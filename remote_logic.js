@@ -1,9 +1,13 @@
 // ==UserScript==
-// @name         🛰️ 뉴비 통합 관제 엔진 (v16.0)
+// @name         🛰️ 뉴비 통합 관제 엔진 (v16.1)
+// @namespace    http://tampermonkey.net/
+// @version      16.1
 // @author       ubase00070
 // @match        https://go.neubie.ai/*
 // @match        https://github.com/*
+// @match        https://gemini.google.com/*
 // @grant        none
+// @run-at       document-start
 // ==/UserScript==
 
 (function() {
