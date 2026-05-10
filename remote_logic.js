@@ -223,16 +223,20 @@
     function handleConcurrencyControl(e) {
         if (!state.isQueueOpt) return;
 
-        // 클릭된 요소와 그 부모 중 버튼 형태를 찾음
-        const btn = e.target.closest('button, a, [role="button"], .btn');
+        // 1. 클릭된 요소 자체 혹은 그 조상 중에서 텍스트가 있는 요소를 찾음
+        // 지메일은 div나 span이 버튼 역할을 하므로 범위를 넓힙니다.
+        const btn = e.target.closest('div, role="button", a, button');
         if (!btn || btn.dataset.intercepted === 'true') return;
 
-        const btnText = btn.innerText.replace(/\s/g, "");
-        const targets = ["도움말 접기", "도움말 펼치기, "관제시작"];
+        // 2. 텍스트 추출 및 정규화 (공백 제거)
+        const btnText = btn.innerText ? btn.innerText.replace(/\s/g, "") : "";
+        
+        // 3. 대상 타겟 (용인고진, 경희대 + 지메일용 키워드 추가)
+        const targets = ["관제시작", "Inbox", "받은편지함"];
         const isTarget = targets.some(t => btnText.includes(t));
 
         if (isTarget) {
-            // 1. 이벤트 즉시 중지 (토글 동작 포함 모든 동작 정지)
+            // 이벤트 전파 및 기본 동작 즉시 중단
             e.preventDefault();
             e.stopImmediatePropagation();
 
@@ -240,23 +244,20 @@
             const jitter = Math.floor(Math.random() * 201) - 100;
             const finalDelay = Math.max(0, base + jitter);
 
-            // 2. 오버레이 표시
+            // UI 표시
             const overlay = document.createElement('div');
             Object.assign(overlay.style, QUEUE_CONFIG.STYLE);
             overlay.innerHTML = `
                 <div style="font-size:20px; margin-bottom:8px;">📡 중복 관제 완화 시스템</div>
-                <div style="color:#ffeb3b;">딜레이 적용 중... (${(finalDelay/1000).toFixed(2)}s)</div>
+                <div style="color:#ffeb3b;">지메일 테스트 중... (${(finalDelay/1000).toFixed(2)}s)</div>
             `;
             document.body.appendChild(overlay);
 
-            // 3. 딜레이 후 "진짜" 클릭 실행
             setTimeout(() => {
                 if (overlay) overlay.remove();
-                
-                // 재귀 방지를 위해 마킹
                 btn.dataset.intercepted = 'true';
-                
-                // 새로운 클릭 이벤트 생성하여 발사 (가장 확실한 방법)
+
+                // 지메일 같은 복잡한 사이트에서는 실제 클릭 이벤트를 다시 생성해서 쏴주는 게 제일 확실합니다.
                 const clickEvent = new MouseEvent('click', {
                     view: window,
                     bubbles: true,
@@ -264,8 +265,7 @@
                 });
                 btn.dispatchEvent(clickEvent);
 
-                // 실행 후 마킹 제거 (다음에 다시 누를 수 있게)
-                setTimeout(() => { delete btn.dataset.intercepted; }, 500);
+                setTimeout(() => { delete btn.dataset.intercepted; }, 1000);
             }, finalDelay);
         }
     }
