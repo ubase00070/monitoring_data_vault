@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         🛰️ 뉴비 통합 관제 엔진 (v16.9.1 - Layout Fix)
+// @name         🛰️ 뉴비 통합 관제 엔진 (v16.9.2 - UI Feedback Fix)
 // @namespace    http://tampermonkey.net/
-// @version      16.9.1
+// @version      16.9.2
 // @author       ubase00070
 // @match        https://go.neubie.ai/*
 // @match        https://github.com/*
@@ -17,7 +17,7 @@
     window.neubieEngineLoaded = true;
 
     const currUrl = window.location.href;
-    console.log("🛰️ 뉴비 통합 엔진 v16.9.1 로드 완료 (Alt+Q 레이아웃 최적화)");
+    console.log("🛰️ 뉴비 통합 엔진 v16.9.2 로드 완료 (복사 피드백 강화)");
 
     /* ============================================================
        SECTION 1. 상태 및 설정
@@ -122,8 +122,8 @@
         titleB.style.cssText = "color:#eee; font-size:18px;";
         const copyBtn = document.createElement('button');
         copyBtn.textContent = '📋 복사';
-        Object.assign(copyBtn.style, { background:'#3b82f6', color:'white', border:'none', padding:'6px 12px', borderRadius:'8px', cursor:'pointer', fontWeight:'bold' });
-        copyBtn.onclick = copyToClipboard;
+        Object.assign(copyBtn.style, { background:'#3b82f6', color:'white', border:'none', padding:'6px 12px', borderRadius:'8px', cursor:'pointer', fontWeight:'bold', transition:'0.2s' });
+        copyBtn.onclick = (e) => copyToClipboard(e.target);
         header.append(titleB, copyBtn);
         batteryPopup.appendChild(header);
 
@@ -154,13 +154,25 @@
         });
     }
 
-    function copyToClipboard() {
+    function copyToClipboard(btn) {
         const now = new Date();
         let hour = now.getHours();
         if (now.getMinutes() >= 50) hour = (hour + 1) % 24;
         let copyText = `[${hour}시 성남 기체 배터리 현황]\n`;
         state.lastBatteryData.forEach(item => { copyText += `• ${item.shortName}: ${item.battery} (${item.statusText})\n`; });
-        navigator.clipboard.writeText(copyText).then(() => alert("복사 완료!"));
+        
+        navigator.clipboard.writeText(copyText).then(() => {
+            // 버튼 상태 변경 피드백
+            const originalText = btn.textContent;
+            const originalBg = btn.style.background;
+            btn.textContent = '✅ 복사됨';
+            btn.style.background = '#22c55e';
+            
+            setTimeout(() => {
+                btn.textContent = originalText;
+                btn.style.background = originalBg;
+            }, 2000);
+        });
     }
 
     /* ============================================================
@@ -178,11 +190,10 @@
         list.appendChild(createMenuCard("🗺️ 지도 최적화", "노드 제거 및 마커 회전", 'isMapOpt', 'neubie_opt_map', () => injectMapStyle()));
         list.appendChild(createMenuCard("📡 줄을 서시오", "중복 개입 방지 (Gemini/GitHub)", 'isQueueOpt', 'neubie_opt_queue'));
         
-        // 성남 배터리 버튼 로직 (열기/닫기 전환)
         const isBatteryOpen = batteryPopup.style.display === 'block';
         list.appendChild(createMenuCard("🔋 성남 배터리", "배터리 실시간 현황", null, null, () => {
             toggleBattery();
-            renderDashboard(); // 버튼 텍스트 갱신을 위해 재렌더링
+            renderDashboard(); 
         }, isBatteryOpen ? '닫기' : '열기'));
 
         dashboard.appendChild(list);
@@ -249,7 +260,6 @@
        SECTION 5. 초기화 및 이벤트 바인딩
        ============================================================ */
     window.addEventListener('keydown', (e) => {
-        // Alt + Q : 메인 대시보드 토글
         if (e.altKey && e.code === 'KeyQ') {
             e.preventDefault();
             if (dashboard.style.display === 'none') { 
@@ -259,11 +269,10 @@
                 dashboard.style.display = 'none'; 
             }
         }
-        // Alt + B : 성남 배터리 전용 토글
         if (e.altKey && e.code === 'KeyB') { 
             e.preventDefault(); 
             toggleBattery(); 
-            if (dashboard.style.display === 'block') renderDashboard(); // 대시보드 열려있으면 버튼 상태 갱신
+            if (dashboard.style.display === 'block') renderDashboard(); 
         }
     });
 
