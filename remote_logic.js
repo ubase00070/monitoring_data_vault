@@ -1,19 +1,36 @@
-/**
- * [뉴빌리티] 통합 관제 엔진 - Dashboard Full Logic (v15.2)
- * 수정사항: 성남 배터리 UI 복원, 맵 최적화 실시간 반영(새로고침X), 열기 버튼 수정
- */
+// ==UserScript==
+// @name         🛰️ 뉴비 통합 관제 엔진 (v16.0)
+// @author       ubase00070
+// @match        https://go.neubie.ai/*
+// @match        https://github.com/*
+// @grant        none
+// ==/UserScript==
+
 (function() {
     'use strict';
 
-    console.log("🛰️ 뉴비 통합 엔진 v15.2 로드 완료");
+    const currUrl = window.location.href;
+    console.log("🛰️ 뉴비 통합 엔진 v16.0 기준점 로드 완료");
 
-    // 1. 상태 관리
+    // 1. 상태 및 설정
+    const config = {
+        targetIds: ['44', '56', '65', '109'], // 자동 최적화 대상
+        batteryIds: [
+            { id: '142', name: '성남판교 200', shortName: '판교 200' },
+            { id: '145', name: '성남서현 201', shortName: '서현 201' },
+            { id: '144', name: '성남율동 202', shortName: '율동 202' },
+            { id: '155', name: '성남야탑 203', shortName: '야탑 203' }
+        ]
+    };
+
+    const isAutoTarget = config.targetIds.some(id => currUrl.includes(`/monitoring/${id}`));
     const state = {
-        isMapOpt: localStorage.getItem('neubie_opt_map') === 'true',
+        // 자동 대상 페이지거나, 이전에 수동으로 켰던 경우 활성화
+        isMapOpt: localStorage.getItem('neubie_opt_map') === 'true' || isAutoTarget,
         lastBatteryData: []
     };
 
-    // 2. UI 요소 생성 (보안 우회를 위해 createElement 사용)
+    // 2. UI 컨테이너 생성 (보안 대응)
     const dashboard = createContainer('neubie-dashboard', '420px', '50%', '50%');
     const batteryPopup = createContainer('neubie-battery-popup', '340px', '20px', 'auto', '20px');
     document.body.append(dashboard, batteryPopup);
@@ -31,52 +48,38 @@
         return el;
     }
 
-    // 3. 성남 배터리 설정 & iframe (관제 페이지인 경우에만 생성)
-    const targetConfigs = [
-        { id: '142', name: '성남판교 200', shortName: '판교 200' },
-        { id: '145', name: '성남서현 201', shortName: '서현 201' },
-        { id: '144', name: '성남율동 202', shortName: '율동 202' },
-        { id: '155', name: '성남야탑 203', shortName: '야탑 203' }
-    ];
+    // 3. 성남 배터리 iframe 로직 (v13.5 로직 계승)
     const iframes = {};
-
-    if (window.location.href.includes('/remote/multiple/driving')) {
-        targetConfigs.forEach(config => {
+    if (currUrl.includes('/remote/multiple/driving')) {
+        config.batteryIds.forEach(c => {
             const ifr = document.createElement('iframe');
-            ifr.src = `https://go.neubie.ai/ko/monitoring/${config.id}`;
+            ifr.src = `https://go.neubie.ai/ko/monitoring/${c.id}`;
             Object.assign(ifr.style, { width: '0', height: '0', border: 'none', display: 'none' });
             document.body.appendChild(ifr);
-            iframes[config.id] = ifr;
+            iframes[c.id] = ifr;
         });
     }
 
-    // 4. 배터리 업데이트 & 복사 (레이아웃 복원 버전)
+    // 4. 배터리 업데이트 & 복사 (v13.5 레이아웃 + v15 UI)
     function updateBatteryStatus() {
-        batteryPopup.innerHTML = ''; 
-        
+        batteryPopup.innerHTML = '';
         const header = document.createElement('div');
         header.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #333; padding-bottom:10px;";
-        
-        const titleText = document.createElement('b');
-        titleText.innerText = "🛰️ 성남 배터리";
-        titleText.style.cssText = "color:#eee; font-size:18px;";
+        header.innerHTML = `<b style="color:#eee; font-size:18px;">🛰️ 성남 배터리</b>`;
         
         const copyBtn = document.createElement('button');
         copyBtn.innerText = '📋 복사';
-        Object.assign(copyBtn.style, { background:'#3b82f6', color:'white', border:'none', padding:'6px 12px', borderRadius:'8px', cursor:'pointer', fontWeight:'bold', fontSize:'12px' });
+        Object.assign(copyBtn.style, { background:'#3b82f6', color:'white', border:'none', padding:'6px 12px', borderRadius:'8px', cursor:'pointer', fontWeight:'bold' });
         copyBtn.onclick = copyToClipboard;
-        
-        header.append(titleText, copyBtn);
+        header.append(copyBtn);
         batteryPopup.appendChild(header);
 
         state.lastBatteryData = [];
-        targetConfigs.forEach(config => {
+        config.batteryIds.forEach(c => {
             let batteryVal = "- %", statusText = "OFF", accentColor = "#666", statusIcon = "⚪";
-
             try {
-                const doc = iframes[config.id]?.contentDocument || iframes[config.id]?.contentWindow.document;
+                const doc = iframes[c.id]?.contentDocument || iframes[c.id]?.contentWindow.document;
                 const card = doc?.querySelector('li[data-qk="robot-card"]');
-
                 if (card) {
                     const cardText = card.innerText;
                     const batteryMatch = cardText.match(/(\d+)%/);
@@ -90,13 +93,12 @@
                         else { accentColor = "#888888"; statusIcon = "⚪"; statusText = "대기 중"; }
                     }
                 }
-            } catch (e) { console.error(`${config.name} 데이터 수집 실패`); }
+            } catch (e) { /* 타 도메인 테스트 시 예외 처리 */ }
 
-            state.lastBatteryData.push({ shortName: config.shortName, battery: batteryVal, statusText: statusText });
-
+            state.lastBatteryData.push({ shortName: c.shortName, battery: batteryVal, statusText: statusText });
             const item = document.createElement('div');
-            item.style.cssText = `display:flex; justify-content:space-between; background:rgba(255,255,255,0.05); padding:12px 16px; border-radius:12px; margin-bottom:8px; border-left:5px solid ${accentColor}; transition: 0.2s;`;
-            item.innerHTML = `<span>${statusIcon} <span style="font-size:14px;">${config.name}</span></span><span style="font-weight:bold; color:${accentColor};">${batteryVal}</span>`;
+            item.style.cssText = `display:flex; justify-content:space-between; background:rgba(255,255,255,0.05); padding:12px 16px; border-radius:12px; margin-bottom:8px; border-left:5px solid ${accentColor};`;
+            item.innerHTML = `<span>${statusIcon} ${c.name}</span><span style="font-weight:bold; color:${accentColor};">${batteryVal}</span>`;
             batteryPopup.appendChild(item);
         });
     }
@@ -107,10 +109,10 @@
         if (now.getMinutes() >= 50) hour = (hour + 1) % 24;
         let copyText = `[${hour}시 성남 기체 배터리 현황]\n`;
         state.lastBatteryData.forEach(item => { copyText += `• ${item.shortName}: ${item.battery} (${item.statusText})\n`; });
-        navigator.clipboard.writeText(copyText).then(() => alert("클립보드 복사 완료!"));
+        navigator.clipboard.writeText(copyText).then(() => alert("복사 완료!"));
     }
 
-    // 5. 맵 최적화 엔진 (새로고침 없이 실시간 반영)
+    // 5. 맵 최적화 로직 (v13.5 로직 완전 이식)
     const originalFetch = window.fetch;
     window.fetch = async (...args) => {
         const url = typeof args[0] === 'string' ? args[0] : args[0].url;
@@ -129,14 +131,16 @@
             style.id = 'neubie-opt-style';
             document.head.appendChild(style);
         }
+        // v13.5의 svg 회전 로직 포함
         style.textContent = state.isMapOpt ? `
             [data-qk^="node-marker"] { display: none !important; }
             gmp-advanced-marker:has([data-qk*="base-marker-대기장소"]) { display: block !important; visibility: visible !important; z-index: 500 !important; }
+            gmp-advanced-marker:has([data-qk*="base-marker-대기장소"]) svg { transform: rotate(180deg) !important; }
             gmp-advanced-marker:has([data-qk*="robot"]), div[class*="MiniMap"] gmp-advanced-marker { display: block !important; visibility: visible !important; z-index: 1000 !important; }
         ` : "";
     }
 
-    // 6. 대시보드 UI 빌더 (열기 버튼 로직 수정)
+    // 6. 대시보드 UI
     function renderDashboard() {
         dashboard.innerHTML = '';
         const title = document.createElement('h2');
@@ -147,11 +151,16 @@
         const list = document.createElement('div');
         list.style.display = "grid"; list.style.gap = "12px";
 
-        list.appendChild(createMenuCard("🗺️ 지도 최적화", "불필요한 노드 제거", true));
-        list.appendChild(createMenuCard("🔋 성남 배터리", "배터리 팝업 토글", false, () => {
-            toggleBattery(); // 여기서 호출!
+        // 지도 최적화 카드
+        const mapCard = createMenuCard("🗺️ 지도 최적화", "노드 제거 및 마커 회전", true);
+        list.appendChild(mapCard);
+
+        // 배터리 카드 (v15.2 열기 버튼 수정 반영)
+        const battCard = createMenuCard("🔋 성남 배터리", "배터리 실시간 팝업", false, () => {
+            toggleBattery();
             dashboard.style.display = 'none';
-        }));
+        });
+        list.appendChild(battCard);
 
         dashboard.appendChild(list);
     }
@@ -160,7 +169,6 @@
         const card = document.createElement('div');
         card.style.cssText = "background:#252525; padding:15px; border-radius:15px; display:flex; justify-content:space-between; align-items:center; border:1px solid #333;";
         card.innerHTML = `<div style="flex:1;"><div style="font-weight:bold; font-size:15px;">${name}</div><div style="font-size:12px; color:#aaa;">${desc}</div></div>`;
-        
         if (isToggle) {
             const chk = document.createElement('input');
             chk.type = 'checkbox'; chk.checked = state.isMapOpt;
@@ -168,7 +176,7 @@
             chk.onchange = (e) => {
                 state.isMapOpt = e.target.checked;
                 localStorage.setItem('neubie_opt_map', state.isMapOpt);
-                injectMapStyle(); // 새로고침 없이 즉시 스타일 적용
+                injectMapStyle();
             };
             card.appendChild(chk);
         } else {
@@ -181,7 +189,6 @@
         return card;
     }
 
-    // 7. 제어 로직
     function toggleBattery() {
         if (batteryPopup.style.display === 'none') {
             updateBatteryStatus();
@@ -191,6 +198,7 @@
         }
     }
 
+    // 7. 통합 단축키 (Alt+/, Alt+B, Alt+M)
     window.addEventListener('keydown', (e) => {
         if (e.altKey && (e.key === '/' || e.code === 'Slash' || e.key === '?')) {
             e.preventDefault();
@@ -198,9 +206,16 @@
             else { dashboard.style.display = 'none'; }
         }
         if (e.altKey && e.code === 'KeyB') { e.preventDefault(); toggleBattery(); }
+        if (e.altKey && e.code === 'KeyM') {
+            e.preventDefault();
+            state.isMapOpt = !state.isMapOpt;
+            localStorage.setItem('neubie_opt_map', state.isMapOpt);
+            injectMapStyle();
+            console.log(`맵 최적화: ${state.isMapOpt ? 'ON' : 'OFF'}`);
+        }
     });
 
-    // 8. 초기화
+    // 8. 초기 실행
     injectMapStyle();
     setInterval(() => { if (batteryPopup.style.display === 'block') updateBatteryStatus(); }, 10000);
 
