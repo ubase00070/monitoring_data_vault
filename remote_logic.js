@@ -224,7 +224,7 @@
     setInterval(() => { if (batteryPopup.style.display === 'block') updateBatteryStatus(); }, 10000);
 
     /* ============================================================
-       SECTION 2. [추가] 줄을 서시오 v1.0 (중복 개입 방지 모듈)
+       SECTION 2. 줄을 서시오 v1.0 (제미나이 보안 대응 버전)
        ============================================================ */
     const QUEUE_CONFIG = {
         SLOTS: [0, 350, 700, 1050, 1400], 
@@ -235,41 +235,48 @@
             position: 'fixed', top: '20%', left: '50%', transform: 'translateX(-50%)',
             backgroundColor: 'rgba(15, 23, 42, 0.98)', color: 'white', border: '3px solid #ffeb3b',
             padding: '25px 50px', borderRadius: '15px', zIndex: '2147483647', textAlign: 'center',
-            boxShadow: '0 10px 40px rgba(0,0,0,0.6)', fontWeight: 'bold', pointerEvents: 'none'
+            boxShadow: '0 10px 40px rgba(0,0,0,0.6)', fontWeight: 'bold', pointerEvents: 'none',
+            fontFamily: 'sans-serif'
         }
     };
-
+    
     function handleConcurrencyControl(e) {
-        // 관제 개입/모델 선택 관련 타겟 탐색
         const btn = e.target.closest('button') || e.target.closest('span.ng-star-inserted') || e.target.closest('div.model-selector');
         if (!btn || btn.dataset.intercepted) return;
-
+    
         const btnText = btn.innerText.replace(/\s/g, "");
-        // 가로챌 키워드 설정
         const isTarget = btnText.includes("빠른모델") || btnText.includes("Flash") || btnText.includes("개입시작");
-
+    
         if (isTarget) {
             e.preventDefault();
             e.stopPropagation();
-
-            // 딜레이 계산
+    
             const base = QUEUE_CONFIG.SLOTS[Math.floor(Math.random() * QUEUE_CONFIG.SLOTS.length)];
             const jitter = Math.floor(Math.random() * (QUEUE_CONFIG.JITTER * 2 + 1)) - QUEUE_CONFIG.JITTER;
             const finalDelay = Math.max(0, base + jitter);
-
-            // 오버레이 생성
+    
+            // [수정] innerHTML 대신 createElement와 textContent를 사용하여 보안 정책 우회
             const overlay = document.createElement('div');
-            overlay.innerHTML = `<div style="font-size: 20px; margin-bottom: 8px;">📡 중복 관제 완화 시스템</div>
-                                 <div style="color: #ffeb3b;">딜레이 적용 중... (${(finalDelay/1000).toFixed(2)}s)</div>`;
             Object.assign(overlay.style, QUEUE_CONFIG.STYLE);
+            
+            const titleDiv = document.createElement('div');
+            titleDiv.textContent = "📡 중복 관제 완화 시스템";
+            titleDiv.style.fontSize = "20px";
+            titleDiv.style.marginBottom = "8px";
+            
+            const delayDiv = document.createElement('div');
+            delayDiv.textContent = `딜레이 적용 중... (${(finalDelay/1000).toFixed(2)}s)`;
+            delayDiv.style.color = "#ffeb3b";
+            
+            overlay.appendChild(titleDiv);
+            overlay.appendChild(delayDiv);
             document.body.appendChild(overlay);
-
-            // 실행
+    
             setTimeout(() => {
                 btn.dataset.intercepted = 'true';
                 btn.click();
                 btn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-
+    
                 setTimeout(() => {
                     overlay.remove();
                     delete btn.dataset.intercepted;
@@ -277,7 +284,7 @@
             }, finalDelay);
         }
     }
-
+    
     // 클릭 이벤트 가로채기 등록
     document.addEventListener('click', handleConcurrencyControl, true);
     
