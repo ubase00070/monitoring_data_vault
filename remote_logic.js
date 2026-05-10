@@ -232,7 +232,7 @@
         const btnText = rawText.replace(/\s/g, "").toLowerCase();
         
         // 3. 대상 타겟 (모두 소문자로 작성하세요)
-        const targets = ["관제시작", "View Details"];
+        const targets = ["관제시작", "viewdetails"];
         const isTarget = targets.some(t => btnText.includes(t));
     
         // 디버깅용 콘솔 (테스트 시 활성화해서 실제 어떤 텍스트가 잡히는지 확인 가능)
