@@ -228,7 +228,7 @@
         if (!btn || btn.dataset.intercepted === 'true') return;
 
         const btnText = btn.innerText.replace(/\s/g, "");
-        const targets = ["전체해제", "관제시작"];
+        const targets = ["도움말 접기", "도움말 펼치기, "관제시작"];
         const isTarget = targets.some(t => btnText.includes(t));
 
         if (isTarget) {
