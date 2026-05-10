@@ -191,17 +191,19 @@
     }
 
     window.addEventListener('keydown', (e) => {
-        if (e.altKey && (e.code === 'Slash' || e.key === '/')) {
+        // 콘솔에 현재 누른 키 정보를 찍어서 확인용
+        console.log(`Key Pressed: ${e.key} | Code: ${e.code} | Alt: ${e.altKey}`);
+    
+        // Alt + / (키패드 슬래시 포함 여러 케이스 대응)
+        if (e.altKey && (e.key === '/' || e.code === 'Slash' || e.key === '?' || e.code === 'IntlRo')) {
             e.preventDefault();
-            if (dashboard.style.display === 'none') { renderDashboard(); dashboard.style.display = 'block'; }
-            else { dashboard.style.display = 'none'; }
-        }
-        if (e.altKey && e.code === 'KeyB') { e.preventDefault(); toggleBattery(); }
-        if (e.altKey && e.code === 'KeyM') {
-            e.preventDefault();
-            state.isMapOpt = !state.isMapOpt;
-            localStorage.setItem('neubie_opt_map', state.isMapOpt);
-            location.reload();
+            console.log("🎯 단축키 감지 성공!"); 
+            if (dashboard.style.display === 'none') {
+                renderDashboard();
+                dashboard.style.display = 'block';
+            } else {
+                dashboard.style.display = 'none';
+            }
         }
     });
 
