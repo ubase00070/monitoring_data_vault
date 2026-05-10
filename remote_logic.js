@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         🛰️ 뉴비 통합 관제 엔진 (v16.9)
+// @name         🛰️ 뉴비 통합 관제 엔진 (v16.9.1 - Layout Fix)
 // @namespace    http://tampermonkey.net/
-// @version      16.9
+// @version      16.9.1
 // @author       ubase00070
 // @match        https://go.neubie.ai/*
 // @match        https://github.com/*
@@ -13,12 +13,11 @@
 (function() {
     'use strict';
 
-    // [0] 중복 실행 방지 및 초기화
     if (window.neubieEngineLoaded) return;
     window.neubieEngineLoaded = true;
 
     const currUrl = window.location.href;
-    console.log("🛰️ 뉴비 통합 엔진 v16.9 로드 완료 (지도 최적화 Full-Fix)");
+    console.log("🛰️ 뉴비 통합 엔진 v16.9.1 로드 완료 (Alt+Q 레이아웃 최적화)");
 
     /* ============================================================
        SECTION 1. 상태 및 설정
@@ -53,9 +52,8 @@
     };
 
     /* ============================================================
-       SECTION 2. 맵 최적화 코어 (Fetch 가로채기 & 스타일 인젝션)
+       SECTION 2. 맵 최적화 코어
        ============================================================ */
-    // [핵심] API 호출 수준에서 노드/경로 데이터 차단 (가장 큰 성능 향상)
     const originalFetch = window.fetch;
     window.fetch = async (...args) => {
         const url = typeof args[0] === 'string' ? args[0] : args[0].url;
@@ -68,19 +66,14 @@
         return originalFetch(...args);
     };
 
-    // [핵심] CSS를 통한 지도 요소 정리 및 마커 회전
     function injectMapStyle() {
         let style = document.getElementById('neubie-opt-style') || document.createElement('style');
         style.id = 'neubie-opt-style';
         style.textContent = state.isMapOpt ? `
-            /* 1. 불필요한 노드 마커 숨김 */
             [data-qk^="node-marker"] { display: none !important; }
-            /* 2. 대기장소 마커는 보이게 하되 180도 회전 (v13.5 로직) */
             gmp-advanced-marker:has([data-qk*="base-marker-대기장소"]) { display: block !important; visibility: visible !important; z-index: 500 !important; }
             gmp-advanced-marker:has([data-qk*="base-marker-대기장소"]) svg { transform: rotate(180deg) !important; }
-            /* 3. 로봇 및 미니맵 마커 가시성 강제 확보 */
             gmp-advanced-marker:has([data-qk*="robot"]), div[class*="MiniMap"] gmp-advanced-marker { display: block !important; visibility: visible !important; z-index: 1000 !important; }
-            /* 4. 기타 불필요한 레이아웃 보정 */
             .gm-style-cc { display: none !important; } 
         ` : "";
         if (!style.parentElement) document.head.appendChild(style);
@@ -184,13 +177,18 @@
 
         list.appendChild(createMenuCard("🗺️ 지도 최적화", "노드 제거 및 마커 회전", 'isMapOpt', 'neubie_opt_map', () => injectMapStyle()));
         list.appendChild(createMenuCard("📡 줄을 서시오", "중복 개입 방지 (Gemini/GitHub)", 'isQueueOpt', 'neubie_opt_queue'));
+        
+        // 성남 배터리 버튼 로직 (열기/닫기 전환)
+        const isBatteryOpen = batteryPopup.style.display === 'block';
         list.appendChild(createMenuCard("🔋 성남 배터리", "배터리 실시간 현황", null, null, () => {
-            toggleBattery(); dashboard.style.display = 'none';
-        }));
+            toggleBattery();
+            renderDashboard(); // 버튼 텍스트 갱신을 위해 재렌더링
+        }, isBatteryOpen ? '닫기' : '열기'));
+
         dashboard.appendChild(list);
     }
 
-    function createMenuCard(name, desc, stateKey, storageKey, action) {
+    function createMenuCard(name, desc, stateKey, storageKey, action, btnLabel = '열기') {
         const card = document.createElement('div');
         card.style.cssText = "background:#252525; padding:15px; border-radius:15px; display:flex; justify-content:space-between; align-items:center; border:1px solid #333;";
         card.innerHTML = `<div style="flex:1;"><div style="font-weight:bold; font-size:15px;">${name}</div><div style="font-size:12px; color:#aaa;">${desc}</div></div>`;
@@ -206,8 +204,8 @@
             card.appendChild(chk);
         } else {
             const btn = document.createElement('button');
-            btn.textContent = '열기';
-            btn.style.cssText = "background:#3b82f6; color:white; border:none; padding:8px 16px; border-radius:8px; cursor:pointer; font-weight:bold;";
+            btn.textContent = btnLabel;
+            btn.style.cssText = `background:${btnLabel === '닫기' ? '#ef4444' : '#3b82f6'}; color:white; border:none; padding:8px 16px; border-radius:8px; cursor:pointer; font-weight:bold; min-width:60px;`;
             btn.onclick = action;
             card.appendChild(btn);
         }
@@ -215,8 +213,12 @@
     }
 
     function toggleBattery() {
-        if (batteryPopup.style.display === 'none') { updateBatteryStatus(); batteryPopup.style.display = 'block'; }
-        else { batteryPopup.style.display = 'none'; }
+        if (batteryPopup.style.display === 'none') { 
+            updateBatteryStatus(); 
+            batteryPopup.style.display = 'block'; 
+        } else { 
+            batteryPopup.style.display = 'none'; 
+        }
     }
 
     function handleConcurrencyControl(e) {
@@ -247,12 +249,22 @@
        SECTION 5. 초기화 및 이벤트 바인딩
        ============================================================ */
     window.addEventListener('keydown', (e) => {
-        if (e.altKey && (e.key === '/' || e.code === 'Slash')) {
+        // Alt + Q : 메인 대시보드 토글
+        if (e.altKey && e.code === 'KeyQ') {
             e.preventDefault();
-            if (dashboard.style.display === 'none') { renderDashboard(); dashboard.style.display = 'block'; }
-            else { dashboard.style.display = 'none'; }
+            if (dashboard.style.display === 'none') { 
+                renderDashboard(); 
+                dashboard.style.display = 'block'; 
+            } else { 
+                dashboard.style.display = 'none'; 
+            }
         }
-        if (e.altKey && e.code === 'KeyB') { e.preventDefault(); toggleBattery(); }
+        // Alt + B : 성남 배터리 전용 토글
+        if (e.altKey && e.code === 'KeyB') { 
+            e.preventDefault(); 
+            toggleBattery(); 
+            if (dashboard.style.display === 'block') renderDashboard(); // 대시보드 열려있으면 버튼 상태 갱신
+        }
     });
 
     document.addEventListener('click', handleConcurrencyControl, true);
