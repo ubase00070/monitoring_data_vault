@@ -232,7 +232,7 @@
         const btnText = btn.innerText ? btn.innerText.replace(/\s/g, "") : "";
         
         // 3. 대상 타겟 (용인고진, 경희대 + 지메일용 키워드 추가)
-        const targets = ["관제시작", "GPU Tester"];
+        const targets = ["관제시작", "Privacy Policy"];
         const isTarget = targets.some(t => btnText.includes(t));
 
         if (isTarget) {
