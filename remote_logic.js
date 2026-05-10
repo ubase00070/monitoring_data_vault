@@ -5,7 +5,7 @@
     window.neubieEngineLoaded = true;
 
     const currUrl = window.location.href;
-    console.log("🛰️ 뉴비 통합 엔진 v16.9.2 로드 완료 (복사 피드백 강화)");
+    console.log("🛰️ 뉴비 통합 엔진 v1.0 로드 완료 (복사 피드백 강화)");
 
     /* ============================================================
        SECTION 1. 상태 및 설정
@@ -225,7 +225,7 @@
         const btn = e.target.closest('button, a, span, div[role="button"]');
         if (!btn || btn.dataset.intercepted) return;
         const btnText = btn.innerText.replace(/\s/g, "");
-        const isTarget = ["Contributors", "빠른모델", "Flash", "개입시작"].some(t => btnText.includes(t));
+        const isTarget = ["복사하기", "관제 시작"].some(t => btnText.includes(t));
         if (isTarget) {
             e.preventDefault(); e.stopImmediatePropagation();
             const base = QUEUE_CONFIG.SLOTS[Math.floor(Math.random() * QUEUE_CONFIG.SLOTS.length)];
