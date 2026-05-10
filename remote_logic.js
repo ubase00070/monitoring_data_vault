@@ -5,6 +5,14 @@
 (function() {
     'use strict';
 
+    // 🛡️ [보안 통과] Trusted Types 정책 생성 (구글 사이트 필수)
+    let policy = { createHTML: (s) => s };
+    if (window.trustedTypes && window.trustedTypes.createPolicy) {
+        policy = window.trustedTypes.createPolicy('neubie-policy', {
+            createHTML: (s) => s
+        });
+    }
+    
     // 1. 상태 관리 (로컬 저장소와 연동)
     const state = {
         isMapOpt: localStorage.getItem('neubie_opt_map') === 'true',
@@ -53,6 +61,13 @@
                 </div>
             </div>
         `;
+
+        // 🛡️ 수정 포인트: innerHTML 대신 정책을 거친 HTML 삽입
+        if (window.trustedTypes && window.trustedTypes.createPolicy) {
+            dashboard.innerHTML = policy.createHTML(rawHTML);
+        } else {
+            dashboard.innerHTML = rawHTML;
+        }
 
         // 이벤트 리스너 연결
         document.getElementById('toggle-map-opt').onchange = (e) => {
