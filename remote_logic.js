@@ -4,10 +4,6 @@
     if (window.neubieEngineLoaded) return;
     window.neubieEngineLoaded = true;
 
-    // 캐시 방지를 위해 매 분마다 주소를 바꿈
-    const buster = Math.floor(Date.now() / 60000);
-    const remoteUrl = `https://cdn.jsdelivr.net/gh/ubase00070/monitoring_data_vault@main/remote_logic.js?v=${buster}`;
-
     const currUrl = window.location.href;
     console.log("🛰️ 뉴비 통합 엔진 v1.1 로드 완료 (복사 피드백 강화)");
 
@@ -284,7 +280,7 @@
         }
     });
 
-    document.addEventListener('click', handleConcurrencyControl, true);
+    document.addEventListener('click', handleControlClick, true);
     injectMapStyle();
     setInterval(() => { if (batteryPopup.style.display === 'block') updateBatteryStatus(); }, 10000);
 
