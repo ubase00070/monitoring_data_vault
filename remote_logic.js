@@ -232,7 +232,7 @@
         const btnText = btn.innerText ? btn.innerText.replace(/\s/g, "") : "";
         
         // 3. 대상 타겟 (용인고진, 경희대 + 지메일용 키워드 추가)
-        const targets = ["관제시작", "Upgrade"];
+        const targets = ["관제시작", "GPU Tester"];
         const isTarget = targets.some(t => btnText.includes(t));
 
         if (isTarget) {
@@ -249,7 +249,7 @@
             Object.assign(overlay.style, QUEUE_CONFIG.STYLE);
             overlay.innerHTML = `
                 <div style="font-size:20px; margin-bottom:8px;">📡 중복 관제 완화 시스템</div>
-                <div style="color:#ffeb3b;">지메일 테스트 중... (${(finalDelay/1000).toFixed(2)}s)</div>
+                <div style="color:#ffeb3b;">테스트 중... (${(finalDelay/1000).toFixed(2)}s)</div>
             `;
             document.body.appendChild(overlay);
 
