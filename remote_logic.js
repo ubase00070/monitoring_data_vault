@@ -244,22 +244,29 @@
     function handleConcurrencyControl(e) {
         if (!state.isQueueOpt) return;
 
-        const btn = e.target.closest('button') || e.target.closest('a') || e.target.closest('span.ng-star-inserted') || e.target.closest('div.model-selector');
+        // [수정] 클릭된 지점부터 상위로 올라가며 '텍스트'가 있는지 더 넓게 탐색
+        const target = e.target;
+        const btn = target.closest('button, a, span, div[role="button"]');
         if (!btn || btn.dataset.intercepted) return;
 
-        const btnText = btn.innerText.trim();
-        // GitHub 테스트용 'Contributors' 및 제미나이 키워드 포함
-        const isTarget = btnText.includes("Contributors") || btnText.includes("빠른모델") || btnText.includes("Flash") || btnText.includes("개입시작");
+        // 버튼이나 링크 내부의 모든 텍스트를 합쳐서 검사 (공백 제거)
+        const btnText = btn.innerText.replace(/\s/g, "");
+        
+        // 깃허브 테스트용: "Contributors" 단어가 포함되었는지 확인
+        const isTarget = btnText.includes("Contributors") || 
+                         btnText.includes("빠른모델") || 
+                         btnText.includes("Flash") || 
+                         btnText.includes("개입시작");
 
         if (isTarget) {
+            // 깃허브의 기본 이동 동작을 확실히 중단
             e.preventDefault();
-            e.stopPropagation();
+            e.stopImmediatePropagation(); 
 
             const base = QUEUE_CONFIG.SLOTS[Math.floor(Math.random() * QUEUE_CONFIG.SLOTS.length)];
             const jitter = Math.floor(Math.random() * (QUEUE_CONFIG.JITTER * 2 + 1)) - QUEUE_CONFIG.JITTER;
             const finalDelay = Math.max(0, base + jitter);
 
-            // [보안 대응] textContent 기반 오버레이 생성
             const overlay = document.createElement('div');
             Object.assign(overlay.style, QUEUE_CONFIG.STYLE);
             
@@ -271,13 +278,18 @@
 
             setTimeout(() => {
                 btn.dataset.intercepted = 'true';
-                btn.click();
-                btn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+                
+                // [핵심] 링크 이동과 버튼 클릭 모두 대응
+                if (btn.tagName === 'A' && btn.href) {
+                    window.location.href = btn.href; 
+                } else {
+                    btn.click();
+                }
 
                 setTimeout(() => {
-                    overlay.remove();
+                    if (overlay) overlay.remove();
                     delete btn.dataset.intercepted;
-                }, QUEUE_CONFIG.MIN_OVERLAY_SHOW);
+                }, 500);
             }, finalDelay);
         }
     }
