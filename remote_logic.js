@@ -222,24 +222,51 @@
 
     function handleConcurrencyControl(e) {
         if (!state.isQueueOpt) return;
-        const btn = e.target.closest('button, a, span, div[role="button"]');
+
+        // 1. 클릭된 요소로부터 가장 가까운 버튼/링크 찾기
+        const btn = e.target.closest('button, a, span, div[role="button"], .btn, .button');
         if (!btn || btn.dataset.intercepted) return;
+
+        // 2. 텍스트 매칭 (공백 제거 후 검사)
         const btnText = btn.innerText.replace(/\s/g, "");
-        const isTarget = ["용인 고진", "경희대", "관제 시작"].some(t => btnText.includes(t));
+        const targets = ["용인고진", "경희대", "관제시작"];
+        const isTarget = targets.some(t => btnText.includes(t));
+
         if (isTarget) {
-            e.preventDefault(); e.stopImmediatePropagation();
+            // 즉시 중단 (다른 이벤트가 실행되지 않도록)
+            e.preventDefault();
+            e.stopImmediatePropagation();
+
+            // 딜레이 계산
             const base = QUEUE_CONFIG.SLOTS[Math.floor(Math.random() * QUEUE_CONFIG.SLOTS.length)];
-            const jitter = Math.floor(Math.random() * 201) - 100;
+            const jitter = Math.floor(Math.random() * (QUEUE_CONFIG.JITTER * 2 + 1)) - QUEUE_CONFIG.JITTER;
             const finalDelay = Math.max(0, base + jitter);
+
+            // 오버레이 표시
             const overlay = document.createElement('div');
             Object.assign(overlay.style, QUEUE_CONFIG.STYLE);
-            overlay.innerHTML = `<div style="font-size:20px; margin-bottom:8px;">📡 중복 관제 완화 시스템</div><div style="color:#ffeb3b;">딜레이 적용 중... (${(finalDelay/1000).toFixed(2)}s)</div>`;
+            overlay.innerHTML = `
+                <div style="font-size:20px; margin-bottom:8px;">📡 중복 관제 완화 시스템</div>
+                <div style="color:#ffeb3b; font-size:16px;">[${btnText}] 딜레이 적용 중... (${(finalDelay/1000).toFixed(2)}s)</div>
+            `;
             document.body.appendChild(overlay);
+
+            // 딜레이 후 실행
             setTimeout(() => {
-                btn.dataset.intercepted = 'true';
-                if (btn.tagName === 'A' && btn.href) window.location.href = btn.href;
-                else btn.click();
-                setTimeout(() => { if (overlay) overlay.remove(); delete btn.dataset.intercepted; }, 500);
+                btn.dataset.intercepted = 'true'; // 재귀 호출 방지 마킹
+                
+                // 버튼의 타입에 따라 클릭 방식 분기
+                if (btn.tagName === 'A' && btn.href && !btn.href.includes('javascript:')) {
+                    window.location.href = btn.href;
+                } else {
+                    btn.click();
+                }
+
+                // 뒷정리
+                setTimeout(() => {
+                    if (overlay) overlay.remove();
+                    delete btn.dataset.intercepted;
+                }, 500);
             }, finalDelay);
         }
     }
