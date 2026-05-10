@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         🛰️ 뉴비 통합 관제 엔진 (v16.1)
+// @name         🛰️ 뉴비 통합 관제 엔진 (v16.8)
 // @namespace    http://tampermonkey.net/
-// @version      16.1
+// @version      16.8
 // @author       ubase00070
 // @match        https://go.neubie.ai/*
 // @match        https://github.com/*
@@ -18,7 +18,7 @@
     window.neubieEngineLoaded = true;
 
     const currUrl = window.location.href;
-    console.log("🛰️ 뉴비 통합 엔진 v16.7 로드 완료 (보안 대응 패치)");
+    console.log("🛰️ 뉴비 통합 엔진 v16.8 로드 완료 (전체 기능 무결성 검증)");
 
     /* ============================================================
        SECTION 1. 상태 및 설정
@@ -36,7 +36,7 @@
     const isAutoTarget = config.targetIds.some(id => currUrl.includes(`/monitoring/${id}`));
     const state = {
         isMapOpt: localStorage.getItem('neubie_opt_map') === 'true' || isAutoTarget,
-        isQueueOpt: localStorage.getItem('neubie_opt_queue') === 'true', // 줄을 서시오 상태 저장
+        isQueueOpt: localStorage.getItem('neubie_opt_queue') === 'true', // 줄을 서시오 상태 로드
         lastBatteryData: []
     };
 
@@ -72,13 +72,12 @@
     const dashboard = createContainer('neubie-dashboard', '420px', '50%', '50%');
     const batteryPopup = createContainer('neubie-battery-popup', '340px', '20px', 'auto', '20px');
 
-    // [안전장치] Body가 없을 경우 대기 후 삽입
     const injectUI = () => { if (document.body) document.body.append(dashboard, batteryPopup); };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', injectUI);
     else injectUI();
 
     /* ============================================================
-       SECTION 3. 성남 배터리 및 맵 최적화 로직 (기존 무결성 유지)
+       SECTION 3. 성남 배터리 및 맵 최적화 로직
        ============================================================ */
     const iframes = {};
     if (currUrl.includes('/remote/multiple/driving')) {
@@ -189,7 +188,7 @@
         // 1. 지도 최적화 토글
         list.appendChild(createMenuCard("🗺️ 지도 최적화", "노드 제거 및 마커 회전", 'isMapOpt', 'neubie_opt_map', () => injectMapStyle()));
         
-        // 2. 줄을 서시오 토글 (신규 추가)
+        // 2. 줄을 서시오 토글 (수정됨: state.isQueueOpt와 연동)
         list.appendChild(createMenuCard("📡 줄을 서시오", "중복 개입 방지 (Gemini/GitHub)", 'isQueueOpt', 'neubie_opt_queue'));
 
         // 3. 배터리 팝업 버튼
@@ -244,22 +243,18 @@
     function handleConcurrencyControl(e) {
         if (!state.isQueueOpt) return;
 
-        // [수정] 클릭된 지점부터 상위로 올라가며 '텍스트'가 있는지 더 넓게 탐색
         const target = e.target;
         const btn = target.closest('button, a, span, div[role="button"]');
         if (!btn || btn.dataset.intercepted) return;
 
-        // 버튼이나 링크 내부의 모든 텍스트를 합쳐서 검사 (공백 제거)
         const btnText = btn.innerText.replace(/\s/g, "");
         
-        // 깃허브 테스트용: "Contributors" 단어가 포함되었는지 확인
         const isTarget = btnText.includes("Contributors") || 
                          btnText.includes("빠른모델") || 
                          btnText.includes("Flash") || 
                          btnText.includes("개입시작");
 
         if (isTarget) {
-            // 깃허브의 기본 이동 동작을 확실히 중단
             e.preventDefault();
             e.stopImmediatePropagation(); 
 
@@ -279,7 +274,6 @@
             setTimeout(() => {
                 btn.dataset.intercepted = 'true';
                 
-                // [핵심] 링크 이동과 버튼 클릭 모두 대응
                 if (btn.tagName === 'A' && btn.href) {
                     window.location.href = btn.href; 
                 } else {
@@ -308,6 +302,10 @@
 
     document.addEventListener('click', handleConcurrencyControl, true);
     injectMapStyle();
-    setInterval(() => { if (batteryPopup.style.display === 'block') updateBatteryStatus(); }, 10000);
+    
+    // 배터리 자동 갱신 (배터리 팝업이 열려있을 때만)
+    setInterval(() => { 
+        if (batteryPopup.style.display === 'block') updateBatteryStatus(); 
+    }, 10000);
 
 })();
