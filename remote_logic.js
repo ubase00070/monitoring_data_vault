@@ -222,49 +222,54 @@
 
     function handleConcurrencyControl(e) {
         if (!state.isQueueOpt) return;
-
-        // 1. 클릭된 요소 자체 혹은 그 조상 중에서 텍스트가 있는 요소를 찾음
-        // 지메일은 div나 span이 버튼 역할을 하므로 범위를 넓힙니다.
-        const btn = e.target.closest('div, role="button", a, button');
+    
+        // 1. 클릭된 요소로부터 버튼/링크 역할을 하는 조상을 찾음
+        const btn = e.target.closest('a, button, div[role="button"], span');
         if (!btn || btn.dataset.intercepted === 'true') return;
-
-        // 2. 텍스트 추출 및 정규화 (공백 제거)
-        const btnText = btn.innerText ? btn.innerText.replace(/\s/g, "") : "";
+    
+        // 2. 텍스트 추출 후 '소문자'로 통일 (대소문자 구분 방지)
+        const rawText = btn.innerText || "";
+        const btnText = rawText.replace(/\s/g, "").toLowerCase();
         
-        // 3. 대상 타겟 (용인고진, 경희대 + 지메일용 키워드 추가)
+        // 3. 대상 타겟 (모두 소문자로 작성하세요)
         const targets = ["관제시작", "privacypolicy"];
         const isTarget = targets.some(t => btnText.includes(t));
-
+    
+        // 디버깅용 콘솔 (테스트 시 활성화해서 실제 어떤 텍스트가 잡히는지 확인 가능)
+        // console.log("Detected Text:", btnText);
+    
         if (isTarget) {
-            // 이벤트 전파 및 기본 동작 즉시 중단
+            // 즉시 중단
             e.preventDefault();
             e.stopImmediatePropagation();
-
+    
             const base = QUEUE_CONFIG.SLOTS[Math.floor(Math.random() * QUEUE_CONFIG.SLOTS.length)];
             const jitter = Math.floor(Math.random() * 201) - 100;
             const finalDelay = Math.max(0, base + jitter);
-
+    
             // UI 표시
             const overlay = document.createElement('div');
             Object.assign(overlay.style, QUEUE_CONFIG.STYLE);
             overlay.innerHTML = `
                 <div style="font-size:20px; margin-bottom:8px;">📡 중복 관제 완화 시스템</div>
-                <div style="color:#ffeb3b;">테스트 중... (${(finalDelay/1000).toFixed(2)}s)</div>
+                <div style="color:#ffeb3b;">[${rawText.trim()}] 딜레이 적용 중... (${(finalDelay/1000).toFixed(2)}s)</div>
             `;
             document.body.appendChild(overlay);
-
+    
             setTimeout(() => {
                 if (overlay) overlay.remove();
                 btn.dataset.intercepted = 'true';
-
-                // 지메일 같은 복잡한 사이트에서는 실제 클릭 이벤트를 다시 생성해서 쏴주는 게 제일 확실합니다.
-                const clickEvent = new MouseEvent('click', {
-                    view: window,
-                    bubbles: true,
-                    cancelable: true
-                });
-                btn.dispatchEvent(clickEvent);
-
+    
+                // 4. 실행 방식 최적화: 링크(a)면 href 이동, 아니면 새 이벤트 발사
+                if (btn.tagName === 'A' && btn.href && !btn.href.includes('javascript:')) {
+                    window.location.href = btn.href;
+                } else {
+                    const clickEvent = new MouseEvent('click', {
+                        view: window, bubbles: true, cancelable: true
+                    });
+                    btn.dispatchEvent(clickEvent);
+                }
+    
                 setTimeout(() => { delete btn.dataset.intercepted; }, 1000);
             }, finalDelay);
         }
