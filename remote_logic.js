@@ -220,57 +220,44 @@
         }
     }
 
-    function handleConcurrencyControl(e) {
-        if (!state.isQueueOpt) return;
+    function handleControlClick(e) {
+        // 1. Gemini의 모델 선택 요소(span 혹은 div)를 탐색
+        const btn = e.target.closest('span.ng-star-inserted') || e.target.closest('div.model-selector');
+        
+        // 이미 가로채기 중이라면 중단
+        if (!btn || btn.dataset.intercepted) return;
     
-        // 1. 클릭된 지점에서 위로 5단계까지 올라가며 '텍스트'와 '태그'를 동시에 검사
-        let el = e.target;
-        let btn = null;
-        let foundText = "";
+        const btnText = btn.innerText.replace(/\s/g, "");
+        
+        // 2. 테스트 키워드 설정 (현재 스크린샷 기준 '빠른모델')
+        const isTarget = btnText.includes("빠른모델") || btnText.includes("Flash");
+        
+        if (isTarget) {
+            // 기존의 즉각적인 클릭 이벤트 차단
+            e.preventDefault();
+            e.stopPropagation();
     
-        for (let i = 0; i < 5 && el; i++) {
-            // 모든 공백, 줄바꿈 제거 후 소문자로 변환
-            const text = (el.innerText || "").replace(/\s+/g, "").toLowerCase();
-            
-            // 타겟 단어가 포함되어 있는지 확인 (viewdetails 추가)
-            if (["관제시작", "viewdetails"].some(t => text.includes(t))) {
-                btn = el.closest('a, button, div, span'); // 가장 가까운 클릭 가능 요소 선택
-                foundText = text;
-                break;
-            }
-            el = el.parentElement;
+            const finalDelay = calculateDelay();
+            const overlay = createOverlay(finalDelay);
+            document.body.appendChild(overlay);
+    
+            setTimeout(() => {
+                // 가로채기 플래그 세팅
+                btn.dataset.intercepted = 'true';
+                
+                // 3. 실제 클릭 트리거 (Angular 환경에선 dispatchEvent가 더 확실할 수 있음)
+                btn.click();
+                btn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    
+                setTimeout(() => {
+                    overlay.style.opacity = '0';
+                    setTimeout(() => {
+                        overlay.remove();
+                        delete btn.dataset.intercepted;
+                    }, 200);
+                }, Math.max(CONFIG.MIN_OVERLAY_SHOW, CONFIG.OVERLAY_DURATION - finalDelay));
+            }, finalDelay);
         }
-    
-        if (!btn || btn.dataset.intercepted === 'true') return;
-    
-        // 2. 타겟 발견 시 딜레이 로직 가동
-        e.preventDefault();
-        e.stopImmediatePropagation();
-    
-        const base = QUEUE_CONFIG.SLOTS[Math.floor(Math.random() * QUEUE_CONFIG.SLOTS.length)];
-        const finalDelay = base + (Math.floor(Math.random() * 201) - 100);
-    
-        const overlay = document.createElement('div');
-        Object.assign(overlay.style, QUEUE_CONFIG.STYLE);
-        overlay.innerHTML = `📡 중복 방지 가동 중...<br>(${(finalDelay/1000).toFixed(2)}s)`;
-        document.body.appendChild(overlay);
-    
-        setTimeout(() => {
-            if (overlay) overlay.remove();
-            btn.dataset.intercepted = 'true';
-    
-            // 3. 실행 (가장 강력한 새 MouseEvent 방식)
-            if (btn.tagName === 'A' && btn.href && !btn.href.includes('javascript:')) {
-                window.location.href = btn.href;
-            } else {
-                const clickEvent = new MouseEvent('click', {
-                    bubbles: true, cancelable: true, view: window
-                });
-                btn.dispatchEvent(clickEvent);
-            }
-    
-            setTimeout(() => { delete btn.dataset.intercepted; }, 1000);
-        }, finalDelay);
     }
 
     /* ============================================================
