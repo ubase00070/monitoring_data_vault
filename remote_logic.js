@@ -13,12 +13,18 @@
 (function() {
     'use strict';
 
-    const currUrl = window.location.href;
-    console.log("🛰️ 뉴비 통합 엔진 v16.0 기준점 로드 완료");
+    // [0] 중복 실행 방지 플래그
+    if (window.neubieEngineLoaded) return;
+    window.neubieEngineLoaded = true;
 
-    // 1. 상태 및 설정
+    const currUrl = window.location.href;
+    console.log("🛰️ 뉴비 통합 엔진 v16.7 로드 완료 (보안 대응 패치)");
+
+    /* ============================================================
+       SECTION 1. 상태 및 설정
+       ============================================================ */
     const config = {
-        targetIds: ['44', '56', '65', '109'], // 자동 최적화 대상
+        targetIds: ['44', '56', '65', '109'],
         batteryIds: [
             { id: '142', name: '성남판교 200', shortName: '판교 200' },
             { id: '145', name: '성남서현 201', shortName: '서현 201' },
@@ -29,16 +35,27 @@
 
     const isAutoTarget = config.targetIds.some(id => currUrl.includes(`/monitoring/${id}`));
     const state = {
-        // 자동 대상 페이지거나, 이전에 수동으로 켰던 경우 활성화
         isMapOpt: localStorage.getItem('neubie_opt_map') === 'true' || isAutoTarget,
+        isQueueOpt: localStorage.getItem('neubie_opt_queue') === 'true', // 줄을 서시오 상태 저장
         lastBatteryData: []
     };
 
-    // 2. UI 컨테이너 생성 (보안 대응)
-    const dashboard = createContainer('neubie-dashboard', '420px', '50%', '50%');
-    const batteryPopup = createContainer('neubie-battery-popup', '340px', '20px', 'auto', '20px');
-    document.body.append(dashboard, batteryPopup);
+    const QUEUE_CONFIG = {
+        SLOTS: [0, 350, 700, 1050, 1400], 
+        JITTER: 100, 
+        MIN_OVERLAY_SHOW: 500,
+        STYLE: {
+            position: 'fixed', top: '20%', left: '50%', transform: 'translateX(-50%)',
+            backgroundColor: 'rgba(15, 23, 42, 0.98)', color: 'white', border: '3px solid #ffeb3b',
+            padding: '25px 50px', borderRadius: '15px', zIndex: '2147483647', textAlign: 'center',
+            boxShadow: '0 10px 40px rgba(0,0,0,0.6)', fontWeight: 'bold', pointerEvents: 'none',
+            fontFamily: 'Pretendard, sans-serif'
+        }
+    };
 
+    /* ============================================================
+       SECTION 2. UI 컨테이너 생성 및 관리
+       ============================================================ */
     function createContainer(id, width, top, left, right = 'auto') {
         const el = document.createElement('div');
         el.id = id;
@@ -52,7 +69,17 @@
         return el;
     }
 
-    // 3. 성남 배터리 iframe 로직 (v13.5 로직 계승)
+    const dashboard = createContainer('neubie-dashboard', '420px', '50%', '50%');
+    const batteryPopup = createContainer('neubie-battery-popup', '340px', '20px', 'auto', '20px');
+
+    // [안전장치] Body가 없을 경우 대기 후 삽입
+    const injectUI = () => { if (document.body) document.body.append(dashboard, batteryPopup); };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', injectUI);
+    else injectUI();
+
+    /* ============================================================
+       SECTION 3. 성남 배터리 및 맵 최적화 로직 (기존 무결성 유지)
+       ============================================================ */
     const iframes = {};
     if (currUrl.includes('/remote/multiple/driving')) {
         config.batteryIds.forEach(c => {
@@ -64,18 +91,21 @@
         });
     }
 
-    // 4. 배터리 업데이트 & 복사 (v13.5 레이아웃 + v15 UI)
     function updateBatteryStatus() {
         batteryPopup.innerHTML = '';
         const header = document.createElement('div');
         header.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #333; padding-bottom:10px;";
-        header.innerHTML = `<b style="color:#eee; font-size:18px;">🛰️ 성남 배터리</b>`;
+        
+        const titleB = document.createElement('b');
+        titleB.textContent = "🛰️ 성남 배터리";
+        titleB.style.cssText = "color:#eee; font-size:18px;";
         
         const copyBtn = document.createElement('button');
-        copyBtn.innerText = '📋 복사';
+        copyBtn.textContent = '📋 복사';
         Object.assign(copyBtn.style, { background:'#3b82f6', color:'white', border:'none', padding:'6px 12px', borderRadius:'8px', cursor:'pointer', fontWeight:'bold' });
         copyBtn.onclick = copyToClipboard;
-        header.append(copyBtn);
+        
+        header.append(titleB, copyBtn);
         batteryPopup.appendChild(header);
 
         state.lastBatteryData = [];
@@ -97,12 +127,18 @@
                         else { accentColor = "#888888"; statusIcon = "⚪"; statusText = "대기 중"; }
                     }
                 }
-            } catch (e) { /* 타 도메인 테스트 시 예외 처리 */ }
+            } catch (e) {}
 
             state.lastBatteryData.push({ shortName: c.shortName, battery: batteryVal, statusText: statusText });
             const item = document.createElement('div');
             item.style.cssText = `display:flex; justify-content:space-between; background:rgba(255,255,255,0.05); padding:12px 16px; border-radius:12px; margin-bottom:8px; border-left:5px solid ${accentColor};`;
-            item.innerHTML = `<span>${statusIcon} ${c.name}</span><span style="font-weight:bold; color:${accentColor};">${batteryVal}</span>`;
+            
+            const leftSpan = document.createElement('span'); leftSpan.textContent = `${statusIcon} ${c.name}`;
+            const rightSpan = document.createElement('span'); 
+            rightSpan.textContent = batteryVal;
+            rightSpan.style.cssText = `font-weight:bold; color:${accentColor};`;
+            
+            item.append(leftSpan, rightSpan);
             batteryPopup.appendChild(item);
         });
     }
@@ -116,76 +152,76 @@
         navigator.clipboard.writeText(copyText).then(() => alert("복사 완료!"));
     }
 
-    // 5. 맵 최적화 로직 (v13.5 로직 완전 이식)
     const originalFetch = window.fetch;
     window.fetch = async (...args) => {
         const url = typeof args[0] === 'string' ? args[0] : args[0].url;
         if (state.isMapOpt && url && (url.includes('nodes?') || url.includes('sites?') || url.includes('paths?'))) {
-            return new Response(JSON.stringify({ data: [], items: [], total: 0 }), {
-                status: 200, headers: { 'Content-Type': 'application/json' }
-            });
+            return new Response(JSON.stringify({ data: [], items: [], total: 0 }), { status: 200, headers: { 'Content-Type': 'application/json' } });
         }
         return originalFetch(...args);
     };
 
     function injectMapStyle() {
-        let style = document.getElementById('neubie-opt-style');
-        if (!style) {
-            style = document.createElement('style');
-            style.id = 'neubie-opt-style';
-            document.head.appendChild(style);
-        }
-        // v13.5의 svg 회전 로직 포함
+        let style = document.getElementById('neubie-opt-style') || document.createElement('style');
+        style.id = 'neubie-opt-style';
         style.textContent = state.isMapOpt ? `
             [data-qk^="node-marker"] { display: none !important; }
             gmp-advanced-marker:has([data-qk*="base-marker-대기장소"]) { display: block !important; visibility: visible !important; z-index: 500 !important; }
             gmp-advanced-marker:has([data-qk*="base-marker-대기장소"]) svg { transform: rotate(180deg) !important; }
             gmp-advanced-marker:has([data-qk*="robot"]), div[class*="MiniMap"] gmp-advanced-marker { display: block !important; visibility: visible !important; z-index: 1000 !important; }
         ` : "";
+        if (!style.parentElement) document.head.appendChild(style);
     }
 
-    // 6. 대시보드 UI
+    /* ============================================================
+       SECTION 4. 대시보드 및 토글 UI (줄을 서시오 통합)
+       ============================================================ */
     function renderDashboard() {
         dashboard.innerHTML = '';
         const title = document.createElement('h2');
-        title.innerText = "🛰️ Neubie Helper Panel";
+        title.textContent = "🛰️ Neubie Helper Panel";
         title.style.cssText = "color:#3b82f6; margin-bottom:20px; font-size:20px;";
         dashboard.appendChild(title);
 
         const list = document.createElement('div');
         list.style.display = "grid"; list.style.gap = "12px";
 
-        // 지도 최적화 카드
-        const mapCard = createMenuCard("🗺️ 지도 최적화", "노드 제거 및 마커 회전", true);
-        list.appendChild(mapCard);
+        // 1. 지도 최적화 토글
+        list.appendChild(createMenuCard("🗺️ 지도 최적화", "노드 제거 및 마커 회전", 'isMapOpt', 'neubie_opt_map', () => injectMapStyle()));
+        
+        // 2. 줄을 서시오 토글 (신규 추가)
+        list.appendChild(createMenuCard("📡 줄을 서시오", "중복 개입 방지 (Gemini/GitHub)", 'isQueueOpt', 'neubie_opt_queue'));
 
-        // 배터리 카드 (v15.2 열기 버튼 수정 반영)
-        const battCard = createMenuCard("🔋 성남 배터리", "배터리 실시간 팝업", false, () => {
-            toggleBattery();
-            dashboard.style.display = 'none';
-        });
-        list.appendChild(battCard);
+        // 3. 배터리 팝업 버튼
+        list.appendChild(createMenuCard("🔋 성남 배터리", "배터리 실시간 현황", null, null, () => {
+            toggleBattery(); dashboard.style.display = 'none';
+        }));
 
         dashboard.appendChild(list);
     }
 
-    function createMenuCard(name, desc, isToggle, action) {
+    function createMenuCard(name, desc, stateKey, storageKey, action) {
         const card = document.createElement('div');
         card.style.cssText = "background:#252525; padding:15px; border-radius:15px; display:flex; justify-content:space-between; align-items:center; border:1px solid #333;";
-        card.innerHTML = `<div style="flex:1;"><div style="font-weight:bold; font-size:15px;">${name}</div><div style="font-size:12px; color:#aaa;">${desc}</div></div>`;
-        if (isToggle) {
+        
+        const info = document.createElement('div');
+        info.style.flex = "1";
+        info.innerHTML = `<div style="font-weight:bold; font-size:15px;">${name}</div><div style="font-size:12px; color:#aaa;">${desc}</div>`;
+        card.appendChild(info);
+
+        if (stateKey) {
             const chk = document.createElement('input');
-            chk.type = 'checkbox'; chk.checked = state.isMapOpt;
+            chk.type = 'checkbox'; chk.checked = state[stateKey];
             chk.style.cssText = "width:18px; height:18px; cursor:pointer;";
             chk.onchange = (e) => {
-                state.isMapOpt = e.target.checked;
-                localStorage.setItem('neubie_opt_map', state.isMapOpt);
-                injectMapStyle();
+                state[stateKey] = e.target.checked;
+                localStorage.setItem(storageKey, state[stateKey]);
+                if (action) action();
             };
             card.appendChild(chk);
         } else {
             const btn = document.createElement('button');
-            btn.innerText = '열기';
+            btn.textContent = '열기';
             btn.style.cssText = "background:#3b82f6; color:white; border:none; padding:8px 16px; border-radius:8px; cursor:pointer; font-weight:bold;";
             btn.onclick = action;
             card.appendChild(btn);
@@ -202,81 +238,42 @@
         }
     }
 
-    // 7. 통합 단축키 (Alt+/, Alt+B, Alt+M)
-    window.addEventListener('keydown', (e) => {
-        if (e.altKey && (e.key === '/' || e.code === 'Slash' || e.key === '?')) {
-            e.preventDefault();
-            if (dashboard.style.display === 'none') { renderDashboard(); dashboard.style.display = 'block'; }
-            else { dashboard.style.display = 'none'; }
-        }
-        if (e.altKey && e.code === 'KeyB') { e.preventDefault(); toggleBattery(); }
-        if (e.altKey && e.code === 'KeyM') {
-            e.preventDefault();
-            state.isMapOpt = !state.isMapOpt;
-            localStorage.setItem('neubie_opt_map', state.isMapOpt);
-            injectMapStyle();
-            console.log(`맵 최적화: ${state.isMapOpt ? 'ON' : 'OFF'}`);
-        }
-    });
-
-    // 8. 초기 실행
-    injectMapStyle();
-    setInterval(() => { if (batteryPopup.style.display === 'block') updateBatteryStatus(); }, 10000);
-
     /* ============================================================
-       SECTION 2. 줄을 서시오 v1.0 (제미나이 보안 대응 버전)
+       SECTION 5. 줄을 서시오 로직 (보안 및 텍스트 대응)
        ============================================================ */
-    const QUEUE_CONFIG = {
-        SLOTS: [0, 350, 700, 1050, 1400], 
-        JITTER: 100, 
-        OVERLAY_DURATION: 2000,
-        MIN_OVERLAY_SHOW: 500,
-        STYLE: {
-            position: 'fixed', top: '20%', left: '50%', transform: 'translateX(-50%)',
-            backgroundColor: 'rgba(15, 23, 42, 0.98)', color: 'white', border: '3px solid #ffeb3b',
-            padding: '25px 50px', borderRadius: '15px', zIndex: '2147483647', textAlign: 'center',
-            boxShadow: '0 10px 40px rgba(0,0,0,0.6)', fontWeight: 'bold', pointerEvents: 'none',
-            fontFamily: 'sans-serif'
-        }
-    };
-    
     function handleConcurrencyControl(e) {
-        const btn = e.target.closest('button') || e.target.closest('span.ng-star-inserted') || e.target.closest('div.model-selector');
+        if (!state.isQueueOpt) return;
+
+        const btn = e.target.closest('button') || e.target.closest('a') || e.target.closest('span.ng-star-inserted') || e.target.closest('div.model-selector');
         if (!btn || btn.dataset.intercepted) return;
-    
-        const btnText = btn.innerText.replace(/\s/g, "");
-        const isTarget = btnText.includes("빠른모델") || btnText.includes("Flash") || btnText.includes("개입시작");
-    
+
+        const btnText = btn.innerText.trim();
+        // GitHub 테스트용 'Contributors' 및 제미나이 키워드 포함
+        const isTarget = btnText.includes("Contributors") || btnText.includes("빠른모델") || btnText.includes("Flash") || btnText.includes("개입시작");
+
         if (isTarget) {
             e.preventDefault();
             e.stopPropagation();
-    
+
             const base = QUEUE_CONFIG.SLOTS[Math.floor(Math.random() * QUEUE_CONFIG.SLOTS.length)];
             const jitter = Math.floor(Math.random() * (QUEUE_CONFIG.JITTER * 2 + 1)) - QUEUE_CONFIG.JITTER;
             const finalDelay = Math.max(0, base + jitter);
-    
-            // [수정] innerHTML 대신 createElement와 textContent를 사용하여 보안 정책 우회
+
+            // [보안 대응] textContent 기반 오버레이 생성
             const overlay = document.createElement('div');
             Object.assign(overlay.style, QUEUE_CONFIG.STYLE);
             
-            const titleDiv = document.createElement('div');
-            titleDiv.textContent = "📡 중복 관제 완화 시스템";
-            titleDiv.style.fontSize = "20px";
-            titleDiv.style.marginBottom = "8px";
+            const t1 = document.createElement('div'); t1.textContent = "📡 중복 관제 완화 시스템"; t1.style.fontSize = "20px"; t1.style.marginBottom = "8px";
+            const t2 = document.createElement('div'); t2.textContent = `딜레이 적용 중... (${(finalDelay/1000).toFixed(2)}s)`; t2.style.color = "#ffeb3b";
             
-            const delayDiv = document.createElement('div');
-            delayDiv.textContent = `딜레이 적용 중... (${(finalDelay/1000).toFixed(2)}s)`;
-            delayDiv.style.color = "#ffeb3b";
-            
-            overlay.appendChild(titleDiv);
-            overlay.appendChild(delayDiv);
-            document.body.appendChild(overlay);
-    
+            overlay.append(t1, t2);
+            (document.body || document.documentElement).appendChild(overlay);
+
             setTimeout(() => {
                 btn.dataset.intercepted = 'true';
                 btn.click();
                 btn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    
+
                 setTimeout(() => {
                     overlay.remove();
                     delete btn.dataset.intercepted;
@@ -284,8 +281,21 @@
             }, finalDelay);
         }
     }
-    
-    // 클릭 이벤트 가로채기 등록
+
+    /* ============================================================
+       SECTION 6. 이벤트 바인딩 및 초기화
+       ============================================================ */
+    window.addEventListener('keydown', (e) => {
+        if (e.altKey && (e.key === '/' || e.code === 'Slash')) {
+            e.preventDefault();
+            if (dashboard.style.display === 'none') { renderDashboard(); dashboard.style.display = 'block'; }
+            else { dashboard.style.display = 'none'; }
+        }
+        if (e.altKey && e.code === 'KeyB') { e.preventDefault(); toggleBattery(); }
+    });
+
     document.addEventListener('click', handleConcurrencyControl, true);
-    
+    injectMapStyle();
+    setInterval(() => { if (batteryPopup.style.display === 'block') updateBatteryStatus(); }, 10000);
+
 })();
