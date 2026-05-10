@@ -5,7 +5,7 @@
     window.neubieEngineLoaded = true;
 
     const currUrl = window.location.href;
-    console.log("🛰️ 뉴비 통합 엔진 v1.0 로드 완료 (복사 피드백 강화)");
+    console.log("🛰️ 뉴비 통합 엔진 v1.1 로드 완료 (복사 피드백 강화)");
 
     /* ============================================================
        SECTION 1. 상태 및 설정
