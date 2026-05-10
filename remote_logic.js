@@ -225,7 +225,7 @@
         const btn = e.target.closest('button, a, span, div[role="button"]');
         if (!btn || btn.dataset.intercepted) return;
         const btnText = btn.innerText.replace(/\s/g, "");
-        const isTarget = ["복사하기", "관제 시작"].some(t => btnText.includes(t));
+        const isTarget = ["용인 고진", "경희대", "관제 시작"].some(t => btnText.includes(t));
         if (isTarget) {
             e.preventDefault(); e.stopImmediatePropagation();
             const base = QUEUE_CONFIG.SLOTS[Math.floor(Math.random() * QUEUE_CONFIG.SLOTS.length)];
