@@ -57,7 +57,7 @@
                 }
             });
 
-            setInterval(() => { if (popup.style.display === 'block') updateStatus(); }, 30000);
+            setInterval(() => { if (popup.style.display === 'block') updateStatus(); }, 10000);
         })();
     }
 
