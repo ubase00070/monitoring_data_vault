@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         🛰️ 뉴비 통합 관제 엔진 (v16.9.2 - UI Feedback Fix)
 // @namespace    http://tampermonkey.net/
-// @version      16.9.2
+// @version      1.0
 // @author       ubase00070
 // @match        https://go.neubie.ai/*
 // @match        https://github.com/*
