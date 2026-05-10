@@ -223,56 +223,54 @@
     function handleConcurrencyControl(e) {
         if (!state.isQueueOpt) return;
     
-        // 1. 클릭된 요소로부터 버튼/링크 역할을 하는 조상을 찾음
-        const btn = e.target.closest('a, button, div[role="button"], span');
+        // 1. 클릭된 지점에서 위로 5단계까지 올라가며 '텍스트'와 '태그'를 동시에 검사
+        let el = e.target;
+        let btn = null;
+        let foundText = "";
+    
+        for (let i = 0; i < 5 && el; i++) {
+            // 모든 공백, 줄바꿈 제거 후 소문자로 변환
+            const text = (el.innerText || "").replace(/\s+/g, "").toLowerCase();
+            
+            // 타겟 단어가 포함되어 있는지 확인 (viewdetails 추가)
+            if (["관제시작", "viewdetails"].some(t => text.includes(t))) {
+                btn = el.closest('a, button, div, span'); // 가장 가까운 클릭 가능 요소 선택
+                foundText = text;
+                break;
+            }
+            el = el.parentElement;
+        }
+    
         if (!btn || btn.dataset.intercepted === 'true') return;
     
-        // 2. 텍스트 추출 후 '소문자'로 통일 (대소문자 구분 방지)
-        const rawText = btn.innerText || "";
-        const btnText = rawText.replace(/\s/g, "").toLowerCase();
-        
-        // 3. 대상 타겟 (모두 소문자로 작성하세요)
-        const targets = ["관제시작", "viewdetails"];
-        const isTarget = targets.some(t => btnText.includes(t));
+        // 2. 타겟 발견 시 딜레이 로직 가동
+        e.preventDefault();
+        e.stopImmediatePropagation();
     
-        // 디버깅용 콘솔 (테스트 시 활성화해서 실제 어떤 텍스트가 잡히는지 확인 가능)
-        // console.log("Detected Text:", btnText);
+        const base = QUEUE_CONFIG.SLOTS[Math.floor(Math.random() * QUEUE_CONFIG.SLOTS.length)];
+        const finalDelay = base + (Math.floor(Math.random() * 201) - 100);
     
-        if (isTarget) {
-            // 즉시 중단
-            e.preventDefault();
-            e.stopImmediatePropagation();
+        const overlay = document.createElement('div');
+        Object.assign(overlay.style, QUEUE_CONFIG.STYLE);
+        overlay.innerHTML = `📡 중복 방지 가동 중...<br>(${(finalDelay/1000).toFixed(2)}s)`;
+        document.body.appendChild(overlay);
     
-            const base = QUEUE_CONFIG.SLOTS[Math.floor(Math.random() * QUEUE_CONFIG.SLOTS.length)];
-            const jitter = Math.floor(Math.random() * 201) - 100;
-            const finalDelay = Math.max(0, base + jitter);
+        setTimeout(() => {
+            if (overlay) overlay.remove();
+            btn.dataset.intercepted = 'true';
     
-            // UI 표시
-            const overlay = document.createElement('div');
-            Object.assign(overlay.style, QUEUE_CONFIG.STYLE);
-            overlay.innerHTML = `
-                <div style="font-size:20px; margin-bottom:8px;">📡 중복 관제 완화 시스템</div>
-                <div style="color:#ffeb3b;">[${rawText.trim()}] 딜레이 적용 중... (${(finalDelay/1000).toFixed(2)}s)</div>
-            `;
-            document.body.appendChild(overlay);
+            // 3. 실행 (가장 강력한 새 MouseEvent 방식)
+            if (btn.tagName === 'A' && btn.href && !btn.href.includes('javascript:')) {
+                window.location.href = btn.href;
+            } else {
+                const clickEvent = new MouseEvent('click', {
+                    bubbles: true, cancelable: true, view: window
+                });
+                btn.dispatchEvent(clickEvent);
+            }
     
-            setTimeout(() => {
-                if (overlay) overlay.remove();
-                btn.dataset.intercepted = 'true';
-    
-                // 4. 실행 방식 최적화: 링크(a)면 href 이동, 아니면 새 이벤트 발사
-                if (btn.tagName === 'A' && btn.href && !btn.href.includes('javascript:')) {
-                    window.location.href = btn.href;
-                } else {
-                    const clickEvent = new MouseEvent('click', {
-                        view: window, bubbles: true, cancelable: true
-                    });
-                    btn.dispatchEvent(clickEvent);
-                }
-    
-                setTimeout(() => { delete btn.dataset.intercepted; }, 1000);
-            }, finalDelay);
-        }
+            setTimeout(() => { delete btn.dataset.intercepted; }, 1000);
+        }, finalDelay);
     }
 
     /* ============================================================
