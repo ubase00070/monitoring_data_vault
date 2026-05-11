@@ -5,7 +5,7 @@
     window.neubieEngineLoaded = true;
 
     const currUrl = window.location.href;
-    console.log("🛰️ 뉴비 통합 엔진 v1.1 로드 완료 (복사 피드백 강화)");
+    console.log("🛰️ 뉴비 통합 엔진 v1.2 로드 완료 (무결성 일일 업무 통합)");
 
     /* ============================================================
        SECTION 1. 상태 및 설정
@@ -17,14 +17,18 @@
             { id: '145', name: '성남서현 201', shortName: '서현 201' },
             { id: '144', name: '성남율동 202', shortName: '율동 202' },
             { id: '155', name: '성남야탑 203', shortName: '야탑 203' }
-        ]
+        ],
+        // 업무 시트 주소 식별자
+        sheetId: "1tLo6Xeq6KJx6zW-fcw8H38jdjxyS2yre5oWY7cxky70"
     };
 
     const isAutoTarget = config.targetIds.some(id => currUrl.includes(`/monitoring/${id}`));
     const state = {
         isMapOpt: localStorage.getItem('neubie_opt_map') === 'true' || isAutoTarget,
         isQueueOpt: localStorage.getItem('neubie_opt_queue') === 'true',
-        lastBatteryData: []
+        isTaskVisible: localStorage.getItem('neubie_opt_task') === 'true', // 업무창 표시 여부
+        lastBatteryData: [],
+        myTodayTasks: JSON.parse(localStorage.getItem('neubie_my_tasks') || "[]")
     };
 
     const QUEUE_CONFIG = {
@@ -38,6 +42,9 @@
             fontFamily: 'Pretendard, sans-serif'
         }
     };
+
+    // 탭 간 통신을 위한 채널
+    const taskChannel = new BroadcastChannel('neubie_task_sync');
 
     /* ============================================================
        SECTION 2. 맵 최적화 코어
@@ -85,8 +92,14 @@
 
     const dashboard = createContainer('neubie-dashboard', '420px', '50%', '50%');
     const batteryPopup = createContainer('neubie-battery-popup', '340px', '20px', 'auto', '20px');
+    const taskPopup = createContainer('neubie-task-popup', '360px', '20px', '20px'); // 업무 팝업 (좌상단)
 
-    const injectUI = () => { if (document.body) document.body.append(dashboard, batteryPopup); };
+    const injectUI = () => { 
+        if (document.body) {
+            document.body.append(dashboard, batteryPopup, taskPopup);
+            if (state.isTaskVisible) taskPopup.style.display = 'block';
+        } 
+    };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', injectUI);
     else injectUI();
 
@@ -150,7 +163,6 @@
         state.lastBatteryData.forEach(item => { copyText += `• ${item.shortName}: ${item.battery} (${item.statusText})\n`; });
         
         navigator.clipboard.writeText(copyText).then(() => {
-            // 버튼 상태 변경 피드백
             const originalText = btn.textContent;
             const originalBg = btn.style.background;
             btn.textContent = '✅ 복사됨';
@@ -164,7 +176,75 @@
     }
 
     /* ============================================================
-       SECTION 4. 줄을 서시오 및 대시보드 토글
+       SECTION 4. 일일 업무 연동 코어 (Sheet 스크래핑 & Sync)
+       ============================================================ */
+    // [구글 시트 탭 전용 데이터 수집 로직]
+    if (currUrl.includes(config.sheetId)) {
+        console.log("📋 업무 시트 데이터 동기화 활성화됨");
+        setInterval(() => {
+            // 1. 사용자 계정 이름 추출 (G열 매칭용)
+            const profileBtn = document.querySelector('a[aria-label*="Google 계정"], img[src*="googleusercontent.com"]');
+            const myNameMatch = profileBtn?.getAttribute('aria-label') || profileBtn?.getAttribute('title') || "";
+            const myName = myNameMatch.match(/[가-힣]+/)?.[0] || ""; 
+
+            if (!myName) return;
+
+            const foundTasks = [];
+            const rows = document.querySelectorAll('tr'); // 구글 시트의 행 구조 탐색
+            
+            rows.forEach(row => {
+                const text = row.innerText;
+                // 사용자의 이름이 포함되어 있고, 업무 내용이 있을법한 행 추출
+                if (text.includes(myName)) {
+                    const cells = text.split('\t').map(c => c.trim()).filter(c => c.length > 0);
+                    // B열(내용)과 G열(이름)을 포함하는 데이터 구조를 대략적으로 캡처
+                    if (cells.length >= 2) {
+                        foundTasks.push({
+                            content: cells[0] || "지정 업무 없음",
+                            raw: text.replace(/\t/g, ' | ')
+                        });
+                    }
+                }
+            });
+
+            if (foundTasks.length > 0) {
+                taskChannel.postMessage({ type: 'TASK_UPDATE', tasks: foundTasks, user: myName });
+            }
+        }, 8000);
+    }
+
+    // [관제 탭 전용 데이터 수신 및 렌더링 로직]
+    function renderTaskList(tasks) {
+        taskPopup.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #444; padding-bottom:10px;">
+                <b style="color:#fbbf24; font-size:17px;">📋 오늘의 업무</b>
+                <span style="font-size:11px; color:#888;">Live</span>
+            </div>
+        `;
+        
+        if (!tasks || tasks.length === 0) {
+            taskPopup.innerHTML += `<div style="color:#666; text-align:center; padding:20px;">업무 시트 탭을 열어주세요.</div>`;
+            return;
+        }
+
+        tasks.forEach(t => {
+            const item = document.createElement('div');
+            item.style.cssText = "background:rgba(251, 191, 36, 0.1); border-left:4px solid #fbbf24; padding:12px; border-radius:8px; margin-bottom:10px; font-size:14px; line-height:1.5;";
+            item.innerHTML = `<div style="color:#eee; font-weight:500;">${t.content}</div>`;
+            taskPopup.appendChild(item);
+        });
+    }
+
+    taskChannel.onmessage = (e) => {
+        if (e.data.type === 'TASK_UPDATE') {
+            state.myTodayTasks = e.data.tasks;
+            localStorage.setItem('neubie_my_tasks', JSON.stringify(e.data.tasks));
+            if (state.isTaskVisible) renderTaskList(state.myTodayTasks);
+        }
+    };
+
+    /* ============================================================
+       SECTION 5. 줄을 서시오 및 대시보드 토글
        ============================================================ */
     function renderDashboard() {
         dashboard.innerHTML = '';
@@ -178,6 +258,16 @@
         list.appendChild(createMenuCard("🗺️ 지도 최적화", "노드 제거 및 마커 회전", 'isMapOpt', 'neubie_opt_map', () => injectMapStyle()));
         list.appendChild(createMenuCard("📡 줄을 서시오", "중복 개입 방지 (Gemini/GitHub)", 'isQueueOpt', 'neubie_opt_queue'));
         
+        // 일일 업무 메뉴 카드 추가
+        list.appendChild(createMenuCard("📋 일일 업무", "좌측 상단 시트 연동 정보", 'isTaskVisible', 'neubie_opt_task', () => {
+            if (state.isTaskVisible) {
+                taskPopup.style.display = 'block';
+                renderTaskList(state.myTodayTasks);
+            } else {
+                taskPopup.style.display = 'none';
+            }
+        }));
+
         const isBatteryOpen = batteryPopup.style.display === 'block';
         list.appendChild(createMenuCard("🔋 성남 배터리", "배터리 실시간 현황", null, null, () => {
             toggleBattery();
@@ -220,20 +310,35 @@
         }
     }
 
+    /* ============================================================
+       SECTION 6. 제미나이 가로채기 로직 (원본 보존)
+       ============================================================ */
+    function calculateDelay() {
+        const slots = QUEUE_CONFIG.SLOTS;
+        const base = slots[Math.floor(Math.random() * slots.length)];
+        return base + (Math.random() * QUEUE_CONFIG.JITTER * 2 - QUEUE_CONFIG.JITTER);
+    }
+
+    function createOverlay(delay) {
+        const el = document.createElement('div');
+        Object.assign(el.style, QUEUE_CONFIG.STYLE);
+        el.style.opacity = '1';
+        el.style.transition = 'opacity 0.2s';
+        el.innerHTML = `
+            <div style="font-size:28px; margin-bottom:10px;">📡 줄을 서시오!</div>
+            <div style="font-size:18px; color:#ffeb3b;">다른 작업자와의 충돌 방지를 위해<br><span style="font-size:32px;">${(delay/1000).toFixed(2)}초</span> 후 자동 실행됩니다.</div>
+        `;
+        return el;
+    }
+
     function handleControlClick(e) {
-        // 1. Gemini의 모델 선택 요소(span 혹은 div)를 탐색
         const btn = e.target.closest('span.ng-star-inserted') || e.target.closest('div.model-selector');
-        
-        // 이미 가로채기 중이라면 중단
-        if (!btn || btn.dataset.intercepted) return;
+        if (!btn || btn.dataset.intercepted || !state.isQueueOpt) return;
     
         const btnText = btn.innerText.replace(/\s/g, "");
-        
-        // 2. 테스트 키워드 설정 (현재 스크린샷 기준 '빠른모델')
         const isTarget = btnText.includes("빠른모델") || btnText.includes("Flash");
         
         if (isTarget) {
-            // 기존의 즉각적인 클릭 이벤트 차단
             e.preventDefault();
             e.stopPropagation();
     
@@ -242,26 +347,20 @@
             document.body.appendChild(overlay);
     
             setTimeout(() => {
-                // 가로채기 플래그 세팅
                 btn.dataset.intercepted = 'true';
-                
-                // 3. 실제 클릭 트리거 (Angular 환경에선 dispatchEvent가 더 확실할 수 있음)
                 btn.click();
                 btn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     
                 setTimeout(() => {
                     overlay.style.opacity = '0';
-                    setTimeout(() => {
-                        overlay.remove();
-                        delete btn.dataset.intercepted;
-                    }, 200);
-                }, Math.max(CONFIG.MIN_OVERLAY_SHOW, CONFIG.OVERLAY_DURATION - finalDelay));
+                    setTimeout(() => { overlay.remove(); delete btn.dataset.intercepted; }, 200);
+                }, 1000);
             }, finalDelay);
         }
     }
 
     /* ============================================================
-       SECTION 5. 초기화 및 이벤트 바인딩
+       SECTION 7. 초기화 및 이벤트 바인딩
        ============================================================ */
     window.addEventListener('keydown', (e) => {
         if (e.altKey && e.code === 'KeyQ') {
@@ -282,6 +381,13 @@
 
     document.addEventListener('click', handleControlClick, true);
     injectMapStyle();
-    setInterval(() => { if (batteryPopup.style.display === 'block') updateBatteryStatus(); }, 10000);
+    
+    // 주기적 업데이트 (배터리 & 업무창 리프레시)
+    setInterval(() => { 
+        if (batteryPopup.style.display === 'block') updateBatteryStatus(); 
+    }, 10000);
+
+    // 초기 실행 시 업무 데이터 로드
+    if (state.isTaskVisible) renderTaskList(state.myTodayTasks);
 
 })();
