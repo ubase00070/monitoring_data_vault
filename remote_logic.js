@@ -5,10 +5,10 @@
     window.neubieEngineLoaded = true;
 
     const currUrl = window.location.href;
-    console.log("🛰️ 뉴비 통합 엔진 v1.2 로드 완료 (무결성 일일 업무 통합)");
+    console.log("🛰️ 뉴비 통합 엔진 v1.3 로드 완료 (무결성 일일 업무 통합)");
 
     /* ============================================================
-       SECTION 1. 상태 및 설정
+        SECTION 1. 상태 및 설정
        ============================================================ */
     const config = {
         targetIds: ['44', '56', '65', '109'],
@@ -47,7 +47,7 @@
     const taskChannel = new BroadcastChannel('neubie_task_sync');
 
     /* ============================================================
-       SECTION 2. 맵 최적화 코어
+        SECTION 2. 맵 최적화 코어
        ============================================================ */
     const originalFetch = window.fetch;
     window.fetch = async (...args) => {
@@ -75,7 +75,7 @@
     }
 
     /* ============================================================
-       SECTION 3. UI 및 배터리 관제 로직
+        SECTION 3. UI 및 배터리 관제 로직
        ============================================================ */
     function createContainer(id, width, top, left, right = 'auto') {
         const el = document.createElement('div');
@@ -176,11 +176,11 @@
     }
 
     /* ============================================================
-       SECTION 4. 일일 업무 연동 코어 (Sheet 스크래핑 & Sync)
+        SECTION 4. 일일 업무 연동 코어 (Sheet 스크래핑 & Sync)
        ============================================================ */
     // [구글 시트 탭 전용 데이터 수집 로직]
     if (currUrl.includes(config.sheetId)) {
-        console.log("📋 업무 시트 데이터 동기화 활성화됨");
+        console.log("📋 업무 시트 데이터 동기화 활성화됨 (5분 주기)");
         setInterval(() => {
             // 1. 사용자 계정 이름 추출 (G열 매칭용)
             const profileBtn = document.querySelector('a[aria-label*="Google 계정"], img[src*="googleusercontent.com"]');
@@ -196,12 +196,21 @@
                 const text = row.innerText;
                 // 사용자의 이름이 포함되어 있고, 업무 내용이 있을법한 행 추출
                 if (text.includes(myName)) {
-                    const cells = text.split('\t').map(c => c.trim()).filter(c => c.length > 0);
-                    // B열(내용)과 G열(이름)을 포함하는 데이터 구조를 대략적으로 캡처
-                    if (cells.length >= 2) {
+                    const cells = text.split('\t').map(c => c.trim());
+                    
+                    // 정밀 수정 로직:
+                    // 1) G열(인덱스 6)에 내 이름이 있고, F열(인덱스 5)에 시간표가 있는 '다중 모니터링' 배정
+                    if (cells[6] === myName && cells[5] && cells[5].includes(':')) {
                         foundTasks.push({
-                            content: cells[0] || "지정 업무 없음",
-                            raw: text.replace(/\t/g, ' | ')
+                            type: 'monitoring',
+                            content: `🖥️ 다중 모니터링 (${cells[5]})`
+                        });
+                    } 
+                    // 2) B열(인덱스 1)에 내용이 있고, 특정 키워드([ ] 또는 '시')가 포함된 개별 임무
+                    else if (cells[1] && (cells[1].includes('[') || cells[1].includes('시'))) {
+                        foundTasks.push({
+                            type: 'task',
+                            content: cells[1]
                         });
                     }
                 }
@@ -210,7 +219,7 @@
             if (foundTasks.length > 0) {
                 taskChannel.postMessage({ type: 'TASK_UPDATE', tasks: foundTasks, user: myName });
             }
-        }, 8000);
+        }, 300000); // 업데이트 주기를 5분(300,000ms)으로 변경
     }
 
     // [관제 탭 전용 데이터 수신 및 렌더링 로직]
@@ -218,7 +227,7 @@
         taskPopup.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #444; padding-bottom:10px;">
                 <b style="color:#fbbf24; font-size:17px;">📋 오늘의 업무</b>
-                <span style="font-size:11px; color:#888;">Live</span>
+                <span style="font-size:11px; color:#888;">5m Sync</span>
             </div>
         `;
         
@@ -229,7 +238,11 @@
 
         tasks.forEach(t => {
             const item = document.createElement('div');
-            item.style.cssText = "background:rgba(251, 191, 36, 0.1); border-left:4px solid #fbbf24; padding:12px; border-radius:8px; margin-bottom:10px; font-size:14px; line-height:1.5;";
+            // 모니터링 배정은 파란색 계열, 일반 임무는 노란색 계열로 시인성 차별화
+            const isMon = t.type === 'monitoring';
+            item.style.cssText = `background:${isMon ? 'rgba(59, 130, 246, 0.1)' : 'rgba(251, 191, 36, 0.1)'}; 
+                                  border-left:4px solid ${isMon ? '#3b82f6' : '#fbbf24'}; 
+                                  padding:12px; border-radius:8px; margin-bottom:10px; font-size:14px; line-height:1.5;`;
             item.innerHTML = `<div style="color:#eee; font-weight:500;">${t.content}</div>`;
             taskPopup.appendChild(item);
         });
@@ -244,7 +257,7 @@
     };
 
     /* ============================================================
-       SECTION 5. 줄을 서시오 및 대시보드 토글
+        SECTION 5. 줄을 서시오 및 대시보드 토글
        ============================================================ */
     function renderDashboard() {
         dashboard.innerHTML = '';
@@ -311,7 +324,7 @@
     }
 
     /* ============================================================
-       SECTION 6. 제미나이 가로채기 로직 (원본 보존)
+        SECTION 6. 제미나이 가로채기 로직 (원본 보존)
        ============================================================ */
     function calculateDelay() {
         const slots = QUEUE_CONFIG.SLOTS;
@@ -360,7 +373,7 @@
     }
 
     /* ============================================================
-       SECTION 7. 초기화 및 이벤트 바인딩
+        SECTION 7. 초기화 및 이벤트 바인딩
        ============================================================ */
     window.addEventListener('keydown', (e) => {
         if (e.altKey && e.code === 'KeyQ') {
