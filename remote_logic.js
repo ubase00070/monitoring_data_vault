@@ -5,7 +5,8 @@
     window.neubieEngineLoaded = true;
 
     const currUrl = window.location.href;
-    console.log("🛰️ 뉴비 통합 엔진 v1.3 로드 완료 (무결성 일일 업무 통합)");
+    const isNeubieSite = currUrl.includes('go.neubie.ai');
+    console.log("🛰️ 뉴비 통합 엔진 v1.4 로드 완료 (줄을 서시오: 뉴비고 최적화)");
 
     /* ============================================================
         SECTION 1. 상태 및 설정
@@ -18,7 +19,6 @@
             { id: '144', name: '성남율동 202', shortName: '율동 202' },
             { id: '155', name: '성남야탑 203', shortName: '야탑 203' }
         ],
-        // 업무 시트 주소 식별자
         sheetId: "1tLo6Xeq6KJx6zW-fcw8H38jdjxyS2yre5oWY7cxky70"
     };
 
@@ -26,7 +26,7 @@
     const state = {
         isMapOpt: localStorage.getItem('neubie_opt_map') === 'true' || isAutoTarget,
         isQueueOpt: localStorage.getItem('neubie_opt_queue') === 'true',
-        isTaskVisible: localStorage.getItem('neubie_opt_task') === 'true', // 업무창 표시 여부
+        isTaskVisible: localStorage.getItem('neubie_opt_task') === 'true',
         lastBatteryData: [],
         myTodayTasks: JSON.parse(localStorage.getItem('neubie_my_tasks') || "[]")
     };
@@ -34,16 +34,17 @@
     const QUEUE_CONFIG = {
         SLOTS: [0, 350, 700, 1050, 1400], 
         JITTER: 100, 
+        OVERLAY_DURATION: 2000,
+        MIN_OVERLAY_SHOW: 500,
         STYLE: {
             position: 'fixed', top: '20%', left: '50%', transform: 'translateX(-50%)',
             backgroundColor: 'rgba(15, 23, 42, 0.98)', color: 'white', border: '3px solid #ffeb3b',
             padding: '25px 50px', borderRadius: '15px', zIndex: '2147483647', textAlign: 'center',
             boxShadow: '0 10px 40px rgba(0,0,0,0.6)', fontWeight: 'bold', pointerEvents: 'none',
-            fontFamily: 'Pretendard, sans-serif'
+            fontFamily: 'Pretendard, sans-serif', transition: 'opacity 0.2s ease-in-out'
         }
     };
 
-    // 탭 간 통신을 위한 채널
     const taskChannel = new BroadcastChannel('neubie_task_sync');
 
     /* ============================================================
@@ -92,7 +93,7 @@
 
     const dashboard = createContainer('neubie-dashboard', '420px', '50%', '50%');
     const batteryPopup = createContainer('neubie-battery-popup', '340px', '20px', 'auto', '20px');
-    const taskPopup = createContainer('neubie-task-popup', '360px', '20px', '20px'); // 업무 팝업 (좌상단)
+    const taskPopup = createContainer('neubie-task-popup', '360px', '20px', '20px');
 
     const injectUI = () => { 
         if (document.body) {
@@ -176,13 +177,11 @@
     }
 
     /* ============================================================
-        SECTION 4. 일일 업무 연동 코어 (Sheet 스크래핑 & Sync)
+        SECTION 4. 일일 업무 연동 코어
        ============================================================ */
-    // [구글 시트 탭 전용 데이터 수집 로직]
     if (currUrl.includes(config.sheetId)) {
         console.log("📋 업무 시트 데이터 동기화 활성화됨 (5분 주기)");
         setInterval(() => {
-            // 1. 사용자 계정 이름 추출 (G열 매칭용)
             const profileBtn = document.querySelector('a[aria-label*="Google 계정"], img[src*="googleusercontent.com"]');
             const myNameMatch = profileBtn?.getAttribute('aria-label') || profileBtn?.getAttribute('title') || "";
             const myName = myNameMatch.match(/[가-힣]+/)?.[0] || ""; 
@@ -190,28 +189,17 @@
             if (!myName) return;
 
             const foundTasks = [];
-            const rows = document.querySelectorAll('tr'); // 구글 시트의 행 구조 탐색
+            const rows = document.querySelectorAll('tr');
             
             rows.forEach(row => {
                 const text = row.innerText;
-                // 사용자의 이름이 포함되어 있고, 업무 내용이 있을법한 행 추출
                 if (text.includes(myName)) {
                     const cells = text.split('\t').map(c => c.trim());
-                    
-                    // 정밀 수정 로직:
-                    // 1) G열(인덱스 6)에 내 이름이 있고, F열(인덱스 5)에 시간표가 있는 '다중 모니터링' 배정
                     if (cells[6] === myName && cells[5] && cells[5].includes(':')) {
-                        foundTasks.push({
-                            type: 'monitoring',
-                            content: `🖥️ 다중 모니터링 (${cells[5]})`
-                        });
+                        foundTasks.push({ type: 'monitoring', content: `🖥️ 다중 모니터링 (${cells[5]})` });
                     } 
-                    // 2) B열(인덱스 1)에 내용이 있고, 특정 키워드([ ] 또는 '시')가 포함된 개별 임무
                     else if (cells[1] && (cells[1].includes('[') || cells[1].includes('시'))) {
-                        foundTasks.push({
-                            type: 'task',
-                            content: cells[1]
-                        });
+                        foundTasks.push({ type: 'task', content: cells[1] });
                     }
                 }
             });
@@ -219,10 +207,9 @@
             if (foundTasks.length > 0) {
                 taskChannel.postMessage({ type: 'TASK_UPDATE', tasks: foundTasks, user: myName });
             }
-        }, 300000); // 업데이트 주기를 5분(300,000ms)으로 변경
+        }, 300000);
     }
 
-    // [관제 탭 전용 데이터 수신 및 렌더링 로직]
     function renderTaskList(tasks) {
         taskPopup.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #444; padding-bottom:10px;">
@@ -238,7 +225,6 @@
 
         tasks.forEach(t => {
             const item = document.createElement('div');
-            // 모니터링 배정은 파란색 계열, 일반 임무는 노란색 계열로 시인성 차별화
             const isMon = t.type === 'monitoring';
             item.style.cssText = `background:${isMon ? 'rgba(59, 130, 246, 0.1)' : 'rgba(251, 191, 36, 0.1)'}; 
                                   border-left:4px solid ${isMon ? '#3b82f6' : '#fbbf24'}; 
@@ -257,7 +243,68 @@
     };
 
     /* ============================================================
-        SECTION 5. 줄을 서시오 및 대시보드 토글
+        SECTION 5. 줄을 서시오 (뉴비고 이식 버전)
+       ============================================================ */
+    function calculateDelay() {
+        const base = QUEUE_CONFIG.SLOTS[Math.floor(Math.random() * QUEUE_CONFIG.SLOTS.length)];
+        const jitter = Math.floor(Math.random() * (QUEUE_CONFIG.JITTER * 2 + 1)) - QUEUE_CONFIG.JITTER;
+        return Math.max(0, base + jitter);
+    }
+
+    function createOverlay(finalDelay) {
+        const overlay = document.createElement('div');
+        overlay.innerHTML = `
+            <div style="font-size: 20px; margin-bottom: 8px; letter-spacing: -0.5px;">📡 중복 관제 완화 시스템 v1.1</div>
+            <div style="font-size: 17px; color: #ffeb3b; font-weight: 500;">
+                딜레이 적용 중... (${(finalDelay/1000).toFixed(2)}s)
+            </div>
+        `;
+        Object.assign(overlay.style, QUEUE_CONFIG.STYLE);
+        return overlay;
+    }
+
+    function handleControlClick(e) {
+        if (!state.isQueueOpt) return;
+
+        // 1. 뉴비고 사이트가 아닌 경우 실행 차단
+        if (!isNeubieSite) return;
+
+        // 2. 버튼 요소 탐색 (Tailwind class 기반)
+        const btn = e.target.closest('div.flex.justify-center.items-center.w-full') || e.target.closest('button');
+        if (!btn || btn.dataset.intercepted) return;
+
+        // 3. 텍스트 Exact Match 검사 (공백 제거 후 "관제시작" 확인)
+        const btnText = btn.innerText.replace(/\s/g, "");
+        const isTarget = btnText === "관제시작"; // '관제 화면 재시작' 등은 여기서 필터링됨
+        
+        // 버튼 상태 확인 (확인중, 종료 등이 아닐 때만)
+        const isAvailable = !btnText.includes("확인중") && !btnText.includes("종료");
+
+        if (isTarget && isAvailable) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const finalDelay = calculateDelay();
+            const overlay = createOverlay(finalDelay);
+            document.body.appendChild(overlay);
+
+            setTimeout(() => {
+                btn.dataset.intercepted = 'true';
+                btn.click(); // 실제 클릭 트리거
+
+                setTimeout(() => {
+                    overlay.style.opacity = '0';
+                    setTimeout(() => {
+                        overlay.remove();
+                        delete btn.dataset.intercepted;
+                    }, 200);
+                }, Math.max(QUEUE_CONFIG.MIN_OVERLAY_SHOW, QUEUE_CONFIG.OVERLAY_DURATION - finalDelay));
+            }, finalDelay);
+        }
+    }
+
+    /* ============================================================
+        SECTION 6. 대시보드 및 UI 컨트롤
        ============================================================ */
     function renderDashboard() {
         dashboard.innerHTML = '';
@@ -269,9 +316,7 @@
         list.style.display = "grid"; list.style.gap = "12px";
 
         list.appendChild(createMenuCard("🗺️ 지도 최적화", "노드 제거 및 마커 회전", 'isMapOpt', 'neubie_opt_map', () => injectMapStyle()));
-        list.appendChild(createMenuCard("📡 줄을 서시오", "중복 개입 방지 (Gemini/GitHub)", 'isQueueOpt', 'neubie_opt_queue'));
-        
-        // 일일 업무 메뉴 카드 추가
+        list.appendChild(createMenuCard("📡 줄을 서시오", "중복 관제 방지 (관제 시작 버튼)", 'isQueueOpt', 'neubie_opt_queue'));
         list.appendChild(createMenuCard("📋 일일 업무", "좌측 상단 시트 연동 정보", 'isTaskVisible', 'neubie_opt_task', () => {
             if (state.isTaskVisible) {
                 taskPopup.style.display = 'block';
@@ -324,55 +369,6 @@
     }
 
     /* ============================================================
-        SECTION 6. 제미나이 가로채기 로직 (원본 보존)
-       ============================================================ */
-    function calculateDelay() {
-        const slots = QUEUE_CONFIG.SLOTS;
-        const base = slots[Math.floor(Math.random() * slots.length)];
-        return base + (Math.random() * QUEUE_CONFIG.JITTER * 2 - QUEUE_CONFIG.JITTER);
-    }
-
-    function createOverlay(delay) {
-        const el = document.createElement('div');
-        Object.assign(el.style, QUEUE_CONFIG.STYLE);
-        el.style.opacity = '1';
-        el.style.transition = 'opacity 0.2s';
-        el.innerHTML = `
-            <div style="font-size:28px; margin-bottom:10px;">📡 줄을 서시오!</div>
-            <div style="font-size:18px; color:#ffeb3b;">다른 작업자와의 충돌 방지를 위해<br><span style="font-size:32px;">${(delay/1000).toFixed(2)}초</span> 후 자동 실행됩니다.</div>
-        `;
-        return el;
-    }
-
-    function handleControlClick(e) {
-        const btn = e.target.closest('span.ng-star-inserted') || e.target.closest('div.model-selector');
-        if (!btn || btn.dataset.intercepted || !state.isQueueOpt) return;
-    
-        const btnText = btn.innerText.replace(/\s/g, "");
-        const isTarget = btnText.includes("빠른모델") || btnText.includes("Flash");
-        
-        if (isTarget) {
-            e.preventDefault();
-            e.stopPropagation();
-    
-            const finalDelay = calculateDelay();
-            const overlay = createOverlay(finalDelay);
-            document.body.appendChild(overlay);
-    
-            setTimeout(() => {
-                btn.dataset.intercepted = 'true';
-                btn.click();
-                btn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    
-                setTimeout(() => {
-                    overlay.style.opacity = '0';
-                    setTimeout(() => { overlay.remove(); delete btn.dataset.intercepted; }, 200);
-                }, 1000);
-            }, finalDelay);
-        }
-    }
-
-    /* ============================================================
         SECTION 7. 초기화 및 이벤트 바인딩
        ============================================================ */
     window.addEventListener('keydown', (e) => {
@@ -392,15 +388,15 @@
         }
     });
 
+    // 캡처링 단계에서 클릭 이벤트 가로채기
     document.addEventListener('click', handleControlClick, true);
+    
     injectMapStyle();
     
-    // 주기적 업데이트 (배터리 & 업무창 리프레시)
     setInterval(() => { 
         if (batteryPopup.style.display === 'block') updateBatteryStatus(); 
     }, 10000);
 
-    // 초기 실행 시 업무 데이터 로드
     if (state.isTaskVisible) renderTaskList(state.myTodayTasks);
 
 })();
