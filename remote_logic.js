@@ -339,6 +339,7 @@
         SECTION 6. [수정] 스마트 네이밍 엔진 카드 생성
        ============================================================ */
     function createNamingCard() {
+        const isWknd = isWeekend();
         const card = document.createElement('div');
         card.id = 'namingSection';
         card.style.cssText = 'background:#252525; padding:15px; border-radius:15px; border:1px solid #333; margin-top:5px;';
@@ -348,6 +349,20 @@
             const info = ROBOT_MAP[h.id] || { site: "미등록", unit: "#" + h.id };
             return `<option value="${h.id}">${info.site} ${info.unit}</option>`;
         }).join('');
+
+        // 복사 효과 공통 함수
+        const applyCopyEffect = (btn) => {
+            const originalText = btn.textContent;
+            const originalBg = btn.style.background || "#444";
+            
+            btn.textContent = '✅ 복사됨';
+            btn.style.background = '#22c55e';
+            
+            setTimeout(() => {
+                btn.textContent = originalText;
+                btn.style.background = originalBg;
+            }, 1500);
+        };
 
         card.innerHTML = `
             <div style="color:#3b82f6; font-weight:bold; font-size:14px; margin-bottom:10px;">🏷️ 스마트 네이밍 엔진</div>
@@ -360,12 +375,15 @@
             </div>
             <div style="display: flex; gap: 5px; flex-wrap: wrap;">
                 <button id="btnMulti" class="sub-btn">다중 관제</button>
-                <button id="btnDeli" class="sub-btn">배송 띠띠</button>
-                <button id="btnPatrol" class="sub-btn">순찰 띠띠</button>
+                ${isWknd ? `
+                    <button id="btnDeli" class="sub-btn">배송 띠띠</button>
+                    <button id="btnPatrol" class="sub-btn">순찰 띠띠</button>
+                ` : `
+                    <button id="btnCombined" class="sub-btn">배송/순찰 띠띠</button>
+                `}
             </div>
         `;
 
-        // 버튼 스타일 등록
         if (!document.getElementById('naming-btn-style')) {
             const style = document.createElement('style');
             style.id = 'naming-btn-style';
@@ -373,13 +391,11 @@
             document.head.appendChild(style);
         }
 
-        const toast = (msg) => { alert(msg + " (복사완료)"); };
-
-        // 이벤트 바인딩 (setTimeout으로 실제 DOM 부착 후 동작 보장)
         setTimeout(() => {
+            // 1. 개별 기체 파일명 복사
             const copyBtn = card.querySelector('#copyFileName');
             if (copyBtn) {
-                copyBtn.onclick = () => {
+                copyBtn.onclick = (e) => {
                     const robotId = card.querySelector('#robotSelector').value;
                     const taskRaw = card.querySelector('#taskInput').value;
                     const taskMatch = taskRaw.match(/F\d+/);
@@ -388,47 +404,45 @@
                     const time = new Date();
                     const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_${info.site}_${info.unit}_${taskNo}`;
                     navigator.clipboard.writeText(finalName);
-                    toast(finalName);
+                    applyCopyEffect(e.target);
                 };
             }
 
+            // 2. 다중 관제 버튼
             const multiBtn = card.querySelector('#btnMulti');
             if (multiBtn) {
-                multiBtn.onclick = () => {
+                multiBtn.onclick = (e) => {
                     const time = getCalculatedTime(10); 
                     const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_다중관제영상`;
                     navigator.clipboard.writeText(finalName);
-                    toast(finalName);
+                    applyCopyEffect(e.target);
                 };
             }
 
-            const btnDeli = card.querySelector('#btnDeli');
-            const btnPatrol = card.querySelector('#btnPatrol');
-
-            if (btnDeli && btnPatrol) {
-                if (!isWeekend()) {
-                    const weekDayHandler = () => {
-                        const time = getCalculatedTime(40); 
-                        const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_부산 국립과학관_#171, #170`;
-                        navigator.clipboard.writeText(finalName);
-                        toast(finalName);
-                    };
-                    btnDeli.onclick = weekDayHandler;
-                    btnPatrol.onclick = weekDayHandler;
-                } else {
-                    btnDeli.onclick = () => {
-                        const time = getCalculatedTime(10);
-                        const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_부산 국립과학관_#171`;
-                        navigator.clipboard.writeText(finalName);
-                        toast(finalName);
-                    };
-                    btnPatrol.onclick = () => {
-                        const time = getCalculatedTime(40);
-                        const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_부산 국립과학관_#170`;
-                        navigator.clipboard.writeText(finalName);
-                        toast(finalName);
-                    };
-                }
+            // 3. 평일/주말 동적 버튼 이벤트
+            if (isWknd) {
+                const deliBtn = card.querySelector('#btnDeli');
+                const patrolBtn = card.querySelector('#btnPatrol');
+                if (deliBtn) deliBtn.onclick = (e) => {
+                    const time = getCalculatedTime(10);
+                    const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_부산 국립과학관_#171`;
+                    navigator.clipboard.writeText(finalName);
+                    applyCopyEffect(e.target);
+                };
+                if (patrolBtn) patrolBtn.onclick = (e) => {
+                    const time = getCalculatedTime(40);
+                    const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_부산 국립과학관_#170`;
+                    navigator.clipboard.writeText(finalName);
+                    applyCopyEffect(e.target);
+                };
+            } else {
+                const combinedBtn = card.querySelector('#btnCombined');
+                if (combinedBtn) combinedBtn.onclick = (e) => {
+                    const time = getCalculatedTime(40); 
+                    const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_부산 국립과학관_#171, #170`;
+                    navigator.clipboard.writeText(finalName);
+                    applyCopyEffect(e.target);
+                };
             }
         }, 10);
 
