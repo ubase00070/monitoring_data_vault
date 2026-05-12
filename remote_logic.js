@@ -338,9 +338,7 @@
         SECTION 6. [추가] 스마트 네이밍 엔진 UI 섹션
        ============================================================ */
     function injectNamingUI() {
-        // 기존 섹션이 있으면 제거하고 다시 그림 (갱신 목적)
-        const oldSection = document.getElementById('namingSection');
-        if (oldSection) oldSection.remove();
+        if (document.getElementById('namingSection')) return;
 
         const namingSection = document.createElement('div');
         namingSection.id = 'namingSection';
@@ -368,7 +366,6 @@
             </div>
         `;
 
-        // dashboard 변수에 직접 추가
         dashboard.appendChild(namingSection);
 
         // 스타일 추가
@@ -460,7 +457,7 @@
 
         dashboard.appendChild(list);
 
-        // 대시보드 렌더링 시 네이밍 UI 자동 삽입
+        // 핵심: 대시보드 내용물이 다 그려진 후 네이밍 UI를 하단에 즉시 주입
         injectNamingUI();
     }
 
