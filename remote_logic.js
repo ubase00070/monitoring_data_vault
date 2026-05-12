@@ -397,9 +397,9 @@
             if (copyBtn) {
                 copyBtn.onclick = (e) => {
                     const robotId = card.querySelector('#robotSelector').value;
-                    const taskRaw = card.querySelector('#taskInput').value;
-                    const taskMatch = taskRaw.match(/F\d+/);
-                    const taskNo = taskMatch ? "#" + taskMatch[0] : "#없음";
+                    const taskRaw = card.querySelector('#taskInput').value.trim();
+                    // 무엇을 입력하든 앞에 F를 붙임 (값이 없으면 #없음)
+                    const taskNo = taskRaw ? "#F" + taskRaw.replace(/^F/i, "") : "#없음";
                     const info = ROBOT_MAP[robotId] || { site: "알수없음", unit: "#000" };
                     const time = new Date();
                     const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_${info.site}_${info.unit}_${taskNo}`;
@@ -424,7 +424,8 @@
                 const deliBtn = card.querySelector('#btnDeli');
                 const patrolBtn = card.querySelector('#btnPatrol');
                 if (deliBtn) deliBtn.onclick = (e) => {
-                    const time = getCalculatedTime(10);
+                    // 배달은 시간 차감 없이 현재 시간(new Date) 적용
+                    const time = new Date();
                     const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_부산 국립과학관_#171`;
                     navigator.clipboard.writeText(finalName);
                     applyCopyEffect(e.target);
