@@ -398,11 +398,11 @@
                 copyBtn.onclick = (e) => {
                     const robotId = card.querySelector('#robotSelector').value;
                     const taskRaw = card.querySelector('#taskInput').value.trim();
-                    // 무엇을 입력하든 앞에 F를 붙임 (값이 없으면 #없음)
-                    const taskNo = taskRaw ? "#F" + taskRaw.replace(/^F/i, "") : "#없음";
+                    // 무엇을 입력하든 앞에 F를 붙임
+                    const taskNo = taskRaw ? "_#F" + taskRaw.replace(/^F/i, "") : "";
                     const info = ROBOT_MAP[robotId] || { site: "알수없음", unit: "#000" };
                     const time = new Date();
-                    const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_${info.site}_${info.unit}_${taskNo}`;
+                    const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_${info.site}_${info.unit}${taskNo}`;
                     navigator.clipboard.writeText(finalName);
                     applyCopyEffect(e.target);
                 };
