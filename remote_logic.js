@@ -6,7 +6,7 @@
 
     const currUrl = window.location.href;
     const isNeubieSite = currUrl.includes('go.neubie.ai');
-    console.log("🛰️ 뉴비 통합 엔진 v1.4 로드 완료 (줄을 서시오: 뉴비고 최적화)");
+    console.log("🛰️ 뉴비 통합 엔진 v1.0 로드됨");
 
     /* ============================================================
         SECTION 1. 상태 및 설정
@@ -365,10 +365,10 @@
         };
 
         card.innerHTML = `
-            <div style="color:#3b82f6; font-weight:bold; font-size:14px; margin-bottom:10px;">🏷️ 스마트 네이밍 엔진</div>
+            <div style="color:#3b82f6; font-weight:bold; font-size:14px; margin-bottom:10px;">🏷️ 영상 파일명 도우미</div>
             <div style="display: flex; gap: 5px; margin-bottom: 10px;">
                 <select id="robotSelector" style="flex: 1.2; background: #333; color: white; border: 1px solid #555; border-radius: 4px; font-size: 12px; padding: 4px;">
-                    ${dropdownOptions || '<option>최근 기체 없음</option>'}
+                    ${dropdownOptions || '<option>최근 배달 기체 없음</option>'}
                 </select>
                 <input type="text" id="taskInput" placeholder="F..." style="flex: 1; background: #333; color: white; border: 1px solid #555; padding: 4px; border-radius: 4px; font-size: 12px;">
                 <button id="copyFileName" style="background: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size:12px;">복사</button>
@@ -376,10 +376,10 @@
             <div style="display: flex; gap: 5px; flex-wrap: wrap;">
                 <button id="btnMulti" class="sub-btn">다중 관제</button>
                 ${isWknd ? `
-                    <button id="btnDeli" class="sub-btn">배송 띠띠</button>
-                    <button id="btnPatrol" class="sub-btn">순찰 띠띠</button>
+                    <button id="btnDeli" class="sub-btn">배송 띠띠(주말)</button>
+                    <button id="btnPatrol" class="sub-btn">순찰 띠띠(주말)</button>
                 ` : `
-                    <button id="btnCombined" class="sub-btn">배송/순찰 띠띠</button>
+                    <button id="btnCombined" class="sub-btn">배송/순찰 띠띠(평일)</button>
                 `}
             </div>
         `;
@@ -469,9 +469,9 @@
         list.style.display = "grid"; 
         list.style.gap = "12px";
 
-        list.appendChild(createMenuCard("🗺️ 지도 최적화", "노드 제거 및 마커 회전", 'isMapOpt', 'neubie_opt_map', () => injectMapStyle()));
-        list.appendChild(createMenuCard("📡 줄을 서시오", "중복 관제 방지 (관제 시작 버튼)", 'isQueueOpt', 'neubie_opt_queue'));
-        list.appendChild(createMenuCard("📋 일일 업무", "좌측 상단 시트 연동 정보", 'isTaskVisible', 'neubie_opt_task', () => {
+        list.appendChild(createMenuCard("🗺️ 역삼, 송도, 성수 요기요 / 성남 삼평동 맵 최적화", "노드 제거 및 대기장소 마커 회전", 'isMapOpt', 'neubie_opt_map', () => injectMapStyle()));
+        list.appendChild(createMenuCard("📡 줄을 서시오", "중복 관제 완화 기능 (관제 시작 버튼에만 작동)", 'isQueueOpt', 'neubie_opt_queue'));
+        list.appendChild(createMenuCard("📋 일일 업무", "시트 연동 정보", 'isTaskVisible', 'neubie_opt_task', () => {
             if (state.isTaskVisible) {
                 taskPopup.style.display = 'block';
                 renderTaskList(state.myTodayTasks);
@@ -484,7 +484,7 @@
         list.appendChild(createNamingCard());
 
         const isBatteryOpen = batteryPopup.style.display === 'block';
-        list.appendChild(createMenuCard("🔋 성남 배터리", "배터리 실시간 현황", null, null, () => {
+        list.appendChild(createMenuCard("🔋 성남 실시간 배터리 현황", "배터리 정보 복사 기능", null, null, () => {
             toggleBattery();
             renderDashboard(); 
         }, isBatteryOpen ? '닫기' : '열기'));
