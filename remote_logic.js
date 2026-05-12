@@ -1,22 +1,6 @@
 (function() {
     'use strict';
 
-    const originalFetch = window.fetch;
-    window.fetch = async (...args) => {
-        const url = typeof args[0] === 'string' ? args[0] : args[0].url;
-        
-        // 직접 숫자를 적는 대신, 아래에 있는 config.targetIds 명단을 보고 검사합니다.
-        const isTargetPage = config.targetIds.some(id => window.location.href.includes(`/monitoring/${id}`));
-        
-        if (isTargetPage && url && (url.includes('nodes?') || url.includes('sites?') || url.includes('paths?'))) {
-            return new Response(JSON.stringify({ data: [], items: [], total: 0 }), {
-                status: 200,
-                headers: { 'Content-Type': 'application/json' }
-            });
-        }
-        return originalFetch(...args);
-    };
-
     if (window.neubieEngineLoaded) return;
     window.neubieEngineLoaded = true;
 
@@ -79,7 +63,7 @@
     window.fetch = async (...args) => {
         const url = typeof args[0] === 'string' ? args[0] : args[0].url;
         // 최적화 대상 URL 감지
-        if (url && (url.includes('nodes?') || url.includes('sites?') || url.includes('paths?'))) {
+        if (state.isMapOpt && url && (url.includes('nodes?') || url.includes('sites?') || url.includes('paths?'))) {
             // 데이터를 빈 배열로 반환하여 렌더링 방지
             return new Response(JSON.stringify({ data: [], items: [], total: 0 }), {
                 status: 200,
@@ -299,12 +283,12 @@
             const targetInterval = isMultiMon ? (interval + 10) : interval;
 
             if (status.remainMin === targetInterval) {
-                if (!window.state.notifiedTasks) window.state.notifiedTasks = new Set();
+                if (!state.notifiedTasks) state.notifiedTasks = new Set();
                 
                 const taskKey = `${t.content}_${timeKey}_${targetInterval}`;
-                if (!window.state.notifiedTasks.has(taskKey)) {
+                if (!state.notifiedTasks.has(taskKey)) {
                     triggerReminder(t.content, status.remainMin);
-                    window.state.notifiedTasks.add(taskKey);
+                    state.notifiedTasks.add(taskKey);
                 }
             }
         });
@@ -441,7 +425,7 @@
 
         setter.onchange = (e) => {
             localStorage.setItem('neubie_remind_int', e.target.value);
-            if (window.state) window.state.notifiedTasks = new Set(); // 알림 기록 초기화
+            if (window.state) state.notifiedTasks = new Set(); // 알림 기록 초기화
             syncTasksFromServer();
         };
         
@@ -914,7 +898,7 @@
     });
 
     document.addEventListener('click', handleControlClick, true);
-    injectMapStyle();
+    if (state.isMapOpt) injectMapStyle();
     
     // 1. 페이지 로드 시 이름이 설정되어 있다면 즉시 한 번 동기화
     if (localStorage.getItem('neubie_user_name')) {
