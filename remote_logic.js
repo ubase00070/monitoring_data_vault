@@ -504,6 +504,40 @@
     /* ============================================================
         SECTION 5. 줄을 서시오 & 중복 관제 완화
        ============================================================ */
+
+    function injectConfigUI() {
+        // 이미 스타일이 존재하면 중복 생성 방지
+        if (document.getElementById('neubie-engine-popup-style')) return;
+
+        const style = document.createElement('style');
+        style.id = 'neubie-engine-popup-style';
+        style.innerHTML = `
+            /* 딜레이 안내 팝업 스타일 */
+            .delay-popup {
+                position: fixed;
+                top: 15%; /* 상단에서 약간 아래 */
+                left: 50%;
+                transform: translate(-50%, 0);
+                background-color: rgba(15, 15, 15, 0.95); /* 더 깊은 검정 */
+                color: #00ff41; 
+                padding: 16px 28px;
+                border-radius: 8px;
+                z-index: 10000; 
+                text-align: center;
+                font-weight: 700;
+                border: 2px solid #00ff41; /* 테두리 강조 */
+                box-shadow: 0 0 20px rgba(0, 255, 65, 0.3);
+                pointer-events: none;
+                line-height: 1.5;
+                font-size: 15px;
+            }
+            /* 기존 UI 스타일들... */
+        `;
+        document.head.appendChild(style);
+
+        // ... 체크박스 생성 로직(줄을 서시오 등) ...
+    }
+
     function calculateDelay() {
         const base = QUEUE_CONFIG.SLOTS[Math.floor(Math.random() * QUEUE_CONFIG.SLOTS.length)];
         const jitter = Math.floor(Math.random() * (QUEUE_CONFIG.JITTER * 2 + 1)) - QUEUE_CONFIG.JITTER;
@@ -522,38 +556,45 @@
         return overlay;
     }
 
-    function handleControlClick(e) {
-        if (!state.isQueueOpt) return;
-        if (!isNeubieSite) return;
+    async function handleControlClick(e) {
+        // 1. 정확히 '관제 시작' 버튼인지 확인
+        const controlBtn = e.target.closest('button');
+        if (!controlBtn || controlBtn.innerText.trim() !== '관제 시작') return;
+        
+        // [추가] 줄을 서시오 체크 여부 확인 (state.isQueue)
+        if (!state.isQueue) return; 
 
-        const btn = e.target.closest('div.flex.justify-center.items-center.w-full') || e.target.closest('button');
-        if (!btn || btn.dataset.intercepted) return;
+        const userName = localStorage.getItem('neubie_user_name') || "운영자";
+        const nameScore = Array.from(userName).reduce((acc, char) => acc + char.charCodeAt(0), 0) * 31;
+        const now = new Date();
+        const timeScore = now.getMinutes() + now.getDate();
+        
+        const mySlot = (nameScore + timeScore) % 10; 
+        const baseDelay = mySlot * 150; 
+        const jitter = Math.floor(Math.random() * 70);
+        const finalDelay = baseDelay + jitter;
 
-        const btnText = btn.innerText.trim(); // 양끝 공백만 제거
-        const isTarget = (btnText === "관제 시작"); // 정확히 "관제 시작"일 때만 true
-        const isAvailable = !btnText.includes("확인중") && !btnText.includes("종료");
+        // 3. 시각적 팝업 생성
+        const popup = document.createElement('div');
+        popup.className = 'delay-popup';
+        popup.innerHTML = `중복 개입 완화 시스템<br>${(finalDelay / 1000).toFixed(2)}초 딜레이 적용 중...`;
+        document.body.appendChild(popup);
 
-        if (isTarget && isAvailable) {
-            e.preventDefault();
-            e.stopPropagation();
+        // 4. 이벤트 차단 및 예약 실행
+        e.preventDefault();
+        e.stopPropagation();
 
-            const finalDelay = calculateDelay();
-            const overlay = createOverlay(finalDelay);
-            document.body.appendChild(overlay);
-
+        setTimeout(() => {
+            // 실제 개입 로직 실행
+            executeIntervention(controlBtn); 
+            
+            // 실행 후 팝업 제거 (요청하신 대로 1.5초간 유지하거나 실행 즉시 제거 가능)
+            // 여기서는 '실행 시점'과 상관없이 사용자가 인지하도록 총 1.5초 후 제거합니다.
             setTimeout(() => {
-                btn.dataset.intercepted = 'true';
-                btn.click();
-
-                setTimeout(() => {
-                    overlay.style.opacity = '0';
-                    setTimeout(() => {
-                        overlay.remove();
-                        delete btn.dataset.intercepted;
-                    }, 200);
-                }, Math.max(QUEUE_CONFIG.MIN_OVERLAY_SHOW, QUEUE_CONFIG.OVERLAY_DURATION - finalDelay));
-            }, finalDelay);
-        }
+                if (popup) popup.remove();
+            }, 1500 - finalDelay > 0 ? 1500 - finalDelay : 500); 
+            
+        }, finalDelay);
     }
 
     /* ============================================================
