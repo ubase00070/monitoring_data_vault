@@ -657,7 +657,7 @@
         headerContainer.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; padding-right:5px;";
 
         const title = document.createElement('h2');
-        title.textContent = "🛰️ Neubie Helper";
+        title.textContent = "✨ 없으면 내가 만든다";
         title.style.cssText = "color:#3b82f6; font-size:18px; margin:0; font-weight:bold;";
 
         // 이름 입력 영역 (성명: [입력칸])
@@ -668,7 +668,7 @@
         // 기존 input 스타일 수정
         nameArea.innerHTML = `
             <span>성명:</span>
-            <input type="text" id="inline-name-input" value="${currentName}" placeholder="미설정"
+            <input type="text" id="inline-name-input" value="${currentName}" placeholder="이름 입력"
                 style="width:70px; border:1px solid #cbd5e1; outline:none; padding:2px 6px; 
                     font-size:13px; font-weight:bold; color:#1e293b; background:white; 
                     border-radius:4px; text-align:center;">
@@ -698,7 +698,7 @@
         list.style.gap = "12px";
 
         // 2. 기본 최적화 카드들
-        list.appendChild(createMenuCard("🗺️ 맵 최적화", "노드 제거 및 마커 회전", 'isMapOpt', 'neubie_opt_map', () => injectMapStyle()));
+        list.appendChild(createMenuCard("🗺️ 역삼/송도/성수 요기요, 성남 삼평동 맵 최적화", "흰색 마커 제거 및 대기장소 마커 회전", 'isMapOpt', 'neubie_opt_map', () => injectMapStyle()));
         list.appendChild(createMenuCard("📡 줄을 서시오", "중복 관제 완화 기능", 'isQueueOpt', 'neubie_opt_queue'));
 
         // 3. 일일 업무 카드 (열기 버튼 방식 + 클릭 시 리프레시)
