@@ -62,49 +62,26 @@
     const originalFetch = window.fetch;
     window.fetch = async (...args) => {
         const url = typeof args[0] === 'string' ? args[0] : args[0].url;
-        // 최적화 대상 URL 감지
-        if (url && (url.includes('nodes?') || url.includes('sites?') || url.includes('paths?'))) {
-            // 데이터를 빈 배열로 반환하여 렌더링 방지
-            return new Response(JSON.stringify({ data: [], items: [], total: 0 }), {
-                status: 200,
-                headers: { 'Content-Type': 'application/json' }
+        if (state.isMapOpt && url && (url.includes('nodes?') || url.includes('sites?') || url.includes('paths?'))) {
+            return new Response(JSON.stringify({ data: [], items: [], total: 0 }), { 
+                status: 200, 
+                headers: { 'Content-Type': 'application/json' } 
             });
         }
         return originalFetch(...args);
     };
 
     function injectMapStyle() {
-        const style = document.createElement('style');
-        style.id = 'neubie-map-optimization';
-        style.textContent = `
-            /* 1. 불필요한 마커 및 경로 숨기기 (가속 핵심) */
-            gmp-advanced-marker:has([data-qk*="base-marker"]),
-            gmp-advanced-marker:has([data-qk*="node-marker"]),
-            gmp-advanced-marker:has([data-qk*="site-marker"]),
-            #map-container svg path[stroke-opacity],
-            .gm-style img[src*="transparent"] { 
-                display: none !important; 
-            }
-
-            /* 2. 대기장소 마커 반전 복구 (가독성) */
-            gmp-advanced-marker:has([data-qk*="base-marker-대기장소"]) {
-                display: block !important;
-                transform: rotate(180deg) !important;
-            }
-
-            /* 3. 기체 및 미니맵 마커는 절대 보존 */
-            gmp-advanced-marker:not(:has([data-qk])),
-            gmp-advanced-marker:has([data-qk*="robot"]),
-            div[class*="MiniMap"] gmp-advanced-marker {
-                display: block !important;
-                visibility: visible !important;
-                z-index: 1000 !important;
-            }
-
-            /* 4. 브라우저 렌더링 가속 */
-            .gm-style canvas { contain: strict !important; }
-        `;
-        document.head.appendChild(style);
+        let style = document.getElementById('neubie-opt-style') || document.createElement('style');
+        style.id = 'neubie-opt-style';
+        style.textContent = state.isMapOpt ? `
+            [data-qk^="node-marker"] { display: none !important; }
+            gmp-advanced-marker:has([data-qk*="base-marker-대기장소"]) { display: block !important; visibility: visible !important; z-index: 500 !important; }
+            gmp-advanced-marker:has([data-qk*="base-marker-대기장소"]) svg { transform: rotate(180deg) !important; }
+            gmp-advanced-marker:has([data-qk*="robot"]), div[class*="MiniMap"] gmp-advanced-marker { display: block !important; visibility: visible !important; z-index: 1000 !important; }
+            .gm-style-cc { display: none !important; } 
+        ` : "";
+        if (!style.parentElement) document.head.appendChild(style);
     }
 
     // [추가] 네이밍용 시간 보정 유틸리티
