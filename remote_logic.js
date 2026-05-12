@@ -224,25 +224,23 @@
     console.log("📋 서버 동기화 업무 엔진 가동 중...");
 
     function syncTasksFromServer() {
-        const myName = "이준";
-        const buster = Math.floor(Date.now() / 60000); // 1분 단위 캐시 버스터
+        const myName = localStorage.getItem('neubie_user_name');
+        if (!myName) return; // 이름이 없으면 중단
+
+        const buster = Math.floor(Date.now() / 60000); 
         const dataUrl = `https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/daily_tasks.json?v=${buster}`;
 
         fetch(dataUrl)
             .then(res => res.json())
             .then(data => {
-                const myTasks = data.filter(t => t.user === myName);
+                // [중요] 여기서 사용자의 이름으로 필터링을 걸어줘야 합니다.
+                const filteredTasks = data.filter(task => task.user === myName);
                 
-                if (myTasks.length > 0) {
-                    console.log(`📥 서버 데이터 수신 완료: ${myTasks.length}건`);
-                    
-                    // 1. 전역 변수에 저장 (대시보드가 열릴 때 참조할 수 있도록)
-                    window.currentMyTasks = myTasks; 
-
-                    // 2. 대시보드가 이미 열려있다면 즉시 새로 그리기
-                    if (dashboard && dashboard.style.display === 'block') {
-                        renderDashboard();
-                    }
+                window.currentMyTasks = filteredTasks;
+                console.log(`📥 ${myName}님의 데이터 수신: ${filteredTasks.length}건`);
+                
+                if (dashboard && dashboard.style.display === 'block') {
+                    renderDashboard();
                 }
             })
             .catch(err => console.error("⚠️ 업무 데이터 로드 실패:", err));
@@ -434,6 +432,49 @@
     /* ============================================================
         SECTION 6. [수정] 스마트 네이밍 엔진 카드 생성
        ============================================================ */
+    // [추가] 이름 저장/수정 함수
+    function saveUserName(newName) {
+        if (!newName.trim()) return;
+        localStorage.setItem('neubie_user_name', newName.trim());
+        syncTasksFromServer(); // 이름이 바뀌었으니 데이터를 다시 불러옴
+        renderDashboard();    // UI 갱신
+    }
+
+    function createConfigCard() {
+        const card = document.createElement('div');
+        card.className = 'menu-card';
+        card.style.cssText = "background:white; padding:15px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.05); display:flex; flex-direction:column; gap:10px;";
+
+        const currentName = localStorage.getItem('neubie_user_name') || "미설정";
+
+        card.innerHTML = `
+            <div style="font-weight:bold; font-size:14px; color:#1e293b;">👤 사용자 설정</div>
+            <div style="display:flex; gap:8px;">
+                <input type="text" id="user-name-input" placeholder="이름 입력 (예: 안혜림)" 
+                    style="flex:1; padding:6px 10px; border:1px solid #e2e8f0; border-radius:6px; font-size:13px;"
+                    value="${currentName === "미설정" ? "" : currentName}">
+                <button id="save-name-btn" style="background:#3b82f6; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px;">저장</button>
+            </div>
+            <div style="font-size:11px; color:#64748b;">현재 설정된 이름: <b id="display-name">${currentName}</b></div>
+        `;
+
+        // setTimeout 대신 card 내부 요소에 직접 접근하여 바인딩
+        const btn = card.querySelector('#save-name-btn');
+        const input = card.querySelector('#user-name-input');
+        
+        btn.onclick = () => {
+            const newName = input.value.trim();
+            if (newName) {
+                localStorage.setItem('neubie_user_name', newName);
+                console.log(`👤 사용자 변경: ${newName}`);
+                syncTasksFromServer(); // 이름 변경 즉시 서버 데이터 재요청
+                renderDashboard();    // UI 즉시 갱신
+            }
+        };
+
+        return card;
+    }
+
     function createNamingCard() {
         const isWknd = isWeekend();
         const card = document.createElement('div');
@@ -568,18 +609,18 @@
         // 1. 기본 최적화 카드들
         list.appendChild(createMenuCard("🗺️ 맵 최적화", "노드 제거 및 마커 회전", 'isMapOpt', 'neubie_opt_map', () => injectMapStyle()));
         list.appendChild(createMenuCard("📡 줄을 서시오", "중복 관제 완화 기능", 'isQueueOpt', 'neubie_opt_queue'));
+        list.appendChild(createConfigCard());
 
         /* ============================================================
-            동적 이름 적용
+            수정된 부분: 동적 이름 적용
            ============================================================ */
-        const targetName = "이준"; // 현재 테스트용 이름
+        const storedName = localStorage.getItem('neubie_user_name') || "사용자";
         const taskCount = (window.currentMyTasks && window.currentMyTasks.length) || 0;
-        const taskDesc = taskCount > 0 ? `현재 ${taskCount}개의 배정된 업무가 있습니다.` : "배정된 업무가 없습니다.";
+        const taskDesc = taskCount > 0 ? `현재 ${taskCount}개의 배정된 업무가 있습니다.` : "배정된 업무가 없거나 이름 설정을 확인해주세요.";
 
-        list.appendChild(createMenuCard(`📋 ${targetName}의 일일 업무`, taskDesc, 'isTaskVisible', 'neubie_opt_task', () => {
+        list.appendChild(createMenuCard(`📋 ${storedName}의 일일 업무`, taskDesc, 'isTaskVisible', 'neubie_opt_task', () => {
             if (state.isTaskVisible) {
                 taskPopup.style.display = 'block';
-                // 서버에서 받은 최신 데이터를 팝업에 전달
                 renderTaskList(window.currentMyTasks || []);
             } else {
                 taskPopup.style.display = 'none';
