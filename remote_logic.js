@@ -303,7 +303,6 @@
         if (!times) return { isExpired: false, remainMin: 999, score: 0 };
         
         const now = new Date();
-        now.setHours(21, 45, 0);
         const startTimeStr = times[0];
         const endTimeStr = times[times.length - 1];
 
