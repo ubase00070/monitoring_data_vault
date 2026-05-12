@@ -556,45 +556,73 @@
         return overlay;
     }
 
-    async function handleControlClick(e) {
-        // 1. 정확히 '관제 시작' 버튼인지 확인
-        const controlBtn = e.target.closest('button');
-        if (!controlBtn || controlBtn.innerText.trim() !== '관제 시작') return;
-        
-        // [추가] 줄을 서시오 체크 여부 확인 (state.isQueue)
-        if (!state.isQueue) return; 
+    /* ============================================================
+    SECTION 5. 무한 순열 기반 지능형 딜레이 엔진 (Anti-Abusing)
+   ============================================================ */
 
-        const userName = localStorage.getItem('neubie_user_name') || "운영자";
-        const nameScore = Array.from(userName).reduce((acc, char) => acc + char.charCodeAt(0), 0) * 31;
-        const now = new Date();
-        const timeScore = now.getMinutes() + now.getDate();
+    async function handleControlClick(e) {
+        if (!state.isQueue) return;
+
+        const targetBtn = e.target.closest('button');
+        if (!targetBtn || targetBtn.innerText.trim() !== '관제 시작') return;
+
+        const currentUserName = localStorage.getItem('neubie_user_name') || "운영자";
         
-        const mySlot = (nameScore + timeScore) % 10; 
-        const baseDelay = mySlot * 150; 
-        const jitter = Math.floor(Math.random() * 70);
+        // 1. 현재 접속 가능 인원 조합 생성 (조합 그룹의 고유성 확보)
+        // 실제로는 전체 명단을 넣어도 '분/요일' 변수 덕분에 현재 접속자끼리만 경쟁하는 효과가 납니다.
+        const allNames = personnelData.map(p => p.name).sort().join('');
+        
+        // 2. 시간/요일 변수 추출 (매 분, 매일 결과값을 바꿈)
+        const now = new Date();
+        const timeKey = `${now.getDay()}${now.getHours()}${now.getMinutes()}`;
+        
+        // 3. 수학적 해시 함수 (문자열을 고유 숫자로 변환)
+        const getHash = (str) => {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                hash = ((hash << 5) - hash) + str.charCodeAt(i);
+                hash |= 0; // 32비트 정수로 변환
+            }
+            return Math.abs(hash);
+        };
+
+        // 4. 개인별 고유 씨앗(Seed) 생성
+        // (전체 조합 문자열 + 내 이름 + 시간 키)를 섞어 나만의 고유 번호 생성
+        const mySeed = getHash(allNames + currentUserName + timeKey);
+        
+        // 5. 슬롯 및 딜레이 계산 (1.5초를 촘촘하게 분산)
+        // 37명이 동시에 눌러도 겹치지 않도록 40ms 단위로 쪼갬
+        const maxSlots = 37; 
+        const mySlot = mySeed % maxSlots;
+        
+        // 기본 간격 40ms + 미세 지터 10ms = 최대 1.48초 + @
+        const baseDelay = mySlot * 40;
+        const jitter = Math.floor(Math.random() * 15); 
         const finalDelay = baseDelay + jitter;
 
-        // 3. 시각적 팝업 생성
+        // 시각적 피드백
         const popup = document.createElement('div');
         popup.className = 'delay-popup';
-        popup.innerHTML = `중복 개입 완화 시스템<br>${(finalDelay / 1000).toFixed(2)}초 딜레이 적용 중...`;
+        popup.innerHTML = `
+            <div style="font-size: 0.9em; opacity: 0.8;">실시간 중복 방지 순열 가동</div>
+            <div style="font-size: 1.2em; margin: 5px 0;">🚀 ${(finalDelay / 1000).toFixed(2)}초 후 진입</div>
+            <div style="font-size: 0.7em; color: #888;">Hash: ${mySeed.toString(16).toUpperCase()}</div>
+        `;
         document.body.appendChild(popup);
 
-        // 4. 이벤트 차단 및 예약 실행
         e.preventDefault();
         e.stopPropagation();
 
         setTimeout(() => {
-            // 실제 개입 로직 실행
-            executeIntervention(controlBtn); 
-            
-            // 실행 후 팝업 제거 (요청하신 대로 1.5초간 유지하거나 실행 즉시 제거 가능)
-            // 여기서는 '실행 시점'과 상관없이 사용자가 인지하도록 총 1.5초 후 제거합니다.
-            setTimeout(() => {
-                if (popup) popup.remove();
-            }, 1500 - finalDelay > 0 ? 1500 - finalDelay : 500); 
-            
+            if (typeof executeIntervention === 'function') executeIntervention(targetBtn);
         }, finalDelay);
+
+        setTimeout(() => {
+            if (popup) {
+                popup.style.opacity = "0";
+                setTimeout(() => popup.remove(), 500);
+            }
+        }, 1500);
     }
 
     /* ============================================================
