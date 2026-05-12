@@ -146,20 +146,20 @@
   {
     "user": "김지훈",
     "type": "monitoring",
-    "content": "다중 모니터링 (Sat Dec 30 1899 07:00:00 GMT+0827 (Korean Standard Time))",
-    "rawTime": "Sat Dec 30 1899 07:00:00 GMT+0827 (Korean Standard Time)"
+    "content": "다중 모니터링 (07:00)",
+    "rawTime": "07:00"
   },
   {
     "user": "박효선",
     "type": "monitoring",
-    "content": "다중 모니터링 (Sat Dec 30 1899 08:00:00 GMT+0827 (Korean Standard Time))",
-    "rawTime": "Sat Dec 30 1899 08:00:00 GMT+0827 (Korean Standard Time)"
+    "content": "다중 모니터링 (08:00)",
+    "rawTime": "08:00"
   },
   {
     "user": "안혜림",
     "type": "monitoring",
-    "content": "다중 모니터링 (Sat Dec 30 1899 09:00:00 GMT+0827 (Korean Standard Time))",
-    "rawTime": "Sat Dec 30 1899 09:00:00 GMT+0827 (Korean Standard Time)"
+    "content": "다중 모니터링 (09:00)",
+    "rawTime": "09:00"
   },
   {
     "user": "박효선",
@@ -320,7 +320,7 @@
   {
     "user": "박효빈",
     "type": "task",
-    "content": "[16:30~17:00] 송도요기요 대기장소 기체 재출근 체크 후 임무 ON ",
+    "content": "[16:30~17:00] 송도요기요 대기장소 기체 재출근 체크 후 임무 ON",
     "rawTime": "16:30"
   },
   {
