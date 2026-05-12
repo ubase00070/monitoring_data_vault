@@ -1,29 +1,6 @@
 (function() {
     'use strict';
 
-    const originalFetch = window.fetch;
-    window.fetch = async (...args) => {
-        const url = typeof args[0] === 'string' ? args[0] : args[0].url;
-        
-        // 직접 숫자를 적는 대신, 아래에 있는 config.targetIds 명단을 보고 검사합니다.
-        const isTargetPage = config.targetIds.some(id => window.location.href.includes(`/monitoring/${id}`));
-        
-        if (isTargetPage && url && (url.includes('nodes?') || url.includes('sites?') || url.includes('paths?'))) {
-            return new Response(JSON.stringify({ data: [], items: [], total: 0 }), {
-                status: 200,
-                headers: { 'Content-Type': 'application/json' }
-            });
-        }
-        return originalFetch(...args);
-    };
-
-    if (window.neubieEngineLoaded) return;
-    window.neubieEngineLoaded = true;
-
-    const currUrl = window.location.href;
-    const isNeubieSite = currUrl.includes('go.neubie.ai');
-    console.log("🛰️ 뉴비 통합 엔진 v1.4 로드 완료 (줄을 서시오: 뉴비고 최적화)");
-
     /* ============================================================
         SECTION 1. 상태 및 설정
        ============================================================ */
@@ -38,7 +15,7 @@
         sheetId: "1tLo6Xeq6KJx6zW-fcw8H38jdjxyS2yre5oWY7cxky70"
     };
 
-    // [추가] 기체 네이밍 매핑 데이터
+    // 기체 네이밍 매핑 데이터
     const ROBOT_MAP = {
         "76": { site: "송도 요기요", unit: "#076" },
         "85": { site: "역삼 요기요", unit: "#085" },
@@ -71,6 +48,29 @@
     };
 
     const taskChannel = new BroadcastChannel('neubie_task_sync');
+
+    const originalFetch = window.fetch;
+    window.fetch = async (...args) => {
+        const url = typeof args[0] === 'string' ? args[0] : args[0].url;
+        
+        // 직접 숫자를 적는 대신, 아래에 있는 config.targetIds 명단을 보고 검사합니다.
+        const isTargetPage = config.targetIds.some(id => window.location.href.includes(`/monitoring/${id}`));
+        
+        if (isTargetPage && url && (url.includes('nodes?') || url.includes('sites?') || url.includes('paths?'))) {
+            return new Response(JSON.stringify({ data: [], items: [], total: 0 }), {
+                status: 200,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
+        return originalFetch(...args);
+    };
+
+    if (window.neubieEngineLoaded) return;
+    window.neubieEngineLoaded = true;
+
+    const currUrl = window.location.href;
+    const isNeubieSite = currUrl.includes('go.neubie.ai');
+    console.log("🛰️ 뉴비 통합 엔진 v1.4 로드 완료 (줄을 서시오: 뉴비고 최적화)");
 
     /* ============================================================
         SECTION 2. 맵 최적화 코어 & 네이밍 유틸리티
