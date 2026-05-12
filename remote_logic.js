@@ -6,7 +6,7 @@
 
     const currUrl = window.location.href;
     const isNeubieSite = currUrl.includes('go.neubie.ai');
-    console.log("🛰️ 뉴비 통합 엔진 v1.0 로드됨");
+    console.log("🛰️ 뉴비 통합 엔진 v1.4 로드 완료 (줄을 서시오: 뉴비고 최적화)");
 
     /* ============================================================
         SECTION 1. 상태 및 설정
@@ -217,12 +217,17 @@
         });
     }
 
+    /* ============================================================
+        SECTION 4-1. [수정] 업무 시트 데이터 동기화 및 알림 엔진
+       ============================================================ */
     if (currUrl.includes(config.sheetId)) {
-        console.log("📋 업무 시트 데이터 동기화 활성화됨 (5분 주기)");
+        console.log("📋 업무 시트 리마인더 엔진 활성화 (1분 주기)");
         setInterval(() => {
-            const profileBtn = document.querySelector('a[aria-label*="Google 계정"], img[src*="googleusercontent.com"]');
-            const myNameMatch = profileBtn?.getAttribute('aria-label') || profileBtn?.getAttribute('title') || "";
-            const myName = myNameMatch.match(/[가-힣]+/)?.[0] || ""; 
+            // [테스트] 실제 이름 로직은 주석 처리하고 '안혜림'으로 고정
+            // const profileBtn = document.querySelector('a[aria-label*="Google 계정"], img[src*="googleusercontent.com"]');
+            // const myNameMatch = profileBtn?.getAttribute('aria-label') || profileBtn?.getAttribute('title') || "";
+            // const myName = myNameMatch.match(/[가-힣]+/)?.[0] || ""; 
+            const myName = "안혜림"; 
 
             if (!myName) return;
 
@@ -233,11 +238,13 @@
                 const text = row.innerText;
                 if (text.includes(myName)) {
                     const cells = text.split('\t').map(c => c.trim());
+                    // 다중 모니터링 (6번 셀이 이름, 5번 셀이 시간)
                     if (cells[6] === myName && cells[5] && cells[5].includes(':')) {
-                        foundTasks.push({ type: 'monitoring', content: `🖥️ 다중 모니터링 (${cells[5]})` });
+                        foundTasks.push({ type: 'monitoring', content: `🖥️ 다중 모니터링 (${cells[5]})`, rawTime: cells[5] });
                     } 
+                    // 일반 업무 (1번 셀에 시간 정보 포함됨)
                     else if (cells[1] && (cells[1].includes('[') || cells[1].includes('시'))) {
-                        foundTasks.push({ type: 'task', content: cells[1] });
+                        foundTasks.push({ type: 'task', content: cells[1], rawTime: cells[1] });
                     }
                 }
             });
@@ -245,38 +252,129 @@
             if (foundTasks.length > 0) {
                 taskChannel.postMessage({ type: 'TASK_UPDATE', tasks: foundTasks, user: myName });
             }
-        }, 300000);
+        }, 60000); // 알림 체크를 위해 1분 주기로 동기화
     }
 
+    // 시간 추출 및 상태 판단 함수
+    function getTaskStatus(rawTime, isMonitoring) {
+        const times = rawTime.match(/\d{2}:\d{2}/g);
+        if (!times) return { isExpired: false, remainMin: 999 };
+        
+        const now = new Date();
+        const startTimeStr = times[0];
+        const endTimeStr = times[times.length - 1];
+
+        const [sH, sM] = startTimeStr.split(':').map(Number);
+        const [eH, eM] = endTimeStr.split(':').map(Number);
+        
+        const start = new Date(); start.setHours(sH, sM, 0);
+        const end = new Date(); end.setHours(eH, eM, 0);
+
+        let remainMin = Math.floor((start - now) / 60000);
+        
+        // 다중 모니터링은 10분 추가 차감 로직 적용
+        if (isMonitoring) remainMin -= 10;
+
+        return {
+            isExpired: now > end,
+            remainMin: remainMin
+        };
+    }
+
+    // 리마인더 알림창 생성 함수
+    function triggerReminder(taskContent, remainMin) {
+        if (document.getElementById('neubie-reminder')) return;
+
+        const alarm = document.createElement('div');
+        alarm.id = 'neubie-reminder';
+        alarm.style.cssText = `
+            position: fixed; top: 30px; left: 50%; transform: translateX(-50%);
+            padding: 18px 40px; background: rgba(20, 20, 20, 0.95); 
+            border: 4px solid #fbbf24; border-radius: 15px; color: white; 
+            z-index: 10000000; box-shadow: 0 0 30px rgba(251, 191, 36, 0.6);
+            text-align: center; backdrop-filter: blur(5px);
+            animation: blink-border 0.8s infinite;
+        `;
+
+        alarm.innerHTML = `
+            <div style="color:#fbbf24; font-size:14px; margin-bottom:5px; font-weight:bold;">⚠️ 업무 리마인더</div>
+            <div style="font-size:18px; font-weight:bold; margin-bottom:5px;">${taskContent}</div>
+            <div style="color:#ff4d4d; font-size:16px; font-weight:bold;">${remainMin}분 전입니다!</div>
+        `;
+
+        if (!document.getElementById('blink-style')) {
+            const style = document.createElement('style');
+            style.id = 'blink-style';
+            style.textContent = `@keyframes blink-border { 0%, 100% { border-color: #fbbf24; transform: translateX(-50%) scale(1); } 50% { border-color: #ef4444; transform: translateX(-50%) scale(1.05); } }`;
+            document.head.appendChild(style);
+        }
+
+        document.body.appendChild(alarm);
+        setTimeout(() => alarm.remove(), 5000);
+    }
+
+    /* ============================================================
+        SECTION 4-2. [수정] UI 렌더링 및 알림 제어
+       ============================================================ */
     function renderTaskList(tasks) {
+        const currentInt = localStorage.getItem('neubie_remind_int') || '0';
+        
         taskPopup.innerHTML = `
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #444; padding-bottom:10px;">
-                <b style="color:#fbbf24; font-size:17px;">📋 오늘의 업무</b>
-                <span style="font-size:11px; color:#888;">5m Sync</span>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid #444; padding-bottom:10px;">
+                <b style="color:#fbbf24; font-size:16px;">📋 리마인더 설정</b>
+                <select id="remindSetter" style="background:#333; color:white; border:1px solid #555; font-size:11px; border-radius:4px; padding:2px;">
+                    <option value="0" ${currentInt === '0' ? 'selected' : ''}>알림 없음</option>
+                    <option value="3" ${currentInt === '3' ? 'selected' : ''}>3분 전</option>
+                    <option value="5" ${currentInt === '5' ? 'selected' : ''}>5분 전</option>
+                </select>
             </div>
         `;
+
+        const setter = taskPopup.querySelector('#remindSetter');
+        setter.onchange = (e) => {
+            localStorage.setItem('neubie_remind_int', e.target.value);
+            state.notifiedTasks = new Set(); // 설정 변경 시 알림 기록 초기화
+        };
         
         if (!tasks || tasks.length === 0) {
-            taskPopup.innerHTML += `<div style="color:#666; text-align:center; padding:20px;">업무 시트 탭을 열어주세요.</div>`;
+            taskPopup.innerHTML += `<div style="color:#666; text-align:center; padding:20px; font-size:12px;">업무 시트 탭을 열어주세요.</div>`;
             return;
         }
 
         tasks.forEach(t => {
+            const status = getTaskStatus(t.rawTime, t.type === 'monitoring');
+            const interval = parseInt(localStorage.getItem('neubie_remind_int') || '0');
+
+            // 알림 조건 체크 (딱 1번만 실행)
+            if (interval > 0 && status.remainMin === interval && !state.notifiedTasks?.has(t.content)) {
+                triggerReminder(t.content, status.remainMin);
+                if (!state.notifiedTasks) state.notifiedTasks = new Set();
+                state.notifiedTasks.add(t.content);
+            }
+
             const item = document.createElement('div');
             const isMon = t.type === 'monitoring';
-            item.style.cssText = `background:${isMon ? 'rgba(59, 130, 246, 0.1)' : 'rgba(251, 191, 36, 0.1)'}; 
-                                  border-left:4px solid ${isMon ? '#3b82f6' : '#fbbf24'}; 
-                                  padding:12px; border-radius:8px; margin-bottom:10px; font-size:14px; line-height:1.5;`;
-            item.innerHTML = `<div style="color:#eee; font-weight:500;">${t.content}</div>`;
+            
+            // 취소선 처리 스타일
+            const textStyle = status.isExpired ? 'text-decoration: line-through; color: #666;' : 'color: #eee;';
+            
+            item.style.cssText = `
+                background:${isMon ? 'rgba(59, 130, 246, 0.1)' : 'rgba(251, 191, 36, 0.1)'}; 
+                border-left:4px solid ${status.isExpired ? '#444' : (isMon ? '#3b82f6' : '#fbbf24')}; 
+                padding:10px; border-radius:8px; margin-bottom:8px; font-size:13px; transition: 0.3s;
+            `;
+            item.innerHTML = `<div style="${textStyle} font-weight:500;">${t.content} ${status.isExpired ? '(종료)' : ''}</div>`;
             taskPopup.appendChild(item);
         });
     }
 
+    // 메시지 수신 시 처리
     taskChannel.onmessage = (e) => {
         if (e.data.type === 'TASK_UPDATE') {
             state.myTodayTasks = e.data.tasks;
             localStorage.setItem('neubie_my_tasks', JSON.stringify(e.data.tasks));
-            if (state.isTaskVisible) renderTaskList(state.myTodayTasks);
+            // 팝업이 열려있지 않더라도 백그라운드에서 알림 로직 실행을 위해 renderTaskList 호출
+            renderTaskList(state.myTodayTasks);
         }
     };
 
@@ -368,7 +466,7 @@
             <div style="color:#3b82f6; font-weight:bold; font-size:14px; margin-bottom:10px;">🏷️ 영상 파일명 도우미</div>
             <div style="display: flex; gap: 5px; margin-bottom: 10px;">
                 <select id="robotSelector" style="flex: 1.2; background: #333; color: white; border: 1px solid #555; border-radius: 4px; font-size: 12px; padding: 4px;">
-                    ${dropdownOptions || '<option>최근 배달 기체 없음</option>'}
+                    ${dropdownOptions || '<option>최근 배달 기체 미감지</option>'}
                 </select>
                 <input type="text" id="taskInput" placeholder="F..." style="flex: 1; background: #333; color: white; border: 1px solid #555; padding: 4px; border-radius: 4px; font-size: 12px;">
                 <button id="copyFileName" style="background: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size:12px;">복사</button>
