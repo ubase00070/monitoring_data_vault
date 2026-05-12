@@ -308,12 +308,13 @@
             if (!rawTime) return { isExpired: false, remainMin: -1, score: 0 };
 
             const now = new Date();
-            const timeMatch = rawTime.match(/\d{2}:\d{2}/);
+            // 문자열에서 시간(HH:mm)만 추출
+            const timeMatch = String(rawTime).match(/\d{2}:\d{2}/);
             if (!timeMatch) return { isExpired: false, remainMin: -1, score: 0 };
 
             const [tHour, tMin] = timeMatch[0].split(':').map(Number);
 
-            // [핵심] 07시 기준 Relative Hour 계산 (07:00 -> 0, 06:00 -> 23)
+            // [핵심] 07시 기준 Relative Score 계산 (07:00 -> 0점, 익일 06:00 -> 1380점)
             const getRelativeScore = (h, m) => {
                 let relHour = h - 7;
                 if (relHour < 0) relHour += 24;
@@ -334,13 +335,12 @@
             .filter(t => {
                 const content = t.content || "";
                 const rawTime = t.rawTime || "";
-                // 내용이 없거나 1899년 노이즈 데이터인 경우 제외
                 return content.trim() !== "" && !String(rawTime).includes("1899");
             })
             .sort((a, b) => {
                 const scoreA = getTaskStatus(a.rawTime || a.time).score;
                 const scoreB = getTaskStatus(b.rawTime || b.time).score;
-                return scoreA - scoreB; // 점수 낮은 순(07:00부터) 정렬
+                return scoreA - scoreB;
             });
 
         // 3. 헤더 및 설정 UI 렌더링
@@ -349,8 +349,8 @@
                 <b style="color:#fbbf24; font-size:16px;">📋 리마인더 설정</b>
                 <select id="remindSetter" style="background:#333; color:white; border:1px solid #555; font-size:11px; border-radius:4px; padding:2px;">
                     <option value="0" ${currentInt === '0' ? 'selected' : ''}>알림 없음</option>
-                    <option value="3" ${currentInt === '3' ? 'selected' : ''}>3분 전</option>
-                    <option value="5" ${currentInt === '5' ? 'selected' : ''}>5분 전</option>
+                    <option value="3" ${currentInt === '3' ? 'selected' : ''}>3분 전 (다중 13분)</option>
+                    <option value="5" ${currentInt === '5' ? 'selected' : ''}>5분 전 (다중 15분)</option>
                 </select>
             </div>
             <div id="task-list-container"></div>
@@ -361,7 +361,7 @@
 
         setter.onchange = (e) => {
             localStorage.setItem('neubie_remind_int', e.target.value);
-            if (window.state) window.state.notifiedTasks = new Set();
+            if (window.state) window.state.notifiedTasks = new Set(); // 알림 기록 초기화
             syncTasksFromServer();
         };
         
@@ -370,24 +370,33 @@
             return;
         }
 
-        // 4. 리스트 생성
+        // 4. 리스트 생성 및 특수 알림 로직 적용
         validTasks.forEach(t => {
             const timeKey = t.rawTime || t.time;
             const status = getTaskStatus(timeKey);
             const interval = parseInt(localStorage.getItem('neubie_remind_int') || '0');
 
-            // 알림 로직
-            if (window.state && interval > 0 && status.remainMin === interval) {
+            // [핵심] 다중 모니터링 업무 전용 오프셋 (+10분)
+            const isMultiMon = t.content && t.content.includes("다중 모니터링");
+            const targetInterval = isMultiMon ? (interval + 10) : interval;
+
+            // 알림 발송 조건 (설정값이 0이 아니고, 계산된 남은 시간이 타겟 시간과 일치할 때)
+            if (window.state && interval > 0 && status.remainMin === targetInterval) {
                 if (!state.notifiedTasks) state.notifiedTasks = new Set();
-                if (!state.notifiedTasks.has(t.content)) {
-                    triggerReminder(t.content, status.remainMin);
-                    state.notifiedTasks.add(t.content);
+                
+                // 업무 내용과 시간을 조합해 고유 키 생성 (중복 알림 방지)
+                const taskKey = `${t.content}_${timeKey}`;
+                if (!state.notifiedTasks.has(taskKey)) {
+                    // 알림창 띄우기 함수 호출
+                    if (typeof triggerReminder === 'function') {
+                        triggerReminder(t.content, status.remainMin);
+                    }
+                    state.notifiedTasks.add(taskKey);
                 }
             }
 
             const item = document.createElement('div');
             const isMon = t.type === 'monitoring';
-            
             const textStyle = status.isExpired 
                 ? 'text-decoration: line-through; color: #777; opacity: 0.7;' 
                 : 'color: #eee;';
@@ -399,8 +408,7 @@
                 display: flex; justify-content: space-between; align-items: center;
             `;
 
-            // 표시할 시간 포맷 정리 (1899년 등의 데이터가 섞여있을 경우 대비)
-            const displayTime = (timeKey && timeKey.length > 10) ? timeKey.match(/\d{2}:\d{2}/)?.[0] : timeKey;
+            const displayTime = (String(timeKey).length > 10) ? String(timeKey).match(/\d{2}:\d{2}/)?.[0] : timeKey;
 
             item.innerHTML = `
                 <div style="${textStyle} font-weight:500;">
@@ -555,7 +563,7 @@
                 <select id="robotSelector" style="flex: 1.2; background: #333; color: white; border: 1px solid #555; border-radius: 4px; font-size: 12px; padding: 4px;">
                     ${dropdownOptions || '<option>최근 배달 기체 미감지</option>'}
                 </select>
-                <input type="text" id="taskInput" placeholder="F... 주문번호를 붙여 넣으세요." style="flex: 1; background: #333; color: white; border: 1px solid #555; padding: 4px; border-radius: 4px; font-size: 12px;">
+                <input type="text" id="taskInput" placeholder="F... 주문번호를 붙여넣으세요." style="flex: 1; background: #333; color: white; border: 1px solid #555; padding: 4px; border-radius: 4px; font-size: 12px;">
                 <button id="copyFileName" style="background: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size:12px;">복사</button>
             </div>
             <div style="display: flex; gap: 5px; flex-wrap: wrap;">
