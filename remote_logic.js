@@ -702,7 +702,7 @@
                 <select id="robotSelector" style="flex: 1.2; background: #333; color: white; border: 1px solid #555; border-radius: 4px; font-size: 12px; padding: 4px;">
                     ${dropdownOptions || '<option>최근 배달 기체 미감지</option>'}
                 </select>
-                <input type="text" id="taskInput" placeholder="F... 주문번호를 붙여넣으세요." style="flex: 1; background: #333; color: white; border: 1px solid #555; padding: 4px; border-radius: 4px; font-size: 12px;">
+                <input type="text" id="taskInput" placeholder="주문번호를 붙여넣으세요." style="flex: 1; background: #333; color: white; border: 1px solid #555; padding: 4px; border-radius: 4px; font-size: 12px;">
                 <button id="copyFileName" style="background: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size:12px;">복사</button>
             </div>
             <div style="display: flex; gap: 5px; flex-wrap: wrap;">
