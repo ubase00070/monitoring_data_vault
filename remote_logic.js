@@ -1,6 +1,22 @@
 (function() {
     'use strict';
 
+    const originalFetch = window.fetch;
+    window.fetch = async (...args) => {
+        const url = typeof args[0] === 'string' ? args[0] : args[0].url;
+        
+        // 직접 숫자를 적는 대신, 아래에 있는 config.targetIds 명단을 보고 검사합니다.
+        const isTargetPage = config.targetIds.some(id => window.location.href.includes(`/monitoring/${id}`));
+        
+        if (isTargetPage && url && (url.includes('nodes?') || url.includes('sites?') || url.includes('paths?'))) {
+            return new Response(JSON.stringify({ data: [], items: [], total: 0 }), {
+                status: 200,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
+        return originalFetch(...args);
+    };
+
     if (window.neubieEngineLoaded) return;
     window.neubieEngineLoaded = true;
 
@@ -62,26 +78,49 @@
     const originalFetch = window.fetch;
     window.fetch = async (...args) => {
         const url = typeof args[0] === 'string' ? args[0] : args[0].url;
-        if (state.isMapOpt && url && (url.includes('nodes?') || url.includes('sites?') || url.includes('paths?'))) {
-            return new Response(JSON.stringify({ data: [], items: [], total: 0 }), { 
-                status: 200, 
-                headers: { 'Content-Type': 'application/json' } 
+        // 최적화 대상 URL 감지
+        if (url && (url.includes('nodes?') || url.includes('sites?') || url.includes('paths?'))) {
+            // 데이터를 빈 배열로 반환하여 렌더링 방지
+            return new Response(JSON.stringify({ data: [], items: [], total: 0 }), {
+                status: 200,
+                headers: { 'Content-Type': 'application/json' }
             });
         }
         return originalFetch(...args);
     };
 
     function injectMapStyle() {
-        let style = document.getElementById('neubie-opt-style') || document.createElement('style');
-        style.id = 'neubie-opt-style';
-        style.textContent = state.isMapOpt ? `
-            [data-qk^="node-marker"] { display: none !important; }
-            gmp-advanced-marker:has([data-qk*="base-marker-대기장소"]) { display: block !important; visibility: visible !important; z-index: 500 !important; }
-            gmp-advanced-marker:has([data-qk*="base-marker-대기장소"]) svg { transform: rotate(180deg) !important; }
-            gmp-advanced-marker:has([data-qk*="robot"]), div[class*="MiniMap"] gmp-advanced-marker { display: block !important; visibility: visible !important; z-index: 1000 !important; }
-            .gm-style-cc { display: none !important; } 
-        ` : "";
-        if (!style.parentElement) document.head.appendChild(style);
+        const style = document.createElement('style');
+        style.id = 'neubie-map-optimization';
+        style.textContent = `
+            /* 1. 불필요한 마커 및 경로 숨기기 (가속 핵심) */
+            gmp-advanced-marker:has([data-qk*="base-marker"]),
+            gmp-advanced-marker:has([data-qk*="node-marker"]),
+            gmp-advanced-marker:has([data-qk*="site-marker"]),
+            #map-container svg path[stroke-opacity],
+            .gm-style img[src*="transparent"] { 
+                display: none !important; 
+            }
+
+            /* 2. 대기장소 마커 반전 복구 (가독성) */
+            gmp-advanced-marker:has([data-qk*="base-marker-대기장소"]) {
+                display: block !important;
+                transform: rotate(180deg) !important;
+            }
+
+            /* 3. 기체 및 미니맵 마커는 절대 보존 */
+            gmp-advanced-marker:not(:has([data-qk])),
+            gmp-advanced-marker:has([data-qk*="robot"]),
+            div[class*="MiniMap"] gmp-advanced-marker {
+                display: block !important;
+                visibility: visible !important;
+                z-index: 1000 !important;
+            }
+
+            /* 4. 브라우저 렌더링 가속 */
+            .gm-style canvas { contain: strict !important; }
+        `;
+        document.head.appendChild(style);
     }
 
     // [추가] 네이밍용 시간 보정 유틸리티
@@ -279,6 +318,7 @@
         if (!times) return { isExpired: false, remainMin: 999, score: 0 };
         
         const now = new Date();
+        now.setHours(21, 45, 0);
         const startTimeStr = times[0];
         const endTimeStr = times[times.length - 1];
 
@@ -392,7 +432,7 @@
                     <option value="3" ${currentInt === '3' ? 'selected' : ''}>3분 전 (다중 13분)</option>
                     <option value="5" ${currentInt === '5' ? 'selected' : ''}>5분 전 (다중 15분)</option>
                 </select>
-            </div>
+            </div>  
             <div id="task-list-container"></div>
         `;
 
@@ -498,8 +538,8 @@
         const btn = e.target.closest('div.flex.justify-center.items-center.w-full') || e.target.closest('button');
         if (!btn || btn.dataset.intercepted) return;
 
-        const btnText = btn.innerText.replace(/\s/g, "");
-        const isTarget = btnText === "관제시작";
+        const btnText = btn.innerText.trim(); // 양끝 공백만 제거
+        const isTarget = (btnText === "관제 시작"); // 정확히 "관제 시작"일 때만 true
         const isAvailable = !btnText.includes("확인중") && !btnText.includes("종료");
 
         if (isTarget && isAvailable) {
@@ -721,16 +761,42 @@
 
         // 이벤트 바인딩
         setTimeout(() => {
+            // 1. 이름 입력창 로직
             const input = document.getElementById('inline-name-input');
             if (input) {
                 input.onchange = () => {
                     const newName = input.value.trim();
                     localStorage.setItem('neubie_user_name', newName);
+                    
+                    // 이름 저장 시 현재 선택된 알림 시간도 강제로 한 번 더 저장
+                    const intervalSelect = document.getElementById('remind-interval');
+                    if (intervalSelect) {
+                        localStorage.setItem('neubie_remind_int', intervalSelect.value);
+                    }
+
                     syncTasksFromServer();
                     renderDashboard();
+                    console.log(`[설정 완료] ${newName}님, 알림 설정이 동기화되었습니다.`);
                 };
             }
-            // X 버튼 클릭 시 통합 종료 실행
+
+            // 2. 알림 설정 드롭다운 선택 시 즉시 저장 로직
+            const intervalSelect = document.getElementById('remind-interval');
+            if (intervalSelect) {
+                // 드롭다운 값이 바뀔 때마다 실행
+                intervalSelect.onchange = () => {
+                    const selectedValue = intervalSelect.value;
+                    localStorage.setItem('neubie_remind_int', selectedValue);
+                    
+                    // 시각적 피드백 (선택하면 잠시 노랗게 변했다가 돌아옴)
+                    intervalSelect.style.backgroundColor = '#fef9c3'; 
+                    setTimeout(() => { intervalSelect.style.backgroundColor = 'white'; }, 300);
+                    
+                    console.log(`[알림 설정 변경] ${selectedValue}분 전으로 저장되었습니다.`);
+                };
+            }
+
+            // 3. X 버튼 클릭 시 통합 종료 실행
             const closeBtn = document.getElementById('all-close-btn');
             if (closeBtn) closeBtn.onclick = closeAllPopups;
         }, 0);
