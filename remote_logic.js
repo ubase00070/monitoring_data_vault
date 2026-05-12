@@ -218,71 +218,39 @@
     }
 
     /* ============================================================
-        SECTION 4-1. [최종 무결 수정] 업무 시트 탐지 및 데이터 추출 엔진
+        SECTION 4-1. [서버 동기화] GitHub JSON 기반 업무 로드 엔진
        ============================================================ */
-    // 시트 ID 포함 여부 판별 로직 강화
-    if (currUrl.includes(config.sheetId) || currUrl.includes("docs.google.com/spreadsheets")) {
-        console.log("📋 업무 시트 엔진 가동 중... (데이터 스캔 시작)");
-        
-        setInterval(() => {
-            // [테스트] 사용자 요청: '안혜림' 고정
-            const myName = "안혜림"; 
+    // 시트 탭이 아니더라도 모든 페이지(뉴비고 대시보드 등)에서 실행되어야 함
+    console.log("📋 서버 동기화 업무 엔진 가동 중...");
 
-            const foundTasks = [];
-            const rows = document.querySelectorAll('tr');
-            
-            if (rows.length === 0) return;
+    function syncTasksFromServer() {
+        const myName = "안혜림";
+        const buster = Math.floor(Date.now() / 600000); // 10분 단위 캐시 버스터
+        const dataUrl = `https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/daily_tasks.json?v=${buster}`;
 
-            rows.forEach((row, index) => {
-                const rowText = row.innerText || "";
-                const rowNum = index + 1;
-
-                // 이름이 포함되어 있지 않으면 스캔 건너뜀 (성능 최적화)
-                if (!rowText.includes(myName)) return;
-
-                // 1. 다중 모니터링 구역 스캔 (6행 ~ 40행으로 여유 있게 설정)
-                // 시트 구조: F열(시간), G열(이름) - 텍스트 내에 이름과 시간 형식이 있는지 확인
-                if (rowNum >= 6 && rowNum <= 40) {
-                    const timeMatch = rowText.match(/\d{2}:\d{2}/); // "08:30" 형태 추출
-                    if (timeMatch) {
-                        foundTasks.push({ 
-                            type: 'monitoring', 
-                            content: `🖥️ 다중 모니터링 (${timeMatch[0]})`, 
-                            rawTime: timeMatch[0] 
-                        });
-                    }
+        fetch(dataUrl)
+            .then(res => res.json())
+            .then(data => {
+                // 내 이름(안혜림)에 해당하는 업무만 필터링
+                const myTasks = data.filter(t => t.user === myName);
+                
+                if (myTasks.length > 0) {
+                    console.log(`📥 서버 데이터 수신 완료: ${myTasks.length}건`);
+                    // 대시보드 UI 업데이트를 위해 메시지 전송
+                    taskChannel.postMessage({ 
+                        type: 'TASK_UPDATE', 
+                        tasks: myTasks, 
+                        user: myName,
+                        timestamp: Date.now()
+                    });
                 }
-
-                // 2. 일일 담당 업무 구역 스캔 (70행 이상 ~ 플렉시블)
-                // 시트 구조: B열([시간] 업무), G열(이름)
-                if (rowNum >= 70) {
-                    // [00:00] 또는 00:00 형태의 시간 정보가 있는지 확인
-                    const timeMatch = rowText.match(/\[?\d{2}:\d{2}\]?/);
-                    if (timeMatch) {
-                        // 이름 부분을 제외한 나머지 텍스트를 업무 내용으로 간주
-                        let taskDetail = rowText.split(myName)[0].replace(/\t/g, ' ').trim();
-                        foundTasks.push({ 
-                            type: 'task', 
-                            content: taskDetail, 
-                            rawTime: timeMatch[0] 
-                        });
-                    }
-                }
-            });
-
-            // 찾은 업무가 있을 경우에만 전송
-            if (foundTasks.length > 0) {
-                // 중복 제거 (행 중복 스캔 방지)
-                const uniqueTasks = Array.from(new Map(foundTasks.map(item => [item.content, item])).values());
-                taskChannel.postMessage({ 
-                    type: 'TASK_UPDATE', 
-                    tasks: uniqueTasks, 
-                    user: myName,
-                    timestamp: Date.now()
-                });
-            }
-        }, 60000); // 30초 주기로 더 기민하게 동기화
+            })
+            .catch(err => console.error("⚠️ 업무 데이터 로드 실패:", err));
     }
+
+    // 처음 로드 시 실행 및 5분마다 갱신
+    syncTasksFromServer();
+    setInterval(syncTasksFromServer, 300000);
 
     // 시간 추출 및 상태 판단 함수 (취소선 및 알림 계산용)
     function getTaskStatus(rawTime, isMonitoring) {
