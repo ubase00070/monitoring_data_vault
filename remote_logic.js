@@ -6,7 +6,6 @@
 
     const currUrl = window.location.href;
     const isNeubieSite = currUrl.includes('go.neubie.ai');
-    console.log("🛰️ 뉴비 통합 엔진 v1.4 로드 완료 (줄을 서시오: 뉴비고 최적화)");
 
     /* ============================================================
         SECTION 1. 상태 및 설정
@@ -255,8 +254,6 @@
             .then(data => {
                 const myTasks = data.filter(t => t.user === myName);
                 window.currentMyTasks = myTasks;
-                
-                console.log(`📥 데이터 동기화 완료: ${new Date().toLocaleTimeString()}`);
 
                 // [핵심] 레이아웃이 닫혀있어도 알림 조건을 체크함
                 checkAndTriggerNotifications(myTasks);
@@ -337,7 +334,6 @@
 
     // 리마인더 알림창 생성 함수 (5초 점멸)
     function triggerReminder(content, remainMin) {
-        console.log(`[알림] ${content} 시작 ${remainMin}분 전!`);
 
         // 점멸 keyframes 한 번만 주입
         if (!document.getElementById('neubie-alarm-style')) {
@@ -597,7 +593,6 @@
             const newName = input.value.trim();
             if (newName) {
                 localStorage.setItem('neubie_user_name', newName);
-                console.log(`👤 사용자 변경: ${newName}`);
                 syncTasksFromServer(); // 이름 변경 즉시 서버 데이터 재요청
                 renderDashboard();    // UI 즉시 갱신
             }
@@ -771,7 +766,6 @@
 
                     syncTasksFromServer();
                     renderDashboard();
-                    console.log(`[설정 완료] ${newName}님, 알림 설정이 동기화되었습니다.`);
                 };
             }
 
@@ -787,7 +781,6 @@
                     intervalSelect.style.backgroundColor = '#fef9c3'; 
                     setTimeout(() => { intervalSelect.style.backgroundColor = 'white'; }, 300);
                     
-                    console.log(`[알림 설정 변경] ${selectedValue}분 전으로 저장되었습니다.`);
                 };
             }
 
@@ -921,7 +914,6 @@
         setTimeout(() => {
             if (location.href !== lastUrl) {
                 lastUrl = location.href;
-                console.log("🔗 페이지 이동 감지: 레이아웃을 닫습니다.");
                 closeAllPopups();
             }
         }, 100); // 주소가 바뀔 시간을 잠깐 주는 0.1초 대기
@@ -945,8 +937,19 @@
 
     // 2. 백그라운드 리프레시 (1분마다 데이터만 몰래 가져옴)
     // 업무 방해를 주지 않기 위해 fetch만 수행하며, 화면 갱신은 위 sync 함수 내 안전장치에 의존함
+    let lastNotifiedMin = -1; 
+
     setInterval(() => {
-        syncTasksFromServer();
-    }, 60000);
+        const now = new Date();
+        const currentFullMin = now.getHours() * 60 + now.getMinutes();
+
+        // 1. 이미 이번 '분'에 체크를 완료했다면 즉시 리턴
+        if (lastNotifiedMin === currentFullMin) return;
+
+        // 2. 새로운 '분'이 시작될 때만 체크 실행 (로그 없음)
+        lastNotifiedMin = currentFullMin; 
+        syncTasksFromServer(); 
+        
+    }, 1000); // 1초마다 조용히 감시
 
 })();
