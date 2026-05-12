@@ -225,7 +225,7 @@
 
     function syncTasksFromServer() {
         const myName = "안혜림";
-        const buster = Math.floor(Date.now() / 600000); // 10분 단위 캐시 버스터
+        const buster = Math.floor(Date.now() / 60000); // 1분 단위 캐시 버스터
         const dataUrl = `https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/daily_tasks.json?v=${buster}`;
 
         fetch(dataUrl)
