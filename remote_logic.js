@@ -557,12 +557,12 @@
         };
 
         card.innerHTML = `
-            <div style="color:#3b82f6; font-weight:bold; font-size:14px; margin-bottom:10px;">🏷️ 영상 파일명 도우미</div>
+            <div style="color:#3b82f6; font-weight:bold; font-size:14px; margin-bottom:10px;">🏷️ 영상 파일명 변경 도우미</div>
             <div style="display: flex; gap: 5px; margin-bottom: 10px;">
                 <select id="robotSelector" style="flex: 1.2; background: #333; color: white; border: 1px solid #555; border-radius: 4px; font-size: 12px; padding: 4px;">
                     ${dropdownOptions || '<option>최근 배달 기체 미감지</option>'}
                 </select>
-                <input type="text" id="taskInput" placeholder="F..." style="flex: 1; background: #333; color: white; border: 1px solid #555; padding: 4px; border-radius: 4px; font-size: 12px;">
+                <input type="text" id="taskInput" placeholder="F... 주문번호를 붙여 넣으세요." style="flex: 1; background: #333; color: white; border: 1px solid #555; padding: 4px; border-radius: 4px; font-size: 12px;">
                 <button id="copyFileName" style="background: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size:12px;">복사</button>
             </div>
             <div style="display: flex; gap: 5px; flex-wrap: wrap;">
@@ -727,7 +727,7 @@
         list.appendChild(createNamingCard());
 
         const isBatteryOpen = batteryPopup.style.display === 'block';
-        list.appendChild(createMenuCard("🔋 성남 실시간 배터리 현황", "배터리 정보 복사 기능", null, null, () => {
+        list.appendChild(createMenuCard("🔋 실시간 성남시 기체 배터리 현황", "실시간으로 정보를 받아옵니다.", null, null, () => {
             toggleBattery();
             renderDashboard(); 
         }, isBatteryOpen ? '닫기' : '열기'));
