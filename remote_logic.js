@@ -231,18 +231,18 @@
         fetch(dataUrl)
             .then(res => res.json())
             .then(data => {
-                // 내 이름(안혜림)에 해당하는 업무만 필터링
                 const myTasks = data.filter(t => t.user === myName);
                 
                 if (myTasks.length > 0) {
                     console.log(`📥 서버 데이터 수신 완료: ${myTasks.length}건`);
-                    // 대시보드 UI 업데이트를 위해 메시지 전송
-                    taskChannel.postMessage({ 
-                        type: 'TASK_UPDATE', 
-                        tasks: myTasks, 
-                        user: myName,
-                        timestamp: Date.now()
-                    });
+                    
+                    // 1. 전역 변수에 저장 (대시보드가 열릴 때 참조할 수 있도록)
+                    window.currentMyTasks = myTasks; 
+
+                    // 2. 대시보드가 이미 열려있다면 즉시 새로 그리기
+                    if (dashboard && dashboard.style.display === 'block') {
+                        renderDashboard();
+                    }
                 }
             })
             .catch(err => console.error("⚠️ 업무 데이터 로드 실패:", err));
@@ -565,18 +565,28 @@
         list.style.display = "grid"; 
         list.style.gap = "12px";
 
-        list.appendChild(createMenuCard("🗺️ 역삼, 송도, 성수 요기요 / 성남 삼평동 맵 최적화", "노드 제거 및 대기장소 마커 회전", 'isMapOpt', 'neubie_opt_map', () => injectMapStyle()));
-        list.appendChild(createMenuCard("📡 줄을 서시오", "중복 관제 완화 기능 (관제 시작 버튼에만 작동)", 'isQueueOpt', 'neubie_opt_queue'));
-        list.appendChild(createMenuCard("📋 일일 업무", "시트 연동 정보", 'isTaskVisible', 'neubie_opt_task', () => {
+        // 1. 기본 최적화 카드들
+        list.appendChild(createMenuCard("🗺️ 맵 최적화", "노드 제거 및 마커 회전", 'isMapOpt', 'neubie_opt_map', () => injectMapStyle()));
+        list.appendChild(createMenuCard("📡 줄을 서시오", "중복 관제 완화 기능", 'isQueueOpt', 'neubie_opt_queue'));
+
+        /* ============================================================
+            수정된 부분: 동적 이름 적용 (안혜림의 일일 업무)
+           ============================================================ */
+        const targetName = "안혜림"; // 현재 테스트용 이름
+        const taskCount = (window.currentMyTasks && window.currentMyTasks.length) || 0;
+        const taskDesc = taskCount > 0 ? `현재 ${taskCount}개의 배정된 업무가 있습니다.` : "배정된 업무가 없습니다.";
+
+        list.appendChild(createMenuCard(`📋 ${targetName}의 일일 업무`, taskDesc, 'isTaskVisible', 'neubie_opt_task', () => {
             if (state.isTaskVisible) {
                 taskPopup.style.display = 'block';
-                renderTaskList(state.myTodayTasks);
+                // 서버에서 받은 최신 데이터를 팝업에 전달
+                renderTaskList(window.currentMyTasks || []);
             } else {
                 taskPopup.style.display = 'none';
             }
         }));
 
-        // 네이밍 엔진 카드를 리스트의 4번째 항목으로 주입
+        // 2. 네이밍 엔진 및 배터리 카드
         list.appendChild(createNamingCard());
 
         const isBatteryOpen = batteryPopup.style.display === 'block';
