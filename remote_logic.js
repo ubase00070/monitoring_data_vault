@@ -225,7 +225,7 @@
 
     function syncTasksFromServer() {
         const myName = localStorage.getItem('neubie_user_name');
-        if (!myName) return; // 이름이 없으면 중단
+        if (!myName) return; // 이름 없으면 실행 안 함
 
         const buster = Math.floor(Date.now() / 60000); 
         const dataUrl = `https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/daily_tasks.json?v=${buster}`;
@@ -233,22 +233,19 @@
         fetch(dataUrl)
             .then(res => res.json())
             .then(data => {
-                // [중요] 여기서 사용자의 이름으로 필터링을 걸어줘야 합니다.
-                const filteredTasks = data.filter(task => task.user === myName);
+                // [수정] 내 이름에 해당하는 임무만 필터링
+                const myTasks = data.filter(t => t.user === myName);
+                window.currentMyTasks = myTasks;
                 
-                window.currentMyTasks = filteredTasks;
-                console.log(`📥 ${myName}님의 데이터 수신: ${filteredTasks.length}건`);
-                
-                if (dashboard && dashboard.style.display === 'block') {
-                    renderDashboard();
+                console.log(`📥 ${myName} 데이터 동기화 완료 (${myTasks.length}건)`);
+
+                // [추가] 업무 팝업이 열려있는 상태라면 즉시 화면 갱신
+                if (taskPopup && taskPopup.style.display === 'block') {
+                    renderTaskList(myTasks);
                 }
             })
-            .catch(err => console.error("⚠️ 업무 데이터 로드 실패:", err));
+            .catch(err => console.log("Silent sync failed"));
     }
-
-    // 처음 로드 시 실행 및 5분마다 갱신
-    syncTasksFromServer();
-    setInterval(syncTasksFromServer, 300000);
 
     // 시간 추출 및 상태 판단 함수 (취소선 및 알림 계산용)
     function getTaskStatus(rawTime, isMonitoring) {
@@ -596,38 +593,76 @@
        ============================================================ */
     function renderDashboard() {
         dashboard.innerHTML = '';
-        const title = document.createElement('h2');
-        title.textContent = "🛰️ Neubie Helper Panel";
-        title.style.cssText = "color:#3b82f6; margin-bottom:20px; font-size:20px;";
-        dashboard.appendChild(title);
         
+        // 1. 헤더 컨테이너 (제목 + 성명 입력창 인라인 배치)
+        const headerContainer = document.createElement('div');
+        headerContainer.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; padding-right:5px;";
+
+        const title = document.createElement('h2');
+        title.textContent = "🛰️ Neubie Helper";
+        title.style.cssText = "color:#3b82f6; font-size:18px; margin:0; font-weight:bold;";
+
+        // 이름 입력 영역 (성명: [입력칸])
+        const nameArea = document.createElement('div');
+        nameArea.style.cssText = "display:flex; align-items:center; gap:5px; font-size:13px; color:#64748b;";
+        const currentName = localStorage.getItem('neubie_user_name') || "";
+        
+        nameArea.innerHTML = `
+            <span>성명:</span>
+            <input type="text" id="inline-name-input" value="${currentName}" placeholder="미설정"
+                style="width:65px; border:none; border-bottom:1px solid #cbd5e1; outline:none; padding:2px 4px; font-size:13px; font-weight:bold; color:#1e293b; background:transparent; text-align:center;">
+        `;
+
+        headerContainer.appendChild(title);
+        headerContainer.appendChild(nameArea);
+        dashboard.appendChild(headerContainer);
+
+        // 이름 입력 시 로컬 스토리지 자동 저장 (onchange 시점에 데이터 갱신)
+        setTimeout(() => {
+            const input = document.getElementById('inline-name-input');
+            if (input) {
+                input.onchange = () => {
+                    const newName = input.value.trim();
+                    localStorage.setItem('neubie_user_name', newName);
+                    console.log(`👤 사용자 변경: ${newName}`);
+                    syncTasksFromServer(); // 이름 변경 시 즉시 백그라운드 fetch
+                    renderDashboard();    // 제목 이름 업데이트를 위해 재렌더링
+                };
+            }
+        }, 0);
+
         const list = document.createElement('div');
         list.id = 'dashboard-list';
         list.style.display = "grid"; 
         list.style.gap = "12px";
 
-        // 1. 기본 최적화 카드들
+        // 2. 기본 최적화 카드들
         list.appendChild(createMenuCard("🗺️ 맵 최적화", "노드 제거 및 마커 회전", 'isMapOpt', 'neubie_opt_map', () => injectMapStyle()));
         list.appendChild(createMenuCard("📡 줄을 서시오", "중복 관제 완화 기능", 'isQueueOpt', 'neubie_opt_queue'));
-        list.appendChild(createConfigCard());
 
-        /* ============================================================
-            수정된 부분: 동적 이름 적용
-           ============================================================ */
+        // 3. 일일 업무 카드 (열기 버튼 방식 + 클릭 시 리프레시)
         const storedName = localStorage.getItem('neubie_user_name') || "사용자";
+        const isTaskOpen = taskPopup.style.display === 'block';
         const taskCount = (window.currentMyTasks && window.currentMyTasks.length) || 0;
-        const taskDesc = taskCount > 0 ? `현재 ${taskCount}개의 배정된 업무가 있습니다.` : "배정된 업무가 없거나 이름 설정을 확인해주세요.";
+        const taskDesc = taskCount > 0 ? `현재 ${taskCount}개의 배정 업무가 있습니다.` : "배정된 업무가 없습니다.";
 
-        list.appendChild(createMenuCard(`📋 ${storedName}의 일일 업무`, taskDesc, 'isTaskVisible', 'neubie_opt_task', () => {
-            if (state.isTaskVisible) {
-                taskPopup.style.display = 'block';
-                renderTaskList(window.currentMyTasks || []);
-            } else {
-                taskPopup.style.display = 'none';
-            }
-        }));
+        list.appendChild(createMenuCard(
+            `📋 ${storedName}의 일일 업무`, 
+            taskDesc, 
+            null, null, 
+            () => {
+                if (taskPopup.style.display === 'none') {
+                    syncTasksFromServer(); // [중요] 열기 누르는 순간 리프레시(Fetch)
+                    taskPopup.style.display = 'block';
+                } else {
+                    taskPopup.style.display = 'none';
+                }
+                renderDashboard(); 
+            }, 
+            isTaskOpen ? '닫기' : '열기'
+        ));
 
-        // 2. 네이밍 엔진 및 배터리 카드
+        // 4. 네이밍 엔진 및 배터리 카드
         list.appendChild(createNamingCard());
 
         const isBatteryOpen = batteryPopup.style.display === 'block';
@@ -692,10 +727,15 @@
     document.addEventListener('click', handleControlClick, true);
     injectMapStyle();
     
-    setInterval(() => { 
-        if (batteryPopup.style.display === 'block') updateBatteryStatus(); 
-    }, 10000);
+    // 1. 페이지 로드 시 이름이 설정되어 있다면 즉시 한 번 동기화
+    if (localStorage.getItem('neubie_user_name')) {
+        syncTasksFromServer();
+    }
 
-    if (state.isTaskVisible) renderTaskList(state.myTodayTasks);
+    // 2. 백그라운드 리프레시 (1분마다 데이터만 몰래 가져옴)
+    // 업무 방해를 주지 않기 위해 fetch만 수행하며, 화면 갱신은 위 sync 함수 내 안전장치에 의존함
+    setInterval(() => {
+        syncTasksFromServer();
+    }, 60000);
 
 })();
