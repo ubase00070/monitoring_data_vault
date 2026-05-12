@@ -733,7 +733,7 @@
         headerContainer.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; padding-right:5px;";
 
         const title = document.createElement('h2');
-        title.textContent = "✨ 우린 램이 8GB라고!";
+        title.textContent = "✨ 우린 램이 8GB라니까?";
         title.style.cssText = "color:#3b82f6; font-size:18px; margin:0; font-weight:bold;";
 
         // 이름 입력 및 닫기 버튼 영역
@@ -810,7 +810,7 @@
         const taskDesc = taskCount > 0 ? `금일 ${taskCount}개의 배정 업무가 있습니다.` : "배정된 업무가 없습니다.";
 
         list.appendChild(createMenuCard(
-            `📋 ${storedName}의 일일 업무`, 
+            `📋 ${storedName}의 일일 업무(알림 설정)`, 
             taskDesc, 
             null, null, 
             () => {
@@ -907,6 +907,33 @@
             if (dashboard.style.display === 'block') renderDashboard(); 
         }
     });
+
+    let lastUrl = location.href;
+
+    // 1. 브라우저의 뒤로가기/앞으로가기 대응 (이벤트 발생 시에만 작동)
+    window.addEventListener('popstate', () => {
+        closeAllPopups();
+    });
+
+    // 2. 화면 어디든 클릭했을 때 주소 확인 (부담 없는 방식)
+    // 뉴비고에서 메뉴를 클릭해 이동할 때 즉각 닫히게 합니다.
+    document.addEventListener('click', () => {
+        setTimeout(() => {
+            if (location.href !== lastUrl) {
+                lastUrl = location.href;
+                console.log("🔗 페이지 이동 감지: 레이아웃을 닫습니다.");
+                closeAllPopups();
+            }
+        }, 100); // 주소가 바뀔 시간을 잠깐 주는 0.1초 대기
+    }, true);
+
+    // 3. 만약 클릭 없이 코드로만 주소가 바뀌는 경우를 대비 (간격을 2초로 늘림)
+    setInterval(() => {
+        if (location.href !== lastUrl) {
+            lastUrl = location.href;
+            closeAllPopups();
+        }
+    }, 2000); // 2초 정도면 충분히 여유로움
 
     document.addEventListener('click', handleControlClick, true);
     if (state.isMapOpt) injectMapStyle();
