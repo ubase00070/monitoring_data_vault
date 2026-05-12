@@ -305,36 +305,52 @@
     }
 
     /* ============================================================
-        SECTION 4-2. [수정] UI 렌더링 및 알림 제어
-       ============================================================ */
+    SECTION 4-2. UI 렌더링 및 07시 기준 정렬/알림 제어
+   ============================================================ */
     function renderTaskList(tasks) {
         const currentInt = localStorage.getItem('neubie_remind_int') || '0';
-        
-        // 1. 07시 기준 상대 시간 계산 함수 (내부 헬퍼)
+
+        // 1. 07시 기준 상대 시간 및 상태 계산 함수
         function getTaskStatus(rawTime) {
-            if (!rawTime) return { isExpired: false, remainMin: -1 };
+            if (!rawTime) return { isExpired: false, remainMin: -1, score: 0 };
 
             const now = new Date();
-            const [tHour, tMin] = rawTime.split(':').map(Number);
+            const timeMatch = rawTime.match(/\d{2}:\d{2}/);
+            if (!timeMatch) return { isExpired: false, remainMin: -1, score: 0 };
 
-            // [핵심] 모든 시간을 07시 기준(Relative)으로 변환
-            // 현재 시간 변환
-            let relCurrHour = now.getHours() - 7;
-            if (relCurrHour < 0) relCurrHour += 24;
-            const currScore = relCurrHour * 60 + now.getMinutes();
+            const [tHour, tMin] = timeMatch[0].split(':').map(Number);
 
-            // 업무 시간 변환
-            let relTaskHour = tHour - 7;
-            if (relTaskHour < 0) relTaskHour += 24;
-            const taskScore = relTaskHour * 60 + tMin;
+            // [핵심] 07시 기준 Relative Hour 계산 (07:00 -> 0, 06:00 -> 23)
+            const getRelativeScore = (h, m) => {
+                let relHour = h - 7;
+                if (relHour < 0) relHour += 24;
+                return relHour * 60 + m;
+            };
+
+            const currScore = getRelativeScore(now.getHours(), now.getMinutes());
+            const taskScore = getRelativeScore(tHour, tMin);
 
             const remainMin = taskScore - currScore;
-            const isExpired = taskScore < currScore; // 07시 기준 점수가 현재보다 작으면 종료
+            const isExpired = taskScore < currScore;
 
-            return { isExpired, remainMin };
+            return { isExpired, remainMin, score: taskScore };
         }
 
-        // 2. 헤더 및 설정 UI 렌더링
+        // 2. 노이즈 제거 및 07시 기준 정렬
+        const validTasks = tasks
+            .filter(t => {
+                const content = t.content || "";
+                const rawTime = t.rawTime || "";
+                // 내용이 없거나 1899년 노이즈 데이터인 경우 제외
+                return content.trim() !== "" && !String(rawTime).includes("1899");
+            })
+            .sort((a, b) => {
+                const scoreA = getTaskStatus(a.rawTime || a.time).score;
+                const scoreB = getTaskStatus(b.rawTime || b.time).score;
+                return scoreA - scoreB; // 점수 낮은 순(07:00부터) 정렬
+            });
+
+        // 3. 헤더 및 설정 UI 렌더링
         taskPopup.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid #444; padding-bottom:10px;">
                 <b style="color:#fbbf24; font-size:16px;">📋 리마인더 설정</b>
@@ -353,21 +369,21 @@
         setter.onchange = (e) => {
             localStorage.setItem('neubie_remind_int', e.target.value);
             if (window.state) window.state.notifiedTasks = new Set();
-            syncTasksFromServer(); // 설정 변경 시 즉시 재렌더링
+            syncTasksFromServer();
         };
         
-        if (!tasks || tasks.length === 0) {
+        if (validTasks.length === 0) {
             container.innerHTML = `<div style="color:#666; text-align:center; padding:20px; font-size:12px;">배정된 업무가 없습니다.</div>`;
             return;
         }
 
-        // 3. 리스트 생성
-        tasks.forEach(t => {
-            // rawTime이 없으면 t.time 등을 참조하도록 유연하게 대응
-            const status = getTaskStatus(t.rawTime || t.time);
+        // 4. 리스트 생성
+        validTasks.forEach(t => {
+            const timeKey = t.rawTime || t.time;
+            const status = getTaskStatus(timeKey);
             const interval = parseInt(localStorage.getItem('neubie_remind_int') || '0');
 
-            // 알림 로직 (state 객체 안전장치 포함)
+            // 알림 로직
             if (window.state && interval > 0 && status.remainMin === interval) {
                 if (!state.notifiedTasks) state.notifiedTasks = new Set();
                 if (!state.notifiedTasks.has(t.content)) {
@@ -379,7 +395,6 @@
             const item = document.createElement('div');
             const isMon = t.type === 'monitoring';
             
-            // 시간이 지났다면 취소선 + 투명도 조절 스타일 적용
             const textStyle = status.isExpired 
                 ? 'text-decoration: line-through; color: #777; opacity: 0.7;' 
                 : 'color: #eee;';
@@ -391,9 +406,12 @@
                 display: flex; justify-content: space-between; align-items: center;
             `;
 
+            // 표시할 시간 포맷 정리 (1899년 등의 데이터가 섞여있을 경우 대비)
+            const displayTime = (timeKey && timeKey.length > 10) ? timeKey.match(/\d{2}:\d{2}/)?.[0] : timeKey;
+
             item.innerHTML = `
                 <div style="${textStyle} font-weight:500;">
-                    <span style="color:${status.isExpired ? '#777' : '#fbbf24'}; margin-right:8px;">${t.time || t.rawTime}</span>
+                    <span style="color:${status.isExpired ? '#777' : '#fbbf24'}; margin-right:8px;">${displayTime || ''}</span>
                     ${t.content}
                 </div>
                 <div style="font-size:11px;">${status.isExpired ? '✅' : '⏳'}</div>
