@@ -335,11 +335,11 @@
     }
 
     /* ============================================================
-        SECTION 6. [수정] 스마트 네이밍 엔진 카드 생성
+        SECTION 6. 스마트 네이밍 엔진 (컴포넌트화)
        ============================================================ */
     function createNamingCard() {
         const card = document.createElement('div');
-        card.id = 'namingSection';
+        card.className = 'naming-engine-card';
         card.style.cssText = 'background:#252525; padding:15px; border-radius:15px; border:1px solid #333; margin-top:5px;';
 
         const history = JSON.parse(localStorage.getItem('neubie_robot_history') || '[]');
@@ -364,7 +364,6 @@
             </div>
         `;
 
-        // 버튼 스타일 등록
         if (!document.getElementById('naming-btn-style')) {
             const style = document.createElement('style');
             style.id = 'naming-btn-style';
@@ -374,68 +373,37 @@
 
         const toast = (msg) => { alert(msg + " (복사완료)"); };
 
-        // 이벤트 바인딩 (setTimeout으로 실제 DOM 부착 후 동작 보장)
         setTimeout(() => {
             const copyBtn = card.querySelector('#copyFileName');
-            if (copyBtn) {
-                copyBtn.onclick = () => {
-                    const robotId = card.querySelector('#robotSelector').value;
-                    const taskRaw = card.querySelector('#taskInput').value;
-                    const taskMatch = taskRaw.match(/F\d+/);
-                    const taskNo = taskMatch ? "#" + taskMatch[0] : "#없음";
-                    const info = ROBOT_MAP[robotId] || { site: "알수없음", unit: "#000" };
-                    const time = new Date();
-                    const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_${info.site}_${info.unit}_${taskNo}`;
-                    navigator.clipboard.writeText(finalName);
-                    toast(finalName);
-                };
-            }
-
+            if (copyBtn) copyBtn.onclick = () => {
+                const robotId = card.querySelector('#robotSelector').value;
+                const taskRaw = card.querySelector('#taskInput').value;
+                const taskNo = taskRaw.match(/F\d+/) ? "#" + taskRaw.match(/F\d+/)[0] : "#없음";
+                const info = ROBOT_MAP[robotId] || { site: "알수없음", unit: "#000" };
+                const time = new Date();
+                const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_${info.site}_${info.unit}_${taskNo}`;
+                navigator.clipboard.writeText(finalName); toast(finalName);
+            };
             const multiBtn = card.querySelector('#btnMulti');
-            if (multiBtn) {
-                multiBtn.onclick = () => {
-                    const time = getCalculatedTime(10); 
-                    const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_다중관제영상`;
-                    navigator.clipboard.writeText(finalName);
-                    toast(finalName);
-                };
-            }
-
+            if (multiBtn) multiBtn.onclick = () => {
+                const time = getCalculatedTime(10); navigator.clipboard.writeText(`${getFormattedDate(time)}_${getFormattedHour(time)}_다중관제영상`); toast("다중관제파일명");
+            };
             const btnDeli = card.querySelector('#btnDeli');
             const btnPatrol = card.querySelector('#btnPatrol');
-
-            if (btnDeli && btnPatrol) {
-                if (!isWeekend()) {
-                    const weekDayHandler = () => {
-                        const time = getCalculatedTime(40); 
-                        const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_부산 국립과학관_#171, #170`;
-                        navigator.clipboard.writeText(finalName);
-                        toast(finalName);
-                    };
-                    btnDeli.onclick = weekDayHandler;
-                    btnPatrol.onclick = weekDayHandler;
-                } else {
-                    btnDeli.onclick = () => {
-                        const time = getCalculatedTime(10);
-                        const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_부산 국립과학관_#171`;
-                        navigator.clipboard.writeText(finalName);
-                        toast(finalName);
-                    };
-                    btnPatrol.onclick = () => {
-                        const time = getCalculatedTime(40);
-                        const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_부산 국립과학관_#170`;
-                        navigator.clipboard.writeText(finalName);
-                        toast(finalName);
-                    };
-                }
-            }
+            const busanHandler = (isDeli) => {
+                const time = getCalculatedTime(isWeekend() ? (isDeli ? 10 : 40) : 40);
+                const unit = isWeekend() ? (isDeli ? "#171" : "#170") : "#171, #170";
+                const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_부산 국립과학관_${unit}`;
+                navigator.clipboard.writeText(finalName); toast(finalName);
+            };
+            if (btnDeli) btnDeli.onclick = () => busanHandler(true);
+            if (btnPatrol) btnPatrol.onclick = () => busanHandler(false);
         }, 10);
-
         return card;
     }
 
     /* ============================================================
-        SECTION 7. 대시보드 및 초기화
+        SECTION 7. 대시보드 렌더링 (구조 개선)
        ============================================================ */
     function renderDashboard() {
         dashboard.innerHTML = '';
@@ -445,28 +413,23 @@
         dashboard.appendChild(title);
         
         const list = document.createElement('div');
-        list.id = 'dashboard-list';
-        list.style.display = "grid"; 
-        list.style.gap = "12px";
+        list.style.cssText = "display: flex; flex-direction: column; gap: 12px;";
 
+        // 1. 기존 메뉴 카드들
         list.appendChild(createMenuCard("🗺️ 지도 최적화", "노드 제거 및 마커 회전", 'isMapOpt', 'neubie_opt_map', () => injectMapStyle()));
         list.appendChild(createMenuCard("📡 줄을 서시오", "중복 관제 방지 (관제 시작 버튼)", 'isQueueOpt', 'neubie_opt_queue'));
         list.appendChild(createMenuCard("📋 일일 업무", "좌측 상단 시트 연동 정보", 'isTaskVisible', 'neubie_opt_task', () => {
-            if (state.isTaskVisible) {
-                taskPopup.style.display = 'block';
-                renderTaskList(state.myTodayTasks);
-            } else {
-                taskPopup.style.display = 'none';
-            }
+            taskPopup.style.display = state.isTaskVisible ? 'block' : 'none';
+            if (state.isTaskVisible) renderTaskList(state.myTodayTasks);
         }));
 
-        // 네이밍 엔진 카드를 리스트의 4번째 항목으로 주입
+        // 2. 핵심: 네이밍 엔진 카드를 리스트 중간에 명시적으로 삽입
         list.appendChild(createNamingCard());
 
+        // 3. 배터리 버튼 카드
         const isBatteryOpen = batteryPopup.style.display === 'block';
         list.appendChild(createMenuCard("🔋 성남 배터리", "배터리 실시간 현황", null, null, () => {
-            toggleBattery();
-            renderDashboard(); 
+            toggleBattery(); renderDashboard(); 
         }, isBatteryOpen ? '닫기' : '열기'));
 
         dashboard.appendChild(list);
