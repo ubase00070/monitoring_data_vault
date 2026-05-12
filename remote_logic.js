@@ -287,7 +287,8 @@
                 
                 const taskKey = `${t.content}_${timeKey}_${targetInterval}`;
                 if (!state.notifiedTasks.has(taskKey)) {
-                    triggerReminder(t.content, status.remainMin);
+                    const displayMin = isMultiMon ? status.remainMin - 10 : status.remainMin;
+                    triggerReminder(t.content, displayMin);
                     state.notifiedTasks.add(taskKey);
                 }
             }
@@ -338,22 +339,33 @@
     // 리마인더 알림창 생성 함수 (5초 점멸)
     function triggerReminder(content, remainMin) {
         console.log(`[알림] ${content} 시작 ${remainMin}분 전!`);
-        
-        // 알림용 UI 엘리먼트 생성
+
+        // 점멸 keyframes 한 번만 주입
+        if (!document.getElementById('neubie-alarm-style')) {
+            const s = document.createElement('style');
+            s.id = 'neubie-alarm-style';
+            s.textContent = `
+                @keyframes neubie-blink {
+                    0%, 100% { border-color: #000; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+                    50% { border-color: #ff0000; box-shadow: 0 0 20px rgba(255,0,0,0.8); }
+                }
+            `;
+            document.head.appendChild(s);
+        }
+
         const alarmDiv = document.createElement('div');
         alarmDiv.style.cssText = `
             position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
             background: #fbbf24; color: #000; padding: 15px 25px; border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5); 
-            z-index: 9999999; /* 어떤 레이아웃보다도 위에 뜨도록 수정 */
-            font-weight: bold; font-size: 16px; border: 2px solid #000;
-            display: flex; align-items: center; gap: 10px; animation: fadeInDown 0.5s;
+            z-index: 9999999;
+            font-weight: bold; font-size: 16px; border: 3px solid #000;
+            display: flex; align-items: center; gap: 10px;
+            animation: neubie-blink 0.5s step-end infinite;
         `;
         alarmDiv.innerHTML = `⚠️ <b>[업무 알림]</b> ${content} 시작 ${remainMin}분 전입니다!`;
-        
+
         document.body.appendChild(alarmDiv);
 
-        // 5초 후 자동으로 사라짐
         setTimeout(() => {
             alarmDiv.style.opacity = '0';
             alarmDiv.style.transition = '0.5s';
