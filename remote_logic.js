@@ -310,6 +310,31 @@
     function renderTaskList(tasks) {
         const currentInt = localStorage.getItem('neubie_remind_int') || '0';
         
+        // 1. 07시 기준 상대 시간 계산 함수 (내부 헬퍼)
+        function getTaskStatus(rawTime) {
+            if (!rawTime) return { isExpired: false, remainMin: -1 };
+
+            const now = new Date();
+            const [tHour, tMin] = rawTime.split(':').map(Number);
+
+            // [핵심] 모든 시간을 07시 기준(Relative)으로 변환
+            // 현재 시간 변환
+            let relCurrHour = now.getHours() - 7;
+            if (relCurrHour < 0) relCurrHour += 24;
+            const currScore = relCurrHour * 60 + now.getMinutes();
+
+            // 업무 시간 변환
+            let relTaskHour = tHour - 7;
+            if (relTaskHour < 0) relTaskHour += 24;
+            const taskScore = relTaskHour * 60 + tMin;
+
+            const remainMin = taskScore - currScore;
+            const isExpired = taskScore < currScore; // 07시 기준 점수가 현재보다 작으면 종료
+
+            return { isExpired, remainMin };
+        }
+
+        // 2. 헤더 및 설정 UI 렌더링
         taskPopup.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid #444; padding-bottom:10px;">
                 <b style="color:#fbbf24; font-size:16px;">📋 리마인더 설정</b>
@@ -319,28 +344,36 @@
                     <option value="5" ${currentInt === '5' ? 'selected' : ''}>5분 전</option>
                 </select>
             </div>
+            <div id="task-list-container"></div>
         `;
 
         const setter = taskPopup.querySelector('#remindSetter');
+        const container = taskPopup.querySelector('#task-list-container');
+
         setter.onchange = (e) => {
             localStorage.setItem('neubie_remind_int', e.target.value);
-            state.notifiedTasks = new Set(); // 설정 변경 시 기록 초기화
+            if (window.state) window.state.notifiedTasks = new Set();
+            syncTasksFromServer(); // 설정 변경 시 즉시 재렌더링
         };
         
         if (!tasks || tasks.length === 0) {
-            taskPopup.innerHTML += `<div style="color:#666; text-align:center; padding:20px; font-size:12px;">업무 시트 탭을 열어주세요.</div>`;
+            container.innerHTML = `<div style="color:#666; text-align:center; padding:20px; font-size:12px;">배정된 업무가 없습니다.</div>`;
             return;
         }
 
+        // 3. 리스트 생성
         tasks.forEach(t => {
-            const status = getTaskStatus(t.rawTime, t.type === 'monitoring');
+            // rawTime이 없으면 t.time 등을 참조하도록 유연하게 대응
+            const status = getTaskStatus(t.rawTime || t.time);
             const interval = parseInt(localStorage.getItem('neubie_remind_int') || '0');
 
-            // 알림 조건 체크 (정확히 설정된 분 전일 때 딱 1번만)
-            if (interval > 0 && status.remainMin === interval && !state.notifiedTasks?.has(t.content)) {
-                triggerReminder(t.content, status.remainMin);
+            // 알림 로직 (state 객체 안전장치 포함)
+            if (window.state && interval > 0 && status.remainMin === interval) {
                 if (!state.notifiedTasks) state.notifiedTasks = new Set();
-                state.notifiedTasks.add(t.content);
+                if (!state.notifiedTasks.has(t.content)) {
+                    triggerReminder(t.content, status.remainMin);
+                    state.notifiedTasks.add(t.content);
+                }
             }
 
             const item = document.createElement('div');
@@ -352,12 +385,20 @@
                 : 'color: #eee;';
             
             item.style.cssText = `
-                background:${status.isExpired ? 'rgba(60, 60, 60, 0.1)' : (isMon ? 'rgba(59, 130, 246, 0.1)' : 'rgba(251, 191, 36, 0.1)')}; 
+                background:${status.isExpired ? 'rgba(60, 60, 60, 0.1)' : (isMon ? 'rgba(59, 130, 246, 0.15)' : 'rgba(251, 191, 36, 0.15)')}; 
                 border-left:4px solid ${status.isExpired ? '#555' : (isMon ? '#3b82f6' : '#fbbf24')}; 
                 padding:10px; border-radius:8px; margin-bottom:8px; font-size:13px; transition: 0.3s;
+                display: flex; justify-content: space-between; align-items: center;
             `;
-            item.innerHTML = `<div style="${textStyle} font-weight:500;">${t.content} ${status.isExpired ? '(완료)' : ''}</div>`;
-            taskPopup.appendChild(item);
+
+            item.innerHTML = `
+                <div style="${textStyle} font-weight:500;">
+                    <span style="color:${status.isExpired ? '#777' : '#fbbf24'}; margin-right:8px;">${t.time || t.rawTime}</span>
+                    ${t.content}
+                </div>
+                <div style="font-size:11px;">${status.isExpired ? '✅' : '⏳'}</div>
+            `;
+            container.appendChild(item);
         });
     }
 
@@ -738,6 +779,6 @@
     // 업무 방해를 주지 않기 위해 fetch만 수행하며, 화면 갱신은 위 sync 함수 내 안전장치에 의존함
     setInterval(() => {
         syncTasksFromServer();
-    }, 60000);
+    }, 300000);
 
 })();
