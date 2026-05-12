@@ -5,9 +5,10 @@
     window.fetch = async (...args) => {
         const url = typeof args[0] === 'string' ? args[0] : args[0].url;
         
-        // 직접 숫자를 적는 대신, 아래에 있는 config.targetIds 명단을 보고 검사합니다.
-        const isTargetPage = config.targetIds.some(id => window.location.href.includes(`/monitoring/${id}`));
+        // 현재 페이지가 최적화 대상 기체(44, 56, 65, 109) 페이지인지 확인
+        const isTargetPage = ['44', '56', '65', '109'].some(id => window.location.href.includes(`/monitoring/${id}`));
         
+        // 대상 페이지이면서 불필요한 데이터를 요청하는 경우 빈 값으로 응답
         if (isTargetPage && url && (url.includes('nodes?') || url.includes('sites?') || url.includes('paths?'))) {
             return new Response(JSON.stringify({ data: [], items: [], total: 0 }), {
                 status: 200,
@@ -431,7 +432,7 @@
                     <option value="3" ${currentInt === '3' ? 'selected' : ''}>3분 전 (다중 13분)</option>
                     <option value="5" ${currentInt === '5' ? 'selected' : ''}>5분 전 (다중 15분)</option>
                 </select>
-            </div>  
+            </div>
             <div id="task-list-container"></div>
         `;
 
@@ -760,42 +761,16 @@
 
         // 이벤트 바인딩
         setTimeout(() => {
-            // 1. 이름 입력창 로직
             const input = document.getElementById('inline-name-input');
             if (input) {
                 input.onchange = () => {
                     const newName = input.value.trim();
                     localStorage.setItem('neubie_user_name', newName);
-                    
-                    // 이름 저장 시 현재 선택된 알림 시간도 강제로 한 번 더 저장
-                    const intervalSelect = document.getElementById('remind-interval');
-                    if (intervalSelect) {
-                        localStorage.setItem('neubie_remind_int', intervalSelect.value);
-                    }
-
                     syncTasksFromServer();
                     renderDashboard();
-                    console.log(`[설정 완료] ${newName}님, 알림 설정이 동기화되었습니다.`);
                 };
             }
-
-            // 2. 알림 설정 드롭다운 선택 시 즉시 저장 로직
-            const intervalSelect = document.getElementById('remind-interval');
-            if (intervalSelect) {
-                // 드롭다운 값이 바뀔 때마다 실행
-                intervalSelect.onchange = () => {
-                    const selectedValue = intervalSelect.value;
-                    localStorage.setItem('neubie_remind_int', selectedValue);
-                    
-                    // 시각적 피드백 (선택하면 잠시 노랗게 변했다가 돌아옴)
-                    intervalSelect.style.backgroundColor = '#fef9c3'; 
-                    setTimeout(() => { intervalSelect.style.backgroundColor = 'white'; }, 300);
-                    
-                    console.log(`[알림 설정 변경] ${selectedValue}분 전으로 저장되었습니다.`);
-                };
-            }
-
-            // 3. X 버튼 클릭 시 통합 종료 실행
+            // X 버튼 클릭 시 통합 종료 실행
             const closeBtn = document.getElementById('all-close-btn');
             if (closeBtn) closeBtn.onclick = closeAllPopups;
         }, 0);
