@@ -136,7 +136,6 @@
     const injectUI = () => { 
         if (document.body) {
             document.body.append(dashboard, batteryPopup, taskPopup);
-            if (state.isTaskVisible) taskPopup.style.display = 'block';
         } 
     };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', injectUI);
@@ -607,10 +606,13 @@
         nameArea.style.cssText = "display:flex; align-items:center; gap:5px; font-size:13px; color:#64748b;";
         const currentName = localStorage.getItem('neubie_user_name') || "";
         
+        // 기존 input 스타일 수정
         nameArea.innerHTML = `
             <span>성명:</span>
             <input type="text" id="inline-name-input" value="${currentName}" placeholder="미설정"
-                style="width:65px; border:none; border-bottom:1px solid #cbd5e1; outline:none; padding:2px 4px; font-size:13px; font-weight:bold; color:#1e293b; background:transparent; text-align:center;">
+                style="width:70px; border:1px solid #cbd5e1; outline:none; padding:2px 6px; 
+                    font-size:13px; font-weight:bold; color:#1e293b; background:white; 
+                    border-radius:4px; text-align:center;">
         `;
 
         headerContainer.appendChild(title);
@@ -700,7 +702,7 @@
 
     function toggleBattery() {
         if (batteryPopup.style.display === 'none') { 
-            updateBatteryStatus(); 
+            updateBatteryStatus(); // 열 때 데이터를 새로 가져옴 (리프레시)
             batteryPopup.style.display = 'block'; 
         } else { 
             batteryPopup.style.display = 'none'; 
