@@ -421,11 +421,11 @@
         // 3. 헤더 및 설정 UI 렌더링
         taskPopup.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid #444; padding-bottom:10px;">
-                <b style="color:#fbbf24; font-size:16px;">📋 리마인더 설정</b>
+                <b style="color:#fbbf24; font-size:16px;">📋 업무 알림 설정</b>
                 <select id="remindSetter" style="background:#333; color:white; border:1px solid #555; font-size:11px; border-radius:4px; padding:2px;">
                     <option value="0" ${currentInt === '0' ? 'selected' : ''}>알림 없음</option>
-                    <option value="3" ${currentInt === '3' ? 'selected' : ''}>3분 전 (다중 13분)</option>
-                    <option value="5" ${currentInt === '5' ? 'selected' : ''}>5분 전 (다중 15분)</option>
+                    <option value="3" ${currentInt === '3' ? 'selected' : ''}>3분 전 (다중은 13분 전)</option>
+                    <option value="5" ${currentInt === '5' ? 'selected' : ''}>5분 전 (다중은  15분 전)</option>
                 </select>
             </div>  
             <div id="task-list-container"></div>
@@ -733,7 +733,7 @@
         headerContainer.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; padding-right:5px;";
 
         const title = document.createElement('h2');
-        title.textContent = "✨ 없으면 내가 만든다";
+        title.textContent = "✨ 우린 램이 8GB라고!";
         title.style.cssText = "color:#3b82f6; font-size:18px; margin:0; font-weight:bold;";
 
         // 이름 입력 및 닫기 버튼 영역
@@ -801,8 +801,8 @@
         list.style.display = "grid"; 
         list.style.gap = "12px";
 
-        list.appendChild(createMenuCard("🗺️ 역삼/송도/성수 요기요, 성남 삼평동 맵 최적화", "흰색 마커 제거 및 대기장소 마커 회전", 'isMapOpt', 'neubie_opt_map', () => injectMapStyle()));
-        list.appendChild(createMenuCard("📡 줄을 서시오", "중복 관제 완화 기능", 'isQueueOpt', 'neubie_opt_queue'));
+        list.appendChild(createMenuCard("🗺️ 역삼, 송도, 성수 요기요 / 성남 삼평동 맵 최적화", "흰색 마커 제거 및 대기장소 마커 회전", 'isMapOpt', 'neubie_opt_map', () => injectMapStyle()));
+        list.appendChild(createMenuCard("📡 줄을 서시오", "중복 개입 완화 기능", 'isQueueOpt', 'neubie_opt_queue'));
 
         const storedName = localStorage.getItem('neubie_user_name') || "사용자";
         const isTaskOpen = taskPopup.style.display === 'block';
@@ -830,7 +830,7 @@
             toggleBattery();
             renderDashboard(); 
         }, isBatteryOpen ? '닫기' : '열기'));
-        
+
         list.appendChild(createNamingCard());
 
         dashboard.appendChild(list);
