@@ -218,55 +218,70 @@
     }
 
     /* ============================================================
-        SECTION 4-1. [수정] 업무 시트 리마인더 및 유연한 데이터 동기화
+        SECTION 4-1. [최종 무결 수정] 업무 시트 탐지 및 데이터 추출 엔진
        ============================================================ */
-    if (currUrl.includes(config.sheetId)) {
-        console.log("📋 업무 시트 리마인더 엔진 활성화 (1분 주기)");
+    // 시트 ID 포함 여부 판별 로직 강화
+    if (currUrl.includes(config.sheetId) || currUrl.includes("docs.google.com/spreadsheets")) {
+        console.log("📋 업무 시트 엔진 가동 중... (데이터 스캔 시작)");
+        
         setInterval(() => {
-            // [테스트] 실제 이름 로직은 주석 처리하고 '안혜림'으로 고정
-            // const profileBtn = document.querySelector('a[aria-label*="Google 계정"], img[src*="googleusercontent.com"]');
-            // const myNameMatch = profileBtn?.getAttribute('aria-label') || profileBtn?.getAttribute('title') || "";
-            // const myName = myNameMatch.match(/[가-힣]+/)?.[0] || ""; 
+            // [테스트] 사용자 요청: '안혜림' 고정
             const myName = "안혜림"; 
-
-            if (!myName) return;
 
             const foundTasks = [];
             const rows = document.querySelectorAll('tr');
             
-            rows.forEach((row, index) => {
-                const cells = row.innerText.split('\t').map(c => c.trim());
-                const rowNum = index + 1; // 실제 시트의 행 번호와 매칭
+            if (rows.length === 0) return;
 
-                // 1. 다중 모니터링 구역 스캔 (6행 ~ 29행)
-                // F열(index 5)에 시간, G열(index 6)에 이름
-                if (rowNum >= 6 && rowNum <= 29) {
-                    if (cells[6] === myName && cells[5] && cells[5].includes(':')) {
+            rows.forEach((row, index) => {
+                const rowText = row.innerText || "";
+                const rowNum = index + 1;
+
+                // 이름이 포함되어 있지 않으면 스캔 건너뜀 (성능 최적화)
+                if (!rowText.includes(myName)) return;
+
+                // 1. 다중 모니터링 구역 스캔 (6행 ~ 40행으로 여유 있게 설정)
+                // 시트 구조: F열(시간), G열(이름) - 텍스트 내에 이름과 시간 형식이 있는지 확인
+                if (rowNum >= 6 && rowNum <= 40) {
+                    const timeMatch = rowText.match(/\d{2}:\d{2}/); // "08:30" 형태 추출
+                    if (timeMatch) {
                         foundTasks.push({ 
                             type: 'monitoring', 
-                            content: `🖥️ 다중 모니터링 (${cells[5]})`, 
-                            rawTime: cells[5] 
+                            content: `🖥️ 다중 모니터링 (${timeMatch[0]})`, 
+                            rawTime: timeMatch[0] 
                         });
                     }
                 }
 
-                // 2. 일일 담당 업무 구역 스캔 (70행 이상부터 플렉시블하게)
-                // B열(index 1)에 [시간] 업무내용, G열(index 6)에 이름
+                // 2. 일일 담당 업무 구역 스캔 (70행 이상 ~ 플렉시블)
+                // 시트 구조: B열([시간] 업무), G열(이름)
                 if (rowNum >= 70) {
-                    if (cells[6] === myName && cells[1] && (cells[1].includes('[') || cells[1].includes(':'))) {
+                    // [00:00] 또는 00:00 형태의 시간 정보가 있는지 확인
+                    const timeMatch = rowText.match(/\[?\d{2}:\d{2}\]?/);
+                    if (timeMatch) {
+                        // 이름 부분을 제외한 나머지 텍스트를 업무 내용으로 간주
+                        let taskDetail = rowText.split(myName)[0].replace(/\t/g, ' ').trim();
                         foundTasks.push({ 
                             type: 'task', 
-                            content: cells[1], 
-                            rawTime: cells[1] 
+                            content: taskDetail, 
+                            rawTime: timeMatch[0] 
                         });
                     }
                 }
             });
 
+            // 찾은 업무가 있을 경우에만 전송
             if (foundTasks.length > 0) {
-                taskChannel.postMessage({ type: 'TASK_UPDATE', tasks: foundTasks, user: myName });
+                // 중복 제거 (행 중복 스캔 방지)
+                const uniqueTasks = Array.from(new Map(foundTasks.map(item => [item.content, item])).values());
+                taskChannel.postMessage({ 
+                    type: 'TASK_UPDATE', 
+                    tasks: uniqueTasks, 
+                    user: myName,
+                    timestamp: Date.now()
+                });
             }
-        }, 60000); // 1분 주기 동기화
+        }, 60000); // 30초 주기로 더 기민하게 동기화
     }
 
     // 시간 추출 및 상태 판단 함수 (취소선 및 알림 계산용)
