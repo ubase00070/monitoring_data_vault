@@ -557,69 +557,87 @@
     }
 
     /* ============================================================
-    SECTION 5. 무한 순열 기반 지능형 딜레이 엔진 (Anti-Abusing)
+    SECTION 5. 지능형 충돌 회피 순열 엔진 (Collision Avoidance)
    ============================================================ */
 
     async function handleControlClick(e) {
         if (!state.isQueue) return;
-
+    
         const targetBtn = e.target.closest('button');
         if (!targetBtn || targetBtn.innerText.trim() !== '관제 시작') return;
-
+    
         const currentUserName = localStorage.getItem('neubie_user_name') || "운영자";
-        
-        // 1. 현재 접속 가능 인원 조합 생성 (조합 그룹의 고유성 확보)
-        // 실제로는 전체 명단을 넣어도 '분/요일' 변수 덕분에 현재 접속자끼리만 경쟁하는 효과가 납니다.
-        const allNames = personnelData.map(p => p.name).sort().join('');
-        
-        // 2. 시간/요일 변수 추출 (매 분, 매일 결과값을 바꿈)
-        const now = new Date();
-        const timeKey = `${now.getDay()}${now.getHours()}${now.getMinutes()}`;
-        
-        // 3. 수학적 해시 함수 (문자열을 고유 숫자로 변환)
+        const user = personnelData.find(u => u.name === currentUserName);
+        if (!user) return; // 명단에 없으면 즉시 실행
+    
+        // 1. 결정론적 해시 함수 (Seeded Hash)
         const getHash = (str) => {
             let hash = 0;
             for (let i = 0; i < str.length; i++) {
                 hash = ((hash << 5) - hash) + str.charCodeAt(i);
-                hash |= 0; // 32비트 정수로 변환
+                hash |= 0;
             }
             return Math.abs(hash);
         };
-
-        // 4. 개인별 고유 씨앗(Seed) 생성
-        // (전체 조합 문자열 + 내 이름 + 시간 키)를 섞어 나만의 고유 번호 생성
-        const mySeed = getHash(allNames + currentUserName + timeKey);
+    
+        // 2. 시공간 Seed 생성 (분 단위로 순열이 뒤섞임)
+        const now = new Date();
+        const timeSeed = `${now.getFullYear()}${now.getMonth()}${now.getDate()}${now.getHours()}${now.getMinutes()}`;
+    
+        // 3. 현재 근무 시간대(조합) 기반의 순열 생성
+        // 같은 'time-11' 조 등 동시간대 근무자들은 같은 'groupKey'를 공유하게 되어
+        // 그들 사이에서 중복 없는 순번을 나눠 갖게 됩니다.
+        const myGroup = personnelData.filter(p => p.class === user.class)
+                        .sort((a, b) => a.name.localeCompare(b.name));
         
-        // 5. 슬롯 및 딜레이 계산 (1.5초를 촘촘하게 분산)
-        // 37명이 동시에 눌러도 겹치지 않도록 40ms 단위로 쪼갬
-        const maxSlots = 37; 
-        const mySlot = mySeed % maxSlots;
+        // Fisher-Yates Shuffle 기반의 결정론적 셔플 (Seed 이용)
+        // 이 과정이 "순번표 섞기"입니다.
+        let indices = Array.from({ length: myGroup.length }, (_, i) => i);
+        let seedNum = getHash(timeSeed + user.class); 
         
-        // 기본 간격 40ms + 미세 지터 10ms = 최대 1.48초 + @
-        const baseDelay = mySlot * 40;
-        const jitter = Math.floor(Math.random() * 15); 
-        const finalDelay = baseDelay + jitter;
-
-        // 시각적 피드백
+        for (let i = indices.length - 1; i > 0; i--) {
+            const j = seedNum % (i + 1);
+            [indices[i], indices[j]] = [indices[j], indices[i]];
+            seedNum = Math.floor(seedNum / (i + 1)) + i; // 시드 변화
+        }
+    
+        // 4. 내 순번(Slot) 확정
+        const mySourceIndex = myGroup.findIndex(p => p.name === currentUserName);
+        const myRank = indices.indexOf(mySourceIndex); // 셔플된 결과 내에서의 순위
+    
+        // 5. 공격적 슬롯 배치 (Poisson Disk Sampling 개념 차용)
+        // 3~4명 충돌 시 서버가 인지할 수 있는 '최소 90ms' 이상의 간격 강제 보장
+        const SPACING = 110; // 슬롯 간 간격 (ms)
+        const baseDelay = myRank * SPACING;
+        
+        // 미세 지터 (같은 슬롯 내에서도 아주 미세하게 분리, 0~30ms)
+        const jitter = getHash(currentUserName + timeSeed) % 30;
+        const finalDelay = Math.min(baseDelay + jitter, 1450);
+    
+        // 시각적 피드백 (팝업)
         const popup = document.createElement('div');
         popup.className = 'delay-popup';
         popup.innerHTML = `
-            <div style="font-size: 0.9em; opacity: 0.8;">실시간 중복 방지 순열 가동</div>
-            <div style="font-size: 1.2em; margin: 5px 0;">🚀 ${(finalDelay / 1000).toFixed(2)}초 후 진입</div>
-            <div style="font-size: 0.7em; color: #888;">Hash: ${mySeed.toString(16).toUpperCase()}</div>
+            <div style="font-size: 0.85em; color: #00ff41; margin-bottom: 4px;">[Collision Avoidance Active]</div>
+            <div style="font-size: 1.1em; font-weight: bold;">🚀 ${(finalDelay / 1000).toFixed(2)}초 대기 적용</div>
+            <div style="font-size: 0.75em; opacity: 0.7; margin-top: 4px;">Group Rank: ${myRank + 1} | Slot Gap: ${SPACING}ms</div>
         `;
         document.body.appendChild(popup);
-
+    
+        // 이벤트 차단 및 예약 실행
         e.preventDefault();
         e.stopPropagation();
-
+    
         setTimeout(() => {
             if (typeof executeIntervention === 'function') executeIntervention(targetBtn);
         }, finalDelay);
-
+    
+        // 팝업 유지 (1.5초)
         setTimeout(() => {
             if (popup) {
+                popup.style.transition = "opacity 0.5s, transform 0.5s";
                 popup.style.opacity = "0";
+                popup.style.transform = "translate(-50%, -20px)";
                 setTimeout(() => popup.remove(), 500);
             }
         }, 1500);
