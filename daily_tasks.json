@@ -144,24 +144,6 @@
     "rawTime": "06:00"
   },
   {
-    "user": "김지훈",
-    "type": "monitoring",
-    "content": "다중 모니터링 (07:00)",
-    "rawTime": "07:00"
-  },
-  {
-    "user": "박효선",
-    "type": "monitoring",
-    "content": "다중 모니터링 (08:00)",
-    "rawTime": "08:00"
-  },
-  {
-    "user": "안혜림",
-    "type": "monitoring",
-    "content": "다중 모니터링 (09:00)",
-    "rawTime": "09:00"
-  },
-  {
     "user": "박효선",
     "type": "task",
     "content": "[08:30] 파주LGD(현대밴디스) 기체 출근 처리 후 임무 ON [평일]",
