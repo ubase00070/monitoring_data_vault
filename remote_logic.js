@@ -337,150 +337,100 @@
 
     /* ============================================================
         SECTION 6. [수정] 스마트 네이밍 엔진 카드 생성
-        버그 수정: innerHTML + setTimeout 방식 → 직접 DOM 생성 + 즉시 이벤트 바인딩으로 변경
-        - renderDashboard() 재호출 시 innerHTML 초기화로 인한 이벤트 유실 방지
-        - history 없을 때 ROBOT_MAP 전체 폴백 옵션 표시
-        - sub-btn 스타일을 인라인으로 적용하여 외부 <style> 주입 의존성 제거
        ============================================================ */
     function createNamingCard() {
         const card = document.createElement('div');
         card.id = 'namingSection';
         card.style.cssText = 'background:#252525; padding:15px; border-radius:15px; border:1px solid #333; margin-top:5px;';
 
-        // 제목
-        const titleDiv = document.createElement('div');
-        titleDiv.style.cssText = 'color:#3b82f6; font-weight:bold; font-size:14px; margin-bottom:10px;';
-        titleDiv.textContent = '🏷️ 스마트 네이밍 엔진';
-        card.appendChild(titleDiv);
-
-        // --- 상단 행: 드롭다운 + 인풋 + 복사 버튼 ---
-        const topRow = document.createElement('div');
-        topRow.style.cssText = 'display:flex; gap:5px; margin-bottom:10px;';
-
-        // 드롭다운 (history 기반, 없으면 ROBOT_MAP 전체 폴백)
-        const robotSelector = document.createElement('select');
-        robotSelector.id = 'robotSelector';
-        robotSelector.style.cssText = 'flex:1.2; background:#333; color:white; border:1px solid #555; border-radius:4px; font-size:12px; padding:4px;';
-
         const history = JSON.parse(localStorage.getItem('neubie_robot_history') || '[]');
-        if (history.length > 0) {
-            history.forEach(h => {
-                const info = ROBOT_MAP[h.id] || { site: "미등록", unit: "#" + h.id };
-                const opt = document.createElement('option');
-                opt.value = h.id;
-                opt.textContent = `${info.site} ${info.unit}`;
-                robotSelector.appendChild(opt);
-            });
-        } else {
-            // [수정] history 없을 때 ROBOT_MAP 전체를 폴백으로 표시
-            Object.entries(ROBOT_MAP).forEach(([id, info]) => {
-                const opt = document.createElement('option');
-                opt.value = id;
-                opt.textContent = `${info.site} ${info.unit}`;
-                robotSelector.appendChild(opt);
-            });
+        let dropdownOptions = history.map(h => {
+            const info = ROBOT_MAP[h.id] || { site: "미등록", unit: "#" + h.id };
+            return `<option value="${h.id}">${info.site} ${info.unit}</option>`;
+        }).join('');
+
+        card.innerHTML = `
+            <div style="color:#3b82f6; font-weight:bold; font-size:14px; margin-bottom:10px;">🏷️ 스마트 네이밍 엔진</div>
+            <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+                <select id="robotSelector" style="flex: 1.2; background: #333; color: white; border: 1px solid #555; border-radius: 4px; font-size: 12px; padding: 4px;">
+                    ${dropdownOptions || '<option>최근 기체 없음</option>'}
+                </select>
+                <input type="text" id="taskInput" placeholder="F..." style="flex: 1; background: #333; color: white; border: 1px solid #555; padding: 4px; border-radius: 4px; font-size: 12px;">
+                <button id="copyFileName" style="background: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size:12px;">복사</button>
+            </div>
+            <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                <button id="btnMulti" class="sub-btn">다중 관제</button>
+                <button id="btnDeli" class="sub-btn">배송 띠띠</button>
+                <button id="btnPatrol" class="sub-btn">순찰 띠띠</button>
+            </div>
+        `;
+
+        // 버튼 스타일 등록
+        if (!document.getElementById('naming-btn-style')) {
+            const style = document.createElement('style');
+            style.id = 'naming-btn-style';
+            style.textContent = `.sub-btn { background: #444; color: #ddd; border: 1px solid #666; padding: 6px 4px; border-radius: 6px; font-size: 12px; cursor: pointer; flex: 1; transition: 0.2s; } .sub-btn:hover { background: #555; border-color: #888; }`;
+            document.head.appendChild(style);
         }
 
-        // 태스크 입력
-        const taskInput = document.createElement('input');
-        taskInput.type = 'text';
-        taskInput.id = 'taskInput';
-        taskInput.placeholder = 'F...';
-        taskInput.style.cssText = 'flex:1; background:#333; color:white; border:1px solid #555; padding:4px; border-radius:4px; font-size:12px;';
-
-        // 복사 버튼
-        const copyBtn = document.createElement('button');
-        copyBtn.id = 'copyFileName';
-        copyBtn.textContent = '복사';
-        copyBtn.style.cssText = 'background:#007bff; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:12px;';
-
-        topRow.appendChild(robotSelector);
-        topRow.appendChild(taskInput);
-        topRow.appendChild(copyBtn);
-        card.appendChild(topRow);
-
-        // --- 하단 행: 서브 버튼 3개 ---
-        const SUB_BTN_STYLE = 'background:#444; color:#ddd; border:1px solid #666; padding:6px 4px; border-radius:6px; font-size:12px; cursor:pointer; flex:1; transition:background 0.2s, border-color 0.2s;';
-
-        const bottomRow = document.createElement('div');
-        bottomRow.style.cssText = 'display:flex; gap:5px; flex-wrap:wrap;';
-
-        const btnMulti = document.createElement('button');
-        btnMulti.id = 'btnMulti';
-        btnMulti.textContent = '다중 관제';
-        btnMulti.style.cssText = SUB_BTN_STYLE;
-
-        const btnDeli = document.createElement('button');
-        btnDeli.id = 'btnDeli';
-        btnDeli.textContent = '배송 띠띠';
-        btnDeli.style.cssText = SUB_BTN_STYLE;
-
-        const btnPatrol = document.createElement('button');
-        btnPatrol.id = 'btnPatrol';
-        btnPatrol.textContent = '순찰 띠띠';
-        btnPatrol.style.cssText = SUB_BTN_STYLE;
-
-        // hover 효과 (인라인 방식)
-        [btnMulti, btnDeli, btnPatrol].forEach(btn => {
-            btn.addEventListener('mouseenter', () => { btn.style.background = '#555'; btn.style.borderColor = '#888'; });
-            btn.addEventListener('mouseleave', () => { btn.style.background = '#444'; btn.style.borderColor = '#666'; });
-        });
-
-        bottomRow.appendChild(btnMulti);
-        bottomRow.appendChild(btnDeli);
-        bottomRow.appendChild(btnPatrol);
-        card.appendChild(bottomRow);
-
-        // --- 이벤트 바인딩 (DOM 생성 직후 즉시 바인딩 — setTimeout 불필요) ---
         const toast = (msg) => { alert(msg + " (복사완료)"); };
 
-        // 복사 버튼: 기체 선택 + 태스크 번호 → 파일명 생성
-        copyBtn.onclick = () => {
-            const robotId = robotSelector.value;
-            const taskRaw = taskInput.value;
-            const taskMatch = taskRaw.match(/F\d+/);
-            const taskNo = taskMatch ? "#" + taskMatch[0] : "#없음";
-            const info = ROBOT_MAP[robotId] || { site: "알수없음", unit: "#000" };
-            const time = new Date();
-            const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_${info.site}_${info.unit}_${taskNo}`;
-            navigator.clipboard.writeText(finalName);
-            toast(finalName);
-        };
+        // 이벤트 바인딩 (setTimeout으로 실제 DOM 부착 후 동작 보장)
+        setTimeout(() => {
+            const copyBtn = card.querySelector('#copyFileName');
+            if (copyBtn) {
+                copyBtn.onclick = () => {
+                    const robotId = card.querySelector('#robotSelector').value;
+                    const taskRaw = card.querySelector('#taskInput').value;
+                    const taskMatch = taskRaw.match(/F\d+/);
+                    const taskNo = taskMatch ? "#" + taskMatch[0] : "#없음";
+                    const info = ROBOT_MAP[robotId] || { site: "알수없음", unit: "#000" };
+                    const time = new Date();
+                    const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_${info.site}_${info.unit}_${taskNo}`;
+                    navigator.clipboard.writeText(finalName);
+                    toast(finalName);
+                };
+            }
 
-        // 다중 관제 버튼: 현재 시각 기준 -10분
-        btnMulti.onclick = () => {
-            const time = getCalculatedTime(10);
-            const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_다중관제영상`;
-            navigator.clipboard.writeText(finalName);
-            toast(finalName);
-        };
+            const multiBtn = card.querySelector('#btnMulti');
+            if (multiBtn) {
+                multiBtn.onclick = () => {
+                    const time = getCalculatedTime(10); 
+                    const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_다중관제영상`;
+                    navigator.clipboard.writeText(finalName);
+                    toast(finalName);
+                };
+            }
 
-        // 배송 띠띠 / 순찰 띠띠: 평일/주말 분기
-        if (!isWeekend()) {
-            // 평일: 두 버튼 모두 -40분, 같은 파일명
-            const weekDayHandler = () => {
-                const time = getCalculatedTime(40);
-                const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_부산 국립과학관_#171, #170`;
-                navigator.clipboard.writeText(finalName);
-                toast(finalName);
-            };
-            btnDeli.onclick = weekDayHandler;
-            btnPatrol.onclick = weekDayHandler;
-        } else {
-            // 주말: 배송(#171) -10분, 순찰(#170) -40분
-            btnDeli.onclick = () => {
-                const time = getCalculatedTime(10);
-                const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_부산 국립과학관_#171`;
-                navigator.clipboard.writeText(finalName);
-                toast(finalName);
-            };
-            btnPatrol.onclick = () => {
-                const time = getCalculatedTime(40);
-                const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_부산 국립과학관_#170`;
-                navigator.clipboard.writeText(finalName);
-                toast(finalName);
-            };
-        }
+            const btnDeli = card.querySelector('#btnDeli');
+            const btnPatrol = card.querySelector('#btnPatrol');
+
+            if (btnDeli && btnPatrol) {
+                if (!isWeekend()) {
+                    const weekDayHandler = () => {
+                        const time = getCalculatedTime(40); 
+                        const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_부산 국립과학관_#171, #170`;
+                        navigator.clipboard.writeText(finalName);
+                        toast(finalName);
+                    };
+                    btnDeli.onclick = weekDayHandler;
+                    btnPatrol.onclick = weekDayHandler;
+                } else {
+                    btnDeli.onclick = () => {
+                        const time = getCalculatedTime(10);
+                        const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_부산 국립과학관_#171`;
+                        navigator.clipboard.writeText(finalName);
+                        toast(finalName);
+                    };
+                    btnPatrol.onclick = () => {
+                        const time = getCalculatedTime(40);
+                        const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_부산 국립과학관_#170`;
+                        navigator.clipboard.writeText(finalName);
+                        toast(finalName);
+                    };
+                }
+            }
+        }, 10);
 
         return card;
     }
