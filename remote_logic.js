@@ -273,35 +273,28 @@
     }
 
     // 리마인더 알림창 생성 함수 (5초 점멸)
-    function triggerReminder(taskContent, remainMin) {
-        if (document.getElementById('neubie-reminder')) return;
-
-        const alarm = document.createElement('div');
-        alarm.id = 'neubie-reminder';
-        alarm.style.cssText = `
-            position: fixed; top: 30px; left: 50%; transform: translateX(-50%);
-            padding: 18px 40px; background: rgba(20, 20, 20, 0.95); 
-            border: 4px solid #fbbf24; border-radius: 15px; color: white; 
-            z-index: 10000000; box-shadow: 0 0 30px rgba(251, 191, 36, 0.6);
-            text-align: center; backdrop-filter: blur(5px);
-            animation: blink-border 0.8s infinite;
+    function triggerReminder(content, remainMin) {
+        console.log(`[알림] ${content} 시작 ${remainMin}분 전!`);
+        
+        // 알림용 UI 엘리먼트 생성
+        const alarmDiv = document.createElement('div');
+        alarmDiv.style.cssText = `
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            background: #fbbf24; color: #000; padding: 15px 25px; border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 10001;
+            font-weight: bold; font-size: 16px; border: 2px solid #000;
+            display: flex; align-items: center; gap: 10px; animation: fadeInDown 0.5s;
         `;
+        alarmDiv.innerHTML = `⚠️ <b>[업무 알림]</b> ${content} 시작 ${remainMin}분 전입니다!`;
+        
+        document.body.appendChild(alarmDiv);
 
-        alarm.innerHTML = `
-            <div style="color:#fbbf24; font-size:14px; margin-bottom:5px; font-weight:bold;">⚠️ 업무 리마인더</div>
-            <div style="font-size:18px; font-weight:bold; margin-bottom:5px;">${taskContent}</div>
-            <div style="color:#ff4d4d; font-size:16px; font-weight:bold;">${remainMin}분 전입니다!</div>
-        `;
-
-        if (!document.getElementById('blink-style')) {
-            const style = document.createElement('style');
-            style.id = 'blink-style';
-            style.textContent = `@keyframes blink-border { 0%, 100% { border-color: #fbbf24; transform: translateX(-50%) scale(1); } 50% { border-color: #ef4444; transform: translateX(-50%) scale(1.05); } }`;
-            document.head.appendChild(style);
-        }
-
-        document.body.appendChild(alarm);
-        setTimeout(() => alarm.remove(), 5000);
+        // 5초 후 자동으로 사라짐
+        setTimeout(() => {
+            alarmDiv.style.opacity = '0';
+            alarmDiv.style.transition = '0.5s';
+            setTimeout(() => alarmDiv.remove(), 500);
+        }, 5000);
     }
 
     /* ============================================================
@@ -778,17 +771,27 @@
         batteryPopup.style.display = 'none';
         taskPopup.style.display = 'none';
     }
-    
+
     window.addEventListener('keydown', (e) => {
         if (e.altKey && e.code === 'KeyQ') {
             e.preventDefault();
-            if (dashboard.style.display === 'none') { 
+            
+            // [수정] 대시보드, 배터리, 업무 팝업 중 하나라도 열려있는지 확인
+            const isAnyOpen = (dashboard.style.display === 'block' || 
+                            batteryPopup.style.display === 'block' || 
+                            taskPopup.style.display === 'block');
+            
+            if (isAnyOpen) {
+                // 하나라도 열려있다면 통합 닫기 실행
+                closeAllPopups();
+            } else {
+                // 모두 닫혀있다면 대시보드 열기
                 renderDashboard(); 
                 dashboard.style.display = 'block'; 
-            } else { 
-                dashboard.style.display = 'none'; 
             }
         }
+        
+        // Alt + B (배터리) 단축키 로직
         if (e.altKey && e.code === 'KeyB') { 
             e.preventDefault(); 
             toggleBattery(); 
