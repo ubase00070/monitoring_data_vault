@@ -652,7 +652,7 @@
     function renderDashboard() {
         dashboard.innerHTML = '';
         
-        // 1. 헤더 컨테이너 (제목 + 성명 입력창 인라인 배치)
+        // 1. 헤더 컨테이너 (제목 + 성명 입력창 + X 버튼 인라인 배치)
         const headerContainer = document.createElement('div');
         headerContainer.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; padding-right:5px;";
 
@@ -660,36 +660,38 @@
         title.textContent = "✨ 없으면 내가 만든다";
         title.style.cssText = "color:#3b82f6; font-size:18px; margin:0; font-weight:bold;";
 
-        // 이름 입력 영역 (성명: [입력칸])
+        // 이름 입력 및 닫기 버튼 영역
         const nameArea = document.createElement('div');
-        nameArea.style.cssText = "display:flex; align-items:center; gap:5px; font-size:13px; color:#64748b;";
+        nameArea.style.cssText = "display:flex; align-items:center; gap:8px; font-size:13px; color:#64748b;";
         const currentName = localStorage.getItem('neubie_user_name') || "";
         
-        // 기존 input 스타일 수정
         nameArea.innerHTML = `
             <span>성명:</span>
             <input type="text" id="inline-name-input" value="${currentName}" placeholder="이름 입력"
                 style="width:70px; border:1px solid #cbd5e1; outline:none; padding:2px 6px; 
                     font-size:13px; font-weight:bold; color:#1e293b; background:white; 
                     border-radius:4px; text-align:center;">
+            <button id="all-close-btn" style="background:#ef4444; color:white; border:none; border-radius:4px; width:22px; height:22px; cursor:pointer; font-weight:bold; display:flex; align-items:center; justify-content:center; font-size:14px;">✕</button>
         `;
 
         headerContainer.appendChild(title);
         headerContainer.appendChild(nameArea);
         dashboard.appendChild(headerContainer);
 
-        // 이름 입력 시 로컬 스토리지 자동 저장 (onchange 시점에 데이터 갱신)
+        // 이벤트 바인딩
         setTimeout(() => {
             const input = document.getElementById('inline-name-input');
             if (input) {
                 input.onchange = () => {
                     const newName = input.value.trim();
                     localStorage.setItem('neubie_user_name', newName);
-                    console.log(`👤 사용자 변경: ${newName}`);
-                    syncTasksFromServer(); // 이름 변경 시 즉시 백그라운드 fetch
-                    renderDashboard();    // 제목 이름 업데이트를 위해 재렌더링
+                    syncTasksFromServer();
+                    renderDashboard();
                 };
             }
+            // X 버튼 클릭 시 통합 종료 실행
+            const closeBtn = document.getElementById('all-close-btn');
+            if (closeBtn) closeBtn.onclick = closeAllPopups;
         }, 0);
 
         const list = document.createElement('div');
@@ -697,15 +699,13 @@
         list.style.display = "grid"; 
         list.style.gap = "12px";
 
-        // 2. 기본 최적화 카드들
         list.appendChild(createMenuCard("🗺️ 역삼/송도/성수 요기요, 성남 삼평동 맵 최적화", "흰색 마커 제거 및 대기장소 마커 회전", 'isMapOpt', 'neubie_opt_map', () => injectMapStyle()));
         list.appendChild(createMenuCard("📡 줄을 서시오", "중복 관제 완화 기능", 'isQueueOpt', 'neubie_opt_queue'));
 
-        // 3. 일일 업무 카드 (열기 버튼 방식 + 클릭 시 리프레시)
         const storedName = localStorage.getItem('neubie_user_name') || "사용자";
         const isTaskOpen = taskPopup.style.display === 'block';
         const taskCount = (window.currentMyTasks && window.currentMyTasks.length) || 0;
-        const taskDesc = taskCount > 0 ? `현재 ${taskCount}개의 배정 업무가 있습니다.` : "배정된 업무가 없습니다.";
+        const taskDesc = taskCount > 0 ? `금일 ${taskCount}개의 배정 업무가 있습니다.` : "배정된 업무가 없습니다.";
 
         list.appendChild(createMenuCard(
             `📋 ${storedName}의 일일 업무`, 
@@ -713,7 +713,7 @@
             null, null, 
             () => {
                 if (taskPopup.style.display === 'none') {
-                    syncTasksFromServer(); // [중요] 열기 누르는 순간 리프레시(Fetch)
+                    syncTasksFromServer();
                     taskPopup.style.display = 'block';
                 } else {
                     taskPopup.style.display = 'none';
@@ -723,7 +723,6 @@
             isTaskOpen ? '닫기' : '열기'
         ));
 
-        // 4. 네이밍 엔진 및 배터리 카드
         list.appendChild(createNamingCard());
 
         const isBatteryOpen = batteryPopup.style.display === 'block';
@@ -738,7 +737,13 @@
     function createMenuCard(name, desc, stateKey, storageKey, action, btnLabel = '열기') {
         const card = document.createElement('div');
         card.style.cssText = "background:#252525; padding:15px; border-radius:15px; display:flex; justify-content:space-between; align-items:center; border:1px solid #333;";
-        card.innerHTML = `<div style="flex:1;"><div style="font-weight:bold; font-size:15px;">${name}</div><div style="font-size:12px; color:#aaa;">${desc}</div></div>`;
+        // 제목에 margin-bottom: 4px를 추가하여 설명과의 간격을 벌림
+        card.innerHTML = `
+            <div style="flex:1;">
+                <div style="font-weight:bold; font-size:15px; margin-bottom:4px;">${name}</div>
+                <div style="font-size:12px; color:#aaa;">${desc}</div>
+            </div>`;
+        
         if (stateKey) {
             const chk = document.createElement('input');
             chk.type = 'checkbox'; chk.checked = state[stateKey];
@@ -768,6 +773,12 @@
         }
     }
 
+    function closeAllPopups() {
+        dashboard.style.display = 'none';
+        batteryPopup.style.display = 'none';
+        taskPopup.style.display = 'none';
+    }
+    
     window.addEventListener('keydown', (e) => {
         if (e.altKey && e.code === 'KeyQ') {
             e.preventDefault();
