@@ -6,7 +6,7 @@
 
     const currUrl = window.location.href;
     const isNeubieSite = currUrl.includes('go.neubie.ai');
-    console.log("🛰️ 뉴비 통합 엔진 v1.5 로드 완료 (스마트 네이밍 레이아웃 수정)");
+    console.log("🛰️ 뉴비 통합 엔진 v1.4 로드 완료 (줄을 서시오: 뉴비고 최적화)");
 
     /* ============================================================
         SECTION 1. 상태 및 설정
@@ -22,6 +22,7 @@
         sheetId: "1tLo6Xeq6KJx6zW-fcw8H38jdjxyS2yre5oWY7cxky70"
     };
 
+    // [추가] 기체 네이밍 매핑 데이터
     const ROBOT_MAP = {
         "76": { site: "송도 요기요", unit: "#076" },
         "85": { site: "역삼 요기요", unit: "#085" },
@@ -56,20 +57,8 @@
     const taskChannel = new BroadcastChannel('neubie_task_sync');
 
     /* ============================================================
-        SECTION 2. 유틸리티
+        SECTION 2. 맵 최적화 코어 & 네이밍 유틸리티
        ============================================================ */
-    const getFormattedDate = (dateObj) => dateObj.toISOString().slice(0, 10).replace(/-/g, "");
-    const getFormattedHour = (dateObj) => String(dateObj.getHours()).padStart(2, '0');
-    const getCalculatedTime = (offsetMinutes) => {
-        const now = new Date();
-        now.setMinutes(now.getMinutes() - offsetMinutes);
-        return now;
-    };
-    const isWeekend = () => {
-        const day = new Date().getDay();
-        return (day === 6 || day === 0);
-    };
-
     const originalFetch = window.fetch;
     window.fetch = async (...args) => {
         const url = typeof args[0] === 'string' ? args[0] : args[0].url;
@@ -95,6 +84,20 @@
         if (!style.parentElement) document.head.appendChild(style);
     }
 
+    // [추가] 네이밍용 시간 보정 유틸리티
+    const getFormattedDate = (dateObj) => dateObj.toISOString().slice(0, 10).replace(/-/g, "");
+    const getFormattedHour = (dateObj) => String(dateObj.getHours()).padStart(2, '0');
+    const getCalculatedTime = (offsetMinutes) => {
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - offsetMinutes);
+        return now;
+    };
+    const isWeekend = () => {
+        const day = new Date().getDay();
+        return (day === 6 || day === 0);
+    };
+
+    // [추가] 기체 트래킹 로직
     function updateRobotContext() {
         const path = window.location.href;
         if (path.includes('go.neubie.ai/ko/remote/robot/')) {
@@ -110,7 +113,7 @@
     updateRobotContext();
 
     /* ============================================================
-        SECTION 3. UI 컨테이너 생성
+        SECTION 3. UI 컴포넌트 생성
        ============================================================ */
     function createContainer(id, width, top, left, right = 'auto') {
         const el = document.createElement('div');
@@ -121,7 +124,7 @@
             borderRadius: '24px', padding: '20px', zIndex: '1000000',
             fontFamily: 'Pretendard, sans-serif', boxShadow: '0 20px 50px rgba(0,0,0,0.8)',
             border: '1px solid #333', display: 'none', transform: left === '50%' ? 'translate(-50%, -50%)' : 'none',
-            maxHeight: '90vh', overflowY: 'auto'
+            maxHeight: '90vh', overflowY: 'auto' // [수정] 레이아웃 가시성 확보를 위한 스크롤 추가
         });
         return el;
     }
@@ -151,7 +154,7 @@
     }
 
     /* ============================================================
-        SECTION 4. 배터리 및 업무 로직
+        SECTION 4. 배터리 및 업무 연동 로직
        ============================================================ */
     function updateBatteryStatus() {
         batteryPopup.innerHTML = '';
@@ -206,6 +209,7 @@
             const originalBg = btn.style.background;
             btn.textContent = '✅ 복사됨';
             btn.style.background = '#22c55e';
+            
             setTimeout(() => {
                 btn.textContent = originalText;
                 btn.style.background = originalBg;
@@ -213,13 +217,36 @@
         });
     }
 
-    taskChannel.onmessage = (e) => {
-        if (e.data.type === 'TASK_UPDATE') {
-            state.myTodayTasks = e.data.tasks;
-            localStorage.setItem('neubie_my_tasks', JSON.stringify(e.data.tasks));
-            if (state.isTaskVisible) renderTaskList(state.myTodayTasks);
-        }
-    };
+    if (currUrl.includes(config.sheetId)) {
+        console.log("📋 업무 시트 데이터 동기화 활성화됨 (5분 주기)");
+        setInterval(() => {
+            const profileBtn = document.querySelector('a[aria-label*="Google 계정"], img[src*="googleusercontent.com"]');
+            const myNameMatch = profileBtn?.getAttribute('aria-label') || profileBtn?.getAttribute('title') || "";
+            const myName = myNameMatch.match(/[가-힣]+/)?.[0] || ""; 
+
+            if (!myName) return;
+
+            const foundTasks = [];
+            const rows = document.querySelectorAll('tr');
+            
+            rows.forEach(row => {
+                const text = row.innerText;
+                if (text.includes(myName)) {
+                    const cells = text.split('\t').map(c => c.trim());
+                    if (cells[6] === myName && cells[5] && cells[5].includes(':')) {
+                        foundTasks.push({ type: 'monitoring', content: `🖥️ 다중 모니터링 (${cells[5]})` });
+                    } 
+                    else if (cells[1] && (cells[1].includes('[') || cells[1].includes('시'))) {
+                        foundTasks.push({ type: 'task', content: cells[1] });
+                    }
+                }
+            });
+
+            if (foundTasks.length > 0) {
+                taskChannel.postMessage({ type: 'TASK_UPDATE', tasks: foundTasks, user: myName });
+            }
+        }, 300000);
+    }
 
     function renderTaskList(tasks) {
         taskPopup.innerHTML = `
@@ -228,10 +255,12 @@
                 <span style="font-size:11px; color:#888;">5m Sync</span>
             </div>
         `;
+        
         if (!tasks || tasks.length === 0) {
             taskPopup.innerHTML += `<div style="color:#666; text-align:center; padding:20px;">업무 시트 탭을 열어주세요.</div>`;
             return;
         }
+
         tasks.forEach(t => {
             const item = document.createElement('div');
             const isMon = t.type === 'monitoring';
@@ -243,8 +272,16 @@
         });
     }
 
+    taskChannel.onmessage = (e) => {
+        if (e.data.type === 'TASK_UPDATE') {
+            state.myTodayTasks = e.data.tasks;
+            localStorage.setItem('neubie_my_tasks', JSON.stringify(e.data.tasks));
+            if (state.isTaskVisible) renderTaskList(state.myTodayTasks);
+        }
+    };
+
     /* ============================================================
-        SECTION 5. 중복 관제 방지 (줄을 서시오)
+        SECTION 5. 줄을 서시오 & 중복 관제 완화
        ============================================================ */
     function calculateDelay() {
         const base = QUEUE_CONFIG.SLOTS[Math.floor(Math.random() * QUEUE_CONFIG.SLOTS.length)];
@@ -265,14 +302,20 @@
     }
 
     function handleControlClick(e) {
-        if (!state.isQueueOpt || !isNeubieSite) return;
+        if (!state.isQueueOpt) return;
+        if (!isNeubieSite) return;
+
         const btn = e.target.closest('div.flex.justify-center.items-center.w-full') || e.target.closest('button');
         if (!btn || btn.dataset.intercepted) return;
 
         const btnText = btn.innerText.replace(/\s/g, "");
-        if (btnText === "관제시작") {
+        const isTarget = btnText === "관제시작";
+        const isAvailable = !btnText.includes("확인중") && !btnText.includes("종료");
+
+        if (isTarget && isAvailable) {
             e.preventDefault();
             e.stopPropagation();
+
             const finalDelay = calculateDelay();
             const overlay = createOverlay(finalDelay);
             document.body.appendChild(overlay);
@@ -280,105 +323,170 @@
             setTimeout(() => {
                 btn.dataset.intercepted = 'true';
                 btn.click();
+
                 setTimeout(() => {
                     overlay.style.opacity = '0';
-                    setTimeout(() => { overlay.remove(); delete btn.dataset.intercepted; }, 200);
+                    setTimeout(() => {
+                        overlay.remove();
+                        delete btn.dataset.intercepted;
+                    }, 200);
                 }, Math.max(QUEUE_CONFIG.MIN_OVERLAY_SHOW, QUEUE_CONFIG.OVERLAY_DURATION - finalDelay));
             }, finalDelay);
         }
     }
 
     /* ============================================================
-        SECTION 6. 스마트 네이밍 엔진 (수정 포인트)
+        SECTION 6. [수정] 스마트 네이밍 엔진 카드 생성
+        버그 수정: innerHTML + setTimeout 방식 → 직접 DOM 생성 + 즉시 이벤트 바인딩으로 변경
+        - renderDashboard() 재호출 시 innerHTML 초기화로 인한 이벤트 유실 방지
+        - history 없을 때 ROBOT_MAP 전체 폴백 옵션 표시
+        - sub-btn 스타일을 인라인으로 적용하여 외부 <style> 주입 의존성 제거
        ============================================================ */
     function createNamingCard() {
         const card = document.createElement('div');
         card.id = 'namingSection';
-        card.style.cssText = 'background:#252525; padding:15px; border-radius:15px; border:1px solid #333;';
+        card.style.cssText = 'background:#252525; padding:15px; border-radius:15px; border:1px solid #333; margin-top:5px;';
+
+        // 제목
+        const titleDiv = document.createElement('div');
+        titleDiv.style.cssText = 'color:#3b82f6; font-weight:bold; font-size:14px; margin-bottom:10px;';
+        titleDiv.textContent = '🏷️ 스마트 네이밍 엔진';
+        card.appendChild(titleDiv);
+
+        // --- 상단 행: 드롭다운 + 인풋 + 복사 버튼 ---
+        const topRow = document.createElement('div');
+        topRow.style.cssText = 'display:flex; gap:5px; margin-bottom:10px;';
+
+        // 드롭다운 (history 기반, 없으면 ROBOT_MAP 전체 폴백)
+        const robotSelector = document.createElement('select');
+        robotSelector.id = 'robotSelector';
+        robotSelector.style.cssText = 'flex:1.2; background:#333; color:white; border:1px solid #555; border-radius:4px; font-size:12px; padding:4px;';
 
         const history = JSON.parse(localStorage.getItem('neubie_robot_history') || '[]');
-        let dropdownOptions = history.map(h => {
-            const info = ROBOT_MAP[h.id] || { site: "미등록", unit: "#" + h.id };
-            return `<option value="${h.id}">${info.site} ${info.unit}</option>`;
-        }).join('');
-
-        card.innerHTML = `
-            <div style="color:#3b82f6; font-weight:bold; font-size:14px; margin-bottom:10px;">🏷️ 스마트 네이밍 엔진</div>
-            <div style="display: flex; gap: 5px; margin-bottom: 10px;">
-                <select id="robotSelector" style="flex: 1.2; background: #333; color: white; border: 1px solid #555; border-radius: 4px; font-size: 12px; padding: 4px;">
-                    ${dropdownOptions || '<option>최근 기체 없음</option>'}
-                </select>
-                <input type="text" id="taskInput" placeholder="F..." style="flex: 1; background: #333; color: white; border: 1px solid #555; padding: 4px; border-radius: 4px; font-size: 12px;">
-                <button id="copyFileName" style="background: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size:12px;">복사</button>
-            </div>
-            <div style="display: flex; gap: 5px; flex-wrap: wrap;">
-                <button id="btnMulti" class="sub-btn">다중 관제</button>
-                <button id="btnDeli" class="sub-btn">배송 띠띠</button>
-                <button id="btnPatrol" class="sub-btn">순찰 띠띠</button>
-            </div>
-        `;
-
-        // 버튼 스타일 등록
-        if (!document.getElementById('naming-btn-style')) {
-            const style = document.createElement('style');
-            style.id = 'naming-btn-style';
-            style.textContent = `.sub-btn { background: #444; color: #ddd; border: 1px solid #666; padding: 6px 4px; border-radius: 6px; font-size: 12px; cursor: pointer; flex: 1; transition: 0.2s; } .sub-btn:hover { background: #555; border-color: #888; }`;
-            document.head.appendChild(style);
+        if (history.length > 0) {
+            history.forEach(h => {
+                const info = ROBOT_MAP[h.id] || { site: "미등록", unit: "#" + h.id };
+                const opt = document.createElement('option');
+                opt.value = h.id;
+                opt.textContent = `${info.site} ${info.unit}`;
+                robotSelector.appendChild(opt);
+            });
+        } else {
+            // [수정] history 없을 때 ROBOT_MAP 전체를 폴백으로 표시
+            Object.entries(ROBOT_MAP).forEach(([id, info]) => {
+                const opt = document.createElement('option');
+                opt.value = id;
+                opt.textContent = `${info.site} ${info.unit}`;
+                robotSelector.appendChild(opt);
+            });
         }
 
+        // 태스크 입력
+        const taskInput = document.createElement('input');
+        taskInput.type = 'text';
+        taskInput.id = 'taskInput';
+        taskInput.placeholder = 'F...';
+        taskInput.style.cssText = 'flex:1; background:#333; color:white; border:1px solid #555; padding:4px; border-radius:4px; font-size:12px;';
+
+        // 복사 버튼
+        const copyBtn = document.createElement('button');
+        copyBtn.id = 'copyFileName';
+        copyBtn.textContent = '복사';
+        copyBtn.style.cssText = 'background:#007bff; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:12px;';
+
+        topRow.appendChild(robotSelector);
+        topRow.appendChild(taskInput);
+        topRow.appendChild(copyBtn);
+        card.appendChild(topRow);
+
+        // --- 하단 행: 서브 버튼 3개 ---
+        const SUB_BTN_STYLE = 'background:#444; color:#ddd; border:1px solid #666; padding:6px 4px; border-radius:6px; font-size:12px; cursor:pointer; flex:1; transition:background 0.2s, border-color 0.2s;';
+
+        const bottomRow = document.createElement('div');
+        bottomRow.style.cssText = 'display:flex; gap:5px; flex-wrap:wrap;';
+
+        const btnMulti = document.createElement('button');
+        btnMulti.id = 'btnMulti';
+        btnMulti.textContent = '다중 관제';
+        btnMulti.style.cssText = SUB_BTN_STYLE;
+
+        const btnDeli = document.createElement('button');
+        btnDeli.id = 'btnDeli';
+        btnDeli.textContent = '배송 띠띠';
+        btnDeli.style.cssText = SUB_BTN_STYLE;
+
+        const btnPatrol = document.createElement('button');
+        btnPatrol.id = 'btnPatrol';
+        btnPatrol.textContent = '순찰 띠띠';
+        btnPatrol.style.cssText = SUB_BTN_STYLE;
+
+        // hover 효과 (인라인 방식)
+        [btnMulti, btnDeli, btnPatrol].forEach(btn => {
+            btn.addEventListener('mouseenter', () => { btn.style.background = '#555'; btn.style.borderColor = '#888'; });
+            btn.addEventListener('mouseleave', () => { btn.style.background = '#444'; btn.style.borderColor = '#666'; });
+        });
+
+        bottomRow.appendChild(btnMulti);
+        bottomRow.appendChild(btnDeli);
+        bottomRow.appendChild(btnPatrol);
+        card.appendChild(bottomRow);
+
+        // --- 이벤트 바인딩 (DOM 생성 직후 즉시 바인딩 — setTimeout 불필요) ---
         const toast = (msg) => { alert(msg + " (복사완료)"); };
 
-        // 이벤트 바인딩 로직을 함수화하여 호출 시점 제어
-        const bindEvents = () => {
-            const copyBtn = card.querySelector('#copyFileName');
-            if (copyBtn) {
-                copyBtn.onclick = () => {
-                    const robotId = card.querySelector('#robotSelector').value;
-                    const taskRaw = card.querySelector('#taskInput').value;
-                    const taskMatch = taskRaw.match(/F\d+/);
-                    const taskNo = taskMatch ? "#" + taskMatch[0] : "#없음";
-                    const info = ROBOT_MAP[robotId] || { site: "알수없음", unit: "#000" };
-                    const time = new Date();
-                    const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_${info.site}_${info.unit}_${taskNo}`;
-                    navigator.clipboard.writeText(finalName);
-                    toast(finalName);
-                };
-            }
-
-            const multiBtn = card.querySelector('#btnMulti');
-            if (multiBtn) {
-                multiBtn.onclick = () => {
-                    const time = getCalculatedTime(10); 
-                    const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_다중관제영상`;
-                    navigator.clipboard.writeText(finalName);
-                    toast(finalName);
-                };
-            }
-
-            const btnDeli = card.querySelector('#btnDeli');
-            const btnPatrol = card.querySelector('#btnPatrol');
-            if (btnDeli && btnPatrol) {
-                const clickHandler = (offset) => {
-                    const time = getCalculatedTime(offset);
-                    const isWeek = !isWeekend();
-                    const unitStr = isWeek ? "#171, #170" : (offset === 10 ? "#171" : "#170");
-                    const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_부산 국립과학관_${unitStr}`;
-                    navigator.clipboard.writeText(finalName);
-                    toast(finalName);
-                };
-
-                btnDeli.onclick = () => clickHandler(!isWeekend() ? 40 : 10);
-                btnPatrol.onclick = () => clickHandler(40);
-            }
+        // 복사 버튼: 기체 선택 + 태스크 번호 → 파일명 생성
+        copyBtn.onclick = () => {
+            const robotId = robotSelector.value;
+            const taskRaw = taskInput.value;
+            const taskMatch = taskRaw.match(/F\d+/);
+            const taskNo = taskMatch ? "#" + taskMatch[0] : "#없음";
+            const info = ROBOT_MAP[robotId] || { site: "알수없음", unit: "#000" };
+            const time = new Date();
+            const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_${info.site}_${info.unit}_${taskNo}`;
+            navigator.clipboard.writeText(finalName);
+            toast(finalName);
         };
 
-        // DOM 부착 후 실행되도록 지연
-        setTimeout(bindEvents, 50);
+        // 다중 관제 버튼: 현재 시각 기준 -10분
+        btnMulti.onclick = () => {
+            const time = getCalculatedTime(10);
+            const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_다중관제영상`;
+            navigator.clipboard.writeText(finalName);
+            toast(finalName);
+        };
+
+        // 배송 띠띠 / 순찰 띠띠: 평일/주말 분기
+        if (!isWeekend()) {
+            // 평일: 두 버튼 모두 -40분, 같은 파일명
+            const weekDayHandler = () => {
+                const time = getCalculatedTime(40);
+                const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_부산 국립과학관_#171, #170`;
+                navigator.clipboard.writeText(finalName);
+                toast(finalName);
+            };
+            btnDeli.onclick = weekDayHandler;
+            btnPatrol.onclick = weekDayHandler;
+        } else {
+            // 주말: 배송(#171) -10분, 순찰(#170) -40분
+            btnDeli.onclick = () => {
+                const time = getCalculatedTime(10);
+                const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_부산 국립과학관_#171`;
+                navigator.clipboard.writeText(finalName);
+                toast(finalName);
+            };
+            btnPatrol.onclick = () => {
+                const time = getCalculatedTime(40);
+                const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_부산 국립과학관_#170`;
+                navigator.clipboard.writeText(finalName);
+                toast(finalName);
+            };
+        }
+
         return card;
     }
 
     /* ============================================================
-        SECTION 7. 대시보드 렌더링 및 초기화
+        SECTION 7. 대시보드 및 초기화
        ============================================================ */
     function renderDashboard() {
         dashboard.innerHTML = '';
@@ -389,18 +497,21 @@
         
         const list = document.createElement('div');
         list.id = 'dashboard-list';
-        list.style.display = "flex";
-        list.style.flexDirection = "column";
+        list.style.display = "grid"; 
         list.style.gap = "12px";
 
         list.appendChild(createMenuCard("🗺️ 지도 최적화", "노드 제거 및 마커 회전", 'isMapOpt', 'neubie_opt_map', () => injectMapStyle()));
         list.appendChild(createMenuCard("📡 줄을 서시오", "중복 관제 방지 (관제 시작 버튼)", 'isQueueOpt', 'neubie_opt_queue'));
         list.appendChild(createMenuCard("📋 일일 업무", "좌측 상단 시트 연동 정보", 'isTaskVisible', 'neubie_opt_task', () => {
-            taskPopup.style.display = state.isTaskVisible ? 'block' : 'none';
-            if (state.isTaskVisible) renderTaskList(state.myTodayTasks);
+            if (state.isTaskVisible) {
+                taskPopup.style.display = 'block';
+                renderTaskList(state.myTodayTasks);
+            } else {
+                taskPopup.style.display = 'none';
+            }
         }));
 
-        // 스마트 네이밍 엔진 카드 추가
+        // 네이밍 엔진 카드를 리스트의 4번째 항목으로 주입
         list.appendChild(createNamingCard());
 
         const isBatteryOpen = batteryPopup.style.display === 'block';
@@ -448,8 +559,12 @@
     window.addEventListener('keydown', (e) => {
         if (e.altKey && e.code === 'KeyQ') {
             e.preventDefault();
-            dashboard.style.display = dashboard.style.display === 'none' ? 'block' : 'none';
-            if (dashboard.style.display === 'block') renderDashboard();
+            if (dashboard.style.display === 'none') { 
+                renderDashboard(); 
+                dashboard.style.display = 'block'; 
+            } else { 
+                dashboard.style.display = 'none'; 
+            }
         }
         if (e.altKey && e.code === 'KeyB') { 
             e.preventDefault(); 
@@ -460,7 +575,11 @@
 
     document.addEventListener('click', handleControlClick, true);
     injectMapStyle();
-    setInterval(() => { if (batteryPopup.style.display === 'block') updateBatteryStatus(); }, 10000);
+    
+    setInterval(() => { 
+        if (batteryPopup.style.display === 'block') updateBatteryStatus(); 
+    }, 10000);
+
     if (state.isTaskVisible) renderTaskList(state.myTodayTasks);
 
 })();
