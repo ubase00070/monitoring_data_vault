@@ -220,11 +220,9 @@
         SECTION 4-1. [서버 동기화] GitHub JSON 기반 업무 로드 엔진
        ============================================================ */
     // 시트 탭이 아니더라도 모든 페이지(뉴비고 대시보드 등)에서 실행되어야 함
-    console.log("📋 서버 동기화 업무 엔진 가동 중...");
-
     function syncTasksFromServer() {
         const myName = localStorage.getItem('neubie_user_name');
-        if (!myName) return; // 이름 없으면 실행 안 함
+        if (!myName) return;
 
         const buster = Math.floor(Date.now() / 60000); 
         const dataUrl = `https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/daily_tasks.json?v=${buster}`;
@@ -232,24 +230,53 @@
         fetch(dataUrl)
             .then(res => res.json())
             .then(data => {
-                // [수정] 내 이름에 해당하는 임무만 필터링
                 const myTasks = data.filter(t => t.user === myName);
                 window.currentMyTasks = myTasks;
                 
-                console.log(`📥 ${myName} 데이터 동기화 완료 (${myTasks.length}건)`);
+                console.log(`📥 데이터 동기화 완료: ${new Date().toLocaleTimeString()}`);
 
-                // [추가] 업무 팝업이 열려있는 상태라면 즉시 화면 갱신
+                // [핵심] 레이아웃이 닫혀있어도 알림 조건을 체크함
+                checkAndTriggerNotifications(myTasks);
+
+                // 업무 팝업이 열려있다면 리스트 갱신
                 if (taskPopup && taskPopup.style.display === 'block') {
                     renderTaskList(myTasks);
                 }
             })
-            .catch(err => console.log("Silent sync failed"));
+            .catch(err => console.log("Sync failed"));
     }
 
-    // 시간 추출 및 상태 판단 함수 (취소선 및 알림 계산용)
+    // 레이아웃 노출 여부와 상관없이 알림만 전담하는 함수
+    function checkAndTriggerNotifications(tasks) {
+        const interval = parseInt(localStorage.getItem('neubie_remind_int') || '0');
+        if (interval === 0) return;
+
+        tasks.forEach(t => {
+            const timeKey = t.rawTime || t.time;
+            // 기존에 만들어둔 getTaskStatus를 활용해 남은 시간 계산
+            const status = getTaskStatus(timeKey); 
+            
+            const isMultiMon = t.content && t.content.includes("다중 모니터링");
+            const targetInterval = isMultiMon ? (interval + 10) : interval;
+
+            if (status.remainMin === targetInterval) {
+                if (!window.state.notifiedTasks) window.state.notifiedTasks = new Set();
+                
+                const taskKey = `${t.content}_${timeKey}_${targetInterval}`;
+                if (!window.state.notifiedTasks.has(taskKey)) {
+                    triggerReminder(t.content, status.remainMin);
+                    window.state.notifiedTasks.add(taskKey);
+                }
+            }
+        });
+    }
+
+    /* ============================================================
+        SECTION 3. 시간 계산 및 상태 판단 (통합 버전)
+       ============================================================ */
     function getTaskStatus(rawTime, isMonitoring) {
-        const times = rawTime.match(/\d{2}:\d{2}/g);
-        if (!times) return { isExpired: false, remainMin: 999 };
+        const times = String(rawTime).match(/\d{2}:\d{2}/g);
+        if (!times) return { isExpired: false, remainMin: 999, score: 0 };
         
         const now = new Date();
         const startTimeStr = times[0];
@@ -258,17 +285,29 @@
         const [sH, sM] = startTimeStr.split(':').map(Number);
         const [eH, eM] = endTimeStr.split(':').map(Number);
         
-        const start = new Date(); start.setHours(sH, sM, 0);
-        const end = new Date(); end.setHours(eH, eM, 0);
+        // [핵심] 07시 기준 상대 점수 계산 (자정 전후 시간 역전 방지)
+        const getRelativeScore = (h, m) => {
+            let relHour = h - 7;
+            if (relHour < 0) relHour += 24;
+            return relHour * 60 + m;
+        };
 
-        let remainMin = Math.floor((start - now) / 60000);
+        const currScore = getRelativeScore(now.getHours(), now.getMinutes());
+        const startScore = getRelativeScore(sH, sM);
+        const endScore = getRelativeScore(eH, eM);
+
+        let remainMin = startScore - currScore;
         
-        // 다중 모니터링은 10분 추가 차감 로직 (3분 전 선택 시 13분 전 알림)
-        if (isMonitoring) remainMin -= 10;
+        // [요청 반영] 다중 모니터링은 10분 일찍 알림이 오도록 계산
+        // (remainMin이 13일 때, 사용자가 설정한 interval 3과 일치하게 됨)
+        if (isMonitoring) {
+            remainMin -= 10; 
+        }
 
         return {
-            isExpired: now > end,
-            remainMin: remainMin
+            isExpired: currScore > endScore, // 업무 종료 시간이 지났으면 취소선
+            remainMin: remainMin,
+            score: startScore // 정렬용 점수
         };
     }
 
@@ -281,7 +320,8 @@
         alarmDiv.style.cssText = `
             position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
             background: #fbbf24; color: #000; padding: 15px 25px; border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 10001;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5); 
+            z-index: 9999999; /* 어떤 레이아웃보다도 위에 뜨도록 수정 */
             font-weight: bold; font-size: 16px; border: 2px solid #000;
             display: flex; align-items: center; gap: 10px; animation: fadeInDown 0.5s;
         `;
@@ -819,6 +859,6 @@
     // 업무 방해를 주지 않기 위해 fetch만 수행하며, 화면 갱신은 위 sync 함수 내 안전장치에 의존함
     setInterval(() => {
         syncTasksFromServer();
-    }, 300000);
+    }, 60000);
 
 })();
