@@ -218,7 +218,7 @@
     }
 
     /* ============================================================
-        SECTION 4-1. [수정] 업무 시트 데이터 동기화 및 알림 엔진
+        SECTION 4-1. [수정] 업무 시트 리마인더 및 유연한 데이터 동기화
        ============================================================ */
     if (currUrl.includes(config.sheetId)) {
         console.log("📋 업무 시트 리마인더 엔진 활성화 (1분 주기)");
@@ -234,17 +234,31 @@
             const foundTasks = [];
             const rows = document.querySelectorAll('tr');
             
-            rows.forEach(row => {
-                const text = row.innerText;
-                if (text.includes(myName)) {
-                    const cells = text.split('\t').map(c => c.trim());
-                    // 다중 모니터링 (6번 셀이 이름, 5번 셀이 시간)
+            rows.forEach((row, index) => {
+                const cells = row.innerText.split('\t').map(c => c.trim());
+                const rowNum = index + 1; // 실제 시트의 행 번호와 매칭
+
+                // 1. 다중 모니터링 구역 스캔 (6행 ~ 29행)
+                // F열(index 5)에 시간, G열(index 6)에 이름
+                if (rowNum >= 6 && rowNum <= 29) {
                     if (cells[6] === myName && cells[5] && cells[5].includes(':')) {
-                        foundTasks.push({ type: 'monitoring', content: `🖥️ 다중 모니터링 (${cells[5]})`, rawTime: cells[5] });
-                    } 
-                    // 일반 업무 (1번 셀에 시간 정보 포함됨)
-                    else if (cells[1] && (cells[1].includes('[') || cells[1].includes('시'))) {
-                        foundTasks.push({ type: 'task', content: cells[1], rawTime: cells[1] });
+                        foundTasks.push({ 
+                            type: 'monitoring', 
+                            content: `🖥️ 다중 모니터링 (${cells[5]})`, 
+                            rawTime: cells[5] 
+                        });
+                    }
+                }
+
+                // 2. 일일 담당 업무 구역 스캔 (70행 이상부터 플렉시블하게)
+                // B열(index 1)에 [시간] 업무내용, G열(index 6)에 이름
+                if (rowNum >= 70) {
+                    if (cells[6] === myName && cells[1] && (cells[1].includes('[') || cells[1].includes(':'))) {
+                        foundTasks.push({ 
+                            type: 'task', 
+                            content: cells[1], 
+                            rawTime: cells[1] 
+                        });
                     }
                 }
             });
@@ -252,10 +266,10 @@
             if (foundTasks.length > 0) {
                 taskChannel.postMessage({ type: 'TASK_UPDATE', tasks: foundTasks, user: myName });
             }
-        }, 60000); // 알림 체크를 위해 1분 주기로 동기화
+        }, 60000); // 1분 주기 동기화
     }
 
-    // 시간 추출 및 상태 판단 함수
+    // 시간 추출 및 상태 판단 함수 (취소선 및 알림 계산용)
     function getTaskStatus(rawTime, isMonitoring) {
         const times = rawTime.match(/\d{2}:\d{2}/g);
         if (!times) return { isExpired: false, remainMin: 999 };
@@ -272,7 +286,7 @@
 
         let remainMin = Math.floor((start - now) / 60000);
         
-        // 다중 모니터링은 10분 추가 차감 로직 적용
+        // 다중 모니터링은 10분 추가 차감 로직 (3분 전 선택 시 13분 전 알림)
         if (isMonitoring) remainMin -= 10;
 
         return {
@@ -281,7 +295,7 @@
         };
     }
 
-    // 리마인더 알림창 생성 함수
+    // 리마인더 알림창 생성 함수 (5초 점멸)
     function triggerReminder(taskContent, remainMin) {
         if (document.getElementById('neubie-reminder')) return;
 
@@ -333,7 +347,7 @@
         const setter = taskPopup.querySelector('#remindSetter');
         setter.onchange = (e) => {
             localStorage.setItem('neubie_remind_int', e.target.value);
-            state.notifiedTasks = new Set(); // 설정 변경 시 알림 기록 초기화
+            state.notifiedTasks = new Set(); // 설정 변경 시 기록 초기화
         };
         
         if (!tasks || tasks.length === 0) {
@@ -345,7 +359,7 @@
             const status = getTaskStatus(t.rawTime, t.type === 'monitoring');
             const interval = parseInt(localStorage.getItem('neubie_remind_int') || '0');
 
-            // 알림 조건 체크 (딱 1번만 실행)
+            // 알림 조건 체크 (정확히 설정된 분 전일 때 딱 1번만)
             if (interval > 0 && status.remainMin === interval && !state.notifiedTasks?.has(t.content)) {
                 triggerReminder(t.content, status.remainMin);
                 if (!state.notifiedTasks) state.notifiedTasks = new Set();
@@ -355,15 +369,17 @@
             const item = document.createElement('div');
             const isMon = t.type === 'monitoring';
             
-            // 취소선 처리 스타일
-            const textStyle = status.isExpired ? 'text-decoration: line-through; color: #666;' : 'color: #eee;';
+            // 시간이 지났다면 취소선 + 투명도 조절 스타일 적용
+            const textStyle = status.isExpired 
+                ? 'text-decoration: line-through; color: #777; opacity: 0.7;' 
+                : 'color: #eee;';
             
             item.style.cssText = `
-                background:${isMon ? 'rgba(59, 130, 246, 0.1)' : 'rgba(251, 191, 36, 0.1)'}; 
-                border-left:4px solid ${status.isExpired ? '#444' : (isMon ? '#3b82f6' : '#fbbf24')}; 
+                background:${status.isExpired ? 'rgba(60, 60, 60, 0.1)' : (isMon ? 'rgba(59, 130, 246, 0.1)' : 'rgba(251, 191, 36, 0.1)')}; 
+                border-left:4px solid ${status.isExpired ? '#555' : (isMon ? '#3b82f6' : '#fbbf24')}; 
                 padding:10px; border-radius:8px; margin-bottom:8px; font-size:13px; transition: 0.3s;
             `;
-            item.innerHTML = `<div style="${textStyle} font-weight:500;">${t.content} ${status.isExpired ? '(종료)' : ''}</div>`;
+            item.innerHTML = `<div style="${textStyle} font-weight:500;">${t.content} ${status.isExpired ? '(완료)' : ''}</div>`;
             taskPopup.appendChild(item);
         });
     }
@@ -373,7 +389,6 @@
         if (e.data.type === 'TASK_UPDATE') {
             state.myTodayTasks = e.data.tasks;
             localStorage.setItem('neubie_my_tasks', JSON.stringify(e.data.tasks));
-            // 팝업이 열려있지 않더라도 백그라운드에서 알림 로직 실행을 위해 renderTaskList 호출
             renderTaskList(state.myTodayTasks);
         }
     };
