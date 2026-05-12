@@ -224,7 +224,7 @@
     console.log("📋 서버 동기화 업무 엔진 가동 중...");
 
     function syncTasksFromServer() {
-        const myName = "안혜림";
+        const myName = "이준";
         const buster = Math.floor(Date.now() / 60000); // 1분 단위 캐시 버스터
         const dataUrl = `https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/daily_tasks.json?v=${buster}`;
 
@@ -570,9 +570,9 @@
         list.appendChild(createMenuCard("📡 줄을 서시오", "중복 관제 완화 기능", 'isQueueOpt', 'neubie_opt_queue'));
 
         /* ============================================================
-            수정된 부분: 동적 이름 적용 (안혜림의 일일 업무)
+            동적 이름 적용
            ============================================================ */
-        const targetName = "안혜림"; // 현재 테스트용 이름
+        const targetName = "이준"; // 현재 테스트용 이름
         const taskCount = (window.currentMyTasks && window.currentMyTasks.length) || 0;
         const taskDesc = taskCount > 0 ? `현재 ${taskCount}개의 배정된 업무가 있습니다.` : "배정된 업무가 없습니다.";
 
