@@ -6,7 +6,7 @@
 
     const currUrl = window.location.href;
     const isNeubieSite = currUrl.includes('go.neubie.ai');
-    console.log("🛰️ 뉴비 통합 엔진 v1.4 로드 완료 (줄을 서시오: 뉴비고 최적화)");
+    console.log("🛰️ 뉴비 통합 엔진 v1.5 로드 완료 (스마트 네이밍 레이아웃 수정)");
 
     /* ============================================================
         SECTION 1. 상태 및 설정
@@ -22,7 +22,6 @@
         sheetId: "1tLo6Xeq6KJx6zW-fcw8H38jdjxyS2yre5oWY7cxky70"
     };
 
-    // [추가] 기체 네이밍 매핑 데이터
     const ROBOT_MAP = {
         "76": { site: "송도 요기요", unit: "#076" },
         "85": { site: "역삼 요기요", unit: "#085" },
@@ -57,8 +56,20 @@
     const taskChannel = new BroadcastChannel('neubie_task_sync');
 
     /* ============================================================
-        SECTION 2. 맵 최적화 코어 & 네이밍 유틸리티
+        SECTION 2. 유틸리티
        ============================================================ */
+    const getFormattedDate = (dateObj) => dateObj.toISOString().slice(0, 10).replace(/-/g, "");
+    const getFormattedHour = (dateObj) => String(dateObj.getHours()).padStart(2, '0');
+    const getCalculatedTime = (offsetMinutes) => {
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - offsetMinutes);
+        return now;
+    };
+    const isWeekend = () => {
+        const day = new Date().getDay();
+        return (day === 6 || day === 0);
+    };
+
     const originalFetch = window.fetch;
     window.fetch = async (...args) => {
         const url = typeof args[0] === 'string' ? args[0] : args[0].url;
@@ -84,20 +95,6 @@
         if (!style.parentElement) document.head.appendChild(style);
     }
 
-    // [추가] 네이밍용 시간 보정 유틸리티
-    const getFormattedDate = (dateObj) => dateObj.toISOString().slice(0, 10).replace(/-/g, "");
-    const getFormattedHour = (dateObj) => String(dateObj.getHours()).padStart(2, '0');
-    const getCalculatedTime = (offsetMinutes) => {
-        const now = new Date();
-        now.setMinutes(now.getMinutes() - offsetMinutes);
-        return now;
-    };
-    const isWeekend = () => {
-        const day = new Date().getDay();
-        return (day === 6 || day === 0);
-    };
-
-    // [추가] 기체 트래킹 로직
     function updateRobotContext() {
         const path = window.location.href;
         if (path.includes('go.neubie.ai/ko/remote/robot/')) {
@@ -113,7 +110,7 @@
     updateRobotContext();
 
     /* ============================================================
-        SECTION 3. UI 컴포넌트 생성
+        SECTION 3. UI 컨테이너 생성
        ============================================================ */
     function createContainer(id, width, top, left, right = 'auto') {
         const el = document.createElement('div');
@@ -124,7 +121,7 @@
             borderRadius: '24px', padding: '20px', zIndex: '1000000',
             fontFamily: 'Pretendard, sans-serif', boxShadow: '0 20px 50px rgba(0,0,0,0.8)',
             border: '1px solid #333', display: 'none', transform: left === '50%' ? 'translate(-50%, -50%)' : 'none',
-            maxHeight: '90vh', overflowY: 'auto' // [수정] 레이아웃 가시성 확보를 위한 스크롤 추가
+            maxHeight: '90vh', overflowY: 'auto'
         });
         return el;
     }
@@ -154,7 +151,7 @@
     }
 
     /* ============================================================
-        SECTION 4. 배터리 및 업무 연동 로직
+        SECTION 4. 배터리 및 업무 로직
        ============================================================ */
     function updateBatteryStatus() {
         batteryPopup.innerHTML = '';
@@ -209,66 +206,10 @@
             const originalBg = btn.style.background;
             btn.textContent = '✅ 복사됨';
             btn.style.background = '#22c55e';
-            
             setTimeout(() => {
                 btn.textContent = originalText;
                 btn.style.background = originalBg;
             }, 2000);
-        });
-    }
-
-    if (currUrl.includes(config.sheetId)) {
-        console.log("📋 업무 시트 데이터 동기화 활성화됨 (5분 주기)");
-        setInterval(() => {
-            const profileBtn = document.querySelector('a[aria-label*="Google 계정"], img[src*="googleusercontent.com"]');
-            const myNameMatch = profileBtn?.getAttribute('aria-label') || profileBtn?.getAttribute('title') || "";
-            const myName = myNameMatch.match(/[가-힣]+/)?.[0] || ""; 
-
-            if (!myName) return;
-
-            const foundTasks = [];
-            const rows = document.querySelectorAll('tr');
-            
-            rows.forEach(row => {
-                const text = row.innerText;
-                if (text.includes(myName)) {
-                    const cells = text.split('\t').map(c => c.trim());
-                    if (cells[6] === myName && cells[5] && cells[5].includes(':')) {
-                        foundTasks.push({ type: 'monitoring', content: `🖥️ 다중 모니터링 (${cells[5]})` });
-                    } 
-                    else if (cells[1] && (cells[1].includes('[') || cells[1].includes('시'))) {
-                        foundTasks.push({ type: 'task', content: cells[1] });
-                    }
-                }
-            });
-
-            if (foundTasks.length > 0) {
-                taskChannel.postMessage({ type: 'TASK_UPDATE', tasks: foundTasks, user: myName });
-            }
-        }, 300000);
-    }
-
-    function renderTaskList(tasks) {
-        taskPopup.innerHTML = `
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #444; padding-bottom:10px;">
-                <b style="color:#fbbf24; font-size:17px;">📋 오늘의 업무</b>
-                <span style="font-size:11px; color:#888;">5m Sync</span>
-            </div>
-        `;
-        
-        if (!tasks || tasks.length === 0) {
-            taskPopup.innerHTML += `<div style="color:#666; text-align:center; padding:20px;">업무 시트 탭을 열어주세요.</div>`;
-            return;
-        }
-
-        tasks.forEach(t => {
-            const item = document.createElement('div');
-            const isMon = t.type === 'monitoring';
-            item.style.cssText = `background:${isMon ? 'rgba(59, 130, 246, 0.1)' : 'rgba(251, 191, 36, 0.1)'}; 
-                                  border-left:4px solid ${isMon ? '#3b82f6' : '#fbbf24'}; 
-                                  padding:12px; border-radius:8px; margin-bottom:10px; font-size:14px; line-height:1.5;`;
-            item.innerHTML = `<div style="color:#eee; font-weight:500;">${t.content}</div>`;
-            taskPopup.appendChild(item);
         });
     }
 
@@ -280,8 +221,30 @@
         }
     };
 
+    function renderTaskList(tasks) {
+        taskPopup.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #444; padding-bottom:10px;">
+                <b style="color:#fbbf24; font-size:17px;">📋 오늘의 업무</b>
+                <span style="font-size:11px; color:#888;">5m Sync</span>
+            </div>
+        `;
+        if (!tasks || tasks.length === 0) {
+            taskPopup.innerHTML += `<div style="color:#666; text-align:center; padding:20px;">업무 시트 탭을 열어주세요.</div>`;
+            return;
+        }
+        tasks.forEach(t => {
+            const item = document.createElement('div');
+            const isMon = t.type === 'monitoring';
+            item.style.cssText = `background:${isMon ? 'rgba(59, 130, 246, 0.1)' : 'rgba(251, 191, 36, 0.1)'}; 
+                                  border-left:4px solid ${isMon ? '#3b82f6' : '#fbbf24'}; 
+                                  padding:12px; border-radius:8px; margin-bottom:10px; font-size:14px; line-height:1.5;`;
+            item.innerHTML = `<div style="color:#eee; font-weight:500;">${t.content}</div>`;
+            taskPopup.appendChild(item);
+        });
+    }
+
     /* ============================================================
-        SECTION 5. 줄을 서시오 & 중복 관제 완화
+        SECTION 5. 중복 관제 방지 (줄을 서시오)
        ============================================================ */
     function calculateDelay() {
         const base = QUEUE_CONFIG.SLOTS[Math.floor(Math.random() * QUEUE_CONFIG.SLOTS.length)];
@@ -302,20 +265,14 @@
     }
 
     function handleControlClick(e) {
-        if (!state.isQueueOpt) return;
-        if (!isNeubieSite) return;
-
+        if (!state.isQueueOpt || !isNeubieSite) return;
         const btn = e.target.closest('div.flex.justify-center.items-center.w-full') || e.target.closest('button');
         if (!btn || btn.dataset.intercepted) return;
 
         const btnText = btn.innerText.replace(/\s/g, "");
-        const isTarget = btnText === "관제시작";
-        const isAvailable = !btnText.includes("확인중") && !btnText.includes("종료");
-
-        if (isTarget && isAvailable) {
+        if (btnText === "관제시작") {
             e.preventDefault();
             e.stopPropagation();
-
             const finalDelay = calculateDelay();
             const overlay = createOverlay(finalDelay);
             document.body.appendChild(overlay);
@@ -323,25 +280,21 @@
             setTimeout(() => {
                 btn.dataset.intercepted = 'true';
                 btn.click();
-
                 setTimeout(() => {
                     overlay.style.opacity = '0';
-                    setTimeout(() => {
-                        overlay.remove();
-                        delete btn.dataset.intercepted;
-                    }, 200);
+                    setTimeout(() => { overlay.remove(); delete btn.dataset.intercepted; }, 200);
                 }, Math.max(QUEUE_CONFIG.MIN_OVERLAY_SHOW, QUEUE_CONFIG.OVERLAY_DURATION - finalDelay));
             }, finalDelay);
         }
     }
 
     /* ============================================================
-        SECTION 6. [수정] 스마트 네이밍 엔진 카드 생성
+        SECTION 6. 스마트 네이밍 엔진 (수정 포인트)
        ============================================================ */
     function createNamingCard() {
         const card = document.createElement('div');
         card.id = 'namingSection';
-        card.style.cssText = 'background:#252525; padding:15px; border-radius:15px; border:1px solid #333; margin-top:5px;';
+        card.style.cssText = 'background:#252525; padding:15px; border-radius:15px; border:1px solid #333;';
 
         const history = JSON.parse(localStorage.getItem('neubie_robot_history') || '[]');
         let dropdownOptions = history.map(h => {
@@ -375,8 +328,8 @@
 
         const toast = (msg) => { alert(msg + " (복사완료)"); };
 
-        // 이벤트 바인딩 (setTimeout으로 실제 DOM 부착 후 동작 보장)
-        setTimeout(() => {
+        // 이벤트 바인딩 로직을 함수화하여 호출 시점 제어
+        const bindEvents = () => {
             const copyBtn = card.querySelector('#copyFileName');
             if (copyBtn) {
                 copyBtn.onclick = () => {
@@ -404,39 +357,28 @@
 
             const btnDeli = card.querySelector('#btnDeli');
             const btnPatrol = card.querySelector('#btnPatrol');
-
             if (btnDeli && btnPatrol) {
-                if (!isWeekend()) {
-                    const weekDayHandler = () => {
-                        const time = getCalculatedTime(40); 
-                        const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_부산 국립과학관_#171, #170`;
-                        navigator.clipboard.writeText(finalName);
-                        toast(finalName);
-                    };
-                    btnDeli.onclick = weekDayHandler;
-                    btnPatrol.onclick = weekDayHandler;
-                } else {
-                    btnDeli.onclick = () => {
-                        const time = getCalculatedTime(10);
-                        const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_부산 국립과학관_#171`;
-                        navigator.clipboard.writeText(finalName);
-                        toast(finalName);
-                    };
-                    btnPatrol.onclick = () => {
-                        const time = getCalculatedTime(40);
-                        const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_부산 국립과학관_#170`;
-                        navigator.clipboard.writeText(finalName);
-                        toast(finalName);
-                    };
-                }
-            }
-        }, 10);
+                const clickHandler = (offset) => {
+                    const time = getCalculatedTime(offset);
+                    const isWeek = !isWeekend();
+                    const unitStr = isWeek ? "#171, #170" : (offset === 10 ? "#171" : "#170");
+                    const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_부산 국립과학관_${unitStr}`;
+                    navigator.clipboard.writeText(finalName);
+                    toast(finalName);
+                };
 
+                btnDeli.onclick = () => clickHandler(!isWeekend() ? 40 : 10);
+                btnPatrol.onclick = () => clickHandler(40);
+            }
+        };
+
+        // DOM 부착 후 실행되도록 지연
+        setTimeout(bindEvents, 50);
         return card;
     }
 
     /* ============================================================
-        SECTION 7. 대시보드 및 초기화
+        SECTION 7. 대시보드 렌더링 및 초기화
        ============================================================ */
     function renderDashboard() {
         dashboard.innerHTML = '';
@@ -447,21 +389,18 @@
         
         const list = document.createElement('div');
         list.id = 'dashboard-list';
-        list.style.display = "grid"; 
+        list.style.display = "flex";
+        list.style.flexDirection = "column";
         list.style.gap = "12px";
 
         list.appendChild(createMenuCard("🗺️ 지도 최적화", "노드 제거 및 마커 회전", 'isMapOpt', 'neubie_opt_map', () => injectMapStyle()));
         list.appendChild(createMenuCard("📡 줄을 서시오", "중복 관제 방지 (관제 시작 버튼)", 'isQueueOpt', 'neubie_opt_queue'));
         list.appendChild(createMenuCard("📋 일일 업무", "좌측 상단 시트 연동 정보", 'isTaskVisible', 'neubie_opt_task', () => {
-            if (state.isTaskVisible) {
-                taskPopup.style.display = 'block';
-                renderTaskList(state.myTodayTasks);
-            } else {
-                taskPopup.style.display = 'none';
-            }
+            taskPopup.style.display = state.isTaskVisible ? 'block' : 'none';
+            if (state.isTaskVisible) renderTaskList(state.myTodayTasks);
         }));
 
-        // 네이밍 엔진 카드를 리스트의 4번째 항목으로 주입
+        // 스마트 네이밍 엔진 카드 추가
         list.appendChild(createNamingCard());
 
         const isBatteryOpen = batteryPopup.style.display === 'block';
@@ -509,12 +448,8 @@
     window.addEventListener('keydown', (e) => {
         if (e.altKey && e.code === 'KeyQ') {
             e.preventDefault();
-            if (dashboard.style.display === 'none') { 
-                renderDashboard(); 
-                dashboard.style.display = 'block'; 
-            } else { 
-                dashboard.style.display = 'none'; 
-            }
+            dashboard.style.display = dashboard.style.display === 'none' ? 'block' : 'none';
+            if (dashboard.style.display === 'block') renderDashboard();
         }
         if (e.altKey && e.code === 'KeyB') { 
             e.preventDefault(); 
@@ -525,11 +460,7 @@
 
     document.addEventListener('click', handleControlClick, true);
     injectMapStyle();
-    
-    setInterval(() => { 
-        if (batteryPopup.style.display === 'block') updateBatteryStatus(); 
-    }, 10000);
-
+    setInterval(() => { if (batteryPopup.style.display === 'block') updateBatteryStatus(); }, 10000);
     if (state.isTaskVisible) renderTaskList(state.myTodayTasks);
 
 })();
