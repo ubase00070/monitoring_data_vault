@@ -534,7 +534,7 @@
 
         // 헤더 및 설정 UI 렌더링 — inline-task-container 사용
         const inlineContainer = document.getElementById('inline-task-container');
-        inlineContainer.innerHTML = '';  // null이면 에러나므로
+        if (inlineContainer) inlineContainer.innerHTML = '';
         const container = inlineContainer || document.createElement('div'); // fallback
 
         if (validTasks.length === 0) {
