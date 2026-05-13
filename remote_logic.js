@@ -248,7 +248,14 @@
         titleB.style.cssText = "color:#eee; font-size:18px;";
         const copyBtn = document.createElement('button');
         copyBtn.textContent = '📋 복사';
-        Object.assign(copyBtn.style, { background:'#3b82f6', color:'white', border:'none', padding:'6px 12px', borderRadius:'8px', cursor:'pointer', fontWeight:'bold', transition:'0.2s' });
+        // 260번 줄 수정
+        Object.assign(copyBtn.style, { 
+            background:'#3b82f6', color:'white', border:'none', 
+            padding:'10px 20px',      // 6px 12px → 10px 20px
+            borderRadius:'8px', cursor:'pointer', fontWeight:'bold', 
+            fontSize:'15px',          
+            transition:'0.2s' 
+        });
         copyBtn.onclick = (e) => copyToClipboard(e.target);
         header.append(titleB, copyBtn);
         batteryPopup.appendChild(header);
