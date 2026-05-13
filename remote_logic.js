@@ -771,8 +771,8 @@
         const popup = document.createElement('div');
         popup.className = 'delay-popup';
         popup.innerHTML = `
-            <div style="font-size: 1.1em; color: #00ff41; margin-bottom: 6px;">[중복 개입 완화 시스템]</div>
-            <div style="font-size: 1.3em; font-weight: bold;">🚀 ${(finalDelay / 1000).toFixed(2)}초 대기 적용</div>
+            <div style="font-size: 1.1em; color: #00ff41; margin-bottom: 6px;">[중복 개입 완화 시스템 v2.0]</div>
+            <div style="font-size: 1.3em; font-weight: bold;"> ${(finalDelay / 1000).toFixed(2)}초 딜레이 적용 중...</div>
             <div style="font-size: 0.9em; opacity: 0.7; margin-top: 6px;">Group Rank: ${myRank + 1} | Slot Gap: ${SPACING}ms</div>
         `;
         document.body.appendChild(popup);
