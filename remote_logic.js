@@ -29,8 +29,8 @@
         "29": { site: "송도 요기요", unit: "#023" }, // 4호기
         "32": { site: "송도 요기요", unit: "#026" }, // 5호기
         "87": { site: "송도 요기요", unit: "#056" }, // 6호기
-        "07": { site: "송도 요기요", unit: "#043" }, // 7호기
-        "57": { site: "송도 요기요", unit: "#081" }, // 8호기
+        "7": { site: "송도 요기요", unit: "#043" }, // 7호기
+        "57": { site: "송도 요기요", unit: "#061" }, // 8호기
         "72": { site: "송도 요기요", unit: "#076" }, // 13호기
         "129": { site: "송도 요기요", unit: "#082" }, // 14호기
         "27": { site: "역삼 요기요", unit: "#021" }, // 3호기
@@ -659,21 +659,21 @@
             /* 딜레이 안내 팝업 스타일 */
             .delay-popup {
                 position: fixed;
-                top: 15%; /* 상단에서 약간 아래 */
+                top: 15%;
                 left: 50%;
                 transform: translate(-50%, 0);
-                background-color: rgba(15, 15, 15, 0.95); /* 더 깊은 검정 */
+                background-color: rgba(15, 15, 15, 0.95);
                 color: #00ff41; 
-                padding: 16px 28px;
-                border-radius: 8px;
+                padding: 24px 44px;        /* 16px 28px → 24px 44px */
+                border-radius: 12px;       /* 8px → 12px */
                 z-index: 10000; 
                 text-align: center;
                 font-weight: 700;
-                border: 2px solid #00ff41; /* 테두리 강조 */
+                border: 2px solid #00ff41;
                 box-shadow: 0 0 20px rgba(0, 255, 65, 0.3);
                 pointer-events: none;
-                line-height: 1.5;
-                font-size: 15px;
+                line-height: 1.6;          /* 1.5 → 1.6 */
+                font-size: 18px;           /* 15px → 18px */
                 transition: opacity 0.5s, transform 0.5s;
             }
         `;
@@ -762,9 +762,9 @@
         const popup = document.createElement('div');
         popup.className = 'delay-popup';
         popup.innerHTML = `
-            <div style="font-size: 0.85em; color: #00ff41; margin-bottom: 4px;">[중복 개입 완화 시스템]</div>
-            <div style="font-size: 1.1em; font-weight: bold;">🚀 ${(finalDelay / 1000).toFixed(2)}초 대기 적용</div>
-            <div style="font-size: 0.75em; opacity: 0.7; margin-top: 4px;">Group Rank: ${myRank + 1} | Slot Gap: ${SPACING}ms</div>
+            <div style="font-size: 1.1em; color: #00ff41; margin-bottom: 6px;">[중복 개입 완화 시스템]</div>
+            <div style="font-size: 1.3em; font-weight: bold;">🚀 ${(finalDelay / 1000).toFixed(2)}초 대기 적용</div>
+            <div style="font-size: 0.9em; opacity: 0.7; margin-top: 6px;">Group Rank: ${myRank + 1} | Slot Gap: ${SPACING}ms</div>
         `;
         document.body.appendChild(popup);
     
