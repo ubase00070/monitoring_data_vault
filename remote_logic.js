@@ -563,11 +563,13 @@
                 border-left:4px solid ${status.isExpired ? '#555' : (isMon ? '#3b82f6' : '#fbbf24')}; 
                 padding:10px; border-radius:8px; margin-bottom:8px; font-size:16px; transition: 0.3s;
                 display: flex; justify-content: space-between; align-items: center;
+                overflow: hidden;
+                max-height: 42px;
             `;
 
             const displayTime = (String(timeKey).length > 10) ? String(timeKey).match(/\d{2}:\d{2}/)?.[0] : timeKey;
 
-            const needsMarquee = t.content.length > 40;
+            const needsMarquee = t.content.length > 22;
             const contentSpan = needsMarquee
                 ? `<span class="marquee-text">${t.content}</span>`
                 : `<span>${t.content}</span>`;
@@ -728,7 +730,7 @@
                 .marquee-text {
                     display: inline-block;
                     white-space: nowrap;
-                    animation: marquee-scroll 10s linear infinite;
+                    animation: marquee-scroll 18s linear infinite;
                 }
                 .marquee-static {
                     display: inline-block;
