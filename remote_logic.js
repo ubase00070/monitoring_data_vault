@@ -23,11 +23,56 @@
 
     // [추가] 기체 네이밍 매핑 데이터
     const ROBOT_MAP = {
-        "76": { site: "송도 요기요", unit: "#076" },
-        "85": { site: "역삼 요기요", unit: "#085" },
-        "124": { site: "가평 니모", unit: "#124" },
-        "171": { site: "부산 국립과학관", unit: "#171" },
-        "170": { site: "부산 국립과학관", unit: "#170" }
+        "20": { site: "송도 요기요", unit: "#013" }, // 1호기
+        "86": { site: "송도 요기요", unit: "#055" }, // 2호기
+        "80": { site: "송도 요기요", unit: "#091" }, // 3호기
+        "29": { site: "송도 요기요", unit: "#023" }, // 4호기
+        "32": { site: "송도 요기요", unit: "#026" }, // 5호기
+        "87": { site: "송도 요기요", unit: "#056" }, // 6호기
+        "07": { site: "송도 요기요", unit: "#043" }, // 7호기
+        "57": { site: "송도 요기요", unit: "#081" }, // 8호기
+        "72": { site: "송도 요기요", unit: "#076" }, // 13호기
+        "129": { site: "송도 요기요", unit: "#082" }, // 14호기
+        "27": { site: "역삼 요기요", unit: "#021" }, // 3호기
+        "152": { site: "역삼 요기요", unit: "#114" }, // 5호기
+        "23": { site: "역삼 요기요", unit: "#017" }, // 11호기
+        "173": { site: "역삼 요기요", unit: "#153" }, // 14호기
+        "78": { site: "역삼 요기요", unit: "#086" }, // 2호기
+        "153": { site: "역삼 요기요", unit: "#118" }, // 6호기
+        "45": { site: "역삼 요기요", unit: "#044" }, // 9호기
+        "174": { site: "역삼 요기요", unit: "#154" }, // 15호기
+        "255": { site: "성수 요기요", unit: "#228" }, // 1호기
+        "256": { site: "성수 요기요", unit: "#229" }, // 2호기
+        "257": { site: "성수 요기요", unit: "#230" }, // 3호기
+        "258": { site: "성수 요기요", unit: "#231" }, // 4호기
+        "259": { site: "성수 요기요", unit: "#232" }, // 5호기
+        "260": { site: "성수 요기요", unit: "#233" }, // 6호기
+        "261": { site: "성수 요기요", unit: "#234" }, // 7호기
+        "262": { site: "성수 요기요", unit: "#235" }, // 8호기
+        "46": { site: "성남 삼평동", unit: "#045" },  // 1호기
+        "53": { site: "성남 삼평동", unit: "#052" }, // 2호기
+        "54": { site: "성남 삼평동", unit: "#053" }, // 3호기
+        "55": { site: "성남 삼평동", unit: "#054" }, // 4호기
+        "133": { site: "성남 삼평동", unit: "#087" }, // 5호기
+        "132": { site: "성남 삼평동", unit: "#088" }, // 6호기
+        "135": { site: "성남 삼평동", unit: "#092" }, // 7호기
+        "136": { site: "성남 삼평동", unit: "#093" }, // 8호기
+        "137": { site: "성남 서현동", unit: "#094" }, // 9호기
+        "122": { site: "성남 서현동", unit: "#095" }, // 10호기
+        "126": { site: "파주 LGD", unit: "#083" }, // 엘리 1호기
+        "58": { site: "파주 LGD", unit: "#062" }, // 엘리 2호기
+        "62": { site: "파주 LGD", unit: "#066" }, // 엘리 3호기
+        "66": { site: "아산 스테이그린", unit: "#070" }, // 그린 1호기
+        "67": { site: "아산 스테이그린", unit: "#071" }, // 그린 2호기
+        "60": { site: "가평 니모 캠핌장", unit: "#064" }, // 가평 1호기
+        "119": { site: "가평 니모 캠핑장", unit: "#085" }, // 가평 2호기
+        "19": { site: "송도 국제캠핑장", unit: "#041" }, // 국캠 1호기
+        "92": { site: "송도 국제캠핑장", unit: "#135" }, // 국캠 2호기
+        "97": { site: "송도 국제캠핑장", unit: "#122" }, // 국캠 3호기
+        "125": { site: "대관령 솔내음 캠핑장", unit: "#110" }, // 대관령 1호기
+        "127": { site: "대관령 솔내음 캠핑장", unit: "#115" }, // 대관령 2호기
+        "214": { site: "진천 힐사이드 캠핑장", unit: "#194" }, // 진천
+        "99": { site: "삼성인력개발원", unit: "#124" }, // 인개원
     };
 
     const isAutoTarget = config.targetIds.some(id => currUrl.includes(`/monitoring/${id}`));
@@ -73,25 +118,51 @@
     };
 
     function injectMapStyle() {
-        const style = document.createElement('style');
-        style.id = 'neubie-map-optimization';
+        let style = document.getElementById('neubie-map-opt-style');
+        if (!style) {
+            style = document.createElement('style');
+            style.id = 'neubie-map-opt-style';
+            document.head.appendChild(style);
+        }
+
+        if (!state.isMapOpt) {
+            style.textContent = "";
+            return;
+        }
+
         style.textContent = `
-            /* 1. 불필요한 마커 및 경로 숨기기 (가속 핵심) */
-            gmp-advanced-marker:has([data-qk*="base-marker"]),
-            gmp-advanced-marker:has([data-qk*="node-marker"]),
-            gmp-advanced-marker:has([data-qk*="site-marker"]),
-            #map-container svg path[stroke-opacity],
-            .gm-style img[src*="transparent"] { 
-                display: none !important; 
+            /* [1] 노드(Path 점) 제거: 렌더링 부하의 주범 차단 */
+            [data-qk^="node-marker"],
+            gmp-advanced-marker:has([data-qk^="node-marker"]) {
+                display: none !important;
             }
 
-            /* 2. 대기장소 마커 반전 복구 (가독성) */
+            /* [2] 대기장소 마커 반전 로직 (글자 방향 보존형) */
             gmp-advanced-marker:has([data-qk*="base-marker-대기장소"]) {
                 display: block !important;
+                visibility: visible !important;
+                z-index: 500 !important;
+            }
+
+            /* 핀 아이콘(SVG)만 180도 회전 */
+            gmp-advanced-marker:has([data-qk*="base-marker-대기장소"]) svg {
                 transform: rotate(180deg) !important;
             }
 
-            /* 3. 기체 및 미니맵 마커는 절대 보존 */
+            /* 레이아웃 구조만 반전시키고, 글자(span/div)의 회전은 방지 */
+            gmp-advanced-marker:has([data-qk*="base-marker-대기장소"]) div.flex-col {
+                display: flex !important;
+                flex-direction: column-reverse !important; /* 아이콘과 글자 순서 바꿈 */
+                transform: translateY(18px) !important;    /* 핀이 거꾸로 꽂히는 위치 보정 */
+            }
+
+            /* 글자(이름)는 정방향 유지 */
+            gmp-advanced-marker:has([data-qk*="base-marker-대기장소"]) span,
+            gmp-advanced-marker:has([data-qk*="base-marker-대기장소"]) div {
+                transform: rotate(0deg) !important; 
+            }
+
+            /* [3] 기체 및 미니맵 마커 절대 보존 */
             gmp-advanced-marker:not(:has([data-qk])),
             gmp-advanced-marker:has([data-qk*="robot"]),
             div[class*="MiniMap"] gmp-advanced-marker {
@@ -100,10 +171,10 @@
                 z-index: 1000 !important;
             }
 
-            /* 4. 브라우저 렌더링 가속 */
+            /* [4] 렌더링 성능 가속 */
             .gm-style canvas { contain: strict !important; }
+            aside { box-shadow: none !important; contain: layout paint !important; }
         `;
-        document.head.appendChild(style);
     }
 
     // [추가] 네이밍용 시간 보정 유틸리티
@@ -183,7 +254,7 @@
         header.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #333; padding-bottom:10px;";
         const titleB = document.createElement('b');
         titleB.textContent = "🛰️ 성남 배터리";
-        titleB.style.cssText = "color:#eee; font-size:18px;";
+        titleB.style.cssText = "color:#eee; font-size:22px;";
         const copyBtn = document.createElement('button');
         copyBtn.textContent = '📋 복사';
         Object.assign(copyBtn.style, { background:'#3b82f6', color:'white', border:'none', padding:'6px 12px', borderRadius:'8px', cursor:'pointer', fontWeight:'bold', transition:'0.2s' });
