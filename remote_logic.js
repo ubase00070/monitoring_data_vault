@@ -598,6 +598,9 @@
             `;
             container.appendChild(item);
         });
+        
+        const inlineContainer = document.getElementById('inline-task-container');
+        if (inlineContainer) inlineContainer.innerHTML = container.innerHTML;
     }
 
     // 메시지 수신 시 처리
@@ -1009,29 +1012,67 @@
 
         const list = document.createElement('div');
         list.id = 'dashboard-list';
-        list.style.display = "grid"; 
-        list.style.gap = "12px";
+        list.style.cssText = "display:grid; gap:12px;";
 
-        list.appendChild(createMenuCard("🗺️ 역삼, 송도, 성수 요기요 / 성남 삼평동 맵 최적화", "흰색 마커 제거 및 대기장소 마커 회전", 'isMapOpt', 'neubie_opt_map', () => injectMapStyle()));
-        list.appendChild(createMenuCard("📡 줄을 서시오", "중복 개입 완화 기능", 'isQueueOpt', 'neubie_opt_queue'));
-
+        // 1. 업무 알림 설정 (태스크 리스트 인라인 삽입)
+        const taskCard = document.createElement('div');
+        taskCard.style.cssText = "background:#252525; padding:15px; border-radius:15px; border:1px solid #333;";
         const storedName = localStorage.getItem('neubie_user_name') || "사용자";
-        const isTaskOpen = taskPopup.style.display === 'block';
-        const taskCount = (window.currentMyTasks && window.currentMyTasks.length) || 0;
-        const taskDesc = taskCount > 0 ? `금일 ${taskCount}개의 배정 업무가 있습니다.` : "배정된 업무가 없습니다.";
+        taskCard.innerHTML = `<div style="font-weight:bold; font-size:18px; margin-bottom:10px;">📋 ${storedName}의 일일 업무</div>`;
+        const taskInline = document.createElement('div');
+        taskInline.id = 'inline-task-container';
+        taskCard.appendChild(taskInline);
+        list.appendChild(taskCard);
 
-        list.appendChild(createMenuCard(
-            `📋 ${storedName}의 일일 업무(알림 설정)`, 
-            taskDesc, 
-            null, null, 
-        ));
+        // syncTasksFromServer 결과를 인라인 컨테이너에 렌더링
+        if (window.currentMyTasks && window.currentMyTasks.length > 0) {
+            renderTaskList(window.currentMyTasks);
+        } else {
+            taskInline.innerHTML = `<div style="color:#666; font-size:14px; padding:8px 0;">배정된 업무가 없습니다.</div>`;
+        }
 
+        // 2. 맵 최적화 + 줄을 서시오 반반 행
+        const twoCol = document.createElement('div');
+        twoCol.style.cssText = "display:grid; grid-template-columns:1fr 1fr; gap:12px;";
+
+        // 맵 최적화 (체크박스, 멘트 없이 이름만)
+        const mapCard = document.createElement('div');
+        mapCard.style.cssText = "background:#252525; padding:15px; border-radius:15px; border:1px solid #333; display:flex; justify-content:space-between; align-items:center;";
+        mapCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">🗺️ 맵 최적화</span>`;
+        const mapChk = document.createElement('input');
+        mapChk.type = 'checkbox'; mapChk.checked = state.isMapOpt;
+        mapChk.style.cssText = "width:18px; height:18px; cursor:pointer;";
+        mapChk.onchange = (e) => {
+            state.isMapOpt = e.target.checked;
+            localStorage.setItem('neubie_opt_map', state.isMapOpt);
+            injectMapStyle();
+        };
+        mapCard.appendChild(mapChk);
+        twoCol.appendChild(mapCard);
+
+        // 줄을 서시오 (체크박스, 멘트 없이 이름만)
+        const queueCard = document.createElement('div');
+        queueCard.style.cssText = "background:#252525; padding:15px; border-radius:15px; border:1px solid #333; display:flex; justify-content:space-between; align-items:center;";
+        queueCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">📡 줄을 서시오</span>`;
+        const queueChk = document.createElement('input');
+        queueChk.type = 'checkbox'; queueChk.checked = state.isQueueOpt;
+        queueChk.style.cssText = "width:18px; height:18px; cursor:pointer;";
+        queueChk.onchange = (e) => {
+            state.isQueueOpt = e.target.checked;
+            localStorage.setItem('neubie_opt_queue', state.isQueueOpt);
+        };
+        queueCard.appendChild(queueChk);
+        twoCol.appendChild(queueCard);
+        list.appendChild(twoCol);
+
+        // 3. 배터리 현황
         const isBatteryOpen = batteryPopup.style.display === 'block';
         list.appendChild(createMenuCard("🔋 실시간 성남시 기체 배터리 현황", "실시간으로 정보를 받아옵니다.", null, null, () => {
             toggleBattery();
-            renderDashboard(); 
+            renderDashboard();
         }, isBatteryOpen ? '닫기' : '열기'));
 
+        // 4. 영상 파일명 도우미
         list.appendChild(createNamingCard());
 
         dashboard.appendChild(list);
