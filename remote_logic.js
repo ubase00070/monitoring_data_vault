@@ -237,6 +237,26 @@
     const iframes = {};
     if (currUrl.includes('/remote/multiple/driving')) {
         config.batteryIds.forEach(c => {
+            let batteryVal = "- %", statusText = "OFF", accentColor = "#666", statusIcon = "⚪";
+            try {
+                const doc = iframes[c.id]?.contentDocument || iframes[c.id]?.contentWindow.document;
+                const card = doc?.querySelector('li[data-qk="robot-card"]');
+                if (card) {
+                    const cardText = card.innerText;
+                    const batteryMatch = cardText.match(/(\d+)%/);
+
+                    // '배터리' 텍스트 조건 제거 — SVG 아이콘만으로 판정
+                    const isCharging = !!card.querySelector('svg[class*="text-tertiary-300"]');
+                    const isPatrolling = cardText.includes('순찰');
+
+                    if (batteryMatch) {
+                        batteryVal = batteryMatch[0];
+                        if (isPatrolling)      { accentColor = "#3b82f6"; statusIcon = "🔵"; statusText = "순찰 중"; }
+                        else if (isCharging)   { accentColor = "#22c55e"; statusIcon = "🟢"; statusText = "충전 중"; }
+                        else                   { accentColor = "#ffffff"; statusIcon = "⚪"; statusText = "대기 중"; }
+                    }
+                }
+            } catch (e) {}
             const ifr = document.createElement('iframe');
             ifr.src = `https://go.neubie.ai/ko/monitoring/${c.id}`;
             Object.assign(ifr.style, { width: '0', height: '0', border: 'none', display: 'none' });
