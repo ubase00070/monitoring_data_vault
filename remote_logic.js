@@ -222,9 +222,9 @@
         return el;
     }
 
-    const dashboard = createContainer('neubie-dashboard', '420px', '50%', '50%');
-    const batteryPopup = createContainer('neubie-battery-popup', '340px', '20px', 'auto', '20px');
-    const taskPopup = createContainer('neubie-task-popup', '360px', '20px', '20px');
+    const dashboard = createContainer('neubie-dashboard', '500px', '50%', '50%');
+    const batteryPopup = createContainer('neubie-battery-popup', '380px', '20px', 'auto', '20px');
+    const taskPopup = createContainer('neubie-task-popup', '420px', '20px', '20px');
 
     const injectUI = () => { 
         if (document.body) {
@@ -1091,16 +1091,26 @@
         return card;
     }
 
+    let batteryRefreshInterval = null;
+
     function toggleBattery() {
-        if (batteryPopup.style.display === 'none') { 
+        if (batteryPopup.style.display === 'none') {
             updateBatteryStatus();
             batteryPopup.style.display = 'block';
-            // iframe 로딩 여유 시간 후 한 번 더 갱신
             setTimeout(() => {
                 if (batteryPopup.style.display === 'block') updateBatteryStatus();
             }, 1500);
-        } else { 
-            batteryPopup.style.display = 'none'; 
+
+            // ✅ 10초마다 자동 갱신
+            batteryRefreshInterval = setInterval(() => {
+                if (batteryPopup.style.display === 'block') updateBatteryStatus();
+                else clearInterval(batteryRefreshInterval);
+            }, 10000);
+
+        } else {
+            batteryPopup.style.display = 'none';
+            // ✅ 팝업 닫으면 인터벌 정리
+            clearInterval(batteryRefreshInterval);
         }
     }
 
