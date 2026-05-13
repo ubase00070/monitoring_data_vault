@@ -244,7 +244,7 @@
         const header = document.createElement('div');
         header.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #333; padding-bottom:10px;";
         const titleB = document.createElement('b');
-        titleB.textContent = "🛰️ 성남 배터리";
+        titleB.textContent = "🔋 성남 배터리 (5초 리프레시)";
         titleB.style.cssText = "color:#eee; font-size:18px;";
         const copyBtn = document.createElement('button');
         copyBtn.textContent = '📋 복사';
@@ -1041,7 +1041,8 @@
                 if (taskPopup.style.display === 'none') {
                     syncTasksFromServer();
                     if (batteryPopup.style.display === 'block') {
-                        taskPopup.style.top = (batteryPopup.offsetHeight + 30) + 'px';
+                        const rect = batteryPopup.getBoundingClientRect();
+                        taskPopup.style.top = (rect.bottom + 10) + 'px';
                     } else {
                         taskPopup.style.top = '20px';
                     }
