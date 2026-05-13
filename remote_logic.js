@@ -262,7 +262,7 @@
         const header = document.createElement('div');
         header.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #333; padding-bottom:10px;";
         const titleB = document.createElement('b');
-        titleB.textContent = "🔋 성남시 배터리 (5초 리프레시)";
+        titleB.textContent = "🔋 실시간 성남시 배터리";
         titleB.style.cssText = "color:#eee; font-size:18px;";
         const copyBtn = document.createElement('button');
         copyBtn.textContent = '📋 복사';
@@ -1006,8 +1006,8 @@
                 <div style="font-weight:bold; font-size:18px;">📋 ${storedName}의 일일 업무</div>
                 <select id="remind-inline" style="background:#333; color:white; border:1px solid #555; font-size:13px; border-radius:4px; padding:2px;">
                     <option value="0" ${currentInt === '0' ? 'selected' : ''}>알림 없음</option>
-                    <option value="3" ${currentInt === '3' ? 'selected' : ''}>3분 전</option>
-                    <option value="5" ${currentInt === '5' ? 'selected' : ''}>5분 전</option>
+                    <option value="3" ${currentInt === '3' ? 'selected' : ''}>3분 전(다중은 13분 전)</option>
+                    <option value="5" ${currentInt === '5' ? 'selected' : ''}>5분 전(다중은 15분 전)</option>
                 </select>
             </div>
         `;
@@ -1030,7 +1030,7 @@
         // 맵 최적화 (체크박스, 멘트 없이 이름만)
         const mapCard = document.createElement('div');
         mapCard.style.cssText = "background:#252525; padding:15px; border-radius:15px; border:1px solid #333; display:flex; justify-content:space-between; align-items:center;";
-        mapCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">🗺️ 맵 최적화</span>`;
+        mapCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">🗺️ 요기요/삼평동 맵 최적화</span>`;
         const mapChk = document.createElement('input');
         mapChk.type = 'checkbox'; mapChk.checked = state.isMapOpt;
         mapChk.style.cssText = "width:18px; height:18px; cursor:pointer;";
@@ -1045,7 +1045,7 @@
         // 줄을 서시오 (체크박스, 멘트 없이 이름만)
         const queueCard = document.createElement('div');
         queueCard.style.cssText = "background:#252525; padding:15px; border-radius:15px; border:1px solid #333; display:flex; justify-content:space-between; align-items:center;";
-        queueCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">📡 줄을 서시오</span>`;
+        queueCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">📡 중복 관제 순열 시스템</span>`;
         const queueChk = document.createElement('input');
         queueChk.type = 'checkbox'; queueChk.checked = state.isQueueOpt;
         queueChk.style.cssText = "width:18px; height:18px; cursor:pointer;";
@@ -1059,7 +1059,7 @@
 
         // 3. 배터리 현황
         const isBatteryOpen = batteryPopup.style.display === 'block';
-        list.appendChild(createMenuCard("🔋 실시간 성남시 기체 배터리 현황", "실시간으로 정보를 받아옵니다.", null, null, () => {
+        list.appendChild(createMenuCard("🔋 실시간 성남시 기체 배터리", "5초 간격으로 정보를 받아옵니다.", null, null, () => {
             toggleBattery();
             renderDashboard();
             // renderDashboard 후 업무 목록 다시 채우기
