@@ -1144,7 +1144,6 @@
     function closeAllPopups() {
         dashboard.style.display = 'none';
         batteryPopup.style.display = 'none';
-        taskPopup.style.display = 'none';
     }
 
     window.addEventListener('keydown', (e) => {
