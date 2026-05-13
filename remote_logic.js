@@ -370,7 +370,7 @@
             fetch(dataUrl).then(r => r.json()),
             fetch(insuUrl).then(r => r.json()),
             fetch(attendanceUrl).then(r => r.json())
-        ]).then(([data, insu]) => {
+        ]).then(([data, insu, attendance]) => {
             state.insuData = insu;
             state.attendanceData = attendance;
 
