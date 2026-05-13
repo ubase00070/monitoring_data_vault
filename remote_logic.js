@@ -21,7 +21,7 @@
         sheetId: "1tLo6Xeq6KJx6zW-fcw8H38jdjxyS2yre5oWY7cxky70"
     };
 
-    // [추가] 기체 네이밍 매핑 데이터
+    // 기체 네이밍 매핑 데이터
     const ROBOT_MAP = {
         "20": { site: "송도 요기요", unit: "#013" }, // 1호기
         "86": { site: "송도 요기요", unit: "#055" }, // 2호기
@@ -31,6 +31,9 @@
         "87": { site: "송도 요기요", unit: "#056" }, // 6호기
         "7": { site: "송도 요기요", unit: "#043" }, // 7호기
         "57": { site: "송도 요기요", unit: "#061" }, // 8호기
+        "2": { site: "송도 요기요", unit: "#081" }, // 10호기 고장
+        "51": { site: "송도 요기요", unit: "#050" }, // 11호기 고장
+        "71": { site: "송도 요기요", unit: "#075" }, // 15호기 고장
         "72": { site: "송도 요기요", unit: "#076" }, // 13호기
         "129": { site: "송도 요기요", unit: "#082" }, // 14호기
         "27": { site: "역삼 요기요", unit: "#021" }, // 3호기
@@ -41,6 +44,10 @@
         "153": { site: "역삼 요기요", unit: "#118" }, // 6호기
         "45": { site: "역삼 요기요", unit: "#044" }, // 9호기
         "174": { site: "역삼 요기요", unit: "#154" }, // 15호기
+        "47": { site: "역삼 요기요", unit: "#046" }, // 1호기 고장
+        "134": { site: "역삼 요기요", unit: "#098" }, // 4호기 고장
+        "1": { site: "역삼 요기요", unit: "#016" }, // 7호기 고장
+        "146": { site: "역삼 요기요", unit: "#084" }, // 12호기 고장
         "255": { site: "성수 요기요", unit: "#228" }, // 1호기
         "256": { site: "성수 요기요", unit: "#229" }, // 2호기
         "257": { site: "성수 요기요", unit: "#230" }, // 3호기
@@ -118,6 +125,9 @@
     };
 
     function injectMapStyle() {
+        // 타겟 사이트가 아니면 즉시 리턴
+        if (!isAutoTarget) return;
+
         let style = document.getElementById('neubie-map-opt-style');
         if (!style) {
             style = document.createElement('style');
@@ -177,7 +187,7 @@
         `;
     }
 
-    // [추가] 네이밍용 시간 보정 유틸리티
+    // 네이밍용 시간 보정 유틸리티
     const getFormattedDate = (dateObj) => dateObj.toISOString().slice(0, 10).replace(/-/g, "");
     const getFormattedHour = (dateObj) => String(dateObj.getHours()).padStart(2, '0');
     const getCalculatedTime = (offsetMinutes) => {
@@ -337,7 +347,7 @@
     /* ============================================================
         SECTION 4-1. [서버 동기화] GitHub JSON 기반 업무 로드 엔진
        ============================================================ */
-    // 시트 탭이 아니더라도 모든 페이지(뉴비고 대시보드 등)에서 실행되어야 함
+    // 모든 페이지(뉴비고 대시보드 등)에서 실행되어야 함
     function syncTasksFromServer() {
         const myName = localStorage.getItem('neubie_user_name');
         if (!myName) return;
@@ -369,7 +379,6 @@
 
         tasks.forEach(t => {
             const timeKey = t.rawTime || t.time;
-            // 기존에 만들어둔 getTaskStatus를 활용해 남은 시간 계산
             const status = getTaskStatus(timeKey); 
             
             const isMultiMon = t.content && t.content.includes("다중 모니터링");
@@ -389,7 +398,7 @@
     }
 
     /* ============================================================
-        SECTION 3. 시간 계산 및 상태 판단 (통합 버전)
+        SECTION 4-2 시간 계산 및 상태 판단 (통합 버전)
        ============================================================ */
     function getTaskStatus(rawTime, isMonitoring) {
         const times = String(rawTime).match(/\d{2}:\d{2}/g);
@@ -402,7 +411,7 @@
         const [sH, sM] = startTimeStr.split(':').map(Number);
         const [eH, eM] = endTimeStr.split(':').map(Number);
         
-        // [핵심] 07시 기준 상대 점수 계산 (자정 전후 시간 역전 방지)
+        // 07시 기준 상대 점수 계산 (자정 전후 시간 역전 방지)
         const getRelativeScore = (h, m) => {
             let relHour = h - 7;
             if (relHour < 0) relHour += 24;
@@ -415,7 +424,7 @@
 
         let remainMin = startScore - currScore;
         
-        // [요청 반영] 다중 모니터링은 10분 일찍 알림이 오도록 계산
+        // 다중 모니터링은 10분 일찍 알림이 오도록 계산
         // (remainMin이 13일 때, 사용자가 설정한 interval 3과 일치하게 됨)
         if (isMonitoring) {
             remainMin -= 10; 
@@ -465,12 +474,12 @@
     }
 
     /* ============================================================
-    SECTION 4-2. UI 렌더링 및 07시 기준 정렬/알림 제어
+    SECTION 4-3. UI 렌더링 및 07시 기준 정렬/알림 제어
    ============================================================ */
     function renderTaskList(tasks) {
         const currentInt = localStorage.getItem('neubie_remind_int') || '0';
 
-        // 1. 07시 기준 상대 시간 및 상태 계산 함수
+        // 07시 기준 상대 시간 및 상태 계산 함수
         function getTaskStatus(rawTime) {
             if (!rawTime) return { isExpired: false, remainMin: -1, score: 0 };
 
@@ -481,7 +490,7 @@
 
             const [tHour, tMin] = timeMatch[0].split(':').map(Number);
 
-            // [핵심] 07시 기준 Relative Score 계산 (07:00 -> 0점, 익일 06:00 -> 1380점)
+            // 07시 기준 Relative Score 계산 (07:00 -> 0점, 익일 06:00 -> 1380점)
             const getRelativeScore = (h, m) => {
                 let relHour = h - 7;
                 if (relHour < 0) relHour += 24;
@@ -497,7 +506,7 @@
             return { isExpired, remainMin, score: taskScore };
         }
 
-        // 2. 노이즈 제거 및 07시 기준 정렬
+        // 노이즈 제거 및 07시 기준 정렬
         const validTasks = tasks
             .filter(t => {
                 const content = t.content || "";
@@ -510,7 +519,7 @@
                 return scoreA - scoreB;
             });
 
-        // 3. 헤더 및 설정 UI 렌더링
+        // 헤더 및 설정 UI 렌더링
         taskPopup.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid #444; padding-bottom:10px;">
                 <b style="color:#fbbf24; font-size:20px;">📋 업무 알림 설정</b>
@@ -537,13 +546,13 @@
             return;
         }
 
-        // 4. 리스트 생성 및 특수 알림 로직 적용
+        // 리스트 생성 및 특수 알림 로직 적용
         validTasks.forEach(t => {
             const timeKey = t.rawTime || t.time;
             const status = getTaskStatus(timeKey);
             const interval = parseInt(localStorage.getItem('neubie_remind_int') || '0');
 
-            // [핵심] 다중 모니터링 업무 전용 오프셋 (+10분)
+            // 다중 모니터링 업무 전용 오프셋 (+10분)
             const isMultiMon = t.content && t.content.includes("다중 모니터링");
             const targetInterval = isMultiMon ? (interval + 10) : interval;
 
@@ -699,7 +708,7 @@
     }
 
     /* ============================================================
-    SECTION 5. 지능형 충돌 회피 순열 엔진 (Collision Avoidance)
+    SECTION 6. 지능형 충돌 회피 순열 엔진
    ============================================================ */
 
     async function handleControlClick(e) {
@@ -714,7 +723,7 @@
         const user = personnelData.find(u => u.name === currentUserName);
         if (!user) return; // 명단에 없으면 즉시 실행
     
-        // 1. 결정론적 해시 함수 (Seeded Hash)
+        // 결정론적 해시 함수 (Seeded Hash)
         const getHash = (str) => {
             let hash = 0;
             for (let i = 0; i < str.length; i++) {
@@ -724,18 +733,18 @@
             return Math.abs(hash);
         };
     
-        // 2. 시공간 Seed 생성 (분 단위로 순열이 뒤섞임)
+        // 시공간 Seed 생성 (분 단위로 순열이 뒤섞임)
         const now = new Date();
         const timeSeed = `${now.getFullYear()}${now.getMonth()}${now.getDate()}${now.getHours()}${Math.floor(now.getMinutes() / 2)}`;
 
-        // 3. 현재 근무 시간대(조합) 기반의 순열 생성
+        // 현재 근무 시간대(조합) 기반의 순열 생성
         // 같은 'time-11' 조 등 동시간대 근무자들은 같은 'groupKey'를 공유하게 되어
         // 그들 사이에서 중복 없는 순번을 나눠 갖게 됩니다.
         const myGroup = personnelData.filter(p => p.class === user.class)
                         .sort((a, b) => a.name.localeCompare(b.name));
         
         // Fisher-Yates Shuffle 기반의 결정론적 셔플 (Seed 이용)
-        // 이 과정이 "순번표 섞기"입니다.
+        // 이 과정이 "순번표 섞기"
         let indices = Array.from({ length: myGroup.length }, (_, i) => i);
         let seedNum = getHash(timeSeed + user.class); 
         
@@ -745,11 +754,11 @@
             seedNum = Math.floor(seedNum / (i + 1)) + i; // 시드 변화
         }
     
-        // 4. 내 순번(Slot) 확정
+        // 내 순번(Slot) 확정
         const mySourceIndex = myGroup.findIndex(p => p.name === currentUserName);
         const myRank = indices.indexOf(mySourceIndex); // 셔플된 결과 내에서의 순위
     
-        // 5. 공격적 슬롯 배치 (Poisson Disk Sampling 개념 차용)
+        // 공격적 슬롯 배치 (Poisson Disk Sampling 개념 차용)
         // 3~4명 충돌 시 서버가 인지할 수 있는 '최소 90ms' 이상의 간격 강제 보장
         const SPACING = 110; // 슬롯 간 간격 (ms)
         const baseDelay = myRank * SPACING;
@@ -788,7 +797,7 @@
     }
 
     /* ============================================================
-        SECTION 6. [수정] 스마트 네이밍 엔진 카드 생성
+        SECTION 7. 스마트 네이밍 엔진 카드 생성
        ============================================================ */
     // [추가] 이름 저장/수정 함수
     function saveUserName(newName) {
@@ -886,7 +895,7 @@
         }
 
         setTimeout(() => {
-            // 1. 개별 기체 파일명 복사
+            // 개별 기체 파일명 복사
             const copyBtn = card.querySelector('#copyFileName');
             if (copyBtn) {
                 copyBtn.onclick = (e) => {
@@ -902,7 +911,7 @@
                 };
             }
 
-            // 2. 다중 관제 버튼
+            // 다중 관제 버튼
             const multiBtn = card.querySelector('#btnMulti');
             if (multiBtn) {
                 multiBtn.onclick = (e) => {
@@ -913,7 +922,7 @@
                 };
             }
 
-            // 3. 평일/주말 동적 버튼 이벤트
+            // 평일/주말 동적 버튼 이벤트
             if (isWknd) {
                 const deliBtn = card.querySelector('#btnDeli');
                 const patrolBtn = card.querySelector('#btnPatrol');
@@ -949,12 +958,12 @@
     }
 
     /* ============================================================
-        SECTION 7. 대시보드 및 초기화
+        SECTION 8. 대시보드 및 초기화
        ============================================================ */
     function renderDashboard() {
         dashboard.innerHTML = '';
         
-        // 1. 헤더 컨테이너 (제목 + 성명 입력창 + X 버튼 인라인 배치)
+        // 헤더 컨테이너 (제목 + 성명 입력창 + X 버튼 인라인 배치)
         const headerContainer = document.createElement('div');
         headerContainer.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; padding-right:5px;";
 
@@ -982,7 +991,7 @@
 
         // 이벤트 바인딩
         setTimeout(() => {
-            // 1. 이름 입력창 로직
+            // 이름 입력창 로직
             const input = document.getElementById('inline-name-input');
             if (input) {
                 input.onchange = () => {
@@ -1000,7 +1009,7 @@
                 };
             }
 
-            // 2. 알림 설정 드롭다운 선택 시 즉시 저장 로직
+            // 알림 설정 드롭다운 선택 시 즉시 저장 로직
             const intervalSelect = document.getElementById('remind-interval');
             if (intervalSelect) {
                 // 드롭다운 값이 바뀔 때마다 실행
@@ -1015,7 +1024,7 @@
                 };
             }
 
-            // 3. X 버튼 클릭 시 통합 종료 실행
+            // X 버튼 클릭 시 통합 종료 실행
             const closeBtn = document.getElementById('all-close-btn');
             if (closeBtn) closeBtn.onclick = closeAllPopups;
         }, 0);
@@ -1097,7 +1106,7 @@
 
     let batteryRefreshInterval = null;
 
-    // 개선: 팝업 열 때만 생성
+    // 팝업 열 때만 생성
     function toggleBattery() {
         if (batteryPopup.style.display === 'none') {
 
@@ -1147,7 +1156,7 @@
         if (e.altKey && e.code === 'KeyQ') {
             e.preventDefault();
             
-            // [수정] 대시보드, 배터리, 업무 팝업 중 하나라도 열려있는지 확인
+            // 대시보드, 배터리, 업무 팝업 중 하나라도 열려있는지 확인
             const isAnyOpen = (dashboard.style.display === 'block' || 
                             batteryPopup.style.display === 'block' || 
                             taskPopup.style.display === 'block');
@@ -1172,12 +1181,12 @@
 
     let lastUrl = location.href;
 
-    // 1. 브라우저의 뒤로가기/앞으로가기 대응 (이벤트 발생 시에만 작동)
+    // 브라우저의 뒤로가기/앞으로가기 대응 (이벤트 발생 시에만 작동)
     window.addEventListener('popstate', () => {
         closeAllPopups();
     });
 
-    // 2. 화면 어디든 클릭했을 때 주소 확인 (부담 없는 방식)
+    // 화면 어디든 클릭했을 때 주소 확인
     // 뉴비고에서 메뉴를 클릭해 이동할 때 즉각 닫히게 합니다.
     document.addEventListener('click', () => {
         setTimeout(() => {
@@ -1189,7 +1198,7 @@
         }, 100); // 주소가 바뀔 시간을 잠깐 주는 0.1초 대기
     }, true);
 
-    // 3. 만약 클릭 없이 코드로만 주소가 바뀌는 경우를 대비 (간격을 2초로 늘림)
+    // 만약 클릭 없이 코드로만 주소가 바뀌는 경우를 대비 (간격 2초)
     setInterval(() => {
         if (location.href !== lastUrl) {
             lastUrl = location.href;
@@ -1202,12 +1211,12 @@
     injectConfigUI();
     if (state.isMapOpt) injectMapStyle();
     
-    // 1. 페이지 로드 시 이름이 설정되어 있다면 즉시 한 번 동기화
+    // 페이지 로드 시 이름이 설정되어 있다면 즉시 한 번 동기화
     if (localStorage.getItem('neubie_user_name')) {
         syncTasksFromServer();
     }
 
-    // 2. 백그라운드 리프레시 (1분마다 데이터만 몰래 가져옴)
+    // 백그라운드 리프레시 (1분마다 데이터만 몰래 가져옴)
     // 업무 방해를 주지 않기 위해 fetch만 수행하며, 화면 갱신은 위 sync 함수 내 안전장치에 의존함
     let lastNotifiedMin = -1; 
 
@@ -1215,10 +1224,10 @@
         const now = new Date();
         const currentFullMin = now.getHours() * 60 + now.getMinutes();
 
-        // 1. 이미 이번 '분'에 체크를 완료했다면 즉시 리턴
+        // 이미 이번 '분'에 체크를 완료했다면 즉시 리턴
         if (lastNotifiedMin === currentFullMin) return;
 
-        // 2. 새로운 '분'이 시작될 때만 체크 실행 (로그 없음)
+        // 새로운 '분'이 시작될 때만 체크 실행 (로그 없음)
         lastNotifiedMin = currentFullMin; 
         syncTasksFromServer(); 
         
