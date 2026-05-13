@@ -31,11 +31,13 @@
         "87": { site: "송도 요기요", unit: "#056" }, // 6호기
         "7": { site: "송도 요기요", unit: "#043" }, // 7호기
         "57": { site: "송도 요기요", unit: "#061" }, // 8호기
+
         "2": { site: "송도 요기요", unit: "#081" }, // 10호기 고장
         "51": { site: "송도 요기요", unit: "#050" }, // 11호기 고장
         "71": { site: "송도 요기요", unit: "#075" }, // 15호기 고장
         "72": { site: "송도 요기요", unit: "#076" }, // 13호기
         "129": { site: "송도 요기요", unit: "#082" }, // 14호기
+
         "27": { site: "역삼 요기요", unit: "#021" }, // 3호기
         "152": { site: "역삼 요기요", unit: "#114" }, // 5호기
         "23": { site: "역삼 요기요", unit: "#017" }, // 11호기
@@ -44,10 +46,12 @@
         "153": { site: "역삼 요기요", unit: "#118" }, // 6호기
         "45": { site: "역삼 요기요", unit: "#044" }, // 9호기
         "174": { site: "역삼 요기요", unit: "#154" }, // 15호기
+
         "47": { site: "역삼 요기요", unit: "#046" }, // 1호기 고장
         "134": { site: "역삼 요기요", unit: "#098" }, // 4호기 고장
         "1": { site: "역삼 요기요", unit: "#016" }, // 7호기 고장
         "146": { site: "역삼 요기요", unit: "#084" }, // 12호기 고장
+
         "255": { site: "성수 요기요", unit: "#228" }, // 1호기
         "256": { site: "성수 요기요", unit: "#229" }, // 2호기
         "257": { site: "성수 요기요", unit: "#230" }, // 3호기
@@ -56,6 +60,7 @@
         "260": { site: "성수 요기요", unit: "#233" }, // 6호기
         "261": { site: "성수 요기요", unit: "#234" }, // 7호기
         "262": { site: "성수 요기요", unit: "#235" }, // 8호기
+
         "46": { site: "성남 삼평동", unit: "#045" },  // 1호기
         "53": { site: "성남 삼평동", unit: "#052" }, // 2호기
         "54": { site: "성남 삼평동", unit: "#053" }, // 3호기
@@ -64,8 +69,10 @@
         "132": { site: "성남 삼평동", unit: "#088" }, // 6호기
         "135": { site: "성남 삼평동", unit: "#092" }, // 7호기
         "136": { site: "성남 삼평동", unit: "#093" }, // 8호기
+
         "137": { site: "성남 서현동", unit: "#094" }, // 9호기
         "122": { site: "성남 서현동", unit: "#095" }, // 10호기
+
         "126": { site: "파주 LGD", unit: "#083" }, // 엘리 1호기
         "58": { site: "파주 LGD", unit: "#062" }, // 엘리 2호기
         "62": { site: "파주 LGD", unit: "#066" }, // 엘리 3호기
@@ -88,7 +95,9 @@
         isQueueOpt: localStorage.getItem('neubie_opt_queue') === 'true',
         isTaskVisible: localStorage.getItem('neubie_opt_task') === 'true',
         lastBatteryData: [],
-        myTodayTasks: JSON.parse(localStorage.getItem('neubie_my_tasks') || "[]")
+        myTodayTasks: JSON.parse(localStorage.getItem('neubie_my_tasks') || "[]"),
+        insuData: null,
+        attendanceData: null
     };
 
     const QUEUE_CONFIG = {
@@ -254,7 +263,7 @@
         const header = document.createElement('div');
         header.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #333; padding-bottom:10px;";
         const titleB = document.createElement('b');
-        titleB.textContent = "🔋 성남 배터리 (5초 리프레시)";
+        titleB.textContent = "🔋 성남시 배터리 (5초 리프레시)";
         titleB.style.cssText = "color:#eee; font-size:18px;";
         const copyBtn = document.createElement('button');
         copyBtn.textContent = '📋 복사';
@@ -347,29 +356,32 @@
     /* ============================================================
         SECTION 4-1. [서버 동기화] GitHub JSON 기반 업무 로드 엔진
        ============================================================ */
-    // 모든 페이지(뉴비고 대시보드 등)에서 실행되어야 함
     function syncTasksFromServer() {
         const myName = localStorage.getItem('neubie_user_name');
         if (!myName) return;
 
-        const buster = Math.floor(Date.now() / 60000); 
+        const buster = Math.floor(Date.now() / 60000);
         const dataUrl = `https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/daily_tasks.json?v=${buster}`;
+        const insuUrl = `https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/insu_data.json?v=${buster}`;
+        const attendanceUrl = `https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/attendance_may2026.json?v=${buster}`;
 
-        fetch(dataUrl)
-            .then(res => res.json())
-            .then(data => {
-                const myTasks = data.filter(t => t.user === myName);
-                window.currentMyTasks = myTasks;
+        // daily_tasks + insu_data 병렬 fetch
+        Promise.all([
+            fetch(dataUrl).then(r => r.json()),
+            fetch(insuUrl).then(r => r.json()),
+            fetch(attendanceUrl).then(r => r.json())
+        ]).then(([data, insu]) => {
+            state.insuData = insu;
+            state.attendanceData = attendance;
 
-                // [핵심] 레이아웃이 닫혀있어도 알림 조건을 체크함
-                checkAndTriggerNotifications(myTasks);
+            const myTasks = data.filter(t => t.user === myName);
+            window.currentMyTasks = myTasks;
+            checkAndTriggerNotifications(myTasks);
 
-                // 업무 팝업이 열려있다면 리스트 갱신
-                if (taskPopup && taskPopup.style.display === 'block') {
-                    renderTaskList(myTasks);
-                }
-            })
-            .catch(err => console.log("Sync failed"));
+            if (taskPopup && taskPopup.style.display === 'block') {
+                renderTaskList(myTasks);
+            }
+        }).catch(err => console.log("Sync failed"));
     }
 
     // 레이아웃 노출 여부와 상관없이 알림만 전담하는 함수
@@ -385,13 +397,18 @@
             const targetInterval = isMultiMon ? (interval + 10) : interval;
 
             if (status.remainMin === targetInterval) {
-                if (!state.notifiedTasks) state.notifiedTasks = new Set();
-                
                 const taskKey = `${t.content}_${timeKey}_${targetInterval}`;
-                if (!state.notifiedTasks.has(taskKey)) {
+                const storageKey = `neubie_notified_${taskKey}`;
+                const notifiedCount = parseInt(localStorage.getItem(storageKey) || '0');
+
+                if (notifiedCount < 2) {
                     const displayMin = isMultiMon ? status.remainMin - 10 : status.remainMin;
                     triggerReminder(t.content, displayMin);
-                    state.notifiedTasks.add(taskKey);
+                    localStorage.setItem(storageKey, String(notifiedCount + 1));
+
+                    const now = new Date();
+                    const msUntilMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1) - now;
+                    setTimeout(() => localStorage.removeItem(storageKey), msUntilMidnight);
                 }
             }
         });
@@ -537,7 +554,6 @@
 
         setter.onchange = (e) => {
             localStorage.setItem('neubie_remind_int', e.target.value);
-            if (window.state) state.notifiedTasks = new Set(); // 알림 기록 초기화
             syncTasksFromServer();
         };
         
@@ -556,19 +572,17 @@
             const isMultiMon = t.content && t.content.includes("다중 모니터링");
             const targetInterval = isMultiMon ? (interval + 10) : interval;
 
-            // 알림 발송 조건 (설정값이 0이 아니고, 계산된 남은 시간이 타겟 시간과 일치할 때)
-            if (window.state && interval > 0 && status.remainMin === targetInterval) {
-                if (!state.notifiedTasks) state.notifiedTasks = new Set();
-                
-                // 업무 내용과 시간을 조합해 고유 키 생성 (중복 알림 방지)
-                const taskKey = `${t.content}_${timeKey}`;
-                if (!state.notifiedTasks.has(taskKey)) {
-                    // 알림창 띄우기 함수 호출
-                    if (typeof triggerReminder === 'function') {
-                        triggerReminder(t.content, status.remainMin);
-                    }
-                    state.notifiedTasks.add(taskKey);
+            const notifiedCount = parseInt(localStorage.getItem(storageKey) || '0');
+
+            if (notifiedCount < 2) {
+                if (typeof triggerReminder === 'function') {
+                    triggerReminder(t.content, status.remainMin);
                 }
+                localStorage.setItem(storageKey, String(notifiedCount + 1));
+
+                const now = new Date();
+                const msUntilMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1) - now;
+                setTimeout(() => localStorage.removeItem(storageKey), msUntilMidnight);
             }
 
             const item = document.createElement('div');
@@ -611,51 +625,95 @@
        ============================================================ */
 
     const personnelData = [
-        { name: "김지훈", time: "(0700-1600)(U)", class: "time-07", id: "U07LD5HA6KC" }, 
-        { name: "오정훈", time: "(0700-1600)(U)", class: "time-07", id: "U081BN7R3FX" }, 
-        { name: "박계원", time: "(0700-1600)(U)", class: "time-07", id: "U07RUM3AMCP" }, 
-        { name: "김경환", time: "(0800-1700)(U)", class: "time-08", id: "U0837ER4DH7" }, 
-        { name: "박효선", time: "(0800-1700)(U)", class: "time-08", id: "U07PFT5K2GN" }, 
-        { name: "안혜림", time: "(0900-1800)(U)", class: "time-09", id: "U07SD6LAGFJ" }, 
-        { name: "이환", time: "(0900-1800)(U)", class: "time-09", id: "U08L5G3E63Z" }, 
-        { name: "이길범", time: "(0900-1800)(U)", class: "time-09", id: "U09TAQYHAAJ" }, 
-        { name: "최윤혁", time: "(0900-1800)(U)", class: "time-09", id: "U09LVJW0LTD" }, 
-        { name: "신현철", time: "(0900-1800)(U)", class: "time-09", id: "U09N857TDQU" },
-        { name: "김동진", time: "(0900-1800)(U)", class: "time-09", id: "U0A75MK1TND" }, 
-        { name: "석승찬", time: "(1000-1900)(U)", class: "time-10", id: "U0ARNJ37WBF" },
-        { name: "이준", time: "(1000-1900)(U)", class: "time-10", id: "U0ARPU34Z9C" },
-        { name: "한승완", time: "(1000-1900)(U)", class: "time-10", id: "U0AS4T1N4MP" },
-        { name: "박은선", time: "(1100-2000)(U)", class: "time-11", id: "U07L9T58G3E" }, 
-        { name: "송주현", time: "(1100-2000)(U)", class: "time-11", id: "U0833HRE3QD" }, 
-        { name: "송태영", time: "(1100-2000)(U)", class: "time-11", id: "U0AJ44Z38F4" },
-        { name: "신은정", time: "(1100-2000)(U)", class: "time-11", id: "U0A4XRZG3BQ" }, 
-        { name: "호덕진", time: "(1100-2000)(U)", class: "time-11", id: "U0AQ3C9SC2J" },
-        { name: "장재원", time: "(1100-2000)(U)", class: "time-11", id: "U0876898WG6" }, 
-        { name: "박효빈", time: "(1400-2300)(U)", class: "time-14", id: "U0A32RYP77F" }, 
-        { name: "이기완", time: "(1400-2300)(U)", class: "time-14", id: "U0ARS0PD2AW" },
-        { name: "권재윤", time: "(1400-2300)(U)", class: "time-14", id: "U0ARAGTJD9D" },
-        { name: "김가은", time: "(1500-2400)(U)", class: "time-15", id: "U0A152QPH16" }, 
-        { name: "서형민", time: "(1500-2400)(U)", class: "time-15", id: "U0A0ANUTX5G" }, 
-        { name: "최성환", time: "(1500-2400)(U)", class: "time-15", id: "U07FBS6APHA" }, 
-        { name: "이규순", time: "(1800-0300)(U)", class: "time-18", id: "U081BN70T0D" }, 
-        { name: "강철환", time: "(1800-0300)(U)", class: "time-18", id: "U0854PMM3B3" }, 
-        { name: "박수연", time: "(1800-0300)(U)", class: "time-18", id: "U07E7AMFUQ2" }, 
-        { name: "신지섭", time: "(1800-0300)(U)", class: "time-18", id: "U07KCEM6DU7" },
-        { name: "최선호", time: "(2000-0500)(U)", class: "time-20", id: "U07EL0TSG0H" }, 
-        { name: "최정기", time: "(2000-0500)(U)", class: "time-20", id: "U07EW4HTGCQ" }, 
-        { name: "고상연", time: "(2000-0500)(U)", class: "time-20", id: "U08LT371YDU" }, 
-        { name: "김소연", time: "(2200-0700)(U)", class: "time-22", id: "U08552CSB3K" }, 
-        { name: "임다연", time: "(2200-0700)(U)", class: "time-22", id: "U07MBG99B1S" }, 
-        { name: "임아연", time: "(2200-0700)(U)", class: "time-22", id: "U07MMMNQZ1P" }, 
-        { name: "안대관", time: "(2330-0830)(U)", class: "time-23", id: "U07E4DMLYR3" }
+        { name: "김지훈", time: "(0700-1600)(U)", break: "(1100-1200)" }, 
+        { name: "오정훈", time: "(0700-1600)(U)", break: "(1100-1200)" }, 
+        { name: "박계원", time: "(0700-1600)(U)", break: "(1100-1200)" }, 
+        { name: "김경환", time: "(0800-1700)(U)", break: "(1200-1300)" }, 
+        { name: "박효선", time: "(0800-1700)(U)", break: "(1200-1300)" }, 
+        { name: "안혜림", time: "(0900-1800)(U)", break: "(1300-1400)" }, 
+        { name: "이환", time: "(0900-1800)(U)", break: "(1300-1400)" }, 
+        { name: "이길범", time: "(0900-1800)(U)", break: "(1300-1400)" }, 
+        { name: "최윤혁", time: "(0900-1800)(U)", break: "(1300-1400)" }, 
+        { name: "신현철", time: "(0900-1800)(U)", break: "(1300-1400)" },
+        { name: "김동진", time: "(0900-1800)(U)", break: "(1300-1400)" }, 
+        { name: "석승찬", time: "(1000-1900)(U)", break: "(1400-1500)" },
+        { name: "이준", time: "(1000-1900)(U)", break: "(1400-1500)" },
+        { name: "한승완", time: "(1000-1900)(U)", break: "(1400-1500)" },
+        { name: "박은선", time: "(1100-2000)(U)", break: "(1400-1500)" }, 
+        { name: "송주현", time: "(1100-2000)(U)", break: "(1500-1600)" }, 
+        { name: "송태영", time: "(1100-2000)(U)", break: "(1500-1600)" },
+        { name: "신은정", time: "(1100-2000)(U)", break: "(1500-1600)" }, 
+        { name: "호덕진", time: "(1100-2000)(U)", break: "(1500-1600)" },
+        { name: "장재원", time: "(1100-2000)(U)", break: "(1500-1600)" }, 
+        { name: "박효빈", time: "(1400-2300)(U)", break: "(1700-1800)" }, 
+        { name: "이기완", time: "(1400-2300)(U)", break: "(1700-1800)" },
+        { name: "권재윤", time: "(1400-2300)(U)", break: "(1700-1800)" },
+        { name: "김가은", time: "(1500-2400)(U)", break: "(1800-1900)" }, 
+        { name: "서형민", time: "(1500-2400)(U)", break: "(1800-1900)" }, 
+        { name: "최성환", time: "(1500-2400)(U)", break: "(1800-1900)" }, 
+        { name: "이규순", time: "(1800-0300)(U)", break: "(2200-2300)" }, 
+        { name: "강철환", time: "(1800-0300)(U)", break: "(2200-2300)" }, 
+        { name: "박수연", time: "(1800-0300)(U)", break: "(2200-2300)" }, 
+        { name: "신지섭", time: "(1800-0300)(U)", break: "(2300-2400)" },
+        { name: "최선호", time: "(2000-0500)(U)", break: "(2300-2400)" }, 
+        { name: "최정기", time: "(2000-0500)(U)", break: "(2300-2400)" }, 
+        { name: "고상연", time: "(2000-0500)(U)", break: "(2300-2400)" }, 
+        { name: "김소연", time: "(2200-0700)(U)", break: "(0100-0200)" }, 
+        { name: "임다연", time: "(2200-0700)(U)", break: "(0200-0300)" }, 
+        { name: "임아연", time: "(2200-0700)(U)", break: "(0300-0400)" }, 
+        { name: "안대관", time: "(2330-0830)(U)", break: "(0400-0500)" }
     ];
 
-    function executeIntervention(btn) {
-        btn.dataset.intercepted = 'true';
-        btn.click();
-        setTimeout(() => {
-            delete btn.dataset.intercepted;
-        }, 200);
+    function parseTimeRange(str) {
+        const m = str.match(/\((\d{2})(\d{2})-(\d{2})(\d{2})\)/);
+        if (!m) return null;
+        return {
+            start: parseInt(m[1]) * 60 + parseInt(m[2]),
+            end:   parseInt(m[3]) * 60 + parseInt(m[4])
+        };
+    }
+
+    function isInRange(range, nowMin) {
+        if (!range) return false;
+        if (range.end < range.start) // 자정 넘김 (예: 2200-0700)
+            return nowMin >= range.start || nowMin < range.end;
+        return nowMin >= range.start && nowMin < range.end;
+    }
+
+    function getCurrentMonitor(insuData) {
+        if (!insuData?.schedule) return null;
+        const now = new Date();
+        // 실제 모니터링은 X:50~X+1:50이므로 +10분으로 정각 슬롯 매핑
+        const adjusted = new Date(now.getTime() + 10 * 60 * 1000);
+        const hour = String(adjusted.getHours()).padStart(2, '0') + ':00';
+        return insuData.schedule[hour] || null;
+    }
+
+    function getActiveGroup(now, insuData, attendanceData) {
+        const today = now.toISOString().split('T')[0]; // "2026-05-13"
+        const todaySchedule = attendanceData?.schedule?.[today];
+        const presentList = todaySchedule?.present || null;
+        const halfDayList = todaySchedule?.halfDay || [];
+        const nowMin = now.getHours() * 60 + now.getMinutes();
+        const currentMonitor = getCurrentMonitor(insuData);
+
+        return personnelData.filter(p => {
+            // 출근자 목록 필터
+            if (presentList && !presentList.includes(p.name)) return false;
+            // 근무 시간대 필터
+            if (!isInRange(parseTimeRange(p.time), nowMin)) return false;
+            // 휴게 시간 필터
+            if (isInRange(parseTimeRange(p.break), nowMin)) return false;
+            // 오후반차 — until 이후면 제외
+            const halfDay = halfDayList.find(h => h.name === p.name);
+            if (halfDay) {
+                const untilMin = parseInt(halfDay.until.split(':')[0]) * 60;
+                if (nowMin >= untilMin) return false;
+            }
+            // 모니터링 담당자 제외
+            if (currentMonitor && p.name === currentMonitor) return false;
+            return true;
+        }).sort((a, b) => a.name.localeCompare(b.name));
     }
     
     function injectConfigUI() {
@@ -689,24 +747,6 @@
         document.head.appendChild(style);
     }
 
-    function calculateDelay() {
-        const base = QUEUE_CONFIG.SLOTS[Math.floor(Math.random() * QUEUE_CONFIG.SLOTS.length)];
-        const jitter = Math.floor(Math.random() * (QUEUE_CONFIG.JITTER * 2 + 1)) - QUEUE_CONFIG.JITTER;
-        return Math.max(0, base + jitter);
-    }
-
-    function createOverlay(finalDelay) {
-        const overlay = document.createElement('div');
-        overlay.innerHTML = `
-            <div style="font-size: 22px; margin-bottom: 8px; letter-spacing: -0.5px;">📡 중복 관제 완화 시스템 v1.1</div>
-            <div style="font-size: 19px; color: #ffeb3b; font-weight: 500;">
-                딜레이 적용 중... (${(finalDelay/1000).toFixed(2)}s)
-            </div>
-        `;
-        Object.assign(overlay.style, QUEUE_CONFIG.STYLE);
-        return overlay;
-    }
-
     /* ============================================================
     SECTION 6. 지능형 충돌 회피 순열 엔진
    ============================================================ */
@@ -721,9 +761,8 @@
     
         const currentUserName = localStorage.getItem('neubie_user_name') || "운영자";
         const user = personnelData.find(u => u.name === currentUserName);
-        if (!user) return; // 명단에 없으면 즉시 실행
+        if (!user) return;
     
-        // 결정론적 해시 함수 (Seeded Hash)
         const getHash = (str) => {
             let hash = 0;
             for (let i = 0; i < str.length; i++) {
@@ -733,60 +772,44 @@
             return Math.abs(hash);
         };
     
-        // 시공간 Seed 생성 (분 단위로 순열이 뒤섞임)
         const now = new Date();
         const timeSeed = `${now.getFullYear()}${now.getMonth()}${now.getDate()}${now.getHours()}${Math.floor(now.getMinutes() / 2)}`;
 
-        // 현재 근무 시간대(조합) 기반의 순열 생성
-        // 같은 'time-11' 조 등 동시간대 근무자들은 같은 'groupKey'를 공유하게 되어
-        // 그들 사이에서 중복 없는 순번을 나눠 갖게 됩니다.
-        const myGroup = personnelData.filter(p => p.class === user.class)
-                        .sort((a, b) => a.name.localeCompare(b.name));
+        const myGroup = getActiveGroup(now, state.insuData, state.attendanceData);
+        const groupKey = myGroup.map(p => p.name).join(',');
         
-        // Fisher-Yates Shuffle 기반의 결정론적 셔플 (Seed 이용)
-        // 이 과정이 "순번표 섞기"
         let indices = Array.from({ length: myGroup.length }, (_, i) => i);
-        let seedNum = getHash(timeSeed + user.class); 
-        
+        let seedNum = getHash(timeSeed + groupKey);
         for (let i = indices.length - 1; i > 0; i--) {
             const j = seedNum % (i + 1);
             [indices[i], indices[j]] = [indices[j], indices[i]];
-            seedNum = Math.floor(seedNum / (i + 1)) + i; // 시드 변화
+            seedNum = Math.floor(seedNum / (i + 1)) + i;
         }
-    
-        // 내 순번(Slot) 확정
+
         const mySourceIndex = myGroup.findIndex(p => p.name === currentUserName);
-        const myRank = indices.indexOf(mySourceIndex); // 셔플된 결과 내에서의 순위
-    
-        // 공격적 슬롯 배치 (Poisson Disk Sampling 개념 차용)
-        // 3~4명 충돌 시 서버가 인지할 수 있는 '최소 90ms' 이상의 간격 강제 보장
-        const SPACING = 110; // 슬롯 간 간격 (ms)
+        const myRank = indices.indexOf(mySourceIndex);
+
+        const SPACING = myGroup.length > 1 ? Math.floor(1400 / (myGroup.length - 1)) : 1400;
         const baseDelay = myRank * SPACING;
-        
-        // 미세 지터 (같은 슬롯 내에서도 아주 미세하게 분리, 0~30ms)
-        const jitter = getHash(currentUserName + timeSeed) % 30;
+        const jitter = getHash(currentUserName + timeSeed) % 50;
         const finalDelay = Math.min(baseDelay + jitter, 1450);
     
-        // 시각적 피드백 (팝업)
         const popup = document.createElement('div');
         popup.className = 'delay-popup';
         popup.innerHTML = `
             <div style="font-size: 1.1em; color: #00ff41; margin-bottom: 6px;">[중복 개입 완화 시스템 v2.0]</div>
-            <div style="font-size: 0.9em; font-weight: bold;"> ${(finalDelay / 1000).toFixed(2)}초 딜레이 적용 중...</div>
-            <div style="font-size: 0.9em; opacity: 0.7; margin-top: 6px;">Group Rank: ${myRank + 1} | Slot Gap: ${SPACING}ms</div>
+            <div style="font-size: 0.9em; font-weight: bold;">${(finalDelay / 1000).toFixed(2)}초 딜레이 적용 중...</div>
+            <div style="font-size: 0.9em; opacity: 0.7; margin-top: 6px;">Rank: ${myRank + 1}/${myGroup.length} | Gap: ${SPACING}ms</div>
         `;
         document.body.appendChild(popup);
     
-        // 이벤트 차단
         e.preventDefault();
         e.stopPropagation();
 
-        // 딜레이 후 실행
         setTimeout(() => {
             executeIntervention(targetBtn);
         }, finalDelay);
 
-        // 팝업 제거 (하나로 통합)
         const showDuration = Math.max(QUEUE_CONFIG.MIN_OVERLAY_SHOW, QUEUE_CONFIG.OVERLAY_DURATION - finalDelay);
         setTimeout(() => {
             popup.style.transition = "opacity 0.5s, transform 0.5s";
