@@ -243,11 +243,10 @@
 
     const dashboard = createContainer('neubie-dashboard', '500px', '50%', '50%');
     const batteryPopup = createContainer('neubie-battery-popup', '380px', '20px', 'auto', '20px');
-    const taskPopup = createContainer('neubie-task-popup', '420px', '20px', '20px');
 
     const injectUI = () => { 
         if (document.body) {
-            document.body.append(dashboard, batteryPopup, taskPopup);
+            document.body.append(dashboard, batteryPopup);
         } 
     };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', injectUI);
@@ -330,9 +329,6 @@
             `;
             batteryPopup.appendChild(item);
         });
-        if (taskPopup.style.display === 'block') {
-            taskPopup.style.top = (batteryPopup.offsetHeight + 30) + 'px';
-        }
     }
 
     function copyToClipboard(btn) {
@@ -380,9 +376,7 @@
             window.currentMyTasks = myTasks;
             checkAndTriggerNotifications(myTasks);
 
-            if (taskPopup && taskPopup.style.display === 'block') {
-                renderTaskList(myTasks);
-            }
+            renderTaskList(myTasks);
         }).catch(err => console.log("Sync failed"));
     }
 
@@ -497,6 +491,16 @@
    ============================================================ */
     function renderTaskList(tasks) {
         const currentInt = localStorage.getItem('neubie_remind_int') || '0';
+        taskCard.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <div style="font-weight:bold; font-size:18px;">📋 ${storedName}의 일일 업무</div>
+                <select id="remind-inline" style="background:#333; color:white; border:1px solid #555; font-size:13px; border-radius:4px; padding:2px;">
+                    <option value="0" ${currentInt === '0' ? 'selected' : ''}>알림 없음</option>
+                    <option value="3" ${currentInt === '3' ? 'selected' : ''}>3분 전</option>
+                    <option value="5" ${currentInt === '5' ? 'selected' : ''}>5분 전</option>
+                </select>
+            </div>
+        `;
 
         // 07시 기준 상대 시간 및 상태 계산 함수
         function getTaskStatus(rawTime) {
@@ -538,27 +542,12 @@
                 return scoreA - scoreB;
             });
 
-        // 헤더 및 설정 UI 렌더링
-        taskPopup.innerHTML = `
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid #444; padding-bottom:10px;">
-                <b style="color:#fbbf24; font-size:20px;">📋 업무 알림 설정</b>
-                <select id="remindSetter" style="background:#333; color:white; border:1px solid #555; font-size:14px; border-radius:4px; padding:2px;">
-                    <option value="0" ${currentInt === '0' ? 'selected' : ''}>알림 없음</option>
-                    <option value="3" ${currentInt === '3' ? 'selected' : ''}>3분 전 (다중은 13분 전)</option>
-                    <option value="5" ${currentInt === '5' ? 'selected' : ''}>5분 전 (다중은  15분 전)</option>
-                </select>
-            </div>  
-            <div id="task-list-container"></div>
-        `;
+        // 헤더 및 설정 UI 렌더링 — inline-task-container 사용
+        const inlineContainer = document.getElementById('inline-task-container');
+        if (!inlineContainer) return;
+        inlineContainer.innerHTML = '';
+        const container = inlineContainer;
 
-        const setter = taskPopup.querySelector('#remindSetter');
-        const container = taskPopup.querySelector('#task-list-container');
-
-        setter.onchange = (e) => {
-            localStorage.setItem('neubie_remind_int', e.target.value);
-            syncTasksFromServer();
-        };
-        
         if (validTasks.length === 0) {
             container.innerHTML = `<div style="color:#666; text-align:center; padding:20px; font-size:15px;">배정된 업무가 없습니다.</div>`;
             return;
@@ -598,9 +587,6 @@
             `;
             container.appendChild(item);
         });
-        
-        const inlineContainer = document.getElementById('inline-task-container');
-        if (inlineContainer) inlineContainer.innerHTML = container.innerHTML;
     }
 
     // 메시지 수신 시 처리
@@ -1005,6 +991,13 @@
                 };
             }
 
+            const remindInline = document.getElementById('remind-inline');
+            if (remindInline) {
+                remindInline.onchange = (e) => {
+                    localStorage.setItem('neubie_remind_int', e.target.value);
+                };
+            }
+
             // X 버튼 클릭 시 통합 종료 실행
             const closeBtn = document.getElementById('all-close-btn');
             if (closeBtn) closeBtn.onclick = closeAllPopups;
@@ -1159,10 +1152,8 @@
         if (e.altKey && e.code === 'KeyQ') {
             e.preventDefault();
             
-            // 대시보드, 배터리, 업무 팝업 중 하나라도 열려있는지 확인
             const isAnyOpen = (dashboard.style.display === 'block' || 
-                            batteryPopup.style.display === 'block' || 
-                            taskPopup.style.display === 'block');
+                            batteryPopup.style.display === 'block');
             
             if (isAnyOpen) {
                 // 하나라도 열려있다면 통합 닫기 실행
@@ -1172,7 +1163,6 @@
                 renderDashboard();
                 dashboard.style.display = 'block';
                 syncTasksFromServer();
-                taskPopup.style.display = 'block'; 
             }
         }
         
