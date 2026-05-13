@@ -284,6 +284,12 @@
 
         state.lastBatteryData = [];
         config.batteryIds.forEach(c => {
+            // iframe이 아직 로딩 중이면 load 이벤트 후 재시도
+            const ifr = iframes[c.id];
+            if (ifr && ifr.contentDocument?.readyState !== 'complete') {
+                ifr.addEventListener('load', () => updateBatteryStatus(), { once: true });
+            }
+
             let batteryVal = "- %", statusText = "OFF", accentColor = "#666", statusIcon = "⚪";
             try {
                 const doc = iframes[c.id]?.contentDocument || iframes[c.id]?.contentWindow.document;
@@ -291,8 +297,11 @@
                 if (card) {
                     const cardText = card.innerText;
                     const batteryMatch = cardText.match(/(\d+)%/);
-                    const isCharging = card.querySelector('svg[class*="text-tertiary-300"]') || cardText.includes('배터리');
-                    const isPatrolling = cardText.includes('순찰');
+
+                    // 충전: SVG 아이콘만으로 판정 (텍스트 조건 제거)
+                    const isCharging = !!card.querySelector('svg.size-10.text-tertiary-300');
+                    const missionLine = cardText.split('\n').find(line => line.includes('임무 진행')) || '';
+                    const isPatrolling = missionLine.includes('순찰');
                     if (batteryMatch) {
                         batteryVal = batteryMatch[0];
                         if (isPatrolling) { accentColor = "#3b82f6"; statusIcon = "🔵"; statusText = "순찰 중"; }
@@ -1100,8 +1109,12 @@
 
     function toggleBattery() {
         if (batteryPopup.style.display === 'none') { 
-            updateBatteryStatus(); // 열 때 데이터를 새로 가져옴 (리프레시)
-            batteryPopup.style.display = 'block'; 
+            updateBatteryStatus();
+            batteryPopup.style.display = 'block';
+            // iframe 로딩 여유 시간 후 한 번 더 갱신
+            setTimeout(() => {
+                if (batteryPopup.style.display === 'block') updateBatteryStatus();
+            }, 1500);
         } else { 
             batteryPopup.style.display = 'none'; 
         }
