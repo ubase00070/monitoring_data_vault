@@ -824,7 +824,7 @@
         };
 
         card.innerHTML = `
-            <div style="color:#3b82f6; font-weight:bold; font-size:18px; margin-bottom:10px;">🏷️ 영상 파일명 변경 도우미</div>
+            <div style="color:#3b82f6; font-weight:bold; font-size:18px; margin-bottom:10px;">🏷️ 영상 파일명 생성기</div>
             <div style="display: flex; gap: 5px; margin-bottom: 10px;">
                 <select id="robotSelector" style="flex: 1.2; background: #333; color: white; border: 1px solid #555; border-radius: 4px; font-size: 15px; padding: 4px;">
                     ${dropdownOptions || '<option>최근 배달 기체 미감지</option>'}
@@ -1006,8 +1006,8 @@
                 <div style="font-weight:bold; font-size:18px;">📋 ${storedName}의 일일 업무</div>
                 <select id="remind-inline" style="background:#333; color:white; border:1px solid #555; font-size:13px; border-radius:4px; padding:2px;">
                     <option value="0" ${currentInt === '0' ? 'selected' : ''}>알림 없음</option>
-                    <option value="3" ${currentInt === '3' ? 'selected' : ''}>3분 전(다중은 13분 전)</option>
-                    <option value="5" ${currentInt === '5' ? 'selected' : ''}>5분 전(다중은 15분 전)</option>
+                    <option value="3" ${currentInt === '3' ? 'selected' : ''}>3분 전 (다중은 13분 전)</option>
+                    <option value="5" ${currentInt === '5' ? 'selected' : ''}>5분 전 (다중은 15분 전)</option>
                 </select>
             </div>
         `;
@@ -1059,7 +1059,7 @@
 
         // 3. 배터리 현황
         const isBatteryOpen = batteryPopup.style.display === 'block';
-        list.appendChild(createMenuCard("🔋 실시간 성남시 기체 배터리", "5초 간격으로 정보를 받아옵니다.", null, null, () => {
+        list.appendChild(createMenuCard("🔋 실시간 성남시 기체 배터리 현황", "5초 간격으로 정보를 받아옵니다.", null, null, () => {
             toggleBattery();
             renderDashboard();
             // renderDashboard 후 업무 목록 다시 채우기
