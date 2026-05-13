@@ -265,7 +265,7 @@
         titleB.textContent = "🔋 실시간 성남시 배터리";
         titleB.style.cssText = "color:#eee; font-size:18px;";
         const copyBtn = document.createElement('button');
-        copyBtn.textContent = '📋 복사';
+        copyBtn.textContent = '복사';
         // 260번 줄 수정
         Object.assign(copyBtn.style, { 
             background:'#3b82f6', color:'white', border:'none', 
@@ -567,10 +567,15 @@
 
             const displayTime = (String(timeKey).length > 10) ? String(timeKey).match(/\d{2}:\d{2}/)?.[0] : timeKey;
 
+            const needsMarquee = t.content.length > 20;
+            const contentSpan = needsMarquee
+                ? `<span class="marquee-text">${t.content}</span>`
+                : `<span>${t.content}</span>`;
+
             item.innerHTML = `
-                <div style="${textStyle} font-weight:500;">
+                <div style="${textStyle} font-weight:500; overflow:hidden;">
                     <span style="color:${status.isExpired ? '#777' : '#fbbf24'}; margin-right:8px;">${displayTime || ''}</span>
-                    ${t.content}
+                    <span class="marquee-text">${t.content}</span>
                 </div>
                 <div style="font-size:14px;">${status.isExpired ? '✅' : '⏳'}</div>
             `;
@@ -710,6 +715,18 @@
                 font-size: 18px;           /* 15px → 18px */
                 transition: opacity 0.5s, transform 0.5s;
             }
+                .marquee-text {
+                    display: inline-block;
+                    white-space: nowrap;
+                    animation: marquee 8s linear infinite;
+                }
+
+                @keyframes marquee {
+                    0%   { transform: translateX(0); }
+                    40%  { transform: translateX(-30%); }
+                    60%  { transform: translateX(-30%); }
+                    100% { transform: translateX(0); }
+                }
         `;
         document.head.appendChild(style);
     }
