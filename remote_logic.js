@@ -243,7 +243,7 @@
 
     const dashboard = createContainer('neubie-dashboard', '500px', '50%', '50%');
     const batteryPopup = createContainer('neubie-battery-popup', '380px', '20px', 'auto', '20px');
-    const taskPopup = createContainer('neubie-task-popup', '420px', '360px', 'auto', '20px');
+    const taskPopup = createContainer('neubie-task-popup', '420px', '20px', '20px');
 
     const injectUI = () => { 
         if (document.body) {
@@ -1024,22 +1024,6 @@
             `📋 ${storedName}의 일일 업무(알림 설정)`, 
             taskDesc, 
             null, null, 
-            () => {
-                if (taskPopup.style.display === 'none') {
-                    syncTasksFromServer();
-                    if (batteryPopup.style.display === 'block') {
-                        const rect = batteryPopup.getBoundingClientRect();
-                        taskPopup.style.top = (rect.bottom + 10) + 'px';
-                    } else {
-                        taskPopup.style.top = '20px';
-                    }
-                    taskPopup.style.display = 'block';
-                } else {
-                    taskPopup.style.display = 'none';
-                }
-                renderDashboard(); 
-            }, 
-            isTaskOpen ? '닫기' : '열기'
         ));
 
         const isBatteryOpen = batteryPopup.style.display === 'block';
@@ -1073,7 +1057,7 @@
                 if (action) action();
             };
             card.appendChild(chk);
-        } else {
+        } else if (action) {
             const btn = document.createElement('button');
             btn.textContent = btnLabel;
             btn.style.cssText = `background:${btnLabel === '닫기' ? '#ef4444' : '#3b82f6'}; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight:bold; min-width:70px; font-size:15px;`;            btn.onclick = action;
@@ -1144,8 +1128,10 @@
                 closeAllPopups();
             } else {
                 // 모두 닫혀있다면 대시보드 열기
-                renderDashboard(); 
-                dashboard.style.display = 'block'; 
+                renderDashboard();
+                dashboard.style.display = 'block';
+                syncTasksFromServer();
+                taskPopup.style.display = 'block'; 
             }
         }
         
