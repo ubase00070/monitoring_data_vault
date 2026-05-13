@@ -1001,6 +1001,17 @@
         taskCard.style.cssText = "background:#252525; padding:15px; border-radius:15px; border:1px solid #333;";
         const storedName = localStorage.getItem('neubie_user_name') || "사용자";
         taskCard.innerHTML = `<div style="font-weight:bold; font-size:18px; margin-bottom:10px;">📋 ${storedName}의 일일 업무</div>`;
+        const currentInt = localStorage.getItem('neubie_remind_int') || '0';
+        taskCard.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <div style="font-weight:bold; font-size:18px;">📋 ${storedName}의 일일 업무</div>
+                <select id="remind-inline" style="background:#333; color:white; border:1px solid #555; font-size:13px; border-radius:4px; padding:2px;">
+                    <option value="0" ${currentInt === '0' ? 'selected' : ''}>알림 없음</option>
+                    <option value="3" ${currentInt === '3' ? 'selected' : ''}>3분 전</option>
+                    <option value="5" ${currentInt === '5' ? 'selected' : ''}>5분 전</option>
+                </select>
+            </div>
+        `;
         const taskInline = document.createElement('div');
         taskInline.id = 'inline-task-container';
         taskCard.appendChild(taskInline);
