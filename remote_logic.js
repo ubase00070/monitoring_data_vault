@@ -573,11 +573,16 @@
                 : `<span>${t.content}</span>`;
 
             item.innerHTML = `
-                <div style="${textStyle} font-weight:500; overflow:hidden;">
-                    <span style="color:${status.isExpired ? '#777' : '#fbbf24'}; margin-right:8px;">${displayTime || ''}</span>
-                    <span class="marquee-text">${t.content}</span>
+                <div style="${textStyle} font-weight:500; display:flex; align-items:center; flex:1; min-width:0; gap:6px;">
+                    <span style="color:${status.isExpired ? '#777' : '#fbbf24'}; flex-shrink:0;">${displayTime || ''}</span>
+                    <div class="marquee-wrap">
+                        ${needsMarquee
+                            ? `<span class="marquee-text">${t.content}</span>`
+                            : `<span class="marquee-static">${t.content}</span>`
+                        }
+                    </div>
                 </div>
-                <div style="font-size:14px;">${status.isExpired ? '✅' : '⏳'}</div>
+                <div style="font-size:14px; flex-shrink:0; margin-left:8px;">${status.isExpired ? '✅' : '⏳'}</div>
             `;
             container.appendChild(item);
         });
@@ -715,16 +720,27 @@
                 font-size: 18px;           /* 15px → 18px */
                 transition: opacity 0.5s, transform 0.5s;
             }
+                .marquee-wrap {
+                    overflow: hidden;
+                    flex: 1;
+                    min-width: 0;
+                }
                 .marquee-text {
                     display: inline-block;
                     white-space: nowrap;
-                    animation: marquee 8s linear infinite;
+                    animation: marquee-scroll 10s linear infinite;
                 }
-
-                @keyframes marquee {
+                .marquee-static {
+                    display: inline-block;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    max-width: 100%;
+                }
+                @keyframes marquee-scroll {
                     0%   { transform: translateX(0); }
-                    40%  { transform: translateX(-30%); }
-                    60%  { transform: translateX(-30%); }
+                    40%  { transform: translateX(-50%); }
+                    60%  { transform: translateX(-50%); }
                     100% { transform: translateX(0); }
                 }
         `;
