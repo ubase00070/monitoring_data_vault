@@ -272,10 +272,10 @@
                     const cardText = card.innerText;
                     const batteryMatch = cardText.match(/(\d+)%/);
                     const isCharging = card.querySelector('svg[class*="text-tertiary-300"]') || cardText.includes('배터리');
-                    const isPatrolling = cardText.includes('순회');
+                    const isPatrolling = cardText.includes('순찰');
                     if (batteryMatch) {
                         batteryVal = batteryMatch[0];
-                        if (isPatrolling) { accentColor = "#3b82f6"; statusIcon = "🔵"; statusText = "순회 중"; }
+                        if (isPatrolling) { accentColor = "#3b82f6"; statusIcon = "🔵"; statusText = "순찰 중"; }
                         else if (isCharging) { accentColor = "#22c55e"; statusIcon = "🟢"; statusText = "충전 중"; }
                         else { accentColor = "#888888"; statusIcon = "⚪"; statusText = "대기 중"; }
                     }
