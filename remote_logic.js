@@ -329,8 +329,10 @@
                 <span style="font-weight:bold; color:${accentColor}; font-size: 20px;">${batteryVal}</span>
             `;
             batteryPopup.appendChild(item);
-            taskPopup.style.top = (batteryPopup.offsetHeight + 30) + 'px';
         });
+        if (taskPopup.style.display === 'block') {
+            taskPopup.style.top = (batteryPopup.offsetHeight + 30) + 'px';
+        }
     }
 
     function copyToClipboard(btn) {
@@ -572,19 +574,6 @@
             const isMultiMon = t.content && t.content.includes("다중 모니터링");
             const targetInterval = isMultiMon ? (interval + 10) : interval;
 
-            const notifiedCount = parseInt(localStorage.getItem(storageKey) || '0');
-
-            if (notifiedCount < 2) {
-                if (typeof triggerReminder === 'function') {
-                    triggerReminder(t.content, status.remainMin);
-                }
-                localStorage.setItem(storageKey, String(notifiedCount + 1));
-
-                const now = new Date();
-                const msUntilMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1) - now;
-                setTimeout(() => localStorage.removeItem(storageKey), msUntilMidnight);
-            }
-
             const item = document.createElement('div');
             const isMon = t.type === 'monitoring';
             const textStyle = status.isExpired 
@@ -751,6 +740,14 @@
     SECTION 6. 지능형 충돌 회피 순열 엔진
    ============================================================ */
 
+    function executeIntervention(btn) {
+        btn.dataset.intercepted = 'true';
+        btn.click();
+        setTimeout(() => {
+            delete btn.dataset.intercepted;
+        }, 200);
+    }
+
     async function handleControlClick(e) {
         if (!state.isQueueOpt) return;
     
@@ -822,48 +819,6 @@
     /* ============================================================
         SECTION 7. 스마트 네이밍 엔진 카드 생성
        ============================================================ */
-    // [추가] 이름 저장/수정 함수
-    function saveUserName(newName) {
-        if (!newName.trim()) return;
-        localStorage.setItem('neubie_user_name', newName.trim());
-        syncTasksFromServer(); // 이름이 바뀌었으니 데이터를 다시 불러옴
-        renderDashboard();    // UI 갱신
-    }
-
-    function createConfigCard() {
-        const card = document.createElement('div');
-        card.className = 'menu-card';
-        card.style.cssText = "background:white; padding:15px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.05); display:flex; flex-direction:column; gap:10px;";
-
-        const currentName = localStorage.getItem('neubie_user_name') || "미설정";
-
-        card.innerHTML = `
-            <div style="font-weight:bold; font-size:14px; color:#1e293b;">👤 사용자 설정</div>
-            <div style="display:flex; gap:8px;">
-                <input type="text" id="user-name-input" placeholder="이름 입력 (예: 안혜림)" 
-                    style="flex:1; padding:6px 10px; border:1px solid #e2e8f0; border-radius:6px; font-size:13px;"
-                    value="${currentName === "미설정" ? "" : currentName}">
-                <button id="save-name-btn" style="background:#3b82f6; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px;">저장</button>
-            </div>
-            <div style="font-size:11px; color:#64748b;">현재 설정된 이름: <b id="display-name">${currentName}</b></div>
-        `;
-
-        // setTimeout 대신 card 내부 요소에 직접 접근하여 바인딩
-        const btn = card.querySelector('#save-name-btn');
-        const input = card.querySelector('#user-name-input');
-        
-        btn.onclick = () => {
-            const newName = input.value.trim();
-            if (newName) {
-                localStorage.setItem('neubie_user_name', newName);
-                syncTasksFromServer(); // 이름 변경 즉시 서버 데이터 재요청
-                renderDashboard();    // UI 즉시 갱신
-            }
-        };
-
-        return card;
-    }
-
     function createNamingCard() {
         const isWknd = isWeekend();
         const card = document.createElement('div');
