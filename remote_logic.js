@@ -235,15 +235,6 @@
     else injectUI();
 
     const iframes = {};
-    if (currUrl.includes('/remote/multiple/driving')) {
-        config.batteryIds.forEach(c => {
-            const ifr = document.createElement('iframe');
-            ifr.src = `https://go.neubie.ai/ko/monitoring/${c.id}`;
-            Object.assign(ifr.style, { width: '0', height: '0', border: 'none', display: 'none' });
-            document.body.appendChild(ifr);
-            iframes[c.id] = ifr;
-        });
-    }
 
     /* ============================================================
         SECTION 4. 배터리 및 업무 연동 로직
@@ -1093,15 +1084,27 @@
 
     let batteryRefreshInterval = null;
 
+    // 개선: 팝업 열 때만 생성
     function toggleBattery() {
         if (batteryPopup.style.display === 'none') {
+
+            // iframe이 없으면 그때 생성
+            config.batteryIds.forEach(c => {
+                if (!iframes[c.id]) {
+                    const ifr = document.createElement('iframe');
+                    ifr.src = `https://go.neubie.ai/ko/monitoring/${c.id}`;
+                    Object.assign(ifr.style, { width:'0', height:'0', border:'none', display:'none' });
+                    document.body.appendChild(ifr);
+                    iframes[c.id] = ifr;
+                }
+            });
+
             updateBatteryStatus();
             batteryPopup.style.display = 'block';
             setTimeout(() => {
                 if (batteryPopup.style.display === 'block') updateBatteryStatus();
             }, 1500);
 
-            // ✅ 10초마다 자동 갱신
             batteryRefreshInterval = setInterval(() => {
                 if (batteryPopup.style.display === 'block') updateBatteryStatus();
                 else clearInterval(batteryRefreshInterval);
@@ -1109,8 +1112,15 @@
 
         } else {
             batteryPopup.style.display = 'none';
-            // ✅ 팝업 닫으면 인터벌 정리
             clearInterval(batteryRefreshInterval);
+
+            // ✅ 닫을 때 iframe 전부 제거 → 부하 없음
+            config.batteryIds.forEach(c => {
+                if (iframes[c.id]) {
+                    iframes[c.id].remove();
+                    delete iframes[c.id];
+                }
+            });
         }
     }
 
