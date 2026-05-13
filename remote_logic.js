@@ -544,12 +544,11 @@
 
         // 헤더 및 설정 UI 렌더링 — inline-task-container 사용
         const inlineContainer = document.getElementById('inline-task-container');
-        if (!inlineContainer) return;
-        inlineContainer.innerHTML = '';
-        const container = inlineContainer;
+        inlineContainer.innerHTML = '';  // null이면 에러나므로
+        const container = inlineContainer || document.createElement('div'); // fallback
 
         if (validTasks.length === 0) {
-            container.innerHTML = `<div style="color:#666; text-align:center; padding:20px; font-size:15px;">배정된 업무가 없습니다.</div>`;
+            if (inlineContainer) inlineContainer.innerHTML = `<div style="color:#666; ...">배정된 업무가 없습니다.</div>`;
             return;
         }
 
