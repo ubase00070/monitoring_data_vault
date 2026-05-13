@@ -567,7 +567,7 @@
 
             const displayTime = (String(timeKey).length > 10) ? String(timeKey).match(/\d{2}:\d{2}/)?.[0] : timeKey;
 
-            const needsMarquee = t.content.length > 20;
+            const needsMarquee = t.content.length > 22;
             const contentSpan = needsMarquee
                 ? `<span class="marquee-text">${t.content}</span>`
                 : `<span>${t.content}</span>`;
