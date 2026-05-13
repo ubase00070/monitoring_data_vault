@@ -961,18 +961,18 @@
 
         const title = document.createElement('h2');
         title.textContent = "✨ 우린 램이 8GB라니까?";
-        title.style.cssText = "color:#3b82f6; font-size:18px; margin:0; font-weight:bold;";
+        title.style.cssText = "color:#3b82f6; font-size:22px; margin:0; font-weight:bold;";
 
         // 이름 입력 및 닫기 버튼 영역
         const nameArea = document.createElement('div');
-        nameArea.style.cssText = "display:flex; align-items:center; gap:8px; font-size:13px; color:#64748b;";
+        nameArea.style.cssText = "display:flex; align-items:center; gap:8px; font-size:15px; color:#64748b;";
         const currentName = localStorage.getItem('neubie_user_name') || "";
         
         nameArea.innerHTML = `
             <span>성명:</span>
             <input type="text" id="inline-name-input" value="${currentName}" placeholder="이름 입력"
                 style="width:70px; border:1px solid #cbd5e1; outline:none; padding:2px 6px; 
-                    font-size:13px; font-weight:bold; color:#1e293b; background:white; 
+                    font-size:15px; font-weight:bold; color:#1e293b; background:white; 
                     border-radius:4px; text-align:center;">
             <button id="all-close-btn" style="background:#ef4444; color:white; border:none; border-radius:4px; width:22px; height:22px; cursor:pointer; font-weight:bold; display:flex; align-items:center; justify-content:center; font-size:14px;">✕</button>
         `;
@@ -1067,8 +1067,8 @@
         // 제목에 margin-bottom: 4px를 추가하여 설명과의 간격을 벌림
         card.innerHTML = `
             <div style="flex:1;">
-                <div style="font-weight:bold; font-size:15px; margin-bottom:4px;">${name}</div>
-                <div style="font-size:12px; color:#aaa;">${desc}</div>
+                <div style="font-weight:bold; font-size:18px; margin-bottom:4px;">${name}</div>
+                <div style="font-size:16px; color:#aaa;">${desc}</div>
             </div>`;
         
         if (stateKey) {
