@@ -237,33 +237,6 @@
     const iframes = {};
     if (currUrl.includes('/remote/multiple/driving')) {
         config.batteryIds.forEach(c => {
-            let batteryVal = "- %", statusText = "OFF", accentColor = "#666", statusIcon = "⚪";
-            try {
-                const doc = iframes[c.id]?.contentDocument || iframes[c.id]?.contentWindow.document;
-                const card = doc?.querySelector('li[data-qk="robot-card"]');
-                if (card) {
-                    const cardText = card.innerText;
-                    const batteryMatch = cardText.match(/(\d+)%/);
-
-                    // 충전: SVG 아이콘 판정
-                    const isCharging = !!card.querySelector('svg.size-10.text-tertiary-300');
-
-                    // 순찰: '임무 진행' span을 찾고 → 바로 다음 span의 텍스트 확인
-                    const allSpans = [...card.querySelectorAll('span')];
-                    const missionLabelIdx = allSpans.findIndex(s => s.textContent.trim() === '임무 진행');
-                    const missionValue = missionLabelIdx !== -1 
-                        ? allSpans[missionLabelIdx + 1]?.textContent?.trim() 
-                        : '';
-                    const isPatrolling = missionValue === '순찰';  // includes 대신 === 로 정확히 일치 확인
-
-                    if (batteryMatch) {
-                        batteryVal = batteryMatch[0];
-                        if (isPatrolling)      { accentColor = "#3b82f6"; statusIcon = "🔵"; statusText = "순찰 중"; }
-                        else if (isCharging)   { accentColor = "#22c55e"; statusIcon = "🟢"; statusText = "충전 중"; }
-                        else                   { accentColor = "#ffffff"; statusIcon = "⚪"; statusText = "대기 중"; }
-                    }
-                }
-            } catch (e) {}
             const ifr = document.createElement('iframe');
             ifr.src = `https://go.neubie.ai/ko/monitoring/${c.id}`;
             Object.assign(ifr.style, { width: '0', height: '0', border: 'none', display: 'none' });
@@ -307,8 +280,12 @@
 
                     // 충전: SVG 아이콘만으로 판정 (텍스트 조건 제거)
                     const isCharging = !!card.querySelector('svg.size-10.text-tertiary-300');
-                    const missionLine = cardText.split('\n').find(line => line.includes('임무 진행')) || '';
-                    const isPatrolling = missionLine.includes('순찰');
+                    const allSpans = [...card.querySelectorAll('span')];
+                    const missionLabelIdx = allSpans.findIndex(s => s.textContent.trim() === '임무 진행');
+                    const missionValue = missionLabelIdx !== -1
+                        ? allSpans[missionLabelIdx + 1]?.textContent?.trim()
+                        : '';
+                    const isPatrolling = missionValue === '순찰';
                     if (batteryMatch) {
                         batteryVal = batteryMatch[0];
                         if (isPatrolling) { accentColor = "#3b82f6"; statusIcon = "🔵"; statusText = "순찰 중"; }
@@ -786,7 +763,7 @@
         const popup = document.createElement('div');
         popup.className = 'delay-popup';
         popup.innerHTML = `
-            <div style="font-size: 0.85em; color: #00ff41; margin-bottom: 4px;">[Collision Avoidance Active]</div>
+            <div style="font-size: 0.85em; color: #00ff41; margin-bottom: 4px;">[중복 개입 완화 시스템]</div>
             <div style="font-size: 1.1em; font-weight: bold;">🚀 ${(finalDelay / 1000).toFixed(2)}초 대기 적용</div>
             <div style="font-size: 0.75em; opacity: 0.7; margin-top: 4px;">Group Rank: ${myRank + 1} | Slot Gap: ${SPACING}ms</div>
         `;
