@@ -1000,7 +1000,6 @@
         const taskCard = document.createElement('div');
         taskCard.style.cssText = "background:#252525; padding:15px; border-radius:15px; border:1px solid #333;";
         const storedName = localStorage.getItem('neubie_user_name') || "사용자";
-        taskCard.innerHTML = `<div style="font-weight:bold; font-size:18px; margin-bottom:10px;">📋 ${storedName}의 일일 업무</div>`;
         const currentInt = localStorage.getItem('neubie_remind_int') || '0';
         taskCard.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
