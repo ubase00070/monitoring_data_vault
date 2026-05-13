@@ -573,8 +573,8 @@
 
             const needsMarquee = t.content.length > 40;
             const contentSpan = needsMarquee
-                ? `<span class="marquee-text">${t.content}</span>`
-                : `<span>${t.content}</span>`;
+                ? `<span class="marquee-text" style="${textStyle}">${t.content}</span>`
+                : `<span style="${textStyle}">${t.content}</span>`;
 
             item.innerHTML = `
                 <span style="color:${status.isExpired ? '#777' : '#fbbf24'}; white-space:nowrap;">${displayTime || ''}</span>
