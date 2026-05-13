@@ -727,7 +727,7 @@
                 .marquee-text {
                     display: inline-block;
                     white-space: nowrap;
-                    animation: marquee-scroll 18s linear infinite;
+                    animation: marquee-scroll 18s linear 2s infinite;
                 }
                 .marquee-static {
                     display: inline-block;
