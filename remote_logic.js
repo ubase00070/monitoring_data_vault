@@ -245,9 +245,16 @@
                     const cardText = card.innerText;
                     const batteryMatch = cardText.match(/(\d+)%/);
 
-                    // '배터리' 텍스트 조건 제거 — SVG 아이콘만으로 판정
-                    const isCharging = !!card.querySelector('svg[class*="text-tertiary-300"]');
-                    const isPatrolling = cardText.includes('순찰');
+                    // 충전: SVG 아이콘 판정
+                    const isCharging = !!card.querySelector('svg.size-10.text-tertiary-300');
+
+                    // 순찰: '임무 진행' span을 찾고 → 바로 다음 span의 텍스트 확인
+                    const allSpans = [...card.querySelectorAll('span')];
+                    const missionLabelIdx = allSpans.findIndex(s => s.textContent.trim() === '임무 진행');
+                    const missionValue = missionLabelIdx !== -1 
+                        ? allSpans[missionLabelIdx + 1]?.textContent?.trim() 
+                        : '';
+                    const isPatrolling = missionValue === '순찰';  // includes 대신 === 로 정확히 일치 확인
 
                     if (batteryMatch) {
                         batteryVal = batteryMatch[0];
