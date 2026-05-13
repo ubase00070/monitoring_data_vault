@@ -224,8 +224,8 @@
 
     const dashboard = createContainer('neubie-dashboard', '500px', '50%', '50%');
     const batteryPopup = createContainer('neubie-battery-popup', '380px', '20px', 'auto', '20px');
-    const taskPopup = createContainer('neubie-task-popup', '420px', '20px', '20px');
-
+    const taskPopup = createContainer('neubie-task-popup', '420px', '320px', 'auto', '20px');
+    
     const injectUI = () => { 
         if (document.body) {
             document.body.append(dashboard, batteryPopup, taskPopup);
@@ -1108,7 +1108,7 @@
             batteryRefreshInterval = setInterval(() => {
                 if (batteryPopup.style.display === 'block') updateBatteryStatus();
                 else clearInterval(batteryRefreshInterval);
-            }, 10000);
+            }, 5000);
 
         } else {
             batteryPopup.style.display = 'none';
