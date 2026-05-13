@@ -695,6 +695,8 @@
     
         const targetBtn = e.target.closest('button');
         if (!targetBtn || targetBtn.innerText.trim() !== '관제 시작') return;
+
+        if (targetBtn.dataset.intercepted) return;
     
         const currentUserName = localStorage.getItem('neubie_user_name') || "운영자";
         const user = personnelData.find(u => u.name === currentUserName);
@@ -1132,6 +1134,7 @@
             if (location.href !== lastUrl) {
                 lastUrl = location.href;
                 closeAllPopups();
+                updateRobotContext();
             }
         }, 100); // 주소가 바뀔 시간을 잠깐 주는 0.1초 대기
     }, true);
@@ -1141,6 +1144,7 @@
         if (location.href !== lastUrl) {
             lastUrl = location.href;
             closeAllPopups();
+            updateRobotContext();
         }
     }, 2000); // 2초 정도면 충분히 여유로움
 
