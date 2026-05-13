@@ -225,7 +225,7 @@
     const dashboard = createContainer('neubie-dashboard', '500px', '50%', '50%');
     const batteryPopup = createContainer('neubie-battery-popup', '380px', '20px', 'auto', '20px');
     const taskPopup = createContainer('neubie-task-popup', '420px', '360px', 'auto', '20px');
-    
+
     const injectUI = () => { 
         if (document.body) {
             document.body.append(dashboard, batteryPopup, taskPopup);
@@ -303,6 +303,7 @@
                 <span style="font-weight:bold; color:${accentColor}; font-size: 20px;">${batteryVal}</span>
             `;
             batteryPopup.appendChild(item);
+            taskPopup.style.top = (batteryPopup.offsetHeight + 30) + 'px';
         });
     }
 
