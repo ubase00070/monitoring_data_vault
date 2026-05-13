@@ -1052,6 +1052,10 @@
         list.appendChild(createMenuCard("🔋 실시간 성남시 기체 배터리 현황", "실시간으로 정보를 받아옵니다.", null, null, () => {
             toggleBattery();
             renderDashboard();
+            // renderDashboard 후 업무 목록 다시 채우기
+            if (window.currentMyTasks && window.currentMyTasks.length > 0) {
+                renderTaskList(window.currentMyTasks);
+            }
         }, isBatteryOpen ? '닫기' : '열기'));
 
         // 4. 영상 파일명 도우미
@@ -1158,7 +1162,12 @@
         if (e.altKey && e.code === 'KeyB') { 
             e.preventDefault(); 
             toggleBattery(); 
-            if (dashboard.style.display === 'block') renderDashboard(); 
+            if (dashboard.style.display === 'block') {
+                renderDashboard();
+                if (window.currentMyTasks && window.currentMyTasks.length > 0) {
+                    renderTaskList(window.currentMyTasks);
+                }
+            }
         }
     });
 
