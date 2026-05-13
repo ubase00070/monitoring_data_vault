@@ -254,7 +254,7 @@
         header.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #333; padding-bottom:10px;";
         const titleB = document.createElement('b');
         titleB.textContent = "🛰️ 성남 배터리";
-        titleB.style.cssText = "color:#eee; font-size:22px;";
+        titleB.style.cssText = "color:#eee; font-size:18px;";
         const copyBtn = document.createElement('button');
         copyBtn.textContent = '📋 복사';
         Object.assign(copyBtn.style, { background:'#3b82f6', color:'white', border:'none', padding:'6px 12px', borderRadius:'8px', cursor:'pointer', fontWeight:'bold', transition:'0.2s' });
@@ -283,8 +283,21 @@
             } catch (e) {}
             state.lastBatteryData.push({ shortName: c.shortName, battery: batteryVal, statusText: statusText });
             const item = document.createElement('div');
-            item.style.cssText = `display:flex; justify-content:space-between; background:rgba(255,255,255,0.05); padding:12px 16px; border-radius:12px; margin-bottom:8px; border-left:5px solid ${accentColor};`;
-            item.innerHTML = `<span>${statusIcon} ${c.name}</span><span style="font-weight:bold; color:${accentColor};">${batteryVal}</span>`;
+            item.style.cssText = `
+                display:flex; 
+                justify-content:space-between; 
+                align-items:center; /* 세로 정렬 맞춤 */
+                background:rgba(255,255,255,0.05); 
+                padding:15px 20px; /* 패딩을 늘려 높이를 확보 */
+                border-radius:12px; 
+                margin-bottom:10px; 
+                border-left:5px solid ${accentColor};
+                font-size: 18px !important; /* 전체 글씨 크기 (성남판교 200 등) */
+            `;
+            item.innerHTML = `
+                <span style="font-weight:500;">${statusIcon} ${c.name}</span>
+                <span style="font-weight:bold; color:${accentColor}; font-size: 20px;">${batteryVal}</span>
+            `;
             batteryPopup.appendChild(item);
         });
     }
@@ -576,6 +589,54 @@
         SECTION 5. 줄을 서시오 & 중복 관제 완화
        ============================================================ */
 
+    const personnelData = [
+        { name: "김지훈", time: "(0700-1600)(U)", class: "time-07", id: "U07LD5HA6KC" }, 
+        { name: "오정훈", time: "(0700-1600)(U)", class: "time-07", id: "U081BN7R3FX" }, 
+        { name: "박계원", time: "(0700-1600)(U)", class: "time-07", id: "U07RUM3AMCP" }, 
+        { name: "김경환", time: "(0800-1700)(U)", class: "time-08", id: "U0837ER4DH7" }, 
+        { name: "박효선", time: "(0800-1700)(U)", class: "time-08", id: "U07PFT5K2GN" }, 
+        { name: "안혜림", time: "(0900-1800)(U)", class: "time-09", id: "U07SD6LAGFJ" }, 
+        { name: "이환", time: "(0900-1800)(U)", class: "time-09", id: "U08L5G3E63Z" }, 
+        { name: "이길범", time: "(0900-1800)(U)", class: "time-09", id: "U09TAQYHAAJ" }, 
+        { name: "최윤혁", time: "(0900-1800)(U)", class: "time-09", id: "U09LVJW0LTD" }, 
+        { name: "신현철", time: "(0900-1800)(U)", class: "time-09", id: "U09N857TDQU" },
+        { name: "김동진", time: "(0900-1800)(U)", class: "time-09", id: "U0A75MK1TND" }, 
+        { name: "석승찬", time: "(1000-1900)(U)", class: "time-10", id: "U0ARNJ37WBF" },
+        { name: "이준", time: "(1000-1900)(U)", class: "time-10", id: "U0ARPU34Z9C" },
+        { name: "한승완", time: "(1000-1900)(U)", class: "time-10", id: "U0AS4T1N4MP" },
+        { name: "박은선", time: "(1100-2000)(U)", class: "time-11", id: "U07L9T58G3E" }, 
+        { name: "송주현", time: "(1100-2000)(U)", class: "time-11", id: "U0833HRE3QD" }, 
+        { name: "송태영", time: "(1100-2000)(U)", class: "time-11", id: "U0AJ44Z38F4" },
+        { name: "신은정", time: "(1100-2000)(U)", class: "time-11", id: "U0A4XRZG3BQ" }, 
+        { name: "호덕진", time: "(1100-2000)(U)", class: "time-11", id: "U0AQ3C9SC2J" },
+        { name: "장재원", time: "(1100-2000)(U)", class: "time-11", id: "U0876898WG6" }, 
+        { name: "박효빈", time: "(1400-2300)(U)", class: "time-14", id: "U0A32RYP77F" }, 
+        { name: "이기완", time: "(1400-2300)(U)", class: "time-14", id: "U0ARS0PD2AW" },
+        { name: "권재윤", time: "(1400-2300)(U)", class: "time-14", id: "U0ARAGTJD9D" },
+        { name: "김가은", time: "(1500-2400)(U)", class: "time-15", id: "U0A152QPH16" }, 
+        { name: "서형민", time: "(1500-2400)(U)", class: "time-15", id: "U0A0ANUTX5G" }, 
+        { name: "최성환", time: "(1500-2400)(U)", class: "time-15", id: "U07FBS6APHA" }, 
+        { name: "이규순", time: "(1800-0300)(U)", class: "time-18", id: "U081BN70T0D" }, 
+        { name: "강철환", time: "(1800-0300)(U)", class: "time-18", id: "U0854PMM3B3" }, 
+        { name: "박수연", time: "(1800-0300)(U)", class: "time-18", id: "U07E7AMFUQ2" }, 
+        { name: "신지섭", time: "(1800-0300)(U)", class: "time-18", id: "U07KCEM6DU7" },
+        { name: "최선호", time: "(2000-0500)(U)", class: "time-20", id: "U07EL0TSG0H" }, 
+        { name: "최정기", time: "(2000-0500)(U)", class: "time-20", id: "U07EW4HTGCQ" }, 
+        { name: "고상연", time: "(2000-0500)(U)", class: "time-20", id: "U08LT371YDU" }, 
+        { name: "김소연", time: "(2200-0700)(U)", class: "time-22", id: "U08552CSB3K" }, 
+        { name: "임다연", time: "(2200-0700)(U)", class: "time-22", id: "U07MBG99B1S" }, 
+        { name: "임아연", time: "(2200-0700)(U)", class: "time-22", id: "U07MMMNQZ1P" }, 
+        { name: "안대관", time: "(2330-0830)(U)", class: "time-23", id: "U07E4DMLYR3" }
+    ];
+
+    function executeIntervention(btn) {
+        btn.dataset.intercepted = 'true';
+        btn.click();
+        setTimeout(() => {
+            delete btn.dataset.intercepted;
+        }, 200);
+    }
+    
     function injectConfigUI() {
         // 이미 스타일이 존재하면 중복 생성 방지
         if (document.getElementById('neubie-engine-popup-style')) return;
@@ -601,12 +662,10 @@
                 pointer-events: none;
                 line-height: 1.5;
                 font-size: 15px;
+                transition: opacity 0.5s, transform 0.5s;
             }
-            /* 기존 UI 스타일들... */
         `;
         document.head.appendChild(style);
-
-        // ... 체크박스 생성 로직(줄을 서시오 등) ...
     }
 
     function calculateDelay() {
@@ -632,7 +691,7 @@
    ============================================================ */
 
     async function handleControlClick(e) {
-        if (!state.isQueue) return;
+        if (!state.isQueueOpt) return;
     
         const targetBtn = e.target.closest('button');
         if (!targetBtn || targetBtn.innerText.trim() !== '관제 시작') return;
@@ -653,8 +712,8 @@
     
         // 2. 시공간 Seed 생성 (분 단위로 순열이 뒤섞임)
         const now = new Date();
-        const timeSeed = `${now.getFullYear()}${now.getMonth()}${now.getDate()}${now.getHours()}${now.getMinutes()}`;
-    
+        const timeSeed = `${now.getFullYear()}${now.getMonth()}${now.getDate()}${now.getHours()}${Math.floor(now.getMinutes() / 2)}`;
+
         // 3. 현재 근무 시간대(조합) 기반의 순열 생성
         // 같은 'time-11' 조 등 동시간대 근무자들은 같은 'groupKey'를 공유하게 되어
         // 그들 사이에서 중복 없는 순번을 나눠 갖게 됩니다.
@@ -695,23 +754,23 @@
         `;
         document.body.appendChild(popup);
     
-        // 이벤트 차단 및 예약 실행
+        // 이벤트 차단
         e.preventDefault();
         e.stopPropagation();
-    
+
+        // 딜레이 후 실행
         setTimeout(() => {
-            if (typeof executeIntervention === 'function') executeIntervention(targetBtn);
+            executeIntervention(targetBtn);
         }, finalDelay);
-    
-        // 팝업 유지 (1.5초)
+
+        // 팝업 제거 (하나로 통합)
+        const showDuration = Math.max(QUEUE_CONFIG.MIN_OVERLAY_SHOW, QUEUE_CONFIG.OVERLAY_DURATION - finalDelay);
         setTimeout(() => {
-            if (popup) {
-                popup.style.transition = "opacity 0.5s, transform 0.5s";
-                popup.style.opacity = "0";
-                popup.style.transform = "translate(-50%, -20px)";
-                setTimeout(() => popup.remove(), 500);
-            }
-        }, 1500);
+            popup.style.transition = "opacity 0.5s, transform 0.5s";
+            popup.style.opacity = "0";
+            popup.style.transform = "translate(-50%, -20px)";
+            setTimeout(() => popup.remove(), 500);
+        }, showDuration);
     }
 
     /* ============================================================
@@ -1086,6 +1145,7 @@
     }, 2000); // 2초 정도면 충분히 여유로움
 
     document.addEventListener('click', handleControlClick, true);
+    injectConfigUI();
     if (state.isMapOpt) injectMapStyle();
     
     // 1. 페이지 로드 시 이름이 설정되어 있다면 즉시 한 번 동기화
