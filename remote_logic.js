@@ -514,8 +514,8 @@
         // 3. 헤더 및 설정 UI 렌더링
         taskPopup.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid #444; padding-bottom:10px;">
-                <b style="color:#fbbf24; font-size:16px;">📋 업무 알림 설정</b>
-                <select id="remindSetter" style="background:#333; color:white; border:1px solid #555; font-size:11px; border-radius:4px; padding:2px;">
+                <b style="color:#fbbf24; font-size:20px;">📋 업무 알림 설정</b>
+                <select id="remindSetter" style="background:#333; color:white; border:1px solid #555; font-size:14px; border-radius:4px; padding:2px;">
                     <option value="0" ${currentInt === '0' ? 'selected' : ''}>알림 없음</option>
                     <option value="3" ${currentInt === '3' ? 'selected' : ''}>3분 전 (다중은 13분 전)</option>
                     <option value="5" ${currentInt === '5' ? 'selected' : ''}>5분 전 (다중은  15분 전)</option>
@@ -534,7 +534,7 @@
         };
         
         if (validTasks.length === 0) {
-            container.innerHTML = `<div style="color:#666; text-align:center; padding:20px; font-size:12px;">배정된 업무가 없습니다.</div>`;
+            container.innerHTML = `<div style="color:#666; text-align:center; padding:20px; font-size:15px;">배정된 업무가 없습니다.</div>`;
             return;
         }
 
@@ -572,7 +572,7 @@
             item.style.cssText = `
                 background:${status.isExpired ? 'rgba(60, 60, 60, 0.1)' : (isMon ? 'rgba(59, 130, 246, 0.15)' : 'rgba(251, 191, 36, 0.15)')}; 
                 border-left:4px solid ${status.isExpired ? '#555' : (isMon ? '#3b82f6' : '#fbbf24')}; 
-                padding:10px; border-radius:8px; margin-bottom:8px; font-size:13px; transition: 0.3s;
+                padding:10px; border-radius:8px; margin-bottom:8px; font-size:16px; transition: 0.3s;
                 display: flex; justify-content: space-between; align-items: center;
             `;
 
@@ -583,7 +583,7 @@
                     <span style="color:${status.isExpired ? '#777' : '#fbbf24'}; margin-right:8px;">${displayTime || ''}</span>
                     ${t.content}
                 </div>
-                <div style="font-size:11px;">${status.isExpired ? '✅' : '⏳'}</div>
+                <div style="font-size:14px;">${status.isExpired ? '✅' : '⏳'}</div>
             `;
             container.appendChild(item);
         });
@@ -690,8 +690,8 @@
     function createOverlay(finalDelay) {
         const overlay = document.createElement('div');
         overlay.innerHTML = `
-            <div style="font-size: 20px; margin-bottom: 8px; letter-spacing: -0.5px;">📡 중복 관제 완화 시스템 v1.1</div>
-            <div style="font-size: 17px; color: #ffeb3b; font-weight: 500;">
+            <div style="font-size: 22px; margin-bottom: 8px; letter-spacing: -0.5px;">📡 중복 관제 완화 시스템 v1.1</div>
+            <div style="font-size: 19px; color: #ffeb3b; font-weight: 500;">
                 딜레이 적용 중... (${(finalDelay/1000).toFixed(2)}s)
             </div>
         `;
@@ -860,13 +860,13 @@
         };
 
         card.innerHTML = `
-            <div style="color:#3b82f6; font-weight:bold; font-size:14px; margin-bottom:10px;">🏷️ 영상 파일명 변경 도우미</div>
+            <div style="color:#3b82f6; font-weight:bold; font-size:18px; margin-bottom:10px;">🏷️ 영상 파일명 변경 도우미</div>
             <div style="display: flex; gap: 5px; margin-bottom: 10px;">
-                <select id="robotSelector" style="flex: 1.2; background: #333; color: white; border: 1px solid #555; border-radius: 4px; font-size: 12px; padding: 4px;">
+                <select id="robotSelector" style="flex: 1.2; background: #333; color: white; border: 1px solid #555; border-radius: 4px; font-size: 15px; padding: 4px;">
                     ${dropdownOptions || '<option>최근 배달 기체 미감지</option>'}
                 </select>
-                <input type="text" id="taskInput" placeholder="주문번호를 붙여넣으세요." style="flex: 1; background: #333; color: white; border: 1px solid #555; padding: 4px; border-radius: 4px; font-size: 12px;">
-                <button id="copyFileName" style="background: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size:12px;">복사</button>
+                <input type="text" id="taskInput" placeholder="주문번호를 붙여넣으세요." style="flex: 1; background: #333; color: white; border: 1px solid #555; padding: 4px; border-radius: 4px; font-size: 15px;">
+                <button id="copyFileName" style="background: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size:15px;">복사</button>
             </div>
             <div style="display: flex; gap: 5px; flex-wrap: wrap;">
                 <button id="btnMulti" class="sub-btn">다중 관제</button>
@@ -882,7 +882,7 @@
         if (!document.getElementById('naming-btn-style')) {
             const style = document.createElement('style');
             style.id = 'naming-btn-style';
-            style.textContent = `.sub-btn { background: #444; color: #ddd; border: 1px solid #666; padding: 6px 4px; border-radius: 6px; font-size: 12px; cursor: pointer; flex: 1; transition: 0.2s; } .sub-btn:hover { background: #555; border-color: #888; }`;
+            style.textContent = `.sub-btn { background: #444; color: #ddd; border: 1px solid #666; padding: 6px 4px; border-radius: 6px; font-size: 15px; cursor: pointer; flex: 1; transition: 0.2s; } .sub-btn:hover { background: #555; border-color: #888; }`;
             document.head.appendChild(style);
         }
 
@@ -961,7 +961,7 @@
 
         const title = document.createElement('h2');
         title.textContent = "✨ 우린 램이 8GB라니까?";
-        title.style.cssText = "color:#3b82f6; font-size:22px; margin:0; font-weight:bold;";
+        title.style.cssText = "color:#3b82f6; font-size:20px; margin:0; font-weight:bold; white-space:nowrap;";
 
         // 이름 입력 및 닫기 버튼 영역
         const nameArea = document.createElement('div');
