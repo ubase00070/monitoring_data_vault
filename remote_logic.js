@@ -1089,8 +1089,7 @@
         } else {
             const btn = document.createElement('button');
             btn.textContent = btnLabel;
-            btn.style.cssText = `background:${btnLabel === '닫기' ? '#ef4444' : '#3b82f6'}; color:white; border:none; padding:8px 16px; border-radius:8px; cursor:pointer; font-weight:bold; min-width:60px;`;
-            btn.onclick = action;
+            btn.style.cssText = `background:${btnLabel === '닫기' ? '#ef4444' : '#3b82f6'}; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight:bold; min-width:70px; font-size:15px;`;            btn.onclick = action;
             card.appendChild(btn);
         }
         return card;
