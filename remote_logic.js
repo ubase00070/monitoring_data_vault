@@ -303,7 +303,7 @@
                 border-radius:12px; 
                 margin-bottom:10px; 
                 border-left:5px solid ${accentColor};
-                font-size: 18px !important; /* 전체 글씨 크기 (성남판교 200 등) */
+                font-size: 16px !important; /* 전체 글씨 크기 (성남판교 200 등) */
             `;
             item.innerHTML = `
                 <span style="font-weight:500;">${statusIcon} ${c.name}</span>
@@ -1040,6 +1040,11 @@
             () => {
                 if (taskPopup.style.display === 'none') {
                     syncTasksFromServer();
+                    if (batteryPopup.style.display === 'block') {
+                        taskPopup.style.top = (batteryPopup.offsetHeight + 30) + 'px';
+                    } else {
+                        taskPopup.style.top = '20px';
+                    }
                     taskPopup.style.display = 'block';
                 } else {
                     taskPopup.style.display = 'none';
