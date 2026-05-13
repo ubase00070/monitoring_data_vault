@@ -16,7 +16,7 @@
             { id: '142', name: '성남판교 200', shortName: '판교 200' },
             { id: '145', name: '성남서현 201', shortName: '서현 201' },
             { id: '144', name: '성남율동 202', shortName: '율동 202' },
-            { id: '155', name: '성남야탑 203', shortName: '야탑 203' }
+            { id: '143', name: '성남야탑 203', shortName: '야탑 203' }
         ],
         sheetId: "1tLo6Xeq6KJx6zW-fcw8H38jdjxyS2yre5oWY7cxky70"
     };
