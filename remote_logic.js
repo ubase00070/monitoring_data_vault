@@ -559,12 +559,14 @@
                 : 'color: #eee;';
             
             item.style.cssText = `
-                background:${status.isExpired ? 'rgba(60, 60, 60, 0.1)' : (isMon ? 'rgba(59, 130, 246, 0.15)' : 'rgba(251, 191, 36, 0.15)')}; 
-                border-left:4px solid ${status.isExpired ? '#555' : (isMon ? '#3b82f6' : '#fbbf24')}; 
+                background:${status.isExpired ? 'rgba(60, 60, 60, 0.1)' : (isMon ? 'rgba(59, 130, 246, 0.15)' : 'rgba(251, 191, 36, 0.15)')};
+                border-left:4px solid ${status.isExpired ? '#555' : (isMon ? '#3b82f6' : '#fbbf24')};
                 padding:10px; border-radius:8px; margin-bottom:8px; font-size:16px; transition: 0.3s;
-                display: flex; justify-content: space-between; align-items: center;
+                display: grid;
+                grid-template-columns: auto 1fr auto;
+                align-items: center;
+                gap: 6px;
                 overflow: hidden;
-                max-height: 42px;
             `;
 
             const displayTime = (String(timeKey).length > 10) ? String(timeKey).match(/\d{2}:\d{2}/)?.[0] : timeKey;
@@ -575,16 +577,11 @@
                 : `<span>${t.content}</span>`;
 
             item.innerHTML = `
-                <div style="${textStyle} font-weight:500; display:flex; align-items:center; flex:1; min-width:0; gap:6px;">
-                    <span style="color:${status.isExpired ? '#777' : '#fbbf24'}; flex-shrink:0;">${displayTime || ''}</span>
-                    <div class="marquee-wrap">
-                        ${needsMarquee
-                            ? `<span class="marquee-text">${t.content}</span>`
-                            : `<span class="marquee-static">${t.content}</span>`
-                        }
-                    </div>
+                <span style="color:${status.isExpired ? '#777' : '#fbbf24'}; white-space:nowrap;">${displayTime || ''}</span>
+                <div class="marquee-wrap" style="${textStyle} font-weight:500;">
+                    ${contentSpan}
                 </div>
-                <div style="font-size:14px; flex-shrink:0; margin-left:8px;">${status.isExpired ? '✅' : '⏳'}</div>
+                <div style="font-size:14px; white-space:nowrap;">${status.isExpired ? '✅' : '⏳'}</div>
             `;
             container.appendChild(item);
         });
