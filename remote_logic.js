@@ -241,72 +241,8 @@
         return el;
     }
 
-    function makeDraggable(el) {
-        let isDragging = false;
-        let startX, startY, startLeft, startTop;
-
-        // transform 제거하고 실제 픽셀 위치로 전환
-        function normalizePosition() {
-            const rect = el.getBoundingClientRect();
-            el.style.transform = 'none';
-            el.style.left = rect.left + 'px';
-            el.style.top = rect.top + 'px';
-            el.style.right = 'auto';
-        }
-
-        el.addEventListener('mousedown', (e) => {
-            // 헤더 영역에서만 드래그
-            const header = el.querySelector('.drag-handle');
-            if (header && !header.contains(e.target)) return;
-            if (!header && e.target !== el) return;
-
-            isDragging = true;
-            normalizePosition();
-
-            startX = e.clientX;
-            startY = e.clientY;
-            startLeft = parseInt(el.style.left);
-            startTop = parseInt(el.style.top);
-
-            el.style.cursor = 'grabbing';
-            e.preventDefault();
-        });
-
-        document.addEventListener('mousemove', (e) => {
-            if (!isDragging) return;
-
-            const dx = e.clientX - startX;
-            const dy = e.clientY - startY;
-
-            let newLeft = startLeft + dx;
-            let newTop = startTop + dy;
-
-            // 웹사이트 영역 밖으로 못 나가도록 제한
-            const elW = el.offsetWidth;
-            const elH = el.offsetHeight;
-            const maxLeft = window.innerWidth - elW;
-            const maxTop = window.innerHeight - elH;
-
-            newLeft = Math.max(0, Math.min(newLeft, maxLeft));
-            newTop = Math.max(0, Math.min(newTop, maxTop));
-
-            el.style.left = newLeft + 'px';
-            el.style.top = newTop + 'px';
-        });
-
-        document.addEventListener('mouseup', () => {
-            if (!isDragging) return;
-            isDragging = false;
-            el.style.cursor = '';
-        });
-    }
-
     const dashboard = createContainer('neubie-dashboard', '500px', '50%', '50%');
     const batteryPopup = createContainer('neubie-battery-popup', '380px', '20px', 'auto', '20px');
-
-    // 드래그 적용
-    makeDraggable(dashboard);
-    makeDraggable(batteryPopup);
 
     const injectUI = () => { 
         if (document.body) {
@@ -322,11 +258,9 @@
         SECTION 4. 배터리 및 업무 연동 로직
        ============================================================ */
     function updateBatteryStatus() {
-        if (isDragging) return; // 드래그 중에는 DOM 초기화 금지
         batteryPopup.innerHTML = '';
         const header = document.createElement('div');
-        header.className = 'drag-handle';
-        header.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #333; padding-bottom:10px; cursor:grab;";
+        header.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #333; padding-bottom:10px;";
         const titleB = document.createElement('b');
         titleB.textContent = "🔋 실시간 성남시 배터리";
         titleB.style.cssText = "color:#eee; font-size:18px;";
@@ -401,7 +335,7 @@
         const now = new Date();
         let hour = now.getHours();
         if (now.getMinutes() >= 50) hour = (hour + 1) % 24;
-        let copyText = `[${String(hour).padStart(2, '0')}시 성남 기체 배터리 현황]\n`;
+        let copyText = `[${hour}시 성남 기체 배터리 현황]\n`;
         state.lastBatteryData.forEach(item => { copyText += `• ${item.shortName}: ${item.battery} (${item.statusText})\n`; });
         
         navigator.clipboard.writeText(copyText).then(() => {
@@ -1019,9 +953,8 @@
         
         // 헤더 컨테이너 (제목 + 성명 입력창 + X 버튼 인라인 배치)
         const headerContainer = document.createElement('div');
-        headerContainer.className = 'drag-handle';
-        headerContainer.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; padding-right:5px; cursor:grab;";
-        
+        headerContainer.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; padding-right:5px;";
+
         const title = document.createElement('h2');
         title.textContent = "✨ 우린 램이 8GB라니까?";
         title.style.cssText = "color:#3b82f6; font-size:20px; margin:0; font-weight:bold; white-space:nowrap;";
@@ -1206,7 +1139,7 @@
 
     // 팝업 열 때만 생성
     function toggleBattery() {
-        if (batteryPopup.style.display !== 'block') {
+        if (batteryPopup.style.display === 'none') {
 
             // iframe이 없으면 그때 생성
             config.batteryIds.forEach(c => {
