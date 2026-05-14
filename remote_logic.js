@@ -1205,7 +1205,7 @@
 
                 config.batteryIds.forEach(c => {
                     const ifr = document.createElement('iframe');
-                    ifr.style.cssText = 'width:0;height:0;border:none;display:none;';
+                    ifr.style.cssText = 'width:0;height:0;border:none;position:fixed;top:-9999px;';
                     ifr.addEventListener('load', () => {
                         iframes[c.id] = ifr; // 읽기용으로 등록
                         loadedCount++;
