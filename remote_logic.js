@@ -1206,7 +1206,7 @@
 
     // 팝업 열 때만 생성
     function toggleBattery() {
-        if (batteryPopup.style.display === 'none') {
+        if (batteryPopup.style.display === 'block') {
 
             // iframe이 없으면 그때 생성
             config.batteryIds.forEach(c => {
