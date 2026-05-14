@@ -244,6 +244,54 @@
     const dashboard = createContainer('neubie-dashboard', '500px', '50%', '50%');
     const batteryPopup = createContainer('neubie-battery-popup', '380px', '20px', 'auto', '20px');
 
+    function makeDraggable(handleEl, targetEl) {
+        // handleEl: 드래그를 시작할 헤더 div
+        // targetEl: 실제로 움직일 팝업 전체 div
+        let isDragging = false, startX, startY, startLeft, startTop;
+
+        handleEl.style.cursor = 'grab';
+
+        handleEl.addEventListener('mousedown', (e) => {
+            // input, button, select는 드래그 제외 — 클릭 기능 보존
+            const tag = e.target.tagName;
+            if (tag === 'INPUT' || tag === 'BUTTON' || tag === 'SELECT' || tag === 'TEXTAREA' || tag === 'A') return;
+
+            isDragging = true;
+
+            // transform 제거 후 실제 픽셀 위치로 전환 (최초 1회)
+            const rect = targetEl.getBoundingClientRect();
+            targetEl.style.transform = 'none';
+            targetEl.style.left = rect.left + 'px';
+            targetEl.style.top = rect.top + 'px';
+            targetEl.style.right = 'auto';
+
+            startX = e.clientX;
+            startY = e.clientY;
+            startLeft = parseFloat(targetEl.style.left);
+            startTop = parseFloat(targetEl.style.top);
+
+            handleEl.style.cursor = 'grabbing';
+            e.preventDefault(); // 헤더에서만 실행 → input/button은 위에서 이미 return됨
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            let newLeft = startLeft + (e.clientX - startX);
+            let newTop  = startTop  + (e.clientY - startY);
+            // 화면 밖 이탈 방지
+            newLeft = Math.max(0, Math.min(newLeft, window.innerWidth  - targetEl.offsetWidth));
+            newTop  = Math.max(0, Math.min(newTop,  window.innerHeight - targetEl.offsetHeight));
+            targetEl.style.left = newLeft + 'px';
+            targetEl.style.top  = newTop  + 'px';
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (!isDragging) return;
+            isDragging = false;
+            handleEl.style.cursor = 'grab';
+        });
+    }
+
     const injectUI = () => { 
         if (document.body) {
             document.body.append(dashboard, batteryPopup);
@@ -277,6 +325,8 @@
         copyBtn.onclick = (e) => copyToClipboard(e.target);
         header.append(titleB, copyBtn);
         batteryPopup.appendChild(header);
+
+        makeDraggable(header, batteryPopup);
 
         state.lastBatteryData = [];
         config.batteryIds.forEach(c => {
@@ -976,6 +1026,8 @@
         headerContainer.appendChild(title);
         headerContainer.appendChild(nameArea);
         dashboard.appendChild(headerContainer);
+
+        makeDraggable(headerContainer, dashboard);
 
         // 이벤트 바인딩
         setTimeout(() => {
