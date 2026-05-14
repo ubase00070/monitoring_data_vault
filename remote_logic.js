@@ -257,6 +257,7 @@
             if (tag === 'INPUT' || tag === 'BUTTON' || tag === 'SELECT' || tag === 'TEXTAREA' || tag === 'A') return;
 
             isDragging = true;
+            targetEl.dataset.dragging = 'true';
 
             // transform 제거 후 실제 픽셀 위치로 전환 (최초 1회)
             const rect = targetEl.getBoundingClientRect();
@@ -288,6 +289,7 @@
         document.addEventListener('mouseup', () => {
             if (!isDragging) return;
             isDragging = false;
+            targetEl.dataset.dragging = 'false';
             handleEl.style.cursor = 'grab';
         });
     }
@@ -306,6 +308,7 @@
         SECTION 4. 배터리 및 업무 연동 로직
        ============================================================ */
     function updateBatteryStatus() {
+        if (batteryPopup.dataset.dragging === 'true') return;
         batteryPopup.innerHTML = '';
         const header = document.createElement('div');
         header.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #333; padding-bottom:10px;";
@@ -1191,7 +1194,7 @@
 
     // 팝업 열 때만 생성
     function toggleBattery() {
-        if (batteryPopup.style.display === 'none') {
+        if (batteryPopup.style.display === 'block') {
 
             // iframe이 없으면 그때 생성
             config.batteryIds.forEach(c => {
