@@ -334,6 +334,10 @@
         state.lastBatteryData = [];
         config.batteryIds.forEach(c => {
             // iframe이 아직 로딩 중이면 load 이벤트 후 재시도
+            const ifr = iframes[c.id];
+            if (ifr && ifr.contentDocument?.readyState !== 'complete') {
+                ifr.addEventListener('load', () => updateBatteryStatus(), { once: true });
+            }
 
             let batteryVal = "- %", statusText = "OFF", accentColor = "#666", statusIcon = "⚪";
             try {
@@ -1190,59 +1194,42 @@
 
     // 팝업 열 때만 생성
     function toggleBattery() {
-        // 기존 열기 분기를 아래로 교체
-        if (batteryPopup.style.display !== 'block') {
+        if (batteryPopup.style.display === 'block') {
 
-            updateBatteryStatus(); // 이전 state 데이터로 즉시 레이아웃 표시
-            batteryPopup.style.display = 'block';
-
-            // 최초 1회 + 1분마다 iframe 로드 → 읽기 → 제거 사이클
-            function fetchBatteryData() {
-                if (batteryPopup.style.display !== 'block') return;
-
-                let loadedCount = 0;
-                const total = config.batteryIds.length; // 4
-
-                config.batteryIds.forEach(c => {
+            // iframe이 없으면 그때 생성
+            config.batteryIds.forEach(c => {
+                if (!iframes[c.id]) {
                     const ifr = document.createElement('iframe');
-                    ifr.style.cssText = 'width:0;height:0;border:none;position:fixed;top:-9999px;';
-                    ifr.addEventListener('load', () => {
-                        iframes[c.id] = ifr; // 읽기용으로 등록
-                        loadedCount++;
-                        if (loadedCount === total) {
-                            // 4개 모두 로드 완료 → 데이터 읽기
-                            updateBatteryStatus();
-                            // 즉시 전부 제거
-                            config.batteryIds.forEach(c2 => {
-                                if (iframes[c2.id]) {
-                                    iframes[c2.id].remove();
-                                    delete iframes[c2.id];
-                                }
-                            });
-                        }
-                    }, { once: true });
                     ifr.src = `https://go.neubie.ai/ko/monitoring/${c.id}`;
+                    Object.assign(ifr.style, { width:'0', height:'0', border:'none', display:'none' });
                     document.body.appendChild(ifr);
-                });
-            }
+                    iframes[c.id] = ifr;
+                }
+            });
 
-            fetchBatteryData(); // 즉시 1회
+            updateBatteryStatus();
+            batteryPopup.style.display = 'block';
+            setTimeout(() => {
+                if (batteryPopup.style.display === 'block') updateBatteryStatus();
+            }, 1500);
 
             batteryRefreshInterval = setInterval(() => {
-                fetchBatteryData(); // 1분마다
-            }, 60000);
-        
+                if (batteryPopup.style.display === 'block') updateBatteryStatus();
+                else clearInterval(batteryRefreshInterval);
+            }, 5000);
+
         } else {
-            // 닫기
             batteryPopup.style.display = 'none';
             clearInterval(batteryRefreshInterval);
+
+            // ✅ 닫을 때 iframe 전부 제거 → 부하 없음
             config.batteryIds.forEach(c => {
                 if (iframes[c.id]) {
                     iframes[c.id].remove();
                     delete iframes[c.id];
                 }
             });
-        }    
+        }
     }
 
     function closeAllPopups() {
