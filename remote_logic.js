@@ -1201,7 +1201,7 @@
                 if (!iframes[c.id]) {
                     const ifr = document.createElement('iframe');
                     ifr.src = `https://go.neubie.ai/ko/monitoring/${c.id}`;
-                    Object.assign(ifr.style, { width:'0', height:'0', border:'none', display:'none' });
+                    Object.assign(ifr.style, { width:'0', height:'0', border:'none', position:'fixed', top:'-9999px' });
                     document.body.appendChild(ifr);
                     iframes[c.id] = ifr;
                 }
