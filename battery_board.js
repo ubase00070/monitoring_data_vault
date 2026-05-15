@@ -189,7 +189,7 @@
         .bb-mg-row { display:flex; align-items:center; gap:6px; padding:6px 0; border-bottom:1px solid rgba(255,255,255,.04); }
         .bb-mg-row:last-child { border-bottom:none; }
         .bb-mg-label { font-size:14px; font-weight:900; color:var(--mu); width:140px; flex-shrink:0; letter-spacing:.3px; }
-        .bb-mg-icons { display:flex; gap:4px; flex-wrap:wrap; }
+        .bb-mg-icons { display:flex; gap:8px; flex-wrap:wrap; }
         .bb-mi {
             width:34px; height:34px; border-radius:50%;
             border:2px solid var(--ac,var(--gy));
