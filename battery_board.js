@@ -49,7 +49,7 @@
         .bb-clock { font-family:'Lato',monospace; font-size:13px; font-weight:900; color:var(--mu); letter-spacing:.8px; }
         .bb-ref   { font-size:11px; color:var(--mu); font-weight:700; }
         .bb-hd-right { position:absolute; right:14px; top:50%; transform:translateY(-50%); display:flex; align-items:center; gap:7px; }
-        .bb-hd-left  { position:absolute; left:14px;  top:50%; transform:translateY(-50%); }
+        .bb-hd-left  { position:absolute; left:14px;  top:50%; transform:translateY(-50%); display:flex; align-items:center; }
 
         /* ── 알림 버튼 ── */
         .bb-alert-btn {
@@ -246,7 +246,8 @@
             <div class="bb-hd">
                 <div class="bb-hd-left">
                     <button class="bb-alert-btn" id="bb-alertBtn">
-                        🚨 알림 <span class="bb-alert-count" id="bb-alertCount">0건</span>
+                        <span>🚨 알림</span>
+                        <span class="bb-alert-count" id="bb-alertCount">0건</span>
                     </button>
                 </div>
                 <div class="bb-hd-title">
