@@ -358,12 +358,13 @@
         isOpen = true;
         document.getElementById('bb').classList.add('open');
         render();
-        if (DB.length === 0) {
-            // 최초 오픈 시 기체 목록 조회
-            fetchAllRobots();
-        } else {
-            refreshAll();
-        }
+        // DB 비었으면 로딩, 로딩 완료 후 드롭다운 자동 갱신
+        fetchAllRobots().then(() => {
+            // 로딩 완료 후 검색창이 포커스 상태면 드롭다운 갱신
+            if (document.activeElement === document.getElementById('bb-si')) {
+                showDd();
+            }
+        });
     }
 
     function closeBoard() {
@@ -599,5 +600,8 @@
 
     // 초기 렌더 (localStorage에 저장된 카드 복원)
     render();
+
+    // 페이지 로드 시 백그라운드에서 미리 기체 목록 조회 (팝업 열기 전에 준비)
+    fetchAllRobots();
 
 })();
