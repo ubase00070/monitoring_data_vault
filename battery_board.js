@@ -500,9 +500,14 @@
             {
                 const isZombie =
                     rs.isConnecting === true &&
-                    (raw.battery == null || raw.battery === 0) &&
-                    (rs.velocity == null || rs.velocity === 0) &&
-                    rs.navpvtHorzAccuracy == null;
+                    // 배터리: null, undefined, 0 모두 포함
+                    !raw.battery &&
+                    // GPS: null, undefined 모두 포함 (0은 유효한 값일 수 있음)
+                    (rs.navpvtHorzAccuracy == null) &&
+                    // 임무 없음: currentScenario가 없거나 falsy
+                    !raw.currentScenario &&
+                    // 속도: null, undefined, 0 모두 포함
+                    !rs.velocity;
 
                 if (isZombie) {
                     if (!zombie[id]) zombie[id] = { count: 1, firstSeen: now };
