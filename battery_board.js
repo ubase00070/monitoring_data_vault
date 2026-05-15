@@ -215,6 +215,11 @@
             border-bottom:1px solid var(--bd); position:relative;
             transition:background .1s; cursor:default;
         }
+        .bb-ap-time {
+            font-size:10px; color:var(--mu);
+            font-family:'Lato',monospace; white-space:nowrap;
+            margin-right:6px;
+        }
         .bb-ap-item:last-child { border-bottom:none; }
         .bb-ap-item:hover { background:var(--sur2); }
         .bb-ap-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
@@ -399,7 +404,8 @@
                     const key = alertKey('standby', id);
                     if (!dismissedAlerts.has(key)) alerts.push({
                         key, type:'standby', dot:'rd', name,
-                        desc:`대기중 ${mins}분 | 마지막 조작: ${rs.lastOperatedUserName || '없음'} ${fmt(rs.lastOperatedAt)}`
+                        desc:`대기중 ${mins}분 | 마지막 조작: ${rs.lastOperatedUserName || '없음'} ${fmt(rs.lastOperatedAt)}`,
+                        time: fmt(new Date().toISOString())
                     });
                 }
             }
@@ -409,7 +415,8 @@
                 const key = alertKey('battery', id);
                 if (!dismissedAlerts.has(key)) alerts.push({
                     key, type:'battery', dot:'ye', name,
-                    desc:`배터리 ${battery}% | ${STL[status]}`
+                    desc:`배터리 ${battery}% | ${STL[status]}`,
+                    time: fmt(new Date().toISOString())
                 });
             }
 
@@ -435,7 +442,8 @@
                         const lastT = fmt(new Date(toggles[id][toggles[id].length - 1].time).toISOString());
                         alerts.push({
                             key, type:'toggle', dot:'or', name,
-                            desc:`ON/OFF 반복 ${Math.floor(toggles[id].length / 2)}회 | 최근 ${lastT}`
+                            desc:`ON/OFF 반복 ${Math.floor(toggles[id].length / 2)}회 | 최근 ${lastT}`,
+                            time: fmt(new Date(toggles[id][0].time).toISOString())
                         });
                     }
                 }
@@ -464,7 +472,8 @@
                         const mins = Math.floor((now - zombie[id].firstSeen) / 60000);
                         alerts.push({
                             key, type:'zombie', dot:'rd', name,
-                            desc:`⚠️ 좀비 추정 ${mins}분째 | 현장 재부팅 필요`
+                            desc:`⚠️ 좀비 추정 ${mins}분째 | 현장 재부팅 필요`,
+                            time: fmt(new Date().toISOString())
                         });
                     }
                 }
@@ -519,6 +528,7 @@
                             <div class="bb-ap-name">${a.name}</div>
                             <div class="bb-ap-desc">${a.desc}</div>
                         </div>
+                        <span class="bb-ap-time">${a.time ?? ''}</span>
                         <button class="bb-ap-dismiss" data-key="${a.key}">해제</button>
                     </div>
                 `).join('')}
@@ -554,7 +564,7 @@
 
         try {
             let allRaw;
-            try { allRaw = JSON.parse(e.detail); } catch { return; }
+            try { allRaw = JSON.parse(e.detail); } catch { fetchLock = false; return; }
 
             const seenIds = new Set();
             DB = [];
