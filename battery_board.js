@@ -263,7 +263,7 @@
         return { battery: Math.round(battery), status };
     }
 
-    async function fetchSiteRobots(siteId) {
+    function fetchSiteRobots(siteId) {
         return new Promise(resolve => {
             GM_xmlhttpRequest({
                 method: 'GET',
@@ -274,14 +274,15 @@
                     try {
                         const json = JSON.parse(res.responseText);
                         resolve((json.results ?? []).map(raw => ({
-                            id:     String(raw.id),
-                            name:   raw.nickname || raw.name || String(raw.id),
+                            id:    String(raw.id),
+                            name:  raw.nickname || raw.name || String(raw.id),
                             siteId,
-                            _raw:   raw
+                            _raw:  raw
                         })));
                     } catch { resolve([]); }
                 },
-                onerror: () => resolve([])
+                onerror: () => resolve([]),
+                ontimeout: () => resolve([])
             });
         });
     }
