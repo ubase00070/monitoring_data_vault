@@ -288,42 +288,33 @@
     }
 
     async function fetchAllRobots() {
-        // 77개 사이트를 병렬 fetch (same-origin 쿠키 자동 포함)
-        const batches = await Promise.allSettled(
-            SITE_IDS.map(sid => fetchSiteRobots(sid))
-        );
-
-        const allRobots = [];
-        const seenIds   = new Set();
-
-        for (const b of batches) {
-            if (b.status !== 'fulfilled') continue;
-            for (const robot of b.value) {
-                if (seenIds.has(robot.id)) continue; // 중복 제거
-                seenIds.add(robot.id);
-                allRobots.push(robot);
-            }
-        }
-
-        // DB 초기화 & 상태 파싱
-        DB = allRobots.map(r => {
-            const parsed = parseRobotStatus(r._raw);
-            return {
-                id:      r.id,
-                name:    r.name,
-                siteId:  r.siteId,
-                status:  parsed.status,
-                battery: parsed.battery,
-                loading: false
-            };
+        return new Promise(resolve => {
+            // 템퍼몽키가 CustomEvent로 데이터를 보내줄 때까지 대기
+            document.addEventListener('bb_robots_data', function handler(e) {
+                document.removeEventListener('bb_robots_data', handler);
+                const allRaw = e.detail;
+                const seenIds = new Set();
+                DB = [];
+                allRaw.forEach(raw => {
+                    const id = String(raw.id);
+                    if (seenIds.has(id)) return;
+                    seenIds.add(id);
+                    const parsed = parseRobotStatus(raw);
+                    DB.push({
+                        id,
+                        name:    raw.nickname || raw.name || id,
+                        status:  parsed.status,
+                        battery: parsed.battery,
+                        loading: false
+                    });
+                });
+                ids = ids.filter(id => DB.some(r => r.id === id));
+                save();
+                setDataSource('rest');
+                render();
+                resolve();
+            });
         });
-
-        // localStorage에 저장된 ids 중 유효하지 않은 것 정리
-        ids = ids.filter(id => DB.some(r => r.id === id));
-        save();
-
-        setDataSource('rest');
-        render();
     }
 
     // 30초마다 전체 갱신 (사이트별 재조회)
