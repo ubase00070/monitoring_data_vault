@@ -21,6 +21,7 @@
             --wh:rgba(240,240,255,.06); --gy:#4b5563; --gy2:rgba(75,85,99,.12);
             --rd:#ef4444; --rd2:rgba(239,68,68,.12); --ye:#fbbf24;
             --or:#f97316; --or2:rgba(249,115,22,.12);
+            --pk:#ec4899; --pk2:rgba(236,72,153,.10);
         }
         #bb-wrap * { box-sizing:border-box; }
 
@@ -159,6 +160,7 @@
         .bb-ca.standby    { --ac:#c8ccd4;  background:var(--wh); }
         .bb-ca.off        { --ac:#4b5563;  background:var(--gy2); }
         .bb-ca.loading    { --ac:#52525e;  background:var(--sur); opacity:0.5; }
+        .bb-ca.delivering { --ac:var(--pk); background:var(--pk2); }
         .bb-ca.warn-bat   { animation:bb-warnBlink 0.8s infinite; }
         @keyframes bb-warnBlink {
             0%,100% { border-color:var(--rd); box-shadow:0 0 0 1px var(--rd); }
@@ -182,6 +184,24 @@
         .bb-ld  { width:6px; height:6px; border-radius:50%; }
         .bb-rmhint { font-size:11px; color:var(--rd); font-weight:700; display:none; opacity:.85; }
         .bb-rmhint.show { display:block; }
+        /* ── 고정 모니터링 그리드 ── */
+        .bb-mg { padding:6px 12px; border-top:1px solid var(--bd); flex-shrink:0; background:var(--bg); }
+        .bb-mg-row { display:flex; align-items:center; gap:6px; padding:3px 0; border-bottom:1px solid rgba(255,255,255,.04); }
+        .bb-mg-row:last-child { border-bottom:none; }
+        .bb-mg-label { font-size:10px; font-weight:900; color:var(--mu); width:120px; flex-shrink:0; letter-spacing:.3px; }
+        .bb-mg-icons { display:flex; gap:4px; flex-wrap:wrap; }
+        .bb-mi {
+            width:22px; height:22px; border-radius:50%;
+            border:2px solid var(--ac,var(--gy));
+            color:var(--ac,var(--gy)); font-size:9px; font-weight:900;
+            display:flex; align-items:center; justify-content:center;
+            font-family:'Lato',monospace;
+        }
+        .bb-mi.charging   { --ac:var(--gn); }
+        .bb-mi.patrolling { --ac:var(--bl); }
+        .bb-mi.delivering { --ac:var(--pk); }
+        .bb-mi.standby    { --ac:#c8ccd4; }
+        .bb-mi.off        { --ac:#4b5563; }
 
         /* ── 알림 패널 ── */
         #bb-alert-panel {
@@ -276,11 +296,30 @@
                 <div id="bb-dd"></div>
             </div>
             <div class="bb-gw"><div class="bb-gr" id="bb-gr"></div></div>
+            <div class="bb-mg" id="bb-mg">
+                <div class="bb-mg-row">
+                    <div class="bb-mg-label">역삼 요기요</div>
+                    <div class="bb-mg-icons" id="bb-mg-yeoksam"></div>
+                </div>
+                <div class="bb-mg-row">
+                    <div class="bb-mg-label">송도 요기요</div>
+                    <div class="bb-mg-icons" id="bb-mg-songdo"></div>
+                </div>
+                <div class="bb-mg-row">
+                    <div class="bb-mg-label">성수 요기요</div>
+                    <div class="bb-mg-icons" id="bb-mg-seongsu"></div>
+                </div>
+                <div class="bb-mg-row">
+                    <div class="bb-mg-label">성남시 삼평&서현</div>
+                    <div class="bb-mg-icons" id="bb-mg-seongnam"></div>
+                </div>
+            </div>
             <div class="bb-ft">
                 <div class="bb-leg">
                     <div class="bb-li"><div class="bb-ld" style="background:#22c55e"></div>충전 중</div>
                     <div class="bb-li"><div class="bb-ld" style="background:#3b82f6"></div>순찰 중</div>
                     <div class="bb-li"><div class="bb-ld" style="background:#c8ccd4"></div>대기 중</div>
+                    <div class="bb-li"><div class="bb-ld" style="background:#ec4899"></div>배달 중</div>
                     <div class="bb-li"><div class="bb-ld" style="background:#4b5563"></div>OFF</div>
                 </div>
                 <div class="bb-rmhint" id="bb-rmhint">카드 선택 → 완료로 제거</div>
@@ -307,14 +346,22 @@
     const LS         = 'bb_ids';
     const LS_TOGGLE  = 'bb_toggles';
     const LS_ZOMBIE  = 'bb_zombie';
-    const STL = { charging:'충전 중', patrolling:'순찰 중', standby:'대기 중', off:'OFF' };
-    const STI = { charging:'🟢', patrolling:'🔵', standby:'⚪', off:'⚫' };
+    const STL = { charging:'충전 중', patrolling:'순찰 중', delivering:'배달 중', standby:'대기 중', off:'OFF' };
+    const STI = { charging:'🟢', patrolling:'🔵', delivering:'🩷', standby:'⚪', off:'⚫' };
     const DELIVERY_TYPES = ['DELIVERY', 'NB_ORDER_DELIVERY'];
+
+    const MONITOR_GROUPS = [
+        { id:'yeoksam',  label:'역삼 요기요',      keywords:['역삼 요기요'] },
+        { id:'songdo',   label:'송도 요기요',      keywords:['송도 요기요'] },
+        { id:'seongsu',  label:'성수 요기요',      keywords:['성수 요기요'] },
+        { id:'seongnam', label:'성남 삼평&서현', keywords:['성남시'] },
+    ];
 
     let DB = [];
     let ids = load();
     let rmMode = false, rmSet = new Set(), isOpen = false, dataSource = 'idle';
     let fetchLock = false;
+    let lastRaw = [];
 
     // 해제된 알림 (메모리에만, 새로고침 시 초기화)
     const dismissedAlerts = new Set();
@@ -363,7 +410,7 @@
         } else if (['PATROL','OPENAPI_PATROL'].includes(raw.service?.serviceType)) {
             status = raw.currentScenario ? 'patrolling' : 'standby';
         } else if (DELIVERY_TYPES.includes(raw.service?.serviceType)) {
-            status = raw.currentScenario ? 'patrolling' : 'standby';
+            status = raw.currentScenario ? 'delivering' : 'standby';
         } else {
             status = 'standby';
         }
@@ -548,6 +595,8 @@
         });
     }
 
+    renderMonitorGrid(allRaw);
+
     function dismiss(key) {
         dismissedAlerts.add(key);
         currentAlerts = currentAlerts.filter(a => a.key !== key);
@@ -564,6 +613,7 @@
         try {
             let allRaw;
             try { allRaw = JSON.parse(e.detail); } catch { fetchLock = false; return; }
+            lastRaw = allRaw;
 
             const seenIds = new Set();
             DB = [];
@@ -580,6 +630,7 @@
 
             const alerts = detectAlerts(allRaw);
             renderAlertPanel(alerts);
+            renderMonitorGrid(allRaw);
 
             if (isOpen) {
                 render();
@@ -599,6 +650,7 @@
         isOpen = true;
         document.getElementById('bb').classList.add('open');
         render();
+        renderMonitorGrid(lastRaw);
         setDataSource(DB.length > 0 ? 'rest' : 'idle');
     }
     function closeBoard() {
@@ -648,6 +700,35 @@
         const el = document.getElementById('bb-ref');
         if (el) el.textContent = m > 0 ? `${m}분 ${String(s).padStart(2,'0')}초 후 갱신` : `${s}초 후 갱신`;
     }, 1000);
+
+    // ============================================================
+    // SECTION 8b. 고정 모니터링 그리드 렌더
+    // ============================================================
+    function renderMonitorGrid(rawList) {
+        MONITOR_GROUPS.forEach(group => {
+            const el = document.getElementById(`bb-mg-${group.id}`);
+            if (!el) return;
+
+            // 키워드로 필터링
+            const robots = rawList.filter(r => {
+                const name = r.nickname || r.name || '';
+                return group.keywords.some(kw => name.includes(kw));
+            }).sort((a, b) => {
+                const na = a.nickname || a.name || '';
+                const nb = b.nickname || b.name || '';
+                // 이름에서 숫자 추출해서 정렬
+                const na_num = parseInt(na.match(/\d+/)?.[0] || '0');
+                const nb_num = parseInt(nb.match(/\d+/)?.[0] || '0');
+                return na_num - nb_num;
+            });
+
+            el.innerHTML = robots.map((r, i) => {
+                const parsed = parseRobotStatus(r);
+                const num = r.nickname?.match(/\d+/)?.[0] || (i + 1);
+                return `<div class="bb-mi ${parsed.status}" title="${r.nickname || r.name} | ${STL[parsed.status]}">${num}</div>`;
+            }).join('');
+        });
+    }
 
     // ============================================================
     // SECTION 9. 카드 렌더
