@@ -356,13 +356,7 @@
         isOpen = true;
         document.getElementById('bb').classList.add('open');
         render();
-        // DB 비었으면 로딩, 로딩 완료 후 드롭다운 자동 갱신
-        fetchAllRobots().then(() => {
-            // 로딩 완료 후 검색창이 포커스 상태면 드롭다운 갱신
-            if (document.activeElement === document.getElementById('bb-si')) {
-                showDd();
-            }
-        });
+        document.dispatchEvent(new CustomEvent('bb_opened')); // 템퍼몽키에 fetch 요청
     }
 
     function closeBoard() {
