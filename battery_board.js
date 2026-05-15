@@ -264,23 +264,26 @@
     }
 
     async function fetchSiteRobots(siteId) {
-        try {
-            const res = await fetch(
-                `https://go.neubie.ai/core/neubie/robots/robots/?offset=0&limit=99999&sites=${siteId}`,
-                { credentials: 'include', headers: { 'Accept': 'application/json' } }
-            );
-            if (!res.ok) return [];
-            const json = await res.json();
-            return (json.results ?? []).map(raw => ({
-                id:      String(raw.id),
-                name:    raw.nickname || raw.name || String(raw.id),
-                siteId,
-                status:  'off',
-                battery: 0,
-                loading: true,
-                _raw:    raw   // 파싱용 임시 보관
-            }));
-        } catch { return []; }
+        return new Promise(resolve => {
+            GM_xmlhttpRequest({
+                method: 'GET',
+                url: `https://go.neubie.ai/core/neubie/robots/robots/?offset=0&limit=99999&sites=${siteId}`,
+                withCredentials: true,
+                headers: { 'Accept': 'application/json' },
+                onload: function(res) {
+                    try {
+                        const json = JSON.parse(res.responseText);
+                        resolve((json.results ?? []).map(raw => ({
+                            id:     String(raw.id),
+                            name:   raw.nickname || raw.name || String(raw.id),
+                            siteId,
+                            _raw:   raw
+                        })));
+                    } catch { resolve([]); }
+                },
+                onerror: () => resolve([])
+            });
+        });
     }
 
     async function fetchAllRobots() {
