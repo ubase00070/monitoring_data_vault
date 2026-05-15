@@ -266,7 +266,7 @@
     async function fetchSiteRobots(siteId) {
         try {
             const res = await fetch(
-                `/core/neubie/robots/robots/?offset=0&limit=99999&sites=${siteId}`,
+                `https://go.neubie.ai/core/neubie/robots/robots/?offset=0&limit=99999&sites=${siteId}`,
                 { credentials: 'include', headers: { 'Accept': 'application/json' } }
             );
             if (!res.ok) return [];
