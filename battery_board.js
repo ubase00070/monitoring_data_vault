@@ -349,6 +349,10 @@
     const STL = { charging:'충전 중', patrolling:'순찰 중', delivering:'배달 중', standby:'대기 중', off:'OFF' };
     const STI = { charging:'🟢', patrolling:'🔵', delivering:'🩷', standby:'⚪', off:'⚫' };
     const DELIVERY_TYPES = ['DELIVERY', 'NB_ORDER_DELIVERY'];
+    const DELIVERY_SITE_IDS = [
+        // 직접 확인해서 채워넣기
+        // 예) 역삼 요기요, 송도 요기요, 성수 요기요, 캠핑장들, 성남시 등
+    ];
 
     const MONITOR_GROUPS = [
         { id:'yeoksam',  label:'역삼 요기요',      keywords:['역삼 요기요'] },
@@ -442,7 +446,9 @@
             const name = raw.nickname || raw.name || id;
             const rs   = raw.robotStatus ?? {};
             const { status, battery } = parseRobotStatus(raw);
-            const isDelivery = DELIVERY_TYPES.includes(raw.service?.serviceType);
+            const isDelivery = 
+                DELIVERY_TYPES.includes(raw.service?.serviceType) ||
+                DELIVERY_SITE_IDS.includes(raw.site?.id);
 
             // ── 기능1: 대기중 20분 이상 (배달용 제외) ─────────────
             if (!isDelivery && status === 'standby') {
