@@ -455,8 +455,7 @@
                     rs.isConnecting === true &&
                     (raw.battery == null || raw.battery === 0) &&
                     (rs.velocity == null || rs.velocity === 0) &&
-                    rs.navpvtHorzAccuracy == null &&
-                    (rs.cpuUsage == null || rs.cpuUsage === 0);
+                    rs.navpvtHorzAccuracy == null;
 
                 if (isZombie) {
                     if (!zombie[id]) zombie[id] = { count: 1, firstSeen: now };
