@@ -310,7 +310,7 @@
                     <div class="bb-mg-icons" id="bb-mg-seongsu"></div>
                 </div>
                 <div class="bb-mg-row">
-                    <div class="bb-mg-label">성남시 삼평&서현</div>
+                    <div class="bb-mg-label">성남시 삼평&amp;서현</div>
                     <div class="bb-mg-icons" id="bb-mg-seongnam"></div>
                 </div>
             </div>
