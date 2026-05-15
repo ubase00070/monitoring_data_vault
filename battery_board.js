@@ -897,7 +897,9 @@
     setTimeout(() => {
         const _token = localStorage.getItem('AccessToken');
         if (_token) {
-            document.dispatchEvent(new CustomEvent('bb_token', { detail: _token }));
+            document.dispatchEvent(new CustomEvent('bb_token', {
+                detail: JSON.stringify({ token: _token, siteIds: SITE_IDS })
+            }));
             console.log('[BB] bb_token 발송 완료');
         } else {
             console.log('[BB] AccessToken 없음');
