@@ -595,8 +595,6 @@
         });
     }
 
-    renderMonitorGrid(allRaw);
-
     function dismiss(key) {
         dismissedAlerts.add(key);
         currentAlerts = currentAlerts.filter(a => a.key !== key);
