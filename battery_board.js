@@ -596,13 +596,15 @@
         if (!e.target.closest('#bb-sb') && !e.target.closest('#bb-dd')) hideDd();
     });
 
-    // GM에 AccessToken 전달
-    const _token = localStorage.getItem('AccessToken');
-    if (_token) {
-        document.dispatchEvent(new CustomEvent('bb_token', { detail: _token }));
-    } else {
-        console.log('[BB] AccessToken 없음');
-    }
+    setTimeout(() => {
+        const _token = localStorage.getItem('AccessToken');
+        if (_token) {
+            document.dispatchEvent(new CustomEvent('bb_token', { detail: _token }));
+            console.log('[BB] bb_token 발송 완료');
+        } else {
+            console.log('[BB] AccessToken 없음');
+        }
+    }, 200);
     // 초기 렌더 (localStorage에 저장된 카드 복원)
     render();
 
