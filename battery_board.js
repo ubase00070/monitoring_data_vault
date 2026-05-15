@@ -292,7 +292,7 @@
             // 템퍼몽키가 CustomEvent로 데이터를 보내줄 때까지 대기
             document.addEventListener('bb_robots_data', function handler(e) {
                 document.removeEventListener('bb_robots_data', handler);
-                const allRaw = e.detail;
+                const allRaw = JSON.parse(e.detail);
                 const seenIds = new Set();
                 DB = [];
                 allRaw.forEach(raw => {
