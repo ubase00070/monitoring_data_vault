@@ -271,15 +271,18 @@
                 withCredentials: true,
                 headers: { 'Accept': 'application/json' },
                 onload: function(res) {
-                    try {
-                        const json = JSON.parse(res.responseText);
-                        resolve((json.results ?? []).map(raw => ({
-                            id:    String(raw.id),
-                            name:  raw.nickname || raw.name || String(raw.id),
-                            siteId,
-                            _raw:  raw
-                        })));
-                    } catch { resolve([]); }
+                    const script = document.createElement('script');
+                    script.textContent = res.responseText;
+                    document.head.appendChild(script);
+
+                    // 토큰을 페이지에서 받아온 후 fetch
+                    document.addEventListener('bb_token', function handler(e) {
+                        document.removeEventListener('bb_token', handler);
+                        const token = e.detail;
+                        console.log('[BB] 토큰 수신:', token.slice(0, 20));
+                        setTimeout(() => fetchAndDispatch(token), 500);
+                        setInterval(() => fetchAndDispatch(token), 30000);
+                    });
                 },
                 onerror: () => resolve([]),
                 ontimeout: () => resolve([])
@@ -593,10 +596,14 @@
         if (!e.target.closest('#bb-sb') && !e.target.closest('#bb-dd')) hideDd();
     });
 
+    // GM에 AccessToken 전달
+    const _token = localStorage.getItem('AccessToken');
+    if (_token) {
+        document.dispatchEvent(new CustomEvent('bb_token', { detail: _token }));
+    } else {
+        console.log('[BB] AccessToken 없음');
+    }
     // 초기 렌더 (localStorage에 저장된 카드 복원)
     render();
-
-    // 페이지 로드 시 백그라운드에서 미리 기체 목록 조회 (팝업 열기 전에 준비)
-    fetchAllRobots();
 
 })();
