@@ -49,7 +49,7 @@
         .bb-clock { font-family:'Lato',monospace; font-size:13px; font-weight:900; color:var(--mu); letter-spacing:.8px; }
         .bb-ref   { font-size:11px; color:var(--mu); font-weight:700; }
         .bb-hd-right { position:absolute; right:14px; top:50%; transform:translateY(-50%); display:flex; align-items:center; gap:7px; }
-        .bb-hd-left  { position:absolute; left:14px;  top:50%; transform:translateY(-50%); display:flex; align-items:center; }
+        .bb-hd-left  { position:absolute; left:14px; top:50%; transform:translateY(-50%); display:flex; align-items:center; }
 
         /* ── 알림 버튼 ── */
         .bb-alert-btn {
@@ -73,7 +73,7 @@
             padding:0 5px; font-size:10px; font-weight:900;
             min-width:18px; text-align:center;
         }
-        .bb-alert-btn:not(.has-alert) .bb-alert-count { background:var(--gy); color:var(--mu); }
+        .bb-alert-btn:not(.has-alert) .bb-alert-count { background:var(--bd2); color:var(--tx); }
 
         /* ── 공통 버튼 ── */
         .bb-src-badge { font-size:10px; font-weight:700; padding:2px 7px; border-radius:4px; letter-spacing:.4px; }
