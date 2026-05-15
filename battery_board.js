@@ -277,7 +277,7 @@
                 </div>
                 <div class="bb-hd-title">
                     <div class="bb-dot" id="bb-dot"></div>
-                    배터리 현황판
+                    관리자용 배터리 현황판
                     <span class="bb-src-badge idle" id="bb-srcBadge">대기</span>
                 </div>
                 <div class="bb-hd-time">
