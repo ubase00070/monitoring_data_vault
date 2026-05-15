@@ -293,8 +293,7 @@
     async function fetchAllRobots() {
         return new Promise(resolve => {
             // 템퍼몽키가 CustomEvent로 데이터를 보내줄 때까지 대기
-            document.addEventListener('bb_robots_data', function handler(e) {
-                document.removeEventListener('bb_robots_data', handler);
+            document.addEventListener('bb_robots_data', function(e) {
                 const allRaw = JSON.parse(e.detail);
                 const seenIds = new Set();
                 DB = [];
@@ -314,8 +313,13 @@
                 ids = ids.filter(id => DB.some(r => r.id === id));
                 save();
                 setDataSource('rest');
-                render();
-                resolve();
+                // 팝업 열려있을 때만 렌더링
+                if (isOpen) {
+                    render();
+                    if (document.activeElement === document.getElementById('bb-si')) {
+                        showDd();
+                    }
+                }
             });
         });
     }
@@ -355,8 +359,10 @@
     function openBoard() {
         isOpen = true;
         document.getElementById('bb').classList.add('open');
+        // DB에 데이터 있으면 즉시 렌더, 없으면 이벤트 오면 자동 렌더됨
         render();
-        document.dispatchEvent(new CustomEvent('bb_opened')); // 템퍼몽키에 fetch 요청
+        setDataSource(DB.length > 0 ? 'rest' : 'idle');
+        // bb_opened 이벤트 제거 — 이제 필요 없음
     }
 
     function closeBoard() {
