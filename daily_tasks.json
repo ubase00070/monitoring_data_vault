@@ -36,13 +36,13 @@
     "rawTime": "12:00"
   },
   {
-    "user": "송주현",
+    "user": "박은선",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "13:00"
   },
   {
-    "user": "박은선",
+    "user": "송주현",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "14:00"
@@ -78,70 +78,58 @@
     "rawTime": "19:00"
   },
   {
-    "user": "김가은",
+    "user": "최성환",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "20:00"
   },
   {
-    "user": "서형민",
+    "user": "이규순",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "21:00"
   },
   {
-    "user": "최성환",
+    "user": "강철환",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "22:00"
   },
   {
-    "user": "이규순",
+    "user": "임아연",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "23:00"
   },
   {
-    "user": "강철환",
+    "user": "이규순",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "00:00"
   },
   {
-    "user": "임아연",
+    "user": "임다연",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "01:00"
   },
   {
-    "user": "이규순",
+    "user": "김소연",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "02:00"
   },
   {
-    "user": "임다연",
+    "user": "임아연",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "03:00"
   },
   {
-    "user": "김소연",
-    "type": "monitoring",
-    "content": "다중 모니터링",
-    "rawTime": "04:00"
-  },
-  {
-    "user": "임아연",
-    "type": "monitoring",
-    "content": "다중 모니터링",
-    "rawTime": "05:00"
-  },
-  {
     "user": "임다연",
     "type": "monitoring",
     "content": "다중 모니터링",
-    "rawTime": "06:00"
+    "rawTime": "04:00"
   },
   {
     "user": "오정훈",
@@ -186,13 +174,13 @@
     "rawTime": "11:00"
   },
   {
-    "user": "김경환",
+    "user": "신은정",
     "type": "task",
     "content": "[12:00~13:00] 부산국립과학관 170,171호기 임무 [화,수,목,금,토,일]",
     "rawTime": "12:00"
   },
   {
-    "user": "오정훈",
+    "user": "김경환",
     "type": "task",
     "content": "[13:00~14:00] 부산국립과학관 170,171호기 임무 [화,수,목,금,토,일]",
     "rawTime": "13:00"
@@ -204,13 +192,13 @@
     "rawTime": "13:00"
   },
   {
-    "user": "송주현",
+    "user": "박은선",
     "type": "task",
     "content": "[13:50~14:00] 송도요기요 임무받기 OFF 후 배터리 잔량 확인",
     "rawTime": "13:50"
   },
   {
-    "user": "권재윤",
+    "user": "이기완",
     "type": "task",
     "content": "[14:00~15:00] 부산국립과학관 170,171호기 임무 [화,수,목,금,토,일]",
     "rawTime": "14:00"
@@ -222,7 +210,7 @@
     "rawTime": "15:00"
   },
   {
-    "user": "박계원",
+    "user": "이기완",
     "type": "task",
     "content": "[15:30~16:00] 역삼요기요 주/야 영업 기체 교대 체크 후 임무 ON",
     "rawTime": "15:30"
@@ -264,7 +252,7 @@
     "rawTime": "09:00"
   },
   {
-    "user": "신은정",
+    "user": "송주현",
     "type": "task",
     "content": "[11:00~12:30] 부산국립과학관 순찰띠띠 임무 [주말] 전용 일정",
     "rawTime": "11:00"
