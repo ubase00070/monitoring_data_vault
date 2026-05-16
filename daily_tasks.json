@@ -30,7 +30,7 @@
     "rawTime": "11:00"
   },
   {
-    "user": "석승찬",
+    "user": "신은정",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "12:00"
@@ -48,13 +48,13 @@
     "rawTime": "14:00"
   },
   {
-    "user": "이기완",
+    "user": "석승찬",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "15:00"
   },
   {
-    "user": "신은정",
+    "user": "이기완",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "16:00"
@@ -66,70 +66,82 @@
     "rawTime": "17:00"
   },
   {
-    "user": "이기완",
+    "user": "권재윤",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "18:00"
   },
   {
-    "user": "권재윤",
+    "user": "최성환",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "19:00"
   },
   {
-    "user": "최성환",
+    "user": "이기완",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "20:00"
   },
   {
-    "user": "이규순",
+    "user": "권재윤",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "21:00"
   },
   {
-    "user": "강철환",
+    "user": "최성환",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "22:00"
   },
   {
-    "user": "임아연",
+    "user": "이규순",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "23:00"
   },
   {
-    "user": "이규순",
+    "user": "강철환",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "00:00"
   },
   {
-    "user": "임다연",
+    "user": "임아연",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "01:00"
   },
   {
-    "user": "김소연",
+    "user": "이규순",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "02:00"
   },
   {
-    "user": "임아연",
+    "user": "임다연",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "03:00"
   },
   {
-    "user": "임다연",
+    "user": "김소연",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "04:00"
+  },
+  {
+    "user": "임아연",
+    "type": "monitoring",
+    "content": "다중 모니터링",
+    "rawTime": "05:00"
+  },
+  {
+    "user": "임다연",
+    "type": "monitoring",
+    "content": "다중 모니터링",
+    "rawTime": "06:00"
   },
   {
     "user": "오정훈",
@@ -174,7 +186,7 @@
     "rawTime": "11:00"
   },
   {
-    "user": "신은정",
+    "user": "석승찬",
     "type": "task",
     "content": "[12:00~13:00] 부산국립과학관 170,171호기 임무 [화,수,목,금,토,일]",
     "rawTime": "12:00"
@@ -222,7 +234,7 @@
     "rawTime": "15:30"
   },
   {
-    "user": "석승찬",
+    "user": "신은정",
     "type": "task",
     "content": "[16:00~17:00] 부산국립과학관 170,171호기 임무 후 주차, 임무받기 OFF  [화,수,목,금,토,일]",
     "rawTime": "16:00"
