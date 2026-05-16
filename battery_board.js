@@ -332,7 +332,7 @@
                     <div class="bb-mg-icons" id="bb-mg-seongsu"></div>
                 </div>
                 <div class="bb-mg-row">
-                    <div class="bb-mg-label">성남시 삼평&amp;서현</div>
+                    <div class="bb-mg-label">성남 삼평&amp;서현</div>
                     <div class="bb-mg-icons" id="bb-mg-seongnam"></div>
                 </div>
             </div>
@@ -354,7 +354,7 @@
                 </div>
                 <div id="bb-info-body">
                     <!-- 설명서 내용 작성 -->
-                    * 새로고침 시에만 첫 20~30초 데이터 전송 시간 필요(ALT+Z 창을 안 눌러도 값은 30초마다 받아옴)<br>
+                    * 새로고침 시에만 첫 20~30초 데이터 전송 시간 필요(ALT+Z 창은 안 열어놔도 데이터 값은 30초마다 받아옴)<br>
                     * 추가한 기체 카드와 배치는 로컬 스토리지에 저장됨(최대 24대. 드래그로 배치 변경가능)<br>
                     * 알림 전송 조건<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 배터리 21% 이하 기체<br>
