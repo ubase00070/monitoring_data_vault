@@ -268,7 +268,7 @@
         .bb-info-btn:hover { border-color:var(--tx); color:var(--tx); }
 
         #bb-info-panel {
-            display:none; position:absolute; top:50%; left:50%;
+            display:none; position:absolute; top:0; left:0; right:0; bottom:0;
             transform:translate(-50%,-50%);
             width:90%; max-height:80%; overflow-y:auto;
             background:var(--sur2); border:1px solid var(--bd2);
@@ -356,14 +356,15 @@
                 </div>
                 <div id="bb-info-body">
                     <!-- 설명서 내용 작성 -->
-                    * 새로고침 시에만 첫 20~30초 데이터 전송 시간 필요(ALT+Z는 눌러도 됨)
-                    * 추가한 기체와 배치는 저장됨(최대 24대. 드래그로 배치 변경가능)<br>
+                    * 새로고침 시에만 첫 20~30초 데이터 전송 시간 필요(ALT+Z는 눌러도 됨)<br>
+                    * 추가한 기체 카드와 배치는 저장됨(최대 24대. 드래그로 배치 변경가능)<br>
                     * 알림 전송 조건<br>
-                        - 배터리 21% 이하 기체<br>
-                        - 배달 사이트 기체가 아닌데, 20분이상 대기 상태로 방치된 경우<br>
-                        - 최근 10분 동안 ON/OFF를 3회 반복한 경우<br>
-                        - 전원ON인데 임무, 배터리, GPS 수신값이 잡히지 않는 경우(좀비)<br>
+                    -   배터리 21% 이하 기체<br>
+                    -   배달 사이트 기체가 아닌데, 20분이상 대기 상태로 방치된 경우<br>
+                    -   최근 10분 동안 ON/OFF를 3회 반복한 경우<br>
+                    -   전원ON인데 임무, 배터리, GPS 수신값이 잡히지 않는 경우(좀비)<br>
                     * 하단 네 줄은 역삼, 송도, 성수, 삼평서현 ON/OFF 및 상태 확인용 퀵메뉴
+                    * 피드백 받습니다(수정 시 자동 실시간 반영).
                 </div>
             </div>
         </div>
