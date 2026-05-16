@@ -269,11 +269,9 @@
 
         #bb-info-panel {
             display:none; position:absolute; top:0; left:0; right:0; bottom:0;
-            transform:translate(-50%,-50%);
-            width:90%; max-height:80%; overflow-y:auto;
             background:var(--sur2); border:1px solid var(--bd2);
             border-radius:12px; box-shadow:0 16px 48px rgba(0,0,0,.85);
-            z-index:10; padding:16px;
+            z-index:10; padding:16px; overflow-y:auto;
             font-size:12px; line-height:1.7; color:var(--tx);
         }
         #bb-info-panel.open { display:block; }
