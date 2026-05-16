@@ -258,6 +258,30 @@
         }
         .bb-ap-item:hover .bb-ap-dismiss { display:block; }
         .bb-ap-empty { padding:24px; text-align:center; font-size:12px; color:var(--mu); font-weight:700; }
+        .bb-info-btn {
+            width:22px; height:22px; border-radius:50%;
+            border:1.5px solid var(--mu); color:var(--mu);
+            background:transparent; font-size:12px; font-weight:900;
+            cursor:pointer; display:flex; align-items:center; justify-content:center;
+            transition:all .15s; flex-shrink:0;
+        }
+        .bb-info-btn:hover { border-color:var(--tx); color:var(--tx); }
+
+        #bb-info-panel {
+            display:none; position:absolute; top:50%; left:50%;
+            transform:translate(-50%,-50%);
+            width:90%; max-height:80%; overflow-y:auto;
+            background:var(--sur2); border:1px solid var(--bd2);
+            border-radius:12px; box-shadow:0 16px 48px rgba(0,0,0,.85);
+            z-index:10; padding:16px;
+            font-size:12px; line-height:1.7; color:var(--tx);
+        }
+        #bb-info-panel.open { display:block; }
+        .bb-info-hd {
+            display:flex; justify-content:space-between; align-items:center;
+            margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid var(--bd);
+        }
+        .bb-info-title { font-size:13px; font-weight:900; }
     `;
     document.head.appendChild(style);
 
@@ -323,6 +347,17 @@
                     <div class="bb-li"><div class="bb-ld" style="background:#4b5563"></div>OFF</div>
                 </div>
                 <div class="bb-rmhint" id="bb-rmhint">카드 선택 → 완료로 제거</div>
+                <button class="bb-info-btn" id="bb-infobtn" title="설명서">i</button>
+            </div>
+            <div id="bb-info-panel">
+                <div class="bb-info-hd">
+                    <div class="bb-info-title">📖 사용 설명서</div>
+                    <div class="bb-xbtn" id="bb-info-close">✕</div>
+                </div>
+                <div id="bb-info-body">
+                    <!-- 여기에 직접 설명 작성 -->
+                    설명서 내용을 여기에 작성하세요.
+                </div>
             </div>
         </div>
 
@@ -881,6 +916,13 @@
     document.getElementById('bb-closebtn').addEventListener('click', closeBoard);
     document.getElementById('bb-sortBtn').addEventListener('click', autoSort);
     document.getElementById('bb-rmbtn').addEventListener('click', toggleRm);
+
+    document.getElementById('bb-infobtn').addEventListener('click', () => {
+    document.getElementById('bb-info-panel').classList.toggle('open');
+    });
+    document.getElementById('bb-info-close').addEventListener('click', () => {
+        document.getElementById('bb-info-panel').classList.remove('open');
+    });
 
     const siEl = document.getElementById('bb-si');
     siEl.addEventListener('click', showDd);
