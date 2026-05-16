@@ -299,7 +299,7 @@
                 </div>
                 <div class="bb-hd-title">
                     <div class="bb-dot" id="bb-dot"></div>
-                    관리자용 배터리 현황판
+                    관리자용 배터리 현황판 for Hyerim
                     <span class="bb-src-badge idle" id="bb-srcBadge">대기</span>
                 </div>
                 <div class="bb-hd-time">
@@ -354,13 +354,14 @@
                 </div>
                 <div id="bb-info-body">
                     <!-- 설명서 내용 작성 -->
-                    * 새로고침 시에만 첫 20~30초 데이터 전송 시간 필요(ALT+Z는 눌러도 됨)<br>
-                    * 추가한 기체 카드와 배치는 저장됨(최대 24대. 드래그로 배치 변경가능)<br>
+                    * 새로고침 시에만 첫 20~30초 데이터 전송 시간 필요(ALT+Z 창을 안 눌러도 값은 30초마다 받아옴)<br>
+                    * 추가한 기체 카드와 배치는 로컬 스토리지에 저장됨(최대 24대. 드래그로 배치 변경가능)<br>
                     * 알림 전송 조건<br>
-                    &nbsp;&nbsp;&nbsp;- 배터리 21% 이하 기체<br>
-                    &nbsp;&nbsp;&nbsp;- 배달 사이트 기체가 아닌데, 20분이상 대기 상태로 방치된 경우<br>
-                    &nbsp;&nbsp;&nbsp;- 최근 10분 동안 ON/OFF를 3회 반복한 경우<br>
-                    &nbsp;&nbsp;&nbsp;- 최근 2분 동안 전원ON인데 임무, 배터리, GPS 수신값이 잡히지 않는 경우(좀비 의심)<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 배터리 21% 이하 기체<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 배달 사이트 기체가 아닌데, 20분이상 대기 상태로 방치된 경우<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 최근 10분 동안 ON/OFF를 3회 이상 반복한 경우<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 최근 2분 동안 전원ON인데 임무, 배터리, GPS 수신값이 잡히지 않는 경우(좀비 의심)<br>
+                    * 알림은 방치하더라도 문제가 해결되면 자동으로 해제됨<br>
                     * 하단 네 줄: 역삼, 송도, 성수, 삼평서현 ON/OFF 및 상태 확인용 퀵메뉴<br>
                     * 피드백 받습니다(수정 시 자동 실시간 반영).
                 </div>
