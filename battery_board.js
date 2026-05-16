@@ -415,13 +415,6 @@
     let fetchLock = false;
     let lastRaw = [];
 
-    // 마스터/슬레이브 관련
-    const LS_MASTER_HB = 'bb_master_hb';  // 하트비트 키
-    const LS_LAST_DATA = 'bb_last_data';  // 마스터가 저장하는 최신 데이터
-    const HB_INTERVAL  = 5000;   // 5초마다 하트비트
-    const HB_TIMEOUT   = 15000;  // 15초 무응답 시 마스터 사망 판정
-    let isMaster = false;
-
     // 해제된 알림 (메모리에만, 새로고침 시 초기화)
     const dismissedAlerts = new Set();
     let currentAlerts = [];
@@ -690,14 +683,10 @@
             });
             ids = ids.filter(id => DB.some(r => r.id === id));
             save();
-            // detectAlerts 호출 전에 마스터만 실행
-            if (isMaster) {
-                const alerts = detectAlerts(allRaw);
-                renderAlertPanel(alerts);
-            } else {
-                // 슬레이브는 알림만 읽어서 표시 (쓰기 없음)
-                renderAlertPanel(currentAlerts);
-            }
+
+            const alerts = detectAlerts(allRaw);
+            renderAlertPanel(alerts);
+
             setDataSource('rest');
 
             renderMonitorGrid(allRaw);
@@ -954,56 +943,18 @@
     });
 
     // ============================================================
-    // SECTION 15. 토큰 발송 (마스터, 슬레이브)
+    // SECTION 15. 토큰 발송
     // ============================================================
+    // SECTION 15. 토큰 발송
     setTimeout(() => {
         const _token = localStorage.getItem('AccessToken');
-        if (!_token) { console.log('[BB] AccessToken 없음'); return; }
-
-        function startMaster(token) {
-            isMaster = true;
-            console.log('[BB] 마스터 탭 됨');
-            localStorage.setItem(LS_MASTER_HB, Date.now());
+        if (_token) {
             document.dispatchEvent(new CustomEvent('bb_token', {
-                detail: JSON.stringify({ token, siteIds: SITE_IDS })
+                detail: JSON.stringify({ token: _token, siteIds: SITE_IDS })
             }));
-            setInterval(() => localStorage.setItem(LS_MASTER_HB, Date.now()), HB_INTERVAL);
-        }
-
-        function startSlavePoll(token) {
-            console.log('[BB] 슬레이브 폴링 시작');
-            setInterval(() => {
-                const hb = localStorage.getItem(LS_MASTER_HB);
-                const age = hb ? Date.now() - parseInt(hb) : Infinity;
-                if (age > HB_TIMEOUT) {
-                    startMaster(token);
-                } else {
-                    const raw = localStorage.getItem(LS_LAST_DATA);
-                    if (raw) {
-                        document.dispatchEvent(new CustomEvent('bb_robots_data', { detail: raw }));
-                    }
-                }
-            }, 10000);
-        }
-
-        const hb = localStorage.getItem(LS_MASTER_HB);
-        const hbAge = hb ? Date.now() - parseInt(hb) : Infinity;
-
-        if (hbAge > HB_TIMEOUT) {
-            // 랜덤 지연으로 경쟁 조건 방지
-            const delay = Math.random() * 500;
-            setTimeout(() => {
-                const hb2 = localStorage.getItem(LS_MASTER_HB);
-                const age2 = hb2 ? Date.now() - parseInt(hb2) : Infinity;
-                if (age2 > HB_TIMEOUT) {
-                    startMaster(_token);
-                } else {
-                    console.log('[BB] 슬레이브 탭 됨 (경쟁 패배)');
-                    startSlavePoll(_token);
-                }
-            }, delay);
+            console.log('[BB] bb_token 발송 완료');
         } else {
-            startSlavePoll(_token);
+            console.log('[BB] AccessToken 없음');
         }
     }, 200);
 
