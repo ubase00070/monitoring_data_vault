@@ -467,7 +467,6 @@
                 <button class="bb-hp-menu-btn" id="bb-hp-btn-btn3">버튼3</button>
             </div>
             <div class="bb-hp-body" id="bb-hp-body">
-                <div class="bb-hp-loading">불러오는 중...</div>
             </div>
         </div>
     `;
