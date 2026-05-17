@@ -1097,16 +1097,7 @@
 
     async function loadVideoHistory() {
         const body = document.getElementById('bb-hp-body');
-
-        // 폴더 버튼은 유지하고 그 아래에 콘텐츠 추가
-        // 기존 콘텐츠 컨테이너가 있으면 제거
-        const existing = document.getElementById('bb-hp-video-content');
-        if (existing) existing.remove();
-
-        const content = document.createElement('div');
-        content.id = 'bb-hp-video-content';
-        content.innerHTML = '<div class="bb-hp-loading">불러오는 중...</div>';
-        body.appendChild(content);
+        body.innerHTML = '';
 
         try {
             const res  = await fetch(MONITOR_DATA_URL + '?t=' + Date.now());
@@ -1114,11 +1105,10 @@
             const history = json.history || {};
 
             if (Object.keys(history).length === 0) {
-                content.innerHTML = '<div class="bb-hp-empty">누락 기록 없음 ✓</div>';
+                body.innerHTML = '<div class="bb-hp-empty">누락 기록 없음 ✓</div>';
                 return;
             }
 
-            // 날짜별로 월 그룹핑
             const byMonth = {};
             Object.entries(history).forEach(([dateStr, entries]) => {
                 const y = dateStr.slice(0,4), m = dateStr.slice(4,6);
@@ -1127,11 +1117,9 @@
                 byMonth[monthKey][dateStr] = entries;
             });
 
-            // 월 내림차순 정렬
             const sortedMonths = Object.keys(byMonth).sort((a,b) => b.localeCompare(a));
 
-            // [변경] 모든 월 기본 닫힘 상태 (isFirst 제거)
-            content.innerHTML = sortedMonths.map(monthKey => {
+            body.innerHTML = sortedMonths.map(monthKey => {
                 const [y, m] = monthKey.split('-');
                 const label  = `${y}년 ${parseInt(m)}월`;
                 const days   = Object.keys(byMonth[monthKey]).sort();
@@ -1155,22 +1143,21 @@
                     `;
                 }).join('');
 
-                // [변경] 모두 기본 닫힘 (open 클래스 없음)
                 return `
                     <div class="bb-hp-month">
                         <div class="bb-hp-month-hd" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.bb-hp-month-arrow').classList.toggle('open')">
-                            <span>${label} 미업로드 기록</span>
+                            <span>${label} 누락 기록</span>
                             <span class="bb-hp-month-arrow">▼</span>
                         </div>
                         <div class="bb-hp-month-body">
-                            ${daysHtml || '<div class="bb-hp-empty">이 달 미업로드 없음 ✓</div>'}
+                            ${daysHtml || '<div class="bb-hp-empty">이 달 누락 없음 ✓</div>'}
                         </div>
                     </div>
                 `;
             }).join('');
 
         } catch(err) {
-            content.innerHTML = '<div class="bb-hp-empty">데이터 로드 실패 ❌</div>';
+            body.innerHTML = '<div class="bb-hp-empty">데이터 로드 실패 ❌</div>';
             console.error('[BB-HIST]', err);
         }
     }
