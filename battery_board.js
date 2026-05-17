@@ -280,6 +280,80 @@
             margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid var(--bd);
         }
         .bb-info-title { font-size:13px; font-weight:900; }
+
+        /* ── 히스토리 버튼 ── */
+        .bb-hist-btn {
+            padding:5px 10px; border-radius:6px;
+            border:1px solid var(--bd2); background:var(--sur2);
+            color:var(--mu); font-size:12px; font-weight:700;
+            font-family:'Lato','Noto Sans KR',sans-serif;
+            cursor:pointer; transition:all .15s;
+            display:flex; align-items:center; gap:5px;
+        }
+        .bb-hist-btn:hover { border-color:var(--mu); color:var(--tx); }
+
+        /* ── 히스토리 패널 ── */
+        #bb-hist-panel {
+            display:none; position:fixed;
+            top:90px; left:50%; transform:translateX(-50%);
+            width:500px; max-height:60vh; overflow-y:auto;
+            background:var(--bg); border:1px solid var(--bd2);
+            border-radius:12px; box-shadow:0 16px 48px rgba(0,0,0,.85);
+            z-index:99999998; font-family:'Lato','Noto Sans KR',sans-serif;
+        }
+        #bb-hist-panel.open { display:block; }
+        .bb-hp-hd {
+            padding:11px 14px; border-bottom:1px solid var(--bd);
+            background:var(--sur); border-radius:12px 12px 0 0;
+            display:flex; justify-content:space-between; align-items:center;
+            position:sticky; top:0; z-index:1;
+        }
+        .bb-hp-title { font-size:13px; font-weight:900; color:var(--tx); }
+        .bb-hp-close {
+            width:22px; height:22px; border-radius:5px;
+            background:rgba(239,68,68,.15); border:1px solid rgba(239,68,68,.3);
+            color:var(--rd); font-size:12px; cursor:pointer;
+            display:flex; align-items:center; justify-content:center; font-weight:900;
+        }
+        .bb-hp-menu { padding:8px 14px; display:flex; gap:8px; border-bottom:1px solid var(--bd); flex-wrap:wrap; }
+        .bb-hp-menu-btn {
+            padding:5px 12px; border-radius:6px; border:1px solid var(--bd2);
+            background:var(--sur2); color:var(--mu); font-size:12px; font-weight:700;
+            cursor:pointer; transition:all .15s;
+        }
+        .bb-hp-menu-btn:hover { border-color:var(--mu); color:var(--tx); }
+        .bb-hp-menu-btn.active { border-color:var(--bl); color:var(--bl); background:var(--bl2); }
+        .bb-hp-body { padding:10px 14px; }
+        .bb-hp-month {
+            margin-bottom:6px; border:1px solid var(--bd2); border-radius:8px; overflow:hidden;
+        }
+        .bb-hp-month-hd {
+            padding:9px 13px; background:var(--sur2);
+            display:flex; justify-content:space-between; align-items:center;
+            cursor:pointer; font-size:12px; font-weight:900; color:var(--tx);
+            user-select:none;
+        }
+        .bb-hp-month-hd:hover { background:var(--bd); }
+        .bb-hp-month-arrow { font-size:10px; color:var(--mu); transition:transform .2s; }
+        .bb-hp-month-arrow.open { transform:rotate(180deg); }
+        .bb-hp-month-body { display:none; border-top:1px solid var(--bd); }
+        .bb-hp-month-body.open { display:block; }
+        .bb-hp-day { padding:7px 13px; border-bottom:1px solid var(--bd); }
+        .bb-hp-day:last-child { border-bottom:none; }
+        .bb-hp-day-title { font-size:11px; font-weight:900; color:var(--mu); margin-bottom:4px; letter-spacing:.3px; }
+        .bb-hp-entry {
+            padding:5px 0; display:flex; align-items:center; gap:8px;
+            border-bottom:1px solid rgba(255,255,255,.04);
+        }
+        .bb-hp-entry:last-child { border-bottom:none; }
+        .bb-hp-entry-hour { font-size:11px; font-weight:900; color:var(--bl); font-family:'Lato',monospace; width:38px; flex-shrink:0; }
+        .bb-hp-entry-name { font-size:12px; font-weight:700; color:var(--tx); flex:1; }
+        .bb-hp-entry-badge {
+            font-size:10px; font-weight:900; padding:2px 7px; border-radius:4px;
+            background:var(--rd2); color:var(--rd); border:1px solid rgba(239,68,68,.3);
+        }
+        .bb-hp-empty { padding:24px; text-align:center; font-size:12px; color:var(--mu); font-weight:700; }
+        .bb-hp-loading { padding:16px; text-align:center; font-size:12px; color:var(--mu); }
     `;
     document.head.appendChild(style);
 
@@ -291,11 +365,12 @@
     wrap.innerHTML = `
         <div id="bb">
             <div class="bb-hd">
-                <div class="bb-hd-left">
+                <div class="bb-hd-left" style="display:flex;align-items:center;gap:7px;">
                     <button class="bb-alert-btn" id="bb-alertBtn">
                         <span>🚨 알림</span>
                         <span class="bb-alert-count" id="bb-alertCount">0건</span>
                     </button>
+                    <button class="bb-hist-btn" id="bb-histBtn">📋 히스토리</button>
                 </div>
                 <div class="bb-hd-title">
                     <div class="bb-dot" id="bb-dot"></div>
@@ -377,6 +452,20 @@
             </div>
             <div id="bb-ap-body">
                 <div class="bb-ap-empty">이상 없음 ✓</div>
+            </div>
+        </div>
+
+        <!-- 히스토리 패널 -->
+        <div id="bb-hist-panel">
+            <div class="bb-hp-hd">
+                <div class="bb-hp-title">📋 히스토리</div>
+                <div class="bb-hp-close" id="bb-hp-close">✕</div>
+            </div>
+            <div class="bb-hp-menu">
+                <button class="bb-hp-menu-btn active" id="bb-hp-btn-video">관제 영상</button>
+            </div>
+            <div class="bb-hp-body" id="bb-hp-body">
+                <div class="bb-hp-loading">불러오는 중...</div>
             </div>
         </div>
     `;
@@ -717,6 +806,7 @@
         isOpen = false;
         document.getElementById('bb').classList.remove('open');
         document.getElementById('bb-alert-panel').classList.remove('open');
+        document.getElementById('bb-hist-panel').classList.remove('open');
         if (rmMode) { rmMode = false; rmSet.clear(); updateRmUI(); }
         hideDd();
     }
@@ -941,7 +1031,102 @@
 
     document.addEventListener('mousedown', e => {
         if (!e.target.closest('#bb-sb') && !e.target.closest('#bb-dd') && !e.target.closest('#bb-alert-panel')) hideDd();
+        // 히스토리 패널 바깥 클릭 닫기
+        const hp = document.getElementById('bb-hist-panel');
+        if (hp?.classList.contains('open') && !e.target.closest('#bb-hist-panel') && !e.target.closest('#bb-histBtn')) {
+            hp.classList.remove('open');
+        }
     });
+
+    // ── 히스토리 버튼 & 패널 ──────────────────────────────────────
+    const MONITOR_DATA_URL = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/monitor_data.json';
+
+    document.getElementById('bb-histBtn').addEventListener('click', () => {
+        const panel = document.getElementById('bb-hist-panel');
+        panel.classList.toggle('open');
+        if (panel.classList.contains('open')) loadHistoryPanel();
+    });
+    document.getElementById('bb-hp-close').addEventListener('click', () => {
+        document.getElementById('bb-hist-panel').classList.remove('open');
+    });
+
+    async function loadHistoryPanel() {
+        const body = document.getElementById('bb-hp-body');
+        body.innerHTML = '<div class="bb-hp-loading">불러오는 중...</div>';
+
+        try {
+            const res  = await fetch(MONITOR_DATA_URL + '?t=' + Date.now());
+            const json = await res.json();
+            const history = json.history || {};
+
+            if (Object.keys(history).length === 0) {
+                body.innerHTML = '<div class="bb-hp-empty">누락 기록 없음 ✓</div>';
+                return;
+            }
+
+            // 날짜별로 월 그룹핑
+            // { "2026-05": { "20260516": [...], ... }, ... }
+            const byMonth = {};
+            Object.entries(history).forEach(([dateStr, entries]) => {
+                // dateStr: "20260516"
+                const y = dateStr.slice(0,4), m = dateStr.slice(4,6);
+                const monthKey = `${y}-${m}`; // "2026-05"
+                if (!byMonth[monthKey]) byMonth[monthKey] = {};
+                byMonth[monthKey][dateStr] = entries;
+            });
+
+            // 월 내림차순 정렬
+            const sortedMonths = Object.keys(byMonth).sort((a,b) => b.localeCompare(a));
+
+            body.innerHTML = sortedMonths.map((monthKey, mi) => {
+                const [y, m] = monthKey.split('-');
+                const label  = `${y}년 ${parseInt(m)}월`;
+
+                // 해당 월의 날짜들 정렬 (오름차순)
+                const days = Object.keys(byMonth[monthKey]).sort();
+
+                const daysHtml = days.map(dateStr => {
+                    const entries = byMonth[monthKey][dateStr];
+                    if (!entries || entries.length === 0) return '';
+
+                    const d = `${parseInt(dateStr.slice(6,8))}일`;
+
+                    const entriesHtml = entries.map(e => `
+                        <div class="bb-hp-entry">
+                            <div class="bb-hp-entry-hour">${e.hour}</div>
+                            <div class="bb-hp-entry-name">${e.name}</div>
+                            <div class="bb-hp-entry-badge">누락확정</div>
+                        </div>
+                    `).join('');
+
+                    return `
+                        <div class="bb-hp-day">
+                            <div class="bb-hp-day-title">📅 ${d} (${entries.length}건)</div>
+                            ${entriesHtml}
+                        </div>
+                    `;
+                }).join('');
+
+                // 첫 번째 월은 기본으로 열려있음
+                const isFirst = mi === 0;
+                return `
+                    <div class="bb-hp-month">
+                        <div class="bb-hp-month-hd" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.bb-hp-month-arrow').classList.toggle('open')">
+                            <span>${label} 누락 기록</span>
+                            <span class="bb-hp-month-arrow ${isFirst?'open':''}">▼</span>
+                        </div>
+                        <div class="bb-hp-month-body ${isFirst?'open':''}">
+                            ${daysHtml || '<div class="bb-hp-empty">이 달 누락 없음 ✓</div>'}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+        } catch(err) {
+            body.innerHTML = '<div class="bb-hp-empty">데이터 로드 실패 ❌</div>';
+            console.error('[BB-HIST]', err);
+        }
+    }
 
     // ============================================================
     // SECTION 15. 토큰 발송
