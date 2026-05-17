@@ -380,7 +380,7 @@
                         <span>🚨 알림</span>
                         <span class="bb-alert-count" id="bb-alertCount">0건</span>
                     </button>
-                    <button class="bb-hist-btn" id="bb-histBtn">📋 히스토리</button>
+                    <button class="bb-hist-btn" id="bb-histBtn" style="display:none;">📋 히스토리</button>
                 </div>
                 <div class="bb-hd-title">
                     <div class="bb-dot" id="bb-dot"></div>
@@ -835,6 +835,20 @@
         isOpen ? closeBoard() : openBoard();
     });
 
+    let _hCount = 0, _hTimer;
+    document.addEventListener('keydown', e => {
+        if (e.key === 'h' || e.key === 'H') {
+            _hCount++;
+            clearTimeout(_hTimer);
+            _hTimer = setTimeout(() => _hCount = 0, 1000);
+            if (_hCount >= 3) {
+                const btn = document.getElementById('bb-histBtn');
+                btn.style.display = 'flex';
+                _hCount = 0;
+            }
+        }
+    });
+
     document.getElementById('bb-alertBtn').addEventListener('click', () => {
         const panel = document.getElementById('bb-alert-panel');
         panel.classList.toggle('open');
@@ -1183,7 +1197,7 @@
                 return `
                     <div class="bb-hp-month">
                         <div class="bb-hp-month-hd" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.bb-hp-month-arrow').classList.toggle('open')">
-                            <span>${label} 누락 기록</span>
+                            <span>${label} 업로드 기록</span>
                             <span class="bb-hp-month-arrow">▼</span>
                         </div>
                         <div class="bb-hp-month-body">
