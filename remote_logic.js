@@ -1173,7 +1173,7 @@
                 queueInfoOverlay.id = 'neubie-queue-info-overlay';
                 queueInfoOverlay.style.cssText = `
                     position:fixed; inset:0; background:transparent; pointer-events:none;
-                    z-index:100; display:flex; align-items:center; justify-content:center;
+                    z-index:2147483646; display:flex; align-items:center; justify-content:center;
                     font-family:Pretendard, sans-serif; border-radius:20px; overflow:hidden;
                 `;
                 const queueInfoBox = document.createElement('div');
@@ -1199,7 +1199,7 @@
                 queueInfoClose.onclick = () => { queueInfoOverlay.style.display='none'; };
                 const queueInfoContent = document.createElement('div');
                 queueInfoContent.id = 'neubie-queue-info-content';
-                queueInfoContent.style.cssText = `font-size:12px; font-style:italic; font-family:Georgia, serif;`;
+                queueInfoContent.style.cssText = `font-size:12px; line-height:1.8; color:#cbd5e1; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;`;
                 queueInfoContent.innerHTML = `
                 결정론적 순열 분산 시스템입니다.<br>
                 이전의 랜덤 5분할+지터 앞뒤 0.1 딜레이 방식은 결국 랜덤이라는 한계를 벗어나지 못했습니다.<br>
@@ -1218,11 +1218,12 @@
                 queueInfoBox.appendChild(queueInfoTitle);
                 queueInfoBox.appendChild(queueInfoContent);
                 queueInfoOverlay.appendChild(queueInfoBox);
-                queueInfoOverlay.style.position = 'absolute';
-                queueInfoOverlay.style.top = dashboard.offsetTop + 'px';
-                queueInfoOverlay.style.left = dashboard.offsetLeft + 'px';
-                queueInfoOverlay.style.width = dashboard.offsetWidth + 'px';
-                queueInfoOverlay.style.height = dashboard.offsetHeight + 'px';
+                const r0 = dashboard.getBoundingClientRect();
+                queueInfoOverlay.style.position = 'fixed';
+                queueInfoOverlay.style.top = r0.top + 'px';
+                queueInfoOverlay.style.left = r0.left + 'px';
+                queueInfoOverlay.style.width = r0.width + 'px';
+                queueInfoOverlay.style.height = r0.height + 'px';
                 document.body.appendChild(queueInfoOverlay);
             } else {
                 const r = dashboard.getBoundingClientRect();
