@@ -380,7 +380,6 @@
                         <span>🚨 알림</span>
                         <span class="bb-alert-count" id="bb-alertCount">0건</span>
                     </button>
-                    <button class="bb-hist-btn" id="bb-histBtn" style="display:none;">📋 히스토리</button>
                 </div>
                 <div class="bb-hd-title">
                     <div class="bb-dot" id="bb-dot"></div>
@@ -842,8 +841,13 @@
             clearTimeout(_hTimer);
             _hTimer = setTimeout(() => _hCount = 0, 1000);
             if (_hCount >= 3) {
-                const btn = document.getElementById('bb-histBtn');
-                btn.style.display = 'flex';
+                const panel = document.getElementById('bb-hist-panel');
+                panel.classList.toggle('open');
+                if (panel.classList.contains('open')) {
+                    panel.style.zIndex = ++topmostZ;
+                    histVideoOpen = false;
+                    loadHistoryPanel();
+                }
                 _hCount = 0;
             }
         }
@@ -1069,16 +1073,6 @@
 
     // ── 히스토리 버튼 & 패널 ──────────────────────────────────────
     const MONITOR_DATA_URL = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/monitor_data.json';
-
-    document.getElementById('bb-histBtn').addEventListener('click', () => {
-        const panel = document.getElementById('bb-hist-panel');
-        panel.classList.toggle('open');
-        if (panel.classList.contains('open')) {
-            panel.style.zIndex = ++topmostZ;
-            histVideoOpen = false;
-            loadHistoryPanel();
-        }
-    });
 
     let histVideoOpen = false; // 관제 영상 폴더 열림 여부
 
