@@ -398,7 +398,7 @@
             btn.style.background = '#22c55e';
             
             setTimeout(() => {
-                btn.textContent = originalText;
+                btn.textContent = origina111lText;
                 btn.style.background = originalBg;
             }, 2000);
         });
@@ -1139,6 +1139,65 @@
             state.isQueueOpt = e.target.checked;
             localStorage.setItem('neubie_opt_queue', state.isQueueOpt);
         };
+        // ⓘ 정보 버튼 (체크박스 왼쪽에 배치)
+        const queueInfoBtn = document.createElement('button');
+        queueInfoBtn.textContent = 'ⓘ';
+        queueInfoBtn.title = '원리 설명';
+        queueInfoBtn.style.cssText = `
+            width:22px; height:22px; border-radius:50%; border:2px solid #aaa;
+            background:transparent; color:#aaa; font-size:13px; font-weight:bold;
+            cursor:pointer; display:flex; align-items:center; justify-content:center;
+            margin-right:8px; flex-shrink:0; line-height:1; padding:0;
+            transition:border-color 0.2s, color 0.2s;
+        `;
+        queueInfoBtn.onmouseenter = () => { queueInfoBtn.style.borderColor='#60a5fa'; queueInfoBtn.style.color='#60a5fa'; };
+        queueInfoBtn.onmouseleave = () => { queueInfoBtn.style.borderColor='#aaa'; queueInfoBtn.style.color='#aaa'; };
+        queueInfoBtn.onclick = () => {
+            let queueInfoOverlay = document.getElementById('neubie-queue-info-overlay');
+            if (!queueInfoOverlay) {
+                queueInfoOverlay = document.createElement('div');
+                queueInfoOverlay.id = 'neubie-queue-info-overlay';
+                queueInfoOverlay.style.cssText = `
+                    position:fixed; inset:0; background:rgba(0,0,0,0.82);
+                    z-index:2147483647; display:flex; align-items:center; justify-content:center;
+                    font-family:Pretendard, sans-serif;
+                `;
+                const queueInfoBox = document.createElement('div');
+                queueInfoBox.style.cssText = `
+                    background:#1e1e2e; color:#e2e8f0; border-radius:18px;
+                    border:1.5px solid #3b82f6; padding:36px 40px 32px 40px;
+                    max-width:600px; width:90%; max-height:80vh; overflow-y:auto;
+                    position:relative; box-shadow:0 10px 50px rgba(0,0,0,0.7);
+                `;
+                const queueInfoTitle = document.createElement('div');
+                queueInfoTitle.textContent = '원리 설명';
+                queueInfoTitle.style.cssText = `font-size:22px; font-weight:bold; margin-bottom:20px; color:#93c5fd;`;
+                const queueInfoClose = document.createElement('button');
+                queueInfoClose.textContent = '✕';
+                queueInfoClose.style.cssText = `
+                    position:absolute; top:16px; right:18px;
+                    background:transparent; border:none; color:#aaa;
+                    font-size:20px; cursor:pointer; line-height:1; padding:4px 8px;
+                    border-radius:6px; transition:color 0.2s;
+                `;
+                queueInfoClose.onmouseenter = () => { queueInfoClose.style.color='#fff'; };
+                queueInfoClose.onmouseleave = () => { queueInfoClose.style.color='#aaa'; };
+                queueInfoClose.onclick = () => { queueInfoOverlay.style.display='none'; };
+                const queueInfoContent = document.createElement('div');
+                queueInfoContent.id = 'neubie-queue-info-content';
+                queueInfoContent.style.cssText = `font-size:15px; line-height:1.8; color:#cbd5e1; white-space:pre-wrap;`;
+                queueInfoContent.textContent = '(여기에 순열 시스템에 대한 원리 설명을 입력하세요.)';  // ← 여기만 나중에 수정
+
+                queueInfoBox.appendChild(queueInfoClose);
+                queueInfoBox.appendChild(queueInfoTitle);
+                queueInfoBox.appendChild(queueInfoContent);
+                queueInfoOverlay.appendChild(queueInfoBox);
+                document.body.appendChild(queueInfoOverlay);
+            } else {
+                queueInfoOverlay.style.display = 'flex';
+            }
+        };
+        queueCard.appendChild(queueInfoBtn);
         queueCard.appendChild(queueChk);
         twoCol.appendChild(queueCard);
         list.appendChild(twoCol);
