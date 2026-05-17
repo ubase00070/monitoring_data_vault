@@ -295,7 +295,7 @@
         /* ── 히스토리 패널 ── */
         #bb-hist-panel {
             display:none; position:fixed;
-            top:90px; left:50%; transform:translateX(-50%);
+            top:16px; left:50%; transform:translateX(-50%);
             width:500px; max-height:60vh; overflow-y:auto;
             background:var(--bg); border:1px solid var(--bd2);
             border-radius:12px; box-shadow:0 16px 48px rgba(0,0,0,.85);
@@ -806,7 +806,6 @@
         isOpen = false;
         document.getElementById('bb').classList.remove('open');
         document.getElementById('bb-alert-panel').classList.remove('open');
-        document.getElementById('bb-hist-panel').classList.remove('open');
         if (rmMode) { rmMode = false; rmSet.clear(); updateRmUI(); }
         hideDd();
     }
@@ -1044,15 +1043,65 @@
     document.getElementById('bb-histBtn').addEventListener('click', () => {
         const panel = document.getElementById('bb-hist-panel');
         panel.classList.toggle('open');
-        if (panel.classList.contains('open')) loadHistoryPanel();
+        if (panel.classList.contains('open')) {
+            histVideoOpen = false; // 매번 새로 열면 폴더 닫힘 상태로 시작
+            loadHistoryPanel();
+        }
     });
-    document.getElementById('bb-hp-close').addEventListener('click', () => {
-        document.getElementById('bb-hist-panel').classList.remove('open');
-    });
+
+    let histVideoOpen = false; // 관제 영상 폴더 열림 여부
 
     async function loadHistoryPanel() {
         const body = document.getElementById('bb-hp-body');
-        body.innerHTML = '<div class="bb-hp-loading">불러오는 중...</div>';
+
+        // [변경] 처음 열면 빈 상태 (관제 영상 버튼만 보임, 자동 로드 없음)
+        body.innerHTML = '';
+        renderHistMenu();
+    }
+
+    function renderHistMenu() {
+        const body = document.getElementById('bb-hp-body');
+        body.innerHTML = ''; // 초기화
+
+        // 관제 영상 폴더 버튼
+        const folderBtn = document.createElement('div');
+        folderBtn.style.cssText = 'padding:6px 14px; border-bottom:1px solid var(--bd);';
+        folderBtn.innerHTML = `
+            <button class="bb-hp-menu-btn ${histVideoOpen ? 'active' : ''}" id="bb-hp-btn-video"
+                style="width:100%; text-align:left; display:flex; justify-content:space-between; align-items:center;">
+                <span>📹 관제 영상 누락</span>
+                <span style="font-size:10px; color:var(--mu);">${histVideoOpen ? '▲' : '▼'}</span>
+            </button>
+        `;
+        body.appendChild(folderBtn);
+
+        folderBtn.querySelector('#bb-hp-btn-video').addEventListener('click', () => {
+            histVideoOpen = !histVideoOpen;
+            if (histVideoOpen) {
+                loadVideoHistory();
+            } else {
+                renderHistMenu(); // 닫으면 메뉴만 다시 그림
+            }
+        });
+
+        // 폴더 열려있으면 내용 렌더
+        if (histVideoOpen) {
+            loadVideoHistory();
+        }
+    }
+
+    async function loadVideoHistory() {
+        const body = document.getElementById('bb-hp-body');
+
+        // 폴더 버튼은 유지하고 그 아래에 콘텐츠 추가
+        // 기존 콘텐츠 컨테이너가 있으면 제거
+        const existing = document.getElementById('bb-hp-video-content');
+        if (existing) existing.remove();
+
+        const content = document.createElement('div');
+        content.id = 'bb-hp-video-content';
+        content.innerHTML = '<div class="bb-hp-loading">불러오는 중...</div>';
+        body.appendChild(content);
 
         try {
             const res  = await fetch(MONITOR_DATA_URL + '?t=' + Date.now());
@@ -1060,17 +1109,15 @@
             const history = json.history || {};
 
             if (Object.keys(history).length === 0) {
-                body.innerHTML = '<div class="bb-hp-empty">누락 기록 없음 ✓</div>';
+                content.innerHTML = '<div class="bb-hp-empty">누락 기록 없음 ✓</div>';
                 return;
             }
 
             // 날짜별로 월 그룹핑
-            // { "2026-05": { "20260516": [...], ... }, ... }
             const byMonth = {};
             Object.entries(history).forEach(([dateStr, entries]) => {
-                // dateStr: "20260516"
                 const y = dateStr.slice(0,4), m = dateStr.slice(4,6);
-                const monthKey = `${y}-${m}`; // "2026-05"
+                const monthKey = `${y}-${m}`;
                 if (!byMonth[monthKey]) byMonth[monthKey] = {};
                 byMonth[monthKey][dateStr] = entries;
             });
@@ -1078,19 +1125,16 @@
             // 월 내림차순 정렬
             const sortedMonths = Object.keys(byMonth).sort((a,b) => b.localeCompare(a));
 
-            body.innerHTML = sortedMonths.map((monthKey, mi) => {
+            // [변경] 모든 월 기본 닫힘 상태 (isFirst 제거)
+            content.innerHTML = sortedMonths.map(monthKey => {
                 const [y, m] = monthKey.split('-');
                 const label  = `${y}년 ${parseInt(m)}월`;
-
-                // 해당 월의 날짜들 정렬 (오름차순)
-                const days = Object.keys(byMonth[monthKey]).sort();
+                const days   = Object.keys(byMonth[monthKey]).sort();
 
                 const daysHtml = days.map(dateStr => {
                     const entries = byMonth[monthKey][dateStr];
                     if (!entries || entries.length === 0) return '';
-
                     const d = `${parseInt(dateStr.slice(6,8))}일`;
-
                     const entriesHtml = entries.map(e => `
                         <div class="bb-hp-entry">
                             <div class="bb-hp-entry-hour">${e.hour}</div>
@@ -1098,7 +1142,6 @@
                             <div class="bb-hp-entry-badge">누락확정</div>
                         </div>
                     `).join('');
-
                     return `
                         <div class="bb-hp-day">
                             <div class="bb-hp-day-title">📅 ${d} (${entries.length}건)</div>
@@ -1107,15 +1150,14 @@
                     `;
                 }).join('');
 
-                // 첫 번째 월은 기본으로 열려있음
-                const isFirst = mi === 0;
+                // [변경] 모두 기본 닫힘 (open 클래스 없음)
                 return `
                     <div class="bb-hp-month">
                         <div class="bb-hp-month-hd" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.bb-hp-month-arrow').classList.toggle('open')">
                             <span>${label} 누락 기록</span>
-                            <span class="bb-hp-month-arrow ${isFirst?'open':''}">▼</span>
+                            <span class="bb-hp-month-arrow">▼</span>
                         </div>
-                        <div class="bb-hp-month-body ${isFirst?'open':''}">
+                        <div class="bb-hp-month-body">
                             ${daysHtml || '<div class="bb-hp-empty">이 달 누락 없음 ✓</div>'}
                         </div>
                     </div>
@@ -1123,7 +1165,7 @@
             }).join('');
 
         } catch(err) {
-            body.innerHTML = '<div class="bb-hp-empty">데이터 로드 실패 ❌</div>';
+            content.innerHTML = '<div class="bb-hp-empty">데이터 로드 실패 ❌</div>';
             console.error('[BB-HIST]', err);
         }
     }
