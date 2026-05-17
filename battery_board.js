@@ -1129,11 +1129,11 @@
                     const d = `${parseInt(dateStr.slice(6,8))}일`;
                     const sorted = [...entries].sort((a, b) => parseInt(a.hour) - parseInt(b.hour));
 
-                    const entriesHtml = entries.map(e => `
+                    const entriesHtml = sorted.map(e => `
                         <div class="bb-hp-entry">
                             <div class="bb-hp-entry-hour">${e.hour}</div>
                             <div class="bb-hp-entry-name">${e.name}</div>
-                            <div class="bb-hp-entry-badge">미업로드</div>
+                            <div class="bb-hp-entry-badge">누락확정</div>
                         </div>
                     `).join('');
                     return `
