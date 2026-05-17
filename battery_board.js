@@ -1127,6 +1127,8 @@
                     const entries = byMonth[monthKey][dateStr];
                     if (!entries || entries.length === 0) return '';
                     const d = `${parseInt(dateStr.slice(6,8))}일`;
+                    const sorted = [...entries].sort((a, b) => parseInt(a.hour) - parseInt(b.hour));
+
                     const entriesHtml = entries.map(e => `
                         <div class="bb-hp-entry">
                             <div class="bb-hp-entry-hour">${e.hour}</div>
