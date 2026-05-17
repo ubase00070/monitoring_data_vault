@@ -1330,6 +1330,8 @@
     function closeAllPopups() {
         dashboard.style.display = 'none';
         batteryPopup.style.display = 'none';
+        const queueInfoOverlay = document.getElementById('neubie-queue-info-overlay');
+        if (queueInfoOverlay) queueInfoOverlay.style.display = 'none';
     }
 
     window.addEventListener('keydown', (e) => {
