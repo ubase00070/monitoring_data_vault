@@ -354,6 +354,16 @@
         }
         .bb-hp-empty { padding:24px; text-align:center; font-size:12px; color:var(--mu); font-weight:700; }
         .bb-hp-loading { padding:16px; text-align:center; font-size:12px; color:var(--mu); }
+        .bb-hp-day.today {
+            border: 1px solid rgba(255,255,255,0.35);
+            border-radius: 7px;
+            padding: 7px 9px;
+            margin: 4px 0;
+        }
+        .bb-hp-day.today .bb-hp-day-title {
+            color: #fff;
+            font-weight: 900;
+        }
     `;
     document.head.appendChild(style);
 
@@ -1102,14 +1112,35 @@
             const res  = await fetch(MONITOR_DATA_URL + '?t=' + Date.now());
             const json = await res.json();
             const history = json.history || {};
+            const realtime = json.realtime || [];
 
-            if (Object.keys(history).length === 0) {
+            // [추가] 오늘 날짜 문자열 생성 ex) "20260517"
+            const now = new Date();
+            const todayStr = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+
+            // [추가] 현재 시각 기준 2시간 슬롯 계산
+            // GAS 감시 슬롯: 07, 09, 11, 13, 15, 17, 19, 21, 23시
+            // 현재시각 -2시간 이전까지만 유효한 데이터
+            const currentHour = now.getHours();
+            const lastSlot = [7,9,11,13,15,17,19,21,23].filter(h => h <= currentHour - 2).pop();
+
+            // [추가] realtime을 오늘 날짜 키로 history에 병합 (표시용)
+            const displayHistory = { ...history };
+            if (realtime.length > 0) {
+                // lastSlot 이전 시간대만 표시 (아직 확인 안 된 시간대는 제외)
+                const validRealtime = realtime.filter(e => parseInt(e.hour) <= (lastSlot || 0));
+                if (validRealtime.length > 0) {
+                    displayHistory[todayStr] = validRealtime;
+                }
+            }
+
+            if (Object.keys(displayHistory).length === 0) {
                 body.innerHTML = '<div class="bb-hp-empty">누락 기록 없음 ✓</div>';
                 return;
             }
 
             const byMonth = {};
-            Object.entries(history).forEach(([dateStr, entries]) => {
+            Object.entries(displayHistory).forEach(([dateStr, entries]) => {
                 const y = dateStr.slice(0,4), m = dateStr.slice(4,6);
                 const monthKey = `${y}-${m}`;
                 if (!byMonth[monthKey]) byMonth[monthKey] = {};
@@ -1129,6 +1160,10 @@
                     const d = `${parseInt(dateStr.slice(4,6))}/${parseInt(dateStr.slice(6,8))}`;
                     const sorted = [...entries].sort((a, b) => parseInt(a.hour) - parseInt(b.hour));
 
+                    // [추가] 오늘이면 today 클래스 추가
+                    const isToday = dateStr === todayStr;
+                    const todayLabel = isToday ? ' 🔴 실시간' : '';
+
                     const entriesHtml = sorted.map(e => `
                         <div class="bb-hp-entry">
                             <div class="bb-hp-entry-hour">${e.hour}</div>
@@ -1136,9 +1171,10 @@
                             <div class="bb-hp-entry-badge">미업로드</div>
                         </div>
                     `).join('');
+
                     return `
-                        <div class="bb-hp-day">
-                            <div class="bb-hp-day-title">📅 ${d} (${entries.length}건)</div>
+                        <div class="bb-hp-day ${isToday ? 'today' : ''}">
+                            <div class="bb-hp-day-title">📅 ${d}${todayLabel} (${entries.length}건)</div>
                             ${entriesHtml}
                         </div>
                     `;
