@@ -1,30 +1,7 @@
 {
-  "updatedAt": "2026-05-17 23:55:13",
-  "realtime": [
-    {
-      "workDate": "20260517",
-      "driveDate": "20260517",
-      "hour": "09:00",
-      "name": "김경환",
-      "status": "미업로드"
-    }
-  ],
-  "final": [
-    {
-      "workDate": "20260516",
-      "driveDate": "20260516",
-      "hour": "09:00",
-      "name": "김경환",
-      "status": "미업로드"
-    },
-    {
-      "workDate": "20260516",
-      "driveDate": "20260516",
-      "hour": "21:00",
-      "name": "권재윤",
-      "status": "미업로드"
-    }
-  ],
+  "updatedAt": "2026-05-18 00:05:09",
+  "realtime": [],
+  "final": [],
   "history": {
     "20260509": [
       {
@@ -130,6 +107,15 @@
         "driveDate": "20260516",
         "hour": "21:00",
         "name": "권재윤",
+        "status": "미업로드"
+      }
+    ],
+    "20260517": [
+      {
+        "workDate": "20260517",
+        "driveDate": "20260517",
+        "hour": "09:00",
+        "name": "김경환",
         "status": "미업로드"
       }
     ]
