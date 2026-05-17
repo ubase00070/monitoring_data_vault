@@ -1139,11 +1139,24 @@
             state.isQueueOpt = e.target.checked;
             localStorage.setItem('neubie_opt_queue', state.isQueueOpt);
         };
+
+        if (!document.getElementById('neubie-blink-style')) {
+            const blinkStyle = document.createElement('style');
+            blinkStyle.id = 'neubie-blink-style';
+            blinkStyle.textContent = `
+                @keyframes neubie-blink {
+                    0%, 100% { opacity: 1; }
+                    50% { opacity: 0.15; }
+                }
+            `;
+            document.head.appendChild(blinkStyle);
+        }
         // ⓘ 정보 버튼 (체크박스 왼쪽에 배치)
         const queueInfoBtn = document.createElement('button');
         queueInfoBtn.textContent = 'i';
         queueInfoBtn.title = '원리 설명';
         queueInfoBtn.style.cssText = `
+            neubie-blink 1.2s ease-in-out infinite;
             width:22px; height:22px; border-radius:50%; border:2px solid #aaa;
             background:transparent; color:#aaa; font-size:13px; font-weight:bold;
             cursor:pointer; display:flex; align-items:center; justify-content:center;
@@ -1152,19 +1165,20 @@
         `;
         queueInfoBtn.onmouseenter = () => { queueInfoBtn.style.borderColor='#60a5fa'; queueInfoBtn.style.color='#60a5fa'; };
         queueInfoBtn.onmouseleave = () => { queueInfoBtn.style.borderColor='#aaa'; queueInfoBtn.style.color='#aaa'; };
+        queueInfoBtn.style.animation = 'neubie-blink 1.2s ease-in-out infinite';
         queueInfoBtn.onclick = () => {
             let queueInfoOverlay = document.getElementById('neubie-queue-info-overlay');
             if (!queueInfoOverlay) {
                 queueInfoOverlay = document.createElement('div');
                 queueInfoOverlay.id = 'neubie-queue-info-overlay';
                 queueInfoOverlay.style.cssText = `
-                    position:absolute; inset:0; background:transparent;
+                    position:fixed; inset:0; background:transparent; pointer-events:none;
                     z-index:100; display:flex; align-items:center; justify-content:center;
                     font-family:Pretendard, sans-serif; border-radius:20px; overflow:hidden;
                 `;
                 const queueInfoBox = document.createElement('div');
                 queueInfoBox.style.cssText = `
-                    background:#1e1e2e; color:#e2e8f0; border-radius:18px;
+                    background:#1e1e2e; color:#e2e8f0; border-radius:18px; pointer-events:auto;
                     border:1.5px solid #3b82f6; padding:36px 40px 32px 40px;
                     max-width:600px; width:90%; max-height:80vh; overflow-y:auto;
                     position:relative; box-shadow:0 10px 50px rgba(0,0,0,0.7);
@@ -1186,15 +1200,36 @@
                 const queueInfoContent = document.createElement('div');
                 queueInfoContent.id = 'neubie-queue-info-content';
                 queueInfoContent.style.cssText = `font-size:12px; font-style:italic; font-family:Georgia, serif;`;
-                queueInfoContent.textContent = '(여기에 순열 시스템에 대한 원리 설명을 입력하세요.)';  // ← 여기만 나중에 수정
+                queueInfoContent.innerHTML = `
+                결정론적 순열 분산 시스템입니다.<br>
+                이전의 랜덤 5분할+지터 앞뒤 0.1 딜레이 방식은 결국 랜덤이라는 한계를 벗어나지 못했습니다.<br>
+                중복 확률 자체는 줄어들었으나, 근본적인 한계가 명확했죠. 하지만 이번 방법은 다릅니다.<br>
+                현재 시각 기준 '가용 인원'을 산출해서 딜레이 등수를 고정합니다.<br>
+                가령 09:20에 휴무/연차/반차를 제외한 근무자가 총 8명이라면, 현 모니터링 인원을 제외한 나머지 7명에게 고정 등수가 배분됩니다.<br>
+                총 7명이니까 각각 1~7등까지 딜레이가 나뉘겠지요. 이 등수 배분은 각 2분마다 변동되며, 근무자 출퇴근 및 식사시간에 맞춰서 배분 그룹이 매번 변합니다.<br>
+                현재 '2분 슬롯 구간'에서 본인이 1등이라서 개입카드를 먼저 들어왔더라도, 이후 2분마다 변하는 등수는 예상할 길이 없습니다.<br>
+                배분할 인원이 적으면 적을 수록 최대 1.5초 중에서 딜레이 간격은 더 넓게 설정됩니다.<br>
+                즉, 이론적으로는 등수가 절대로 겹칠 수 없습니다. 이미 함수가 계산하는 순간 결정되었기 때문이죠.<br>
+                이러한 근무자 그룹 배분은 각자 PC환경에서 동일한 계산으로 동일한 등수를 계산합니다.<br>
+                이 방법이 '서버 네트워크 차원에서의 문제'까지는 어떻게 하지 못합니다만, 적어도 클라이언트에서 할 수 있는 최대한의 해결책이라고 생각합니다.
+                `;
 
                 queueInfoBox.appendChild(queueInfoClose);
                 queueInfoBox.appendChild(queueInfoTitle);
                 queueInfoBox.appendChild(queueInfoContent);
                 queueInfoOverlay.appendChild(queueInfoBox);
-                dashboard.style.position = 'relative';
-                dashboard.appendChild(queueInfoOverlay);
+                queueInfoOverlay.style.position = 'absolute';
+                queueInfoOverlay.style.top = dashboard.offsetTop + 'px';
+                queueInfoOverlay.style.left = dashboard.offsetLeft + 'px';
+                queueInfoOverlay.style.width = dashboard.offsetWidth + 'px';
+                queueInfoOverlay.style.height = dashboard.offsetHeight + 'px';
+                document.body.appendChild(queueInfoOverlay);
             } else {
+                const r = dashboard.getBoundingClientRect();
+                queueInfoOverlay.style.top = r.top + 'px';
+                queueInfoOverlay.style.left = r.left + 'px';
+                queueInfoOverlay.style.width = r.width + 'px';
+                queueInfoOverlay.style.height = r.height + 'px';
                 queueInfoOverlay.style.display = 'flex';
             }
         };
