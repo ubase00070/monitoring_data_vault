@@ -388,7 +388,7 @@
         const now = new Date();
         let hour = now.getHours();
         if (now.getMinutes() >= 50) hour = (hour + 1) % 24;
-        let copyText = `[${hour}시 성남 기체 배터리 현황]\n`;
+        let copyText = `[${String(hour).padStart(2, '0')}시 성남 기체 배터리 현황]\n`;
         state.lastBatteryData.forEach(item => { copyText += `• ${item.shortName}: ${item.battery} (${item.statusText})\n`; });
         
         navigator.clipboard.writeText(copyText).then(() => {
@@ -660,7 +660,7 @@
         { name: "김경환", time: "(0800-1700)(U)", break: "(1200-1300)" }, 
         { name: "박효선", time: "(0800-1700)(U)", break: "(1200-1300)" }, 
         { name: "안혜림", time: "(0900-1800)(U)", break: "(1300-1400)" }, 
-        { name: "이환", time: "(0900-1800)(U)", break: "(1300-1400)" },  
+        { name: "이환", time: "(0900-1800)(U)", break: "(1300-1400)" }, 
         { name: "최윤혁", time: "(0900-1800)(U)", break: "(1300-1400)" }, 
         { name: "신현철", time: "(0900-1800)(U)", break: "(1300-1400)" },
         { name: "김동진", time: "(0900-1800)(U)", break: "(1300-1400)" }, 
