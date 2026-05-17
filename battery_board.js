@@ -838,6 +838,10 @@
         document.getElementById('bb-alert-panel').classList.remove('open');
     });
 
+    document.getElementById('bb-hp-close').addEventListener('click', () => {
+        document.getElementById('bb-hist-panel').classList.remove('open');
+    });
+
     // ============================================================
     // SECTION 8. 시계 & 카운트다운
     // ============================================================
@@ -1038,11 +1042,6 @@
 
     document.addEventListener('mousedown', e => {
         if (!e.target.closest('#bb-sb') && !e.target.closest('#bb-dd') && !e.target.closest('#bb-alert-panel')) hideDd();
-        // 히스토리 패널 바깥 클릭 닫기
-        const hp = document.getElementById('bb-hist-panel');
-        if (hp?.classList.contains('open') && !e.target.closest('#bb-hist-panel') && !e.target.closest('#bb-histBtn')) {
-            hp.classList.remove('open');
-        }
     });
 
     // ── 히스토리 버튼 & 패널 ──────────────────────────────────────
@@ -1061,11 +1060,8 @@
     let histVideoOpen = false; // 관제 영상 폴더 열림 여부
 
     async function loadHistoryPanel() {
-        const body = document.getElementById('bb-hp-body');
-
-        // [변경] 처음 열면 빈 상태 (관제 영상 버튼만 보임, 자동 로드 없음)
-        body.innerHTML = '';
-        renderHistMenu();
+        // renderHistMenu() 호출 제거, 바로 loadVideoHistory() 호출
+        await loadVideoHistory();
     }
 
     function renderHistMenu() {
