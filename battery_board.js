@@ -462,7 +462,9 @@
                 <div class="bb-hp-close" id="bb-hp-close">✕</div>
             </div>
             <div class="bb-hp-menu">
-                <button class="bb-hp-menu-btn active" id="bb-hp-btn-video">관제 영상</button>
+                <button class="bb-hp-menu-btn active" id="bb-hp-btn-video">다중 영상</button>
+                <button class="bb-hp-menu-btn" id="bb-hp-btn-btn2">버튼2</button>
+                <button class="bb-hp-menu-btn" id="bb-hp-btn-btn3">버튼3</button>
             </div>
             <div class="bb-hp-body" id="bb-hp-body">
                 <div class="bb-hp-loading">불러오는 중...</div>
@@ -504,6 +506,8 @@
     let rmMode = false, rmSet = new Set(), isOpen = false, dataSource = 'idle';
     let fetchLock = false;
     let lastRaw = [];
+
+    let topmostZ = 100000000;
 
     // 해제된 알림 (메모리에만, 새로고침 시 초기화)
     const dismissedAlerts = new Set();
@@ -806,6 +810,7 @@
         isOpen = false;
         document.getElementById('bb').classList.remove('open');
         document.getElementById('bb-alert-panel').classList.remove('open');
+        document.getElementById('bb-hist-panel').classList.remove('open');
         if (rmMode) { rmMode = false; rmSet.clear(); updateRmUI(); }
         hideDd();
     }
@@ -824,7 +829,10 @@
     document.getElementById('bb-alertBtn').addEventListener('click', () => {
         const panel = document.getElementById('bb-alert-panel');
         panel.classList.toggle('open');
-        if (panel.classList.contains('open')) renderAlertPanel(currentAlerts);
+        if (panel.classList.contains('open')) {
+            panel.style.zIndex = ++topmostZ;
+            renderAlertPanel(currentAlerts);
+        }
     });
     document.getElementById('bb-ap-close').addEventListener('click', () => {
         document.getElementById('bb-alert-panel').classList.remove('open');
@@ -1044,7 +1052,8 @@
         const panel = document.getElementById('bb-hist-panel');
         panel.classList.toggle('open');
         if (panel.classList.contains('open')) {
-            histVideoOpen = false; // 매번 새로 열면 폴더 닫힘 상태로 시작
+            panel.style.zIndex = ++topmostZ;
+            histVideoOpen = false;
             loadHistoryPanel();
         }
     });
@@ -1069,7 +1078,7 @@
         folderBtn.innerHTML = `
             <button class="bb-hp-menu-btn ${histVideoOpen ? 'active' : ''}" id="bb-hp-btn-video"
                 style="width:100%; text-align:left; display:flex; justify-content:space-between; align-items:center;">
-                <span>📹 관제 영상 누락</span>
+                <span>📹 다중 관제 영상</span>
                 <span style="font-size:10px; color:var(--mu);">${histVideoOpen ? '▲' : '▼'}</span>
             </button>
         `;
@@ -1139,7 +1148,7 @@
                         <div class="bb-hp-entry">
                             <div class="bb-hp-entry-hour">${e.hour}</div>
                             <div class="bb-hp-entry-name">${e.name}</div>
-                            <div class="bb-hp-entry-badge">누락확정</div>
+                            <div class="bb-hp-entry-badge">미업로드</div>
                         </div>
                     `).join('');
                     return `
@@ -1154,11 +1163,11 @@
                 return `
                     <div class="bb-hp-month">
                         <div class="bb-hp-month-hd" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.bb-hp-month-arrow').classList.toggle('open')">
-                            <span>${label} 누락 기록</span>
+                            <span>${label} 미업로드 기록</span>
                             <span class="bb-hp-month-arrow">▼</span>
                         </div>
                         <div class="bb-hp-month-body">
-                            ${daysHtml || '<div class="bb-hp-empty">이 달 누락 없음 ✓</div>'}
+                            ${daysHtml || '<div class="bb-hp-empty">이 달 미업로드 없음 ✓</div>'}
                         </div>
                     </div>
                 `;
