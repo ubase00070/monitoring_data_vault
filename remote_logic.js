@@ -1141,7 +1141,7 @@
         };
         // ⓘ 정보 버튼 (체크박스 왼쪽에 배치)
         const queueInfoBtn = document.createElement('button');
-        queueInfoBtn.textContent = 'ⓘ';
+        queueInfoBtn.textContent = 'i';
         queueInfoBtn.title = '원리 설명';
         queueInfoBtn.style.cssText = `
             width:22px; height:22px; border-radius:50%; border:2px solid #aaa;
@@ -1158,9 +1158,9 @@
                 queueInfoOverlay = document.createElement('div');
                 queueInfoOverlay.id = 'neubie-queue-info-overlay';
                 queueInfoOverlay.style.cssText = `
-                    position:fixed; inset:0; background:rgba(0,0,0,0.82);
-                    z-index:2147483647; display:flex; align-items:center; justify-content:center;
-                    font-family:Pretendard, sans-serif;
+                    position:absolute; inset:0; background:transparent;
+                    z-index:100; display:flex; align-items:center; justify-content:center;
+                    font-family:Pretendard, sans-serif; border-radius:20px; overflow:hidden;
                 `;
                 const queueInfoBox = document.createElement('div');
                 queueInfoBox.style.cssText = `
@@ -1185,14 +1185,15 @@
                 queueInfoClose.onclick = () => { queueInfoOverlay.style.display='none'; };
                 const queueInfoContent = document.createElement('div');
                 queueInfoContent.id = 'neubie-queue-info-content';
-                queueInfoContent.style.cssText = `font-size:15px; line-height:1.8; color:#cbd5e1; white-space:pre-wrap;`;
+                queueInfoContent.style.cssText = `font-size:12px; font-style:italic; font-family:Georgia, serif;`;
                 queueInfoContent.textContent = '(여기에 순열 시스템에 대한 원리 설명을 입력하세요.)';  // ← 여기만 나중에 수정
 
                 queueInfoBox.appendChild(queueInfoClose);
                 queueInfoBox.appendChild(queueInfoTitle);
                 queueInfoBox.appendChild(queueInfoContent);
                 queueInfoOverlay.appendChild(queueInfoBox);
-                document.body.appendChild(queueInfoOverlay);
+                dashboard.style.position = 'relative';
+                dashboard.appendChild(queueInfoOverlay);
             } else {
                 queueInfoOverlay.style.display = 'flex';
             }
