@@ -1,37 +1,15 @@
 {
-  "updatedAt": "2026-05-18 06:55:10",
+  "updatedAt": "2026-05-18 07:15:07",
   "realtime": [
     {
-      "workDate": "20260517",
+      "workDate": "20260518",
       "driveDate": "20260518",
       "hour": "04:00",
       "name": "최정기",
       "status": "미업로드"
-    },
-    {
-      "workDate": "20260517",
-      "driveDate": "20260518",
-      "hour": "05:00",
-      "name": "김소연",
-      "status": "미업로드"
-    },
-    {
-      "workDate": "20260517",
-      "driveDate": "20260518",
-      "hour": "06:00",
-      "name": "임아연",
-      "status": "미업로드"
     }
   ],
-  "final": [
-    {
-      "workDate": "20260517",
-      "driveDate": "20260517",
-      "hour": "09:00",
-      "name": "김경환",
-      "status": "미업로드"
-    }
-  ],
+  "final": [],
   "history": {
     "20260509": [
       {
