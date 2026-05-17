@@ -1126,14 +1126,14 @@
                 const daysHtml = days.map(dateStr => {
                     const entries = byMonth[monthKey][dateStr];
                     if (!entries || entries.length === 0) return '';
-                    const d = `${parseInt(dateStr.slice(6,8))}일`;
+                    const d = `${parseInt(dateStr.slice(4,6))}/${parseInt(dateStr.slice(6,8))}`;
                     const sorted = [...entries].sort((a, b) => parseInt(a.hour) - parseInt(b.hour));
 
                     const entriesHtml = sorted.map(e => `
                         <div class="bb-hp-entry">
                             <div class="bb-hp-entry-hour">${e.hour}</div>
                             <div class="bb-hp-entry-name">${e.name}</div>
-                            <div class="bb-hp-entry-badge">누락확정</div>
+                            <div class="bb-hp-entry-badge">미업로드</div>
                         </div>
                     `).join('');
                     return `
