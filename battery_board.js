@@ -55,7 +55,7 @@
             background-clip: text;
             animation: bb-pink-flow 3s ease infinite;
         }
-        .bb-hd-title { font-size:18px; font-weight:900; color:var(--tx); display:flex; align-items:center; gap:7px; }
+        .bb-hd-title { font-size:20px; font-weight:900; color:var(--tx); display:flex; align-items:center; gap:7px; }
         .bb-dot { width:7px; height:7px; border-radius:50%; background:var(--gn); animation:bb-blink 2s infinite; }
         .bb-dot.err { background:var(--rd); }
         @keyframes bb-blink { 0%,100%{opacity:1} 50%{opacity:.2} }
@@ -456,8 +456,10 @@
                     <div class="bb-li"><div class="bb-ld" style="background:#eab308;"></div>도킹 중</div>
                     <div class="bb-li"><div class="bb-ld" style="background:#4b5563"></div>OFF</div>
                 </div>
-                <button class="bb-info-btn" id="bb-infobtn" title="설명서">i</button>
-                <div class="bb-rmhint" id="bb-rmhint">카드 선택 → 완료로 제거</div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <div class="bb-rmhint" id="bb-rmhint">카드 선택 → 완료로 제거</div>
+                    <button class="bb-info-btn" id="bb-infobtn" title="설명서">i</button>
+                </div>
             </div>
             <div id="bb-info-panel">
                 <div class="bb-info-hd">
