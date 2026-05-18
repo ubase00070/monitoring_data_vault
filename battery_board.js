@@ -397,7 +397,7 @@
                 </div>
                 <div class="bb-hd-title">
                     <div class="bb-dot" id="bb-dot"></div>
-                    관리자용 배터리 현황판 for <span style="color:#ec4899;">Hyerim</span>
+                    <span style="background:linear-gradient(90deg,#f9a8d4,#ec4899,#db2777); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">관리자용 배터리 현황판</span>
                     <span class="bb-src-badge idle" id="bb-srcBadge">대기</span>
                 </div>
                 <div class="bb-hd-time">
