@@ -29,7 +29,7 @@
         #bb {
             display:none; position:fixed; top:50%; left:50%;
             transform:translate(-50%,-50%);
-            width:860px; background:var(--bg);
+            width:820px; background:var(--bg);
             border:1px solid var(--bd2); border-radius:16px;
             box-shadow:0 24px 60px rgba(0,0,0,.75);
             z-index:9999999; font-family:'Lato','Noto Sans KR',sans-serif;
@@ -166,7 +166,7 @@
             0%,100% { border-color:var(--rd); box-shadow:0 0 0 1px var(--rd); }
             50%     { border-color:transparent; box-shadow:none; }
         }
-        .bb-ca-name { font-size:16px; font-weight:900; color:var(--tx); line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; letter-spacing:-.2px; }
+        .bb-ca-name { font-size:17px; font-weight:900; color:var(--tx); line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; letter-spacing:-.2px; }
         .bb-ca-mid  { display:flex; justify-content:space-between; align-items:center; }
         .bb-ca-st   { font-size:11px; font-weight:700; color:var(--ac,var(--mu)); display:flex; align-items:center; gap:3px; opacity:.9; }
         .bb-ca-bat  { font-family:'Lato',monospace; font-size:15px; font-weight:900; color:var(--ac,var(--mu)); line-height:1; white-space:nowrap; }
@@ -191,9 +191,9 @@
         .bb-mg-label { font-size:14px; font-weight:900; color:var(--tx); width:140px; flex-shrink:0; letter-spacing:.3px; }
         .bb-mg-icons { display:flex; gap:8px; flex-wrap:wrap; }
         .bb-mi {
-            width:40px; height:40px; border-radius:50%;
+            width:44px; height:44px; border-radius:50%;
             border:2px solid var(--ac,var(--gy));
-            color:var(--ac,var(--gy)); font-size:13px; font-weight:900;
+            color:var(--ac,var(--gy)); font-size:15px; font-weight:900;
             display:flex; align-items:center; justify-content:center;
             font-family:'Lato',monospace;
             opacity:0.35; /* OFF 기본값 */
