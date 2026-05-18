@@ -712,6 +712,7 @@
         saveToggles(toggles);
         saveZombie(zombie);
         cleanToggles();
+        window._bbAlerts = alerts;
         return alerts;
     }
 
