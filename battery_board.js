@@ -119,13 +119,13 @@
         .bb-si {
             width:100%; background:var(--sur2); border:1px solid var(--bd2);
             border-radius:7px; padding:6px 10px 6px 28px;
-            color:var(--tx); font-size:12px;
+            color:var(--tx); font-size:13px;
             font-family:'Lato','Noto Sans KR',sans-serif;
             outline:none; transition:border-color .2s;
         }
         .bb-si:focus { border-color:var(--bl); }
         .bb-si::placeholder { color:var(--mu); }
-        .bb-si-icon { position:absolute; left:21px; top:50%; transform:translateY(-50%); font-size:11px; color:var(--mu); pointer-events:none; }
+        .bb-si-icon { position:absolute; left:21px; top:50%; transform:translateY(-50%); font-size:13px; color:var(--mu); pointer-events:none; }
         #bb-dd {
             position:absolute; top:100%; left:0; right:0;
             background:var(--sur2); border:1px solid var(--bd2);
@@ -134,7 +134,7 @@
         }
         #bb-dd.open { display:block; }
         .bb-di {
-            padding:8px 13px; font-size:12px; font-weight:700; cursor:pointer;
+            padding:8px 13px; font-size:13px; font-weight:700; cursor:pointer;
             display:flex; justify-content:space-between; align-items:center;
             border-bottom:1px solid var(--bd); transition:background .1s;
         }
@@ -443,7 +443,7 @@
                     <div class="bb-mg-icons" id="bb-mg-seongsu"></div>
                 </div>
                 <div class="bb-mg-row">
-                    <div class="bb-mg-label">성남 삼평&amp;서현</div>
+                    <div class="bb-mg-label">성남 삼평/서현</div>
                     <div class="bb-mg-icons" id="bb-mg-seongnam"></div>
                 </div>
             </div>
