@@ -895,7 +895,6 @@
 
     const RS = 30; let ns = RS;
     setInterval(() => {
-        if (!isOpen) return;
         ns--;
         if (ns <= 0) ns = RS;
         const m = Math.floor(ns / 60), s = ns % 60;
