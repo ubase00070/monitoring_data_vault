@@ -171,7 +171,7 @@
         .bb-ca.charging   { --ac:var(--gn); background:var(--gn2); }
         .bb-ca.patrolling { --ac:var(--bl); background:var(--bl2); }
         .bb-ca.standby    { --ac:#c8ccd4;  background:var(--wh); }
-        .bb-ca.off        { --ac:#4b5563;  background:var(--gy2); }
+        .bb-ca.off { --ac:#4b5563; background:#17171c; }
         .bb-ca.loading    { --ac:#52525e;  background:var(--sur); opacity:0.5; }
         .bb-ca.delivering { --ac:var(--pk); background:var(--pk2); }
         .bb-ca.warn-bat   { animation:bb-warnBlink 0.8s infinite; }
@@ -195,7 +195,7 @@
         .bb-leg { display:flex; gap:12px; }
         .bb-li  { display:flex; align-items:center; gap:4px; font-size:13px; color:var(--mu); font-weight:700; }
         .bb-ld  { width:6px; height:6px; border-radius:50%; }
-        .bb-rmhint { font-size:11px; color:var(--rd); font-weight:700; display:none; opacity:.85; }
+        .bb-rmhint { font-size:13px; color:var(--rd); font-weight:700; display:none; opacity:.85; }
         .bb-rmhint.show { display:block; }
         /* ── 고정 모니터링 그리드 ── */
         .bb-mg { padding:6px 12px; border-top:1px solid var(--bd); flex-shrink:0; background:var(--bg); }
@@ -223,7 +223,7 @@
         }
 
         .bb-mi.off {
-            opacity:0.25;
+            opacity:0.12;
         }
         .bb-mi.charging   { --ac:var(--gn); }
         .bb-mi.patrolling { --ac:var(--bl); }
@@ -456,8 +456,8 @@
                     <div class="bb-li"><div class="bb-ld" style="background:#eab308;"></div>도킹 중</div>
                     <div class="bb-li"><div class="bb-ld" style="background:#4b5563"></div>OFF</div>
                 </div>
-                <div class="bb-rmhint" id="bb-rmhint">카드 선택 → 완료로 제거</div>
                 <button class="bb-info-btn" id="bb-infobtn" title="설명서">i</button>
+                <div class="bb-rmhint" id="bb-rmhint">카드 선택 → 완료로 제거</div>
             </div>
             <div id="bb-info-panel">
                 <div class="bb-info-hd">
