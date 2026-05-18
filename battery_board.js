@@ -191,17 +191,31 @@
         .bb-mg-label { font-size:14px; font-weight:900; color:var(--mu); width:140px; flex-shrink:0; letter-spacing:.3px; }
         .bb-mg-icons { display:flex; gap:8px; flex-wrap:wrap; }
         .bb-mi {
-            width:34px; height:34px; border-radius:50%;
+            width:40px; height:40px; border-radius:50%;
             border:2px solid var(--ac,var(--gy));
-            color:var(--ac,var(--gy)); font-size:12px; font-weight:900;
+            color:var(--ac,var(--gy)); font-size:13px; font-weight:900;
             display:flex; align-items:center; justify-content:center;
             font-family:'Lato',monospace;
+            opacity:0.35; /* OFF 기본값 */
+        }
+
+        /* ON 상태 강조 */
+        .bb-mi.charging,
+        .bb-mi.patrolling,
+        .bb-mi.delivering,
+        .bb-mi.standby {
+            opacity:1;
+            border-width:3px;
+            box-shadow:0 0 6px var(--ac);
+        }
+
+        .bb-mi.off {
+            opacity:0.25;
         }
         .bb-mi.charging   { --ac:var(--gn); }
         .bb-mi.patrolling { --ac:var(--bl); }
         .bb-mi.delivering { --ac:var(--pk); }
         .bb-mi.standby    { --ac:#c8ccd4; }
-        .bb-mi.off        { --ac:#4b5563; }
 
         /* ── 알림 패널 ── */
         #bb-alert-panel {
