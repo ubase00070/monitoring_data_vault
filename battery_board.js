@@ -306,7 +306,7 @@
             display:flex; justify-content:space-between; align-items:center;
             margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid var(--bd);
         }
-        .bb-info-title { font-size:16px; font-weight:900; }
+        .bb-info-title { font-size:17px; font-weight:900; }
 
         /* ── 히스토리 버튼 ── */
         .bb-hist-btn {
@@ -410,7 +410,7 @@
                 </div>
                 <div class="bb-hd-title">
                     <div class="bb-dot" id="bb-dot"></div>
-                    <span class="bb-title-gradient">관리자용 배터리 현황판</span>
+                    <span class="bb-title-gradient">관리자용 배터리 현황판</span><span style="font-size:16px; color:var(--mu);">by CYH</span>
                     <span class="bb-src-badge idle" id="bb-srcBadge">대기</span>
                 </div>
                 <div class="bb-hd-time">
@@ -463,7 +463,7 @@
             </div>
             <div id="bb-info-panel">
                 <div class="bb-info-hd">
-                    <div class="bb-info-title">📖 사용 설명서</div>
+                    <div class="bb-info-title">📖 사용 설명서 for AHR</div>
                     <div class="bb-xbtn" id="bb-info-close">✕</div>
                 </div>
                 <div id="bb-info-body">
