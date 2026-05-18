@@ -69,7 +69,7 @@
         .bb-alert-btn {
             padding:5px 10px; border-radius:6px;
             border:1px solid var(--bd2); background:var(--sur2);
-            color:var(--mu); font-size:14px; font-weight:700;
+            color:var(--mu); font-size:15px; font-weight:700;
             font-family:'Lato','Noto Sans KR',sans-serif;
             cursor:pointer; transition:all .15s;
             display:flex; align-items:center; gap:5px;
@@ -458,7 +458,7 @@
                 </div>
                 <div style="display:flex; align-items:center; gap:8px;">
                     <div class="bb-rmhint" id="bb-rmhint">카드 선택 → 완료로 제거</div>
-                    <button class="bb-info-btn" id="bb-infobtn" title="설명서">i</button>
+                    <button class="bb-info-btn" id="bb-infobtn" title="사용 설명서">i</button>
                 </div>
             </div>
             <div id="bb-info-panel">
@@ -468,17 +468,17 @@
                 </div>
                 <div id="bb-info-body">
                     <!-- 설명서 내용 작성 -->
-                    * 첫 로딩/새로고침 시에만 10~20초 데이터 전송 시간 필요(최대한 안 쓰는 '알림 센터' 페이지를 활용함)<br>
-                    * 다른 페이지로 이동했다면 재접속 또는 새로고침 필요<br>
+                    * 첫 로딩/새로고침 시에만 10~20초 데이터 전송 시간 필요(오직 '알림 센터' 페이지에서만 작동함)<br>
+                    * 다른 페이지로 이동했다면 재접속 또는 새로고침 필수<br>
                     * 추가한 기체 카드와 배치는 로컬 스토리지에 저장됨(최대 24대. 드래그로 배치 변경가능)<br>
                     * 알림 전송 조건<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 배터리 21% 이하 기체<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 배달 사이트 기체가 아닌데 120분이상 대기 상태로 방치된 경우<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 무선 도킹됨 상태 기체<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 최근 10분 동안 ON/OFF를 3회 이상 반복한 경우<br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 전원ON인데 임무, 배터리, GPS 수신값이 잡히지 않는 경우(좀비 의심)<br>
-                    * 하단 네 줄: 역삼, 송도, 성수, 삼평서현 ON/OFF 및 상태 확인용 퀵메뉴<br>
-                    * 개선 여지가 다분한 툴이니 피드백 받습니다(수정 시 자동 실시간 반영).
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 전원ON인데 배터리, GPS 수신값이 잡히지 않는 경우(좀비 의심)<br>
+                    * 하단 고정 바: 역삼, 송도, 성수, 삼평서현 ON/OFF 및 상태 확인용 퀵메뉴<br>
+                    * 개선 피드백 받습니다(수정 시 자동 실시간 반영).
                 </div>
             </div>
         </div>
