@@ -1,23 +1,7 @@
 {
-  "updatedAt": "2026-05-19 06:55:07",
-  "realtime": [
-    {
-      "workDate": "20260518",
-      "driveDate": "20260519",
-      "hour": "06:00",
-      "name": "임아연",
-      "status": "미업로드"
-    }
-  ],
-  "final": [
-    {
-      "workDate": "20260518",
-      "driveDate": "20260518",
-      "hour": "09:00",
-      "name": "김경환",
-      "status": "미업로드"
-    }
-  ],
+  "updatedAt": "2026-05-19 07:15:08",
+  "realtime": [],
+  "final": [],
   "history": {
     "20260509": [
       {
