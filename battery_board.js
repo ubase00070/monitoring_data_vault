@@ -29,7 +29,7 @@
         #bb {
             display:none; position:fixed; top:50%; left:50%;
             transform:translate(-50%,-50%);
-            width:740px; background:var(--bg);
+            width:820px; background:var(--bg);
             border:1px solid var(--bd2); border-radius:16px;
             box-shadow:0 24px 60px rgba(0,0,0,.75);
             z-index:9999999; font-family:'Lato','Noto Sans KR',sans-serif;
@@ -572,7 +572,7 @@
         let status;
         if (!rs.isConnecting) {
             status = 'off';
-        } else if (rs.isCharging || rs.isWirelessChargerConnected) {
+        } else if (rs.isCharging || rs.isWirelessChargerConnected || rs.isOnWirelessChargerDock) {
             status = 'charging';
         } else if (['PATROL','OPENAPI_PATROL'].includes(raw.service?.serviceType)) {
             status = raw.currentScenario ? 'patrolling' : 'standby';
@@ -590,7 +590,8 @@
     function fmt(isoStr) {
         if (!isoStr) return '-';
         const d = new Date(isoStr);
-        return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+        const p = x => String(x).padStart(2,'0');
+        return `${p(d.getMonth()+1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
     }
     function minAgo(isoStr) {
         if (!isoStr) return 9999;
