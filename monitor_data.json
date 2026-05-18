@@ -1,23 +1,7 @@
 {
-  "updatedAt": "2026-05-18 23:55:10",
-  "realtime": [
-    {
-      "workDate": "20260518",
-      "driveDate": "20260518",
-      "hour": "09:00",
-      "name": "김경환",
-      "status": "미업로드"
-    }
-  ],
-  "final": [
-    {
-      "workDate": "20260517",
-      "driveDate": "20260517",
-      "hour": "09:00",
-      "name": "김경환",
-      "status": "미업로드"
-    }
-  ],
+  "updatedAt": "2026-05-19 00:05:18",
+  "realtime": [],
+  "final": [],
   "history": {
     "20260509": [
       {
@@ -130,6 +114,15 @@
       {
         "workDate": "20260517",
         "driveDate": "20260517",
+        "hour": "09:00",
+        "name": "김경환",
+        "status": "미업로드"
+      }
+    ],
+    "20260518": [
+      {
+        "workDate": "20260518",
+        "driveDate": "20260518",
         "hour": "09:00",
         "name": "김경환",
         "status": "미업로드"
