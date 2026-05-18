@@ -440,6 +440,7 @@
                     <div class="bb-li"><div class="bb-ld" style="background:#3b82f6"></div>순찰 중</div>
                     <div class="bb-li"><div class="bb-ld" style="background:#c8ccd4"></div>대기 중</div>
                     <div class="bb-li"><div class="bb-ld" style="background:#ec4899"></div>배달 중</div>
+                    <div class="bb-li"><div class="bb-ld" style="background:#eab308;"></div>도킹 중</div>
                     <div class="bb-li"><div class="bb-ld" style="background:#4b5563"></div>OFF</div>
                 </div>
                 <div class="bb-rmhint" id="bb-rmhint">카드 선택 → 완료로 제거</div>
@@ -458,6 +459,7 @@
                     * 알림 전송 조건<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 배터리 21% 이하 기체<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 배달 사이트 기체가 아닌데 120분이상 대기 상태로 방치된 경우<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 무선 도킹됨 상태 기체<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 최근 10분 동안 ON/OFF를 3회 이상 반복한 경우<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 전원ON인데 임무, 배터리, GPS 수신값이 잡히지 않는 경우(좀비 의심)<br>
                     * 하단 네 줄: 역삼, 송도, 성수, 삼평서현 ON/OFF 및 상태 확인용 퀵메뉴<br>
@@ -501,8 +503,8 @@
     const LS         = 'bb_ids';
     const LS_TOGGLE  = 'bb_toggles';
     const LS_ZOMBIE  = 'bb_zombie';
-    const STL = { charging:'충전 중', patrolling:'순찰 중', delivering:'배달 중', standby:'대기 중', off:'OFF' };
-    const STI = { charging:'🟢', patrolling:'🔵', delivering:'🩷', standby:'⚪', off:'⚫' };
+    const STL = { charging:'충전 중', patrolling:'순찰 중', delivering:'배달 중', standby:'대기 중', docking:'도킹 중', off:'OFF' };
+    const STI = { charging:'🟢', patrolling:'🔵', delivering:'🩷', standby:'⚪', docking:'🟡', off:'⚫' };
     const DELIVERY_TYPES = ['ALL', 'OPENAPI_DELIVERY'];
     const DELIVERY_SITE_IDS = [
         25,27,44,47,48,53,56,65,86,109,118,141,180,
@@ -579,8 +581,10 @@
         let status;
         if (!rs.isConnecting) {
             status = 'off';
-        } else if (rs.isCharging || rs.isWirelessChargerConnected || rs.isOnWirelessChargerDock) {
+        } else if (rs.isCharging || rs.isWirelessChargerConnected) {
             status = 'charging';
+        } else if (rs.isOnWirelessChargerDock) {
+            status = 'docking';
         } else if (['PATROL','OPENAPI_PATROL'].includes(raw.service?.serviceType)) {
             status = raw.currentScenario ? 'patrolling' : 'standby';
         } else if (DELIVERY_TYPES.includes(raw.service?.serviceType)) {
@@ -621,7 +625,7 @@
                 DELIVERY_TYPES.includes(raw.service?.serviceType) ||
                 DELIVERY_SITE_IDS.includes(raw.site?.id);
 
-            // ── 기능1: 대기중 120분 이상 (배달용 제외) ─────────────
+            // ── 기능1: 대기중 30분 이상 (배달용 제외) ─────────────
             if (!isDelivery && status === 'standby') {
                 const mins = minAgo(rs.lastOperatedAt);
                 if (mins >= 120) {
@@ -634,7 +638,17 @@
                 }
             }
 
-            // ── 기능2: 배터리 21% 이하 (전 기체) ──────────────────
+            // ── 기능2: 도킹됐는데 충전 안 되는 경우 ──
+            if (status === 'docking') {
+                const key = alertKey('docking', id);
+                if (!dismissedAlerts.has(key)) alerts.push({
+                    key, type:'docking', dot:'ye', name,
+                    desc:`무선 도크 위에 있으나 충전 안 됨 | 확인 필요`,
+                    time: fmt(new Date().toISOString())
+                });
+            }
+
+            // ── 기능3: 배터리 21% 이하 (전 기체) ──────────────────
             if (rs.isConnecting && battery > 0 && battery <= 21) {
                 const key = alertKey('battery', id);
                 if (!dismissedAlerts.has(key)) alerts.push({
@@ -644,7 +658,7 @@
                 });
             }
 
-            // ── 기능3: ON/OFF 반복 (10분 내 6회 전환) ─────────────
+            // ── 기능4: ON/OFF 반복 (10분 내 6회 전환) ─────────────
             {
                 const prev = toggles[id];
                 const prevState = prev?.length ? prev[prev.length - 1].state : null;
@@ -673,7 +687,7 @@
                 }
             }
 
-            // ── 기능4: 좀비 상태 (켜짐인데 battery/GPS/속도 없음) ─
+            // ── 기능5: 좀비 상태 (켜짐인데 battery/GPS/속도 없음) ─
             {
                 const isZombie =
                     rs.isConnecting === true &&
