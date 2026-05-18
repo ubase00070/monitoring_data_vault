@@ -29,7 +29,7 @@
         #bb {
             display:none; position:fixed; top:50%; left:50%;
             transform:translate(-50%,-50%);
-            width:820px; background:var(--bg);
+            width:880px; background:var(--bg);
             border:1px solid var(--bd2); border-radius:16px;
             box-shadow:0 24px 60px rgba(0,0,0,.75);
             z-index:9999999; font-family:'Lato','Noto Sans KR',sans-serif;
@@ -191,9 +191,9 @@
         .bb-mg-label { font-size:13px; font-weight:900; color:var(--tx); width:140px; flex-shrink:0; letter-spacing:.3px; }
         .bb-mg-icons { display:flex; gap:5px; flex-wrap:wrap; }
         .bb-mi {
-            width:28px; height:28px; border-radius:50%;
+            width:30px; height:30px; border-radius:50%;
             border:2px solid var(--ac,var(--gy));
-            color:var(--ac,var(--gy)); font-size:11px; font-weight:900;
+            color:var(--ac,var(--gy)); font-size:12px; font-weight:900;
             display:flex; align-items:center; justify-content:center;
             font-family:'Lato',monospace;
             opacity:0.35; /* OFF 기본값 */
