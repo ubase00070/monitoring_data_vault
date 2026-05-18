@@ -42,6 +42,19 @@
             background:var(--sur); border-radius:16px 16px 0 0;
             flex-shrink:0; position:relative; gap:3px;
         }
+        @keyframes bb-pink-flow {
+            0%   { background-position: 0% 50%; }
+            50%  { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .bb-title-gradient {
+            background: linear-gradient(90deg, #fce7f3, #ec4899, #db2777, #ec4899, #fce7f3);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: bb-pink-flow 3s ease infinite;
+        }
         .bb-hd-title { font-size:17px; font-weight:900; color:var(--tx); display:flex; align-items:center; gap:7px; }
         .bb-dot { width:7px; height:7px; border-radius:50%; background:var(--gn); animation:bb-blink 2s infinite; }
         .bb-dot.err { background:var(--rd); }
@@ -397,7 +410,7 @@
                 </div>
                 <div class="bb-hd-title">
                     <div class="bb-dot" id="bb-dot"></div>
-                    <span style="background:linear-gradient(90deg,#f9a8d4,#ec4899,#db2777); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">관리자용 배터리 현황판</span>
+                    <span class="bb-title-gradient">관리자용 배터리 현황판</span>
                     <span class="bb-src-badge idle" id="bb-srcBadge">대기</span>
                 </div>
                 <div class="bb-hd-time">
