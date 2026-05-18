@@ -69,7 +69,7 @@
         .bb-alert-btn {
             padding:5px 10px; border-radius:6px;
             border:1px solid var(--bd2); background:var(--sur2);
-            color:var(--mu); font-size:13px; font-weight:700;
+            color:var(--mu); font-size:14px; font-weight:700;
             font-family:'Lato','Noto Sans KR',sans-serif;
             cursor:pointer; transition:all .15s;
             display:flex; align-items:center; gap:5px;
@@ -193,7 +193,7 @@
             flex-shrink:0; background:var(--sur); border-radius:0 0 16px 16px;
         }
         .bb-leg { display:flex; gap:12px; }
-        .bb-li  { display:flex; align-items:center; gap:4px; font-size:11px; color:var(--mu); font-weight:700; }
+        .bb-li  { display:flex; align-items:center; gap:4px; font-size:13px; color:var(--mu); font-weight:700; }
         .bb-ld  { width:6px; height:6px; border-radius:50%; }
         .bb-rmhint { font-size:11px; color:var(--rd); font-weight:700; display:none; opacity:.85; }
         .bb-rmhint.show { display:block; }
@@ -201,7 +201,7 @@
         .bb-mg { padding:6px 12px; border-top:1px solid var(--bd); flex-shrink:0; background:var(--bg); }
         .bb-mg-row { display:flex; align-items:center; gap:5px; padding:3px 0; border-bottom:1px solid rgba(255,255,255,.06); }
         .bb-mg-row:last-child { border-bottom:none; }
-        .bb-mg-label { font-size:14px; font-weight:900; color:var(--tx); width:140px; flex-shrink:0; letter-spacing:.3px; }
+        .bb-mg-label { font-size:15px; font-weight:900; color:var(--tx); width:140px; flex-shrink:0; letter-spacing:.3px; }
         .bb-mg-icons { display:flex; gap:5px; flex-wrap:wrap; }
         .bb-mi {
             width:30px; height:30px; border-radius:50%;
@@ -246,7 +246,7 @@
             display:flex; justify-content:space-between; align-items:center;
             position:sticky; top:0; z-index:1;
         }
-        .bb-ap-title { font-size:14px; font-weight:900; color:var(--tx); }
+        .bb-ap-title { font-size:15px; font-weight:900; color:var(--tx); }
         .bb-ap-close {
             width:22px; height:22px; border-radius:5px;
             background:rgba(239,68,68,.15); border:1px solid rgba(239,68,68,.3);
@@ -275,7 +275,7 @@
         .bb-ap-dot.or { background:var(--or); }
         .bb-ap-info { display:flex; flex-direction:column; gap:2px; flex:1; }
         .bb-ap-name { font-size:14px; font-weight:900; color:var(--tx); }
-        .bb-ap-desc { font-size:12px; color:var(--mu); font-weight:700; }
+        .bb-ap-desc { font-size:13px; color:var(--mu); font-weight:700; }
         .bb-ap-dismiss {
             display:none; padding:3px 8px; border-radius:4px;
             font-size:11px; font-weight:700;
