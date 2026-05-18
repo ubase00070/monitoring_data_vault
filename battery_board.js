@@ -405,7 +405,7 @@
                     <div class="bb-ref" id="bb-ref">— 초 후 갱신</div>
                 </div>
                 <div class="bb-hd-right">
-                    <button class="bb-btn so" id="bb-sortBtn">이름 순 정렬</button>
+                    <button class="bb-btn so" id="bb-sortBtn">가나다 순 정렬</button>
                     <button class="bb-btn" id="bb-rmbtn">제거</button>
                     <div class="bb-xbtn" id="bb-closebtn">✕</div>
                 </div>
@@ -621,7 +621,7 @@
                 DELIVERY_TYPES.includes(raw.service?.serviceType) ||
                 DELIVERY_SITE_IDS.includes(raw.site?.id);
 
-            // ── 기능1: 대기중 20분 이상 (배달용 제외) ─────────────
+            // ── 기능1: 대기중 30분 이상 (배달용 제외) ─────────────
             if (!isDelivery && status === 'standby') {
                 const mins = minAgo(rs.lastOperatedAt);
                 if (mins >= 30) {
@@ -999,7 +999,7 @@
         save(); render();
         const btn = document.getElementById('bb-sortBtn');
         btn.textContent = '✓ 정렬됨';
-        setTimeout(() => { btn.textContent = '이름 순 정렬'; }, 1200);
+        setTimeout(() => { btn.textContent = '가나다 순 정렬'; }, 1200);
     }
 
     function toggleRm() {
