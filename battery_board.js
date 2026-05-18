@@ -452,12 +452,12 @@
                 </div>
                 <div id="bb-info-body">
                     <!-- 설명서 내용 작성 -->
-                    * 새로고침 시에만 첫 20~30초 데이터 전송 시간 필요(최대한 안 쓰는 페이지를 활용함)<br>
+                    * 새로고침 시에만 첫 10~20초 데이터 전송 시간 필요(최대한 안 쓰는 페이지를 활용함)<br>
                     * 실수로 다른 페이지로 이동했다면 재접속 또는 새로고침 필요(그 시간동안의 기록 누락 영향은 미미할 것으로 추정)<br>
                     * 추가한 기체 카드와 배치는 로컬 스토리지에 저장됨(최대 24대. 드래그로 배치 변경가능)<br>
                     * 알림 전송 조건<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 배터리 21% 이하 기체<br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 배달 사이트 기체가 아닌데 20분이상 대기 상태로 방치된 경우<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 배달 사이트 기체가 아닌데 30분이상 대기 상태로 방치된 경우<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 최근 10분 동안 ON/OFF를 3회 이상 반복한 경우<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 최근 2분 동안 전원ON인데 임무, 배터리, GPS 수신값이 잡히지 않는 경우(좀비 의심)<br>
                     * 알림은 방치하더라도 문제가 해결되면 자동으로 해제됨<br>
@@ -617,7 +617,7 @@
             // ── 기능1: 대기중 20분 이상 (배달용 제외) ─────────────
             if (!isDelivery && status === 'standby') {
                 const mins = minAgo(rs.lastOperatedAt);
-                if (mins >= 20) {
+                if (mins >= 30) {
                     const key = alertKey('standby', id);
                     if (!dismissedAlerts.has(key)) alerts.push({
                         key, type:'standby', dot:'rd', name,
