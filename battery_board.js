@@ -186,14 +186,14 @@
         .bb-rmhint.show { display:block; }
         /* ── 고정 모니터링 그리드 ── */
         .bb-mg { padding:6px 12px; border-top:1px solid var(--bd); flex-shrink:0; background:var(--bg); }
-        .bb-mg-row { display:flex; align-items:center; gap:6px; padding:7px 0; border-bottom:1px solid rgba(255,255,255,.06); }
+        .bb-mg-row { display:flex; align-items:center; gap:5px; padding:4px 0; border-bottom:1px solid rgba(255,255,255,.06); }
         .bb-mg-row:last-child { border-bottom:none; }
-        .bb-mg-label { font-size:14px; font-weight:900; color:var(--tx); width:140px; flex-shrink:0; letter-spacing:.3px; }
+        .bb-mg-label { font-size:13px; font-weight:900; color:var(--tx); width:140px; flex-shrink:0; letter-spacing:.3px; }
         .bb-mg-icons { display:flex; gap:8px; flex-wrap:wrap; }
         .bb-mi {
-            width:44px; height:44px; border-radius:50%;
+            width:34px; height:34px; border-radius:50%;
             border:2px solid var(--ac,var(--gy));
-            color:var(--ac,var(--gy)); font-size:15px; font-weight:900;
+            color:var(--ac,var(--gy)); font-size:12px; font-weight:900;
             display:flex; align-items:center; justify-content:center;
             font-family:'Lato',monospace;
             opacity:0.35; /* OFF 기본값 */
