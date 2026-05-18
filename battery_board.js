@@ -457,7 +457,7 @@
                     * 추가한 기체 카드와 배치는 로컬 스토리지에 저장됨(최대 24대. 드래그로 배치 변경가능)<br>
                     * 알림 전송 조건<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 배터리 21% 이하 기체<br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 배달 사이트 기체가 아닌데 30분이상 대기 상태로 방치된 경우<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 배달 사이트 기체가 아닌데 120분이상 대기 상태로 방치된 경우<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 최근 10분 동안 ON/OFF를 3회 이상 반복한 경우<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 전원ON인데 임무, 배터리, GPS 수신값이 잡히지 않는 경우(좀비 의심)<br>
                     * 하단 네 줄: 역삼, 송도, 성수, 삼평서현 ON/OFF 및 상태 확인용 퀵메뉴<br>
@@ -621,10 +621,10 @@
                 DELIVERY_TYPES.includes(raw.service?.serviceType) ||
                 DELIVERY_SITE_IDS.includes(raw.site?.id);
 
-            // ── 기능1: 대기중 30분 이상 (배달용 제외) ─────────────
+            // ── 기능1: 대기중 120분 이상 (배달용 제외) ─────────────
             if (!isDelivery && status === 'standby') {
                 const mins = minAgo(rs.lastOperatedAt);
-                if (mins >= 30) {
+                if (mins >= 120) {
                     const key = alertKey('standby', id);
                     if (!dismissedAlerts.has(key)) alerts.push({
                         key, type:'standby', dot:'rd', name,
