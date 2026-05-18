@@ -711,9 +711,10 @@
     function getCurrentMonitor(insuData) {
         if (!insuData?.schedule) return null;
         const now = new Date();
-        // 실제 모니터링은 X:50~X+1:50이므로 +10분으로 정각 슬롯 매핑
-        const adjusted = new Date(now.getTime() + 10 * 60 * 1000);
-        const hour = String(adjusted.getHours()).padStart(2, '0') + ':00';
+        // X:50~X+1:50 구간이므로, 분이 50 이상이면 현재 시각 슬롯, 미만이면 이전 시각 슬롯
+        const slotHour = now.getMinutes() >= 50 ? now.getHours() : now.getHours() - 1;
+        const normalizedHour = ((slotHour % 24) + 24) % 24; // 음수 방지
+        const hour = String(normalizedHour).padStart(2, '0') + ':00';
         return insuData.schedule[hour] || null;
     }
 
@@ -726,8 +727,8 @@
         const currentMonitor = getCurrentMonitor(insuData);
 
         return personnelData.filter(p => {
-            // 출근자 목록 필터
-            if (presentList && !presentList.includes(p.name)) return false;
+            // attendanceData 없으면 근무시간만으로 필터 (안전 모드)
+            if (presentList !== null && !presentList.includes(p.name)) return false;
             // 근무 시간대 필터
             if (!isInRange(parseTimeRange(p.time), nowMin)) return false;
             // 휴게 시간 필터
@@ -832,9 +833,21 @@
         };
     
         const now = new Date();
-        const timeSeed = `${now.getFullYear()}${now.getMonth()}${now.getDate()}${now.getHours()}${Math.floor(now.getMinutes() / 2)}`;
+        // 자정 넘기는 야간 근무자 기준으로 날짜 고정 (22시 이전이면 전날 기준)
+        const seedDate = now.getHours() < 7 
+            ? new Date(now.getTime() - 7 * 60 * 60 * 1000) 
+            : now;
+        const timeSeed = `${seedDate.getFullYear()}${seedDate.getMonth()}${seedDate.getDate()}${now.getHours()}${Math.floor(now.getMinutes() / 2)}`;
 
         const myGroup = getActiveGroup(now, state.insuData, state.attendanceData);
+        if (myGroup.length === 0) {
+            executeIntervention(targetBtn);
+            return;
+        }
+        if (!myGroup.find(p => p.name === currentUserName)) {
+            executeIntervention(targetBtn);
+            return;
+        }
         const groupKey = myGroup.map(p => p.name).join(',');
         
         let indices = Array.from({ length: myGroup.length }, (_, i) => i);
@@ -1156,7 +1169,6 @@
         queueInfoBtn.textContent = 'i';
         queueInfoBtn.title = '원리 설명';
         queueInfoBtn.style.cssText = `
-            neubie-blink 1.2s ease-in-out infinite;
             width:22px; height:22px; border-radius:50%; border:2px solid #aaa;
             background:transparent; color:#aaa; font-size:13px; font-weight:bold;
             cursor:pointer; display:flex; align-items:center; justify-content:center;
