@@ -42,7 +42,7 @@
             background:var(--sur); border-radius:16px 16px 0 0;
             flex-shrink:0; position:relative; gap:3px;
         }
-        .bb-hd-title { font-size:16px; font-weight:900; color:var(--tx); display:flex; align-items:center; gap:7px; }
+        .bb-hd-title { font-size:17px; font-weight:900; color:var(--tx); display:flex; align-items:center; gap:7px; }
         .bb-dot { width:7px; height:7px; border-radius:50%; background:var(--gn); animation:bb-blink 2s infinite; }
         .bb-dot.err { background:var(--rd); }
         @keyframes bb-blink { 0%,100%{opacity:1} 50%{opacity:.2} }
@@ -286,7 +286,7 @@
             background:var(--sur2); border:1px solid var(--bd2);
             border-radius:12px; box-shadow:0 16px 48px rgba(0,0,0,.85);
             z-index:9999999999; padding:16px; overflow-y:auto;
-            font-size:12px; line-height:1.7; color:var(--tx);
+            font-size:14px; line-height:1.8; color:var(--tx);
         }
         #bb-info-panel.open { display:block; }
         .bb-info-hd {
