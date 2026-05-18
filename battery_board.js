@@ -828,7 +828,7 @@
         e.preventDefault();
         const h = location.host;
         const allowed =
-            (h === 'go.neubie.ai' && location.pathname.includes('/ko/remote/multiple/driving')) ||
+            (h === 'go.neubie.ai' && location.pathname.includes('/ko/notification')) ||
             h.endsWith('vercel.app');
         if (!allowed) return;
         isOpen ? closeBoard() : openBoard();
