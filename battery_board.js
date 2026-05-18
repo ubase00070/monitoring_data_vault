@@ -201,7 +201,7 @@
         .bb-mg { padding:6px 12px; border-top:1px solid var(--bd); flex-shrink:0; background:var(--bg); }
         .bb-mg-row { display:flex; align-items:center; gap:5px; padding:3px 0; border-bottom:1px solid rgba(255,255,255,.06); }
         .bb-mg-row:last-child { border-bottom:none; }
-        .bb-mg-label { font-size:13px; font-weight:900; color:var(--tx); width:140px; flex-shrink:0; letter-spacing:.3px; }
+        .bb-mg-label { font-size:14px; font-weight:900; color:var(--tx); width:140px; flex-shrink:0; letter-spacing:.3px; }
         .bb-mg-icons { display:flex; gap:5px; flex-wrap:wrap; }
         .bb-mi {
             width:30px; height:30px; border-radius:50%;
