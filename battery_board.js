@@ -55,13 +55,13 @@
             background-clip: text;
             animation: bb-pink-flow 3s ease infinite;
         }
-        .bb-hd-title { font-size:17px; font-weight:900; color:var(--tx); display:flex; align-items:center; gap:7px; }
+        .bb-hd-title { font-size:18px; font-weight:900; color:var(--tx); display:flex; align-items:center; gap:7px; }
         .bb-dot { width:7px; height:7px; border-radius:50%; background:var(--gn); animation:bb-blink 2s infinite; }
         .bb-dot.err { background:var(--rd); }
         @keyframes bb-blink { 0%,100%{opacity:1} 50%{opacity:.2} }
         .bb-hd-time { display:flex; align-items:baseline; gap:8px; }
         .bb-clock { font-family:'Lato',monospace; font-size:13px; font-weight:900; color:var(--mu); letter-spacing:.8px; }
-        .bb-ref   { font-size:11px; color:var(--mu); font-weight:700; }
+        .bb-ref   { font-size:12px; color:var(--mu); font-weight:700; }
         .bb-hd-right { position:absolute; right:14px; top:50%; transform:translateY(-50%); display:flex; align-items:center; gap:7px; }
         .bb-hd-left  { position:absolute; left:14px; top:50%; transform:translateY(-50%); display:flex; align-items:center; }
 
@@ -84,18 +84,18 @@
         }
         .bb-alert-count {
             background:var(--rd); color:#fff; border-radius:9px;
-            padding:0 5px; font-size:10px; font-weight:900;
+            padding:0 5px; font-size:14px; font-weight:900;
             min-width:18px; text-align:center;
         }
         .bb-alert-btn:not(.has-alert) .bb-alert-count { background:var(--bd2); color:var(--tx); }
 
         /* ── 공통 버튼 ── */
-        .bb-src-badge { font-size:10px; font-weight:700; padding:2px 7px; border-radius:4px; letter-spacing:.4px; }
+        .bb-src-badge { font-size:12px; font-weight:700; padding:2px 7px; border-radius:4px; letter-spacing:.4px; }
         .bb-src-badge.rest { background:rgba(34,197,94,.15); color:var(--gn); border:1px solid rgba(34,197,94,.3); }
         .bb-src-badge.idle { background:var(--gy2); color:var(--mu); border:1px solid rgba(75,85,99,.3); }
         .bb-src-badge.err  { background:var(--rd2); color:var(--rd); border:1px solid rgba(239,68,68,.3); }
         .bb-btn {
-            padding:5px 13px; border-radius:6px; border:1px solid var(--bd2);
+            padding:5px 14px; border-radius:6px; border:1px solid var(--bd2);
             background:var(--sur2); color:var(--tx); font-size:12px;
             font-family:'Lato','Noto Sans KR',sans-serif;
             font-weight:700; cursor:pointer; transition:all .15s; white-space:nowrap;
@@ -299,14 +299,14 @@
             background:var(--sur2); border:1px solid var(--bd2);
             border-radius:12px; box-shadow:0 16px 48px rgba(0,0,0,.85);
             z-index:9999999999; padding:16px; overflow-y:auto;
-            font-size:14px; line-height:1.8; color:var(--tx);
+            font-size:15px; line-height:1.8; color:var(--tx);
         }
         #bb-info-panel.open { display:block; }
         .bb-info-hd {
             display:flex; justify-content:space-between; align-items:center;
             margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid var(--bd);
         }
-        .bb-info-title { font-size:13px; font-weight:900; }
+        .bb-info-title { font-size:16px; font-weight:900; }
 
         /* ── 히스토리 버튼 ── */
         .bb-hist-btn {
