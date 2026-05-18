@@ -284,7 +284,7 @@
             white-space:nowrap;
         }
         .bb-ap-item:hover .bb-ap-dismiss { display:block; }
-        .bb-ap-empty { padding:24px; text-align:center; font-size:12px; color:var(--mu); font-weight:700; }
+        .bb-ap-empty { padding:24px; text-align:center; font-size:13px; color:var(--mu); font-weight:700; }
         .bb-info-btn {
             width:22px; height:22px; border-radius:50%;
             border:1.5px solid var(--mu); color:var(--mu);
@@ -468,7 +468,7 @@
                 </div>
                 <div id="bb-info-body">
                     <!-- 설명서 내용 작성 -->
-                    * 첫 로딩/새로고침 시에만 10~20초 데이터 전송 시간 필요(오직 '알림 센터' 페이지에서만 작동함)<br>
+                    * 첫 로딩 시에만 10~20초 데이터 전송 시간 필요(오직 '알림 센터' 페이지에서만 작동함)<br>
                     * 다른 페이지로 이동했다면 재접속 또는 새로고침 필수<br>
                     * 추가한 기체 카드와 배치는 로컬 스토리지에 저장됨(최대 24대. 드래그로 배치 변경가능)<br>
                     * 알림 전송 조건<br>
