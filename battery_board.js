@@ -530,8 +530,16 @@
 
     let topmostZ = 100000000;
 
-    // 해제된 알림 (메모리에만, 새로고침 시 초기화)
-    const dismissedAlerts = new Set();
+    function loadDismissed() {
+        try {
+            const saved = JSON.parse(localStorage.getItem('bb_dismissed') || '[]');
+            const cutoff = Date.now() - 6 * 60 * 60 * 1000;
+            const valid = saved.filter(item => item.time > cutoff);
+            localStorage.setItem('bb_dismissed', JSON.stringify(valid));
+            return new Set(valid.map(item => item.key));
+        } catch { return new Set(); }
+    }
+    const dismissedAlerts = loadDismissed();
     let currentAlerts = [];
 
     // ============================================================
@@ -772,6 +780,12 @@
 
     function dismiss(key) {
         dismissedAlerts.add(key);
+        // localStorage에 시각과 함께 저장
+        try {
+            const saved = JSON.parse(localStorage.getItem('bb_dismissed') || '[]');
+            saved.push({ key, time: Date.now() });
+            localStorage.setItem('bb_dismissed', JSON.stringify(saved));
+        } catch {}
         currentAlerts = currentAlerts.filter(a => a.key !== key);
         renderAlertPanel(currentAlerts);
     }
