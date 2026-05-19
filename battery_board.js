@@ -896,7 +896,7 @@
             _hCount++;
             clearTimeout(_hTimer);
             _hTimer = setTimeout(() => _hCount = 0, 1000);
-            if (_hCount >= 3) {
+            if (_hCount >= 5) {
                 const panel = document.getElementById('bb-hist-panel');
                 panel.classList.toggle('open');
                 if (panel.classList.contains('open')) {
