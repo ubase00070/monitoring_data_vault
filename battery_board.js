@@ -241,7 +241,7 @@
             display:flex; align-items:center; justify-content:center; font-weight:900;
         }
         .bb-ap-section-title {
-            padding:8px 14px 4px; font-size:10px; font-weight:900;
+            padding:8px 14px 4px; font-size:13px; font-weight:900;
             color:var(--mu); letter-spacing:.6px;
         }
         .bb-ap-item {
@@ -250,7 +250,7 @@
             transition:background .1s; cursor:default;
         }
         .bb-ap-time {
-            font-size:10px; color:var(--mu);
+            font-size:13px; color:var(--mu);
             font-family:'Lato',monospace; white-space:nowrap;
             margin-right:6px;
         }
@@ -261,8 +261,8 @@
         .bb-ap-dot.ye { background:var(--ye); }
         .bb-ap-dot.or { background:var(--or); }
         .bb-ap-info { display:flex; flex-direction:column; gap:2px; flex:1; }
-        .bb-ap-name { font-size:13px; font-weight:900; color:var(--tx); }
-        .bb-ap-desc { font-size:11px; color:var(--mu); font-weight:700; }
+        .bb-ap-name { font-size:14px; font-weight:900; color:var(--tx); }
+        .bb-ap-desc { font-size:13px; color:var(--mu); font-weight:700; }
         .bb-ap-dismiss {
             display:none; padding:3px 8px; border-radius:4px;
             font-size:11px; font-weight:700;
