@@ -42,13 +42,26 @@
             background:var(--sur); border-radius:16px 16px 0 0;
             flex-shrink:0; position:relative; gap:3px;
         }
-        .bb-hd-title { font-size:17px; font-weight:900; color:var(--tx); display:flex; align-items:center; gap:7px; }
+        @keyframes bb-pink-flow {
+            0%   { background-position: 0% 50%; }
+            50%  { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .bb-title-gradient {
+            background: linear-gradient(90deg, #fce7f3, #ec4899, #db2777, #ec4899, #fce7f3);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: bb-pink-flow 3s ease infinite;
+        }
+        .bb-hd-title { font-size:20px; font-weight:900; color:var(--tx); display:flex; align-items:center; gap:7px; }
         .bb-dot { width:7px; height:7px; border-radius:50%; background:var(--gn); animation:bb-blink 2s infinite; }
         .bb-dot.err { background:var(--rd); }
         @keyframes bb-blink { 0%,100%{opacity:1} 50%{opacity:.2} }
         .bb-hd-time { display:flex; align-items:baseline; gap:8px; }
         .bb-clock { font-family:'Lato',monospace; font-size:13px; font-weight:900; color:var(--mu); letter-spacing:.8px; }
-        .bb-ref   { font-size:11px; color:var(--mu); font-weight:700; }
+        .bb-ref   { font-size:12px; color:var(--mu); font-weight:700; }
         .bb-hd-right { position:absolute; right:14px; top:50%; transform:translateY(-50%); display:flex; align-items:center; gap:7px; }
         .bb-hd-left  { position:absolute; left:14px; top:50%; transform:translateY(-50%); display:flex; align-items:center; }
 
@@ -56,7 +69,7 @@
         .bb-alert-btn {
             padding:5px 10px; border-radius:6px;
             border:1px solid var(--bd2); background:var(--sur2);
-            color:var(--mu); font-size:12px; font-weight:700;
+            color:var(--mu); font-size:15px; font-weight:700;
             font-family:'Lato','Noto Sans KR',sans-serif;
             cursor:pointer; transition:all .15s;
             display:flex; align-items:center; gap:5px;
@@ -71,18 +84,18 @@
         }
         .bb-alert-count {
             background:var(--rd); color:#fff; border-radius:9px;
-            padding:0 5px; font-size:10px; font-weight:900;
+            padding:0 5px; font-size:14px; font-weight:900;
             min-width:18px; text-align:center;
         }
         .bb-alert-btn:not(.has-alert) .bb-alert-count { background:var(--bd2); color:var(--tx); }
 
         /* ── 공통 버튼 ── */
-        .bb-src-badge { font-size:10px; font-weight:700; padding:2px 7px; border-radius:4px; letter-spacing:.4px; }
+        .bb-src-badge { font-size:12px; font-weight:700; padding:2px 7px; border-radius:4px; letter-spacing:.4px; }
         .bb-src-badge.rest { background:rgba(34,197,94,.15); color:var(--gn); border:1px solid rgba(34,197,94,.3); }
         .bb-src-badge.idle { background:var(--gy2); color:var(--mu); border:1px solid rgba(75,85,99,.3); }
         .bb-src-badge.err  { background:var(--rd2); color:var(--rd); border:1px solid rgba(239,68,68,.3); }
         .bb-btn {
-            padding:5px 13px; border-radius:6px; border:1px solid var(--bd2);
+            padding:5px 14px; border-radius:6px; border:1px solid var(--bd2);
             background:var(--sur2); color:var(--tx); font-size:12px;
             font-family:'Lato','Noto Sans KR',sans-serif;
             font-weight:700; cursor:pointer; transition:all .15s; white-space:nowrap;
@@ -106,13 +119,13 @@
         .bb-si {
             width:100%; background:var(--sur2); border:1px solid var(--bd2);
             border-radius:7px; padding:6px 10px 6px 28px;
-            color:var(--tx); font-size:12px;
+            color:var(--tx); font-size:13px;
             font-family:'Lato','Noto Sans KR',sans-serif;
             outline:none; transition:border-color .2s;
         }
         .bb-si:focus { border-color:var(--bl); }
         .bb-si::placeholder { color:var(--mu); }
-        .bb-si-icon { position:absolute; left:21px; top:50%; transform:translateY(-50%); font-size:11px; color:var(--mu); pointer-events:none; }
+        .bb-si-icon { position:absolute; left:21px; top:50%; transform:translateY(-50%); font-size:13px; color:var(--mu); pointer-events:none; }
         #bb-dd {
             position:absolute; top:100%; left:0; right:0;
             background:var(--sur2); border:1px solid var(--bd2);
@@ -121,7 +134,7 @@
         }
         #bb-dd.open { display:block; }
         .bb-di {
-            padding:8px 13px; font-size:12px; font-weight:700; cursor:pointer;
+            padding:8px 13px; font-size:13px; font-weight:700; cursor:pointer;
             display:flex; justify-content:space-between; align-items:center;
             border-bottom:1px solid var(--bd); transition:background .1s;
         }
@@ -158,7 +171,7 @@
         .bb-ca.charging   { --ac:var(--gn); background:var(--gn2); }
         .bb-ca.patrolling { --ac:var(--bl); background:var(--bl2); }
         .bb-ca.standby    { --ac:#c8ccd4;  background:var(--wh); }
-        .bb-ca.off        { --ac:#4b5563;  background:var(--gy2); }
+        .bb-ca.off { --ac:#4b5563; background:#17171c; }
         .bb-ca.loading    { --ac:#52525e;  background:var(--sur); opacity:0.5; }
         .bb-ca.delivering { --ac:var(--pk); background:var(--pk2); }
         .bb-ca.warn-bat   { animation:bb-warnBlink 0.8s infinite; }
@@ -180,15 +193,15 @@
             flex-shrink:0; background:var(--sur); border-radius:0 0 16px 16px;
         }
         .bb-leg { display:flex; gap:12px; }
-        .bb-li  { display:flex; align-items:center; gap:4px; font-size:11px; color:var(--mu); font-weight:700; }
+        .bb-li  { display:flex; align-items:center; gap:4px; font-size:13px; color:var(--mu); font-weight:700; }
         .bb-ld  { width:6px; height:6px; border-radius:50%; }
-        .bb-rmhint { font-size:11px; color:var(--rd); font-weight:700; display:none; opacity:.85; }
+        .bb-rmhint { font-size:13px; color:var(--rd); font-weight:700; display:none; opacity:.85; }
         .bb-rmhint.show { display:block; }
         /* ── 고정 모니터링 그리드 ── */
         .bb-mg { padding:6px 12px; border-top:1px solid var(--bd); flex-shrink:0; background:var(--bg); }
         .bb-mg-row { display:flex; align-items:center; gap:5px; padding:3px 0; border-bottom:1px solid rgba(255,255,255,.06); }
         .bb-mg-row:last-child { border-bottom:none; }
-        .bb-mg-label { font-size:13px; font-weight:900; color:var(--tx); width:140px; flex-shrink:0; letter-spacing:.3px; }
+        .bb-mg-label { font-size:15px; font-weight:900; color:var(--tx); width:140px; flex-shrink:0; letter-spacing:.3px; }
         .bb-mg-icons { display:flex; gap:5px; flex-wrap:wrap; }
         .bb-mi {
             width:30px; height:30px; border-radius:50%;
@@ -210,7 +223,7 @@
         }
 
         .bb-mi.off {
-            opacity:0.25;
+            opacity:0.12;
         }
         .bb-mi.charging   { --ac:var(--gn); }
         .bb-mi.patrolling { --ac:var(--bl); }
@@ -233,7 +246,7 @@
             display:flex; justify-content:space-between; align-items:center;
             position:sticky; top:0; z-index:1;
         }
-        .bb-ap-title { font-size:13px; font-weight:900; color:var(--tx); }
+        .bb-ap-title { font-size:15px; font-weight:900; color:var(--tx); }
         .bb-ap-close {
             width:22px; height:22px; border-radius:5px;
             background:rgba(239,68,68,.15); border:1px solid rgba(239,68,68,.3);
@@ -241,7 +254,7 @@
             display:flex; align-items:center; justify-content:center; font-weight:900;
         }
         .bb-ap-section-title {
-            padding:8px 14px 4px; font-size:13px; font-weight:900;
+            padding:8px 14px 4px; font-size:10px; font-weight:900;
             color:var(--mu); letter-spacing:.6px;
         }
         .bb-ap-item {
@@ -271,7 +284,7 @@
             white-space:nowrap;
         }
         .bb-ap-item:hover .bb-ap-dismiss { display:block; }
-        .bb-ap-empty { padding:24px; text-align:center; font-size:12px; color:var(--mu); font-weight:700; }
+        .bb-ap-empty { padding:24px; text-align:center; font-size:13px; color:var(--mu); font-weight:700; }
         .bb-info-btn {
             width:22px; height:22px; border-radius:50%;
             border:1.5px solid var(--mu); color:var(--mu);
@@ -286,14 +299,14 @@
             background:var(--sur2); border:1px solid var(--bd2);
             border-radius:12px; box-shadow:0 16px 48px rgba(0,0,0,.85);
             z-index:9999999999; padding:16px; overflow-y:auto;
-            font-size:14px; line-height:1.8; color:var(--tx);
+            font-size:15px; line-height:1.8; color:var(--tx);
         }
         #bb-info-panel.open { display:block; }
         .bb-info-hd {
             display:flex; justify-content:space-between; align-items:center;
             margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid var(--bd);
         }
-        .bb-info-title { font-size:13px; font-weight:900; }
+        .bb-info-title { font-size:17px; font-weight:900; }
 
         /* ── 히스토리 버튼 ── */
         .bb-hist-btn {
@@ -397,7 +410,7 @@
                 </div>
                 <div class="bb-hd-title">
                     <div class="bb-dot" id="bb-dot"></div>
-                    관리자용 배터리 현황판 for Hyerim
+                    <span class="bb-title-gradient">관리자용 배터리 현황판</span><span style="font-size:16px; color:var(--mu);">by CYH</span>
                     <span class="bb-src-badge idle" id="bb-srcBadge">대기</span>
                 </div>
                 <div class="bb-hd-time">
@@ -405,7 +418,7 @@
                     <div class="bb-ref" id="bb-ref">— 초 후 갱신</div>
                 </div>
                 <div class="bb-hd-right">
-                    <button class="bb-btn so" id="bb-sortBtn">이름 순 정렬</button>
+                    <button class="bb-btn so" id="bb-sortBtn">가나다 순 정렬</button>
                     <button class="bb-btn" id="bb-rmbtn">제거</button>
                     <div class="bb-xbtn" id="bb-closebtn">✕</div>
                 </div>
@@ -430,7 +443,7 @@
                     <div class="bb-mg-icons" id="bb-mg-seongsu"></div>
                 </div>
                 <div class="bb-mg-row">
-                    <div class="bb-mg-label">성남 삼평&amp;서현</div>
+                    <div class="bb-mg-label">성남 삼평/서현</div>
                     <div class="bb-mg-icons" id="bb-mg-seongnam"></div>
                 </div>
             </div>
@@ -440,29 +453,32 @@
                     <div class="bb-li"><div class="bb-ld" style="background:#3b82f6"></div>순찰 중</div>
                     <div class="bb-li"><div class="bb-ld" style="background:#c8ccd4"></div>대기 중</div>
                     <div class="bb-li"><div class="bb-ld" style="background:#ec4899"></div>배달 중</div>
+                    <div class="bb-li"><div class="bb-ld" style="background:#eab308;"></div>도킹 중</div>
                     <div class="bb-li"><div class="bb-ld" style="background:#4b5563"></div>OFF</div>
                 </div>
-                <div class="bb-rmhint" id="bb-rmhint">카드 선택 → 완료로 제거</div>
-                <button class="bb-info-btn" id="bb-infobtn" title="설명서">i</button>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <div class="bb-rmhint" id="bb-rmhint">카드 선택 → 완료로 제거</div>
+                    <button class="bb-info-btn" id="bb-infobtn" title="사용 설명서">i</button>
+                </div>
             </div>
             <div id="bb-info-panel">
                 <div class="bb-info-hd">
-                    <div class="bb-info-title">📖 사용 설명서</div>
+                    <div class="bb-info-title">📖 사용 설명서 for AHR</div>
                     <div class="bb-xbtn" id="bb-info-close">✕</div>
                 </div>
                 <div id="bb-info-body">
                     <!-- 설명서 내용 작성 -->
-                    * 새로고침 시에만 첫 10~20초 데이터 전송 시간 필요(최대한 안 쓰는 페이지를 활용함)<br>
-                    * 실수로 다른 페이지로 이동했다면 재접속 또는 새로고침 필요(그 시간동안의 기록 누락 영향은 미미할 것으로 추정)<br>
+                    * 첫 로딩 시에만 10~20초 데이터 전송 시간 필요(오직 '알림 센터' 페이지에서만 작동함)<br>
+                    * 다른 페이지로 이동했다면 재접속 또는 새로고침 필수<br>
                     * 추가한 기체 카드와 배치는 로컬 스토리지에 저장됨(최대 24대. 드래그로 배치 변경가능)<br>
                     * 알림 전송 조건<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 배터리 21% 이하 기체<br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 배달 사이트 기체가 아닌데 30분이상 대기 상태로 방치된 경우<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 배달 사이트 기체가 아닌데 120분이상 대기 상태로 방치된 경우<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 무선 도킹됨 상태 기체<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 최근 10분 동안 ON/OFF를 3회 이상 반복한 경우<br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 최근 2분 동안 전원ON인데 임무, 배터리, GPS 수신값이 잡히지 않는 경우(좀비 의심)<br>
-                    * 알림은 방치하더라도 문제가 해결되면 자동으로 해제됨<br>
-                    * 하단 네 줄: 역삼, 송도, 성수, 삼평서현 ON/OFF 및 상태 확인용 퀵메뉴<br>
-                    * 피드백 받습니다(수정 시 자동 실시간 반영).
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 전원ON인데 배터리, GPS 수신값이 잡히지 않는 경우(좀비 의심)<br>
+                    * 하단 고정 바: 역삼, 송도, 성수, 삼평서현 ON/OFF 및 상태 확인용 퀵메뉴<br>
+                    * 개선 피드백 받습니다(수정 시 자동 실시간 반영).
                 </div>
             </div>
         </div>
@@ -502,8 +518,8 @@
     const LS         = 'bb_ids';
     const LS_TOGGLE  = 'bb_toggles';
     const LS_ZOMBIE  = 'bb_zombie';
-    const STL = { charging:'충전 중', patrolling:'순찰 중', delivering:'배달 중', standby:'대기 중', off:'OFF' };
-    const STI = { charging:'🟢', patrolling:'🔵', delivering:'🩷', standby:'⚪', off:'⚫' };
+    const STL = { charging:'충전 중', patrolling:'순찰 중', delivering:'배달 중', standby:'대기 중', docking:'도킹 중', off:'OFF' };
+    const STI = { charging:'🟢', patrolling:'🔵', delivering:'🩷', standby:'⚪', docking:'🟡', off:'⚫' };
     const DELIVERY_TYPES = ['ALL', 'OPENAPI_DELIVERY'];
     const DELIVERY_SITE_IDS = [
         25,27,44,47,48,53,56,65,86,109,118,141,180,
@@ -511,7 +527,7 @@
     const SITE_IDS = [
         24,25,27,36,37,40,42,44,45,46,47,48,50,53,56,57,62,64,
         65,66,72,75,82,86,100,105,108,109,111,117,118,126,131,
-        132,134,138,140,141,142,143,144,145,146,150,151,
+        132,134,137,138,140,141,142,143,144,145,146,150,151,
         177,178,179,180,181,182,187,193,196,202,203,214
     ];
 
@@ -580,8 +596,10 @@
         let status;
         if (!rs.isConnecting) {
             status = 'off';
-        } else if (rs.isCharging || rs.isWirelessChargerConnected || rs.isOnWirelessChargerDock) {
+        } else if (rs.isCharging || rs.isWirelessChargerConnected) {
             status = 'charging';
+        } else if (rs.isOnWirelessChargerDock) {
+            status = 'docking';
         } else if (['PATROL','OPENAPI_PATROL'].includes(raw.service?.serviceType)) {
             status = raw.currentScenario ? 'patrolling' : 'standby';
         } else if (DELIVERY_TYPES.includes(raw.service?.serviceType)) {
@@ -622,10 +640,10 @@
                 DELIVERY_TYPES.includes(raw.service?.serviceType) ||
                 DELIVERY_SITE_IDS.includes(raw.site?.id);
 
-            // ── 기능1: 대기중 20분 이상 (배달용 제외) ─────────────
+            // ── 기능1: 대기중 30분 이상 (배달용 제외) ─────────────
             if (!isDelivery && status === 'standby') {
                 const mins = minAgo(rs.lastOperatedAt);
-                if (mins >= 30) {
+                if (mins >= 120) {
                     const key = alertKey('standby', id);
                     if (!dismissedAlerts.has(key)) alerts.push({
                         key, type:'standby', dot:'rd', name,
@@ -635,7 +653,17 @@
                 }
             }
 
-            // ── 기능2: 배터리 21% 이하 (전 기체) ──────────────────
+            // ── 기능2: 도킹됐는데 충전 안 되는 경우 ──
+            if (status === 'docking') {
+                const key = alertKey('docking', id);
+                if (!dismissedAlerts.has(key)) alerts.push({
+                    key, type:'docking', dot:'ye', name,
+                    desc:`무선 도크 위에 있으나 충전 안 됨 | 확인 필요`,
+                    time: fmt(new Date().toISOString())
+                });
+            }
+
+            // ── 기능3: 배터리 21% 이하 (전 기체) ──────────────────
             if (rs.isConnecting && battery > 0 && battery <= 21) {
                 const key = alertKey('battery', id);
                 if (!dismissedAlerts.has(key)) alerts.push({
@@ -645,7 +673,7 @@
                 });
             }
 
-            // ── 기능3: ON/OFF 반복 (10분 내 6회 전환) ─────────────
+            // ── 기능4: ON/OFF 반복 (10분 내 6회 전환) ─────────────
             {
                 const prev = toggles[id];
                 const prevState = prev?.length ? prev[prev.length - 1].state : null;
@@ -674,7 +702,7 @@
                 }
             }
 
-            // ── 기능4: 좀비 상태 (켜짐인데 battery/GPS/속도 없음) ─
+            // ── 기능5: 좀비 상태 (켜짐인데 battery/GPS/속도 없음) ─
             {
                 const isZombie =
                     rs.isConnecting === true &&
@@ -682,8 +710,6 @@
                     !raw.battery &&
                     // GPS: null, undefined 모두 포함 (0은 유효한 값일 수 있음)
                     (rs.navpvtHorzAccuracy == null || rs.navpvtHorzAccuracy === 0) &&
-                    // 임무 없음: currentScenario가 없거나 falsy
-                    !raw.currentScenario &&
                     // 속도: null, undefined, 0 모두 포함
                     !rs.velocity;
 
@@ -1002,7 +1028,7 @@
         save(); render();
         const btn = document.getElementById('bb-sortBtn');
         btn.textContent = '✓ 정렬됨';
-        setTimeout(() => { btn.textContent = '이름 순 정렬'; }, 1200);
+        setTimeout(() => { btn.textContent = '가나다 순 정렬'; }, 1200);
     }
 
     function toggleRm() {
