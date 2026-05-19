@@ -893,23 +893,29 @@
     });
 
     let _hCount = 0, _hTimer;
-    document.addEventListener('keydown', e => {
-        if (e.key === 'h' || e.key === 'H') {
-            _hCount++;
-            clearTimeout(_hTimer);
-            _hTimer = setTimeout(() => _hCount = 0, 1000);
-            if (_hCount >= 5) {
-                const panel = document.getElementById('bb-hist-panel');
-                panel.classList.toggle('open');
-                if (panel.classList.contains('open')) {
-                    panel.style.zIndex = ++topmostZ;
-                    histVideoOpen = false;
-                    loadHistoryPanel();
-                }
-                _hCount = 0;
-            }
-        }
-    });
+   document.addEventListener('keydown', e => {
+       if (e.key === 'h' || e.key === 'H') {
+           if (_hCount === 0) {
+               _hTimer = setTimeout(() => _hCount = 0, 2000); // 2초
+           }
+           _hCount++;
+           if (_hCount >= 5) {
+               clearTimeout(_hTimer);
+               _hCount = 0;
+               const panel = document.getElementById('bb-hist-panel');
+               panel.classList.toggle('open');
+               if (panel.classList.contains('open')) {
+                   panel.style.zIndex = ++topmostZ;
+                   histVideoOpen = false;
+                   loadHistoryPanel();
+               }
+           }
+       } else {
+           // h 아닌 다른 키 누르면 초기화
+           clearTimeout(_hTimer);
+           _hCount = 0;
+       }
+   });
 
     document.getElementById('bb-alertBtn').addEventListener('click', () => {
         const panel = document.getElementById('bb-alert-panel');
