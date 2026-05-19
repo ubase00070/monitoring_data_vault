@@ -379,9 +379,9 @@
             font-size:10px; font-weight:900; padding:2px 7px; border-radius:4px;
             background:var(--rd2); color:var(--rd); border:1px solid rgba(239,68,68,.3);
         }
-        .bb-hp-entry-badge {
-            font-size:10px; font-weight:900; padding:2px 7px; border-radius:4px;
-            background:var(--rd2); color:var(--rd); border:1px solid rgba(239,68,68,.3);
+        .bb-hp-entry-badge.misplaced {
+            background:rgba(251,191,36,.10); color:var(--ye);
+            border:1px solid rgba(251,191,36,.3);
         }
         .bb-hp-empty { padding:24px; text-align:center; font-size:12px; color:var(--mu); font-weight:700; }
         .bb-hp-loading { padding:16px; text-align:center; font-size:12px; color:var(--mu); }
