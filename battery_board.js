@@ -1239,7 +1239,7 @@
                         <div class="bb-hp-entry">
                             <div class="bb-hp-entry-hour">${e.hour}</div>
                             <div class="bb-hp-entry-name">${e.name}</div>
-                            <div class="bb-hp-entry-badge">미업로드</div>
+                            <div class="bb-hp-entry-badge">${e.status}</div>
                         </div>
                     `).join('');
 
