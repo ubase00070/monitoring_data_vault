@@ -463,7 +463,7 @@
             </div>
             <div id="bb-info-panel">
                 <div class="bb-info-hd">
-                    <div class="bb-info-title">📖 사용 설명서 for AHR</div>
+                    <div class="bb-info-title">📖 사용 설명서</div>
                     <div class="bb-xbtn" id="bb-info-close">✕</div>
                 </div>
                 <div id="bb-info-body">
@@ -520,7 +520,7 @@
     const LS_ZOMBIE  = 'bb_zombie';
     const STL = { charging:'충전 중', patrolling:'순찰 중', delivering:'배달 중', standby:'대기 중', docking:'도킹 중', off:'OFF' };
     const STI = { charging:'🟢', patrolling:'🔵', delivering:'🩷', standby:'⚪', docking:'🟡', off:'⚫' };
-    const DELIVERY_TYPES = ['ALL', 'OPENAPI_DELIVERY'];
+    const DELIVERY_TYPES = ['ALL', 'OPENAPI_DELIVERY', 'NB_ORDER_DELIVERY', 'DELIVERY'];
     const DELIVERY_SITE_IDS = [
         25,27,44,47,48,53,56,65,86,109,118,141,180,
     ];
