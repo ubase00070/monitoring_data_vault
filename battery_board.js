@@ -515,9 +515,9 @@
     // SECTION 1. 상수 & 상태
     // ============================================================
     const MAX = 24;
-    const LS         = 'bb_ids';
-    const LS_TOGGLE  = 'bb_toggles';
-    const LS_ZOMBIE  = 'bb_zombie';
+    const LS         = 'bb_ids';  // 터치 금지
+    const LS_TOGGLE  = 'bb_toggles'; // 터치 금지
+    const LS_ZOMBIE  = 'bb_zombie'; // 터치 금지
     const STL = { charging:'충전 중', patrolling:'순찰 중', delivering:'배달 중', standby:'대기 중', docking:'도킹 중', off:'OFF' };
     const STI = { charging:'🟢', patrolling:'🔵', delivering:'🩷', standby:'⚪', docking:'🟡', off:'⚫' };
     const DELIVERY_TYPES = ['ALL', 'OPENAPI_DELIVERY', 'NB_ORDER_DELIVERY', 'DELIVERY'];
@@ -839,8 +839,10 @@
                 const parsed = parseRobotStatus(raw);
                 DB.push({ id, name: raw.nickname || raw.name || id, status: parsed.status, battery: parsed.battery, loading: false });
             });
-            ids = ids.filter(id => DB.some(r => r.id === id));
-            save();
+            if (DB.length > 0) {
+                ids = ids.filter(id => DB.some(r => r.id === id));
+                save();
+            }
 
             const alerts = detectAlerts(allRaw);
             renderAlertPanel(alerts);
