@@ -1254,7 +1254,7 @@
                 return `
                     <div class="bb-hp-month">
                         <div class="bb-hp-month-hd" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.bb-hp-month-arrow').classList.toggle('open')">
-                            <span>${label} 업로드 기록 (2시간마다 반영됨)</span>
+                            <span>${label} 업로드 기록 (2시간마다 반영 / 폴더 실수 감안)</span>
                             <span class="bb-hp-month-arrow">▼</span>
                         </div>
                         <div class="bb-hp-month-body">
