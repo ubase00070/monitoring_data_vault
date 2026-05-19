@@ -197,7 +197,12 @@
     }
 
     // 네이밍용 시간 보정 유틸리티
-    const getFormattedDate = (dateObj) => dateObj.toISOString().slice(0, 10).replace(/-/g, "");
+    const getFormattedDate = (dateObj) => {
+        const y = dateObj.getFullYear();
+        const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const d = String(dateObj.getDate()).padStart(2, '0');
+        return `${y}${m}${d}`;
+    };
     const getFormattedHour = (dateObj) => String(dateObj.getHours()).padStart(2, '0');
     const getCalculatedTime = (offsetMinutes) => {
         const now = new Date();
