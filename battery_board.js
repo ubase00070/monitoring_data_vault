@@ -379,6 +379,10 @@
             font-size:10px; font-weight:900; padding:2px 7px; border-radius:4px;
             background:var(--rd2); color:var(--rd); border:1px solid rgba(239,68,68,.3);
         }
+        .bb-hp-entry-badge {
+            font-size:10px; font-weight:900; padding:2px 7px; border-radius:4px;
+            background:var(--rd2); color:var(--rd); border:1px solid rgba(239,68,68,.3);
+        }
         .bb-hp-empty { padding:24px; text-align:center; font-size:12px; color:var(--mu); font-weight:700; }
         .bb-hp-loading { padding:16px; text-align:center; font-size:12px; color:var(--mu); }
         .bb-hp-day.today {
@@ -1239,7 +1243,7 @@
                         <div class="bb-hp-entry">
                             <div class="bb-hp-entry-hour">${e.hour}</div>
                             <div class="bb-hp-entry-name">${e.name}</div>
-                            <div class="bb-hp-entry-badge">${e.status}</div>
+                            <div class="bb-hp-entry-badge ${e.status !== '미업로드' ? 'misplaced' : ''}">${e.status}</div>
                         </div>
                     `).join('');
 
