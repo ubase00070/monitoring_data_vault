@@ -1201,13 +1201,8 @@
 
             // [추가] realtime을 오늘 날짜 키로 history에 병합 (표시용)
             const displayHistory = { ...history };
-            if (realtime.length > 0) {
-                // lastSlot 이전 시간대만 표시 (아직 확인 안 된 시간대는 제외)
-                const validRealtime = realtime.filter(e => parseInt(e.hour) <= (lastSlot || 0));
-                if (validRealtime.length > 0) {
-                    displayHistory[todayStr] = validRealtime;
-                }
-            }
+            const validRealtime = realtime.filter(e => parseInt(e.hour) <= (lastSlot || 0));
+            displayHistory[todayStr] = validRealtime;
 
             if (Object.keys(displayHistory).length === 0) {
                 body.innerHTML = '<div class="bb-hp-empty">누락 기록 없음 ✓</div>';
