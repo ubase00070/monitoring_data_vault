@@ -96,31 +96,31 @@
     "rawTime": "22:00"
   },
   {
-    "user": "임아연",
+    "user": "최선호",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "23:00"
   },
   {
-    "user": "최선호",
+    "user": "임다연",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "00:00"
   },
   {
-    "user": "임다연",
+    "user": "안대관",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "01:00"
   },
   {
-    "user": "안대관",
+    "user": "임아연",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "02:00"
   },
   {
-    "user": "임아연",
+    "user": "임다연",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "03:00"
@@ -132,7 +132,7 @@
     "rawTime": "04:00"
   },
   {
-    "user": "임다연",
+    "user": "임아연",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "05:00"
