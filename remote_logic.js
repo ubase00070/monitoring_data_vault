@@ -1462,14 +1462,18 @@
         batteryPopup.style.display = 'none';
         const queueInfoOverlay = document.getElementById('neubie-queue-info-overlay');
         if (queueInfoOverlay) queueInfoOverlay.style.display = 'none';
+        const tipsOverlay = document.getElementById('neubie-tips-overlay');
+        if (tipsOverlay) tipsOverlay.style.display = 'none';
     }
 
     window.addEventListener('keydown', (e) => {
         if (e.altKey && e.code === 'KeyQ') {
             e.preventDefault();
             
+            const tipsOverlayEl = document.getElementById('neubie-tips-overlay');
             const isAnyOpen = (dashboard.style.display === 'block' || 
-                            batteryPopup.style.display === 'block');
+                            batteryPopup.style.display === 'block' ||
+                            (tipsOverlayEl && tipsOverlayEl.style.display === 'flex'));
             
             if (isAnyOpen) {
                 // 하나라도 열려있다면 통합 닫기 실행
