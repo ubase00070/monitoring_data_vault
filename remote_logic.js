@@ -518,7 +518,7 @@
                 const s = document.createElement('style');
                 s.id = 'neubie-alarm-style';
                 s.textContent = `
-                    @keyframes neubie-blink {
+                    @keyframes neubie-alarm-blink {
                         0%, 100% { border-color: #000; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
                         50% { border-color: #ff0000; box-shadow: 0 0 30px rgba(255,0,0,0.9); }
                     }
@@ -537,7 +537,7 @@
                 z-index:9999999; font-weight:bold; font-size:16px;
                 border:3px solid #000; display:flex; align-items:center; gap:10px;
                 box-shadow:0 8px 30px rgba(0,0,0,0.5);
-                animation:neubie-fadein 0.3s ease, neubie-blink 0.5s step-end 0.3s infinite;
+                animation:neubie-fadein 0.3s ease, neubie-alarm-blink 0.5s step-end 0.3s infinite;
             `;
             alarmDiv.innerHTML = `⚠️ <b>[업무 알림]</b> ${content} 시작 ${remainMin}분 전입니다!`;
             document.body.appendChild(alarmDiv);
@@ -1138,29 +1138,20 @@
         const storedName = localStorage.getItem('neubie_user_name') || "사용자";
         const currentInt = localStorage.getItem('neubie_remind_int') || '0';
         taskCard.innerHTML = `
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-                    <div style="font-weight:bold; font-size:18px;">📋 ${storedName}의 일일 업무</div>
-                    <div id="notif-type-toggle" style="display:flex; gap:4px;">
-                        <button id="btn-type1" style="
-                            padding:4px 10px; border-radius:20px; font-size:12px; font-weight:bold; cursor:pointer;
-                            border:2px solid #f59e0b; background:#f59e0b; color:#000; transition:all 0.2s;
-                        ">Type1</button>
-                        <button id="btn-type2" style="
-                            padding:4px 10px; border-radius:20px; font-size:12px; font-weight:bold; cursor:pointer;
-                            border:2px solid #2563eb; background:transparent; color:#60a5fa; transition:all 0.2s;
-                        ">Type2</button>
-                    </div>
-                    <button id="btn-notif-test" style="
-                        padding:4px 10px; border-radius:20px; font-size:11px; font-weight:bold; cursor:pointer;
-                        border:1px solid #555; background:#333; color:#aaa; transition:all 0.2s;
-                    ">Test</button>
+            <div style="margin-bottom:10px;">
+                <div style="display:flex; align-items:center; gap:6px; margin-bottom:8px; flex-wrap:wrap;">
+                    <div style="font-weight:bold; font-size:17px; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">📋 ${storedName}의 일일 업무</div>
+                    <button id="btn-type1" style="padding:3px 10px; border-radius:20px; font-size:12px; font-weight:bold; cursor:pointer; border:2px solid #f59e0b; background:#f59e0b; color:#000;">알림 타입1</button>
+                    <button id="btn-type2" style="padding:3px 10px; border-radius:20px; font-size:12px; font-weight:bold; cursor:pointer; border:2px solid #2563eb; background:transparent; color:#60a5fa;">알림 타입2</button>
+                    <button id="btn-notif-test" style="padding:3px 8px; border-radius:20px; font-size:11px; font-weight:bold; cursor:pointer; border:1px solid #555; background:#333; color:#aaa;">알림 테스트</button>
                 </div>
-                <select id="remind-inline" style="background:#333; color:white; border:1px solid #555; font-size:13px; border-radius:4px; padding:2px;">
-                    <option value="0" ${currentInt === '0' ? 'selected' : ''}>알림 없음</option>
-                    <option value="3" ${currentInt === '3' ? 'selected' : ''}>3분 전 (다중은 13분 전)</option>
-                    <option value="5" ${currentInt === '5' ? 'selected' : ''}>5분 전 (다중은 15분 전)</option>
-                </select>
+                <div style="display:flex; justify-content:flex-end;">
+                    <select id="remind-inline" style="background:#333; color:white; border:1px solid #555; font-size:13px; border-radius:4px; padding:2px;">
+                        <option value="0" ${currentInt === '0' ? 'selected' : ''}>알림 없음</option>
+                        <option value="3" ${currentInt === '3' ? 'selected' : ''}>3분 전 (다중은 13분 전)</option>
+                        <option value="5" ${currentInt === '5' ? 'selected' : ''}>5분 전 (다중은 15분 전)</option>
+                    </select>
+                </div>
             </div>
         `;
         // 알림 타입 토글 + Test 버튼 이벤트
