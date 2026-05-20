@@ -569,11 +569,11 @@
                 white-space:nowrap; letter-spacing:0.03em;
                 box-shadow:0 4px 20px rgba(37,99,235,0.5);
                 border-left:4px solid #60a5fa; border-right:4px solid #60a5fa;
-                animation:neubie-ticker 6s linear forwards;
+                animation:neubie-ticker 9s linear forwards;
             `;
             bar.innerHTML = `🚇 &nbsp;[업무 알림]&nbsp; ${content} 시작 ${remainMin}분 전입니다!`;
             document.body.appendChild(bar);
-            setTimeout(() => bar.remove(), 6200);
+            setTimeout(() => bar.remove(), 9200);
         }
     }
 
@@ -1140,7 +1140,7 @@
         taskCard.innerHTML = `
             <div style="margin-bottom:10px;">
                 <div style="display:flex; align-items:center; gap:6px; margin-bottom:8px; flex-wrap:wrap;">
-                    <div style="font-weight:bold; font-size:17px; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">📋 ${storedName}의 일일 업무</div>
+                    <div style="font-weight:bold; font-size:18px; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">📋 ${storedName}의 일일 업무</div>
                     <button id="btn-type1" style="padding:3px 10px; border-radius:20px; font-size:12px; font-weight:bold; cursor:pointer; border:2px solid #f59e0b; background:#f59e0b; color:#000;">알림 타입1</button>
                     <button id="btn-type2" style="padding:3px 10px; border-radius:20px; font-size:12px; font-weight:bold; cursor:pointer; border:2px solid #2563eb; background:transparent; color:#60a5fa;">알림 타입2</button>
                     <button id="btn-notif-test" style="padding:3px 8px; border-radius:20px; font-size:11px; font-weight:bold; cursor:pointer; border:1px solid #555; background:#333; color:#aaa;">알림 테스트</button>
@@ -1164,11 +1164,27 @@
 
             function applyTypeUI(type) {
                 if (type === 'type1') {
-                    btn1.style.background = '#f59e0b'; btn1.style.color = '#000';
-                    btn2.style.background = 'transparent'; btn2.style.color = '#60a5fa';
+                    // type1 ON
+                    btn1.style.background = '#f59e0b';
+                    btn1.style.borderColor = '#f59e0b';
+                    btn1.style.color = '#000';
+                    btn1.style.opacity = '1';
+                    // type2 OFF
+                    btn2.style.background = 'transparent';
+                    btn2.style.borderColor = '#555';
+                    btn2.style.color = '#555';
+                    btn2.style.opacity = '0.45';
                 } else {
-                    btn2.style.background = '#2563eb'; btn2.style.color = '#fff';
-                    btn1.style.background = 'transparent'; btn1.style.color = '#f59e0b';
+                    // type2 ON
+                    btn2.style.background = '#2563eb';
+                    btn2.style.borderColor = '#2563eb';
+                    btn2.style.color = '#fff';
+                    btn2.style.opacity = '1';
+                    // type1 OFF
+                    btn1.style.background = 'transparent';
+                    btn1.style.borderColor = '#555';
+                    btn1.style.color = '#555';
+                    btn1.style.opacity = '0.45';
                 }
             }
             applyTypeUI(savedType);
@@ -1182,7 +1198,20 @@
                 applyTypeUI('type2');
             };
             btnTest.onclick = () => {
+                if (btnTest.disabled) return;
+                btnTest.disabled = true;
+                btnTest.textContent = '✓';
+                btnTest.style.background = '#16a34a';
+                btnTest.style.borderColor = '#16a34a';
+                btnTest.style.color = '#fff';
                 triggerReminder('테스트 업무', 5);
+                setTimeout(() => {
+                    btnTest.disabled = false;
+                    btnTest.textContent = 'Test';
+                    btnTest.style.background = '#333';
+                    btnTest.style.borderColor = '#555';
+                    btnTest.style.color = '#aaa';
+                }, 6000); // type2 길이에 맞춰 6초 후 복귀
             };
         }, 0);
         const taskInline = document.createElement('div');
