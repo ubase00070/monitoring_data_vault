@@ -508,40 +508,73 @@
         };
     }
 
-    // 리마인더 알림창 생성 함수 (5초 점멸)
+    // 리마인더 알림창 생성 함수
     function triggerReminder(content, remainMin) {
+        const notifType = localStorage.getItem('neubie_notif_type') || 'type1';
 
-        // 점멸 keyframes 한 번만 주입
-        if (!document.getElementById('neubie-alarm-style')) {
-            const s = document.createElement('style');
-            s.id = 'neubie-alarm-style';
-            s.textContent = `
-                @keyframes neubie-blink {
-                    0%, 100% { border-color: #000; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-                    50% { border-color: #ff0000; box-shadow: 0 0 20px rgba(255,0,0,0.8); }
-                }
+        // ── Type 1: 점멸 ──────────────────────────────────────────
+        if (notifType === 'type1') {
+            if (!document.getElementById('neubie-alarm-style')) {
+                const s = document.createElement('style');
+                s.id = 'neubie-alarm-style';
+                s.textContent = `
+                    @keyframes neubie-blink {
+                        0%, 100% { border-color: #000; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+                        50% { border-color: #ff0000; box-shadow: 0 0 30px rgba(255,0,0,0.9); }
+                    }
+                    @keyframes neubie-fadein {
+                        from { opacity:0; transform:translateX(-50%) translateY(-10px); }
+                        to   { opacity:1; transform:translateX(-50%) translateY(0); }
+                    }
+                `;
+                document.head.appendChild(s);
+            }
+            const alarmDiv = document.createElement('div');
+            alarmDiv.style.cssText = `
+                position:fixed; top:20px; left:50%; transform:translateX(-50%);
+                background:linear-gradient(135deg,#fbbf24,#f59e0b);
+                color:#000; padding:15px 30px; border-radius:14px;
+                z-index:9999999; font-weight:bold; font-size:16px;
+                border:3px solid #000; display:flex; align-items:center; gap:10px;
+                box-shadow:0 8px 30px rgba(0,0,0,0.5);
+                animation:neubie-fadein 0.3s ease, neubie-blink 0.5s step-end 0.3s infinite;
             `;
-            document.head.appendChild(s);
+            alarmDiv.innerHTML = `⚠️ <b>[업무 알림]</b> ${content} 시작 ${remainMin}분 전입니다!`;
+            document.body.appendChild(alarmDiv);
+            setTimeout(() => {
+                alarmDiv.style.opacity = '0';
+                alarmDiv.style.transition = '0.5s';
+                setTimeout(() => alarmDiv.remove(), 500);
+            }, 5000);
+
+        // ── Type 2: 지하철 자막 (좌→우) ─────────────────────────
+        } else {
+            if (!document.getElementById('neubie-ticker-style')) {
+                const s = document.createElement('style');
+                s.id = 'neubie-ticker-style';
+                s.textContent = `
+                    @keyframes neubie-ticker {
+                        0%   { left: -100%; }
+                        100% { left: 110%; }
+                    }
+                `;
+                document.head.appendChild(s);
+            }
+            const bar = document.createElement('div');
+            bar.style.cssText = `
+                position:fixed; top:20px; left:-100%;
+                background:linear-gradient(90deg,#1e3a5f,#2563eb,#1e3a5f);
+                color:#fff; padding:13px 40px; border-radius:10px;
+                z-index:9999999; font-weight:bold; font-size:16px;
+                white-space:nowrap; letter-spacing:0.03em;
+                box-shadow:0 4px 20px rgba(37,99,235,0.5);
+                border-left:4px solid #60a5fa; border-right:4px solid #60a5fa;
+                animation:neubie-ticker 6s linear forwards;
+            `;
+            bar.innerHTML = `🚇 &nbsp;[업무 알림]&nbsp; ${content} 시작 ${remainMin}분 전입니다!`;
+            document.body.appendChild(bar);
+            setTimeout(() => bar.remove(), 6200);
         }
-
-        const alarmDiv = document.createElement('div');
-        alarmDiv.style.cssText = `
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-            background: #fbbf24; color: #000; padding: 15px 25px; border-radius: 12px;
-            z-index: 9999999;
-            font-weight: bold; font-size: 16px; border: 3px solid #000;
-            display: flex; align-items: center; gap: 10px;
-            animation: neubie-blink 0.5s step-end infinite;
-        `;
-        alarmDiv.innerHTML = `⚠️ <b>[업무 알림]</b> ${content} 시작 ${remainMin}분 전입니다!`;
-
-        document.body.appendChild(alarmDiv);
-
-        setTimeout(() => {
-            alarmDiv.style.opacity = '0';
-            alarmDiv.style.transition = '0.5s';
-            setTimeout(() => alarmDiv.remove(), 500);
-        }, 5000);
     }
 
     /* ============================================================
@@ -1106,7 +1139,23 @@
         const currentInt = localStorage.getItem('neubie_remind_int') || '0';
         taskCard.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                <div style="font-weight:bold; font-size:18px;">📋 ${storedName}의 일일 업무</div>
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                    <div style="font-weight:bold; font-size:18px;">📋 ${storedName}의 일일 업무</div>
+                    <div id="notif-type-toggle" style="display:flex; gap:4px;">
+                        <button id="btn-type1" style="
+                            padding:4px 10px; border-radius:20px; font-size:12px; font-weight:bold; cursor:pointer;
+                            border:2px solid #f59e0b; background:#f59e0b; color:#000; transition:all 0.2s;
+                        ">Type1</button>
+                        <button id="btn-type2" style="
+                            padding:4px 10px; border-radius:20px; font-size:12px; font-weight:bold; cursor:pointer;
+                            border:2px solid #2563eb; background:transparent; color:#60a5fa; transition:all 0.2s;
+                        ">Type2</button>
+                    </div>
+                    <button id="btn-notif-test" style="
+                        padding:4px 10px; border-radius:20px; font-size:11px; font-weight:bold; cursor:pointer;
+                        border:1px solid #555; background:#333; color:#aaa; transition:all 0.2s;
+                    ">Test</button>
+                </div>
                 <select id="remind-inline" style="background:#333; color:white; border:1px solid #555; font-size:13px; border-radius:4px; padding:2px;">
                     <option value="0" ${currentInt === '0' ? 'selected' : ''}>알림 없음</option>
                     <option value="3" ${currentInt === '3' ? 'selected' : ''}>3분 전 (다중은 13분 전)</option>
@@ -1114,6 +1163,37 @@
                 </select>
             </div>
         `;
+        // 알림 타입 토글 + Test 버튼 이벤트
+        setTimeout(() => {
+            const savedType = localStorage.getItem('neubie_notif_type') || 'type1';
+            const btn1 = document.getElementById('btn-type1');
+            const btn2 = document.getElementById('btn-type2');
+            const btnTest = document.getElementById('btn-notif-test');
+            if (!btn1 || !btn2 || !btnTest) return;
+
+            function applyTypeUI(type) {
+                if (type === 'type1') {
+                    btn1.style.background = '#f59e0b'; btn1.style.color = '#000';
+                    btn2.style.background = 'transparent'; btn2.style.color = '#60a5fa';
+                } else {
+                    btn2.style.background = '#2563eb'; btn2.style.color = '#fff';
+                    btn1.style.background = 'transparent'; btn1.style.color = '#f59e0b';
+                }
+            }
+            applyTypeUI(savedType);
+
+            btn1.onclick = () => {
+                localStorage.setItem('neubie_notif_type', 'type1');
+                applyTypeUI('type1');
+            };
+            btn2.onclick = () => {
+                localStorage.setItem('neubie_notif_type', 'type2');
+                applyTypeUI('type2');
+            };
+            btnTest.onclick = () => {
+                triggerReminder('테스트 업무', 5);
+            };
+        }, 0);
         const taskInline = document.createElement('div');
         taskInline.id = 'inline-task-container';
         taskCard.appendChild(taskInline);
