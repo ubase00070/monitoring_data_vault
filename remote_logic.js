@@ -926,7 +926,7 @@
         };
 
         card.innerHTML = `
-            <div style="color:#3b82f6; font-weight:bold; font-size:18px; margin-bottom:10px;">🏷️ 영상 파일명 생성기</div>
+            <div style="color:#3b82f6; font-weight:bold; font-size:18px; margin-bottom:10px;">🏷️ 영상 파일명 생성기 (날짜/시각 자동 반영)</div>
             <div style="display: flex; gap: 5px; margin-bottom: 10px;">
                 <select id="robotSelector" style="flex: 1.2; background: #333; color: white; border: 1px solid #555; border-radius: 4px; font-size: 15px; padding: 4px;">
                     ${dropdownOptions || '<option>최근 배달 기체 미감지</option>'}
@@ -1148,7 +1148,7 @@
         // 줄을 서시오 (체크박스, 멘트 없이 이름만)
         const queueCard = document.createElement('div');
         queueCard.style.cssText = "background:#252525; padding:15px; border-radius:15px; border:1px solid #333; display:flex; justify-content:space-between; align-items:center;";
-        queueCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">📡 중복 관제 순열 시스템</span>`;
+        queueCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">📡 줄을 서시오 v2.0</span>`;
         const queueChk = document.createElement('input');
         queueChk.type = 'checkbox'; queueChk.checked = state.isQueueOpt;
         queueChk.style.cssText = "width:18px; height:18px; cursor:pointer;";
@@ -1254,16 +1254,134 @@
         twoCol.appendChild(queueCard);
         list.appendChild(twoCol);
 
-        // 3. 배터리 현황
+        const bottomRow = document.createElement('div');
+        bottomRow.style.cssText = "display:grid; grid-template-columns:1fr 1fr; gap:12px;";
+
+        // 3. 최적화 팁 + 배터리 현황 (반반 2열)
+        const bottomRow = document.createElement('div');
+        bottomRow.style.cssText = "display:grid; grid-template-columns:1fr 1fr; gap:12px;";
+
+        // 3-1. 최적화 팁 (좌측)
+        const tipsCard = document.createElement('div');
+        tipsCard.style.cssText = "background:#252525; padding:15px; border-radius:15px; border:1px solid #333; display:flex; justify-content:space-between; align-items:center;";
+        tipsCard.innerHTML = `
+            <div style="flex:1;">
+                <div style="font-weight:bold; font-size:15px; margin-bottom:3px;">💡 최적화 팁</div>
+                <div style="font-size:13px; color:#aaa;">항목별 가이드</div>
+            </div>`;
+        const tipsOpenBtn = document.createElement('button');
+        tipsOpenBtn.textContent = '열기';
+        tipsOpenBtn.style.cssText = "background:#3b82f6; color:white; border:none; padding:8px 16px; border-radius:8px; cursor:pointer; font-weight:bold; font-size:14px; white-space:nowrap;";
+        tipsOpenBtn.onclick = () => {
+            let tipsOverlay = document.getElementById('neubie-tips-overlay');
+            if (!tipsOverlay) {
+                tipsOverlay = document.createElement('div');
+                tipsOverlay.id = 'neubie-tips-overlay';
+                tipsOverlay.style.cssText = `
+                    position:fixed; inset:0; background:transparent; pointer-events:none;
+                    z-index:2147483646; display:flex; align-items:center; justify-content:center;
+                    font-family:Pretendard, sans-serif; border-radius:20px; overflow:hidden;
+                `;
+                const tipsBox = document.createElement('div');
+                tipsBox.style.cssText = `
+                    background:#1e1e2e; color:#e2e8f0; border-radius:18px; pointer-events:auto;
+                    border:1.5px solid #f59e0b; padding:28px 32px 24px 32px;
+                    max-width:560px; width:90%; max-height:80vh; overflow-y:auto;
+                    position:relative; box-shadow:0 10px 50px rgba(0,0,0,0.7);
+                `;
+                const tipsTitle = document.createElement('div');
+                tipsTitle.textContent = '💡 최적화 팁';
+                tipsTitle.style.cssText = `font-size:20px; font-weight:bold; margin-bottom:20px; color:#fcd34d;`;
+                const tipsClose = document.createElement('button');
+                tipsClose.textContent = '✕';
+                tipsClose.style.cssText = `
+                    position:absolute; top:16px; right:18px;
+                    background:transparent; border:none; color:#aaa;
+                    font-size:20px; cursor:pointer; line-height:1; padding:4px 8px;
+                    border-radius:6px; transition:color 0.2s;
+                `;
+                tipsClose.onmouseenter = () => { tipsClose.style.color='#fff'; };
+                tipsClose.onmouseleave = () => { tipsClose.style.color='#aaa'; };
+                tipsClose.onclick = () => { tipsOverlay.style.display='none'; };
+
+                const tipsItems = [
+                    { title: "슬랙 PWA 버전 사용법(앱 버전보다 가벼움)", url: "https://www.notion.so/PWA-366a8cf5ba7b80eebb43e017c095702c" },
+                    { title: "OBS 최적화 및 클립 따기 설정법", url: "https://telling-ink-a85.notion.site/OBS-366a8cf5ba7b80dfb101cfa149eaefcf?pvs=74" },
+                    { title: "추천 프로그램 목록", url: "https://telling-ink-a85.notion.site/366a8cf5ba7b80958575eadb8809f313" },
+                ];
+                const tipsContent = document.createElement('div');
+                tipsContent.style.cssText = "display:grid; gap:10px;";
+                tipsItems.forEach(item => {
+                    const row = document.createElement('div');
+                    row.style.cssText = `
+                        display:flex; justify-content:space-between; align-items:center;
+                        background:#252535; border:1px solid #333; border-radius:12px;
+                        padding:13px 16px; gap:12px;
+                    `;
+                    const rowTitle = document.createElement('span');
+                    rowTitle.textContent = item.title;
+                    rowTitle.style.cssText = "font-size:14px; font-weight:600; color:#e2e8f0; flex:1;";
+                    const rowBtn = document.createElement('button');
+                    rowBtn.textContent = '보기';
+                    rowBtn.style.cssText = `
+                        background:#f59e0b; color:#1a1a1a; border:none;
+                        padding:7px 16px; border-radius:8px; cursor:pointer;
+                        font-weight:bold; font-size:13px; white-space:nowrap;
+                        transition:background 0.2s;
+                    `;
+                    rowBtn.onmouseenter = () => { rowBtn.style.background='#fbbf24'; };
+                    rowBtn.onmouseleave = () => { rowBtn.style.background='#f59e0b'; };
+                    rowBtn.onclick = () => { window.open(item.url, '_blank'); };
+                    row.appendChild(rowTitle);
+                    row.appendChild(rowBtn);
+                    tipsContent.appendChild(row);
+                });
+                tipsBox.appendChild(tipsClose);
+                tipsBox.appendChild(tipsTitle);
+                tipsBox.appendChild(tipsContent);
+                tipsOverlay.appendChild(tipsBox);
+                const r0 = dashboard.getBoundingClientRect();
+                tipsOverlay.style.position = 'fixed';
+                tipsOverlay.style.top = r0.top + 'px';
+                tipsOverlay.style.left = r0.left + 'px';
+                tipsOverlay.style.width = r0.width + 'px';
+                tipsOverlay.style.height = r0.height + 'px';
+                document.body.appendChild(tipsOverlay);
+            } else {
+                const r = dashboard.getBoundingClientRect();
+                tipsOverlay.style.top = r.top + 'px';
+                tipsOverlay.style.left = r.left + 'px';
+                tipsOverlay.style.width = r.width + 'px';
+                tipsOverlay.style.height = r.height + 'px';
+                tipsOverlay.style.display = 'flex';
+            }
+        };
+        tipsCard.appendChild(tipsOpenBtn);
+        bottomRow.appendChild(tipsCard);
+
+        // 3-2. 배터리 현황 (우측)
         const isBatteryOpen = batteryPopup.style.display === 'block';
-        list.appendChild(createMenuCard("🔋 실시간 성남시 기체 배터리 현황", "5초 간격으로 정보를 받아옵니다.", null, null, () => {
+        const batteryCard = document.createElement('div');
+        batteryCard.style.cssText = "background:#252525; padding:15px; border-radius:15px; border:1px solid #333; display:flex; justify-content:space-between; align-items:center;";
+        batteryCard.innerHTML = `
+            <div style="flex:1;">
+                <div style="font-weight:bold; font-size:15px; margin-bottom:3px;">🔋 성남 배터리</div>
+                <div style="font-size:13px; color:#aaa;">5초 간격 갱신</div>
+            </div>`;
+        const batteryBtn = document.createElement('button');
+        batteryBtn.textContent = isBatteryOpen ? '닫기' : '열기';
+        batteryBtn.style.cssText = `background:${isBatteryOpen ? '#ef4444' : '#3b82f6'}; color:white; border:none; padding:8px 16px; border-radius:8px; cursor:pointer; font-weight:bold; font-size:14px; white-space:nowrap;`;
+        batteryBtn.onclick = () => {
             toggleBattery();
             renderDashboard();
-            // renderDashboard 후 업무 목록 다시 채우기
             if (window.currentMyTasks && window.currentMyTasks.length > 0) {
                 renderTaskList(window.currentMyTasks);
             }
-        }, isBatteryOpen ? '닫기' : '열기'));
+        };
+        batteryCard.appendChild(batteryBtn);
+        bottomRow.appendChild(batteryCard);
+
+        list.appendChild(bottomRow);
 
         // 4. 영상 파일명 도우미
         list.appendChild(createNamingCard());
