@@ -643,7 +643,6 @@
         // 리스트 생성 및 특수 알림 로직 적용
         validTasks.forEach(t => {
             const timeKey = t.rawTime || t.time;
-            const status = getTaskStatus(timeKey);
             const interval = parseInt(localStorage.getItem('neubie_remind_int') || '0');
 
             // 다중 모니터링 업무 전용 오프셋 (+10분)
@@ -651,7 +650,10 @@
             const targetInterval = isMultiMon ? (interval + 10) : interval;
 
             const item = document.createElement('div');
-            const isMon = t.type === 'monitoring';
+            const isMon = t.type === 'monitoring' || t.type === 'tomorrow_07';
+            const status = t.type === 'tomorrow_07'
+                ? { isExpired: false, remainMin: 999, score: 0 }
+                : getTaskStatus(timeKey, isMon);
             const textStyle = status.isExpired 
                 ? 'text-decoration: line-through; color: #777; opacity: 0.7;' 
                 : 'color: #eee;';
