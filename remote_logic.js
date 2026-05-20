@@ -430,7 +430,14 @@
             state.insuData = insu;
             state.attendanceData = attendance;
 
-            const myTasks = data.filter(t => t.user === myName);
+            const myTasks = data.filter(t => {
+                if (t.user !== myName) return false;
+                // tomorrow_07 타입은 00:00~07:10 사이에만 표시
+                if (t.type === 'tomorrow_07') {
+                    return hour < 7;
+                }
+                return true;
+            });
             window.currentMyTasks = myTasks;
             checkAndTriggerNotifications(myTasks);
 
