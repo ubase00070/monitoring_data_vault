@@ -1025,7 +1025,7 @@
         headerContainer.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; padding-right:5px;";
 
         const title = document.createElement('h2');
-        title.textContent = "✨ 우린 램이 8GB라니까?";
+        title.textContent = "🫠 없으면 내가 만든다";
         title.style.cssText = "color:#3b82f6; font-size:20px; margin:0; font-weight:bold; white-space:nowrap;";
 
         // 이름 입력 및 닫기 버튼 영역
