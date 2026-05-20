@@ -1,18 +1,11 @@
 {
-  "updatedAt": "2026-05-21 02:45:10",
+  "updatedAt": "2026-05-21 02:55:16",
   "realtime": [
     {
       "workDate": "20260520",
       "driveDate": "20260521",
       "hour": "01:00",
       "name": "안대관",
-      "status": "미업로드"
-    },
-    {
-      "workDate": "20260520",
-      "driveDate": "20260521",
-      "hour": "02:00",
-      "name": "임아연",
       "status": "미업로드"
     },
     {
