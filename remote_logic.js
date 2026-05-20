@@ -1141,9 +1141,9 @@
             <div style="margin-bottom:10px;">
                 <div style="display:flex; align-items:center; gap:6px; margin-bottom:8px; flex-wrap:wrap;">
                     <div style="font-weight:bold; font-size:18px; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">📋 ${storedName}의 일일 업무</div>
-                    <button id="btn-type1" style="padding:3px 10px; border-radius:20px; font-size:12px; font-weight:bold; cursor:pointer; border:2px solid #f59e0b; background:#f59e0b; color:#000;">알림 타입1</button>
-                    <button id="btn-type2" style="padding:3px 10px; border-radius:20px; font-size:12px; font-weight:bold; cursor:pointer; border:2px solid #2563eb; background:transparent; color:#60a5fa;">알림 타입2</button>
-                    <button id="btn-notif-test" style="padding:3px 8px; border-radius:20px; font-size:11px; font-weight:bold; cursor:pointer; border:1px solid #555; background:#333; color:#aaa;">알림 테스트</button>
+                    <button id="btn-type1" style="padding:3px 8px; border-radius:20px; font-size:11px; font-weight:bold; cursor:pointer; border:2px solid #f59e0b; background:#f59e0b; color:#000;">알림 타입1</button>
+                    <button id="btn-type2" style="padding:3px 8px; border-radius:20px; font-size:11px; font-weight:bold; cursor:pointer; border:2px solid #2563eb; background:transparent; color:#60a5fa;">알림 타입2</button>
+                    <button id="btn-notif-test" style="padding:3px 8px; border-radius:20px; font-size:11px; font-weight:bold; cursor:pointer; border:1px solid #555; background:#333; color:#aaa;">테스트</button>
                 </div>
                 <div style="display:flex; justify-content:flex-end;">
                     <select id="remind-inline" style="background:#333; color:white; border:1px solid #555; font-size:13px; border-radius:4px; padding:2px;">
@@ -1207,7 +1207,7 @@
                 triggerReminder('테스트 업무', 5);
                 setTimeout(() => {
                     btnTest.disabled = false;
-                    btnTest.textContent = 'Test';
+                    btnTest.textContent = '테스트';
                     btnTest.style.background = '#333';
                     btnTest.style.borderColor = '#555';
                     btnTest.style.color = '#aaa';
