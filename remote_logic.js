@@ -545,7 +545,7 @@
                 alarmDiv.style.opacity = '0';
                 alarmDiv.style.transition = '0.5s';
                 setTimeout(() => alarmDiv.remove(), 500);
-            }, 5000);
+            }, 7000);
 
         // ── Type 2: 지하철 자막 (좌→우) ─────────────────────────
         } else {
@@ -569,11 +569,11 @@
                 white-space:nowrap; letter-spacing:0.03em;
                 box-shadow:0 4px 20px rgba(37,99,235,0.5);
                 border-left:4px solid #60a5fa; border-right:4px solid #60a5fa;
-                animation:neubie-ticker 9s linear forwards;
+                animation:neubie-ticker 10s linear forwards;
             `;
             bar.innerHTML = `🚇 &nbsp;[업무 알림]&nbsp; ${content} 시작 ${remainMin}분 전입니다!`;
             document.body.appendChild(bar);
-            setTimeout(() => bar.remove(), 9200);
+            setTimeout(() => bar.remove(), 10200);
         }
     }
 
@@ -1211,7 +1211,7 @@
                     btnTest.style.background = '#333';
                     btnTest.style.borderColor = '#555';
                     btnTest.style.color = '#aaa';
-                }, 6000); // type2 길이에 맞춰 6초 후 복귀
+                }, 10000); // type2 길이에 맞춰 6초 후 복귀
             };
         }, 0);
         const taskInline = document.createElement('div');
