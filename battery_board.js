@@ -1203,8 +1203,9 @@
             const displayHistory = { ...history };
             const validRealtime = realtime.filter(e => parseInt(e.hour) <= (lastSlot || 0));
             displayHistory[todayStr] = validRealtime;
-
-            if (Object.keys(displayHistory).length === 0) {
+            
+            // history가 비어있고 오늘도 0건이면 → 전체 누락 없음
+            if (Object.keys(history).length === 0 && validRealtime.length === 0) {
                 body.innerHTML = '<div class="bb-hp-empty">누락 기록 없음 ✓</div>';
                 return;
             }
