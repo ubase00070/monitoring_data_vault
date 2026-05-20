@@ -1230,15 +1230,15 @@
                     if (!entries || entries.length === 0) {
                          // 오늘 날짜(실시간)인 경우만 0건 표시
                          const isToday = dateStr === todayStr;
-                         if (!isToday) return '';
                          const d = `${parseInt(dateStr.slice(4,6))}/${parseInt(dateStr.slice(6,8))}`;
+                         const todayLabel = isToday ? ' 🔴 실시간' : '';
                          return `
-                             <div class="bb-hp-day today">
-                                 <div class="bb-hp-day-title">📅 ${d} 🔴 실시간 (0건)</div>
-                                 <div style="padding:6px 0; font-size:11px; color:var(--mu); font-weight:700;">누락 없음 ✓</div>
+                             <div class="bb-hp-day ${isToday ? 'today' : ''}">
+                                 <div class="bb-hp-day-title">📅 ${d}${todayLabel} (0건)</div>
+                                 <div style="padding:6px 0; font-size:11px; color:var(--gn); font-weight:700;">✓ 누락 없음</div>
                              </div>
                          `;
-                     }
+                    }
                     const d = `${parseInt(dateStr.slice(4,6))}/${parseInt(dateStr.slice(6,8))}`;
                     const sorted = [...entries].sort((a, b) => parseInt(a.hour) - parseInt(b.hour));
 
