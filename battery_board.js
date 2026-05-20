@@ -1234,7 +1234,7 @@
                          return `
                              <div class="bb-hp-day today">
                                  <div class="bb-hp-day-title">📅 ${d} 🔴 실시간 (0건)</div>
-                                 <div style="padding:6px 0; font-size:11px; color:var(--mu); font-weight:700;">이상 없음 ✓</div>
+                                 <div style="padding:6px 0; font-size:11px; color:var(--mu); font-weight:700;">누락 없음 ✓</div>
                              </div>
                          `;
                      }
