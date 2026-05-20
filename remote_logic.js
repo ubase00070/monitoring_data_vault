@@ -1302,7 +1302,7 @@
                 tipsClose.onclick = () => { tipsOverlay.style.display='none'; };
 
                 const tipsItems = [
-                    { title: "슬랙 PWA 버전 사용법(앱 버전보다 가벼움)", url: "https://www.notion.so/PWA-366a8cf5ba7b80eebb43e017c095702c" },
+                    { title: "슬랙 PWA 버전 사용법(앱 버전보다 가벼움)", url: "https://telling-ink-a85.notion.site/PWA-366a8cf5ba7b80eebb43e017c095702c?pvs=74" },
                     { title: "OBS 최적화 및 클립 따기 설정법", url: "https://telling-ink-a85.notion.site/OBS-366a8cf5ba7b80dfb101cfa149eaefcf?pvs=74" },
                     { title: "추천 프로그램 목록", url: "https://telling-ink-a85.notion.site/366a8cf5ba7b80958575eadb8809f313" },
                 ];
@@ -1362,8 +1362,8 @@
         batteryCard.style.cssText = "background:#252525; padding:15px; border-radius:15px; border:1px solid #333; display:flex; justify-content:space-between; align-items:center;";
         batteryCard.innerHTML = `
             <div style="flex:1;">
-                <div style="font-weight:bold; font-size:15px; margin-bottom:3px;">🔋 성남 배터리</div>
-                <div style="font-size:13px; color:#aaa;">5초 간격 갱신</div>
+                <div style="font-weight:bold; font-size:15px; margin-bottom:3px;">🔋 성남 배터리 현황</div>
+                <div style="font-size:13px; color:#aaa;">5초 간격 데이터 갱신</div>
             </div>`;
         const batteryBtn = document.createElement('button');
         batteryBtn.textContent = isBatteryOpen ? '닫기' : '열기';
