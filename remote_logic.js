@@ -1254,9 +1254,6 @@
         twoCol.appendChild(queueCard);
         list.appendChild(twoCol);
 
-        const bottomRow = document.createElement('div');
-        bottomRow.style.cssText = "display:grid; grid-template-columns:1fr 1fr; gap:12px;";
-
         // 3. 최적화 팁 + 배터리 현황 (반반 2열)
         const bottomRow = document.createElement('div');
         bottomRow.style.cssText = "display:grid; grid-template-columns:1fr 1fr; gap:12px;";
