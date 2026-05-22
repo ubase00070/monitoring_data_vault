@@ -506,8 +506,8 @@
             </div>
             <div class="bb-hp-menu">
                 <button class="bb-hp-menu-btn active" id="bb-hp-btn-video">다중 영상</button>
-                <button class="bb-hp-menu-btn" id="bb-hp-btn-btn2">버튼2</button>
-                <button class="bb-hp-menu-btn" id="bb-hp-btn-btn3">버튼3</button>
+                <button class="bb-hp-menu-btn" id="bb-hp-btn-hw">뉴비슈 HW</button>
+                <button class="bb-hp-menu-btn" id="bb-hp-btn-sw">뉴비슈 SW</button>
             </div>
             <div class="bb-hp-body" id="bb-hp-body">
             </div>
@@ -911,6 +911,13 @@
                if (panel.classList.contains('open')) {
                    panel.style.zIndex = ++topmostZ;
                    histVideoOpen = false;
+                   histActiveMenu = 'video';
+                   // 버튼 active 상태 초기화
+                   ['bb-hp-btn-video','bb-hp-btn-hw','bb-hp-btn-sw'].forEach(id => {
+                       const el = document.getElementById(id);
+                       if (el) el.classList.remove('active');
+                   });
+                   document.getElementById('bb-hp-btn-video').classList.add('active');
                    loadHistoryPanel();
                }
            }
@@ -935,6 +942,36 @@
 
     document.getElementById('bb-hp-close').addEventListener('click', () => {
         document.getElementById('bb-hist-panel').classList.remove('open');
+    });
+
+    // 뉴비슈 HW 버튼
+    document.getElementById('bb-hp-btn-hw').addEventListener('click', () => {
+        histActiveMenu = 'hw';
+        ['bb-hp-btn-video','bb-hp-btn-hw','bb-hp-btn-sw'].forEach(id => {
+            document.getElementById(id).classList.remove('active');
+        });
+        document.getElementById('bb-hp-btn-hw').classList.add('active');
+        loadNeubieIssues('hw');
+    });
+
+    // 뉴비슈 SW 버튼
+    document.getElementById('bb-hp-btn-sw').addEventListener('click', () => {
+        histActiveMenu = 'sw';
+        ['bb-hp-btn-video','bb-hp-btn-hw','bb-hp-btn-sw'].forEach(id => {
+            document.getElementById(id).classList.remove('active');
+        });
+        document.getElementById('bb-hp-btn-sw').classList.add('active');
+        loadNeubieIssues('sw');
+    });
+
+    // 다중 영상 버튼 (기존 active 복원용)
+    document.getElementById('bb-hp-btn-video').addEventListener('click', () => {
+        histActiveMenu = 'video';
+        ['bb-hp-btn-video','bb-hp-btn-hw','bb-hp-btn-sw'].forEach(id => {
+            document.getElementById(id).classList.remove('active');
+        });
+        document.getElementById('bb-hp-btn-video').classList.add('active');
+        loadVideoHistory();
     });
 
     // ============================================================
@@ -1140,43 +1177,15 @@
 
     // ── 히스토리 버튼 & 패널 ──────────────────────────────────────
     const MONITOR_DATA_URL = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/monitor_data.json';
+    const NEUBIE_BASE_URL = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/';
+    const MONTH_NAMES = { '01':'jan','02':'feb','03':'mar','04':'apr','05':'may','06':'jun','07':'jul','08':'aug','09':'sep','10':'oct','11':'nov','12':'dec' };
 
     let histVideoOpen = false; // 관제 영상 폴더 열림 여부
+    let histActiveMenu = 'video'; // 'video' | 'hw' | 'sw'  ← 추가
 
     async function loadHistoryPanel() {
         // renderHistMenu() 호출 제거, 바로 loadVideoHistory() 호출
         await loadVideoHistory();
-    }
-
-    function renderHistMenu() {
-        const body = document.getElementById('bb-hp-body');
-        body.innerHTML = ''; // 초기화
-
-        // 관제 영상 폴더 버튼
-        const folderBtn = document.createElement('div');
-        folderBtn.style.cssText = 'padding:6px 14px; border-bottom:1px solid var(--bd);';
-        folderBtn.innerHTML = `
-            <button class="bb-hp-menu-btn ${histVideoOpen ? 'active' : ''}" id="bb-hp-btn-video"
-                style="width:100%; text-align:left; display:flex; justify-content:space-between; align-items:center;">
-                <span>📹 다중 관제 영상</span>
-                <span style="font-size:10px; color:var(--mu);">${histVideoOpen ? '▲' : '▼'}</span>
-            </button>
-        `;
-        body.appendChild(folderBtn);
-
-        folderBtn.querySelector('#bb-hp-btn-video').addEventListener('click', () => {
-            histVideoOpen = !histVideoOpen;
-            if (histVideoOpen) {
-                loadVideoHistory();
-            } else {
-                renderHistMenu(); // 닫으면 메뉴만 다시 그림
-            }
-        });
-
-        // 폴더 열려있으면 내용 렌더
-        if (histVideoOpen) {
-            loadVideoHistory();
-        }
     }
 
     async function loadVideoHistory() {
@@ -1280,6 +1289,98 @@
             console.error('[BB-HIST]', err);
         }
     }
+
+    async function loadNeubieIssues(type) {
+        // type: 'hw' | 'sw'
+        const body = document.getElementById('bb-hp-body');
+        const now   = new Date();
+
+        // 월별 드롭다운 생성 (1월~현재월)
+        const currentMonthNum = now.getMonth() + 1;
+        const months = [];
+        for (let m = 1; m <= currentMonthNum; m++) {
+            const mm = String(m).padStart(2, '0');
+            months.push({ num: mm, name: MONTH_NAMES[mm], label: `${m}월` });
+        }
+
+        body.innerHTML = months.reverse().map(mo => `
+            <div class="bb-hp-month" id="bb-ni-month-${type}-${mo.num}">
+                <div class="bb-hp-month-hd" onclick="window._bbToggleNeubie('${type}','${mo.num}','${mo.name}',this)">
+                    <span>📊 ${mo.label} 이슈 현황</span>
+                    <span class="bb-hp-month-arrow">▼</span>
+                </div>
+                <div class="bb-hp-month-body" id="bb-ni-body-${type}-${mo.num}">
+                    <div class="bb-hp-loading">▼ 클릭하여 로드</div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    window._bbToggleNeubie = async function(type, monthNum, monthName, hdEl) {
+        const bodyEl  = document.getElementById(`bb-ni-body-${type}-${monthNum}`);
+        const arrowEl = hdEl.querySelector('.bb-hp-month-arrow');
+        const isOpen  = bodyEl.classList.contains('open');
+
+        if (isOpen) {
+            bodyEl.classList.remove('open');
+            arrowEl.classList.remove('open');
+            return;
+        }
+
+        bodyEl.classList.add('open');
+        arrowEl.classList.add('open');
+
+        // 이미 로드된 경우 스킵
+        if (bodyEl.dataset.loaded === '1') return;
+
+        bodyEl.innerHTML = '<div class="bb-hp-loading">로딩 중...</div>';
+
+        const filename = `neubie_issue_${type}_${monthName}.json`;
+        const url = NEUBIE_BASE_URL + filename + '?t=' + Date.now();
+
+        try {
+            const res  = await fetch(url);
+            if (!res.ok) throw new Error('not found');
+            const json = await res.json();
+
+            // 새 포맷 { issues, meta } 또는 구 포맷 flat array
+            const meta    = json.meta || null;
+            const summary = meta ? meta.summary : null;
+
+            if (!summary || summary.length === 0) {
+                bodyEl.innerHTML = '<div class="bb-hp-empty">summary 데이터 없음</div>';
+                bodyEl.dataset.loaded = '1';
+                return;
+            }
+
+            bodyEl.innerHTML = `
+                <div style="padding:8px 13px; font-size:11px; color:var(--mu); font-weight:700; border-bottom:1px solid var(--bd);">
+                    전체 ${meta.total_issues}건 / ${meta.total_robots}개 기체
+                    <span style="float:right; color:var(--mu);">생성: ${meta.generated_at ? meta.generated_at.slice(0,10) : '-'}</span>
+                </div>
+                <div style="max-height:320px; overflow-y:auto;">
+                    ${summary.map(s => {
+                        const phList = Object.entries(s.phenomena || {})
+                            .sort((a,b) => b[1]-a[1])
+                            .map(([ph, cnt]) => `<span style="color:var(--mu)">${ph} ${cnt}건</span>`)
+                            .join(' <span style="color:var(--bd2)">|</span> ');
+                        return `
+                            <div style="padding:7px 13px; border-bottom:1px solid var(--bd); font-size:12px; line-height:1.6;">
+                                <div style="font-weight:900; color:var(--tx);">${s.site} / ${s.robot}
+                                    <span style="font-size:11px; color:var(--${type==='hw'?'rd':'bl'}); margin-left:6px;">총 ${s.total}건</span>
+                                </div>
+                                <div style="font-size:11px; margin-top:2px;">${phList}</div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+            bodyEl.dataset.loaded = '1';
+        } catch(err) {
+            bodyEl.innerHTML = '<div class="bb-hp-empty">데이터 로드 실패 ❌</div>';
+            console.error('[BB-NEUBIE]', err);
+        }
+    };
 
     // ============================================================
     // SECTION 15. 토큰 발송
