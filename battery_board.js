@@ -1416,25 +1416,55 @@
             z-index:999999999; font-family:'Lato','Noto Sans KR',sans-serif;
         `;
 
+        const accentColor = type === 'hw' ? 'var(--rd)' : 'var(--bl)';
+        const accentBg    = type === 'hw' ? 'rgba(239,68,68,.08)' : 'rgba(59,130,246,.08)';
+        const accentBd    = type === 'hw' ? 'rgba(239,68,68,.3)' : 'rgba(59,130,246,.3)';
+
         const issuesHtml = issues.map((r, i) => `
-            <div style="padding:12px 16px; border-bottom:1px solid var(--bd); font-size:13px; line-height:2;">
-                <div style="font-size:11px; font-weight:900; color:var(--mu); margin-bottom:6px; letter-spacing:.4px;">
-                    [${i+1}/${issues.length}]
+            <div style="border-bottom:2px solid var(--bd2); font-size:13px; line-height:1.9;">
+
+                <!-- 건 구분 헤더 -->
+                <div style="
+                    padding:7px 16px;
+                    background:${accentBg};
+                    border-left:3px solid ${accentColor};
+                    border-bottom:1px solid ${accentBd};
+                    display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:12px; font-weight:900; color:${accentColor};">[${i+1}/${issues.length}]</span>
+                    <span style="font-size:12px; font-weight:900; color:var(--tx);">${r.date || '-'}</span>
+                    <span style="font-size:11px; color:var(--mu); margin-left:auto;">${r.priority || ''}</span>
                 </div>
-                <div style="color:var(--mu);">● &nbsp;긴급도 : <span style="color:var(--tx)">${r.urgency || '-'}</span></div>
-                <div style="color:var(--mu);">● &nbsp;심각도 : <span style="color:var(--tx)">${r.severity || '-'}</span></div>
-                <div style="color:var(--mu);">● &nbsp;이슈 현상 : <span style="color:var(--tx)">${r.phenomenon || '-'}</span></div>
-                <div style="border-top:1px solid var(--bd); margin:6px 0;"></div>
-                <div style="color:var(--mu);">● &nbsp;날짜 : <span style="color:var(--tx)">${r.date || '-'}</span></div>
-                <div style="color:var(--mu);">● &nbsp;사이트 : <span style="color:var(--tx)">${r.site || '-'}</span></div>
-                <div style="color:var(--mu);">● &nbsp;로봇 호기 : <span style="color:var(--tx)">${r.robot || '-'}</span></div>
-                <div style="color:var(--mu);">● &nbsp;작성자 : <span style="color:var(--tx)">${r.author || '-'}</span></div>
-                <div style="border-top:1px solid var(--bd); margin:6px 0;"></div>
-                <div style="color:var(--mu);">● &nbsp;초동 조치 : <span style="color:var(--tx)">${r.action || '-'}</span></div>
-                ${r.auto ? `<div style="color:var(--mu);">● &nbsp;자율주행 여부 : <span style="color:var(--tx)">${r.auto}</span></div>` : ''}
-                <div style="border-top:1px solid var(--bd); margin:6px 0;"></div>
-                <div style="color:var(--mu);">● &nbsp;내용 :</div>
-                <div style="color:var(--tx); margin-top:4px; line-height:1.7; font-size:12px;">${r.content || '-'}</div>
+
+                <!-- 본문 -->
+                <div style="padding:10px 16px;">
+                    <div style="color:#a0a0b0; font-size:11px; font-weight:700; margin-bottom:2px;">긴급도 / 심각도 / 이슈 현상</div>
+                    <div style="color:var(--tx); margin-bottom:8px;">
+                        ${r.urgency || '-'} &nbsp;·&nbsp; ${r.severity || '-'}<br>
+                        <span style="color:${accentColor}; font-weight:900;">${r.phenomenon || '-'}</span>
+                    </div>
+
+                    <div style="border-top:1px solid var(--bd); margin:6px 0;"></div>
+
+                    <div style="color:#a0a0b0; font-size:11px; font-weight:700; margin-bottom:2px;">사이트 / 로봇 / 작성자</div>
+                    <div style="color:var(--tx); margin-bottom:8px;">
+                        ${r.site || '-'} &nbsp;/&nbsp; ${r.robot || '-'} &nbsp;/&nbsp; ${r.author || '-'}
+                    </div>
+
+                    <div style="border-top:1px solid var(--bd); margin:6px 0;"></div>
+
+                    <div style="color:#a0a0b0; font-size:11px; font-weight:700; margin-bottom:2px;">초동 조치${r.auto ? ' / 자율주행' : ''}</div>
+                    <div style="color:var(--tx); margin-bottom:8px;">
+                        ${r.action || '-'}${r.auto ? ` &nbsp;/&nbsp; ${r.auto}` : ''}
+                    </div>
+
+                    <div style="border-top:1px solid var(--bd); margin:6px 0;"></div>
+
+                    <div style="color:#a0a0b0; font-size:11px; font-weight:700; margin-bottom:4px;">내용</div>
+                    <div style="color:var(--tx); font-size:12px; line-height:1.8;
+                        background:var(--sur2); border-radius:6px; padding:8px 10px;">
+                        ${r.content || '-'}
+                    </div>
+                </div>
             </div>
         `).join('');
 
