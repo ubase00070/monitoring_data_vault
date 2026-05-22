@@ -87,6 +87,8 @@
         "127": { site: "대관령 솔내음 캠핑장", unit: "#115" }, // 대관령 2호기
         "214": { site: "진천 힐사이드 캠핑장", unit: "#194" }, // 진천
         "99": { site: "삼성인력개발원", unit: "#124" }, // 인개원
+
+        "158": { site: "에버랜드 장미축제", unit: "#140" }, // 에버랜드
     };
 
     const isAutoTarget = config.targetIds.some(id => currUrl.includes(`/monitoring/${id}`));
