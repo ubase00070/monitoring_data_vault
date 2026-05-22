@@ -648,12 +648,16 @@
             if (!isDelivery && status === 'standby') {
                 const mins = minAgo(rs.lastOperatedAt);
                 if (mins >= 120) {
-                    const key = alertKey('standby', id);
-                    if (!dismissedAlerts.has(key)) alerts.push({
-                        key, type:'standby', dot:'rd', name,
-                        desc:`대기중 ${mins}분 | 마지막 조작: ${rs.lastOperatedUserName || '없음'} ${fmt(rs.lastOperatedAt)}`,
-                        time: fmt(new Date().toISOString())
-                    });
+                    // 360분 초과 + 배터리 50% 이상 → 충전 후 대기 중인 기체(야간/경비실 보관) → 알림 제외
+                    const isResting = mins >= 360 && battery >= 50;
+                    if (!isResting) {
+                        const key = alertKey('standby', id);
+                        if (!dismissedAlerts.has(key)) alerts.push({
+                            key, type:'standby', dot:'rd', name,
+                            desc:`대기중 ${mins}분 | 마지막 조작: ${rs.lastOperatedUserName || '없음'} ${fmt(rs.lastOperatedAt)}`,
+                            time: fmt(new Date().toISOString())
+                        });
+                    }
                 }
             }
 
