@@ -1278,7 +1278,7 @@
                 return `
                     <div class="bb-hp-month">
                         <div class="bb-hp-month-hd" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.bb-hp-month-arrow').classList.toggle('open')">
-                            <span>${label} 업로드 기록 (2시간마다 반영 / 파일명 실수 감안)</span>
+                            <span>${label} 영상 업로드 기록 (홀수 시간마다 반영)</span>
                             <span class="bb-hp-month-arrow">▼</span>
                         </div>
                         <div class="bb-hp-month-body">
@@ -1311,7 +1311,7 @@
         body.innerHTML = months.reverse().map(mo => `
             <div class="bb-hp-month" id="bb-ni-month-${type}-${mo.num}">
                 <div class="bb-hp-month-hd" onclick="window._bbToggleNeubie('${type}','${mo.num}','${mo.name}',this)">
-                    <span>📊 ${mo.label} 이슈 현황</span>
+                    <span>📊 ${mo.label} 뉴비슈 현황 (내림차순)</span>
                     <span class="bb-hp-month-arrow">▼</span>
                 </div>
                 <div class="bb-hp-month-body" id="bb-ni-body-${type}-${mo.num}">
