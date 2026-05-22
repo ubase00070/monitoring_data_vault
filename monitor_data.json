@@ -1,15 +1,7 @@
 {
-  "updatedAt": "2026-05-23 06:55:11",
+  "updatedAt": "2026-05-23 07:15:08",
   "realtime": [],
-  "final": [
-    {
-      "workDate": "20260522",
-      "driveDate": "20260522",
-      "hour": "08:00",
-      "name": "박계원",
-      "status": "미업로드"
-    }
-  ],
+  "final": [],
   "history": {
     "20260509": [
       {
