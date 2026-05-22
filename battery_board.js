@@ -1298,7 +1298,8 @@
         // 월별 드롭다운 생성 (1월~현재월)
         const currentMonthNum = now.getMonth() + 1;
         const months = [];
-        for (let m = 1; m <= currentMonthNum; m++) {
+        const START_MONTH = 5;
+        for (let m = START_MONTH; m <= currentMonthNum; m++) {
             const mm = String(m).padStart(2, '0');
             months.push({ num: mm, name: MONTH_NAMES[mm], label: `${m}월` });
         }
@@ -1349,6 +1350,7 @@
 
             if (!summary || summary.length === 0) {
                 bodyEl.innerHTML = '<div class="bb-hp-empty">summary 데이터 없음</div>';
+                bodyEl._issueData = json.issues || [];
                 bodyEl.dataset.loaded = '1';
                 return;
             }
@@ -1359,27 +1361,114 @@
                     <span style="float:right; color:var(--mu);">생성: ${meta.generated_at ? meta.generated_at.slice(0,10) : '-'}</span>
                 </div>
                 <div style="max-height:320px; overflow-y:auto;">
-                    ${summary.map(s => {
+                    ${summary.map((s, si) => {
                         const phList = Object.entries(s.phenomena || {})
                             .sort((a,b) => b[1]-a[1])
-                            .map(([ph, cnt]) => `<span style="color:var(--mu)">${ph} ${cnt}건</span>`)
+                            .map(([ph,cnt]) => `<span style="color:var(--mu)">${ph} ${cnt}건</span>`)
                             .join(' <span style="color:var(--bd2)">|</span> ');
                         return `
-                            <div style="padding:7px 13px; border-bottom:1px solid var(--bd); font-size:12px; line-height:1.6;">
-                                <div style="font-weight:900; color:var(--tx);">${s.site} / ${s.robot}
-                                    <span style="font-size:11px; color:var(--${type==='hw'?'rd':'bl'}); margin-left:6px;">총 ${s.total}건</span>
+                            <div style="padding:7px 13px; border-bottom:1px solid var(--bd); font-size:12px; line-height:1.6; display:flex; justify-content:space-between; align-items:flex-start;">
+                                <div style="flex:1;">
+                                    <div style="font-weight:900; color:var(--tx);">${s.site} / ${s.robot}
+                                        <span style="font-size:11px; color:var(--${type==='hw'?'rd':'bl'}); margin-left:6px;">총 ${s.total}건</span>
+                                    </div>
+                                    <div style="font-size:11px; margin-top:2px;">${phList}</div>
                                 </div>
-                                <div style="font-size:11px; margin-top:2px;">${phList}</div>
+                                <button onclick="window._bbShowIssueDetail('${type}','${monthNum}','${s.robot.replace(/['"\\]/g,'')}',${si})"
+                                    style="flex-shrink:0; margin-left:8px; padding:3px 9px; border-radius:5px;
+                                    border:1px solid var(--bd2); background:var(--sur2); color:var(--mu);
+                                    font-size:11px; font-weight:700; cursor:pointer; white-space:nowrap;">
+                                    보기
+                                </button>
                             </div>
                         `;
                     }).join('')}
                 </div>
             `;
+            bodyEl._issueData = json.issues || [];
             bodyEl.dataset.loaded = '1';
         } catch(err) {
             bodyEl.innerHTML = '<div class="bb-hp-empty">데이터 로드 실패 ❌</div>';
             console.error('[BB-NEUBIE]', err);
         }
+    };
+
+    window._bbShowIssueDetail = function(type, monthNum, robot, summaryIdx) {
+        // 이미 로드된 JSON 데이터에서 해당 기체 issues 추출
+        const bodyElId = `bb-ni-body-${type}-${monthNum}`;
+        const bodyEl = document.getElementById(bodyElId);
+        if (!bodyEl || !bodyEl._issueData) return;
+
+        const issues = bodyEl._issueData.filter(r => r.robot === robot);
+        if (!issues.length) return;
+
+        // 기존 팝업 제거
+        const prev = document.getElementById('bb-issue-detail-panel');
+        if (prev) prev.remove();
+
+        const panel = document.createElement('div');
+        panel.id = 'bb-issue-detail-panel';
+        panel.style.cssText = `
+            position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+            width:460px; max-height:70vh; overflow-y:auto;
+            background:var(--bg); border:1px solid var(--bd2);
+            border-radius:12px; box-shadow:0 16px 48px rgba(0,0,0,.9);
+            z-index:999999999; font-family:'Lato','Noto Sans KR',sans-serif;
+        `;
+
+        const issuesHtml = issues.map((r, i) => `
+            <div style="padding:12px 16px; border-bottom:1px solid var(--bd); font-size:13px; line-height:2;">
+                <div style="font-size:11px; font-weight:900; color:var(--mu); margin-bottom:6px; letter-spacing:.4px;">
+                    [${i+1}/${issues.length}]
+                </div>
+                <div style="color:var(--mu);">● &nbsp;긴급도 : <span style="color:var(--tx)">${r.urgency || '-'}</span></div>
+                <div style="color:var(--mu);">● &nbsp;심각도 : <span style="color:var(--tx)">${r.severity || '-'}</span></div>
+                <div style="color:var(--mu);">● &nbsp;이슈 현상 : <span style="color:var(--tx)">${r.phenomenon || '-'}</span></div>
+                <div style="border-top:1px solid var(--bd); margin:6px 0;"></div>
+                <div style="color:var(--mu);">● &nbsp;날짜 : <span style="color:var(--tx)">${r.date || '-'}</span></div>
+                <div style="color:var(--mu);">● &nbsp;사이트 : <span style="color:var(--tx)">${r.site || '-'}</span></div>
+                <div style="color:var(--mu);">● &nbsp;로봇 호기 : <span style="color:var(--tx)">${r.robot || '-'}</span></div>
+                <div style="color:var(--mu);">● &nbsp;작성자 : <span style="color:var(--tx)">${r.author || '-'}</span></div>
+                <div style="border-top:1px solid var(--bd); margin:6px 0;"></div>
+                <div style="color:var(--mu);">● &nbsp;초동 조치 : <span style="color:var(--tx)">${r.action || '-'}</span></div>
+                ${r.auto ? `<div style="color:var(--mu);">● &nbsp;자율주행 여부 : <span style="color:var(--tx)">${r.auto}</span></div>` : ''}
+                <div style="border-top:1px solid var(--bd); margin:6px 0;"></div>
+                <div style="color:var(--mu);">● &nbsp;내용 :</div>
+                <div style="color:var(--tx); margin-top:4px; line-height:1.7; font-size:12px;">${r.content || '-'}</div>
+            </div>
+        `).join('');
+
+        panel.innerHTML = `
+            <div style="padding:11px 16px; border-bottom:1px solid var(--bd);
+                background:var(--sur); border-radius:12px 12px 0 0;
+                display:flex; justify-content:space-between; align-items:center;
+                position:sticky; top:0; z-index:1;">
+                <div style="font-size:14px; font-weight:900; color:var(--tx);">
+                    ${robot} 이슈 상세 
+                    <span style="font-size:12px; color:var(--${type==='hw'?'rd':'bl'}); margin-left:6px;">
+                        ${issues.length}건
+                    </span>
+                </div>
+                <div onclick="document.getElementById('bb-issue-detail-panel').remove()"
+                    style="width:22px; height:22px; border-radius:5px;
+                    background:rgba(239,68,68,.15); border:1px solid rgba(239,68,68,.3);
+                    color:var(--rd); font-size:12px; cursor:pointer;
+                    display:flex; align-items:center; justify-content:center; font-weight:900;">✕</div>
+            </div>
+            ${issuesHtml}
+        `;
+
+        document.body.appendChild(panel);
+
+        // 바깥 클릭 시 닫기
+        setTimeout(() => {
+            document.addEventListener('mousedown', function closeDetail(e) {
+                if (!panel.contains(e.target)) {
+                    panel.remove();
+                    document.removeEventListener('mousedown', closeDetail);
+                }
+            });
+        }, 100);
     };
 
     // ============================================================
