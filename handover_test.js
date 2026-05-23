@@ -508,6 +508,7 @@
                 if (span.textContent.trim().includes(unitName)) {
                     const label = span.closest('label');
                     if (label) { label.click(); clicked = true; break; }
+                    await sleep(300);
                 }
             }
 
@@ -515,8 +516,7 @@
 
             // 검색창 초기화
             setInputValue(searchInput, '');
-            searchInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', keyCode: 13, bubbles: true }));
-            await sleep(200);
+            await sleep(150);
 
             return clicked;
         } catch (e) {
