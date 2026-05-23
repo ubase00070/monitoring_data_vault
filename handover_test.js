@@ -484,40 +484,59 @@
 
     async function checkOneUnit(unitName) {
         try {
-            // 1단계: 검색 없이 현재 목록에서 찾기 (빠름)
-            const allSpans = document.querySelectorAll('span[data-qk="robot-name"]');
-            for (const span of allSpans) {
-                const text = span.textContent.trim();
-                if (text === unitName || text.includes(unitName)) {
-                    const label = span.closest('label');
-                    if (label) { label.click(); await sleep(80); return true; }
-                }
-            }
-
-            // 2단계: 검색 후 찾기
             const searchInput =
                 document.querySelector('[data-qk="monitoring-robot-list-search-form-site-search-name-input-wrapper"] input') ||
                 document.querySelector('[data-qk*="search-name-input"] input') ||
                 document.querySelector('section input[type="text"]');
             if (!searchInput) return false;
 
-            searchInput.focus();
-            setInputValue(searchInput, unitName);
-            await waitForSearchResult(unitName, 2000);
-
-            const spans = document.querySelectorAll('span[data-qk="robot-name"]');
-            let clicked = false;
-            for (const span of spans) {
-                if (span.textContent.trim().includes(unitName)) {
+            // 1단계: 검색 없이 현재 목록에서 정확히 매칭
+            const allSpans = document.querySelectorAll('span[data-qk="robot-name"]');
+            for (const span of allSpans) {
+                if (span.textContent.trim() === unitName) {
                     const label = span.closest('label');
-                    if (label) { label.click(); clicked = true; break; }
+                    if (label && label.offsetParent !== null) {
+                        label.click();
+                        await sleep(80);
+                        return true;
+                    }
                 }
             }
 
-            await sleep(200);
-            setInputValue(searchInput, '');
-            await sleep(150);
-            return clicked;
+            // 2단계: 검색 후 필터링 대기
+            searchInput.focus();
+            setInputValue(searchInput, unitName);
+            
+            // 필터링 후 결과가 줄어들 때까지 대기
+            const beforeCount = document.querySelectorAll('span[data-qk="robot-name"]').length;
+            await new Promise(resolve => {
+                const start = Date.now();
+                const check = () => {
+                    const spans = document.querySelectorAll('span[data-qk="robot-name"]');
+                    const filtered = Array.from(spans).some(s => 
+                        s.textContent.trim().includes(unitName) && s.offsetParent !== null
+                    );
+                    if (filtered || Date.now() - start > 2000) resolve();
+                    else setTimeout(check, 50);
+                };
+                check();
+            });
+
+            // 보이는 결과 중 매칭되는 것 클릭
+            const spans = document.querySelectorAll('span[data-qk="robot-name"]');
+            for (const span of spans) {
+                if (span.textContent.trim().includes(unitName) && span.offsetParent !== null) {
+                    const label = span.closest('label');
+                    if (label) {
+                        label.click();
+                        await sleep(200);
+                        setInputValue(searchInput, '');
+                        await sleep(150);
+                        return true;
+                    }
+                }
+            }
+            return false;
         } catch (e) {
             console.error('[checkOneUnit]', e);
             return false;
