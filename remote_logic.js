@@ -669,6 +669,8 @@
                 align-items: center;
                 gap: 6px;
                 overflow: hidden;
+                width: 100%;
+                box-sizing: border-box;
             `;
 
             const displayTime = (String(timeKey).length > 10) ? String(timeKey).match(/\d{2}:\d{2}/)?.[0] : timeKey;
@@ -1227,6 +1229,7 @@
         }, 0);
         const taskInline = document.createElement('div');
         taskInline.id = 'inline-task-container';
+        taskInline.style.cssText = 'width:100%; overflow:hidden;';
         taskCard.appendChild(taskInline);
         list.appendChild(taskCard);
 
