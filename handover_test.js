@@ -4,7 +4,7 @@
     if (window.__handoverLoaded) return;
     window.__handoverLoaded = true;
 
-    const isMonitoringPage = location.href.includes('go.neubie.ai/ko/remote/multiple/monitoring')
+    const isMonitoringPage = location.href.includes('go.neubie.ai/ko/remote/multiple')
         || location.href.includes('multimonitoring.vercel.app');
 
     if (!isMonitoringPage) return;
