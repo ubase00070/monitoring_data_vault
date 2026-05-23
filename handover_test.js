@@ -588,7 +588,13 @@
             const res = await gmGithubRequest('GET', GITHUB_API_URL);
             if (res.status !== 200) throw new Error(`${res.status}`);
             const json = JSON.parse(res.text);
-            return JSON.parse(atob(json.content.replace(/\n/g, '')));
+            const decoded = decodeURIComponent(
+                atob(json.content.replace(/\n/g, ''))
+                    .split('')
+                    .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+                    .join('')
+            );
+            return JSON.parse(decoded);
         } catch (e) {
             // fallback: raw URL (캐시 있을 수 있음)
             try {
