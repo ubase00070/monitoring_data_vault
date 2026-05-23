@@ -490,27 +490,19 @@
                 document.querySelector('section input[type="text"]');
             if (!searchInput) return false;
 
-            // 검색어 입력 + 엔터 (필터링 트리거)
+            // 검색어 입력 + 엔터
             searchInput.focus();
             setInputValue(searchInput, unitName);
             searchInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', keyCode: 13, bubbles: true }));
             searchInput.dispatchEvent(new KeyboardEvent('keyup',   { key: 'Enter', keyCode: 13, bubbles: true }));
 
-            // 필터링 후 보이는 항목 대기
-            await new Promise(resolve => {
-                const start = Date.now();
-                const check = () => {
-                    const visible = Array.from(document.querySelectorAll('span[data-qk="robot-name"]'))
-                        .filter(s => s.offsetParent !== null);
-                    if (visible.length < 154 || Date.now() - start > 2000) resolve(visible);
-                    else setTimeout(check, 50);
-                };
-                check();
-            });
+            // 필터링 대기
+            await sleep(500);
 
             // 보이는 결과에서 클릭
             const spans = Array.from(document.querySelectorAll('span[data-qk="robot-name"]'))
                 .filter(s => s.offsetParent !== null);
+
             let clicked = false;
             for (const span of spans) {
                 if (span.textContent.trim().includes(unitName)) {
@@ -520,10 +512,12 @@
             }
 
             await sleep(200);
+
             // 검색창 초기화
             setInputValue(searchInput, '');
             searchInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', keyCode: 13, bubbles: true }));
-            await sleep(150);
+            await sleep(200);
+
             return clicked;
         } catch (e) {
             console.error('[checkOneUnit]', e);
