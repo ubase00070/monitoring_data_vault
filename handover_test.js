@@ -13,7 +13,7 @@
         SECTION 1. 상수 및 유틸
     ============================================================ */
     const HANDOVER_RAW_URL  = 'https://raw.githubusercontent.com/ubase00070/monitoring_handover/main/handover.json';
-    const GITHUB_API_URL    = 'https://api.github.com/repos/ubase00070/monitoring_handover/contents/handover.json';
+    const GITHUB_TOKEN      = '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';
     const MAX_SELECT        = 6;
 
     const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -598,17 +598,30 @@
     document.getElementById('ho-upload-btn').addEventListener('click', async () => {
         setStatus('⏳ 인계 업로드 중...', '#f59e0b');
 
-        // content.js body attribute에서 현재 기체 읽기
+        // 기체: 현재 페이지 DOM에서 직접 읽기
         let allUnits = [];
         try {
-            allUnits = JSON.parse(document.body.getAttribute('data-last-units') || '[]');
+            // data-last-units 시도
+            const fromAttr = document.body.getAttribute('data-last-units');
+            if (fromAttr) {
+                allUnits = JSON.parse(fromAttr);
+            }
+            // 없으면 현재 모니터링 화면 DOM에서 직접 추출
+            if (!allUnits.length) {
+                const selector = 'span.font-size-14.max-w-fit.truncate.font-bold.text-white';
+                allUnits = Array.from(document.querySelectorAll(selector))
+                    .map(el => el.innerText.trim())
+                    .filter(n => n.length >= 2);
+            }
         } catch(e) {}
 
         // otherTabUnits (다른 탭 기체) → tab2
         // 현재 탭 기체 → tab1
         // 단순하게 전체를 tab1으로 넘기고 받는 쪽이 배분
         // TODO: tab 구분이 필요하면 background.js의 otherTabUnits 활용
-        const myName = document.body.getAttribute('data-auto-insu') || '알 수 없음';
+        // 이름: localStorage에서 읽기 (remote_logic.js가 저장해둠)
+        const myName = localStorage.getItem('neubie_user_name') || '알 수 없음';
+
         const now = new Date();
         const ts = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
 
