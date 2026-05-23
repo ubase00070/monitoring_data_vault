@@ -2208,8 +2208,8 @@
       "syncIssue": false
     },
     "성남 203": {
-      "status": "suspended",
-      "reason": "CCTV안나와",
+      "status": "active",
+      "reason": "",
       "updatedAt": "2026-05-23 12:19:30",
       "syncIssue": false
     },
