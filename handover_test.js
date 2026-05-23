@@ -645,7 +645,7 @@
     new MutationObserver(() => {
         if (location.href === lastUrl) return;
         lastUrl = location.href;
-        const isTarget = location.href.includes('/ko/remote/multiple/monitoring')
+        const isTarget = location.href.includes('/ko/remote/multiple')
             || location.href.includes('multimonitoring.vercel.app');
         peekTab.style.display = isTarget ? 'block' : 'none';
         if (!isTarget) {
