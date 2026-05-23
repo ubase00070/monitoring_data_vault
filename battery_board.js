@@ -958,7 +958,7 @@
     // 뉴비슈 SW 버튼
     document.getElementById('bb-hp-btn-sw').addEventListener('click', () => {
         histActiveMenu = 'sw';
-        ['bb-hp-btn-video','bb-hp-btn-hw','bb-hp-btn-sw'].forEach(id => {
+        ['bb-hp-btn-hw','bb-hp-btn-sw'].forEach(id => {
             document.getElementById(id).classList.remove('active');
         });
         document.getElementById('bb-hp-btn-sw').classList.add('active');
