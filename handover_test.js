@@ -50,6 +50,24 @@
         });
     }
 
+    // 템퍼몽키를 통한 GitHub API 중계 호출
+    function gmGithubRequest(method, url, body = null) {
+        return new Promise((resolve) => {
+            const requestId = Math.random().toString(36).slice(2);
+
+            const handler = (e) => {
+                if (e.detail.requestId !== requestId) return;
+                window.removeEventListener('ho_github_response', handler);
+                resolve({ status: e.detail.status, text: e.detail.text });
+            };
+            window.addEventListener('ho_github_response', handler);
+
+            window.dispatchEvent(new CustomEvent('ho_github_request', {
+                detail: { method, url, body: body ? JSON.stringify(body) : null, requestId }
+            }));
+        });
+    }
+
     /* ============================================================
         SECTION 2. 상태
     ============================================================ */
@@ -549,18 +567,12 @@
     ============================================================ */
     async function fetchHandover() {
         try {
-            // GitHub API로 캐시 없이 fetch
-            const res = await fetch(GITHUB_API_URL, {
-                headers: {
-                    'Authorization': `token ${GITHUB_TOKEN}`,
-                    'Accept': 'application/vnd.github.v3+json'
-                }
-            });
-            if (!res.ok) throw new Error(`${res.status}`);
-            const json = await res.json();
-            return JSON.parse(atob(json.content.replace(/\n/g,'')));
+            const res = await gmGithubRequest('GET', GITHUB_API_URL);
+            if (res.status !== 200) throw new Error(`${res.status}`);
+            const json = JSON.parse(res.text);
+            return JSON.parse(atob(json.content.replace(/\n/g, '')));
         } catch (e) {
-            // fallback: raw URL
+            // fallback: raw URL (캐시 있을 수 있음)
             try {
                 const res2 = await fetch(HANDOVER_RAW_URL + '?t=' + Date.now());
                 if (res2.ok) return await res2.json();
@@ -612,24 +624,20 @@
             // SHA 가져오기
             let sha = '';
             try {
-                const getRes = await fetch(GITHUB_API_URL, {
-                    headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' }
-                });
-                if (getRes.ok) sha = (await getRes.json()).sha;
+                const getRes = await gmGithubRequest('GET', GITHUB_API_URL);
+                if (getRes.status === 200) sha = JSON.parse(getRes.text).sha;
             } catch(e) {}
 
+            // 업로드
             const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
-            const putRes = await fetch(GITHUB_API_URL, {
-                method: 'PUT',
-                headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: `인계: ${myName} (${ts})`, content, ...(sha ? { sha } : {}) })
+            const putRes = await gmGithubRequest('PUT', GITHUB_API_URL, {
+                message: `인계: ${myName} (${ts})`,
+                content,
+                ...(sha ? { sha } : {})
             });
 
-            if (putRes.ok) {
-                handoverData = payload;
-                renderGrid(payload.tab1, payload.tab2);
-                setBadge(payload.tab1.length + payload.tab2.length);
-                setStatus(`✅ 인계 완료 (${payload.tab1.length + payload.tab2.length}대)`, '#22c55e');
+            if (putRes.status === 200 || putRes.status === 201) {
+                // 성공 처리
             } else {
                 throw new Error(`${putRes.status}`);
             }
