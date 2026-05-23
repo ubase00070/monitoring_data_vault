@@ -4,13 +4,13 @@
     if (window.__handoverLoaded) return;
     window.__handoverLoaded = true;
 
-    const isMonitoringPage = location.href.includes('go.neubie.ai/ko/remote/multiple')
+    const isMonitoringPage = (location.href.includes('go.neubie.ai/ko/remote/multiple') && !location.href.includes('/driving'))
         || location.href.includes('multimonitoring.vercel.app');
 
     if (!isMonitoringPage) return;
 
     /* ============================================================
-        SECTION 1. 상수 및 유틸
+        SECTION 1. Constants & Utils
     ============================================================ */
     const HANDOVER_RAW_URL  = 'https://raw.githubusercontent.com/ubase00070/monitoring_handover/main/handover.json';
     const GITHUB_API_URL    = 'https://api.github.com/repos/ubase00070/monitoring_handover/contents/handover.json';
@@ -18,10 +18,10 @@
 
     const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-    // 시크릿 탭 여부
+    // incognito check
     const isIncognito = !!window.chrome?.extension?.inIncognitoContext;
 
-    // React input 강제 입력 (from content.js)
+    // force React input value
     function setInputValue(input, value) {
         const nativeSetter = Object.getOwnPropertyDescriptor(
             window.HTMLInputElement.prototype, 'value'
@@ -32,7 +32,7 @@
         input.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true }));
     }
 
-    // 검색 결과 대기 (from content.js)
+    // wait for search result
     function waitForSearchResult(unitName, timeout = 2000) {
         return new Promise(resolve => {
             const start = Date.now();
@@ -49,7 +49,7 @@
         });
     }
 
-    // 템퍼몽키를 통한 GitHub API 중계 호출
+    // GitHub API via Tampermonkey relay
     function gmGithubRequest(method, url, body = null) {
         return new Promise((resolve) => {
             const requestId = Math.random().toString(36).slice(2);
@@ -68,19 +68,19 @@
     }
 
     /* ============================================================
-        SECTION 2. 상태
+        SECTION 2. State
     ============================================================ */
     let selectedCells  = [];
     let handoverData   = null;
     let confirmLoopId  = null;
 
     /* ============================================================
-        SECTION 3. UI 생성
+        SECTION 3. UI
     ============================================================ */
-    // ── 빼꼼 탭 ──
+    // peek tab
     const peekTab = document.createElement('div');
     peekTab.id = 'ho-peek-tab';
-    peekTab.textContent = '📋 인계';
+    peekTab.textContent = '📋 HO';
     Object.assign(peekTab.style, {
         position:'fixed', top:'0', left:'50%', transform:'translateX(-50%)',
         zIndex:'2147483647', background:'rgba(240,242,248,0.96)', color:'#1a1f2e',
@@ -91,7 +91,7 @@
         border:'1px solid rgba(200,210,230,0.6)', borderTop:'none',
     });
 
-    // ── 메인 패널 ──
+    // main panel
     const panel = document.createElement('div');
     panel.id = 'ho-panel';
     Object.assign(panel.style, {
@@ -105,7 +105,7 @@
         transition:'top 0.3s cubic-bezier(0.4,0,0.2,1)', userSelect:'none',
     });
 
-    // 바로 시작 버튼 스타일 헬퍼
+    // quick start btn style
     const quickBtnStyle = (active) => `
         font-size:10px; font-weight:700; padding:2px 9px;
         border-radius:6px; border:none; cursor:${active ? 'pointer' : 'not-allowed'};
@@ -117,12 +117,12 @@
     `;
 
     panel.innerHTML = `
-        <!-- 헤더 -->
+        <!-- header -->
         <div style="display:flex;justify-content:space-between;align-items:center;
             margin-bottom:12px;padding-bottom:10px;border-bottom:1.5px solid rgba(0,0,0,0.08);">
             <div style="display:flex;align-items:center;gap:10px;">
                 <span style="font-size:14px;font-weight:800;color:#1a1f2e;letter-spacing:0.02em;">
-                    📋 인계 기체
+                    📋 Handover
                 </span>
                 <span id="ho-badge" style="
                     font-size:10px;font-weight:700;padding:2px 8px;
@@ -137,21 +137,21 @@
                     background:#f59e0b;color:#fff;border:none;
                     padding:5px 13px;border-radius:8px;font-size:12px;
                     font-weight:700;cursor:pointer;font-family:Pretendard,sans-serif;
-                    transition:background 0.15s;">📤 인계 완료</button>
+                    transition:background 0.15s;">📤 Send</button>
             </div>
         </div>
 
-        <!-- 그리드 -->
+        <!-- grid -->
         <div style="display:flex;gap:14px;">
 
-            <!-- 본인 계정 (3×2) -->
+            <!-- My Tab (3×2) -->
             <div style="flex:1;">
                 <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px;">
                     <span style="font-size:10px;font-weight:800;color:#475569;letter-spacing:0.07em;">
-                        본인 계정
+                        My Tab
                     </span>
                     <button id="ho-quick-tab1" style="${quickBtnStyle(!isIncognito)}">
-                        ⚡ 바로 시작
+                        ⚡ Quick
                     </button>
                 </div>
                 <div id="ho-grid-tab1" style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;">
@@ -170,17 +170,17 @@
                 </div>
             </div>
 
-            <!-- 구분선 -->
+            <!-- divider -->
             <div style="width:1px;background:rgba(0,0,0,0.1);border-radius:1px;margin:0 1px;"></div>
 
-            <!-- 멀티 계정 (3×2) -->
+            <!-- Multi Tab (3×2) -->
             <div style="flex:1;">
                 <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px;">
                     <span style="font-size:10px;font-weight:800;color:#475569;letter-spacing:0.07em;">
-                        멀티 계정
+                        Multi Tab
                     </span>
                     <button id="ho-quick-tab2" style="${quickBtnStyle(isIncognito)}">
-                        ⚡ 바로 시작
+                        ⚡ Quick
                     </button>
                 </div>
                 <div id="ho-grid-tab2" style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;">
@@ -200,16 +200,16 @@
             </div>
         </div>
 
-        <!-- 하단 -->
+        <!-- bottom -->
         <div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between;">
             <span style="font-size:10px;color:#94a3b8;letter-spacing:0.02em;">
-                버튼 선택 후 시작하기 &nbsp;|&nbsp;
+                Select then Start &nbsp;|&nbsp;
                 <kbd style="background:#e8edf5;border:1px solid #c8d2e0;
                     border-radius:4px;padding:1px 5px;font-size:10px;color:#4b5563;">Alt+M</kbd>
             </span>
             <div style="display:flex;align-items:center;gap:10px;">
                 <span id="ho-select-count" style="font-size:11px;font-weight:600;color:#64748b;">
-                    선택 0 / ${MAX_SELECT}
+                    0 / ${MAX_SELECT}
                 </span>
                 <button id="ho-start-btn" style="
                     background:#22c55e;color:#fff;border:none;
@@ -218,7 +218,7 @@
                     opacity:0.35;pointer-events:none;
                     transition:all 0.2s;letter-spacing:0.02em;
                     box-shadow:0 2px 8px rgba(34,197,94,0.3);">
-                    🚀 시작하기
+                    🚀 Start
                 </button>
             </div>
         </div>
@@ -228,7 +228,7 @@
     document.body.appendChild(panel);
 
     /* ============================================================
-        SECTION 4. 패널 토글
+        SECTION 4. Panel Toggle
     ============================================================ */
     let isPanelOpen = false;
 
@@ -257,7 +257,7 @@
     });
 
     /* ============================================================
-        SECTION 5. 상태 헬퍼
+        SECTION 5. Status Helpers
     ============================================================ */
     function setStatus(msg, color = '#64748b') {
         const el = document.getElementById('ho-status-text');
@@ -268,7 +268,7 @@
         const n = selectedCells.length;
         const countEl = document.getElementById('ho-select-count');
         const startBtn = document.getElementById('ho-start-btn');
-        if (countEl) countEl.textContent = `선택 ${n} / ${MAX_SELECT}`;
+        if (countEl) countEl.textContent = `${n} / ${MAX_SELECT}`;
         if (startBtn) {
             const active = n > 0;
             startBtn.style.opacity = active ? '1' : '0.35';
@@ -280,17 +280,17 @@
         const badge = document.getElementById('ho-badge');
         if (!badge) return;
         if (total > 0) {
-            badge.textContent = `${total}대`;
+            badge.textContent = `${total}`;
             badge.style.display = 'inline-block';
-            peekTab.textContent = `📋 인계 (${total})`;
+            peekTab.textContent = `📋 HO (${total})`;
         } else {
             badge.style.display = 'none';
-            peekTab.textContent = '📋 인계';
+            peekTab.textContent = '📋 HO';
         }
     }
 
     /* ============================================================
-        SECTION 6. 셀 스타일 헬퍼
+        SECTION 6. Cell Styles
     ============================================================ */
     function cellIdle(cell) {
         Object.assign(cell.style, {
@@ -332,7 +332,7 @@
     }
 
     /* ============================================================
-        SECTION 7. 그리드 렌더링
+        SECTION 7. Grid Render
     ============================================================ */
     function renderGrid(tab1Units = [], tab2Units = []) {
         selectedCells = [];
@@ -368,7 +368,7 @@
     }
 
     /* ============================================================
-        SECTION 8. 셀 클릭 이벤트
+        SECTION 8. Cell Click
     ============================================================ */
     panel.addEventListener('click', e => {
         const cell = e.target.closest('.ho-cell');
@@ -381,7 +381,7 @@
             selectedCells = selectedCells.filter(c => c !== cell);
         } else {
             if (selectedCells.length >= MAX_SELECT) {
-                setStatus(`⚠️ 최대 ${MAX_SELECT}대까지 선택 가능`, '#f59e0b');
+                setStatus(`⚠️ Max ${MAX_SELECT} units`, '#f59e0b');
                 return;
             }
             cellSelected(cell);
@@ -392,7 +392,7 @@
     });
 
     /* ============================================================
-        SECTION 9. 시작하기 / 바로 시작
+        SECTION 9. Start / Quick Start
     ============================================================ */
     document.getElementById('ho-start-btn').addEventListener('click', async () => {
         if (!selectedCells.length) return;
@@ -409,7 +409,7 @@
         selectedCells = cells;
         cells.forEach(cellSelected);
         updateSelectCount();
-        await sleep(150);
+        await sleep(100);
         await runAutoSelect(units, cells);
     });
 
@@ -427,16 +427,16 @@
     });
 
     /* ============================================================
-        SECTION 10. 자동 선택 실행 (from content.js)
+        SECTION 10. Auto Select
     ============================================================ */
     async function runAutoSelect(units, cells) {
-        const startBtn = document.getElementById('ho-start-btn');
-        if (startBtn) { startBtn.style.opacity = '0.5'; startBtn.style.pointerEvents = 'none'; }
+        const hoStartBtn = document.getElementById('ho-start-btn');
+        if (hoStartBtn) { hoStartBtn.style.opacity = '0.5'; hoStartBtn.style.pointerEvents = 'none'; }
 
-        // 모달 대기
+        // wait for modal
         let modal = document.querySelector('[data-qk="remote-multiple-select-robot-dialog"]');
         if (!modal) {
-            setStatus('⏳ 모달 대기 중...', '#3b82f6');
+            setStatus('⏳ Waiting...', '#3b82f6');
             modal = await new Promise(resolve => {
                 const t = setTimeout(() => resolve(null), 8000);
                 const obs = new MutationObserver(() => {
@@ -448,8 +448,8 @@
         }
 
         if (!modal) {
-            setStatus('⚠️ 모달이 열리지 않음', '#ef4444');
-            if (startBtn) { startBtn.style.opacity = '1'; startBtn.style.pointerEvents = 'auto'; }
+            setStatus('⚠️ Modal not found', '#ef4444');
+            if (hoStartBtn) { hoStartBtn.style.opacity = '1'; hoStartBtn.style.pointerEvents = 'auto'; }
             return;
         }
 
@@ -463,62 +463,51 @@
             const result = await checkOneUnit(name);
             if (result) {
                 ok++;
-                if (cell) { cellDone(cell); }
+                if (cell) cellDone(cell);
             } else {
-                if (cell) {
-                    Object.assign(cell.style, {
-                        background:'rgba(239,68,68,0.1)', color:'#dc2626',
-                        border:'1.5px solid #fca5a5',
-                    });
-                }
+                if (cell) Object.assign(cell.style, {
+                    background:'rgba(239,68,68,0.1)', color:'#dc2626',
+                    border:'1.5px solid #fca5a5',
+                });
             }
+            await sleep(400); 
         }
 
         selectedCells = selectedCells.filter(c => c.dataset.done !== 'true');
         updateSelectCount();
 
-        setStatus(`✅ ${ok}/${units.length}대 완료 — 시작하기`, '#22c55e');
-        await sleep(300);
+        setStatus(`✅ ${ok}/${units.length} done`, '#22c55e');
+        await sleep(400);
         await clickStartButton();
     }
 
     async function checkOneUnit(unitName) {
         try {
-            const searchInput =
-                document.querySelector('[data-qk="monitoring-robot-list-search-form-site-search-name-input-wrapper"] input') ||
-                document.querySelector('[data-qk*="search-name-input"] input') ||
-                document.querySelector('section input[type="text"]');
-            if (!searchInput) return false;
-
-            // 검색어 입력 + 엔터
-            searchInput.focus();
-            setInputValue(searchInput, unitName);
-            searchInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', keyCode: 13, bubbles: true }));
-            searchInput.dispatchEvent(new KeyboardEvent('keyup',   { key: 'Enter', keyCode: 13, bubbles: true }));
-
-            // 필터링 대기
-            await sleep(500);
-
-            // 보이는 결과에서 클릭
-            const spans = Array.from(document.querySelectorAll('span[data-qk="robot-name"]'))
-                .filter(s => s.offsetParent !== null);
-
-            let clicked = false;
+            // 검색 없이 DOM에서 직접 매칭 후 클릭
+            const spans = document.querySelectorAll('span[data-qk="robot-name"]');
             for (const span of spans) {
-                if (span.textContent.trim().includes(unitName)) {
+                const text = span.textContent.trim();
+                if (text === unitName || text.includes(unitName)) {
                     const label = span.closest('label');
-                    if (label) { label.click(); clicked = true; break; }
-                    await sleep(300);
+                    if (label) {
+                        label.click();
+                        await sleep(30); // 최소 딜레이
+                        return true;
+                    }
                 }
             }
 
-            await sleep(200);
+            // 못 찾으면 label 전체 텍스트로 2차 시도
+            for (const label of document.querySelectorAll('label')) {
+                const t = label.textContent.trim().replace(/\s+/g, ' ');
+                if (t === unitName || t.includes(unitName)) {
+                    label.click();
+                    await sleep(30);
+                    return true;
+                }
+            }
 
-            // 검색창 초기화
-            setInputValue(searchInput, '');
-            await sleep(150);
-
-            return clicked;
+            return false;
         } catch (e) {
             console.error('[checkOneUnit]', e);
             return false;
@@ -526,17 +515,20 @@
     }
 
     async function clickStartButton() {
-        await sleep(200);
-        const btn = Array.from(document.querySelectorAll('button'))
-            .find(b => b.textContent.trim() === '시작하기' && !b.disabled);
-        if (!btn) { setStatus('⚠️ 시작하기 버튼 없음 — 직접 클릭', '#f59e0b'); return false; }
+        await sleep(150);
+        // find by data-qk
+        const btn = document.querySelector('[data-qk="remote-multiple-select-robot-dialog-confirm-button"]');
+        if (!btn || btn.disabled) {
+            setStatus('⚠️ Start btn unavailable', '#f59e0b');
+            return false;
+        }
         btn.click();
-        setStatus('🎉 완료!', '#22c55e');
+        setStatus('🎉 Done!', '#22c55e');
         return true;
     }
 
     /* ============================================================
-        SECTION 11. content.js 감시 → 연결 확인 시 회색 처리
+        SECTION 11. Confirm Loop
     ============================================================ */
     function startConfirmLoop() {
         if (confirmLoopId) clearInterval(confirmLoopId);
@@ -563,14 +555,14 @@
     }
 
     /* ============================================================
-        SECTION 12. 인계 받기 — 자동 + 수동
+        SECTION 12. Fetch Handover
     ============================================================ */
     async function fetchHandover() {
         try {
             const res = await gmGithubRequest('GET', GITHUB_API_URL);
             if (res.status !== 200) throw new Error(`${res.status}`);
             const json = JSON.parse(res.text);
-            // UTF-8 한글 정상 디코딩
+            // UTF-8 decode
             const binary = atob(json.content.replace(/\n/g, ''));
             const bytes = new Uint8Array(binary.length);
             for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
@@ -585,7 +577,7 @@
         }
     }
 
-    // 페이지 진입 시 자동 fetch
+    // auto fetch on load
     async function autoFetch() {
         const data = await fetchHandover();
         if (!data) return;
@@ -596,22 +588,22 @@
         if (total === 0) return;
         renderGrid(tab1, tab2);
         setBadge(total);
-        setStatus(`📋 ${total}대 (${data.handover_by || '?'})`, '#3b82f6');
+        setStatus(`📋 ${total} (${data.handover_by || '?'})`, '#3b82f6');
     }
 
-    // 인계 완료 — 현재 모니터링 기체 push
+    // upload handover
     document.getElementById('ho-upload-btn').addEventListener('click', async () => {
-        setStatus('⏳ 인계 업로드 중...', '#f59e0b');
+        setStatus('⏳ Uploading...', '#f59e0b');
 
-        // 기체: 현재 페이지 DOM에서 직접 읽기
+        // read units from DOM
         let allUnits = [];
         try {
-            // data-last-units 시도
+            // try body attribute
             const fromAttr = document.body.getAttribute('data-last-units');
             if (fromAttr) {
                 allUnits = JSON.parse(fromAttr);
             }
-            // 없으면 현재 모니터링 화면 DOM에서 직접 추출
+            // fallback: read from DOM
             if (!allUnits.length) {
                 const selector = 'span.font-size-14.max-w-fit.truncate.font-bold.text-white';
                 allUnits = Array.from(document.querySelectorAll(selector))
@@ -620,12 +612,12 @@
             }
         } catch(e) {}
 
-        // otherTabUnits (다른 탭 기체) → tab2
-        // 현재 탭 기체 → tab1
-        // 단순하게 전체를 tab1으로 넘기고 받는 쪽이 배분
-        // TODO: tab 구분이 필요하면 background.js의 otherTabUnits 활용
-        // 이름: localStorage에서 읽기 (remote_logic.js가 저장해둠)
-        const myName = localStorage.getItem('neubie_user_name') || '알 수 없음';
+        
+        
+        
+        
+        // get name from localStorage
+        const myName = localStorage.getItem('neubie_user_name') || 'Unknown';
 
         const now = new Date();
         const ts = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
@@ -638,17 +630,17 @@
         };
 
         try {
-            // SHA 가져오기
+            // get SHA
             let sha = '';
             try {
                 const getRes = await gmGithubRequest('GET', GITHUB_API_URL);
                 if (getRes.status === 200) sha = JSON.parse(getRes.text).sha;
             } catch(e) {}
 
-            // 업로드
+            // upload
             const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
             const putRes = await gmGithubRequest('PUT', GITHUB_API_URL, {
-                message: `인계: ${myName} (${ts})`,
+                message: `HO: ${myName} (${ts})`,
                 content,
                 ...(sha ? { sha } : {})
             });
@@ -657,23 +649,23 @@
                 handoverData = payload;
                 renderGrid(payload.tab1, payload.tab2);
                 setBadge(payload.tab1.length + payload.tab2.length);
-                setStatus(`✅ 인계 완료 (${payload.tab1.length + payload.tab2.length}대)`, '#22c55e');
+                setStatus(`✅ Sent (${payload.tab1.length + payload.tab2.length})`, '#22c55e');
             } else {
                 throw new Error(`${putRes.status}`);
             }
         } catch(e) {
-            setStatus(`❌ 업로드 실패 (${e.message})`, '#ef4444');
+            setStatus(`❌ Failed (${e.message})`, '#ef4444');
         }
     });
 
     /* ============================================================
-        SECTION 13. URL 변경 감지 (SPA 대응)
+        SECTION 13. SPA URL Watch
     ============================================================ */
     let lastUrl = location.href;
     new MutationObserver(() => {
         if (location.href === lastUrl) return;
         lastUrl = location.href;
-        const isTarget = location.href.includes('/ko/remote/multiple')
+        const isTarget = (location.href.includes('/ko/remote/multiple') && !location.href.includes('/driving'))
             || location.href.includes('multimonitoring.vercel.app');
         peekTab.style.display = isTarget ? 'block' : 'none';
         if (!isTarget) {
@@ -683,9 +675,9 @@
     }).observe(document.body, { subtree: true, childList: true });
 
     /* ============================================================
-        SECTION 14. 초기 실행
+        SECTION 14. Init
     ============================================================ */
     startConfirmLoop();
-    autoFetch(); // 페이지 진입 시 자동으로 인계 데이터 로드
+    autoFetch(); // auto fetch on page load
 
 })();
