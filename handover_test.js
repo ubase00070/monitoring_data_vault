@@ -13,7 +13,6 @@
         SECTION 1. 상수 및 유틸
     ============================================================ */
     const HANDOVER_RAW_URL  = 'https://raw.githubusercontent.com/ubase00070/monitoring_handover/main/handover.json';
-    const GITHUB_TOKEN      = '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';
     const GITHUB_API_URL    = 'https://api.github.com/repos/ubase00070/monitoring_handover/contents/handover.json';
     const MAX_SELECT        = 6;
 
