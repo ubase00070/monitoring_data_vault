@@ -490,53 +490,41 @@
                 document.querySelector('section input[type="text"]');
             if (!searchInput) return false;
 
-            // 1단계: 검색 없이 현재 목록에서 정확히 매칭
-            const allSpans = document.querySelectorAll('span[data-qk="robot-name"]');
-            for (const span of allSpans) {
-                if (span.textContent.trim() === unitName) {
-                    const label = span.closest('label');
-                    if (label && label.offsetParent !== null) {
-                        label.click();
-                        await sleep(80);
-                        return true;
-                    }
-                }
-            }
-
-            // 2단계: 검색 후 필터링 대기
+            // 검색어 입력 + 엔터 (필터링 트리거)
             searchInput.focus();
             setInputValue(searchInput, unitName);
-            
-            // 필터링 후 결과가 줄어들 때까지 대기
-            const beforeCount = document.querySelectorAll('span[data-qk="robot-name"]').length;
+            searchInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', keyCode: 13, bubbles: true }));
+            searchInput.dispatchEvent(new KeyboardEvent('keyup',   { key: 'Enter', keyCode: 13, bubbles: true }));
+
+            // 필터링 후 보이는 항목 대기
             await new Promise(resolve => {
                 const start = Date.now();
                 const check = () => {
-                    const spans = document.querySelectorAll('span[data-qk="robot-name"]');
-                    const filtered = Array.from(spans).some(s => 
-                        s.textContent.trim().includes(unitName) && s.offsetParent !== null
-                    );
-                    if (filtered || Date.now() - start > 2000) resolve();
+                    const visible = Array.from(document.querySelectorAll('span[data-qk="robot-name"]'))
+                        .filter(s => s.offsetParent !== null);
+                    if (visible.length < 154 || Date.now() - start > 2000) resolve(visible);
                     else setTimeout(check, 50);
                 };
                 check();
             });
 
-            // 보이는 결과 중 매칭되는 것 클릭
-            const spans = document.querySelectorAll('span[data-qk="robot-name"]');
+            // 보이는 결과에서 클릭
+            const spans = Array.from(document.querySelectorAll('span[data-qk="robot-name"]'))
+                .filter(s => s.offsetParent !== null);
+            let clicked = false;
             for (const span of spans) {
-                if (span.textContent.trim().includes(unitName) && span.offsetParent !== null) {
+                if (span.textContent.trim().includes(unitName)) {
                     const label = span.closest('label');
-                    if (label) {
-                        label.click();
-                        await sleep(200);
-                        setInputValue(searchInput, '');
-                        await sleep(150);
-                        return true;
-                    }
+                    if (label) { label.click(); clicked = true; break; }
                 }
             }
-            return false;
+
+            await sleep(200);
+            // 검색창 초기화
+            setInputValue(searchInput, '');
+            searchInput.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', keyCode: 13, bubbles: true }));
+            await sleep(150);
+            return clicked;
         } catch (e) {
             console.error('[checkOneUnit]', e);
             return false;
@@ -588,15 +576,13 @@
             const res = await gmGithubRequest('GET', GITHUB_API_URL);
             if (res.status !== 200) throw new Error(`${res.status}`);
             const json = JSON.parse(res.text);
-            const decoded = decodeURIComponent(
-                atob(json.content.replace(/\n/g, ''))
-                    .split('')
-                    .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-                    .join('')
-            );
-            return JSON.parse(decoded);
+            // UTF-8 한글 정상 디코딩
+            const binary = atob(json.content.replace(/\n/g, ''));
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+            return JSON.parse(new TextDecoder('utf-8').decode(bytes));
         } catch (e) {
-            // fallback: raw URL (캐시 있을 수 있음)
+            // fallback: raw URL
             try {
                 const res2 = await fetch(HANDOVER_RAW_URL + '?t=' + Date.now());
                 if (res2.ok) return await res2.json();
