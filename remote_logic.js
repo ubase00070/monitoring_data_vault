@@ -1640,7 +1640,12 @@
 
     document.addEventListener('click', handleControlClick, true);
     injectConfigUI();
-    if (state.isMapOpt) injectMapStyle();
+    if (state.isMapOpt) {
+        injectMapStyle(); // 즉시 한 번
+        // 맵 로드 완료 후 재적용 (마커가 DOM에 생성될 때까지 대기)
+        setTimeout(() => { if (state.isMapOpt) injectMapStyle(); }, 2000);
+        setTimeout(() => { if (state.isMapOpt) injectMapStyle(); }, 5000);
+    }
     
     // 페이지 로드 시 이름이 설정되어 있다면 즉시 한 번 동기화
     if (localStorage.getItem('neubie_user_name')) {
