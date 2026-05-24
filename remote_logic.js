@@ -1004,7 +1004,7 @@
                 copyBtn.onclick = (e) => {
                     const robotId = card.querySelector('#robotSelector').value;
                     const taskRaw = card.querySelector('#taskInput').value.trim();
-                    const taskNo = taskRaw ? "_" + taskRaw : "";
+                    const taskNo = taskRaw ? "_#" + taskRaw : "";
                     const info = ROBOT_MAP[robotId] || { site: "알수없음", unit: "#000" };
                     const time = new Date();
                     const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_${info.site}_${info.unit}${taskNo}`;
