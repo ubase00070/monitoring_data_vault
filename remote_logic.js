@@ -1641,11 +1641,17 @@
     document.addEventListener('click', handleControlClick, true);
     injectConfigUI();
     if (state.isMapOpt) {
-        injectMapStyle(); // 즉시 한 번
-        // 맵 로드 완료 후 재적용 (마커가 DOM에 생성될 때까지 대기)
-        setTimeout(() => { if (state.isMapOpt) injectMapStyle(); }, 2000);
-        setTimeout(() => { if (state.isMapOpt) injectMapStyle(); }, 5000);
-        setTimeout(() => { if (state.isMapOpt) injectMapStyle(); }, 10000);
+        injectMapStyle();
+        // MutationObserver로 gmp-advanced-marker가 DOM에 추가되는 순간 감지
+        const mapObserver = new MutationObserver(() => {
+            if (document.querySelector('gmp-advanced-marker') && state.isMapOpt) {
+                injectMapStyle();
+                mapObserver.disconnect(); // 한 번 적용되면 감시 종료
+            }
+        });
+        mapObserver.observe(document.body, { childList: true, subtree: true });
+        // 안전망: 30초 후 옵저버 자동 종료
+        setTimeout(() => mapObserver.disconnect(), 30000);
     }
     
     // 페이지 로드 시 이름이 설정되어 있다면 즉시 한 번 동기화
