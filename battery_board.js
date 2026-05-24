@@ -477,8 +477,9 @@
                     * 추가한 기체 카드와 배치는 로컬 스토리지에 저장됨(최대 24대. 드래그로 배치 변경가능)<br>
                     * 알림 전송 조건<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 배터리 21% 이하 기체<br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 배달 사이트 기체가 아닌데 120분이상 ~ 360분 미만 대기 상태로 방치된 경우<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 배달 사이트 기체가 아닌데 120분이상 ~ 360분 미만 대기 상태로 방치된 경우(배터리 50% 미만이면 360분 지났어도 알림 발생)<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 무선 도킹됨 상태 기체<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 탐지 메시지 뜬 기체(기능 테스트 중)<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 최근 10분 동안 ON/OFF를 3회 이상 반복한 경우<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 전원ON인데 배터리, GPS 수신값이 잡히지 않는 경우(좀비 의심)<br>
                     * 하단 고정 바: 역삼, 송도, 성수, 삼평서현 ON/OFF 및 상태 확인용 퀵메뉴<br>
@@ -738,6 +739,22 @@
                             time: fmt(new Date().toISOString())
                         });
                     }
+                }
+            }
+
+            // ── 기능6: 탐지 센서 이상 (가스/열원/객체 등) ──────────
+            if (Array.isArray(raw.robotAddons)) {
+                const triggered = raw.robotAddons.some(addon =>
+                    addon.addonConfig &&
+                    Object.keys(addon.addonConfig).length > 0
+                );
+                if (triggered) {
+                    const key = alertKey('detection', id);
+                    if (!dismissedAlerts.has(key)) alerts.push({
+                        key, type:'detection', dot:'ye', name,
+                        desc:`탐지 센서 이상 감지 | 즉시 확인 필요`,
+                        time: fmt(new Date().toISOString())
+                    });
                 }
             }
         });
