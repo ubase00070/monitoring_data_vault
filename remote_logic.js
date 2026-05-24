@@ -826,6 +826,7 @@
                     overflow: hidden;
                     flex: 1;
                     min-width: 0;
+                    white-space: nowrap;
                 }
                 .marquee-text {
                     display: inline-block;
