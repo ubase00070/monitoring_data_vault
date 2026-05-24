@@ -248,7 +248,7 @@
         return el;
     }
 
-    const dashboard = createContainer('neubie-dashboard', '500px', '50%', '50%');
+    const dashboard = createContainer('neubie-dashboard', '540px', '50%', '50%');
     const batteryPopup = createContainer('neubie-battery-popup', '380px', '20px', 'auto', '20px');
 
     function makeDraggable(handleEl, targetEl) {
