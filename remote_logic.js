@@ -1075,7 +1075,7 @@
 
         // 패치노트 버튼
         const patchBtn = document.createElement('button');
-        patchBtn.textContent = '📋';
+        patchBtn.textContent = '패치노트';
         patchBtn.title = '패치노트';
         patchBtn.style.cssText = `
             background:transparent; border:1px solid #555; color:#aaa;
@@ -1123,10 +1123,10 @@
                         version: 'v1.1',
                         date: '2026-05-24',
                         items: [
-                            '크롬에서 맵 최적화 즉시 적용',
+                            '크롬에서 맵 최적화 체크 시, 새로고침 없이 즉시 적용',
                             '줄을 서시오 레이아웃 미표시 해결',
-                            '알림 타입1, 2 추가',
-                            '명일 07시 다중 모니터링 예정자 표기',
+                            '알림 타입1, 2, 알림 테스트 기능 추가',
+                            '명일 07시 다중 관제는 자정 이후 표기됨',
                         ]
                     },
                 ];
