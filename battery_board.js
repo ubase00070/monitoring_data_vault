@@ -408,11 +408,14 @@
         <div id="bb">
             <div class="bb-hd">
                 <div class="bb-hd-left" style="display:flex;align-items:center;gap:7px;">
-                    <button class="bb-alert-btn" id="bb-alertBtn">
-                        <span>🚨 알림</span>
-                        <span class="bb-alert-count" id="bb-alertCount">0건</span>
-                    </button>
-                </div>
+                   <button class="bb-alert-btn" id="bb-alertBtn">
+                       <span>🚨 알림</span>
+                       <span class="bb-alert-count" id="bb-alertCount">0건</span>
+                   </button>
+                   <button id="bb-zoom-out" style="padding:2px 7px;border-radius:5px;border:1px solid var(--bd2);background:var(--sur2);color:var(--mu);font-size:11px;font-weight:900;cursor:pointer;line-height:1.6;">－</button>
+                   <span id="bb-zoom-label" style="font-size:11px;color:var(--mu);font-weight:700;min-width:32px;text-align:center;">100%</span>
+                   <button id="bb-zoom-in"  style="padding:2px 7px;border-radius:5px;border:1px solid var(--bd2);background:var(--sur2);color:var(--mu);font-size:11px;font-weight:900;cursor:pointer;line-height:1.6;">＋</button>
+               </div>
                 <div class="bb-hd-title">
                     <div class="bb-dot" id="bb-dot"></div>
                     <span class="bb-title-gradient">관리자용 배터리 현황판</span><span style="font-size:16px; color:var(--mu);">by CYH</span>
@@ -1178,6 +1181,36 @@
     const siEl = document.getElementById('bb-si');
     siEl.addEventListener('click', showDd);
     siEl.addEventListener('input', showDd);
+
+    // ── 줌 기능 ──────────────────────────────────────────
+    (function() {
+        const ZOOM_KEY  = 'bb_zoom';
+        const ZOOM_MIN  = 1.0;
+        const ZOOM_MAX  = 2.0;
+        const ZOOM_STEP = 0.1;
+
+        let zoom = parseFloat(localStorage.getItem(ZOOM_KEY)) || 1.0;
+
+        function applyZoom() {
+            const bb = document.getElementById('bb');
+            if (!bb) return;
+            bb.style.transform = `translate(-50%, -50%) scale(${zoom})`;
+            bb.style.transformOrigin = 'center center';
+            document.getElementById('bb-zoom-label').textContent = Math.round(zoom * 100) + '%';
+            document.getElementById('bb-zoom-in').disabled  = zoom >= ZOOM_MAX;
+            document.getElementById('bb-zoom-out').disabled = zoom <= ZOOM_MIN;
+            localStorage.setItem(ZOOM_KEY, zoom.toFixed(1));
+        }
+
+        document.getElementById('bb-zoom-in').addEventListener('click', () => {
+            if (zoom < ZOOM_MAX) { zoom = Math.round((zoom + ZOOM_STEP) * 10) / 10; applyZoom(); }
+        });
+        document.getElementById('bb-zoom-out').addEventListener('click', () => {
+            if (zoom > ZOOM_MIN) { zoom = Math.round((zoom - ZOOM_STEP) * 10) / 10; applyZoom(); }
+        });
+
+        applyZoom();
+    })();
 
     let ddFocusIdx = -1;
 
