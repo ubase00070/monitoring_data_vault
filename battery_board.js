@@ -141,6 +141,7 @@
         .bb-di:last-child { border-bottom:none; }
         .bb-di:hover { background:var(--bd); }
         .bb-di-plus { font-size:17px; color:var(--gn); font-weight:900; line-height:1; }
+        .bb-di.bb-di-focus { background:var(--bd); color:var(--tx); }
 
         /* ── 카드 그리드 ── */
         .bb-gw { padding:10px 12px; flex-shrink:0; }
@@ -1177,7 +1178,40 @@
     const siEl = document.getElementById('bb-si');
     siEl.addEventListener('click', showDd);
     siEl.addEventListener('input', showDd);
-    siEl.addEventListener('keydown', e => { if (e.key==='Enter') e.preventDefault(); });
+
+    let ddFocusIdx = -1;
+
+    siEl.addEventListener('keydown', e => {
+        const ddEl   = document.getElementById('bb-dd');
+        const items  = [...ddEl.querySelectorAll('.bb-di[data-rid]')];
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            ddFocusIdx = Math.min(ddFocusIdx + 1, items.length - 1);
+            items.forEach((el, i) => el.classList.toggle('bb-di-focus', i === ddFocusIdx));
+            items[ddFocusIdx]?.scrollIntoView({ block: 'nearest' });
+
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            ddFocusIdx = Math.max(ddFocusIdx - 1, 0);
+            items.forEach((el, i) => el.classList.toggle('bb-di-focus', i === ddFocusIdx));
+            items[ddFocusIdx]?.scrollIntoView({ block: 'nearest' });
+
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (ddFocusIdx >= 0 && items[ddFocusIdx]) {
+                addRobot(items[ddFocusIdx].dataset.rid);
+                ddFocusIdx = -1;
+            }
+
+        } else if (e.key === 'Escape') {
+            hideDd();
+            ddFocusIdx = -1;
+        }
+    });
+
+    // 검색어 바뀌면 포커스 인덱스 초기화
+    siEl.addEventListener('input', () => { ddFocusIdx = -1; });
 
     document.addEventListener('mousedown', e => {
         if (!e.target.closest('#bb-sb') && !e.target.closest('#bb-dd') && !e.target.closest('#bb-alert-panel')) hideDd();
