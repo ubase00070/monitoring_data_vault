@@ -1655,22 +1655,6 @@
     }, 2000); // 2초 정도면 충분히 여유로움
 
     document.addEventListener('click', handleControlClick, true);
-    // URL 변화 감지 (SPA 대응)
-    let lastUrl = window.location.href;
-    const urlObserver = new MutationObserver(() => {
-        const currentUrl = window.location.href;
-        if (currentUrl !== lastUrl) {
-            lastUrl = currentUrl;
-            const isTarget = config.targetIds.some(id => currentUrl.includes(`/monitoring/${id}`));
-            if (isTarget && state.isMapOpt) {
-                // 페이지 전환 후 맵 로드 대기
-                setTimeout(() => injectMapStyle(), 1000);
-                setTimeout(() => injectMapStyle(), 3000);
-                setTimeout(() => injectMapStyle(), 6000);
-            }
-        }
-    });
-    urlObserver.observe(document.body, { childList: true, subtree: true });
     
     // 페이지 로드 시 이름이 설정되어 있다면 즉시 한 번 동기화
     if (localStorage.getItem('neubie_user_name')) {
