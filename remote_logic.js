@@ -136,8 +136,9 @@
     };
 
     function injectMapStyle() {
-        // 타겟 사이트가 아니면 즉시 리턴
-        if (!isAutoTarget) return;
+        const currentUrl = window.location.href;
+        const isCurrentTarget = config.targetIds.some(id => currentUrl.includes(`/monitoring/${id}`));
+        if (!isCurrentTarget) return;
 
         let style = document.getElementById('neubie-map-opt-style');
         if (!style) {
