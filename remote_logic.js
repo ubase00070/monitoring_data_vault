@@ -1654,6 +1654,7 @@
     }, 2000); // 2초 정도면 충분히 여유로움
 
     document.addEventListener('click', handleControlClick, true);
+    injectConfigUI();
     
     // 페이지 로드 시 이름이 설정되어 있다면 즉시 한 번 동기화
     if (localStorage.getItem('neubie_user_name')) {
