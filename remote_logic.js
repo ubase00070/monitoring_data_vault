@@ -1083,6 +1083,7 @@
             border-radius:6px; padding:2px 6px; cursor:pointer;
             font-size:12px; margin-left:6px; vertical-align:middle;
             transition:all 0.2s;
+            animation: neubie-blink 1.5s ease-in-out infinite;
         `;
         patchBtn.onmouseenter = () => { patchBtn.style.borderColor='#3b82f6'; patchBtn.style.color='#3b82f6'; };
         patchBtn.onmouseleave = () => { patchBtn.style.borderColor='#555'; patchBtn.style.color='#aaa'; };
@@ -1126,8 +1127,8 @@
                         items: [
                             '크롬에서 맵 최적화 체크 시, 새로고침 없이 즉시 적용',
                             '줄을 서시오 레이아웃 미표시 해결',
-                            '알림 타입1, 2, 알림 테스트 기능 추가',
-                            '명일 07시 다중 관제는 자정 이후 표기됨',
+                            '알림 타입1 & 2, 알림 테스트 기능 추가',
+                            '명일 07시 다중 임무는 자정 이후 표기됨(07시 출근자에만 해당)',
                         ]
                     },
                 ];
