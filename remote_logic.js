@@ -136,6 +136,7 @@
     };
 
     function injectMapStyle() {
+        // 타겟 사이트가 아니면 즉시 리턴
         const currentUrl = window.location.href;
         const isCurrentTarget = config.targetIds.some(id => currentUrl.includes(`/monitoring/${id}`));
         if (!isCurrentTarget) return;
@@ -1626,8 +1627,15 @@
                 lastUrl = location.href;
                 closeAllPopups();
                 updateRobotContext();
+                // 맵 최적화 페이지 전환 시 재적용
+                const isTarget = config.targetIds.some(id => location.href.includes(`/monitoring/${id}`));
+                if (isTarget && state.isMapOpt) {
+                    setTimeout(() => injectMapStyle(), 1000);
+                    setTimeout(() => injectMapStyle(), 3000);
+                    setTimeout(() => injectMapStyle(), 6000);
+                }
             }
-        }, 100); // 주소가 바뀔 시간을 잠깐 주는 0.1초 대기
+        }, 100);
     }, true);
 
     // 만약 클릭 없이 코드로만 주소가 바뀌는 경우를 대비 (간격 2초)
@@ -1636,24 +1644,33 @@
             lastUrl = location.href;
             closeAllPopups();
             updateRobotContext();
+            // 맵 최적화 페이지 전환 시 재적용
+            const isTarget = config.targetIds.some(id => location.href.includes(`/monitoring/${id}`));
+            if (isTarget && state.isMapOpt) {
+                setTimeout(() => injectMapStyle(), 1000);
+                setTimeout(() => injectMapStyle(), 3000);
+                setTimeout(() => injectMapStyle(), 6000);
+            }
         }
     }, 2000); // 2초 정도면 충분히 여유로움
 
     document.addEventListener('click', handleControlClick, true);
-    injectConfigUI();
-    if (state.isMapOpt) {
-        injectMapStyle();
-        // MutationObserver로 gmp-advanced-marker가 DOM에 추가되는 순간 감지
-        const mapObserver = new MutationObserver(() => {
-            if (document.querySelector('gmp-advanced-marker') && state.isMapOpt) {
-                injectMapStyle();
-                mapObserver.disconnect(); // 한 번 적용되면 감시 종료
+    // URL 변화 감지 (SPA 대응)
+    let lastUrl = window.location.href;
+    const urlObserver = new MutationObserver(() => {
+        const currentUrl = window.location.href;
+        if (currentUrl !== lastUrl) {
+            lastUrl = currentUrl;
+            const isTarget = config.targetIds.some(id => currentUrl.includes(`/monitoring/${id}`));
+            if (isTarget && state.isMapOpt) {
+                // 페이지 전환 후 맵 로드 대기
+                setTimeout(() => injectMapStyle(), 1000);
+                setTimeout(() => injectMapStyle(), 3000);
+                setTimeout(() => injectMapStyle(), 6000);
             }
-        });
-        mapObserver.observe(document.body, { childList: true, subtree: true });
-        // 안전망: 30초 후 옵저버 자동 종료
-        setTimeout(() => mapObserver.disconnect(), 30000);
-    }
+        }
+    });
+    urlObserver.observe(document.body, { childList: true, subtree: true });
     
     // 페이지 로드 시 이름이 설정되어 있다면 즉시 한 번 동기화
     if (localStorage.getItem('neubie_user_name')) {
