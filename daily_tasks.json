@@ -54,7 +54,7 @@
     "rawTime": "15:00"
   },
   {
-    "user": "박효빈",
+    "user": "이기완",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "16:00"
@@ -72,7 +72,7 @@
     "rawTime": "18:00"
   },
   {
-    "user": "이기완",
+    "user": "박효빈",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "19:00"
@@ -240,7 +240,7 @@
     "rawTime": "16:00"
   },
   {
-    "user": "이기완",
+    "user": "한승완",
     "type": "task",
     "content": "[16:30~17:00] 송도요기요 대기장소 기체 재출근 체크 후 임무 ON",
     "rawTime": "16:30"
