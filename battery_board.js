@@ -1194,8 +1194,20 @@
         function applyZoom() {
             const bb = document.getElementById('bb');
             if (!bb) return;
-            bb.style.transform = `translate(-50%, -50%) scale(${zoom})`;
-            bb.style.transformOrigin = 'center center';
+
+            // 드래그로 이동한 상태인지 확인
+            const isDragged = bb.style.left !== '' && bb.style.left !== '50%';
+
+            if (isDragged) {
+                // 드래그 상태: translate 없이 scale만, transformOrigin은 top left
+                bb.style.transform       = `scale(${zoom})`;
+                bb.style.transformOrigin = 'top left';
+            } else {
+                // 초기 중앙 상태
+                bb.style.transform       = `translate(-50%, -50%) scale(${zoom})`;
+                bb.style.transformOrigin = 'center center';
+            }
+
             document.getElementById('bb-zoom-label').textContent = Math.round(zoom * 100) + '%';
             document.getElementById('bb-zoom-in').disabled  = zoom >= ZOOM_MAX;
             document.getElementById('bb-zoom-out').disabled = zoom <= ZOOM_MIN;
