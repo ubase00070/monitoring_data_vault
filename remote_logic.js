@@ -1073,6 +1073,110 @@
         title.textContent = "🫠 없으면 만들지 뭐";
         title.style.cssText = "color:#3b82f6; font-size:20px; margin:0; font-weight:bold; white-space:nowrap;";
 
+        // 패치노트 버튼
+        const patchBtn = document.createElement('button');
+        patchBtn.textContent = '📋';
+        patchBtn.title = '패치노트';
+        patchBtn.style.cssText = `
+            background:transparent; border:1px solid #555; color:#aaa;
+            border-radius:6px; padding:2px 6px; cursor:pointer;
+            font-size:12px; margin-left:6px; vertical-align:middle;
+            transition:all 0.2s;
+        `;
+        patchBtn.onmouseenter = () => { patchBtn.style.borderColor='#3b82f6'; patchBtn.style.color='#3b82f6'; };
+        patchBtn.onmouseleave = () => { patchBtn.style.borderColor='#555'; patchBtn.style.color='#aaa'; };
+        patchBtn.onclick = () => {
+            let patchOverlay = document.getElementById('neubie-patch-overlay');
+            if (!patchOverlay) {
+                patchOverlay = document.createElement('div');
+                patchOverlay.id = 'neubie-patch-overlay';
+                patchOverlay.style.cssText = `
+                    position:fixed; inset:0; background:transparent; pointer-events:none;
+                    z-index:2147483646; display:flex; align-items:center; justify-content:center;
+                    font-family:Pretendard, sans-serif;
+                `;
+                const patchBox = document.createElement('div');
+                patchBox.style.cssText = `
+                    background:#1e1e2e; color:#e2e8f0; border-radius:18px; pointer-events:auto;
+                    border:1.5px solid #3b82f6; padding:28px 32px 24px 32px;
+                    max-width:560px; width:90%; max-height:80vh; overflow-y:auto;
+                    position:relative; box-shadow:0 10px 50px rgba(0,0,0,0.7);
+                `;
+                const patchTitle = document.createElement('div');
+                patchTitle.textContent = '📋 패치노트';
+                patchTitle.style.cssText = `font-size:20px; font-weight:bold; margin-bottom:20px; color:#60a5fa;`;
+                const patchClose = document.createElement('button');
+                patchClose.textContent = '✕';
+                patchClose.style.cssText = `
+                    position:absolute; top:16px; right:18px;
+                    background:transparent; border:none; color:#aaa;
+                    font-size:20px; cursor:pointer; padding:4px 8px; border-radius:6px;
+                `;
+                patchClose.onmouseenter = () => { patchClose.style.color='#fff'; };
+                patchClose.onmouseleave = () => { patchClose.style.color='#aaa'; };
+                patchClose.onclick = () => { patchOverlay.style.display='none'; };
+
+                // ── 패치노트 내용 ──────────────────────────────────────
+                // 아래 patchItems 배열에 버전별 내용을 추가하세요
+                const patchItems = [
+                    {
+                        version: 'v1.1',
+                        date: '2026-05-24',
+                        items: [
+                            '크롬에서 맵 최적화 즉시 적용',
+                            '줄을 서시오 레이아웃 미표시 해결',
+                            '알림 타입1, 2 추가',
+                            '명일 07시 다중 모니터링 예정자 표기',
+                        ]
+                    },
+                ];
+                // ────────────────────────────────────────────────────────
+
+                const patchContent = document.createElement('div');
+                patchContent.style.cssText = "display:grid; gap:16px;";
+                patchItems.forEach(patch => {
+                    const section = document.createElement('div');
+                    section.style.cssText = "background:#252535; border:1px solid #333; border-radius:12px; padding:14px 16px;";
+                    const versionRow = document.createElement('div');
+                    versionRow.style.cssText = "display:flex; align-items:center; gap:8px; margin-bottom:10px;";
+                    versionRow.innerHTML = `
+                        <span style="font-size:15px; font-weight:bold; color:#60a5fa;">${patch.version}</span>
+                        <span style="font-size:12px; color:#666;">${patch.date}</span>
+                    `;
+                    const itemList = document.createElement('ul');
+                    itemList.style.cssText = "margin:0; padding-left:18px; display:grid; gap:6px;";
+                    patch.items.forEach(item => {
+                        const li = document.createElement('li');
+                        li.textContent = item;
+                        li.style.cssText = "font-size:13px; color:#cbd5e1; line-height:1.5;";
+                        itemList.appendChild(li);
+                    });
+                    section.appendChild(versionRow);
+                    section.appendChild(itemList);
+                    patchContent.appendChild(section);
+                });
+
+                patchBox.appendChild(patchClose);
+                patchBox.appendChild(patchTitle);
+                patchBox.appendChild(patchContent);
+                patchOverlay.appendChild(patchBox);
+                const r = dashboard.getBoundingClientRect();
+                patchOverlay.style.position = 'fixed';
+                patchOverlay.style.top = r.top + 'px';
+                patchOverlay.style.left = r.left + 'px';
+                patchOverlay.style.width = r.width + 'px';
+                patchOverlay.style.height = r.height + 'px';
+                document.body.appendChild(patchOverlay);
+            } else {
+                const r = dashboard.getBoundingClientRect();
+                patchOverlay.style.top = r.top + 'px';
+                patchOverlay.style.left = r.left + 'px';
+                patchOverlay.style.width = r.width + 'px';
+                patchOverlay.style.height = r.height + 'px';
+                patchOverlay.style.display = 'flex';
+            }
+        };
+
         // 이름 입력 및 닫기 버튼 영역
         const nameArea = document.createElement('div');
         nameArea.style.cssText = "display:flex; align-items:center; gap:8px; font-size:15px; color:#64748b;";
@@ -1087,7 +1191,11 @@
             <button id="all-close-btn" style="background:#ef4444; color:white; border:none; border-radius:4px; width:22px; height:22px; cursor:pointer; font-weight:bold; display:flex; align-items:center; justify-content:center; font-size:14px;">✕</button>
         `;
 
-        headerContainer.appendChild(title);
+        const titleWrap = document.createElement('div');
+        titleWrap.style.cssText = "display:flex; align-items:center; gap:0;";
+        titleWrap.appendChild(title);
+        titleWrap.appendChild(patchBtn);
+        headerContainer.appendChild(titleWrap);
         headerContainer.appendChild(nameArea);
         dashboard.appendChild(headerContainer);
 
@@ -1576,6 +1684,8 @@
         if (queueInfoOverlay) queueInfoOverlay.style.display = 'none';
         const tipsOverlay = document.getElementById('neubie-tips-overlay');
         if (tipsOverlay) tipsOverlay.style.display = 'none';
+        const patchOverlay = document.getElementById('neubie-patch-overlay');
+        if (patchOverlay) patchOverlay.style.display='none';
     }
 
     window.addEventListener('keydown', (e) => {
