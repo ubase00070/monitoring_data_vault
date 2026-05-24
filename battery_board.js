@@ -416,7 +416,7 @@
                    <span id="bb-zoom-label" style="font-size:11px;color:var(--mu);font-weight:700;min-width:32px;text-align:center;">100%</span>
                    <button id="bb-zoom-in"  style="padding:2px 7px;border-radius:5px;border:1px solid var(--bd2);background:var(--sur2);color:var(--mu);font-size:11px;font-weight:900;cursor:pointer;line-height:1.6;">＋</button>
                </div>
-                <div class="bb-hd-title">
+                <div class="bb-hd-title" id="bb-drag-handle" style="cursor:grab;">
                     <div class="bb-dot" id="bb-dot"></div>
                     <span class="bb-title-gradient">관리자용 배터리 현황판</span><span style="font-size:16px; color:var(--mu);">by CYH</span>
                     <span class="bb-src-badge idle" id="bb-srcBadge">대기</span>
@@ -1210,6 +1210,44 @@
         });
 
         applyZoom();
+    })();
+
+    // ── 드래그 이동 기능 ──────────────────────────────────
+    (function() {
+        const handle = document.getElementById('bb-drag-handle');
+        const bb     = document.getElementById('bb');
+        let dragging = false, ox = 0, oy = 0;
+
+        handle.addEventListener('mousedown', e => {
+            dragging = true;
+            // 현재 bb 위치 기준으로 마우스 오프셋 계산
+            const rect = bb.getBoundingClientRect();
+            ox = e.clientX - rect.left;
+            oy = e.clientY - rect.top;
+            handle.style.cursor = 'grabbing';
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', e => {
+            if (!dragging) return;
+            const zoom = parseFloat(localStorage.getItem('bb_zoom')) || 1.0;
+            const w = bb.offsetWidth  * zoom;
+            const h = bb.offsetHeight * zoom;
+            let x = e.clientX - ox;
+            let y = e.clientY - oy;
+            // 화면 밖으로 나가지 않도록 제한
+            x = Math.max(0, Math.min(window.innerWidth  - w, x));
+            y = Math.max(0, Math.min(window.innerHeight - h, y));
+            bb.style.left      = x + 'px';
+            bb.style.top       = y + 'px';
+            bb.style.transform = `scale(${zoom})`;
+            bb.style.transformOrigin = 'top left';
+        });
+
+        document.addEventListener('mouseup', () => {
+            dragging = false;
+            handle.style.cursor = 'grab';
+        });
     })();
 
     let ddFocusIdx = -1;
