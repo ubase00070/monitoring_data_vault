@@ -420,16 +420,15 @@
         const myName = localStorage.getItem('neubie_user_name');
         if (!myName) return;
 
-        const buster = Math.floor(Date.now() / 60000);
-        const dataUrl = `https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/daily_tasks.json?v=${buster}`;
-        const insuUrl = `https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/insu_data.json?v=${buster}`;
-        const attendanceUrl = `https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/attendance_may2026.json?v=${buster}`;
+        const dataUrl = `https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/daily_tasks.json`;
+        const insuUrl = `https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/insu_data.json`;
+        const attendanceUrl = `https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/attendance_may2026.json`;
 
         // daily_tasks + insu_data 병렬 fetch
         Promise.all([
-            fetch(dataUrl).then(r => r.json()),
-            fetch(insuUrl).then(r => r.json()),
-            fetch(attendanceUrl).then(r => r.json())
+            fetch(dataUrl, {cache: 'no-store'}).then(r => r.json()),
+            fetch(insuUrl, {cache: 'no-store'}).then(r => r.json()),
+            fetch(attendanceUrl, {cache: 'no-store'}).then(r => r.json())
         ]).then(([data, insu, attendance]) => {
             state.insuData = insu;
             state.attendanceData = attendance;
