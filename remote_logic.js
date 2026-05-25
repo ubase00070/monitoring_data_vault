@@ -214,9 +214,9 @@
         return now;
     };
     const isWeekend = () => {
-        return true;
-        // const day = new Date().getDay();
-        // return (day === 6 || day === 0);
+        // return true;
+        const day = new Date().getDay();
+        return (day === 6 || day === 0);
     };
 
     // [추가] 기체 트래킹 로직
