@@ -11,13 +11,13 @@
         SECTION 1. 상태 및 설정
        ============================================================ */
 	   
-	const HANDOVER_TOKEN = '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';
 	const HANDOVER_API = 'https://api.github.com/repos/ubase00070/monitoring_handover/contents/handover.json';
-	const INSU_DATA_URL = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/insu_data.json';
+	const HANDOVER_RAW = 'https://raw.githubusercontent.com/ubase00070/monitoring_handover/main/handover.json';
+	const HANDOVER_CONFIG = 'https://raw.githubusercontent.com/ubase00070/monitoring_handover/main/config.json';
 
 	const isHandoverPage = () =>
 		location.href.includes('go.neubie.ai/ko/remote/multiple') &&
-		!location.href.includes('/driving');   
+		!location.href.inclfudes('/driving');   
 	   
     const config = {
         targetIds: ['44', '56', '65', '109'],
@@ -1941,16 +1941,10 @@
 		// ── GitHub GET ──
 		const githubGet = async () => {
 			try {
-				const res = await fetch(HANDOVER_API, {
-					headers: {
-						'Authorization': `token ${HANDOVER_TOKEN}`,
-						'Accept': 'application/vnd.github.v3+json',
-					}
-				});
+				const res = await originalFetch(HANDOVER_RAW + '?t=' + Date.now());
 				if (!res.ok) return null;
-				const json = await res.json();
-				const data = JSON.parse(atob(json.content.replace(/\n/g, '')));
-				return { data, sha: json.sha };
+				const data = await res.json();
+				return { data };
 			} catch(e) { return null; }
 		};
 
