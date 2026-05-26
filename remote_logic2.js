@@ -1971,15 +1971,15 @@
 			if (!modal) { setDpMsg('모달 없음', '#ef4444'); return; }
 
 			// ✅ React 체크박스를 강제로 체크하는 헬퍼
-			const reactCheck = (checkbox) => {
-				if (!checkbox) return false;
-				if (checkbox.checked) return true; // 이미 체크됨
-				const nativeSetter = Object.getOwnPropertyDescriptor(
-					window.HTMLInputElement.prototype, 'checked'
-				).set;
-				nativeSetter.call(checkbox, true);
-				checkbox.dispatchEvent(new Event('input',  { bubbles: true }));
-				checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+			const reactCheck = (label) => {
+				if (!label) return false;
+				const checkbox = label.querySelector('input[type="checkbox"]');
+				if (checkbox?.checked) return true;
+				const opts = { bubbles: true, cancelable: true, view: window };
+				label.dispatchEvent(new MouseEvent('mouseover', opts));
+				label.dispatchEvent(new MouseEvent('mousedown', opts));
+				label.dispatchEvent(new MouseEvent('mouseup',   opts));
+				label.dispatchEvent(new MouseEvent('click',     opts));
 				return true;
 			};
 
@@ -1996,8 +1996,7 @@
 					const text = span.textContent.trim();
 					if (text === name || text.includes(name) || name.includes(text)) {
 						const label = span.closest('label');
-						const checkbox = label?.querySelector('input[type="checkbox"]');
-						if (checkbox && reactCheck(checkbox)) { clicked = true; break; }
+						if (label && reactCheck(label)) { clicked = true; break; }
 					}
 				}
 
@@ -2005,8 +2004,7 @@
 				if (!clicked) {
 					for (const label of document.querySelectorAll('label')) {
 						if (label.textContent.trim().replace(/\s+/g, ' ').includes(name)) {
-							const checkbox = label.querySelector('input[type="checkbox"]');
-							if (checkbox && reactCheck(checkbox)) { clicked = true; break; }
+							if (reactCheck(label)) { clicked = true; break; }
 						}
 					}
 				}
