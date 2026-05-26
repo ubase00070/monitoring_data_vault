@@ -2041,11 +2041,8 @@
 			if (isHandoverPage()) {
 				const existing = document.getElementById('ho-remote-panel');
 				if (existing) {
-					existing.style.display = existing.style.display === 'none' ? 'block' : 'none';
-					const peekTab = document.getElementById('ho-remote-peek');
-					if (peekTab) peekTab.style.display = existing.style.display === 'none' ? 'flex' : 'none';
-				} else {
-					initHandoverLayout();
+					const isOpen = existing.style.top === '0px';
+					existing.style.top = isOpen ? '-300px' : '0px';
 				}
 				return;
 			}
