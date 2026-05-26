@@ -1333,22 +1333,16 @@
             const history = json.history || {};
             const realtime = json.realtime || [];
 
-            // [추가] 오늘 날짜 문자열 생성 ex) "20260517"
             const now = new Date();
             const todayStr = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
 
-            // [추가] 현재 시각 기준 2시간 슬롯 계산
-            // GAS 감시 슬롯: 07, 09, 11, 13, 15, 17, 19, 21, 23시
-            // 현재시각 -2시간 이전까지만 유효한 데이터
             const currentHour = now.getHours();
             const lastSlot = currentHour >= 2 ? currentHour - 2 : 0;
 
-            // [추가] realtime을 오늘 날짜 키로 history에 병합 (표시용)
             const displayHistory = { ...history };
             const validRealtime = realtime.filter(e => parseInt(e.hour) <= lastSlot);
             displayHistory[todayStr] = validRealtime;
             
-            // history가 비어있고 오늘도 0건이면 → 전체 누락 없음
             if (Object.keys(history).length === 0 && validRealtime.length === 0) {
                 body.innerHTML = '<div class="bb-hp-empty">누락 기록 없음 ✓</div>';
                 return;
@@ -1372,7 +1366,6 @@
                 const daysHtml = days.map(dateStr => {
                     const entries = byMonth[monthKey][dateStr];
                     if (!entries || entries.length === 0) {
-                         // 오늘 날짜(실시간)인 경우만 0건 표시
                          const isToday = dateStr === todayStr;
                          const d = `${parseInt(dateStr.slice(4,6))}/${parseInt(dateStr.slice(6,8))}`;
                          const todayLabel = isToday ? ' 🔴 실시간' : '';
@@ -1386,7 +1379,6 @@
                     const d = `${parseInt(dateStr.slice(4,6))}/${parseInt(dateStr.slice(6,8))}`;
                     const sorted = [...entries].sort((a, b) => parseInt(a.hour) - parseInt(b.hour));
 
-                    // [추가] 오늘이면 today 클래스 추가
                     const isToday = dateStr === todayStr;
                     const todayLabel = isToday ? ' 🔴 실시간' : '';
 
