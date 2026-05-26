@@ -17,7 +17,7 @@
 
 	const isHandoverPage = () =>
 		location.href.includes('go.neubie.ai/ko/remote/multiple') &&
-		!location.href.inclfudes('/driving');   
+		!location.href.includes('/driving');   
 	   
     const config = {
         targetIds: ['44', '56', '65', '109'],
