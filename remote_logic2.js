@@ -1999,6 +1999,12 @@
 			if (!targets.length) { setDpMsg('연결 가능한 기체 없음', '#f59e0b'); return; }
 			targets.forEach(cellSel);
 			selectedCells = [...targets];
+			// ← 모달이 없으면 사용자에게 안내
+			const modal = document.querySelector('[data-qk="remote-multiple-select-robot-dialog"]');
+			if (!modal) { 
+				setDpMsg('뉴비고에서 기체 선택 모달을 먼저 열어주세요', '#f59e0b'); 
+				return; 
+			}
 			await runAutoSelect(targets.map(c => c.dataset.unit), targets);
 		});
 
