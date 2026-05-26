@@ -11,10 +11,6 @@
         SECTION 1. 상태 및 설정
        ============================================================ */
 	   
-	const HANDOVER_API = 'https://api.github.com/repos/ubase00070/monitoring_handover/contents/handover.json';
-	const HANDOVER_RAW = 'https://raw.githubusercontent.com/ubase00070/monitoring_handover/main/handover.json';
-	const HANDOVER_CONFIG = 'https://raw.githubusercontent.com/ubase00070/monitoring_handover/main/config.json';
-
 	const isHandoverPage = () =>
 		location.href.includes('go.neubie.ai/ko/remote/multiple') &&
 		!location.href.includes('/driving');   
@@ -417,7 +413,7 @@
             btn.style.background = '#22c55e';
             
             setTimeout(() => {
-                btn.textContent = origina111lText;
+                btn.textContent = originalText;
                 btn.style.background = originalBg;
             }, 2000);
         });
@@ -1943,20 +1939,17 @@
 		};
 
 		const githubGet = async () => {
-		    try {
-		        const res = await originalFetch(
-		            'https://api.github.com/repos/ubase00070/monitoring_handover/contents/handover.json',
-		            {
-		                headers: {
-		                    'Accept': 'application/vnd.github.v3+json'
-		                }
-		            }
-		        );
-		        if (!res.ok) return null;
-		        const json = await res.json();
-		        const data = JSON.parse(atob(json.content.replace(/\n/g, '')));
-		        return { data, sha: json.sha };
-		    } catch(e) { return null; }
+			try {
+				const token = localStorage.getItem('ho_github_token') || '';
+				const res = await originalFetch(
+					'https://api.github.com/repos/ubase00070/monitoring_handover/contents/handover.json',
+					{ headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' } }
+				);
+				if (!res.ok) return null;
+				const json = await res.json();
+				const data = JSON.parse(atob(json.content.replace(/\n/g, '')));
+				return { data };
+			} catch(e) { return null; }
 		};
 
 		// ── 유효성 검증 (1시간 이내 데이터) ──
