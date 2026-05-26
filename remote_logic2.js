@@ -1941,7 +1941,9 @@
 		// ── GitHub GET ──
 		const githubGet = async () => {
 			try {
-				const res = await originalFetch(HANDOVER_RAW + '?t=' + Date.now());
+				const res = await fetch(
+					'https://raw.githubusercontent.com/ubase00070/monitoring_handover/main/handover.json?t=' + Date.now()
+				);
 				if (!res.ok) return null;
 				const data = await res.json();
 				return { data };
