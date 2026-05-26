@@ -1408,7 +1408,7 @@
                 return `
                     <div class="bb-hp-month">
                         <div class="bb-hp-month-hd" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.bb-hp-month-arrow').classList.toggle('open')">
-                            <span>${label} 영상 업로드 기록 (08:30 확정 / 17:30 중간점검)</span>
+                            <span>${label} 영상 업로드 기록 (휴먼에러 감안)</span>
                             <span class="bb-hp-month-arrow">▼</span>
                         </div>
                         <div class="bb-hp-month-body">
