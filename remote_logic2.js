@@ -1942,16 +1942,22 @@
 			});
 		};
 
-		// ── GitHub GET ──
 		const githubGet = async () => {
-			try {
-				const res = await originalFetch(
-					'https://raw.githubusercontent.com/ubase00070/monitoring_handover/main/handover.json?t=' + Date.now()
-				);
-				if (!res.ok) return null;
-				const data = await res.json();
-				return { data };
-			} catch(e) { return null; }
+		    try {
+		        const res = await originalFetch(
+		            'https://api.github.com/repos/ubase00070/monitoring_handover/contents/handover.json',
+		            {
+		                headers: {
+		                    'Accept': 'application/vnd.github.v3+json',
+		                    'Cache-Control': 'no-cache'
+		                }
+		            }
+		        );
+		        if (!res.ok) return null;
+		        const json = await res.json();
+		        const data = JSON.parse(atob(json.content.replace(/\n/g, '')));
+		        return { data, sha: json.sha };
+		    } catch(e) { return null; }
 		};
 
 		// ── 유효성 검증 (1시간 이내 데이터) ──
