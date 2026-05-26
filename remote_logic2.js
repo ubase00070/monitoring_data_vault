@@ -1952,11 +1952,6 @@
 			if (!units.length) { setDpMsg('기체 데이터 없음', '#94a3b8'); return; }
 			renderGrid(units);
 			setDpMsg(`교대 기체 데이터 로드됨 (${data.handover_by || '?'} → ${units.length}대)`, '#22c55e');
-		
-			console.log('버튼 클릭:', Date.now());
-			setDpMsg('데이터 확인 중...', '#3b82f6');
-			const result = await githubGet();
-			console.log('버튼 fetch 완료:', Date.now());
 		});
 
 		// ── Auto select ──
@@ -2035,12 +2030,6 @@
 			if (e.target.closest('[data-qk="remote-multiple-select-robot-dialog"]')) return;
 			p.style.top = '-300px';
 		});
-		
-		// ── 자동 Fetch (패널 열릴 때 1회) ──
-		console.log('자동 fetch 시작:', Date.now());
-		setDpMsg('인계 데이터 확인 중...', '#3b82f6');
-		const result = await githubGet();
-		console.log('자동 fetch 완료:', Date.now());
 	}
 	// ── 핸드오버 레이아웃 끝 ──────────────────────────────
 
