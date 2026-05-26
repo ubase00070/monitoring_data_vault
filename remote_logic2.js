@@ -1914,7 +1914,7 @@
 		const githubGet = async () => {
 			try {
 				const token = localStorage.getItem('ho_github_token') || '';
-				const res = await originalFetch(
+				const res = await fetch(  // originalFetch → fetch
 					'https://api.github.com/repos/ubase00070/monitoring_handover/contents/handover.json',
 					{ headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' } }
 				);
