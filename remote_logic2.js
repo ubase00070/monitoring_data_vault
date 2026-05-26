@@ -1702,32 +1702,6 @@
 
 	// ── 핸드오버 레이아웃 ──────────────────────────────────
 	async function initHandoverLayout() {
-		// 빼꼼 탭 생성
-		let peekTab = document.getElementById('ho-remote-peek');
-		if (!peekTab) {
-			peekTab = document.createElement('div');
-			peekTab.id = 'ho-remote-peek';
-			Object.assign(peekTab.style, {
-				position: 'fixed', top: '0', left: '50%', transform: 'translateX(-50%)',
-				zIndex: '2147483647', background: 'rgba(240,242,248,0.96)', color: '#1a1f2e',
-				padding: '3px 18px', borderRadius: '0 0 9px 9px', fontSize: '13px',
-				fontWeight: '700', fontFamily: 'Pretendard,sans-serif', cursor: 'pointer',
-				boxShadow: '0 2px 10px rgba(0,0,0,0.25)', userSelect: 'none',
-				border: '1px solid rgba(200,210,230,0.6)', borderTop: 'none',
-				display: 'flex', alignItems: 'center', justifyContent: 'center',
-			});
-			peekTab.textContent = '≡';
-			document.body.appendChild(peekTab);
-			peekTab.addEventListener('click', () => {
-				const panel = document.getElementById('ho-remote-panel');
-				if (panel) {
-					const isOpen = panel.style.top === '0px';
-					panel.style.top = isOpen ? '-300px' : '0px';
-					peekTab.style.opacity = isOpen ? '1' : '0';
-				}
-			});
-		}
-
 		// 패널 생성
 		let panel = document.getElementById('ho-remote-panel');
 		if (panel) { panel.style.top = '0px'; peekTab.style.opacity = '0'; return; }
@@ -1744,7 +1718,6 @@
 			border: '1px solid rgba(200,210,230,0.7)', borderTop: 'none',
 			transition: 'top 0.28s cubic-bezier(0.4,0,0.2,1)',
 		});
-		peekTab.style.opacity = '0';
 		document.body.appendChild(panel);
 
 		// ── DP 상태 메시지 ──
@@ -1948,10 +1921,10 @@
 				if (!res.ok) return null;
 				const json = await res.json();
 				const decoded = decodeURIComponent(
-				    atob(json.content.replace(/\n/g, ''))
-				        .split('')
-				        .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-				        .join('')
+					atob(json.content.replace(/\n/g, ''))
+						.split('')
+						.map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+						.join('')
 				);
 				const data = JSON.parse(decoded);
 				return { data };
@@ -2052,12 +2025,10 @@
 		// 패널 외부 클릭 시 닫기
 		document.addEventListener('mousedown', (e) => {
 			const p = document.getElementById('ho-remote-panel');
-			const pk = document.getElementById('ho-remote-peek');
-			if (!p || !pk) return;
-			if (p.contains(e.target) || e.target === pk) return;
+			if (!p) return;
+			if (p.contains(e.target)) return;
 			if (e.target.closest('[data-qk="remote-multiple-select-robot-dialog"]')) return;
 			p.style.top = '-300px';
-			pk.style.opacity = '1';
 		});
 	}
 	// ── 핸드오버 레이아웃 끝 ──────────────────────────────
