@@ -1948,8 +1948,7 @@
 		            'https://api.github.com/repos/ubase00070/monitoring_handover/contents/handover.json',
 		            {
 		                headers: {
-		                    'Accept': 'application/vnd.github.v3+json',
-		                    'Cache-Control': 'no-cache'
+		                    'Accept': 'application/vnd.github.v3+json'
 		                }
 		            }
 		        );
