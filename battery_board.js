@@ -510,6 +510,7 @@
                 <div class="bb-hp-close" id="bb-hp-close">✕</div>
             </div>
             <div class="bb-hp-menu">
+                <button class="bb-hp-menu-btn active" id="bb-hp-btn-video">다중 영상</button>
                 <button class="bb-hp-menu-btn" id="bb-hp-btn-hw">뉴비슈 HW</button>
                 <button class="bb-hp-menu-btn" id="bb-hp-btn-sw">뉴비슈 SW</button>
             </div>
@@ -921,34 +922,34 @@
     });
 
     let _hCount = 0, _hTimer;
-   document.addEventListener('keydown', e => {
-       if (e.key === 'h' || e.key === 'H') {
-           if (_hCount === 0) {
-               _hTimer = setTimeout(() => _hCount = 0, 2000); // 2초
-           }
-           _hCount++;
-           if (_hCount >= 5) {
-               clearTimeout(_hTimer);
-               _hCount = 0;
-               const panel = document.getElementById('bb-hist-panel');
-               panel.classList.toggle('open');
-               if (panel.classList.contains('open')) {
-                   panel.style.zIndex = ++topmostZ;
-                   histActiveMenu = 'hw';
-                   ['bb-hp-btn-hw','bb-hp-btn-sw'].forEach(id => {
-                       const el = document.getElementById(id);
-                       if (el) el.classList.remove('active');
-                   });
-                   document.getElementById('bb-hp-btn-hw').classList.add('active');
-                   loadHistoryPanel();
-               }
-           }
-       } else {
-           // h 아닌 다른 키 누르면 초기화
-           clearTimeout(_hTimer);
-           _hCount = 0;
-       }
-   });
+    document.addEventListener('keydown', e => {
+        if (e.key === 'h' || e.key === 'H') {
+            if (_hCount === 0) {
+                _hTimer = setTimeout(() => _hCount = 0, 2000); // 2초
+            }
+            _hCount++;
+            if (_hCount >= 5) {
+                clearTimeout(_hTimer);
+                _hCount = 0;
+                const panel = document.getElementById('bb-hist-panel');
+                panel.classList.toggle('open');
+                if (panel.classList.contains('open')) {
+                    panel.style.zIndex = ++topmostZ;
+                    histActiveMenu = 'video';
+                    ['bb-hp-btn-video','bb-hp-btn-hw','bb-hp-btn-sw'].forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) el.classList.remove('active');
+                    });
+                    document.getElementById('bb-hp-btn-video').classList.add('active');
+                    loadHistoryPanel();
+                }
+            }
+        } else {
+            // h 아닌 다른 키 누르면 초기화
+            clearTimeout(_hTimer);
+            _hCount = 0;
+        }
+    });
 
     document.getElementById('bb-alertBtn').addEventListener('click', () => {
         const panel = document.getElementById('bb-alert-panel');
@@ -964,6 +965,15 @@
 
     document.getElementById('bb-hp-close').addEventListener('click', () => {
         document.getElementById('bb-hist-panel').classList.remove('open');
+    });
+
+    document.getElementById('bb-hp-btn-video').addEventListener('click', () => {
+        histActiveMenu = 'video';
+        ['bb-hp-btn-video','bb-hp-btn-hw','bb-hp-btn-sw'].forEach(id => {
+            document.getElementById(id).classList.remove('active');
+        });
+        document.getElementById('bb-hp-btn-video').classList.add('active');
+        loadVideoHistory();
     });
 
     // 뉴비슈 HW 버튼
@@ -1301,15 +1311,117 @@
     });
 
     // ── 히스토리 버튼 & 패널 ──────────────────────────────────────
-    const MONITOR_DATA_URL = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/monitor_data.json';
+    const MONITOR_DATA_URL = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/swordfish.css';
     const NEUBIE_BASE_URL = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/';
     const MONTH_NAMES = { '01':'jan','02':'feb','03':'mar','04':'apr','05':'may','06':'jun','07':'jul','08':'aug','09':'sep','10':'oct','11':'nov','12':'dec' };
 
-    let histActiveMenu = 'hw';
+    let histVideoOpen = false;
+    let histActiveMenu = 'video';
 
     async function loadHistoryPanel() {
-        histActiveMenu = 'hw';
-        await loadNeubieIssues('hw');
+        await loadVideoHistory();
+    }
+
+    async function loadVideoHistory() {
+        const body = document.getElementById('bb-hp-body');
+        body.innerHTML = '';
+
+        try {
+            const res  = await fetch(MONITOR_DATA_URL + '?t=' + Date.now());
+            const json = await res.json();
+            const history = json.history || {};
+            const realtime = json.realtime || [];
+
+            // [추가] 오늘 날짜 문자열 생성 ex) "20260517"
+            const now = new Date();
+            const todayStr = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+
+            // [추가] 현재 시각 기준 2시간 슬롯 계산
+            // GAS 감시 슬롯: 07, 09, 11, 13, 15, 17, 19, 21, 23시
+            // 현재시각 -2시간 이전까지만 유효한 데이터
+            const currentHour = now.getHours();
+            const lastSlot = currentHour >= 2 ? currentHour - 2 : 0;
+
+            // [추가] realtime을 오늘 날짜 키로 history에 병합 (표시용)
+            const displayHistory = { ...history };
+            const validRealtime = realtime.filter(e => parseInt(e.hour) <= lastSlot);
+            displayHistory[todayStr] = validRealtime;
+            
+            // history가 비어있고 오늘도 0건이면 → 전체 누락 없음
+            if (Object.keys(history).length === 0 && validRealtime.length === 0) {
+                body.innerHTML = '<div class="bb-hp-empty">누락 기록 없음 ✓</div>';
+                return;
+            }
+
+            const byMonth = {};
+            Object.entries(displayHistory).forEach(([dateStr, entries]) => {
+                const y = dateStr.slice(0,4), m = dateStr.slice(4,6);
+                const monthKey = `${y}-${m}`;
+                if (!byMonth[monthKey]) byMonth[monthKey] = {};
+                byMonth[monthKey][dateStr] = entries;
+            });
+
+            const sortedMonths = Object.keys(byMonth).sort((a,b) => b.localeCompare(a));
+
+            body.innerHTML = sortedMonths.map(monthKey => {
+                const [y, m] = monthKey.split('-');
+                const label  = `${y}년 ${parseInt(m)}월`;
+                const days   = Object.keys(byMonth[monthKey]).sort();
+
+                const daysHtml = days.map(dateStr => {
+                    const entries = byMonth[monthKey][dateStr];
+                    if (!entries || entries.length === 0) {
+                         // 오늘 날짜(실시간)인 경우만 0건 표시
+                         const isToday = dateStr === todayStr;
+                         const d = `${parseInt(dateStr.slice(4,6))}/${parseInt(dateStr.slice(6,8))}`;
+                         const todayLabel = isToday ? ' 🔴 실시간' : '';
+                         return `
+                             <div class="bb-hp-day ${isToday ? 'today' : ''}">
+                                 <div class="bb-hp-day-title">📅 ${d}${todayLabel} (0건)</div>
+                                 <div style="padding:6px 0; font-size:11px; color:var(--gn); font-weight:700;">✓ 누락 없음</div>
+                             </div>
+                         `;
+                    }
+                    const d = `${parseInt(dateStr.slice(4,6))}/${parseInt(dateStr.slice(6,8))}`;
+                    const sorted = [...entries].sort((a, b) => parseInt(a.hour) - parseInt(b.hour));
+
+                    // [추가] 오늘이면 today 클래스 추가
+                    const isToday = dateStr === todayStr;
+                    const todayLabel = isToday ? ' 🔴 실시간' : '';
+
+                    const entriesHtml = sorted.map(e => `
+                        <div class="bb-hp-entry">
+                            <div class="bb-hp-entry-hour">${e.hour}</div>
+                            <div class="bb-hp-entry-name">${e.name}</div>
+                            <div class="bb-hp-entry-badge ${e.status !== '미업로드' ? 'misplaced' : ''}">${e.status}</div>
+                        </div>
+                    `).join('');
+
+                    return `
+                        <div class="bb-hp-day ${isToday ? 'today' : ''}">
+                            <div class="bb-hp-day-title">📅 ${d}${todayLabel} (${entries.length}건)</div>
+                            ${entriesHtml}
+                        </div>
+                    `;
+                }).join('');
+
+                return `
+                    <div class="bb-hp-month">
+                        <div class="bb-hp-month-hd" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.bb-hp-month-arrow').classList.toggle('open')">
+                            <span>${label} 영상 업로드 기록 (08:30 확정 / 17:30 중간점검)</span>
+                            <span class="bb-hp-month-arrow">▼</span>
+                        </div>
+                        <div class="bb-hp-month-body">
+                            ${daysHtml || '<div class="bb-hp-empty">이 달 누락 없음 ✓</div>'}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+        } catch(err) {
+            body.innerHTML = '<div class="bb-hp-empty">데이터 로드 실패 ❌</div>';
+            console.error('[BB-HIST]', err);
+        }
     }
 
     async function loadNeubieIssues(type) {
