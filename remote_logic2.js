@@ -1692,6 +1692,10 @@
     function closeAllPopups() {
         dashboard.style.display = 'none';
         batteryPopup.style.display = 'none';
+
+		document.getElementById('ho-remote-peek')?.remove();
+    	document.getElementById('ho-remote-panel')?.remove();
+		
         const queueInfoOverlay = document.getElementById('neubie-queue-info-overlay');
         if (queueInfoOverlay) queueInfoOverlay.style.display = 'none';
         const tipsOverlay = document.getElementById('neubie-tips-overlay');
