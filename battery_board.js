@@ -1328,7 +1328,8 @@
 
         try {
             const res  = await fetch(MONITOR_DATA_URL + '?t=' + Date.now());
-            const json = await res.json();
+            const text = await res.text();
+            const json = JSON.parse(text.slice(text.indexOf('{')));
             const history = json.history || {};
             const realtime = json.realtime || [];
 
