@@ -1947,7 +1947,13 @@
 				);
 				if (!res.ok) return null;
 				const json = await res.json();
-				const data = JSON.parse(atob(json.content.replace(/\n/g, '')));
+				const decoded = decodeURIComponent(
+				    atob(json.content.replace(/\n/g, ''))
+				        .split('')
+				        .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+				        .join('')
+				);
+				const data = JSON.parse(decoded);
 				return { data };
 			} catch(e) { return null; }
 		};
