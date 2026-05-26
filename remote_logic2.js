@@ -1704,7 +1704,7 @@
 	async function initHandoverLayout() {
 		// 패널 생성
 		let panel = document.getElementById('ho-remote-panel');
-		if (panel) { panel.style.top = '0px'; peekTab.style.opacity = '0'; return; }
+		if (panel) { panel.style.top = '0px'; return; }
 
 		panel = document.createElement('div');
 		panel.id = 'ho-remote-panel';
@@ -2043,6 +2043,8 @@
 				if (existing) {
 					const isOpen = existing.style.top === '0px';
 					existing.style.top = isOpen ? '-300px' : '0px';
+				} else {
+					initHandoverLayout(); // ← 이게 빠져있었음
 				}
 				return;
 			}
