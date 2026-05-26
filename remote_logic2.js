@@ -1970,6 +1970,19 @@
 			}
 			if (!modal) { setDpMsg('모달 없음', '#ef4444'); return; }
 
+			// ✅ React 체크박스를 강제로 체크하는 헬퍼
+			const reactCheck = (checkbox) => {
+				if (!checkbox) return false;
+				if (checkbox.checked) return true; // 이미 체크됨
+				const nativeSetter = Object.getOwnPropertyDescriptor(
+					window.HTMLInputElement.prototype, 'checked'
+				).set;
+				nativeSetter.call(checkbox, true);
+				checkbox.dispatchEvent(new Event('input',  { bubbles: true }));
+				checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+				return true;
+			};
+
 			let ok = 0;
 			for (let i = 0; i < units.length; i++) {
 				const name = units[i];
@@ -1984,8 +1997,7 @@
 					if (text === name || text.includes(name) || name.includes(text)) {
 						const label = span.closest('label');
 						const checkbox = label?.querySelector('input[type="checkbox"]');
-						if (label && !checkbox?.checked) { label.click(); clicked = true; break; }
-						else if (checkbox?.checked) { clicked = true; break; }
+						if (checkbox && reactCheck(checkbox)) { clicked = true; break; }
 					}
 				}
 
@@ -1994,22 +2006,27 @@
 					for (const label of document.querySelectorAll('label')) {
 						if (label.textContent.trim().replace(/\s+/g, ' ').includes(name)) {
 							const checkbox = label.querySelector('input[type="checkbox"]');
-							if (!checkbox?.checked) label.click();
-							clicked = true; break;
+							if (checkbox && reactCheck(checkbox)) { clicked = true; break; }
 						}
 					}
 				}
 
 				if (clicked) { ok++; if (cell) cellDone(cell); }
-				await new Promise(r => setTimeout(r, 30));
+				await new Promise(r => setTimeout(r, 80)); // 30ms → 80ms로 여유 확보
 			}
 
-			setDpMsg(`${ok}/${units.length} 완료`, '#22c55e');
-			await new Promise(r => setTimeout(r, 120));
+			setDpMsg(`${ok}/${units.length} 선택 완료, 시작하기 대기 중...`, '#22c55e');
 
-			// 확인(시작하기) 버튼 클릭
-			const confirmBtn = document.querySelector('[data-qk="remote-multiple-select-robot-dialog-confirm-button"]');
-			if (confirmBtn && !confirmBtn.disabled) {
+			// ✅ 시작하기 버튼이 활성화될 때까지 폴링 (최대 3초)
+			const confirmBtn = await new Promise(resolve => {
+				const interval = setInterval(() => {
+					const btn = document.querySelector('[data-qk="remote-multiple-select-robot-dialog-confirm-button"]');
+					if (btn && !btn.disabled) { clearInterval(interval); resolve(btn); }
+				}, 100);
+				setTimeout(() => { clearInterval(interval); resolve(null); }, 3000);
+			});
+
+			if (confirmBtn) {
 				confirmBtn.click();
 				setDpMsg('완료! ✅', '#22c55e');
 			} else {
