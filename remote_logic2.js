@@ -1974,23 +1974,47 @@
 			for (let i = 0; i < units.length; i++) {
 				const name = units[i];
 				const cell = targetCells[i];
-				const spans = document.querySelectorAll('span[data-qk="robot-name"]');
+				setDpMsg(`${name} (${i+1}/${units.length})`, '#3b82f6');
 				let clicked = false;
+
+				// 1단계: span[data-qk="robot-name"]으로 찾기
+				const spans = document.querySelectorAll('span[data-qk="robot-name"]');
 				for (const span of spans) {
-					if (span.textContent.trim().includes(name)) {
+					const text = span.textContent.trim();
+					if (text === name || text.includes(name) || name.includes(text)) {
 						const label = span.closest('label');
 						const checkbox = label?.querySelector('input[type="checkbox"]');
 						if (label && !checkbox?.checked) { label.click(); clicked = true; break; }
 						else if (checkbox?.checked) { clicked = true; break; }
 					}
 				}
+
+				// 2단계 폴백: 모든 label 텍스트 검색
+				if (!clicked) {
+					for (const label of document.querySelectorAll('label')) {
+						if (label.textContent.trim().replace(/\s+/g, ' ').includes(name)) {
+							const checkbox = label.querySelector('input[type="checkbox"]');
+							if (!checkbox?.checked) label.click();
+							clicked = true; break;
+						}
+					}
+				}
+
 				if (clicked) { ok++; if (cell) cellDone(cell); }
 				await new Promise(r => setTimeout(r, 30));
 			}
+
 			setDpMsg(`${ok}/${units.length} 완료`, '#22c55e');
 			await new Promise(r => setTimeout(r, 120));
+
+			// 확인(시작하기) 버튼 클릭
 			const confirmBtn = document.querySelector('[data-qk="remote-multiple-select-robot-dialog-confirm-button"]');
-			if (confirmBtn && !confirmBtn.disabled) confirmBtn.click();
+			if (confirmBtn && !confirmBtn.disabled) {
+				confirmBtn.click();
+				setDpMsg('완료! ✅', '#22c55e');
+			} else {
+				setDpMsg('시작하기 버튼을 직접 눌러주세요', '#f59e0b');
+			}
 		};
 
 		autoBtn.addEventListener('click', async () => {
