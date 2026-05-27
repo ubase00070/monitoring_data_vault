@@ -482,6 +482,7 @@
                     * 알림 전송 조건<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 배터리 21% 이하 기체<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 배달 사이트 기체가 아닌데 120분이상 ~ 360분 미만 대기 상태로 방치된 경우(배터리 50% 미만이면 360분 지났어도 알림 발생)<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 순찰 시간이 유동적인 사이트 기체가 순찰 시작 시간대에 10분이상 머무는 경우(ex. 리센츠, 엘스 등)<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 무선 도킹됨 상태 기체<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 탐지 메시지 뜬 기체(기능 테스트 중)<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 최근 10분 동안 ON/OFF를 3회 이상 반복한 경우<br>
@@ -634,6 +635,44 @@
     }
     function alertKey(type, id) { return `${type}::${id}`; }
 
+    // ── 기능7: 순찰 미시작 감지 전역 상태 ──────────────────
+    const posHistory = new Map();
+    // { "robotId": { lat, lon, count, alertedAt } }
+
+    const PATROL_SCHEDULE = {
+        46 : [9, 14, 19],
+        66 : [9, 15, 21],
+        72 : [9, 14, 20],
+        75 : [10, 16, 19, 0],
+        105: [9, 14, 16, 22, 2],
+        108: [14, 1],
+        126: [17, 20, 23, 2, 5],
+    };
+
+    function getDistanceMeters(lat1, lon1, lat2, lon2) {
+        const R    = 6371000;
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a    = Math.sin(dLat/2) ** 2 +
+                    Math.cos(lat1 * Math.PI/180) *
+                    Math.cos(lat2 * Math.PI/180) *
+                    Math.sin(dLon/2) ** 2;
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    }
+
+    function isPatrolTime(siteId) {
+        const hours = PATROL_SCHEDULE[Number(siteId)];
+        if (!hours) return false;
+        const now  = new Date();
+        const nowM = now.getHours() * 60 + now.getMinutes();
+        return hours.some(h => {
+            const targetM = h * 60;
+            const diff    = Math.abs(nowM - targetM);
+            const diffW   = Math.min(diff, 1440 - diff); // 자정 경계 처리
+            return diffW <= 30;
+        });
+    }
+
     function detectAlerts(rawList) {
         const alerts = [];
         const now = Date.now();
@@ -761,6 +800,49 @@
                         time: fmt(new Date().toISOString())
                     });
                 }
+            }
+
+            // ── 기능7: 순찰 미시작 감지 (좌표 고정 10분) ──────────
+            const siteId = raw.site?.id;
+            if (
+                PATROL_SCHEDULE[siteId] &&          // 감시 대상 사이트
+                rs.isConnecting === true &&          // 전원 ON
+                isPatrolTime(siteId) &&              // 순찰 시간대
+                typeof rs.navpvtHorzAccuracy === 'number' &&
+                rs.navpvtHorzAccuracy < 50000 &&    // 야외 판정
+                typeof rs.latitude === 'number' &&
+                typeof rs.longitude === 'number'
+            ) {
+                const prev = posHistory.get(id);
+                const curLat = rs.latitude;
+                const curLon = rs.longitude;
+
+                if (!prev) {
+                    // 첫 체크: 기준 좌표 저장, 카운트 0
+                    posHistory.set(id, { lat: curLat, lon: curLon, count: 0 });
+                } else {
+                    const dist = getDistanceMeters(prev.lat, prev.lon, curLat, curLon);
+                    if (dist > 10) {
+                        // 10m 초과 이동 → 카운트 초기화, 새 좌표 저장
+                        posHistory.set(id, { lat: curLat, lon: curLon, count: 0 });
+                        dismissedAlerts.delete(alertKey('patrol-fix', id));
+                    } else {
+                        // 10m 이내 → 카운트 누적
+                        prev.count += 1;
+                        // 20체크 = 약 10분
+                        if (prev.count >= 20) {
+                            const key = alertKey('patrol-fix', id);
+                            if (!dismissedAlerts.has(key)) alerts.push({
+                                key, type:'patrol-fix', dot:'ye', name,
+                                desc:`순찰 미시작 의심 — 10분 이상 위치 고정`,
+                                time: fmt(new Date().toISOString())
+                            });
+                        }
+                    }
+                }
+            } else if (!PATROL_SCHEDULE[raw.site?.id]) {
+                // 감시 대상 아닌 기체는 이력 삭제 (메모리 정리)
+                posHistory.delete(id);
             }
         });
 
