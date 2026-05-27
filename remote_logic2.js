@@ -1284,7 +1284,7 @@
             const savedType = localStorage.getItem('neubie_notif_type') || 'type1';
             const btn1 = document.getElementById('btn-type1');
             const btn2 = document.getElementById('btn-type2');
-            if (!btn1 || !btn2 || !btnTest) return;
+            if (!btn1 || !btn2) return;
 
             function applyTypeUI(type) {
                 if (type === 'type1') {
