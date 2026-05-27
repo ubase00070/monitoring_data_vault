@@ -1273,8 +1273,8 @@
 				    <button id="btn-type2" style="padding:3px 8px; border-radius:20px; font-size:11px; font-weight:bold; cursor:pointer; border:2px solid #2563eb; background:transparent; color:#60a5fa;">알림2</button>
 				    <select id="remind-inline" style="background:#333; color:white; border:1px solid #555; font-size:13px; border-radius:4px; padding:2px;">
 				        <option value="0" ${currentInt === '0' ? 'selected' : ''}>알림 없음</option>
-				        <option value="3" ${currentInt === '3' ? 'selected' : ''}>3분 전</option>
-				        <option value="5" ${currentInt === '5' ? 'selected' : ''}>5분 전</option>
+				        <option value="3" ${currentInt === '3' ? 'selected' : ''}>3분 전(다중은 13분 전)</option>
+				        <option value="5" ${currentInt === '5' ? 'selected' : ''}>5분 전(다중은 15분 전)</option>
 				    </select>
 				</div>
             </div>
@@ -1341,7 +1341,7 @@
 
         // 맵 최적화 (체크박스, 멘트 없이 이름만)
         const mapCard = document.createElement('div');
-        mapCard.style.cssText = "background:#252525; padding:15px; border-radius:15px; border:1px solid #333; display:flex; justify-content:space-between; align-items:center;";
+        mapCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333; display:flex; justify-content:space-between; align-items:center;";
         mapCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">🗺️ 요기요/삼평동 맵 최적화</span>`;
         const mapChk = document.createElement('input');
         mapChk.type = 'checkbox'; mapChk.checked = state.isMapOpt;
@@ -1356,7 +1356,7 @@
 
         // 줄을 서시오 (체크박스, 멘트 없이 이름만)
         const queueCard = document.createElement('div');
-        queueCard.style.cssText = "background:#252525; padding:15px; border-radius:15px; border:1px solid #333; display:flex; justify-content:space-between; align-items:center;";
+        queueCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333; display:flex; justify-content:space-between; align-items:center;";
         queueCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">📡 줄을 서시오 v2.0</span>`;
         const queueChk = document.createElement('input');
         queueChk.type = 'checkbox'; queueChk.checked = state.isQueueOpt;
@@ -1468,7 +1468,7 @@
 
         // 3-1. 최적화 팁 (좌측)
         const tipsCard = document.createElement('div');
-        tipsCard.style.cssText = "background:#252525; padding:15px; border-radius:15px; border:1px solid #333; display:flex; justify-content:space-between; align-items:center;";
+        tipsCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333; display:flex; justify-content:space-between; align-items:center;";
         tipsCard.innerHTML = `
             <div style="flex:1;">
                 <div style="font-weight:bold; font-size:15px; margin-bottom:3px;">💡 최적화 팁</div>
@@ -1566,7 +1566,7 @@
         // 3-2. 배터리 현황 (우측)
         const isBatteryOpen = batteryPopup.style.display === 'block';
         const batteryCard = document.createElement('div');
-        batteryCard.style.cssText = "background:#252525; padding:15px; border-radius:15px; border:1px solid #333; display:flex; justify-content:space-between; align-items:center;";
+        batteryCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333; display:flex; justify-content:space-between; align-items:center;";
         batteryCard.innerHTML = `
             <div style="flex:1;">
                 <div style="font-weight:bold; font-size:15px; margin-bottom:3px;">🔋 성남 배터리 현황</div>
