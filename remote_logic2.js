@@ -955,7 +955,7 @@
         const isWknd = isWeekend();
         const card = document.createElement('div');
         card.id = 'namingSection';
-        card.style.cssText = 'background:#252525; padding:15px; border-radius:15px; border:1px solid #333; margin-top:5px;';
+        card.style.cssText = 'background:#252525; padding:10px 15px; border-radius:15px; border:1px solid #333; margin-top:5px;';
 
         const history = JSON.parse(localStorage.getItem('neubie_robot_history') || '[]');
         let dropdownOptions = history.map(h => {
@@ -984,7 +984,7 @@
                     ${dropdownOptions || '<option>최근 배달 기체 미감지</option>'}
                 </select>
                 <input type="text" id="taskInput" placeholder="주문번호를 붙여넣으세요." style="flex: 0 1 160px; background: #333; color: white; border: 1px solid #555; padding: 4px; border-radius: 4px; font-size: 15px;">
-                <button id="copyFileName" style="background: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size:15px;">복사</button>
+                <button id="copyFileName" style="background: #007bff; color: white; border: none; padding: 5px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size:15px; white-space:nowrap; min-width:70px;">복사</button>
             </div>
             <div style="display: flex; gap: 5px; flex-wrap: wrap;">
                 <button id="btnMulti" class="sub-btn">다중 관제</button>
@@ -1475,7 +1475,7 @@
             </div>`;
         const tipsOpenBtn = document.createElement('button');
         tipsOpenBtn.textContent = '열기';
-        tipsOpenBtn.style.cssText = "background:#3b82f6; color:white; border:none; padding:8px 16px; border-radius:8px; cursor:pointer; font-weight:bold; font-size:14px; white-space:nowrap;";
+        tipsOpenBtn.style.cssText = "background:#3b82f6; color:white; border:none; padding:5px 14px; border-radius:8px; cursor:pointer; font-weight:bold; font-size:13px; white-space:nowrap;";
         tipsOpenBtn.onclick = () => {
             let tipsOverlay = document.getElementById('neubie-tips-overlay');
             if (!tipsOverlay) {
@@ -1573,7 +1573,7 @@
             </div>`;
         const batteryBtn = document.createElement('button');
         batteryBtn.textContent = isBatteryOpen ? '닫기' : '열기';
-        batteryBtn.style.cssText = `background:${isBatteryOpen ? '#ef4444' : '#3b82f6'}; color:white; border:none; padding:8px 16px; border-radius:8px; cursor:pointer; font-weight:bold; font-size:14px; white-space:nowrap;`;
+        batteryBtn.style.cssText = `background:${isBatteryOpen ? '#ef4444' : '#3b82f6'}; color:white; border:none; padding:5px 14px; border-radius:8px; cursor:pointer; font-weight:bold; font-size:13px; white-space:nowrap;`; 
         batteryBtn.onclick = () => {
             toggleBattery();
             renderDashboard();
