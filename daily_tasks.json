@@ -18,13 +18,13 @@
     "rawTime": "09:00"
   },
   {
-    "user": "안혜림",
+    "user": "김동진",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "10:00"
   },
   {
-    "user": "김동진",
+    "user": "안혜림",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "11:00"
@@ -192,13 +192,13 @@
     "rawTime": "10:30"
   },
   {
-    "user": "오정훈",
+    "user": "석승찬",
     "type": "task",
     "content": "[10:30~11:00] 성남 [삼평동+서현동] 기체 출근 체크 후 임무 ON [평일]",
     "rawTime": "10:30"
   },
   {
-    "user": "후보 없음",
+    "user": "박효선",
     "type": "task",
     "content": "[10:30~11:00] 송도요기요 대기장소 기체 출근 체크 후 임무 ON",
     "rawTime": "10:30"
@@ -252,7 +252,7 @@
     "rawTime": "14:00"
   },
   {
-    "user": "박계원",
+    "user": "김가은",
     "type": "task",
     "content": "[15:00~16:00] 부산국립과학관 170,171호기 임무 [화,수,목,금,토,일]",
     "rawTime": "15:00"
