@@ -107,20 +107,6 @@
         attendanceData: null
     };
 
-    const QUEUE_CONFIG = {
-        SLOTS: [0, 350, 700, 1050, 1400], 
-        JITTER: 100, 
-        OVERLAY_DURATION: 2000,
-        MIN_OVERLAY_SHOW: 500,
-        STYLE: {
-            position: 'fixed', top: '20%', left: '50%', transform: 'translateX(-50%)',
-            backgroundColor: 'rgba(15, 23, 42, 0.98)', color: 'white', border: '3px solid #ffeb3b',
-            padding: '25px 50px', borderRadius: '15px', zIndex: '2147483647', textAlign: 'center',
-            boxShadow: '0 10px 40px rgba(0,0,0,0.6)', fontWeight: 'bold', pointerEvents: 'none',
-            fontFamily: 'Pretendard, sans-serif', transition: 'opacity 0.2s ease-in-out'
-        }
-    };
-
     const taskChannel = new BroadcastChannel('neubie_task_sync');
 
     /* ============================================================
@@ -747,59 +733,6 @@
         { name: "임아연", time: "(2200-0700)(U)", break: "(0300-0400)" }, 
         { name: "안대관", time: "(2330-0830)(U)", break: "(0400-0500)" }
     ];
-
-    function parseTimeRange(str) {
-        const m = str.match(/\((\d{2})(\d{2})-(\d{2})(\d{2})\)/);
-        if (!m) return null;
-        return {
-            start: parseInt(m[1]) * 60 + parseInt(m[2]),
-            end:   parseInt(m[3]) * 60 + parseInt(m[4])
-        };
-    }
-
-    function isInRange(range, nowMin) {
-        if (!range) return false;
-        if (range.end < range.start) // 자정 넘김 (예: 2200-0700)
-            return nowMin >= range.start || nowMin < range.end;
-        return nowMin >= range.start && nowMin < range.end;
-    }
-
-    function getCurrentMonitor(insuData) {
-        if (!insuData?.schedule) return null;
-        const now = new Date();
-        // X:50~X+1:50 구간이므로, 분이 50 이상이면 현재 시각 슬롯, 미만이면 이전 시각 슬롯
-        const slotHour = now.getMinutes() >= 50 ? now.getHours() : now.getHours() - 1;
-        const normalizedHour = ((slotHour % 24) + 24) % 24; // 음수 방지
-        const hour = String(normalizedHour).padStart(2, '0') + ':00';
-        return insuData.schedule[hour] || null;
-    }
-
-    function getActiveGroup(now, insuData, attendanceData) {
-        const today = now.toISOString().split('T')[0]; // "2026-05-13"
-        const todaySchedule = attendanceData?.schedule?.[today];
-        const presentList = todaySchedule?.present || null;
-        const halfDayList = todaySchedule?.halfDay || [];
-        const nowMin = now.getHours() * 60 + now.getMinutes();
-        const currentMonitor = getCurrentMonitor(insuData);
-
-        return personnelData.filter(p => {
-            // attendanceData 없으면 근무시간만으로 필터 (안전 모드)
-            if (presentList !== null && !presentList.includes(p.name)) return false;
-            // 근무 시간대 필터
-            if (!isInRange(parseTimeRange(p.time), nowMin)) return false;
-            // 휴게 시간 필터
-            if (isInRange(parseTimeRange(p.break), nowMin)) return false;
-            // 오후반차 — until 이후면 제외
-            const halfDay = halfDayList.find(h => h.name === p.name);
-            if (halfDay) {
-                const untilMin = parseInt(halfDay.until.split(':')[0]) * 60;
-                if (nowMin >= untilMin) return false;
-            }
-            // 모니터링 담당자 제외
-            if (currentMonitor && p.name === currentMonitor) return false;
-            return true;
-        }).sort((a, b) => a.name.localeCompare(b.name));
-    }
     
     function injectConfigUI() {
         // 이미 스타일이 존재하면 중복 생성 방지
@@ -809,25 +742,6 @@
         style.id = 'neubie-engine-popup-style';
         style.innerHTML = `
             /* 딜레이 안내 팝업 스타일 */
-            .delay-popup {
-                position: fixed;
-                top: 15%;
-                left: 50%;
-                transform: translate(-50%, 0);
-                background-color: rgba(15, 15, 15, 0.95);
-                color: #00ff41; 
-                padding: 24px 44px;        /* 16px 28px → 24px 44px */
-                border-radius: 12px;       /* 8px → 12px */
-                z-index: 10000; 
-                text-align: center;
-                font-weight: 700;
-                border: 2px solid #00ff41;
-                box-shadow: 0 0 20px rgba(0, 255, 65, 0.3);
-                pointer-events: none;
-                line-height: 1.6;          /* 1.5 → 1.6 */
-                font-size: 18px;           /* 15px → 18px */
-                transition: opacity 0.5s, transform 0.5s;
-            }
                 .marquee-wrap {
                     overflow: hidden;
                     flex: 1;
@@ -857,95 +771,110 @@
     }
 
     /* ============================================================
-    SECTION 6. 지능형 충돌 회피 순열 엔진
-   ============================================================ */
+    SECTION 6. 개입카드 중복 감지 엔진
+    ============================================================ */
 
+    // ─ 브릿지 변수 ─────────────────────────────────────────────
+    let pendingOverlapNames = []; // 클릭 시점에 스냅샷한 타인 이름들
+    let cameFromIntervention = false; // 관제 시작 버튼으로 진입했는가
+    let seenBadgeNames = new Set(); // driving 체류 중 누적된 뱃지 이름들
+    let badgeWatchInterval = null;
+
+    // ─ driving 페이지 진입 시 뱃지 누적 감시 시작 ───────────────
+    function startBadgeWatch() {
+        if (badgeWatchInterval) return;
+        seenBadgeNames.clear();
+
+        badgeWatchInterval = setInterval(() => {
+            if (!location.href.includes('/driving')) {
+                stopBadgeWatch();
+                return;
+            }
+            // ⚠️ 선택자 미확정 — 출근 후 콘솔 확인 필요
+            // 확인 방법: 개입카드 뜬 상태에서 콘솔에 아래 실행
+            // [...document.querySelectorAll('*')].filter(el => el.children.length === 0 && /^[가-힣]{1,4}$/.test(el.textContent.trim())).map(el => ({ tag: el.tagName, class: el.className, text: el.textContent.trim(), title: el.title, aria: el.getAttribute('aria-label') }))
+            const BADGE_SELECTOR = 'FIXME'; // ← 여기에 확인된 선택자 입력
+            
+            if (BADGE_SELECTOR === 'FIXME') return; // 선택자 미입력 시 안전하게 스킵
+
+            document.querySelectorAll(BADGE_SELECTOR).forEach(el => {
+                // title > aria-label > textContent 순서로 전체 이름 시도
+                const name = el.title?.trim() 
+                    || el.getAttribute('aria-label')?.trim() 
+                    || el.textContent?.trim();
+                if (name && /[가-힣]/.test(name)) seenBadgeNames.add(name);
+            });
+        }, 300);
+    }
+
+    function stopBadgeWatch() {
+        clearInterval(badgeWatchInterval);
+        badgeWatchInterval = null;
+    }
+
+    // ─ executeIntervention (기존 유지) ───────────────────────────
     function executeIntervention(btn) {
         btn.dataset.intercepted = 'true';
         btn.click();
-        setTimeout(() => {
-            delete btn.dataset.intercepted;
-        }, 200);
+        setTimeout(() => { delete btn.dataset.intercepted; }, 200);
     }
 
-    async function handleControlClick(e) {
-        if (!state.isQueueOpt) return;
-    
+    // ─ handleControlClick — 순열 제거, 스냅샷만 ─────────────────
+    function handleControlClick(e) {
         const targetBtn = e.target.closest('button');
         if (!targetBtn || targetBtn.innerText.trim() !== '관제 시작') return;
-
         if (targetBtn.dataset.intercepted) return;
-    
-        const currentUserName = localStorage.getItem('neubie_user_name') || "운영자";
-        const user = personnelData.find(u => u.name === currentUserName);
-        if (!user) return;
-    
-        const getHash = (str) => {
-            let hash = 0;
-            for (let i = 0; i < str.length; i++) {
-                hash = ((hash << 5) - hash) + str.charCodeAt(i);
-                hash |= 0;
-            }
-            return Math.abs(hash);
-        };
-    
-        const now = new Date();
-        // 자정 넘기는 야간 근무자 기준으로 날짜 고정 (22시 이전이면 전날 기준)
-        const seedDate = now.getHours() < 7 
-            ? new Date(now.getTime() - 7 * 60 * 60 * 1000) 
-            : now;
-        const timeSeed = `${seedDate.getFullYear()}${seedDate.getMonth()}${seedDate.getDate()}${now.getHours()}${Math.floor(now.getMinutes() / 2)}`;
 
-        const myGroup = getActiveGroup(now, state.insuData, state.attendanceData);
-        if (myGroup.length === 0) {
-            executeIntervention(targetBtn);
-            return;
+        const myName = localStorage.getItem('neubie_user_name') || '';
+
+        // driving 체류 중 누적된 뱃지에서 내 이름 제외
+        pendingOverlapNames = [...seenBadgeNames].filter(name => {
+            // title/aria-label로 전체 이름이 잡혔을 때: 정확히 비교
+            if (name.length > 1) return name !== myName;
+            // 성씨 1글자만 잡혔을 때: 내 성씨와 다른 것만
+            return name !== myName[0];
+        });
+
+        cameFromIntervention = true; // 플래그 ON
+        executeIntervention(targetBtn); // 딜레이 없이 즉시 실행
+    }
+
+    // ─ 중복 배너 표시 ────────────────────────────────────────────
+    function showOverlapBanner(names) {
+        let banner = document.getElementById('neubie-overlap-banner');
+        if (!banner) {
+            banner = document.createElement('div');
+            banner.id = 'neubie-overlap-banner';
+            banner.style.cssText = `
+                position: fixed;
+                top: 64px; left: 50%;
+                transform: translateX(-50%);
+                background: rgba(220, 38, 38, 0.96);
+                color: white;
+                padding: 14px 32px;
+                border-radius: 14px;
+                z-index: 2147483647;
+                font-family: Pretendard, sans-serif;
+                font-weight: bold;
+                font-size: 17px;
+                box-shadow: 0 6px 30px rgba(220,38,38,0.5);
+                border: 2px solid #fca5a5;
+                pointer-events: none;
+                text-align: center;
+                line-height: 1.6;
+                animation: neubie-fadein 0.3s ease;
+            `;
+            document.body.appendChild(banner);
         }
-        if (!myGroup.find(p => p.name === currentUserName)) {
-            executeIntervention(targetBtn);
-            return;
-        }
-        const groupKey = myGroup.map(p => p.name).join(',');
-        
-        let indices = Array.from({ length: myGroup.length }, (_, i) => i);
-        let seedNum = getHash(timeSeed + groupKey);
-        for (let i = indices.length - 1; i > 0; i--) {
-            const j = seedNum % (i + 1);
-            [indices[i], indices[j]] = [indices[j], indices[i]];
-            seedNum = Math.floor(seedNum / (i + 1)) + i;
-        }
+        const nameText = names.join(', ');
+        banner.innerHTML = `⚠️ <b>${nameText}</b>와(과) 중복 개입 중입니다`;
 
-        const mySourceIndex = myGroup.findIndex(p => p.name === currentUserName);
-        const myRank = indices.indexOf(mySourceIndex);
-
-        const SPACING = myGroup.length > 1 ? Math.floor(1400 / (myGroup.length - 1)) : 1400;
-        const baseDelay = myRank * SPACING;
-        const jitter = getHash(currentUserName + timeSeed) % 50;
-        const finalDelay = Math.min(baseDelay + jitter, 1450);
-    
-        const popup = document.createElement('div');
-        popup.className = 'delay-popup';
-        popup.innerHTML = `
-            <div style="font-size: 1.1em; color: #00ff41; margin-bottom: 6px;">[중복 개입 완화 시스템 v2.0]</div>
-            <div style="font-size: 0.9em; font-weight: bold;">${(finalDelay / 1000).toFixed(2)}초 딜레이 적용 중...</div>
-            <div style="font-size: 0.9em; opacity: 0.7; margin-top: 6px;">Rank: ${myRank + 1}/${myGroup.length} | Gap: ${SPACING}ms</div>
-        `;
-        document.body.appendChild(popup);
-    
-        e.preventDefault();
-        e.stopPropagation();
-
-        setTimeout(() => {
-            executeIntervention(targetBtn);
-        }, finalDelay);
-
-        const showDuration = Math.max(QUEUE_CONFIG.MIN_OVERLAY_SHOW, QUEUE_CONFIG.OVERLAY_DURATION - finalDelay);
-        setTimeout(() => {
-            popup.style.transition = "opacity 0.5s, transform 0.5s";
-            popup.style.opacity = "0";
-            popup.style.transform = "translate(-50%, -20px)";
-            setTimeout(() => popup.remove(), 500);
-        }, showDuration);
+        clearTimeout(banner._hideTimer);
+        banner._hideTimer = setTimeout(() => {
+            banner.style.transition = 'opacity 0.5s';
+            banner.style.opacity = '0';
+            setTimeout(() => banner.remove(), 500);
+        }, 6000);
     }
 
     /* ============================================================
@@ -984,7 +913,7 @@
                     ${dropdownOptions || '<option>최근 배달 기체 미감지</option>'}
                 </select>
                 <input type="text" id="taskInput" placeholder="주문번호를 붙여넣으세요." style="flex: 0 1 160px; background: #333; color: white; border: 1px solid #555; padding: 4px; border-radius: 4px; font-size: 15px;">
-                <button id="copyFileName" style="background: #007bff; color: white; border: none; padding: 5px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size:15px; white-space:nowrap; min-width:70px;">복사</button>
+                <button id="copyFileName" style="background: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size:15px;">복사</button>
             </div>
             <div style="display: flex; gap: 5px; flex-wrap: wrap;">
                 <button id="btnMulti" class="sub-btn">다중 관제</button>
@@ -1357,7 +1286,7 @@
         // 줄을 서시오 (체크박스, 멘트 없이 이름만)
         const queueCard = document.createElement('div');
         queueCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333; display:flex; justify-content:space-between; align-items:center;";
-        queueCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">📡 줄을 서시오 v2.0</span>`;
+        queueCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">👁 중복 개입 감지</span>`;
         const queueChk = document.createElement('input');
         queueChk.type = 'checkbox'; queueChk.checked = state.isQueueOpt;
         queueChk.style.cssText = "width:18px; height:18px; cursor:pointer;";
@@ -2132,6 +2061,24 @@
             lastUrl = location.href;
             closeAllPopups();
             updateRobotContext();
+
+            // ▼ 추가: driving 진입 시 뱃지 감시 시작
+            if (location.href.includes('/driving') && !location.href.includes('robot-id=')) {
+                startBadgeWatch();
+            } else {
+                stopBadgeWatch();
+            }
+
+            // ▼ 추가: robot-id 페이지 진입 + 관제 시작으로 들어온 경우만
+            if (location.href.includes('robot-id=') && cameFromIntervention) {
+                cameFromIntervention = false;
+                const names = [...pendingOverlapNames];
+                pendingOverlapNames = [];
+                if (names.length > 0) {
+                    setTimeout(() => showOverlapBanner(names), 400);
+                }
+            }
+
             // 맵 최적화 페이지 전환 시 재적용
             const isTarget = config.targetIds.some(id => location.href.includes(`/monitoring/${id}`));
             if (isTarget && state.isMapOpt) {
