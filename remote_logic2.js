@@ -1267,19 +1267,16 @@
         const currentInt = localStorage.getItem('neubie_remind_int') || '0';
         taskCard.innerHTML = `
             <div style="margin-bottom:10px;">
-                <div style="display:flex; align-items:center; gap:6px; margin-bottom:8px; flex-wrap:wrap;">
-                    <div style="font-weight:bold; font-size:18px; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">📋 ${storedName}의 일일 업무</div>
-                    <button id="btn-type1" style="padding:3px 8px; border-radius:20px; font-size:11px; font-weight:bold; cursor:pointer; border:2px solid #f59e0b; background:#f59e0b; color:#000;">알림 타입1</button>
-                    <button id="btn-type2" style="padding:3px 8px; border-radius:20px; font-size:11px; font-weight:bold; cursor:pointer; border:2px solid #2563eb; background:transparent; color:#60a5fa;">알림 타입2</button>
-                    <button id="btn-notif-test" style="padding:3px 8px; border-radius:20px; font-size:11px; font-weight:bold; cursor:pointer; border:1px solid #555; background:#333; color:#aaa;">테스트</button>
-                </div>
-                <div style="display:flex; justify-content:flex-end;">
-                    <select id="remind-inline" style="background:#333; color:white; border:1px solid #555; font-size:13px; border-radius:4px; padding:2px;">
-                        <option value="0" ${currentInt === '0' ? 'selected' : ''}>알림 없음</option>
-                        <option value="3" ${currentInt === '3' ? 'selected' : ''}>3분 전 (다중은 13분 전)</option>
-                        <option value="5" ${currentInt === '5' ? 'selected' : ''}>5분 전 (다중은 15분 전)</option>
-                    </select>
-                </div>
+                <div style="display:flex; align-items:center; gap:6px; margin-bottom:8px; flex-wrap:nowrap;">
+				    <div style="font-weight:bold; font-size:15px; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📋 ${storedName}의 일일 업무</div>
+				    <button id="btn-type1" style="padding:3px 8px; border-radius:20px; font-size:11px; font-weight:bold; cursor:pointer; border:2px solid #f59e0b; background:#f59e0b; color:#000;">알림1</button>
+				    <button id="btn-type2" style="padding:3px 8px; border-radius:20px; font-size:11px; font-weight:bold; cursor:pointer; border:2px solid #2563eb; background:transparent; color:#60a5fa;">알림2</button>
+				    <select id="remind-inline" style="background:#333; color:white; border:1px solid #555; font-size:13px; border-radius:4px; padding:2px;">
+				        <option value="0" ${currentInt === '0' ? 'selected' : ''}>알림 없음</option>
+				        <option value="3" ${currentInt === '3' ? 'selected' : ''}>3분 전</option>
+				        <option value="5" ${currentInt === '5' ? 'selected' : ''}>5분 전</option>
+				    </select>
+				</div>
             </div>
         `;
         // 알림 타입 토글 + Test 버튼 이벤트
@@ -1287,7 +1284,6 @@
             const savedType = localStorage.getItem('neubie_notif_type') || 'type1';
             const btn1 = document.getElementById('btn-type1');
             const btn2 = document.getElementById('btn-type2');
-            const btnTest = document.getElementById('btn-notif-test');
             if (!btn1 || !btn2 || !btnTest) return;
 
             function applyTypeUI(type) {
@@ -1325,23 +1321,8 @@
                 localStorage.setItem('neubie_notif_type', 'type2');
                 applyTypeUI('type2');
             };
-            btnTest.onclick = () => {
-                if (btnTest.disabled) return;
-                btnTest.disabled = true;
-                btnTest.textContent = '✓';
-                btnTest.style.background = '#16a34a';
-                btnTest.style.borderColor = '#16a34a';
-                btnTest.style.color = '#fff';
-                triggerReminder('테스트 업무', 5);
-                setTimeout(() => {
-                    btnTest.disabled = false;
-                    btnTest.textContent = '테스트';
-                    btnTest.style.background = '#333';
-                    btnTest.style.borderColor = '#555';
-                    btnTest.style.color = '#aaa';
-                }, 10000); // type2 길이에 맞춰 6초 후 복귀
-            };
         }, 0);
+		
         const taskInline = document.createElement('div');
         taskInline.id = 'inline-task-container';
         taskCard.appendChild(taskInline);
@@ -1409,7 +1390,6 @@
         `;
         queueInfoBtn.onmouseenter = () => { queueInfoBtn.style.borderColor='#60a5fa'; queueInfoBtn.style.color='#60a5fa'; };
         queueInfoBtn.onmouseleave = () => { queueInfoBtn.style.borderColor='#aaa'; queueInfoBtn.style.color='#aaa'; };
-        queueInfoBtn.style.animation = 'neubie-blink 1.2s ease-in-out infinite';
         queueInfoBtn.onclick = () => {
             let queueInfoOverlay = document.getElementById('neubie-queue-info-overlay');
             if (!queueInfoOverlay) {
@@ -1492,7 +1472,6 @@
         tipsCard.innerHTML = `
             <div style="flex:1;">
                 <div style="font-weight:bold; font-size:15px; margin-bottom:3px;">💡 최적화 팁</div>
-                <div style="font-size:13px; color:#aaa;">항목별 가이드</div>
             </div>`;
         const tipsOpenBtn = document.createElement('button');
         tipsOpenBtn.textContent = '열기';
@@ -1591,7 +1570,6 @@
         batteryCard.innerHTML = `
             <div style="flex:1;">
                 <div style="font-weight:bold; font-size:15px; margin-bottom:3px;">🔋 성남 배터리 현황</div>
-                <div style="font-size:13px; color:#aaa;">5초 간격 데이터 갱신</div>
             </div>`;
         const batteryBtn = document.createElement('button');
         batteryBtn.textContent = isBatteryOpen ? '닫기' : '열기';
