@@ -89,6 +89,7 @@
         "99": { site: "삼성인력개발원", unit: "#124" }, // 인개원
 
         "158": { site: "에버랜드 장미축제", unit: "#140" }, // 에버랜드
+        "236": { site: "Hitachi Building Systems", unit: "#178" }, // 히타치 배달
     };
 
     const isAutoTarget = config.targetIds.some(id => currUrl.includes(`/monitoring/${id}`));
