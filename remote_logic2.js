@@ -2218,10 +2218,10 @@
             backdropFilter: 'blur(8px)',
             border: '1px solid rgba(255,255,255,0.13)',
             borderRadius: '8px',
-            padding: '5px 14px',
+            padding: '4px 8px',
             display: 'flex',
             alignItems: 'center',
-            gap: '8px',
+            gap: '5px',
             boxShadow: '0 2px 12px rgba(0,0,0,0.4)',
             fontFamily: 'Pretendard, sans-serif',
             userSelect: 'none',
@@ -2241,7 +2241,7 @@
         slider.max = BRIGHTNESS.MAX;
         slider.value = savedVal;
         Object.assign(slider.style, {
-            width: '100px',
+            width: '72px',
             height: '4px',
             accentColor: '#ffffff',
             cursor: 'pointer',
@@ -2264,7 +2264,7 @@
             color: '#aaa',
             border: '1px solid rgba(255,255,255,0.2)',
             borderRadius: '999px',
-            padding: '3px 10px',
+            padding: '3px 6px',
             fontSize: '12px',
             fontWeight: '700',
             cursor: 'pointer',
