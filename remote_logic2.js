@@ -2208,13 +2208,15 @@
 
         const savedVal = parseInt(localStorage.getItem(BRIGHTNESS.STORAGE_KEY) ?? BRIGHTNESS.DEFAULT);
 
+        const savedBarLeft = localStorage.getItem('neubie_brightness_bar_left');
+
         const bar = document.createElement('div');
         bar.id = 'neubie-brightness-bar';
         Object.assign(bar.style, {
             position: 'fixed',
             // 기본 위치: 상단 중앙
             top: '2px',
-            left: '50%',
+            left: savedLeft || '50%',
             transform: 'translateX(-50%)',
             zIndex: '2147483640',
             background: 'rgba(15,15,15,0.75)',
@@ -2274,6 +2276,7 @@
             isDragging = false;
             icon.style.cursor = 'grab';
             bar.style.transition = 'left 0.28s cubic-bezier(0.4,0,0.2,1), transform 0.28s cubic-bezier(0.4,0,0.2,1)';
+            localStorage.setItem('neubie_brightness_bar_left', bar.style.left); // ← 추가
         });
 
         // 슬라이더
@@ -2378,8 +2381,9 @@
 					if (brightnessBar) {
 						if (isOpen) {
 							// 패널 닫힘 → 중앙 복귀
-							brightnessBar.style.left = '50%';
-							brightnessBar.style.transform = 'translateX(-50%)';
+							const savedLeft = localStorage.getItem('neubie_brightness_bar_left');
+                            brightnessBar.style.left = savedLeft || '50%';
+                            brightnessBar.style.transform = 'translateX(-50%)';
 						} else {
 							// 패널 열림 → 좌측으로
 							brightnessBar.style.left = '12px';
