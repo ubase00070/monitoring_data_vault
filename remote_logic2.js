@@ -12,9 +12,9 @@
        ============================================================ */
 	   
 	const isHandoverPage = () =>
-	    (location.href.includes('go.neubie.ai/ko/remote/multiple') &&
-	     !location.href.includes('/driving')) ||
-	    location.href.includes('multimonitoring.vercel.app');   
+        (location.href.includes('go.neubie.ai/ko/remote/multiple') &&
+        !location.href.includes('/driving')) ||
+        location.href.includes('multimonitoring.vercel.app');
 	   
     const config = {
         targetIds: ['44', '56', '65', '109'],
@@ -2008,6 +2008,7 @@
         MAX: 100,
         DEFAULT: 50,
         STORAGE_KEY: 'neubie_brightness',
+        AUTO_KEY: 'neubie_brightness_auto',
     };
 
     // ── React friendly 값 주입 헬퍼 ──────────────────────
@@ -2041,17 +2042,33 @@
     // ── MutationObserver: 새 카메라 추가 시 자동 적용 ─────
     function startBrightnessObserver(masterValue) {
         const applied = new WeakSet();
-        const observer = new MutationObserver(() => {
+
+        const observer = new MutationObserver((mutations) => {
             const val = masterValue();
-            if (val === null) return; // Auto 꺼져 있으면 스킵
-            const sliders = document.querySelectorAll(BRIGHTNESS.SLIDER_SELECTOR);
-            sliders.forEach(s => {
-                if (s.id === 'neubie-master-brightness') return;
-                if (applied.has(s)) return;
-                applied.add(s);
-                setSliderValue(s, val);
+            if (val === null) return;
+
+            mutations.forEach(mutation => {
+                mutation.addedNodes.forEach(node => {
+                    if (node.nodeType !== 1) return; // Element만
+
+                    // 추가된 노드 자체가 슬라이더인 경우
+                    const sliders = [];
+                    if (node.matches?.(BRIGHTNESS.SLIDER_SELECTOR)) sliders.push(node);
+
+                    // 추가된 노드 내부에 슬라이더가 있는 경우
+                    node.querySelectorAll?.(BRIGHTNESS.SLIDER_SELECTOR)
+                        .forEach(s => sliders.push(s));
+
+                    sliders.forEach(s => {
+                        if (s.id === 'neubie-master-brightness') return;
+                        if (applied.has(s)) return;
+                        applied.add(s);
+                        setSliderValue(s, val);
+                    });
+                });
             });
         });
+
         observer.observe(document.body, { childList: true, subtree: true });
         return observer;
     }
@@ -2109,7 +2126,7 @@
         label.style.cssText = 'color:#fff; font-size:13px; font-weight:600; min-width:28px; text-align:right;';
         label.textContent = savedVal;
 
-        let autoOn = false;
+        let autoOn = localStorage.getItem(BRIGHTNESS.AUTO_KEY) === 'true';
 
         const autoBtn = document.createElement('button');
         autoBtn.textContent = 'Auto';
@@ -2128,12 +2145,11 @@
 
         autoBtn.addEventListener('click', () => {
             autoOn = !autoOn;
+            localStorage.setItem(BRIGHTNESS.AUTO_KEY, autoOn); // ← 추가
             if (autoOn) {
-                // 활성화: 초록 + 현재 값으로 즉시 전체 적용
                 Object.assign(autoBtn.style, { background: '#22c55e', color: '#fff', border: '1px solid #22c55e' });
                 applyBrightnessToAll(slider.value);
             } else {
-                // 비활성화: 원래 스타일로
                 Object.assign(autoBtn.style, { background: 'rgba(255,255,255,0.12)', color: '#aaa', border: '1px solid rgba(255,255,255,0.2)' });
             }
         });
