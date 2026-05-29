@@ -1825,7 +1825,7 @@
 
 		const githubGet = async () => {
 		    try {
-		        const res = await originalFetch(
+		        const res = await Fetch(
 		            `https://raw.githubusercontent.com/ubase00070/monitoring_handover/main/handover.json?t=${Date.now()}`,
 		            { cache: 'no-store' }
 		        );
