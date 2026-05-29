@@ -2080,7 +2080,7 @@
             const units = result.data.units || [];
             if (units.length) {
                 renderGrid(units);
-                setDpMsg(`교대 기체 데이터 로드됨 (${result.data.handover_by || '?'} → ${units.length}대)`, '#22c55e');
+                setDpMsg(`교대 기체 데이터 로드됨 (${result.data.handover_by || '?'} - ${units.length}대)`, '#22c55e');
             } else {
                 setDpMsg('교대 기체 데이터가 없습니다', '#f59e0b');
             }
@@ -2234,7 +2234,47 @@
         // ☀️ 아이콘
         const icon = document.createElement('span');
         icon.textContent = '☀️';
-        icon.style.cssText = 'font-size:14px; line-height:1;';
+        icon.style.cssText = 'font-size:14px; line-height:1; cursor:grab;';
+
+        // ── 드래그 이동 ──
+        let isDragging = false;
+        let dragStartX = 0;
+        let barStartLeft = 0;
+
+        const onDragStart = (e) => {
+            const panel = document.getElementById('ho-remote-panel');
+            if (panel && panel.style.top === '0px') return; // 패널 열려있으면 비활성화
+            isDragging = true;
+            dragStartX = e.clientX;
+            barStartLeft = bar.getBoundingClientRect().left + bar.offsetWidth / 2;
+            bar.style.transition = 'none';
+            icon.style.cursor = 'grabbing';
+            e.preventDefault();
+        };
+
+        icon.addEventListener('mousedown', onDragStart);
+
+        bar.addEventListener('mousedown', (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.tagName === 'SPAN' && e.target !== icon) return;
+            onDragStart(e);
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const delta = e.clientX - dragStartX;
+            const newCenter = barStartLeft + delta;
+            const halfWidth = bar.offsetWidth / 2;
+            const clamped = Math.max(halfWidth, Math.min(window.innerWidth - halfWidth, newCenter));
+            bar.style.left = clamped + 'px';
+            bar.style.transform = 'translateX(-50%)';
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (!isDragging) return;
+            isDragging = false;
+            icon.style.cursor = 'grab';
+            bar.style.transition = 'left 0.28s cubic-bezier(0.4,0,0.2,1), transform 0.28s cubic-bezier(0.4,0,0.2,1)';
+        });
 
         // 슬라이더
         const slider = document.createElement('input');
