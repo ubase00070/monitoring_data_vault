@@ -2143,12 +2143,15 @@
             transition: '0.2s',
         });
 
+        if (autoOn) {
+            Object.assign(autoBtn.style, { background: '#22c55e', color: '#fff', border: '1px solid #22c55e' });
+        }
+
         autoBtn.addEventListener('click', () => {
             autoOn = !autoOn;
             localStorage.setItem(BRIGHTNESS.AUTO_KEY, autoOn); // ← 추가
             if (autoOn) {
                 Object.assign(autoBtn.style, { background: '#22c55e', color: '#fff', border: '1px solid #22c55e' });
-                applyBrightnessToAll(slider.value);
             } else {
                 Object.assign(autoBtn.style, { background: 'rgba(255,255,255,0.12)', color: '#aaa', border: '1px solid rgba(255,255,255,0.2)' });
             }
