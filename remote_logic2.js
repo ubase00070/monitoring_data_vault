@@ -395,7 +395,7 @@
         navigator.clipboard.writeText(copyText).then(() => {
             const originalText = btn.textContent;
             const originalBg = btn.style.background;
-            btn.textContent = '✅ 복사됨';
+            btn.textContent = '복사됨';
             btn.style.background = '#22c55e';
             
             setTimeout(() => {
@@ -897,7 +897,7 @@
             const originalText = btn.textContent;
             const originalBg = btn.style.background || "#444";
             
-            btn.textContent = '✅ 복사됨';
+            btn.textContent = '복사됨';
             btn.style.background = '#22c55e';
             
             setTimeout(() => {
@@ -1738,7 +1738,7 @@
 			const time = getCalculatedTime(10);
 			const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_다중모니터링`;
 			navigator.clipboard.writeText(finalName);
-			multiBtn.textContent = '✅ 복사됨';
+			multiBtn.textContent = '복사됨';
 			setTimeout(() => { multiBtn.textContent = '다중 관제'; }, 1500);
 		};
 
