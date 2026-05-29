@@ -2144,12 +2144,6 @@
             applyBrightnessToAll(v);
         });
 
-        resetBtn.addEventListener('click', () => {
-            slider.value = BRIGHTNESS.DEFAULT;
-            label.textContent = BRIGHTNESS.DEFAULT;
-            applyBrightnessToAll(BRIGHTNESS.DEFAULT);
-        });
-
         bar.appendChild(icon);
         bar.appendChild(slider);
         bar.appendChild(label);
