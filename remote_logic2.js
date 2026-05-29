@@ -114,20 +114,6 @@
         attendanceData: null
     };
 
-    const QUEUE_CONFIG = {
-        SLOTS: [0, 350, 700, 1050, 1400], 
-        JITTER: 100, 
-        OVERLAY_DURATION: 2000,
-        MIN_OVERLAY_SHOW: 500,
-        STYLE: {
-            position: 'fixed', top: '20%', left: '50%', transform: 'translateX(-50%)',
-            backgroundColor: 'rgba(15, 23, 42, 0.98)', color: 'white', border: '3px solid #ffeb3b',
-            padding: '25px 50px', borderRadius: '15px', zIndex: '2147483647', textAlign: 'center',
-            boxShadow: '0 10px 40px rgba(0,0,0,0.6)', fontWeight: 'bold', pointerEvents: 'none',
-            fontFamily: 'Pretendard, sans-serif', transition: 'opacity 0.2s ease-in-out'
-        }
-    };
-
     const taskChannel = new BroadcastChannel('neubie_task_sync');
 
     /* ============================================================
@@ -713,101 +699,9 @@
     };
 
     /* ============================================================
-        SECTION 5. 줄을 서시오 & 중복 관제 완화
+        SECTION 5. 줄을 서시오 & 중복 관제 완화(구 줄을 서시오 v2.0 위치)
        ============================================================ */
 
-    const personnelData = [
-        { name: "김지훈", time: "(0700-1600)(U)", break: "(1100-1200)" }, 
-        { name: "오정훈", time: "(0700-1600)(U)", break: "(1100-1200)" }, 
-        { name: "박계원", time: "(0700-1600)(U)", break: "(1100-1200)" }, 
-        { name: "김경환", time: "(0800-1700)(U)", break: "(1200-1300)" }, 
-        { name: "박효선", time: "(0800-1700)(U)", break: "(1200-1300)" }, 
-        { name: "안혜림", time: "(0900-1800)(U)", break: "(1300-1400)" }, 
-        { name: "이환", time: "(0900-1800)(U)", break: "(1300-1400)" }, 
-        { name: "최윤혁", time: "(0900-1800)(U)", break: "(1300-1400)" }, 
-        { name: "신현철", time: "(0900-1800)(U)", break: "(1300-1400)" },
-        { name: "김동진", time: "(0900-1800)(U)", break: "(1300-1400)" }, 
-        { name: "석승찬", time: "(1000-1900)(U)", break: "(1400-1500)" },
-        { name: "이준", time: "(1000-1900)(U)", break: "(1400-1500)" },
-        { name: "한승완", time: "(1000-1900)(U)", break: "(1400-1500)" },
-        { name: "박은선", time: "(1100-2000)(U)", break: "(1400-1500)" }, 
-        { name: "송주현", time: "(1100-2000)(U)", break: "(1500-1600)" }, 
-        { name: "송태영", time: "(1100-2000)(U)", break: "(1500-1600)" },
-        { name: "신은정", time: "(1100-2000)(U)", break: "(1500-1600)" }, 
-        { name: "호덕진", time: "(1100-2000)(U)", break: "(1500-1600)" },
-        { name: "장재원", time: "(1100-2000)(U)", break: "(1500-1600)" }, 
-        { name: "박효빈", time: "(1400-2300)(U)", break: "(1700-1800)" }, 
-        { name: "이기완", time: "(1400-2300)(U)", break: "(1700-1800)" },
-        { name: "권재윤", time: "(1400-2300)(U)", break: "(1700-1800)" },
-        { name: "김가은", time: "(1500-2400)(U)", break: "(1800-1900)" }, 
-        { name: "서형민", time: "(1500-2400)(U)", break: "(1800-1900)" }, 
-        { name: "최성환", time: "(1500-2400)(U)", break: "(1800-1900)" }, 
-        { name: "이규순", time: "(1800-0300)(U)", break: "(2200-2300)" }, 
-        { name: "강철환", time: "(1800-0300)(U)", break: "(2200-2300)" }, 
-        { name: "박수연", time: "(1800-0300)(U)", break: "(2200-2300)" }, 
-        { name: "신지섭", time: "(1800-0300)(U)", break: "(2300-2400)" },
-        { name: "최선호", time: "(2000-0500)(U)", break: "(2300-2400)" }, 
-        { name: "최정기", time: "(2000-0500)(U)", break: "(2300-2400)" }, 
-        { name: "고상연", time: "(2000-0500)(U)", break: "(2300-2400)" }, 
-        { name: "김소연", time: "(2200-0700)(U)", break: "(0100-0200)" }, 
-        { name: "임다연", time: "(2200-0700)(U)", break: "(0200-0300)" }, 
-        { name: "임아연", time: "(2200-0700)(U)", break: "(0300-0400)" }, 
-        { name: "안대관", time: "(2330-0830)(U)", break: "(0400-0500)" }
-    ];
-
-    function parseTimeRange(str) {
-        const m = str.match(/\((\d{2})(\d{2})-(\d{2})(\d{2})\)/);
-        if (!m) return null;
-        return {
-            start: parseInt(m[1]) * 60 + parseInt(m[2]),
-            end:   parseInt(m[3]) * 60 + parseInt(m[4])
-        };
-    }
-
-    function isInRange(range, nowMin) {
-        if (!range) return false;
-        if (range.end < range.start) // 자정 넘김 (예: 2200-0700)
-            return nowMin >= range.start || nowMin < range.end;
-        return nowMin >= range.start && nowMin < range.end;
-    }
-
-    function getCurrentMonitor(insuData) {
-        if (!insuData?.schedule) return null;
-        const now = new Date();
-        // X:50~X+1:50 구간이므로, 분이 50 이상이면 현재 시각 슬롯, 미만이면 이전 시각 슬롯
-        const slotHour = now.getMinutes() >= 50 ? now.getHours() : now.getHours() - 1;
-        const normalizedHour = ((slotHour % 24) + 24) % 24; // 음수 방지
-        const hour = String(normalizedHour).padStart(2, '0') + ':00';
-        return insuData.schedule[hour] || null;
-    }
-
-    function getActiveGroup(now, insuData, attendanceData) {
-        const today = now.toISOString().split('T')[0]; // "2026-05-13"
-        const todaySchedule = attendanceData?.schedule?.[today];
-        const presentList = todaySchedule?.present || null;
-        const halfDayList = todaySchedule?.halfDay || [];
-        const nowMin = now.getHours() * 60 + now.getMinutes();
-        const currentMonitor = getCurrentMonitor(insuData);
-
-        return personnelData.filter(p => {
-            // attendanceData 없으면 근무시간만으로 필터 (안전 모드)
-            if (presentList !== null && !presentList.includes(p.name)) return false;
-            // 근무 시간대 필터
-            if (!isInRange(parseTimeRange(p.time), nowMin)) return false;
-            // 휴게 시간 필터
-            if (isInRange(parseTimeRange(p.break), nowMin)) return false;
-            // 오후반차 — until 이후면 제외
-            const halfDay = halfDayList.find(h => h.name === p.name);
-            if (halfDay) {
-                const untilMin = parseInt(halfDay.until.split(':')[0]) * 60;
-                if (nowMin >= untilMin) return false;
-            }
-            // 모니터링 담당자 제외
-            if (currentMonitor && p.name === currentMonitor) return false;
-            return true;
-        }).sort((a, b) => a.name.localeCompare(b.name));
-    }
-    
     function injectConfigUI() {
         // 이미 스타일이 존재하면 중복 생성 방지
         if (document.getElementById('neubie-engine-popup-style')) return;
