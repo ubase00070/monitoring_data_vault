@@ -2245,11 +2245,13 @@
 
         const onDragStart = (e) => {
             const panel = document.getElementById('ho-remote-panel');
-            if (panel && panel.style.top === '0px') return; // 패널 열려있으면 비활성화
+            if (panel && panel.style.top === '0px') return;
             isDragging = true;
             dragStartX = e.clientX;
             barStartLeft = bar.getBoundingClientRect().left + bar.offsetWidth / 2;
             bar.style.transition = 'none';
+            bar.style.transform = 'none';
+            bar.style.left = barStartLeft + 'px'; // ← 추가: 즉시 픽셀 고정
             icon.style.cursor = 'grabbing';
             e.preventDefault();
         };
