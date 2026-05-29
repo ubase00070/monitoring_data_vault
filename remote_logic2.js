@@ -1690,11 +1690,36 @@
         if (patchOverlay) patchOverlay.style.display='none';
     }
 
+    // ── 유효성 검증 (1시간 이내 데이터) ──
+	const isDataValid = (updatedAt) => {
+        if (!updatedAt) return false;
+        // +09:00 명시로 한국시간 고정
+        const updated = new Date(updatedAt.replace(' ', 'T') + '+09:00');
+        return (Date.now() - updated.getTime()) < 20 * 60 * 1000;
+    };
+
     // ── 핸드오버 레이아웃 ──────────────────────────────────
 	async function initHandoverLayout() {
 		// 패널 생성
 		let panel = document.getElementById('ho-remote-panel');
-		if (panel) { panel.style.top = '0px'; return; }
+        if (panel) {
+            panel.style.top = '0px';
+            const r = await githubGet();
+            const dpMsgEl = document.getElementById('ho-dp-msg');
+            if (dpMsgEl) {
+                if (r && !isDataValid(r.data?.updatedAt)) {
+                    dpMsgEl.textContent = '20분 초과로 로드 실패';
+                    dpMsgEl.style.color = '#ef4444';
+                    document.querySelectorAll('.ho-remote-cell').forEach(c => {
+                        c.textContent = '—';
+                        Object.assign(c.style, { background: 'rgba(255,255,255,0.45)', color: '#b0bec5',
+                            border: '1.5px dashed #c8d2e0', cursor: 'default' });
+                        c.dataset.unit = ''; c.dataset.selected = 'false'; c.dataset.done = 'false';
+                    });
+                }
+            }
+            return;
+        }
 
 		panel = document.createElement('div');
 		panel.id = 'ho-remote-panel';
@@ -1890,14 +1915,6 @@
                 const data = await res.json();
                 return { data };
             } catch(e) { console.log('githubGet error:', e); return null; }
-        };
-
-        // ── 유효성 검증 (1시간 이내 데이터) ──
-		const isDataValid = (updatedAt) => {
-            if (!updatedAt) return false;
-            // +09:00 명시로 한국시간 고정
-            const updated = new Date(updatedAt.replace(' ', 'T') + '+09:00');
-            return (Date.now() - updated.getTime()) < 20 * 60 * 1000;
         };
 
 		// ── 교대받기 버튼 ──
