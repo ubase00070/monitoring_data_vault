@@ -2216,7 +2216,7 @@
             position: 'fixed',
             // 기본 위치: 상단 중앙
             top: '2px',
-            left: savedLeft || '50%',
+            left: savedBarLeft || '50%',
             transform: 'translateX(-50%)',
             zIndex: '2147483640',
             background: 'rgba(15,15,15,0.75)',
