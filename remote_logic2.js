@@ -321,11 +321,11 @@
         // 260번 줄 수정
         Object.assign(copyBtn.style, { 
             background:'#3b82f6', color:'white', border:'none', 
-            padding:'10px 20px',      // 6px 12px → 10px 20px
+            padding:'6px 14px',      
             borderRadius:'8px', cursor:'pointer', fontWeight:'bold', 
             fontSize:'15px',          
             transition:'0.2s',
-			width: '90px',
+			width: '80px',
             flexShrink: '0',
             whiteSpace: 'nowrap',
             overflow: 'hidden'
