@@ -1693,7 +1693,7 @@
 		panel.id = 'ho-remote-panel';
 		Object.assign(panel.style, {
 			position: 'fixed', top: '0px', left: '50%', transform: 'translateX(-50%)',
-			zIndex: '2147483646', width: '700px',
+			zIndex: '2147483646', width: '560px',
 			background: 'rgba(234,238,248,0.98)',
 			borderRadius: '0 0 14px 14px', padding: '8px 12px 10px',
 			fontFamily: 'Pretendard,sans-serif',
@@ -1770,24 +1770,24 @@
 		});
 
 		// 다중 관제 버튼
-		const multiBtn = mkBtn('📋 다중 관제', '#475569');
+		const multiBtn = mkBtn('다중 파일명', '#475569');
 		multiBtn.onclick = () => {
 			const time = getCalculatedTime(10);
 			const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_다중모니터링`;
 			navigator.clipboard.writeText(finalName);
-			multiBtn.textContent = '✅ 복사됨';
+			multiBtn.textContent = '복사됨';
 			setTimeout(() => { multiBtn.textContent = '📋 다중 관제'; }, 1500);
 		};
 
 		// 성남 배터리 버튼
-		const battBtn = mkBtn('🔋 성남 배터리', '#475569');
+		const battBtn = mkBtn('성남 배터리', '#475569');
 		battBtn.onclick = () => {
 			toggleBattery();
 			battBtn.textContent = batteryPopup.style.display === 'block' ? '🔋 배터리 닫기' : '🔋 성남 배터리';
 		};
 
 		// 교대 받기 버튼
-		const fetchBtn = mkBtn('🔄 교대 받기', '#3b82f6');
+		const fetchBtn = mkBtn('교대 기체 로드', '#3b82f6');
 
 		// 로그 메시지
 		headerRow.appendChild(multiBtn);
@@ -1799,8 +1799,8 @@
 		const rightBtns = document.createElement('div');
 		Object.assign(rightBtns.style, { marginLeft: 'auto', display: 'flex', gap: '5px', flexShrink: '0' });
 
-		const autoBtn = mkBtn('⚡ 자동', '#6366f1');
-		const startBtn = mkBtn('🚀 수동', '#22c55e', { opacity: '0.35', pointerEvents: 'none' });
+		const autoBtn = mkBtn('자동 시작', '#6366f1');
+		const startBtn = mkBtn('수동 시작', '#22c55e', { opacity: '0.35', pointerEvents: 'none' });
 
 		rightBtns.appendChild(autoBtn);
 		rightBtns.appendChild(startBtn);
@@ -1822,7 +1822,7 @@
 			cell.dataset.done = 'false';
 			cell.textContent = '—';
 			Object.assign(cell.style, {
-				height: '34px', borderRadius: '7px', border: '1.5px dashed #c8d2e0',
+				height: '26px', borderRadius: '7px', border: '1.5px dashed #c8d2e0',
 				background: 'rgba(255,255,255,0.45)', color: '#b0bec5', fontSize: '10px',
 				fontFamily: 'Pretendard,sans-serif', cursor: 'default',
 				display: 'flex', alignItems: 'center', justifyContent: 'center',
