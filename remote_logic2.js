@@ -1949,18 +1949,32 @@
 			}
 			if (!modal) { setDpMsg('모달 없음', '#ef4444'); return; }
 
-			// ✅ React 체크박스를 강제로 체크하는 헬퍼
-			const reactCheck = (label) => {
-				if (!label) return false;
-				const checkbox = label.querySelector('input[type="checkbox"]');
-				if (checkbox?.checked) return true;
-				const opts = { bubbles: true, cancelable: true, view: window };
-				label.dispatchEvent(new MouseEvent('mouseover', opts));
-				label.dispatchEvent(new MouseEvent('mousedown', opts));
-				label.dispatchEvent(new MouseEvent('mouseup',   opts));
-				label.dispatchEvent(new MouseEvent('click',     opts));
-				return true;
-			};
+            // ── 체크박스가 실제로 나타날 때까지 대기 (최대 15초) ──
+            setDpMsg('기체 목록 로딩 대기 중...', '#94a3b8');
+            const isReady = await new Promise(resolve => {
+                // 이미 있으면 즉시 통과
+                if (modal.querySelector('input[type="checkbox"]')) { resolve(true); return; }
+                const t = setTimeout(() => { obs.disconnect(); resolve(false); }, 15000);
+                const obs = new MutationObserver(() => {
+                    if (modal.querySelector('input[type="checkbox"]')) {
+                        clearTimeout(t); obs.disconnect(); resolve(true);
+                    }
+                });
+                obs.observe(modal, { childList: true, subtree: true });
+            });
+            if (!isReady) { setDpMsg('기체 목록 로딩 실패 (타임아웃)', '#ef4444'); return; }
+
+            const reactCheck = (label) => {
+                if (!label) return false;
+                const checkbox = label.querySelector('input[type="checkbox"]');
+                if (checkbox?.checked) return true;
+                const opts = { bubbles: true, cancelable: true, view: window };
+                label.dispatchEvent(new MouseEvent('mouseover', opts));
+                label.dispatchEvent(new MouseEvent('mousedown', opts));
+                label.dispatchEvent(new MouseEvent('mouseup',   opts));
+                label.dispatchEvent(new MouseEvent('click',     opts));
+                return true;
+            };
 
 			let ok = 0;
 			for (let i = 0; i < units.length; i++) {
