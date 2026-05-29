@@ -2079,12 +2079,12 @@
                 renderGrid(units);
                 setDpMsg(`교대 기체 데이터 로드됨 (${result.data.handover_by || '?'} → ${units.length}대)`, '#22c55e');
             } else {
-                setDpMsg('이전 시간 교대 기체 데이터가 없습니다', '#f59e0b');
+                setDpMsg('교대 기체 데이터가 없습니다', '#f59e0b');
             }
         } else if (result && result.data?.updatedAt) {
-            setDpMsg('20분 초과로 로드 실패', '#ef4444');
+            setDpMsg('이미 20분이 지난 데이터입니다', '#ef4444');
         } else {
-            setDpMsg('이전 시간 교대 기체 데이터가 없습니다', '#f59e0b');
+            setDpMsg('교대 기체 데이터가 없습니다', '#f59e0b');
         }
 
         // ── 20분 만료 감시 (30초마다) ──
@@ -2210,14 +2210,14 @@
         Object.assign(bar.style, {
             position: 'fixed',
             // 기본 위치: 상단 중앙
-            top: '6px',
+            top: '2px',
             left: '50%',
             transform: 'translateX(-50%)',
             zIndex: '2147483640',
             background: 'rgba(15,15,15,0.75)',
             backdropFilter: 'blur(8px)',
             border: '1px solid rgba(255,255,255,0.13)',
-            borderRadius: '999px',
+            borderRadius: '8px',
             padding: '5px 14px',
             display: 'flex',
             alignItems: 'center',
