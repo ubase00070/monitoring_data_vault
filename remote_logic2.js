@@ -17,8 +17,8 @@
 
     // 밝기바를 표시할 페이지 조건 (multiple + driving 모두 포함)
     const isBrightnessPage = () =>
-        location.href.includes('go.neubie.ai/ko/remote/multiple') ||
-        location.href.includes('go.neubie.ai/ko/remote/robot/') ||
+        (location.href.includes('go.neubie.ai/ko/remote/multiple') &&
+        !location.href.includes('/driving')) ||
         location.href.includes('multimonitoring.vercel.app');
     
        const config = {
@@ -1770,8 +1770,7 @@
 		});
 
 		// 다중 관제 버튼
-		const multiBtn = mkBtn('다중 파일명', '#475569');
-        multiBtn.style.minWidth = multiBtn.offsetWidth + 'px';
+		const multiBtn = mkBtn('다중 파일명', '#475569', { minWidth: '70px' });
 		multiBtn.onclick = () => {
 			const time = getCalculatedTime(10);
 			const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_다중모니터링`;
@@ -1907,7 +1906,7 @@
 			const units = data.units || [];
 			if (!units.length) { setDpMsg('기체 데이터 없음', '#94a3b8'); return; }
 			renderGrid(units);
-			setDpMsg(`교대 기체 데이터 로드됨 (${data.handover_by || '?'} → ${units.length}대)`, '#22c55e');
+			setDpMsg(`교대 기체 목록 로드됨 (${data.handover_by || '?'} - ${units.length}대)`, '#22c55e');
 		});
 
 		// ── Auto select ──
