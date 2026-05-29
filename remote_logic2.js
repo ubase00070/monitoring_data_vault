@@ -1825,26 +1825,12 @@
 
 		const githubGet = async () => {
 		    try {
-		        const token = localStorage.getItem('ho_github_token') || '';
 		        const res = await fetch(
-		            `https://api.github.com/repos/ubase00070/monitoring_handover/contents/handover.json?t=${Date.now()}`,
-		            { 
-		                cache: 'no-store',
-		                headers: { 
-		                    'Authorization': `token ${token}`,
-		                    'Accept': 'application/vnd.github.v3+json'
-		                } 
-		            }
+		            `https://multimonitoring.vercel.app/api/handover?t=${Date.now()}`,
+		            { cache: 'no-store' }
 		        );
 		        if (!res.ok) return null;
-		        const json = await res.json();
-		        const decoded = decodeURIComponent(
-		            atob(json.content.replace(/\n/g, ''))
-		                .split('')
-		                .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-		                .join('')
-		        );
-		        const data = JSON.parse(decoded);
+		        const data = await res.json();
 		        return { data };
 		    } catch(e) { console.log('githubGet error:', e); return null; }
 		};
