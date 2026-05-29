@@ -2109,12 +2109,6 @@
 			if (p.contains(e.target)) return;
 			if (e.target.closest('[data-qk="remote-multiple-select-robot-dialog"]')) return;
 			p.style.top = '-300px';
-			// 밝기바 중앙 복귀
-			const brightnessBar = document.getElementById('neubie-brightness-bar');
-			if (brightnessBar) {
-				brightnessBar.style.left = '50%';
-				brightnessBar.style.transform = 'translateX(-50%)';
-			}
 		});
 	}
 	// ── 핸드오버 레이아웃 끝 ──────────────────────────────
@@ -2208,16 +2202,13 @@
 
         const savedVal = parseInt(localStorage.getItem(BRIGHTNESS.STORAGE_KEY) ?? BRIGHTNESS.DEFAULT);
 
-        const savedBarLeft = localStorage.getItem('neubie_brightness_bar_left');
-
         const bar = document.createElement('div');
         bar.id = 'neubie-brightness-bar';
         Object.assign(bar.style, {
             position: 'fixed',
             // 기본 위치: 상단 중앙
-            top: '2px',
-            left: savedBarLeft || '50%',
-            transform: 'translateX(-50%)',
+            top: '4px',
+            left: '8px',
             zIndex: '2147483640',
             background: 'rgba(15,15,15,0.75)',
             backdropFilter: 'blur(8px)',
@@ -2230,56 +2221,12 @@
             boxShadow: '0 2px 12px rgba(0,0,0,0.4)',
             fontFamily: 'Pretendard, sans-serif',
             userSelect: 'none',
-            transition: 'left 0.28s cubic-bezier(0.4,0,0.2,1), transform 0.28s cubic-bezier(0.4,0,0.2,1)',
         });
 
         // ☀️ 아이콘
         const icon = document.createElement('span');
         icon.textContent = '☀️';
-        icon.style.cssText = 'font-size:14px; line-height:1; cursor:grab;';
-
-        // ── 드래그 이동 ──
-        let isDragging = false;
-        let dragStartX = 0;
-        let barStartLeft = 0;
-
-        const onDragStart = (e) => {
-            const panel = document.getElementById('ho-remote-panel');
-            if (panel && panel.style.top === '0px') return;
-            isDragging = true;
-            dragStartX = e.clientX;
-            barStartLeft = bar.getBoundingClientRect().left + bar.offsetWidth / 2;
-            bar.style.transition = 'none';
-            bar.style.transform = 'none';
-            bar.style.left = barStartLeft + 'px'; // ← 추가: 즉시 픽셀 고정
-            icon.style.cursor = 'grabbing';
-            e.preventDefault();
-        };
-
-        icon.addEventListener('mousedown', onDragStart);
-
-        bar.addEventListener('mousedown', (e) => {
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.tagName === 'SPAN' && e.target !== icon) return;
-            onDragStart(e);
-        });
-
-        document.addEventListener('mousemove', (e) => {
-            if (!isDragging) return;
-            const delta = e.clientX - dragStartX;
-            const newCenter = barStartLeft + delta;
-            const halfWidth = bar.offsetWidth / 2;
-            const clamped = Math.max(halfWidth, Math.min(window.innerWidth - halfWidth, newCenter));
-            bar.style.left = clamped + 'px';
-            bar.style.transform = 'translateX(-50%)';
-        });
-
-        document.addEventListener('mouseup', () => {
-            if (!isDragging) return;
-            isDragging = false;
-            icon.style.cursor = 'grab';
-            bar.style.transition = 'left 0.28s cubic-bezier(0.4,0,0.2,1), transform 0.28s cubic-bezier(0.4,0,0.2,1)';
-            localStorage.setItem('neubie_brightness_bar_left', bar.style.left); // ← 추가
-        });
+        icon.style.cssText = 'font-size:14px; line-height:1;';
 
         // 슬라이더
         const slider = document.createElement('input');
@@ -2375,30 +2322,11 @@
 			// remote/multiple 페이지면 핸드오버 레이아웃
 			if (isHandoverPage() && localStorage.getItem('neubie_handover_enabled') !== 'false') {
 				const existing = document.getElementById('ho-remote-panel');
-				const brightnessBar = document.getElementById('neubie-brightness-bar');
 				if (existing) {
 					const isOpen = existing.style.top === '0px';
 					existing.style.top = isOpen ? '-300px' : '0px';
-					// 밝기바 위치 토글
-					if (brightnessBar) {
-						if (isOpen) {
-							// 패널 닫힘 → 중앙 복귀
-							const savedLeft = localStorage.getItem('neubie_brightness_bar_left');
-                            brightnessBar.style.left = savedLeft || '50%';
-                            brightnessBar.style.transform = 'translateX(-50%)';
-						} else {
-							// 패널 열림 → 좌측으로
-							brightnessBar.style.left = '12px';
-							brightnessBar.style.transform = 'translateX(0)';
-						}
-					}
 				} else {
 					initHandoverLayout();
-					// 패널 열릴 때 밝기바 좌측으로
-					if (brightnessBar) {
-						brightnessBar.style.left = '12px';
-						brightnessBar.style.transform = 'translateX(0)';
-					}
 				}
 				return;
 			}
