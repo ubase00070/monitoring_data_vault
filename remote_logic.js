@@ -980,9 +980,11 @@
                     ${dropdownOptions || '<option>최근 배달 기체 미감지</option>'}
                 </select>
                 <input type="text" id="taskInput" placeholder="주문번호를 붙여넣으세요." style="flex: 0 1 160px; background: #333; color: white; border: 1px solid #555; padding: 4px; border-radius: 4px; font-size: 15px;">
-                <button id="copyFileName" style="background: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size:14px; min-width: 70px; white-space: nowrap; flex-shrink: 0;">복사</button>
+                <span style="width: 70px; flex-shrink: 0; display: inline-flex;">
+                    <button id="copyFileName" style="background: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 15px; width: 100%; white-space: nowrap; overflow: hidden;">복사</button>
+                </span>
             </div>
-            <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+            <div style="display: flex; gap: 5px; flex-wrap: nowrap;">
                 <button id="btnMulti" class="sub-btn">다중 관제</button>
                 ${isWknd ? `
                     <button id="btnDeli" class="sub-btn">배송 띠띠(주말)</button>
