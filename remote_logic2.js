@@ -1656,10 +1656,35 @@
                 if (batteryPopup.style.display === 'block') updateBatteryStatus();
             }, 1500);
 
+            if (isHandoverPage()) {
+                let freezePollCount = 0;
+                const freezePoll = setInterval(() => {
+                    freezePollCount++;
+                    const allFilled = config.batteryIds.every(c => {
+                        try {
+                            const doc = iframes[c.id]?.contentDocument || iframes[c.id]?.contentWindow?.document;
+                            if (!doc) return false;
+                            const text = doc.body?.innerText || '';
+                            return /\d+%/.test(text);
+                        } catch(e) { return false; }
+                    });
+                    if (allFilled || freezePollCount >= 14) { // 최대 7초(500ms×14)
+                        clearInterval(freezePoll);
+                        updateBatteryStatus(); // 마지막으로 한 번 더 갱신
+                        config.batteryIds.forEach(c => {
+                            if (iframes[c.id]) {
+                                iframes[c.id].src = ''; // iframe 연결 끊기
+                            }
+                        });
+                        clearInterval(batteryRefreshInterval); // 30초 리프레시도 중단
+                    }
+                }, 500);
+            }
+
             batteryRefreshInterval = setInterval(() => {
                 if (batteryPopup.style.display === 'block') updateBatteryStatus();
                 else clearInterval(batteryRefreshInterval);
-            }, 5000);
+            }, 60000);
 
         } else {
             batteryPopup.style.display = 'none';
