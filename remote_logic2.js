@@ -1751,7 +1751,7 @@
 		Object.assign(panel.style, {
 			position: 'fixed', top: '0px', left: '50%', transform: 'translateX(-50%)',
 			zIndex: '2147483646', width: '560px',
-			background: 'rgba(234,238,248,0.98)',
+			background: 'rgba(170, 170, 170, 0.98)',
 			borderRadius: '0 0 14px 14px', padding: '5px 8px 7px',
 			fontFamily: 'Pretendard,sans-serif',
 			boxShadow: '0 8px 32px rgba(0,0,0,0.35)',
@@ -2241,7 +2241,7 @@
         slider.max = BRIGHTNESS.MAX;
         slider.value = savedVal;
         Object.assign(slider.style, {
-            width: '72px',
+            width: '82px',
             height: '4px',
             accentColor: '#ffffff',
             cursor: 'pointer',
