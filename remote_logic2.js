@@ -1695,7 +1695,7 @@
 			position: 'fixed', top: '0px', left: '50%', transform: 'translateX(-50%)',
 			zIndex: '2147483646', width: '560px',
 			background: 'rgba(234,238,248,0.98)',
-			borderRadius: '0 0 14px 14px', padding: '8px 12px 10px',
+			borderRadius: '0 0 14px 14px', padding: '5px 8px 7px',
 			fontFamily: 'Pretendard,sans-serif',
 			boxShadow: '0 8px 32px rgba(0,0,0,0.35)',
 			border: '1px solid rgba(200,210,230,0.7)', borderTop: 'none',
@@ -1764,7 +1764,7 @@
 		const headerRow = document.createElement('div');
 		Object.assign(headerRow.style, {
 			display: 'flex', alignItems: 'center', gap: '5px',
-			marginBottom: '6px', paddingBottom: '6px',
+			marginBottom: '4px', paddingBottom: '4px',
 			borderBottom: '1px solid rgba(0,0,0,0.08)',
 			flexWrap: 'nowrap',
 		});
@@ -1776,14 +1776,14 @@
 			const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_다중모니터링`;
 			navigator.clipboard.writeText(finalName);
 			multiBtn.textContent = '복사됨';
-			setTimeout(() => { multiBtn.textContent = '📋 다중 관제'; }, 1500);
+			setTimeout(() => { multiBtn.textContent = '다중 파일명'; }, 1500);
 		};
 
 		// 성남 배터리 버튼
 		const battBtn = mkBtn('성남 배터리', '#475569');
 		battBtn.onclick = () => {
 			toggleBattery();
-			battBtn.textContent = batteryPopup.style.display === 'block' ? '🔋 배터리 닫기' : '🔋 성남 배터리';
+			battBtn.textContent = batteryPopup.style.display === 'block' ? '배터리 닫기' : '성남 배터리';
 		};
 
 		// 교대 받기 버튼
@@ -1810,7 +1810,7 @@
 		// ── 그리드 (좌측 컬럼 없이 바로) ──
 		const grid = document.createElement('div');
 		Object.assign(grid.style, {
-			display: 'grid', gridTemplateColumns: 'repeat(6,1fr)', gap: '4px',
+			display: 'grid', gridTemplateColumns: 'repeat(6,1fr)', gap: '3px',
 		});
 
 		const cells = Array.from({ length: MAX_UNITS }, (_, i) => {
