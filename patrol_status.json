@@ -1,6 +1,197 @@
 {
-  "updatedAt": "2026-05-29 18:00:15",
+  "updatedAt": "2026-05-30 08:00:16",
   "recentHistory": [
+    {
+      "at": "2026-05-30 08:00:16",
+      "changes": [
+        {
+          "type": "추가",
+          "site": "리센츠 1",
+          "status": "uncertain",
+          "reason": "반드시 순회로 진행"
+        },
+        {
+          "type": "추가",
+          "site": "리센츠 2",
+          "status": "uncertain",
+          "reason": "반드시 순회로 진행"
+        },
+        {
+          "type": "삭제",
+          "site": "리센츠 1",
+          "status": "active",
+          "reason": "[삭제] 09:00 - [09:00] 잠실 리센츠 1호기 - 첫번째 순찰 A 코스"
+        },
+        {
+          "type": "삭제",
+          "site": "리센츠 2",
+          "status": "active",
+          "reason": "[삭제] 09:00 - [09:00] 잠실 리센츠 2호기 - 첫번째 순찰 B 코스"
+        },
+        {
+          "type": "추가",
+          "site": "리센츠 1",
+          "status": "uncertain",
+          "reason": "반드시 순회로 진행"
+        },
+        {
+          "type": "추가",
+          "site": "리센츠 2",
+          "status": "uncertain",
+          "reason": "반드시 순회로 진행"
+        },
+        {
+          "type": "삭제",
+          "site": "리센츠 1",
+          "status": "active",
+          "reason": "[삭제] 10:00 - [10:00] 잠실 리센츠 1호기 - 두번째 순찰 B 코스"
+        },
+        {
+          "type": "삭제",
+          "site": "리센츠 2",
+          "status": "active",
+          "reason": "[삭제] 10:00 - [10:00] 잠실 리센츠 2호기 - 두번째 순찰 A 코스"
+        },
+        {
+          "type": "추가",
+          "site": "리센츠 1",
+          "status": "uncertain",
+          "reason": "반드시 순회로 진행"
+        },
+        {
+          "type": "추가",
+          "site": "리센츠 2",
+          "status": "uncertain",
+          "reason": "반드시 순회로 진행"
+        },
+        {
+          "type": "삭제",
+          "site": "리센츠 1",
+          "status": "active",
+          "reason": "[삭제] 14:00 - [14:00] 잠실리센츠 1호기 - 첫번째 순찰 A 코스"
+        },
+        {
+          "type": "삭제",
+          "site": "리센츠 2",
+          "status": "active",
+          "reason": "[삭제] 14:00 - [14:00] 잠실리센츠 2호기 - 첫번째 순찰 B 코스"
+        },
+        {
+          "type": "추가",
+          "site": "리센츠 1",
+          "status": "uncertain",
+          "reason": "반드시 순회로 진행"
+        },
+        {
+          "type": "추가",
+          "site": "리센츠 2",
+          "status": "uncertain",
+          "reason": "반드시 순회로 진행"
+        },
+        {
+          "type": "삭제",
+          "site": "리센츠 1",
+          "status": "active",
+          "reason": "[삭제] 15:00 - [15:00] 잠실 리센츠 1호기 - 두번째 순찰 B 코스"
+        },
+        {
+          "type": "삭제",
+          "site": "리센츠 2",
+          "status": "active",
+          "reason": "[삭제] 15:00 - [15:00] 잠실 리센츠 2호기 - 두번째 순찰 A 코스"
+        },
+        {
+          "type": "추가",
+          "site": "잠실 리센츠",
+          "status": "uncertain",
+          "reason": "반드시 순회로 진행"
+        },
+        {
+          "type": "추가",
+          "site": "잠실 리센츠",
+          "status": "uncertain",
+          "reason": "반드시 순회로 진행"
+        },
+        {
+          "type": "삭제",
+          "site": "잠실 리센츠",
+          "status": "active",
+          "reason": "[삭제] 19:00 - [19:00] 잠실 리센츠 - 1호기 순찰 A 코스"
+        },
+        {
+          "type": "삭제",
+          "site": "잠실 리센츠",
+          "status": "active",
+          "reason": "[삭제] 19:00 - [19:00] 잠실 리센츠 - 2호기 순찰 B 코스"
+        },
+        {
+          "type": "삭제",
+          "site": "송도 국제 캠핑장",
+          "status": "active",
+          "reason": "B구역 매너타임"
+        },
+        {
+          "type": "추가",
+          "site": "평택 1",
+          "status": "uncertain",
+          "reason": "볼륨0.4확인"
+        },
+        {
+          "type": "추가",
+          "site": "평택 2",
+          "status": "uncertain",
+          "reason": "볼륨0.4확인"
+        },
+        {
+          "type": "삭제",
+          "site": "평택 1",
+          "status": "active",
+          "reason": "[삭제] 22:00 - [22:00] 평택 1호기 - 순찰"
+        },
+        {
+          "type": "삭제",
+          "site": "평택 2",
+          "status": "active",
+          "reason": "[삭제] 22:00 - [22:00] 평택 2호기 - 순찰"
+        },
+        {
+          "type": "추가",
+          "site": "평택 1",
+          "status": "uncertain",
+          "reason": "볼륨0.4확인"
+        },
+        {
+          "type": "추가",
+          "site": "평택 2",
+          "status": "uncertain",
+          "reason": "볼륨0.4확인"
+        },
+        {
+          "type": "삭제",
+          "site": "평택 1",
+          "status": "active",
+          "reason": "[삭제] 02:00 - [02:30~04:30] 평택 1호기 - 순찰"
+        },
+        {
+          "type": "삭제",
+          "site": "평택 2",
+          "status": "active",
+          "reason": "[삭제] 02:00 - [02:30~04:30] 평택 2호기 - 순찰"
+        },
+        {
+          "type": "추가",
+          "site": "성남 야탑역 203호기",
+          "status": "uncertain",
+          "reason": "순찰 준비"
+        },
+        {
+          "type": "삭제",
+          "site": "성남 야탑역 203호기",
+          "status": "active",
+          "reason": "순찰 준비"
+        }
+      ]
+    },
     {
       "at": "2026-05-29 18:00:15",
       "changes": [
@@ -3381,17 +3572,6 @@
           "reason": " 01:00 ~ 04:00 "
         }
       ]
-    },
-    {
-      "at": "2026-05-24 19:11:06",
-      "changes": [
-        {
-          "type": "변경",
-          "site": "[상태변경] 성남 201: uncertain → suspended",
-          "status": "uncertain",
-          "reason": "[상태변경] 성남 201: uncertain → suspended"
-        }
-      ]
     }
   ],
   "patrol_schedule": {
@@ -3453,11 +3633,11 @@
         "note": ""
       },
       {
-        "task": "[09:00] 잠실 리센츠 1호기 - 첫번째 순찰 A 코스",
+        "task": "[09:00] 잠실 리센츠 1호기 - 첫번째 순회 A 코스 (반드시 순회로 진행)",
         "note": ""
       },
       {
-        "task": "[09:00] 잠실 리센츠 2호기 - 첫번째 순찰 B 코스",
+        "task": "[09:00] 잠실 리센츠 2호기 - 첫번째 순찰 B 코스 (반드시 순회로 진행)",
         "note": ""
       },
       {
@@ -3519,11 +3699,11 @@
         "note": ""
       },
       {
-        "task": "[10:00] 잠실 리센츠 1호기 - 두번째 순찰 B 코스",
+        "task": "[10:00] 잠실 리센츠 1호기 - 두번째 순찰 B 코스 (반드시 순회로 진행)",
         "note": ""
       },
       {
-        "task": "[10:00] 잠실 리센츠 2호기 - 두번째 순찰 A 코스",
+        "task": "[10:00] 잠실 리센츠 2호기 - 두번째 순찰 A 코스 (반드시 순회로 진행)",
         "note": ""
       },
       {
@@ -3675,11 +3855,11 @@
         "note": ""
       },
       {
-        "task": "[14:00] 잠실리센츠 1호기 - 첫번째 순찰 A 코스",
+        "task": "[14:00] 잠실리센츠 1호기 - 첫번째 순찰 A 코스 (반드시 순회로 진행)",
         "note": ""
       },
       {
-        "task": "[14:00] 잠실리센츠 2호기 - 첫번째 순찰 B 코스",
+        "task": "[14:00] 잠실리센츠 2호기 - 첫번째 순찰 B 코스 (반드시 순회로 진행)",
         "note": ""
       },
       {
@@ -3741,11 +3921,11 @@
         "note": "6/5까지 순찰 중단(단지내주자창공사)"
       },
       {
-        "task": "[15:00] 잠실 리센츠 1호기 - 두번째 순찰 B 코스",
+        "task": "[15:00] 잠실 리센츠 1호기 - 두번째 순찰 B 코스 (반드시 순회로 진행)",
         "note": ""
       },
       {
-        "task": "[15:00] 잠실 리센츠 2호기 - 두번째 순찰 A 코스",
+        "task": "[15:00] 잠실 리센츠 2호기 - 두번째 순찰 A 코스 (반드시 순회로 진행)",
         "note": ""
       },
       {
@@ -3925,11 +4105,11 @@
         "note": ""
       },
       {
-        "task": "[19:00] 잠실 리센츠 - 1호기 순찰 A 코스",
+        "task": "[19:00] 잠실 리센츠 - 1호기 순찰 A 코스 (반드시 순회로 진행)",
         "note": ""
       },
       {
-        "task": "[19:00] 잠실 리센츠 - 2호기 순찰 B 코스",
+        "task": "[19:00] 잠실 리센츠 - 2호기 순찰 B 코스 (반드시 순회로 진행)",
         "note": ""
       },
       {
@@ -4029,10 +4209,6 @@
         "note": ""
       },
       {
-        "task": "[21:10] 송도 국제 캠핑장 - 순회(B구역 매너타임)",
-        "note": ""
-      },
-      {
         "task": "[21:40] 신동백 롯데캐슬 에코1단지 아파트 - 출차 (순찰 준비)",
         "note": "순찰 20분전 스테이션 앞 출차"
       },
@@ -4091,11 +4267,11 @@
         "note": ""
       },
       {
-        "task": "[22:00] 평택 1호기 - 순찰",
+        "task": "[22:00] 평택 1호기 - 순찰 (볼륨0.4확인)",
         "note": "순찰보류 (타이어마모)"
       },
       {
-        "task": "[22:00] 평택 2호기 - 순찰",
+        "task": "[22:00] 평택 2호기 - 순찰 (볼륨0.4확인)",
         "note": ""
       },
       {
@@ -4311,11 +4487,11 @@
         "note": ""
       },
       {
-        "task": "[02:30~04:30] 평택 1호기 - 순찰",
+        "task": "[02:30~04:30] 평택 1호기 - 순찰 (볼륨0.4확인)",
         "note": "순찰보류 (타이어마모)"
       },
       {
-        "task": "[02:30~04:30] 평택 2호기 - 순찰",
+        "task": "[02:30~04:30] 평택 2호기 - 순찰 (볼륨0.4확인)",
         "note": ""
       },
       {
@@ -4491,7 +4667,7 @@
         "note": "CCTV안나와 순찰보류"
       },
       {
-        "task": "[0650] 성남 야탑역 203호기 - 출차 (순찰 준비)",
+        "task": "[06:50] 성남 야탑역 203호기 - 출차 (순찰 준비)",
         "note": ""
       }
     ]
@@ -4500,247 +4676,247 @@
     "용인 고진": {
       "status": "suspended",
       "reason": "타이어마모",
-      "updatedAt": "2026-05-29 18:00:15",
+      "updatedAt": "2026-05-30 08:00:16",
       "syncIssue": false
     },
     "서강대": {
       "status": "suspended",
       "reason": "타이어마모",
-      "updatedAt": "2026-05-29 18:00:15",
+      "updatedAt": "2026-05-30 08:00:16",
       "syncIssue": false
     },
     "경희대": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-05-29 18:00:15",
+      "updatedAt": "2026-05-30 08:00:16",
       "syncIssue": false
     },
     "성남 202": {
       "status": "suspended",
       "reason": "CCTV안나와",
-      "updatedAt": "2026-05-29 18:00:15",
+      "updatedAt": "2026-05-30 08:00:16",
       "syncIssue": false
     },
     "성남 203": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-05-29 18:00:15",
+      "updatedAt": "2026-05-30 08:00:16",
       "syncIssue": false
     },
     "부산 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-05-29 18:00:15",
+      "updatedAt": "2026-05-30 08:00:16",
       "syncIssue": false
     },
     "부산 3": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-05-29 18:00:15",
+      "updatedAt": "2026-05-30 08:00:16",
       "syncIssue": false
     },
     "파주": {
       "status": "uncertain",
       "reason": "출차시GPS1000미만으로안떨어질경우기체재부팅",
-      "updatedAt": "2026-05-29 18:00:15",
+      "updatedAt": "2026-05-30 08:00:16",
       "syncIssue": false
     },
     "리센츠 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-05-29 18:00:15",
+      "updatedAt": "2026-05-30 08:00:16",
       "syncIssue": false
     },
     "리센츠 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-05-29 18:00:15",
+      "updatedAt": "2026-05-30 08:00:16",
       "syncIssue": false
     },
     "평택 1": {
       "status": "suspended",
       "reason": "타이어마모",
-      "updatedAt": "2026-05-29 18:00:15",
+      "updatedAt": "2026-05-30 08:00:16",
       "syncIssue": false
     },
     "평택 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-05-29 18:00:15",
+      "updatedAt": "2026-05-30 08:00:16",
       "syncIssue": false
     },
     "DMZ": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-05-29 18:00:15",
+      "updatedAt": "2026-05-30 08:00:16",
       "syncIssue": false
     },
     "부산 서면": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-05-29 18:00:15",
+      "updatedAt": "2026-05-30 08:00:16",
       "syncIssue": false
     },
     "부천 중동": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-05-29 18:00:15",
+      "updatedAt": "2026-05-30 08:00:16",
       "syncIssue": false
     },
     "성남 200": {
       "status": "suspended",
       "reason": "파손",
-      "updatedAt": "2026-05-29 18:00:15",
+      "updatedAt": "2026-05-30 08:00:16",
       "syncIssue": true
     },
     "성남 201": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-05-29 18:00:15",
+      "updatedAt": "2026-05-30 08:00:16",
       "syncIssue": false
     },
     "잠실 레이크팰리스": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-05-29 18:00:15",
+      "updatedAt": "2026-05-30 08:00:16",
       "syncIssue": false
     },
     "고양 래미안": {
       "status": "suspended",
       "reason": "단지내주자창공사",
-      "updatedAt": "2026-05-29 18:00:15",
+      "updatedAt": "2026-05-30 08:00:16",
       "syncIssue": false
     },
     "인력개발원": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-05-29 18:00:15",
+      "updatedAt": "2026-05-30 08:00:16",
       "syncIssue": false
     },
     "부산 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-05-29 18:00:15",
+      "updatedAt": "2026-05-30 08:00:16",
       "syncIssue": false
     },
     "부산 4": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-05-29 18:00:15",
+      "updatedAt": "2026-05-30 08:00:16",
       "syncIssue": false
     },
     "엘스": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-05-29 18:00:15",
+      "updatedAt": "2026-05-30 08:00:16",
       "syncIssue": false
     },
     "창원대 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-05-29 18:00:15",
+      "updatedAt": "2026-05-30 08:00:16",
       "syncIssue": false
     },
     "창원대 2": {
       "status": "suspended",
       "reason": "교내 도로공사",
-      "updatedAt": "2026-05-29 18:00:15",
+      "updatedAt": "2026-05-30 08:00:16",
       "syncIssue": true
     },
     "한성대": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-05-29 18:00:15",
+      "updatedAt": "2026-05-30 08:00:16",
       "syncIssue": false
     },
     "김포 풍무": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-05-29 18:00:15",
+      "updatedAt": "2026-05-30 08:00:16",
       "syncIssue": false
     },
     "부경대": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-05-29 18:00:15",
+      "updatedAt": "2026-05-30 08:00:16",
       "syncIssue": false
     },
     "김포 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-05-29 18:00:15",
+      "updatedAt": "2026-05-30 08:00:16",
       "syncIssue": false
     },
     "김포 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-05-29 18:00:15",
+      "updatedAt": "2026-05-30 08:00:16",
       "syncIssue": false
     },
     "광교 풍경채": {
       "status": "suspended",
       "reason": "기체꺼짐",
-      "updatedAt": "2026-05-29 18:00:15",
+      "updatedAt": "2026-05-30 08:00:16",
       "syncIssue": false
     },
     "지제": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-05-29 18:00:15",
+      "updatedAt": "2026-05-30 08:00:16",
       "syncIssue": false
     },
     "중앙대": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-05-29 18:00:15",
+      "updatedAt": "2026-05-30 08:00:16",
       "syncIssue": false
     },
     "쉴더스": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-05-29 18:00:15",
+      "updatedAt": "2026-05-30 08:00:16",
       "syncIssue": false
     },
     "잠실 르엘": {
       "status": "uncertain",
       "reason": "20분전 스테이션 출차",
-      "updatedAt": "2026-05-29 18:00:15",
+      "updatedAt": "2026-05-30 08:00:16",
       "syncIssue": false
     },
     "두루아이 3": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-05-29 18:00:15",
+      "updatedAt": "2026-05-30 08:00:16",
       "syncIssue": false
     },
     "신동백": {
       "status": "uncertain",
       "reason": "순찰 20분전 스테이션 앞 출차",
-      "updatedAt": "2026-05-29 18:00:15",
+      "updatedAt": "2026-05-30 08:00:16",
       "syncIssue": false
     },
     "청담 르엘": {
       "status": "uncertain",
       "reason": "순찰 20분전 대기장소로 출차",
-      "updatedAt": "2026-05-29 18:00:15",
+      "updatedAt": "2026-05-30 08:00:16",
       "syncIssue": false
     },
     "전주천": {
       "status": "uncertain",
       "reason": "순찰 20분전 스테이션 앞 출차",
-      "updatedAt": "2026-05-29 18:00:15",
+      "updatedAt": "2026-05-30 08:00:16",
       "syncIssue": false
     },
     "아주대": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-05-29 18:00:15",
+      "updatedAt": "2026-05-30 08:00:16",
       "syncIssue": false
     },
     "인재개발원": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-05-29 18:00:15",
+      "updatedAt": "2026-05-30 08:00:16",
       "syncIssue": false
     }
   }
