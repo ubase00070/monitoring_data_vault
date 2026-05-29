@@ -1771,19 +1771,26 @@
 
 		// 다중 관제 버튼
 		const multiBtn = mkBtn('다중 파일명', '#475569');
+        multiBtn.style.minWidth = multiBtn.offsetWidth + 'px';
 		multiBtn.onclick = () => {
 			const time = getCalculatedTime(10);
 			const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_다중모니터링`;
 			navigator.clipboard.writeText(finalName);
 			multiBtn.textContent = '복사됨';
-			setTimeout(() => { multiBtn.textContent = '다중 파일명'; }, 1500);
+            multiBtn.style.background = '#22c55e';
+			setTimeout(() => {
+                multiBtn.textContent = '다중 파일명';
+                multiBtn.style.background = '#475569';
+            }, 1500);
 		};
 
 		// 성남 배터리 버튼
 		const battBtn = mkBtn('성남 배터리', '#475569');
 		battBtn.onclick = () => {
 			toggleBattery();
-			battBtn.textContent = batteryPopup.style.display === 'block' ? '배터리 닫기' : '성남 배터리';
+			const isOpen = batteryPopup.style.display === 'block';
+            battBtn.textContent = isOpen ? '배터리 닫기' : '성남 배터리';
+            battBtn.style.background = isOpen ? '#ef4444' : '#475569';
 		};
 
 		// 교대 받기 버튼
