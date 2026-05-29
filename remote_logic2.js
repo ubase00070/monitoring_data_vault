@@ -893,7 +893,6 @@
         setTimeout(() => { delete btn.dataset.intercepted; }, 200);
     }
 
-    // ─ handleControlClick — 순열 제거, 스냅샷만 ─────────────────
     function handleControlClick(e) {
         const targetBtn = e.target.closest('button');
         if (!targetBtn || targetBtn.innerText.trim() !== '관제 시작') return;
@@ -901,16 +900,24 @@
 
         const myName = localStorage.getItem('neubie_user_name') || '';
 
-        // driving 체류 중 누적된 뱃지에서 내 이름 제외
-        pendingOverlapNames = [...seenBadgeNames].filter(name => {
-            // title/aria-label로 전체 이름이 잡혔을 때: 정확히 비교
+        // ① 클릭 순간 카드에서 즉시 스냅샷 (현재 이름 최소 1명 보장)
+        const card = targetBtn.closest('CARD_SELECTOR'); // ← 확인 필요
+        const snapNames = [...(card?.querySelectorAll('BADGE_SELECTOR') || [])]
+            .map(el => el.title?.trim() || el.getAttribute('aria-label')?.trim() || el.textContent?.trim())
+            .filter(name => name && /[가-힣]/.test(name) && name !== myName);
+
+        // ② driving 체류 중 누적된 뱃지 (우르르 이름들)
+        const accumulated = [...seenBadgeNames].filter(name => {
             if (name.length > 1) return name !== myName;
-            // 성씨 1글자만 잡혔을 때: 내 성씨와 다른 것만
             return name !== myName[0];
         });
 
-        cameFromIntervention = true; // 플래그 ON
-        executeIntervention(targetBtn); // 딜레이 없이 즉시 실행
+        // ③ 합치되 중복 제거, snap 우선 (최소 보장), accumulated로 보강
+        const merged = [...new Set([...snapNames, ...accumulated])];
+        pendingOverlapNames = merged;
+
+        cameFromIntervention = true;
+        executeIntervention(targetBtn);
     }
 
     // ─ 중복 배너 표시 ────────────────────────────────────────────
@@ -1890,7 +1897,7 @@
             if (!updatedAt) return false;
             // +09:00 명시로 한국시간 고정
             const updated = new Date(updatedAt.replace(' ', 'T') + '+09:00');
-            return (Date.now() - updated.getTime()) < 60 * 60 * 1000;
+            return (Date.now() - updated.getTime()) < 20 * 60 * 1000;
         };
 
 		// ── 교대받기 버튼 ──
@@ -2011,16 +2018,30 @@
 		setDpMsg('인계 데이터 확인 중...', '#3b82f6');
 		const result = await githubGet();
 		if (result && isDataValid(result.data.updatedAt)) {
-			const units = result.data.units || [];
-			if (units.length) {
-				renderGrid(units);
-				setDpMsg(`교대 기체 데이터 로드됨 (${result.data.handover_by || '?'} → ${units.length}대)`, '#22c55e');
-			} else {
-				setDpMsg('이전 시간 교대 기체 데이터가 없습니다', '#f59e0b');
-			}
-		} else {
-			setDpMsg('이전 시간 교대 기체 데이터가 없습니다', '#f59e0b');
-		}
+            const units = result.data.units || [];
+            if (units.length) {
+                renderGrid(units);
+                setDpMsg(`교대 기체 데이터 로드됨 (${result.data.handover_by || '?'} → ${units.length}대)`, '#22c55e');
+            } else {
+                setDpMsg('이전 시간 교대 기체 데이터가 없습니다', '#f59e0b');
+            }
+        } else if (result && result.data?.updatedAt) {
+            setDpMsg('20분 초과로 로드 실패', '#ef4444');
+        } else {
+            setDpMsg('이전 시간 교대 기체 데이터가 없습니다', '#f59e0b');
+        }
+
+        // ── 20분 만료 감시 (30초마다) ──
+        const expiryInterval = setInterval(() => {
+            if (panel.style.top !== '0px') return;       // 패널 닫혀있으면 스킵
+            if (!gridUnits.length) return;               // 로드된 데이터 없으면 스킵
+            if (!isDataValid(result?.data?.updatedAt)) {
+                cells.forEach(cellEmpty);
+                gridUnits = [];
+                setDpMsg('20분 초과, 기체 목록 만료됨', '#ef4444');
+                clearInterval(expiryInterval);
+            }
+        }, 30000);
 
 		// 패널 외부 클릭 시 닫기
 		document.addEventListener('mousedown', (e) => {
