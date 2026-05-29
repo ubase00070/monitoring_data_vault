@@ -12,8 +12,9 @@
        ============================================================ */
 	   
 	const isHandoverPage = () =>
-		location.href.includes('go.neubie.ai/ko/remote/multiple') &&
-		!location.href.includes('/driving');   
+        (location.href.includes('go.neubie.ai/ko/remote/multiple') ||
+        location.href.includes('multimonitoring.vercel.app')) &&
+        !location.href.includes('/driving');   
 	   
     const config = {
         targetIds: ['44', '56', '65', '109'],
@@ -321,11 +322,11 @@
         // 260번 줄 수정
         Object.assign(copyBtn.style, { 
             background:'#3b82f6', color:'white', border:'none', 
-            padding:'6px 14px',      
+            padding:'6px 14px',      // 6px 12px → 10px 20px
             borderRadius:'8px', cursor:'pointer', fontWeight:'bold', 
             fontSize:'15px',          
-            transition:'0.2s',
-			width: '80px',
+            transition:'0.2s', 
+            width: '80px',
             flexShrink: '0',
             whiteSpace: 'nowrap',
             overflow: 'hidden'
@@ -399,7 +400,7 @@
         navigator.clipboard.writeText(copyText).then(() => {
             const originalText = btn.textContent;
             const originalBg = btn.style.background;
-            btn.textContent = '복사됨';
+            btn.textContent = '✅ 복사됨';
             btn.style.background = '#22c55e';
             
             setTimeout(() => {
@@ -901,7 +902,7 @@
             const originalText = btn.textContent;
             const originalBg = btn.style.background || "#444";
             
-            btn.textContent = '복사됨';
+            btn.textContent = '✅ 복사됨';
             btn.style.background = '#22c55e';
             
             setTimeout(() => {
@@ -917,11 +918,9 @@
                     ${dropdownOptions || '<option>최근 배달 기체 미감지</option>'}
                 </select>
                 <input type="text" id="taskInput" placeholder="주문번호를 붙여넣으세요." style="flex: 0 1 160px; background: #333; color: white; border: 1px solid #555; padding: 4px; border-radius: 4px; font-size: 15px;">
-                <span style="width: 70px; flex-shrink: 0; display: inline-flex;">
-				    <button id="copyFileName" style="background: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 15px; width: 100%; white-space: nowrap; overflow: hidden;">복사</button>
-				</span>
+                <button id="copyFileName" style="background: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size:15px;">복사</button>
             </div>
-            <div style="display: flex; gap: 5px; flex-wrap: nowrap;">
+            <div style="display: flex; gap: 5px; flex-wrap: wrap;">
                 <button id="btnMulti" class="sub-btn">다중 관제</button>
                 ${isWknd ? `
                     <button id="btnDeli" class="sub-btn">배송 띠띠(주말)</button>
@@ -1742,7 +1741,7 @@
 			const time = getCalculatedTime(10);
 			const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_다중모니터링`;
 			navigator.clipboard.writeText(finalName);
-			multiBtn.textContent = '복사됨';
+			multiBtn.textContent = '✅ 복사됨';
 			setTimeout(() => { multiBtn.textContent = '다중 관제'; }, 1500);
 		};
 
@@ -1990,6 +1989,196 @@
 		});
 	}
 	// ── 핸드오버 레이아웃 끝 ──────────────────────────────
+
+    /* ============================================================
+        SECTION 9. 전체 밝기 마스터 컨트롤
+        - remote/multiple 페이지에서 고정 표시
+        - 슬라이더 조작 시 모든 카메라 슬라이더에 동기화
+        - ⚠️  FIXME_SLIDER_SELECTOR: 내일 Elements 확인 후 수정
+       ============================================================ */
+
+    // ── 상수 ──────────────────────────────────────────────
+    // 내일 Elements에서 확인할 것:
+    //   1) 각 카메라 슬라이더의 input[type=range] selector
+    //   2) 슬라이더 값 범위 (min/max) 
+    //   3) CSS filter로 동작하는지 여부
+    const BRIGHTNESS = {
+        SLIDER_SELECTOR: 'input[type="range"]', // ⚠️ FIXME: 실제 selector로 교체
+        MIN: 0,
+        MAX: 100,
+        DEFAULT: 50,
+        STORAGE_KEY: 'neubie_brightness',
+    };
+
+    // ── React friendly 값 주입 헬퍼 ──────────────────────
+    function setSliderValue(input, value) {
+        try {
+            // React synthetic event 대응 (nativeInputValueSetter)
+            const nativeSetter = Object.getOwnPropertyDescriptor(
+                window.HTMLInputElement.prototype, 'value'
+            ).set;
+            nativeSetter.call(input, value);
+            input.dispatchEvent(new Event('input',  { bubbles: true }));
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+        } catch(e) {
+            // fallback: 직접 할당
+            input.value = value;
+            input.dispatchEvent(new Event('input',  { bubbles: true }));
+        }
+    }
+
+    // ── 모든 카메라 슬라이더에 값 동기화 ──────────────────
+    function applyBrightnessToAll(value) {
+        const sliders = document.querySelectorAll(BRIGHTNESS.SLIDER_SELECTOR);
+        sliders.forEach(s => {
+            // 마스터 슬라이더 자신은 건너뜀
+            if (s.id === 'neubie-master-brightness') return;
+            setSliderValue(s, value);
+        });
+        localStorage.setItem(BRIGHTNESS.STORAGE_KEY, value);
+    }
+
+    // ── MutationObserver: 새 카메라 추가 시 자동 적용 ─────
+    function startBrightnessObserver(masterValue) {
+        const applied = new WeakSet();
+        const observer = new MutationObserver(() => {
+            const val = masterValue();
+            if (val === null) return; // Auto 꺼져 있으면 스킵
+            const sliders = document.querySelectorAll(BRIGHTNESS.SLIDER_SELECTOR);
+            sliders.forEach(s => {
+                if (s.id === 'neubie-master-brightness') return;
+                if (applied.has(s)) return;
+                applied.add(s);
+                setSliderValue(s, val);
+            });
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+        return observer;
+    }
+
+    // ── UI 생성 ───────────────────────────────────────────
+    function injectMasterBrightness() {
+        if (document.getElementById('neubie-brightness-bar')) return;
+
+        const savedVal = parseInt(localStorage.getItem(BRIGHTNESS.STORAGE_KEY) ?? BRIGHTNESS.DEFAULT);
+
+        const bar = document.createElement('div');
+        bar.id = 'neubie-brightness-bar';
+        Object.assign(bar.style, {
+            position: 'fixed',
+            // multiple 페이지 상단 UI와 겹치지 않도록 우측 하단 고정
+            bottom: '20px', right: '20px',
+            zIndex: '2147483640',
+            background: 'rgba(15,15,15,0.82)',
+            backdropFilter: 'blur(8px)',
+            border: '1px solid rgba(255,255,255,0.13)',
+            borderRadius: '999px',
+            padding: '7px 16px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            boxShadow: '0 4px 24px rgba(0,0,0,0.5)',
+            fontFamily: 'Pretendard, sans-serif',
+            userSelect: 'none',
+        });
+
+        // ☀️ 아이콘
+        const icon = document.createElement('span');
+        icon.textContent = '☀️';
+        icon.style.cssText = 'font-size:16px; line-height:1;';
+
+        // 슬라이더 — 원본 UI와 동일한 pill 스타일
+        const slider = document.createElement('input');
+        slider.type = 'range';
+        slider.id = 'neubie-master-brightness';
+        slider.min = BRIGHTNESS.MIN;
+        slider.max = BRIGHTNESS.MAX;
+        slider.value = savedVal;
+        Object.assign(slider.style, {
+            width: '120px',
+            height: '4px',
+            accentColor: '#ffffff',
+            cursor: 'pointer',
+            outline: 'none',
+            border: 'none',
+            background: 'transparent',
+        });
+
+        // 숫자 표시
+        const label = document.createElement('span');
+        label.style.cssText = 'color:#fff; font-size:13px; font-weight:600; min-width:28px; text-align:right;';
+        label.textContent = savedVal;
+
+        let autoOn = false;
+
+        const autoBtn = document.createElement('button');
+        autoBtn.textContent = 'Auto';
+        Object.assign(autoBtn.style, {
+            background: 'rgba(255,255,255,0.12)',
+            color: '#aaa',
+            border: '1px solid rgba(255,255,255,0.2)',
+            borderRadius: '999px',
+            padding: '3px 10px',
+            fontSize: '12px',
+            fontWeight: '700',
+            cursor: 'pointer',
+            flexShrink: '0',
+            transition: '0.2s',
+        });
+
+        autoBtn.addEventListener('click', () => {
+            autoOn = !autoOn;
+            if (autoOn) {
+                // 활성화: 초록 + 현재 값으로 즉시 전체 적용
+                Object.assign(autoBtn.style, { background: '#22c55e', color: '#fff', border: '1px solid #22c55e' });
+                applyBrightnessToAll(slider.value);
+            } else {
+                // 비활성화: 원래 스타일로
+                Object.assign(autoBtn.style, { background: 'rgba(255,255,255,0.12)', color: '#aaa', border: '1px solid rgba(255,255,255,0.2)' });
+            }
+        });
+
+        slider.addEventListener('input', () => {
+            const v = slider.value;
+            label.textContent = v;
+            applyBrightnessToAll(v);
+        });
+
+        resetBtn.addEventListener('click', () => {
+            slider.value = BRIGHTNESS.DEFAULT;
+            label.textContent = BRIGHTNESS.DEFAULT;
+            applyBrightnessToAll(BRIGHTNESS.DEFAULT);
+        });
+
+        bar.appendChild(icon);
+        bar.appendChild(slider);
+        bar.appendChild(label);
+        bar.appendChild(autoBtn);
+        document.body.appendChild(bar);
+
+        // MutationObserver로 나중에 추가되는 카메라에도 자동 적용
+        startBrightnessObserver(() => autoOn ? parseInt(slider.value) : null);
+
+        // 초기 1회 적용 (페이지 로드 시 기존 카메라에)
+        setTimeout(() => applyBrightnessToAll(savedVal), 800);
+    }
+
+    // ── multiple 페이지 진입 시 자동 주입 / 이탈 시 제거 ──
+    function checkBrightnessBar() {
+        const isMultiple = location.href.includes('go.neubie.ai/ko/remote/multiple') ||
+                           location.href.includes('multimonitoring.vercel.app');
+        const bar = document.getElementById('neubie-brightness-bar');
+        if (isMultiple && !bar) {
+            injectMasterBrightness();
+        } else if (!isMultiple && bar) {
+            bar.remove();
+        }
+    }
+
+    // URL 변경 감지 (기존 setInterval과 연동)
+    const _origCheckBrightness = checkBrightnessBar;
+    setInterval(_origCheckBrightness, 1500);
+    _origCheckBrightness(); // 최초 1회
 
     window.addEventListener('keydown', (e) => {
         if (e.altKey && e.code === 'KeyQ') {
