@@ -1824,24 +1824,16 @@
 		};
 
 		const githubGet = async () => {
-			try {
-				const token = localStorage.getItem('ho_github_token') || '';
-				const res = await fetch(  // originalFetch → fetch
-					'https://api.github.com/repos/ubase00070/monitoring_handover/contents/handover.json',
-					{ headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' } }
-				);
-				if (!res.ok) return null;
-				const json = await res.json();
-				const decoded = decodeURIComponent(
-					atob(json.content.replace(/\n/g, ''))
-						.split('')
-						.map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-						.join('')
-				);
-				const data = JSON.parse(decoded);
-				return { data };
-			} catch(e) { return null; }
-		};
+            try {
+                const res = await fetch(
+                    `https://raw.githubusercontent.com/ubase00070/monitoring_handover/main/handover.json?t=${Date.now()}`,
+                    { cache: 'no-store' }
+                );
+                if (!res.ok) return null;
+                const data = await res.json();
+                return { data };
+            } catch(e) { return null; }
+        };
 
 		// ── 유효성 검증 (1시간 이내 데이터) ──
 		const isDataValid = (updatedAt) => {
