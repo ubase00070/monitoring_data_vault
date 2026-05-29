@@ -1369,13 +1369,13 @@
         // 줄을 서시오 (체크박스, 멘트 없이 이름만)
         const queueCard = document.createElement('div');
         queueCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333; display:flex; justify-content:space-between; align-items:center;";
-        queueCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">📡 줄을 서시오 v2.0</span>`;
+        queueCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">📡 다중 관제 도우미</span>`;
         const queueChk = document.createElement('input');
-        queueChk.type = 'checkbox'; queueChk.checked = state.isQueueOpt;
+        queueChk.type = 'checkbox';
+        queueChk.checked = localStorage.getItem('neubie_handover_enabled') !== 'false'; // 기본 true
         queueChk.style.cssText = "width:18px; height:18px; cursor:pointer;";
         queueChk.onchange = (e) => {
-            state.isQueueOpt = e.target.checked;
-            localStorage.setItem('neubie_opt_queue', state.isQueueOpt);
+            localStorage.setItem('neubie_handover_enabled', e.target.checked);
         };
 
         if (!document.getElementById('neubie-blink-style')) {
@@ -2328,7 +2328,7 @@
 			e.preventDefault();
 
 			// remote/multiple 페이지면 핸드오버 레이아웃
-			if (isHandoverPage()) {
+			if (isHandoverPage() && localStorage.getItem('neubie_handover_enabled') !== 'false') {
 				const existing = document.getElementById('ho-remote-panel');
 				const brightnessBar = document.getElementById('neubie-brightness-bar');
 				if (existing) {
