@@ -1751,7 +1751,7 @@
 		Object.assign(panel.style, {
 			position: 'fixed', top: '0px', left: '50%', transform: 'translateX(-50%)',
 			zIndex: '2147483646', width: '560px',
-			background: 'rgba(170, 170, 170, 0.98)',
+			background: 'rgba(200, 200, 200, 0.98)',
 			borderRadius: '0 0 14px 14px', padding: '5px 8px 7px',
 			fontFamily: 'Pretendard,sans-serif',
 			boxShadow: '0 8px 32px rgba(0,0,0,0.35)',
@@ -1767,6 +1767,9 @@
 			fontSize: '10px', color: '#64748b',
 			overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
 			flex: '1', minWidth: '0',
+            background: 'rgba(255,255,255,0.85)',
+            borderRadius: '5px',
+            padding: '2px 7px',
 		});
 		dpMsg.textContent = '로딩 중...';
 
