@@ -1824,16 +1824,16 @@
 		};
 
 		const githubGet = async () => {
-            try {
-                const res = await fetch(
-                    `https://raw.githubusercontent.com/ubase00070/monitoring_handover/main/handover.json?t=${Date.now()}`,
-                    { cache: 'no-store' }
-                );
-                if (!res.ok) return null;
-                const data = await res.json();
-                return { data };
-            } catch(e) { return null; }
-        };
+		    try {
+		        const res = await originalFetch(
+		            `https://raw.githubusercontent.com/ubase00070/monitoring_handover/main/handover.json?t=${Date.now()}`,
+		            { cache: 'no-store' }
+		        );
+		        if (!res.ok) return null;
+		        const data = await res.json();
+		        return { data };
+		    } catch(e) { console.log('githubGet error:', e); return null; }
+		};
 
 		// ── 유효성 검증 (1시간 이내 데이터) ──
 		const isDataValid = (updatedAt) => {
