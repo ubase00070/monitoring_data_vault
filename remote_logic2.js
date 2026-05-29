@@ -324,7 +324,11 @@
             padding:'10px 20px',      // 6px 12px → 10px 20px
             borderRadius:'8px', cursor:'pointer', fontWeight:'bold', 
             fontSize:'15px',          
-            transition:'0.2s' 
+            transition:'0.2s',
+			width: '90px',
+            flexShrink: '0',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden'
         });
         copyBtn.onclick = (e) => copyToClipboard(e.target);
         header.append(titleB, copyBtn);
