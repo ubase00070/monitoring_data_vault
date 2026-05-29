@@ -12,9 +12,9 @@
        ============================================================ */
 	   
 	const isHandoverPage = () =>
-        (location.href.includes('go.neubie.ai/ko/remote/multiple') ||
-        location.href.includes('multimonitoring.vercel.app')) &&
-        !location.href.includes('/driving');   
+	    (location.href.includes('go.neubie.ai/ko/remote/multiple') &&
+	     !location.href.includes('/driving')) ||
+	    location.href.includes('multimonitoring.vercel.app');   
 	   
     const config = {
         targetIds: ['44', '56', '65', '109'],
