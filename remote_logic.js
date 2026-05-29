@@ -405,7 +405,7 @@
         navigator.clipboard.writeText(copyText).then(() => {
             const originalText = btn.textContent;
             const originalBg = btn.style.background;
-            btn.textContent = '✅ 복사됨';
+            btn.textContent = '복사됨';
             btn.style.background = '#22c55e';
             
             setTimeout(() => {
@@ -964,7 +964,7 @@
             const originalText = btn.textContent;
             const originalBg = btn.style.background || "#444";
             
-            btn.textContent = '✅ 복사됨';
+            btn.textContent = '복사됨';
             btn.style.background = '#22c55e';
             
             setTimeout(() => {
