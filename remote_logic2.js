@@ -1837,9 +1837,10 @@
 
 		// ── 유효성 검증 (1시간 이내 데이터) ──
 		const isDataValid = (updatedAt) => {
-			if (!updatedAt) return false;
-			const updated = new Date(updatedAt.replace(' ', 'T'));
-			return (Date.now() - updated.getTime()) < 60 * 60 * 1000;
+		    if (!updatedAt) return false;
+		    // +09:00 명시로 한국시간 고정
+		    const updated = new Date(updatedAt.replace(' ', 'T') + '+09:00');
+		    return (Date.now() - updated.getTime()) < 60 * 60 * 1000;
 		};
 
 		// ── 교대받기 버튼 ──
