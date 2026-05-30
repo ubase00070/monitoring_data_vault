@@ -761,9 +761,7 @@
             // ⚠️ 선택자 미확정 — 출근 후 콘솔 확인 필요
             // 확인 방법: 개입카드 뜬 상태에서 콘솔에 아래 실행
             // [...document.querySelectorAll('*')].filter(el => el.children.length === 0 && /^[가-힣]{1,4}$/.test(el.textContent.trim())).map(el => ({ tag: el.tagName, class: el.className, text: el.textContent.trim(), title: el.title, aria: el.getAttribute('aria-label') }))
-            const BADGE_SELECTOR = 'FIXME'; // ← 여기에 확인된 선택자 입력
-            
-            if (BADGE_SELECTOR === 'FIXME') return; // 선택자 미입력 시 안전하게 스킵
+            const BADGE_SELECTOR = 'span.font-size-14.font-medium.text-white';
 
             document.querySelectorAll(BADGE_SELECTOR).forEach(el => {
                 // title > aria-label > textContent 순서로 전체 이름 시도
@@ -788,31 +786,30 @@
     }
 
     function handleControlClick(e) {
-        const targetBtn = e.target.closest('button');
-        if (!targetBtn || targetBtn.innerText.trim() !== '관제 시작') return;
-        if (targetBtn.dataset.intercepted) return;
+		const targetBtn = e.target.closest('button');
+		if (!targetBtn || targetBtn.innerText.trim() !== '관제 시작') return;
+		if (targetBtn.dataset.intercepted) return;
 
-        const myName = localStorage.getItem('neubie_user_name') || '';
+		const myName = localStorage.getItem('neubie_user_name') || '';
 
-        // ① 클릭 순간 카드에서 즉시 스냅샷 (현재 이름 최소 1명 보장)
-        const card = targetBtn.closest('CARD_SELECTOR'); // ← 확인 필요
-        const snapNames = [...(card?.querySelectorAll('BADGE_SELECTOR') || [])]
-            .map(el => el.title?.trim() || el.getAttribute('aria-label')?.trim() || el.textContent?.trim())
-            .filter(name => name && /[가-힣]/.test(name) && name !== myName);
+		// ① 클릭 순간 카드에서 즉시 스냅샷
+		const card = targetBtn.closest('div[data-qk="multiple-driving-card"]');
+		const snapNames = [...(card?.querySelectorAll('span.font-size-14.font-medium.text-white') || [])]
+			.map(el => el.textContent?.trim())
+			.filter(name => name && /[가-힣]/.test(name) && name !== myName);
 
-        // ② driving 체류 중 누적된 뱃지 (우르르 이름들)
-        const accumulated = [...seenBadgeNames].filter(name => {
-            if (name.length > 1) return name !== myName;
-            return name !== myName[0];
-        });
+		// ② driving 체류 중 누적된 뱃지
+		const accumulated = [...seenBadgeNames].filter(name => {
+			if (name.length > 1) return name !== myName;
+			return name !== myName[0];
+		});
 
-        // ③ 합치되 중복 제거, snap 우선 (최소 보장), accumulated로 보강
-        const merged = [...new Set([...snapNames, ...accumulated])];
-        pendingOverlapNames = merged;
+		const merged = [...new Set([...snapNames, ...accumulated])];
+		pendingOverlapNames = merged;
 
-        cameFromIntervention = true;
-        executeIntervention(targetBtn);
-    }
+		cameFromIntervention = true;
+		executeIntervention(targetBtn);
+	}
 
     // ─ 중복 배너 표시 ────────────────────────────────────────────
     function showOverlapBanner(names) {
@@ -2020,7 +2017,6 @@
     //   2) 슬라이더 값 범위 (min/max) 
     //   3) CSS filter로 동작하는지 여부
     const BRIGHTNESS = {
-        SLIDER_SELECTOR: 'input[type="range"]', // ⚠️ FIXME: 실제 selector로 교체
         MIN: 0,
         MAX: 100,
         DEFAULT: 50,
@@ -2028,22 +2024,13 @@
         AUTO_KEY: 'neubie_brightness_auto',
     };
 
-    // ── React friendly 값 주입 헬퍼 ──────────────────────
-    function setSliderValue(input, value) {
-        try {
-            // React synthetic event 대응 (nativeInputValueSetter)
-            const nativeSetter = Object.getOwnPropertyDescriptor(
-                window.HTMLInputElement.prototype, 'value'
-            ).set;
-            nativeSetter.call(input, value);
-            input.dispatchEvent(new Event('input',  { bubbles: true }));
-            input.dispatchEvent(new Event('change', { bubbles: true }));
-        } catch(e) {
-            // fallback: 직접 할당
-            input.value = value;
-            input.dispatchEvent(new Event('input',  { bubbles: true }));
-        }
-    }
+	function applyBrightnessToAll(value) {
+		const brightnessVal = value / 50; // 0~100 → 0.0~2.0 (50이 기준 1.0)
+		document.querySelectorAll('video[data-qk="remote-multiple-front-cam"]').forEach(v => {
+			v.style.filter = `brightness(${brightnessVal})`;
+		});
+		localStorage.setItem(BRIGHTNESS.STORAGE_KEY, value);
+	}
 
     // ── 모든 카메라 슬라이더에 값 동기화 ──────────────────
     function applyBrightnessToAll(value) {
@@ -2056,39 +2043,18 @@
         localStorage.setItem(BRIGHTNESS.STORAGE_KEY, value);
     }
 
-    // ── MutationObserver: 새 카메라 추가 시 자동 적용 ─────
     function startBrightnessObserver(masterValue) {
-        const applied = new WeakSet();
-
-        const observer = new MutationObserver((mutations) => {
-            const val = masterValue();
-            if (val === null) return;
-
-            mutations.forEach(mutation => {
-                mutation.addedNodes.forEach(node => {
-                    if (node.nodeType !== 1) return; // Element만
-
-                    // 추가된 노드 자체가 슬라이더인 경우
-                    const sliders = [];
-                    if (node.matches?.(BRIGHTNESS.SLIDER_SELECTOR)) sliders.push(node);
-
-                    // 추가된 노드 내부에 슬라이더가 있는 경우
-                    node.querySelectorAll?.(BRIGHTNESS.SLIDER_SELECTOR)
-                        .forEach(s => sliders.push(s));
-
-                    sliders.forEach(s => {
-                        if (s.id === 'neubie-master-brightness') return;
-                        if (applied.has(s)) return;
-                        applied.add(s);
-                        setSliderValue(s, val);
-                    });
-                });
-            });
-        });
-
-        observer.observe(document.body, { childList: true, subtree: true });
-        return observer;
-    }
+		const observer = new MutationObserver(() => {
+			const val = masterValue();
+			if (val === null) return;
+			const brightnessVal = val / 50;
+			document.querySelectorAll('video[data-qk="remote-multiple-front-cam"]').forEach(v => {
+				v.style.filter = `brightness(${brightnessVal})`;
+			});
+		});
+		observer.observe(document.body, { childList: true, subtree: true });
+		return observer;
+	}
 
     // ── UI 생성 ───────────────────────────────────────────
     function injectMasterBrightness() {
