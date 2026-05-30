@@ -406,7 +406,7 @@
             btn.style.background = '#22c55e';
             
             setTimeout(() => {
-                btn.textContent = originalText;
+                btn.textContent = origina111lText;
                 btn.style.background = originalBg;
             }, 2000);
         });
