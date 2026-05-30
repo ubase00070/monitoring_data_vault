@@ -2017,7 +2017,7 @@
     //   2) 슬라이더 값 범위 (min/max) 
     //   3) CSS filter로 동작하는지 여부
     const BRIGHTNESS = {
-        MIN: 0,
+        MIN: 20,
         MAX: 100,
         DEFAULT: 50,
         STORAGE_KEY: 'neubie_brightness',
@@ -2025,7 +2025,7 @@
     };
 
 	function applyBrightnessToAll(value) {
-		const brightnessVal = value / 50; // 0~100 → 0.0~2.0 (50이 기준 1.0)
+		const brightnessVal = value / 50; // 20~100 → 0.0~2.0 (50이 기준 1.0)
 		document.querySelectorAll('video[data-qk="remote-multiple-front-cam"]').forEach(v => {
 			v.style.filter = `brightness(${brightnessVal})`;
 		});
