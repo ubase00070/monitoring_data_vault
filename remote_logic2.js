@@ -1756,16 +1756,13 @@
             if (!isReady) { setDpMsg('기체 목록 로딩 실패 (타임아웃)', '#ef4444'); return; }
 
             const reactCheck = (label) => {
-                if (!label) return false;
-                const checkbox = label.querySelector('input[type="checkbox"]');
-                if (checkbox?.checked) return true;
-                const opts = { bubbles: true, cancelable: true, view: window };
-                label.dispatchEvent(new MouseEvent('mouseover', opts));
-                label.dispatchEvent(new MouseEvent('mousedown', opts));
-                label.dispatchEvent(new MouseEvent('mouseup',   opts));
-                label.dispatchEvent(new MouseEvent('click',     opts));
-                return true;
-            };
+			    if (!label) return false;
+			    const checkbox = label.querySelector('input[type="checkbox"]');
+			    if (checkbox?.checked) return true;
+			    // mouseover/mousedown/mouseup 제거, click만
+			    label.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+			    return true;
+			};
 
 			let ok = 0;
 			for (let i = 0; i < units.length; i++) {
