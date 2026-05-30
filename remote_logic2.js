@@ -11,15 +11,12 @@
         SECTION 1. 상태 및 설정
        ============================================================ */
     const isHandoverPage = () =>
-        (location.href.includes('go.neubie.ai/ko/remote/multiple') &&
-        !location.href.includes('/driving')) ||
-        location.href.includes('multimonitoring.vercel.app');
-
-    // 밝기바를 표시할 페이지 조건 (multiple + driving 모두 포함)
-    const isBrightnessPage = () =>
-        (location.href.includes('go.neubie.ai/ko/remote/multiple') &&
-        !location.href.includes('/driving')) ||
-        location.href.includes('multimonitoring.vercel.app');
+	    location.href.includes('go.neubie.ai/ko/remote/multiple') &&
+	    !location.href.includes('/driving');
+	
+	const isBrightnessPage = () =>
+	    location.href.includes('go.neubie.ai/ko/remote/multiple') &&
+	    !location.href.includes('/driving');
     
        const config = {
         targetIds: ['44', '56', '65', '109'],
@@ -929,7 +926,8 @@
                         items: [
                             '줄을 서시오 v2.0 폐기 -> 다중 관제 도우미 도입',
                             '다중 카메라 밝기 한 번에 조절',
-							'교대기체 자동으로 받기 (테스트 중)',
+							'기체 카메라 위치 드래그로 변경',
+							'교대기체 자동으로 받기(6대까지만 / 테스트 중)',
                             '중복 개입은 근본 해결이 불가하니 또다른 방법을 모색해보겠습니다.',
                         ]
                     },
@@ -1228,10 +1226,10 @@
                 queueInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:#cbd5e1; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;`;
                 queueInfoContent.innerHTML = `
 				다중 관제 도우미 체크 시, 다중 관제 기체 카메라 밝기 한 번에 조절<br>
-				교대 기체 받기 -> 자동 시작 or 기체 선택 -> 수동 시작<br>
+				기체 위치 버튼 -> 드래그&드랍으로 기체 카메라 위치 자유자재 변경<br>
 				제 '모니터링 교대 도우미 v2.0' 사이트 이용 시 교대 기체 업로드 가능<br>
+				업로드된 교대 기체 받기(최근 20분까지만 유효) -> 자동 시작<br>
 				'없으면 만들지 뭐'만 이용하더라도 교대 기체 받기는 가능<br>
-				자동 교대가 필요하신 분만 쓰시면 되겠습니다.<br>
 				<br>
 				줄을 서시오 v2.0의 경우 이론적으로는 겹치지 않게 짜여졌지만<br>
 				모두가 사용해야한다는 점이 결국 현실적 장벽으로 작용했습니다.<br>
