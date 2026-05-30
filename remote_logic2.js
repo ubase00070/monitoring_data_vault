@@ -1778,7 +1778,7 @@
                 const spans = document.querySelectorAll('span[data-qk="robot-name"]');
                 for (const span of spans) {
                     const text = span.textContent.trim();
-                    if (text === name) {  // 완전일치만
+                    if (text === name || text.includes(name) || name.includes(text)) {
                         const label = span.closest('label');
                         if (label && reactCheck(label)) { clicked = true; break; }
                     }
