@@ -2057,7 +2057,7 @@
             position: 'fixed',
             // 기본 위치: 상단 중앙
             top: '4px',
-            left: '8px',
+            left: '60px',
             zIndex: '2147483640',
             background: 'rgba(15,15,15,0.75)',
             backdropFilter: 'blur(8px)',
