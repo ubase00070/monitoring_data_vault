@@ -1919,10 +1919,10 @@
             backdropFilter: 'blur(8px)',
             border: '1px solid rgba(255,255,255,0.13)',
             borderRadius: '8px',
-            padding: '4px 8px',
+            padding: '3px 6px',
             display: 'flex',
             alignItems: 'center',
-            gap: '5px',
+            gap: '3px',
             boxShadow: '0 2px 12px rgba(0,0,0,0.4)',
             fontFamily: 'Pretendard, sans-serif',
             userSelect: 'none',
@@ -1952,7 +1952,7 @@
 
         // 숫자 표시
         const label = document.createElement('span');
-        label.style.cssText = 'color:#fff; font-size:13px; font-weight:600; min-width:28px; text-align:right;';
+        label.style.cssText = 'color:#fff; font-size:13px; font-weight:600; min-width:22px; text-align:right;';
         label.textContent = savedVal;
 
         slider.addEventListener('input', () => {
