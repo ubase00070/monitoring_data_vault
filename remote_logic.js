@@ -1941,7 +1941,7 @@
         slider.max = BRIGHTNESS.MAX;
         slider.value = savedVal;
         Object.assign(slider.style, {
-            width: '82px',
+            width: '76px',
             height: '4px',
             accentColor: '#ffffff',
             cursor: 'pointer',
