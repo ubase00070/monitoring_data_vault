@@ -244,7 +244,8 @@
             borderRadius: '24px', padding: '20px', zIndex: '1000000',
             fontFamily: 'Pretendard, sans-serif', boxShadow: '0 20px 50px rgba(0,0,0,0.8)',
             border: '1px solid #333', display: 'none', transform: left === '50%' ? 'translate(-50%, -50%)' : 'none',
-            maxHeight: '90vh', overflowY: 'auto', overflowX: 'hidden'
+            maxHeight: '90vh', overflowY: 'auto', overflowX: 'hidden',
+            boxSizing: 'border-box',
         });
         return el;
     }
@@ -1055,7 +1056,7 @@
 
         const list = document.createElement('div');
         list.id = 'dashboard-list';
-        list.style.cssText = "display:grid; gap:12px;";
+        list.style.cssText = "display:grid; gap:12px; width:100%; box-sizing:border-box;";
 
         // 1. 업무 알림 설정 (태스크 리스트 인라인 삽입)
         const taskCard = document.createElement('div');
