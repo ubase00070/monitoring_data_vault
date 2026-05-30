@@ -742,78 +742,6 @@
     SECTION 6. 개입카드 중복 감지 엔진
     ============================================================ */
 
-    // ─ 브릿지 변수 ─────────────────────────────────────────────
-    let pendingOverlapNames = [];
-	let cameFromIntervention = false;
-
-    // ─ executeIntervention (기존 유지) ───────────────────────────
-    function executeIntervention(btn) {
-        btn.dataset.intercepted = 'true';
-        btn.click();
-        setTimeout(() => { delete btn.dataset.intercepted; }, 200);
-    }
-
-    function handleControlClick(e) {
-		const targetBtn = e.target.closest('button');
-		if (!targetBtn || targetBtn.innerText.trim() !== '관제 시작') return;
-		if (targetBtn.dataset.intercepted) return;
-
-		const myName = localStorage.getItem('neubie_user_name') || '';
-
-		// 클릭 순간 카드 스냅샷만
-		const card = targetBtn.closest('div[data-qk="multiple-driving-card"]');
-		const snapNames = [...(card?.querySelectorAll(
-			'div.rounded-12.flex.h-24.w-24.cursor-default.items-center.justify-center.bg-mono-800 span.font-size-14.font-medium.text-white'
-		) || [])]
-			.map(el => el.textContent?.trim())
-			.filter(name => name && /[가-힣]/.test(name) && name !== myName);
-
-		pendingOverlapNames = snapNames;
-		cameFromIntervention = true;
-		executeIntervention(targetBtn);
-	}
-
-    // ─ 중복 배너 표시 ────────────────────────────────────────────
-    function showOverlapBanner(names) {
-        let banner = document.getElementById('neubie-overlap-banner');
-        if (!banner) {
-            banner = document.createElement('div');
-            banner.id = 'neubie-overlap-banner';
-            banner.style.cssText = `
-                position: fixed;
-                top: 120px; left: 50%;
-                transform: translateX(-50%);
-                background: rgba(234, 88, 12, 0.95);
-                color: white;
-                padding: 12px 20px;
-                border-radius: 14px;
-                z-index: 2147483647;
-                font-family: Pretendard, sans-serif;
-                font-weight: bold;
-                font-size: 15px;
-				max-width: 80vw;
-				white-space: normal;
-				word-break: keep-all;
-                box-shadow: 0 6px 30px rgba(234,88,12,0.4);
-				border: 2px solid #fdba74;
-                pointer-events: none;
-                text-align: center;
-                line-height: 1.6;
-                animation: neubie-fadein 0.3s ease;
-            `;
-            document.body.appendChild(banner);
-        }
-        const nameText = names.join('\n');
-		banner.innerHTML = `👥 현재 접속 중: <b>${names.join(', ')}</b>`;
-
-        clearTimeout(banner._hideTimer);
-        banner._hideTimer = setTimeout(() => {
-            banner.style.transition = 'opacity 0.5s';
-            banner.style.opacity = '0';
-            setTimeout(() => banner.remove(), 500);
-        }, 6000);
-    }
-
     /* ============================================================
         SECTION 7. 스마트 네이밍 엔진 카드 생성
        ============================================================ */
@@ -1231,8 +1159,14 @@
         queueChk.checked = localStorage.getItem('neubie_handover_enabled') !== 'false'; // 기본 true
         queueChk.style.cssText = "width:18px; height:18px; cursor:pointer;";
         queueChk.onchange = (e) => {
-            localStorage.setItem('neubie_handover_enabled', e.target.checked);
-        };
+			localStorage.setItem('neubie_handover_enabled', e.target.checked);
+			const bar = document.getElementById('neubie-brightness-bar');
+			if (!e.target.checked && bar) {
+				bar.remove();
+			} else if (e.target.checked && !bar && isBrightnessPage()) {
+				injectMasterBrightness();
+			}
+		};
 
         if (!document.getElementById('neubie-blink-style')) {
             const blinkStyle = document.createElement('style');
@@ -1293,11 +1227,14 @@
                 queueInfoContent.id = 'neubie-queue-info-content';
                 queueInfoContent.style.cssText = `font-size:12px; line-height:1.8; color:#cbd5e1; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;`;
                 queueInfoContent.innerHTML = `
-                모두를 만족시킬 수는 없는 법이죠.<br>
-				결정론적 순열 방식은 수학적으로는 절대 겹치지 않게 짜여졌지만<br>
+				줄을 서시오 결정론적 순열 방식은 이론적으로는 절대 겹치지 않게 짜여졌지만<br>
 				모두가 사용해야한다는 점이 결국 장벽으로 작용하는군요.<br>
-				사람마다 사용환경과 취향이 다르다는 점을 고려하여 근본으로 돌아갑니다.<br>
-				'지금 내가 누구와 중복되었는가?'를 아는 것이라도 챙겨봅시다.<br>                
+				사람마다 사용환경과 취향이 다르다는 점을 고려하여 근본으로 돌아가서 재연구하겠습니다.<br>
+				<br>
+				다중 관제 도우미 체크상태 시, 모니터링 페이지에서 카메라 밝기 한 번에 조절<br>
+				교대 기체 받기 후 자동 시작, 수동 선택 후 시작 기능을 사용할 수 있습니다.<br>
+				교대 기체 데이터 전송은 '모니터링 교대 도우미 v2.0' 사이트 이용 시 가능합니다.<br>
+				'없으면 만들지 뭐'만 이용하더라도 교대 기체 받기는 가능합니다.
                 `;
 
                 queueInfoBox.appendChild(queueInfoClose);
@@ -2037,13 +1974,14 @@
 
     // ── multiple/driving 페이지 진입 시 자동 주입 / 이탈 시 제거 ──
     function checkBrightnessBar() {
-        const bar = document.getElementById('neubie-brightness-bar');
-        if (isBrightnessPage() && !bar) {
-            injectMasterBrightness();
-        } else if (!isBrightnessPage() && bar) {
-            bar.remove();
-        }
-    }
+		const enabled = localStorage.getItem('neubie_handover_enabled') !== 'false';
+		const bar = document.getElementById('neubie-brightness-bar');
+		if (isBrightnessPage() && !bar && enabled) {
+			injectMasterBrightness();
+		} else if ((!isBrightnessPage() || !enabled) && bar) {
+			bar.remove();
+		}
+	}
 
     // URL 변경 감지 (기존 setInterval과 연동)
     const _origCheckBrightness = checkBrightnessBar;
@@ -2127,16 +2065,6 @@
             closeAllPopups();
             updateRobotContext();
 
-            // ▼ 추가: robot-id 페이지 진입 + 관제 시작으로 들어온 경우만
-            if (location.href.includes('robot-id=') && cameFromIntervention) {
-                cameFromIntervention = false;
-                const names = [...pendingOverlapNames];
-                pendingOverlapNames = [];
-                if (names.length > 0) {
-                    setTimeout(() => showOverlapBanner(names), 400);
-                }
-            }
-
             // 맵 최적화 페이지 전환 시 재적용
             const isTarget = config.targetIds.some(id => location.href.includes(`/monitoring/${id}`));
             if (isTarget && state.isMapOpt) {
@@ -2147,7 +2075,6 @@
         }
     }, 2000); // 2초 정도면 충분히 여유로움
 
-    document.addEventListener('click', handleControlClick, true);
     injectConfigUI();
     
     // 페이지 로드 시 이름이 설정되어 있다면 즉시 한 번 동기화
