@@ -1815,7 +1815,7 @@
 		});
 
 		posBtn.addEventListener('click', () => {
-			// 현재 화면에 추가된 카드 순서대로 그리드에 채우기
+			// order 기준으로 정렬해서 읽음
 			const cards = [...document.querySelectorAll(
 				'.flex.h-full.w-full.items-center.justify-center.overflow-hidden .p-3'
 			)];
@@ -1823,9 +1823,14 @@
 				setDpMsg('현재 추가된 기체가 없습니다', '#f59e0b');
 				return;
 			}
+
+			// ▼ order 값 기준 정렬 추가
+			cards.sort((a, b) => parseInt(a.style.order || '0') - parseInt(b.style.order || '0'));
+
 			const names = cards.map(c =>
 				c.querySelector('.bg-prmary-50')?.textContent?.trim() || '—'
 			);
+
 			// 그리드에 채우기
 			cells.forEach((cell, i) => {
 				if (names[i]) {
@@ -1840,33 +1845,34 @@
 				}
 			});
 
-			// 드래그앤드롭 로직
-			let dragSrc = null;
-			cells.forEach(cell => {
-				cell.addEventListener('dragstart', () => { dragSrc = cell; cell.style.opacity = '0.4'; });
-				cell.addEventListener('dragend', () => { cell.style.opacity = '1'; });
-				cell.addEventListener('dragover', e => e.preventDefault());
-				cell.addEventListener('drop', () => {
-					if (!dragSrc || dragSrc === cell) return;
-					// 텍스트/데이터 교환
-					[dragSrc.textContent, cell.textContent] = [cell.textContent, dragSrc.textContent];
-					[dragSrc.dataset.unit, cell.dataset.unit] = [cell.dataset.unit, dragSrc.dataset.unit];
-					// 실제 카드 order 적용
-					const allCards = [...document.querySelectorAll(
-						'.flex.h-full.w-full.items-center.justify-center.overflow-hidden .p-3'
-					)];
-					cells.forEach((c, idx) => {
-						const targetCard = allCards.find(ac =>
-							ac.querySelector('.bg-prmary-50')?.textContent?.trim() === c.dataset.unit
-						);
-						if (targetCard) targetCard.style.order = String(idx);
+			// ▼ 드래그 이벤트 중복 방지 — 최초 1회만 등록
+			if (!cells[0]._dragRegistered) {
+				let dragSrc = null;
+				cells.forEach(cell => {
+					cell._dragRegistered = true;
+					cell.addEventListener('dragstart', () => { dragSrc = cell; cell.style.opacity = '0.4'; });
+					cell.addEventListener('dragend', () => { cell.style.opacity = '1'; });
+					cell.addEventListener('dragover', e => e.preventDefault());
+					cell.addEventListener('drop', () => {
+						if (!dragSrc || dragSrc === cell) return;
+						[dragSrc.textContent, cell.textContent] = [cell.textContent, dragSrc.textContent];
+						[dragSrc.dataset.unit, cell.dataset.unit] = [cell.dataset.unit, dragSrc.dataset.unit];
+						const allCards = [...document.querySelectorAll(
+							'.flex.h-full.w-full.items-center.justify-center.overflow-hidden .p-3'
+						)];
+						cells.forEach((c, idx) => {
+							const targetCard = allCards.find(ac =>
+								ac.querySelector('.bg-prmary-50')?.textContent?.trim() === c.dataset.unit
+							);
+							if (targetCard) targetCard.style.order = String(idx);
+						});
+						const order = cells.filter(c => c.dataset.unit).map(c => c.dataset.unit);
+						localStorage.setItem('neubie_card_order', JSON.stringify(order));
+						setDpMsg('순서 저장됨', '#22c55e');
 					});
-					// localStorage 저장
-					const order = cells.filter(c => c.dataset.unit).map(c => c.dataset.unit);
-					localStorage.setItem('neubie_card_order', JSON.stringify(order));
-					setDpMsg(`순서 저장됨`, '#22c55e');
 				});
-			});
+			}
+
 			setDpMsg('드래그로 순서를 변경하세요', '#3b82f6');
 		});
 
