@@ -1540,7 +1540,7 @@
 		};
 
 		// ── 그리드 셀 ──
-		const MAX_UNITS = 12;
+		const MAX_UNITS = 6;
 		let selectedCells = [];
 		let gridUnits = [];
 
@@ -1628,10 +1628,10 @@
 		Object.assign(rightBtns.style, { marginLeft: 'auto', display: 'flex', gap: '5px', flexShrink: '0' });
 
 		const autoBtn = mkBtn('자동 시작', '#6366f1');
-		const startBtn = mkBtn('수동 시작', '#22c55e', { opacity: '0.35', pointerEvents: 'none' });
+		const posBtn = mkBtn('기체 위치', '#64748b');
 
 		rightBtns.appendChild(autoBtn);
-		rightBtns.appendChild(startBtn);
+		rightBtns.appendChild(posBtn);
 		headerRow.appendChild(rightBtns);
 		panel.appendChild(headerRow);
 
@@ -1666,8 +1666,6 @@
 					cellSel(cell);
 					selectedCells.push(cell);
 				}
-				startBtn.style.opacity = selectedCells.length > 0 ? '1' : '0.35';
-				startBtn.style.pointerEvents = selectedCells.length > 0 ? 'auto' : 'none';
 			});
 			grid.appendChild(cell);
 			return cell;
@@ -1679,8 +1677,6 @@
 		const renderGrid = (units) => {
 			gridUnits = units;
 			selectedCells = [];
-			startBtn.style.opacity = '0.35';
-			startBtn.style.pointerEvents = 'none';
 			cells.forEach((cell, i) => {
 				const name = units[i] || null;
 				if (name) {
@@ -1818,9 +1814,66 @@
 			await runAutoSelect(targets.map(c => c.dataset.unit), targets);
 		});
 
-		startBtn.addEventListener('click', async () => {
-			if (!selectedCells.length) return;
-			await runAutoSelect(selectedCells.map(c => c.dataset.unit), [...selectedCells]);
+		posBtn.addEventListener('click', () => {
+			// order 기준으로 정렬해서 읽음
+			const cards = [...document.querySelectorAll(
+				'.flex.h-full.w-full.items-center.justify-center.overflow-hidden .p-3'
+			)];
+			if (!cards.length) {
+				setDpMsg('현재 추가된 기체가 없습니다', '#f59e0b');
+				return;
+			}
+
+			// ▼ order 값 기준 정렬 추가
+			cards.sort((a, b) => parseInt(a.style.order || '0') - parseInt(b.style.order || '0'));
+
+			const names = cards.map(c =>
+				c.querySelector('.bg-prmary-50')?.textContent?.trim() || '—'
+			);
+
+			// 그리드에 채우기
+			cells.forEach((cell, i) => {
+				if (names[i]) {
+					cell.textContent = names[i];
+					cell.dataset.unit = names[i];
+					cell.dataset.done = 'false';
+					cell.dataset.selected = 'false';
+					cell.draggable = true;
+					cellIdle(cell);
+				} else {
+					cellEmpty(cell);
+				}
+			});
+
+			// ▼ 드래그 이벤트 중복 방지 — 최초 1회만 등록
+			if (!cells[0]._dragRegistered) {
+				let dragSrc = null;
+				cells.forEach(cell => {
+					cell._dragRegistered = true;
+					cell.addEventListener('dragstart', () => { dragSrc = cell; cell.style.opacity = '0.4'; });
+					cell.addEventListener('dragend', () => { cell.style.opacity = '1'; });
+					cell.addEventListener('dragover', e => e.preventDefault());
+					cell.addEventListener('drop', () => {
+						if (!dragSrc || dragSrc === cell) return;
+						[dragSrc.textContent, cell.textContent] = [cell.textContent, dragSrc.textContent];
+						[dragSrc.dataset.unit, cell.dataset.unit] = [cell.dataset.unit, dragSrc.dataset.unit];
+						const allCards = [...document.querySelectorAll(
+							'.flex.h-full.w-full.items-center.justify-center.overflow-hidden .p-3'
+						)];
+						cells.forEach((c, idx) => {
+							const targetCard = allCards.find(ac =>
+								ac.querySelector('.bg-prmary-50')?.textContent?.trim() === c.dataset.unit
+							);
+							if (targetCard) targetCard.style.order = String(idx);
+						});
+						const order = cells.filter(c => c.dataset.unit).map(c => c.dataset.unit);
+						localStorage.setItem('neubie_card_order', JSON.stringify(order));
+						setDpMsg('순서 저장됨', '#22c55e');
+					});
+				});
+			}
+
+			setDpMsg('드래그로 순서를 변경하세요', '#3b82f6');
 		});
 
 		// ── 자동 Fetch (패널 열릴 때 1회) ──
