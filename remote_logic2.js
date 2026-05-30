@@ -406,7 +406,7 @@
             btn.style.background = '#22c55e';
             
             setTimeout(() => {
-                btn.textContent = origina111lText;
+                btn.textContent = originalText;
                 btn.style.background = originalBg;
             }, 2000);
         });
@@ -794,7 +794,9 @@
 
 		// ① 클릭 순간 카드에서 즉시 스냅샷
 		const card = targetBtn.closest('div[data-qk="multiple-driving-card"]');
-		const snapNames = [...(card?.querySelectorAll('span.font-size-14.font-medium.text-white') || [])]
+		const snapNames = [...(card?.querySelectorAll(
+			'div.rounded-12.flex.h-24.w-24.cursor-default.items-center.justify-center.bg-mono-800 span.font-size-14.font-medium.text-white'
+		) || [])]
 			.map(el => el.textContent?.trim())
 			.filter(name => name && /[가-힣]/.test(name) && name !== myName);
 
@@ -819,7 +821,7 @@
             banner.id = 'neubie-overlap-banner';
             banner.style.cssText = `
                 position: fixed;
-                top: 64px; left: 50%;
+                top: 120px; left: 50%;
                 transform: translateX(-50%);
                 background: rgba(234, 88, 12, 0.95);
                 color: white;
