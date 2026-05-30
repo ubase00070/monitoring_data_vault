@@ -1782,7 +1782,7 @@
 				for (const span of spans) {
 					const text = span.textContent.trim();
 					if (isBanned(text)) continue; // ← 밴 키워드 있으면 스킵
-					if (text === name || text.includes(name) || name.includes(text)) {
+					if (text === name || text.includes(name)) {
 						const label = span.closest('label');
 						if (label && reactCheck(label)) { clicked = true; break; }
 					}
