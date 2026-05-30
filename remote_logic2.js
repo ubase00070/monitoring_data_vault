@@ -1210,7 +1210,7 @@
                     position:relative; box-shadow:0 10px 50px rgba(0,0,0,0.7);
                 `;
                 const queueInfoTitle = document.createElement('div');
-                queueInfoTitle.textContent = '원리 설명';
+                queueInfoTitle.textContent = '제작자의 소회';
                 queueInfoTitle.style.cssText = `font-size:22px; font-weight:bold; margin-bottom:20px; color:#93c5fd;`;
                 const queueInfoClose = document.createElement('button');
                 queueInfoClose.textContent = '✕';
