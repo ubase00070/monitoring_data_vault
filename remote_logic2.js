@@ -1767,9 +1767,8 @@
                 return true;
             };
 
-			// 허용 키워드 — 이 단어가 포함된 기체만 체크
-			const ALLOWED_KEYWORDS = ['LG_CNS', 'LIT', 'DMZ', 'EDC', 'CFC'];
-			const isAllowed = (text) => ALLOWED_KEYWORDS.some(kw => text.includes(kw));
+			const BANNED_KEYWORDS = ['JINOK', 'Morai'];
+			const isBanned = (text) => BANNED_KEYWORDS.some(kw => text.includes(kw));
 
 			let ok = 0;
 			for (let i = 0; i < units.length; i++) {
@@ -1782,7 +1781,7 @@
 				const spans = document.querySelectorAll('span[data-qk="robot-name"]');
 				for (const span of spans) {
 					const text = span.textContent.trim();
-					if (!isAllowed(text)) continue; // ← 허용 키워드 없으면 스킵
+					if (isBanned(text)) continue; // ← 밴 키워드 있으면 스킵
 					if (text === name || text.includes(name) || name.includes(text)) {
 						const label = span.closest('label');
 						if (label && reactCheck(label)) { clicked = true; break; }
@@ -1793,7 +1792,7 @@
 				if (!clicked) {
 					for (const label of document.querySelectorAll('label')) {
 						const spanText = label.querySelector('span[data-qk="robot-name"]')?.textContent.trim() || '';
-						if (!isAllowed(spanText)) continue; // ← 허용 키워드 없으면 스킵
+						if (isBanned(spanText)) continue; // ← 밴 키워드 있으면 스킵
 						if (label.textContent.trim().replace(/\s+/g, ' ').includes(name)) {
 							if (reactCheck(label)) { clicked = true; break; }
 						}
