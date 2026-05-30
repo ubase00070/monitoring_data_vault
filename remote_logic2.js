@@ -1774,10 +1774,15 @@
 				setDpMsg(`${name} (${i+1}/${units.length})`, '#3b82f6');
 				let clicked = false;
 
+				// 허용 키워드 — 이 단어가 포함된 기체만 체크
+				const ALLOWED_KEYWORDS = ['LG_CNS', 'LIT', 'DMZ', 'EDC', 'CFC'];
+				const isAllowed = (text) => ALLOWED_KEYWORDS.some(kw => text.includes(kw));
+
 				// 1단계: span[data-qk="robot-name"]으로 찾기
 				const spans = document.querySelectorAll('span[data-qk="robot-name"]');
 				for (const span of spans) {
 					const text = span.textContent.trim();
+					if (!isAllowed(text)) continue; // ← 허용 키워드 없으면 스킵
 					if (text === name || text.includes(name) || name.includes(text)) {
 						const label = span.closest('label');
 						if (label && reactCheck(label)) { clicked = true; break; }
@@ -1787,6 +1792,8 @@
 				// 2단계 폴백: 모든 label 텍스트 검색
 				if (!clicked) {
 					for (const label of document.querySelectorAll('label')) {
+						const spanText = label.querySelector('span[data-qk="robot-name"]')?.textContent.trim() || '';
+						if (!isAllowed(spanText)) continue; // ← 허용 키워드 없으면 스킵
 						if (label.textContent.trim().replace(/\s+/g, ' ').includes(name)) {
 							if (reactCheck(label)) { clicked = true; break; }
 						}
