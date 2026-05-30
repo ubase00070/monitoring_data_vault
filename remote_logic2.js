@@ -1767,16 +1767,16 @@
                 return true;
             };
 
+			// 허용 키워드 — 이 단어가 포함된 기체만 체크
+			const ALLOWED_KEYWORDS = ['LG_CNS', 'LIT', 'DMZ', 'EDC', 'CFC'];
+			const isAllowed = (text) => ALLOWED_KEYWORDS.some(kw => text.includes(kw));
+
 			let ok = 0;
 			for (let i = 0; i < units.length; i++) {
 				const name = units[i];
 				const cell = targetCells[i];
 				setDpMsg(`${name} (${i+1}/${units.length})`, '#3b82f6');
 				let clicked = false;
-
-				// 허용 키워드 — 이 단어가 포함된 기체만 체크
-				const ALLOWED_KEYWORDS = ['LG_CNS', 'LIT', 'DMZ', 'EDC', 'CFC'];
-				const isAllowed = (text) => ALLOWED_KEYWORDS.some(kw => text.includes(kw));
 
 				// 1단계: span[data-qk="robot-name"]으로 찾기
 				const spans = document.querySelectorAll('span[data-qk="robot-name"]');
