@@ -1767,9 +1767,6 @@
                 return true;
             };
 
-			const BANNED_KEYWORDS = ['JINOK', 'Morai'];
-			const isBanned = (text) => BANNED_KEYWORDS.some(kw => text.includes(kw));
-
 			let ok = 0;
 			for (let i = 0; i < units.length; i++) {
 				const name = units[i];
@@ -1778,15 +1775,22 @@
 				let clicked = false;
 
 				// 1단계: span[data-qk="robot-name"]으로 찾기
-				const spans = document.querySelectorAll('span[data-qk="robot-name"]');
-				for (const span of spans) {
-					const text = span.textContent.trim();
-					if (isBanned(text)) continue; // ← 밴 키워드 있으면 스킵
-					if (text === name || text.includes(name)) {
-						const label = span.closest('label');
-						if (label && reactCheck(label)) { clicked = true; break; }
-					}
-				}
+                const spans = document.querySelectorAll('span[data-qk="robot-name"]');
+                for (const span of spans) {
+                    const text = span.textContent.trim();
+                    if (text === name || text.includes(name) || name.includes(text)) {
+                        const label = span.closest('label');
+                        if (label && reactCheck(label)) { clicked = true; break; }
+                    }
+                }
+                // 2단계 폴백: 모든 label 텍스트 검색
+                if (!clicked) {
+                    for (const label of document.querySelectorAll('label')) {
+                        if (label.textContent.trim().replace(/\s+/g, ' ').includes(name)) {
+                            if (reactCheck(label)) { clicked = true; break; }
+                        }
+                    }
+                }
 
 				if (clicked) { ok++; if (cell) cellDone(cell); }
 				await new Promise(r => setTimeout(r, 80)); // 30ms → 80ms로 여유 확보
