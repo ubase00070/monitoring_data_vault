@@ -1152,7 +1152,7 @@
         queueCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">📡 다중 관제 도우미</span>`;
         const queueChk = document.createElement('input');
         queueChk.type = 'checkbox';
-        queueChk.checked = localStorage.getItem('neubie_handover_enabled') !== 'false'; // 기본 true
+        queueChk.checked = localStorage.getItem('neubie_handover_enabled') === 'true'; // 기본 false
         queueChk.style.cssText = "width:18px; height:18px; cursor:pointer;";
         queueChk.onchange = (e) => {
 			localStorage.setItem('neubie_handover_enabled', e.target.checked);
