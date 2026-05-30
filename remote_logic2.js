@@ -2032,17 +2032,6 @@
 		localStorage.setItem(BRIGHTNESS.STORAGE_KEY, value);
 	}
 
-    // ── 모든 카메라 슬라이더에 값 동기화 ──────────────────
-    function applyBrightnessToAll(value) {
-        const sliders = document.querySelectorAll(BRIGHTNESS.SLIDER_SELECTOR);
-        sliders.forEach(s => {
-            // 마스터 슬라이더 자신은 건너뜀
-            if (s.id === 'neubie-master-brightness') return;
-            setSliderValue(s, value);
-        });
-        localStorage.setItem(BRIGHTNESS.STORAGE_KEY, value);
-    }
-
     function startBrightnessObserver(masterValue) {
 		const observer = new MutationObserver(() => {
 			const val = masterValue();
