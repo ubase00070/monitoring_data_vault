@@ -1526,43 +1526,43 @@
 
     // 팝업 열 때만 생성
     function toggleBattery() {
-        if (batteryPopup.style.display !== 'block') {
+		if (batteryPopup.style.display !== 'block') {
+			config.batteryIds.forEach(c => {
+				if (!iframes[c.id]) {
+					const ifr = document.createElement('iframe');
+					ifr.src = `https://go.neubie.ai/ko/monitoring/${c.id}`;
+					Object.assign(ifr.style, { width:'0', height:'0', border:'none', position:'fixed', top:'-9999px' });
+					document.body.appendChild(ifr);
+					iframes[c.id] = ifr;
+				}
+			});
 
-            // iframe이 없으면 그때 생성
-            config.batteryIds.forEach(c => {
-                if (!iframes[c.id]) {
-                    const ifr = document.createElement('iframe');
-                    ifr.src = `https://go.neubie.ai/ko/monitoring/${c.id}`;
-                    Object.assign(ifr.style, { width:'0', height:'0', border:'none', position:'fixed', top:'-9999px' });
-                    document.body.appendChild(ifr);
-                    iframes[c.id] = ifr;
-                }
-            });
+			updateBatteryStatus();
+			batteryPopup.style.display = 'block';
 
-            updateBatteryStatus();
-            batteryPopup.style.display = 'block';
-            setTimeout(() => {
-                if (batteryPopup.style.display === 'block') updateBatteryStatus();
-            }, 1500);
+			// 첫 로드: 5초 후 1회 갱신
+			setTimeout(() => {
+				if (batteryPopup.style.display !== 'block') return;
+				updateBatteryStatus();
 
-            batteryRefreshInterval = setInterval(() => {
-                if (batteryPopup.style.display === 'block') updateBatteryStatus();
-                else clearInterval(batteryRefreshInterval);
-            }, 5000);
+				// 이후부터 1분마다 갱신
+				batteryRefreshInterval = setInterval(() => {
+					if (batteryPopup.style.display === 'block') updateBatteryStatus();
+					else clearInterval(batteryRefreshInterval);
+				}, 60000);
+			}, 5000);
 
-        } else {
-            batteryPopup.style.display = 'none';
-            clearInterval(batteryRefreshInterval);
-
-            // ✅ 닫을 때 iframe 전부 제거 → 부하 없음
-            config.batteryIds.forEach(c => {
-                if (iframes[c.id]) {
-                    iframes[c.id].remove();
-                    delete iframes[c.id];
-                }
-            });
-        }
-    }
+		} else {
+			batteryPopup.style.display = 'none';
+			clearInterval(batteryRefreshInterval);
+			config.batteryIds.forEach(c => {
+				if (iframes[c.id]) {
+					iframes[c.id].remove();
+					delete iframes[c.id];
+				}
+			});
+		}
+	}
 
     function closeAllPopups() {
         dashboard.style.display = 'none';
