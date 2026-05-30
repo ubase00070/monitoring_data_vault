@@ -1210,7 +1210,7 @@
                     position:relative; box-shadow:0 10px 50px rgba(0,0,0,0.7);
                 `;
                 const queueInfoTitle = document.createElement('div');
-                queueInfoTitle.textContent = '원리 설명';
+                queueInfoTitle.textContent = '제작자의 소회';
                 queueInfoTitle.style.cssText = `font-size:22px; font-weight:bold; margin-bottom:20px; color:#93c5fd;`;
                 const queueInfoClose = document.createElement('button');
                 queueInfoClose.textContent = '✕';
@@ -1774,23 +1774,21 @@
 				setDpMsg(`${name} (${i+1}/${units.length})`, '#3b82f6');
 				let clicked = false;
 
-				// 1단계: span[data-qk="robot-name"]으로 찾기 — 완전일치만
+				// 1단계: span[data-qk="robot-name"]으로 찾기
 				const spans = document.querySelectorAll('span[data-qk="robot-name"]');
 				for (const span of spans) {
 					const text = span.textContent.trim();
-					if (text === name) {  // ← 완전일치만
+					if (text === name || text.includes(name) || name.includes(text)) {
 						const label = span.closest('label');
 						if (label && reactCheck(label)) { clicked = true; break; }
 					}
 				}
 
-				// 2단계 폴백: span 텍스트 포함 관계만 (label 전체 텍스트 금지)
+				// 2단계 폴백: 모든 label 텍스트 검색
 				if (!clicked) {
-					for (const span of document.querySelectorAll('span[data-qk="robot-name"]')) {
-						const text = span.textContent.trim();
-						if (text === name) {
-							const label = span.closest('label');
-							if (label && reactCheck(label)) { clicked = true; break; }
+					for (const label of document.querySelectorAll('label')) {
+						if (label.textContent.trim().replace(/\s+/g, ' ').includes(name)) {
+							if (reactCheck(label)) { clicked = true; break; }
 						}
 					}
 				}
