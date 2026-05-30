@@ -1783,6 +1783,14 @@
                         if (label && reactCheck(label)) { clicked = true; break; }
                     }
                 }
+				// 2단계 폴백: 모든 label 텍스트 검색
+                if (!clicked) {
+                    for (const label of document.querySelectorAll('label')) {
+                        if (label.textContent.trim().replace(/\s+/g, ' ').includes(name)) {
+                            if (reactCheck(label)) { clicked = true; break; }
+                        }
+                    }
+                }
 
 				if (clicked) { ok++; if (cell) cellDone(cell); }
 				await new Promise(r => setTimeout(r, 80)); // 30ms → 80ms로 여유 확보
