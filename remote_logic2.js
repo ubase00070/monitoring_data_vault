@@ -1548,7 +1548,7 @@
             batteryRefreshInterval = setInterval(() => {
                 if (batteryPopup.style.display === 'block') updateBatteryStatus();
                 else clearInterval(batteryRefreshInterval);
-            }, 10000);
+            }, 5000);
 
         } else {
             batteryPopup.style.display = 'none';
