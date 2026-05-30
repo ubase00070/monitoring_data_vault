@@ -1774,23 +1774,15 @@
 				setDpMsg(`${name} (${i+1}/${units.length})`, '#3b82f6');
 				let clicked = false;
 
-				// 1단계: span[data-qk="robot-name"]으로 찾기
-                const spans = document.querySelectorAll('span[data-qk="robot-name"]');
-                for (const span of spans) {
-                    const text = span.textContent.trim();
-                    if (text === name || text.includes(name) || name.includes(text)) {
-                        const label = span.closest('label');
-                        if (label && reactCheck(label)) { clicked = true; break; }
-                    }
-                }
-				// 2단계 폴백: 모든 label 텍스트 검색
-                if (!clicked) {
-                    for (const label of document.querySelectorAll('label')) {
-                        if (label.textContent.trim().replace(/\s+/g, ' ').includes(name)) {
-                            if (reactCheck(label)) { clicked = true; break; }
-                        }
-                    }
-                }
+				// 1단계: div.px-12 span으로 기체명 찾기
+				const labels = document.querySelectorAll('label');
+				for (const label of labels) {
+				    const text = label.querySelector('div.px-12 span')?.textContent.trim();
+				    if (!text) continue;
+				    if (text === name) {
+				        if (reactCheck(label)) { clicked = true; break; }
+				    }
+				}
 
 				if (clicked) { ok++; if (cell) cellDone(cell); }
 				await new Promise(r => setTimeout(r, 80)); // 30ms → 80ms로 여유 확보
