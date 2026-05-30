@@ -1788,17 +1788,6 @@
 					}
 				}
 
-				// 2단계 폴백: 모든 label 텍스트 검색
-				if (!clicked) {
-					for (const label of document.querySelectorAll('label')) {
-						const spanText = label.querySelector('span[data-qk="robot-name"]')?.textContent.trim() || '';
-						if (isBanned(spanText)) continue; // ← 밴 키워드 있으면 스킵
-						if (label.textContent.trim().replace(/\s+/g, ' ').includes(name)) {
-							if (reactCheck(label)) { clicked = true; break; }
-						}
-					}
-				}
-
 				if (clicked) { ok++; if (cell) cellDone(cell); }
 				await new Promise(r => setTimeout(r, 80)); // 30ms → 80ms로 여유 확보
 			}
