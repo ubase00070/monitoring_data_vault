@@ -743,40 +743,8 @@
     ============================================================ */
 
     // ─ 브릿지 변수 ─────────────────────────────────────────────
-    let pendingOverlapNames = []; // 클릭 시점에 스냅샷한 타인 이름들
-    let cameFromIntervention = false; // 관제 시작 버튼으로 진입했는가
-    let seenBadgeNames = new Set(); // driving 체류 중 누적된 뱃지 이름들
-    let badgeWatchInterval = null;
-
-    // ─ driving 페이지 진입 시 뱃지 누적 감시 시작 ───────────────
-    function startBadgeWatch() {
-        if (badgeWatchInterval) return;
-        seenBadgeNames.clear();
-
-        badgeWatchInterval = setInterval(() => {
-            if (!location.href.includes('/driving')) {
-                stopBadgeWatch();
-                return;
-            }
-            // ⚠️ 선택자 미확정 — 출근 후 콘솔 확인 필요
-            // 확인 방법: 개입카드 뜬 상태에서 콘솔에 아래 실행
-            // [...document.querySelectorAll('*')].filter(el => el.children.length === 0 && /^[가-힣]{1,4}$/.test(el.textContent.trim())).map(el => ({ tag: el.tagName, class: el.className, text: el.textContent.trim(), title: el.title, aria: el.getAttribute('aria-label') }))
-            const BADGE_SELECTOR = 'span.font-size-14.font-medium.text-white';
-
-            document.querySelectorAll(BADGE_SELECTOR).forEach(el => {
-                // title > aria-label > textContent 순서로 전체 이름 시도
-                const name = el.title?.trim() 
-                    || el.getAttribute('aria-label')?.trim() 
-                    || el.textContent?.trim();
-                if (name && /[가-힣]/.test(name)) seenBadgeNames.add(name);
-            });
-        }, 300);
-    }
-
-    function stopBadgeWatch() {
-        clearInterval(badgeWatchInterval);
-        badgeWatchInterval = null;
-    }
+    let pendingOverlapNames = [];
+	let cameFromIntervention = false;
 
     // ─ executeIntervention (기존 유지) ───────────────────────────
     function executeIntervention(btn) {
@@ -792,7 +760,7 @@
 
 		const myName = localStorage.getItem('neubie_user_name') || '';
 
-		// ① 클릭 순간 카드에서 즉시 스냅샷
+		// 클릭 순간 카드 스냅샷만
 		const card = targetBtn.closest('div[data-qk="multiple-driving-card"]');
 		const snapNames = [...(card?.querySelectorAll(
 			'div.rounded-12.flex.h-24.w-24.cursor-default.items-center.justify-center.bg-mono-800 span.font-size-14.font-medium.text-white'
@@ -800,15 +768,7 @@
 			.map(el => el.textContent?.trim())
 			.filter(name => name && /[가-힣]/.test(name) && name !== myName);
 
-		// ② driving 체류 중 누적된 뱃지
-		const accumulated = [...seenBadgeNames].filter(name => {
-			if (name.length > 1) return name !== myName;
-			return name !== myName[0];
-		});
-
-		const merged = [...new Set([...snapNames, ...accumulated])];
-		pendingOverlapNames = merged;
-
+		pendingOverlapNames = snapNames;
 		cameFromIntervention = true;
 		executeIntervention(targetBtn);
 	}
@@ -844,7 +804,7 @@
             document.body.appendChild(banner);
         }
         const nameText = names.join('\n');
-		banner.innerHTML = `⚠️ 중복 개입 감지<br><b style="font-size:14px;">${names.map(n => n).join('<br>')}</b>`;
+		banner.innerHTML = `👥 현재 접속 중: <b>${names.join(', ')}</b>`;
 
         clearTimeout(banner._hideTimer);
         banner._hideTimer = setTimeout(() => {
@@ -2166,13 +2126,6 @@
             lastUrl = location.href;
             closeAllPopups();
             updateRobotContext();
-
-            // ▼ 추가: driving 진입 시 뱃지 감시 시작
-            if (location.href.includes('/driving') && !location.href.includes('robot-id=')) {
-                startBadgeWatch();
-            } else {
-                stopBadgeWatch();
-            }
 
             // ▼ 추가: robot-id 페이지 진입 + 관제 시작으로 들어온 경우만
             if (location.href.includes('robot-id=') && cameFromIntervention) {
