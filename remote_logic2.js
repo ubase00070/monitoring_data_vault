@@ -1182,7 +1182,7 @@
         // ⓘ 정보 버튼 (체크박스 왼쪽에 배치)
         const queueInfoBtn = document.createElement('button');
         queueInfoBtn.textContent = 'i';
-        queueInfoBtn.title = '원리 설명';
+        queueInfoBtn.title = '제작자의 소회';
         queueInfoBtn.style.cssText = `
             width:22px; height:22px; border-radius:50%; border:2px solid #aaa;
             background:transparent; color:#aaa; font-size:13px; font-weight:bold;
