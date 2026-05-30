@@ -12,14 +12,12 @@
        ============================================================ */
     const isHandoverPage = () =>
         (location.href.includes('go.neubie.ai/ko/remote/multiple') &&
-        !location.href.includes('/driving')) ||
-        location.href.includes('multimonitoring.vercel.app');
+        !location.href.includes('/driving');
 
     // 밝기바를 표시할 페이지 조건 (multiple + driving 모두 포함)
     const isBrightnessPage = () =>
         (location.href.includes('go.neubie.ai/ko/remote/multiple') &&
-        !location.href.includes('/driving')) ||
-        location.href.includes('multimonitoring.vercel.app');
+        !location.href.includes('/driving');
     
        const config = {
         targetIds: ['44', '56', '65', '109'],
