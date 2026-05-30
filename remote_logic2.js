@@ -11,15 +11,12 @@
         SECTION 1. 상태 및 설정
        ============================================================ */
     const isHandoverPage = () =>
-        (location.href.includes('go.neubie.ai/ko/remote/multiple') &&
-        !location.href.includes('/driving')) ||
-        location.href.includes('multimonitoring.vercel.app');
-
-    // 밝기바를 표시할 페이지 조건 (multiple + driving 모두 포함)
-    const isBrightnessPage = () =>
-        (location.href.includes('go.neubie.ai/ko/remote/multiple') &&
-        !location.href.includes('/driving')) ||
-        location.href.includes('multimonitoring.vercel.app');
+	    location.href.includes('go.neubie.ai/ko/remote/multiple') &&
+	    !location.href.includes('/driving');
+	
+	const isBrightnessPage = () =>
+	    location.href.includes('go.neubie.ai/ko/remote/multiple') &&
+	    !location.href.includes('/driving');
     
        const config = {
         targetIds: ['44', '56', '65', '109'],
@@ -1545,24 +1542,11 @@
 
 		// ── 그리드 셀 ──
 		const MAX_UNITS = 6;
-		let selectedCells = [];
-		let gridUnits = [];
 
 		const cellIdle = c => {
 			Object.assign(c.style, { background: 'rgba(255,255,255,0.85)', color: '#1e293b',
 				border: '1.5px solid #93c5fd', cursor: 'pointer', fontWeight: '600' });
 			c.dataset.selected = 'false';
-		};
-		const cellSel = c => {
-			Object.assign(c.style, { background: 'rgba(59,130,246,0.13)', color: '#1d4ed8',
-				border: '2px solid #3b82f6', cursor: 'pointer', fontWeight: '700' });
-			c.dataset.selected = 'true';
-		};
-		const cellDone = c => {
-			Object.assign(c.style, { background: 'rgba(203,213,225,0.35)', color: '#94a3b8',
-				border: '1.5px solid #cbd5e1', cursor: 'default', fontWeight: '400' });
-			c.dataset.done = 'true'; c.dataset.selected = 'false';
-			selectedCells = selectedCells.filter(s => s !== c);
 		};
 		const cellEmpty = c => {
 			c.textContent = '—';
@@ -1660,40 +1644,11 @@
 				display: 'flex', alignItems: 'center', justifyContent: 'center',
 				textAlign: 'center', lineHeight: '1.3', padding: '3px',
 			});
-			cell.addEventListener('click', () => {
-				if (!cell.dataset.unit || cell.dataset.done === 'true') return;
-				if (cell.dataset.selected === 'true') {
-					cellIdle(cell);
-					selectedCells = selectedCells.filter(c => c !== cell);
-				} else {
-					if (selectedCells.length >= 6) return;
-					cellSel(cell);
-					selectedCells.push(cell);
-				}
-			});
 			grid.appendChild(cell);
 			return cell;
 		});
 
 		panel.appendChild(grid);
-
-		// ── 그리드에 기체 렌더링 ──
-		const renderGrid = (units) => {
-			gridUnits = units;
-			selectedCells = [];
-			cells.forEach((cell, i) => {
-				const name = units[i] || null;
-				if (name) {
-					cell.textContent = name;
-					cell.dataset.unit = name;
-					cell.dataset.done = 'false';
-					cell.dataset.selected = 'false';
-					cellIdle(cell);
-				} else {
-					cellEmpty(cell);
-				}
-			});
-		};
 
 		const githubGet = async () => {
             try {
@@ -1709,19 +1664,18 @@
 
 		// ── 교대받기 버튼 ──
 		fetchBtn.addEventListener('click', async () => {
-			setDpMsg('데이터 확인 중...', '#3b82f6');
-			const result = await githubGet();
-			if (!result) { setDpMsg('Fetch 실패', '#ef4444'); return; }
-			const { data } = result;
-			if (!isDataValid(data.updatedAt)) {
-				setDpMsg('이전 시간 교대 기체 데이터가 없습니다', '#f59e0b');
-				return;
-			}
-			const units = data.units || [];
-			if (!units.length) { setDpMsg('기체 데이터 없음', '#94a3b8'); return; }
-			renderGrid(units);
-			setDpMsg(`교대 기체 목록 로드됨 (${data.handover_by || '?'} - ${units.length}대)`, '#22c55e');
-		});
+            setDpMsg('데이터 확인 중...', '#3b82f6');
+            const result = await githubGet();
+            if (!result) { setDpMsg('Fetch 실패', '#ef4444'); return; }
+            const { data } = result;
+            if (!isDataValid(data.updatedAt)) {
+                setDpMsg('이전 시간 교대 기체 데이터가 없습니다', '#f59e0b');
+                return;
+            }
+            const units = data.units || [];
+            if (!units.length) { setDpMsg('기체 데이터 없음', '#94a3b8'); return; }
+            setDpMsg(`교대 기체 로드됨 (${data.handover_by || '?'} - ${units.length}대)`, '#22c55e');
+        });
 
 		// ── Auto select ──
 		const runAutoSelect = async (units, targetCells) => {
@@ -1780,7 +1734,7 @@
 					}
 				}
 
-				if (clicked) { ok++; if (cell) cellDone(cell); }
+				if (clicked) { ok++; }
 				await new Promise(r => setTimeout(r, 80)); // 30ms → 80ms로 여유 확보
 			}
 
@@ -1804,19 +1758,21 @@
 		};
 
 		autoBtn.addEventListener('click', async () => {
-			const available = cells.filter(c => c.dataset.unit && c.dataset.done !== 'true');
-			const targets = available.slice(0, 6);
-			if (!targets.length) { setDpMsg('연결 가능한 기체 없음', '#f59e0b'); return; }
-			targets.forEach(cellSel);
-			selectedCells = [...targets];
-			// ← 모달이 없으면 사용자에게 안내
-			const modal = document.querySelector('[data-qk="remote-multiple-select-robot-dialog"]');
-			if (!modal) { 
-				setDpMsg('뉴비고에서 기체 선택 모달을 먼저 열어주세요', '#f59e0b'); 
-				return; 
-			}
-			await runAutoSelect(targets.map(c => c.dataset.unit), targets);
-		});
+            const modal = document.querySelector('[data-qk="remote-multiple-select-robot-dialog"]');
+            if (!modal) {
+                setDpMsg('뉴비고에서 기체 선택 모달을 먼저 열어주세요', '#f59e0b');
+                return;
+            }
+            // localStorage에 저장된 교대 기체 목록 사용
+            const result = await githubGet();
+            if (!result || !isDataValid(result.data?.updatedAt)) {
+                setDpMsg('교대 기체 데이터가 없습니다. 로드 먼저 해주세요', '#f59e0b');
+                return;
+            }
+            const units = result.data.units || [];
+            if (!units.length) { setDpMsg('기체 데이터 없음', '#94a3b8'); return; }
+            await runAutoSelect(units, new Array(units.length).fill(null));
+        });
 
 		posBtn.addEventListener('click', () => {
 			// order 기준으로 정렬해서 읽음
@@ -1886,7 +1842,6 @@
 		if (result && isDataValid(result.data.updatedAt)) {
             const units = result.data.units || [];
             if (units.length) {
-                renderGrid(units);
                 setDpMsg(`교대 기체 데이터 로드됨 (${result.data.handover_by || '?'} - ${units.length}대)`, '#22c55e');
             } else {
                 setDpMsg('교대 기체 데이터가 없습니다', '#f59e0b');
@@ -1900,10 +1855,7 @@
         // ── 20분 만료 감시 (30초마다) ──
         const expiryInterval = setInterval(() => {
             if (panel.style.top !== '0px') return;       // 패널 닫혀있으면 스킵
-            if (!gridUnits.length) return;               // 로드된 데이터 없으면 스킵
             if (!isDataValid(result?.data?.updatedAt)) {
-                cells.forEach(cellEmpty);
-                gridUnits = [];
                 setDpMsg('20분 초과, 기체 목록 만료됨', '#ef4444');
                 clearInterval(expiryInterval);
             }
