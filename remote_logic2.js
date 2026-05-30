@@ -11,15 +11,12 @@
         SECTION 1. 상태 및 설정
        ============================================================ */
     const isHandoverPage = () =>
-        (location.href.includes('go.neubie.ai/ko/remote/multiple') &&
-        !location.href.includes('/driving')) ||
-        location.href.includes('multimonitoring.vercel.app');
-
-    // 밝기바를 표시할 페이지 조건 (multiple + driving 모두 포함)
-    const isBrightnessPage = () =>
-        (location.href.includes('go.neubie.ai/ko/remote/multiple') &&
-        !location.href.includes('/driving')) ||
-        location.href.includes('multimonitoring.vercel.app');
+	    location.href.includes('go.neubie.ai/ko/remote/multiple') &&
+	    !location.href.includes('/driving');
+	
+	const isBrightnessPage = () =>
+	    location.href.includes('go.neubie.ai/ko/remote/multiple') &&
+	    !location.href.includes('/driving');
     
        const config = {
         targetIds: ['44', '56', '65', '109'],
@@ -925,12 +922,12 @@
                 const patchItems = [
                     {
                         version: 'v1.1',
-                        date: '2026-05-29',
+                        date: '2026-05-30',
                         items: [
-                            '복사 버튼 레이아웃 깨짐 수정',
-                            '다중 및 일일 업무는 시트 에러발생 시 최근 정상 목록을 유지함',
-                            '크롬에서 맵 최적화 체크 시, 새로고침 없이 즉시 적용',
-                            '명일 07시 다중 임무는 자정 이후 표기됨(07시 출근자에만 해당)',
+                            '줄을 서시오 v2.0 폐기 -> 다중 관제 도우미 도입',
+                            '다중 카메라 밝기 한 번에 조절',
+							'교대기체 자동으로 받기 (테스트 중)',
+                            '중복 개입은 근본 해결이 불가하니 또다른 방법을 모색해보겠습니다.',
                         ]
                     },
                 ];
@@ -1156,7 +1153,7 @@
         queueCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">📡 다중 관제 도우미</span>`;
         const queueChk = document.createElement('input');
         queueChk.type = 'checkbox';
-        queueChk.checked = localStorage.getItem('neubie_handover_enabled') !== 'false'; // 기본 true
+        queueChk.checked = localStorage.getItem('neubie_handover_enabled') === 'true'; // 기본 false
         queueChk.style.cssText = "width:18px; height:18px; cursor:pointer;";
         queueChk.onchange = (e) => {
 			localStorage.setItem('neubie_handover_enabled', e.target.checked);
@@ -1227,10 +1224,11 @@
                 queueInfoContent.id = 'neubie-queue-info-content';
                 queueInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:#cbd5e1; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;`;
                 queueInfoContent.innerHTML = `
-				다중 관제 도우미 체크 시, 다중 관제 기체 카메라 밝기 한 번에 조절 가능<br>
-				교대 기체 받기 -> 자동 시작, 수동 선택 -> 시작 기능<br>
-				교대 기체 업로드는 '모니터링 교대 도우미 v2.0' 사이트 이용 시 가능<br>
+				다중 관제 도우미 체크 시, 다중 관제 기체 카메라 밝기 한 번에 조절<br>
+				교대 기체 받기 -> 자동 시작 or 기체 선택 -> 수동 시작<br>
+				제 '모니터링 교대 도우미 v2.0' 사이트 이용 시 교대 기체 업로드 가능<br>
 				'없으면 만들지 뭐'만 이용하더라도 교대 기체 받기는 가능<br>
+				자동 교대가 필요하신 분만 쓰시면 되겠습니다.<br>
 				<br>
 				줄을 서시오 v2.0의 경우 이론적으로는 겹치지 않게 짜여졌지만<br>
 				모두가 사용해야한다는 점이 결국 현실적 장벽으로 작용했습니다.<br>
@@ -1542,7 +1540,7 @@
 		};
 
 		// ── 그리드 셀 ──
-		const MAX_UNITS = 12;
+		const MAX_UNITS = 6;
 		let selectedCells = [];
 		let gridUnits = [];
 
@@ -1630,10 +1628,10 @@
 		Object.assign(rightBtns.style, { marginLeft: 'auto', display: 'flex', gap: '5px', flexShrink: '0' });
 
 		const autoBtn = mkBtn('자동 시작', '#6366f1');
-		const startBtn = mkBtn('수동 시작', '#22c55e', { opacity: '0.35', pointerEvents: 'none' });
+		const posBtn = mkBtn('기체 위치', '#64748b');
 
 		rightBtns.appendChild(autoBtn);
-		rightBtns.appendChild(startBtn);
+		rightBtns.appendChild(posBtn);
 		headerRow.appendChild(rightBtns);
 		panel.appendChild(headerRow);
 
@@ -1668,8 +1666,6 @@
 					cellSel(cell);
 					selectedCells.push(cell);
 				}
-				startBtn.style.opacity = selectedCells.length > 0 ? '1' : '0.35';
-				startBtn.style.pointerEvents = selectedCells.length > 0 ? 'auto' : 'none';
 			});
 			grid.appendChild(cell);
 			return cell;
@@ -1681,8 +1677,6 @@
 		const renderGrid = (units) => {
 			gridUnits = units;
 			selectedCells = [];
-			startBtn.style.opacity = '0.35';
-			startBtn.style.pointerEvents = 'none';
 			cells.forEach((cell, i) => {
 				const name = units[i] || null;
 				if (name) {
@@ -1820,9 +1814,60 @@
 			await runAutoSelect(targets.map(c => c.dataset.unit), targets);
 		});
 
-		startBtn.addEventListener('click', async () => {
-			if (!selectedCells.length) return;
-			await runAutoSelect(selectedCells.map(c => c.dataset.unit), [...selectedCells]);
+		posBtn.addEventListener('click', () => {
+			// 현재 화면에 추가된 카드 순서대로 그리드에 채우기
+			const cards = [...document.querySelectorAll(
+				'.flex.h-full.w-full.items-center.justify-center.overflow-hidden .p-3'
+			)];
+			if (!cards.length) {
+				setDpMsg('현재 추가된 기체가 없습니다', '#f59e0b');
+				return;
+			}
+			const names = cards.map(c =>
+				c.querySelector('.bg-prmary-50')?.textContent?.trim() || '—'
+			);
+			// 그리드에 채우기
+			cells.forEach((cell, i) => {
+				if (names[i]) {
+					cell.textContent = names[i];
+					cell.dataset.unit = names[i];
+					cell.dataset.done = 'false';
+					cell.dataset.selected = 'false';
+					cell.draggable = true;
+					cellIdle(cell);
+				} else {
+					cellEmpty(cell);
+				}
+			});
+
+			// 드래그앤드롭 로직
+			let dragSrc = null;
+			cells.forEach(cell => {
+				cell.addEventListener('dragstart', () => { dragSrc = cell; cell.style.opacity = '0.4'; });
+				cell.addEventListener('dragend', () => { cell.style.opacity = '1'; });
+				cell.addEventListener('dragover', e => e.preventDefault());
+				cell.addEventListener('drop', () => {
+					if (!dragSrc || dragSrc === cell) return;
+					// 텍스트/데이터 교환
+					[dragSrc.textContent, cell.textContent] = [cell.textContent, dragSrc.textContent];
+					[dragSrc.dataset.unit, cell.dataset.unit] = [cell.dataset.unit, dragSrc.dataset.unit];
+					// 실제 카드 order 적용
+					const allCards = [...document.querySelectorAll(
+						'.flex.h-full.w-full.items-center.justify-center.overflow-hidden .p-3'
+					)];
+					cells.forEach((c, idx) => {
+						const targetCard = allCards.find(ac =>
+							ac.querySelector('.bg-prmary-50')?.textContent?.trim() === c.dataset.unit
+						);
+						if (targetCard) targetCard.style.order = String(idx);
+					});
+					// localStorage 저장
+					const order = cells.filter(c => c.dataset.unit).map(c => c.dataset.unit);
+					localStorage.setItem('neubie_card_order', JSON.stringify(order));
+					setDpMsg(`순서 저장됨`, '#22c55e');
+				});
+			});
+			setDpMsg('드래그로 순서를 변경하세요', '#3b82f6');
 		});
 
 		// ── 자동 Fetch (패널 열릴 때 1회) ──
