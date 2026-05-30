@@ -1788,7 +1788,7 @@
 				if (!clicked) {
 					for (const span of document.querySelectorAll('span[data-qk="robot-name"]')) {
 						const text = span.textContent.trim();
-						if (text.includes(name) || name.includes(text)) {
+						if (text === name) {
 							const label = span.closest('label');
 							if (label && reactCheck(label)) { clicked = true; break; }
 						}
