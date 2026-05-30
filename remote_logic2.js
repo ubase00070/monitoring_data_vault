@@ -1778,17 +1778,9 @@
                 const spans = document.querySelectorAll('span[data-qk="robot-name"]');
                 for (const span of spans) {
                     const text = span.textContent.trim();
-                    if (text === name || text.includes(name) || name.includes(text)) {
+                    if (text === name) {  // 완전일치만
                         const label = span.closest('label');
                         if (label && reactCheck(label)) { clicked = true; break; }
-                    }
-                }
-                // 2단계 폴백: 모든 label 텍스트 검색
-                if (!clicked) {
-                    for (const label of document.querySelectorAll('label')) {
-                        if (label.textContent.trim().replace(/\s+/g, ' ').includes(name)) {
-                            if (reactCheck(label)) { clicked = true; break; }
-                        }
                     }
                 }
 
