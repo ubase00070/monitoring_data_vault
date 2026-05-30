@@ -1227,14 +1227,14 @@
                 queueInfoContent.id = 'neubie-queue-info-content';
                 queueInfoContent.style.cssText = `font-size:12px; line-height:1.8; color:#cbd5e1; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;`;
                 queueInfoContent.innerHTML = `
-				줄을 서시오 결정론적 순열 방식은 이론적으로는 절대 겹치지 않게 짜여졌지만<br>
-				모두가 사용해야한다는 점이 결국 장벽으로 작용하는군요.<br>
-				사람마다 사용환경과 취향이 다르다는 점을 고려하여 근본으로 돌아가서 재연구하겠습니다.<br>
-				<br>
 				다중 관제 도우미 체크상태 시, 모니터링 페이지에서 카메라 밝기 한 번에 조절<br>
 				교대 기체 받기 후 자동 시작, 수동 선택 후 시작 기능을 사용할 수 있습니다.<br>
 				교대 기체 데이터 전송은 '모니터링 교대 도우미 v2.0' 사이트 이용 시 가능합니다.<br>
-				'없으면 만들지 뭐'만 이용하더라도 교대 기체 받기는 가능합니다.
+				'없으면 만들지 뭐'만 이용하더라도 교대 기체 받기는 가능합니다.<br>
+				<br>
+				줄을 서시오 v2.0의 경우 이론적으로는 절대 겹치지 않게 짜여졌지만<br>
+				모두가 사용해야한다는 점이 결국 현실적 장벽으로 작용하는군요.<br>
+				사람마다 사용환경과 취향이 다르다는 점을 고려하여 근본으로 돌아가서 재연구하겠습니다.<br>
                 `;
 
                 queueInfoBox.appendChild(queueInfoClose);
