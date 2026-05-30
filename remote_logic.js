@@ -10,7 +10,18 @@
     /* ============================================================
         SECTION 1. 상태 및 설정
        ============================================================ */
-    const config = {
+    const isHandoverPage = () =>
+        (location.href.includes('go.neubie.ai/ko/remote/multiple') &&
+        !location.href.includes('/driving')) ||
+        location.href.includes('multimonitoring.vercel.app');
+
+    // 밝기바를 표시할 페이지 조건 (multiple + driving 모두 포함)
+    const isBrightnessPage = () =>
+        (location.href.includes('go.neubie.ai/ko/remote/multiple') &&
+        !location.href.includes('/driving')) ||
+        location.href.includes('multimonitoring.vercel.app');
+    
+       const config = {
         targetIds: ['44', '56', '65', '109'],
         batteryIds: [
             { id: '142', name: '성남판교 200', shortName: '판교 200' },
@@ -101,20 +112,6 @@
         myTodayTasks: JSON.parse(localStorage.getItem('neubie_my_tasks') || "[]"),
         insuData: null,
         attendanceData: null
-    };
-
-    const QUEUE_CONFIG = {
-        SLOTS: [0, 350, 700, 1050, 1400], 
-        JITTER: 100, 
-        OVERLAY_DURATION: 2000,
-        MIN_OVERLAY_SHOW: 500,
-        STYLE: {
-            position: 'fixed', top: '20%', left: '50%', transform: 'translateX(-50%)',
-            backgroundColor: 'rgba(15, 23, 42, 0.98)', color: 'white', border: '3px solid #ffeb3b',
-            padding: '25px 50px', borderRadius: '15px', zIndex: '2147483647', textAlign: 'center',
-            boxShadow: '0 10px 40px rgba(0,0,0,0.6)', fontWeight: 'bold', pointerEvents: 'none',
-            fontFamily: 'Pretendard, sans-serif', transition: 'opacity 0.2s ease-in-out'
-        }
     };
 
     const taskChannel = new BroadcastChannel('neubie_task_sync');
@@ -409,7 +406,7 @@
             btn.style.background = '#22c55e';
             
             setTimeout(() => {
-                btn.textContent = origina111lText;
+                btn.textContent = originalText;
                 btn.style.background = originalBg;
             }, 2000);
         });
@@ -702,101 +699,9 @@
     };
 
     /* ============================================================
-        SECTION 5. 줄을 서시오 & 중복 관제 완화
+        SECTION 5. 줄을 서시오 & 중복 관제 완화(구 줄을 서시오 v2.0 위치)
        ============================================================ */
 
-    const personnelData = [
-        { name: "김지훈", time: "(0700-1600)(U)", break: "(1100-1200)" }, 
-        { name: "오정훈", time: "(0700-1600)(U)", break: "(1100-1200)" }, 
-        { name: "박계원", time: "(0700-1600)(U)", break: "(1100-1200)" }, 
-        { name: "김경환", time: "(0800-1700)(U)", break: "(1200-1300)" }, 
-        { name: "박효선", time: "(0800-1700)(U)", break: "(1200-1300)" }, 
-        { name: "안혜림", time: "(0900-1800)(U)", break: "(1300-1400)" }, 
-        { name: "이환", time: "(0900-1800)(U)", break: "(1300-1400)" }, 
-        { name: "최윤혁", time: "(0900-1800)(U)", break: "(1300-1400)" }, 
-        { name: "신현철", time: "(0900-1800)(U)", break: "(1300-1400)" },
-        { name: "김동진", time: "(0900-1800)(U)", break: "(1300-1400)" }, 
-        { name: "석승찬", time: "(1000-1900)(U)", break: "(1400-1500)" },
-        { name: "이준", time: "(1000-1900)(U)", break: "(1400-1500)" },
-        { name: "한승완", time: "(1000-1900)(U)", break: "(1400-1500)" },
-        { name: "박은선", time: "(1100-2000)(U)", break: "(1400-1500)" }, 
-        { name: "송주현", time: "(1100-2000)(U)", break: "(1500-1600)" }, 
-        { name: "송태영", time: "(1100-2000)(U)", break: "(1500-1600)" },
-        { name: "신은정", time: "(1100-2000)(U)", break: "(1500-1600)" }, 
-        { name: "호덕진", time: "(1100-2000)(U)", break: "(1500-1600)" },
-        { name: "장재원", time: "(1100-2000)(U)", break: "(1500-1600)" }, 
-        { name: "박효빈", time: "(1400-2300)(U)", break: "(1700-1800)" }, 
-        { name: "이기완", time: "(1400-2300)(U)", break: "(1700-1800)" },
-        { name: "권재윤", time: "(1400-2300)(U)", break: "(1700-1800)" },
-        { name: "김가은", time: "(1500-2400)(U)", break: "(1800-1900)" }, 
-        { name: "서형민", time: "(1500-2400)(U)", break: "(1800-1900)" }, 
-        { name: "최성환", time: "(1500-2400)(U)", break: "(1800-1900)" }, 
-        { name: "이규순", time: "(1800-0300)(U)", break: "(2200-2300)" }, 
-        { name: "강철환", time: "(1800-0300)(U)", break: "(2200-2300)" }, 
-        { name: "박수연", time: "(1800-0300)(U)", break: "(2200-2300)" }, 
-        { name: "신지섭", time: "(1800-0300)(U)", break: "(2300-2400)" },
-        { name: "최선호", time: "(2000-0500)(U)", break: "(2300-2400)" }, 
-        { name: "최정기", time: "(2000-0500)(U)", break: "(2300-2400)" }, 
-        { name: "고상연", time: "(2000-0500)(U)", break: "(2300-2400)" }, 
-        { name: "김소연", time: "(2200-0700)(U)", break: "(0100-0200)" }, 
-        { name: "임다연", time: "(2200-0700)(U)", break: "(0200-0300)" }, 
-        { name: "임아연", time: "(2200-0700)(U)", break: "(0300-0400)" }, 
-        { name: "안대관", time: "(2330-0830)(U)", break: "(0400-0500)" }
-    ];
-
-    function parseTimeRange(str) {
-        const m = str.match(/\((\d{2})(\d{2})-(\d{2})(\d{2})\)/);
-        if (!m) return null;
-        return {
-            start: parseInt(m[1]) * 60 + parseInt(m[2]),
-            end:   parseInt(m[3]) * 60 + parseInt(m[4])
-        };
-    }
-
-    function isInRange(range, nowMin) {
-        if (!range) return false;
-        if (range.end < range.start) // 자정 넘김 (예: 2200-0700)
-            return nowMin >= range.start || nowMin < range.end;
-        return nowMin >= range.start && nowMin < range.end;
-    }
-
-    function getCurrentMonitor(insuData) {
-        if (!insuData?.schedule) return null;
-        const now = new Date();
-        // X:50~X+1:50 구간이므로, 분이 50 이상이면 현재 시각 슬롯, 미만이면 이전 시각 슬롯
-        const slotHour = now.getMinutes() >= 50 ? now.getHours() : now.getHours() - 1;
-        const normalizedHour = ((slotHour % 24) + 24) % 24; // 음수 방지
-        const hour = String(normalizedHour).padStart(2, '0') + ':00';
-        return insuData.schedule[hour] || null;
-    }
-
-    function getActiveGroup(now, insuData, attendanceData) {
-        const today = now.toISOString().split('T')[0]; // "2026-05-13"
-        const todaySchedule = attendanceData?.schedule?.[today];
-        const presentList = todaySchedule?.present || null;
-        const halfDayList = todaySchedule?.halfDay || [];
-        const nowMin = now.getHours() * 60 + now.getMinutes();
-        const currentMonitor = getCurrentMonitor(insuData);
-
-        return personnelData.filter(p => {
-            // attendanceData 없으면 근무시간만으로 필터 (안전 모드)
-            if (presentList !== null && !presentList.includes(p.name)) return false;
-            // 근무 시간대 필터
-            if (!isInRange(parseTimeRange(p.time), nowMin)) return false;
-            // 휴게 시간 필터
-            if (isInRange(parseTimeRange(p.break), nowMin)) return false;
-            // 오후반차 — until 이후면 제외
-            const halfDay = halfDayList.find(h => h.name === p.name);
-            if (halfDay) {
-                const untilMin = parseInt(halfDay.until.split(':')[0]) * 60;
-                if (nowMin >= untilMin) return false;
-            }
-            // 모니터링 담당자 제외
-            if (currentMonitor && p.name === currentMonitor) return false;
-            return true;
-        }).sort((a, b) => a.name.localeCompare(b.name));
-    }
-    
     function injectConfigUI() {
         // 이미 스타일이 존재하면 중복 생성 방지
         if (document.getElementById('neubie-engine-popup-style')) return;
@@ -805,25 +710,6 @@
         style.id = 'neubie-engine-popup-style';
         style.innerHTML = `
             /* 딜레이 안내 팝업 스타일 */
-            .delay-popup {
-                position: fixed;
-                top: 15%;
-                left: 50%;
-                transform: translate(-50%, 0);
-                background-color: rgba(15, 15, 15, 0.95);
-                color: #00ff41; 
-                padding: 24px 44px;        /* 16px 28px → 24px 44px */
-                border-radius: 12px;       /* 8px → 12px */
-                z-index: 10000; 
-                text-align: center;
-                font-weight: 700;
-                border: 2px solid #00ff41;
-                box-shadow: 0 0 20px rgba(0, 255, 65, 0.3);
-                pointer-events: none;
-                line-height: 1.6;          /* 1.5 → 1.6 */
-                font-size: 18px;           /* 15px → 18px */
-                transition: opacity 0.5s, transform 0.5s;
-            }
                 .marquee-wrap {
                     overflow: hidden;
                     flex: 1;
@@ -853,96 +739,8 @@
     }
 
     /* ============================================================
-    SECTION 6. 지능형 충돌 회피 순열 엔진
-   ============================================================ */
-
-    function executeIntervention(btn) {
-        btn.dataset.intercepted = 'true';
-        btn.click();
-        setTimeout(() => {
-            delete btn.dataset.intercepted;
-        }, 200);
-    }
-
-    async function handleControlClick(e) {
-        if (!state.isQueueOpt) return;
-    
-        const targetBtn = e.target.closest('button');
-        if (!targetBtn || targetBtn.innerText.trim() !== '관제 시작') return;
-
-        if (targetBtn.dataset.intercepted) return;
-    
-        const currentUserName = localStorage.getItem('neubie_user_name') || "운영자";
-        const user = personnelData.find(u => u.name === currentUserName);
-        if (!user) return;
-    
-        const getHash = (str) => {
-            let hash = 0;
-            for (let i = 0; i < str.length; i++) {
-                hash = ((hash << 5) - hash) + str.charCodeAt(i);
-                hash |= 0;
-            }
-            return Math.abs(hash);
-        };
-    
-        const now = new Date();
-        // 자정 넘기는 야간 근무자 기준으로 날짜 고정 (22시 이전이면 전날 기준)
-        const seedDate = now.getHours() < 7 
-            ? new Date(now.getTime() - 7 * 60 * 60 * 1000) 
-            : now;
-        const timeSeed = `${seedDate.getFullYear()}${seedDate.getMonth()}${seedDate.getDate()}${now.getHours()}${Math.floor(now.getMinutes() / 2)}`;
-
-        const myGroup = getActiveGroup(now, state.insuData, state.attendanceData);
-        if (myGroup.length === 0) {
-            executeIntervention(targetBtn);
-            return;
-        }
-        if (!myGroup.find(p => p.name === currentUserName)) {
-            executeIntervention(targetBtn);
-            return;
-        }
-        const groupKey = myGroup.map(p => p.name).join(',');
-        
-        let indices = Array.from({ length: myGroup.length }, (_, i) => i);
-        let seedNum = getHash(timeSeed + groupKey);
-        for (let i = indices.length - 1; i > 0; i--) {
-            const j = seedNum % (i + 1);
-            [indices[i], indices[j]] = [indices[j], indices[i]];
-            seedNum = Math.floor(seedNum / (i + 1)) + i;
-        }
-
-        const mySourceIndex = myGroup.findIndex(p => p.name === currentUserName);
-        const myRank = indices.indexOf(mySourceIndex);
-
-        const SPACING = myGroup.length > 1 ? Math.floor(1400 / (myGroup.length - 1)) : 1400;
-        const baseDelay = myRank * SPACING;
-        const jitter = getHash(currentUserName + timeSeed) % 50;
-        const finalDelay = Math.min(baseDelay + jitter, 1450);
-    
-        const popup = document.createElement('div');
-        popup.className = 'delay-popup';
-        popup.innerHTML = `
-            <div style="font-size: 1.1em; color: #00ff41; margin-bottom: 6px;">[중복 개입 완화 시스템 v2.0]</div>
-            <div style="font-size: 0.9em; font-weight: bold;">${(finalDelay / 1000).toFixed(2)}초 딜레이 적용 중...</div>
-            <div style="font-size: 0.9em; opacity: 0.7; margin-top: 6px;">Rank: ${myRank + 1}/${myGroup.length} | Gap: ${SPACING}ms</div>
-        `;
-        document.body.appendChild(popup);
-    
-        e.preventDefault();
-        e.stopPropagation();
-
-        setTimeout(() => {
-            executeIntervention(targetBtn);
-        }, finalDelay);
-
-        const showDuration = Math.max(QUEUE_CONFIG.MIN_OVERLAY_SHOW, QUEUE_CONFIG.OVERLAY_DURATION - finalDelay);
-        setTimeout(() => {
-            popup.style.transition = "opacity 0.5s, transform 0.5s";
-            popup.style.opacity = "0";
-            popup.style.transform = "translate(-50%, -20px)";
-            setTimeout(() => popup.remove(), 500);
-        }, showDuration);
-    }
+    SECTION 6. 개입카드 중복 감지 엔진
+    ============================================================ */
 
     /* ============================================================
         SECTION 7. 스마트 네이밍 엔진 카드 생성
@@ -1127,12 +925,11 @@
                 const patchItems = [
                     {
                         version: 'v1.1',
-                        date: '2026-05-29',
+                        date: '2026-05-30',
                         items: [
-                            '복사 버튼 레이아웃 깨짐 수정',
-                            '다중 및 일일 업무는 시트 에러발생 시 최근 정상 목록을 유지함',
-                            '크롬에서 맵 최적화 체크 시, 새로고침 없이 즉시 적용',
-                            '명일 07시 다중 임무는 자정 이후 표기됨(07시 출근자에만 해당)',
+                            '줄을 서시오 v2.0 폐기 -> 다중 관제 도우미 도입',
+                            '다중 카메라 밝기 한 번에 조절 및 자동 교대기체 받기 가능',
+                            '중복 개입은 근본 해결이 불가하니 또다른 방법을 모색해보겠습니다.',
                         ]
                     },
                 ];
@@ -1355,14 +1152,20 @@
         // 줄을 서시오 (체크박스, 멘트 없이 이름만)
         const queueCard = document.createElement('div');
         queueCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333; display:flex; justify-content:space-between; align-items:center;";
-        queueCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">📡 줄을 서시오 v2.0</span>`;
+        queueCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">📡 다중 관제 도우미</span>`;
         const queueChk = document.createElement('input');
-        queueChk.type = 'checkbox'; queueChk.checked = state.isQueueOpt;
+        queueChk.type = 'checkbox';
+        queueChk.checked = localStorage.getItem('neubie_handover_enabled') !== 'false'; // 기본 true
         queueChk.style.cssText = "width:18px; height:18px; cursor:pointer;";
         queueChk.onchange = (e) => {
-            state.isQueueOpt = e.target.checked;
-            localStorage.setItem('neubie_opt_queue', state.isQueueOpt);
-        };
+			localStorage.setItem('neubie_handover_enabled', e.target.checked);
+			const bar = document.getElementById('neubie-brightness-bar');
+			if (!e.target.checked && bar) {
+				bar.remove();
+			} else if (e.target.checked && !bar && isBrightnessPage()) {
+				injectMasterBrightness();
+			}
+		};
 
         if (!document.getElementById('neubie-blink-style')) {
             const blinkStyle = document.createElement('style');
@@ -1378,7 +1181,7 @@
         // ⓘ 정보 버튼 (체크박스 왼쪽에 배치)
         const queueInfoBtn = document.createElement('button');
         queueInfoBtn.textContent = 'i';
-        queueInfoBtn.title = '원리 설명';
+        queueInfoBtn.title = '제작자의 소회';
         queueInfoBtn.style.cssText = `
             width:22px; height:22px; border-radius:50%; border:2px solid #aaa;
             background:transparent; color:#aaa; font-size:13px; font-weight:bold;
@@ -1406,7 +1209,7 @@
                     position:relative; box-shadow:0 10px 50px rgba(0,0,0,0.7);
                 `;
                 const queueInfoTitle = document.createElement('div');
-                queueInfoTitle.textContent = '원리 설명';
+                queueInfoTitle.textContent = '제작자의 소회';
                 queueInfoTitle.style.cssText = `font-size:22px; font-weight:bold; margin-bottom:20px; color:#93c5fd;`;
                 const queueInfoClose = document.createElement('button');
                 queueInfoClose.textContent = '✕';
@@ -1421,18 +1224,17 @@
                 queueInfoClose.onclick = () => { queueInfoOverlay.style.display='none'; };
                 const queueInfoContent = document.createElement('div');
                 queueInfoContent.id = 'neubie-queue-info-content';
-                queueInfoContent.style.cssText = `font-size:12px; line-height:1.8; color:#cbd5e1; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;`;
+                queueInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:#cbd5e1; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;`;
                 queueInfoContent.innerHTML = `
-                결정론적 순열 분산 시스템입니다.<br>
-                이전의 랜덤 5분할+지터 앞뒤 0.1 딜레이 방식은 결국 랜덤이라는 한계를 벗어나지 못했죠.<br>
-                이 방식은 현재 시각 기준 '가용 인원'을 산출해서 딜레이 등수를 고정합니다.<br>
-                가령 09:20에 휴무/연차/반차를 제외한 근무자가 총 8명이라면, 현 모니터링 인원을 제외한 나머지 7명에게 고정 등수가 배분됩니다.<br>
-                총 7명이니까 각각 1~7등까지 딜레이가 나뉘겠지요. 이 등수 배분은 각 2분마다 변동되며, 근무자 출퇴근 및 식사시간에 맞춰서 배분 그룹이 매번 바뀝니다.<br>
-                현재 '2분 슬롯 구간'에서 본인이 1등이라서 개입카드를 먼저 들어왔더라도, 이후 2분마다 변하는 등수는 예상할 길이 없습니다.<br>
-                배분할 인원이 적으면 적을 수록 최대 1.5초 중에서 딜레이 간격은 더 넓게 설정됩니다.<br>
-                즉, 이론적으로는 등수가 절대로 겹칠 수 없습니다. 이미 함수가 계산하는 순간 결정되니까요.<br>
-                이러한 근무자 그룹 배분은 각자 PC환경에서 동일한 계산으로 동일한 등수를 계산합니다.<br>
-                이 방법이 '서버 네트워크 문제'까지는 어떻게 하지 못합니다만, 적어도 클라이언트에서 할 수 있는 최대한의 해결책이라고 기대해봅니다.
+				다중 관제 도우미 체크 시, 다중 관제 기체 카메라 밝기 한 번에 조절<br>
+				교대 기체 받기 -> 자동 시작 or 기체 선택 -> 수동 시작<br>
+				제 '모니터링 교대 도우미 v2.0' 사이트 이용 시 교대 기체 업로드 가능<br>
+				'없으면 만들지 뭐'만 이용하더라도 교대 기체 받기는 가능<br>
+				자동 교대가 필요하신 분만 쓰시면 되겠습니다.<br>
+				<br>
+				줄을 서시오 v2.0의 경우 이론적으로는 겹치지 않게 짜여졌지만<br>
+				모두가 사용해야한다는 점이 결국 현실적 장벽으로 작용했습니다.<br>
+				사람마다 사용환경과 기호가 다르다는 점을 인정하고, 근본으로 돌아가서 재연구하겠습니다.<br>
                 `;
 
                 queueInfoBox.appendChild(queueInfoClose);
@@ -1623,47 +1425,51 @@
 
     // 팝업 열 때만 생성
     function toggleBattery() {
-        if (batteryPopup.style.display !== 'block') {
+		if (batteryPopup.style.display !== 'block') {
+			config.batteryIds.forEach(c => {
+				if (!iframes[c.id]) {
+					const ifr = document.createElement('iframe');
+					ifr.src = `https://go.neubie.ai/ko/monitoring/${c.id}`;
+					Object.assign(ifr.style, { width:'0', height:'0', border:'none', position:'fixed', top:'-9999px' });
+					document.body.appendChild(ifr);
+					iframes[c.id] = ifr;
+				}
+			});
 
-            // iframe이 없으면 그때 생성
-            config.batteryIds.forEach(c => {
-                if (!iframes[c.id]) {
-                    const ifr = document.createElement('iframe');
-                    ifr.src = `https://go.neubie.ai/ko/monitoring/${c.id}`;
-                    Object.assign(ifr.style, { width:'0', height:'0', border:'none', position:'fixed', top:'-9999px' });
-                    document.body.appendChild(ifr);
-                    iframes[c.id] = ifr;
-                }
-            });
+			updateBatteryStatus();
+			batteryPopup.style.display = 'block';
 
-            updateBatteryStatus();
-            batteryPopup.style.display = 'block';
-            setTimeout(() => {
-                if (batteryPopup.style.display === 'block') updateBatteryStatus();
-            }, 1500);
+			// 첫 로드: 5초 후 1회 갱신
+			setTimeout(() => {
+				if (batteryPopup.style.display !== 'block') return;
+				updateBatteryStatus();
 
-            batteryRefreshInterval = setInterval(() => {
-                if (batteryPopup.style.display === 'block') updateBatteryStatus();
-                else clearInterval(batteryRefreshInterval);
-            }, 5000);
+				// 이후부터 1분마다 갱신
+				batteryRefreshInterval = setInterval(() => {
+					if (batteryPopup.style.display === 'block') updateBatteryStatus();
+					else clearInterval(batteryRefreshInterval);
+				}, 60000);
+			}, 5000);
 
-        } else {
-            batteryPopup.style.display = 'none';
-            clearInterval(batteryRefreshInterval);
-
-            // ✅ 닫을 때 iframe 전부 제거 → 부하 없음
-            config.batteryIds.forEach(c => {
-                if (iframes[c.id]) {
-                    iframes[c.id].remove();
-                    delete iframes[c.id];
-                }
-            });
-        }
-    }
+		} else {
+			batteryPopup.style.display = 'none';
+			clearInterval(batteryRefreshInterval);
+			config.batteryIds.forEach(c => {
+				if (iframes[c.id]) {
+					iframes[c.id].remove();
+					delete iframes[c.id];
+				}
+			});
+		}
+	}
 
     function closeAllPopups() {
         dashboard.style.display = 'none';
         batteryPopup.style.display = 'none';
+
+		document.getElementById('ho-remote-peek')?.remove();
+    	document.getElementById('ho-remote-panel')?.remove();
+		
         const queueInfoOverlay = document.getElementById('neubie-queue-info-overlay');
         if (queueInfoOverlay) queueInfoOverlay.style.display = 'none';
         const tipsOverlay = document.getElementById('neubie-tips-overlay');
@@ -1672,30 +1478,546 @@
         if (patchOverlay) patchOverlay.style.display='none';
     }
 
+    // ── 유효성 검증 (1시간 이내 데이터) ──
+	const isDataValid = (updatedAt) => {
+        if (!updatedAt) return false;
+        // +09:00 명시로 한국시간 고정
+        const updated = new Date(updatedAt.replace(' ', 'T') + '+09:00');
+        return (Date.now() - updated.getTime()) < 20 * 60 * 1000;
+    };
+
+    // ── 핸드오버 레이아웃 ──────────────────────────────────
+	async function initHandoverLayout() {
+		// 패널 생성
+		let panel = document.getElementById('ho-remote-panel');
+        if (panel) {
+            panel.style.top = '0px';
+            const r = await githubGet();
+            const dpMsgEl = document.getElementById('ho-dp-msg');
+            if (dpMsgEl) {
+                if (r && !isDataValid(r.data?.updatedAt)) {
+                    dpMsgEl.textContent = '20분 초과로 로드 실패';
+                    dpMsgEl.style.color = '#ef4444';
+                    document.querySelectorAll('.ho-remote-cell').forEach(c => {
+                        c.textContent = '—';
+                        Object.assign(c.style, { background: 'rgba(255,255,255,0.45)', color: '#b0bec5',
+                            border: '1.5px dashed #c8d2e0', cursor: 'default' });
+                        c.dataset.unit = ''; c.dataset.selected = 'false'; c.dataset.done = 'false';
+                    });
+                }
+            }
+            return;
+        }
+
+		panel = document.createElement('div');
+		panel.id = 'ho-remote-panel';
+		Object.assign(panel.style, {
+			position: 'fixed', top: '0px', left: '50%', transform: 'translateX(-50%)',
+			zIndex: '2147483646', width: '560px',
+			background: 'rgba(200, 200, 200, 0.98)',
+			borderRadius: '0 0 14px 14px', padding: '5px 8px 7px',
+			fontFamily: 'Pretendard,sans-serif',
+			boxShadow: '0 8px 32px rgba(0,0,0,0.35)',
+			border: '1px solid rgba(200,210,230,0.7)', borderTop: 'none',
+			transition: 'top 0.28s cubic-bezier(0.4,0,0.2,1)',
+		});
+		document.body.appendChild(panel);
+
+		// ── DP 상태 메시지 ──
+		const dpMsg = document.createElement('span');
+		dpMsg.id = 'ho-dp-msg';
+		Object.assign(dpMsg.style, {
+			fontSize: '10px', color: '#64748b',
+			overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+			flex: '1', minWidth: '0',
+            background: 'rgba(255,255,255,0.85)',
+            borderRadius: '5px',
+            padding: '2px 7px',
+		});
+		dpMsg.textContent = '로딩 중...';
+
+		const setDpMsg = (msg, color = '#64748b') => {
+			dpMsg.textContent = msg;
+			dpMsg.style.color = color;
+		};
+
+		// ── 그리드 셀 ──
+		const MAX_UNITS = 12;
+		let selectedCells = [];
+		let gridUnits = [];
+
+		const cellIdle = c => {
+			Object.assign(c.style, { background: 'rgba(255,255,255,0.85)', color: '#1e293b',
+				border: '1.5px solid #93c5fd', cursor: 'pointer', fontWeight: '600' });
+			c.dataset.selected = 'false';
+		};
+		const cellSel = c => {
+			Object.assign(c.style, { background: 'rgba(59,130,246,0.13)', color: '#1d4ed8',
+				border: '2px solid #3b82f6', cursor: 'pointer', fontWeight: '700' });
+			c.dataset.selected = 'true';
+		};
+		const cellDone = c => {
+			Object.assign(c.style, { background: 'rgba(203,213,225,0.35)', color: '#94a3b8',
+				border: '1.5px solid #cbd5e1', cursor: 'default', fontWeight: '400' });
+			c.dataset.done = 'true'; c.dataset.selected = 'false';
+			selectedCells = selectedCells.filter(s => s !== c);
+		};
+		const cellEmpty = c => {
+			c.textContent = '—';
+			Object.assign(c.style, { background: 'rgba(255,255,255,0.45)', color: '#b0bec5',
+				border: '1.5px dashed #c8d2e0', cursor: 'default', fontWeight: '400' });
+			c.dataset.unit = ''; c.dataset.selected = 'false'; c.dataset.done = 'false';
+		};
+
+		// ── 공통 버튼 스타일 헬퍼 ──
+		const mkBtn = (text, bg, extra = {}) => {
+			const b = document.createElement('button');
+			b.textContent = text;
+			Object.assign(b.style, {
+				background: bg, color: '#fff', border: 'none',
+				padding: '3px 9px', borderRadius: '6px', fontSize: '11px',
+				fontWeight: '700', cursor: 'pointer', fontFamily: 'Pretendard,sans-serif',
+				whiteSpace: 'nowrap', flexShrink: '0',
+				...extra,
+			});
+			return b;
+		};
+
+		// ── 헤더 행 (1줄로 모든 버튼 + 로그) ──
+		const headerRow = document.createElement('div');
+		Object.assign(headerRow.style, {
+			display: 'flex', alignItems: 'center', gap: '5px',
+			marginBottom: '4px', paddingBottom: '4px',
+			borderBottom: '1px solid rgba(0,0,0,0.08)',
+			flexWrap: 'nowrap',
+		});
+
+		// 다중 관제 버튼
+		const multiBtn = mkBtn('다중 파일명', '#475569', { minWidth: '70px' });
+		multiBtn.onclick = () => {
+			const time = getCalculatedTime(10);
+			const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_다중모니터링`;
+			navigator.clipboard.writeText(finalName);
+			multiBtn.textContent = '복사됨';
+            multiBtn.style.background = '#22c55e';
+			setTimeout(() => {
+                multiBtn.textContent = '다중 파일명';
+                multiBtn.style.background = '#475569';
+            }, 1500);
+		};
+
+		// 성남 배터리 버튼
+		const battBtn = mkBtn('성남 배터리', '#475569');
+		battBtn.id = 'ho-batt-btn';
+		battBtn.onclick = () => {
+			toggleBattery();
+			const isOpen = batteryPopup.style.display === 'block';
+            battBtn.textContent = isOpen ? '배터리 닫기' : '성남 배터리';
+            battBtn.style.background = isOpen ? '#ef4444' : '#475569';
+		};
+
+		// 교대 받기 버튼
+		const fetchBtn = mkBtn('교대 기체 로드', '#3b82f6');
+
+		// 로그 메시지
+		headerRow.appendChild(multiBtn);
+		headerRow.appendChild(battBtn);
+		headerRow.appendChild(fetchBtn);
+		headerRow.appendChild(dpMsg);
+
+		// 우측: 자동/수동 시작
+		const rightBtns = document.createElement('div');
+		Object.assign(rightBtns.style, { marginLeft: 'auto', display: 'flex', gap: '5px', flexShrink: '0' });
+
+		const autoBtn = mkBtn('자동 시작', '#6366f1');
+		const startBtn = mkBtn('수동 시작', '#22c55e', { opacity: '0.35', pointerEvents: 'none' });
+
+		rightBtns.appendChild(autoBtn);
+		rightBtns.appendChild(startBtn);
+		headerRow.appendChild(rightBtns);
+		panel.appendChild(headerRow);
+
+		// ── 그리드 (좌측 컬럼 없이 바로) ──
+		const grid = document.createElement('div');
+		Object.assign(grid.style, {
+			display: 'grid', gridTemplateColumns: 'repeat(6,1fr)', gap: '3px',
+		});
+
+		const cells = Array.from({ length: MAX_UNITS }, (_, i) => {
+			const cell = document.createElement('button');
+			cell.className = 'ho-remote-cell';
+			cell.dataset.idx = i;
+			cell.dataset.unit = '';
+			cell.dataset.selected = 'false';
+			cell.dataset.done = 'false';
+			cell.textContent = '—';
+			Object.assign(cell.style, {
+				height: '26px', borderRadius: '7px', border: '1.5px dashed #c8d2e0',
+				background: 'rgba(255,255,255,0.45)', color: '#b0bec5', fontSize: '10px',
+				fontFamily: 'Pretendard,sans-serif', cursor: 'default',
+				display: 'flex', alignItems: 'center', justifyContent: 'center',
+				textAlign: 'center', lineHeight: '1.3', padding: '3px',
+			});
+			cell.addEventListener('click', () => {
+				if (!cell.dataset.unit || cell.dataset.done === 'true') return;
+				if (cell.dataset.selected === 'true') {
+					cellIdle(cell);
+					selectedCells = selectedCells.filter(c => c !== cell);
+				} else {
+					if (selectedCells.length >= 6) return;
+					cellSel(cell);
+					selectedCells.push(cell);
+				}
+				startBtn.style.opacity = selectedCells.length > 0 ? '1' : '0.35';
+				startBtn.style.pointerEvents = selectedCells.length > 0 ? 'auto' : 'none';
+			});
+			grid.appendChild(cell);
+			return cell;
+		});
+
+		panel.appendChild(grid);
+
+		// ── 그리드에 기체 렌더링 ──
+		const renderGrid = (units) => {
+			gridUnits = units;
+			selectedCells = [];
+			startBtn.style.opacity = '0.35';
+			startBtn.style.pointerEvents = 'none';
+			cells.forEach((cell, i) => {
+				const name = units[i] || null;
+				if (name) {
+					cell.textContent = name;
+					cell.dataset.unit = name;
+					cell.dataset.done = 'false';
+					cell.dataset.selected = 'false';
+					cellIdle(cell);
+				} else {
+					cellEmpty(cell);
+				}
+			});
+		};
+
+		const githubGet = async () => {
+            try {
+                const res = await fetch(
+                    `https://multimonitoring.vercel.app/api/handover?t=${Date.now()}`,
+                    { cache: 'no-store' }
+                );
+                if (!res.ok) return null;
+                const data = await res.json();
+                return { data };
+            } catch(e) { console.log('githubGet error:', e); return null; }
+        };
+
+		// ── 교대받기 버튼 ──
+		fetchBtn.addEventListener('click', async () => {
+			setDpMsg('데이터 확인 중...', '#3b82f6');
+			const result = await githubGet();
+			if (!result) { setDpMsg('Fetch 실패', '#ef4444'); return; }
+			const { data } = result;
+			if (!isDataValid(data.updatedAt)) {
+				setDpMsg('이전 시간 교대 기체 데이터가 없습니다', '#f59e0b');
+				return;
+			}
+			const units = data.units || [];
+			if (!units.length) { setDpMsg('기체 데이터 없음', '#94a3b8'); return; }
+			renderGrid(units);
+			setDpMsg(`교대 기체 목록 로드됨 (${data.handover_by || '?'} - ${units.length}대)`, '#22c55e');
+		});
+
+		// ── Auto select ──
+		const runAutoSelect = async (units, targetCells) => {
+			let modal = document.querySelector('[data-qk="remote-multiple-select-robot-dialog"]');
+			if (!modal) {
+				setDpMsg('모달 대기 중...', '#3b82f6');
+				modal = await new Promise(resolve => {
+					const t = setTimeout(() => resolve(null), 8000);
+					const obs = new MutationObserver(() => {
+						const el = document.querySelector('[data-qk="remote-multiple-select-robot-dialog"]');
+						if (el) { clearTimeout(t); obs.disconnect(); resolve(el); }
+					});
+					obs.observe(document.body, { childList: true, subtree: true });
+				});
+			}
+			if (!modal) { setDpMsg('모달 없음', '#ef4444'); return; }
+
+            // ── 체크박스가 실제로 나타날 때까지 대기 (최대 15초) ──
+            setDpMsg('기체 목록 로딩 대기 중...', '#94a3b8');
+            const isReady = await new Promise(resolve => {
+                // 이미 있으면 즉시 통과
+                if (modal.querySelector('input[type="checkbox"]')) { resolve(true); return; }
+                const t = setTimeout(() => { obs.disconnect(); resolve(false); }, 15000);
+                const obs = new MutationObserver(() => {
+                    if (modal.querySelector('input[type="checkbox"]')) {
+                        clearTimeout(t); obs.disconnect(); resolve(true);
+                    }
+                });
+                obs.observe(modal, { childList: true, subtree: true });
+            });
+            if (!isReady) { setDpMsg('기체 목록 로딩 실패 (타임아웃)', '#ef4444'); return; }
+
+            const reactCheck = (label) => {
+				if (!label) return false;
+				const checkbox = label.querySelector('input[type="checkbox"]');
+				if (checkbox?.checked) return true;
+				// mouseover/mousedown/mouseup 제거, click만
+				label.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+				return true;
+			};
+
+			let ok = 0;
+			for (let i = 0; i < units.length; i++) {
+				const name = units[i];
+				const cell = targetCells[i];
+				setDpMsg(`${name} (${i+1}/${units.length})`, '#3b82f6');
+				let clicked = false;
+
+				// 1단계: div.px-12 span으로 기체명 찾기
+				const labels = document.querySelectorAll('label');
+				for (const label of labels) {
+					const text = label.querySelector('div.px-12 span')?.textContent.trim();
+					if (!text) continue;
+					if (text === name) {
+						if (reactCheck(label)) { clicked = true; break; }
+					}
+				}
+
+				if (clicked) { ok++; if (cell) cellDone(cell); }
+				await new Promise(r => setTimeout(r, 80)); // 30ms → 80ms로 여유 확보
+			}
+
+			setDpMsg(`${ok}/${units.length} 선택 완료, 시작하기 대기 중...`, '#22c55e');
+
+			// ✅ 시작하기 버튼이 활성화될 때까지 폴링 (최대 3초)
+			const confirmBtn = await new Promise(resolve => {
+				const interval = setInterval(() => {
+					const btn = document.querySelector('[data-qk="remote-multiple-select-robot-dialog-confirm-button"]');
+					if (btn && !btn.disabled) { clearInterval(interval); resolve(btn); }
+				}, 100);
+				setTimeout(() => { clearInterval(interval); resolve(null); }, 3000);
+			});
+
+			if (confirmBtn) {
+				confirmBtn.click();
+				setDpMsg('완료! ✅', '#22c55e');
+			} else {
+				setDpMsg('시작하기 버튼을 직접 눌러주세요', '#f59e0b');
+			}
+		};
+
+		autoBtn.addEventListener('click', async () => {
+			const available = cells.filter(c => c.dataset.unit && c.dataset.done !== 'true');
+			const targets = available.slice(0, 6);
+			if (!targets.length) { setDpMsg('연결 가능한 기체 없음', '#f59e0b'); return; }
+			targets.forEach(cellSel);
+			selectedCells = [...targets];
+			// ← 모달이 없으면 사용자에게 안내
+			const modal = document.querySelector('[data-qk="remote-multiple-select-robot-dialog"]');
+			if (!modal) { 
+				setDpMsg('뉴비고에서 기체 선택 모달을 먼저 열어주세요', '#f59e0b'); 
+				return; 
+			}
+			await runAutoSelect(targets.map(c => c.dataset.unit), targets);
+		});
+
+		startBtn.addEventListener('click', async () => {
+			if (!selectedCells.length) return;
+			await runAutoSelect(selectedCells.map(c => c.dataset.unit), [...selectedCells]);
+		});
+
+		// ── 자동 Fetch (패널 열릴 때 1회) ──
+		setDpMsg('인계 데이터 확인 중...', '#3b82f6');
+		const result = await githubGet();
+		if (result && isDataValid(result.data.updatedAt)) {
+            const units = result.data.units || [];
+            if (units.length) {
+                renderGrid(units);
+                setDpMsg(`교대 기체 데이터 로드됨 (${result.data.handover_by || '?'} - ${units.length}대)`, '#22c55e');
+            } else {
+                setDpMsg('교대 기체 데이터가 없습니다', '#f59e0b');
+            }
+        } else if (result && result.data?.updatedAt) {
+            setDpMsg('이미 20분이 지난 데이터입니다', '#ef4444');
+        } else {
+            setDpMsg('교대 기체 데이터가 없습니다', '#f59e0b');
+        }
+
+        // ── 20분 만료 감시 (30초마다) ──
+        const expiryInterval = setInterval(() => {
+            if (panel.style.top !== '0px') return;       // 패널 닫혀있으면 스킵
+            if (!gridUnits.length) return;               // 로드된 데이터 없으면 스킵
+            if (!isDataValid(result?.data?.updatedAt)) {
+                cells.forEach(cellEmpty);
+                gridUnits = [];
+                setDpMsg('20분 초과, 기체 목록 만료됨', '#ef4444');
+                clearInterval(expiryInterval);
+            }
+        }, 30000);
+
+		// 패널 외부 클릭 시 닫기
+		document.addEventListener('mousedown', (e) => {
+			const p = document.getElementById('ho-remote-panel');
+			if (!p) return;
+			if (p.contains(e.target)) return;
+			if (e.target.closest('[data-qk="remote-multiple-select-robot-dialog"]')) return;
+			p.style.top = '-300px';
+		});
+	}
+	// ── 핸드오버 레이아웃 끝 ──────────────────────────────
+
+    /* ============================================================
+        SECTION 9. 전체 밝기 마스터 컨트롤
+        - remote/multiple 페이지에서 고정 표시
+        - 슬라이더 조작 시 모든 카메라 슬라이더에 동기화
+        - ⚠️  FIXME_SLIDER_SELECTOR: 내일 Elements 확인 후 수정
+       ============================================================ */
+
+    // ── 상수 ──────────────────────────────────────────────
+    // 내일 Elements에서 확인할 것:
+    //   1) 각 카메라 슬라이더의 input[type=range] selector
+    //   2) 슬라이더 값 범위 (min/max) 
+    //   3) CSS filter로 동작하는지 여부
+    const BRIGHTNESS = {
+        MIN: 20,
+        MAX: 100,
+        DEFAULT: 50,
+        STORAGE_KEY: 'neubie_brightness',
+    };
+
+	function applyBrightnessToAll(value) {
+		const brightnessVal = value / 50; // 20~100 → 0.0~2.0 (50이 기준 1.0)
+		document.querySelectorAll('video[data-qk="remote-multiple-front-cam"]').forEach(v => {
+			v.style.filter = `brightness(${brightnessVal})`;
+		});
+		localStorage.setItem(BRIGHTNESS.STORAGE_KEY, value);
+	}
+
+    // ── UI 생성 ───────────────────────────────────────────
+    function injectMasterBrightness() {
+        if (document.getElementById('neubie-brightness-bar')) return;
+
+        const savedVal = parseInt(localStorage.getItem(BRIGHTNESS.STORAGE_KEY) ?? BRIGHTNESS.DEFAULT);
+
+        const bar = document.createElement('div');
+        bar.id = 'neubie-brightness-bar';
+        Object.assign(bar.style, {
+            position: 'fixed',
+            // 기본 위치: 상단 중앙
+            top: '4px',
+            left: '60px',
+            zIndex: '2147483640',
+            background: 'rgba(15,15,15,0.75)',
+            backdropFilter: 'blur(8px)',
+            border: '1px solid rgba(255,255,255,0.13)',
+            borderRadius: '8px',
+            padding: '4px 8px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '5px',
+            boxShadow: '0 2px 12px rgba(0,0,0,0.4)',
+            fontFamily: 'Pretendard, sans-serif',
+            userSelect: 'none',
+        });
+
+        // ☀️ 아이콘
+        const icon = document.createElement('span');
+        icon.textContent = '☀️';
+        icon.style.cssText = 'font-size:14px; line-height:1;';
+
+        // 슬라이더
+        const slider = document.createElement('input');
+        slider.type = 'range';
+        slider.id = 'neubie-master-brightness';
+        slider.min = BRIGHTNESS.MIN;
+        slider.max = BRIGHTNESS.MAX;
+        slider.value = savedVal;
+        Object.assign(slider.style, {
+            width: '82px',
+            height: '4px',
+            accentColor: '#ffffff',
+            cursor: 'pointer',
+            outline: 'none',
+            border: 'none',
+            background: 'transparent',
+        });
+
+        // 숫자 표시
+        const label = document.createElement('span');
+        label.style.cssText = 'color:#fff; font-size:13px; font-weight:600; min-width:28px; text-align:right;';
+        label.textContent = savedVal;
+
+        slider.addEventListener('input', () => {
+            const v = slider.value;
+            label.textContent = v;
+            applyBrightnessToAll(v);
+        });
+
+        bar.appendChild(icon);
+        bar.appendChild(slider);
+        bar.appendChild(label);
+        document.body.appendChild(bar);
+
+        // 초기 1회 적용 (페이지 로드 시 기존 카메라에)
+        setTimeout(() => applyBrightnessToAll(savedVal), 800);
+    }
+
+    // ── multiple/driving 페이지 진입 시 자동 주입 / 이탈 시 제거 ──
+    function checkBrightnessBar() {
+		const enabled = localStorage.getItem('neubie_handover_enabled') !== 'false';
+		const bar = document.getElementById('neubie-brightness-bar');
+		if (isBrightnessPage() && !bar && enabled) {
+			injectMasterBrightness();
+		} else if ((!isBrightnessPage() || !enabled) && bar) {
+			bar.remove();
+		}
+	}
+
+    // URL 변경 감지 (기존 setInterval과 연동)
+    const _origCheckBrightness = checkBrightnessBar;
+    setInterval(_origCheckBrightness, 1500);
+    _origCheckBrightness(); // 최초 1회
+
     window.addEventListener('keydown', (e) => {
         if (e.altKey && e.code === 'KeyQ') {
-            e.preventDefault();
-            
-            const tipsOverlayEl = document.getElementById('neubie-tips-overlay');
-            const isAnyOpen = (dashboard.style.display === 'block' || 
-                            batteryPopup.style.display === 'block' ||
-                            (tipsOverlayEl && tipsOverlayEl.style.display === 'flex'));
-            
-            if (isAnyOpen) {
-                // 하나라도 열려있다면 통합 닫기 실행
-                closeAllPopups();
-            } else {
-                // 모두 닫혀있다면 대시보드 열기
-                renderDashboard();
-                dashboard.style.display = 'block';
-                syncTasksFromServer();
-            }
-        }
+			e.preventDefault();
+
+			// remote/multiple 페이지면 핸드오버 레이아웃
+			if (isHandoverPage() && localStorage.getItem('neubie_handover_enabled') !== 'false') {
+				const existing = document.getElementById('ho-remote-panel');
+				if (existing) {
+					const isOpen = existing.style.top === '0px';
+					existing.style.top = isOpen ? '-300px' : '0px';
+				} else {
+					initHandoverLayout();
+				}
+				return;
+			}
+
+			// 그 외 페이지는 기존 대시보드
+			const tipsOverlayEl = document.getElementById('neubie-tips-overlay');
+			const isAnyOpen = (dashboard.style.display === 'block' || 
+							batteryPopup.style.display === 'block' ||
+							(tipsOverlayEl && tipsOverlayEl.style.display === 'flex'));
+			
+			if (isAnyOpen) {
+				closeAllPopups();
+			} else {
+				renderDashboard();
+				dashboard.style.display = 'block';
+				syncTasksFromServer();
+			}
+		}
         
         // Alt + B (배터리) 단축키 로직
         if (e.altKey && e.code === 'KeyB') { 
             e.preventDefault(); 
-            toggleBattery(); 
+            toggleBattery();
+			const battBtnEl = document.getElementById('ho-batt-btn');
+			if (battBtnEl) {
+				const isOpen = batteryPopup.style.display === 'block';
+				battBtnEl.textContent = isOpen ? '배터리 닫기' : '성남 배터리';
+				battBtnEl.style.background = isOpen ? '#ef4444' : '#475569';
+			}
             if (dashboard.style.display === 'block') {
                 renderDashboard();
                 if (window.currentMyTasks && window.currentMyTasks.length > 0) {
@@ -1737,6 +2059,7 @@
             lastUrl = location.href;
             closeAllPopups();
             updateRobotContext();
+
             // 맵 최적화 페이지 전환 시 재적용
             const isTarget = config.targetIds.some(id => location.href.includes(`/monitoring/${id}`));
             if (isTarget && state.isMapOpt) {
@@ -1747,7 +2070,6 @@
         }
     }, 2000); // 2초 정도면 충분히 여유로움
 
-    document.addEventListener('click', handleControlClick, true);
     injectConfigUI();
     
     // 페이지 로드 시 이름이 설정되어 있다면 즉시 한 번 동기화
