@@ -821,16 +821,19 @@
                 position: fixed;
                 top: 64px; left: 50%;
                 transform: translateX(-50%);
-                background: rgba(220, 38, 38, 0.96);
+                background: rgba(234, 88, 12, 0.95);
                 color: white;
-                padding: 14px 32px;
+                padding: 12px 20px;
                 border-radius: 14px;
                 z-index: 2147483647;
                 font-family: Pretendard, sans-serif;
                 font-weight: bold;
-                font-size: 17px;
-                box-shadow: 0 6px 30px rgba(220,38,38,0.5);
-                border: 2px solid #fca5a5;
+                font-size: 15px;
+				max-width: 80vw;
+				white-space: normal;
+				word-break: keep-all;
+                box-shadow: 0 6px 30px rgba(234,88,12,0.4);
+				border: 2px solid #fdba74;
                 pointer-events: none;
                 text-align: center;
                 line-height: 1.6;
@@ -838,8 +841,8 @@
             `;
             document.body.appendChild(banner);
         }
-        const nameText = names.join(', ');
-        banner.innerHTML = `⚠️ <b>${nameText}</b>와(과) 중복 개입 중입니다`;
+        const nameText = names.join('\n');
+		banner.innerHTML = `⚠️ 중복 개입 감지<br><b style="font-size:14px;">${names.map(n => n).join('<br>')}</b>`;
 
         clearTimeout(banner._hideTimer);
         banner._hideTimer = setTimeout(() => {
@@ -1328,16 +1331,11 @@
                 queueInfoContent.id = 'neubie-queue-info-content';
                 queueInfoContent.style.cssText = `font-size:12px; line-height:1.8; color:#cbd5e1; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;`;
                 queueInfoContent.innerHTML = `
-                결정론적 순열 분산 시스템입니다.<br>
-                이전의 랜덤 5분할+지터 앞뒤 0.1 딜레이 방식은 결국 랜덤이라는 한계를 벗어나지 못했죠.<br>
-                이 방식은 현재 시각 기준 '가용 인원'을 산출해서 딜레이 등수를 고정합니다.<br>
-                가령 09:20에 휴무/연차/반차를 제외한 근무자가 총 8명이라면, 현 모니터링 인원을 제외한 나머지 7명에게 고정 등수가 배분됩니다.<br>
-                총 7명이니까 각각 1~7등까지 딜레이가 나뉘겠지요. 이 등수 배분은 각 2분마다 변동되며, 근무자 출퇴근 및 식사시간에 맞춰서 배분 그룹이 매번 바뀝니다.<br>
-                현재 '2분 슬롯 구간'에서 본인이 1등이라서 개입카드를 먼저 들어왔더라도, 이후 2분마다 변하는 등수는 예상할 길이 없습니다.<br>
-                배분할 인원이 적으면 적을 수록 최대 1.5초 중에서 딜레이 간격은 더 넓게 설정됩니다.<br>
-                즉, 이론적으로는 등수가 절대로 겹칠 수 없습니다. 이미 함수가 계산하는 순간 결정되니까요.<br>
-                이러한 근무자 그룹 배분은 각자 PC환경에서 동일한 계산으로 동일한 등수를 계산합니다.<br>
-                이 방법이 '서버 네트워크 문제'까지는 어떻게 하지 못합니다만, 적어도 클라이언트에서 할 수 있는 최대한의 해결책이라고 기대해봅니다.
+                모두를 만족시킬 수는 없는 법이죠.<br>
+				결정론적 순열 방식은 수학적으로는 절대 겹치지 않게 짜여졌지만<br>
+				모두가 사용해야한다는 점이 결국 장벽으로 작용하는군요.<br>
+				사람마다 사용환경과 취향이 다르다는 점을 고려하여 근본으로 돌아갑니다.<br>
+				'지금 내가 누구와 중복되었는가?'를 아는 것이라도 챙겨봅시다.<br>                
                 `;
 
                 queueInfoBox.appendChild(queueInfoClose);
@@ -2021,7 +2019,6 @@
         MAX: 100,
         DEFAULT: 50,
         STORAGE_KEY: 'neubie_brightness',
-        AUTO_KEY: 'neubie_brightness_auto',
     };
 
 	function applyBrightnessToAll(value) {
@@ -2030,19 +2027,6 @@
 			v.style.filter = `brightness(${brightnessVal})`;
 		});
 		localStorage.setItem(BRIGHTNESS.STORAGE_KEY, value);
-	}
-
-    function startBrightnessObserver(masterValue) {
-		const observer = new MutationObserver(() => {
-			const val = masterValue();
-			if (val === null) return;
-			const brightnessVal = val / 50;
-			document.querySelectorAll('video[data-qk="remote-multiple-front-cam"]').forEach(v => {
-				v.style.filter = `brightness(${brightnessVal})`;
-			});
-		});
-		observer.observe(document.body, { childList: true, subtree: true });
-		return observer;
 	}
 
     // ── UI 생성 ───────────────────────────────────────────
@@ -2099,37 +2083,6 @@
         label.style.cssText = 'color:#fff; font-size:13px; font-weight:600; min-width:28px; text-align:right;';
         label.textContent = savedVal;
 
-        let autoOn = localStorage.getItem(BRIGHTNESS.AUTO_KEY) === 'true';
-
-        const autoBtn = document.createElement('button');
-        autoBtn.textContent = 'Auto';
-        Object.assign(autoBtn.style, {
-            background: 'rgba(255,255,255,0.12)',
-            color: '#aaa',
-            border: '1px solid rgba(255,255,255,0.2)',
-            borderRadius: '999px',
-            padding: '3px 6px',
-            fontSize: '12px',
-            fontWeight: '700',
-            cursor: 'pointer',
-            flexShrink: '0',
-            transition: '0.2s',
-        });
-
-        if (autoOn) {
-            Object.assign(autoBtn.style, { background: '#22c55e', color: '#fff', border: '1px solid #22c55e' });
-        }
-
-        autoBtn.addEventListener('click', () => {
-            autoOn = !autoOn;
-            localStorage.setItem(BRIGHTNESS.AUTO_KEY, autoOn); // ← 추가
-            if (autoOn) {
-                Object.assign(autoBtn.style, { background: '#22c55e', color: '#fff', border: '1px solid #22c55e' });
-            } else {
-                Object.assign(autoBtn.style, { background: 'rgba(255,255,255,0.12)', color: '#aaa', border: '1px solid rgba(255,255,255,0.2)' });
-            }
-        });
-
         slider.addEventListener('input', () => {
             const v = slider.value;
             label.textContent = v;
@@ -2139,11 +2092,7 @@
         bar.appendChild(icon);
         bar.appendChild(slider);
         bar.appendChild(label);
-        bar.appendChild(autoBtn);
         document.body.appendChild(bar);
-
-        // MutationObserver로 나중에 추가되는 카메라에도 자동 적용
-        startBrightnessObserver(() => autoOn ? parseInt(slider.value) : null);
 
         // 초기 1회 적용 (페이지 로드 시 기존 카메라에)
         setTimeout(() => applyBrightnessToAll(savedVal), 800);
