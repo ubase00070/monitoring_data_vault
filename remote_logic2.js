@@ -2091,7 +2091,8 @@
 			menuBtnWasPressed = true;
 
 			// ▼ 게임패드 ON 상태일 때만 동작
-			const padOnBtn = document.querySelector('[data-qk="remote-robot-controller-game-pad-segmented-control-ON"]');
+			const padOnBtn = document.querySelector('[data-qk="remote-robot-controller-game-pad-segmented-control-ON"]')
+						  || document.querySelector('[data-qk="remote-robot-game-pad-segmented-control-ON"]');
 			const isGamepadOn = padOnBtn?.classList.contains('bg-white');
 			if (!isGamepadOn) return;
 			// ▲
