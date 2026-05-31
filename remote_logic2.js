@@ -2109,18 +2109,23 @@
 	            dpadWasPressed.up = false;
 	        }
 	        // D-pad right (15) — 맵 헤드 방향 일치
-	        const rightBtn = gp.buttons[15];
-	        if (rightBtn?.pressed && !dpadWasPressed.right) {
-	            dpadWasPressed.right = true;
-	            const btn = document.querySelector('[data-qk="location-robot-sync-button"]');
-	            if (btn) {
-	                const opts = { bubbles: true, cancelable: true, view: window };
-	                btn.dispatchEvent(new MouseEvent('mousedown', opts));
-	                btn.dispatchEvent(new MouseEvent('mouseup', opts));
-	                btn.dispatchEvent(new MouseEvent('click', opts));
-	            }
-	        } else if (!rightBtn?.pressed) {
-			    setTimeout(() => { dpadWasPressed.right = false; }, 200); // ← 200ms 후 리셋
+			const rightBtn = gp.buttons[15];
+			if (rightBtn?.pressed && !dpadWasPressed.right) {
+			    dpadWasPressed.right = true;
+			    const btn = document.querySelector('[data-qk="location-robot-sync-button"]');
+			    if (btn) {
+			        const opts = { bubbles: true, cancelable: true, view: window };
+			        btn.dispatchEvent(new MouseEvent('mousedown', opts));
+			        btn.dispatchEvent(new MouseEvent('mouseup', opts));
+			        btn.dispatchEvent(new MouseEvent('click', opts));
+			        setTimeout(() => {
+			            btn.dispatchEvent(new MouseEvent('mousedown', opts));
+			            btn.dispatchEvent(new MouseEvent('mouseup', opts));
+			            btn.dispatchEvent(new MouseEvent('click', opts));
+			        }, 150);
+			    }
+			} else if (!rightBtn?.pressed) {
+			    dpadWasPressed.right = false;
 			}
 	        // D-pad down (13) — 자동 긴급 정지 토글
 	        const downBtn = gp.buttons[13];
