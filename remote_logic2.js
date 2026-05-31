@@ -2120,8 +2120,8 @@
 	                btn.dispatchEvent(new MouseEvent('click', opts));
 	            }
 	        } else if (!rightBtn?.pressed) {
-	            dpadWasPressed.right = false;
-	        }
+			    setTimeout(() => { dpadWasPressed.right = false; }, 200); // ← 200ms 후 리셋
+			}
 	        // D-pad down (13) — 자동 긴급 정지 토글
 	        const downBtn = gp.buttons[13];
 	        if (downBtn?.pressed && !dpadWasPressed.down) {
