@@ -924,13 +924,16 @@
                 const patchItems = [
                     {
                         version: 'v1.1',
-                        date: '2026-05-30',
+                        date: '2026-05-31',
                         items: [
-                            '줄을 서시오 v2.0 폐기 -> 다중 관제 도우미 도입',
-                            '다중 카메라 밝기 한 번에 조절',
+							'게임패드 D-PAD(상, 우, 하) 기능 부여',
+							'D-PAD UP: 다음 개입 요청받기 ON/OFF',
+							'D-PAD RIGHT: 미니맵 기체헤드 방향으로 정렬',
+							'D-PAD DOWN: 자동 긴급 정지 ON/OFF',
+                            '다중 관제 기체 카메라 밝기 한 번에 조절',
 							'기체 카메라 위치 드래그로 변경',
-							'교대기체 자동으로 받기(6대까지만 / 테스트 중)',
-                            '중복 개입은 근본 해결이 불가하니 또다른 방법을 모색해보겠습니다.',
+							'교대기체 자동 받기(6대까지 / 테스트 중)',
+                            '줄을 서시오 폐기: 또다른 대책을 모색해보겠습니다.',
                         ]
                     },
                 ];
@@ -1227,15 +1230,15 @@
                 queueInfoContent.id = 'neubie-queue-info-content';
                 queueInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:#cbd5e1; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;`;
                 queueInfoContent.innerHTML = `
-				다중 관제 도우미 체크 시, 다중 관제 기체 카메라 밝기 한 번에 조절<br>
-				기체 위치 버튼 -> 드래그&드랍으로 기체 카메라 위치 자유자재 변경<br>
-				제 '모니터링 교대 도우미 v2.0' 사이트 이용 시 교대 기체 업로드 가능<br>
-				업로드된 교대 기체 받기(최근 20분까지만 유효) -> 자동 시작<br>
+				다중 관제 도우미 체크 -> 기체 카메라 밝기 한 번에 조절<br>
+				기체 위치 -> 드래그&드랍으로 카메라 위치 스왑<br>
+				저의 '모니터링 교대 도우미 v2.0' 사이트 이용 시 교대 기체 업로드 가능<br>
+				업로드된 교대 기체 받기(최근 20분까지의 데이터만 유효) -> 자동 시작(6대까지)<br>
 				'없으면 만들지 뭐'만 이용하더라도 교대 기체 받기는 가능<br>
 				<br>
-				줄을 서시오 v2.0의 경우 이론적으로는 겹치지 않게 짜여졌지만<br>
-				모두가 사용해야한다는 점이 결국 현실적 장벽으로 작용했습니다.<br>
-				사람마다 사용환경과 기호가 다르다는 점을 인정하고, 근본으로 돌아가서 재연구하겠습니다.<br>
+				줄을 서시오 v2.0의 경우 수학적으로는 겹치지 않게 짜여졌지만<br>
+				모두가 이걸 사용해야 효과를 볼 수 있다는 현실적 장벽에 부딪혔습니다.<br>
+				각자 사용환경과 기호가 다르다는 점을 인정하고, 근본으로 돌아가 재연구하겠습니다.<br>
                 `;
 
                 queueInfoBox.appendChild(queueInfoClose);
@@ -1771,7 +1774,7 @@
                 setDpMsg('교대 기체 데이터가 없습니다. 로드 먼저 해주세요', '#f59e0b');
                 return;
             }
-            const units = result.data.units || [];
+            const units = (result.data.units || []).slice(0, 6); // 최대 6대
             if (!units.length) { setDpMsg('기체 데이터 없음', '#94a3b8'); return; }
             await runAutoSelect(units, new Array(units.length).fill(null));
         });
@@ -1844,7 +1847,7 @@
 		if (result && isDataValid(result.data.updatedAt)) {
             const units = result.data.units || [];
             if (units.length) {
-                setDpMsg(`교대 기체 데이터 로드됨 (${result.data.handover_by || '?'} - ${units.length}대)`, '#22c55e');
+                setDpMsg(`교대 기체 로드됨 (${result.data.handover_by || '?'} - ${units.length}대)`, '#22c55e');
             } else {
                 setDpMsg('교대 기체 데이터가 없습니다', '#f59e0b');
             }
@@ -2078,6 +2081,52 @@
             }
         }
     }, 2000); // 2초 정도면 충분히 여유로움
+
+	// ── 게임패드 바인딩 ──
+    let dpadWasPressed = { up: false, right: false, down: false };
+    setInterval(() => {
+        const gp = navigator.getGamepads()[0];
+        if (!gp) return;
+        const isDrivingPage = location.href.includes('/remote/multiple/driving/') 
+                           || location.href.includes('/remote/robot/');
+        if (!isDrivingPage) return;
+
+        // 게임패드 ON 상태 확인
+        const padOnBtn = document.querySelector('[data-qk="remote-robot-controller-game-pad-segmented-control-ON"]')
+                      || document.querySelector('[data-qk="remote-robot-game-pad-segmented-control-ON"]');
+        const isGamepadOn = padOnBtn?.classList.contains('bg-white');
+        if (!isGamepadOn) {
+            dpadWasPressed = { up: false, right: false, down: false };
+            return;
+        }
+        // D-pad up (12) — 다음 개입 요청 받기 토글
+        const upBtn = gp.buttons[12];
+        if (upBtn?.pressed && !dpadWasPressed.up) {
+            dpadWasPressed.up = true;
+            const el = document.querySelector('[data-qk="auto-intervention-change-switch"]');
+            el?.querySelector('label')?.click() || el?.click();
+        } else if (!upBtn?.pressed) {
+            dpadWasPressed.up = false;
+        }
+        // D-pad right (15) — 맵 헤드 방향 일치
+        const rightBtn = gp.buttons[15];
+        if (rightBtn?.pressed && !dpadWasPressed.right) {
+            dpadWasPressed.right = true;
+            document.querySelector('[data-qk="location-robot-sync-button"]')?.click();
+        } else if (!rightBtn?.pressed) {
+            dpadWasPressed.right = false;
+        }
+        // D-pad down (13) — 자동 긴급 정지 토글
+        const downBtn = gp.buttons[13];
+        if (downBtn?.pressed && !dpadWasPressed.down) {
+            dpadWasPressed.down = true;
+            const el = document.querySelector('[data-qk="remote-robot-cam-adas-switch"]')
+                    || document.querySelector('[data-qk="driving-robot-cam-adas-switch"]');
+            el?.querySelector('label')?.click();
+        } else if (!downBtn?.pressed) {
+            dpadWasPressed.down = false;
+        }
+    }, 100);
 
     injectConfigUI();
     
