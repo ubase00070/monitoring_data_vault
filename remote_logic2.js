@@ -2122,7 +2122,7 @@
 			            btn.dispatchEvent(new MouseEvent('mousedown', opts));
 			            btn.dispatchEvent(new MouseEvent('mouseup', opts));
 			            btn.dispatchEvent(new MouseEvent('click', opts));
-			        }, 150);
+			        }, 400);
 			    }
 			} else if (!rightBtn?.pressed) {
 			    dpadWasPressed.right = false;
