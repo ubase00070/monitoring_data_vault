@@ -2083,50 +2083,72 @@
     }, 2000); // 2초 정도면 충분히 여유로움
 
 	// ── 게임패드 바인딩 ──
-    let dpadWasPressed = { up: false, right: false, down: false };
-    setInterval(() => {
-        const gp = navigator.getGamepads()[0];
-        if (!gp) return;
-        const isDrivingPage = location.href.includes('/remote/multiple/driving/') 
-                           || location.href.includes('/remote/robot/');
-        if (!isDrivingPage) return;
+	if (!window.neubieGamepadBound) {
+		window.neubieGamepadBound = true;
+		let dpadWasPressed = { up: false, right: false, down: false };
 
-        // 게임패드 ON 상태 확인
-        const padOnBtn = document.querySelector('[data-qk="remote-robot-controller-game-pad-segmented-control-ON"]')
-                      || document.querySelector('[data-qk="remote-robot-game-pad-segmented-control-ON"]');
-        const isGamepadOn = padOnBtn?.classList.contains('bg-white');
-        if (!isGamepadOn) {
-            dpadWasPressed = { up: false, right: false, down: false };
-            return;
-        }
-        // D-pad up (12) — 다음 개입 요청 받기 토글
-        const upBtn = gp.buttons[12];
-        if (upBtn?.pressed && !dpadWasPressed.up) {
-            dpadWasPressed.up = true;
-            const el = document.querySelector('[data-qk="auto-intervention-change-switch"]');
-            el?.querySelector('label')?.click() || el?.click();
-        } else if (!upBtn?.pressed) {
-            dpadWasPressed.up = false;
-        }
-        // D-pad right (15) — 맵 헤드 방향 일치
-        const rightBtn = gp.buttons[15];
-        if (rightBtn?.pressed && !dpadWasPressed.right) {
-            dpadWasPressed.right = true;
-            document.querySelector('[data-qk="location-robot-sync-button"]')?.click();
-        } else if (!rightBtn?.pressed) {
-            dpadWasPressed.right = false;
-        }
-        // D-pad down (13) — 자동 긴급 정지 토글
-        const downBtn = gp.buttons[13];
-        if (downBtn?.pressed && !dpadWasPressed.down) {
-            dpadWasPressed.down = true;
-            const el = document.querySelector('[data-qk="remote-robot-cam-adas-switch"]')
-                    || document.querySelector('[data-qk="driving-robot-cam-adas-switch"]');
-            el?.querySelector('label')?.click();
-        } else if (!downBtn?.pressed) {
-            dpadWasPressed.down = false;
-        }
-    }, 100);
+		// 맵 헤드 방향 일치 헬퍼
+		const syncMap = () => {
+			const btn = document.querySelector('[data-qk="location-robot-sync-button"]');
+			if (!btn) return;
+			const opts = { bubbles: true, cancelable: true, view: window };
+			btn.dispatchEvent(new MouseEvent('mousedown', opts));
+			btn.dispatchEvent(new MouseEvent('mouseup', opts));
+			btn.dispatchEvent(new MouseEvent('click', opts));
+			setTimeout(() => {
+				btn.dispatchEvent(new MouseEvent('mousedown', opts));
+				btn.dispatchEvent(new MouseEvent('mouseup', opts));
+				btn.dispatchEvent(new MouseEvent('click', opts));
+			}, 400);
+		};
+
+		setInterval(() => {
+			const gp = navigator.getGamepads()[0];
+			if (!gp) return;
+			const isDrivingPage = location.href.includes('/remote/multiple/driving/') 
+							   || location.href.includes('/remote/robot/');
+			if (!isDrivingPage) return;
+			const padOnBtn = document.querySelector('[data-qk="remote-robot-controller-game-pad-segmented-control-ON"]')
+						  || document.querySelector('[data-qk="remote-robot-game-pad-segmented-control-ON"]');
+			const isGamepadOn = padOnBtn?.classList.contains('bg-white');
+			if (!isGamepadOn) {
+				dpadWasPressed = { up: false, right: false, down: false };
+				return;
+			}
+
+			// D-pad up (12) — 다음 개입 요청 받기 토글 + 맵 재동기화
+			const upBtn = gp.buttons[12];
+			if (upBtn?.pressed && !dpadWasPressed.up) {
+				dpadWasPressed.up = true;
+				const el = document.querySelector('[data-qk="auto-intervention-change-switch"]');
+				el?.querySelector('label')?.click() || el?.click();
+				syncMap(); // ← 맵 재동기화
+			} else if (!upBtn?.pressed) {
+				dpadWasPressed.up = false;
+			}
+
+			// D-pad right (15) — 맵 헤드 방향 일치
+			const rightBtn = gp.buttons[15];
+			if (rightBtn?.pressed && !dpadWasPressed.right) {
+				dpadWasPressed.right = true;
+				syncMap();
+			} else if (!rightBtn?.pressed) {
+				dpadWasPressed.right = false;
+			}
+
+			// D-pad down (13) — 자동 긴급 정지 토글 + 맵 재동기화
+			const downBtn = gp.buttons[13];
+			if (downBtn?.pressed && !dpadWasPressed.down) {
+				dpadWasPressed.down = true;
+				const el = document.querySelector('[data-qk="remote-robot-cam-adas-switch"]')
+						|| document.querySelector('[data-qk="driving-robot-cam-adas-switch"]');
+				el?.querySelector('label')?.click();
+				syncMap(); // ← 맵 재동기화
+			} else if (!downBtn?.pressed) {
+				dpadWasPressed.down = false;
+			}
+		}, 100);
+	}
 
     injectConfigUI();
     
