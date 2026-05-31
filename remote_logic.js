@@ -248,7 +248,7 @@
         return el;
     }
 
-    const dashboard = createContainer('neubie-dashboard', '540px', '50%', '50%');
+    const dashboard = createContainer('neubie-dashboard', '580px', '50%', '50%');
     const batteryPopup = createContainer('neubie-battery-popup', '380px', '20px', 'auto', '20px');
 
     function makeDraggable(handleEl, targetEl) {
@@ -1947,7 +1947,7 @@
             cursor: 'pointer',
             outline: 'none',
             border: 'none',
-            background: 'transparent',
+            background: 'rgba(255,255,255,0.4)',
         });
 
         // 숫자 표시
