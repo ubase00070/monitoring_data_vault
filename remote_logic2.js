@@ -2081,6 +2081,25 @@
         }
     }, 2000); // 2초 정도면 충분히 여유로움
 
+	// ── 게임패드 긴급정지 해제 바인딩 (D-pad down) ──
+	let menuBtnWasPressed = false;
+	setInterval(() => {
+		const gp = navigator.getGamepads()[0];
+		if (!gp) return;
+		const menuBtn = gp.buttons[13]; // D-pad down
+		if (menuBtn?.pressed && !menuBtnWasPressed) {
+			menuBtnWasPressed = true;
+			const el = document.querySelector('[data-qk="remote-robot-cam-adas-switch"]') 
+					|| document.querySelector('[data-qk="driving-robot-cam-adas-switch"]');
+			if (el) {
+				const label = el.querySelector('label');
+				if (label) label.click();
+			}
+		} else if (!menuBtn?.pressed) {
+			menuBtnWasPressed = false;
+		}
+	}, 100);
+
     injectConfigUI();
     
     // 페이지 로드 시 이름이 설정되어 있다면 즉시 한 번 동기화
