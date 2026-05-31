@@ -1949,7 +1949,7 @@
             cursor: 'pointer',
             outline: 'none',
             border: 'none',
-            background: 'transparent',
+            background: 'rgba(255,255,255,0.4)',
         });
 
         // 숫자 표시
