@@ -1773,7 +1773,7 @@
                 setDpMsg('교대 기체 데이터가 없습니다. 로드 먼저 해주세요', '#f59e0b');
                 return;
             }
-            const units = result.data.units || [];
+            const units = (result.data.units || []).slice(0, 6); // 최대 6대
             if (!units.length) { setDpMsg('기체 데이터 없음', '#94a3b8'); return; }
             await runAutoSelect(units, new Array(units.length).fill(null));
         });
