@@ -2089,6 +2089,13 @@
 		const menuBtn = gp.buttons[13]; // D-pad down
 		if (menuBtn?.pressed && !menuBtnWasPressed) {
 			menuBtnWasPressed = true;
+
+			// ▼ 게임패드 ON 상태일 때만 동작
+			const padOnBtn = document.querySelector('[data-qk="remote-robot-controller-game-pad-segmented-control-ON"]');
+			const isGamepadOn = padOnBtn?.classList.contains('bg-white');
+			if (!isGamepadOn) return;
+			// ▲
+
 			const el = document.querySelector('[data-qk="remote-robot-cam-adas-switch"]') 
 					|| document.querySelector('[data-qk="driving-robot-cam-adas-switch"]');
 			if (el) {
