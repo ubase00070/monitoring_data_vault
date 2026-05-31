@@ -2113,10 +2113,7 @@
 			dpadWasPressed.right = true;
 			const btn = document.querySelector('[data-qk="location-robot-sync-button"]');
 			if (btn) {
-				const opts = { bubbles: true, cancelable: true, view: window };
-				btn.dispatchEvent(new MouseEvent('mousedown', opts));
-				btn.dispatchEvent(new MouseEvent('mouseup', opts));
-				btn.dispatchEvent(new MouseEvent('click', opts));
+				btn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window }));
 			}
 		} else if (!rightBtn?.pressed) {
 			dpadWasPressed.right = false;
