@@ -2084,95 +2084,101 @@
 
 	// ── 게임패드 바인딩 ──
 	if (!window.neubieGamepadBound) {
-		window.neubieGamepadBound = true;
-		let dpadWasPressed = { up: false, right: false, down: false, left: false };
-
-		// 맵 헤드 방향 일치 헬퍼
-		const syncMap = () => {
-			const btn = document.querySelector('[data-qk="location-robot-sync-button"]');
-			if (!btn) return;
-			const opts = { bubbles: true, cancelable: true, view: window };
-			btn.dispatchEvent(new MouseEvent('mousedown', opts));
-			btn.dispatchEvent(new MouseEvent('mouseup', opts));
-			btn.dispatchEvent(new MouseEvent('click', opts));
-			setTimeout(() => {
-				btn.dispatchEvent(new MouseEvent('mousedown', opts));
-				btn.dispatchEvent(new MouseEvent('mouseup', opts));
-				btn.dispatchEvent(new MouseEvent('click', opts));
-			}, 400);
-		};
-
-		// 밝기 조절 헬퍼
-		const changeBrightness = (direction) => {
-			const wrapper = document.querySelector('[data-qk="remote-robot-cam-brightness-select-select-wrapper"]');
-			wrapper?.click();
-			setTimeout(() => {
-				const options = [...document.querySelectorAll('[data-qk="remote-robot-cam-brightness-select-option"]')];
-				const currentVal = parseFloat(document.querySelector('[data-qk="remote-robot-cam-brightness-select"]')?.value || '1');
-				const currentIdx = options.findIndex(o => parseFloat(o.textContent.replace('밝기 ', '')) === currentVal);
-				const nextIdx = direction === 'up'
-					? Math.min(currentIdx + 1, options.length - 1)
-					: Math.max(currentIdx - 1, 0);
-				options[nextIdx]?.click();
-			}, 150);
-		};
-
-		setInterval(() => {
-			const gp = navigator.getGamepads()[0];
-			if (!gp) return;
-			const isDrivingPage = location.href.includes('/remote/multiple/driving/') 
-							   || location.href.includes('/remote/robot/');
-			if (!isDrivingPage) return;
-			const padOnBtn = document.querySelector('[data-qk="remote-robot-controller-game-pad-segmented-control-ON"]')
-						  || document.querySelector('[data-qk="remote-robot-game-pad-segmented-control-ON"]');
-			const isGamepadOn = padOnBtn?.classList.contains('bg-white');
-			if (!isGamepadOn) {
-				dpadWasPressed = { up: false, right: false, down: false, left: false };
-				return;
-			}
-
-			// D-pad up (12) — 다음 개입 요청 받기 토글 + 맵 재동기화
-			const upBtn = gp.buttons[12];
-			if (upBtn?.pressed && !dpadWasPressed.up) {
-				dpadWasPressed.up = true;
-				const el = document.querySelector('[data-qk="auto-intervention-change-switch"]');
-				el?.querySelector('label')?.click() || el?.click();
-				syncMap();
-			} else if (!upBtn?.pressed) {
-				dpadWasPressed.up = false;
-			}
-
-			// D-pad right (15) — 밝기 올리기
-			const rightBtn = gp.buttons[15];
-			if (rightBtn?.pressed && !dpadWasPressed.right) {
-				dpadWasPressed.right = true;
-				changeBrightness('up');
-			} else if (!rightBtn?.pressed) {
-				dpadWasPressed.right = false;
-			}
-
-			// D-pad down (13) — 자동 긴급 정지 토글 + 맵 재동기화
-			const downBtn = gp.buttons[13];
-			if (downBtn?.pressed && !dpadWasPressed.down) {
-				dpadWasPressed.down = true;
-				const el = document.querySelector('[data-qk="remote-robot-cam-adas-switch"]')
-						|| document.querySelector('[data-qk="driving-robot-cam-adas-switch"]');
-				el?.querySelector('label')?.click();
-				syncMap();
-			} else if (!downBtn?.pressed) {
-				dpadWasPressed.down = false;
-			}
-
-			// D-pad left (14) — 밝기 내리기
-			const leftBtn = gp.buttons[14];
-			if (leftBtn?.pressed && !dpadWasPressed.left) {
-				dpadWasPressed.left = true;
-				changeBrightness('down');
-			} else if (!leftBtn?.pressed) {
-				dpadWasPressed.left = false;
-			}
-
-		}, 100);
+	    window.neubieGamepadBound = true;
+	    let dpadWasPressed = { up: false, right: false, down: false, left: false };
+	
+	    // 맵 헤드 방향 일치 헬퍼
+	    const syncMap = () => {
+	        const btn = document.querySelector('[data-qk="location-robot-sync-button"]');
+	        if (!btn) return;
+	        const opts = { bubbles: true, cancelable: true, view: window };
+	        btn.dispatchEvent(new MouseEvent('mousedown', opts));
+	        btn.dispatchEvent(new MouseEvent('mouseup', opts));
+	        btn.dispatchEvent(new MouseEvent('click', opts));
+	        setTimeout(() => {
+	            btn.dispatchEvent(new MouseEvent('mousedown', opts));
+	            btn.dispatchEvent(new MouseEvent('mouseup', opts));
+	            btn.dispatchEvent(new MouseEvent('click', opts));
+	        }, 400);
+	    };
+	
+	    // 밝기 조절 헬퍼 (개입카드/일반 페이지 모두 커버 + 맵 재동기화)
+	    const changeBrightness = (direction) => {
+	        const wrapper = document.querySelector('[data-qk="remote-robot-cam-brightness-select-select-wrapper"]')
+	                     || document.querySelector('[data-qk="driving-robot-cam-brightness-select-select-wrapper"]');
+	        const input = document.querySelector('[data-qk="remote-robot-cam-brightness-select"]')
+	                   || document.querySelector('[data-qk="driving-robot-cam-brightness-select"]');
+	        wrapper?.click();
+	        setTimeout(() => {
+	            const options = [...document.querySelectorAll(
+	                '[data-qk="remote-robot-cam-brightness-select-option"], [data-qk="driving-robot-cam-brightness-select-option"]'
+	            )];
+	            const currentVal = parseFloat(input?.value || '1');
+	            const currentIdx = options.findIndex(o => parseFloat(o.textContent.replace('밝기 ', '')) === currentVal);
+	            const nextIdx = direction === 'up'
+	                ? Math.min(currentIdx + 1, options.length - 1)
+	                : Math.max(currentIdx - 1, 0);
+	            options[nextIdx]?.click();
+	            syncMap(); // ← 밝기 조절 후 맵 재동기화
+	        }, 150);
+	    };
+	
+	    setInterval(() => {
+	        const gp = navigator.getGamepads()[0];
+	        if (!gp) return;
+	        const isDrivingPage = location.href.includes('/remote/multiple/driving/')
+	                           || location.href.includes('/remote/robot/');
+	        if (!isDrivingPage) return;
+	        const padOnBtn = document.querySelector('[data-qk="remote-robot-controller-game-pad-segmented-control-ON"]')
+	                      || document.querySelector('[data-qk="remote-robot-game-pad-segmented-control-ON"]');
+	        const isGamepadOn = padOnBtn?.classList.contains('bg-white');
+	        if (!isGamepadOn) {
+	            dpadWasPressed = { up: false, right: false, down: false, left: false };
+	            return;
+	        }
+	
+	        // D-pad up (12) — 다음 개입 요청 받기 토글 + 맵 재동기화
+	        const upBtn = gp.buttons[12];
+	        if (upBtn?.pressed && !dpadWasPressed.up) {
+	            dpadWasPressed.up = true;
+	            const el = document.querySelector('[data-qk="auto-intervention-change-switch"]');
+	            el?.querySelector('label')?.click() || el?.click();
+	            syncMap();
+	        } else if (!upBtn?.pressed) {
+	            dpadWasPressed.up = false;
+	        }
+	
+	        // D-pad right (15) — 밝기 올리기 + 맵 재동기화
+	        const rightBtn = gp.buttons[15];
+	        if (rightBtn?.pressed && !dpadWasPressed.right) {
+	            dpadWasPressed.right = true;
+	            changeBrightness('up');
+	        } else if (!rightBtn?.pressed) {
+	            dpadWasPressed.right = false;
+	        }
+	
+	        // D-pad down (13) — 자동 긴급 정지 토글 + 맵 재동기화
+	        const downBtn = gp.buttons[13];
+	        if (downBtn?.pressed && !dpadWasPressed.down) {
+	            dpadWasPressed.down = true;
+	            const el = document.querySelector('[data-qk="remote-robot-cam-adas-switch"]')
+	                    || document.querySelector('[data-qk="driving-robot-cam-adas-switch"]');
+	            el?.querySelector('label')?.click();
+	            syncMap();
+	        } else if (!downBtn?.pressed) {
+	            dpadWasPressed.down = false;
+	        }
+	
+	        // D-pad left (14) — 밝기 내리기 + 맵 재동기화
+	        const leftBtn = gp.buttons[14];
+	        if (leftBtn?.pressed && !dpadWasPressed.left) {
+	            dpadWasPressed.left = true;
+	            changeBrightness('down');
+	        } else if (!leftBtn?.pressed) {
+	            dpadWasPressed.left = false;
+	        }
+	
+	    }, 100);
 	}
 
     injectConfigUI();
