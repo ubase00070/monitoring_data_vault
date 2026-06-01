@@ -926,15 +926,15 @@
                         version: 'v1.1',
                         date: '2026-06-01',
                         items: [
-							'게임패드 D-PAD(상, 우, 하) 기능 부여',
+							'게임패드 D-PAD(상하좌우) 기능 부여',
 							'D-PAD UP: 다음 개입 요청받기 ON/OFF',
 							'D-PAD DOWN: 자동 긴급 정지 ON/OFF',
 							'D-PAD LEFT: 카메라 밝기 내리기',
 							'D-PAD RIGHT: 카메라 밝기 올리기',
-                            '다중 관제 시 기체 카메라 밝기 한 번에 조절',
+                            '다중 관제화면에서 기체 밝기 한 번에 조절',
 							'기체 카메라 위치 드래그로 변경',
-							'교대기체 자동 받기(6대까지 / 테스트 중)',
-                            '줄을 서시오 폐기: 또다른 대책을 모색해보겠습니다.',
+							'교대기체 자동 받기(6대까지만 / 12대는 테스트 중)',
+                            '줄을 서시오 폐기: 또다른 대책을 강구해보겠습니다.',
                         ]
                     },
                 ];
@@ -1231,8 +1231,8 @@
                 queueInfoContent.id = 'neubie-queue-info-content';
                 queueInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:#cbd5e1; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;`;
                 queueInfoContent.innerHTML = `
-				다중 관제 도우미 체크 -> 기체 카메라 밝기 한 번에 조절<br>
-				기체 위치 -> 드래그&드랍으로 카메라 위치 스왑<br>
+				다중 관제 도우미 체크: 기체 카메라 밝기 한 번에 조절<br>
+				기체 카메라 위치 드래그&드랍으로 카메라 위치 스왑<br>
 				저의 '모니터링 교대 도우미 v2.0' 사이트 이용 시 교대 기체 업로드 가능<br>
 				업로드된 교대 기체 받기(최근 20분까지의 데이터만 유효) -> 자동 시작(6대까지)<br>
 				'없으면 만들지 뭐'만 이용하더라도 교대 기체 받기는 가능<br>
