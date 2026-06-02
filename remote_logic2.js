@@ -12,12 +12,14 @@
        ============================================================ */
     const isHandoverPage = () =>
         (location.href.includes('go.neubie.ai/ko/remote/multiple') &&
-        !location.href.includes('/driving'));
+        !location.href.includes('/driving')) ||
+        location.href.includes('multimonitoring.vercel.app');
 
     // 밝기바를 표시할 페이지 조건 (multiple + driving 모두 포함)
     const isBrightnessPage = () =>
         (location.href.includes('go.neubie.ai/ko/remote/multiple') &&
-        !location.href.includes('/driving'));
+        !location.href.includes('/driving')) ||
+        location.href.includes('multimonitoring.vercel.app');
     
        const config = {
         targetIds: ['44', '56', '65', '109'],
@@ -1269,18 +1271,18 @@
 
         // 3. 스케쥴 비교표/최적화 팁 + 배터리 현황 (반반 2열)
         const bottomRow = document.createElement('div');
-        bottomRow.style.cssText = "display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;";
+        bottomRow.style.cssText = "display:flex; gap:8px; align-items:center; flex-wrap:wrap;";
 
         // 3-0. 스케줄 비교 카드
         const scheduleCard = document.createElement('div');
-        scheduleCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333; display:flex; justify-content:space-between; align-items:center; cursor:pointer;";
+        scheduleCard.style.cssText = "background:#252525; padding:5px 10px; border-radius:8px; border:1px solid #333; cursor:pointer; display:inline-flex; align-items:center;";
         scheduleCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">📅 스케줄 비교</div>`;
         scheduleCard.onclick = () => openScheduleOverlay();
         bottomRow.appendChild(scheduleCard);
 
         // 3-1. 최적화 팁 (좌측)
         const tipsCard = document.createElement('div');
-        tipsCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333; cursor:pointer;";
+        tipsCard.style.cssText = "background:#252525; padding:5px 10px; border-radius:8px; border:1px solid #333; cursor:pointer; display:inline-flex; align-items:center; white-space:nowrap;";
         tipsCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">💡 최적화 팁</div>`;
         const tipsOpenBtn = document.createElement('button');
         tipsOpenBtn.textContent = '열기';
@@ -2010,7 +2012,7 @@
 				return;
 			}
 
-            function openScheduleOverlay() {
+            window.openScheduleOverlay = function() {
             const SCHEDULE_URL = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/schedule_for_mobile.json';
             const SEAT_MAP = [
                 ['서형민','김가은','박효빈','신지섭','한승완','안대관/이준','최정기/석승찬','차현모/최성환','김용욱'],
