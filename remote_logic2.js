@@ -2066,10 +2066,10 @@
             box.innerHTML = `
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
                 <div style="display:flex;align-items:center;gap:8px;">
-                    <span style="font-size:1rem;font-weight:700;color:#4f8ef7;">🏢 뉴빌리티 스케쥴표</span>
-                    <span id="nso-status" style="font-size:.68rem;color:#94a3b8;">로딩 중...</span>
+                    <span style="font-size:20px;font-weight:700;color:#4f8ef7;">🏢 뉴빌리티 스케쥴표</span>
+                    <span id="nso-status" style="font-size:14px;color:#94a3b8;">로딩 중...</span>
                     <span id="nso-dot" style="width:7px;height:7px;border-radius:50%;background:#eab308;display:inline-block;"></span>
-                    <span id="nso-updated" style="font-size:.65rem;color:#64748b;"></span>
+                    <span id="nso-updated" style="font-size:14px;color:#64748b;"></span>
                 </div>
                 <button id="nso-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#22263a;color:#94a3b8;font-size:1rem;cursor:pointer;">✕</button>
                 </div>
@@ -2077,29 +2077,29 @@
                 <!-- 달력 -->
                 <div style="margin-bottom:120px;background:rgba(15,17,23,.3);border-radius:12px;padding:12px;backdrop-filter:blur(4px)">
                 <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:10px">
-                    <button id="nso-prev" style="width:28px;height:28px;border:1px solid #2e3347;border-radius:5px;background:#22263a;color:#94a3b8;font-size:.9rem;cursor:pointer;">◀</button>
-                    <div id="nso-cal-title" style="font-size:.9rem;font-weight:700;color:#e2e8f0;">로딩 중...</div>
-                    <button id="nso-next" style="width:28px;height:28px;border:1px solid #2e3347;border-radius:5px;background:#22263a;color:#94a3b8;font-size:.9rem;cursor:pointer;">▶</button>
+                    <button id="nso-prev" style="width:28px;height:28px;border:1px solid #2e3347;border-radius:5px;background:#22263a;color:#94a3b8;font-size:14px;cursor:pointer;">◀</button>
+                    <div id="nso-cal-title" style="font-size:16px;font-weight:700;color:#e2e8f0;">로딩 중...</div>
+                    <button id="nso-next" style="width:28px;height:28px;border:1px solid #2e3347;border-radius:5px;background:#22263a;color:#94a3b8;font-size:14px;cursor:pointer;">▶</button>
                 </div>
                 <div id="nso-cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;"></div>
                 </div>
 
                 <!-- 검색 패널 (하단 고정) -->
                 <div style="position:sticky;bottom:0;background:#1a1d27;border:1px solid #2e3347;border-radius:9px;padding:12px 14px;margin-top:12px;">
-                <div style="font-size:.78rem;color:#94a3b8;margin-bottom:9px;">👥 스케줄 비교</div>
+                <div style="font-size:14px;color:#94a3b8;margin-bottom:9px;">👥 스케줄 비교</div>
                 <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-                    <div style="position:relative;flex:1;min-width:80px;">
-                    <label style="position:absolute;top:-8px;left:7px;font-size:.65rem;padding:0 3px;background:#1a1d27;border-radius:3px;font-weight:700;color:#f97316;">직원 1</label>
+                    <div style="position:relative;flex:1;min-width:60px;">
+                    <label style="position:absolute;top:-8px;left:7px;font-size:12px;padding:0 3px;background:#1a1d27;border-radius:3px;font-weight:700;color:#f97316;">직원 1</label>
                     <input id="nso-name1" type="text" placeholder="이름..." autocomplete="off"
-                        style="width:100%;background:#0f1117;border:1.5px solid #2e3347;border-radius:5px;padding:8px 10px;color:#e2e8f0;font-size:.82rem;"/>
+                        style="width:100%;background:#0f1117;border:1.5px solid #2e3347;border-radius:5px;padding:8px 10px;color:#e2e8f0;font-size:14px;"/>
                     </div>
                     <div style="position:relative;flex:1;min-width:0;">
-                    <label style="position:absolute;top:-8px;left:7px;font-size:.65rem;padding:0 3px;background:#1a1d27;border-radius:3px;font-weight:700;color:#a855f7;">직원 2</label>
+                    <label style="position:absolute;top:-8px;left:7px;font-size:12px;padding:0 3px;background:#1a1d27;border-radius:3px;font-weight:700;color:#a855f7;">직원 2</label>
                     <input id="nso-name2" type="text" placeholder="이름..." autocomplete="off"
-                        style="width:100%;background:#0f1117;border:1.5px solid #2e3347;border-radius:5px;padding:8px 10px;color:#e2e8f0;font-size:.82rem;"/>
+                        style="width:100%;background:#0f1117;border:1.5px solid #2e3347;border-radius:5px;padding:8px 10px;color:#e2e8f0;font-size:14px;"/>
                     </div>
-                    <button id="nso-compare" style="padding:6px 14px;border:none;border-radius:5px;cursor:pointer;font-size:.76rem;font-weight:600;background:#4f8ef7;color:#fff;">비교</button>
-                    <button id="nso-clear" style="padding:6px 14px;border:none;border-radius:5px;cursor:pointer;font-size:.76rem;font-weight:600;background:#22263a;color:#94a3b8;border:1px solid #2e3347;">초기화</button>
+                    <button id="nso-compare" style="padding:6px 14px;border:none;border-radius:5px;cursor:pointer;font-size:14px;font-weight:600;background:#4f8ef7;color:#fff;">비교</button>
+                    <button id="nso-clear" style="padding:6px 14px;border:none;border-radius:5px;cursor:pointer;font-size:14px;font-weight:600;background:#22263a;color:#94a3b8;border:1px solid #2e3347;">초기화</button>
                 </div>
                 <div id="nso-overlap" style="font-size:.73rem;color:#94a3b8;padding:5px 10px;background:#22263a;border-radius:5px;margin-top:7px;display:none;"></div>
                 </div>
@@ -2108,9 +2108,9 @@
                 <div id="nso-seat-modal" style="position:fixed;inset:0;background:transparent;display:flex;align-items:center;justify-content:center;z-index:2147483647;backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:opacity .18s;">
                 <div style="background:#1a1d27;border:1px solid #2e3347;border-radius:12px;padding:18px;width:min(96vw,720px);max-height:92vh;overflow-y:auto;">
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-                    <div style="font-size:.88rem;font-weight:700;">🪑 좌석 배치 — <span id="nso-seat-date" style="color:#4f8ef7;"></span></div>
+                    <div style="font-size:16px;font-weight:700;">🪑 좌석 배치 — <span id="nso-seat-date" style="color:#4f8ef7;"></span></div>
                     </div>
-                    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:11px;font-size:.7rem;color:#94a3b8;">
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:11px;font-size:14px;color:#94a3b8;">
                     <span><span style="width:8px;height:8px;border-radius:2px;background:#22c55e;display:inline-block;margin-right:3px;"></span>출근</span>
                     <span><span style="width:8px;height:8px;border-radius:2px;background:#eab308;display:inline-block;margin-right:3px;"></span>반차/반반차</span>
                     <span><span style="width:8px;height:8px;border-radius:2px;background:#22263a;border:1px solid #2e3347;display:inline-block;margin-right:3px;"></span>미출근</span>
@@ -2140,7 +2140,7 @@
                 grid.innerHTML='';
                 DOW.forEach((d,i)=>{
                 const el=document.createElement('div');
-                el.style.cssText=`text-align:center;font-size:.66rem;font-weight:600;padding:4px 0;color:${DOW_CLS[i]};background:rgba(15,17,23,.7);border-radius:3px;`;
+                el.style.cssText=`text-align:center;font-size:14px;font-weight:600;padding:4px 0;color:${DOW_CLS[i]};background:rgba(15,17,23,.7);border-radius:3px;`;
                 el.textContent=d; grid.appendChild(el);
                 });
                 const firstDow=new Date(year,m0-1,1).getDay();
@@ -2155,14 +2155,14 @@
                 const el=document.createElement('div');
                 el.style.cssText=`background:#1a1d27;border:1px solid ${isToday?'#4f8ef7':'#2e3347'};border-radius:6px;padding:5px 4px;min-height:70px;cursor:pointer;transition:all .12s;position:relative;`;
                 const numEl=document.createElement('div');
-                numEl.style.cssText=`font-size:.66rem;font-weight:600;color:${dow===0?'#f87171':dow===6?'#60a5fa':isToday?'#4f8ef7':'#64748b'};margin-bottom:3px;`;
+                numEl.style.cssText=`font-size:13px;font-weight:600;color:${dow===0?'#f87171':dow===6?'#60a5fa':isToday?'#4f8ef7':'#64748b'};margin-bottom:3px;`;
                 numEl.textContent=d; el.appendChild(numEl);
                 if(info){
                     const {d1,d2,w1,w2}=info;
                     if(w1){
                     const b=document.createElement('div');
                     const st=d1?.status||'work';
-                    b.style.cssText=`font-size:.6rem;border-radius:3px;padding:1px 4px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4;background:rgba(249,115,22,.18);color:#f97316;${st==='half'||st==='half-half'?'border:1px dashed #f97316;':''}${st==='annual'||st==='public'||st==='off'?'background:transparent;text-decoration:line-through;color:#64748b;':''}`;
+                    b.style.cssText=`font-size:13px;border-radius:3px;padding:1px 4px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4;background:rgba(249,115,22,.18);color:#f97316;${st==='half'||st==='half-half'?'border:1px dashed #f97316;':''}${st==='annual'||st==='public'||st==='off'?'background:transparent;text-decoration:line-through;color:#64748b;':''}`;
                     const n1v=box.querySelector('#nso-name1').value.trim();
                     b.textContent=st==='half'?`${n1v}(반차)`:st==='half-half'?`${n1v}(반반차)`:st==='annual'?`${n1v}(연차)`:st==='public'?`${n1v}(공가)`:n1v;
                     el.appendChild(b);
@@ -2268,21 +2268,21 @@
                         const sp=document.createElement('div');
                         sp.style.cssText='display:flex;flex-direction:column;align-items:center;';
                         const ne=document.createElement('div');
-                        ne.style.cssText=`font-size:.63rem;line-height:1.25;font-weight:700;color:${w?(isHalf?'#eab308':'#22c55e'):'#64748b'};`;
+                        ne.style.cssText=`font-size:14px;line-height:1.25;font-weight:700;color:${w?(isHalf?'#eab308':'#22c55e'):'#64748b'};`;
                         ne.textContent=name; sp.appendChild(ne);
                         if(leaveMap[name]){
                         const bd=document.createElement('div');
-                        bd.style.cssText='font-size:.48rem;border-radius:2px;padding:0 3px;margin-top:1px;font-weight:700;background:rgba(234,179,8,.25);color:#eab308;';
+                        bd.style.cssText='font-size:12px;border-radius:2px;padding:0 3px;margin-top:1px;font-weight:700;background:rgba(234,179,8,.25);color:#eab308;';
                         bd.textContent=leaveMap[name]==='annual'?'연차':'공가'; sp.appendChild(bd);
                         }
                         if(w&&(w.status==='half'||w.status==='half-half')){
                         const bd=document.createElement('div');
-                        bd.style.cssText='font-size:.48rem;border-radius:2px;padding:0 3px;margin-top:1px;font-weight:700;background:rgba(234,179,8,.25);color:#eab308;';
+                        bd.style.cssText='font-size:12px;border-radius:2px;padding:0 3px;margin-top:1px;font-weight:700;background:rgba(234,179,8,.25);color:#eab308;';
                         bd.textContent=w.status==='half'?'반차':'반반차'; sp.appendChild(bd);
                         }
                         if(w){
                         const te=document.createElement('div');
-                        te.style.cssText=`font-size:.54rem;color:${isHalf?'rgba(234,179,8,.75)':'rgba(34,197,94,.65)'};line-height:1.2;margin-top:1px;`;
+                        te.style.cssText=`font-size:12px;color:${isHalf?'rgba(234,179,8,.75)':'rgba(34,197,94,.65)'};line-height:1.2;margin-top:1px;`;
                         te.textContent=w.workTime||w.shiftType||''; sp.appendChild(te);
                         }
                         sd.appendChild(sp);
@@ -2318,7 +2318,7 @@
                     el.addEventListener('mouseenter', ev=>{
                     let tip=document.getElementById('nso-tooltip');
                     if(!tip){ tip=document.createElement('div'); tip.id='nso-tooltip';
-                        tip.style.cssText='position:fixed;background:#1a1d27;border:1px solid #2e3347;border-radius:7px;padding:9px 12px;font-size:.72rem;z-index:2147483647;pointer-events:none;max-width:210px;line-height:1.55;box-shadow:0 4px 24px rgba(0,0,0,.45);';
+                        tip.style.cssText='position:fixed;background:#1a1d27;border:1px solid #2e3347;border-radius:7px;padding:9px 12px;font-size:12px;z-index:2147483647;pointer-events:none;max-width:210px;line-height:1.55;box-shadow:0 4px 24px rgba(0,0,0,.45);';
                         document.body.appendChild(tip);
                     }
                     let html='';
