@@ -2093,7 +2093,7 @@
                     <input id="nso-name1" type="text" placeholder="이름..." autocomplete="off"
                         style="width:100%;background:#0f1117;border:1.5px solid #2e3347;border-radius:5px;padding:8px 10px;color:#e2e8f0;font-size:.82rem;"/>
                     </div>
-                    <div style="position:relative;flex:1;min-width:130px;">
+                    <div style="position:relative;flex:1;min-width:0;">
                     <label style="position:absolute;top:-8px;left:7px;font-size:.65rem;padding:0 3px;background:#1a1d27;border-radius:3px;font-weight:700;color:#a855f7;">직원 2</label>
                     <input id="nso-name2" type="text" placeholder="이름..." autocomplete="off"
                         style="width:100%;background:#0f1117;border:1.5px solid #2e3347;border-radius:5px;padding:8px 10px;color:#e2e8f0;font-size:.82rem;"/>
