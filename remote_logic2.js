@@ -1269,14 +1269,16 @@
 
         // 3. 스케쥴 비교표/최적화 팁 + 배터리 현황 (반반 2열)
         const bottomRow = document.createElement('div');
-        bottomRow.style.cssText = "display:flex; gap:8px; align-items:center; flex-wrap:wrap;";
+        bottomRow.style.cssText = "display:grid; grid-template-columns:1fr 1fr; gap:8px;";
 
         // 3-0. 스케줄 비교 카드
         const scheduleCard = document.createElement('div');
         scheduleCard.style.cssText = "background:#252525; padding:5px 10px; border-radius:8px; border:1px solid #333; cursor:pointer; display:inline-flex; align-items:center;";
         scheduleCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">📅 스케줄 비교</div>`;
         scheduleCard.onclick = () => openScheduleOverlay();
-        bottomRow.appendChild(scheduleCard);
+        const leftCol = document.createElement('div');
+        leftCol.style.cssText = "display:grid; grid-template-rows:1fr 1fr; gap:8px;";
+        leftCol.appendChild(scheduleCard);
 
         // 3-1. 최적화 팁 (좌측)
         const tipsCard = document.createElement('div');
@@ -1370,7 +1372,8 @@
             }
         };
         tipsCard.onclick = () => tipsOpenBtn.onclick();
-        bottomRow.appendChild(tipsCard);
+        leftCol.appendChild(tipsCard);
+        bottomRow.appendChild(leftCol);
 
         // 3-2. 배터리 현황 (우측)
         const isBatteryOpen = batteryPopup.style.display === 'block';
@@ -2029,7 +2032,7 @@
             overlay.id = 'neubie-schedule-overlay';
             overlay.style.cssText = `
                 position:fixed; inset:0; z-index:2147483646;
-                background:rgba(0,0,0,0.75);
+                background:transparent;
                 display:flex; align-items:center; justify-content:center;
                 font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;
             `;
@@ -2085,7 +2088,7 @@
                 <div style="position:sticky;bottom:0;background:#1a1d27;border:1px solid #2e3347;border-radius:9px;padding:12px 14px;margin-top:12px;">
                 <div style="font-size:.78rem;color:#94a3b8;margin-bottom:9px;">👥 스케줄 비교</div>
                 <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-                    <div style="position:relative;flex:1;min-width:130px;">
+                    <div style="position:relative;flex:1;min-width:80px;">
                     <label style="position:absolute;top:-8px;left:7px;font-size:.65rem;padding:0 3px;background:#1a1d27;border-radius:3px;font-weight:700;color:#f97316;">직원 1</label>
                     <input id="nso-name1" type="text" placeholder="이름..." autocomplete="off"
                         style="width:100%;background:#0f1117;border:1.5px solid #2e3347;border-radius:5px;padding:8px 10px;color:#e2e8f0;font-size:.82rem;"/>
@@ -2102,11 +2105,10 @@
                 </div>
 
                 <!-- 좌석 모달 -->
-                <div id="nso-seat-modal" style="position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:2147483647;backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:opacity .18s;">
+                <div id="nso-seat-modal" style="position:fixed;inset:0;background:transparent;display:flex;align-items:center;justify-content:center;z-index:2147483647;backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:opacity .18s;">
                 <div style="background:#1a1d27;border:1px solid #2e3347;border-radius:12px;padding:18px;width:min(96vw,720px);max-height:92vh;overflow-y:auto;">
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
                     <div style="font-size:.88rem;font-weight:700;">🪑 좌석 배치 — <span id="nso-seat-date" style="color:#4f8ef7;"></span></div>
-                    <button id="nso-seat-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#22263a;color:#94a3b8;font-size:.95rem;cursor:pointer;">✕</button>
                     </div>
                     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:11px;font-size:.7rem;color:#94a3b8;">
                     <span><span style="width:8px;height:8px;border-radius:2px;background:#22c55e;display:inline-block;margin-right:3px;"></span>출근</span>
@@ -2212,7 +2214,10 @@
             // 좌석 배치
             function openSeat(dateLabel){
                 if(!scheduleData) return;
-                const modal=box.querySelector('#nso-seat-modal');
+                const modal = box.querySelector('#nso-seat-modal');
+                modal.addEventListener('click', () => {
+                  modal.style.opacity='0'; modal.style.pointerEvents='none';
+                });
                 if(!modal) return;
                 box.querySelector('#nso-seat-date').textContent=dateLabel;
                 const pw=scheduleData.staff
@@ -2343,10 +2348,10 @@
 
             // 이벤트 바인딩
             box.querySelector('#nso-close').onclick = () => overlay.style.display='none';
-            box.querySelector('#nso-seat-close').onclick = () => {
-                const m=box.querySelector('#nso-seat-modal');
-                if(m){ m.style.opacity='0'; m.style.pointerEvents='none'; }
-            };
+            box.querySelector('#nso-seat-modal').addEventListener('click', () => {
+              const m=box.querySelector('#nso-seat-modal');
+              if(m){ m.style.opacity='0'; m.style.pointerEvents='none'; }
+            });
             box.querySelector('#nso-prev').onclick = () => {
                 if(!currentMonthKey) return;
                 const [y,m]=currentMonthKey.split('-').map(Number);
