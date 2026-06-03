@@ -1374,7 +1374,7 @@
         // 3-2. 배터리 현황 (우측)
         const isBatteryOpen = batteryPopup.style.display === 'block';
         const batteryCard = document.createElement('div');
-        batteryCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333; display:flex; justify-content:space-between; align-items:center; grid-row: span 2;";
+        batteryCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333; display:flex; justify-content:space-between; align-items:center;";
         batteryCard.innerHTML = `
             <div style="flex:1;">
                 <div style="font-weight:bold; font-size:15px; margin-bottom:3px;">🔋 성남 배터리 현황</div>
@@ -1389,10 +1389,16 @@
                 renderTaskList(window.currentMyTasks);
             }
         };
+
+        const reservedCard = document.createElement('div');
+        reservedCard.style.cssText = "background:#1a1a1a; padding:8px 12px; border-radius:15px; border:1px dashed #333;";
+        reservedCard.innerHTML = `<div style="font-size:15px;color:#444;">Hello, World!</div>`;
+
         batteryCard.appendChild(batteryBtn);
         bottomRow.appendChild(scheduleCard);
         bottomRow.appendChild(batteryCard);
         bottomRow.appendChild(tipsCard);
+        bottomRow.appendChild(reservedCard);
 
         list.appendChild(bottomRow);
 
@@ -2022,7 +2028,7 @@
             let SEAT_MAP = null;
             const seatRes = await fetch('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/seat_map.json?t='+Date.now());
             SEAT_MAP = await seatRes.json();
-			const PARTITION_AFTER = 1;
+            const PARTITION_AFTER = 1;
 
             // 오버레이 생성
             overlay = document.createElement('div');
