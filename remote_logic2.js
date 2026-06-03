@@ -2011,21 +2011,17 @@
 				return;
 			}
 
-            window.openScheduleOverlay = function() {
+            window.openScheduleOverlay = async function() {
             const now = new Date();
             const curKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
             const SCHEDULE_URL = `https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/schedule_for_mobile_${curKey}.json`;
-            const SEAT_MAP = [
-                ['서형민','김가은','박효빈','신지섭','한승완','안대관/이준','최정기/석승찬','차현모/최성환','김용욱'],
-                ['신은정', null,   '이기완','권재윤','김소연','박수연','최선호','이규순','강철환'],
-                ['임다연','송태영','장재원','송주현','신현철','이환', null,   '김경환','김지훈'],
-                ['임아연','호덕진','박은선','김동진','안혜림','최윤혁','박효선','박계원','오정훈'],
-            ];
-            const PARTITION_AFTER = 1;
-
-            // 이미 열려있으면 표시만
+            
             let overlay = document.getElementById('neubie-schedule-overlay');
-            if (overlay) { overlay.style.display='flex'; return; }
+            if (overlay) { overlay.style.display='flex'; return; }  
+
+            let SEAT_MAP = null;
+            const seatRes = await fetch('...');
+            SEAT_MAP = await seatRes.json();
 
             // 오버레이 생성
             overlay = document.createElement('div');
