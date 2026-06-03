@@ -2239,6 +2239,7 @@
                 });
                 renderSeat(pw,leaveMap);
                 modal.style.opacity='1'; modal.style.pointerEvents='all';
+                box.style.filter='blur(4px)';
             }
 
             function renderSeat(pw,leaveMap){
@@ -2360,6 +2361,7 @@
             box.querySelector('#nso-seat-modal').addEventListener('click', () => {
               const m=box.querySelector('#nso-seat-modal');
               if(m){ m.style.opacity='0'; m.style.pointerEvents='none'; }
+              box.style.filter='';
             });
             const BASE_URL = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/';
 
