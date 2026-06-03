@@ -109,7 +109,6 @@
         lastBatteryData: [],
         myTodayTasks: JSON.parse(localStorage.getItem('neubie_my_tasks') || "[]"),
         insuData: null,
-        attendanceData: null
     };
 
     const taskChannel = new BroadcastChannel('neubie_task_sync');
@@ -420,16 +419,13 @@
 
         const dataUrl = `https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/daily_tasks.json`;
         const insuUrl = `https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/insu_data.json`;
-        const attendanceUrl = `https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/attendance_june2026.json`;
 
         // daily_tasks + insu_data 병렬 fetch
         Promise.all([
             fetch(dataUrl, {cache: 'no-store'}).then(r => r.json()),
             fetch(insuUrl, {cache: 'no-store'}).then(r => r.json()),
-            fetch(attendanceUrl, {cache: 'no-store'}).then(r => r.json())
-        ]).then(([data, insu, attendance]) => {
+        ]).then(([data, insu]) => {
             state.insuData = insu;
-            state.attendanceData = attendance;
 
             const myTasks = data.filter(t => {
                 if (t.user !== myName) return false;
