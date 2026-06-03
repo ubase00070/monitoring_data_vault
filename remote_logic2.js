@@ -2069,7 +2069,7 @@
             box.innerHTML = `
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
                 <div style="display:flex;align-items:center;gap:8px;">
-                    <span style="font-size:20px;font-weight:700;color:#4f8ef7;">🏢 월별 스케줄 및 좌석 배치도</span>
+                    <span style="font-size:20px;font-weight:700;color:#4f8ef7;">📅 월별 스케줄 및 좌석 배치도</span>
                     <span id="nso-status" style="font-size:12px;color:#94a3b8;">로딩 중...</span>
                     <span id="nso-dot" style="width:7px;height:7px;border-radius:50%;background:#eab308;display:inline-block;"></span>
                     <span id="nso-updated" style="font-size:12px;color:#64748b;"></span>
@@ -2094,15 +2094,13 @@
                 <div style="position:sticky;bottom:0;background:#1a1d27;border:1px solid #2e3347;border-radius:9px;padding:12px 14px;margin-top:12px;">
                 <div style="font-size:14px;color:#94a3b8;margin-bottom:9px;">👥 스케줄 비교(입력 시 저장됨)</div>
                 <div style="display:flex;gap:6px;align-items:center;width:100%;">
-                    <div style="position:relative;flex:1;min-width:0;">
-                    <label style="position:absolute;top:-8px;left:7px;font-size:12px;padding:0 3px;background:#1a1d27;border-radius:3px;font-weight:700;color:#f97316;">직원 1</label>
+                    <div style="flex:1;min-width:0;">
                     <input id="nso-name1" type="text" placeholder="이름..." autocomplete="off"
-                        style="width:100%;background:#0f1117;border:1.5px solid #2e3347;border-radius:5px;padding:8px 10px;color:#e2e8f0;font-size:14px;box-sizing:border-box;"/>
+                        style="width:100%;background:#0f1117;border:1.5px solid #f97316;border-radius:5px;padding:8px 10px;color:#e2e8f0;font-size:14px;box-sizing:border-box;"/>
                     </div>
-                    <div style="position:relative;flex:1;min-width:0;">
-                    <label style="position:absolute;top:-8px;left:7px;font-size:12px;padding:0 3px;background:#1a1d27;border-radius:3px;font-weight:700;color:#a855f7;">직원 2</label>
+                    <div style="flex:1;min-width:0;">
                     <input id="nso-name2" type="text" placeholder="이름..." autocomplete="off"
-                        style="width:100%;background:#0f1117;border:1.5px solid #2e3347;border-radius:5px;padding:8px 10px;color:#e2e8f0;font-size:14px;box-sizing:border-box;"/>
+                        style="width:100%;background:#0f1117;border:1.5px solid #a855f7;border-radius:5px;padding:8px 10px;color:#e2e8f0;font-size:14px;box-sizing:border-box;"/>
                     </div>
                     <button id="nso-compare" style="flex-shrink:0;padding:6px 14px;border:none;border-radius:5px;cursor:pointer;font-size:14px;font-weight:600;background:#4f8ef7;color:#fff;white-space:nowrap;">비교</button>
                     <button id="nso-clear" style="flex-shrink:0;padding:6px 14px;border:none;border-radius:5px;cursor:pointer;font-size:14px;font-weight:600;background:#22263a;color:#94a3b8;border:1px solid #2e3347;white-space:nowrap;">초기화</button>
@@ -2115,7 +2113,7 @@
                 <div style="background:#1a1d27;border:1px solid #2e3347;border-radius:12px;padding:18px;width:min(96vw,720px);max-height:92vh;overflow-y:auto;">
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
                     <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
-                      <div style="font-size:16px;font-weight:700;">🪑 좌석 배치 — <span id="nso-seat-date" style="color:#4f8ef7;"></span></div>
+                      <div style="font-size:16px;font-weight:700;color:#ffffff;">🪑 좌석 배치 — <span id="nso-seat-date" style="color:#4f8ef7;"></span></div>
                       <div style="font-size:16px;color:#475569;">(아무 데나 클릭하면 닫힘)</div>
                     </div>
                     </div>
