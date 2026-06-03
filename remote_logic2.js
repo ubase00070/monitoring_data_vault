@@ -1136,9 +1136,9 @@
             taskInline.innerHTML = `<div style="color:#666; font-size:14px; padding:8px 0;">배정된 업무가 없습니다.</div>`;
         }
 
-        // 2. 맵 최적화 + 줄을 서시오 반반 행
+        // 2. 맵 최적화
         const twoCol = document.createElement('div');
-        twoCol.style.cssText = "display:grid; grid-template-columns:1fr 1fr; gap:12px;";
+        twoCol.style.cssText = "display:grid; grid-template-columns:1fr 1fr; gap:8px;";
 
         // 맵 최적화 (체크박스, 멘트 없이 이름만)
         const mapCard = document.createElement('div');
@@ -1270,16 +1270,13 @@
 
         // 3. 스케줄 비교표/최적화 팁 + 배터리 현황 (반반 2열)
         const bottomRow = document.createElement('div');
-        bottomRow.style.cssText = "display:grid; grid-template-columns:1fr 1fr; gap:8px;";
+        bottomRow.style.cssText = "display:grid; grid-template-columns:1fr 1fr; grid-template-rows:auto auto; gap:8px;";
 
         // 3-0. 스케줄 비교 카드
         const scheduleCard = document.createElement('div');
-        scheduleCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333; cursor:pointer; display:inline-flex; align-items:center;";
+        scheduleCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333; cursor:pointer; display:flex; align-items:center;";
         scheduleCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">📅 월별 스케줄 및 좌석 배치도</div>`;
         scheduleCard.onclick = () => openScheduleOverlay();
-        const leftCol = document.createElement('div');
-        leftCol.style.cssText = "display:grid; grid-template-rows:1fr 1fr; gap:8px;";
-        leftCol.appendChild(scheduleCard);
 
         // 3-1. 최적화 팁 (좌측)
         const tipsCard = document.createElement('div');
@@ -1373,13 +1370,12 @@
             }
         };
         tipsCard.onclick = () => tipsOpenBtn.onclick();
-        leftCol.appendChild(tipsCard);
-        bottomRow.appendChild(leftCol);
+        bottomRow.appendChild(tipsCard);
 
         // 3-2. 배터리 현황 (우측)
         const isBatteryOpen = batteryPopup.style.display === 'block';
         const batteryCard = document.createElement('div');
-        batteryCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333; display:flex; justify-content:space-between; align-items:center;";
+        batteryCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333; display:flex; justify-content:space-between; align-items:center; grid-row: span 2;";
         batteryCard.innerHTML = `
             <div style="flex:1;">
                 <div style="font-weight:bold; font-size:15px; margin-bottom:3px;">🔋 성남 배터리 현황</div>
@@ -2079,11 +2075,13 @@
 
                 <!-- 달력 -->
                 <div style="margin-bottom:120px;background:rgba(15,17,23,.3);border-radius:12px;padding:12px;">
-                <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:10px;position:relative;">
+                <div style="display:flex;align-items:center;margin-bottom:10px;position:relative;">
+                    <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;">
                     <button id="nso-prev" style="width:28px;height:28px;border:1px solid #2e3347;border-radius:5px;background:#22263a;color:#94a3b8;font-size:14px;cursor:pointer;">◀</button>
                     <div id="nso-cal-title" style="font-size:16px;font-weight:700;color:#e2e8f0;">로딩 중...</div>
                     <button id="nso-next" style="width:28px;height:28px;border:1px solid #2e3347;border-radius:5px;background:#22263a;color:#94a3b8;font-size:14px;cursor:pointer;">▶</button>
-                    <div style="font-size:12px;color:#475569;">(날짜 클릭 -> 좌석 배치도)</div>
+                    </div>
+                    <div style="position:absolute;right:0;font-size:12px;color:#475569;">(날짜 클릭 → 좌석 배치도)</div>
                 </div>
                 <div id="nso-cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;"></div>
                 </div>
