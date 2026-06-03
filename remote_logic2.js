@@ -2067,11 +2067,11 @@
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
                 <div style="display:flex;align-items:center;gap:8px;">
                     <span style="font-size:20px;font-weight:700;color:#4f8ef7;">🏢 뉴빌리티 스케쥴표</span>
-                    <span id="nso-status" style="font-size:14px;color:#94a3b8;">로딩 중...</span>
+                    <span id="nso-status" style="font-size:12px;color:#94a3b8;">로딩 중...</span>
                     <span id="nso-dot" style="width:7px;height:7px;border-radius:50%;background:#eab308;display:inline-block;"></span>
-                    <span id="nso-updated" style="font-size:14px;color:#64748b;"></span>
+                    <span id="nso-updated" style="font-size:12px;color:#64748b;"></span>
                 </div>
-                <button id="nso-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#22263a;color:#94a3b8;font-size:1rem;cursor:pointer;">✕</button>
+                <button id="nso-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#22263a;color:#94a3b8;font-size:16px;cursor:pointer;">✕</button>
                 </div>
 
                 <!-- 달력 -->
@@ -2087,13 +2087,13 @@
                 <!-- 검색 패널 (하단 고정) -->
                 <div style="position:sticky;bottom:0;background:#1a1d27;border:1px solid #2e3347;border-radius:9px;padding:12px 14px;margin-top:12px;">
                 <div style="font-size:14px;color:#94a3b8;margin-bottom:9px;">👥 스케줄 비교</div>
-                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-                    <div style="position:relative;flex:1;min-width:60px;">
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:nowrap;">
+                    <div style="position:relative;flex:0 1 120px;min-width:0;">
                     <label style="position:absolute;top:-8px;left:7px;font-size:12px;padding:0 3px;background:#1a1d27;border-radius:3px;font-weight:700;color:#f97316;">직원 1</label>
                     <input id="nso-name1" type="text" placeholder="이름..." autocomplete="off"
                         style="width:100%;background:#0f1117;border:1.5px solid #2e3347;border-radius:5px;padding:8px 10px;color:#e2e8f0;font-size:14px;"/>
                     </div>
-                    <div style="position:relative;flex:1;min-width:0;">
+                    <div style="position:relative;flex:0 1 120px;min-width:0;">
                     <label style="position:absolute;top:-8px;left:7px;font-size:12px;padding:0 3px;background:#1a1d27;border-radius:3px;font-weight:700;color:#a855f7;">직원 2</label>
                     <input id="nso-name2" type="text" placeholder="이름..." autocomplete="off"
                         style="width:100%;background:#0f1117;border:1.5px solid #2e3347;border-radius:5px;padding:8px 10px;color:#e2e8f0;font-size:14px;"/>
@@ -2101,7 +2101,7 @@
                     <button id="nso-compare" style="padding:6px 14px;border:none;border-radius:5px;cursor:pointer;font-size:14px;font-weight:600;background:#4f8ef7;color:#fff;">비교</button>
                     <button id="nso-clear" style="padding:6px 14px;border:none;border-radius:5px;cursor:pointer;font-size:14px;font-weight:600;background:#22263a;color:#94a3b8;border:1px solid #2e3347;">초기화</button>
                 </div>
-                <div id="nso-overlap" style="font-size:.73rem;color:#94a3b8;padding:5px 10px;background:#22263a;border-radius:5px;margin-top:7px;display:none;"></div>
+                <div id="nso-overlap" style="font-size:13px;color:#94a3b8;padding:5px 10px;background:#22263a;border-radius:5px;margin-top:7px;display:none;"></div>
                 </div>
 
                 <!-- 좌석 모달 -->
@@ -2110,7 +2110,7 @@
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
                     <div style="font-size:16px;font-weight:700;">🪑 좌석 배치 — <span id="nso-seat-date" style="color:#4f8ef7;"></span></div>
                     </div>
-                    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:11px;font-size:14px;color:#94a3b8;">
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:11px;font-size:12px;color:#94a3b8;">
                     <span><span style="width:8px;height:8px;border-radius:2px;background:#22c55e;display:inline-block;margin-right:3px;"></span>출근</span>
                     <span><span style="width:8px;height:8px;border-radius:2px;background:#eab308;display:inline-block;margin-right:3px;"></span>반차/반반차</span>
                     <span><span style="width:8px;height:8px;border-radius:2px;background:#22263a;border:1px solid #2e3347;display:inline-block;margin-right:3px;"></span>미출근</span>
@@ -2155,7 +2155,7 @@
                 const el=document.createElement('div');
                 el.style.cssText=`background:#1a1d27;border:1px solid ${isToday?'#4f8ef7':'#2e3347'};border-radius:6px;padding:5px 4px;min-height:70px;cursor:pointer;transition:all .12s;position:relative;`;
                 const numEl=document.createElement('div');
-                numEl.style.cssText=`font-size:13px;font-weight:600;color:${dow===0?'#f87171':dow===6?'#60a5fa':isToday?'#4f8ef7':'#64748b'};margin-bottom:3px;`;
+                numEl.style.cssText=`font-size:14px;font-weight:600;color:${dow===0?'#f87171':dow===6?'#60a5fa':isToday?'#4f8ef7':'#64748b'};margin-bottom:3px;`;
                 numEl.textContent=d; el.appendChild(numEl);
                 if(info){
                     const {d1,d2,w1,w2}=info;
@@ -2170,7 +2170,7 @@
                     if(w2){
                     const b=document.createElement('div');
                     const st=d2?.status||'work';
-                    b.style.cssText=`font-size:.6rem;border-radius:3px;padding:1px 4px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4;background:rgba(168,85,247,.18);color:#a855f7;${st==='half'||st==='half-half'?'border:1px dashed #a855f7;':''}${st==='annual'||st==='public'||st==='off'?'background:transparent;text-decoration:line-through;color:#64748b;':''}`;
+                    b.style.cssText=`font-size:13px;border-radius:3px;padding:1px 4px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4;background:rgba(168,85,247,.18);color:#a855f7;${st==='half'||st==='half-half'?'border:1px dashed #a855f7;':''}${st==='annual'||st==='public'||st==='off'?'background:transparent;text-decoration:line-through;color:#64748b;':''}`;
                     const n2v=box.querySelector('#nso-name2').value.trim();
                     b.textContent=st==='half'?`${n2v}(반차)`:st==='half-half'?`${n2v}(반반차)`:st==='annual'?`${n2v}(연차)`:st==='public'?`${n2v}(공가)`:n2v;
                     el.appendChild(b);
@@ -2249,7 +2249,7 @@
                     const el=document.createElement('div');
                     if(!raw){
                     el.style.cssText='background:#0f1117;border:1px dashed #2e3347;border-radius:6px;padding:6px 2px;min-height:62px;';
-                    el.innerHTML=`<span style="position:absolute;top:2px;right:3px;font-size:.48rem;color:#334155;">${idx}</span>`;
+                    el.innerHTML=`<span style="position:absolute;top:2px;right:3px;font-size:12px;color:#334155;">${idx}</span>`;
                     grid.appendChild(el); continue;
                     }
                     const occ=raw.split('/').map(n=>n.trim());
@@ -2268,16 +2268,16 @@
                         const sp=document.createElement('div');
                         sp.style.cssText='display:flex;flex-direction:column;align-items:center;';
                         const ne=document.createElement('div');
-                        ne.style.cssText=`font-size:14px;line-height:1.25;font-weight:700;color:${w?(isHalf?'#eab308':'#22c55e'):'#64748b'};`;
+                        ne.style.cssText=`font-size:12px;line-height:1.25;font-weight:700;color:${w?(isHalf?'#eab308':'#22c55e'):'#64748b'};`;
                         ne.textContent=name; sp.appendChild(ne);
                         if(leaveMap[name]){
                         const bd=document.createElement('div');
-                        bd.style.cssText='font-size:12px;border-radius:2px;padding:0 3px;margin-top:1px;font-weight:700;background:rgba(234,179,8,.25);color:#eab308;';
+                        bd.style.cssText='font-size:11px;border-radius:2px;padding:0 3px;margin-top:1px;font-weight:700;background:rgba(234,179,8,.25);color:#eab308;';
                         bd.textContent=leaveMap[name]==='annual'?'연차':'공가'; sp.appendChild(bd);
                         }
                         if(w&&(w.status==='half'||w.status==='half-half')){
                         const bd=document.createElement('div');
-                        bd.style.cssText='font-size:12px;border-radius:2px;padding:0 3px;margin-top:1px;font-weight:700;background:rgba(234,179,8,.25);color:#eab308;';
+                        bd.style.cssText='font-size:11px;border-radius:2px;padding:0 3px;margin-top:1px;font-weight:700;background:rgba(234,179,8,.25);color:#eab308;';
                         bd.textContent=w.status==='half'?'반차':'반반차'; sp.appendChild(bd);
                         }
                         if(w){
