@@ -2223,12 +2223,15 @@
             // 좌석 배치
             function openSeat(dateLabel){
               if(!scheduleData) return;
-              const modal = box.querySelector('#nso-seat-modal');
+              const modal = box.querySelector('#nso-seat-modal') || overlay.querySelector('#nso-seat-modal');
               if(!modal) return;
 
+              // box 밖 overlay로 이동 (최초 1회만)
               if(modal.parentNode === box) overlay.appendChild(modal);
 
-              box.querySelector('#nso-seat-date').textContent=dateLabel;
+              // ★ overlay.querySelector로 변경
+              overlay.querySelector('#nso-seat-date').textContent=dateLabel;
+            
               const pw=scheduleData.staff
                 .filter(s=>s.schedule[dateLabel]?.present)
                 .map(s=>({name:s.name,shiftType:s.shiftType,workTime:s.workTime,status:s.schedule[dateLabel].status}));
@@ -2241,7 +2244,6 @@
               modal.style.opacity='1'; modal.style.pointerEvents='all';
               box.style.filter='blur(4px)';
 
-              // ★ 닫을 때 (중복 등록 방지위해 기존 리스너 제거 후 재등록)
               modal.onclick = () => {
                 modal.style.opacity='0'; modal.style.pointerEvents='none';
                 box.style.filter='';
@@ -2250,7 +2252,7 @@
 
             function renderSeat(pw,leaveMap){
                 const pMap=Object.fromEntries(pw.map(w=>[w.name,w]));
-                const grid=box.querySelector('#nso-seat-grid');
+                const grid=overlay.querySelector('#nso-seat-grid')
                 if(!grid) return;
                 grid.innerHTML='';
                 let idx=0;
