@@ -2110,7 +2110,10 @@
                 <div id="nso-seat-modal" style="position:fixed;inset:0;background:transparent;display:flex;align-items:center;justify-content:center;z-index:2147483647;backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:opacity .18s;">
                 <div style="background:#1a1d27;border:1px solid #2e3347;border-radius:12px;padding:18px;width:min(96vw,720px);max-height:92vh;overflow-y:auto;">
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-                    <div style="font-size:16px;font-weight:700;">🪑 좌석 배치 — <span id="nso-seat-date" style="color:#4f8ef7;"></span></div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
+                      <div style="font-size:16px;font-weight:700;">🪑 좌석 배치 — <span id="nso-seat-date" style="color:#4f8ef7;"></span></div>
+                      <div style="font-size:16px;color:#475569;">(아무데나 클릭하면 닫힘)</div>
+                    </div>
                     </div>
                     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:11px;font-size:12px;color:#94a3b8;">
                     <span><span style="width:8px;height:8px;border-radius:2px;background:#22c55e;display:inline-block;margin-right:3px;"></span>출근</span>
@@ -2284,7 +2287,7 @@
                         }
                         if(w){
                         const te=document.createElement('div');
-                        te.style.cssText=`font-size:12px;color:${isHalf?'rgba(234,179,8,.75)':'rgba(34,197,94,.65)'};line-height:1.2;margin-top:1px;`;
+                        te.style.cssText=`font-size:10px;color:${isHalf?'rgba(234,179,8,.75)':'rgba(34,197,94,.65)'};line-height:1.2;margin-top:1px;`;
                         te.textContent=w.workTime||w.shiftType||''; sp.appendChild(te);
                         }
                         sd.appendChild(sp);
@@ -2312,7 +2315,7 @@
                         bd.textContent=w.status==='half'?'반차':'반반차'; el.appendChild(bd);
                         }
                         const te=document.createElement('div');
-                        te.style.cssText=`font-size:.54rem;color:${isHalf?'rgba(234,179,8,.75)':'rgba(34,197,94,.65)'};line-height:1.2;margin-top:1px;`;
+                        te.style.cssText=`font-size:10px;color:${isHalf?'rgba(234,179,8,.75)':'rgba(34,197,94,.65)'};line-height:1.2;margin-top:1px;`;
                         te.textContent=w.workTime||w.shiftType||''; el.appendChild(te);
                     }
                     }
