@@ -1273,8 +1273,8 @@
 
         // 3-0. 스케줄 비교 카드
         const scheduleCard = document.createElement('div');
-        scheduleCard.style.cssText = "background:#252525; padding:5px 10px; border-radius:8px; border:1px solid #333; cursor:pointer; display:inline-flex; align-items:center;";
-        scheduleCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">📅 스케줄 비교</div>`;
+        scheduleCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333; cursor:pointer; display:inline-flex; align-items:center;";
+        scheduleCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">📅 월별 스케쥴 비교표</div>`;
         scheduleCard.onclick = () => openScheduleOverlay();
         const leftCol = document.createElement('div');
         leftCol.style.cssText = "display:grid; grid-template-rows:1fr 1fr; gap:8px;";
@@ -1282,8 +1282,8 @@
 
         // 3-1. 최적화 팁 (좌측)
         const tipsCard = document.createElement('div');
-        tipsCard.style.cssText = "background:#252525; padding:5px 10px; border-radius:8px; border:1px solid #333; cursor:pointer; display:inline-flex; align-items:center; white-space:nowrap;";
-        tipsCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">💡 최적화 팁</div>`;
+        tipsCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333; cursor:pointer; display:inline-flex; align-items:center;";
+        tipsCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">💡 최적화 설정 및 프로그램 추천</div>`;
         const tipsOpenBtn = document.createElement('button');
         tipsOpenBtn.textContent = '열기';
         tipsOpenBtn.style.cssText = "background:#3b82f6; color:white; border:none; padding:5px 14px; border-radius:8px; cursor:pointer; font-weight:bold; font-size:13px; white-space:nowrap;";
@@ -2014,7 +2014,9 @@
 			}
 
             window.openScheduleOverlay = function() {
-            const SCHEDULE_URL = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/schedule_for_mobile.json';
+            const now = new Date();
+            const curKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+            const SCHEDULE_URL = `https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/schedule_for_mobile_${curKey}.json`;
             const SEAT_MAP = [
                 ['서형민','김가은','박효빈','신지섭','한승완','안대관/이준','최정기/석승찬','차현모/최성환','김용욱'],
                 ['신은정', null,   '이기완','권재윤','김소연','박수연','최선호','이규순','강철환'],
@@ -2087,19 +2089,19 @@
                 <!-- 검색 패널 (하단 고정) -->
                 <div style="position:sticky;bottom:0;background:#1a1d27;border:1px solid #2e3347;border-radius:9px;padding:12px 14px;margin-top:12px;">
                 <div style="font-size:14px;color:#94a3b8;margin-bottom:9px;">👥 스케줄 비교</div>
-                <div style="display:flex;gap:8px;align-items:center;flex-wrap:nowrap;">
-                    <div style="position:relative;flex:0 1 120px;min-width:0;">
+                <div style="display:flex;gap:6px;align-items:center;width:100%;">
+                    <div style="position:relative;flex:1;min-width:0;">
                     <label style="position:absolute;top:-8px;left:7px;font-size:12px;padding:0 3px;background:#1a1d27;border-radius:3px;font-weight:700;color:#f97316;">직원 1</label>
                     <input id="nso-name1" type="text" placeholder="이름..." autocomplete="off"
-                        style="width:100%;background:#0f1117;border:1.5px solid #2e3347;border-radius:5px;padding:8px 10px;color:#e2e8f0;font-size:14px;"/>
+                        style="width:100%;background:#0f1117;border:1.5px solid #2e3347;border-radius:5px;padding:8px 10px;color:#e2e8f0;font-size:14px;box-sizing:border-box;"/>
                     </div>
-                    <div style="position:relative;flex:0 1 120px;min-width:0;">
+                    <div style="position:relative;flex:1;min-width:0;">
                     <label style="position:absolute;top:-8px;left:7px;font-size:12px;padding:0 3px;background:#1a1d27;border-radius:3px;font-weight:700;color:#a855f7;">직원 2</label>
                     <input id="nso-name2" type="text" placeholder="이름..." autocomplete="off"
-                        style="width:100%;background:#0f1117;border:1.5px solid #2e3347;border-radius:5px;padding:8px 10px;color:#e2e8f0;font-size:14px;"/>
+                        style="width:100%;background:#0f1117;border:1.5px solid #2e3347;border-radius:5px;padding:8px 10px;color:#e2e8f0;font-size:14px;box-sizing:border-box;"/>
                     </div>
-                    <button id="nso-compare" style="padding:6px 14px;border:none;border-radius:5px;cursor:pointer;font-size:14px;font-weight:600;background:#4f8ef7;color:#fff;">비교</button>
-                    <button id="nso-clear" style="padding:6px 14px;border:none;border-radius:5px;cursor:pointer;font-size:14px;font-weight:600;background:#22263a;color:#94a3b8;border:1px solid #2e3347;">초기화</button>
+                    <button id="nso-compare" style="flex-shrink:0;padding:6px 14px;border:none;border-radius:5px;cursor:pointer;font-size:14px;font-weight:600;background:#4f8ef7;color:#fff;white-space:nowrap;">비교</button>
+                    <button id="nso-clear" style="flex-shrink:0;padding:6px 14px;border:none;border-radius:5px;cursor:pointer;font-size:14px;font-weight:600;background:#22263a;color:#94a3b8;border:1px solid #2e3347;white-space:nowrap;">초기화</button>
                 </div>
                 <div id="nso-overlap" style="font-size:13px;color:#94a3b8;padding:5px 10px;background:#22263a;border-radius:5px;margin-top:7px;display:none;"></div>
                 </div>
@@ -2296,7 +2298,7 @@
                     } else {
                     const w=pMap[raw];
                     const ne=document.createElement('div');
-                    ne.style.cssText=`font-size:.63rem;line-height:1.25;font-weight:700;color:${isOn?(isHalf?'#eab308':'#22c55e'):'#94a3b8'};`;
+                    ne.style.cssText=`font-size:12px;line-height:1.25;font-weight:700;color:${isOn?(isHalf?'#eab308':'#22c55e'):'#94a3b8'};`;
                     ne.textContent=raw; el.appendChild(ne);
                     if(leaveMap[raw]){
                         const bd=document.createElement('div');
@@ -2352,19 +2354,47 @@
               const m=box.querySelector('#nso-seat-modal');
               if(m){ m.style.opacity='0'; m.style.pointerEvents='none'; }
             });
+            const BASE_URL = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/';
+
+            async function loadMonthFromGithub(newKey) {
+            // 로컬캐시 확인
+            const c = getCache();
+            if(c[newKey] && new Date(c[newKey].updatedAt).toDateString()===new Date().toDateString()){
+                currentMonthKey=newKey; scheduleData=c[newKey]; renderCal();
+                if(sel1||sel2) runCompare();
+                return;
+            }
+            // GitHub fetch
+            status.textContent='로딩 중...'; dot.style.background='#eab308';
+            try {
+                const url = `${BASE_URL}schedule_for_mobile_${newKey}.json?t=${Date.now()}`;
+                const res = await fetch(url);
+                if(!res.ok) throw new Error('없음');
+                const data = await res.json();
+                setCache(newKey, data);
+                currentMonthKey=newKey; scheduleData=data;
+                status.textContent='완료'; dot.style.background='#22c55e';
+                renderCal();
+                if(sel1||sel2) runCompare();
+            } catch(e) {
+                status.textContent=`${newKey} 데이터 없음`; dot.style.background='#ef4444';
+            }
+            }
+
             box.querySelector('#nso-prev').onclick = () => {
-                if(!currentMonthKey) return;
-                const [y,m]=currentMonthKey.split('-').map(Number);
-                const newKey=`${new Date(y,m-2,1).getFullYear()}-${String(new Date(y,m-2,1).getMonth()+1).padStart(2,'0')}`;
-                const c=getCache();
-                if(c[newKey]){ currentMonthKey=newKey; scheduleData=c[newKey]; renderCal(); }
+            if(!currentMonthKey) return;
+            const [y,m]=currentMonthKey.split('-').map(Number);
+            const d=new Date(y,m-2,1);
+            const newKey=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+            loadMonthFromGithub(newKey);
             };
+
             box.querySelector('#nso-next').onclick = () => {
-                if(!currentMonthKey) return;
-                const [y,m]=currentMonthKey.split('-').map(Number);
-                const newKey=`${new Date(y,m,1).getFullYear()}-${String(new Date(y,m,1).getMonth()+1).padStart(2,'0')}`;
-                const c=getCache();
-                if(c[newKey]){ currentMonthKey=newKey; scheduleData=c[newKey]; renderCal(); }
+            if(!currentMonthKey) return;
+            const [y,m]=currentMonthKey.split('-').map(Number);
+            const d=new Date(y,m,1);
+            const newKey=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+            loadMonthFromGithub(newKey);
             };
             box.querySelector('#nso-compare').onclick = runCompare;
             box.querySelector('#nso-name1').addEventListener('keydown',e=>{ if(e.key==='Enter') box.querySelector('#nso-name2').focus(); });
@@ -2392,9 +2422,11 @@
             const cache = getCache();
             const keys = Object.keys(cache).sort();
             if(keys.length){
-                const last=cache[keys[keys.length-1]];
+                const curKey = `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`;
+                const last = cache[curKey] || cache[keys[keys.length-1]];
+                const lastKey = cache[curKey] ? curKey : keys[keys.length-1];
                 if(last?.updatedAt && new Date(last.updatedAt).toDateString()===new Date().toDateString()){
-                currentMonthKey=keys[keys.length-1]; scheduleData=last;
+                currentMonthKey=lastKey; scheduleData=last;
                 status.textContent='⚡ 캐시 로드'; dot.style.background='#22c55e';
                 if(last.updatedAt) updated.textContent=new Date(last.updatedAt).toLocaleString('ko-KR');
                 renderCal();
