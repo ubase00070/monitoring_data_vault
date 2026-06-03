@@ -109,7 +109,6 @@
         lastBatteryData: [],
         myTodayTasks: JSON.parse(localStorage.getItem('neubie_my_tasks') || "[]"),
         insuData: null,
-        attendanceData: null
     };
 
     const taskChannel = new BroadcastChannel('neubie_task_sync');
@@ -420,16 +419,13 @@
 
         const dataUrl = `https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/daily_tasks.json`;
         const insuUrl = `https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/insu_data.json`;
-        const attendanceUrl = `https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/attendance_june2026.json`;
 
         // daily_tasks + insu_data 병렬 fetch
         Promise.all([
             fetch(dataUrl, {cache: 'no-store'}).then(r => r.json()),
             fetch(insuUrl, {cache: 'no-store'}).then(r => r.json()),
-            fetch(attendanceUrl, {cache: 'no-store'}).then(r => r.json())
-        ]).then(([data, insu, attendance]) => {
+        ]).then(([data, insu]) => {
             state.insuData = insu;
-            state.attendanceData = attendance;
 
             const myTasks = data.filter(t => {
                 if (t.user !== myName) return false;
@@ -924,8 +920,10 @@
                 const patchItems = [
                     {
                         version: 'v1.1',
-                        date: '2026-06-01',
+                        date: '2026-06-03',
                         items: [
+                            'multimonitoring.vercel.app 모바일 버전(일일업무 & 캘린더)',
+                            '스케줄 비교표 및 좌석 배치도',
 							'게임패드 D-PAD(상하좌우) 기능 부여',
 							'D-PAD UP: 다음 개입 요청받기 ON/OFF',
 							'D-PAD DOWN: 자동 긴급 정지 ON/OFF',
@@ -934,7 +932,6 @@
                             '다중 관제화면에서 기체 밝기 한 번에 조절',
 							'기체 카메라 위치 드래그로 변경',
 							'교대기체 자동 받기(6대까지만 / 12대는 테스트 중)',
-                            '줄을 서시오 폐기: 또다른 대책을 강구해보겠습니다.',
                         ]
                     },
                 ];
@@ -1058,7 +1055,7 @@
 
         const list = document.createElement('div');
         list.id = 'dashboard-list';
-        list.style.cssText = "display:grid; gap:12px; width:100%; box-sizing:border-box;";
+        list.style.cssText = "display:grid; gap:8px; width:100%; box-sizing:border-box;";
 
         // 1. 업무 알림 설정 (태스크 리스트 인라인 삽입)
         const taskCard = document.createElement('div');
@@ -1135,9 +1132,9 @@
             taskInline.innerHTML = `<div style="color:#666; font-size:14px; padding:8px 0;">배정된 업무가 없습니다.</div>`;
         }
 
-        // 2. 맵 최적화 + 줄을 서시오 반반 행
+        // 2. 맵 최적화
         const twoCol = document.createElement('div');
-        twoCol.style.cssText = "display:grid; grid-template-columns:1fr 1fr; gap:12px;";
+        twoCol.style.cssText = "display:grid; grid-template-columns:1fr 1fr; gap:8px;";
 
         // 맵 최적화 (체크박스, 멘트 없이 이름만)
         const mapCard = document.createElement('div');
@@ -1267,17 +1264,20 @@
         twoCol.appendChild(queueCard);
         list.appendChild(twoCol);
 
-        // 3. 최적화 팁 + 배터리 현황 (반반 2열)
+        // 3. 스케줄 비교표/최적화 팁 + 배터리 현황 (반반 2열)
         const bottomRow = document.createElement('div');
-        bottomRow.style.cssText = "display:grid; grid-template-columns:1fr 1fr; gap:12px;";
+        bottomRow.style.cssText = "display:grid; grid-template-columns:1fr 1fr; grid-template-rows:auto auto; gap:8px;";
+
+        // 3-0. 스케줄 비교 카드
+        const scheduleCard = document.createElement('div');
+        scheduleCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333; cursor:pointer; display:flex; align-items:center;";
+        scheduleCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">📅 월별 스케줄 및 좌석 배치도</div>`;
+        scheduleCard.onclick = () => openScheduleOverlay();
 
         // 3-1. 최적화 팁 (좌측)
         const tipsCard = document.createElement('div');
-        tipsCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333; display:flex; justify-content:space-between; align-items:center;";
-        tipsCard.innerHTML = `
-            <div style="flex:1;">
-                <div style="font-weight:bold; font-size:15px; margin-bottom:3px;">💡 최적화 팁</div>
-            </div>`;
+        tipsCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333; cursor:pointer; display:inline-flex; align-items:center;";
+        tipsCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">💡 최적화 설정 및 프로그램 추천</div>`;
         const tipsOpenBtn = document.createElement('button');
         tipsOpenBtn.textContent = '열기';
         tipsOpenBtn.style.cssText = "background:#3b82f6; color:white; border:none; padding:5px 14px; border-radius:8px; cursor:pointer; font-weight:bold; font-size:13px; white-space:nowrap;";
@@ -1331,7 +1331,7 @@
                     rowTitle.textContent = item.title;
                     rowTitle.style.cssText = "font-size:14px; font-weight:600; color:#e2e8f0; flex:1;";
                     const rowBtn = document.createElement('button');
-                    rowBtn.textContent = '보기';
+                    rowBtn.textContent = '열기';
                     rowBtn.style.cssText = `
                         background:#f59e0b; color:#1a1a1a; border:none;
                         padding:7px 16px; border-radius:8px; cursor:pointer;
@@ -1365,8 +1365,7 @@
                 tipsOverlay.style.display = 'flex';
             }
         };
-        tipsCard.appendChild(tipsOpenBtn);
-        bottomRow.appendChild(tipsCard);
+        tipsCard.onclick = () => tipsOpenBtn.onclick();
 
         // 3-2. 배터리 현황 (우측)
         const isBatteryOpen = batteryPopup.style.display === 'block';
@@ -1386,8 +1385,16 @@
                 renderTaskList(window.currentMyTasks);
             }
         };
+
+        const reservedCard = document.createElement('div');
+        reservedCard.style.cssText = "background:#1a1a1a; padding:8px 12px; border-radius:15px; border:1px dashed #333;";
+        reservedCard.innerHTML = `<div style="font-size:15px;color:#444;">Hello, World!</div>`;
+
         batteryCard.appendChild(batteryBtn);
+        bottomRow.appendChild(scheduleCard);
         bottomRow.appendChild(batteryCard);
+        bottomRow.appendChild(tipsCard);
+        bottomRow.appendChild(reservedCard);
 
         list.appendChild(bottomRow);
 
@@ -2005,6 +2012,460 @@
 				}
 				return;
 			}
+
+            window.openScheduleOverlay = async function() {
+            const now = new Date();
+            const curKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+            const SCHEDULE_URL = `https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/schedule_for_mobile_${curKey}.json`;
+            
+            let overlay = document.getElementById('neubie-schedule-overlay');
+            if (overlay) { overlay.style.display='flex'; return; }  
+
+            let SEAT_MAP = null;
+            const seatRes = await fetch('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/seat_map.json?t='+Date.now());
+            SEAT_MAP = await seatRes.json();
+            const PARTITION_AFTER = 1;
+
+            // 오버레이 생성
+            overlay = document.createElement('div');
+            overlay.id = 'neubie-schedule-overlay';
+            overlay.style.cssText = `
+                position:fixed; inset:0; z-index:2147483646;
+                background:transparent;
+                display:flex; align-items:center; justify-content:center;
+                font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;
+            `;
+
+            const box = document.createElement('div');
+            box.style.cssText = `
+                background:#0f1117; color:#e2e8f0;
+                border-radius:16px; padding:20px;
+                width:min(96vw,820px); max-height:92vh;
+                overflow-y:auto; position:relative;
+                background-image: linear-gradient(to bottom, #1a2240 0%, transparent 30%),
+                url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/snoopy_camping.jpg');
+                background-size: 100% auto;
+                background-position: center bottom;
+                background-repeat: no-repeat;
+                background-color: #1a2240;
+                box-shadow: 0 4px 40px rgba(0,0,0,0.7);
+            `;
+
+            // 상태 변수
+            let scheduleData = null, compareResult = null;
+            let currentMonthKey = '', sel1 = '', sel2 = '';
+
+            // 로컬캐시
+            const LS = 'nv_data_cache';
+            const getCache = () => { try{ return JSON.parse(localStorage.getItem(LS)||'{}'); }catch(e){ return {}; } };
+            const setCache = (k,v) => { try{ const c=getCache(); c[k]=v; localStorage.setItem(LS,JSON.stringify(c)); }catch(e){} };
+            const monthKey = d => { if(!d?.dates?.length) return ''; const [m]=d.dates[0].split('/').map(Number); return `${new Date().getFullYear()}-${String(m).padStart(2,'0')}`; };
+
+            // HTML 구조
+            box.innerHTML = `
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <span style="font-size:20px;font-weight:700;color:#4f8ef7;">📅 월별 스케줄 및 좌석 배치도</span>
+                    <span id="nso-status" style="font-size:12px;color:#94a3b8;">로딩 중...</span>
+                    <span id="nso-dot" style="width:7px;height:7px;border-radius:50%;background:#eab308;display:inline-block;"></span>
+                    <span id="nso-updated" style="font-size:12px;color:#64748b;"></span>
+                </div>
+                <button id="nso-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#22263a;color:#94a3b8;font-size:16px;cursor:pointer;">✕</button>
+                </div>
+
+                <!-- 달력 -->
+                <div style="margin-bottom:120px;background:rgba(15,17,23,.3);border-radius:12px;padding:12px;">
+                <div style="display:flex;align-items:center;margin-bottom:10px;position:relative;">
+                    <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;">
+                    <button id="nso-prev" style="width:28px;height:28px;border:1px solid #2e3347;border-radius:5px;background:#22263a;color:#94a3b8;font-size:14px;cursor:pointer;">◀</button>
+                    <div id="nso-cal-title" style="font-size:16px;font-weight:700;color:#e2e8f0;">로딩 중...</div>
+                    <button id="nso-next" style="width:28px;height:28px;border:1px solid #2e3347;border-radius:5px;background:#22263a;color:#94a3b8;font-size:14px;cursor:pointer;">▶</button>
+                    </div>
+                    <div style="position:absolute;right:0;font-size:12px;color:#475569;">(날짜 클릭 → 좌석 배치도)</div>
+                </div>
+                <div id="nso-cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;"></div>
+                </div>
+
+                <!-- 검색 패널 (하단 고정) -->
+                <div style="position:sticky;bottom:0;background:#1a1d27;border:1px solid #2e3347;border-radius:9px;padding:12px 14px;margin-top:12px;">
+                <div style="font-size:14px;color:#94a3b8;margin-bottom:9px;">👥 스케줄 비교(입력 시 저장됨)</div>
+                <div style="display:flex;gap:6px;align-items:center;width:100%;">
+                    <div style="flex:1;min-width:0;">
+                    <input id="nso-name1" type="text" placeholder="이름..." autocomplete="off"
+                        style="width:100%;background:#0f1117;border:1.5px solid #f97316;border-radius:5px;padding:8px 10px;color:#e2e8f0;font-size:14px;box-sizing:border-box;"/>
+                    </div>
+                    <div style="flex:1;min-width:0;">
+                    <input id="nso-name2" type="text" placeholder="이름..." autocomplete="off"
+                        style="width:100%;background:#0f1117;border:1.5px solid #a855f7;border-radius:5px;padding:8px 10px;color:#e2e8f0;font-size:14px;box-sizing:border-box;"/>
+                    </div>
+                    <button id="nso-compare" style="flex-shrink:0;padding:6px 14px;border:none;border-radius:5px;cursor:pointer;font-size:14px;font-weight:600;background:#4f8ef7;color:#fff;white-space:nowrap;">비교</button>
+                    <button id="nso-clear" style="flex-shrink:0;padding:6px 14px;border:none;border-radius:5px;cursor:pointer;font-size:14px;font-weight:600;background:#22263a;color:#94a3b8;border:1px solid #2e3347;white-space:nowrap;">초기화</button>
+                </div>
+                <div id="nso-overlap" style="font-size:13px;color:#94a3b8;padding:5px 10px;background:#22263a;border-radius:5px;margin-top:7px;display:none;"></div>
+                </div>
+
+                <!-- 좌석 모달 -->
+                <div id="nso-seat-modal" style="position:fixed;inset:0;background:transparent;display:flex;align-items:center;justify-content:center;z-index:2147483647;opacity:0;pointer-events:none;transition:opacity .18s;">
+                <div style="background:#1a1d27;border:1px solid #2e3347;border-radius:12px;padding:18px;width:min(96vw,720px);max-height:92vh;overflow-y:auto;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
+                      <div style="font-size:16px;font-weight:700;color:#ffffff;">🪑 좌석 배치 — <span id="nso-seat-date" style="color:#4f8ef7;"></span></div>
+                      <div style="font-size:16px;color:#475569;">(아무 데나 클릭하면 닫힘)</div>
+                    </div>
+                    </div>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:11px;font-size:12px;color:#94a3b8;">
+                    <span><span style="width:8px;height:8px;border-radius:2px;background:#22c55e;display:inline-block;margin-right:3px;"></span>출근</span>
+                    <span><span style="width:8px;height:8px;border-radius:2px;background:#eab308;display:inline-block;margin-right:3px;"></span>연차/반차/반반차/공가</span>
+                    <span><span style="width:8px;height:8px;border-radius:2px;background:#22263a;border:1px solid #2e3347;display:inline-block;margin-right:3px;"></span>미출근</span>
+                    </div>
+                    <div id="nso-seat-grid" style="display:grid;grid-template-columns:repeat(9,1fr);gap:4px;"></div>
+                </div>
+                </div>
+            `;
+
+            overlay.appendChild(box);
+            document.body.appendChild(overlay);
+            overlay.addEventListener('click', e => { if(e.target===overlay) overlay.style.display='none'; });
+
+            // 달력 렌더
+            const DOW=['일','월','화','수','목','금','토'];
+            const DOW_CLS=['#f87171','#94a3b8','#94a3b8','#94a3b8','#94a3b8','#94a3b8','#60a5fa'];
+
+            function renderCal() {
+                const grid = box.querySelector('#nso-cal-grid');
+                const title = box.querySelector('#nso-cal-title');
+                if(!grid||!title||!scheduleData?.dates?.length) return;
+                const [m0]=scheduleData.dates[0].split('/').map(Number);
+                const year=new Date().getFullYear();
+                title.textContent=`${year}년 ${m0}월`;
+                const dim=new Date(year,m0,0).getDate();
+                const today=new Date();
+                grid.innerHTML='';
+                DOW.forEach((d,i)=>{
+                const el=document.createElement('div');
+                el.style.cssText=`text-align:center;font-size:14px;font-weight:600;padding:4px 0;color:${DOW_CLS[i]};background:rgba(15,17,23,.7);border-radius:3px;`;
+                el.textContent=d; grid.appendChild(el);
+                });
+                const firstDow=new Date(year,m0-1,1).getDay();
+                for(let i=0;i<firstDow;i++){
+                const el=document.createElement('div'); grid.appendChild(el);
+                }
+                for(let d=1;d<=dim;d++){
+                const dow=new Date(year,m0-1,d).getDay();
+                const label=`${m0}/${d}`;
+                const info=compareResult?compareResult[label]:null;
+                const isToday=today.getFullYear()===year&&today.getMonth()===m0-1&&today.getDate()===d;
+                const el=document.createElement('div');
+                el.style.cssText=`background:#1a1d27;border:1px solid ${isToday?'#4f8ef7':'#2e3347'};border-radius:6px;padding:5px 4px;min-height:70px;cursor:pointer;transition:all .12s;position:relative;`;
+                const numEl=document.createElement('div');
+                numEl.style.cssText=`font-size:14px;font-weight:600;color:${dow===0?'#f87171':dow===6?'#60a5fa':isToday?'#4f8ef7':'#64748b'};margin-bottom:3px;`;
+                numEl.textContent=d; el.appendChild(numEl);
+                if(info){
+                    const {d1,d2,w1,w2}=info;
+                    if(w1){
+                    const b=document.createElement('div');
+                    const st=d1?.status||'work';
+                    b.style.cssText=`font-size:13px;border-radius:3px;padding:1px 4px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4;background:rgba(249,115,22,.18);color:#f97316;${st==='half'||st==='half-half'?'border:1px dashed #f97316;':''}${st==='annual'||st==='public'||st==='off'?'background:transparent;text-decoration:line-through;color:#64748b;':''}`;
+                    const n1v=box.querySelector('#nso-name1').value.trim();
+                    b.textContent=st==='half'?`${n1v}(반차)`:st==='half-half'?`${n1v}(반반차)`:st==='annual'?`${n1v}(연차)`:st==='public'?`${n1v}(공가)`:n1v;
+                    el.appendChild(b);
+                    }
+                    if(w2){
+                    const b=document.createElement('div');
+                    const st=d2?.status||'work';
+                    b.style.cssText=`font-size:13px;border-radius:3px;padding:1px 4px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4;background:rgba(168,85,247,.18);color:#a855f7;${st==='half'||st==='half-half'?'border:1px dashed #a855f7;':''}${st==='annual'||st==='public'||st==='off'?'background:transparent;text-decoration:line-through;color:#64748b;':''}`;
+                    const n2v=box.querySelector('#nso-name2').value.trim();
+                    b.textContent=st==='half'?`${n2v}(반차)`:st==='half-half'?`${n2v}(반반차)`:st==='annual'?`${n2v}(연차)`:st==='public'?`${n2v}(공가)`:n2v;
+                    el.appendChild(b);
+                    }
+                }
+                el.addEventListener('click',()=>openSeat(label));
+                grid.appendChild(el);
+                }
+            }
+
+            // 비교
+            function runCompare(){
+                sel1=box.querySelector('#nso-name1').value.trim();
+                sel2=box.querySelector('#nso-name2').value.trim();
+                if(!scheduleData||(!sel1&&!sel2)) return;
+                const s1=scheduleData.staff.find(s=>s.name===sel1);
+                const s2=scheduleData.staff.find(s=>s.name===sel2);
+                if(!s1&&!s2) return;
+                try{ localStorage.setItem('nv_name1',sel1); localStorage.setItem('nv_name2',sel2); }catch(e){}
+                compareResult={};
+                let c1=0,c2=0,ov=0;
+                for(const date of scheduleData.dates){
+                const d1=s1?s1.schedule[date]:null, d2=s2?s2.schedule[date]:null;
+                const w1=d1?d1.working:false, w2=d2?d2.working:false;
+                const p1=d1?d1.present:false, p2=d2?d2.present:false;
+                if(w1)c1++; if(w2)c2++; if(p1&&p2)ov++;
+                compareResult[date]={d1,d2,w1,w2};
+                }
+                const ov2=box.querySelector('#nso-overlap');
+                if(ov2){
+                ov2.style.display='block';
+                ov2.innerHTML=
+                    (s1?`<span style="color:#f97316;font-weight:700">${sel1}</span> <strong>${c1}일</strong>`:'') +
+                    (s1&&s2?' | ':'') +
+                    (s2?`<span style="color:#a855f7;font-weight:700">${sel2}</span> <strong>${c2}일</strong>`:'') +
+                    (s1&&s2?` | 겹침 <strong style="color:#4f8ef7">${ov}일</strong>`:'');
+                }
+                renderCal();
+            }
+
+            // 좌석 배치
+            function openSeat(dateLabel){
+              if(!scheduleData) return;
+              const modal = box.querySelector('#nso-seat-modal') || overlay.querySelector('#nso-seat-modal');
+              if(!modal) return;
+
+              // box 밖 overlay로 이동 (최초 1회만)
+              if(modal.parentNode === box) overlay.appendChild(modal);
+
+              // ★ overlay.querySelector로 변경
+              overlay.querySelector('#nso-seat-date').textContent=dateLabel;
+            
+              const pw=scheduleData.staff
+                .filter(s=>s.schedule[dateLabel]?.present)
+                .map(s=>({name:s.name,shiftType:s.shiftType,workTime:s.workTime,status:s.schedule[dateLabel].status}));
+              const leaveMap={};
+              scheduleData.staff.forEach(s=>{
+                const d=s.schedule[dateLabel];
+                if(d&&(d.status==='annual'||d.status==='public')) leaveMap[s.name]=d.status;
+              });
+              renderSeat(pw,leaveMap);
+              modal.style.opacity='1'; modal.style.pointerEvents='all';
+              box.style.filter='blur(4px)';
+
+              modal.onclick = () => {
+                modal.style.opacity='0'; modal.style.pointerEvents='none';
+                box.style.filter='';
+              };
+            }
+
+            function renderSeat(pw,leaveMap){
+                const pMap=Object.fromEntries(pw.map(w=>[w.name,w]));
+                const grid=overlay.querySelector('#nso-seat-grid')
+                if(!grid) return;
+                grid.innerHTML='';
+                let idx=0;
+                for(let row=0;row<SEAT_MAP.length;row++){
+                if(row===PARTITION_AFTER+1){
+                    const pl=document.createElement('div');
+                    pl.style.cssText='grid-column:1/-1;height:2px;background:linear-gradient(90deg,transparent,#64748b 20%,#64748b 80%,transparent);border-radius:1px;margin:3px 0;opacity:.35;';
+                    grid.appendChild(pl);
+                }
+                for(let col=0;col<SEAT_MAP[row].length;col++){
+                    const raw=SEAT_MAP[row][col]; idx++;
+                    const el=document.createElement('div');
+                    if(!raw){
+                    el.style.cssText='background:#0f1117;border:1px dashed #2e3347;border-radius:6px;padding:6px 2px;min-height:62px;';
+                    el.innerHTML=`<span style="position:absolute;top:2px;right:3px;font-size:12px;color:#334155;">${idx}</span>`;
+                    grid.appendChild(el); continue;
+                    }
+                    const occ=raw.split('/').map(n=>n.trim());
+                    const onPpl=occ.filter(n=>pMap[n]);
+                    const isOn=onPpl.length>0;
+                    const isHalf=isOn&&onPpl.some(n=>pMap[n].status==='half'||pMap[n].status==='half-half');
+                    const bg=isOn?(isHalf?'rgba(234,179,8,.12)':'rgba(34,197,94,.15)'):'#22263a';
+                    const bc=isOn?(isHalf?'#eab308':'#22c55e'):'#2e3347';
+                    el.style.cssText=`background:${bg};border:1px solid ${bc};border-radius:6px;padding:6px 2px;text-align:center;font-size:.62rem;font-weight:600;min-height:62px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;position:relative;${isOn?'':`opacity:.35;`}`;
+                    el.innerHTML=`<span style="position:absolute;top:2px;right:3px;font-size:.48rem;color:#334155;">${idx}</span>`;
+                    if(occ.length>1){
+                    const sd=document.createElement('div');
+                    sd.style.cssText='display:flex;flex-direction:column;align-items:center;width:100%;gap:0;';
+                    occ.forEach((name,i)=>{
+                        const w=pMap[name];
+                        const sp=document.createElement('div');
+                        sp.style.cssText='display:flex;flex-direction:column;align-items:center;';
+                        const ne=document.createElement('div');
+                        ne.style.cssText=`font-size:12px;line-height:1.25;font-weight:700;color:${w?(isHalf?'#eab308':'#22c55e'):'#64748b'};`;
+                        ne.textContent=name; sp.appendChild(ne);
+                        if(leaveMap[name]){
+                        const bd=document.createElement('div');
+                        bd.style.cssText='font-size:11px;border-radius:2px;padding:0 3px;margin-top:1px;font-weight:700;background:rgba(234,179,8,.25);color:#eab308;';
+                        bd.textContent=leaveMap[name]==='annual'?'연차':'공가'; sp.appendChild(bd);
+                        }
+                        if(w&&(w.status==='half'||w.status==='half-half')){
+                        const bd=document.createElement('div');
+                        bd.style.cssText='font-size:11px;border-radius:2px;padding:0 3px;margin-top:1px;font-weight:700;background:rgba(234,179,8,.25);color:#eab308;';
+                        bd.textContent=w.status==='half'?'반차':'반반차'; sp.appendChild(bd);
+                        }
+                        if(w){
+                        const te=document.createElement('div');
+                        te.style.cssText=`font-size:10px;color:${isHalf?'rgba(234,179,8,.75)':'rgba(34,197,94,.65)'};line-height:1.2;margin-top:1px;`;
+                        te.textContent=w.workTime||w.shiftType||''; sp.appendChild(te);
+                        }
+                        sd.appendChild(sp);
+                        if(i<occ.length-1){
+                        const dv=document.createElement('div');
+                        dv.style.cssText='font-size:.46rem;color:#64748b;line-height:1;';
+                        dv.textContent='/'; sd.appendChild(dv);
+                        }
+                    });
+                    el.appendChild(sd);
+                    } else {
+                    const w=pMap[raw];
+                    const ne=document.createElement('div');
+                    ne.style.cssText=`font-size:12px;line-height:1.25;font-weight:700;color:${isOn?(isHalf?'#eab308':'#22c55e'):'#94a3b8'};`;
+                    ne.textContent=raw; el.appendChild(ne);
+                    if(leaveMap[raw]){
+                        const bd=document.createElement('div');
+                        bd.style.cssText='font-size:.48rem;border-radius:2px;padding:0 3px;margin-top:1px;font-weight:700;background:rgba(234,179,8,.25);color:#eab308;';
+                        bd.textContent=leaveMap[raw]==='annual'?'연차':'공가'; el.appendChild(bd);
+                    }
+                    if(w){
+                        if(w.status==='half'||w.status==='half-half'){
+                        const bd=document.createElement('div');
+                        bd.style.cssText='font-size:.48rem;border-radius:2px;padding:0 3px;margin-top:1px;font-weight:700;background:rgba(234,179,8,.25);color:#eab308;';
+                        bd.textContent=w.status==='half'?'반차':'반반차'; el.appendChild(bd);
+                        }
+                        const te=document.createElement('div');
+                        te.style.cssText=`font-size:10px;color:${isHalf?'rgba(234,179,8,.75)':'rgba(34,197,94,.65)'};line-height:1.2;margin-top:1px;`;
+                        te.textContent=w.workTime||w.shiftType||''; el.appendChild(te);
+                    }
+                    }
+                    // 툴팁
+                    el.addEventListener('mouseenter', ev=>{
+                    let tip=document.getElementById('nso-tooltip');
+                    if(!tip){ tip=document.createElement('div'); tip.id='nso-tooltip';
+                        tip.style.cssText='position:fixed;background:#1a1d27;border:1px solid #2e3347;border-radius:7px;padding:9px 12px;font-size:12px;z-index:2147483647;pointer-events:none;max-width:210px;line-height:1.55;box-shadow:0 4px 24px rgba(0,0,0,.45);';
+                        document.body.appendChild(tip);
+                    }
+                    let html='';
+                    occ.forEach((name,i)=>{
+                        const w=pMap[name];
+                        html+=`<div style="font-weight:700;color:#e2e8f0;margin-bottom:2px;">${name}</div>`;
+                        if(w){
+                        const ko={work:'출근',half:'반차','half-half':'반반차',annual:'연차',public:'공가',off:'휴무',empty:'미출근'};
+                        html+=`<div style="color:#94a3b8;">근무조: <span style="color:#e2e8f0;">${w.shiftType}</span></div>`;
+                        html+=`<div style="color:#94a3b8;">시간: <span style="color:#e2e8f0;">${w.workTime}</span></div>`;
+                        html+=`<div style="color:#94a3b8;">상태: <span style="color:#e2e8f0;">${ko[w.status]||w.status}</span></div>`;
+                        } else { html+=`<div style="color:#64748b;">미출근</div>`; }
+                        if(i<occ.length-1) html+=`<hr style="border:none;border-top:1px solid #2e3347;margin:4px 0;">`;
+                    });
+                    tip.innerHTML=html;
+                    tip.style.display='block';
+                    let x=ev.clientX+13, y=ev.clientY+13;
+                    if(x+210>window.innerWidth) x=ev.clientX-220;
+                    if(y+130>window.innerHeight) y=ev.clientY-140;
+                    tip.style.left=x+'px'; tip.style.top=y+'px';
+                    });
+                    el.addEventListener('mouseleave',()=>{ const t=document.getElementById('nso-tooltip'); if(t) t.style.display='none'; });
+                    grid.appendChild(el);
+                }
+                }
+            }
+
+            // 이벤트 바인딩
+            box.querySelector('#nso-close').onclick = () => overlay.style.display='none';
+            box.querySelector('#nso-seat-modal').addEventListener('click', () => {
+              const m=box.querySelector('#nso-seat-modal');
+              if(m){ m.style.opacity='0'; m.style.pointerEvents='none'; }
+              box.style.filter='';
+            });
+            const BASE_URL = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/';
+
+            async function loadMonthFromGithub(newKey) {
+            // 로컬캐시 확인
+            const c = getCache();
+            if(c[newKey] && new Date(c[newKey].updatedAt).toDateString()===new Date().toDateString()){
+                currentMonthKey=newKey; scheduleData=c[newKey]; renderCal();
+                if(sel1||sel2) runCompare();
+                return;
+            }
+            // GitHub fetch
+            status.textContent='로딩 중...'; dot.style.background='#eab308';
+            try {
+                const url = `${BASE_URL}schedule_for_mobile_${newKey}.json?t=${Date.now()}`;
+                const res = await fetch(url);
+                if(!res.ok) throw new Error('없음');
+                const data = await res.json();
+                setCache(newKey, data);
+                currentMonthKey=newKey; scheduleData=data;
+                status.textContent='완료'; dot.style.background='#22c55e';
+                renderCal();
+                if(sel1||sel2) runCompare();
+            } catch(e) {
+                status.textContent=`${newKey} 데이터 없음`; dot.style.background='#ef4444';
+            }
+            }
+
+            box.querySelector('#nso-prev').onclick = () => {
+            if(!currentMonthKey) return;
+            const [y,m]=currentMonthKey.split('-').map(Number);
+            const d=new Date(y,m-2,1);
+            const newKey=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+            loadMonthFromGithub(newKey);
+            };
+
+            box.querySelector('#nso-next').onclick = () => {
+            if(!currentMonthKey) return;
+            const [y,m]=currentMonthKey.split('-').map(Number);
+            const d=new Date(y,m,1);
+            const newKey=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+            loadMonthFromGithub(newKey);
+            };
+            box.querySelector('#nso-compare').onclick = runCompare;
+            box.querySelector('#nso-name1').addEventListener('keydown',e=>{ if(e.key==='Enter') box.querySelector('#nso-name2').focus(); });
+            box.querySelector('#nso-name2').addEventListener('keydown',e=>{ if(e.key==='Enter') runCompare(); });
+            box.querySelector('#nso-clear').onclick = () => {
+                box.querySelector('#nso-name1').value=''; box.querySelector('#nso-name2').value='';
+                sel1=''; sel2=''; compareResult=null;
+                box.querySelector('#nso-overlap').style.display='none';
+                renderCal();
+            };
+
+            // 저장된 이름 복원
+            try{
+                const n1=localStorage.getItem('nv_name1')||'';
+                const n2=localStorage.getItem('nv_name2')||'';
+                if(n1) box.querySelector('#nso-name1').value=n1;
+                if(n2) box.querySelector('#nso-name2').value=n2;
+            }catch(e){}
+
+            // 데이터 로드
+            const status = box.querySelector('#nso-status');
+            const dot = box.querySelector('#nso-dot');
+            const updated = box.querySelector('#nso-updated');
+
+            const cache = getCache();
+            const keys = Object.keys(cache).sort();
+            if(keys.length){
+                const curKey = `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`;
+                const last = cache[curKey] || cache[keys[keys.length-1]];
+                const lastKey = cache[curKey] ? curKey : keys[keys.length-1];
+                if(last?.updatedAt && new Date(last.updatedAt).toDateString()===new Date().toDateString()){
+                currentMonthKey=lastKey; scheduleData=last;
+                status.textContent='⚡ 캐시 로드'; dot.style.background='#22c55e';
+                if(last.updatedAt) updated.textContent=new Date(last.updatedAt).toLocaleString('ko-KR') + ' 데이터 기준';
+                renderCal();
+                // 저장된 이름으로 비교
+                const n1=box.querySelector('#nso-name1').value.trim();
+                const n2=box.querySelector('#nso-name2').value.trim();
+                if(n1||n2) setTimeout(runCompare,0);
+                return;
+                }
+            }
+
+            // GitHub Raw fetch
+            status.textContent='로딩 중...'; dot.style.background='#eab308';
+            fetch(SCHEDULE_URL+'?t='+Date.now())
+                .then(r=>r.json())
+                .then(data=>{
+                const key=monthKey(data);
+                if(key){ setCache(key,data); currentMonthKey=key; }
+                scheduleData=data;
+                status.textContent='갱신 완료'; dot.style.background='#22c55e';
+                if(data.updatedAt) updated.textContent=new Date(data.updatedAt).toLocaleString('ko-KR') + ' 데이터 기준';
+                renderCal();
+                const n1=box.querySelector('#nso-name1').value.trim();
+                const n2=box.querySelector('#nso-name2').value.trim();
+                if(n1||n2) runCompare();
+                })
+                .catch(()=>{ status.textContent='로드 실패'; dot.style.background='#ef4444'; });
+            }
 
 			// 그 외 페이지는 기존 대시보드
 			const tipsOverlayEl = document.getElementById('neubie-tips-overlay');
