@@ -2022,6 +2022,7 @@
             let SEAT_MAP = null;
             const seatRes = await fetch('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/seat_map.json?t='+Date.now());
             SEAT_MAP = await seatRes.json();
+			const PARTITION_AFTER = 1;
 
             // 오버레이 생성
             overlay = document.createElement('div');
