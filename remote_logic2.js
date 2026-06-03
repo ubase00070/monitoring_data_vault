@@ -1370,7 +1370,6 @@
             }
         };
         tipsCard.onclick = () => tipsOpenBtn.onclick();
-        bottomRow.appendChild(tipsCard);
 
         // 3-2. 배터리 현황 (우측)
         const isBatteryOpen = batteryPopup.style.display === 'block';
@@ -1391,7 +1390,9 @@
             }
         };
         batteryCard.appendChild(batteryBtn);
+        bottomRow.appendChild(scheduleCard);
         bottomRow.appendChild(batteryCard);
+        bottomRow.appendChild(tipsCard);
 
         list.appendChild(bottomRow);
 
