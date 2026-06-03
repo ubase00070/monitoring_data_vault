@@ -927,7 +927,7 @@
                         date: '2026-06-03',
                         items: [
                             'multimonitoring.vercel.app 모바일 버전(일일업무 & 캘린더)',
-                            '스케쥴 비교표 및 좌석 배치도',
+                            '스케줄 비교표 및 좌석 배치도',
 							'게임패드 D-PAD(상하좌우) 기능 부여',
 							'D-PAD UP: 다음 개입 요청받기 ON/OFF',
 							'D-PAD DOWN: 자동 긴급 정지 ON/OFF',
@@ -1268,14 +1268,14 @@
         twoCol.appendChild(queueCard);
         list.appendChild(twoCol);
 
-        // 3. 스케쥴 비교표/최적화 팁 + 배터리 현황 (반반 2열)
+        // 3. 스케줄 비교표/최적화 팁 + 배터리 현황 (반반 2열)
         const bottomRow = document.createElement('div');
         bottomRow.style.cssText = "display:grid; grid-template-columns:1fr 1fr; gap:8px;";
 
-        // 3-0. 스케쥴 비교 카드
+        // 3-0. 스케줄 비교 카드
         const scheduleCard = document.createElement('div');
         scheduleCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333; cursor:pointer; display:inline-flex; align-items:center;";
-        scheduleCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">📅 월별 스케쥴 비교표</div>`;
+        scheduleCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">📅 월별 스케줄 및 좌석 배치도</div>`;
         scheduleCard.onclick = () => openScheduleOverlay();
         const leftCol = document.createElement('div');
         leftCol.style.cssText = "display:grid; grid-template-rows:1fr 1fr; gap:8px;";
@@ -2069,7 +2069,7 @@
             box.innerHTML = `
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
                 <div style="display:flex;align-items:center;gap:8px;">
-                    <span style="font-size:20px;font-weight:700;color:#4f8ef7;">🏢 월별 스케쥴 및 좌석 배치도</span>
+                    <span style="font-size:20px;font-weight:700;color:#4f8ef7;">🏢 월별 스케줄 및 좌석 배치도</span>
                     <span id="nso-status" style="font-size:12px;color:#94a3b8;">로딩 중...</span>
                     <span id="nso-dot" style="width:7px;height:7px;border-radius:50%;background:#eab308;display:inline-block;"></span>
                     <span id="nso-updated" style="font-size:12px;color:#64748b;"></span>
@@ -2079,18 +2079,18 @@
 
                 <!-- 달력 -->
                 <div style="margin-bottom:120px;background:rgba(15,17,23,.3);border-radius:12px;padding:12px;">
-                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px">
+                <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:10px;position:relative;">
                     <button id="nso-prev" style="width:28px;height:28px;border:1px solid #2e3347;border-radius:5px;background:#22263a;color:#94a3b8;font-size:14px;cursor:pointer;">◀</button>
                     <div id="nso-cal-title" style="font-size:16px;font-weight:700;color:#e2e8f0;">로딩 중...</div>
                     <button id="nso-next" style="width:28px;height:28px;border:1px solid #2e3347;border-radius:5px;background:#22263a;color:#94a3b8;font-size:14px;cursor:pointer;">▶</button>
-                    <div style="font-size:10px;color:#475569;">(날짜 클릭 -> 좌석 배치도)</div>
+                    <div style="font-size:12px;color:#475569;">(날짜 클릭 -> 좌석 배치도)</div>
                 </div>
                 <div id="nso-cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;"></div>
                 </div>
 
                 <!-- 검색 패널 (하단 고정) -->
                 <div style="position:sticky;bottom:0;background:#1a1d27;border:1px solid #2e3347;border-radius:9px;padding:12px 14px;margin-top:12px;">
-                <div style="font-size:14px;color:#94a3b8;margin-bottom:9px;">👥 스케쥴 비교(입력 시 저장됨)</div>
+                <div style="font-size:14px;color:#94a3b8;margin-bottom:9px;">👥 스케줄 비교(입력 시 저장됨)</div>
                 <div style="display:flex;gap:6px;align-items:center;width:100%;">
                     <div style="position:relative;flex:1;min-width:0;">
                     <label style="position:absolute;top:-8px;left:7px;font-size:12px;padding:0 3px;background:#1a1d27;border-radius:3px;font-weight:700;color:#f97316;">직원 1</label>
@@ -2119,7 +2119,7 @@
                     </div>
                     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:11px;font-size:12px;color:#94a3b8;">
                     <span><span style="width:8px;height:8px;border-radius:2px;background:#22c55e;display:inline-block;margin-right:3px;"></span>출근</span>
-                    <span><span style="width:8px;height:8px;border-radius:2px;background:#eab308;display:inline-block;margin-right:3px;"></span>반차/반반차</span>
+                    <span><span style="width:8px;height:8px;border-radius:2px;background:#eab308;display:inline-block;margin-right:3px;"></span>연차/반차/반반차/공가</span>
                     <span><span style="width:8px;height:8px;border-radius:2px;background:#22263a;border:1px solid #2e3347;display:inline-block;margin-right:3px;"></span>미출근</span>
                     </div>
                     <div id="nso-seat-grid" style="display:grid;grid-template-columns:repeat(9,1fr);gap:4px;"></div>
@@ -2433,7 +2433,7 @@
                 if(last?.updatedAt && new Date(last.updatedAt).toDateString()===new Date().toDateString()){
                 currentMonthKey=lastKey; scheduleData=last;
                 status.textContent='⚡ 캐시 로드'; dot.style.background='#22c55e';
-                if(last.updatedAt) updated.textContent=new Date(last.updatedAt).toLocaleString('ko-KR') + ' 기준';
+                if(last.updatedAt) updated.textContent=new Date(last.updatedAt).toLocaleString('ko-KR') + ' 데이터 기준';
                 renderCal();
                 // 저장된 이름으로 비교
                 const n1=box.querySelector('#nso-name1').value.trim();
@@ -2452,7 +2452,7 @@
                 if(key){ setCache(key,data); currentMonthKey=key; }
                 scheduleData=data;
                 status.textContent='갱신 완료'; dot.style.background='#22c55e';
-                if(data.updatedAt) updated.textContent=new Date(data.updatedAt).toLocaleString('ko-KR') + ' 기준';
+                if(data.updatedAt) updated.textContent=new Date(data.updatedAt).toLocaleString('ko-KR') + ' 데이터 기준';
                 renderCal();
                 const n1=box.querySelector('#nso-name1').value.trim();
                 const n2=box.querySelector('#nso-name2').value.trim();
