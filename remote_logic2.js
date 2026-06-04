@@ -2201,22 +2201,35 @@
                     const {d1,d2,w1,w2}=info;
                     const isLeave1=d1?.status==='annual'||d1?.status==='public';
                     const isLeave2=d2?.status==='annual'||d2?.status==='public';
-                    const show1=calMode==='work'?w1:(d1?(!w1||isLeave1):false);
-                    const show2=calMode==='work'?w2:(d2?(!w2||isLeave2):false);
+                    const show1 = calMode==='work' ? (w1 && !isLeave1) : (d1 ? (!w1||isLeave1) : false);
+                    const show2 = calMode==='work' ? (w2 && !isLeave2) : (d2 ? (!w2||isLeave2) : false);
+
                     if(show1){
                     const b=document.createElement('div');
                     const st=d1?.status||'work';
-                    b.style.cssText=`font-size:13px;border-radius:3px;padding:1px 4px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4;background:rgba(249,115,22,.18);color:#f97316;${st==='half'||st==='half-half'?'border:1px dashed #f97316;':''}${st==='annual'||st==='public'?'background:transparent;text-decoration:line-through;color:#64748b;':''}`;
+                    const isOff1 = calMode!=='work'; // 휴무 기준일 때
+                    b.style.cssText=`font-size:13px;border-radius:3px;padding:1px 4px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4;
+                        background:${isOff1?'rgba(100,116,139,.18)':'rgba(249,115,22,.18)'};
+                        color:${isOff1?'#64748b':'#f97316'};
+                        ${st==='half'||st==='half-half'?'border:1px dashed #f97316;':''}`;
                     const n1v=box.querySelector('#nso-name1').value.trim();
-                    b.textContent=st==='half'?`${n1v}(반차)`:st==='half-half'?`${n1v}(반반차)`:st==='annual'?`${n1v}(연차)`:st==='public'?`${n1v}(공가)`:n1v;
+                    b.textContent=st==='half'?`${n1v}(반차)`:st==='half-half'?`${n1v}(반반차)`:
+                        isOff1&&st==='annual'?`${n1v}(연차)`:
+                        isOff1&&st==='public'?`${n1v}(공가)`:n1v;
                     el.appendChild(b);
                     }
                     if(show2){
                     const b=document.createElement('div');
                     const st=d2?.status||'work';
-                    b.style.cssText=`font-size:13px;border-radius:3px;padding:1px 4px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4;background:rgba(168,85,247,.18);color:#a855f7;${st==='half'||st==='half-half'?'border:1px dashed #a855f7;':''}${st==='annual'||st==='public'?'background:transparent;text-decoration:line-through;color:#64748b;':''}`;
+                    const isOff2 = calMode!=='work';
+                    b.style.cssText=`font-size:13px;border-radius:3px;padding:1px 4px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4;
+                        background:${isOff2?'rgba(100,116,139,.18)':'rgba(168,85,247,.18)'};
+                        color:${isOff2?'#64748b':'#a855f7'};
+                        ${st==='half'||st==='half-half'?'border:1px dashed #a855f7;':''}`;
                     const n2v=box.querySelector('#nso-name2').value.trim();
-                    b.textContent=st==='half'?`${n2v}(반차)`:st==='half-half'?`${n2v}(반반차)`:st==='annual'?`${n2v}(연차)`:st==='public'?`${n2v}(공가)`:n2v;
+                    b.textContent=st==='half'?`${n2v}(반차)`:st==='half-half'?`${n2v}(반반차)`:
+                        isOff2&&st==='annual'?`${n2v}(연차)`:
+                        isOff2&&st==='public'?`${n2v}(공가)`:n2v;
                     el.appendChild(b);
                     }
                 }
