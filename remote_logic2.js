@@ -1300,7 +1300,33 @@
                 `;
                 const tipsTitle = document.createElement('div');
                 tipsTitle.textContent = '💡 최적화 팁';
-                tipsTitle.style.cssText = `font-size:20px; font-weight:bold; margin-bottom:20px; color:#fcd34d;`;
+                tipsTitle.style.cssText = `font-size:20px; font-weight:bold; margin-bottom:20px; color:#fcd34d; cursor:pointer;`;
+
+				const padIndicator = document.createElement('span');
+				padIndicator.style.cssText = 'font-size:12px;color:#ef4444;margin-left:8px;font-weight:700;';
+				padIndicator.textContent = '패드기능 OFF';
+				padIndicator.style.display = localStorage.getItem('neubie_dpad_binding')==='off' ? 'inline' : 'none';
+				tipsTitle.appendChild(padIndicator);
+				
+				let tipClickCount = 0;
+				let tipClickTimer = null;
+				tipsTitle.addEventListener('click', () => {
+				  tipClickCount++;
+				  clearTimeout(tipClickTimer);
+				  tipClickTimer = setTimeout(() => { tipClickCount = 0; }, 2000);
+				  if(tipClickCount >= 5){
+				    tipClickCount = 0;
+				    clearTimeout(tipClickTimer);
+				    if(localStorage.getItem('neubie_dpad_binding')==='off'){
+				      localStorage.removeItem('neubie_dpad_binding');
+				      padIndicator.style.display='none';
+				    } else {
+				      localStorage.setItem('neubie_dpad_binding','off');
+				      padIndicator.style.display='inline';
+				    }
+				  }
+				});
+				
                 const tipsClose = document.createElement('button');
                 tipsClose.textContent = '✕';
                 tipsClose.style.cssText = `
@@ -1310,31 +1336,6 @@
                     border-radius:6px; transition:color 0.2s;
                 `;
 				
-				const padIndicator = document.createElement('span');
-				padIndicator.style.cssText = 'font-size:12px;color:#ef4444;margin-left:8px;font-weight:700;';
-				padIndicator.textContent = '패드기능 OFF';
-				padIndicator.style.display = localStorage.getItem('neubie_dpad_binding')==='off' ? 'inline' : 'none';
-				tipsTitle.appendChild(padIndicator);
-
-				let tipClickCount = 0;
-				let tipClickTimer = null;
-				tipsTitle.addEventListener('click', () => {
-				  tipClickCount++;
-				  clearTimeout(tipClickTimer);
-				  tipClickTimer = setTimeout(() => { tipClickCount = 0; }, 2000); // 2초 안에 5번
-				  if(tipClickCount >= 5){
-					tipClickCount = 0;
-					clearTimeout(tipClickTimer);
-					if(localStorage.getItem('neubie_dpad_binding')==='off'){
-					  localStorage.removeItem('neubie_dpad_binding');
-					  padIndicator.style.display='none';
-					} else {
-					  localStorage.setItem('neubie_dpad_binding','off');
-					  padIndicator.style.display='inline';
-					}
-				  }
-				});
-
                 tipsClose.onmouseenter = () => { tipsClose.style.color='#fff'; };
                 tipsClose.onmouseleave = () => { tipsClose.style.color='#aaa'; };
                 tipsClose.onclick = () => { tipsOverlay.style.display='none'; };
@@ -2669,6 +2670,23 @@
 	
 	    }, 100);
 	}
+	
+	(function detectAndSaveMulti() {
+	  try {
+		const lsKey = Object.keys(localStorage).find(k => k.startsWith('ph_phc_') && k.endsWith('_posthog'));
+		if (!lsKey) return;
+		const posthog = JSON.parse(localStorage.getItem(lsKey));
+		const email = posthog?.distinct_id || '';
+		const match = email.match(/ubase_multiple(\d+)@gmail\.com/);
+		if (!match) return;
+
+		fetch('https://multimonitoring.vercel.app/api/multi_status', {
+		  method: 'POST',
+		  headers: { 'Content-Type': 'application/json' },
+		  body: JSON.stringify({ active: match[1] })
+		}).catch(()=>{});
+	  } catch(e) {}
+	})();
 
     injectConfigUI();
     
