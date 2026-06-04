@@ -2553,6 +2553,107 @@
             }
         }, 100);
     }, true);
+	
+	/* ============================================================
+    SECTION X. 중복 개입 감지 — /intervenes/ 폴링
+   ============================================================ */
+	let intervenePollingTimer = null;
+
+	function startIntervenePolling(robotId) {
+		stopIntervenePolling();
+
+		// 배너 생성
+		let banner = document.getElementById('neubie-intervene-banner');
+		if (!banner) {
+			banner = document.createElement('div');
+			banner.id = 'neubie-intervene-banner';
+			Object.assign(banner.style, {
+				position: 'fixed', top: '60px', left: '50%',
+				transform: 'translateX(-50%)',
+				background: 'rgba(239,68,68,0.95)',
+				color: '#fff', padding: '10px 24px',
+				borderRadius: '12px', zIndex: '9999999',
+				fontWeight: 'bold', fontSize: '15px',
+				boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+				display: 'none', textAlign: 'center',
+				fontFamily: 'Pretendard, sans-serif',
+			});
+			document.body.appendChild(banner);
+		}
+
+		const poll = async () => {
+			try {
+				const res = await originalFetch(
+					`https://go.neubie.ai/api/v1/monitoring/intervenes/?robot=${robotId}&limit=10`,
+					{ cache: 'no-store' }
+				);
+				const data = await res.json();
+
+				// resolvedAt이 null인 진행 중인 개입만 필터
+				const active = (data.results || []).filter(r => r.resolvedAt === null);
+
+				if (active.length > 1) {
+					// 중복 개입 — 이름 목록 표시
+					const names = active.map(r => r.drivingUser?.name || '?').join(', ');
+					banner.textContent = `⚠️ 중복 개입 감지: ${names}님이 동시에 조치 중`;
+					banner.style.display = 'block';
+				} else if (active.length === 1) {
+					const name = active[0].drivingUser?.name || '?';
+					banner.textContent = `🔵 현재 ${name}님 조치 중`;
+					banner.style.background = 'rgba(37,99,235,0.92)';
+					banner.style.display = 'block';
+				} else {
+					banner.style.display = 'none';
+				}
+			} catch (e) {
+				// 폴링 실패 시 조용히 무시
+			}
+		};
+
+		poll(); // 즉시 1회 실행
+		intervenePollingTimer = setInterval(poll, 4000); // 4초 간격
+	}
+
+	function stopIntervenePolling() {
+		if (intervenePollingTimer) {
+			clearInterval(intervenePollingTimer);
+			intervenePollingTimer = null;
+		}
+		const banner = document.getElementById('neubie-intervene-banner');
+		if (banner) banner.style.display = 'none';
+	}
+
+	function checkDrivingPageAndPoll() {
+		const url = location.href;
+		// /remote/multiple/driving/{id} 또는 /remote/robot/{id} 모두 커버
+		const drivingMatch = url.match(/\/remote\/multiple\/driving\/(\d+)/);
+		const robotMatch   = url.match(/\/remote\/robot\/(\d+)/);
+
+		if (drivingMatch) {
+			// intervenes API의 robot 파라미터는 robot DB id
+			// URL의 id는 intervene id → robot 파라미터 별도 필요
+			// 일단 intervene id로 조회 후 robot.id 추출
+			const interveneId = drivingMatch[1];
+			fetchRobotIdFromIntervene(interveneId);
+		} else if (robotMatch) {
+			startIntervenePolling(robotMatch[1]);
+		} else {
+			stopIntervenePolling();
+		}
+	}
+
+	async function fetchRobotIdFromIntervene(interveneId) {
+		try {
+			const res = await originalFetch(
+				`https://go.neubie.ai/api/v1/monitoring/intervenes/${interveneId}/`,
+				{ cache: 'no-store' }
+			);
+			const data = await res.json();
+			if (data.robot?.id) {
+				startIntervenePolling(data.robot.id);
+			}
+		} catch (e) {}
+	}
 
     // 만약 클릭 없이 코드로만 주소가 바뀌는 경우를 대비 (간격 2초)
     setInterval(() => {
@@ -2560,6 +2661,7 @@
             lastUrl = location.href;
             closeAllPopups();
             updateRobotContext();
+			checkDrivingPageAndPoll();
 
             // 맵 최적화 페이지 전환 시 재적용
             const isTarget = config.targetIds.some(id => location.href.includes(`/monitoring/${id}`));
@@ -2670,7 +2772,7 @@
 	
 	    }, 100);
 	}
-	
+
 	// localStorage.setItem 가로채기 — 계정 변경 시 자동 감지
 	const _origSetItem = localStorage.setItem.bind(localStorage);
 	localStorage.setItem = function(key, value) {
@@ -2708,6 +2810,7 @@
 	})();
 
     injectConfigUI();
+	checkDrivingPageAndPoll();
     
     // 페이지 로드 시 이름이 설정되어 있다면 즉시 한 번 동기화
     if (localStorage.getItem('neubie_user_name')) {
