@@ -181,11 +181,11 @@
             50%     { border-color:transparent; box-shadow:none; }
         }
         .bb-ca-name { font-size:15px; font-weight:900; color:var(--tx); line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; letter-spacing:-.2px; }
-        .bb-ca:hover .bb-ca-name { overflow:visible; animation:bb-marquee 3s linear 0.5s 1 forwards; }
-        @keyframes bb-marquee {
-            0%   { transform:translateX(0); }
-            100% { transform:translateX(-60%); }
-        }
+   	  .bb-ca-name.bb-marquee { overflow:visible; animation:bb-marquee 3s linear 0.5s 1 forwards; }
+   	  @keyframes bb-marquee {
+   		   0%   { transform:translateX(0); }
+   			100% { transform:translateX(-60%); }
+   	  }
         .bb-ca-mid  { display:flex; justify-content:space-between; align-items:center; }
         .bb-ca-st   { font-size:11px; font-weight:700; color:var(--ac,var(--mu)); display:flex; align-items:center; gap:3px; opacity:.9; }
         .bb-ca-bat  { font-family:'Lato',monospace; font-size:15px; font-weight:900; color:var(--ac,var(--mu)); line-height:1; white-space:nowrap; }
@@ -1171,6 +1171,19 @@
             c.addEventListener('drop',      ddrop);
             c.addEventListener('dragend',   dend);
         }
+
+        // 이름이 잘린 경우에만 호버 마퀴 적용
+        const nameEl = c.querySelector('.bb-ca-name');
+        c.addEventListener('mouseenter', () => {
+            if (nameEl.scrollWidth > nameEl.clientWidth) {
+                nameEl.classList.add('bb-marquee');
+            }
+        });
+        c.addEventListener('mouseleave', () => {
+            nameEl.classList.remove('bb-marquee');
+            // 애니메이션 리셋
+            nameEl.style.transform = '';
+        });
         return c;
     }
 
