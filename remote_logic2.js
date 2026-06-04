@@ -2671,6 +2671,25 @@
 	    }, 100);
 	}
 	
+	// localStorage.setItem 가로채기 — 계정 변경 시 자동 감지
+	const _origSetItem = localStorage.setItem.bind(localStorage);
+	localStorage.setItem = function(key, value) {
+	  _origSetItem(key, value);
+	  if (key.includes('ph_phc_') && key.endsWith('_posthog')) {
+		try {
+		  const posthog = JSON.parse(value);
+		  const email = posthog?.distinct_id || '';
+		  const match = email.match(/ubase_multiple(\d+)@gmail\.com/);
+		  const multiNum = match ? match[1] : '';
+		  fetch('https://multimonitoring.vercel.app/api/multi_status', {
+			method: 'POST',
+			headers: {'Content-Type':'application/json'},
+			body: JSON.stringify({ active: multiNum })
+		  }).catch(()=>{});
+		} catch(e) {}
+	  }
+	};
+	
 	(function detectAndSaveMulti() {
 	  try {
 		const lsKey = Object.keys(localStorage).find(k => k.startsWith('ph_phc_') && k.endsWith('_posthog'));
