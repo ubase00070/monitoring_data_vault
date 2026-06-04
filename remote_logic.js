@@ -2079,8 +2079,13 @@
             `;
 
             // 상태 변수
+            let nsoZoom = parseInt(localStorage.getItem('nv_nso_zoom') || '100');
             let scheduleData = null, compareResult = null;
+            let calMode = localStorage.getItem('nv_nso_cal_mode') || 'work';
             let currentMonthKey = '', sel1 = '', sel2 = '';
+
+            box.style.transform = `scale(${nsoZoom/100})`;
+            box.style.transformOrigin = 'top center';
 
             // 로컬캐시
             const LS = 'nv_data_cache';
@@ -2097,18 +2102,24 @@
                     <span id="nso-dot" style="width:7px;height:7px;border-radius:50%;background:#eab308;display:inline-block;"></span>
                     <span id="nso-updated" style="font-size:12px;color:#64748b;"></span>
                 </div>
-                <button id="nso-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#22263a;color:#94a3b8;font-size:16px;cursor:pointer;">✕</button>
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <button id="nso-zoom-out" style="width:26px;height:26px;border:none;border-radius:5px;background:#22263a;color:#94a3b8;font-size:14px;cursor:pointer;">-</button>
+                  <span id="nso-zoom-label" style="font-size:12px;color:#94a3b8;min-width:36px;text-align:center;">100%</span>
+                  <button id="nso-zoom-in" style="width:26px;height:26px;border:none;border-radius:5px;background:#22263a;color:#94a3b8;font-size:14px;cursor:pointer;">+</button>
+                  <button id="nso-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
+                </div>
                 </div>
 
                 <!-- 달력 -->
                 <div style="margin-bottom:120px;background:rgba(15,17,23,.3);border-radius:12px;padding:12px;">
                 <div style="display:flex;align-items:center;margin-bottom:10px;position:relative;">
-                    <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;">
+                  <div style="font-size:11px;color:#475569;position:absolute;left:0;">(날짜 클릭 → 좌석 배치도)</div>
+                  <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;">
                     <button id="nso-prev" style="width:28px;height:28px;border:1px solid #2e3347;border-radius:5px;background:#22263a;color:#94a3b8;font-size:14px;cursor:pointer;">◀</button>
                     <div id="nso-cal-title" style="font-size:16px;font-weight:700;color:#e2e8f0;">로딩 중...</div>
                     <button id="nso-next" style="width:28px;height:28px;border:1px solid #2e3347;border-radius:5px;background:#22263a;color:#94a3b8;font-size:14px;cursor:pointer;">▶</button>
-                    </div>
-                    <div style="position:absolute;right:0;font-size:12px;color:#475569;">(날짜 클릭 → 좌석 배치도)</div>
+                  </div>
+                  <button id="nso-cal-mode" style="position:absolute;right:0;font-size:12px;padding:3px 8px;border-radius:6px;border:1px solid #f97316;background:rgba(249,115,22,0.1);color:#f97316;cursor:pointer;white-space:nowrap;">근무 기준</button>
                 </div>
                 <div id="nso-cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;"></div>
                 </div>
@@ -2152,7 +2163,6 @@
 
             overlay.appendChild(box);
             document.body.appendChild(overlay);
-            overlay.addEventListener('click', e => { if(e.target===overlay) overlay.style.display='none'; });
 
             // 달력 렌더
             const DOW=['일','월','화','수','목','금','토'];
@@ -2189,21 +2199,38 @@
                 numEl.textContent=d; el.appendChild(numEl);
                 if(info){
                     const {d1,d2,w1,w2}=info;
-                    if(w1){
-                    const b=document.createElement('div');
-                    const st=d1?.status||'work';
-                    b.style.cssText=`font-size:13px;border-radius:3px;padding:1px 4px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4;background:rgba(249,115,22,.18);color:#f97316;${st==='half'||st==='half-half'?'border:1px dashed #f97316;':''}${st==='annual'||st==='public'||st==='off'?'background:transparent;text-decoration:line-through;color:#64748b;':''}`;
-                    const n1v=box.querySelector('#nso-name1').value.trim();
-                    b.textContent=st==='half'?`${n1v}(반차)`:st==='half-half'?`${n1v}(반반차)`:st==='annual'?`${n1v}(연차)`:st==='public'?`${n1v}(공가)`:n1v;
-                    el.appendChild(b);
+                    const isLeave1=d1?.status==='annual'||d1?.status==='public';
+                    const isLeave2=d2?.status==='annual'||d2?.status==='public';
+                    const show1 = calMode==='work' ? (w1 && !isLeave1) : (d1 ? (!w1||isLeave1) : false);
+                    const show2 = calMode==='work' ? (w2 && !isLeave2) : (d2 ? (!w2||isLeave2) : false);
+
+                    if(show1){
+                      const b=document.createElement('div');
+                      const st=d1?.status||'work';
+                      const isOff1 = calMode!=='work';
+                      b.style.cssText=`font-size:13px;border-radius:3px;padding:1px 4px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4;
+                        background:rgba(249,115,22,.18);
+                        color:#f97316;
+                        ${st==='half'||st==='half-half'?'border:1px dashed #f97316;':''}`;
+                      const n1v=box.querySelector('#nso-name1').value.trim();
+                      b.textContent=st==='half'?`${n1v}(반차)`:st==='half-half'?`${n1v}(반반차)`:
+                        isOff1&&st==='annual'?`${n1v}(연차)`:
+                        isOff1&&st==='public'?`${n1v}(공가)`:n1v;
+                      el.appendChild(b);
                     }
-                    if(w2){
-                    const b=document.createElement('div');
-                    const st=d2?.status||'work';
-                    b.style.cssText=`font-size:13px;border-radius:3px;padding:1px 4px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4;background:rgba(168,85,247,.18);color:#a855f7;${st==='half'||st==='half-half'?'border:1px dashed #a855f7;':''}${st==='annual'||st==='public'||st==='off'?'background:transparent;text-decoration:line-through;color:#64748b;':''}`;
-                    const n2v=box.querySelector('#nso-name2').value.trim();
-                    b.textContent=st==='half'?`${n2v}(반차)`:st==='half-half'?`${n2v}(반반차)`:st==='annual'?`${n2v}(연차)`:st==='public'?`${n2v}(공가)`:n2v;
-                    el.appendChild(b);
+                    if(show2){
+                      const b=document.createElement('div');
+                      const st=d2?.status||'work';
+                      const isOff2 = calMode!=='work';
+                      b.style.cssText=`font-size:13px;border-radius:3px;padding:1px 4px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4;
+                        background:rgba(168,85,247,.18);
+                        color:#a855f7;
+                        ${st==='half'||st==='half-half'?'border:1px dashed #a855f7;':''}`;
+                      const n2v=box.querySelector('#nso-name2').value.trim();
+                      b.textContent=st==='half'?`${n2v}(반차)`:st==='half-half'?`${n2v}(반반차)`:
+                        isOff2&&st==='annual'?`${n2v}(연차)`:
+                        isOff2&&st==='public'?`${n2v}(공가)`:n2v;
+                      el.appendChild(b);
                     }
                 }
                 el.addEventListener('click',()=>openSeat(label));
@@ -2222,21 +2249,30 @@
                 try{ localStorage.setItem('nv_name1',sel1); localStorage.setItem('nv_name2',sel2); }catch(e){}
                 compareResult={};
                 let c1=0,c2=0,ov=0;
+                let off1=0,off2=0,offOv=0;
                 for(const date of scheduleData.dates){
                 const d1=s1?s1.schedule[date]:null, d2=s2?s2.schedule[date]:null;
                 const w1=d1?d1.working:false, w2=d2?d2.working:false;
                 const p1=d1?d1.present:false, p2=d2?d2.present:false;
-                if(w1)c1++; if(w2)c2++; if(p1&&p2)ov++;
+                if(p1)c1++; if(p2)c2++; if(p1&&p2)ov++;
+                if(!p1||(d1?.status==='annual'||d1?.status==='public')) off1++;
+                if(!p2||(d2?.status==='annual'||d2?.status==='public')) off2++;
+                if((!p1||(d1?.status==='annual'||d1?.status==='public'))&&
+                    (!p2||(d2?.status==='annual'||d2?.status==='public'))) offOv++;
                 compareResult[date]={d1,d2,w1,w2};
                 }
+                const d1Show=calMode==='work'?c1:off1;
+                const d2Show=calMode==='work'?c2:off2;
+                const ovShow=calMode==='work'?ov:offOv;
+                const modeLabel=calMode==='work'?'근무':'휴무';
                 const ov2=box.querySelector('#nso-overlap');
                 if(ov2){
                 ov2.style.display='block';
                 ov2.innerHTML=
-                    (s1?`<span style="color:#f97316;font-weight:700">${sel1}</span> <strong>${c1}일</strong>`:'') +
+                    (s1?`<span style="color:#f97316;font-weight:700">${sel1}</span> <strong>${d1Show}일</strong>`:'') +
                     (s1&&s2?' | ':'') +
-                    (s2?`<span style="color:#a855f7;font-weight:700">${sel2}</span> <strong>${c2}일</strong>`:'') +
-                    (s1&&s2?` | 겹침 <strong style="color:#4f8ef7">${ov}일</strong>`:'');
+                    (s2?`<span style="color:#a855f7;font-weight:700">${sel2}</span> <strong>${d2Show}일</strong>`:'') +
+                    (s1&&s2?` | ${modeLabel}겹침 <strong style="color:#4f8ef7">${ovShow}일</strong>`:'');
                 }
                 renderCal();
             }
@@ -2386,6 +2422,36 @@
             }
 
             // 이벤트 바인딩
+            // 줌 버튼
+            const updateZoom = (z) => {
+              nsoZoom = Math.max(100, Math.min(150, z));
+              localStorage.setItem('nv_nso_zoom', nsoZoom);
+              box.style.transform = `scale(${nsoZoom/100})`;
+              box.style.transformOrigin = 'top center';
+              box.querySelector('#nso-zoom-label').textContent = nsoZoom + '%';
+            };
+              box.querySelector('#nso-zoom-in').onclick = () => updateZoom(nsoZoom+10);
+              box.querySelector('#nso-zoom-out').onclick = () => updateZoom(nsoZoom-10);
+              box.querySelector('#nso-zoom-label').textContent = nsoZoom + '%';
+              box.style.transform = `scale(${nsoZoom/100})`;
+
+            // 근무/휴무 토글
+            box.querySelector('#nso-cal-mode').textContent = calMode==='work'?'근무 기준':'휴무 기준';
+            
+            const updateCalModeBtn = () => {
+              const btn = box.querySelector('#nso-cal-mode');
+              btn.textContent = calMode==='work'?'근무 기준':'휴무 기준';
+              btn.style.borderColor = calMode==='work'?'#f97316':'#a855f7';
+              btn.style.color = calMode==='work'?'#f97316':'#a855f7';
+            };
+            updateCalModeBtn();
+            box.querySelector('#nso-cal-mode').onclick = () => {
+              calMode = calMode==='work'?'off':'work';
+              localStorage.setItem('nv_nso_cal_mode', calMode);
+              updateCalModeBtn();
+              if(sel1||sel2) runCompare(); else renderCal();
+            };
+
             box.querySelector('#nso-close').onclick = () => overlay.style.display='none';
             box.querySelector('#nso-seat-modal').addEventListener('click', () => {
               const m=box.querySelector('#nso-seat-modal');
@@ -2496,12 +2562,15 @@
 
 			// 그 외 페이지는 기존 대시보드
 			const tipsOverlayEl = document.getElementById('neubie-tips-overlay');
-			const isAnyOpen = (dashboard.style.display === 'block' || 
-							batteryPopup.style.display === 'block' ||
-							(tipsOverlayEl && tipsOverlayEl.style.display === 'flex'));
+			const scheduleOverlayEl = document.getElementById('neubie-schedule-overlay');
+              const isAnyOpen = (dashboard.style.display === 'block' || 
+              batteryPopup.style.display === 'block' ||
+              (tipsOverlayEl && tipsOverlayEl.style.display === 'flex') ||
+              (scheduleOverlayEl && scheduleOverlayEl.style.display === 'flex'));
 			
 			if (isAnyOpen) {
 				closeAllPopups();
+                if(scheduleOverlayEl) scheduleOverlayEl.style.display='none';
 			} else {
 				renderDashboard();
 				dashboard.style.display = 'block';
