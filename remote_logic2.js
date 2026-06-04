@@ -2079,8 +2079,13 @@
             `;
 
             // 상태 변수
+            let nsoZoom = parseInt(localStorage.getItem('nv_nso_zoom') || '100');
             let scheduleData = null, compareResult = null;
+            let calMode = localStorage.getItem('nv_nso_cal_mode') || 'work';
             let currentMonthKey = '', sel1 = '', sel2 = '';
+
+            box.style.transform = `scale(${nsoZoom/100})`;
+            box.style.transformOrigin = 'top center';
 
             // 로컬캐시
             const LS = 'nv_data_cache';
@@ -2097,18 +2102,22 @@
                     <span id="nso-dot" style="width:7px;height:7px;border-radius:50%;background:#eab308;display:inline-block;"></span>
                     <span id="nso-updated" style="font-size:12px;color:#64748b;"></span>
                 </div>
-                <button id="nso-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#22263a;color:#94a3b8;font-size:16px;cursor:pointer;">✕</button>
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <button id="nso-zoom-out" style="width:26px;height:26px;border:none;border-radius:5px;background:#22263a;color:#94a3b8;font-size:14px;cursor:pointer;">-</button>
+                  <span id="nso-zoom-label" style="font-size:12px;color:#94a3b8;min-width:36px;text-align:center;">100%</span>
+                  <button id="nso-zoom-in" style="width:26px;height:26px;border:none;border-radius:5px;background:#22263a;color:#94a3b8;font-size:14px;cursor:pointer;">+</button>
+                  <button id="nso-close" style="...">✕</button>
+                </div>
                 </div>
 
                 <!-- 달력 -->
                 <div style="margin-bottom:120px;background:rgba(15,17,23,.3);border-radius:12px;padding:12px;">
                 <div style="display:flex;align-items:center;margin-bottom:10px;position:relative;">
-                    <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;">
-                    <button id="nso-prev" style="width:28px;height:28px;border:1px solid #2e3347;border-radius:5px;background:#22263a;color:#94a3b8;font-size:14px;cursor:pointer;">◀</button>
-                    <div id="nso-cal-title" style="font-size:16px;font-weight:700;color:#e2e8f0;">로딩 중...</div>
-                    <button id="nso-next" style="width:28px;height:28px;border:1px solid #2e3347;border-radius:5px;background:#22263a;color:#94a3b8;font-size:14px;cursor:pointer;">▶</button>
-                    </div>
-                    <div style="position:absolute;right:0;font-size:12px;color:#475569;">(날짜 클릭 → 좌석 배치도)</div>
+                  <div style="font-size:11px;color:#475569;position:absolute;left:0;">(날짜 클릭 → 좌석 배치도)</div>
+                  <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;">
+                    ◀ 제목 ▶
+                  </div>
+                  <button id="nso-cal-mode" style="position:absolute;right:0;font-size:12px;padding:3px 8px;border-radius:6px;border:1px solid rgba(79,142,247,0.3);background:rgba(79,142,247,0.15);color:#94a3b8;cursor:pointer;white-space:nowrap;">근무 기준</button>
                 </div>
                 <div id="nso-cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;"></div>
                 </div>
@@ -2189,7 +2198,11 @@
                 numEl.textContent=d; el.appendChild(numEl);
                 if(info){
                     const {d1,d2,w1,w2}=info;
-                    if(w1){
+                    const isLeave1=d1?.status==='annual'||d1?.status==='public';
+                    const isLeave2=d2?.status==='annual'||d2?.status==='public';
+                    const show1=calMode==='work'?w1:(d1?(!w1||isLeave1):false);
+                    const show2=calMode==='work'?w2:(d2?(!w2||isLeave2):false);
+                    if(show1){
                     const b=document.createElement('div');
                     const st=d1?.status||'work';
                     b.style.cssText=`font-size:13px;border-radius:3px;padding:1px 4px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4;background:rgba(249,115,22,.18);color:#f97316;${st==='half'||st==='half-half'?'border:1px dashed #f97316;':''}${st==='annual'||st==='public'||st==='off'?'background:transparent;text-decoration:line-through;color:#64748b;':''}`;
@@ -2197,7 +2210,7 @@
                     b.textContent=st==='half'?`${n1v}(반차)`:st==='half-half'?`${n1v}(반반차)`:st==='annual'?`${n1v}(연차)`:st==='public'?`${n1v}(공가)`:n1v;
                     el.appendChild(b);
                     }
-                    if(w2){
+                    if(show2){
                     const b=document.createElement('div');
                     const st=d2?.status||'work';
                     b.style.cssText=`font-size:13px;border-radius:3px;padding:1px 4px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4;background:rgba(168,85,247,.18);color:#a855f7;${st==='half'||st==='half-half'?'border:1px dashed #a855f7;':''}${st==='annual'||st==='public'||st==='off'?'background:transparent;text-decoration:line-through;color:#64748b;':''}`;
@@ -2222,21 +2235,30 @@
                 try{ localStorage.setItem('nv_name1',sel1); localStorage.setItem('nv_name2',sel2); }catch(e){}
                 compareResult={};
                 let c1=0,c2=0,ov=0;
+                let off1=0,off2=0,offOv=0;
                 for(const date of scheduleData.dates){
                 const d1=s1?s1.schedule[date]:null, d2=s2?s2.schedule[date]:null;
                 const w1=d1?d1.working:false, w2=d2?d2.working:false;
                 const p1=d1?d1.present:false, p2=d2?d2.present:false;
-                if(w1)c1++; if(w2)c2++; if(p1&&p2)ov++;
+                if(p1)c1++; if(p2)c2++; if(p1&&p2)ov++;
+                if(!p1||(d1?.status==='annual'||d1?.status==='public')) off1++;
+                if(!p2||(d2?.status==='annual'||d2?.status==='public')) off2++;
+                if((!p1||(d1?.status==='annual'||d1?.status==='public'))&&
+                    (!p2||(d2?.status==='annual'||d2?.status==='public'))) offOv++;
                 compareResult[date]={d1,d2,w1,w2};
                 }
+                const d1Show=calMode==='work'?c1:off1;
+                const d2Show=calMode==='work'?c2:off2;
+                const ovShow=calMode==='work'?ov:offOv;
+                const modeLabel=calMode==='work'?'근무':'휴무';
                 const ov2=box.querySelector('#nso-overlap');
                 if(ov2){
                 ov2.style.display='block';
                 ov2.innerHTML=
-                    (s1?`<span style="color:#f97316;font-weight:700">${sel1}</span> <strong>${c1}일</strong>`:'') +
+                    (s1?`<span style="color:#f97316;font-weight:700">${sel1}</span> <strong>${d1Show}일</strong>`:'') +
                     (s1&&s2?' | ':'') +
-                    (s2?`<span style="color:#a855f7;font-weight:700">${sel2}</span> <strong>${c2}일</strong>`:'') +
-                    (s1&&s2?` | 겹침 <strong style="color:#4f8ef7">${ov}일</strong>`:'');
+                    (s2?`<span style="color:#a855f7;font-weight:700">${sel2}</span> <strong>${d2Show}일</strong>`:'') +
+                    (s1&&s2?` | ${modeLabel}겹침 <strong style="color:#4f8ef7">${ovShow}일</strong>`:'');
                 }
                 renderCal();
             }
@@ -2386,6 +2408,29 @@
             }
 
             // 이벤트 바인딩
+            // 줌 버튼
+            const updateZoom = (z) => {
+              nsoZoom = Math.max(100, Math.min(150, z));
+              localStorage.setItem('nv_nso_zoom', nsoZoom);
+              box.style.transform = `scale(${nsoZoom/100})`;
+              box.style.transformOrigin = 'top center';
+              box.querySelector('#nso-zoom-label').textContent = nsoZoom + '%';
+            };
+              box.querySelector('#nso-zoom-in').onclick = () => updateZoom(nsoZoom+10);
+              box.querySelector('#nso-zoom-out').onclick = () => updateZoom(nsoZoom-10);
+              box.querySelector('#nso-zoom-label').textContent = nsoZoom + '%';
+              box.style.transform = `scale(${nsoZoom/100})`;
+
+            // 근무/휴무 토글
+            box.querySelector('#nso-cal-mode').textContent = calMode==='work'?'근무 기준':'휴무 기준';
+            box.querySelector('#nso-cal-mode').onclick = () => {
+              calMode = calMode==='work'?'off':'work';
+              localStorage.setItem('nv_nso_cal_mode', calMode);
+              box.querySelector('#nso-cal-mode').textContent = calMode==='work'?'근무 기준':'휴무 기준';
+              if(sel1||sel2) runCompare();
+              else renderCal();
+            };
+
             box.querySelector('#nso-close').onclick = () => overlay.style.display='none';
             box.querySelector('#nso-seat-modal').addEventListener('click', () => {
               const m=box.querySelector('#nso-seat-modal');
@@ -2553,107 +2598,6 @@
             }
         }, 100);
     }, true);
-	
-	/* ============================================================
-    SECTION X. 중복 개입 감지 — /intervenes/ 폴링
-   ============================================================ */
-	let intervenePollingTimer = null;
-
-	function startIntervenePolling(robotId) {
-		stopIntervenePolling();
-
-		// 배너 생성
-		let banner = document.getElementById('neubie-intervene-banner');
-		if (!banner) {
-			banner = document.createElement('div');
-			banner.id = 'neubie-intervene-banner';
-			Object.assign(banner.style, {
-				position: 'fixed', top: '60px', left: '50%',
-				transform: 'translateX(-50%)',
-				background: 'rgba(239,68,68,0.95)',
-				color: '#fff', padding: '10px 24px',
-				borderRadius: '12px', zIndex: '9999999',
-				fontWeight: 'bold', fontSize: '15px',
-				boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
-				display: 'none', textAlign: 'center',
-				fontFamily: 'Pretendard, sans-serif',
-			});
-			document.body.appendChild(banner);
-		}
-
-		const poll = async () => {
-			try {
-				const res = await originalFetch(
-					`https://go.neubie.ai/api/v1/monitoring/intervenes/?robot=${robotId}&limit=10`,
-					{ cache: 'no-store' }
-				);
-				const data = await res.json();
-
-				// resolvedAt이 null인 진행 중인 개입만 필터
-				const active = (data.results || []).filter(r => r.resolvedAt === null);
-
-				if (active.length > 1) {
-					// 중복 개입 — 이름 목록 표시
-					const names = active.map(r => r.drivingUser?.name || '?').join(', ');
-					banner.textContent = `⚠️ 중복 개입 감지: ${names}님이 동시에 조치 중`;
-					banner.style.display = 'block';
-				} else if (active.length === 1) {
-					const name = active[0].drivingUser?.name || '?';
-					banner.textContent = `🔵 현재 ${name}님 조치 중`;
-					banner.style.background = 'rgba(37,99,235,0.92)';
-					banner.style.display = 'block';
-				} else {
-					banner.style.display = 'none';
-				}
-			} catch (e) {
-				// 폴링 실패 시 조용히 무시
-			}
-		};
-
-		poll(); // 즉시 1회 실행
-		intervenePollingTimer = setInterval(poll, 4000); // 4초 간격
-	}
-
-	function stopIntervenePolling() {
-		if (intervenePollingTimer) {
-			clearInterval(intervenePollingTimer);
-			intervenePollingTimer = null;
-		}
-		const banner = document.getElementById('neubie-intervene-banner');
-		if (banner) banner.style.display = 'none';
-	}
-
-	function checkDrivingPageAndPoll() {
-		const url = location.href;
-		// /remote/multiple/driving/{id} 또는 /remote/robot/{id} 모두 커버
-		const drivingMatch = url.match(/\/remote\/multiple\/driving\/(\d+)/);
-		const robotMatch   = url.match(/\/remote\/robot\/(\d+)/);
-
-		if (drivingMatch) {
-			// intervenes API의 robot 파라미터는 robot DB id
-			// URL의 id는 intervene id → robot 파라미터 별도 필요
-			// 일단 intervene id로 조회 후 robot.id 추출
-			const interveneId = drivingMatch[1];
-			fetchRobotIdFromIntervene(interveneId);
-		} else if (robotMatch) {
-			startIntervenePolling(robotMatch[1]);
-		} else {
-			stopIntervenePolling();
-		}
-	}
-
-	async function fetchRobotIdFromIntervene(interveneId) {
-		try {
-			const res = await originalFetch(
-				`https://go.neubie.ai/api/v1/monitoring/intervenes/${interveneId}/`,
-				{ cache: 'no-store' }
-			);
-			const data = await res.json();
-			if (data.robot?.id) {
-				startIntervenePolling(data.robot.id);
-			}
-		} catch (e) {}
-	}
 
     // 만약 클릭 없이 코드로만 주소가 바뀌는 경우를 대비 (간격 2초)
     setInterval(() => {
@@ -2661,7 +2605,6 @@
             lastUrl = location.href;
             closeAllPopups();
             updateRobotContext();
-			checkDrivingPageAndPoll();
 
             // 맵 최적화 페이지 전환 시 재적용
             const isTarget = config.targetIds.some(id => location.href.includes(`/monitoring/${id}`));
@@ -2810,7 +2753,6 @@
 	})();
 
     injectConfigUI();
-	checkDrivingPageAndPoll();
     
     // 페이지 로드 시 이름이 설정되어 있다면 즉시 한 번 동기화
     if (localStorage.getItem('neubie_user_name')) {
