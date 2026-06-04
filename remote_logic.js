@@ -1300,7 +1300,33 @@
                 `;
                 const tipsTitle = document.createElement('div');
                 tipsTitle.textContent = '💡 최적화 팁';
-                tipsTitle.style.cssText = `font-size:20px; font-weight:bold; margin-bottom:20px; color:#fcd34d;`;
+                tipsTitle.style.cssText = `font-size:20px; font-weight:bold; margin-bottom:20px; color:#fcd34d; cursor:pointer;`;
+
+				const padIndicator = document.createElement('span');
+				padIndicator.style.cssText = 'font-size:12px;color:#ef4444;margin-left:8px;font-weight:700;';
+				padIndicator.textContent = '패드기능 OFF';
+				padIndicator.style.display = localStorage.getItem('neubie_dpad_binding')==='off' ? 'inline' : 'none';
+				tipsTitle.appendChild(padIndicator);
+				
+				let tipClickCount = 0;
+				let tipClickTimer = null;
+				tipsTitle.addEventListener('click', () => {
+				  tipClickCount++;
+				  clearTimeout(tipClickTimer);
+				  tipClickTimer = setTimeout(() => { tipClickCount = 0; }, 2000);
+				  if(tipClickCount >= 5){
+				    tipClickCount = 0;
+				    clearTimeout(tipClickTimer);
+				    if(localStorage.getItem('neubie_dpad_binding')==='off'){
+				      localStorage.removeItem('neubie_dpad_binding');
+				      padIndicator.style.display='none';
+				    } else {
+				      localStorage.setItem('neubie_dpad_binding','off');
+				      padIndicator.style.display='inline';
+				    }
+				  }
+				});
+				
                 const tipsClose = document.createElement('button');
                 tipsClose.textContent = '✕';
                 tipsClose.style.cssText = `
@@ -1309,6 +1335,7 @@
                     font-size:20px; cursor:pointer; line-height:1; padding:4px 8px;
                     border-radius:6px; transition:color 0.2s;
                 `;
+				
                 tipsClose.onmouseenter = () => { tipsClose.style.color='#fff'; };
                 tipsClose.onmouseleave = () => { tipsClose.style.color='#aaa'; };
                 tipsClose.onclick = () => { tipsOverlay.style.display='none'; };
@@ -2586,6 +2613,7 @@
 	    };
 	
 	    setInterval(() => {
+			if(localStorage.getItem('neubie_dpad_binding')==='off') return;
 	        const gp = navigator.getGamepads()[0];
 	        if (!gp) return;
 	        const isDrivingPage = location.href.includes('/remote/multiple/driving/')
