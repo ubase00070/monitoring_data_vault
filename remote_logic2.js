@@ -2119,7 +2119,7 @@
                     <div id="nso-cal-title" style="font-size:16px;font-weight:700;color:#e2e8f0;">로딩 중...</div>
                     <button id="nso-next" style="width:28px;height:28px;border:1px solid #2e3347;border-radius:5px;background:#22263a;color:#94a3b8;font-size:14px;cursor:pointer;">▶</button>
                   </div>
-                  <button id="nso-cal-mode" style="position:absolute;right:0;font-size:12px;padding:3px 8px;border-radius:6px;border:1px solid rgba(79,142,247,0.3);background:rgba(79,142,247,0.15);color:#94a3b8;cursor:pointer;white-space:nowrap;">근무 기준</button>
+                  <button id="nso-cal-mode" style="position:absolute;right:0;font-size:12px;padding:3px 8px;border-radius:6px;border:1px solid #f97316;background:rgba(249,115,22,0.1);color:#f97316;cursor:pointer;white-space:nowrap;">근무 기준</button>
                 </div>
                 <div id="nso-cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;"></div>
                 </div>
@@ -2437,13 +2437,6 @@
               localStorage.setItem('nv_nso_cal_mode', calMode);
               updateCalModeBtn();
               if(sel1||sel2) runCompare(); else renderCal();
-            };
-            box.querySelector('#nso-cal-mode').onclick = () => {
-              calMode = calMode==='work'?'off':'work';
-              localStorage.setItem('nv_nso_cal_mode', calMode);
-              box.querySelector('#nso-cal-mode').textContent = calMode==='work'?'근무 기준':'휴무 기준';
-              if(sel1||sel2) runCompare();
-              else renderCal();
             };
 
             box.querySelector('#nso-close').onclick = () => overlay.style.display='none';
