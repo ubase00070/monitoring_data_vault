@@ -2115,7 +2115,9 @@
                 <div style="display:flex;align-items:center;margin-bottom:10px;position:relative;">
                   <div style="font-size:11px;color:#475569;position:absolute;left:0;">(날짜 클릭 → 좌석 배치도)</div>
                   <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;">
-                    ◀ 제목 ▶
+                    <button id="nso-prev" style="width:28px;height:28px;border:1px solid #2e3347;border-radius:5px;background:#22263a;color:#94a3b8;font-size:14px;cursor:pointer;">◀</button>
+                    <div id="nso-cal-title" style="font-size:16px;font-weight:700;color:#e2e8f0;">로딩 중...</div>
+                    <button id="nso-next" style="width:28px;height:28px;border:1px solid #2e3347;border-radius:5px;background:#22263a;color:#94a3b8;font-size:14px;cursor:pointer;">▶</button>
                   </div>
                   <button id="nso-cal-mode" style="position:absolute;right:0;font-size:12px;padding:3px 8px;border-radius:6px;border:1px solid rgba(79,142,247,0.3);background:rgba(79,142,247,0.15);color:#94a3b8;cursor:pointer;white-space:nowrap;">근무 기준</button>
                 </div>
