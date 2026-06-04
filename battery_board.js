@@ -145,7 +145,7 @@
 
         /* ── 카드 그리드 ── */
         .bb-gw { padding:10px 12px; flex-shrink:0; }
-        .bb-gr { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
+        .bb-gr { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; }
         .bb-ca {
             height:76px; background:var(--sur); border:1px solid var(--bd);
             border-radius:9px; padding:8px 11px;
@@ -524,7 +524,7 @@
     // ============================================================
     // SECTION 1. 상수 & 상태
     // ============================================================
-    const MAX = 24;
+    const MAX = 30;
     const LS         = 'bb_ids';  // 터치 금지
     const LS_TOGGLE  = 'bb_toggles'; // 터치 금지
     const LS_ZOMBIE  = 'bb_zombie'; // 터치 금지
