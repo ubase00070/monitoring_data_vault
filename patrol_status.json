@@ -4840,8 +4840,8 @@
       "syncIssue": false
     },
     "서강대": {
-      "status": "suspended",
-      "reason": "타이어마모",
+      "status": "active",
+      "reason": "",
       "updatedAt": "2026-06-01 19:30:15",
       "syncIssue": false
     },
