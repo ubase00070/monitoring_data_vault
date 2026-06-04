@@ -2106,7 +2106,7 @@
                   <button id="nso-zoom-out" style="width:26px;height:26px;border:none;border-radius:5px;background:#22263a;color:#94a3b8;font-size:14px;cursor:pointer;">-</button>
                   <span id="nso-zoom-label" style="font-size:12px;color:#94a3b8;min-width:36px;text-align:center;">100%</span>
                   <button id="nso-zoom-in" style="width:26px;height:26px;border:none;border-radius:5px;background:#22263a;color:#94a3b8;font-size:14px;cursor:pointer;">+</button>
-                  <button id="nso-close" style="...">✕</button>
+                  <button id="nso-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
                 </div>
                 </div>
 
@@ -2163,7 +2163,6 @@
 
             overlay.appendChild(box);
             document.body.appendChild(overlay);
-            overlay.addEventListener('click', e => { if(e.target===overlay) overlay.style.display='none'; });
 
             // 달력 렌더
             const DOW=['일','월','화','수','목','금','토'];
@@ -2207,7 +2206,7 @@
                     if(show1){
                     const b=document.createElement('div');
                     const st=d1?.status||'work';
-                    b.style.cssText=`font-size:13px;border-radius:3px;padding:1px 4px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4;background:rgba(249,115,22,.18);color:#f97316;${st==='half'||st==='half-half'?'border:1px dashed #f97316;':''}${st==='annual'||st==='public'||st==='off'?'background:transparent;text-decoration:line-through;color:#64748b;':''}`;
+                    b.style.cssText=`font-size:13px;border-radius:3px;padding:1px 4px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4;background:rgba(249,115,22,.18);color:#f97316;${st==='half'||st==='half-half'?'border:1px dashed #f97316;':''}${st==='annual'||st==='public'?'background:transparent;text-decoration:line-through;color:#64748b;':''}`;
                     const n1v=box.querySelector('#nso-name1').value.trim();
                     b.textContent=st==='half'?`${n1v}(반차)`:st==='half-half'?`${n1v}(반반차)`:st==='annual'?`${n1v}(연차)`:st==='public'?`${n1v}(공가)`:n1v;
                     el.appendChild(b);
@@ -2215,7 +2214,7 @@
                     if(show2){
                     const b=document.createElement('div');
                     const st=d2?.status||'work';
-                    b.style.cssText=`font-size:13px;border-radius:3px;padding:1px 4px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4;background:rgba(168,85,247,.18);color:#a855f7;${st==='half'||st==='half-half'?'border:1px dashed #a855f7;':''}${st==='annual'||st==='public'||st==='off'?'background:transparent;text-decoration:line-through;color:#64748b;':''}`;
+                    b.style.cssText=`font-size:13px;border-radius:3px;padding:1px 4px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4;background:rgba(168,85,247,.18);color:#a855f7;${st==='half'||st==='half-half'?'border:1px dashed #a855f7;':''}${st==='annual'||st==='public'?'background:transparent;text-decoration:line-through;color:#64748b;':''}`;
                     const n2v=box.querySelector('#nso-name2').value.trim();
                     b.textContent=st==='half'?`${n2v}(반차)`:st==='half-half'?`${n2v}(반반차)`:st==='annual'?`${n2v}(연차)`:st==='public'?`${n2v}(공가)`:n2v;
                     el.appendChild(b);
@@ -2425,6 +2424,20 @@
 
             // 근무/휴무 토글
             box.querySelector('#nso-cal-mode').textContent = calMode==='work'?'근무 기준':'휴무 기준';
+            
+            const updateCalModeBtn = () => {
+              const btn = box.querySelector('#nso-cal-mode');
+              btn.textContent = calMode==='work'?'근무 기준':'휴무 기준';
+              btn.style.borderColor = calMode==='work'?'#f97316':'#a855f7';
+              btn.style.color = calMode==='work'?'#f97316':'#a855f7';
+            };
+            updateCalModeBtn();
+            box.querySelector('#nso-cal-mode').onclick = () => {
+              calMode = calMode==='work'?'off':'work';
+              localStorage.setItem('nv_nso_cal_mode', calMode);
+              updateCalModeBtn();
+              if(sel1||sel2) runCompare(); else renderCal();
+            };
             box.querySelector('#nso-cal-mode').onclick = () => {
               calMode = calMode==='work'?'off':'work';
               localStorage.setItem('nv_nso_cal_mode', calMode);
@@ -2543,12 +2556,15 @@
 
 			// 그 외 페이지는 기존 대시보드
 			const tipsOverlayEl = document.getElementById('neubie-tips-overlay');
-			const isAnyOpen = (dashboard.style.display === 'block' || 
-							batteryPopup.style.display === 'block' ||
-							(tipsOverlayEl && tipsOverlayEl.style.display === 'flex'));
+			const scheduleOverlayEl = document.getElementById('neubie-schedule-overlay');
+              const isAnyOpen = (dashboard.style.display === 'block' || 
+              batteryPopup.style.display === 'block' ||
+              (tipsOverlayEl && tipsOverlayEl.style.display === 'flex') ||
+              (scheduleOverlayEl && scheduleOverlayEl.style.display === 'flex'));
 			
 			if (isAnyOpen) {
 				closeAllPopups();
+                if(scheduleOverlayEl) scheduleOverlayEl.style.display='none';
 			} else {
 				renderDashboard();
 				dashboard.style.display = 'block';
