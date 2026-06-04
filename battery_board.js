@@ -181,7 +181,7 @@
             50%     { border-color:transparent; box-shadow:none; }
         }
         .bb-ca-name { font-size:15px; font-weight:900; color:var(--tx); line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; letter-spacing:-.2px; }
-        .bb-ca-name:hover { overflow:visible; animation:bb-marquee 3s linear 0.5s 1 forwards; }
+        .bb-ca:hover .bb-ca-name { overflow:visible; animation:bb-marquee 3s linear 0.5s 1 forwards; }
         @keyframes bb-marquee {
             0%   { transform:translateX(0); }
             100% { transform:translateX(-60%); }
