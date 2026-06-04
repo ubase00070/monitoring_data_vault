@@ -180,7 +180,12 @@
             0%,100% { border-color:var(--rd); box-shadow:0 0 0 1px var(--rd); }
             50%     { border-color:transparent; box-shadow:none; }
         }
-        .bb-ca-name { font-size:17px; font-weight:900; color:var(--tx); line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; letter-spacing:-.2px; }
+        .bb-ca-name { font-size:15px; font-weight:900; color:var(--tx); line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; letter-spacing:-.2px; }
+        .bb-ca-name:hover { overflow:visible; animation:bb-marquee 3s linear 0.5s 1 forwards; }
+        @keyframes bb-marquee {
+            0%   { transform:translateX(0); }
+            100% { transform:translateX(-60%); }
+        }
         .bb-ca-mid  { display:flex; justify-content:space-between; align-items:center; }
         .bb-ca-st   { font-size:11px; font-weight:700; color:var(--ac,var(--mu)); display:flex; align-items:center; gap:3px; opacity:.9; }
         .bb-ca-bat  { font-family:'Lato',monospace; font-size:15px; font-weight:900; color:var(--ac,var(--mu)); line-height:1; white-space:nowrap; }
