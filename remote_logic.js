@@ -2046,7 +2046,15 @@
             const SCHEDULE_URL = `https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/schedule_for_mobile_${curKey}.json`;
             
             let overlay = document.getElementById('neubie-schedule-overlay');
-            if (overlay) { overlay.style.display='flex'; return; }  
+            if (overlay) {
+			  // 좌석모달 닫기
+			  const m = overlay.querySelector('#nso-seat-modal');
+			  if(m){ m.style.opacity='0'; m.style.pointerEvents='none'; }
+			  const b = overlay.querySelector('.schedule-box');
+			  if(b) b.style.filter='';
+			  overlay.style.display='flex';
+			  return;
+			}
 
             let SEAT_MAP = null;
             const seatRes = await fetch('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/seat_map.json?t='+Date.now());
@@ -2287,10 +2295,6 @@
               // box 밖 overlay로 이동 (최초 1회만)
               if(modal.parentNode === box) overlay.appendChild(modal);
 
-			  modal.onclick = () => {
-				modal.style.opacity='0'; modal.style.pointerEvents='none';
-				box.style.filter='';
-			  };
               // ★ overlay.querySelector로 변경
               overlay.querySelector('#nso-seat-date').textContent=dateLabel;
             
