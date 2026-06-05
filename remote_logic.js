@@ -2059,7 +2059,7 @@
             overlay.style.cssText = `
                 position:fixed; inset:0; z-index:2147483646;
                 background:transparent;
-                display:flex; align-items:center; justify-content:center;
+                display:flex; align-items:flex-start; justify-content:center; padding-top:20px;
                 font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;
             `;
 
@@ -2068,6 +2068,7 @@
                 background:#0f1117; color:#e2e8f0;
                 border-radius:16px; padding:20px;
                 width:min(96vw,820px); max-height:92vh;
+				margin-top:0;
                 overflow-y:auto; position:relative;
                 background-image: linear-gradient(to bottom, #1a2240 0%, transparent 30%),
                 url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/snoopy_camping.jpg');
