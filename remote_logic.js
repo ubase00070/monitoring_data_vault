@@ -2425,12 +2425,12 @@
             // 이벤트 바인딩
             // 줌 버튼
             const updateZoom = (z) => {
-              nsoZoom = Math.max(100, Math.min(150, z));
-              localStorage.setItem('nv_nso_zoom', nsoZoom);
-              box.style.transform = `scale(${nsoZoom/100})`;
-              box.style.transformOrigin = 'top center';
-              box.querySelector('#nso-zoom-label').textContent = nsoZoom + '%';
-            };
+			  nsoZoom = Math.max(100, Math.min(150, z));
+			  localStorage.setItem('nv_nso_zoom', nsoZoom);
+			  box.style.zoom = `${nsoZoom}%`; 
+			  box.style.transform = '';      
+			  box.querySelector('#nso-zoom-label').textContent = nsoZoom + '%';
+			};
               box.querySelector('#nso-zoom-in').onclick = () => updateZoom(nsoZoom+10);
               box.querySelector('#nso-zoom-out').onclick = () => updateZoom(nsoZoom-10);
               box.querySelector('#nso-zoom-label').textContent = nsoZoom + '%';
