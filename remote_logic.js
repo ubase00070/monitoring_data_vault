@@ -2050,7 +2050,7 @@
 			  // 좌석모달 닫기
 			  const m = overlay.querySelector('#nso-seat-modal');
 			  if(m){ m.style.opacity='0'; m.style.pointerEvents='none'; }
-			  const b = overlay.querySelector('.schedule-box');
+			  const b = overlay.firstElementChild;
 			  if(b) b.style.filter='';
 			  overlay.style.display='flex';
 			  return;
@@ -2092,9 +2092,6 @@
             let scheduleData = null, compareResult = null;
             let calMode = localStorage.getItem('nv_nso_cal_mode') || 'work';
             let currentMonthKey = '', sel1 = '', sel2 = '';
-
-            box.style.transform = `scale(${nsoZoom/100})`;
-            box.style.transformOrigin = 'top center';
 
             // 로컬캐시
             const LS = 'nv_data_cache';
