@@ -2439,6 +2439,7 @@
               box.querySelector('#nso-zoom-in').onclick = () => updateZoom(nsoZoom+10);
               box.querySelector('#nso-zoom-out').onclick = () => updateZoom(nsoZoom-10);
               box.querySelector('#nso-zoom-label').textContent = nsoZoom + '%';
+			  box.style.zoom = `${nsoZoom}%`;
 
             // 근무/휴무 토글
             box.querySelector('#nso-cal-mode').textContent = calMode==='work'?'근무 기준':'휴무 기준';
