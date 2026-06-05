@@ -193,8 +193,8 @@
       "workTime": "09:00~18:00",
       "schedule": {
         "6/1": {
-          "status": "work",
-          "working": false,
+          "status": "annual",
+          "working": true,
           "present": false,
           "raw": "연차"
         },
