@@ -2573,7 +2573,13 @@
 			
 			if (isAnyOpen) {
 				closeAllPopups();
-                if(scheduleOverlayEl) scheduleOverlayEl.style.display='none';
+                if(scheduleOverlayEl){
+				  scheduleOverlayEl.style.display='none';
+				  const m = scheduleOverlayEl.querySelector('#nso-seat-modal');
+				  if(m){ m.style.opacity='0'; m.style.pointerEvents='none'; }
+				  const b = scheduleOverlayEl.querySelector('.schedule-box');
+				  if(b) b.style.filter='';
+				}
 			} else {
 				renderDashboard();
 				dashboard.style.display = 'block';
