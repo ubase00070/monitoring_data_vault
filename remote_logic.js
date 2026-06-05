@@ -2053,6 +2053,20 @@
 			  const b = overlay.firstElementChild;
 			  if(b) b.style.filter='';
 			  overlay.style.display='flex';
+              // ★ 재열기 시에도 fetch
+              fetch(SCHEDULE_URL+'?t='+Date.now())
+                .then(r=>r.json())
+                .then(data=>{
+                  const key=monthKey(data);
+                  if(key){ setCache(key,data); currentMonthKey=key; }
+                  scheduleData=data;
+                  const updated=overlay.querySelector('#nso-updated');
+                  if(updated&&data.updatedAt) updated.textContent=new Date(data.updatedAt).toLocaleString('ko-KR')+' 데이터 기준';
+                  renderCal();
+                  const n1=overlay.querySelector('#nso-name1')?.value.trim();
+                  const n2=overlay.querySelector('#nso-name2')?.value.trim();
+                  if(n1||n2) runCompare();
+                }).catch(()=>{});
 			  return;
 			}
 
@@ -2523,25 +2537,6 @@
             const status = box.querySelector('#nso-status');
             const dot = box.querySelector('#nso-dot');
             const updated = box.querySelector('#nso-updated');
-
-            const cache = getCache();
-            const keys = Object.keys(cache).sort();
-            if(keys.length){
-                const curKey = `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`;
-                const last = cache[curKey] || cache[keys[keys.length-1]];
-                const lastKey = cache[curKey] ? curKey : keys[keys.length-1];
-                if(last?.updatedAt && new Date(last.updatedAt).toDateString()===new Date().toDateString()){
-                currentMonthKey=lastKey; scheduleData=last;
-                status.textContent='⚡ 캐시 로드'; dot.style.background='#22c55e';
-                if(last.updatedAt) updated.textContent=new Date(last.updatedAt).toLocaleString('ko-KR') + ' 데이터 기준';
-                renderCal();
-                // 저장된 이름으로 비교
-                const n1=box.querySelector('#nso-name1').value.trim();
-                const n2=box.querySelector('#nso-name2').value.trim();
-                if(n1||n2) setTimeout(runCompare,0);
-                return;
-                }
-            }
 
             // GitHub Raw fetch
             status.textContent='로딩 중...'; dot.style.background='#eab308';
