@@ -2145,7 +2145,7 @@
 
                 <!-- 좌석 모달 -->
                 <div id="nso-seat-modal" style="position:fixed;inset:0;background:transparent;display:flex;align-items:center;justify-content:center;z-index:2147483647;opacity:0;pointer-events:none;transition:opacity .18s;">
-                <div style="background:#1a1d27;border:1px solid #2e3347;border-radius:12px;padding:18px;width:min(96vw,720px);max-height:92vh;overflow-y:auto;">
+                <div style="background:#1a1d27;border:1px solid #2e3347;border-radius:12px;padding:18px;width:min(96vw,1000px);max-height:92vh;overflow-y:auto;">
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
                     <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
                       <div style="font-size:16px;font-weight:700;color:#ffffff;">🪑 좌석 배치 — <span id="nso-seat-date" style="color:#4f8ef7;"></span></div>
@@ -2157,7 +2157,7 @@
                     <span><span style="width:8px;height:8px;border-radius:2px;background:#eab308;display:inline-block;margin-right:3px;"></span>연차/반차/반반차/공가</span>
                     <span><span style="width:8px;height:8px;border-radius:2px;background:#22263a;border:1px solid #2e3347;display:inline-block;margin-right:3px;"></span>미출근</span>
                     </div>
-                    <div id="nso-seat-grid" style="display:grid;grid-template-columns:repeat(9,1fr);gap:4px;"></div>
+                    <div id="nso-seat-grid" style="display:grid;grid-template-columns:repeat(9,1fr);gap:6px;"></div>
                 </div>
                 </div>
             `;
@@ -2324,7 +2324,7 @@
                     const raw=SEAT_MAP[row][col]; idx++;
                     const el=document.createElement('div');
                     if(!raw){
-                    el.style.cssText='background:#0f1117;border:1px dashed #2e3347;border-radius:6px;padding:6px 2px;min-height:80px;';
+                    el.style.cssText='background:#0f1117;border:1px dashed #2e3347;border-radius:6px;padding:6px 2px;min-height:100px;';
                     el.innerHTML=`<span style="position:absolute;top:2px;right:3px;font-size:12px;color:#334155;">${idx}</span>`;
                     grid.appendChild(el); continue;
                     }
@@ -2334,7 +2334,7 @@
                     const isHalf=isOn&&onPpl.some(n=>pMap[n].status==='half'||pMap[n].status==='half-half');
                     const bg=isOn?(isHalf?'rgba(234,179,8,.12)':'rgba(34,197,94,.15)'):'#22263a';
                     const bc=isOn?(isHalf?'#eab308':'#22c55e'):'#2e3347';
-                    el.style.cssText=`background:${bg};border:1px solid ${bc};border-radius:6px;padding:6px 2px;text-align:center;font-size:.62rem;font-weight:600;min-height:80px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;position:relative;${isOn?'':`opacity:.35;`}`;
+                    el.style.cssText=`background:${bg};border:1px solid ${bc};border-radius:6px;padding:6px 2px;text-align:center;font-size:.62rem;font-weight:600;min-height:100px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;position:relative;${isOn?'':`opacity:.35;`}`;
                     el.innerHTML=`<span style="position:absolute;top:2px;right:3px;font-size:.48rem;color:#334155;">${idx}</span>`;
                     if(occ.length>1){
                     const sd=document.createElement('div');
