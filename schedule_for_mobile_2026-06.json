@@ -194,8 +194,8 @@
       "schedule": {
         "6/1": {
           "status": "work",
-          "working": true,
-          "present": true,
+          "working": false,
+          "present": false,
           "raw": "연차"
         },
         "6/2": {
