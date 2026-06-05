@@ -639,10 +639,10 @@
           "raw": "휴무"
         },
         "6/13": {
-          "status": "work",
+          "status": "half-half",
           "working": true,
           "present": true,
-          "raw": "1"
+          "raw": "반반차"
         },
         "6/14": {
           "status": "work",
@@ -4801,10 +4801,10 @@
           "raw": "휴무"
         },
         "6/21": {
-          "status": "empty",
+          "status": "off",
           "working": false,
           "present": false,
-          "raw": "`"
+          "raw": "휴무"
         },
         "6/22": {
           "status": "work",
@@ -6382,10 +6382,10 @@
           "raw": "1"
         },
         "6/4": {
-          "status": "work",
+          "status": "half",
           "working": true,
           "present": true,
-          "raw": "1"
+          "raw": "반차"
         },
         "6/5": {
           "status": "off",
@@ -6548,7 +6548,7 @@
     {
       "name": "신입(야간)",
       "shiftType": "야간2",
-      "workTime": "",
+      "workTime": "20:00~05:00",
       "schedule": {
         "6/1": {
           "status": "work",
@@ -7888,6 +7888,6 @@
     "6/30"
   ],
   "mainMonth": 6,
-  "updatedAt": "2026-06-04T07:11:10.931Z",
+  "updatedAt": "2026-06-05T03:53:03.424Z",
   "sheetName": "2026년_06월 스케줄"
 }
