@@ -489,7 +489,7 @@
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 배달 사이트 기체가 아닌데 120분이상 ~ 360분 미만 대기 상태로 방치된 경우(배터리 50% 미만이면 360분 지났어도 알림 발생)<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 순찰 시간이 유동적인 사이트 기체가 순찰 시작 시간대에 10분이상 머무는 경우(ex. 리센츠, 엘스 등)<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 무선 도킹됨 상태 기체<br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 탐지 메시지 뜬 기체(기능 테스트 중)<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 탐지 메시지 뜬 기체(기능 테스트 중... 쉽지 않네요.<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 최근 10분 동안 ON/OFF를 3회 이상 반복한 경우<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 전원ON인데 배터리, GPS 수신값이 잡히지 않는 경우(좀비 의심)<br>
                     * 하단 고정 바: 역삼, 송도, 성수, 삼평서현 ON/OFF 및 상태 확인용 퀵메뉴<br>
