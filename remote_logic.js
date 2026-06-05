@@ -2064,7 +2064,6 @@
             `;
 
             const box = document.createElement('div');
-			box.classList.add('schedule-box');
             box.style.cssText = `
                 background:#0f1117; color:#e2e8f0;
                 border-radius:16px; padding:20px;
@@ -2085,6 +2084,9 @@
             let scheduleData = null, compareResult = null;
             let calMode = localStorage.getItem('nv_nso_cal_mode') || 'work';
             let currentMonthKey = '', sel1 = '', sel2 = '';
+
+            box.style.transform = `scale(${nsoZoom/100})`;
+            box.style.transformOrigin = 'top center';
 
             // 로컬캐시
             const LS = 'nv_data_cache';
@@ -2143,7 +2145,7 @@
 
                 <!-- 좌석 모달 -->
                 <div id="nso-seat-modal" style="position:fixed;inset:0;background:transparent;display:flex;align-items:center;justify-content:center;z-index:2147483647;opacity:0;pointer-events:none;transition:opacity .18s;">
-                <div style="background:#1a1d27;border:1px solid #2e3347;border-radius:12px;padding:18px;width:min(96vw,1000px);max-height:92vh;overflow-y:auto;">
+                <div style="background:#1a1d27;border:1px solid #2e3347;border-radius:12px;padding:18px;width:min(96vw,900px);max-height:92vh;overflow-y:auto;">
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
                     <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
                       <div style="font-size:16px;font-weight:700;color:#ffffff;">🪑 좌석 배치 — <span id="nso-seat-date" style="color:#4f8ef7;"></span></div>
@@ -2285,6 +2287,10 @@
               // box 밖 overlay로 이동 (최초 1회만)
               if(modal.parentNode === box) overlay.appendChild(modal);
 
+			  modal.onclick = () => {
+				modal.style.opacity='0'; modal.style.pointerEvents='none';
+				box.style.filter='';
+			  };
               // ★ overlay.querySelector로 변경
               overlay.querySelector('#nso-seat-date').textContent=dateLabel;
             
@@ -2342,21 +2348,21 @@
                         const sp=document.createElement('div');
                         sp.style.cssText='display:flex;flex-direction:column;align-items:center;';
                         const ne=document.createElement('div');
-                        ne.style.cssText=`font-size:12px;line-height:1.25;font-weight:700;color:${w?(isHalf?'#eab308':'#22c55e'):'#64748b'};`;
+                        ne.style.cssText=`font-size:13px;line-height:1.25;font-weight:700;color:${w?(isHalf?'#eab308':'#22c55e'):'#64748b'};`;
                         ne.textContent=name; sp.appendChild(ne);
                         if(leaveMap[name]){
                         const bd=document.createElement('div');
-                        bd.style.cssText='font-size:11px;border-radius:2px;padding:0 3px;margin-top:1px;font-weight:700;background:rgba(234,179,8,.25);color:#eab308;';
+                        bd.style.cssText='font-size:12px;border-radius:2px;padding:0 3px;margin-top:1px;font-weight:700;background:rgba(234,179,8,.25);color:#eab308;';
                         bd.textContent=leaveMap[name]==='annual'?'연차':'공가'; sp.appendChild(bd);
                         }
                         if(w&&(w.status==='half'||w.status==='half-half')){
                         const bd=document.createElement('div');
-                        bd.style.cssText='font-size:11px;border-radius:2px;padding:0 3px;margin-top:1px;font-weight:700;background:rgba(234,179,8,.25);color:#eab308;';
+                        bd.style.cssText='font-size:12px;border-radius:2px;padding:0 3px;margin-top:1px;font-weight:700;background:rgba(234,179,8,.25);color:#eab308;';
                         bd.textContent=w.status==='half'?'반차':'반반차'; sp.appendChild(bd);
                         }
                         if(w){
                         const te=document.createElement('div');
-                        te.style.cssText=`font-size:10px;color:${isHalf?'rgba(234,179,8,.75)':'rgba(34,197,94,.65)'};line-height:1.2;margin-top:1px;`;
+                        te.style.cssText=`font-size:13px;color:${isHalf?'rgba(234,179,8,.75)':'rgba(34,197,94,.65)'};line-height:1.2;margin-top:1px;`;
                         te.textContent=w.workTime||w.shiftType||''; sp.appendChild(te);
                         }
                         sd.appendChild(sp);
@@ -2370,21 +2376,21 @@
                     } else {
                     const w=pMap[raw];
                     const ne=document.createElement('div');
-                    ne.style.cssText=`font-size:12px;line-height:1.25;font-weight:700;color:${isOn?(isHalf?'#eab308':'#22c55e'):'#94a3b8'};`;
+                    ne.style.cssText=`font-size:13px;line-height:1.25;font-weight:700;color:${isOn?(isHalf?'#eab308':'#22c55e'):'#94a3b8'};`;
                     ne.textContent=raw; el.appendChild(ne);
                     if(leaveMap[raw]){
                         const bd=document.createElement('div');
-                        bd.style.cssText='font-size:.48rem;border-radius:2px;padding:0 3px;margin-top:1px;font-weight:700;background:rgba(234,179,8,.25);color:#eab308;';
+                        bd.style.cssText='font-size:12px;border-radius:2px;padding:0 3px;margin-top:1px;font-weight:700;background:rgba(234,179,8,.25);color:#eab308;';
                         bd.textContent=leaveMap[raw]==='annual'?'연차':'공가'; el.appendChild(bd);
                     }
                     if(w){
                         if(w.status==='half'||w.status==='half-half'){
                         const bd=document.createElement('div');
-                        bd.style.cssText='font-size:.48rem;border-radius:2px;padding:0 3px;margin-top:1px;font-weight:700;background:rgba(234,179,8,.25);color:#eab308;';
+                        bd.style.cssText='font-size:12px;border-radius:2px;padding:0 3px;margin-top:1px;font-weight:700;background:rgba(234,179,8,.25);color:#eab308;';
                         bd.textContent=w.status==='half'?'반차':'반반차'; el.appendChild(bd);
                         }
                         const te=document.createElement('div');
-                        te.style.cssText=`font-size:10px;color:${isHalf?'rgba(234,179,8,.75)':'rgba(34,197,94,.65)'};line-height:1.2;margin-top:1px;`;
+                        te.style.cssText=`font-size:13px;color:${isHalf?'rgba(234,179,8,.75)':'rgba(34,197,94,.65)'};line-height:1.2;margin-top:1px;`;
                         te.textContent=w.workTime||w.shiftType||''; el.appendChild(te);
                     }
                     }
@@ -2432,7 +2438,6 @@
               box.querySelector('#nso-zoom-in').onclick = () => updateZoom(nsoZoom+10);
               box.querySelector('#nso-zoom-out').onclick = () => updateZoom(nsoZoom-10);
               box.querySelector('#nso-zoom-label').textContent = nsoZoom + '%';
-              box.style.transform = `scale(${nsoZoom/100})`;
 
             // 근무/휴무 토글
             box.querySelector('#nso-cal-mode').textContent = calMode==='work'?'근무 기준':'휴무 기준';
@@ -2451,17 +2456,7 @@
               if(sel1||sel2) runCompare(); else renderCal();
             };
 
-            box.querySelector('#nso-close').onclick = () => {
-			  overlay.style.display='none';
-			  const m = overlay.querySelector('#nso-seat-modal');
-			  if(m){ m.style.opacity='0'; m.style.pointerEvents='none'; }
-			  box.style.filter='';
-			};
-            overlay.querySelector('#nso-seat-modal').addEventListener('click', () => {
-			  const m=overlay.querySelector('#nso-seat-modal');
-			  if(m){ m.style.opacity='0'; m.style.pointerEvents='none'; }
-			  box.style.filter='';
-			});
+            box.querySelector('#nso-close').onclick = () => overlay.style.display='none';
             const BASE_URL = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/';
 
             async function loadMonthFromGithub(newKey) {
@@ -2574,13 +2569,7 @@
 			
 			if (isAnyOpen) {
 				closeAllPopups();
-                if(scheduleOverlayEl){
-				  scheduleOverlayEl.style.display='none';
-				  const m = scheduleOverlayEl.querySelector('#nso-seat-modal');
-				  if(m){ m.style.opacity='0'; m.style.pointerEvents='none'; }
-				  const b = scheduleOverlayEl.querySelector('.schedule-box');
-				  if(b) b.style.filter='';
-				}
+                if(scheduleOverlayEl) scheduleOverlayEl.style.display='none';
 			} else {
 				renderDashboard();
 				dashboard.style.display = 'block';
