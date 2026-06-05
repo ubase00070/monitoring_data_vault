@@ -2053,6 +2053,20 @@
 			  const b = overlay.firstElementChild;
 			  if(b) b.style.filter='';
 			  overlay.style.display='flex';
+              // ★ 재열기 시에도 fetch
+              fetch(SCHEDULE_URL+'?t='+Date.now())
+                .then(r=>r.json())
+                .then(data=>{
+                  const key=monthKey(data);
+                  if(key){ setCache(key,data); currentMonthKey=key; }
+                  scheduleData=data;
+                  const updated=overlay.querySelector('#nso-updated');
+                  if(updated&&data.updatedAt) updated.textContent=new Date(data.updatedAt).toLocaleString('ko-KR')+' 데이터 기준';
+                  renderCal();
+                  const n1=overlay.querySelector('#nso-name1')?.value.trim();
+                  const n2=overlay.querySelector('#nso-name2')?.value.trim();
+                  if(n1||n2) runCompare();
+                }).catch(()=>{});
 			  return;
 			}
 
