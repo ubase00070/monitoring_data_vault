@@ -920,10 +920,10 @@
                 const patchItems = [
                     {
                         version: 'v1.1',
-                        date: '2026-06-03',
+                        date: '2026-06-06',
                         items: [
+							'개입카드 페이지 재배치로 하단쪽 버튼이 보이도록 변경(스크롤 바 제거)',
                             'multimonitoring.vercel.app 모바일 버전(일일업무 & 캘린더)',
-                            '스케줄 비교표 및 좌석 배치도',
 							'게임패드 D-PAD(상하좌우) 기능 부여',
 							'D-PAD UP: 다음 개입 요청받기 ON/OFF',
 							'D-PAD DOWN: 자동 긴급 정지 ON/OFF',
