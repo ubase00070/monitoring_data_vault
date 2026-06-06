@@ -2641,6 +2641,51 @@
             }
         }
     }, 2000); // 2초 정도면 충분히 여유로움
+	
+	// ── 개입 페이지 레이아웃 패치 ──
+    function patchDrivingPageLayout() {
+        if (!location.href.includes('/remote/multiple/driving/')) return;
+
+        // 1. 헤더 flex-col 재구성
+        const header = document.querySelector('header');
+        if (header) {
+            header.style.flexDirection = 'column';
+            header.style.alignItems = 'flex-start';
+            header.style.justifyContent = 'center';
+            header.style.paddingTop = '2px';
+            header.style.paddingBottom = '2px';
+            header.style.gap = '1px';
+        }
+
+        // 2. 상태바를 '해결완료' 버튼 앞으로 이동
+        const statusBar = Array.from(document.querySelectorAll('div.flex.items-center.justify-between'))
+            .find(el => el.textContent.includes('LTE') && el.getBoundingClientRect().height < 60);
+        const resolveBtn = Array.from(document.querySelectorAll('button'))
+            .find(el => el.textContent.trim() === '해결 완료' || el.textContent.trim() === '해결완료');
+        if (statusBar && resolveBtn) {
+            resolveBtn.parentElement.insertBefore(statusBar, resolveBtn);
+            statusBar.style.marginLeft = '-320px';
+        }
+
+        // 3. 임무 바 높이 조정
+        const missionWrapper = document.querySelector('.relative.overflow-hidden.w-full.h-58');
+        if (missionWrapper) {
+            missionWrapper.style.height = '64px';
+            missionWrapper.style.paddingTop = '4px';
+            missionWrapper.style.paddingBottom = '4px';
+        }
+
+        // 4. 컨테이너 gap/padding 압축
+        const container = document.querySelector('.flex.h-full.w-full.flex-col[class*="gap-16"][class*="pt-14"]');
+        if (container) {
+            container.style.gap = '6px';
+            container.style.paddingTop = '6px';
+        }
+    }
+
+    // 페이지 진입 시 + URL 변경 시 자동 실행 (DOM 렌더링 대기)
+    setTimeout(() => patchDrivingPageLayout(), 1500);
+    setTimeout(() => patchDrivingPageLayout(), 3000);
 
 	// ── 게임패드 바인딩 ──
 	if (!window.neubieGamepadBound) {
