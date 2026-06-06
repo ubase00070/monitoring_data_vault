@@ -2621,6 +2621,8 @@
                     setTimeout(() => injectMapStyle(), 3000);
                     setTimeout(() => injectMapStyle(), 6000);
                 }
+				setTimeout(() => patchDrivingPageLayout(), 1500);
+                setTimeout(() => patchDrivingPageLayout(), 3000);
             }
         }, 100);
     }, true);
@@ -2639,6 +2641,8 @@
                 setTimeout(() => injectMapStyle(), 3000);
                 setTimeout(() => injectMapStyle(), 6000);
             }
+			setTimeout(() => patchDrivingPageLayout(), 1500);
+            setTimeout(() => patchDrivingPageLayout(), 3000);
         }
     }, 2000); // 2초 정도면 충분히 여유로움
 	
