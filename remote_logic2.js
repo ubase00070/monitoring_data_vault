@@ -920,10 +920,10 @@
                 const patchItems = [
                     {
                         version: 'v1.1',
-                        date: '2026-06-03',
+                        date: '2026-06-06',
                         items: [
+							'개입카드 페이지 재배치로 하단쪽 버튼이 보이도록 변경(스크롤 바 제거)',
                             'multimonitoring.vercel.app 모바일 버전(일일업무 & 캘린더)',
-                            '스케줄 비교표 및 좌석 배치도',
 							'게임패드 D-PAD(상하좌우) 기능 부여',
 							'D-PAD UP: 다음 개입 요청받기 ON/OFF',
 							'D-PAD DOWN: 자동 긴급 정지 ON/OFF',
@@ -2621,8 +2621,7 @@
                     setTimeout(() => injectMapStyle(), 3000);
                     setTimeout(() => injectMapStyle(), 6000);
                 }
-				setTimeout(() => patchDrivingPageLayout(), 1500);
-                setTimeout(() => patchDrivingPageLayout(), 3000);
+				watchAndPatchDrivingPage();
             }
         }, 100);
     }, true);
@@ -2641,32 +2640,33 @@
                 setTimeout(() => injectMapStyle(), 3000);
                 setTimeout(() => injectMapStyle(), 6000);
             }
-			setTimeout(() => patchDrivingPageLayout(), 1500);
-            setTimeout(() => patchDrivingPageLayout(), 3000);
+			watchAndPatchDrivingPage();
         }
     }, 2000); // 2초 정도면 충분히 여유로움
 	
 	// ── 개입 페이지 레이아웃 패치 ──
     function patchDrivingPageLayout() {
-        if (!location.href.includes('/remote/multiple/driving/')) return;
+        if (!location.href.includes('/remote/multiple/driving/')) return false;
+
+        const header = document.querySelector('header');
+        const resolveBtn = Array.from(document.querySelectorAll('button'))
+            .find(el => el.textContent.trim() === '해결 완료' || el.textContent.trim() === '해결완료');
+
+        // 핵심 요소 미준비 시 대기
+        if (!header || !resolveBtn) return false;
 
         // 1. 헤더 flex-col 재구성
-        const header = document.querySelector('header');
-        if (header) {
-            header.style.flexDirection = 'column';
-            header.style.alignItems = 'flex-start';
-            header.style.justifyContent = 'center';
-            header.style.paddingTop = '2px';
-            header.style.paddingBottom = '2px';
-            header.style.gap = '1px';
-        }
+        header.style.flexDirection = 'column';
+        header.style.alignItems = 'flex-start';
+        header.style.justifyContent = 'center';
+        header.style.paddingTop = '2px';
+        header.style.paddingBottom = '2px';
+        header.style.gap = '1px';
 
         // 2. 상태바를 '해결완료' 버튼 앞으로 이동
         const statusBar = Array.from(document.querySelectorAll('div.flex.items-center.justify-between'))
             .find(el => el.textContent.includes('LTE') && el.getBoundingClientRect().height < 60);
-        const resolveBtn = Array.from(document.querySelectorAll('button'))
-            .find(el => el.textContent.trim() === '해결 완료' || el.textContent.trim() === '해결완료');
-        if (statusBar && resolveBtn) {
+        if (statusBar) {
             resolveBtn.parentElement.insertBefore(statusBar, resolveBtn);
             statusBar.style.marginLeft = '-320px';
         }
@@ -2685,11 +2685,23 @@
             container.style.gap = '6px';
             container.style.paddingTop = '6px';
         }
+
+        return true; // 패치 완료
     }
 
-    // 페이지 진입 시 + URL 변경 시 자동 실행 (DOM 렌더링 대기)
-    setTimeout(() => patchDrivingPageLayout(), 1500);
-    setTimeout(() => patchDrivingPageLayout(), 3000);
+    function watchAndPatchDrivingPage() {
+        if (!location.href.includes('/remote/multiple/driving/')) return;
+        if (patchDrivingPageLayout()) return; // 이미 준비됐으면 즉시 실행
+
+        const observer = new MutationObserver(() => {
+            if (patchDrivingPageLayout()) {
+                observer.disconnect();
+            }
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+    }
+
+    watchAndPatchDrivingPage();
 
 	// ── 게임패드 바인딩 ──
 	if (!window.neubieGamepadBound) {
