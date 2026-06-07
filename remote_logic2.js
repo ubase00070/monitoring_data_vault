@@ -1392,6 +1392,10 @@
                 tipsOverlay.style.width = r.width + 'px';
                 tipsOverlay.style.height = r.height + 'px';
                 tipsOverlay.style.display = 'flex';
+                tipsOverlay.querySelector('button').onclick = () => {
+                    tipsOverlay.style.display = 'none';
+                    tipsCard.style.outline = 'none';
+                };
             }
         };
         tipsCard.onclick = () => {
