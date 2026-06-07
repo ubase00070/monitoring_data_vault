@@ -1130,19 +1130,15 @@
             taskInline.innerHTML = `<div style="color:#666; font-size:14px; padding:8px 0;">배정된 업무가 없습니다.</div>`;
         }
 
-        // 2. 맵 최적화
-        const twoCol = document.createElement('div');
-        twoCol.style.cssText = "display:grid; grid-template-columns:1fr 1fr; gap:8px;";
-
         // 맵 최적화 카드
         const mapCard = document.createElement('div');
         mapCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; display:flex; justify-content:space-between; align-items:center;";
         mapCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">🗺️ 요기요 + 삼평동 지도 최적화</span>`;
-        
+
         // 맵 최적화 (체크박스, 멘트 없이 이름만)
         const mapToggle = document.createElement('button');
         mapToggle.textContent = state.isMapOpt ? 'ON' : 'OFF';
-        mapToggle.style.cssText = `background:${state.isMapOpt ? '#2563eb' : '#444'}; color:white; border:none; padding:4px 12px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:13px;`;
+        mapToggle.style.cssText = `background:${state.isMapOpt ? '#2563eb' : '#444'}; color:white; border:none; padding:4px 12px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:13px; min-width:44px; text-align:center;`;
         mapToggle.onclick = () => {
             state.isMapOpt = !state.isMapOpt;
             localStorage.setItem('neubie_opt_map', state.isMapOpt);
@@ -1151,7 +1147,6 @@
             injectMapStyle();
         };
         mapCard.appendChild(mapToggle);
-        twoCol.appendChild(mapCard);
 
         // 줄을 서시오 (체크박스, 멘트 없이 이름만)
         const queueCard = document.createElement('div');
@@ -1160,7 +1155,7 @@
         const queueEnabled = localStorage.getItem('neubie_handover_enabled') === 'true';
         const queueToggle = document.createElement('button');
         queueToggle.textContent = queueEnabled ? 'ON' : 'OFF';
-        queueToggle.style.cssText = `background:${queueEnabled ? '#2563eb' : '#444'}; color:white; border:none; padding:4px 12px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:13px;`;
+        queueToggle.style.cssText = `background:${queueEnabled ? '#2563eb' : '#444'}; color:white; border:none; padding:4px 12px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:13px; min-width:44px; text-align:center;`;
         queueToggle.onclick = () => {
             const next = queueToggle.textContent === 'OFF';
             localStorage.setItem('neubie_handover_enabled', next);
@@ -1262,20 +1257,19 @@
         };
         queueCard.appendChild(queueInfoBtn);
         queueCard.appendChild(queueToggle);
-        twoCol.appendChild(queueCard);
-        list.appendChild(twoCol);
 
         // 3. 스케줄 비교표/최적화 팁 + 배터리 현황 (반반 2열)
         const bottomRow = document.createElement('div');
-        bottomRow.style.cssText = "display:grid; grid-template-columns:1fr 1fr; grid-template-rows:auto auto; gap:8px;";
+        bottomRow.style.cssText = "display:grid; grid-template-columns:1fr 1fr; gap:8px;";
 
         // 3-0. 스케줄 비교 카드
         const scheduleCard = document.createElement('div');
         scheduleCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; cursor:pointer; display:flex; align-items:center;";
         scheduleCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">📅 스케줄표 + 좌석 배치도</div>`;
+        window._neubieScheduleCard = scheduleCard;
         scheduleCard.onclick = () => {
             const isActive = scheduleCard.style.borderColor === 'rgb(239, 68, 68)';
-            scheduleCard.style.border = isActive ? '1px solid #333333' : '1px solid #ef4444';
+            scheduleCard.style.border = isActive ? '1px solid #333333' : '2px solid #ef4444';
             if (!isActive) openScheduleOverlay();
         };
 
@@ -1343,7 +1337,10 @@
 				
                 tipsClose.onmouseenter = () => { tipsClose.style.color='#fff'; };
                 tipsClose.onmouseleave = () => { tipsClose.style.color='#aaa'; };
-                tipsClose.onclick = () => { tipsOverlay.style.display='none'; };
+                tipsClose.onclick = () => {
+                    tipsOverlay.style.display = 'none';
+                    tipsCard.style.border = '1px solid #333333';
+                };
 
                 const tipsItems = [
                     { title: "슬랙 PWA 버전 사용법", url: "https://telling-ink-a85.notion.site/PWA-366a8cf5ba7b80eebb43e017c095702c?pvs=74" },
@@ -1399,7 +1396,7 @@
         };
         tipsCard.onclick = () => {
             const isActive = tipsCard.style.borderColor === 'rgb(239, 68, 68)';
-            tipsCard.style.border = isActive ? '1px solid #333333' : '1px solid #ef4444';
+            tipsCard.style.border = isActive ? '1px solid #333333' : '2px solid #ef4444';
             tipsOpenBtn.onclick();
         };
 
@@ -1412,9 +1409,10 @@
                 <div style="font-weight:bold; font-size:15px; margin-bottom:3px;">🔋 실시간 성남 배터리</div>
             </div>`;
         batteryCard.style.cursor = 'pointer';
+        window._neubieBatteryCard = batteryCard;
         batteryCard.onclick = () => {
             const isActive = batteryCard.style.borderColor === 'rgb(239, 68, 68)';
-            batteryCard.style.border = isActive ? '1px solid #333333' : '1px solid #ef4444';
+            batteryCard.style.border = isActive ? '1px solid #333333' : '2px solid #ef4444';
             toggleBattery();
             renderDashboard();
             if (window.currentMyTasks && window.currentMyTasks.length > 0) {
@@ -1426,10 +1424,12 @@
         reservedCard.style.cssText = "background:#1a1a1a; padding:8px 12px; border-radius:15px; border:1px dashed #333;";
         reservedCard.innerHTML = `<div style="font-size:15px;color:#ffffff;">Hello, World!</div>`;
 
-        bottomRow.appendChild(batteryCard);
-        bottomRow.appendChild(scheduleCard);
-        bottomRow.appendChild(tipsCard);
-        bottomRow.appendChild(reservedCard);
+        bottomRow.appendChild(mapCard);      // 지도 최적화
+        bottomRow.appendChild(batteryCard);  // 성남 배터리
+        bottomRow.appendChild(queueCard);    // 다중 도우미
+        bottomRow.appendChild(scheduleCard); // 스케줄표
+        bottomRow.appendChild(tipsCard);     // 최적화 팁
+        bottomRow.appendChild(reservedCard); // Hello, World!
 
         list.appendChild(bottomRow);
 
@@ -1500,6 +1500,7 @@
 
 		} else {
 			batteryPopup.style.display = 'none';
+            if (window._neubieBatteryCard) window._neubieBatteryCard.style.border = '1px solid #333333';
 			clearInterval(batteryRefreshInterval);
 			config.batteryIds.forEach(c => {
 				if (iframes[c.id]) {
@@ -1513,6 +1514,7 @@
     function closeAllPopups() {
         dashboard.style.display = 'none';
         batteryPopup.style.display = 'none';
+        if (window._neubieBatteryCard) window._neubieBatteryCard.style.border = '1px solid #333333';
 
 		document.getElementById('ho-remote-peek')?.remove();
     	document.getElementById('ho-remote-panel')?.remove();
@@ -2471,7 +2473,10 @@
               if(sel1||sel2) runCompare(); else renderCal();
             };
 
-            box.querySelector('#nso-close').onclick = () => overlay.style.display='none';
+            box.querySelector('#nso-close').onclick = () => {
+                overlay.style.display = 'none';
+                if (window._neubieScheduleCard) window._neubieScheduleCard.style.border = '1px solid #333333';
+            };
             const BASE_URL = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/';
 
             async function loadMonthFromGithub(newKey) {
