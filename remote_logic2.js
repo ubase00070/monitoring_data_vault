@@ -234,10 +234,13 @@
         el.id = id;
         Object.assign(el.style, {
             position: 'fixed', top: top, left: left, right: right,
-            width: width, backgroundColor: 'rgba(15, 15, 15, 0.98)', color: '#fff',
+            width: width, backgroundColor: '#1a1a2a', color: '#fff',
             borderRadius: '24px', padding: '20px', zIndex: '1000000',
             fontFamily: 'Pretendard, sans-serif', boxShadow: '0 20px 50px rgba(0,0,0,0.8)',
-            border: '1px solid #333', display: 'none', transform: left === '50%' ? 'translate(-50%, -50%)' : 'none',
+            border: '3px solid transparent', display: 'none', transform: left === '50%' ? 'translate(-50%, -50%)' : 'none',
+            backgroundImage: 'linear-gradient(#1a1a2a, #1a1a2a), linear-gradient(135deg, #6366f1, #ec4899)',
+            backgroundOrigin: 'border-box',
+            backgroundClip: 'padding-box, border-box',
             maxHeight: '90vh', overflowY: 'auto', overflowX: 'hidden',
             boxSizing: 'border-box',
         });
