@@ -234,11 +234,11 @@
         el.id = id;
         Object.assign(el.style, {
             position: 'fixed', top: top, left: left, right: right,
-            width: width, backgroundColor: '#150d2e', color: '#fff',
+            width: width, backgroundColor: '#0d1b2a', color: '#fff',
             borderRadius: '24px', padding: '20px', zIndex: '1000000',
             fontFamily: 'Pretendard, sans-serif', boxShadow: '0 20px 50px rgba(0,0,0,0.8)',
             border: '3px solid transparent', display: 'none', transform: left === '50%' ? 'translate(-50%, -50%)' : 'none',
-            backgroundImage: 'linear-gradient(#150d2e, #150d2e), linear-gradient(135deg, #6366f1, #ec4899)',
+            backgroundImage: 'linear-gradient(#0d1b2a, #0d1b2a), linear-gradient(135deg, #6366f1, #ec4899)',
             backgroundOrigin: 'border-box',
             backgroundClip: 'padding-box, border-box',
             maxHeight: '90vh', overflowY: 'auto', overflowX: 'hidden',
@@ -317,7 +317,7 @@
         if (batteryPopup.dataset.dragging === 'true') return;
         batteryPopup.innerHTML = '';
         const header = document.createElement('div');
-        header.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #4a3580; padding-bottom:10px;";
+        header.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #2a4a6a; padding-bottom:10px;";
         const titleB = document.createElement('b');
         titleB.textContent = "🔋 실시간 성남 배터리";
         titleB.style.cssText = "color:#eee; font-size:18px;";
@@ -744,7 +744,7 @@
         const isWknd = isWeekend();
         const card = document.createElement('div');
         card.id = 'namingSection';
-        card.style.cssText = 'background:#2d1f5e; padding:10px 15px; border-radius:15px; border:1px solid #4a3580; margin-top:5px;';
+        card.style.cssText = 'background:#1a2e4a; padding:10px 15px; border-radius:15px; border:1px solid #2a4a6a; margin-top:5px;';
 
         const history = JSON.parse(localStorage.getItem('neubie_robot_history') || '[]');
         let dropdownOptions = history.map(h => {
@@ -939,7 +939,7 @@
                 patchContent.style.cssText = "display:grid; gap:16px;";
                 patchItems.forEach(patch => {
                     const section = document.createElement('div');
-                    section.style.cssText = "background:#2d1f5e; border:1px solid #4a3580; border-radius:12px; padding:14px 16px;";
+                    section.style.cssText = "background:#1a2e4a; border:1px solid #2a4a6a; border-radius:12px; padding:14px 16px;";
                     const versionRow = document.createElement('div');
                     versionRow.style.cssText = "display:flex; align-items:center; gap:8px; margin-bottom:10px;";
                     versionRow.innerHTML = `
@@ -1057,7 +1057,7 @@
 
         // 1. 업무 알림 설정 (태스크 리스트 인라인 삽입)
         const taskCard = document.createElement('div');
-        taskCard.style.cssText = "background:#2d1f5e; padding:15px; border-radius:15px; border:1px solid #4a3580;";
+        taskCard.style.cssText = "background:#1a2e4a; padding:15px; border-radius:15px; border:1px solid #2a4a6a;";
         const storedName = localStorage.getItem('neubie_user_name') || "사용자";
         const currentInt = localStorage.getItem('neubie_remind_int') || '0';
         taskCard.innerHTML = `
@@ -1136,7 +1136,7 @@
 
         // 맵 최적화 (체크박스, 멘트 없이 이름만)
         const mapCard = document.createElement('div');
-        mapCard.style.cssText = "background:#2d1f5e; padding:8px 12px; border-radius:15px; border:1px solid #4a3580; display:flex; justify-content:space-between; align-items:center;";
+        mapCard.style.cssText = "background:#1a2e4a; padding:8px 12px; border-radius:15px; border:1px solid #2a4a6a; display:flex; justify-content:space-between; align-items:center;";
         mapCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">🗺️ 요기요 지도 최적화</span>`;
         const mapChk = document.createElement('input');
         mapChk.type = 'checkbox'; mapChk.checked = state.isMapOpt;
@@ -1151,7 +1151,7 @@
 
         // 줄을 서시오 (체크박스, 멘트 없이 이름만)
         const queueCard = document.createElement('div');
-        queueCard.style.cssText = "background:#2d1f5e; padding:8px 12px; border-radius:15px; border:1px solid #4a3580; display:flex; justify-content:space-between; align-items:center;";
+        queueCard.style.cssText = "background:#1a2e4a; padding:8px 12px; border-radius:15px; border:1px solid #2a4a6a; display:flex; justify-content:space-between; align-items:center;";
         queueCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">📡 다중 도우미</span>`;
         const queueChk = document.createElement('input');
         queueChk.type = 'checkbox';
@@ -1264,13 +1264,13 @@
 
         // 3-0. 스케줄 비교 카드
         const scheduleCard = document.createElement('div');
-        scheduleCard.style.cssText = "background:#2d1f5e; padding:8px 12px; border-radius:15px; border:1px solid #4a3580; cursor:pointer; display:flex; align-items:center;";
+        scheduleCard.style.cssText = "background:#1a2e4a; padding:8px 12px; border-radius:15px; border:1px solid #2a4a6a; cursor:pointer; display:flex; align-items:center;";
         scheduleCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">📅 스케줄표 + 좌석 배치도</div>`;
         scheduleCard.onclick = () => openScheduleOverlay();
 
         // 3-1. 최적화 팁 (좌측)
         const tipsCard = document.createElement('div');
-        tipsCard.style.cssText = "background:#2d1f5e; padding:8px 12px; border-radius:15px; border:1px solid #4a3580; cursor:pointer; display:inline-flex; align-items:center;";
+        tipsCard.style.cssText = "background:#1a2e4a; padding:8px 12px; border-radius:15px; border:1px solid #2a4a6a; cursor:pointer; display:inline-flex; align-items:center;";
         tipsCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">💡 최적화 팁</div>`;
         const tipsOpenBtn = document.createElement('button');
         tipsOpenBtn.textContent = '열기';
@@ -1345,7 +1345,7 @@
                     const row = document.createElement('div');
                     row.style.cssText = `
                         display:flex; justify-content:space-between; align-items:center;
-                        background:#2d1f5e; border:1px solid #4a3580; border-radius:12px;
+                        background:#1a2e4a; border:1px solid #2a4a6a; border-radius:12px;
                         padding:13px 16px; gap:12px;
                     `;
                     const rowTitle = document.createElement('span');
@@ -1391,7 +1391,7 @@
         // 3-2. 배터리 현황 (우측)
         const isBatteryOpen = batteryPopup.style.display === 'block';
         const batteryCard = document.createElement('div');
-        batteryCard.style.cssText = "background:#2d1f5e; padding:8px 12px; border-radius:15px; border:1px solid #4a3580; display:flex; justify-content:space-between; align-items:center;";
+        batteryCard.style.cssText = "background:#1a2e4a; padding:8px 12px; border-radius:15px; border:1px solid #2a4a6a; display:flex; justify-content:space-between; align-items:center;";
         batteryCard.innerHTML = `
             <div style="flex:1;">
                 <div style="font-weight:bold; font-size:15px; margin-bottom:3px;">🔋 실시간 성남 배터리</div>
@@ -1427,7 +1427,7 @@
 
     function createMenuCard(name, desc, stateKey, storageKey, action, btnLabel = '열기') {
         const card = document.createElement('div');
-        card.style.cssText = "background:#2d1f5e; padding:15px; border-radius:15px; display:flex; justify-content:space-between; align-items:center; border:1px solid #4a3580;";
+        card.style.cssText = "background:#1a2e4a; padding:15px; border-radius:15px; display:flex; justify-content:space-between; align-items:center; border:1px solid #2a4a6a;";
         // 제목에 margin-bottom: 4px를 추가하여 설명과의 간격을 벌림
         card.innerHTML = `
             <div style="flex:1;">
