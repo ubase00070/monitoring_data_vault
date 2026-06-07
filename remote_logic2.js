@@ -2602,21 +2602,22 @@
         if (e.altKey && e.code === 'KeyB') { 
             e.preventDefault(); 
             toggleBattery();
-            if (window._neubieBatteryCard) {
+            const battBtnEl = document.getElementById('ho-batt-btn');
+            if (battBtnEl) {
                 const isOpen = batteryPopup.style.display === 'block';
-                window._neubieBatteryCard.style.outline = isOpen ? '2px solid #ef4444' : 'none';
+                battBtnEl.textContent = isOpen ? '배터리 닫기' : '성남 배터리';
+                battBtnEl.style.background = isOpen ? '#ef4444' : '#475569';
             }
-			const battBtnEl = document.getElementById('ho-batt-btn');
-			if (battBtnEl) {
-				const isOpen = batteryPopup.style.display === 'block';
-				battBtnEl.textContent = isOpen ? '배터리 닫기' : '성남 배터리';
-				battBtnEl.style.background = isOpen ? '#ef4444' : '#475569';
-			}
             if (dashboard.style.display === 'block') {
                 renderDashboard();
                 if (window.currentMyTasks && window.currentMyTasks.length > 0) {
                     renderTaskList(window.currentMyTasks);
                 }
+            }
+            // renderDashboard 이후에 outline 적용
+            if (window._neubieBatteryCard) {
+                const isOpen = batteryPopup.style.display === 'block';
+                window._neubieBatteryCard.style.outline = isOpen ? '2px solid #ef4444' : 'none';
             }
         }
     });
