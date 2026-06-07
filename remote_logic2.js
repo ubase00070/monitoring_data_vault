@@ -319,7 +319,7 @@
         const header = document.createElement('div');
         header.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #333333; padding-bottom:10px;";
         const titleB = document.createElement('b');
-        titleB.textContent = "🔋 실시간 성남 배터리";
+        titleB.textContent = "실시간 성남 배터리";
         titleB.style.cssText = "color:#eee; font-size:18px;";
         const copyBtn = document.createElement('button');
         copyBtn.textContent = '복사';
@@ -902,7 +902,7 @@
                     position:relative; box-shadow:0 10px 50px rgba(0,0,0,0.7);
                 `;
                 const patchTitle = document.createElement('div');
-                patchTitle.textContent = '📋 패치노트';
+                patchTitle.textContent = '패치노트';
                 patchTitle.style.cssText = `font-size:20px; font-weight:bold; margin-bottom:20px; color:#60a5fa;`;
                 const patchClose = document.createElement('button');
                 patchClose.textContent = '✕';
@@ -1133,7 +1133,7 @@
         // 맵 최적화 카드
         const mapCard = document.createElement('div');
         mapCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; display:flex; justify-content:space-between; align-items:center;";
-        mapCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">요기요 지도 최적화</span>`;
+        mapCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">요기요 페이지 최적화</span>`;
 
         // 맵 최적화 (체크박스, 멘트 없이 이름만)
         const mapToggle = document.createElement('button');
@@ -1298,7 +1298,7 @@
                     position:relative; box-shadow:0 10px 50px rgba(0,0,0,0.7);
                 `;
                 const tipsTitle = document.createElement('div');
-                tipsTitle.textContent = '💡 최적화 팁';
+                tipsTitle.textContent = '최적화 팁';
                 tipsTitle.style.cssText = `font-size:20px; font-weight:bold; margin-bottom:20px; color:#fcd34d; cursor:pointer;`;
 
 				const padIndicator = document.createElement('span');
@@ -2598,6 +2598,11 @@
 			}
 		}
         
+        if (window._neubieBatteryCard) {
+            const isOpen = batteryPopup.style.display === 'block';
+            window._neubieBatteryCard.style.outline = isOpen ? '2px solid #ef4444' : 'none';
+        }
+
         // Alt + B (배터리) 단축키 로직
         if (e.altKey && e.code === 'KeyB') { 
             e.preventDefault(); 
