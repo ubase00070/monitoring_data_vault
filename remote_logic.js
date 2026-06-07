@@ -2814,7 +2814,7 @@
 	            dpadWasPressed.left = false;
 	        }
 	
-	    }, 500);
+	    }, 100);
 	}
 
 	// localStorage.setItem 가로채기 — 계정 변경 시 자동 감지
