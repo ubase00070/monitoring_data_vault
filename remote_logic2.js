@@ -237,7 +237,7 @@
             width: width, backgroundColor: '#111111', color: '#fff',
             borderRadius: '24px', padding: '20px', zIndex: '1000000',
             fontFamily: 'Pretendard, sans-serif', boxShadow: '0 20px 50px rgba(0,0,0,0.8)',
-            border: '3px solid transparent', display: 'none', transform: left === '50%' ? 'translate(-50%, -50%)' : 'none',
+            border: '4px solid transparent', display: 'none', transform: left === '50%' ? 'translate(-50%, -50%)' : 'none',
             backgroundImage: 'linear-gradient(#111111, #111111), linear-gradient(135deg, #6366f1, #ec4899)',
             backgroundOrigin: 'border-box',
             backgroundClip: 'padding-box, border-box',
@@ -1064,8 +1064,8 @@
             <div style="margin-bottom:10px;">
                 <div style="display:flex; align-items:center; gap:6px; margin-bottom:8px; flex-wrap:nowrap;">
                     <div style="font-weight:bold; font-size:17px; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📋 ${storedName}의 일일 업무</div>
-                    <button id="btn-type1" style="padding:3px 8px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer; border:2px solid #f59e0b; background:#f59e0b; color:#000;">알림1</button>
-                    <button id="btn-type2" style="padding:3px 8px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer; border:2px solid #2563eb; background:transparent; color:#60a5fa;">알림2</button>
+                    <button id="btn-type1" style="padding:3px 8px; border-radius:4px; font-size:12px; font-weight:bold; cursor:pointer; border:2px solid #f59e0b; background:#f59e0b; color:#000;">알림1</button>
+                    <button id="btn-type2" style="padding:3px 8px; border-radius:4px; font-size:12px; font-weight:bold; cursor:pointer; border:2px solid #2563eb; background:transparent; color:#60a5fa;">알림2</button>
                     <select id="remind-inline" style="background:#333; color:white; border:1px solid #555; font-size:13px; border-radius:4px; padding:2px;">
                         <option value="0" ${currentInt === '0' ? 'selected' : ''}>알림 없음</option>
                         <option value="3" ${currentInt === '3' ? 'selected' : ''}>3분 전</option>
@@ -1135,37 +1135,39 @@
         twoCol.style.cssText = "display:grid; grid-template-columns:1fr 1fr; gap:8px;";
 
         // 맵 최적화 (체크박스, 멘트 없이 이름만)
-        const mapCard = document.createElement('div');
-        mapCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; display:flex; justify-content:space-between; align-items:center;";
-        mapCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">🗺️ 요기요 지도 최적화</span>`;
-        const mapChk = document.createElement('input');
-        mapChk.type = 'checkbox'; mapChk.checked = state.isMapOpt;
-        mapChk.style.cssText = "width:18px; height:18px; cursor:pointer;";
-        mapChk.onchange = (e) => {
-            state.isMapOpt = e.target.checked;
+        const mapToggle = document.createElement('button');
+        mapToggle.textContent = state.isMapOpt ? 'ON' : 'OFF';
+        mapToggle.style.cssText = `background:${state.isMapOpt ? '#2563eb' : '#444'}; color:white; border:none; padding:4px 12px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:13px;`;
+        mapToggle.onclick = () => {
+            state.isMapOpt = !state.isMapOpt;
             localStorage.setItem('neubie_opt_map', state.isMapOpt);
+            mapToggle.textContent = state.isMapOpt ? 'ON' : 'OFF';
+            mapToggle.style.background = state.isMapOpt ? '#2563eb' : '#444';
             injectMapStyle();
         };
-        mapCard.appendChild(mapChk);
+        mapCard.appendChild(mapToggle);
         twoCol.appendChild(mapCard);
 
         // 줄을 서시오 (체크박스, 멘트 없이 이름만)
         const queueCard = document.createElement('div');
         queueCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; display:flex; justify-content:space-between; align-items:center;";
         queueCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">📡 다중 모니터링 도우미</span>`;
-        const queueChk = document.createElement('input');
-        queueChk.type = 'checkbox';
-        queueChk.checked = localStorage.getItem('neubie_handover_enabled') === 'true'; // 기본 false
-        queueChk.style.cssText = "width:18px; height:18px; cursor:pointer;";
-        queueChk.onchange = (e) => {
-			localStorage.setItem('neubie_handover_enabled', e.target.checked);
-			const bar = document.getElementById('neubie-brightness-bar');
-			if (!e.target.checked && bar) {
-				bar.remove();
-			} else if (e.target.checked && !bar && isBrightnessPage()) {
-				injectMasterBrightness();
-			}
-		};
+        const queueEnabled = localStorage.getItem('neubie_handover_enabled') === 'true';
+        const queueToggle = document.createElement('button');
+        queueToggle.textContent = queueEnabled ? 'ON' : 'OFF';
+        queueToggle.style.cssText = `background:${queueEnabled ? '#2563eb' : '#444'}; color:white; border:none; padding:4px 12px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:13px;`;
+        queueToggle.onclick = () => {
+            const next = queueToggle.textContent === 'OFF';
+            localStorage.setItem('neubie_handover_enabled', next);
+            queueToggle.textContent = next ? 'ON' : 'OFF';
+            queueToggle.style.background = next ? '#2563eb' : '#444';
+            const bar = document.getElementById('neubie-brightness-bar');
+            if (!next && bar) {
+                bar.remove();
+            } else if (next && !bar && isBrightnessPage()) {
+                injectMasterBrightness();
+            }
+        };
 
         if (!document.getElementById('neubie-blink-style')) {
             const blinkStyle = document.createElement('style');
@@ -1254,7 +1256,7 @@
             }
         };
         queueCard.appendChild(queueInfoBtn);
-        queueCard.appendChild(queueChk);
+        queueCard.appendChild(queueToggle);
         twoCol.appendChild(queueCard);
         list.appendChild(twoCol);
 
@@ -1266,7 +1268,11 @@
         const scheduleCard = document.createElement('div');
         scheduleCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; cursor:pointer; display:flex; align-items:center;";
         scheduleCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">📅 스케줄표 + 좌석 배치도</div>`;
-        scheduleCard.onclick = () => openScheduleOverlay();
+        scheduleCard.onclick = () => {
+            const isActive = scheduleCard.style.borderColor === 'rgb(239, 68, 68)';
+            scheduleCard.style.border = isActive ? '1px solid #333333' : '1px solid #ef4444';
+            if (!isActive) openScheduleOverlay();
+        };
 
         // 3-1. 최적화 팁 (좌측)
         const tipsCard = document.createElement('div');
@@ -1386,7 +1392,11 @@
                 tipsOverlay.style.display = 'flex';
             }
         };
-        tipsCard.onclick = () => tipsOpenBtn.onclick();
+        tipsCard.onclick = () => {
+            const isActive = tipsCard.style.borderColor === 'rgb(239, 68, 68)';
+            tipsCard.style.border = isActive ? '1px solid #333333' : '1px solid #ef4444';
+            tipsOpenBtn.onclick();
+        };
 
         // 3-2. 배터리 현황 (우측)
         const isBatteryOpen = batteryPopup.style.display === 'block';
@@ -1396,10 +1406,10 @@
             <div style="flex:1;">
                 <div style="font-weight:bold; font-size:15px; margin-bottom:3px;">🔋 실시간 성남 배터리</div>
             </div>`;
-        const batteryBtn = document.createElement('button');
-        batteryBtn.textContent = isBatteryOpen ? '닫기' : '열기';
-        batteryBtn.style.cssText = `background:${isBatteryOpen ? '#ef4444' : '#3b82f6'}; color:white; border:none; padding:5px 14px; border-radius:8px; cursor:pointer; font-weight:bold; font-size:13px; white-space:nowrap;`;
-        batteryBtn.onclick = () => {
+        batteryCard.style.cursor = 'pointer';
+        batteryCard.onclick = () => {
+            const isActive = batteryCard.style.borderColor === 'rgb(239, 68, 68)';
+            batteryCard.style.border = isActive ? '1px solid #333333' : '1px solid #ef4444';
             toggleBattery();
             renderDashboard();
             if (window.currentMyTasks && window.currentMyTasks.length > 0) {
@@ -1411,9 +1421,8 @@
         reservedCard.style.cssText = "background:#1a1a1a; padding:8px 12px; border-radius:15px; border:1px dashed #333;";
         reservedCard.innerHTML = `<div style="font-size:15px;color:#ffffff;">Hello, World!</div>`;
 
-        batteryCard.appendChild(batteryBtn);
-        bottomRow.appendChild(scheduleCard);
         bottomRow.appendChild(batteryCard);
+        bottomRow.appendChild(scheduleCard);
         bottomRow.appendChild(tipsCard);
         bottomRow.appendChild(reservedCard);
 
