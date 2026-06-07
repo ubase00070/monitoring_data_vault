@@ -316,7 +316,7 @@
         const header = document.createElement('div');
         header.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #333; padding-bottom:10px;";
         const titleB = document.createElement('b');
-        titleB.textContent = "🔋 실시간 성남시 배터리";
+        titleB.textContent = "🔋 실시간 성남 배터리";
         titleB.style.cssText = "color:#eee; font-size:18px;";
         const copyBtn = document.createElement('button');
         copyBtn.textContent = '복사';
@@ -775,10 +775,10 @@
                 </span>
             </div>
             <div style="display: flex; gap: 5px; flex-wrap: nowrap;">
-                <button id="btnMulti" class="sub-btn">다중 관제</button>
+                <button id="btnMulti" class="sub-btn">다중 모니터링</button>
                 ${isWknd ? `
-                    <button id="btnDeli" class="sub-btn">배송 띠띠(주말)</button>
-                    <button id="btnPatrol" class="sub-btn">순찰 띠띠(주말)</button>
+                    <button id="btnDeli" class="sub-btn">배송 띠띠 (주말)</button>
+                    <button id="btnPatrol" class="sub-btn">순찰 띠띠 (주말)</button>
                 ` : `
                     <button id="btnCombined" class="sub-btn">배송/순찰 띠띠(평일)</button>
                 `}
@@ -808,7 +808,7 @@
                 };
             }
 
-            // 다중 관제 버튼
+            // 다중 모니터링 버튼
             const multiBtn = card.querySelector('#btnMulti');
             if (multiBtn) {
                 multiBtn.onclick = (e) => {
@@ -919,13 +919,13 @@
                         version: 'v1.1',
                         date: '2026-06-07',
                         items: [
-							'개입카드 페이지 재배치로 하단쪽 버튼이 보이도록 변경(스크롤 바 제거)',
-                            'multimonitoring.vercel.app 모바일 버전(일일업무 & 캘린더)',
+							'개입카드 페이지 상태 바 재배치(스크롤 바 제거)',
 							'D-PAD UP: 다음 개입 요청받기 ON/OFF',
 							'D-PAD DOWN: 자동 긴급 정지 ON/OFF',
 							'D-PAD LEFT: 카메라 밝기 내리기',
 							'D-PAD RIGHT: 카메라 밝기 올리기',
-							'기체 카메라 위치 드래그로 변경',
+                            '다중 관제 카메라 밝기 한 번에 조정',
+							'다중 관제 카메라 위치 드래그로 변경',
 							'교대기체 자동 받기(최대 6대)',
                         ]
                     },
@@ -1134,7 +1134,7 @@
         // 맵 최적화 (체크박스, 멘트 없이 이름만)
         const mapCard = document.createElement('div');
         mapCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333; display:flex; justify-content:space-between; align-items:center;";
-        mapCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">🗺️ 요기요/삼평동 지도 최적화</span>`;
+        mapCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">🗺️ 요기요 지도 최적화</span>`;
         const mapChk = document.createElement('input');
         mapChk.type = 'checkbox'; mapChk.checked = state.isMapOpt;
         mapChk.style.cssText = "width:18px; height:18px; cursor:pointer;";
@@ -1149,7 +1149,7 @@
         // 줄을 서시오 (체크박스, 멘트 없이 이름만)
         const queueCard = document.createElement('div');
         queueCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333; display:flex; justify-content:space-between; align-items:center;";
-        queueCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">📡 다중 관제 도우미</span>`;
+        queueCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">📡 다중 도우미</span>`;
         const queueChk = document.createElement('input');
         queueChk.type = 'checkbox';
         queueChk.checked = localStorage.getItem('neubie_handover_enabled') === 'true'; // 기본 false
@@ -1223,7 +1223,7 @@
                 queueInfoContent.id = 'neubie-queue-info-content';
                 queueInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:#cbd5e1; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;`;
                 queueInfoContent.innerHTML = `
-				다중 관제 도우미 체크: 기체 카메라 밝기 한 번에 조절<br>
+				'다중 도우미' 체크: 기체 카메라 밝기 한 번에 조절<br>
 				기체 카메라 위치 드래그&드랍으로 카메라 위치 스왑<br>
 				저의 '모니터링 교대 도우미 v2.0' 사이트 이용 시 교대 기체 업로드 가능<br>
 				업로드된 교대 기체 받기(최근 20분까지의 데이터만 유효) -> 자동 시작(6대까지)<br>
@@ -1391,7 +1391,7 @@
         batteryCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333; display:flex; justify-content:space-between; align-items:center;";
         batteryCard.innerHTML = `
             <div style="flex:1;">
-                <div style="font-weight:bold; font-size:15px; margin-bottom:3px;">🔋 성남 배터리 현황</div>
+                <div style="font-weight:bold; font-size:15px; margin-bottom:3px;">🔋 실시간 성남 배터리</div>
             </div>`;
         const batteryBtn = document.createElement('button');
         batteryBtn.textContent = isBatteryOpen ? '닫기' : '열기';
@@ -1406,7 +1406,7 @@
 
         const reservedCard = document.createElement('div');
         reservedCard.style.cssText = "background:#1a1a1a; padding:8px 12px; border-radius:15px; border:1px dashed #333;";
-        reservedCard.innerHTML = `<div style="font-size:15px;color:#444;">Hello, World!</div>`;
+        reservedCard.innerHTML = `<div style="font-size:15px;color:#ffffff;">Hello, World!</div>`;
 
         batteryCard.appendChild(batteryBtn);
         bottomRow.appendChild(scheduleCard);
@@ -1609,7 +1609,7 @@
 			flexWrap: 'nowrap',
 		});
 
-		// 다중 관제 버튼
+		// 다중 모니터링 버튼
 		const multiBtn = mkBtn('다중 파일명', '#475569', { minWidth: '70px' });
 		multiBtn.onclick = () => {
 			const time = getCalculatedTime(10);
