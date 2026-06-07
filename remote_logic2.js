@@ -1268,8 +1268,8 @@
         scheduleCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">📅 스케줄표 + 좌석 배치도</div>`;
         window._neubieScheduleCard = scheduleCard;
         scheduleCard.onclick = () => {
-            const isActive = scheduleCard.style.borderColor === 'rgb(239, 68, 68)';
-            scheduleCard.style.border = isActive ? '1px solid #333333' : '2px solid #ef4444';
+            const isActive = scheduleCard.style.outline !== 'none' && scheduleCard.style.outline !== '';
+            scheduleCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
             if (!isActive) openScheduleOverlay();
         };
 
@@ -1339,7 +1339,7 @@
                 tipsClose.onmouseleave = () => { tipsClose.style.color='#aaa'; };
                 tipsClose.onclick = () => {
                     tipsOverlay.style.display = 'none';
-                    tipsCard.style.border = '1px solid #333333';
+                    tipsCard.style.outline = 'none';
                 };
 
                 const tipsItems = [
@@ -1395,8 +1395,8 @@
             }
         };
         tipsCard.onclick = () => {
-            const isActive = tipsCard.style.borderColor === 'rgb(239, 68, 68)';
-            tipsCard.style.border = isActive ? '1px solid #333333' : '2px solid #ef4444';
+            const isActive = tipsCard.style.outline !== 'none' && tipsCard.style.outline !== '';
+            tipsCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
             tipsOpenBtn.onclick();
         };
 
@@ -1411,8 +1411,8 @@
         batteryCard.style.cursor = 'pointer';
         window._neubieBatteryCard = batteryCard;
         batteryCard.onclick = () => {
-            const isActive = batteryCard.style.borderColor === 'rgb(239, 68, 68)';
-            batteryCard.style.border = isActive ? '1px solid #333333' : '2px solid #ef4444';
+            const isActive = batteryCard.style.outline !== 'none' && batteryCard.style.outline !== '';
+            batteryCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
             toggleBattery();
             if (window.currentMyTasks && window.currentMyTasks.length > 0) {
                 renderTaskList(window.currentMyTasks);
@@ -1499,7 +1499,7 @@
 
 		} else {
 			batteryPopup.style.display = 'none';
-            if (window._neubieBatteryCard) window._neubieBatteryCard.style.border = '1px solid #333333';
+            if (window._neubieBatteryCard) window._neubieBatteryCard.style.outline = 'none';
 			clearInterval(batteryRefreshInterval);
 			config.batteryIds.forEach(c => {
 				if (iframes[c.id]) {
@@ -1513,7 +1513,7 @@
     function closeAllPopups() {
         dashboard.style.display = 'none';
         batteryPopup.style.display = 'none';
-        if (window._neubieBatteryCard) window._neubieBatteryCard.style.border = '1px solid #333333';
+        if (window._neubieBatteryCard) window._neubieBatteryCard.style.outline = 'none';
 
 		document.getElementById('ho-remote-peek')?.remove();
     	document.getElementById('ho-remote-panel')?.remove();
@@ -2474,7 +2474,7 @@
 
             box.querySelector('#nso-close').onclick = () => {
                 overlay.style.display = 'none';
-                if (window._neubieScheduleCard) window._neubieScheduleCard.style.border = '1px solid #333333';
+                if (window._neubieScheduleCard) window._neubieScheduleCard.style.outline = 'none';
             };
             const BASE_URL = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/';
 
