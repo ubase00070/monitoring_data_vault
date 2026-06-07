@@ -14,10 +14,7 @@
         (location.href.includes('go.neubie.ai/ko/remote/multiple') &&
         !location.href.includes('/driving'));
 
-    // 밝기바를 표시할 페이지 조건 (multiple + driving 모두 포함)
-    const isBrightnessPage = () =>
-        (location.href.includes('go.neubie.ai/ko/remote/multiple') &&
-        !location.href.includes('/driving'));
+    const isBrightnessPage = isHandoverPage;
     
        const config = {
         targetIds: ['44', '56', '65', '109'],
@@ -767,7 +764,7 @@
         };
 
         card.innerHTML = `
-            <div style="color:#3b82f6; font-weight:bold; font-size:18px; margin-bottom:10px;">🏷️ 영상 파일명 생성기 (날짜/시각 자동 반영)</div>
+            <div style="color:#3b82f6; font-weight:bold; font-size:18px; margin-bottom:10px;">🏷️ 영상 파일명 생성기</div>
             <div style="display: flex; gap: 5px; margin-bottom: 10px;">
                 <select id="robotSelector" style="flex: 1.2; background: #333; color: white; border: 1px solid #555; border-radius: 4px; font-size: 15px; padding: 4px;">
                     ${dropdownOptions || '<option>최근 배달 기체 미감지</option>'}
@@ -868,7 +865,7 @@
         headerContainer.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; padding-right:5px;";
 
         const title = document.createElement('h2');
-        title.textContent = "🫠 없으면 만들지 뭐";
+        title.textContent = "없으면 만들지 뭐";
         title.style.cssText = "color:#3b82f6; font-size:20px; margin:0; font-weight:bold; white-space:nowrap;";
 
         // 패치노트 버튼
@@ -920,18 +917,16 @@
                 const patchItems = [
                     {
                         version: 'v1.1',
-                        date: '2026-06-06',
+                        date: '2026-06-07',
                         items: [
 							'개입카드 페이지 재배치로 하단쪽 버튼이 보이도록 변경(스크롤 바 제거)',
                             'multimonitoring.vercel.app 모바일 버전(일일업무 & 캘린더)',
-							'게임패드 D-PAD(상하좌우) 기능 부여',
 							'D-PAD UP: 다음 개입 요청받기 ON/OFF',
 							'D-PAD DOWN: 자동 긴급 정지 ON/OFF',
 							'D-PAD LEFT: 카메라 밝기 내리기',
 							'D-PAD RIGHT: 카메라 밝기 올리기',
-                            '다중 관제화면에서 기체 밝기 한 번에 조절',
 							'기체 카메라 위치 드래그로 변경',
-							'교대기체 자동 받기(6대까지만 / 12대는 테스트 중)',
+							'교대기체 자동 받기(최대 6대)',
                         ]
                     },
                 ];
@@ -1139,7 +1134,7 @@
         // 맵 최적화 (체크박스, 멘트 없이 이름만)
         const mapCard = document.createElement('div');
         mapCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333; display:flex; justify-content:space-between; align-items:center;";
-        mapCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">🗺️ 요기요/삼평동 맵 최적화</span>`;
+        mapCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">🗺️ 요기요/삼평동 지도 최적화</span>`;
         const mapChk = document.createElement('input');
         mapChk.type = 'checkbox'; mapChk.checked = state.isMapOpt;
         mapChk.style.cssText = "width:18px; height:18px; cursor:pointer;";
@@ -1233,10 +1228,6 @@
 				저의 '모니터링 교대 도우미 v2.0' 사이트 이용 시 교대 기체 업로드 가능<br>
 				업로드된 교대 기체 받기(최근 20분까지의 데이터만 유효) -> 자동 시작(6대까지)<br>
 				'없으면 만들지 뭐'만 이용하더라도 교대 기체 받기는 가능<br>
-				<br>
-				줄을 서시오 v2.0의 경우 수학적으로는 겹치지 않게 짜여졌지만<br>
-				모두가 이걸 사용해야 효과를 볼 수 있다는 현실적 장벽에 부딪혔습니다.<br>
-				각자 사용환경과 기호가 다르다는 점을 인정하고, 근본으로 돌아가 재연구하겠습니다.<br>
                 `;
 
                 queueInfoBox.appendChild(queueInfoClose);
@@ -1271,13 +1262,13 @@
         // 3-0. 스케줄 비교 카드
         const scheduleCard = document.createElement('div');
         scheduleCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333; cursor:pointer; display:flex; align-items:center;";
-        scheduleCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">📅 월별 스케줄 및 좌석 배치도</div>`;
+        scheduleCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">📅 스케줄표 + 좌석 배치도</div>`;
         scheduleCard.onclick = () => openScheduleOverlay();
 
         // 3-1. 최적화 팁 (좌측)
         const tipsCard = document.createElement('div');
         tipsCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333; cursor:pointer; display:inline-flex; align-items:center;";
-        tipsCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">💡 최적화 설정 및 프로그램 추천</div>`;
+        tipsCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">💡 최적화 팁</div>`;
         const tipsOpenBtn = document.createElement('button');
         tipsOpenBtn.textContent = '열기';
         tipsOpenBtn.style.cssText = "background:#3b82f6; color:white; border:none; padding:5px 14px; border-radius:8px; cursor:pointer; font-weight:bold; font-size:13px; white-space:nowrap;";
@@ -1341,9 +1332,9 @@
                 tipsClose.onclick = () => { tipsOverlay.style.display='none'; };
 
                 const tipsItems = [
-                    { title: "슬랙 PWA 버전 사용법(앱 버전보다 가벼움)", url: "https://telling-ink-a85.notion.site/PWA-366a8cf5ba7b80eebb43e017c095702c?pvs=74" },
-                    { title: "OBS 최적화 및 클립 따기 설정법", url: "https://telling-ink-a85.notion.site/OBS-366a8cf5ba7b80dfb101cfa149eaefcf?pvs=74" },
-                    { title: "CYH's 추천 프로그램 목록", url: "https://telling-ink-a85.notion.site/366a8cf5ba7b80958575eadb8809f313" },
+                    { title: "슬랙 PWA 버전 사용법", url: "https://telling-ink-a85.notion.site/PWA-366a8cf5ba7b80eebb43e017c095702c?pvs=74" },
+                    { title: "OBS 설정법", url: "https://telling-ink-a85.notion.site/OBS-366a8cf5ba7b80dfb101cfa149eaefcf?pvs=74" },
+                    { title: "CYH's 추천 프로그램", url: "https://telling-ink-a85.notion.site/366a8cf5ba7b80958575eadb8809f313" },
                 ];
                 const tipsContent = document.createElement('div');
                 tipsContent.style.cssText = "display:grid; gap:10px;";
@@ -1914,16 +1905,7 @@
 
     /* ============================================================
         SECTION 9. 전체 밝기 마스터 컨트롤
-        - remote/multiple 페이지에서 고정 표시
-        - 슬라이더 조작 시 모든 카메라 슬라이더에 동기화
-        - ⚠️  FIXME_SLIDER_SELECTOR: 내일 Elements 확인 후 수정
        ============================================================ */
-
-    // ── 상수 ──────────────────────────────────────────────
-    // 내일 Elements에서 확인할 것:
-    //   1) 각 카메라 슬라이더의 input[type=range] selector
-    //   2) 슬라이더 값 범위 (min/max) 
-    //   3) CSS filter로 동작하는지 여부
     const BRIGHTNESS = {
         MIN: 20,
         MAX: 100,
@@ -2117,7 +2099,7 @@
             box.innerHTML = `
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
                 <div style="display:flex;align-items:center;gap:8px;">
-                    <span style="font-size:20px;font-weight:700;color:#4f8ef7;">📅 월별 스케줄 및 좌석 배치도</span>
+                    <span style="font-size:20px;font-weight:700;color:#4f8ef7;">📅 스케줄표 + 좌석 배치도</span>
                     <span id="nso-status" style="font-size:12px;color:#94a3b8;">로딩 중...</span>
                     <span id="nso-dot" style="width:7px;height:7px;border-radius:50%;background:#eab308;display:inline-block;"></span>
                     <span id="nso-updated" style="font-size:12px;color:#64748b;"></span>
@@ -2621,7 +2603,9 @@
                     setTimeout(() => injectMapStyle(), 3000);
                     setTimeout(() => injectMapStyle(), 6000);
                 }
-				watchAndPatchDrivingPage();
+				setTimeout(() => patchDrivingPageLayout(), 1500);
+                setTimeout(() => patchDrivingPageLayout(), 3000);
+				setTimeout(() => patchDrivingPageLayout(), 6000);
             }
         }, 100);
     }, true);
@@ -2640,68 +2624,57 @@
                 setTimeout(() => injectMapStyle(), 3000);
                 setTimeout(() => injectMapStyle(), 6000);
             }
-			watchAndPatchDrivingPage();
+			setTimeout(() => patchDrivingPageLayout(), 1500);
+            setTimeout(() => patchDrivingPageLayout(), 3000);
+			setTimeout(() => patchDrivingPageLayout(), 6000);
         }
     }, 2000); // 2초 정도면 충분히 여유로움
 	
 	// ── 개입 페이지 레이아웃 패치 ──
     function patchDrivingPageLayout() {
-        if (!location.href.includes('/remote/multiple/driving/')) return false;
+        if (!location.href.includes('/remote/multiple/driving/')) return;
 
+        // 핵심 요소 전부 확인
         const header = document.querySelector('header');
-        const resolveBtn = Array.from(document.querySelectorAll('button'))
-            .find(el => el.textContent.trim() === '해결 완료' || el.textContent.trim() === '해결완료');
-
-        // 핵심 요소 미준비 시 대기
-        if (!header || !resolveBtn) return false;
-
-        // 1. 헤더 flex-col 재구성
-        header.style.flexDirection = 'column';
-        header.style.alignItems = 'flex-start';
-        header.style.justifyContent = 'center';
-        header.style.paddingTop = '2px';
-        header.style.paddingBottom = '2px';
-        header.style.gap = '1px';
-
-        // 2. 상태바를 '해결완료' 버튼 앞으로 이동
         const statusBar = Array.from(document.querySelectorAll('div.flex.items-center.justify-between'))
             .find(el => el.textContent.includes('LTE') && el.getBoundingClientRect().height < 60);
-        if (statusBar) {
-            resolveBtn.parentElement.insertBefore(statusBar, resolveBtn);
-            statusBar.style.marginLeft = '-320px';
-        }
-
-        // 3. 임무 바 높이 조정
+        const resolveBtn = Array.from(document.querySelectorAll('button'))
+            .find(el => el.textContent.trim() === '해결 완료' || el.textContent.trim() === '해결완료');
         const missionWrapper = document.querySelector('.relative.overflow-hidden.w-full.h-58');
-        if (missionWrapper) {
+        const container = document.querySelector('.flex.h-full.w-full.flex-col[class*="gap-16"][class*="pt-14"]');
+
+        // 하나라도 없으면 실행 안 함 (부분 성공 방지)
+        if (!header || !statusBar || !resolveBtn || !missionWrapper || !container) return;
+
+        // 전부 준비됐을 때 한 프레임에 한 번에 적용
+        requestAnimationFrame(() => {
+            // 1. 헤더 flex-col 재구성
+            header.style.flexDirection = 'column';
+            header.style.alignItems = 'flex-start';
+            header.style.justifyContent = 'center';
+            header.style.paddingTop = '2px';
+            header.style.paddingBottom = '2px';
+            header.style.gap = '1px';
+
+            // 2. 상태바를 '해결완료' 버튼 앞으로 이동
+            resolveBtn.parentElement.insertBefore(statusBar, resolveBtn);
+            statusBar.style.marginLeft = '-280px';
+
+            // 3. 임무 바 높이 조정
             missionWrapper.style.height = '64px';
             missionWrapper.style.paddingTop = '4px';
             missionWrapper.style.paddingBottom = '4px';
-        }
 
-        // 4. 컨테이너 gap/padding 압축
-        const container = document.querySelector('.flex.h-full.w-full.flex-col[class*="gap-16"][class*="pt-14"]');
-        if (container) {
+            // 4. 컨테이너 gap/padding 압축
             container.style.gap = '6px';
             container.style.paddingTop = '6px';
-        }
-
-        return true; // 패치 완료
-    }
-
-    function watchAndPatchDrivingPage() {
-        if (!location.href.includes('/remote/multiple/driving/')) return;
-        if (patchDrivingPageLayout()) return; // 이미 준비됐으면 즉시 실행
-
-        const observer = new MutationObserver(() => {
-            if (patchDrivingPageLayout()) {
-                observer.disconnect();
-            }
         });
-        observer.observe(document.body, { childList: true, subtree: true });
     }
 
-    watchAndPatchDrivingPage();
+    // 페이지 진입 시 + URL 변경 시 자동 실행 (DOM 렌더링 대기)
+    setTimeout(() => patchDrivingPageLayout(), 1500);
+    setTimeout(() => patchDrivingPageLayout(), 3000);
+    setTimeout(() => patchDrivingPageLayout(), 6000);
 
 	// ── 게임패드 바인딩 ──
 	if (!window.neubieGamepadBound) {
@@ -2800,26 +2773,31 @@
 	            dpadWasPressed.left = false;
 	        }
 	
-	    }, 100);
+	    }, 500);
 	}
 
 	// localStorage.setItem 가로채기 — 계정 변경 시 자동 감지
 	const _origSetItem = localStorage.setItem.bind(localStorage);
 	localStorage.setItem = function(key, value) {
 	  _origSetItem(key, value);
-	  if (key.includes('ph_phc_') && key.endsWith('_posthog')) {
-		try {
-		  const posthog = JSON.parse(value);
-		  const email = posthog?.distinct_id || '';
-		  const match = email.match(/ubase_multiple(\d+)@gmail\.com/);
-		  const multiNum = match ? match[1] : '';
-		  fetch('https://multimonitoring.vercel.app/api/multi_status', {
-			method: 'POST',
-			headers: {'Content-Type':'application/json'},
-			body: JSON.stringify({ active: multiNum })
-		  }).catch(()=>{});
-		} catch(e) {}
-	  }
+	  // ★ 정확히 '_posthog' 로 끝나는 메인 키만 처리
+	  if (!key.includes('ph_phc_') || !key.endsWith('_posthog')) return;
+	  // ★ distinct_id 변경 여부만 체크
+	  try {
+		const posthog = JSON.parse(value);
+		const email = posthog?.distinct_id || '';
+		if (!email) return; // ← distinct_id 없으면 스킵
+		const match = email.match(/ubase_multiple(\d+)@gmail\.com/);
+		const multiNum = match ? match[1] : '';
+		if (multiNum === _lastMultiNum) return;
+		if (!multiNum) return; // ★ 일반 계정이면 POST 안 함
+		_lastMultiNum = multiNum;
+		fetch('https://multimonitoring.vercel.app/api/multi_status', {
+		  method: 'POST',
+		  headers: {'Content-Type':'application/json'},
+		  body: JSON.stringify({ active: multiNum })
+		}).catch(()=>{});
+	  } catch(e) {}
 	};
 	
 	(function detectAndSaveMulti() {
