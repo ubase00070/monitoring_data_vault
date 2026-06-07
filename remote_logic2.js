@@ -1420,15 +1420,26 @@
         };
 
         const reservedCard = document.createElement('div');
-        reservedCard.style.cssText = "background:#1a1a1a; padding:8px 12px; border-radius:15px; border:1px dashed #333;";
-        reservedCard.innerHTML = `<div style="font-size:15px;color:#ffffff;">Hello, World!</div>`;
+        reservedCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; display:flex; justify-content:space-between; align-items:center;";
+        reservedCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">Hello, World!</span>`;
+        const reservedEnabled = localStorage.getItem('neubie_opt_reserved') === 'true';
+        const reservedToggle = document.createElement('button');
+        reservedToggle.textContent = reservedEnabled ? 'ON' : 'OFF';
+        reservedToggle.style.cssText = `background:${reservedEnabled ? '#2563eb' : '#444'}; color:white; border:none; padding:4px 0; border-radius:6px; cursor:pointer; font-weight:bold; font-size:13px; width:44px; text-align:center;`;
+        reservedToggle.onclick = () => {
+            const next = reservedToggle.textContent === 'OFF';
+            localStorage.setItem('neubie_opt_reserved', next);
+            reservedToggle.textContent = next ? 'ON' : 'OFF';
+            reservedToggle.style.background = next ? '#2563eb' : '#444';
+        };
+        reservedCard.appendChild(reservedToggle);
 
         bottomRow.appendChild(mapCard);      // 지도 최적화
         bottomRow.appendChild(batteryCard);  // 성남 배터리
         bottomRow.appendChild(queueCard);    // 다중 도우미
         bottomRow.appendChild(scheduleCard); // 스케줄표
-        bottomRow.appendChild(tipsCard);     // 최적화 팁
         bottomRow.appendChild(reservedCard); // Hello, World!
+        bottomRow.appendChild(tipsCard);     // 최적화 팁
 
         list.appendChild(bottomRow);
 
