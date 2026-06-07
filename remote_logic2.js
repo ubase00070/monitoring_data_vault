@@ -868,7 +868,7 @@
         headerContainer.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; padding-right:5px;";
 
         const title = document.createElement('h2');
-        title.textContent = "없으면 만들지 뭐";
+        title.textContent = "뉴비고 도우미";
         title.style.cssText = "color:#3b82f6; font-size:20px; margin:0; font-weight:bold; white-space:nowrap;";
 
         // 패치노트 버튼
@@ -920,16 +920,16 @@
                 const patchItems = [
                     {
                         version: 'v1.1',
-                        date: '2026-06-07',
+                        date: '2026-06-06',
                         items: [
 							'개입카드 페이지 상태 바 재배치(스크롤 바 제거)',
 							'D-PAD UP: 다음 개입 요청받기 ON/OFF',
 							'D-PAD DOWN: 자동 긴급 정지 ON/OFF',
 							'D-PAD LEFT: 카메라 밝기 내리기',
 							'D-PAD RIGHT: 카메라 밝기 올리기',
-                            '다중 관제 카메라 밝기 한 번에 조정',
+                            '다중 관제 카메라 밝기 한 번에 조절',
 							'다중 관제 카메라 위치 드래그로 변경',
-							'교대기체 자동 받기(최대 6대)',
+							'교대 기체 자동 받기(최대 6대)',
                         ]
                     },
                 ];
@@ -988,7 +988,7 @@
         nameArea.innerHTML = `
             <span>성명:</span>
             <input type="text" id="inline-name-input" value="${currentName}" placeholder="이름 입력"
-                style="width:70px; border:1px solid #cbd5e1; outline:none; padding:2px 6px; 
+                style="width:52px; border:1px solid #cbd5e1; outline:none; padding:2px 6px; 
                     font-size:15px; font-weight:bold; color:#252525; background:white; 
                     border-radius:4px; text-align:center;">
             <button id="all-close-btn" style="background:#ef4444; color:white; border:none; border-radius:4px; width:22px; height:22px; cursor:pointer; font-weight:bold; display:flex; align-items:center; justify-content:center; font-size:14px;">✕</button>
@@ -1064,12 +1064,12 @@
             <div style="margin-bottom:10px;">
                 <div style="display:flex; align-items:center; gap:6px; margin-bottom:8px; flex-wrap:nowrap;">
                     <div style="font-weight:bold; font-size:17px; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📋 ${storedName}의 일일 업무</div>
-                    <button id="btn-type1" style="padding:3px 8px; border-radius:20px; font-size:11px; font-weight:bold; cursor:pointer; border:2px solid #f59e0b; background:#f59e0b; color:#000;">알림1</button>
-                    <button id="btn-type2" style="padding:3px 8px; border-radius:20px; font-size:11px; font-weight:bold; cursor:pointer; border:2px solid #2563eb; background:transparent; color:#60a5fa;">알림2</button>
+                    <button id="btn-type1" style="padding:3px 8px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer; border:2px solid #f59e0b; background:#f59e0b; color:#000;">알림1</button>
+                    <button id="btn-type2" style="padding:3px 8px; border-radius:4px; font-size:11px; font-weight:bold; cursor:pointer; border:2px solid #2563eb; background:transparent; color:#60a5fa;">알림2</button>
                     <select id="remind-inline" style="background:#333; color:white; border:1px solid #555; font-size:13px; border-radius:4px; padding:2px;">
                         <option value="0" ${currentInt === '0' ? 'selected' : ''}>알림 없음</option>
-                        <option value="3" ${currentInt === '3' ? 'selected' : ''}>3분 전(다중: 13분 전)</option>
-                        <option value="5" ${currentInt === '5' ? 'selected' : ''}>5분 전(다중: 15분 전)</option>
+                        <option value="3" ${currentInt === '3' ? 'selected' : ''}>3분 전</option>
+                        <option value="5" ${currentInt === '5' ? 'selected' : ''}>5분 전</option>
                     </select>
                 </div>
             </div>
@@ -1152,7 +1152,7 @@
         // 줄을 서시오 (체크박스, 멘트 없이 이름만)
         const queueCard = document.createElement('div');
         queueCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; display:flex; justify-content:space-between; align-items:center;";
-        queueCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">📡 다중 도우미</span>`;
+        queueCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">📡 다중 모니터링 도우미</span>`;
         const queueChk = document.createElement('input');
         queueChk.type = 'checkbox';
         queueChk.checked = localStorage.getItem('neubie_handover_enabled') === 'true'; // 기본 false
@@ -1181,7 +1181,7 @@
         // ⓘ 정보 버튼 (체크박스 왼쪽에 배치)
         const queueInfoBtn = document.createElement('button');
         queueInfoBtn.textContent = 'i';
-        queueInfoBtn.title = '제작자의 소회';
+        queueInfoBtn.title = '기능 설명';
         queueInfoBtn.style.cssText = `
             width:22px; height:22px; border-radius:50%; border:2px solid #aaa;
             background:transparent; color:#aaa; font-size:13px; font-weight:bold;
@@ -1209,7 +1209,7 @@
                     position:relative; box-shadow:0 10px 50px rgba(0,0,0,0.7);
                 `;
                 const queueInfoTitle = document.createElement('div');
-                queueInfoTitle.textContent = '제작자의 소회';
+                queueInfoTitle.textContent = '기능 설명';
                 queueInfoTitle.style.cssText = `font-size:22px; font-weight:bold; margin-bottom:20px; color:#93c5fd;`;
                 const queueInfoClose = document.createElement('button');
                 queueInfoClose.textContent = '✕';
@@ -1226,11 +1226,11 @@
                 queueInfoContent.id = 'neubie-queue-info-content';
                 queueInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:#cbd5e1; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;`;
                 queueInfoContent.innerHTML = `
-				'다중 도우미' 체크: 기체 카메라 밝기 한 번에 조절<br>
-				기체 카메라 위치 드래그&드랍으로 카메라 위치 스왑<br>
-				저의 '모니터링 교대 도우미 v2.0' 사이트 이용 시 교대 기체 업로드 가능<br>
-				업로드된 교대 기체 받기(최근 20분까지의 데이터만 유효) -> 자동 시작(6대까지)<br>
-				'없으면 만들지 뭐'만 이용하더라도 교대 기체 받기는 가능<br>
+				기체 카메라 밝기 한 번에 조절<br>
+				기체 카메라 위치 스왑<br>
+				multimonitoring.vercel.app 이용 시 교대 기체 업로드<br>
+				업로드된 교대 기체 받기(최근 20분까지만 유효) -> 자동 시작(6대까지)<br>
+				'뉴비고 도우미'만 이용하더라도 교대 기체 받기 가능<br>
                 `;
 
                 queueInfoBox.appendChild(queueInfoClose);
