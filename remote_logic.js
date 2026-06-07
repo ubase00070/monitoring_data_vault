@@ -988,7 +988,7 @@
         nameArea.innerHTML = `
             <span>성명:</span>
             <input type="text" id="inline-name-input" value="${currentName}" placeholder="이름 입력"
-                style="width:52px; border:1px solid #cbd5e1; outline:none; padding:2px 6px; 
+                style="width:60px; border:1px solid #cbd5e1; outline:none; padding:2px 6px; 
                     font-size:15px; font-weight:bold; color:#252525; background:white; 
                     border-radius:4px; text-align:center;">
             <button id="all-close-btn" style="background:#ef4444; color:white; border:none; border-radius:4px; width:22px; height:22px; cursor:pointer; font-weight:bold; display:flex; align-items:center; justify-content:center; font-size:14px;">✕</button>
