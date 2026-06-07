@@ -767,7 +767,7 @@
         };
 
         card.innerHTML = `
-            <div style="color:#3b82f6; font-weight:bold; font-size:18px; margin-bottom:10px;">🏷️ 영상 파일명 생성기</div>
+            <div style="color:#3b82f6; font-weight:bold; font-size:18px; margin-bottom:10px;">영상 파일명 생성기</div>
             <div style="display: flex; gap: 5px; margin-bottom: 10px;">
                 <select id="robotSelector" style="flex: 1.2; background: #333; color: white; border: 1px solid #555; border-radius: 4px; font-size: 15px; padding: 4px;">
                     ${dropdownOptions || '<option>최근 배달 기체 미감지</option>'}
@@ -1133,7 +1133,7 @@
         // 맵 최적화 카드
         const mapCard = document.createElement('div');
         mapCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; display:flex; justify-content:space-between; align-items:center;";
-        mapCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">🗺️ 요기요 지도 최적화</span>`;
+        mapCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">요기요 지도 최적화</span>`;
 
         // 맵 최적화 (체크박스, 멘트 없이 이름만)
         const mapToggle = document.createElement('button');
@@ -1151,7 +1151,7 @@
         // 줄을 서시오 (체크박스, 멘트 없이 이름만)
         const queueCard = document.createElement('div');
         queueCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; display:flex; justify-content:space-between; align-items:center;";
-        queueCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">📡 다중 모니터링 도우미</span>`;
+        queueCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">다중 모니터링 도우미</span>`;
         const queueEnabled = localStorage.getItem('neubie_handover_enabled') === 'true';
         const queueToggle = document.createElement('button');
         queueToggle.textContent = queueEnabled ? 'ON' : 'OFF';
@@ -1265,7 +1265,7 @@
         // 3-0. 스케줄 비교 카드
         const scheduleCard = document.createElement('div');
         scheduleCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; cursor:pointer; display:flex; align-items:center;";
-        scheduleCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">📅 스케줄표 + 좌석 배치도</div>`;
+        scheduleCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">스케줄표 + 좌석 배치도</div>`;
         window._neubieScheduleCard = scheduleCard;
         scheduleCard.onclick = () => {
             const isActive = scheduleCard.style.outline !== 'none' && scheduleCard.style.outline !== '';
@@ -1276,7 +1276,7 @@
         // 3-1. 최적화 팁 (좌측)
         const tipsCard = document.createElement('div');
         tipsCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; cursor:pointer; display:inline-flex; align-items:center;";
-        tipsCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">💡 최적화 팁</div>`;
+        tipsCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">최적화 팁</div>`;
         const tipsOpenBtn = document.createElement('button');
         tipsOpenBtn.textContent = '열기';
         tipsOpenBtn.style.cssText = "background:#3b82f6; color:white; border:none; padding:5px 14px; border-radius:8px; cursor:pointer; font-weight:bold; font-size:13px; white-space:nowrap;";
@@ -1410,7 +1410,7 @@
         batteryCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; display:flex; justify-content:space-between; align-items:center;";
         batteryCard.innerHTML = `
             <div style="flex:1;">
-                <div style="font-weight:bold; font-size:15px; margin-bottom:3px;">🔋 실시간 성남 배터리</div>
+                <div style="font-weight:bold; font-size:15px; margin-bottom:3px;">실시간 성남 배터리</div>
             </div>`;
         batteryCard.style.cursor = 'pointer';
         window._neubieBatteryCard = batteryCard;
@@ -1425,7 +1425,7 @@
 
         const reservedCard = document.createElement('div');
         reservedCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; display:flex; justify-content:space-between; align-items:center;";
-        reservedCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">Hello, World!</span>`;
+        reservedCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">빈 기능</span>`;
         const reservedEnabled = localStorage.getItem('neubie_opt_reserved') === 'true';
         const reservedToggle = document.createElement('button');
         reservedToggle.textContent = reservedEnabled ? 'ON' : 'OFF';
@@ -1442,7 +1442,7 @@
         bottomRow.appendChild(batteryCard);  // 성남 배터리
         bottomRow.appendChild(queueCard);    // 다중 도우미
         bottomRow.appendChild(scheduleCard); // 스케줄표
-        bottomRow.appendChild(reservedCard); // Hello, World!
+        bottomRow.appendChild(reservedCard); // 빈 기능
         bottomRow.appendChild(tipsCard);     // 최적화 팁
 
         list.appendChild(bottomRow);
