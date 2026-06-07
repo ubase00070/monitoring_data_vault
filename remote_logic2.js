@@ -234,11 +234,11 @@
         el.id = id;
         Object.assign(el.style, {
             position: 'fixed', top: top, left: left, right: right,
-            width: width, backgroundColor: '#0f172a', color: '#fff',
+            width: width, backgroundColor: '#090e1f', color: '#fff',
             borderRadius: '24px', padding: '20px', zIndex: '1000000',
             fontFamily: 'Pretendard, sans-serif', boxShadow: '0 20px 50px rgba(0,0,0,0.8)',
             border: '3px solid transparent', display: 'none', transform: left === '50%' ? 'translate(-50%, -50%)' : 'none',
-            backgroundImage: 'linear-gradient(#0f172a, #0f172a), linear-gradient(135deg, #6366f1, #ec4899)',
+            backgroundImage: 'linear-gradient(#090e1f, #090e1f), linear-gradient(135deg, #6366f1, #ec4899)',
             backgroundOrigin: 'border-box',
             backgroundClip: 'padding-box, border-box',
             maxHeight: '90vh', overflowY: 'auto', overflowX: 'hidden',
