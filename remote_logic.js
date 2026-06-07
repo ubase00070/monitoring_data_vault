@@ -14,10 +14,7 @@
         (location.href.includes('go.neubie.ai/ko/remote/multiple') &&
         !location.href.includes('/driving'));
 
-    // 밝기바를 표시할 페이지 조건 (multiple + driving 모두 포함)
-    const isBrightnessPage = () =>
-        (location.href.includes('go.neubie.ai/ko/remote/multiple') &&
-        !location.href.includes('/driving'));
+    const isBrightnessPage = isHandoverPage;
     
        const config = {
         targetIds: ['44', '56', '65', '109'],
@@ -237,10 +234,13 @@
         el.id = id;
         Object.assign(el.style, {
             position: 'fixed', top: top, left: left, right: right,
-            width: width, backgroundColor: 'rgba(15, 15, 15, 0.98)', color: '#fff',
+            width: width, backgroundColor: '#111111', color: '#fff',
             borderRadius: '24px', padding: '20px', zIndex: '1000000',
             fontFamily: 'Pretendard, sans-serif', boxShadow: '0 20px 50px rgba(0,0,0,0.8)',
-            border: '1px solid #333', display: 'none', transform: left === '50%' ? 'translate(-50%, -50%)' : 'none',
+            border: '4px solid transparent', display: 'none', transform: left === '50%' ? 'translate(-50%, -50%)' : 'none',
+            backgroundImage: 'linear-gradient(#111111, #111111), linear-gradient(135deg, #6366f1, #ec4899)',
+            backgroundOrigin: 'border-box',
+            backgroundClip: 'padding-box, border-box',
             maxHeight: '90vh', overflowY: 'auto', overflowX: 'hidden',
             boxSizing: 'border-box',
         });
@@ -317,9 +317,9 @@
         if (batteryPopup.dataset.dragging === 'true') return;
         batteryPopup.innerHTML = '';
         const header = document.createElement('div');
-        header.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #333; padding-bottom:10px;";
+        header.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #333333; padding-bottom:10px;";
         const titleB = document.createElement('b');
-        titleB.textContent = "🔋 실시간 성남시 배터리";
+        titleB.textContent = "실시간 성남 배터리";
         titleB.style.cssText = "color:#eee; font-size:18px;";
         const copyBtn = document.createElement('button');
         copyBtn.textContent = '복사';
@@ -744,7 +744,7 @@
         const isWknd = isWeekend();
         const card = document.createElement('div');
         card.id = 'namingSection';
-        card.style.cssText = 'background:#252525; padding:10px 15px; border-radius:15px; border:1px solid #333; margin-top:5px;';
+        card.style.cssText = 'background:#252525; padding:10px 15px; border-radius:15px; border:1px solid #333333; margin-top:5px;';
 
         const history = JSON.parse(localStorage.getItem('neubie_robot_history') || '[]');
         let dropdownOptions = history.map(h => {
@@ -767,7 +767,7 @@
         };
 
         card.innerHTML = `
-            <div style="color:#3b82f6; font-weight:bold; font-size:18px; margin-bottom:10px;">🏷️ 영상 파일명 생성기 (날짜/시각 자동 반영)</div>
+            <div style="color:#3b82f6; font-weight:bold; font-size:18px; margin-bottom:10px;">영상 파일명 생성기</div>
             <div style="display: flex; gap: 5px; margin-bottom: 10px;">
                 <select id="robotSelector" style="flex: 1.2; background: #333; color: white; border: 1px solid #555; border-radius: 4px; font-size: 15px; padding: 4px;">
                     ${dropdownOptions || '<option>최근 배달 기체 미감지</option>'}
@@ -778,10 +778,10 @@
                 </span>
             </div>
             <div style="display: flex; gap: 5px; flex-wrap: nowrap;">
-                <button id="btnMulti" class="sub-btn">다중 관제</button>
+                <button id="btnMulti" class="sub-btn">다중 모니터링</button>
                 ${isWknd ? `
-                    <button id="btnDeli" class="sub-btn">배송 띠띠(주말)</button>
-                    <button id="btnPatrol" class="sub-btn">순찰 띠띠(주말)</button>
+                    <button id="btnDeli" class="sub-btn">배송 띠띠 (주말)</button>
+                    <button id="btnPatrol" class="sub-btn">순찰 띠띠 (주말)</button>
                 ` : `
                     <button id="btnCombined" class="sub-btn">배송/순찰 띠띠(평일)</button>
                 `}
@@ -811,7 +811,7 @@
                 };
             }
 
-            // 다중 관제 버튼
+            // 다중 모니터링 버튼
             const multiBtn = card.querySelector('#btnMulti');
             if (multiBtn) {
                 multiBtn.onclick = (e) => {
@@ -868,7 +868,7 @@
         headerContainer.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; padding-right:5px;";
 
         const title = document.createElement('h2');
-        title.textContent = "🫠 없으면 만들지 뭐";
+        title.textContent = "뉴비고 도우미";
         title.style.cssText = "color:#3b82f6; font-size:20px; margin:0; font-weight:bold; white-space:nowrap;";
 
         // 패치노트 버튼
@@ -902,7 +902,7 @@
                     position:relative; box-shadow:0 10px 50px rgba(0,0,0,0.7);
                 `;
                 const patchTitle = document.createElement('div');
-                patchTitle.textContent = '📋 패치노트';
+                patchTitle.textContent = '패치노트';
                 patchTitle.style.cssText = `font-size:20px; font-weight:bold; margin-bottom:20px; color:#60a5fa;`;
                 const patchClose = document.createElement('button');
                 patchClose.textContent = '✕';
@@ -922,16 +922,14 @@
                         version: 'v1.1',
                         date: '2026-06-06',
                         items: [
-							'개입카드 페이지 재배치로 하단쪽 버튼이 보이도록 변경(스크롤 바 제거)',
-                            'multimonitoring.vercel.app 모바일 버전(일일업무 & 캘린더)',
-							'게임패드 D-PAD(상하좌우) 기능 부여',
+							'개입카드 페이지 상태 바 재배치(스크롤 바 제거)',
 							'D-PAD UP: 다음 개입 요청받기 ON/OFF',
 							'D-PAD DOWN: 자동 긴급 정지 ON/OFF',
 							'D-PAD LEFT: 카메라 밝기 내리기',
 							'D-PAD RIGHT: 카메라 밝기 올리기',
-                            '다중 관제화면에서 기체 밝기 한 번에 조절',
-							'기체 카메라 위치 드래그로 변경',
-							'교대기체 자동 받기(6대까지만 / 12대는 테스트 중)',
+                            '다중 관제 카메라 밝기 한 번에 조절',
+							'다중 관제 카메라 위치 드래그로 변경',
+							'교대 기체 자동 받기(최대 6대)',
                         ]
                     },
                 ];
@@ -941,7 +939,7 @@
                 patchContent.style.cssText = "display:grid; gap:16px;";
                 patchItems.forEach(patch => {
                     const section = document.createElement('div');
-                    section.style.cssText = "background:#252535; border:1px solid #333; border-radius:12px; padding:14px 16px;";
+                    section.style.cssText = "background:#252525; border:1px solid #333333; border-radius:12px; padding:14px 16px;";
                     const versionRow = document.createElement('div');
                     versionRow.style.cssText = "display:flex; align-items:center; gap:8px; margin-bottom:10px;";
                     versionRow.innerHTML = `
@@ -990,8 +988,8 @@
         nameArea.innerHTML = `
             <span>성명:</span>
             <input type="text" id="inline-name-input" value="${currentName}" placeholder="이름 입력"
-                style="width:70px; border:1px solid #cbd5e1; outline:none; padding:2px 6px; 
-                    font-size:15px; font-weight:bold; color:#1e293b; background:white; 
+                style="width:52px; border:1px solid #cbd5e1; outline:none; padding:2px 6px; 
+                    font-size:15px; font-weight:bold; color:#252525; background:white; 
                     border-radius:4px; text-align:center;">
             <button id="all-close-btn" style="background:#ef4444; color:white; border:none; border-radius:4px; width:22px; height:22px; cursor:pointer; font-weight:bold; display:flex; align-items:center; justify-content:center; font-size:14px;">✕</button>
         `;
@@ -1059,19 +1057,19 @@
 
         // 1. 업무 알림 설정 (태스크 리스트 인라인 삽입)
         const taskCard = document.createElement('div');
-        taskCard.style.cssText = "background:#252525; padding:15px; border-radius:15px; border:1px solid #333;";
+        taskCard.style.cssText = "background:#252525; padding:15px; border-radius:15px; border:1px solid #333333;";
         const storedName = localStorage.getItem('neubie_user_name') || "사용자";
         const currentInt = localStorage.getItem('neubie_remind_int') || '0';
         taskCard.innerHTML = `
             <div style="margin-bottom:10px;">
                 <div style="display:flex; align-items:center; gap:6px; margin-bottom:8px; flex-wrap:nowrap;">
                     <div style="font-weight:bold; font-size:17px; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📋 ${storedName}의 일일 업무</div>
-                    <button id="btn-type1" style="padding:3px 8px; border-radius:20px; font-size:11px; font-weight:bold; cursor:pointer; border:2px solid #f59e0b; background:#f59e0b; color:#000;">알림1</button>
-                    <button id="btn-type2" style="padding:3px 8px; border-radius:20px; font-size:11px; font-weight:bold; cursor:pointer; border:2px solid #2563eb; background:transparent; color:#60a5fa;">알림2</button>
+                    <button id="btn-type1" style="padding:3px 8px; border-radius:4px; font-size:12px; font-weight:bold; cursor:pointer; border:2px solid #f59e0b; background:#f59e0b; color:#000;">알림1</button>
+                    <button id="btn-type2" style="padding:3px 8px; border-radius:4px; font-size:12px; font-weight:bold; cursor:pointer; border:2px solid #2563eb; background:transparent; color:#60a5fa;">알림2</button>
                     <select id="remind-inline" style="background:#333; color:white; border:1px solid #555; font-size:13px; border-radius:4px; padding:2px;">
                         <option value="0" ${currentInt === '0' ? 'selected' : ''}>알림 없음</option>
-                        <option value="3" ${currentInt === '3' ? 'selected' : ''}>3분 전(다중: 13분 전)</option>
-                        <option value="5" ${currentInt === '5' ? 'selected' : ''}>5분 전(다중: 15분 전)</option>
+                        <option value="3" ${currentInt === '3' ? 'selected' : ''}>3분 전</option>
+                        <option value="5" ${currentInt === '5' ? 'selected' : ''}>5분 전</option>
                     </select>
                 </div>
             </div>
@@ -1132,42 +1130,44 @@
             taskInline.innerHTML = `<div style="color:#666; font-size:14px; padding:8px 0;">배정된 업무가 없습니다.</div>`;
         }
 
-        // 2. 맵 최적화
-        const twoCol = document.createElement('div');
-        twoCol.style.cssText = "display:grid; grid-template-columns:1fr 1fr; gap:8px;";
+        // 맵 최적화 카드
+        const mapCard = document.createElement('div');
+        mapCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; display:flex; justify-content:space-between; align-items:center;";
+        mapCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">요기요 페이지 최적화</span>`;
 
         // 맵 최적화 (체크박스, 멘트 없이 이름만)
-        const mapCard = document.createElement('div');
-        mapCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333; display:flex; justify-content:space-between; align-items:center;";
-        mapCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">🗺️ 요기요/삼평동 맵 최적화</span>`;
-        const mapChk = document.createElement('input');
-        mapChk.type = 'checkbox'; mapChk.checked = state.isMapOpt;
-        mapChk.style.cssText = "width:18px; height:18px; cursor:pointer;";
-        mapChk.onchange = (e) => {
-            state.isMapOpt = e.target.checked;
+        const mapToggle = document.createElement('button');
+        mapToggle.textContent = state.isMapOpt ? 'ON' : 'OFF';
+        mapToggle.style.cssText = `background:${state.isMapOpt ? '#2563eb' : '#444'}; color:white; border:none; padding:4px 0; border-radius:6px; cursor:pointer; font-weight:bold; font-size:13px; width:44px; text-align:center;`;
+        mapToggle.onclick = () => {
+            state.isMapOpt = !state.isMapOpt;
             localStorage.setItem('neubie_opt_map', state.isMapOpt);
+            mapToggle.textContent = state.isMapOpt ? 'ON' : 'OFF';
+            mapToggle.style.background = state.isMapOpt ? '#2563eb' : '#444';
             injectMapStyle();
         };
-        mapCard.appendChild(mapChk);
-        twoCol.appendChild(mapCard);
+        mapCard.appendChild(mapToggle);
 
         // 줄을 서시오 (체크박스, 멘트 없이 이름만)
         const queueCard = document.createElement('div');
-        queueCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333; display:flex; justify-content:space-between; align-items:center;";
-        queueCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">📡 다중 관제 도우미</span>`;
-        const queueChk = document.createElement('input');
-        queueChk.type = 'checkbox';
-        queueChk.checked = localStorage.getItem('neubie_handover_enabled') === 'true'; // 기본 false
-        queueChk.style.cssText = "width:18px; height:18px; cursor:pointer;";
-        queueChk.onchange = (e) => {
-			localStorage.setItem('neubie_handover_enabled', e.target.checked);
-			const bar = document.getElementById('neubie-brightness-bar');
-			if (!e.target.checked && bar) {
-				bar.remove();
-			} else if (e.target.checked && !bar && isBrightnessPage()) {
-				injectMasterBrightness();
-			}
-		};
+        queueCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; display:flex; justify-content:space-between; align-items:center;";
+        queueCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">다중 모니터링 도우미</span>`;
+        const queueEnabled = localStorage.getItem('neubie_handover_enabled') === 'true';
+        const queueToggle = document.createElement('button');
+        queueToggle.textContent = queueEnabled ? 'ON' : 'OFF';
+        queueToggle.style.cssText = `background:${queueEnabled ? '#2563eb' : '#444'}; color:white; border:none; padding:4px 0; border-radius:6px; cursor:pointer; font-weight:bold; font-size:13px; width:44px; text-align:center;`;
+        queueToggle.onclick = () => {
+            const next = queueToggle.textContent === 'OFF';
+            localStorage.setItem('neubie_handover_enabled', next);
+            queueToggle.textContent = next ? 'ON' : 'OFF';
+            queueToggle.style.background = next ? '#2563eb' : '#444';
+            const bar = document.getElementById('neubie-brightness-bar');
+            if (!next && bar) {
+                bar.remove();
+            } else if (next && !bar && isBrightnessPage()) {
+                injectMasterBrightness();
+            }
+        };
 
         if (!document.getElementById('neubie-blink-style')) {
             const blinkStyle = document.createElement('style');
@@ -1183,7 +1183,7 @@
         // ⓘ 정보 버튼 (체크박스 왼쪽에 배치)
         const queueInfoBtn = document.createElement('button');
         queueInfoBtn.textContent = 'i';
-        queueInfoBtn.title = '제작자의 소회';
+        queueInfoBtn.title = '기능 설명';
         queueInfoBtn.style.cssText = `
             width:22px; height:22px; border-radius:50%; border:2px solid #aaa;
             background:transparent; color:#aaa; font-size:13px; font-weight:bold;
@@ -1211,7 +1211,7 @@
                     position:relative; box-shadow:0 10px 50px rgba(0,0,0,0.7);
                 `;
                 const queueInfoTitle = document.createElement('div');
-                queueInfoTitle.textContent = '제작자의 소회';
+                queueInfoTitle.textContent = '기능 설명';
                 queueInfoTitle.style.cssText = `font-size:22px; font-weight:bold; margin-bottom:20px; color:#93c5fd;`;
                 const queueInfoClose = document.createElement('button');
                 queueInfoClose.textContent = '✕';
@@ -1228,15 +1228,11 @@
                 queueInfoContent.id = 'neubie-queue-info-content';
                 queueInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:#cbd5e1; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;`;
                 queueInfoContent.innerHTML = `
-				다중 관제 도우미 체크: 기체 카메라 밝기 한 번에 조절<br>
-				기체 카메라 위치 드래그&드랍으로 카메라 위치 스왑<br>
-				저의 '모니터링 교대 도우미 v2.0' 사이트 이용 시 교대 기체 업로드 가능<br>
-				업로드된 교대 기체 받기(최근 20분까지의 데이터만 유효) -> 자동 시작(6대까지)<br>
-				'없으면 만들지 뭐'만 이용하더라도 교대 기체 받기는 가능<br>
-				<br>
-				줄을 서시오 v2.0의 경우 수학적으로는 겹치지 않게 짜여졌지만<br>
-				모두가 이걸 사용해야 효과를 볼 수 있다는 현실적 장벽에 부딪혔습니다.<br>
-				각자 사용환경과 기호가 다르다는 점을 인정하고, 근본으로 돌아가 재연구하겠습니다.<br>
+				기체 카메라 밝기 한 번에 조절<br>
+				기체 카메라 위치 스왑<br>
+				multimonitoring.vercel.app 이용 시 교대 기체 업로드<br>
+				업로드된 교대 기체 받기(최근 20분까지만 유효) -> 자동 시작(6대까지)<br>
+				'뉴비고 도우미'만 이용하더라도 교대 기체 받기 가능<br>
                 `;
 
                 queueInfoBox.appendChild(queueInfoClose);
@@ -1260,24 +1256,27 @@
             }
         };
         queueCard.appendChild(queueInfoBtn);
-        queueCard.appendChild(queueChk);
-        twoCol.appendChild(queueCard);
-        list.appendChild(twoCol);
+        queueCard.appendChild(queueToggle);
 
         // 3. 스케줄 비교표/최적화 팁 + 배터리 현황 (반반 2열)
         const bottomRow = document.createElement('div');
-        bottomRow.style.cssText = "display:grid; grid-template-columns:1fr 1fr; grid-template-rows:auto auto; gap:8px;";
+        bottomRow.style.cssText = "display:grid; grid-template-columns:1fr 1fr; gap:8px;";
 
         // 3-0. 스케줄 비교 카드
         const scheduleCard = document.createElement('div');
-        scheduleCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333; cursor:pointer; display:flex; align-items:center;";
-        scheduleCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">📅 월별 스케줄 및 좌석 배치도</div>`;
-        scheduleCard.onclick = () => openScheduleOverlay();
+        scheduleCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; cursor:pointer; display:flex; align-items:center;";
+        scheduleCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">스케줄표 + 좌석 배치도</div>`;
+        window._neubieScheduleCard = scheduleCard;
+        scheduleCard.onclick = () => {
+            const isActive = scheduleCard.style.outline !== 'none' && scheduleCard.style.outline !== '';
+            scheduleCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
+            if (!isActive) openScheduleOverlay();
+        };
 
         // 3-1. 최적화 팁 (좌측)
         const tipsCard = document.createElement('div');
-        tipsCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333; cursor:pointer; display:inline-flex; align-items:center;";
-        tipsCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">💡 최적화 설정 및 프로그램 추천</div>`;
+        tipsCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; cursor:pointer; display:inline-flex; align-items:center;";
+        tipsCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">최적화 팁</div>`;
         const tipsOpenBtn = document.createElement('button');
         tipsOpenBtn.textContent = '열기';
         tipsOpenBtn.style.cssText = "background:#3b82f6; color:white; border:none; padding:5px 14px; border-radius:8px; cursor:pointer; font-weight:bold; font-size:13px; white-space:nowrap;";
@@ -1299,7 +1298,7 @@
                     position:relative; box-shadow:0 10px 50px rgba(0,0,0,0.7);
                 `;
                 const tipsTitle = document.createElement('div');
-                tipsTitle.textContent = '💡 최적화 팁';
+                tipsTitle.textContent = '최적화 팁';
                 tipsTitle.style.cssText = `font-size:20px; font-weight:bold; margin-bottom:20px; color:#fcd34d; cursor:pointer;`;
 
 				const padIndicator = document.createElement('span');
@@ -1338,12 +1337,15 @@
 				
                 tipsClose.onmouseenter = () => { tipsClose.style.color='#fff'; };
                 tipsClose.onmouseleave = () => { tipsClose.style.color='#aaa'; };
-                tipsClose.onclick = () => { tipsOverlay.style.display='none'; };
+                tipsClose.onclick = () => {
+                    tipsOverlay.style.display = 'none';
+                    tipsCard.style.outline = 'none';
+                };
 
                 const tipsItems = [
-                    { title: "슬랙 PWA 버전 사용법(앱 버전보다 가벼움)", url: "https://telling-ink-a85.notion.site/PWA-366a8cf5ba7b80eebb43e017c095702c?pvs=74" },
-                    { title: "OBS 최적화 및 클립 따기 설정법", url: "https://telling-ink-a85.notion.site/OBS-366a8cf5ba7b80dfb101cfa149eaefcf?pvs=74" },
-                    { title: "CYH's 추천 프로그램 목록", url: "https://telling-ink-a85.notion.site/366a8cf5ba7b80958575eadb8809f313" },
+                    { title: "슬랙 PWA 버전 사용법", url: "https://telling-ink-a85.notion.site/PWA-366a8cf5ba7b80eebb43e017c095702c?pvs=74" },
+                    { title: "OBS 설정법", url: "https://telling-ink-a85.notion.site/OBS-366a8cf5ba7b80dfb101cfa149eaefcf?pvs=74" },
+                    { title: "CYH's 추천 프로그램", url: "https://telling-ink-a85.notion.site/366a8cf5ba7b80958575eadb8809f313" },
                 ];
                 const tipsContent = document.createElement('div');
                 tipsContent.style.cssText = "display:grid; gap:10px;";
@@ -1351,7 +1353,7 @@
                     const row = document.createElement('div');
                     row.style.cssText = `
                         display:flex; justify-content:space-between; align-items:center;
-                        background:#252535; border:1px solid #333; border-radius:12px;
+                        background:#252525; border:1px solid #333333; border-radius:12px;
                         padding:13px 16px; gap:12px;
                     `;
                     const rowTitle = document.createElement('span');
@@ -1390,38 +1392,58 @@
                 tipsOverlay.style.width = r.width + 'px';
                 tipsOverlay.style.height = r.height + 'px';
                 tipsOverlay.style.display = 'flex';
+                tipsOverlay.querySelector('button').onclick = () => {
+                    tipsOverlay.style.display = 'none';
+                    tipsCard.style.outline = 'none';
+                };
             }
         };
-        tipsCard.onclick = () => tipsOpenBtn.onclick();
+        tipsCard.onclick = () => {
+            const isActive = tipsCard.style.outline !== 'none' && tipsCard.style.outline !== '';
+            tipsCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
+            tipsOpenBtn.onclick();
+        };
 
         // 3-2. 배터리 현황 (우측)
         const isBatteryOpen = batteryPopup.style.display === 'block';
         const batteryCard = document.createElement('div');
-        batteryCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333; display:flex; justify-content:space-between; align-items:center;";
+        batteryCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; display:flex; justify-content:space-between; align-items:center;";
         batteryCard.innerHTML = `
             <div style="flex:1;">
-                <div style="font-weight:bold; font-size:15px; margin-bottom:3px;">🔋 성남 배터리 현황</div>
+                <div style="font-weight:bold; font-size:15px; margin-bottom:3px;">실시간 성남 배터리</div>
             </div>`;
-        const batteryBtn = document.createElement('button');
-        batteryBtn.textContent = isBatteryOpen ? '닫기' : '열기';
-        batteryBtn.style.cssText = `background:${isBatteryOpen ? '#ef4444' : '#3b82f6'}; color:white; border:none; padding:5px 14px; border-radius:8px; cursor:pointer; font-weight:bold; font-size:13px; white-space:nowrap;`;
-        batteryBtn.onclick = () => {
+        batteryCard.style.cursor = 'pointer';
+        window._neubieBatteryCard = batteryCard;
+        batteryCard.onclick = () => {
+            const isActive = batteryCard.style.outline !== 'none' && batteryCard.style.outline !== '';
+            batteryCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
             toggleBattery();
-            renderDashboard();
             if (window.currentMyTasks && window.currentMyTasks.length > 0) {
                 renderTaskList(window.currentMyTasks);
             }
         };
 
         const reservedCard = document.createElement('div');
-        reservedCard.style.cssText = "background:#1a1a1a; padding:8px 12px; border-radius:15px; border:1px dashed #333;";
-        reservedCard.innerHTML = `<div style="font-size:15px;color:#444;">Hello, World!</div>`;
+        reservedCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; display:flex; justify-content:space-between; align-items:center;";
+        reservedCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">빈 기능</span>`;
+        const reservedEnabled = localStorage.getItem('neubie_opt_reserved') === 'true';
+        const reservedToggle = document.createElement('button');
+        reservedToggle.textContent = reservedEnabled ? 'ON' : 'OFF';
+        reservedToggle.style.cssText = `background:${reservedEnabled ? '#2563eb' : '#444'}; color:white; border:none; padding:4px 0; border-radius:6px; cursor:pointer; font-weight:bold; font-size:13px; width:44px; text-align:center;`;
+        reservedToggle.onclick = () => {
+            const next = reservedToggle.textContent === 'OFF';
+            localStorage.setItem('neubie_opt_reserved', next);
+            reservedToggle.textContent = next ? 'ON' : 'OFF';
+            reservedToggle.style.background = next ? '#2563eb' : '#444';
+        };
+        reservedCard.appendChild(reservedToggle);
 
-        batteryCard.appendChild(batteryBtn);
-        bottomRow.appendChild(scheduleCard);
-        bottomRow.appendChild(batteryCard);
-        bottomRow.appendChild(tipsCard);
-        bottomRow.appendChild(reservedCard);
+        bottomRow.appendChild(mapCard);      // 지도 최적화
+        bottomRow.appendChild(batteryCard);  // 성남 배터리
+        bottomRow.appendChild(queueCard);    // 다중 도우미
+        bottomRow.appendChild(scheduleCard); // 스케줄표
+        bottomRow.appendChild(reservedCard); // 빈 기능
+        bottomRow.appendChild(tipsCard);     // 최적화 팁
 
         list.appendChild(bottomRow);
 
@@ -1433,7 +1455,7 @@
 
     function createMenuCard(name, desc, stateKey, storageKey, action, btnLabel = '열기') {
         const card = document.createElement('div');
-        card.style.cssText = "background:#252525; padding:15px; border-radius:15px; display:flex; justify-content:space-between; align-items:center; border:1px solid #333;";
+        card.style.cssText = "background:#252525; padding:15px; border-radius:15px; display:flex; justify-content:space-between; align-items:center; border:1px solid #333333;";
         // 제목에 margin-bottom: 4px를 추가하여 설명과의 간격을 벌림
         card.innerHTML = `
             <div style="flex:1;">
@@ -1492,6 +1514,7 @@
 
 		} else {
 			batteryPopup.style.display = 'none';
+            if (window._neubieBatteryCard) window._neubieBatteryCard.style.outline = 'none';
 			clearInterval(batteryRefreshInterval);
 			config.batteryIds.forEach(c => {
 				if (iframes[c.id]) {
@@ -1505,6 +1528,7 @@
     function closeAllPopups() {
         dashboard.style.display = 'none';
         batteryPopup.style.display = 'none';
+        if (window._neubieBatteryCard) window._neubieBatteryCard.style.outline = 'none';
 
 		document.getElementById('ho-remote-peek')?.remove();
     	document.getElementById('ho-remote-panel')?.remove();
@@ -1584,7 +1608,7 @@
 		const MAX_UNITS = 6;
 
 		const cellIdle = c => {
-			Object.assign(c.style, { background: 'rgba(255,255,255,0.85)', color: '#1e293b',
+			Object.assign(c.style, { background: 'rgba(255,255,255,0.85)', color: '#252525',
 				border: '1.5px solid #93c5fd', cursor: 'pointer', fontWeight: '600' });
 			c.dataset.selected = 'false';
 		};
@@ -1618,7 +1642,7 @@
 			flexWrap: 'nowrap',
 		});
 
-		// 다중 관제 버튼
+		// 다중 모니터링 버튼
 		const multiBtn = mkBtn('다중 파일명', '#475569', { minWidth: '70px' });
 		multiBtn.onclick = () => {
 			const time = getCalculatedTime(10);
@@ -1914,16 +1938,7 @@
 
     /* ============================================================
         SECTION 9. 전체 밝기 마스터 컨트롤
-        - remote/multiple 페이지에서 고정 표시
-        - 슬라이더 조작 시 모든 카메라 슬라이더에 동기화
-        - ⚠️  FIXME_SLIDER_SELECTOR: 내일 Elements 확인 후 수정
        ============================================================ */
-
-    // ── 상수 ──────────────────────────────────────────────
-    // 내일 Elements에서 확인할 것:
-    //   1) 각 카메라 슬라이더의 input[type=range] selector
-    //   2) 슬라이더 값 범위 (min/max) 
-    //   3) CSS filter로 동작하는지 여부
     const BRIGHTNESS = {
         MIN: 20,
         MAX: 100,
@@ -2117,7 +2132,7 @@
             box.innerHTML = `
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
                 <div style="display:flex;align-items:center;gap:8px;">
-                    <span style="font-size:20px;font-weight:700;color:#4f8ef7;">📅 월별 스케줄 및 좌석 배치도</span>
+                    <span style="font-size:20px;font-weight:700;color:#4f8ef7;">    스케줄표 + 좌석 배치도</span>
                     <span id="nso-status" style="font-size:12px;color:#94a3b8;">로딩 중...</span>
                     <span id="nso-dot" style="width:7px;height:7px;border-radius:50%;background:#eab308;display:inline-block;"></span>
                     <span id="nso-updated" style="font-size:12px;color:#64748b;"></span>
@@ -2344,7 +2359,7 @@
                     const el=document.createElement('div');
                     if(!raw){
                     el.style.cssText='background:#0f1117;border:1px dashed #2e3347;border-radius:6px;padding:6px 2px;min-height:100px;';
-                    el.innerHTML=`<span style="position:absolute;top:2px;right:3px;font-size:12px;color:#334155;">${idx}</span>`;
+                    el.innerHTML=`<span style="position:absolute;top:2px;right:3px;font-size:12px;color:#333333;">${idx}</span>`;
                     grid.appendChild(el); continue;
                     }
                     const occ=raw.split('/').map(n=>n.trim());
@@ -2354,7 +2369,7 @@
                     const bg=isOn?(isHalf?'rgba(234,179,8,.12)':'rgba(34,197,94,.15)'):'#22263a';
                     const bc=isOn?(isHalf?'#eab308':'#22c55e'):'#2e3347';
                     el.style.cssText=`background:${bg};border:1px solid ${bc};border-radius:6px;padding:6px 2px;text-align:center;font-size:.62rem;font-weight:600;min-height:100px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;position:relative;${isOn?'':`opacity:.35;`}`;
-                    el.innerHTML=`<span style="position:absolute;top:2px;right:3px;font-size:.48rem;color:#334155;">${idx}</span>`;
+                    el.innerHTML=`<span style="position:absolute;top:2px;right:3px;font-size:.48rem;color:#333333;">${idx}</span>`;
                     if(occ.length>1){
                     const sd=document.createElement('div');
                     sd.style.cssText='display:flex;flex-direction:column;align-items:center;width:100%;gap:0;';
@@ -2472,7 +2487,10 @@
               if(sel1||sel2) runCompare(); else renderCal();
             };
 
-            box.querySelector('#nso-close').onclick = () => overlay.style.display='none';
+            box.querySelector('#nso-close').onclick = () => {
+                overlay.style.display = 'none';
+                if (window._neubieScheduleCard) window._neubieScheduleCard.style.outline = 'none';
+            };
             const BASE_URL = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/';
 
             async function loadMonthFromGithub(newKey) {
@@ -2579,22 +2597,27 @@
 				syncTasksFromServer();
 			}
 		}
-        
+
         // Alt + B (배터리) 단축키 로직
         if (e.altKey && e.code === 'KeyB') { 
             e.preventDefault(); 
             toggleBattery();
-			const battBtnEl = document.getElementById('ho-batt-btn');
-			if (battBtnEl) {
-				const isOpen = batteryPopup.style.display === 'block';
-				battBtnEl.textContent = isOpen ? '배터리 닫기' : '성남 배터리';
-				battBtnEl.style.background = isOpen ? '#ef4444' : '#475569';
-			}
+            const battBtnEl = document.getElementById('ho-batt-btn');
+            if (battBtnEl) {
+                const isOpen = batteryPopup.style.display === 'block';
+                battBtnEl.textContent = isOpen ? '배터리 닫기' : '성남 배터리';
+                battBtnEl.style.background = isOpen ? '#ef4444' : '#475569';
+            }
             if (dashboard.style.display === 'block') {
                 renderDashboard();
                 if (window.currentMyTasks && window.currentMyTasks.length > 0) {
                     renderTaskList(window.currentMyTasks);
                 }
+            }
+            // renderDashboard 이후에 outline 적용
+            if (window._neubieBatteryCard) {
+                const isOpen = batteryPopup.style.display === 'block';
+                window._neubieBatteryCard.style.outline = isOpen ? '2px solid #ef4444' : 'none';
             }
         }
     });
@@ -2652,41 +2675,41 @@
     function patchDrivingPageLayout() {
         if (!location.href.includes('/remote/multiple/driving/')) return;
 
-        // 1. 헤더 flex-col 재구성
+        // 핵심 요소 전부 확인
         const header = document.querySelector('header');
-        if (header) {
+        const statusBar = Array.from(document.querySelectorAll('div.flex.items-center.justify-between'))
+            .find(el => el.textContent.includes('LTE') && el.getBoundingClientRect().height < 60);
+        const resolveBtn = Array.from(document.querySelectorAll('button'))
+            .find(el => el.textContent.trim() === '해결 완료' || el.textContent.trim() === '해결완료');
+        const missionWrapper = document.querySelector('.relative.overflow-hidden.w-full.h-58');
+        const container = document.querySelector('.flex.h-full.w-full.flex-col[class*="gap-16"][class*="pt-14"]');
+
+        // 하나라도 없으면 실행 안 함 (부분 성공 방지)
+        if (!header || !statusBar || !resolveBtn || !missionWrapper || !container) return;
+
+        // 전부 준비됐을 때 한 프레임에 한 번에 적용
+        requestAnimationFrame(() => {
+            // 1. 헤더 flex-col 재구성
             header.style.flexDirection = 'column';
             header.style.alignItems = 'flex-start';
             header.style.justifyContent = 'center';
             header.style.paddingTop = '2px';
             header.style.paddingBottom = '2px';
             header.style.gap = '1px';
-        }
 
-        // 2. 상태바를 '해결완료' 버튼 앞으로 이동
-        const statusBar = Array.from(document.querySelectorAll('div.flex.items-center.justify-between'))
-            .find(el => el.textContent.includes('LTE') && el.getBoundingClientRect().height < 60);
-        const resolveBtn = Array.from(document.querySelectorAll('button'))
-            .find(el => el.textContent.trim() === '해결 완료' || el.textContent.trim() === '해결완료');
-        if (statusBar && resolveBtn) {
+            // 2. 상태바를 '해결완료' 버튼 앞으로 이동
             resolveBtn.parentElement.insertBefore(statusBar, resolveBtn);
-            statusBar.style.marginLeft = '-320px';
-        }
+            statusBar.style.marginLeft = '-280px';
 
-        // 3. 임무 바 높이 조정
-        const missionWrapper = document.querySelector('.relative.overflow-hidden.w-full.h-58');
-        if (missionWrapper) {
+            // 3. 임무 바 높이 조정
             missionWrapper.style.height = '64px';
             missionWrapper.style.paddingTop = '4px';
             missionWrapper.style.paddingBottom = '4px';
-        }
 
-        // 4. 컨테이너 gap/padding 압축
-        const container = document.querySelector('.flex.h-full.w-full.flex-col[class*="gap-16"][class*="pt-14"]');
-        if (container) {
+            // 4. 컨테이너 gap/padding 압축
             container.style.gap = '6px';
             container.style.paddingTop = '6px';
-        }
+        });
     }
 
     // 페이지 진입 시 + URL 변경 시 자동 실행 (DOM 렌더링 대기)
@@ -2791,7 +2814,7 @@
 	            dpadWasPressed.left = false;
 	        }
 	
-	    }, 100);
+	    }, 500);
 	}
 
 	// localStorage.setItem 가로채기 — 계정 변경 시 자동 감지
