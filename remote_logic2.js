@@ -2132,7 +2132,7 @@
             box.innerHTML = `
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
                 <div style="display:flex;align-items:center;gap:8px;">
-                    <span style="font-size:20px;font-weight:700;color:#4f8ef7;">📅 스케줄표 + 좌석 배치도</span>
+                    <span style="font-size:20px;font-weight:700;color:#4f8ef7;">    스케줄표 + 좌석 배치도</span>
                     <span id="nso-status" style="font-size:12px;color:#94a3b8;">로딩 중...</span>
                     <span id="nso-dot" style="width:7px;height:7px;border-radius:50%;background:#eab308;display:inline-block;"></span>
                     <span id="nso-updated" style="font-size:12px;color:#64748b;"></span>
@@ -2597,16 +2597,15 @@
 				syncTasksFromServer();
 			}
 		}
-        
-        if (window._neubieBatteryCard) {
-            const isOpen = batteryPopup.style.display === 'block';
-            window._neubieBatteryCard.style.outline = isOpen ? '2px solid #ef4444' : 'none';
-        }
 
         // Alt + B (배터리) 단축키 로직
         if (e.altKey && e.code === 'KeyB') { 
             e.preventDefault(); 
             toggleBattery();
+            if (window._neubieBatteryCard) {
+                const isOpen = batteryPopup.style.display === 'block';
+                window._neubieBatteryCard.style.outline = isOpen ? '2px solid #ef4444' : 'none';
+            }
 			const battBtnEl = document.getElementById('ho-batt-btn');
 			if (battBtnEl) {
 				const isOpen = batteryPopup.style.display === 'block';
