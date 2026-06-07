@@ -2623,6 +2623,7 @@
                 }
 				setTimeout(() => patchDrivingPageLayout(), 1500);
                 setTimeout(() => patchDrivingPageLayout(), 3000);
+				setTimeout(() => patchDrivingPageLayout(), 6000);
             }
         }, 100);
     }, true);
@@ -2643,6 +2644,7 @@
             }
 			setTimeout(() => patchDrivingPageLayout(), 1500);
             setTimeout(() => patchDrivingPageLayout(), 3000);
+			setTimeout(() => patchDrivingPageLayout(), 6000);
         }
     }, 2000); // 2초 정도면 충분히 여유로움
 	
