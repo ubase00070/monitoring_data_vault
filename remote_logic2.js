@@ -1133,12 +1133,12 @@
         // 맵 최적화 카드
         const mapCard = document.createElement('div');
         mapCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; display:flex; justify-content:space-between; align-items:center;";
-        mapCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">🗺️ 요기요 + 삼평동 지도 최적화</span>`;
+        mapCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">🗺️ 요기요 지도 최적화</span>`;
 
         // 맵 최적화 (체크박스, 멘트 없이 이름만)
         const mapToggle = document.createElement('button');
         mapToggle.textContent = state.isMapOpt ? 'ON' : 'OFF';
-        mapToggle.style.cssText = `background:${state.isMapOpt ? '#2563eb' : '#444'}; color:white; border:none; padding:4px 12px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:13px; min-width:44px; text-align:center;`;
+        mapToggle.style.cssText = `background:${state.isMapOpt ? '#2563eb' : '#444'}; color:white; border:none; padding:4px 0; border-radius:6px; cursor:pointer; font-weight:bold; font-size:13px; width:44px; text-align:center;`;
         mapToggle.onclick = () => {
             state.isMapOpt = !state.isMapOpt;
             localStorage.setItem('neubie_opt_map', state.isMapOpt);
@@ -1155,7 +1155,7 @@
         const queueEnabled = localStorage.getItem('neubie_handover_enabled') === 'true';
         const queueToggle = document.createElement('button');
         queueToggle.textContent = queueEnabled ? 'ON' : 'OFF';
-        queueToggle.style.cssText = `background:${queueEnabled ? '#2563eb' : '#444'}; color:white; border:none; padding:4px 12px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:13px; min-width:44px; text-align:center;`;
+        queueToggle.style.cssText = `background:${queueEnabled ? '#2563eb' : '#444'}; color:white; border:none; padding:4px 0; border-radius:6px; cursor:pointer; font-weight:bold; font-size:13px; width:44px; text-align:center;`;
         queueToggle.onclick = () => {
             const next = queueToggle.textContent === 'OFF';
             localStorage.setItem('neubie_handover_enabled', next);
@@ -1414,7 +1414,6 @@
             const isActive = batteryCard.style.borderColor === 'rgb(239, 68, 68)';
             batteryCard.style.border = isActive ? '1px solid #333333' : '2px solid #ef4444';
             toggleBattery();
-            renderDashboard();
             if (window.currentMyTasks && window.currentMyTasks.length > 0) {
                 renderTaskList(window.currentMyTasks);
             }
