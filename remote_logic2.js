@@ -1134,6 +1134,11 @@
         const twoCol = document.createElement('div');
         twoCol.style.cssText = "display:grid; grid-template-columns:1fr 1fr; gap:8px;";
 
+        // 맵 최적화 카드
+        const mapCard = document.createElement('div');
+        mapCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; display:flex; justify-content:space-between; align-items:center;";
+        mapCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">🗺️ 요기요 + 삼평동 지도 최적화</span>`;
+        
         // 맵 최적화 (체크박스, 멘트 없이 이름만)
         const mapToggle = document.createElement('button');
         mapToggle.textContent = state.isMapOpt ? 'ON' : 'OFF';
