@@ -988,7 +988,7 @@
         nameArea.innerHTML = `
             <span>성명:</span>
             <input type="text" id="inline-name-input" value="${currentName}" placeholder="이름 입력"
-                style="width:52px; border:1px solid #cbd5e1; outline:none; padding:2px 6px; 
+                style="width:60px; border:1px solid #cbd5e1; outline:none; padding:2px 6px; 
                     font-size:15px; font-weight:bold; color:#252525; background:white; 
                     border-radius:4px; text-align:center;">
             <button id="all-close-btn" style="background:#ef4444; color:white; border:none; border-radius:4px; width:22px; height:22px; cursor:pointer; font-weight:bold; display:flex; align-items:center; justify-content:center; font-size:14px;">✕</button>
@@ -2675,41 +2675,41 @@
     function patchDrivingPageLayout() {
         if (!location.href.includes('/remote/multiple/driving/')) return;
 
-        // 핵심 요소 전부 확인
+        // 1. 헤더 flex-col 재구성
         const header = document.querySelector('header');
-        const statusBar = Array.from(document.querySelectorAll('div.flex.items-center.justify-between'))
-            .find(el => el.textContent.includes('LTE') && el.getBoundingClientRect().height < 60);
-        const resolveBtn = Array.from(document.querySelectorAll('button'))
-            .find(el => el.textContent.trim() === '해결 완료' || el.textContent.trim() === '해결완료');
-        const missionWrapper = document.querySelector('.relative.overflow-hidden.w-full.h-58');
-        const container = document.querySelector('.flex.h-full.w-full.flex-col[class*="gap-16"][class*="pt-14"]');
-
-        // 하나라도 없으면 실행 안 함 (부분 성공 방지)
-        if (!header || !statusBar || !resolveBtn || !missionWrapper || !container) return;
-
-        // 전부 준비됐을 때 한 프레임에 한 번에 적용
-        requestAnimationFrame(() => {
-            // 1. 헤더 flex-col 재구성
+        if (header) {
             header.style.flexDirection = 'column';
             header.style.alignItems = 'flex-start';
             header.style.justifyContent = 'center';
             header.style.paddingTop = '2px';
             header.style.paddingBottom = '2px';
             header.style.gap = '1px';
+        }
 
-            // 2. 상태바를 '해결완료' 버튼 앞으로 이동
+        // 2. 상태바를 '해결완료' 버튼 앞으로 이동
+        const statusBar = Array.from(document.querySelectorAll('div.flex.items-center.justify-between'))
+            .find(el => el.textContent.includes('LTE') && el.getBoundingClientRect().height < 60);
+        const resolveBtn = Array.from(document.querySelectorAll('button'))
+            .find(el => el.textContent.trim() === '해결 완료' || el.textContent.trim() === '해결완료');
+        if (statusBar && resolveBtn) {
             resolveBtn.parentElement.insertBefore(statusBar, resolveBtn);
             statusBar.style.marginLeft = '-280px';
+        }
 
-            // 3. 임무 바 높이 조정
+        // 3. 임무 바 높이 조정
+        const missionWrapper = document.querySelector('.relative.overflow-hidden.w-full.h-58');
+        if (missionWrapper) {
             missionWrapper.style.height = '64px';
             missionWrapper.style.paddingTop = '4px';
             missionWrapper.style.paddingBottom = '4px';
+        }
 
-            // 4. 컨테이너 gap/padding 압축
+        // 4. 컨테이너 gap/padding 압축
+        const container = document.querySelector('.flex.h-full.w-full.flex-col[class*="gap-16"][class*="pt-14"]');
+        if (container) {
             container.style.gap = '6px';
             container.style.paddingTop = '6px';
-        });
+        }
     }
 
     // 페이지 진입 시 + URL 변경 시 자동 실행 (DOM 렌더링 대기)
@@ -2814,7 +2814,7 @@
 	            dpadWasPressed.left = false;
 	        }
 	
-	    }, 500);
+	    }, 100);
 	}
 
 	// localStorage.setItem 가로채기 — 계정 변경 시 자동 감지
