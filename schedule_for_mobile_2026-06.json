@@ -639,10 +639,10 @@
           "raw": "휴무"
         },
         "6/13": {
-          "status": "half-half",
+          "status": "work",
           "working": true,
           "present": true,
-          "raw": "반반차"
+          "raw": "1"
         },
         "6/14": {
           "status": "work",
@@ -6406,10 +6406,10 @@
           "raw": "1"
         },
         "6/8": {
-          "status": "work",
+          "status": "annual",
           "working": true,
-          "present": true,
-          "raw": "1"
+          "present": false,
+          "raw": "연차"
         },
         "6/9": {
           "status": "work",
@@ -7888,6 +7888,6 @@
     "6/30"
   ],
   "mainMonth": 6,
-  "updatedAt": "2026-06-07T03:53:07.670Z",
+  "updatedAt": "2026-06-08T03:53:04.764Z",
   "sheetName": "2026년_06월 스케줄"
 }
