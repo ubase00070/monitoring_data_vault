@@ -1777,6 +1777,12 @@
       "updatedAt": "2026-06-08 19:54:44",
       "syncIssue": false
     },
+    "동백SK아펠바움": {
+      "status": "suspended",
+      "reason": "중단",
+      "updatedAt": "2026-06-09 19:54:00",
+      "syncIssue": false:
+    },
     "아주대": {
       "status": "active",
       "reason": "",
