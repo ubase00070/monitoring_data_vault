@@ -35,30 +35,8 @@ YEAH!
 The Government?
 FUCK YEAH!
 */{
-  "updatedAt": "2026-06-09 17:54:46",
-  "realtime": [
-    {
-      "workDate": "20260609",
-      "driveDate": "20260609",
-      "hour": "09:00",
-      "name": "김경환",
-      "status": "100MB 미만 영상"
-    },
-    {
-      "workDate": "20260609",
-      "driveDate": "20260609",
-      "hour": "13:00",
-      "name": "석승찬",
-      "status": "미업로드"
-    },
-    {
-      "workDate": "20260609",
-      "driveDate": "20260609",
-      "hour": "16:00",
-      "name": "박은선",
-      "status": "미업로드"
-    }
-  ],
+  "updatedAt": "2026-06-10 08:34:45",
+  "realtime": [],
   "final": [],
   "history": {
     "20260509": [
@@ -315,6 +293,22 @@ FUCK YEAH!
         "name": "장재원",
         "status": "미업로드"
       }
+    ],
+    "20260609": [
+      {
+        "workDate": "20260609",
+        "driveDate": "20260609",
+        "hour": "09:00",
+        "name": "김경환",
+        "status": "100MB 미만 영상"
+      },
+      {
+        "workDate": "20260609",
+        "driveDate": "20260609",
+        "hour": "13:00",
+        "name": "석승찬",
+        "status": "미업로드"
+      }
     ]
   },
   "misplaced": {
@@ -450,6 +444,22 @@ FUCK YEAH!
     "20260605": [],
     "20260606": [],
     "20260607": [],
-    "20260608": []
+    "20260608": [],
+    "20260609": [
+      {
+        "fileName": "20260609_09_다중모니터링.mp4",
+        "folderDate": "20260609",
+        "targetDate": "20260609",
+        "hour": "09:00",
+        "note": "100MB 미만 영상"
+      },
+      {
+        "fileName": "20260610_00_다중모니터링(서브).mp4",
+        "folderDate": "20260610",
+        "targetDate": "20260610",
+        "hour": "00:00",
+        "note": "100MB 미만 영상"
+      }
+    ]
   }
 }
