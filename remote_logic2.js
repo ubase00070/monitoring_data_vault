@@ -108,6 +108,96 @@
         insuData: null,
     };
 
+    /* ============================================================
+    SECTION 조작자 감시 (개입 페이지 전용)
+   ============================================================ */
+    const OPERATOR_FETCH_INTERVAL = 5000;
+    const OPERATOR_FETCH_COUNT = 6;
+    const OPERATOR_PANEL_DURATION = 5000;
+    const OPERATOR_PANEL_ID = 'neubie-operator-watch-panel';
+    let _operatorFetchTimer = null;
+    let _operatorFetchDone = false;
+
+    function _getMyName() {
+        return localStorage.getItem('neubie_user_name') || null;
+    }
+    function _getRobotIdFromUrl() {
+        return new URLSearchParams(location.search).get('robot-id');
+    }
+    async function _fetchSingleRobot(robotId) {
+        const res = await fetch(`https://core.neubie.ai/robots/${robotId}/`, { credentials: 'include' });
+        return await res.json();
+    }
+    function _showOperatorPanel(name) {
+        _removeOperatorPanel();
+        const panel = document.createElement('div');
+        panel.id = OPERATOR_PANEL_ID;
+        panel.style.cssText = `
+            position:fixed; top:16px; left:60%; transform:translateX(-50%);
+            z-index:999999; pointer-events:none;
+            animation: _opFadeIn 0.2s ease;
+        `;
+        panel.innerHTML = `
+            <div style="display:flex;align-items:center;gap:10px;
+                background:rgba(18,18,36,0.97);border:1px solid #6a6aaa;
+                border-radius:24px;padding:10px 24px;
+                box-shadow:0 4px 20px rgba(0,0,0,0.5);
+                font-family:'Pretendard','Noto Sans KR',sans-serif;">
+                <span style="font-size:14px;color:#aab;">⚠️ 조작자</span>
+                <span style="font-size:18px;font-weight:700;color:#ffd080;">${name}</span>
+            </div>
+        `;
+        document.body.appendChild(panel);
+        clearTimeout(panel._hideTimer);
+        panel._hideTimer = setTimeout(() => _removeOperatorPanel(), OPERATOR_PANEL_DURATION);
+    }
+    function _removeOperatorPanel() {
+        const panel = document.getElementById(OPERATOR_PANEL_ID);
+        if (panel) { clearTimeout(panel._hideTimer); panel.remove(); }
+    }
+    function _stopOperatorWatch() {
+        if (_operatorFetchTimer) { clearInterval(_operatorFetchTimer); _operatorFetchTimer = null; }
+        _operatorFetchDone = true;
+        _removeOperatorPanel();
+    }
+    async function _startOperatorWatch() {
+        const robotId = _getRobotIdFromUrl();
+        if (!robotId) return;
+        _stopOperatorWatch();
+        _operatorFetchDone = false;
+
+        let baselineName = null;
+        try {
+            const robot = await _fetchSingleRobot(robotId);
+            baselineName = robot?.robotStatus?.lastOperatedUserName || null;
+        } catch(e) {}
+
+        if (_operatorFetchDone) return;
+
+        let fetchCount = 0;
+        const myName = _getMyName();
+
+        const doFetch = async () => {
+            if (_operatorFetchDone) { clearInterval(_operatorFetchTimer); return; }
+            fetchCount++;
+            try {
+                const robot = await _fetchSingleRobot(robotId);
+                if (_operatorFetchDone) return;
+                const currentName = robot?.robotStatus?.lastOperatedUserName || null;
+                if (currentName && currentName !== baselineName && currentName !== myName) {
+                    _showOperatorPanel(currentName);
+                    baselineName = currentName;
+                }
+            } catch(e) {}
+            if (fetchCount >= OPERATOR_FETCH_COUNT) {
+                clearInterval(_operatorFetchTimer);
+                _operatorFetchTimer = null;
+            }
+        };
+
+        _operatorFetchTimer = setInterval(doFetch, OPERATOR_FETCH_INTERVAL);
+    }
+
     const taskChannel = new BroadcastChannel('neubie_task_sync');
 
     /* ============================================================
@@ -2989,6 +3079,12 @@
 				setTimeout(() => patchDrivingPageLayout(), 1500);
                 setTimeout(() => patchDrivingPageLayout(), 3000);
 				setTimeout(() => patchDrivingPageLayout(), 6000);
+
+                if (/\/driving\/\d+/.test(location.pathname)) {
+                    _startOperatorWatch();
+                } else {
+                    _stopOperatorWatch();
+                }
             }
         }, 100);
     }, true);
@@ -3010,6 +3106,12 @@
 			setTimeout(() => patchDrivingPageLayout(), 1500);
             setTimeout(() => patchDrivingPageLayout(), 3000);
 			setTimeout(() => patchDrivingPageLayout(), 6000);
+
+            if (/\/driving\/\d+/.test(location.pathname)) {
+                _startOperatorWatch();
+            } else {
+                _stopOperatorWatch();
+            }
         }
     }, 2000); // 2초 정도면 충분히 여유로움
 	
