@@ -3137,7 +3137,7 @@
             .find(el => el.textContent.trim() === '해결 완료' || el.textContent.trim() === '해결완료');
         if (statusBar && resolveBtn) {
             resolveBtn.parentElement.insertBefore(statusBar, resolveBtn);
-            statusBar.style.marginLeft = '-280px';
+            statusBar.style.marginLeft = '-240px';
         }
 
         // 3. 임무 바 높이 조정
