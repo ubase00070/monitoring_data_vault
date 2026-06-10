@@ -35,8 +35,30 @@ YEAH!
 The Government?
 FUCK YEAH!
 */{
-  "updatedAt": "2026-06-10 08:54:41",
-  "realtime": [],
+  "updatedAt": "2026-06-10 10:04:41",
+  "realtime": [
+    {
+      "workDate": "20260610",
+      "driveDate": "20260610",
+      "hour": "00:00",
+      "name": "이규순",
+      "status": "100MB 미만 영상"
+    },
+    {
+      "workDate": "20260610",
+      "driveDate": "20260610",
+      "hour": "08:00",
+      "name": "박계원",
+      "status": "미업로드"
+    },
+    {
+      "workDate": "20260610",
+      "driveDate": "20260610",
+      "hour": "09:00",
+      "name": "김경환",
+      "status": "미업로드"
+    }
+  ],
   "final": [],
   "history": {
     "20260509": [
@@ -446,13 +468,6 @@ FUCK YEAH!
     "20260607": [],
     "20260608": [],
     "20260609": [
-      {
-        "fileName": "20260609_09_다중모니터링.mp4",
-        "folderDate": "20260609",
-        "targetDate": "20260609",
-        "hour": "09:00",
-        "note": "100MB 미만 영상"
-      },
       {
         "fileName": "20260610_00_다중모니터링(서브).mp4",
         "folderDate": "20260610",
