@@ -2374,21 +2374,21 @@
                                     <textarea id="nb-reply-text-${c.id}" placeholder="답글..." style="width:100%; height:52px; font-size:12px; padding:6px 8px; border-radius:6px; border:0.5px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.08); color:#fff; outline:none; resize:none; box-sizing:border-box; font-family:inherit;"></textarea>
                                     <div style="display:flex; justify-content:flex-end; gap:6px; margin-top:6px;">
                                         <button onclick="window._nbToggleReply('${c.id}')" style="height:26px;padding:0 10px;font-size:11px;background:rgba(255,255,255,0.1);border:none;color:#fff;border-radius:6px;cursor:pointer;">취소</button>
-                                        <button onclick="window._nbSubmitReply('${c.id}')" style="height:26px;padding:0 10px;font-size:11px;background:#6366f1;border:none;color:white;border-radius:6px;cursor:pointer;font-weight:500;">등록</button>
+                                        <button onclick="window._nbSubmitReply('${c.id}', this)" style="height:26px;padding:0 10px;font-size:11px;background:#6366f1;border:none;color:white;border-radius:6px;cursor:pointer;font-weight:500;">등록</button>
                                     </div>
                                 </div>
 								<div id="nb-edit-reply-box-${r.id}" style="display:none; margin-top:6px;">
 									<textarea id="nb-edit-reply-text-${r.id}" style="width:100%; height:46px; font-size:11px; padding:6px 8px; border-radius:6px; border:0.5px solid rgba(99,102,241,0.4); background:rgba(255,255,255,0.08); color:#fff; outline:none; resize:none; box-sizing:border-box; font-family:inherit;"></textarea>
 									<div style="display:flex; justify-content:flex-end; gap:6px; margin-top:4px;">
 										<button onclick="window._nbToggleEditReply('${c.id}','${r.id}')" style="height:24px;padding:0 8px;font-size:10px;background:rgba(255,255,255,0.1);border:none;color:#fff;border-radius:6px;cursor:pointer;">취소</button>
-										<button onclick="window._nbSubmitEditReply('${c.id}','${r.id}')" style="height:24px;padding:0 8px;font-size:10px;background:#6366f1;border:none;color:white;border-radius:6px;cursor:pointer;font-weight:500;">저장</button>
+										<button onclick="window._nbSubmitEditReply('${c.id}','${r.id}', this)" style="height:24px;padding:0 8px;font-size:10px;background:#6366f1;border:none;color:white;border-radius:6px;cursor:pointer;font-weight:500;">저장</button>
 									</div>
 								</div>
 								<div id="nb-edit-comment-box-${c.id}" style="display:none; margin-top:8px;">
 									<textarea id="nb-edit-comment-text-${c.id}" style="width:100%; height:52px; font-size:12px; padding:6px 8px; border-radius:6px; border:0.5px solid rgba(99,102,241,0.4); background:rgba(255,255,255,0.08); color:#fff; outline:none; resize:none; box-sizing:border-box; font-family:inherit;"></textarea>
 									<div style="display:flex; justify-content:flex-end; gap:6px; margin-top:6px;">
 										<button onclick="window._nbToggleEditComment('${c.id}')" style="height:26px;padding:0 10px;font-size:11px;background:rgba(255,255,255,0.1);border:none;color:#fff;border-radius:6px;cursor:pointer;">취소</button>
-										<button onclick="window._nbSubmitEditComment('${c.id}')" style="height:26px;padding:0 10px;font-size:11px;background:#6366f1;border:none;color:white;border-radius:6px;cursor:pointer;font-weight:500;">저장</button>
+										<button onclick="window._nbSubmitEditComment('${c.id}', this)" style="height:26px;padding:0 10px;font-size:11px;background:#6366f1;border:none;color:white;border-radius:6px;cursor:pointer;font-weight:500;">저장</button>
 									</div>
 								</div>
                             </div>
@@ -2398,7 +2398,7 @@
                     <div style="margin-top:16px; border-top:0.5px solid rgba(255,255,255,0.1); padding-top:14px;">
                         <textarea id="nb-comment-input" placeholder="댓글을 입력하세요..." style="width:100%; height:64px; font-size:13px; padding:8px 10px; border-radius:6px; border:0.5px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.08); color:#fff; outline:none; resize:none; box-sizing:border-box; font-family:inherit;"></textarea>
                         <div style="display:flex; justify-content:flex-end; margin-top:8px;">
-                            <button onclick="window._nbSubmitComment()" style="height:30px;padding:0 16px;font-size:12px;font-weight:500;background:#6366f1;border:none;color:white;border-radius:6px;cursor:pointer;">댓글 등록</button>
+                            <button onclick="window._nbSubmitComment(this)" style="height:30px;padding:0 16px;font-size:12px;font-weight:500;background:#6366f1;border:none;color:white;border-radius:6px;cursor:pointer;">댓글 등록</button>
                         </div>
                     </div>` : `<div style="text-align:center; padding:16px; font-size:12px; color:rgba(255,255,255,0.35); border-top:0.5px solid rgba(255,255,255,0.1); margin-top:16px;">로그인 정보가 없어 댓글을 달 수 없습니다</div>`}
                 `;
@@ -2434,6 +2434,8 @@
                 const title = document.getElementById('nb-write-title').value.trim();
                 const content = document.getElementById('nb-write-content').value.trim();
                 if (!title || !content) return;
+                const btn = document.getElementById('nb-write-submit');
+                btn.disabled = true; btn.textContent = '등록 중...';
                 try {
                     await fetch('https://multimonitoring.vercel.app/api/board', {
                         method: 'POST',
@@ -2442,6 +2444,7 @@
                     });
                     await loadPosts();
                 } catch(e) { alert('등록 실패'); }
+                finally { btn.disabled = false; btn.textContent = '등록'; }
             }
 			
 			function showEditScreen(post) {
@@ -2457,6 +2460,8 @@
 				const title = document.getElementById('nb-edit-title').value.trim();
 				const content = document.getElementById('nb-edit-content').value.trim();
 				if (!title || !content) return;
+				const btn = document.getElementById('nb-edit-submit');
+				btn.disabled = true; btn.textContent = '저장 중...';
 				try {
 					await fetch('https://multimonitoring.vercel.app/api/board', {
 						method: 'PUT',
@@ -2467,10 +2472,13 @@
 					const post = allPosts.find(p => p.id === currentPostId);
 					if (post) showDetail(post);
 				} catch(e) { alert('수정 실패'); }
+				finally { btn.disabled = false; btn.textContent = '저장'; }
 			}
 
             async function deletePost(id) {
                 if (!confirm('삭제하시겠습니까?')) return;
+                const btn = document.getElementById('nb-delete-post-btn');
+                btn.disabled = true; btn.textContent = '삭제 중...';
                 try {
                     await fetch('https://multimonitoring.vercel.app/api/board', {
                         method: 'DELETE',
@@ -2479,6 +2487,7 @@
                     });
                     await loadPosts();
                 } catch(e) { alert('삭제 실패'); }
+                finally { btn.disabled = false; btn.textContent = '삭제'; }
             }
 
             window._nbOpenPost = (id) => {
@@ -2492,9 +2501,10 @@
                 if (box) box.style.display = box.style.display === 'none' ? 'block' : 'none';
             };
 
-            window._nbSubmitComment = async () => {
+            window._nbSubmitComment = async (btn) => {
                 const text = document.getElementById('nb-comment-input')?.value.trim();
                 if (!text) return;
+                btn.disabled = true; btn.textContent = '등록 중...';
                 try {
                     await fetch('https://multimonitoring.vercel.app/api/comment', {
                         method: 'POST',
@@ -2507,11 +2517,13 @@
                     const post = allPosts.find(p => p.id === currentPostId);
                     if (post) renderDetailBody(post);
                 } catch(e) { alert('댓글 등록 실패'); }
+                finally { btn.disabled = false; btn.textContent = '댓글 등록'; }
             };
 
-            window._nbSubmitReply = async (cId) => {
+            window._nbSubmitReply = async (cId, btn) => {
                 const text = document.getElementById('nb-reply-text-' + cId)?.value.trim();
                 if (!text) return;
+                btn.disabled = true; btn.textContent = '등록 중...';
                 try {
                     await fetch('https://multimonitoring.vercel.app/api/comment', {
                         method: 'POST',
@@ -2524,6 +2536,7 @@
                     const post = allPosts.find(p => p.id === currentPostId);
                     if (post) renderDetailBody(post);
                 } catch(e) { alert('답글 등록 실패'); }
+                finally { btn.disabled = false; btn.textContent = '등록'; }
             };
 
             window._nbDeleteComment = async (cId) => {
@@ -2568,9 +2581,10 @@
 				}
 			};
 
-			window._nbSubmitEditComment = async (cId) => {
+			window._nbSubmitEditComment = async (cId, btn) => {
 				const text = document.getElementById('nb-edit-comment-text-' + cId)?.value.trim();
 				if (!text) return;
+				btn.disabled = true; btn.textContent = '저장 중...';
 				try {
 					await fetch('https://multimonitoring.vercel.app/api/comment', {
 						method: 'PUT',
@@ -2583,6 +2597,7 @@
 					const post = allPosts.find(p => p.id === currentPostId);
 					if (post) renderDetailBody(post);
 				} catch(e) { alert('수정 실패'); }
+				finally { btn.disabled = false; btn.textContent = '저장'; }
 			};
 
 			window._nbToggleEditReply = (cId, rId, originalText) => {
@@ -2595,9 +2610,10 @@
 				}
 			};
 
-			window._nbSubmitEditReply = async (cId, rId) => {
+			window._nbSubmitEditReply = async (cId, rId, btn) => {
 				const text = document.getElementById('nb-edit-reply-text-' + rId)?.value.trim();
 				if (!text) return;
+				btn.disabled = true; btn.textContent = '저장 중...';
 				try {
 					await fetch('https://multimonitoring.vercel.app/api/comment', {
 						method: 'PUT',
@@ -2610,6 +2626,7 @@
 					const post = allPosts.find(p => p.id === currentPostId);
 					if (post) renderDetailBody(post);
 				} catch(e) { alert('수정 실패'); }
+				finally { btn.disabled = false; btn.textContent = '저장'; }
 			};
 
             loadPosts();
