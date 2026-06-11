@@ -341,68 +341,54 @@
     const batteryPopup = createContainer('neubie-battery-popup', '380px', '20px', 'auto', '20px');
 
     function makeDraggable(handleEl, targetEl) {
-		let isDragging = false, startX, startY, startLeft, startTop, dragZoom;
+        // handleEl: 드래그를 시작할 헤더 div
+        // targetEl: 실제로 움직일 팝업 전체 div
+        let isDragging = false, startX, startY, startLeft, startTop;
 
-		handleEl.style.cursor = 'grab';
-
-		handleEl.addEventListener('mousedown', (e) => {
-			const tag = e.target.tagName;
-			if (tag === 'INPUT' || tag === 'BUTTON' || tag === 'SELECT' || tag === 'TEXTAREA' || tag === 'A') return;
-
-			isDragging = true;
-			targetEl.dataset.dragging = 'true';
-
-			dragZoom = parseFloat(targetEl.style.zoom || '100') / 100 || 1;
-			const rect = targetEl.getBoundingClientRect();
-			targetEl.style.transform = 'none';
-			targetEl.style.left = (rect.left / dragZoom) + 'px';
-			targetEl.style.top = (rect.top / dragZoom) + 'px';
-			targetEl.style.right = 'auto';
-
-			startX = e.clientX;
-			startY = e.clientY;
-			startLeft = parseFloat(targetEl.style.left);
-			startTop = parseFloat(targetEl.style.top);
-
-			handleEl.style.cursor = 'grabbing';
-			e.preventDefault();
-		});
-
-		document.addEventListener('mousemove', (e) => {
-			if (!isDragging) return;
-			let newLeft = startLeft + (e.clientX - startX);
-			let newTop  = startTop  + (e.clientY - startY);
-			newLeft = Math.max(0, Math.min(newLeft, window.innerWidth  - targetEl.offsetWidth  * dragZoom));
-			newTop  = Math.max(0, Math.min(newTop,  window.innerHeight - targetEl.offsetHeight * dragZoom));
-			targetEl.style.left = newLeft + 'px';
-			targetEl.style.top  = newTop  + 'px';
-		});
-
-		document.addEventListener('mouseup', () => {
-			if (!isDragging) return;
-			isDragging = false;
-			targetEl.dataset.dragging = 'false';
-			handleEl.style.cursor = 'grab';
-		});
-	}
-
-    document.addEventListener('mousemove', (e) => {
-        if (!isDragging) return;
-        let newLeft = startLeft + (e.clientX - startX);
-        let newTop  = startTop  + (e.clientY - startY);
-        newLeft = Math.max(0, Math.min(newLeft, window.innerWidth  - targetEl.offsetWidth  * dragZoom));
-        newTop  = Math.max(0, Math.min(newTop,  window.innerHeight - targetEl.offsetHeight * dragZoom));
-        targetEl.style.left = newLeft + 'px';
-        targetEl.style.top  = newTop  + 'px';
-    });
-
-    document.addEventListener('mouseup', () => {
-        if (!isDragging) return;
-        isDragging = false;
-        targetEl.dataset.dragging = 'false';
         handleEl.style.cursor = 'grab';
-    });
-}
+
+        handleEl.addEventListener('mousedown', (e) => {
+            // input, button, select는 드래그 제외 — 클릭 기능 보존
+            const tag = e.target.tagName;
+            if (tag === 'INPUT' || tag === 'BUTTON' || tag === 'SELECT' || tag === 'TEXTAREA' || tag === 'A') return;
+
+            isDragging = true;
+            targetEl.dataset.dragging = 'true';
+
+            // transform 제거 후 실제 픽셀 위치로 전환 (최초 1회)
+            const rect = targetEl.getBoundingClientRect();
+            targetEl.style.transform = 'none';
+            targetEl.style.left = rect.left + 'px';
+            targetEl.style.top = rect.top + 'px';
+            targetEl.style.right = 'auto';
+
+            startX = e.clientX;
+            startY = e.clientY;
+            startLeft = parseFloat(targetEl.style.left);
+            startTop = parseFloat(targetEl.style.top);
+
+            handleEl.style.cursor = 'grabbing';
+            e.preventDefault(); // 헤더에서만 실행 → input/button은 위에서 이미 return됨
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            let newLeft = startLeft + (e.clientX - startX);
+            let newTop  = startTop  + (e.clientY - startY);
+            // 화면 밖 이탈 방지
+            newLeft = Math.max(0, Math.min(newLeft, window.innerWidth  - targetEl.offsetWidth));
+            newTop  = Math.max(0, Math.min(newTop,  window.innerHeight - targetEl.offsetHeight));
+            targetEl.style.left = newLeft + 'px';
+            targetEl.style.top  = newTop  + 'px';
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (!isDragging) return;
+            isDragging = false;
+            targetEl.dataset.dragging = 'false';
+            handleEl.style.cursor = 'grab';
+        });
+    }
 
     const injectUI = () => { 
         if (document.body) {
@@ -2194,15 +2180,8 @@
             }
 
             let overlay = document.getElementById('neubie-board-overlay');
-			if (overlay) {
-				// 위치 유지하면서 화면만 초기화
-				overlay.style.display = 'flex';
-				document.getElementById('nb-screen-list').style.display = 'block';
-				document.getElementById('nb-screen-detail').style.display = 'none';
-				document.getElementById('nb-screen-write').style.display = 'none';
-				document.getElementById('nb-screen-edit').style.display = 'none';
-				loadPosts();
-				return;
+            if (overlay) {
+				overlay.remove();
 			}
 
             const dashboard = document.getElementById('neubie-dashboard');
@@ -2228,9 +2207,6 @@
             <div style="width:100%; height:100%; background:rgba(10,10,30,0.72); backdrop-filter:blur(2px); display:flex; flex-direction:column; border-radius:24px;">
                 <div id="nb-board-header" style="display:flex; align-items:center; gap:8px; padding:12px 16px; border-bottom:0.5px solid rgba(255,255,255,0.12);">
                     <span style="font-size:15px; font-weight:600; color:#fff; flex:1;">📋 뉴비고 게시판</span>
-					<button id="nb-zoom-out" style="height:28px; width:28px; background:rgba(255,255,255,0.1); color:white; border:none; border-radius:6px; cursor:pointer; font-size:14px;" title="축소">－</button>
-					<span id="nb-zoom-label" style="font-size:11px; color:rgba(255,255,255,0.5); min-width:32px; text-align:center;">100%</span>
-					<button id="nb-zoom-in" style="height:28px; width:28px; background:rgba(255,255,255,0.1); color:white; border:none; border-radius:6px; cursor:pointer; font-size:14px;" title="확대">＋</button>
                     <button id="nb-refresh-btn" style="height:28px; width:28px; background:rgba(255,255,255,0.1); color:white; border:none; border-radius:6px; cursor:pointer; font-size:14px;" title="새로고침">↺</button>
 					<button id="nb-write-btn" style="height:28px; padding:0 12px; font-size:12px; font-weight:500; background:#6366f1; color:white; border:none; border-radius:6px; cursor:pointer;">✏️ 글쓰기</button>
                     <button id="nb-board-close" style="background:rgba(255,255,255,0.1); border:none; color:#fff; width:26px; height:26px; border-radius:50%; cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center;">✕</button>
@@ -2302,21 +2278,20 @@
 			};
 			document.getElementById('nb-edit-submit').onclick = submitEdit;
 			document.getElementById('nb-refresh-btn').onclick = () => loadPosts();
-			// 드래그
-			var boardHeader = overlay.querySelector('#nb-board-header');
-			makeDraggable(boardHeader || overlay.querySelector('div > div:first-child'), overlay);
 
-			// 줌
-			let nbZoom = parseInt(localStorage.getItem('nb_board_zoom') || '100');
-			function updateNbZoom(val) {
-				nbZoom = Math.min(150, Math.max(70, val));
-				localStorage.setItem('nb_board_zoom', nbZoom);
-				overlay.style.zoom = `${nbZoom}%`;
-				document.getElementById('nb-zoom-label').textContent = nbZoom + '%';
-			}
-			updateNbZoom(nbZoom);
-			document.getElementById('nb-zoom-in').onclick = () => updateNbZoom(nbZoom + 10);
-			document.getElementById('nb-zoom-out').onclick = () => updateNbZoom(nbZoom - 10);
+			// 드래그
+			makeDraggable(document.getElementById('nb-board-header'), overlay);
+
+			// 줌 (+/- 버튼은 없이 wheel로 간결하게)
+			overlay.addEventListener('wheel', (e) => {
+				if (!e.ctrlKey) return;
+				e.preventDefault();
+				var z = parseFloat(overlay.style.zoom || '100');
+				z = Math.min(150, Math.max(70, z + (e.deltaY < 0 ? 10 : -10)));
+				overlay.style.zoom = z + '%';
+				localStorage.setItem('nb_board_zoom', z);
+			}, { passive: false });
+			overlay.style.zoom = localStorage.getItem('nb_board_zoom') || '100%';
             document.getElementById('nb-write-btn').onclick = () => {
                 if (!myEmail) return alert('로그인 정보가 없어 글쓰기가 불가합니다.');
                 showWriteScreen();
