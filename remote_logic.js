@@ -133,7 +133,7 @@
         const panel = document.createElement('div');
         panel.id = OPERATOR_PANEL_ID;
         panel.style.cssText = `
-            position:fixed; top:16px; left:60%; transform:translateX(-50%);
+            position:fixed; top:16px; left:70%; transform:translateX(-50%);
             z-index:999999; pointer-events:none;
             animation: _opFadeIn 0.2s ease;
         `;
