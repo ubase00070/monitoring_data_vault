@@ -356,11 +356,12 @@
             targetEl.dataset.dragging = 'true';
 
             // transform 제거 후 실제 픽셀 위치로 전환 (최초 1회)
-            const rect = targetEl.getBoundingClientRect();
-            targetEl.style.transform = 'none';
-            targetEl.style.left = rect.left + 'px';
-            targetEl.style.top = rect.top + 'px';
-            targetEl.style.right = 'auto';
+            const zoom = parseFloat(targetEl.style.zoom || '100') / 100 || 1;
+			const rect = targetEl.getBoundingClientRect();
+			targetEl.style.transform = 'none';
+			targetEl.style.left = (rect.left / zoom) + 'px';
+			targetEl.style.top = (rect.top / zoom) + 'px';
+			targetEl.style.right = 'auto';
 
             startX = e.clientX;
             startY = e.clientY;
@@ -376,8 +377,8 @@
             let newLeft = startLeft + (e.clientX - startX);
             let newTop  = startTop  + (e.clientY - startY);
             // 화면 밖 이탈 방지
-            newLeft = Math.max(0, Math.min(newLeft, window.innerWidth  - targetEl.offsetWidth));
-            newTop  = Math.max(0, Math.min(newTop,  window.innerHeight - targetEl.offsetHeight));
+            newLeft = Math.max(0, Math.min(newLeft, (window.innerWidth - targetEl.offsetWidth * zoom)));
+			newTop  = Math.max(0, Math.min(newTop,  (window.innerHeight - targetEl.offsetHeight * zoom)));
             targetEl.style.left = newLeft + 'px';
             targetEl.style.top  = newTop  + 'px';
         });
