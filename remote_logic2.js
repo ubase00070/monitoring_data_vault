@@ -2230,6 +2230,7 @@
 
                 <div id="nb-screen-write" style="display:none; flex-direction:column; flex:1;">
                     <div style="padding:10px 16px; border-bottom:0.5px solid rgba(255,255,255,0.1); display:flex; align-items:center; gap:8px;">
+						<button id="nb-edit-post-btn" style="display:none; background:rgba(99,102,241,0.2); border:1px solid rgba(99,102,241,0.4); color:#a5b4fc; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:12px;">수정</button>
                         <button id="nb-write-cancel" style="background:rgba(255,255,255,0.1); border:none; color:#fff; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:12px;">← 취소</button>
                         <span style="font-size:13px; color:#e2e8f0; flex:1;">새 글 작성</span>
                         <button id="nb-write-submit" style="background:#6366f1; border:none; color:white; padding:4px 14px; border-radius:6px; cursor:pointer; font-size:12px; font-weight:500;">등록</button>
@@ -2237,6 +2238,18 @@
                     <div style="padding:16px; display:flex; flex-direction:column; gap:10px; flex:1;">
                         <input id="nb-write-title" type="text" placeholder="제목" style="height:36px; font-size:13px; padding:0 10px; border-radius:6px; border:0.5px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.08); color:#fff; outline:none;">
                         <textarea id="nb-write-content" placeholder="내용을 입력하세요..." style="flex:1; min-height:100px; font-size:13px; padding:10px; border-radius:6px; border:0.5px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.08); color:#fff; outline:none; resize:none; font-family:inherit;"></textarea>
+                    </div>
+                </div>
+				
+				<div id="nb-screen-edit" style="display:none; flex-direction:column; flex:1;">
+                    <div style="padding:10px 16px; border-bottom:0.5px solid rgba(255,255,255,0.1); display:flex; align-items:center; gap:8px;">
+                        <button id="nb-edit-cancel" style="background:rgba(255,255,255,0.1); border:none; color:#fff; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:12px;">← 취소</button>
+                        <span style="font-size:13px; color:#e2e8f0; flex:1;">글 수정</span>
+                        <button id="nb-edit-submit" style="background:#6366f1; border:none; color:white; padding:4px 14px; border-radius:6px; cursor:pointer; font-size:12px; font-weight:500;">저장</button>
+                    </div>
+                    <div style="padding:16px; display:flex; flex-direction:column; gap:10px; flex:1;">
+                        <input id="nb-edit-title" type="text" placeholder="제목" style="height:36px; font-size:13px; padding:0 10px; border-radius:6px; border:0.5px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.08); color:#fff; outline:none;">
+                        <textarea id="nb-edit-content" placeholder="내용" style="flex:1; min-height:100px; font-size:13px; padding:10px; border-radius:6px; border:0.5px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.08); color:#fff; outline:none; resize:none; font-family:inherit;"></textarea>
                     </div>
                 </div>
 
@@ -2256,6 +2269,11 @@
             document.getElementById('nb-board-close').onclick = () => { overlay.style.display = 'none'; };
             document.getElementById('nb-back-btn').onclick = () => showList();
             document.getElementById('nb-write-cancel').onclick = () => showList();
+			document.getElementById('nb-edit-cancel').onclick = () => {
+				const post = allPosts.find(p => p.id === currentPostId);
+				if (post) showDetail(post);
+			};
+			document.getElementById('nb-edit-submit').onclick = submitEdit;
             document.getElementById('nb-write-btn').onclick = () => {
                 if (!myEmail) return alert('로그인 정보가 없어 글쓰기가 불가합니다.');
                 showWriteScreen();
@@ -2282,6 +2300,10 @@
             function showDetail(post) {
                 document.getElementById('nb-screen-list').style.display = 'none';
                 document.getElementById('nb-screen-write').style.display = 'none';
+				document.getElementById('nb-screen-edit').style.display = 'none';
+				const editBtn = document.getElementById('nb-edit-post-btn');
+				editBtn.style.display = (myEmail && post.email === myEmail) ? 'block' : 'none';
+				editBtn.onclick = () => showEditScreen(post);
                 const det = document.getElementById('nb-screen-detail');
                 det.style.display = 'flex';
                 document.getElementById('nb-detail-title-header').textContent = post.title;
@@ -2329,7 +2351,7 @@
                                 <div style="display:flex; align-items:center; gap:10px; margin-top:4px;">
                                     <span style="font-size:11px; color:rgba(255,255,255,0.35);">${formatDate(c.createdAt)}</span>
                                     ${myEmail ? `<button onclick="window._nbToggleReply('${c.id}')" style="background:none;border:none;font-size:11px;color:#a5b4fc;cursor:pointer;padding:0;">↩ 답글</button>` : ''}
-                                    ${(myEmail && c.email === myEmail) ? `<button onclick="window._nbDeleteComment('${c.id}')" style="background:none;border:none;font-size:11px;color:rgba(239,68,68,0.7);cursor:pointer;padding:0;">삭제</button>` : ''}
+                                    ${(myEmail && c.email === myEmail) ? `<button onclick="window._nbDeleteComment('${c.id}')" style="background:none;border:none;font-size:11px;color:rgba(239,68,68,0.7);cursor:pointer;padding:0;">삭제</button><button onclick="window._nbToggleEditComment('${c.id}','${c.text}')" style="background:none;border:none;font-size:11px;color:#a5b4fc;cursor:pointer;padding:0;">수정</button>` : ''}
                                 </div>
                                 ${(c.replies||[]).map(r => `
                                     <div style="display:flex; gap:8px; margin-top:10px; padding-left:8px; border-left:2px solid rgba(99,102,241,0.3);">
@@ -2339,7 +2361,7 @@
                                             <div style="font-size:12px; color:#e2e8f0; margin:2px 0;">${r.text}</div>
                                             <div style="display:flex; align-items:center; gap:8px; margin-top:3px;">
                                                 <span style="font-size:10px; color:rgba(255,255,255,0.3);">${formatDate(r.createdAt)}</span>
-                                                ${(myEmail && r.email === myEmail) ? `<button onclick="window._nbDeleteReply('${c.id}','${r.id}')" style="background:none;border:none;font-size:10px;color:rgba(239,68,68,0.6);cursor:pointer;padding:0;">삭제</button>` : ''}
+                                                ${(myEmail && r.email === myEmail) ? `<button onclick="window._nbDeleteReply('${c.id}','${r.id}')" style="background:none;border:none;font-size:10px;color:rgba(239,68,68,0.6);cursor:pointer;padding:0;">삭제</button><button onclick="window._nbToggleEditReply('${c.id}','${r.id}','${r.text}')" style="background:none;border:none;font-size:10px;color:#a5b4fc;cursor:pointer;padding:0;">수정</button>` : ''}
                                             </div>
                                         </div>
                                     </div>
@@ -2351,6 +2373,20 @@
                                         <button onclick="window._nbSubmitReply('${c.id}')" style="height:26px;padding:0 10px;font-size:11px;background:#6366f1;border:none;color:white;border-radius:6px;cursor:pointer;font-weight:500;">등록</button>
                                     </div>
                                 </div>
+								<div id="nb-edit-reply-box-${r.id}" style="display:none; margin-top:6px;">
+									<textarea id="nb-edit-reply-text-${r.id}" style="width:100%; height:46px; font-size:11px; padding:6px 8px; border-radius:6px; border:0.5px solid rgba(99,102,241,0.4); background:rgba(255,255,255,0.08); color:#fff; outline:none; resize:none; box-sizing:border-box; font-family:inherit;"></textarea>
+									<div style="display:flex; justify-content:flex-end; gap:6px; margin-top:4px;">
+										<button onclick="window._nbToggleEditReply('${c.id}','${r.id}')" style="height:24px;padding:0 8px;font-size:10px;background:rgba(255,255,255,0.1);border:none;color:#fff;border-radius:6px;cursor:pointer;">취소</button>
+										<button onclick="window._nbSubmitEditReply('${c.id}','${r.id}')" style="height:24px;padding:0 8px;font-size:10px;background:#6366f1;border:none;color:white;border-radius:6px;cursor:pointer;font-weight:500;">저장</button>
+									</div>
+								</div>
+								<div id="nb-edit-comment-box-${c.id}" style="display:none; margin-top:8px;">
+									<textarea id="nb-edit-comment-text-${c.id}" style="width:100%; height:52px; font-size:12px; padding:6px 8px; border-radius:6px; border:0.5px solid rgba(99,102,241,0.4); background:rgba(255,255,255,0.08); color:#fff; outline:none; resize:none; box-sizing:border-box; font-family:inherit;"></textarea>
+									<div style="display:flex; justify-content:flex-end; gap:6px; margin-top:6px;">
+										<button onclick="window._nbToggleEditComment('${c.id}')" style="height:26px;padding:0 10px;font-size:11px;background:rgba(255,255,255,0.1);border:none;color:#fff;border-radius:6px;cursor:pointer;">취소</button>
+										<button onclick="window._nbSubmitEditComment('${c.id}')" style="height:26px;padding:0 10px;font-size:11px;background:#6366f1;border:none;color:white;border-radius:6px;cursor:pointer;font-weight:500;">저장</button>
+									</div>
+								</div>
                             </div>
                         </div>
                     `).join('')}
@@ -2411,6 +2447,31 @@
                     await loadPosts();
                 } catch(e) { alert('등록 실패'); }
             }
+			
+			function showEditScreen(post) {
+				document.getElementById('nb-screen-list').style.display = 'none';
+				document.getElementById('nb-screen-detail').style.display = 'none';
+				document.getElementById('nb-screen-write').style.display = 'none';
+				document.getElementById('nb-screen-edit').style.display = 'flex';
+				document.getElementById('nb-edit-title').value = post.title;
+				document.getElementById('nb-edit-content').value = post.content;
+			}
+
+			async function submitEdit() {
+				const title = document.getElementById('nb-edit-title').value.trim();
+				const content = document.getElementById('nb-edit-content').value.trim();
+				if (!title || !content) return;
+				try {
+					await fetch('https://multimonitoring.vercel.app/api/board', {
+						method: 'PUT',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ email: myEmail, id: currentPostId, title, content })
+					});
+					await loadPosts();
+					const post = allPosts.find(p => p.id === currentPostId);
+					if (post) showDetail(post);
+				} catch(e) { alert('수정 실패'); }
+			}
 
             async function deletePost(id) {
                 if (!confirm('삭제하시겠습니까?')) return;
@@ -2456,7 +2517,7 @@
                 const text = document.getElementById('nb-reply-text-' + cId)?.value.trim();
                 if (!text) return;
                 try {
-                    await fetch('https://multimonitoring.vercel.app/api/board/comment', {
+                    await fetch('https://multimonitoring.vercel.app/api/comment', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ email: myEmail, author: myName, postId: currentPostId, commentId: cId, text })
@@ -2500,6 +2561,60 @@
                     if (post) renderDetailBody(post);
                 } catch(e) { alert('삭제 실패'); }
             };
+			
+			window._nbToggleEditComment = (cId, originalText) => {
+				const box = document.getElementById('nb-edit-comment-box-' + cId);
+				if (!box) return;
+				const isOpen = box.style.display !== 'none';
+				box.style.display = isOpen ? 'none' : 'block';
+				if (!isOpen && originalText) {
+					document.getElementById('nb-edit-comment-text-' + cId).value = originalText;
+				}
+			};
+
+			window._nbSubmitEditComment = async (cId) => {
+				const text = document.getElementById('nb-edit-comment-text-' + cId)?.value.trim();
+				if (!text) return;
+				try {
+					await fetch('https://multimonitoring.vercel.app/api/comment', {
+						method: 'PUT',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ email: myEmail, postId: currentPostId, commentId: cId, text })
+					});
+					const res = await fetch('https://multimonitoring.vercel.app/api/board?t=' + Date.now());
+					const data = await res.json();
+					allPosts = data.posts || [];
+					const post = allPosts.find(p => p.id === currentPostId);
+					if (post) renderDetailBody(post);
+				} catch(e) { alert('수정 실패'); }
+			};
+
+			window._nbToggleEditReply = (cId, rId, originalText) => {
+				const box = document.getElementById('nb-edit-reply-box-' + rId);
+				if (!box) return;
+				const isOpen = box.style.display !== 'none';
+				box.style.display = isOpen ? 'none' : 'block';
+				if (!isOpen && originalText) {
+					document.getElementById('nb-edit-reply-text-' + rId).value = originalText;
+				}
+			};
+
+			window._nbSubmitEditReply = async (cId, rId) => {
+				const text = document.getElementById('nb-edit-reply-text-' + rId)?.value.trim();
+				if (!text) return;
+				try {
+					await fetch('https://multimonitoring.vercel.app/api/comment', {
+						method: 'PUT',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ email: myEmail, postId: currentPostId, commentId: cId, replyId: rId, text })
+					});
+					const res = await fetch('https://multimonitoring.vercel.app/api/board?t=' + Date.now());
+					const data = await res.json();
+					allPosts = data.posts || [];
+					const post = allPosts.find(p => p.id === currentPostId);
+					if (post) renderDetailBody(post);
+				} catch(e) { alert('수정 실패'); }
+			};
 
             loadPosts();
         };
