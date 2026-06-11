@@ -2184,15 +2184,20 @@
             overlay = document.createElement('div');
             overlay.id = 'neubie-board-overlay';
             const r = dashboard.getBoundingClientRect();
-            Object.assign(overlay.style, {
-                position: 'fixed', top: r.top+'px', left: r.left+'px',
-                width: r.width+'px', height: r.height+'px',
-                zIndex: '1000001', display: 'flex',
-                alignItems: 'center', justifyContent: 'center',
-                backgroundImage: `url(${BG_IMG})`,
-                backgroundSize: 'cover', backgroundPosition: 'center',
-                borderRadius: '24px', overflow: 'hidden',
-            });
+			Object.assign(overlay.style, {
+				position: 'fixed',
+				top: r.top + 'px',
+				left: r.left + 'px',
+				width: r.width + 'px',
+				height: r.height + 'px',
+				zIndex: '1000001', display: 'flex',
+				alignItems: 'center', justifyContent: 'center',
+				backgroundImage: `url(${BG_IMG})`,
+				backgroundSize: 'cover', backgroundPosition: 'center',
+				borderRadius: '24px', overflow: 'hidden',
+				transform: 'scale(1.5)',
+				transformOrigin: 'center center',
+			});
 
             overlay.innerHTML = `
             <div style="width:100%; height:100%; background:rgba(10,10,30,0.72); backdrop-filter:blur(2px); display:flex; flex-direction:column; border-radius:24px;">
