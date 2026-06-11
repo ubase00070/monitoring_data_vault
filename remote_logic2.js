@@ -2181,8 +2181,15 @@
             }
 
             let overlay = document.getElementById('neubie-board-overlay');
-            if (overlay) {
-				overlay.remove();
+			if (overlay) {
+				// 위치 유지하면서 화면만 초기화
+				overlay.style.display = 'flex';
+				document.getElementById('nb-screen-list').style.display = 'block';
+				document.getElementById('nb-screen-detail').style.display = 'none';
+				document.getElementById('nb-screen-write').style.display = 'none';
+				document.getElementById('nb-screen-edit').style.display = 'none';
+				loadPosts();
+				return;
 			}
 
             const dashboard = document.getElementById('neubie-dashboard');
