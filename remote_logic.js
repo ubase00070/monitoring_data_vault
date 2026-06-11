@@ -2290,7 +2290,7 @@
                 document.getElementById('nb-screen-list').style.display = 'block';
                 document.getElementById('nb-screen-detail').style.display = 'none';
                 document.getElementById('nb-screen-write').style.display = 'none';
-                renderList(allPosts);
+                renderList(allPosts, true)
             }
 
             function showWriteScreen() {
@@ -2317,13 +2317,22 @@
                 renderDetailBody(post);
             }
 
-            function renderList(posts) {
+            let _currentPage = 1;
+            const PAGE_SIZE = 20;
+
+            function renderList(posts, resetPage) {
+                if (resetPage) _currentPage = 1;
                 const el = document.getElementById('nb-screen-list');
                 if (!posts.length) {
                     el.innerHTML = `<div style="text-align:center; padding:40px 16px; color:rgba(255,255,255,0.4); font-size:13px;">게시글이 없습니다</div>`;
                     return;
                 }
-                el.innerHTML = posts.map(p => `
+                const totalPages = Math.ceil(posts.length / PAGE_SIZE);
+                const start = (_currentPage - 1) * PAGE_SIZE;
+                const paged = posts.slice(start, start + PAGE_SIZE);
+                const isPaged = posts === allPosts; // 검색 중엔 페이지네이션 숨김
+
+                el.innerHTML = paged.map(p => `
                     <div onclick="window._nbOpenPost('${p.id}')" style="display:flex; align-items:center; gap:10px; padding:10px 16px; border-bottom:0.5px solid rgba(255,255,255,0.07); cursor:pointer; transition:background 0.12s;" onmouseenter="this.style.background='rgba(255,255,255,0.06)'" onmouseleave="this.style.background='transparent'">
                         <div style="width:30px; height:30px; border-radius:50%; background:rgba(99,102,241,0.3); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:600; color:#a5b4fc; flex-shrink:0;">${initials(p.author)}</div>
                         <div style="flex:1; min-width:0;">
@@ -2333,7 +2342,20 @@
                         ${(p.commentCount||0) > 0 ? `<span style="font-size:11px; color:#a5b4fc; background:rgba(99,102,241,0.2); padding:2px 7px; border-radius:10px; white-space:nowrap;">💬 ${p.commentCount}</span>` : ''}
                     </div>
                 `).join('');
+
+                if (isPaged && totalPages > 1) {
+                    el.innerHTML += `
+                        <div style="display:flex; align-items:center; justify-content:center; gap:12px; padding:12px 0; border-top:0.5px solid rgba(255,255,255,0.08);">
+                            <button onclick="window._nbPrevPage()" ${_currentPage <= 1 ? 'disabled' : ''} style="height:28px; padding:0 12px; font-size:12px; background:rgba(255,255,255,0.08); border:0.5px solid rgba(255,255,255,0.15); color:${_currentPage <= 1 ? 'rgba(255,255,255,0.2)' : '#e2e8f0'}; border-radius:6px; cursor:${_currentPage <= 1 ? 'default' : 'pointer'};">← 이전</button>
+                            <span style="font-size:12px; color:rgba(255,255,255,0.5);">${_currentPage} / ${totalPages}</span>
+                            <button onclick="window._nbNextPage()" ${_currentPage >= totalPages ? 'disabled' : ''} style="height:28px; padding:0 12px; font-size:12px; background:rgba(255,255,255,0.08); border:0.5px solid rgba(255,255,255,0.15); color:${_currentPage >= totalPages ? 'rgba(255,255,255,0.2)' : '#e2e8f0'}; border-radius:6px; cursor:${_currentPage >= totalPages ? 'default' : 'pointer'};">다음 →</button>
+                        </div>
+                    `;
+                }
             }
+
+            window._nbPrevPage = () => { _currentPage--; renderList(allPosts); document.getElementById('nb-screen-list').scrollTop = 0; };
+            window._nbNextPage = () => { _currentPage++; renderList(allPosts); document.getElementById('nb-screen-list').scrollTop = 0; };
 
             function renderDetailBody(post) {
                 const comments = post.comments || [];
