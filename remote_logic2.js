@@ -133,7 +133,7 @@
         const panel = document.createElement('div');
         panel.id = OPERATOR_PANEL_ID;
         panel.style.cssText = `
-            position:fixed; top:16px; left:60%; transform:translateX(-50%);
+            position:fixed; top:16px; left:70%; transform:translateX(-50%);
             z-index:999999; pointer-events:none;
             animation: _opFadeIn 0.2s ease;
         `;
@@ -967,8 +967,8 @@
         patchBtn.title = '패치노트';
         patchBtn.style.cssText = `
             background:transparent; border:1px solid #555; color:#aaa;
-            border-radius:6px; padding:2px 6px; cursor:pointer;
-            font-size:12px; margin-left:6px; vertical-align:middle;
+            border-radius:6px; padding:4px 10px; cursor:pointer;
+            font-size:14px; margin-left:6px; vertical-align:middle;
             transition:all 0.2s;
             animation: neubie-blink 1.5s ease-in-out infinite;
         `;
@@ -1010,8 +1010,10 @@
                 const patchItems = [
                     {
                         version: 'v1.1',
-                        date: '2026-06-06',
+                        date: '2026-06-11',
                         items: [
+							'게시판 기능 추가',
+							'개입 시 현재 패드 조작자 표기(본인 제외)',
 							'개입카드 페이지 상태 바 재배치(스크롤 바 제거)',
 							'D-PAD UP: 다음 개입 요청받기 ON/OFF',
 							'D-PAD DOWN: 자동 긴급 정지 ON/OFF',
@@ -1092,7 +1094,7 @@
         // 게시판 버튼
         const boardBtn = document.createElement('button');
         boardBtn.textContent = '게시판';
-        boardBtn.style.cssText = "background:transparent; border:1px solid #475569; color:#94a3b8; padding:2px 8px; border-radius:6px; cursor:pointer; font-size:12px; margin-left:4px;";
+        boardBtn.style.cssText = "background:transparent; border:1px solid #475569; color:#ffffff; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:14px; margin-left:4px;";
         boardBtn.onclick = () => openBoardOverlay();
         titleWrap.appendChild(boardBtn);
 
@@ -2205,6 +2207,9 @@
             <div style="width:100%; height:100%; background:rgba(10,10,30,0.72); backdrop-filter:blur(2px); display:flex; flex-direction:column; border-radius:24px;">
                 <div style="display:flex; align-items:center; gap:8px; padding:12px 16px; border-bottom:0.5px solid rgba(255,255,255,0.12);">
                     <span style="font-size:15px; font-weight:600; color:#fff; flex:1;">📋 뉴비고 게시판</span>
+					<button id="nb-zoom-out" style="height:28px; width:28px; background:rgba(255,255,255,0.1); color:white; border:none; border-radius:6px; cursor:pointer; font-size:14px;" title="축소">－</button>
+					<span id="nb-zoom-label" style="font-size:11px; color:rgba(255,255,255,0.5); min-width:32px; text-align:center;">100%</span>
+					<button id="nb-zoom-in" style="height:28px; width:28px; background:rgba(255,255,255,0.1); color:white; border:none; border-radius:6px; cursor:pointer; font-size:14px;" title="확대">＋</button>
                     <button id="nb-refresh-btn" style="height:28px; width:28px; background:rgba(255,255,255,0.1); color:white; border:none; border-radius:6px; cursor:pointer; font-size:14px;" title="새로고침">↺</button>
 					<button id="nb-write-btn" style="height:28px; padding:0 12px; font-size:12px; font-weight:500; background:#6366f1; color:white; border:none; border-radius:6px; cursor:pointer;">✏️ 글쓰기</button>
                     <button id="nb-board-close" style="background:rgba(255,255,255,0.1); border:none; color:#fff; width:26px; height:26px; border-radius:50%; cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center;">✕</button>
@@ -2276,6 +2281,20 @@
 			};
 			document.getElementById('nb-edit-submit').onclick = submitEdit;
 			document.getElementById('nb-refresh-btn').onclick = () => loadPosts();
+			// 드래그
+			makeDraggable(overlay.querySelector('div'), overlay);
+
+			// 줌
+			let nbZoom = parseInt(localStorage.getItem('nb_board_zoom') || '100');
+			function updateNbZoom(val) {
+				nbZoom = Math.min(150, Math.max(70, val));
+				localStorage.setItem('nb_board_zoom', nbZoom);
+				overlay.style.zoom = `${nbZoom}%`;
+				document.getElementById('nb-zoom-label').textContent = nbZoom + '%';
+			}
+			updateNbZoom(nbZoom);
+			document.getElementById('nb-zoom-in').onclick = () => updateNbZoom(nbZoom + 10);
+			document.getElementById('nb-zoom-out').onclick = () => updateNbZoom(nbZoom - 10);
             document.getElementById('nb-write-btn').onclick = () => {
                 if (!myEmail) return alert('로그인 정보가 없어 글쓰기가 불가합니다.');
                 showWriteScreen();
@@ -2288,7 +2307,7 @@
                 document.getElementById('nb-screen-list').style.display = 'block';
                 document.getElementById('nb-screen-detail').style.display = 'none';
                 document.getElementById('nb-screen-write').style.display = 'none';
-                renderList(allPosts);
+                renderList(allPosts, true)
             }
 
             function showWriteScreen() {
@@ -2315,13 +2334,22 @@
                 renderDetailBody(post);
             }
 
-            function renderList(posts) {
+            let _currentPage = 1;
+            const PAGE_SIZE = 20;
+
+            function renderList(posts, resetPage) {
+                if (resetPage) _currentPage = 1;
                 const el = document.getElementById('nb-screen-list');
                 if (!posts.length) {
                     el.innerHTML = `<div style="text-align:center; padding:40px 16px; color:rgba(255,255,255,0.4); font-size:13px;">게시글이 없습니다</div>`;
                     return;
                 }
-                el.innerHTML = posts.map(p => `
+                const totalPages = Math.ceil(posts.length / PAGE_SIZE);
+                const start = (_currentPage - 1) * PAGE_SIZE;
+                const paged = posts.slice(start, start + PAGE_SIZE);
+                const isPaged = posts === allPosts; // 검색 중엔 페이지네이션 숨김
+
+                el.innerHTML = paged.map(p => `
                     <div onclick="window._nbOpenPost('${p.id}')" style="display:flex; align-items:center; gap:10px; padding:10px 16px; border-bottom:0.5px solid rgba(255,255,255,0.07); cursor:pointer; transition:background 0.12s;" onmouseenter="this.style.background='rgba(255,255,255,0.06)'" onmouseleave="this.style.background='transparent'">
                         <div style="width:30px; height:30px; border-radius:50%; background:rgba(99,102,241,0.3); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:600; color:#a5b4fc; flex-shrink:0;">${initials(p.author)}</div>
                         <div style="flex:1; min-width:0;">
@@ -2331,7 +2359,20 @@
                         ${(p.commentCount||0) > 0 ? `<span style="font-size:11px; color:#a5b4fc; background:rgba(99,102,241,0.2); padding:2px 7px; border-radius:10px; white-space:nowrap;">💬 ${p.commentCount}</span>` : ''}
                     </div>
                 `).join('');
+
+                if (isPaged && totalPages > 1) {
+                    el.innerHTML += `
+                        <div style="display:flex; align-items:center; justify-content:center; gap:12px; padding:12px 0; border-top:0.5px solid rgba(255,255,255,0.08);">
+                            <button onclick="window._nbPrevPage()" ${_currentPage <= 1 ? 'disabled' : ''} style="height:28px; padding:0 12px; font-size:12px; background:rgba(255,255,255,0.08); border:0.5px solid rgba(255,255,255,0.15); color:${_currentPage <= 1 ? 'rgba(255,255,255,0.2)' : '#e2e8f0'}; border-radius:6px; cursor:${_currentPage <= 1 ? 'default' : 'pointer'};">← 이전</button>
+                            <span style="font-size:12px; color:rgba(255,255,255,0.5);">${_currentPage} / ${totalPages}</span>
+                            <button onclick="window._nbNextPage()" ${_currentPage >= totalPages ? 'disabled' : ''} style="height:28px; padding:0 12px; font-size:12px; background:rgba(255,255,255,0.08); border:0.5px solid rgba(255,255,255,0.15); color:${_currentPage >= totalPages ? 'rgba(255,255,255,0.2)' : '#e2e8f0'}; border-radius:6px; cursor:${_currentPage >= totalPages ? 'default' : 'pointer'};">다음 →</button>
+                        </div>
+                    `;
+                }
             }
+
+            window._nbPrevPage = () => { _currentPage--; renderList(allPosts); document.getElementById('nb-screen-list').scrollTop = 0; };
+            window._nbNextPage = () => { _currentPage++; renderList(allPosts); document.getElementById('nb-screen-list').scrollTop = 0; };
 
             function renderDetailBody(post) {
                 const comments = post.comments || [];
@@ -2372,21 +2413,21 @@
                                     <textarea id="nb-reply-text-${c.id}" placeholder="답글..." style="width:100%; height:52px; font-size:12px; padding:6px 8px; border-radius:6px; border:0.5px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.08); color:#fff; outline:none; resize:none; box-sizing:border-box; font-family:inherit;"></textarea>
                                     <div style="display:flex; justify-content:flex-end; gap:6px; margin-top:6px;">
                                         <button onclick="window._nbToggleReply('${c.id}')" style="height:26px;padding:0 10px;font-size:11px;background:rgba(255,255,255,0.1);border:none;color:#fff;border-radius:6px;cursor:pointer;">취소</button>
-                                        <button onclick="window._nbSubmitReply('${c.id}')" style="height:26px;padding:0 10px;font-size:11px;background:#6366f1;border:none;color:white;border-radius:6px;cursor:pointer;font-weight:500;">등록</button>
+                                        <button onclick="window._nbSubmitReply('${c.id}', this)" style="height:26px;padding:0 10px;font-size:11px;background:#6366f1;border:none;color:white;border-radius:6px;cursor:pointer;font-weight:500;">등록</button>
                                     </div>
                                 </div>
 								<div id="nb-edit-reply-box-${r.id}" style="display:none; margin-top:6px;">
 									<textarea id="nb-edit-reply-text-${r.id}" style="width:100%; height:46px; font-size:11px; padding:6px 8px; border-radius:6px; border:0.5px solid rgba(99,102,241,0.4); background:rgba(255,255,255,0.08); color:#fff; outline:none; resize:none; box-sizing:border-box; font-family:inherit;"></textarea>
 									<div style="display:flex; justify-content:flex-end; gap:6px; margin-top:4px;">
 										<button onclick="window._nbToggleEditReply('${c.id}','${r.id}')" style="height:24px;padding:0 8px;font-size:10px;background:rgba(255,255,255,0.1);border:none;color:#fff;border-radius:6px;cursor:pointer;">취소</button>
-										<button onclick="window._nbSubmitEditReply('${c.id}','${r.id}')" style="height:24px;padding:0 8px;font-size:10px;background:#6366f1;border:none;color:white;border-radius:6px;cursor:pointer;font-weight:500;">저장</button>
+										<button onclick="window._nbSubmitEditReply('${c.id}','${r.id}', this)" style="height:24px;padding:0 8px;font-size:10px;background:#6366f1;border:none;color:white;border-radius:6px;cursor:pointer;font-weight:500;">저장</button>
 									</div>
 								</div>
 								<div id="nb-edit-comment-box-${c.id}" style="display:none; margin-top:8px;">
 									<textarea id="nb-edit-comment-text-${c.id}" style="width:100%; height:52px; font-size:12px; padding:6px 8px; border-radius:6px; border:0.5px solid rgba(99,102,241,0.4); background:rgba(255,255,255,0.08); color:#fff; outline:none; resize:none; box-sizing:border-box; font-family:inherit;"></textarea>
 									<div style="display:flex; justify-content:flex-end; gap:6px; margin-top:6px;">
 										<button onclick="window._nbToggleEditComment('${c.id}')" style="height:26px;padding:0 10px;font-size:11px;background:rgba(255,255,255,0.1);border:none;color:#fff;border-radius:6px;cursor:pointer;">취소</button>
-										<button onclick="window._nbSubmitEditComment('${c.id}')" style="height:26px;padding:0 10px;font-size:11px;background:#6366f1;border:none;color:white;border-radius:6px;cursor:pointer;font-weight:500;">저장</button>
+										<button onclick="window._nbSubmitEditComment('${c.id}', this)" style="height:26px;padding:0 10px;font-size:11px;background:#6366f1;border:none;color:white;border-radius:6px;cursor:pointer;font-weight:500;">저장</button>
 									</div>
 								</div>
                             </div>
@@ -2396,7 +2437,7 @@
                     <div style="margin-top:16px; border-top:0.5px solid rgba(255,255,255,0.1); padding-top:14px;">
                         <textarea id="nb-comment-input" placeholder="댓글을 입력하세요..." style="width:100%; height:64px; font-size:13px; padding:8px 10px; border-radius:6px; border:0.5px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.08); color:#fff; outline:none; resize:none; box-sizing:border-box; font-family:inherit;"></textarea>
                         <div style="display:flex; justify-content:flex-end; margin-top:8px;">
-                            <button onclick="window._nbSubmitComment()" style="height:30px;padding:0 16px;font-size:12px;font-weight:500;background:#6366f1;border:none;color:white;border-radius:6px;cursor:pointer;">댓글 등록</button>
+                            <button onclick="window._nbSubmitComment(this)" style="height:30px;padding:0 16px;font-size:12px;font-weight:500;background:#6366f1;border:none;color:white;border-radius:6px;cursor:pointer;">댓글 등록</button>
                         </div>
                     </div>` : `<div style="text-align:center; padding:16px; font-size:12px; color:rgba(255,255,255,0.35); border-top:0.5px solid rgba(255,255,255,0.1); margin-top:16px;">로그인 정보가 없어 댓글을 달 수 없습니다</div>`}
                 `;
@@ -2432,6 +2473,8 @@
                 const title = document.getElementById('nb-write-title').value.trim();
                 const content = document.getElementById('nb-write-content').value.trim();
                 if (!title || !content) return;
+                const btn = document.getElementById('nb-write-submit');
+                btn.disabled = true; btn.textContent = '등록 중...';
                 try {
                     await fetch('https://multimonitoring.vercel.app/api/board', {
                         method: 'POST',
@@ -2440,6 +2483,7 @@
                     });
                     await loadPosts();
                 } catch(e) { alert('등록 실패'); }
+                finally { btn.disabled = false; btn.textContent = '등록'; }
             }
 			
 			function showEditScreen(post) {
@@ -2455,6 +2499,8 @@
 				const title = document.getElementById('nb-edit-title').value.trim();
 				const content = document.getElementById('nb-edit-content').value.trim();
 				if (!title || !content) return;
+				const btn = document.getElementById('nb-edit-submit');
+				btn.disabled = true; btn.textContent = '저장 중...';
 				try {
 					await fetch('https://multimonitoring.vercel.app/api/board', {
 						method: 'PUT',
@@ -2465,10 +2511,13 @@
 					const post = allPosts.find(p => p.id === currentPostId);
 					if (post) showDetail(post);
 				} catch(e) { alert('수정 실패'); }
+				finally { btn.disabled = false; btn.textContent = '저장'; }
 			}
 
             async function deletePost(id) {
                 if (!confirm('삭제하시겠습니까?')) return;
+                const btn = document.getElementById('nb-delete-post-btn');
+                btn.disabled = true; btn.textContent = '삭제 중...';
                 try {
                     await fetch('https://multimonitoring.vercel.app/api/board', {
                         method: 'DELETE',
@@ -2477,6 +2526,7 @@
                     });
                     await loadPosts();
                 } catch(e) { alert('삭제 실패'); }
+                finally { btn.disabled = false; btn.textContent = '삭제'; }
             }
 
             window._nbOpenPost = (id) => {
@@ -2490,9 +2540,10 @@
                 if (box) box.style.display = box.style.display === 'none' ? 'block' : 'none';
             };
 
-            window._nbSubmitComment = async () => {
+            window._nbSubmitComment = async (btn) => {
                 const text = document.getElementById('nb-comment-input')?.value.trim();
                 if (!text) return;
+                btn.disabled = true; btn.textContent = '등록 중...';
                 try {
                     await fetch('https://multimonitoring.vercel.app/api/comment', {
                         method: 'POST',
@@ -2505,11 +2556,13 @@
                     const post = allPosts.find(p => p.id === currentPostId);
                     if (post) renderDetailBody(post);
                 } catch(e) { alert('댓글 등록 실패'); }
+                finally { btn.disabled = false; btn.textContent = '댓글 등록'; }
             };
 
-            window._nbSubmitReply = async (cId) => {
+            window._nbSubmitReply = async (cId, btn) => {
                 const text = document.getElementById('nb-reply-text-' + cId)?.value.trim();
                 if (!text) return;
+                btn.disabled = true; btn.textContent = '등록 중...';
                 try {
                     await fetch('https://multimonitoring.vercel.app/api/comment', {
                         method: 'POST',
@@ -2522,6 +2575,7 @@
                     const post = allPosts.find(p => p.id === currentPostId);
                     if (post) renderDetailBody(post);
                 } catch(e) { alert('답글 등록 실패'); }
+                finally { btn.disabled = false; btn.textContent = '등록'; }
             };
 
             window._nbDeleteComment = async (cId) => {
@@ -2566,9 +2620,10 @@
 				}
 			};
 
-			window._nbSubmitEditComment = async (cId) => {
+			window._nbSubmitEditComment = async (cId, btn) => {
 				const text = document.getElementById('nb-edit-comment-text-' + cId)?.value.trim();
 				if (!text) return;
+				btn.disabled = true; btn.textContent = '저장 중...';
 				try {
 					await fetch('https://multimonitoring.vercel.app/api/comment', {
 						method: 'PUT',
@@ -2581,6 +2636,7 @@
 					const post = allPosts.find(p => p.id === currentPostId);
 					if (post) renderDetailBody(post);
 				} catch(e) { alert('수정 실패'); }
+				finally { btn.disabled = false; btn.textContent = '저장'; }
 			};
 
 			window._nbToggleEditReply = (cId, rId, originalText) => {
@@ -2593,9 +2649,10 @@
 				}
 			};
 
-			window._nbSubmitEditReply = async (cId, rId) => {
+			window._nbSubmitEditReply = async (cId, rId, btn) => {
 				const text = document.getElementById('nb-edit-reply-text-' + rId)?.value.trim();
 				if (!text) return;
+				btn.disabled = true; btn.textContent = '저장 중...';
 				try {
 					await fetch('https://multimonitoring.vercel.app/api/comment', {
 						method: 'PUT',
@@ -2608,6 +2665,7 @@
 					const post = allPosts.find(p => p.id === currentPostId);
 					if (post) renderDetailBody(post);
 				} catch(e) { alert('수정 실패'); }
+				finally { btn.disabled = false; btn.textContent = '저장'; }
 			};
 
             loadPosts();
