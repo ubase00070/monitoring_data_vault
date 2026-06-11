@@ -2140,8 +2140,24 @@
     const _origCheckBrightness = checkBrightnessBar;
     setInterval(_origCheckBrightness, 1500);
     _origCheckBrightness(); // 최초 1회
-	
-	window.openBoardOverlay = async function() {
+
+    window.addEventListener('keydown', (e) => {
+        if (e.altKey && e.code === 'KeyQ') {
+			e.preventDefault();
+
+			// remote/multiple 페이지면 핸드오버 레이아웃
+			if (isHandoverPage() && localStorage.getItem('neubie_handover_enabled') !== 'false') {
+				const existing = document.getElementById('ho-remote-panel');
+				if (existing) {
+					const isOpen = existing.style.top === '0px';
+					existing.style.top = isOpen ? '-300px' : '0px';
+				} else {
+					initHandoverLayout();
+				}
+				return;
+			}
+
+            window.openBoardOverlay = async function() {
             const BOARD_API = 'https://multimonitoring.vercel.app/api/board';
             const BG_IMG = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing_isabelle.png';
 
@@ -2189,7 +2205,7 @@
 
             overlay.innerHTML = `
             <div style="width:100%; height:100%; background:rgba(10,10,30,0.72); backdrop-filter:blur(2px); display:flex; flex-direction:column; border-radius:24px;">
-                <div id="nb-board-header" style="display:flex; align-items:center; gap:8px; padding:12px 16px; border-bottom:0.5px solid rgba(255,255,255,0.12);">
+                <div style="display:flex; align-items:center; gap:8px; padding:12px 16px; border-bottom:0.5px solid rgba(255,255,255,0.12);">
                     <span style="font-size:15px; font-weight:600; color:#fff; flex:1;">📋 뉴비고 게시판</span>
                     <button id="nb-refresh-btn" style="height:28px; width:28px; background:rgba(255,255,255,0.1); color:white; border:none; border-radius:6px; cursor:pointer; font-size:14px;" title="새로고침">↺</button>
 					<button id="nb-write-btn" style="height:28px; padding:0 12px; font-size:12px; font-weight:500; background:#6366f1; color:white; border:none; border-radius:6px; cursor:pointer;">✏️ 글쓰기</button>
@@ -2262,20 +2278,6 @@
 			};
 			document.getElementById('nb-edit-submit').onclick = submitEdit;
 			document.getElementById('nb-refresh-btn').onclick = () => loadPosts();
-
-			// 드래그
-			makeDraggable(document.getElementById('nb-board-header'), overlay);
-
-			// 줌 (+/- 버튼은 없이 wheel로 간결하게)
-			overlay.addEventListener('wheel', (e) => {
-				if (!e.ctrlKey) return;
-				e.preventDefault();
-				var z = parseFloat(overlay.style.zoom || '100');
-				z = Math.min(150, Math.max(70, z + (e.deltaY < 0 ? 10 : -10)));
-				overlay.style.zoom = z + '%';
-				localStorage.setItem('nb_board_zoom', z);
-			}, { passive: false });
-			overlay.style.zoom = localStorage.getItem('nb_board_zoom') || '100%';
             document.getElementById('nb-write-btn').onclick = () => {
                 if (!myEmail) return alert('로그인 정보가 없어 글쓰기가 불가합니다.');
                 showWriteScreen();
@@ -2651,25 +2653,6 @@
 
             loadPosts();
         };
-
-    window.addEventListener('keydown', (e) => {
-        if (e.altKey && e.code === 'KeyQ') {
-			e.preventDefault();
-
-			// remote/multiple 페이지면 핸드오버 레이아웃
-			if (isHandoverPage() && localStorage.getItem('neubie_handover_enabled') !== 'false') {
-				const existing = document.getElementById('ho-remote-panel');
-				if (existing) {
-					const isOpen = existing.style.top === '0px';
-					existing.style.top = isOpen ? '-300px' : '0px';
-				} else {
-					initHandoverLayout();
-				}
-				return;
-			}
-
-			openBoardOverlay();
-			return;
 
             window.openScheduleOverlay = async function() {
             const now = new Date();
