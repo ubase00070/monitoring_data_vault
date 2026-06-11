@@ -3441,7 +3441,7 @@
 		const match = email.match(/ubase_multiple(\d+)@gmail\.com/);
 		const multiNum = match ? match[1] : '';
 		if (multiNum === _lastMultiNum) return;
-		if (!multiNum) return; // ★ 일반 계정이면 POST 안 함
+		if (!multiNum) return; // ★ 너무 매우 중요!!!!! 일반 계정이면 POST 안 함
 		_lastMultiNum = multiNum;
 		fetch('https://multimonitoring.vercel.app/api/multi_status', {
 		  method: 'POST',
