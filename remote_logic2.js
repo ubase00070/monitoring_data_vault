@@ -2303,7 +2303,7 @@
 			document.getElementById('nb-edit-submit').onclick = submitEdit;
 			document.getElementById('nb-refresh-btn').onclick = () => loadPosts();
 			// 드래그
-			const boardHeader = overlay.querySelector('#nb-board-header');
+			var boardHeader = overlay.querySelector('#nb-board-header');
 			makeDraggable(boardHeader || overlay.querySelector('div > div:first-child'), overlay);
 
 			// 줌
