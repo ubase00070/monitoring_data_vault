@@ -341,55 +341,68 @@
     const batteryPopup = createContainer('neubie-battery-popup', '380px', '20px', 'auto', '20px');
 
     function makeDraggable(handleEl, targetEl) {
-        // handleEl: 드래그를 시작할 헤더 div
-        // targetEl: 실제로 움직일 팝업 전체 div
-        let isDragging = false, startX, startY, startLeft, startTop;
+		let isDragging = false, startX, startY, startLeft, startTop, dragZoom;
 
-        handleEl.style.cursor = 'grab';
+		handleEl.style.cursor = 'grab';
 
-        handleEl.addEventListener('mousedown', (e) => {
-            // input, button, select는 드래그 제외 — 클릭 기능 보존
-            const tag = e.target.tagName;
-            if (tag === 'INPUT' || tag === 'BUTTON' || tag === 'SELECT' || tag === 'TEXTAREA' || tag === 'A') return;
+		handleEl.addEventListener('mousedown', (e) => {
+			const tag = e.target.tagName;
+			if (tag === 'INPUT' || tag === 'BUTTON' || tag === 'SELECT' || tag === 'TEXTAREA' || tag === 'A') return;
 
-            isDragging = true;
-            targetEl.dataset.dragging = 'true';
+			isDragging = true;
+			targetEl.dataset.dragging = 'true';
 
-            // transform 제거 후 실제 픽셀 위치로 전환 (최초 1회)
-            const zoom = parseFloat(targetEl.style.zoom || '100') / 100 || 1;
+			dragZoom = parseFloat(targetEl.style.zoom || '100') / 100 || 1;
 			const rect = targetEl.getBoundingClientRect();
 			targetEl.style.transform = 'none';
-			targetEl.style.left = (rect.left / zoom) + 'px';
-			targetEl.style.top = (rect.top / zoom) + 'px';
+			targetEl.style.left = (rect.left / dragZoom) + 'px';
+			targetEl.style.top = (rect.top / dragZoom) + 'px';
 			targetEl.style.right = 'auto';
 
-            startX = e.clientX;
-            startY = e.clientY;
-            startLeft = parseFloat(targetEl.style.left);
-            startTop = parseFloat(targetEl.style.top);
+			startX = e.clientX;
+			startY = e.clientY;
+			startLeft = parseFloat(targetEl.style.left);
+			startTop = parseFloat(targetEl.style.top);
 
-            handleEl.style.cursor = 'grabbing';
-            e.preventDefault(); // 헤더에서만 실행 → input/button은 위에서 이미 return됨
-        });
+			handleEl.style.cursor = 'grabbing';
+			e.preventDefault();
+		});
 
-        document.addEventListener('mousemove', (e) => {
-            if (!isDragging) return;
-            let newLeft = startLeft + (e.clientX - startX);
-            let newTop  = startTop  + (e.clientY - startY);
-            // 화면 밖 이탈 방지
-            newLeft = Math.max(0, Math.min(newLeft, (window.innerWidth - targetEl.offsetWidth * zoom)));
-			newTop  = Math.max(0, Math.min(newTop,  (window.innerHeight - targetEl.offsetHeight * zoom)));
-            targetEl.style.left = newLeft + 'px';
-            targetEl.style.top  = newTop  + 'px';
-        });
+		document.addEventListener('mousemove', (e) => {
+			if (!isDragging) return;
+			let newLeft = startLeft + (e.clientX - startX);
+			let newTop  = startTop  + (e.clientY - startY);
+			newLeft = Math.max(0, Math.min(newLeft, window.innerWidth  - targetEl.offsetWidth  * dragZoom));
+			newTop  = Math.max(0, Math.min(newTop,  window.innerHeight - targetEl.offsetHeight * dragZoom));
+			targetEl.style.left = newLeft + 'px';
+			targetEl.style.top  = newTop  + 'px';
+		});
 
-        document.addEventListener('mouseup', () => {
-            if (!isDragging) return;
-            isDragging = false;
-            targetEl.dataset.dragging = 'false';
-            handleEl.style.cursor = 'grab';
-        });
-    }
+		document.addEventListener('mouseup', () => {
+			if (!isDragging) return;
+			isDragging = false;
+			targetEl.dataset.dragging = 'false';
+			handleEl.style.cursor = 'grab';
+		});
+	}
+
+    document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        let newLeft = startLeft + (e.clientX - startX);
+        let newTop  = startTop  + (e.clientY - startY);
+        newLeft = Math.max(0, Math.min(newLeft, window.innerWidth  - targetEl.offsetWidth  * dragZoom));
+        newTop  = Math.max(0, Math.min(newTop,  window.innerHeight - targetEl.offsetHeight * dragZoom));
+        targetEl.style.left = newLeft + 'px';
+        targetEl.style.top  = newTop  + 'px';
+    });
+
+    document.addEventListener('mouseup', () => {
+        if (!isDragging) return;
+        isDragging = false;
+        targetEl.dataset.dragging = 'false';
+        handleEl.style.cursor = 'grab';
+    });
+}
 
     const injectUI = () => { 
         if (document.body) {
@@ -2213,7 +2226,7 @@
 
             overlay.innerHTML = `
             <div style="width:100%; height:100%; background:rgba(10,10,30,0.72); backdrop-filter:blur(2px); display:flex; flex-direction:column; border-radius:24px;">
-                <div style="display:flex; align-items:center; gap:8px; padding:12px 16px; border-bottom:0.5px solid rgba(255,255,255,0.12);">
+                <div id="nb-board-header" style="display:flex; align-items:center; gap:8px; padding:12px 16px; border-bottom:0.5px solid rgba(255,255,255,0.12);">
                     <span style="font-size:15px; font-weight:600; color:#fff; flex:1;">📋 뉴비고 게시판</span>
 					<button id="nb-zoom-out" style="height:28px; width:28px; background:rgba(255,255,255,0.1); color:white; border:none; border-radius:6px; cursor:pointer; font-size:14px;" title="축소">－</button>
 					<span id="nb-zoom-label" style="font-size:11px; color:rgba(255,255,255,0.5); min-width:32px; text-align:center;">100%</span>
@@ -2290,7 +2303,8 @@
 			document.getElementById('nb-edit-submit').onclick = submitEdit;
 			document.getElementById('nb-refresh-btn').onclick = () => loadPosts();
 			// 드래그
-			makeDraggable(overlay.querySelector('div'), overlay);
+			const boardHeader = overlay.querySelector('#nb-board-header');
+			makeDraggable(boardHeader || overlay.querySelector('div > div:first-child'), overlay);
 
 			// 줌
 			let nbZoom = parseInt(localStorage.getItem('nb_board_zoom') || '100');
