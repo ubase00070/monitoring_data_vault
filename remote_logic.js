@@ -108,6 +108,96 @@
         insuData: null,
     };
 
+    /* ============================================================
+    SECTION 조작자 감시 (개입 페이지 전용)
+   ============================================================ */
+    const OPERATOR_FETCH_INTERVAL = 5000;
+    const OPERATOR_FETCH_COUNT = 6;
+    const OPERATOR_PANEL_DURATION = 5000;
+    const OPERATOR_PANEL_ID = 'neubie-operator-watch-panel';
+    let _operatorFetchTimer = null;
+    let _operatorFetchDone = false;
+
+    function _getMyName() {
+        return localStorage.getItem('neubie_user_name') || null;
+    }
+    function _getRobotIdFromUrl() {
+        return new URLSearchParams(location.search).get('robot-id');
+    }
+    async function _fetchSingleRobot(robotId) {
+        const res = await fetch(`https://core.neubie.ai/robots/${robotId}/`, { credentials: 'include' });
+        return await res.json();
+    }
+    function _showOperatorPanel(name) {
+        _removeOperatorPanel();
+        const panel = document.createElement('div');
+        panel.id = OPERATOR_PANEL_ID;
+        panel.style.cssText = `
+            position:fixed; top:16px; left:60%; transform:translateX(-50%);
+            z-index:999999; pointer-events:none;
+            animation: _opFadeIn 0.2s ease;
+        `;
+        panel.innerHTML = `
+            <div style="display:flex;align-items:center;gap:10px;
+                background:rgba(18,18,36,0.97);border:1px solid #6a6aaa;
+                border-radius:24px;padding:10px 24px;
+                box-shadow:0 4px 20px rgba(0,0,0,0.5);
+                font-family:'Pretendard','Noto Sans KR',sans-serif;">
+                <span style="font-size:14px;color:#aab;">⚠️ 조작자</span>
+                <span style="font-size:18px;font-weight:700;color:#ffd080;">${name}</span>
+            </div>
+        `;
+        document.body.appendChild(panel);
+        clearTimeout(panel._hideTimer);
+        panel._hideTimer = setTimeout(() => _removeOperatorPanel(), OPERATOR_PANEL_DURATION);
+    }
+    function _removeOperatorPanel() {
+        const panel = document.getElementById(OPERATOR_PANEL_ID);
+        if (panel) { clearTimeout(panel._hideTimer); panel.remove(); }
+    }
+    function _stopOperatorWatch() {
+        if (_operatorFetchTimer) { clearInterval(_operatorFetchTimer); _operatorFetchTimer = null; }
+        _operatorFetchDone = true;
+        _removeOperatorPanel();
+    }
+    async function _startOperatorWatch() {
+        const robotId = _getRobotIdFromUrl();
+        if (!robotId) return;
+        _stopOperatorWatch();
+        _operatorFetchDone = false;
+
+        let baselineName = null;
+        try {
+            const robot = await _fetchSingleRobot(robotId);
+            baselineName = robot?.robotStatus?.lastOperatedUserName || null;
+        } catch(e) {}
+
+        if (_operatorFetchDone) return;
+
+        let fetchCount = 0;
+        const myName = _getMyName();
+
+        const doFetch = async () => {
+            if (_operatorFetchDone) { clearInterval(_operatorFetchTimer); return; }
+            fetchCount++;
+            try {
+                const robot = await _fetchSingleRobot(robotId);
+                if (_operatorFetchDone) return;
+                const currentName = robot?.robotStatus?.lastOperatedUserName || null;
+                if (currentName && currentName !== baselineName && currentName !== myName) {
+                    _showOperatorPanel(currentName);
+                    baselineName = currentName;
+                }
+            } catch(e) {}
+            if (fetchCount >= OPERATOR_FETCH_COUNT) {
+                clearInterval(_operatorFetchTimer);
+                _operatorFetchTimer = null;
+            }
+        };
+
+        _operatorFetchTimer = setInterval(doFetch, OPERATOR_FETCH_INTERVAL);
+    }
+
     const taskChannel = new BroadcastChannel('neubie_task_sync');
 
     /* ============================================================
@@ -920,8 +1010,10 @@
                 const patchItems = [
                     {
                         version: 'v1.1',
-                        date: '2026-06-06',
+                        date: '2026-06-11',
                         items: [
+							'게시판 기능 추가',
+							'개입 시 현재 패드 조작자 표기(본인 제외)',
 							'개입카드 페이지 상태 바 재배치(스크롤 바 제거)',
 							'D-PAD UP: 다음 개입 요청받기 ON/OFF',
 							'D-PAD DOWN: 자동 긴급 정지 ON/OFF',
@@ -998,6 +1090,14 @@
         titleWrap.style.cssText = "display:flex; align-items:center; gap:0;";
         titleWrap.appendChild(title);
         titleWrap.appendChild(patchBtn);
+        
+        // 게시판 버튼
+        const boardBtn = document.createElement('button');
+        boardBtn.textContent = '게시판';
+        boardBtn.style.cssText = "background:transparent; border:1px solid #475569; color:#94a3b8; padding:2px 8px; border-radius:6px; cursor:pointer; font-size:12px; margin-left:4px;";
+        boardBtn.onclick = () => openBoardOverlay();
+        titleWrap.appendChild(boardBtn);
+
         headerContainer.appendChild(titleWrap);
         headerContainer.appendChild(nameArea);
         dashboard.appendChild(headerContainer);
@@ -1539,6 +1639,8 @@
         if (tipsOverlay) tipsOverlay.style.display = 'none';
         const patchOverlay = document.getElementById('neubie-patch-overlay');
         if (patchOverlay) patchOverlay.style.display='none';
+        const boardOverlay = document.getElementById('neubie-board-overlay');
+        if (boardOverlay) boardOverlay.style.display='none';
     }
 
     // ── 유효성 검증 (1시간 이내 데이터) ──
@@ -2054,6 +2156,464 @@
 				}
 				return;
 			}
+
+            window.openBoardOverlay = async function() {
+            const BOARD_API = 'https://multimonitoring.vercel.app/api/board';
+            const BG_IMG = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing_isabelle.png';
+
+            // 현재 로그인 이메일 읽기
+            function getMyEmail() {
+                try {
+                    const lsKey = Object.keys(localStorage).find(k => k.startsWith('ph_phc_') && k.endsWith('_posthog'));
+                    if (!lsKey) return '';
+                    const ph = JSON.parse(localStorage.getItem(lsKey));
+                    const email = ph?.distinct_id || '';
+                    return (email.startsWith('ubase') && email.endsWith('@gmail.com')) ? email : '';
+                } catch(e) { return ''; }
+            }
+
+            function getMyName() { return localStorage.getItem('neubie_user_name') || '익명'; }
+            function initials(name) { return name ? name.slice(0,1) : '?'; }
+            function formatDate(iso) {
+                const d = new Date(iso);
+                return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+            }
+
+            let overlay = document.getElementById('neubie-board-overlay');
+            if (overlay) {
+				overlay.remove();
+			}
+
+            const dashboard = document.getElementById('neubie-dashboard');
+            overlay = document.createElement('div');
+            overlay.id = 'neubie-board-overlay';
+            const r = dashboard.getBoundingClientRect();
+			Object.assign(overlay.style, {
+				position: 'fixed',
+				top: r.top + 'px',
+				left: r.left + 'px',
+				width: r.width + 'px',
+				height: r.height + 'px',
+				zIndex: '1000001', display: 'flex',
+				alignItems: 'center', justifyContent: 'center',
+				backgroundImage: `url(${BG_IMG})`,
+				backgroundSize: 'cover', backgroundPosition: 'center',
+				borderRadius: '24px', overflow: 'hidden',
+				transform: 'scale(1.5)',
+				transformOrigin: 'center center',
+			});
+
+            overlay.innerHTML = `
+            <div style="width:100%; height:100%; background:rgba(10,10,30,0.72); backdrop-filter:blur(2px); display:flex; flex-direction:column; border-radius:24px;">
+                <div style="display:flex; align-items:center; gap:8px; padding:12px 16px; border-bottom:0.5px solid rgba(255,255,255,0.12);">
+                    <span style="font-size:15px; font-weight:600; color:#fff; flex:1;">📋 뉴비고 게시판</span>
+                    <button id="nb-refresh-btn" style="height:28px; width:28px; background:rgba(255,255,255,0.1); color:white; border:none; border-radius:6px; cursor:pointer; font-size:14px;" title="새로고침">↺</button>
+					<button id="nb-write-btn" style="height:28px; padding:0 12px; font-size:12px; font-weight:500; background:#6366f1; color:white; border:none; border-radius:6px; cursor:pointer;">✏️ 글쓰기</button>
+                    <button id="nb-board-close" style="background:rgba(255,255,255,0.1); border:none; color:#fff; width:26px; height:26px; border-radius:50%; cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center;">✕</button>
+                </div>
+                <div style="padding:8px 16px; display:flex; gap:8px; border-bottom:0.5px solid rgba(255,255,255,0.1);">
+                    <select id="nb-search-type" style="height:28px; font-size:12px; padding:0 6px; border-radius:6px; border:0.5px solid rgba(255,255,255,0.2); background:#1e1e3a; color:#e2e8f0; outline:none;">
+                        <option value="all">전체</option>
+                        <option value="title">제목</option>
+                        <option value="author">작성자</option>
+                    </select>
+                    <input id="nb-search-input" type="text" placeholder="검색..." style="flex:1; height:28px; font-size:12px; padding:0 10px; border-radius:6px; border:0.5px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.1); color:#fff; outline:none;">
+                </div>
+
+                <div id="nb-screen-list" style="flex:1; overflow-y:auto; padding:4px 0;"></div>
+
+                <div id="nb-screen-detail" style="display:none; flex:1; overflow-y:auto; flex-direction:column;">
+                    <div style="padding:10px 16px; border-bottom:0.5px solid rgba(255,255,255,0.1); display:flex; align-items:center; gap:8px;">
+                        <button id="nb-back-btn" style="background:rgba(255,255,255,0.1); border:none; color:#fff; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:12px;">← 목록</button>
+                        <span id="nb-detail-title-header" style="font-size:13px; color:#e2e8f0; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
+						<button id="nb-edit-post-btn" style="display:none; background:rgba(99,102,241,0.2); border:1px solid rgba(99,102,241,0.4); color:#a5b4fc; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:12px;">수정</button>
+                        <button id="nb-delete-post-btn" style="display:none; background:rgba(239,68,68,0.2); border:1px solid rgba(239,68,68,0.4); color:#fca5a5; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:12px;">삭제</button>
+                    </div>
+                    <div id="nb-detail-body" style="padding:16px; flex:1; overflow-y:auto;"></div>
+                </div>
+
+                <div id="nb-screen-write" style="display:none; flex-direction:column; flex:1;">
+                    <div style="padding:10px 16px; border-bottom:0.5px solid rgba(255,255,255,0.1); display:flex; align-items:center; gap:8px;">
+                        <button id="nb-write-cancel" style="background:rgba(255,255,255,0.1); border:none; color:#fff; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:12px;">← 취소</button>
+                        <span style="font-size:13px; color:#e2e8f0; flex:1;">새 글 작성</span>
+                        <button id="nb-write-submit" style="background:#6366f1; border:none; color:white; padding:4px 14px; border-radius:6px; cursor:pointer; font-size:12px; font-weight:500;">등록</button>
+                    </div>
+                    <div style="padding:16px; display:flex; flex-direction:column; gap:10px; flex:1;">
+                        <input id="nb-write-title" type="text" placeholder="제목" style="height:36px; font-size:13px; padding:0 10px; border-radius:6px; border:0.5px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.08); color:#fff; outline:none;">
+                        <textarea id="nb-write-content" placeholder="내용을 입력하세요..." style="flex:1; min-height:100px; font-size:13px; padding:10px; border-radius:6px; border:0.5px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.08); color:#fff; outline:none; resize:none; font-family:inherit;"></textarea>
+                    </div>
+                </div>
+				
+				<div id="nb-screen-edit" style="display:none; flex-direction:column; flex:1;">
+                    <div style="padding:10px 16px; border-bottom:0.5px solid rgba(255,255,255,0.1); display:flex; align-items:center; gap:8px;">
+                        <button id="nb-edit-cancel" style="background:rgba(255,255,255,0.1); border:none; color:#fff; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:12px;">← 취소</button>
+                        <span style="font-size:13px; color:#e2e8f0; flex:1;">글 수정</span>
+                        <button id="nb-edit-submit" style="background:#6366f1; border:none; color:white; padding:4px 14px; border-radius:6px; cursor:pointer; font-size:12px; font-weight:500;">저장</button>
+                    </div>
+                    <div style="padding:16px; display:flex; flex-direction:column; gap:10px; flex:1;">
+                        <input id="nb-edit-title" type="text" placeholder="제목" style="height:36px; font-size:13px; padding:0 10px; border-radius:6px; border:0.5px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.08); color:#fff; outline:none;">
+                        <textarea id="nb-edit-content" placeholder="내용" style="flex:1; min-height:100px; font-size:13px; padding:10px; border-radius:6px; border:0.5px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.08); color:#fff; outline:none; resize:none; font-family:inherit;"></textarea>
+                    </div>
+                </div>
+
+                <div style="padding:6px 16px; border-top:0.5px solid rgba(255,255,255,0.1); text-align:right;">
+                    <span id="nb-user-badge" style="font-size:11px; color:rgba(255,255,255,0.5);"></span>
+                </div>
+            </div>`;
+
+            document.body.appendChild(overlay);
+
+            let allPosts = [];
+            let currentPostId = null;
+            const myEmail = getMyEmail();
+            const myName = getMyName();
+
+            document.getElementById('nb-user-badge').textContent = myEmail ? `${myName} (${myEmail})` : '⚠️ 로그인 정보 없음 — 읽기 전용';
+            document.getElementById('nb-board-close').onclick = () => { overlay.style.display = 'none'; };
+            document.getElementById('nb-back-btn').onclick = () => showList();
+            document.getElementById('nb-write-cancel').onclick = () => showList();
+			document.getElementById('nb-edit-cancel').onclick = () => {
+				const post = allPosts.find(p => p.id === currentPostId);
+				if (post) showDetail(post);
+			};
+			document.getElementById('nb-edit-submit').onclick = submitEdit;
+			document.getElementById('nb-refresh-btn').onclick = () => loadPosts();
+            document.getElementById('nb-write-btn').onclick = () => {
+                if (!myEmail) return alert('로그인 정보가 없어 글쓰기가 불가합니다.');
+                showWriteScreen();
+            };
+            document.getElementById('nb-write-submit').onclick = submitPost;
+            document.getElementById('nb-search-input').oninput = filterPosts;
+            document.getElementById('nb-search-type').onchange = filterPosts;
+
+            function showList() {
+                document.getElementById('nb-screen-list').style.display = 'block';
+                document.getElementById('nb-screen-detail').style.display = 'none';
+                document.getElementById('nb-screen-write').style.display = 'none';
+                renderList(allPosts);
+            }
+
+            function showWriteScreen() {
+                document.getElementById('nb-screen-list').style.display = 'none';
+                document.getElementById('nb-screen-detail').style.display = 'none';
+                document.getElementById('nb-screen-write').style.display = 'flex';
+                document.getElementById('nb-write-title').value = '';
+                document.getElementById('nb-write-content').value = '';
+            }
+
+            function showDetail(post) {
+                document.getElementById('nb-screen-list').style.display = 'none';
+                document.getElementById('nb-screen-write').style.display = 'none';
+				document.getElementById('nb-screen-edit').style.display = 'none';
+				const editBtn = document.getElementById('nb-edit-post-btn');
+				editBtn.style.display = (myEmail && post.email === myEmail) ? 'block' : 'none';
+				editBtn.onclick = () => showEditScreen(post);
+                const det = document.getElementById('nb-screen-detail');
+                det.style.display = 'flex';
+                document.getElementById('nb-detail-title-header').textContent = post.title;
+                const delBtn = document.getElementById('nb-delete-post-btn');
+                delBtn.style.display = (myEmail && post.email === myEmail) ? 'block' : 'none';
+                delBtn.onclick = () => deletePost(post.id);
+                renderDetailBody(post);
+            }
+
+            function renderList(posts) {
+                const el = document.getElementById('nb-screen-list');
+                if (!posts.length) {
+                    el.innerHTML = `<div style="text-align:center; padding:40px 16px; color:rgba(255,255,255,0.4); font-size:13px;">게시글이 없습니다</div>`;
+                    return;
+                }
+                el.innerHTML = posts.map(p => `
+                    <div onclick="window._nbOpenPost('${p.id}')" style="display:flex; align-items:center; gap:10px; padding:10px 16px; border-bottom:0.5px solid rgba(255,255,255,0.07); cursor:pointer; transition:background 0.12s;" onmouseenter="this.style.background='rgba(255,255,255,0.06)'" onmouseleave="this.style.background='transparent'">
+                        <div style="width:30px; height:30px; border-radius:50%; background:rgba(99,102,241,0.3); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:600; color:#a5b4fc; flex-shrink:0;">${initials(p.author)}</div>
+                        <div style="flex:1; min-width:0;">
+                            <div style="font-size:13px; font-weight:500; color:#f1f5f9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${p.title}</div>
+                            <div style="font-size:11px; color:rgba(255,255,255,0.45); margin-top:2px;">${p.author} · ${formatDate(p.createdAt)}</div>
+                        </div>
+                        ${(p.commentCount||0) > 0 ? `<span style="font-size:11px; color:#a5b4fc; background:rgba(99,102,241,0.2); padding:2px 7px; border-radius:10px; white-space:nowrap;">💬 ${p.commentCount}</span>` : ''}
+                    </div>
+                `).join('');
+            }
+
+            function renderDetailBody(post) {
+                const comments = post.comments || [];
+                const totalComments = comments.reduce((a,c) => a + 1 + (c.replies||[]).length, 0);
+                document.getElementById('nb-detail-body').innerHTML = `
+                    <h2 style="font-size:15px; font-weight:600; color:#f1f5f9; margin:0 0 8px;">${post.title}</h2>
+                    <div style="font-size:12px; color:rgba(255,255,255,0.45); margin-bottom:14px; display:flex; gap:12px;">
+                        <span>👤 ${post.author}</span>
+                        <span>📅 ${formatDate(post.createdAt)}</span>
+                    </div>
+                    <div style="font-size:13px; color:#e2e8f0; line-height:1.7; padding:14px; background:rgba(255,255,255,0.07); border-radius:10px; margin-bottom:20px; white-space:pre-wrap;">${post.content}</div>
+                    <div style="font-size:13px; font-weight:500; color:rgba(255,255,255,0.6); margin-bottom:12px;">💬 댓글 ${totalComments}개</div>
+                    ${comments.map(c => `
+                        <div style="display:flex; gap:8px; margin-bottom:14px;">
+                            <div style="width:26px; height:26px; border-radius:50%; background:rgba(99,102,241,0.25); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600; color:#a5b4fc; flex-shrink:0;">${initials(c.author)}</div>
+                            <div style="flex:1;">
+                                <div style="font-size:12px; font-weight:500; color:#f1f5f9;">${c.author}</div>
+                                <div style="font-size:13px; color:#e2e8f0; margin:3px 0; line-height:1.6;">${c.text}</div>
+                                <div style="display:flex; align-items:center; gap:10px; margin-top:4px;">
+                                    <span style="font-size:11px; color:rgba(255,255,255,0.35);">${formatDate(c.createdAt)}</span>
+                                    ${myEmail ? `<button onclick="window._nbToggleReply('${c.id}')" style="background:none;border:none;font-size:11px;color:#a5b4fc;cursor:pointer;padding:0;">↩ 답글</button>` : ''}
+                                    ${(myEmail && c.email === myEmail) ? `<button onclick="window._nbDeleteComment('${c.id}')" style="background:none;border:none;font-size:11px;color:rgba(239,68,68,0.7);cursor:pointer;padding:0;">삭제</button><button onclick="window._nbToggleEditComment('${c.id}','${c.text}')" style="background:none;border:none;font-size:11px;color:#a5b4fc;cursor:pointer;padding:0;">수정</button>` : ''}
+                                </div>
+                                ${(c.replies||[]).map(r => `
+                                    <div style="display:flex; gap:8px; margin-top:10px; padding-left:8px; border-left:2px solid rgba(99,102,241,0.3);">
+                                        <div style="width:20px; height:20px; border-radius:50%; background:rgba(99,102,241,0.2); display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:600; color:#a5b4fc; flex-shrink:0;">${initials(r.author)}</div>
+                                        <div style="flex:1;">
+                                            <div style="font-size:11px; font-weight:500; color:#f1f5f9;">${r.author}</div>
+                                            <div style="font-size:12px; color:#e2e8f0; margin:2px 0;">${r.text}</div>
+                                            <div style="display:flex; align-items:center; gap:8px; margin-top:3px;">
+                                                <span style="font-size:10px; color:rgba(255,255,255,0.3);">${formatDate(r.createdAt)}</span>
+                                                ${(myEmail && r.email === myEmail) ? `<button onclick="window._nbDeleteReply('${c.id}','${r.id}')" style="background:none;border:none;font-size:10px;color:rgba(239,68,68,0.6);cursor:pointer;padding:0;">삭제</button><button onclick="window._nbToggleEditReply('${c.id}','${r.id}','${r.text}')" style="background:none;border:none;font-size:10px;color:#a5b4fc;cursor:pointer;padding:0;">수정</button>` : ''}
+                                            </div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                                <div id="nb-reply-box-${c.id}" style="display:none; margin-top:8px;">
+                                    <textarea id="nb-reply-text-${c.id}" placeholder="답글..." style="width:100%; height:52px; font-size:12px; padding:6px 8px; border-radius:6px; border:0.5px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.08); color:#fff; outline:none; resize:none; box-sizing:border-box; font-family:inherit;"></textarea>
+                                    <div style="display:flex; justify-content:flex-end; gap:6px; margin-top:6px;">
+                                        <button onclick="window._nbToggleReply('${c.id}')" style="height:26px;padding:0 10px;font-size:11px;background:rgba(255,255,255,0.1);border:none;color:#fff;border-radius:6px;cursor:pointer;">취소</button>
+                                        <button onclick="window._nbSubmitReply('${c.id}')" style="height:26px;padding:0 10px;font-size:11px;background:#6366f1;border:none;color:white;border-radius:6px;cursor:pointer;font-weight:500;">등록</button>
+                                    </div>
+                                </div>
+								<div id="nb-edit-reply-box-${r.id}" style="display:none; margin-top:6px;">
+									<textarea id="nb-edit-reply-text-${r.id}" style="width:100%; height:46px; font-size:11px; padding:6px 8px; border-radius:6px; border:0.5px solid rgba(99,102,241,0.4); background:rgba(255,255,255,0.08); color:#fff; outline:none; resize:none; box-sizing:border-box; font-family:inherit;"></textarea>
+									<div style="display:flex; justify-content:flex-end; gap:6px; margin-top:4px;">
+										<button onclick="window._nbToggleEditReply('${c.id}','${r.id}')" style="height:24px;padding:0 8px;font-size:10px;background:rgba(255,255,255,0.1);border:none;color:#fff;border-radius:6px;cursor:pointer;">취소</button>
+										<button onclick="window._nbSubmitEditReply('${c.id}','${r.id}')" style="height:24px;padding:0 8px;font-size:10px;background:#6366f1;border:none;color:white;border-radius:6px;cursor:pointer;font-weight:500;">저장</button>
+									</div>
+								</div>
+								<div id="nb-edit-comment-box-${c.id}" style="display:none; margin-top:8px;">
+									<textarea id="nb-edit-comment-text-${c.id}" style="width:100%; height:52px; font-size:12px; padding:6px 8px; border-radius:6px; border:0.5px solid rgba(99,102,241,0.4); background:rgba(255,255,255,0.08); color:#fff; outline:none; resize:none; box-sizing:border-box; font-family:inherit;"></textarea>
+									<div style="display:flex; justify-content:flex-end; gap:6px; margin-top:6px;">
+										<button onclick="window._nbToggleEditComment('${c.id}')" style="height:26px;padding:0 10px;font-size:11px;background:rgba(255,255,255,0.1);border:none;color:#fff;border-radius:6px;cursor:pointer;">취소</button>
+										<button onclick="window._nbSubmitEditComment('${c.id}')" style="height:26px;padding:0 10px;font-size:11px;background:#6366f1;border:none;color:white;border-radius:6px;cursor:pointer;font-weight:500;">저장</button>
+									</div>
+								</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                    ${myEmail ? `
+                    <div style="margin-top:16px; border-top:0.5px solid rgba(255,255,255,0.1); padding-top:14px;">
+                        <textarea id="nb-comment-input" placeholder="댓글을 입력하세요..." style="width:100%; height:64px; font-size:13px; padding:8px 10px; border-radius:6px; border:0.5px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.08); color:#fff; outline:none; resize:none; box-sizing:border-box; font-family:inherit;"></textarea>
+                        <div style="display:flex; justify-content:flex-end; margin-top:8px;">
+                            <button onclick="window._nbSubmitComment()" style="height:30px;padding:0 16px;font-size:12px;font-weight:500;background:#6366f1;border:none;color:white;border-radius:6px;cursor:pointer;">댓글 등록</button>
+                        </div>
+                    </div>` : `<div style="text-align:center; padding:16px; font-size:12px; color:rgba(255,255,255,0.35); border-top:0.5px solid rgba(255,255,255,0.1); margin-top:16px;">로그인 정보가 없어 댓글을 달 수 없습니다</div>`}
+                `;
+            }
+
+            function filterPosts() {
+                const q = document.getElementById('nb-search-input').value.trim().toLowerCase();
+                const type = document.getElementById('nb-search-type').value;
+                if (!q) { renderList(allPosts); return; }
+                const filtered = allPosts.filter(p => {
+                    if (type === 'title') return p.title.toLowerCase().includes(q);
+                    if (type === 'author') return p.author.toLowerCase().includes(q);
+                    return p.title.toLowerCase().includes(q) || p.author.toLowerCase().includes(q);
+                });
+                renderList(filtered);
+            }
+
+            async function loadPosts() {
+				const listEl = document.getElementById('nb-screen-list');
+				if (!listEl) return;
+				listEl.innerHTML = `<div style="text-align:center; padding:40px; color:rgba(255,255,255,0.4); font-size:13px;">불러오는 중...</div>`;
+				try {
+					const res = await fetch('https://multimonitoring.vercel.app/api/board?t=' + Date.now());
+					const data = await res.json();
+					allPosts = data.posts || [];
+					showList();
+				} catch(e) {
+					document.getElementById('nb-screen-list').innerHTML = `<div style="text-align:center; padding:40px; color:rgba(239,68,68,0.7); font-size:13px;">불러오기 실패: ${e.message}</div>`;
+				}
+			}
+
+            async function submitPost() {
+                const title = document.getElementById('nb-write-title').value.trim();
+                const content = document.getElementById('nb-write-content').value.trim();
+                if (!title || !content) return;
+                try {
+                    await fetch('https://multimonitoring.vercel.app/api/board', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: myEmail, author: myName, title, content })
+                    });
+                    await loadPosts();
+                } catch(e) { alert('등록 실패'); }
+            }
+			
+			function showEditScreen(post) {
+				document.getElementById('nb-screen-list').style.display = 'none';
+				document.getElementById('nb-screen-detail').style.display = 'none';
+				document.getElementById('nb-screen-write').style.display = 'none';
+				document.getElementById('nb-screen-edit').style.display = 'flex';
+				document.getElementById('nb-edit-title').value = post.title;
+				document.getElementById('nb-edit-content').value = post.content;
+			}
+
+			async function submitEdit() {
+				const title = document.getElementById('nb-edit-title').value.trim();
+				const content = document.getElementById('nb-edit-content').value.trim();
+				if (!title || !content) return;
+				try {
+					await fetch('https://multimonitoring.vercel.app/api/board', {
+						method: 'PUT',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ email: myEmail, id: currentPostId, title, content })
+					});
+					await loadPosts();
+					const post = allPosts.find(p => p.id === currentPostId);
+					if (post) showDetail(post);
+				} catch(e) { alert('수정 실패'); }
+			}
+
+            async function deletePost(id) {
+                if (!confirm('삭제하시겠습니까?')) return;
+                try {
+                    await fetch('https://multimonitoring.vercel.app/api/board', {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: myEmail, id })
+                    });
+                    await loadPosts();
+                } catch(e) { alert('삭제 실패'); }
+            }
+
+            window._nbOpenPost = (id) => {
+                currentPostId = id;
+                const post = allPosts.find(p => p.id === id);
+                if (post) showDetail(post);
+            };
+
+            window._nbToggleReply = (cId) => {
+                const box = document.getElementById('nb-reply-box-' + cId);
+                if (box) box.style.display = box.style.display === 'none' ? 'block' : 'none';
+            };
+
+            window._nbSubmitComment = async () => {
+                const text = document.getElementById('nb-comment-input')?.value.trim();
+                if (!text) return;
+                try {
+                    await fetch('https://multimonitoring.vercel.app/api/comment', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: myEmail, author: myName, postId: currentPostId, text })
+                    });
+                    const res = await fetch('https://multimonitoring.vercel.app/api/board?t=' + Date.now());
+                    const data = await res.json();
+                    allPosts = data.posts || [];
+                    const post = allPosts.find(p => p.id === currentPostId);
+                    if (post) renderDetailBody(post);
+                } catch(e) { alert('댓글 등록 실패'); }
+            };
+
+            window._nbSubmitReply = async (cId) => {
+                const text = document.getElementById('nb-reply-text-' + cId)?.value.trim();
+                if (!text) return;
+                try {
+                    await fetch('https://multimonitoring.vercel.app/api/comment', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: myEmail, author: myName, postId: currentPostId, commentId: cId, text })
+                    });
+                    const res = await fetch('https://multimonitoring.vercel.app/api/board?t=' + Date.now());
+                    const data = await res.json();
+                    allPosts = data.posts || [];
+                    const post = allPosts.find(p => p.id === currentPostId);
+                    if (post) renderDetailBody(post);
+                } catch(e) { alert('답글 등록 실패'); }
+            };
+
+            window._nbDeleteComment = async (cId) => {
+                if (!confirm('댓글을 삭제하시겠습니까?')) return;
+                try {
+                    await fetch('https://multimonitoring.vercel.app/api/comment', {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: myEmail, postId: currentPostId, commentId: cId })
+                    });
+                    const res = await fetch('https://multimonitoring.vercel.app/api/board?t=' + Date.now());
+                    const data = await res.json();
+                    allPosts = data.posts || [];
+                    const post = allPosts.find(p => p.id === currentPostId);
+                    if (post) renderDetailBody(post);
+                } catch(e) { alert('삭제 실패'); }
+            };
+
+            window._nbDeleteReply = async (cId, rId) => {
+                if (!confirm('답글을 삭제하시겠습니까?')) return;
+                try {
+                    await fetch('https://multimonitoring.vercel.app/api/comment', {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: myEmail, postId: currentPostId, commentId: cId, replyId: rId })
+                    });
+                    const res = await fetch('https://multimonitoring.vercel.app/api/board?t=' + Date.now());
+                    const data = await res.json();
+                    allPosts = data.posts || [];
+                    const post = allPosts.find(p => p.id === currentPostId);
+                    if (post) renderDetailBody(post);
+                } catch(e) { alert('삭제 실패'); }
+            };
+			
+			window._nbToggleEditComment = (cId, originalText) => {
+				const box = document.getElementById('nb-edit-comment-box-' + cId);
+				if (!box) return;
+				const isOpen = box.style.display !== 'none';
+				box.style.display = isOpen ? 'none' : 'block';
+				if (!isOpen && originalText) {
+					document.getElementById('nb-edit-comment-text-' + cId).value = originalText;
+				}
+			};
+
+			window._nbSubmitEditComment = async (cId) => {
+				const text = document.getElementById('nb-edit-comment-text-' + cId)?.value.trim();
+				if (!text) return;
+				try {
+					await fetch('https://multimonitoring.vercel.app/api/comment', {
+						method: 'PUT',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ email: myEmail, postId: currentPostId, commentId: cId, text })
+					});
+					const res = await fetch('https://multimonitoring.vercel.app/api/board?t=' + Date.now());
+					const data = await res.json();
+					allPosts = data.posts || [];
+					const post = allPosts.find(p => p.id === currentPostId);
+					if (post) renderDetailBody(post);
+				} catch(e) { alert('수정 실패'); }
+			};
+
+			window._nbToggleEditReply = (cId, rId, originalText) => {
+				const box = document.getElementById('nb-edit-reply-box-' + rId);
+				if (!box) return;
+				const isOpen = box.style.display !== 'none';
+				box.style.display = isOpen ? 'none' : 'block';
+				if (!isOpen && originalText) {
+					document.getElementById('nb-edit-reply-text-' + rId).value = originalText;
+				}
+			};
+
+			window._nbSubmitEditReply = async (cId, rId) => {
+				const text = document.getElementById('nb-edit-reply-text-' + rId)?.value.trim();
+				if (!text) return;
+				try {
+					await fetch('https://multimonitoring.vercel.app/api/comment', {
+						method: 'PUT',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ email: myEmail, postId: currentPostId, commentId: cId, replyId: rId, text })
+					});
+					const res = await fetch('https://multimonitoring.vercel.app/api/board?t=' + Date.now());
+					const data = await res.json();
+					allPosts = data.posts || [];
+					const post = allPosts.find(p => p.id === currentPostId);
+					if (post) renderDetailBody(post);
+				} catch(e) { alert('수정 실패'); }
+			};
+
+            loadPosts();
+        };
 
             window.openScheduleOverlay = async function() {
             const now = new Date();
@@ -2647,6 +3207,12 @@
 				setTimeout(() => patchDrivingPageLayout(), 1500);
                 setTimeout(() => patchDrivingPageLayout(), 3000);
 				setTimeout(() => patchDrivingPageLayout(), 6000);
+
+                if (/\/driving\/\d+/.test(location.pathname)) {
+                    _startOperatorWatch();
+                } else {
+                    _stopOperatorWatch();
+                }
             }
         }, 100);
     }, true);
@@ -2668,6 +3234,12 @@
 			setTimeout(() => patchDrivingPageLayout(), 1500);
             setTimeout(() => patchDrivingPageLayout(), 3000);
 			setTimeout(() => patchDrivingPageLayout(), 6000);
+
+            if (/\/driving\/\d+/.test(location.pathname)) {
+                _startOperatorWatch();
+            } else {
+                _stopOperatorWatch();
+            }
         }
     }, 2000); // 2초 정도면 충분히 여유로움
 	
