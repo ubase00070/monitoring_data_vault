@@ -2202,7 +2202,7 @@
                     <button id="nb-board-close" style="background:rgba(255,255,255,0.1); border:none; color:#fff; width:26px; height:26px; border-radius:50%; cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center;">✕</button>
                 </div>
                 <div style="padding:8px 16px; display:flex; gap:8px; border-bottom:0.5px solid rgba(255,255,255,0.1);">
-                    <select id="nb-search-type" style="height:28px; font-size:12px; padding:0 6px; border-radius:6px; border:0.5px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.1); color:#fff; outline:none;">
+                    <select id="nb-search-type" style="height:28px; font-size:12px; padding:0 6px; border-radius:6px; border:0.5px solid rgba(255,255,255,0.2); background:#1e1e3a; color:#e2e8f0; outline:none;">
                         <option value="all">전체</option>
                         <option value="title">제목</option>
                         <option value="author">작성자</option>
@@ -2375,7 +2375,10 @@
                     const res = await fetch('https://multimonitoring.vercel.app/api/board?t=' + Date.now());
                     const data = await res.json();
                     allPosts = data.posts || [];
-                    showList();
+					document.getElementById('nb-screen-list').style.display = 'block';
+					document.getElementById('nb-screen-detail').style.display = 'none';
+					document.getElementById('nb-screen-write').style.display = 'none';
+					renderList(allPosts);
                 } catch(e) {
                     document.getElementById('nb-screen-list').innerHTML = `<div style="text-align:center; padding:40px; color:rgba(239,68,68,0.7); font-size:13px;">불러오기 실패</div>`;
                 }
