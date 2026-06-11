@@ -2393,8 +2393,9 @@
 					document.getElementById('nb-screen-write').style.display = 'none';
 					renderList(allPosts);
                 } catch(e) {
-                    document.getElementById('nb-screen-list').innerHTML = `<div style="text-align:center; padding:40px; color:rgba(239,68,68,0.7); font-size:13px;">불러오기 실패</div>`;
-                }
+					console.log('loadPosts 에러:', e.message, e);
+					document.getElementById('nb-screen-list').innerHTML = `<div style="text-align:center; padding:40px; color:rgba(239,68,68,0.7); font-size:13px;">불러오기 실패: ${e.message}</div>`;
+				}
             }
 
             async function submitPost() {
