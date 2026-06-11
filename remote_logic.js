@@ -967,8 +967,8 @@
         patchBtn.title = '패치노트';
         patchBtn.style.cssText = `
             background:transparent; border:1px solid #555; color:#aaa;
-            border-radius:6px; padding:2px 6px; cursor:pointer;
-            font-size:12px; margin-left:6px; vertical-align:middle;
+            border-radius:6px; padding:4px 10px; cursor:pointer;
+            font-size:14px; margin-left:6px; vertical-align:middle;
             transition:all 0.2s;
             animation: neubie-blink 1.5s ease-in-out infinite;
         `;
@@ -1094,7 +1094,7 @@
         // 게시판 버튼
         const boardBtn = document.createElement('button');
         boardBtn.textContent = '게시판';
-        boardBtn.style.cssText = "background:transparent; border:1px solid #475569; color:#ffffff; padding:2px 8px; border-radius:6px; cursor:pointer; font-size:12px; margin-left:4px;";
+        boardBtn.style.cssText = "background:transparent; border:1px solid #475569; color:#ffffff; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:14px; margin-left:4px;";
         boardBtn.onclick = () => openBoardOverlay();
         titleWrap.appendChild(boardBtn);
 
