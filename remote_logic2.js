@@ -1012,8 +1012,8 @@
                         version: 'v1.1',
                         date: '2026-06-11',
                         items: [
-							'게시판 기능 추가',
-							'개입 시 현재 패드 조작자 표기(본인 제외)',
+							'게시판 기능',
+							'개입카드 페이지에서 현재 기체 조작자 표기(본인 제외)',
 							'개입카드 페이지 상태 바 재배치(스크롤 바 제거)',
 							'D-PAD UP: 다음 개입 요청받기 ON/OFF',
 							'D-PAD DOWN: 자동 긴급 정지 ON/OFF',
@@ -1021,7 +1021,6 @@
 							'D-PAD RIGHT: 카메라 밝기 올리기',
                             '다중 관제 카메라 밝기 한 번에 조절',
 							'다중 관제 카메라 위치 드래그로 변경',
-							'교대 기체 자동 받기(최대 6대)',
                         ]
                     },
                 ];
@@ -3442,7 +3441,7 @@
 		const match = email.match(/ubase_multiple(\d+)@gmail\.com/);
 		const multiNum = match ? match[1] : '';
 		if (multiNum === _lastMultiNum) return;
-		if (!multiNum) return; // ★ 일반 계정이면 POST 안 함
+		if (!multiNum) return; // ★ 너무 매우 중요!!!!! 일반 계정이면 POST 안 함
 		_lastMultiNum = multiNum;
 		fetch('https://multimonitoring.vercel.app/api/multi_status', {
 		  method: 'POST',
