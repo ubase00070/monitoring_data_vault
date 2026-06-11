@@ -2179,13 +2179,7 @@
 
             let overlay = document.getElementById('neubie-board-overlay');
             if (overlay) {
-				overlay.style.display = 'flex';
-				// 내부 화면 상태 초기화
-				document.getElementById('nb-screen-list').style.display = 'block';
-				document.getElementById('nb-screen-detail').style.display = 'none';
-				document.getElementById('nb-screen-write').style.display = 'none';
-				loadPosts();
-				return;
+				overlay.remove();
 			}
 
             const dashboard = document.getElementById('neubie-dashboard');
