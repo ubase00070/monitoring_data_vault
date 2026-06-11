@@ -1094,7 +1094,7 @@
         // 게시판 버튼
         const boardBtn = document.createElement('button');
         boardBtn.textContent = '게시판';
-        boardBtn.style.cssText = "background:transparent; border:1px solid #475569; color:#94a3b8; padding:2px 8px; border-radius:6px; cursor:pointer; font-size:12px; margin-left:4px;";
+        boardBtn.style.cssText = "background:transparent; border:1px solid #475569; color:#ffffff; padding:2px 8px; border-radius:6px; cursor:pointer; font-size:12px; margin-left:4px;";
         boardBtn.onclick = () => openBoardOverlay();
         titleWrap.appendChild(boardBtn);
 
