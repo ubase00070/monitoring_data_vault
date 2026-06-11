@@ -5611,7 +5611,7 @@
       }
     },
     {
-      "name": "신입",
+      "name": "김도형",
       "shiftType": "야간1",
       "workTime": "",
       "schedule": {
@@ -5676,124 +5676,124 @@
           "raw": ""
         },
         "6/11": {
-          "status": "empty",
-          "working": false,
-          "present": false,
-          "raw": ""
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "6/12": {
-          "status": "empty",
-          "working": false,
-          "present": false,
-          "raw": ""
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "6/13": {
-          "status": "empty",
+          "status": "off",
           "working": false,
           "present": false,
-          "raw": ""
+          "raw": "휴무"
         },
         "6/14": {
-          "status": "empty",
+          "status": "off",
           "working": false,
           "present": false,
-          "raw": ""
+          "raw": "휴무"
         },
         "6/15": {
-          "status": "empty",
-          "working": false,
-          "present": false,
-          "raw": ""
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "6/16": {
-          "status": "empty",
-          "working": false,
-          "present": false,
-          "raw": ""
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "6/17": {
-          "status": "empty",
-          "working": false,
-          "present": false,
-          "raw": ""
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "6/18": {
-          "status": "empty",
-          "working": false,
-          "present": false,
-          "raw": ""
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "6/19": {
-          "status": "empty",
-          "working": false,
-          "present": false,
-          "raw": ""
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "6/20": {
-          "status": "empty",
+          "status": "off",
           "working": false,
           "present": false,
-          "raw": ""
+          "raw": "휴무"
         },
         "6/21": {
-          "status": "empty",
+          "status": "off",
           "working": false,
           "present": false,
-          "raw": ""
+          "raw": "휴무"
         },
         "6/22": {
-          "status": "empty",
-          "working": false,
-          "present": false,
-          "raw": ""
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "6/23": {
-          "status": "empty",
-          "working": false,
-          "present": false,
-          "raw": ""
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "6/24": {
-          "status": "empty",
-          "working": false,
-          "present": false,
-          "raw": ""
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "6/25": {
-          "status": "empty",
-          "working": false,
-          "present": false,
-          "raw": ""
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "6/26": {
-          "status": "empty",
-          "working": false,
-          "present": false,
-          "raw": ""
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "6/27": {
-          "status": "empty",
+          "status": "off",
           "working": false,
           "present": false,
-          "raw": ""
+          "raw": "휴무"
         },
         "6/28": {
-          "status": "empty",
+          "status": "off",
           "working": false,
           "present": false,
-          "raw": ""
+          "raw": "휴무"
         },
         "6/29": {
-          "status": "empty",
-          "working": false,
-          "present": false,
-          "raw": ""
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "6/30": {
-          "status": "empty",
-          "working": false,
-          "present": false,
-          "raw": ""
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         }
       }
     },
@@ -7888,6 +7888,6 @@
     "6/30"
   ],
   "mainMonth": 6,
-  "updatedAt": "2026-06-10T03:53:20.783Z",
+  "updatedAt": "2026-06-11T03:53:03.715Z",
   "sheetName": "2026년_06월 스케줄"
 }
