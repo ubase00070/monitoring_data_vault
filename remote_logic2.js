@@ -2140,24 +2140,8 @@
     const _origCheckBrightness = checkBrightnessBar;
     setInterval(_origCheckBrightness, 1500);
     _origCheckBrightness(); // 최초 1회
-
-    window.addEventListener('keydown', (e) => {
-        if (e.altKey && e.code === 'KeyQ') {
-			e.preventDefault();
-
-			// remote/multiple 페이지면 핸드오버 레이아웃
-			if (isHandoverPage() && localStorage.getItem('neubie_handover_enabled') !== 'false') {
-				const existing = document.getElementById('ho-remote-panel');
-				if (existing) {
-					const isOpen = existing.style.top === '0px';
-					existing.style.top = isOpen ? '-300px' : '0px';
-				} else {
-					initHandoverLayout();
-				}
-				return;
-			}
-
-            window.openBoardOverlay = async function() {
+	
+	window.openBoardOverlay = async function() {
             const BOARD_API = 'https://multimonitoring.vercel.app/api/board';
             const BG_IMG = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing_isabelle.png';
 
@@ -2667,6 +2651,25 @@
 
             loadPosts();
         };
+
+    window.addEventListener('keydown', (e) => {
+        if (e.altKey && e.code === 'KeyQ') {
+			e.preventDefault();
+
+			// remote/multiple 페이지면 핸드오버 레이아웃
+			if (isHandoverPage() && localStorage.getItem('neubie_handover_enabled') !== 'false') {
+				const existing = document.getElementById('ho-remote-panel');
+				if (existing) {
+					const isOpen = existing.style.top === '0px';
+					existing.style.top = isOpen ? '-300px' : '0px';
+				} else {
+					initHandoverLayout();
+				}
+				return;
+			}
+
+			openBoardOverlay();
+			return;
 
             window.openScheduleOverlay = async function() {
             const now = new Date();
