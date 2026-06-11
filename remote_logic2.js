@@ -2383,20 +2383,26 @@
             }
 
             async function loadPosts() {
-                document.getElementById('nb-screen-list').innerHTML = `<div style="text-align:center; padding:40px; color:rgba(255,255,255,0.4); font-size:13px;">불러오는 중...</div>`;
-                try {
-                    const res = await fetch('https://multimonitoring.vercel.app/api/board?t=' + Date.now());
-                    const data = await res.json();
-                    allPosts = data.posts || [];
-					document.getElementById('nb-screen-list').style.display = 'block';
-					document.getElementById('nb-screen-detail').style.display = 'none';
-					document.getElementById('nb-screen-write').style.display = 'none';
-					renderList(allPosts);
-                } catch(e) {
-					console.log('loadPosts 에러:', e.message, e);
+				console.log('[board] loadPosts 시작');
+				const listEl = document.getElementById('nb-screen-list');
+				console.log('[board] listEl:', listEl);
+				if (!listEl) { console.log('[board] listEl 없음!'); return; }
+				listEl.innerHTML = `<div style="text-align:center; padding:40px; color:rgba(255,255,255,0.4); font-size:13px;">불러오는 중...</div>`;
+				try {
+					console.log('[board] fetch 시작');
+					const res = await fetch('https://multimonitoring.vercel.app/api/board?t=' + Date.now());
+					console.log('[board] fetch 완료, status:', res.status);
+					const data = await res.json();
+					console.log('[board] data:', data.posts?.length);
+					allPosts = data.posts || [];
+					console.log('[board] showList 호출 전');
+					showList();
+					console.log('[board] showList 호출 후');
+				} catch(e) {
+					console.log('[board] catch 에러:', e.message, e);
 					document.getElementById('nb-screen-list').innerHTML = `<div style="text-align:center; padding:40px; color:rgba(239,68,68,0.7); font-size:13px;">불러오기 실패: ${e.message}</div>`;
 				}
-            }
+			}
 
             async function submitPost() {
                 const title = document.getElementById('nb-write-title').value.trim();
