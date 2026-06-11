@@ -2439,7 +2439,7 @@
                 const text = document.getElementById('nb-comment-input')?.value.trim();
                 if (!text) return;
                 try {
-                    await fetch('https://multimonitoring.vercel.app/api/board/comment', {
+                    await fetch('https://multimonitoring.vercel.app/api/comment', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ email: myEmail, author: myName, postId: currentPostId, text })
@@ -2472,7 +2472,7 @@
             window._nbDeleteComment = async (cId) => {
                 if (!confirm('댓글을 삭제하시겠습니까?')) return;
                 try {
-                    await fetch('https://multimonitoring.vercel.app/api/board/comment', {
+                    await fetch('https://multimonitoring.vercel.app/api/comment', {
                         method: 'DELETE',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ email: myEmail, postId: currentPostId, commentId: cId })
@@ -2488,7 +2488,7 @@
             window._nbDeleteReply = async (cId, rId) => {
                 if (!confirm('답글을 삭제하시겠습니까?')) return;
                 try {
-                    await fetch('https://multimonitoring.vercel.app/api/board/comment', {
+                    await fetch('https://multimonitoring.vercel.app/api/comment', {
                         method: 'DELETE',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ email: myEmail, postId: currentPostId, commentId: cId, replyId: rId })
