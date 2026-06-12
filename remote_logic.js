@@ -113,7 +113,7 @@
    ============================================================ */
     const OPERATOR_FETCH_INTERVAL = 5000;
     const OPERATOR_FETCH_COUNT = 6;
-    const OPERATOR_PANEL_DURATION = 5000;
+    const OPERATOR_PANEL_DURATION = 7000;
     const OPERATOR_PANEL_ID = 'neubie-operator-watch-panel';
     let _operatorFetchTimer = null;
     let _operatorFetchDone = false;
