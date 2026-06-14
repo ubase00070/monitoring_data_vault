@@ -177,8 +177,8 @@
 		if (dp) { clearTimeout(dp._hideTimer); dp.remove(); }
 	}
 	function _checkDangerZone(robotId) {
-		const config = DANGER_ZONE_MAP[robotId];
-		if (!config || !config.zones?.length) return;
+		const dzconfig = DANGER_ZONE_MAP[robotId];
+		if (!dzconfig || !dzconfig.zones?.length) return;
 
 		// MutationObserver로 시나리오 바 텍스트 감시
 		const observer = new MutationObserver(() => {
@@ -186,8 +186,8 @@
 				'span.max-w-190.font-size-14.truncate.font-medium.text-mono-800'
 			);
 			const text = current?.innerText?.trim() || '';
-			if (config.zones.some(z => text.includes(z))) {
-				_showDangerPanel(config.label, text);
+			if (dzconfig.zones.some(z => text.includes(z))) {
+				_showDangerPanel(dzconfig.label, text);
 			}
 		});
 		observer.observe(document.body, { childList: true, subtree: true, characterData: true });
@@ -197,9 +197,8 @@
 			'span.max-w-190.font-size-14.truncate.font-medium.text-mono-800'
 		);
 		const text = current?.innerText?.trim() || '';
-		const config = DANGER_ZONE_MAP[robotId];
-		if (config.zones.some(z => text.includes(z))) {
-		  _showDangerPanel(config.label, text);
+		if (dzconfig.zones.some(z => text.includes(z))) {
+		  _showDangerPanel(dzconfig.label, text);
 		}
 
 		// 페이지 이탈 시 observer 정리
@@ -1058,8 +1057,9 @@
                 const patchItems = [
                     {
                         version: 'v1.1',
-                        date: '2026-06-11',
+                        date: '2026-06-14',
                         items: [
+							'전복 및 위험 구간 알림 기능',
 							'게시판 기능',
 							'개입카드 페이지에서 현재 기체 조작자 표기(본인 제외)',
 							'개입카드 페이지 상태 바 재배치(스크롤 바 제거)',
