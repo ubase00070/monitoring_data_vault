@@ -869,9 +869,7 @@
             </div>
             <div style="display: flex; gap: 5px; flex-wrap: nowrap;">
                 <button id="btnMulti" class="sub-btn">다중 모니터링</button>
-                ${isWknd ? `
-                    <button id="btnCombined" class="sub-btn">배송/순찰 띠띠</button>
-                `}
+                <button id="btnCombined" class="sub-btn">배송/순찰 띠띠</button>
             </div>
         `;
 
