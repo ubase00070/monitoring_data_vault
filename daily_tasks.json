@@ -12,13 +12,13 @@
     "rawTime": "08:00"
   },
   {
-    "user": "박효선",
+    "user": "김동진",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "09:00"
   },
   {
-    "user": "최윤혁",
+    "user": "이환",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "10:00"
@@ -30,19 +30,19 @@
     "rawTime": "11:00"
   },
   {
-    "user": "이준",
+    "user": "성혜진",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "12:00"
   },
   {
-    "user": "송주현",
+    "user": "석승찬",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "13:00"
   },
   {
-    "user": "박은선",
+    "user": "이민수",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "14:00"
@@ -54,7 +54,7 @@
     "rawTime": "15:00"
   },
   {
-    "user": "신은정",
+    "user": "송태영",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "16:00"
@@ -72,37 +72,37 @@
     "rawTime": "18:00"
   },
   {
-    "user": "박효빈",
+    "user": "강철환",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "19:00"
   },
   {
-    "user": "최성환",
+    "user": "이기완",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "20:00"
   },
   {
-    "user": "강철환",
+    "user": "권재윤",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "21:00"
   },
   {
-    "user": "최선호",
+    "user": "강철환",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "22:00"
   },
   {
-    "user": "강철환",
+    "user": "최정기",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "23:00"
   },
   {
-    "user": "최정기",
+    "user": "임다연",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "00:00"
@@ -114,13 +114,13 @@
     "rawTime": "01:00"
   },
   {
-    "user": "김소연",
+    "user": "안대관",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "02:00"
   },
   {
-    "user": "임다연",
+    "user": "최선호",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "03:00"
@@ -132,13 +132,13 @@
     "rawTime": "04:00"
   },
   {
-    "user": "임다연",
+    "user": "안대관",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "05:00"
   },
   {
-    "user": "김소연",
+    "user": "임다연",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "06:00"
@@ -146,17 +146,11 @@
   {
     "user": "박효선",
     "type": "task",
-    "content": "[08:50] 부산과학관 170호기 임무 HUB B 출근 / 자비에 재부팅 / 임무받기 ON 진행  [화,수,목,금,토,일]",
-    "rawTime": "08:50"
+    "content": "[08:30] 파주LGD(현대밴디스) 기체 출근 처리 후 임무 ON [평일]",
+    "rawTime": "08:30"
   },
   {
-    "user": "안혜림",
-    "type": "task",
-    "content": "[09:00~10:00] 부산국립과학관 170,171호기  임무 [화,수,목,금,토,일]",
-    "rawTime": "09:00"
-  },
-  {
-    "user": "김지훈",
+    "user": "박계원",
     "type": "task",
     "content": "[09:30~10:00] 역삼요기요 대기장소 기체 출근 체크 후 임무 ON",
     "rawTime": "09:30"
@@ -164,44 +158,38 @@
   {
     "user": "한승완",
     "type": "task",
-    "content": "[10:00~11:00] 부산국립과학관 170,171호기 임무 [화,수,목,금,토,일]",
+    "content": "[10:00] 성남 [삼평동] 대기장소3 주간기체 3호기 출근 임무 [평일]",
     "rawTime": "10:00"
   },
   {
-    "user": "박계원",
+    "user": "석승찬",
+    "type": "task",
+    "content": "[10:00] 성남 [삼평동] 대기장소3 주간기체 6호기 출근 임무 [평일]",
+    "rawTime": "10:00"
+  },
+  {
+    "user": "박효선",
     "type": "task",
     "content": "[10:30] 성수동1가 요기요 임무받기 ON",
     "rawTime": "10:30"
   },
   {
-    "user": "이준",
+    "user": "김동진",
+    "type": "task",
+    "content": "[10:30~11:00] 성남 [삼평동] 기체 출근 체크 후 임무 ON",
+    "rawTime": "10:30"
+  },
+  {
+    "user": "박계원",
     "type": "task",
     "content": "[10:30~11:00] 송도요기요 대기장소 기체 출근 체크 후 임무 ON",
     "rawTime": "10:30"
   },
   {
-    "user": "장재원",
+    "user": "석승찬",
     "type": "task",
-    "content": "[11:00~12:00] 부산국립과학관 170,171호기 임무 [화,수,목,금,토,일]",
-    "rawTime": "11:00"
-  },
-  {
-    "user": "최윤혁",
-    "type": "task",
-    "content": "[11:50~12:00] 성남 [서현동+서현-수내역 드론배달] 기체 출근 체크 후 임무 ON [수,목,금,토,일]",
-    "rawTime": "11:50"
-  },
-  {
-    "user": "신은정",
-    "type": "task",
-    "content": "[12:00~13:00] 부산국립과학관 170,171호기 임무 [화,수,목,금,토,일]",
-    "rawTime": "12:00"
-  },
-  {
-    "user": "박은선",
-    "type": "task",
-    "content": "[13:00~14:00] 부산국립과학관 170,171호기 임무 [화,수,목,금,토,일]",
-    "rawTime": "13:00"
+    "content": "[11:55] 파주LGD(현대밴디스) 임무받기 OFF [평일]",
+    "rawTime": "11:55"
   },
   {
     "user": "김지훈",
@@ -210,67 +198,79 @@
     "rawTime": "13:00"
   },
   {
-    "user": "호덕진",
+    "user": "박은선",
+    "type": "task",
+    "content": "[13:05] 파주LGD(현대밴디스) 임무받기 ON [평일]",
+    "rawTime": "13:05"
+  },
+  {
+    "user": "박계원",
     "type": "task",
     "content": "[13:50~14:00] 송도요기요 임무받기 OFF 후 배터리 잔량 확인",
     "rawTime": "13:50"
   },
   {
-    "user": "송주현",
-    "type": "task",
-    "content": "[14:00~15:00] 부산국립과학관 170,171호기 임무 [화,수,목,금,토,일]",
-    "rawTime": "14:00"
-  },
-  {
-    "user": "이준",
-    "type": "task",
-    "content": "[15:00~16:00] 부산국립과학관 170,171호기 임무 [화,수,목,금,토,일]",
-    "rawTime": "15:00"
-  },
-  {
-    "user": "박계원",
+    "user": "김동진",
     "type": "task",
     "content": "[15:30~16:00] 역삼요기요 주/야 영업 기체 교대 체크 후 임무 ON",
     "rawTime": "15:30"
   },
   {
-    "user": "한승완",
+    "user": "이환",
     "type": "task",
     "content": "[15:30~16:00] 성수1가 요기요 주/야 영업 기체 교대 체크 후 임무 ON",
     "rawTime": "15:30"
   },
   {
-    "user": "신현철",
+    "user": "권재윤",
     "type": "task",
-    "content": "[16:00~17:00] 부산국립과학관 170,171호기 임무 후 주차, 임무받기 OFF [화,수,목,금,토,일]",
-    "rawTime": "16:00"
+    "content": "[16:30] 파주LGD(현대밴디스) 기체 퇴근 처리 후 임무 OFF [평일]",
+    "rawTime": "16:30"
   },
   {
-    "user": "박효빈",
+    "user": "석승찬",
+    "type": "task",
+    "content": "[16:30] 성남 [삼평동] 대기장소3 주간기체 3호기 퇴근 후 임무 OFF [평일]",
+    "rawTime": "16:30"
+  },
+  {
+    "user": "이환",
+    "type": "task",
+    "content": "[16:30] 성남 [삼평동] 대기장소3 주간기체 6호기 퇴근 후 임무 OFF [평일]",
+    "rawTime": "16:30"
+  },
+  {
+    "user": "박효선",
+    "type": "task",
+    "content": "[16:30~17:00] 성남 [삼평동] 주간기체 임무 OFF 및 야간기체 임무 ON [평일]",
+    "rawTime": "16:30"
+  },
+  {
+    "user": "한승완",
     "type": "task",
     "content": "[16:30~17:00] 송도요기요 대기장소 기체 재출근 체크 후 임무 ON",
     "rawTime": "16:30"
   },
   {
-    "user": "최성환",
-    "type": "task",
-    "content": "[17:30] 성남 [서현동+서현-수내역 드론배달]  임무받기 OFF [수,목,금,토,일]",
-    "rawTime": "17:30"
-  },
-  {
-    "user": "최성환",
+    "user": "한승완",
     "type": "task",
     "content": "[17:40] 무선충전 기체 주차 상태 (충전중⚡) 확인",
     "rawTime": "17:40"
   },
   {
-    "user": "강철환",
+    "user": "최정기",
     "type": "task",
     "content": "[20:30] 성수동1가, 송도신도시, 역삼요기요 영업 종료 - 기체 전원 임무 OFF",
     "rawTime": "20:30"
   },
   {
-    "user": "임다연",
+    "user": "최선호",
+    "type": "task",
+    "content": "[22:00] 성남 삼평동 임무받기 OFF[평일]",
+    "rawTime": "22:00"
+  },
+  {
+    "user": "강철환",
     "type": "task",
     "content": "[23:00] 무선충전 기체 주차 상태 (충전중⚡) 확인 + 00:00~23:00 리부팅 안된 무선 기체 Xavier 재부팅",
     "rawTime": "23:00"
