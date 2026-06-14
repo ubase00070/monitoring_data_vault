@@ -907,35 +907,14 @@
                 };
             }
 
-            // 평일/주말 동적 버튼 이벤트
-            if (isWknd) {
-                const deliBtn = card.querySelector('#btnDeli');
-                const patrolBtn = card.querySelector('#btnPatrol');
-                
-                if (deliBtn) deliBtn.onclick = (e) => {
-                    // 배송 띠띠 (#171) - 10분 차감 적용
-                    const time = getCalculatedTime(10);
-                    const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_부산 국립과학관_#171`;
-                    navigator.clipboard.writeText(finalName);
-                    applyCopyEffect(e.target);
-                };
-                
-                if (patrolBtn) patrolBtn.onclick = (e) => {
-                    // 순찰 띠띠 (#170) - 40분 차감 유지
-                    const time = getCalculatedTime(40);
-                    const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_부산 국립과학관_#170`;
-                    navigator.clipboard.writeText(finalName);
-                    applyCopyEffect(e.target);
-                };
-            } else {
-                const combinedBtn = card.querySelector('#btnCombined');
-				if (combinedBtn) combinedBtn.onclick = (e) => {
-					const time = getCalculatedTime(40);
-					const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_부산 국립과학관_#171, #170`;
-					navigator.clipboard.writeText(finalName);
-					applyCopyEffect(e.target);
-				};
-            }
+            // 배송/순찰 띠띠 버튼
+            const combinedBtn = card.querySelector('#btnCombined');
+            if (combinedBtn) combinedBtn.onclick = (e) => {
+                const time = getCalculatedTime(40);
+                const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_부산 국립과학관_#171, #170`;
+                navigator.clipboard.writeText(finalName);
+                applyCopyEffect(e.target);
+            };
         }, 10);
 
         return card;
