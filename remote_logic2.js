@@ -870,10 +870,7 @@
             <div style="display: flex; gap: 5px; flex-wrap: nowrap;">
                 <button id="btnMulti" class="sub-btn">다중 모니터링</button>
                 ${isWknd ? `
-                    <button id="btnDeli" class="sub-btn">배송 띠띠 (주말)</button>
-                    <button id="btnPatrol" class="sub-btn">순찰 띠띠 (주말)</button>
-                ` : `
-                    <button id="btnCombined" class="sub-btn">배송/순찰 띠띠(평일)</button>
+                    <button id="btnCombined" class="sub-btn">배송/순찰 띠띠</button>
                 `}
             </div>
         `;
@@ -934,13 +931,12 @@
                 };
             } else {
                 const combinedBtn = card.querySelector('#btnCombined');
-                if (combinedBtn) combinedBtn.onclick = (e) => {
-                    // 평일 배송/순찰 합본 - 40분 차감 유지
-                    const time = getCalculatedTime(40); 
-                    const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_부산 국립과학관_#171, #170`;
-                    navigator.clipboard.writeText(finalName);
-                    applyCopyEffect(e.target);
-                };
+				if (combinedBtn) combinedBtn.onclick = (e) => {
+					const time = getCalculatedTime(40);
+					const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_부산 국립과학관_#171, #170`;
+					navigator.clipboard.writeText(finalName);
+					applyCopyEffect(e.target);
+				};
             }
         }, 10);
 
