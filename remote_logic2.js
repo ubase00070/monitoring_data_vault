@@ -115,6 +115,16 @@
     const OPERATOR_FETCH_COUNT = 6;
     const OPERATOR_PANEL_DURATION = 5000;
     const OPERATOR_PANEL_ID = 'neubie-operator-watch-panel';
+	
+	const DANGER_ZONE_MAP = {
+	  // robotId: ['위험구간명1', '위험구간명2', ...]
+	  195:  ['휴레스트_13', '휴레스트_14'], // 고양 래미안
+	  221: ['상단_1', '판교역순찰_01'],// 성남 판교 200
+	  
+	  // 기체 id 추가
+	};
+	const DANGER_PANEL_ID = 'neubie-danger-zone-panel';
+
     let _operatorFetchTimer = null;
     let _operatorFetchDone = false;
 
@@ -156,15 +166,74 @@
         if (panel) { clearTimeout(panel._hideTimer); panel.remove(); }
     }
     function _stopOperatorWatch() {
-        if (_operatorFetchTimer) { clearInterval(_operatorFetchTimer); _operatorFetchTimer = null; }
-        _operatorFetchDone = true;
-        _removeOperatorPanel();
-    }
+		if (_operatorFetchTimer) { clearInterval(_operatorFetchTimer); _operatorFetchTimer = null; }
+		_operatorFetchDone = true;
+		_removeOperatorPanel();
+		window._dangerObserver?.disconnect();
+		const dp = document.getElementById(DANGER_PANEL_ID);
+		if (dp) { clearTimeout(dp._hideTimer); dp.remove(); }
+	}
+	function _checkDangerZone(robotId) {
+		const zones = DANGER_ZONE_MAP[robotId];
+		if (!zones || zones.length === 0) return;
+
+		// MutationObserver로 시나리오 바 텍스트 감시
+		const observer = new MutationObserver(() => {
+			const current = document.querySelector(
+				'span.max-w-190.font-size-14.truncate.font-medium.text-mono-800'
+			);
+			const text = current?.innerText?.trim() || '';
+			if (zones.some(z => text.includes(z))) {
+				_showDangerPanel(text);
+			}
+		});
+		observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+
+		// 진입 즉시 1회 체크
+		const current = document.querySelector(
+			'span.max-w-190.font-size-14.truncate.font-medium.text-mono-800'
+		);
+		const text = current?.innerText?.trim() || '';
+		if (zones.some(z => text.includes(z))) _showDangerPanel(text);
+
+		// 페이지 이탈 시 observer 정리
+		window._dangerObserver?.disconnect();
+		window._dangerObserver = observer;
+	}
+
+	function _showDangerPanel(zoneText) {
+		let panel = document.getElementById(DANGER_PANEL_ID);
+		if (panel) { clearTimeout(panel._hideTimer); panel.remove(); }
+
+		panel = document.createElement('div');
+		panel.id = DANGER_PANEL_ID;
+		panel.style.cssText = `
+			position:fixed; top:56px; left:50%; transform:translateX(-50%);
+			z-index:999999; pointer-events:none;
+			animation: _opFadeIn 0.2s ease;
+		`;
+		panel.innerHTML = `
+			<div style="display:flex;align-items:center;gap:10px;
+				background:rgba(80,20,20,0.97);border:1px solid #ff4444;
+				border-radius:24px;padding:10px 24px;
+				box-shadow:0 4px 20px rgba(0,0,0,0.5);
+				font-family:'Pretendard','Noto Sans KR',sans-serif;">
+				<span style="font-size:15px;color:#ffaaaa;">⚠️ 사고 다발 지역입니다. 관제 시 주의바랍니다.</span>
+				<span style="font-size:17px;font-weight:700;color:#ffdddd;">${zoneText}</span>
+			</div>
+		`;
+		document.body.appendChild(panel);
+		panel._hideTimer = setTimeout(() => {
+			panel.remove();
+			window._dangerObserver?.disconnect();
+		}, 7000);
+	}
     async function _startOperatorWatch() {
         const robotId = _getRobotIdFromUrl();
         if (!robotId) return;
         _stopOperatorWatch();
         _operatorFetchDone = false;
+		_checkDangerZone(robotId);
 
         let baselineName = null;
         try {
