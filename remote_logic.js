@@ -115,19 +115,6 @@
     const OPERATOR_FETCH_COUNT = 6;
     const OPERATOR_PANEL_DURATION = 5000;
     const OPERATOR_PANEL_ID = 'neubie-operator-watch-panel';
-	
-	const DANGER_ZONE_MAP = {
-	  195:  { // 고양 래미안
-		zones: ['휴레스트_12', '휴레스트_13', '휴레스트_14'],
-		label: '⚠️ 단차 미인지 추락 다발 구간에 주의하세요.',
-	  },
-	  221: { // 성남 판교 200
-		zones: ['상단_1', '판교역순찰_01'],
-		label: '⚠️ 건널목 네트워크 끊김 다발 구간에 주의하세요.',
-	  },
-	};
-	const DANGER_PANEL_ID = 'neubie-danger-zone-panel';
-
     let _operatorFetchTimer = null;
     let _operatorFetchDone = false;
 
@@ -169,76 +156,15 @@
         if (panel) { clearTimeout(panel._hideTimer); panel.remove(); }
     }
     function _stopOperatorWatch() {
-		if (_operatorFetchTimer) { clearInterval(_operatorFetchTimer); _operatorFetchTimer = null; }
-		_operatorFetchDone = true;
-		_removeOperatorPanel();
-		window._dangerObserver?.disconnect();
-		const dp = document.getElementById(DANGER_PANEL_ID);
-		if (dp) { clearTimeout(dp._hideTimer); dp.remove(); }
-	}
-	function _checkDangerZone(robotId) {
-		const dzconfig = DANGER_ZONE_MAP[robotId];
-		if (!dzconfig || !dzconfig.zones?.length) return;
-
-		// MutationObserver로 시나리오 바 텍스트 감시
-		const observer = new MutationObserver(() => {
-			const current = document.querySelector(
-				'span.max-w-190.font-size-14.truncate.font-medium.text-mono-800'
-			);
-			const text = current?.innerText?.trim() || '';
-			if (dzconfig.zones.some(z => text.includes(z))) {
-				_showDangerPanel(dzconfig.label, text);
-			}
-		});
-		observer.observe(document.body, { childList: true, subtree: true, characterData: true });
-
-		// 진입 즉시 1회 체크
-		const current = document.querySelector(
-			'span.max-w-190.font-size-14.truncate.font-medium.text-mono-800'
-		);
-		const text = current?.innerText?.trim() || '';
-		if (dzconfig.zones.some(z => text.includes(z))) {
-		  _showDangerPanel(dzconfig.label, text);
-		}
-
-		// 페이지 이탈 시 observer 정리
-		window._dangerObserver?.disconnect();
-		window._dangerObserver = observer;
-	}
-
-	function _showDangerPanel(label, zoneText) {
-		let panel = document.getElementById(DANGER_PANEL_ID);
-		if (panel) { clearTimeout(panel._hideTimer); panel.remove(); }
-
-		panel = document.createElement('div');
-		panel.id = DANGER_PANEL_ID;
-		panel.style.cssText = `
-			position:fixed; top:30px; left:50%; transform:translateX(-50%);
-			z-index:999999; pointer-events:none;
-			animation: _opFadeIn 0.2s ease;
-		`;
-		panel.innerHTML = `
-			<div style="display:flex;align-items:center;gap:10px;
-				background:rgba(80,20,20,0.97);border:1px solid #ff4444;
-				border-radius:24px;padding:10px 24px;
-				box-shadow:0 4px 20px rgba(0,0,0,0.5);
-				font-family:'Pretendard','Noto Sans KR',sans-serif;">
-				<span style="font-size:15px;color:#ffaaaa;">${label}</span>
-				<span style="font-size:17px;font-weight:700;color:#ffdddd;">${zoneText}</span>
-			</div>
-		`;
-		document.body.appendChild(panel);
-		panel._hideTimer = setTimeout(() => {
-			panel.remove();
-			window._dangerObserver?.disconnect();
-		}, 7000);
-	}
+        if (_operatorFetchTimer) { clearInterval(_operatorFetchTimer); _operatorFetchTimer = null; }
+        _operatorFetchDone = true;
+        _removeOperatorPanel();
+    }
     async function _startOperatorWatch() {
         const robotId = _getRobotIdFromUrl();
         if (!robotId) return;
         _stopOperatorWatch();
         _operatorFetchDone = false;
-		_checkDangerZone(robotId);
 
         let baselineName = null;
         try {
@@ -1057,9 +983,8 @@
                 const patchItems = [
                     {
                         version: 'v1.1',
-                        date: '2026-06-14',
+                        date: '2026-06-11',
                         items: [
-							'전복 및 위험 구간 알림 기능',
 							'게시판 기능',
 							'개입카드 페이지에서 현재 기체 조작자 표기(본인 제외)',
 							'개입카드 페이지 상태 바 재배치(스크롤 바 제거)',
