@@ -117,11 +117,14 @@
     const OPERATOR_PANEL_ID = 'neubie-operator-watch-panel';
 	
 	const DANGER_ZONE_MAP = {
-	  // robotId: ['위험구간명1', '위험구간명2', ...]
-	  195:  ['휴레스트_13', '휴레스트_14'], // 고양 래미안
-	  221: ['상단_1', '판교역순찰_01'],// 성남 판교 200
-	  
-	  // 기체 id 추가
+	  195:  { // 고양 래미안
+		zones: ['휴레스트_12', '휴레스트_13', '휴레스트_14'],
+		label: '⚠️ 미니맵 이격 및 단차 미인지 추락에 주의하세요.',
+	  },
+	  221: { // 성남 판교 200
+		zones: ['상단_1', '판교역순찰_01'],
+		label: '⚠️ 횡단 시 네트워크 끊김에 주의하세요.',
+	  },
 	};
 	const DANGER_PANEL_ID = 'neubie-danger-zone-panel';
 
@@ -174,8 +177,8 @@
 		if (dp) { clearTimeout(dp._hideTimer); dp.remove(); }
 	}
 	function _checkDangerZone(robotId) {
-		const zones = DANGER_ZONE_MAP[robotId];
-		if (!zones || zones.length === 0) return;
+		const config = DANGER_ZONE_MAP[robotId];
+		if (!config || !config.zones?.length) return;
 
 		// MutationObserver로 시나리오 바 텍스트 감시
 		const observer = new MutationObserver(() => {
@@ -183,8 +186,8 @@
 				'span.max-w-190.font-size-14.truncate.font-medium.text-mono-800'
 			);
 			const text = current?.innerText?.trim() || '';
-			if (zones.some(z => text.includes(z))) {
-				_showDangerPanel(text);
+			if (config.zones.some(z => text.includes(z))) {
+				_showDangerPanel(config.label, text);
 			}
 		});
 		observer.observe(document.body, { childList: true, subtree: true, characterData: true });
@@ -194,21 +197,24 @@
 			'span.max-w-190.font-size-14.truncate.font-medium.text-mono-800'
 		);
 		const text = current?.innerText?.trim() || '';
-		if (zones.some(z => text.includes(z))) _showDangerPanel(text);
+		const config = DANGER_ZONE_MAP[robotId];
+		if (config.zones.some(z => text.includes(z))) {
+		  _showDangerPanel(config.label, text);
+		}
 
 		// 페이지 이탈 시 observer 정리
 		window._dangerObserver?.disconnect();
 		window._dangerObserver = observer;
 	}
 
-	function _showDangerPanel(zoneText) {
+	function _showDangerPanel(label, zoneText) {
 		let panel = document.getElementById(DANGER_PANEL_ID);
 		if (panel) { clearTimeout(panel._hideTimer); panel.remove(); }
 
 		panel = document.createElement('div');
 		panel.id = DANGER_PANEL_ID;
 		panel.style.cssText = `
-			position:fixed; top:56px; left:50%; transform:translateX(-50%);
+			position:fixed; top:30px; left:50%; transform:translateX(-50%);
 			z-index:999999; pointer-events:none;
 			animation: _opFadeIn 0.2s ease;
 		`;
@@ -218,7 +224,7 @@
 				border-radius:24px;padding:10px 24px;
 				box-shadow:0 4px 20px rgba(0,0,0,0.5);
 				font-family:'Pretendard','Noto Sans KR',sans-serif;">
-				<span style="font-size:15px;color:#ffaaaa;">⚠️ 사고 다발 지역입니다. 관제 시 주의바랍니다.</span>
+				<span style="font-size:15px;color:#ffaaaa;">${label}</span>
 				<span style="font-size:17px;font-weight:700;color:#ffdddd;">${zoneText}</span>
 			</div>
 		`;
