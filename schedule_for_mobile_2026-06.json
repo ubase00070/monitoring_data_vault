@@ -6327,10 +6327,10 @@
           "raw": "휴무"
         },
         "6/26": {
-          "status": "work",
+          "status": "annual",
           "working": true,
-          "present": true,
-          "raw": "1"
+          "present": false,
+          "raw": "연차"
         },
         "6/27": {
           "status": "work",
@@ -7888,6 +7888,6 @@
     "6/30"
   ],
   "mainMonth": 6,
-  "updatedAt": "2026-06-14T03:53:03.939Z",
+  "updatedAt": "2026-06-15T03:53:03.393Z",
   "sheetName": "2026년_06월 스케줄"
 }
