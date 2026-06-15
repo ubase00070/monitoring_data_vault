@@ -35,30 +35,8 @@ YEAH!
 The Government?
 FUCK YEAH!
 */{
-  "updatedAt": "2026-06-15 17:54:42",
-  "realtime": [
-    {
-      "workDate": "20260615",
-      "driveDate": "20260614",
-      "hour": "02:00",
-      "name": "안대관",
-      "status": "미업로드"
-    },
-    {
-      "workDate": "20260615",
-      "driveDate": "20260615",
-      "hour": "07:00",
-      "name": "김지훈",
-      "status": "미업로드"
-    },
-    {
-      "workDate": "20260615",
-      "driveDate": "20260615",
-      "hour": "08:00",
-      "name": "박계원",
-      "status": "미업로드"
-    }
-  ],
+  "updatedAt": "2026-06-16 08:34:41",
+  "realtime": [],
   "final": [],
   "history": {
     "20260509": [
@@ -360,6 +338,22 @@ FUCK YEAH!
         "name": "송주현",
         "status": "미업로드"
       }
+    ],
+    "20260615": [
+      {
+        "workDate": "20260615",
+        "driveDate": "20260615",
+        "hour": "07:00",
+        "name": "김지훈",
+        "status": "미업로드"
+      },
+      {
+        "workDate": "20260615",
+        "driveDate": "20260615",
+        "hour": "08:00",
+        "name": "박계원",
+        "status": "미업로드"
+      }
     ]
   },
   "misplaced": {
@@ -509,6 +503,7 @@ FUCK YEAH!
     "20260611": [],
     "20260612": [],
     "20260613": [],
-    "20260614": []
+    "20260614": [],
+    "20260615": []
   }
 }
