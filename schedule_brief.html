@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>뉴비고 관제 교대 시나리오 비교</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap');
+:root{
+  --bg:#080b12;--surface:#0f1520;--surface2:#162030;
+  --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.12);
+  --text:#e2e8f0;--text2:#7a8fa6;--text3:#3d5068;
+  --c:#4a9eff;--t:#ff6b6b;--s:#2dd4bf;--accent:#6c7af4;
+  --peak1:#ffcc33;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;font-size:14px;line-height:1.6;overflow-x:hidden}
+.slide{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:56px 7vw;position:relative;border-bottom:1px solid var(--border)}
+.snum{position:absolute;top:26px;right:28px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:2px}
+.eye{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--accent);margin-bottom:14px;font-weight:500}
+.hl{font-size:clamp(24px,3.5vw,46px);font-weight:900;line-height:1.1;letter-spacing:-1px;margin-bottom:18px}
+.sub{font-size:clamp(12px,1.3vw,15px);color:var(--text2);max-width:660px;line-height:1.7;margin-bottom:32px}
+.div{width:36px;height:2px;background:var(--accent);margin-bottom:22px;border-radius:1px}
+
+/* HERO */
+#s0{background:radial-gradient(ellipse at 65% 35%,rgba(108,122,244,0.1) 0%,transparent 60%)}
+.hg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-top:32px}
+.hc{padding:18px 20px;border-radius:10px;border:1px solid}
+.hc.c{border-color:var(--c);background:rgba(74,158,255,0.08)}
+.hc.t{border-color:var(--t);background:rgba(255,107,107,0.08)}
+.hc.s{border-color:var(--s);background:rgba(45,212,191,0.08)}
+.hc-lb{font-size:9px;letter-spacing:2.5px;text-transform:uppercase;font-weight:700;margin-bottom:8px}
+.hc.c .hc-lb{color:var(--c)}.hc.t .hc-lb{color:var(--t)}.hc.s .hc-lb{color:var(--s)}
+.hc-sl{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text2);line-height:1.9}
+.hc-n{font-size:28px;font-weight:900;margin-top:10px}
+.hc.c .hc-n{color:var(--c)}.hc.t .hc-n{color:var(--t)}.hc.s .hc-n{color:var(--s)}
+.hc-n span{font-size:11px;color:var(--text2);font-weight:400;margin-left:3px}
+
+/* NOTICE */
+.notice{background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:12px 16px;font-size:12px;color:var(--text2);margin-top:20px;line-height:1.6}
+.notice strong{color:var(--text)}
+
+/* HM */
+.hm-wrap{width:100%;margin-bottom:0}
+.hm-ttl{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:7px;display:flex;align-items:center;gap:8px}
+.hm-row{display:flex;align-items:flex-end;gap:1px}
+.hm-bw{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;position:relative;cursor:default}
+.hm-b{width:100%;border-radius:2px 2px 0 0;transition:all .4s ease}
+.hm-bw:hover .hm-b{filter:brightness(1.3)}
+.hm-v{font-size:8px;font-weight:700;color:var(--text2);position:absolute;top:-12px;left:50%;transform:translateX(-50%);white-space:nowrap}
+.hm-ls{display:flex;gap:1px;margin-top:3px}
+.hm-ls span{flex:1;text-align:center;font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--text3)}
+.hm-ls span.pk{color:var(--peak1);font-weight:700}
+.pk-leg{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text3);margin-top:5px}
+.pk-dot{width:7px;height:7px;border-radius:1px;background:var(--peak1);opacity:.7}
+
+/* DATE TABS */
+.tab-row{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap}
+.tab{padding:5px 14px;border-radius:6px;font-size:11px;cursor:pointer;border:1px solid var(--border2);background:var(--surface2);color:var(--text2);transition:all .15s;font-family:'JetBrains Mono',monospace}
+.tab.active{background:var(--accent);color:#fff;border-color:transparent}
+.tab.weekend{border-color:rgba(255,107,107,0.3);color:rgba(255,107,107,0.7)}
+.tab.weekend.active{background:var(--t);border-color:transparent;color:#fff}
+
+/* 3UP */
+.cg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;width:100%}
+.cc{background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:16px}
+.cc-h{display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.cc-dot{width:8px;height:8px;border-radius:50%}
+.cc-nm{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase}
+.stat-row{margin-top:12px;display:flex;flex-direction:column;gap:5px}
+.stat-r{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--text2);padding:4px 0;border-bottom:1px solid var(--border)}
+.stat-r:last-child{border-bottom:none}
+.stat-v{font-weight:700;font-family:'JetBrains Mono',monospace}
+
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse;margin-top:18px;font-size:12px}
+.tbl th{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);padding:8px 12px;text-align:left;border-bottom:1px solid var(--border2)}
+.tbl td{padding:10px 12px;border-bottom:1px solid var(--border)}
+.tbl tr:last-child td{border-bottom:none}
+.bg{display:inline-flex;align-items:center;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600}
+.bg.g{background:rgba(45,212,191,0.15);color:var(--s)}
+.bg.w{background:rgba(255,107,107,0.15);color:var(--t)}
+.bg.n{background:rgba(255,255,255,0.06);color:var(--text2)}
+
+/* NAV */
+.nav{position:fixed;right:18px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:7px;z-index:100}
+.nd{width:7px;height:7px;border-radius:50%;background:var(--border2);border:none;cursor:pointer;transition:all .2s;padding:0}
+.nd.active{background:var(--accent);transform:scale(1.5)}
+.nd:hover{background:var(--text2)}
+
+@media(max-width:768px){.hg,.cg{grid-template-columns:1fr}.slide{padding:44px 5vw}}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <button class="nd active" onclick="goTo(0)"></button>
+  <button class="nd" onclick="goTo(1)"></button>
+  <button class="nd" onclick="goTo(2)"></button>
+  <button class="nd" onclick="goTo(3)"></button>
+  <button class="nd" onclick="goTo(4)"></button>
+  <button class="nd" onclick="goTo(5)"></button>
+</nav>
+
+<!-- 01 개요 -->
+<section class="slide" id="s0">
+  <div class="snum">01 / 06</div>
+  <div class="eye">뉴비고 관제 교대 시나리오 비교</div>
+  <h1 class="hl">현행 · 3조 · 6조<br>무엇이 다른가</h1>
+  <p class="sub">6월 전체(6/1~6/30) 실제 출근 데이터 기반. 휴무·연차·공가 반영. 피크 수치는 11~14시·17~20시 구간 시간당 평균 가용인원.</p>
+  <div class="div"></div>
+  <div class="hg">
+    <div class="hc c">
+      <div class="hc-lb">현행</div>
+      <div class="hc-sl">07~16 · 08~17 · 09~18<br>10~19 · 11~20<br>14~23 · 15~24 · 18~03<br>20~05 · 22~07 · 23:30~</div>
+      <div class="hc-n">11<span>개 시간대</span></div>
+    </div>
+    <div class="hc t">
+      <div class="hc-lb">3조</div>
+      <div class="hc-sl">주간1: 07~15<br>야간1: 15~23<br>야간3: 23~07<br></div>
+      <div class="hc-n">3<span>개 조 + A/B 휴게</span></div>
+    </div>
+    <div class="hc s">
+      <div class="hc-lb">6조</div>
+      <div class="hc-sl">주간1: 07~16 · 주간2: 09~18<br>주간3: 11~20<br>야간1: 15~24 · 야간2: 18~03<br>야간3: 22~07</div>
+      <div class="hc-n">6<span>개 조 + A/B 휴게</span></div>
+    </div>
+  </div>
+  <div class="notice">
+    <strong>산출 기준</strong> — 동일한 출근 인원에 각 시나리오의 근무 시간대를 대입하여 계산. 3조·6조는 시뮬레이터에서 설정한 A/B 휴게 배정을 그대로 적용. 현행은 A/B 미분리(자연 분산).
+  </div>
+</section>
+
+<!-- 02-b 운영 전환 부담 -->
+<section class="slide" id="s2">
+  <div class="snum">02 / 06</div>
+  <div class="eye">운영 전환 부담 분석</div>
+  <h2 class="hl">시간대 이동 인원과<br>스케줄 관리 복잡도</h2>
+  <p class="sub">현행 대비 각 안 전환 시 발생하는 인원별 이동 거리와 스케줄 편성 복잡도를 정리합니다.</p>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:24px">
+    <!-- 현행 -->
+    <div class="cc">
+      <div class="cc-h"><div class="cc-dot" style="background:var(--c)"></div><span class="cc-nm" style="color:var(--c)">현행 유지</span></div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.8;margin-top:4px">
+        <div style="margin-bottom:8px"><span style="color:var(--text);font-weight:600">이동 인원</span><br>0명</div>
+        <div style="margin-bottom:8px"><span style="color:var(--text);font-weight:600">시간대 종류</span><br>11종 유지</div>
+        <div style="margin-bottom:8px"><span style="color:var(--text);font-weight:600">스케줄 편성</span><br>조별 시작 시각이 달라 공백·겹침 조절 필요. 9가지 경우의 수.</div>
+        <div><span style="color:var(--text);font-weight:600">신입 배치</span><br>11개 슬롯 중 선택.</div>
+        <div><span style="color:var(--text);font-weight:600">관리자</span><br>그대로 유지.</div>
+      </div>
+    </div>
+    <!-- 3조 -->
+    <div class="cc">
+      <div class="cc-h"><div class="cc-dot" style="background:var(--t)"></div><span class="cc-nm" style="color:var(--t)">3조 전환</span></div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.8;margin-top:4px">
+        <div style="margin-bottom:8px"><span style="color:var(--text);font-weight:600">이동 인원</span><br><span style="color:var(--t)">25명+</span> — 09~18(8명) → 07~15 또는 15~23으로 분리, 11~20(5명) → 동일, 14~23(3명) 등 다수 인원 재배치</div>
+        <div style="margin-bottom:8px"><span style="color:var(--text);font-weight:600">최대 이동 폭</span><br>최대 <span style="color:var(--t)">±4시간</span> (09~18 → 15~23 시 6시간 뒤로 이동)</div>
+        <div style="margin-bottom:8px"><span style="color:var(--text);font-weight:600">스케줄 편성</span><br>3종 단순. 단, A/B 휴게 분리 필수 적용 시 실질 6종.</div>
+        <div><span style="color:var(--text);font-weight:600">관리자</span><br>그대로 둘 수도 있으나, 관할 조 경계(15시)가 관리자 근무 내부에 위치.</div>
+      </div>
+    </div>
+    <!-- 6조 -->
+    <div class="cc">
+      <div class="cc-h"><div class="cc-dot" style="background:var(--s)"></div><span class="cc-nm" style="color:var(--s)">6조 전환</span></div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.8;margin-top:4px">
+        <div style="margin-bottom:8px"><span style="color:var(--text);font-weight:600">이동 인원</span><br><span style="color:var(--s)">10명</span> (다수 1시간 내외 이동)</div>
+        <div style="margin-bottom:8px"><span style="color:var(--text);font-weight:600">최대 이동 폭</span><br>±2시간 (최선호, 최정기 2시간)</div>
+        <div style="margin-bottom:8px"><span style="color:var(--text);font-weight:600">스케줄 편성</span><br>6종으로 압축. A/B 휴게는 조 내 규칙으로 고정.</div>
+        <div><span style="color:var(--text);font-weight:600">관리자</span><br>시간 변경 불필요. 현행 유지 가능.</div>
+      </div>
+    </div>
+  </div>
+
+  <br>
+  <!-- 이동 상세 테이블 -->
+  <div style="font-size:12px;font-weight:700;color:var(--text2);letter-spacing:1px;margin-bottom:8px">[3조]로 전환 시 예상 이동 상세</div>
+  <table class="tbl" style="font-size:11px">
+    <thead><tr><th>현행 시간대</th><th>인원</th><th>3조 이동 후</th><th>이동 폭</th></tr></thead>
+    <tbody>
+      <tr><td>09~18 (6명)</td><td>이환·최윤혁·신현철·김동진·이민수·성혜진</td><td>07~15 또는 15~23</td><td style="color:var(--t)">±2~6시간</td></tr>
+      <tr><td>10~19 (3명)</td><td>석승찬·이준·한승완</td><td>07~15 또는 15~23</td><td style="color:var(--t)">±3~5시간</td></tr>
+      <tr><td>11~20 (5명)</td><td>송주현·송태영·신은정·장재원·호덕진</td><td>15~23</td><td style="color:var(--t)">+4시간</td></tr>
+      <tr><td>14~23 (3명)</td><td>박효빈·이기완·권재윤</td><td>15~23</td><td style="color:var(--t)">+1시간</td></tr>
+      <tr><td>18~03 (2명)</td><td>이규순·강철환</td><td>23~07</td><td style="color:var(--t)">+5시간</td></tr>
+      <tr><td>20~05 · 22~07 (6명)</td><td>최선호·최정기·김소연·임다연·임아연·박은선</td><td>23~07</td><td style="color:var(--t)">+1~3시간</td></tr>
+    </tbody>
+  </table>
+  <br><br>
+  <div style="font-size:12px;font-weight:700;color:var(--text2);letter-spacing:1px;margin-bottom:8px">[6조]로 전환 시 예상 이동 상세</div>
+  <table class="tbl" style="font-size:11px">
+    <thead><tr><th>현행 시간대</th><th>인원</th><th>6조 이동 후</th><th>이동 폭</th></tr></thead>
+    <tbody>
+      <tr><td>08~17 (2명)</td><td>김경환·박효선</td><td>07~16</td><td style="color:var(--text2)">-1시간</td></tr>
+      <tr><td>10~19 (3명)</td><td>석승찬·이준·한승완</td><td>11~20</td><td style="color:var(--t)">+1시간</td></tr>
+      <tr><td>14~23 (3명)</td><td>박효빈·이기완·권재윤</td><td>15~23</td><td style="color:var(--t)">+1시간</td></tr>
+      <tr><td>20~05 (2명)</td><td>최선호·최정기</td><td>18~03</td><td style="color:var(--text2)">-2시간</td></tr>
+      <tr><td>2330~0830 (1명)</td><td>안대관</td><td>22~07</td><td style="color:var(--text2)">-1시간 반</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<script>
+const GANTT_START = 7;
+const HOURS = Array.from({length:24},(_,i)=>(i+GANTT_START)%24);
+const PEAK = new Set([11,12,13,14,17,18,19,20]);
+const DATES = ["6/1","6/2","6/3","6/4","6/5","6/6","6/7","6/8","6/9","6/10","6/11","6/12","6/13","6/14","6/15","6/16","6/17","6/18","6/19","6/20","6/21","6/22","6/23","6/24","6/25","6/26","6/27","6/28","6/29","6/30"];
+const DAYS  = ["월","화","수","목","금","토","일","월","화","수","목","금","토","일","월","화","수","목","금","토","일","월","화","수","목","금","토","일","월","화"];
+// 주중: 월~금 (weekday 0~4), 주말: 토~일 (weekday 5~6)
+const WK = [0,1,2,3,4,6,7,8,9,10,11,14,15,16,17,18,21,22,23,24,25,28,29]; // 6월 주중 날짜 인덱스
+const WE = [5,6,12,13,19,20,26,27]; // 6월 주말 날짜 인덱스 (0-based)
+
+// ── 6월 전체 실 출근 데이터 ──────────────────────
+const DATA = {
+  "6/1":{day:"월",c:[2,3,10,12,13,14,8,16,17,18,14,10,10,8,8,11,7,7,3,7,5,5,4,4],t:[10,10,12,12,7,7,10,12,10,10,10,5,5,9,9,9,6,7,7,4,3,6,6,6],s:[3,3,10,10,12,13,10,15,15,17,17,10,11,8,8,10,11,7,5,5,4,4,4,4]},
+  "6/2":{day:"화",c:[2,4,10,11,12,12,8,15,15,16,12,10,11,10,10,10,8,9,6,9,5,5,3,3],t:[10,10,11,11,6,6,10,11,8,8,8,5,6,9,9,8,8,9,9,4,5,7,7,7],s:[4,4,10,10,10,12,10,14,14,14,14,12,12,10,10,8,12,9,8,7,3,3,3,3]},
+  "6/3":{day:"수",c:[3,4,6,8,11,12,10,13,12,15,12,11,11,7,7,8,7,7,3,7,5,5,4,4],t:[7,7,8,8,5,4,7,8,10,10,10,5,6,10,10,9,7,7,7,4,3,6,6,6],s:[3,3,6,6,10,12,11,13,10,14,14,12,12,7,7,8,11,7,6,4,4,4,4,4]},
+  "6/4":{day:"목",c:[2,4,10,12,15,14,9,16,16,19,15,11,11,8,8,8,6,7,4,7,4,4,3,3],t:[10,10,12,12,8,6,10,12,10,10,10,6,6,10,10,9,6,7,7,5,2,5,5,5],s:[3,3,10,10,13,14,11,16,14,17,17,12,12,8,8,8,10,7,6,5,3,3,3,3]},
+  "6/5":{day:"금",c:[2,4,9,12,13,12,8,14,16,17,12,10,8,7,7,8,4,6,3,6,4,4,3,3],t:[11,11,12,12,7,6,11,12,7,7,7,4,4,7,7,7,5,6,6,4,2,5,5,5],s:[3,3,9,9,11,11,11,14,13,15,15,9,11,7,7,8,9,6,5,4,3,3,3,3]},
+  "6/6":{day:"토",c:[3,4,6,9,9,10,8,10,11,11,8,9,6,5,5,7,4,7,3,7,5,5,4,4],t:[8,8,9,9,4,6,8,9,5,5,5,2,4,5,5,5,6,7,7,4,3,6,6,6],s:[3,3,6,6,8,9,10,11,8,10,10,8,10,5,5,7,8,7,5,5,4,4,4,4]},
+  "6/7":{day:"일",c:[3,3,7,9,9,12,8,11,11,11,10,10,9,8,8,8,7,9,6,9,5,5,3,3],t:[8,8,9,9,4,6,8,9,6,6,6,3,6,7,7,6,8,9,9,4,5,7,7,7],s:[3,3,7,7,9,10,10,12,9,11,11,12,12,8,8,6,10,9,7,8,3,3,3,3]},
+  "6/8":{day:"월",c:[3,4,8,9,11,12,8,14,12,14,11,10,10,7,7,8,6,8,4,8,5,5,4,4],t:[8,8,9,9,5,5,8,9,8,8,8,4,7,9,9,8,7,8,8,5,3,6,6,6],s:[3,3,8,8,10,12,9,13,11,13,13,10,11,7,7,8,10,8,7,5,4,4,4,4]},
+  "6/9":{day:"화",c:[3,5,10,12,13,13,9,15,16,17,13,9,9,7,7,8,7,7,3,7,5,5,4,4],t:[11,11,12,12,7,6,11,12,8,8,8,5,4,8,8,7,7,7,7,4,3,6,6,6],s:[4,4,10,10,11,13,11,15,14,15,15,10,10,7,7,8,11,7,6,4,4,4,4,4]},
+  "6/10":{day:"수",c:[3,5,11,12,14,14,9,17,16,18,14,10,11,8,8,8,8,8,4,8,5,5,4,4],t:[10,10,12,12,7,7,10,12,10,10,10,5,5,9,9,8,8,8,8,4,4,7,7,7],s:[4,4,11,11,12,14,11,16,15,16,16,11,11,8,8,8,12,8,6,6,4,4,4,4]},
+  "6/11":{day:"목",c:[2,4,11,13,16,15,9,18,18,21,16,11,11,8,8,9,5,6,3,6,4,4,3,3],t:[11,11,13,13,8,7,11,13,11,11,11,5,6,10,10,10,5,6,6,4,2,5,5,5],s:[3,3,11,11,14,14,12,17,16,19,19,11,12,8,8,9,10,6,5,4,3,3,3,3]},
+  "6/12":{day:"금",c:[3,4,8,11,12,13,9,14,17,18,14,11,11,8,8,10,7,6,2,6,4,4,4,4],t:[10,10,11,11,6,6,10,11,10,10,10,6,5,10,10,10,5,6,6,5,1,5,5,5],s:[3,3,8,8,11,11,12,14,14,17,17,11,11,8,8,11,11,6,5,3,4,4,4,4]},
+  "6/13":{day:"토",c:[2,4,6,9,9,9,9,9,13,13,10,10,10,9,9,10,10,9,5,9,5,5,4,4],t:[8,8,9,9,4,6,8,9,7,7,7,5,5,8,8,7,8,9,9,5,4,7,7,7],s:[4,4,6,6,7,10,10,11,10,11,11,13,11,9,9,9,12,9,7,7,4,4,4,4]},
+  "6/14":{day:"일",c:[2,3,6,8,10,11,9,11,10,12,10,10,9,7,7,8,6,8,5,8,5,5,3,3],t:[7,7,8,8,4,5,7,8,7,7,7,3,7,8,8,7,7,8,8,4,4,6,6,6],s:[3,3,6,6,9,10,11,12,8,11,11,12,12,7,7,6,9,8,6,7,3,3,3,3]},
+  "6/15":{day:"월",c:[3,4,9,11,12,13,8,14,14,15,12,9,8,7,7,7,5,7,4,7,5,5,3,3],t:[10,10,11,11,7,5,10,11,7,7,7,4,4,7,7,6,7,7,7,3,4,6,6,6],s:[3,3,9,9,11,12,10,14,12,14,14,10,11,7,7,6,10,7,6,5,3,3,3,3]},
+  "6/16":{day:"화",c:[3,5,10,11,12,12,8,15,14,15,11,9,9,7,7,7,7,8,4,8,5,5,4,4],t:[10,10,11,11,6,6,10,11,7,7,7,4,4,7,7,6,8,8,8,4,4,7,7,7],s:[4,4,10,10,10,12,10,14,13,13,13,9,10,7,7,7,11,8,7,5,4,4,4,4]},
+  "6/17":{day:"수",c:[2,4,10,11,14,13,8,17,15,18,13,11,11,9,9,10,6,9,5,9,6,6,4,4],t:[9,9,11,11,6,7,9,11,10,10,10,5,7,10,10,9,8,9,9,5,4,7,7,7],s:[3,3,10,10,12,12,11,15,14,16,16,11,13,9,9,9,12,9,7,7,4,4,4,4]},
+  "6/18":{day:"목",c:[3,4,10,12,14,15,9,16,17,19,16,10,11,8,8,9,6,6,3,6,4,4,3,3],t:[11,11,12,12,7,6,11,12,10,10,10,5,6,10,10,10,5,6,6,4,2,5,5,5],s:[3,3,10,10,13,13,12,16,15,18,18,12,11,8,8,9,10,6,5,4,3,3,3,3]},
+  "6/19":{day:"금",c:[2,3,8,11,12,13,9,13,16,17,14,11,11,9,9,10,8,7,4,7,4,4,3,3],t:[10,10,11,11,7,5,10,11,9,9,9,5,5,9,9,9,6,7,7,4,3,6,6,6],s:[3,3,8,8,11,13,10,14,13,16,16,13,12,9,9,9,11,7,6,5,3,3,3,3]},
+  "6/20":{day:"토",c:[3,4,8,11,11,13,10,12,15,15,13,9,9,8,8,8,7,6,4,6,4,4,2,2],t:[10,10,11,11,6,6,10,11,8,8,8,5,4,8,8,7,6,6,6,3,3,5,5,5],s:[4,4,8,8,10,13,11,14,12,14,14,13,11,8,8,6,10,6,6,4,2,2,2,2]},
+  "6/21":{day:"일",c:[3,4,6,8,10,11,9,12,12,14,11,10,10,7,7,8,7,7,3,7,5,5,4,4],t:[7,7,8,8,4,5,7,8,9,9,9,5,5,9,9,8,7,7,7,4,3,6,6,6],s:[3,3,6,6,9,10,11,12,10,13,13,11,11,7,7,8,11,7,5,5,4,4,4,4]},
+  "6/22":{day:"월",c:[3,4,9,11,11,12,7,13,15,15,12,10,10,9,9,9,8,9,5,9,5,5,4,4],t:[10,10,11,11,6,6,10,11,7,7,7,5,5,8,8,7,8,9,9,5,4,7,7,7],s:[3,3,9,9,10,10,10,13,13,14,14,11,11,9,9,9,12,9,7,7,4,4,4,4]},
+  "6/23":{day:"화",c:[3,5,12,14,15,15,9,17,17,18,14,11,10,8,8,8,7,9,5,9,5,5,4,4],t:[12,12,14,14,8,8,12,14,8,8,8,4,6,8,8,7,8,9,9,5,4,7,7,7],s:[4,4,12,12,13,14,12,17,15,16,16,11,12,8,8,8,11,9,7,7,4,4,4,4]},
+  "6/24":{day:"수",c:[3,5,11,13,14,14,9,17,18,19,14,11,11,9,9,10,7,8,4,8,5,5,4,4],t:[11,11,13,13,7,8,11,13,10,10,10,6,6,10,10,9,7,8,8,5,3,6,6,6],s:[4,4,11,11,12,14,11,16,16,17,17,11,12,9,9,10,12,8,7,5,4,4,4,4]},
+  "6/25":{day:"목",c:[3,4,9,11,12,13,8,14,16,17,14,9,10,8,8,10,7,7,3,7,5,5,4,4],t:[10,10,11,11,6,6,10,11,9,9,9,6,4,9,9,9,6,7,7,4,3,6,6,6],s:[3,3,9,9,11,12,10,14,14,16,16,11,10,8,8,10,11,7,6,4,4,4,4,4]},
+  "6/26":{day:"금",c:[3,4,10,13,13,15,10,14,17,17,15,9,9,7,7,9,7,6,3,6,4,4,3,3],t:[12,12,13,13,8,6,12,13,8,8,8,4,5,8,8,8,5,6,6,4,2,5,5,5],s:[4,4,10,10,12,14,12,16,14,16,16,12,10,7,7,8,9,6,5,4,3,3,3,3]},
+  "6/27":{day:"토",c:[3,4,7,9,9,11,9,12,13,13,10,9,9,7,7,9,8,7,3,7,5,5,4,4],t:[8,8,9,9,5,5,8,9,8,8,8,4,5,8,8,7,7,7,7,4,3,6,6,6],s:[4,4,7,7,8,11,10,12,11,12,12,10,10,7,7,8,11,7,5,5,4,4,4,4]},
+  "6/28":{day:"일",c:[3,4,6,8,9,10,8,10,12,13,11,8,9,7,7,8,8,7,3,7,5,5,4,4],t:[7,7,8,8,4,5,7,8,8,8,8,5,4,8,8,7,7,7,7,4,3,6,6,6],s:[3,3,6,6,8,9,10,11,10,12,12,11,9,7,7,8,11,7,5,5,4,4,4,4]},
+  "6/29":{day:"월",c:[3,5,11,13,14,14,9,16,18,19,15,9,10,9,9,8,6,6,4,6,4,4,2,2],t:[11,11,13,13,7,8,11,13,10,10,10,6,4,9,9,8,6,6,6,3,3,5,5,5],s:[4,4,11,11,12,13,12,16,16,17,17,12,11,9,9,7,11,6,5,5,2,2,2,2]},
+  "6/30":{day:"화",c:[3,5,12,14,16,16,10,18,18,20,16,10,10,8,8,7,5,6,4,6,4,4,2,2],t:[12,12,14,14,8,8,12,14,10,10,10,5,5,9,9,8,6,6,6,3,3,5,5,5],s:[4,4,12,12,14,15,13,18,16,18,18,12,12,8,8,6,10,6,5,5,2,2,2,2]},
+};
+
+// 6월 전체 월평균 (Python 계산값)
+const MONTH_AVG = {
+  c: [2.7,4.1,8.9,10.9,12.2,12.8,8.7,14.1,14.9,16.1,12.7,9.9,9.8,7.8,7.8,8.6,6.7,7.3,3.8,7.3,4.7,4.7,3.5,3.5],
+  t: [9.6,9.6,10.9,10.9,6.1,6.1,9.6,10.9,8.5,8.5,8.5,4.7,5.2,8.5,8.5,7.8,6.7,7.3,7.3,4.1,3.2,6.0,6.0,6.0],
+  s: [3.4,3.4,8.9,8.9,10.8,12.1,10.8,14.2,12.8,14.7,14.7,11.1,11.1,7.8,7.8,8.1,10.6,7.3,5.9,5.2,3.5,3.5,3.5,3.5],
+};
+
+const PEAK_H = [11,12,13,14];
+const PEAK_E = [17,18,19,20];
+
+function avg(arr){return arr.reduce((a,b)=>a+b,0)/arr.length}
+function peakAvg(counts, hs){
+  return avg(hs.map(h=>counts[HOURS.indexOf(h)]));
+}
+function dayAvg(counts){
+  return avg(counts.slice(0,16)); // 07~22시
+}
+
+// ── RENDER HM ──────────────────────────────────
+const COLORS = {c:'#4a9eff',t:'#ff6b6b',s:'#2dd4bf'};
+
+function buildHM(rowId, lblId, counts, color, maxVal){
+  const row=document.getElementById(rowId);
+  const lbl=document.getElementById(lblId);
+  if(!row||!lbl)return;
+  const h=row.getBoundingClientRect().height||110;
+  const max=maxVal||Math.max(...counts,1);
+  row.innerHTML='';lbl.innerHTML='';
+  HOURS.forEach((hr,i)=>{
+    const cnt=counts[i];
+    const hp=Math.max((cnt/max)*(h-16),cnt>0?3:1);
+    const isPk=PEAK.has(hr);
+    const bc=isPk&&cnt>0?color:cnt>0?color+'66':'#131c2b';
+    const w=document.createElement('div');
+    w.className='hm-bw';w.title=`${String(hr).padStart(2,'0')}시: ${cnt}명`;
+    w.innerHTML=`<div class="hm-v">${cnt||''}</div><div class="hm-b" style="height:${hp}px;background:${bc}"></div>`;
+    row.appendChild(w);
+    const l=document.createElement('span');
+    l.textContent=String(hr).padStart(2,'0');
+    if(isPk)l.className='pk';
+    lbl.appendChild(l);
+  });
+}
+
+// ── DATE TABS ──────────────────────────────────
+let curDate='6/1';
+
+function buildTabs(containerId, onClick){
+  const el=document.getElementById(containerId);
+  if(!el)return;
+  el.innerHTML='';
+  DATES.forEach((d,i)=>{
+    const btn=document.createElement('button');
+    const isWE=[5,6,12,13,19,20,26,27].includes(i);
+    btn.className='tab'+(d===curDate?' active':'')+(isWE?' weekend':'');
+    btn.textContent=`${d}(${DAYS[i]})`;
+    btn.onclick=()=>{ curDate=d; onClick(d); buildTabs(containerId,onClick); if(containerId==='tabRow') buildTabs('tabRow2',onClick); else buildTabs('tabRow',onClick); };
+    el.appendChild(btn);
+  });
+}
+
+function renderDate(d){
+  const dd=DATA[d];
+  if(!dd)return;
+  const max=Math.max(...dd.c,...dd.t,...dd.s);
+  buildHM('hm-c','hl-c',dd.c,COLORS.c,max);
+  buildHM('hm-t','hl-t',dd.t,COLORS.t,max);
+  buildHM('hm-s','hl-s',dd.s,COLORS.s,max);
+  buildHM('pk-c','pl-c',dd.c,COLORS.c,max);
+  buildHM('pk-t','pl-t',dd.t,COLORS.t,max);
+  buildHM('pk-s','pl-s',dd.s,COLORS.s,max);
+  [['c',COLORS.c],['t',COLORS.t],['s',COLORS.s]].forEach(([k,col])=>{
+    const el=document.getElementById('st-'+k);
+    if(!el)return;
+    const cnt=dd[k];
+    el.innerHTML=`
+      <div class="stat-r"><span>점심 피크 평균</span><span class="stat-v" style="color:${col}">${peakAvg(cnt,PEAK_H).toFixed(1)}명</span></div>
+      <div class="stat-r"><span>저녁 피크 평균</span><span class="stat-v" style="color:${col}">${peakAvg(cnt,PEAK_E).toFixed(1)}명</span></div>
+      <div class="stat-r"><span>07~22시 평균</span><span class="stat-v" style="color:${col}">${dayAvg(cnt).toFixed(1)}명</span></div>`;
+  });
+}
+
+// ── WEEKLY TABLE (6월 전체) ──────────────────────
+function buildWeekTables(){
+  const keys=['c','t','s'];
+  const labels=['현행','3조','6조'];
+  const colors=[COLORS.c,COLORS.t,COLORS.s];
+  const WK_IDX=[0,1,2,3,4,7,8,9,10,11,14,15,16,17,18,21,22,23,24,25,28,29]; // 주중
+  const WE_IDX=[5,6,12,13,19,20,26,27]; // 주말
+
+  function rowHtml(idxList){
+    return keys.map((k,ki)=>{
+      const p1=avg(idxList.map(i=>peakAvg(DATA[DATES[i]][k],PEAK_H)));
+      const p2=avg(idxList.map(i=>peakAvg(DATA[DATES[i]][k],PEAK_E)));
+      const pa=avg(idxList.map(i=>dayAvg(DATA[DATES[i]][k])));
+      return`<tr>
+        <td style="color:${colors[ki]};font-weight:600">${labels[ki]}</td>
+        <td><span style="font-family:'JetBrains Mono',monospace;font-weight:700;color:${colors[ki]}">${p1.toFixed(1)}</span>명</td>
+        <td><span style="font-family:'JetBrains Mono',monospace;font-weight:700;color:${colors[ki]}">${p2.toFixed(1)}</span>명</td>
+        <td><span style="font-family:'JetBrains Mono',monospace">${pa.toFixed(1)}</span>명</td>
+      </tr>`;
+    }).join('');
+  }
+
+  const _wk=document.getElementById('wk-tbl'); if(_wk) _wk.innerHTML=rowHtml(WK_IDX);
+  const _we=document.getElementById('we-tbl'); if(_we) _we.innerHTML=rowHtml(WE_IDX);
+
+  // 전체 월평균 (Python 계산값 직접 사용)
+  const allTbl=document.getElementById('all-tbl');
+  if(!allTbl) { /* 슬라이드 없음 */ }
+  const monthData=[
+    {k:'c',label:'현행',m:MONTH_AVG.c},
+    {k:'t',label:'3조', m:MONTH_AVG.t},
+    {k:'s',label:'6조', m:MONTH_AVG.s},
+  ];
+  if(allTbl) allTbl.innerHTML=monthData.map(({k,label,m},ki)=>{
+    const p1=peakAvg(m,PEAK_H); const p2=peakAvg(m,PEAK_E); const pa=dayAvg(m);
+    const note={c:'저녁 피크 가장 낮음',t:'주간 집중, 저녁 약화',s:'저녁 피크 가장 높음'}[k];
+    return`<tr>
+      <td style="color:${colors[ki]};font-weight:600">${label}</td>
+      <td><span style="font-family:'JetBrains Mono',monospace;font-weight:700;color:${colors[ki]}">${p1.toFixed(1)}</span>명</td>
+      <td><span style="font-family:'JetBrains Mono',monospace;font-weight:700;color:${colors[ki]}">${p2.toFixed(1)}</span>명</td>
+      <td><span style="font-family:'JetBrains Mono',monospace">${pa.toFixed(1)}</span>명</td>
+      <td style="font-size:11px;color:var(--text2)">${note}</td>
+    </tr>`;
+  }).join('');
+
+  // 평가표 수치
+  monthData.forEach(({k,m},ki)=>{
+    const p1=peakAvg(m,PEAK_H); const p2=peakAvg(m,PEAK_E);
+    const e1=document.getElementById(`eval-${k}-p1`);
+    const e2=document.getElementById(`eval-${k}-p2`);
+    if(e1) e1.innerHTML=`<span style="font-family:'JetBrains Mono',monospace;font-weight:700;color:${colors[ki]}">${p1.toFixed(1)}명</span>`;
+    if(e2) e2.innerHTML=`<span style="font-family:'JetBrains Mono',monospace;font-weight:700;color:${colors[ki]}">${p2.toFixed(1)}명</span>`;
+  });
+}
+
+// ── NAV ──────────────────────────────────────
+const dots=document.querySelectorAll('.nd');
+function goTo(i){
+  const slides=document.querySelectorAll('.slide');
+  if(slides[i]) slides[i].scrollIntoView({behavior:'smooth'});
+}
+
+window.addEventListener('load',()=>{
+  const slides=document.querySelectorAll('.slide');
+  const obs=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting&&e.intersectionRatio>0.5){
+        const idx=Array.from(slides).indexOf(e.target);
+        dots.forEach((d,i)=>d.classList.toggle('active',i===idx));
+      }
+    });
+  },{threshold:0.5});
+  slides.forEach(s=>obs.observe(s));
+  document.addEventListener('keydown',e=>{
+    const cur=Array.from(dots).findIndex(d=>d.classList.contains('active'));
+    if(e.key==='ArrowDown'||e.key==='PageDown')goTo(Math.min(cur+1,slides.length-1));
+    if(e.key==='ArrowUp'||e.key==='PageUp')goTo(Math.max(cur-1,0));
+  });
+  buildTabs('tabRow', d=>{ renderDate(d); });
+  buildTabs('tabRow2', d=>{ renderDate(d); });
+  renderDate('6/1');
+  buildWeekTables();
+  window.addEventListener('resize',()=>renderDate(curDate));
+  setTimeout(buildExtra, 150);
+});
+
+// ── 추가 슬라이드(07~08) 데이터 ──────────────────
+function buildExtra(){
+  function hourAvgAll(key, hour){
+    return DATES.reduce((sum,d)=>{
+      const idx=HOURS.indexOf(hour);
+      return sum+(DATA[d]?.[key]?.[idx]||0);
+    },0)/DATES.length;
+  }
+  function rangeAvgAll(key, hours){
+    return hours.reduce((s,h)=>s+hourAvgAll(key,h),0)/hours.length;
+  }
+
+  const amH=[9,10,11];
+  const pmH=[21,22,23,0,1,2,3];
+  const LABELS={c:'현행',t:'3조',s:'6조'};
+
+  const patrolAm=document.getElementById('patrol-am');
+  if(patrolAm){
+    patrolAm.innerHTML='';
+    ['c','t','s'].forEach(k=>{
+      const avgs=amH.map(h=>hourAvgAll(k,h).toFixed(1));
+      const overall=rangeAvgAll(k,amH).toFixed(1);
+      patrolAm.innerHTML+=`<tr>
+        <td style="color:${COLORS[k]};font-weight:600">${LABELS[k]}</td>
+        ${avgs.map(v=>`<td style="font-family:'JetBrains Mono',monospace">${v}</td>`).join('')}
+        <td style="font-family:'JetBrains Mono',monospace;font-weight:700;color:${COLORS[k]}">${overall}</td>
+      </tr>`;
+    });
+  }
+
+  const patrolPm=document.getElementById('patrol-pm');
+  if(patrolPm){
+    patrolPm.innerHTML='';
+    ['c','t','s'].forEach(k=>{
+      const avgs=pmH.map(h=>hourAvgAll(k,h).toFixed(1));
+      const pmOverall=rangeAvgAll(k,pmH).toFixed(1);
+      patrolPm.innerHTML+=`<tr>
+        <td ...>${LABELS[k]}</td>
+        ${avgs.map(v=>`<td ...>${v}</td>`).join('')}
+        <td style="font-family:'JetBrains Mono',monospace;font-weight:700;color:${COLORS[k]}">${pmOverall}</td>
+      </tr>`;
+    });
+  }
+
+  const dawnH=[3,4,5,6,7,8];
+  ['c','t','s'].forEach(k=>{
+    const el=document.getElementById('dawn-'+k);
+    if(!el)return;
+    el.innerHTML=dawnH.map(h=>`<tr>
+      <td style="font-family:'JetBrains Mono',monospace">${String(h).padStart(2,'0')}시</td>
+      <td style="font-family:'JetBrains Mono',monospace;font-weight:700;color:${COLORS[k]}">${hourAvgAll(k,h).toFixed(1)}</td>
+    </tr>`).join('');
+    const ea=document.getElementById('dawn-avg-'+k);
+    if(ea) ea.innerHTML=`<span style="font-family:'JetBrains Mono',monospace;font-weight:700;color:${COLORS[k]}">${rangeAvgAll(k,dawnH).toFixed(1)}명</span>`;
+  });
+}
+
+function buildHM(rowId, lblId, counts, color, maxVal){
+  const row=document.getElementById(rowId);
+  const lbl=document.getElementById(lblId);
+  if(!row||!lbl)return;
+  const h=row.getBoundingClientRect().height||110;
+  const max=maxVal||Math.max(...counts,1);
+  row.innerHTML='';lbl.innerHTML='';
+  HOURS.forEach((hr,i)=>{
+    const cnt=counts[i];
+    const hp=Math.max((cnt/max)*(h-16),cnt>0?3:1);
+    const isPk=PEAK.has(hr);
+    const bc=isPk&&cnt>0?color:cnt>0?color+'66':'#131c2b';
+    const w=document.createElement('div');
+    w.className='hm-bw';w.title=`${String(hr).padStart(2,'0')}시: ${cnt}명`;
+    w.innerHTML=`<div class="hm-v">${cnt||''}</div><div class="hm-b" style="height:${hp}px;background:${bc}"></div>`;
+    row.appendChild(w);
+    const l=document.createElement('span');
+    l.textContent=String(hr).padStart(2,'0');
+    if(isPk)l.className='pk';
+    lbl.appendChild(l);
+  });
+}
+</script>
+
+<!-- 02 피크 비교 -->
+<section class="slide" id="s1">
+  <div class="snum">03 / 06</div>
+  <div class="eye">피크타임 평균 가용인원</div>
+  <h2 class="hl">점심·저녁 피크<br>날짜별 수치 비교</h2>
+  <p class="sub">11~14시 4개 시간 평균 / 17~20시 4개 시간 평균. 실 출근 반영.</p>
+  <div class="tab-row" id="tabRow2"></div>
+  <div class="cg">
+    <div class="cc">
+      <div class="cc-h"><div class="cc-dot" style="background:var(--c)"></div><span class="cc-nm" style="color:var(--c)">현행</span></div>
+      <div class="hm-row" id="pk-c" style="height:80px"></div>
+      <div class="hm-ls" id="pl-c"></div>
+      <div class="stat-row" id="st-c"></div>
+    </div>
+    <div class="cc">
+      <div class="cc-h"><div class="cc-dot" style="background:var(--t)"></div><span class="cc-nm" style="color:var(--t)">3조</span></div>
+      <div class="hm-row" id="pk-t" style="height:80px"></div>
+      <div class="hm-ls" id="pl-t"></div>
+      <div class="stat-row" id="st-t"></div>
+    </div>
+    <div class="cc">
+      <div class="cc-h"><div class="cc-dot" style="background:var(--s)"></div><span class="cc-nm" style="color:var(--s)">6조</span></div>
+      <div class="hm-row" id="pk-s" style="height:80px"></div>
+      <div class="hm-ls" id="pl-s"></div>
+      <div class="stat-row" id="st-s"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 07 비피크 시간대 배분 -->
+<section class="slide" id="s3">
+  <div class="snum">04 / 06</div>
+  <div class="eye">비피크 시간대 배분</div>
+  <h2 class="hl">순찰 집중 업무 시간대<br>(09~11시 · 21~03시) 배분</h2>
+  <p class="sub">배달 피크 외 구간. 6월 전체 일평균 기준.</p>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
+    <!-- 09~11시 -->
+    <div>
+      <div style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--text2);margin-bottom:10px">09~11시 평균 가용인원 (오전 순찰)</div>
+      <table class="tbl" style="font-size:12px">
+        <thead><tr><th>구분</th><th>09시</th><th>10시</th><th>11시</th><th>구간 평균</th></tr></thead>
+        <tbody id="patrol-am"></tbody>
+      </table>
+    </div>
+    <!-- 21~03시 -->
+    <div>
+      <div style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--text2);margin-bottom:10px">21~03시 평균 가용인원 (야간 순찰)</div>
+      <table class="tbl" style="font-size:12px">
+        <thead><tr><th>구분</th><th>21시</th><th>22시</th><th>23시</th><th>00시</th><th>01시</th><th>02시</th><th>03시</th><th>구간 평균</th></tr></thead>
+        <tbody id="patrol-pm"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="notice">
+    <strong>관찰 포인트</strong> — 3조는 15시 교대로 인해 09~14시 구간이 단일 조(주간1)만 투입되며, 이 구간의 최대 가용인원이 제한됨. 6조는 주간1·주간2·주간3이 겹치는 11~16시에 가용인원이 집중되고, 야간2(18~03) 투입으로 21~23시 구간을 추가 보강함.
+  </div>
+</section>
+
+<!-- 08 03~09시 실효성 -->
+<section class="slide" id="s4">
+  <div class="snum">05 / 06</div>
+  <div class="eye">심야·새벽 구간 실효성</div>
+  <h2 class="hl">03~09시 구간<br>순찰 감소 시간대</h2>
+  <p class="sub">순찰 감소 구간. 이 시간대에 투입된 인원 수 및 구조적 특성을 비교합니다.</p>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:20px">
+    <div class="cc">
+      <div class="cc-h"><div class="cc-dot" style="background:var(--c)"></div><span class="cc-nm" style="color:var(--c)">현행</span></div>
+      <table class="tbl" style="font-size:11px;margin-top:4px">
+        <thead><tr><th>시간</th><th>평균 인원</th></tr></thead>
+        <tbody id="dawn-c"></tbody>
+      </table>
+      <div style="font-size:11px;color:var(--text2);margin-top:10px;line-height:1.6">20~05(2명)·22~07(4명)·23:30~08:30(1명)이 03시 이후까지 잔류. 07시 이전 퇴근하지 않는 인원 <span style="color:var(--c);font-weight:600">7명</span> 상시.</div>
+    </div>
+    <div class="cc">
+      <div class="cc-h"><div class="cc-dot" style="background:var(--t)"></div><span class="cc-nm" style="color:var(--t)">3조</span></div>
+      <table class="tbl" style="font-size:11px;margin-top:4px">
+        <thead><tr><th>시간</th><th>평균 인원</th></tr></thead>
+        <tbody id="dawn-t"></tbody>
+      </table>
+      <div style="font-size:11px;color:var(--text2);margin-top:10px;line-height:1.6">야간3(23~07) 9명이 03~07시를 전담. A/B 휴게 분산 적용. 실출근 기준 <span style="color:var(--t);font-weight:600">5~6명</span> 수준.</div>
+    </div>
+    <div class="cc">
+      <div class="cc-h"><div class="cc-dot" style="background:var(--s)"></div><span class="cc-nm" style="color:var(--s)">6조</span></div>
+      <table class="tbl" style="font-size:11px;margin-top:4px">
+        <thead><tr><th>시간</th><th>평균 인원</th></tr></thead>
+        <tbody id="dawn-s"></tbody>
+      </table>
+      <div style="font-size:11px;color:var(--text2);margin-top:10px;line-height:1.6">야간3(22~07) 5명이 03~07시 전담. 실출근 기준 <span style="color:var(--s);font-weight:600">3~4명</span> 수준. 현행·3조 대비 적으나 업무량 감소 구간과 일치.</div>
+    </div>
+  </div>
+
+  <table class="tbl">
+    <thead>
+      <tr><th>항목</th><th style="color:var(--c)">현행</th><th style="color:var(--t)">3조</th><th style="color:var(--s)">6조</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>03~07시 평균 가용인원</td>
+        <td id="dawn-avg-c"></td>
+        <td id="dawn-avg-t"></td>
+        <td id="dawn-avg-s"></td>
+      </tr>
+      <tr>
+        <td>03~07시 전담 조</td>
+        <td>22~07(4명) + 2330~0830(1명)</td>
+        <td>야간3 23~07 (9명)</td>
+        <td>야간3 22~07 (5명)</td>
+      </tr>
+      <tr>
+        <td>관리자 공백</td>
+        <td>03~09시 공백</td>
+        <td>03~09시 공백</td>
+        <td>03~09시 공백 (세 안 동일)</td>
+      </tr>
+      <tr>
+        <td>03~09시 구간 평가</td>
+        <td style="font-size:11px;color:var(--text2)">20~05가 일부 구간 잔류.</td>
+        <td style="font-size:11px;color:var(--text2)">야간3 9명이 새벽 전담. 업무량 대비 인원 과잉.</td>
+        <td style="font-size:11px;color:var(--text2)">야간3 5명. 업무량 감소와 인원 감소 일치.</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+<!-- 09 종합의견 -->
+<section class="slide" id="s5">
+  <div class="snum">06 / 06</div>
+  <div class="eye">종합</div>
+  <h2 class="hl">3개 안<br>항목별 종합 요약</h2>
+  <p class="sub">6월 전체 실출근 기반 수치와 구조적 특성을 종합한 항목별 비교입니다.</p>
+
+  <table class="tbl" style="margin-top:0">
+    <thead>
+      <tr><th>항목</th><th style="color:var(--c)">현행</th><th style="color:var(--t)">3조</th><th style="color:var(--s)">6조</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>점심 피크 평균 (11~14시, 6월 전체)</td>
+        <td style="color:var(--c);font-family:'JetBrains Mono',monospace;font-weight:700">11.9명</td>
+        <td style="color:var(--t);font-family:'JetBrains Mono',monospace;font-weight:700">8.2명</td>
+        <td style="color:var(--s);font-family:'JetBrains Mono',monospace;font-weight:700">12.0명</td>
+      </tr>
+      <tr>
+        <td>저녁 피크 평균 (17~20시, 6월 전체)</td>
+        <td style="color:var(--c);font-family:'JetBrains Mono',monospace;font-weight:700">10.1명</td>
+        <td style="color:var(--t);font-family:'JetBrains Mono',monospace;font-weight:700">6.7명</td>
+        <td style="color:var(--s);font-family:'JetBrains Mono',monospace;font-weight:700">11.2명</td>
+      </tr>
+      <tr>
+        <td>주중 저녁 피크 평균</td>
+        <td style="color:var(--c);font-family:'JetBrains Mono',monospace">10.5명</td>
+        <td style="color:var(--t);font-family:'JetBrains Mono',monospace">7.0명</td>
+        <td style="color:var(--s);font-family:'JetBrains Mono',monospace">11.5명</td>
+      </tr>
+      <tr>
+        <td>주말 저녁 피크 평균</td>
+        <td style="color:var(--c);font-family:'JetBrains Mono',monospace">9.0명</td>
+        <td style="color:var(--t);font-family:'JetBrains Mono',monospace">6.0명</td>
+        <td style="color:var(--s);font-family:'JetBrains Mono',monospace">10.3명</td>
+      </tr>
+      <tr>
+        <td>03~07시 평균 가용인원</td>
+        <td style="color:var(--c);font-family:'JetBrains Mono',monospace">4.7명</td>
+        <td style="color:var(--t);font-family:'JetBrains Mono',monospace">6.0명</td>
+        <td style="color:var(--s);font-family:'JetBrains Mono',monospace">3.5명</td>
+      </tr>
+      <tr>
+        <td>시간대 이동 인원</td>
+        <td><span class="bg g">0명</span></td>
+        <td><span class="bg w">25명+</span></td>
+        <td><span class="bg n">10명</span></td>
+      </tr>
+      <tr>
+        <td>최대 이동 폭</td>
+        <td>—</td>
+        <td style="color:var(--t)">최대 ±6시간</td>
+        <td style="color:var(--s)">최대 ±2시간</td>
+      </tr>
+      <tr>
+        <td>관리자 시간 변경 필요</td>
+        <td><span class="bg g">불필요</span></td>
+        <td><span class="bg w">유지 및 조정</span></td>
+        <td><span class="bg g">불필요</span></td>
+      </tr>
+      <tr>
+        <td>시간대 종류</td>
+        <td><span class="bg w">11종</span></td>
+        <td><span class="bg g">3종</span> <span style="font-size:10px;color:var(--text3)"></span></td>
+        <td><span class="bg n">6종</span></td>
+      </tr>
+      <tr>
+        <td>신입 배치 기준 명확성</td>
+        <td style="font-size:11px;color:var(--text2)">슬롯 11종, 개별 지정 필요</td>
+        <td style="font-size:11px;color:var(--text2)">조 3종, 명확</td>
+        <td style="font-size:11px;color:var(--text2)">조 6종, 명확</td>
+      </tr>
+      <tr>
+        <td>A/B 휴게 분산 필수 여부</td>
+        <td style="font-size:11px;color:var(--text2)">미적용 — 부분 개인 적용 중</td>
+        <td style="font-size:11px;color:var(--text2)">필수 — 미적용 시 피크 구간 함몰</td>
+        <td style="font-size:11px;color:var(--text2)">부분 필수 — 미적용 시 피크 효과 감소</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="notice" style="margin-top:20px">
+    <strong>수치 산출 기준</strong> — 6월 1일~30일 전체 30일, 실제 출근(present:true) 인원 기반. 3조·6조는 동일 출근 인원에 각 시나리오 근무 시간대와 A/B 휴게 배정을 대입하여 산출. 현행은 A/B 미분리 자연 분산.
+  </div>
+</section>
+
+</body>
