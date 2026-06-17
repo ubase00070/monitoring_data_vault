@@ -3269,15 +3269,21 @@
             header.style.gap = '1px';
         }
 
-        // 2. 상태바를 '해결완료' 버튼 앞으로 이동
-        const statusBar = Array.from(document.querySelectorAll('div.flex.items-center.justify-between'))
-            .find(el => el.textContent.includes('LTE') && el.getBoundingClientRect().height < 60);
-        const resolveBtn = Array.from(document.querySelectorAll('button'))
-            .find(el => el.textContent.trim() === '해결 완료' || el.textContent.trim() === '해결완료');
-        if (statusBar && resolveBtn) {
-            resolveBtn.parentElement.insertBefore(statusBar, resolveBtn);
-            statusBar.style.marginLeft = '-240px';
-        }
+        // 2. 상태바를 빨간뱃지 아래로 이동 (없으면 해결완료 버튼 앞 fallback)
+		const redBadge = document.querySelector(
+			'.rounded-8.flex.flex-row.items-center.justify-between.truncate.bg-red-50.px-8'
+		);
+		const statusBar = Array.from(document.querySelectorAll('div.flex.items-center.justify-between'))
+			.find(el => el.textContent.includes('LTE') && !el.querySelector('.bg-red-50') && el.getBoundingClientRect().height < 60);
+		const resolveBtn = Array.from(document.querySelectorAll('button'))
+			.find(el => el.textContent.trim() === '해결 완료' || el.textContent.trim() === '해결완료');
+		if (statusBar && redBadge) {
+			redBadge.parentElement.insertBefore(statusBar, redBadge.nextSibling);
+			statusBar.style.marginLeft = '';
+		} else if (statusBar && resolveBtn) {
+			resolveBtn.parentElement.insertBefore(statusBar, resolveBtn);
+			statusBar.style.marginLeft = '-240px';
+		}
 
         // 3. 임무 바 높이 조정
         const missionWrapper = document.querySelector('.relative.overflow-hidden.w-full.h-58');
