@@ -1978,10 +1978,10 @@
           "raw": "1"
         },
         "6/18": {
-          "status": "work",
+          "status": "half",
           "working": true,
           "present": true,
-          "raw": "1"
+          "raw": "반차"
         },
         "6/19": {
           "status": "off",
@@ -4397,10 +4397,10 @@
           "raw": "1"
         },
         "6/16": {
-          "status": "work",
+          "status": "half-half",
           "working": true,
           "present": true,
-          "raw": "1"
+          "raw": "반반차"
         },
         "6/17": {
           "status": "work",
@@ -7407,10 +7407,10 @@
           "raw": "1"
         },
         "6/19": {
-          "status": "off",
-          "working": false,
+          "status": "annual",
+          "working": true,
           "present": false,
-          "raw": "휴무"
+          "raw": "연차"
         },
         "6/20": {
           "status": "off",
@@ -7419,10 +7419,10 @@
           "raw": "휴무"
         },
         "6/21": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "6/22": {
           "status": "work",
@@ -7888,6 +7888,6 @@
     "6/30"
   ],
   "mainMonth": 6,
-  "updatedAt": "2026-06-17T03:53:02.788Z",
+  "updatedAt": "2026-06-18T03:53:02.529Z",
   "sheetName": "2026년_06월 스케줄"
 }
