@@ -2095,7 +2095,7 @@
 
 	if (isHandoverPage()) {
 		checkUnmonitoredRobots();
-		setInterval(checkUnmonitoredRobots, 60000);
+		setInterval(checkUnmonitoredRobots, 30000);
 	}
 
     /* ============================================================
