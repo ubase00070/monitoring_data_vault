@@ -2057,44 +2057,44 @@
 	}
 
 	function _showUnmonitoredPanel(alerts) {
-	    let panel = document.getElementById(UNMONITORED_PANEL_ID);
-	    if (!panel) {
-	        panel = document.createElement('div');
-	        panel.id = UNMONITORED_PANEL_ID;
-	        panel.style.cssText = `
-	            position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
-	            z-index:999999; pointer-events:none;
-	            display:flex; flex-direction:column; gap:4px; align-items:center;
-	        `;
-	        document.body.appendChild(panel);
-	    }
-	
-	    // 2개씩 묶어서 행으로
-	    const rows = [];
-	    for (let i = 0; i < Math.min(alerts.length, 4); i += 2) {
-	        rows.push(alerts.slice(i, i + 2));
-	    }
-	
-	    panel.innerHTML = rows.map(row => `
-	        <div style="display:flex; gap:6px;">
-	            ${row.map(msg => `
-	                <div style="
-	                    display:flex; align-items:center; gap:8px;
-	                    background:rgba(30,20,60,0.92); border:1px solid #a78bfa;
-	                    border-radius:20px; padding:7px 18px;
-	                    box-shadow:0 4px 16px rgba(0,0,0,0.4);
-	                    font-family:'Pretendard','Noto Sans KR',sans-serif;
-	                    white-space:nowrap;
-	                ">
-	                    <span style="font-size:12px;color:#c4b5fd;">⚠️</span>
-	                    <span style="font-size:14px;font-weight:700;color:#ede9fe;">${msg}</span>
-	                </div>
-	            `).join('')}
-	        </div>
-	    `).join('');
+		let panel = document.getElementById(UNMONITORED_PANEL_ID);
+		if (!panel) {
+			panel = document.createElement('div');
+			panel.id = UNMONITORED_PANEL_ID;
+			panel.style.cssText = `
+				position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+				z-index:999999; pointer-events:none;
+				display:flex; flex-direction:column; gap:4px; align-items:center;
+			`;
+			document.body.appendChild(panel);
+		}
+
+		// 2개씩 묶어서 행으로
+		const rows = [];
+		for (let i = 0; i < Math.min(alerts.length, 4); i += 2) {
+			rows.push(alerts.slice(i, i + 2));
+		}
+
+		panel.innerHTML = rows.map(row => `
+			<div style="display:flex; gap:6px;">
+				${row.map(msg => `
+					<div style="
+						display:flex; align-items:center; gap:8px;
+						background:rgba(30,20,60,0.92); border:1px solid #a78bfa;
+						border-radius:20px; padding:7px 18px;
+						box-shadow:0 4px 16px rgba(0,0,0,0.4);
+						font-family:'Pretendard','Noto Sans KR',sans-serif;
+						white-space:nowrap;
+					">
+						<span style="font-size:12px;color:#c4b5fd;">⚠️</span>
+						<span style="font-size:14px;font-weight:700;color:#ede9fe;">${msg}</span>
+					</div>
+				`).join('')}
+			</div>
+		`).join('');
 	}
 
-	if (isHandoverPage()) {
+	if (isHandoverPage() && localStorage.getItem('neubie_handover_enabled') !== 'false') {
 		checkUnmonitoredRobots();
 		setInterval(checkUnmonitoredRobots, 30000);
 	}
