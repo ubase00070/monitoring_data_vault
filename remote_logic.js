@@ -2011,6 +2011,92 @@
 		});
 	}
 	// ── 핸드오버 레이아웃 끝 ──────────────────────────────
+	
+	/* ============================================================
+    SECTION 미모니터링 순찰 감지
+   ============================================================ */
+	const UNMONITORED_WATCH = [
+		{ id: 219, name: '경희대 1호기' },
+		{ id: 218, name: '경희대 2호기' },
+		{ id: 114, name: '부경대 1호기' },
+		{ id: 115, name: '부경대 2호기' },
+		{ id: 174, name: '평택 1호기' },
+		{ id: 179, name: '평택 2호기' },
+		{ id: 76, name: '부산 서면 1호기' },
+		{ id: 74, name: '부천 중동 1호기' },
+		{ id: 193, name: '김포풍무센트럴푸르지오_1호기' },
+		{ id: 99, name: '인력개발원 1호기' },
+		{ id: 178, name: '김포 1호기' },
+		{ id: 177, name: '김포 2호기' },
+		{ id: 254, name: '광교풍경채(대체 기체) 1호기' },
+	];
+	const UNMONITORED_PANEL_ID = 'neubie-unmonitored-panel';
+
+	async function checkUnmonitoredRobots() {
+		if (!isHandoverPage()) return;
+		const alerts = [];
+		for (const robot of UNMONITORED_WATCH) {
+			try {
+				const res = await fetch(
+					`https://core.neubie.ai/robots/${robot.id}/`,
+					{ credentials: 'include' }
+				);
+				const data = await res.json();
+				if (data.currentScenario !== null && data.isMonitoring === false) {
+					alerts.push(`${robot.name} ${data.currentScenarioTypeText || '임무'} 중!`);
+				}
+			} catch(e) {}
+		}
+		const panel = document.getElementById(UNMONITORED_PANEL_ID);
+		if (alerts.length > 0) {
+			_showUnmonitoredPanel(alerts);
+		} else if (panel) {
+			panel.remove();
+		}
+	}
+
+	function _showUnmonitoredPanel(alerts) {
+	    let panel = document.getElementById(UNMONITORED_PANEL_ID);
+	    if (!panel) {
+	        panel = document.createElement('div');
+	        panel.id = UNMONITORED_PANEL_ID;
+	        panel.style.cssText = `
+	            position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+	            z-index:999999; pointer-events:none;
+	            display:flex; flex-direction:column; gap:4px; align-items:center;
+	        `;
+	        document.body.appendChild(panel);
+	    }
+	
+	    // 2개씩 묶어서 행으로
+	    const rows = [];
+	    for (let i = 0; i < Math.min(alerts.length, 4); i += 2) {
+	        rows.push(alerts.slice(i, i + 2));
+	    }
+	
+	    panel.innerHTML = rows.map(row => `
+	        <div style="display:flex; gap:6px;">
+	            ${row.map(msg => `
+	                <div style="
+	                    display:flex; align-items:center; gap:8px;
+	                    background:rgba(30,20,60,0.92); border:1px solid #a78bfa;
+	                    border-radius:20px; padding:7px 18px;
+	                    box-shadow:0 4px 16px rgba(0,0,0,0.4);
+	                    font-family:'Pretendard','Noto Sans KR',sans-serif;
+	                    white-space:nowrap;
+	                ">
+	                    <span style="font-size:12px;color:#c4b5fd;">⚠️</span>
+	                    <span style="font-size:14px;font-weight:700;color:#ede9fe;">${msg}</span>
+	                </div>
+	            `).join('')}
+	        </div>
+	    `).join('');
+	}
+
+	if (isHandoverPage()) {
+		checkUnmonitoredRobots();
+		setInterval(checkUnmonitoredRobots, 30000);
+	}
 
     /* ============================================================
         SECTION 9. 전체 밝기 마스터 컨트롤
