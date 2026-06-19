@@ -2231,7 +2231,7 @@
 	// 전역 observer로 관리 (페이지 전환 후 재등록 가능하도록)
 	function registerSideObserver() {
 		if (!isMonitoringPage()) return;
-		if (!localStorage.getItem('neubie_handover_enabled') !== 'false') return;
+		if (localStorage.getItem('neubie_handover_enabled') === 'false') return;
 		if (window._sideObserver) window._sideObserver.disconnect();
 		window._sideObserver = new MutationObserver(() => {
 			if (isMonitoringPage() && localStorage.getItem('neubie_handover_enabled') !== 'false') {
