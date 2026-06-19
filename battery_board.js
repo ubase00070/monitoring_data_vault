@@ -431,9 +431,7 @@
                     <div class="bb-ref" id="bb-ref">— 초 후 갱신</div>
                 </div>
                 <div class="bb-hd-right">
-					<button id="bb-backup-btn" style="padding:2px 8px;border-radius:5px;border:1px solid var(--bd2);background:var(--sur2);color:var(--mu);font-size:11px;font-weight:700;cursor:pointer;">백업</button>
-					<button id="bb-restore-btn" style="padding:2px 8px;border-radius:5px;border:1px solid var(--bd2);background:var(--sur2);color:var(--mu);font-size:11px;font-weight:700;cursor:pointer;">복원</button>
-                    <button class="bb-btn so" id="bb-sortBtn">가나다 순</button>
+                    <button class="bb-btn so" id="bb-sortBtn">가나다 순 정렬</button>
                     <button class="bb-btn" id="bb-rmbtn">제거</button>
                     <div class="bb-xbtn" id="bb-closebtn">✕</div>
                 </div>
@@ -1374,17 +1372,19 @@
     })();
 	
 	// ── 백업/복원 ──────────────────────────────────────────
-    const BACKUP_URL = 'https://multimonitoring.vercel.app/api/board?type=bb_backup';
+    const BACKUP_BASE = 'https://multimonitoring.vercel.app/api/board?type=bb_backup';
 
     document.getElementById('bb-backup-btn').addEventListener('click', async () => {
+        const name = prompt('백업 이름을 입력하세요 (예: 최윤혁)');
+        if (!name || !name.trim()) return;
         try {
-            const res = await fetch(BACKUP_URL, {
+            const res = await fetch(BACKUP_BASE, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ids })
+                body: JSON.stringify({ ids, name: name.trim() })
             });
             const data = await res.json();
-            if (data.ok) alert('✅ 백업 완료');
+            if (data.ok) alert(`✅ "${name.trim()}" 백업 완료 (${ids.length}대)`);
             else alert('❌ 백업 실패');
         } catch(e) {
             alert('❌ 백업 실패 (네트워크 오류)');
@@ -1392,16 +1392,37 @@
     });
 
     document.getElementById('bb-restore-btn').addEventListener('click', async () => {
-        if (!confirm('저장된 백업으로 복원하시겠습니까?\n현재 목록이 교체됩니다.')) return;
         try {
-            const res = await fetch(BACKUP_URL);
+            // 목록 조회
+            const listRes = await fetch('https://multimonitoring.vercel.app/api/board?type=bb_backup_list');
+            const listData = await listRes.json();
+            const names = listData.names || [];
+            if (!names.length) { alert('❌ 저장된 백업 없음'); return; }
+
+            // 선택 팝업
+            const choice = prompt(`복원할 백업을 선택하세요:\n\n${names.map((n,i) => `${i+1}. ${n}`).join('\n')}\n\n번호 또는 이름 입력:`);
+            if (!choice) return;
+
+            // 번호 또는 이름으로 매칭
+            const num = parseInt(choice);
+            const name = (!isNaN(num) && num >= 1 && num <= names.length)
+                ? names[num - 1]
+                : names.find(n => n === choice.trim());
+
+            if (!name) { alert('❌ 해당 백업 없음'); return; }
+
+            // 복원
+            const res = await fetch(`${BACKUP_BASE}&name=${encodeURIComponent(name)}`);
             const data = await res.json();
             if (!data.ids || !data.ids.length) { alert('❌ 백업 데이터 없음'); return; }
+
+            if (!confirm(`"${name}" 백업으로 복원하시겠습니까?\n현재 목록(${ids.length}대)이 교체됩니다.`)) return;
+
             ids.length = 0;
             data.ids.forEach(id => ids.push(id));
             save();
             render();
-            alert(`✅ 복원 완료 (${data.ids.length}대)`);
+            alert(`✅ "${name}" 복원 완료 (${data.ids.length}대)`);
         } catch(e) {
             alert('❌ 복원 실패 (네트워크 오류)');
         }
