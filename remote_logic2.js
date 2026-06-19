@@ -985,8 +985,9 @@
                 const patchItems = [
                     {
                         version: 'v1.1',
-                        date: '2026-06-11',
+                        date: '2026-06-18',
                         items: [
+							'불규칙 순찰 기체 모니터링 미추가 시 알림 기능',
 							'게시판 기능',
 							'개입카드 페이지에서 현재 기체 조작자 표기(본인 제외)',
 							'개입카드 페이지 상태 바 재배치(스크롤 바 제거)',
@@ -2020,6 +2021,7 @@
 		{ id: 218, name: '경희대 2호기' },
 		{ id: 114, name: '부경대 1호기' },
 		{ id: 115, name: '부경대 2호기' },
+		{ id: 234, name: 'DMZ' },
 		{ id: 174, name: '평택 1호기' },
 		{ id: 179, name: '평택 2호기' },
 		{ id: 76, name: '부산 서면 1호기' },
@@ -2056,46 +2058,185 @@
 	}
 
 	function _showUnmonitoredPanel(alerts) {
-	    let panel = document.getElementById(UNMONITORED_PANEL_ID);
-	    if (!panel) {
-	        panel = document.createElement('div');
-	        panel.id = UNMONITORED_PANEL_ID;
-	        panel.style.cssText = `
-	            position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
-	            z-index:999999; pointer-events:none;
-	            display:flex; flex-direction:column; gap:4px; align-items:center;
-	        `;
-	        document.body.appendChild(panel);
-	    }
-	
-	    // 2개씩 묶어서 행으로
-	    const rows = [];
-	    for (let i = 0; i < Math.min(alerts.length, 4); i += 2) {
-	        rows.push(alerts.slice(i, i + 2));
-	    }
-	
-	    panel.innerHTML = rows.map(row => `
-	        <div style="display:flex; gap:6px;">
-	            ${row.map(msg => `
-	                <div style="
-	                    display:flex; align-items:center; gap:8px;
-	                    background:rgba(30,20,60,0.92); border:1px solid #a78bfa;
-	                    border-radius:20px; padding:7px 18px;
-	                    box-shadow:0 4px 16px rgba(0,0,0,0.4);
-	                    font-family:'Pretendard','Noto Sans KR',sans-serif;
-	                    white-space:nowrap;
-	                ">
-	                    <span style="font-size:12px;color:#c4b5fd;">⚠️</span>
-	                    <span style="font-size:14px;font-weight:700;color:#ede9fe;">${msg}</span>
-	                </div>
-	            `).join('')}
-	        </div>
-	    `).join('');
+		let panel = document.getElementById(UNMONITORED_PANEL_ID);
+		if (!panel) {
+			panel = document.createElement('div');
+			panel.id = UNMONITORED_PANEL_ID;
+			panel.style.cssText = `
+				position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+				z-index:999999; pointer-events:none;
+				display:flex; flex-direction:column; gap:4px; align-items:center;
+			`;
+			document.body.appendChild(panel);
+		}
+
+		// 2개씩 묶어서 행으로
+		const rows = [];
+		for (let i = 0; i < Math.min(alerts.length, 4); i += 2) {
+			rows.push(alerts.slice(i, i + 2));
+		}
+
+		panel.innerHTML = rows.map(row => `
+			<div style="display:flex; gap:6px;">
+				${row.map(msg => `
+					<div style="
+						display:flex; align-items:center; gap:8px;
+						background:rgba(30,20,60,0.92); border:1px solid #a78bfa;
+						border-radius:20px; padding:7px 18px;
+						box-shadow:0 4px 16px rgba(0,0,0,0.4);
+						font-family:'Pretendard','Noto Sans KR',sans-serif;
+						white-space:nowrap;
+					">
+						<span style="font-size:12px;color:#c4b5fd;">⚠️</span>
+						<span style="font-size:14px;font-weight:700;color:#ede9fe;">${msg}</span>
+					</div>
+				`).join('')}
+			</div>
+		`).join('');
 	}
 
-	if (isHandoverPage()) {
+	if (isHandoverPage() && localStorage.getItem('neubie_handover_enabled') !== 'false') {
 		checkUnmonitoredRobots();
 		setInterval(checkUnmonitoredRobots, 30000);
+	}
+	
+	/* ============================================================
+    SECTION 사이드브레이크 버튼 (모니터링 페이지 전용)
+   ============================================================ */
+	function isMonitoringPage() {
+		return location.href.includes('go.neubie.ai/ko/remote/multiple/monitoring');
+	}
+
+	async function injectSidebrakeButtons() {
+		if (!isMonitoringPage()) return;
+
+		const cards = document.querySelectorAll('.rounded-8.relative.flex.overflow-hidden');
+		cards.forEach(async (card) => {
+			if (card.dataset.sideInjected) return;
+			card.dataset.sideInjected = 'true';
+
+			const nameEl = card.querySelector('span.font-size-14.max-w-fit.truncate.font-bold.text-white');
+			const robotName = nameEl?.innerText.trim();
+			if (!robotName) return;
+
+			try {
+				const res = await fetch(
+					`https://core.neubie.ai/robots/?nickname=${encodeURIComponent(robotName)}`,
+					{ credentials: 'include' }
+				);
+				const json = await res.json();
+				const robot = json.results?.[0];
+				if (!robot) return;
+
+				const isMovable = robot.robotStatus.isMovable;
+
+				const wrapper = document.createElement('div');
+				wrapper.style.cssText = `
+					position: absolute;
+					top: 8px; left: 8px;
+					z-index: 999;
+					pointer-events: auto;
+				`;
+
+				const btn = document.createElement('div');
+				btn.dataset.robotId = String(robot.id);
+				btn.dataset.isMovable = String(isMovable);
+				btn.style.cssText = `
+					background: ${isMovable ? 'rgba(100,100,100,0.85)' : 'rgba(34,197,94,0.85)'};
+					color: white;
+					border-radius: 8px;
+					padding: 3px 8px;
+					font-size: 11px;
+					font-weight: 600;
+					cursor: pointer;
+					user-select: none;
+					display: flex;
+					align-items: center;
+					gap: 4px;
+					font-family: 'Pretendard', sans-serif;
+					position: relative;
+					overflow: hidden;
+				`;
+				btn.innerHTML = `<span style="position:relative;z-index:1;">${isMovable ? '🔓' : '🔒'} 사이드</span>`;
+
+				let holdTimer = null;
+				let fillEl = null;
+
+				btn.addEventListener('mousedown', (e) => {
+					e.stopPropagation();
+					const curMovable = btn.dataset.isMovable === 'true';
+
+					fillEl = document.createElement('div');
+					if (curMovable) {
+						btn.style.background = 'rgba(100,100,100,0.85)';
+						fillEl.style.cssText = `
+							position: absolute; top: 0; left: 0;
+							height: 100%; width: 0%;
+							background: rgba(34,197,94,0.85);
+							border-radius: 8px;
+							transition: width 1s linear;
+							z-index: 0;
+						`;
+					} else {
+						btn.style.background = 'rgba(34,197,94,0.85)';
+						fillEl.style.cssText = `
+							position: absolute; top: 0; right: 0;
+							height: 100%; width: 0%;
+							background: rgba(100,100,100,0.85);
+							border-radius: 8px;
+							transition: width 1s linear;
+							z-index: 0;
+						`;
+					}
+					btn.appendChild(fillEl);
+					setTimeout(() => { if (fillEl) fillEl.style.width = '100%'; }, 10);
+
+					holdTimer = setTimeout(async () => {
+						const action = curMovable ? 'WAIT' : 'MOVE';
+						const robotId = btn.dataset.robotId;
+						await fetch(`https://core.neubie.ai/robots/${robotId}/control/`, {
+							method: 'PUT',
+							credentials: 'include',
+							headers: { 'Content-Type': 'application/json' },
+							body: JSON.stringify({ action })
+						});
+						const newMovable = !curMovable;
+						btn.dataset.isMovable = String(newMovable);
+						btn.querySelector('span').innerHTML = `${newMovable ? '🔓' : '🔒'} 사이드`;
+						btn.style.background = newMovable ? 'rgba(100,100,100,0.85)' : 'rgba(34,197,94,0.85)';
+						if (fillEl) { fillEl.remove(); fillEl = null; }
+					}, 1000);
+				});
+
+				const cancelHold = () => {
+					clearTimeout(holdTimer);
+					const curMovable = btn.dataset.isMovable === 'true';
+					btn.style.background = curMovable ? 'rgba(100,100,100,0.85)' : 'rgba(34,197,94,0.85)';
+					if (fillEl) { fillEl.remove(); fillEl = null; }
+				};
+
+				btn.addEventListener('mouseup', (e) => { e.stopPropagation(); cancelHold(); });
+				btn.addEventListener('mouseleave', cancelHold);
+
+				wrapper.appendChild(btn);
+				card.style.position = 'relative';
+				card.appendChild(wrapper);
+			} catch(e) {
+				console.warn('사이드 버튼 삽입 실패:', e);
+			}
+		});
+	}
+
+	// 모니터링 페이지에서만 실행
+	if (isMonitoringPage() && localStorage.getItem('neubie_handover_enabled') !== 'false') {
+		setTimeout(injectSidebrakeButtons, 2000);
+
+		const sideObserver = new MutationObserver(() => {
+			if (isMonitoringPage() && localStorage.getItem('neubie_handover_enabled') !== 'false') {
+				injectSidebrakeButtons();
+			}
+		});
+		sideObserver.observe(document.body, { childList: true, subtree: true });
 	}
 
     /* ============================================================
