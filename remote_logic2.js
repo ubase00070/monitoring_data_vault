@@ -79,8 +79,8 @@
         "137": { site: "성남 서현동", unit: "#094" }, // 9호기
         "122": { site: "성남 서현동", unit: "#095" }, // 10호기
 
-        "126": { site: "파주 LGD", unit: "#083" }, // 엘리 1호기
-        "58": { site: "파주 LGD", unit: "#062" }, // 엘리 2호기
+        "68": { site: "파주 LGD", unit: "#072" }, // 엘리 1호기
+        "106": { site: "파주 LGD", unit: "#078" }, // 엘리 2호기
         "62": { site: "파주 LGD", unit: "#066" }, // 엘리 3호기
         "66": { site: "아산 스테이그린", unit: "#070" }, // 그린 1호기
         "67": { site: "아산 스테이그린", unit: "#071" }, // 그린 2호기
@@ -985,7 +985,7 @@
                 const patchItems = [
                     {
                         version: 'v1.1',
-                        date: '2026-06-19',
+                        date: '2026-06-18',
                         items: [
 							'불규칙 순찰 기체 모니터링 미추가 시 알림 기능',
 							'게시판 기능',
@@ -2136,7 +2136,13 @@
 					top: 8px; left: 8px;
 					z-index: 999;
 					pointer-events: auto;
+					opacity: 0;
+					transition: opacity 0.2s;
 				`;
+
+				// 카드에 hover 이벤트
+				card.addEventListener('mouseenter', () => wrapper.style.opacity = '1');
+				card.addEventListener('mouseleave', () => wrapper.style.opacity = '0');
 
 				const btn = document.createElement('div');
 				btn.dataset.robotId = String(robot.id);
@@ -2221,6 +2227,71 @@
 				wrapper.appendChild(btn);
 				card.style.position = 'relative';
 				card.appendChild(wrapper);
+				
+				// 화질 버튼 삽입
+				let currentLevel = robot.robotStatus.bitrateLevel;
+				const bitrateWrapper = document.createElement('div');
+				bitrateWrapper.style.cssText = `
+					position: absolute;
+					top: 8px; left: 80px;
+					z-index: 999;
+					pointer-events: auto;
+					display: flex;
+					gap: 2px;
+					opacity: 0;
+					transition: opacity 0.2s;
+				`;
+
+				card.addEventListener('mouseenter', () => bitrateWrapper.style.opacity = '1');
+				card.addEventListener('mouseleave', () => bitrateWrapper.style.opacity = '0');
+
+				let isCooling = false;
+				const makeBtn = (label, delta) => {
+					const btn = document.createElement('div');
+					btn.innerHTML = label;
+					btn.style.cssText = `
+						background: rgba(60,60,60,0.85);
+						color: white;
+						border-radius: 5px;
+						width: 18px;
+						height: 18px;
+						font-size: 10px;
+						font-weight: 700;
+						cursor: pointer;
+						user-select: none;
+						display: flex;
+						align-items: center;
+						justify-content: center;
+						font-family: 'Pretendard', sans-serif;
+						transition: opacity 0.15s;
+					`;
+					btn.addEventListener('click', async (e) => {
+						e.stopPropagation();
+						if (isCooling) return;
+						const newLevel = currentLevel + delta;
+						if (newLevel < 1 || newLevel > 5) return;
+						isCooling = true;
+						btn.style.opacity = '0.4';
+						btn.style.cursor = 'not-allowed';
+						await fetch(`https://core.neubie.ai/robots/${robot.id}/video-bitrate-level/`, {
+							method: 'PUT',
+							credentials: 'include',
+							headers: { 'Content-Type': 'application/json' },
+							body: JSON.stringify({ level: newLevel })
+						});
+						currentLevel = newLevel;
+						setTimeout(() => {
+							isCooling = false;
+							btn.style.opacity = '1';
+							btn.style.cursor = 'pointer';
+						}, 1000);
+					});
+					return btn;
+				};
+
+				bitrateWrapper.appendChild(makeBtn('▲', 1));
+				bitrateWrapper.appendChild(makeBtn('▼', -1));
+				card.appendChild(bitrateWrapper);
 			} catch(e) {
 				console.warn('사이드 버튼 삽입 실패:', e);
 			}
