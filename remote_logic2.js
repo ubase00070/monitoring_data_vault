@@ -2228,14 +2228,21 @@
 	}
 
 	// 모니터링 페이지에서만 실행
-	if (isMonitoringPage() && localStorage.getItem('neubie_handover_enabled') !== 'false') {
-
-		const sideObserver = new MutationObserver(() => {
+	// 전역 observer로 관리 (페이지 전환 후 재등록 가능하도록)
+	function registerSideObserver() {
+		if (!isMonitoringPage()) return;
+		if (!localStorage.getItem('neubie_handover_enabled') !== 'false') return;
+		if (window._sideObserver) window._sideObserver.disconnect();
+		window._sideObserver = new MutationObserver(() => {
 			if (isMonitoringPage() && localStorage.getItem('neubie_handover_enabled') !== 'false') {
 				setTimeout(injectSidebrakeButtons, 500);
 			}
 		});
-		sideObserver.observe(document.body, { childList: true, subtree: true });
+		window._sideObserver.observe(document.body, { childList: true, subtree: true });
+	}
+
+	if (isMonitoringPage() && localStorage.getItem('neubie_handover_enabled') !== 'false') {
+		registerSideObserver();
 	}
 
     /* ============================================================
@@ -3452,6 +3459,9 @@
                 } else {
                     _stopOperatorWatch();
                 }
+				if (isMonitoringPage() && localStorage.getItem('neubie_handover_enabled') !== 'false') {
+                    registerSideObserver();
+                }
             }
         }, 100);
     }, true);
@@ -3479,6 +3489,10 @@
             } else {
                 _stopOperatorWatch();
             }
+			if (isMonitoringPage() && localStorage.getItem('neubie_handover_enabled') !== 'false') {
+                registerSideObserver();
+            }
+			
         }
     }, 2000); // 2초 정도면 충분히 여유로움
 	
