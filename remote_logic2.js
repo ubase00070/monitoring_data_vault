@@ -2117,8 +2117,6 @@
 			const robotName = nameEl?.innerText.trim();
 			if (!robotName) return;
 
-			card.dataset.sideInjected = 'true';
-
 			try {
 				const res = await fetch(
 					`https://core.neubie.ai/robots/?nickname=${encodeURIComponent(robotName)}`,
@@ -2127,6 +2125,8 @@
 				const json = await res.json();
 				const robot = json.results?.[0];
 				if (!robot) return;
+				
+				card.dataset.sideInjected = 'true';
 
 				const isMovable = robot.robotStatus.isMovable;
 
@@ -2229,7 +2229,6 @@
 
 	// 모니터링 페이지에서만 실행
 	if (isMonitoringPage() && localStorage.getItem('neubie_handover_enabled') !== 'false') {
-		setTimeout(injectSidebrakeButtons, 5000);
 
 		const sideObserver = new MutationObserver(() => {
 			if (isMonitoringPage() && localStorage.getItem('neubie_handover_enabled') !== 'false') {
