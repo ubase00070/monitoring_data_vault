@@ -2113,11 +2113,11 @@
 		const cards = document.querySelectorAll('.rounded-8.relative.flex.overflow-hidden');
 		cards.forEach(async (card) => {
 			if (card.dataset.sideInjected) return;
-			card.dataset.sideInjected = 'true';
-
 			const nameEl = card.querySelector('span.font-size-14.max-w-fit.truncate.font-bold.text-white');
 			const robotName = nameEl?.innerText.trim();
 			if (!robotName) return;
+
+			card.dataset.sideInjected = 'true';
 
 			try {
 				const res = await fetch(
@@ -2229,11 +2229,11 @@
 
 	// 모니터링 페이지에서만 실행
 	if (isMonitoringPage() && localStorage.getItem('neubie_handover_enabled') !== 'false') {
-		setTimeout(injectSidebrakeButtons, 2000);
+		setTimeout(injectSidebrakeButtons, 5000);
 
 		const sideObserver = new MutationObserver(() => {
 			if (isMonitoringPage() && localStorage.getItem('neubie_handover_enabled') !== 'false') {
-				injectSidebrakeButtons();
+				setTimeout(injectSidebrakeButtons, 500);
 			}
 		});
 		sideObserver.observe(document.body, { childList: true, subtree: true });
