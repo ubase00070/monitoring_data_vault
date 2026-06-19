@@ -431,7 +431,9 @@
                     <div class="bb-ref" id="bb-ref">— 초 후 갱신</div>
                 </div>
                 <div class="bb-hd-right">
-                    <button class="bb-btn so" id="bb-sortBtn">가나다 순 정렬</button>
+					<button id="bb-backup-btn" style="padding:2px 8px;border-radius:5px;border:1px solid var(--bd2);background:var(--sur2);color:var(--mu);font-size:11px;font-weight:700;cursor:pointer;">백업</button>
+					<button id="bb-restore-btn" style="padding:2px 8px;border-radius:5px;border:1px solid var(--bd2);background:var(--sur2);color:var(--mu);font-size:11px;font-weight:700;cursor:pointer;">복원</button>
+                    <button class="bb-btn so" id="bb-sortBtn">가나다 순</button>
                     <button class="bb-btn" id="bb-rmbtn">제거</button>
                     <div class="bb-xbtn" id="bb-closebtn">✕</div>
                 </div>
@@ -1425,37 +1427,6 @@
             alert(`✅ "${name}" 복원 완료 (${data.ids.length}대)`);
         } catch(e) {
             alert('❌ 복원 실패 (네트워크 오류)');
-        }
-    });
-
-    let ddFocusIdx = -1;
-
-    siEl.addEventListener('keydown', e => {
-        const ddEl   = document.getElementById('bb-dd');
-        const items  = [...ddEl.querySelectorAll('.bb-di[data-rid]')];
-
-        if (e.key === 'ArrowDown') {
-            e.preventDefault();
-            ddFocusIdx = Math.min(ddFocusIdx + 1, items.length - 1);
-            items.forEach((el, i) => el.classList.toggle('bb-di-focus', i === ddFocusIdx));
-            items[ddFocusIdx]?.scrollIntoView({ block: 'nearest' });
-
-        } else if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            ddFocusIdx = Math.max(ddFocusIdx - 1, 0);
-            items.forEach((el, i) => el.classList.toggle('bb-di-focus', i === ddFocusIdx));
-            items[ddFocusIdx]?.scrollIntoView({ block: 'nearest' });
-
-        } else if (e.key === 'Enter') {
-            e.preventDefault();
-            if (ddFocusIdx >= 0 && items[ddFocusIdx]) {
-                addRobot(items[ddFocusIdx].dataset.rid);
-                ddFocusIdx = -1;
-            }
-
-        } else if (e.key === 'Escape') {
-            hideDd();
-            ddFocusIdx = -1;
         }
     });
 
