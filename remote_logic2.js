@@ -2269,7 +2269,7 @@
 								if (!existingText) {
 									const lapSpan = document.createElement('span');
 									lapSpan.className = 'neubie-lap-span';
-									lapSpan.style.cssText = 'color: white; font-size: 11px; font-weight: 600; white-space: nowrap;';
+									lapSpan.style.cssText = 'color: white; font-size: 11px; font-weight: 600; white-space: nowrap; margin-left: -6px; margin-top: 1px;';
 									grayBox.appendChild(lapSpan);
 								}
 								grayBox.querySelector('.neubie-lap-span').innerText = `🟢순찰중 ${lap}`;
