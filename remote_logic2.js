@@ -3610,17 +3610,29 @@
 	};
 
 	function checkDangerZone() {
-		const match = location.href.match(/\/ko\/remote\/robot\/(\d+)/);
-		if (!match) { removeDangerWarning(); return; }
-		const robotId = parseInt(match[1]);
-		const config = DANGER_ZONE_CONFIG[robotId];
-		if (!config) { removeDangerWarning(); return; }
+		const href = location.href;
+		let robotId = null;
+
+		// 일반 접속: /ko/remote/robot/221
+		const robotMatch = href.match(/\/ko\/remote\/robot\/(\d+)/);
+		if (robotMatch) {
+			robotId = parseInt(robotMatch[1]);
+		} else {
+			// 개입카드: /ko/remote/multiple/driving/xxxxx?robot-id=221
+			const params = new URLSearchParams(location.search);
+			const robotIdParam = params.get('robot-id');
+			if (robotIdParam) robotId = parseInt(robotIdParam);
+		}
+
+		if (!robotId) { removeDangerWarning(); return; }
+		const cfg = DANGER_ZONE_CONFIG[robotId];
+		if (!cfg) { removeDangerWarning(); return; }
 
 		const activePoi = Array.from(document.querySelectorAll('span.max-w-190.font-size-14.truncate.font-medium'))
 			.find(el => el.className.includes('text-mono-800') && el.innerText.includes('로 이동'));
 		const poiName = activePoi?.innerText?.replace('로 이동', '').trim();
 
-		if (poiName && config.pois.some(p => poiName.includes(p))) {
+		if (poiName && cfg.pois.some(p => poiName.includes(p))) {
 			if (document.getElementById('neubie-danger-warning')) return;
 			const warning = document.createElement('div');
 			warning.id = 'neubie-danger-warning';
@@ -3641,7 +3653,7 @@
 				white-space: nowrap;
 				pointer-events: none;
 			`;
-			warning.innerText = config.message;
+			warning.innerText = cfg.message;
 			document.body.appendChild(warning);
 			setTimeout(() => removeDangerWarning(), 7000);
 		} else {
