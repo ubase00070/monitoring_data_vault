@@ -2249,28 +2249,42 @@
 				) {
 					const siteId = robot.site?.id || robot.site;
 					const robotNickname = robot.nickname;
+					const grayBox = card.querySelector('.bg-prmary-50 .rounded-extra-large');
+					const dot = grayBox?.querySelector('.blur-1.size-8');
 
-					const divider = document.createElement('span');
-					divider.style.cssText = 'color: rgba(255,255,255,0.3); font-size: 11px; margin: 0 2px;';
-					divider.innerText = '|';
-					wrapper.appendChild(divider);
+					function updateLapDisplay(lap) {
+						if (!grayBox) return;
+						const existingText = grayBox.querySelector('span.neubie-lap-span');
+						const nativeSpan = grayBox.querySelector('span:not(.neubie-lap-span)');
+						const nativeText = nativeSpan?.innerText?.trim();
 
-					const lapLabel = document.createElement('span');
-					lapLabel.className = 'neubie-lap-label';
-					lapLabel.style.cssText = `
-						color: white;
-						font-size: 11px;
-						font-weight: 600;
-						font-family: 'Pretendard', sans-serif;
-						white-space: nowrap;
-					`;
-					lapLabel.innerText = '🟢순찰중 ...';
-					wrapper.appendChild(lapLabel);
+						if (nativeText) {
+							// 기존 텍스트 있으면 우리 것 제거
+							if (existingText) existingText.remove();
+							if (dot) dot.style.display = '';
+						} else {
+							// 비어있으면 바퀴수 삽입
+							if (lap) {
+								if (dot) dot.style.display = 'none';
+								if (!existingText) {
+									const lapSpan = document.createElement('span');
+									lapSpan.className = 'neubie-lap-span';
+									lapSpan.style.cssText = 'color: white; font-size: 11px; font-weight: 600; white-space: nowrap;';
+									grayBox.appendChild(lapSpan);
+								}
+								grayBox.querySelector('.neubie-lap-span').innerText = `🟢순찰중 ${lap}`;
+							} else {
+								// lap 없으면 우리 것 제거
+								if (existingText) existingText.remove();
+								if (dot) dot.style.display = '';
+							}
+						}
+					}
 
-					// 초기 바퀴수 로드
+					// 초기 로드
 					(async () => {
 						const lap = await getLapCountFromNotifications(siteId, robotNickname);
-						lapLabel.innerText = lap ? `🟢순찰중 ${lap}` : '🟢순찰중 -/-';
+						updateLapDisplay(lap);
 					})();
 
 					// 30초마다 갱신
@@ -2278,7 +2292,7 @@
 						if (!document.body.contains(card)) { clearInterval(lapTimer); return; }
 						try {
 							const lap = await getLapCountFromNotifications(siteId, robotNickname);
-							if (lap) lapLabel.innerText = `🟢순찰중 ${lap}`;
+							updateLapDisplay(lap);
 						} catch(e) {}
 					}, 30000);
 				}
