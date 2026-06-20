@@ -604,7 +604,7 @@
         };
     }
 
-    // 리마인더 알림창 생성 함수
+    // 리마인더 알림창 생성
     function triggerReminder(content, remainMin) {
         const notifType = localStorage.getItem('neubie_notif_type') || 'type1';
 
