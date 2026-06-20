@@ -1122,7 +1122,7 @@
                 };
             }
 
-            // X 버튼 클릭 시 통합 종료 실행
+            // X 버튼 클릭 시 통합 종료
             const closeBtn = document.getElementById('all-close-btn');
             if (closeBtn) closeBtn.onclick = closeAllPopups;
         }, 0);
