@@ -1,3 +1,33 @@
+// ── WebSocket 감시 (페이지 로드 전 실행) ──
+(function() {
+    const origWS = window.WebSocket;
+    window.WebSocket = function(url, protocols) {
+        const ws = protocols ? new origWS(url, protocols) : new origWS(url);
+        const origAEL = ws.addEventListener.bind(ws);
+        ws.addEventListener = function(type, listener, options) {
+            if (type === 'message') {
+                const wrapped = function(e) {
+                    if (typeof e.data === 'string' && e.data.includes('travel_distance')) {
+                        try {
+                            const jsonStr = e.data.substring(e.data.indexOf('{'));
+                            const data = JSON.parse(jsonStr);
+                            if (data.message?.travel_distance !== undefined) {
+                                console.log('[WS]', data.robot, '| travel:', data.message.travel_distance, '| scene:', data.scene);
+                            }
+                        } catch(ex) {}
+                    }
+                    return listener.call(this, e);
+                };
+                return origAEL(type, wrapped, options);
+            }
+            return origAEL(type, listener, options);
+        };
+        return ws;
+    };
+    window.WebSocket.prototype = origWS.prototype;
+    console.log('[WS 감시 등록됨]');
+})();
+
 (function() {
     'use strict';
 
@@ -985,8 +1015,9 @@
                 const patchItems = [
                     {
                         version: 'v1.1',
-                        date: '2026-06-18',
+                        date: '2026-06-20',
                         items: [
+							'모니터링 페이지 화질 조절 기능',
 							'불규칙 순찰 기체 모니터링 미추가 시 알림 기능',
 							'게시판 기능',
 							'개입카드 페이지에서 현재 기체 조작자 표기(본인 제외)',
@@ -1303,8 +1334,9 @@
                 queueInfoContent.id = 'neubie-queue-info-content';
                 queueInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:#cbd5e1; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;`;
                 queueInfoContent.innerHTML = `
-				기체 카메라 밝기 한 번에 조절<br>
-				기체 카메라 위치 스왑<br>
+				화질 조절<br>
+				카메라 밝기 한 번에 조절<br>
+				카메라 위치 스왑<br>
 				multimonitoring.vercel.app 이용 시 교대 기체 업로드<br>
 				업로드된 교대 기체 받기(최근 20분까지만 유효) -> 자동 시작(6대까지)<br>
 				'뉴비고 도우미'만 이용하더라도 교대 기체 받기 가능<br>
@@ -2099,20 +2131,23 @@
 		checkUnmonitoredRobots();
 		setInterval(checkUnmonitoredRobots, 30000);
 	}
-	
+
 	/* ============================================================
-    SECTION 사이드브레이크 버튼 (모니터링 페이지 전용)
+    SECTION 화질 조절 버튼 (모니터링 페이지 전용)
    ============================================================ */
+	const LEVEL_LABELS = ['', '최소', '낮음', '중간', '높음', '최대'];
+
 	function isMonitoringPage() {
 		return location.href.includes('go.neubie.ai/ko/remote/multiple/monitoring');
 	}
 
-	async function injectSidebrakeButtons() {
+	async function injectBitrateButtons() {
 		if (!isMonitoringPage()) return;
 
 		const cards = document.querySelectorAll('.rounded-8.relative.flex.overflow-hidden');
 		cards.forEach(async (card) => {
-			if (card.dataset.sideInjected) return;
+			if (card.dataset.bitrateInjected) return;
+
 			const nameEl = card.querySelector('span.font-size-14.max-w-fit.truncate.font-bold.text-white');
 			const robotName = nameEl?.innerText.trim();
 			if (!robotName) return;
@@ -2125,10 +2160,10 @@
 				const json = await res.json();
 				const robot = json.results?.[0];
 				if (!robot) return;
-				
-				card.dataset.sideInjected = 'true';
 
-				const isMovable = robot.robotStatus.isMovable;
+				card.dataset.bitrateInjected = 'true';
+
+				let currentLevel = robot.robotStatus.bitrateLevel;
 
 				const wrapper = document.createElement('div');
 				wrapper.style.cssText = `
@@ -2136,184 +2171,123 @@
 					top: 8px; left: 8px;
 					z-index: 999;
 					pointer-events: auto;
+					display: flex;
+					flex-direction: row;
+					align-items: center;
+					gap: 3px;
 					opacity: 0;
 					transition: opacity 0.2s;
+					background: rgba(20,20,20,0.8);
+					border-radius: 8px;
+					padding: 3px 6px;
 				`;
 
-				// 카드에 hover 이벤트
 				card.addEventListener('mouseenter', () => wrapper.style.opacity = '1');
 				card.addEventListener('mouseleave', () => wrapper.style.opacity = '0');
 
-				const btn = document.createElement('div');
-				btn.dataset.robotId = String(robot.id);
-				btn.dataset.isMovable = String(isMovable);
-				btn.style.cssText = `
-					background: ${isMovable ? 'rgba(100,100,100,0.85)' : 'rgba(34,197,94,0.85)'};
+				const labelEl = document.createElement('span');
+				labelEl.innerText = `화질 ${LEVEL_LABELS[currentLevel]}`;
+				labelEl.style.cssText = `
 					color: white;
-					border-radius: 8px;
-					padding: 3px 8px;
 					font-size: 11px;
 					font-weight: 600;
-					cursor: pointer;
-					user-select: none;
-					display: flex;
-					align-items: center;
-					gap: 4px;
 					font-family: 'Pretendard', sans-serif;
-					position: relative;
-					overflow: hidden;
+					white-space: nowrap;
 				`;
-				btn.innerHTML = `<span style="position:relative;z-index:1;">${isMovable ? '🔓' : '🔒'} 사이드</span>`;
-
-				let holdTimer = null;
-				let fillEl = null;
-
-				btn.addEventListener('mousedown', (e) => {
-					e.stopPropagation();
-					const curMovable = btn.dataset.isMovable === 'true';
-
-					fillEl = document.createElement('div');
-					if (curMovable) {
-						btn.style.background = 'rgba(100,100,100,0.85)';
-						fillEl.style.cssText = `
-							position: absolute; top: 0; left: 0;
-							height: 100%; width: 0%;
-							background: rgba(34,197,94,0.85);
-							border-radius: 8px;
-							transition: width 1s linear;
-							z-index: 0;
-						`;
-					} else {
-						btn.style.background = 'rgba(34,197,94,0.85)';
-						fillEl.style.cssText = `
-							position: absolute; top: 0; right: 0;
-							height: 100%; width: 0%;
-							background: rgba(100,100,100,0.85);
-							border-radius: 8px;
-							transition: width 1s linear;
-							z-index: 0;
-						`;
-					}
-					btn.appendChild(fillEl);
-					setTimeout(() => { if (fillEl) fillEl.style.width = '100%'; }, 10);
-
-					holdTimer = setTimeout(async () => {
-						const action = curMovable ? 'WAIT' : 'MOVE';
-						const robotId = btn.dataset.robotId;
-						await fetch(`https://core.neubie.ai/robots/${robotId}/control/`, {
-							method: 'PUT',
-							credentials: 'include',
-							headers: { 'Content-Type': 'application/json' },
-							body: JSON.stringify({ action })
-						});
-						const newMovable = !curMovable;
-						btn.dataset.isMovable = String(newMovable);
-						btn.querySelector('span').innerHTML = `${newMovable ? '🔓' : '🔒'} 사이드`;
-						btn.style.background = newMovable ? 'rgba(100,100,100,0.85)' : 'rgba(34,197,94,0.85)';
-						if (fillEl) { fillEl.remove(); fillEl = null; }
-					}, 1000);
-				});
-
-				const cancelHold = () => {
-					clearTimeout(holdTimer);
-					const curMovable = btn.dataset.isMovable === 'true';
-					btn.style.background = curMovable ? 'rgba(100,100,100,0.85)' : 'rgba(34,197,94,0.85)';
-					if (fillEl) { fillEl.remove(); fillEl = null; }
-				};
-
-				btn.addEventListener('mouseup', (e) => { e.stopPropagation(); cancelHold(); });
-				btn.addEventListener('mouseleave', cancelHold);
-
-				wrapper.appendChild(btn);
-				card.style.position = 'relative';
-				card.appendChild(wrapper);
-				
-				// 화질 버튼 삽입
-				let currentLevel = robot.robotStatus.bitrateLevel;
-				const bitrateWrapper = document.createElement('div');
-				bitrateWrapper.style.cssText = `
-					position: absolute;
-					top: 8px; left: 80px;
-					z-index: 999;
-					pointer-events: auto;
-					display: flex;
-					gap: 2px;
-					opacity: 0;
-					transition: opacity 0.2s;
-				`;
-
-				card.addEventListener('mouseenter', () => bitrateWrapper.style.opacity = '1');
-				card.addEventListener('mouseleave', () => bitrateWrapper.style.opacity = '0');
 
 				let isCooling = false;
+
 				const makeBtn = (label, delta) => {
 					const btn = document.createElement('div');
 					btn.innerHTML = label;
 					btn.style.cssText = `
-						background: rgba(60,60,60,0.85);
 						color: white;
-						border-radius: 5px;
-						width: 18px;
-						height: 18px;
-						font-size: 10px;
+						font-size: 11px;
 						font-weight: 700;
 						cursor: pointer;
 						user-select: none;
 						display: flex;
 						align-items: center;
 						justify-content: center;
-						font-family: 'Pretendard', sans-serif;
+						width: 14px;
+						height: 14px;
+						border-radius: 4px;
+						background: rgba(80,80,80,0.8);
 						transition: opacity 0.15s;
 					`;
+
 					btn.addEventListener('click', async (e) => {
 						e.stopPropagation();
 						if (isCooling) return;
 						const newLevel = currentLevel + delta;
 						if (newLevel < 1 || newLevel > 5) return;
+
 						isCooling = true;
 						btn.style.opacity = '0.4';
-						btn.style.cursor = 'not-allowed';
+
 						await fetch(`https://core.neubie.ai/robots/${robot.id}/video-bitrate-level/`, {
 							method: 'PUT',
 							credentials: 'include',
 							headers: { 'Content-Type': 'application/json' },
 							body: JSON.stringify({ level: newLevel })
 						});
+
 						currentLevel = newLevel;
+						labelEl.innerText = `화질 ${LEVEL_LABELS[currentLevel]}`;
+
 						setTimeout(() => {
 							isCooling = false;
 							btn.style.opacity = '1';
-							btn.style.cursor = 'pointer';
 						}, 1000);
 					});
+
 					return btn;
 				};
 
-				bitrateWrapper.appendChild(makeBtn('▲', 1));
-				bitrateWrapper.appendChild(makeBtn('▼', -1));
-				card.appendChild(bitrateWrapper);
+				wrapper.appendChild(makeBtn('▲', 1));
+				wrapper.appendChild(labelEl);
+				wrapper.appendChild(makeBtn('▼', -1));
+				card.style.position = 'relative';
+				card.appendChild(wrapper);
+				
+				// 30초마다 현재 화질 동기화
+				const syncTimer = setInterval(async () => {
+					if (!document.body.contains(card)) {
+						clearInterval(syncTimer);
+						return;
+					}
+					if (isCooling) return; // ← 클릭 중이면 싱크 스킵
+					try {
+						const r = await fetch(`https://core.neubie.ai/robots/${robot.id}/`, { credentials: 'include' });
+						const d = await r.json();
+						const level = d.robotStatus.bitrateLevel;
+						if (level !== currentLevel) {
+							currentLevel = level;
+							labelEl.innerText = `화질 ${LEVEL_LABELS[currentLevel]}`;
+						}
+					} catch(e) {}
+				}, 30000);
+
 			} catch(e) {
-				console.warn('사이드 버튼 삽입 실패:', e);
+				console.warn('화질 버튼 삽입 실패:', e);
 			}
 		});
 	}
 
-	// 모니터링 페이지에서만 실행
-	// 전역 observer로 관리 (페이지 전환 후 재등록 가능하도록)
-	function registerSideObserver() {
+	function registerBitrateObserver() {
 		if (!isMonitoringPage()) return;
 		if (localStorage.getItem('neubie_handover_enabled') === 'false') return;
-		if (window._sideObserver) window._sideObserver.disconnect();
-		window._sideObserver = new MutationObserver(() => {
+		if (window._bitrateObserver) window._bitrateObserver.disconnect();
+		window._bitrateObserver = new MutationObserver(() => {
 			if (isMonitoringPage() && localStorage.getItem('neubie_handover_enabled') !== 'false') {
-				setTimeout(injectSidebrakeButtons, 500);
+				setTimeout(injectBitrateButtons, 500);
 			}
 		});
-		window._sideObserver.observe(document.body, { childList: true, subtree: true });
+		window._bitrateObserver.observe(document.body, { childList: true, subtree: true });
 	}
 
 	if (isMonitoringPage() && localStorage.getItem('neubie_handover_enabled') !== 'false') {
-		registerSideObserver();
+		registerBitrateObserver();
 	}
 
     /* ============================================================
@@ -3531,8 +3505,8 @@
                     _stopOperatorWatch();
                 }
 				if (isMonitoringPage() && localStorage.getItem('neubie_handover_enabled') !== 'false') {
-                    registerSideObserver();
-                }
+					registerBitrateObserver();
+				}
             }
         }, 100);
     }, true);
@@ -3561,9 +3535,8 @@
                 _stopOperatorWatch();
             }
 			if (isMonitoringPage() && localStorage.getItem('neubie_handover_enabled') !== 'false') {
-                registerSideObserver();
-            }
-			
+				registerBitrateObserver();
+			}
         }
     }, 2000); // 2초 정도면 충분히 여유로움
 	
