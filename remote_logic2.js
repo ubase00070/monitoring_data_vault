@@ -987,6 +987,7 @@
                         version: 'v1.1',
                         date: '2026-06-20',
                         items: [
+							'네트워크 불안정 지역 경고 레이아웃',
 							'다중 모니터링 기체 화질 조절',
 							'불규칙 순찰 기체 모니터링 미추가 시 알림 기능',
 							'게시판 기능',
@@ -3547,6 +3548,8 @@
 				
 				setTimeout(() => checkDangerZone(), 1000);
 				setTimeout(() => checkDangerZone(), 2000);
+				setTimeout(() => checkDangerZone(), 3500);
+				setTimeout(() => checkDangerZone(), 5000);
 				
 				setTimeout(() => patchDrivingPageLayout(), 1500);
                 setTimeout(() => patchDrivingPageLayout(), 3000);
@@ -3581,6 +3584,8 @@
 			
 			setTimeout(() => checkDangerZone(), 1000);
 			setTimeout(() => checkDangerZone(), 2000);
+			setTimeout(() => checkDangerZone(), 3500);
+			setTimeout(() => checkDangerZone(), 5000);
 			
 			setTimeout(() => patchDrivingPageLayout(), 1500);
             setTimeout(() => patchDrivingPageLayout(), 3000);
