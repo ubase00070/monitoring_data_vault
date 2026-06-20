@@ -1,31 +1,33 @@
 // ── WebSocket 감시 (페이지 로드 전 실행) ──
 (function() {
-    const origWS = window.WebSocket;
-    window.WebSocket = function(url, protocols) {
-        const ws = protocols ? new origWS(url, protocols) : new origWS(url);
-        const origAEL = ws.addEventListener.bind(ws);
-        ws.addEventListener = function(type, listener, options) {
-            if (type === 'message') {
-                const wrapped = function(e) {
-                    if (typeof e.data === 'string' && e.data.includes('travel_distance')) {
-                        try {
-                            const jsonStr = e.data.substring(e.data.indexOf('{'));
-                            const data = JSON.parse(jsonStr);
-                            if (data.message?.travel_distance !== undefined) {
-                                console.log('[WS]', data.robot, '| travel:', data.message.travel_distance, '| scene:', data.scene);
-                            }
-                        } catch(ex) {}
-                    }
-                    return listener.call(this, e);
-                };
-                return origAEL(type, wrapped, options);
-            }
-            return origAEL(type, listener, options);
-        };
-        return ws;
-    };
-    window.WebSocket.prototype = origWS.prototype;
-    console.log('[WS 감시 등록됨]');
+    // onmessage 방식도 감시
+	const origWS = window.WebSocket;
+	window.WebSocket = function(url, protocols) {
+		const ws = protocols ? new origWS(url, protocols) : new origWS(url);
+		
+		// onmessage 프로퍼티 감시
+		let _onmessage = null;
+		Object.defineProperty(ws, 'onmessage', {
+			get() { return _onmessage; },
+			set(fn) {
+				_onmessage = function(e) {
+					if (typeof e.data === 'string' && e.data.includes('travel_distance')) {
+						try {
+							const jsonStr = e.data.substring(e.data.indexOf('{'));
+							const data = JSON.parse(jsonStr);
+							if (data.message?.travel_distance !== undefined) {
+								console.log('[WS onmessage]', data.robot, '| travel:', data.message.travel_distance, '| scene:', data.scene);
+							}
+						} catch(ex) {}
+					}
+					return fn.call(this, e);
+				};
+			}
+		});
+		return ws;
+	};
+	window.WebSocket.prototype = origWS.prototype;
+	console.log('[WS onmessage 감시 등록됨]');
 })();
 
 (function() {
