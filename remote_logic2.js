@@ -534,7 +534,7 @@
         }).catch(err => console.log("Sync failed"));
     }
 
-    // 레이아웃 노출 여부와 상관없이 알림만 전담
+    // 레이아웃 노출 여부와 상관없이 알림만 전담하는 함수
     function checkAndTriggerNotifications(tasks) {
         const interval = parseInt(localStorage.getItem('neubie_remind_int') || '0');
         if (interval === 0) return;
@@ -1122,7 +1122,7 @@
                 };
             }
 
-            // X 버튼 클릭 시 통합 종료
+            // X 버튼 클릭 시 통합 종료 실행
             const closeBtn = document.getElementById('all-close-btn');
             if (closeBtn) closeBtn.onclick = closeAllPopups;
         }, 0);
@@ -2111,36 +2111,20 @@
 		225, 230, 244
 	]);
 
-	async function getLapCountFromIframe(robotId) {
-		return new Promise((resolve) => {
-			const iframe = document.createElement('iframe');
-			iframe.src = `https://go.neubie.ai/ko/remote/robot/${robotId}`;
-			iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;';
-			document.body.appendChild(iframe);
-			iframe.onload = () => {
-				setTimeout(() => {
-					try {
-						const iw = iframe.contentWindow;
-						const id = iframe.contentDocument;
-						iw.WebSocket = function() { return { send:()=>{}, close:()=>{}, addEventListener:()=>{}, onopen:null, onmessage:null }; };
-						id.querySelectorAll('video').forEach(v => { v.src=''; v.srcObject=null; v.remove(); });
-						iw.posthog = { capture:()=>{}, identify:()=>{} };
-						id.querySelectorAll('canvas').forEach(c => c.remove());
-						id.querySelectorAll('img').forEach(i => i.src='');
-					} catch(e) {}
-				}, 50);
-				setTimeout(() => {
-					try {
-						const lapEl = Array.from(iframe.contentDocument.querySelectorAll('span.font-size-14.font-medium'))
-							.find(el => el.innerText?.match(/^\d+\/\d+$/));
-						iframe.remove();
-						resolve(lapEl?.innerText || null);
-					} catch(e) { iframe.remove(); resolve(null); }
-				}, 2000);
-			};
-			iframe.onerror = () => { iframe.remove(); resolve(null); };
-			setTimeout(() => { try { iframe.remove(); } catch(e) {} resolve(null); }, 8000);
-		});
+	async function getLapCountFromNotifications(siteId, robotNickname) {
+		try {
+			const res = await fetch(
+				`https://core.neubie.ai/notifications/?site=${siteId}&limit=20`,
+				{ credentials: 'include' }
+			);
+			if (!res.ok) return null;
+			const data = await res.json();
+			const lapMsg = data.results.find(n =>
+				n.code === 'OSA-27' && n.robotNickname === robotNickname
+			);
+			const match = lapMsg?.message?.match(/(\d+\/\d+)/);
+			return match?.[1] || null;
+		} catch(e) { return null; }
 	}
 
 	function isMonitoringPage() {
@@ -2263,12 +2247,16 @@
 					robot.service?.serviceType === 'PATROL' &&
 					!PATROL_LAP_EXCLUDE_IDS.has(robot.id)
 				) {
+					const siteId = robot.site?.id || robot.site;
+					const robotNickname = robot.nickname;
+
 					const divider = document.createElement('span');
 					divider.style.cssText = 'color: rgba(255,255,255,0.3); font-size: 11px; margin: 0 2px;';
 					divider.innerText = '|';
 					wrapper.appendChild(divider);
 
 					const lapLabel = document.createElement('span');
+					lapLabel.className = 'neubie-lap-label';
 					lapLabel.style.cssText = `
 						color: white;
 						font-size: 11px;
@@ -2279,35 +2267,20 @@
 					lapLabel.innerText = '🟢순찰중 ...';
 					wrapper.appendChild(lapLabel);
 
-					// 초기 바퀴수 로드 (순차 처리, 시나리오 있을 때만)
-					if (robot.currentScenario) {
-						setTimeout(async () => {
-							const lap = await getLapCountFromIframe(robot.id);
-							if (lap) lapLabel.innerText = `🟢순찰중 ${lap}`;
-							else lapLabel.innerText = '🟢순찰중 -/-';
-						}, (card.dataset.lapLoadIndex || 0) * 2500);
-					} else {
-						lapLabel.innerText = '🟢순찰중 -/-';
-					}
+					// 초기 바퀴수 로드
+					(async () => {
+						const lap = await getLapCountFromNotifications(siteId, robotNickname);
+						lapLabel.innerText = lap ? `🟢순찰중 ${lap}` : '🟢순찰중 -/-';
+					})();
 
-					// 2분마다 갱신
-					let lastScene = null;
+					// 30초마다 갱신
 					const lapTimer = setInterval(async () => {
 						if (!document.body.contains(card)) { clearInterval(lapTimer); return; }
 						try {
-							const rr = await fetch(`https://core.neubie.ai/robots/${robot.id}/`, { credentials: 'include' });
-							const rd = await rr.json();
-							const scenarioId = rd.currentScenario;
-							if (!scenarioId) { lapLabel.innerText = '🟢순찰중 -/-'; lastScene = null; return; }
-							const sr = await fetch(`https://core.neubie.ai/scenarios/${scenarioId}/`, { credentials: 'include' });
-							const sd = await sr.json();
-							if (lastScene !== null && sd.currentScene !== lastScene) {
-								const lap = await getLapCountFromIframe(robot.id);
-								if (lap) lapLabel.innerText = `🟢순찰중 ${lap}`;
-							}
-							lastScene = sd.currentScene;
+							const lap = await getLapCountFromNotifications(siteId, robotNickname);
+							if (lap) lapLabel.innerText = `🟢순찰중 ${lap}`;
 						} catch(e) {}
-					}, 120000);
+					}, 30000);
 				}
 				
 				card.appendChild(wrapper);
