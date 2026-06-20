@@ -225,7 +225,7 @@
 
         /* 기타 배달 */
         .bb-delivery-area { flex:1; padding:7px 10px; display:flex; flex-direction:column; gap:5px; min-height:0; }
-        .bb-delivery-title { font-size:10px; font-weight:900; color:var(--mu); letter-spacing:.3px; flex-shrink:0; }
+        .bb-delivery-title { font-size:12px; font-weight:900; color:var(--mu); letter-spacing:.3px; flex-shrink:0; }
         .bb-delivery-chips {
             display:flex; flex-wrap:wrap; gap:4px;
             overflow-y:auto; max-height:100px; padding-right:2px;
@@ -475,7 +475,6 @@
     const DELIVERY_TYPES = ['ALL', 'OPENAPI_DELIVERY', 'NB_ORDER_DELIVERY', 'DELIVERY'];
     const DELIVERY_SITE_IDS = [25,27,44,47,48,53,56,65,86,109,118,141,180];
 
-    // 퀵바 사이트 ID (역삼=109, 송도=65, 성수=56, 삼평=44, 서현=86)
     const QUICK_SITE_IDS = [109, 65, 56, 44, 86];
     // 기타 배달 = DELIVERY_SITE_IDS 에 있지만 QUICK_SITE_IDS 에 없는 것
     const OTHER_DELIVERY_SITE_IDS = DELIVERY_SITE_IDS.filter(id => !QUICK_SITE_IDS.includes(id));
