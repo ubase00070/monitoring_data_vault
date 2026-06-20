@@ -985,8 +985,9 @@
                 const patchItems = [
                     {
                         version: 'v1.1',
-                        date: '2026-06-18',
+                        date: '2026-06-20',
                         items: [
+							'모니터링 페이지 화질 조절 기능',
 							'불규칙 순찰 기체 모니터링 미추가 시 알림 기능',
 							'게시판 기능',
 							'개입카드 페이지에서 현재 기체 조작자 표기(본인 제외)',
@@ -2098,6 +2099,146 @@
 	if (isHandoverPage() && localStorage.getItem('neubie_handover_enabled') !== 'false') {
 		checkUnmonitoredRobots();
 		setInterval(checkUnmonitoredRobots, 30000);
+	}
+
+	/* ============================================================
+    SECTION 화질 조절 버튼 (모니터링 페이지 전용)
+   ============================================================ */
+	const LEVEL_LABELS = ['', '최소', '낮음', '중간', '높음', '최대'];
+
+	function isMonitoringPage() {
+		return location.href.includes('go.neubie.ai/ko/remote/multiple/monitoring');
+	}
+
+	async function injectBitrateButtons() {
+		if (!isMonitoringPage()) return;
+
+		const cards = document.querySelectorAll('.rounded-8.relative.flex.overflow-hidden');
+		cards.forEach(async (card) => {
+			if (card.dataset.bitrateInjected) return;
+
+			const nameEl = card.querySelector('span.font-size-14.max-w-fit.truncate.font-bold.text-white');
+			const robotName = nameEl?.innerText.trim();
+			if (!robotName) return;
+
+			try {
+				const res = await fetch(
+					`https://core.neubie.ai/robots/?nickname=${encodeURIComponent(robotName)}`,
+					{ credentials: 'include' }
+				);
+				const json = await res.json();
+				const robot = json.results?.[0];
+				if (!robot) return;
+
+				card.dataset.bitrateInjected = 'true';
+
+				let currentLevel = robot.robotStatus.bitrateLevel;
+
+				const wrapper = document.createElement('div');
+				wrapper.style.cssText = `
+					position: absolute;
+					top: 8px; left: 8px;
+					z-index: 999;
+					pointer-events: auto;
+					display: flex;
+					flex-direction: row;
+					align-items: center;
+					gap: 3px;
+					opacity: 0;
+					transition: opacity 0.2s;
+					background: rgba(20,20,20,0.8);
+					border-radius: 8px;
+					padding: 3px 6px;
+				`;
+
+				card.addEventListener('mouseenter', () => wrapper.style.opacity = '1');
+				card.addEventListener('mouseleave', () => wrapper.style.opacity = '0');
+
+				const labelEl = document.createElement('span');
+				labelEl.innerText = `화질 ${LEVEL_LABELS[currentLevel]}`;
+				labelEl.style.cssText = `
+					color: white;
+					font-size: 10px;
+					font-weight: 600;
+					font-family: 'Pretendard', sans-serif;
+					white-space: nowrap;
+				`;
+
+				let isCooling = false;
+
+				const makeBtn = (label, delta) => {
+					const btn = document.createElement('div');
+					btn.innerHTML = label;
+					btn.style.cssText = `
+						color: white;
+						font-size: 10px;
+						font-weight: 700;
+						cursor: pointer;
+						user-select: none;
+						display: flex;
+						align-items: center;
+						justify-content: center;
+						width: 14px;
+						height: 14px;
+						border-radius: 4px;
+						background: rgba(80,80,80,0.8);
+						transition: opacity 0.15s;
+					`;
+
+					btn.addEventListener('click', async (e) => {
+						e.stopPropagation();
+						if (isCooling) return;
+						const newLevel = currentLevel + delta;
+						if (newLevel < 1 || newLevel > 5) return;
+
+						isCooling = true;
+						btn.style.opacity = '0.4';
+
+						await fetch(`https://core.neubie.ai/robots/${robot.id}/video-bitrate-level/`, {
+							method: 'PUT',
+							credentials: 'include',
+							headers: { 'Content-Type': 'application/json' },
+							body: JSON.stringify({ level: newLevel })
+						});
+
+						currentLevel = newLevel;
+						labelEl.innerText = `화질 ${LEVEL_LABELS[currentLevel]}`;
+
+						setTimeout(() => {
+							isCooling = false;
+							btn.style.opacity = '1';
+						}, 1000);
+					});
+
+					return btn;
+				};
+
+				wrapper.appendChild(makeBtn('▲', 1));
+				wrapper.appendChild(labelEl);
+				wrapper.appendChild(makeBtn('▼', -1));
+				card.style.position = 'relative';
+				card.appendChild(wrapper);
+
+			} catch(e) {
+				console.warn('화질 버튼 삽입 실패:', e);
+			}
+		});
+	}
+
+	function registerBitrateObserver() {
+		if (!isMonitoringPage()) return;
+		if (localStorage.getItem('neubie_handover_enabled') === 'false') return;
+		if (window._bitrateObserver) window._bitrateObserver.disconnect();
+		window._bitrateObserver = new MutationObserver(() => {
+			if (isMonitoringPage() && localStorage.getItem('neubie_handover_enabled') !== 'false') {
+				setTimeout(injectBitrateButtons, 500);
+			}
+		});
+		window._bitrateObserver.observe(document.body, { childList: true, subtree: true });
+	}
+
+	if (isMonitoringPage() && localStorage.getItem('neubie_handover_enabled') !== 'false') {
+		registerBitrateObserver();
 	}
 
     /* ============================================================
@@ -3314,6 +3455,9 @@
                 } else {
                     _stopOperatorWatch();
                 }
+				if (isMonitoringPage() && localStorage.getItem('neubie_handover_enabled') !== 'false') {
+					registerBitrateObserver();
+				}
             }
         }, 100);
     }, true);
@@ -3341,6 +3485,9 @@
             } else {
                 _stopOperatorWatch();
             }
+			if (isMonitoringPage() && localStorage.getItem('neubie_handover_enabled') !== 'false') {
+				registerBitrateObserver();
+			}
         }
     }, 2000); // 2초 정도면 충분히 여유로움
 	
