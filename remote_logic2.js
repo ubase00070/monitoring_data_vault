@@ -3544,6 +3544,10 @@
                     setTimeout(() => injectMapStyle(), 3000);
                     setTimeout(() => injectMapStyle(), 6000);
                 }
+				
+				setTimeout(() => checkDangerZone(), 1000);
+				setTimeout(() => checkDangerZone(), 2000);
+				
 				setTimeout(() => patchDrivingPageLayout(), 1500);
                 setTimeout(() => patchDrivingPageLayout(), 3000);
 				setTimeout(() => patchDrivingPageLayout(), 6000);
@@ -3574,6 +3578,10 @@
                 setTimeout(() => injectMapStyle(), 3000);
                 setTimeout(() => injectMapStyle(), 6000);
             }
+			
+			setTimeout(() => checkDangerZone(), 1000);
+			setTimeout(() => checkDangerZone(), 2000);
+			
 			setTimeout(() => patchDrivingPageLayout(), 1500);
             setTimeout(() => patchDrivingPageLayout(), 3000);
 			setTimeout(() => patchDrivingPageLayout(), 6000);
@@ -3588,6 +3596,63 @@
 			}
         }
     }, 2000); // 2초 정도면 충분히 여유로움
+	
+	// ── 위험구간 경고 ──
+	const DANGER_ZONE_CONFIG = {
+		221: { // 성남판교 200
+			pois: [
+				'판교역순찰_01',
+				'현대백화점/힐스테이트 판교역사이 금연구역1',
+				'현대백화점/힐스테이트 판교역사이 금연구역2',
+			],
+			message: '⚠️ 네트워크 불안정 구간입니다. 관제 시 유의하세요.'
+		}
+	};
+
+	function checkDangerZone() {
+		const match = location.href.match(/\/ko\/remote\/robot\/(\d+)/);
+		if (!match) { removeDangerWarning(); return; }
+		const robotId = parseInt(match[1]);
+		const config = DANGER_ZONE_CONFIG[robotId];
+		if (!config) { removeDangerWarning(); return; }
+
+		const activePoi = Array.from(document.querySelectorAll('span.max-w-190.font-size-14.truncate.font-medium'))
+			.find(el => el.className.includes('text-mono-800') && el.innerText.includes('로 이동'));
+		const poiName = activePoi?.innerText?.replace('로 이동', '').trim();
+
+		if (poiName && config.pois.some(p => poiName.includes(p))) {
+			if (document.getElementById('neubie-danger-warning')) return;
+			const warning = document.createElement('div');
+			warning.id = 'neubie-danger-warning';
+			warning.style.cssText = `
+				position: fixed;
+				top: 80px;
+				left: 50%;
+				transform: translateX(-50%);
+				z-index: 9999;
+				background: rgba(220, 38, 38, 0.92);
+				color: white;
+				font-size: 13px;
+				font-weight: 700;
+				padding: 8px 20px;
+				border-radius: 8px;
+				font-family: 'Pretendard', sans-serif;
+				box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+				white-space: nowrap;
+				pointer-events: none;
+			`;
+			warning.innerText = config.message;
+			document.body.appendChild(warning);
+			setTimeout(() => removeDangerWarning(), 7000);
+		} else {
+			removeDangerWarning();
+		}
+	}
+
+	function removeDangerWarning() {
+		const el = document.getElementById('neubie-danger-warning');
+		if (el) el.remove();
+	}
 	
 	// ── 개입 페이지 레이아웃 패치 ──
     function patchDrivingPageLayout() {
