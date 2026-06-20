@@ -61,7 +61,7 @@
             font-family:inherit; font-weight:700; cursor:pointer; white-space:nowrap;
         }
         .bb-btn:hover { border-color:var(--mu); }
-        .bb-btn.rm { border-color:rgba(239,68,68,.3); color:var(--rd); background:var(--rd2); }
+        .bb-btn.rm { border-color:rgba(239,68,68,.3); color:var(--rd); background:var(239,68,68,.3); }
         .bb-btn.rm:hover { background:rgba(239,68,68,.25); }
         .bb-btn.info { border-color:rgba(156,163,175,.2); color:var(--tx); background:var(--sur2); font-size:12px; padding:5px 10px; }
         .bb-xbtn {
@@ -206,7 +206,7 @@
             padding:5px; display:grid;
             grid-template-columns:repeat(4,1fr);
             grid-template-rows:repeat(4,1fr);
-            gap:3px; width:120px; height:112px;
+            gap:3px; width:120px; height:120px;
         }
         .bb-mi {
             width:100%; aspect-ratio:1; border-radius:50%;
@@ -408,7 +408,7 @@
             <div class="bb-bottom">
                 <div class="bb-mg" id="bb-mg"></div>
                 <div class="bb-delivery-area">
-                    <div class="bb-delivery-title">🚗 배달 중 (기타)</div>
+                    <div class="bb-delivery-title">🚗 배달 중 (캠핑장 및 기타)</div>
                     <div class="bb-delivery-chips" id="bb-delivery-chips"></div>
                 </div>
             </div>
@@ -420,8 +420,7 @@
                     <div class="bb-xbtn" id="bb-info-close">✕</div>
                 </div>
                 <div id="bb-info-body">
-                    * 첫 로딩 시에만 10~20초 데이터 전송 시간 필요(오직 '알림 센터' 페이지에서만 작동함)<br>
-                    * 다른 페이지로 이동했다면 재접속 또는 새로고침 필수<br>
+                    * 오직 '알림 센터' 페이지에서만 작동<br>
                     * 추가한 기체 카드와 배치는 로컬 스토리지에 저장됨(최대 30대. 드래그로 배치 변경 가능)<br>
                     * 알림 전송 조건<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;- 배터리 21% 이하 기체<br>
@@ -430,7 +429,7 @@
                     &nbsp;&nbsp;&nbsp;&nbsp;- 전원 ON인데 배터리·GPS 수신값이 잡히지 않는 경우(좀비 의심)<br>
                     * 하단 퀵바: 역삼·송도·성수·삼평서현 ON/OFF 및 상태 확인용<br>
                     * 기타 배달: 퀵바 외 배달 사이트 기체 실시간 표시<br>
-                    * Alt+Z: 현황판 열기/닫기 | h 5연타: 히스토리 패널<br>
+                    * Alt+Z: 현황판 열기/닫기<br>
                     * 개선 피드백 받습니다(수정 시 자동 실시간 반영).
                 </div>
             </div>
