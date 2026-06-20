@@ -1304,8 +1304,9 @@
                 queueInfoContent.id = 'neubie-queue-info-content';
                 queueInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:#cbd5e1; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;`;
                 queueInfoContent.innerHTML = `
-				기체 카메라 밝기 한 번에 조절<br>
-				기체 카메라 위치 스왑<br>
+				화질 조절<br>
+				카메라 밝기 한 번에 조절<br>
+				카메라 위치 스왑<br>
 				multimonitoring.vercel.app 이용 시 교대 기체 업로드<br>
 				업로드된 교대 기체 받기(최근 20분까지만 유효) -> 자동 시작(6대까지)<br>
 				'뉴비고 도우미'만 이용하더라도 교대 기체 받기 가능<br>
