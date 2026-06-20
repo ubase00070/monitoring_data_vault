@@ -2225,6 +2225,7 @@
 				        clearInterval(syncTimer);
 				        return;
 				    }
+					if (isCooling) return; // ← 클릭 중이면 싱크 스킵
 				    try {
 				        const r = await fetch(`https://core.neubie.ai/robots/${robot.id}/`, { credentials: 'include' });
 				        const d = await r.json();
