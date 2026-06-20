@@ -534,7 +534,7 @@
         }).catch(err => console.log("Sync failed"));
     }
 
-    // 레이아웃 노출 여부와 상관없이 알림만 전담하는 함수
+    // 레이아웃 노출 여부와 상관없이 알림만 전담
     function checkAndTriggerNotifications(tasks) {
         const interval = parseInt(localStorage.getItem('neubie_remind_int') || '0');
         if (interval === 0) return;
