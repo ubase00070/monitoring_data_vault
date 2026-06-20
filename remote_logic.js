@@ -2219,6 +2219,23 @@
 				card.style.position = 'relative';
 				card.appendChild(wrapper);
 
+				// 30초마다 현재 화질 동기화
+				const syncTimer = setInterval(async () => {
+				    if (!document.body.contains(card)) {
+				        clearInterval(syncTimer);
+				        return;
+				    }
+				    try {
+				        const r = await fetch(`https://core.neubie.ai/robots/${robot.id}/`, { credentials: 'include' });
+				        const d = await r.json();
+				        const level = d.robotStatus.bitrateLevel;
+				        if (level !== currentLevel) {
+				            currentLevel = level;
+				            labelEl.innerText = `화질 ${LEVEL_LABELS[currentLevel]}`;
+				        }
+				    } catch(e) {}
+				}, 30000);
+
 			} catch(e) {
 				console.warn('화질 버튼 삽입 실패:', e);
 			}
