@@ -2158,7 +2158,7 @@
 				labelEl.innerText = `화질 ${LEVEL_LABELS[currentLevel]}`;
 				labelEl.style.cssText = `
 					color: white;
-					font-size: 10px;
+					font-size: 11px;
 					font-weight: 600;
 					font-family: 'Pretendard', sans-serif;
 					white-space: nowrap;
@@ -2171,7 +2171,7 @@
 					btn.innerHTML = label;
 					btn.style.cssText = `
 						color: white;
-						font-size: 10px;
+						font-size: 11px;
 						font-weight: 700;
 						cursor: pointer;
 						user-select: none;
