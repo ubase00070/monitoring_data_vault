@@ -1,35 +1,3 @@
-// ── WebSocket 감시 (페이지 로드 전 실행) ──
-(function() {
-    // onmessage 방식도 감시
-	const origWS = window.WebSocket;
-	window.WebSocket = function(url, protocols) {
-		const ws = protocols ? new origWS(url, protocols) : new origWS(url);
-		
-		// onmessage 프로퍼티 감시
-		let _onmessage = null;
-		Object.defineProperty(ws, 'onmessage', {
-			get() { return _onmessage; },
-			set(fn) {
-				_onmessage = function(e) {
-					if (typeof e.data === 'string' && e.data.includes('travel_distance')) {
-						try {
-							const jsonStr = e.data.substring(e.data.indexOf('{'));
-							const data = JSON.parse(jsonStr);
-							if (data.message?.travel_distance !== undefined) {
-								console.log('[WS onmessage]', data.robot, '| travel:', data.message.travel_distance, '| scene:', data.scene);
-							}
-						} catch(ex) {}
-					}
-					return fn.call(this, e);
-				};
-			}
-		});
-		return ws;
-	};
-	window.WebSocket.prototype = origWS.prototype;
-	console.log('[WS onmessage 감시 등록됨]');
-})();
-
 (function() {
     'use strict';
 
@@ -636,7 +604,7 @@
         };
     }
 
-    // 리마인더 알림창 생성 함수
+    // 리마인더 알림창 생성
     function triggerReminder(content, remainMin) {
         const notifType = localStorage.getItem('neubie_notif_type') || 'type1';
 
@@ -1019,7 +987,7 @@
                         version: 'v1.1',
                         date: '2026-06-20',
                         items: [
-							'모니터링 페이지 화질 조절 기능',
+							'다중 모니터링 기체 화질 조절',
 							'불규칙 순찰 기체 모니터링 미추가 시 알림 기능',
 							'게시판 기능',
 							'개입카드 페이지에서 현재 기체 조작자 표기(본인 제외)',
@@ -1028,8 +996,8 @@
 							'D-PAD DOWN: 자동 긴급 정지 ON/OFF',
 							'D-PAD LEFT: 카메라 밝기 내리기',
 							'D-PAD RIGHT: 카메라 밝기 올리기',
-                            '다중 관제 카메라 밝기 한 번에 조절',
-							'다중 관제 카메라 위치 드래그로 변경',
+                            '다중 모니터링 카메라 밝기 한 번에 조절',
+							'다중 모니터링 카메라 위치 드래그로 변경',
                         ]
                     },
                 ];
@@ -2138,6 +2106,42 @@
     SECTION 화질 조절 버튼 (모니터링 페이지 전용)
    ============================================================ */
 	const LEVEL_LABELS = ['', '최소', '낮음', '중간', '높음', '최대'];
+	const PATROL_LAP_EXCLUDE_IDS = new Set([
+		172, 187, 191, 192, 199, 200, 201, 203, 204, 205, 206, 207, 208, 209,
+		225, 230, 244
+	]);
+
+	async function getLapCountFromIframe(robotId) {
+		return new Promise((resolve) => {
+			const iframe = document.createElement('iframe');
+			iframe.src = `https://go.neubie.ai/ko/remote/robot/${robotId}`;
+			iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;';
+			document.body.appendChild(iframe);
+			iframe.onload = () => {
+				setTimeout(() => {
+					try {
+						const iw = iframe.contentWindow;
+						const id = iframe.contentDocument;
+						iw.WebSocket = function() { return { send:()=>{}, close:()=>{}, addEventListener:()=>{}, onopen:null, onmessage:null }; };
+						id.querySelectorAll('video').forEach(v => { v.src=''; v.srcObject=null; v.remove(); });
+						iw.posthog = { capture:()=>{}, identify:()=>{} };
+						id.querySelectorAll('canvas').forEach(c => c.remove());
+						id.querySelectorAll('img').forEach(i => i.src='');
+					} catch(e) {}
+				}, 50);
+				setTimeout(() => {
+					try {
+						const lapEl = Array.from(iframe.contentDocument.querySelectorAll('span.font-size-14.font-medium'))
+							.find(el => el.innerText?.match(/^\d+\/\d+$/));
+						iframe.remove();
+						resolve(lapEl?.innerText || null);
+					} catch(e) { iframe.remove(); resolve(null); }
+				}, 2000);
+			};
+			iframe.onerror = () => { iframe.remove(); resolve(null); };
+			setTimeout(() => { try { iframe.remove(); } catch(e) {} resolve(null); }, 8000);
+		});
+	}
 
 	function isMonitoringPage() {
 		return location.href.includes('go.neubie.ai/ko/remote/multiple/monitoring');
@@ -2149,6 +2153,9 @@
 		const cards = document.querySelectorAll('.rounded-8.relative.flex.overflow-hidden');
 		cards.forEach(async (card) => {
 			if (card.dataset.bitrateInjected) return;
+			
+			card.dataset.lapLoadIndex = document.querySelectorAll('[data-lap-load-index]').length;
+			card.setAttribute('data-lap-load-index', card.dataset.lapLoadIndex);
 
 			const nameEl = card.querySelector('span.font-size-14.max-w-fit.truncate.font-bold.text-white');
 			const robotName = nameEl?.innerText.trim();
@@ -2250,24 +2257,77 @@
 				wrapper.appendChild(labelEl);
 				wrapper.appendChild(makeBtn('▼', -1));
 				card.style.position = 'relative';
-				card.appendChild(wrapper);
 				
+				// 바퀴수 표시 (PATROL 기체 + 제외 목록 아닌 경우)
+				if (
+					robot.service?.serviceType === 'PATROL' &&
+					!PATROL_LAP_EXCLUDE_IDS.has(robot.id)
+				) {
+					const divider = document.createElement('span');
+					divider.style.cssText = 'color: rgba(255,255,255,0.3); font-size: 11px; margin: 0 2px;';
+					divider.innerText = '|';
+					wrapper.appendChild(divider);
+
+					const lapLabel = document.createElement('span');
+					lapLabel.style.cssText = `
+						color: white;
+						font-size: 11px;
+						font-weight: 600;
+						font-family: 'Pretendard', sans-serif;
+						white-space: nowrap;
+					`;
+					lapLabel.innerText = '🟢순찰중 ...';
+					wrapper.appendChild(lapLabel);
+
+					// 초기 바퀴수 로드 (순차 처리, 시나리오 있을 때만)
+					if (robot.currentScenario) {
+						setTimeout(async () => {
+							const lap = await getLapCountFromIframe(robot.id);
+							if (lap) lapLabel.innerText = `🟢순찰중 ${lap}`;
+							else lapLabel.innerText = '🟢순찰중 -/-';
+						}, (card.dataset.lapLoadIndex || 0) * 2500);
+					} else {
+						lapLabel.innerText = '🟢순찰중 -/-';
+					}
+
+					// 2분마다 갱신
+					let lastScene = null;
+					const lapTimer = setInterval(async () => {
+						if (!document.body.contains(card)) { clearInterval(lapTimer); return; }
+						try {
+							const rr = await fetch(`https://core.neubie.ai/robots/${robot.id}/`, { credentials: 'include' });
+							const rd = await rr.json();
+							const scenarioId = rd.currentScenario;
+							if (!scenarioId) { lapLabel.innerText = '🟢순찰중 -/-'; lastScene = null; return; }
+							const sr = await fetch(`https://core.neubie.ai/scenarios/${scenarioId}/`, { credentials: 'include' });
+							const sd = await sr.json();
+							if (lastScene !== null && sd.currentScene !== lastScene) {
+								const lap = await getLapCountFromIframe(robot.id);
+								if (lap) lapLabel.innerText = `🟢순찰중 ${lap}`;
+							}
+							lastScene = sd.currentScene;
+						} catch(e) {}
+					}, 120000);
+				}
+				
+				card.appendChild(wrapper);
+
 				// 30초마다 현재 화질 동기화
 				const syncTimer = setInterval(async () => {
-					if (!document.body.contains(card)) {
-						clearInterval(syncTimer);
-						return;
-					}
+				    if (!document.body.contains(card)) {
+				        clearInterval(syncTimer);
+				        return;
+				    }
 					if (isCooling) return; // ← 클릭 중이면 싱크 스킵
-					try {
-						const r = await fetch(`https://core.neubie.ai/robots/${robot.id}/`, { credentials: 'include' });
-						const d = await r.json();
-						const level = d.robotStatus.bitrateLevel;
-						if (level !== currentLevel) {
-							currentLevel = level;
-							labelEl.innerText = `화질 ${LEVEL_LABELS[currentLevel]}`;
-						}
-					} catch(e) {}
+				    try {
+				        const r = await fetch(`https://core.neubie.ai/robots/${robot.id}/`, { credentials: 'include' });
+				        const d = await r.json();
+				        const level = d.robotStatus.bitrateLevel;
+				        if (level !== currentLevel) {
+				            currentLevel = level;
+				            labelEl.innerText = `화질 ${LEVEL_LABELS[currentLevel]}`;
+				        }
+				    } catch(e) {}
 				}, 30000);
 
 			} catch(e) {
