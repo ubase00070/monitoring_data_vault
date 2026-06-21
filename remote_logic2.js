@@ -480,6 +480,28 @@
         });
     }
 
+	function copyToClipboard(btn) {
+	    const now = new Date();
+	    let hour = now.getHours();
+	    if (now.getMinutes() >= 50) hour = (hour + 1) % 24;
+	    let copyText = `[${String(hour).padStart(2,'0')}시 성남 기체 배터리 현황]\n`;
+	    state.lastBatteryData.forEach(item => {
+	        copyText += `• ${item.shortName}: ${item.battery} (${item.statusText})\n`;
+	    });
+	    navigator.clipboard.writeText(copyText).then(() => {
+	        const originalText = btn.textContent;
+	        const originalBg   = btn.style.background;
+	        btn.textContent    = '복사됨';
+	        btn.style.background = '#22c55e';
+	        setTimeout(() => {
+	            btn.textContent    = originalText;
+	            btn.style.background = originalBg;
+	        }, 1500);
+	    }).catch(() => {
+	        alert('복사 실패 — 클립보드 권한을 확인해주세요.');
+	    });
+	}
+	
     /* ============================================================
         SECTION 4-1. [서버 동기화] GitHub JSON 기반 업무 로드 엔진
        ============================================================ */
