@@ -1644,6 +1644,8 @@
 		
         const queueInfoOverlay = document.getElementById('neubie-queue-info-overlay');
         if (queueInfoOverlay) queueInfoOverlay.style.display = 'none';
+		const mapInfoOverlay = document.getElementById('neubie-map-info-overlay');
+        if (mapInfoOverlay) mapInfoOverlay.style.display = 'none';
         const tipsOverlay = document.getElementById('neubie-tips-overlay');
         if (tipsOverlay) tipsOverlay.style.display = 'none';
         const patchOverlay = document.getElementById('neubie-patch-overlay');
