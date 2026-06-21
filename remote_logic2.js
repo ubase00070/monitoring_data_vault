@@ -480,28 +480,28 @@
         });
     }
 
-	function copyToClipboard(btn) {
-	    const now = new Date();
-	    let hour = now.getHours();
-	    if (now.getMinutes() >= 50) hour = (hour + 1) % 24;
-	    let copyText = `[${String(hour).padStart(2,'0')}시 성남 기체 배터리 현황]\n`;
-	    state.lastBatteryData.forEach(item => {
-	        copyText += `• ${item.shortName}: ${item.battery} (${item.statusText})\n`;
-	    });
-	    navigator.clipboard.writeText(copyText).then(() => {
-	        const originalText = btn.textContent;
-	        const originalBg   = btn.style.background;
-	        btn.textContent    = '복사됨';
-	        btn.style.background = '#22c55e';
-	        setTimeout(() => {
-	            btn.textContent    = originalText;
-	            btn.style.background = originalBg;
-	        }, 1500);
-	    }).catch(() => {
-	        alert('복사 실패 — 클립보드 권한을 확인해주세요.');
-	    });
-	}
-	
+    function copyToClipboard(btn) {
+        const now = new Date();
+        let hour = now.getHours();
+        if (now.getMinutes() >= 50) hour = (hour + 1) % 24;
+        let copyText = `[${String(hour).padStart(2,'0')}시 성남 기체 배터리 현황]\n`;
+        state.lastBatteryData.forEach(item => {
+            copyText += `• ${item.shortName}: ${item.battery} (${item.statusText})\n`;
+        });
+        navigator.clipboard.writeText(copyText).then(() => {
+            const originalText = btn.textContent;
+            const originalBg   = btn.style.background;
+            btn.textContent    = '복사됨';
+            btn.style.background = '#22c55e';
+            setTimeout(() => {
+                btn.textContent    = originalText;
+                btn.style.background = originalBg;
+            }, 1500);
+        }).catch(() => {
+            alert('복사 실패 — 클립보드 권한을 확인해주세요.');
+        });
+    }
+
     /* ============================================================
         SECTION 4-1. [서버 동기화] GitHub JSON 기반 업무 로드 엔진
        ============================================================ */
@@ -987,14 +987,14 @@
                         version: 'v1.2',
                         date: '2026-06-22',
                         items: [
+                            '임무 종료된 리센츠/엘스 페이지 이탈 시 5초 후 자동 사이드 ON 신호 전송',
                             '순찰도 순회와 동일하게 현재 바퀴 수 표기',
                             '성남 배터리 속도 개선',
 							'네트워크 불안정 지역 경고 레이아웃',
 							'다중 모니터링 기체 화질 조절',
 							'불규칙 순찰 기체 모니터링 미추가 시 알림 기능',
 							'게시판 기능',
-							'개입카드 페이지에서 현재 기체 조작자 표기(본인 제외)',
-							'개입카드 페이지 상태 바 재배치(스크롤 바 제거)',
+							'개입카드 현재 조작자 표기(본인 제외) / 상태 바 재배치(스크롤 제거)',
 							'D-PAD UP/DOWN: 다음 개입 요청받기 / 자동 긴급 정지 ON OFF',
 							'D-PAD LEFT/RIGHT: 카메라 밝기 내리기/올리기',
                             '다중 모니터링 카메라 밝기 한 번에 조절 및 드래그로 위치 변경',
@@ -1271,11 +1271,11 @@
                 const mapInfoContent = document.createElement('div');
                 mapInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:#cbd5e1;`;
                 mapInfoContent.innerHTML = `
-				    역삼 요기요 / 송도 요기요 / 성수 요기요 / 성남 삼평동<br>
-				    페이지에서 흰색 마커를 숨겨서 최적화.<br>
-				    대기장소 마커(주황)를 역방향으로 뒤집어서 보기 쉽도록 함.<br>
-				    기존 뉴비고 상의 아이콘 숨기기 기능은 여전히 작동.<br>
-				`;
+                    역삼 요기요 / 송도 요기요 / 성수 요기요 / 성남 삼평동<br>
+                    페이지에서 흰색 마커를 숨겨서 최적화.<br>
+                    대기장소 마커(주황)를 역방향으로 뒤집어서 보기 쉽도록 함.<br>
+                    기존 뉴비고 상의 아이콘 숨기기 기능은 여전히 작동.<br>
+                `;
                 mapInfoBox.appendChild(mapInfoClose);
                 mapInfoBox.appendChild(mapInfoTitle);
                 mapInfoBox.appendChild(mapInfoContent);
@@ -1666,7 +1666,7 @@
 		
         const queueInfoOverlay = document.getElementById('neubie-queue-info-overlay');
         if (queueInfoOverlay) queueInfoOverlay.style.display = 'none';
-		const mapInfoOverlay = document.getElementById('neubie-map-info-overlay');
+        const mapInfoOverlay = document.getElementById('neubie-map-info-overlay');
         if (mapInfoOverlay) mapInfoOverlay.style.display = 'none';
         const tipsOverlay = document.getElementById('neubie-tips-overlay');
         if (tipsOverlay) tipsOverlay.style.display = 'none';
@@ -3590,7 +3590,15 @@
     document.addEventListener('click', () => {
         setTimeout(() => {
             if (location.href !== lastUrl) {
+                const prevUrl = lastUrl;  // ← 이전 URL 먼저 저장
                 lastUrl = location.href;
+
+                // 자동 사이드브레이크 - 이탈 감지
+				const prevRobotId = getAutoSideRobotId(prevUrl);
+				if (prevRobotId && AUTO_SIDE_ROBOTS[prevRobotId]) {
+					triggerAutoSide(prevRobotId);
+				}
+
                 closeAllPopups();
                 updateRobotContext();
                 // 맵 최적화 페이지 전환 시 재적용
@@ -3625,7 +3633,15 @@
     // 만약 클릭 없이 코드로만 주소가 바뀌는 경우를 대비 (간격 2초)
     setInterval(() => {
         if (location.href !== lastUrl) {
+            const prevUrl = lastUrl;  // ← 이전 URL 먼저 저장
             lastUrl = location.href;
+
+            // 자동 사이드브레이크 - 이탈 감지
+			const prevRobotId = getAutoSideRobotId(prevUrl);
+			if (prevRobotId && AUTO_SIDE_ROBOTS[prevRobotId]) {
+				triggerAutoSide(prevRobotId);
+			}
+
             closeAllPopups();
             updateRobotContext();
 
@@ -3656,7 +3672,100 @@
 			}
         }
     }, 2000); // 2초 정도면 충분히 여유로움
-	
+    
+    // ── 자동 사이드브레이크 (잠실 엘스/리센츠) ──
+	const AUTO_SIDE_ROBOTS = {
+		128: '잠실 리센츠 1호기',
+		82:  '잠실 리센츠 2호기',
+		156: '잠실 엘스 1호기',
+		157: '잠실 엘스 2호기',
+	};
+
+	function getAutoSideRobotId(url) {
+		const robotMatch = url.match(/\/ko\/remote\/robot\/(\d+)/);
+		if (robotMatch) return parseInt(robotMatch[1]);
+		const params = new URLSearchParams(url.split('?')[1] || '');
+		const robotId = params.get('robot-id');
+		return robotId ? parseInt(robotId) : null;
+	}
+
+	function showAutoSideNotice(msg, color) {
+		const existing = document.getElementById('neubie-auto-side-notice');
+		if (existing) existing.remove();
+		const el = document.createElement('div');
+		el.id = 'neubie-auto-side-notice';
+		el.style.cssText = `
+			position: fixed;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			z-index: 9999;
+			background: ${color};
+			color: white;
+			font-size: 14px;
+			font-weight: 700;
+			padding: 14px 28px;
+			border-radius: 12px;
+			font-family: 'Pretendard', sans-serif;
+			box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+			white-space: nowrap;
+			pointer-events: none;
+		`;
+		el.innerText = msg;
+		document.body.appendChild(el);
+		setTimeout(() => el.remove(), 4000);
+	}
+
+    const _autoSideInProgress = new Set();
+
+	async function triggerAutoSide(robotId) {
+		const robotName = AUTO_SIDE_ROBOTS[robotId];
+
+        if (_autoSideInProgress.has(robotId)) return;
+		_autoSideInProgress.add(robotId);
+
+		try {
+			const res = await fetch(`https://core.neubie.ai/robots/${robotId}/`, { credentials: 'include' });
+			const data = await res.json();
+			if (data.currentScenario) { _autoSideInProgress.delete(robotId); return; }
+            if (!data.robotStatus.isMovable) { _autoSideInProgress.delete(robotId); return; }
+
+			// 5초 예고 레이아웃
+			showAutoSideNotice(`5초 후 ${robotName}의 사이드 브레이크를 ON으로 변경합니다.`, 'rgba(59,130,246,0.92)');
+
+			setTimeout(async () => {
+				// 5초 후 다시 한번 확인
+				try {
+					const res2 = await fetch(`https://core.neubie.ai/robots/${robotId}/`, { credentials: 'include' });
+					const data2 = await res2.json();
+					if (data2.currentScenario) { _autoSideInProgress.delete(robotId); return; }
+					if (!data2.robotStatus.isMovable) { _autoSideInProgress.delete(robotId); return; }
+
+					const res3 = await fetch(`https://core.neubie.ai/robots/${robotId}/control/`, {
+						method: 'PUT',
+						credentials: 'include',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ action: 'WAIT' })
+					});
+					if (res3.ok) {
+						showAutoSideNotice(`✅ ${robotName} 사이드 브레이크 ON`, 'rgba(22,163,74,0.92)');
+						_autoSideInProgress.delete(robotId);
+					} else {
+						showAutoSideNotice(`❌ ${robotName} 사이드 브레이크 명령 전송 실패`, 'rgba(220,38,38,0.92)');
+						_autoSideInProgress.delete(robotId);
+					}
+				} catch(e) {
+                    _autoSideInProgress.delete(robotId);
+                    showAutoSideNotice(`❌ ${robotName} 사이드 브레이크 명령 전송 실패`, 'rgba(220,38,38,0.92)');
+                }
+			}, 5000);
+
+		} catch(e) {
+            _autoSideInProgress.delete(robotId);
+            showAutoSideNotice(`❌ ${robotName} 사이드 브레이크 명령 전송 실패`, 'rgba(220,38,38,0.92)');
+        }
+	}
+    
 	// ── 위험구간 경고 ──
 	const DANGER_ZONE_CONFIG = {
 		221: { // 성남판교 200
