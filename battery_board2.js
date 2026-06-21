@@ -104,13 +104,15 @@
         .bb-chip.bat    { background:var(--rd2); color:var(--rd); border:2px solid rgba(239,68,68,.55); box-shadow:0 0 8px rgba(239,68,68,.25); animation:chipPulse 1s infinite; }
         .bb-chip.dock   { background:rgba(251,191,36,.12); color:var(--ye); border:2px solid rgba(251,191,36,.5); box-shadow:0 0 6px rgba(251,191,36,.2); }
         .bb-chip.zombie { background:rgba(249,115,22,.12); color:var(--or); border:2px solid rgba(249,115,22,.5); box-shadow:0 0 8px rgba(249,115,22,.2); animation:chipPulse .7s infinite; }
+        .bb-chip.cam { background:rgba(249,115,22,.12); color:var(--or); border:2px solid rgba(249,115,22,.45); box-shadow:0 0 6px rgba(249,115,22,.15); }
+        .bb-chip.nomap { background:rgba(249,115,22,.12); color:var(--or); border:2px solid rgba(249,115,22,.45); box-shadow:0 0 6px rgba(249,115,22,.15); }
         .bb-chip.idle   { background:rgba(59,130,246,.10); color:var(--bl); border:2px solid rgba(59,130,246,.45); box-shadow:0 0 6px rgba(59,130,246,.15); }
         .bb-chip-none   { font-size:12px; color:var(--mu); font-weight:700; }
         @keyframes chipPulse { 0%,100%{opacity:1} 50%{opacity:.55} }
 
         /* 검색 */
         .bb-search-wrap {
-            width:300px; flex-shrink:0; padding:6px 10px;
+            width:280px; flex-shrink:0; padding:6px 10px;
             border-left:1px solid var(--bd); background:var(--bg);
             position:relative; display:flex; align-items:center;
         }
@@ -616,7 +618,7 @@
                 });
             }
 
-            // ── 기능5: 좀비 상태 ───────────────────────────────────
+            // ── 기능4: 좀비 상태 ───────────────────────────────────
             {
                 const isZombie =
                     rs.isConnecting === true &&
@@ -641,6 +643,56 @@
                     }
                 }
             }
+
+            // ── 기능5: 카메라 미노출 감지 ─────────────────────────────
+            if (rs.isConnecting) {
+                const CAM_LABELS = {
+                    isOnCamF:  'F(전면)',
+                    isOnCamFd: 'Fd(하단)',
+                    isOnCamFl: 'Fl(전면 좌측)',
+                    isOnCamFr: 'Fr(전면 우측)',
+                    isOnCamBl: 'Bl(후면 좌측)',
+                    isOnCamBr: 'Br(후면 우측)',
+                };
+                // 전체 false면 초기화 중으로 판단 — 제외
+                const anyCamOn = Object.keys(CAM_LABELS).some(k => rs[k] === true);
+                if (anyCamOn) {
+                    const offCams = Object.entries(CAM_LABELS)
+                        .filter(([k]) => rs[k] === false)
+                        .map(([, label]) => label);
+                    if (offCams.length > 0) {
+                        const key = alertKey('cam', id);
+                        if (!dismissedAlerts.has(key)) alerts.push({
+                            key, type:'cam', dot:'or', name,
+                            desc:`캠 미노출: ${offCams.join(', ')}`,
+                            time: fmt(new Date().toISOString())
+                        });
+                    }
+                }
+            }
+
+            // ── 기능6: 미니맵 위치 미노출 감지 ────────────────────────
+            {
+                const gpsZero =
+                    rs.isConnecting === true &&
+                    raw.battery > 0 &&   // 배터리는 정상 (좀비 아님)
+                    (rs.navpvtHorzAccuracy === 0 || rs.navpvtHorzAccuracy == null);
+
+                if (gpsZero) {
+                    if (!zombie[id + '_gps']) zombie[id + '_gps'] = { count: 1, firstSeen: now };
+                    else zombie[id + '_gps'].count++;
+                } else {
+                    delete zombie[id + '_gps'];
+                }
+                if (zombie[id + '_gps'] && zombie[id + '_gps'].count >= 4) {
+                    const key = alertKey('nomap', id);
+                    if (!dismissedAlerts.has(key)) alerts.push({
+                        key, type:'nomap', dot:'or', name,
+                        desc:`GPS 수신값 0 — 미니맵 위치 미노출 | 현장 재부팅 필요`,
+                        time: fmt(new Date().toISOString())
+                    });
+                }
+            }
         });
 
         saveZombie(zombie);
@@ -657,6 +709,8 @@
         dock:   { label:'🟡 도킹',   order:1 },
         zombie: { label:'👻 좀비',   order:2 },
         idle:   { label:'⏳ 방치',   order:3 },
+        cam:    { label:'🎥 캠', order:4 },
+        nomap:  { label:'🗺️ 미노출', order:5 },
     };
 
     function renderAlertChips(alerts) {
@@ -684,7 +738,6 @@
                 const first = groups[type][0];
                 return `<div class="bb-chip ${type}" data-type="${type}">
                     ${meta.label} <strong>${count}건</strong>
-                    <span style="opacity:.7;font-size:11px;margin-left:2px;">— ${first.name}${count > 1 ? ' 외' : ''}</span>
                 </div>`;
             }).join('');
 
