@@ -110,7 +110,7 @@
 
         /* 검색 */
         .bb-search-wrap {
-            width:320px; flex-shrink:0; padding:6px 10px;
+            width:300px; flex-shrink:0; padding:6px 10px;
             border-left:1px solid var(--bd); background:var(--bg);
             position:relative; display:flex; align-items:center;
         }
@@ -454,8 +454,8 @@
             </div>
             <div class="bb-hp-menu">
                 <button class="bb-hp-menu-btn active" id="bb-hp-btn-video">다중 영상</button>
-                <button class="bb-hp-menu-btn" id="bb-hp-btn-hw">뉴비슈 HW</button>
-                <button class="bb-hp-menu-btn" id="bb-hp-btn-sw">뉴비슈 SW</button>
+                <button class="bb-hp-menu-btn" id="bb-hp-btn-hw">버튼 2</button>
+                <button class="bb-hp-menu-btn" id="bb-hp-btn-sw">버튼 3</button>
             </div>
             <div class="bb-hp-body" id="bb-hp-body"></div>
         </div>
@@ -1121,16 +1121,14 @@
         loadVideoHistory();
     });
     document.getElementById('bb-hp-btn-hw').addEventListener('click', () => {
-        histActiveMenu = 'hw';
         ['bb-hp-btn-video','bb-hp-btn-hw','bb-hp-btn-sw'].forEach(id => document.getElementById(id).classList.remove('active'));
         document.getElementById('bb-hp-btn-hw').classList.add('active');
-        loadNeubieIssues('hw');
+        document.getElementById('bb-hp-body').innerHTML = '<div class="bb-hp-empty">준비 중입니다.</div>';
     });
     document.getElementById('bb-hp-btn-sw').addEventListener('click', () => {
-        histActiveMenu = 'sw';
         ['bb-hp-btn-video','bb-hp-btn-hw','bb-hp-btn-sw'].forEach(id => document.getElementById(id).classList.remove('active'));
         document.getElementById('bb-hp-btn-sw').classList.add('active');
-        loadNeubieIssues('sw');
+        document.getElementById('bb-hp-body').innerHTML = '<div class="bb-hp-empty">준비 중입니다.</div>';
     });
 
     const siEl = document.getElementById('bb-si');
@@ -1268,7 +1266,6 @@
     // SECTION HIST. 히스토리 패널 로직
     // ============================================================
     const MONITOR_DATA_URL = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/swordfish.css';
-    const NEUBIE_BASE_URL  = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/';
     const MONTH_NAMES = { '01':'jan','02':'feb','03':'mar','04':'apr','05':'may','06':'jun','07':'jul','08':'aug','09':'sep','10':'oct','11':'nov','12':'dec' };
     let histActiveMenu = 'video';
 
@@ -1340,28 +1337,6 @@
         }
     }
 
-    async function loadNeubieIssues(type) {
-        const body = document.getElementById('bb-hp-body');
-        const now  = new Date();
-        const currentMonthNum = now.getMonth() + 1;
-        const START_MONTH = 5;
-        const months = [];
-        for (let m = START_MONTH; m <= currentMonthNum; m++) {
-            const mm = String(m).padStart(2,'0');
-            months.push({ num: mm, name: MONTH_NAMES[mm], label: `${m}월` });
-        }
-        body.innerHTML = months.reverse().map(mo => `
-            <div class="bb-hp-month" id="bb-ni-month-${type}-${mo.num}">
-                <div class="bb-hp-month-hd" onclick="window._bbToggleNeubie('${type}','${mo.num}','${mo.name}',this)">
-                    <span>📊 ${mo.label} 뉴비슈 현황</span>
-                    <span class="bb-hp-month-arrow">▼</span>
-                </div>
-                <div class="bb-hp-month-body" id="bb-ni-body-${type}-${mo.num}">
-                    <div class="bb-hp-loading">▼ 클릭하여 로드</div>
-                </div>
-            </div>`).join('');
-    }
-
     window._bbToggleNeubie = async function(type, monthNum, monthName, hdEl) {
         const bodyEl  = document.getElementById(`bb-ni-body-${type}-${monthNum}`);
         const arrowEl = hdEl.querySelector('.bb-hp-month-arrow');
@@ -1415,71 +1390,6 @@
             bodyEl.innerHTML = '<div class="bb-hp-empty">데이터 로드 실패 ❌</div>';
             console.error('[BB-NEUBIE]', err);
         }
-    };
-
-    window._bbShowIssueDetail = function(type, monthNum, robot, summaryIdx) {
-        const bodyElId = `bb-ni-body-${type}-${monthNum}`;
-        const bodyEl = document.getElementById(bodyElId);
-        if (!bodyEl || !bodyEl._issueData) return;
-        const issues = bodyEl._issueData.filter(r => r.robot === robot);
-        if (!issues.length) return;
-        const prev = document.getElementById('bb-issue-detail-panel');
-        if (prev) prev.remove();
-        const panel = document.createElement('div');
-        panel.id = 'bb-issue-detail-panel';
-        panel.style.cssText = `
-            position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
-            width:460px;max-height:70vh;overflow-y:auto;
-            background:var(--bg);border:1px solid var(--bd2);
-            border-radius:12px;box-shadow:0 16px 48px rgba(0,0,0,.9);
-            z-index:999999999;font-family:'Lato',sans-serif;
-        `;
-        const accentColor = type==='hw' ? 'var(--rd)' : 'var(--bl)';
-        const accentBg    = type==='hw' ? 'rgba(239,68,68,.08)' : 'rgba(59,130,246,.08)';
-        const accentBd    = type==='hw' ? 'rgba(239,68,68,.3)'  : 'rgba(59,130,246,.3)';
-        panel.innerHTML = `
-            <div style="padding:11px 16px;border-bottom:1px solid var(--bd);background:var(--sur);border-radius:12px 12px 0 0;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:1;">
-                <div style="font-size:14px;font-weight:900;color:var(--tx);">
-                    ${robot} 이슈 상세
-                    <span style="font-size:12px;color:var(--${type==='hw'?'rd':'bl'});margin-left:6px;">${issues.length}건</span>
-                </div>
-                <div onclick="document.getElementById('bb-issue-detail-panel').remove()"
-                    style="width:22px;height:22px;border-radius:5px;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:var(--rd);font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:900;">✕</div>
-            </div>
-            ${issues.map((r, i) => `
-                <div style="border-bottom:2px solid var(--bd2);font-size:13px;line-height:1.9;">
-                    <div style="padding:7px 16px;background:${accentBg};border-left:3px solid ${accentColor};border-bottom:1px solid ${accentBd};display:flex;align-items:center;gap:8px;">
-                        <span style="font-size:12px;font-weight:900;color:${accentColor};">[${i+1}/${issues.length}]</span>
-                        <span style="font-size:12px;font-weight:900;color:var(--tx);">${r.date || '-'}</span>
-                        <span style="font-size:11px;color:var(--mu);margin-left:auto;">${r.priority || ''}</span>
-                    </div>
-                    <div style="padding:10px 16px;">
-                        <div style="color:#a0a0b0;font-size:11px;font-weight:700;margin-bottom:2px;">긴급도 / 심각도 / 이슈 현상</div>
-                        <div style="color:var(--tx);margin-bottom:8px;">
-                            ${r.urgency || '-'} &nbsp;·&nbsp; ${r.severity || '-'}<br>
-                            <span style="color:${accentColor};font-weight:900;">${r.phenomenon || '-'}</span>
-                        </div>
-                        <div style="border-top:1px solid var(--bd);margin:6px 0;"></div>
-                        <div style="color:#a0a0b0;font-size:11px;font-weight:700;margin-bottom:2px;">사이트 / 로봇 / 작성자</div>
-                        <div style="color:var(--tx);margin-bottom:8px;">${r.site || '-'} &nbsp;/&nbsp; ${r.robot || '-'} &nbsp;/&nbsp; ${r.author || '-'}</div>
-                        <div style="border-top:1px solid var(--bd);margin:6px 0;"></div>
-                        <div style="color:#a0a0b0;font-size:11px;font-weight:700;margin-bottom:2px;">초동 조치${r.auto?' / 자율주행':''}</div>
-                        <div style="color:var(--tx);margin-bottom:8px;">${r.action || '-'}${r.auto?' &nbsp;/&nbsp; '+r.auto:''}</div>
-                        <div style="border-top:1px solid var(--bd);margin:6px 0;"></div>
-                        <div style="color:#a0a0b0;font-size:11px;font-weight:700;margin-bottom:4px;">내용</div>
-                        <div style="color:var(--tx);font-size:12px;line-height:1.8;background:var(--sur2);border-radius:6px;padding:8px 10px;">${r.content || '-'}</div>
-                    </div>
-                </div>`).join('')}
-        `;
-        document.body.appendChild(panel);
-        setTimeout(() => {
-            document.addEventListener('mousedown', function closeDetail(e) {
-                if (!panel.contains(e.target)) {
-                    panel.remove();
-                    document.removeEventListener('mousedown', closeDetail);
-                }
-            });
-        }, 100);
     };
 
     // ============================================================
