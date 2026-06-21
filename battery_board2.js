@@ -110,7 +110,7 @@
 
         /* 검색 */
         .bb-search-wrap {
-            width:260px; flex-shrink:0; padding:6px 10px;
+            width:320px; flex-shrink:0; padding:6px 10px;
             border-left:1px solid var(--bd); background:var(--bg);
             position:relative; display:flex; align-items:center;
         }
