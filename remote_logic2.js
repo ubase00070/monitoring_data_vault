@@ -400,12 +400,10 @@
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', injectUI);
     else injectUI();
 
-    const iframes = {};
-
     /* ============================================================
         SECTION 4. 배터리 및 업무 연동 로직
        ============================================================ */
-    function updateBatteryStatus() {
+    async function updateBatteryStatus() {
         if (batteryPopup.dataset.dragging === 'true') return;
         batteryPopup.innerHTML = '';
         const header = document.createElement('div');
@@ -415,90 +413,70 @@
         titleB.style.cssText = "color:#eee; font-size:18px;";
         const copyBtn = document.createElement('button');
         copyBtn.textContent = '복사';
-        // 260번 줄 수정
-        Object.assign(copyBtn.style, { 
-            background:'#3b82f6', color:'white', border:'none', 
-            padding:'10px 20px',      // 6px 12px → 10px 20px
-            borderRadius:'8px', cursor:'pointer', fontWeight:'bold', 
-            fontSize:'15px',          
-            transition:'0.2s' 
+        Object.assign(copyBtn.style, {
+            background:'#3b82f6', color:'white', border:'none',
+            padding:'10px 20px',
+            borderRadius:'8px', cursor:'pointer', fontWeight:'bold',
+            fontSize:'15px',
+            transition:'0.2s'
         });
         copyBtn.onclick = (e) => copyToClipboard(e.target);
         header.append(titleB, copyBtn);
         batteryPopup.appendChild(header);
-
         makeDraggable(header, batteryPopup);
 
         state.lastBatteryData = [];
-        config.batteryIds.forEach(c => {
-            // iframe이 아직 로딩 중이면 load 이벤트 후 재시도
-            const ifr = iframes[c.id];
-            if (ifr && ifr.contentDocument?.readyState !== 'complete') {
-                ifr.addEventListener('load', () => updateBatteryStatus(), { once: true });
-            }
+
+        // ── fetch로 4대 병렬 조회 ──
+        const token = localStorage.getItem('AccessToken');
+        const results = await Promise.all(
+            config.batteryIds.map(c =>
+                fetch(`https://core.neubie.ai/robots/${c.id}/`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                })
+                .then(r => r.ok ? r.json() : null)
+                .catch(() => null)
+            )
+        );
+
+        config.batteryIds.forEach((c, i) => {
+            const raw = results[i];
+            const rs  = raw?.robotStatus ?? {};
 
             let batteryVal = "- %", statusText = "OFF", accentColor = "#666", statusIcon = "⚪";
-            try {
-                const doc = iframes[c.id]?.contentDocument || iframes[c.id]?.contentWindow.document;
-                const card = doc?.querySelector('li[data-qk="robot-card"]');
-                if (card) {
-                    const cardText = card.innerText;
-                    const batteryMatch = cardText.match(/(\d+)%/);
 
-                    // 충전: SVG 아이콘만으로 판정 (텍스트 조건 제거)
-                    const isCharging = !!card.querySelector('svg.size-10.text-tertiary-300');
-                    const allSpans = [...card.querySelectorAll('span')];
-                    const missionLabelIdx = allSpans.findIndex(s => s.textContent.trim() === '임무 진행');
-                    const missionValue = missionLabelIdx !== -1
-                        ? allSpans[missionLabelIdx + 1]?.textContent?.trim()
-                        : '';
-                    const isPatrolling = missionValue === '순찰';
-                    if (batteryMatch) {
-                        batteryVal = batteryMatch[0];
-                        if (isPatrolling) { accentColor = "#3b82f6"; statusIcon = "🔵"; statusText = "순찰 중"; }
-                        else if (isCharging) { accentColor = "#22c55e"; statusIcon = "🟢"; statusText = "충전 중"; }
-                        else { accentColor = "#888888"; statusIcon = "⚪"; statusText = "대기 중"; }
-                    }
+            if (raw && rs.isConnecting) {
+                const battery = Math.round(raw.battery ?? rs.battery ?? 0);
+                batteryVal = `${battery}%`;
+
+                if (rs.isCharging || rs.isWirelessChargerConnected) {
+                    accentColor = "#22c55e"; statusIcon = "🟢"; statusText = "충전 중";
+                } else if (raw.currentScenario) {
+                    accentColor = "#3b82f6"; statusIcon = "🔵"; statusText = "순찰 중";
+                } else {
+                    accentColor = "#888888"; statusIcon = "⚪"; statusText = "대기 중";
                 }
-            } catch (e) {}
-            state.lastBatteryData.push({ shortName: c.shortName, battery: batteryVal, statusText: statusText });
+            }
+
+            state.lastBatteryData.push({ shortName: c.shortName, battery: batteryVal, statusText });
+
             const item = document.createElement('div');
             item.style.cssText = `
-                display:flex; 
-                justify-content:space-between; 
-                align-items:center; /* 세로 정렬 맞춤 */
-                background:rgba(255,255,255,0.05); 
-                padding:15px 20px; /* 패딩을 늘려 높이를 확보 */
-                border-radius:12px; 
-                margin-bottom:10px; 
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                background:rgba(255,255,255,0.05);
+                padding:15px 20px;
+                border-radius:12px;
+                margin-bottom:10px;
                 border-left:5px solid ${accentColor};
-                font-size: 16px !important; /* 전체 글씨 크기 (성남판교 200 등) */
+                font-size: 16px !important;
             `;
             item.innerHTML = `
                 <span style="font-weight:500;">${statusIcon} ${c.name}</span>
                 <span style="font-weight:bold; color:${accentColor}; font-size: 20px;">${batteryVal}</span>
             `;
             batteryPopup.appendChild(item);
-        });
-    }
-
-    function copyToClipboard(btn) {
-        const now = new Date();
-        let hour = now.getHours();
-        if (now.getMinutes() >= 50) hour = (hour + 1) % 24;
-        let copyText = `[${String(hour).padStart(2, '0')}시 성남 기체 배터리 현황]\n`;
-        state.lastBatteryData.forEach(item => { copyText += `• ${item.shortName}: ${item.battery} (${item.statusText})\n`; });
-        
-        navigator.clipboard.writeText(copyText).then(() => {
-            const originalText = btn.textContent;
-            const originalBg = btn.style.background;
-            btn.textContent = '복사됨';
-            btn.style.background = '#22c55e';
-            
-            setTimeout(() => {
-                btn.textContent = originalText;
-                btn.style.background = originalBg;
-            }, 2000);
         });
     }
 
@@ -984,9 +962,10 @@
                 // 아래 patchItems 배열에 버전별 내용을 추가하세요
                 const patchItems = [
                     {
-                        version: 'v1.1',
-                        date: '2026-06-20',
+                        version: 'v1.2',
+                        date: '2026-06-21',
                         items: [
+                            '성남 배터리 속도 개선',
 							'네트워크 불안정 지역 경고 레이아웃',
 							'다중 모니터링 기체 화질 조절',
 							'불규칙 순찰 기체 모니터링 미추가 시 알림 기능',
@@ -995,8 +974,7 @@
 							'개입카드 페이지 상태 바 재배치(스크롤 바 제거)',
 							'D-PAD UP: 다음 개입 요청받기 ON/OFF',
 							'D-PAD DOWN: 자동 긴급 정지 ON/OFF',
-							'D-PAD LEFT: 카메라 밝기 내리기',
-							'D-PAD RIGHT: 카메라 밝기 올리기',
+							'D-PAD LEFT/RIGHT: 카메라 밝기 내리기/올리기',
                             '다중 모니터링 카메라 밝기 한 번에 조절',
 							'다중 모니터링 카메라 위치 드래그로 변경',
                         ]
@@ -1564,44 +1542,23 @@
 
     // 팝업 열 때만 생성
     function toggleBattery() {
-		if (batteryPopup.style.display !== 'block') {
-			config.batteryIds.forEach(c => {
-				if (!iframes[c.id]) {
-					const ifr = document.createElement('iframe');
-					ifr.src = `https://go.neubie.ai/ko/monitoring/${c.id}`;
-					Object.assign(ifr.style, { width:'0', height:'0', border:'none', position:'fixed', top:'-9999px' });
-					document.body.appendChild(ifr);
-					iframes[c.id] = ifr;
-				}
-			});
+        if (batteryPopup.style.display !== 'block') {
 
-			updateBatteryStatus();
-			batteryPopup.style.display = 'block';
+            updateBatteryStatus();  
+            batteryPopup.style.display = 'block';
 
-			// 첫 로드: 5초 후 1회 갱신
-			setTimeout(() => {
-				if (batteryPopup.style.display !== 'block') return;
-				updateBatteryStatus();
+            // 5초 후 1회 갱신 → 필요없으니 삭제, 바로 1분 간격으로
+            batteryRefreshInterval = setInterval(() => {
+                if (batteryPopup.style.display === 'block') updateBatteryStatus();
+                else clearInterval(batteryRefreshInterval);
+            }, 60000);
 
-				// 이후부터 1분마다 갱신
-				batteryRefreshInterval = setInterval(() => {
-					if (batteryPopup.style.display === 'block') updateBatteryStatus();
-					else clearInterval(batteryRefreshInterval);
-				}, 60000);
-			}, 5000);
-
-		} else {
-			batteryPopup.style.display = 'none';
+        } else {
+            batteryPopup.style.display = 'none';
             if (window._neubieBatteryCard) window._neubieBatteryCard.style.outline = 'none';
-			clearInterval(batteryRefreshInterval);
-			config.batteryIds.forEach(c => {
-				if (iframes[c.id]) {
-					iframes[c.id].remove();
-					delete iframes[c.id];
-				}
-			});
-		}
-	}
+            clearInterval(batteryRefreshInterval);
+        }
+    }
 
     function closeAllPopups() {
         dashboard.style.display = 'none';
