@@ -965,6 +965,7 @@
                         version: 'v1.2',
                         date: '2026-06-21',
                         items: [
+                            '순회가 아닌 순찰 기체도 현재 바퀴 수 표기',
                             '성남 배터리 속도 개선',
 							'네트워크 불안정 지역 경고 레이아웃',
 							'다중 모니터링 기체 화질 조절',
@@ -972,11 +973,9 @@
 							'게시판 기능',
 							'개입카드 페이지에서 현재 기체 조작자 표기(본인 제외)',
 							'개입카드 페이지 상태 바 재배치(스크롤 바 제거)',
-							'D-PAD UP: 다음 개입 요청받기 ON/OFF',
-							'D-PAD DOWN: 자동 긴급 정지 ON/OFF',
+							'D-PAD UP/DOWN: 다음 개입 요청받기 / 자동 긴급 정지 ON OFF',
 							'D-PAD LEFT/RIGHT: 카메라 밝기 내리기/올리기',
-                            '다중 모니터링 카메라 밝기 한 번에 조절',
-							'다중 모니터링 카메라 위치 드래그로 변경',
+                            '다중 모니터링 카메라 밝기 한 번에 조절 및 드래그로 위치 변경',
                         ]
                     },
                 ];
@@ -1201,6 +1200,80 @@
             mapToggle.style.background = state.isMapOpt ? '#2563eb' : '#444';
             injectMapStyle();
         };
+
+        // ⓘ 요기요 페이지 최적화 정보 버튼
+        const mapInfoBtn = document.createElement('button');
+        mapInfoBtn.textContent = 'i';
+        mapInfoBtn.title = '기능 설명';
+        mapInfoBtn.style.cssText = `
+            width:22px; height:22px; border-radius:50%; border:2px solid #aaa;
+            background:transparent; color:#aaa; font-size:13px; font-weight:bold;
+            cursor:pointer; display:flex; align-items:center; justify-content:center;
+            margin-right:8px; flex-shrink:0; line-height:1; padding:0;
+            transition:border-color 0.2s, color 0.2s;
+        `;
+        mapInfoBtn.onmouseenter = () => { mapInfoBtn.style.borderColor='#60a5fa'; mapInfoBtn.style.color='#60a5fa'; };
+        mapInfoBtn.onmouseleave = () => { mapInfoBtn.style.borderColor='#aaa'; mapInfoBtn.style.color='#aaa'; };
+        mapInfoBtn.onclick = (e) => {
+            e.stopPropagation();
+            let mapInfoOverlay = document.getElementById('neubie-map-info-overlay');
+            if (!mapInfoOverlay) {
+                mapInfoOverlay = document.createElement('div');
+                mapInfoOverlay.id = 'neubie-map-info-overlay';
+                mapInfoOverlay.style.cssText = `
+                    position:fixed; inset:0; background:transparent; pointer-events:none;
+                    z-index:2147483646; display:flex; align-items:center; justify-content:center;
+                    font-family:Pretendard, sans-serif;
+                `;
+                const mapInfoBox = document.createElement('div');
+                mapInfoBox.style.cssText = `
+                    background:#1e1e2e; color:#e2e8f0; border-radius:18px; pointer-events:auto;
+                    border:1.5px solid #3b82f6; padding:36px 40px 32px 40px;
+                    max-width:600px; width:90%; max-height:80vh; overflow-y:auto;
+                    position:relative; box-shadow:0 10px 50px rgba(0,0,0,0.7);
+                `;
+                const mapInfoTitle = document.createElement('div');
+                mapInfoTitle.textContent = '기능 설명';
+                mapInfoTitle.style.cssText = `font-size:22px; font-weight:bold; margin-bottom:20px; color:#93c5fd;`;
+                const mapInfoClose = document.createElement('button');
+                mapInfoClose.textContent = '✕';
+                mapInfoClose.style.cssText = `
+                    position:absolute; top:16px; right:18px;
+                    background:transparent; border:none; color:#aaa;
+                    font-size:20px; cursor:pointer; line-height:1; padding:4px 8px;
+                    border-radius:6px; transition:color 0.2s;
+                `;
+                mapInfoClose.onmouseenter = () => { mapInfoClose.style.color='#fff'; };
+                mapInfoClose.onmouseleave = () => { mapInfoClose.style.color='#aaa'; };
+                mapInfoClose.onclick = () => { mapInfoOverlay.style.display='none'; };
+                const mapInfoContent = document.createElement('div');
+                mapInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:#cbd5e1;`;
+                mapInfoContent.innerHTML = `
+                역삼 요기요 / 송도 요기요 / 성수 요기요 / 성남 삼평동
+                페이지에서 흰색 마커를 숨겨서 최적화.
+                대기장소 마커(주황)를 역방향으로 뒤집어서 보기 쉽도록 함.
+                기존 뉴비고 상의 아이콘 숨기기 기능은 여전히 작동.
+                `;
+                mapInfoBox.appendChild(mapInfoClose);
+                mapInfoBox.appendChild(mapInfoTitle);
+                mapInfoBox.appendChild(mapInfoContent);
+                mapInfoOverlay.appendChild(mapInfoBox);
+                const r0 = dashboard.getBoundingClientRect();
+                mapInfoOverlay.style.top = r0.top + 'px';
+                mapInfoOverlay.style.left = r0.left + 'px';
+                mapInfoOverlay.style.width = r0.width + 'px';
+                mapInfoOverlay.style.height = r0.height + 'px';
+                document.body.appendChild(mapInfoOverlay);
+            } else {
+                const r = dashboard.getBoundingClientRect();
+                mapInfoOverlay.style.top = r.top + 'px';
+                mapInfoOverlay.style.left = r.left + 'px';
+                mapInfoOverlay.style.width = r.width + 'px';
+                mapInfoOverlay.style.height = r.height + 'px';
+                mapInfoOverlay.style.display = 'flex';
+            }
+        };
+        mapCard.appendChild(mapInfoBtn);
         mapCard.appendChild(mapToggle);
 
         // 줄을 서시오 (체크박스, 멘트 없이 이름만)
@@ -1283,6 +1356,7 @@
                 queueInfoContent.id = 'neubie-queue-info-content';
                 queueInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:#cbd5e1; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;`;
                 queueInfoContent.innerHTML = `
+                순찰 기체 바퀴 수 표기<br>
 				화질 조절<br>
 				카메라 밝기 한 번에 조절<br>
 				카메라 위치 스왑<br>
