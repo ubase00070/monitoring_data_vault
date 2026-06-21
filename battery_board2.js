@@ -425,10 +425,12 @@
                     * 오직 '알림 센터' 페이지에서만 작동<br>
                     * 추가한 기체 카드와 배치는 로컬 스토리지에 저장됨(최대 30대. 드래그로 배치 변경 가능)<br>
                     * 알림 전송 조건<br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;- 배터리 21% 이하 기체<br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;- 배달 사이트 기체가 아닌데 120분 이상 대기 상태로 방치된 경우<br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;- 무선 도킹됨 상태 기체<br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;- 전원 ON인데 배터리·GPS 수신값이 잡히지 않는 경우(좀비 의심)<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- 배터리 부족(21% 이하)<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- 무선 도킹됨<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- 120분 이상 방치(배달 사이트 제외)<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- 좀비: 전원 ON인데 배터리·GPS 수신값이 잡히지 않는 경우<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- 캠 미노출(F, Fd, Fl, Fr, Bl, Br)<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- 미니맵 기체 위치 미노출<br>
                     * 하단 퀵바: 역삼·송도·성수·삼평서현 ON/OFF 및 상태 확인용<br>
                     * 기타 배달: 퀵바 외 배달 사이트 기체 실시간 표시<br>
                     * Alt+Z: 현황판 열기/닫기<br>
