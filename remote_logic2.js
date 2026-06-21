@@ -1249,11 +1249,11 @@
                 const mapInfoContent = document.createElement('div');
                 mapInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:#cbd5e1;`;
                 mapInfoContent.innerHTML = `
-                역삼 요기요 / 송도 요기요 / 성수 요기요 / 성남 삼평동
-                페이지에서 흰색 마커를 숨겨서 최적화.
-                대기장소 마커(주황)를 역방향으로 뒤집어서 보기 쉽도록 함.
-                기존 뉴비고 상의 아이콘 숨기기 기능은 여전히 작동.
-                `;
+				    역삼 요기요 / 송도 요기요 / 성수 요기요 / 성남 삼평동<br>
+				    페이지에서 흰색 마커를 숨겨서 최적화.<br>
+				    대기장소 마커(주황)를 역방향으로 뒤집어서 보기 쉽도록 함.<br>
+				    기존 뉴비고 상의 아이콘 숨기기 기능은 여전히 작동.<br>
+				`;
                 mapInfoBox.appendChild(mapInfoClose);
                 mapInfoBox.appendChild(mapInfoTitle);
                 mapInfoBox.appendChild(mapInfoContent);
