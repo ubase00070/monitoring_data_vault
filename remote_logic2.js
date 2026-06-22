@@ -2332,11 +2332,11 @@
 				) {
 					const siteId = robot.site?.id || robot.site;
 					const robotNickname = robot.nickname;
-					const grayBox = card.querySelector('.bg-prmary-50 .rounded-extra-large');
-					const dot = grayBox?.querySelector('.blur-1.size-8');
 
 					function updateLapDisplay(lap) {
+						const grayBox = card.querySelector('.bg-prmary-50 .rounded-extra-large');
 						if (!grayBox) return;
+						const dot = grayBox.querySelector('.blur-1.size-8');
 						const existingText = grayBox.querySelector('span.neubie-lap-span');
 						const nativeSpan = grayBox.querySelector('span:not(.neubie-lap-span)');
 						const nativeText = nativeSpan?.innerText?.trim();
