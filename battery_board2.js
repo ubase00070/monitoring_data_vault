@@ -578,136 +578,159 @@
     function alertKey(type, id) { return `${type}::${id}`; }
 
     function detectAlerts(rawList) {
-        const alerts = [];
-        const now = Date.now();
-        const zombie = loadZombie();
+		const alerts = [];
+		const now = Date.now();
+		const zombie = loadZombie();
 
-        rawList.forEach(raw => {
-            const id   = String(raw.id);
-            const name = raw.nickname || raw.name || id;
-            const rs   = raw.robotStatus ?? {};
-            const { status, battery } = parseRobotStatus(raw);
-            const isDelivery =
-                DELIVERY_TYPES.includes(raw.service?.serviceType) ||
-                DELIVERY_SITE_IDS.includes(raw.site?.id);
+		// dismissedAlerts 로컬스토리지 동기화 헬퍼
+		function clearDismiss(key) {
+			if (!dismissedAlerts.has(key)) return;
+			dismissedAlerts.delete(key);
+			try {
+				const saved = JSON.parse(localStorage.getItem('bb_dismissed') || '[]');
+				localStorage.setItem('bb_dismissed', JSON.stringify(saved.filter(i => i.key !== key)));
+			} catch {}
+		}
 
-            // ── 기능1: 대기중 방치 (배달용 제외) ──────────────────
-            if (!isDelivery && status === 'standby') {
-                const mins = minAgo(rs.lastOperatedAt);
-                if (mins >= 120) {
-                    const isResting = mins >= 360 && battery >= 50;
-                    if (!isResting) {
-                        const key = alertKey('standby', id);
-                        if (!dismissedAlerts.has(key)) alerts.push({
-                            key, type:'idle', dot:'bl', name,
-                            desc:`대기중 ${mins}분 | 마지막 조작: ${rs.lastOperatedUserName || '없음'} ${fmt(rs.lastOperatedAt)}`,
-                            time: fmt(new Date().toISOString())
-                        });
-                    }
-                }
-            }
+		rawList.forEach(raw => {
+			const id   = String(raw.id);
+			const name = raw.nickname || raw.name || id;
+			const rs   = raw.robotStatus ?? {};
+			const { status, battery } = parseRobotStatus(raw);
+			const isDelivery =
+				DELIVERY_TYPES.includes(raw.service?.serviceType) ||
+				DELIVERY_SITE_IDS.includes(raw.site?.id);
 
-            // ── 기능2: 도킹 이상 ───────────────────────────────────
-            if (status === 'docking') {
-                const key = alertKey('docking', id);
-                if (!dismissedAlerts.has(key)) alerts.push({
-                    key, type:'dock', dot:'ye', name,
-                    desc:`무선 도크 위에 있으나 충전 안 됨 | 확인 필요`,
-                    time: fmt(new Date().toISOString())
-                });
-            }
+			// ── 기능1: 대기중 방치 ──────────────────────────────────
+			if (!isDelivery && status === 'standby') {
+				const mins = minAgo(rs.lastOperatedAt);
+				if (mins >= 120) {
+					const isResting = mins >= 360 && battery >= 50;
+					if (!isResting) {
+						const key = alertKey('standby', id);
+						if (!dismissedAlerts.has(key)) alerts.push({
+							key, type:'idle', dot:'bl', name,
+							desc:`대기중 ${mins}분 | 마지막 조작: ${rs.lastOperatedUserName || '없음'} ${fmt(rs.lastOperatedAt)}`,
+							time: fmt(new Date().toISOString())
+						});
+					}
+				} else {
+					clearDismiss(alertKey('standby', id)); // 방치 해소 → dismiss 초기화
+				}
+			} else {
+				clearDismiss(alertKey('standby', id)); // 대기 아님 → dismiss 초기화
+			}
 
-            // ── 기능3: 배터리 21% 이하 ─────────────────────────────
-            if (rs.isConnecting && battery > 0 && battery <= 21) {
-                const key = alertKey('battery', id);
-                if (!dismissedAlerts.has(key)) alerts.push({
-                    key, type:'bat', dot:'ye', name,
-                    desc:`배터리 ${battery}% | ${STL[status]}`,
-                    time: fmt(new Date().toISOString())
-                });
-            }
+			// ── 기능2: 도킹 이상 ─────────────────────────────────────
+			if (status === 'docking') {
+				const key = alertKey('docking', id);
+				if (!dismissedAlerts.has(key)) alerts.push({
+					key, type:'dock', dot:'ye', name,
+					desc:`무선 도크 위에 있으나 충전 안 됨 | 확인 필요`,
+					time: fmt(new Date().toISOString())
+				});
+			} else {
+				clearDismiss(alertKey('docking', id)); // 도킹 해소 → dismiss 초기화
+			}
 
-            // ── 기능4: 좀비 상태 ───────────────────────────────────
-            {
-                const isZombie =
-                    rs.isConnecting === true &&
-                    !raw.battery &&
-                    (rs.navpvtHorzAccuracy == null || rs.navpvtHorzAccuracy === 0) &&
-                    !rs.velocity;
-                if (isZombie) {
-                    if (!zombie[id]) zombie[id] = { count: 1, firstSeen: now };
-                    else zombie[id].count++;
-                } else {
-                    delete zombie[id];
-                }
-                if (zombie[id] && zombie[id].count >= 4) {
-                    const key = alertKey('zombie', id);
-                    if (!dismissedAlerts.has(key)) {
-                        const mins = Math.floor((now - zombie[id].firstSeen) / 60000);
-                        alerts.push({
-                            key, type:'zombie', dot:'rd', name,
-                            desc:`⚠️ 좀비 추정 ${mins}분째 | 현장 재부팅 필요`,
-                            time: fmt(new Date().toISOString())
-                        });
-                    }
-                }
-            }
+			// ── 기능3: 배터리 21% 이하 ──────────────────────────────
+			if (rs.isConnecting && battery > 0 && battery <= 21) {
+				const key = alertKey('battery', id);
+				if (!dismissedAlerts.has(key)) alerts.push({
+					key, type:'bat', dot:'ye', name,
+					desc:`배터리 ${battery}% | ${STL[status]}`,
+					time: fmt(new Date().toISOString())
+				});
+			} else {
+				clearDismiss(alertKey('battery', id)); // 배터리 회복 → dismiss 초기화
+			}
 
-            // ── 기능5: 카메라 미노출 감지 ─────────────────────────────
-            if (rs.isConnecting) {
-                const CAM_LABELS = {
-                    isOnCamF:  'F(전면)',
-                    isOnCamFd: 'Fd(하단)',
-                    isOnCamFl: 'Fl(전면 좌측)',
-                    isOnCamFr: 'Fr(전면 우측)',
-                    isOnCamBl: 'Bl(후면 좌측)',
-                    isOnCamBr: 'Br(후면 우측)',
-                };
-                // 전체 false면 초기화 중으로 판단 — 제외
-                const anyCamOn = Object.keys(CAM_LABELS).some(k => rs[k] === true);
-                if (anyCamOn) {
-                    const offCams = Object.entries(CAM_LABELS)
-                        .filter(([k]) => rs[k] === false)
-                        .map(([, label]) => label);
-                    if (offCams.length > 0) {
-                        const key = alertKey('cam', id);
-                        if (!dismissedAlerts.has(key)) alerts.push({
-                            key, type:'cam', dot:'or', name,
-                            desc:`캠 미송출: ${offCams.join(', ')}`,
-                            time: fmt(new Date().toISOString())
-                        });
-                    }
-                }
-            }
+			// ── 기능4: 좀비 상태 ─────────────────────────────────────
+			{
+				const isZombie =
+					rs.isConnecting === true &&
+					!raw.battery &&
+					(rs.navpvtHorzAccuracy == null || rs.navpvtHorzAccuracy === 0) &&
+					!rs.velocity;
+				if (isZombie) {
+					if (!zombie[id]) zombie[id] = { count: 1, firstSeen: now };
+					else zombie[id].count++;
+				} else {
+					delete zombie[id];
+					clearDismiss(alertKey('zombie', id)); // 좀비 해소 → dismiss 초기화
+				}
+				if (zombie[id] && zombie[id].count >= 4) {
+					const key = alertKey('zombie', id);
+					if (!dismissedAlerts.has(key)) {
+						const mins = Math.floor((now - zombie[id].firstSeen) / 60000);
+						alerts.push({
+							key, type:'zombie', dot:'rd', name,
+							desc:`⚠️ 좀비 추정 ${mins}분째 | 현장 재부팅 필요`,
+							time: fmt(new Date().toISOString())
+						});
+					}
+				}
+			}
 
-            // ── 기능6: 미니맵 위치 미노출 감지 ────────────────────────
-            {
-                const gpsZero =
-                    rs.isConnecting === true &&
-                    raw.battery > 0 &&   // 배터리는 정상 (좀비 아님)
-                    (rs.navpvtHorzAccuracy === 0 || rs.navpvtHorzAccuracy == null);
+			// ── 기능5: 카메라 미노출 감지 ───────────────────────────
+			if (rs.isConnecting) {
+				const CAM_LABELS = {
+					isOnCamF:  'F(전면)',
+					isOnCamFd: 'Fd(하단)',
+					isOnCamFl: 'Fl(전면 좌측)',
+					isOnCamFr: 'Fr(전면 우측)',
+					isOnCamBl: 'Bl(후면 좌측)',
+					isOnCamBr: 'Br(후면 우측)',
+				};
+				const anyCamOn = Object.keys(CAM_LABELS).some(k => rs[k] === true);
+				if (anyCamOn) {
+					const offCams = Object.entries(CAM_LABELS)
+						.filter(([k]) => rs[k] === false)
+						.map(([, label]) => label);
+					if (offCams.length > 0) {
+						const key = alertKey('cam', id);
+						if (!dismissedAlerts.has(key)) alerts.push({
+							key, type:'cam', dot:'or', name,
+							desc:`캠 미노출: ${offCams.join(', ')}`,
+							time: fmt(new Date().toISOString())
+						});
+					} else {
+						clearDismiss(alertKey('cam', id)); // 캠 전부 복구 → dismiss 초기화
+					}
+				}
+			} else {
+				clearDismiss(alertKey('cam', id));
+			}
 
-                if (gpsZero) {
-                    if (!zombie[id + '_gps']) zombie[id + '_gps'] = { count: 1, firstSeen: now };
-                    else zombie[id + '_gps'].count++;
-                } else {
-                    delete zombie[id + '_gps'];
-                }
-                if (zombie[id + '_gps'] && zombie[id + '_gps'].count >= 4) {
-                    const key = alertKey('nomap', id);
-                    if (!dismissedAlerts.has(key)) alerts.push({
-                        key, type:'nomap', dot:'or', name,
-                        desc:`GPS 수신값 0 — 미니맵 위치 미노출 | 조치 필요`,
-                        time: fmt(new Date().toISOString())
-                    });
-                }
-            }
-        });
+			// ── 기능6: 미니맵 위치 미노출 감지 ─────────────────────
+			{
+				const gpsZero =
+					rs.isConnecting === true &&
+					raw.battery > 0 &&
+					(rs.navpvtHorzAccuracy === 0 || rs.navpvtHorzAccuracy == null);
 
-        saveZombie(zombie);
-        window._bbAlerts = alerts;
-        return alerts;
-    }
+				if (gpsZero) {
+					if (!zombie[id + '_gps']) zombie[id + '_gps'] = { count: 1, firstSeen: now };
+					else zombie[id + '_gps'].count++;
+				} else {
+					delete zombie[id + '_gps'];
+					clearDismiss(alertKey('nomap', id)); // GPS 복구 → dismiss 초기화
+				}
+				if (zombie[id + '_gps'] && zombie[id + '_gps'].count >= 4) {
+					const key = alertKey('nomap', id);
+					if (!dismissedAlerts.has(key)) alerts.push({
+						key, type:'nomap', dot:'or', name,
+						desc:`GPS 수신값 0 — 미니맵 위치 미노출 | 현장 재부팅 필요`,
+						time: fmt(new Date().toISOString())
+					});
+				}
+			}
+		});
+
+		saveZombie(zombie);
+		window._bbAlerts = alerts;
+		return alerts;
+	}
 
     // ============================================================
     // SECTION 5. 알림 칩 + 패널 렌더
