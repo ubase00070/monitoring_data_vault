@@ -673,7 +673,7 @@
                         const key = alertKey('cam', id);
                         if (!dismissedAlerts.has(key)) alerts.push({
                             key, type:'cam', dot:'or', name,
-                            desc:`캠 미노출: ${offCams.join(', ')}`,
+                            desc:`캠 미송출: ${offCams.join(', ')}`,
                             time: fmt(new Date().toISOString())
                         });
                     }
@@ -697,7 +697,7 @@
                     const key = alertKey('nomap', id);
                     if (!dismissedAlerts.has(key)) alerts.push({
                         key, type:'nomap', dot:'or', name,
-                        desc:`GPS 수신값 0 — 미니맵 위치 미노출 | 현장 재부팅 필요`,
+                        desc:`GPS 수신값 0 — 미니맵 위치 미노출 | 조치 필요`,
                         time: fmt(new Date().toISOString())
                     });
                 }
@@ -718,8 +718,8 @@
         dock:   { label:'🟡 도킹',   order:1 },
         zombie: { label:'👻 좀비',   order:2 },
         idle:   { label:'⏳ 방치',   order:3 },
-        cam:    { label:'🎥 캠', order:4 },
-        nomap:  { label:'🗺️ 미노출', order:5 },
+        cam:    { label:'🎥 캠 미송출', order:4 },
+        nomap:  { label:'🗺️ 위치 미노출', order:5 },
     };
 
     function renderAlertChips(alerts) {
