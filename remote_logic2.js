@@ -454,56 +454,61 @@
         _batteryInitialized = true;
     }
 
+    let _batteryFetching = false;
     async function updateBatteryStatus() {
         if (batteryPopup.dataset.dragging === 'true') return;
-        if (!_batteryInitialized || !batteryPopup.querySelector('#neubie-battery-list')) {
-            buildBatteryShell();
-        }
+        if (_batteryFetching) return;
+        _batteryFetching = true;
+        try {
+            if (!_batteryInitialized || !batteryPopup.querySelector('#neubie-battery-list')) {
+                buildBatteryShell();
+            }
 
-        state.lastBatteryData = [];
+            state.lastBatteryData = [];
 
-        // ── fetch로 4대 병렬 조회 ──
-        const results = await Promise.all(
-            config.batteryIds.map(c =>
-                fetch(`https://core.neubie.ai/robots/${c.id}/`, {
-                    credentials: 'include'
-                })
-                .then(r => r.ok ? r.json() : null)
-                .catch(() => null)
-            )
-        );
+            const results = await Promise.all(
+                config.batteryIds.map(c =>
+                    fetch(`https://core.neubie.ai/robots/${c.id}/`, {
+                        credentials: 'include'
+                    })
+                    .then(r => r.ok ? r.json() : null)
+                    .catch(() => null)
+                )
+            );
 
-        config.batteryIds.forEach((c, i) => {
-            const raw = results[i];
-            const rs  = raw?.robotStatus ?? {};
+            config.batteryIds.forEach((c, i) => {
+                const raw = results[i];
+                const rs  = raw?.robotStatus ?? {};
 
-            let batteryVal = "- %", statusText = "OFF", accentColor = "#666", statusIcon = "⚪";
+                let batteryVal = "- %", statusText = "OFF", accentColor = "#666", statusIcon = "⚪";
 
-            if (raw && rs.isConnecting) {
-                const battery = Math.round(raw.battery ?? rs.battery ?? 0);
-                batteryVal = `${battery}%`;
+                if (raw && rs.isConnecting) {
+                    const battery = Math.round(raw.battery ?? rs.battery ?? 0);
+                    batteryVal = `${battery}%`;
 
-                if (rs.isCharging || rs.isWirelessChargerConnected) {
-                    accentColor = "#22c55e"; statusIcon = "🟢"; statusText = "충전 중";
-                } else if (raw.currentScenario) {
-                    accentColor = "#3b82f6"; statusIcon = "🔵"; statusText = "순찰 중";
-                } else {
-                    accentColor = "#888888"; statusIcon = "⚪"; statusText = "대기 중";
+                    if (rs.isCharging || rs.isWirelessChargerConnected) {
+                        accentColor = "#22c55e"; statusIcon = "🟢"; statusText = "충전 중";
+                    } else if (raw.currentScenario) {
+                        accentColor = "#3b82f6"; statusIcon = "🔵"; statusText = "순찰 중";
+                    } else {
+                        accentColor = "#888888"; statusIcon = "⚪"; statusText = "대기 중";
+                    }
                 }
-            }
 
-            state.lastBatteryData.push({ shortName: c.shortName, battery: batteryVal, statusText });
+                state.lastBatteryData.push({ shortName: c.shortName, battery: batteryVal, statusText });
 
-            // 기존 아이템 찾아서 수치만 업데이트
-            const item = batteryPopup.querySelector(`[data-battery-id="${c.id}"]`);
-            if (item) {
-                item.style.borderLeft = `5px solid ${accentColor}`;
-                item.querySelector('.bat-name').textContent = `${statusIcon} ${c.name}`;
-                const valEl = item.querySelector('.bat-val');
-                valEl.textContent = batteryVal;
-                valEl.style.color = accentColor;
-            }
-        });
+                const item = batteryPopup.querySelector(`[data-battery-id="${c.id}"]`);
+                if (item) {
+                    item.style.borderLeft = `5px solid ${accentColor}`;
+                    item.querySelector('.bat-name').textContent = `${statusIcon} ${c.name}`;
+                    const valEl = item.querySelector('.bat-val');
+                    valEl.textContent = batteryVal;
+                    valEl.style.color = accentColor;
+                }
+            });
+        } finally {
+            _batteryFetching = false;
+        }
     }
 
     function copyToClipboard(btn) {
@@ -1889,18 +1894,29 @@
         };
 
 		// ── 교대받기 버튼 ──
-		fetchBtn.addEventListener('click', async () => {
-            setDpMsg('데이터 확인 중...', '#3b82f6');
-            const result = await githubGet();
-            if (!result) { setDpMsg('Fetch 실패', '#ef4444'); return; }
-            const { data } = result;
-            if (!isDataValid(data.updatedAt)) {
-                setDpMsg('이전 시간 교대 기체 데이터가 없습니다', '#f59e0b');
-                return;
+		let _fetchBtnRunning = false;
+        fetchBtn.addEventListener('click', async () => {
+            if (_fetchBtnRunning) return;
+            _fetchBtnRunning = true;
+            fetchBtn.disabled = true;
+            fetchBtn.style.opacity = '0.5';
+            try {
+                setDpMsg('데이터 확인 중...', '#3b82f6');
+                const result = await githubGet();
+                if (!result) { setDpMsg('Fetch 실패', '#ef4444'); return; }
+                const { data } = result;
+                if (!isDataValid(data.updatedAt)) {
+                    setDpMsg('이전 시간 교대 기체 데이터가 없습니다', '#f59e0b');
+                    return;
+                }
+                const units = data.units || [];
+                if (!units.length) { setDpMsg('기체 데이터 없음', '#94a3b8'); return; }
+                setDpMsg(`교대 기체 로드됨 (${data.handover_by || '?'} - ${units.length}대)`, '#22c55e');
+            } finally {
+                _fetchBtnRunning = false;
+                fetchBtn.disabled = false;
+                fetchBtn.style.opacity = '1';
             }
-            const units = data.units || [];
-            if (!units.length) { setDpMsg('기체 데이터 없음', '#94a3b8'); return; }
-            setDpMsg(`교대 기체 로드됨 (${data.handover_by || '?'} - ${units.length}대)`, '#22c55e');
         });
 
 		// ── Auto select ──
@@ -2115,32 +2131,38 @@
 		{ id: 99, name: '인력개발원 1호기' },
 		{ id: 178, name: '김포 1호기' },
 		{ id: 177, name: '김포 2호기' },
-		{ id: 254, name: '광교풍경채(대체 기체) 1호기' },
 	];
 	const UNMONITORED_PANEL_ID = 'neubie-unmonitored-panel';
 
-	async function checkUnmonitoredRobots() {
-		if (!isHandoverPage()) return;
-		const alerts = [];
-		for (const robot of UNMONITORED_WATCH) {
-			try {
-				const res = await fetch(
-					`https://core.neubie.ai/robots/${robot.id}/`,
-					{ credentials: 'include' }
-				);
-				const data = await res.json();
-				if (data.currentScenario !== null && data.isMonitoring === false) {
-					alerts.push(`${robot.name} ${data.currentScenarioTypeText || '임무'} 중!`);
-				}
-			} catch(e) {}
-		}
-		const panel = document.getElementById(UNMONITORED_PANEL_ID);
-		if (alerts.length > 0) {
-			_showUnmonitoredPanel(alerts);
-		} else if (panel) {
-			panel.remove();
-		}
-	}
+    let _unmonitoredRunning = false;
+    async function checkUnmonitoredRobots() {
+        if (!isHandoverPage()) return;
+        if (_unmonitoredRunning) return;
+        _unmonitoredRunning = true;
+        try {
+            const alerts = [];
+            for (const robot of UNMONITORED_WATCH) {
+                try {
+                    const res = await fetch(
+                        `https://core.neubie.ai/robots/${robot.id}/`,
+                        { credentials: 'include' }
+                    );
+                    const data = await res.json();
+                    if (data.currentScenario !== null && data.isMonitoring === false) {
+                        alerts.push(`${robot.name} ${data.currentScenarioTypeText || '임무'} 중!`);
+                    }
+                } catch(e) {}
+            }
+            const panel = document.getElementById(UNMONITORED_PANEL_ID);
+            if (alerts.length > 0) {
+                _showUnmonitoredPanel(alerts);
+            } else if (panel) {
+                panel.remove();
+            }
+        } finally {
+            _unmonitoredRunning = false;
+        }
+    }
 
 	function _showUnmonitoredPanel(alerts) {
 		let panel = document.getElementById(UNMONITORED_PANEL_ID);
@@ -2304,26 +2326,8 @@
 				wrapper.appendChild(labelEl);
 				wrapper.appendChild(makeBtn('▼', -1));
 				card.style.position = 'relative';
-								
+				
 				card.appendChild(wrapper);
-
-				// 30초마다 현재 화질 동기화
-				const syncTimer = setInterval(async () => {
-				    if (!document.body.contains(card)) {
-				        clearInterval(syncTimer);
-				        return;
-				    }
-					if (isCooling) return; // ← 클릭 중이면 싱크 스킵
-				    try {
-				        const r = await fetch(`https://core.neubie.ai/robots/${robot.id}/`, { credentials: 'include' });
-				        const d = await r.json();
-				        const level = d.robotStatus.bitrateLevel;
-				        if (level !== currentLevel) {
-				            currentLevel = level;
-				            labelEl.innerText = `화질 ${LEVEL_LABELS[currentLevel]}`;
-				        }
-				    } catch(e) {}
-				}, 30000);
 
 			} catch(e) {
 				console.warn('화질 버튼 삽입 실패:', e);
@@ -2335,11 +2339,15 @@
 		if (!isMonitoringPage()) return;
 		if (localStorage.getItem('neubie_handover_enabled') === 'false') return;
 		if (window._bitrateObserver) window._bitrateObserver.disconnect();
-		window._bitrateObserver = new MutationObserver(() => {
-			if (isMonitoringPage() && localStorage.getItem('neubie_handover_enabled') !== 'false') {
-				setTimeout(injectBitrateButtons, 500);
-			}
-		});
+		let _bitrateThrottle = null;
+        window._bitrateObserver = new MutationObserver(() => {
+            if (!isMonitoringPage()) return;
+            if (_bitrateThrottle) return;  // ← 이미 예약됨, 무시
+            _bitrateThrottle = setTimeout(() => {
+                injectBitrateButtons();
+                _bitrateThrottle = null;
+            }, 500);
+        });
 		window._bitrateObserver.observe(document.body, { childList: true, subtree: true });
 	}
 
@@ -3632,7 +3640,7 @@
 		156: '잠실 엘스 1호기',
 		157: '잠실 엘스 2호기',
 		249: '한성대 1호기',
-=	};
+	};
 
 	function getAutoSideRobotId(url) {
 		const robotMatch = url.match(/\/ko\/remote\/robot\/(\d+)/);
