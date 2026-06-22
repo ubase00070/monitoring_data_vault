@@ -1019,7 +1019,6 @@
                         date: '2026-06-22',
                         items: [
                             '임무 종료된 리센츠/엘스 페이지 이탈 시 5초 후 자동 사이드 ON 신호 전송',
-                            '순찰도 순회와 동일하게 현재 바퀴 수 표기',
                             '성남 배터리 속도 개선',
 							'네트워크 불안정 지역 경고 레이아웃',
 							'다중 모니터링 기체 화질 조절',
@@ -1409,7 +1408,6 @@
                 queueInfoContent.id = 'neubie-queue-info-content';
                 queueInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:#cbd5e1; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;`;
                 queueInfoContent.innerHTML = `
-                순찰 기체 바퀴 수 표기<br>
 				화질 조절<br>
 				카메라 밝기 한 번에 조절<br>
 				카메라 위치 스왑<br>
