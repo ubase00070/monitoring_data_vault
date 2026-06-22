@@ -792,6 +792,10 @@
         } catch {}
         currentAlerts = currentAlerts.filter(a => a.key !== key);
         renderAlertChips(currentAlerts);
+
+		if (currentAlerts.length === 0) {
+	        document.getElementById('bb-alert-panel').classList.remove('open');
+	    }
     }
 
     // ============================================================
