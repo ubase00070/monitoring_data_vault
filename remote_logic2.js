@@ -428,16 +428,15 @@
         state.lastBatteryData = [];
 
         // ── fetch로 4대 병렬 조회 ──
-        const token = localStorage.getItem('AccessToken');
         const results = await Promise.all(
-            config.batteryIds.map(c =>
-                fetch(`https://core.neubie.ai/robots/${c.id}/`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                })
-                .then(r => r.ok ? r.json() : null)
-                .catch(() => null)
-            )
-        );
+			config.batteryIds.map(c =>
+				fetch(`https://core.neubie.ai/robots/${c.id}/`, {
+					credentials: 'include'
+				})
+				.then(r => r.ok ? r.json() : null)
+				.catch(() => null)
+			)
+		);
 
         config.batteryIds.forEach((c, i) => {
             const raw = results[i];
