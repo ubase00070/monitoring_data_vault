@@ -2189,26 +2189,6 @@
     SECTION 화질 조절 버튼 (모니터링 페이지 전용)
    ============================================================ */
 	const LEVEL_LABELS = ['', '최소', '낮음', '중간', '높음', '최대'];
-	const PATROL_LAP_EXCLUDE_IDS = new Set([
-		172, 187, 192, 199, 200, 201, 203, 204, 205, 206, 207, 208, 209,
-		225, 230, 244
-	]);
-
-	async function getLapCountFromNotifications(siteId, robotNickname) {
-		try {
-			const res = await fetch(
-				`https://core.neubie.ai/notifications/?site=${siteId}&limit=20&codes=OSA-27`,
-				{ credentials: 'include' }
-			);
-			if (!res.ok) return null;
-			const data = await res.json();
-			const lapMsg = data.results.find(n =>
-				n.code === 'OSA-27' && n.robotNickname === robotNickname
-			);
-			const match = lapMsg?.message?.match(/(\d+\/\d+)/);
-			return match?.[1] || null;
-		} catch(e) { return null; }
-	}
 
 	function isMonitoringPage() {
 		return location.href.includes('go.neubie.ai/ko/remote/multiple/monitoring');
@@ -2324,62 +2304,7 @@
 				wrapper.appendChild(labelEl);
 				wrapper.appendChild(makeBtn('▼', -1));
 				card.style.position = 'relative';
-				
-				// 바퀴수 표시 (PATROL 기체 + 제외 목록 아닌 경우)
-				if (
-					robot.service?.serviceType === 'PATROL' &&
-					!PATROL_LAP_EXCLUDE_IDS.has(robot.id)
-				) {
-					const siteId = robot.site?.id || robot.site;
-					const robotNickname = robot.nickname;
-
-					function updateLapDisplay(lap) {
-						const grayBox = card.querySelector('.bg-prmary-50 .rounded-extra-large');
-						if (!grayBox) return;
-						const dot = grayBox.querySelector('.blur-1.size-8');
-						const existingText = grayBox.querySelector('span.neubie-lap-span');
-						const nativeSpan = grayBox.querySelector('span:not(.neubie-lap-span)');
-						const nativeText = nativeSpan?.innerText?.trim();
-
-						if (nativeText) {
-							// 기존 텍스트 있으면 우리 것 제거
-							if (existingText) existingText.remove();
-							if (dot) dot.style.display = '';
-						} else {
-							// 비어있으면 바퀴수 삽입
-							if (lap) {
-								if (dot) dot.style.display = 'none';
-								if (!existingText) {
-									const lapSpan = document.createElement('span');
-									lapSpan.className = 'neubie-lap-span';
-									lapSpan.style.cssText = 'color: white; font-size: 11px; font-weight: 600; white-space: nowrap; margin-left: -6px; margin-top: 1px;';
-									grayBox.appendChild(lapSpan);
-								}
-								grayBox.querySelector('.neubie-lap-span').innerText = `🟢순찰중 ${lap}`;
-							} else {
-								// lap 없으면 우리 것 제거
-								if (existingText) existingText.remove();
-								if (dot) dot.style.display = '';
-							}
-						}
-					}
-
-					// 초기 로드
-					(async () => {
-						const lap = await getLapCountFromNotifications(siteId, robotNickname);
-						updateLapDisplay(lap);
-					})();
-
-					// 30초마다 갱신
-					const lapTimer = setInterval(async () => {
-						if (!document.body.contains(card)) { clearInterval(lapTimer); return; }
-						try {
-							const lap = await getLapCountFromNotifications(siteId, robotNickname);
-							updateLapDisplay(lap);
-						} catch(e) {}
-					}, 30000);
-				}
-				
+								
 				card.appendChild(wrapper);
 
 				// 30초마다 현재 화질 동기화
@@ -3707,7 +3632,7 @@
 		156: '잠실 엘스 1호기',
 		157: '잠실 엘스 2호기',
 		249: '한성대 1호기',
-	};
+=	};
 
 	function getAutoSideRobotId(url) {
 		const robotMatch = url.match(/\/ko\/remote\/robot\/(\d+)/);
