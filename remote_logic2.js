@@ -19,10 +19,10 @@
        const config = {
         targetIds: ['44', '56', '65', '109'],
         batteryIds: [
-		    { id: '221', name: '성남판교 200', shortName: '판교 200' },
-		    { id: '222', name: '성남서현 201', shortName: '서현 201' },
-		    { id: '224', name: '성남율동 202', shortName: '율동 202' },
-		    { id: '223', name: '성남야탑 203', shortName: '야탑 203' }
+			{ id: '221', name: '성남판교 200', shortName: '판교 200' },
+			{ id: '222', name: '성남서현 201', shortName: '서현 201' },
+			{ id: '224', name: '성남율동 202', shortName: '율동 202' },
+			{ id: '223', name: '성남야탑 203', shortName: '야탑 203' }
 		],
         sheetId: "1tLo6Xeq6KJx6zW-fcw8H38jdjxyS2yre5oWY7cxky70"
     };
@@ -403,8 +403,9 @@
     /* ============================================================
         SECTION 4. 배터리 및 업무 연동 로직
        ============================================================ */
-    async function updateBatteryStatus() {
-        if (batteryPopup.dataset.dragging === 'true') return;
+    let _batteryInitialized = false;
+
+    function buildBatteryShell() {
         batteryPopup.innerHTML = '';
         const header = document.createElement('div');
         header.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #333333; padding-bottom:10px;";
@@ -425,18 +426,52 @@
         batteryPopup.appendChild(header);
         makeDraggable(header, batteryPopup);
 
+        const list = document.createElement('div');
+        list.id = 'neubie-battery-list';
+        batteryPopup.appendChild(list);
+
+        // 4대 아이템 미리 생성
+        config.batteryIds.forEach((c) => {
+            const item = document.createElement('div');
+            item.dataset.batteryId = c.id;
+            item.style.cssText = `
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                background:rgba(255,255,255,0.05);
+                padding:15px 20px;
+                border-radius:12px;
+                margin-bottom:10px;
+                border-left:5px solid #666;
+                font-size: 16px !important;
+            `;
+            item.innerHTML = `
+                <span style="font-weight:500;" class="bat-name">⚪ ${c.name}</span>
+                <span style="font-weight:bold; font-size: 20px;" class="bat-val">- %</span>
+            `;
+            list.appendChild(item);
+        });
+        _batteryInitialized = true;
+    }
+
+    async function updateBatteryStatus() {
+        if (batteryPopup.dataset.dragging === 'true') return;
+        if (!_batteryInitialized || !batteryPopup.querySelector('#neubie-battery-list')) {
+            buildBatteryShell();
+        }
+
         state.lastBatteryData = [];
 
         // ── fetch로 4대 병렬 조회 ──
         const results = await Promise.all(
-			config.batteryIds.map(c =>
-				fetch(`https://core.neubie.ai/robots/${c.id}/`, {
-					credentials: 'include'
-				})
-				.then(r => r.ok ? r.json() : null)
-				.catch(() => null)
-			)
-		);
+            config.batteryIds.map(c =>
+                fetch(`https://core.neubie.ai/robots/${c.id}/`, {
+                    credentials: 'include'
+                })
+                .then(r => r.ok ? r.json() : null)
+                .catch(() => null)
+            )
+        );
 
         config.batteryIds.forEach((c, i) => {
             const raw = results[i];
@@ -459,23 +494,15 @@
 
             state.lastBatteryData.push({ shortName: c.shortName, battery: batteryVal, statusText });
 
-            const item = document.createElement('div');
-            item.style.cssText = `
-                display:flex;
-                justify-content:space-between;
-                align-items:center;
-                background:rgba(255,255,255,0.05);
-                padding:15px 20px;
-                border-radius:12px;
-                margin-bottom:10px;
-                border-left:5px solid ${accentColor};
-                font-size: 16px !important;
-            `;
-            item.innerHTML = `
-                <span style="font-weight:500;">${statusIcon} ${c.name}</span>
-                <span style="font-weight:bold; color:${accentColor}; font-size: 20px;">${batteryVal}</span>
-            `;
-            batteryPopup.appendChild(item);
+            // 기존 아이템 찾아서 수치만 업데이트
+            const item = batteryPopup.querySelector(`[data-battery-id="${c.id}"]`);
+            if (item) {
+                item.style.borderLeft = `5px solid ${accentColor}`;
+                item.querySelector('.bat-name').textContent = `${statusIcon} ${c.name}`;
+                const valEl = item.querySelector('.bat-val');
+                valEl.textContent = batteryVal;
+                valEl.style.color = accentColor;
+            }
         });
     }
 
@@ -1643,6 +1670,7 @@
             batteryPopup.style.display = 'block';
 
             // 5초 후 1회 갱신 → 필요없으니 삭제, 바로 1분 간격으로
+			if (batteryRefreshInterval) clearInterval(batteryRefreshInterval); // 중복 방지
             batteryRefreshInterval = setInterval(() => {
                 if (batteryPopup.style.display === 'block') updateBatteryStatus();
                 else clearInterval(batteryRefreshInterval);
