@@ -19,11 +19,11 @@
        const config = {
         targetIds: ['44', '56', '65', '109'],
         batteryIds: [
-            { id: '142', name: '성남판교 200', shortName: '판교 200' },
-            { id: '145', name: '성남서현 201', shortName: '서현 201' },
-            { id: '144', name: '성남율동 202', shortName: '율동 202' },
-            { id: '143', name: '성남야탑 203', shortName: '야탑 203' }
-        ],
+			{ id: '221', name: '성남판교 200', shortName: '판교 200' },
+			{ id: '222', name: '성남서현 201', shortName: '서현 201' },
+			{ id: '224', name: '성남율동 202', shortName: '율동 202' },
+			{ id: '223', name: '성남야탑 203', shortName: '야탑 203' }
+		],
         sheetId: "1tLo6Xeq6KJx6zW-fcw8H38jdjxyS2yre5oWY7cxky70"
     };
 
@@ -113,8 +113,8 @@
     /* ============================================================
     SECTION 조작자 감시 (개입 페이지 전용)
    ============================================================ */
-    const OPERATOR_FETCH_INTERVAL = 5000;
-    const OPERATOR_FETCH_COUNT = 6;
+    const OPERATOR_FETCH_INTERVAL = 10000;
+    const OPERATOR_FETCH_COUNT = 2;
     const OPERATOR_PANEL_DURATION = 5000;
     const OPERATOR_PANEL_ID = 'neubie-operator-watch-panel';
     let _operatorFetchTimer = null;
@@ -400,13 +400,12 @@
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', injectUI);
     else injectUI();
 
-    const iframes = {};
-
     /* ============================================================
         SECTION 4. 배터리 및 업무 연동 로직
        ============================================================ */
-    function updateBatteryStatus() {
-        if (batteryPopup.dataset.dragging === 'true') return;
+    let _batteryInitialized = false;
+
+    function buildBatteryShell() {
         batteryPopup.innerHTML = '';
         const header = document.createElement('div');
         header.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #333333; padding-bottom:10px;";
@@ -415,90 +414,122 @@
         titleB.style.cssText = "color:#eee; font-size:18px;";
         const copyBtn = document.createElement('button');
         copyBtn.textContent = '복사';
-        // 260번 줄 수정
-        Object.assign(copyBtn.style, { 
-            background:'#3b82f6', color:'white', border:'none', 
-            padding:'10px 20px',      // 6px 12px → 10px 20px
-            borderRadius:'8px', cursor:'pointer', fontWeight:'bold', 
-            fontSize:'15px',          
-            transition:'0.2s' 
+        Object.assign(copyBtn.style, {
+            background:'#3b82f6', color:'white', border:'none',
+            padding:'10px 20px',
+            borderRadius:'8px', cursor:'pointer', fontWeight:'bold',
+            fontSize:'15px',
+            transition:'0.2s'
         });
         copyBtn.onclick = (e) => copyToClipboard(e.target);
         header.append(titleB, copyBtn);
         batteryPopup.appendChild(header);
-
         makeDraggable(header, batteryPopup);
 
-        state.lastBatteryData = [];
-        config.batteryIds.forEach(c => {
-            // iframe이 아직 로딩 중이면 load 이벤트 후 재시도
-            const ifr = iframes[c.id];
-            if (ifr && ifr.contentDocument?.readyState !== 'complete') {
-                ifr.addEventListener('load', () => updateBatteryStatus(), { once: true });
-            }
+        const list = document.createElement('div');
+        list.id = 'neubie-battery-list';
+        batteryPopup.appendChild(list);
 
-            let batteryVal = "- %", statusText = "OFF", accentColor = "#666", statusIcon = "⚪";
-            try {
-                const doc = iframes[c.id]?.contentDocument || iframes[c.id]?.contentWindow.document;
-                const card = doc?.querySelector('li[data-qk="robot-card"]');
-                if (card) {
-                    const cardText = card.innerText;
-                    const batteryMatch = cardText.match(/(\d+)%/);
-
-                    // 충전: SVG 아이콘만으로 판정 (텍스트 조건 제거)
-                    const isCharging = !!card.querySelector('svg.size-10.text-tertiary-300');
-                    const allSpans = [...card.querySelectorAll('span')];
-                    const missionLabelIdx = allSpans.findIndex(s => s.textContent.trim() === '임무 진행');
-                    const missionValue = missionLabelIdx !== -1
-                        ? allSpans[missionLabelIdx + 1]?.textContent?.trim()
-                        : '';
-                    const isPatrolling = missionValue === '순찰';
-                    if (batteryMatch) {
-                        batteryVal = batteryMatch[0];
-                        if (isPatrolling) { accentColor = "#3b82f6"; statusIcon = "🔵"; statusText = "순찰 중"; }
-                        else if (isCharging) { accentColor = "#22c55e"; statusIcon = "🟢"; statusText = "충전 중"; }
-                        else { accentColor = "#888888"; statusIcon = "⚪"; statusText = "대기 중"; }
-                    }
-                }
-            } catch (e) {}
-            state.lastBatteryData.push({ shortName: c.shortName, battery: batteryVal, statusText: statusText });
+        // 4대 아이템 미리 생성
+        config.batteryIds.forEach((c) => {
             const item = document.createElement('div');
+            item.dataset.batteryId = c.id;
             item.style.cssText = `
-                display:flex; 
-                justify-content:space-between; 
-                align-items:center; /* 세로 정렬 맞춤 */
-                background:rgba(255,255,255,0.05); 
-                padding:15px 20px; /* 패딩을 늘려 높이를 확보 */
-                border-radius:12px; 
-                margin-bottom:10px; 
-                border-left:5px solid ${accentColor};
-                font-size: 16px !important; /* 전체 글씨 크기 (성남판교 200 등) */
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                background:rgba(255,255,255,0.05);
+                padding:15px 20px;
+                border-radius:12px;
+                margin-bottom:10px;
+                border-left:5px solid #666;
+                font-size: 16px !important;
             `;
             item.innerHTML = `
-                <span style="font-weight:500;">${statusIcon} ${c.name}</span>
-                <span style="font-weight:bold; color:${accentColor}; font-size: 20px;">${batteryVal}</span>
+                <span style="font-weight:500;" class="bat-name">⚪ ${c.name}</span>
+                <span style="font-weight:bold; font-size: 20px;" class="bat-val">- %</span>
             `;
-            batteryPopup.appendChild(item);
+            list.appendChild(item);
         });
+        _batteryInitialized = true;
+    }
+
+    let _batteryFetching = false;
+    async function updateBatteryStatus() {
+        if (batteryPopup.dataset.dragging === 'true') return;
+        if (_batteryFetching) return;
+        _batteryFetching = true;
+        try {
+            if (!_batteryInitialized || !batteryPopup.querySelector('#neubie-battery-list')) {
+                buildBatteryShell();
+            }
+
+            state.lastBatteryData = [];
+
+            const results = await Promise.all(
+                config.batteryIds.map(c =>
+                    fetch(`https://core.neubie.ai/robots/${c.id}/`, {
+                        credentials: 'include'
+                    })
+                    .then(r => r.ok ? r.json() : null)
+                    .catch(() => null)
+                )
+            );
+
+            config.batteryIds.forEach((c, i) => {
+                const raw = results[i];
+                const rs  = raw?.robotStatus ?? {};
+
+                let batteryVal = "- %", statusText = "OFF", accentColor = "#666", statusIcon = "⚪";
+
+                if (raw && rs.isConnecting) {
+                    const battery = Math.round(raw.battery ?? rs.battery ?? 0);
+                    batteryVal = `${battery}%`;
+
+                    if (rs.isCharging || rs.isWirelessChargerConnected) {
+                        accentColor = "#22c55e"; statusIcon = "🟢"; statusText = "충전 중";
+                    } else if (raw.currentScenario) {
+                        accentColor = "#3b82f6"; statusIcon = "🔵"; statusText = "순찰 중";
+                    } else {
+                        accentColor = "#888888"; statusIcon = "⚪"; statusText = "대기 중";
+                    }
+                }
+
+                state.lastBatteryData.push({ shortName: c.shortName, battery: batteryVal, statusText });
+
+                const item = batteryPopup.querySelector(`[data-battery-id="${c.id}"]`);
+                if (item) {
+                    item.style.borderLeft = `5px solid ${accentColor}`;
+                    item.querySelector('.bat-name').textContent = `${statusIcon} ${c.name}`;
+                    const valEl = item.querySelector('.bat-val');
+                    valEl.textContent = batteryVal;
+                    valEl.style.color = accentColor;
+                }
+            });
+        } finally {
+            _batteryFetching = false;
+        }
     }
 
     function copyToClipboard(btn) {
         const now = new Date();
         let hour = now.getHours();
         if (now.getMinutes() >= 50) hour = (hour + 1) % 24;
-        let copyText = `[${String(hour).padStart(2, '0')}시 성남 기체 배터리 현황]\n`;
-        state.lastBatteryData.forEach(item => { copyText += `• ${item.shortName}: ${item.battery} (${item.statusText})\n`; });
-        
+        let copyText = `[${String(hour).padStart(2,'0')}시 성남 기체 배터리 현황]\n`;
+        state.lastBatteryData.forEach(item => {
+            copyText += `• ${item.shortName}: ${item.battery} (${item.statusText})\n`;
+        });
         navigator.clipboard.writeText(copyText).then(() => {
             const originalText = btn.textContent;
-            const originalBg = btn.style.background;
-            btn.textContent = '복사됨';
+            const originalBg   = btn.style.background;
+            btn.textContent    = '복사됨';
             btn.style.background = '#22c55e';
-            
             setTimeout(() => {
-                btn.textContent = originalText;
+                btn.textContent    = originalText;
                 btn.style.background = originalBg;
-            }, 2000);
+            }, 1500);
+        }).catch(() => {
+            alert('복사 실패 — 클립보드 권한을 확인해주세요.');
         });
     }
 
@@ -903,8 +934,7 @@
             if (multiBtn) {
                 multiBtn.onclick = (e) => {
                     const time = getCalculatedTime(10); 
-                    const myName = localStorage.getItem('neubie_user_name') || '';
-					const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_다중모니터링${myName ? '_' + myName : ''}`;
+                    const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_다중모니터링`;
                     navigator.clipboard.writeText(finalName);
                     applyCopyEffect(e.target);
                 };
@@ -985,20 +1015,19 @@
                 // 아래 patchItems 배열에 버전별 내용을 추가하세요
                 const patchItems = [
                     {
-                        version: 'v1.1',
-                        date: '2026-06-20',
+                        version: 'v1.2',
+                        date: '2026-06-22',
                         items: [
+                            '임무 종료된 리센츠/엘스 페이지 이탈 시 5초 후 자동 사이드 ON 신호 전송',
+                            '성남 배터리 속도 개선',
+							'네트워크 불안정 지역 경고 레이아웃',
 							'다중 모니터링 기체 화질 조절',
 							'불규칙 순찰 기체 모니터링 미추가 시 알림 기능',
 							'게시판 기능',
-							'개입카드 페이지에서 현재 기체 조작자 표기(본인 제외)',
-							'개입카드 페이지 상태 바 재배치(스크롤 바 제거)',
-							'D-PAD UP: 다음 개입 요청받기 ON/OFF',
-							'D-PAD DOWN: 자동 긴급 정지 ON/OFF',
-							'D-PAD LEFT: 카메라 밝기 내리기',
-							'D-PAD RIGHT: 카메라 밝기 올리기',
-                            '다중 모니터링 카메라 밝기 한 번에 조절',
-							'다중 모니터링 카메라 위치 드래그로 변경',
+							'개입카드 현재 조작자 표기(본인 제외) / 상태 바 재배치(스크롤 제거)',
+							'D-PAD UP/DOWN: 다음 개입 요청받기 / 자동 긴급 정지 ON OFF',
+							'D-PAD LEFT/RIGHT: 카메라 밝기 내리기/올리기',
+                            '다중 모니터링 카메라 밝기 한 번에 조절 및 드래그로 위치 변경',
                         ]
                     },
                 ];
@@ -1223,6 +1252,80 @@
             mapToggle.style.background = state.isMapOpt ? '#2563eb' : '#444';
             injectMapStyle();
         };
+
+        // ⓘ 요기요 페이지 최적화 정보 버튼
+        const mapInfoBtn = document.createElement('button');
+        mapInfoBtn.textContent = 'i';
+        mapInfoBtn.title = '기능 설명';
+        mapInfoBtn.style.cssText = `
+            width:22px; height:22px; border-radius:50%; border:2px solid #aaa;
+            background:transparent; color:#aaa; font-size:13px; font-weight:bold;
+            cursor:pointer; display:flex; align-items:center; justify-content:center;
+            margin-right:8px; flex-shrink:0; line-height:1; padding:0;
+            transition:border-color 0.2s, color 0.2s;
+        `;
+        mapInfoBtn.onmouseenter = () => { mapInfoBtn.style.borderColor='#60a5fa'; mapInfoBtn.style.color='#60a5fa'; };
+        mapInfoBtn.onmouseleave = () => { mapInfoBtn.style.borderColor='#aaa'; mapInfoBtn.style.color='#aaa'; };
+        mapInfoBtn.onclick = (e) => {
+            e.stopPropagation();
+            let mapInfoOverlay = document.getElementById('neubie-map-info-overlay');
+            if (!mapInfoOverlay) {
+                mapInfoOverlay = document.createElement('div');
+                mapInfoOverlay.id = 'neubie-map-info-overlay';
+                mapInfoOverlay.style.cssText = `
+                    position:fixed; inset:0; background:transparent; pointer-events:none;
+                    z-index:2147483646; display:flex; align-items:center; justify-content:center;
+                    font-family:Pretendard, sans-serif;
+                `;
+                const mapInfoBox = document.createElement('div');
+                mapInfoBox.style.cssText = `
+                    background:#1e1e2e; color:#e2e8f0; border-radius:18px; pointer-events:auto;
+                    border:1.5px solid #3b82f6; padding:36px 40px 32px 40px;
+                    max-width:600px; width:90%; max-height:80vh; overflow-y:auto;
+                    position:relative; box-shadow:0 10px 50px rgba(0,0,0,0.7);
+                `;
+                const mapInfoTitle = document.createElement('div');
+                mapInfoTitle.textContent = '기능 설명';
+                mapInfoTitle.style.cssText = `font-size:22px; font-weight:bold; margin-bottom:20px; color:#93c5fd;`;
+                const mapInfoClose = document.createElement('button');
+                mapInfoClose.textContent = '✕';
+                mapInfoClose.style.cssText = `
+                    position:absolute; top:16px; right:18px;
+                    background:transparent; border:none; color:#aaa;
+                    font-size:20px; cursor:pointer; line-height:1; padding:4px 8px;
+                    border-radius:6px; transition:color 0.2s;
+                `;
+                mapInfoClose.onmouseenter = () => { mapInfoClose.style.color='#fff'; };
+                mapInfoClose.onmouseleave = () => { mapInfoClose.style.color='#aaa'; };
+                mapInfoClose.onclick = () => { mapInfoOverlay.style.display='none'; };
+                const mapInfoContent = document.createElement('div');
+                mapInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:#cbd5e1;`;
+                mapInfoContent.innerHTML = `
+                    역삼 요기요 / 송도 요기요 / 성수 요기요 / 성남 삼평동<br>
+                    페이지에서 흰색 마커를 숨겨서 최적화.<br>
+                    대기장소 마커(주황)를 역방향으로 뒤집어서 보기 쉽도록 함.<br>
+                    기존 뉴비고 상의 아이콘 숨기기 기능은 여전히 작동.<br>
+                `;
+                mapInfoBox.appendChild(mapInfoClose);
+                mapInfoBox.appendChild(mapInfoTitle);
+                mapInfoBox.appendChild(mapInfoContent);
+                mapInfoOverlay.appendChild(mapInfoBox);
+                const r0 = dashboard.getBoundingClientRect();
+                mapInfoOverlay.style.top = r0.top + 'px';
+                mapInfoOverlay.style.left = r0.left + 'px';
+                mapInfoOverlay.style.width = r0.width + 'px';
+                mapInfoOverlay.style.height = r0.height + 'px';
+                document.body.appendChild(mapInfoOverlay);
+            } else {
+                const r = dashboard.getBoundingClientRect();
+                mapInfoOverlay.style.top = r.top + 'px';
+                mapInfoOverlay.style.left = r.left + 'px';
+                mapInfoOverlay.style.width = r.width + 'px';
+                mapInfoOverlay.style.height = r.height + 'px';
+                mapInfoOverlay.style.display = 'flex';
+            }
+        };
+        mapCard.appendChild(mapInfoBtn);
         mapCard.appendChild(mapToggle);
 
         // 줄을 서시오 (체크박스, 멘트 없이 이름만)
@@ -1564,44 +1667,24 @@
 
     // 팝업 열 때만 생성
     function toggleBattery() {
-		if (batteryPopup.style.display !== 'block') {
-			config.batteryIds.forEach(c => {
-				if (!iframes[c.id]) {
-					const ifr = document.createElement('iframe');
-					ifr.src = `https://go.neubie.ai/ko/monitoring/${c.id}`;
-					Object.assign(ifr.style, { width:'0', height:'0', border:'none', position:'fixed', top:'-9999px' });
-					document.body.appendChild(ifr);
-					iframes[c.id] = ifr;
-				}
-			});
+        if (batteryPopup.style.display !== 'block') {
 
-			updateBatteryStatus();
-			batteryPopup.style.display = 'block';
+            updateBatteryStatus();  
+            batteryPopup.style.display = 'block';
 
-			// 첫 로드: 5초 후 1회 갱신
-			setTimeout(() => {
-				if (batteryPopup.style.display !== 'block') return;
-				updateBatteryStatus();
+            // 5초 후 1회 갱신 → 필요없으니 삭제, 바로 1분 간격으로
+			if (batteryRefreshInterval) clearInterval(batteryRefreshInterval); // 중복 방지
+            batteryRefreshInterval = setInterval(() => {
+                if (batteryPopup.style.display === 'block') updateBatteryStatus();
+                else clearInterval(batteryRefreshInterval);
+            }, 60000);
 
-				// 이후부터 1분마다 갱신
-				batteryRefreshInterval = setInterval(() => {
-					if (batteryPopup.style.display === 'block') updateBatteryStatus();
-					else clearInterval(batteryRefreshInterval);
-				}, 60000);
-			}, 5000);
-
-		} else {
-			batteryPopup.style.display = 'none';
+        } else {
+            batteryPopup.style.display = 'none';
             if (window._neubieBatteryCard) window._neubieBatteryCard.style.outline = 'none';
-			clearInterval(batteryRefreshInterval);
-			config.batteryIds.forEach(c => {
-				if (iframes[c.id]) {
-					iframes[c.id].remove();
-					delete iframes[c.id];
-				}
-			});
-		}
-	}
+            clearInterval(batteryRefreshInterval);
+        }
+    }
 
     function closeAllPopups() {
         dashboard.style.display = 'none';
@@ -1613,6 +1696,8 @@
 		
         const queueInfoOverlay = document.getElementById('neubie-queue-info-overlay');
         if (queueInfoOverlay) queueInfoOverlay.style.display = 'none';
+        const mapInfoOverlay = document.getElementById('neubie-map-info-overlay');
+        if (mapInfoOverlay) mapInfoOverlay.style.display = 'none';
         const tipsOverlay = document.getElementById('neubie-tips-overlay');
         if (tipsOverlay) tipsOverlay.style.display = 'none';
         const patchOverlay = document.getElementById('neubie-patch-overlay');
@@ -1807,18 +1892,29 @@
         };
 
 		// ── 교대받기 버튼 ──
-		fetchBtn.addEventListener('click', async () => {
-            setDpMsg('데이터 확인 중...', '#3b82f6');
-            const result = await githubGet();
-            if (!result) { setDpMsg('Fetch 실패', '#ef4444'); return; }
-            const { data } = result;
-            if (!isDataValid(data.updatedAt)) {
-                setDpMsg('이전 시간 교대 기체 데이터가 없습니다', '#f59e0b');
-                return;
+		let _fetchBtnRunning = false;
+        fetchBtn.addEventListener('click', async () => {
+            if (_fetchBtnRunning) return;
+            _fetchBtnRunning = true;
+            fetchBtn.disabled = true;
+            fetchBtn.style.opacity = '0.5';
+            try {
+                setDpMsg('데이터 확인 중...', '#3b82f6');
+                const result = await githubGet();
+                if (!result) { setDpMsg('Fetch 실패', '#ef4444'); return; }
+                const { data } = result;
+                if (!isDataValid(data.updatedAt)) {
+                    setDpMsg('이전 시간 교대 기체 데이터가 없습니다', '#f59e0b');
+                    return;
+                }
+                const units = data.units || [];
+                if (!units.length) { setDpMsg('기체 데이터 없음', '#94a3b8'); return; }
+                setDpMsg(`교대 기체 로드됨 (${data.handover_by || '?'} - ${units.length}대)`, '#22c55e');
+            } finally {
+                _fetchBtnRunning = false;
+                fetchBtn.disabled = false;
+                fetchBtn.style.opacity = '1';
             }
-            const units = data.units || [];
-            if (!units.length) { setDpMsg('기체 데이터 없음', '#94a3b8'); return; }
-            setDpMsg(`교대 기체 로드됨 (${data.handover_by || '?'} - ${units.length}대)`, '#22c55e');
         });
 
 		// ── Auto select ──
@@ -2033,32 +2129,38 @@
 		{ id: 99, name: '인력개발원 1호기' },
 		{ id: 178, name: '김포 1호기' },
 		{ id: 177, name: '김포 2호기' },
-		{ id: 254, name: '광교풍경채(대체 기체) 1호기' },
 	];
 	const UNMONITORED_PANEL_ID = 'neubie-unmonitored-panel';
 
-	async function checkUnmonitoredRobots() {
-		if (!isHandoverPage()) return;
-		const alerts = [];
-		for (const robot of UNMONITORED_WATCH) {
-			try {
-				const res = await fetch(
-					`https://core.neubie.ai/robots/${robot.id}/`,
-					{ credentials: 'include' }
-				);
-				const data = await res.json();
-				if (data.currentScenario !== null && data.isMonitoring === false) {
-					alerts.push(`${robot.name} ${data.currentScenarioTypeText || '임무'} 중!`);
-				}
-			} catch(e) {}
-		}
-		const panel = document.getElementById(UNMONITORED_PANEL_ID);
-		if (alerts.length > 0) {
-			_showUnmonitoredPanel(alerts);
-		} else if (panel) {
-			panel.remove();
-		}
-	}
+    let _unmonitoredRunning = false;
+    async function checkUnmonitoredRobots() {
+        if (!isHandoverPage()) return;
+        if (_unmonitoredRunning) return;
+        _unmonitoredRunning = true;
+        try {
+            const alerts = [];
+            for (const robot of UNMONITORED_WATCH) {
+                try {
+                    const res = await fetch(
+                        `https://core.neubie.ai/robots/${robot.id}/`,
+                        { credentials: 'include' }
+                    );
+                    const data = await res.json();
+                    if (data.currentScenario !== null && data.isMonitoring === false) {
+                        alerts.push(`${robot.name} ${data.currentScenarioTypeText || '임무'} 중!`);
+                    }
+                } catch(e) {}
+            }
+            const panel = document.getElementById(UNMONITORED_PANEL_ID);
+            if (alerts.length > 0) {
+                _showUnmonitoredPanel(alerts);
+            } else if (panel) {
+                panel.remove();
+            }
+        } finally {
+            _unmonitoredRunning = false;
+        }
+    }
 
 	function _showUnmonitoredPanel(alerts) {
 		let panel = document.getElementById(UNMONITORED_PANEL_ID);
@@ -2112,148 +2214,150 @@
 		return location.href.includes('go.neubie.ai/ko/remote/multiple/monitoring');
 	}
 
-	async function injectBitrateButtons() {
-		if (!isMonitoringPage()) return;
+	let _bitrateRunning = false;
 
-		const cards = document.querySelectorAll('.rounded-8.relative.flex.overflow-hidden');
-		cards.forEach(async (card) => {
-			if (card.dataset.bitrateInjected) return;
+    async function injectBitrateButtons() {
+        if (!isMonitoringPage()) return;
+        if (_bitrateRunning) return;
+        _bitrateRunning = true;
 
-			const nameEl = card.querySelector('span.font-size-14.max-w-fit.truncate.font-bold.text-white');
-			const robotName = nameEl?.innerText.trim();
-			if (!robotName) return;
+        try {
+            const cards = document.querySelectorAll('.rounded-8.relative.flex.overflow-hidden');
+            const pending = [];
 
-			try {
-				const res = await fetch(
-					`https://core.neubie.ai/robots/?nickname=${encodeURIComponent(robotName)}`,
-					{ credentials: 'include' }
-				);
-				const json = await res.json();
-				const robot = json.results?.[0];
-				if (!robot) return;
+            cards.forEach(card => {
+                if (card.dataset.bitrateInjected) return;
+                card.dataset.bitrateInjected = 'true';
+                pending.push(card);
+            });
 
-				card.dataset.bitrateInjected = 'true';
+            for (const card of pending) {
+                const nameEl = card.querySelector('span.font-size-14.max-w-fit.truncate.font-bold.text-white');
+                const robotName = nameEl?.innerText.trim();
+                if (!robotName) continue;
 
-				let currentLevel = robot.robotStatus.bitrateLevel;
+                try {
+                    const res = await fetch(
+                        `https://core.neubie.ai/robots/?nickname=${encodeURIComponent(robotName)}`,
+                        { credentials: 'include' }
+                    );
+                    if (!res.ok) continue;
+                    const json = await res.json();
+                    const robot = json.results?.[0];
+                    if (!robot) continue;
 
-				const wrapper = document.createElement('div');
-				wrapper.style.cssText = `
-					position: absolute;
-					top: 8px; left: 8px;
-					z-index: 999;
-					pointer-events: auto;
-					display: flex;
-					flex-direction: row;
-					align-items: center;
-					gap: 3px;
-					opacity: 0;
-					transition: opacity 0.2s;
-					background: rgba(20,20,20,0.8);
-					border-radius: 8px;
-					padding: 3px 6px;
-				`;
+                    let currentLevel = robot.robotStatus.bitrateLevel;
 
-				card.addEventListener('mouseenter', () => wrapper.style.opacity = '1');
-				card.addEventListener('mouseleave', () => wrapper.style.opacity = '0');
+                    const wrapper = document.createElement('div');
+                    wrapper.style.cssText = `
+                        position: absolute;
+                        top: 8px; left: 8px;
+                        z-index: 999;
+                        pointer-events: auto;
+                        display: flex;
+                        flex-direction: row;
+                        align-items: center;
+                        gap: 3px;
+                        opacity: 0;
+                        transition: opacity 0.2s;
+                        background: rgba(20,20,20,0.8);
+                        border-radius: 8px;
+                        padding: 3px 6px;
+                    `;
 
-				const labelEl = document.createElement('span');
-				labelEl.innerText = `화질 ${LEVEL_LABELS[currentLevel]}`;
-				labelEl.style.cssText = `
-					color: white;
-					font-size: 11px;
-					font-weight: 600;
-					font-family: 'Pretendard', sans-serif;
-					white-space: nowrap;
-				`;
+                    card.addEventListener('mouseenter', () => wrapper.style.opacity = '1');
+                    card.addEventListener('mouseleave', () => wrapper.style.opacity = '0');
 
-				let isCooling = false;
+                    const labelEl = document.createElement('span');
+                    labelEl.innerText = `화질 ${LEVEL_LABELS[currentLevel]}`;
+                    labelEl.style.cssText = `
+                        color: white;
+                        font-size: 11px;
+                        font-weight: 600;
+                        font-family: 'Pretendard', sans-serif;
+                        white-space: nowrap;
+                    `;
 
-				const makeBtn = (label, delta) => {
-					const btn = document.createElement('div');
-					btn.innerHTML = label;
-					btn.style.cssText = `
-						color: white;
-						font-size: 11px;
-						font-weight: 700;
-						cursor: pointer;
-						user-select: none;
-						display: flex;
-						align-items: center;
-						justify-content: center;
-						width: 14px;
-						height: 14px;
-						border-radius: 4px;
-						background: rgba(80,80,80,0.8);
-						transition: opacity 0.15s;
-					`;
+                    let isCooling = false;
 
-					btn.addEventListener('click', async (e) => {
-						e.stopPropagation();
-						if (isCooling) return;
-						const newLevel = currentLevel + delta;
-						if (newLevel < 1 || newLevel > 5) return;
+                    const makeBtn = (label, delta) => {
+                        const btn = document.createElement('div');
+                        btn.innerHTML = label;
+                        btn.style.cssText = `
+                            color: white;
+                            font-size: 11px;
+                            font-weight: 700;
+                            cursor: pointer;
+                            user-select: none;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            width: 14px;
+                            height: 14px;
+                            border-radius: 4px;
+                            background: rgba(80,80,80,0.8);
+                            transition: opacity 0.15s;
+                        `;
 
-						isCooling = true;
-						btn.style.opacity = '0.4';
+                        btn.addEventListener('click', async (e) => {
+                            e.stopPropagation();
+                            if (isCooling) return;
+                            const newLevel = currentLevel + delta;
+                            if (newLevel < 1 || newLevel > 5) return;
 
-						await fetch(`https://core.neubie.ai/robots/${robot.id}/video-bitrate-level/`, {
-							method: 'PUT',
-							credentials: 'include',
-							headers: { 'Content-Type': 'application/json' },
-							body: JSON.stringify({ level: newLevel })
-						});
+                            isCooling = true;
+                            btn.style.opacity = '0.4';
 
-						currentLevel = newLevel;
-						labelEl.innerText = `화질 ${LEVEL_LABELS[currentLevel]}`;
+                            try {
+                                await fetch(`https://core.neubie.ai/robots/${robot.id}/video-bitrate-level/`, {
+                                    method: 'PUT',
+                                    credentials: 'include',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ level: newLevel })
+                                });
+                                currentLevel = newLevel;
+                                labelEl.innerText = `화질 ${LEVEL_LABELS[currentLevel]}`;
+                            } catch(e) {}
 
-						setTimeout(() => {
-							isCooling = false;
-							btn.style.opacity = '1';
-						}, 1000);
-					});
+                            setTimeout(() => {
+                                isCooling = false;
+                                btn.style.opacity = '1';
+                            }, 1000);
+                        });
 
-					return btn;
-				};
+                        return btn;
+                    };
 
-				wrapper.appendChild(makeBtn('▲', 1));
-				wrapper.appendChild(labelEl);
-				wrapper.appendChild(makeBtn('▼', -1));
-				card.style.position = 'relative';
-				card.appendChild(wrapper);
+                    wrapper.appendChild(makeBtn('▲', 1));
+                    wrapper.appendChild(labelEl);
+                    wrapper.appendChild(makeBtn('▼', -1));
+                    card.style.position = 'relative';
+                    card.appendChild(wrapper);
 
-				// 30초마다 현재 화질 동기화
-				const syncTimer = setInterval(async () => {
-				    if (!document.body.contains(card)) {
-				        clearInterval(syncTimer);
-				        return;
-				    }
-					if (isCooling) return; // ← 클릭 중이면 싱크 스킵
-				    try {
-				        const r = await fetch(`https://core.neubie.ai/robots/${robot.id}/`, { credentials: 'include' });
-				        const d = await r.json();
-				        const level = d.robotStatus.bitrateLevel;
-				        if (level !== currentLevel) {
-				            currentLevel = level;
-				            labelEl.innerText = `화질 ${LEVEL_LABELS[currentLevel]}`;
-				        }
-				    } catch(e) {}
-				}, 30000);
-
-			} catch(e) {
-				console.warn('화질 버튼 삽입 실패:', e);
-			}
-		});
-	}
+                } catch(e) {
+                    console.warn('화질 버튼 삽입 실패:', e);
+                    // 실패 시 플래그 해제 → 다음 기회에 재시도
+                    card.dataset.bitrateInjected = '';
+                }
+            }
+        } finally {
+            _bitrateRunning = false;
+        }
+    }
 
 	function registerBitrateObserver() {
 		if (!isMonitoringPage()) return;
 		if (localStorage.getItem('neubie_handover_enabled') === 'false') return;
 		if (window._bitrateObserver) window._bitrateObserver.disconnect();
-		window._bitrateObserver = new MutationObserver(() => {
-			if (isMonitoringPage() && localStorage.getItem('neubie_handover_enabled') !== 'false') {
-				setTimeout(injectBitrateButtons, 500);
-			}
-		});
+		let _bitrateThrottle = null;
+        window._bitrateObserver = new MutationObserver(() => {
+            if (!isMonitoringPage()) return;
+            if (_bitrateThrottle) return;  // ← 이미 예약됨, 무시
+            _bitrateThrottle = setTimeout(() => {
+                injectBitrateButtons();
+                _bitrateThrottle = null;
+            }, 500);
+        });
 		window._bitrateObserver.observe(document.body, { childList: true, subtree: true });
 	}
 
@@ -3456,7 +3560,15 @@
     document.addEventListener('click', () => {
         setTimeout(() => {
             if (location.href !== lastUrl) {
+                const prevUrl = lastUrl;  // ← 이전 URL 먼저 저장
                 lastUrl = location.href;
+
+                // 자동 사이드브레이크 - 이탈 감지
+				const prevRobotId = getAutoSideRobotId(prevUrl);
+				if (prevRobotId && AUTO_SIDE_ROBOTS[prevRobotId]) {
+					triggerAutoSide(prevRobotId);
+				}
+
                 closeAllPopups();
                 updateRobotContext();
                 // 맵 최적화 페이지 전환 시 재적용
@@ -3466,6 +3578,12 @@
                     setTimeout(() => injectMapStyle(), 3000);
                     setTimeout(() => injectMapStyle(), 6000);
                 }
+				
+				setTimeout(() => checkDangerZone(), 1000);
+				setTimeout(() => checkDangerZone(), 2000);
+				setTimeout(() => checkDangerZone(), 3500);
+				setTimeout(() => checkDangerZone(), 5000);
+				
 				setTimeout(() => patchDrivingPageLayout(), 1500);
                 setTimeout(() => patchDrivingPageLayout(), 3000);
 				setTimeout(() => patchDrivingPageLayout(), 6000);
@@ -3485,7 +3603,15 @@
     // 만약 클릭 없이 코드로만 주소가 바뀌는 경우를 대비 (간격 2초)
     setInterval(() => {
         if (location.href !== lastUrl) {
+            const prevUrl = lastUrl;  // ← 이전 URL 먼저 저장
             lastUrl = location.href;
+
+            // 자동 사이드브레이크 - 이탈 감지
+			const prevRobotId = getAutoSideRobotId(prevUrl);
+			if (prevRobotId && AUTO_SIDE_ROBOTS[prevRobotId]) {
+				triggerAutoSide(prevRobotId);
+			}
+
             closeAllPopups();
             updateRobotContext();
 
@@ -3496,6 +3622,12 @@
                 setTimeout(() => injectMapStyle(), 3000);
                 setTimeout(() => injectMapStyle(), 6000);
             }
+			
+			setTimeout(() => checkDangerZone(), 1000);
+			setTimeout(() => checkDangerZone(), 2000);
+			setTimeout(() => checkDangerZone(), 3500);
+			setTimeout(() => checkDangerZone(), 5000);
+			
 			setTimeout(() => patchDrivingPageLayout(), 1500);
             setTimeout(() => patchDrivingPageLayout(), 3000);
 			setTimeout(() => patchDrivingPageLayout(), 6000);
@@ -3510,6 +3642,169 @@
 			}
         }
     }, 2000); // 2초 정도면 충분히 여유로움
+    
+    // ── 자동 사이드브레이크 (잠실 엘스/리센츠) ──
+	const AUTO_SIDE_ROBOTS = {
+		128: '잠실 리센츠 1호기',
+		82:  '잠실 리센츠 2호기',
+		156: '잠실 엘스 1호기',
+		157: '잠실 엘스 2호기',
+		249: '한성대 1호기',
+	};
+
+	function getAutoSideRobotId(url) {
+		const robotMatch = url.match(/\/ko\/remote\/robot\/(\d+)/);
+		if (robotMatch) return parseInt(robotMatch[1]);
+		const params = new URLSearchParams(url.split('?')[1] || '');
+		const robotId = params.get('robot-id');
+		return robotId ? parseInt(robotId) : null;
+	}
+
+	function showAutoSideNotice(msg, color) {
+		const existing = document.getElementById('neubie-auto-side-notice');
+		if (existing) existing.remove();
+		const el = document.createElement('div');
+		el.id = 'neubie-auto-side-notice';
+		el.style.cssText = `
+			position: fixed;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			z-index: 9999;
+			background: ${color};
+			color: white;
+			font-size: 14px;
+			font-weight: 700;
+			padding: 14px 28px;
+			border-radius: 12px;
+			font-family: 'Pretendard', sans-serif;
+			box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+			white-space: nowrap;
+			pointer-events: none;
+		`;
+		el.innerText = msg;
+		document.body.appendChild(el);
+		setTimeout(() => el.remove(), 4000);
+	}
+
+    const _autoSideInProgress = new Set();
+
+	async function triggerAutoSide(robotId) {
+		const robotName = AUTO_SIDE_ROBOTS[robotId];
+
+        if (_autoSideInProgress.has(robotId)) return;
+		_autoSideInProgress.add(robotId);
+
+		try {
+			const res = await fetch(`https://core.neubie.ai/robots/${robotId}/`, { credentials: 'include' });
+			const data = await res.json();
+			if (data.currentScenario) { _autoSideInProgress.delete(robotId); return; }
+            if (!data.robotStatus.isMovable) { _autoSideInProgress.delete(robotId); return; }
+
+			// 5초 예고 레이아웃
+			showAutoSideNotice(`5초 후 ${robotName}의 사이드 브레이크를 ON으로 변경합니다.`, 'rgba(59,130,246,0.92)');
+
+			setTimeout(async () => {
+				// 5초 후 다시 한번 확인
+				try {
+					const res2 = await fetch(`https://core.neubie.ai/robots/${robotId}/`, { credentials: 'include' });
+					const data2 = await res2.json();
+					if (data2.currentScenario) { _autoSideInProgress.delete(robotId); return; }
+					if (!data2.robotStatus.isMovable) { _autoSideInProgress.delete(robotId); return; }
+
+					const res3 = await fetch(`https://core.neubie.ai/robots/${robotId}/control/`, {
+						method: 'PUT',
+						credentials: 'include',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ action: 'WAIT' })
+					});
+					if (res3.ok) {
+						showAutoSideNotice(`✅ ${robotName} 사이드 브레이크 ON`, 'rgba(22,163,74,0.92)');
+						_autoSideInProgress.delete(robotId);
+					} else {
+						showAutoSideNotice(`❌ ${robotName} 사이드 브레이크 명령 전송 실패`, 'rgba(220,38,38,0.92)');
+						_autoSideInProgress.delete(robotId);
+					}
+				} catch(e) {
+                    _autoSideInProgress.delete(robotId);
+                    showAutoSideNotice(`❌ ${robotName} 사이드 브레이크 명령 전송 실패`, 'rgba(220,38,38,0.92)');
+                }
+			}, 5000);
+
+		} catch(e) {
+            _autoSideInProgress.delete(robotId);
+            showAutoSideNotice(`❌ ${robotName} 사이드 브레이크 명령 전송 실패`, 'rgba(220,38,38,0.92)');
+        }
+	}
+    
+	// ── 위험구간 경고 ──
+	const DANGER_ZONE_CONFIG = {
+		221: { // 성남판교 200
+			pois: [
+				'판교역순찰_01',
+				'현대백화점/힐스테이트 판교역사이 금연구역1',
+				'현대백화점/힐스테이트 판교역사이 금연구역2',
+			],
+			message: '⚠️ 네트워크 불안정 구간입니다. 관제 시 유의하세요.'
+		}
+	};
+
+	function checkDangerZone() {
+		const href = location.href;
+		let robotId = null;
+
+		// 일반 접속: /ko/remote/robot/221
+		const robotMatch = href.match(/\/ko\/remote\/robot\/(\d+)/);
+		if (robotMatch) {
+			robotId = parseInt(robotMatch[1]);
+		} else {
+			// 개입카드: /ko/remote/multiple/driving/xxxxx?robot-id=221
+			const params = new URLSearchParams(location.search);
+			const robotIdParam = params.get('robot-id');
+			if (robotIdParam) robotId = parseInt(robotIdParam);
+		}
+
+		if (!robotId) { removeDangerWarning(); return; }
+		const cfg = DANGER_ZONE_CONFIG[robotId];
+		if (!cfg) { removeDangerWarning(); return; }
+
+		const activePoi = Array.from(document.querySelectorAll('span.max-w-190.font-size-14.truncate.font-medium'))
+			.find(el => el.className.includes('text-mono-800') && el.innerText.includes('로 이동'));
+		const poiName = activePoi?.innerText?.replace('로 이동', '').trim();
+
+		if (poiName && cfg.pois.some(p => poiName.includes(p))) {
+			if (document.getElementById('neubie-danger-warning')) return;
+			const warning = document.createElement('div');
+			warning.id = 'neubie-danger-warning';
+			warning.style.cssText = `
+				position: fixed;
+				top: 80px;
+				left: 50%;
+				transform: translateX(-50%);
+				z-index: 9999;
+				background: rgba(220, 38, 38, 0.92);
+				color: white;
+				font-size: 13px;
+				font-weight: 700;
+				padding: 8px 20px;
+				border-radius: 8px;
+				font-family: 'Pretendard', sans-serif;
+				box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+				white-space: nowrap;
+				pointer-events: none;
+			`;
+			warning.innerText = cfg.message;
+			document.body.appendChild(warning);
+			setTimeout(() => removeDangerWarning(), 7000);
+		} else {
+			removeDangerWarning();
+		}
+	}
+
+	function removeDangerWarning() {
+		const el = document.getElementById('neubie-danger-warning');
+		if (el) el.remove();
+	}
 	
 	// ── 개입 페이지 레이아웃 패치 ──
     function patchDrivingPageLayout() {
