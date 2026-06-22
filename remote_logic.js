@@ -903,7 +903,8 @@
             if (multiBtn) {
                 multiBtn.onclick = (e) => {
                     const time = getCalculatedTime(10); 
-                    const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_다중모니터링`;
+                    const myName = localStorage.getItem('neubie_user_name') || '';
+					const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_다중모니터링${myName ? '_' + myName : ''}`;
                     navigator.clipboard.writeText(finalName);
                     applyCopyEffect(e.target);
                 };
