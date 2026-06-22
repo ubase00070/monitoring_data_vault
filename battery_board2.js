@@ -837,8 +837,9 @@
 		renderAlertChips(currentAlerts);
 
 		// 남은 알림 없으면 패널 닫기
-		if (currentAlerts.length === 0) {
-			document.getElementById('bb-alert-panel').classList.remove('open');
+		const remainingInType = currentAlerts.filter(a => a.type === currentAlertType).length;
+		if (currentAlerts.length === 0 || remainingInType === 0) {
+		    document.getElementById('bb-alert-panel').classList.remove('open');
 		}
 	}
 
