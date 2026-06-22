@@ -244,15 +244,17 @@
 
         /* ── 알림 상세 패널 ── */
         #bb-alert-panel {
-            display:none; position:fixed;
-            top:50%; left:50%; transform:translate(-50%,-50%);
-            width:460px; max-height:72vh; overflow-y:auto;
-            background:#2c2f4a;
-            border:2px solid #6c72a8;
-            border-radius:14px;
-            box-shadow:0 0 0 1px rgba(255,255,255,.18), 0 24px 64px rgba(0,0,0,.9);
-            z-index:99999999; font-family:inherit;
-        }
+			display:none; position:fixed;
+			top:50%; left:50%; transform:translate(-50%,-50%);
+			width:552px;           /* 460 × 1.2 */
+			max-height:86vh;       /* 72 × 1.2 */
+			overflow-y:auto;
+			background:#0a0a0c;    /* 검정 */
+			border:2px solid #6c72a8;
+			border-radius:14px;
+			box-shadow:0 0 0 1px rgba(255,255,255,.18), 0 24px 64px rgba(0,0,0,.9);
+			z-index:99999999;
+		}
         #bb-alert-panel.open { display:block; }
         .bb-ap-hd {
             padding:14px 16px; border-bottom:1px solid #4a5070;
@@ -269,7 +271,7 @@
         }
         .bb-ap-item {
             padding:13px 16px; border-bottom:1px solid #3a3f62;
-            display:flex; align-items:flex-start; gap:12px; background:#2c2f4a;
+            display:flex; align-items:flex-start; gap:12px; background:#0a0a0c;
         }
         .bb-ap-item:last-child { border-bottom:none; }
         .bb-ap-item:hover { background:#323558; }
@@ -289,7 +291,7 @@
             color:#a0a8cc; font-size:11px; font-weight:700; cursor:pointer; font-family:inherit;
         }
         .bb-ap-item:hover .bb-ap-dismiss { display:block; }
-        .bb-ap-empty { padding:28px 16px; text-align:center; font-size:14px; color:#8890b8; font-weight:700; background:#2c2f4a; border-radius:0 0 12px 12px; }
+        .bb-ap-empty { padding:28px 16px; text-align:center; font-size:14px; color:#8890b8; font-weight:700; background:#0a0a0c; border-radius:0 0 12px 12px; }
 
         /* ── 사용 설명서 패널 ── */
         #bb-info-panel {
@@ -784,19 +786,20 @@
     }
 
     function dismiss(key) {
-        dismissedAlerts.add(key);
-        try {
-            const saved = JSON.parse(localStorage.getItem('bb_dismissed') || '[]');
-            saved.push({ key, time: Date.now() });
-            localStorage.setItem('bb_dismissed', JSON.stringify(saved));
-        } catch {}
-        currentAlerts = currentAlerts.filter(a => a.key !== key);
-        renderAlertChips(currentAlerts);
+		dismissedAlerts.add(key);
+		try {
+			const saved = JSON.parse(localStorage.getItem('bb_dismissed') || '[]');
+			saved.push({ key, time: Date.now() });
+			localStorage.setItem('bb_dismissed', JSON.stringify(saved));
+		} catch {}
+		currentAlerts = currentAlerts.filter(a => a.key !== key);
+		renderAlertChips(currentAlerts);
 
+		// 남은 알림 없으면 패널 닫기
 		if (currentAlerts.length === 0) {
-	        document.getElementById('bb-alert-panel').classList.remove('open');
-	    }
-    }
+			document.getElementById('bb-alert-panel').classList.remove('open');
+		}
+	}
 
     // ============================================================
     // SECTION 6. bb_robots_data 리스너
