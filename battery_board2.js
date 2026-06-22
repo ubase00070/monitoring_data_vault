@@ -826,7 +826,18 @@
             }
 
             const alerts = detectAlerts(allRaw);
-            renderAlertChips(alerts);
+			renderAlertChips(alerts);
+
+			// 패널 열려있으면 현재 타입 내용 갱신
+			if (document.getElementById('bb-alert-panel').classList.contains('open') && currentAlertType) {
+				const groups = {};
+				alerts.forEach(a => {
+					if (!groups[a.type]) groups[a.type] = [];
+					groups[a.type].push(a);
+				});
+				openAlertPanel(currentAlertType, groups);
+			}
+
             renderMonitorGrid(allRaw);
             renderDeliveryChips(allRaw);
 
@@ -1002,7 +1013,8 @@
         const lowBat = !r.loading && !off && r.battery <= 21;
         const pct    = (off || r.loading) ? 0 : r.battery;
         const inside = pct >= 28;
-        const showMissionOff = !r.canDispatch && !off && !r.loading;
+        const showMissionOff = !r.canDispatch && !off && !r.loading
+			&& r.status !== 'patrolling' && r.status !== 'delivering';
 
         const batColor  = 'rgba(240,240,255,.93)';
         const batShadow = inside
