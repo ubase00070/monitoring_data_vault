@@ -2197,7 +2197,7 @@
 	async function getLapCountFromNotifications(siteId, robotNickname) {
 		try {
 			const res = await fetch(
-				`https://core.neubie.ai/notifications/?site=${siteId}&limit=20`,
+				`https://core.neubie.ai/notifications/?site=${siteId}&limit=20&codes=OSA-27`,
 				{ credentials: 'include' }
 			);
 			if (!res.ok) return null;
