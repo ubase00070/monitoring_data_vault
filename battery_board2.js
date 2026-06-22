@@ -101,14 +101,18 @@
             transition:filter .15s, box-shadow .15s;
         }
         .bb-chip:hover { filter:brightness(1.15); }
-        .bb-chip.bat    { background:var(--rd2); color:var(--rd); border:2px solid rgba(239,68,68,.55); box-shadow:0 0 8px rgba(239,68,68,.25); animation:chipPulse 1s infinite; }
-        .bb-chip.dock   { background:rgba(251,191,36,.12); color:var(--ye); border:2px solid rgba(251,191,36,.5); box-shadow:0 0 6px rgba(251,191,36,.2); }
-        .bb-chip.zombie { background:rgba(249,115,22,.12); color:var(--or); border:2px solid rgba(249,115,22,.5); box-shadow:0 0 8px rgba(249,115,22,.2); animation:chipPulse .7s infinite; }
-        .bb-chip.cam { background:rgba(249,115,22,.12); color:var(--or); border:2px solid rgba(249,115,22,.45); box-shadow:0 0 6px rgba(249,115,22,.15); }
-        .bb-chip.nomap { background:rgba(249,115,22,.12); color:var(--or); border:2px solid rgba(249,115,22,.45); box-shadow:0 0 6px rgba(249,115,22,.15); }
-        .bb-chip.idle   { background:rgba(59,130,246,.10); color:var(--bl); border:2px solid rgba(59,130,246,.45); box-shadow:0 0 6px rgba(59,130,246,.15); }
+        .bb-chip.bat    { background:var(--rd2); color:var(--rd); border:2px solid rgba(239,68,68,.55); box-shadow:0 0 8px rgba(239,68,68,.25); animation:chipPulse 1s infinite, chipBorder 1s infinite; }
+		.bb-chip.dock   { background:rgba(251,191,36,.12); color:var(--ye); border:2px solid rgba(251,191,36,.5); box-shadow:0 0 6px rgba(251,191,36,.2); animation:chipPulse 1s infinite, chipBorder 1s infinite; }
+		.bb-chip.zombie { background:rgba(249,115,22,.12); color:var(--or); border:2px solid rgba(249,115,22,.5); box-shadow:0 0 8px rgba(249,115,22,.2); animation:chipPulse .7s infinite, chipBorder .7s infinite; }
+		.bb-chip.cam    { background:rgba(249,115,22,.12); color:var(--or); border:2px solid rgba(249,115,22,.45); box-shadow:0 0 6px rgba(249,115,22,.15); animation:chipPulse 1s infinite, chipBorder 1s infinite; }
+		.bb-chip.nomap  { background:rgba(249,115,22,.12); color:var(--or); border:2px solid rgba(249,115,22,.45); box-shadow:0 0 6px rgba(249,115,22,.15); animation:chipPulse 1s infinite, chipBorder 1s infinite; }
+		.bb-chip.idle   { background:rgba(59,130,246,.10); color:var(--bl); border:2px solid rgba(59,130,246,.45); box-shadow:0 0 6px rgba(59,130,246,.15); animation:chipPulse 1.2s infinite, chipBorder 1.2s infinite; }
         .bb-chip-none   { font-size:12px; color:var(--mu); font-weight:700; }
         @keyframes chipPulse { 0%,100%{opacity:1} 50%{opacity:.55} }
+		@keyframes chipBorder {
+			0%,100% { box-shadow:0 0 0 2px currentColor; }
+			50%     { box-shadow:none; }
+		}
 
         /* 검색 */
         .bb-search-wrap {
@@ -250,18 +254,19 @@
 			max-height:86vh;       /* 72 × 1.2 */
 			overflow-y:auto;
 			background:#0a0a0c;    /* 검정 */
-			border:2px solid #6c72a8;
+			border:2px solid rgba(239,68,68,.7);
 			border-radius:14px;
-			box-shadow:0 0 0 1px rgba(255,255,255,.18), 0 24px 64px rgba(0,0,0,.9);
+			box-shadow:0 0 0 1px rgba(239,68,68,.3), 0 24px 64px rgba(0,0,0,.9);
 			z-index:99999999;
 		}
         #bb-alert-panel.open { display:block; }
         .bb-ap-hd {
-            padding:14px 16px; border-bottom:1px solid #4a5070;
-            background:#363a5c; border-radius:12px 12px 0 0;
-            display:flex; justify-content:space-between; align-items:center;
-            position:sticky; top:0; z-index:1;
-        }
+			padding:14px 16px; border-bottom:1px solid #4a5070;
+			background:#0a0a0c; 
+			border-radius:12px 12px 0 0;
+			display:flex; justify-content:space-between; align-items:center;
+			position:sticky; top:0; z-index:1;
+		}
         .bb-ap-title { font-size:16px; font-weight:900; color:#ffffff; }
         .bb-ap-close {
             width:26px; height:26px; border-radius:7px;
@@ -793,6 +798,19 @@
 			localStorage.setItem('bb_dismissed', JSON.stringify(saved));
 		} catch {}
 		currentAlerts = currentAlerts.filter(a => a.key !== key);
+
+		// 패널에서 해당 항목 즉시 제거
+		const itemEl = document.querySelector(`.bb-ap-item[data-key="${key}"]`);
+		if (itemEl) itemEl.remove();
+
+		// 제목 건수 갱신
+		const titleEl = document.getElementById('bb-ap-title');
+		if (titleEl && currentAlertType) {
+			const meta = ALERT_META[currentAlertType] || { label: currentAlertType };
+			const remaining = currentAlerts.filter(a => a.type === currentAlertType).length;
+			titleEl.textContent = `${meta.label} (${remaining}건)`;
+		}
+
 		renderAlertChips(currentAlerts);
 
 		// 남은 알림 없으면 패널 닫기
