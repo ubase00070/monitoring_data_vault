@@ -2342,8 +2342,16 @@
                 }
             }
         } finally {
-            _bitrateRunning = false;
-        }
+		    _bitrateRunning = false;
+		
+		    // ← 추가: 완료 후 미처리 카드 있으면 재시도
+		    const remaining = document.querySelectorAll(
+		        '.rounded-8.relative.flex.overflow-hidden:not([data-bitrate-injected="true"])'
+		    );
+		    if (remaining.length > 0) {
+		        setTimeout(injectBitrateButtons, 1000);
+		    }
+		}
     }
 
 	function registerBitrateObserver() {
