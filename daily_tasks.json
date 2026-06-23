@@ -18,13 +18,13 @@
     "rawTime": "09:00"
   },
   {
-    "user": "성혜진",
+    "user": "이환",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "10:00"
   },
   {
-    "user": "이환",
+    "user": "한승완",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "11:00"
@@ -48,7 +48,7 @@
     "rawTime": "14:00"
   },
   {
-    "user": "한승완",
+    "user": "성혜진",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "15:00"
@@ -168,21 +168,9 @@
     "rawTime": "09:30"
   },
   {
-    "user": "오정훈",
+    "user": "최윤혁",
     "type": "task",
     "content": "[10:00~11:00] 부산국립과학관 170,171호기 임무 [화,수,목,금,토,일]",
-    "rawTime": "10:00"
-  },
-  {
-    "user": "한승완",
-    "type": "task",
-    "content": "[10:00] 성남 [삼평동] 대기장소3 주간기체 3호기 출근 임무 [평일]",
-    "rawTime": "10:00"
-  },
-  {
-    "user": "이환",
-    "type": "task",
-    "content": "[10:00] 성남 [삼평동] 대기장소3 주간기체 6호기 출근 임무 [평일]",
     "rawTime": "10:00"
   },
   {
@@ -285,18 +273,6 @@
     "user": "신은정",
     "type": "task",
     "content": "[16:30] 파주LGD(현대밴디스) 기체 퇴근 처리 후 임무 OFF [평일]",
-    "rawTime": "16:30"
-  },
-  {
-    "user": "박효빈",
-    "type": "task",
-    "content": "[16:30] 성남 [삼평동] 대기장소3 주간기체 3호기 퇴근 후 임무 OFF [평일]",
-    "rawTime": "16:30"
-  },
-  {
-    "user": "김가은",
-    "type": "task",
-    "content": "[16:30] 성남 [삼평동] 대기장소3 주간기체 6호기 퇴근 후 임무 OFF [평일]",
     "rawTime": "16:30"
   },
   {
