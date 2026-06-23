@@ -313,50 +313,6 @@
         }
         .bb-info-title { font-size:17px; font-weight:900; }
 
-        /* ── 히스토리 패널 ── */
-        #bb-hist-panel {
-            display:none; position:fixed;
-            top:16px; left:50%; transform:translateX(-50%);
-            width:500px; max-height:60vh; overflow-y:auto;
-            background:var(--bg); border:1px solid var(--bd2);
-            border-radius:12px; box-shadow:0 16px 48px rgba(0,0,0,.85);
-            z-index:99999998; font-family:inherit;
-        }
-        #bb-hist-panel.open { display:block; }
-        .bb-hp-hd {
-            padding:11px 14px; border-bottom:1px solid var(--bd);
-            background:var(--sur); border-radius:12px 12px 0 0;
-            display:flex; justify-content:space-between; align-items:center;
-            position:sticky; top:0; z-index:1;
-        }
-        .bb-hp-title { font-size:13px; font-weight:900; color:var(--tx); }
-        .bb-hp-close { width:22px; height:22px; border-radius:5px; background:rgba(239,68,68,.15); border:1px solid rgba(239,68,68,.3); color:var(--rd); font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-weight:900; }
-        .bb-hp-menu { padding:8px 14px; display:flex; gap:8px; border-bottom:1px solid var(--bd); flex-wrap:wrap; }
-        .bb-hp-menu-btn { padding:5px 12px; border-radius:6px; border:1px solid var(--bd2); background:var(--sur2); color:var(--mu); font-size:12px; font-weight:700; cursor:pointer; }
-        .bb-hp-menu-btn:hover { border-color:var(--mu); color:var(--tx); }
-        .bb-hp-menu-btn.active { border-color:var(--bl); color:var(--bl); background:var(--bl2); }
-        .bb-hp-body { padding:10px 14px; }
-        .bb-hp-month { margin-bottom:6px; border:1px solid var(--bd2); border-radius:8px; overflow:hidden; }
-        .bb-hp-month-hd { padding:9px 13px; background:var(--sur2); display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-size:12px; font-weight:900; color:var(--tx); user-select:none; }
-        .bb-hp-month-hd:hover { background:var(--bd); }
-        .bb-hp-month-arrow { font-size:10px; color:var(--mu); transition:transform .2s; }
-        .bb-hp-month-arrow.open { transform:rotate(180deg); }
-        .bb-hp-month-body { display:none; border-top:1px solid var(--bd); }
-        .bb-hp-month-body.open { display:block; }
-        .bb-hp-day { padding:7px 13px; border-bottom:1px solid var(--bd); }
-        .bb-hp-day:last-child { border-bottom:none; }
-        .bb-hp-day-title { font-size:11px; font-weight:900; color:var(--mu); margin-bottom:4px; letter-spacing:.3px; }
-        .bb-hp-entry { padding:5px 0; display:flex; align-items:center; gap:8px; border-bottom:1px solid rgba(255,255,255,.04); }
-        .bb-hp-entry:last-child { border-bottom:none; }
-        .bb-hp-entry-hour { font-size:11px; font-weight:900; color:var(--bl); font-family:'Lato',monospace; width:38px; flex-shrink:0; }
-        .bb-hp-entry-name { font-size:12px; font-weight:700; color:var(--tx); flex:1; }
-        .bb-hp-entry-badge { font-size:10px; font-weight:900; padding:2px 7px; border-radius:4px; background:var(--rd2); color:var(--rd); border:1px solid rgba(239,68,68,.3); }
-        .bb-hp-entry-badge.misplaced { background:rgba(251,191,36,.10); color:var(--ye); border:1px solid rgba(251,191,36,.3); }
-        .bb-hp-empty { padding:24px; text-align:center; font-size:12px; color:var(--mu); font-weight:700; }
-        .bb-hp-loading { padding:16px; text-align:center; font-size:12px; color:var(--mu); }
-        .bb-hp-day.today { border:1px solid rgba(255,255,255,.35); border-radius:7px; padding:7px 9px; margin:4px 0; }
-        .bb-hp-day.today .bb-hp-day-title { color:#fff; font-weight:900; }
-
         /* ── 제거 힌트 ── */
         .bb-rmhint { font-size:12px; color:var(--rd); font-weight:700; display:none; opacity:.85; }
         .bb-rmhint.show { display:block; }
@@ -455,20 +411,6 @@
             <div id="bb-ap-body">
                 <div class="bb-ap-empty">이상 없음 ✓</div>
             </div>
-        </div>
-
-        <!-- 히스토리 패널 -->
-        <div id="bb-hist-panel">
-            <div class="bb-hp-hd">
-                <div class="bb-hp-title">📋 히스토리</div>
-                <div class="bb-hp-close" id="bb-hp-close">✕</div>
-            </div>
-            <div class="bb-hp-menu">
-                <button class="bb-hp-menu-btn active" id="bb-hp-btn-video">다중 영상</button>
-                <button class="bb-hp-menu-btn" id="bb-hp-btn-hw">버튼 2</button>
-                <button class="bb-hp-menu-btn" id="bb-hp-btn-sw">버튼 3</button>
-            </div>
-            <div class="bb-hp-body" id="bb-hp-body"></div>
         </div>
     `;
     document.body.appendChild(wrap);
@@ -839,7 +781,7 @@
 		// 남은 알림 없으면 패널 닫기
 		const remainingInType = currentAlerts.filter(a => a.type === currentAlertType).length;
 		if (currentAlerts.length === 0 || remainingInType === 0) {
-		    document.getElementById('bb-alert-panel').classList.remove('open');
+			document.getElementById('bb-alert-panel').classList.remove('open');
 		}
 	}
 
@@ -915,7 +857,6 @@
         isOpen = false;
         document.getElementById('bb').classList.remove('open');
         document.getElementById('bb-alert-panel').classList.remove('open');
-        document.getElementById('bb-hist-panel').classList.remove('open');
         if (rmMode) { rmMode = false; rmSet.clear(); updateRmUI(); }
         hideDd();
     }
@@ -932,30 +873,6 @@
             h.endsWith('vercel.app');
         if (!allowed) return;
         isOpen ? closeBoard() : openBoard();
-    });
-
-    let _hCount = 0, _hTimer;
-    document.addEventListener('keydown', e => {
-        if (e.key === 'h' || e.key === 'H') {
-            if (_hCount === 0) _hTimer = setTimeout(() => _hCount = 0, 2000);
-            _hCount++;
-            if (_hCount >= 5) {
-                clearTimeout(_hTimer); _hCount = 0;
-                const panel = document.getElementById('bb-hist-panel');
-                panel.classList.toggle('open');
-                if (panel.classList.contains('open')) {
-                    panel.style.zIndex = ++topmostZ;
-                    histActiveMenu = 'video';
-                    ['bb-hp-btn-video','bb-hp-btn-hw','bb-hp-btn-sw'].forEach(id => {
-                        document.getElementById(id)?.classList.remove('active');
-                    });
-                    document.getElementById('bb-hp-btn-video').classList.add('active');
-                    loadHistoryPanel();
-                }
-            }
-        } else {
-            clearTimeout(_hTimer); _hCount = 0;
-        }
     });
 
     // ============================================================
@@ -1227,26 +1144,6 @@
         document.getElementById('bb-info-panel').classList.remove('open');
     });
 
-    document.getElementById('bb-hp-close').addEventListener('click', () => {
-        document.getElementById('bb-hist-panel').classList.remove('open');
-    });
-    document.getElementById('bb-hp-btn-video').addEventListener('click', () => {
-        histActiveMenu = 'video';
-        ['bb-hp-btn-video','bb-hp-btn-hw','bb-hp-btn-sw'].forEach(id => document.getElementById(id).classList.remove('active'));
-        document.getElementById('bb-hp-btn-video').classList.add('active');
-        loadVideoHistory();
-    });
-    document.getElementById('bb-hp-btn-hw').addEventListener('click', () => {
-        ['bb-hp-btn-video','bb-hp-btn-hw','bb-hp-btn-sw'].forEach(id => document.getElementById(id).classList.remove('active'));
-        document.getElementById('bb-hp-btn-hw').classList.add('active');
-        document.getElementById('bb-hp-body').innerHTML = '<div class="bb-hp-empty">준비 중입니다.</div>';
-    });
-    document.getElementById('bb-hp-btn-sw').addEventListener('click', () => {
-        ['bb-hp-btn-video','bb-hp-btn-hw','bb-hp-btn-sw'].forEach(id => document.getElementById(id).classList.remove('active'));
-        document.getElementById('bb-hp-btn-sw').classList.add('active');
-        document.getElementById('bb-hp-body').innerHTML = '<div class="bb-hp-empty">준비 중입니다.</div>';
-    });
-
     const siEl = document.getElementById('bb-si');
     siEl.addEventListener('click', showDd);
     siEl.addEventListener('input', () => { ddFocusIdx = -1; showDd(); });
@@ -1377,136 +1274,6 @@
             alert(`✅ "${name}" 복원 완료 (${data.ids.length}대)`);
         } catch { alert('❌ 복원 실패 (네트워크 오류)'); }
     });
-
-    // ============================================================
-    // SECTION HIST. 히스토리 패널 로직
-    // ============================================================
-    const MONITOR_DATA_URL = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/swordfish.css';
-    const MONTH_NAMES = { '01':'jan','02':'feb','03':'mar','04':'apr','05':'may','06':'jun','07':'jul','08':'aug','09':'sep','10':'oct','11':'nov','12':'dec' };
-    let histActiveMenu = 'video';
-
-    async function loadHistoryPanel() { await loadVideoHistory(); }
-
-    async function loadVideoHistory() {
-        const body = document.getElementById('bb-hp-body');
-        body.innerHTML = '';
-        try {
-            const res  = await fetch(MONITOR_DATA_URL + '?t=' + Date.now());
-            const text = await res.text();
-            const json = JSON.parse(text.slice(text.indexOf('{')));
-            const history = json.history || {};
-            const realtime = json.realtime || [];
-            const now = new Date();
-            const todayStr = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
-            const lastSlot = now.getHours() >= 2 ? now.getHours() - 2 : 0;
-            const displayHistory = { ...history };
-            displayHistory[todayStr] = realtime.filter(e => parseInt(e.hour) <= lastSlot);
-            if (Object.keys(history).length === 0 && displayHistory[todayStr].length === 0) {
-                body.innerHTML = '<div class="bb-hp-empty">누락 기록 없음 ✓</div>';
-                return;
-            }
-            const byMonth = {};
-            Object.entries(displayHistory).forEach(([dateStr, entries]) => {
-                const monthKey = `${dateStr.slice(0,4)}-${dateStr.slice(4,6)}`;
-                if (!byMonth[monthKey]) byMonth[monthKey] = {};
-                byMonth[monthKey][dateStr] = entries;
-            });
-            const sortedMonths = Object.keys(byMonth).sort((a,b) => b.localeCompare(a));
-            body.innerHTML = sortedMonths.map(monthKey => {
-                const [y, m] = monthKey.split('-');
-                const label = `${y}년 ${parseInt(m)}월`;
-                const days  = Object.keys(byMonth[monthKey]).sort();
-                const daysHtml = days.map(dateStr => {
-                    const entries = byMonth[monthKey][dateStr];
-                    const isToday = dateStr === todayStr;
-                    const todayLabel = isToday ? ' 🔴 실시간' : '';
-                    const d = `${parseInt(dateStr.slice(4,6))}/${parseInt(dateStr.slice(6,8))}`;
-                    if (!entries || entries.length === 0) return `
-                        <div class="bb-hp-day ${isToday?'today':''}">
-                            <div class="bb-hp-day-title">📅 ${d}${todayLabel} (0건)</div>
-                            <div style="padding:6px 0;font-size:11px;color:var(--gn);font-weight:700;">✓ 누락 없음</div>
-                        </div>`;
-                    const sorted = [...entries].sort((a,b) => parseInt(a.hour)-parseInt(b.hour));
-                    return `
-                        <div class="bb-hp-day ${isToday?'today':''}">
-                            <div class="bb-hp-day-title">📅 ${d}${todayLabel} (${entries.length}건)</div>
-                            ${sorted.map(e => `
-                                <div class="bb-hp-entry">
-                                    <div class="bb-hp-entry-hour">${e.hour}</div>
-                                    <div class="bb-hp-entry-name">${e.name}</div>
-                                    <div class="bb-hp-entry-badge ${e.status !== '미업로드' ? 'misplaced' : ''}">${e.status}</div>
-                                </div>`).join('')}
-                        </div>`;
-                }).join('');
-                return `
-                    <div class="bb-hp-month">
-                        <div class="bb-hp-month-hd" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.bb-hp-month-arrow').classList.toggle('open')">
-                            <span>${label} 영상 업로드 기록</span>
-                            <span class="bb-hp-month-arrow">▼</span>
-                        </div>
-                        <div class="bb-hp-month-body">${daysHtml}</div>
-                    </div>`;
-            }).join('');
-        } catch(err) {
-            body.innerHTML = '<div class="bb-hp-empty">데이터 로드 실패 ❌</div>';
-            console.error('[BB-HIST]', err);
-        }
-    }
-
-    window._bbToggleNeubie = async function(type, monthNum, monthName, hdEl) {
-        const bodyEl  = document.getElementById(`bb-ni-body-${type}-${monthNum}`);
-        const arrowEl = hdEl.querySelector('.bb-hp-month-arrow');
-        const isOpen  = bodyEl.classList.contains('open');
-        if (isOpen) { bodyEl.classList.remove('open'); arrowEl.classList.remove('open'); return; }
-        bodyEl.classList.add('open'); arrowEl.classList.add('open');
-        if (bodyEl.dataset.loaded === '1') return;
-        bodyEl.innerHTML = '<div class="bb-hp-loading">로딩 중...</div>';
-        const url = NEUBIE_BASE_URL + `neubie_issue_${type}_${monthName}.json?t=` + Date.now();
-        try {
-            const res = await fetch(url);
-            if (!res.ok) throw new Error('not found');
-            const json = await res.json();
-            const meta    = json.meta || null;
-            const summary = meta ? meta.summary : null;
-            if (!summary || !summary.length) {
-                bodyEl.innerHTML = '<div class="bb-hp-empty">summary 데이터 없음</div>';
-                bodyEl._issueData = json.issues || [];
-                bodyEl.dataset.loaded = '1';
-                return;
-            }
-            bodyEl.innerHTML = `
-                <div style="padding:8px 13px;font-size:11px;color:var(--mu);font-weight:700;border-bottom:1px solid var(--bd);">
-                    전체 ${meta.total_issues}건 / ${meta.total_robots}개 기체
-                    <span style="float:right;color:var(--mu);">생성: ${meta.generated_at ? meta.generated_at.slice(0,10) : '-'}</span>
-                </div>
-                <div style="max-height:320px;overflow-y:auto;">
-                    ${summary.map((s, si) => {
-                        const phList = Object.entries(s.phenomena || {})
-                            .sort((a,b) => b[1]-a[1])
-                            .map(([ph,cnt]) => `<span style="color:var(--mu)">${ph} ${cnt}건</span>`)
-                            .join(' <span style="color:var(--bd2)">|</span> ');
-                        return `
-                            <div style="padding:7px 13px;border-bottom:1px solid var(--bd);font-size:12px;line-height:1.6;display:flex;justify-content:space-between;align-items:flex-start;">
-                                <div style="flex:1;">
-                                    <div style="font-weight:900;color:var(--tx);">${s.site} / ${s.robot}
-                                        <span style="font-size:11px;color:var(--${type==='hw'?'rd':'bl'});margin-left:6px;">총 ${s.total}건</span>
-                                    </div>
-                                    <div style="font-size:11px;margin-top:2px;">${phList}</div>
-                                </div>
-                                <button onclick="window._bbShowIssueDetail('${type}','${monthNum}','${s.robot.replace(/['"\\]/g,'')}',${si})"
-                                    style="flex-shrink:0;margin-left:8px;padding:3px 9px;border-radius:5px;border:1px solid var(--bd2);background:var(--sur2);color:var(--mu);font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">
-                                    보기
-                                </button>
-                            </div>`;
-                    }).join('')}
-                </div>`;
-            bodyEl._issueData = json.issues || [];
-            bodyEl.dataset.loaded = '1';
-        } catch(err) {
-            bodyEl.innerHTML = '<div class="bb-hp-empty">데이터 로드 실패 ❌</div>';
-            console.error('[BB-NEUBIE]', err);
-        }
-    };
 
     // ============================================================
     // SECTION 15. 토큰 발송
