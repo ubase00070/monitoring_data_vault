@@ -674,7 +674,7 @@
                 setTimeout(() => alarmDiv.remove(), 500);
             }, 7000);
 
-        // ── Type 2: 지하철 자막 (좌→우) ─────────────────────────
+        // ── Type 2: 지하철 자막 ─────────────────────────
         } else {
             if (!document.getElementById('neubie-ticker-style')) {
                 const s = document.createElement('style');
