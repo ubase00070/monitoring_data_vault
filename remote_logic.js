@@ -2218,207 +2218,180 @@
 
 	let _bitrateRunning = false;
 
-    async function injectBitrateButtons() {
-        if (!isMonitoringPage()) return;
-        if (_bitrateRunning) return;
-        _bitrateRunning = true;
-
-        try {
-            const cards = document.querySelectorAll('.rounded-8.relative.flex.overflow-hidden');
-            const pending = [];
-
-            cards.forEach(card => {
-                if (card.dataset.bitrateInjected) return;
-                card.dataset.bitrateInjected = 'true';
-                pending.push(card);
-            });
-
-            for (const card of pending) {
-                const nameEl = card.querySelector('span.font-size-14.max-w-fit.truncate.font-bold.text-white');
-                const robotName = nameEl?.innerText.trim();
-                if (!robotName) continue;
-
-                try {
-                    const res = await fetch(
-                        `https://core.neubie.ai/robots/?nickname=${encodeURIComponent(robotName)}`,
-                        { credentials: 'include' }
-                    );
-                    if (!res.ok) continue;
-                    const json = await res.json();
-                    const robot = json.results?.[0];
-                    if (!robot) continue;
-
-                    let currentLevel = robot.robotStatus.bitrateLevel;
-
-                    const wrapper = document.createElement('div');
-                    wrapper.style.cssText = `
-                        position: absolute;
-                        top: 8px; left: 8px;
-                        z-index: 999;
-                        pointer-events: auto;
-                        display: flex;
-                        flex-direction: row;
-                        align-items: center;
-                        gap: 3px;
-                        opacity: 0;
-                        transition: opacity 0.2s;
-                        background: rgba(20,20,20,0.8);
-                        border-radius: 8px;
-                        padding: 3px 6px;
-                    `;
-
-                    card.addEventListener('mouseenter', () => wrapper.style.opacity = '1');
-                    card.addEventListener('mouseleave', () => wrapper.style.opacity = '0');
-
-                    const labelEl = document.createElement('span');
-                    labelEl.innerText = `화질 ${LEVEL_LABELS[currentLevel]}`;
-                    labelEl.style.cssText = `
-                        color: white;
-                        font-size: 11px;
-                        font-weight: 600;
-                        font-family: 'Pretendard', sans-serif;
-                        white-space: nowrap;
-                    `;
-
-                    let isCooling = false;
-
-                    const makeBtn = (label, delta) => {
-                        const btn = document.createElement('div');
-                        btn.innerHTML = label;
-                        btn.style.cssText = `
-                            color: white;
-                            font-size: 11px;
-                            font-weight: 700;
-                            cursor: pointer;
-                            user-select: none;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            width: 14px;
-                            height: 14px;
-                            border-radius: 4px;
-                            background: rgba(80,80,80,0.8);
-                            transition: opacity 0.15s;
-                        `;
-
-                        btn.addEventListener('click', async (e) => {
-                            e.stopPropagation();
-                            if (isCooling) return;
-                            const newLevel = currentLevel + delta;
-                            if (newLevel < 1 || newLevel > 5) return;
-
-                            isCooling = true;
-                            btn.style.opacity = '0.4';
-
-                            try {
-                                await fetch(`https://core.neubie.ai/robots/${robot.id}/video-bitrate-level/`, {
-                                    method: 'PUT',
-                                    credentials: 'include',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ level: newLevel })
-                                });
-                                currentLevel = newLevel;
-                                labelEl.innerText = `화질 ${LEVEL_LABELS[currentLevel]}`;
-                            } catch(e) {}
-
-                            setTimeout(() => {
-                                isCooling = false;
-                                btn.style.opacity = '1';
-                            }, 1000);
-                        });
-
-                        return btn;
-                    };
-
-                    wrapper.appendChild(makeBtn('▲', 1));
-                    wrapper.appendChild(labelEl);
-                    wrapper.appendChild(makeBtn('▼', -1));
-
-					const sep = document.createElement('span');
-					sep.style.cssText = `
-					    color: rgba(255,255,255,0.2);
-					    font-size: 11px;
-					    display: flex;
-					    align-items: center;
-					    padding: 0 3px;
-					`;
-					sep.textContent = '|';
-					
-					// 램프 버튼
-					let isHeadLightOn = robot.robotStatus?.isHeadLightOn ?? false;
-					let isLampCooling = false;
-					
-					const lampBtn = document.createElement('span');
-					lampBtn.textContent = '램프';
-					lampBtn.style.cssText = `
-					    color: ${isHeadLightOn ? 'rgba(255,255,255,1)' : 'rgba(255,255,255,0.25)'};
-					    font-size: 11px;
-					    font-weight: ${isHeadLightOn ? '700' : '400'};
-					    cursor: pointer;
-					    user-select: none;
-					    display: flex;
-					    align-items: center;
-					    justify-content: center;
-					    padding: 0 2px;
-					    transition: color 0.2s, font-weight 0.2s;
-					    white-space: nowrap;
-					    height: 100%;
-					`;
-					
-					lampBtn.addEventListener('click', async (e) => {
-					    e.stopPropagation();
-					    if (isLampCooling) return;
-					    isLampCooling = true;
-					    lampBtn.style.opacity = '0.4';
-					    try {
-					        const r = await fetch(`https://core.neubie.ai/robots/${robot.id}/head-light/`, {
-					            method: 'PUT',
-					            credentials: 'include',
-					            headers: { 'Content-Type': 'application/json' },
-					            body: JSON.stringify({ isOn: !isHeadLightOn })
-					        });
-					        if (r.ok) {
-					            isHeadLightOn = !isHeadLightOn;
-					            lampBtn.style.color = isHeadLightOn ? 'rgba(255,255,255,1)' : 'rgba(255,255,255,0.25)';
-					            lampBtn.style.fontWeight = isHeadLightOn ? '700' : '400';
-					        }
-					    } catch(e) {}
-					    lampBtn.style.opacity = '1';
-					    setTimeout(() => isLampCooling = false, 1000);
-					});
-					
-					wrapper.appendChild(sep);
-					wrapper.appendChild(lampBtn);
-					
-                    card.style.position = 'relative';
-                    card.appendChild(wrapper);
-
-                } catch(e) {
-                    console.warn('화질 버튼 삽입 실패:', e);
-                    // 실패 시 플래그 해제 → 다음 기회에 재시도
-                    card.dataset.bitrateInjected = '';
-                }
-            }
-        } finally {
-		    _bitrateRunning = false;
-		
-		    // 미처리 카드 있으면 최대 5회, 2초 간격으로 재시도
-		    let retryCount = 0;
-		    const retryInject = () => {
-		        const remaining = document.querySelectorAll(
-		            '.rounded-8.relative.flex.overflow-hidden:not([data-bitrate-injected="true"])'
-		        );
-		        if (remaining.length > 0 && retryCount < 5) {
-		            retryCount++;
-		            setTimeout(() => {
-		                injectBitrateButtons();
-		                retryInject();
-		            }, 2000);
-		        }
-		    };
-		    retryInject();
-		}
-    }
+	async function injectBitrateButtons() {
+	    if (!isMonitoringPage()) return;
+	    if (_bitrateRunning) return;
+	    _bitrateRunning = true;
+	
+	    try {
+	        const cards = document.querySelectorAll('.rounded-8.relative.flex.overflow-hidden');
+	
+	        // 원본처럼 forEach async (병렬) + 방어는 Promise.all로
+	        const promises = [...cards].map(async (card) => {
+	            if (card.dataset.bitrateInjected) return;
+	            card.dataset.bitrateInjected = 'true';
+	
+	            const nameEl = card.querySelector('span.font-size-14.max-w-fit.truncate.font-bold.text-white');
+	            const robotName = nameEl?.innerText.trim();
+	            if (!robotName) return;
+	
+	            try {
+	                const res = await fetch(
+	                    `https://core.neubie.ai/robots/?nickname=${encodeURIComponent(robotName)}`,
+	                    { credentials: 'include' }
+	                );
+	                if (!res.ok) { card.dataset.bitrateInjected = ''; return; }
+	                const json = await res.json();
+	                const robot = json.results?.[0];
+	                if (!robot) { card.dataset.bitrateInjected = ''; return; }
+	
+	                let currentLevel = robot.robotStatus.bitrateLevel;
+	                let isHeadLightOn = robot.robotStatus?.isHeadLightOn ?? false;
+	
+	                const wrapper = document.createElement('div');
+	                wrapper.style.cssText = `
+	                    position: absolute;
+	                    top: 8px; left: 8px;
+	                    z-index: 999;
+	                    pointer-events: auto;
+	                    display: flex;
+	                    flex-direction: row;
+	                    align-items: center;
+	                    gap: 3px;
+	                    opacity: 0;
+	                    transition: opacity 0.2s;
+	                    background: rgba(20,20,20,0.8);
+	                    border-radius: 8px;
+	                    padding: 3px 6px;
+	                `;
+	
+	                card.addEventListener('mouseenter', () => wrapper.style.opacity = '1');
+	                card.addEventListener('mouseleave', () => wrapper.style.opacity = '0');
+	
+	                const labelEl = document.createElement('span');
+	                labelEl.innerText = `화질 ${LEVEL_LABELS[currentLevel]}`;
+	                labelEl.style.cssText = `
+	                    color: white;
+	                    font-size: 11px;
+	                    font-weight: 600;
+	                    font-family: 'Pretendard', sans-serif;
+	                    white-space: nowrap;
+	                `;
+	
+	                let isCooling = false;
+	
+	                const makeBtn = (label, delta) => {
+	                    const btn = document.createElement('div');
+	                    btn.innerHTML = label;
+	                    btn.style.cssText = `
+	                        color: white;
+	                        font-size: 11px;
+	                        font-weight: 700;
+	                        cursor: pointer;
+	                        user-select: none;
+	                        display: flex;
+	                        align-items: center;
+	                        justify-content: center;
+	                        width: 14px;
+	                        height: 14px;
+	                        border-radius: 4px;
+	                        background: rgba(80,80,80,0.8);
+	                        transition: opacity 0.15s;
+	                    `;
+	                    btn.addEventListener('click', async (e) => {
+	                        e.stopPropagation();
+	                        if (isCooling) return;
+	                        const newLevel = currentLevel + delta;
+	                        if (newLevel < 1 || newLevel > 5) return;
+	                        isCooling = true;
+	                        btn.style.opacity = '0.4';
+	                        try {
+	                            await fetch(`https://core.neubie.ai/robots/${robot.id}/video-bitrate-level/`, {
+	                                method: 'PUT',
+	                                credentials: 'include',
+	                                headers: { 'Content-Type': 'application/json' },
+	                                body: JSON.stringify({ level: newLevel })
+	                            });
+	                            currentLevel = newLevel;
+	                            labelEl.innerText = `화질 ${LEVEL_LABELS[currentLevel]}`;
+	                        } catch(e) {}
+	                        setTimeout(() => { isCooling = false; btn.style.opacity = '1'; }, 1000);
+	                    });
+	                    return btn;
+	                };
+	
+	                // 구분선
+	                const sep = document.createElement('span');
+	                sep.style.cssText = `color:rgba(255,255,255,0.2);font-size:11px;display:flex;align-items:center;padding:0 3px;`;
+	                sep.textContent = '|';
+	
+	                // 램프 버튼
+	                let isLampCooling = false;
+	                const lampBtn = document.createElement('span');
+	                lampBtn.textContent = '램프';
+	                lampBtn.style.cssText = `
+	                    color: ${isHeadLightOn ? 'rgba(255,255,255,1)' : 'rgba(255,255,255,0.25)'};
+	                    font-size: 11px;
+	                    font-weight: ${isHeadLightOn ? '700' : '400'};
+	                    cursor: pointer;
+	                    user-select: none;
+	                    display: flex;
+	                    align-items: center;
+	                    justify-content: center;
+	                    padding: 0 2px;
+	                    transition: color 0.2s, font-weight 0.2s;
+	                    white-space: nowrap;
+	                    height: 100%;
+	                `;
+	                lampBtn.addEventListener('click', async (e) => {
+	                    e.stopPropagation();
+	                    if (isLampCooling) return;
+	                    isLampCooling = true;
+	                    lampBtn.style.opacity = '0.4';
+	                    try {
+	                        const r = await fetch(`https://core.neubie.ai/robots/${robot.id}/head-light/`, {
+	                            method: 'PUT',
+	                            credentials: 'include',
+	                            headers: { 'Content-Type': 'application/json' },
+	                            body: JSON.stringify({ isOn: !isHeadLightOn })
+	                        });
+	                        if (r.ok) {
+	                            isHeadLightOn = !isHeadLightOn;
+	                            lampBtn.style.color = isHeadLightOn ? 'rgba(255,255,255,1)' : 'rgba(255,255,255,0.25)';
+	                            lampBtn.style.fontWeight = isHeadLightOn ? '700' : '400';
+	                        }
+	                    } catch(e) {}
+	                    lampBtn.style.opacity = '1';
+	                    setTimeout(() => isLampCooling = false, 1000);
+	                });
+	
+	                wrapper.appendChild(makeBtn('▲', 1));
+	                wrapper.appendChild(labelEl);
+	                wrapper.appendChild(makeBtn('▼', -1));
+	                wrapper.appendChild(sep);
+	                wrapper.appendChild(lampBtn);
+	                card.style.position = 'relative';
+	                card.appendChild(wrapper);
+	
+	            } catch(e) {
+	                console.warn('화질 버튼 삽입 실패:', e);
+	                card.dataset.bitrateInjected = '';
+	            }
+	        });
+	
+	        await Promise.all(promises);
+	
+	    } finally {
+	        _bitrateRunning = false;
+	
+	        const remaining = document.querySelectorAll(
+	            '.rounded-8.relative.flex.overflow-hidden:not([data-bitrate-injected="true"])'
+	        );
+	        if (remaining.length > 0) {
+	            setTimeout(injectBitrateButtons, 2000);
+	        }
+	    }
+	}
 
 	function registerBitrateObserver() {
 		if (!isMonitoringPage()) return;
