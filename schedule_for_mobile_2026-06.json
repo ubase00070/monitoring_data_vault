@@ -4837,10 +4837,10 @@
           "raw": "1"
         },
         "6/27": {
-          "status": "work",
+          "status": "half",
           "working": true,
           "present": true,
-          "raw": "1"
+          "raw": "반차"
         },
         "6/28": {
           "status": "off",
@@ -7888,6 +7888,6 @@
     "6/30"
   ],
   "mainMonth": 6,
-  "updatedAt": "2026-06-22T03:53:11.005Z",
+  "updatedAt": "2026-06-23T03:53:06.220Z",
   "sheetName": "2026년_06월 스케줄"
 }
