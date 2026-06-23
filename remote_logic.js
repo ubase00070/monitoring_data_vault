@@ -2402,13 +2402,21 @@
         } finally {
 		    _bitrateRunning = false;
 		
-		    // 카메라 피드 로딩 완료 후 재시도
-		    const remaining = document.querySelectorAll(
-		        '.rounded-8.relative.flex.overflow-hidden:not([data-bitrate-injected="true"])'
-		    );
-		    if (remaining.length > 0) {
-		        setTimeout(injectBitrateButtons, 2000);  // 1000 → 2000
-		    }
+		    // 미처리 카드 있으면 최대 5회, 2초 간격으로 재시도
+		    let retryCount = 0;
+		    const retryInject = () => {
+		        const remaining = document.querySelectorAll(
+		            '.rounded-8.relative.flex.overflow-hidden:not([data-bitrate-injected="true"])'
+		        );
+		        if (remaining.length > 0 && retryCount < 5) {
+		            retryCount++;
+		            setTimeout(() => {
+		                injectBitrateButtons();
+		                retryInject();
+		            }, 2000);
+		        }
+		    };
+		    retryInject();
 		}
     }
 
