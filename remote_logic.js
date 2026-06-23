@@ -2390,8 +2390,15 @@
 				'.rounded-8.relative.flex.overflow-hidden:not([data-bitrate-injected="true"])'
 			);
 			if (remaining.length > 0) {
-				setTimeout(injectBitrateButtons, 2000);
-			}
+		        window._bitrateRetryCount = (window._bitrateRetryCount || 0) + 1;
+		        if (window._bitrateRetryCount <= 5) {  // 최대 5회 (10초)
+		            setTimeout(injectBitrateButtons, 2000);
+		        } else {
+		            window._bitrateRetryCount = 0;  // 초기화
+		        }
+		    } else {
+		        window._bitrateRetryCount = 0;  // 성공 시 초기화
+		    }
 		}
 	}
 
