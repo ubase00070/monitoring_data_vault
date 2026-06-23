@@ -1017,8 +1017,9 @@
                 const patchItems = [
                     {
                         version: 'v1.2',
-                        date: '2026-06-22',
+                        date: '2026-06-23',
                         items: [
+							'다중 모니터링 헤드 램프 ON/OFF',
                             '임무 종료된 리센츠/엘스 페이지 이탈 시 5초 후 자동 사이드 ON 신호 전송',
                             '성남 배터리 속도 개선',
 							'네트워크 불안정 지역 경고 레이아웃',
@@ -2401,12 +2402,12 @@
         } finally {
 		    _bitrateRunning = false;
 		
-		    // ← 추가: 완료 후 미처리 카드 있으면 재시도
+		    // 카메라 피드 로딩 완료 후 재시도
 		    const remaining = document.querySelectorAll(
 		        '.rounded-8.relative.flex.overflow-hidden:not([data-bitrate-injected="true"])'
 		    );
 		    if (remaining.length > 0) {
-		        setTimeout(injectBitrateButtons, 1000);
+		        setTimeout(injectBitrateButtons, 2000);  // 1000 → 2000
 		    }
 		}
     }
@@ -2422,7 +2423,7 @@
             _bitrateThrottle = setTimeout(() => {
                 injectBitrateButtons();
                 _bitrateThrottle = null;
-            }, 500);
+            }, 1500);
         });
 		window._bitrateObserver.observe(document.body, { childList: true, subtree: true });
 	}
