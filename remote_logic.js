@@ -2332,6 +2332,63 @@
                     wrapper.appendChild(makeBtn('▲', 1));
                     wrapper.appendChild(labelEl);
                     wrapper.appendChild(makeBtn('▼', -1));
+
+					const sep = document.createElement('span');
+					sep.style.cssText = `
+					    color: rgba(255,255,255,0.2);
+					    font-size: 11px;
+					    display: flex;
+					    align-items: center;
+					    padding: 0 3px;
+					`;
+					sep.textContent = '|';
+					
+					// 램프 버튼
+					let isHeadLightOn = robot.robotStatus?.isHeadLightOn ?? false;
+					let isLampCooling = false;
+					
+					const lampBtn = document.createElement('span');
+					lampBtn.textContent = '램프';
+					lampBtn.style.cssText = `
+					    color: ${isHeadLightOn ? 'rgba(255,255,255,1)' : 'rgba(255,255,255,0.25)'};
+					    font-size: 11px;
+					    font-weight: ${isHeadLightOn ? '700' : '400'};
+					    cursor: pointer;
+					    user-select: none;
+					    display: flex;
+					    align-items: center;
+					    justify-content: center;
+					    padding: 0 2px;
+					    transition: color 0.2s, font-weight 0.2s;
+					    white-space: nowrap;
+					    height: 100%;
+					`;
+					
+					lampBtn.addEventListener('click', async (e) => {
+					    e.stopPropagation();
+					    if (isLampCooling) return;
+					    isLampCooling = true;
+					    lampBtn.style.opacity = '0.4';
+					    try {
+					        const r = await fetch(`https://core.neubie.ai/robots/${robot.id}/head-light/`, {
+					            method: 'PUT',
+					            credentials: 'include',
+					            headers: { 'Content-Type': 'application/json' },
+					            body: JSON.stringify({ isOn: !isHeadLightOn })
+					        });
+					        if (r.ok) {
+					            isHeadLightOn = !isHeadLightOn;
+					            lampBtn.style.color = isHeadLightOn ? 'rgba(255,255,255,1)' : 'rgba(255,255,255,0.25)';
+					            lampBtn.style.fontWeight = isHeadLightOn ? '700' : '400';
+					        }
+					    } catch(e) {}
+					    lampBtn.style.opacity = '1';
+					    setTimeout(() => isLampCooling = false, 1000);
+					});
+					
+					wrapper.appendChild(sep);
+					wrapper.appendChild(lampBtn);
+					
                     card.style.position = 'relative';
                     card.appendChild(wrapper);
 
