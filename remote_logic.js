@@ -3757,6 +3757,8 @@
 		_autoSideInProgress.add(robotId);
 
 		try {
+			await new Promise(r => setTimeout(r, 2000));
+			
 			const res = await fetch(`https://core.neubie.ai/robots/${robotId}/`, { credentials: 'include' });
 			const data = await res.json();
 			if (data.currentScenario) { _autoSideInProgress.delete(robotId); return; }
