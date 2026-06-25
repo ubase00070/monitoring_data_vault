@@ -19,7 +19,7 @@
             --bd:#242428; --bd2:#2e2e34; --tx:#e8e8f0; --mu:#52525e;
             --gn:#22c55e; --gn2:rgba(34,197,94,.10);
             --bl:#3b82f6; --bl2:rgba(59,130,246,.10);
-            --wh:rgba(240,240,255,.06); --gy:#4b5563; --gy2:rgba(75,85,99,.12);
+            --wh:rgba(240,240,255,.06); --gy:#4b5563;
             --rd:#ef4444; --rd2:rgba(239,68,68,.12); --ye:#fbbf24;
             --or:#f97316; --or2:rgba(249,115,22,.12);
             --pk:#ec4899; --pk2:rgba(236,72,153,.10);
@@ -445,6 +445,15 @@
         { id:'seongsu',  label:'성수 요기요',    keywords:['성수 요기요'] },
         { id:'seongnam', label:'성남 삼평/서현', keywords:['성남시'] },
     ];
+	
+	const CAM_LABELS = {
+		isOnCamF:  'F(전면)',
+		isOnCamFd: 'Fd(하단)',
+		isOnCamFl: 'Fl(전면 좌측)',
+		isOnCamFr: 'Fr(전면 우측)',
+		isOnCamBl: 'Bl(후면 좌측)',
+		isOnCamBr: 'Br(후면 우측)',
+	};
 
     let DB = [];
     let ids = load();
@@ -616,14 +625,6 @@
 
 			// ── 기능5: 카메라 미노출 감지 ───────────────────────────
 			if (rs.isConnecting) {
-				const CAM_LABELS = {
-					isOnCamF:  'F(전면)',
-					isOnCamFd: 'Fd(하단)',
-					isOnCamFl: 'Fl(전면 좌측)',
-					isOnCamFr: 'Fr(전면 우측)',
-					isOnCamBl: 'Bl(후면 좌측)',
-					isOnCamBr: 'Br(후면 우측)',
-				};
 				const anyCamOn = Object.keys(CAM_LABELS).some(k => rs[k] === true);
 				if (anyCamOn) {
 					const offCams = Object.entries(CAM_LABELS)
