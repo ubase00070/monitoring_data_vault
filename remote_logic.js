@@ -303,7 +303,7 @@
         return (day === 6 || day === 0);
     };
 
-    // [추가] 기체 트래킹 로직
+    // 기체 트래킹 로직
     function updateRobotContext() {
         const path = window.location.href;
         if (path.includes('go.neubie.ai/ko/remote/robot/')) {
@@ -339,25 +339,21 @@
         return el;
     }
 
-    const dashboard = createContainer('neubie-dashboard', '580px', '50%', '50%');
+    const dashboard = createContainer('neubie-dashboard', 'min(580px, 94vw)', '50%', '50%');
     const batteryPopup = createContainer('neubie-battery-popup', '380px', '20px', 'auto', '20px');
 
     function makeDraggable(handleEl, targetEl) {
-        // handleEl: 드래그를 시작할 헤더 div
-        // targetEl: 실제로 움직일 팝업 전체 div
         let isDragging = false, startX, startY, startLeft, startTop;
 
         handleEl.style.cursor = 'grab';
 
         handleEl.addEventListener('mousedown', (e) => {
-            // input, button, select는 드래그 제외 — 클릭 기능 보존
             const tag = e.target.tagName;
             if (tag === 'INPUT' || tag === 'BUTTON' || tag === 'SELECT' || tag === 'TEXTAREA' || tag === 'A') return;
 
             isDragging = true;
             targetEl.dataset.dragging = 'true';
 
-            // transform 제거 후 실제 픽셀 위치로 전환 (최초 1회)
             const rect = targetEl.getBoundingClientRect();
             targetEl.style.transform = 'none';
             targetEl.style.left = rect.left + 'px';
@@ -370,14 +366,14 @@
             startTop = parseFloat(targetEl.style.top);
 
             handleEl.style.cursor = 'grabbing';
-            e.preventDefault(); // 헤더에서만 실행 → input/button은 위에서 이미 return됨
+            e.preventDefault();
         });
 
         document.addEventListener('mousemove', (e) => {
             if (!isDragging) return;
             let newLeft = startLeft + (e.clientX - startX);
             let newTop  = startTop  + (e.clientY - startY);
-            // 화면 밖 이탈 방지
+
             newLeft = Math.max(0, Math.min(newLeft, window.innerWidth  - targetEl.offsetWidth));
             newTop  = Math.max(0, Math.min(newTop,  window.innerHeight - targetEl.offsetHeight));
             targetEl.style.left = newLeft + 'px';
@@ -430,7 +426,6 @@
         list.id = 'neubie-battery-list';
         batteryPopup.appendChild(list);
 
-        // 4대 아이템 미리 생성
         config.batteryIds.forEach((c) => {
             const item = document.createElement('div');
             item.dataset.batteryId = c.id;
@@ -534,7 +529,7 @@
     }
 
     /* ============================================================
-        SECTION 4-1. [서버 동기화] GitHub JSON 기반 업무 로드 엔진
+        SECTION 4-1. [서버 동기화] GitHub JSON 기반 업무 로드
        ============================================================ */
     function syncTasksFromServer() {
         const myName = localStorage.getItem('neubie_user_name');
@@ -596,7 +591,7 @@
     }
 
     /* ============================================================
-        SECTION 4-2 시간 계산 및 상태 판단 (통합 버전)
+        SECTION 4-2 시간 계산 및 상태 판단
        ============================================================ */
     function getTaskStatus(rawTime, isMonitoring) {
         const times = String(rawTime).match(/\d{2}:\d{2}/g);
@@ -623,19 +618,17 @@
         let remainMin = startScore - currScore;
         
         // 다중 모니터링은 10분 일찍 알림이 오도록 계산
-        // (remainMin이 13일 때, 사용자가 설정한 interval 3과 일치하게 됨)
         if (isMonitoring) {
             remainMin -= 10; 
         }
 
         return {
-            isExpired: currScore > endScore, // 업무 종료 시간이 지났으면 취소선
+            isExpired: currScore > endScore,
             remainMin: remainMin,
-            score: startScore // 정렬용 점수
+            score: startScore
         };
     }
 
-    // 리마인더 알림창 생성
     function triggerReminder(content, remainMin) {
         const notifType = localStorage.getItem('neubie_notif_type') || 'type1';
 
@@ -674,7 +667,7 @@
                 setTimeout(() => alarmDiv.remove(), 500);
             }, 7000);
 
-        // ── Type 2: 지하철 자막 ─────────────────────────
+        // ── Type 2: 지하철 스타일 ─────────────────────────
         } else {
             if (!document.getElementById('neubie-ticker-style')) {
                 const s = document.createElement('style');
@@ -710,12 +703,10 @@
     function renderTaskList(tasks) {
         const currentInt = localStorage.getItem('neubie_remind_int') || '0';
 
-        // 07시 기준 상대 시간 및 상태 계산 함수
         function getTaskStatus(rawTime) {
             if (!rawTime) return { isExpired: false, remainMin: -1, score: 0 };
 
             const now = new Date();
-            // 문자열에서 시간(HH:mm)만 추출
             const timeMatch = String(rawTime).match(/\d{2}:\d{2}/);
             if (!timeMatch) return { isExpired: false, remainMin: -1, score: 0 };
 
@@ -737,7 +728,6 @@
             return { isExpired, remainMin, score: taskScore };
         }
 
-        // 노이즈 제거 및 07시 기준 정렬
         const validTasks = tasks
             .filter(t => {
                 const content = t.content || "";
@@ -750,7 +740,6 @@
                 return scoreA - scoreB;
             });
 
-        // 헤더 및 설정 UI 렌더링 — inline-task-container 사용
         const inlineContainer = document.getElementById('inline-task-container');
         if (inlineContainer) inlineContainer.innerHTML = '';
         const container = inlineContainer || document.createElement('div'); // fallback
@@ -760,7 +749,6 @@
             return;
         }
 
-        // 리스트 생성 및 특수 알림 로직 적용
         validTasks.forEach(t => {
             const timeKey = t.rawTime || t.time;
             const interval = parseInt(localStorage.getItem('neubie_remind_int') || '0');
@@ -807,7 +795,6 @@
         });
     }
 
-    // 메시지 수신 시 처리
     taskChannel.onmessage = (e) => {
         if (e.data.type === 'TASK_UPDATE') {
             state.myTodayTasks = e.data.tasks;
@@ -817,11 +804,10 @@
     };
 
     /* ============================================================
-        SECTION 5. 줄을 서시오 & 중복 관제 완화(구)
+        SECTION 5. 줄을 서시오 & 중복 관제 완화(구버전 잔여물 style)
        ============================================================ */
 
     function injectConfigUI() {
-        // 이미 스타일이 존재하면 중복 생성 방지
         if (document.getElementById('neubie-engine-popup-style')) return;
 
         const style = document.createElement('style');
@@ -857,11 +843,7 @@
     }
 
     /* ============================================================
-    SECTION 6. 개입카드 중복 감지 엔진
-    ============================================================ */
-
-    /* ============================================================
-        SECTION 7. 스마트 네이밍 엔진 카드 생성
+        SECTION 7. 스마트 네이밍 엔진 카드
        ============================================================ */
     function createNamingCard() {
         const isWknd = isWeekend();
@@ -1101,7 +1083,6 @@
         titleWrap.appendChild(title);
         titleWrap.appendChild(patchBtn);
         
-        // 게시판 버튼
         const boardBtn = document.createElement('button');
         boardBtn.textContent = '게시판';
         boardBtn.style.cssText = "background:transparent; border:1px solid #475569; color:#ffffff; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:14px; margin-left:4px;";
@@ -1114,9 +1095,7 @@
 
         makeDraggable(headerContainer, dashboard);
 
-        // 이벤트 바인딩
         setTimeout(() => {
-            // 이름 입력창 로직
             const input = document.getElementById('inline-name-input');
             if (input) {
                 input.onchange = () => {
@@ -1137,12 +1116,10 @@
             // 알림 설정 드롭다운 선택 시 즉시 저장 로직
             const intervalSelect = document.getElementById('remind-interval');
             if (intervalSelect) {
-                // 드롭다운 값이 바뀔 때마다 실행
                 intervalSelect.onchange = () => {
                     const selectedValue = intervalSelect.value;
                     localStorage.setItem('neubie_remind_int', selectedValue);
                     
-                    // 시각적 피드백 (선택하면 잠시 노랗게 변했다가 돌아옴)
                     intervalSelect.style.backgroundColor = '#fef9c3'; 
                     setTimeout(() => { intervalSelect.style.backgroundColor = 'white'; }, 300);
                     
@@ -1184,7 +1161,7 @@
                 </div>
             </div>
         `;
-        // 알림 타입 토글 + Test 버튼 이벤트
+        // 알림 타입 토글
         setTimeout(() => {
             const savedType = localStorage.getItem('neubie_notif_type') || 'type1';
             const btn1 = document.getElementById('btn-type1');
@@ -1233,7 +1210,6 @@
         taskCard.appendChild(taskInline);
         list.appendChild(taskCard);
 
-        // syncTasksFromServer 결과를 인라인 컨테이너에 렌더링
         if (window.currentMyTasks && window.currentMyTasks.length > 0) {
             renderTaskList(window.currentMyTasks);
         } else {
@@ -1257,7 +1233,7 @@
             injectMapStyle();
         };
 
-        // ⓘ 요기요 페이지 최적화 정보 버튼
+        // ⓘ 요기요 페이지 최적화 기능 설명 버튼
         const mapInfoBtn = document.createElement('button');
         mapInfoBtn.textContent = 'i';
         mapInfoBtn.title = '기능 설명';
@@ -1332,7 +1308,6 @@
         mapCard.appendChild(mapInfoBtn);
         mapCard.appendChild(mapToggle);
 
-        // 줄을 서시오 (체크박스, 멘트 없이 이름만)
         const queueCard = document.createElement('div');
         queueCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; display:flex; justify-content:space-between; align-items:center;";
         queueCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">다중 모니터링 도우미</span>`;
@@ -1364,7 +1339,7 @@
             `;
             document.head.appendChild(blinkStyle);
         }
-        // ⓘ 정보 버튼 (체크박스 왼쪽에 배치)
+        // ⓘ 정보 버튼
         const queueInfoBtn = document.createElement('button');
         queueInfoBtn.textContent = 'i';
         queueInfoBtn.title = '기능 설명';
@@ -1443,11 +1418,11 @@
         queueCard.appendChild(queueInfoBtn);
         queueCard.appendChild(queueToggle);
 
-        // 3. 스케줄 비교표/최적화 팁 + 배터리 현황 (반반 2열)
+        // 반반 2열
         const bottomRow = document.createElement('div');
         bottomRow.style.cssText = "display:grid; grid-template-columns:1fr 1fr; gap:8px;";
 
-        // 3-0. 스케줄 비교 카드
+        // 스케줄 비교 카드
         const scheduleCard = document.createElement('div');
         scheduleCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; cursor:pointer; display:flex; align-items:center;";
         scheduleCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">스케줄표 + 좌석 배치도</div>`;
@@ -1458,7 +1433,7 @@
             if (!isActive) openScheduleOverlay();
         };
 
-        // 3-1. 최적화 팁 (좌측)
+        // 최적화 팁
         const tipsCard = document.createElement('div');
         tipsCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; cursor:pointer; display:inline-flex; align-items:center;";
         tipsCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">최적화 팁</div>`;
@@ -1589,7 +1564,7 @@
             tipsOpenBtn.onclick();
         };
 
-        // 3-2. 배터리 현황 (우측)
+        // 배터리 현황
         const isBatteryOpen = batteryPopup.style.display === 'block';
         const batteryCard = document.createElement('div');
         batteryCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; display:flex; justify-content:space-between; align-items:center;";
@@ -1632,39 +1607,10 @@
 
         list.appendChild(bottomRow);
 
-        // 4. 영상 파일명 도우미
+        // 영상 파일명 도우미
         list.appendChild(createNamingCard());
 
         dashboard.appendChild(list);
-    }
-
-    function createMenuCard(name, desc, stateKey, storageKey, action, btnLabel = '열기') {
-        const card = document.createElement('div');
-        card.style.cssText = "background:#252525; padding:15px; border-radius:15px; display:flex; justify-content:space-between; align-items:center; border:1px solid #333333;";
-        // 제목에 margin-bottom: 4px를 추가하여 설명과의 간격을 벌림
-        card.innerHTML = `
-            <div style="flex:1;">
-                <div style="font-weight:bold; font-size:18px; margin-bottom:4px;">${name}</div>
-                <div style="font-size:16px; color:#aaa;">${desc}</div>
-            </div>`;
-        
-        if (stateKey) {
-            const chk = document.createElement('input');
-            chk.type = 'checkbox'; chk.checked = state[stateKey];
-            chk.style.cssText = "width:18px; height:18px; cursor:pointer;";
-            chk.onchange = (e) => {
-                state[stateKey] = e.target.checked;
-                localStorage.setItem(storageKey, state[stateKey]);
-                if (action) action();
-            };
-            card.appendChild(chk);
-        } else if (action) {
-            const btn = document.createElement('button');
-            btn.textContent = btnLabel;
-            btn.style.cssText = `background:${btnLabel === '닫기' ? '#ef4444' : '#3b82f6'}; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight:bold; min-width:70px; font-size:15px;`;            btn.onclick = action;
-            card.appendChild(btn);
-        }
-        return card;
     }
 
     let batteryRefreshInterval = null;
@@ -1720,7 +1666,6 @@
 
     // ── 핸드오버 레이아웃 ──────────────────────────────────
 	async function initHandoverLayout() {
-		// 패널 생성
 		let panel = document.getElementById('ho-remote-panel');
         if (panel) {
             panel.style.top = '0px';
@@ -1838,7 +1783,6 @@
 		// 교대 받기 버튼
 		const fetchBtn = mkBtn('교대 기체 로드', '#3b82f6');
 
-		// 로그 메시지
 		headerRow.appendChild(multiBtn);
 		headerRow.appendChild(battBtn);
 		headerRow.appendChild(fetchBtn);
@@ -1856,7 +1800,7 @@
 		headerRow.appendChild(rightBtns);
 		panel.appendChild(headerRow);
 
-		// ── 그리드 (좌측 컬럼 없이 바로) ──
+		// ── 그리드 ──
 		const grid = document.createElement('div');
 		Object.assign(grid.style, {
 			display: 'grid', gridTemplateColumns: 'repeat(6,1fr)', gap: '3px',
@@ -1956,7 +1900,6 @@
 				if (!label) return false;
 				const checkbox = label.querySelector('input[type="checkbox"]');
 				if (checkbox?.checked) return true;
-				// mouseover/mousedown/mouseup 제거, click만
 				label.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
 				return true;
 			};
@@ -1968,7 +1911,6 @@
 				setDpMsg(`${name} (${i+1}/${units.length})`, '#3b82f6');
 				let clicked = false;
 
-				// 1단계: div.px-12 span으로 기체명 찾기
 				const labels = document.querySelectorAll('label');
 				for (const label of labels) {
 					const text = label.querySelector('div.px-12 span')?.textContent.trim();
@@ -2007,7 +1949,7 @@
                 setDpMsg('뉴비고에서 기체 선택 모달을 먼저 열어주세요', '#f59e0b');
                 return;
             }
-            // localStorage에 저장된 교대 기체 목록 사용
+			
             const result = await githubGet();
             if (!result || !isDataValid(result.data?.updatedAt)) {
                 setDpMsg('교대 기체 데이터가 없습니다. 로드 먼저 해주세요', '#f59e0b');
@@ -2019,7 +1961,6 @@
         });
 
 		posBtn.addEventListener('click', () => {
-			// order 기준으로 정렬해서 읽음
 			const cards = [...document.querySelectorAll(
 				'.flex.h-full.w-full.items-center.justify-center.overflow-hidden .p-3'
 			)];
@@ -2028,14 +1969,12 @@
 				return;
 			}
 
-			// ▼ order 값 기준 정렬 추가
 			cards.sort((a, b) => parseInt(a.style.order || '0') - parseInt(b.style.order || '0'));
 
 			const names = cards.map(c =>
 				c.querySelector('.bg-prmary-50')?.textContent?.trim() || '—'
 			);
 
-			// 그리드에 채우기
 			cells.forEach((cell, i) => {
 				if (names[i]) {
 					cell.textContent = names[i];
@@ -2049,7 +1988,7 @@
 				}
 			});
 
-			// ▼ 드래그 이벤트 중복 방지 — 최초 1회만 등록
+			// 드래그 이벤트 중복 방지 — 최초 1회만
 			if (!cells[0]._dragRegistered) {
 				let dragSrc = null;
 				cells.forEach(cell => {
@@ -2098,7 +2037,7 @@
 
         // ── 20분 만료 감시 (30초마다) ──
         const expiryInterval = setInterval(() => {
-            if (panel.style.top !== '0px') return;       // 패널 닫혀있으면 스킵
+            if (panel.style.top !== '0px') return;   // 패널 닫혀있으면 스킵
             if (!isDataValid(result?.data?.updatedAt)) {
                 setDpMsg('20분 초과, 기체 목록 만료됨', '#ef4444');
                 clearInterval(expiryInterval);
@@ -2223,7 +2162,7 @@
 		try {
 			const cards = document.querySelectorAll('.rounded-8.relative.flex.overflow-hidden');
 
-			// 원본처럼 forEach async (병렬) + 방어는 Promise.all로
+			// forEach async (병렬) + 방어는 Promise.all
 			const promises = [...cards].map(async (card) => {
 				if (card.dataset.bitrateInjected) return;
 				card.dataset.bitrateInjected = 'true';
@@ -2317,12 +2256,11 @@
 						return btn;
 					};
 
-					// 구분선
 					const sep = document.createElement('span');
 					sep.style.cssText = `color:rgba(255,255,255,0.2);font-size:11px;display:flex;align-items:center;padding:0 3px;`;
 					sep.textContent = '|';
 
-					// 램프 버튼
+					// 헤드 램프 버튼
 					let isLampCooling = false;
 					const lampBtn = document.createElement('span');
 					lampBtn.textContent = '램프';
@@ -2404,7 +2342,7 @@
 		let _bitrateThrottle = null;
         window._bitrateObserver = new MutationObserver(() => {
             if (!isMonitoringPage()) return;
-            if (_bitrateThrottle) return;  // ← 이미 예약됨, 무시
+            if (_bitrateThrottle) return;  
             _bitrateThrottle = setTimeout(() => {
                 injectBitrateButtons();
                 _bitrateThrottle = null;
@@ -2445,7 +2383,6 @@
         bar.id = 'neubie-brightness-bar';
         Object.assign(bar.style, {
             position: 'fixed',
-            // 기본 위치: 상단 중앙
             top: '4px',
             left: '60px',
             zIndex: '2147483640',
@@ -2462,12 +2399,10 @@
             userSelect: 'none',
         });
 
-        // ☀️ 아이콘
         const icon = document.createElement('span');
         icon.textContent = '☀️';
         icon.style.cssText = 'font-size:14px; line-height:1;';
 
-        // 슬라이더
         const slider = document.createElement('input');
         slider.type = 'range';
         slider.id = 'neubie-master-brightness';
@@ -2484,7 +2419,6 @@
             background: 'rgba(255,255,255,0.4)',
         });
 
-        // 숫자 표시
         const label = document.createElement('span');
         label.style.cssText = 'color:#fff; font-size:13px; font-weight:600; min-width:22px; text-align:right;';
         label.textContent = savedVal;
@@ -2500,7 +2434,6 @@
         bar.appendChild(label);
         document.body.appendChild(bar);
 
-        // 초기 1회 적용 (페이지 로드 시 기존 카메라에)
         setTimeout(() => applyBrightnessToAll(savedVal), 800);
     }
 
@@ -2540,7 +2473,6 @@
             const BOARD_API = 'https://multimonitoring.vercel.app/api/board';
             const BG_IMG = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing_isabelle.png';
 
-            // 현재 로그인 이메일 읽기
             function getMyEmail() {
                 try {
                     const lsKey = Object.keys(localStorage).find(k => k.startsWith('ph_phc_') && k.endsWith('_posthog'));
@@ -3046,7 +2978,7 @@
 			  const b = overlay.firstElementChild;
 			  if(b) b.style.filter='';
 			  overlay.style.display='flex';
-              // ★ 재열기 시에도 fetch
+              // 재열기 시에도 fetch
               fetch(SCHEDULE_URL+'?t='+Date.now())
                 .then(r=>r.json())
                 .then(data=>{
@@ -3068,7 +3000,6 @@
             SEAT_MAP = await seatRes.json();
             const PARTITION_AFTER = 1;
 
-            // 오버레이 생성
             overlay = document.createElement('div');
             overlay.id = 'neubie-schedule-overlay';
             overlay.style.cssText = `
@@ -3094,19 +3025,16 @@
                 box-shadow: 0 4px 40px rgba(0,0,0,0.7);
             `;
 
-            // 상태 변수
             let nsoZoom = parseInt(localStorage.getItem('nv_nso_zoom') || '100');
             let scheduleData = null, compareResult = null;
             let calMode = localStorage.getItem('nv_nso_cal_mode') || 'work';
             let currentMonthKey = '', sel1 = '', sel2 = '';
 
-            // 로컬캐시
             const LS = 'nv_data_cache';
             const getCache = () => { try{ return JSON.parse(localStorage.getItem(LS)||'{}'); }catch(e){ return {}; } };
             const setCache = (k,v) => { try{ const c=getCache(); c[k]=v; localStorage.setItem(LS,JSON.stringify(c)); }catch(e){} };
             const monthKey = d => { if(!d?.dates?.length) return ''; const [m]=d.dates[0].split('/').map(Number); return `${new Date().getFullYear()}-${String(m).padStart(2,'0')}`; };
 
-            // HTML 구조
             box.innerHTML = `
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
                 <div style="display:flex;align-items:center;gap:8px;">
@@ -3137,7 +3065,7 @@
                 <div id="nso-cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;"></div>
                 </div>
 
-                <!-- 검색 패널 (하단 고정) -->
+                <!-- 검색 패널 -->
                 <div style="position:sticky;bottom:0;background:#1a1d27;border:1px solid #2e3347;border-radius:9px;padding:12px 14px;margin-top:12px;">
                 <div style="font-size:14px;color:#94a3b8;margin-bottom:9px;">👥 스케줄 비교(입력 시 저장됨)</div>
                 <div style="display:flex;gap:6px;align-items:center;width:100%;">
@@ -3177,7 +3105,6 @@
             overlay.appendChild(box);
             document.body.appendChild(overlay);
 
-            // 달력 렌더
             const DOW=['일','월','화','수','목','금','토'];
             const DOW_CLS=['#f87171','#94a3b8','#94a3b8','#94a3b8','#94a3b8','#94a3b8','#60a5fa'];
 
@@ -3296,10 +3223,8 @@
               const modal = box.querySelector('#nso-seat-modal') || overlay.querySelector('#nso-seat-modal');
               if(!modal) return;
 
-              // box 밖 overlay로 이동 (최초 1회만)
               if(modal.parentNode === box) overlay.appendChild(modal);
 
-              // ★ overlay.querySelector로 변경
               overlay.querySelector('#nso-seat-date').textContent=dateLabel;
             
               const pw=scheduleData.staff
@@ -3402,7 +3327,6 @@
                         te.textContent=w.workTime||w.shiftType||''; el.appendChild(te);
                     }
                     }
-                    // 툴팁
                     el.addEventListener('mouseenter', ev=>{
                     let tip=document.getElementById('nso-tooltip');
                     if(!tip){ tip=document.createElement('div'); tip.id='nso-tooltip';
@@ -3434,7 +3358,6 @@
                 }
             }
 
-            // 이벤트 바인딩
             // 줌 버튼
             const updateZoom = (z) => {
 			  nsoZoom = Math.max(100, Math.min(150, z));
@@ -3448,7 +3371,6 @@
               box.querySelector('#nso-zoom-label').textContent = nsoZoom + '%';
 			  box.style.zoom = `${nsoZoom}%`;
 
-            // 근무/휴무 토글
             box.querySelector('#nso-cal-mode').textContent = calMode==='work'?'근무 기준':'휴무 기준';
             
             const updateCalModeBtn = () => {
@@ -3472,14 +3394,12 @@
             const BASE_URL = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/';
 
             async function loadMonthFromGithub(newKey) {
-            // 로컬캐시 확인
             const c = getCache();
             if(c[newKey] && new Date(c[newKey].updatedAt).toDateString()===new Date().toDateString()){
                 currentMonthKey=newKey; scheduleData=c[newKey]; renderCal();
                 if(sel1||sel2) runCompare();
                 return;
             }
-            // GitHub fetch
             status.textContent='로딩 중...'; dot.style.background='#eab308';
             try {
                 const url = `${BASE_URL}schedule_for_mobile_${newKey}.json?t=${Date.now()}`;
@@ -3521,7 +3441,6 @@
                 renderCal();
             };
 
-            // 저장된 이름 복원
             try{
                 const n1=localStorage.getItem('nv_name1')||'';
                 const n2=localStorage.getItem('nv_name2')||'';
@@ -3529,12 +3448,10 @@
                 if(n2) box.querySelector('#nso-name2').value=n2;
             }catch(e){}
 
-            // 데이터 로드
             const status = box.querySelector('#nso-status');
             const dot = box.querySelector('#nso-dot');
             const updated = box.querySelector('#nso-updated');
 
-            // GitHub Raw fetch
             status.textContent='로딩 중...'; dot.style.background='#eab308';
             fetch(SCHEDULE_URL+'?t='+Date.now())
                 .then(r=>r.json())
@@ -3576,7 +3493,7 @@
 			}
 		}
 
-        // Alt + B (배터리) 단축키 로직
+        // Alt + B (배터리) 단축키
         if (e.altKey && e.code === 'KeyB') { 
             e.preventDefault(); 
             toggleBattery();
@@ -3602,13 +3519,13 @@
 
     let lastUrl = location.href;
 
-    // 브라우저의 뒤로가기/앞으로가기 대응 (이벤트 발생 시에만 작동)
+    // 브라우저의 뒤로가기/앞으로가기 대응 (이벤트 발생 시에만)
     window.addEventListener('popstate', () => {
         closeAllPopups();
     });
 
     // 화면 어디든 클릭했을 때 주소 확인
-    // 뉴비고에서 메뉴를 클릭해 이동할 때 즉각 닫히게 합니다.
+    // 뉴비고에서 메뉴를 클릭해 이동할 때 즉각 닫히게
     document.addEventListener('click', () => {
         setTimeout(() => {
             if (location.href !== lastUrl) {
@@ -3657,7 +3574,7 @@
         }, 100);
     }, true);
 
-    // 만약 클릭 없이 코드로만 주소가 바뀌는 경우를 대비 (간격 2초)
+    // 클릭 없이 코드로만 주소가 바뀌는 경우를 대비 (간격 2초)
     setInterval(() => {
         if (location.href !== lastUrl) {
             const prevUrl = lastUrl;  // ← 이전 URL 먼저 저장
@@ -3702,9 +3619,9 @@
 				registerBitrateObserver();
 			}
         }
-    }, 2000); // 2초 정도면 충분히 여유로움
+    }, 2000);
     
-    // ── 자동 사이드브레이크 (잠실 엘스/리센츠) ──
+    // ── 자동 사이드브레이크 ──
 	const AUTO_SIDE_ROBOTS = {
 		128: '잠실 리센츠 1호기',
 		82:  '잠실 리센츠 2호기',
@@ -3802,7 +3719,7 @@
     
 	// ── 위험구간 경고 ──
 	const DANGER_ZONE_CONFIG = {
-		221: { // 성남판교 200
+		221: {
 			pois: [
 				'판교역순찰_01',
 				'현대백화점/힐스테이트 판교역사이 금연구역1',
@@ -3869,11 +3786,11 @@
 		if (el) el.remove();
 	}
 	
-	// ── 개입 페이지 레이아웃 패치 ──
+	// ── 개입 페이지 레이아웃 ──
     function patchDrivingPageLayout() {
         if (!location.href.includes('/remote/multiple/driving/')) return;
 
-        // 1. 헤더 flex-col 재구성
+        // 헤더 flex-col 재구성
         const header = document.querySelector('header');
         if (header) {
             header.style.flexDirection = 'column';
@@ -3884,7 +3801,7 @@
             header.style.gap = '1px';
         }
 
-        // 2. 상태바를 빨간뱃지 아래로 이동 (없으면 해결완료 버튼 앞 fallback)
+        // 상태바를 빨간뱃지 아래로 이동 (없으면 해결완료 버튼 앞 fallback)
 		const redBadge = document.querySelector(
 			'.rounded-8.flex.flex-row.items-center.justify-between.truncate.bg-red-50.px-8'
 		);
@@ -3900,7 +3817,7 @@
 			statusBar.style.marginLeft = '-240px';
 		}
 
-        // 3. 임무 바 높이 조정
+        // 임무 바 높이 조정
         const missionWrapper = document.querySelector('.relative.overflow-hidden.w-full.h-58');
         if (missionWrapper) {
             missionWrapper.style.height = '64px';
@@ -3908,7 +3825,7 @@
             missionWrapper.style.paddingBottom = '4px';
         }
 
-        // 4. 컨테이너 gap/padding 압축
+        // 컨테이너 gap/padding 압축
         const container = document.querySelector('.flex.h-full.w-full.flex-col[class*="gap-16"][class*="pt-14"]');
         if (container) {
             container.style.gap = '6px';
@@ -3926,7 +3843,7 @@
 	    window.neubieGamepadBound = true;
 	    let dpadWasPressed = { up: false, right: false, down: false, left: false };
 	
-	    // 맵 헤드 방향 일치 헬퍼
+	    // 맵 헤드 방향 일치
 	    const syncMap = () => {
 	        const btn = document.querySelector('[data-qk="location-robot-sync-button"]');
 	        if (!btn) return;
@@ -3941,7 +3858,7 @@
 	        }, 400);
 	    };
 	
-	    // 밝기 조절 헬퍼 (개입카드/일반 페이지 모두 커버 + 맵 재동기화)
+	    // 밝기 조절 헬퍼
 	    const changeBrightness = (direction) => {
 	        const wrapper = document.querySelector('[data-qk="remote-robot-cam-brightness-select-select-wrapper"]')
 	                     || document.querySelector('[data-qk="driving-robot-cam-brightness-select-select-wrapper"]');
@@ -4025,9 +3942,8 @@
 	const _origSetItem = localStorage.setItem.bind(localStorage);
 	localStorage.setItem = function(key, value) {
 	  _origSetItem(key, value);
-	  // ★ 정확히 '_posthog' 로 끝나는 메인 키만 처리
+	  // 정확히 '_posthog' 로 끝나는 메인 키만 처리
 	  if (!key.includes('ph_phc_') || !key.endsWith('_posthog')) return;
-	  // ★ distinct_id 변경 여부만 체크
 	  try {
 		const posthog = JSON.parse(value);
 		const email = posthog?.distinct_id || '';
@@ -4035,7 +3951,7 @@
 		const match = email.match(/ubase_multiple(\d+)@gmail\.com/);
 		const multiNum = match ? match[1] : '';
 		if (multiNum === _lastMultiNum) return;
-		if (!multiNum) return; // ★ 너무 매우 중요!!!!! 일반 계정이면 POST 안 함
+		if (!multiNum) return; // ★ 중요! 일반 계정이면 POST 안 함
 		_lastMultiNum = multiNum;
 		fetch('https://multimonitoring.vercel.app/api/multi_status', {
 		  method: 'POST',
@@ -4064,26 +3980,21 @@
 
     injectConfigUI();
     
-    // 페이지 로드 시 이름이 설정되어 있다면 즉시 한 번 동기화
     if (localStorage.getItem('neubie_user_name')) {
         syncTasksFromServer();
     }
 
-    // 백그라운드 리프레시 (1분마다 데이터만 몰래 가져옴)
-    // 업무 방해를 주지 않기 위해 fetch만 수행하며, 화면 갱신은 위 sync 함수 내 안전장치에 의존함
     let lastNotifiedMin = -1; 
 
     setInterval(() => {
         const now = new Date();
         const currentFullMin = now.getHours() * 60 + now.getMinutes();
 
-        // 이미 이번 '분'에 체크를 완료했다면 즉시 리턴
         if (lastNotifiedMin === currentFullMin) return;
 
-        // 새로운 '분'이 시작될 때만 체크 실행 (로그 없음)
         lastNotifiedMin = currentFullMin; 
         syncTasksFromServer(); 
         
-    }, 1000); // 1초마다 조용히 감시
+    }, 1000);
 
 })();
