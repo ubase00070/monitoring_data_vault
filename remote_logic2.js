@@ -340,6 +340,29 @@
     }
 
     const dashboard = createContainer('neubie-dashboard', 'min(580px, 94vw)', '50%', '50%');
+	
+	// 특정 사용자(오정훈) PC에서만 내부 요소 넘침 방어
+    (function ensureNoOverflowForUser() {
+        const userName = localStorage.getItem('neubie_user_name');
+        if (userName !== '오정훈') return;
+        const styleId = 'neubie-dash-overflow-fix';
+        if (document.getElementById(styleId)) return;
+        const st = document.createElement('style');
+        st.id = styleId;
+        st.textContent = `
+            #neubie-dashboard, #neubie-dashboard * {
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+            }
+            #neubie-dashboard select,
+            #neubie-dashboard input,
+            #neubie-dashboard button {
+                min-width: 0 !important;
+            }
+        `;
+        document.head.appendChild(st);
+    })();
+	
     const batteryPopup = createContainer('neubie-battery-popup', '380px', '20px', 'auto', '20px');
 
     function makeDraggable(handleEl, targetEl) {
@@ -2552,6 +2575,10 @@
                     <div style="padding:16px; display:flex; flex-direction:column; gap:10px; flex:1;">
                         <input id="nb-write-title" type="text" placeholder="제목" style="height:36px; font-size:13px; padding:0 10px; border-radius:6px; border:0.5px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.08); color:#fff; outline:none;">
                         <textarea id="nb-write-content" placeholder="내용을 입력하세요..." style="flex:1; min-height:100px; font-size:13px; padding:10px; border-radius:6px; border:0.5px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.08); color:#fff; outline:none; resize:none; font-family:inherit;"></textarea>
+						<label style="display:flex; align-items:center; gap:6px; font-size:12px; color:rgba(255,255,255,0.6); cursor:pointer; user-select:none;">
+                            <input type="checkbox" id="nb-write-anon" style="width:14px; height:14px; cursor:pointer;">
+                            익명으로 작성
+                        </label>
                     </div>
                 </div>
 				
@@ -2705,10 +2732,16 @@
                                 `).join('')}
                                 <div id="nb-reply-box-${c.id}" style="display:none; margin-top:8px;">
                                     <textarea id="nb-reply-text-${c.id}" placeholder="답글..." style="width:100%; height:52px; font-size:12px; padding:6px 8px; border-radius:6px; border:0.5px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.08); color:#fff; outline:none; resize:none; box-sizing:border-box; font-family:inherit;"></textarea>
-                                    <div style="display:flex; justify-content:flex-end; gap:6px; margin-top:6px;">
+                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
+                                        <label style="display:flex; align-items:center; gap:5px; font-size:10px; color:rgba(255,255,255,0.5); cursor:pointer; user-select:none;">
+                                            <input type="checkbox" id="nb-reply-anon-${c.id}" style="width:12px; height:12px; cursor:pointer;">
+                                            익명
+                                        </label>
+                                        <div style="display:flex; gap:6px;">
                                         <button onclick="window._nbToggleReply('${c.id}')" style="height:26px;padding:0 10px;font-size:11px;background:rgba(255,255,255,0.1);border:none;color:#fff;border-radius:6px;cursor:pointer;">취소</button>
                                         <button onclick="window._nbSubmitReply('${c.id}', this)" style="height:26px;padding:0 10px;font-size:11px;background:#6366f1;border:none;color:white;border-radius:6px;cursor:pointer;font-weight:500;">등록</button>
-                                    </div>
+										</div>
+									</div>
                                 </div>
 								<div id="nb-edit-reply-box-${r.id}" style="display:none; margin-top:6px;">
 									<textarea id="nb-edit-reply-text-${r.id}" style="width:100%; height:46px; font-size:11px; padding:6px 8px; border-radius:6px; border:0.5px solid rgba(99,102,241,0.4); background:rgba(255,255,255,0.08); color:#fff; outline:none; resize:none; box-sizing:border-box; font-family:inherit;"></textarea>
@@ -2730,7 +2763,11 @@
                     ${myEmail ? `
                     <div style="margin-top:16px; border-top:0.5px solid rgba(255,255,255,0.1); padding-top:14px;">
                         <textarea id="nb-comment-input" placeholder="댓글을 입력하세요..." style="width:100%; height:64px; font-size:13px; padding:8px 10px; border-radius:6px; border:0.5px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.08); color:#fff; outline:none; resize:none; box-sizing:border-box; font-family:inherit;"></textarea>
-                        <div style="display:flex; justify-content:flex-end; margin-top:8px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+                            <label style="display:flex; align-items:center; gap:5px; font-size:11px; color:rgba(255,255,255,0.55); cursor:pointer; user-select:none;">
+                                <input type="checkbox" id="nb-comment-anon" style="width:13px; height:13px; cursor:pointer;">
+                                익명
+                            </label>
                             <button onclick="window._nbSubmitComment(this)" style="height:30px;padding:0 16px;font-size:12px;font-weight:500;background:#6366f1;border:none;color:white;border-radius:6px;cursor:pointer;">댓글 등록</button>
                         </div>
                     </div>` : `<div style="text-align:center; padding:16px; font-size:12px; color:rgba(255,255,255,0.35); border-top:0.5px solid rgba(255,255,255,0.1); margin-top:16px;">로그인 정보가 없어 댓글을 달 수 없습니다</div>`}
@@ -2754,7 +2791,7 @@
 				if (!listEl) return;
 				listEl.innerHTML = `<div style="text-align:center; padding:40px; color:rgba(255,255,255,0.4); font-size:13px;">불러오는 중...</div>`;
 				try {
-					const res = await fetch('https://multimonitoring.vercel.app/api/board?t=' + Date.now());
+					const res = await fetch('https://multimonitoring.vercel.app/api/board?t=' + Date.now() + '&email=' + encodeURIComponent(myEmail));
 					const data = await res.json();
 					allPosts = data.posts || [];
 					showList();
@@ -2767,13 +2804,14 @@
                 const title = document.getElementById('nb-write-title').value.trim();
                 const content = document.getElementById('nb-write-content').value.trim();
                 if (!title || !content) return;
+				const isAnon = document.getElementById('nb-write-anon')?.checked;
                 const btn = document.getElementById('nb-write-submit');
                 btn.disabled = true; btn.textContent = '등록 중...';
                 try {
                     await fetch('https://multimonitoring.vercel.app/api/board', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email: myEmail, author: myName, title, content })
+                        body: JSON.stringify({ email: myEmail, author: isAnon ? '익명' : myName, anon: isAnon, title, content })
                     });
                     await loadPosts();
                 } catch(e) { alert('등록 실패'); }
@@ -2837,14 +2875,15 @@
             window._nbSubmitComment = async (btn) => {
                 const text = document.getElementById('nb-comment-input')?.value.trim();
                 if (!text) return;
+				const isAnon = document.getElementById('nb-comment-anon')?.checked;
                 btn.disabled = true; btn.textContent = '등록 중...';
                 try {
                     await fetch('https://multimonitoring.vercel.app/api/comment', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email: myEmail, author: myName, postId: currentPostId, text })
+                        body: JSON.stringify({ email: myEmail, author: isAnon ? '익명' : myName, anon: isAnon, postId: currentPostId, text })
                     });
-                    const res = await fetch('https://multimonitoring.vercel.app/api/board?t=' + Date.now());
+                    const res = await fetch('https://multimonitoring.vercel.app/api/board?t=' + Date.now() + '&email=' + encodeURIComponent(myEmail));
                     const data = await res.json();
                     allPosts = data.posts || [];
                     const post = allPosts.find(p => p.id === currentPostId);
@@ -2856,14 +2895,15 @@
             window._nbSubmitReply = async (cId, btn) => {
                 const text = document.getElementById('nb-reply-text-' + cId)?.value.trim();
                 if (!text) return;
+				const isAnon = document.getElementById('nb-reply-anon-' + cId)?.checked;
                 btn.disabled = true; btn.textContent = '등록 중...';
                 try {
                     await fetch('https://multimonitoring.vercel.app/api/comment', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email: myEmail, author: myName, postId: currentPostId, commentId: cId, text })
+                        body: JSON.stringify({ email: myEmail, author: isAnon ? '익명' : myName, anon: isAnon, postId: currentPostId, commentId: cId, text })
                     });
-                    const res = await fetch('https://multimonitoring.vercel.app/api/board?t=' + Date.now());
+                    const res = await fetch('https://multimonitoring.vercel.app/api/board?t=' + Date.now() + '&email=' + encodeURIComponent(myEmail));
                     const data = await res.json();
                     allPosts = data.posts || [];
                     const post = allPosts.find(p => p.id === currentPostId);
@@ -2880,7 +2920,7 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ email: myEmail, postId: currentPostId, commentId: cId })
                     });
-                    const res = await fetch('https://multimonitoring.vercel.app/api/board?t=' + Date.now());
+                    const res = await fetch('https://multimonitoring.vercel.app/api/board?t=' + Date.now() + '&email=' + encodeURIComponent(myEmail));
                     const data = await res.json();
                     allPosts = data.posts || [];
                     const post = allPosts.find(p => p.id === currentPostId);
@@ -2896,7 +2936,7 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ email: myEmail, postId: currentPostId, commentId: cId, replyId: rId })
                     });
-                    const res = await fetch('https://multimonitoring.vercel.app/api/board?t=' + Date.now());
+                    const res = await fetch('https://multimonitoring.vercel.app/api/board?t=' + Date.now() + '&email=' + encodeURIComponent(myEmail));
                     const data = await res.json();
                     allPosts = data.posts || [];
                     const post = allPosts.find(p => p.id === currentPostId);
@@ -2924,7 +2964,7 @@
 						headers: { 'Content-Type': 'application/json' },
 						body: JSON.stringify({ email: myEmail, postId: currentPostId, commentId: cId, text })
 					});
-					const res = await fetch('https://multimonitoring.vercel.app/api/board?t=' + Date.now());
+					const res = await fetch('https://multimonitoring.vercel.app/api/board?t=' + Date.now() + '&email=' + encodeURIComponent(myEmail));
 					const data = await res.json();
 					allPosts = data.posts || [];
 					const post = allPosts.find(p => p.id === currentPostId);
@@ -2953,7 +2993,7 @@
 						headers: { 'Content-Type': 'application/json' },
 						body: JSON.stringify({ email: myEmail, postId: currentPostId, commentId: cId, replyId: rId, text })
 					});
-					const res = await fetch('https://multimonitoring.vercel.app/api/board?t=' + Date.now());
+					const res = await fetch('https://multimonitoring.vercel.app/api/board?t=' + Date.now() + '&email=' + encodeURIComponent(myEmail));
 					const data = await res.json();
 					allPosts = data.posts || [];
 					const post = allPosts.find(p => p.id === currentPostId);
