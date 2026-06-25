@@ -18,13 +18,13 @@
     "rawTime": "09:00"
   },
   {
-    "user": "이민수",
+    "user": "성혜진",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "10:00"
   },
   {
-    "user": "성혜진",
+    "user": "이민수",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "11:00"
@@ -162,19 +162,19 @@
     "rawTime": "09:00"
   },
   {
-    "user": "신현철",
+    "user": "박계원",
     "type": "task",
     "content": "[09:30~10:00] 역삼요기요 대기장소 기체 출근 체크 후 임무 ON",
     "rawTime": "09:30"
   },
   {
-    "user": "박계원",
+    "user": "신현철",
     "type": "task",
     "content": "[10:00~11:00] 부산국립과학관 170,171호기 임무 [화,수,목,금,토,일]",
     "rawTime": "10:00"
   },
   {
-    "user": "신현철",
+    "user": "이민수",
     "type": "task",
     "content": "[10:00] 성남 [삼평동] 대기장소2 주간기체 4호기 출근 임무 [평일]",
     "rawTime": "10:00"
