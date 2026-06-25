@@ -340,6 +340,29 @@
     }
 
     const dashboard = createContainer('neubie-dashboard', 'min(580px, 94vw)', '50%', '50%');
+
+	// 특정 사용자(오정훈) PC에서만 내부 요소 넘침 방어
+    (function ensureNoOverflowForUser() {
+        const userName = localStorage.getItem('neubie_user_name');
+        if (userName !== '오정훈') return;
+        const styleId = 'neubie-dash-overflow-fix';
+        if (document.getElementById(styleId)) return;
+        const st = document.createElement('style');
+        st.id = styleId;
+        st.textContent = `
+            #neubie-dashboard, #neubie-dashboard * {
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+            }
+            #neubie-dashboard select,
+            #neubie-dashboard input,
+            #neubie-dashboard button {
+                min-width: 0 !important;
+            }
+        `;
+        document.head.appendChild(st);
+    })();
+	
     const batteryPopup = createContainer('neubie-battery-popup', '380px', '20px', 'auto', '20px');
 
     function makeDraggable(handleEl, targetEl) {
