@@ -344,7 +344,7 @@
 	// 특정 사용자(오정훈) PC에서만 내부 요소 넘침 방어
     (function ensureNoOverflowForUser() {
         const userName = localStorage.getItem('neubie_user_name');
-        if (userName !== '오정훈') return;
+        if (userName !== '오정훈' && userName !== '최윤혁') return;
         const styleId = 'neubie-dash-overflow-fix';
         if (document.getElementById(styleId)) return;
         const st = document.createElement('style');
