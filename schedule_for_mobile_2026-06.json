@@ -1857,16 +1857,16 @@
           "raw": "휴무"
         },
         "6/29": {
-          "status": "annual",
+          "status": "work",
           "working": true,
-          "present": false,
-          "raw": "연차"
+          "present": true,
+          "raw": "1"
         },
         "6/30": {
-          "status": "annual",
+          "status": "work",
           "working": true,
-          "present": false,
-          "raw": "연차"
+          "present": true,
+          "raw": "1"
         }
       }
     },
@@ -7888,6 +7888,6 @@
     "6/30"
   ],
   "mainMonth": 6,
-  "updatedAt": "2026-06-26T03:53:08.262Z",
+  "updatedAt": "2026-06-27T03:53:17.167Z",
   "sheetName": "2026년_06월 스케줄"
 }
