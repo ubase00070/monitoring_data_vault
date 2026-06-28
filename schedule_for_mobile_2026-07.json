@@ -778,10 +778,10 @@
       "workTime": "18:00~03:00",
       "schedule": {
         "7/1": {
-          "status": "annual",
+          "status": "half-half",
           "working": true,
-          "present": false,
-          "raw": "연차"
+          "present": true,
+          "raw": "반반차"
         },
         "7/2": {
           "status": "work",
@@ -8141,6 +8141,6 @@
     "7/31"
   ],
   "mainMonth": 7,
-  "updatedAt": "2026-06-27T03:53:37.459Z",
+  "updatedAt": "2026-06-28T03:53:11.950Z",
   "sheetName": "2026년_07월 스케줄"
 }
