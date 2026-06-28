@@ -1,0 +1,26 @@
+[
+  {
+    "id": "hidden-gems",
+    "title": "아무도 안 봤지만 봐야 하는 영화들",
+    "description": "흥행과 무관하게, 영화사에 남을 작품들.",
+    "icon": "💎"
+  },
+  {
+    "id": "night-rain",
+    "title": "비 오는 밤에 혼자 봐야 하는 영화들",
+    "description": "고독이 필요할 때.",
+    "icon": "🌧"
+  },
+  {
+    "id": "soul-actors",
+    "title": "배우의 눈빛 하나로 영화가 된 작품들",
+    "description": "연출보다 배우가 앞선 순간들.",
+    "icon": "👁"
+  },
+  {
+    "id": "director-ambition",
+    "title": "감독이 가장 외로웠을 때 만든 영화들",
+    "description": "야망과 고독이 공존했을 때 탄생한 작품들.",
+    "icon": "🎬"
+  }
+]
