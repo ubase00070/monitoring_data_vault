@@ -49176,8 +49176,7 @@ window.addEventListener('load', async () => {
   // 디폴트 한글 모드 — 초기 fetch 후 전체 재렌더
   // 한글 이름 백그라운드 fetch — 완료되면 재렌더
   fetchKoNames().then(() => {
-    // fetch 완료 후 한 번만 전체 재렌더
-    if (nameLang === 'ko') _rerenderAll();
+    if (nameLang === 'ko') _patchNamesInDOM();
   }).catch(()=>{});
 
   // 렌더
