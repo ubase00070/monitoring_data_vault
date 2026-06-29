@@ -417,6 +417,8 @@
       el.textContent = '토큰 없음 — 새로고침';
       el.style.background = '#fce8e8';
       el.style.color = '#c0392b';
+      // 토큰이 아직 없으면 500ms 후 재시도 (로더보다 먼저 실행됐을 경우 대비)
+      setTimeout(checkToken, 500);
     }
   }
 
@@ -469,7 +471,8 @@
         setTimeout(tryBuild, 500);
       }
     };
-    tryBuild();
+    // @require가 IIFE보다 먼저 실행되므로 토큰 주입 대기
+    setTimeout(tryBuild, 300);
   }
 
   init();
