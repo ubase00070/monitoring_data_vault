@@ -14,14 +14,15 @@
   const BOT_NAMES = ['뉴비슈', '뉴비슈_HW', '뉴비슈_SW', 'Neubie', 'neubie'];
 
   function getToken() {
+    // 탬퍼몽키 로더에서 주입한 토큰 우선 사용
+    if (window.__slackSearchToken) return window.__slackSearchToken;
     try {
       const boot = unsafeWindow?.TS?.boot_data;
       if (boot?.api_token) return boot.api_token;
       const store = unsafeWindow?.TS?.redux?.store?.getState();
       if (store?.auth?.currentUser?.token) return store.auth.currentUser.token;
     } catch (e) {}
-    const m = document.cookie.match(/(?:^|;\s*)d=([^;]+)/);
-    return m ? decodeURIComponent(m[1]) : null;
+    return null;
   }
 
   async function slackAPI(method, params) {
