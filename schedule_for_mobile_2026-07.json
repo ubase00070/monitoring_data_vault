@@ -1586,28 +1586,28 @@
           "raw": "1"
         },
         "7/7": {
-          "status": "work",
+          "status": "public",
           "working": true,
-          "present": true,
-          "raw": "1"
+          "present": false,
+          "raw": "공가"
         },
         "7/8": {
+          "status": "public",
+          "working": true,
+          "present": false,
+          "raw": "공가"
+        },
+        "7/9": {
+          "status": "public",
+          "working": true,
+          "present": false,
+          "raw": "공가"
+        },
+        "7/10": {
           "status": "work",
           "working": true,
           "present": true,
           "raw": "1"
-        },
-        "7/9": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
-        },
-        "7/10": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
         },
         "7/11": {
           "status": "work",
@@ -1622,16 +1622,16 @@
           "raw": "1"
         },
         "7/13": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "7/14": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "7/15": {
           "status": "work",
@@ -2623,10 +2623,10 @@
           "raw": "휴무"
         },
         "7/19": {
-          "status": "work",
+          "status": "half",
           "working": true,
           "present": true,
-          "raw": "1"
+          "raw": "반차"
         },
         "7/20": {
           "status": "work",
@@ -8141,6 +8141,6 @@
     "7/31"
   ],
   "mainMonth": 7,
-  "updatedAt": "2026-06-28T03:53:11.950Z",
+  "updatedAt": "2026-06-29T03:53:28.145Z",
   "sheetName": "2026년_07월 스케줄"
 }
