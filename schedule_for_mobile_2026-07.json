@@ -6224,16 +6224,16 @@
           "raw": "1"
         },
         "7/8": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "7/9": {
           "status": "off",
           "working": false,
           "present": false,
           "raw": "휴무"
+        },
+        "7/9": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "7/10": {
           "status": "work",
@@ -6640,10 +6640,10 @@
           "raw": "1"
         },
         "7/13": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "7/14": {
           "status": "off",
@@ -6652,10 +6652,10 @@
           "raw": "휴무"
         },
         "7/15": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "7/16": {
           "status": "work",
@@ -8141,6 +8141,6 @@
     "7/31"
   ],
   "mainMonth": 7,
-  "updatedAt": "2026-06-29T03:53:28.145Z",
+  "updatedAt": "2026-06-30T03:53:12.352Z",
   "sheetName": "2026년_07월 스케줄"
 }
