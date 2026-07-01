@@ -368,9 +368,13 @@
             font-size:11px; font-weight:900; padding:3px 8px;
             border-radius:5px; flex-shrink:0; margin-left:6px;
         }
-        .bb-icp-badge.ok   { background:rgba(34,197,94,.15);  color:var(--gn); }
-        .bb-icp-badge.warn { background:rgba(251,191,36,.15); color:var(--ye); }
-        .bb-icp-badge.crit { background:rgba(239,68,68,.15);  color:var(--rd); }
+        .bb-icp-badge.ok       { background:rgba(34,197,94,.15);  color:var(--gn); }
+		.bb-icp-badge.warn     { background:rgba(251,191,36,.15); color:var(--ye); }
+		.bb-icp-badge.crit     { background:rgba(239,68,68,.15);  color:var(--rd); }
+		.bb-icp-badge.patrol   { background:rgba(59,130,246,.15); color:var(--bl); }
+		.bb-icp-badge.deliver  { background:rgba(236,72,153,.15); color:var(--pk); }
+		.bb-icp-badge.standby  { background:rgba(200,204,212,.15); color:#c8ccd4; }
+		.bb-icp-badge.off      { background:rgba(75,85,99,.15);   color:#6b7280; }
         .bb-icp-close {
             width:22px; height:22px; border-radius:5px; flex-shrink:0;
             background:rgba(239,68,68,.15); border:1px solid rgba(239,68,68,.3);
@@ -1166,11 +1170,11 @@
 
         const statusBadgeMap = {
 			charging:   { label:'🟢 충전 중',  cls:'ok' },
-			patrolling: { label:'🔵 순찰 중',  cls:'ok' },
-			delivering: { label:'🩷 배달 중',  cls:'ok' },
-			standby:    { label:'⚪ 대기 중',  cls:'ok' },
+			patrolling: { label:'🔵 순찰 중',  cls:'patrol' },
+			delivering: { label:'🩷 배달 중',  cls:'deliver' },
+			standby:    { label:'⚪ 대기 중',  cls:'standby' },
 			docking:    { label:'🟡 도킹 중',  cls:'warn' },
-			off:        { label:'⚫ OFF',      cls:'warn' },
+			off:        { label:'⚫ OFF',      cls:'off' },
 		};
 		const badgeInfo = statusBadgeMap[r.status] || { label:r.status, cls:'ok' };
 		badgeEl.className = `bb-icp-badge ${badgeInfo.cls}`;
