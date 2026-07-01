@@ -39,7 +39,7 @@
         #bb.open { display:flex; }
 		
 		#bb, #bb * {
-			font-weight: 400 !important;
+			font-weight: 300 !important;
 		}
 		
 		.bb-firefly {
@@ -258,7 +258,7 @@
 			content:'';
 			position:absolute;
 			bottom:4px; right:4px;
-			width:130px; height:64px;
+			width:130px; height:130px;
 			background-image:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/walker_dancing.webp');
 			background-size:contain;
 			background-repeat:no-repeat;
