@@ -98,7 +98,7 @@
         }
         .bb-alert-bar {
             flex:1; display:flex; align-items:center; gap:8px;
-            padding:6px 12px; background:var(--sur);
+            padding:6px 12px; background:var(--bg);
         }
         .bb-alert-label {
             font-size:13px; font-weight:900; color:var(--tx);
@@ -221,7 +221,7 @@
 
         /* 퀵바 */
         .bb-mg { display:flex; flex-direction:row; gap:5px; padding:7px 8px; border-right:1px solid var(--bd); flex-shrink:0; }
-        .bb-mg-col { display:flex; flex-direction:column; border:1px solid var(--bd2); border-radius:8px; background:var(--sur2); overflow:hidden; }
+        .bb-mg-col { display:flex; flex-direction:column; border:1px solid var(--bd2); border-radius:8px; background:var(--bg); overflow:hidden; }
         .bb-mg-col-title {
             padding:5px 6px; font-size:15px; font-weight:900; color:var(--tx);
             border-bottom:1px solid var(--bd); background:var(--sur);
