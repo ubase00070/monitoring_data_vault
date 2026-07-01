@@ -269,9 +269,10 @@
 
         #bb-walker-toggle {
             position:absolute; top:4px; right:4px;
-            width:22px; height:22px; border-radius:6px;
+            min-width:34px; height:20px; padding:0 6px;
+            border-radius:6px;
             background:var(--sur2); border:1px solid var(--bd2);
-            color:var(--mu); font-size:12px; cursor:pointer;
+            color:var(--mu); font-size:10px; font-weight:900; cursor:pointer;
             display:flex; align-items:center; justify-content:center;
             z-index:2; transition:background .15s, color .15s;
         }
@@ -1569,7 +1570,7 @@
         function applyWalkerToggle() {
             walkerEl.style.display = walkerOn ? '' : 'none';
             toggleEl.classList.toggle('off', !walkerOn);
-            toggleEl.textContent = walkerOn ? '🐾' : '🚫';
+            toggleEl.textContent = walkerOn ? '동숲' : '🚫';
             toggleEl.title = walkerOn ? '동숲 주민 끄기' : '동숲 주민 켜기';
         }
         applyWalkerToggle();
