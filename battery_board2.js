@@ -54,7 +54,7 @@
         .bb-hd {
             display:flex; flex-direction:column; align-items:center;
             padding:11px 14px 9px; border-bottom:1px solid var(--bd);
-            background:var(--sur); border-radius:16px 16px 0 0;
+            background:var(--bg); border-radius:16px 16px 0 0;
             flex-shrink:0; position:relative; gap:3px;
         }
         .bb-hd-title {
@@ -98,7 +98,7 @@
         }
         .bb-alert-bar {
             flex:1; display:flex; align-items:center; gap:8px;
-            padding:6px 12px; background:var(--sur2);
+            padding:6px 12px; background:var(--sur);
         }
         .bb-alert-label {
             font-size:13px; font-weight:900; color:var(--tx);
