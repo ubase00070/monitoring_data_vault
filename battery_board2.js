@@ -1117,8 +1117,6 @@
         const issues = [];
         if (cpu >= 90) issues.push('crit');
         else if (cpu >= 80) issues.push('warn');
-        if (gps > 500000) issues.push('crit');
-        else if (gps > 100000) issues.push('warn');
         if (tmpL < 0 || tmpR < 0) issues.push('crit');
         else if (tmpL >= 60 || tmpR >= 60) issues.push('crit');
         else if (tmpL >= 55 || tmpR >= 55) issues.push('warn');
@@ -1139,7 +1137,9 @@
             : gps < 50000  ? `양호 (${gps.toLocaleString()})`
             : gps < 500000 ? `불안정 (${gps.toLocaleString()})`
             : `위험 (${gps.toLocaleString()})`;
-        const gpsDot = gps === 0 ? '🔴' : gps < 50000 ? '🟢' : gps < 500000 ? '🟠' : '🔴';
+        const gpsDot = (gps === 0 || gps == null) ? '🔴' : '';
+		const gpsTxt = (gps === 0 || gps == null) ? '수신 불가 🔴'
+			: gps.toLocaleString();
 
         // 섀시 온도
         const tmpTxt = (tmpL < 0 || tmpR < 0)
