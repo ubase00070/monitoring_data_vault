@@ -230,7 +230,13 @@
         .bb-mi.off        { opacity:.12; }
 
         /* 기타 배달 */
-        .bb-delivery-area { flex:1; padding:7px 10px; display:flex; flex-direction:column; gap:5px; min-height:0; }
+        .bb-delivery-area {
+		    flex:1; padding:7px 10px; display:flex; flex-direction:column; gap:5px; min-height:0;
+		    background-image: url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/snoopy_bottom.png');
+		    background-size: cover;
+		    background-position: center;
+		    background-repeat: no-repeat;
+		}
         .bb-delivery-title { font-size:12px; font-weight:900; color:var(--mu); letter-spacing:.3px; flex-shrink:0; }
         .bb-delivery-chips {
             display:flex; flex-wrap:wrap; gap:4px;
