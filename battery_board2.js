@@ -58,7 +58,7 @@
             flex-shrink:0; position:relative; gap:3px;
         }
         .bb-hd-title {
-            font-size:20px; font-weight:900; color:#e2b82c;
+            font-size:22px; font-weight:900; color:#e2b82c;
             display:flex; align-items:center; gap:7px; cursor:grab;
         }
         .bb-hd-time { display:flex; align-items:baseline; gap:8px; }
@@ -272,7 +272,7 @@
             min-width:34px; height:20px; padding:0 6px;
             border-radius:6px;
             background:var(--sur2); border:1px solid var(--bd2);
-            color:var(--mu); font-size:10px; font-weight:900; cursor:pointer;
+            color:var(--tx); font-size:10px; font-weight:900; cursor:pointer;
             display:flex; align-items:center; justify-content:center;
             z-index:2; transition:background .15s, color .15s;
         }
