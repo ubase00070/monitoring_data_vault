@@ -1115,15 +1115,15 @@
         const tmpR = rs.chassisRightTemperature ?? 0;
 
         const issues = [];
-        if (cpu >= 90) issues.push('crit');
-        else if (cpu >= 80) issues.push('warn');
-        if (tmpL < 0 || tmpR < 0) issues.push('crit');
-        else if (tmpL >= 60 || tmpR >= 60) issues.push('crit');
+        if (cpu >= 90) issues.push('warn');
+		else if (cpu >= 80) issues.push('warn');
+        if (tmpL < 0 || tmpR < 0) issues.push('warn');
+		else if (tmpL >= 60 || tmpR >= 60) issues.push('warn');
         else if (tmpL >= 55 || tmpR >= 55) issues.push('warn');
         if (Math.abs(tmpL - tmpR) >= 10) issues.push('warn');
 
-        const overallStatus = issues.includes('crit') ? 'crit' : issues.includes('warn') ? 'warn' : 'ok';
-        const statusLabel = { ok:'🟢 정상', warn:'🟡 주의', crit:'🔴 점검 필요' };
+        const overallStatus = issues.length > 0 ? 'warn' : 'ok';
+		const statusLabel = { ok:'🟢 정상', warn:'🟡 주의' };
         badgeEl.className = `bb-icp-badge ${overallStatus}`;
         badgeEl.textContent = statusLabel[overallStatus];
 
