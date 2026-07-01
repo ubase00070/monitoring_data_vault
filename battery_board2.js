@@ -39,7 +39,7 @@
         #bb.open { display:flex; }
 		
 		#bb, #bb * {
-			font-weight: 350 !important;
+			font-weight: 450 !important;
 		}
 		
 		.bb-firefly {
