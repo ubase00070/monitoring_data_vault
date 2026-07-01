@@ -120,10 +120,10 @@
         .bb-chip.nomap  { background:rgba(249,115,22,.12); color:var(--or); border:2px solid rgba(249,115,22,.45); box-shadow:0 0 6px rgba(249,115,22,.15); animation:chipPulse 1s infinite, chipBorder 1s infinite; }
         .bb-chip.idle   { background:rgba(59,130,246,.10); color:var(--bl); border:2px solid rgba(59,130,246,.45); box-shadow:0 0 6px rgba(59,130,246,.15); animation:chipPulse 1.2s infinite, chipBorder 1.2s infinite; }
         .bb-chip-none   { font-size:12px; color:var(--mu); font-weight:700; }
-        @keyframes chipPulse { 0%,100%{opacity:1} 50%{opacity:.55} }
+        @keyframes chipPulse { 0%,100%{opacity:1} 50%{opacity:.85} }
         @keyframes chipBorder {
             0%,100% { box-shadow:0 0 0 2px currentColor; }
-            50%     { box-shadow:none; }
+            50%     { box-shadow:0 0 0 1px currentColor; }
         }
 
         /* 검색 */
@@ -166,7 +166,7 @@
         .bb-gr { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; }
         .bb-ca {
 			height:80px; background:var(--sur);
-			border-radius:18px; padding:8px 11px;
+			border-radius:18px; padding:6px 11px;
 			cursor:grab; position:relative; overflow:hidden;
 			display:flex; flex-direction:column; justify-content:space-between;
 			border:2px solid var(--ac-border,var(--bd));
@@ -223,7 +223,7 @@
         .bb-mg { display:flex; flex-direction:row; gap:5px; padding:7px 8px; border-right:1px solid var(--bd); flex-shrink:0; }
         .bb-mg-col { display:flex; flex-direction:column; border:1px solid var(--bd2); border-radius:8px; background:var(--sur2); overflow:hidden; }
         .bb-mg-col-title {
-            padding:5px 6px; font-size:12px; font-weight:900; color:var(--tx);
+            padding:5px 6px; font-size:13px; font-weight:900; color:var(--tx);
             border-bottom:1px solid var(--bd); background:var(--sur);
             text-align:center; white-space:nowrap;
         }
