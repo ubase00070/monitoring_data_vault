@@ -38,6 +38,10 @@
         }
         #bb.open { display:flex; }
 		
+		#bb, #bb * {
+			font-weight: 400 !important;
+		}
+		
 		.bb-firefly {
 			position:absolute; width:4px; height:4px; border-radius:50%;
 			background:var(--ye); box-shadow:0 0 6px 2px rgba(255,224,130,.6);
@@ -254,7 +258,7 @@
 			content:'';
 			position:absolute;
 			bottom:4px; right:4px;
-			width:64px; height:64px;
+			width:130px; height:64px;
 			background-image:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/walker_dancing.webp');
 			background-size:contain;
 			background-repeat:no-repeat;
