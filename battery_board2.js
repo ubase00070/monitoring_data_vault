@@ -15,14 +15,14 @@
     style.textContent = `
         @import url('https://fonts.googleapis.com/css2?family=Jua&family=Lato:wght@400;700;900&display=swap');
         :root {
-			--bg:#0b0921; --sur:#221e46; --sur2:#2c265a;
-			--bd:#453e78; --bd2:#544c8f; --tx:#fff6d8; --mu:#9d92c9;
-			--gn:#5ec478; --gn2:rgba(94,196,120,.13);
-			--bl:#5a96d6; --bl2:rgba(90,150,214,.13);
-			--wh:rgba(255,246,216,.08); --gy:#6b6598;
-			--rd:#d66e6e; --rd2:rgba(214,110,110,.14); --ye:#e0a846;
-			--or:#d68a52; --or2:rgba(214,138,82,.13);
-			--pk:#d66ea0; --pk2:rgba(214,110,160,.13);
+			--bg:#0d0d0f; --sur:#141416; --sur2:#1a1a1e;
+			--bd:#242428; --bd2:#2e2e34; --tx:#e8e8f0; --mu:#52525e;
+			--gn:#22c55e; --gn2:rgba(34,197,94,.10);
+			--bl:#3b82f6; --bl2:rgba(59,130,246,.10);
+			--wh:rgba(240,240,255,.06); --gy:#4b5563;
+			--rd:#ef4444; --rd2:rgba(239,68,68,.12); --ye:#fbbf24;
+			--or:#f97316; --or2:rgba(249,115,22,.12);
+			--pk:#ec4899; --pk2:rgba(236,72,153,.10);
 		}
         #bb-wrap * { box-sizing:border-box; }
 
@@ -191,7 +191,6 @@
             transform:translate(-50%,-50%);
             color:var(--rd); font-size:22px; font-weight:900; opacity:.9; pointer-events:none;
         }
-        .bb-ca.charging   { --ac:var(--gn); --ac-border:rgba(34,197,94,.35);  background:var(--gn2); }
         .bb-ca.charging   { --ac:var(--gn); --ac-border:var(--gn);  background:var(--sur); }
 		.bb-ca.patrolling { --ac:var(--bl); --ac-border:var(--bl); background:var(--sur); }
 		.bb-ca.standby    { --ac:#c8ccd4;  --ac-border:rgba(200,204,212,.3);  background:var(--sur); }
@@ -1165,10 +1164,17 @@
         else if (tmpL >= 55 || tmpR >= 55) issues.push('warn');
         if (Math.abs(tmpL - tmpR) >= 10) issues.push('warn');
 
-        const overallStatus = issues.length > 0 ? 'warn' : 'ok';
-		const statusLabel = { ok:'🟢 정상', warn:'🟡 주의' };
-        badgeEl.className = `bb-icp-badge ${overallStatus}`;
-        badgeEl.textContent = statusLabel[overallStatus];
+        const statusBadgeMap = {
+			charging:   { label:'🟢 충전 중',  cls:'ok' },
+			patrolling: { label:'🔵 순찰 중',  cls:'ok' },
+			delivering: { label:'🩷 배달 중',  cls:'ok' },
+			standby:    { label:'⚪ 대기 중',  cls:'ok' },
+			docking:    { label:'🟡 도킹 중',  cls:'warn' },
+			off:        { label:'⚫ OFF',      cls:'warn' },
+		};
+		const badgeInfo = statusBadgeMap[r.status] || { label:r.status, cls:'ok' };
+		badgeEl.className = `bb-icp-badge ${badgeInfo.cls}`;
+		badgeEl.textContent = badgeInfo.label;
 
         // CPU 바
         const filled = Math.floor(cpu / 10);
