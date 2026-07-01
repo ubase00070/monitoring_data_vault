@@ -192,12 +192,13 @@
             color:var(--rd); font-size:22px; font-weight:900; opacity:.9; pointer-events:none;
         }
         .bb-ca.charging   { --ac:var(--gn); --ac-border:rgba(34,197,94,.35);  background:var(--gn2); }
-        .bb-ca.patrolling { --ac:var(--bl); --ac-border:rgba(59,130,246,.35); background:var(--bl2); }
-        .bb-ca.standby    { --ac:#c8ccd4;  --ac-border:rgba(200,204,212,.2);  background:var(--wh); }
-        .bb-ca.off        { --ac:#4b5563; --ac-border:rgba(75,85,99,.25);     background:#17171c; }
-        .bb-ca.delivering { --ac:var(--pk); --ac-border:rgba(236,72,153,.35); background:var(--pk2); }
-        .bb-ca.docking    { --ac:var(--ye); --ac-border:rgba(251,191,36,.35); background:rgba(251,191,36,.08); }
-        .bb-ca.loading    { --ac:#52525e; --ac-border:rgba(75,85,99,.2); background:var(--sur); opacity:.5; }
+        .bb-ca.charging   { --ac:var(--gn); --ac-border:var(--gn);  background:var(--sur); }
+		.bb-ca.patrolling { --ac:var(--bl); --ac-border:var(--bl); background:var(--sur); }
+		.bb-ca.standby    { --ac:#c8ccd4;  --ac-border:rgba(200,204,212,.3);  background:var(--sur); }
+		.bb-ca.off        { --ac:#4b5563; --ac-border:rgba(75,85,99,.3);     background:#17171c; }
+		.bb-ca.delivering { --ac:var(--pk); --ac-border:var(--pk); background:var(--sur); }
+		.bb-ca.docking    { --ac:var(--ye); --ac-border:var(--ye); background:var(--sur); }
+		.bb-ca.loading    { --ac:#52525e; --ac-border:rgba(75,85,99,.2); background:var(--sur); opacity:.5; }
         .bb-ca.warn-bat   { animation:bb-warnBlink .8s infinite; }
         @keyframes bb-warnBlink {
             0%,100% { border-color:var(--rd); box-shadow:0 0 0 1px var(--rd); }
