@@ -13,7 +13,7 @@
     // ============================================================
     const style = document.createElement('style');
     style.textContent = `
-        @import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Jua&family=Lato:wght@400;700;900&display=swap');
         :root {
 			--bg:#1a1836; --sur:#2d2a52; --sur2:#3a3568;
 			--bd:#4a4580; --bd2:#5a5498; --tx:#fff6d8; --mu:#a89fd4;
