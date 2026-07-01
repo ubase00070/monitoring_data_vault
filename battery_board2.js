@@ -247,12 +247,20 @@
         /* 기타 배달 */
         .bb-delivery-area {
 			flex:1; padding:7px 10px; display:flex; flex-direction:column; gap:5px; min-height:0;
-			background-image: 
-				linear-gradient(rgba(13,13,15,.55), rgba(13,13,15,.55)),
-				url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/snoopy_bottom.png');
-			background-size: cover;
-			background-position: center;
-			background-repeat: no-repeat;
+			position:relative;
+			overflow:hidden;
+		}
+		.bb-delivery-area::after {
+			content:'';
+			position:absolute;
+			bottom:4px; right:4px;
+			width:64px; height:64px;
+			background-image:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/walker_dancing.webp');
+			background-size:contain;
+			background-repeat:no-repeat;
+			background-position:center;
+			pointer-events:none;
+			z-index:0;
 		}
         .bb-delivery-title { font-size:12px; font-weight:900; color:var(--mu); letter-spacing:.3px; flex-shrink:0; }
         .bb-delivery-chips {
