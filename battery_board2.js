@@ -266,6 +266,19 @@
 			transition:transform .15s;
 		}
 		#bb-walker:active { transform:scale(0.92); }
+
+        #bb-walker-toggle {
+            position:absolute; top:4px; right:4px;
+            width:22px; height:22px; border-radius:6px;
+            background:var(--sur2); border:1px solid var(--bd2);
+            color:var(--mu); font-size:12px; cursor:pointer;
+            display:flex; align-items:center; justify-content:center;
+            z-index:2; transition:background .15s, color .15s;
+        }
+        #bb-walker-toggle:hover { border-color:var(--mu); }
+        #bb-walker-toggle.off {
+            color:var(--rd); border-color:rgba(239,68,68,.3); background:rgba(239,68,68,.1);
+        }
 		
         .bb-delivery-title { font-size:15px; font-weight:900; color:var(--mu); letter-spacing:.3px; flex-shrink:0; }
         .bb-delivery-chips {
@@ -466,7 +479,8 @@
                 <div class="bb-delivery-area">
 					<div class="bb-delivery-title">🚗 배달 중 (캠핑장 및 기타)</div>
 					<div class="bb-delivery-chips" id="bb-delivery-chips"></div>
-					<div id="bb-walker"></div>
+					<button id="bb-walker-toggle" title="동숲 주민 표시/숨김"></button>
+                    <div id="bb-walker"></div>
 				</div>
             </div>
 
@@ -1534,17 +1548,38 @@
 		];
 		let walkerIdx = 0;
 
-		const walkerEl = document.getElementById('bb-walker');
-		function setWalker(idx) {
-			walkerEl.style.backgroundImage = `url('${WALKER_BASE}${walkerFiles[idx]}')`;
-		}
-		setWalker(0);
+        const walkerEl = document.getElementById('bb-walker');
+        const toggleEl = document.getElementById('bb-walker-toggle');
 
-		walkerEl.addEventListener('click', () => {
-			walkerIdx = (walkerIdx + 1) % walkerFiles.length;
-			setWalker(walkerIdx);
-		});
-	})();
+        function setWalker(idx) {
+            walkerEl.style.backgroundImage = `url('${WALKER_BASE}${walkerFiles[idx]}')`;
+        }
+        setWalker(0);
+
+        walkerEl.addEventListener('click', () => {
+            walkerIdx = (walkerIdx + 1) % walkerFiles.length;
+            setWalker(walkerIdx);
+        });
+
+        // ── 표시 on/off 토글 (기본 ON, localStorage 저장) ──
+        const WALKER_TOGGLE_KEY = 'bb_walker_on';
+        let walkerOn = localStorage.getItem(WALKER_TOGGLE_KEY);
+        walkerOn = walkerOn === null ? true : walkerOn === '1';   // 저장된 값 없으면 기본 ON
+
+        function applyWalkerToggle() {
+            walkerEl.style.display = walkerOn ? '' : 'none';
+            toggleEl.classList.toggle('off', !walkerOn);
+            toggleEl.textContent = walkerOn ? '🐾' : '🚫';
+            toggleEl.title = walkerOn ? '동숲 주민 끄기' : '동숲 주민 켜기';
+        }
+        applyWalkerToggle();
+
+        toggleEl.addEventListener('click', () => {
+            walkerOn = !walkerOn;
+            localStorage.setItem(WALKER_TOGGLE_KEY, walkerOn ? '1' : '0');
+            applyWalkerToggle();
+        });
+    })();
 
     // ── 줌 기능
     (function() {
