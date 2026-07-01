@@ -447,6 +447,7 @@
                     <span class="bb-alert-label">🚨 알림</span>
                     <div class="bb-alert-chips" id="bb-alert-chips"></div>
                 </div>
+                <button class="bb-btn" id="bb-inforequest-btn" style="margin-right:6px; align-self:center;">기체정보</button>
                 <div class="bb-search-wrap">
                     <div class="bb-si-wrap">
                         <span class="bb-si-icon">🔍</span>
@@ -1269,16 +1270,111 @@
 
         panel.classList.add('open');
         panel.style.zIndex = ++topmostZ;
+        registerInfoPanelClose();
+        }
 
-        setTimeout(() => {
-            document.addEventListener('mousedown', function closeInfo(e) {
-                if (!panel.contains(e.target)) {
-                    panel.classList.remove('open');
-                    document.removeEventListener('mousedown', closeInfo);
+        // ── 새 헬퍼 함수 (openInfoCardPanel 함수 바로 아래에 추가)
+        let _infoPanelCloseHandler = null;
+        function registerInfoPanelClose() {
+            const panel = document.getElementById('bb-info-card-panel');
+            if (_infoPanelCloseHandler) {
+                document.removeEventListener('mousedown', _infoPanelCloseHandler);
+                _infoPanelCloseHandler = null;
+            }
+            setTimeout(() => {
+                _infoPanelCloseHandler = function closeInfo(e) {
+                    if (!panel.contains(e.target)) {
+                        panel.classList.remove('open');
+                        document.removeEventListener('mousedown', _infoPanelCloseHandler);
+                        _infoPanelCloseHandler = null;
+                    }
+                };
+                document.addEventListener('mousedown', _infoPanelCloseHandler);
+            }, 100);
+        }
+
+        function openInfoSearchMode() {
+            const panel   = document.getElementById('bb-info-card-panel');
+            const titleEl = document.getElementById('bb-icp-title');
+            const badgeEl = document.getElementById('bb-icp-badge');
+            const bodyEl  = document.getElementById('bb-icp-body');
+
+            titleEl.textContent = '기체 정보 검색';
+            badgeEl.style.display = 'none';
+
+            let searchFocusIdx = -1;
+
+            function renderList(query) {
+                const q = query.trim();
+                const res = DB.filter(r => q === '' || r.name.includes(q))
+                            .sort((a,b) => a.name.localeCompare(b.name, 'ko'));
+                const listEl = bodyEl.querySelector('#bb-info-search-list');
+                if (!listEl) return;
+
+                if (res.length === 0) {
+                    listEl.innerHTML = `<div class="bb-di" style="color:var(--mu);cursor:default;">${DB.length===0 ? '기체 데이터 로딩 중...' : '검색 결과 없음'}</div>`;
+                    return;
                 }
+                listEl.innerHTML = res.map(r =>
+                    `<div class="bb-di" data-rid="${r.id}">
+                        <span class="bb-di-name">${r.name}</span>
+                        <span class="bb-di-icon">${STI[r.status]}</span>
+                    </div>`
+                ).join('');
+                listEl.querySelectorAll('.bb-di[data-rid]').forEach(el => {
+                    el.addEventListener('mousedown', e => {
+                        e.preventDefault(); e.stopPropagation();
+                        const robot = DB.find(x => x.id === el.dataset.rid);
+                        if (robot) {
+                            badgeEl.style.display = '';
+                            openInfoCardPanel(robot);
+                        }
+                    });
+                });
+            }
+
+            bodyEl.innerHTML = `
+                <div style="padding:10px 14px;">
+                    <div class="bb-si-wrap" style="position:relative;">
+                        <span class="bb-si-icon" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--mu);">🔍</span>
+                        <input class="bb-si" id="bb-info-search-input" placeholder="기체명 검색" autocomplete="off"
+                            style="width:100%; background:var(--sur2); border:1px solid var(--bd2); border-radius:7px; padding:6px 10px 6px 26px; color:var(--tx); font-size:12px; outline:none; font-family:inherit; box-sizing:border-box;">
+                    </div>
+                    <div id="bb-info-search-list" style="max-height:240px; overflow-y:auto; margin-top:8px;"></div>
+                </div>
+            `;
+
+            const inputEl = bodyEl.querySelector('#bb-info-search-input');
+            renderList('');
+            inputEl.focus();
+
+            inputEl.addEventListener('input', () => { searchFocusIdx = -1; renderList(inputEl.value); });
+            inputEl.addEventListener('keydown', e => {
+                const listEl = bodyEl.querySelector('#bb-info-search-list');
+                const items = listEl.querySelectorAll('.bb-di[data-rid]');
+                if (!items.length) return;
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    searchFocusIdx = Math.min(searchFocusIdx + 1, items.length - 1);
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    searchFocusIdx = Math.max(searchFocusIdx - 1, 0);
+                } else if (e.key === 'Enter' && searchFocusIdx >= 0) {
+                    e.preventDefault();
+                    const robot = DB.find(x => x.id === items[searchFocusIdx].dataset.rid);
+                    if (robot) {
+                        badgeEl.style.display = '';
+                        openInfoCardPanel(robot);
+                    }
+                    return;
+                }
+                items.forEach((el, i) => el.classList.toggle('bb-di-focus', i === searchFocusIdx));
             });
-        }, 100);
-    }
+
+            panel.classList.add('open');
+            panel.style.zIndex = ++topmostZ;
+            registerInfoPanelClose();
+        }
 
     // ============================================================
     // SECTION 10. 정렬 & 제거
@@ -1381,6 +1477,11 @@
         document.getElementById('bb-info-card-panel').classList.remove('open');
     });
 
+    document.getElementById('bb-inforequest-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        openInfoSearchMode();
+    });
+
     document.getElementById('bb-infobtn').addEventListener('click', () => {
         document.getElementById('bb-info-panel').classList.toggle('open');
     });
@@ -1419,9 +1520,14 @@
 		const WALKER_BASE = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/';
 		const walkerFiles = [
 			'Walker.webp',
-			'Bluebear.webp',
-			'Bones.webp',
-			'Curt.webp',
+            'Blathers.webp',
+            'Bluebear.webp',
+            'Bob.webp',
+            'Bones.webp',
+            'Curt.webp',
+            'Filbert.webp',
+			'Joey.webp',
+            'Ketchup.webp',			
 			'Sable.webp',
 			'Sherb.webp',
 			'Wisp.webp',
