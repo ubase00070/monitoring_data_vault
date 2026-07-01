@@ -1133,11 +1133,6 @@
         const cpuDot = cpu >= 90 ? '🔴' : cpu >= 80 ? '🟠' : '🟢';
 
         // GPS 텍스트
-        const gpsTxt = gps === 0 ? '수신 불가'
-            : gps < 50000  ? `양호 (${gps.toLocaleString()})`
-            : gps < 500000 ? `불안정 (${gps.toLocaleString()})`
-            : `위험 (${gps.toLocaleString()})`;
-        const gpsDot = (gps === 0 || gps == null) ? '🔴' : '';
 		const gpsTxt = (gps === 0 || gps == null) ? '수신 불가 🔴'
 			: gps.toLocaleString();
 
@@ -1191,7 +1186,7 @@
                 </div>
                 <div class="bb-icp-row">
                     <span class="bb-icp-label">GPS 정확도</span>
-                    <span class="bb-icp-value">${gpsTxt} ${gpsDot}</span>
+                    <span class="bb-icp-value">${gpsTxt}</span>
                 </div>
                 <div class="bb-icp-row">
                     <span class="bb-icp-label">섀시 온도</span>
