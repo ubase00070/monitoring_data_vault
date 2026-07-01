@@ -15,7 +15,7 @@
     style.textContent = `
         @import url('https://fonts.googleapis.com/css2?family=Jua&family=Lato:wght@400;700;900&display=swap');
         :root {
-			--bg:#1a1836; --sur:#2d2a52; --sur2:#3a3568;
+			--bg:#100e28; --sur:#2d2a52; --sur2:#3a3568;
 			--bd:#4a4580; --bd2:#5a5498; --tx:#fff6d8; --mu:#a89fd4;
 			--gn:#7ee787; --gn2:rgba(126,231,135,.15);
 			--bl:#79c0ff; --bl2:rgba(121,192,255,.15);
@@ -207,7 +207,7 @@
         .bb-ca-name.bb-marquee { overflow:visible; animation:bb-marquee 3s linear 0.5s 1 forwards; }
         @keyframes bb-marquee { 0%{transform:translateX(0)} 100%{transform:translateX(-60%)} }
         .bb-ca-mid  { display:flex; justify-content:space-between; align-items:center; }
-        .bb-ca-st   { font-size:14px; font-weight:700; color:var(--ac,var(--mu)); opacity:.9; }
+        .bb-ca-st   { font-size:13px; font-weight:700; color:var(--ac,var(--mu)); opacity:.9; }
         .bb-mission-off { font-size:11px; font-weight:900; color:rgba(239,68,68,.8); }
         .bb-ca-bar-wrap { position:relative; }
         .bb-ca-bar  { height:14px; background:rgba(255,255,255,.07); border-radius:4px; overflow:hidden; }
