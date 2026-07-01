@@ -315,7 +315,7 @@
         #bb-info-card-panel {
             display:none; position:fixed;
             top:50%; left:50%; transform:translate(-50%,-50%);
-            width:320px; background:#0a0a0c;
+            width:368px; background:#0a0a0c;
             border:1px solid var(--bd2); border-radius:12px;
             box-shadow:0 16px 48px rgba(0,0,0,.9);
             z-index:999999999; font-family:'Lato',sans-serif;
