@@ -15,8 +15,8 @@
     style.textContent = `
         @import url('https://fonts.googleapis.com/css2?family=Jua&family=Lato:wght@400;700;900&display=swap');
         :root {
-			--bg:#100e28; --sur:#2d2a52; --sur2:#3a3568;
-			--bd:#4a4580; --bd2:#5a5498; --tx:#fff6d8; --mu:#a89fd4;
+			--bg:#0b0921; --sur:#221e46; --sur2:#2c265a;
+			--bd:#453e78; --bd2:#544c8f; --tx:#fff6d8; --mu:#9d92c9;
 			--gn:#7ee787; --gn2:rgba(126,231,135,.15);
 			--bl:#79c0ff; --bl2:rgba(121,192,255,.15);
 			--wh:rgba(255,246,216,.08); --gy:#6b6598;
