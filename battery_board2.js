@@ -15,15 +15,15 @@
     style.textContent = `
         @import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap');
         :root {
-            --bg:#0d0d0f; --sur:#141416; --sur2:#1a1a1e;
-            --bd:#242428; --bd2:#2e2e34; --tx:#e8e8f0; --mu:#52525e;
-            --gn:#22c55e; --gn2:rgba(34,197,94,.10);
-            --bl:#3b82f6; --bl2:rgba(59,130,246,.10);
-            --wh:rgba(240,240,255,.06); --gy:#4b5563;
-            --rd:#ef4444; --rd2:rgba(239,68,68,.12); --ye:#fbbf24;
-            --or:#f97316; --or2:rgba(249,115,22,.12);
-            --pk:#ec4899; --pk2:rgba(236,72,153,.10);
-        }
+			--bg:#1a1836; --sur:#2d2a52; --sur2:#3a3568;
+			--bd:#4a4580; --bd2:#5a5498; --tx:#fff6d8; --mu:#a89fd4;
+			--gn:#7ee787; --gn2:rgba(126,231,135,.15);
+			--bl:#79c0ff; --bl2:rgba(121,192,255,.15);
+			--wh:rgba(255,246,216,.08); --gy:#6b6598;
+			--rd:#ff6b6b; --rd2:rgba(255,107,107,.15); --ye:#ffe082;
+			--or:#ffb37e; --or2:rgba(255,179,126,.15);
+			--pk:#ff9ecf; --pk2:rgba(255,158,207,.15);
+		}
         #bb-wrap * { box-sizing:border-box; }
 
         /* ── 메인 패널 ── */
@@ -33,10 +33,18 @@
             width:960px; background:var(--bg);
             border:1px solid var(--bd2); border-radius:16px;
             box-shadow:0 24px 60px rgba(0,0,0,.75);
-            z-index:9999999; font-family:'Lato',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+            z-index:9999999; font-family:'Jua','Lato',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
             color:var(--tx); flex-direction:column;
         }
         #bb.open { display:flex; }
+		
+		.bb-firefly {
+			position:absolute; width:4px; height:4px; border-radius:50%;
+			background:var(--ye); box-shadow:0 0 6px 2px rgba(255,224,130,.6);
+			animation:bb-flicker 2.5s ease-in-out infinite;
+			pointer-events:none; z-index:1;
+		}
+		@keyframes bb-flicker { 0%,100%{opacity:.15} 50%{opacity:.9} }
 
         /* ── 헤더 ── */
         .bb-hd {
@@ -153,15 +161,22 @@
         .bb-gw { padding:10px 12px; flex-shrink:0; }
         .bb-gr { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; }
         .bb-ca {
-            height:80px; background:var(--sur);
-            border-radius:9px; padding:8px 11px;
-            cursor:grab; position:relative; overflow:hidden;
-            display:flex; flex-direction:column; justify-content:space-between;
-            border:1px solid var(--ac-border,var(--bd));
-            transition:border-color .2s, background .2s, opacity .15s;
-        }
-        .bb-ca:active { cursor:grabbing; }
-        .bb-ca::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--ac,var(--gy)); border-radius:9px 9px 0 0; }
+			height:80px; background:var(--sur);
+			border-radius:18px; padding:8px 11px;
+			cursor:grab; position:relative; overflow:hidden;
+			display:flex; flex-direction:column; justify-content:space-between;
+			border:2px solid var(--ac-border,var(--bd));
+			transition:transform .25s cubic-bezier(.34,1.56,.64,1),
+					   box-shadow .25s cubic-bezier(.34,1.56,.64,1),
+					   border-color .2s, background .2s, opacity .15s;
+		}
+		.bb-ca:hover {
+			transform:translateY(-3px) scale(1.03);
+			box-shadow:0 6px 0 rgba(0,0,0,.2), 0 0 16px rgba(255,224,130,.25);
+			border-color:var(--ye);
+		}
+		.bb-ca:active { cursor:grabbing; transform:translateY(-1px) scale(0.99); }
+		.bb-ca::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--ac,var(--gy)); border-radius:18px 18px 0 0; }
         .bb-ca.dragging { opacity:.3; }
         .bb-ca.dragover { border-color:var(--bl)!important; box-shadow:0 0 0 1px var(--bl); }
         .bb-ca.selectable { cursor:pointer; }
@@ -231,13 +246,13 @@
 
         /* 기타 배달 */
         .bb-delivery-area {
-		    flex:1; padding:7px 10px; display:flex; flex-direction:column; gap:5px; min-height:0;
-		    background-image: 
-		        linear-gradient(rgba(13,13,15,.55), rgba(13,13,15,.55)),
-		        url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/snoopy_bottom.png');
-		    background-size: cover;
-		    background-position: center;
-		    background-repeat: no-repeat;
+			flex:1; padding:7px 10px; display:flex; flex-direction:column; gap:5px; min-height:0;
+			background-image: 
+				linear-gradient(rgba(13,13,15,.55), rgba(13,13,15,.55)),
+				url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/snoopy_bottom.png');
+			background-size: cover;
+			background-position: center;
+			background-repeat: no-repeat;
 		}
         .bb-delivery-title { font-size:12px; font-weight:900; color:var(--mu); letter-spacing:.3px; flex-shrink:0; }
         .bb-delivery-chips {
@@ -351,20 +366,20 @@
             margin-left:6px;
         }
         .bb-icp-section {
-            padding:9px 14px; border-bottom:1px solid var(--bd);
+            padding:7px 14px; border-bottom:1px solid var(--bd);
         }
         .bb-icp-section:last-child { border-bottom:none; }
         .bb-icp-section-title {
-            font-size:10px; font-weight:900; color:var(--mu);
-            letter-spacing:.5px; margin-bottom:6px; text-transform:uppercase;
+            font-size:11px; font-weight:900; color:var(--mu);
+            letter-spacing:.5px; margin-bottom:4px; text-transform:uppercase;
         }
         .bb-icp-row {
             display:flex; justify-content:space-between; align-items:center;
-            padding:2px 0; font-size:12px;
+            padding:3px 0; font-size:13px;
         }
         .bb-icp-label { color:var(--mu); font-weight:700; }
         .bb-icp-value { color:var(--tx); font-weight:700; text-align:right; display:flex; align-items:center; gap:4px; }
-        .bb-icp-bar { font-size:10px; color:var(--gn); letter-spacing:-1px; }
+        .bb-icp-bar { font-size:11px; color:var(--gn); letter-spacing:-1px; }
 
         /* ── 제거 힌트 ── */
         .bb-rmhint { font-size:12px; color:var(--rd); font-weight:700; display:none; opacity:.85; }
@@ -379,6 +394,11 @@
     wrap.id = 'bb-wrap';
     wrap.innerHTML = `
         <div id="bb">
+			<div class="bb-firefly" style="top:8%;left:15%;animation-delay:0s;"></div>
+			<div class="bb-firefly" style="top:25%;left:80%;animation-delay:.8s;"></div>
+			<div class="bb-firefly" style="top:60%;left:8%;animation-delay:1.5s;"></div>
+			<div class="bb-firefly" style="top:75%;left:45%;animation-delay:2.1s;"></div>
+			<div class="bb-firefly" style="top:15%;left:55%;animation-delay:.5s;"></div>
             <!-- 헤더 -->
             <div class="bb-hd">
                 <div class="bb-hd-left">
@@ -438,7 +458,7 @@
                     <div class="bb-xbtn" id="bb-info-close">✕</div>
                 </div>
                 <div id="bb-info-body">
-                    * 오직 '알림 센터' 페이지에서만 작동<br>
+                    * 오직 '알림 센터' 페이지에서만 열람<br>
                     * 추가한 기체 카드와 배치는 로컬 스토리지에 저장됨(최대 30대. 드래그로 배치 변경 가능)<br>
                     * 카드 더블클릭: 기체 상세 Info 패널 (CPU, GPS, 섀시 온도, 마지막 조작자 등)<br>
                     * 알림 전송 조건<br>
