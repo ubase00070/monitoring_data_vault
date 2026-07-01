@@ -203,7 +203,7 @@
             0%,100% { border-color:var(--rd); box-shadow:0 0 0 1px var(--rd); }
             50%     { border-color:transparent; box-shadow:none; }
         }
-        .bb-ca-name { font-size:17px; font-weight:900; color:var(--tx); line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; letter-spacing:-.2px; }
+        .bb-ca-name { font-size:16.5px; font-weight:900; color:var(--tx); line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; letter-spacing:-.2px; }
         .bb-ca-name.bb-marquee { overflow:visible; animation:bb-marquee 3s linear 0.5s 1 forwards; }
         @keyframes bb-marquee { 0%{transform:translateX(0)} 100%{transform:translateX(-60%)} }
         .bb-ca-mid  { display:flex; justify-content:space-between; align-items:center; }
@@ -254,18 +254,19 @@
 			position:relative;
 			overflow:hidden;
 		}
-		.bb-delivery-area::after {
-			content:'';
+		#bb-walker {
 			position:absolute;
 			bottom:4px; right:4px;
 			width:145px; height:145px;
-			background-image:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/walker_dancing.webp');
 			background-size:contain;
 			background-repeat:no-repeat;
 			background-position:center;
-			pointer-events:none;
-			z-index:0;
+			cursor:pointer;
+			z-index:1;
+			transition:transform .15s;
 		}
+		#bb-walker:active { transform:scale(0.92); }
+		
         .bb-delivery-title { font-size:15px; font-weight:900; color:var(--mu); letter-spacing:.3px; flex-shrink:0; }
         .bb-delivery-chips {
             display:flex; flex-wrap:wrap; gap:4px;
@@ -458,9 +459,10 @@
             <div class="bb-bottom">
                 <div class="bb-mg" id="bb-mg"></div>
                 <div class="bb-delivery-area">
-                    <div class="bb-delivery-title">🚗 배달 중 (캠핑장 및 기타)</div>
-                    <div class="bb-delivery-chips" id="bb-delivery-chips"></div>
-                </div>
+					<div class="bb-delivery-title">🚗 배달 중 (캠핑장 및 기타)</div>
+					<div class="bb-delivery-chips" id="bb-delivery-chips"></div>
+					<div id="bb-walker"></div>
+				</div>
             </div>
 
             <!-- 사용 설명서 패널 -->
@@ -1400,6 +1402,32 @@
     document.addEventListener('mousedown', e => {
         if (!e.target.closest('.bb-search-wrap') && !e.target.closest('#bb-dd')) hideDd();
     });
+
+	// 동숲 주민
+	(function() {
+		const WALKER_BASE = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/';
+		const walkerFiles = [
+			'Walker.webp',
+			'Bluebear.webp',
+			'Bones.webp',
+			'Curt.webp',
+			'Sable.webp',
+			'Sherb.webp',
+			'Wisp.webp',
+		];
+		let walkerIdx = 0;
+
+		const walkerEl = document.getElementById('bb-walker');
+		function setWalker(idx) {
+			walkerEl.style.backgroundImage = `url('${WALKER_BASE}${walkerFiles[idx]}')`;
+		}
+		setWalker(0);
+
+		walkerEl.addEventListener('click', () => {
+			walkerIdx = (walkerIdx + 1) % walkerFiles.length;
+			setWalker(walkerIdx);
+		});
+	})();
 
     // ── 줌 기능
     (function() {
