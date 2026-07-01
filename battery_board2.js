@@ -69,13 +69,13 @@
 
         .bb-btn {
             padding:5px 12px; border-radius:6px; border:1px solid var(--bd2);
-            background:var(--sur2); color:var(--tx); font-size:12px;
+            background:var(--sur2); color:var(--tx); font-size:13px;
             font-family:inherit; font-weight:700; cursor:pointer; white-space:nowrap;
         }
         .bb-btn:hover { border-color:var(--mu); }
         .bb-btn.rm { border-color:rgba(239,68,68,.3); color:var(--rd); background:rgba(239,68,68,.15); }
         .bb-btn.rm:hover { background:rgba(239,68,68,.25); }
-        .bb-btn.info { border-color:rgba(156,163,175,.2); color:var(--tx); background:var(--sur2); font-size:12px; padding:5px 10px; }
+        .bb-btn.info { border-color:rgba(156,163,175,.2); color:var(--tx); background:var(--sur2); font-size:13px; padding:5px 10px; }
         .bb-xbtn {
             width:24px; height:24px; border-radius:6px;
             background:rgba(239,68,68,.15); border:1px solid rgba(239,68,68,.3);
@@ -88,7 +88,7 @@
             background:var(--sur2); color:var(--tx); font-size:12px;
             font-weight:900; cursor:pointer; line-height:1.5; font-family:inherit;
         }
-        .zoom-label { font-size:11px; color:var(--tx); font-weight:700; min-width:34px; text-align:center; }
+        .zoom-label { font-size:12px; color:var(--tx); font-weight:700; min-width:34px; text-align:center; }
 
         /* ── 알림바 + 검색 ── */
         .bb-alert-row {
@@ -108,7 +108,7 @@
         .bb-chip {
             display:flex; align-items:center; gap:4px;
             padding:5px 12px; border-radius:10px;
-            font-size:12px; font-weight:700; cursor:pointer;
+            font-size:13px; font-weight:700; cursor:pointer;
             white-space:nowrap; font-family:inherit;
             transition:filter .15s, box-shadow .15s;
         }
@@ -207,7 +207,7 @@
         .bb-ca-name.bb-marquee { overflow:visible; animation:bb-marquee 3s linear 0.5s 1 forwards; }
         @keyframes bb-marquee { 0%{transform:translateX(0)} 100%{transform:translateX(-60%)} }
         .bb-ca-mid  { display:flex; justify-content:space-between; align-items:center; }
-        .bb-ca-st   { font-size:12px; font-weight:700; color:var(--ac,var(--mu)); opacity:.9; }
+        .bb-ca-st   { font-size:13px; font-weight:700; color:var(--ac,var(--mu)); opacity:.9; }
         .bb-mission-off { font-size:11px; font-weight:900; color:rgba(239,68,68,.8); }
         .bb-ca-bar-wrap { position:relative; }
         .bb-ca-bar  { height:14px; background:rgba(255,255,255,.07); border-radius:4px; overflow:hidden; }
@@ -223,7 +223,7 @@
         .bb-mg { display:flex; flex-direction:row; gap:5px; padding:7px 8px; border-right:1px solid var(--bd); flex-shrink:0; }
         .bb-mg-col { display:flex; flex-direction:column; border:1px solid var(--bd2); border-radius:8px; background:var(--sur2); overflow:hidden; }
         .bb-mg-col-title {
-            padding:5px 6px; font-size:13px; font-weight:900; color:var(--tx);
+            padding:5px 6px; font-size:14px; font-weight:900; color:var(--tx);
             border-bottom:1px solid var(--bd); background:var(--sur);
             text-align:center; white-space:nowrap;
         }
@@ -266,7 +266,7 @@
 			pointer-events:none;
 			z-index:0;
 		}
-        .bb-delivery-title { font-size:12px; font-weight:900; color:var(--mu); letter-spacing:.3px; flex-shrink:0; }
+        .bb-delivery-title { font-size:14px; font-weight:900; color:var(--mu); letter-spacing:.3px; flex-shrink:0; }
         .bb-delivery-chips {
             display:flex; flex-wrap:wrap; gap:4px;
             overflow-y:auto; max-height:100px; padding-right:2px;
@@ -274,12 +274,12 @@
         .bb-delivery-chips::-webkit-scrollbar { width:4px; }
         .bb-delivery-chips::-webkit-scrollbar-thumb { background:var(--bd2); border-radius:2px; }
         .bb-delivery-chip {
-            display:flex; align-items:center; gap:4px;
-            padding:3px 9px; border-radius:6px;
-            background:var(--pk2); border:1px solid rgba(236,72,153,.3);
-            color:var(--pk); font-size:11px; font-weight:700; white-space:nowrap;
-        }
-        .bb-delivery-empty { font-size:11px; color:var(--mu); font-weight:700; }
+			display:flex; align-items:center; gap:4px;
+			padding:3px 9px; border-radius:6px;
+			background:var(--pk2); border:1px solid rgba(236,72,153,.3);
+			color:var(--pk); font-size:12px; font-weight:700; white-space:nowrap;
+		}
+        .bb-delivery-empty { font-size:13px; color:var(--mu); font-weight:700; }
 
         /* ── 알림 상세 패널 ── */
         #bb-alert-panel {
