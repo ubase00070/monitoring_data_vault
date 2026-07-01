@@ -39,7 +39,7 @@
         #bb.open { display:flex; }
 		
 		#bb, #bb * {
-			font-weight: 300 !important;
+			font-weight: 350 !important;
 		}
 		
 		.bb-firefly {
@@ -203,12 +203,12 @@
             0%,100% { border-color:var(--rd); box-shadow:0 0 0 1px var(--rd); }
             50%     { border-color:transparent; box-shadow:none; }
         }
-        .bb-ca-name { font-size:15px; font-weight:900; color:var(--tx); line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; letter-spacing:-.2px; }
+        .bb-ca-name { font-size:16px; font-weight:900; color:var(--tx); line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; letter-spacing:-.2px; }
         .bb-ca-name.bb-marquee { overflow:visible; animation:bb-marquee 3s linear 0.5s 1 forwards; }
         @keyframes bb-marquee { 0%{transform:translateX(0)} 100%{transform:translateX(-60%)} }
         .bb-ca-mid  { display:flex; justify-content:space-between; align-items:center; }
-        .bb-ca-st   { font-size:11px; font-weight:700; color:var(--ac,var(--mu)); opacity:.9; }
-        .bb-mission-off { font-size:10px; font-weight:900; color:rgba(239,68,68,.8); }
+        .bb-ca-st   { font-size:12px; font-weight:700; color:var(--ac,var(--mu)); opacity:.9; }
+        .bb-mission-off { font-size:11px; font-weight:900; color:rgba(239,68,68,.8); }
         .bb-ca-bar-wrap { position:relative; }
         .bb-ca-bar  { height:14px; background:rgba(255,255,255,.07); border-radius:4px; overflow:hidden; }
         .bb-ca-fill { height:100%; border-radius:4px; background:var(--ac,var(--gy)); transition:width .6s ease; }
@@ -258,7 +258,7 @@
 			content:'';
 			position:absolute;
 			bottom:4px; right:4px;
-			width:130px; height:130px;
+			width:145px; height:145px;
 			background-image:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/walker_dancing.webp');
 			background-size:contain;
 			background-repeat:no-repeat;
@@ -1097,7 +1097,7 @@
                         ${inside
                             ? 'right:5px;top:50%;transform:translateY(-50%);'
                             : `left:calc(${pct}% + 5px);top:50%;transform:translateY(-50%);`}
-                        font-size:10px;font-weight:900;
+                        font-size:11px;font-weight:900;
                         color:${batColor};
                         font-family:'Lato',monospace;
                         text-shadow:${batShadow};
