@@ -1355,7 +1355,7 @@
                         <input class="bb-si" id="bb-info-search-input" placeholder="기체명 검색" autocomplete="off"
                             style="width:100%; background:var(--sur2); border:1px solid var(--bd2); border-radius:7px; padding:6px 10px 6px 26px; color:var(--tx); font-size:12px; outline:none; font-family:inherit; box-sizing:border-box;">
                     </div>
-                    <div id="bb-info-search-list" style="max-height:240px; overflow-y:auto; margin-top:8px;"></div>
+                    <div id="bb-info-search-list" style="height:240px; overflow-y:auto; margin-top:8px;"></div>
                 </div>
             `;
 
