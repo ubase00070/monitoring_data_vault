@@ -1,8 +1,6 @@
 /* ============================================================
-   battery_board.js v3.0
+   battery_board.js v3.1
    뉴비고 배터리 현황판 — 템퍼몽키 inject용
-   레이아웃 v8 이식 버전
-   제거: 기능4(ON/OFF반복), 기능6(탐지센서), 기능7(순찰미시작)
    ============================================================ */
 
 (function () {
@@ -13,17 +11,17 @@
     // ============================================================
     const style = document.createElement('style');
     style.textContent = `
-        @import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Jua&family=Lato:wght@400;700;900&display=swap');
         :root {
-            --bg:#0d0d0f; --sur:#141416; --sur2:#1a1a1e;
-            --bd:#242428; --bd2:#2e2e34; --tx:#e8e8f0; --mu:#52525e;
-            --gn:#22c55e; --gn2:rgba(34,197,94,.10);
-            --bl:#3b82f6; --bl2:rgba(59,130,246,.10);
-            --wh:rgba(240,240,255,.06); --gy:#4b5563;
-            --rd:#ef4444; --rd2:rgba(239,68,68,.12); --ye:#fbbf24;
-            --or:#f97316; --or2:rgba(249,115,22,.12);
-            --pk:#ec4899; --pk2:rgba(236,72,153,.10);
-        }
+			--bg:#111113; --sur:#141416; --sur2:#1a1a1e;
+			--bd:#242428; --bd2:#2e2e34; --tx:#e8e8f0; --mu:#52525e;
+			--gn:#22c55e; --gn2:rgba(34,197,94,.10);
+			--bl:#3b82f6; --bl2:rgba(59,130,246,.10);
+			--wh:rgba(240,240,255,.06); --gy:#4b5563;
+			--rd:#ef4444; --rd2:rgba(239,68,68,.12); --ye:#fbbf24;
+			--or:#f97316; --or2:rgba(249,115,22,.12);
+			--pk:#ec4899; --pk2:rgba(236,72,153,.10);
+		}
         #bb-wrap * { box-sizing:border-box; }
 
         /* ── 메인 패널 ── */
@@ -33,20 +31,32 @@
             width:960px; background:var(--bg);
             border:1px solid var(--bd2); border-radius:16px;
             box-shadow:0 24px 60px rgba(0,0,0,.75);
-            z-index:9999999; font-family:'Lato',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+            z-index:9999999; font-family:'Jua','Lato',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
             color:var(--tx); flex-direction:column;
         }
         #bb.open { display:flex; }
+		
+		#bb, #bb * {
+			font-weight: 450 !important;
+		}
+		
+		.bb-firefly {
+			position:absolute; width:4px; height:4px; border-radius:50%;
+			background:var(--ye); box-shadow:0 0 6px 2px rgba(255,224,130,.6);
+			animation:bb-flicker 2.5s ease-in-out infinite;
+			pointer-events:none; z-index:1;
+		}
+		@keyframes bb-flicker { 0%,100%{opacity:.15} 50%{opacity:.9} }
 
         /* ── 헤더 ── */
         .bb-hd {
             display:flex; flex-direction:column; align-items:center;
             padding:11px 14px 9px; border-bottom:1px solid var(--bd);
-            background:var(--sur); border-radius:16px 16px 0 0;
+            background:var(--bg); border-radius:16px 16px 0 0;
             flex-shrink:0; position:relative; gap:3px;
         }
         .bb-hd-title {
-            font-size:20px; font-weight:900; color:#e2b82c;
+            font-size:22px; font-weight:900; color:#e2b82c;
             display:flex; align-items:center; gap:7px; cursor:grab;
         }
         .bb-hd-time { display:flex; align-items:baseline; gap:8px; }
@@ -57,13 +67,13 @@
 
         .bb-btn {
             padding:5px 12px; border-radius:6px; border:1px solid var(--bd2);
-            background:var(--sur2); color:var(--tx); font-size:12px;
+            background:var(--sur2); color:var(--tx); font-size:14px;
             font-family:inherit; font-weight:700; cursor:pointer; white-space:nowrap;
         }
         .bb-btn:hover { border-color:var(--mu); }
-        .bb-btn.rm { border-color:rgba(239,68,68,.3); color:var(--rd); background:var(239,68,68,.3); }
+        .bb-btn.rm { border-color:rgba(239,68,68,.3); color:var(--rd); background:rgba(239,68,68,.15); }
         .bb-btn.rm:hover { background:rgba(239,68,68,.25); }
-        .bb-btn.info { border-color:rgba(156,163,175,.2); color:var(--tx); background:var(--sur2); font-size:12px; padding:5px 10px; }
+        .bb-btn.info { border-color:rgba(156,163,175,.2); color:var(--tx); background:var(--sur2); font-size:14px; padding:5px 10px; }
         .bb-xbtn {
             width:24px; height:24px; border-radius:6px;
             background:rgba(239,68,68,.15); border:1px solid rgba(239,68,68,.3);
@@ -76,7 +86,7 @@
             background:var(--sur2); color:var(--tx); font-size:12px;
             font-weight:900; cursor:pointer; line-height:1.5; font-family:inherit;
         }
-        .zoom-label { font-size:11px; color:var(--tx); font-weight:700; min-width:34px; text-align:center; }
+        .zoom-label { font-size:14px; color:var(--tx); font-weight:700; min-width:34px; text-align:center; }
 
         /* ── 알림바 + 검색 ── */
         .bb-alert-row {
@@ -86,7 +96,7 @@
         }
         .bb-alert-bar {
             flex:1; display:flex; align-items:center; gap:8px;
-            padding:6px 12px; background:var(--sur2);
+            padding:6px 12px; background:var(--bg);
         }
         .bb-alert-label {
             font-size:13px; font-weight:900; color:var(--tx);
@@ -96,23 +106,23 @@
         .bb-chip {
             display:flex; align-items:center; gap:4px;
             padding:5px 12px; border-radius:10px;
-            font-size:12px; font-weight:700; cursor:pointer;
+            font-size:15px; font-weight:700; cursor:pointer;
             white-space:nowrap; font-family:inherit;
             transition:filter .15s, box-shadow .15s;
         }
         .bb-chip:hover { filter:brightness(1.15); }
         .bb-chip.bat    { background:var(--rd2); color:var(--rd); border:2px solid rgba(239,68,68,.55); box-shadow:0 0 8px rgba(239,68,68,.25); animation:chipPulse 1s infinite, chipBorder 1s infinite; }
-		.bb-chip.dock   { background:rgba(251,191,36,.12); color:var(--ye); border:2px solid rgba(251,191,36,.5); box-shadow:0 0 6px rgba(251,191,36,.2); animation:chipPulse 1s infinite, chipBorder 1s infinite; }
-		.bb-chip.zombie { background:rgba(249,115,22,.12); color:var(--or); border:2px solid rgba(249,115,22,.5); box-shadow:0 0 8px rgba(249,115,22,.2); animation:chipPulse .7s infinite, chipBorder .7s infinite; }
-		.bb-chip.cam    { background:rgba(249,115,22,.12); color:var(--or); border:2px solid rgba(249,115,22,.45); box-shadow:0 0 6px rgba(249,115,22,.15); animation:chipPulse 1s infinite, chipBorder 1s infinite; }
-		.bb-chip.nomap  { background:rgba(249,115,22,.12); color:var(--or); border:2px solid rgba(249,115,22,.45); box-shadow:0 0 6px rgba(249,115,22,.15); animation:chipPulse 1s infinite, chipBorder 1s infinite; }
-		.bb-chip.idle   { background:rgba(59,130,246,.10); color:var(--bl); border:2px solid rgba(59,130,246,.45); box-shadow:0 0 6px rgba(59,130,246,.15); animation:chipPulse 1.2s infinite, chipBorder 1.2s infinite; }
+        .bb-chip.dock   { background:rgba(251,191,36,.12); color:var(--ye); border:2px solid rgba(251,191,36,.5); box-shadow:0 0 6px rgba(251,191,36,.2); animation:chipPulse 1s infinite, chipBorder 1s infinite; }
+        .bb-chip.zombie { background:rgba(249,115,22,.12); color:var(--or); border:2px solid rgba(249,115,22,.5); box-shadow:0 0 8px rgba(249,115,22,.2); animation:chipPulse .7s infinite, chipBorder .7s infinite; }
+        .bb-chip.cam    { background:rgba(249,115,22,.12); color:var(--or); border:2px solid rgba(249,115,22,.45); box-shadow:0 0 6px rgba(249,115,22,.15); animation:chipPulse 1s infinite, chipBorder 1s infinite; }
+        .bb-chip.nomap  { background:rgba(249,115,22,.12); color:var(--or); border:2px solid rgba(249,115,22,.45); box-shadow:0 0 6px rgba(249,115,22,.15); animation:chipPulse 1s infinite, chipBorder 1s infinite; }
+        .bb-chip.idle   { background:rgba(59,130,246,.10); color:var(--bl); border:2px solid rgba(59,130,246,.45); box-shadow:0 0 6px rgba(59,130,246,.15); animation:chipPulse 1.2s infinite, chipBorder 1.2s infinite; }
         .bb-chip-none   { font-size:12px; color:var(--mu); font-weight:700; }
-        @keyframes chipPulse { 0%,100%{opacity:1} 50%{opacity:.55} }
-		@keyframes chipBorder {
-			0%,100% { box-shadow:0 0 0 2px currentColor; }
-			50%     { box-shadow:none; }
-		}
+        @keyframes chipPulse { 0%,100%{opacity:1} 50%{opacity:.85} }
+        @keyframes chipBorder {
+            0%,100% { box-shadow:0 0 0 2px currentColor; }
+            50%     { box-shadow:0 0 0 1px currentColor; }
+        }
 
         /* 검색 */
         .bb-search-wrap {
@@ -153,15 +163,22 @@
         .bb-gw { padding:10px 12px; flex-shrink:0; }
         .bb-gr { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; }
         .bb-ca {
-            height:80px; background:var(--sur);
-            border-radius:9px; padding:8px 11px;
-            cursor:grab; position:relative; overflow:hidden;
-            display:flex; flex-direction:column; justify-content:space-between;
-            border:1px solid var(--ac-border,var(--bd));
-            transition:border-color .2s, background .2s, opacity .15s;
-        }
-        .bb-ca:active { cursor:grabbing; }
-        .bb-ca::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--ac,var(--gy)); border-radius:9px 9px 0 0; }
+			height:80px; background:var(--sur);
+			border-radius:18px; padding:6px 11px;
+			cursor:grab; position:relative; overflow:hidden;
+			display:flex; flex-direction:column; justify-content:space-between;
+			border:2px solid var(--ac-border,var(--bd));
+			transition:transform .25s cubic-bezier(.34,1.56,.64,1),
+					   box-shadow .25s cubic-bezier(.34,1.56,.64,1),
+					   border-color .2s, background .2s, opacity .15s;
+		}
+		.bb-ca:hover {
+			transform:translateY(-3px) scale(1.03);
+			box-shadow:0 6px 0 rgba(0,0,0,.2), 0 0 16px rgba(255,224,130,.25);
+			border-color:var(--ye);
+		}
+		.bb-ca:active { cursor:grabbing; transform:translateY(-1px) scale(0.99); }
+		.bb-ca::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--ac,var(--gy)); border-radius:18px 18px 0 0; }
         .bb-ca.dragging { opacity:.3; }
         .bb-ca.dragover { border-color:var(--bl)!important; box-shadow:0 0 0 1px var(--bl); }
         .bb-ca.selectable { cursor:pointer; }
@@ -172,24 +189,24 @@
             transform:translate(-50%,-50%);
             color:var(--rd); font-size:22px; font-weight:900; opacity:.9; pointer-events:none;
         }
-        .bb-ca.charging   { --ac:var(--gn); --ac-border:rgba(34,197,94,.35);  background:var(--gn2); }
-        .bb-ca.patrolling { --ac:var(--bl); --ac-border:rgba(59,130,246,.35); background:var(--bl2); }
-        .bb-ca.standby    { --ac:#c8ccd4;  --ac-border:rgba(200,204,212,.2);  background:var(--wh); }
-        .bb-ca.off        { --ac:#4b5563; --ac-border:rgba(75,85,99,.25);     background:#17171c; }
-        .bb-ca.delivering { --ac:var(--pk); --ac-border:rgba(236,72,153,.35); background:var(--pk2); }
-        .bb-ca.docking    { --ac:var(--ye); --ac-border:rgba(251,191,36,.35); background:rgba(251,191,36,.08); }
-        .bb-ca.loading    { --ac:#52525e; --ac-border:rgba(75,85,99,.2); background:var(--sur); opacity:.5; }
+        .bb-ca.charging   { --ac:var(--gn); --ac-border:var(--gn);  background:var(--sur); }
+		.bb-ca.patrolling { --ac:var(--bl); --ac-border:var(--bl); background:var(--sur); }
+		.bb-ca.standby    { --ac:#c8ccd4;  --ac-border:rgba(200,204,212,.3);  background:var(--sur); }
+		.bb-ca.off        { --ac:#4b5563; --ac-border:rgba(75,85,99,.3);     background:#17171c; }
+		.bb-ca.delivering { --ac:var(--pk); --ac-border:var(--pk); background:var(--sur); }
+		.bb-ca.docking    { --ac:var(--ye); --ac-border:var(--ye); background:var(--sur); }
+		.bb-ca.loading    { --ac:#52525e; --ac-border:rgba(75,85,99,.2); background:var(--sur); opacity:.5; }
         .bb-ca.warn-bat   { animation:bb-warnBlink .8s infinite; }
         @keyframes bb-warnBlink {
             0%,100% { border-color:var(--rd); box-shadow:0 0 0 1px var(--rd); }
             50%     { border-color:transparent; box-shadow:none; }
         }
-        .bb-ca-name { font-size:15px; font-weight:900; color:var(--tx); line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; letter-spacing:-.2px; }
+        .bb-ca-name { font-size:16.5px; font-weight:900; color:var(--tx); line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; letter-spacing:-.2px; }
         .bb-ca-name.bb-marquee { overflow:visible; animation:bb-marquee 3s linear 0.5s 1 forwards; }
         @keyframes bb-marquee { 0%{transform:translateX(0)} 100%{transform:translateX(-60%)} }
         .bb-ca-mid  { display:flex; justify-content:space-between; align-items:center; }
-        .bb-ca-st   { font-size:11px; font-weight:700; color:var(--ac,var(--mu)); opacity:.9; }
-        .bb-mission-off { font-size:10px; font-weight:900; color:rgba(239,68,68,.8); }
+        .bb-ca-st   { font-size:13px; font-weight:700; color:var(--ac,var(--mu)); opacity:.9; }
+        .bb-mission-off { font-size:11px; font-weight:900; color:rgba(239,68,68,.8); }
         .bb-ca-bar-wrap { position:relative; }
         .bb-ca-bar  { height:14px; background:rgba(255,255,255,.07); border-radius:4px; overflow:hidden; }
         .bb-ca-fill { height:100%; border-radius:4px; background:var(--ac,var(--gy)); transition:width .6s ease; }
@@ -202,9 +219,9 @@
 
         /* 퀵바 */
         .bb-mg { display:flex; flex-direction:row; gap:5px; padding:7px 8px; border-right:1px solid var(--bd); flex-shrink:0; }
-        .bb-mg-col { display:flex; flex-direction:column; border:1px solid var(--bd2); border-radius:8px; background:var(--sur2); overflow:hidden; }
+        .bb-mg-col { display:flex; flex-direction:column; border:1px solid var(--bd2); border-radius:8px; background:var(--bg); overflow:hidden; }
         .bb-mg-col-title {
-            padding:5px 6px; font-size:12px; font-weight:900; color:var(--tx);
+            padding:5px 6px; font-size:15px; font-weight:900; color:var(--tx);
             border-bottom:1px solid var(--bd); background:var(--sur);
             text-align:center; white-space:nowrap;
         }
@@ -230,8 +247,39 @@
         .bb-mi.off        { opacity:.12; }
 
         /* 기타 배달 */
-        .bb-delivery-area { flex:1; padding:7px 10px; display:flex; flex-direction:column; gap:5px; min-height:0; }
-        .bb-delivery-title { font-size:12px; font-weight:900; color:var(--mu); letter-spacing:.3px; flex-shrink:0; }
+        .bb-delivery-area {
+			flex:1; padding:7px 10px; display:flex; flex-direction:column; gap:5px; min-height:0;
+			position:relative;
+			overflow:hidden;
+		}
+		#bb-walker {
+			position:absolute;
+			bottom:4px; right:4px;
+			width:145px; height:145px;
+			background-size:contain;
+			background-repeat:no-repeat;
+			background-position:center;
+			cursor:pointer;
+			z-index:1;
+			transition:transform .15s;
+		}
+		#bb-walker:active { transform:scale(0.92); }
+
+        #bb-walker-toggle {
+            position:absolute; top:4px; right:4px;
+            min-width:34px; height:20px; padding:0 6px;
+            border-radius:6px;
+            background:var(--sur2); border:1px solid var(--bd2);
+            color:var(--tx); font-size:10px; font-weight:900; cursor:pointer;
+            display:flex; align-items:center; justify-content:center;
+            z-index:2; transition:background .15s, color .15s;
+        }
+        #bb-walker-toggle:hover { border-color:var(--mu); }
+        #bb-walker-toggle.off {
+            color:var(--rd); border-color:rgba(239,68,68,.3); background:rgba(239,68,68,.1);
+        }
+		
+        .bb-delivery-title { font-size:15px; font-weight:900; color:var(--mu); letter-spacing:.3px; flex-shrink:0; }
         .bb-delivery-chips {
             display:flex; flex-wrap:wrap; gap:4px;
             overflow-y:auto; max-height:100px; padding-right:2px;
@@ -239,34 +287,32 @@
         .bb-delivery-chips::-webkit-scrollbar { width:4px; }
         .bb-delivery-chips::-webkit-scrollbar-thumb { background:var(--bd2); border-radius:2px; }
         .bb-delivery-chip {
-            display:flex; align-items:center; gap:4px;
-            padding:3px 9px; border-radius:6px;
-            background:var(--pk2); border:1px solid rgba(236,72,153,.3);
-            color:var(--pk); font-size:11px; font-weight:700; white-space:nowrap;
-        }
-        .bb-delivery-empty { font-size:11px; color:var(--mu); font-weight:700; }
+			display:flex; align-items:center; gap:4px;
+			padding:3px 9px; border-radius:6px;
+			background:var(--pk2); border:1px solid rgba(236,72,153,.3);
+			color:var(--pk); font-size:14px; font-weight:700; white-space:nowrap;
+		}
+        .bb-delivery-empty { font-size:14px; color:var(--mu); font-weight:700; }
 
         /* ── 알림 상세 패널 ── */
         #bb-alert-panel {
-			display:none; position:fixed;
-			top:50%; left:50%; transform:translate(-50%,-50%);
-			width:552px;           /* 460 × 1.2 */
-			max-height:86vh;       /* 72 × 1.2 */
-			overflow-y:auto;
-			background:#0a0a0c;    /* 검정 */
-			border:2px solid rgba(239,68,68,.7);
-			border-radius:14px;
-			box-shadow:0 0 0 1px rgba(239,68,68,.3), 0 24px 64px rgba(0,0,0,.9);
-			z-index:99999999;
-		}
+            display:none; position:fixed;
+            top:50%; left:50%; transform:translate(-50%,-50%);
+            width:552px; max-height:86vh; overflow-y:auto;
+            background:#0a0a0c;
+            border:2px solid rgba(239,68,68,.7);
+            border-radius:14px;
+            box-shadow:0 0 0 1px rgba(239,68,68,.3), 0 24px 64px rgba(0,0,0,.9);
+            z-index:99999999;
+        }
         #bb-alert-panel.open { display:block; }
         .bb-ap-hd {
-			padding:14px 16px; border-bottom:1px solid #4a5070;
-			background:#0a0a0c; 
-			border-radius:12px 12px 0 0;
-			display:flex; justify-content:space-between; align-items:center;
-			position:sticky; top:0; z-index:1;
-		}
+            padding:14px 16px; border-bottom:1px solid #4a5070;
+            background:#0a0a0c;
+            border-radius:12px 12px 0 0;
+            display:flex; justify-content:space-between; align-items:center;
+            position:sticky; top:0; z-index:1;
+        }
         .bb-ap-title { font-size:16px; font-weight:900; color:#ffffff; }
         .bb-ap-close {
             width:26px; height:26px; border-radius:7px;
@@ -313,6 +359,57 @@
         }
         .bb-info-title { font-size:17px; font-weight:900; }
 
+        /* ── 기체 Info 패널 ── */
+        #bb-info-card-panel {
+            display:none; position:fixed;
+            top:50%; left:50%; transform:translate(-50%,-50%);
+            width:368px; background:#0a0a0c;
+            border:2px solid rgba(255,255,255,.85); border-radius:12px;
+            box-shadow:0 16px 48px rgba(0,0,0,.9);
+            z-index:999999999; font-family:'Lato',sans-serif;
+            color:var(--tx); overflow:hidden;
+        }
+        #bb-info-card-panel.open { display:block; }
+        .bb-icp-hd {
+            padding:11px 14px; background:var(--sur);
+            border-bottom:1px solid var(--bd);
+            display:flex; justify-content:space-between; align-items:center;
+        }
+        .bb-icp-title { font-size:14px; font-weight:900; color:var(--tx); flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .bb-icp-badge {
+            font-size:11px; font-weight:900; padding:3px 8px;
+            border-radius:5px; flex-shrink:0; margin-left:6px;
+        }
+        .bb-icp-badge.ok       { background:rgba(34,197,94,.15);  color:var(--gn); }
+		.bb-icp-badge.warn     { background:rgba(251,191,36,.15); color:var(--ye); }
+		.bb-icp-badge.crit     { background:rgba(239,68,68,.15);  color:var(--rd); }
+		.bb-icp-badge.patrol   { background:rgba(59,130,246,.15); color:var(--bl); }
+		.bb-icp-badge.deliver  { background:rgba(236,72,153,.15); color:var(--pk); }
+		.bb-icp-badge.standby  { background:rgba(200,204,212,.15); color:#c8ccd4; }
+		.bb-icp-badge.off      { background:rgba(75,85,99,.15);   color:#6b7280; }
+        .bb-icp-close {
+            width:22px; height:22px; border-radius:5px; flex-shrink:0;
+            background:rgba(239,68,68,.15); border:1px solid rgba(239,68,68,.3);
+            color:var(--rd); font-size:12px; cursor:pointer;
+            display:flex; align-items:center; justify-content:center; font-weight:900;
+            margin-left:6px;
+        }
+        .bb-icp-section {
+            padding:7px 14px; border-bottom:1px solid var(--bd);
+        }
+        .bb-icp-section:last-child { border-bottom:none; }
+        .bb-icp-section-title {
+            font-size:11px; font-weight:900; color:var(--mu);
+            letter-spacing:.5px; margin-bottom:4px; text-transform:uppercase;
+        }
+        .bb-icp-row {
+            display:flex; justify-content:space-between; align-items:center;
+            padding:3px 0; font-size:13px;
+        }
+        .bb-icp-label { color:var(--mu); font-weight:700; }
+        .bb-icp-value { color:var(--tx); font-weight:700; text-align:right; display:flex; align-items:center; gap:4px; }
+        .bb-icp-bar { font-size:11px; color:var(--gn); letter-spacing:-1px; }
+
         /* ── 제거 힌트 ── */
         .bb-rmhint { font-size:12px; color:var(--rd); font-weight:700; display:none; opacity:.85; }
         .bb-rmhint.show { display:block; }
@@ -326,6 +423,11 @@
     wrap.id = 'bb-wrap';
     wrap.innerHTML = `
         <div id="bb">
+			<div class="bb-firefly" style="top:8%;left:15%;animation-delay:0s;"></div>
+			<div class="bb-firefly" style="top:25%;left:80%;animation-delay:.8s;"></div>
+			<div class="bb-firefly" style="top:60%;left:8%;animation-delay:1.5s;"></div>
+			<div class="bb-firefly" style="top:75%;left:45%;animation-delay:2.1s;"></div>
+			<div class="bb-firefly" style="top:15%;left:55%;animation-delay:.5s;"></div>
             <!-- 헤더 -->
             <div class="bb-hd">
                 <div class="bb-hd-left">
@@ -357,6 +459,7 @@
                     <span class="bb-alert-label">🚨 알림</span>
                     <div class="bb-alert-chips" id="bb-alert-chips"></div>
                 </div>
+                <button class="bb-btn" id="bb-inforequest-btn" style="margin-right:6px; align-self:center;">기체정보</button>
                 <div class="bb-search-wrap">
                     <div class="bb-si-wrap">
                         <span class="bb-si-icon">🔍</span>
@@ -373,9 +476,11 @@
             <div class="bb-bottom">
                 <div class="bb-mg" id="bb-mg"></div>
                 <div class="bb-delivery-area">
-                    <div class="bb-delivery-title">🚗 배달 중 (캠핑장 및 기타)</div>
-                    <div class="bb-delivery-chips" id="bb-delivery-chips"></div>
-                </div>
+					<div class="bb-delivery-title">🚗 배달 중 (캠핑장 및 기타)</div>
+					<div class="bb-delivery-chips" id="bb-delivery-chips"></div>
+					<button id="bb-walker-toggle" title="동숲 주민 표시/숨김"></button>
+                    <div id="bb-walker"></div>
+				</div>
             </div>
 
             <!-- 사용 설명서 패널 -->
@@ -385,8 +490,9 @@
                     <div class="bb-xbtn" id="bb-info-close">✕</div>
                 </div>
                 <div id="bb-info-body">
-                    * 오직 '알림 센터' 페이지에서만 작동<br>
+                    * 오직 '알림 센터' 페이지에서만 열람<br>
                     * 추가한 기체 카드와 배치는 로컬 스토리지에 저장됨(최대 30대. 드래그로 배치 변경 가능)<br>
+                    * 카드 더블클릭/기체정보 검색창: 기체 상세 Info 패널 (CPU, GPS, 섀시 온도, 마지막 조작자 등)<br>
                     * 알림 전송 조건<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;- 배터리 부족(21% 이하)<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;- 무선 도킹됨<br>
@@ -412,6 +518,16 @@
                 <div class="bb-ap-empty">이상 없음 ✓</div>
             </div>
         </div>
+
+        <!-- 기체 Info 패널 -->
+        <div id="bb-info-card-panel">
+            <div class="bb-icp-hd">
+                <div class="bb-icp-title" id="bb-icp-title">기체 정보</div>
+                <div class="bb-icp-badge ok" id="bb-icp-badge">정상</div>
+                <div class="bb-icp-close" id="bb-icp-close">✕</div>
+            </div>
+            <div id="bb-icp-body"></div>
+        </div>
     `;
     document.body.appendChild(wrap);
 
@@ -429,7 +545,6 @@
     const DELIVERY_SITE_IDS = [25,27,44,47,48,53,56,65,86,109,118,141,180];
 
     const QUICK_SITE_IDS = [109, 65, 56, 44, 86];
-    // 기타 배달 = DELIVERY_SITE_IDS 에 있지만 QUICK_SITE_IDS 에 없는 것
     const OTHER_DELIVERY_SITE_IDS = DELIVERY_SITE_IDS.filter(id => !QUICK_SITE_IDS.includes(id));
 
     const SITE_IDS = [
@@ -445,15 +560,15 @@
         { id:'seongsu',  label:'성수 요기요',    keywords:['성수 요기요'] },
         { id:'seongnam', label:'성남 삼평/서현', keywords:['성남시'] },
     ];
-	
-	const CAM_LABELS = {
-		isOnCamF:  'F(전면)',
-		isOnCamFd: 'Fd(하단)',
-		isOnCamFl: 'Fl(전면 좌측)',
-		isOnCamFr: 'Fr(전면 우측)',
-		isOnCamBl: 'Bl(후면 좌측)',
-		isOnCamBr: 'Br(후면 우측)',
-	};
+
+    const CAM_LABELS = {
+        isOnCamF:  'F(전면)',
+        isOnCamFd: 'Fd(하단)',
+        isOnCamFl: 'Fl(전면 좌측)',
+        isOnCamFr: 'Fr(전면 우측)',
+        isOnCamBl: 'Bl(후면 좌측)',
+        isOnCamBr: 'Br(후면 우측)',
+    };
 
     let DB = [];
     let ids = load();
@@ -514,7 +629,7 @@
     }
 
     // ============================================================
-    // SECTION 4. 알림 감지 (기능4·6·7 제거)
+    // SECTION 4. 알림 감지
     // ============================================================
     function fmt(isoStr) {
         if (!isoStr) return '-';
@@ -529,162 +644,160 @@
     function alertKey(type, id) { return `${type}::${id}`; }
 
     function detectAlerts(rawList) {
-		const alerts = [];
-		const now = Date.now();
-		const zombie = loadZombie();
+        const alerts = [];
+        const now = Date.now();
+        const zombie = loadZombie();
 
-		// dismissedAlerts 로컬스토리지 동기화 헬퍼
-		function clearDismiss(key) {
-			if (!dismissedAlerts.has(key)) return;
-			dismissedAlerts.delete(key);
-			try {
-				const saved = JSON.parse(localStorage.getItem('bb_dismissed') || '[]');
-				localStorage.setItem('bb_dismissed', JSON.stringify(saved.filter(i => i.key !== key)));
-			} catch {}
-		}
+        function clearDismiss(key) {
+            if (!dismissedAlerts.has(key)) return;
+            dismissedAlerts.delete(key);
+            try {
+                const saved = JSON.parse(localStorage.getItem('bb_dismissed') || '[]');
+                localStorage.setItem('bb_dismissed', JSON.stringify(saved.filter(i => i.key !== key)));
+            } catch {}
+        }
 
-		rawList.forEach(raw => {
-			const id   = String(raw.id);
-			const name = raw.nickname || raw.name || id;
-			const rs   = raw.robotStatus ?? {};
-			const { status, battery } = parseRobotStatus(raw);
-			const isDelivery =
-				DELIVERY_TYPES.includes(raw.service?.serviceType) ||
-				DELIVERY_SITE_IDS.includes(raw.site?.id);
+        rawList.forEach(raw => {
+            const id   = String(raw.id);
+            const name = raw.nickname || raw.name || id;
+            const rs   = raw.robotStatus ?? {};
+            const { status, battery } = parseRobotStatus(raw);
+            const isDelivery =
+                DELIVERY_TYPES.includes(raw.service?.serviceType) ||
+                DELIVERY_SITE_IDS.includes(raw.site?.id);
 
-			// ── 기능1: 대기중 방치 ──────────────────────────────────
-			if (!isDelivery && status === 'standby') {
-				const mins = minAgo(rs.lastOperatedAt);
-				if (mins >= 120) {
-					const isResting = mins >= 360 && battery >= 50;
-					if (!isResting) {
-						const key = alertKey('standby', id);
-						if (!dismissedAlerts.has(key)) alerts.push({
-							key, type:'idle', dot:'bl', name,
-							desc:`대기중 ${mins}분 | 마지막 조작: ${rs.lastOperatedUserName || '없음'} ${fmt(rs.lastOperatedAt)}`,
-							time: fmt(new Date().toISOString())
-						});
-					}
-				} else {
-					clearDismiss(alertKey('standby', id)); // 방치 해소 → dismiss 초기화
-				}
-			} else {
-				clearDismiss(alertKey('standby', id)); // 대기 아님 → dismiss 초기화
-			}
+            // ── 기능1: 대기중 방치
+            if (!isDelivery && status === 'standby') {
+                const mins = minAgo(rs.lastOperatedAt);
+                if (mins >= 120) {
+                    const isResting = mins >= 360 && battery >= 50;
+                    if (!isResting) {
+                        const key = alertKey('standby', id);
+                        if (!dismissedAlerts.has(key)) alerts.push({
+                            key, type:'idle', dot:'bl', name,
+                            desc:`대기중 ${mins}분 | 마지막 조작: ${rs.lastOperatedUserName || '없음'} ${fmt(rs.lastOperatedAt)}`,
+                            time: fmt(new Date().toISOString())
+                        });
+                    }
+                } else {
+                    clearDismiss(alertKey('standby', id));
+                }
+            } else {
+                clearDismiss(alertKey('standby', id));
+            }
 
-			// ── 기능2: 도킹 이상 ─────────────────────────────────────
-			if (status === 'docking') {
-				const key = alertKey('docking', id);
-				if (!dismissedAlerts.has(key)) alerts.push({
-					key, type:'dock', dot:'ye', name,
-					desc:`무선 도크 위에 있으나 충전 안 됨 | 확인 필요`,
-					time: fmt(new Date().toISOString())
-				});
-			} else {
-				clearDismiss(alertKey('docking', id)); // 도킹 해소 → dismiss 초기화
-			}
+            // ── 기능2: 도킹 이상
+            if (status === 'docking') {
+                const key = alertKey('docking', id);
+                if (!dismissedAlerts.has(key)) alerts.push({
+                    key, type:'dock', dot:'ye', name,
+                    desc:`무선 도크 위에 있으나 충전 안 됨 | 확인 필요`,
+                    time: fmt(new Date().toISOString())
+                });
+            } else {
+                clearDismiss(alertKey('docking', id));
+            }
 
-			// ── 기능3: 배터리 21% 이하 ──────────────────────────────
-			if (rs.isConnecting && battery > 0 && battery <= 21) {
-				const key = alertKey('battery', id);
-				if (!dismissedAlerts.has(key)) alerts.push({
-					key, type:'bat', dot:'ye', name,
-					desc:`배터리 ${battery}% | ${STL[status]}`,
-					time: fmt(new Date().toISOString())
-				});
-			} else {
-				clearDismiss(alertKey('battery', id)); // 배터리 회복 → dismiss 초기화
-			}
+            // ── 기능3: 배터리 21% 이하
+            if (rs.isConnecting && battery > 0 && battery <= 21) {
+                const key = alertKey('battery', id);
+                if (!dismissedAlerts.has(key)) alerts.push({
+                    key, type:'bat', dot:'ye', name,
+                    desc:`배터리 ${battery}% | ${STL[status]}`,
+                    time: fmt(new Date().toISOString())
+                });
+            } else {
+                clearDismiss(alertKey('battery', id));
+            }
 
-			// ── 기능4: 좀비 상태 ─────────────────────────────────────
-			{
-				const isZombie =
-					rs.isConnecting === true &&
-					!raw.battery &&
-					(rs.navpvtHorzAccuracy == null || rs.navpvtHorzAccuracy === 0) &&
-					!rs.velocity;
-				if (isZombie) {
-					if (!zombie[id]) zombie[id] = { count: 1, firstSeen: now };
-					else zombie[id].count++;
-				} else {
-					delete zombie[id];
-					clearDismiss(alertKey('zombie', id)); // 좀비 해소 → dismiss 초기화
-				}
-				if (zombie[id] && zombie[id].count >= 4) {
-					const key = alertKey('zombie', id);
-					if (!dismissedAlerts.has(key)) {
-						const mins = Math.floor((now - zombie[id].firstSeen) / 60000);
-						alerts.push({
-							key, type:'zombie', dot:'rd', name,
-							desc:`⚠️ 좀비 추정 ${mins}분째 | 현장 재부팅 필요`,
-							time: fmt(new Date().toISOString())
-						});
-					}
-				}
-			}
+            // ── 기능4: 좀비 상태
+            {
+                const isZombie =
+                    rs.isConnecting === true &&
+                    !raw.battery &&
+                    (rs.navpvtHorzAccuracy == null || rs.navpvtHorzAccuracy === 0) &&
+                    !rs.velocity;
+                if (isZombie) {
+                    if (!zombie[id]) zombie[id] = { count: 1, firstSeen: now };
+                    else zombie[id].count++;
+                } else {
+                    delete zombie[id];
+                    clearDismiss(alertKey('zombie', id));
+                }
+                if (zombie[id] && zombie[id].count >= 4) {
+                    const key = alertKey('zombie', id);
+                    if (!dismissedAlerts.has(key)) {
+                        const mins = Math.floor((now - zombie[id].firstSeen) / 60000);
+                        alerts.push({
+                            key, type:'zombie', dot:'rd', name,
+                            desc:`⚠️ 좀비 추정 ${mins}분째 | 현장 재부팅 필요`,
+                            time: fmt(new Date().toISOString())
+                        });
+                    }
+                }
+            }
 
-			// ── 기능5: 카메라 미노출 감지 ───────────────────────────
-			if (rs.isConnecting) {
-				const anyCamOn = Object.keys(CAM_LABELS).some(k => rs[k] === true);
-				if (anyCamOn) {
-					const offCams = Object.entries(CAM_LABELS)
-						.filter(([k]) => rs[k] === false)
-						.map(([, label]) => label);
-					if (offCams.length > 0) {
-						const key = alertKey('cam', id);
-						if (!dismissedAlerts.has(key)) alerts.push({
-							key, type:'cam', dot:'or', name,
-							desc:`캠 미노출: ${offCams.join(', ')}`,
-							time: fmt(new Date().toISOString())
-						});
-					} else {
-						clearDismiss(alertKey('cam', id)); // 캠 전부 복구 → dismiss 초기화
-					}
-				}
-			} else {
-				clearDismiss(alertKey('cam', id));
-			}
+            // ── 기능5: 카메라 미노출 감지
+            if (rs.isConnecting) {
+                const anyCamOn = Object.keys(CAM_LABELS).some(k => rs[k] === true);
+                if (anyCamOn) {
+                    const offCams = Object.entries(CAM_LABELS)
+                        .filter(([k]) => rs[k] === false)
+                        .map(([, label]) => label);
+                    if (offCams.length > 0) {
+                        const key = alertKey('cam', id);
+                        if (!dismissedAlerts.has(key)) alerts.push({
+                            key, type:'cam', dot:'or', name,
+                            desc:`캠 미노출: ${offCams.join(', ')}`,
+                            time: fmt(new Date().toISOString())
+                        });
+                    } else {
+                        clearDismiss(alertKey('cam', id));
+                    }
+                }
+            } else {
+                clearDismiss(alertKey('cam', id));
+            }
 
-			// ── 기능6: 미니맵 위치 미노출 감지 ─────────────────────
-			{
-				const gpsZero =
-					rs.isConnecting === true &&
-					raw.battery > 0 &&
-					(rs.navpvtHorzAccuracy === 0 || rs.navpvtHorzAccuracy == null);
+            // ── 기능6: 미니맵 위치 미노출 감지
+            {
+                const gpsZero =
+                    rs.isConnecting === true &&
+                    raw.battery > 0 &&
+                    (rs.navpvtHorzAccuracy === 0 || rs.navpvtHorzAccuracy == null);
 
-				if (gpsZero) {
-					if (!zombie[id + '_gps']) zombie[id + '_gps'] = { count: 1, firstSeen: now };
-					else zombie[id + '_gps'].count++;
-				} else {
-					delete zombie[id + '_gps'];
-					clearDismiss(alertKey('nomap', id)); // GPS 복구 → dismiss 초기화
-				}
-				if (zombie[id + '_gps'] && zombie[id + '_gps'].count >= 4) {
-					const key = alertKey('nomap', id);
-					if (!dismissedAlerts.has(key)) alerts.push({
-						key, type:'nomap', dot:'or', name,
-						desc:`GPS 수신값 0 — 미니맵 위치 미노출 | 현장 재부팅 필요`,
-						time: fmt(new Date().toISOString())
-					});
-				}
-			}
-		});
+                if (gpsZero) {
+                    if (!zombie[id + '_gps']) zombie[id + '_gps'] = { count: 1, firstSeen: now };
+                    else zombie[id + '_gps'].count++;
+                } else {
+                    delete zombie[id + '_gps'];
+                    clearDismiss(alertKey('nomap', id));
+                }
+                if (zombie[id + '_gps'] && zombie[id + '_gps'].count >= 4) {
+                    const key = alertKey('nomap', id);
+                    if (!dismissedAlerts.has(key)) alerts.push({
+                        key, type:'nomap', dot:'or', name,
+                        desc:`GPS 수신값 0 — 미니맵 위치 미노출 | 현장 재부팅 필요`,
+                        time: fmt(new Date().toISOString())
+                    });
+                }
+            }
+        });
 
-		saveZombie(zombie);
-		window._bbAlerts = alerts;
-		return alerts;
-	}
+        saveZombie(zombie);
+        window._bbAlerts = alerts;
+        return alerts;
+    }
 
     // ============================================================
     // SECTION 5. 알림 칩 + 패널 렌더
     // ============================================================
-    // 알림 타입별 메타
     const ALERT_META = {
-        bat:    { label:'🔋 배터리', order:0 },
-        dock:   { label:'🟡 도킹',   order:1 },
-        zombie: { label:'👻 좀비',   order:2 },
-        idle:   { label:'⏳ 방치',   order:3 },
-        cam:    { label:'🎥 캠 미송출', order:4 },
+        bat:    { label:'🔋 배터리',      order:0 },
+        dock:   { label:'🟡 도킹',        order:1 },
+        zombie: { label:'👻 좀비',        order:2 },
+        idle:   { label:'⏳ 방치',        order:3 },
+        cam:    { label:'🎥 캠 미송출',   order:4 },
         nomap:  { label:'🗺️ 위치 미노출', order:5 },
     };
 
@@ -693,7 +806,6 @@
         const el = document.getElementById('bb-alert-chips');
         if (!el) return;
 
-        // 타입별 그룹핑
         const groups = {};
         alerts.forEach(a => {
             if (!groups[a.type]) groups[a.type] = [];
@@ -710,7 +822,6 @@
             el.innerHTML = types.map(type => {
                 const meta  = ALERT_META[type] || { label: type };
                 const count = groups[type].length;
-                const first = groups[type][0];
                 return `<div class="bb-chip ${type}" data-type="${type}">
                     ${meta.label} <strong>${count}건</strong>
                 </div>`;
@@ -757,34 +868,31 @@
     }
 
     function dismiss(key) {
-		dismissedAlerts.add(key);
-		try {
-			const saved = JSON.parse(localStorage.getItem('bb_dismissed') || '[]');
-			saved.push({ key, time: Date.now() });
-			localStorage.setItem('bb_dismissed', JSON.stringify(saved));
-		} catch {}
-		currentAlerts = currentAlerts.filter(a => a.key !== key);
+        dismissedAlerts.add(key);
+        try {
+            const saved = JSON.parse(localStorage.getItem('bb_dismissed') || '[]');
+            saved.push({ key, time: Date.now() });
+            localStorage.setItem('bb_dismissed', JSON.stringify(saved));
+        } catch {}
+        currentAlerts = currentAlerts.filter(a => a.key !== key);
 
-		// 패널에서 해당 항목 즉시 제거
-		const itemEl = document.querySelector(`.bb-ap-item[data-key="${key}"]`);
-		if (itemEl) itemEl.remove();
+        const itemEl = document.querySelector(`.bb-ap-item[data-key="${key}"]`);
+        if (itemEl) itemEl.remove();
 
-		// 제목 건수 갱신
-		const titleEl = document.getElementById('bb-ap-title');
-		if (titleEl && currentAlertType) {
-			const meta = ALERT_META[currentAlertType] || { label: currentAlertType };
-			const remaining = currentAlerts.filter(a => a.type === currentAlertType).length;
-			titleEl.textContent = `${meta.label} (${remaining}건)`;
-		}
+        const titleEl = document.getElementById('bb-ap-title');
+        if (titleEl && currentAlertType) {
+            const meta = ALERT_META[currentAlertType] || { label: currentAlertType };
+            const remaining = currentAlerts.filter(a => a.type === currentAlertType).length;
+            titleEl.textContent = `${meta.label} (${remaining}건)`;
+        }
 
-		renderAlertChips(currentAlerts);
+        renderAlertChips(currentAlerts);
 
-		// 남은 알림 없으면 패널 닫기
-		const remainingInType = currentAlerts.filter(a => a.type === currentAlertType).length;
-		if (currentAlerts.length === 0 || remainingInType === 0) {
-			document.getElementById('bb-alert-panel').classList.remove('open');
-		}
-	}
+        const remainingInType = currentAlerts.filter(a => a.type === currentAlertType).length;
+        if (currentAlerts.length === 0 || remainingInType === 0) {
+            document.getElementById('bb-alert-panel').classList.remove('open');
+        }
+    }
 
     // ============================================================
     // SECTION 6. bb_robots_data 리스너
@@ -810,6 +918,7 @@
                     status: parsed.status, battery: parsed.battery,
                     loading: false, siteId,
                     canDispatch: raw.canDispatch ?? true,
+                    raw,  // Info 패널용 원본 데이터
                 });
             });
             if (DB.length > 0) {
@@ -818,17 +927,16 @@
             }
 
             const alerts = detectAlerts(allRaw);
-			renderAlertChips(alerts);
+            renderAlertChips(alerts);
 
-			// 패널 열려있으면 현재 타입 내용 갱신
-			if (document.getElementById('bb-alert-panel').classList.contains('open') && currentAlertType) {
-				const groups = {};
-				alerts.forEach(a => {
-					if (!groups[a.type]) groups[a.type] = [];
-					groups[a.type].push(a);
-				});
-				openAlertPanel(currentAlertType, groups);
-			}
+            if (document.getElementById('bb-alert-panel').classList.contains('open') && currentAlertType) {
+                const groups = {};
+                alerts.forEach(a => {
+                    if (!groups[a.type]) groups[a.type] = [];
+                    groups[a.type].push(a);
+                });
+                openAlertPanel(currentAlertType, groups);
+            }
 
             renderMonitorGrid(allRaw);
             renderDeliveryChips(allRaw);
@@ -858,11 +966,11 @@
         isOpen = false;
         document.getElementById('bb').classList.remove('open');
         document.getElementById('bb-alert-panel').classList.remove('open');
+        document.getElementById('bb-info-card-panel').classList.remove('open');
         if (rmMode) { rmMode = false; rmSet.clear(); updateRmUI(); }
         hideDd();
     }
 
-    // 페이지 진입 시 자동 열림
     openBoard();
 
     document.addEventListener('keydown', e => {
@@ -896,7 +1004,7 @@
     }, 1000);
 
     // ============================================================
-    // SECTION 8b. 퀵바 렌더 (4×4=16슬롯)
+    // SECTION 8b. 퀵바 렌더
     // ============================================================
     function renderMonitorGrid(rawList) {
         const mgEl = document.getElementById('bb-mg');
@@ -912,7 +1020,6 @@
                 return na - nb;
             });
 
-            // OFF 기체 제외한 ON 기체만
             const onRobots = robots.filter(r => parseRobotStatus(r).status !== 'off');
             const SLOTS = 16;
 
@@ -981,7 +1088,8 @@
         const pct    = (off || r.loading) ? 0 : r.battery;
         const inside = pct >= 28;
         const showMissionOff = !r.canDispatch && !off && !r.loading
-			&& r.status !== 'patrolling' && r.status !== 'delivering';
+            && r.status !== 'patrolling' && r.status !== 'delivering'
+            && r.status !== 'charging';
 
         const batColor  = 'rgba(240,240,255,.93)';
         const batShadow = inside
@@ -1009,7 +1117,7 @@
                         ${inside
                             ? 'right:5px;top:50%;transform:translateY(-50%);'
                             : `left:calc(${pct}% + 5px);top:50%;transform:translateY(-50%);`}
-                        font-size:10px;font-weight:900;
+                        font-size:11px;font-weight:900;
                         color:${batColor};
                         font-family:'Lato',monospace;
                         text-shadow:${batShadow};
@@ -1027,9 +1135,14 @@
             c.addEventListener('dragleave', dleave);
             c.addEventListener('drop',      ddrop);
             c.addEventListener('dragend',   dend);
+
+            // 더블클릭 → Info 패널
+            c.addEventListener('dblclick', e => {
+                e.stopPropagation();
+                openInfoCardPanel(r);
+            });
         }
 
-        // 이름이 잘린 경우만 호버 마퀴
         const nameEl = c.querySelector('.bb-ca-name');
         c.addEventListener('mouseenter', () => {
             if (nameEl.scrollWidth > nameEl.clientWidth) nameEl.classList.add('bb-marquee');
@@ -1040,6 +1153,241 @@
         });
         return c;
     }
+
+    // ============================================================
+    // SECTION 9b. 기체 Info 패널
+    // ============================================================
+    function openInfoCardPanel(r) {
+        const raw = r.raw;
+        if (!raw) return;
+        const rs = raw.robotStatus ?? {};
+        const panel   = document.getElementById('bb-info-card-panel');
+        const titleEl = document.getElementById('bb-icp-title');
+        const badgeEl = document.getElementById('bb-icp-badge');
+        const bodyEl  = document.getElementById('bb-icp-body');
+
+        titleEl.textContent = r.name;
+
+        // 이상 판단
+        const cpu  = rs.cpuUsage ?? 0;
+        const gps  = rs.navpvtHorzAccuracy ?? 0;
+        const tmpL = rs.chassisLeftTemperature ?? 0;
+        const tmpR = rs.chassisRightTemperature ?? 0;
+
+        const issues = [];
+        if (cpu >= 90) issues.push('warn');
+		else if (cpu >= 80) issues.push('warn');
+        if (tmpL < 0 || tmpR < 0) issues.push('warn');
+		else if (tmpL >= 60 || tmpR >= 60) issues.push('warn');
+        else if (tmpL >= 55 || tmpR >= 55) issues.push('warn');
+        if (Math.abs(tmpL - tmpR) >= 10) issues.push('warn');
+
+        const statusBadgeMap = {
+			charging:   { label:'🟢 충전 중',  cls:'ok' },
+			patrolling: { label:'🔵 순찰 중',  cls:'patrol' },
+			delivering: { label:'🩷 배달 중',  cls:'deliver' },
+			standby:    { label:'⚪ 대기 중',  cls:'standby' },
+			docking:    { label:'🟡 도킹 중',  cls:'warn' },
+			off:        { label:'⚫ OFF',      cls:'off' },
+		};
+		const badgeInfo = statusBadgeMap[r.status] || { label:r.status, cls:'ok' };
+		badgeEl.className = `bb-icp-badge ${badgeInfo.cls}`;
+		badgeEl.textContent = badgeInfo.label;
+
+        // CPU 바
+        const filled = Math.floor(cpu / 10);
+        const cpuBar = '█'.repeat(filled) + '░'.repeat(10 - filled);
+        const cpuDot = cpu >= 90 ? '🔴' : cpu >= 80 ? '🟠' : '🟢';
+
+        // GPS 텍스트
+		const gpsTxt = (gps === 0 || gps == null) ? '수신 불가 🔴'
+			: gps.toLocaleString();
+
+        // 섀시 온도
+        const tmpTxt = (tmpL < 0 || tmpR < 0)
+            ? `좌${tmpL}° 우${tmpR}° (센서이상)`
+            : `좌${tmpL}° 우${tmpR}°`;
+        const tmpDot = (tmpL < 0 || tmpR < 0) ? '🔴'
+            : (tmpL >= 60 || tmpR >= 60) ? '🔴'
+            : (tmpL >= 55 || tmpR >= 55) ? '🟠'
+            : Math.abs(tmpL - tmpR) >= 10 ? '🟠' : '🟢';
+
+        // ADAS
+        const adasDot = rs.isOnAdas ? '🟢' : '🟠';
+
+        // 마지막 조작
+        const lastOp = rs.lastOperatedUserName || '-';
+        let lastOpAt = '-';
+        if (rs.lastOperatedAt) {
+            const diff = Math.floor((Date.now() - new Date(rs.lastOperatedAt).getTime()) / 60000);
+            const hm = new Date(rs.lastOperatedAt).toLocaleTimeString('ko-KR', { hour:'2-digit', minute:'2-digit' });
+            lastOpAt = diff < 60 ? `${hm} (${diff}분 전)` : `${hm} (${Math.floor(diff/60)}시간 전)`;
+        }
+
+        // SW 버전 & 하드웨어
+        const swVer  = raw.version?.softwareVersion?.swVersion ?? '-';
+        const swShort = swVer.split('-')[0];
+        const mdVer  = raw.version?.mechanicalDesignVersion?.mdVer ?? '-';
+        const relayMajor = raw.version?.relayVersion?.relayFwMajor ?? 1;
+        const relayMinor = raw.version?.relayVersion?.relayFwMinor ?? 0;
+
+        bodyEl.innerHTML = `
+            <div class="bb-icp-section">
+                <div class="bb-icp-section-title">마지막 조작</div>
+                <div class="bb-icp-row">
+                    <span class="bb-icp-label">조작자</span>
+                    <span class="bb-icp-value">${lastOp}</span>
+                </div>
+                <div class="bb-icp-row">
+                    <span class="bb-icp-label">조작 시간</span>
+                    <span class="bb-icp-value">${lastOpAt}</span>
+                </div>
+            </div>
+            <div class="bb-icp-section">
+                <div class="bb-icp-section-title">기체 상태 지표</div>
+                <div class="bb-icp-row">
+                    <span class="bb-icp-label">CPU</span>
+                    <span class="bb-icp-value">
+                        <span class="bb-icp-bar">${cpuBar}</span>${cpu}% ${cpuDot}
+                    </span>
+                </div>
+                <div class="bb-icp-row">
+                    <span class="bb-icp-label">GPS 정확도</span>
+                    <span class="bb-icp-value">${gpsTxt}</span>
+                </div>
+                <div class="bb-icp-row">
+                    <span class="bb-icp-label">섀시 온도</span>
+                    <span class="bb-icp-value">${tmpTxt} ${tmpDot}</span>
+                </div>
+                <div class="bb-icp-row">
+                    <span class="bb-icp-label">ADAS</span>
+                    <span class="bb-icp-value">${rs.isOnAdas ? 'ON' : 'OFF'} ${adasDot}</span>
+                </div>
+            </div>
+            <div class="bb-icp-section">
+                <div class="bb-icp-section-title">하드웨어</div>
+                <div class="bb-icp-row">
+                    <span class="bb-icp-label">SW 버전</span>
+                    <span class="bb-icp-value">${swShort}</span>
+                </div>
+                <div class="bb-icp-row">
+                    <span class="bb-icp-label">기체 세대</span>
+                    <span class="bb-icp-value">${mdVer}세대</span>
+                </div>
+                <div class="bb-icp-row">
+                    <span class="bb-icp-label">Relay FW</span>
+                    <span class="bb-icp-value">${relayMajor}.${relayMinor}</span>
+                </div>
+            </div>
+        `;
+
+        panel.classList.add('open');
+        panel.style.zIndex = ++topmostZ;
+        registerInfoPanelClose();
+        }
+
+        // ── 새 헬퍼 함수 (openInfoCardPanel 함수 바로 아래에 추가)
+        let _infoPanelCloseHandler = null;
+        function registerInfoPanelClose() {
+            const panel = document.getElementById('bb-info-card-panel');
+            if (_infoPanelCloseHandler) {
+                document.removeEventListener('mousedown', _infoPanelCloseHandler);
+                _infoPanelCloseHandler = null;
+            }
+            setTimeout(() => {
+                _infoPanelCloseHandler = function closeInfo(e) {
+                    if (!panel.contains(e.target)) {
+                        panel.classList.remove('open');
+                        document.removeEventListener('mousedown', _infoPanelCloseHandler);
+                        _infoPanelCloseHandler = null;
+                    }
+                };
+                document.addEventListener('mousedown', _infoPanelCloseHandler);
+            }, 100);
+        }
+
+        function openInfoSearchMode() {
+            const panel   = document.getElementById('bb-info-card-panel');
+            const titleEl = document.getElementById('bb-icp-title');
+            const badgeEl = document.getElementById('bb-icp-badge');
+            const bodyEl  = document.getElementById('bb-icp-body');
+
+            titleEl.textContent = '기체 정보 검색';
+            badgeEl.style.display = 'none';
+
+            let searchFocusIdx = -1;
+
+            function renderList(query) {
+                const q = query.trim();
+                const res = DB.filter(r => q === '' || r.name.includes(q))
+                            .sort((a,b) => a.name.localeCompare(b.name, 'ko'));
+                const listEl = bodyEl.querySelector('#bb-info-search-list');
+                if (!listEl) return;
+
+                if (res.length === 0) {
+                    listEl.innerHTML = `<div class="bb-di" style="color:var(--mu);cursor:default;">${DB.length===0 ? '기체 데이터 로딩 중...' : '검색 결과 없음'}</div>`;
+                    return;
+                }
+                listEl.innerHTML = res.map(r =>
+                    `<div class="bb-di" data-rid="${r.id}">
+                        <span class="bb-di-name">${r.name}</span>
+                        <span class="bb-di-icon">${STI[r.status]}</span>
+                    </div>`
+                ).join('');
+                listEl.querySelectorAll('.bb-di[data-rid]').forEach(el => {
+                    el.addEventListener('mousedown', e => {
+                        e.preventDefault(); e.stopPropagation();
+                        const robot = DB.find(x => x.id === el.dataset.rid);
+                        if (robot) {
+                            badgeEl.style.display = '';
+                            openInfoCardPanel(robot);
+                        }
+                    });
+                });
+            }
+
+            bodyEl.innerHTML = `
+                <div style="padding:10px 14px;">
+                    <div class="bb-si-wrap" style="position:relative;">
+                        <span class="bb-si-icon" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--mu);">🔍</span>
+                        <input class="bb-si" id="bb-info-search-input" placeholder="기체명 검색" autocomplete="off"
+                            style="width:100%; background:var(--sur2); border:1px solid var(--bd2); border-radius:7px; padding:6px 10px 6px 26px; color:var(--tx); font-size:12px; outline:none; font-family:inherit; box-sizing:border-box;">
+                    </div>
+                    <div id="bb-info-search-list" style="height:240px; overflow-y:auto; margin-top:8px;"></div>
+                </div>
+            `;
+
+            const inputEl = bodyEl.querySelector('#bb-info-search-input');
+            renderList('');
+            inputEl.focus();
+
+            inputEl.addEventListener('input', () => { searchFocusIdx = -1; renderList(inputEl.value); });
+            inputEl.addEventListener('keydown', e => {
+                const listEl = bodyEl.querySelector('#bb-info-search-list');
+                const items = listEl.querySelectorAll('.bb-di[data-rid]');
+                if (!items.length) return;
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    searchFocusIdx = Math.min(searchFocusIdx + 1, items.length - 1);
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    searchFocusIdx = Math.max(searchFocusIdx - 1, 0);
+                } else if (e.key === 'Enter' && searchFocusIdx >= 0) {
+                    e.preventDefault();
+                    const robot = DB.find(x => x.id === items[searchFocusIdx].dataset.rid);
+                    if (robot) {
+                        badgeEl.style.display = '';
+                        openInfoCardPanel(robot);
+                    }
+                    return;
+                }
+                items.forEach((el, i) => el.classList.toggle('bb-di-focus', i === searchFocusIdx));
+            });
+
+            panel.classList.add('open');
+            panel.style.zIndex = ++topmostZ;
+            registerInfoPanelClose();
+        }
 
     // ============================================================
     // SECTION 10. 정렬 & 제거
@@ -1138,6 +1486,15 @@
         document.getElementById('bb-alert-panel').classList.remove('open');
     });
 
+    document.getElementById('bb-icp-close').addEventListener('click', () => {
+        document.getElementById('bb-info-card-panel').classList.remove('open');
+    });
+
+    document.getElementById('bb-inforequest-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        openInfoSearchMode();
+    });
+
     document.getElementById('bb-infobtn').addEventListener('click', () => {
         document.getElementById('bb-info-panel').classList.toggle('open');
     });
@@ -1171,7 +1528,59 @@
         if (!e.target.closest('.bb-search-wrap') && !e.target.closest('#bb-dd')) hideDd();
     });
 
-    // ── 줌 기능 ──────────────────────────────────────────────────
+	// 동숲 주민
+	(function() {
+		const WALKER_BASE = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/';
+		const walkerFiles = [
+			'Walker.webp',
+            'Blathers.webp',
+            'Bluebear.webp',
+            'Bob.webp',
+            'Bones.webp',
+            'Curt.webp',
+            'Filbert.webp',
+			'Joey.webp',
+            'Ketchup.webp',			
+			'Sable.webp',
+			'Sherb.webp',
+			'Wisp.webp',
+		];
+		let walkerIdx = 0;
+
+        const walkerEl = document.getElementById('bb-walker');
+        const toggleEl = document.getElementById('bb-walker-toggle');
+
+        function setWalker(idx) {
+            walkerEl.style.backgroundImage = `url('${WALKER_BASE}${walkerFiles[idx]}')`;
+        }
+        setWalker(0);
+
+        walkerEl.addEventListener('click', () => {
+            walkerIdx = (walkerIdx + 1) % walkerFiles.length;
+            setWalker(walkerIdx);
+        });
+
+        // ── 표시 on/off 토글 (기본 ON, localStorage 저장) ──
+        const WALKER_TOGGLE_KEY = 'bb_walker_on';
+        let walkerOn = localStorage.getItem(WALKER_TOGGLE_KEY);
+        walkerOn = walkerOn === null ? true : walkerOn === '1';   // 저장된 값 없으면 기본 ON
+
+        function applyWalkerToggle() {
+            walkerEl.style.display = walkerOn ? '' : 'none';
+            toggleEl.classList.toggle('off', !walkerOn);
+            toggleEl.textContent = walkerOn ? '동숲' : '🚫';
+            toggleEl.title = walkerOn ? '동숲 주민 끄기' : '동숲 주민 켜기';
+        }
+        applyWalkerToggle();
+
+        toggleEl.addEventListener('click', () => {
+            walkerOn = !walkerOn;
+            localStorage.setItem(WALKER_TOGGLE_KEY, walkerOn ? '1' : '0');
+            applyWalkerToggle();
+        });
+    })();
+
+    // ── 줌 기능
     (function() {
         const ZOOM_KEY = 'bb_zoom', ZOOM_MIN = 1.0, ZOOM_MAX = 2.0, ZOOM_STEP = 0.1;
         let zoom = parseFloat(localStorage.getItem(ZOOM_KEY)) || 1.0;
@@ -1201,7 +1610,7 @@
         applyZoom();
     })();
 
-    // ── 드래그 이동 ──────────────────────────────────────────────
+    // ── 드래그 이동
     (function() {
         const handle = document.getElementById('bb-drag-handle');
         const bb     = document.getElementById('bb');
@@ -1234,7 +1643,7 @@
         });
     })();
 
-    // ── 백업/복원 ────────────────────────────────────────────────
+    // ── 백업/복원
     const BACKUP_BASE = 'https://multimonitoring.vercel.app/api/board?type=bb_backup';
 
     document.getElementById('bb-backup-btn').addEventListener('click', async () => {
