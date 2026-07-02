@@ -5,13 +5,14 @@
     window.neubieEngineLoaded = true;
 
     const currUrl = window.location.href;
-    const isNeubieSite = currUrl.includes('go.neubie.ai');
+    const NEUBIE_HOSTS = ['go.neubie.ai', 'ncc.neubility.ai'];
+    const isNeubieSite = NEUBIE_HOSTS.some(h => currUrl.includes(h));
 
     /* ============================================================
         SECTION 1. 상태 및 설정
        ============================================================ */
     const isHandoverPage = () =>
-        (location.href.includes('go.neubie.ai/ko/remote/multiple') &&
+        (NEUBIE_HOSTS.some(h => location.href.includes(`${h}/ko/remote/multiple`)) &&
         !location.href.includes('/driving'));
 
     const isBrightnessPage = isHandoverPage;
@@ -306,7 +307,7 @@
     // 기체 트래킹 로직
     function updateRobotContext() {
         const path = window.location.href;
-        if (path.includes('go.neubie.ai/ko/remote/robot/')) {
+        if (NEUBIE_HOSTS.some(h => path.includes(`${h}/ko/remote/robot/`))) {
             const robotNum = path.split('/').pop().split('?')[0];
             if (ROBOT_MAP[robotNum]) {
                 let history = JSON.parse(localStorage.getItem('neubie_robot_history') || '[]');
@@ -2170,7 +2171,7 @@
 	const LEVEL_LABELS = ['', '최소', '낮음', '중간', '높음', '최대'];
 
 	function isMonitoringPage() {
-		return location.href.includes('go.neubie.ai/ko/remote/multiple/monitoring');
+		return NEUBIE_HOSTS.some(h => location.href.includes(`${h}/ko/remote/multiple/monitoring`));
 	}
 
 	let _bitrateRunning = false;
