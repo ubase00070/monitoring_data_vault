@@ -1546,20 +1546,23 @@
 			'Sherb.webp',
 			'Wisp.webp',
 		];
-		let walkerIdx = 0;
-
-        const walkerEl = document.getElementById('bb-walker');
-        const toggleEl = document.getElementById('bb-walker-toggle');
-
-        function setWalker(idx) {
-            walkerEl.style.backgroundImage = `url('${WALKER_BASE}${walkerFiles[idx]}')`;
-        }
-        setWalker(0);
-
-        walkerEl.addEventListener('click', () => {
-            walkerIdx = (walkerIdx + 1) % walkerFiles.length;
-            setWalker(walkerIdx);
-        });
+		const WALKER_IDX_KEY = 'bb_walker_idx';
+		let walkerIdx = parseInt(localStorage.getItem(WALKER_IDX_KEY), 10);
+		if (isNaN(walkerIdx) || walkerIdx < 0 || walkerIdx >= walkerFiles.length) walkerIdx = 0;
+		
+		const walkerEl = document.getElementById('bb-walker');
+		const toggleEl = document.getElementById('bb-walker-toggle');
+		
+		function setWalker(idx) {
+		    walkerEl.style.backgroundImage = `url('${WALKER_BASE}${walkerFiles[idx]}')`;
+		}
+		setWalker(walkerIdx);   // ← 0 대신 저장된 idx로 시작
+		
+		walkerEl.addEventListener('click', () => {
+		    walkerIdx = (walkerIdx + 1) % walkerFiles.length;
+		    setWalker(walkerIdx);
+		    localStorage.setItem(WALKER_IDX_KEY, String(walkerIdx));   // ← 클릭할 때마다 저장
+		});
 
         // ── 표시 on/off 토글 (기본 ON, localStorage 저장) ──
         const WALKER_TOGGLE_KEY = 'bb_walker_on';
