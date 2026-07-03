@@ -4,6 +4,16 @@
     if (window.neubieEngineLoaded) return;
     window.neubieEngineLoaded = true;
 
+	// ── 카페24 써라운드 웹폰트 로드 (게시판용) ──
+    (function loadSsurroundFont() {
+        if (document.getElementById('neubie-ssurround-font')) return;
+        const link = document.createElement('link');
+        link.id = 'neubie-ssurround-font';
+        link.rel = 'stylesheet';
+        link.href = 'https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_seven@1.1/Cafe24Ssurround.css';
+        document.head.appendChild(link);
+    })();
+
     const currUrl = window.location.href;
     const NEUBIE_HOSTS = ['go.neubie.ai', 'ncc.neubility.ai'];
     const isNeubieSite = NEUBIE_HOSTS.some(h => currUrl.includes(h));
@@ -2545,6 +2555,7 @@
             const dashboard = document.getElementById('neubie-dashboard');
             overlay = document.createElement('div');
             overlay.id = 'neubie-board-overlay';
+			overlay.style.fontFamily = "'Cafe24Ssurround', 'Pretendard', sans-serif";
             const r = dashboard.getBoundingClientRect();
 			Object.assign(overlay.style, {
 				position: 'fixed',
