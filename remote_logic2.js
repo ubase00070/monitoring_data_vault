@@ -3093,7 +3093,7 @@
                 `;
                 box.innerHTML = `
                     <div style="display:flex; align-items:center; padding:16px 18px; border-bottom:1px solid #333; gap:8px;">
-                        <span id="nb-secret-title-lock" style="font-size:16px; font-weight:700; color:#c4b5fd; flex:1; cursor:default; user-select:none;">🔒 1:1 관리자 문의</span>
+                        <span id="nb-secret-title-lock" style="font-size:16px; font-weight:700; color:#c4b5fd; flex:1; cursor:default; user-select:none;">🔒 1:1 문의</span>
                         <button id="nb-secret-close" style="background:transparent; border:none; color:#aaa; font-size:18px; cursor:pointer;">✕</button>
                     </div>
                     <div id="nb-secret-body" style="padding:16px 18px; overflow-y:auto; flex:1;"></div>
@@ -3182,7 +3182,7 @@
                     <input id="nb-secret-title" placeholder="제목" style="width:100%; height:38px; padding:0 10px; margin-bottom:8px; box-sizing:border-box; background:rgba(255,255,255,0.08); border:1px solid #444; border-radius:6px; color:#fff; font-size:13px;">
                     <textarea id="nb-secret-content" placeholder="관리자에게 전달할 내용을 입력하세요" style="width:100%; height:140px; padding:10px; box-sizing:border-box; background:rgba(255,255,255,0.08); border:1px solid #444; border-radius:6px; color:#fff; font-size:13px; resize:none; font-family:inherit;"></textarea>
                     <label style="display:flex; align-items:center; gap:6px; margin:8px 0; font-size:12px; color:#aaa; cursor:pointer;">
-                        <input type="checkbox" id="nb-secret-anon"> 익명으로 (관리자도 누구인지 확인불가)
+                        <input type="checkbox" id="nb-secret-anon"> 익명으로 (저도 누가 썼는지 확인불가합니다.)
                     </label>
                     <div style="display:flex; gap:8px;">
                         <button id="nb-secret-cancel" style="flex:1; padding:10px; background:rgba(255,255,255,0.1); border:none; color:#fff; border-radius:6px; cursor:pointer;">취소</button>
@@ -3216,7 +3216,7 @@
                 const comments = (post.comments||[]).map(c => `
                     <div style="background:${c.byAdmin?'rgba(124,58,237,0.15)':'rgba(255,255,255,0.04)'}; border-radius:6px; padding:8px 10px; margin-bottom:6px;">
                         <div style="display:flex; align-items:center; gap:6px; margin-bottom:2px;">
-                            <span style="font-size:11px; color:${c.byAdmin?'#c4b5fd':'#888'}; flex:1;">${c.byAdmin?'👑 관리자':escapeHtml(c.author)}</span>
+                            <span style="font-size:11px; color:${c.byAdmin?'#c4b5fd':'#888'}; flex:1;">${c.byAdmin?'👑 최윤혁':escapeHtml(c.author)}</span>
                             ${c.mine ? `
                                 <button class="nb-cmt-edit" data-cid="${c.id}" style="background:transparent; border:none; color:#888; cursor:pointer; font-size:10px;">수정</button>
                                 <button class="nb-cmt-del" data-cid="${c.id}" style="background:transparent; border:none; color:#f87171; cursor:pointer; font-size:10px;">삭제</button>
