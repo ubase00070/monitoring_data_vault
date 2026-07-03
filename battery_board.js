@@ -1533,6 +1533,7 @@
 		const WALKER_BASE = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/';
 		const walkerFiles = [
 			'Walker.webp',
+			'Scoot.webp',
             'Blathers.webp',
             'Bluebear.webp',
             'Bob.webp',
