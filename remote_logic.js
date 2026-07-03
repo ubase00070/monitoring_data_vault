@@ -587,8 +587,8 @@
         const myName = localStorage.getItem('neubie_user_name');
         if (!myName) return;
 
-        const dataUrl = `https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/daily_tasks.json`;
-        const insuUrl = `https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/insu_data.json`;
+        const dataUrl = `https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/daily_tasks.json?t=${Date.now()}`;
+		const insuUrl = `https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/insu_data.json?t=${Date.now()}`;
 
         // daily_tasks + insu_data 병렬 fetch
         Promise.all([
