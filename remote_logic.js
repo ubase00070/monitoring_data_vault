@@ -4,7 +4,7 @@
     if (window.neubieEngineLoaded) return;
     window.neubieEngineLoaded = true;
 
-	// ── 카페24 써라운드 웹폰트 로드 (게시판용) ──
+	// ── 카페24 써라운드 웹폰트 (게시판용) ──
     (function loadSsurroundFont() {
         if (document.getElementById('neubie-ssurround-font')) return;
         const link = document.createElement('link');
