@@ -3388,7 +3388,7 @@
             window.openScheduleOverlay = async function() {
             const now = new Date();
             const curKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-            const SCHEDULE_URL = `https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/schedule_for_mobile_${curKey}.json`;
+            const SCHEDULE_URL = `https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/monthly_schedule/schedule_for_mobile_${curKey}.json`;
             
             let overlay = document.getElementById('neubie-schedule-overlay');
             if (overlay) {
@@ -3811,7 +3811,7 @@
                 overlay.style.display = 'none';
                 if (window._neubieScheduleCard) window._neubieScheduleCard.style.outline = 'none';
             };
-            const BASE_URL = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/';
+            const BASE_URL = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/monthly_schedule/';
 
             async function loadMonthFromGithub(newKey) {
             const c = getCache();
