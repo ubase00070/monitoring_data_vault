@@ -10,7 +10,7 @@
         const link = document.createElement('link');
         link.id = 'neubie-ssurround-font';
         link.rel = 'stylesheet';
-        link.href = 'https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_seven@1.1/Cafe24Ssurround.css';
+        link.href = 'https://cdn.jsdelivr.net/gh/fonts-archive/Cafe24Ssurround/subsets/Cafe24Ssurround-dynamic-subset.css';
         document.head.appendChild(link);
     })();
 
