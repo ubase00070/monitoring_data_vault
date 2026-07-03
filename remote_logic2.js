@@ -652,7 +652,7 @@
 
         let remainMin = startScore - currScore;
         
-        // 다중 모니터링은 10분 일찍 알림이 오도록
+        // 다중 모니터링은 10분 일찍 알림이 오도록 계산
         if (isMonitoring) {
             remainMin -= 10; 
         }
@@ -3066,7 +3066,7 @@
                 `;
                 box.innerHTML = `
                     <div style="display:flex; align-items:center; padding:16px 18px; border-bottom:1px solid #333; gap:8px;">
-                        <span id="nb-secret-title-lock" style="font-size:16px; font-weight:700; color:#c4b5fd; flex:1; cursor:default; user-select:none;">🔒 1:1 관리자 문의</span>
+                        <span id="nb-secret-title-lock" style="font-size:16px; font-weight:700; color:#c4b5fd; flex:1; cursor:default; user-select:none;">🔒 1:1 관리자 문의(익명 시 관리자도 </span>
                         <button id="nb-secret-close" style="background:transparent; border:none; color:#aaa; font-size:18px; cursor:pointer;">✕</button>
                     </div>
                     <div id="nb-secret-body" style="padding:16px 18px; overflow-y:auto; flex:1;"></div>
@@ -3187,8 +3187,14 @@
                 const canComment = isAdmin || (myEmail && post.email === myEmail);
                 const comments = (post.comments||[]).map(c => `
                     <div style="background:${c.byAdmin?'rgba(124,58,237,0.15)':'rgba(255,255,255,0.04)'}; border-radius:6px; padding:8px 10px; margin-bottom:6px;">
-                        <div style="font-size:11px; color:${c.byAdmin?'#c4b5fd':'#888'}; margin-bottom:2px;">${c.byAdmin?'👑 관리자':escapeHtml(c.author)}</div>
-                        <div style="font-size:13px; color:#eee; white-space:pre-wrap;">${escapeHtml(c.text)}</div>
+                        <div style="display:flex; align-items:center; gap:6px; margin-bottom:2px;">
+                            <span style="font-size:11px; color:${c.byAdmin?'#c4b5fd':'#888'}; flex:1;">${c.byAdmin?'👑 관리자':escapeHtml(c.author)}</span>
+                            ${c.mine ? `
+                                <button class="nb-cmt-edit" data-cid="${c.id}" style="background:transparent; border:none; color:#888; cursor:pointer; font-size:10px;">수정</button>
+                                <button class="nb-cmt-del" data-cid="${c.id}" style="background:transparent; border:none; color:#f87171; cursor:pointer; font-size:10px;">삭제</button>
+                            ` : ''}
+                        </div>
+                        <div class="nb-cmt-text" data-cid="${c.id}" style="font-size:13px; color:#eee; white-space:pre-wrap;">${escapeHtml(c.text)}</div>
                     </div>
                 `).join('') || '<div style="color:#666; font-size:12px; padding:8px 0;">아직 답변이 없습니다.</div>';
 
@@ -3196,7 +3202,7 @@
                     <button id="nb-secret-back" style="background:transparent; border:none; color:#a78bfa; cursor:pointer; font-size:13px; margin-bottom:10px;">← 목록</button>
                     <div style="font-size:15px; font-weight:700; color:#fff; margin-bottom:4px;">${escapeHtml(post.title)}</div>
                     <div style="font-size:11px; color:#888; margin-bottom:10px;">${isAdmin?escapeHtml(post.author)+' · ':''}${new Date(post.createdAt).toLocaleString('ko-KR')}</div>
-                    ${(myEmail && post.email === myEmail && !isAdmin) ? `
+                    ${(post.mine && !isAdmin) ? `
                         <div style="display:flex; gap:6px; margin-bottom:10px;">
                             <button id="nb-secret-edit" style="padding:4px 10px; background:rgba(255,255,255,0.1); border:none; color:#fff; border-radius:6px; cursor:pointer; font-size:11px;">✏️ 수정</button>
                             <button id="nb-secret-del" style="padding:4px 10px; background:rgba(239,68,68,0.2); border:none; color:#fca5a5; border-radius:6px; cursor:pointer; font-size:11px;">🗑 삭제</button>
@@ -3212,6 +3218,17 @@
                         </div>
                     ` : ''}
                 `;
+
+                async function refreshDetail() {
+                    let url = `${SECRET_API}?t=${Date.now()}`;
+                    if (_secretAdminPw) url += `&admin=${encodeURIComponent(_secretAdminPw)}`;
+                    else url += `&email=${encodeURIComponent(myEmail)}`;
+                    const res = await fetch(url);
+                    const data = await res.json();
+                    const updated = (data.posts||[]).find(p => p.id === post.id);
+                    if (updated) renderSecretDetail(updated, data.isAdmin);
+                }
+                
                 document.getElementById('nb-secret-back').onclick = () => loadSecretPosts();
                 const editBtn = document.getElementById('nb-secret-edit');
                 if (editBtn) editBtn.onclick = () => renderSecretEdit(post);
@@ -3234,7 +3251,7 @@
                     try {
                         const payload = { action:'comment', postId:post.id, text };
                         if (_secretAdminPw) payload.adminPw = _secretAdminPw;
-                        else { payload.email = myEmail; payload.author = myName; }
+                        else { payload.email = myEmail; payload.author = post.anon ? '익명' : myName; payload.anon = post.anon; }
                         await fetch(SECRET_API, {
                             method:'POST', headers:{'Content-Type':'application/json'},
                             body: JSON.stringify(payload)
@@ -3249,6 +3266,30 @@
                         if (updated) renderSecretDetail(updated, data.isAdmin);
                     } catch(err) { alert('등록 실패'); e.target.disabled=false; }
                 };
+                // 댓글 수정
+                body.querySelectorAll('.nb-cmt-edit').forEach(btn => {
+                    btn.onclick = () => {
+                        const cid = btn.dataset.cid;
+                        const textEl = body.querySelector(`.nb-cmt-text[data-cid="${cid}"]`);
+                        const old = textEl.textContent;
+                        const newText = prompt('댓글 수정', old);
+                        if (newText === null || !newText.trim() || newText === old) return;
+                        fetch(SECRET_API, {
+                            method:'PUT', headers:{'Content-Type':'application/json'},
+                            body: JSON.stringify({ email: myEmail, id: post.id, commentId: cid, text: newText.trim() })
+                        }).then(() => refreshDetail());
+                    };
+                });
+                // 댓글 삭제
+                body.querySelectorAll('.nb-cmt-del').forEach(btn => {
+                    btn.onclick = () => {
+                        if (!confirm('댓글을 삭제하시겠습니까?')) return;
+                        fetch(SECRET_API, {
+                            method:'DELETE', headers:{'Content-Type':'application/json'},
+                            body: JSON.stringify({ email: myEmail, id: post.id, commentId: btn.dataset.cid })
+                        }).then(() => refreshDetail());
+                    };
+                });
             }
 
             function renderSecretEdit(post) {
