@@ -274,7 +274,7 @@
                 display: none !important;
             }
 
-            /* [2] 대기장소 마커 반전 로직 (글자 방향 보존형) */
+            /* [2] 대기장소 마커 반전 로직 (글자 방향 보존) */
             gmp-advanced-marker:has([data-qk*="base-marker-대기장소"]) {
                 display: block !important;
                 visibility: visible !important;
