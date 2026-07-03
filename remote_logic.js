@@ -2531,7 +2531,7 @@
 
             window.openBoardOverlay = async function() {
             const BOARD_API = 'https://multimonitoring.vercel.app/api/board';
-            const BG_IMG = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing_isabelle.png';
+            const BG_IMG = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/animal_crossing_isabelle.png';
 
             function getMyEmail() {
                 try {
@@ -3433,7 +3433,7 @@
 				margin-top:0;
                 overflow-y:auto; position:relative;
                 background-image: linear-gradient(to bottom, #1a2240 0%, transparent 30%),
-                url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/snoopy_camping.jpg');
+                url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/snoopy_camping.jpg');
                 background-size: 100% auto;
                 background-position: center bottom;
                 background-repeat: no-repeat;
