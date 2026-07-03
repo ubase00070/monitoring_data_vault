@@ -1124,7 +1124,7 @@
         titleWrap.appendChild(boardBtn);
 
         const secretBtn = document.createElement('button');
-        secretBtn.textContent = '🔒 1:1 문의';
+        secretBtn.textContent = '🔒 문의';
         secretBtn.style.cssText = "background:transparent; border:1px solid #a78bfa; color:#c4b5fd; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:14px; margin-left:4px;";
         secretBtn.onmouseenter = () => { secretBtn.style.background='rgba(167,139,250,0.15)'; };
         secretBtn.onmouseleave = () => { secretBtn.style.background='transparent'; };
@@ -2563,6 +2563,7 @@
             overlay.innerHTML = `
             <div style="width:100%; height:100%; background:rgba(10,10,30,0.72); backdrop-filter:blur(2px); display:flex; flex-direction:column; border-radius:24px;">
                 <div style="display:flex; align-items:center; gap:8px; padding:12px 16px; border-bottom:0.5px solid rgba(255,255,255,0.12);">
+                    <div id="nb-board-header" style="display:flex; align-items:center; gap:8px; padding:12px 16px; border-bottom:0.5px solid rgba(255,255,255,0.12); cursor:grab;">
                     <span style="font-size:15px; font-weight:600; color:#fff; flex:1;">📋 뉴비고 게시판</span>
                     <button id="nb-refresh-btn" style="height:28px; width:28px; background:rgba(255,255,255,0.1); color:white; border:none; border-radius:6px; cursor:pointer; font-size:14px;" title="새로고침">↺</button>
 					<button id="nb-write-btn" style="height:28px; padding:0 12px; font-size:12px; font-weight:500; background:#6366f1; color:white; border:none; border-radius:6px; cursor:pointer;">✏️ 글쓰기</button>
@@ -2628,6 +2629,33 @@
             let currentPostId = null;
             const myEmail = getMyEmail();
             const myName = getMyName();
+
+            // ── 게시판 드래그 (scale 유지) ──
+            (function makeBoardDraggable() {
+                const handle = document.getElementById('nb-board-header');
+                if (!handle) return;
+                let dragging = false, sx, sy, sLeft, sTop;
+                handle.addEventListener('mousedown', (e) => {
+                    const tag = e.target.tagName;
+                    if (tag === 'INPUT' || tag === 'BUTTON' || tag === 'SELECT' || tag === 'TEXTAREA' || tag === 'A') return;
+                    dragging = true;
+                    sx = e.clientX; sy = e.clientY;
+                    sLeft = parseFloat(overlay.style.left);
+                    sTop = parseFloat(overlay.style.top);
+                    handle.style.cursor = 'grabbing';
+                    e.preventDefault();
+                });
+                document.addEventListener('mousemove', (e) => {
+                    if (!dragging) return;
+                    overlay.style.left = (sLeft + (e.clientX - sx)) + 'px';
+                    overlay.style.top  = (sTop  + (e.clientY - sy)) + 'px';
+                });
+                document.addEventListener('mouseup', () => {
+                    if (!dragging) return;
+                    dragging = false;
+                    handle.style.cursor = 'grab';
+                });
+            })();
 
             document.getElementById('nb-user-badge').textContent = myEmail ? `${myName} (${myEmail})` : '⚠️ 로그인 정보 없음 — 읽기 전용';
             document.getElementById('nb-board-close').onclick = () => { overlay.style.display = 'none'; };
@@ -3066,7 +3094,7 @@
                 `;
                 box.innerHTML = `
                     <div style="display:flex; align-items:center; padding:16px 18px; border-bottom:1px solid #333; gap:8px;">
-                        <span id="nb-secret-title-lock" style="font-size:16px; font-weight:700; color:#c4b5fd; flex:1; cursor:default; user-select:none;">🔒 1:1 관리자 문의(익명 시 관리자도 </span>
+                        <span id="nb-secret-title-lock" style="font-size:16px; font-weight:700; color:#c4b5fd; flex:1; cursor:default; user-select:none;">🔒 1:1 관리자 문의</span>
                         <button id="nb-secret-close" style="background:transparent; border:none; color:#aaa; font-size:18px; cursor:pointer;">✕</button>
                     </div>
                     <div id="nb-secret-body" style="padding:16px 18px; overflow-y:auto; flex:1;"></div>
@@ -3155,7 +3183,7 @@
                     <input id="nb-secret-title" placeholder="제목" style="width:100%; height:38px; padding:0 10px; margin-bottom:8px; box-sizing:border-box; background:rgba(255,255,255,0.08); border:1px solid #444; border-radius:6px; color:#fff; font-size:13px;">
                     <textarea id="nb-secret-content" placeholder="관리자에게 전달할 내용을 입력하세요" style="width:100%; height:140px; padding:10px; box-sizing:border-box; background:rgba(255,255,255,0.08); border:1px solid #444; border-radius:6px; color:#fff; font-size:13px; resize:none; font-family:inherit;"></textarea>
                     <label style="display:flex; align-items:center; gap:6px; margin:8px 0; font-size:12px; color:#aaa; cursor:pointer;">
-                        <input type="checkbox" id="nb-secret-anon"> 익명으로 (관리자도 누군지 볼 수 없음)
+                        <input type="checkbox" id="nb-secret-anon"> 익명으로 (관리자도 누구인지 확인불가)
                     </label>
                     <div style="display:flex; gap:8px;">
                         <button id="nb-secret-cancel" style="flex:1; padding:10px; background:rgba(255,255,255,0.1); border:none; color:#fff; border-radius:6px; cursor:pointer;">취소</button>
@@ -3175,7 +3203,8 @@
                             method:'POST', headers:{'Content-Type':'application/json'},
                             body: JSON.stringify({ email:myEmail, author: isAnon ? '익명' : myName, anon:isAnon, title, content })
                         });
-                        loadSecretPosts();
+                        await new Promise(r => setTimeout(r, 400));
+                        await loadSecretPosts();
                     } catch(err) { alert('전송 실패'); e.target.disabled=false; e.target.textContent='문의 보내기'; }
                 };
             }
@@ -3220,6 +3249,7 @@
                 `;
 
                 async function refreshDetail() {
+                    await new Promise(r => setTimeout(r, 400));
                     let url = `${SECRET_API}?t=${Date.now()}`;
                     if (_secretAdminPw) url += `&admin=${encodeURIComponent(_secretAdminPw)}`;
                     else url += `&email=${encodeURIComponent(myEmail)}`;
@@ -3228,7 +3258,7 @@
                     const updated = (data.posts||[]).find(p => p.id === post.id);
                     if (updated) renderSecretDetail(updated, data.isAdmin);
                 }
-                
+
                 document.getElementById('nb-secret-back').onclick = () => loadSecretPosts();
                 const editBtn = document.getElementById('nb-secret-edit');
                 if (editBtn) editBtn.onclick = () => renderSecretEdit(post);
@@ -3240,7 +3270,8 @@
                             method:'DELETE', headers:{'Content-Type':'application/json'},
                             body: JSON.stringify({ email: myEmail, id: post.id })
                         });
-                        loadSecretPosts();
+                        await new Promise(r => setTimeout(r, 400));
+                        await loadSecretPosts();
                     } catch(err) { alert('삭제 실패'); }
                 };
                 const replyBtn = document.getElementById('nb-secret-reply-btn');
@@ -3256,6 +3287,7 @@
                             method:'POST', headers:{'Content-Type':'application/json'},
                             body: JSON.stringify(payload)
                         });
+                        await new Promise(r => setTimeout(r, 400));
                         // 최신 데이터 다시 받아서 상세 갱신
                         let url = `${SECRET_API}?t=${Date.now()}`;
                         if (_secretAdminPw) url += `&admin=${encodeURIComponent(_secretAdminPw)}`;
