@@ -4,7 +4,7 @@
     if (window.neubieEngineLoaded) return;
     window.neubieEngineLoaded = true;
 
-	// ── 배민 주아 웹폰트 로드 (게시판) ──
+	// ── 배민 주아 웹폰트 (게시판) ──
     (function loadJuaFont() {
         if (document.getElementById('neubie-jua-font')) return;
         const st = document.createElement('style');
