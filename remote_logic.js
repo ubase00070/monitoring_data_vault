@@ -4,14 +4,21 @@
     if (window.neubieEngineLoaded) return;
     window.neubieEngineLoaded = true;
 
-	// ── 카페24 써라운드 웹폰트 (게시판용) ──
-    (function loadSsurroundFont() {
-        if (document.getElementById('neubie-ssurround-font')) return;
-        const link = document.createElement('link');
-        link.id = 'neubie-ssurround-font';
-        link.rel = 'stylesheet';
-        link.href = 'https://cdn.jsdelivr.net/gh/fonts-archive/Cafe24Ssurround/subsets/Cafe24Ssurround-dynamic-subset.css';
-        document.head.appendChild(link);
+	// ── 티몬 몬소리 웹폰트 로드 (게시판용) ──
+    (function loadTmonFont() {
+        if (document.getElementById('neubie-tmon-font')) return;
+        const st = document.createElement('style');
+        st.id = 'neubie-tmon-font';
+        st.textContent = `
+            @font-face {
+                font-family: 'TmonMonsori';
+                src: url('https://cdn.jsdelivr.net/gh/fontbee/font@main/Tmon/TmonMonsori.woff') format('woff');
+                font-weight: normal;
+                font-style: normal;
+                font-display: swap;
+            }
+        `;
+        document.head.appendChild(st);
     })();
 
     const currUrl = window.location.href;
@@ -2555,7 +2562,13 @@
             const dashboard = document.getElementById('neubie-dashboard');
             overlay = document.createElement('div');
             overlay.id = 'neubie-board-overlay';
-			overlay.style.fontFamily = "'Cafe24Ssurround', 'Pretendard', sans-serif";
+			const boardFontStyle = document.createElement('style');
+			boardFontStyle.textContent = `
+				#neubie-board-overlay, #neubie-board-overlay * {
+					font-family: 'TmonMonsori', 'Pretendard', sans-serif !important;
+				}
+			`;
+			overlay.appendChild(boardFontStyle);
             const r = dashboard.getBoundingClientRect();
 			Object.assign(overlay.style, {
 				position: 'fixed',
@@ -2718,7 +2731,7 @@
             }
 
             let _currentPage = 1;
-            const PAGE_SIZE = 20;
+            const PAGE_SIZE = 10;
 
             function renderList(posts, resetPage) {
                 if (resetPage) _currentPage = 1;
