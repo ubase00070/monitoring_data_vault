@@ -111,6 +111,15 @@
         insuData: null,
     };
 
+    function getAuthHeaders() {
+        try {
+            const token = JSON.parse(localStorage.getItem('AccessToken'));
+            return token ? { 'Authorization': `Bearer ${token}` } : {};
+        } catch (e) {
+            return {};
+        }
+    }
+
     /* ============================================================
     SECTION 조작자 감시 (개입 페이지 전용)
    ============================================================ */
@@ -128,7 +137,10 @@
         return new URLSearchParams(location.search).get('robot-id');
     }
     async function _fetchSingleRobot(robotId) {
-        const res = await fetch(`https://core.neubie.ai/robots/${robotId}/`, { credentials: 'include' });
+        const res = await fetch(`https://core.neubie.ai/robots/${robotId}/`, {
+            credentials: 'include',
+            headers: getAuthHeaders()
+        });
         return await res.json();
     }
     function _showOperatorPanel(name) {
@@ -486,7 +498,8 @@
             const results = await Promise.all(
                 config.batteryIds.map(c =>
                     fetch(`https://core.neubie.ai/robots/${c.id}/`, {
-                        credentials: 'include'
+                        credentials: 'include',
+                        headers: getAuthHeaders()
                     })
                     .then(r => r.ok ? r.json() : null)
                     .catch(() => null)
@@ -2102,7 +2115,9 @@
                 try {
                     const res = await fetch(
                         `https://core.neubie.ai/robots/${robot.id}/`,
-                        { credentials: 'include' }
+                        { credentials: 'include',
+                          headers: getAuthHeaders()
+                        }
                     );
                     const data = await res.json();
                     if (data.currentScenario !== null && data.isMonitoring === false) {
@@ -2194,9 +2209,9 @@
 
 				try {
 					const res = await fetch(
-						`https://core.neubie.ai/robots/?nickname=${encodeURIComponent(robotName)}`,
-						{ credentials: 'include' }
-					);
+                        `https://core.neubie.ai/robots/?nickname=${encodeURIComponent(robotName)}`,
+                        { credentials: 'include', headers: getAuthHeaders() }
+                    );
 					if (!res.ok) { card.dataset.bitrateInjected = ''; return; }
 					const json = await res.json();
 					const robot = json.results?.[0];
@@ -2264,11 +2279,11 @@
 							btn.style.opacity = '0.4';
 							try {
 								await fetch(`https://core.neubie.ai/robots/${robot.id}/video-bitrate-level/`, {
-									method: 'PUT',
-									credentials: 'include',
-									headers: { 'Content-Type': 'application/json' },
-									body: JSON.stringify({ level: newLevel })
-								});
+                                    method: 'PUT',
+                                    credentials: 'include',
+                                    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+                                    body: JSON.stringify({ level: newLevel })
+                                });
 								currentLevel = newLevel;
 								labelEl.innerText = `화질 ${LEVEL_LABELS[currentLevel]}`;
 							} catch(e) {}
@@ -2306,11 +2321,11 @@
 						lampBtn.style.opacity = '0.4';
 						try {
 							const r = await fetch(`https://core.neubie.ai/robots/${robot.id}/head-light/`, {
-								method: 'PUT',
-								credentials: 'include',
-								headers: { 'Content-Type': 'application/json' },
-								body: JSON.stringify({ isOn: !isHeadLightOn })
-							});
+                                method: 'PUT',
+                                credentials: 'include',
+                                headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+                                body: JSON.stringify({ isOn: !isHeadLightOn })
+                            });
 							if (r.ok) {
 								isHeadLightOn = !isHeadLightOn;
 								lampBtn.style.color = isHeadLightOn ? 'rgba(255,255,255,1)' : 'rgba(255,255,255,0.25)';
@@ -3714,7 +3729,10 @@
 		try {
 			await new Promise(r => setTimeout(r, 2000));
 			
-			const res = await fetch(`https://core.neubie.ai/robots/${robotId}/`, { credentials: 'include' });
+			const res = await fetch(`https://core.neubie.ai/robots/${robotId}/`, {
+                credentials: 'include',
+                headers: getAuthHeaders()
+            });
 			const data = await res.json();
 			if (data.currentScenario) { _autoSideInProgress.delete(robotId); return; }
             if (!data.robotStatus.isMovable) { _autoSideInProgress.delete(robotId); return; }
@@ -3725,7 +3743,10 @@
 			setTimeout(async () => {
 				// 5초 후 다시 한번 확인
 				try {
-					const res2 = await fetch(`https://core.neubie.ai/robots/${robotId}/`, { credentials: 'include' });
+					const res2 = await fetch(`https://core.neubie.ai/robots/${robotId}/`, {
+                        credentials: 'include',
+                        headers: getAuthHeaders()
+                    });
 					const data2 = await res2.json();
 					if (data2.currentScenario) { _autoSideInProgress.delete(robotId); return; }
 					if (!data2.robotStatus.isMovable) { _autoSideInProgress.delete(robotId); return; }
@@ -3733,7 +3754,7 @@
 					const res3 = await fetch(`https://core.neubie.ai/robots/${robotId}/control/`, {
 						method: 'PUT',
 						credentials: 'include',
-						headers: { 'Content-Type': 'application/json' },
+						headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
 						body: JSON.stringify({ action: 'WAIT' })
 					});
 					if (res3.ok) {
