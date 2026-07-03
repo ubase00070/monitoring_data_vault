@@ -1696,6 +1696,8 @@
         if (patchOverlay) patchOverlay.style.display='none';
         const boardOverlay = document.getElementById('neubie-board-overlay');
         if (boardOverlay) boardOverlay.style.display='none';
+        const secretOverlay = document.getElementById('neubie-secret-overlay');
+        if (secretOverlay) secretOverlay.style.display='none';
     }
 
     // ── 유효성 검증 (1시간 이내 데이터) ──
@@ -3064,9 +3066,7 @@
                 `;
                 box.innerHTML = `
                     <div style="display:flex; align-items:center; padding:16px 18px; border-bottom:1px solid #333; gap:8px;">
-                        <span style="font-size:16px; font-weight:700; color:#c4b5fd; flex:1;">🔒 1:1 관리자 문의</span>
-                        <span id="nb-secret-mode" style="font-size:11px; color:#888;"></span>
-                        <button id="nb-secret-admin-btn" style="background:transparent; border:1px solid #a78bfa; color:#c4b5fd; padding:3px 8px; border-radius:6px; cursor:pointer; font-size:11px;">관리자 모드</button>
+                        <span id="nb-secret-title-lock" style="font-size:16px; font-weight:700; color:#c4b5fd; flex:1; cursor:default; user-select:none;">🔒 1:1 관리자 문의</span>
                         <button id="nb-secret-close" style="background:transparent; border:none; color:#aaa; font-size:18px; cursor:pointer;">✕</button>
                     </div>
                     <div id="nb-secret-body" style="padding:16px 18px; overflow-y:auto; flex:1;"></div>
@@ -3075,20 +3075,35 @@
                 document.body.appendChild(overlay);
 
                 document.getElementById('nb-secret-close').onclick = () => { overlay.style.display = 'none'; };
-                document.getElementById('nb-secret-admin-btn').onclick = async () => {
-                    const pw = prompt('관리자 비밀번호를 입력하세요');
-                    if (!pw) return;
-                    // 서버에 비번 확인
-                    const res = await fetch(`${SECRET_API}?admin=${encodeURIComponent(pw)}`);
-                    const data = await res.json();
-                    if (data.isAdmin) {
-                        _secretAdminPw = pw;
-                        document.getElementById('nb-secret-mode').textContent = '👑 관리자 모드';
-                        loadSecretPosts();
-                    } else {
-                        alert('비밀번호가 일치하지 않습니다.');
+
+                // 자물쇠(제목) 2초 내 5회 클릭 → 관리자 진입
+                let _secretLockClicks = 0;
+                let _secretLockTimer = null;
+                document.getElementById('nb-secret-title-lock').addEventListener('click', async () => {
+                    _secretLockClicks++;
+                    clearTimeout(_secretLockTimer);
+                    _secretLockTimer = setTimeout(() => { _secretLockClicks = 0; }, 2000);
+                    if (_secretLockClicks >= 5) {
+                        _secretLockClicks = 0;
+                        clearTimeout(_secretLockTimer);
+                        // 이미 관리자면 해제
+                        if (_secretAdminPw) {
+                            _secretAdminPw = null;
+                            loadSecretPosts();
+                            return;
+                        }
+                        const pw = prompt('관리자 비밀번호를 입력하세요');
+                        if (!pw) return;
+                        const res = await fetch(`${SECRET_API}?admin=${encodeURIComponent(pw)}`);
+                        const data = await res.json();
+                        if (data.isAdmin) {
+                            _secretAdminPw = pw;
+                            loadSecretPosts();
+                        } else {
+                            alert('비밀번호가 일치하지 않습니다.');
+                        }
                     }
-                };
+                });
             }
 
             // ── 목록 로드 ──
@@ -3181,6 +3196,12 @@
                     <button id="nb-secret-back" style="background:transparent; border:none; color:#a78bfa; cursor:pointer; font-size:13px; margin-bottom:10px;">← 목록</button>
                     <div style="font-size:15px; font-weight:700; color:#fff; margin-bottom:4px;">${escapeHtml(post.title)}</div>
                     <div style="font-size:11px; color:#888; margin-bottom:10px;">${isAdmin?escapeHtml(post.author)+' · ':''}${new Date(post.createdAt).toLocaleString('ko-KR')}</div>
+                    ${(myEmail && post.email === myEmail && !isAdmin) ? `
+                        <div style="display:flex; gap:6px; margin-bottom:10px;">
+                            <button id="nb-secret-edit" style="padding:4px 10px; background:rgba(255,255,255,0.1); border:none; color:#fff; border-radius:6px; cursor:pointer; font-size:11px;">✏️ 수정</button>
+                            <button id="nb-secret-del" style="padding:4px 10px; background:rgba(239,68,68,0.2); border:none; color:#fca5a5; border-radius:6px; cursor:pointer; font-size:11px;">🗑 삭제</button>
+                        </div>
+                    ` : ''}
                     <div style="font-size:13px; color:#ddd; white-space:pre-wrap; padding:12px; background:rgba(255,255,255,0.03); border-radius:8px; margin-bottom:14px;">${escapeHtml(post.content)}</div>
                     <div style="font-size:12px; color:#aaa; margin-bottom:6px;">💬 답변</div>
                     ${comments}
@@ -3192,6 +3213,19 @@
                     ` : ''}
                 `;
                 document.getElementById('nb-secret-back').onclick = () => loadSecretPosts();
+                const editBtn = document.getElementById('nb-secret-edit');
+                if (editBtn) editBtn.onclick = () => renderSecretEdit(post);
+                const delBtn = document.getElementById('nb-secret-del');
+                if (delBtn) delBtn.onclick = async () => {
+                    if (!confirm('이 문의를 삭제하시겠습니까?')) return;
+                    try {
+                        await fetch(SECRET_API, {
+                            method:'DELETE', headers:{'Content-Type':'application/json'},
+                            body: JSON.stringify({ email: myEmail, id: post.id })
+                        });
+                        loadSecretPosts();
+                    } catch(err) { alert('삭제 실패'); }
+                };
                 const replyBtn = document.getElementById('nb-secret-reply-btn');
                 if (replyBtn) replyBtn.onclick = async (e) => {
                     const text = document.getElementById('nb-secret-reply').value.trim();
@@ -3214,6 +3248,30 @@
                         const updated = (data.posts||[]).find(p => p.id === post.id);
                         if (updated) renderSecretDetail(updated, data.isAdmin);
                     } catch(err) { alert('등록 실패'); e.target.disabled=false; }
+                };
+            }
+
+            function renderSecretEdit(post) {
+                const body = document.getElementById('nb-secret-body');
+                body.innerHTML = `
+                    <button id="nb-secret-edit-back" style="background:transparent; border:none; color:#a78bfa; cursor:pointer; font-size:13px; margin-bottom:10px;">← 취소</button>
+                    <input id="nb-secret-edit-title" value="${escapeHtml(post.title)}" style="width:100%; height:38px; padding:0 10px; margin-bottom:8px; box-sizing:border-box; background:rgba(255,255,255,0.08); border:1px solid #444; border-radius:6px; color:#fff; font-size:13px;">
+                    <textarea id="nb-secret-edit-content" style="width:100%; height:140px; padding:10px; box-sizing:border-box; background:rgba(255,255,255,0.08); border:1px solid #444; border-radius:6px; color:#fff; font-size:13px; resize:none; font-family:inherit;">${escapeHtml(post.content)}</textarea>
+                    <button id="nb-secret-edit-save" style="width:100%; padding:10px; margin-top:8px; background:#7c3aed; border:none; color:#fff; border-radius:6px; cursor:pointer; font-weight:600;">수정 완료</button>
+                `;
+                document.getElementById('nb-secret-edit-back').onclick = () => renderSecretDetail(post, false);
+                document.getElementById('nb-secret-edit-save').onclick = async (e) => {
+                    const title = document.getElementById('nb-secret-edit-title').value.trim();
+                    const content = document.getElementById('nb-secret-edit-content').value.trim();
+                    if (!title || !content) return;
+                    e.target.disabled = true; e.target.textContent = '수정 중...';
+                    try {
+                        await fetch(SECRET_API, {
+                            method:'PUT', headers:{'Content-Type':'application/json'},
+                            body: JSON.stringify({ email: myEmail, id: post.id, title, content })
+                        });
+                        loadSecretPosts();
+                    } catch(err) { alert('수정 실패'); e.target.disabled=false; e.target.textContent='수정 완료'; }
                 };
             }
 
