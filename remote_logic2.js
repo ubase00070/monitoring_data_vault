@@ -137,7 +137,10 @@
         return new URLSearchParams(location.search).get('robot-id');
     }
     async function _fetchSingleRobot(robotId) {
-        const res = await fetch(`https://core.neubie.ai/robots/${robotId}/`, { credentials: 'include' });
+        const res = await fetch(`https://core.neubie.ai/robots/${robotId}/`, {
+            credentials: 'include',
+            headers: getAuthHeaders()
+        });
         return await res.json();
     }
     function _showOperatorPanel(name) {
@@ -495,7 +498,8 @@
             const results = await Promise.all(
                 config.batteryIds.map(c =>
                     fetch(`https://core.neubie.ai/robots/${c.id}/`, {
-                        credentials: 'include'
+                        credentials: 'include',
+                        headers: getAuthHeaders()
                     })
                     .then(r => r.ok ? r.json() : null)
                     .catch(() => null)
@@ -2111,7 +2115,9 @@
                 try {
                     const res = await fetch(
                         `https://core.neubie.ai/robots/${robot.id}/`,
-                        { credentials: 'include' }
+                        { credentials: 'include',
+                          headers: getAuthHeaders()
+                        }
                     );
                     const data = await res.json();
                     if (data.currentScenario !== null && data.isMonitoring === false) {
@@ -3723,7 +3729,10 @@
 		try {
 			await new Promise(r => setTimeout(r, 2000));
 			
-			const res = await fetch(`https://core.neubie.ai/robots/${robotId}/`, { credentials: 'include' });
+			const res = await fetch(`https://core.neubie.ai/robots/${robotId}/`, {
+                credentials: 'include',
+                headers: getAuthHeaders()
+            });
 			const data = await res.json();
 			if (data.currentScenario) { _autoSideInProgress.delete(robotId); return; }
             if (!data.robotStatus.isMovable) { _autoSideInProgress.delete(robotId); return; }
@@ -3734,7 +3743,10 @@
 			setTimeout(async () => {
 				// 5초 후 다시 한번 확인
 				try {
-					const res2 = await fetch(`https://core.neubie.ai/robots/${robotId}/`, { credentials: 'include' });
+					const res2 = await fetch(`https://core.neubie.ai/robots/${robotId}/`, {
+                        credentials: 'include',
+                        headers: getAuthHeaders()
+                    });
 					const data2 = await res2.json();
 					if (data2.currentScenario) { _autoSideInProgress.delete(robotId); return; }
 					if (!data2.robotStatus.isMovable) { _autoSideInProgress.delete(robotId); return; }
@@ -3742,7 +3754,7 @@
 					const res3 = await fetch(`https://core.neubie.ai/robots/${robotId}/control/`, {
 						method: 'PUT',
 						credentials: 'include',
-						headers: { 'Content-Type': 'application/json' },
+						headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
 						body: JSON.stringify({ action: 'WAIT' })
 					});
 					if (res3.ok) {
