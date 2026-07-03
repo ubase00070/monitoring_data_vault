@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>뉴비고 관제 시뮬레이터</title>
+<style>
+:root {
+  --bg:#0d0f18; --surface:#161924; --surface2:#1e2235; --surface3:#252a3e;
+  --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.13);
+  --text:#e8eaf2; --text2:#8b8fa8; --text3:#555977; --accent:#6c7af4;
+  --c-day1:#378ADD; --c-day1s:rgba(55,138,221,0.18);
+  --c-day2:#1D9E75; --c-day2s:rgba(29,158,117,0.18);
+  --c-bridge:#1D9E75; --c-bridges:rgba(29,158,117,0.18);
+  --c-night1:#9b88e8; --c-night1s:rgba(155,136,232,0.18);
+  --c-night2:#D85A30; --c-night2s:rgba(216,90,48,0.18);
+  --c-mgr:#EF9F27; --c-mgrs:rgba(239,159,39,0.18);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;font-size:13px;line-height:1.5;min-height:100vh}
+header{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:var(--surface);border-bottom:1px solid var(--border2);position:sticky;top:0;z-index:100;flex-wrap:wrap;gap:8px}
+.logo{display:flex;align-items:center;gap:8px}
+.logo-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent)}
+.logo-text{font-size:14px;font-weight:600;letter-spacing:-0.3px}
+.logo-sub{font-size:11px;color:var(--text2);margin-left:2px}
+.header-right{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.schedule-btns{display:flex;gap:5px;align-items:center;padding:4px 10px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px}
+.schedule-btns span{font-size:10px;color:var(--text3);margin-right:4px}
+.btn{padding:5px 11px;border-radius:6px;font-size:12px;cursor:pointer;border:1px solid var(--border2);background:var(--surface2);color:var(--text2);transition:all .15s}
+.btn:hover{background:var(--surface3);color:var(--text)}
+.btn-primary{background:var(--accent);color:#fff;border-color:transparent}
+.btn-primary:hover{background:#7c8bf5}
+.btn-success{background:rgba(29,158,117,0.25);color:#5dcaa5;border-color:rgba(29,158,117,0.35)}
+.btn-success:hover{background:rgba(29,158,117,0.4)}
+.btn-month{padding:4px 10px;font-size:11px}
+.btn-month.active{background:var(--accent);color:#fff;border-color:transparent}
+
+/* scenario bar */
+.scenario-bar{display:flex;align-items:center;gap:8px;padding:7px 20px;background:var(--surface);border-bottom:1px solid var(--border);font-size:12px;color:var(--text2);flex-wrap:wrap}
+.chip{padding:3px 10px;border-radius:20px;font-size:11px;cursor:pointer;border:1px solid var(--border2);background:var(--surface2);color:var(--text2);transition:all .15s;white-space:nowrap}
+.chip.active{background:var(--accent);color:#fff;border-color:transparent}
+.chip:hover:not(.active){border-color:var(--accent);color:var(--accent)}
+
+/* main layout */
+.main{display:grid;grid-template-columns:340px 1fr;gap:0;height:calc(100vh - 96px)}
+.panel-left{border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column}
+.group-header{display:flex;align-items:center;justify-content:space-between;padding:7px 16px 4px;font-size:10px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:2}
+.person-list{padding:6px}
+.person-card{display:flex;align-items:center;gap:8px;padding:6px 9px;border-radius:7px;margin-bottom:3px;background:var(--surface2);border:1px solid var(--border);cursor:pointer;transition:all .12s}
+.person-card:hover{border-color:var(--border2);background:var(--surface3)}
+.person-card.selected{border-color:var(--accent);background:rgba(108,122,244,0.1)}
+.person-card.on-leave{opacity:0.45}
+.person-avatar{width:26px;height:26px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
+.person-info{flex:1;min-width:0}
+.person-name{font-size:12px;font-weight:500;color:var(--text)}
+.person-time{font-size:10px;color:var(--text2);font-variant-numeric:tabular-nums}
+.person-meta{display:flex;flex-direction:column;gap:2px;align-items:flex-end}
+
+/* panel right */
+.panel-right{display:flex;flex-direction:column;overflow:hidden}
+.gantt-container{flex:1;overflow:hidden;padding:12px 14px 0;display:flex;flex-direction:column}
+.gantt-title{font-size:11px;font-weight:600;color:var(--text2);margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
+.gantt-inner{flex:1;overflow-y:auto}
+.gantt-header{display:grid;grid-template-columns:82px repeat(24,1fr);margin-bottom:3px;position:sticky;top:0;background:var(--bg);z-index:5;padding-bottom:3px}
+.gantt-hour-label{font-size:9px;color:var(--text3);text-align:center;padding:2px 0;border-left:1px solid var(--border)}
+.gantt-hour-label:first-child{border-left:none}
+.gantt-row{display:grid;grid-template-columns:82px repeat(24,1fr);margin-bottom:2px;align-items:center}
+.gantt-row:hover{background:rgba(255,255,255,0.02)}
+.gantt-row-label{font-size:9px;color:var(--text2);padding:0 5px 0 0;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gantt-row-label span{font-size:8px;color:var(--text3);display:block}
+.gantt-cell{height:20px;border-left:1px solid var(--border);cursor:pointer}
+.gantt-cell:hover{opacity:.8}
+.gantt-group-gap{grid-column:1/-1;height:5px}
+
+/* heatmap */
+.heatmap-section{padding:10px 14px;border-top:1px solid var(--border)}
+.heatmap-bar-row{display:grid;grid-template-columns:82px repeat(24,1fr);gap:0;align-items:flex-end;height:160px;margin-top:3px}
+.heatmap-label-row{display:grid;grid-template-columns:82px repeat(24,1fr)}
+.heatmap-col{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:160px;position:relative;cursor:pointer}
+.heatmap-col:hover .heatmap-bar{filter:brightness(1.25)}
+.heatmap-bar{width:calc(100% - 2px);border-radius:2px 2px 0 0;transition:height .3s ease}
+.heatmap-num{position:absolute;top:-13px;left:50%;transform:translateX(-50%);font-size:9px;font-weight:600;color:var(--text2);white-space:nowrap}
+.heatmap-h-label{font-size:9px;color:var(--text3);text-align:center;padding-top:2px}
+.heatmap-y-label{font-size:9px;color:var(--text3);display:flex;align-items:flex-end;padding-bottom:2px}
+
+/* drilldown */
+.drilldown{padding:10px 14px;border-top:1px solid var(--border);min-height:80px}
+.drilldown-title{font-size:11px;color:var(--text2);margin-bottom:7px;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.drilldown-pills{display:flex;flex-wrap:wrap;gap:4px}
+.drill-pill{padding:3px 9px;border-radius:20px;font-size:11px;border:1px solid;cursor:pointer;transition:all .12s}
+.drill-pill:hover{filter:brightness(1.2)}
+
+/* summary */
+.summary-bar{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:10px 14px;border-top:1px solid var(--border);background:var(--surface)}
+.stat-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 11px}
+.stat-label{font-size:10px;color:var(--text3);margin-bottom:2px}
+.stat-val{font-size:19px;font-weight:700;color:var(--text);line-height:1}
+.stat-sub{font-size:10px;color:var(--text2);margin-top:2px}
+
+/* badges */
+.break-badge{display:inline-flex;align-items:center;gap:2px;font-size:9px;padding:1px 5px;border-radius:3px;background:rgba(239,159,39,0.15);color:var(--c-mgr);border:1px solid rgba(239,159,39,0.25)}
+.solo-badge{display:inline-flex;align-items:center;gap:2px;font-size:9px;padding:1px 5px;border-radius:3px;background:rgba(216,90,48,0.15);color:#e8805a;border:1px solid rgba(216,90,48,0.25)}
+.special-badge{display:inline-flex;align-items:center;gap:2px;font-size:9px;padding:1px 5px;border-radius:3px;background:rgba(155,136,232,0.15);color:#cfc5f7;border:1px solid rgba(155,136,232,0.25)}
+.legend{display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:10px;color:var(--text2)}
+.legend-item{display:flex;align-items:center;gap:4px}
+.legend-dot{width:8px;height:8px;border-radius:2px}
+
+/* schedule mode indicator */
+.schedule-mode-badge{font-size:10px;padding:2px 8px;border-radius:4px;background:rgba(29,158,117,0.2);color:#5dcaa5;border:1px solid rgba(29,158,117,0.3)}
+
+/* modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:22px;width:360px;max-width:90vw;box-shadow:0 20px 60px rgba(0,0,0,0.5);transform:translateY(10px);transition:transform .2s}
+.modal-overlay.open .modal{transform:translateY(0)}
+.modal-title{font-size:15px;font-weight:600;margin-bottom:14px}
+.modal-field{margin-bottom:11px}
+.modal-label{font-size:11px;color:var(--text2);margin-bottom:3px}
+.modal-input,.modal-select{width:100%;padding:6px 10px;border-radius:6px;background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-size:12px;outline:none}
+.modal-input:focus,.modal-select:focus{border-color:var(--accent)}
+.modal-row{display:flex;gap:8px}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--surface2);border:1px solid var(--border2);color:var(--text);padding:7px 16px;border-radius:20px;font-size:12px;z-index:300;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    <span class="logo-text">뉴빌리티 스케줄 시뮬레이터</span>
+    <span class="logo-sub">v1.0</span>
+  </div>
+  <div class="header-right">
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--c-day1)"></div>주간1</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--c-day2)"></div>주간2</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--c-bridge)"></div>주간3</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--c-night1)"></div>야간1</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--c-night2)"></div>야간2</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--c-mgr)"></div>관리자</div>
+    </div>
+    <div class="schedule-btns">
+      <span>실제 스케줄</span>
+      <button class="btn btn-month active" id="btn-jun" onclick="fetchSchedule('06')">6월</button>
+      <button class="btn btn-month" id="btn-jul" onclick="fetchSchedule('07')">7월</button>
+      <button class="btn btn-success" onclick="applyRealSchedule()" id="btn-apply-schedule" style="display:none">✓ 적용</button>
+      <button class="btn" onclick="clearRealSchedule()" id="btn-clear-schedule" style="display:none">✕ 해제</button>
+    </div>
+    <button class="btn" onclick="resetToDefault()">↺ 초기화</button>
+    <button class="btn btn-primary" onclick="saveScenario()">저장</button>
+    <a href="schedule_brief.html" target="_blank" class="btn" style="text-decoration:none;background:rgba(45,212,191,0.15);color:#2dd4bf;border-color:rgba(45,212,191,0.3)">📊 브리핑</a>
+  </div>
+</header>
+
+<div class="scenario-bar">
+  <span>시나리오:</span>
+  <div style="display:flex;gap:6px;flex-wrap:wrap" id="scenarioChips">
+    <div class="chip active" id="chip-current" onclick="loadScenario('current',this)">현행</div>
+  </div>
+  <div id="schedule-mode-info" style="display:none">
+    <span class="schedule-mode-badge" id="schedule-mode-label">📅 실제 스케줄 적용 중</span>
+    <input type="date" id="schedule-date-picker" style="margin-left:8px;background:var(--surface2);border:1px solid var(--border2);color:var(--text);border-radius:5px;padding:2px 6px;font-size:11px;outline:none" onchange="updateScheduleDate(this.value)">
+  </div>
+  <span style="margin-left:auto;font-size:11px;color:var(--text3)" id="scenario-hint">인원 카드 ✎ 클릭 → 시간대 변경</span>
+</div>
+
+<div class="main">
+  <div class="panel-left" id="personPanel"></div>
+  <div class="panel-right">
+    <div class="gantt-container">
+      <div class="gantt-title">
+        <span>📋 근무 간트 차트 <span style="font-size:10px;font-weight:400;color:var(--text3)">(빗금=휴게시간)</span></span>
+        <span id="gantt-date-label" style="font-size:10px;color:var(--text2)"></span>
+      </div>
+      <div class="gantt-inner" id="ganttInner"></div>
+    </div>
+    <div class="heatmap-section">
+      <div style="font-size:10px;font-weight:600;color:var(--text2);margin-bottom:5px;display:flex;align-items:center;justify-content:space-between">
+        <span>⬛ 시간대별 가용 인원</span>
+        <button class="btn" style="font-size:10px;padding:3px 10px" onclick="openHeatmapCompare()">📊 히트맵 비교</button>
+      </div>
+      <div class="heatmap-bar-row" id="heatmapBars"></div>
+      <div class="heatmap-label-row" id="heatmapLabels"></div>
+    </div>
+    <div class="drilldown" id="drilldown">
+      <div class="drilldown-title">🕐 히트맵 막대를 클릭하면 해당 시간 인원이 표시됩니다</div>
+    </div>
+  </div>
+</div>
+
+<div class="summary-bar" id="summaryBar"></div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-title" id="modalTitle">인원 설정 변경</div>
+    <div class="modal-field">
+      <div class="modal-label">이름</div>
+      <input class="modal-input" id="modalName" type="text" readonly>
+    </div>
+    <div class="modal-field">
+      <div class="modal-label">소속 조 (선택 시 시간 자동 반영)</div>
+      <select class="modal-select" id="modalGroup" onchange="onGroupChange(this.value)">
+        <option value="주간1-07">주간1 (07~16)</option>
+        <option value="주간2-09">주간2 (09~18)</option>
+        <option value="주간3">주간3 (10~19)</option>
+        <option value="주간3">주간3 (11~20)</option>
+        <option value="야간1-14">야간1 (14~23)</option>
+        <option value="야간1-15">야간1 (15~24)</option>
+        <option value="야간2-18">야간2 (18~03)</option>
+        <option value="야간2-20">야간2 (20~05)</option>
+        <option value="야간3-22">야간3 (22~07)</option>
+        <option value="야간3-2330">야간3 (23:30~08:30)</option>
+      </select>
+    </div>
+    <div class="modal-row">
+      <div class="modal-field" style="flex:1">
+        <div class="modal-label">시작 시간 (세부 조정)</div>
+        <select class="modal-select" id="modalStart"></select>
+      </div>
+      <div class="modal-field" style="flex:1">
+        <div class="modal-label">종료 시간</div>
+        <select class="modal-select" id="modalEnd"></select>
+      </div>
+    </div>
+    <div class="modal-field">
+      <div class="modal-label">역할</div>
+      <select class="modal-select" id="modalRole">
+        <option value="op">관제사</option>
+        <option value="mgr">관리자</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">취소</button>
+      <button class="btn btn-primary" onclick="applyModal()">적용</button>
+    </div>
+  </div>
+</div>
+
+<!-- 히트맵 비교 모달 -->
+<div id="compareOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:300;overflow-y:auto">
+  <div style="max-width:1400px;margin:0 auto;padding:20px">
+    <!-- 헤더 -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:15px;font-weight:600;color:var(--text)">📊 히트맵 비교</span>
+        <span style="font-size:11px;color:var(--text3)">두 시나리오의 날짜별 가용 인원을 비교합니다</span>
+      </div>
+      <button class="btn" onclick="closeHeatmapCompare()" style="font-size:12px">✕ 닫기</button>
+    </div>
+
+    <!-- 설정 바 -->
+    <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;padding:12px 14px;background:var(--surface);border:1px solid var(--border2);border-radius:10px;margin-bottom:16px">
+      <div>
+        <div style="font-size:10px;color:var(--text3);margin-bottom:4px">A안 (좌)</div>
+        <select id="cmpA" class="modal-select" style="width:160px"></select>
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--text3);margin-bottom:4px">B안 (우)</div>
+        <select id="cmpB" class="modal-select" style="width:160px"></select>
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--text3);margin-bottom:4px">시작 날짜</div>
+        <input type="date" id="cmpDateStart" class="modal-input" style="width:140px" value="2026-06-15">
+      </div>
+      <div>
+        <div style="font-size:10px;color:var(--text3);margin-bottom:4px">종료 날짜 <span style="color:var(--text3)">(최대 7일)</span></div>
+        <input type="date" id="cmpDateEnd" class="modal-input" style="width:140px" value="2026-06-21">
+      </div>
+      <button class="btn btn-primary" onclick="runHeatmapCompare()" style="height:32px;font-size:12px">비교 실행</button>
+    </div>
+
+    <!-- 결과 영역 -->
+    <div id="compareResult"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- 그룹 휴게 A/B 설정 모달 -->
+<div class="modal-overlay" id="breakConfigOverlay" onclick="if(event.target===this)closeBreakConfig()">
+  <div class="modal">
+    <div class="modal-title">휴게 A/B 설정 — <span id="breakConfigGroupName"></span></div>
+    <p style="font-size:11px;color:var(--text2);margin-bottom:14px">같은 조 인원을 A/B 두 그룹으로 나눠 서로 다른 시간에 휴게를 배치합니다.</p>
+    <div class="modal-row">
+      <div class="modal-field" style="flex:1">
+        <div class="modal-label">A조 휴게 시작</div>
+        <select class="modal-select" id="breakA"></select>
+      </div>
+      <div class="modal-field" style="flex:1">
+        <div class="modal-label">B조 휴게 시작</div>
+        <select class="modal-select" id="breakB"></select>
+      </div>
+    </div>
+    <p style="font-size:10px;color:var(--text3);margin-bottom:8px">* 휴게는 1시간 단위로 적용됩니다. 설정 후 각 인원 카드에서 A/B를 선택하세요.</p>
+    <div class="modal-actions">
+      <button class="btn btn-danger" onclick="clearBreakConfig()">설정 초기화</button>
+      <button class="btn" onclick="closeBreakConfig()">취소</button>
+      <button class="btn btn-primary" onclick="applyBreakConfig()">적용</button>
+    </div>
+  </div>
+</div>
+
+<!-- 개별 휴게 설정 모달 (관리자 등) -->
+<div class="modal-overlay" id="personBreakOverlay" onclick="if(event.target===this)closePersonBreak()">
+  <div class="modal">
+    <div class="modal-title">개별 휴게 설정 — <span id="personBreakName"></span></div>
+    <div class="modal-field">
+      <div class="modal-label">휴게 시작 시간 (없으면 비워두기)</div>
+      <select class="modal-select" id="personBreakHour">
+        <option value="">휴게 없음</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-danger" onclick="clearPersonBreak()">설정 제거</button>
+      <button class="btn" onclick="closePersonBreak()">취소</button>
+      <button class="btn btn-primary" onclick="applyPersonBreak()">적용</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// 상수
+// ═══════════════════════════════════════════════
+const GANTT_START = 7;
+const MANAGERS = ['차현모','안혜림','박수연','신지섭'];
+
+// 조별 기본 시간 매핑
+const GROUP_TIMES = {
+  '주간1-07': {start:'07:00',end:'16:00',group:'주간1'},
+  '주간2-09': {start:'09:00',end:'18:00',group:'주간2'},
+  '주간3':    {start:'10:00',end:'19:00',group:'주간3'},
+  '주간3':   {start:'11:00',end:'20:00',group:'주간3'},
+  '야간1-14': {start:'14:00',end:'23:00',group:'야간1'},
+  '야간1-15': {start:'15:00',end:'24:00',group:'야간1'},
+  '야간2-18': {start:'18:00',end:'03:00',group:'야간2'},
+  '야간2-20': {start:'20:00',end:'05:00',group:'야간2'},
+  '야간3-22': {start:'22:00',end:'07:00',group:'야간3'},
+  '야간3-2330':{start:'23:30',end:'08:30',group:'야간3'},
+};
+
+// 시작 시간 → 휴게 시작 시(정시)
+const BREAK_MAP = {
+  '07:00':11,'08:00':12,'09:00':13,'10:00':14,'11:00':15,
+  '14:00':17,'15:00':18,'18:00':22,'20:00':23,'22:00':1,'23:30':1,
+};
+
+// 그룹별 A/B 휴게 설정: { groupKey: { A: hour, B: hour } }
+// null이면 단일 휴게(BREAK_MAP 기본값 사용)
+const groupBreakConfig = {};
+
+// 인원별 A/B 선택: { personId: 'A' | 'B' | 'custom' }
+const personBreakSlot = {};
+
+// 인원별 커스텀 휴게 시간 (관리자 등): { personId: hour | null }
+const personBreakCustom = {
+  'm1': 13,  // 차현모
+  'm2': 13,  // 안혜림
+  'm3': 22,  // 박수연
+  'm4': 23,  // 신지섭
+};
+
+// 그룹의 실제 휴게 시작 시간 반환 (기본 BREAK_MAP 또는 A/B 설정)
+function resolveBreakHour(p) {
+  // 관리자 또는 커스텀 설정된 인원
+  if (personBreakCustom.hasOwnProperty(p.id)) return personBreakCustom[p.id];
+  const base = BREAK_MAP[p.start] ?? null;
+  if (base === null) return null;
+  const groupKey = p.isManager ? '관리자' : p.group;
+  const cfg = groupBreakConfig[groupKey];
+  if (!cfg) return base; // A/B 미설정 → 기본값
+  const slot = personBreakSlot[p.id] || 'A';
+  return cfg[slot] ?? base;
+}
+
+const GROUP_COLOR = {
+  '주간1':  {bg:'var(--c-day1)',  soft:'var(--c-day1s)',   text:'#a8d4f5'},
+  '주간2':  {bg:'#5ab548',  soft:'rgba(90,181,72,0.18)',   text:'#a8e89c'},
+  '주간3': {bg:'var(--c-bridge)',soft:'var(--c-bridges)', text:'#8ddfbe'},
+  '야간1':  {bg:'#d4527a',  soft:'rgba(212,82,122,0.18)',  text:'#f5a8c0'},
+  '야간2':  {bg:'var(--c-night2)',soft:'var(--c-night2s)', text:'#f5b09a'},
+  '야간3':  {bg:'#7a4fd6',soft:'rgba(122,79,214,0.18)', text:'#c9b0f5'},
+  '관리자': {bg:'var(--c-mgr)',   soft:'var(--c-mgrs)',    text:'#fad48e'},
+};
+
+const TIME_OPTIONS_SORTED = [
+  '00:00','00:30','01:00','01:30','02:00','02:30','03:00','03:30',
+  '04:00','04:30','05:00','05:30','06:00','06:30','07:00','07:30',
+  '08:00','08:30','09:00','09:30','10:00','10:30','11:00','11:30',
+  '12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30',
+  '16:00','16:30','17:00','17:30','18:00','18:30','19:00','19:30',
+  '20:00','20:30','21:00','21:30','22:00','22:30','23:00','23:30','24:00',
+];
+
+// ═══════════════════════════════════════════════
+// 베이스 데이터
+// ═══════════════════════════════════════════════
+const CURRENT_DATA = [
+  {id:'m1',name:'차현모', group:'주간2',start:'09:00',end:'18:00',isManager:true},
+  {id:'m2',name:'안혜림', group:'주간2',start:'09:00',end:'18:00',isManager:true},
+  {id:'m3',name:'박수연', group:'야간2',start:'18:00',end:'03:00',isManager:true},
+  {id:'m4',name:'신지섭', group:'야간2',start:'18:00',end:'03:00',isManager:true},
+  {id:'p01',name:'김지훈', group:'주간1',start:'07:00',end:'16:00'},
+  {id:'p02',name:'오정훈', group:'주간1',start:'07:00',end:'16:00'},
+  {id:'p03',name:'박계원', group:'주간1',start:'07:00',end:'16:00'},
+  {id:'p04',name:'김경환', group:'주간1',start:'08:00',end:'17:00'},
+  {id:'p05',name:'박효선', group:'주간1',start:'08:00',end:'17:00'},
+  {id:'p06',name:'이환',   group:'주간2',start:'09:00',end:'18:00'},
+  {id:'p07',name:'최윤혁', group:'주간2',start:'09:00',end:'18:00'},
+  {id:'p08',name:'신현철', group:'주간2',start:'09:00',end:'18:00'},
+  {id:'p09',name:'김동진', group:'주간2',start:'09:00',end:'18:00'},
+  {id:'p10',name:'이민수', group:'주간2',start:'09:00',end:'18:00'},
+  {id:'p11',name:'성혜진', group:'주간2',start:'09:00',end:'18:00'},
+  {id:'p12',name:'석승찬', group:'주간2',start:'10:00',end:'19:00'},
+  {id:'p13',name:'이준',   group:'주간2',start:'10:00',end:'19:00'},
+  {id:'p14',name:'한승완', group:'주간2',start:'10:00',end:'19:00'},
+  {id:'p15',name:'박은선', group:'야간3',start:'22:00',end:'07:00'},  // 1) 22~07 이동
+  {id:'p16',name:'송주현', group:'주간3',start:'11:00',end:'20:00'},
+  {id:'p17',name:'송태영', group:'주간3',start:'11:00',end:'20:00'},
+  {id:'p18',name:'신은정', group:'주간3',start:'11:00',end:'20:00'},
+  {id:'p19',name:'장재원', group:'주간3',start:'11:00',end:'20:00'},
+  {id:'p20',name:'호덕진', group:'주간3',start:'11:00',end:'20:00'},
+  {id:'p21',name:'박효빈', group:'야간1',start:'14:00',end:'23:00'},
+  {id:'p22',name:'이기완', group:'야간1',start:'14:00',end:'23:00'},
+  {id:'p23',name:'권재윤', group:'야간1',start:'14:00',end:'23:00'},
+  {id:'p24',name:'김가은', group:'야간1',start:'15:00',end:'24:00'},
+  {id:'p25',name:'서형민', group:'야간1',start:'15:00',end:'24:00'},
+  {id:'p26',name:'김도형', group:'야간1',start:'15:00',end:'24:00'},
+  {id:'p27',name:'최성환', group:'야간1',start:'15:00',end:'24:00',special:'주말근무'},  // 3)
+  {id:'p28',name:'이규순', group:'야간2',start:'18:00',end:'03:00'},
+  {id:'p29',name:'강철환', group:'야간2',start:'18:00',end:'03:00'},
+  {id:'p30',name:'최선호', group:'야간2',start:'20:00',end:'05:00'},
+  {id:'p31',name:'최정기', group:'야간2',start:'20:00',end:'05:00'},
+  {id:'p32',name:'김소연', group:'야간3',start:'22:00',end:'07:00'},
+  {id:'p33',name:'임다연', group:'야간3',start:'22:00',end:'07:00'},
+  {id:'p34',name:'임아연', group:'야간3',start:'22:00',end:'07:00'},
+  {id:'p35',name:'안대관', group:'야간3',start:'23:30',end:'08:30'},
+];
+
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+let people = deepClone(CURRENT_DATA);
+let selectedId = null;
+let editingId = null;
+let currentScenarioKey = 'current';
+let realScheduleData = null;      // fetch된 원본 JSON
+let realScheduleActive = false;   // 실제 스케줄 적용 여부
+let realScheduleDate = null;      // 현재 표시 날짜 (YYYY-MM-DD)
+let currentMonth = '06';
+
+function deepClone(arr){return arr.map(p=>({...p}))}
+
+// ═══════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════
+function toDecimal(t){
+  if(t==='24:00')return 24;
+  const[h,m]=t.split(':').map(Number);return h+(m||0)/60;
+}
+function isActive(p,hour){
+  let s=toDecimal(p.start),e=toDecimal(p.end);
+  if(e<=s)e+=24;
+  return e>24?hour>=s||hour<e-24:hour>=s&&hour<e;
+}
+function getDuration(p){
+  let s=toDecimal(p.start),e=toDecimal(p.end);
+  if(e<=s)e+=24;return e-s;
+}
+function getBreakHour(p){ return resolveBreakHour(p); }
+function getBreakLabel(p){
+  const h=getBreakHour(p);if(h===null)return'';
+  return`${String(h).padStart(2,'0')}:00~${String((h+1)%24).padStart(2,'0')}:00`;
+}
+function getColor(p){
+  if(p.isManager)return GROUP_COLOR['관리자'];
+  return GROUP_COLOR[p.group]||GROUP_COLOR['주간1'];
+}
+// 실제 스케줄 적용 시 해당 날짜에 출근 여부
+function isPresentOnDate(personName, dateKey){
+  if(!realScheduleActive||!realScheduleData)return true;
+  const s=realScheduleData.staff.find(x=>x.name===personName);
+  if(!s)return true;
+  const d=s.schedule[dateKey];
+  if(!d)return true;
+  return d.present===true;
+}
+function getDateKey(dateStr){
+  // dateStr: YYYY-MM-DD → 6/1 형태
+  const d=new Date(dateStr);
+  return`${d.getMonth()+1}/${d.getDate()}`;
+}
+function getPeopleAtHour(h){
+  return people.filter(p=>{
+    if(!isActive(p,h))return false;
+    if(getBreakHour(p)===h)return false;  // ← 추가: 휴게 시간 제외
+    if(realScheduleActive&&realScheduleDate){
+      return isPresentOnDate(p.name,getDateKey(realScheduleDate));
+    }
+    return true;
+  });
+}
+function getStats(){
+  const hourCounts=Array.from({length:24},(_,h)=>getPeopleAtHour(h).length);
+  const peak=Math.max(...hourCounts);
+  const min=Math.min(...hourCounts);
+  const mgrGapHours=Array.from({length:24},(_,h)=>{
+    return getPeopleAtHour(h).filter(p=>p.isManager).length===0?h:null;
+  }).filter(h=>h!==null);
+  const soloOps=Array.from({length:24},(_,h)=>{
+    const ops=getPeopleAtHour(h).filter(p=>!p.isManager);
+    return ops.length===1?h:null;
+  }).filter(h=>h!==null);
+  return{hourCounts,peak,min,mgrGapHours,soloOps,avg:(hourCounts.reduce((a,b)=>a+b,0)/24).toFixed(1)};
+}
+
+// ═══════════════════════════════════════════════
+// REAL SCHEDULE FETCH
+// ═══════════════════════════════════════════════
+async function fetchSchedule(month){
+  currentMonth=month;
+  document.getElementById('btn-jun').classList.toggle('active',month==='06');
+  document.getElementById('btn-jul').classList.toggle('active',month==='07');
+  const url=`https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/schedule_for_mobile_2026-${month}.json`;
+  showToast(`${month}월 스케줄 불러오는 중...`);
+  try{
+    const r=await fetch(url);
+    if(!r.ok)throw new Error(`HTTP ${r.status}`);
+    realScheduleData=await r.json();
+    document.getElementById('btn-apply-schedule').style.display='';
+    document.getElementById('btn-clear-schedule').style.display='';
+    showToast(`${month}월 스케줄 로드 완료 — [✓ 적용] 버튼을 누르세요`);
+  }catch(e){
+    showToast(`스케줄 로드 실패: ${e.message}`);
+    realScheduleData=null;
+    document.getElementById('btn-apply-schedule').style.display='none';
+  }
+}
+
+function applyRealSchedule(){
+  if(!realScheduleData){showToast('먼저 스케줄을 로드하세요');return}
+  realScheduleActive=true;
+  // 기본 날짜: 데이터의 첫 날짜
+  const firstDate=realScheduleData.dates?.[0];
+  const year=2026;
+  const m=realScheduleData.mainMonth||6;
+  const d=firstDate?.split('/')?.[1]||'1';
+  realScheduleDate=`${year}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  document.getElementById('schedule-mode-info').style.display='flex';
+  document.getElementById('schedule-mode-info').style.alignItems='center';
+  document.getElementById('schedule-mode-info').style.gap='8px';
+  document.getElementById('schedule-date-picker').value=realScheduleDate;
+  document.getElementById('schedule-mode-label').textContent=`📅 ${currentMonth}월 실제 스케줄`;
+  document.getElementById('gantt-date-label').textContent=`— ${realScheduleDate} 기준`;
+  showToast(`실제 스케줄 적용됨 (${realScheduleDate})`);
+  renderAll();
+}
+
+function clearRealSchedule(){
+  realScheduleActive=false;
+  realScheduleDate=null;
+  document.getElementById('schedule-mode-info').style.display='none';
+  document.getElementById('gantt-date-label').textContent='';
+  showToast('실제 스케줄 해제');
+  renderAll();
+}
+
+function updateScheduleDate(val){
+  realScheduleDate=val;
+  document.getElementById('gantt-date-label').textContent=`— ${val} 기준`;
+  renderAll();
+}
+
+// ═══════════════════════════════════════════════
+// RENDER: PERSON PANEL
+// ═══════════════════════════════════════════════
+function renderPersonPanel(){
+  const panel=document.getElementById('personPanel');
+  const groupOrder=['관리자','주간1','주간2','주간3','야간1','야간2','야간3'];
+  const grouped={};groupOrder.forEach(g=>grouped[g]=[]);
+  people.forEach(p=>{
+    const key=p.isManager?'관리자':p.group;
+    if(!grouped[key])grouped[key]=[];
+    grouped[key].push(p);
+  });
+  let html='';
+  groupOrder.forEach(g=>{
+    const members=grouped[g];if(!members.length)return;
+    members.sort((a,b)=>toDecimal(a.start)-toDecimal(b.start));
+    const c=GROUP_COLOR[g]||GROUP_COLOR['주간1'];
+    const cfg=groupBreakConfig[g];
+    const cfgLabel=cfg?`A:${String(cfg.A).padStart(2,'0')}시 / B:${String(cfg.B).padStart(2,'0')}시`:'휴게 A/B 설정';
+    html+=`<div class="group-header" style="color:${c.text}">
+      <span style="cursor:pointer;display:flex;align-items:center;gap:4px" onclick="openGroupModal('${g}')" title="${g} 전체 시간 변경">${g} <span style="font-size:9px;opacity:.5">✎</span></span>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span style="font-size:10px;font-weight:400">${members.length}명</span>
+        <span style="font-size:9px;padding:1px 7px;border-radius:3px;cursor:pointer;border:1px solid ${cfg?c.bg:'var(--border2)'};color:${cfg?c.text:'var(--text3)'};background:${cfg?'rgba(255,255,255,0.07)':'transparent'}" onclick="openBreakConfig('${g}')">${cfgLabel}</span>
+      </div>
+    </div><div class="person-list">`;
+    members.forEach(p=>{
+      const col=getColor(p);
+      const brk=getBreakHour(p)!==null;
+      const isSelected=selectedId===p.id;
+      const dur=getDuration(p);
+      const onLeave=realScheduleActive&&realScheduleDate&&!isPresentOnDate(p.name,getDateKey(realScheduleDate));
+      const groupKey=p.isManager?'관리자':p.group;
+      const hasCfg=!!groupBreakConfig[groupKey];
+      const isCustom=personBreakCustom.hasOwnProperty(p.id);
+      const slot=personBreakSlot[p.id]||'A';
+
+      // A/B 토글 또는 커스텀 표시
+      let breakControl='';
+      if(isCustom){
+        const ch=personBreakCustom[p.id];
+        breakControl=`<span class="break-badge" style="cursor:pointer" onclick="event.stopPropagation();openPersonBreak('${p.id}')">${ch!==null?String(ch).padStart(2,'0')+':00 개별':'휴게없음'}</span>`;
+      } else if(hasCfg){
+        breakControl=`<span style="display:inline-flex;border-radius:3px;overflow:hidden;border:1px solid var(--border2);font-size:9px">
+          <span onclick="event.stopPropagation();setSlot('${p.id}','A')" style="padding:1px 6px;cursor:pointer;background:${slot==='A'?col.bg:'transparent'};color:${slot==='A'?'#fff':'var(--text3)'}">A</span>
+          <span onclick="event.stopPropagation();setSlot('${p.id}','B')" style="padding:1px 6px;cursor:pointer;background:${slot==='B'?col.bg:'transparent'};color:${slot==='B'?'#fff':'var(--text3)'}">B</span>
+        </span>`;
+      } else if(p.isManager){
+        breakControl=`<span style="font-size:9px;color:var(--text3);cursor:pointer" onclick="event.stopPropagation();openPersonBreak('${p.id}')">개별설정</span>`;
+      } else {
+        breakControl=brk?`<span class="break-badge">${getBreakLabel(p)}</span>`:'';
+      }
+
+      html+=`<div class="person-card${isSelected?' selected':''}${onLeave?' on-leave':''}" onclick="selectPerson('${p.id}')" id="card-${p.id}">
+        <div class="person-avatar" style="background:${col.soft};color:${col.text}">${p.name.slice(-2)}</div>
+        <div class="person-info">
+          <div class="person-name">${p.name}${p.isManager?'<span style="color:var(--c-mgr);font-size:9px;margin-left:3px">관리자</span>':''} ${p.special?`<span class="special-badge">${p.special}</span>`:''}</div>
+          <div class="person-time">${p.start}–${p.end} <span style="color:var(--text3)">(${dur%1===0?dur:dur.toFixed(1)}h)</span>${onLeave?' <span style="color:var(--text3)">휴무/부재</span>':''}</div>
+        </div>
+        <div class="person-meta">
+          ${breakControl}
+          <span style="font-size:9px;color:var(--text3);cursor:pointer;padding:2px 4px" onclick="event.stopPropagation();openModal('${p.id}')">✎</span>
+        </div>
+      </div>`;
+    });
+    html+='</div>';
+  });
+  panel.innerHTML=html;
+}
+
+// ═══════════════════════════════════════════════
+// RENDER: GANTT
+// ═══════════════════════════════════════════════
+function renderGantt(){
+  const inner=document.getElementById('ganttInner');
+  const hours=Array.from({length:24},(_,i)=>(i+GANTT_START)%24);
+  let html=`<div class="gantt-header"><div style="font-size:8px;color:var(--text3);text-align:right;padding-right:4px">이름</div>`;
+  hours.forEach(h=>html+=`<div class="gantt-hour-label">${String(h).padStart(2,'0')}</div>`);
+  html+='</div>';
+  const groupOrder=['관리자','주간1','주간2','주간3','야간1','야간2','야간3'];
+  const grouped={};groupOrder.forEach(g=>grouped[g]=[]);
+  people.forEach(p=>{const key=p.isManager?'관리자':p.group;if(!grouped[key])grouped[key]=[];grouped[key].push(p);});
+  groupOrder.forEach(g=>{
+    const members=grouped[g];if(!members.length)return;
+    members.forEach(p=>{
+      const col=getColor(p);
+      const brkH=getBreakHour(p);
+      const onLeave=realScheduleActive&&realScheduleDate&&!isPresentOnDate(p.name,getDateKey(realScheduleDate));
+      html+=`<div class="gantt-row">
+        <div class="gantt-row-label" title="${p.name}">${p.name}<span>${p.start}~${p.end}</span></div>`;
+      hours.forEach(h=>{
+        const active=isActive(p,h);
+        const isBreak=brkH!==null&&h===brkH;
+        if(active&&!onLeave){
+          const style=isBreak
+            ?`background:repeating-linear-gradient(45deg,${col.bg},${col.bg} 3px,rgba(0,0,0,0.4) 3px,rgba(0,0,0,0.4) 6px);opacity:.8`
+            :`background:${col.bg};opacity:.75`;
+          html+=`<div class="gantt-cell" style="${style}" title="${p.name} ${p.start}~${p.end}${isBreak?' (휴게)':''}"></div>`;
+        }else if(active&&onLeave){
+          html+=`<div class="gantt-cell" style="background:var(--border2);opacity:.3" title="${p.name} (휴무/부재)"></div>`;
+        }else{
+          html+=`<div class="gantt-cell" style="background:transparent"></div>`;
+        }
+      });
+      html+='</div>';
+    });
+    html+=`<div class="gantt-group-gap"></div>`;
+  });
+  inner.innerHTML=html;
+}
+
+// ═══════════════════════════════════════════════
+// RENDER: HEATMAP
+// ═══════════════════════════════════════════════
+function renderHeatmap(){
+  const stats=getStats();
+  const hours=Array.from({length:24},(_,i)=>(i+GANTT_START)%24);
+  const max=Math.max(...hours.map(h=>stats.hourCounts[h]),1);
+  let bH=`<div class="heatmap-y-label">인원</div>`,lH=`<div style="font-size:9px;color:var(--text3)"></div>`;
+  hours.forEach(h=>{
+    const count=stats.hourCounts[h];
+    const heightPx=Math.max((count/max)*148,count>0?3:1);
+    const mgrCnt=getPeopleAtHour(h).filter(p=>p.isManager).length;
+    const opCnt=count-mgrCnt;
+    const noMgr=mgrCnt===0&&count>0;
+    const isSolo=opCnt===1;
+    let barColor;
+    if(noMgr&&isSolo)barColor='#D85A30';
+    else if(noMgr)barColor='#c47a2a';
+    else if(count>=max*.8)barColor='#6c7af4';
+    else if(count>=max*.5)barColor='#378ADD';
+    else if(count>=max*.3)barColor='#1D9E75';
+    else barColor='#555977';
+    bH+=`<div class="heatmap-col" onclick="drilldown(${h})" title="${h}시: ${count}명">
+      <div class="heatmap-bar" style="height:${heightPx}px;background:${barColor}">
+        <div class="heatmap-num">${count}</div>
+      </div></div>`;
+    lH+=`<div class="heatmap-h-label">${String(h).padStart(2,'0')}</div>`;
+  });
+  document.getElementById('heatmapBars').innerHTML=bH;
+  document.getElementById('heatmapLabels').innerHTML=lH;
+}
+
+// ═══════════════════════════════════════════════
+// DRILLDOWN
+// ═══════════════════════════════════════════════
+function drilldown(h){
+  const at=getPeopleAtHour(h);
+  const mgrs=at.filter(p=>p.isManager),ops=at.filter(p=>!p.isManager);
+  const noMgr=mgrs.length===0,solo=ops.length===1;
+  let html=`<div class="drilldown-title">🕐 <b>${String(h).padStart(2,'0')}:00</b> — 총 <b>${at.length}명</b>
+    ${noMgr?'<span class="solo-badge">⚠ 관리자 없음</span>':`<span class="break-badge">👤 관리자 ${mgrs.length}명</span>`}
+    ${solo?'<span class="solo-badge">⚠ 관제사 1인</span>':''}
+    <span style="color:var(--text3);font-size:10px;margin-left:auto">관제사 ${ops.length} · 관리자 ${mgrs.length}</span>
+  </div><div class="drilldown-pills">`;
+  if(!at.length){html+=`<span style="color:var(--text3);font-size:11px">이 시간대에 출근 인원이 없습니다</span>`;}
+  mgrs.forEach(p=>html+=`<span class="drill-pill" style="background:var(--c-mgrs);border-color:var(--c-mgr);color:var(--c-mgr)" onclick="selectPerson('${p.id}')">👑 ${p.name} <span style="opacity:.6;font-size:9px">${p.start}~${p.end}</span></span>`);
+  ops.forEach(p=>{const c=getColor(p);html+=`<span class="drill-pill" style="background:${c.soft};border-color:${c.bg};color:${c.text}" onclick="selectPerson('${p.id}')">${p.name} <span style="opacity:.6;font-size:9px">${p.start}~${p.end}</span></span>`;});
+  html+='</div>';
+  document.getElementById('drilldown').innerHTML=html;
+}
+
+// ═══════════════════════════════════════════════
+// RENDER: SUMMARY
+// ═══════════════════════════════════════════════
+function renderSummary(){
+  const s=getStats();
+  const mgrStr=s.mgrGapHours.length===0?'없음 ✓':s.mgrGapHours.map(h=>`${h}시`).join(', ');
+  const soloStr=s.soloOps.length===0?'없음 ✓':s.soloOps.map(h=>`${h}시`).join(', ');
+  document.getElementById('summaryBar').innerHTML=`
+    <div class="stat-card"><div class="stat-label">피크 인원</div><div class="stat-val" style="color:#6c7af4">${s.peak}명</div><div class="stat-sub">최대 동시 근무</div></div>
+    <div class="stat-card"><div class="stat-label">최소 인원</div><div class="stat-val" style="color:${s.min<=3?'var(--c-night2)':'var(--c-day2)'}">${s.min}명</div><div class="stat-sub">24h 중 최저</div></div>
+    <div class="stat-card"><div class="stat-label">평균 인원</div><div class="stat-val">${s.avg}명</div><div class="stat-sub">시간당 평균</div></div>
+    <div class="stat-card"><div class="stat-label">관리자 공백</div><div class="stat-val" style="font-size:${s.mgrGapHours.length?'12px':'19px'};color:${s.mgrGapHours.length?'var(--c-night2)':'var(--c-day2)'}">${mgrStr}</div><div class="stat-sub">${s.mgrGapHours.length}시간</div></div>
+    <div class="stat-card"><div class="stat-label">단독 관제 구간</div><div class="stat-val" style="font-size:${s.soloOps.length?'12px':'19px'};color:${s.soloOps.length?'var(--c-night2)':'var(--c-day2)'}">${soloStr}</div><div class="stat-sub">관제사 1명</div></div>`;
+}
+
+// ═══════════════════════════════════════════════
+// MODAL
+// ═══════════════════════════════════════════════
+function openGroupModal(groupKey) {
+  editingId = '__group__' + groupKey;
+  // 해당 그룹 대표 인원으로 현재 시간 초기값 설정
+  const rep = people.find(p => (p.isManager ? '관리자' : p.group) === groupKey);
+  document.getElementById('modalName').value = `[${groupKey}] 전체 인원 시간 변경`;
+  document.getElementById('modalRole').value = rep?.isManager ? 'mgr' : 'op';
+  // 대표 인원 기준 gKey 찾기
+  const gKey = rep
+    ? Object.entries(GROUP_TIMES).find(([k,v])=>v.start===rep.start&&v.end===rep.end&&v.group===rep.group)?.[0] || ''
+    : '';
+  const ss=document.getElementById('modalStart'), se=document.getElementById('modalEnd');
+  ss.innerHTML=se.innerHTML='';
+  TIME_OPTIONS_SORTED.forEach(t=>{
+    ss.innerHTML+=`<option value="${t}"${rep?.start===t?' selected':''}>${t}</option>`;
+    se.innerHTML+=`<option value="${t}"${rep?.end===t?' selected':''}>${t}</option>`;
+  });
+  if(gKey) document.getElementById('modalGroup').value=gKey;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+function openModal(id){
+  const p=people.find(x=>x.id===id);if(!p)return;
+  editingId=id;
+  document.getElementById('modalName').value=p.name;
+  document.getElementById('modalRole').value=p.isManager?'mgr':'op';
+  // 현재 시간에서 역방향으로 group key 추정
+  const gKey=Object.entries(GROUP_TIMES).find(([k,v])=>v.start===p.start&&v.end===p.end&&v.group===p.group)?.[0]
+    || (p.group==='주간1'&&p.start==='07:00'?'주간1-07'
+      :p.group==='주간1'?'주간1-09'
+      :p.group==='주간2'?'주간2-09'
+      :p.group==='주간3'?'주간3'
+      :p.group==='야간1'&&p.start==='14:00'?'야간1-14'
+      :p.group==='야간1'&&p.start==='18:00'?'야간1-18'
+      :p.group==='야간1'?'야간1-15'
+      :p.group==='야간2'&&p.start==='18:00'?'야간2-18'
+      :p.group==='야간2'?'야간2-20'
+      :p.group==='야간3'&&p.start==='23:30'?'야간3-2330'
+      :'야간3-22')
+  document.getElementById('modalGroup').value=gKey;
+  const ss=document.getElementById('modalStart'),se=document.getElementById('modalEnd');
+  ss.innerHTML=se.innerHTML='';
+  TIME_OPTIONS_SORTED.forEach(t=>{
+    ss.innerHTML+=`<option value="${t}"${p.start===t?' selected':''}>${t}</option>`;
+    se.innerHTML+=`<option value="${t}"${p.end===t?' selected':''}>${t}</option>`;
+  });
+  document.getElementById('modalOverlay').classList.add('open');
+}
+function onGroupChange(gKey){
+  const gt=GROUP_TIMES[gKey];if(!gt)return;
+  document.getElementById('modalStart').value=gt.start;
+  document.getElementById('modalEnd').value=gt.end;
+}
+function closeModal(){document.getElementById('modalOverlay').classList.remove('open');editingId=null}
+function applyModal(){
+  const gKey=document.getElementById('modalGroup').value;
+  const gt=GROUP_TIMES[gKey];
+  const newStart=document.getElementById('modalStart').value;
+  const newEnd=document.getElementById('modalEnd').value;
+
+  // 그룹 일괄 변경
+  if(editingId?.startsWith('__group__')){
+    const groupKey=editingId.replace('__group__','');
+    people.forEach(p=>{
+      if((p.isManager?'관리자':p.group)!==groupKey)return;
+      if(gt)p.group=gt.group;
+      p.start=newStart;
+      p.end=newEnd;
+    });
+    closeModal();renderAll();
+    showToast(`${groupKey} 전체 → ${newStart}~${newEnd} 변경`);
+    return;
+  }
+
+  // 개인 변경
+  const p=people.find(x=>x.id===editingId);if(!p)return;
+  if(gt)p.group=gt.group;
+  p.start=newStart;
+  p.end=newEnd;
+  p.isManager=document.getElementById('modalRole').value==='mgr';
+  closeModal();renderAll();showToast(`${p.name} → ${newStart}~${newEnd} 변경`);
+}
+
+// ═══════════════════════════════════════════════
+// SELECTION
+// ═══════════════════════════════════════════════
+function selectPerson(id){
+  selectedId=selectedId===id?null:id;
+  renderPersonPanel();
+  if(selectedId){
+    const p=people.find(x=>x.id===id);
+    if(p){
+      showToast(`${p.name} — ${p.start}~${p.end} (${getDuration(p)}h)`);
+      document.getElementById('card-'+selectedId)?.scrollIntoView({behavior:'smooth',block:'nearest'});
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════
+// SCENARIOS
+// ═══════════════════════════════════════════════
+const BUILTIN_SCENARIOS = {"sc_1781532089423":{"name":"3조","data":[{"id":"m1","name":"차현모","group":"주간2","start":"09:00","end":"18:00","isManager":true},{"id":"m2","name":"안혜림","group":"주간2","start":"09:00","end":"18:00","isManager":true},{"id":"m3","name":"박수연","group":"야간1","start":"18:00","end":"03:00","isManager":true},{"id":"m4","name":"신지섭","group":"야간1","start":"18:00","end":"03:00","isManager":true},{"id":"p01","name":"김지훈","group":"주간1","start":"07:00","end":"15:00"},{"id":"p02","name":"오정훈","group":"주간1","start":"07:00","end":"15:00"},{"id":"p03","name":"박계원","group":"주간1","start":"07:00","end":"15:00"},{"id":"p04","name":"김경환","group":"주간1","start":"07:00","end":"15:00","isManager":false},{"id":"p05","name":"박효선","group":"주간1","start":"07:00","end":"15:00","isManager":false},{"id":"p06","name":"이환","group":"주간1","start":"07:00","end":"15:00","isManager":false},{"id":"p07","name":"최윤혁","group":"주간1","start":"07:00","end":"15:00","isManager":false},{"id":"p08","name":"신현철","group":"주간1","start":"07:00","end":"15:00","isManager":false},{"id":"p09","name":"김동진","group":"주간1","start":"07:00","end":"15:00","isManager":false},{"id":"p10","name":"이민수","group":"주간1","start":"07:00","end":"15:00","isManager":false},{"id":"p11","name":"성혜진","group":"주간1","start":"07:00","end":"15:00","isManager":false},{"id":"p12","name":"석승찬","group":"주간1","start":"07:00","end":"15:00","isManager":false},{"id":"p13","name":"이준","group":"주간1","start":"07:00","end":"15:00","isManager":false},{"id":"p14","name":"한승완","group":"주간1","start":"07:00","end":"15:00","isManager":false},{"id":"p15","name":"박은선","group":"야간3","start":"23:00","end":"07:00","isManager":false},{"id":"p16","name":"송주현","group":"야간1","start":"15:00","end":"23:00","isManager":false},{"id":"p17","name":"송태영","group":"야간1","start":"15:00","end":"23:00","isManager":false},{"id":"p18","name":"신은정","group":"야간1","start":"15:00","end":"23:00","isManager":false},{"id":"p19","name":"장재원","group":"야간1","start":"15:00","end":"23:00","isManager":false},{"id":"p20","name":"호덕진","group":"야간1","start":"15:00","end":"23:00","isManager":false},{"id":"p21","name":"박효빈","group":"야간1","start":"15:00","end":"23:00","isManager":false},{"id":"p22","name":"이기완","group":"야간1","start":"15:00","end":"23:00","isManager":false},{"id":"p23","name":"권재윤","group":"야간1","start":"15:00","end":"23:00","isManager":false},{"id":"p24","name":"김가은","group":"야간1","start":"15:00","end":"23:00"},{"id":"p25","name":"서형민","group":"야간1","start":"15:00","end":"23:00"},{"id":"p26","name":"김도형","group":"야간1","start":"15:00","end":"23:00"},{"id":"p27","name":"최성환","group":"야간1","start":"15:00","end":"23:00","special":"주말근무"},{"id":"p28","name":"이규순","group":"야간3","start":"23:00","end":"07:00","isManager":false},{"id":"p29","name":"강철환","group":"야간3","start":"23:00","end":"07:00","isManager":false},{"id":"p30","name":"최선호","group":"야간3","start":"23:00","end":"07:00","isManager":false},{"id":"p31","name":"최정기","group":"야간3","start":"23:00","end":"07:00","isManager":false},{"id":"p32","name":"김소연","group":"야간3","start":"23:00","end":"07:00"},{"id":"p33","name":"임다연","group":"야간3","start":"23:00","end":"07:00"},{"id":"p34","name":"임아연","group":"야간3","start":"23:00","end":"07:00"},{"id":"p35","name":"안대관","group":"야간3","start":"23:00","end":"07:00"}],"breakConfig":{"브릿지":{"A":14,"B":15},"주간2":{"A":12,"B":13},"야간1":{"A":18,"B":19},"야간2":{"A":1,"B":2},"주간1":{"A":11,"B":12},"야간3":{"A":2,"B":3}},"breakSlot":{"p12":"B","p13":"B","p14":"B","p16":"A","p17":"A","p18":"A","p19":"A","p20":"A","p21":"A","p26":"B","p06":"A","p07":"A","p08":"B","p09":"B","p10":"B","p11":"B","p22":"B","p23":"B","p24":"B","p25":"B","p27":"B","p28":"A","p29":"A","p15":"A","p30":"A","p31":"A","p32":"B","p33":"B","p34":"B","p35":"B","p01":"A","p02":"A","p03":"A","p04":"A","p05":"A"},"breakCustom":{"m1":13,"m2":13,"m4":23,"m3":22}},"sc_1781542528282":{"name":"6조","data":[{"id":"m1","name":"차현모","group":"주간2","start":"09:00","end":"18:00","isManager":true},{"id":"m2","name":"안혜림","group":"주간2","start":"09:00","end":"18:00","isManager":true},{"id":"m3","name":"박수연","group":"야간1","start":"18:00","end":"03:00","isManager":true},{"id":"m4","name":"신지섭","group":"야간1","start":"18:00","end":"03:00","isManager":true},{"id":"p01","name":"김지훈","group":"주간1","start":"07:00","end":"16:00"},{"id":"p02","name":"오정훈","group":"주간1","start":"07:00","end":"16:00"},{"id":"p03","name":"박계원","group":"주간1","start":"07:00","end":"16:00"},{"id":"p04","name":"김경환","group":"주간1","start":"07:00","end":"16:00","isManager":false},{"id":"p05","name":"박효선","group":"주간1","start":"07:00","end":"16:00","isManager":false},{"id":"p06","name":"이환","group":"주간2","start":"09:00","end":"18:00"},{"id":"p07","name":"최윤혁","group":"주간2","start":"09:00","end":"18:00"},{"id":"p08","name":"신현철","group":"주간2","start":"09:00","end":"18:00"},{"id":"p09","name":"김동진","group":"주간2","start":"09:00","end":"18:00"},{"id":"p10","name":"이민수","group":"주간2","start":"09:00","end":"18:00"},{"id":"p11","name":"성혜진","group":"주간2","start":"09:00","end":"18:00"},{"id":"p12","name":"석승찬","group":"주간3","start":"11:00","end":"20:00","isManager":false},{"id":"p13","name":"이준","group":"주간3","start":"11:00","end":"20:00","isManager":false},{"id":"p14","name":"한승완","group":"주간3","start":"11:00","end":"20:00","isManager":false},{"id":"p15","name":"박은선","group":"야간3","start":"22:00","end":"07:00"},{"id":"p16","name":"송주현","group":"주간3","start":"11:00","end":"20:00"},{"id":"p17","name":"송태영","group":"주간3","start":"11:00","end":"20:00"},{"id":"p18","name":"신은정","group":"주간3","start":"11:00","end":"20:00"},{"id":"p19","name":"장재원","group":"주간3","start":"11:00","end":"20:00"},{"id":"p20","name":"호덕진","group":"주간3","start":"11:00","end":"20:00"},{"id":"p21","name":"박효빈","group":"야간1","start":"15:00","end":"24:00","isManager":false},{"id":"p22","name":"이기완","group":"야간1","start":"15:00","end":"24:00","isManager":false},{"id":"p23","name":"권재윤","group":"야간1","start":"15:00","end":"24:00","isManager":false},{"id":"p24","name":"김가은","group":"야간1","start":"15:00","end":"24:00"},{"id":"p25","name":"서형민","group":"야간1","start":"15:00","end":"24:00"},{"id":"p26","name":"김도형","group":"야간1","start":"15:00","end":"24:00","isManager":false},{"id":"p27","name":"최성환","group":"야간1","start":"15:00","end":"24:00","special":"주말근무"},{"id":"p28","name":"이규순","group":"야간2","start":"18:00","end":"03:00","isManager":false},{"id":"p29","name":"강철환","group":"야간2","start":"18:00","end":"03:00","isManager":false},{"id":"p30","name":"최선호","group":"야간2","start":"18:00","end":"03:00"},{"id":"p31","name":"최정기","group":"야간2","start":"18:00","end":"03:00"},{"id":"p32","name":"김소연","group":"야간3","start":"22:00","end":"07:00"},{"id":"p33","name":"임다연","group":"야간3","start":"22:00","end":"07:00"},{"id":"p34","name":"임아연","group":"야간3","start":"22:00","end":"07:00"},{"id":"p35","name":"안대관","group":"야간3","start":"22:00","end":"07:00","isManager":false}],"breakConfig":{"주간2":{"A":12,"B":13},"야간1":{"A":18,"B":19},"야간3":{"A":1,"B":2}},"breakSlot":{"p06":"A","p07":"A","p08":"A","p09":"B","p10":"B","p11":"B","p12":"B","p13":"B","p14":"A","p21":"A","p22":"A","p23":"A","p24":"B","p25":"B","p26":"B","p27":"B","p15":"A","p32":"A","p33":"B","p34":"B","p35":"B"},"breakCustom":{"m1":13,"m2":13,"m3":22,"m4":23}}};
+
+function getSaved(){
+  try{
+    const local=JSON.parse(localStorage.getItem('neubie_scenarios')||'{}');
+    // local이 BUILTIN을 덮어씀 (수정사항 우선)
+    return {...BUILTIN_SCENARIOS, ...local};
+  }catch{return {...BUILTIN_SCENARIOS}}
+}
+function setSaved(obj){
+  // 전체 저장 (BUILTIN 키 포함 — local이 새로고침 후에도 BUILTIN을 덮어쓸 수 있도록)
+  localStorage.setItem('neubie_scenarios', JSON.stringify(obj));
+}
+
+function renderScenarioChips(){
+  const chips=document.getElementById('scenarioChips');
+  chips.querySelectorAll('.chip-saved').forEach(c=>c.remove());
+  const saved=getSaved();
+  Object.keys(saved).forEach(key=>{
+    const name=saved[key].name||key;
+    const div=document.createElement('div');
+    div.className='chip chip-saved'+(currentScenarioKey===key?' active':'');
+    div.id='chip-'+key;
+    div.innerHTML=`${name} <span onclick="event.stopPropagation();renameScenario('${key}')" style="opacity:.5;margin-left:3px;cursor:pointer" title="이름 변경">✎</span><span onclick="event.stopPropagation();deleteScenario('${key}')" style="opacity:.5;margin-left:2px;cursor:pointer" title="삭제">✕</span>`;
+    div.addEventListener('click',()=>loadScenario(key,div));
+    chips.appendChild(div);
+  });
+  document.getElementById('chip-current').classList.toggle('active',currentScenarioKey==='current');
+}
+
+function loadScenario(key,chipEl){
+  currentScenarioKey=key;
+  if(key==='current'){
+    people=deepClone(CURRENT_DATA);
+    Object.keys(groupBreakConfig).forEach(k=>delete groupBreakConfig[k]);
+    Object.keys(personBreakSlot).forEach(k=>delete personBreakSlot[k]);
+    Object.keys(personBreakCustom).forEach(k=>delete personBreakCustom[k]);
+    Object.assign(personBreakCustom, {m1:13,m2:13,m3:22,m4:23});
+  }
+  else if(key==='proposed') people=deepClone(PROPOSED_DATA);
+  else{
+    const saved=getSaved();
+    if(saved[key]){
+      people=JSON.parse(JSON.stringify(saved[key].data));
+      Object.keys(groupBreakConfig).forEach(k=>delete groupBreakConfig[k]);
+      Object.keys(personBreakSlot).forEach(k=>delete personBreakSlot[k]);
+      Object.keys(personBreakCustom).forEach(k=>delete personBreakCustom[k]);
+      Object.assign(groupBreakConfig, JSON.parse(JSON.stringify(saved[key].breakConfig||{})));
+      Object.assign(personBreakSlot,  JSON.parse(JSON.stringify(saved[key].breakSlot ||{})));
+      Object.assign(personBreakCustom,JSON.parse(JSON.stringify(saved[key].breakCustom||{})));
+    }
+    else{showToast('저장된 시나리오 없음');return}
+  }
+  renderScenarioChips();renderAll();
+  showToast(key==='current'?'현행 로드':key==='proposed'?'제안 통합안 로드':(getSaved()[key]?.name||key)+' 로드');
+}
+
+// 현재 시나리오 안에서 저장 (현행/제안은 새 슬롯, 커스텀은 덮어쓰기)
+function saveScenario(){
+  const saved=getSaved();
+  if(currentScenarioKey!=='current'&&currentScenarioKey!=='proposed'&&saved[currentScenarioKey]){
+    // 기존 커스텀 시나리오 → 덮어쓰기
+    saved[currentScenarioKey].breakConfig=JSON.parse(JSON.stringify(groupBreakConfig));
+    saved[currentScenarioKey].breakSlot  =JSON.parse(JSON.stringify(personBreakSlot));
+    saved[currentScenarioKey].breakCustom=JSON.parse(JSON.stringify(personBreakCustom));
+    saved[currentScenarioKey].data=JSON.parse(JSON.stringify(people));
+    setSaved(saved);
+    renderScenarioChips();
+    showToast(`"${saved[currentScenarioKey].name}" 저장됨`);
+  }else{
+    // 새 슬롯 생성
+    const name=prompt('시나리오 이름을 입력하세요',`시나리오 ${Object.keys(saved).length+1}`);
+    if(!name)return;
+    const key='sc_'+Date.now();
+    saved[key]={
+      name,
+      data:       JSON.parse(JSON.stringify(people)),
+      breakConfig:JSON.parse(JSON.stringify(groupBreakConfig)),
+      breakSlot:  JSON.parse(JSON.stringify(personBreakSlot)),
+      breakCustom:JSON.parse(JSON.stringify(personBreakCustom)),
+    };
+    setSaved(saved);
+    currentScenarioKey=key;
+    renderScenarioChips();
+    showToast(`"${name}" 저장 완료`);
+  }
+}
+function renameScenario(key){
+  const saved=getSaved();
+  const name=prompt('새 이름을 입력하세요',saved[key]?.name||key);
+  if(!name)return;
+  saved[key].name=name;setSaved(saved);renderScenarioChips();showToast(`"${name}"으로 변경`);
+}
+function deleteScenario(key){
+  const saved=getSaved();
+  if(!confirm(`"${saved[key]?.name}" 삭제할까요?`))return;
+  delete saved[key];setSaved(saved);
+  if(currentScenarioKey===key)loadScenario('current',document.getElementById('chip-current'));
+  else renderScenarioChips();
+  showToast('삭제됨');
+}
+function resetToDefault(){
+  if(!confirm('현행 데이터로 초기화할까요?'))return;
+  loadScenario('current',document.getElementById('chip-current'));
+}
+
+// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════
+// 휴게 A/B 설정
+// ═══════════════════════════════════════════════
+let editingBreakGroup = null;
+let editingPersonBreakId = null;
+const HOUR_OPTIONS = Array.from({length:24},(_,i)=>i);
+
+function openBreakConfig(groupKey) {
+  editingBreakGroup = groupKey;
+  document.getElementById('breakConfigGroupName').textContent = groupKey;
+  const cfg = groupBreakConfig[groupKey];
+  const rep = people.find(p=>(p.isManager?'관리자':p.group)===groupKey);
+  const defaultHour = rep ? (BREAK_MAP[rep.start]??13) : 13;
+  const aVal = cfg?.A ?? defaultHour;
+  const bVal = cfg?.B ?? ((defaultHour+1)%24);
+  ['breakA','breakB'].forEach((id,i)=>{
+    const sel=document.getElementById(id);
+    sel.innerHTML=HOUR_OPTIONS.map(h=>`<option value="${h}"${(i===0?aVal:bVal)===h?' selected':''}>${String(h).padStart(2,'0')}:00</option>`).join('');
+  });
+  document.getElementById('breakConfigOverlay').classList.add('open');
+}
+function closeBreakConfig(){ document.getElementById('breakConfigOverlay').classList.remove('open'); editingBreakGroup=null; }
+function applyBreakConfig(){
+  const a=parseInt(document.getElementById('breakA').value);
+  const b=parseInt(document.getElementById('breakB').value);
+  if(a===b){ showToast('A와 B 시간이 같습니다'); return; }
+  groupBreakConfig[editingBreakGroup]={A:a,B:b};
+  people.forEach(p=>{ if((p.isManager?'관리자':p.group)===editingBreakGroup && !personBreakSlot[p.id]) personBreakSlot[p.id]='A'; });
+  closeBreakConfig(); renderAll();
+  showToast(`${editingBreakGroup} A:${String(a).padStart(2,'0')}시 / B:${String(b).padStart(2,'0')}시 설정 완료`);
+}
+function clearBreakConfig(){
+  delete groupBreakConfig[editingBreakGroup];
+  people.forEach(p=>{ if((p.isManager?'관리자':p.group)===editingBreakGroup) delete personBreakSlot[p.id]; });
+  closeBreakConfig(); renderAll(); showToast('휴게 설정 초기화');
+}
+function setSlot(id, slot){ personBreakSlot[id]=slot; renderAll(); }
+
+function openPersonBreak(id){
+  editingPersonBreakId=id;
+  const p=people.find(x=>x.id===id); if(!p)return;
+  document.getElementById('personBreakName').textContent=p.name;
+  const cur=personBreakCustom.hasOwnProperty(id)?personBreakCustom[id]:null;
+  const sel=document.getElementById('personBreakHour');
+  sel.innerHTML=`<option value="">휴게 없음</option>`+
+    HOUR_OPTIONS.map(h=>`<option value="${h}"${cur===h?' selected':''}>${String(h).padStart(2,'0')}:00</option>`).join('');
+  document.getElementById('personBreakOverlay').classList.add('open');
+}
+function closePersonBreak(){ document.getElementById('personBreakOverlay').classList.remove('open'); editingPersonBreakId=null; }
+function applyPersonBreak(){
+  const val=document.getElementById('personBreakHour').value;
+  personBreakCustom[editingPersonBreakId]=val===''?null:parseInt(val);
+  closePersonBreak(); renderAll();
+  const p=people.find(x=>x.id===editingPersonBreakId);
+  showToast(`${p?.name} 개별 휴게 ${val===''?'없음':val+':00'} 설정`);
+}
+function clearPersonBreak(){ delete personBreakCustom[editingPersonBreakId]; closePersonBreak(); renderAll(); }
+
+// ═══════════════════════════════════════════════
+// 히트맵 비교
+// ═══════════════════════════════════════════════
+function openHeatmapCompare() {
+  // 시나리오 셀렉트 채우기
+  const saved = getSaved();
+  const opts = [
+    {key:'current', name:'현행'},
+    ...Object.entries(saved).map(([k,v])=>({key:k, name:v.name||k}))
+  ];
+  ['cmpA','cmpB'].forEach((id,i) => {
+    const sel = document.getElementById(id);
+    sel.innerHTML = opts.map(o=>`<option value="${o.key}">${o.name}</option>`).join('');
+    sel.value = i===0 ? 'current' : (opts[1]?.key||'current');
+  });
+  document.getElementById('compareOverlay').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+}
+function closeHeatmapCompare() {
+  document.getElementById('compareOverlay').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+// 특정 시나리오 데이터 + 날짜 기준 시간대별 가용인원 계산
+function calcHeatmapForScenario(scenarioKey, dateStr) {
+  const saved = getSaved();
+  let scenarioPeople;
+  if(scenarioKey==='current') scenarioPeople = deepClone(CURRENT_DATA);
+  else if(saved[scenarioKey]) scenarioPeople = JSON.parse(JSON.stringify(saved[scenarioKey].data));
+  else return null;
+
+  // 휴게 설정 복원
+  const bConfig = scenarioKey==='current' ? {} : (saved[scenarioKey]?.breakConfig||{});
+  const bSlot   = scenarioKey==='current' ? {} : (saved[scenarioKey]?.breakSlot||{});
+  const bCustom = scenarioKey==='current'
+    ? {m1:13,m2:13,m3:22,m4:23}
+    : (saved[scenarioKey]?.breakCustom||{});
+
+  const dateKey = (() => { const d=new Date(dateStr); return`${d.getMonth()+1}/${d.getDate()}`; })();
+
+  function resolveBreak(p) {
+    if(bCustom.hasOwnProperty(p.id)) return bCustom[p.id];
+    const base = BREAK_MAP[p.start]??null;
+    if(base===null) return null;
+    const gk = p.isManager?'관리자':p.group;
+    const cfg = bConfig[gk];
+    if(!cfg) return base;
+    const slot = bSlot[p.id]||'A';
+    return cfg[slot]??base;
+  }
+
+  function isActiveLocal(p,h) {
+    let s=toDecimal(p.start),e=toDecimal(p.end);
+    if(e<=s)e+=24;
+    return e>24?h>=s||h<e-24:h>=s&&h<e;
+  }
+
+  const GANTT_START=7;
+  const hours=Array.from({length:24},(_,i)=>(i+GANTT_START)%24);
+  return hours.map(h => {
+    return scenarioPeople.filter(p => {
+      if(!isActiveLocal(p,h)) return false;
+      if(resolveBreak(p)===h) return false;
+      if(realScheduleData && dateKey) {
+        const s=realScheduleData.staff.find(x=>x.name===p.name);
+        if(s) { const d=s.schedule[dateKey]; if(d&&d.present===false) return false; }
+      }
+      return true;
+    }).length;
+  });
+}
+
+function runHeatmapCompare() {
+  const keyA = document.getElementById('cmpA').value;
+  const keyB = document.getElementById('cmpB').value;
+  const dateStart = document.getElementById('cmpDateStart').value;
+  const dateEnd   = document.getElementById('cmpDateEnd').value;
+  if(!dateStart||!dateEnd){ showToast('날짜를 선택하세요'); return; }
+
+  // 날짜 목록 생성 (최대 7일)
+  const dates = [];
+  const d = new Date(dateStart);
+  const dEnd = new Date(dateEnd);
+  while(d<=dEnd && dates.length<7) {
+    dates.push(new Date(d).toISOString().slice(0,10));
+    d.setDate(d.getDate()+1);
+  }
+  if(!dates.length){ showToast('날짜 범위를 확인하세요'); return; }
+
+  const saved = getSaved();
+  const nameA = keyA==='current'?'현행':(saved[keyA]?.name||keyA);
+  const nameB = keyB==='current'?'현행':(saved[keyB]?.name||keyB);
+
+  const GANTT_START=7;
+  const hours=Array.from({length:24},(_,i)=>(i+GANTT_START)%24);
+  const DAY_KO=['일','월','화','수','목','금','토'];
+
+  let html = '';
+
+  dates.forEach(dateStr => {
+    const countsA = calcHeatmapForScenario(keyA, dateStr);
+    const countsB = calcHeatmapForScenario(keyB, dateStr);
+    if(!countsA||!countsB) return;
+
+    const maxAB = Math.max(...countsA,...countsB,1);
+    const d = new Date(dateStr);
+    const dayLabel = `${dateStr.slice(5).replace('-','/')} (${DAY_KO[d.getDay()]})`;
+    const isWeekend = d.getDay()===0||d.getDay()===6;
+
+    function buildBars(counts, side) {
+      let bH = `<div style="font-size:9px;color:var(--text3);display:flex;align-items:flex-end;padding-bottom:2px;min-width:20px">${side==='left'?'인원':''}</div>`;
+      counts.forEach((count,i) => {
+        const h = hours[i];
+        const heightPx = Math.max((count/maxAB)*80, count>0?3:1);
+        // 피크 구간 강조 (11~14시, 17~20시)
+        const isPeak = (h>=11&&h<=14)||(h>=17&&h<=20);
+        let barColor;
+        if(count>=maxAB*.8) barColor='#6c7af4';
+        else if(count>=maxAB*.5) barColor='#378ADD';
+        else if(count>=maxAB*.3) barColor='#1D9E75';
+        else barColor='#555977';
+        if(isPeak && count>0) barColor = side==='left'?'#EF9F27':'#d4527a';
+        bH+=`<div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:80px;position:relative;cursor:default;flex:1" title="${h}시: ${count}명">
+          <div style="width:calc(100% - 1px);border-radius:2px 2px 0 0;height:${heightPx}px;background:${barColor};transition:height .2s"></div>
+          <div style="position:absolute;top:-13px;font-size:8px;font-weight:600;color:var(--text2)">${count||''}</div>
+        </div>`;
+      });
+      return bH;
+    }
+
+    function buildLabels() {
+      let l = `<div style="min-width:20px"></div>`;
+      hours.forEach(h => {
+        const isPeak=(h>=11&&h<=14)||(h>=17&&h<=20);
+        l+=`<div style="flex:1;font-size:8px;text-align:center;color:${isPeak?'var(--c-mgr)':'var(--text3)'};padding-top:2px">${String(h).padStart(2,'0')}</div>`;
+      });
+      return l;
+    }
+
+    html += `
+    <div style="background:var(--surface);border:1px solid ${isWeekend?'rgba(216,90,48,0.3)':'var(--border2)'};border-radius:10px;padding:12px 14px;margin-bottom:12px">
+      <div style="font-size:11px;font-weight:600;color:${isWeekend?'#e8805a':'var(--text)'};margin-bottom:10px;display:flex;align-items:center;gap:8px">
+        ${dayLabel}
+        ${isWeekend?'<span style="font-size:9px;padding:1px 6px;border-radius:3px;background:rgba(216,90,48,0.2);color:#e8805a">주말</span>':''}
+        <span style="font-size:9px;color:var(--text3);font-weight:400;margin-left:4px">
+          <span style="color:#EF9F27">█</span> A안피크
+          <span style="color:#d4527a;margin-left:4px">█</span> B안피크
+          <span style="color:var(--text3);margin-left:4px">(11~14시, 17~20시 강조)</span>
+        </span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <!-- A안 -->
+        <div>
+          <div style="font-size:10px;font-weight:500;color:#5a8fd4;margin-bottom:6px">A: ${nameA}</div>
+          <div style="display:flex;gap:0;align-items:flex-end;height:80px">${buildBars(countsA,'left')}</div>
+          <div style="display:flex;gap:0;margin-top:2px">${buildLabels()}</div>
+        </div>
+        <!-- B안 -->
+        <div>
+          <div style="font-size:10px;font-weight:500;color:#d4527a;margin-bottom:6px">B: ${nameB}</div>
+          <div style="display:flex;gap:0;align-items:flex-end;height:80px">${buildBars(countsB,'right')}</div>
+          <div style="display:flex;gap:0;margin-top:2px">${buildLabels()}</div>
+        </div>
+      </div>
+      <!-- 차이 요약 -->
+      <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);display:flex;gap:12px;flex-wrap:wrap">
+        ${[{label:'11~14시 합계',s:11,e:14},{label:'17~20시 합계',s:17,e:20},{label:'전체 평균',s:-1,e:-1}].map(({label,s,e})=>{
+          let sumA,sumB;
+          if(s<0){
+            sumA=(countsA.reduce((a,b)=>a+b,0)/24).toFixed(1);
+            sumB=(countsB.reduce((a,b)=>a+b,0)/24).toFixed(1);
+          } else {
+            sumA=hours.filter(h=>h>=s&&h<=e).reduce((acc,h)=>acc+countsA[hours.indexOf(h)],0);
+            sumB=hours.filter(h=>h>=s&&h<=e).reduce((acc,h)=>acc+countsB[hours.indexOf(h)],0);
+          }
+          const diff = s<0 ? (parseFloat(sumB)-parseFloat(sumA)).toFixed(1) : sumB-sumA;
+          const color = diff>0?'#5dcaa5':diff<0?'#e8805a':'var(--text3)';
+          return `<span style="font-size:10px;color:var(--text2)">${label}: <b style="color:#5a8fd4">${sumA}</b> → <b style="color:#d4527a">${sumB}</b> <span style="color:${color}">(${diff>0?'+':''}${diff})</span></span>`;
+        }).join('')}
+      </div>
+    </div>`;
+  });
+
+  document.getElementById('compareResult').innerHTML = html || '<div style="color:var(--text3);padding:20px">실제 스케줄(6월)을 먼저 적용하면 더 정확한 비교가 가능합니다.</div>';
+}
+
+// ═══════════════════════════════════════════════
+// TOAST & RENDER ALL
+// ═══════════════════════════════════════════════
+let toastTimer;
+function showToast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.classList.add('show');
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2200);
+}
+function renderAll(){
+  renderPersonPanel();renderGantt();renderHeatmap();renderSummary();
+}
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded',()=>{
+  renderScenarioChips();
+  renderAll();
+  // 6월 스케줄 자동 로드 시도
+  fetchSchedule('06').then(()=>{
+    if(realScheduleData) document.getElementById('btn-apply-schedule').style.display='';
+  }).catch(()=>{});
+});
+</script>
+</body>
+</html>
