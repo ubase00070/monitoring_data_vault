@@ -4,15 +4,15 @@
     if (window.neubieEngineLoaded) return;
     window.neubieEngineLoaded = true;
 
-	// ── 티몬 몬소리 웹폰트 로드 (게시판용) ──
-    (function loadTmonFont() {
-        if (document.getElementById('neubie-tmon-font')) return;
+	// ── 배민 주아 웹폰트 로드 (게시판용) ──
+    (function loadJuaFont() {
+        if (document.getElementById('neubie-jua-font')) return;
         const st = document.createElement('style');
-        st.id = 'neubie-tmon-font';
+        st.id = 'neubie-jua-font';
         st.textContent = `
             @font-face {
-                font-family: 'TmonMonsori';
-                src: url('https://cdn.jsdelivr.net/gh/fontbee/font@main/Tmon/TmonMonsori.woff') format('woff');
+                font-family: 'BMJUA';
+                src: url('https://cdn.jsdelivr.net/gh/fonts-archive/BMJUA/BMJUA.woff2') format('woff2');
                 font-weight: normal;
                 font-style: normal;
                 font-display: swap;
@@ -2563,12 +2563,17 @@
             overlay = document.createElement('div');
             overlay.id = 'neubie-board-overlay';
 			const boardFontStyle = document.createElement('style');
-			boardFontStyle.textContent = `
-				#neubie-board-overlay, #neubie-board-overlay * {
-					font-family: 'TmonMonsori', 'Pretendard', sans-serif !important;
-				}
-			`;
-			overlay.appendChild(boardFontStyle);
+			(function applyBoardFont() {
+				if (document.getElementById('neubie-board-font-style')) return;
+				const boardFontStyle = document.createElement('style');
+				boardFontStyle.id = 'neubie-board-font-style';
+				boardFontStyle.textContent = `
+					#neubie-board-overlay, #neubie-board-overlay * {
+						font-family: 'BMJUA', 'Pretendard', sans-serif !important;
+					}
+				`;
+				document.head.appendChild(boardFontStyle);
+			})();
             const r = dashboard.getBoundingClientRect();
 			Object.assign(overlay.style, {
 				position: 'fixed',
