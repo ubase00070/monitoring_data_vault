@@ -1036,8 +1036,9 @@
                 const patchItems = [
                     {
                         version: 'v1.2',
-                        date: '2026-07-02',
+                        date: '2026-07-03',
                         items: [
+                            '1:1 문의 기능(익명 가능)',
 							'뉴비고 도메인 변경 대응',
 							'다중 모니터링 헤드 램프 ON/OFF',
                             '임무 종료된 리센츠/엘스 페이지 이탈 시 5초 후 자동 사이드 ON 신호 전송',
@@ -1122,6 +1123,14 @@
         boardBtn.style.cssText = "background:transparent; border:1px solid #475569; color:#ffffff; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:14px; margin-left:4px;";
         boardBtn.onclick = () => openBoardOverlay();
         titleWrap.appendChild(boardBtn);
+
+        const secretBtn = document.createElement('button');
+        secretBtn.textContent = '🔒 문의';
+        secretBtn.style.cssText = "background:transparent; border:1px solid #a78bfa; color:#c4b5fd; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:14px; margin-left:4px;";
+        secretBtn.onmouseenter = () => { secretBtn.style.background='rgba(167,139,250,0.15)'; };
+        secretBtn.onmouseleave = () => { secretBtn.style.background='transparent'; };
+        secretBtn.onclick = () => openSecretOverlay();
+        titleWrap.appendChild(secretBtn);
 
         headerContainer.appendChild(titleWrap);
         headerContainer.appendChild(nameArea);
@@ -1688,6 +1697,8 @@
         if (patchOverlay) patchOverlay.style.display='none';
         const boardOverlay = document.getElementById('neubie-board-overlay');
         if (boardOverlay) boardOverlay.style.display='none';
+        const secretOverlay = document.getElementById('neubie-secret-overlay');
+        if (secretOverlay) secretOverlay.style.display='none';
     }
 
     // ── 유효성 검증 (1시간 이내 데이터) ──
@@ -2552,7 +2563,7 @@
 
             overlay.innerHTML = `
             <div style="width:100%; height:100%; background:rgba(10,10,30,0.72); backdrop-filter:blur(2px); display:flex; flex-direction:column; border-radius:24px;">
-                <div style="display:flex; align-items:center; gap:8px; padding:12px 16px; border-bottom:0.5px solid rgba(255,255,255,0.12);">
+                <div id="nb-board-header" style="display:flex; align-items:center; gap:8px; padding:12px 16px; border-bottom:0.5px solid rgba(255,255,255,0.12); cursor:grab;">
                     <span style="font-size:15px; font-weight:600; color:#fff; flex:1;">📋 뉴비고 게시판</span>
                     <button id="nb-refresh-btn" style="height:28px; width:28px; background:rgba(255,255,255,0.1); color:white; border:none; border-radius:6px; cursor:pointer; font-size:14px;" title="새로고침">↺</button>
 					<button id="nb-write-btn" style="height:28px; padding:0 12px; font-size:12px; font-weight:500; background:#6366f1; color:white; border:none; border-radius:6px; cursor:pointer;">✏️ 글쓰기</button>
@@ -2618,6 +2629,33 @@
             let currentPostId = null;
             const myEmail = getMyEmail();
             const myName = getMyName();
+
+            // ── 게시판 드래그 (scale 유지) ──
+            (function makeBoardDraggable() {
+                const handle = document.getElementById('nb-board-header');
+                if (!handle) return;
+                let dragging = false, sx, sy, sLeft, sTop;
+                handle.addEventListener('mousedown', (e) => {
+                    const tag = e.target.tagName;
+                    if (tag === 'INPUT' || tag === 'BUTTON' || tag === 'SELECT' || tag === 'TEXTAREA' || tag === 'A') return;
+                    dragging = true;
+                    sx = e.clientX; sy = e.clientY;
+                    sLeft = parseFloat(overlay.style.left);
+                    sTop = parseFloat(overlay.style.top);
+                    handle.style.cursor = 'grabbing';
+                    e.preventDefault();
+                });
+                document.addEventListener('mousemove', (e) => {
+                    if (!dragging) return;
+                    overlay.style.left = (sLeft + (e.clientX - sx)) + 'px';
+                    overlay.style.top  = (sTop  + (e.clientY - sy)) + 'px';
+                });
+                document.addEventListener('mouseup', () => {
+                    if (!dragging) return;
+                    dragging = false;
+                    handle.style.cursor = 'grab';
+                });
+            })();
 
             document.getElementById('nb-user-badge').textContent = myEmail ? `${myName} (${myEmail})` : '⚠️ 로그인 정보 없음 — 읽기 전용';
             document.getElementById('nb-board-close').onclick = () => { overlay.style.display = 'none'; };
@@ -3016,6 +3054,306 @@
 			};
 
             loadPosts();
+        };
+
+        // ══════════════════════════════════════════════
+        //  1:1 비밀 문의함 (관리자 문의)
+        // ══════════════════════════════════════════════
+        let _secretAdminPw = null;  // 관리자 세션 비번 (열람 중에만 메모리 보관)
+
+        window.openSecretOverlay = async function() {
+            const SECRET_API = 'https://multimonitoring.vercel.app/api/secret';
+            const getMyEmail = () => {
+                try {
+                    const lsKey = Object.keys(localStorage).find(k => k.startsWith('ph_phc_') && k.endsWith('_posthog'));
+                    if (!lsKey) return '';
+                    const ph = JSON.parse(localStorage.getItem(lsKey));
+                    const email = ph?.distinct_id || '';
+                    return (email.startsWith('ubase') && email.endsWith('@gmail.com')) ? email : '';
+                } catch(e) { return ''; }
+            };
+            const myEmail = getMyEmail();
+            const myName = localStorage.getItem('neubie_user_name') || '익명';
+
+            let overlay = document.getElementById('neubie-secret-overlay');
+            if (overlay) { overlay.style.display = 'flex'; }
+            else {
+                overlay = document.createElement('div');
+                overlay.id = 'neubie-secret-overlay';
+                overlay.style.cssText = `
+                    position:fixed; inset:0; z-index:2147483647;
+                    background:rgba(0,0,0,0.6); display:flex;
+                    align-items:center; justify-content:center;
+                    font-family:'Paperlogy','Pretendard',sans-serif;
+                `;
+                const box = document.createElement('div');
+                box.style.cssText = `
+                    width:min(560px,94vw); max-height:82vh; overflow:hidden;
+                    background:#1a1a24; border:1.5px solid #a78bfa; border-radius:16px;
+                    display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,0.6);
+                `;
+                box.innerHTML = `
+                    <div style="display:flex; align-items:center; padding:16px 18px; border-bottom:1px solid #333; gap:8px;">
+                        <span id="nb-secret-title-lock" style="font-size:16px; font-weight:700; color:#c4b5fd; flex:1; cursor:default; user-select:none;">🔒 1:1 문의</span>
+                        <button id="nb-secret-close" style="background:transparent; border:none; color:#aaa; font-size:18px; cursor:pointer;">✕</button>
+                    </div>
+                    <div id="nb-secret-body" style="padding:16px 18px; overflow-y:auto; flex:1;"></div>
+                `;
+                overlay.appendChild(box);
+                document.body.appendChild(overlay);
+
+                document.getElementById('nb-secret-close').onclick = () => { overlay.style.display = 'none'; };
+
+                // 자물쇠(제목) 2초 내 5회 클릭 → 관리자 진입
+                let _secretLockClicks = 0;
+                let _secretLockTimer = null;
+                document.getElementById('nb-secret-title-lock').addEventListener('click', async () => {
+                    _secretLockClicks++;
+                    clearTimeout(_secretLockTimer);
+                    _secretLockTimer = setTimeout(() => { _secretLockClicks = 0; }, 2000);
+                    if (_secretLockClicks >= 5) {
+                        _secretLockClicks = 0;
+                        clearTimeout(_secretLockTimer);
+                        // 이미 관리자면 해제
+                        if (_secretAdminPw) {
+                            _secretAdminPw = null;
+                            loadSecretPosts();
+                            return;
+                        }
+                        const pw = prompt('관리자 비밀번호를 입력하세요');
+                        if (!pw) return;
+                        const res = await fetch(`${SECRET_API}?admin=${encodeURIComponent(pw)}`);
+                        const data = await res.json();
+                        if (data.isAdmin) {
+                            _secretAdminPw = pw;
+                            loadSecretPosts();
+                        } else {
+                            alert('비밀번호가 일치하지 않습니다.');
+                        }
+                    }
+                });
+            }
+
+            // ── 목록 로드 ──
+            async function loadSecretPosts() {
+                const body = document.getElementById('nb-secret-body');
+                body.innerHTML = `<div style="text-align:center; padding:30px; color:#666;">불러오는 중...</div>`;
+                try {
+                    let url = `${SECRET_API}?t=${Date.now()}`;
+                    if (_secretAdminPw) url += `&admin=${encodeURIComponent(_secretAdminPw)}`;
+                    else url += `&email=${encodeURIComponent(myEmail)}`;
+                    const res = await fetch(url);
+                    const data = await res.json();
+                    renderSecretList(data.posts || [], data.isAdmin);
+                } catch(e) {
+                    body.innerHTML = `<div style="text-align:center; padding:30px; color:#e57;">불러오기 실패</div>`;
+                }
+            }
+            window._loadSecretPosts = loadSecretPosts;
+
+            // ── 목록 렌더 ──
+            function renderSecretList(posts, isAdmin) {
+                const body = document.getElementById('nb-secret-body');
+                const writeBtn = `
+                    <button id="nb-secret-write-btn" style="width:100%; padding:10px; margin-bottom:12px; background:#7c3aed; border:none; color:#fff; border-radius:8px; cursor:pointer; font-size:13px; font-weight:600;">✏️ 새 문의 작성</button>
+                `;
+                if (!posts.length) {
+                    body.innerHTML = writeBtn + `<div style="text-align:center; padding:30px; color:#666; font-size:13px;">${isAdmin ? '문의가 없습니다.' : '내 문의가 없습니다. 위 버튼으로 작성하세요.'}</div>`;
+                } else {
+                    body.innerHTML = writeBtn + posts.map(p => `
+                        <div class="nb-secret-item" data-id="${p.id}" style="background:rgba(255,255,255,0.04); border:1px solid #333; border-radius:8px; padding:12px; margin-bottom:8px; cursor:pointer;">
+                            <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+                                <span style="font-size:13px; font-weight:600; color:#fff; flex:1;">${escapeHtml(p.title)}</span>
+                                ${(p.comments||[]).some(c=>c.byAdmin) ? '<span style="font-size:10px; color:#4ade80;">✔ 답변완료</span>' : '<span style="font-size:10px; color:#888;">대기중</span>'}
+                            </div>
+                            <div style="font-size:11px; color:#888;">${isAdmin ? escapeHtml(p.author) + ' · ' : ''}${new Date(p.createdAt).toLocaleString('ko-KR')}</div>
+                        </div>
+                    `).join('');
+                    body.querySelectorAll('.nb-secret-item').forEach(el => {
+                        el.onclick = () => renderSecretDetail(posts.find(p => p.id === el.dataset.id), isAdmin);
+                    });
+                }
+                document.getElementById('nb-secret-write-btn').onclick = () => renderSecretWrite();
+            }
+
+            // ── 작성 화면 ──
+            function renderSecretWrite() {
+                const body = document.getElementById('nb-secret-body');
+                body.innerHTML = `
+                    <input id="nb-secret-title" placeholder="제목" style="width:100%; height:38px; padding:0 10px; margin-bottom:8px; box-sizing:border-box; background:rgba(255,255,255,0.08); border:1px solid #444; border-radius:6px; color:#fff; font-size:13px;">
+                    <textarea id="nb-secret-content" placeholder="관리자에게 전달할 내용을 입력하세요" style="width:100%; height:140px; padding:10px; box-sizing:border-box; background:rgba(255,255,255,0.08); border:1px solid #444; border-radius:6px; color:#fff; font-size:13px; resize:none; font-family:inherit;"></textarea>
+                    <label style="display:flex; align-items:center; gap:6px; margin:8px 0; font-size:12px; color:#aaa; cursor:pointer;">
+                        <input type="checkbox" id="nb-secret-anon"> 익명으로 (저도 누가 썼는지 확인불가합니다.)
+                    </label>
+                    <div style="display:flex; gap:8px;">
+                        <button id="nb-secret-cancel" style="flex:1; padding:10px; background:rgba(255,255,255,0.1); border:none; color:#fff; border-radius:6px; cursor:pointer;">취소</button>
+                        <button id="nb-secret-submit" style="flex:2; padding:10px; background:#7c3aed; border:none; color:#fff; border-radius:6px; cursor:pointer; font-weight:600;">문의 보내기</button>
+                    </div>
+                `;
+                document.getElementById('nb-secret-cancel').onclick = () => loadSecretPosts();
+                document.getElementById('nb-secret-submit').onclick = async (e) => {
+                    const title = document.getElementById('nb-secret-title').value.trim();
+                    const content = document.getElementById('nb-secret-content').value.trim();
+                    if (!title || !content) return;
+                    const isAnon = document.getElementById('nb-secret-anon').checked;
+                    if (!myEmail) return alert('로그인 정보가 없어 문의할 수 없습니다.');
+                    e.target.disabled = true; e.target.textContent = '전송 중...';
+                    try {
+                        await fetch(SECRET_API, {
+                            method:'POST', headers:{'Content-Type':'application/json'},
+                            body: JSON.stringify({ email:myEmail, author: isAnon ? '익명' : myName, anon:isAnon, title, content })
+                        });
+                        await new Promise(r => setTimeout(r, 400));
+                        await loadSecretPosts();
+                    } catch(err) { alert('전송 실패'); e.target.disabled=false; e.target.textContent='문의 보내기'; }
+                };
+            }
+
+            // ── 상세 화면 ──
+            function renderSecretDetail(post, isAdmin) {
+                if (!post) return;
+                const body = document.getElementById('nb-secret-body');
+                const canComment = isAdmin || (myEmail && post.email === myEmail);
+                const comments = (post.comments||[]).map(c => `
+                    <div style="background:${c.byAdmin?'rgba(124,58,237,0.15)':'rgba(255,255,255,0.04)'}; border-radius:6px; padding:8px 10px; margin-bottom:6px;">
+                        <div style="display:flex; align-items:center; gap:6px; margin-bottom:2px;">
+                            <span style="font-size:11px; color:${c.byAdmin?'#c4b5fd':'#888'}; flex:1;">${c.byAdmin?'👑 최윤혁':escapeHtml(c.author)}</span>
+                            ${c.mine ? `
+                                <button class="nb-cmt-edit" data-cid="${c.id}" style="background:transparent; border:none; color:#888; cursor:pointer; font-size:10px;">수정</button>
+                                <button class="nb-cmt-del" data-cid="${c.id}" style="background:transparent; border:none; color:#f87171; cursor:pointer; font-size:10px;">삭제</button>
+                            ` : ''}
+                        </div>
+                        <div class="nb-cmt-text" data-cid="${c.id}" style="font-size:13px; color:#eee; white-space:pre-wrap;">${escapeHtml(c.text)}</div>
+                    </div>
+                `).join('') || '<div style="color:#666; font-size:12px; padding:8px 0;">아직 답변이 없습니다.</div>';
+
+                body.innerHTML = `
+                    <button id="nb-secret-back" style="background:transparent; border:none; color:#a78bfa; cursor:pointer; font-size:13px; margin-bottom:10px;">← 목록</button>
+                    <div style="font-size:15px; font-weight:700; color:#fff; margin-bottom:4px;">${escapeHtml(post.title)}</div>
+                    <div style="font-size:11px; color:#888; margin-bottom:10px;">${isAdmin?escapeHtml(post.author)+' · ':''}${new Date(post.createdAt).toLocaleString('ko-KR')}</div>
+                    ${(post.mine && !isAdmin) ? `
+                        <div style="display:flex; gap:6px; margin-bottom:10px;">
+                            <button id="nb-secret-edit" style="padding:4px 10px; background:rgba(255,255,255,0.1); border:none; color:#fff; border-radius:6px; cursor:pointer; font-size:11px;">✏️ 수정</button>
+                            <button id="nb-secret-del" style="padding:4px 10px; background:rgba(239,68,68,0.2); border:none; color:#fca5a5; border-radius:6px; cursor:pointer; font-size:11px;">🗑 삭제</button>
+                        </div>
+                    ` : ''}
+                    <div style="font-size:13px; color:#ddd; white-space:pre-wrap; padding:12px; background:rgba(255,255,255,0.03); border-radius:8px; margin-bottom:14px;">${escapeHtml(post.content)}</div>
+                    <div style="font-size:12px; color:#aaa; margin-bottom:6px;">💬 답변</div>
+                    ${comments}
+                    ${canComment ? `
+                        <div style="margin-top:10px;">
+                            <textarea id="nb-secret-reply" placeholder="${isAdmin?'답변 작성...':'추가 문의...'}" style="width:100%; height:60px; padding:8px; box-sizing:border-box; background:rgba(255,255,255,0.08); border:1px solid #444; border-radius:6px; color:#fff; font-size:12px; resize:none; font-family:inherit;"></textarea>
+                            <button id="nb-secret-reply-btn" style="width:100%; padding:8px; margin-top:6px; background:#7c3aed; border:none; color:#fff; border-radius:6px; cursor:pointer; font-size:12px; font-weight:600;">${isAdmin?'답변 등록':'등록'}</button>
+                        </div>
+                    ` : ''}
+                `;
+
+                async function refreshDetail() {
+                    await new Promise(r => setTimeout(r, 400));
+                    let url = `${SECRET_API}?t=${Date.now()}`;
+                    if (_secretAdminPw) url += `&admin=${encodeURIComponent(_secretAdminPw)}`;
+                    else url += `&email=${encodeURIComponent(myEmail)}`;
+                    const res = await fetch(url);
+                    const data = await res.json();
+                    const updated = (data.posts||[]).find(p => p.id === post.id);
+                    if (updated) renderSecretDetail(updated, data.isAdmin);
+                }
+
+                document.getElementById('nb-secret-back').onclick = () => loadSecretPosts();
+                const editBtn = document.getElementById('nb-secret-edit');
+                if (editBtn) editBtn.onclick = () => renderSecretEdit(post);
+                const delBtn = document.getElementById('nb-secret-del');
+                if (delBtn) delBtn.onclick = async () => {
+                    if (!confirm('이 문의를 삭제하시겠습니까?')) return;
+                    try {
+                        await fetch(SECRET_API, {
+                            method:'DELETE', headers:{'Content-Type':'application/json'},
+                            body: JSON.stringify({ email: myEmail, id: post.id })
+                        });
+                        await new Promise(r => setTimeout(r, 400));
+                        await loadSecretPosts();
+                    } catch(err) { alert('삭제 실패'); }
+                };
+                const replyBtn = document.getElementById('nb-secret-reply-btn');
+                if (replyBtn) replyBtn.onclick = async (e) => {
+                    const text = document.getElementById('nb-secret-reply').value.trim();
+                    if (!text) return;
+                    e.target.disabled = true; e.target.textContent = '등록 중...';
+                    try {
+                        const payload = { action:'comment', postId:post.id, text };
+                        if (_secretAdminPw) payload.adminPw = _secretAdminPw;
+                        else { payload.email = myEmail; payload.author = post.anon ? '익명' : myName; payload.anon = post.anon; }
+                        await fetch(SECRET_API, {
+                            method:'POST', headers:{'Content-Type':'application/json'},
+                            body: JSON.stringify(payload)
+                        });
+                        await new Promise(r => setTimeout(r, 400));
+                        // 최신 데이터 다시 받아서 상세 갱신
+                        let url = `${SECRET_API}?t=${Date.now()}`;
+                        if (_secretAdminPw) url += `&admin=${encodeURIComponent(_secretAdminPw)}`;
+                        else url += `&email=${encodeURIComponent(myEmail)}`;
+                        const res = await fetch(url);
+                        const data = await res.json();
+                        const updated = (data.posts||[]).find(p => p.id === post.id);
+                        if (updated) renderSecretDetail(updated, data.isAdmin);
+                    } catch(err) { alert('등록 실패'); e.target.disabled=false; }
+                };
+                // 댓글 수정
+                body.querySelectorAll('.nb-cmt-edit').forEach(btn => {
+                    btn.onclick = () => {
+                        const cid = btn.dataset.cid;
+                        const textEl = body.querySelector(`.nb-cmt-text[data-cid="${cid}"]`);
+                        const old = textEl.textContent;
+                        const newText = prompt('댓글 수정', old);
+                        if (newText === null || !newText.trim() || newText === old) return;
+                        fetch(SECRET_API, {
+                            method:'PUT', headers:{'Content-Type':'application/json'},
+                            body: JSON.stringify({ email: myEmail, id: post.id, commentId: cid, text: newText.trim() })
+                        }).then(() => refreshDetail());
+                    };
+                });
+                // 댓글 삭제
+                body.querySelectorAll('.nb-cmt-del').forEach(btn => {
+                    btn.onclick = () => {
+                        if (!confirm('댓글을 삭제하시겠습니까?')) return;
+                        fetch(SECRET_API, {
+                            method:'DELETE', headers:{'Content-Type':'application/json'},
+                            body: JSON.stringify({ email: myEmail, id: post.id, commentId: btn.dataset.cid })
+                        }).then(() => refreshDetail());
+                    };
+                });
+            }
+
+            function renderSecretEdit(post) {
+                const body = document.getElementById('nb-secret-body');
+                body.innerHTML = `
+                    <button id="nb-secret-edit-back" style="background:transparent; border:none; color:#a78bfa; cursor:pointer; font-size:13px; margin-bottom:10px;">← 취소</button>
+                    <input id="nb-secret-edit-title" value="${escapeHtml(post.title)}" style="width:100%; height:38px; padding:0 10px; margin-bottom:8px; box-sizing:border-box; background:rgba(255,255,255,0.08); border:1px solid #444; border-radius:6px; color:#fff; font-size:13px;">
+                    <textarea id="nb-secret-edit-content" style="width:100%; height:140px; padding:10px; box-sizing:border-box; background:rgba(255,255,255,0.08); border:1px solid #444; border-radius:6px; color:#fff; font-size:13px; resize:none; font-family:inherit;">${escapeHtml(post.content)}</textarea>
+                    <button id="nb-secret-edit-save" style="width:100%; padding:10px; margin-top:8px; background:#7c3aed; border:none; color:#fff; border-radius:6px; cursor:pointer; font-weight:600;">수정 완료</button>
+                `;
+                document.getElementById('nb-secret-edit-back').onclick = () => renderSecretDetail(post, false);
+                document.getElementById('nb-secret-edit-save').onclick = async (e) => {
+                    const title = document.getElementById('nb-secret-edit-title').value.trim();
+                    const content = document.getElementById('nb-secret-edit-content').value.trim();
+                    if (!title || !content) return;
+                    e.target.disabled = true; e.target.textContent = '수정 중...';
+                    try {
+                        await fetch(SECRET_API, {
+                            method:'PUT', headers:{'Content-Type':'application/json'},
+                            body: JSON.stringify({ email: myEmail, id: post.id, title, content })
+                        });
+                        loadSecretPosts();
+                    } catch(err) { alert('수정 실패'); e.target.disabled=false; e.target.textContent='수정 완료'; }
+                };
+            }
+
+            function escapeHtml(s) {
+                return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            }
+
+            // 초기 로드
+            loadSecretPosts();
         };
 
             window.openScheduleOverlay = async function() {
