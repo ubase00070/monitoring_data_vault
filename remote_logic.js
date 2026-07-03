@@ -3412,7 +3412,7 @@
 			}
 
             let SEAT_MAP = null;
-            const seatRes = await fetch('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/seat_map.json?t='+Date.now());
+            const seatRes = await fetch('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/monthly_schedule/seat_map.json?t='+Date.now());
             SEAT_MAP = await seatRes.json();
             const PARTITION_AFTER = 1;
 
