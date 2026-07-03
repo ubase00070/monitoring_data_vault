@@ -2123,12 +2123,8 @@
 	const UNMONITORED_WATCH = [
 		{ id: 219, name: '경희대 1호기' },
 		{ id: 234, name: 'DMZ' },
-		{ id: 174, name: '평택 1호기' },
-		{ id: 179, name: '평택 2호기' },
 		{ id: 76, name: '부산 서면 1호기' },
 		{ id: 74, name: '부천 중동 1호기' },
-		{ id: 178, name: '김포 1호기' },
-		{ id: 177, name: '김포 2호기' },
 	];
 	const UNMONITORED_PANEL_ID = 'neubie-unmonitored-panel';
 
