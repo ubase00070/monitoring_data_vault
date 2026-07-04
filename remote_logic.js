@@ -4360,46 +4360,6 @@
 	    }, 100);
 	}
 
-	// localStorage.setItem 가로채기 — 계정 변경 시 자동 감지
-	const _origSetItem = localStorage.setItem.bind(localStorage);
-	localStorage.setItem = function(key, value) {
-	  _origSetItem(key, value);
-	  // 정확히 '_posthog' 로 끝나는 메인 키만 처리
-	  if (!key.includes('ph_phc_') || !key.endsWith('_posthog')) return;
-	  try {
-		const posthog = JSON.parse(value);
-		const email = posthog?.distinct_id || '';
-		if (!email) return; // ← distinct_id 없으면 스킵
-		const match = email.match(/ubase_multiple(\d+)@gmail\.com/);
-		const multiNum = match ? match[1] : '';
-		if (multiNum === _lastMultiNum) return;
-		if (!multiNum) return; // ★ 중요! 일반 계정이면 POST 안 함
-		_lastMultiNum = multiNum;
-		fetch('https://multimonitoring.vercel.app/api/multi_status', {
-		  method: 'POST',
-		  headers: {'Content-Type':'application/json'},
-		  body: JSON.stringify({ active: multiNum })
-		}).catch(()=>{});
-	  } catch(e) {}
-	};
-	
-	(function detectAndSaveMulti() {
-	  try {
-		const lsKey = Object.keys(localStorage).find(k => k.startsWith('ph_phc_') && k.endsWith('_posthog'));
-		if (!lsKey) return;
-		const posthog = JSON.parse(localStorage.getItem(lsKey));
-		const email = posthog?.distinct_id || '';
-		const match = email.match(/ubase_multiple(\d+)@gmail\.com/);
-		if (!match) return;
-
-		fetch('https://multimonitoring.vercel.app/api/multi_status', {
-		  method: 'POST',
-		  headers: { 'Content-Type': 'application/json' },
-		  body: JSON.stringify({ active: match[1] })
-		}).catch(()=>{});
-	  } catch(e) {}
-	})();
-
     injectConfigUI();
     
     if (localStorage.getItem('neubie_user_name')) {
