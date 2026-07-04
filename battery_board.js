@@ -1286,7 +1286,6 @@
         registerInfoPanelClose();
         }
 
-        // ── 새 헬퍼 함수 (openInfoCardPanel 함수 바로 아래에 추가)
         let _infoPanelCloseHandler = null;
         function registerInfoPanelClose() {
             const panel = document.getElementById('bb-info-card-panel');
