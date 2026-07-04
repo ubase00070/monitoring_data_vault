@@ -1424,7 +1424,7 @@
     }
 
     // ============================================================
-    // SECTION 11. 드래그앤드롭
+    // SECTION 11. 드래그 앤 드롭
     // ============================================================
     let dsrc = null;
     function dstart(e) { dsrc = this.dataset.id; this.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', dsrc); }
