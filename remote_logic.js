@@ -37,10 +37,10 @@
        const config = {
         targetIds: ['44', '56', '65', '109'],
         batteryIds: [
-			{ id: '221', name: '성남판교 200', shortName: '판교 200' },
-			{ id: '222', name: '성남서현 201', shortName: '서현 201' },
-			{ id: '224', name: '성남율동 202', shortName: '율동 202' },
-			{ id: '223', name: '성남야탑 203', shortName: '야탑 203' }
+			{ id: '221', name: '성남 판교', shortName: '성남 판교' },
+			{ id: '222', name: '성남 서현', shortName: '성남 서현' },
+			{ id: '224', name: '성남 율동', shortName: '성남 율동' },
+			{ id: '223', name: '성남 야탑', shortName: '성남 야탑' }
 		],
         sheetId: "1tLo6Xeq6KJx6zW-fcw8H38jdjxyS2yre5oWY7cxky70"
     };
@@ -2124,7 +2124,7 @@
 		{ id: 219, name: '경희대 1호기' },
 		{ id: 234, name: 'DMZ' },
 		{ id: 76, name: '부산 서면 1호기' },
-		{ id: 74, name: '부천 중동 1호기' },
+		{ id: 74, name: '부천 위브 1호기' },
 	];
 	const UNMONITORED_PANEL_ID = 'neubie-unmonitored-panel';
 
