@@ -1532,56 +1532,68 @@
 	(function() {
 		const WALKER_BASE = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/';
 		const walkerFiles = [
-			'Walker.webp',
-			'Scoot.webp',
-            'Blathers.webp',
-            'Bluebear.webp',
-            'Bob.webp',
-            'Bones.webp',
-            'Curt.webp',
-            'Filbert.webp',
-			'Joey.webp',
-            'Ketchup.webp',			
-			'Sable.webp',
-			'Sherb.webp',
-			'Wisp.webp',
+			{ name: 'Walker',   variants: ['Walker.webp', 'Walker_2.webp', 'Walker_3.webp'] },
+			{ name: 'Blathers', variants: ['Blathers.webp', 'Blathers_2.webp', 'Blathers_3.webp'] },
+			{ name: 'Bluebear', variants: ['Bluebear.webp', 'Bluebear_2.webp', 'Bluebear_3.webp'] },
+			{ name: 'Bob',      variants: ['Bob.webp'] },
+			{ name: 'Bones',    variants: ['Bones.webp', 'Bones_2.webp', 'Bones_3.webp'] },
+			{ name: 'Curt',     variants: ['Curt.webp'] },
+			{ name: 'Filbert',  variants: ['Filbert.webp', 'Filbert_2.webp', 'Filbert_3.webp'] },
+			{ name: 'Joey',     variants: ['Joey.webp'] },
+			{ name: 'Ketchup',  variants: ['Ketchup.webp', 'Ketchup_2.webp'] },
+			{ name: 'Sable',    variants: ['Sable.webp', 'Sable_2.webp'] },
+			{ name: 'Sherb',    variants: ['Sherb.webp', 'Sherb_2.webp'] },
+			{ name: 'Wisp',     variants: ['Wisp.webp', 'Wisp_2.webp'] },
 		];
-		const WALKER_IDX_KEY = 'bb_walker_idx';
-		let walkerIdx = parseInt(localStorage.getItem(WALKER_IDX_KEY), 10);
-		if (isNaN(walkerIdx) || walkerIdx < 0 || walkerIdx >= walkerFiles.length) walkerIdx = 0;
 		
+		const ROTATE_MS = 2 * 60 * 60 * 1000;   // 2시간마다 배리에이션 교체 (원하는 시간으로 조정)
+
+		const WALKER_IDX_KEY = 'bb_walker_idx';   // 캐릭터 선택 (기존 키 그대로 유지 — 순서 안 바꿨으니 호환됨)
+		let charIdx = parseInt(localStorage.getItem(WALKER_IDX_KEY), 10);
+		if (isNaN(charIdx) || charIdx < 0 || charIdx >= walkerFiles.length) charIdx = 0;
+
 		const walkerEl = document.getElementById('bb-walker');
 		const toggleEl = document.getElementById('bb-walker-toggle');
-		
-		function setWalker(idx) {
-		    walkerEl.style.backgroundImage = `url('${WALKER_BASE}${walkerFiles[idx]}')`;
+
+		function currentVariantFile() {
+			const variants = walkerFiles[charIdx].variants;
+			// 시간 기준으로 결정 — 저장할 필요 없이 항상 같은 계산이 나옴 (새로고침해도 일관됨)
+			const vIdx = Math.floor(Date.now() / ROTATE_MS) % variants.length;
+			return variants[vIdx];
 		}
-		setWalker(walkerIdx);   // ← 0 대신 저장된 idx로 시작
-		
+
+		function renderWalker() {
+			walkerEl.style.backgroundImage = `url('${WALKER_BASE}${currentVariantFile()}')`;
+		}
+		renderWalker();
+
 		walkerEl.addEventListener('click', () => {
-		    walkerIdx = (walkerIdx + 1) % walkerFiles.length;
-		    setWalker(walkerIdx);
-		    localStorage.setItem(WALKER_IDX_KEY, String(walkerIdx));   // ← 클릭할 때마다 저장
+			charIdx = (charIdx + 1) % walkerFiles.length;
+			localStorage.setItem(WALKER_IDX_KEY, String(charIdx));
+			renderWalker();
 		});
 
-        // ── 표시 on/off 토글 (기본 ON, localStorage 저장) ──
-        const WALKER_TOGGLE_KEY = 'bb_walker_on';
-        let walkerOn = localStorage.getItem(WALKER_TOGGLE_KEY);
-        walkerOn = walkerOn === null ? true : walkerOn === '1';   // 저장된 값 없으면 기본 ON
+		// 배리에이션 교체 시점을 놓치지 않도록 주기적으로 재확인 (API 호출 없음, 순수 화면 갱신)
+		setInterval(renderWalker, 60 * 1000);   // 1분마다 체크
 
-        function applyWalkerToggle() {
-            walkerEl.style.display = walkerOn ? '' : 'none';
-            toggleEl.classList.toggle('off', !walkerOn);
-            toggleEl.textContent = walkerOn ? '동숲' : '🚫';
-            toggleEl.title = walkerOn ? '동숲 주민 끄기' : '동숲 주민 켜기';
-        }
-        applyWalkerToggle();
+		// ── 표시 on/off 토글 (기본 ON, localStorage 저장) ──
+		const WALKER_TOGGLE_KEY = 'bb_walker_on';
+		let walkerOn = localStorage.getItem(WALKER_TOGGLE_KEY);
+		walkerOn = walkerOn === null ? true : walkerOn === '1';
 
-        toggleEl.addEventListener('click', () => {
-            walkerOn = !walkerOn;
-            localStorage.setItem(WALKER_TOGGLE_KEY, walkerOn ? '1' : '0');
-            applyWalkerToggle();
-        });
+		function applyWalkerToggle() {
+			walkerEl.style.display = walkerOn ? '' : 'none';
+			toggleEl.classList.toggle('off', !walkerOn);
+			toggleEl.textContent = walkerOn ? '동숲' : '🚫';
+			toggleEl.title = walkerOn ? '동숲 주민 끄기' : '동숲 주민 켜기';
+		}
+		applyWalkerToggle();
+
+		toggleEl.addEventListener('click', () => {
+			walkerOn = !walkerOn;
+			localStorage.setItem(WALKER_TOGGLE_KEY, walkerOn ? '1' : '0');
+			applyWalkerToggle();
+		});
     })();
 
     // ── 줌 기능
