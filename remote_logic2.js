@@ -4038,7 +4038,7 @@
         }, 100);
     }, true);
 
-    // 클릭 없이 코드로만 주소가 바뀌는 경우를 대비 (간격 2초)
+    // 클릭 없이 코드로만 주소가 바뀌는 경우 대비 (간격 2초)
     setInterval(() => {
         if (location.href !== lastUrl) {
             const prevUrl = lastUrl;  // ← 이전 URL 먼저 저장
