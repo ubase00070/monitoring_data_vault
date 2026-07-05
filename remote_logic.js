@@ -4148,7 +4148,7 @@
 			showAutoSideNotice(`5초 후 ${robotName}의 사이드 브레이크를 ON으로 변경합니다.`, 'rgba(59,130,246,0.92)');
 
 			setTimeout(async () => {
-				// 5초 후 다시 한번 확인
+				// 5초 후 다시 확인
 				try {
 					const res2 = await fetch(`https://core.neubie.ai/robots/${robotId}/`, {
                         credentials: 'include',
