@@ -1052,14 +1052,13 @@
                 // 아래 patchItems 배열에 버전별 내용을 추가하세요
                 const patchItems = [
                     {
-                        version: 'v1.2',
-                        date: '2026-07-03',
+                        version: 'v1.3',
+                        date: '2026-07-05',
                         items: [
                             '1:1 문의 기능(익명 가능)',
 							'뉴비고 도메인 변경 대응',
 							'다중 모니터링 헤드 램프 ON/OFF',
                             '임무 종료된 리센츠/엘스 페이지 이탈 시 5초 후 자동 사이드 ON 신호 전송',
-							'네트워크 불안정 지역 경고 레이아웃',
 							'다중 모니터링 기체 화질 조절',
 							'불규칙 순찰 기체 모니터링 미추가 시 알림 기능',
 							'개입카드 현재 조작자 표기(본인 제외) / 상태 바 재배치(스크롤 제거)',
@@ -3969,11 +3968,6 @@
                     setTimeout(() => injectMapStyle(), 6000);
                 }
 				
-				setTimeout(() => checkDangerZone(), 1000);
-				setTimeout(() => checkDangerZone(), 2000);
-				setTimeout(() => checkDangerZone(), 3500);
-				setTimeout(() => checkDangerZone(), 5000);
-				
 				setTimeout(() => patchDrivingPageLayout(), 1500);
                 setTimeout(() => patchDrivingPageLayout(), 3000);
 				setTimeout(() => patchDrivingPageLayout(), 6000);
@@ -4016,11 +4010,6 @@
                 setTimeout(() => injectMapStyle(), 3000);
                 setTimeout(() => injectMapStyle(), 6000);
             }
-			
-			setTimeout(() => checkDangerZone(), 1000);
-			setTimeout(() => checkDangerZone(), 2000);
-			setTimeout(() => checkDangerZone(), 3500);
-			setTimeout(() => checkDangerZone(), 5000);
 			
 			setTimeout(() => patchDrivingPageLayout(), 1500);
             setTimeout(() => patchDrivingPageLayout(), 3000);
@@ -4137,75 +4126,6 @@
             _autoSideInProgress.delete(robotId);
             showAutoSideNotice(`❌ ${robotName} 사이드 브레이크 명령 전송 실패`, 'rgba(220,38,38,0.92)');
         }
-	}
-    
-	// ── 위험구간 경고 ──
-	const DANGER_ZONE_CONFIG = {
-		221: {
-			pois: [
-				'판교역순찰_01',
-				'현대백화점/힐스테이트 판교역사이 금연구역1',
-				'현대백화점/힐스테이트 판교역사이 금연구역2',
-			],
-			message: '⚠️ 네트워크 불안정 구간입니다. 관제 시 유의하세요.'
-		}
-	};
-
-	function checkDangerZone() {
-		const href = location.href;
-		let robotId = null;
-
-		// 일반 접속: /ko/remote/robot/221
-		const robotMatch = href.match(/\/ko\/remote\/robot\/(\d+)/);
-		if (robotMatch) {
-			robotId = parseInt(robotMatch[1]);
-		} else {
-			// 개입카드: /ko/remote/multiple/driving/xxxxx?robot-id=221
-			const params = new URLSearchParams(location.search);
-			const robotIdParam = params.get('robot-id');
-			if (robotIdParam) robotId = parseInt(robotIdParam);
-		}
-
-		if (!robotId) { removeDangerWarning(); return; }
-		const cfg = DANGER_ZONE_CONFIG[robotId];
-		if (!cfg) { removeDangerWarning(); return; }
-
-		const activePoi = Array.from(document.querySelectorAll('span.max-w-190.font-size-14.truncate.font-medium'))
-			.find(el => el.className.includes('text-mono-800') && el.innerText.includes('로 이동'));
-		const poiName = activePoi?.innerText?.replace('로 이동', '').trim();
-
-		if (poiName && cfg.pois.some(p => poiName.includes(p))) {
-			if (document.getElementById('neubie-danger-warning')) return;
-			const warning = document.createElement('div');
-			warning.id = 'neubie-danger-warning';
-			warning.style.cssText = `
-				position: fixed;
-				top: 80px;
-				left: 50%;
-				transform: translateX(-50%);
-				z-index: 9999;
-				background: rgba(220, 38, 38, 0.92);
-				color: white;
-				font-size: 13px;
-				font-weight: 700;
-				padding: 8px 20px;
-				border-radius: 8px;
-				font-family: 'Pretendard', sans-serif;
-				box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-				white-space: nowrap;
-				pointer-events: none;
-			`;
-			warning.innerText = cfg.message;
-			document.body.appendChild(warning);
-			setTimeout(() => removeDangerWarning(), 7000);
-		} else {
-			removeDangerWarning();
-		}
-	}
-
-	function removeDangerWarning() {
-		const el = document.getElementById('neubie-danger-warning');
-		if (el) el.remove();
 	}
 	
 	// ── 개입 페이지 레이아웃 ──
