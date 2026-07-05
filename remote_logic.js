@@ -1899,6 +1899,19 @@
                 return { data };
             } catch(e) { console.log('githubGet error:', e); return null; }
         };
+		
+		const patchTaken = async (names) => {
+			try {
+				const res = await fetch(`https://multimonitoring.vercel.app/api/handover`, {
+					method: 'PATCH',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ addTaken: names }),
+				});
+				if (!res.ok) console.log('patchTaken 실패:', res.status);
+			} catch (e) {
+				console.log('patchTaken 오류:', e);
+			}
+		};
 
 		// ── 교대받기 버튼 ──
 		let _fetchBtnRunning = false;
@@ -1940,7 +1953,7 @@
 					obs.observe(document.body, { childList: true, subtree: true });
 				});
 			}
-			if (!modal) { setDpMsg('모달 없음', '#ef4444'); return; }
+			if (!modal) { setDpMsg('모달 없음', '#ef4444'); return { confirmed: false, checkedUnits: [] }; }
 
             // ── 체크박스가 실제로 나타날 때까지 대기 (최대 15초) ──
             setDpMsg('기체 목록 로딩 대기 중...', '#94a3b8');
@@ -1955,7 +1968,7 @@
                 });
                 obs.observe(modal, { childList: true, subtree: true });
             });
-            if (!isReady) { setDpMsg('기체 목록 로딩 실패 (타임아웃)', '#ef4444'); return; }
+            if (!isReady) { setDpMsg('기체 목록 로딩 실패 (타임아웃)', '#ef4444'); return { confirmed: false, checkedUnits: [] }; }
 
             const reactCheck = (label) => {
 				if (!label) return false;
@@ -1965,10 +1978,9 @@
 				return true;
 			};
 
-			let ok = 0;
+			const checkedUnits = [];
 			for (let i = 0; i < units.length; i++) {
 				const name = units[i];
-				const cell = targetCells[i];
 				setDpMsg(`${name} (${i+1}/${units.length})`, '#3b82f6');
 				let clicked = false;
 
@@ -1981,11 +1993,16 @@
 					}
 				}
 
-				if (clicked) { ok++; }
-				await new Promise(r => setTimeout(r, 80)); // 30ms → 80ms로 여유 확보
+				if (clicked) checkedUnits.push(name);
+				await new Promise(r => setTimeout(r, 80));
 			}
 
-			setDpMsg(`${ok}/${units.length} 선택 완료, 시작하기 대기 중...`, '#22c55e');
+			if (!checkedUnits.length) {
+				setDpMsg('선택된 기체 없음', '#ef4444');
+				return { confirmed: false, checkedUnits: [] };
+			}
+
+			setDpMsg(`${checkedUnits.length}/${units.length} 선택 완료, 시작하기 대기 중...`, '#22c55e');
 
 			// ✅ 시작하기 버튼이 활성화될 때까지 폴링 (최대 3초)
 			const confirmBtn = await new Promise(resolve => {
@@ -1999,27 +2016,45 @@
 			if (confirmBtn) {
 				confirmBtn.click();
 				setDpMsg('완료! ✅', '#22c55e');
+				return { confirmed: true, checkedUnits };
 			} else {
 				setDpMsg('시작하기 버튼을 직접 눌러주세요', '#f59e0b');
+				return { confirmed: false, checkedUnits };
 			}
 		};
 
 		autoBtn.addEventListener('click', async () => {
-            const modal = document.querySelector('[data-qk="remote-multiple-select-robot-dialog"]');
-            if (!modal) {
-                setDpMsg('뉴비고에서 기체 선택 모달을 먼저 열어주세요', '#f59e0b');
-                return;
-            }
-			
-            const result = await githubGet();
-            if (!result || !isDataValid(result.data?.updatedAt)) {
-                setDpMsg('교대 기체 데이터가 없습니다. 로드 먼저 해주세요', '#f59e0b');
-                return;
-            }
-            const units = (result.data.units || []).slice(0, 6); // 최대 6대
-            if (!units.length) { setDpMsg('기체 데이터 없음', '#94a3b8'); return; }
-            await runAutoSelect(units, new Array(units.length).fill(null));
-        });
+			const modal = document.querySelector('[data-qk="remote-multiple-select-robot-dialog"]');
+			if (!modal) {
+				setDpMsg('뉴비고에서 기체 선택 모달을 먼저 열어주세요', '#f59e0b');
+				return;
+			}
+
+			const result = await githubGet();
+			if (!result || !isDataValid(result.data?.updatedAt)) {
+				setDpMsg('교대 기체 데이터가 없습니다. 로드 먼저 해주세요', '#f59e0b');
+				return;
+			}
+
+			const { units = [], taken = [] } = result.data;
+			const available = units.filter(u => !taken.includes(u)).slice(0, 6);
+
+			if (!available.length) {
+				setDpMsg('배정 가능한 기체가 없습니다 (전체 배정 완료)', '#94a3b8');
+				return;
+			}
+
+			const { confirmed, checkedUnits } = await runAutoSelect(available, new Array(available.length).fill(null));
+
+			if (!checkedUnits.length) return;
+
+			if (confirmed) {
+				await patchTaken(checkedUnits);
+				setDpMsg(`${checkedUnits.length}대 시작 및 서버 반영 완료`, '#22c55e');
+			} else {
+				setDpMsg(`${checkedUnits.join(', ')} 체크됨 — 시작하기 버튼을 직접 누르면 taken 반영은 되지 않습니다`, '#f59e0b');
+			}
+		});
 
 		posBtn.addEventListener('click', () => {
 			const cards = [...document.querySelectorAll(
