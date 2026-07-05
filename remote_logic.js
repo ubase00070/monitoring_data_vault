@@ -3142,6 +3142,8 @@
 
         window.openSecretOverlay = async function() {
             const SECRET_API = 'https://multimonitoring.vercel.app/api/secret';
+            const ITEMS_PER_PAGE = 5;
+            let currentPage = 1;
             const getMyEmail = () => {
                 try {
                     const lsKey = Object.keys(localStorage).find(k => k.startsWith('ph_phc_') && k.endsWith('_posthog'));
@@ -3239,7 +3241,12 @@
                 if (!posts.length) {
                     body.innerHTML = writeBtn + `<div style="text-align:center; padding:30px; color:#666; font-size:13px;">${isAdmin ? '문의가 없습니다.' : '내 문의가 없습니다. 위 버튼으로 작성하세요.'}</div>`;
                 } else {
-                    body.innerHTML = writeBtn + posts.map(p => `
+                    const totalPages = Math.max(1, Math.ceil(posts.length / ITEMS_PER_PAGE));
+                    if (currentPage > totalPages) currentPage = totalPages;
+                    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+                    const pagePosts = posts.slice(start, start + ITEMS_PER_PAGE);
+
+                    const listHtml = pagePosts.map(p => `
                         <div class="nb-secret-item" data-id="${p.id}" style="background:rgba(255,255,255,0.04); border:1px solid #333; border-radius:8px; padding:12px; margin-bottom:8px; cursor:pointer;">
                             <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
                                 <span style="font-size:13px; font-weight:600; color:#fff; flex:1;">${escapeHtml(p.title)}</span>
@@ -3248,9 +3255,25 @@
                             <div style="font-size:11px; color:#888;">${isAdmin ? escapeHtml(p.author) + ' · ' : ''}${new Date(p.createdAt).toLocaleString('ko-KR')}</div>
                         </div>
                     `).join('');
+
+                    const pagerHtml = totalPages > 1 ? `
+                        <div style="display:flex; align-items:center; justify-content:center; gap:12px; margin-top:12px;">
+                            <button id="nb-secret-prev" ${currentPage === 1 ? 'disabled' : ''} style="padding:6px 14px; background:#333; border:none; color:#fff; border-radius:6px; cursor:pointer; font-size:12px; opacity:${currentPage === 1 ? '0.4' : '1'};">이전</button>
+                            <span style="font-size:12px; color:#aaa;">${currentPage} / ${totalPages}</span>
+                            <button id="nb-secret-next" ${currentPage === totalPages ? 'disabled' : ''} style="padding:6px 14px; background:#333; border:none; color:#fff; border-radius:6px; cursor:pointer; font-size:12px; opacity:${currentPage === totalPages ? '0.4' : '1'};">다음</button>
+                        </div>
+                    ` : '';
+
+                    body.innerHTML = writeBtn + listHtml + pagerHtml;
+
                     body.querySelectorAll('.nb-secret-item').forEach(el => {
                         el.onclick = () => renderSecretDetail(posts.find(p => p.id === el.dataset.id), isAdmin);
                     });
+
+                    if (totalPages > 1) {
+                        document.getElementById('nb-secret-prev').onclick = () => { currentPage--; renderSecretList(posts, isAdmin); };
+                        document.getElementById('nb-secret-next').onclick = () => { currentPage++; renderSecretList(posts, isAdmin); };
+                    }
                 }
                 document.getElementById('nb-secret-write-btn').onclick = () => renderSecretWrite();
             }
