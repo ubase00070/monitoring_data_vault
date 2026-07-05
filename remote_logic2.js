@@ -1025,7 +1025,7 @@
 			newBadge.textContent = 'NEW';
 			newBadge.title = PATCH_NOTE_NEW_CONTENT; // 마우스 올리면 내용 미리보기(선택사항)
 			newBadge.style.cssText = `
-				position:absolute; top:-8px; right:-10px;
+				position:absolute; top:-8px; right:-4px;
 				background:#ef4444; color:#fff; font-size:9px; font-weight:bold;
 				padding:1px 4px; border-radius:8px; line-height:1.4;
 				pointer-events:none; white-space:nowrap;
