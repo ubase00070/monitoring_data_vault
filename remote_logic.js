@@ -1004,17 +1004,36 @@
         title.textContent = "뉴비고 도우미";
         title.style.cssText = "color:#3b82f6; font-size:20px; margin:0; font-weight:bold; white-space:nowrap;";
 
-        // 패치노트 버튼
+        // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
+		// 문자열을 넣으면 패치노트 버튼에 빨간 '`' 뱃지가 점멸하며 뜸.
+		// 빈 문자열('')로 비우면 뱃지가 사라짐.
+		const PATCH_NOTE_NEW_CONTENT = '260705_다중12대';
+		
         const patchBtn = document.createElement('button');
         patchBtn.textContent = '패치노트';
         patchBtn.title = '패치노트';
         patchBtn.style.cssText = `
+			position:relative;
             background:transparent; border:1px solid #555; color:#aaa;
             border-radius:6px; padding:4px 10px; cursor:pointer;
             font-size:14px; margin-left:6px; vertical-align:middle;
             transition:all 0.2s;
-            animation: neubie-blink 1.5s ease-in-out infinite;
         `;
+		
+		if (PATCH_NOTE_NEW_CONTENT.trim()) {
+			const newBadge = document.createElement('span');
+			newBadge.textContent = 'NEW';
+			newBadge.title = PATCH_NOTE_NEW_CONTENT; // 마우스 올리면 내용 미리보기(선택사항)
+			newBadge.style.cssText = `
+				position:absolute; top:-8px; right:-4px;
+				background:#ef4444; color:#fff; font-size:9px; font-weight:bold;
+				padding:1px 4px; border-radius:8px; line-height:1.4;
+				pointer-events:none; white-space:nowrap;
+				animation: neubie-blink 1.5s ease-in-out infinite;
+			`;
+			patchBtn.appendChild(newBadge);
+		}
+		
         patchBtn.onmouseenter = () => { patchBtn.style.borderColor='#3b82f6'; patchBtn.style.color='#3b82f6'; };
         patchBtn.onmouseleave = () => { patchBtn.style.borderColor='#555'; patchBtn.style.color='#aaa'; };
         patchBtn.onclick = () => {
@@ -1055,17 +1074,17 @@
                         version: 'v1.3',
                         date: '2026-07-05',
                         items: [
-							'다중관제 교대 자동 시작(6대->12대로 확장)',
+							'다중 교대 자동 시작(12대로 확장/교대 도우미사이트 사용자만)',
+							'',
                             '1:1 문의 기능(익명 가능)',
-							'뉴비고 도메인 변경 대응',
 							'다중관제 헤드 램프 ON/OFF',
-                            '임무 종료된 리센츠/엘스 페이지 이탈 시 5초 후 자동 사이드 ON 신호 전송',
+                            '임무 종료된 리센츠/엘스/한성대 페이지 이탈 시 5초 후 자동 사이드',
 							'다중관제 기체 화질 조절',
 							'불규칙 순찰 기체 모니터링 미추가 시 알림 기능',
-							'개입카드 현재 조작자 표기(본인 제외) / 상태 바 재배치(스크롤 제거)',
+							'개입카드 현재 조작자 표기 / 상태 바 재배치(스크롤 제거)',
 							'D-PAD UP/DOWN: 다음 개입 요청받기 / 자동 긴급 정지 ON OFF',
 							'D-PAD LEFT/RIGHT: 카메라 밝기 내리기/올리기',
-                            '다중관제 카메라 밝기 한 번에 조절 및 드래그로 위치 변경',
+                            '다중관제 카메라 밝기 한 번에 조절 / 카메라 위치 변경',
                         ]
                     },
                 ];
@@ -1451,7 +1470,7 @@
 				카메라 밝기 한 번에 조절<br>
 				카메라 위치 스왑<br>
 				multimonitoring.vercel.app 이용 시 교대 기체 업로드<br>
-				업로드된 교대 기체 받기(최근 20분까지만 유효) -> 자동 시작(6대까지)<br>
+				업로드된 교대 기체 받기(최근 20분까지만 유효) -> 자동 시작(12대까지)<br>
 				'뉴비고 도우미'만 이용하더라도 교대 기체 받기 가능<br>
                 `;
 
