@@ -18,124 +18,130 @@
     "rawTime": "09:00"
   },
   {
-    "user": "이환",
+    "user": "이민수",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "10:00"
   },
   {
-    "user": "최윤혁",
+    "user": "이환",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "11:00"
   },
   {
-    "user": "석승찬",
+    "user": "최윤혁",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "12:00"
   },
   {
-    "user": "박은선",
+    "user": "석승찬",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "13:00"
   },
   {
-    "user": "한승완",
+    "user": "박은선",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "14:00"
   },
   {
-    "user": "이민수",
+    "user": "한승완",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "15:00"
   },
   {
-    "user": "신은정",
+    "user": "이민수",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "16:00"
   },
   {
-    "user": "장재원",
+    "user": "신은정",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "17:00"
   },
   {
-    "user": "호덕진",
+    "user": "장재원",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "18:00"
   },
   {
-    "user": "이기완",
+    "user": "호덕진",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "19:00"
   },
   {
-    "user": "권재윤",
+    "user": "이기완",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "20:00"
   },
   {
-    "user": "김도형",
+    "user": "권재윤",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "21:00"
   },
   {
-    "user": "서형민",
+    "user": "김도형",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "22:00"
   },
   {
-    "user": "이규순",
+    "user": "서형민",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "23:00"
   },
   {
-    "user": "최선호",
+    "user": "이규순",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "00:00"
   },
   {
-    "user": "최정기",
+    "user": "최선호",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "01:00"
   },
   {
-    "user": "김소연",
+    "user": "최정기",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "02:00"
   },
   {
-    "user": "최선호",
+    "user": "김소연",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "03:00"
   },
   {
-    "user": "임아연",
+    "user": "최선호",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "04:00"
   },
   {
-    "user": "안대관",
+    "user": "임아연",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "05:00"
+  },
+  {
+    "user": "안대관",
+    "type": "monitoring",
+    "content": "다중 모니터링",
+    "rawTime": "06:00"
   },
   {
     "user": "박효선",
@@ -156,7 +162,7 @@
     "rawTime": "10:00"
   },
   {
-    "user": "이민수",
+    "user": "한승완",
     "type": "task",
     "content": "[10:30] 성수동1가 요기요 임무받기 ON",
     "rawTime": "10:30"
