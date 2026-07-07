@@ -1078,8 +1078,9 @@
                 const patchItems = [
                     {
                         version: 'v1.3',
-                        date: '2026-07-05',
+                        date: '2026-07-07',
                         items: [
+                            '실시간 날씨(기상청 데이터)',
 							'다중 자동교대 12대로 확장 / 다중페이지 기체 뜨면 ALT+Q -> 자동시작)',
 							'',
                             '1:1 문의 기능(익명 가능)',
@@ -1670,7 +1671,8 @@
 
         const weatherCard = document.createElement('div');
         weatherCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; cursor:pointer; display:flex; align-items:center;";
-        weatherCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">부천 송내 현재 날씨(기상청 데이터)</div>`;
+        weatherCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">송내 현재 날씨 (실시간 기상청)</div>`;
+        window._neubieWeatherCard = weatherCard;
         weatherCard.onclick = () => {
             const isActive = weatherCard.style.outline !== 'none' && weatherCard.style.outline !== '';
             weatherCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
@@ -3985,14 +3987,17 @@
                 `;
                 box.innerHTML = `
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-                        <span style="font-size:18px;font-weight:700;color:#4f8ef7;">부천 송내 현재 날씨(기상청 데이터)</span>
+                        <span style="font-size:18px;font-weight:700;color:#4f8ef7;">송내 현재 날씨(실시간 기상청)</span>
                         <button id="nwo-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
                     </div>
                     <div id="nwo-body" style="font-size:13px;color:#64748b;">불러오는 중...</div>
                 `;
                 overlay.appendChild(box);
                 document.body.appendChild(overlay);
-                box.querySelector('#nwo-close').onclick = () => { overlay.style.display = 'none'; };
+                box.querySelector('#nwo-close').onclick = () => {
+                    overlay.style.display = 'none';
+                    weatherCard.style.outline = 'none';
+                };
 
                 renderWeather(overlay);
             };
