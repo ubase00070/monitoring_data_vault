@@ -1676,7 +1676,12 @@
         weatherCard.onclick = () => {
             const isActive = weatherCard.style.outline !== 'none' && weatherCard.style.outline !== '';
             weatherCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
-            if (!isActive) openWeatherOverlay();
+            if (!isActive) {
+                openWeatherOverlay();
+            } else {
+                const weatherOverlay = document.getElementById('neubie-weather-overlay');
+                if (weatherOverlay) weatherOverlay.style.display = 'none';
+            }
         };
 
         bottomRow.appendChild(mapCard);      // 지도 최적화
@@ -3978,6 +3983,7 @@
                     background:transparent;
                     display:flex; align-items:flex-start; justify-content:center; padding-top:20px;
                     font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;
+                    pointer-events:none;
                 `;
                 const box = document.createElement('div');
                 box.style.cssText = `
@@ -3985,6 +3991,7 @@
                     border-radius:16px; padding:20px;
                     width:min(96vw,720px);
                     box-shadow:0 4px 40px rgba(0,0,0,0.7);
+                    pointer-events:auto;
                 `;
                 box.innerHTML = `
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
