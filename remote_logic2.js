@@ -1670,7 +1670,7 @@
 
         const weatherCard = document.createElement('div');
         weatherCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; cursor:pointer; display:flex; align-items:center;";
-        weatherCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">근무지 날씨</div>`;
+        weatherCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">부천 송내 현재 날씨</div>`;
         weatherCard.onclick = () => {
             const isActive = weatherCard.style.outline !== 'none' && weatherCard.style.outline !== '';
             weatherCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
@@ -3980,19 +3980,19 @@
                 box.style.cssText = `
                     background:#0f1117; color:#e2e8f0;
                     border-radius:16px; padding:20px;
-                    width:min(94vw,460px);
+                    width:min(96vw,720px);
                     box-shadow:0 4px 40px rgba(0,0,0,0.7);
                 `;
                 box.innerHTML = `
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-                        <span style="font-size:18px;font-weight:700;color:#4f8ef7;">근무지 날씨</span>
+                        <span style="font-size:18px;font-weight:700;color:#4f8ef7;">부천 송내 현재 날씨</span>
                         <button id="nwo-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
                     </div>
                     <div id="nwo-body" style="font-size:13px;color:#64748b;">불러오는 중...</div>
                 `;
                 overlay.appendChild(box);
                 document.body.appendChild(overlay);
-                box.querySelector('#nwo-close').onclick = closeAllPopups;
+                box.querySelector('#nwo-close').onclick = () => { overlay.style.display = 'none'; };
 
                 renderWeather(overlay);
             };
@@ -4024,12 +4024,12 @@
                         <div style="font-size:11px;color:#94a3b8;">${i === 0 ? '지금' : h.hour + '시'}</div>
                         <div style="font-size:16px;margin:4px 0;">${h.icon}</div>
                         <div style="font-size:13px;">${h.temp}°</div>
-                        ${h.pop > 0 ? `<div style="font-size:10px;color:#4f8ef7;">${h.pop}%</div>` : ''}
+                        ${h.pop > 0 ? `<div style="font-size:10px;color:#4f8ef7;">💧${h.pop}%</div>` : ''}
                     </div>`).join('');
 
                 const dailyHtml = data.daily.map(d => `
                     <div style="background:#1a1c24;border-radius:10px;padding:10px 6px;text-align:center;flex:1;">
-                        <div style="font-size:12px;color:#94a3b8;margin-bottom:4px;">${d.label}</div>
+                        <div style="font-size:12px;color:#94a3b8;margin-bottom:4px;">${formatDailyLabel(d.date)}</div>
                         <div style="font-size:18px;">${d.icon}</div>
                         <div style="font-size:13px;font-weight:700;margin-top:6px;">${d.min}° / ${d.max}°</div>
                         <div style="font-size:11px;color:${d.pop > 0 ? '#4f8ef7' : '#64748b'};margin-top:2px;">${d.pop > 0 ? '강수 ' + d.pop + '%' : '강수 없음'}</div>
@@ -4051,6 +4051,12 @@
                     </div>
                     <div style="border-top:1px solid #2e3347;padding-top:10px;display:flex;gap:8px;">${dailyHtml}</div>
                 `;
+            }
+
+            function formatDailyLabel(dateStr) {
+                const y = Number(dateStr.slice(0, 4)), m = Number(dateStr.slice(4, 6)), d = Number(dateStr.slice(6, 8));
+                const dow = ['일', '월', '화', '수', '목', '금', '토'][new Date(y, m - 1, d).getDay()];
+                return `${m}/${d}(${dow})`;
             }
 
             async function fetchWeatherReal() {
