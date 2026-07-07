@@ -2528,7 +2528,7 @@
 				top: r.top + 'px',
 				left: r.left + 'px',
 				width: r.width + 'px',
-				height: r.height + 'px',
+				height: (r.height + 80) + 'px',
 				zIndex: '1000001', display: 'flex',
 				alignItems: 'center', justifyContent: 'center',
 				backgroundImage: `url(${BG_IMG})`,
@@ -2547,7 +2547,10 @@
 					<button id="nb-write-btn" style="height:28px; padding:0 12px; font-size:12px; font-weight:500; background:#6366f1; color:white; border:none; border-radius:6px; cursor:pointer;">✏️ 글쓰기</button>
                     <button id="nb-board-close" style="background:rgba(255,255,255,0.1); border:none; color:#fff; width:26px; height:26px; border-radius:50%; cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center;">✕</button>
                 </div>
-                <div style="padding:8px 16px; display:flex; gap:8px; border-bottom:0.5px solid rgba(255,255,255,0.1);">
+
+                <div id="nb-screen-list" style="flex:1; overflow-y:auto; padding:4px 0;"></div>
+
+                <div style="padding:8px 16px; display:flex; gap:8px; border-top:0.5px solid rgba(255,255,255,0.1);">
                     <select id="nb-search-type" style="height:28px; font-size:12px; padding:0 6px; border-radius:6px; border:0.5px solid rgba(255,255,255,0.2); background:#1e1e3a; color:#e2e8f0; outline:none;">
                         <option value="all">전체</option>
                         <option value="title">제목</option>
@@ -2555,8 +2558,6 @@
                     </select>
                     <input id="nb-search-input" type="text" placeholder="검색..." style="flex:1; height:28px; font-size:12px; padding:0 10px; border-radius:6px; border:0.5px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.1); color:#fff; outline:none;">
                 </div>
-
-                <div id="nb-screen-list" style="flex:1; overflow-y:auto; padding:4px 0;"></div>
 
                 <div id="nb-screen-detail" style="display:none; flex:1; overflow-y:auto; flex-direction:column;">
                     <div style="padding:10px 16px; border-bottom:0.5px solid rgba(255,255,255,0.1); display:flex; align-items:center; gap:8px;">
@@ -2701,13 +2702,13 @@
                 const isPaged = posts === allPosts; // 검색 중엔 페이지네이션 숨김
 
                 el.innerHTML = paged.map(p => `
-                    <div onclick="window._nbOpenPost('${p.id}')" style="display:flex; align-items:center; gap:10px; padding:10px 16px; border-bottom:0.5px solid rgba(255,255,255,0.07); cursor:pointer; transition:background 0.12s;" onmouseenter="this.style.background='rgba(255,255,255,0.06)'" onmouseleave="this.style.background='transparent'">
-                        <div style="width:30px; height:30px; border-radius:50%; background:rgba(99,102,241,0.3); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:600; color:#a5b4fc; flex-shrink:0;">${initials(p.author)}</div>
-                        <div style="flex:1; min-width:0;">
-                            <div style="font-size:13px; font-weight:500; color:#f1f5f9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${p.title}</div>
-                            <div style="font-size:11px; color:rgba(255,255,255,0.45); margin-top:2px;">${p.author} · ${formatDate(p.createdAt)}</div>
+                    <div onclick="window._nbOpenPost('${p.id}')" style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 16px; border-bottom:0.5px solid rgba(255,255,255,0.07); cursor:pointer; transition:background 0.12s;" onmouseenter="this.style.background='rgba(255,255,255,0.06)'" onmouseleave="this.style.background='transparent'">
+                        <div style="font-size:13px; font-weight:500; color:#f1f5f9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; min-width:0;">${p.title}</div>
+                        <div style="font-size:11px; color:rgba(255,255,255,0.45); white-space:nowrap; flex-shrink:0; display:flex; align-items:center; gap:6px;">
+                            <span>${p.author}</span>
+                            <span>${formatDate(p.createdAt)}</span>
+                            ${(p.commentCount||0) > 0 ? `<span style="color:#a5b4fc;">💬 ${p.commentCount}</span>` : ''}
                         </div>
-                        ${(p.commentCount||0) > 0 ? `<span style="font-size:11px; color:#a5b4fc; background:rgba(99,102,241,0.2); padding:2px 7px; border-radius:10px; white-space:nowrap;">💬 ${p.commentCount}</span>` : ''}
                     </div>
                 `).join('');
 
@@ -4110,7 +4111,7 @@
                                 </div>
                             </div>
                             <button id="rc-spin" style="width:100%;padding:8px;background:#4f8ef7;border:none;color:#0f1117;font-weight:700;border-radius:8px;cursor:pointer;font-size:13px;">돌리기</button>
-                            <button id="rc-copy-img" style="display:none;width:100%;margin-top:8px;padding:6px;background:#252525;border:1px solid #333;color:#e2e8f0;border-radius:8px;cursor:pointer;font-size:12px;">📋 결과 이미지 복사</button>
+                            <button id="rc-copy-img" style="visibility:hidden;width:100%;margin-top:8px;padding:6px;background:#252525;border:1px solid #333;color:#e2e8f0;border-radius:8px;cursor:pointer;font-size:12px;">📋 결과 이미지 복사</button>
                         </div>
                         <div style="background:#1a1c24;border-radius:12px;padding:14px;display:flex;flex-direction:column;align-items:center;height:100%;box-sizing:border-box;">
                             <div style="font-size:14px;font-weight:700;margin-bottom:12px;color:#94a3b8;align-self:flex-start;">동전 던지기</div>
@@ -4270,7 +4271,7 @@
                     if (rcSpinning || rcItems.length === 0) return;
                     rcSpinning = true;
                     rcSetControlsDisabled(true);
-                    box.querySelector('#rc-copy-img').style.display = 'none';
+                    box.querySelector('#rc-copy-img').style.visibility = 'hidden';
                     const n = rcItems.length;
                     const sliceDeg = 360 / n;
                     const targetIndex = Math.floor(Math.random() * n);
@@ -4293,7 +4294,7 @@
                         setTimeout(() => { pointer.style.transform = 'translateX(-50%) rotate(0deg)'; }, 220);
                         badge.textContent = '당첨: ' + rcItems[targetIndex];
                         badge.style.display = 'inline-block';
-                        box.querySelector('#rc-copy-img').style.display = 'block';
+                        box.querySelector('#rc-copy-img').style.visibility = 'visible';
                         rcSpinning = false;
                         rcSetControlsDisabled(false);
                     }, 5050);
