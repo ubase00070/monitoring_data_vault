@@ -1209,7 +1209,7 @@
         themeBtn.onclick = () => {
             const next = nbThemeName === 'light' ? 'dark' : 'light';
             localStorage.setItem('neubie_theme', next);
-            ['neubie-weather-overlay', 'neubie-roulette-overlay', 'neubie-tips-overlay', 'neubie-patch-overlay', 'neubie-secret-overlay'].forEach(id => {
+            ['neubie-weather-overlay', 'neubie-roulette-overlay', 'neubie-tips-overlay', 'neubie-patch-overlay', 'neubie-secret-overlay', 'neubie-map-info-overlay', 'neubie-queue-info-overlay'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.remove();
             });
