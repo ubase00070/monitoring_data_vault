@@ -51,6 +51,8 @@
         proxyUrl: 'https://multimonitoring.vercel.app/api/weather'
     };
 
+	fetch(WEATHER_CONFIG.proxyUrl).catch(() => {});
+	
     // 기체 네이밍 매핑 데이터
     const ROBOT_MAP = {
         "20": { site: "송도 요기요", unit: "#013" }, // 1호기
