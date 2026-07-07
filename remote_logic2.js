@@ -2719,7 +2719,7 @@
                 const isPaged = posts === allPosts; // 검색 중엔 페이지네이션 숨김
 
                 el.innerHTML = paged.map(p => `
-                    <div onclick="window._nbOpenPost('${p.id}')" style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px 16px; border-bottom:0.5px solid rgba(255,255,255,0.07); cursor:pointer; transition:background 0.12s;" onmouseenter="this.style.background='rgba(255,255,255,0.06)'" onmouseleave="this.style.background='transparent'">
+                    <div onclick="window._nbOpenPost('${p.id}')" style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 16px; border-bottom:0.5px solid rgba(255,255,255,0.07); cursor:pointer; transition:background 0.12s;" onmouseenter="this.style.background='rgba(255,255,255,0.06)'" onmouseleave="this.style.background='transparent'">
                         <div style="font-size:13px; font-weight:500; color:#f1f5f9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; min-width:0;">${p.title}</div>
                         <div style="font-size:11px; color:rgba(255,255,255,0.45); white-space:nowrap; flex-shrink:0; display:flex; align-items:center; gap:6px;">
                             <span>${p.author}</span>
