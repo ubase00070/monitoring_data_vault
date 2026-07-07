@@ -1080,9 +1080,9 @@
                 const patchItems = [
                     {
                         version: 'v1.3',
-                        date: '2026-07-07',
+                        date: '2026-07-08',
                         items: [
-                            '실시간 날씨(기상청 데이터)',
+                            '실시간 날씨(기상청 데이터), 룰렛&동전 기능',
 							'다중 자동교대 12대로 확장 / 다중페이지 기체 뜨면 ALT+Q -> 자동시작)',
 							'',
                             '1:1 문의 기능(익명 가능)',
@@ -2659,7 +2659,7 @@
                 document.getElementById('nb-screen-list').style.display = 'block';
                 document.getElementById('nb-screen-detail').style.display = 'none';
                 document.getElementById('nb-screen-write').style.display = 'none';
-                renderList(allPosts, true)
+                renderList(allPosts, false)
             }
 
             function showWriteScreen() {
@@ -4097,18 +4097,21 @@
         중식
         일식</textarea>
                             <button id="rc-build" style="width:100%;margin-top:6px;padding:6px;background:#252525;border:1px solid #333;color:#e2e8f0;border-radius:8px;cursor:pointer;font-size:12px;">룰렛 만들기 (엔터로 구분)</button>
-                            <div style="position:relative;width:190px;height:190px;margin:16px auto 6px;">
-                                <div id="rc-pointer" style="position:absolute;top:-4px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:13px solid #e2e8f0;z-index:3;transition:transform .15s ease;"></div>
-                                <div id="rc-wheel-wrap" style="position:relative;width:190px;height:190px;transition:transform 5s cubic-bezier(.13,.72,.1,1);">
-                                    <canvas id="rc-canvas" width="190" height="190" style="display:block;position:relative;z-index:1;"></canvas>
-                                    <div id="rc-labels" style="position:absolute;inset:0;z-index:2;pointer-events:none;"></div>
+                            <div id="rc-capture-area" style="background:#0f1117;border-radius:12px;padding:8px 0;">
+                                <div style="position:relative;width:190px;height:190px;margin:16px auto 6px;">
+                                    <div id="rc-pointer" style="position:absolute;top:-4px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:13px solid #e2e8f0;z-index:3;transition:transform .15s ease;"></div>
+                                    <div id="rc-wheel-wrap" style="position:relative;width:190px;height:190px;transition:transform 5s cubic-bezier(.13,.72,.1,1);">
+                                        <canvas id="rc-canvas" width="190" height="190" style="display:block;position:relative;z-index:1;pointer-events:none;"></canvas>
+                                        <div id="rc-labels" style="position:absolute;inset:0;z-index:2;pointer-events:none;"></div>
+                                    </div>
+                                    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:30px;height:30px;border-radius:50%;background:#1a1c24;border:2px solid #0f1117;z-index:3;"></div>
                                 </div>
-                                <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:30px;height:30px;border-radius:50%;background:#1a1c24;border:2px solid #0f1117;z-index:3;"></div>
+                                <div style="text-align:center;min-height:28px;margin-top:8px;">
+                                    <span id="rc-result" style="display:none;font-size:12px;font-weight:700;padding:4px 12px;border-radius:999px;background:#1e3a5f;color:#4f8ef7;"></span>
+                                </div>
                             </div>
                             <button id="rc-spin" style="width:100%;padding:8px;background:#4f8ef7;border:none;color:#0f1117;font-weight:700;border-radius:8px;cursor:pointer;font-size:13px;">돌리기</button>
-                            <div style="text-align:center;min-height:28px;margin-top:8px;">
-                                <span id="rc-result" style="display:none;font-size:12px;font-weight:700;padding:4px 12px;border-radius:999px;background:#1e3a5f;color:#4f8ef7;"></span>
-                            </div>
+                            <button id="rc-copy-img" style="display:none;width:100%;margin-top:8px;padding:6px;background:#252525;border:1px solid #333;color:#e2e8f0;border-radius:8px;cursor:pointer;font-size:12px;">📋 결과 이미지 복사</button>
                         </div>
                         <div style="background:#1a1c24;border-radius:12px;padding:14px;display:flex;flex-direction:column;align-items:center;">
                             <div style="font-size:14px;font-weight:700;margin-bottom:12px;color:#94a3b8;align-self:flex-start;">동전 던지기</div>
@@ -4215,6 +4218,36 @@
                     box.querySelector('#rc-input').disabled = disabled;
                 }
 
+                function rcLoadHtml2Canvas() {
+                    return new Promise((resolve, reject) => {
+                        if (window.html2canvas) return resolve();
+                        const s = document.createElement('script');
+                        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+                        s.onload = () => resolve();
+                        s.onerror = reject;
+                        document.head.appendChild(s);
+                    });
+                }
+
+                box.querySelector('#rc-copy-img').onclick = async () => {
+                    const btn = box.querySelector('#rc-copy-img');
+                    const original = btn.textContent;
+                    btn.textContent = '캡처 중...';
+                    btn.disabled = true;
+                    try {
+                        await rcLoadHtml2Canvas();
+                        const target = box.querySelector('#rc-capture-area');
+                        const blobPromise = window.html2canvas(target, { backgroundColor: '#0f1117' })
+                            .then(canvas => new Promise(resolve => canvas.toBlob(resolve, 'image/png')));
+                        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blobPromise })]);
+                        btn.textContent = '복사됨!';
+                    } catch (e) {
+                        console.error(e);
+                        btn.textContent = '복사 실패';
+                    }
+                    setTimeout(() => { btn.textContent = original; btn.disabled = false; }, 1500);
+                };
+
                 function rcLoadCategory(cat, fallback) {
                     rcCategory = cat;
                     rcSetActiveButton(cat);
@@ -4233,6 +4266,7 @@
                     if (rcSpinning || rcItems.length === 0) return;
                     rcSpinning = true;
                     rcSetControlsDisabled(true);
+                    box.querySelector('#rc-copy-img').style.display = 'none';
                     const n = rcItems.length;
                     const sliceDeg = 360 / n;
                     const targetIndex = Math.floor(Math.random() * n);
@@ -4255,6 +4289,7 @@
                         setTimeout(() => { pointer.style.transform = 'translateX(-50%) rotate(0deg)'; }, 220);
                         badge.textContent = '당첨: ' + rcItems[targetIndex];
                         badge.style.display = 'inline-block';
+                        box.querySelector('#rc-copy-img').style.display = 'block';
                         rcSpinning = false;
                         rcSetControlsDisabled(false);
                     }, 5050);
