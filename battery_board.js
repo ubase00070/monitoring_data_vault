@@ -360,6 +360,18 @@
         .bb-ap-item:hover .bb-ap-dismiss { display:block; }
         .bb-ap-empty { padding:28px 16px; text-align:center; font-size:14px; color:#8890b8; font-weight:700; background:#0a0a0c; border-radius:0 0 12px 12px; }
 
+        #bb-alert-panel.bb-light { background:var(--sur); }
+		#bb-alert-panel.bb-light .bb-ap-hd { background:var(--sur); border-bottom-color:var(--bd); }
+		#bb-alert-panel.bb-light .bb-ap-title { color:var(--tx); }
+		#bb-alert-panel.bb-light .bb-ap-close { color:#b91c1c; }
+		#bb-alert-panel.bb-light .bb-ap-item { background:var(--sur); border-bottom-color:var(--bd); }
+		#bb-alert-panel.bb-light .bb-ap-item:hover { background:var(--sur2); }
+		#bb-alert-panel.bb-light .bb-ap-name { color:var(--tx); }
+		#bb-alert-panel.bb-light .bb-ap-desc { color:var(--tx); }
+		#bb-alert-panel.bb-light .bb-ap-time { color:var(--mu); }
+		#bb-alert-panel.bb-light .bb-ap-dismiss { background:var(--sur2); border-color:var(--bd2); color:var(--tx); }
+		#bb-alert-panel.bb-light .bb-ap-empty { background:var(--sur); color:var(--mu); }
+
         /* ── 사용 설명서 패널 ── */
         #bb-info-panel {
             display:none; position:absolute; top:0; left:0; right:0; bottom:0;
@@ -552,6 +564,7 @@
     const applyBbTheme = () => {
         const theme = localStorage.getItem('neubie_bb_theme') || 'light';
         bbEl.classList.toggle('bb-light', theme === 'light');
+        document.getElementById('bb-alert-panel').classList.toggle('bb-light', theme === 'light');
         document.getElementById('bb-theme-btn').textContent = theme === 'light' ? '라이트' : '다크';
     };
     applyBbTheme();
