@@ -60,7 +60,7 @@
     };
 
     function getNbTheme() {
-        return NB_THEMES[localStorage.getItem('neubie_theme') || 'light'];
+        return NB_THEMES[localStorage.getItem('neubie_theme') || 'dark'];
     }
 
     fetch(WEATHER_CONFIG.proxyUrl).catch(() => {});
@@ -1022,7 +1022,7 @@
        ============================================================ */
     function renderDashboard() {
         dashboard.innerHTML = '';
-        const nbThemeName = localStorage.getItem('neubie_theme') || 'light';
+        const nbThemeName = localStorage.getItem('neubie_theme') || 'dark';
         const T = getNbTheme();
         dashboard.style.backgroundColor = T.bg;
         dashboard.style.color = T.text;
