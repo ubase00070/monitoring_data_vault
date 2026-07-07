@@ -22,6 +22,13 @@
 			--or:#f97316; --or2:rgba(249,115,22,.12);
 			--pk:#ec4899; --pk2:rgba(236,72,153,.10);
 		}
+
+        #bb.bb-light {
+			--bg:#ece5d4; --sur:#f7f2e6; --sur2:#f0ead9;
+			--bd:#d9cdb0; --bd2:#c9bc99; --tx:#2b2418; --mu:#8a7f68;
+			--wh:rgba(0,0,0,.04);
+		}
+
         #bb-wrap * { box-sizing:border-box; }
 
         /* ── 메인 패널 ── */
@@ -446,6 +453,7 @@
                     <div class="bb-ref" id="bb-ref">— 초 후 갱신</div>
                 </div>
                 <div class="bb-hd-right">
+                    <button id="bb-theme-btn" class="bb-btn">다크</button>
                     <button id="bb-backup-btn" class="bb-btn">백업</button>
                     <button id="bb-restore-btn" class="bb-btn">복원</button>
                     <button class="bb-btn rm" id="bb-rmbtn">제거</button>
@@ -530,6 +538,19 @@
         </div>
     `;
     document.body.appendChild(wrap);
+
+    const bbEl = document.getElementById('bb');
+    const applyBbTheme = () => {
+        const theme = localStorage.getItem('neubie_theme') || 'dark';
+        bbEl.classList.toggle('bb-light', theme === 'light');
+        document.getElementById('bb-theme-btn').textContent = theme === 'light' ? '라이트' : '다크';
+    };
+    applyBbTheme();
+    document.getElementById('bb-theme-btn').addEventListener('click', () => {
+        const next = (localStorage.getItem('neubie_theme') || 'dark') === 'light' ? 'dark' : 'light';
+        localStorage.setItem('neubie_theme', next);
+        applyBbTheme();
+    });
 
     // ============================================================
     // SECTION 1. 상수 & 상태
