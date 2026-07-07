@@ -1670,7 +1670,7 @@
 
         const weatherCard = document.createElement('div');
         weatherCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; cursor:pointer; display:flex; align-items:center;";
-        weatherCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">부천 송내 현재 날씨</div>`;
+        weatherCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">부천 송내 현재 날씨(기상청 데이터)</div>`;
         weatherCard.onclick = () => {
             const isActive = weatherCard.style.outline !== 'none' && weatherCard.style.outline !== '';
             weatherCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
@@ -3985,7 +3985,7 @@
                 `;
                 box.innerHTML = `
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-                        <span style="font-size:18px;font-weight:700;color:#4f8ef7;">부천 송내 현재 날씨</span>
+                        <span style="font-size:18px;font-weight:700;color:#4f8ef7;">부천 송내 현재 날씨(기상청 데이터)</span>
                         <button id="nwo-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
                     </div>
                     <div id="nwo-body" style="font-size:13px;color:#64748b;">불러오는 중...</div>
@@ -3997,30 +3997,12 @@
                 renderWeather(overlay);
             };
 
-            // TODO: WEATHER_CONFIG.proxyUrl 준비되면 fetch(WEATHER_CONFIG.proxyUrl)로 교체
-            function fetchWeatherMock() {
-                const sky = ['☀️','🌤️','☁️','🌧️'];
-                const now = new Date();
-                const hourly = Array.from({length: 12}, (_, i) => ({
-                    hour: (now.getHours() + i) % 24,
-                    temp: 22 - Math.floor(i / 2),
-                    icon: sky[i % sky.length],
-                    pop: i === 2 || i === 3 ? 60 : 0
-                }));
-                const daily = [
-                    { label: '내일', min: 18, max: 26, icon: '🌧️', pop: 40 },
-                    { label: '모레', min: 17, max: 24, icon: '☀️', pop: 0 },
-                    { label: '글피', min: 16, max: 23, icon: '☁️', pop: 10 }
-                ];
-                return { updatedAt: now, current: hourly[0], hourly, daily };
-            }
-
             async function renderWeather(overlay) {
                 const data = await fetchWeatherReal(); // TODO: 실제 API 연결 시 await fetch(...)
                 const body = overlay.querySelector('#nwo-body');
 
                 const hourlyHtml = data.hourly.map((h, i) => `
-                    <div style="flex:0 0 auto;width:48px;text-align:center;padding:6px 0;${i < 6 ? 'opacity:1;' : 'opacity:0.65;'}${i === 0 ? 'background:#1e3a5f;border-radius:8px;' : ''}">
+                    <div style="flex:1;min-width:0;text-align:center;padding:6px 0;${i < 6 ? 'opacity:1;' : 'opacity:0.65;'}${i === 0 ? 'background:#1e3a5f;border-radius:8px;' : ''}">
                         <div style="font-size:11px;color:#94a3b8;">${i === 0 ? '지금' : h.hour + '시'}</div>
                         <div style="font-size:16px;margin:4px 0;">${h.icon}</div>
                         <div style="font-size:13px;">${h.temp}°</div>
@@ -4043,7 +4025,7 @@
                             <div style="font-size:11px;color:#64748b;">${data.updatedAt.toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'})} 기준</div>
                         </div>
                     </div>
-                    <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:10px;">${hourlyHtml}</div>
+                    <div style="display:flex;gap:4px;margin-bottom:10px;">${hourlyHtml}</div>
                     <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;">
                         <span style="font-size:10px;color:#64748b;">0~6h 정밀</span>
                         <div style="flex:1;height:1px;background:#2e3347;"></div>
