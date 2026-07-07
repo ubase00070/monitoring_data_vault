@@ -45,6 +45,9 @@
         sheetId: "1tLo6Xeq6KJx6zW-fcw8H38jdjxyS2yre5oWY7cxky70"
     };
 
+    // 오프라인 모드 — true로 바꾸면 이 도구의 NCC 외부 통신이 즉시 차단됩니다.
+    const OFFLINE_MODE = false;
+
     // 날씨 위젯 설정 (근무지: 뉴코아중동백화점 기준 격자좌표)
     const WEATHER_CONFIG = {
         nx: 57, ny: 126,
@@ -246,6 +249,10 @@
     const originalFetch = window.fetch;
     window.fetch = async (...args) => {
         const url = typeof args[0] === 'string' ? args[0] : args[0].url;
+        // 오프라인 모드: NCC(core.neubie.ai) API 호출만 차단. 본인 인프라(Vercel/GitHub)는 그대로 통과.
+        if (OFFLINE_MODE && url && url.includes('core.neubie.ai')) {
+            throw new Error('오프라인 모드: NCC API 요청이 차단되었습니다.');
+        }
         // 최적화 대상 URL 감지
         if (state.isMapOpt && url && (url.includes('nodes?') || url.includes('sites?') || url.includes('paths?'))) {
             // 데이터를 빈 배열로 반환하여 렌더링 방지
@@ -1010,7 +1017,7 @@
         headerContainer.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; padding-right:5px;";
 
         const title = document.createElement('h2');
-        title.textContent = "뉴비고 도우미";
+        title.textContent = OFFLINE_MODE ? "오프라인 모드" : "뉴비고 도우미";
         title.style.cssText = "color:#3b82f6; font-size:20px; margin:0; font-weight:bold; white-space:nowrap;";
 
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
