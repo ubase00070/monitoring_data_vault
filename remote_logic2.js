@@ -4083,16 +4083,17 @@
                     </div>
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
                         <div style="background:#1a1c24;border-radius:12px;padding:14px;">
-                            <div style="font-size:14px;font-weight:700;margin-bottom:8px;color:#94a3b8;">룰렛</div>
-                            <div style="display:flex;gap:6px;margin-bottom:8px;">
-                                <button id="rc-preset-lunch" style="font-size:11px;padding:4px 8px;background:#252525;border:1px solid #333;color:#e2e8f0;border-radius:6px;cursor:pointer;">점심 메뉴</button>
-                                <button id="rc-preset-people" style="font-size:11px;padding:4px 8px;background:#252525;border:1px solid #333;color:#e2e8f0;border-radius:6px;cursor:pointer;">사람 이름</button>
-                                <button id="rc-preset-etc" style="font-size:11px;padding:4px 8px;background:#252525;border:1px solid #333;color:#e2e8f0;border-radius:6px;cursor:pointer;">기타</button>
+                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                                <span style="font-size:14px;font-weight:700;color:#94a3b8;">룰렛</span>
+                                <div style="display:flex;gap:6px;">
+                                    <button id="rc-preset-lunch" style="font-size:11px;padding:4px 8px;background:#252525;border:1px solid #333;color:#e2e8f0;border-radius:6px;cursor:pointer;">점심 메뉴</button>
+                                    <button id="rc-preset-people" style="font-size:11px;padding:4px 8px;background:#252525;border:1px solid #333;color:#e2e8f0;border-radius:6px;cursor:pointer;">사람 이름</button>
+                                    <button id="rc-preset-etc" style="font-size:11px;padding:4px 8px;background:#252525;border:1px solid #333;color:#e2e8f0;border-radius:6px;cursor:pointer;">기타</button>
+                                </div>
                             </div>
-                            <textarea id="rc-input" rows="3" style="width:100%;box-sizing:border-box;resize:none;font-size:12px;background:#111319;color:#e2e8f0;border:1px solid #333;border-radius:8px;padding:6px 8px;">김밥천국
-        한솥도시락
-        마라탕
-        돈까스</textarea>
+                            <textarea id="rc-input" rows="6" style="width:100%;box-sizing:border-box;resize:none;font-size:12px;background:#111319;color:#e2e8f0;border:1px solid #333;border-radius:8px;padding:6px 8px;">한식
+        중식
+        일식</textarea>
                             <button id="rc-build" style="width:100%;margin-top:6px;padding:6px;background:#252525;border:1px solid #333;color:#e2e8f0;border-radius:8px;cursor:pointer;font-size:12px;">룰렛 만들기</button>
                             <div style="position:relative;width:190px;height:190px;margin:16px auto 6px;">
                                 <div id="rc-pointer" style="position:absolute;top:-4px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:13px solid #e2e8f0;z-index:3;transition:transform .15s ease;"></div>
@@ -4107,7 +4108,7 @@
                         <div style="background:#1a1c24;border-radius:12px;padding:14px;display:flex;flex-direction:column;align-items:center;">
                             <div style="font-size:14px;font-weight:700;margin-bottom:12px;color:#94a3b8;align-self:flex-start;">동전 던지기</div>
                             <div style="width:100px;height:100px;perspective:700px;margin:20px 0 22px;">
-                                <div id="rc-coin" style="width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform 1.9s cubic-bezier(.17,.67,.2,1);">
+                                <div id="rc-coin" style="width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform 2.6s cubic-bezier(.17,.67,.2,1);">
                                     <div style="position:absolute;inset:0;border-radius:50%;background:#3a2a10;border:3px solid #f59e0b;display:flex;align-items:center;justify-content:center;backface-visibility:hidden;">
                                         <div style="width:80%;height:80%;border-radius:50%;border:1.5px dashed #f59e0b;display:flex;align-items:center;justify-content:center;">
                                             <span style="font-size:20px;font-weight:700;color:#fbbf24;">앞</span>
@@ -4228,7 +4229,7 @@
                         badge.style.background = isHeads ? '#3a2a10' : '#12233b';
                         badge.style.color = isHeads ? '#fbbf24' : '#4f8ef7';
                         badge.style.display = 'inline-block';
-                    }, 1950);
+                    }, 2650);
                 };
             };
 
