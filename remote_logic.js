@@ -45,6 +45,26 @@
         sheetId: "1tLo6Xeq6KJx6zW-fcw8H38jdjxyS2yre5oWY7cxky70"
     };
 
+    // 오프라인 모드 — true로 바꾸면 이 도구의 NCC 외부 통신이 즉시 차단됩니다.
+    const OFFLINE_MODE = false;
+
+    // 날씨 위젯 설정 (근무지: 뉴코아중동백화점 기준 격자좌표)
+    const WEATHER_CONFIG = {
+        nx: 57, ny: 126,
+        proxyUrl: 'https://multimonitoring.vercel.app/api/weather'
+    };
+
+    const NB_THEMES = {
+        light: { bg: '#ece5d4', card: '#f7f2e6', border: '#d9cdb0', text: '#2b2418', accent: '#1e3a5f', purple: '#7c3aed' },
+        dark:  { bg: '#111111', card: '#252525', border: '#333333', text: '#e2e8f0', accent: '#3b82f6', purple: '#c4b5fd' }
+    };
+
+    function getNbTheme() {
+        return NB_THEMES[localStorage.getItem('neubie_theme') || 'dark'];
+    }
+
+    fetch(WEATHER_CONFIG.proxyUrl).catch(() => {});
+
     // 기체 네이밍 매핑 데이터
     const ROBOT_MAP = {
         "20": { site: "송도 요기요", unit: "#013" }, // 1호기
@@ -238,6 +258,10 @@
     const originalFetch = window.fetch;
     window.fetch = async (...args) => {
         const url = typeof args[0] === 'string' ? args[0] : args[0].url;
+        // 오프라인 모드: NCC(core.neubie.ai) API 호출만 차단. 본인 인프라(Vercel/GitHub)는 그대로 통과.
+        if (OFFLINE_MODE && url && url.includes('core.neubie.ai')) {
+            throw new Error('오프라인 모드: NCC API 요청이 차단되었습니다.');
+        }
         // 최적화 대상 URL 감지
         if (state.isMapOpt && url && (url.includes('nodes?') || url.includes('sites?') || url.includes('paths?'))) {
             // 데이터를 빈 배열로 반환하여 렌더링 방지
@@ -453,12 +477,17 @@
     let _batteryInitialized = false;
 
     function buildBatteryShell() {
+        const T = getNbTheme();
+        batteryPopup.style.backgroundColor = T.bg;
+        batteryPopup.style.backgroundImage = `linear-gradient(${T.bg}, ${T.bg}), linear-gradient(135deg, #6366f1, #ec4899)`;
+        batteryPopup.style.color = T.text;
+
         batteryPopup.innerHTML = '';
         const header = document.createElement('div');
-        header.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #333333; padding-bottom:10px;";
+        header.style.cssText = `display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid ${T.border}; padding-bottom:10px;`;
         const titleB = document.createElement('b');
-        titleB.textContent = "실시간 성남 배터리";
-        titleB.style.cssText = "color:#eee; font-size:18px;";
+        titleB.textContent = "🔋 실시간 성남 배터리 현황";
+        titleB.style.cssText = `color:${T.text}; font-size:18px;`;
         const copyBtn = document.createElement('button');
         copyBtn.textContent = '복사';
         Object.assign(copyBtn.style, {
@@ -484,7 +513,7 @@
                 display:flex;
                 justify-content:space-between;
                 align-items:center;
-                background:rgba(255,255,255,0.05);
+                background:${T.bg === '#111111' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)'};
                 padding:15px 20px;
                 border-radius:12px;
                 margin-bottom:10px;
@@ -753,6 +782,7 @@
     SECTION 4-3. UI 렌더링 및 07시 기준 정렬/알림 제어
    ============================================================ */
     function renderTaskList(tasks) {
+        const T = getNbTheme();
         const currentInt = localStorage.getItem('neubie_remind_int') || '0';
 
         function getTaskStatus(rawTime) {
@@ -816,7 +846,7 @@
                 : getTaskStatus(timeKey, isMon);
             const textStyle = status.isExpired 
                 ? 'text-decoration: line-through; color: #777; opacity: 0.7;' 
-                : 'color: #eee;';
+                : `color: ${T.text};`;
             
             item.style.cssText = `
                 background:${status.isExpired ? 'rgba(60, 60, 60, 0.1)' : (isMon ? 'rgba(59, 130, 246, 0.15)' : 'rgba(251, 191, 36, 0.15)')};
@@ -899,9 +929,10 @@
        ============================================================ */
     function createNamingCard() {
         const isWknd = isWeekend();
+        const T = getNbTheme();
         const card = document.createElement('div');
         card.id = 'namingSection';
-        card.style.cssText = 'background:#252525; padding:10px 15px; border-radius:15px; border:1px solid #333333; margin-top:5px;';
+        card.style.cssText = `background:${T.card}; padding:10px 15px; border-radius:15px; border:1px solid ${T.border}; margin-top:5px;`;
 
         const history = JSON.parse(localStorage.getItem('neubie_robot_history') || '[]');
         let dropdownOptions = history.map(h => {
@@ -924,17 +955,18 @@
         };
 
         card.innerHTML = `
-            <div style="color:#3b82f6; font-weight:bold; font-size:18px; margin-bottom:10px;">영상 파일명 생성기</div>
-            <div style="display: flex; gap: 5px; margin-bottom: 10px;">
-                <select id="robotSelector" style="flex: 1.2; background: #333; color: white; border: 1px solid #555; border-radius: 4px; font-size: 15px; padding: 4px;">
-                    ${dropdownOptions || '<option>최근 배달 기체 미감지</option>'}
-                </select>
-                <input type="text" id="taskInput" placeholder="주문번호를 붙여넣으세요." style="flex: 0 1 160px; background: #333; color: white; border: 1px solid #555; padding: 4px; border-radius: 4px; font-size: 15px;">
-                <span style="width: 70px; flex-shrink: 0; display: inline-flex;">
-                    <button id="copyFileName" style="background: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 15px; width: 100%; white-space: nowrap; overflow: hidden;">복사</button>
-                </span>
-            </div>
-            <div style="display: flex; gap: 5px; flex-wrap: nowrap;">
+            <div style="color:${T.accent}; font-weight:bold; font-size:18px; margin-bottom:10px;">🏷️ 영상 파일명 생성기</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px 5px; margin-bottom: 10px;">
+                <div style="position: relative; min-width: 0;">
+                    <select id="robotSelector" style="width: 100%; background: #333; color: white; border: 1px solid #555; border-radius: 4px; font-size: 15px; padding: 0 20px 0 8px; height: 32px; line-height: 32px; box-sizing: border-box; appearance: none; -webkit-appearance: none; -moz-appearance: none;">
+                        ${dropdownOptions || '<option>최근 배달 기체 미감지</option>'}
+                    </select>
+                    <span style="position: absolute; right: 6px; top: 50%; transform: translateY(-50%); pointer-events: none; color: #aaa; font-size: 11px;">▾</span>
+                </div>
+                <div style="display: flex; gap: 5px; min-width: 0;">
+                    <input type="text" id="taskInput" placeholder="주문번호를 붙여넣으세요." style="flex: 1; min-width: 0; background: #333; color: white; border: 1px solid #555; padding: 0 8px; border-radius: 4px; font-size: 15px; height: 32px; line-height: 32px; box-sizing: border-box;">
+                    <button id="copyFileName" style="width: 70px; flex-shrink: 0; background: #007bff; color: white; border: none; padding: 0 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 15px; white-space: nowrap; overflow: hidden; height: 32px; line-height: 32px; box-sizing: border-box;">복사</button>
+                </div>
                 <button id="btnMulti" class="sub-btn">다중 모니터링</button>
                 <button id="btnCombined" class="sub-btn">배송/순찰 띠띠</button>
             </div>
@@ -943,7 +975,7 @@
         if (!document.getElementById('naming-btn-style')) {
             const style = document.createElement('style');
             style.id = 'naming-btn-style';
-            style.textContent = `.sub-btn { background: #444; color: #ddd; border: 1px solid #666; padding: 6px 4px; border-radius: 6px; font-size: 15px; cursor: pointer; flex: 1; transition: 0.2s; } .sub-btn:hover { background: #555; border-color: #888; }`;
+            style.textContent = `.sub-btn { background: #444; color: #ddd; border: 1px solid #666; padding: 6px 4px; border-radius: 6px; font-size: 15px; cursor: pointer; flex: 1; min-width: 0; transition: 0.2s; } .sub-btn:hover { background: #555; border-color: #888; }`;
             document.head.appendChild(style);
         }
 
@@ -995,14 +1027,19 @@
        ============================================================ */
     function renderDashboard() {
         dashboard.innerHTML = '';
+        const nbThemeName = localStorage.getItem('neubie_theme') || 'dark';
+        const T = getNbTheme();
+        dashboard.style.backgroundColor = T.bg;
+        dashboard.style.color = T.text;
+        dashboard.style.backgroundImage = `linear-gradient(${T.bg}, ${T.bg}), linear-gradient(135deg, #6366f1, #ec4899)`;
         
         // 헤더 컨테이너 (제목 + 성명 입력창 + X 버튼 인라인 배치)
         const headerContainer = document.createElement('div');
         headerContainer.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; padding-right:5px;";
 
         const title = document.createElement('h2');
-        title.textContent = "뉴비고 도우미";
-        title.style.cssText = "color:#3b82f6; font-size:20px; margin:0; font-weight:bold; white-space:nowrap;";
+        title.textContent = OFFLINE_MODE ? "오프라인 모드" : "뉴비고 도우미";
+        title.style.cssText = `color:${T.accent}; font-size:20px; margin:0; font-weight:bold; white-space:nowrap;`;
 
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
 		// 문자열을 넣으면 패치노트 버튼에 빨간 '`' 뱃지가 점멸하며 뜸.
@@ -1014,7 +1051,7 @@
         patchBtn.title = '패치노트';
         patchBtn.style.cssText = `
 			position:relative;
-            background:transparent; border:1px solid #555; color:#aaa;
+            background:transparent; border:1px solid ${T.border}; color:${T.text};
             border-radius:6px; padding:4px 10px; cursor:pointer;
             font-size:14px; margin-left:6px; vertical-align:middle;
             transition:all 0.2s;
@@ -1035,7 +1072,7 @@
 		}
 		
         patchBtn.onmouseenter = () => { patchBtn.style.borderColor='#3b82f6'; patchBtn.style.color='#3b82f6'; };
-        patchBtn.onmouseleave = () => { patchBtn.style.borderColor='#555'; patchBtn.style.color='#aaa'; };
+        patchBtn.onmouseleave = () => { patchBtn.style.borderColor=T.border; patchBtn.style.color=T.text; };
         patchBtn.onclick = () => {
             let patchOverlay = document.getElementById('neubie-patch-overlay');
             if (!patchOverlay) {
@@ -1048,14 +1085,14 @@
                 `;
                 const patchBox = document.createElement('div');
                 patchBox.style.cssText = `
-                    background:#1e1e2e; color:#e2e8f0; border-radius:18px; pointer-events:auto;
-                    border:1.5px solid #3b82f6; padding:28px 32px 24px 32px;
+                    background:${T.card}; color:${T.text}; border-radius:18px; pointer-events:auto;
+                    border:1.5px solid ${T.accent}; padding:28px 32px 24px 32px;
                     max-width:560px; width:90%; max-height:80vh; overflow-y:auto;
                     position:relative; box-shadow:0 10px 50px rgba(0,0,0,0.7);
                 `;
                 const patchTitle = document.createElement('div');
                 patchTitle.textContent = '패치노트';
-                patchTitle.style.cssText = `font-size:20px; font-weight:bold; margin-bottom:20px; color:#60a5fa;`;
+                patchTitle.style.cssText = `font-size:20px; font-weight:bold; margin-bottom:20px; color:${T.accent};`;
                 const patchClose = document.createElement('button');
                 patchClose.textContent = '✕';
                 patchClose.style.cssText = `
@@ -1072,19 +1109,18 @@
                 const patchItems = [
                     {
                         version: 'v1.3',
-                        date: '2026-07-05',
+                        date: '2026-07-08',
                         items: [
+                            '룰렛 돌리기 & 동전 던지기 & 개인 메모 기능',
+                            '실시간 날씨(기상청 데이터)',
 							'다중 자동교대 12대로 확장 / 다중페이지 기체 뜨면 ALT+Q -> 자동시작)',
-							'',
+                            '',
                             '1:1 문의 기능(익명 가능)',
-							'다중관제 헤드 램프 ON/OFF',
                             '임무 종료된 리센츠/엘스/한성대 페이지 이탈 시 5초 후 자동 사이드',
-							'다중관제 기체 화질 조절',
 							'불규칙 순찰 기체 모니터링 미추가 시 알림 기능',
 							'개입카드 현재 조작자 표기 / 상태 바 재배치(스크롤 제거)',
 							'D-PAD UP/DOWN: 다음 개입 요청받기 / 자동 긴급 정지 ON OFF',
 							'D-PAD LEFT/RIGHT: 카메라 밝기 내리기/올리기',
-                            '다중관제 카메라 밝기 한 번에 조절 / 카메라 위치 변경',
                         ]
                     },
                 ];
@@ -1094,7 +1130,7 @@
                 patchContent.style.cssText = "display:grid; gap:16px;";
                 patchItems.forEach(patch => {
                     const section = document.createElement('div');
-                    section.style.cssText = "background:#252525; border:1px solid #333333; border-radius:12px; padding:14px 16px;";
+                    section.style.cssText = `background:${T.card}; border:1px solid ${T.border}; border-radius:12px; padding:14px 16px;`;
                     const versionRow = document.createElement('div');
                     versionRow.style.cssText = "display:flex; align-items:center; gap:8px; margin-bottom:10px;";
                     versionRow.innerHTML = `
@@ -1106,7 +1142,7 @@
                     patch.items.forEach(item => {
                         const li = document.createElement('li');
                         li.textContent = item;
-                        li.style.cssText = "font-size:13px; color:#cbd5e1; line-height:1.5;";
+                        li.style.cssText = `font-size:13px; color:${T.text}; line-height:1.5;`;
                         itemList.appendChild(li);
                     });
                     section.appendChild(versionRow);
@@ -1156,17 +1192,31 @@
         
         const boardBtn = document.createElement('button');
         boardBtn.textContent = '게시판';
-        boardBtn.style.cssText = "background:transparent; border:1px solid #475569; color:#ffffff; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:14px; margin-left:4px;";
+        boardBtn.style.cssText = `background:transparent; border:1px solid #475569; color:${T.text}; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:14px; margin-left:4px;`;
         boardBtn.onclick = () => openBoardOverlay();
         titleWrap.appendChild(boardBtn);
 
         const secretBtn = document.createElement('button');
         secretBtn.textContent = '🔒 문의';
-        secretBtn.style.cssText = "background:transparent; border:1px solid #a78bfa; color:#c4b5fd; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:14px; margin-left:4px;";
+        secretBtn.style.cssText = `background:transparent; border:1px solid ${T.purple}; color:${T.purple}; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:14px; margin-left:4px;`;
         secretBtn.onmouseenter = () => { secretBtn.style.background='rgba(167,139,250,0.15)'; };
         secretBtn.onmouseleave = () => { secretBtn.style.background='transparent'; };
         secretBtn.onclick = () => openSecretOverlay();
         titleWrap.appendChild(secretBtn);
+        const themeBtn = document.createElement('button');
+        themeBtn.textContent = nbThemeName === 'light' ? '라이트' : '다크';
+        themeBtn.style.cssText = `width:48px; text-align:center; background:transparent; border:1px solid ${T.border}; color:${T.text}; padding:4px 0; border-radius:6px; cursor:pointer; font-size:14px; margin-left:4px;`;
+        themeBtn.onclick = () => {
+            const next = nbThemeName === 'light' ? 'dark' : 'light';
+            localStorage.setItem('neubie_theme', next);
+            ['neubie-weather-overlay', 'neubie-roulette-overlay', 'neubie-tips-overlay', 'neubie-patch-overlay', 'neubie-secret-overlay'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.remove();
+            });
+            buildBatteryShell();
+            renderDashboard();
+        };
+        titleWrap.appendChild(themeBtn);
 
         headerContainer.appendChild(titleWrap);
         headerContainer.appendChild(nameArea);
@@ -1223,7 +1273,7 @@
 
         // 1. 업무 알림 설정 (태스크 리스트 인라인 삽입)
         const taskCard = document.createElement('div');
-        taskCard.style.cssText = "background:#252525; padding:15px; border-radius:15px; border:1px solid #333333;";
+        taskCard.style.cssText = `background:${T.card}; padding:15px; border-radius:15px; border:1px solid ${T.border};`;
         const storedName = localStorage.getItem('neubie_user_name') || "사용자";
         const currentInt = localStorage.getItem('neubie_remind_int') || '0';
         taskCard.innerHTML = `
@@ -1289,16 +1339,10 @@
         taskCard.appendChild(taskInline);
         list.appendChild(taskCard);
 
-        if (window.currentMyTasks && window.currentMyTasks.length > 0) {
-            renderTaskList(window.currentMyTasks);
-        } else {
-            taskInline.innerHTML = `<div style="color:#666; font-size:14px; padding:8px 0;">배정된 업무가 없습니다.</div>`;
-        }
-
         // 맵 최적화 카드
         const mapCard = document.createElement('div');
-        mapCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; display:flex; justify-content:space-between; align-items:center;";
-        mapCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">요기요 페이지 최적화</span>`;
+        mapCard.style.cssText = `background:${T.card}; padding:8px 12px; border-radius:15px; border:1px solid ${T.border}; display:flex; justify-content:space-between; align-items:center;`;
+        mapCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">🗺️ 요기요 페이지 최적화</span>`;
 
         // 맵 최적화 (체크박스, 멘트 없이 이름만)
         const mapToggle = document.createElement('button');
@@ -1338,14 +1382,14 @@
                 `;
                 const mapInfoBox = document.createElement('div');
                 mapInfoBox.style.cssText = `
-                    background:#1e1e2e; color:#e2e8f0; border-radius:18px; pointer-events:auto;
-                    border:1.5px solid #3b82f6; padding:36px 40px 32px 40px;
+                    background:${T.card}; color:${T.text}; border-radius:18px; pointer-events:auto;
+                    border:1.5px solid ${T.accent}; padding:36px 40px 32px 40px;
                     max-width:600px; width:90%; max-height:80vh; overflow-y:auto;
                     position:relative; box-shadow:0 10px 50px rgba(0,0,0,0.7);
                 `;
                 const mapInfoTitle = document.createElement('div');
                 mapInfoTitle.textContent = '기능 설명';
-                mapInfoTitle.style.cssText = `font-size:22px; font-weight:bold; margin-bottom:20px; color:#93c5fd;`;
+                mapInfoTitle.style.cssText = `font-size:22px; font-weight:bold; margin-bottom:20px; color:${T.accent};`;
                 const mapInfoClose = document.createElement('button');
                 mapInfoClose.textContent = '✕';
                 mapInfoClose.style.cssText = `
@@ -1358,7 +1402,7 @@
                 mapInfoClose.onmouseleave = () => { mapInfoClose.style.color='#aaa'; };
                 mapInfoClose.onclick = () => { mapInfoOverlay.style.display='none'; };
                 const mapInfoContent = document.createElement('div');
-                mapInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:#cbd5e1;`;
+                mapInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:${T.text};`;
                 mapInfoContent.innerHTML = `
                     역삼 요기요 / 송도 요기요 / 성수 요기요 / 성남 삼평동<br>
                     페이지에서 흰색 마커를 숨겨서 최적화.<br>
@@ -1388,8 +1432,8 @@
         mapCard.appendChild(mapToggle);
 
         const queueCard = document.createElement('div');
-        queueCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; display:flex; justify-content:space-between; align-items:center;";
-        queueCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">다중 모니터링 도우미</span>`;
+        queueCard.style.cssText = `background:${T.card}; padding:8px 12px; border-radius:15px; border:1px solid ${T.border}; display:flex; justify-content:space-between; align-items:center;`;
+        queueCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">🖥️ 다중 모니터링 도우미</span>`;
         const queueEnabled = localStorage.getItem('neubie_handover_enabled') === 'true';
         const queueToggle = document.createElement('button');
         queueToggle.textContent = queueEnabled ? 'ON' : 'OFF';
@@ -1443,14 +1487,14 @@
                 `;
                 const queueInfoBox = document.createElement('div');
                 queueInfoBox.style.cssText = `
-                    background:#1e1e2e; color:#e2e8f0; border-radius:18px; pointer-events:auto;
-                    border:1.5px solid #3b82f6; padding:36px 40px 32px 40px;
+                    background:${T.card}; color:${T.text}; border-radius:18px; pointer-events:auto;
+                    border:1.5px solid ${T.accent}; padding:36px 40px 32px 40px;
                     max-width:600px; width:90%; max-height:80vh; overflow-y:auto;
                     position:relative; box-shadow:0 10px 50px rgba(0,0,0,0.7);
                 `;
                 const queueInfoTitle = document.createElement('div');
                 queueInfoTitle.textContent = '기능 설명';
-                queueInfoTitle.style.cssText = `font-size:22px; font-weight:bold; margin-bottom:20px; color:#93c5fd;`;
+                queueInfoTitle.style.cssText = `font-size:22px; font-weight:bold; margin-bottom:20px; color:${T.accent};`;
                 const queueInfoClose = document.createElement('button');
                 queueInfoClose.textContent = '✕';
                 queueInfoClose.style.cssText = `
@@ -1464,10 +1508,11 @@
                 queueInfoClose.onclick = () => { queueInfoOverlay.style.display='none'; };
                 const queueInfoContent = document.createElement('div');
                 queueInfoContent.id = 'neubie-queue-info-content';
-                queueInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:#cbd5e1; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;`;
+                queueInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:${T.text}; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;`;
                 queueInfoContent.innerHTML = `
-				화질 조절<br>
-				카메라 밝기 한 번에 조절<br>
+				기체별 화질 조절<br>
+                기체별 헤드램프 토글<br>
+				기체 카메라 밝기 한 번에 조절<br>
 				카메라 위치 스왑<br>
 				multimonitoring.vercel.app 이용 시 교대 기체 업로드<br>
 				업로드된 교대 기체 받기(최근 20분까지만 유효) -> 자동 시작(12대까지)<br>
@@ -1503,8 +1548,8 @@
 
         // 스케줄 비교 카드
         const scheduleCard = document.createElement('div');
-        scheduleCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; cursor:pointer; display:flex; align-items:center;";
-        scheduleCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">스케줄표 + 좌석 배치도</div>`;
+        scheduleCard.style.cssText = `background:${T.card}; padding:8px 12px; border-radius:15px; border:1px solid ${T.border}; cursor:pointer; display:flex; align-items:center;`;
+        scheduleCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">📅 스케줄표 + 좌석 배치도</div>`;
         window._neubieScheduleCard = scheduleCard;
         scheduleCard.onclick = () => {
             const isActive = scheduleCard.style.outline !== 'none' && scheduleCard.style.outline !== '';
@@ -1512,144 +1557,28 @@
             if (!isActive) openScheduleOverlay();
         };
 
-        // 최적화 팁
-        const tipsCard = document.createElement('div');
-        tipsCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; cursor:pointer; display:inline-flex; align-items:center;";
-        tipsCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">최적화 팁</div>`;
-        const tipsOpenBtn = document.createElement('button');
-        tipsOpenBtn.textContent = '열기';
-        tipsOpenBtn.style.cssText = "background:#3b82f6; color:white; border:none; padding:5px 14px; border-radius:8px; cursor:pointer; font-weight:bold; font-size:13px; white-space:nowrap;";
-        tipsOpenBtn.onclick = () => {
-            let tipsOverlay = document.getElementById('neubie-tips-overlay');
-            if (!tipsOverlay) {
-                tipsOverlay = document.createElement('div');
-                tipsOverlay.id = 'neubie-tips-overlay';
-                tipsOverlay.style.cssText = `
-                    position:fixed; inset:0; background:transparent; pointer-events:none;
-                    z-index:2147483646; display:flex; align-items:center; justify-content:center;
-                    font-family:Pretendard, sans-serif; border-radius:20px; overflow:hidden;
-                `;
-                const tipsBox = document.createElement('div');
-                tipsBox.style.cssText = `
-                    background:#1e1e2e; color:#e2e8f0; border-radius:18px; pointer-events:auto;
-                    border:1.5px solid #f59e0b; padding:28px 32px 24px 32px;
-                    max-width:560px; width:90%; max-height:80vh; overflow-y:auto;
-                    position:relative; box-shadow:0 10px 50px rgba(0,0,0,0.7);
-                `;
-                const tipsTitle = document.createElement('div');
-                tipsTitle.textContent = '최적화 팁';
-                tipsTitle.style.cssText = `font-size:20px; font-weight:bold; margin-bottom:20px; color:#fcd34d; cursor:pointer;`;
-
-				const padIndicator = document.createElement('span');
-				padIndicator.style.cssText = 'font-size:12px;color:#ef4444;margin-left:8px;font-weight:700;';
-				padIndicator.textContent = '패드기능 OFF';
-				padIndicator.style.display = localStorage.getItem('neubie_dpad_binding')==='off' ? 'inline' : 'none';
-				tipsTitle.appendChild(padIndicator);
-				
-				let tipClickCount = 0;
-				let tipClickTimer = null;
-				tipsTitle.addEventListener('click', () => {
-				  tipClickCount++;
-				  clearTimeout(tipClickTimer);
-				  tipClickTimer = setTimeout(() => { tipClickCount = 0; }, 2000);
-				  if(tipClickCount >= 5){
-				    tipClickCount = 0;
-				    clearTimeout(tipClickTimer);
-				    if(localStorage.getItem('neubie_dpad_binding')==='off'){
-				      localStorage.removeItem('neubie_dpad_binding');
-				      padIndicator.style.display='none';
-				    } else {
-				      localStorage.setItem('neubie_dpad_binding','off');
-				      padIndicator.style.display='inline';
-				    }
-				  }
-				});
-				
-                const tipsClose = document.createElement('button');
-                tipsClose.textContent = '✕';
-                tipsClose.style.cssText = `
-                    position:absolute; top:16px; right:18px;
-                    background:transparent; border:none; color:#aaa;
-                    font-size:20px; cursor:pointer; line-height:1; padding:4px 8px;
-                    border-radius:6px; transition:color 0.2s;
-                `;
-				
-                tipsClose.onmouseenter = () => { tipsClose.style.color='#fff'; };
-                tipsClose.onmouseleave = () => { tipsClose.style.color='#aaa'; };
-                tipsClose.onclick = () => {
-                    tipsOverlay.style.display = 'none';
-                    tipsCard.style.outline = 'none';
-                };
-
-                const tipsItems = [
-                    { title: "슬랙 PWA 버전 사용법", url: "https://telling-ink-a85.notion.site/PWA-366a8cf5ba7b80eebb43e017c095702c?pvs=74" },
-                    { title: "OBS 설정법", url: "https://telling-ink-a85.notion.site/OBS-366a8cf5ba7b80dfb101cfa149eaefcf?pvs=74" },
-                    { title: "CYH's 추천 프로그램", url: "https://telling-ink-a85.notion.site/366a8cf5ba7b80958575eadb8809f313" },
-                ];
-                const tipsContent = document.createElement('div');
-                tipsContent.style.cssText = "display:grid; gap:10px;";
-                tipsItems.forEach(item => {
-                    const row = document.createElement('div');
-                    row.style.cssText = `
-                        display:flex; justify-content:space-between; align-items:center;
-                        background:#252525; border:1px solid #333333; border-radius:12px;
-                        padding:13px 16px; gap:12px;
-                    `;
-                    const rowTitle = document.createElement('span');
-                    rowTitle.textContent = item.title;
-                    rowTitle.style.cssText = "font-size:14px; font-weight:600; color:#e2e8f0; flex:1;";
-                    const rowBtn = document.createElement('button');
-                    rowBtn.textContent = '열기';
-                    rowBtn.style.cssText = `
-                        background:#f59e0b; color:#1a1a1a; border:none;
-                        padding:7px 16px; border-radius:8px; cursor:pointer;
-                        font-weight:bold; font-size:13px; white-space:nowrap;
-                        transition:background 0.2s;
-                    `;
-                    rowBtn.onmouseenter = () => { rowBtn.style.background='#fbbf24'; };
-                    rowBtn.onmouseleave = () => { rowBtn.style.background='#f59e0b'; };
-                    rowBtn.onclick = () => { window.open(item.url, '_blank'); };
-                    row.appendChild(rowTitle);
-                    row.appendChild(rowBtn);
-                    tipsContent.appendChild(row);
-                });
-                tipsBox.appendChild(tipsClose);
-                tipsBox.appendChild(tipsTitle);
-                tipsBox.appendChild(tipsContent);
-                tipsOverlay.appendChild(tipsBox);
-                const r0 = dashboard.getBoundingClientRect();
-                tipsOverlay.style.position = 'fixed';
-                tipsOverlay.style.top = r0.top + 'px';
-                tipsOverlay.style.left = r0.left + 'px';
-                tipsOverlay.style.width = r0.width + 'px';
-                tipsOverlay.style.height = r0.height + 'px';
-                document.body.appendChild(tipsOverlay);
+        const rouletteCard = document.createElement('div');
+        rouletteCard.style.cssText = `background:${T.card}; padding:8px 12px; border-radius:15px; border:1px solid ${T.border}; cursor:pointer; display:flex; align-items:center;`;
+        rouletteCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">🎡 룰렛 & 동전 & 메모</div>`;
+        window._neubieRouletteCard = rouletteCard;
+        rouletteCard.onclick = () => {
+            const isActive = rouletteCard.style.outline !== 'none' && rouletteCard.style.outline !== '';
+            rouletteCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
+            if (!isActive) {
+                openRouletteOverlay();
             } else {
-                const r = dashboard.getBoundingClientRect();
-                tipsOverlay.style.top = r.top + 'px';
-                tipsOverlay.style.left = r.left + 'px';
-                tipsOverlay.style.width = r.width + 'px';
-                tipsOverlay.style.height = r.height + 'px';
-                tipsOverlay.style.display = 'flex';
-                tipsOverlay.querySelector('button').onclick = () => {
-                    tipsOverlay.style.display = 'none';
-                    tipsCard.style.outline = 'none';
-                };
+                const rouletteOverlay = document.getElementById('neubie-roulette-overlay');
+                if (rouletteOverlay) rouletteOverlay.style.display = 'none';
             }
-        };
-        tipsCard.onclick = () => {
-            const isActive = tipsCard.style.outline !== 'none' && tipsCard.style.outline !== '';
-            tipsCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
-            tipsOpenBtn.onclick();
         };
 
         // 배터리 현황
         const isBatteryOpen = batteryPopup.style.display === 'block';
         const batteryCard = document.createElement('div');
-        batteryCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; display:flex; justify-content:space-between; align-items:center;";
+        batteryCard.style.cssText = `background:${T.card}; padding:8px 12px; border-radius:15px; border:1px solid ${T.border}; display:flex; justify-content:space-between; align-items:center;`;
         batteryCard.innerHTML = `
             <div style="flex:1;">
-                <div style="font-weight:bold; font-size:15px; margin-bottom:3px;">실시간 성남 배터리</div>
+                <div style="font-weight:bold; font-size:15px; margin-bottom:3px;">🔋 실시간 성남 배터리 현황</div>
             </div>`;
         batteryCard.style.cursor = 'pointer';
         window._neubieBatteryCard = batteryCard;
@@ -1662,27 +1591,27 @@
             }
         };
 
-        const reservedCard = document.createElement('div');
-        reservedCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; display:flex; justify-content:space-between; align-items:center;";
-        reservedCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">빈 기능</span>`;
-        const reservedEnabled = localStorage.getItem('neubie_opt_reserved') === 'true';
-        const reservedToggle = document.createElement('button');
-        reservedToggle.textContent = reservedEnabled ? 'ON' : 'OFF';
-        reservedToggle.style.cssText = `background:${reservedEnabled ? '#2563eb' : '#444'}; color:white; border:none; padding:4px 0; border-radius:6px; cursor:pointer; font-weight:bold; font-size:13px; width:44px; text-align:center;`;
-        reservedToggle.onclick = () => {
-            const next = reservedToggle.textContent === 'OFF';
-            localStorage.setItem('neubie_opt_reserved', next);
-            reservedToggle.textContent = next ? 'ON' : 'OFF';
-            reservedToggle.style.background = next ? '#2563eb' : '#444';
+        const weatherCard = document.createElement('div');
+        weatherCard.style.cssText = `background:${T.card}; padding:8px 12px; border-radius:15px; border:1px solid ${T.border}; cursor:pointer; display:flex; align-items:center;`;
+        weatherCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">🌤️ 송내 현재 날씨 (기상청 API)</div>`;
+        window._neubieWeatherCard = weatherCard;
+        weatherCard.onclick = () => {
+            const isActive = weatherCard.style.outline !== 'none' && weatherCard.style.outline !== '';
+            weatherCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
+            if (!isActive) {
+                openWeatherOverlay();
+            } else {
+                const weatherOverlay = document.getElementById('neubie-weather-overlay');
+                if (weatherOverlay) weatherOverlay.style.display = 'none';
+            }
         };
-        reservedCard.appendChild(reservedToggle);
 
         bottomRow.appendChild(mapCard);      // 지도 최적화
         bottomRow.appendChild(batteryCard);  // 성남 배터리
         bottomRow.appendChild(queueCard);    // 다중 도우미
         bottomRow.appendChild(scheduleCard); // 스케줄표
-        bottomRow.appendChild(reservedCard); // 빈 기능
-        bottomRow.appendChild(tipsCard);     // 최적화 팁
+        bottomRow.appendChild(weatherCard); // 날씨
+        bottomRow.appendChild(rouletteCard);     // 최적화 팁
 
         list.appendChild(bottomRow);
 
@@ -1690,6 +1619,12 @@
         list.appendChild(createNamingCard());
 
         dashboard.appendChild(list);
+
+        if (window.currentMyTasks && window.currentMyTasks.length > 0) {
+            renderTaskList(window.currentMyTasks);
+        } else {
+            taskInline.innerHTML = `<div style="color:#666; font-size:14px; padding:8px 0;">배정된 업무가 없습니다.</div>`;
+        }
     }
 
     let batteryRefreshInterval = null;
@@ -1735,6 +1670,12 @@
         if (boardOverlay) boardOverlay.style.display='none';
         const secretOverlay = document.getElementById('neubie-secret-overlay');
         if (secretOverlay) secretOverlay.style.display='none';
+        const weatherOverlay = document.getElementById('neubie-weather-overlay');
+        if (weatherOverlay) weatherOverlay.style.display='none';
+        if (window._neubieWeatherCard) window._neubieWeatherCard.style.outline = 'none';
+        const rouletteOverlay = document.getElementById('neubie-roulette-overlay');
+        if (rouletteOverlay) rouletteOverlay.style.display = 'none';
+        if (window._neubieRouletteCard) window._neubieRouletteCard.style.outline = 'none';
     }
 
     // ── 유효성 검증 (1시간 이내 데이터) ──
@@ -2621,6 +2562,9 @@
 					#neubie-board-overlay, #neubie-board-overlay * {
 						font-family: 'BMJUA', 'Pretendard', sans-serif !important;
 					}
+					#neubie-board-overlay .nb-emoji {
+						font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif !important;
+					}
 				`;
 				document.head.appendChild(boardFontStyle);
 			})();
@@ -2630,7 +2574,7 @@
 				top: r.top + 'px',
 				left: r.left + 'px',
 				width: r.width + 'px',
-				height: r.height + 'px',
+				height: '560px',
 				zIndex: '1000001', display: 'flex',
 				alignItems: 'center', justifyContent: 'center',
 				backgroundImage: `url(${BG_IMG})`,
@@ -2643,25 +2587,32 @@
             overlay.innerHTML = `
             <div style="width:100%; height:100%; background:rgba(10,10,30,0.72); backdrop-filter:blur(2px); display:flex; flex-direction:column; border-radius:24px;">
                 <div id="nb-board-header" style="display:flex; align-items:center; gap:8px; padding:12px 16px; border-bottom:0.5px solid rgba(255,255,255,0.12); cursor:grab;">
-                    <span style="font-size:15px; font-weight:600; color:#fff; flex:1;">📋 뉴비고 게시판</span>
+                    <span style="font-size:15px; font-weight:600; color:#fff; flex:1;"><span class="nb-emoji">📋</span> 뉴비고 게시판</span>
+                    <button id="nb-tips-btn" style="height:28px; padding:0 10px; font-size:12px; font-weight:500; background:#f59e0b; color:#1a1a1a; border:none; border-radius:6px; cursor:pointer;" title="최적화 팁">💡 최적화 팁</button>
                     <button id="nb-refresh-btn" style="height:28px; width:28px; background:rgba(255,255,255,0.1); color:white; border:none; border-radius:6px; cursor:pointer; font-size:14px;" title="새로고침">↺</button>
 					<button id="nb-write-btn" style="height:28px; padding:0 12px; font-size:12px; font-weight:500; background:#6366f1; color:white; border:none; border-radius:6px; cursor:pointer;">✏️ 글쓰기</button>
                     <button id="nb-board-close" style="background:rgba(255,255,255,0.1); border:none; color:#fff; width:26px; height:26px; border-radius:50%; cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center;">✕</button>
                 </div>
-                <div style="padding:8px 16px; display:flex; gap:8px; border-bottom:0.5px solid rgba(255,255,255,0.1);">
-                    <select id="nb-search-type" style="height:28px; font-size:12px; padding:0 6px; border-radius:6px; border:0.5px solid rgba(255,255,255,0.2); background:#1e1e3a; color:#e2e8f0; outline:none;">
-                        <option value="all">전체</option>
-                        <option value="title">제목</option>
-                        <option value="author">작성자</option>
-                    </select>
-                    <input id="nb-search-input" type="text" placeholder="검색..." style="flex:1; height:28px; font-size:12px; padding:0 10px; border-radius:6px; border:0.5px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.1); color:#fff; outline:none;">
-                </div>
+
+                <div style="height:2px; background:#6366f1; opacity:0.5; margin:0 16px;"></div>
 
                 <div id="nb-screen-list" style="flex:1; overflow-y:auto; padding:4px 0;"></div>
 
+                <div style="padding:8px 16px; display:flex; align-items:center; justify-content:space-between; gap:8px; border-top:0.5px solid rgba(255,255,255,0.1);">
+                    <div style="display:flex; gap:8px; flex:1; min-width:0;">
+                        <select id="nb-search-type" style="height:28px; font-size:12px; padding:0 6px; border-radius:6px; border:0.5px solid rgba(255,255,255,0.2); background:#1e1e3a; color:#e2e8f0; outline:none;">
+                            <option value="all">전체</option>
+                            <option value="title">제목</option>
+                            <option value="author">작성자</option>
+                        </select>
+                        <input id="nb-search-input" type="text" placeholder="검색..." style="flex:1; height:28px; font-size:12px; padding:0 10px; border-radius:6px; border:0.5px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.1); color:#fff; outline:none;">
+                    </div>
+                    <div id="nb-pagination" style="display:flex; align-items:center; gap:8px; flex-shrink:0;"></div>
+                </div>
+
                 <div id="nb-screen-detail" style="display:none; flex:1; overflow-y:auto; flex-direction:column;">
                     <div style="padding:10px 16px; border-bottom:0.5px solid rgba(255,255,255,0.1); display:flex; align-items:center; gap:8px;">
-                        <button id="nb-back-btn" style="background:rgba(255,255,255,0.1); border:none; color:#fff; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:12px;">← 목록</button>
+                        <button id="nb-back-btn" style="background:rgba(255,255,255,0.1); border:none; color:#fff; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:12px;"><span class="nb-emoji">←</span> 목록</button>
                         <span id="nb-detail-title-header" style="font-size:13px; color:#e2e8f0; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
 						<button id="nb-edit-post-btn" style="display:none; background:rgba(99,102,241,0.2); border:1px solid rgba(99,102,241,0.4); color:#a5b4fc; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:12px;">수정</button>
                         <button id="nb-delete-post-btn" style="display:none; background:rgba(239,68,68,0.2); border:1px solid rgba(239,68,68,0.4); color:#fca5a5; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:12px;">삭제</button>
@@ -2746,6 +2697,7 @@
 			};
 			document.getElementById('nb-edit-submit').onclick = submitEdit;
 			document.getElementById('nb-refresh-btn').onclick = () => loadPosts();
+            document.getElementById('nb-tips-btn').onclick = () => openTipsOverlay();
             document.getElementById('nb-write-btn').onclick = () => {
                 if (!myEmail) return alert('로그인 정보가 없어 글쓰기가 불가합니다.');
                 showWriteScreen();
@@ -2758,7 +2710,7 @@
                 document.getElementById('nb-screen-list').style.display = 'block';
                 document.getElementById('nb-screen-detail').style.display = 'none';
                 document.getElementById('nb-screen-write').style.display = 'none';
-                renderList(allPosts, true)
+                renderList(allPosts, false)
             }
 
             function showWriteScreen() {
@@ -2793,6 +2745,7 @@
                 const el = document.getElementById('nb-screen-list');
                 if (!posts.length) {
                     el.innerHTML = `<div style="text-align:center; padding:40px 16px; color:rgba(255,255,255,0.4); font-size:13px;">게시글이 없습니다</div>`;
+                    document.getElementById('nb-pagination').innerHTML = '';
                     return;
                 }
                 const totalPages = Math.ceil(posts.length / PAGE_SIZE);
@@ -2801,24 +2754,25 @@
                 const isPaged = posts === allPosts; // 검색 중엔 페이지네이션 숨김
 
                 el.innerHTML = paged.map(p => `
-                    <div onclick="window._nbOpenPost('${p.id}')" style="display:flex; align-items:center; gap:10px; padding:10px 16px; border-bottom:0.5px solid rgba(255,255,255,0.07); cursor:pointer; transition:background 0.12s;" onmouseenter="this.style.background='rgba(255,255,255,0.06)'" onmouseleave="this.style.background='transparent'">
-                        <div style="width:30px; height:30px; border-radius:50%; background:rgba(99,102,241,0.3); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:600; color:#a5b4fc; flex-shrink:0;">${initials(p.author)}</div>
-                        <div style="flex:1; min-width:0;">
-                            <div style="font-size:13px; font-weight:500; color:#f1f5f9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${p.title}</div>
-                            <div style="font-size:11px; color:rgba(255,255,255,0.45); margin-top:2px;">${p.author} · ${formatDate(p.createdAt)}</div>
+                    <div onclick="window._nbOpenPost('${p.id}')" style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 16px; border-bottom:0.5px solid rgba(255,255,255,0.07); cursor:pointer; transition:background 0.12s;" onmouseenter="this.style.background='rgba(255,255,255,0.06)'" onmouseleave="this.style.background='transparent'">
+                        <div style="font-size:13px; font-weight:500; color:#f1f5f9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; min-width:0;">${p.title}</div>
+                        <div style="font-size:11px; color:rgba(255,255,255,0.45); white-space:nowrap; flex-shrink:0; display:flex; align-items:center; gap:6px;">
+                            <span>${p.author}</span>
+                            <span>${formatDate(p.createdAt)}</span>
+                            ${(p.commentCount||0) > 0 ? `<span style="color:#a5b4fc;">💬 ${p.commentCount}</span>` : ''}
                         </div>
-                        ${(p.commentCount||0) > 0 ? `<span style="font-size:11px; color:#a5b4fc; background:rgba(99,102,241,0.2); padding:2px 7px; border-radius:10px; white-space:nowrap;">💬 ${p.commentCount}</span>` : ''}
                     </div>
                 `).join('');
 
+                const pagerEl = document.getElementById('nb-pagination');
                 if (isPaged && totalPages > 1) {
-                    el.innerHTML += `
-                        <div style="display:flex; align-items:center; justify-content:center; gap:12px; padding:12px 0; border-top:0.5px solid rgba(255,255,255,0.08);">
-                            <button onclick="window._nbPrevPage()" ${_currentPage <= 1 ? 'disabled' : ''} style="height:28px; padding:0 12px; font-size:12px; background:rgba(255,255,255,0.08); border:0.5px solid rgba(255,255,255,0.15); color:${_currentPage <= 1 ? 'rgba(255,255,255,0.2)' : '#e2e8f0'}; border-radius:6px; cursor:${_currentPage <= 1 ? 'default' : 'pointer'};">← 이전</button>
-                            <span style="font-size:12px; color:rgba(255,255,255,0.5);">${_currentPage} / ${totalPages}</span>
-                            <button onclick="window._nbNextPage()" ${_currentPage >= totalPages ? 'disabled' : ''} style="height:28px; padding:0 12px; font-size:12px; background:rgba(255,255,255,0.08); border:0.5px solid rgba(255,255,255,0.15); color:${_currentPage >= totalPages ? 'rgba(255,255,255,0.2)' : '#e2e8f0'}; border-radius:6px; cursor:${_currentPage >= totalPages ? 'default' : 'pointer'};">다음 →</button>
-                        </div>
+                    pagerEl.innerHTML = `
+                        <button onclick="window._nbPrevPage()" ${_currentPage <= 1 ? 'disabled' : ''} style="height:24px; padding:0 10px; font-size:11px; background:rgba(255,255,255,0.08); border:0.5px solid rgba(255,255,255,0.15); color:${_currentPage <= 1 ? 'rgba(255,255,255,0.2)' : '#e2e8f0'}; border-radius:6px; cursor:${_currentPage <= 1 ? 'default' : 'pointer'};"><span class="nb-emoji">←</span> 이전</button>
+                        <span style="font-size:12px; color:rgba(255,255,255,0.5);">${_currentPage} / ${totalPages}</span>
+                        <button onclick="window._nbNextPage()" ${_currentPage >= totalPages ? 'disabled' : ''} style="height:24px; padding:0 10px; font-size:11px; background:rgba(255,255,255,0.08); border:0.5px solid rgba(255,255,255,0.15); color:${_currentPage >= totalPages ? 'rgba(255,255,255,0.2)' : '#e2e8f0'}; border-radius:6px; cursor:${_currentPage >= totalPages ? 'default' : 'pointer'};">다음 <span class="nb-emoji">→</span></button>
                     `;
+                } else {
+                    pagerEl.innerHTML = '';
                 }
             }
 
@@ -2830,7 +2784,7 @@
                 const totalComments = comments.reduce((a,c) => a + 1 + (c.replies||[]).length, 0);
                 document.getElementById('nb-detail-body').innerHTML = `
                     <h2 style="font-size:15px; font-weight:600; color:#f1f5f9; margin:0 0 8px;">${post.title}</h2>
-                    <div style="font-size:12px; color:rgba(255,255,255,0.45); margin-bottom:14px; display:flex; gap:12px;">
+                    <div style="font-size:12px; color:rgba(255,255,255,0.45); margin-bottom:14px; display:flex; align-items:center; justify-content:space-between;">
                         <span>👤 ${post.author}</span>
                         <span>📅 ${formatDate(post.createdAt)}</span>
                     </div>
@@ -2840,10 +2794,12 @@
                         <div style="display:flex; gap:8px; margin-bottom:14px;">
                             <div style="width:26px; height:26px; border-radius:50%; background:rgba(99,102,241,0.25); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600; color:#a5b4fc; flex-shrink:0;">${initials(c.author)}</div>
                             <div style="flex:1;">
-                                <div style="font-size:12px; font-weight:500; color:#f1f5f9;">${c.author}</div>
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <div style="font-size:12px; font-weight:500; color:#f1f5f9;">${c.author}</div>
+                                    <span style="font-size:11px; color:rgba(255,255,255,0.35);">${formatDate(c.createdAt)}</span>
+                                </div>
                                 <div style="font-size:13px; color:#e2e8f0; margin:3px 0; line-height:1.6;">${c.text}</div>
                                 <div style="display:flex; align-items:center; gap:10px; margin-top:4px;">
-                                    <span style="font-size:11px; color:rgba(255,255,255,0.35);">${formatDate(c.createdAt)}</span>
                                     ${myEmail ? `<button onclick="window._nbToggleReply('${c.id}')" style="background:none;border:none;font-size:11px;color:#a5b4fc;cursor:pointer;padding:0;">↩ 답글</button>` : ''}
                                     ${(myEmail && c.email === myEmail) ? `<button onclick="window._nbDeleteComment('${c.id}')" style="background:none;border:none;font-size:11px;color:rgba(239,68,68,0.7);cursor:pointer;padding:0;">삭제</button><button onclick="window._nbToggleEditComment('${c.id}','${c.text}')" style="background:none;border:none;font-size:11px;color:#a5b4fc;cursor:pointer;padding:0;">수정</button>` : ''}
                                 </div>
@@ -2851,10 +2807,12 @@
                                     <div style="display:flex; gap:8px; margin-top:10px; padding-left:8px; border-left:2px solid rgba(99,102,241,0.3);">
                                         <div style="width:20px; height:20px; border-radius:50%; background:rgba(99,102,241,0.2); display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:600; color:#a5b4fc; flex-shrink:0;">${initials(r.author)}</div>
                                         <div style="flex:1;">
-                                            <div style="font-size:11px; font-weight:500; color:#f1f5f9;">${r.author}</div>
+                                            <div style="display:flex; align-items:center; gap:8px;">
+                                                <div style="font-size:11px; font-weight:500; color:#f1f5f9;">${r.author}</div>
+                                                <span style="font-size:10px; color:rgba(255,255,255,0.3);">${formatDate(r.createdAt)}</span>
+                                            </div>
                                             <div style="font-size:12px; color:#e2e8f0; margin:2px 0;">${r.text}</div>
                                             <div style="display:flex; align-items:center; gap:8px; margin-top:3px;">
-                                                <span style="font-size:10px; color:rgba(255,255,255,0.3);">${formatDate(r.createdAt)}</span>
                                                 ${(myEmail && r.email === myEmail) ? `<button onclick="window._nbDeleteReply('${c.id}','${r.id}')" style="background:none;border:none;font-size:10px;color:rgba(239,68,68,0.6);cursor:pointer;padding:0;">삭제</button><button onclick="window._nbToggleEditReply('${c.id}','${r.id}','${r.text}')" style="background:none;border:none;font-size:10px;color:#a5b4fc;cursor:pointer;padding:0;">수정</button>` : ''}
                                             </div>
                                         </div>
@@ -3531,7 +3489,7 @@
             box.innerHTML = `
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
                 <div style="display:flex;align-items:center;gap:8px;">
-                    <span style="font-size:20px;font-weight:700;color:#4f8ef7;">    스케줄표 + 좌석 배치도</span>
+                    <span style="font-size:20px;font-weight:700;color:#4f8ef7;">📅 스케줄표 + 좌석 배치도</span>
                     <span id="nso-status" style="font-size:12px;color:#94a3b8;">로딩 중...</span>
                     <span id="nso-dot" style="width:7px;height:7px;border-radius:50%;background:#eab308;display:inline-block;"></span>
                     <span id="nso-updated" style="font-size:12px;color:#64748b;"></span>
@@ -3961,6 +3919,478 @@
                 })
                 .catch(()=>{ status.textContent='로드 실패'; dot.style.background='#ef4444'; });
             }
+
+            window.openWeatherOverlay = async function() {
+                const T = getNbTheme();
+                let overlay = document.getElementById('neubie-weather-overlay');
+                if (overlay) { overlay.style.display = 'flex'; renderWeather(overlay); return; }
+
+                overlay = document.createElement('div');
+                overlay.id = 'neubie-weather-overlay';
+                overlay.style.cssText = `
+                    position:fixed; inset:0; z-index:2147483646;
+                    background:transparent;
+                    display:flex; align-items:flex-start; justify-content:center; padding-top:20px;
+                    font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;
+                    pointer-events:none;
+                `;
+                const box = document.createElement('div');
+                box.style.cssText = `
+                    background:${T.card}; color:${T.text};
+                    border-radius:16px; padding:20px;
+                    width:min(96vw,720px);
+                    box-shadow:0 4px 40px rgba(0,0,0,0.7);
+                    pointer-events:auto;
+                `;
+                box.innerHTML = `
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                        <span style="font-size:18px;font-weight:700;color:#4f8ef7;">🌤️ 송내 현재 날씨 (기상청 API)</span>
+                        <button id="nwo-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
+                    </div>
+                    <div id="nwo-body" style="font-size:13px;color:#64748b;">불러오는 중...</div>
+                `;
+                overlay.appendChild(box);
+                document.body.appendChild(overlay);
+                box.querySelector('#nwo-close').onclick = () => {
+                    overlay.style.display = 'none';
+                    window._neubieWeatherCard.style.outline = 'none';
+                };
+
+                renderWeather(overlay);
+            };
+
+            async function renderWeather(overlay) {
+                const data = await fetchWeatherReal(); // TODO: 실제 API 연결 시 await fetch(...)
+                const body = overlay.querySelector('#nwo-body');
+
+                const hourlyHtml = data.hourly.map((h, i) => `
+                    <div style="flex:1;min-width:0;text-align:center;padding:6px 0;${i < 6 ? 'opacity:1;' : 'opacity:0.65;'}${i === 0 ? 'background:#1e3a5f;border-radius:8px;' : ''}">
+                        <div style="font-size:11px;color:#94a3b8;">${i === 0 ? '지금' : h.hour + '시'}</div>
+                        <div style="font-size:16px;margin:4px 0;">${h.icon}</div>
+                        <div style="font-size:13px;">${h.temp}°</div>
+                        ${h.pop > 0 ? `<div style="font-size:10px;color:#4f8ef7;">💧${h.pop}%</div>` : ''}
+                    </div>`).join('');
+
+                const dailyHtml = data.daily.map(d => `
+                    <div style="background:#1a1c24;border-radius:10px;padding:10px 6px;text-align:center;flex:1;">
+                        <div style="font-size:12px;color:#94a3b8;margin-bottom:4px;">${formatDailyLabel(d.date)}</div>
+                        <div style="font-size:18px;">${d.icon}</div>
+                        <div style="font-size:13px;font-weight:700;margin-top:6px;">${d.min}° / ${d.max}°</div>
+                        <div style="font-size:11px;color:${d.pop > 0 ? '#4f8ef7' : '#64748b'};margin-top:2px;">${d.pop > 0 ? '강수 ' + d.pop + '%' : '강수 없음'}</div>
+                    </div>`).join('');
+
+                body.innerHTML = `
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+                        <div style="font-size:24px;">${data.current.icon}</div>
+                        <div>
+                            <div style="font-size:11px;color:#94a3b8;margin-bottom:2px;">오늘 · ${data.updatedAt.getMonth()+1}/${data.updatedAt.getDate()}(${['일','월','화','수','목','금','토'][data.updatedAt.getDay()]})</div>
+                            <div style="font-size:22px;font-weight:700;line-height:1.1;">${data.current.temp}°</div>
+                            <div style="font-size:11px;color:#64748b;">${data.updatedAt.toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit', hour12:false})} 기준</div>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:4px;margin-bottom:10px;">${hourlyHtml}</div>
+                    <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;">
+                        <span style="font-size:10px;color:#64748b;">0~6h 정밀</span>
+                        <div style="flex:1;height:1px;background:#2e3347;"></div>
+                        <span style="font-size:10px;color:#64748b;">6~12h 예상</span>
+                    </div>
+                    <div style="border-top:1px solid #2e3347;padding-top:10px;display:flex;gap:8px;">${dailyHtml}</div>
+                `;
+            }
+
+            function formatDailyLabel(dateStr) {
+                const y = Number(dateStr.slice(0, 4)), m = Number(dateStr.slice(4, 6)), d = Number(dateStr.slice(6, 8));
+                const dow = ['일', '월', '화', '수', '목', '금', '토'][new Date(y, m - 1, d).getDay()];
+                return `${m}/${d}(${dow})`;
+            }
+
+            async function fetchWeatherReal() {
+                const res = await fetch(WEATHER_CONFIG.proxyUrl);
+                const data = await res.json();
+                data.updatedAt = new Date(data.updatedAt);
+                return data;
+            }
+
+            window.openTipsOverlay = function() {
+                const T = getNbTheme();
+                const dashboardEl = document.getElementById('neubie-dashboard');
+                let tipsOverlay = document.getElementById('neubie-tips-overlay');
+                if (!tipsOverlay) {
+                    tipsOverlay = document.createElement('div');
+                    tipsOverlay.id = 'neubie-tips-overlay';
+                    tipsOverlay.style.cssText = `
+                        position:fixed; inset:0; background:transparent; pointer-events:none;
+                        z-index:2147483646; display:flex; align-items:center; justify-content:center;
+                        font-family:Pretendard, sans-serif; border-radius:20px; overflow:hidden;
+                    `;
+                    const tipsBox = document.createElement('div');
+                    tipsBox.style.cssText = `
+                        background:#1e1e2e; color:#e2e8f0; border-radius:18px; pointer-events:auto;
+                        border:1.5px solid #f59e0b; padding:28px 32px 24px 32px;
+                        max-width:560px; width:90%; max-height:80vh; overflow-y:auto;
+                        position:relative; box-shadow:0 10px 50px rgba(0,0,0,0.7);
+                    `;
+                    const tipsTitle = document.createElement('div');
+                    tipsTitle.textContent = '최적화 팁';
+                    tipsTitle.style.cssText = `font-size:20px; font-weight:bold; margin-bottom:20px; color:#fcd34d; cursor:pointer;`;
+
+                    const padIndicator = document.createElement('span');
+                    padIndicator.style.cssText = 'font-size:12px;color:#ef4444;margin-left:8px;font-weight:700;';
+                    padIndicator.textContent = '패드기능 OFF';
+                    padIndicator.style.display = localStorage.getItem('neubie_dpad_binding')==='off' ? 'inline' : 'none';
+                    tipsTitle.appendChild(padIndicator);
+
+                    let tipClickCount = 0;
+                    let tipClickTimer = null;
+                    tipsTitle.addEventListener('click', () => {
+                    tipClickCount++;
+                    clearTimeout(tipClickTimer);
+                    tipClickTimer = setTimeout(() => { tipClickCount = 0; }, 2000);
+                    if(tipClickCount >= 5){
+                        tipClickCount = 0;
+                        clearTimeout(tipClickTimer);
+                        if(localStorage.getItem('neubie_dpad_binding')==='off'){
+                        localStorage.removeItem('neubie_dpad_binding');
+                        padIndicator.style.display='none';
+                        } else {
+                        localStorage.setItem('neubie_dpad_binding','off');
+                        padIndicator.style.display='inline';
+                        }
+                    }
+                    });
+
+                    const tipsClose = document.createElement('button');
+                    tipsClose.textContent = '✕';
+                    tipsClose.style.cssText = `
+                        position:absolute; top:16px; right:18px;
+                        background:transparent; border:none; color:#aaa;
+                        font-size:20px; cursor:pointer; line-height:1; padding:4px 8px;
+                        border-radius:6px; transition:color 0.2s;
+                    `;
+                    tipsClose.onmouseenter = () => { tipsClose.style.color='#fff'; };
+                    tipsClose.onmouseleave = () => { tipsClose.style.color='#aaa'; };
+                    tipsClose.onclick = () => { tipsOverlay.style.display = 'none'; };
+
+                    const tipsItems = [
+                        { title: "슬랙 PWA 버전 사용법", url: "https://telling-ink-a85.notion.site/PWA-366a8cf5ba7b80eebb43e017c095702c?pvs=74" },
+                        { title: "OBS 설정법", url: "https://telling-ink-a85.notion.site/OBS-366a8cf5ba7b80dfb101cfa149eaefcf?pvs=74" },
+                        { title: "CYH's 추천 프로그램", url: "https://telling-ink-a85.notion.site/366a8cf5ba7b80958575eadb8809f313" },
+                    ];
+                    const tipsContent = document.createElement('div');
+                    tipsContent.style.cssText = "display:grid; gap:10px;";
+                    tipsItems.forEach(item => {
+                        const row = document.createElement('div');
+                        row.style.cssText = `
+                            display:flex; justify-content:space-between; align-items:center;
+                            background:#252525; border:1px solid #333333; border-radius:12px;
+                            padding:13px 16px; gap:12px;
+                        `;
+                        const rowTitle = document.createElement('span');
+                        rowTitle.textContent = item.title;
+                        rowTitle.style.cssText = "font-size:14px; font-weight:600; color:#e2e8f0; flex:1;";
+                        const rowBtn = document.createElement('button');
+                        rowBtn.textContent = '열기';
+                        rowBtn.style.cssText = `
+                            background:#f59e0b; color:#1a1a1a; border:none;
+                            padding:7px 16px; border-radius:8px; cursor:pointer;
+                            font-weight:bold; font-size:13px; white-space:nowrap;
+                            transition:background 0.2s;
+                        `;
+                        rowBtn.onmouseenter = () => { rowBtn.style.background='#fbbf24'; };
+                        rowBtn.onmouseleave = () => { rowBtn.style.background='#f59e0b'; };
+                        rowBtn.onclick = () => { window.open(item.url, '_blank'); };
+                        row.appendChild(rowTitle);
+                        row.appendChild(rowBtn);
+                        tipsContent.appendChild(row);
+                    });
+                    tipsBox.appendChild(tipsClose);
+                    tipsBox.appendChild(tipsTitle);
+                    tipsBox.appendChild(tipsContent);
+                    tipsOverlay.appendChild(tipsBox);
+                    document.body.appendChild(tipsOverlay);
+                }
+                const r0 = dashboardEl.getBoundingClientRect();
+                tipsOverlay.style.top = r0.top + 'px';
+                tipsOverlay.style.left = r0.left + 'px';
+                tipsOverlay.style.width = r0.width + 'px';
+                tipsOverlay.style.height = r0.height + 'px';
+                tipsOverlay.style.display = 'flex';
+            };
+
+            window.openRouletteOverlay = function() {
+                const T = getNbTheme();
+                let overlay = document.getElementById('neubie-roulette-overlay');
+                if (overlay) { overlay.style.display = 'flex'; return; }
+
+                overlay = document.createElement('div');
+                overlay.id = 'neubie-roulette-overlay';
+                overlay.style.cssText = `
+                    position:fixed; inset:0; z-index:2147483646;
+                    background:transparent; pointer-events:none;
+                    display:flex; align-items:center; justify-content:center;
+                    font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;
+                `;
+                const box = document.createElement('div');
+                box.style.cssText = `
+                    background:${T.card}; color:${T.text};
+                    border-radius:16px; padding:20px;
+                    width:min(94vw,620px);
+                    box-shadow:0 4px 40px rgba(0,0,0,0.7);
+                    pointer-events:auto;
+                `;
+                box.innerHTML = `
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                        <span style="font-size:18px;font-weight:700;color:#4f8ef7;">🎡 룰렛 돌리기 & 동전 던지기 & 개인 메모</span>
+                        <button id="rc-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                        <div style="background:${T.bg};border-radius:12px;padding:14px;">
+                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                                <span style="font-size:14px;font-weight:700;color:#94a3b8;">룰렛</span>
+                                <div style="display:flex;gap:6px;">
+                                    <button id="rc-preset-lunch" style="font-size:11px;padding:4px 8px;background:#252525;border:1px solid #333;color:#e2e8f0;border-radius:6px;cursor:pointer;">식사 메뉴</button>
+                                    <button id="rc-preset-people" style="font-size:11px;padding:4px 8px;background:#252525;border:1px solid #333;color:#e2e8f0;border-radius:6px;cursor:pointer;">사람 이름</button>
+                                    <button id="rc-preset-etc" style="font-size:11px;padding:4px 8px;background:#252525;border:1px solid #333;color:#e2e8f0;border-radius:6px;cursor:pointer;">기타</button>
+                                </div>
+                            </div>
+                            <textarea id="rc-input" rows="6" style="width:100%;box-sizing:border-box;resize:none;font-size:12px;background:#111319;color:#e2e8f0;border:1px solid #333;border-radius:8px;padding:6px 8px;"></textarea>
+                            <button id="rc-build" style="width:100%;margin-top:6px;padding:6px;background:#252525;border:1px solid #333;color:#e2e8f0;border-radius:8px;cursor:pointer;font-size:12px;">룰렛 만들기 (엔터로 구분)</button>
+                            <div id="rc-capture-area" style="background:${T.card};border-radius:12px;padding:8px 0;">
+                                <div style="position:relative;width:190px;height:190px;margin:16px auto 6px;">
+                                    <div id="rc-pointer" style="position:absolute;top:-4px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:13px solid #e2e8f0;z-index:3;transition:transform .15s ease;"></div>
+                                    <div id="rc-wheel-wrap" style="position:relative;width:190px;height:190px;transition:transform 5s cubic-bezier(.13,.72,.1,1);">
+                                        <canvas id="rc-canvas" width="190" height="190" style="display:block;position:relative;z-index:1;pointer-events:none;"></canvas>
+                                        <div id="rc-labels" style="position:absolute;inset:0;z-index:2;pointer-events:none;"></div>
+                                    </div>
+                                    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:30px;height:30px;border-radius:50%;background:#1a1c24;border:2px solid #0f1117;z-index:3;"></div>
+                                </div>
+                                <div style="text-align:center;min-height:28px;margin-top:8px;">
+                                    <span id="rc-result" style="display:none;font-size:12px;font-weight:700;padding:4px 12px;border-radius:999px;background:#1e3a5f;color:#4f8ef7;"></span>
+                                </div>
+                            </div>
+                            <button id="rc-spin" style="width:100%;padding:8px;background:#4f8ef7;border:none;color:#0f1117;font-weight:700;border-radius:8px;cursor:pointer;font-size:13px;">돌리기</button>
+                            <button id="rc-copy-img" style="visibility:hidden;width:100%;margin-top:8px;padding:6px;background:#252525;border:1px solid #333;color:#e2e8f0;border-radius:8px;cursor:pointer;font-size:12px;">📋 결과 이미지 복사</button>
+                        </div>
+                        <div style="background:${T.bg};border-radius:12px;padding:14px;display:flex;flex-direction:column;align-items:center;height:100%;box-sizing:border-box;">
+                            <div style="font-size:14px;font-weight:700;margin-bottom:12px;color:#94a3b8;align-self:flex-start;">동전 던지기</div>
+                            <div style="width:65px;height:65px;perspective:500px;margin:10px 0 12px;">
+                                <div id="rc-coin" style="width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform 2.6s cubic-bezier(.17,.67,.2,1);">
+                                    <div style="position:absolute;inset:0;border-radius:50%;background:#3a2a10;border:2px solid #f59e0b;display:flex;align-items:center;justify-content:center;backface-visibility:hidden;">
+                                        <div style="width:80%;height:80%;border-radius:50%;border:1px dashed #f59e0b;display:flex;align-items:center;justify-content:center;">
+                                            <span style="font-size:14px;font-weight:700;color:#fbbf24;">앞</span>
+                                        </div>
+                                    </div>
+                                    <div style="position:absolute;inset:0;border-radius:50%;background:#12233b;border:2px solid #4f8ef7;display:flex;align-items:center;justify-content:center;backface-visibility:hidden;transform:rotateY(180deg);">
+                                        <div style="width:80%;height:80%;border-radius:50%;border:1px dashed #4f8ef7;display:flex;align-items:center;justify-content:center;">
+                                            <span style="font-size:14px;font-weight:700;color:#4f8ef7;">뒤</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button id="rc-flip" style="width:100%;padding:8px;background:#4f8ef7;border:none;color:#0f1117;font-weight:700;border-radius:8px;cursor:pointer;font-size:13px;">던지기</button>
+                            <div style="text-align:center;min-height:28px;margin-top:8px;">
+                                <span id="rc-coin-result" style="display:none;font-size:12px;font-weight:700;padding:4px 12px;border-radius:999px;"></span>
+                            </div>
+                            <div style="width:100%;margin-top:14px;border-top:1px solid #2e3347;padding-top:12px;flex:1;display:flex;flex-direction:column;min-height:0;">
+                                <div style="font-size:14px;color:#94a3b8;margin-bottom:6px;">개인 메모 (본인 브라우저에만 저장됨)</div>
+                                <textarea id="rc-memo" maxlength="500" style="width:100%;box-sizing:border-box;resize:none;overflow-y:auto;font-size:12px;background:#111319;color:#e2e8f0;border:1px solid #333;border-radius:8px;padding:6px 8px;flex:1;min-height:0;" placeholder="메모를 입력하세요..."></textarea>
+                                <div id="rc-memo-count" style="text-align:right;font-size:10px;color:#64748b;margin-top:2px;">0/500</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                overlay.appendChild(box);
+                document.body.appendChild(overlay);
+
+                box.querySelector('#rc-close').onclick = () => {
+                    overlay.style.display = 'none';
+                    if (window._neubieRouletteCard) window._neubieRouletteCard.style.outline = 'none';
+                };
+
+                const palette = ['#7F77DD','#1D9E75','#D85A30','#D4537E'];
+                const canvas = box.querySelector('#rc-canvas');
+                const ctx = canvas.getContext('2d');
+                let rcItems = [];
+                let rcRotation = 0;
+                let rcSpinning = false;
+                const RC_KEYS = { lunch: 'neubie_roulette_lunch', people: 'neubie_roulette_people', etc: 'neubie_roulette_etc' };
+                let rcCategory = 'lunch';
+
+                function rcDraw() {
+                    const n = rcItems.length || 1;
+                    const cx = 95, cy = 95, r = 90;
+                    ctx.clearRect(0, 0, 190, 190);
+                    const slice = 2 * Math.PI / n;
+                    for (let i = 0; i < n; i++) {
+                        const start = i * slice - Math.PI / 2;
+                        ctx.beginPath();
+                        ctx.moveTo(cx, cy);
+                        ctx.arc(cx, cy, r, start, start + slice);
+                        ctx.closePath();
+                        ctx.fillStyle = palette[i % palette.length];
+                        ctx.fill();
+                        ctx.strokeStyle = '#1a1c24';
+                        ctx.lineWidth = 3;
+                        ctx.stroke();
+                    }
+                    const labelsEl = box.querySelector('#rc-labels');
+                    labelsEl.innerHTML = '';
+                    const labelR = 58;
+                    for (let i = 0; i < n; i++) {
+                        const angle = i * slice + slice / 2 - Math.PI / 2;
+                        const x = cx + labelR * Math.cos(angle);
+                        const y = cy + labelR * Math.sin(angle);
+                        const lab = document.createElement('div');
+                        lab.className = 'rc-label';
+                        lab.style.cssText = `position:absolute;left:${x}px;top:${y}px;transform:translate(-50%,-50%) rotate(${-rcRotation}deg);color:#fff;font-size:11px;font-weight:500;white-space:nowrap;transition:transform 5s cubic-bezier(.13,.72,.1,1);`;
+                        lab.textContent = (rcItems[i] || '').slice(0, 7);
+                        labelsEl.appendChild(lab);
+                    }
+                }
+
+                function rcRebuild() {
+                    rcItems = box.querySelector('#rc-input').value.split('\n').map(s => s.trim()).filter(Boolean);
+                    box.querySelector('#rc-result').style.display = 'none';
+                    rcDraw();
+                }
+
+                box.querySelector('#rc-build').onclick = rcRebuild;
+
+                function rcSetActiveButton(cat) {
+                    ['lunch', 'people', 'etc'].forEach(c => {
+                        const btn = box.querySelector('#rc-preset-' + c);
+                        if (c === cat) {
+                            btn.style.background = '#4f8ef7';
+                            btn.style.color = '#0f1117';
+                            btn.style.borderColor = '#4f8ef7';
+                        } else {
+                            btn.style.background = '#252525';
+                            btn.style.color = '#e2e8f0';
+                            btn.style.borderColor = '#333';
+                        }
+                    });
+                }
+
+                function rcSetControlsDisabled(disabled) {
+                    ['rc-preset-lunch', 'rc-preset-people', 'rc-preset-etc', 'rc-build', 'rc-spin'].forEach(id => {
+                        const el = box.querySelector('#' + id);
+                        el.disabled = disabled;
+                        el.style.opacity = disabled ? '0.5' : '1';
+                        el.style.cursor = disabled ? 'not-allowed' : 'pointer';
+                    });
+                    box.querySelector('#rc-input').disabled = disabled;
+                }
+
+                function rcLoadHtml2Canvas() {
+                    return new Promise((resolve, reject) => {
+                        if (window.html2canvas) return resolve();
+                        const s = document.createElement('script');
+                        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+                        s.onload = () => resolve();
+                        s.onerror = reject;
+                        document.head.appendChild(s);
+                    });
+                }
+
+                box.querySelector('#rc-copy-img').onclick = async () => {
+                    const btn = box.querySelector('#rc-copy-img');
+                    const original = btn.textContent;
+                    btn.textContent = '캡처 중...';
+                    btn.disabled = true;
+                    try {
+                        await rcLoadHtml2Canvas();
+                        const target = box.querySelector('#rc-capture-area');
+                        const blobPromise = window.html2canvas(target, { backgroundColor: '#0f1117' })
+                            .then(canvas => new Promise(resolve => canvas.toBlob(resolve, 'image/png')));
+                        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blobPromise })]);
+                        btn.textContent = '복사됨!';
+                    } catch (e) {
+                        console.error(e);
+                        btn.textContent = '복사 실패';
+                    }
+                    setTimeout(() => { btn.textContent = original; btn.disabled = false; }, 1500);
+                };
+
+                function rcLoadCategory(cat, fallback) {
+                    rcCategory = cat;
+                    rcSetActiveButton(cat);
+                    const saved = localStorage.getItem(RC_KEYS[cat]);
+                    box.querySelector('#rc-input').value = (saved !== null && saved !== '') ? saved : fallback;
+                    rcRebuild();
+                }
+                box.querySelector('#rc-preset-lunch').onclick = () => rcLoadCategory('lunch', '한식\n중식\n일식\n분식');
+                box.querySelector('#rc-preset-people').onclick = () => rcLoadCategory('people', '유재석\n김연아\n손흥민\n김용욱');
+                box.querySelector('#rc-preset-etc').onclick = () => rcLoadCategory('etc', '1\n2\n3\n4');
+                box.querySelector('#rc-input').addEventListener('input', () => {
+                    localStorage.setItem(RC_KEYS[rcCategory], box.querySelector('#rc-input').value);
+                });
+
+                box.querySelector('#rc-spin').onclick = () => {
+                    if (rcSpinning || rcItems.length === 0) return;
+                    rcSpinning = true;
+                    rcSetControlsDisabled(true);
+                    box.querySelector('#rc-copy-img').style.visibility = 'hidden';
+                    const n = rcItems.length;
+                    const sliceDeg = 360 / n;
+                    const targetIndex = Math.floor(Math.random() * n);
+                    const targetCenterDeg = targetIndex * sliceDeg + sliceDeg / 2;
+                    const extraSpins = 5 * 360;
+                    rcRotation = rcRotation - (rcRotation % 360) + extraSpins + (360 - targetCenterDeg);
+                    const wheelWrap = box.querySelector('#rc-wheel-wrap');
+                    wheelWrap.style.transition = 'transform 5s cubic-bezier(.13,.72,.1,1)';
+                    wheelWrap.style.transform = `rotate(${rcRotation}deg)`;
+                    box.querySelectorAll('.rc-label').forEach(lab => {
+                        lab.style.transition = 'transform 5s cubic-bezier(.13,.72,.1,1)';
+                        lab.style.transform = `translate(-50%,-50%) rotate(${-rcRotation}deg)`;
+                    });
+                    const pointer = box.querySelector('#rc-pointer');
+                    const badge = box.querySelector('#rc-result');
+                    badge.style.display = 'none';
+                    setTimeout(() => {
+                        pointer.style.transform = 'translateX(-50%) rotate(-14deg)';
+                        setTimeout(() => { pointer.style.transform = 'translateX(-50%) rotate(10deg)'; }, 110);
+                        setTimeout(() => { pointer.style.transform = 'translateX(-50%) rotate(0deg)'; }, 220);
+                        badge.textContent = '당첨: ' + rcItems[targetIndex];
+                        badge.style.display = 'inline-block';
+                        box.querySelector('#rc-copy-img').style.visibility = 'visible';
+                        rcSpinning = false;
+                        rcSetControlsDisabled(false);
+                    }, 5050);
+                };
+
+                const savedLunch = localStorage.getItem(RC_KEYS.lunch);
+                if (savedLunch) box.querySelector('#rc-input').value = savedLunch;
+                rcRebuild();
+                rcSetActiveButton('lunch');
+
+                let coinRot = 0;
+                box.querySelector('#rc-flip').onclick = () => {
+                    const isHeads = Math.random() < 0.5;
+                    coinRot += 6 * 360 + (isHeads ? 0 : 180);
+                    box.querySelector('#rc-coin').style.transform = `rotateY(${coinRot}deg)`;
+                    const badge = box.querySelector('#rc-coin-result');
+                    badge.style.display = 'none';
+                    setTimeout(() => {
+                        badge.textContent = isHeads ? '앞면' : '뒷면';
+                        badge.style.background = isHeads ? '#3a2a10' : '#12233b';
+                        badge.style.color = isHeads ? '#fbbf24' : '#4f8ef7';
+                        badge.style.display = 'inline-block';
+                    }, 2650);
+                };
+                
+                const RC_MEMO_KEY = 'neubie_roulette_memo';
+                const memoEl = box.querySelector('#rc-memo');
+                const memoCountEl = box.querySelector('#rc-memo-count');
+                const savedMemo = localStorage.getItem(RC_MEMO_KEY);
+                if (savedMemo) {
+                    memoEl.value = savedMemo;
+                    memoCountEl.textContent = savedMemo.length + '/500';
+                }
+                memoEl.addEventListener('input', () => {
+                    localStorage.setItem(RC_MEMO_KEY, memoEl.value);
+                    memoCountEl.textContent = memoEl.value.length + '/500';
+                });
+            };
 
 			// 그 외 페이지는 기존 대시보드
 			const tipsOverlayEl = document.getElementById('neubie-tips-overlay');
