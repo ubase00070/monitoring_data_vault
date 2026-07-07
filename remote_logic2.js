@@ -934,13 +934,13 @@
         card.innerHTML = `
             <div style="color:#3b82f6; font-weight:bold; font-size:18px; margin-bottom:10px;">🏷️ 영상 파일명 생성기</div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px 5px; margin-bottom: 10px;">
-                <div style="position: relative;">
+                <div style="position: relative; min-width: 0;">
                     <select id="robotSelector" style="width: 100%; background: #333; color: white; border: 1px solid #555; border-radius: 4px; font-size: 15px; padding: 0 20px 0 8px; height: 32px; line-height: 32px; box-sizing: border-box; appearance: none; -webkit-appearance: none; -moz-appearance: none;">
                         ${dropdownOptions || '<option>최근 배달 기체 미감지</option>'}
                     </select>
                     <span style="position: absolute; right: 6px; top: 50%; transform: translateY(-50%); pointer-events: none; color: #aaa; font-size: 11px;">▾</span>
                 </div>
-                <div style="display: flex; gap: 5px;">
+                <div style="display: flex; gap: 5px; min-width: 0;">
                     <input type="text" id="taskInput" placeholder="주문번호를 붙여넣으세요." style="flex: 1; min-width: 0; background: #333; color: white; border: 1px solid #555; padding: 0 8px; border-radius: 4px; font-size: 15px; height: 32px; line-height: 32px; box-sizing: border-box;">
                     <button id="copyFileName" style="width: 70px; flex-shrink: 0; background: #007bff; color: white; border: none; padding: 0 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 15px; white-space: nowrap; overflow: hidden; height: 32px; line-height: 32px; box-sizing: border-box;">복사</button>
                 </div>
@@ -956,7 +956,7 @@
         if (!document.getElementById('naming-btn-style')) {
             const style = document.createElement('style');
             style.id = 'naming-btn-style';
-            style.textContent = `.sub-btn { background: #444; color: #ddd; border: 1px solid #666; padding: 6px 4px; border-radius: 6px; font-size: 15px; cursor: pointer; flex: 1; transition: 0.2s; } .sub-btn:hover { background: #555; border-color: #888; }`;
+            style.textContent = `.sub-btn { background: #444; color: #ddd; border: 1px solid #666; padding: 6px 4px; border-radius: 6px; font-size: 15px; cursor: pointer; flex: 1; min-width: 0; transition: 0.2s; } .sub-btn:hover { background: #555; border-color: #888; }`;
             document.head.appendChild(style);
         }
 
