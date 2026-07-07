@@ -1519,135 +1519,19 @@
             if (!isActive) openScheduleOverlay();
         };
 
-        // 최적화 팁
-        const tipsCard = document.createElement('div');
-        tipsCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; cursor:pointer; display:inline-flex; align-items:center;";
-        tipsCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">최적화 팁</div>`;
-        const tipsOpenBtn = document.createElement('button');
-        tipsOpenBtn.textContent = '열기';
-        tipsOpenBtn.style.cssText = "background:#3b82f6; color:white; border:none; padding:5px 14px; border-radius:8px; cursor:pointer; font-weight:bold; font-size:13px; white-space:nowrap;";
-        tipsOpenBtn.onclick = () => {
-            let tipsOverlay = document.getElementById('neubie-tips-overlay');
-            if (!tipsOverlay) {
-                tipsOverlay = document.createElement('div');
-                tipsOverlay.id = 'neubie-tips-overlay';
-                tipsOverlay.style.cssText = `
-                    position:fixed; inset:0; background:transparent; pointer-events:none;
-                    z-index:2147483646; display:flex; align-items:center; justify-content:center;
-                    font-family:Pretendard, sans-serif; border-radius:20px; overflow:hidden;
-                `;
-                const tipsBox = document.createElement('div');
-                tipsBox.style.cssText = `
-                    background:#1e1e2e; color:#e2e8f0; border-radius:18px; pointer-events:auto;
-                    border:1.5px solid #f59e0b; padding:28px 32px 24px 32px;
-                    max-width:560px; width:90%; max-height:80vh; overflow-y:auto;
-                    position:relative; box-shadow:0 10px 50px rgba(0,0,0,0.7);
-                `;
-                const tipsTitle = document.createElement('div');
-                tipsTitle.textContent = '최적화 팁';
-                tipsTitle.style.cssText = `font-size:20px; font-weight:bold; margin-bottom:20px; color:#fcd34d; cursor:pointer;`;
-
-				const padIndicator = document.createElement('span');
-				padIndicator.style.cssText = 'font-size:12px;color:#ef4444;margin-left:8px;font-weight:700;';
-				padIndicator.textContent = '패드기능 OFF';
-				padIndicator.style.display = localStorage.getItem('neubie_dpad_binding')==='off' ? 'inline' : 'none';
-				tipsTitle.appendChild(padIndicator);
-				
-				let tipClickCount = 0;
-				let tipClickTimer = null;
-				tipsTitle.addEventListener('click', () => {
-				  tipClickCount++;
-				  clearTimeout(tipClickTimer);
-				  tipClickTimer = setTimeout(() => { tipClickCount = 0; }, 2000);
-				  if(tipClickCount >= 5){
-				    tipClickCount = 0;
-				    clearTimeout(tipClickTimer);
-				    if(localStorage.getItem('neubie_dpad_binding')==='off'){
-				      localStorage.removeItem('neubie_dpad_binding');
-				      padIndicator.style.display='none';
-				    } else {
-				      localStorage.setItem('neubie_dpad_binding','off');
-				      padIndicator.style.display='inline';
-				    }
-				  }
-				});
-				
-                const tipsClose = document.createElement('button');
-                tipsClose.textContent = '✕';
-                tipsClose.style.cssText = `
-                    position:absolute; top:16px; right:18px;
-                    background:transparent; border:none; color:#aaa;
-                    font-size:20px; cursor:pointer; line-height:1; padding:4px 8px;
-                    border-radius:6px; transition:color 0.2s;
-                `;
-				
-                tipsClose.onmouseenter = () => { tipsClose.style.color='#fff'; };
-                tipsClose.onmouseleave = () => { tipsClose.style.color='#aaa'; };
-                tipsClose.onclick = () => {
-                    tipsOverlay.style.display = 'none';
-                    tipsCard.style.outline = 'none';
-                };
-
-                const tipsItems = [
-                    { title: "슬랙 PWA 버전 사용법", url: "https://telling-ink-a85.notion.site/PWA-366a8cf5ba7b80eebb43e017c095702c?pvs=74" },
-                    { title: "OBS 설정법", url: "https://telling-ink-a85.notion.site/OBS-366a8cf5ba7b80dfb101cfa149eaefcf?pvs=74" },
-                    { title: "CYH's 추천 프로그램", url: "https://telling-ink-a85.notion.site/366a8cf5ba7b80958575eadb8809f313" },
-                ];
-                const tipsContent = document.createElement('div');
-                tipsContent.style.cssText = "display:grid; gap:10px;";
-                tipsItems.forEach(item => {
-                    const row = document.createElement('div');
-                    row.style.cssText = `
-                        display:flex; justify-content:space-between; align-items:center;
-                        background:#252525; border:1px solid #333333; border-radius:12px;
-                        padding:13px 16px; gap:12px;
-                    `;
-                    const rowTitle = document.createElement('span');
-                    rowTitle.textContent = item.title;
-                    rowTitle.style.cssText = "font-size:14px; font-weight:600; color:#e2e8f0; flex:1;";
-                    const rowBtn = document.createElement('button');
-                    rowBtn.textContent = '열기';
-                    rowBtn.style.cssText = `
-                        background:#f59e0b; color:#1a1a1a; border:none;
-                        padding:7px 16px; border-radius:8px; cursor:pointer;
-                        font-weight:bold; font-size:13px; white-space:nowrap;
-                        transition:background 0.2s;
-                    `;
-                    rowBtn.onmouseenter = () => { rowBtn.style.background='#fbbf24'; };
-                    rowBtn.onmouseleave = () => { rowBtn.style.background='#f59e0b'; };
-                    rowBtn.onclick = () => { window.open(item.url, '_blank'); };
-                    row.appendChild(rowTitle);
-                    row.appendChild(rowBtn);
-                    tipsContent.appendChild(row);
-                });
-                tipsBox.appendChild(tipsClose);
-                tipsBox.appendChild(tipsTitle);
-                tipsBox.appendChild(tipsContent);
-                tipsOverlay.appendChild(tipsBox);
-                const r0 = dashboard.getBoundingClientRect();
-                tipsOverlay.style.position = 'fixed';
-                tipsOverlay.style.top = r0.top + 'px';
-                tipsOverlay.style.left = r0.left + 'px';
-                tipsOverlay.style.width = r0.width + 'px';
-                tipsOverlay.style.height = r0.height + 'px';
-                document.body.appendChild(tipsOverlay);
+        const rouletteCard = document.createElement('div');
+        rouletteCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; cursor:pointer; display:flex; align-items:center;";
+        rouletteCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">🎡 룰렛 & 동전 던지기</div>`;
+        window._neubieRouletteCard = rouletteCard;
+        rouletteCard.onclick = () => {
+            const isActive = rouletteCard.style.outline !== 'none' && rouletteCard.style.outline !== '';
+            rouletteCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
+            if (!isActive) {
+                openRouletteOverlay();
             } else {
-                const r = dashboard.getBoundingClientRect();
-                tipsOverlay.style.top = r.top + 'px';
-                tipsOverlay.style.left = r.left + 'px';
-                tipsOverlay.style.width = r.width + 'px';
-                tipsOverlay.style.height = r.height + 'px';
-                tipsOverlay.style.display = 'flex';
-                tipsOverlay.querySelector('button').onclick = () => {
-                    tipsOverlay.style.display = 'none';
-                    tipsCard.style.outline = 'none';
-                };
+                const rouletteOverlay = document.getElementById('neubie-roulette-overlay');
+                if (rouletteOverlay) rouletteOverlay.style.display = 'none';
             }
-        };
-        tipsCard.onclick = () => {
-            const isActive = tipsCard.style.outline !== 'none' && tipsCard.style.outline !== '';
-            tipsCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
-            tipsOpenBtn.onclick();
         };
 
         // 배터리 현황
@@ -1671,7 +1555,7 @@
 
         const weatherCard = document.createElement('div');
         weatherCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; cursor:pointer; display:flex; align-items:center;";
-        weatherCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">☀️ 송내 현재 날씨 (실시간 기상청)</div>`;
+        weatherCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">☀️ 송내 현재 날씨 (기상청 API)</div>`;
         window._neubieWeatherCard = weatherCard;
         weatherCard.onclick = () => {
             const isActive = weatherCard.style.outline !== 'none' && weatherCard.style.outline !== '';
@@ -1689,7 +1573,7 @@
         bottomRow.appendChild(queueCard);    // 다중 도우미
         bottomRow.appendChild(scheduleCard); // 스케줄표
         bottomRow.appendChild(weatherCard); // 날씨
-        bottomRow.appendChild(tipsCard);     // 최적화 팁
+        bottomRow.appendChild(rouletteCard);     // 최적화 팁
 
         list.appendChild(bottomRow);
 
@@ -1745,6 +1629,9 @@
         const weatherOverlay = document.getElementById('neubie-weather-overlay');
         if (weatherOverlay) weatherOverlay.style.display='none';
         if (window._neubieWeatherCard) window._neubieWeatherCard.style.outline = 'none';
+        const rouletteOverlay = document.getElementById('neubie-roulette-overlay');
+        if (rouletteOverlay) rouletteOverlay.style.display = 'none';
+        if (window._neubieRouletteCard) window._neubieRouletteCard.style.outline = 'none';
     }
 
     // ── 유효성 검증 (1시간 이내 데이터) ──
@@ -2654,6 +2541,7 @@
             <div style="width:100%; height:100%; background:rgba(10,10,30,0.72); backdrop-filter:blur(2px); display:flex; flex-direction:column; border-radius:24px;">
                 <div id="nb-board-header" style="display:flex; align-items:center; gap:8px; padding:12px 16px; border-bottom:0.5px solid rgba(255,255,255,0.12); cursor:grab;">
                     <span style="font-size:15px; font-weight:600; color:#fff; flex:1;">📋 뉴비고 게시판</span>
+                    <button id="nb-tips-btn" style="height:28px; padding:0 10px; font-size:12px; font-weight:500; background:#f59e0b; color:#1a1a1a; border:none; border-radius:6px; cursor:pointer;" title="최적화 팁">💡 팁</button>
                     <button id="nb-refresh-btn" style="height:28px; width:28px; background:rgba(255,255,255,0.1); color:white; border:none; border-radius:6px; cursor:pointer; font-size:14px;" title="새로고침">↺</button>
 					<button id="nb-write-btn" style="height:28px; padding:0 12px; font-size:12px; font-weight:500; background:#6366f1; color:white; border:none; border-radius:6px; cursor:pointer;">✏️ 글쓰기</button>
                     <button id="nb-board-close" style="background:rgba(255,255,255,0.1); border:none; color:#fff; width:26px; height:26px; border-radius:50%; cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center;">✕</button>
@@ -2756,6 +2644,7 @@
 			};
 			document.getElementById('nb-edit-submit').onclick = submitEdit;
 			document.getElementById('nb-refresh-btn').onclick = () => loadPosts();
+            document.getElementById('nb-tips-btn').onclick = () => openTipsOverlay();
             document.getElementById('nb-write-btn').onclick = () => {
                 if (!myEmail) return alert('로그인 정보가 없어 글쓰기가 불가합니다.');
                 showWriteScreen();
@@ -3995,7 +3884,7 @@
                 `;
                 box.innerHTML = `
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-                        <span style="font-size:18px;font-weight:700;color:#4f8ef7;">☀️ 송내 현재 날씨 (실시간 기상청)</span>
+                        <span style="font-size:18px;font-weight:700;color:#4f8ef7;">☀️ 송내 현재 날씨 (기상청 API)</span>
                         <button id="nwo-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
                     </div>
                     <div id="nwo-body" style="font-size:13px;color:#64748b;">불러오는 중...</div>
@@ -4061,6 +3950,287 @@
                 data.updatedAt = new Date(data.updatedAt);
                 return data;
             }
+
+            window.openTipsOverlay = function() {
+                const dashboardEl = document.getElementById('neubie-dashboard');
+                let tipsOverlay = document.getElementById('neubie-tips-overlay');
+                if (!tipsOverlay) {
+                    tipsOverlay = document.createElement('div');
+                    tipsOverlay.id = 'neubie-tips-overlay';
+                    tipsOverlay.style.cssText = `
+                        position:fixed; inset:0; background:transparent; pointer-events:none;
+                        z-index:2147483646; display:flex; align-items:center; justify-content:center;
+                        font-family:Pretendard, sans-serif; border-radius:20px; overflow:hidden;
+                    `;
+                    const tipsBox = document.createElement('div');
+                    tipsBox.style.cssText = `
+                        background:#1e1e2e; color:#e2e8f0; border-radius:18px; pointer-events:auto;
+                        border:1.5px solid #f59e0b; padding:28px 32px 24px 32px;
+                        max-width:560px; width:90%; max-height:80vh; overflow-y:auto;
+                        position:relative; box-shadow:0 10px 50px rgba(0,0,0,0.7);
+                    `;
+                    const tipsTitle = document.createElement('div');
+                    tipsTitle.textContent = '최적화 팁';
+                    tipsTitle.style.cssText = `font-size:20px; font-weight:bold; margin-bottom:20px; color:#fcd34d; cursor:pointer;`;
+
+                    const padIndicator = document.createElement('span');
+                    padIndicator.style.cssText = 'font-size:12px;color:#ef4444;margin-left:8px;font-weight:700;';
+                    padIndicator.textContent = '패드기능 OFF';
+                    padIndicator.style.display = localStorage.getItem('neubie_dpad_binding')==='off' ? 'inline' : 'none';
+                    tipsTitle.appendChild(padIndicator);
+
+                    let tipClickCount = 0;
+                    let tipClickTimer = null;
+                    tipsTitle.addEventListener('click', () => {
+                    tipClickCount++;
+                    clearTimeout(tipClickTimer);
+                    tipClickTimer = setTimeout(() => { tipClickCount = 0; }, 2000);
+                    if(tipClickCount >= 5){
+                        tipClickCount = 0;
+                        clearTimeout(tipClickTimer);
+                        if(localStorage.getItem('neubie_dpad_binding')==='off'){
+                        localStorage.removeItem('neubie_dpad_binding');
+                        padIndicator.style.display='none';
+                        } else {
+                        localStorage.setItem('neubie_dpad_binding','off');
+                        padIndicator.style.display='inline';
+                        }
+                    }
+                    });
+
+                    const tipsClose = document.createElement('button');
+                    tipsClose.textContent = '✕';
+                    tipsClose.style.cssText = `
+                        position:absolute; top:16px; right:18px;
+                        background:transparent; border:none; color:#aaa;
+                        font-size:20px; cursor:pointer; line-height:1; padding:4px 8px;
+                        border-radius:6px; transition:color 0.2s;
+                    `;
+                    tipsClose.onmouseenter = () => { tipsClose.style.color='#fff'; };
+                    tipsClose.onmouseleave = () => { tipsClose.style.color='#aaa'; };
+                    tipsClose.onclick = () => { tipsOverlay.style.display = 'none'; };
+
+                    const tipsItems = [
+                        { title: "슬랙 PWA 버전 사용법", url: "https://telling-ink-a85.notion.site/PWA-366a8cf5ba7b80eebb43e017c095702c?pvs=74" },
+                        { title: "OBS 설정법", url: "https://telling-ink-a85.notion.site/OBS-366a8cf5ba7b80dfb101cfa149eaefcf?pvs=74" },
+                        { title: "CYH's 추천 프로그램", url: "https://telling-ink-a85.notion.site/366a8cf5ba7b80958575eadb8809f313" },
+                    ];
+                    const tipsContent = document.createElement('div');
+                    tipsContent.style.cssText = "display:grid; gap:10px;";
+                    tipsItems.forEach(item => {
+                        const row = document.createElement('div');
+                        row.style.cssText = `
+                            display:flex; justify-content:space-between; align-items:center;
+                            background:#252525; border:1px solid #333333; border-radius:12px;
+                            padding:13px 16px; gap:12px;
+                        `;
+                        const rowTitle = document.createElement('span');
+                        rowTitle.textContent = item.title;
+                        rowTitle.style.cssText = "font-size:14px; font-weight:600; color:#e2e8f0; flex:1;";
+                        const rowBtn = document.createElement('button');
+                        rowBtn.textContent = '열기';
+                        rowBtn.style.cssText = `
+                            background:#f59e0b; color:#1a1a1a; border:none;
+                            padding:7px 16px; border-radius:8px; cursor:pointer;
+                            font-weight:bold; font-size:13px; white-space:nowrap;
+                            transition:background 0.2s;
+                        `;
+                        rowBtn.onmouseenter = () => { rowBtn.style.background='#fbbf24'; };
+                        rowBtn.onmouseleave = () => { rowBtn.style.background='#f59e0b'; };
+                        rowBtn.onclick = () => { window.open(item.url, '_blank'); };
+                        row.appendChild(rowTitle);
+                        row.appendChild(rowBtn);
+                        tipsContent.appendChild(row);
+                    });
+                    tipsBox.appendChild(tipsClose);
+                    tipsBox.appendChild(tipsTitle);
+                    tipsBox.appendChild(tipsContent);
+                    tipsOverlay.appendChild(tipsBox);
+                    document.body.appendChild(tipsOverlay);
+                }
+                const r0 = dashboardEl.getBoundingClientRect();
+                tipsOverlay.style.top = r0.top + 'px';
+                tipsOverlay.style.left = r0.left + 'px';
+                tipsOverlay.style.width = r0.width + 'px';
+                tipsOverlay.style.height = r0.height + 'px';
+                tipsOverlay.style.display = 'flex';
+            };
+
+            window.openRouletteOverlay = function() {
+                let overlay = document.getElementById('neubie-roulette-overlay');
+                if (overlay) { overlay.style.display = 'flex'; return; }
+
+                overlay = document.createElement('div');
+                overlay.id = 'neubie-roulette-overlay';
+                overlay.style.cssText = `
+                    position:fixed; inset:0; z-index:2147483646;
+                    background:transparent; pointer-events:none;
+                    display:flex; align-items:center; justify-content:center;
+                    font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;
+                `;
+                const box = document.createElement('div');
+                box.style.cssText = `
+                    background:#0f1117; color:#e2e8f0;
+                    border-radius:16px; padding:20px;
+                    width:min(94vw,620px);
+                    box-shadow:0 4px 40px rgba(0,0,0,0.7);
+                    pointer-events:auto;
+                `;
+                box.innerHTML = `
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                        <span style="font-size:18px;font-weight:700;color:#4f8ef7;">룰렛 & 동전 던지기</span>
+                        <button id="rc-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                        <div style="background:#1a1c24;border-radius:12px;padding:14px;">
+                            <div style="font-size:14px;font-weight:700;margin-bottom:8px;color:#94a3b8;">룰렛</div>
+                            <div style="display:flex;gap:6px;margin-bottom:8px;">
+                                <button id="rc-preset-lunch" style="font-size:11px;padding:4px 8px;background:#252525;border:1px solid #333;color:#e2e8f0;border-radius:6px;cursor:pointer;">점심 메뉴</button>
+                                <button id="rc-preset-people" style="font-size:11px;padding:4px 8px;background:#252525;border:1px solid #333;color:#e2e8f0;border-radius:6px;cursor:pointer;">사람 이름</button>
+                                <button id="rc-preset-etc" style="font-size:11px;padding:4px 8px;background:#252525;border:1px solid #333;color:#e2e8f0;border-radius:6px;cursor:pointer;">기타</button>
+                            </div>
+                            <textarea id="rc-input" rows="3" style="width:100%;box-sizing:border-box;resize:none;font-size:12px;background:#111319;color:#e2e8f0;border:1px solid #333;border-radius:8px;padding:6px 8px;">김밥천국
+        한솥도시락
+        마라탕
+        돈까스</textarea>
+                            <button id="rc-build" style="width:100%;margin-top:6px;padding:6px;background:#252525;border:1px solid #333;color:#e2e8f0;border-radius:8px;cursor:pointer;font-size:12px;">룰렛 만들기</button>
+                            <div style="position:relative;width:190px;height:190px;margin:16px auto 6px;">
+                                <div id="rc-pointer" style="position:absolute;top:-4px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:13px solid #e2e8f0;z-index:3;transition:transform .15s ease;"></div>
+                                <canvas id="rc-canvas" width="190" height="190" style="display:block;position:relative;z-index:1;"></canvas>
+                                <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:30px;height:30px;border-radius:50%;background:#1a1c24;border:2px solid #0f1117;z-index:2;"></div>
+                            </div>
+                            <button id="rc-spin" style="width:100%;padding:8px;background:#4f8ef7;border:none;color:#0f1117;font-weight:700;border-radius:8px;cursor:pointer;font-size:13px;">돌리기</button>
+                            <div style="text-align:center;min-height:28px;margin-top:8px;">
+                                <span id="rc-result" style="display:none;font-size:12px;font-weight:700;padding:4px 12px;border-radius:999px;background:#1e3a5f;color:#4f8ef7;"></span>
+                            </div>
+                        </div>
+                        <div style="background:#1a1c24;border-radius:12px;padding:14px;display:flex;flex-direction:column;align-items:center;">
+                            <div style="font-size:14px;font-weight:700;margin-bottom:12px;color:#94a3b8;align-self:flex-start;">동전 던지기</div>
+                            <div style="width:100px;height:100px;perspective:700px;margin:20px 0 22px;">
+                                <div id="rc-coin" style="width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform 1.9s cubic-bezier(.17,.67,.2,1);">
+                                    <div style="position:absolute;inset:0;border-radius:50%;background:#3a2a10;border:3px solid #f59e0b;display:flex;align-items:center;justify-content:center;backface-visibility:hidden;">
+                                        <div style="width:80%;height:80%;border-radius:50%;border:1.5px dashed #f59e0b;display:flex;align-items:center;justify-content:center;">
+                                            <span style="font-size:20px;font-weight:700;color:#fbbf24;">앞</span>
+                                        </div>
+                                    </div>
+                                    <div style="position:absolute;inset:0;border-radius:50%;background:#12233b;border:3px solid #4f8ef7;display:flex;align-items:center;justify-content:center;backface-visibility:hidden;transform:rotateY(180deg);">
+                                        <div style="width:80%;height:80%;border-radius:50%;border:1.5px dashed #4f8ef7;display:flex;align-items:center;justify-content:center;">
+                                            <span style="font-size:20px;font-weight:700;color:#4f8ef7;">뒤</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button id="rc-flip" style="width:100%;padding:8px;background:#4f8ef7;border:none;color:#0f1117;font-weight:700;border-radius:8px;cursor:pointer;font-size:13px;">던지기</button>
+                            <div style="text-align:center;min-height:28px;margin-top:8px;">
+                                <span id="rc-coin-result" style="display:none;font-size:12px;font-weight:700;padding:4px 12px;border-radius:999px;"></span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                overlay.appendChild(box);
+                document.body.appendChild(overlay);
+
+                box.querySelector('#rc-close').onclick = () => {
+                    overlay.style.display = 'none';
+                    if (window._neubieRouletteCard) window._neubieRouletteCard.style.outline = 'none';
+                };
+
+                const palette = ['#7F77DD','#1D9E75','#D85A30','#D4537E'];
+                const canvas = box.querySelector('#rc-canvas');
+                const ctx = canvas.getContext('2d');
+                let rcItems = [];
+                let rcRotation = 0;
+                const RC_KEYS = { lunch: 'neubie_roulette_lunch', people: 'neubie_roulette_people', etc: 'neubie_roulette_etc' };
+                let rcCategory = 'lunch';
+
+                function rcDraw() {
+                    const n = rcItems.length || 1;
+                    const cx = 95, cy = 95, r = 90;
+                    ctx.clearRect(0, 0, 190, 190);
+                    const slice = 2 * Math.PI / n;
+                    for (let i = 0; i < n; i++) {
+                        const start = i * slice - Math.PI / 2;
+                        ctx.beginPath();
+                        ctx.moveTo(cx, cy);
+                        ctx.arc(cx, cy, r, start, start + slice);
+                        ctx.closePath();
+                        ctx.fillStyle = palette[i % palette.length];
+                        ctx.fill();
+                        ctx.strokeStyle = '#1a1c24';
+                        ctx.lineWidth = 3;
+                        ctx.stroke();
+                        ctx.save();
+                        ctx.translate(cx, cy);
+                        ctx.rotate(start + slice / 2);
+                        ctx.fillStyle = '#fff';
+                        ctx.font = '500 11px sans-serif';
+                        ctx.textAlign = 'right';
+                        ctx.fillText((rcItems[i] || '').slice(0, 7), r - 12, 4);
+                        ctx.restore();
+                    }
+                }
+
+                function rcRebuild() {
+                    rcItems = box.querySelector('#rc-input').value.split('\n').map(s => s.trim()).filter(Boolean);
+                    box.querySelector('#rc-result').style.display = 'none';
+                    rcDraw();
+                }
+
+                box.querySelector('#rc-build').onclick = rcRebuild;
+                function rcLoadCategory(cat, fallback) {
+                    rcCategory = cat;
+                    const saved = localStorage.getItem(RC_KEYS[cat]);
+                    box.querySelector('#rc-input').value = (saved !== null && saved !== '') ? saved : fallback;
+                    rcRebuild();
+                }
+                box.querySelector('#rc-preset-lunch').onclick = () => rcLoadCategory('lunch', '한식\n중식\n일식\n양식\n분식');
+                box.querySelector('#rc-preset-people').onclick = () => rcLoadCategory('people', '홍길동\n임꺽정\n이춘향\n이몽룡');
+                box.querySelector('#rc-preset-etc').onclick = () => rcLoadCategory('etc', '');
+                box.querySelector('#rc-input').addEventListener('input', () => {
+                    localStorage.setItem(RC_KEYS[rcCategory], box.querySelector('#rc-input').value);
+                });
+
+                box.querySelector('#rc-spin').onclick = () => {
+                    if (rcItems.length === 0) return;
+                    const n = rcItems.length;
+                    const sliceDeg = 360 / n;
+                    const targetIndex = Math.floor(Math.random() * n);
+                    const targetCenterDeg = targetIndex * sliceDeg + sliceDeg / 2;
+                    const extraSpins = 5 * 360;
+                    rcRotation = rcRotation - (rcRotation % 360) + extraSpins + (360 - targetCenterDeg);
+                    canvas.style.transition = 'transform 5s cubic-bezier(.13,.72,.1,1)';
+                    canvas.style.transform = `rotate(${rcRotation}deg)`;
+                    const pointer = box.querySelector('#rc-pointer');
+                    const badge = box.querySelector('#rc-result');
+                    badge.style.display = 'none';
+                    setTimeout(() => {
+                        pointer.style.transform = 'translateX(-50%) rotate(-14deg)';
+                        setTimeout(() => { pointer.style.transform = 'translateX(-50%) rotate(10deg)'; }, 110);
+                        setTimeout(() => { pointer.style.transform = 'translateX(-50%) rotate(0deg)'; }, 220);
+                        badge.textContent = '당첨: ' + rcItems[targetIndex];
+                        badge.style.display = 'inline-block';
+                    }, 5050);
+                };
+
+                const savedLunch = localStorage.getItem(RC_KEYS.lunch);
+                if (savedLunch) box.querySelector('#rc-input').value = savedLunch;
+                rcRebuild();
+
+                let coinRot = 0;
+                box.querySelector('#rc-flip').onclick = () => {
+                    const isHeads = Math.random() < 0.5;
+                    coinRot += 6 * 360 + (isHeads ? 0 : 180);
+                    box.querySelector('#rc-coin').style.transform = `rotateY(${coinRot}deg)`;
+                    const badge = box.querySelector('#rc-coin-result');
+                    badge.style.display = 'none';
+                    setTimeout(() => {
+                        badge.textContent = isHeads ? '앞면' : '뒷면';
+                        badge.style.background = isHeads ? '#3a2a10' : '#12233b';
+                        badge.style.color = isHeads ? '#fbbf24' : '#4f8ef7';
+                        badge.style.display = 'inline-block';
+                    }, 1950);
+                };
+            };
 
 			// 그 외 페이지는 기존 대시보드
 			const tipsOverlayEl = document.getElementById('neubie-tips-overlay');
