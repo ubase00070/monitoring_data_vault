@@ -24,12 +24,19 @@
 		}
 
         #bb.bb-light {
-			--bg:#ddd4bd; --sur:#eee5d2; --sur2:#e6dcc4;
-			--bd:#c7b990; --bd2:#b5a67d; --tx:#2b2418; --mu:#7a6f5c;
+			--bg:#d6cbae; --sur:#f5efdd; --sur2:#ece2c8;
+			--bd:#c2b58c; --bd2:#aa9c73; --tx:#2b2418; --mu:#7a6f5c;
 			--wh:rgba(0,0,0,.05);
 		}
         #bb.bb-light .bb-ca.standby { --ac:#8a7f68; --ac-border:rgba(138,127,104,.35); }
 		#bb.bb-light .bb-mi.standby { --ac:#8a7f68; }
+        #bb.bb-light .bb-mi:not(.empty) { color:#2b2418; }
+        #bb.bb-light .bb-chip.bat    { background:var(--sur); color:#b91c1c; }
+		#bb.bb-light .bb-chip.dock   { background:var(--sur); color:#a16207; }
+		#bb.bb-light .bb-chip.zombie { background:var(--sur); color:#c2410c; }
+		#bb.bb-light .bb-chip.cam    { background:var(--sur); color:#c2410c; }
+		#bb.bb-light .bb-chip.nomap  { background:var(--sur); color:#c2410c; }
+		#bb.bb-light .bb-chip.idle   { background:var(--sur); color:#1d4ed8; }
 
         #bb-wrap * { box-sizing:border-box; }
 
@@ -372,7 +379,7 @@
         #bb-info-card-panel {
             display:none; position:fixed;
             top:50%; left:50%; transform:translate(-50%,-50%);
-            width:368px; background:#0a0a0c;
+            width:368px; background:var(--sur);
             border:2px solid rgba(255,255,255,.85); border-radius:12px;
             box-shadow:0 16px 48px rgba(0,0,0,.9);
             z-index:999999999; font-family:'Lato',sans-serif;
