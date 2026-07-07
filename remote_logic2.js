@@ -777,6 +777,7 @@
     SECTION 4-3. UI 렌더링 및 07시 기준 정렬/알림 제어
    ============================================================ */
     function renderTaskList(tasks) {
+        const T = getNbTheme();
         const currentInt = localStorage.getItem('neubie_remind_int') || '0';
 
         function getTaskStatus(rawTime) {
@@ -840,7 +841,7 @@
                 : getTaskStatus(timeKey, isMon);
             const textStyle = status.isExpired 
                 ? 'text-decoration: line-through; color: #777; opacity: 0.7;' 
-                : 'color: #eee;';
+                : `color: ${T.text};`;
             
             item.style.cssText = `
                 background:${status.isExpired ? 'rgba(60, 60, 60, 0.1)' : (isMon ? 'rgba(59, 130, 246, 0.15)' : 'rgba(251, 191, 36, 0.15)')};
@@ -1124,7 +1125,7 @@
                 patchContent.style.cssText = "display:grid; gap:16px;";
                 patchItems.forEach(patch => {
                     const section = document.createElement('div');
-                    section.style.cssText = `background:${T.card}; border:1px solid ${T.border}; border-radius:12px; padding:14px 16px;`;
+                    section.style.cssText = "background:#252525; border:1px solid #333333; border-radius:12px; padding:14px 16px;";
                     const versionRow = document.createElement('div');
                     versionRow.style.cssText = "display:flex; align-items:center; gap:8px; margin-bottom:10px;";
                     versionRow.innerHTML = `
@@ -1328,12 +1329,6 @@
         taskCard.appendChild(taskInline);
         list.appendChild(taskCard);
 
-        if (window.currentMyTasks && window.currentMyTasks.length > 0) {
-            renderTaskList(window.currentMyTasks);
-        } else {
-            taskInline.innerHTML = `<div style="color:#666; font-size:14px; padding:8px 0;">배정된 업무가 없습니다.</div>`;
-        }
-
         // 맵 최적화 카드
         const mapCard = document.createElement('div');
         mapCard.style.cssText = `background:${T.card}; padding:8px 12px; border-radius:15px; border:1px solid ${T.border}; display:flex; justify-content:space-between; align-items:center;`;
@@ -1377,14 +1372,14 @@
                 `;
                 const mapInfoBox = document.createElement('div');
                 mapInfoBox.style.cssText = `
-                    background:#1e1e2e; color:#e2e8f0; border-radius:18px; pointer-events:auto;
-                    border:1.5px solid #3b82f6; padding:36px 40px 32px 40px;
+                    background:${T.card}; color:${T.text}; border-radius:18px; pointer-events:auto;
+                    border:1.5px solid ${T.accent}; padding:36px 40px 32px 40px;
                     max-width:600px; width:90%; max-height:80vh; overflow-y:auto;
                     position:relative; box-shadow:0 10px 50px rgba(0,0,0,0.7);
                 `;
                 const mapInfoTitle = document.createElement('div');
                 mapInfoTitle.textContent = '기능 설명';
-                mapInfoTitle.style.cssText = `font-size:22px; font-weight:bold; margin-bottom:20px; color:#93c5fd;`;
+                mapInfoTitle.style.cssText = `font-size:22px; font-weight:bold; margin-bottom:20px; color:${T.accent};`;
                 const mapInfoClose = document.createElement('button');
                 mapInfoClose.textContent = '✕';
                 mapInfoClose.style.cssText = `
@@ -1397,7 +1392,7 @@
                 mapInfoClose.onmouseleave = () => { mapInfoClose.style.color='#aaa'; };
                 mapInfoClose.onclick = () => { mapInfoOverlay.style.display='none'; };
                 const mapInfoContent = document.createElement('div');
-                mapInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:#cbd5e1;`;
+                mapInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:${T.text};`;
                 mapInfoContent.innerHTML = `
                     역삼 요기요 / 송도 요기요 / 성수 요기요 / 성남 삼평동<br>
                     페이지에서 흰색 마커를 숨겨서 최적화.<br>
@@ -1482,14 +1477,14 @@
                 `;
                 const queueInfoBox = document.createElement('div');
                 queueInfoBox.style.cssText = `
-                    background:#1e1e2e; color:#e2e8f0; border-radius:18px; pointer-events:auto;
-                    border:1.5px solid #3b82f6; padding:36px 40px 32px 40px;
+                    background:${T.card}; color:${T.text}; border-radius:18px; pointer-events:auto;
+                    border:1.5px solid ${T.accent}; padding:36px 40px 32px 40px;
                     max-width:600px; width:90%; max-height:80vh; overflow-y:auto;
                     position:relative; box-shadow:0 10px 50px rgba(0,0,0,0.7);
                 `;
                 const queueInfoTitle = document.createElement('div');
                 queueInfoTitle.textContent = '기능 설명';
-                queueInfoTitle.style.cssText = `font-size:22px; font-weight:bold; margin-bottom:20px; color:#93c5fd;`;
+                queueInfoTitle.style.cssText = `font-size:22px; font-weight:bold; margin-bottom:20px; color:${T.accent};`;
                 const queueInfoClose = document.createElement('button');
                 queueInfoClose.textContent = '✕';
                 queueInfoClose.style.cssText = `
@@ -1503,7 +1498,7 @@
                 queueInfoClose.onclick = () => { queueInfoOverlay.style.display='none'; };
                 const queueInfoContent = document.createElement('div');
                 queueInfoContent.id = 'neubie-queue-info-content';
-                queueInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:#cbd5e1; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;`;
+                queueInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:${T.text}; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;`;
                 queueInfoContent.innerHTML = `
 				기체별 화질 조절<br>
                 기체별 헤드램프 토글<br>
@@ -1614,6 +1609,12 @@
         list.appendChild(createNamingCard());
 
         dashboard.appendChild(list);
+
+        if (window.currentMyTasks && window.currentMyTasks.length > 0) {
+            renderTaskList(window.currentMyTasks);
+        } else {
+            taskInline.innerHTML = `<div style="color:#666; font-size:14px; padding:8px 0;">배정된 업무가 없습니다.</div>`;
+        }
     }
 
     let batteryRefreshInterval = null;
