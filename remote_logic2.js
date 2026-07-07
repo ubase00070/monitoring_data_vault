@@ -934,12 +934,12 @@
         card.innerHTML = `
             <div style="color:#3b82f6; font-weight:bold; font-size:18px; margin-bottom:10px;">🏷️ 영상 파일명 생성기</div>
             <div style="display: flex; align-items: center; gap: 5px; margin-bottom: 10px;">
-                <select id="robotSelector" style="flex: 1.2; background: #333; color: white; border: 1px solid #555; border-radius: 4px; font-size: 15px; padding: 4px;">
+                <select id="robotSelector" style="flex: 1.2; background: #333; color: white; border: 1px solid #555; border-radius: 4px; font-size: 15px; padding: 4px; height: 32px; box-sizing: border-box;">
                     ${dropdownOptions || '<option>최근 배달 기체 미감지</option>'}
                 </select>
-                <input type="text" id="taskInput" placeholder="주문번호를 붙여넣으세요." style="flex: 0 1 160px; background: #333; color: white; border: 1px solid #555; padding: 4px; border-radius: 4px; font-size: 15px;">
+                <input type="text" id="taskInput" placeholder="주문번호를 붙여넣으세요." style="flex: 0 1 160px; background: #333; color: white; border: 1px solid #555; padding: 4px; border-radius: 4px; font-size: 15px; height: 32px; box-sizing: border-box;">
                 <span style="width: 70px; flex-shrink: 0; display: inline-flex;">
-                    <button id="copyFileName" style="background: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 15px; width: 100%; white-space: nowrap; overflow: hidden;">복사</button>
+                    <button id="copyFileName" style="background: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 15px; width: 100%; white-space: nowrap; overflow: hidden; height: 32px; box-sizing: border-box;">복사</button>
                 </span>
             </div>
             <div style="display: flex; gap: 5px; flex-wrap: nowrap;">
@@ -1556,7 +1556,7 @@
 
         const weatherCard = document.createElement('div');
         weatherCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; cursor:pointer; display:flex; align-items:center;";
-        weatherCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">☀️ 송내 현재 날씨 (기상청 API)</div>`;
+        weatherCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">🌤️ 송내 현재 날씨 (기상청 API)</div>`;
         window._neubieWeatherCard = weatherCard;
         weatherCard.onclick = () => {
             const isActive = weatherCard.style.outline !== 'none' && weatherCard.style.outline !== '';
@@ -3900,7 +3900,7 @@
                 `;
                 box.innerHTML = `
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-                        <span style="font-size:18px;font-weight:700;color:#4f8ef7;">☀️ 송내 현재 날씨 (기상청 API)</span>
+                        <span style="font-size:18px;font-weight:700;color:#4f8ef7;">🌤️ 송내 현재 날씨 (기상청 API)</span>
                         <button id="nwo-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
                     </div>
                     <div id="nwo-body" style="font-size:13px;color:#64748b;">불러오는 중...</div>
@@ -4148,7 +4148,7 @@
                                 <span id="rc-coin-result" style="display:none;font-size:12px;font-weight:700;padding:4px 12px;border-radius:999px;"></span>
                             </div>
                             <div style="width:100%;margin-top:14px;border-top:1px solid #2e3347;padding-top:12px;flex:1;display:flex;flex-direction:column;min-height:0;">
-                                <div style="font-size:12px;color:#94a3b8;margin-bottom:6px;">개인 메모</div>
+                                <div style="font-size:12px;color:#94a3b8;margin-bottom:6px;">개인 메모 (본인 브라우저에만 저장됨)</div>
                                 <textarea id="rc-memo" maxlength="500" style="width:100%;box-sizing:border-box;resize:none;overflow-y:auto;font-size:12px;background:#111319;color:#e2e8f0;border:1px solid #333;border-radius:8px;padding:6px 8px;flex:1;min-height:0;" placeholder="메모를 입력하세요..."></textarea>
                                 <div id="rc-memo-count" style="text-align:right;font-size:10px;color:#64748b;margin-top:2px;">0/500</div>
                             </div>
