@@ -51,8 +51,8 @@
         proxyUrl: 'https://multimonitoring.vercel.app/api/weather'
     };
 
-	fetch(WEATHER_CONFIG.proxyUrl).catch(() => {});
-	
+    fetch(WEATHER_CONFIG.proxyUrl).catch(() => {});
+
     // 기체 네이밍 매핑 데이터
     const ROBOT_MAP = {
         "20": { site: "송도 요기요", unit: "#013" }, // 1호기
@@ -2543,7 +2543,7 @@
             <div style="width:100%; height:100%; background:rgba(10,10,30,0.72); backdrop-filter:blur(2px); display:flex; flex-direction:column; border-radius:24px;">
                 <div id="nb-board-header" style="display:flex; align-items:center; gap:8px; padding:12px 16px; border-bottom:0.5px solid rgba(255,255,255,0.12); cursor:grab;">
                     <span style="font-size:15px; font-weight:600; color:#fff; flex:1;">📋 뉴비고 게시판</span>
-                    <button id="nb-tips-btn" style="height:28px; padding:0 10px; font-size:12px; font-weight:500; background:#f59e0b; color:#1a1a1a; border:none; border-radius:6px; cursor:pointer;" title="최적화 팁">💡 팁</button>
+                    <button id="nb-tips-btn" style="height:28px; padding:0 10px; font-size:12px; font-weight:500; background:#f59e0b; color:#1a1a1a; border:none; border-radius:6px; cursor:pointer;" title="최적화 팁">💡 최적화 팁</button>
                     <button id="nb-refresh-btn" style="height:28px; width:28px; background:rgba(255,255,255,0.1); color:white; border:none; border-radius:6px; cursor:pointer; font-size:14px;" title="새로고침">↺</button>
 					<button id="nb-write-btn" style="height:28px; padding:0 12px; font-size:12px; font-weight:500; background:#6366f1; color:white; border:none; border-radius:6px; cursor:pointer;">✏️ 글쓰기</button>
                     <button id="nb-board-close" style="background:rgba(255,255,255,0.1); border:none; color:#fff; width:26px; height:26px; border-radius:50%; cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center;">✕</button>
@@ -4088,7 +4088,7 @@
                             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
                                 <span style="font-size:14px;font-weight:700;color:#94a3b8;">룰렛</span>
                                 <div style="display:flex;gap:6px;">
-                                    <button id="rc-preset-lunch" style="font-size:11px;padding:4px 8px;background:#252525;border:1px solid #333;color:#e2e8f0;border-radius:6px;cursor:pointer;">점심 메뉴</button>
+                                    <button id="rc-preset-lunch" style="font-size:11px;padding:4px 8px;background:#252525;border:1px solid #333;color:#e2e8f0;border-radius:6px;cursor:pointer;">식사 메뉴</button>
                                     <button id="rc-preset-people" style="font-size:11px;padding:4px 8px;background:#252525;border:1px solid #333;color:#e2e8f0;border-radius:6px;cursor:pointer;">사람 이름</button>
                                     <button id="rc-preset-etc" style="font-size:11px;padding:4px 8px;background:#252525;border:1px solid #333;color:#e2e8f0;border-radius:6px;cursor:pointer;">기타</button>
                                 </div>
@@ -4096,10 +4096,10 @@
                             <textarea id="rc-input" rows="6" style="width:100%;box-sizing:border-box;resize:none;font-size:12px;background:#111319;color:#e2e8f0;border:1px solid #333;border-radius:8px;padding:6px 8px;">한식
         중식
         일식</textarea>
-                            <button id="rc-build" style="width:100%;margin-top:6px;padding:6px;background:#252525;border:1px solid #333;color:#e2e8f0;border-radius:8px;cursor:pointer;font-size:12px;">룰렛 만들기</button>
+                            <button id="rc-build" style="width:100%;margin-top:6px;padding:6px;background:#252525;border:1px solid #333;color:#e2e8f0;border-radius:8px;cursor:pointer;font-size:12px;">룰렛 만들기 (엔터로 구분)</button>
                             <div style="position:relative;width:190px;height:190px;margin:16px auto 6px;">
                                 <div id="rc-pointer" style="position:absolute;top:-4px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:13px solid #e2e8f0;z-index:3;transition:transform .15s ease;"></div>
-                                <div id="rc-wheel-wrap" style="position:relative;width:190px;height:190px;">
+                                <div id="rc-wheel-wrap" style="position:relative;width:190px;height:190px;transition:transform 5s cubic-bezier(.13,.72,.1,1);">
                                     <canvas id="rc-canvas" width="190" height="190" style="display:block;position:relative;z-index:1;"></canvas>
                                     <div id="rc-labels" style="position:absolute;inset:0;z-index:2;pointer-events:none;"></div>
                                 </div>
@@ -4175,7 +4175,7 @@
                         const y = cy + labelR * Math.sin(angle);
                         const lab = document.createElement('div');
                         lab.className = 'rc-label';
-                        lab.style.cssText = `position:absolute;left:${x}px;top:${y}px;transform:translate(-50%,-50%) rotate(0deg);color:#fff;font-size:11px;font-weight:500;white-space:nowrap;`;
+                        lab.style.cssText = `position:absolute;left:${x}px;top:${y}px;transform:translate(-50%,-50%) rotate(0deg);color:#fff;font-size:11px;font-weight:500;white-space:nowrap;transition:transform 5s cubic-bezier(.13,.72,.1,1);`;
                         lab.textContent = (rcItems[i] || '').slice(0, 7);
                         labelsEl.appendChild(lab);
                     }
