@@ -1523,7 +1523,7 @@
 
         const rouletteCard = document.createElement('div');
         rouletteCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; cursor:pointer; display:flex; align-items:center;";
-        rouletteCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">🎡 룰렛 & 동전 던지기</div>`;
+        rouletteCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">🎡 룰렛 & 동전 & 메모</div>`;
         window._neubieRouletteCard = rouletteCard;
         rouletteCard.onclick = () => {
             const isActive = rouletteCard.style.outline !== 'none' && rouletteCard.style.outline !== '';
@@ -4113,7 +4113,7 @@
                             <button id="rc-spin" style="width:100%;padding:8px;background:#4f8ef7;border:none;color:#0f1117;font-weight:700;border-radius:8px;cursor:pointer;font-size:13px;">돌리기</button>
                             <button id="rc-copy-img" style="display:none;width:100%;margin-top:8px;padding:6px;background:#252525;border:1px solid #333;color:#e2e8f0;border-radius:8px;cursor:pointer;font-size:12px;">📋 결과 이미지 복사</button>
                         </div>
-                        <div style="background:#1a1c24;border-radius:12px;padding:14px;display:flex;flex-direction:column;align-items:center;">
+                        <div style="background:#1a1c24;border-radius:12px;padding:14px;display:flex;flex-direction:column;align-items:center;height:100%;box-sizing:border-box;">
                             <div style="font-size:14px;font-weight:700;margin-bottom:12px;color:#94a3b8;align-self:flex-start;">동전 던지기</div>
                             <div style="width:65px;height:65px;perspective:500px;margin:10px 0 12px;">
                                 <div id="rc-coin" style="width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform 2.6s cubic-bezier(.17,.67,.2,1);">
@@ -4133,9 +4133,9 @@
                             <div style="text-align:center;min-height:28px;margin-top:8px;">
                                 <span id="rc-coin-result" style="display:none;font-size:12px;font-weight:700;padding:4px 12px;border-radius:999px;"></span>
                             </div>
-                            <div style="width:100%;margin-top:14px;border-top:1px solid #2e3347;padding-top:12px;">
+                            <div style="width:100%;margin-top:14px;border-top:1px solid #2e3347;padding-top:12px;flex:1;display:flex;flex-direction:column;min-height:0;">
                                 <div style="font-size:12px;color:#94a3b8;margin-bottom:6px;">개인 메모</div>
-                                <textarea id="rc-memo" maxlength="500" rows="4" style="width:100%;box-sizing:border-box;resize:none;overflow-y:auto;font-size:12px;background:#111319;color:#e2e8f0;border:1px solid #333;border-radius:8px;padding:6px 8px;" placeholder="나만 보는 메모..."></textarea>
+                                <textarea id="rc-memo" maxlength="500" style="width:100%;box-sizing:border-box;resize:none;overflow-y:auto;font-size:12px;background:#111319;color:#e2e8f0;border:1px solid #333;border-radius:8px;padding:6px 8px;flex:1;min-height:0;" placeholder="메모를 입력하세요..."></textarea>
                                 <div id="rc-memo-count" style="text-align:right;font-size:10px;color:#64748b;margin-top:2px;">0/500</div>
                             </div>
                         </div>
