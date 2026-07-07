@@ -4097,8 +4097,11 @@
                             <button id="rc-build" style="width:100%;margin-top:6px;padding:6px;background:#252525;border:1px solid #333;color:#e2e8f0;border-radius:8px;cursor:pointer;font-size:12px;">룰렛 만들기</button>
                             <div style="position:relative;width:190px;height:190px;margin:16px auto 6px;">
                                 <div id="rc-pointer" style="position:absolute;top:-4px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:13px solid #e2e8f0;z-index:3;transition:transform .15s ease;"></div>
-                                <canvas id="rc-canvas" width="190" height="190" style="display:block;position:relative;z-index:1;"></canvas>
-                                <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:30px;height:30px;border-radius:50%;background:#1a1c24;border:2px solid #0f1117;z-index:2;"></div>
+                                <div id="rc-wheel-wrap" style="position:relative;width:190px;height:190px;">
+                                    <canvas id="rc-canvas" width="190" height="190" style="display:block;position:relative;z-index:1;"></canvas>
+                                    <div id="rc-labels" style="position:absolute;inset:0;z-index:2;pointer-events:none;"></div>
+                                </div>
+                                <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:30px;height:30px;border-radius:50%;background:#1a1c24;border:2px solid #0f1117;z-index:3;"></div>
                             </div>
                             <button id="rc-spin" style="width:100%;padding:8px;background:#4f8ef7;border:none;color:#0f1117;font-weight:700;border-radius:8px;cursor:pointer;font-size:13px;">돌리기</button>
                             <div style="text-align:center;min-height:28px;margin-top:8px;">
@@ -4160,14 +4163,19 @@
                         ctx.strokeStyle = '#1a1c24';
                         ctx.lineWidth = 3;
                         ctx.stroke();
-                        ctx.save();
-                        ctx.translate(cx, cy);
-                        ctx.rotate(start + slice / 2);
-                        ctx.fillStyle = '#fff';
-                        ctx.font = '500 11px sans-serif';
-                        ctx.textAlign = 'right';
-                        ctx.fillText((rcItems[i] || '').slice(0, 7), r - 12, 4);
-                        ctx.restore();
+                    }
+                    const labelsEl = box.querySelector('#rc-labels');
+                    labelsEl.innerHTML = '';
+                    const labelR = 58;
+                    for (let i = 0; i < n; i++) {
+                        const angle = i * slice + slice / 2 - Math.PI / 2;
+                        const x = cx + labelR * Math.cos(angle);
+                        const y = cy + labelR * Math.sin(angle);
+                        const lab = document.createElement('div');
+                        lab.className = 'rc-label';
+                        lab.style.cssText = `position:absolute;left:${x}px;top:${y}px;transform:translate(-50%,-50%) rotate(0deg);color:#fff;font-size:11px;font-weight:500;white-space:nowrap;`;
+                        lab.textContent = (rcItems[i] || '').slice(0, 7);
+                        labelsEl.appendChild(lab);
                     }
                 }
 
@@ -4178,8 +4186,25 @@
                 }
 
                 box.querySelector('#rc-build').onclick = rcRebuild;
+
+                function rcSetActiveButton(cat) {
+                    ['lunch', 'people', 'etc'].forEach(c => {
+                        const btn = box.querySelector('#rc-preset-' + c);
+                        if (c === cat) {
+                            btn.style.background = '#4f8ef7';
+                            btn.style.color = '#0f1117';
+                            btn.style.borderColor = '#4f8ef7';
+                        } else {
+                            btn.style.background = '#252525';
+                            btn.style.color = '#e2e8f0';
+                            btn.style.borderColor = '#333';
+                        }
+                    });
+                }
+
                 function rcLoadCategory(cat, fallback) {
                     rcCategory = cat;
+                    rcSetActiveButton(cat);
                     const saved = localStorage.getItem(RC_KEYS[cat]);
                     box.querySelector('#rc-input').value = (saved !== null && saved !== '') ? saved : fallback;
                     rcRebuild();
@@ -4199,8 +4224,13 @@
                     const targetCenterDeg = targetIndex * sliceDeg + sliceDeg / 2;
                     const extraSpins = 5 * 360;
                     rcRotation = rcRotation - (rcRotation % 360) + extraSpins + (360 - targetCenterDeg);
-                    canvas.style.transition = 'transform 5s cubic-bezier(.13,.72,.1,1)';
-                    canvas.style.transform = `rotate(${rcRotation}deg)`;
+                    const wheelWrap = box.querySelector('#rc-wheel-wrap');
+                    wheelWrap.style.transition = 'transform 5s cubic-bezier(.13,.72,.1,1)';
+                    wheelWrap.style.transform = `rotate(${rcRotation}deg)`;
+                    box.querySelectorAll('.rc-label').forEach(lab => {
+                        lab.style.transition = 'transform 5s cubic-bezier(.13,.72,.1,1)';
+                        lab.style.transform = `translate(-50%,-50%) rotate(${-rcRotation}deg)`;
+                    });
                     const pointer = box.querySelector('#rc-pointer');
                     const badge = box.querySelector('#rc-result');
                     badge.style.display = 'none';
@@ -4216,6 +4246,7 @@
                 const savedLunch = localStorage.getItem(RC_KEYS.lunch);
                 if (savedLunch) box.querySelector('#rc-input').value = savedLunch;
                 rcRebuild();
+                rcSetActiveButton('lunch');
 
                 let coinRot = 0;
                 box.querySelector('#rc-flip').onclick = () => {
