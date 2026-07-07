@@ -2531,7 +2531,7 @@
 				top: r.top + 'px',
 				left: r.left + 'px',
 				width: r.width + 'px',
-				height: (r.height + 40) + 'px',
+				height: (r.height + 60) + 'px',
 				zIndex: '1000001', display: 'flex',
 				alignItems: 'center', justifyContent: 'center',
 				backgroundImage: `url(${BG_IMG})`,
@@ -2746,7 +2746,7 @@
                         <div style="display:flex; gap:8px; margin-bottom:14px;">
                             <div style="width:26px; height:26px; border-radius:50%; background:rgba(99,102,241,0.25); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600; color:#a5b4fc; flex-shrink:0;">${initials(c.author)}</div>
                             <div style="flex:1;">
-                                <div style="display:flex; align-items:center; justify-content:space-between;">
+                                <div style="display:flex; align-items:center; gap:8px;">
                                     <div style="font-size:12px; font-weight:500; color:#f1f5f9;">${c.author}</div>
                                     <span style="font-size:11px; color:rgba(255,255,255,0.35);">${formatDate(c.createdAt)}</span>
                                 </div>
@@ -2759,10 +2759,12 @@
                                     <div style="display:flex; gap:8px; margin-top:10px; padding-left:8px; border-left:2px solid rgba(99,102,241,0.3);">
                                         <div style="width:20px; height:20px; border-radius:50%; background:rgba(99,102,241,0.2); display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:600; color:#a5b4fc; flex-shrink:0;">${initials(r.author)}</div>
                                         <div style="flex:1;">
-                                            <div style="font-size:11px; font-weight:500; color:#f1f5f9;">${r.author}</div>
+                                            <div style="display:flex; align-items:center; gap:8px;">
+                                                <div style="font-size:11px; font-weight:500; color:#f1f5f9;">${r.author}</div>
+                                                <span style="font-size:10px; color:rgba(255,255,255,0.3);">${formatDate(r.createdAt)}</span>
+                                            </div>
                                             <div style="font-size:12px; color:#e2e8f0; margin:2px 0;">${r.text}</div>
                                             <div style="display:flex; align-items:center; gap:8px; margin-top:3px;">
-                                                <span style="font-size:10px; color:rgba(255,255,255,0.3);">${formatDate(r.createdAt)}</span>
                                                 ${(myEmail && r.email === myEmail) ? `<button onclick="window._nbDeleteReply('${c.id}','${r.id}')" style="background:none;border:none;font-size:10px;color:rgba(239,68,68,0.6);cursor:pointer;padding:0;">삭제</button><button onclick="window._nbToggleEditReply('${c.id}','${r.id}','${r.text}')" style="background:none;border:none;font-size:10px;color:#a5b4fc;cursor:pointer;padding:0;">수정</button>` : ''}
                                             </div>
                                         </div>
