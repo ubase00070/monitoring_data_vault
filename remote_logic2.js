@@ -46,7 +46,7 @@
     };
 
     // 오프라인 모드 — true로 바꾸면 이 도구의 NCC 외부 통신이 즉시 차단됩니다.
-    const OFFLINE_MODE = false;
+    const OFFLINE_MODE = true;
 
     // 날씨 위젯 설정 (근무지: 뉴코아중동백화점 기준 격자좌표)
     const WEATHER_CONFIG = {
@@ -4115,9 +4115,7 @@
                                     <button id="rc-preset-etc" style="font-size:11px;padding:4px 8px;background:#252525;border:1px solid #333;color:#e2e8f0;border-radius:6px;cursor:pointer;">기타</button>
                                 </div>
                             </div>
-                            <textarea id="rc-input" rows="6" style="width:100%;box-sizing:border-box;resize:none;font-size:12px;background:#111319;color:#e2e8f0;border:1px solid #333;border-radius:8px;padding:6px 8px;">한식
-        중식
-        일식</textarea>
+                            <textarea id="rc-input" rows="6" style="width:100%;box-sizing:border-box;resize:none;font-size:12px;background:#111319;color:#e2e8f0;border:1px solid #333;border-radius:8px;padding:6px 8px;"></textarea>
                             <button id="rc-build" style="width:100%;margin-top:6px;padding:6px;background:#252525;border:1px solid #333;color:#e2e8f0;border-radius:8px;cursor:pointer;font-size:12px;">룰렛 만들기 (엔터로 구분)</button>
                             <div id="rc-capture-area" style="background:#0f1117;border-radius:12px;padding:8px 0;">
                                 <div style="position:relative;width:190px;height:190px;margin:16px auto 6px;">
@@ -4284,7 +4282,7 @@
                 }
                 box.querySelector('#rc-preset-lunch').onclick = () => rcLoadCategory('lunch', '한식\n중식\n일식\n분식');
                 box.querySelector('#rc-preset-people').onclick = () => rcLoadCategory('people', '유재석\n김연아\n손흥민\n김용욱');
-                box.querySelector('#rc-preset-etc').onclick = () => rcLoadCategory('etc', '');
+                box.querySelector('#rc-preset-etc').onclick = () => rcLoadCategory('etc', '1\n2\n3\n4');
                 box.querySelector('#rc-input').addEventListener('input', () => {
                     localStorage.setItem(RC_KEYS[rcCategory], box.querySelector('#rc-input').value);
                 });
