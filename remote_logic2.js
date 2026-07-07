@@ -4004,7 +4004,7 @@
                 document.body.appendChild(overlay);
                 box.querySelector('#nwo-close').onclick = () => {
                     overlay.style.display = 'none';
-                    weatherCard.style.outline = 'none';
+                    window._neubieWeatherCard.style.outline = 'none';
                 };
 
                 renderWeather(overlay);
@@ -4036,7 +4036,7 @@
                         <div>
                             <div style="font-size:11px;color:#94a3b8;margin-bottom:2px;">오늘 · ${data.updatedAt.getMonth()+1}/${data.updatedAt.getDate()}(${['일','월','화','수','목','금','토'][data.updatedAt.getDay()]})</div>
                             <div style="font-size:22px;font-weight:700;line-height:1.1;">${data.current.temp}°</div>
-                            <div style="font-size:11px;color:#64748b;">${data.updatedAt.toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'})} 기준</div>
+                            <div style="font-size:11px;color:#64748b;">${data.updatedAt.toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit', hour12:false})} 기준</div>
                         </div>
                     </div>
                     <div style="display:flex;gap:4px;margin-bottom:10px;">${hourlyHtml}</div>
