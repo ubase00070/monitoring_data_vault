@@ -360,7 +360,12 @@
         .bb-ap-item:hover .bb-ap-dismiss { display:block; }
         .bb-ap-empty { padding:28px 16px; text-align:center; font-size:14px; color:#8890b8; font-weight:700; background:#0a0a0c; border-radius:0 0 12px 12px; }
 
-        #bb-alert-panel.bb-light { background:var(--sur); }
+        #bb-alert-panel.bb-light {
+			--bg:#ded3b8; --sur:#f8f3e6; --sur2:#efe6d2;
+			--bd:#cabf9d; --bd2:#b3a687; --tx:#2b2418; --mu:#7a6f5c;
+			--wh:rgba(0,0,0,.05);
+			background:var(--sur);
+		}
 		#bb-alert-panel.bb-light .bb-ap-hd { background:var(--sur); border-bottom-color:var(--bd); }
 		#bb-alert-panel.bb-light .bb-ap-title { color:var(--tx); }
 		#bb-alert-panel.bb-light .bb-ap-close { color:#b91c1c; }
@@ -397,6 +402,12 @@
             z-index:999999999; font-family:'Lato',sans-serif;
             color:var(--tx); overflow:hidden;
         }
+        #bb-info-card-panel.bb-light {
+			--bg:#ded3b8; --sur:#f8f3e6; --sur2:#efe6d2;
+			--bd:#cabf9d; --bd2:#b3a687; --tx:#2b2418; --mu:#7a6f5c;
+			--wh:rgba(0,0,0,.05);
+			background:var(--sur);
+		}   
         #bb-info-card-panel.open { display:block; }
         .bb-icp-hd {
             padding:11px 14px; background:var(--sur);
@@ -565,6 +576,7 @@
         const theme = localStorage.getItem('neubie_bb_theme') || 'light';
         bbEl.classList.toggle('bb-light', theme === 'light');
         document.getElementById('bb-alert-panel').classList.toggle('bb-light', theme === 'light');
+        document.getElementById('bb-info-card-panel').classList.toggle('bb-light', theme === 'light');
         document.getElementById('bb-theme-btn').textContent = theme === 'light' ? '라이트' : '다크';
     };
     applyBbTheme();
