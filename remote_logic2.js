@@ -45,6 +45,12 @@
         sheetId: "1tLo6Xeq6KJx6zW-fcw8H38jdjxyS2yre5oWY7cxky70"
     };
 
+    // 날씨 위젯 설정 (근무지: 뉴코아중동백화점 기준 격자좌표)
+    const WEATHER_CONFIG = {
+        nx: 57, ny: 126,
+        proxyUrl: 'https://multimonitoring.vercel.app/api/weather'
+    };
+
     // 기체 네이밍 매핑 데이터
     const ROBOT_MAP = {
         "20": { site: "송도 요기요", unit: "#013" }, // 1호기
@@ -1074,7 +1080,8 @@
                         version: 'v1.3',
                         date: '2026-07-05',
                         items: [
-							'다중관제 교대 자동 시작(6대->12대로 확장/vercel.app 사용자만)',
+							'다중 자동교대 12대로 확장 / 다중페이지 기체 뜨면 ALT+Q -> 자동시작)',
+							'',
                             '1:1 문의 기능(익명 가능)',
 							'다중관제 헤드 램프 ON/OFF',
                             '임무 종료된 리센츠/엘스/한성대 페이지 이탈 시 5초 후 자동 사이드',
@@ -1661,26 +1668,20 @@
             }
         };
 
-        const reservedCard = document.createElement('div');
-        reservedCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; display:flex; justify-content:space-between; align-items:center;";
-        reservedCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">빈 기능</span>`;
-        const reservedEnabled = localStorage.getItem('neubie_opt_reserved') === 'true';
-        const reservedToggle = document.createElement('button');
-        reservedToggle.textContent = reservedEnabled ? 'ON' : 'OFF';
-        reservedToggle.style.cssText = `background:${reservedEnabled ? '#2563eb' : '#444'}; color:white; border:none; padding:4px 0; border-radius:6px; cursor:pointer; font-weight:bold; font-size:13px; width:44px; text-align:center;`;
-        reservedToggle.onclick = () => {
-            const next = reservedToggle.textContent === 'OFF';
-            localStorage.setItem('neubie_opt_reserved', next);
-            reservedToggle.textContent = next ? 'ON' : 'OFF';
-            reservedToggle.style.background = next ? '#2563eb' : '#444';
+        const weatherCard = document.createElement('div');
+        weatherCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; cursor:pointer; display:flex; align-items:center;";
+        weatherCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">근무지 날씨</div>`;
+        weatherCard.onclick = () => {
+            const isActive = weatherCard.style.outline !== 'none' && weatherCard.style.outline !== '';
+            weatherCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
+            if (!isActive) openWeatherOverlay();
         };
-        reservedCard.appendChild(reservedToggle);
 
         bottomRow.appendChild(mapCard);      // 지도 최적화
         bottomRow.appendChild(batteryCard);  // 성남 배터리
         bottomRow.appendChild(queueCard);    // 다중 도우미
         bottomRow.appendChild(scheduleCard); // 스케줄표
-        bottomRow.appendChild(reservedCard); // 빈 기능
+        bottomRow.appendChild(weatherCard); // 날씨
         bottomRow.appendChild(tipsCard);     // 최적화 팁
 
         list.appendChild(bottomRow);
@@ -1734,6 +1735,8 @@
         if (boardOverlay) boardOverlay.style.display='none';
         const secretOverlay = document.getElementById('neubie-secret-overlay');
         if (secretOverlay) secretOverlay.style.display='none';
+        const weatherOverlay = document.getElementById('neubie-weather-overlay');
+        if (weatherOverlay) weatherOverlay.style.display='none';
     }
 
     // ── 유효성 검증 (1시간 이내 데이터) ──
@@ -3141,6 +3144,8 @@
 
         window.openSecretOverlay = async function() {
             const SECRET_API = 'https://multimonitoring.vercel.app/api/secret';
+            const ITEMS_PER_PAGE = 5;
+            let currentPage = 1;
             const getMyEmail = () => {
                 try {
                     const lsKey = Object.keys(localStorage).find(k => k.startsWith('ph_phc_') && k.endsWith('_posthog'));
@@ -3238,7 +3243,12 @@
                 if (!posts.length) {
                     body.innerHTML = writeBtn + `<div style="text-align:center; padding:30px; color:#666; font-size:13px;">${isAdmin ? '문의가 없습니다.' : '내 문의가 없습니다. 위 버튼으로 작성하세요.'}</div>`;
                 } else {
-                    body.innerHTML = writeBtn + posts.map(p => `
+                    const totalPages = Math.max(1, Math.ceil(posts.length / ITEMS_PER_PAGE));
+                    if (currentPage > totalPages) currentPage = totalPages;
+                    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+                    const pagePosts = posts.slice(start, start + ITEMS_PER_PAGE);
+
+                    const listHtml = pagePosts.map(p => `
                         <div class="nb-secret-item" data-id="${p.id}" style="background:rgba(255,255,255,0.04); border:1px solid #333; border-radius:8px; padding:12px; margin-bottom:8px; cursor:pointer;">
                             <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
                                 <span style="font-size:13px; font-weight:600; color:#fff; flex:1;">${escapeHtml(p.title)}</span>
@@ -3247,9 +3257,25 @@
                             <div style="font-size:11px; color:#888;">${isAdmin ? escapeHtml(p.author) + ' · ' : ''}${new Date(p.createdAt).toLocaleString('ko-KR')}</div>
                         </div>
                     `).join('');
+
+                    const pagerHtml = totalPages > 1 ? `
+                        <div style="display:flex; align-items:center; justify-content:center; gap:12px; margin-top:12px;">
+                            <button id="nb-secret-prev" ${currentPage === 1 ? 'disabled' : ''} style="padding:6px 14px; background:#333; border:none; color:#fff; border-radius:6px; cursor:pointer; font-size:12px; opacity:${currentPage === 1 ? '0.4' : '1'};">이전</button>
+                            <span style="font-size:12px; color:#aaa;">${currentPage} / ${totalPages}</span>
+                            <button id="nb-secret-next" ${currentPage === totalPages ? 'disabled' : ''} style="padding:6px 14px; background:#333; border:none; color:#fff; border-radius:6px; cursor:pointer; font-size:12px; opacity:${currentPage === totalPages ? '0.4' : '1'};">다음</button>
+                        </div>
+                    ` : '';
+
+                    body.innerHTML = writeBtn + listHtml + pagerHtml;
+
                     body.querySelectorAll('.nb-secret-item').forEach(el => {
                         el.onclick = () => renderSecretDetail(posts.find(p => p.id === el.dataset.id), isAdmin);
                     });
+
+                    if (totalPages > 1) {
+                        document.getElementById('nb-secret-prev').onclick = () => { currentPage--; renderSecretList(posts, isAdmin); };
+                        document.getElementById('nb-secret-next').onclick = () => { currentPage++; renderSecretList(posts, isAdmin); };
+                    }
                 }
                 document.getElementById('nb-secret-write-btn').onclick = () => renderSecretWrite();
             }
@@ -3938,6 +3964,102 @@
                 .catch(()=>{ status.textContent='로드 실패'; dot.style.background='#ef4444'; });
             }
 
+            window.openWeatherOverlay = async function() {
+                let overlay = document.getElementById('neubie-weather-overlay');
+                if (overlay) { overlay.style.display = 'flex'; renderWeather(overlay); return; }
+
+                overlay = document.createElement('div');
+                overlay.id = 'neubie-weather-overlay';
+                overlay.style.cssText = `
+                    position:fixed; inset:0; z-index:2147483646;
+                    background:transparent;
+                    display:flex; align-items:flex-start; justify-content:center; padding-top:20px;
+                    font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;
+                `;
+                const box = document.createElement('div');
+                box.style.cssText = `
+                    background:#0f1117; color:#e2e8f0;
+                    border-radius:16px; padding:20px;
+                    width:min(94vw,460px);
+                    box-shadow:0 4px 40px rgba(0,0,0,0.7);
+                `;
+                box.innerHTML = `
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                        <span style="font-size:18px;font-weight:700;color:#4f8ef7;">근무지 날씨</span>
+                        <button id="nwo-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
+                    </div>
+                    <div id="nwo-body" style="font-size:13px;color:#64748b;">불러오는 중...</div>
+                `;
+                overlay.appendChild(box);
+                document.body.appendChild(overlay);
+                box.querySelector('#nwo-close').onclick = closeAllPopups;
+
+                renderWeather(overlay);
+            };
+
+            // TODO: WEATHER_CONFIG.proxyUrl 준비되면 fetch(WEATHER_CONFIG.proxyUrl)로 교체
+            function fetchWeatherMock() {
+                const sky = ['☀️','🌤️','☁️','🌧️'];
+                const now = new Date();
+                const hourly = Array.from({length: 12}, (_, i) => ({
+                    hour: (now.getHours() + i) % 24,
+                    temp: 22 - Math.floor(i / 2),
+                    icon: sky[i % sky.length],
+                    pop: i === 2 || i === 3 ? 60 : 0
+                }));
+                const daily = [
+                    { label: '내일', min: 18, max: 26, icon: '🌧️', pop: 40 },
+                    { label: '모레', min: 17, max: 24, icon: '☀️', pop: 0 },
+                    { label: '글피', min: 16, max: 23, icon: '☁️', pop: 10 }
+                ];
+                return { updatedAt: now, current: hourly[0], hourly, daily };
+            }
+
+            async function renderWeather(overlay) {
+                const data = await fetchWeatherReal(); // TODO: 실제 API 연결 시 await fetch(...)
+                const body = overlay.querySelector('#nwo-body');
+
+                const hourlyHtml = data.hourly.map((h, i) => `
+                    <div style="flex:0 0 auto;width:48px;text-align:center;padding:6px 0;${i < 6 ? 'opacity:1;' : 'opacity:0.65;'}${i === 0 ? 'background:#1e3a5f;border-radius:8px;' : ''}">
+                        <div style="font-size:11px;color:#94a3b8;">${i === 0 ? '지금' : h.hour + '시'}</div>
+                        <div style="font-size:16px;margin:4px 0;">${h.icon}</div>
+                        <div style="font-size:13px;">${h.temp}°</div>
+                        ${h.pop > 0 ? `<div style="font-size:10px;color:#4f8ef7;">${h.pop}%</div>` : ''}
+                    </div>`).join('');
+
+                const dailyHtml = data.daily.map(d => `
+                    <div style="background:#1a1c24;border-radius:10px;padding:10px 6px;text-align:center;flex:1;">
+                        <div style="font-size:12px;color:#94a3b8;margin-bottom:4px;">${d.label}</div>
+                        <div style="font-size:18px;">${d.icon}</div>
+                        <div style="font-size:13px;font-weight:700;margin-top:6px;">${d.min}° / ${d.max}°</div>
+                        <div style="font-size:11px;color:${d.pop > 0 ? '#4f8ef7' : '#64748b'};margin-top:2px;">${d.pop > 0 ? '강수 ' + d.pop + '%' : '강수 없음'}</div>
+                    </div>`).join('');
+
+                body.innerHTML = `
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+                        <div style="font-size:24px;">${data.current.icon}</div>
+                        <div>
+                            <div style="font-size:22px;font-weight:700;line-height:1.1;">${data.current.temp}°</div>
+                            <div style="font-size:11px;color:#64748b;">${data.updatedAt.toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'})} 기준</div>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:10px;">${hourlyHtml}</div>
+                    <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;">
+                        <span style="font-size:10px;color:#64748b;">0~6h 정밀</span>
+                        <div style="flex:1;height:1px;background:#2e3347;"></div>
+                        <span style="font-size:10px;color:#64748b;">6~12h 예상</span>
+                    </div>
+                    <div style="border-top:1px solid #2e3347;padding-top:10px;display:flex;gap:8px;">${dailyHtml}</div>
+                `;
+            }
+
+            async function fetchWeatherReal() {
+                const res = await fetch(WEATHER_CONFIG.proxyUrl);
+                const data = await res.json();
+                data.updatedAt = new Date(data.updatedAt);
+                return data;
+            }
+
 			// 그 외 페이지는 기존 대시보드
 			const tipsOverlayEl = document.getElementById('neubie-tips-overlay');
 			const scheduleOverlayEl = document.getElementById('neubie-schedule-overlay');
@@ -4038,7 +4160,7 @@
         }, 100);
     }, true);
 
-    // 클릭 없이 코드로만 주소가 바뀌는 경우 대비 (간격 2초)
+    // 클릭 없이 코드로만 주소가 바뀌는 경우를 대비 (간격 2초)
     setInterval(() => {
         if (location.href !== lastUrl) {
             const prevUrl = lastUrl;  // ← 이전 URL 먼저 저장
@@ -4147,7 +4269,7 @@
 			showAutoSideNotice(`5초 후 ${robotName}의 사이드 브레이크를 ON으로 변경합니다.`, 'rgba(59,130,246,0.92)');
 
 			setTimeout(async () => {
-				// 5초 후 다시 한번 확인
+				// 5초 후 다시 확인
 				try {
 					const res2 = await fetch(`https://core.neubie.ai/robots/${robotId}/`, {
                         credentials: 'include',
