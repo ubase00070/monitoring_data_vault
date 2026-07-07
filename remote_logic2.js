@@ -934,7 +934,7 @@
         card.innerHTML = `
             <div style="color:#3b82f6; font-weight:bold; font-size:18px; margin-bottom:10px;">🏷️ 영상 파일명 생성기</div>
             <div style="display: flex; gap: 5px; margin-bottom: 10px;">
-                <select id="robotSelector" style="flex: 1.2; background: #333; color: white; border: 1px solid #555; border-radius: 4px; font-size: 15px; padding: 4px;">
+                <select id="robotSelector" style="flex: 1.2; background: #333; color: white; border: 1px solid #555; border-radius: 4px; font-size: 15px; padding: 4px; text-align:center; text-align-last:center;">
                     ${dropdownOptions || '<option>최근 배달 기체 미감지</option>'}
                 </select>
                 <input type="text" id="taskInput" placeholder="주문번호를 붙여넣으세요." style="flex: 0 1 160px; background: #333; color: white; border: 1px solid #555; padding: 4px; border-radius: 4px; font-size: 15px;">
@@ -1541,7 +1541,7 @@
         batteryCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; display:flex; justify-content:space-between; align-items:center;";
         batteryCard.innerHTML = `
             <div style="flex:1;">
-                <div style="font-weight:bold; font-size:15px; margin-bottom:3px;">실시간 성남 배터리 현황</div>
+                <div style="font-weight:bold; font-size:15px; margin-bottom:3px;">🔋 실시간 성남 배터리 현황</div>
             </div>`;
         batteryCard.style.cursor = 'pointer';
         window._neubieBatteryCard = batteryCard;
@@ -4094,7 +4094,7 @@
                 `;
                 box.innerHTML = `
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-                        <span style="font-size:18px;font-weight:700;color:#4f8ef7;">룰렛 & 동전 & 메모</span>
+                        <span style="font-size:18px;font-weight:700;color:#4f8ef7;">🎡 룰렛 돌리기 & 동전 던지기 & 개인 메모</span>
                         <button id="rc-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
                     </div>
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
