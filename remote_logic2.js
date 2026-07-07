@@ -4115,16 +4115,16 @@
                         </div>
                         <div style="background:#1a1c24;border-radius:12px;padding:14px;display:flex;flex-direction:column;align-items:center;">
                             <div style="font-size:14px;font-weight:700;margin-bottom:12px;color:#94a3b8;align-self:flex-start;">동전 던지기</div>
-                            <div style="width:100px;height:100px;perspective:700px;margin:20px 0 22px;">
+                            <div style="width:65px;height:65px;perspective:500px;margin:10px 0 12px;">
                                 <div id="rc-coin" style="width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform 2.6s cubic-bezier(.17,.67,.2,1);">
-                                    <div style="position:absolute;inset:0;border-radius:50%;background:#3a2a10;border:3px solid #f59e0b;display:flex;align-items:center;justify-content:center;backface-visibility:hidden;">
-                                        <div style="width:80%;height:80%;border-radius:50%;border:1.5px dashed #f59e0b;display:flex;align-items:center;justify-content:center;">
-                                            <span style="font-size:20px;font-weight:700;color:#fbbf24;">앞</span>
+                                    <div style="position:absolute;inset:0;border-radius:50%;background:#3a2a10;border:2px solid #f59e0b;display:flex;align-items:center;justify-content:center;backface-visibility:hidden;">
+                                        <div style="width:80%;height:80%;border-radius:50%;border:1px dashed #f59e0b;display:flex;align-items:center;justify-content:center;">
+                                            <span style="font-size:14px;font-weight:700;color:#fbbf24;">앞</span>
                                         </div>
                                     </div>
-                                    <div style="position:absolute;inset:0;border-radius:50%;background:#12233b;border:3px solid #4f8ef7;display:flex;align-items:center;justify-content:center;backface-visibility:hidden;transform:rotateY(180deg);">
-                                        <div style="width:80%;height:80%;border-radius:50%;border:1.5px dashed #4f8ef7;display:flex;align-items:center;justify-content:center;">
-                                            <span style="font-size:20px;font-weight:700;color:#4f8ef7;">뒤</span>
+                                    <div style="position:absolute;inset:0;border-radius:50%;background:#12233b;border:2px solid #4f8ef7;display:flex;align-items:center;justify-content:center;backface-visibility:hidden;transform:rotateY(180deg);">
+                                        <div style="width:80%;height:80%;border-radius:50%;border:1px dashed #4f8ef7;display:flex;align-items:center;justify-content:center;">
+                                            <span style="font-size:14px;font-weight:700;color:#4f8ef7;">뒤</span>
                                         </div>
                                     </div>
                                 </div>
@@ -4132,6 +4132,11 @@
                             <button id="rc-flip" style="width:100%;padding:8px;background:#4f8ef7;border:none;color:#0f1117;font-weight:700;border-radius:8px;cursor:pointer;font-size:13px;">던지기</button>
                             <div style="text-align:center;min-height:28px;margin-top:8px;">
                                 <span id="rc-coin-result" style="display:none;font-size:12px;font-weight:700;padding:4px 12px;border-radius:999px;"></span>
+                            </div>
+                            <div style="width:100%;margin-top:14px;border-top:1px solid #2e3347;padding-top:12px;">
+                                <div style="font-size:12px;color:#94a3b8;margin-bottom:6px;">개인 메모</div>
+                                <textarea id="rc-memo" maxlength="500" rows="4" style="width:100%;box-sizing:border-box;resize:none;overflow-y:auto;font-size:12px;background:#111319;color:#e2e8f0;border:1px solid #333;border-radius:8px;padding:6px 8px;" placeholder="나만 보는 메모..."></textarea>
+                                <div id="rc-memo-count" style="text-align:right;font-size:10px;color:#64748b;margin-top:2px;">0/500</div>
                             </div>
                         </div>
                     </div>
@@ -4255,8 +4260,8 @@
                     box.querySelector('#rc-input').value = (saved !== null && saved !== '') ? saved : fallback;
                     rcRebuild();
                 }
-                box.querySelector('#rc-preset-lunch').onclick = () => rcLoadCategory('lunch', '한식\n중식\n일식\n양식\n분식');
-                box.querySelector('#rc-preset-people').onclick = () => rcLoadCategory('people', '홍길동\n임꺽정\n이춘향\n이몽룡');
+                box.querySelector('#rc-preset-lunch').onclick = () => rcLoadCategory('lunch', '한식\n중식\n일식\n분식');
+                box.querySelector('#rc-preset-people').onclick = () => rcLoadCategory('people', '유재석\n김연아\n손흥민\n김용욱');
                 box.querySelector('#rc-preset-etc').onclick = () => rcLoadCategory('etc', '');
                 box.querySelector('#rc-input').addEventListener('input', () => {
                     localStorage.setItem(RC_KEYS[rcCategory], box.querySelector('#rc-input').value);
@@ -4314,6 +4319,19 @@
                         badge.style.display = 'inline-block';
                     }, 2650);
                 };
+                
+                const RC_MEMO_KEY = 'neubie_roulette_memo';
+                const memoEl = box.querySelector('#rc-memo');
+                const memoCountEl = box.querySelector('#rc-memo-count');
+                const savedMemo = localStorage.getItem(RC_MEMO_KEY);
+                if (savedMemo) {
+                    memoEl.value = savedMemo;
+                    memoCountEl.textContent = savedMemo.length + '/500';
+                }
+                memoEl.addEventListener('input', () => {
+                    localStorage.setItem(RC_MEMO_KEY, memoEl.value);
+                    memoCountEl.textContent = memoEl.value.length + '/500';
+                });
             };
 
 			// 그 외 페이지는 기존 대시보드
