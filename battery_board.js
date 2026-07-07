@@ -24,9 +24,9 @@
 		}
 
         #bb.bb-light {
-			--bg:#ece5d4; --sur:#f7f2e6; --sur2:#f0ead9;
-			--bd:#d9cdb0; --bd2:#c9bc99; --tx:#2b2418; --mu:#8a7f68;
-			--wh:rgba(0,0,0,.04);
+			--bg:#ddd4bd; --sur:#eee5d2; --sur2:#e6dcc4;
+			--bd:#c7b990; --bd2:#b5a67d; --tx:#2b2418; --mu:#7a6f5c;
+			--wh:rgba(0,0,0,.05);
 		}
         #bb.bb-light .bb-ca.standby { --ac:#8a7f68; --ac-border:rgba(138,127,104,.35); }
 		#bb.bb-light .bb-mi.standby { --ac:#8a7f68; }
@@ -543,14 +543,14 @@
 
     const bbEl = document.getElementById('bb');
     const applyBbTheme = () => {
-        const theme = localStorage.getItem('neubie_theme') || 'dark';
+        const theme = localStorage.getItem('neubie_bb_theme') || 'light';
         bbEl.classList.toggle('bb-light', theme === 'light');
         document.getElementById('bb-theme-btn').textContent = theme === 'light' ? '라이트' : '다크';
     };
     applyBbTheme();
     document.getElementById('bb-theme-btn').addEventListener('click', () => {
-        const next = (localStorage.getItem('neubie_theme') || 'dark') === 'light' ? 'dark' : 'light';
-        localStorage.setItem('neubie_theme', next);
+        const next = (localStorage.getItem('neubie_bb_theme') || 'light') === 'light' ? 'dark' : 'light';
+        localStorage.setItem('neubie_bb_theme', next);
         applyBbTheme();
     });
 
