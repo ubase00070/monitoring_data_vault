@@ -933,19 +933,19 @@
 
         card.innerHTML = `
             <div style="color:#3b82f6; font-weight:bold; font-size:18px; margin-bottom:10px;">🏷️ 영상 파일명 생성기</div>
-            <div style="display: flex; align-items: center; gap: 5px; margin-bottom: 10px;">
-                <div style="position: relative; flex: 1.2;">
-                    <select id="robotSelector" style="width: 100%; background: #333; color: white; border: 1px solid #555; border-radius: 4px; font-size: 15px; padding: 4px 20px 4px 4px; height: 32px; line-height: 32px; box-sizing: border-box; appearance: none; -webkit-appearance: none; -moz-appearance: none;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 5px; margin-bottom: 10px;">
+                <div style="position: relative;">
+                    <select id="robotSelector" style="width: 100%; background: #333; color: white; border: 1px solid #555; border-radius: 4px; font-size: 15px; padding: 0 20px 0 8px; height: 32px; line-height: 32px; box-sizing: border-box; appearance: none; -webkit-appearance: none; -moz-appearance: none;">
                         ${dropdownOptions || '<option>최근 배달 기체 미감지</option>'}
                     </select>
                     <span style="position: absolute; right: 6px; top: 50%; transform: translateY(-50%); pointer-events: none; color: #aaa; font-size: 11px;">▾</span>
                 </div>
-                <input type="text" id="taskInput" placeholder="주문번호를 붙여넣으세요." style="flex: 0 1 160px; background: #333; color: white; border: 1px solid #555; padding: 4px; border-radius: 4px; font-size: 15px; height: 32px; line-height: 32px; box-sizing: border-box;">
-                <span style="width: 70px; flex-shrink: 0; display: inline-flex;">
-                    <button id="copyFileName" style="background: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 15px; width: 100%; white-space: nowrap; overflow: hidden; height: 32px; line-height: 32px; box-sizing: border-box;">복사</button>
-                </span>
+                <div style="display: flex; gap: 5px;">
+                    <input type="text" id="taskInput" placeholder="주문번호를 붙여넣으세요." style="flex: 1; min-width: 0; background: #333; color: white; border: 1px solid #555; padding: 0 8px; border-radius: 4px; font-size: 15px; height: 32px; line-height: 32px; box-sizing: border-box;">
+                    <button id="copyFileName" style="width: 70px; flex-shrink: 0; background: #007bff; color: white; border: none; padding: 0 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 15px; white-space: nowrap; overflow: hidden; height: 32px; line-height: 32px; box-sizing: border-box;">복사</button>
+                </div>
             </div>
-            <div style="display: flex; gap: 5px; flex-wrap: nowrap;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
                 <button id="btnMulti" class="sub-btn">다중 모니터링</button>
                 <button id="btnCombined" class="sub-btn">배송/순찰 띠띠</button>
             </div>
