@@ -54,6 +54,15 @@
         proxyUrl: 'https://multimonitoring.vercel.app/api/weather'
     };
 
+    const NB_THEMES = {
+        light: { bg: '#faf6ec', card: '#ffffff', border: '#ece3cf', text: '#2b2418', accent: '#1e3a5f' },
+        dark:  { bg: '#111111', card: '#252525', border: '#333333', text: '#e2e8f0', accent: '#3b82f6' }
+    };
+
+    function getNbTheme() {
+        return NB_THEMES[localStorage.getItem('neubie_theme') || 'light'];
+    }
+
     fetch(WEATHER_CONFIG.proxyUrl).catch(() => {});
 
     // 기체 네이밍 매핑 데이터
@@ -914,9 +923,10 @@
        ============================================================ */
     function createNamingCard() {
         const isWknd = isWeekend();
+        const T = getNbTheme();
         const card = document.createElement('div');
         card.id = 'namingSection';
-        card.style.cssText = 'background:#252525; padding:10px 15px; border-radius:15px; border:1px solid #333333; margin-top:5px;';
+        card.style.cssText = `background:${T.card}; padding:10px 15px; border-radius:15px; border:1px solid ${T.border}; margin-top:5px;`;
 
         const history = JSON.parse(localStorage.getItem('neubie_robot_history') || '[]');
         let dropdownOptions = history.map(h => {
@@ -939,7 +949,7 @@
         };
 
         card.innerHTML = `
-            <div style="color:#3b82f6; font-weight:bold; font-size:18px; margin-bottom:10px;">🏷️ 영상 파일명 생성기</div>
+            <div style="color:${T.accent}; font-weight:bold; font-size:18px; margin-bottom:10px;">🏷️ 영상 파일명 생성기</div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px 5px; margin-bottom: 10px;">
                 <div style="position: relative; min-width: 0;">
                     <select id="robotSelector" style="width: 100%; background: #333; color: white; border: 1px solid #555; border-radius: 4px; font-size: 15px; padding: 0 20px 0 8px; height: 32px; line-height: 32px; box-sizing: border-box; appearance: none; -webkit-appearance: none; -moz-appearance: none;">
@@ -1011,6 +1021,11 @@
        ============================================================ */
     function renderDashboard() {
         dashboard.innerHTML = '';
+        const nbThemeName = localStorage.getItem('neubie_theme') || 'light';
+        const T = getNbTheme();
+        dashboard.style.backgroundColor = T.bg;
+        dashboard.style.color = T.text;
+        dashboard.style.backgroundImage = `linear-gradient(${T.bg}, ${T.bg}), linear-gradient(135deg, #6366f1, #ec4899)`;
         
         // 헤더 컨테이너 (제목 + 성명 입력창 + X 버튼 인라인 배치)
         const headerContainer = document.createElement('div');
@@ -1018,7 +1033,7 @@
 
         const title = document.createElement('h2');
         title.textContent = OFFLINE_MODE ? "오프라인 모드" : "뉴비고 도우미";
-        title.style.cssText = "color:#3b82f6; font-size:20px; margin:0; font-weight:bold; white-space:nowrap;";
+        title.style.cssText = `color:${T.accent}; font-size:20px; margin:0; font-weight:bold; white-space:nowrap;`;
 
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
 		// 문자열을 넣으면 패치노트 버튼에 빨간 '`' 뱃지가 점멸하며 뜸.
@@ -1109,7 +1124,7 @@
                 patchContent.style.cssText = "display:grid; gap:16px;";
                 patchItems.forEach(patch => {
                     const section = document.createElement('div');
-                    section.style.cssText = "background:#252525; border:1px solid #333333; border-radius:12px; padding:14px 16px;";
+                    section.style.cssText = `background:${T.card}; border:1px solid ${T.border}; border-radius:12px; padding:14px 16px;`;
                     const versionRow = document.createElement('div');
                     versionRow.style.cssText = "display:flex; align-items:center; gap:8px; margin-bottom:10px;";
                     versionRow.innerHTML = `
@@ -1182,6 +1197,15 @@
         secretBtn.onmouseleave = () => { secretBtn.style.background='transparent'; };
         secretBtn.onclick = () => openSecretOverlay();
         titleWrap.appendChild(secretBtn);
+        const themeBtn = document.createElement('button');
+        themeBtn.textContent = nbThemeName === 'light' ? '라이트' : '다크';
+        themeBtn.style.cssText = "width:48px; text-align:center; background:transparent; border:1px solid #64748b; color:#94a3b8; padding:4px 0; border-radius:6px; cursor:pointer; font-size:14px; margin-left:4px;";
+        themeBtn.onclick = () => {
+            const next = nbThemeName === 'light' ? 'dark' : 'light';
+            localStorage.setItem('neubie_theme', next);
+            renderDashboard();
+        };
+        titleWrap.appendChild(themeBtn);
 
         headerContainer.appendChild(titleWrap);
         headerContainer.appendChild(nameArea);
@@ -1238,7 +1262,7 @@
 
         // 1. 업무 알림 설정 (태스크 리스트 인라인 삽입)
         const taskCard = document.createElement('div');
-        taskCard.style.cssText = "background:#252525; padding:15px; border-radius:15px; border:1px solid #333333;";
+        taskCard.style.cssText = `background:${T.card}; padding:15px; border-radius:15px; border:1px solid ${T.border};`;
         const storedName = localStorage.getItem('neubie_user_name') || "사용자";
         const currentInt = localStorage.getItem('neubie_remind_int') || '0';
         taskCard.innerHTML = `
@@ -1312,7 +1336,7 @@
 
         // 맵 최적화 카드
         const mapCard = document.createElement('div');
-        mapCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; display:flex; justify-content:space-between; align-items:center;";
+        mapCard.style.cssText = `background:${T.card}; padding:8px 12px; border-radius:15px; border:1px solid ${T.border}; display:flex; justify-content:space-between; align-items:center;`;
         mapCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">🗺️ 요기요 페이지 최적화</span>`;
 
         // 맵 최적화 (체크박스, 멘트 없이 이름만)
@@ -1403,7 +1427,7 @@
         mapCard.appendChild(mapToggle);
 
         const queueCard = document.createElement('div');
-        queueCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; display:flex; justify-content:space-between; align-items:center;";
+        queueCard.style.cssText = `background:${T.card}; padding:8px 12px; border-radius:15px; border:1px solid ${T.border}; display:flex; justify-content:space-between; align-items:center;`;
         queueCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">🖥️ 다중 모니터링 도우미</span>`;
         const queueEnabled = localStorage.getItem('neubie_handover_enabled') === 'true';
         const queueToggle = document.createElement('button');
@@ -1519,7 +1543,7 @@
 
         // 스케줄 비교 카드
         const scheduleCard = document.createElement('div');
-        scheduleCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; cursor:pointer; display:flex; align-items:center;";
+        scheduleCard.style.cssText = `background:${T.card}; padding:8px 12px; border-radius:15px; border:1px solid ${T.border}; cursor:pointer; display:flex; align-items:center;`;
         scheduleCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">📅 스케줄표 + 좌석 배치도</div>`;
         window._neubieScheduleCard = scheduleCard;
         scheduleCard.onclick = () => {
@@ -1529,7 +1553,7 @@
         };
 
         const rouletteCard = document.createElement('div');
-        rouletteCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; cursor:pointer; display:flex; align-items:center;";
+        rouletteCard.style.cssText = `background:${T.card}; padding:8px 12px; border-radius:15px; border:1px solid ${T.border}; cursor:pointer; display:flex; align-items:center;`;
         rouletteCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">🎡 룰렛 & 동전 & 메모</div>`;
         window._neubieRouletteCard = rouletteCard;
         rouletteCard.onclick = () => {
@@ -1546,7 +1570,7 @@
         // 배터리 현황
         const isBatteryOpen = batteryPopup.style.display === 'block';
         const batteryCard = document.createElement('div');
-        batteryCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; display:flex; justify-content:space-between; align-items:center;";
+        batteryCard.style.cssText = `background:${T.card}; padding:8px 12px; border-radius:15px; border:1px solid ${T.border}; display:flex; justify-content:space-between; align-items:center;`;
         batteryCard.innerHTML = `
             <div style="flex:1;">
                 <div style="font-weight:bold; font-size:15px; margin-bottom:3px;">🔋 실시간 성남 배터리 현황</div>
@@ -1563,7 +1587,7 @@
         };
 
         const weatherCard = document.createElement('div');
-        weatherCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; cursor:pointer; display:flex; align-items:center;";
+        weatherCard.style.cssText = `background:${T.card}; padding:8px 12px; border-radius:15px; border:1px solid ${T.border}; cursor:pointer; display:flex; align-items:center;`;
         weatherCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">🌤️ 송내 현재 날씨 (기상청 API)</div>`;
         window._neubieWeatherCard = weatherCard;
         weatherCard.onclick = () => {
