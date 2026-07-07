@@ -55,8 +55,8 @@
     };
 
     const NB_THEMES = {
-        light: { bg: '#faf6ec', card: '#ffffff', border: '#ece3cf', text: '#2b2418', accent: '#1e3a5f' },
-        dark:  { bg: '#111111', card: '#252525', border: '#333333', text: '#e2e8f0', accent: '#3b82f6' }
+        light: { bg: '#ece5d4', card: '#f7f2e6', border: '#d9cdb0', text: '#2b2418', accent: '#1e3a5f', purple: '#7c3aed' },
+        dark:  { bg: '#111111', card: '#252525', border: '#333333', text: '#e2e8f0', accent: '#3b82f6', purple: '#c4b5fd' }
     };
 
     function getNbTheme() {
@@ -1045,7 +1045,7 @@
         patchBtn.title = '패치노트';
         patchBtn.style.cssText = `
 			position:relative;
-            background:transparent; border:1px solid #555; color:#aaa;
+            background:transparent; border:1px solid ${T.border}; color:${T.text};
             border-radius:6px; padding:4px 10px; cursor:pointer;
             font-size:14px; margin-left:6px; vertical-align:middle;
             transition:all 0.2s;
@@ -1066,7 +1066,7 @@
 		}
 		
         patchBtn.onmouseenter = () => { patchBtn.style.borderColor='#3b82f6'; patchBtn.style.color='#3b82f6'; };
-        patchBtn.onmouseleave = () => { patchBtn.style.borderColor='#555'; patchBtn.style.color='#aaa'; };
+        patchBtn.onmouseleave = () => { patchBtn.style.borderColor=T.border; patchBtn.style.color=T.text; };
         patchBtn.onclick = () => {
             let patchOverlay = document.getElementById('neubie-patch-overlay');
             if (!patchOverlay) {
@@ -1186,20 +1186,20 @@
         
         const boardBtn = document.createElement('button');
         boardBtn.textContent = '게시판';
-        boardBtn.style.cssText = "background:transparent; border:1px solid #475569; color:#ffffff; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:14px; margin-left:4px;";
+        boardBtn.style.cssText = `background:transparent; border:1px solid #475569; color:${T.text}; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:14px; margin-left:4px;`;
         boardBtn.onclick = () => openBoardOverlay();
         titleWrap.appendChild(boardBtn);
 
         const secretBtn = document.createElement('button');
         secretBtn.textContent = '🔒 문의';
-        secretBtn.style.cssText = "background:transparent; border:1px solid #a78bfa; color:#c4b5fd; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:14px; margin-left:4px;";
+        secretBtn.style.cssText = `background:transparent; border:1px solid ${T.purple}; color:${T.purple}; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:14px; margin-left:4px;`;
         secretBtn.onmouseenter = () => { secretBtn.style.background='rgba(167,139,250,0.15)'; };
         secretBtn.onmouseleave = () => { secretBtn.style.background='transparent'; };
         secretBtn.onclick = () => openSecretOverlay();
         titleWrap.appendChild(secretBtn);
         const themeBtn = document.createElement('button');
         themeBtn.textContent = nbThemeName === 'light' ? '라이트' : '다크';
-        themeBtn.style.cssText = "width:48px; text-align:center; background:transparent; border:1px solid #64748b; color:#94a3b8; padding:4px 0; border-radius:6px; cursor:pointer; font-size:14px; margin-left:4px;";
+        themeBtn.style.cssText = `width:48px; text-align:center; background:transparent; border:1px solid ${T.border}; color:${T.text}; padding:4px 0; border-radius:6px; cursor:pointer; font-size:14px; margin-left:4px;`;
         themeBtn.onclick = () => {
             const next = nbThemeName === 'light' ? 'dark' : 'light';
             localStorage.setItem('neubie_theme', next);
