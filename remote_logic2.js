@@ -46,7 +46,7 @@
     };
 
     // 오프라인 모드 — true로 바꾸면 이 도구의 NCC 외부 통신이 즉시 차단됩니다.
-    const OFFLINE_MODE = true;
+    const OFFLINE_MODE = false;
 
     // 날씨 위젯 설정 (근무지: 뉴코아중동백화점 기준 격자좌표)
     const WEATHER_CONFIG = {
