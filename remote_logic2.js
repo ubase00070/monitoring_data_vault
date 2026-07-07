@@ -477,12 +477,17 @@
     let _batteryInitialized = false;
 
     function buildBatteryShell() {
+        const T = getNbTheme();
+        batteryPopup.style.backgroundColor = T.bg;
+        batteryPopup.style.backgroundImage = `linear-gradient(${T.bg}, ${T.bg}), linear-gradient(135deg, #6366f1, #ec4899)`;
+        batteryPopup.style.color = T.text;
+
         batteryPopup.innerHTML = '';
         const header = document.createElement('div');
-        header.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #333333; padding-bottom:10px;";
+        header.style.cssText = `display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid ${T.border}; padding-bottom:10px;`;
         const titleB = document.createElement('b');
         titleB.textContent = "🔋 실시간 성남 배터리 현황";
-        titleB.style.cssText = "color:#eee; font-size:18px;";
+        titleB.style.cssText = `color:${T.text}; font-size:18px;`;
         const copyBtn = document.createElement('button');
         copyBtn.textContent = '복사';
         Object.assign(copyBtn.style, {
@@ -508,7 +513,7 @@
                 display:flex;
                 justify-content:space-between;
                 align-items:center;
-                background:rgba(255,255,255,0.05);
+                background:${T.bg === '#111111' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)'};
                 padding:15px 20px;
                 border-radius:12px;
                 margin-bottom:10px;
@@ -1080,14 +1085,14 @@
                 `;
                 const patchBox = document.createElement('div');
                 patchBox.style.cssText = `
-                    background:#1e1e2e; color:#e2e8f0; border-radius:18px; pointer-events:auto;
-                    border:1.5px solid #3b82f6; padding:28px 32px 24px 32px;
+                    background:${T.card}; color:${T.text}; border-radius:18px; pointer-events:auto;
+                    border:1.5px solid ${T.accent}; padding:28px 32px 24px 32px;
                     max-width:560px; width:90%; max-height:80vh; overflow-y:auto;
                     position:relative; box-shadow:0 10px 50px rgba(0,0,0,0.7);
                 `;
                 const patchTitle = document.createElement('div');
                 patchTitle.textContent = '패치노트';
-                patchTitle.style.cssText = `font-size:20px; font-weight:bold; margin-bottom:20px; color:#60a5fa;`;
+                patchTitle.style.cssText = `font-size:20px; font-weight:bold; margin-bottom:20px; color:${T.accent};`;
                 const patchClose = document.createElement('button');
                 patchClose.textContent = '✕';
                 patchClose.style.cssText = `
@@ -1125,7 +1130,7 @@
                 patchContent.style.cssText = "display:grid; gap:16px;";
                 patchItems.forEach(patch => {
                     const section = document.createElement('div');
-                    section.style.cssText = "background:#252525; border:1px solid #333333; border-radius:12px; padding:14px 16px;";
+                    section.style.cssText = `background:${T.card}; border:1px solid ${T.border}; border-radius:12px; padding:14px 16px;`;
                     const versionRow = document.createElement('div');
                     versionRow.style.cssText = "display:flex; align-items:center; gap:8px; margin-bottom:10px;";
                     versionRow.innerHTML = `
@@ -3452,7 +3457,7 @@
 
             const box = document.createElement('div');
             box.style.cssText = `
-                background:#0f1117; color:#e2e8f0;
+                background:${T.card}; color:${T.text};
                 border-radius:16px; padding:20px;
                 width:min(96vw,820px); max-height:92vh;
 				margin-top:0;
@@ -3925,7 +3930,7 @@
                 `;
                 const box = document.createElement('div');
                 box.style.cssText = `
-                    background:#0f1117; color:#e2e8f0;
+                    background:${T.card}; color:${T.text};
                     border-radius:16px; padding:20px;
                     width:min(96vw,720px);
                     box-shadow:0 4px 40px rgba(0,0,0,0.7);
@@ -4119,7 +4124,7 @@
                 `;
                 const box = document.createElement('div');
                 box.style.cssText = `
-                    background:#0f1117; color:#e2e8f0;
+                    background:${T.card}; color:${T.text};
                     border-radius:16px; padding:20px;
                     width:min(94vw,620px);
                     box-shadow:0 4px 40px rgba(0,0,0,0.7);
@@ -4131,7 +4136,7 @@
                         <button id="rc-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
                     </div>
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-                        <div style="background:#1a1c24;border-radius:12px;padding:14px;">
+                        <div style="background:${T.bg};border-radius:12px;padding:14px;">
                             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
                                 <span style="font-size:14px;font-weight:700;color:#94a3b8;">룰렛</span>
                                 <div style="display:flex;gap:6px;">
@@ -4142,7 +4147,7 @@
                             </div>
                             <textarea id="rc-input" rows="6" style="width:100%;box-sizing:border-box;resize:none;font-size:12px;background:#111319;color:#e2e8f0;border:1px solid #333;border-radius:8px;padding:6px 8px;"></textarea>
                             <button id="rc-build" style="width:100%;margin-top:6px;padding:6px;background:#252525;border:1px solid #333;color:#e2e8f0;border-radius:8px;cursor:pointer;font-size:12px;">룰렛 만들기 (엔터로 구분)</button>
-                            <div id="rc-capture-area" style="background:#0f1117;border-radius:12px;padding:8px 0;">
+                            <div id="rc-capture-area" style="background:${T.card};border-radius:12px;padding:8px 0;">
                                 <div style="position:relative;width:190px;height:190px;margin:16px auto 6px;">
                                     <div id="rc-pointer" style="position:absolute;top:-4px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:13px solid #e2e8f0;z-index:3;transition:transform .15s ease;"></div>
                                     <div id="rc-wheel-wrap" style="position:relative;width:190px;height:190px;transition:transform 5s cubic-bezier(.13,.72,.1,1);">
@@ -4158,7 +4163,7 @@
                             <button id="rc-spin" style="width:100%;padding:8px;background:#4f8ef7;border:none;color:#0f1117;font-weight:700;border-radius:8px;cursor:pointer;font-size:13px;">돌리기</button>
                             <button id="rc-copy-img" style="visibility:hidden;width:100%;margin-top:8px;padding:6px;background:#252525;border:1px solid #333;color:#e2e8f0;border-radius:8px;cursor:pointer;font-size:12px;">📋 결과 이미지 복사</button>
                         </div>
-                        <div style="background:#1a1c24;border-radius:12px;padding:14px;display:flex;flex-direction:column;align-items:center;height:100%;box-sizing:border-box;">
+                        <div style="background:${T.bg};border-radius:12px;padding:14px;display:flex;flex-direction:column;align-items:center;height:100%;box-sizing:border-box;">
                             <div style="font-size:14px;font-weight:700;margin-bottom:12px;color:#94a3b8;align-self:flex-start;">동전 던지기</div>
                             <div style="width:65px;height:65px;perspective:500px;margin:10px 0 12px;">
                                 <div id="rc-coin" style="width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform 2.6s cubic-bezier(.17,.67,.2,1);">
