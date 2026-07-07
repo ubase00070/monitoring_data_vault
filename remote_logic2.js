@@ -1142,7 +1142,7 @@
                     patch.items.forEach(item => {
                         const li = document.createElement('li');
                         li.textContent = item;
-                        li.style.cssText = "font-size:13px; color:#cbd5e1; line-height:1.5;";
+                        li.style.cssText = `font-size:13px; color:${T.text}; line-height:1.5;`;
                         itemList.appendChild(li);
                     });
                     section.appendChild(versionRow);
@@ -3457,7 +3457,7 @@
 
             const box = document.createElement('div');
             box.style.cssText = `
-                background:${T.card}; color:${T.text};
+                background:#0f1117; color:#e2e8f0;
                 border-radius:16px; padding:20px;
                 width:min(96vw,820px); max-height:92vh;
 				margin-top:0;
@@ -3916,6 +3916,7 @@
             }
 
             window.openWeatherOverlay = async function() {
+                const T = getNbTheme();
                 let overlay = document.getElementById('neubie-weather-overlay');
                 if (overlay) { overlay.style.display = 'flex'; renderWeather(overlay); return; }
 
@@ -4006,6 +4007,7 @@
             }
 
             window.openTipsOverlay = function() {
+                const T = getNbTheme();
                 const dashboardEl = document.getElementById('neubie-dashboard');
                 let tipsOverlay = document.getElementById('neubie-tips-overlay');
                 if (!tipsOverlay) {
@@ -4111,6 +4113,7 @@
             };
 
             window.openRouletteOverlay = function() {
+                const T = getNbTheme();
                 let overlay = document.getElementById('neubie-roulette-overlay');
                 if (overlay) { overlay.style.display = 'flex'; return; }
 
