@@ -4146,6 +4146,7 @@
                 const ctx = canvas.getContext('2d');
                 let rcItems = [];
                 let rcRotation = 0;
+                let rcSpinning = false;
                 const RC_KEYS = { lunch: 'neubie_roulette_lunch', people: 'neubie_roulette_people', etc: 'neubie_roulette_etc' };
                 let rcCategory = 'lunch';
 
@@ -4175,7 +4176,7 @@
                         const y = cy + labelR * Math.sin(angle);
                         const lab = document.createElement('div');
                         lab.className = 'rc-label';
-                        lab.style.cssText = `position:absolute;left:${x}px;top:${y}px;transform:translate(-50%,-50%) rotate(0deg);color:#fff;font-size:11px;font-weight:500;white-space:nowrap;transition:transform 5s cubic-bezier(.13,.72,.1,1);`;
+                        lab.style.cssText = `position:absolute;left:${x}px;top:${y}px;transform:translate(-50%,-50%) rotate(${-rcRotation}deg);color:#fff;font-size:11px;font-weight:500;white-space:nowrap;transition:transform 5s cubic-bezier(.13,.72,.1,1);`;
                         lab.textContent = (rcItems[i] || '').slice(0, 7);
                         labelsEl.appendChild(lab);
                     }
@@ -4204,6 +4205,16 @@
                     });
                 }
 
+                function rcSetControlsDisabled(disabled) {
+                    ['rc-preset-lunch', 'rc-preset-people', 'rc-preset-etc', 'rc-build', 'rc-spin'].forEach(id => {
+                        const el = box.querySelector('#' + id);
+                        el.disabled = disabled;
+                        el.style.opacity = disabled ? '0.5' : '1';
+                        el.style.cursor = disabled ? 'not-allowed' : 'pointer';
+                    });
+                    box.querySelector('#rc-input').disabled = disabled;
+                }
+
                 function rcLoadCategory(cat, fallback) {
                     rcCategory = cat;
                     rcSetActiveButton(cat);
@@ -4219,7 +4230,9 @@
                 });
 
                 box.querySelector('#rc-spin').onclick = () => {
-                    if (rcItems.length === 0) return;
+                    if (rcSpinning || rcItems.length === 0) return;
+                    rcSpinning = true;
+                    rcSetControlsDisabled(true);
                     const n = rcItems.length;
                     const sliceDeg = 360 / n;
                     const targetIndex = Math.floor(Math.random() * n);
@@ -4242,6 +4255,8 @@
                         setTimeout(() => { pointer.style.transform = 'translateX(-50%) rotate(0deg)'; }, 220);
                         badge.textContent = '당첨: ' + rcItems[targetIndex];
                         badge.style.display = 'inline-block';
+                        rcSpinning = false;
+                        rcSetControlsDisabled(false);
                     }, 5050);
                 };
 
