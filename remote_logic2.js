@@ -947,10 +947,6 @@
                 <button id="btnMulti" class="sub-btn">다중 모니터링</button>
                 <button id="btnCombined" class="sub-btn">배송/순찰 띠띠</button>
             </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
-                <button id="btnMulti" class="sub-btn">다중 모니터링</button>
-                <button id="btnCombined" class="sub-btn">배송/순찰 띠띠</button>
-            </div>
         `;
 
         if (!document.getElementById('naming-btn-style')) {
