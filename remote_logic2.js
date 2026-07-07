@@ -1082,18 +1082,16 @@
                         version: 'v1.3',
                         date: '2026-07-08',
                         items: [
-                            '실시간 날씨(기상청 데이터), 룰렛&동전 기능',
+                            '룰렛 돌리기 & 동전 던지기 & 개인 메모 기능',
+                            '실시간 날씨(기상청 데이터)',
 							'다중 자동교대 12대로 확장 / 다중페이지 기체 뜨면 ALT+Q -> 자동시작)',
-							'',
+                            '',
                             '1:1 문의 기능(익명 가능)',
-							'다중관제 헤드 램프 ON/OFF',
                             '임무 종료된 리센츠/엘스/한성대 페이지 이탈 시 5초 후 자동 사이드',
-							'다중관제 기체 화질 조절',
 							'불규칙 순찰 기체 모니터링 미추가 시 알림 기능',
 							'개입카드 현재 조작자 표기 / 상태 바 재배치(스크롤 제거)',
 							'D-PAD UP/DOWN: 다음 개입 요청받기 / 자동 긴급 정지 ON OFF',
 							'D-PAD LEFT/RIGHT: 카메라 밝기 내리기/올리기',
-                            '다중관제 카메라 밝기 한 번에 조절 / 카메라 위치 변경',
                         ]
                     },
                 ];
@@ -1475,8 +1473,9 @@
                 queueInfoContent.id = 'neubie-queue-info-content';
                 queueInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:#cbd5e1; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;`;
                 queueInfoContent.innerHTML = `
-				화질 조절<br>
-				카메라 밝기 한 번에 조절<br>
+				기체별 화질 조절<br>
+                기체별 헤드램프 토글<br>
+				기체 카메라 밝기 한 번에 조절<br>
 				카메라 위치 스왑<br>
 				multimonitoring.vercel.app 이용 시 교대 기체 업로드<br>
 				업로드된 교대 기체 받기(최근 20분까지만 유효) -> 자동 시작(12대까지)<br>
@@ -4080,7 +4079,7 @@
                 `;
                 box.innerHTML = `
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-                        <span style="font-size:18px;font-weight:700;color:#4f8ef7;">룰렛 & 동전 던지기</span>
+                        <span style="font-size:18px;font-weight:700;color:#4f8ef7;">룰렛 & 동전 & 메모</span>
                         <button id="rc-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
                     </div>
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
