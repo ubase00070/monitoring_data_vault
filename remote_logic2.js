@@ -1671,7 +1671,7 @@
 
         const weatherCard = document.createElement('div');
         weatherCard.style.cssText = "background:#252525; padding:8px 12px; border-radius:15px; border:1px solid #333333; cursor:pointer; display:flex; align-items:center;";
-        weatherCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">송내 현재 날씨 (실시간 기상청)</div>`;
+        weatherCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">☀️ 송내 현재 날씨 (실시간 기상청)</div>`;
         window._neubieWeatherCard = weatherCard;
         weatherCard.onclick = () => {
             const isActive = weatherCard.style.outline !== 'none' && weatherCard.style.outline !== '';
@@ -1739,6 +1739,7 @@
         if (secretOverlay) secretOverlay.style.display='none';
         const weatherOverlay = document.getElementById('neubie-weather-overlay');
         if (weatherOverlay) weatherOverlay.style.display='none';
+        if (window._neubieWeatherCard) window._neubieWeatherCard.style.outline = 'none';
     }
 
     // ── 유효성 검증 (1시간 이내 데이터) ──
@@ -3987,7 +3988,7 @@
                 `;
                 box.innerHTML = `
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-                        <span style="font-size:18px;font-weight:700;color:#4f8ef7;">송내 현재 날씨(실시간 기상청)</span>
+                        <span style="font-size:18px;font-weight:700;color:#4f8ef7;">☀️ 송내 현재 날씨 (실시간 기상청)</span>
                         <button id="nwo-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
                     </div>
                     <div id="nwo-body" style="font-size:13px;color:#64748b;">불러오는 중...</div>
@@ -4026,6 +4027,7 @@
                     <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
                         <div style="font-size:24px;">${data.current.icon}</div>
                         <div>
+                            <div style="font-size:11px;color:#94a3b8;margin-bottom:2px;">오늘 · ${data.updatedAt.getMonth()+1}/${data.updatedAt.getDate()}(${['일','월','화','수','목','금','토'][data.updatedAt.getDay()]})</div>
                             <div style="font-size:22px;font-weight:700;line-height:1.1;">${data.current.temp}°</div>
                             <div style="font-size:11px;color:#64748b;">${data.updatedAt.toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit'})} 기준</div>
                         </div>
