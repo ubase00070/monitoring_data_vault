@@ -1660,7 +1660,7 @@
     })();
 
     // ── 백업/복원
-    const BACKUP_BASE = 'https://multimonitoring.vercel.app/api/board?type=bb_backup';
+    const BACKUP_BASE = 'https://multimonitoring.vercel.app/api/battery';
 
     document.getElementById('bb-backup-btn').addEventListener('click', async () => {
         const name = prompt('백업 이름을 입력하세요 (예: 최윤혁)');
@@ -1679,7 +1679,7 @@
 
     document.getElementById('bb-restore-btn').addEventListener('click', async () => {
         try {
-            const listRes = await fetch('https://multimonitoring.vercel.app/api/board?type=bb_backup_list');
+            const listRes = await fetch('https://multimonitoring.vercel.app/api/battery');
             const listData = await listRes.json();
             const names = listData.names || [];
             if (!names.length) { alert('❌ 저장된 백업 없음'); return; }
@@ -1690,7 +1690,7 @@
                 ? names[num - 1]
                 : names.find(n => n === choice.trim());
             if (!name) { alert('❌ 해당 백업 없음'); return; }
-            const res = await fetch(`${BACKUP_BASE}&name=${encodeURIComponent(name)}`);
+            const res = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent(name)}`);
             const data = await res.json();
             if (!data.ids || !data.ids.length) { alert('❌ 백업 데이터 없음'); return; }
             if (!confirm(`"${name}" 백업으로 복원하시겠습니까?\n현재 목록(${ids.length}대)이 교체됩니다.`)) return;
