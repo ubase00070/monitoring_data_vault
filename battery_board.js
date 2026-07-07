@@ -24,8 +24,8 @@
 		}
 
         #bb.bb-light {
-			--bg:#d6cbae; --sur:#f5efdd; --sur2:#ece2c8;
-			--bd:#c2b58c; --bd2:#aa9c73; --tx:#2b2418; --mu:#7a6f5c;
+			--bg:#ded3b8; --sur:#f8f3e6; --sur2:#efe6d2;
+			--bd:#cabf9d; --bd2:#b3a687; --tx:#2b2418; --mu:#7a6f5c;
 			--wh:rgba(0,0,0,.05);
 		}
         #bb.bb-light .bb-ca.standby { --ac:#8a7f68; --ac-border:rgba(138,127,104,.35); }
