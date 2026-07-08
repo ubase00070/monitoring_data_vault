@@ -24,10 +24,13 @@
 		}
 
         #bb.bb-light {
-			--bg:#ded3b8; --sur:#f8f3e6; --sur2:#efe6d2;
-			--bd:#cabf9d; --bd2:#b3a687; --tx:#2b2418; --mu:#7a6f5c;
-			--wh:rgba(0,0,0,.05);
-		}
+            --bg:#ded3b8; --sur:#f8f3e6; --sur2:#efe6d2;
+            --bd:#cabf9d; --bd2:#b3a687; --tx:#2b2418; --mu:#7a6f5c;
+            --wh:rgba(0,0,0,.05);
+        }
+        #bb.bb-light .bb-hd-title { color:#2b2418; }
+        #bb.bb-light .bb-delivery-title { color:#2b2418; }
+        #bb.bb-light .bb-delivery-empty { color:#2b2418; }
         #bb.bb-light .bb-ca.standby { --ac:#8a7f68; --ac-border:rgba(138,127,104,.35); }
 		#bb.bb-light .bb-mi.standby { --ac:#8a7f68; }
         #bb.bb-light .bb-mi:not(.empty) { color:#2b2418; }
@@ -318,10 +321,11 @@
             display:none; position:fixed;
             top:50%; left:50%; transform:translate(-50%,-50%);
             width:552px; max-height:86vh; overflow-y:auto;
-            background:#0a0a0c;
-            border:2px solid rgba(239,68,68,.7);
-            border-radius:14px;
-            box-shadow:0 0 0 1px rgba(239,68,68,.3), 0 24px 64px rgba(0,0,0,.9);
+            border:3px solid transparent; border-radius:14px;
+            background-image: linear-gradient(#0a0a0c, #0a0a0c), linear-gradient(135deg, #6366f1, #ec4899);
+            background-origin: border-box;
+            background-clip: padding-box, border-box;
+            box-shadow:0 24px 64px rgba(0,0,0,.9);
             z-index:99999999;
         }
         #bb-alert-panel.open { display:block; }
@@ -345,14 +349,14 @@
         }
         .bb-ap-item:last-child { border-bottom:none; }
         .bb-ap-item:hover { background:#323558; }
-        .bb-ap-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; margin-top:5px; }
+        .bb-ap-dot { width:14px; height:14px; border-radius:50%; flex-shrink:0; margin-top:3px; }
         .bb-ap-dot.rd { background:#f87171; }
         .bb-ap-dot.ye { background:#fcd34d; }
         .bb-ap-dot.or { background:#fb923c; }
         .bb-ap-dot.bl { background:#60a5fa; }
         .bb-ap-info { display:flex; flex-direction:column; gap:4px; flex:1; }
-        .bb-ap-name { font-size:15px; font-weight:900; color:#f4f4ff; }
-        .bb-ap-desc { font-size:13px; font-weight:700; color:#c4c8e8; line-height:1.55; }
+        .bb-ap-name { font-size:17px; font-weight:900; color:#f4f4ff; }
+        .bb-ap-desc { font-size:14.5px; font-weight:700; color:#c4c8e8; line-height:1.55; }
         .bb-ap-time { font-size:11px; color:#8890b8; font-family:'Lato',monospace; }
         .bb-ap-dismiss {
             display:none; flex-shrink:0; align-self:center;
@@ -367,7 +371,6 @@
 			--bg:#ded3b8; --sur:#f8f3e6; --sur2:#efe6d2;
 			--bd:#cabf9d; --bd2:#b3a687; --tx:#2b2418; --mu:#7a6f5c;
 			--wh:rgba(0,0,0,.05);
-			background:var(--sur);
 		}
 		#bb-alert-panel.bb-light .bb-ap-hd { background:var(--sur); border-bottom-color:var(--bd); }
 		#bb-alert-panel.bb-light .bb-ap-title { color:var(--tx); }
@@ -386,7 +389,7 @@
             background:var(--sur2); border:1px solid var(--bd2);
             border-radius:12px; box-shadow:0 16px 48px rgba(0,0,0,.85);
             z-index:9999999999; padding:16px; overflow-y:auto;
-            font-size:14px; line-height:1.8; color:var(--tx);
+            font-size:16px; line-height:1.85; color:var(--tx);
         }
         #bb-info-panel.open { display:block; }
         .bb-info-hd {
@@ -399,18 +402,20 @@
         #bb-info-card-panel {
             display:none; position:fixed;
             top:50%; left:50%; transform:translate(-50%,-50%);
-            width:368px; background:var(--sur);
-            border:2px solid rgba(255,255,255,.85); border-radius:12px;
+            width:368px;
+            border:3px solid transparent; border-radius:12px;
+            background-image: linear-gradient(var(--sur), var(--sur)), linear-gradient(135deg, #6366f1, #ec4899);
+            background-origin: border-box;
+            background-clip: padding-box, border-box;
             box-shadow:0 16px 48px rgba(0,0,0,.9);
             z-index:999999999; font-family:'Lato',sans-serif;
             color:var(--tx); overflow:hidden;
         }
         #bb-info-card-panel.bb-light {
-			--bg:#ded3b8; --sur:#f8f3e6; --sur2:#efe6d2;
-			--bd:#cabf9d; --bd2:#b3a687; --tx:#2b2418; --mu:#7a6f5c;
-			--wh:rgba(0,0,0,.05);
-			background:var(--sur);
-		}   
+            --bg:#ded3b8; --sur:#f8f3e6; --sur2:#efe6d2;
+            --bd:#cabf9d; --bd2:#b3a687; --tx:#2b2418; --mu:#7a6f5c;
+            --wh:rgba(0,0,0,.05);
+        }  
         #bb-info-card-panel.open { display:block; }
         .bb-icp-hd {
             padding:11px 14px; background:var(--sur);
@@ -533,7 +538,7 @@
                     <div class="bb-xbtn" id="bb-info-close">✕</div>
                 </div>
                 <div id="bb-info-body">
-                    * 오직 '알림 센터' 페이지에서만 열람<br>
+                    * 오직 '알림 센터' 페이지에서 ALT+Z 작동<br>
                     * 추가한 기체 카드와 배치는 로컬 스토리지에 저장됨(최대 30대. 드래그로 배치 변경 가능)<br>
                     * 카드 더블클릭/기체정보 검색창: 기체 상세 Info 패널 (CPU, GPS, 섀시 온도, 마지막 조작자 등)<br>
                     * 알림 전송 조건<br>
