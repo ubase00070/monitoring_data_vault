@@ -1111,11 +1111,11 @@
                         version: 'v1.3',
                         date: '2026-07-08',
                         items: [
-							'다크/라이트 선택',
+                            'NCC 원격조종 페이지 구/신버전 방어 대응',
+                            '다크/라이트 모드 선택',
                             '룰렛 돌리기 & 동전 던지기 & 개인 메모 기능',
                             '실시간 날씨(기상청 데이터)',
 							'다중 자동교대 12대로 확장 / 다중페이지 기체 뜨면 ALT+Q -> 자동시작)',
-                            '',
                             '1:1 문의 기능(익명 가능)',
                             '임무 종료된 리센츠/엘스/한성대 페이지 이탈 시 5초 후 자동 사이드',
 							'불규칙 순찰 기체 모니터링 미추가 시 알림 기능',
@@ -4641,6 +4641,12 @@
     function patchDrivingPageLayout() {
         if (!location.href.includes('/remote/multiple/driving/')) return;
 
+        // 구버전 전용 마커 확인 — 신버전(리뉴얼)이면 이 패치 전체를 건너뜀
+        // (header 태그나 범용 flex 유틸만으로는 신/구 구분이 안 돼서, 구버전에만 있는 고유 클래스로 게이트)
+        const isLegacyLayout = document.querySelector('.rounded-8.flex.flex-row.items-center.justify-between.truncate.bg-red-50.px-8')
+                             || document.querySelector('.relative.overflow-hidden.w-full.h-58');
+        if (!isLegacyLayout) return;
+
         // 헤더 flex-col 재구성
         const header = document.querySelector('header');
         if (header) {
@@ -4694,6 +4700,19 @@
 	    window.neubieGamepadBound = true;
 	    let dpadWasPressed = { up: false, right: false, down: false, left: false };
 	
+        // ── 신버전 대응: data-qk 없는 라벨 버튼 하이브리드 파인더 ──
+        function findLabelButton(label) {
+            const aside = document.querySelector('aside');
+            const scope = aside || document;
+            return [...scope.querySelectorAll('button')]
+                .find(b => b.textContent.trim().startsWith(label));
+        }
+        function getLabelButtonState(label) {
+            const btn = findLabelButton(label);
+            if (!btn) return null;
+            return btn.textContent.trim().slice(label.length).trim();
+        }
+
 	    // 맵 헤드 방향 일치
 	    const syncMap = () => {
 	        const btn = document.querySelector('[data-qk="location-robot-sync-button"]');
@@ -4710,25 +4729,65 @@
 	    };
 	
 	    // 밝기 조절 헬퍼
-	    const changeBrightness = (direction) => {
-	        const wrapper = document.querySelector('[data-qk="remote-robot-cam-brightness-select-select-wrapper"]')
-	                     || document.querySelector('[data-qk="driving-robot-cam-brightness-select-select-wrapper"]');
-	        const input = document.querySelector('[data-qk="remote-robot-cam-brightness-select"]')
-	                   || document.querySelector('[data-qk="driving-robot-cam-brightness-select"]');
-	        wrapper?.click();
-	        setTimeout(() => {
-	            const options = [...document.querySelectorAll(
-	                '[data-qk="remote-robot-cam-brightness-select-option"], [data-qk="driving-robot-cam-brightness-select-option"]'
-	            )];
-	            const currentVal = parseFloat(input?.value || '1');
-	            const currentIdx = options.findIndex(o => parseFloat(o.textContent.replace('밝기 ', '')) === currentVal);
-	            const nextIdx = direction === 'up'
-	                ? Math.min(currentIdx + 1, options.length - 1)
-	                : Math.max(currentIdx - 1, 0);
-	            options[nextIdx]?.click();
-	            syncMap(); // ← 밝기 조절 후 맵 재동기화
-	        }, 150);
-	    };
+        const changeBrightness = (direction) => {
+            // 신버전: hover 슬라이더
+            const rangeInput = document.querySelector('input[type="range"][min="0.5"][max="3"]');
+            if (rangeInput) {
+                const BRIGHTNESS_STEP = 0.1;
+                const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+                let val = parseFloat(rangeInput.value);
+                val = direction === 'up' ? Math.min(val + BRIGHTNESS_STEP, 3) : Math.max(val - BRIGHTNESS_STEP, 0.5);
+                val = Math.round(val * 10) / 10;
+                nativeSetter.call(rangeInput, val);
+                rangeInput.dispatchEvent(new Event('input', { bubbles: true }));
+                rangeInput.dispatchEvent(new Event('change', { bubbles: true }));
+                syncMap();
+                return;
+            }
+
+            // 구버전: 드롭다운 방식 (폴백)
+            const wrapper = document.querySelector('[data-qk="remote-robot-cam-brightness-select-select-wrapper"]')
+                        || document.querySelector('[data-qk="driving-robot-cam-brightness-select-select-wrapper"]');
+            const input = document.querySelector('[data-qk="remote-robot-cam-brightness-select"]')
+                    || document.querySelector('[data-qk="driving-robot-cam-brightness-select"]');
+            wrapper?.click();
+            setTimeout(() => {
+                const options = [...document.querySelectorAll(
+                    '[data-qk="remote-robot-cam-brightness-select-option"], [data-qk="driving-robot-cam-brightness-select-option"]'
+                )];
+                const currentVal = parseFloat(input?.value || '1');
+                const currentIdx = options.findIndex(o => parseFloat(o.textContent.replace('밝기 ', '')) === currentVal);
+                const nextIdx = direction === 'up'
+                    ? Math.min(currentIdx + 1, options.length - 1)
+                    : Math.max(currentIdx - 1, 0);
+                options[nextIdx]?.click();
+                syncMap();
+            }, 150);
+        };
+
+        // 화질 조절 헬퍼 (신규 — 오디오 select와 data-qk 중복이라 input value로 필터링)
+        const changeQuality = (direction) => {
+            const wrapper = [...document.querySelectorAll('[data-qk$="bitrate-select-select-wrapper"]')]
+                .find(el => {
+                    const inp = el.querySelector('input');
+                    return inp && /^[1-5]$/.test(inp.value);
+                });
+            if (!wrapper) return;
+
+            const input = wrapper.querySelector('input');
+            const labels = ['최소', '낮음', '중간', '높음', '최대'];
+            const currentIdx = parseInt(input.value, 10) - 1;
+
+            wrapper.click();
+            setTimeout(() => {
+                const options = [...document.querySelectorAll('[data-qk$="bitrate-select-option"]')];
+                const nextIdx = direction === 'up'
+                    ? Math.min(currentIdx + 1, labels.length - 1)
+                    : Math.max(currentIdx - 1, 0);
+                options[nextIdx]?.click();
+                syncMap();
+            }, 150);
+        };
 	
 	    setInterval(() => {
 			if(localStorage.getItem('neubie_dpad_binding')==='off') return;
@@ -4738,8 +4797,10 @@
 	                           || location.href.includes('/remote/robot/');
 	        if (!isDrivingPage) return;
 	        const padOnBtn = document.querySelector('[data-qk="remote-robot-controller-game-pad-segmented-control-ON"]')
-	                      || document.querySelector('[data-qk="remote-robot-game-pad-segmented-control-ON"]');
-	        const isGamepadOn = padOnBtn?.classList.contains('bg-white');
+                            || document.querySelector('[data-qk="remote-robot-game-pad-segmented-control-ON"]');
+            const isGamepadOn = padOnBtn
+                ? padOnBtn.classList.contains('bg-white')
+                : getLabelButtonState('게임패드') === 'ON';
 	        if (!isGamepadOn) {
 	            dpadWasPressed = { up: false, right: false, down: false, left: false };
 	            return;
@@ -4770,8 +4831,12 @@
 	        if (downBtn?.pressed && !dpadWasPressed.down) {
 	            dpadWasPressed.down = true;
 	            const el = document.querySelector('[data-qk="remote-robot-cam-adas-switch"]')
-	                    || document.querySelector('[data-qk="driving-robot-cam-adas-switch"]');
-	            el?.querySelector('label')?.click();
+                        || document.querySelector('[data-qk="driving-robot-cam-adas-switch"]');
+                if (el) {
+                    el.querySelector('label')?.click();
+                } else {
+                    findLabelButton('자동정지')?.click();
+                }
 	            syncMap();
 	        } else if (!downBtn?.pressed) {
 	            dpadWasPressed.down = false;
