@@ -62,14 +62,6 @@
 			font-weight: 450 !important;
 		}
 		
-		.bb-firefly {
-			position:absolute; width:4px; height:4px; border-radius:50%;
-			background:var(--ye); box-shadow:0 0 6px 2px rgba(255,224,130,.6);
-			animation:bb-flicker 2.5s ease-in-out infinite;
-			pointer-events:none; z-index:1;
-		}
-		@keyframes bb-flicker { 0%,100%{opacity:.15} 50%{opacity:.9} }
-
         /* ── 헤더 ── */
         .bb-hd {
             display:flex; flex-direction:column; align-items:center;
@@ -121,7 +113,7 @@
             padding:6px 12px; background:var(--bg);
         }
         .bb-alert-label {
-            font-size:13px; font-weight:900; color:var(--tx);
+            font-size:15px; font-weight:900; color:var(--tx);
             flex-shrink:0; white-space:nowrap;
         }
         .bb-alert-chips { display:flex; gap:5px; flex-wrap:wrap; flex:1; align-items:center; }
@@ -243,7 +235,7 @@
         .bb-mg { display:flex; flex-direction:row; gap:5px; padding:7px 8px; border-right:1px solid var(--bd); flex-shrink:0; }
         .bb-mg-col { display:flex; flex-direction:column; border:1px solid var(--bd2); border-radius:8px; background:var(--bg); overflow:hidden; }
         .bb-mg-col-title {
-            padding:5px 6px; font-size:15px; font-weight:900; color:var(--tx);
+            padding:5px 6px; font-size:16.5px; font-weight:900; color:var(--tx);
             border-bottom:1px solid var(--bd); background:var(--sur);
             text-align:center; white-space:nowrap;
         }
@@ -289,10 +281,10 @@
 
         #bb-walker-toggle {
             position:absolute; top:4px; right:4px;
-            min-width:34px; height:20px; padding:0 6px;
+            min-width:38px; height:22px; padding:0 7px;
             border-radius:6px;
             background:var(--sur2); border:1px solid var(--bd2);
-            color:var(--tx); font-size:10px; font-weight:900; cursor:pointer;
+            color:var(--tx); font-size:12px; font-weight:900; cursor:pointer;
             display:flex; align-items:center; justify-content:center;
             z-index:2; transition:background .15s, color .15s;
         }
@@ -470,11 +462,6 @@
     wrap.id = 'bb-wrap';
     wrap.innerHTML = `
         <div id="bb">
-			<div class="bb-firefly" style="top:8%;left:15%;animation-delay:0s;"></div>
-			<div class="bb-firefly" style="top:25%;left:80%;animation-delay:.8s;"></div>
-			<div class="bb-firefly" style="top:60%;left:8%;animation-delay:1.5s;"></div>
-			<div class="bb-firefly" style="top:75%;left:45%;animation-delay:2.1s;"></div>
-			<div class="bb-firefly" style="top:15%;left:55%;animation-delay:.5s;"></div>
             <!-- 헤더 -->
             <div class="bb-hd">
                 <div class="bb-hd-left">
@@ -544,7 +531,7 @@
                     * 알림 전송 조건<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;- 배터리 부족(21% 이하)<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;- 무선 도킹됨<br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;- 120분 이상 방치(배달 사이트 제외)<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- 대기 중 배터리 50% 미만(배달 사이트 기체 제외)<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;- 좀비: 전원 ON인데 배터리·GPS 수신값이 잡히지 않는 경우<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;- 캠 미노출(F, Fd, Fl, Fr, Bl, Br)<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;- 미니맵 기체 위치 미노출<br>
@@ -730,19 +717,16 @@
                 DELIVERY_TYPES.includes(raw.service?.serviceType) ||
                 DELIVERY_SITE_IDS.includes(raw.site?.id);
 
-            // ── 기능1: 대기중 방치
+            // ── 기능1: 대기중 방치 (배터리 50% 미만인 경우에만)
             if (!isDelivery && status === 'standby') {
                 const mins = minAgo(rs.lastOperatedAt);
-                if (mins >= 120) {
-                    const isResting = mins >= 360 && battery >= 50;
-                    if (!isResting) {
-                        const key = alertKey('standby', id);
-                        if (!dismissedAlerts.has(key)) alerts.push({
-                            key, type:'idle', dot:'bl', name,
-                            desc:`대기중 ${mins}분 | 마지막 조작: ${rs.lastOperatedUserName || '없음'} ${fmt(rs.lastOperatedAt)}`,
-                            time: fmt(new Date().toISOString())
-                        });
-                    }
+                if (battery < 50) {
+                    const key = alertKey('standby', id);
+                    if (!dismissedAlerts.has(key)) alerts.push({
+                        key, type:'idle', dot:'bl', name,
+                        desc:`대기중 ${mins}분 | 배터리 ${battery}% | 마지막 조작: ${rs.lastOperatedUserName || '없음'} ${fmt(rs.lastOperatedAt)}`,
+                        time: fmt(new Date().toISOString())
+                    });
                 } else {
                     clearDismiss(alertKey('standby', id));
                 }
@@ -1182,7 +1166,7 @@
                         ${inside
                             ? 'right:5px;top:50%;transform:translateY(-50%);'
                             : `left:calc(${pct}% + 5px);top:50%;transform:translateY(-50%);`}
-                        font-size:11px;font-weight:900;-webkit-text-stroke:0.3px currentColor;
+                        font-size:11px;font-weight:900;-webkit-text-stroke:0.45px currentColor;
                         color:${batColor};
                         font-family:'Lato',monospace;
                         text-shadow:${batShadow};
