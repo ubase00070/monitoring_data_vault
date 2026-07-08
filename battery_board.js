@@ -584,6 +584,7 @@
         const next = (localStorage.getItem('neubie_bb_theme') || 'light') === 'light' ? 'dark' : 'light';
         localStorage.setItem('neubie_bb_theme', next);
         applyBbTheme();
+        render();
     });
 
     // ============================================================
@@ -1146,10 +1147,11 @@
             && r.status !== 'patrolling' && r.status !== 'delivering'
             && r.status !== 'charging';
 
-        const batColor  = 'rgba(240,240,255,.93)';
-        const batShadow = inside
-            ? '0 0 4px rgba(0,0,0,.8)'
-            : '0 1px 3px rgba(0,0,0,.95), 0 0 6px rgba(0,0,0,.7)';
+        const isLight = bbEl.classList.contains('bb-light');
+        const batColor  = isLight ? 'rgba(30,25,15,.95)' : 'rgba(240,240,255,.93)';
+        const batShadow = isLight
+            ? (inside ? '0 0 3px rgba(255,255,255,.85)' : '0 1px 2px rgba(255,255,255,.9), 0 0 4px rgba(255,255,255,.6)')
+            : (inside ? '0 0 4px rgba(0,0,0,.8)' : '0 1px 3px rgba(0,0,0,.95), 0 0 6px rgba(0,0,0,.7)');
 
         const c = document.createElement('div');
         c.className = `bb-ca ${r.loading ? 'loading' : r.status}${lowBat ? ' warn-bat' : ''}`;
@@ -1172,7 +1174,7 @@
                         ${inside
                             ? 'right:5px;top:50%;transform:translateY(-50%);'
                             : `left:calc(${pct}% + 5px);top:50%;transform:translateY(-50%);`}
-                        font-size:11px;font-weight:900;
+                        font-size:11px;font-weight:900;-webkit-text-stroke:0.3px currentColor;
                         color:${batColor};
                         font-family:'Lato',monospace;
                         text-shadow:${batShadow};
