@@ -698,7 +698,7 @@
 
         let remainMin = startScore - currScore;
         
-        // 다중 모니터링은 10분 일찍 알림이 오도록 계산
+        // 다중 모니터링은 10분 일찍 오도록 계산
         if (isMonitoring) {
             remainMin -= 10; 
         }
