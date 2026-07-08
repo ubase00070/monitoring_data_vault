@@ -1111,11 +1111,11 @@
                         version: 'v1.3',
                         date: '2026-07-08',
                         items: [
-                            '다크/라이트 선택',
+                            'NCC 원격조종 신버전 대응',
+                            '다크/라이트 모드 선택',
                             '룰렛 돌리기 & 동전 던지기 & 개인 메모 기능',
                             '실시간 날씨(기상청 데이터)',
 							'다중 자동교대 12대로 확장 / 다중페이지 기체 뜨면 ALT+Q -> 자동시작)',
-                            '',
                             '1:1 문의 기능(익명 가능)',
                             '임무 종료된 리센츠/엘스/한성대 페이지 이탈 시 5초 후 자동 사이드',
 							'불규칙 순찰 기체 모니터링 미추가 시 알림 기능',
@@ -4727,9 +4727,10 @@
             // 신버전: hover 슬라이더
             const rangeInput = document.querySelector('input[type="range"][min="0.5"][max="3"]');
             if (rangeInput) {
+                const BRIGHTNESS_STEP = 0.1;
                 const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
                 let val = parseFloat(rangeInput.value);
-                val = direction === 'up' ? Math.min(val + 0.5, 3) : Math.max(val - 0.5, 0.5);
+                val = direction === 'up' ? Math.min(val + BRIGHTNESS_STEP, 3) : Math.max(val - BRIGHTNESS_STEP, 0.5);
                 val = Math.round(val * 10) / 10;
                 nativeSetter.call(rangeInput, val);
                 rangeInput.dispatchEvent(new Event('input', { bubbles: true }));
