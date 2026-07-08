@@ -24,10 +24,13 @@
 		}
 
         #bb.bb-light {
-			--bg:#ded3b8; --sur:#f8f3e6; --sur2:#efe6d2;
-			--bd:#cabf9d; --bd2:#b3a687; --tx:#2b2418; --mu:#7a6f5c;
-			--wh:rgba(0,0,0,.05);
-		}
+            --bg:#ded3b8; --sur:#f8f3e6; --sur2:#efe6d2;
+            --bd:#cabf9d; --bd2:#b3a687; --tx:#2b2418; --mu:#7a6f5c;
+            --wh:rgba(0,0,0,.05);
+        }
+        #bb.bb-light .bb-hd-title { color:#2b2418; }
+        #bb.bb-light .bb-delivery-title { color:#2b2418; }
+        #bb.bb-light .bb-delivery-empty { color:#2b2418; }
         #bb.bb-light .bb-ca.standby { --ac:#8a7f68; --ac-border:rgba(138,127,104,.35); }
 		#bb.bb-light .bb-mi.standby { --ac:#8a7f68; }
         #bb.bb-light .bb-mi:not(.empty) { color:#2b2418; }
@@ -44,8 +47,11 @@
         #bb {
             display:none; position:fixed; top:50%; left:50%;
             transform:translate(-50%,-50%);
-            width:960px; background:var(--bg);
-            border:1px solid var(--bd2); border-radius:16px;
+            width:960px;
+            border:3px solid transparent; border-radius:16px;
+            background-image: linear-gradient(var(--bg), var(--bg)), linear-gradient(135deg, #6366f1, #ec4899);
+            background-origin: border-box;
+            background-clip: padding-box, border-box;
             box-shadow:0 24px 60px rgba(0,0,0,.75);
             z-index:9999999; font-family:'Jua','Lato',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
             color:var(--tx); flex-direction:column;
@@ -56,14 +62,6 @@
 			font-weight: 450 !important;
 		}
 		
-		.bb-firefly {
-			position:absolute; width:4px; height:4px; border-radius:50%;
-			background:var(--ye); box-shadow:0 0 6px 2px rgba(255,224,130,.6);
-			animation:bb-flicker 2.5s ease-in-out infinite;
-			pointer-events:none; z-index:1;
-		}
-		@keyframes bb-flicker { 0%,100%{opacity:.15} 50%{opacity:.9} }
-
         /* ── 헤더 ── */
         .bb-hd {
             display:flex; flex-direction:column; align-items:center;
@@ -115,7 +113,7 @@
             padding:6px 12px; background:var(--bg);
         }
         .bb-alert-label {
-            font-size:13px; font-weight:900; color:var(--tx);
+            font-size:15px; font-weight:900; color:var(--tx);
             flex-shrink:0; white-space:nowrap;
         }
         .bb-alert-chips { display:flex; gap:5px; flex-wrap:wrap; flex:1; align-items:center; }
@@ -180,7 +178,7 @@
         .bb-gr { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; }
         .bb-ca {
 			height:80px; background:var(--sur);
-			border-radius:18px; padding:6px 11px;
+			border-radius:18px; padding:6px 8px;
 			cursor:grab; position:relative; overflow:hidden;
 			display:flex; flex-direction:column; justify-content:space-between;
 			border:2px solid var(--ac-border,var(--bd));
@@ -194,7 +192,7 @@
 			border-color:var(--ye);
 		}
 		.bb-ca:active { cursor:grabbing; transform:translateY(-1px) scale(0.99); }
-		.bb-ca::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--ac,var(--gy)); border-radius:18px 18px 0 0; }
+		.bb-ca::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--ac,var(--gy)); border-radius:16px 16px 0 0; }
         .bb-ca.dragging { opacity:.3; }
         .bb-ca.dragover { border-color:var(--bl)!important; box-shadow:0 0 0 1px var(--bl); }
         .bb-ca.selectable { cursor:pointer; }
@@ -237,7 +235,7 @@
         .bb-mg { display:flex; flex-direction:row; gap:5px; padding:7px 8px; border-right:1px solid var(--bd); flex-shrink:0; }
         .bb-mg-col { display:flex; flex-direction:column; border:1px solid var(--bd2); border-radius:8px; background:var(--bg); overflow:hidden; }
         .bb-mg-col-title {
-            padding:5px 6px; font-size:15px; font-weight:900; color:var(--tx);
+            padding:5px 6px; font-size:16.5px; font-weight:900; color:var(--tx);
             border-bottom:1px solid var(--bd); background:var(--sur);
             text-align:center; white-space:nowrap;
         }
@@ -283,10 +281,10 @@
 
         #bb-walker-toggle {
             position:absolute; top:4px; right:4px;
-            min-width:34px; height:20px; padding:0 6px;
+            min-width:38px; height:22px; padding:0 7px;
             border-radius:6px;
             background:var(--sur2); border:1px solid var(--bd2);
-            color:var(--tx); font-size:10px; font-weight:900; cursor:pointer;
+            color:var(--tx); font-size:12px; font-weight:900; cursor:pointer;
             display:flex; align-items:center; justify-content:center;
             z-index:2; transition:background .15s, color .15s;
         }
@@ -315,10 +313,11 @@
             display:none; position:fixed;
             top:50%; left:50%; transform:translate(-50%,-50%);
             width:552px; max-height:86vh; overflow-y:auto;
-            background:#0a0a0c;
-            border:2px solid rgba(239,68,68,.7);
-            border-radius:14px;
-            box-shadow:0 0 0 1px rgba(239,68,68,.3), 0 24px 64px rgba(0,0,0,.9);
+            border:3px solid transparent; border-radius:14px;
+            background-image: linear-gradient(#0a0a0c, #0a0a0c), linear-gradient(135deg, #6366f1, #ec4899);
+            background-origin: border-box;
+            background-clip: padding-box, border-box;
+            box-shadow:0 24px 64px rgba(0,0,0,.9);
             z-index:99999999;
         }
         #bb-alert-panel.open { display:block; }
@@ -342,14 +341,14 @@
         }
         .bb-ap-item:last-child { border-bottom:none; }
         .bb-ap-item:hover { background:#323558; }
-        .bb-ap-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; margin-top:5px; }
+        .bb-ap-dot { width:14px; height:14px; border-radius:50%; flex-shrink:0; margin-top:3px; }
         .bb-ap-dot.rd { background:#f87171; }
         .bb-ap-dot.ye { background:#fcd34d; }
         .bb-ap-dot.or { background:#fb923c; }
         .bb-ap-dot.bl { background:#60a5fa; }
         .bb-ap-info { display:flex; flex-direction:column; gap:4px; flex:1; }
-        .bb-ap-name { font-size:15px; font-weight:900; color:#f4f4ff; }
-        .bb-ap-desc { font-size:13px; font-weight:700; color:#c4c8e8; line-height:1.55; }
+        .bb-ap-name { font-size:17px; font-weight:900; color:#f4f4ff; }
+        .bb-ap-desc { font-size:14.5px; font-weight:700; color:#c4c8e8; line-height:1.55; }
         .bb-ap-time { font-size:11px; color:#8890b8; font-family:'Lato',monospace; }
         .bb-ap-dismiss {
             display:none; flex-shrink:0; align-self:center;
@@ -364,7 +363,6 @@
 			--bg:#ded3b8; --sur:#f8f3e6; --sur2:#efe6d2;
 			--bd:#cabf9d; --bd2:#b3a687; --tx:#2b2418; --mu:#7a6f5c;
 			--wh:rgba(0,0,0,.05);
-			background:var(--sur);
 		}
 		#bb-alert-panel.bb-light .bb-ap-hd { background:var(--sur); border-bottom-color:var(--bd); }
 		#bb-alert-panel.bb-light .bb-ap-title { color:var(--tx); }
@@ -383,7 +381,7 @@
             background:var(--sur2); border:1px solid var(--bd2);
             border-radius:12px; box-shadow:0 16px 48px rgba(0,0,0,.85);
             z-index:9999999999; padding:16px; overflow-y:auto;
-            font-size:14px; line-height:1.8; color:var(--tx);
+            font-size:16px; line-height:1.85; color:var(--tx);
         }
         #bb-info-panel.open { display:block; }
         .bb-info-hd {
@@ -396,18 +394,20 @@
         #bb-info-card-panel {
             display:none; position:fixed;
             top:50%; left:50%; transform:translate(-50%,-50%);
-            width:368px; background:var(--sur);
-            border:2px solid rgba(255,255,255,.85); border-radius:12px;
+            width:368px;
+            border:3px solid transparent; border-radius:12px;
+            background-image: linear-gradient(var(--sur), var(--sur)), linear-gradient(135deg, #6366f1, #ec4899);
+            background-origin: border-box;
+            background-clip: padding-box, border-box;
             box-shadow:0 16px 48px rgba(0,0,0,.9);
             z-index:999999999; font-family:'Lato',sans-serif;
             color:var(--tx); overflow:hidden;
         }
         #bb-info-card-panel.bb-light {
-			--bg:#ded3b8; --sur:#f8f3e6; --sur2:#efe6d2;
-			--bd:#cabf9d; --bd2:#b3a687; --tx:#2b2418; --mu:#7a6f5c;
-			--wh:rgba(0,0,0,.05);
-			background:var(--sur);
-		}   
+            --bg:#ded3b8; --sur:#f8f3e6; --sur2:#efe6d2;
+            --bd:#cabf9d; --bd2:#b3a687; --tx:#2b2418; --mu:#7a6f5c;
+            --wh:rgba(0,0,0,.05);
+        }  
         #bb-info-card-panel.open { display:block; }
         .bb-icp-hd {
             padding:11px 14px; background:var(--sur);
@@ -462,11 +462,6 @@
     wrap.id = 'bb-wrap';
     wrap.innerHTML = `
         <div id="bb">
-			<div class="bb-firefly" style="top:8%;left:15%;animation-delay:0s;"></div>
-			<div class="bb-firefly" style="top:25%;left:80%;animation-delay:.8s;"></div>
-			<div class="bb-firefly" style="top:60%;left:8%;animation-delay:1.5s;"></div>
-			<div class="bb-firefly" style="top:75%;left:45%;animation-delay:2.1s;"></div>
-			<div class="bb-firefly" style="top:15%;left:55%;animation-delay:.5s;"></div>
             <!-- 헤더 -->
             <div class="bb-hd">
                 <div class="bb-hd-left">
@@ -530,13 +525,13 @@
                     <div class="bb-xbtn" id="bb-info-close">✕</div>
                 </div>
                 <div id="bb-info-body">
-                    * 오직 '알림 센터' 페이지에서만 열람<br>
+                    * 오직 '알림 센터' 페이지에서 ALT+Z 작동<br>
                     * 추가한 기체 카드와 배치는 로컬 스토리지에 저장됨(최대 30대. 드래그로 배치 변경 가능)<br>
                     * 카드 더블클릭/기체정보 검색창: 기체 상세 Info 패널 (CPU, GPS, 섀시 온도, 마지막 조작자 등)<br>
                     * 알림 전송 조건<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;- 배터리 부족(21% 이하)<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;- 무선 도킹됨<br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;- 120분 이상 방치(배달 사이트 제외)<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- 대기 중 배터리 50% 미만(배달 사이트 기체 제외)<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;- 좀비: 전원 ON인데 배터리·GPS 수신값이 잡히지 않는 경우<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;- 캠 미노출(F, Fd, Fl, Fr, Bl, Br)<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;- 미니맵 기체 위치 미노출<br>
@@ -722,19 +717,16 @@
                 DELIVERY_TYPES.includes(raw.service?.serviceType) ||
                 DELIVERY_SITE_IDS.includes(raw.site?.id);
 
-            // ── 기능1: 대기중 방치
+            // ── 기능1: 대기중 방치 (배터리 50% 미만인 경우에만)
             if (!isDelivery && status === 'standby') {
                 const mins = minAgo(rs.lastOperatedAt);
-                if (mins >= 120) {
-                    const isResting = mins >= 360 && battery >= 50;
-                    if (!isResting) {
-                        const key = alertKey('standby', id);
-                        if (!dismissedAlerts.has(key)) alerts.push({
-                            key, type:'idle', dot:'bl', name,
-                            desc:`대기중 ${mins}분 | 마지막 조작: ${rs.lastOperatedUserName || '없음'} ${fmt(rs.lastOperatedAt)}`,
-                            time: fmt(new Date().toISOString())
-                        });
-                    }
+                if (battery < 50) {
+                    const key = alertKey('standby', id);
+                    if (!dismissedAlerts.has(key)) alerts.push({
+                        key, type:'idle', dot:'bl', name,
+                        desc:`대기중 ${mins}분 | 배터리 ${battery}% | 마지막 조작: ${rs.lastOperatedUserName || '없음'} ${fmt(rs.lastOperatedAt)}`,
+                        time: fmt(new Date().toISOString())
+                    });
                 } else {
                     clearDismiss(alertKey('standby', id));
                 }
@@ -1174,7 +1166,7 @@
                         ${inside
                             ? 'right:5px;top:50%;transform:translateY(-50%);'
                             : `left:calc(${pct}% + 5px);top:50%;transform:translateY(-50%);`}
-                        font-size:11px;font-weight:900;-webkit-text-stroke:0.3px currentColor;
+                        font-size:11px;font-weight:900;-webkit-text-stroke:0.45px currentColor;
                         color:${batColor};
                         font-family:'Lato',monospace;
                         text-shadow:${batShadow};
