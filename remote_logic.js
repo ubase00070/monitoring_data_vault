@@ -357,19 +357,20 @@
         return (day === 6 || day === 0);
     };
 
-    // 기체 트래킹 로직
+    // 기체 트래킹 로직 (/new 대응)
     function updateRobotContext() {
-        const path = window.location.href;
-        if (NEUBIE_HOSTS.some(h => path.includes(`${h}/ko/remote/robot/`))) {
-            const robotNum = path.split('/').pop().split('?')[0];
-            if (ROBOT_MAP[robotNum]) {
-                let history = JSON.parse(localStorage.getItem('neubie_robot_history') || '[]');
-                const newData = { id: robotNum, timestamp: Date.now() };
-                history = [newData, ...history.filter(h => h.id !== robotNum)].slice(0, 3);
-                localStorage.setItem('neubie_robot_history', JSON.stringify(history));
-            }
-        }
-    }
+	    const path = window.location.href;
+	    if (NEUBIE_HOSTS.some(h => path.includes(`${h}/ko/remote/robot/`))) {
+	        const idMatch = path.match(/\/ko\/remote\/robot\/(\d+)/);
+	        const robotNum = idMatch ? idMatch[1] : null;
+	        if (robotNum && ROBOT_MAP[robotNum]) {
+	            let history = JSON.parse(localStorage.getItem('neubie_robot_history') || '[]');
+	            const newData = { id: robotNum, timestamp: Date.now() };
+	            history = [newData, ...history.filter(h => h.id !== robotNum)].slice(0, 3);
+	            localStorage.setItem('neubie_robot_history', JSON.stringify(history));
+	        }
+	    }
+	}
     updateRobotContext();
 
     /* ============================================================
