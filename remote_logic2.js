@@ -4939,6 +4939,18 @@
         showHandoverToast('현재 모니터링 기체 업로드 중...', 'progress');
 
         try {
+			// 최근에 이미 갱신됐는지 확인 (수동 업로드와의 충돌 방지) + taken 백업
+            const beforeRes = await fetch('https://multimonitoring.vercel.app/api/handover');
+            const before = beforeRes.ok ? await beforeRes.json() : null;
+
+            if (before) {
+                const secondsSinceUpdate = (Date.now() - new Date(before.updatedAt).getTime()) / 1000;
+                if (secondsSinceUpdate < 180) {
+                    return; // 최근 3분 내 이미 갱신됨 - 자동화는 양보하고 조용히 종료
+                }
+            }
+            const preservedTaken = before?.taken || [];
+			
             const allRobots = await fetchAllRobotsForHandover();
             const units = allRobots
                 .filter(r => r.isMonitoring === true)
