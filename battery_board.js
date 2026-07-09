@@ -73,6 +73,7 @@
             box-shadow:0 24px 60px rgba(0,0,0,.75);
             z-index:9999999; font-family:'Paperlogy','Lato',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
 			font-weight:900;
+			-webkit-text-stroke: 0.4px currentColor;
 			color:var(--tx); flex-direction:column;
         }
         #bb.open { display:flex; }
