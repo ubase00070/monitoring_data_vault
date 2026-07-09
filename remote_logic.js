@@ -156,6 +156,74 @@
             return {};
         }
     }
+	
+	async function fetchAllRobotsForHandover() {
+        const res = await fetch('https://core.neubie.ai/robots/?limit=200', {
+            credentials: 'include',
+            headers: getAuthHeaders()
+        });
+        if (!res.ok) throw new Error(`robots fetch failed: ${res.status}`);
+        const data = await res.json();
+        let all = data.results;
+        // 200대 넘어가는 미래 대비 안전장치
+        let next = data.next;
+        let guard = 0;
+        while (next && guard < 10) {
+            const r2 = await fetch(next, { credentials: 'include', headers: getAuthHeaders() });
+            if (!r2.ok) break;
+            const d2 = await r2.json();
+            all = all.concat(d2.results);
+            next = d2.next;
+            guard++;
+        }
+        return all;
+    }
+
+    function showHandoverToast(message, type) {
+        const existing = document.getElementById('neubie-ho-toast');
+        if (existing) existing.remove();
+
+        const colors = {
+            progress: { bg: '#1e293b', text: '#e2e8f0' },
+            success:  { bg: '#166534', text: '#ffffff' },
+            fail:     { bg: '#7f1d1d', text: '#ffffff' },
+        };
+        const c = colors[type] || colors.progress;
+
+        const el = document.createElement('div');
+        el.id = 'neubie-ho-toast';
+        el.textContent = message;
+        el.style.cssText = `
+            position:fixed; top:12px; left:50%; transform:translateX(-50%);
+            background:${c.bg}; color:${c.text};
+            padding:8px 18px; border-radius:10px;
+            font-size:13px; font-weight:700;
+            z-index:99999999; pointer-events:none;
+            box-shadow:0 4px 16px rgba(0,0,0,.4);
+            transition:opacity .3s ease;
+        `;
+        document.body.appendChild(el);
+
+        if (type !== 'progress') {
+            setTimeout(() => {
+                el.style.opacity = '0';
+                setTimeout(() => el.remove(), 300);
+            }, 3000);
+        }
+    }
+
+    function getKSTDate() {
+        const utcMs = Date.now() + (new Date().getTimezoneOffset() * 60000);
+        return new Date(utcMs + 9 * 60 * 60000);
+    }
+    function getKSTMinutes() {
+        return getKSTDate().getMinutes();
+    }
+    function isScheduledMonitorNow(myName) {
+        if (!myName || !state.insuData || !state.insuData.schedule) return false;
+        const hourKey = `${String(getKSTDate().getHours()).padStart(2, '0')}:00`;
+        return state.insuData.schedule[hourKey] === myName;
+    }
 
     /* ============================================================
     SECTION 조작자 감시 (개입 페이지 전용)
@@ -1110,13 +1178,13 @@
                 const patchItems = [
                     {
                         version: 'v1.3',
-                        date: '2026-07-08',
+                        date: '2026-07-09',
                         items: [
+							'다중 교대기체 자동 업로드(45분에만) / 자동 교대시작 최대 12대',
                             'NCC 원격조종 페이지 구/신버전 기존 기능 및 페이지 대응',
                             '다크/라이트 모드 선택',
                             '룰렛 돌리기 & 동전 던지기 & 개인 메모',
                             '실시간 송내 날씨(기상청 API 데이터)',
-							'다중 자동교대 12대로 확장 / 다중페이지 기체 뜨면 ALT+Q -> 자동시작)',
                             '1:1 문의 기능(익명 가능)',
                             '임무 종료된 리센츠/엘스/한성대 페이지 이탈 시 5초 후 자동 사이드',
 							'불규칙 순찰 기체 모니터링 미추가 시 알림 기능',
@@ -1516,9 +1584,9 @@
                 기체별 헤드램프 토글<br>
 				기체 카메라 밝기 한 번에 조절<br>
 				카메라 위치 스왑<br>
-				multimonitoring.vercel.app 이용 시 교대 기체 업로드<br>
-				업로드된 교대 기체 받기(최근 20분까지만 유효) -> 자동 시작(12대까지)<br>
-				'뉴비고 도우미'만 이용하더라도 교대 기체 받기 가능<br>
+				45분에 자동으로 실시간 교대 기체 업로드<br>
+				multimonitoring.vercel.app 이용 시에도 기체 업로드 가능<br>
+				'뉴비고 도우미'만 이용하더라도 교대 기체 업로드 및 받기 가능<br>
                 `;
 
                 queueInfoBox.appendChild(queueInfoClose);
@@ -4855,6 +4923,60 @@
 	    }, 100);
 	}
 
+	async function runAutoHandoverUpload() {
+        if (!isMonitoringPage()) return;
+
+        const myName = _getMyName();
+        if (!myName) return; // 이름 없음 = 시크릿탭 취급, 원천 봉쇄 (요구사항 3)
+
+        if (!isScheduledMonitorNow(myName)) return;
+
+        const now = new Date();
+        const fireKey = `neubie_ho_fired_${now.getFullYear()}${now.getMonth()}${now.getDate()}_${now.getHours()}`;
+        if (localStorage.getItem(fireKey)) return;
+        localStorage.setItem(fireKey, '1'); // 체크 직후 즉시 세팅 (일반탭 다중 방어)
+
+        showHandoverToast('현재 모니터링 기체 업로드 중...', 'progress');
+
+        try {
+			// 최근에 이미 갱신됐는지 확인 (수동 업로드와의 충돌 방지) + taken 백업
+            const beforeRes = await fetch('https://multimonitoring.vercel.app/api/handover');
+            const before = beforeRes.ok ? await beforeRes.json() : null;
+
+            if (before) {
+                const secondsSinceUpdate = (Date.now() - new Date(before.updatedAt).getTime()) / 1000;
+                if (secondsSinceUpdate < 180) {
+                    return; // 최근 3분 내 이미 갱신됨 - 자동화는 양보하고 조용히 종료
+                }
+            }
+            const preservedTaken = before?.taken || [];
+			
+            const allRobots = await fetchAllRobotsForHandover();
+            const units = allRobots
+                .filter(r => r.isMonitoring === true)
+                .map(r => r.nickname || r.name);
+
+            if (!units.length) {
+                showHandoverToast('모니터링 기체 업로드 실패', 'fail');
+                return; // 실패 시 그대로 종료, 추가 신호 없음 (요구사항 2)
+            }
+
+            const res = await fetch('https://multimonitoring.vercel.app/api/handover', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ handover_by: myName, units }) // Just a Tool과 완전 동일 포맷 (요구사항 6)
+            });
+
+            if (res.ok) {
+                showHandoverToast('모니터링 기체 업로드 성공', 'success');
+            } else {
+                showHandoverToast('모니터링 기체 업로드 실패', 'fail');
+            }
+        } catch (e) {
+            showHandoverToast('모니터링 기체 업로드 실패', 'fail');
+        }
+    }
+
     injectConfigUI();
     
     if (localStorage.getItem('neubie_user_name')) {
@@ -4871,6 +4993,10 @@
 
         lastNotifiedMin = currentFullMin; 
         syncTasksFromServer(); 
+
+        if (getKSTMinutes() === 45) {
+            runAutoHandoverUpload();
+        }
         
     }, 1000);
 
