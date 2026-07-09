@@ -1699,7 +1699,7 @@
 
     let batteryRefreshInterval = null;
 
-    // 팝업 열 때만 생성
+    // 팝업 열 때만
     function toggleBattery() {
         if (batteryPopup.style.display !== 'block') {
 
