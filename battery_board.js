@@ -234,7 +234,11 @@
             0%,100% { border-color:var(--rd); box-shadow:0 0 0 1px var(--rd); }
             50%     { border-color:transparent; box-shadow:none; }
         }
-        .bb-ca-name { font-size:15px; font-weight:900; color:var(--tx); line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .bb-ca-name { 
+		    font-size:15px; font-weight:900; color:var(--tx); line-height:1.1; 
+		    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+		    -webkit-text-stroke: 0.4px currentColor;
+		}
         .bb-ca-name.bb-marquee { overflow:visible; animation:bb-marquee 3s linear 0.5s 1 forwards; }
         @keyframes bb-marquee { 0%{transform:translateX(0)} 100%{transform:translateX(-60%)} }
         .bb-ca-mid  { display:flex; justify-content:space-between; align-items:center; }
