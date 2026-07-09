@@ -15,19 +15,19 @@
 			font-family: 'Paperlogy';
 			font-weight: 400;
 			font-display: swap;
-			src: url('https://cdn.jsdelivr.net/gh/fonts-archive/Paperlogy/Paperlogy-4Regular.woff2') format('woff2');
+			src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-4Regular.woff2') format('woff2');
 		}
 		@font-face {
 			font-family: 'Paperlogy';
 			font-weight: 700;
 			font-display: swap;
-			src: url('https://cdn.jsdelivr.net/gh/fonts-archive/Paperlogy/Paperlogy-7Bold.woff2') format('woff2');
+			src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-7Bold.woff2') format('woff2');
 		}
 		@font-face {
 			font-family: 'Paperlogy';
 			font-weight: 900;
 			font-display: swap;
-			src: url('https://cdn.jsdelivr.net/gh/fonts-archive/Paperlogy/Paperlogy-9Black.woff2') format('woff2');
+			src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-9Black.woff2') format('woff2');
 		}
 		@import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap');
         :root {
@@ -234,11 +234,11 @@
             0%,100% { border-color:var(--rd); box-shadow:0 0 0 1px var(--rd); }
             50%     { border-color:transparent; box-shadow:none; }
         }
-        .bb-ca-name { font-size:16.5px; font-weight:900; color:var(--tx); line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .bb-ca-name { font-size:15px; font-weight:900; color:var(--tx); line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .bb-ca-name.bb-marquee { overflow:visible; animation:bb-marquee 3s linear 0.5s 1 forwards; }
         @keyframes bb-marquee { 0%{transform:translateX(0)} 100%{transform:translateX(-60%)} }
         .bb-ca-mid  { display:flex; justify-content:space-between; align-items:center; }
-        .bb-ca-st   { font-size:13px; font-weight:700; color:var(--ac,var(--mu)); opacity:.9; }
+        .bb-ca-st   { font-size:12px; font-weight:700; color:var(--ac,var(--mu)); opacity:.9; }
         .bb-mission-off { font-size:11px; font-weight:900; color:rgba(239,68,68,.8); }
         .bb-ca-bar-wrap { position:relative; }
         .bb-ca-bar  { height:14px; background:rgba(255,255,255,.07); border-radius:4px; overflow:hidden; }
