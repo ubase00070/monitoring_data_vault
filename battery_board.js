@@ -72,7 +72,7 @@
             background-clip: padding-box, border-box;
             box-shadow:0 24px 60px rgba(0,0,0,.75);
             z-index:9999999; font-family:'Paperlogy','Lato',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-			font-weight:700;
+			font-weight:900;
 			color:var(--tx); flex-direction:column;
         }
         #bb.open { display:flex; }
