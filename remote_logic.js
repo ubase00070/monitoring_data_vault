@@ -4964,7 +4964,7 @@
             const res = await fetch('https://multimonitoring.vercel.app/api/handover', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ handover_by: myName, units }) // Just a Tool과 완전 동일 포맷 (요구사항 6)
+                body: JSON.stringify({ handover_by: myName, units }) // Just a Tool과 완전 동일 포맷
             });
 
             if (res.ok) {
