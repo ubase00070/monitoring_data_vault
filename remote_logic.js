@@ -136,6 +136,7 @@
 
         "158": { site: "에버랜드 장미축제", unit: "#140" }, // 에버랜드
         "236": { site: "Hitachi Building Systems", unit: "#178" }, // 히타치 배달
+        "168": { site: "서산 뜨레 바베큐", unit: "#145" }, // 서산 뜨레 바베큐
     };
 
     const isAutoTarget = config.targetIds.some(id => currUrl.includes(`/monitoring/${id}`));
