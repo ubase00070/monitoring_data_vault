@@ -630,8 +630,8 @@
     ];
 
     const MONITOR_GROUPS = [
-        { id:'yeoksam',  label:'역삼 요기요',    keywords:['역삼 요기요'] },
-        { id:'songdo',   label:'송도 요기요',    keywords:['송도 요기요'] },
+        { id:'yeoksam',  label:'역삼 요기요',    keywords:['역삼동 (요기요)'] },
+        { id:'songdo',   label:'송도 요기요',    keywords:['송도 신도시(요기요)'] },
         { id:'seongsu',  label:'성수 요기요',    keywords:['성수 요기요'] },
         { id:'seongnam', label:'성남 삼평/서현', keywords:['성남형'] },
     ];
