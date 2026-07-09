@@ -1,5 +1,5 @@
 /* ============================================================
-   battery_board.js v2.1
+   battery_board.js v3.1
    뉴비고 배터리 현황판 — 템퍼몽키 inject
    ============================================================ */
 
@@ -11,6 +11,24 @@
     // ============================================================
     const style = document.createElement('style');
     style.textContent = `
+		@font-face {
+			font-family: 'Paperlogy';
+			font-weight: 400;
+			font-display: swap;
+			src: url('https://cdn.jsdelivr.net/gh/fonts-archive/Paperlogy/Paperlogy-4Regular.woff2') format('woff2');
+		}
+		@font-face {
+			font-family: 'Paperlogy';
+			font-weight: 700;
+			font-display: swap;
+			src: url('https://cdn.jsdelivr.net/gh/fonts-archive/Paperlogy/Paperlogy-7Bold.woff2') format('woff2');
+		}
+		@font-face {
+			font-family: 'Paperlogy';
+			font-weight: 900;
+			font-display: swap;
+			src: url('https://cdn.jsdelivr.net/gh/fonts-archive/Paperlogy/Paperlogy-9Black.woff2') format('woff2');
+		}
 		@import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap');
         :root {
 			--bg:#111113; --sur:#141416; --sur2:#1a1a1e;
@@ -53,8 +71,8 @@
             background-origin: border-box;
             background-clip: padding-box, border-box;
             box-shadow:0 24px 60px rgba(0,0,0,.75);
-            z-index:9999999; font-family:'Pretendard','Lato',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-            font-weight:900;
+            z-index:9999999; font-family:'Paperlogy','Lato',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+			font-weight:700;
 			color:var(--tx); flex-direction:column;
         }
         #bb.open { display:flex; }
