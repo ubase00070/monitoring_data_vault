@@ -1341,7 +1341,7 @@
         list.id = 'dashboard-list';
         list.style.cssText = "display:grid; gap:8px; width:100%; box-sizing:border-box;";
 
-        // 1. 업무 알림 설정 (태스크 리스트 인라인 삽입)
+        // 1. 업무 알림 (태스크 리스트 인라인 삽입)
         const taskCard = document.createElement('div');
         taskCard.style.cssText = `background:${T.card}; padding:15px; border-radius:15px; border:1px solid ${T.border};`;
         const storedName = localStorage.getItem('neubie_user_name') || "사용자";
