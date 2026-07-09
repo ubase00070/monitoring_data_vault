@@ -11,7 +11,7 @@
     // ============================================================
     const style = document.createElement('style');
     style.textContent = `
-        @import url('https://fonts.googleapis.com/css2?family=Jua&family=Lato:wght@400;700;900&display=swap');
+		@import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap');
         :root {
 			--bg:#111113; --sur:#141416; --sur2:#1a1a1e;
 			--bd:#242428; --bd2:#2e2e34; --tx:#e8e8f0; --mu:#52525e;
@@ -53,7 +53,7 @@
             background-origin: border-box;
             background-clip: padding-box, border-box;
             box-shadow:0 24px 60px rgba(0,0,0,.75);
-            z-index:9999999; font-family:'Jua','Lato',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+            z-index:9999999; font-family:'Pretendard','Lato',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
             color:var(--tx); flex-direction:column;
         }
         #bb.open { display:flex; }
