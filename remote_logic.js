@@ -4925,6 +4925,7 @@
 
 	async function runAutoHandoverUpload() {
         if (!isMonitoringPage()) return;
+		if (localStorage.getItem('neubie_handover_enabled') === 'false') return;
 
         const myName = _getMyName();
         if (!myName) return; // 이름 없음 = 시크릿탭 취급, 원천 봉쇄 (요구사항 3)
