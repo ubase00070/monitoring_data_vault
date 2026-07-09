@@ -65,7 +65,7 @@
 
     fetch(WEATHER_CONFIG.proxyUrl).catch(() => {});
 
-    // 기체 네이밍 매핑 데이터
+    // 기체 네이밍 매핑
     const ROBOT_MAP = {
         "20": { site: "송도 요기요", unit: "#013" }, // 1호기
         "86": { site: "송도 요기요", unit: "#055" }, // 2호기
