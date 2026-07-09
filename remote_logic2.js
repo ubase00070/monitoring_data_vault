@@ -4994,7 +4994,7 @@
         lastNotifiedMin = currentFullMin; 
         syncTasksFromServer(); 
 
-        if (getKSTMinutes() === 10) {
+        if (getKSTMinutes() === 20) {
             runAutoHandoverUpload();
         }
         
