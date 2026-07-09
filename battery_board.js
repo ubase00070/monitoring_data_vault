@@ -54,7 +54,7 @@
             background-clip: padding-box, border-box;
             box-shadow:0 24px 60px rgba(0,0,0,.75);
             z-index:9999999; font-family:'Pretendard','Lato',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-            font-weight:700;
+            font-weight:900;
 			color:var(--tx); flex-direction:column;
         }
         #bb.open { display:flex; }
@@ -216,7 +216,7 @@
             0%,100% { border-color:var(--rd); box-shadow:0 0 0 1px var(--rd); }
             50%     { border-color:transparent; box-shadow:none; }
         }
-        .bb-ca-name { font-size:16.5px; font-weight:900; color:var(--tx); line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; letter-spacing:-.2px; }
+        .bb-ca-name { font-size:16.5px; font-weight:900; color:var(--tx); line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .bb-ca-name.bb-marquee { overflow:visible; animation:bb-marquee 3s linear 0.5s 1 forwards; }
         @keyframes bb-marquee { 0%{transform:translateX(0)} 100%{transform:translateX(-60%)} }
         .bb-ca-mid  { display:flex; justify-content:space-between; align-items:center; }
