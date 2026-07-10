@@ -5072,10 +5072,10 @@
           "raw": "1"
         },
         "7/9": {
-          "status": "work",
+          "status": "half",
           "working": true,
           "present": true,
-          "raw": "1"
+          "raw": "반차"
         },
         "7/10": {
           "status": "off",
@@ -8141,6 +8141,6 @@
     "7/31"
   ],
   "mainMonth": 7,
-  "updatedAt": "2026-07-09T03:53:07.357Z",
+  "updatedAt": "2026-07-10T03:53:04.398Z",
   "sheetName": "2026년_07월 스케줄"
 }
