@@ -136,6 +136,7 @@
 
         "158": { site: "에버랜드 장미축제", unit: "#140" }, // 에버랜드
         "236": { site: "Hitachi Building Systems", unit: "#178" }, // 히타치 배달
+        "168": { site: "서산 뜨레 바베큐", unit: "#145" }, // 서산 뜨레 바베큐
     };
 
     const isAutoTarget = config.targetIds.some(id => currUrl.includes(`/monitoring/${id}`));
@@ -157,19 +158,28 @@
         }
     }
 	
+	async function fetchWithTimeout(url, options = {}, timeoutMs = 15000) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+            return await fetch(url, { ...options, signal: controller.signal });
+        } finally {
+            clearTimeout(timer);
+        }
+    }
+	
 	async function fetchAllRobotsForHandover() {
-        const res = await fetch('https://core.neubie.ai/robots/?limit=200', {
+        const res = await fetchWithTimeout('https://core.neubie.ai/robots/?limit=200', {   // ← fetch → fetchWithTimeout
             credentials: 'include',
             headers: getAuthHeaders()
         });
         if (!res.ok) throw new Error(`robots fetch failed: ${res.status}`);
         const data = await res.json();
         let all = data.results;
-        // 200대 넘어가는 미래 대비 안전장치
         let next = data.next;
         let guard = 0;
         while (next && guard < 10) {
-            const r2 = await fetch(next, { credentials: 'include', headers: getAuthHeaders() });
+            const r2 = await fetchWithTimeout(next, { credentials: 'include', headers: getAuthHeaders() });   // ← fetch → fetchWithTimeout
             if (!r2.ok) break;
             const d2 = await r2.json();
             all = all.concat(d2.results);
@@ -1178,13 +1188,13 @@
                 const patchItems = [
                     {
                         version: 'v1.3',
-                        date: '2026-07-08',
+                        date: '2026-07-09',
                         items: [
+							'다중 교대기체 자동 업로드(45분에만) / 자동 교대시작 최대 12대',
                             'NCC 원격조종 페이지 구/신버전 기존 기능 및 페이지 대응',
                             '다크/라이트 모드 선택',
                             '룰렛 돌리기 & 동전 던지기 & 개인 메모',
                             '실시간 송내 날씨(기상청 API 데이터)',
-							'다중 자동교대 12대로 확장 / 다중페이지 기체 뜨면 ALT+Q -> 자동시작)',
                             '1:1 문의 기능(익명 가능)',
                             '임무 종료된 리센츠/엘스/한성대 페이지 이탈 시 5초 후 자동 사이드',
 							'불규칙 순찰 기체 모니터링 미추가 시 알림 기능',
@@ -1279,7 +1289,7 @@
         themeBtn.onclick = () => {
             const next = nbThemeName === 'light' ? 'dark' : 'light';
             localStorage.setItem('neubie_theme', next);
-            ['neubie-weather-overlay', 'neubie-roulette-overlay', 'neubie-tips-overlay', 'neubie-patch-overlay', 'neubie-secret-overlay', 'neubie-map-info-overlay', 'neubie-queue-info-overlay'].forEach(id => {
+            ['neubie-weather-overlay', 'neubie-roulette-overlay', 'neubie-tips-overlay', 'neubie-patch-overlay', 'neubie-secret-overlay', 'neubie-map-info-overlay', 'neubie-queue-info-overlay', 'neubie-drivetheme-overlay', 'neubie-moretools-overlay'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.remove();
             });
@@ -1584,9 +1594,9 @@
                 기체별 헤드램프 토글<br>
 				기체 카메라 밝기 한 번에 조절<br>
 				카메라 위치 스왑<br>
-				multimonitoring.vercel.app 이용 시 교대 기체 업로드<br>
-				업로드된 교대 기체 받기(최근 20분까지만 유효) -> 자동 시작(12대까지)<br>
-				'뉴비고 도우미'만 이용하더라도 교대 기체 받기 가능<br>
+				45분에 자동으로 실시간 교대 기체 업로드<br>
+				multimonitoring.vercel.app 이용 시에도 기체 업로드 가능<br>
+				'뉴비고 도우미'만 이용하더라도 교대 기체 업로드 및 받기 가능<br>
                 `;
 
                 queueInfoBox.appendChild(queueInfoClose);
@@ -1629,16 +1639,16 @@
 
         const rouletteCard = document.createElement('div');
         rouletteCard.style.cssText = `background:${T.card}; padding:8px 12px; border-radius:15px; border:1px solid ${T.border}; cursor:pointer; display:flex; align-items:center;`;
-        rouletteCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">🎡 룰렛 & 동전 & 메모</div>`;
+        rouletteCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">🌤️ 날씨 & 룰렛 & 기타</div>`;   // ← 라벨만 교체
         window._neubieRouletteCard = rouletteCard;
         rouletteCard.onclick = () => {
             const isActive = rouletteCard.style.outline !== 'none' && rouletteCard.style.outline !== '';
             rouletteCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
             if (!isActive) {
-                openRouletteOverlay();
+                openMoreToolsOverlay();   // ← openRouletteOverlay() 대신 새 메뉴 오버레이 호출
             } else {
-                const rouletteOverlay = document.getElementById('neubie-roulette-overlay');
-                if (rouletteOverlay) rouletteOverlay.style.display = 'none';
+                const moreOverlay = document.getElementById('neubie-moretools-overlay');
+                if (moreOverlay) moreOverlay.style.display = 'none';
             }
         };
 
@@ -1663,16 +1673,16 @@
 
         const weatherCard = document.createElement('div');
         weatherCard.style.cssText = `background:${T.card}; padding:8px 12px; border-radius:15px; border:1px solid ${T.border}; cursor:pointer; display:flex; align-items:center;`;
-        weatherCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">🌤️ 송내 현재 날씨 (기상청 API)</div>`;
+        weatherCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">🎨 레이아웃 색상 변경</div>`;   // ← 라벨 교체
         window._neubieWeatherCard = weatherCard;
         weatherCard.onclick = () => {
             const isActive = weatherCard.style.outline !== 'none' && weatherCard.style.outline !== '';
             weatherCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
             if (!isActive) {
-                openWeatherOverlay();
+                openDriveThemeOverlay();   // ← openWeatherOverlay() 대신 새 테마 선택 오버레이 호출
             } else {
-                const weatherOverlay = document.getElementById('neubie-weather-overlay');
-                if (weatherOverlay) weatherOverlay.style.display = 'none';
+                const dtOverlay = document.getElementById('neubie-drivetheme-overlay');
+                if (dtOverlay) dtOverlay.style.display = 'none';
             }
         };
 
@@ -2275,6 +2285,96 @@
 
 	function isMonitoringPage() {
 		return NEUBIE_HOSTS.some(h => location.href.includes(`${h}/ko/remote/multiple/monitoring`));
+	}
+
+    function isNewDrivingPage() {
+		return NEUBIE_HOSTS.some(h => location.href.includes(`${h}/ko/remote/robot/`)) && location.href.includes('/new');
+	}
+
+    /* ============================================================
+	   SECTION 기체 원격조종(/new) 레이아웃 색상 테마
+	   ============================================================ */
+	const DRIVE_THEME_KEY = 'neubie_drive_theme';
+	const DRIVE_THEMES = {
+		light: { card: '#e5e5e5', border: '#999999', text: '#111111', label: '☀️ 라이트' },
+	};
+	const DRIVE_TARGETS = ['적재함', '헤드램프', '게임패드', '자동정지', '임무 받기 중지', '임무 시작 시 알림이 여기에 표시됩니다.', '임무 설정'];
+
+	function driveThemeClimb(startEl, maxWidth = 320) {
+		let best = startEl, node = startEl;
+		for (let i = 0; i < 10 && node.parentElement; i++) {
+			node = node.parentElement;
+			if (node.getBoundingClientRect().width > maxWidth) break;
+			const m = getComputedStyle(node).backgroundColor.match(/rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?\)/);
+			if (m && (m[4] === undefined ? 1 : parseFloat(m[4])) > 0.15) best = node;
+		}
+		return best;
+	}
+
+	function driveThemeFindByText(label) {
+		const el = [...document.querySelectorAll('*')].find(e => e.children.length === 0 && e.textContent.trim() === label);
+		return el ? driveThemeClimb(el) : null;
+	}
+
+	function driveThemeMark(el, t) {
+		if (!el) return;
+		const paint = (n) => {
+			n.style.setProperty('background-color', t.card, 'important');
+			n.style.setProperty('border', `1px solid ${t.border}`, 'important');
+			n.style.setProperty('color', t.text, 'important');
+			n.setAttribute('data-neubie-theme-touched', '1');
+		};
+		paint(el);
+		el.querySelectorAll('*').forEach(c => {
+			const m = getComputedStyle(c).backgroundColor.match(/rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?\)/);
+			const alpha = m ? (m[4] === undefined ? 1 : parseFloat(m[4])) : 0;
+			if (alpha > 0.15) paint(c);
+			else { c.style.setProperty('color', t.text, 'important'); c.setAttribute('data-neubie-theme-touched', '1'); }
+		});
+	}
+
+	function clearDriveTheme() {
+		document.getElementById('neubie-drive-theme-style')?.remove();
+		document.querySelectorAll('[data-neubie-theme-touched]').forEach(el => {
+			el.style.removeProperty('background-color');
+			el.style.removeProperty('background-image');
+			el.style.removeProperty('border');
+			el.style.removeProperty('border-bottom');
+			el.style.removeProperty('color');
+			el.removeAttribute('data-neubie-theme-touched');
+		});
+	}
+
+	function applyDriveTheme(themeKey) {
+		if (!isNewDrivingPage()) return;   // 안전장치: 이 페이지가 아니면 절대 실행 안 함
+		clearDriveTheme();
+		if (themeKey !== 'light') return;   // dark(원본)는 그냥 초기화 상태로 끝
+
+		const t = DRIVE_THEMES.light;
+		const style = document.createElement('style');
+		style.id = 'neubie-drive-theme-style';
+		style.textContent = `
+			div.bg-mono-800.dark.flex-col { background-color: ${t.card} !important; background-image: none !important; }
+			input[placeholder="문장 입력 송출"]::placeholder { color: ${t.text} !important; opacity: 0.6 !important; }
+		`;
+		document.head.appendChild(style);
+
+		DRIVE_TARGETS.forEach(label => driveThemeMark(driveThemeFindByText(label), t));
+		const inputEl = document.querySelector('input[placeholder="문장 입력 송출"]');
+		if (inputEl) driveThemeMark(driveThemeClimb(inputEl), t);
+
+		const header = document.querySelector('header');
+		if (header) {
+			driveThemeMark(header, t);
+			header.style.setProperty('border', 'none', 'important');
+			header.style.setProperty('border-bottom', `2px solid ${t.border}`, 'important');
+		}
+	}
+
+	function initDriveTheme() {
+		if (!isNewDrivingPage()) return;
+		const saved = localStorage.getItem(DRIVE_THEME_KEY) || 'dark';
+		applyDriveTheme(saved);
 	}
 
 	let _bitrateRunning = false;
@@ -3313,7 +3413,7 @@
                     <input id="nb-secret-title" placeholder="제목" style="width:100%; height:38px; padding:0 10px; margin-bottom:8px; box-sizing:border-box; background:rgba(255,255,255,0.08); border:1px solid #444; border-radius:6px; color:#fff; font-size:13px;">
                     <textarea id="nb-secret-content" placeholder="관리자에게 전달할 내용을 입력하세요" style="width:100%; height:140px; padding:10px; box-sizing:border-box; background:rgba(255,255,255,0.08); border:1px solid #444; border-radius:6px; color:#fff; font-size:13px; resize:none; font-family:inherit;"></textarea>
                     <label style="display:flex; align-items:center; gap:6px; margin:8px 0; font-size:12px; color:#aaa; cursor:pointer;">
-                        <input type="checkbox" id="nb-secret-anon"> 익명으로 (저도 누가 썼는지 확인불가합니다.)
+                        <input type="checkbox" id="nb-secret-anon"> 익명으로 (저도 누가 썼는지 확인불가.)
                     </label>
                     <div style="display:flex; gap:8px;">
                         <button id="nb-secret-cancel" style="flex:1; padding:10px; background:rgba(255,255,255,0.1); border:none; color:#fff; border-radius:6px; cursor:pointer;">취소</button>
@@ -3990,6 +4090,78 @@
                 .catch(()=>{ status.textContent='로드 실패'; dot.style.background='#ef4444'; });
             }
 
+            window.openDriveThemeOverlay = function() {
+                const T = getNbTheme();
+                let overlay = document.getElementById('neubie-drivetheme-overlay');
+                const current = localStorage.getItem(DRIVE_THEME_KEY) || 'dark';
+
+                if (!overlay) {
+                    overlay = document.createElement('div');
+                    overlay.id = 'neubie-drivetheme-overlay';
+                    overlay.style.cssText = `
+                        position:fixed; inset:0; z-index:2147483646;
+                        display:flex; align-items:flex-start; justify-content:center; padding-top:20px;
+                        font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif; pointer-events:none;
+                    `;
+                    document.body.appendChild(overlay);
+                }
+                overlay.style.display = 'flex';
+                overlay.innerHTML = `
+                    <div style="background:${T.card}; color:${T.text}; border-radius:16px; padding:20px; width:min(90vw,360px); box-shadow:0 4px 40px rgba(0,0,0,0.7); pointer-events:auto;">
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                            <span style="font-size:16px;font-weight:700;">🎨 레이아웃 색상 변경</span>
+                            <button id="dto-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
+                        </div>
+                        <div style="font-size:12px;color:#94a3b8;margin-bottom:12px;">기체 원격조종(신형) 화면 배경을 바꿉니다. 이 브라우저에만 저장되며, 다른 화면에는 영향 없습니다.</div>
+                        <div style="display:flex; flex-direction:column; gap:8px;">
+                            <button data-dt="dark" style="padding:10px; border-radius:8px; border:1px solid ${current==='dark'?'#4f8ef7':T.border}; background:${current==='dark'?'#1e3a8a33':'transparent'}; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🌙 원본 (다크)</button>
+                            <button data-dt="light" style="padding:10px; border-radius:8px; border:1px solid ${current==='light'?'#4f8ef7':T.border}; background:${current==='light'?'#1e3a8a33':'transparent'}; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">☀️ 라이트</button>
+                        </div>
+                        <div style="font-size:11px;color:#64748b;margin-top:10px;">추후 다른 색상 테마도 여기에 추가될 예정입니다.</div>
+                    </div>
+                `;
+                overlay.querySelector('#dto-close').onclick = () => overlay.style.display = 'none';
+                overlay.querySelectorAll('[data-dt]').forEach(btn => {
+                    btn.onclick = () => {
+                        const key = btn.dataset.dt;
+                        localStorage.setItem(DRIVE_THEME_KEY, key);
+                        applyDriveTheme(key);
+                        openDriveThemeOverlay();   // 선택 표시(테두리) 갱신을 위해 재렌더
+                    };
+                });
+            };
+
+            window.openMoreToolsOverlay = function() {
+                const T = getNbTheme();
+                let overlay = document.getElementById('neubie-moretools-overlay');
+                if (!overlay) {
+                    overlay = document.createElement('div');
+                    overlay.id = 'neubie-moretools-overlay';
+                    overlay.style.cssText = `
+                        position:fixed; inset:0; z-index:2147483646;
+                        display:flex; align-items:flex-start; justify-content:center; padding-top:20px;
+                        font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif; pointer-events:none;
+                    `;
+                    document.body.appendChild(overlay);
+                }
+                overlay.style.display = 'flex';
+                overlay.innerHTML = `
+                    <div style="background:${T.card}; color:${T.text}; border-radius:16px; padding:20px; width:min(90vw,320px); box-shadow:0 4px 40px rgba(0,0,0,0.7); pointer-events:auto;">
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                            <span style="font-size:16px;font-weight:700;">🌤️ 날씨 & 룰렛 & 기타</span>
+                            <button id="mto-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:8px;">
+                            <button id="mto-weather" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🌤️ 송내 현재 날씨 (기상청 API)</button>
+                            <button id="mto-roulette" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🎡 룰렛 & 동전 & 메모</button>
+                        </div>
+                    </div>
+                `;
+                overlay.querySelector('#mto-close').onclick = () => overlay.style.display = 'none';
+                overlay.querySelector('#mto-weather').onclick = () => { overlay.style.display = 'none'; openWeatherOverlay(); };
+                overlay.querySelector('#mto-roulette').onclick = () => { overlay.style.display = 'none'; openRouletteOverlay(); };
+            };
+
             window.openWeatherOverlay = async function() {
                 const T = getNbTheme();
                 let overlay = document.getElementById('neubie-weather-overlay');
@@ -4549,6 +4721,8 @@
 				setTimeout(() => patchDrivingPageLayout(), 1500);
                 setTimeout(() => patchDrivingPageLayout(), 3000);
 				setTimeout(() => patchDrivingPageLayout(), 6000);
+                setTimeout(() => initDriveTheme(), 1500);  
+                setTimeout(() => initDriveTheme(), 3000);
 
                 if (/\/driving\/\d+/.test(location.pathname)) {
                     _startOperatorWatch();
@@ -4592,6 +4766,8 @@
 			setTimeout(() => patchDrivingPageLayout(), 1500);
             setTimeout(() => patchDrivingPageLayout(), 3000);
 			setTimeout(() => patchDrivingPageLayout(), 6000);
+            setTimeout(() => initDriveTheme(), 1500); 
+            setTimeout(() => initDriveTheme(), 3000);
 
             if (/\/driving\/\d+/.test(location.pathname)) {
                 _startOperatorWatch();
@@ -4925,6 +5101,7 @@
 
 	async function runAutoHandoverUpload() {
         if (!isMonitoringPage()) return;
+		if (localStorage.getItem('neubie_handover_enabled') === 'false') return;
 
         const myName = _getMyName();
         if (!myName) return; // 이름 없음 = 시크릿탭 취급, 원천 봉쇄 (요구사항 3)
@@ -4940,7 +5117,7 @@
 
         try {
 			// 최근에 이미 갱신됐는지 확인 (수동 업로드와의 충돌 방지) + taken 백업
-            const beforeRes = await fetch('https://multimonitoring.vercel.app/api/handover');
+            const beforeRes = await fetchWithTimeout('https://multimonitoring.vercel.app/api/handover');   // ← fetch → fetchWithTimeout
             const before = beforeRes.ok ? await beforeRes.json() : null;
 
             if (before) {
@@ -4961,15 +5138,15 @@
                 return; // 실패 시 그대로 종료, 추가 신호 없음 (요구사항 2)
             }
 
-            const res = await fetch('https://multimonitoring.vercel.app/api/handover', {
+            const res = await fetchWithTimeout('https://multimonitoring.vercel.app/api/handover', {   // ← fetch → fetchWithTimeout
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ handover_by: myName, units }) // Just a Tool과 완전 동일 포맷 (요구사항 6)
+                body: JSON.stringify({ handover_by: myName, units })
             });
 
             if (res.ok) {
                 showHandoverToast('모니터링 기체 업로드 성공', 'success');
-            } else {
+            } else {1
                 showHandoverToast('모니터링 기체 업로드 실패', 'fail');
             }
         } catch (e) {
@@ -4978,6 +5155,7 @@
     }
 
     injectConfigUI();
+    setTimeout(() => initDriveTheme(), 1000);
     
     if (localStorage.getItem('neubie_user_name')) {
         syncTasksFromServer();
@@ -4994,7 +5172,7 @@
         lastNotifiedMin = currentFullMin; 
         syncTasksFromServer(); 
 
-        if (getKSTMinutes() === 20) {
+        if (getKSTMinutes() === 45) {
             runAutoHandoverUpload();
         }
         
