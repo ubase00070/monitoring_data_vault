@@ -2298,7 +2298,7 @@
 	const DRIVE_THEMES = {
 		light: { card: '#e5e5e5', border: '#999999', text: '#111111', label: '☀️ 라이트' },
 	};
-	const DRIVE_TARGETS = ['적재함', '헤드램프', '게임패드', '자동정지', '임무 받기 중지', '임무 시작 시 알림이 여기에 표시됩니다.', '임무 설정'];
+	const DRIVE_TARGETS = ['적재함', '헤드램프', '게임패드', '자동정지', '임무 받기 중지', '임무 시작 시 알림이 여기에 표시됩니다.', '임무 설정', '도착 처리'];   
 
 	function driveThemeClimb(startEl, maxWidth = 320) {
 		let best = startEl, node = startEl;
@@ -2363,6 +2363,11 @@
 		const inputEl = document.querySelector('input[placeholder="문장 입력 송출"]');
 		if (inputEl) driveThemeMark(driveThemeClimb(inputEl), t);
 
+        // 주행 로그 패널 — 텍스트가 매번 바뀌어(시간값) 라벨 매칭이 불가능해 클래스로 직접 지정
+		// ※ 사이트 개편 시 이 클래스 조합이 바뀌면 재확인 필요
+		const logPanel = document.querySelector('.rounded-small.bg-mono-100.w-full.min-h-50');
+		if (logPanel) driveThemeMark(logPanel, t);
+        
 		const header = document.querySelector('header');
 		if (header) {
 			driveThemeMark(header, t);
