@@ -158,19 +158,28 @@
         }
     }
 	
+	async function fetchWithTimeout(url, options = {}, timeoutMs = 15000) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
+        try {
+            return await fetch(url, { ...options, signal: controller.signal });
+        } finally {
+            clearTimeout(timer);
+        }
+    }
+	
 	async function fetchAllRobotsForHandover() {
-        const res = await fetch('https://core.neubie.ai/robots/?limit=200', {
+        const res = await fetchWithTimeout('https://core.neubie.ai/robots/?limit=200', {   // ← fetch → fetchWithTimeout
             credentials: 'include',
             headers: getAuthHeaders()
         });
         if (!res.ok) throw new Error(`robots fetch failed: ${res.status}`);
         const data = await res.json();
         let all = data.results;
-        // 200대 넘어가는 미래 대비 안전장치
         let next = data.next;
         let guard = 0;
         while (next && guard < 10) {
-            const r2 = await fetch(next, { credentials: 'include', headers: getAuthHeaders() });
+            const r2 = await fetchWithTimeout(next, { credentials: 'include', headers: getAuthHeaders() });   // ← fetch → fetchWithTimeout
             if (!r2.ok) break;
             const d2 = await r2.json();
             all = all.concat(d2.results);
@@ -4942,7 +4951,7 @@
 
         try {
 			// 최근에 이미 갱신됐는지 확인 (수동 업로드와의 충돌 방지) + taken 백업
-            const beforeRes = await fetch('https://multimonitoring.vercel.app/api/handover');
+            const beforeRes = await fetchWithTimeout('https://multimonitoring.vercel.app/api/handover');   // ← fetch → fetchWithTimeout
             const before = beforeRes.ok ? await beforeRes.json() : null;
 
             if (before) {
@@ -4963,10 +4972,10 @@
                 return; // 실패 시 그대로 종료, 추가 신호 없음 (요구사항 2)
             }
 
-            const res = await fetch('https://multimonitoring.vercel.app/api/handover', {
+            const res = await fetchWithTimeout('https://multimonitoring.vercel.app/api/handover', {   // ← fetch → fetchWithTimeout
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ handover_by: myName, units }) // Just a Tool과 완전 동일 포맷
+                body: JSON.stringify({ handover_by: myName, units })
             });
 
             if (res.ok) {
