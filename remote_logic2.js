@@ -2333,9 +2333,32 @@
 		});
 	}
 
+    function watchSoundInputCard() {
+		const inputEl = document.querySelector('input[placeholder="문장 입력 송출"]');
+		const card = inputEl?.closest('.border-1.rounded-small.flex.w-full.shrink-0.flex-col');
+		if (!card) return;
+
+		if (window._soundInputThemeObserver) window._soundInputThemeObserver.disconnect();
+
+		let selfWriting = false;   // ← 재진입 방지 플래그
+		window._soundInputThemeObserver = new MutationObserver(() => {
+			if (selfWriting) return;   // 우리가 방금 쓴 변경이면 무시
+			const saved = localStorage.getItem(DRIVE_THEME_KEY) || 'dark';
+			if (saved !== 'light') return;
+
+			selfWriting = true;
+			driveThemeMark(card, DRIVE_THEMES.light);
+			const freshInput = document.querySelector('input[placeholder="문장 입력 송출"]');
+			if (freshInput) driveThemeMark(driveThemeClimb(freshInput), DRIVE_THEMES.light);
+			requestAnimationFrame(() => { selfWriting = false; });   // 다음 프레임부터 다시 감시 활성화
+		});
+		window._soundInputThemeObserver.observe(card, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
+	}
+
 	function clearDriveTheme() {
 		document.getElementById('neubie-drive-theme-style')?.remove();
-		document.querySelectorAll('[data-neubie-theme-touched]').forEach(el => {
+		if (window._soundInputThemeObserver) { window._soundInputThemeObserver.disconnect(); window._soundInputThemeObserver = null; }
+        document.querySelectorAll('[data-neubie-theme-touched]').forEach(el => {
 			el.style.removeProperty('background-color');
 			el.style.removeProperty('background-image');
 			el.style.removeProperty('border');
@@ -2362,12 +2385,13 @@
 		DRIVE_TARGETS.forEach(label => driveThemeMark(driveThemeFindByText(label), t));
 		const inputEl = document.querySelector('input[placeholder="문장 입력 송출"]');
 		if (inputEl) driveThemeMark(driveThemeClimb(inputEl), t);
+        watchSoundInputCard();
 
         // 주행 로그 패널 — 텍스트가 매번 바뀌어(시간값) 라벨 매칭이 불가능해 클래스로 직접 지정
 		// ※ 사이트 개편 시 이 클래스 조합이 바뀌면 재확인 필요
 		const logPanel = document.querySelector('.rounded-small.bg-mono-100.w-full.min-h-50');
 		if (logPanel) driveThemeMark(logPanel, t);
-        
+
 		const header = document.querySelector('header');
 		if (header) {
 			driveThemeMark(header, t);
