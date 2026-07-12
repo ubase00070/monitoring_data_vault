@@ -1756,6 +1756,10 @@
         const rouletteOverlay = document.getElementById('neubie-roulette-overlay');
         if (rouletteOverlay) rouletteOverlay.style.display = 'none';
         if (window._neubieRouletteCard) window._neubieRouletteCard.style.outline = 'none';
+		const driveThemeOverlay = document.getElementById('neubie-drivetheme-overlay');
+		if (driveThemeOverlay) driveThemeOverlay.style.display = 'none';
+		const moreToolsOverlay = document.getElementById('neubie-moretools-overlay');
+		if (moreToolsOverlay) moreToolsOverlay.style.display = 'none';
     }
 
     // ── 유효성 검증 (1시간 이내 데이터) ──
@@ -2296,7 +2300,7 @@
 	   ============================================================ */
 	const DRIVE_THEME_KEY = 'neubie_drive_theme';
 	const DRIVE_THEMES = {
-		light: { card: '#e5e5e5', border: '#999999', text: '#111111', label: '☀️ 라이트' },
+		light: { card: '#e5e5e5', border: '#999999', text: '#111111', track: '#b0b0b0', label: '☀️ 라이트' },   // track 필드 추가
 	};
 	const DRIVE_TARGETS = ['적재함', '헤드램프', '게임패드', '자동정지', '임무 받기 중지', '임무 시작 시 알림이 여기에 표시됩니다.', '임무 설정', '도착 처리'];   
 
@@ -2318,6 +2322,7 @@
 
 	function driveThemeMark(el, t) {
 		if (!el) return;
+		const cardRgb = t.card.match(/[a-f\d]{2}/gi).map(h => parseInt(h, 16)).join(', ');
 		const paint = (n) => {
 			n.style.setProperty('background-color', t.card, 'important');
 			n.style.setProperty('border', `1px solid ${t.border}`, 'important');
@@ -2326,10 +2331,29 @@
 		};
 		paint(el);
 		el.querySelectorAll('*').forEach(c => {
-			const m = getComputedStyle(c).backgroundColor.match(/rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?\)/);
+			const cs = getComputedStyle(c);
+			const m = cs.backgroundColor.match(/rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?\)/);
 			const alpha = m ? (m[4] === undefined ? 1 : parseFloat(m[4])) : 0;
-			if (alpha > 0.15) paint(c);
-			else { c.style.setProperty('color', t.text, 'important'); c.setAttribute('data-neubie-theme-touched', '1'); }
+			const hasGradient = cs.backgroundImage && cs.backgroundImage.includes('gradient');
+
+			if (alpha > 0.15) {
+				paint(c);
+			} else if (hasGradient) {
+				const newBg = cs.backgroundImage.replace(/rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)/g, `rgb(${cardRgb})`);
+				c.style.setProperty('background-image', newBg, 'important');
+				c.style.setProperty('color', t.text, 'important');
+				c.setAttribute('data-neubie-theme-touched', '1');
+			} else {
+				c.style.setProperty('color', t.text, 'important');
+				c.setAttribute('data-neubie-theme-touched', '1');
+			}
+
+			// SVG 아이콘(배터리 등)은 color가 아니라 fill/stroke로 그려지는 경우가 많아 별도 처리
+			if (c.tagName === 'svg' || c.tagName === 'path' || c.tagName === 'circle' || c.tagName === 'rect') {
+				c.style.setProperty('fill', t.text, 'important');
+				c.style.setProperty('stroke', t.text, 'important');
+				c.setAttribute('data-neubie-theme-touched', '1');
+			}
 		});
 	}
 
@@ -2398,6 +2422,12 @@
 			header.style.setProperty('border', 'none', 'important');
 			header.style.setProperty('border-bottom', `2px solid ${t.border}`, 'important');
 		}
+
+		// 경유지 슬라이더 트랙 — 카드보다 살짝 진하게 (지하철 노선도 스타일)
+		document.querySelectorAll('.h-full.overflow-auto.flex.w-full.scrollbar-hide').forEach(track => {
+			track.style.setProperty('background-color', t.track, 'important');
+			track.setAttribute('data-neubie-theme-touched', '1');
+		});
 	}
 
 	function initDriveTheme() {
