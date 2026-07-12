@@ -1303,7 +1303,7 @@
         // ADAS
         const adasDot = rs.isOnAdas ? '🟢' : '🟠';
 
-        // 마지막 조작
+        // 마지막 개입 조작 시간
         const lastOp = rs.lastOperatedUserName || '-';
         let lastOpAt = '-';
         if (rs.lastOperatedAt) {
@@ -1312,7 +1312,7 @@
             lastOpAt = diff < 60 ? `${hm} (${diff}분 전)` : `${hm} (${Math.floor(diff/60)}시간 전)`;
         }
 
-        // 마지막 연결
+        // 마지막 연결 끊김
         let lastConnAt = '-';
         if (rs.lastConnectedAt) {
             const diff = Math.floor((Date.now() - new Date(rs.lastConnectedAt).getTime()) / 60000);
@@ -1329,17 +1329,17 @@
 
         bodyEl.innerHTML = `
             <div class="bb-icp-section">
-                <div class="bb-icp-section-title">마지막 조작</div>
+                <div class="bb-icp-section-title">마지막 조작/연결</div>
                 <div class="bb-icp-row">
                     <span class="bb-icp-label">조작자</span>
                     <span class="bb-icp-value">${lastOp}</span>
                 </div>
                 <div class="bb-icp-row">
-                    <span class="bb-icp-label">조작 시간</span>
+                    <span class="bb-icp-label">개입 조작 시간</span>
                     <span class="bb-icp-value">${lastOpAt}</span>
                 </div>
                 <div class="bb-icp-row">
-                    <span class="bb-icp-label">마지막 연결</span>
+                    <span class="bb-icp-label">마지막 연결 끊김</span>
                     <span class="bb-icp-value">${lastConnAt}</span>
                 </div>
             </div>
