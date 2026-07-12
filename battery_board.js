@@ -52,6 +52,7 @@
         #bb.bb-light .bb-ca.standby { --ac:#8a7f68; --ac-border:rgba(138,127,104,.35); }
 		#bb.bb-light .bb-mi.standby { --ac:#8a7f68; }
         #bb.bb-light .bb-mi:not(.empty) { color:#2b2418; }
+        #bb.bb-light .bb-chip.estop { background:var(--sur); color:#dc2626; }
         #bb.bb-light .bb-chip.bat    { background:var(--sur); color:#b91c1c; }
 		#bb.bb-light .bb-chip.dock   { background:var(--sur); color:#a16207; }
 		#bb.bb-light .bb-chip.zombie { background:var(--sur); color:#c2410c; }
@@ -145,6 +146,7 @@
             transition:filter .15s, box-shadow .15s;
         }
         .bb-chip:hover { filter:brightness(1.15); }
+        .bb-chip.estop { background:var(--rd2); color:var(--rd); border:2px solid rgba(239,68,68,.7); box-shadow:0 0 10px rgba(239,68,68,.4); animation:chipPulse .5s infinite, chipBorder .5s infinite; }
         .bb-chip.bat    { background:var(--rd2); color:var(--rd); border:2px solid rgba(239,68,68,.55); box-shadow:0 0 8px rgba(239,68,68,.25); animation:chipPulse 1s infinite, chipBorder 1s infinite; }
         .bb-chip.dock   { background:rgba(251,191,36,.12); color:var(--ye); border:2px solid rgba(251,191,36,.5); box-shadow:0 0 6px rgba(251,191,36,.2); animation:chipPulse 1s infinite, chipBorder 1s infinite; }
         .bb-chip.zombie { background:rgba(249,115,22,.12); color:var(--or); border:2px solid rgba(249,115,22,.5); box-shadow:0 0 8px rgba(249,115,22,.2); animation:chipPulse .7s infinite, chipBorder .7s infinite; }
@@ -553,6 +555,7 @@
                     * 추가한 기체 카드와 배치는 로컬 스토리지에 저장됨(최대 30대. 드래그로 배치 변경 가능)<br>
                     * 카드 더블클릭/기체정보 검색창: 기체 상세 Info 패널 (CPU, GPS, 섀시 온도, 마지막 조작자 등)<br>
                     * 알림 전송 조건<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- 비상정지 버튼 눌림<br> 
                     &nbsp;&nbsp;&nbsp;&nbsp;- 배터리 부족(21% 이하)<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;- 무선 도킹됨<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;- 대기 중 배터리 50% 미만(배달 사이트 기체 제외)<br>
@@ -854,6 +857,18 @@
                     });
                 }
             }
+
+            // ── 기능7: 비상정지 (E-Stop)
+            if (raw.isEStopped === true) {
+                const key = alertKey('estop', id);
+                if (!dismissedAlerts.has(key)) alerts.push({
+                    key, type:'estop', dot:'rd', name,
+                    desc:`🚨 비상정지 버튼 눌림 | 현장 해제 필요`,
+                    time: fmt(new Date().toISOString())
+                });
+            } else {
+                clearDismiss(alertKey('estop', id));
+            }
         });
 
         saveZombie(zombie);
@@ -865,6 +880,7 @@
     // SECTION 5. 알림 칩 + 패널 렌더
     // ============================================================
     const ALERT_META = {
+        estop:  { label:'🆘 비상정지',    order:-1 },
         bat:    { label:'🔋 배터리',      order:0 },
         dock:   { label:'🟡 도킹',        order:1 },
         zombie: { label:'👻 좀비',        order:2 },
@@ -1296,6 +1312,14 @@
             lastOpAt = diff < 60 ? `${hm} (${diff}분 전)` : `${hm} (${Math.floor(diff/60)}시간 전)`;
         }
 
+        // 마지막 연결
+        let lastConnAt = '-';
+        if (rs.lastConnectedAt) {
+            const diff = Math.floor((Date.now() - new Date(rs.lastConnectedAt).getTime()) / 60000);
+            const hm = new Date(rs.lastConnectedAt).toLocaleTimeString('ko-KR', { hour:'2-digit', minute:'2-digit' });
+            lastConnAt = diff < 60 ? `${hm} (${diff}분 전)` : `${hm} (${Math.floor(diff/60)}시간 전)`;
+        }
+
         // SW 버전 & 하드웨어
         const swVer  = raw.version?.softwareVersion?.swVersion ?? '-';
         const swShort = swVer.split('-')[0];
@@ -1313,6 +1337,10 @@
                 <div class="bb-icp-row">
                     <span class="bb-icp-label">조작 시간</span>
                     <span class="bb-icp-value">${lastOpAt}</span>
+                </div>
+                <div class="bb-icp-row">
+                    <span class="bb-icp-label">마지막 연결</span>
+                    <span class="bb-icp-value">${lastConnAt}</span>
                 </div>
             </div>
             <div class="bb-icp-section">
