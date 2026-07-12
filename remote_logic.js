@@ -1123,7 +1123,7 @@
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
 		// 문자열을 넣으면 패치노트에 빨간 '`' 뱃지가 점멸하며 뜸.
 		// 빈 문자열('')로 비우면 뱃지가 사라짐.
-		const PATCH_NOTE_NEW_CONTENT = '260705_다중12대';
+		const PATCH_NOTE_NEW_CONTENT = '';
 		
         const patchBtn = document.createElement('button');
         patchBtn.textContent = '패치노트';
