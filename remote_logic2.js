@@ -2332,6 +2332,9 @@
 		};
 		paint(el);
 		el.querySelectorAll('*').forEach(c => {
+			// 닫기(X) 버튼처럼 원래부터 강조색(빨강)인 요소는 건드리지 않고 원본 그대로 유지
+			if (c.closest && c.closest('.bg-red-400')) return;
+			
 			// 배터리 아이콘 내부 채우기(bg-mono-200) — 카드색이 아니라 글자색(진한 톤)으로. 안 그러면 흰 배경에 묻힘
 			if (typeof c.className === 'string' && c.className.includes('bg-mono-200')) {
 				c.style.setProperty('background-color', t.text, 'important');
