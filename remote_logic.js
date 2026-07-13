@@ -4458,7 +4458,12 @@
                     </div>`).join('');
 
                 const favs = JSON.parse(localStorage.getItem('neubie_weather_favs') || '[]');
-                const favChips = favs.map(f => `<button class="nwo-fav-chip" data-nx="${f.nx}" data-ny="${f.ny}" data-label="${f.label}" style="padding:4px 10px;border-radius:12px;border:1px solid #333;background:${f.label===label?'#1e3a5f':'transparent'};color:#e2e8f0;font-size:11px;cursor:pointer;">${f.label} ✕</button>`).join('');
+                const favChips = favs.map(f => `
+                    <button class="nwo-fav-chip" data-nx="${f.nx}" data-ny="${f.ny}" data-label="${f.label}" style="padding:4px 4px 4px 10px;border-radius:12px;border:1px solid #333;background:${f.label===label?'#1e3a5f':'transparent'};color:#e2e8f0;font-size:11px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">
+                        ${f.label}
+                        <span class="nwo-fav-remove" data-label="${f.label}" style="padding:0 4px;color:#94a3b8;font-weight:bold;">✕</span>
+                    </button>
+                `).join('');
 
                 body.innerHTML = `
                     <div style="display:flex;gap:6px;margin-bottom:10px;align-items:center;">
@@ -4502,6 +4507,17 @@
 
                 body.querySelectorAll('.nwo-fav-chip').forEach(chip => {
                     chip.onclick = () => renderWeather(overlay, Number(chip.dataset.nx), Number(chip.dataset.ny), chip.dataset.label);
+                });
+
+				body.querySelectorAll('.nwo-fav-remove').forEach(removeBtn => {
+                    removeBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        const targetLabel = removeBtn.dataset.label;
+                        const favs = JSON.parse(localStorage.getItem('neubie_weather_favs') || '[]');
+                        const updated = favs.filter(f => f.label !== targetLabel);
+                        localStorage.setItem('neubie_weather_favs', JSON.stringify(updated));
+                        renderWeather(overlay, nx, ny, label);   // 현재 보고 있던 지역은 유지한 채 목록만 갱신
+                    };
                 });
 
                 const addFavBtn = body.querySelector('#nwo-add-fav');
