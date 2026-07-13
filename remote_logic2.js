@@ -4413,6 +4413,8 @@
                     width:min(96vw,720px);
                     box-shadow:0 4px 40px rgba(0,0,0,0.7);
                     pointer-events:auto;
+                    transform: scale(1.25);
+                    transform-origin: top center;
                 `;
                 box.innerHTML = `
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
