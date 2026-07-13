@@ -1228,7 +1228,7 @@
                             'NCC 원격조종 페이지 구/신버전 기존 기능 및 페이지 대응',
                             '다크/라이트 모드 선택',
                             '룰렛 돌리기 & 동전 던지기 & 개인 메모',
-                            '실시간 송내 날씨(기상청 API 데이터)',
+                            '실시간 날씨(지역검색 가능 / 기상청 API 데이터)',
                             '임무 종료된 리센츠/엘스/한성대 페이지 이탈 시 5초 후 자동 사이드',
 							'불규칙 순찰 기체 모니터링 미추가 시 알림 기능',
 							'개입카드 현재 조작자 표기 / 상태 바 재배치(스크롤 제거)',
@@ -1672,7 +1672,7 @@
 
         const rouletteCard = document.createElement('div');
         rouletteCard.style.cssText = `background:${T.card}; padding:8px 12px; border-radius:15px; border:1px solid ${T.border}; cursor:pointer; display:flex; align-items:center;`;
-        rouletteCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">🌤️ 날씨 & 룰렛 & 기타</div>`;   // ← 라벨만 교체
+        rouletteCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">🌤️ 날씨 & 룰렛 & 기타</div>`; 
         window._neubieRouletteCard = rouletteCard;
         rouletteCard.onclick = () => {
             const isActive = rouletteCard.style.outline !== 'none' && rouletteCard.style.outline !== '';
@@ -4371,7 +4371,7 @@
                             <button id="mto-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
                         </div>
                         <div style="display:flex; flex-direction:column; gap:8px;">
-                            <button id="mto-weather" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🌤️ 송내 현재 날씨 (기상청 API)</button>
+                            <button id="mto-weather" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🌤️ 실시간 날씨 (기상청 API)</button>
                             <button id="mto-roulette" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🎡 룰렛 & 동전 & 메모</button>
                         </div>
                     </div>
@@ -4416,7 +4416,7 @@
                 `;
                 box.innerHTML = `
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-                        <span style="font-size:18px;font-weight:700;color:#4f8ef7;">🌤️ 송내 현재 날씨 (기상청 API)</span>
+                        <span style="font-size:18px;font-weight:700;color:#4f8ef7;">🌤️ 실시간 날씨 (기상청 API)</span>
                         <button id="nwo-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
                     </div>
                     <div id="nwo-body" style="font-size:13px;color:#64748b;">불러오는 중...</div>
@@ -4436,7 +4436,6 @@
                 if (body) body.innerHTML = `<div style="text-align:center;padding:30px;color:#64748b;">${label} 날씨 불러오는 중...</div>`;
 				
 				const data = await fetchWeatherReal(nx, ny);
-                const body = overlay.querySelector('#nwo-body');
 
                 const hourlyHtml = data.hourly.map((h, i) => `
                     <div style="flex:1;min-width:0;text-align:center;padding:6px 0;${i < 6 ? 'opacity:1;' : 'opacity:0.65;'}${i === 0 ? 'background:#1e3a5f;border-radius:8px;' : ''}">
