@@ -4,21 +4,15 @@
     if (window.neubieEngineLoaded) return;
     window.neubieEngineLoaded = true;
 
-	// ── 배민 주아 웹폰트 (게시판) ──
-    (function loadJuaFont() {
-        if (document.getElementById('neubie-jua-font')) return;
-        const st = document.createElement('style');
-        st.id = 'neubie-jua-font';
-        st.textContent = `
-            @font-face {
-                font-family: 'BMJUA';
-                src: url('https://cdn.jsdelivr.net/gh/fonts-archive/BMJUA/BMJUA.woff2') format('woff2');
-                font-weight: normal;
-                font-style: normal;
-                font-display: swap;
-            }
-        `;
-        document.head.appendChild(st);
+	// ── Paperlogy 웹폰트 (신규 추가) ──
+    (function loadPaperlogyFont() {
+        if (document.getElementById('neubie-paperlogy-font')) return;
+        const link = document.createElement('link');
+        link.id = 'neubie-paperlogy-font';
+        link.rel = 'stylesheet';
+        link.type = 'text/css';
+        link.href = 'https://cdn.jsdelivr.net/gh/fonts-archive/Paperlogy/subsets/Paperlogy-dynamic-subset.css';
+        document.head.appendChild(link);
     })();
 
     const currUrl = window.location.href;
@@ -523,6 +517,26 @@
             #neubie-dashboard button {
                 min-width: 0 !important;
             }
+
+            #neubie-dashboard, #neubie-dashboard *,
+            #neubie-battery-popup, #neubie-battery-popup *,
+            #neubie-board-overlay, #neubie-board-overlay *,
+            #neubie-secret-overlay, #neubie-secret-overlay *,
+            #neubie-schedule-overlay, #neubie-schedule-overlay *,
+            #neubie-weather-overlay, #neubie-weather-overlay *,
+            #neubie-roulette-overlay, #neubie-roulette-overlay *,
+            #neubie-tips-overlay, #neubie-tips-overlay *,
+            #neubie-patch-overlay, #neubie-patch-overlay *,
+            #neubie-map-info-overlay, #neubie-map-info-overlay *,
+            #neubie-queue-info-overlay, #neubie-queue-info-overlay *,
+            #neubie-drivetheme-overlay, #neubie-drivetheme-overlay *,
+            #neubie-moretools-overlay, #neubie-moretools-overlay * {
+                font-family: 'Paperlogy', 'Pretendard', 'Noto Sans KR', sans-serif !important;
+            }
+
+            #nso-seat-grid, #nso-seat-grid * {
+                font-family: 'Pretendard', 'Noto Sans KR', sans-serif !important;
+            }
         `;
         document.head.appendChild(st);
     })();
@@ -823,71 +837,39 @@
     }
 
     function triggerReminder(content, remainMin) {
-        const notifType = localStorage.getItem('neubie_notif_type') || 'type1';
-
-        // ── Type 1: 점멸 ──────────────────────────────────────────
-        if (notifType === 'type1') {
-            if (!document.getElementById('neubie-alarm-style')) {
-                const s = document.createElement('style');
-                s.id = 'neubie-alarm-style';
-                s.textContent = `
-                    @keyframes neubie-alarm-blink {
-                        0%, 100% { border-color: #000; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-                        50% { border-color: #ff0000; box-shadow: 0 0 30px rgba(255,0,0,0.9); }
-                    }
-                    @keyframes neubie-fadein {
-                        from { opacity:0; transform:translateX(-50%) translateY(-10px); }
-                        to   { opacity:1; transform:translateX(-50%) translateY(0); }
-                    }
-                `;
-                document.head.appendChild(s);
-            }
-            const alarmDiv = document.createElement('div');
-            alarmDiv.style.cssText = `
-                position:fixed; top:20px; left:50%; transform:translateX(-50%);
-                background:linear-gradient(135deg,#fbbf24,#f59e0b);
-                color:#000; padding:15px 30px; border-radius:14px;
-                z-index:9999999; font-weight:bold; font-size:16px;
-                border:3px solid #000; display:flex; align-items:center; gap:10px;
-                box-shadow:0 8px 30px rgba(0,0,0,0.5);
-                animation:neubie-fadein 0.3s ease, neubie-alarm-blink 0.5s step-end 0.3s infinite;
+        // notifType 체크 제거 — 항상 Type1(점멸)만 실행
+        if (!document.getElementById('neubie-alarm-style')) {
+            const s = document.createElement('style');
+            s.id = 'neubie-alarm-style';
+            s.textContent = `
+                @keyframes neubie-alarm-blink {
+                    0%, 100% { border-color: #000; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+                    50% { border-color: #ff0000; box-shadow: 0 0 30px rgba(255,0,0,0.9); }
+                }
+                @keyframes neubie-fadein {
+                    from { opacity:0; transform:translateX(-50%) translateY(-10px); }
+                    to   { opacity:1; transform:translateX(-50%) translateY(0); }
+                }
             `;
-            alarmDiv.innerHTML = `⚠️ <b>[업무 알림]</b> ${content} 시작 ${remainMin}분 전입니다!`;
-            document.body.appendChild(alarmDiv);
-            setTimeout(() => {
-                alarmDiv.style.opacity = '0';
-                alarmDiv.style.transition = '0.5s';
-                setTimeout(() => alarmDiv.remove(), 500);
-            }, 7000);
-
-        // ── Type 2: 지하철 스타일 ─────────────────────────
-        } else {
-            if (!document.getElementById('neubie-ticker-style')) {
-                const s = document.createElement('style');
-                s.id = 'neubie-ticker-style';
-                s.textContent = `
-                    @keyframes neubie-ticker {
-                        0%   { left: -100%; }
-                        100% { left: 110%; }
-                    }
-                `;
-                document.head.appendChild(s);
-            }
-            const bar = document.createElement('div');
-            bar.style.cssText = `
-                position:fixed; top:20px; left:-100%;
-                background:linear-gradient(90deg,#1e3a5f,#2563eb,#1e3a5f);
-                color:#fff; padding:13px 40px; border-radius:10px;
-                z-index:9999999; font-weight:bold; font-size:16px;
-                white-space:nowrap; letter-spacing:0.03em;
-                box-shadow:0 4px 20px rgba(37,99,235,0.5);
-                border-left:4px solid #60a5fa; border-right:4px solid #60a5fa;
-                animation:neubie-ticker 10s linear forwards;
-            `;
-            bar.innerHTML = `🚇 &nbsp;[업무 알림]&nbsp; ${content} 시작 ${remainMin}분 전입니다!`;
-            document.body.appendChild(bar);
-            setTimeout(() => bar.remove(), 10200);
+            document.head.appendChild(s);
         }
+        const alarmDiv = document.createElement('div');
+        alarmDiv.style.cssText = `
+            position:fixed; top:20px; left:50%; transform:translateX(-50%);
+            background:linear-gradient(135deg,#fbbf24,#f59e0b);
+            color:#000; padding:15px 30px; border-radius:14px;
+            z-index:9999999; font-weight:bold; font-size:16px;
+            border:3px solid #000; display:flex; align-items:center; gap:10px;
+            box-shadow:0 8px 30px rgba(0,0,0,0.5);
+            animation:neubie-fadein 0.3s ease, neubie-alarm-blink 0.5s step-end 0.3s infinite;
+        `;
+        alarmDiv.innerHTML = `⚠️ <b>[업무 알림]</b> ${content} 시작 ${remainMin}분 전입니다!`;
+        document.body.appendChild(alarmDiv);
+        setTimeout(() => {
+            alarmDiv.style.opacity = '0';
+            alarmDiv.style.transition = '0.5s';
+            setTimeout(() => alarmDiv.remove(), 500);
+        }, 7000);
     }
 
     /* ============================================================
@@ -1139,7 +1121,6 @@
        ============================================================ */
     function renderDashboard() {
         dashboard.innerHTML = '';
-        const nbThemeName = localStorage.getItem('neubie_theme') || 'dark';
         const T = getNbTheme();
         dashboard.style.backgroundColor = T.bg;
         dashboard.style.color = T.text;
@@ -1150,13 +1131,13 @@
         headerContainer.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; padding-right:5px;";
 
         const title = document.createElement('h2');
-        title.textContent = OFFLINE_MODE ? "오프라인 모드" : "뉴비고 도우미";
+        title.textContent = OFFLINE_MODE ? "오프라인 모드" : "NCC 도우미";
         title.style.cssText = `color:${T.accent}; font-size:20px; margin:0; font-weight:bold; white-space:nowrap;`;
 
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
 		// 문자열을 넣으면 패치노트에 빨간 '`' 뱃지가 점멸하며 뜸.
 		// 빈 문자열('')로 비우면 뱃지가 사라짐.
-		const PATCH_NOTE_NEW_CONTENT = '원격조종 라이트모드_260713';
+		const PATCH_NOTE_NEW_CONTENT = '전반적 개선 260714';
 		
         const patchBtn = document.createElement('button');
         patchBtn.textContent = '패치노트';
@@ -1220,20 +1201,17 @@
                 // 아래 patchItems 배열에 버전별 내용을 추가하세요
                 const patchItems = [
                     {
-                        version: 'v1.3',
-                        date: '2026-07-13',
+                        version: 'v1.4',
+                        date: '2026-07-14',
                         items: [
-							'원격조종(테스트버전) 페이지 라이트 모드',
+                            '게임패드 커스텀 바인딩 설명 페이지',
 							'다중 교대기체 자동 업로드(45분에만) / 자동 교대시작 최대 12대',
-                            'NCC 원격조종 페이지 구/신버전 기존 기능 및 페이지 대응',
                             '다크/라이트 모드 선택',
                             '룰렛 돌리기 & 동전 던지기 & 개인 메모',
                             '실시간 날씨(지역검색 가능 / 기상청 API 데이터)',
                             '임무 종료된 리센츠/엘스/한성대 페이지 이탈 시 5초 후 자동 사이드',
 							'불규칙 순찰 기체 모니터링 미추가 시 알림 기능',
 							'개입카드 현재 조작자 표기 / 상태 바 재배치(스크롤 제거)',
-							'D-PAD UP/DOWN: 다음 개입 요청받기 / 자동 긴급 정지 ON OFF',
-							'D-PAD LEFT/RIGHT: 카메라 밝기 내리기/올리기',
                         ]
                     },
                 ];
@@ -1309,27 +1287,11 @@
         boardBtn.onclick = () => openBoardOverlay();
         titleWrap.appendChild(boardBtn);
 
-        const secretBtn = document.createElement('button');
-        secretBtn.textContent = '🔒 문의';
-        secretBtn.style.cssText = `background:transparent; border:1px solid ${T.purple}; color:${T.purple}; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:14px; margin-left:4px;`;
-        secretBtn.onmouseenter = () => { secretBtn.style.background='rgba(167,139,250,0.15)'; };
-        secretBtn.onmouseleave = () => { secretBtn.style.background='transparent'; };
-        secretBtn.onclick = () => openSecretOverlay();
-        titleWrap.appendChild(secretBtn);
-        const themeBtn = document.createElement('button');
-        themeBtn.textContent = nbThemeName === 'light' ? '라이트' : '다크';
-        themeBtn.style.cssText = `width:48px; text-align:center; background:transparent; border:1px solid ${T.border}; color:${T.text}; padding:4px 0; border-radius:6px; cursor:pointer; font-size:14px; margin-left:4px;`;
-        themeBtn.onclick = () => {
-            const next = nbThemeName === 'light' ? 'dark' : 'light';
-            localStorage.setItem('neubie_theme', next);
-            ['neubie-weather-overlay', 'neubie-roulette-overlay', 'neubie-tips-overlay', 'neubie-patch-overlay', 'neubie-secret-overlay', 'neubie-map-info-overlay', 'neubie-queue-info-overlay', 'neubie-drivetheme-overlay', 'neubie-moretools-overlay'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.remove();
-            });
-            buildBatteryShell();
-            renderDashboard();
-        };
-        titleWrap.appendChild(themeBtn);
+        const gamepadBtn = document.createElement('button');
+        gamepadBtn.textContent = '🎮 게임패드';
+        gamepadBtn.style.cssText = `background:transparent; border:1px solid #4f8ef7; color:#4f8ef7; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:14px; margin-left:4px;`;
+        gamepadBtn.onclick = () => openGamepadGuideOverlay();
+        titleWrap.appendChild(gamepadBtn);
 
         headerContainer.appendChild(titleWrap);
         headerContainer.appendChild(nameArea);
@@ -1393,8 +1355,6 @@
             <div style="margin-bottom:10px;">
                 <div style="display:flex; align-items:center; gap:6px; margin-bottom:8px; flex-wrap:nowrap;">
                     <div style="font-weight:bold; font-size:17px; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📋 ${storedName}의 일일 업무</div>
-                    <button id="btn-type1" style="padding:3px 8px; border-radius:4px; font-size:12px; font-weight:bold; cursor:pointer; border:2px solid #f59e0b; background:#f59e0b; color:#000;">알림1</button>
-                    <button id="btn-type2" style="padding:3px 8px; border-radius:4px; font-size:12px; font-weight:bold; cursor:pointer; border:2px solid #2563eb; background:transparent; color:#60a5fa;">알림2</button>
                     <select id="remind-inline" style="background:#333; color:white; border:1px solid #555; font-size:13px; border-radius:4px; padding:2px;">
                         <option value="0" ${currentInt === '0' ? 'selected' : ''}>알림 없음</option>
                         <option value="3" ${currentInt === '3' ? 'selected' : ''}>3분 전</option>
@@ -1403,49 +1363,6 @@
                 </div>
             </div>
         `;
-        // 알림 타입 토글
-        setTimeout(() => {
-            const savedType = localStorage.getItem('neubie_notif_type') || 'type1';
-            const btn1 = document.getElementById('btn-type1');
-            const btn2 = document.getElementById('btn-type2');
-            if (!btn1 || !btn2) return;
-
-            function applyTypeUI(type) {
-                if (type === 'type1') {
-                    // type1 ON
-                    btn1.style.background = '#f59e0b';
-                    btn1.style.borderColor = '#f59e0b';
-                    btn1.style.color = '#000';
-                    btn1.style.opacity = '1';
-                    // type2 OFF
-                    btn2.style.background = 'transparent';
-                    btn2.style.borderColor = '#555';
-                    btn2.style.color = '#555';
-                    btn2.style.opacity = '0.45';
-                } else {
-                    // type2 ON
-                    btn2.style.background = '#2563eb';
-                    btn2.style.borderColor = '#2563eb';
-                    btn2.style.color = '#fff';
-                    btn2.style.opacity = '1';
-                    // type1 OFF
-                    btn1.style.background = 'transparent';
-                    btn1.style.borderColor = '#555';
-                    btn1.style.color = '#555';
-                    btn1.style.opacity = '0.45';
-                }
-            }
-            applyTypeUI(savedType);
-
-            btn1.onclick = () => {
-                localStorage.setItem('neubie_notif_type', 'type1');
-                applyTypeUI('type1');
-            };
-            btn2.onclick = () => {
-                localStorage.setItem('neubie_notif_type', 'type2');
-                applyTypeUI('type2');
-            };
-        }, 0);
 
         const taskInline = document.createElement('div');
         taskInline.id = 'inline-task-container';
@@ -1520,7 +1437,7 @@
                     역삼 요기요 / 송도 요기요 / 성수 요기요 / 성남 삼평동<br>
                     페이지에서 흰색 마커를 숨겨서 최적화.<br>
                     대기장소 마커(주황)를 역방향으로 뒤집어서 보기 쉽도록 함.<br>
-                    기존 뉴비고 상의 아이콘 숨기기 기능은 여전히 작동.<br>
+                    기존 NCC 상의 아이콘 숨기기 기능은 여전히 작동.<br>
                 `;
                 mapInfoBox.appendChild(mapInfoClose);
                 mapInfoBox.appendChild(mapInfoTitle);
@@ -1546,7 +1463,7 @@
 
         const queueCard = document.createElement('div');
         queueCard.style.cssText = `background:${T.card}; padding:8px 12px; border-radius:15px; border:1px solid ${T.border}; display:flex; justify-content:space-between; align-items:center;`;
-        queueCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">🖥️ 다중 모니터링 도우미</span>`;
+        queueCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">🖥️ 다중 모니터링 기능</span>`;
         const queueEnabled = localStorage.getItem('neubie_handover_enabled') === 'true';
         const queueToggle = document.createElement('button');
         queueToggle.textContent = queueEnabled ? 'ON' : 'OFF';
@@ -1629,7 +1546,7 @@
 				카메라 위치 스왑<br>
 				45분에 자동으로 실시간 교대 기체 업로드<br>
 				multimonitoring.vercel.app 이용 시에도 기체 업로드 가능<br>
-				'뉴비고 도우미'만 이용하더라도 교대 기체 업로드 및 받기 가능<br>
+				'NCC 도우미'만 이용하더라도 교대 기체 업로드 및 받기 가능<br>
                 `;
 
                 queueInfoBox.appendChild(queueInfoClose);
@@ -1706,13 +1623,13 @@
 
         const weatherCard = document.createElement('div');
         weatherCard.style.cssText = `background:${T.card}; padding:8px 12px; border-radius:15px; border:1px solid ${T.border}; cursor:pointer; display:flex; align-items:center;`;
-        weatherCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">🎨 원격조종 페이지 색상</div>`;   // ← 라벨 교체
+        weatherCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">🎨 레이아웃 색상</div>`; 
         window._neubieWeatherCard = weatherCard;
         weatherCard.onclick = () => {
             const isActive = weatherCard.style.outline !== 'none' && weatherCard.style.outline !== '';
             weatherCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
             if (!isActive) {
-                openDriveThemeOverlay();   // ← openWeatherOverlay() 대신 새 테마 선택 오버레이 호출
+                openDriveThemeOverlay();  
             } else {
                 const dtOverlay = document.getElementById('neubie-drivetheme-overlay');
                 if (dtOverlay) dtOverlay.style.display = 'none';
@@ -2129,7 +2046,7 @@
 		autoBtn.addEventListener('click', async () => {
 			const modal = document.querySelector('[data-qk="remote-multiple-select-robot-dialog"]');
 			if (!modal) {
-				setDpMsg('뉴비고에서 기체 선택 모달을 먼저 열어주세요', '#f59e0b');
+				setDpMsg('NCC에서 기체 선택 모달을 먼저 열어주세요', '#f59e0b');
 				return;
 			}
 
@@ -2351,6 +2268,14 @@
 
     function isNewDrivingPage() {
 		return NEUBIE_HOSTS.some(h => location.href.includes(`${h}/ko/remote/robot/`)) && location.href.includes('/new');
+	}
+
+    // 게임패드 커스텀 바인딩 — 명시적으로 켜거나 끈 적이 없으면 이름으로 기본값 결정 ('오정훈'만 기본 OFF)
+	function isDpadBindingOff() {
+		const stored = localStorage.getItem('neubie_dpad_binding');
+		if (stored === 'off') return true;
+		if (stored === 'on') return false;
+		return (localStorage.getItem('neubie_user_name') || '') === '오정훈';
 	}
 
     /* ============================================================
@@ -2946,7 +2871,7 @@
 				boardFontStyle.id = 'neubie-board-font-style';
 				boardFontStyle.textContent = `
 					#neubie-board-overlay, #neubie-board-overlay * {
-						font-family: 'BMJUA', 'Pretendard', sans-serif !important;
+						font-family: 'Paperlogy', 'Pretendard', sans-serif !important;   // ← 'BMJUA' → 'Paperlogy'로 교체
 					}
 					#neubie-board-overlay .nb-emoji {
 						font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif !important;
@@ -2973,7 +2898,8 @@
             overlay.innerHTML = `
             <div style="width:100%; height:100%; background:rgba(10,10,30,0.72); backdrop-filter:blur(2px); display:flex; flex-direction:column; border-radius:24px;">
                 <div id="nb-board-header" style="display:flex; align-items:center; gap:8px; padding:12px 16px; border-bottom:0.5px solid rgba(255,255,255,0.12); cursor:grab;">
-                    <span style="font-size:15px; font-weight:600; color:#fff; flex:1;"><span class="nb-emoji">📋</span> 뉴비고 게시판</span>
+                    <span style="font-size:15px; font-weight:600; color:#fff; flex:1;"><span class="nb-emoji">📋</span> NCC 게시판</span>
+                    <button id="nb-secret-inline-btn" style="height:28px; padding:0 10px; font-size:12px; font-weight:500; background:transparent; border:1px solid #a78bfa; color:#a78bfa; border-radius:6px; cursor:pointer;">🔒 문의</button>
                     <button id="nb-tips-btn" style="height:28px; padding:0 10px; font-size:12px; font-weight:500; background:#f59e0b; color:#1a1a1a; border:none; border-radius:6px; cursor:pointer;" title="최적화 팁">💡 최적화 팁</button>
                     <button id="nb-refresh-btn" style="height:28px; width:28px; background:rgba(255,255,255,0.1); color:white; border:none; border-radius:6px; cursor:pointer; font-size:14px;" title="새로고침">↺</button>
 					<button id="nb-write-btn" style="height:28px; padding:0 12px; font-size:12px; font-weight:500; background:#6366f1; color:white; border:none; border-radius:6px; cursor:pointer;">✏️ 글쓰기</button>
@@ -2984,7 +2910,7 @@
 
                 <div id="nb-screen-list" style="flex:1; overflow-y:auto; padding:4px 0;"></div>
 
-                <div style="padding:8px 16px; display:flex; align-items:center; justify-content:space-between; gap:8px; border-top:0.5px solid rgba(255,255,255,0.1);">
+                <div id="nb-list-toolbar" style="padding:8px 16px; display:flex; align-items:center; justify-content:space-between; gap:8px; border-top:0.5px solid rgba(255,255,255,0.1);">
                     <div style="display:flex; gap:8px; flex:1; min-width:0;">
                         <select id="nb-search-type" style="height:28px; font-size:12px; padding:0 6px; border-radius:6px; border:0.5px solid rgba(255,255,255,0.2); background:#1e1e3a; color:#e2e8f0; outline:none;">
                             <option value="all">전체</option>
@@ -3083,6 +3009,7 @@
 			};
 			document.getElementById('nb-edit-submit').onclick = submitEdit;
 			document.getElementById('nb-refresh-btn').onclick = () => loadPosts();
+            document.getElementById('nb-secret-inline-btn').onclick = () => openSecretOverlay();
             document.getElementById('nb-tips-btn').onclick = () => openTipsOverlay();
             document.getElementById('nb-write-btn').onclick = () => {
                 if (!myEmail) return alert('로그인 정보가 없어 글쓰기가 불가합니다.');
@@ -3096,6 +3023,7 @@
                 document.getElementById('nb-screen-list').style.display = 'block';
                 document.getElementById('nb-screen-detail').style.display = 'none';
                 document.getElementById('nb-screen-write').style.display = 'none';
+                document.getElementById('nb-list-toolbar').style.display = 'flex';
                 renderList(allPosts, false)
             }
 
@@ -3103,6 +3031,7 @@
                 document.getElementById('nb-screen-list').style.display = 'none';
                 document.getElementById('nb-screen-detail').style.display = 'none';
                 document.getElementById('nb-screen-write').style.display = 'flex';
+                document.getElementById('nb-list-toolbar').style.display = 'none';
                 document.getElementById('nb-write-title').value = '';
                 document.getElementById('nb-write-content').value = '';
             }
@@ -3111,7 +3040,8 @@
                 document.getElementById('nb-screen-list').style.display = 'none';
                 document.getElementById('nb-screen-write').style.display = 'none';
 				document.getElementById('nb-screen-edit').style.display = 'none';
-				const editBtn = document.getElementById('nb-edit-post-btn');
+				document.getElementById('nb-list-toolbar').style.display = 'none';
+                const editBtn = document.getElementById('nb-edit-post-btn');
 				editBtn.style.display = (myEmail && post.email === myEmail) ? 'block' : 'none';
 				editBtn.onclick = () => showEditScreen(post);
                 const det = document.getElementById('nb-screen-detail');
@@ -3297,7 +3227,8 @@
 				document.getElementById('nb-screen-detail').style.display = 'none';
 				document.getElementById('nb-screen-write').style.display = 'none';
 				document.getElementById('nb-screen-edit').style.display = 'flex';
-				document.getElementById('nb-edit-title').value = post.title;
+				document.getElementById('nb-list-toolbar').style.display = 'none';
+                document.getElementById('nb-edit-title').value = post.title;
 				document.getElementById('nb-edit-content').value = post.content;
 			}
 
@@ -4311,7 +4242,8 @@
             window.openDriveThemeOverlay = function() {
                 const T = getNbTheme();
                 let overlay = document.getElementById('neubie-drivetheme-overlay');
-                const current = localStorage.getItem(DRIVE_THEME_KEY) || 'dark';
+                const nbThemeName = localStorage.getItem('neubie_theme') || 'dark';
+                const driveTheme = localStorage.getItem(DRIVE_THEME_KEY) || 'dark';
 
                 if (!overlay) {
                     overlay = document.createElement('div');
@@ -4326,28 +4258,56 @@
                 overlay.style.display = 'flex';
                 overlay.innerHTML = `
                     <div style="background:${T.card}; color:${T.text}; border-radius:16px; padding:20px; width:min(90vw,360px); box-shadow:0 4px 40px rgba(0,0,0,0.7); pointer-events:auto;">
-                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-                            <span style="font-size:16px;font-weight:700;">🎨 원격조종 페이지 색상</span>
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+                            <span style="font-size:16px;font-weight:700;">🎨 레이아웃 색상 설정</span>
                             <button id="dto-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
                         </div>
-                        <div style="font-size:12px;color:#94a3b8;margin-bottom:12px;">원격조종(테스트버전) 화면 배경을 바꿉니다. 해당 형태의 페이지에서만 적용됩니다.</div>
-                        <div style="display:flex; flex-direction:column; gap:8px;">
-                            <button data-dt="dark" style="padding:10px; border-radius:8px; border:1px solid ${current==='dark'?'#4f8ef7':T.border}; background:${current==='dark'?'#1e3a8a33':'transparent'}; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🌙 원본 (다크)</button>
-                            <button data-dt="light" style="padding:10px; border-radius:8px; border:1px solid ${current==='light'?'#4f8ef7':T.border}; background:${current==='light'?'#1e3a8a33':'transparent'}; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">☀️ 라이트</button>
+
+                        <div style="font-size:13px;font-weight:600;margin-bottom:6px;">ALT+Q 레이아웃</div>
+                        <div style="font-size:11px;color:#94a3b8;margin-bottom:8px;">핸드오버/대시보드 등 도구 전반의 화면 톤입니다.</div>
+                        <div style="display:flex; gap:8px; margin-bottom:18px;">
+                            <button data-nbt="dark" style="flex:1; padding:10px; border-radius:8px; border:1px solid ${nbThemeName==='dark'?'#4f8ef7':T.border}; background:${nbThemeName==='dark'?'#1e3a8a33':'transparent'}; color:${T.text}; cursor:pointer; font-size:13px;">🌙 다크</button>
+                            <button data-nbt="light" style="flex:1; padding:10px; border-radius:8px; border:1px solid ${nbThemeName==='light'?'#4f8ef7':T.border}; background:${nbThemeName==='light'?'#1e3a8a33':'transparent'}; color:${T.text}; cursor:pointer; font-size:13px;">☀️ 라이트</button>
+                        </div>
+
+                        <div style="border-top:1px solid ${T.border}; margin-bottom:14px;"></div>
+
+                        <div style="font-size:13px;font-weight:600;margin-bottom:6px;">원격조종 페이지</div>
+                        <div style="font-size:11px;color:#94a3b8;margin-bottom:8px;">기체 원격조종(신형, /new) 화면에만 적용됩니다.</div>
+                        <div style="display:flex; gap:8px;">
+                            <button data-dt="dark" style="flex:1; padding:10px; border-radius:8px; border:1px solid ${driveTheme==='dark'?'#4f8ef7':T.border}; background:${driveTheme==='dark'?'#1e3a8a33':'transparent'}; color:${T.text}; cursor:pointer; font-size:13px;">🌙 원본</button>
+                            <button data-dt="light" style="flex:1; padding:10px; border-radius:8px; border:1px solid ${driveTheme==='light'?'#4f8ef7':T.border}; background:${driveTheme==='light'?'#1e3a8a33':'transparent'}; color:${T.text}; cursor:pointer; font-size:13px;">☀️ 라이트</button>
                         </div>
                         <div style="font-size:11px;color:#64748b;margin-top:10px;">추후 다른 색상 테마도 여기에 추가될 예정입니다.</div>
                     </div>
                 `;
                 overlay.querySelector('#dto-close').onclick = () => {
                     overlay.style.display = 'none';
-                    if (window._neubieWeatherCard) window._neubieWeatherCard.style.outline = 'none';   // ← 추가
+                    if (window._neubieWeatherCard) window._neubieWeatherCard.style.outline = 'none';
                 };
+
+                // ALT+Q 레이아웃 색상 토글 (기존 themeBtn 로직 그대로 이식)
+                overlay.querySelectorAll('[data-nbt]').forEach(btn => {
+                    btn.onclick = () => {
+                        const next = btn.dataset.nbt;
+                        localStorage.setItem('neubie_theme', next);
+                        ['neubie-weather-overlay', 'neubie-roulette-overlay', 'neubie-tips-overlay', 'neubie-patch-overlay', 'neubie-secret-overlay', 'neubie-map-info-overlay', 'neubie-queue-info-overlay', 'neubie-moretools-overlay', 'neubie-gamepad-guide-overlay'].forEach(id => {
+                            const el = document.getElementById(id);
+                            if (el) el.remove();
+                        });
+                        buildBatteryShell();
+                        renderDashboard();
+                        openDriveThemeOverlay();   // 자기 자신은 유지한 채 선택 표시만 갱신
+                    };
+                });
+
+                // 원격조종 페이지 색상 토글 (기존 로직 그대로)
                 overlay.querySelectorAll('[data-dt]').forEach(btn => {
                     btn.onclick = () => {
                         const key = btn.dataset.dt;
                         localStorage.setItem(DRIVE_THEME_KEY, key);
                         applyDriveTheme(key);
-                        openDriveThemeOverlay();   // 선택 표시(테두리) 갱신을 위해 재렌더
+                        openDriveThemeOverlay();
                     };
                 });
             };
@@ -4509,7 +4469,7 @@
                     chip.onclick = () => renderWeather(overlay, Number(chip.dataset.nx), Number(chip.dataset.ny), chip.dataset.label);
                 });
 
-				body.querySelectorAll('.nwo-fav-remove').forEach(removeBtn => {
+                body.querySelectorAll('.nwo-fav-remove').forEach(removeBtn => {
                     removeBtn.onclick = (e) => {
                         e.stopPropagation();
                         const targetLabel = removeBtn.dataset.label;
@@ -4562,6 +4522,46 @@
                 return data;
             }
 
+            window.openGamepadGuideOverlay = function() {
+                const isOff = isDpadBindingOff();
+                let overlay = document.getElementById('neubie-gamepad-guide-overlay');
+
+                if (!overlay) {
+                    overlay = document.createElement('div');
+                    overlay.id = 'neubie-gamepad-guide-overlay';
+                    overlay.style.cssText = `
+                        position:fixed; inset:0; z-index:2147483646;
+                        display:flex; align-items:center; justify-content:center;
+                        font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif; pointer-events:none;
+                    `;
+                    document.body.appendChild(overlay);
+                }
+                overlay.style.display = 'flex';
+                overlay.innerHTML = `
+                    <div style="background:#1e1e2e; color:#e2e8f0; border-radius:16px; padding:16px; max-width:92vw; max-height:90vh; box-shadow:0 10px 50px rgba(0,0,0,0.7); pointer-events:auto; display:flex; flex-direction:column;">
+                        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; gap:10px;">
+                            <span style="font-size:16px; font-weight:700;">🎮 D-PAD 기능 설명</span>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <button id="gp-toggle" style="width:52px; padding:6px 0; border-radius:8px; border:1px solid ${isOff ? '#ef4444' : '#22c55e'}; background:${isOff ? 'rgba(239,68,68,0.15)' : 'rgba(34,197,94,0.15)'}; color:${isOff ? '#ef4444' : '#22c55e'}; font-weight:700; font-size:13px; cursor:pointer; text-align:center;">${isOff ? 'OFF' : 'ON'}</button>
+                                <button id="gp-close" style="width:28px; height:28px; border:none; border-radius:5px; background:#3b0000; border:1px solid #ef4444; color:#ef4444; font-size:16px; cursor:pointer;">✕</button>
+                            </div>
+                        </div>
+                        <img src="https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/xbox_binding.png"
+                             width="640"
+                             style="border-radius:8px; display:block; height:auto;" />
+                    </div>
+                `;
+                overlay.querySelector('#gp-toggle').onclick = () => {
+                    if (isDpadBindingOff()) {
+                        localStorage.setItem('neubie_dpad_binding', 'on');    // ← removeItem 대신 명시적 'on' 저장
+                    } else {
+                        localStorage.setItem('neubie_dpad_binding', 'off');
+                    }
+                    openGamepadGuideOverlay();
+                };
+                overlay.querySelector('#gp-close').onclick = () => { overlay.style.display = 'none'; };
+            };
+
             window.openTipsOverlay = function() {
                 const T = getNbTheme();
                 const dashboardEl = document.getElementById('neubie-dashboard');
@@ -4584,31 +4584,6 @@
                     const tipsTitle = document.createElement('div');
                     tipsTitle.textContent = '최적화 팁';
                     tipsTitle.style.cssText = `font-size:20px; font-weight:bold; margin-bottom:20px; color:#fcd34d; cursor:pointer;`;
-
-                    const padIndicator = document.createElement('span');
-                    padIndicator.style.cssText = 'font-size:12px;color:#ef4444;margin-left:8px;font-weight:700;';
-                    padIndicator.textContent = '패드기능 OFF';
-                    padIndicator.style.display = localStorage.getItem('neubie_dpad_binding')==='off' ? 'inline' : 'none';
-                    tipsTitle.appendChild(padIndicator);
-
-                    let tipClickCount = 0;
-                    let tipClickTimer = null;
-                    tipsTitle.addEventListener('click', () => {
-                    tipClickCount++;
-                    clearTimeout(tipClickTimer);
-                    tipClickTimer = setTimeout(() => { tipClickCount = 0; }, 2000);
-                    if(tipClickCount >= 5){
-                        tipClickCount = 0;
-                        clearTimeout(tipClickTimer);
-                        if(localStorage.getItem('neubie_dpad_binding')==='off'){
-                        localStorage.removeItem('neubie_dpad_binding');
-                        padIndicator.style.display='none';
-                        } else {
-                        localStorage.setItem('neubie_dpad_binding','off');
-                        padIndicator.style.display='inline';
-                        }
-                    }
-                    });
 
                     const tipsClose = document.createElement('button');
                     tipsClose.textContent = '✕';
@@ -4999,7 +4974,7 @@
     });
 
     // 화면 어디든 클릭했을 때 주소 확인
-    // 뉴비고에서 메뉴를 클릭해 이동할 때 즉각 닫히게
+    // NCC에서 메뉴를 클릭해 이동할 때 즉각 닫히게
     document.addEventListener('click', () => {
         setTimeout(() => {
             if (location.href !== lastUrl) {
@@ -5344,7 +5319,7 @@
         };
 	
 	    setInterval(() => {
-			if(localStorage.getItem('neubie_dpad_binding')==='off') return;
+			if(isDpadBindingOff()) return;
 	        const gp = navigator.getGamepads()[0];
 	        if (!gp) return;
 	        const isDrivingPage = location.href.includes('/remote/multiple/driving/')
