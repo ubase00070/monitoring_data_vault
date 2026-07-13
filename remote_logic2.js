@@ -1139,7 +1139,6 @@
        ============================================================ */
     function renderDashboard() {
         dashboard.innerHTML = '';
-        const nbThemeName = localStorage.getItem('neubie_theme') || 'dark';
         const T = getNbTheme();
         dashboard.style.backgroundColor = T.bg;
         dashboard.style.color = T.text;
@@ -1316,21 +1315,6 @@
         secretBtn.onmouseleave = () => { secretBtn.style.background='transparent'; };
         secretBtn.onclick = () => openSecretOverlay();
         titleWrap.appendChild(secretBtn);
-        const themeBtn = document.createElement('button');
-        themeBtn.textContent = nbThemeName === 'light' ? '라이트' : '다크';
-        themeBtn.style.cssText = `width:48px; text-align:center; background:transparent; border:1px solid ${T.border}; color:${T.text}; padding:4px 0; border-radius:6px; cursor:pointer; font-size:14px; margin-left:4px;`;
-        themeBtn.onclick = () => {
-            const next = nbThemeName === 'light' ? 'dark' : 'light';
-            localStorage.setItem('neubie_theme', next);
-            ['neubie-weather-overlay', 'neubie-roulette-overlay', 'neubie-tips-overlay', 'neubie-patch-overlay', 'neubie-secret-overlay', 'neubie-map-info-overlay', 'neubie-queue-info-overlay', 'neubie-drivetheme-overlay', 'neubie-moretools-overlay'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.remove();
-            });
-            buildBatteryShell();
-            renderDashboard();
-        };
-        titleWrap.appendChild(themeBtn);
-
         headerContainer.appendChild(titleWrap);
         headerContainer.appendChild(nameArea);
         dashboard.appendChild(headerContainer);
@@ -3976,8 +3960,8 @@
                 numEl.textContent=d; el.appendChild(numEl);
                 if(info){
                     const {d1,d2,w1,w2}=info;
-                    const isLeave1=d1?.status==='annual'||d1?.status==='public';
-                    const isLeave2=d2?.status==='annual'||d2?.status==='public';
+                    const isLeave1=d1?.status==='annual'||d1?.status==='public'||d1?.status==='dispatch';
+                    const isLeave2=d2?.status==='annual'||d2?.status==='public'||d2?.status==='dispatch';
                     const show1 = calMode==='work' ? (w1 && !isLeave1) : (d1 ? (!w1||isLeave1) : false);
                     const show2 = calMode==='work' ? (w2 && !isLeave2) : (d2 ? (!w2||isLeave2) : false);
 
@@ -3993,6 +3977,7 @@
                       b.textContent=st==='half'?`${n1v}(반차)`:st==='half-half'?`${n1v}(반반차)`:
                         isOff1&&st==='annual'?`${n1v}(연차)`:
                         isOff1&&st==='public'?`${n1v}(공가)`:n1v;
+                        isOff1&&st==='dispatch'?`${n1v}(파견)`:n1v;
                       el.appendChild(b);
                     }
                     if(show2){
@@ -4007,6 +3992,7 @@
                       b.textContent=st==='half'?`${n2v}(반차)`:st==='half-half'?`${n2v}(반반차)`:
                         isOff2&&st==='annual'?`${n2v}(연차)`:
                         isOff2&&st==='public'?`${n2v}(공가)`:n2v;
+                        isOff2&&st==='dispatch'?`${n2v}(파견)`:n2v;
                       el.appendChild(b);
                     }
                 }
@@ -4032,10 +4018,10 @@
                 const w1=d1?d1.working:false, w2=d2?d2.working:false;
                 const p1=d1?d1.present:false, p2=d2?d2.present:false;
                 if(p1)c1++; if(p2)c2++; if(p1&&p2)ov++;
-                if(!p1||(d1?.status==='annual'||d1?.status==='public')) off1++;
-                if(!p2||(d2?.status==='annual'||d2?.status==='public')) off2++;
-                if((!p1||(d1?.status==='annual'||d1?.status==='public'))&&
-                    (!p2||(d2?.status==='annual'||d2?.status==='public'))) offOv++;
+                if(!p1||(d1?.status==='annual'||d1?.status==='public'||d1?.status==='dispatch')) off1++;
+                if(!p2||(d2?.status==='annual'||d2?.status==='public'||d2?.status==='dispatch')) off2++;
+                if((!p1||(d1?.status==='annual'||d1?.status==='public'||d1?.status==='dispatch'))&&
+                    (!p2||(d2?.status==='annual'||d2?.status==='public'||d2?.status==='dispatch'))) offOv++;
                 compareResult[date]={d1,d2,w1,w2};
                 }
                 const d1Show=calMode==='work'?c1:off1;
@@ -4070,7 +4056,7 @@
               const leaveMap={};
               scheduleData.staff.forEach(s=>{
                 const d=s.schedule[dateLabel];
-                if(d&&(d.status==='annual'||d.status==='public')) leaveMap[s.name]=d.status;
+                if(d&&(d.status==='annual'||d.status==='public'||d.status==='dispatch')) leaveMap[s.name]=d.status;
               });
               renderSeat(pw,leaveMap);
               modal.style.opacity='1'; modal.style.pointerEvents='all';
@@ -4123,7 +4109,7 @@
                         if(leaveMap[name]){
                         const bd=document.createElement('div');
                         bd.style.cssText='font-size:12px;border-radius:2px;padding:0 3px;margin-top:1px;font-weight:700;background:rgba(234,179,8,.25);color:#eab308;';
-                        bd.textContent=leaveMap[name]==='annual'?'연차':'공가'; sp.appendChild(bd);
+                        bd.textContent=leaveMap[name]==='annual'?'연차':leaveMap[name]==='dispatch'?'파견':'공가'; sp.appendChild(bd);
                         }
                         if(w&&(w.status==='half'||w.status==='half-half')){
                         const bd=document.createElement('div');
@@ -4151,7 +4137,7 @@
                     if(leaveMap[raw]){
                         const bd=document.createElement('div');
                         bd.style.cssText='font-size:12px;border-radius:2px;padding:0 3px;margin-top:1px;font-weight:700;background:rgba(234,179,8,.25);color:#eab308;';
-                        bd.textContent=leaveMap[raw]==='annual'?'연차':'공가'; el.appendChild(bd);
+                        bd.textContent=leaveMap[raw]==='annual'?'연차':leaveMap[raw]==='dispatch'?'파견':'공가'; el.appendChild(bd);
                     }
                     if(w){
                         if(w.status==='half'||w.status==='half-half'){
@@ -4175,7 +4161,7 @@
                         const w=pMap[name];
                         html+=`<div style="font-weight:700;color:#e2e8f0;margin-bottom:2px;">${name}</div>`;
                         if(w){
-                        const ko={work:'출근',half:'반차','half-half':'반반차',annual:'연차',public:'공가',off:'휴무',empty:'미출근'};
+                        const ko={work:'출근',half:'반차','half-half':'반반차',annual:'연차',public:'공가',dispatch:'파견',off:'휴무',empty:'미출근'};
                         html+=`<div style="color:#94a3b8;">근무조: <span style="color:#e2e8f0;">${w.shiftType}</span></div>`;
                         html+=`<div style="color:#94a3b8;">시간: <span style="color:#e2e8f0;">${w.workTime}</span></div>`;
                         html+=`<div style="color:#94a3b8;">상태: <span style="color:#e2e8f0;">${ko[w.status]||w.status}</span></div>`;
@@ -4309,7 +4295,8 @@
             window.openDriveThemeOverlay = function() {
                 const T = getNbTheme();
                 let overlay = document.getElementById('neubie-drivetheme-overlay');
-                const current = localStorage.getItem(DRIVE_THEME_KEY) || 'dark';
+                const nbThemeName = localStorage.getItem('neubie_theme') || 'dark';
+                const driveTheme = localStorage.getItem(DRIVE_THEME_KEY) || 'dark';
 
                 if (!overlay) {
                     overlay = document.createElement('div');
@@ -4324,28 +4311,56 @@
                 overlay.style.display = 'flex';
                 overlay.innerHTML = `
                     <div style="background:${T.card}; color:${T.text}; border-radius:16px; padding:20px; width:min(90vw,360px); box-shadow:0 4px 40px rgba(0,0,0,0.7); pointer-events:auto;">
-                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-                            <span style="font-size:16px;font-weight:700;">🎨 원격조종 페이지 색상</span>
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+                            <span style="font-size:16px;font-weight:700;">🎨 레이아웃 색상 설정</span>
                             <button id="dto-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
                         </div>
-                        <div style="font-size:12px;color:#94a3b8;margin-bottom:12px;">원격조종(테스트버전) 화면 배경을 바꿉니다. 해당 형태의 페이지에서만 적용됩니다.</div>
-                        <div style="display:flex; flex-direction:column; gap:8px;">
-                            <button data-dt="dark" style="padding:10px; border-radius:8px; border:1px solid ${current==='dark'?'#4f8ef7':T.border}; background:${current==='dark'?'#1e3a8a33':'transparent'}; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🌙 원본 (다크)</button>
-                            <button data-dt="light" style="padding:10px; border-radius:8px; border:1px solid ${current==='light'?'#4f8ef7':T.border}; background:${current==='light'?'#1e3a8a33':'transparent'}; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">☀️ 라이트</button>
+
+                        <div style="font-size:13px;font-weight:600;margin-bottom:6px;">ALT+Q 레이아웃</div>
+                        <div style="font-size:11px;color:#94a3b8;margin-bottom:8px;">핸드오버/대시보드 등 도구 전반의 화면 톤입니다.</div>
+                        <div style="display:flex; gap:8px; margin-bottom:18px;">
+                            <button data-nbt="dark" style="flex:1; padding:10px; border-radius:8px; border:1px solid ${nbThemeName==='dark'?'#4f8ef7':T.border}; background:${nbThemeName==='dark'?'#1e3a8a33':'transparent'}; color:${T.text}; cursor:pointer; font-size:13px;">🌙 다크</button>
+                            <button data-nbt="light" style="flex:1; padding:10px; border-radius:8px; border:1px solid ${nbThemeName==='light'?'#4f8ef7':T.border}; background:${nbThemeName==='light'?'#1e3a8a33':'transparent'}; color:${T.text}; cursor:pointer; font-size:13px;">☀️ 라이트</button>
+                        </div>
+
+                        <div style="border-top:1px solid ${T.border}; margin-bottom:14px;"></div>
+
+                        <div style="font-size:13px;font-weight:600;margin-bottom:6px;">원격조종 페이지</div>
+                        <div style="font-size:11px;color:#94a3b8;margin-bottom:8px;">기체 원격조종(신형, /new) 화면에만 적용됩니다.</div>
+                        <div style="display:flex; gap:8px;">
+                            <button data-dt="dark" style="flex:1; padding:10px; border-radius:8px; border:1px solid ${driveTheme==='dark'?'#4f8ef7':T.border}; background:${driveTheme==='dark'?'#1e3a8a33':'transparent'}; color:${T.text}; cursor:pointer; font-size:13px;">🌙 원본</button>
+                            <button data-dt="light" style="flex:1; padding:10px; border-radius:8px; border:1px solid ${driveTheme==='light'?'#4f8ef7':T.border}; background:${driveTheme==='light'?'#1e3a8a33':'transparent'}; color:${T.text}; cursor:pointer; font-size:13px;">☀️ 라이트</button>
                         </div>
                         <div style="font-size:11px;color:#64748b;margin-top:10px;">추후 다른 색상 테마도 여기에 추가될 예정입니다.</div>
                     </div>
                 `;
                 overlay.querySelector('#dto-close').onclick = () => {
                     overlay.style.display = 'none';
-                    if (window._neubieWeatherCard) window._neubieWeatherCard.style.outline = 'none';   // ← 추가
+                    if (window._neubieWeatherCard) window._neubieWeatherCard.style.outline = 'none';
                 };
+
+                // ALT+Q 레이아웃 색상 토글 (기존 themeBtn 로직 그대로 이식)
+                overlay.querySelectorAll('[data-nbt]').forEach(btn => {
+                    btn.onclick = () => {
+                        const next = btn.dataset.nbt;
+                        localStorage.setItem('neubie_theme', next);
+                        ['neubie-weather-overlay', 'neubie-roulette-overlay', 'neubie-tips-overlay', 'neubie-patch-overlay', 'neubie-secret-overlay', 'neubie-map-info-overlay', 'neubie-queue-info-overlay', 'neubie-moretools-overlay'].forEach(id => {
+                            const el = document.getElementById(id);
+                            if (el) el.remove();
+                        });
+                        buildBatteryShell();
+                        renderDashboard();
+                        openDriveThemeOverlay();   // 자기 자신은 유지한 채 선택 표시만 갱신
+                    };
+                });
+
+                // 원격조종 페이지 색상 토글 (기존 로직 그대로)
                 overlay.querySelectorAll('[data-dt]').forEach(btn => {
                     btn.onclick = () => {
                         const key = btn.dataset.dt;
                         localStorage.setItem(DRIVE_THEME_KEY, key);
                         applyDriveTheme(key);
-                        openDriveThemeOverlay();   // 선택 표시(테두리) 갱신을 위해 재렌더
+                        openDriveThemeOverlay();
                     };
                 });
             };
@@ -4456,7 +4471,12 @@
                     </div>`).join('');
 
                 const favs = JSON.parse(localStorage.getItem('neubie_weather_favs') || '[]');
-                const favChips = favs.map(f => `<button class="nwo-fav-chip" data-nx="${f.nx}" data-ny="${f.ny}" data-label="${f.label}" style="padding:4px 10px;border-radius:12px;border:1px solid #333;background:${f.label===label?'#1e3a5f':'transparent'};color:#e2e8f0;font-size:11px;cursor:pointer;">${f.label} ✕</button>`).join('');
+                const favChips = favs.map(f => `
+                    <button class="nwo-fav-chip" data-nx="${f.nx}" data-ny="${f.ny}" data-label="${f.label}" style="padding:4px 4px 4px 10px;border-radius:12px;border:1px solid #333;background:${f.label===label?'#1e3a5f':'transparent'};color:#e2e8f0;font-size:11px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">
+                        ${f.label}
+                        <span class="nwo-fav-remove" data-label="${f.label}" style="padding:0 4px;color:#94a3b8;font-weight:bold;">✕</span>
+                    </button>
+                `).join('');
 
                 body.innerHTML = `
                     <div style="display:flex;gap:6px;margin-bottom:10px;align-items:center;">
@@ -4500,6 +4520,17 @@
 
                 body.querySelectorAll('.nwo-fav-chip').forEach(chip => {
                     chip.onclick = () => renderWeather(overlay, Number(chip.dataset.nx), Number(chip.dataset.ny), chip.dataset.label);
+                });
+
+                body.querySelectorAll('.nwo-fav-remove').forEach(removeBtn => {
+                    removeBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        const targetLabel = removeBtn.dataset.label;
+                        const favs = JSON.parse(localStorage.getItem('neubie_weather_favs') || '[]');
+                        const updated = favs.filter(f => f.label !== targetLabel);
+                        localStorage.setItem('neubie_weather_favs', JSON.stringify(updated));
+                        renderWeather(overlay, nx, ny, label);   // 현재 보고 있던 지역은 유지한 채 목록만 갱신
+                    };
                 });
 
                 const addFavBtn = body.querySelector('#nwo-add-fav');
