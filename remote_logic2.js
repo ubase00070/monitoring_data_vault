@@ -4,21 +4,15 @@
     if (window.neubieEngineLoaded) return;
     window.neubieEngineLoaded = true;
 
-	// ── 배민 주아 웹폰트 (게시판) ──
-    (function loadJuaFont() {
-        if (document.getElementById('neubie-jua-font')) return;
-        const st = document.createElement('style');
-        st.id = 'neubie-jua-font';
-        st.textContent = `
-            @font-face {
-                font-family: 'BMJUA';
-                src: url('https://cdn.jsdelivr.net/gh/fonts-archive/BMJUA/BMJUA.woff2') format('woff2');
-                font-weight: normal;
-                font-style: normal;
-                font-display: swap;
-            }
-        `;
-        document.head.appendChild(st);
+	// ── Paperlogy 웹폰트 (신규 추가) ──
+    (function loadPaperlogyFont() {
+        if (document.getElementById('neubie-paperlogy-font')) return;
+        const link = document.createElement('link');
+        link.id = 'neubie-paperlogy-font';
+        link.rel = 'stylesheet';
+        link.type = 'text/css';
+        link.href = 'https://cdn.jsdelivr.net/gh/fonts-archive/Paperlogy/subsets/Paperlogy-dynamic-subset.css';
+        document.head.appendChild(link);
     })();
 
     const currUrl = window.location.href;
@@ -522,6 +516,22 @@
             #neubie-dashboard input,
             #neubie-dashboard button {
                 min-width: 0 !important;
+            }
+
+            #neubie-dashboard, #neubie-dashboard *,
+            #neubie-battery-popup, #neubie-battery-popup *,
+            #neubie-board-overlay, #neubie-board-overlay *,
+            #neubie-secret-overlay, #neubie-secret-overlay *,
+            #neubie-schedule-overlay, #neubie-schedule-overlay *,
+            #neubie-weather-overlay, #neubie-weather-overlay *,
+            #neubie-roulette-overlay, #neubie-roulette-overlay *,
+            #neubie-tips-overlay, #neubie-tips-overlay *,
+            #neubie-patch-overlay, #neubie-patch-overlay *,
+            #neubie-map-info-overlay, #neubie-map-info-overlay *,
+            #neubie-queue-info-overlay, #neubie-queue-info-overlay *,
+            #neubie-drivetheme-overlay, #neubie-drivetheme-overlay *,
+            #neubie-moretools-overlay, #neubie-moretools-overlay * {
+                font-family: 'Paperlogy', 'Pretendard', 'Noto Sans KR', sans-serif !important;
             }
         `;
         document.head.appendChild(st);
@@ -2930,7 +2940,7 @@
 				boardFontStyle.id = 'neubie-board-font-style';
 				boardFontStyle.textContent = `
 					#neubie-board-overlay, #neubie-board-overlay * {
-						font-family: 'BMJUA', 'Pretendard', sans-serif !important;
+						font-family: 'Paperlogy', 'Pretendard', sans-serif !important;   // ← 'BMJUA' → 'Paperlogy'로 교체
 					}
 					#neubie-board-overlay .nb-emoji {
 						font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif !important;
