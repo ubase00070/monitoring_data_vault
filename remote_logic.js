@@ -1123,7 +1123,7 @@
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
 		// 문자열을 넣으면 패치노트에 빨간 '`' 뱃지가 점멸하며 뜸.
 		// 빈 문자열('')로 비우면 뱃지가 사라짐.
-		const PATCH_NOTE_NEW_CONTENT = '';
+		const PATCH_NOTE_NEW_CONTENT = '원격조종 라이트모드_260713';
 		
         const patchBtn = document.createElement('button');
         patchBtn.textContent = '패치노트';
@@ -1188,14 +1188,14 @@
                 const patchItems = [
                     {
                         version: 'v1.3',
-                        date: '2026-07-09',
+                        date: '2026-07-13',
                         items: [
+							'원격조종(테스트버전) 페이지 라이트 모드',
 							'다중 교대기체 자동 업로드(45분에만) / 자동 교대시작 최대 12대',
                             'NCC 원격조종 페이지 구/신버전 기존 기능 및 페이지 대응',
                             '다크/라이트 모드 선택',
                             '룰렛 돌리기 & 동전 던지기 & 개인 메모',
                             '실시간 송내 날씨(기상청 API 데이터)',
-                            '1:1 문의 기능(익명 가능)',
                             '임무 종료된 리센츠/엘스/한성대 페이지 이탈 시 5초 후 자동 사이드',
 							'불규칙 순찰 기체 모니터링 미추가 시 알림 기능',
 							'개입카드 현재 조작자 표기 / 상태 바 재배치(스크롤 제거)',
@@ -1289,7 +1289,7 @@
         themeBtn.onclick = () => {
             const next = nbThemeName === 'light' ? 'dark' : 'light';
             localStorage.setItem('neubie_theme', next);
-            ['neubie-weather-overlay', 'neubie-roulette-overlay', 'neubie-tips-overlay', 'neubie-patch-overlay', 'neubie-secret-overlay', 'neubie-map-info-overlay', 'neubie-queue-info-overlay'].forEach(id => {
+            ['neubie-weather-overlay', 'neubie-roulette-overlay', 'neubie-tips-overlay', 'neubie-patch-overlay', 'neubie-secret-overlay', 'neubie-map-info-overlay', 'neubie-queue-info-overlay', 'neubie-drivetheme-overlay', 'neubie-moretools-overlay'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.remove();
             });
@@ -1639,16 +1639,16 @@
 
         const rouletteCard = document.createElement('div');
         rouletteCard.style.cssText = `background:${T.card}; padding:8px 12px; border-radius:15px; border:1px solid ${T.border}; cursor:pointer; display:flex; align-items:center;`;
-        rouletteCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">🎡 룰렛 & 동전 & 메모</div>`;
+        rouletteCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">🌤️ 날씨 & 룰렛 & 기타</div>`;   // ← 라벨만 교체
         window._neubieRouletteCard = rouletteCard;
         rouletteCard.onclick = () => {
             const isActive = rouletteCard.style.outline !== 'none' && rouletteCard.style.outline !== '';
             rouletteCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
             if (!isActive) {
-                openRouletteOverlay();
+                openMoreToolsOverlay();   // ← openRouletteOverlay() 대신 새 메뉴 오버레이 호출
             } else {
-                const rouletteOverlay = document.getElementById('neubie-roulette-overlay');
-                if (rouletteOverlay) rouletteOverlay.style.display = 'none';
+                const moreOverlay = document.getElementById('neubie-moretools-overlay');
+                if (moreOverlay) moreOverlay.style.display = 'none';
             }
         };
 
@@ -1673,16 +1673,16 @@
 
         const weatherCard = document.createElement('div');
         weatherCard.style.cssText = `background:${T.card}; padding:8px 12px; border-radius:15px; border:1px solid ${T.border}; cursor:pointer; display:flex; align-items:center;`;
-        weatherCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">🌤️ 송내 현재 날씨 (기상청 API)</div>`;
+        weatherCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">🎨 원격조종 페이지 색상</div>`;   // ← 라벨 교체
         window._neubieWeatherCard = weatherCard;
         weatherCard.onclick = () => {
             const isActive = weatherCard.style.outline !== 'none' && weatherCard.style.outline !== '';
             weatherCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
             if (!isActive) {
-                openWeatherOverlay();
+                openDriveThemeOverlay();   // ← openWeatherOverlay() 대신 새 테마 선택 오버레이 호출
             } else {
-                const weatherOverlay = document.getElementById('neubie-weather-overlay');
-                if (weatherOverlay) weatherOverlay.style.display = 'none';
+                const dtOverlay = document.getElementById('neubie-drivetheme-overlay');
+                if (dtOverlay) dtOverlay.style.display = 'none';
             }
         };
 
@@ -1756,6 +1756,10 @@
         const rouletteOverlay = document.getElementById('neubie-roulette-overlay');
         if (rouletteOverlay) rouletteOverlay.style.display = 'none';
         if (window._neubieRouletteCard) window._neubieRouletteCard.style.outline = 'none';
+		const driveThemeOverlay = document.getElementById('neubie-drivetheme-overlay');
+		if (driveThemeOverlay) driveThemeOverlay.style.display = 'none';
+		const moreToolsOverlay = document.getElementById('neubie-moretools-overlay');
+		if (moreToolsOverlay) moreToolsOverlay.style.display = 'none';
     }
 
     // ── 유효성 검증 (1시간 이내 데이터) ──
@@ -2285,6 +2289,202 @@
 
 	function isMonitoringPage() {
 		return NEUBIE_HOSTS.some(h => location.href.includes(`${h}/ko/remote/multiple/monitoring`));
+	}
+
+    function isNewDrivingPage() {
+		return NEUBIE_HOSTS.some(h => location.href.includes(`${h}/ko/remote/robot/`)) && location.href.includes('/new');
+	}
+
+    /* ============================================================
+	   SECTION 기체 원격조종(/new) 레이아웃 색상 테마
+	   ============================================================ */
+	const DRIVE_THEME_KEY = 'neubie_drive_theme';
+	const DRIVE_THEMES = {
+		light: { card: '#ffffff', border: '#cccccc', text: '#111111', label: '☀️ 라이트' },   // card 흰색, track 필드 삭제
+	};
+	const DRIVE_TARGETS = ['적재함', '헤드램프', '게임패드', '자동정지', '임무 받기 중지', '임무 시작 시 알림이 여기에 표시됩니다.', '임무 설정', '도착 처리'];   
+
+	function driveThemeClimb(startEl, maxWidth = 320) {
+		let best = startEl, node = startEl;
+		for (let i = 0; i < 10 && node.parentElement; i++) {
+			node = node.parentElement;
+			if (node.getBoundingClientRect().width > maxWidth) break;
+			const m = getComputedStyle(node).backgroundColor.match(/rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?\)/);
+			if (m && (m[4] === undefined ? 1 : parseFloat(m[4])) > 0.15) best = node;
+		}
+		return best;
+	}
+
+	function driveThemeFindByText(label) {
+		const el = [...document.querySelectorAll('*')].find(e => e.children.length === 0 && e.textContent.trim() === label);
+		return el ? driveThemeClimb(el) : null;
+	}
+
+	function driveThemeMark(el, t) {
+		if (!el) return;
+		const cardRgb = t.card.match(/[a-f\d]{2}/gi).map(h => parseInt(h, 16)).join(', ');
+		const paint = (n) => {
+			n.style.setProperty('background-color', t.card, 'important');
+			n.style.setProperty('border', `1px solid ${t.border}`, 'important');
+			n.style.setProperty('box-shadow', 'none', 'important');   // ← 신규: 로그패널 등 진한 그림자 제거
+			n.style.setProperty('color', t.text, 'important');
+			n.setAttribute('data-neubie-theme-touched', '1');
+		};
+		paint(el);
+		el.querySelectorAll('*').forEach(c => {
+			// 닫기(X) 버튼 레드 원본 유지 유지
+			if (c.closest && c.closest('.bg-red-400')) return;
+			
+			// 배터리 아이콘 내부 채우기(bg-mono-200) — 카드색이 아니라 글자색(진한 톤)으로. 안 그러면 흰 배경에 묻힘
+			if (typeof c.className === 'string' && c.className.includes('bg-mono-200')) {
+				c.style.setProperty('background-color', t.text, 'important');
+				c.setAttribute('data-neubie-theme-touched', '1');
+				return;
+			}
+
+			const cs = getComputedStyle(c);
+			const m = cs.backgroundColor.match(/rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?\)/);
+			const alpha = m ? (m[4] === undefined ? 1 : parseFloat(m[4])) : 0;
+			const hasGradient = cs.backgroundImage && cs.backgroundImage.includes('gradient');
+
+			if (alpha > 0.15) {
+				paint(c);
+			} else if (hasGradient) {
+				// rgba(38,38,38,0) 같은 투명 끝단도 놓치지 않도록 rgb/rgba 둘 다 치환
+				const newBg = cs.backgroundImage.replace(/rgba?\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*(?:,\s*[\d.]+\s*)?\)/g, (match) => {
+					const isTransparentEnd = /,\s*0\s*\)$/.test(match);
+					return isTransparentEnd ? `rgba(${cardRgb}, 0)` : `rgb(${cardRgb})`;
+				});
+				c.style.setProperty('background-image', newBg, 'important');
+				c.style.setProperty('color', t.text, 'important');
+				c.setAttribute('data-neubie-theme-touched', '1');
+			} else {
+				c.style.setProperty('color', t.text, 'important');
+				c.setAttribute('data-neubie-theme-touched', '1');
+			}
+
+			if (c.tagName === 'svg' || c.tagName === 'path' || c.tagName === 'circle' || c.tagName === 'rect') {
+				c.style.setProperty('fill', t.text, 'important');
+				c.style.setProperty('stroke', t.text, 'important');
+				c.setAttribute('data-neubie-theme-touched', '1');
+			}
+		});
+	}
+
+    function watchSoundInputCard() {
+		const inputEl = document.querySelector('input[placeholder="문장 입력 송출"]');
+		const card = inputEl?.closest('.border-1.rounded-small.flex.w-full.shrink-0.flex-col');
+		if (!card) return;
+
+		if (window._soundInputThemeObserver) window._soundInputThemeObserver.disconnect();
+
+		let selfWriting = false;   // ← 재진입 방지 플래그
+		window._soundInputThemeObserver = new MutationObserver(() => {
+			if (selfWriting) return;   // 우리가 방금 쓴 변경이면 무시
+			const saved = localStorage.getItem(DRIVE_THEME_KEY) || 'dark';
+			if (saved !== 'light') return;
+
+			selfWriting = true;
+			driveThemeMark(card, DRIVE_THEMES.light);
+			const freshInput = document.querySelector('input[placeholder="문장 입력 송출"]');
+			if (freshInput) driveThemeMark(driveThemeClimb(freshInput), DRIVE_THEMES.light);
+			requestAnimationFrame(() => { selfWriting = false; });   // 다음 프레임부터 다시 감시 활성화
+		});
+		window._soundInputThemeObserver.observe(card, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
+	}
+	
+	function watchMissionProgressCard() {
+		const missionCard = driveThemeFindByText('도착 처리');
+		if (!missionCard) return;
+
+		if (window._missionThemeObserver) window._missionThemeObserver.disconnect();
+
+		let selfWriting = false;
+		window._missionThemeObserver = new MutationObserver(() => {
+			if (selfWriting) return;
+			const saved = localStorage.getItem(DRIVE_THEME_KEY) || 'dark';
+			if (saved !== 'light') return;
+
+			selfWriting = true;
+			driveThemeMark(missionCard, DRIVE_THEMES.light);
+			requestAnimationFrame(() => { selfWriting = false; });
+		});
+		window._missionThemeObserver.observe(missionCard, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
+	}
+
+	function watchLogPanel() {
+		const logPanel = document.querySelector('.rounded-small.bg-mono-100.w-full.min-h-50');
+		if (!logPanel) return;
+
+		if (window._logPanelThemeObserver) window._logPanelThemeObserver.disconnect();
+
+		let selfWriting = false;
+		window._logPanelThemeObserver = new MutationObserver(() => {
+			if (selfWriting) return;
+			const saved = localStorage.getItem(DRIVE_THEME_KEY) || 'dark';
+			if (saved !== 'light') return;
+
+			selfWriting = true;
+			driveThemeMark(logPanel, DRIVE_THEMES.light);
+			requestAnimationFrame(() => { selfWriting = false; });
+		});
+		window._logPanelThemeObserver.observe(logPanel, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
+	}
+
+	function clearDriveTheme() {
+		document.getElementById('neubie-drive-theme-style')?.remove();
+		if (window._soundInputThemeObserver) { window._soundInputThemeObserver.disconnect(); window._soundInputThemeObserver = null; }
+        if (window._missionThemeObserver) { window._missionThemeObserver.disconnect(); window._missionThemeObserver = null; } 
+		if (window._logPanelThemeObserver) { window._logPanelThemeObserver.disconnect(); window._logPanelThemeObserver = null; }
+		document.querySelectorAll('[data-neubie-theme-touched]').forEach(el => {
+			el.style.removeProperty('background-color');
+			el.style.removeProperty('background-image');
+			el.style.removeProperty('border');
+			el.style.removeProperty('border-bottom');
+			el.style.removeProperty('box-shadow');
+			el.style.removeProperty('color');
+			el.removeAttribute('data-neubie-theme-touched');
+		});
+	}
+
+	function applyDriveTheme(themeKey) {
+		if (!isNewDrivingPage()) return;   // 안전장치: 이 페이지가 아니면 절대 실행 안 함
+		clearDriveTheme();
+		if (themeKey !== 'light') return;   // dark(원본)는 그냥 초기화 상태로 끝
+
+		const t = DRIVE_THEMES.light;
+		const style = document.createElement('style');
+		style.id = 'neubie-drive-theme-style';
+		style.textContent = `
+			div.bg-mono-800.dark.flex-col { background-color: ${t.card} !important; background-image: none !important; }
+			input[placeholder="문장 입력 송출"]::placeholder { color: ${t.text} !important; opacity: 0.6 !important; }
+		`;
+		document.head.appendChild(style);
+
+		DRIVE_TARGETS.forEach(label => driveThemeMark(driveThemeFindByText(label), t));
+		const inputEl = document.querySelector('input[placeholder="문장 입력 송출"]');
+		if (inputEl) driveThemeMark(driveThemeClimb(inputEl), t);
+        watchSoundInputCard();
+		watchMissionProgressCard();
+
+        // 주행 로그 패널 — 텍스트가 매번 바뀌어(시간값) 라벨 매칭이 불가능해 클래스로 직접 지정
+		// ※ 사이트 개편 시 이 클래스 조합이 바뀌면 재확인 필요
+		const logPanel = document.querySelector('.rounded-small.bg-mono-100.w-full.min-h-50');
+		if (logPanel) driveThemeMark(logPanel, t);
+		watchLogPanel();
+
+		const header = document.querySelector('header');
+		if (header) {
+			driveThemeMark(header, t);
+			header.style.setProperty('border', 'none', 'important');
+			header.style.setProperty('border-bottom', `2px solid ${t.border}`, 'important');
+		}
+	}
+
+	function initDriveTheme() {
+		if (!isNewDrivingPage()) return;
+		const saved = localStorage.getItem(DRIVE_THEME_KEY) || 'dark';
+		applyDriveTheme(saved);
 	}
 
 	let _bitrateRunning = false;
@@ -4000,6 +4200,84 @@
                 .catch(()=>{ status.textContent='로드 실패'; dot.style.background='#ef4444'; });
             }
 
+            window.openDriveThemeOverlay = function() {
+                const T = getNbTheme();
+                let overlay = document.getElementById('neubie-drivetheme-overlay');
+                const current = localStorage.getItem(DRIVE_THEME_KEY) || 'dark';
+
+                if (!overlay) {
+                    overlay = document.createElement('div');
+                    overlay.id = 'neubie-drivetheme-overlay';
+                    overlay.style.cssText = `
+                        position:fixed; inset:0; z-index:2147483646;
+                        display:flex; align-items:flex-start; justify-content:center; padding-top:20px;
+                        font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif; pointer-events:none;
+                    `;
+                    document.body.appendChild(overlay);
+                }
+                overlay.style.display = 'flex';
+                overlay.innerHTML = `
+                    <div style="background:${T.card}; color:${T.text}; border-radius:16px; padding:20px; width:min(90vw,360px); box-shadow:0 4px 40px rgba(0,0,0,0.7); pointer-events:auto;">
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                            <span style="font-size:16px;font-weight:700;">🎨 원격조종 페이지 색상</span>
+                            <button id="dto-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
+                        </div>
+                        <div style="font-size:12px;color:#94a3b8;margin-bottom:12px;">원격조종(테스트버전) 화면 배경을 바꿉니다. 해당 형태의 페이지에서만 적용됩니다.</div>
+                        <div style="display:flex; flex-direction:column; gap:8px;">
+                            <button data-dt="dark" style="padding:10px; border-radius:8px; border:1px solid ${current==='dark'?'#4f8ef7':T.border}; background:${current==='dark'?'#1e3a8a33':'transparent'}; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🌙 원본 (다크)</button>
+                            <button data-dt="light" style="padding:10px; border-radius:8px; border:1px solid ${current==='light'?'#4f8ef7':T.border}; background:${current==='light'?'#1e3a8a33':'transparent'}; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">☀️ 라이트</button>
+                        </div>
+                        <div style="font-size:11px;color:#64748b;margin-top:10px;">추후 다른 색상 테마도 여기에 추가될 예정입니다.</div>
+                    </div>
+                `;
+                overlay.querySelector('#dto-close').onclick = () => {
+                    overlay.style.display = 'none';
+                    if (window._neubieWeatherCard) window._neubieWeatherCard.style.outline = 'none';   // ← 추가
+                };
+                overlay.querySelectorAll('[data-dt]').forEach(btn => {
+                    btn.onclick = () => {
+                        const key = btn.dataset.dt;
+                        localStorage.setItem(DRIVE_THEME_KEY, key);
+                        applyDriveTheme(key);
+                        openDriveThemeOverlay();   // 선택 표시(테두리) 갱신을 위해 재렌더
+                    };
+                });
+            };
+
+            window.openMoreToolsOverlay = function() {
+                const T = getNbTheme();
+                let overlay = document.getElementById('neubie-moretools-overlay');
+                if (!overlay) {
+                    overlay = document.createElement('div');
+                    overlay.id = 'neubie-moretools-overlay';
+                    overlay.style.cssText = `
+                        position:fixed; inset:0; z-index:2147483646;
+                        display:flex; align-items:flex-start; justify-content:center; padding-top:20px;
+                        font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif; pointer-events:none;
+                    `;
+                    document.body.appendChild(overlay);
+                }
+                overlay.style.display = 'flex';
+                overlay.innerHTML = `
+                    <div style="background:${T.card}; color:${T.text}; border-radius:16px; padding:20px; width:min(90vw,320px); box-shadow:0 4px 40px rgba(0,0,0,0.7); pointer-events:auto;">
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                            <span style="font-size:16px;font-weight:700;">🌤️ 날씨 & 룰렛 & 기타</span>
+                            <button id="mto-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:8px;">
+                            <button id="mto-weather" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🌤️ 송내 현재 날씨 (기상청 API)</button>
+                            <button id="mto-roulette" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🎡 룰렛 & 동전 & 메모</button>
+                        </div>
+                    </div>
+                `;
+                overlay.querySelector('#mto-close').onclick = () => {
+                    overlay.style.display = 'none';
+                    if (window._neubieRouletteCard) window._neubieRouletteCard.style.outline = 'none';   // ← 추가
+                };
+                overlay.querySelector('#mto-weather').onclick = () => { overlay.style.display = 'none'; openWeatherOverlay(); };
+                overlay.querySelector('#mto-roulette').onclick = () => { overlay.style.display = 'none'; openRouletteOverlay(); };
+            };
+
             window.openWeatherOverlay = async function() {
                 const T = getNbTheme();
                 let overlay = document.getElementById('neubie-weather-overlay');
@@ -4559,6 +4837,8 @@
 				setTimeout(() => patchDrivingPageLayout(), 1500);
                 setTimeout(() => patchDrivingPageLayout(), 3000);
 				setTimeout(() => patchDrivingPageLayout(), 6000);
+                setTimeout(() => initDriveTheme(), 1500);  
+                setTimeout(() => initDriveTheme(), 3000);
 
                 if (/\/driving\/\d+/.test(location.pathname)) {
                     _startOperatorWatch();
@@ -4602,6 +4882,8 @@
 			setTimeout(() => patchDrivingPageLayout(), 1500);
             setTimeout(() => patchDrivingPageLayout(), 3000);
 			setTimeout(() => patchDrivingPageLayout(), 6000);
+            setTimeout(() => initDriveTheme(), 1500); 
+            setTimeout(() => initDriveTheme(), 3000);
 
             if (/\/driving\/\d+/.test(location.pathname)) {
                 _startOperatorWatch();
@@ -4980,7 +5262,7 @@
 
             if (res.ok) {
                 showHandoverToast('모니터링 기체 업로드 성공', 'success');
-            } else {
+            } else {1
                 showHandoverToast('모니터링 기체 업로드 실패', 'fail');
             }
         } catch (e) {
@@ -4989,6 +5271,7 @@
     }
 
     injectConfigUI();
+    setTimeout(() => initDriveTheme(), 1000);
     
     if (localStorage.getItem('neubie_user_name')) {
         syncTasksFromServer();
