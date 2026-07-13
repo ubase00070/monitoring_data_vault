@@ -53,6 +53,39 @@
         nx: 57, ny: 126,
         proxyUrl: 'https://multimonitoring.vercel.app/api/weather'
     };
+	
+	const REGION_GRID = { 
+        '서울': { nx: 60, ny: 127 }, '강남': { nx: 61, ny: 126 }, '강북': { nx: 61, ny: 128 },
+        '강서': { nx: 58, ny: 126 }, '관악': { nx: 59, ny: 125 }, '마포': { nx: 59, ny: 127 },
+        '송파': { nx: 62, ny: 126 }, '노원': { nx: 61, ny: 130 }, '중구(서울)': { nx: 60, ny: 127 },
+        '인천': { nx: 55, ny: 124 }, '수원': { nx: 60, ny: 121 }, '성남': { nx: 63, ny: 124 },
+        '부천': { nx: 56, ny: 125 }, '고양': { nx: 57, ny: 128 }, '용인': { nx: 64, ny: 119 },
+        '안양': { nx: 59, ny: 123 }, '파주': { nx: 58, ny: 131 }, '화성': { nx: 57, ny: 119 },
+        '광명': { nx: 58, ny: 125 }, '평택': { nx: 62, ny: 114 }, '시흥': { nx: 57, ny: 123 },
+        '군포': { nx: 59, ny: 122 }, '의왕': { nx: 60, ny: 122 }, '하남': { nx: 65, ny: 130 },
+        '남양주': { nx: 64, ny: 133 }, '김포': { nx: 55, ny: 128 }, '광주(경기)': { nx: 65, ny: 125 },
+        '양주': { nx: 61, ny: 133 }, '구리': { nx: 62, ny: 127 }, '안산': { nx: 58, ny: 121 },
+        '이천': { nx: 68, ny: 121 }, '오산': { nx: 62, ny: 118 }, '안성': { nx: 65, ny: 115 },
+        '의정부': { nx: 61, ny: 130 }, '동두천': { nx: 61, ny: 136 }, '가평': { nx: 69, ny: 133 },
+        '양평': { nx: 69, ny: 125 }, '여주': { nx: 71, ny: 121 }, '포천': { nx: 64, ny: 138 },
+        '연천': { nx: 61, ny: 139 }, '과천': { nx: 60, ny: 124 },
+        '춘천': { nx: 73, ny: 134 }, '원주': { nx: 76, ny: 122 }, '강릉': { nx: 92, ny: 131 },
+        '속초': { nx: 87, ny: 141 }, '동해': { nx: 97, ny: 127 }, '삼척': { nx: 98, ny: 125 },
+        '홍천': { nx: 75, ny: 130 }, '태백': { nx: 95, ny: 119 },
+        '대전': { nx: 67, ny: 100 }, '청주': { nx: 69, ny: 106 }, '천안': { nx: 63, ny: 110 },
+        '세종': { nx: 66, ny: 103 }, '충주': { nx: 76, ny: 114 }, '제천': { nx: 81, ny: 118 },
+        '아산': { nx: 60, ny: 110 }, '서산': { nx: 51, ny: 117 }, '보령': { nx: 55, ny: 106 },
+        '논산': { nx: 62, ny: 97 },
+        '전주': { nx: 63, ny: 89 }, '광주(전남)': { nx: 58, ny: 74 }, '군산': { nx: 56, ny: 92 },
+        '익산': { nx: 60, ny: 91 }, '목포': { nx: 50, ny: 67 }, '여수': { nx: 73, ny: 66 },
+        '순천': { nx: 70, ny: 70 }, '나주': { nx: 56, ny: 71 }, '정읍': { nx: 58, ny: 83 },
+        '부산': { nx: 98, ny: 76 }, '대구': { nx: 89, ny: 90 }, '울산': { nx: 102, ny: 84 },
+        '포항': { nx: 102, ny: 94 }, '창원': { nx: 90, ny: 77 }, '진주': { nx: 81, ny: 75 },
+        '구미': { nx: 84, ny: 96 }, '경주': { nx: 100, ny: 91 }, '김해': { nx: 95, ny: 77 },
+        '양산': { nx: 97, ny: 79 }, '거제': { nx: 90, ny: 69 }, '통영': { nx: 87, ny: 68 },
+        '안동': { nx: 91, ny: 106 }, '경산': { nx: 91, ny: 90 },
+        '제주': { nx: 52, ny: 38 }, '서귀포': { nx: 52, ny: 33 },
+    };
 
     const NB_THEMES = {
         light: { bg: '#ece5d4', card: '#f7f2e6', border: '#d9cdb0', text: '#2b2418', accent: '#1e3a5f', purple: '#7c3aed' },
@@ -1123,7 +1156,7 @@
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
 		// 문자열을 넣으면 패치노트에 빨간 '`' 뱃지가 점멸하며 뜸.
 		// 빈 문자열('')로 비우면 뱃지가 사라짐.
-		const PATCH_NOTE_NEW_CONTENT = '';
+		const PATCH_NOTE_NEW_CONTENT = '원격조종 라이트모드_260713';
 		
         const patchBtn = document.createElement('button');
         patchBtn.textContent = '패치노트';
@@ -1188,14 +1221,14 @@
                 const patchItems = [
                     {
                         version: 'v1.3',
-                        date: '2026-07-09',
+                        date: '2026-07-13',
                         items: [
+							'원격조종(테스트버전) 페이지 라이트 모드',
 							'다중 교대기체 자동 업로드(45분에만) / 자동 교대시작 최대 12대',
                             'NCC 원격조종 페이지 구/신버전 기존 기능 및 페이지 대응',
                             '다크/라이트 모드 선택',
                             '룰렛 돌리기 & 동전 던지기 & 개인 메모',
                             '실시간 송내 날씨(기상청 API 데이터)',
-                            '1:1 문의 기능(익명 가능)',
                             '임무 종료된 리센츠/엘스/한성대 페이지 이탈 시 5초 후 자동 사이드',
 							'불규칙 순찰 기체 모니터링 미추가 시 알림 기능',
 							'개입카드 현재 조작자 표기 / 상태 바 재배치(스크롤 제거)',
@@ -1673,7 +1706,7 @@
 
         const weatherCard = document.createElement('div');
         weatherCard.style.cssText = `background:${T.card}; padding:8px 12px; border-radius:15px; border:1px solid ${T.border}; cursor:pointer; display:flex; align-items:center;`;
-        weatherCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">🎨 원격조종 레이아웃 색상 변경</div>`;   // ← 라벨 교체
+        weatherCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">🎨 원격조종 페이지 색상</div>`;   // ← 라벨 교체
         window._neubieWeatherCard = weatherCard;
         weatherCard.onclick = () => {
             const isActive = weatherCard.style.outline !== 'none' && weatherCard.style.outline !== '';
@@ -2060,8 +2093,33 @@
 
 			if (confirmBtn) {
 				confirmBtn.click();
-				setDpMsg('완료! ✅', '#22c55e');
-				return { confirmed: true, checkedUnits };
+				setDpMsg('추가 확인 중...', '#3b82f6');
+
+				// 전부 아니면 전무이므로, 대표로 하나라도 카드가 뜨는지만 확인 (최대 4초)
+				const success = await new Promise(resolve => {
+					const deadline = Date.now() + 4000;
+					const check = () => {
+						const cardNames = [...document.querySelectorAll('.flex.h-full.w-full.items-center.justify-center.overflow-hidden .p-3')]
+							.map(el => el.textContent.trim());
+						const anyAppeared = checkedUnits.some(name => cardNames.some(c => c.includes(name)));
+						if (anyAppeared) {
+							resolve(true);
+						} else if (Date.now() > deadline) {
+							resolve(false);
+						} else {
+							setTimeout(check, 300);
+						}
+					};
+					check();
+				});
+
+				if (success) {
+					setDpMsg('완료! ✅', '#22c55e');
+					return { confirmed: true, checkedUnits };
+				} else {
+					setDpMsg(`거절됨 (이미 모니터링 중 등) — taken 처리 안 함, 다시 시도해주세요`, '#ef4444');
+					return { confirmed: false, checkedUnits: [] };   // ← 실패 시 완전히 빈 배열 반환
+				}
 			} else {
 				setDpMsg('시작하기 버튼을 직접 눌러주세요', '#f59e0b');
 				return { confirmed: false, checkedUnits };
@@ -2326,15 +2384,19 @@
 		const paint = (n) => {
 			n.style.setProperty('background-color', t.card, 'important');
 			n.style.setProperty('border', `1px solid ${t.border}`, 'important');
-			n.style.setProperty('box-shadow', 'none', 'important');   // ← 신규: 로그패널 등 진한 그림자 제거
-			n.style.setProperty('color', t.text, 'important');
+			n.style.setProperty('box-shadow', 'none', 'important');
+			if (!(n.closest && n.closest('.text-warning'))) {
+				n.style.setProperty('color', t.text, 'important');
+			} else {
+				n.style.removeProperty('color');   // ON 전환 시 이전에 박힌 검정을 확실히 제거
+			}
 			n.setAttribute('data-neubie-theme-touched', '1');
 		};
 		paint(el);
 		el.querySelectorAll('*').forEach(c => {
-			// 닫기(X) 버튼처럼 원래부터 강조색(빨강)인 요소는 건드리지 않고 원본 그대로 유지
+			// 닫기(X) 버튼 레드 원본 유지
 			if (c.closest && c.closest('.bg-red-400')) return;
-			
+
 			// 배터리 아이콘 내부 채우기(bg-mono-200) — 카드색이 아니라 글자색(진한 톤)으로. 안 그러면 흰 배경에 묻힘
 			if (typeof c.className === 'string' && c.className.includes('bg-mono-200')) {
 				c.style.setProperty('background-color', t.text, 'important');
@@ -2346,6 +2408,7 @@
 			const m = cs.backgroundColor.match(/rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?\)/);
 			const alpha = m ? (m[4] === undefined ? 1 : parseFloat(m[4])) : 0;
 			const hasGradient = cs.backgroundImage && cs.backgroundImage.includes('gradient');
+			const isWarning = c.closest && c.closest('.text-warning');   // ON 상태(주황) 여부 — 한 번만 계산해 재사용
 
 			if (alpha > 0.15) {
 				paint(c);
@@ -2356,16 +2419,30 @@
 					return isTransparentEnd ? `rgba(${cardRgb}, 0)` : `rgb(${cardRgb})`;
 				});
 				c.style.setProperty('background-image', newBg, 'important');
-				c.style.setProperty('color', t.text, 'important');
+				if (!isWarning) {
+					c.style.setProperty('color', t.text, 'important');
+				} else {
+					c.style.removeProperty('color');
+				}
 				c.setAttribute('data-neubie-theme-touched', '1');
 			} else {
-				c.style.setProperty('color', t.text, 'important');
+				if (!isWarning) {
+					c.style.setProperty('color', t.text, 'important');
+				} else {
+					c.style.removeProperty('color');
+				}
 				c.setAttribute('data-neubie-theme-touched', '1');
 			}
 
+			// 아이콘(svg/path/circle/rect) — 텍스트와 동일한 규칙으로 fill/stroke 처리
 			if (c.tagName === 'svg' || c.tagName === 'path' || c.tagName === 'circle' || c.tagName === 'rect') {
-				c.style.setProperty('fill', t.text, 'important');
-				c.style.setProperty('stroke', t.text, 'important');
+				if (!isWarning) {
+					c.style.setProperty('fill', t.text, 'important');
+					c.style.setProperty('stroke', t.text, 'important');
+				} else {
+					c.style.removeProperty('fill');
+					c.style.removeProperty('stroke');
+				}
 				c.setAttribute('data-neubie-theme-touched', '1');
 			}
 		});
@@ -2430,12 +2507,38 @@
 		});
 		window._logPanelThemeObserver.observe(logPanel, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
 	}
+	
+	function watchToggleButtons() {
+		if (window._toggleThemeObservers) {
+			window._toggleThemeObservers.forEach(obs => obs.disconnect());
+		}
+		window._toggleThemeObservers = [];
+
+		let selfWriting = false;
+		const targets = ['헤드램프', '게임패드', '자동정지', '적재함'];
+		targets.forEach(label => {
+			const card = driveThemeFindByText(label);
+			if (!card) return;
+			const obs = new MutationObserver(() => {
+				if (selfWriting) return;
+				const saved = localStorage.getItem(DRIVE_THEME_KEY) || 'dark';
+				if (saved !== 'light') return;
+
+				selfWriting = true;
+				driveThemeMark(card, DRIVE_THEMES.light);
+				requestAnimationFrame(() => { selfWriting = false; });
+			});
+			obs.observe(card, { subtree: true, attributes: true, attributeFilter: ['class'] });
+			window._toggleThemeObservers.push(obs);
+		});
+	}
 
 	function clearDriveTheme() {
 		document.getElementById('neubie-drive-theme-style')?.remove();
 		if (window._soundInputThemeObserver) { window._soundInputThemeObserver.disconnect(); window._soundInputThemeObserver = null; }
         if (window._missionThemeObserver) { window._missionThemeObserver.disconnect(); window._missionThemeObserver = null; } 
 		if (window._logPanelThemeObserver) { window._logPanelThemeObserver.disconnect(); window._logPanelThemeObserver = null; }
+		if (window._toggleThemeObservers) { window._toggleThemeObservers.forEach(obs => obs.disconnect()); window._toggleThemeObservers = null; }
 		document.querySelectorAll('[data-neubie-theme-touched]').forEach(el => {
 			el.style.removeProperty('background-color');
 			el.style.removeProperty('background-image');
@@ -2443,6 +2546,8 @@
 			el.style.removeProperty('border-bottom');
 			el.style.removeProperty('box-shadow');
 			el.style.removeProperty('color');
+			el.style.removeProperty('fill');  
+			el.style.removeProperty('stroke');
 			el.removeAttribute('data-neubie-theme-touched');
 		});
 	}
@@ -2462,6 +2567,7 @@
 		document.head.appendChild(style);
 
 		DRIVE_TARGETS.forEach(label => driveThemeMark(driveThemeFindByText(label), t));
+		watchToggleButtons();
 		const inputEl = document.querySelector('input[placeholder="문장 입력 송출"]');
 		if (inputEl) driveThemeMark(driveThemeClimb(inputEl), t);
         watchSoundInputCard();
@@ -4219,10 +4325,10 @@
                 overlay.innerHTML = `
                     <div style="background:${T.card}; color:${T.text}; border-radius:16px; padding:20px; width:min(90vw,360px); box-shadow:0 4px 40px rgba(0,0,0,0.7); pointer-events:auto;">
                         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-                            <span style="font-size:16px;font-weight:700;">🎨 원격조종 레이아웃 색상 변경</span>
+                            <span style="font-size:16px;font-weight:700;">🎨 원격조종 페이지 색상</span>
                             <button id="dto-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
                         </div>
-                        <div style="font-size:12px;color:#94a3b8;margin-bottom:12px;">기체 원격조종(신형) 화면 배경을 바꿉니다. 이 브라우저에만 저장되며, 다른 화면에는 영향 없습니다.</div>
+                        <div style="font-size:12px;color:#94a3b8;margin-bottom:12px;">원격조종(테스트버전) 화면 배경을 바꿉니다. 해당 형태의 페이지에서만 적용됩니다.</div>
                         <div style="display:flex; flex-direction:column; gap:8px;">
                             <button data-dt="dark" style="padding:10px; border-radius:8px; border:1px solid ${current==='dark'?'#4f8ef7':T.border}; background:${current==='dark'?'#1e3a8a33':'transparent'}; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🌙 원본 (다크)</button>
                             <button data-dt="light" style="padding:10px; border-radius:8px; border:1px solid ${current==='light'?'#4f8ef7':T.border}; background:${current==='light'?'#1e3a8a33':'transparent'}; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">☀️ 라이트</button>
@@ -4230,7 +4336,10 @@
                         <div style="font-size:11px;color:#64748b;margin-top:10px;">추후 다른 색상 테마도 여기에 추가될 예정입니다.</div>
                     </div>
                 `;
-                overlay.querySelector('#dto-close').onclick = () => overlay.style.display = 'none';
+                overlay.querySelector('#dto-close').onclick = () => {
+                    overlay.style.display = 'none';
+                    if (window._neubieWeatherCard) window._neubieWeatherCard.style.outline = 'none';   // ← 추가
+                };
                 overlay.querySelectorAll('[data-dt]').forEach(btn => {
                     btn.onclick = () => {
                         const key = btn.dataset.dt;
@@ -4267,9 +4376,20 @@
                         </div>
                     </div>
                 `;
-                overlay.querySelector('#mto-close').onclick = () => overlay.style.display = 'none';
-                overlay.querySelector('#mto-weather').onclick = () => { overlay.style.display = 'none'; openWeatherOverlay(); };
-                overlay.querySelector('#mto-roulette').onclick = () => { overlay.style.display = 'none'; openRouletteOverlay(); };
+                overlay.querySelector('#mto-close').onclick = () => {
+                    overlay.style.display = 'none';
+                    if (window._neubieRouletteCard) window._neubieRouletteCard.style.outline = 'none';   // ← 추가
+                };
+                overlay.querySelector('#mto-weather').onclick = () => {
+                    overlay.style.display = 'none';
+                    if (window._neubieRouletteCard) window._neubieRouletteCard.style.outline = 'none';   // ← 추가
+                    openWeatherOverlay();
+                };
+                overlay.querySelector('#mto-roulette').onclick = () => {
+                    overlay.style.display = 'none';
+                    if (window._neubieRouletteCard) window._neubieRouletteCard.style.outline = 'none';   // ← 추가
+                    openRouletteOverlay();
+                };
             };
 
             window.openWeatherOverlay = async function() {
@@ -4311,8 +4431,8 @@
                 renderWeather(overlay);
             };
 
-            async function renderWeather(overlay) {
-                const data = await fetchWeatherReal(); // TODO: 실제 API 연결 시 await fetch(...)
+            async function renderWeather(overlay, nx = WEATHER_CONFIG.nx, ny = WEATHER_CONFIG.ny, label = '송내') {
+                const data = await fetchWeatherReal(nx, ny);
                 const body = overlay.querySelector('#nwo-body');
 
                 const hourlyHtml = data.hourly.map((h, i) => `
@@ -4331,14 +4451,26 @@
                         <div style="font-size:11px;color:${d.pop > 0 ? '#4f8ef7' : '#64748b'};margin-top:2px;">${d.pop > 0 ? '강수 ' + d.pop + '%' : '강수 없음'}</div>
                     </div>`).join('');
 
+                const favs = JSON.parse(localStorage.getItem('neubie_weather_favs') || '[]');
+                const favChips = favs.map(f => `<button class="nwo-fav-chip" data-nx="${f.nx}" data-ny="${f.ny}" data-label="${f.label}" style="padding:4px 10px;border-radius:12px;border:1px solid #333;background:${f.label===label?'#1e3a5f':'transparent'};color:#e2e8f0;font-size:11px;cursor:pointer;">${f.label} ✕</button>`).join('');
+
                 body.innerHTML = `
+                    <div style="display:flex;gap:6px;margin-bottom:10px;align-items:center;">
+                        <input id="nwo-search" placeholder="지역 검색 (예: 파주)" style="flex:1;padding:6px 10px;border-radius:8px;border:1px solid #333;background:#1a1c24;color:#e2e8f0;font-size:12px;">
+                        <button id="nwo-search-btn" style="padding:6px 12px;border-radius:8px;border:none;background:#4f8ef7;color:#fff;font-size:12px;cursor:pointer;">검색</button>
+                    </div>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+                        <button class="nwo-fav-chip" data-nx="${WEATHER_CONFIG.nx}" data-ny="${WEATHER_CONFIG.ny}" data-label="송내" style="padding:4px 10px;border-radius:12px;border:1px solid #333;background:${label==='송내'?'#1e3a5f':'transparent'};color:#e2e8f0;font-size:11px;cursor:pointer;">📍 송내</button>
+                        ${favChips}
+                    </div>
                     <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
                         <div style="font-size:24px;">${data.current.icon}</div>
                         <div>
-                            <div style="font-size:11px;color:#94a3b8;margin-bottom:2px;">오늘 · ${data.updatedAt.getMonth()+1}/${data.updatedAt.getDate()}(${['일','월','화','수','목','금','토'][data.updatedAt.getDay()]})</div>
+                            <div style="font-size:11px;color:#94a3b8;margin-bottom:2px;">${label} · ${data.updatedAt.getMonth()+1}/${data.updatedAt.getDate()}(${['일','월','화','수','목','금','토'][data.updatedAt.getDay()]})</div>
                             <div style="font-size:22px;font-weight:700;line-height:1.1;">${data.current.temp}°</div>
                             <div style="font-size:11px;color:#64748b;">${data.updatedAt.toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit', hour12:false})} 기준</div>
                         </div>
+                        ${label !== '송내' ? `<button id="nwo-add-fav" style="margin-left:auto;padding:5px 10px;border-radius:8px;border:1px solid #f59e0b;background:transparent;color:#f59e0b;font-size:11px;cursor:pointer;">⭐ 즐겨찾기 추가</button>` : ''}
                     </div>
                     <div style="display:flex;gap:4px;margin-bottom:10px;">${hourlyHtml}</div>
                     <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;">
@@ -4348,6 +4480,35 @@
                     </div>
                     <div style="border-top:1px solid #2e3347;padding-top:10px;display:flex;gap:8px;">${dailyHtml}</div>
                 `;
+
+                const doSearch = () => {
+                    const raw = body.querySelector('#nwo-search').value.trim();
+                    const q = raw.replace(/(특별시|광역시|특별자치시|특별자치도|도|시|군|구)$/g, '').trim();
+                    const match = Object.keys(REGION_GRID).find(k => {
+                        const key = k.replace(/\(.+\)/, '');
+                        return key.includes(q) || q.includes(key);
+                    });
+                    if (!match) { alert('해당 지역을 찾을 수 없습니다. (시/군 단위로 검색해주세요)'); return; }
+                    renderWeather(overlay, REGION_GRID[match].nx, REGION_GRID[match].ny, match.replace(/\(.+\)/, ''));
+                };
+                body.querySelector('#nwo-search-btn').onclick = doSearch;
+                body.querySelector('#nwo-search').onkeydown = (e) => { if (e.key === 'Enter') doSearch(); };
+
+                body.querySelectorAll('.nwo-fav-chip').forEach(chip => {
+                    chip.onclick = () => renderWeather(overlay, Number(chip.dataset.nx), Number(chip.dataset.ny), chip.dataset.label);
+                });
+
+                const addFavBtn = body.querySelector('#nwo-add-fav');
+                if (addFavBtn) {
+                    addFavBtn.onclick = () => {
+                        const favs = JSON.parse(localStorage.getItem('neubie_weather_favs') || '[]');
+                        if (!favs.some(f => f.label === label)) {
+                            favs.push({ nx, ny, label });
+                            localStorage.setItem('neubie_weather_favs', JSON.stringify(favs));
+                        }
+                        renderWeather(overlay, nx, ny, label);
+                    };
+                }
             }
 
             function formatDailyLabel(dateStr) {
@@ -4356,8 +4517,8 @@
                 return `${m}/${d}(${dow})`;
             }
 
-            async function fetchWeatherReal() {
-                const res = await fetch(WEATHER_CONFIG.proxyUrl);
+            async function fetchWeatherReal(nx = WEATHER_CONFIG.nx, ny = WEATHER_CONFIG.ny) {
+                const res = await fetch(`${WEATHER_CONFIG.proxyUrl}?nx=${nx}&ny=${ny}`);
                 const data = await res.json();
                 data.updatedAt = new Date(data.updatedAt);
                 return data;
