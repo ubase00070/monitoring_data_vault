@@ -2231,88 +2231,88 @@
           "raw": "휴무"
         },
         "7/18": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "7/19": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "7/20": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": "파견"
         },
         "7/21": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": "파견"
         },
         "7/22": {
-          "status": "off",
+          "status": "empty",
           "working": false,
           "present": false,
-          "raw": "휴무"
+          "raw": "파견"
         },
         "7/23": {
-          "status": "off",
+          "status": "empty",
           "working": false,
           "present": false,
-          "raw": "휴무"
+          "raw": "파견"
         },
         "7/24": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": "파견"
         },
         "7/25": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "7/26": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "7/27": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": "파견"
         },
         "7/28": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": "파견"
         },
         "7/29": {
-          "status": "off",
+          "status": "empty",
           "working": false,
           "present": false,
-          "raw": "휴무"
+          "raw": "파견"
         },
         "7/30": {
-          "status": "off",
+          "status": "empty",
           "working": false,
           "present": false,
-          "raw": "휴무"
+          "raw": "파견"
         },
         "7/31": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": "파견"
         }
       }
     },
@@ -7128,16 +7128,16 @@
           "raw": "1"
         },
         "7/30": {
-          "status": "work",
+          "status": "annual",
           "working": true,
-          "present": true,
-          "raw": "1"
+          "present": false,
+          "raw": "연차"
         },
         "7/31": {
-          "status": "work",
+          "status": "annual",
           "working": true,
-          "present": true,
-          "raw": "1"
+          "present": false,
+          "raw": "연차"
         }
       }
     },
@@ -8141,6 +8141,6 @@
     "7/31"
   ],
   "mainMonth": 7,
-  "updatedAt": "2026-07-12T03:53:06.338Z",
+  "updatedAt": "2026-07-13T03:53:06.486Z",
   "sheetName": "2026년_07월 스케줄"
 }
