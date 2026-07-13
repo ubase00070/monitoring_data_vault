@@ -1710,6 +1710,8 @@
 		if (driveThemeOverlay) driveThemeOverlay.style.display = 'none';
 		const moreToolsOverlay = document.getElementById('neubie-moretools-overlay');
 		if (moreToolsOverlay) moreToolsOverlay.style.display = 'none';
+        const gamepadGuideOverlay = document.getElementById('neubie-gamepad-guide-overlay'); 
+		if (gamepadGuideOverlay) gamepadGuideOverlay.style.display = 'none';
     }
 
     // ── 유효성 검증 (1시간 이내 데이터) ──
@@ -4547,8 +4549,8 @@
                             </div>
                         </div>
                         <img src="https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/xbox_binding.png"
-                             width="640"
-                             style="border-radius:8px; display:block; height:auto;" />
+                             width="960" height="540"
+                             style="border-radius:8px; display:block; max-width:90vw; max-height:80vh;" />
                     </div>
                 `;
                 overlay.querySelector('#gp-toggle').onclick = () => {
