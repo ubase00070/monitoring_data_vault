@@ -533,6 +533,10 @@
             #neubie-moretools-overlay, #neubie-moretools-overlay * {
                 font-family: 'Paperlogy', 'Pretendard', 'Noto Sans KR', sans-serif !important;
             }
+
+            #nso-seat-grid, #nso-seat-grid * {
+                font-family: 'Pretendard', 'Noto Sans KR', sans-serif !important;
+            }
         `;
         document.head.appendChild(st);
     })();
@@ -1133,7 +1137,7 @@
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
 		// 문자열을 넣으면 패치노트에 빨간 '`' 뱃지가 점멸하며 뜸.
 		// 빈 문자열('')로 비우면 뱃지가 사라짐.
-		const PATCH_NOTE_NEW_CONTENT = '원격조종 라이트모드_260713';
+		const PATCH_NOTE_NEW_CONTENT = '전반적 개선 260714';
 		
         const patchBtn = document.createElement('button');
         patchBtn.textContent = '패치노트';
@@ -2263,6 +2267,14 @@
 		return NEUBIE_HOSTS.some(h => location.href.includes(`${h}/ko/remote/robot/`)) && location.href.includes('/new');
 	}
 
+    // 게임패드 커스텀 바인딩 — 명시적으로 켜거나 끈 적이 없으면 이름으로 기본값 결정 ('오정훈'만 기본 OFF)
+	function isDpadBindingOff() {
+		const stored = localStorage.getItem('neubie_dpad_binding');
+		if (stored === 'off') return true;
+		if (stored === 'on') return false;
+		return (localStorage.getItem('neubie_user_name') || '') === '오정훈';
+	}
+
     /* ============================================================
 	   SECTION 기체 원격조종(/new) 레이아웃 색상 테마
 	   ============================================================ */
@@ -2886,6 +2898,7 @@
                     <span style="font-size:15px; font-weight:600; color:#fff; flex:1;"><span class="nb-emoji">📋</span> NCC 게시판</span>
                     <button id="nb-secret-inline-btn" style="height:28px; padding:0 10px; font-size:12px; font-weight:500; background:transparent; border:1px solid #a78bfa; color:#a78bfa; border-radius:6px; cursor:pointer;">🔒 문의</button>
                     <button id="nb-tips-btn" style="height:28px; padding:0 10px; font-size:12px; font-weight:500; background:#f59e0b; color:#1a1a1a; border:none; border-radius:6px; cursor:pointer;" title="최적화 팁">💡 최적화 팁</button>
+                    <button id="nb-gamepad-btn" style="height:28px; padding:0 10px; font-size:12px; font-weight:500; background:transparent; border:1px solid #4f8ef7; color:#4f8ef7; border-radius:6px; cursor:pointer;" title="게임패드 커스텀">🎮 게임패드</button>
                     <button id="nb-refresh-btn" style="height:28px; width:28px; background:rgba(255,255,255,0.1); color:white; border:none; border-radius:6px; cursor:pointer; font-size:14px;" title="새로고침">↺</button>
 					<button id="nb-write-btn" style="height:28px; padding:0 12px; font-size:12px; font-weight:500; background:#6366f1; color:white; border:none; border-radius:6px; cursor:pointer;">✏️ 글쓰기</button>
                     <button id="nb-board-close" style="background:rgba(255,255,255,0.1); border:none; color:#fff; width:26px; height:26px; border-radius:50%; cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center;">✕</button>
@@ -2996,6 +3009,7 @@
 			document.getElementById('nb-refresh-btn').onclick = () => loadPosts();
             document.getElementById('nb-secret-inline-btn').onclick = () => openSecretOverlay();
             document.getElementById('nb-tips-btn').onclick = () => openTipsOverlay();
+            document.getElementById('nb-gamepad-btn').onclick = () => openGamepadGuideOverlay();
             document.getElementById('nb-write-btn').onclick = () => {
                 if (!myEmail) return alert('로그인 정보가 없어 글쓰기가 불가합니다.');
                 showWriteScreen();
@@ -4276,7 +4290,7 @@
                     btn.onclick = () => {
                         const next = btn.dataset.nbt;
                         localStorage.setItem('neubie_theme', next);
-                        ['neubie-weather-overlay', 'neubie-roulette-overlay', 'neubie-tips-overlay', 'neubie-patch-overlay', 'neubie-secret-overlay', 'neubie-map-info-overlay', 'neubie-queue-info-overlay', 'neubie-moretools-overlay'].forEach(id => {
+                        ['neubie-weather-overlay', 'neubie-roulette-overlay', 'neubie-tips-overlay', 'neubie-patch-overlay', 'neubie-secret-overlay', 'neubie-map-info-overlay', 'neubie-queue-info-overlay', 'neubie-moretools-overlay', 'neubie-gamepad-guide-overlay'].forEach(id => {
                             const el = document.getElementById(id);
                             if (el) el.remove();
                         });
@@ -4507,6 +4521,44 @@
                 return data;
             }
 
+            window.openGamepadGuideOverlay = function() {
+                const isOff = isDpadBindingOff();
+                let overlay = document.getElementById('neubie-gamepad-guide-overlay');
+
+                if (!overlay) {
+                    overlay = document.createElement('div');
+                    overlay.id = 'neubie-gamepad-guide-overlay';
+                    overlay.style.cssText = `
+                        position:fixed; inset:0; z-index:2147483646;
+                        display:flex; align-items:center; justify-content:center;
+                        font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif; pointer-events:none;
+                    `;
+                    document.body.appendChild(overlay);
+                }
+                overlay.style.display = 'flex';
+                overlay.innerHTML = `
+                    <div style="background:#1e1e2e; color:#e2e8f0; border-radius:16px; padding:16px; max-width:92vw; max-height:90vh; box-shadow:0 10px 50px rgba(0,0,0,0.7); pointer-events:auto; display:flex; flex-direction:column;">
+                        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; gap:10px;">
+                            <span style="font-size:16px; font-weight:700;">🎮 게임패드 커스텀</span>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <button id="gp-toggle" style="padding:6px 14px; border-radius:8px; border:1px solid ${isOff ? '#ef4444' : '#22c55e'}; background:${isOff ? 'rgba(239,68,68,0.15)' : 'rgba(34,197,94,0.15)'}; color:${isOff ? '#ef4444' : '#22c55e'}; font-weight:700; font-size:13px; cursor:pointer;">${isOff ? 'OFF' : 'ON'}</button>
+                                <button id="gp-close" style="width:28px; height:28px; border:none; border-radius:5px; background:#3b0000; border:1px solid #ef4444; color:#ef4444; font-size:16px; cursor:pointer;">✕</button>
+                            </div>
+                        </div>
+                        <img src="https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/xbox_binding.png"
+                             style="max-width:100%; max-height:75vh; width:auto; height:auto; border-radius:8px; display:block;" />
+                    </div>
+                `;
+                overlay.querySelector('#gp-toggle').onclick = () => {
+                    if (isDpadBindingOff()) {
+                        localStorage.setItem('neubie_dpad_binding', 'on');    // ← removeItem 대신 명시적 'on' 저장
+                    } else {
+                        localStorage.setItem('neubie_dpad_binding', 'off');
+                    }
+                    openGamepadGuideOverlay();
+                };
+            };
+
             window.openTipsOverlay = function() {
                 const T = getNbTheme();
                 const dashboardEl = document.getElementById('neubie-dashboard');
@@ -4529,31 +4581,6 @@
                     const tipsTitle = document.createElement('div');
                     tipsTitle.textContent = '최적화 팁';
                     tipsTitle.style.cssText = `font-size:20px; font-weight:bold; margin-bottom:20px; color:#fcd34d; cursor:pointer;`;
-
-                    const padIndicator = document.createElement('span');
-                    padIndicator.style.cssText = 'font-size:12px;color:#ef4444;margin-left:8px;font-weight:700;';
-                    padIndicator.textContent = '패드기능 OFF';
-                    padIndicator.style.display = localStorage.getItem('neubie_dpad_binding')==='off' ? 'inline' : 'none';
-                    tipsTitle.appendChild(padIndicator);
-
-                    let tipClickCount = 0;
-                    let tipClickTimer = null;
-                    tipsTitle.addEventListener('click', () => {
-                    tipClickCount++;
-                    clearTimeout(tipClickTimer);
-                    tipClickTimer = setTimeout(() => { tipClickCount = 0; }, 2000);
-                    if(tipClickCount >= 5){
-                        tipClickCount = 0;
-                        clearTimeout(tipClickTimer);
-                        if(localStorage.getItem('neubie_dpad_binding')==='off'){
-                        localStorage.removeItem('neubie_dpad_binding');
-                        padIndicator.style.display='none';
-                        } else {
-                        localStorage.setItem('neubie_dpad_binding','off');
-                        padIndicator.style.display='inline';
-                        }
-                    }
-                    });
 
                     const tipsClose = document.createElement('button');
                     tipsClose.textContent = '✕';
@@ -5289,7 +5316,7 @@
         };
 	
 	    setInterval(() => {
-			if(localStorage.getItem('neubie_dpad_binding')==='off') return;
+			if(isDpadBindingOff()) return;
 	        const gp = navigator.getGamepads()[0];
 	        if (!gp) return;
 	        const isDrivingPage = location.href.includes('/remote/multiple/driving/')
