@@ -53,6 +53,39 @@
         nx: 57, ny: 126,
         proxyUrl: 'https://multimonitoring.vercel.app/api/weather'
     };
+	
+	const REGION_GRID = { 
+        '서울': { nx: 60, ny: 127 }, '강남': { nx: 61, ny: 126 }, '강북': { nx: 61, ny: 128 },
+        '강서': { nx: 58, ny: 126 }, '관악': { nx: 59, ny: 125 }, '마포': { nx: 59, ny: 127 },
+        '송파': { nx: 62, ny: 126 }, '노원': { nx: 61, ny: 130 }, '중구(서울)': { nx: 60, ny: 127 },
+        '인천': { nx: 55, ny: 124 }, '수원': { nx: 60, ny: 121 }, '성남': { nx: 63, ny: 124 },
+        '부천': { nx: 56, ny: 125 }, '고양': { nx: 57, ny: 128 }, '용인': { nx: 64, ny: 119 },
+        '안양': { nx: 59, ny: 123 }, '파주': { nx: 58, ny: 131 }, '화성': { nx: 57, ny: 119 },
+        '광명': { nx: 58, ny: 125 }, '평택': { nx: 62, ny: 114 }, '시흥': { nx: 57, ny: 123 },
+        '군포': { nx: 59, ny: 122 }, '의왕': { nx: 60, ny: 122 }, '하남': { nx: 65, ny: 130 },
+        '남양주': { nx: 64, ny: 133 }, '김포': { nx: 55, ny: 128 }, '광주(경기)': { nx: 65, ny: 125 },
+        '양주': { nx: 61, ny: 133 }, '구리': { nx: 62, ny: 127 }, '안산': { nx: 58, ny: 121 },
+        '이천': { nx: 68, ny: 121 }, '오산': { nx: 62, ny: 118 }, '안성': { nx: 65, ny: 115 },
+        '의정부': { nx: 61, ny: 130 }, '동두천': { nx: 61, ny: 136 }, '가평': { nx: 69, ny: 133 },
+        '양평': { nx: 69, ny: 125 }, '여주': { nx: 71, ny: 121 }, '포천': { nx: 64, ny: 138 },
+        '연천': { nx: 61, ny: 139 }, '과천': { nx: 60, ny: 124 },
+        '춘천': { nx: 73, ny: 134 }, '원주': { nx: 76, ny: 122 }, '강릉': { nx: 92, ny: 131 },
+        '속초': { nx: 87, ny: 141 }, '동해': { nx: 97, ny: 127 }, '삼척': { nx: 98, ny: 125 },
+        '홍천': { nx: 75, ny: 130 }, '태백': { nx: 95, ny: 119 },
+        '대전': { nx: 67, ny: 100 }, '청주': { nx: 69, ny: 106 }, '천안': { nx: 63, ny: 110 },
+        '세종': { nx: 66, ny: 103 }, '충주': { nx: 76, ny: 114 }, '제천': { nx: 81, ny: 118 },
+        '아산': { nx: 60, ny: 110 }, '서산': { nx: 51, ny: 117 }, '보령': { nx: 55, ny: 106 },
+        '논산': { nx: 62, ny: 97 },
+        '전주': { nx: 63, ny: 89 }, '광주(전남)': { nx: 58, ny: 74 }, '군산': { nx: 56, ny: 92 },
+        '익산': { nx: 60, ny: 91 }, '목포': { nx: 50, ny: 67 }, '여수': { nx: 73, ny: 66 },
+        '순천': { nx: 70, ny: 70 }, '나주': { nx: 56, ny: 71 }, '정읍': { nx: 58, ny: 83 },
+        '부산': { nx: 98, ny: 76 }, '대구': { nx: 89, ny: 90 }, '울산': { nx: 102, ny: 84 },
+        '포항': { nx: 102, ny: 94 }, '창원': { nx: 90, ny: 77 }, '진주': { nx: 81, ny: 75 },
+        '구미': { nx: 84, ny: 96 }, '경주': { nx: 100, ny: 91 }, '김해': { nx: 95, ny: 77 },
+        '양산': { nx: 97, ny: 79 }, '거제': { nx: 90, ny: 69 }, '통영': { nx: 87, ny: 68 },
+        '안동': { nx: 91, ny: 106 }, '경산': { nx: 91, ny: 90 },
+        '제주': { nx: 52, ny: 38 }, '서귀포': { nx: 52, ny: 33 },
+    };
 
     const NB_THEMES = {
         light: { bg: '#ece5d4', card: '#f7f2e6', border: '#d9cdb0', text: '#2b2418', accent: '#1e3a5f', purple: '#7c3aed' },
@@ -1195,7 +1228,7 @@
                             'NCC 원격조종 페이지 구/신버전 기존 기능 및 페이지 대응',
                             '다크/라이트 모드 선택',
                             '룰렛 돌리기 & 동전 던지기 & 개인 메모',
-                            '실시간 송내 날씨(기상청 API 데이터)',
+                            '실시간 날씨(지역검색 가능 / 기상청 API 데이터)',
                             '임무 종료된 리센츠/엘스/한성대 페이지 이탈 시 5초 후 자동 사이드',
 							'불규칙 순찰 기체 모니터링 미추가 시 알림 기능',
 							'개입카드 현재 조작자 표기 / 상태 바 재배치(스크롤 제거)',
@@ -1639,7 +1672,7 @@
 
         const rouletteCard = document.createElement('div');
         rouletteCard.style.cssText = `background:${T.card}; padding:8px 12px; border-radius:15px; border:1px solid ${T.border}; cursor:pointer; display:flex; align-items:center;`;
-        rouletteCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">🌤️ 날씨 & 룰렛 & 기타</div>`;   // ← 라벨만 교체
+        rouletteCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">🌤️ 날씨 & 룰렛 & 기타</div>`; 
         window._neubieRouletteCard = rouletteCard;
         rouletteCard.onclick = () => {
             const isActive = rouletteCard.style.outline !== 'none' && rouletteCard.style.outline !== '';
@@ -3959,7 +3992,7 @@
                       const n1v=box.querySelector('#nso-name1').value.trim();
                       b.textContent=st==='half'?`${n1v}(반차)`:st==='half-half'?`${n1v}(반반차)`:
                         isOff1&&st==='annual'?`${n1v}(연차)`:
-                        isOff1&&st==='public'?`${n1v}(공가)`:
+                        isOff1&&st==='public'?`${n1v}(공가)`:n1v;
                         isOff1&&st==='dispatch'?`${n1v}(파견)`:n1v;
                       el.appendChild(b);
                     }
@@ -3974,7 +4007,7 @@
                       const n2v=box.querySelector('#nso-name2').value.trim();
                       b.textContent=st==='half'?`${n2v}(반차)`:st==='half-half'?`${n2v}(반반차)`:
                         isOff2&&st==='annual'?`${n2v}(연차)`:
-                        isOff2&&st==='public'?`${n2v}(공가)`:
+                        isOff2&&st==='public'?`${n2v}(공가)`:n2v;
                         isOff2&&st==='dispatch'?`${n2v}(파견)`:n2v;
                       el.appendChild(b);
                     }
@@ -4340,7 +4373,7 @@
                             <button id="mto-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
                         </div>
                         <div style="display:flex; flex-direction:column; gap:8px;">
-                            <button id="mto-weather" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🌤️ 송내 현재 날씨 (기상청 API)</button>
+                            <button id="mto-weather" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🌤️ 실시간 날씨 (기상청 API)</button>
                             <button id="mto-roulette" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🎡 룰렛 & 동전 & 메모</button>
                         </div>
                     </div>
@@ -4382,10 +4415,12 @@
                     width:min(96vw,720px);
                     box-shadow:0 4px 40px rgba(0,0,0,0.7);
                     pointer-events:auto;
+                    transform: scale(1.25);
+                    transform-origin: top center;
                 `;
                 box.innerHTML = `
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-                        <span style="font-size:18px;font-weight:700;color:#4f8ef7;">🌤️ 송내 현재 날씨 (기상청 API)</span>
+                        <span style="font-size:18px;font-weight:700;color:#4f8ef7;">🌤️ 실시간 날씨 (기상청 API)</span>
                         <button id="nwo-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
                     </div>
                     <div id="nwo-body" style="font-size:13px;color:#64748b;">불러오는 중...</div>
@@ -4400,9 +4435,11 @@
                 renderWeather(overlay);
             };
 
-            async function renderWeather(overlay) {
-                const data = await fetchWeatherReal(); // TODO: 실제 API 연결 시 await fetch(...)
+            async function renderWeather(overlay, nx = WEATHER_CONFIG.nx, ny = WEATHER_CONFIG.ny, label = '송내') {
                 const body = overlay.querySelector('#nwo-body');
+                if (body) body.innerHTML = `<div style="text-align:center;padding:30px;color:#64748b;">${label} 날씨 불러오는 중...</div>`;
+				
+				const data = await fetchWeatherReal(nx, ny);
 
                 const hourlyHtml = data.hourly.map((h, i) => `
                     <div style="flex:1;min-width:0;text-align:center;padding:6px 0;${i < 6 ? 'opacity:1;' : 'opacity:0.65;'}${i === 0 ? 'background:#1e3a5f;border-radius:8px;' : ''}">
@@ -4420,14 +4457,26 @@
                         <div style="font-size:11px;color:${d.pop > 0 ? '#4f8ef7' : '#64748b'};margin-top:2px;">${d.pop > 0 ? '강수 ' + d.pop + '%' : '강수 없음'}</div>
                     </div>`).join('');
 
+                const favs = JSON.parse(localStorage.getItem('neubie_weather_favs') || '[]');
+                const favChips = favs.map(f => `<button class="nwo-fav-chip" data-nx="${f.nx}" data-ny="${f.ny}" data-label="${f.label}" style="padding:4px 10px;border-radius:12px;border:1px solid #333;background:${f.label===label?'#1e3a5f':'transparent'};color:#e2e8f0;font-size:11px;cursor:pointer;">${f.label} ✕</button>`).join('');
+
                 body.innerHTML = `
+                    <div style="display:flex;gap:6px;margin-bottom:10px;align-items:center;">
+                        <input id="nwo-search" placeholder="지역 검색 (예: 파주)" style="flex:1;padding:6px 10px;border-radius:8px;border:1px solid #333;background:#1a1c24;color:#e2e8f0;font-size:12px;">
+                        <button id="nwo-search-btn" style="padding:6px 12px;border-radius:8px;border:none;background:#4f8ef7;color:#fff;font-size:12px;cursor:pointer;">검색</button>
+                    </div>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+                        <button class="nwo-fav-chip" data-nx="${WEATHER_CONFIG.nx}" data-ny="${WEATHER_CONFIG.ny}" data-label="송내" style="padding:4px 10px;border-radius:12px;border:1px solid #333;background:${label==='송내'?'#1e3a5f':'transparent'};color:#e2e8f0;font-size:11px;cursor:pointer;">📍 송내</button>
+                        ${favChips}
+                    </div>
                     <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
                         <div style="font-size:24px;">${data.current.icon}</div>
                         <div>
-                            <div style="font-size:11px;color:#94a3b8;margin-bottom:2px;">오늘 · ${data.updatedAt.getMonth()+1}/${data.updatedAt.getDate()}(${['일','월','화','수','목','금','토'][data.updatedAt.getDay()]})</div>
+                            <div style="font-size:11px;color:#94a3b8;margin-bottom:2px;">${label} · ${data.updatedAt.getMonth()+1}/${data.updatedAt.getDate()}(${['일','월','화','수','목','금','토'][data.updatedAt.getDay()]})</div>
                             <div style="font-size:22px;font-weight:700;line-height:1.1;">${data.current.temp}°</div>
                             <div style="font-size:11px;color:#64748b;">${data.updatedAt.toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit', hour12:false})} 기준</div>
                         </div>
+                        ${label !== '송내' ? `<button id="nwo-add-fav" style="margin-left:auto;padding:5px 10px;border-radius:8px;border:1px solid #f59e0b;background:transparent;color:#f59e0b;font-size:11px;cursor:pointer;">⭐ 즐겨찾기 추가</button>` : ''}
                     </div>
                     <div style="display:flex;gap:4px;margin-bottom:10px;">${hourlyHtml}</div>
                     <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;">
@@ -4437,6 +4486,35 @@
                     </div>
                     <div style="border-top:1px solid #2e3347;padding-top:10px;display:flex;gap:8px;">${dailyHtml}</div>
                 `;
+
+                const doSearch = () => {
+                    const raw = body.querySelector('#nwo-search').value.trim();
+                    const q = raw.replace(/(특별시|광역시|특별자치시|특별자치도|도|시|군|구)$/g, '').trim();
+                    const match = Object.keys(REGION_GRID).find(k => {
+                        const key = k.replace(/\(.+\)/, '');
+                        return key.includes(q) || q.includes(key);
+                    });
+                    if (!match) { alert('해당 지역을 찾을 수 없습니다. (시/군 단위로 검색해주세요)'); return; }
+                    renderWeather(overlay, REGION_GRID[match].nx, REGION_GRID[match].ny, match.replace(/\(.+\)/, ''));
+                };
+                body.querySelector('#nwo-search-btn').onclick = doSearch;
+                body.querySelector('#nwo-search').onkeydown = (e) => { if (e.key === 'Enter') doSearch(); };
+
+                body.querySelectorAll('.nwo-fav-chip').forEach(chip => {
+                    chip.onclick = () => renderWeather(overlay, Number(chip.dataset.nx), Number(chip.dataset.ny), chip.dataset.label);
+                });
+
+                const addFavBtn = body.querySelector('#nwo-add-fav');
+                if (addFavBtn) {
+                    addFavBtn.onclick = () => {
+                        const favs = JSON.parse(localStorage.getItem('neubie_weather_favs') || '[]');
+                        if (!favs.some(f => f.label === label)) {
+                            favs.push({ nx, ny, label });
+                            localStorage.setItem('neubie_weather_favs', JSON.stringify(favs));
+                        }
+                        renderWeather(overlay, nx, ny, label);
+                    };
+                }
             }
 
             function formatDailyLabel(dateStr) {
@@ -4445,9 +4523,25 @@
                 return `${m}/${d}(${dow})`;
             }
 
-            async function fetchWeatherReal() {
-                const res = await fetch(WEATHER_CONFIG.proxyUrl);
+            async function fetchWeatherReal(nx = WEATHER_CONFIG.nx, ny = WEATHER_CONFIG.ny) {
+                const cacheKey = `neubie_weather_cache_${nx}_${ny}`;
+                const CACHE_TTL_MS = 5 * 60 * 1000;   // 5분 — 서버 캐시(10분)보다 살짝 짧게 잡아 데이터 신선도 확보
+
+                try {
+                    const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
+                    if (cached && (Date.now() - cached.savedAt) < CACHE_TTL_MS) {
+                        cached.data.updatedAt = new Date(cached.data.updatedAt);
+                        return cached.data;   // ← 캐시 적중 시 네트워크 요청 자체를 안 함
+                    }
+                } catch (e) { /* 캐시 파싱 실패는 무시하고 새로 받아옴 */ }
+
+                const res = await fetch(`${WEATHER_CONFIG.proxyUrl}?nx=${nx}&ny=${ny}`);
                 const data = await res.json();
+
+                try {
+                    localStorage.setItem(cacheKey, JSON.stringify({ savedAt: Date.now(), data }));
+                } catch (e) { /* 저장 실패(용량 초과 등)해도 기능엔 지장 없음 */ }
+
                 data.updatedAt = new Date(data.updatedAt);
                 return data;
             }
