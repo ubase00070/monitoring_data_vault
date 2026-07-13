@@ -4432,7 +4432,10 @@
             };
 
             async function renderWeather(overlay, nx = WEATHER_CONFIG.nx, ny = WEATHER_CONFIG.ny, label = '송내') {
-                const data = await fetchWeatherReal(nx, ny);
+                const body = overlay.querySelector('#nwo-body');
+                if (body) body.innerHTML = `<div style="text-align:center;padding:30px;color:#64748b;">${label} 날씨 불러오는 중...</div>`;
+				
+				const data = await fetchWeatherReal(nx, ny);
                 const body = overlay.querySelector('#nwo-body');
 
                 const hourlyHtml = data.hourly.map((h, i) => `
@@ -4518,8 +4521,24 @@
             }
 
             async function fetchWeatherReal(nx = WEATHER_CONFIG.nx, ny = WEATHER_CONFIG.ny) {
+                const cacheKey = `neubie_weather_cache_${nx}_${ny}`;
+                const CACHE_TTL_MS = 5 * 60 * 1000;   // 5분 — 서버 캐시(10분)보다 살짝 짧게 잡아 데이터 신선도 확보
+
+                try {
+                    const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
+                    if (cached && (Date.now() - cached.savedAt) < CACHE_TTL_MS) {
+                        cached.data.updatedAt = new Date(cached.data.updatedAt);
+                        return cached.data;   // ← 캐시 적중 시 네트워크 요청 자체를 안 함
+                    }
+                } catch (e) { /* 캐시 파싱 실패는 무시하고 새로 받아옴 */ }
+
                 const res = await fetch(`${WEATHER_CONFIG.proxyUrl}?nx=${nx}&ny=${ny}`);
                 const data = await res.json();
+
+                try {
+                    localStorage.setItem(cacheKey, JSON.stringify({ savedAt: Date.now(), data }));
+                } catch (e) { /* 저장 실패(용량 초과 등)해도 기능엔 지장 없음 */ }
+
                 data.updatedAt = new Date(data.updatedAt);
                 return data;
             }
