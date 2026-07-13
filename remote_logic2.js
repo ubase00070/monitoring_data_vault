@@ -1123,7 +1123,7 @@
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
 		// 문자열을 넣으면 패치노트에 빨간 '`' 뱃지가 점멸하며 뜸.
 		// 빈 문자열('')로 비우면 뱃지가 사라짐.
-		const PATCH_NOTE_NEW_CONTENT = '260705_다중12대';
+		const PATCH_NOTE_NEW_CONTENT = '';
 		
         const patchBtn = document.createElement('button');
         patchBtn.textContent = '패치노트';
@@ -1673,7 +1673,7 @@
 
         const weatherCard = document.createElement('div');
         weatherCard.style.cssText = `background:${T.card}; padding:8px 12px; border-radius:15px; border:1px solid ${T.border}; cursor:pointer; display:flex; align-items:center;`;
-        weatherCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">🎨 레이아웃 색상 변경</div>`;   // ← 라벨 교체
+        weatherCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">🎨 원격조종 레이아웃 색상 변경</div>`;   // ← 라벨 교체
         window._neubieWeatherCard = weatherCard;
         weatherCard.onclick = () => {
             const isActive = weatherCard.style.outline !== 'none' && weatherCard.style.outline !== '';
@@ -2300,7 +2300,7 @@
 	   ============================================================ */
 	const DRIVE_THEME_KEY = 'neubie_drive_theme';
 	const DRIVE_THEMES = {
-		light: { card: '#e5e5e5', border: '#999999', text: '#111111', track: '#b0b0b0', label: '☀️ 라이트' },   // track 필드 추가
+		light: { card: '#ffffff', border: '#cccccc', text: '#111111', label: '☀️ 라이트' },   // card 흰색, track 필드 삭제
 	};
 	const DRIVE_TARGETS = ['적재함', '헤드램프', '게임패드', '자동정지', '임무 받기 중지', '임무 시작 시 알림이 여기에 표시됩니다.', '임무 설정', '도착 처리'];   
 
@@ -2326,11 +2326,19 @@
 		const paint = (n) => {
 			n.style.setProperty('background-color', t.card, 'important');
 			n.style.setProperty('border', `1px solid ${t.border}`, 'important');
+			n.style.setProperty('box-shadow', 'none', 'important');   // ← 신규: 로그패널 등 진한 그림자 제거
 			n.style.setProperty('color', t.text, 'important');
 			n.setAttribute('data-neubie-theme-touched', '1');
 		};
 		paint(el);
 		el.querySelectorAll('*').forEach(c => {
+			// 배터리 아이콘 내부 채우기(bg-mono-200) — 카드색이 아니라 글자색(진한 톤)으로. 안 그러면 흰 배경에 묻힘
+			if (typeof c.className === 'string' && c.className.includes('bg-mono-200')) {
+				c.style.setProperty('background-color', t.text, 'important');
+				c.setAttribute('data-neubie-theme-touched', '1');
+				return;
+			}
+
 			const cs = getComputedStyle(c);
 			const m = cs.backgroundColor.match(/rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?\)/);
 			const alpha = m ? (m[4] === undefined ? 1 : parseFloat(m[4])) : 0;
@@ -2339,7 +2347,11 @@
 			if (alpha > 0.15) {
 				paint(c);
 			} else if (hasGradient) {
-				const newBg = cs.backgroundImage.replace(/rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)/g, `rgb(${cardRgb})`);
+				// rgba(38,38,38,0) 같은 투명 끝단도 놓치지 않도록 rgb/rgba 둘 다 치환
+				const newBg = cs.backgroundImage.replace(/rgba?\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*(?:,\s*[\d.]+\s*)?\)/g, (match) => {
+					const isTransparentEnd = /,\s*0\s*\)$/.test(match);
+					return isTransparentEnd ? `rgba(${cardRgb}, 0)` : `rgb(${cardRgb})`;
+				});
 				c.style.setProperty('background-image', newBg, 'important');
 				c.style.setProperty('color', t.text, 'important');
 				c.setAttribute('data-neubie-theme-touched', '1');
@@ -2348,7 +2360,6 @@
 				c.setAttribute('data-neubie-theme-touched', '1');
 			}
 
-			// SVG 아이콘(배터리 등)은 color가 아니라 fill/stroke로 그려지는 경우가 많아 별도 처리
 			if (c.tagName === 'svg' || c.tagName === 'path' || c.tagName === 'circle' || c.tagName === 'rect') {
 				c.style.setProperty('fill', t.text, 'important');
 				c.style.setProperty('stroke', t.text, 'important');
@@ -2387,6 +2398,7 @@
 			el.style.removeProperty('background-image');
 			el.style.removeProperty('border');
 			el.style.removeProperty('border-bottom');
+			el.style.removeProperty('box-shadow');
 			el.style.removeProperty('color');
 			el.removeAttribute('data-neubie-theme-touched');
 		});
@@ -2422,12 +2434,6 @@
 			header.style.setProperty('border', 'none', 'important');
 			header.style.setProperty('border-bottom', `2px solid ${t.border}`, 'important');
 		}
-
-		// 경유지 슬라이더 트랙 — 카드보다 살짝 진하게 (지하철 노선도 스타일)
-		document.querySelectorAll('.h-full.overflow-auto.flex.w-full.scrollbar-hide').forEach(track => {
-			track.style.setProperty('background-color', t.track, 'important');
-			track.setAttribute('data-neubie-theme-touched', '1');
-		});
 	}
 
 	function initDriveTheme() {
@@ -4168,7 +4174,7 @@
                 overlay.innerHTML = `
                     <div style="background:${T.card}; color:${T.text}; border-radius:16px; padding:20px; width:min(90vw,360px); box-shadow:0 4px 40px rgba(0,0,0,0.7); pointer-events:auto;">
                         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-                            <span style="font-size:16px;font-weight:700;">🎨 레이아웃 색상 변경</span>
+                            <span style="font-size:16px;font-weight:700;">🎨 원격조종 레이아웃 색상 변경</span>
                             <button id="dto-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
                         </div>
                         <div style="font-size:12px;color:#94a3b8;margin-bottom:12px;">기체 원격조종(신형) 화면 배경을 바꿉니다. 이 브라우저에만 저장되며, 다른 화면에는 영향 없습니다.</div>
