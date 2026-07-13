@@ -3943,8 +3943,8 @@
                 numEl.textContent=d; el.appendChild(numEl);
                 if(info){
                     const {d1,d2,w1,w2}=info;
-                    const isLeave1=d1?.status==='annual'||d1?.status==='public';
-                    const isLeave2=d2?.status==='annual'||d2?.status==='public';
+                    const isLeave1=d1?.status==='annual'||d1?.status==='public'||d1?.status==='dispatch';
+                    const isLeave2=d2?.status==='annual'||d2?.status==='public'||d2?.status==='dispatch';
                     const show1 = calMode==='work' ? (w1 && !isLeave1) : (d1 ? (!w1||isLeave1) : false);
                     const show2 = calMode==='work' ? (w2 && !isLeave2) : (d2 ? (!w2||isLeave2) : false);
 
@@ -3959,7 +3959,8 @@
                       const n1v=box.querySelector('#nso-name1').value.trim();
                       b.textContent=st==='half'?`${n1v}(반차)`:st==='half-half'?`${n1v}(반반차)`:
                         isOff1&&st==='annual'?`${n1v}(연차)`:
-                        isOff1&&st==='public'?`${n1v}(공가)`:n1v;
+                        isOff1&&st==='public'?`${n1v}(공가)`:
+                        isOff1&&st==='dispatch'?`${n1v}(파견)`:n1v;
                       el.appendChild(b);
                     }
                     if(show2){
@@ -3973,7 +3974,8 @@
                       const n2v=box.querySelector('#nso-name2').value.trim();
                       b.textContent=st==='half'?`${n2v}(반차)`:st==='half-half'?`${n2v}(반반차)`:
                         isOff2&&st==='annual'?`${n2v}(연차)`:
-                        isOff2&&st==='public'?`${n2v}(공가)`:n2v;
+                        isOff2&&st==='public'?`${n2v}(공가)`:
+                        isOff2&&st==='dispatch'?`${n2v}(파견)`:n2v;
                       el.appendChild(b);
                     }
                 }
@@ -3999,10 +4001,10 @@
                 const w1=d1?d1.working:false, w2=d2?d2.working:false;
                 const p1=d1?d1.present:false, p2=d2?d2.present:false;
                 if(p1)c1++; if(p2)c2++; if(p1&&p2)ov++;
-                if(!p1||(d1?.status==='annual'||d1?.status==='public')) off1++;
-                if(!p2||(d2?.status==='annual'||d2?.status==='public')) off2++;
-                if((!p1||(d1?.status==='annual'||d1?.status==='public'))&&
-                    (!p2||(d2?.status==='annual'||d2?.status==='public'))) offOv++;
+                if(!p1||(d1?.status==='annual'||d1?.status==='public'||d1?.status==='dispatch')) off1++;
+                if(!p2||(d2?.status==='annual'||d2?.status==='public'||d2?.status==='dispatch')) off2++;
+                if((!p1||(d1?.status==='annual'||d1?.status==='public'||d1?.status==='dispatch'))&&
+                    (!p2||(d2?.status==='annual'||d2?.status==='public'||d2?.status==='dispatch'))) offOv++;
                 compareResult[date]={d1,d2,w1,w2};
                 }
                 const d1Show=calMode==='work'?c1:off1;
@@ -4037,7 +4039,7 @@
               const leaveMap={};
               scheduleData.staff.forEach(s=>{
                 const d=s.schedule[dateLabel];
-                if(d&&(d.status==='annual'||d.status==='public')) leaveMap[s.name]=d.status;
+                if(d&&(d.status==='annual'||d.status==='public'||d.status==='dispatch')) leaveMap[s.name]=d.status;
               });
               renderSeat(pw,leaveMap);
               modal.style.opacity='1'; modal.style.pointerEvents='all';
@@ -4090,7 +4092,7 @@
                         if(leaveMap[name]){
                         const bd=document.createElement('div');
                         bd.style.cssText='font-size:12px;border-radius:2px;padding:0 3px;margin-top:1px;font-weight:700;background:rgba(234,179,8,.25);color:#eab308;';
-                        bd.textContent=leaveMap[name]==='annual'?'연차':'공가'; sp.appendChild(bd);
+                        bd.textContent=leaveMap[name]==='annual'?'연차':leaveMap[name]==='dispatch'?'파견':'공가'; sp.appendChild(bd);
                         }
                         if(w&&(w.status==='half'||w.status==='half-half')){
                         const bd=document.createElement('div');
@@ -4118,7 +4120,7 @@
                     if(leaveMap[raw]){
                         const bd=document.createElement('div');
                         bd.style.cssText='font-size:12px;border-radius:2px;padding:0 3px;margin-top:1px;font-weight:700;background:rgba(234,179,8,.25);color:#eab308;';
-                        bd.textContent=leaveMap[raw]==='annual'?'연차':'공가'; el.appendChild(bd);
+                        bd.textContent=leaveMap[raw]==='annual'?'연차':leaveMap[raw]==='dispatch'?'파견':'공가'; el.appendChild(bd);
                     }
                     if(w){
                         if(w.status==='half'||w.status==='half-half'){
@@ -4142,7 +4144,7 @@
                         const w=pMap[name];
                         html+=`<div style="font-weight:700;color:#e2e8f0;margin-bottom:2px;">${name}</div>`;
                         if(w){
-                        const ko={work:'출근',half:'반차','half-half':'반반차',annual:'연차',public:'공가',off:'휴무',empty:'미출근'};
+                        const ko={work:'출근',half:'반차','half-half':'반반차',annual:'연차',public:'공가',dispatch:'파견',off:'휴무',empty:'미출근'};
                         html+=`<div style="color:#94a3b8;">근무조: <span style="color:#e2e8f0;">${w.shiftType}</span></div>`;
                         html+=`<div style="color:#94a3b8;">시간: <span style="color:#e2e8f0;">${w.workTime}</span></div>`;
                         html+=`<div style="color:#94a3b8;">상태: <span style="color:#e2e8f0;">${ko[w.status]||w.status}</span></div>`;
