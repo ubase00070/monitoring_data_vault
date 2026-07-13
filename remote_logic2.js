@@ -1149,7 +1149,7 @@
         headerContainer.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; padding-right:5px;";
 
         const title = document.createElement('h2');
-        title.textContent = OFFLINE_MODE ? "오프라인 모드" : "뉴비고 도우미";
+        title.textContent = OFFLINE_MODE ? "오프라인 모드" : "NCC 도우미";
         title.style.cssText = `color:${T.accent}; font-size:20px; margin:0; font-weight:bold; white-space:nowrap;`;
 
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
@@ -1504,7 +1504,7 @@
                     역삼 요기요 / 송도 요기요 / 성수 요기요 / 성남 삼평동<br>
                     페이지에서 흰색 마커를 숨겨서 최적화.<br>
                     대기장소 마커(주황)를 역방향으로 뒤집어서 보기 쉽도록 함.<br>
-                    기존 뉴비고 상의 아이콘 숨기기 기능은 여전히 작동.<br>
+                    기존 NCC 상의 아이콘 숨기기 기능은 여전히 작동.<br>
                 `;
                 mapInfoBox.appendChild(mapInfoClose);
                 mapInfoBox.appendChild(mapInfoTitle);
@@ -1530,7 +1530,7 @@
 
         const queueCard = document.createElement('div');
         queueCard.style.cssText = `background:${T.card}; padding:8px 12px; border-radius:15px; border:1px solid ${T.border}; display:flex; justify-content:space-between; align-items:center;`;
-        queueCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">🖥️ 다중 모니터링 도우미</span>`;
+        queueCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">🖥️ 다중 모니터링 기능</span>`;
         const queueEnabled = localStorage.getItem('neubie_handover_enabled') === 'true';
         const queueToggle = document.createElement('button');
         queueToggle.textContent = queueEnabled ? 'ON' : 'OFF';
@@ -1613,7 +1613,7 @@
 				카메라 위치 스왑<br>
 				45분에 자동으로 실시간 교대 기체 업로드<br>
 				multimonitoring.vercel.app 이용 시에도 기체 업로드 가능<br>
-				'뉴비고 도우미'만 이용하더라도 교대 기체 업로드 및 받기 가능<br>
+				'NCC 도우미'만 이용하더라도 교대 기체 업로드 및 받기 가능<br>
                 `;
 
                 queueInfoBox.appendChild(queueInfoClose);
@@ -1690,13 +1690,13 @@
 
         const weatherCard = document.createElement('div');
         weatherCard.style.cssText = `background:${T.card}; padding:8px 12px; border-radius:15px; border:1px solid ${T.border}; cursor:pointer; display:flex; align-items:center;`;
-        weatherCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">🎨 원격조종 페이지 색상</div>`;   // ← 라벨 교체
+        weatherCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">🎨 레이아웃 색상</div>`; 
         window._neubieWeatherCard = weatherCard;
         weatherCard.onclick = () => {
             const isActive = weatherCard.style.outline !== 'none' && weatherCard.style.outline !== '';
             weatherCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
             if (!isActive) {
-                openDriveThemeOverlay();   // ← openWeatherOverlay() 대신 새 테마 선택 오버레이 호출
+                openDriveThemeOverlay();  
             } else {
                 const dtOverlay = document.getElementById('neubie-drivetheme-overlay');
                 if (dtOverlay) dtOverlay.style.display = 'none';
@@ -2113,7 +2113,7 @@
 		autoBtn.addEventListener('click', async () => {
 			const modal = document.querySelector('[data-qk="remote-multiple-select-robot-dialog"]');
 			if (!modal) {
-				setDpMsg('뉴비고에서 기체 선택 모달을 먼저 열어주세요', '#f59e0b');
+				setDpMsg('NCC에서 기체 선택 모달을 먼저 열어주세요', '#f59e0b');
 				return;
 			}
 
@@ -2957,7 +2957,7 @@
             overlay.innerHTML = `
             <div style="width:100%; height:100%; background:rgba(10,10,30,0.72); backdrop-filter:blur(2px); display:flex; flex-direction:column; border-radius:24px;">
                 <div id="nb-board-header" style="display:flex; align-items:center; gap:8px; padding:12px 16px; border-bottom:0.5px solid rgba(255,255,255,0.12); cursor:grab;">
-                    <span style="font-size:15px; font-weight:600; color:#fff; flex:1;"><span class="nb-emoji">📋</span> 뉴비고 게시판</span>
+                    <span style="font-size:15px; font-weight:600; color:#fff; flex:1;"><span class="nb-emoji">📋</span> NCC 게시판</span>
                     <button id="nb-tips-btn" style="height:28px; padding:0 10px; font-size:12px; font-weight:500; background:#f59e0b; color:#1a1a1a; border:none; border-radius:6px; cursor:pointer;" title="최적화 팁">💡 최적화 팁</button>
                     <button id="nb-refresh-btn" style="height:28px; width:28px; background:rgba(255,255,255,0.1); color:white; border:none; border-radius:6px; cursor:pointer; font-size:14px;" title="새로고침">↺</button>
 					<button id="nb-write-btn" style="height:28px; padding:0 12px; font-size:12px; font-weight:500; background:#6366f1; color:white; border:none; border-radius:6px; cursor:pointer;">✏️ 글쓰기</button>
@@ -5012,7 +5012,7 @@
     });
 
     // 화면 어디든 클릭했을 때 주소 확인
-    // 뉴비고에서 메뉴를 클릭해 이동할 때 즉각 닫히게
+    // NCC에서 메뉴를 클릭해 이동할 때 즉각 닫히게
     document.addEventListener('click', () => {
         setTimeout(() => {
             if (location.href !== lastUrl) {
