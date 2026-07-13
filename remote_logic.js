@@ -2352,16 +2352,18 @@
 			n.style.setProperty('background-color', t.card, 'important');
 			n.style.setProperty('border', `1px solid ${t.border}`, 'important');
 			n.style.setProperty('box-shadow', 'none', 'important');
-			if (!(n.closest && n.closest('.text-warning'))) {   // ← 추가: ON 상태(주황) 요소는 글자색 안 건드림
+			if (!(n.closest && n.closest('.text-warning'))) {
 				n.style.setProperty('color', t.text, 'important');
+			} else {
+				n.style.removeProperty('color');   // ON 전환 시 이전에 박힌 검정을 확실히 제거
 			}
 			n.setAttribute('data-neubie-theme-touched', '1');
 		};
 		paint(el);
 		el.querySelectorAll('*').forEach(c => {
-			// 닫기(X) 버튼 레드 원본 유지 유지
+			// 닫기(X) 버튼 레드 원본 유지
 			if (c.closest && c.closest('.bg-red-400')) return;
-			
+
 			// 배터리 아이콘 내부 채우기(bg-mono-200) — 카드색이 아니라 글자색(진한 톤)으로. 안 그러면 흰 배경에 묻힘
 			if (typeof c.className === 'string' && c.className.includes('bg-mono-200')) {
 				c.style.setProperty('background-color', t.text, 'important');
@@ -2373,6 +2375,7 @@
 			const m = cs.backgroundColor.match(/rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?\)/);
 			const alpha = m ? (m[4] === undefined ? 1 : parseFloat(m[4])) : 0;
 			const hasGradient = cs.backgroundImage && cs.backgroundImage.includes('gradient');
+			const isWarning = c.closest && c.closest('.text-warning');   // ON 상태(주황) 여부 — 한 번만 계산해 재사용
 
 			if (alpha > 0.15) {
 				paint(c);
@@ -2383,19 +2386,29 @@
 					return isTransparentEnd ? `rgba(${cardRgb}, 0)` : `rgb(${cardRgb})`;
 				});
 				c.style.setProperty('background-image', newBg, 'important');
-				c.style.setProperty('color', t.text, 'important');
+				if (!isWarning) {
+					c.style.setProperty('color', t.text, 'important');
+				} else {
+					c.style.removeProperty('color');
+				}
 				c.setAttribute('data-neubie-theme-touched', '1');
 			} else {
-				if (!(c.closest && c.closest('.text-warning'))) {  
+				if (!isWarning) {
 					c.style.setProperty('color', t.text, 'important');
+				} else {
+					c.style.removeProperty('color');
 				}
 				c.setAttribute('data-neubie-theme-touched', '1');
 			}
 
+			// 아이콘(svg/path/circle/rect) — 텍스트와 동일한 규칙으로 fill/stroke 처리
 			if (c.tagName === 'svg' || c.tagName === 'path' || c.tagName === 'circle' || c.tagName === 'rect') {
-				if (!(c.closest && c.closest('.text-warning'))) {   // ← 추가
+				if (!isWarning) {
 					c.style.setProperty('fill', t.text, 'important');
 					c.style.setProperty('stroke', t.text, 'important');
+				} else {
+					c.style.removeProperty('fill');
+					c.style.removeProperty('stroke');
 				}
 				c.setAttribute('data-neubie-theme-touched', '1');
 			}
