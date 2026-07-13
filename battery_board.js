@@ -1303,22 +1303,26 @@
         // ADAS
         const adasDot = rs.isOnAdas ? '🟢' : '🟠';
 
-        // 마지막 개입 조작 시간
-        const lastOp = rs.lastOperatedUserName || '-';
-        let lastOpAt = '-';
-        if (rs.lastOperatedAt) {
-            const diff = Math.floor((Date.now() - new Date(rs.lastOperatedAt).getTime()) / 60000);
-            const hm = new Date(rs.lastOperatedAt).toLocaleTimeString('ko-KR', { hour:'2-digit', minute:'2-digit' });
-            lastOpAt = diff < 60 ? `${hm} (${diff}분 전)` : `${hm} (${Math.floor(diff/60)}시간 전)`;
-        }
-
-        // 마지막 연결 끊김
-        let lastConnAt = '-';
-        if (rs.lastConnectedAt) {
-            const diff = Math.floor((Date.now() - new Date(rs.lastConnectedAt).getTime()) / 60000);
-            const hm = new Date(rs.lastConnectedAt).toLocaleTimeString('ko-KR', { hour:'2-digit', minute:'2-digit' });
-            lastConnAt = diff < 60 ? `${hm} (${diff}분 전)` : `${hm} (${Math.floor(diff/60)}시간 전)`;
-        }
+		function formatRelTime(isoStr) {
+		    if (!isoStr) return '-';
+		    const d = new Date(isoStr);
+		    const diffMin = Math.floor((Date.now() - d.getTime()) / 60000);
+		    const hm = d.toLocaleTimeString('ko-KR', { hour:'2-digit', minute:'2-digit' });
+		
+		    if (diffMin < 60) return `${hm} (${diffMin}분 전)`;
+		    if (diffMin < 1440) return `${hm} (${Math.floor(diffMin / 60)}시간 전)`;
+		
+		    // 24시간(1440분) 이상이면 날짜로 표기
+		    const p = x => String(x).padStart(2, '0');
+		    return `${p(d.getMonth() + 1)}/${p(d.getDate())} ${hm}`;
+		}
+		
+		// 마지막 조작
+		const lastOp = rs.lastOperatedUserName || '-';
+		const lastOpAt = formatRelTime(rs.lastOperatedAt);
+		
+		// 마지막 연결
+		const lastConnAt = formatRelTime(rs.lastConnectedAt);
 
         // SW 버전 & 하드웨어
         const swVer  = raw.version?.softwareVersion?.swVersion ?? '-';
