@@ -1290,6 +1290,12 @@
         boardBtn.onclick = () => openBoardOverlay();
         titleWrap.appendChild(boardBtn);
 
+        const gamepadBtn = document.createElement('button');
+        gamepadBtn.textContent = '🎮 게임패드';
+        gamepadBtn.style.cssText = `background:transparent; border:1px solid #4f8ef7; color:#4f8ef7; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:14px; margin-left:4px;`;
+        gamepadBtn.onclick = () => openGamepadGuideOverlay();
+        titleWrap.appendChild(gamepadBtn);
+
         headerContainer.appendChild(titleWrap);
         headerContainer.appendChild(nameArea);
         dashboard.appendChild(headerContainer);
@@ -2898,7 +2904,6 @@
                     <span style="font-size:15px; font-weight:600; color:#fff; flex:1;"><span class="nb-emoji">📋</span> NCC 게시판</span>
                     <button id="nb-secret-inline-btn" style="height:28px; padding:0 10px; font-size:12px; font-weight:500; background:transparent; border:1px solid #a78bfa; color:#a78bfa; border-radius:6px; cursor:pointer;">🔒 문의</button>
                     <button id="nb-tips-btn" style="height:28px; padding:0 10px; font-size:12px; font-weight:500; background:#f59e0b; color:#1a1a1a; border:none; border-radius:6px; cursor:pointer;" title="최적화 팁">💡 최적화 팁</button>
-                    <button id="nb-gamepad-btn" style="height:28px; padding:0 10px; font-size:12px; font-weight:500; background:transparent; border:1px solid #4f8ef7; color:#4f8ef7; border-radius:6px; cursor:pointer;" title="게임패드 커스텀">🎮 게임패드</button>
                     <button id="nb-refresh-btn" style="height:28px; width:28px; background:rgba(255,255,255,0.1); color:white; border:none; border-radius:6px; cursor:pointer; font-size:14px;" title="새로고침">↺</button>
 					<button id="nb-write-btn" style="height:28px; padding:0 12px; font-size:12px; font-weight:500; background:#6366f1; color:white; border:none; border-radius:6px; cursor:pointer;">✏️ 글쓰기</button>
                     <button id="nb-board-close" style="background:rgba(255,255,255,0.1); border:none; color:#fff; width:26px; height:26px; border-radius:50%; cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center;">✕</button>
@@ -3009,7 +3014,6 @@
 			document.getElementById('nb-refresh-btn').onclick = () => loadPosts();
             document.getElementById('nb-secret-inline-btn').onclick = () => openSecretOverlay();
             document.getElementById('nb-tips-btn').onclick = () => openTipsOverlay();
-            document.getElementById('nb-gamepad-btn').onclick = () => openGamepadGuideOverlay();
             document.getElementById('nb-write-btn').onclick = () => {
                 if (!myEmail) return alert('로그인 정보가 없어 글쓰기가 불가합니다.');
                 showWriteScreen();
@@ -4541,7 +4545,7 @@
                         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; gap:10px;">
                             <span style="font-size:16px; font-weight:700;">🎮 게임패드 커스텀</span>
                             <div style="display:flex; align-items:center; gap:8px;">
-                                <button id="gp-toggle" style="padding:6px 14px; border-radius:8px; border:1px solid ${isOff ? '#ef4444' : '#22c55e'}; background:${isOff ? 'rgba(239,68,68,0.15)' : 'rgba(34,197,94,0.15)'}; color:${isOff ? '#ef4444' : '#22c55e'}; font-weight:700; font-size:13px; cursor:pointer;">${isOff ? 'OFF' : 'ON'}</button>
+                                <button id="gp-toggle" style="width:52px; padding:6px 0; border-radius:8px; border:1px solid ${isOff ? '#ef4444' : '#22c55e'}; background:${isOff ? 'rgba(239,68,68,0.15)' : 'rgba(34,197,94,0.15)'}; color:${isOff ? '#ef4444' : '#22c55e'}; font-weight:700; font-size:13px; cursor:pointer; text-align:center;">${isOff ? 'OFF' : 'ON'}</button>
                                 <button id="gp-close" style="width:28px; height:28px; border:none; border-radius:5px; background:#3b0000; border:1px solid #ef4444; color:#ef4444; font-size:16px; cursor:pointer;">✕</button>
                             </div>
                         </div>
@@ -4557,6 +4561,7 @@
                     }
                     openGamepadGuideOverlay();
                 };
+                overlay.querySelector('#gp-close').onclick = () => { overlay.style.display = 'none'; };
             };
 
             window.openTipsOverlay = function() {
