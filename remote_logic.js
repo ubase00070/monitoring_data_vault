@@ -2060,8 +2060,33 @@
 
 			if (confirmBtn) {
 				confirmBtn.click();
-				setDpMsg('완료! ✅', '#22c55e');
-				return { confirmed: true, checkedUnits };
+				setDpMsg('추가 확인 중...', '#3b82f6');
+
+				// 전부 아니면 전무이므로, 대표로 하나라도 카드가 뜨는지만 확인 (최대 4초)
+				const success = await new Promise(resolve => {
+					const deadline = Date.now() + 4000;
+					const check = () => {
+						const cardNames = [...document.querySelectorAll('.flex.h-full.w-full.items-center.justify-center.overflow-hidden .p-3')]
+							.map(el => el.textContent.trim());
+						const anyAppeared = checkedUnits.some(name => cardNames.some(c => c.includes(name)));
+						if (anyAppeared) {
+							resolve(true);
+						} else if (Date.now() > deadline) {
+							resolve(false);
+						} else {
+							setTimeout(check, 300);
+						}
+					};
+					check();
+				});
+
+				if (success) {
+					setDpMsg('완료! ✅', '#22c55e');
+					return { confirmed: true, checkedUnits };
+				} else {
+					setDpMsg(`거절됨 (이미 모니터링 중 등) — taken 처리 안 함, 다시 시도해주세요`, '#ef4444');
+					return { confirmed: false, checkedUnits: [] };   // ← 실패 시 완전히 빈 배열 반환
+				}
 			} else {
 				setDpMsg('시작하기 버튼을 직접 눌러주세요', '#f59e0b');
 				return { confirmed: false, checkedUnits };
@@ -2326,8 +2351,10 @@
 		const paint = (n) => {
 			n.style.setProperty('background-color', t.card, 'important');
 			n.style.setProperty('border', `1px solid ${t.border}`, 'important');
-			n.style.setProperty('box-shadow', 'none', 'important');   // ← 신규: 로그패널 등 진한 그림자 제거
-			n.style.setProperty('color', t.text, 'important');
+			n.style.setProperty('box-shadow', 'none', 'important');
+			if (!(n.closest && n.closest('.text-warning'))) {   // ← 추가: ON 상태(주황) 요소는 글자색 안 건드림
+				n.style.setProperty('color', t.text, 'important');
+			}
 			n.setAttribute('data-neubie-theme-touched', '1');
 		};
 		paint(el);
@@ -2359,13 +2386,17 @@
 				c.style.setProperty('color', t.text, 'important');
 				c.setAttribute('data-neubie-theme-touched', '1');
 			} else {
-				c.style.setProperty('color', t.text, 'important');
+				if (!(c.closest && c.closest('.text-warning'))) {  
+					c.style.setProperty('color', t.text, 'important');
+				}
 				c.setAttribute('data-neubie-theme-touched', '1');
 			}
 
 			if (c.tagName === 'svg' || c.tagName === 'path' || c.tagName === 'circle' || c.tagName === 'rect') {
-				c.style.setProperty('fill', t.text, 'important');
-				c.style.setProperty('stroke', t.text, 'important');
+				if (!(c.closest && c.closest('.text-warning'))) {   // ← 추가
+					c.style.setProperty('fill', t.text, 'important');
+					c.style.setProperty('stroke', t.text, 'important');
+				}
 				c.setAttribute('data-neubie-theme-touched', '1');
 			}
 		});
@@ -2443,8 +2474,8 @@
 			el.style.removeProperty('border-bottom');
 			el.style.removeProperty('box-shadow');
 			el.style.removeProperty('color');
-			el.style.removeProperty('fill');
-        	el.style.removeProperty('stroke');
+			el.style.removeProperty('fill');  
+			el.style.removeProperty('stroke');
 			el.removeAttribute('data-neubie-theme-touched');
 		});
 	}
