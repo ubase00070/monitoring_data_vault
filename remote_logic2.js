@@ -2389,11 +2389,51 @@
 		});
 		window._soundInputThemeObserver.observe(card, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
 	}
+	
+	function watchMissionProgressCard() {
+		const missionCard = driveThemeFindByText('도착 처리');
+		if (!missionCard) return;
+
+		if (window._missionThemeObserver) window._missionThemeObserver.disconnect();
+
+		let selfWriting = false;
+		window._missionThemeObserver = new MutationObserver(() => {
+			if (selfWriting) return;
+			const saved = localStorage.getItem(DRIVE_THEME_KEY) || 'dark';
+			if (saved !== 'light') return;
+
+			selfWriting = true;
+			driveThemeMark(missionCard, DRIVE_THEMES.light);
+			requestAnimationFrame(() => { selfWriting = false; });
+		});
+		window._missionThemeObserver.observe(missionCard, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
+	}
+
+	function watchLogPanel() {
+		const logPanel = document.querySelector('.rounded-small.bg-mono-100.w-full.min-h-50');
+		if (!logPanel) return;
+
+		if (window._logPanelThemeObserver) window._logPanelThemeObserver.disconnect();
+
+		let selfWriting = false;
+		window._logPanelThemeObserver = new MutationObserver(() => {
+			if (selfWriting) return;
+			const saved = localStorage.getItem(DRIVE_THEME_KEY) || 'dark';
+			if (saved !== 'light') return;
+
+			selfWriting = true;
+			driveThemeMark(logPanel, DRIVE_THEMES.light);
+			requestAnimationFrame(() => { selfWriting = false; });
+		});
+		window._logPanelThemeObserver.observe(logPanel, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
+	}
 
 	function clearDriveTheme() {
 		document.getElementById('neubie-drive-theme-style')?.remove();
 		if (window._soundInputThemeObserver) { window._soundInputThemeObserver.disconnect(); window._soundInputThemeObserver = null; }
-        document.querySelectorAll('[data-neubie-theme-touched]').forEach(el => {
+        if (window._missionThemeObserver) { window._missionThemeObserver.disconnect(); window._missionThemeObserver = null; } 
+		if (window._logPanelThemeObserver) { window._logPanelThemeObserver.disconnect(); window._logPanelThemeObserver = null; }
+		document.querySelectorAll('[data-neubie-theme-touched]').forEach(el => {
 			el.style.removeProperty('background-color');
 			el.style.removeProperty('background-image');
 			el.style.removeProperty('border');
@@ -2422,11 +2462,13 @@
 		const inputEl = document.querySelector('input[placeholder="문장 입력 송출"]');
 		if (inputEl) driveThemeMark(driveThemeClimb(inputEl), t);
         watchSoundInputCard();
+		watchMissionProgressCard();
 
         // 주행 로그 패널 — 텍스트가 매번 바뀌어(시간값) 라벨 매칭이 불가능해 클래스로 직접 지정
 		// ※ 사이트 개편 시 이 클래스 조합이 바뀌면 재확인 필요
 		const logPanel = document.querySelector('.rounded-small.bg-mono-100.w-full.min-h-50');
 		if (logPanel) driveThemeMark(logPanel, t);
+		watchLogPanel();
 
 		const header = document.querySelector('header');
 		if (header) {
