@@ -4274,8 +4274,16 @@
                     overlay.style.display = 'none';
                     if (window._neubieRouletteCard) window._neubieRouletteCard.style.outline = 'none';   // ← 추가
                 };
-                overlay.querySelector('#mto-weather').onclick = () => { overlay.style.display = 'none'; openWeatherOverlay(); };
-                overlay.querySelector('#mto-roulette').onclick = () => { overlay.style.display = 'none'; openRouletteOverlay(); };
+                overlay.querySelector('#mto-weather').onclick = () => {
+                    overlay.style.display = 'none';
+                    if (window._neubieRouletteCard) window._neubieRouletteCard.style.outline = 'none';   // ← 추가
+                    openWeatherOverlay();
+                };
+                overlay.querySelector('#mto-roulette').onclick = () => {
+                    overlay.style.display = 'none';
+                    if (window._neubieRouletteCard) window._neubieRouletteCard.style.outline = 'none';   // ← 추가
+                    openRouletteOverlay();
+                };
             };
 
             window.openWeatherOverlay = async function() {
