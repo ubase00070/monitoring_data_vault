@@ -2461,12 +2461,38 @@
 		});
 		window._logPanelThemeObserver.observe(logPanel, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
 	}
+	
+	function watchToggleButtons() {
+		if (window._toggleThemeObservers) {
+			window._toggleThemeObservers.forEach(obs => obs.disconnect());
+		}
+		window._toggleThemeObservers = [];
+
+		let selfWriting = false;
+		const targets = ['헤드램프', '게임패드', '자동정지', '적재함'];
+		targets.forEach(label => {
+			const card = driveThemeFindByText(label);
+			if (!card) return;
+			const obs = new MutationObserver(() => {
+				if (selfWriting) return;
+				const saved = localStorage.getItem(DRIVE_THEME_KEY) || 'dark';
+				if (saved !== 'light') return;
+
+				selfWriting = true;
+				driveThemeMark(card, DRIVE_THEMES.light);
+				requestAnimationFrame(() => { selfWriting = false; });
+			});
+			obs.observe(card, { subtree: true, attributes: true, attributeFilter: ['class'] });
+			window._toggleThemeObservers.push(obs);
+		});
+	}
 
 	function clearDriveTheme() {
 		document.getElementById('neubie-drive-theme-style')?.remove();
 		if (window._soundInputThemeObserver) { window._soundInputThemeObserver.disconnect(); window._soundInputThemeObserver = null; }
         if (window._missionThemeObserver) { window._missionThemeObserver.disconnect(); window._missionThemeObserver = null; } 
 		if (window._logPanelThemeObserver) { window._logPanelThemeObserver.disconnect(); window._logPanelThemeObserver = null; }
+		if (window._toggleThemeObservers) { window._toggleThemeObservers.forEach(obs => obs.disconnect()); window._toggleThemeObservers = null; }
 		document.querySelectorAll('[data-neubie-theme-touched]').forEach(el => {
 			el.style.removeProperty('background-color');
 			el.style.removeProperty('background-image');
@@ -2495,6 +2521,7 @@
 		document.head.appendChild(style);
 
 		DRIVE_TARGETS.forEach(label => driveThemeMark(driveThemeFindByText(label), t));
+		watchToggleButtons();
 		const inputEl = document.querySelector('input[placeholder="문장 입력 송출"]');
 		if (inputEl) driveThemeMark(driveThemeClimb(inputEl), t);
         watchSoundInputCard();
