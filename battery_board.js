@@ -1333,17 +1333,17 @@
 
         bodyEl.innerHTML = `
             <div class="bb-icp-section">
-                <div class="bb-icp-section-title">마지막 조작/연결</div>
+                <div class="bb-icp-section-title">조작/연결 기록</div>
                 <div class="bb-icp-row">
-                    <span class="bb-icp-label">조작자</span>
+                    <span class="bb-icp-label">마지막 조작자</span>
                     <span class="bb-icp-value">${lastOp}</span>
                 </div>
                 <div class="bb-icp-row">
-                    <span class="bb-icp-label">개입 조작 시간</span>
+                    <span class="bb-icp-label">마지막 개입 시간</span>
                     <span class="bb-icp-value">${lastOpAt}</span>
                 </div>
                 <div class="bb-icp-row">
-                    <span class="bb-icp-label">마지막 연결 끊김</span>
+                    <span class="bb-icp-label">마지막 기체 연결 끊김</span>
                     <span class="bb-icp-value">${lastConnAt}</span>
                 </div>
             </div>
