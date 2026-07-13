@@ -2443,6 +2443,8 @@
 			el.style.removeProperty('border-bottom');
 			el.style.removeProperty('box-shadow');
 			el.style.removeProperty('color');
+			el.style.removeProperty('fill');
+        	el.style.removeProperty('stroke');
 			el.removeAttribute('data-neubie-theme-touched');
 		});
 	}
