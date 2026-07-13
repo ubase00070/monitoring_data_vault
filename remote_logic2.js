@@ -2978,7 +2978,7 @@
 
                 <div id="nb-screen-list" style="flex:1; overflow-y:auto; padding:4px 0;"></div>
 
-                <div style="padding:8px 16px; display:flex; align-items:center; justify-content:space-between; gap:8px; border-top:0.5px solid rgba(255,255,255,0.1);">
+                <div id="nb-list-toolbar" style="padding:8px 16px; display:flex; align-items:center; justify-content:space-between; gap:8px; border-top:0.5px solid rgba(255,255,255,0.1);">
                     <div style="display:flex; gap:8px; flex:1; min-width:0;">
                         <select id="nb-search-type" style="height:28px; font-size:12px; padding:0 6px; border-radius:6px; border:0.5px solid rgba(255,255,255,0.2); background:#1e1e3a; color:#e2e8f0; outline:none;">
                             <option value="all">전체</option>
@@ -3090,6 +3090,7 @@
                 document.getElementById('nb-screen-list').style.display = 'block';
                 document.getElementById('nb-screen-detail').style.display = 'none';
                 document.getElementById('nb-screen-write').style.display = 'none';
+                document.getElementById('nb-list-toolbar').style.display = 'flex';
                 renderList(allPosts, false)
             }
 
@@ -3097,6 +3098,7 @@
                 document.getElementById('nb-screen-list').style.display = 'none';
                 document.getElementById('nb-screen-detail').style.display = 'none';
                 document.getElementById('nb-screen-write').style.display = 'flex';
+                document.getElementById('nb-list-toolbar').style.display = 'none';
                 document.getElementById('nb-write-title').value = '';
                 document.getElementById('nb-write-content').value = '';
             }
@@ -3105,7 +3107,8 @@
                 document.getElementById('nb-screen-list').style.display = 'none';
                 document.getElementById('nb-screen-write').style.display = 'none';
 				document.getElementById('nb-screen-edit').style.display = 'none';
-				const editBtn = document.getElementById('nb-edit-post-btn');
+				document.getElementById('nb-list-toolbar').style.display = 'none';
+                const editBtn = document.getElementById('nb-edit-post-btn');
 				editBtn.style.display = (myEmail && post.email === myEmail) ? 'block' : 'none';
 				editBtn.onclick = () => showEditScreen(post);
                 const det = document.getElementById('nb-screen-detail');
@@ -3291,7 +3294,8 @@
 				document.getElementById('nb-screen-detail').style.display = 'none';
 				document.getElementById('nb-screen-write').style.display = 'none';
 				document.getElementById('nb-screen-edit').style.display = 'flex';
-				document.getElementById('nb-edit-title').value = post.title;
+				document.getElementById('nb-list-toolbar').style.display = 'none';
+                document.getElementById('nb-edit-title').value = post.title;
 				document.getElementById('nb-edit-content').value = post.content;
 			}
 
