@@ -858,8 +858,8 @@
                 }
             }
 
-            // ── 기능7: 비상정지 (E-Stop)
-            if (raw.isEStopped === true) {
+            // ── 기능7: 비상정지
+            if (raw.isEmergency === true) {
                 const key = alertKey('estop', id);
                 if (!dismissedAlerts.has(key)) alerts.push({
                     key, type:'estop', dot:'rd', name,
