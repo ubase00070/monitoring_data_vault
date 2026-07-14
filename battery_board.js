@@ -1103,8 +1103,8 @@
                 const name = r.nickname || r.name || '';
                 return group.keywords.some(kw => name.includes(kw));
             }).sort((a, b) => {
-                const na = parseInt((a.nickname || a.name || '').match(/\d+/)?.[0] || '0');
-                const nb = parseInt((b.nickname || b.name || '').match(/\d+/)?.[0] || '0');
+                const na = parseInt((a.nickname || a.name || '').match(/(\d+)호기/)?.[1] || '0');
+                const nb = parseInt((b.nickname || b.name || '').match(/(\d+)호기/)?.[1] || '0');
                 return na - nb;
             });
 
@@ -1122,7 +1122,7 @@
                 const el = document.createElement('div');
                 if (r) {
                     const parsed = parseRobotStatus(r);
-                    const num = (r.nickname || r.name || '').match(/\d+/)?.[0] || (i + 1);
+                    const num = (r.nickname || r.name || '').match(/(\d+)호기/)?.[1] || (i + 1);
                     el.className = `bb-mi ${parsed.status}`;
                     el.title = `${r.nickname || r.name} | ${STL[parsed.status]}`;
                     el.textContent = num;
