@@ -1201,20 +1201,17 @@
                 // 아래 patchItems 배열에 버전별 내용을 추가하세요
                 const patchItems = [
                     {
-                        version: 'v1.3',
-                        date: '2026-07-13',
+                        version: 'v1.4',
+                        date: '2026-07-14',
                         items: [
-							'원격조종(테스트버전) 페이지 라이트 모드',
+                            '게임패드 커스텀 바인딩 설명 페이지',
 							'다중 교대기체 자동 업로드(45분에만) / 자동 교대시작 최대 12대',
-                            'NCC 원격조종 페이지 구/신버전 기존 기능 및 페이지 대응',
                             '다크/라이트 모드 선택',
                             '룰렛 돌리기 & 동전 던지기 & 개인 메모',
                             '실시간 날씨(지역검색 가능 / 기상청 API 데이터)',
                             '임무 종료된 리센츠/엘스/한성대 페이지 이탈 시 5초 후 자동 사이드',
 							'불규칙 순찰 기체 모니터링 미추가 시 알림 기능',
 							'개입카드 현재 조작자 표기 / 상태 바 재배치(스크롤 제거)',
-							'D-PAD UP/DOWN: 다음 개입 요청받기 / 자동 긴급 정지 ON OFF',
-							'D-PAD LEFT/RIGHT: 카메라 밝기 내리기/올리기',
                         ]
                     },
                 ];
@@ -1713,6 +1710,8 @@
 		if (driveThemeOverlay) driveThemeOverlay.style.display = 'none';
 		const moreToolsOverlay = document.getElementById('neubie-moretools-overlay');
 		if (moreToolsOverlay) moreToolsOverlay.style.display = 'none';
+        const gamepadGuideOverlay = document.getElementById('neubie-gamepad-guide-overlay'); 
+		if (gamepadGuideOverlay) gamepadGuideOverlay.style.display = 'none';
     }
 
     // ── 유효성 검증 (1시간 이내 데이터) ──
@@ -4543,14 +4542,15 @@
                 overlay.innerHTML = `
                     <div style="background:#1e1e2e; color:#e2e8f0; border-radius:16px; padding:16px; max-width:92vw; max-height:90vh; box-shadow:0 10px 50px rgba(0,0,0,0.7); pointer-events:auto; display:flex; flex-direction:column;">
                         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; gap:10px;">
-                            <span style="font-size:16px; font-weight:700;">🎮 게임패드 커스텀</span>
-                            <div style="display:flex; align-items:center; gap:8px;">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <span style="font-size:16px; font-weight:700;">🎮 D-PAD 기능변경 설명</span>
                                 <button id="gp-toggle" style="width:52px; padding:6px 0; border-radius:8px; border:1px solid ${isOff ? '#ef4444' : '#22c55e'}; background:${isOff ? 'rgba(239,68,68,0.15)' : 'rgba(34,197,94,0.15)'}; color:${isOff ? '#ef4444' : '#22c55e'}; font-weight:700; font-size:13px; cursor:pointer; text-align:center;">${isOff ? 'OFF' : 'ON'}</button>
-                                <button id="gp-close" style="width:28px; height:28px; border:none; border-radius:5px; background:#3b0000; border:1px solid #ef4444; color:#ef4444; font-size:16px; cursor:pointer;">✕</button>
                             </div>
+                            <button id="gp-close" style="width:28px; height:28px; border:none; border-radius:5px; background:#3b0000; border:1px solid #ef4444; color:#ef4444; font-size:16px; cursor:pointer;">✕</button>
                         </div>
                         <img src="https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/xbox_binding.png"
-                             style="max-width:100%; max-height:75vh; width:auto; height:auto; border-radius:8px; display:block;" />
+                             width="960" height="540"
+                             style="border-radius:8px; display:block; max-width:90vw; max-height:80vh;" />
                     </div>
                 `;
                 overlay.querySelector('#gp-toggle').onclick = () => {
@@ -4585,7 +4585,7 @@
                     `;
                     const tipsTitle = document.createElement('div');
                     tipsTitle.textContent = '최적화 팁';
-                    tipsTitle.style.cssText = `font-size:20px; font-weight:bold; margin-bottom:20px; color:#fcd34d; cursor:pointer;`;
+                    tipsTitle.style.cssText = `font-size:20px; font-weight:bold; margin-bottom:20px; color:#fcd34d;`;
 
                     const tipsClose = document.createElement('button');
                     tipsClose.textContent = '✕';
