@@ -4544,7 +4544,7 @@
                         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; gap:10px;">
                             <div style="display:flex; align-items:center; gap:10px;">
                                 <span style="font-size:16px; font-weight:700;">🎮 D-PAD 기능변경 설명</span>
-                                <button id="gp-toggle" style="width:110px; padding:6px 0; border-radius:8px; border:1px solid ${isOff ? '#ef4444' : '#22c55e'}; background:${isOff ? 'rgba(239,68,68,0.15)' : 'rgba(34,197,94,0.15)'}; color:${isOff ? '#ef4444' : '#22c55e'}; font-weight:700; font-size:13px; cursor:pointer; text-align:center;">${isOff ? '기능 OFF' : '기능 ON'}</button>
+                                <button id="gp-toggle" style="width:110px; padding:6px 0; border-radius:8px; border:1px solid ${isOff ? '#ef4444' : '#22c55e'}; background:${isOff ? 'rgba(239,68,68,0.15)' : 'rgba(34,197,94,0.15)'}; color:${isOff ? '#ef4444' : '#22c55e'}; font-weight:700; font-size:13px; cursor:pointer; text-align:center;">${isOff ? '기능 OFF됨' : '기능 ON됨'}</button>
                             </div>
                             <button id="gp-close" style="width:28px; height:28px; border:none; border-radius:5px; background:#3b0000; border:1px solid #ef4444; color:#ef4444; font-size:16px; cursor:pointer;">✕</button>
                         </div>
