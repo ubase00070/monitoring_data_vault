@@ -4585,7 +4585,7 @@
                     `;
                     const tipsTitle = document.createElement('div');
                     tipsTitle.textContent = '최적화 팁';
-                    tipsTitle.style.cssText = `font-size:20px; font-weight:bold; margin-bottom:20px; color:#fcd34d; cursor:pointer;`;
+                    tipsTitle.style.cssText = `font-size:20px; font-weight:bold; margin-bottom:20px; color:#fcd34d;`;
 
                     const tipsClose = document.createElement('button');
                     tipsClose.textContent = '✕';
