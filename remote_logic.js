@@ -4548,7 +4548,7 @@
                             </div>
                             <button id="gp-close" style="width:28px; height:28px; border:none; border-radius:5px; background:#3b0000; border:1px solid #ef4444; color:#ef4444; font-size:16px; cursor:pointer;">✕</button>
                         </div>
-                        <img src="https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/xbox_binding.png"
+                        <img src="https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/xbox_binding.jpg"
                              width="960" height="540"
                              style="border-radius:8px; display:block; max-width:90vw; max-height:80vh;" />
                     </div>
