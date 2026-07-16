@@ -739,49 +739,33 @@
         SECTION 4-1. [서버 동기화] GitHub JSON 기반 업무 로드
        ============================================================ */
     function syncTasksFromServer() {
-		const myName = localStorage.getItem('neubie_user_name');
-		if (!myName) return;
+        const myName = localStorage.getItem('neubie_user_name');
+        if (!myName) return;
 
-		const dataUrl = `https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/daily_tasks.json?t=${Date.now()}`;
+        const dataUrl = `https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/daily_tasks.json?t=${Date.now()}`;
 		const insuUrl = `https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/insu_data.json?t=${Date.now()}`;
 
-		// daily_tasks + insu_data 병렬 fetch
-		Promise.all([
-			fetch(dataUrl, {cache: 'no-store'}).then(r => r.json()),
-			fetch(insuUrl, {cache: 'no-store'}).then(r => r.json()),
-		]).then(([data, insu]) => {
-			state.insuData = insu;
+        // daily_tasks + insu_data 병렬 fetch
+        Promise.all([
+            fetch(dataUrl, {cache: 'no-store'}).then(r => r.json()),
+            fetch(insuUrl, {cache: 'no-store'}).then(r => r.json()),
+        ]).then(([data, insu]) => {
+            state.insuData = insu;
 
-			// ── 오염 데이터 방어: "가져오기 실패" 등이 섞여있으면 이번 갱신을 통째로 무시 ──
-			const CONTAMINATION_KEYWORDS = ['가져오기 실패', '#REF!', 'Loading', '로딩'];
-			const isContaminated = Array.isArray(data) && data.some(t =>
-				CONTAMINATION_KEYWORDS.some(kw =>
-					String(t.user || '').includes(kw) || String(t.content || '').includes(kw)
-				)
-			);
+            const myTasks = data.filter(t => {
+                if (t.user !== myName) return false;
+                // tomorrow_07 타입은 00:00~07:10 사이에만 표시
+                if (t.type === 'tomorrow_07') {
+                    return new Date().getHours() < 7;
+                }
+                return true;
+            });
+            window.currentMyTasks = myTasks;
+            checkAndTriggerNotifications(myTasks);
 
-			if (isContaminated) {
-				console.warn('⚠️ daily_tasks.json 오염 감지 — 이전 목록 유지, 갱신 스킵');
-				const cached = JSON.parse(localStorage.getItem('neubie_my_tasks') || 'null');
-				if (cached) renderTaskList(cached); // 캐시된 마지막 정상 목록으로 재렌더 (없으면 화면 그대로 둠)
-				return;
-			}
-			// ──────────────────────────────────────────────────────────────
-
-			const myTasks = data.filter(t => {
-				if (t.user !== myName) return false;
-				if (t.type === 'tomorrow_07') {
-					return new Date().getHours() < 7;
-				}
-				return true;
-			});
-
-			window.currentMyTasks = myTasks;
-			localStorage.setItem('neubie_my_tasks', JSON.stringify(myTasks)); // 정상 데이터일 때만 캐시 갱신
-			checkAndTriggerNotifications(myTasks);
-			renderTaskList(myTasks);
-		}).catch(err => console.log("Sync failed"));
-	}
+            renderTaskList(myTasks);
+        }).catch(err => console.log("Sync failed"));
+    }
 
     // 레이아웃 노출 여부와 상관없이 알림만 전담하는 함수
     function checkAndTriggerNotifications(tasks) {
