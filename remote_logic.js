@@ -2323,6 +2323,9 @@
 			// 닫기(X) 버튼 레드 원본 유지
 			if (c.closest && c.closest('.bg-red-400')) return;
 
+			// 신규 추가 — 시나리오 진행바(체크포인트 완료 표시)는 상태색이 의미를 가지므로 원본 그대로 유지
+			if (typeof c.className === 'string' && c.className.includes('bg-primary')) return;
+			
 			// 배터리 아이콘 내부 채우기(bg-mono-200) — 카드색이 아니라 글자색(진한 톤)으로. 안 그러면 흰 배경에 묻힘
 			if (typeof c.className === 'string' && c.className.includes('bg-mono-200')) {
 				c.style.setProperty('background-color', t.text, 'important');
