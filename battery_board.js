@@ -1679,7 +1679,7 @@
 			renderWalker();
 		});
 
-		// 배리에이션 교체 시점을 놓치지 않도록 주기적으로 재확인 (API 호출 없음, 순수 화면 갱신)
+		// 교체 시점을 놓치지 않도록 주기적으로 재확인 (API 호출 없음, 순수 화면 갱신)
 		setInterval(renderWalker, 60 * 1000);   // 1분마다 체크
 
 		// ── 표시 on/off 토글 (기본 ON, localStorage 저장) ──
