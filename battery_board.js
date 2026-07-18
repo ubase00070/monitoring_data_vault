@@ -1637,6 +1637,7 @@
 		const walkerFiles = [
 			{ name: 'Walker',   variants: ['Walker.webp', 'Walker_2.webp', 'Walker_3.webp'] },
 			{ name: 'Scoot',   variants: ['Scoot.webp', 'Scoot_2.webp', 'Scoot_3.webp'] },
+			{ name: 'Flurry',   variants: ['Flurry.png', 'Flurry_2.png', 'Flurry_3.png', 'Flurry_4.png'] },
 			{ name: 'Blathers', variants: ['Blathers.webp', 'Blathers_2.webp', 'Blathers_3.webp'] },
 			{ name: 'Bluebear', variants: ['Bluebear.webp', 'Bluebear_2.webp', 'Bluebear_3.webp'] },
 			{ name: 'Bob',      variants: ['Bob.webp'] },
@@ -1648,6 +1649,7 @@
 			{ name: 'Sable',    variants: ['Sable.webp', 'Sable_2.webp'] },
 			{ name: 'Sherb',    variants: ['Sherb.webp', 'Sherb_2.webp'] },
 			{ name: 'Wisp',     variants: ['Wisp.webp', 'Wisp_2.webp'] },
+			
 		];
 		
 		const ROTATE_MS = 2 * 60 * 60 * 1000;   // 2시간마다 배리에이션 교체 (원하는 시간으로 조정)
