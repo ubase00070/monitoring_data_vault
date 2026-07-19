@@ -497,7 +497,7 @@
             <div class="bb-hd">
                 <div class="bb-hd-left">
                     <button class="bb-btn info" id="bb-infobtn">사용 설명서</button>
-                    <button class="bb-btn" id="bb-sortBtn">가나다 순</button>
+                    <button class="bb-btn" id="bb-inforequest-btn">기체정보</button>
                     <button id="bb-zoom-out" class="zoom-btn">－</button>
                     <span id="bb-zoom-label" class="zoom-label">100%</span>
                     <button id="bb-zoom-in"  class="zoom-btn">＋</button>
@@ -525,7 +525,6 @@
                     <span class="bb-alert-label">🚨 알림</span>
                     <div class="bb-alert-chips" id="bb-alert-chips"></div>
                 </div>
-                <button class="bb-btn" id="bb-inforequest-btn" style="margin-right:6px; align-self:center;">기체정보</button>
                 <div class="bb-search-wrap">
                     <div class="bb-si-wrap">
                         <span class="bb-si-icon">🔍</span>
@@ -1591,7 +1590,6 @@
     // SECTION 14. 이벤트 바인딩
     // ============================================================
     document.getElementById('bb-closebtn').addEventListener('click', closeBoard);
-    document.getElementById('bb-sortBtn').addEventListener('click', autoSort);
     document.getElementById('bb-rmbtn').addEventListener('click', toggleRm);
 
     document.getElementById('bb-ap-close').addEventListener('click', () => {
