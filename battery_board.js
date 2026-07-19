@@ -139,11 +139,16 @@
         }
         .bb-alert-chips { display:flex; gap:5px; flex-wrap:wrap; flex:1; align-items:center; }
         .bb-chip {
-            display:flex; align-items:center; gap:4px;
+            display:flex; flex-direction:column; gap:2px;
             padding:5px 12px; border-radius:10px;
             font-size:15px; font-weight:700; cursor:pointer;
-            white-space:nowrap; font-family:inherit;
+            font-family:inherit; max-width:180px;
             transition:filter .15s, box-shadow .15s;
+        }
+        .bb-chip-l1 { white-space:nowrap; }
+        .bb-chip-l2 {
+            font-size:11px; font-weight:500; opacity:.8;
+            white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
         }
         .bb-chip:hover { filter:brightness(1.15); }
         .bb-chip.estop { background:var(--rd2); color:var(--rd); border:2px solid rgba(239,68,68,.7); box-shadow:0 0 10px rgba(239,68,68,.4); animation:chipPulse .5s infinite, chipBorder .5s infinite; }
@@ -162,7 +167,7 @@
 
         /* 검색 */
         .bb-search-wrap {
-            width:280px; flex-shrink:0; padding:6px 10px;
+            width:220px; flex-shrink:0; padding:6px 10px;
             border-left:1px solid var(--bd); background:var(--bg);
             position:relative; display:flex; align-items:center;
         }
@@ -908,10 +913,14 @@
             el.innerHTML = '<span class="bb-chip-none">이상 없음 ✓</span>';
         } else {
             el.innerHTML = types.map(type => {
-                const meta  = ALERT_META[type] || { label: type };
-                const count = groups[type].length;
+                const meta   = ALERT_META[type] || { label: type };
+                const items  = groups[type];
+                const count  = items.length;
+                const first  = items[0]?.name || '';
+                const preview = count > 1 ? `${first} 등 ${count}대` : first;
                 return `<div class="bb-chip ${type}" data-type="${type}">
-                    ${meta.label} <strong>${count}건</strong>
+                    <div class="bb-chip-l1">${meta.label} <strong>${count}건</strong></div>
+                    <div class="bb-chip-l2">${preview}</div>
                 </div>`;
             }).join('');
 
