@@ -1566,7 +1566,6 @@
                 `<div class="bb-di" data-rid="${r.id}">
                     <span class="bb-di-name">${r.name}</span>
                     <span class="bb-di-icon">${STI[r.status]}</span>
-                    <span class="bb-di-plus">＋</span>
                 </div>`
             ).join('');
             ddEl.querySelectorAll('.bb-di[data-rid]').forEach(el => {
