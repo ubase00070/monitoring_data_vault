@@ -167,7 +167,7 @@
 
         /* 검색 */
         .bb-search-wrap {
-            width:220px; flex-shrink:0; padding:6px 10px;
+            width:240px; flex-shrink:0; padding:6px 10px;
             border-left:1px solid var(--bd); background:var(--bg);
             position:relative; display:flex; align-items:center;
         }
