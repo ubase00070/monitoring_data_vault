@@ -1351,7 +1351,7 @@
             padding:4px; box-sizing:border-box;
         `;
         gamepadBtn.innerHTML = `<span style="position:relative; z-index:1; font-size:26px;">🎮</span>
-            <span style="position:relative; z-index:1; font-size:14px; font-weight:500; white-space:nowrap; text-align:center;">게임패드</span>`;
+            <span style="position:relative; z-index:1; font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">게임패드</span>`;
         const gamepadLabel = document.createElement('span');
         gamepadLabel.style.cssText = 'position:relative; z-index:1; font-size:12px; font-weight:bold; letter-spacing:0.5px;';
         gamepadLabel.textContent = isDpadBindingOff() ? 'OFF' : 'ON';
@@ -1553,7 +1553,7 @@
             padding:4px; box-sizing:border-box;
         `;
         mapToggle.innerHTML = `<span style="position:relative; z-index:1; font-size:26px;">🗺️</span>
-            <span style="position:relative; z-index:1; font-size:14px; font-weight:500; white-space:nowrap; text-align:center;">맵 최적화 기능</span>`;
+            <span style="position:relative; z-index:1; font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">요기요 최적화</span>`;
         const mapLabel = document.createElement('span');
         mapLabel.style.cssText = 'position:relative; z-index:1; font-size:12px; font-weight:bold; letter-spacing:0.5px;';
         mapLabel.textContent = state.isMapOpt ? 'ON' : 'OFF';
@@ -1653,7 +1653,7 @@
             padding:4px; box-sizing:border-box;
         `;
         queueToggle.innerHTML = `<span style="position:relative; z-index:1; font-size:26px;">🖥️</span>
-            <span style="position:relative; z-index:1; font-size:14px; font-weight:500; white-space:nowrap; text-align:center;">다중 모니터링 기능</span>`;
+            <span style="position:relative; z-index:1; font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">다중 모니터링 기능</span>`;
         const queueLabel = document.createElement('span');
         queueLabel.style.cssText = 'position:relative; z-index:1; font-size:12px; font-weight:bold; letter-spacing:0.5px;';
         queueLabel.textContent = queueEnabled ? 'ON' : 'OFF';
