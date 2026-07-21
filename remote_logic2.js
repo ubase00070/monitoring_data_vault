@@ -526,11 +526,7 @@
             #neubie-weather-overlay, #neubie-weather-overlay *,
             #neubie-roulette-overlay, #neubie-roulette-overlay *,
             #neubie-tips-overlay, #neubie-tips-overlay *,
-            #neubie-patch-overlay, #neubie-patch-overlay *,
-            #neubie-map-info-overlay, #neubie-map-info-overlay *,
-            #neubie-queue-info-overlay, #neubie-queue-info-overlay *,
-            #neubie-drivetheme-overlay, #neubie-drivetheme-overlay *,
-            #neubie-moretools-overlay, #neubie-moretools-overlay * {
+            #neubie-shared-popup, #neubie-shared-popup * {
                 font-family: 'Paperlogy', 'Pretendard', 'Noto Sans KR', sans-serif !important;
             }
 
@@ -1214,109 +1210,84 @@
         patchBtn.onmouseenter = () => { patchBtn.style.borderColor='#3b82f6'; patchBtn.style.color='#3b82f6'; };
         patchBtn.onmouseleave = () => { patchBtn.style.borderColor=T.border; patchBtn.style.color=T.text; };
         patchBtn.onclick = () => {
-            let patchOverlay = document.getElementById('neubie-patch-overlay');
-
             // 이미 열려있으면(패치노트 버튼 재클릭) 닫기만 하고 종료 — X버튼 없이도 닫는 방법
-            if (patchOverlay && patchOverlay.style.display === 'flex') {
-                patchOverlay.style.display = 'none';
+            if (isSharedPopupOpen('patch')) {
+                hideSharedPopup();
                 return;
             }
 
-            if (!patchOverlay) {
-                patchOverlay = document.createElement('div');
-                patchOverlay.id = 'neubie-patch-overlay';
-                patchOverlay.style.cssText = `
-                    position:fixed; background:transparent; pointer-events:none;
-                    z-index:2147483646; display:flex; align-items:flex-end; justify-content:center;
-                    font-family:Pretendard, sans-serif;
-                `;
-                const patchBox = document.createElement('div');
-                patchBox.style.cssText = `
-                    background:${T.card}; color:${T.text}; border-radius:18px; pointer-events:auto;
-                    border:1.5px solid ${T.accent}; padding:28px 32px 24px 32px;
-                    max-width:560px; width:90%; max-height:80vh; overflow-y:auto;
-                    position:relative; box-shadow:0 10px 50px rgba(0,0,0,0.7);
-                `;
-                const patchTitle = document.createElement('div');
-                patchTitle.textContent = '패치노트';
-                patchTitle.style.cssText = `font-size:20px; font-weight:bold; margin-bottom:20px; color:${T.accent};`;
-                const patchClose = document.createElement('button');
-                patchClose.textContent = '✕';
-                patchClose.style.cssText = `
-                    position:absolute; top:16px; right:18px;
-                    background:transparent; border:none; color:#aaa;
-                    font-size:20px; cursor:pointer; padding:4px 8px; border-radius:6px;
-                `;
-                patchClose.onmouseenter = () => { patchClose.style.color='#fff'; };
-                patchClose.onmouseleave = () => { patchClose.style.color='#aaa'; };
-                patchClose.onclick = () => { patchOverlay.style.display='none'; };
+            const patchBox = document.createElement('div');
+            patchBox.style.cssText = `
+                background:${T.card}; color:${T.text}; border-radius:18px; pointer-events:auto;
+                border:1.5px solid ${T.accent}; padding:28px 32px 24px 32px;
+                width:100%; box-sizing:border-box; max-height:70vh; overflow-y:auto;
+                position:relative; box-shadow:0 10px 50px rgba(0,0,0,0.7);
+            `;
+            const patchTitle = document.createElement('div');
+            patchTitle.textContent = '패치노트';
+            patchTitle.style.cssText = `font-size:20px; font-weight:bold; margin-bottom:20px; color:${T.accent};`;
+            const patchClose = document.createElement('button');
+            patchClose.textContent = '✕';
+            patchClose.style.cssText = `
+                position:absolute; top:16px; right:18px;
+                background:transparent; border:none; color:#aaa;
+                font-size:20px; cursor:pointer; padding:4px 8px; border-radius:6px;
+            `;
+            patchClose.onmouseenter = () => { patchClose.style.color='#fff'; };
+            patchClose.onmouseleave = () => { patchClose.style.color='#aaa'; };
+            patchClose.onclick = () => hideSharedPopup();
 
-                // ── 패치노트 내용 ──────────────────────────────────────
-                // 아래 patchItems 배열에 버전별 내용을 추가하세요
-                const patchItems = [
-                    {
-                        version: 'v1.4',
-                        date: '2026-07-21',
-                        items: [
-							'스트림덱 스타일 적용(길게 누르면 ON/OFF됨)',
-							'임무 종료된 리센츠/엘스/한성대/진천 페이지 이탈 5초 후 자동 사이드',
-                            '게임패드 커스텀 바인딩 설명 페이지',
-							'다중 자동 교대시작 최대 12대까지',
-                            '다크/라이트 모드 선택',
-                            '룰렛 돌리기 & 동전 던지기 & 개인 메모',
-                            '실시간 날씨(지역검색 가능 / 기상청 API 데이터)',
-							'불규칙 순찰 기체 모니터링 미추가 시 알림 기능',
-							'개입카드 현재 조작자 표기 / 상태 바 재배치(스크롤 제거)',
-                        ]
-                    },
-                ];
-                // ────────────────────────────────────────────────────────
+            // ── 패치노트 내용 ──────────────────────────────────────
+            // 아래 patchItems 배열에 버전별 내용을 추가하세요
+            const patchItems = [
+                {
+                    version: 'v1.4',
+                    date: '2026-07-21',
+                    items: [
+						'스트림덱 스타일 적용(길게 누르면 ON/OFF됨)',
+						'임무 종료된 리센츠/엘스/한성대/진천 페이지 이탈 5초 후 자동 사이드',
+                        '게임패드 커스텀 바인딩 설명 페이지',
+						'다중 자동 교대시작 최대 12대까지',
+                        '다크/라이트 모드 선택',
+                        '룰렛 돌리기 & 동전 던지기 & 개인 메모',
+                        '실시간 날씨(지역검색 가능 / 기상청 API 데이터)',
+						'불규칙 순찰 기체 모니터링 미추가 시 알림 기능',
+						'개입카드 현재 조작자 표기 / 상태 바 재배치(스크롤 제거)',
+                    ]
+                },
+            ];
+            // ────────────────────────────────────────────────────────
 
-                const patchContent = document.createElement('div');
-                patchContent.style.cssText = "display:grid; gap:16px;";
-                patchItems.forEach(patch => {
-                    const section = document.createElement('div');
-                    section.style.cssText = `background:${T.card}; border:1px solid ${T.border}; border-radius:12px; padding:14px 16px;`;
-                    const versionRow = document.createElement('div');
-                    versionRow.style.cssText = "display:flex; align-items:center; gap:8px; margin-bottom:10px;";
-                    versionRow.innerHTML = `
-                        <span style="font-size:15px; font-weight:bold; color:#60a5fa;">${patch.version}</span>
-                        <span style="font-size:12px; color:#666;">${patch.date}</span>
-                    `;
-                    const itemList = document.createElement('ul');
-                    itemList.style.cssText = "margin:0; padding-left:18px; display:grid; gap:6px;";
-                    patch.items.forEach(item => {
-                        const li = document.createElement('li');
-                        li.textContent = item;
-                        li.style.cssText = `font-size:13px; color:${T.text}; line-height:1.5;`;
-                        itemList.appendChild(li);
-                    });
-                    section.appendChild(versionRow);
-                    section.appendChild(itemList);
-                    patchContent.appendChild(section);
+            const patchContent = document.createElement('div');
+            patchContent.style.cssText = "display:grid; gap:16px;";
+            patchItems.forEach(patch => {
+                const section = document.createElement('div');
+                section.style.cssText = `background:${T.card}; border:1px solid ${T.border}; border-radius:12px; padding:14px 16px;`;
+                const versionRow = document.createElement('div');
+                versionRow.style.cssText = "display:flex; align-items:center; gap:8px; margin-bottom:10px;";
+                versionRow.innerHTML = `
+                    <span style="font-size:15px; font-weight:bold; color:#60a5fa;">${patch.version}</span>
+                    <span style="font-size:12px; color:#666;">${patch.date}</span>
+                `;
+                const itemList = document.createElement('ul');
+                itemList.style.cssText = "margin:0; padding-left:18px; display:grid; gap:6px;";
+                patch.items.forEach(item => {
+                    const li = document.createElement('li');
+                    li.textContent = item;
+                    li.style.cssText = `font-size:13px; color:${T.text}; line-height:1.5;`;
+                    itemList.appendChild(li);
                 });
+                section.appendChild(versionRow);
+                section.appendChild(itemList);
+                patchContent.appendChild(section);
+            });
 
-                patchBox.appendChild(patchClose);
-                patchBox.appendChild(patchTitle);
-                patchBox.appendChild(patchContent);
-                patchOverlay.appendChild(patchBox);
-                const r = getAboveTilesRect();
-                patchOverlay.style.position = 'fixed';
-                patchOverlay.style.top = 'auto';
-                patchOverlay.style.bottom = r.bottom + 'px';
-                patchOverlay.style.left = r.left + 'px';
-                patchOverlay.style.width = r.width + 'px';
-                patchOverlay.style.height = 'auto';
-                document.body.appendChild(patchOverlay);
-            } else {
-                const r = getAboveTilesRect();
-                patchOverlay.style.top = 'auto';
-                patchOverlay.style.bottom = r.bottom + 'px';
-                patchOverlay.style.left = r.left + 'px';
-                patchOverlay.style.width = r.width + 'px';
-                patchOverlay.style.height = 'auto';
-                patchOverlay.style.display = 'flex';
-            }
+            patchBox.appendChild(patchClose);
+            patchBox.appendChild(patchTitle);
+            patchBox.appendChild(patchContent);
+            weatherCard.style.outline = 'none';
+            rouletteCard.style.outline = 'none';
+            showSharedPopup('patch', patchBox);
         };
 
         // 이름 입력 및 닫기 버튼 영역
@@ -1360,12 +1331,15 @@
             display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
             padding:4px; box-sizing:border-box;
         `;
-        gamepadBtn.innerHTML = `<span style="position:relative; z-index:1; font-size:18px;">🎮</span>
-            <span style="position:relative; z-index:1; font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">게임패드</span>`;
-        const gamepadLabel = document.createElement('span');
-        gamepadLabel.style.cssText = 'position:relative; z-index:1; font-size:12px; font-weight:bold; letter-spacing:0.5px;';
+        gamepadBtn.innerHTML = `
+            <div style="position:relative; z-index:1; display:flex; align-items:center; justify-content:center; gap:6px;">
+                <span style="font-size:18px;">🎮</span>
+                <span class="nb-onoff" style="font-size:12px; font-weight:bold; letter-spacing:0.5px;"></span>
+            </div>
+            <span style="position:relative; z-index:1; font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">게임패드</span>
+        `;
+        const gamepadLabel = gamepadBtn.querySelector('.nb-onoff');
         gamepadLabel.textContent = isDpadBindingOff() ? 'OFF' : 'ON';
-        gamepadBtn.appendChild(gamepadLabel);
         paintToggleTile(gamepadBtn, !isDpadBindingOff(), T);
         attachNeonHover(gamepadBtn, () => !isDpadBindingOff());
         // 게임패드 가이드 오버레이(#gp-toggle)에서 토글해도 이 타일이 즉시 반영되도록 전역 sync 함수 노출
@@ -1549,15 +1523,59 @@
 
         // 맵최적화/다중모니터링/레이아웃색상/날씨&기타/패치노트 팝업을 '일일 업무 카드(taskCard) 바닥' 기준으로
         // 스트림덱 타일(bottomRow) 위쪽 틈에만 앉히기 위한 영역 계산 — 스트림덱 버튼을 절대 가리지 않음
-        // (taskCard/bottomRow는 아래에서 선언되지만, 이 함수는 클릭 시점에만 호출되므로 그때는 이미 존재함)
-        // 맵최적화/다중모니터링/레이아웃색상/날씨&기타/패치노트 팝업을 '스트림덱 타일(bottomRow) 바로 위'에
-        // 딱 붙여 앉히기 위한 좌표 계산. top/height로 영역을 제한하는 대신, CSS bottom으로 타일 상단에
-        // 고정하고 내용 높이만큼 위로 자라도록 해서 절대 타일을 가리지 않고 잘리지도 않게 함.
-        function getAboveTilesRect() {
+        // ── 스트림덱 위 팝업들의 '공유 창' 시스템 ──────────────────────────────
+        // 맵최적화/다중모니터링/레이아웃색상/날씨&기타/패치노트 — 이 5개는 모두
+        // 하나의 오버레이(#neubie-shared-popup)를 공유한다. 즉 다른 트리거를 누르면
+        // 새 창이 또 뜨는 게 아니라, 이미 떠있는 창의 '내용물만' 교체된다.
+        // 폭은 메인 대시보드(dashboard) 폭에 맞추고, 높이는 내용에 따라 자동.
+        // 위치는 스트림덱 상단에서 POPUP_GAP만큼 살짝 띄워서 붙인다(버튼과 완전히 안 붙게).
+        const POPUP_GAP = 14;
+
+        function getSharedPopupRect() {
+            const d = dashboard.getBoundingClientRect();
             const t = bottomRow.getBoundingClientRect();
-            return { left: t.left, width: t.width, bottom: window.innerHeight - t.top };
+            return { left: d.left, width: d.width, bottom: (window.innerHeight - t.top) + POPUP_GAP };
         }
-        window.getAboveTilesRect = getAboveTilesRect; // 다른 스코프(레이아웃색상/날씨&기타 오버레이 등)에서도 호출 가능하도록 노출
+
+        function showSharedPopup(key, boxEl) {
+            let overlay = document.getElementById('neubie-shared-popup');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'neubie-shared-popup';
+                overlay.style.cssText = `
+                    position:fixed; z-index:2147483646; background:transparent; pointer-events:none;
+                    display:flex; align-items:flex-end; justify-content:center;
+                    font-family:Pretendard, sans-serif;
+                `;
+                document.body.appendChild(overlay);
+            }
+            overlay.dataset.key = key;
+            overlay.innerHTML = '';
+            overlay.appendChild(boxEl);
+            const r = getSharedPopupRect();
+            overlay.style.top = 'auto';
+            overlay.style.left = r.left + 'px';
+            overlay.style.width = r.width + 'px';
+            overlay.style.bottom = r.bottom + 'px';
+            overlay.style.height = 'auto';
+            overlay.style.display = 'flex';
+        }
+
+        function hideSharedPopup() {
+            const overlay = document.getElementById('neubie-shared-popup');
+            if (overlay) overlay.style.display = 'none';
+        }
+
+        function isSharedPopupOpen(key) {
+            const overlay = document.getElementById('neubie-shared-popup');
+            return !!(overlay && overlay.style.display === 'flex' && overlay.dataset.key === key);
+        }
+
+        // 다른 스코프(레이아웃색상/날씨&기타 오버레이 등)에서도 호출 가능하도록 전역 노출
+        window.getSharedPopupRect = getSharedPopupRect;
+        window.showSharedPopup = showSharedPopup;
+        window.hideSharedPopup = hideSharedPopup;
+        window.isSharedPopupOpen = isSharedPopupOpen;
 
         // 요기요 최적화 — 스트림덱 타일 (아이콘 + 라벨 + ON/OFF)
         const mapToggle = document.createElement('button');
@@ -1566,12 +1584,15 @@
             display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
             padding:4px; box-sizing:border-box;
         `;
-        mapToggle.innerHTML = `<span style="position:relative; z-index:1; font-size:18px;">🗺️</span>
-            <span style="position:relative; z-index:1; font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">맵 최적화 기능</span>`;
-        const mapLabel = document.createElement('span');
-        mapLabel.style.cssText = 'position:relative; z-index:1; font-size:12px; font-weight:bold; letter-spacing:0.5px;';
+        mapToggle.innerHTML = `
+            <div style="position:relative; z-index:1; display:flex; align-items:center; justify-content:center; gap:6px;">
+                <span style="font-size:18px;">🗺️</span>
+                <span class="nb-onoff" style="font-size:12px; font-weight:bold; letter-spacing:0.5px;"></span>
+            </div>
+            <span style="position:relative; z-index:1; font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">맵 최적화 기능</span>
+        `;
+        const mapLabel = mapToggle.querySelector('.nb-onoff');
         mapLabel.textContent = state.isMapOpt ? 'ON' : 'OFF';
-        mapToggle.appendChild(mapLabel);
         paintToggleTile(mapToggle, state.isMapOpt, T);
         attachNeonHover(mapToggle, () => state.isMapOpt);
         attachHoldToggle(mapToggle, {
@@ -1600,71 +1621,48 @@
         mapInfoBtn.onmouseleave = () => { mapInfoBtn.style.borderColor='#aaa'; mapInfoBtn.style.color='#aaa'; };
         mapInfoBtn.onclick = (e) => {
             e.stopPropagation();
-            let mapInfoOverlay = document.getElementById('neubie-map-info-overlay');
 
-            // 이미 열려있으면(같은 버튼 재클릭) 닫기만 하고 종료 — X버튼 없이도 닫는 방법
-            if (mapInfoOverlay && mapInfoOverlay.style.display === 'flex') {
-                mapInfoOverlay.style.display = 'none';
+            // 같은 버튼 재클릭 시 닫기만 하고 종료 — X버튼 없이도 닫는 방법
+            if (isSharedPopupOpen('map-info')) {
+                hideSharedPopup();
                 return;
             }
 
-            if (!mapInfoOverlay) {
-                mapInfoOverlay = document.createElement('div');
-                mapInfoOverlay.id = 'neubie-map-info-overlay';
-                mapInfoOverlay.style.cssText = `
-                    position:fixed; background:transparent; pointer-events:none;
-                    z-index:2147483646; display:flex; align-items:flex-end; justify-content:center;
-                    font-family:Pretendard, sans-serif;
-                `;
-                const mapInfoBox = document.createElement('div');
-                mapInfoBox.style.cssText = `
-                    background:${T.card}; color:${T.text}; border-radius:18px; pointer-events:auto;
-                    border:1.5px solid ${T.accent}; padding:36px 40px 32px 40px;
-                    max-width:600px; width:90%; max-height:80vh; overflow-y:auto;
-                    position:relative; box-shadow:0 10px 50px rgba(0,0,0,0.7);
-                `;
-                const mapInfoTitle = document.createElement('div');
-                mapInfoTitle.textContent = '기능 설명';
-                mapInfoTitle.style.cssText = `font-size:22px; font-weight:bold; margin-bottom:20px; color:${T.accent};`;
-                const mapInfoClose = document.createElement('button');
-                mapInfoClose.textContent = '✕';
-                mapInfoClose.style.cssText = `
-                    position:absolute; top:16px; right:18px;
-                    background:transparent; border:none; color:#aaa;
-                    font-size:20px; cursor:pointer; line-height:1; padding:4px 8px;
-                    border-radius:6px; transition:color 0.2s;
-                `;
-                mapInfoClose.onmouseenter = () => { mapInfoClose.style.color='#fff'; };
-                mapInfoClose.onmouseleave = () => { mapInfoClose.style.color='#aaa'; };
-                mapInfoClose.onclick = () => { mapInfoOverlay.style.display='none'; };
-                const mapInfoContent = document.createElement('div');
-                mapInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:${T.text};`;
-                mapInfoContent.innerHTML = `
-                    역삼 요기요 / 송도 요기요 / 성수 요기요 / 성남 삼평동<br>
-                    페이지에서 흰색 마커를 숨겨서 최적화.<br>
-                    대기장소 마커(주황)를 역방향으로 뒤집어서 보기 쉽도록 함.<br>
-                    기존 NCC 상의 아이콘 숨기기 기능은 여전히 작동.<br>
-                `;
-                mapInfoBox.appendChild(mapInfoClose);
-                mapInfoBox.appendChild(mapInfoTitle);
-                mapInfoBox.appendChild(mapInfoContent);
-                mapInfoOverlay.appendChild(mapInfoBox);
-                const r0 = getAboveTilesRect();
-                mapInfoOverlay.style.top = 'auto';
-                mapInfoOverlay.style.bottom = r0.bottom + 'px';
-                mapInfoOverlay.style.left = r0.left + 'px';
-                mapInfoOverlay.style.width = r0.width + 'px';
-                mapInfoOverlay.style.height = 'auto';
-                document.body.appendChild(mapInfoOverlay);
-            } else {
-                const r = getAboveTilesRect();
-                mapInfoOverlay.style.top = 'auto';
-                mapInfoOverlay.style.bottom = r.bottom + 'px';
-                mapInfoOverlay.style.left = r.left + 'px';
-                mapInfoOverlay.style.width = r.width + 'px';
-                mapInfoOverlay.style.height = 'auto';
-                mapInfoOverlay.style.display = 'flex';
-            }
+            const mapInfoBox = document.createElement('div');
+            mapInfoBox.style.cssText = `
+                background:${T.card}; color:${T.text}; border-radius:18px; pointer-events:auto;
+                border:1.5px solid ${T.accent}; padding:36px 40px 32px 40px;
+                width:100%; box-sizing:border-box; max-height:70vh; overflow-y:auto;
+                position:relative; box-shadow:0 10px 50px rgba(0,0,0,0.7);
+            `;
+            const mapInfoTitle = document.createElement('div');
+            mapInfoTitle.textContent = '기능 설명';
+            mapInfoTitle.style.cssText = `font-size:22px; font-weight:bold; margin-bottom:20px; color:${T.accent};`;
+            const mapInfoClose = document.createElement('button');
+            mapInfoClose.textContent = '✕';
+            mapInfoClose.style.cssText = `
+                position:absolute; top:16px; right:18px;
+                background:transparent; border:none; color:#aaa;
+                font-size:20px; cursor:pointer; line-height:1; padding:4px 8px;
+                border-radius:6px; transition:color 0.2s;
+            `;
+            mapInfoClose.onmouseenter = () => { mapInfoClose.style.color='#fff'; };
+            mapInfoClose.onmouseleave = () => { mapInfoClose.style.color='#aaa'; };
+            mapInfoClose.onclick = () => hideSharedPopup();
+            const mapInfoContent = document.createElement('div');
+            mapInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:${T.text};`;
+            mapInfoContent.innerHTML = `
+                역삼 요기요 / 송도 요기요 / 성수 요기요 / 성남 삼평동<br>
+                페이지에서 흰색 마커를 숨겨서 최적화.<br>
+                대기장소 마커(주황)를 역방향으로 뒤집어서 보기 쉽도록 함.<br>
+                기존 NCC 상의 아이콘 숨기기 기능은 여전히 작동.<br>
+            `;
+            mapInfoBox.appendChild(mapInfoClose);
+            mapInfoBox.appendChild(mapInfoTitle);
+            mapInfoBox.appendChild(mapInfoContent);
+            weatherCard.style.outline = 'none';
+            rouletteCard.style.outline = 'none';
+            showSharedPopup('map-info', mapInfoBox);
         };
 
 		// 다중 모니터링 기능 — 스트림덱 타일
@@ -1675,12 +1673,15 @@
             display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
             padding:4px; box-sizing:border-box;
         `;
-        queueToggle.innerHTML = `<span style="position:relative; z-index:1; font-size:18px;">🖥️</span>
-            <span style="position:relative; z-index:1; font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">다중 모니터링 기능</span>`;
-        const queueLabel = document.createElement('span');
-        queueLabel.style.cssText = 'position:relative; z-index:1; font-size:12px; font-weight:bold; letter-spacing:0.5px;';
+        queueToggle.innerHTML = `
+            <div style="position:relative; z-index:1; display:flex; align-items:center; justify-content:center; gap:6px;">
+                <span style="font-size:18px;">🖥️</span>
+                <span class="nb-onoff" style="font-size:12px; font-weight:bold; letter-spacing:0.5px;"></span>
+            </div>
+            <span style="position:relative; z-index:1; font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">다중 모니터링 기능</span>
+        `;
+        const queueLabel = queueToggle.querySelector('.nb-onoff');
         queueLabel.textContent = queueEnabled ? 'ON' : 'OFF';
-        queueToggle.appendChild(queueLabel);
         paintToggleTile(queueToggle, queueEnabled, T);
         attachNeonHover(queueToggle, () => queueLabel.textContent === 'ON');
         attachHoldToggle(queueToggle, {
@@ -1724,76 +1725,51 @@
         queueInfoBtn.onmouseenter = () => { queueInfoBtn.style.borderColor='#60a5fa'; queueInfoBtn.style.color='#60a5fa'; };
         queueInfoBtn.onmouseleave = () => { queueInfoBtn.style.borderColor='#aaa'; queueInfoBtn.style.color='#aaa'; };
         queueInfoBtn.onclick = () => {
-            let queueInfoOverlay = document.getElementById('neubie-queue-info-overlay');
-
-            // 이미 열려있으면(같은 버튼 재클릭) 닫기만 하고 종료 — X버튼 없이도 닫는 방법
-            if (queueInfoOverlay && queueInfoOverlay.style.display === 'flex') {
-                queueInfoOverlay.style.display = 'none';
+            // 같은 버튼 재클릭 시 닫기만 하고 종료 — X버튼 없이도 닫는 방법
+            if (isSharedPopupOpen('queue-info')) {
+                hideSharedPopup();
                 return;
             }
 
-            if (!queueInfoOverlay) {
-                queueInfoOverlay = document.createElement('div');
-                queueInfoOverlay.id = 'neubie-queue-info-overlay';
-                queueInfoOverlay.style.cssText = `
-                    position:fixed; background:transparent; pointer-events:none;
-                    z-index:2147483646; display:flex; align-items:flex-end; justify-content:center;
-                    font-family:Pretendard, sans-serif; border-radius:20px; overflow:visible;
-                `;
-                const queueInfoBox = document.createElement('div');
-                queueInfoBox.style.cssText = `
-                    background:${T.card}; color:${T.text}; border-radius:18px; pointer-events:auto;
-                    border:1.5px solid ${T.accent}; padding:36px 40px 32px 40px;
-                    max-width:600px; width:90%; max-height:80vh; overflow-y:auto;
-                    position:relative; box-shadow:0 10px 50px rgba(0,0,0,0.7);
-                `;
-                const queueInfoTitle = document.createElement('div');
-                queueInfoTitle.textContent = '기능 설명';
-                queueInfoTitle.style.cssText = `font-size:22px; font-weight:bold; margin-bottom:20px; color:${T.accent};`;
-                const queueInfoClose = document.createElement('button');
-                queueInfoClose.textContent = '✕';
-                queueInfoClose.style.cssText = `
-                    position:absolute; top:16px; right:18px;
-                    background:transparent; border:none; color:#aaa;
-                    font-size:20px; cursor:pointer; line-height:1; padding:4px 8px;
-                    border-radius:6px; transition:color 0.2s;
-                `;
-                queueInfoClose.onmouseenter = () => { queueInfoClose.style.color='#fff'; };
-                queueInfoClose.onmouseleave = () => { queueInfoClose.style.color='#aaa'; };
-                queueInfoClose.onclick = () => { queueInfoOverlay.style.display='none'; };
-                const queueInfoContent = document.createElement('div');
-                queueInfoContent.id = 'neubie-queue-info-content';
-                queueInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:${T.text}; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;`;
-                queueInfoContent.innerHTML = `
+            const queueInfoBox = document.createElement('div');
+            queueInfoBox.style.cssText = `
+                background:${T.card}; color:${T.text}; border-radius:18px; pointer-events:auto;
+                border:1.5px solid ${T.accent}; padding:36px 40px 32px 40px;
+                width:100%; box-sizing:border-box; max-height:70vh; overflow-y:auto;
+                position:relative; box-shadow:0 10px 50px rgba(0,0,0,0.7);
+            `;
+            const queueInfoTitle = document.createElement('div');
+            queueInfoTitle.textContent = '기능 설명';
+            queueInfoTitle.style.cssText = `font-size:22px; font-weight:bold; margin-bottom:20px; color:${T.accent};`;
+            const queueInfoClose = document.createElement('button');
+            queueInfoClose.textContent = '✕';
+            queueInfoClose.style.cssText = `
+                position:absolute; top:16px; right:18px;
+                background:transparent; border:none; color:#aaa;
+                font-size:20px; cursor:pointer; line-height:1; padding:4px 8px;
+                border-radius:6px; transition:color 0.2s;
+            `;
+            queueInfoClose.onmouseenter = () => { queueInfoClose.style.color='#fff'; };
+            queueInfoClose.onmouseleave = () => { queueInfoClose.style.color='#aaa'; };
+            queueInfoClose.onclick = () => hideSharedPopup();
+            const queueInfoContent = document.createElement('div');
+            queueInfoContent.id = 'neubie-queue-info-content';
+            queueInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:${T.text}; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;`;
+            queueInfoContent.innerHTML = `
 				기체별 화질 조절<br>
                 기체별 헤드램프 토글<br>
 				기체 카메라 밝기 한 번에 조절<br>
 				카메라 위치 스왑<br>
 				multimonitoring.vercel.app 이용 시에도 기체 업로드 가능<br>
 				'NCC 도우미'만 이용하더라도 교대 기체 업로드 및 받기 가능<br>
-                `;
+            `;
 
-                queueInfoBox.appendChild(queueInfoClose);
-                queueInfoBox.appendChild(queueInfoTitle);
-                queueInfoBox.appendChild(queueInfoContent);
-                queueInfoOverlay.appendChild(queueInfoBox);
-                const r0 = getAboveTilesRect();
-                queueInfoOverlay.style.position = 'fixed';
-                queueInfoOverlay.style.top = 'auto';
-                queueInfoOverlay.style.bottom = r0.bottom + 'px';
-                queueInfoOverlay.style.left = r0.left + 'px';
-                queueInfoOverlay.style.width = r0.width + 'px';
-                queueInfoOverlay.style.height = 'auto';
-                document.body.appendChild(queueInfoOverlay);
-            } else {
-                const r = getAboveTilesRect();
-                queueInfoOverlay.style.top = 'auto';
-                queueInfoOverlay.style.bottom = r.bottom + 'px';
-                queueInfoOverlay.style.left = r.left + 'px';
-                queueInfoOverlay.style.width = r.width + 'px';
-                queueInfoOverlay.style.height = 'auto';
-                queueInfoOverlay.style.display = 'flex';
-            }
+            queueInfoBox.appendChild(queueInfoClose);
+            queueInfoBox.appendChild(queueInfoTitle);
+            queueInfoBox.appendChild(queueInfoContent);
+            weatherCard.style.outline = 'none';
+            rouletteCard.style.outline = 'none';
+            showSharedPopup('queue-info', queueInfoBox);
         };
 
         // 스트림덱 스타일 4열 타일 그리드 (8개)
@@ -1835,10 +1811,10 @@
             const isActive = rouletteCard.style.outline !== 'none' && rouletteCard.style.outline !== '';
             rouletteCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
             if (!isActive) {
+                weatherCard.style.outline = 'none'; // 공유 창 — 다른 트리거의 활성 표시는 정리
                 openMoreToolsOverlay();
             } else {
-                const moreOverlay = document.getElementById('neubie-moretools-overlay');
-                if (moreOverlay) moreOverlay.style.display = 'none';
+                hideSharedPopup();
             }
         };
 
@@ -1880,10 +1856,10 @@
             const isActive = weatherCard.style.outline !== 'none' && weatherCard.style.outline !== '';
             weatherCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
             if (!isActive) {
+                rouletteCard.style.outline = 'none'; // 공유 창 — 다른 트리거의 활성 표시는 정리
                 openDriveThemeOverlay();
             } else {
-                const dtOverlay = document.getElementById('neubie-drivetheme-overlay');
-                if (dtOverlay) dtOverlay.style.display = 'none';
+                hideSharedPopup();
             }
         };
 
@@ -1944,14 +1920,10 @@
 		document.getElementById('ho-remote-peek')?.remove();
     	document.getElementById('ho-remote-panel')?.remove();
 		
-        const queueInfoOverlay = document.getElementById('neubie-queue-info-overlay');
-        if (queueInfoOverlay) queueInfoOverlay.style.display = 'none';
-        const mapInfoOverlay = document.getElementById('neubie-map-info-overlay');
-        if (mapInfoOverlay) mapInfoOverlay.style.display = 'none';
+        const sharedPopup = document.getElementById('neubie-shared-popup');
+        if (sharedPopup) sharedPopup.style.display = 'none';
         const tipsOverlay = document.getElementById('neubie-tips-overlay');
         if (tipsOverlay) tipsOverlay.style.display = 'none';
-        const patchOverlay = document.getElementById('neubie-patch-overlay');
-        if (patchOverlay) patchOverlay.style.display='none';
         const boardOverlay = document.getElementById('neubie-board-overlay');
         if (boardOverlay) boardOverlay.style.display='none';
         const secretOverlay = document.getElementById('neubie-secret-overlay');
@@ -1962,10 +1934,6 @@
         const rouletteOverlay = document.getElementById('neubie-roulette-overlay');
         if (rouletteOverlay) rouletteOverlay.style.display = 'none';
         if (window._neubieRouletteCard) window._neubieRouletteCard.style.outline = 'none';
-		const driveThemeOverlay = document.getElementById('neubie-drivetheme-overlay');
-		if (driveThemeOverlay) driveThemeOverlay.style.display = 'none';
-		const moreToolsOverlay = document.getElementById('neubie-moretools-overlay');
-		if (moreToolsOverlay) moreToolsOverlay.style.display = 'none';
         const gamepadGuideOverlay = document.getElementById('neubie-gamepad-guide-overlay'); 
 		if (gamepadGuideOverlay) gamepadGuideOverlay.style.display = 'none';
     }
@@ -4502,68 +4470,45 @@
 
             window.openDriveThemeOverlay = function() {
                 const T = getNbTheme();
-                let overlay = document.getElementById('neubie-drivetheme-overlay');
                 const nbThemeName = localStorage.getItem('neubie_theme') || 'dark';
                 const driveTheme = localStorage.getItem(DRIVE_THEME_KEY) || 'dark';
 
-                if (!overlay) {
-                    overlay = document.createElement('div');
-                    overlay.id = 'neubie-drivetheme-overlay';
-                    overlay.style.cssText = `
-                        position:fixed; z-index:2147483646;
-                        display:flex; align-items:flex-end; justify-content:center; box-sizing:border-box;
-                        font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif; pointer-events:none;
-                    `;
-                    document.body.appendChild(overlay);
-                }
-                if (window.getAboveTilesRect) {
-                    const r = window.getAboveTilesRect();
-                    overlay.style.top = 'auto';
-                    overlay.style.bottom = r.bottom + 'px';
-                    overlay.style.left = r.left + 'px';
-                    overlay.style.width = r.width + 'px';
-                    overlay.style.height = 'auto';
-                } else {
-                    overlay.style.top = '0'; overlay.style.bottom = 'auto'; overlay.style.left = '0';
-                    overlay.style.width = '100%'; overlay.style.height = '100%';
-                }
-                overlay.style.display = 'flex';
-                overlay.innerHTML = `
-                    <div style="background:${T.card}; color:${T.text}; border-radius:16px; padding:20px; width:min(90vw,360px); box-shadow:0 4px 40px rgba(0,0,0,0.7); pointer-events:auto;">
-                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-                            <span style="font-size:16px;font-weight:700;">🎨 레이아웃 색상 설정</span>
-                            <button id="dto-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
-                        </div>
-
-                        <div style="font-size:13px;font-weight:600;margin-bottom:6px;">ALT+Q 레이아웃</div>
-                        <div style="font-size:11px;color:#94a3b8;margin-bottom:8px;">핸드오버/대시보드 등 도구 전반의 화면 톤입니다.</div>
-                        <div style="display:flex; gap:8px; margin-bottom:18px;">
-                            <button data-nbt="dark" style="flex:1; padding:10px; border-radius:8px; border:1px solid ${nbThemeName==='dark'?'#4f8ef7':T.border}; background:${nbThemeName==='dark'?'#1e3a8a33':'transparent'}; color:${T.text}; cursor:pointer; font-size:13px;">🌙 다크</button>
-                            <button data-nbt="light" style="flex:1; padding:10px; border-radius:8px; border:1px solid ${nbThemeName==='light'?'#4f8ef7':T.border}; background:${nbThemeName==='light'?'#1e3a8a33':'transparent'}; color:${T.text}; cursor:pointer; font-size:13px;">☀️ 라이트</button>
-                        </div>
-
-                        <div style="border-top:1px solid ${T.border}; margin-bottom:14px;"></div>
-
-                        <div style="font-size:13px;font-weight:600;margin-bottom:6px;">원격조종 페이지</div>
-                        <div style="font-size:11px;color:#94a3b8;margin-bottom:8px;">기체 원격조종(신형, /new) 화면에만 적용됩니다.</div>
-                        <div style="display:flex; gap:8px;">
-                            <button data-dt="dark" style="flex:1; padding:10px; border-radius:8px; border:1px solid ${driveTheme==='dark'?'#4f8ef7':T.border}; background:${driveTheme==='dark'?'#1e3a8a33':'transparent'}; color:${T.text}; cursor:pointer; font-size:13px;">🌙 원본</button>
-                            <button data-dt="light" style="flex:1; padding:10px; border-radius:8px; border:1px solid ${driveTheme==='light'?'#4f8ef7':T.border}; background:${driveTheme==='light'?'#1e3a8a33':'transparent'}; color:${T.text}; cursor:pointer; font-size:13px;">☀️ 라이트</button>
-                        </div>
-                        <div style="font-size:11px;color:#64748b;margin-top:10px;">추후 다른 색상 테마도 여기에 추가될 예정입니다.</div>
+                const box = document.createElement('div');
+                box.style.cssText = `background:${T.card}; color:${T.text}; border-radius:16px; padding:20px; width:100%; box-sizing:border-box; box-shadow:0 4px 40px rgba(0,0,0,0.7); pointer-events:auto;`;
+                box.innerHTML = `
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+                        <span style="font-size:16px;font-weight:700;">🎨 레이아웃 색상 설정</span>
+                        <button id="dto-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
                     </div>
+
+                    <div style="font-size:13px;font-weight:600;margin-bottom:6px;">ALT+Q 레이아웃</div>
+                    <div style="font-size:11px;color:#94a3b8;margin-bottom:8px;">핸드오버/대시보드 등 도구 전반의 화면 톤입니다.</div>
+                    <div style="display:flex; gap:8px; margin-bottom:18px;">
+                        <button data-nbt="dark" style="flex:1; padding:10px; border-radius:8px; border:1px solid ${nbThemeName==='dark'?'#4f8ef7':T.border}; background:${nbThemeName==='dark'?'#1e3a8a33':'transparent'}; color:${T.text}; cursor:pointer; font-size:13px;">🌙 다크</button>
+                        <button data-nbt="light" style="flex:1; padding:10px; border-radius:8px; border:1px solid ${nbThemeName==='light'?'#4f8ef7':T.border}; background:${nbThemeName==='light'?'#1e3a8a33':'transparent'}; color:${T.text}; cursor:pointer; font-size:13px;">☀️ 라이트</button>
+                    </div>
+
+                    <div style="border-top:1px solid ${T.border}; margin-bottom:14px;"></div>
+
+                    <div style="font-size:13px;font-weight:600;margin-bottom:6px;">원격조종 페이지</div>
+                    <div style="font-size:11px;color:#94a3b8;margin-bottom:8px;">기체 원격조종(신형, /new) 화면에만 적용됩니다.</div>
+                    <div style="display:flex; gap:8px;">
+                        <button data-dt="dark" style="flex:1; padding:10px; border-radius:8px; border:1px solid ${driveTheme==='dark'?'#4f8ef7':T.border}; background:${driveTheme==='dark'?'#1e3a8a33':'transparent'}; color:${T.text}; cursor:pointer; font-size:13px;">🌙 원본</button>
+                        <button data-dt="light" style="flex:1; padding:10px; border-radius:8px; border:1px solid ${driveTheme==='light'?'#4f8ef7':T.border}; background:${driveTheme==='light'?'#1e3a8a33':'transparent'}; color:${T.text}; cursor:pointer; font-size:13px;">☀️ 라이트</button>
+                    </div>
+                    <div style="font-size:11px;color:#64748b;margin-top:10px;">추후 다른 색상 테마도 여기에 추가될 예정입니다.</div>
                 `;
-                overlay.querySelector('#dto-close').onclick = () => {
-                    overlay.style.display = 'none';
+                box.querySelector('#dto-close').onclick = () => {
+                    window.hideSharedPopup();
                     if (window._neubieWeatherCard) window._neubieWeatherCard.style.outline = 'none';
                 };
 
                 // ALT+Q 레이아웃 색상 토글 (기존 themeBtn 로직 그대로 이식)
-                overlay.querySelectorAll('[data-nbt]').forEach(btn => {
+                box.querySelectorAll('[data-nbt]').forEach(btn => {
                     btn.onclick = () => {
                         const next = btn.dataset.nbt;
                         localStorage.setItem('neubie_theme', next);
-                        ['neubie-weather-overlay', 'neubie-roulette-overlay', 'neubie-tips-overlay', 'neubie-patch-overlay', 'neubie-secret-overlay', 'neubie-map-info-overlay', 'neubie-queue-info-overlay', 'neubie-moretools-overlay', 'neubie-gamepad-guide-overlay'].forEach(id => {
+                        ['neubie-shared-popup', 'neubie-weather-overlay', 'neubie-roulette-overlay', 'neubie-tips-overlay', 'neubie-secret-overlay', 'neubie-gamepad-guide-overlay'].forEach(id => {
                             const el = document.getElementById(id);
                             if (el) el.remove();
                         });
@@ -4574,7 +4519,7 @@
                 });
 
                 // 원격조종 페이지 색상 토글 (기존 로직 그대로)
-                overlay.querySelectorAll('[data-dt]').forEach(btn => {
+                box.querySelectorAll('[data-dt]').forEach(btn => {
                     btn.onclick = () => {
                         const key = btn.dataset.dt;
                         localStorage.setItem(DRIVE_THEME_KEY, key);
@@ -4582,59 +4527,39 @@
                         openDriveThemeOverlay();
                     };
                 });
+
+                window.showSharedPopup('drivetheme', box);
             };
 
             window.openMoreToolsOverlay = function() {
                 const T = getNbTheme();
-                let overlay = document.getElementById('neubie-moretools-overlay');
-                if (!overlay) {
-                    overlay = document.createElement('div');
-                    overlay.id = 'neubie-moretools-overlay';
-                    overlay.style.cssText = `
-                        position:fixed; z-index:2147483646;
-                        display:flex; align-items:flex-end; justify-content:center; box-sizing:border-box;
-                        font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif; pointer-events:none;
-                    `;
-                    document.body.appendChild(overlay);
-                }
-                if (window.getAboveTilesRect) {
-                    const r = window.getAboveTilesRect();
-                    overlay.style.top = 'auto';
-                    overlay.style.bottom = r.bottom + 'px';
-                    overlay.style.left = r.left + 'px';
-                    overlay.style.width = r.width + 'px';
-                    overlay.style.height = 'auto';
-                } else {
-                    overlay.style.top = '0'; overlay.style.bottom = 'auto'; overlay.style.left = '0';
-                    overlay.style.width = '100%'; overlay.style.height = '100%';
-                }
-                overlay.style.display = 'flex';
-                overlay.innerHTML = `
-                    <div style="background:${T.card}; color:${T.text}; border-radius:16px; padding:20px; width:min(90vw,320px); box-shadow:0 4px 40px rgba(0,0,0,0.7); pointer-events:auto;">
-                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-                            <span style="font-size:16px;font-weight:700;">🌤️ 날씨 & 룰렛 & 기타</span>
-                            <button id="mto-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
-                        </div>
-                        <div style="display:flex; flex-direction:column; gap:8px;">
-                            <button id="mto-weather" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🌤️ 실시간 날씨 (기상청 API)</button>
-                            <button id="mto-roulette" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🎡 룰렛 & 동전 & 메모</button>
-                        </div>
+                const box = document.createElement('div');
+                box.style.cssText = `background:${T.card}; color:${T.text}; border-radius:16px; padding:20px; width:100%; box-sizing:border-box; box-shadow:0 4px 40px rgba(0,0,0,0.7); pointer-events:auto;`;
+                box.innerHTML = `
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                        <span style="font-size:16px;font-weight:700;">🌤️ 날씨 & 룰렛 & 기타</span>
+                        <button id="mto-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:8px;">
+                        <button id="mto-weather" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🌤️ 실시간 날씨 (기상청 API)</button>
+                        <button id="mto-roulette" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🎡 룰렛 & 동전 & 메모</button>
                     </div>
                 `;
-                overlay.querySelector('#mto-close').onclick = () => {
-                    overlay.style.display = 'none';
-                    if (window._neubieRouletteCard) window._neubieRouletteCard.style.outline = 'none';   // ← 추가
+                box.querySelector('#mto-close').onclick = () => {
+                    window.hideSharedPopup();
+                    if (window._neubieRouletteCard) window._neubieRouletteCard.style.outline = 'none';
                 };
-                overlay.querySelector('#mto-weather').onclick = () => {
-                    overlay.style.display = 'none';
-                    if (window._neubieRouletteCard) window._neubieRouletteCard.style.outline = 'none';   // ← 추가
+                box.querySelector('#mto-weather').onclick = () => {
+                    window.hideSharedPopup();
+                    if (window._neubieRouletteCard) window._neubieRouletteCard.style.outline = 'none';
                     openWeatherOverlay();
                 };
-                overlay.querySelector('#mto-roulette').onclick = () => {
-                    overlay.style.display = 'none';
-                    if (window._neubieRouletteCard) window._neubieRouletteCard.style.outline = 'none';   // ← 추가
+                box.querySelector('#mto-roulette').onclick = () => {
+                    window.hideSharedPopup();
+                    if (window._neubieRouletteCard) window._neubieRouletteCard.style.outline = 'none';
                     openRouletteOverlay();
                 };
+                window.showSharedPopup('moretools', box);
             };
 
             window.openWeatherOverlay = async function() {
