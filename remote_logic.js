@@ -636,9 +636,6 @@
             const item = document.createElement('div');
             item.dataset.batteryId = c.id;
             item.style.cssText = `
-                display:flex;
-                justify-content:space-between;
-                align-items:center;
                 background:${T.bg === '#111111' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)'};
                 padding:15px 20px;
                 border-radius:12px;
@@ -647,8 +644,13 @@
                 font-size: 16px !important;
             `;
             item.innerHTML = `
-                <span style="font-weight:500;" class="bat-name">⚪ ${c.name}</span>
-                <span style="font-weight:bold; font-size: 20px;" class="bat-val">- %</span>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <span style="font-weight:500;" class="bat-name">⚪ ${c.name}</span>
+                    <span style="font-weight:bold; font-size: 20px;" class="bat-val">- %</span>
+                </div>
+                <div class="bat-bar-track" style="width:100%; height:10px; background:${T.bg === '#111111' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'}; border-radius:5px; overflow:hidden;">
+                    <div class="bat-bar-fill" style="height:100%; width:0%; background:#666; border-radius:5px; transition:width 0.3s ease, background 0.3s ease;"></div>
+                </div>
             `;
             list.appendChild(item);
         });
@@ -682,11 +684,12 @@
                 const raw = results[i];
                 const rs  = raw?.robotStatus ?? {};
 
-                let batteryVal = "- %", statusText = "OFF", accentColor = "#666", statusIcon = "⚪";
+                let batteryVal = "- %", statusText = "OFF", accentColor = "#666", statusIcon = "⚪", batteryPct = 0;
 
                 if (raw && rs.isConnecting) {
                     const battery = Math.round(raw.battery ?? rs.battery ?? 0);
                     batteryVal = `${battery}%`;
+                    batteryPct = Math.min(100, Math.max(0, battery));
 
                     if (rs.isCharging || rs.isWirelessChargerConnected) {
                         accentColor = "#22c55e"; statusIcon = "🟢"; statusText = "충전 중";
@@ -694,6 +697,11 @@
                         accentColor = "#3b82f6"; statusIcon = "🔵"; statusText = "순찰 중";
                     } else {
                         accentColor = "#888888"; statusIcon = "⚪"; statusText = "대기 중";
+                    }
+
+                    // 배터리 잔량 자체가 낮으면(20% 이하) 충전/순찰 여부와 무관하게 경고색으로 강조
+                    if (battery <= 20 && !(rs.isCharging || rs.isWirelessChargerConnected)) {
+                        accentColor = "#ef4444";
                     }
                 }
 
@@ -706,6 +714,12 @@
                     const valEl = item.querySelector('.bat-val');
                     valEl.textContent = batteryVal;
                     valEl.style.color = accentColor;
+
+                    const fillEl = item.querySelector('.bat-bar-fill');
+                    if (fillEl) {
+                        fillEl.style.width = `${batteryPct}%`;
+                        fillEl.style.background = accentColor;
+                    }
                 }
             });
         } finally {
