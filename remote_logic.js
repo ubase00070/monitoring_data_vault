@@ -523,8 +523,6 @@
             #neubie-board-overlay, #neubie-board-overlay *,
             #neubie-secret-overlay, #neubie-secret-overlay *,
             #neubie-schedule-overlay, #neubie-schedule-overlay *,
-            #neubie-weather-overlay, #neubie-weather-overlay *,
-            #neubie-roulette-overlay, #neubie-roulette-overlay *,
             #neubie-tips-overlay, #neubie-tips-overlay *,
             #neubie-shared-popup, #neubie-shared-popup * {
                 font-family: 'Paperlogy', 'Pretendard', 'Noto Sans KR', sans-serif !important;
@@ -1348,7 +1346,13 @@
             paintToggleTile(gamepadBtn, !isDpadBindingOff(), T);
         };
         attachHoldToggle(gamepadBtn, {
-            onShortClick: () => openGamepadGuideOverlay(),
+            onShortClick: () => {
+                if (window.isSharedPopupOpen && window.isSharedPopupOpen('gamepad-guide')) {
+                    window.hideSharedPopup();
+                } else {
+                    openGamepadGuideOverlay();
+                }
+            },
             onHold: () => {
                 localStorage.setItem('neubie_dpad_binding', isDpadBindingOff() ? 'on' : 'off');
                 window.syncGamepadTile();
@@ -1928,14 +1932,8 @@
         if (boardOverlay) boardOverlay.style.display='none';
         const secretOverlay = document.getElementById('neubie-secret-overlay');
         if (secretOverlay) secretOverlay.style.display='none';
-        const weatherOverlay = document.getElementById('neubie-weather-overlay');
-        if (weatherOverlay) weatherOverlay.style.display='none';
         if (window._neubieWeatherCard) window._neubieWeatherCard.style.outline = 'none';
-        const rouletteOverlay = document.getElementById('neubie-roulette-overlay');
-        if (rouletteOverlay) rouletteOverlay.style.display = 'none';
         if (window._neubieRouletteCard) window._neubieRouletteCard.style.outline = 'none';
-        const gamepadGuideOverlay = document.getElementById('neubie-gamepad-guide-overlay'); 
-		if (gamepadGuideOverlay) gamepadGuideOverlay.style.display = 'none';
     }
 
     // ── 유효성 검증 (1시간 이내 데이터) ──
@@ -4508,7 +4506,7 @@
                     btn.onclick = () => {
                         const next = btn.dataset.nbt;
                         localStorage.setItem('neubie_theme', next);
-                        ['neubie-shared-popup', 'neubie-weather-overlay', 'neubie-roulette-overlay', 'neubie-tips-overlay', 'neubie-secret-overlay', 'neubie-gamepad-guide-overlay'].forEach(id => {
+                        ['neubie-shared-popup', 'neubie-tips-overlay', 'neubie-secret-overlay'].forEach(id => {
                             const el = document.getElementById(id);
                             if (el) el.remove();
                         });
@@ -4542,69 +4540,27 @@
                     </div>
                     <div style="display:flex; flex-direction:column; gap:8px;">
                         <button id="mto-weather" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🌤️ 실시간 날씨 (기상청 API)</button>
-                        <button id="mto-roulette" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🎡 룰렛 & 동전 & 메모</button>
+                        <button id="mto-roulette" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🎡 룰렛 돌리기</button>
                     </div>
                 `;
                 box.querySelector('#mto-close').onclick = () => {
                     window.hideSharedPopup();
                     if (window._neubieRouletteCard) window._neubieRouletteCard.style.outline = 'none';
                 };
-                box.querySelector('#mto-weather').onclick = () => {
-                    window.hideSharedPopup();
-                    if (window._neubieRouletteCard) window._neubieRouletteCard.style.outline = 'none';
-                    openWeatherOverlay();
-                };
-                box.querySelector('#mto-roulette').onclick = () => {
-                    window.hideSharedPopup();
-                    if (window._neubieRouletteCard) window._neubieRouletteCard.style.outline = 'none';
-                    openRouletteOverlay();
-                };
+                box.querySelector('#mto-weather').onclick = () => openWeatherOverlay();
+                box.querySelector('#mto-roulette').onclick = () => openRouletteOverlay();
                 window.showSharedPopup('moretools', box);
             };
 
             window.openWeatherOverlay = async function() {
                 const T = getNbTheme();
-                let overlay = document.getElementById('neubie-weather-overlay');
-                const r = window.getSharedPopupRect ? window.getSharedPopupRect() : null;
-
-                if (overlay) {
-                    if (r) {
-                        overlay.style.top = 'auto';
-                        overlay.style.bottom = r.bottom + 'px';
-                        overlay.style.left = r.left + 'px';
-                        overlay.style.width = r.width + 'px';
-                    }
-                    overlay.style.display = 'flex';
-                    renderWeather(overlay);
-                    return;
-                }
-
-                overlay = document.createElement('div');
-                overlay.id = 'neubie-weather-overlay';
-                overlay.style.cssText = `
-                    position:fixed; z-index:2147483646;
-                    background:transparent;
-                    display:flex; align-items:flex-end; justify-content:center;
-                    font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;
-                    pointer-events:none;
-                `;
-                if (r) {
-                    overlay.style.top = 'auto';
-                    overlay.style.bottom = r.bottom + 'px';
-                    overlay.style.left = r.left + 'px';
-                    overlay.style.width = r.width + 'px';
-                } else {
-                    overlay.style.inset = '0';
-                }
                 const box = document.createElement('div');
                 box.style.cssText = `
                     background:${T.card}; color:${T.text};
                     border-radius:16px; padding:20px;
-                    width:min(96vw,720px);
+                    width:100%; box-sizing:border-box;
                     box-shadow:0 4px 40px rgba(0,0,0,0.7);
                     pointer-events:auto;
-                    transform: scale(1.0);
-                    transform-origin: bottom center;
                 `;
                 box.innerHTML = `
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
@@ -4613,14 +4569,12 @@
                     </div>
                     <div id="nwo-body" style="font-size:13px;color:#64748b;">불러오는 중...</div>
                 `;
-                overlay.appendChild(box);
-                document.body.appendChild(overlay);
                 box.querySelector('#nwo-close').onclick = () => {
-                    overlay.style.display = 'none';
-                    window._neubieWeatherCard.style.outline = 'none';
+                    window.hideSharedPopup();
+                    if (window._neubieRouletteCard) window._neubieRouletteCard.style.outline = 'none';
                 };
-
-                renderWeather(overlay);
+                window.showSharedPopup('weather', box);
+                renderWeather(box);
             };
 
             async function renderWeather(overlay, nx = WEATHER_CONFIG.nx, ny = WEATHER_CONFIG.ny, label = '송내') {
@@ -4638,11 +4592,13 @@
                     </div>`).join('');
 
                 const dailyHtml = data.daily.map(d => `
-                    <div style="background:#1a1c24;border-radius:10px;padding:10px 6px;text-align:center;flex:1;">
-                        <div style="font-size:12px;color:#94a3b8;margin-bottom:4px;">${formatDailyLabel(d.date)}</div>
-                        <div style="font-size:18px;">${d.icon}</div>
-                        <div style="font-size:13px;font-weight:700;margin-top:6px;">${d.min}° / ${d.max}°</div>
-                        <div style="font-size:11px;color:${d.pop > 0 ? '#4f8ef7' : '#64748b'};margin-top:2px;">${d.pop > 0 ? '강수 ' + d.pop + '%' : '강수 없음'}</div>
+                    <div style="background:#1a1c24;border-radius:8px;padding:6px 8px;flex:1;">
+                        <div style="display:flex;align-items:center;justify-content:space-between;">
+                            <span style="font-size:11px;color:#94a3b8;">${formatDailyLabel(d.date)}</span>
+                            <span style="font-size:14px;">${d.icon}</span>
+                        </div>
+                        <div style="font-size:12px;font-weight:700;margin-top:3px;">${d.min}° / ${d.max}°</div>
+                        <div style="font-size:9px;color:${d.pop > 0 ? '#4f8ef7' : '#64748b'};margin-top:1px;">${d.pop > 0 ? '강수 ' + d.pop + '%' : '강수 없음'}</div>
                     </div>`).join('');
 
                 const favs = JSON.parse(localStorage.getItem('neubie_weather_favs') || '[]');
@@ -4751,43 +4707,19 @@
             }
 
             window.openGamepadGuideOverlay = function() {
-                let overlay = document.getElementById('neubie-gamepad-guide-overlay');
-
-                // 스트림덱 위 다른 팝업들과 동일한 bottom 앵커 좌표 사용
-                const r = window.getSharedPopupRect ? window.getSharedPopupRect() : null;
-
-                if (!overlay) {
-                    overlay = document.createElement('div');
-                    overlay.id = 'neubie-gamepad-guide-overlay';
-                    overlay.style.cssText = `
-                        position:fixed; z-index:2147483646;
-                        display:flex; align-items:flex-end; justify-content:center;
-                        font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif; pointer-events:none;
-                    `;
-                    document.body.appendChild(overlay);
-                }
-                if (r) {
-                    overlay.style.top = 'auto';
-                    overlay.style.bottom = r.bottom + 'px';
-                    overlay.style.left = r.left + 'px';
-                    overlay.style.width = r.width + 'px';
-                    overlay.style.height = 'auto';
-                } else {
-                    overlay.style.inset = '0';
-                }
-                overlay.style.display = 'flex';
-                overlay.innerHTML = `
-                    <div style="background:#1e1e2e; color:#e2e8f0; border-radius:16px; padding:16px; max-width:92vw; max-height:90vh; box-shadow:0 10px 50px rgba(0,0,0,0.7); pointer-events:auto; display:flex; flex-direction:column; transform:scale(0.5); transform-origin:bottom center;">
-                        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; gap:10px;">
-                            <span style="font-size:16px; font-weight:700;">🎮 D-PAD 기능변경 설명</span>
-                            <button id="gp-close" style="width:28px; height:28px; border:none; border-radius:5px; background:#3b0000; border:1px solid #ef4444; color:#ef4444; font-size:16px; cursor:pointer;">✕</button>
-                        </div>
-                        <img src="https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/xbox_binding.jpg"
-                             width="960" height="540"
-                             style="border-radius:8px; display:block; max-width:90vw; max-height:80vh;" />
+                const box = document.createElement('div');
+                box.style.cssText = `background:#1e1e2e; color:#e2e8f0; border-radius:16px; padding:16px; width:100%; box-sizing:border-box; max-height:90vh; box-shadow:0 10px 50px rgba(0,0,0,0.7); pointer-events:auto; display:flex; flex-direction:column; transform:scale(0.575); transform-origin:bottom center;`;
+                box.innerHTML = `
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; gap:10px;">
+                        <span style="font-size:16px; font-weight:700;">🎮 D-PAD 기능변경 설명</span>
+                        <button id="gp-close" style="width:28px; height:28px; border:none; border-radius:5px; background:#3b0000; border:1px solid #ef4444; color:#ef4444; font-size:16px; cursor:pointer;">✕</button>
                     </div>
+                    <img src="https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/xbox_binding.jpg"
+                         width="960" height="540"
+                         style="border-radius:8px; display:block; max-width:90vw; max-height:80vh;" />
                 `;
-                overlay.querySelector('#gp-close').onclick = () => { overlay.style.display = 'none'; };
+                box.querySelector('#gp-close').onclick = () => window.hideSharedPopup();
+                window.showSharedPopup('gamepad-guide', box);
             };
 
             window.openTipsOverlay = function() {
@@ -4873,44 +4805,35 @@
 
             window.openRouletteOverlay = function() {
                 const T = getNbTheme();
-                let overlay = document.getElementById('neubie-roulette-overlay');
-                if (overlay) { overlay.style.display = 'flex'; return; }
-
-                overlay = document.createElement('div');
-                overlay.id = 'neubie-roulette-overlay';
-                overlay.style.cssText = `
-                    position:fixed; inset:0; z-index:2147483646;
-                    background:transparent; pointer-events:none;
-                    display:flex; align-items:center; justify-content:center;
-                    font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;
-                `;
                 const box = document.createElement('div');
                 box.style.cssText = `
                     background:${T.card}; color:${T.text};
                     border-radius:16px; padding:20px;
-                    width:min(94vw,620px);
+                    width:100%; box-sizing:border-box;
                     box-shadow:0 4px 40px rgba(0,0,0,0.7);
                     pointer-events:auto;
                 `;
                 box.innerHTML = `
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-                        <span style="font-size:18px;font-weight:700;color:#4f8ef7;">🎡 룰렛 돌리기 & 동전 던지기 & 개인 메모</span>
+                        <span style="font-size:18px;font-weight:700;color:#4f8ef7;">🎡 룰렛 돌리기</span>
                         <button id="rc-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
                     </div>
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-                        <div style="background:${T.bg};border-radius:12px;padding:14px;">
+                        <div style="background:${T.bg};border-radius:12px;padding:14px;display:flex;flex-direction:column;box-sizing:border-box;">
                             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-                                <span style="font-size:14px;font-weight:700;color:#94a3b8;">룰렛</span>
+                                <span style="font-size:14px;font-weight:700;color:#94a3b8;">룰렛 설정</span>
                                 <div style="display:flex;gap:6px;">
                                     <button id="rc-preset-lunch" style="font-size:11px;padding:4px 8px;background:#252525;border:1px solid #333;color:#e2e8f0;border-radius:6px;cursor:pointer;">식사 메뉴</button>
                                     <button id="rc-preset-people" style="font-size:11px;padding:4px 8px;background:#252525;border:1px solid #333;color:#e2e8f0;border-radius:6px;cursor:pointer;">사람 이름</button>
                                     <button id="rc-preset-etc" style="font-size:11px;padding:4px 8px;background:#252525;border:1px solid #333;color:#e2e8f0;border-radius:6px;cursor:pointer;">기타</button>
                                 </div>
                             </div>
-                            <textarea id="rc-input" rows="6" style="width:100%;box-sizing:border-box;resize:none;font-size:12px;background:#111319;color:#e2e8f0;border:1px solid #333;border-radius:8px;padding:6px 8px;"></textarea>
+                            <textarea id="rc-input" style="width:100%;flex:1;min-height:120px;box-sizing:border-box;resize:none;font-size:12px;background:#111319;color:#e2e8f0;border:1px solid #333;border-radius:8px;padding:6px 8px;"></textarea>
                             <button id="rc-build" style="width:100%;margin-top:6px;padding:6px;background:#252525;border:1px solid #333;color:#e2e8f0;border-radius:8px;cursor:pointer;font-size:12px;">룰렛 만들기 (엔터로 구분)</button>
+                        </div>
+                        <div style="background:${T.bg};border-radius:12px;padding:14px;display:flex;flex-direction:column;align-items:center;box-sizing:border-box;">
                             <div id="rc-capture-area" style="background:${T.card};border-radius:12px;padding:8px 0;">
-                                <div style="position:relative;width:190px;height:190px;margin:16px auto 6px;">
+                                <div style="position:relative;width:190px;height:190px;margin:0 auto 6px;">
                                     <div id="rc-pointer" style="position:absolute;top:-4px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:13px solid #e2e8f0;z-index:3;transition:transform .15s ease;"></div>
                                     <div id="rc-wheel-wrap" style="position:relative;width:190px;height:190px;transition:transform 5s cubic-bezier(.13,.72,.1,1);">
                                         <canvas id="rc-canvas" width="190" height="190" style="display:block;position:relative;z-index:1;pointer-events:none;"></canvas>
@@ -4925,39 +4848,11 @@
                             <button id="rc-spin" style="width:100%;padding:8px;background:#4f8ef7;border:none;color:#0f1117;font-weight:700;border-radius:8px;cursor:pointer;font-size:13px;">돌리기</button>
                             <button id="rc-copy-img" style="visibility:hidden;width:100%;margin-top:8px;padding:6px;background:#252525;border:1px solid #333;color:#e2e8f0;border-radius:8px;cursor:pointer;font-size:12px;">📋 결과 이미지 복사</button>
                         </div>
-                        <div style="background:${T.bg};border-radius:12px;padding:14px;display:flex;flex-direction:column;align-items:center;height:100%;box-sizing:border-box;">
-                            <div style="font-size:14px;font-weight:700;margin-bottom:12px;color:#94a3b8;align-self:flex-start;">동전 던지기</div>
-                            <div style="width:65px;height:65px;perspective:500px;margin:10px 0 12px;">
-                                <div id="rc-coin" style="width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform 2.6s cubic-bezier(.17,.67,.2,1);">
-                                    <div style="position:absolute;inset:0;border-radius:50%;background:#3a2a10;border:2px solid #f59e0b;display:flex;align-items:center;justify-content:center;backface-visibility:hidden;">
-                                        <div style="width:80%;height:80%;border-radius:50%;border:1px dashed #f59e0b;display:flex;align-items:center;justify-content:center;">
-                                            <span style="font-size:14px;font-weight:700;color:#fbbf24;">앞</span>
-                                        </div>
-                                    </div>
-                                    <div style="position:absolute;inset:0;border-radius:50%;background:#12233b;border:2px solid #4f8ef7;display:flex;align-items:center;justify-content:center;backface-visibility:hidden;transform:rotateY(180deg);">
-                                        <div style="width:80%;height:80%;border-radius:50%;border:1px dashed #4f8ef7;display:flex;align-items:center;justify-content:center;">
-                                            <span style="font-size:14px;font-weight:700;color:#4f8ef7;">뒤</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <button id="rc-flip" style="width:100%;padding:8px;background:#4f8ef7;border:none;color:#0f1117;font-weight:700;border-radius:8px;cursor:pointer;font-size:13px;">던지기</button>
-                            <div style="text-align:center;min-height:28px;margin-top:8px;">
-                                <span id="rc-coin-result" style="display:none;font-size:12px;font-weight:700;padding:4px 12px;border-radius:999px;"></span>
-                            </div>
-                            <div style="width:100%;margin-top:14px;border-top:1px solid #2e3347;padding-top:12px;flex:1;display:flex;flex-direction:column;min-height:0;">
-                                <div style="font-size:14px;color:#94a3b8;margin-bottom:6px;">개인 메모 (본인 브라우저에만 저장됨)</div>
-                                <textarea id="rc-memo" maxlength="500" style="width:100%;box-sizing:border-box;resize:none;overflow-y:auto;font-size:12px;background:#111319;color:#e2e8f0;border:1px solid #333;border-radius:8px;padding:6px 8px;flex:1;min-height:0;" placeholder="메모를 입력하세요..."></textarea>
-                                <div id="rc-memo-count" style="text-align:right;font-size:10px;color:#64748b;margin-top:2px;">0/500</div>
-                            </div>
-                        </div>
                     </div>
                 `;
-                overlay.appendChild(box);
-                document.body.appendChild(overlay);
 
                 box.querySelector('#rc-close').onclick = () => {
-                    overlay.style.display = 'none';
+                    window.hideSharedPopup();
                     if (window._neubieRouletteCard) window._neubieRouletteCard.style.outline = 'none';
                 };
 
@@ -5117,33 +5012,7 @@
                 rcRebuild();
                 rcSetActiveButton('lunch');
 
-                let coinRot = 0;
-                box.querySelector('#rc-flip').onclick = () => {
-                    const isHeads = Math.random() < 0.5;
-                    coinRot += 6 * 360 + (isHeads ? 0 : 180);
-                    box.querySelector('#rc-coin').style.transform = `rotateY(${coinRot}deg)`;
-                    const badge = box.querySelector('#rc-coin-result');
-                    badge.style.display = 'none';
-                    setTimeout(() => {
-                        badge.textContent = isHeads ? '앞면' : '뒷면';
-                        badge.style.background = isHeads ? '#3a2a10' : '#12233b';
-                        badge.style.color = isHeads ? '#fbbf24' : '#4f8ef7';
-                        badge.style.display = 'inline-block';
-                    }, 2650);
-                };
-                
-                const RC_MEMO_KEY = 'neubie_roulette_memo';
-                const memoEl = box.querySelector('#rc-memo');
-                const memoCountEl = box.querySelector('#rc-memo-count');
-                const savedMemo = localStorage.getItem(RC_MEMO_KEY);
-                if (savedMemo) {
-                    memoEl.value = savedMemo;
-                    memoCountEl.textContent = savedMemo.length + '/500';
-                }
-                memoEl.addEventListener('input', () => {
-                    localStorage.setItem(RC_MEMO_KEY, memoEl.value);
-                    memoCountEl.textContent = memoEl.value.length + '/500';
-                });
+                window.showSharedPopup('roulette', box);
             };
 
 			// 그 외 페이지는 기존 대시보드
