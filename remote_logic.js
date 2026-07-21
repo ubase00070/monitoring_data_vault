@@ -1339,7 +1339,7 @@
             transition:box-shadow 0.15s;
         `;
         boardBtn.innerHTML = `
-            <span style="font-size:26px; margin-top:6px;">📌</span>
+            <span style="font-size:22px; margin-top:6px;">📌</span>
             <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">게시판</span>
         `;
         boardBtn.onclick = () => openBoardOverlay();
@@ -1351,7 +1351,7 @@
             display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
             padding:4px; box-sizing:border-box;
         `;
-        gamepadBtn.innerHTML = `<span style="position:relative; z-index:1; font-size:26px;">🎮</span>
+        gamepadBtn.innerHTML = `<span style="position:relative; z-index:1; font-size:22px;">🎮</span>
             <span style="position:relative; z-index:1; font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">게임패드</span>`;
         const gamepadLabel = document.createElement('span');
         gamepadLabel.style.cssText = 'position:relative; z-index:1; font-size:12px; font-weight:bold; letter-spacing:0.5px;';
@@ -1553,7 +1553,7 @@
             display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
             padding:4px; box-sizing:border-box;
         `;
-        mapToggle.innerHTML = `<span style="position:relative; z-index:1; font-size:26px;">🗺️</span>
+        mapToggle.innerHTML = `<span style="position:relative; z-index:1; font-size:22px;">🗺️</span>
             <span style="position:relative; z-index:1; font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">맵 최적화 기능</span>`;
         const mapLabel = document.createElement('span');
         mapLabel.style.cssText = 'position:relative; z-index:1; font-size:12px; font-weight:bold; letter-spacing:0.5px;';
@@ -1653,7 +1653,7 @@
             display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
             padding:4px; box-sizing:border-box;
         `;
-        queueToggle.innerHTML = `<span style="position:relative; z-index:1; font-size:26px;">🖥️</span>
+        queueToggle.innerHTML = `<span style="position:relative; z-index:1; font-size:22px;">🖥️</span>
             <span style="position:relative; z-index:1; font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">다중 모니터링 기능</span>`;
         const queueLabel = document.createElement('span');
         queueLabel.style.cssText = 'position:relative; z-index:1; font-size:12px; font-weight:bold; letter-spacing:0.5px;';
@@ -1778,7 +1778,7 @@
             display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
             padding:4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
-        scheduleCard.innerHTML = `<span style="font-size:26px;">📅</span>
+        scheduleCard.innerHTML = `<span style="font-size:22px;">📅</span>
             <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">스케줄표 & 좌석도</span>`;
         window._neubieScheduleCard = scheduleCard;
         attachStaticNeonHover(scheduleCard, '255,79,163');
@@ -1796,7 +1796,7 @@
             display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
             padding:4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
-        rouletteCard.innerHTML = `<span style="font-size:26px;">🌤️</span>
+        rouletteCard.innerHTML = `<span style="font-size:22px;">🌤️</span>
             <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">날씨 & 기타</span>`;
         window._neubieRouletteCard = rouletteCard;
         attachStaticNeonHover(rouletteCard, '44,230,217');
@@ -1820,7 +1820,7 @@
             display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
             padding:4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
-        batteryCard.innerHTML = `<span style="font-size:26px;">🔋</span>
+        batteryCard.innerHTML = `<span style="font-size:22px;">🔋</span>
             <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">성남 배터리 현황</span>`;
         window._neubieBatteryCard = batteryCard;
         attachStaticNeonHover(batteryCard, '250,204,21');
@@ -1841,7 +1841,7 @@
             display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
             padding:4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
-        weatherCard.innerHTML = `<span style="font-size:26px;">🎨</span>
+        weatherCard.innerHTML = `<span style="font-size:22px;">🎨</span>
             <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">레이아웃 색상</span>`;
         window._neubieWeatherCard = weatherCard;
         attachStaticNeonHover(weatherCard, '157,92,255');
