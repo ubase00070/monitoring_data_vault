@@ -4,7 +4,7 @@
     if (window.neubieEngineLoaded) return;
     window.neubieEngineLoaded = true;
 
-	// ── Paperlogy 웹폰트 (신규 추가) ──
+	// ── Paperlogy 웹폰트 ──
     (function loadPaperlogyFont() {
         if (document.getElementById('neubie-paperlogy-font')) return;
         const link = document.createElement('link');
