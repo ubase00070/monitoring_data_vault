@@ -959,18 +959,20 @@
                 align-items: center;
                 gap: 6px;
                 overflow: hidden;
+                height: 39px;
+                box-sizing: border-box;
             `;
 
             const displayTime = (String(timeKey).length > 10) ? String(timeKey).match(/\d{2}:\d{2}/)?.[0] : timeKey;
 
-            const needsMarquee = t.content.length > 40;
-            const contentSpan = needsMarquee
-                ? `<span class="marquee-text" style="${textStyle}">${t.content}</span>`
-                : `<span style="${textStyle}">${t.content}</span>`;
+            const isLong = t.content.length > 40;
+            const contentSpan = isLong
+                ? `<span style="${textStyle} font-size:12px; line-height:1.15; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">${t.content}</span>`
+                : `<span style="${textStyle} font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${t.content}</span>`;
 
             item.innerHTML = `
                 <span style="color:${status.isExpired ? '#777' : '#fbbf24'}; white-space:nowrap;">${displayTime || ''}</span>
-                <div class="marquee-wrap" style="${textStyle} font-weight:500;">
+                <div style="font-weight:500; min-width:0; overflow:hidden;">
                     ${contentSpan}
                 </div>
                 <div style="font-size:14px; white-space:nowrap;">${status.isExpired ? '✅' : '⏳'}</div>
