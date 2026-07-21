@@ -4565,17 +4565,37 @@
             window.openWeatherOverlay = async function() {
                 const T = getNbTheme();
                 let overlay = document.getElementById('neubie-weather-overlay');
-                if (overlay) { overlay.style.display = 'flex'; renderWeather(overlay); return; }
+                const r = window.getSharedPopupRect ? window.getSharedPopupRect() : null;
+
+                if (overlay) {
+                    if (r) {
+                        overlay.style.top = 'auto';
+                        overlay.style.bottom = r.bottom + 'px';
+                        overlay.style.left = r.left + 'px';
+                        overlay.style.width = r.width + 'px';
+                    }
+                    overlay.style.display = 'flex';
+                    renderWeather(overlay);
+                    return;
+                }
 
                 overlay = document.createElement('div');
                 overlay.id = 'neubie-weather-overlay';
                 overlay.style.cssText = `
-                    position:fixed; inset:0; z-index:2147483646;
+                    position:fixed; z-index:2147483646;
                     background:transparent;
-                    display:flex; align-items:flex-start; justify-content:center; padding-top:20px;
+                    display:flex; align-items:flex-end; justify-content:center;
                     font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;
                     pointer-events:none;
                 `;
+                if (r) {
+                    overlay.style.top = 'auto';
+                    overlay.style.bottom = r.bottom + 'px';
+                    overlay.style.left = r.left + 'px';
+                    overlay.style.width = r.width + 'px';
+                } else {
+                    overlay.style.inset = '0';
+                }
                 const box = document.createElement('div');
                 box.style.cssText = `
                     background:${T.card}; color:${T.text};
@@ -4583,8 +4603,8 @@
                     width:min(96vw,720px);
                     box-shadow:0 4px 40px rgba(0,0,0,0.7);
                     pointer-events:auto;
-                    transform: scale(1.25);
-                    transform-origin: top center;
+                    transform: scale(1.0);
+                    transform-origin: bottom center;
                 `;
                 box.innerHTML = `
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
@@ -4731,45 +4751,35 @@
             }
 
             window.openGamepadGuideOverlay = function() {
-                const isOff = isDpadBindingOff();
                 let overlay = document.getElementById('neubie-gamepad-guide-overlay');
 
-                // 스트림덱 타일(bottomRow) 바로 위 영역에 앉히기 — 못 찾으면 전체 화면 중앙으로 폴백
-                const dashboardEl = document.getElementById('neubie-dashboard');
-                const tilesEl = document.getElementById('neubie-streamdeck-grid');
-                let posRect = null;
-                if (dashboardEl && tilesEl) {
-                    const d = dashboardEl.getBoundingClientRect();
-                    const t = tilesEl.getBoundingClientRect();
-                    posRect = { top: d.top, left: d.left, width: d.width, height: Math.max(120, t.top - d.top) };
-                }
+                // 스트림덱 위 다른 팝업들과 동일한 bottom 앵커 좌표 사용
+                const r = window.getSharedPopupRect ? window.getSharedPopupRect() : null;
 
                 if (!overlay) {
                     overlay = document.createElement('div');
                     overlay.id = 'neubie-gamepad-guide-overlay';
                     overlay.style.cssText = `
                         position:fixed; z-index:2147483646;
-                        display:flex; align-items:center; justify-content:center;
+                        display:flex; align-items:flex-end; justify-content:center;
                         font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif; pointer-events:none;
                     `;
                     document.body.appendChild(overlay);
                 }
-                if (posRect) {
-                    overlay.style.top = posRect.top + 'px';
-                    overlay.style.left = posRect.left + 'px';
-                    overlay.style.width = posRect.width + 'px';
-                    overlay.style.height = posRect.height + 'px';
+                if (r) {
+                    overlay.style.top = 'auto';
+                    overlay.style.bottom = r.bottom + 'px';
+                    overlay.style.left = r.left + 'px';
+                    overlay.style.width = r.width + 'px';
+                    overlay.style.height = 'auto';
                 } else {
                     overlay.style.inset = '0';
                 }
                 overlay.style.display = 'flex';
                 overlay.innerHTML = `
-                    <div style="background:#1e1e2e; color:#e2e8f0; border-radius:16px; padding:16px; max-width:92vw; max-height:90vh; box-shadow:0 10px 50px rgba(0,0,0,0.7); pointer-events:auto; display:flex; flex-direction:column;">
+                    <div style="background:#1e1e2e; color:#e2e8f0; border-radius:16px; padding:16px; max-width:92vw; max-height:90vh; box-shadow:0 10px 50px rgba(0,0,0,0.7); pointer-events:auto; display:flex; flex-direction:column; transform:scale(0.5); transform-origin:bottom center;">
                         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; gap:10px;">
-                            <div style="display:flex; align-items:center; gap:10px;">
-                                <span style="font-size:16px; font-weight:700;">🎮 D-PAD 기능변경 설명</span>
-                                <button id="gp-toggle" style="width:110px; padding:6px 0; border-radius:8px; border:1px solid ${isOff ? '#ef4444' : '#22c55e'}; background:${isOff ? 'rgba(239,68,68,0.15)' : 'rgba(34,197,94,0.15)'}; color:${isOff ? '#ef4444' : '#22c55e'}; font-weight:700; font-size:13px; cursor:pointer; text-align:center;">${isOff ? '기능 OFF됨' : '기능 ON됨'}</button>
-                            </div>
+                            <span style="font-size:16px; font-weight:700;">🎮 D-PAD 기능변경 설명</span>
                             <button id="gp-close" style="width:28px; height:28px; border:none; border-radius:5px; background:#3b0000; border:1px solid #ef4444; color:#ef4444; font-size:16px; cursor:pointer;">✕</button>
                         </div>
                         <img src="https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/xbox_binding.jpg"
@@ -4777,15 +4787,6 @@
                              style="border-radius:8px; display:block; max-width:90vw; max-height:80vh;" />
                     </div>
                 `;
-                overlay.querySelector('#gp-toggle').onclick = () => {
-                    if (isDpadBindingOff()) {
-                        localStorage.setItem('neubie_dpad_binding', 'on');   
-                    } else {
-                        localStorage.setItem('neubie_dpad_binding', 'off');
-                    }
-                    window.syncGamepadTile?.(); // Alt+Q 메인 레이아웃의 게임패드 타일 즉시 동기화
-                    openGamepadGuideOverlay();
-                };
                 overlay.querySelector('#gp-close').onclick = () => { overlay.style.display = 'none'; };
             };
 
