@@ -1040,7 +1040,12 @@
         const T = getNbTheme();
         const card = document.createElement('div');
         card.id = 'namingSection';
-        card.style.cssText = `background:${T.card}; padding:10px 15px; border-radius:15px; border:1px solid ${T.border}; margin-top:5px;`;
+        card.style.cssText = `
+            padding:10px 15px; border-radius:15px; margin-top:5px; border:1px solid transparent;
+            background-image: linear-gradient(${T.card}, ${T.card}), linear-gradient(135deg, #6366f1, #ec4899);
+            background-origin: border-box; background-clip: padding-box, border-box;
+            box-shadow:0 0 5px rgba(150,120,255,0.25);
+        `;
 
         const history = JSON.parse(localStorage.getItem('neubie_robot_history') || '[]');
         let dropdownOptions = history.map(h => {
@@ -1421,7 +1426,12 @@
 
         // 1. 업무 알림 설정 (태스크 리스트 인라인 삽입)
         const taskCard = document.createElement('div');
-        taskCard.style.cssText = `background:${T.card}; padding:15px; border-radius:15px; border:1px solid ${T.border};`;
+        taskCard.style.cssText = `
+            padding:15px; border-radius:15px; border:1px solid transparent;
+            background-image: linear-gradient(${T.card}, ${T.card}), linear-gradient(135deg, #6366f1, #ec4899);
+            background-origin: border-box; background-clip: padding-box, border-box;
+            box-shadow:0 0 5px rgba(150,120,255,0.25);
+        `;
         const storedName = localStorage.getItem('neubie_user_name') || "사용자";
         const currentInt = localStorage.getItem('neubie_remind_int') || '0';
         taskCard.innerHTML = `
@@ -1445,6 +1455,7 @@
 		// 스트림덱 스타일 홀드 토글: 짧게 클릭 = 기존 설명 동작, 2초 홀드(좌→우 채움) = ON/OFF 토글
         function attachHoldToggle(btn, { onHold, onShortClick }) {
             const HOLD_MS = 1500;
+            const SHORT_CLICK_MS = 300; // 이 시간 안에 뗐을 때만 '짧은 클릭'으로 인정
             btn.style.position = 'relative';
             btn.style.overflow = 'hidden';
 
@@ -1455,11 +1466,12 @@
             `;
             btn.insertBefore(fill, btn.firstChild);
 
-            let holdTimer = null, fired = false;
+            let holdTimer = null, fired = false, pressStart = 0;
 
             const startHold = (e) => {
                 e.preventDefault();
                 fired = false;
+                pressStart = Date.now();
                 fill.style.transition = 'none';
                 fill.style.width = '0%';
                 requestAnimationFrame(() => {
@@ -1482,8 +1494,10 @@
             btn.addEventListener('mousedown', startHold);
             btn.addEventListener('mouseup', () => {
                 const wasFired = fired;
+                const heldMs = Date.now() - pressStart;
                 cancelHold();
-                if (!wasFired) onShortClick?.();
+                // 완주(wasFired)도 아니고, 빠른 탭(SHORT_CLICK_MS 이내)도 아니면 — 홀드하다 만 것이므로 아무 것도 하지 않음
+                if (!wasFired && heldMs < SHORT_CLICK_MS) onShortClick?.();
             });
             btn.addEventListener('mouseleave', cancelHold);
         }
@@ -1521,6 +1535,14 @@
             const hover = `0 0 18px 2px rgba(${rgb},0.95), 0 0 5px rgba(${rgb},0.8), inset 0 0 10px rgba(${rgb},0.3)`;
             el.onmouseenter = () => { el.style.boxShadow = hover; };
             el.onmouseleave = () => { el.style.boxShadow = base; };
+        }
+
+        // 요기요/다중모니터링/게임패드 설명 팝업을 스트림덱 타일(bottomRow) '위쪽'에 앉히기 위한 영역 계산
+        // (bottomRow는 아래에서 선언되지만, 이 함수는 클릭 시점에만 호출되므로 그때는 이미 존재함)
+        function getAboveTilesRect() {
+            const d = dashboard.getBoundingClientRect();
+            const t = bottomRow.getBoundingClientRect();
+            return { top: d.top, left: d.left, width: d.width, height: Math.max(120, t.top - d.top) };
         }
 
         // 요기요 최적화 — 스트림덱 타일 (아이콘 + 라벨 + ON/OFF)
@@ -1606,14 +1628,14 @@
                 mapInfoBox.appendChild(mapInfoTitle);
                 mapInfoBox.appendChild(mapInfoContent);
                 mapInfoOverlay.appendChild(mapInfoBox);
-                const r0 = dashboard.getBoundingClientRect();
+                const r0 = getAboveTilesRect();
                 mapInfoOverlay.style.top = r0.top + 'px';
                 mapInfoOverlay.style.left = r0.left + 'px';
                 mapInfoOverlay.style.width = r0.width + 'px';
                 mapInfoOverlay.style.height = r0.height + 'px';
                 document.body.appendChild(mapInfoOverlay);
             } else {
-                const r = dashboard.getBoundingClientRect();
+                const r = getAboveTilesRect();
                 mapInfoOverlay.style.top = r.top + 'px';
                 mapInfoOverlay.style.left = r.left + 'px';
                 mapInfoOverlay.style.width = r.width + 'px';
@@ -1725,7 +1747,7 @@
                 queueInfoBox.appendChild(queueInfoTitle);
                 queueInfoBox.appendChild(queueInfoContent);
                 queueInfoOverlay.appendChild(queueInfoBox);
-                const r0 = dashboard.getBoundingClientRect();
+                const r0 = getAboveTilesRect();
                 queueInfoOverlay.style.position = 'fixed';
                 queueInfoOverlay.style.top = r0.top + 'px';
                 queueInfoOverlay.style.left = r0.left + 'px';
@@ -1733,7 +1755,7 @@
                 queueInfoOverlay.style.height = r0.height + 'px';
                 document.body.appendChild(queueInfoOverlay);
             } else {
-                const r = dashboard.getBoundingClientRect();
+                const r = getAboveTilesRect();
                 queueInfoOverlay.style.top = r.top + 'px';
                 queueInfoOverlay.style.left = r.left + 'px';
                 queueInfoOverlay.style.width = r.width + 'px';
@@ -1744,6 +1766,7 @@
 
         // 스트림덱 스타일 4열 타일 그리드 (8개)
         const bottomRow = document.createElement('div');
+        bottomRow.id = 'neubie-streamdeck-grid';
         bottomRow.style.cssText = "display:grid; grid-template-columns:repeat(4, 1fr); gap:8px;";
 
         const scheduleCard = document.createElement('div');
@@ -4732,15 +4755,33 @@
                 const isOff = isDpadBindingOff();
                 let overlay = document.getElementById('neubie-gamepad-guide-overlay');
 
+                // 스트림덱 타일(bottomRow) 바로 위 영역에 앉히기 — 못 찾으면 전체 화면 중앙으로 폴백
+                const dashboardEl = document.getElementById('neubie-dashboard');
+                const tilesEl = document.getElementById('neubie-streamdeck-grid');
+                let posRect = null;
+                if (dashboardEl && tilesEl) {
+                    const d = dashboardEl.getBoundingClientRect();
+                    const t = tilesEl.getBoundingClientRect();
+                    posRect = { top: d.top, left: d.left, width: d.width, height: Math.max(120, t.top - d.top) };
+                }
+
                 if (!overlay) {
                     overlay = document.createElement('div');
                     overlay.id = 'neubie-gamepad-guide-overlay';
                     overlay.style.cssText = `
-                        position:fixed; inset:0; z-index:2147483646;
+                        position:fixed; z-index:2147483646;
                         display:flex; align-items:center; justify-content:center;
                         font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif; pointer-events:none;
                     `;
                     document.body.appendChild(overlay);
+                }
+                if (posRect) {
+                    overlay.style.top = posRect.top + 'px';
+                    overlay.style.left = posRect.left + 'px';
+                    overlay.style.width = posRect.width + 'px';
+                    overlay.style.height = posRect.height + 'px';
+                } else {
+                    overlay.style.inset = '0';
                 }
                 overlay.style.display = 'flex';
                 overlay.innerHTML = `
