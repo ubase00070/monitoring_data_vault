@@ -637,9 +637,9 @@
             item.dataset.batteryId = c.id;
             item.style.cssText = `
                 background:${T.bg === '#111111' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)'};
-                padding:15px 20px;
+                padding:9px 20px;
                 border-radius:12px;
-                margin-bottom:10px;
+                margin-bottom:8px;
                 border-left:5px solid #666;
                 font-size: 16px !important;
             `;
@@ -1184,7 +1184,7 @@
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
 		// 문자열을 넣으면 패치노트에 빨간 '`' 뱃지가 점멸하며 뜸.
 		// 빈 문자열('')로 비우면 뱃지가 사라짐.
-		const PATCH_NOTE_NEW_CONTENT = '';
+		const PATCH_NOTE_NEW_CONTENT = '스트림덱';
 		
         const patchBtn = document.createElement('button');
         patchBtn.textContent = '패치노트';
@@ -1249,8 +1249,9 @@
                 const patchItems = [
                     {
                         version: 'v1.4',
-                        date: '2026-07-18',
+                        date: '2026-07-21',
                         items: [
+							'스트림덱 스타일 적용(길게 누르면 ON/OFF됨)',
 							'임무 종료된 리센츠/엘스/한성대/진천 페이지 이탈 5초 후 자동 사이드',
                             '게임패드 커스텀 바인딩 설명 페이지',
 							'다중 자동 교대시작 최대 12대까지',
@@ -1292,7 +1293,7 @@
                 patchBox.appendChild(patchTitle);
                 patchBox.appendChild(patchContent);
                 patchOverlay.appendChild(patchBox);
-                const r = dashboard.getBoundingClientRect();
+                const r = getAboveTilesRect();
                 patchOverlay.style.position = 'fixed';
                 patchOverlay.style.top = r.top + 'px';
                 patchOverlay.style.left = r.left + 'px';
@@ -1300,7 +1301,7 @@
                 patchOverlay.style.height = r.height + 'px';
                 document.body.appendChild(patchOverlay);
             } else {
-                const r = dashboard.getBoundingClientRect();
+                const r = getAboveTilesRect();
                 patchOverlay.style.top = r.top + 'px';
                 patchOverlay.style.left = r.left + 'px';
                 patchOverlay.style.width = r.width + 'px';
@@ -1331,14 +1332,14 @@
         // 게시판 / 게임패드는 더 이상 헤더 탭이 아니라 아래 스트림덱 그리드의 타일로 들어감
         const boardBtn = document.createElement('button');
         boardBtn.style.cssText = `
-            position:relative; overflow:hidden; aspect-ratio:1.6/1; border-radius:10px; cursor:pointer;
+            position:relative; overflow:hidden; aspect-ratio:2.0/1; border-radius:10px; cursor:pointer;
             display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
             padding:4px; box-sizing:border-box; background:${T.card}; border:1px solid #60a5fa;
             box-shadow:0 0 6px rgba(96,165,250,0.35), inset 0 0 8px rgba(96,165,250,0.1);
             transition:box-shadow 0.15s;
         `;
         boardBtn.innerHTML = `
-            <span style="font-size:26px; margin-top:6px;">📌</span>
+            <span style="font-size:18px; margin-top:6px;">📌</span>
             <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">게시판</span>
         `;
         boardBtn.onclick = () => openBoardOverlay();
@@ -1346,11 +1347,11 @@
 
         const gamepadBtn = document.createElement('button');
         gamepadBtn.style.cssText = `
-            position:relative; overflow:hidden; aspect-ratio:1.6/1; border-radius:10px; cursor:pointer;
+            position:relative; overflow:hidden; aspect-ratio:2.0/1; border-radius:10px; cursor:pointer;
             display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
             padding:4px; box-sizing:border-box;
         `;
-        gamepadBtn.innerHTML = `<span style="position:relative; z-index:1; font-size:26px;">🎮</span>
+        gamepadBtn.innerHTML = `<span style="position:relative; z-index:1; font-size:18px;">🎮</span>
             <span style="position:relative; z-index:1; font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">게임패드</span>`;
         const gamepadLabel = document.createElement('span');
         gamepadLabel.style.cssText = 'position:relative; z-index:1; font-size:12px; font-weight:bold; letter-spacing:0.5px;';
@@ -1537,23 +1538,25 @@
             el.onmouseleave = () => { el.style.boxShadow = base; };
         }
 
-        // 요기요/다중모니터링/게임패드 설명 팝업을 스트림덱 타일(bottomRow) '위쪽'에 앉히기 위한 영역 계산
-        // (bottomRow는 아래에서 선언되지만, 이 함수는 클릭 시점에만 호출되므로 그때는 이미 존재함)
+        // 맵최적화/다중모니터링/레이아웃색상/날씨&기타/패치노트 팝업을 '일일 업무 카드(taskCard) 바닥' 기준으로
+        // 스트림덱 타일(bottomRow) 위쪽 틈에만 앉히기 위한 영역 계산 — 스트림덱 버튼을 절대 가리지 않음
+        // (taskCard/bottomRow는 아래에서 선언되지만, 이 함수는 클릭 시점에만 호출되므로 그때는 이미 존재함)
         function getAboveTilesRect() {
-            const d = dashboard.getBoundingClientRect();
+            const taskRect = taskCard.getBoundingClientRect();
             const t = bottomRow.getBoundingClientRect();
-            return { top: d.top, left: d.left, width: d.width, height: Math.max(120, t.top - d.top) };
+            return { top: taskRect.bottom, left: t.left, width: t.width, height: Math.max(80, t.top - taskRect.bottom) };
         }
+        window.getAboveTilesRect = getAboveTilesRect; // 다른 스코프(레이아웃색상/날씨&기타 오버레이 등)에서도 호출 가능하도록 노출
 
         // 요기요 최적화 — 스트림덱 타일 (아이콘 + 라벨 + ON/OFF)
         const mapToggle = document.createElement('button');
         mapToggle.style.cssText = `
-            position:relative; overflow:hidden; aspect-ratio:1.6/1; border-radius:10px; cursor:pointer;
+            position:relative; overflow:hidden; aspect-ratio:2.0/1; border-radius:10px; cursor:pointer;
             display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
             padding:4px; box-sizing:border-box;
         `;
-        mapToggle.innerHTML = `<span style="position:relative; z-index:1; font-size:26px;">🗺️</span>
-            <span style="position:relative; z-index:1; font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">요기요 최적화</span>`;
+        mapToggle.innerHTML = `<span style="position:relative; z-index:1; font-size:18px;">🗺️</span>
+            <span style="position:relative; z-index:1; font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">맵 최적화 기능</span>`;
         const mapLabel = document.createElement('span');
         mapLabel.style.cssText = 'position:relative; z-index:1; font-size:12px; font-weight:bold; letter-spacing:0.5px;';
         mapLabel.textContent = state.isMapOpt ? 'ON' : 'OFF';
@@ -1648,11 +1651,11 @@
         const queueEnabled = localStorage.getItem('neubie_handover_enabled') === 'true';
         const queueToggle = document.createElement('button');
         queueToggle.style.cssText = `
-            position:relative; overflow:hidden; aspect-ratio:1.6/1; border-radius:10px; cursor:pointer;
+            position:relative; overflow:hidden; aspect-ratio:2.0/1; border-radius:10px; cursor:pointer;
             display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
             padding:4px; box-sizing:border-box;
         `;
-        queueToggle.innerHTML = `<span style="position:relative; z-index:1; font-size:26px;">🖥️</span>
+        queueToggle.innerHTML = `<span style="position:relative; z-index:1; font-size:18px;">🖥️</span>
             <span style="position:relative; z-index:1; font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">다중 모니터링 기능</span>`;
         const queueLabel = document.createElement('span');
         queueLabel.style.cssText = 'position:relative; z-index:1; font-size:12px; font-weight:bold; letter-spacing:0.5px;';
@@ -1771,13 +1774,13 @@
 
         const scheduleCard = document.createElement('div');
         scheduleCard.style.cssText = `
-            position:relative; aspect-ratio:1.6/1; border-radius:10px; cursor:pointer;
+            position:relative; aspect-ratio:2.0/1; border-radius:10px; cursor:pointer;
             background:${T.card}; border:1px solid #ff4fa3;
             box-shadow:0 0 6px rgba(255,79,163,0.35), inset 0 0 8px rgba(255,79,163,0.1);
             display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
             padding:4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
-        scheduleCard.innerHTML = `<span style="font-size:26px;">📅</span>
+        scheduleCard.innerHTML = `<span style="font-size:18px;">📅</span>
             <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">스케줄표 & 좌석도</span>`;
         window._neubieScheduleCard = scheduleCard;
         attachStaticNeonHover(scheduleCard, '255,79,163');
@@ -1789,13 +1792,13 @@
 
         const rouletteCard = document.createElement('div');
         rouletteCard.style.cssText = `
-            position:relative; aspect-ratio:1.6/1; border-radius:10px; cursor:pointer;
+            position:relative; aspect-ratio:2.0/1; border-radius:10px; cursor:pointer;
             background:${T.card}; border:1px solid #2ce6d9;
             box-shadow:0 0 6px rgba(44,230,217,0.35), inset 0 0 8px rgba(44,230,217,0.1);
             display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
             padding:4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
-        rouletteCard.innerHTML = `<span style="font-size:26px;">🌤️</span>
+        rouletteCard.innerHTML = `<span style="font-size:18px;">🌤️</span>
             <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">날씨 & 기타</span>`;
         window._neubieRouletteCard = rouletteCard;
         attachStaticNeonHover(rouletteCard, '44,230,217');
@@ -1813,13 +1816,13 @@
         const isBatteryOpen = batteryPopup.style.display === 'block';
         const batteryCard = document.createElement('div');
         batteryCard.style.cssText = `
-            position:relative; aspect-ratio:1.6/1; border-radius:10px; cursor:pointer;
+            position:relative; aspect-ratio:2.0/1; border-radius:10px; cursor:pointer;
             background:${T.card}; border:1px solid #facc15;
             box-shadow:0 0 6px rgba(250,204,21,0.35), inset 0 0 8px rgba(250,204,21,0.1);
             display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
             padding:4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
-        batteryCard.innerHTML = `<span style="font-size:26px;">🔋</span>
+        batteryCard.innerHTML = `<span style="font-size:18px;">🔋</span>
             <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">성남 배터리 현황</span>`;
         window._neubieBatteryCard = batteryCard;
         attachStaticNeonHover(batteryCard, '250,204,21');
@@ -1834,13 +1837,13 @@
 
         const weatherCard = document.createElement('div');
         weatherCard.style.cssText = `
-            position:relative; aspect-ratio:1.6/1; border-radius:10px; cursor:pointer;
+            position:relative; aspect-ratio:2.0/1; border-radius:10px; cursor:pointer;
             background:${T.card}; border:1px solid #9d5cff;
             box-shadow:0 0 6px rgba(157,92,255,0.35), inset 0 0 8px rgba(157,92,255,0.1);
             display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
             padding:4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
-        weatherCard.innerHTML = `<span style="font-size:26px;">🎨</span>
+        weatherCard.innerHTML = `<span style="font-size:18px;">🎨</span>
             <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">레이아웃 색상</span>`;
         window._neubieWeatherCard = weatherCard;
         attachStaticNeonHover(weatherCard, '157,92,255');
@@ -3120,7 +3123,7 @@
 				backgroundImage: `url(${BG_IMG})`,
 				backgroundSize: 'cover', backgroundPosition: 'center',
 				borderRadius: '24px', overflow: 'hidden',
-				transform: 'scale(1.5)',
+				transform: 'scale(1.275)', // 기존 1.5에서 15% 축소
 				transformOrigin: 'center center',
 			});
 
@@ -4478,11 +4481,21 @@
                     overlay = document.createElement('div');
                     overlay.id = 'neubie-drivetheme-overlay';
                     overlay.style.cssText = `
-                        position:fixed; inset:0; z-index:2147483646;
-                        display:flex; align-items:flex-start; justify-content:center; padding-top:20px;
+                        position:fixed; z-index:2147483646;
+                        display:flex; align-items:flex-start; justify-content:center; padding-top:8px; box-sizing:border-box;
                         font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif; pointer-events:none;
                     `;
                     document.body.appendChild(overlay);
+                }
+                if (window.getAboveTilesRect) {
+                    const r = window.getAboveTilesRect();
+                    overlay.style.top = r.top + 'px';
+                    overlay.style.left = r.left + 'px';
+                    overlay.style.width = r.width + 'px';
+                    overlay.style.height = r.height + 'px';
+                } else {
+                    overlay.style.top = '0'; overlay.style.left = '0';
+                    overlay.style.width = '100%'; overlay.style.height = '100%';
                 }
                 overlay.style.display = 'flex';
                 overlay.innerHTML = `
@@ -4548,11 +4561,21 @@
                     overlay = document.createElement('div');
                     overlay.id = 'neubie-moretools-overlay';
                     overlay.style.cssText = `
-                        position:fixed; inset:0; z-index:2147483646;
-                        display:flex; align-items:flex-start; justify-content:center; padding-top:20px;
+                        position:fixed; z-index:2147483646;
+                        display:flex; align-items:flex-start; justify-content:center; padding-top:8px; box-sizing:border-box;
                         font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif; pointer-events:none;
                     `;
                     document.body.appendChild(overlay);
+                }
+                if (window.getAboveTilesRect) {
+                    const r = window.getAboveTilesRect();
+                    overlay.style.top = r.top + 'px';
+                    overlay.style.left = r.left + 'px';
+                    overlay.style.width = r.width + 'px';
+                    overlay.style.height = r.height + 'px';
+                } else {
+                    overlay.style.top = '0'; overlay.style.left = '0';
+                    overlay.style.width = '100%'; overlay.style.height = '100%';
                 }
                 overlay.style.display = 'flex';
                 overlay.innerHTML = `
