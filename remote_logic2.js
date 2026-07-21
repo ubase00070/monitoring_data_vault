@@ -1674,10 +1674,34 @@
 
     // 팝업 열 때만 생성
     function toggleBattery() {
+        const isMulti = isMonitoringPage(); // 다중 모니터링 페이지 여부 (Alt+Q 메인 레이아웃 없음)
+
         if (batteryPopup.style.display !== 'block') {
 
-            updateBatteryStatus();  
-            batteryPopup.style.display = 'block';
+            updateBatteryStatus();
+
+            if (isMulti) {
+                // 다중 모니터링 페이지: 기존과 동일 — 우측 상단 고정, 애니메이션 없음
+                batteryPopup.style.transition = 'none';
+                batteryPopup.style.top = '20px';
+                batteryPopup.style.left = 'auto';
+                batteryPopup.style.right = '20px';
+                batteryPopup.style.transform = 'none';
+                batteryPopup.style.display = 'block';
+            } else {
+                // Alt+Q 메인 레이아웃 우측에 도킹 + 드로어 슬라이드 애니메이션
+                const dRect = dashboard.getBoundingClientRect();
+                batteryPopup.style.transition = 'none';
+                batteryPopup.style.top = dRect.top + 'px';
+                batteryPopup.style.left = (dRect.right + 12) + 'px';
+                batteryPopup.style.right = 'auto';
+                batteryPopup.style.transform = 'translateX(-100%)'; // 대시보드 뒤에 숨은 상태로 시작
+                batteryPopup.style.display = 'block';
+
+                void batteryPopup.offsetWidth; // 강제 리플로우 → transition 적용 보장
+                batteryPopup.style.transition = 'transform 0.3s ease-out';
+                batteryPopup.style.transform = 'translateX(0)'; // 우측으로 스르르 슬라이드
+            }
 
             // 5초 후 1회 갱신 → 필요없으니 삭제, 바로 1분 간격으로
 			if (batteryRefreshInterval) clearInterval(batteryRefreshInterval); // 중복 방지
@@ -1687,7 +1711,17 @@
             }, 60000);
 
         } else {
-            batteryPopup.style.display = 'none';
+            if (isMulti) {
+                batteryPopup.style.display = 'none';
+            } else {
+                batteryPopup.style.transition = 'transform 0.3s ease-out';
+                batteryPopup.style.transform = 'translateX(-100%)'; // 다시 대시보드 뒤로 슬라이드
+                setTimeout(() => {
+                    if (batteryPopup.style.transform === 'translateX(-100%)') {
+                        batteryPopup.style.display = 'none';
+                    }
+                }, 300);
+            }
             if (window._neubieBatteryCard) window._neubieBatteryCard.style.outline = 'none';
             clearInterval(batteryRefreshInterval);
         }
