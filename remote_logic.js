@@ -534,7 +534,7 @@
         document.head.appendChild(st);
     })();
 	
-    const batteryPopup = createContainer('neubie-battery-popup', '380px', '20px', 'auto', '20px');
+    const batteryPopup = createContainer('neubie-battery-popup', '420px', '20px', 'auto', '20px');
 
     function makeDraggable(handleEl, targetEl) {
         let isDragging = false, startX, startY, startLeft, startTop;
@@ -608,17 +608,28 @@
         const titleB = document.createElement('b');
         titleB.textContent = "🔋 실시간 성남 배터리 현황";
         titleB.style.cssText = `color:${T.text}; font-size:18px;`;
+
+        const headerRight = document.createElement('div');
+        headerRight.style.cssText = `display:flex; align-items:center; gap:8px;`;
+
         const copyBtn = document.createElement('button');
         copyBtn.textContent = '복사';
         Object.assign(copyBtn.style, {
             background:'#3b82f6', color:'white', border:'none',
-            padding:'10px 20px',
+            padding:'6px 16px',
             borderRadius:'8px', cursor:'pointer', fontWeight:'bold',
-            fontSize:'15px',
+            fontSize:'14px',
             transition:'0.2s'
         });
         copyBtn.onclick = (e) => copyToClipboard(e.target);
-        header.append(titleB, copyBtn);
+
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = '✕';
+        closeBtn.style.cssText = `background:#ef4444; color:white; border:none; border-radius:4px; width:22px; height:22px; cursor:pointer; font-weight:bold; display:flex; align-items:center; justify-content:center; font-size:14px;`;
+        closeBtn.onclick = () => toggleBattery();
+
+        headerRight.append(copyBtn, closeBtn);
+        header.append(titleB, headerRight);
         batteryPopup.appendChild(header);
         makeDraggable(header, batteryPopup);
 
