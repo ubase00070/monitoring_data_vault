@@ -630,19 +630,19 @@
             item.dataset.batteryId = c.id;
             item.style.cssText = `
                 background:${T.bg === '#111111' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)'};
-                padding:9px 20px;
-                border-radius:12px;
-                margin-bottom:8px;
+                padding:6px 16px;
+                border-radius:10px;
+                margin-bottom:6px;
                 border-left:5px solid #666;
                 font-size: 16px !important;
             `;
             item.innerHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
                     <span style="font-weight:500;" class="bat-name">⚪ ${c.name}</span>
-                    <span style="font-weight:bold; font-size: 20px;" class="bat-val">- %</span>
+                    <span style="font-weight:bold; font-size: 16px;" class="bat-val">- %</span>
                 </div>
-                <div class="bat-bar-track" style="width:100%; height:10px; background:${T.bg === '#111111' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'}; border-radius:5px; overflow:hidden;">
-                    <div class="bat-bar-fill" style="height:100%; width:0%; background:#666; border-radius:5px; transition:width 0.3s ease, background 0.3s ease;"></div>
+                <div class="bat-bar-track" style="width:100%; height:6px; background:${T.bg === '#111111' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'}; border-radius:3px; overflow:hidden;">
+                    <div class="bat-bar-fill" style="height:100%; width:0%; background:#666; border-radius:3px; transition:width 0.3s ease, background 0.3s ease;"></div>
                 </div>
             `;
             list.appendChild(item);
@@ -1896,6 +1896,15 @@
     // 팝업 열 때만 생성
     function toggleBattery() {
         if (batteryPopup.style.display !== 'block') {
+
+            // 다른 팝업들과 동일하게 스트림덱 바로 위(bottom 라인)에 맞춰 등장
+            if (typeof getSharedPopupRect === 'function') {
+                const r = getSharedPopupRect();
+                batteryPopup.style.top = 'auto';
+                batteryPopup.style.left = r.left + 'px';
+                batteryPopup.style.right = 'auto';
+                batteryPopup.style.bottom = r.bottom + 'px';
+            }
 
             updateBatteryStatus();  
             batteryPopup.style.display = 'block';
@@ -4718,9 +4727,10 @@
             };
 
             window.openTipsOverlay = function() {
+                const T = getNbTheme();
                 const box = document.createElement('div');
                 box.style.cssText = `
-                    background:#1e1e2e; color:#e2e8f0; border-radius:18px;
+                    background:${T.card}; color:${T.text}; border-radius:18px;
                     border:1.5px solid #f59e0b; padding:28px 32px 24px 32px;
                     width:100%; box-sizing:border-box; max-height:80vh; overflow-y:auto;
                     position:relative; box-shadow:0 10px 50px rgba(0,0,0,0.7); pointer-events:auto;
@@ -4755,12 +4765,13 @@
                     const row = document.createElement('div');
                     row.style.cssText = `
                         display:flex; justify-content:space-between; align-items:center;
-                        background:#252525; border:1px solid #333333; border-radius:12px;
+                        background:${T.bg === '#111111' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)'};
+                        border:1px solid ${T.border}; border-radius:12px;
                         padding:13px 16px; gap:12px;
                     `;
                     const rowTitle = document.createElement('span');
                     rowTitle.textContent = item.title;
-                    rowTitle.style.cssText = "font-size:14px; font-weight:600; color:#e2e8f0; flex:1;";
+                    rowTitle.style.cssText = `font-size:14px; font-weight:600; color:${T.text}; flex:1;`;
                     const rowBtn = document.createElement('button');
                     rowBtn.textContent = '열기';
                     rowBtn.style.cssText = `
