@@ -1063,7 +1063,10 @@
         };
 
         card.innerHTML = `
-            <div style="color:${T.accent}; font-weight:bold; font-size:18px; margin-bottom:10px;">🏷️ 영상 파일명 생성기</div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <span style="color:${T.accent}; font-weight:bold; font-size:18px;">🏷️ 영상 파일명 생성기</span>
+                <button id="openDriveTodayBtn" style="background:#444; color:#ddd; border:1px solid #666; padding:4px 8px; border-radius:6px; font-size:13px; cursor:pointer; white-space:nowrap;">📂 영상 드라이브 열기</button>
+            </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px 5px; margin-bottom: 10px;">
                 <div style="position: relative; min-width: 0;">
                     <select id="robotSelector" style="width: 100%; background: #333; color: white; border: 1px solid #555; border-radius: 4px; font-size: 15px; padding: 0 20px 0 8px; height: 32px; line-height: 32px; box-sizing: border-box; appearance: none; -webkit-appearance: none; -moz-appearance: none;">
@@ -1088,6 +1091,31 @@
         }
 
         setTimeout(() => {
+			// 영상 드라이브 열기 → 오늘 날짜 폴더로 이동 (없으면 루트 폴더로 폴백)
+            const openDriveBtn = card.querySelector('#openDriveTodayBtn');
+            if (openDriveBtn) {
+                openDriveBtn.onclick = async () => {
+                    const ROOT_FOLDER_URL = 'https://drive.google.com/drive/folders/0AJPzAP1RZ6FhUk9PVA';
+                    const todayStr = getFormattedDate(new Date()); // 예: "20260721"
+
+                    let targetUrl = ROOT_FOLDER_URL;
+
+                    try {
+                        const res = await fetch('https://multimonitoring.vercel.app/api/drive');
+                        const data = await res.json();
+                        if (data?.folders?.[todayStr]) {
+                            targetUrl = data.folders[todayStr];
+                        } else if (data?.root) {
+                            targetUrl = data.root; // 오늘자 폴더 없으면 루트로 폴백
+                        }
+                    } catch (e) {
+                        console.warn('[영상 드라이브] 폴더 정보 조회 실패 → 루트로 이동:', e);
+                    }
+
+                    window.open(targetUrl, '_blank');
+                };
+            }
+			
             // 개별 기체 파일명 복사
             const copyBtn = card.querySelector('#copyFileName');
             if (copyBtn) {
