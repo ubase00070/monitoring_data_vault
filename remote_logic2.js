@@ -5222,7 +5222,7 @@
     });
 
     // 화면 어디든 클릭했을 때 주소 확인
-    // NCC에서 메뉴를 클릭해 이동할 때 즉각 닫히게
+    // NCC에서 메뉴를 클릭해 이동 시 즉각 닫히게
     document.addEventListener('click', () => {
         setTimeout(() => {
             if (location.href !== lastUrl) {
