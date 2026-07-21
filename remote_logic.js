@@ -1554,7 +1554,7 @@
             padding:4px; box-sizing:border-box;
         `;
         mapToggle.innerHTML = `<span style="position:relative; z-index:1; font-size:26px;">🗺️</span>
-            <span style="position:relative; z-index:1; font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">요기요 최적화</span>`;
+            <span style="position:relative; z-index:1; font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">맵 최적화 기능</span>`;
         const mapLabel = document.createElement('span');
         mapLabel.style.cssText = 'position:relative; z-index:1; font-size:12px; font-weight:bold; letter-spacing:0.5px;';
         mapLabel.textContent = state.isMapOpt ? 'ON' : 'OFF';
