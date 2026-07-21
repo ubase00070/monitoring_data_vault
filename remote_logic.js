@@ -523,7 +523,6 @@
             #neubie-board-overlay, #neubie-board-overlay *,
             #neubie-secret-overlay, #neubie-secret-overlay *,
             #neubie-schedule-overlay, #neubie-schedule-overlay *,
-            #neubie-tips-overlay, #neubie-tips-overlay *,
             #neubie-shared-popup, #neubie-shared-popup * {
                 font-family: 'Paperlogy', 'Pretendard', 'Noto Sans KR', sans-serif !important;
             }
@@ -1809,8 +1808,8 @@
             display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
             padding:4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
-        rouletteCard.innerHTML = `<span style="font-size:18px;">🌤️</span>
-            <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">날씨 & 룰렛</span>`;
+        rouletteCard.innerHTML = `<span style="font-size:18px;">🧰</span>
+            <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">날씨 & 룰렛 & 기타</span>`;
         window._neubieRouletteCard = rouletteCard;
         attachStaticNeonHover(rouletteCard, '44,230,217');
         rouletteCard.onclick = () => {
@@ -1928,8 +1927,6 @@
 		
         const sharedPopup = document.getElementById('neubie-shared-popup');
         if (sharedPopup) sharedPopup.style.display = 'none';
-        const tipsOverlay = document.getElementById('neubie-tips-overlay');
-        if (tipsOverlay) tipsOverlay.style.display = 'none';
         const boardOverlay = document.getElementById('neubie-board-overlay');
         if (boardOverlay) boardOverlay.style.display='none';
         const secretOverlay = document.getElementById('neubie-secret-overlay');
@@ -3129,7 +3126,6 @@
                 <div id="nb-board-header" style="display:flex; align-items:center; gap:8px; padding:12px 16px; border-bottom:0.5px solid rgba(255,255,255,0.12); cursor:grab;">
                     <span style="font-size:15px; font-weight:600; color:#fff; flex:1;"><span class="nb-emoji">📋</span> NCC 게시판</span>
                     <button id="nb-secret-inline-btn" style="height:28px; padding:0 10px; font-size:12px; font-weight:500; background:transparent; border:1px solid #a78bfa; color:#a78bfa; border-radius:6px; cursor:pointer;">🔒 문의</button>
-                    <button id="nb-tips-btn" style="height:28px; padding:0 10px; font-size:12px; font-weight:500; background:#f59e0b; color:#1a1a1a; border:none; border-radius:6px; cursor:pointer;" title="최적화 팁">💡 최적화 팁</button>
                     <button id="nb-refresh-btn" style="height:28px; width:28px; background:rgba(255,255,255,0.1); color:white; border:none; border-radius:6px; cursor:pointer; font-size:14px;" title="새로고침">↺</button>
 					<button id="nb-write-btn" style="height:28px; padding:0 12px; font-size:12px; font-weight:500; background:#6366f1; color:white; border:none; border-radius:6px; cursor:pointer;">✏️ 글쓰기</button>
                     <button id="nb-board-close" style="background:rgba(255,255,255,0.1); border:none; color:#fff; width:26px; height:26px; border-radius:50%; cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center;">✕</button>
@@ -3239,7 +3235,6 @@
 			document.getElementById('nb-edit-submit').onclick = submitEdit;
 			document.getElementById('nb-refresh-btn').onclick = () => loadPosts();
             document.getElementById('nb-secret-inline-btn').onclick = () => openSecretOverlay();
-            document.getElementById('nb-tips-btn').onclick = () => openTipsOverlay();
             document.getElementById('nb-write-btn').onclick = () => {
                 if (!myEmail) return alert('로그인 정보가 없어 글쓰기가 불가합니다.');
                 showWriteScreen();
@@ -4508,7 +4503,7 @@
                     btn.onclick = () => {
                         const next = btn.dataset.nbt;
                         localStorage.setItem('neubie_theme', next);
-                        ['neubie-shared-popup', 'neubie-tips-overlay', 'neubie-secret-overlay'].forEach(id => {
+                        ['neubie-shared-popup', 'neubie-secret-overlay'].forEach(id => {
                             const el = document.getElementById(id);
                             if (el) el.remove();
                         });
@@ -4537,12 +4532,13 @@
                 box.style.cssText = `background:${T.card}; color:${T.text}; border-radius:16px; padding:20px; width:100%; box-sizing:border-box; box-shadow:0 4px 40px rgba(0,0,0,0.7); pointer-events:auto;`;
                 box.innerHTML = `
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-                        <span style="font-size:16px;font-weight:700;">🌤️ 날씨 & 룰렛 & 기타</span>
+                        <span style="font-size:16px;font-weight:700;">🧰 날씨 & 룰렛 & 기타</span>
                         <button id="mto-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
                     </div>
                     <div style="display:flex; flex-direction:column; gap:8px;">
                         <button id="mto-weather" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🌤️ 실시간 날씨 (기상청 API)</button>
                         <button id="mto-roulette" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🎡 룰렛 돌리기</button>
+                        <button id="mto-tips" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">💡 최적화 팁</button>
                     </div>
                 `;
                 box.querySelector('#mto-close').onclick = () => {
@@ -4551,6 +4547,7 @@
                 };
                 box.querySelector('#mto-weather').onclick = () => openWeatherOverlay();
                 box.querySelector('#mto-roulette').onclick = () => openRouletteOverlay();
+                box.querySelector('#mto-tips').onclick = () => openTipsOverlay();
                 window.showSharedPopup('moretools', box);
             };
 
@@ -4724,84 +4721,68 @@
             };
 
             window.openTipsOverlay = function() {
-                const T = getNbTheme();
-                const dashboardEl = document.getElementById('neubie-dashboard');
-                let tipsOverlay = document.getElementById('neubie-tips-overlay');
-                if (!tipsOverlay) {
-                    tipsOverlay = document.createElement('div');
-                    tipsOverlay.id = 'neubie-tips-overlay';
-                    tipsOverlay.style.cssText = `
-                        position:fixed; inset:0; background:transparent; pointer-events:none;
-                        z-index:2147483646; display:flex; align-items:center; justify-content:center;
-                        font-family:Pretendard, sans-serif; border-radius:20px; overflow:hidden;
-                    `;
-                    const tipsBox = document.createElement('div');
-                    tipsBox.style.cssText = `
-                        background:#1e1e2e; color:#e2e8f0; border-radius:18px; pointer-events:auto;
-                        border:1.5px solid #f59e0b; padding:28px 32px 24px 32px;
-                        max-width:560px; width:90%; max-height:80vh; overflow-y:auto;
-                        position:relative; box-shadow:0 10px 50px rgba(0,0,0,0.7);
-                    `;
-                    const tipsTitle = document.createElement('div');
-                    tipsTitle.textContent = '최적화 팁';
-                    tipsTitle.style.cssText = `font-size:20px; font-weight:bold; margin-bottom:20px; color:#fcd34d;`;
+                const box = document.createElement('div');
+                box.style.cssText = `
+                    background:#1e1e2e; color:#e2e8f0; border-radius:18px;
+                    border:1.5px solid #f59e0b; padding:28px 32px 24px 32px;
+                    width:100%; box-sizing:border-box; max-height:80vh; overflow-y:auto;
+                    position:relative; box-shadow:0 10px 50px rgba(0,0,0,0.7); pointer-events:auto;
+                `;
+                const tipsTitle = document.createElement('div');
+                tipsTitle.textContent = '최적화 팁';
+                tipsTitle.style.cssText = `font-size:20px; font-weight:bold; margin-bottom:20px; color:#fcd34d;`;
 
-                    const tipsClose = document.createElement('button');
-                    tipsClose.textContent = '✕';
-                    tipsClose.style.cssText = `
-                        position:absolute; top:16px; right:18px;
-                        background:transparent; border:none; color:#aaa;
-                        font-size:20px; cursor:pointer; line-height:1; padding:4px 8px;
-                        border-radius:6px; transition:color 0.2s;
-                    `;
-                    tipsClose.onmouseenter = () => { tipsClose.style.color='#fff'; };
-                    tipsClose.onmouseleave = () => { tipsClose.style.color='#aaa'; };
-                    tipsClose.onclick = () => { tipsOverlay.style.display = 'none'; };
+                const tipsClose = document.createElement('button');
+                tipsClose.textContent = '✕';
+                tipsClose.style.cssText = `
+                    position:absolute; top:16px; right:18px;
+                    background:transparent; border:none; color:#aaa;
+                    font-size:20px; cursor:pointer; line-height:1; padding:4px 8px;
+                    border-radius:6px; transition:color 0.2s;
+                `;
+                tipsClose.onmouseenter = () => { tipsClose.style.color='#fff'; };
+                tipsClose.onmouseleave = () => { tipsClose.style.color='#aaa'; };
+                tipsClose.onclick = () => {
+                    window.hideSharedPopup();
+                    if (window._neubieRouletteCard) window._neubieRouletteCard.style.outline = 'none';
+                };
 
-                    const tipsItems = [
-                        { title: "슬랙 PWA 버전 사용법", url: "https://telling-ink-a85.notion.site/PWA-366a8cf5ba7b80eebb43e017c095702c?pvs=74" },
-                        { title: "OBS 설정법", url: "https://telling-ink-a85.notion.site/OBS-366a8cf5ba7b80dfb101cfa149eaefcf?pvs=74" },
-                        { title: "CYH's 추천 프로그램", url: "https://telling-ink-a85.notion.site/366a8cf5ba7b80958575eadb8809f313" },
-                    ];
-                    const tipsContent = document.createElement('div');
-                    tipsContent.style.cssText = "display:grid; gap:10px;";
-                    tipsItems.forEach(item => {
-                        const row = document.createElement('div');
-                        row.style.cssText = `
-                            display:flex; justify-content:space-between; align-items:center;
-                            background:#252525; border:1px solid #333333; border-radius:12px;
-                            padding:13px 16px; gap:12px;
-                        `;
-                        const rowTitle = document.createElement('span');
-                        rowTitle.textContent = item.title;
-                        rowTitle.style.cssText = "font-size:14px; font-weight:600; color:#e2e8f0; flex:1;";
-                        const rowBtn = document.createElement('button');
-                        rowBtn.textContent = '열기';
-                        rowBtn.style.cssText = `
-                            background:#f59e0b; color:#1a1a1a; border:none;
-                            padding:7px 16px; border-radius:8px; cursor:pointer;
-                            font-weight:bold; font-size:13px; white-space:nowrap;
-                            transition:background 0.2s;
-                        `;
-                        rowBtn.onmouseenter = () => { rowBtn.style.background='#fbbf24'; };
-                        rowBtn.onmouseleave = () => { rowBtn.style.background='#f59e0b'; };
-                        rowBtn.onclick = () => { window.open(item.url, '_blank'); };
-                        row.appendChild(rowTitle);
-                        row.appendChild(rowBtn);
-                        tipsContent.appendChild(row);
-                    });
-                    tipsBox.appendChild(tipsClose);
-                    tipsBox.appendChild(tipsTitle);
-                    tipsBox.appendChild(tipsContent);
-                    tipsOverlay.appendChild(tipsBox);
-                    document.body.appendChild(tipsOverlay);
-                }
-                const r0 = dashboardEl.getBoundingClientRect();
-                tipsOverlay.style.top = r0.top + 'px';
-                tipsOverlay.style.left = r0.left + 'px';
-                tipsOverlay.style.width = r0.width + 'px';
-                tipsOverlay.style.height = r0.height + 'px';
-                tipsOverlay.style.display = 'flex';
+                const tipsItems = [
+                    { title: "슬랙 PWA 버전 사용법", url: "https://telling-ink-a85.notion.site/PWA-366a8cf5ba7b80eebb43e017c095702c?pvs=74" },
+                    { title: "OBS 설정법", url: "https://telling-ink-a85.notion.site/OBS-366a8cf5ba7b80dfb101cfa149eaefcf?pvs=74" },
+                    { title: "CYH's 추천 프로그램", url: "https://telling-ink-a85.notion.site/366a8cf5ba7b80958575eadb8809f313" },
+                ];
+                const tipsContent = document.createElement('div');
+                tipsContent.style.cssText = "display:grid; gap:10px;";
+                tipsItems.forEach(item => {
+                    const row = document.createElement('div');
+                    row.style.cssText = `
+                        display:flex; justify-content:space-between; align-items:center;
+                        background:#252525; border:1px solid #333333; border-radius:12px;
+                        padding:13px 16px; gap:12px;
+                    `;
+                    const rowTitle = document.createElement('span');
+                    rowTitle.textContent = item.title;
+                    rowTitle.style.cssText = "font-size:14px; font-weight:600; color:#e2e8f0; flex:1;";
+                    const rowBtn = document.createElement('button');
+                    rowBtn.textContent = '열기';
+                    rowBtn.style.cssText = `
+                        background:#f59e0b; color:#1a1a1a; border:none;
+                        padding:7px 16px; border-radius:8px; cursor:pointer;
+                        font-weight:bold; font-size:13px; white-space:nowrap;
+                        transition:background 0.2s;
+                    `;
+                    rowBtn.onmouseenter = () => { rowBtn.style.background='#fbbf24'; };
+                    rowBtn.onmouseleave = () => { rowBtn.style.background='#f59e0b'; };
+                    rowBtn.onclick = () => { window.open(item.url, '_blank'); };
+                    row.appendChild(rowTitle);
+                    row.appendChild(rowBtn);
+                    tipsContent.appendChild(row);
+                });
+                box.appendChild(tipsClose);
+                box.appendChild(tipsTitle);
+                box.appendChild(tipsContent);
+                window.showSharedPopup('tips', box);
             };
 
             window.openRouletteOverlay = function() {
@@ -5017,11 +4998,11 @@
             };
 
 			// 그 외 페이지는 기존 대시보드
-			const tipsOverlayEl = document.getElementById('neubie-tips-overlay');
+			const sharedPopupEl = document.getElementById('neubie-shared-popup');
 			const scheduleOverlayEl = document.getElementById('neubie-schedule-overlay');
               const isAnyOpen = (dashboard.style.display === 'block' || 
               batteryPopup.style.display === 'block' ||
-              (tipsOverlayEl && tipsOverlayEl.style.display === 'flex') ||
+              (sharedPopupEl && sharedPopupEl.style.display === 'flex') ||
               (scheduleOverlayEl && scheduleOverlayEl.style.display === 'flex'));
 			
 			if (isAnyOpen) {
