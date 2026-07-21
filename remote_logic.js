@@ -1808,7 +1808,7 @@
             padding:4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
         rouletteCard.innerHTML = `<span style="font-size:18px;">🌤️</span>
-            <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">날씨 & 기타</span>`;
+            <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">날씨 & 룰렛</span>`;
         window._neubieRouletteCard = rouletteCard;
         attachStaticNeonHover(rouletteCard, '44,230,217');
         rouletteCard.onclick = () => {
@@ -1873,10 +1873,10 @@
         bottomRow.appendChild(gamepadBtn);   // 게임패드 (ON/OFF)
         bottomRow.appendChild(batteryCard);  // 성남 배터리
 
-        // 2행: 레이아웃 색상 - 게시판 - 날씨 & 기타 - 스케줄 좌석
+        // 2행: 레이아웃 색상 - 날씨 & 룰렛 - 게시판 - 스케줄 좌석
         bottomRow.appendChild(weatherCard);  // 레이아웃 색상
+        bottomRow.appendChild(rouletteCard); // 날씨 & 룰렛
         bottomRow.appendChild(boardBtn);     // 게시판
-        bottomRow.appendChild(rouletteCard); // 날씨 & 기타
         bottomRow.appendChild(scheduleCard); // 스케줄 좌석
 
         list.appendChild(bottomRow);
@@ -4708,15 +4708,14 @@
 
             window.openGamepadGuideOverlay = function() {
                 const box = document.createElement('div');
-                box.style.cssText = `background:#1e1e2e; color:#e2e8f0; border-radius:16px; padding:16px; width:100%; box-sizing:border-box; max-height:90vh; box-shadow:0 10px 50px rgba(0,0,0,0.7); pointer-events:auto; display:flex; flex-direction:column; transform:scale(0.575); transform-origin:bottom center;`;
+                box.style.cssText = `background:#1e1e2e; color:#e2e8f0; border-radius:16px; padding:16px; width:100%; box-sizing:border-box; max-height:90vh; overflow-y:auto; box-shadow:0 10px 50px rgba(0,0,0,0.7); pointer-events:auto; display:flex; flex-direction:column;`;
                 box.innerHTML = `
                     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; gap:10px;">
                         <span style="font-size:16px; font-weight:700;">🎮 D-PAD 기능변경 설명</span>
                         <button id="gp-close" style="width:28px; height:28px; border:none; border-radius:5px; background:#3b0000; border:1px solid #ef4444; color:#ef4444; font-size:16px; cursor:pointer;">✕</button>
                     </div>
                     <img src="https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/xbox_binding.jpg"
-                         width="960" height="540"
-                         style="border-radius:8px; display:block; max-width:90vw; max-height:80vh;" />
+                         style="border-radius:8px; display:block; width:100%; height:auto;" />
                 `;
                 box.querySelector('#gp-close').onclick = () => window.hideSharedPopup();
                 window.showSharedPopup('gamepad-guide', box);
