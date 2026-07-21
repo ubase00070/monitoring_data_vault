@@ -1814,15 +1814,15 @@
         const batteryCard = document.createElement('div');
         batteryCard.style.cssText = `
             position:relative; aspect-ratio:1.6/1; border-radius:10px; cursor:pointer;
-            background:${T.card}; border:1px solid #34d158;
-            box-shadow:0 0 6px rgba(52,209,88,0.35), inset 0 0 8px rgba(52,209,88,0.1);
+            background:${T.card}; border:1px solid #facc15;
+            box-shadow:0 0 6px rgba(250,204,21,0.35), inset 0 0 8px rgba(250,204,21,0.1);
             display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
             padding:4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
         batteryCard.innerHTML = `<span style="font-size:26px;">🔋</span>
             <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">성남 배터리 현황</span>`;
         window._neubieBatteryCard = batteryCard;
-        attachStaticNeonHover(batteryCard, '52,209,88');
+        attachStaticNeonHover(batteryCard, '250,204,21');
         batteryCard.onclick = () => {
             const isActive = batteryCard.style.outline !== 'none' && batteryCard.style.outline !== '';
             batteryCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
