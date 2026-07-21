@@ -1674,34 +1674,35 @@
 
     // 팝업 열 때만 생성
     function toggleBattery() {
-        const isMulti = isMonitoringPage(); // 다중 모니터링 페이지 여부 (Alt+Q 메인 레이아웃 없음)
+        const isMulti = isMonitoringPage(); // 다중 모니터링 페이지 여부
 
         if (batteryPopup.style.display !== 'block') {
 
             updateBatteryStatus();
 
+            batteryPopup.style.transition = 'none';
+
             if (isMulti) {
-                // 다중 모니터링 페이지: 기존과 동일 — 우측 상단 고정, 애니메이션 없음
-                batteryPopup.style.transition = 'none';
+                // 다중 모니터링 페이지: 기존 고정 좌표 그대로
                 batteryPopup.style.top = '20px';
                 batteryPopup.style.left = 'auto';
                 batteryPopup.style.right = '20px';
-                batteryPopup.style.transform = 'none';
-                batteryPopup.style.display = 'block';
+                batteryPopup.style.zIndex = '1000000';
             } else {
-                // Alt+Q 메인 레이아웃 우측에 도킹 + 드로어 슬라이드 애니메이션
+                // Alt+Q 메인 레이아웃 우측에 도킹
                 const dRect = dashboard.getBoundingClientRect();
-                batteryPopup.style.transition = 'none';
                 batteryPopup.style.top = dRect.top + 'px';
                 batteryPopup.style.left = (dRect.right + 12) + 'px';
                 batteryPopup.style.right = 'auto';
-                batteryPopup.style.transform = 'translateX(-100%)'; // 대시보드 뒤에 숨은 상태로 시작
-                batteryPopup.style.display = 'block';
-
-                void batteryPopup.offsetWidth; // 강제 리플로우 → transition 적용 보장
-                batteryPopup.style.transition = 'transform 0.3s ease-out';
-                batteryPopup.style.transform = 'translateX(0)'; // 우측으로 스르르 슬라이드
+                batteryPopup.style.zIndex = '999999'; // 대시보드(1000000)보다 낮게 → 항상 뒤쪽에 깔림
             }
+
+            batteryPopup.style.transform = 'translateX(100%)'; // 제자리보다 오른쪽(화면 바깥)에서 시작
+            batteryPopup.style.display = 'block';
+
+            void batteryPopup.offsetWidth; // 강제 리플로우 → transition 적용 보장
+            batteryPopup.style.transition = 'transform 0.3s ease-out';
+            batteryPopup.style.transform = 'translateX(0)'; // 좌측(제자리)으로 슬라이드
 
             // 5초 후 1회 갱신 → 필요없으니 삭제, 바로 1분 간격으로
 			if (batteryRefreshInterval) clearInterval(batteryRefreshInterval); // 중복 방지
@@ -1711,17 +1712,14 @@
             }, 60000);
 
         } else {
-            if (isMulti) {
-                batteryPopup.style.display = 'none';
-            } else {
-                batteryPopup.style.transition = 'transform 0.3s ease-out';
-                batteryPopup.style.transform = 'translateX(-100%)'; // 다시 대시보드 뒤로 슬라이드
-                setTimeout(() => {
-                    if (batteryPopup.style.transform === 'translateX(-100%)') {
-                        batteryPopup.style.display = 'none';
-                    }
-                }, 300);
-            }
+            batteryPopup.style.transition = 'transform 0.3s ease-out';
+            batteryPopup.style.transform = 'translateX(100%)'; // 다시 우측 바깥으로 슬라이드 아웃
+            setTimeout(() => {
+                if (batteryPopup.style.transform === 'translateX(100%)') {
+                    batteryPopup.style.display = 'none';
+                }
+            }, 300);
+
             if (window._neubieBatteryCard) window._neubieBatteryCard.style.outline = 'none';
             clearInterval(batteryRefreshInterval);
         }
