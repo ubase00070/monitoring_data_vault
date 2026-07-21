@@ -1337,7 +1337,7 @@
             <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">게시판</span>
         `;
         boardBtn.onclick = () => openBoardOverlay();
-        attachStaticNeonHover(boardBtn, 'rgba(96,165,250,0.7)');
+        attachStaticNeonHover(boardBtn, '96,165,250');
 
         const gamepadBtn = document.createElement('button');
         gamepadBtn.style.cssText = `
@@ -1353,12 +1353,16 @@
         gamepadBtn.appendChild(gamepadLabel);
         paintToggleTile(gamepadBtn, !isDpadBindingOff(), T);
         attachNeonHover(gamepadBtn, () => !isDpadBindingOff());
+        // 게임패드 가이드 오버레이(#gp-toggle)에서 토글해도 이 타일이 즉시 반영되도록 전역 sync 함수 노출
+        window.syncGamepadTile = () => {
+            gamepadLabel.textContent = isDpadBindingOff() ? 'OFF' : 'ON';
+            paintToggleTile(gamepadBtn, !isDpadBindingOff(), T);
+        };
         attachHoldToggle(gamepadBtn, {
             onShortClick: () => openGamepadGuideOverlay(),
             onHold: () => {
                 localStorage.setItem('neubie_dpad_binding', isDpadBindingOff() ? 'on' : 'off');
-                gamepadLabel.textContent = isDpadBindingOff() ? 'OFF' : 'ON';
-                paintToggleTile(gamepadBtn, !isDpadBindingOff(), T);
+                window.syncGamepadTile();
             },
         });
 
@@ -1440,7 +1444,7 @@
 
 		// 스트림덱 스타일 홀드 토글: 짧게 클릭 = 기존 설명 동작, 2초 홀드(좌→우 채움) = ON/OFF 토글
         function attachHoldToggle(btn, { onHold, onShortClick }) {
-            const HOLD_MS = 2000;
+            const HOLD_MS = 1500;
             btn.style.position = 'relative';
             btn.style.overflow = 'hidden';
 
@@ -1499,20 +1503,24 @@
             btn.style.transition = 'box-shadow 0.15s, border-color 0.15s';
         }
 
-        // 호버 시 미미한 네온 효과 (ON=초록 글로우, OFF=중립 글로우)
+        // 호버 시 뚜렷한 네온 효과 (ON=초록 글로우, OFF=중립 글로우) — 평상시 은은한 글로우는 유지, 호버 시에만 확 밝아짐
         function attachNeonHover(btn, getIsOn) {
-            btn.onmouseenter = () => {
-                btn.style.boxShadow = getIsOn()
-                    ? '0 0 6px rgba(34,197,94,0.6)'
-                    : '0 0 6px rgba(148,163,184,0.45)';
-            };
-            btn.onmouseleave = () => { btn.style.boxShadow = 'none'; };
+            const baseShadow = (on) => on
+                ? '0 0 6px rgba(34,197,94,0.4), inset 0 0 8px rgba(34,197,94,0.12)'
+                : '0 0 4px rgba(255,255,255,0.12)';
+            const hoverShadow = (on) => on
+                ? '0 0 18px 2px rgba(34,197,94,0.95), 0 0 5px rgba(34,197,94,0.8), inset 0 0 10px rgba(34,197,94,0.3)'
+                : '0 0 16px 2px rgba(226,232,240,0.8), inset 0 0 8px rgba(226,232,240,0.2)';
+            btn.onmouseenter = () => { btn.style.boxShadow = hoverShadow(getIsOn()); };
+            btn.onmouseleave = () => { btn.style.boxShadow = baseShadow(getIsOn()); };
         }
 
-        // ON/OFF가 없는 일반 타일용 — 고정 색상 네온 호버
-        function attachStaticNeonHover(el, glowColor) {
-            el.onmouseenter = () => { el.style.boxShadow = `0 0 6px ${glowColor}`; };
-            el.onmouseleave = () => { el.style.boxShadow = 'none'; };
+        // ON/OFF가 없는 일반 타일용 — 고정 색상 네온 호버 (rgb 트리플렛만 전달, 예: '52,209,88')
+        function attachStaticNeonHover(el, rgb) {
+            const base = `0 0 6px rgba(${rgb},0.35), inset 0 0 8px rgba(${rgb},0.1)`;
+            const hover = `0 0 18px 2px rgba(${rgb},0.95), 0 0 5px rgba(${rgb},0.8), inset 0 0 10px rgba(${rgb},0.3)`;
+            el.onmouseenter = () => { el.style.boxShadow = hover; };
+            el.onmouseleave = () => { el.style.boxShadow = base; };
         }
 
         // 요기요 최적화 — 스트림덱 타일 (아이콘 + 라벨 + ON/OFF)
@@ -1523,7 +1531,7 @@
             padding:4px; box-sizing:border-box;
         `;
         mapToggle.innerHTML = `<span style="position:relative; z-index:1; font-size:26px;">🗺️</span>
-            <span style="position:relative; z-index:1; font-size:14px; font-weight:500; white-space:nowrap; text-align:center;">요기요 최적화</span>`;
+            <span style="position:relative; z-index:1; font-size:14px; font-weight:500; white-space:nowrap; text-align:center;">맵 최적화 기능</span>`;
         const mapLabel = document.createElement('span');
         mapLabel.style.cssText = 'position:relative; z-index:1; font-size:12px; font-weight:bold; letter-spacing:0.5px;';
         mapLabel.textContent = state.isMapOpt ? 'ON' : 'OFF';
@@ -1623,7 +1631,7 @@
             padding:4px; box-sizing:border-box;
         `;
         queueToggle.innerHTML = `<span style="position:relative; z-index:1; font-size:26px;">🖥️</span>
-            <span style="position:relative; z-index:1; font-size:14px; font-weight:500; white-space:nowrap; text-align:center;">다중 모니터링</span>`;
+            <span style="position:relative; z-index:1; font-size:14px; font-weight:500; white-space:nowrap; text-align:center;">다중 모니터링 기능</span>`;
         const queueLabel = document.createElement('span');
         queueLabel.style.cssText = 'position:relative; z-index:1; font-size:12px; font-weight:bold; letter-spacing:0.5px;';
         queueLabel.textContent = queueEnabled ? 'ON' : 'OFF';
@@ -1747,9 +1755,9 @@
             padding:4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
         scheduleCard.innerHTML = `<span style="font-size:26px;">📅</span>
-            <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">스케줄 좌석</span>`;
+            <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">스케줄표 & 좌석도</span>`;
         window._neubieScheduleCard = scheduleCard;
-        attachStaticNeonHover(scheduleCard, 'rgba(255,79,163,0.7)');
+        attachStaticNeonHover(scheduleCard, '255,79,163');
         scheduleCard.onclick = () => {
             const isActive = scheduleCard.style.outline !== 'none' && scheduleCard.style.outline !== '';
             scheduleCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
@@ -1767,7 +1775,7 @@
         rouletteCard.innerHTML = `<span style="font-size:26px;">🌤️</span>
             <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">날씨 & 기타</span>`;
         window._neubieRouletteCard = rouletteCard;
-        attachStaticNeonHover(rouletteCard, 'rgba(44,230,217,0.7)');
+        attachStaticNeonHover(rouletteCard, '44,230,217');
         rouletteCard.onclick = () => {
             const isActive = rouletteCard.style.outline !== 'none' && rouletteCard.style.outline !== '';
             rouletteCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
@@ -1789,9 +1797,9 @@
             padding:4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
         batteryCard.innerHTML = `<span style="font-size:26px;">🔋</span>
-            <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">배터리 현황</span>`;
+            <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">성남 배터리 현황</span>`;
         window._neubieBatteryCard = batteryCard;
-        attachStaticNeonHover(batteryCard, 'rgba(52,209,88,0.7)');
+        attachStaticNeonHover(batteryCard, '52,209,88');
         batteryCard.onclick = () => {
             const isActive = batteryCard.style.outline !== 'none' && batteryCard.style.outline !== '';
             batteryCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
@@ -1812,7 +1820,7 @@
         weatherCard.innerHTML = `<span style="font-size:26px;">🎨</span>
             <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">레이아웃 색상</span>`;
         window._neubieWeatherCard = weatherCard;
-        attachStaticNeonHover(weatherCard, 'rgba(157,92,255,0.7)');
+        attachStaticNeonHover(weatherCard, '157,92,255');
         weatherCard.onclick = () => {
             const isActive = weatherCard.style.outline !== 'none' && weatherCard.style.outline !== '';
             weatherCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
@@ -1824,14 +1832,17 @@
             }
         };
 
+        // 1행: 요기요 최적화 - 다중 모니터링 - 게임패드 - 성남 배터리
         bottomRow.appendChild(mapToggle);    // 요기요 최적화 (ON/OFF)
-        bottomRow.appendChild(batteryCard);
         bottomRow.appendChild(queueToggle);  // 다중 모니터링 (ON/OFF)
-        bottomRow.appendChild(scheduleCard);
-        bottomRow.appendChild(weatherCard);
-        bottomRow.appendChild(rouletteCard);
         bottomRow.appendChild(gamepadBtn);   // 게임패드 (ON/OFF)
+        bottomRow.appendChild(batteryCard);  // 성남 배터리
+
+        // 2행: 레이아웃 색상 - 게시판 - 날씨 & 기타 - 스케줄 좌석
+        bottomRow.appendChild(weatherCard);  // 레이아웃 색상
         bottomRow.appendChild(boardBtn);     // 게시판
+        bottomRow.appendChild(rouletteCard); // 날씨 & 기타
+        bottomRow.appendChild(scheduleCard); // 스케줄 좌석
 
         list.appendChild(bottomRow);
 
@@ -4752,6 +4763,7 @@
                     } else {
                         localStorage.setItem('neubie_dpad_binding', 'off');
                     }
+                    window.syncGamepadTile?.(); // Alt+Q 메인 레이아웃의 게임패드 타일 즉시 동기화
                     openGamepadGuideOverlay();
                 };
                 overlay.querySelector('#gp-close').onclick = () => { overlay.style.display = 'none'; };
