@@ -1332,7 +1332,7 @@
         // 게시판 / 게임패드는 더 이상 헤더 탭이 아니라 아래 스트림덱 그리드의 타일로 들어감
         const boardBtn = document.createElement('button');
         boardBtn.style.cssText = `
-            position:relative; overflow:hidden; aspect-ratio:1.8/1; border-radius:10px; cursor:pointer;
+            position:relative; overflow:hidden; aspect-ratio:2.0/1; border-radius:10px; cursor:pointer;
             display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
             padding:4px; box-sizing:border-box; background:${T.card}; border:1px solid #60a5fa;
             box-shadow:0 0 6px rgba(96,165,250,0.35), inset 0 0 8px rgba(96,165,250,0.1);
@@ -1347,7 +1347,7 @@
 
         const gamepadBtn = document.createElement('button');
         gamepadBtn.style.cssText = `
-            position:relative; overflow:hidden; aspect-ratio:1.8/1; border-radius:10px; cursor:pointer;
+            position:relative; overflow:hidden; aspect-ratio:2.0/1; border-radius:10px; cursor:pointer;
             display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
             padding:4px; box-sizing:border-box;
         `;
@@ -1549,7 +1549,7 @@
         // 요기요 최적화 — 스트림덱 타일 (아이콘 + 라벨 + ON/OFF)
         const mapToggle = document.createElement('button');
         mapToggle.style.cssText = `
-            position:relative; overflow:hidden; aspect-ratio:1.8/1; border-radius:10px; cursor:pointer;
+            position:relative; overflow:hidden; aspect-ratio:2.0/1; border-radius:10px; cursor:pointer;
             display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
             padding:4px; box-sizing:border-box;
         `;
@@ -1649,7 +1649,7 @@
         const queueEnabled = localStorage.getItem('neubie_handover_enabled') === 'true';
         const queueToggle = document.createElement('button');
         queueToggle.style.cssText = `
-            position:relative; overflow:hidden; aspect-ratio:1.8/1; border-radius:10px; cursor:pointer;
+            position:relative; overflow:hidden; aspect-ratio:2.0/1; border-radius:10px; cursor:pointer;
             display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
             padding:4px; box-sizing:border-box;
         `;
@@ -1772,7 +1772,7 @@
 
         const scheduleCard = document.createElement('div');
         scheduleCard.style.cssText = `
-            position:relative; aspect-ratio:1.8/1; border-radius:10px; cursor:pointer;
+            position:relative; aspect-ratio:2.0/1; border-radius:10px; cursor:pointer;
             background:${T.card}; border:1px solid #ff4fa3;
             box-shadow:0 0 6px rgba(255,79,163,0.35), inset 0 0 8px rgba(255,79,163,0.1);
             display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
@@ -1790,7 +1790,7 @@
 
         const rouletteCard = document.createElement('div');
         rouletteCard.style.cssText = `
-            position:relative; aspect-ratio:1.8/1; border-radius:10px; cursor:pointer;
+            position:relative; aspect-ratio:2.0/1; border-radius:10px; cursor:pointer;
             background:${T.card}; border:1px solid #2ce6d9;
             box-shadow:0 0 6px rgba(44,230,217,0.35), inset 0 0 8px rgba(44,230,217,0.1);
             display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
@@ -1814,7 +1814,7 @@
         const isBatteryOpen = batteryPopup.style.display === 'block';
         const batteryCard = document.createElement('div');
         batteryCard.style.cssText = `
-            position:relative; aspect-ratio:1.8/1; border-radius:10px; cursor:pointer;
+            position:relative; aspect-ratio:2.0/1; border-radius:10px; cursor:pointer;
             background:${T.card}; border:1px solid #facc15;
             box-shadow:0 0 6px rgba(250,204,21,0.35), inset 0 0 8px rgba(250,204,21,0.1);
             display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
@@ -1835,7 +1835,7 @@
 
         const weatherCard = document.createElement('div');
         weatherCard.style.cssText = `
-            position:relative; aspect-ratio:1.8/1; border-radius:10px; cursor:pointer;
+            position:relative; aspect-ratio:2.0/1; border-radius:10px; cursor:pointer;
             background:${T.card}; border:1px solid #9d5cff;
             box-shadow:0 0 6px rgba(157,92,255,0.35), inset 0 0 8px rgba(157,92,255,0.1);
             display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
