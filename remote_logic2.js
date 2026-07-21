@@ -1215,12 +1215,19 @@
         patchBtn.onmouseleave = () => { patchBtn.style.borderColor=T.border; patchBtn.style.color=T.text; };
         patchBtn.onclick = () => {
             let patchOverlay = document.getElementById('neubie-patch-overlay');
+
+            // 이미 열려있으면(패치노트 버튼 재클릭) 닫기만 하고 종료 — X버튼 없이도 닫는 방법
+            if (patchOverlay && patchOverlay.style.display === 'flex') {
+                patchOverlay.style.display = 'none';
+                return;
+            }
+
             if (!patchOverlay) {
                 patchOverlay = document.createElement('div');
                 patchOverlay.id = 'neubie-patch-overlay';
                 patchOverlay.style.cssText = `
-                    position:fixed; inset:0; background:transparent; pointer-events:none;
-                    z-index:2147483646; display:flex; align-items:center; justify-content:center;
+                    position:fixed; background:transparent; pointer-events:none;
+                    z-index:2147483646; display:flex; align-items:flex-end; justify-content:center;
                     font-family:Pretendard, sans-serif;
                 `;
                 const patchBox = document.createElement('div');
@@ -1295,17 +1302,19 @@
                 patchOverlay.appendChild(patchBox);
                 const r = getAboveTilesRect();
                 patchOverlay.style.position = 'fixed';
-                patchOverlay.style.top = r.top + 'px';
+                patchOverlay.style.top = 'auto';
+                patchOverlay.style.bottom = r.bottom + 'px';
                 patchOverlay.style.left = r.left + 'px';
                 patchOverlay.style.width = r.width + 'px';
-                patchOverlay.style.height = r.height + 'px';
+                patchOverlay.style.height = 'auto';
                 document.body.appendChild(patchOverlay);
             } else {
                 const r = getAboveTilesRect();
-                patchOverlay.style.top = r.top + 'px';
+                patchOverlay.style.top = 'auto';
+                patchOverlay.style.bottom = r.bottom + 'px';
                 patchOverlay.style.left = r.left + 'px';
                 patchOverlay.style.width = r.width + 'px';
-                patchOverlay.style.height = r.height + 'px';
+                patchOverlay.style.height = 'auto';
                 patchOverlay.style.display = 'flex';
             }
         };
@@ -1541,10 +1550,12 @@
         // 맵최적화/다중모니터링/레이아웃색상/날씨&기타/패치노트 팝업을 '일일 업무 카드(taskCard) 바닥' 기준으로
         // 스트림덱 타일(bottomRow) 위쪽 틈에만 앉히기 위한 영역 계산 — 스트림덱 버튼을 절대 가리지 않음
         // (taskCard/bottomRow는 아래에서 선언되지만, 이 함수는 클릭 시점에만 호출되므로 그때는 이미 존재함)
+        // 맵최적화/다중모니터링/레이아웃색상/날씨&기타/패치노트 팝업을 '스트림덱 타일(bottomRow) 바로 위'에
+        // 딱 붙여 앉히기 위한 좌표 계산. top/height로 영역을 제한하는 대신, CSS bottom으로 타일 상단에
+        // 고정하고 내용 높이만큼 위로 자라도록 해서 절대 타일을 가리지 않고 잘리지도 않게 함.
         function getAboveTilesRect() {
-            const taskRect = taskCard.getBoundingClientRect();
             const t = bottomRow.getBoundingClientRect();
-            return { top: taskRect.bottom, left: t.left, width: t.width, height: Math.max(80, t.top - taskRect.bottom) };
+            return { left: t.left, width: t.width, bottom: window.innerHeight - t.top };
         }
         window.getAboveTilesRect = getAboveTilesRect; // 다른 스코프(레이아웃색상/날씨&기타 오버레이 등)에서도 호출 가능하도록 노출
 
@@ -1590,12 +1601,19 @@
         mapInfoBtn.onclick = (e) => {
             e.stopPropagation();
             let mapInfoOverlay = document.getElementById('neubie-map-info-overlay');
+
+            // 이미 열려있으면(같은 버튼 재클릭) 닫기만 하고 종료 — X버튼 없이도 닫는 방법
+            if (mapInfoOverlay && mapInfoOverlay.style.display === 'flex') {
+                mapInfoOverlay.style.display = 'none';
+                return;
+            }
+
             if (!mapInfoOverlay) {
                 mapInfoOverlay = document.createElement('div');
                 mapInfoOverlay.id = 'neubie-map-info-overlay';
                 mapInfoOverlay.style.cssText = `
-                    position:fixed; inset:0; background:transparent; pointer-events:none;
-                    z-index:2147483646; display:flex; align-items:center; justify-content:center;
+                    position:fixed; background:transparent; pointer-events:none;
+                    z-index:2147483646; display:flex; align-items:flex-end; justify-content:center;
                     font-family:Pretendard, sans-serif;
                 `;
                 const mapInfoBox = document.createElement('div');
@@ -1632,17 +1650,19 @@
                 mapInfoBox.appendChild(mapInfoContent);
                 mapInfoOverlay.appendChild(mapInfoBox);
                 const r0 = getAboveTilesRect();
-                mapInfoOverlay.style.top = r0.top + 'px';
+                mapInfoOverlay.style.top = 'auto';
+                mapInfoOverlay.style.bottom = r0.bottom + 'px';
                 mapInfoOverlay.style.left = r0.left + 'px';
                 mapInfoOverlay.style.width = r0.width + 'px';
-                mapInfoOverlay.style.height = r0.height + 'px';
+                mapInfoOverlay.style.height = 'auto';
                 document.body.appendChild(mapInfoOverlay);
             } else {
                 const r = getAboveTilesRect();
-                mapInfoOverlay.style.top = r.top + 'px';
+                mapInfoOverlay.style.top = 'auto';
+                mapInfoOverlay.style.bottom = r.bottom + 'px';
                 mapInfoOverlay.style.left = r.left + 'px';
                 mapInfoOverlay.style.width = r.width + 'px';
-                mapInfoOverlay.style.height = r.height + 'px';
+                mapInfoOverlay.style.height = 'auto';
                 mapInfoOverlay.style.display = 'flex';
             }
         };
@@ -1705,13 +1725,20 @@
         queueInfoBtn.onmouseleave = () => { queueInfoBtn.style.borderColor='#aaa'; queueInfoBtn.style.color='#aaa'; };
         queueInfoBtn.onclick = () => {
             let queueInfoOverlay = document.getElementById('neubie-queue-info-overlay');
+
+            // 이미 열려있으면(같은 버튼 재클릭) 닫기만 하고 종료 — X버튼 없이도 닫는 방법
+            if (queueInfoOverlay && queueInfoOverlay.style.display === 'flex') {
+                queueInfoOverlay.style.display = 'none';
+                return;
+            }
+
             if (!queueInfoOverlay) {
                 queueInfoOverlay = document.createElement('div');
                 queueInfoOverlay.id = 'neubie-queue-info-overlay';
                 queueInfoOverlay.style.cssText = `
-                    position:fixed; inset:0; background:transparent; pointer-events:none;
-                    z-index:2147483646; display:flex; align-items:center; justify-content:center;
-                    font-family:Pretendard, sans-serif; border-radius:20px; overflow:hidden;
+                    position:fixed; background:transparent; pointer-events:none;
+                    z-index:2147483646; display:flex; align-items:flex-end; justify-content:center;
+                    font-family:Pretendard, sans-serif; border-radius:20px; overflow:visible;
                 `;
                 const queueInfoBox = document.createElement('div');
                 queueInfoBox.style.cssText = `
@@ -1752,17 +1779,19 @@
                 queueInfoOverlay.appendChild(queueInfoBox);
                 const r0 = getAboveTilesRect();
                 queueInfoOverlay.style.position = 'fixed';
-                queueInfoOverlay.style.top = r0.top + 'px';
+                queueInfoOverlay.style.top = 'auto';
+                queueInfoOverlay.style.bottom = r0.bottom + 'px';
                 queueInfoOverlay.style.left = r0.left + 'px';
                 queueInfoOverlay.style.width = r0.width + 'px';
-                queueInfoOverlay.style.height = r0.height + 'px';
+                queueInfoOverlay.style.height = 'auto';
                 document.body.appendChild(queueInfoOverlay);
             } else {
                 const r = getAboveTilesRect();
-                queueInfoOverlay.style.top = r.top + 'px';
+                queueInfoOverlay.style.top = 'auto';
+                queueInfoOverlay.style.bottom = r.bottom + 'px';
                 queueInfoOverlay.style.left = r.left + 'px';
                 queueInfoOverlay.style.width = r.width + 'px';
-                queueInfoOverlay.style.height = r.height + 'px';
+                queueInfoOverlay.style.height = 'auto';
                 queueInfoOverlay.style.display = 'flex';
             }
         };
@@ -4482,19 +4511,20 @@
                     overlay.id = 'neubie-drivetheme-overlay';
                     overlay.style.cssText = `
                         position:fixed; z-index:2147483646;
-                        display:flex; align-items:flex-start; justify-content:center; padding-top:8px; box-sizing:border-box;
+                        display:flex; align-items:flex-end; justify-content:center; box-sizing:border-box;
                         font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif; pointer-events:none;
                     `;
                     document.body.appendChild(overlay);
                 }
                 if (window.getAboveTilesRect) {
                     const r = window.getAboveTilesRect();
-                    overlay.style.top = r.top + 'px';
+                    overlay.style.top = 'auto';
+                    overlay.style.bottom = r.bottom + 'px';
                     overlay.style.left = r.left + 'px';
                     overlay.style.width = r.width + 'px';
-                    overlay.style.height = r.height + 'px';
+                    overlay.style.height = 'auto';
                 } else {
-                    overlay.style.top = '0'; overlay.style.left = '0';
+                    overlay.style.top = '0'; overlay.style.bottom = 'auto'; overlay.style.left = '0';
                     overlay.style.width = '100%'; overlay.style.height = '100%';
                 }
                 overlay.style.display = 'flex';
@@ -4562,19 +4592,20 @@
                     overlay.id = 'neubie-moretools-overlay';
                     overlay.style.cssText = `
                         position:fixed; z-index:2147483646;
-                        display:flex; align-items:flex-start; justify-content:center; padding-top:8px; box-sizing:border-box;
+                        display:flex; align-items:flex-end; justify-content:center; box-sizing:border-box;
                         font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif; pointer-events:none;
                     `;
                     document.body.appendChild(overlay);
                 }
                 if (window.getAboveTilesRect) {
                     const r = window.getAboveTilesRect();
-                    overlay.style.top = r.top + 'px';
+                    overlay.style.top = 'auto';
+                    overlay.style.bottom = r.bottom + 'px';
                     overlay.style.left = r.left + 'px';
                     overlay.style.width = r.width + 'px';
-                    overlay.style.height = r.height + 'px';
+                    overlay.style.height = 'auto';
                 } else {
-                    overlay.style.top = '0'; overlay.style.left = '0';
+                    overlay.style.top = '0'; overlay.style.bottom = 'auto'; overlay.style.left = '0';
                     overlay.style.width = '100%'; overlay.style.height = '100%';
                 }
                 overlay.style.display = 'flex';
