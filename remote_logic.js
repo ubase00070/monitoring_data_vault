@@ -4,7 +4,7 @@
     if (window.neubieEngineLoaded) return;
     window.neubieEngineLoaded = true;
 
-	// ── Paperlogy 웹폰트 (신규 추가) ──
+	// ── Paperlogy 웹폰트 ──
     (function loadPaperlogyFont() {
         if (document.getElementById('neubie-paperlogy-font')) return;
         const link = document.createElement('link');
@@ -1040,7 +1040,12 @@
         const T = getNbTheme();
         const card = document.createElement('div');
         card.id = 'namingSection';
-        card.style.cssText = `background:${T.card}; padding:10px 15px; border-radius:15px; border:1px solid ${T.border}; margin-top:5px;`;
+        card.style.cssText = `
+            padding:10px 15px; border-radius:15px; margin-top:5px; border:1px solid transparent;
+            background-image: linear-gradient(${T.card}, ${T.card}), linear-gradient(135deg, #6366f1, #ec4899);
+            background-origin: border-box; background-clip: padding-box, border-box;
+            box-shadow:0 0 5px rgba(150,120,255,0.25);
+        `;
 
         const history = JSON.parse(localStorage.getItem('neubie_robot_history') || '[]');
         let dropdownOptions = history.map(h => {
@@ -1179,7 +1184,7 @@
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
 		// 문자열을 넣으면 패치노트에 빨간 '`' 뱃지가 점멸하며 뜸.
 		// 빈 문자열('')로 비우면 뱃지가 사라짐.
-		const PATCH_NOTE_NEW_CONTENT = '';
+		const PATCH_NOTE_NEW_CONTENT = '스트림덱';
 		
         const patchBtn = document.createElement('button');
         patchBtn.textContent = '패치노트';
@@ -1244,8 +1249,9 @@
                 const patchItems = [
                     {
                         version: 'v1.4',
-                        date: '2026-07-18',
+                        date: '2026-07-21',
                         items: [
+							'스트림덱 스타일 적용(길게 누르면 ON/OFF됨)',
 							'임무 종료된 리센츠/엘스/한성대/진천 페이지 이탈 5초 후 자동 사이드',
                             '게임패드 커스텀 바인딩 설명 페이지',
 							'다중 자동 교대시작 최대 12대까지',
@@ -1323,17 +1329,48 @@
         titleWrap.appendChild(title);
         titleWrap.appendChild(patchBtn);
         
+        // 게시판 / 게임패드는 더 이상 헤더 탭이 아니라 아래 스트림덱 그리드의 타일로 들어감
         const boardBtn = document.createElement('button');
-        boardBtn.textContent = '게시판';
-        boardBtn.style.cssText = `background:transparent; border:1px solid #475569; color:${T.text}; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:14px; margin-left:4px;`;
+        boardBtn.style.cssText = `
+            position:relative; overflow:hidden; aspect-ratio:1.6/1; border-radius:10px; cursor:pointer;
+            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+            padding:4px; box-sizing:border-box; background:${T.card}; border:1px solid #60a5fa;
+            box-shadow:0 0 6px rgba(96,165,250,0.35), inset 0 0 8px rgba(96,165,250,0.1);
+            transition:box-shadow 0.15s;
+        `;
+        boardBtn.innerHTML = `
+            <span style="font-size:26px; margin-top:6px;">📌</span>
+            <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">게시판</span>
+        `;
         boardBtn.onclick = () => openBoardOverlay();
-        titleWrap.appendChild(boardBtn);
+        attachStaticNeonHover(boardBtn, '96,165,250');
 
         const gamepadBtn = document.createElement('button');
-        gamepadBtn.textContent = '🎮 게임패드';
-        gamepadBtn.style.cssText = `background:transparent; border:1px solid #4f8ef7; color:#4f8ef7; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:14px; margin-left:4px;`;
-        gamepadBtn.onclick = () => openGamepadGuideOverlay();
-        titleWrap.appendChild(gamepadBtn);
+        gamepadBtn.style.cssText = `
+            position:relative; overflow:hidden; aspect-ratio:1.6/1; border-radius:10px; cursor:pointer;
+            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+            padding:4px; box-sizing:border-box;
+        `;
+        gamepadBtn.innerHTML = `<span style="position:relative; z-index:1; font-size:26px;">🎮</span>
+            <span style="position:relative; z-index:1; font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">게임패드</span>`;
+        const gamepadLabel = document.createElement('span');
+        gamepadLabel.style.cssText = 'position:relative; z-index:1; font-size:12px; font-weight:bold; letter-spacing:0.5px;';
+        gamepadLabel.textContent = isDpadBindingOff() ? 'OFF' : 'ON';
+        gamepadBtn.appendChild(gamepadLabel);
+        paintToggleTile(gamepadBtn, !isDpadBindingOff(), T);
+        attachNeonHover(gamepadBtn, () => !isDpadBindingOff());
+        // 게임패드 가이드 오버레이(#gp-toggle)에서 토글해도 이 타일이 즉시 반영되도록 전역 sync 함수 노출
+        window.syncGamepadTile = () => {
+            gamepadLabel.textContent = isDpadBindingOff() ? 'OFF' : 'ON';
+            paintToggleTile(gamepadBtn, !isDpadBindingOff(), T);
+        };
+        attachHoldToggle(gamepadBtn, {
+            onShortClick: () => openGamepadGuideOverlay(),
+            onHold: () => {
+                localStorage.setItem('neubie_dpad_binding', isDpadBindingOff() ? 'on' : 'off');
+                window.syncGamepadTile();
+            },
+        });
 
         headerContainer.appendChild(titleWrap);
         headerContainer.appendChild(nameArea);
@@ -1390,7 +1427,12 @@
 
         // 1. 업무 알림 설정 (태스크 리스트 인라인 삽입)
         const taskCard = document.createElement('div');
-        taskCard.style.cssText = `background:${T.card}; padding:15px; border-radius:15px; border:1px solid ${T.border};`;
+        taskCard.style.cssText = `
+            padding:15px; border-radius:15px; border:1px solid transparent;
+            background-image: linear-gradient(${T.card}, ${T.card}), linear-gradient(135deg, #6366f1, #ec4899);
+            background-origin: border-box; background-clip: padding-box, border-box;
+            box-shadow:0 0 5px rgba(150,120,255,0.25);
+        `;
         const storedName = localStorage.getItem('neubie_user_name') || "사용자";
         const currentInt = localStorage.getItem('neubie_remind_int') || '0';
         taskCard.innerHTML = `
@@ -1411,22 +1453,124 @@
         taskCard.appendChild(taskInline);
         list.appendChild(taskCard);
 
-        // 맵 최적화 카드
-        const mapCard = document.createElement('div');
-        mapCard.style.cssText = `background:${T.card}; padding:8px 12px; border-radius:15px; border:1px solid ${T.border}; display:flex; justify-content:space-between; align-items:center;`;
-        mapCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">🗺️ 요기요 페이지 최적화</span>`;
+		// 스트림덱 스타일 홀드 토글: 짧게 클릭 = 기존 설명 동작, 2초 홀드(좌→우 채움) = ON/OFF 토글
+        function attachHoldToggle(btn, { onHold, onShortClick }) {
+            const HOLD_MS = 1500;
+            const SHORT_CLICK_MS = 300; // 이 시간 안에 뗐을 때만 '짧은 클릭'으로 인정
+            btn.style.position = 'relative';
+            btn.style.overflow = 'hidden';
 
-        // 맵 최적화 (체크박스, 멘트 없이 이름만)
+            const fill = document.createElement('div');
+            fill.style.cssText = `
+                position:absolute; top:0; left:0; height:100%; width:0%;
+                background:rgba(255,255,255,0.28); pointer-events:none; z-index:0;
+            `;
+            btn.insertBefore(fill, btn.firstChild);
+
+            let holdTimer = null, fired = false, pressStart = 0;
+
+            const startHold = (e) => {
+                e.preventDefault();
+                fired = false;
+                pressStart = Date.now();
+                fill.style.transition = 'none';
+                fill.style.width = '0%';
+                requestAnimationFrame(() => {
+                    fill.style.transition = `width ${HOLD_MS}ms linear`;
+                    fill.style.width = '100%'; // 좌 → 우로 채워짐
+                });
+                holdTimer = setTimeout(() => {
+                    fired = true;
+                    onHold();
+                    fill.style.transition = 'none';
+                    fill.style.width = '0%';
+                }, HOLD_MS);
+            };
+            const cancelHold = () => {
+                clearTimeout(holdTimer);
+                fill.style.transition = 'width 0.15s ease-out';
+                fill.style.width = '0%';
+            };
+
+            btn.addEventListener('mousedown', startHold);
+            btn.addEventListener('mouseup', () => {
+                const wasFired = fired;
+                const heldMs = Date.now() - pressStart;
+                cancelHold();
+                // 완주(wasFired)도 아니고, 빠른 탭(SHORT_CLICK_MS 이내)도 아니면 — 홀드하다 만 것이므로 아무 것도 하지 않음
+                if (!wasFired && heldMs < SHORT_CLICK_MS) onShortClick?.();
+            });
+            btn.addEventListener('mouseleave', cancelHold);
+        }
+
+        // ON/OFF 상태에 맞춰 버튼 색(다크/라이트 모두 대응) 칠하기
+        function paintToggleTile(btn, isOn, T) {
+            const isDark = T.bg === '#111111';
+            btn.style.background = isOn
+                ? (isDark ? 'rgba(34,197,94,0.18)' : 'rgba(34,197,94,0.15)')
+                : (isDark ? '#3a3a3a' : '#e2e2e2');
+            btn.style.border = `1px solid ${isOn ? '#22c55e' : (isDark ? '#666' : '#999')}`;
+            btn.style.color = isOn ? '#22c55e' : (isDark ? '#bbb' : '#555');
+            btn.style.borderRadius = '6px';
+            btn.style.boxShadow = isOn
+                ? '0 0 6px rgba(34,197,94,0.4), inset 0 0 8px rgba(34,197,94,0.12)'
+                : '0 0 4px rgba(255,255,255,0.12)';
+            btn.style.transition = 'box-shadow 0.15s, border-color 0.15s';
+        }
+
+        // 호버 시 뚜렷한 네온 효과 (ON=초록 글로우, OFF=중립 글로우) — 평상시 은은한 글로우는 유지, 호버 시에만 확 밝아짐
+        function attachNeonHover(btn, getIsOn) {
+            const baseShadow = (on) => on
+                ? '0 0 6px rgba(34,197,94,0.4), inset 0 0 8px rgba(34,197,94,0.12)'
+                : '0 0 4px rgba(255,255,255,0.12)';
+            const hoverShadow = (on) => on
+                ? '0 0 18px 2px rgba(34,197,94,0.95), 0 0 5px rgba(34,197,94,0.8), inset 0 0 10px rgba(34,197,94,0.3)'
+                : '0 0 16px 2px rgba(226,232,240,0.8), inset 0 0 8px rgba(226,232,240,0.2)';
+            btn.onmouseenter = () => { btn.style.boxShadow = hoverShadow(getIsOn()); };
+            btn.onmouseleave = () => { btn.style.boxShadow = baseShadow(getIsOn()); };
+        }
+
+        // ON/OFF가 없는 일반 타일용 — 고정 색상 네온 호버 (rgb 트리플렛만 전달, 예: '52,209,88')
+        function attachStaticNeonHover(el, rgb) {
+            const base = `0 0 6px rgba(${rgb},0.35), inset 0 0 8px rgba(${rgb},0.1)`;
+            const hover = `0 0 18px 2px rgba(${rgb},0.95), 0 0 5px rgba(${rgb},0.8), inset 0 0 10px rgba(${rgb},0.3)`;
+            el.onmouseenter = () => { el.style.boxShadow = hover; };
+            el.onmouseleave = () => { el.style.boxShadow = base; };
+        }
+
+        // 요기요/다중모니터링/게임패드 설명 팝업을 스트림덱 타일(bottomRow) '위쪽'에 앉히기 위한 영역 계산
+        // (bottomRow는 아래에서 선언되지만, 이 함수는 클릭 시점에만 호출되므로 그때는 이미 존재함)
+        function getAboveTilesRect() {
+            const d = dashboard.getBoundingClientRect();
+            const t = bottomRow.getBoundingClientRect();
+            return { top: d.top, left: d.left, width: d.width, height: Math.max(120, t.top - d.top) };
+        }
+
+        // 요기요 최적화 — 스트림덱 타일 (아이콘 + 라벨 + ON/OFF)
         const mapToggle = document.createElement('button');
-        mapToggle.textContent = state.isMapOpt ? 'ON' : 'OFF';
-        mapToggle.style.cssText = `background:${state.isMapOpt ? '#2563eb' : '#444'}; color:white; border:none; padding:4px 0; border-radius:6px; cursor:pointer; font-weight:bold; font-size:13px; width:44px; text-align:center;`;
-        mapToggle.onclick = () => {
-            state.isMapOpt = !state.isMapOpt;
-            localStorage.setItem('neubie_opt_map', state.isMapOpt);
-            mapToggle.textContent = state.isMapOpt ? 'ON' : 'OFF';
-            mapToggle.style.background = state.isMapOpt ? '#2563eb' : '#444';
-            injectMapStyle();
-        };
+        mapToggle.style.cssText = `
+            position:relative; overflow:hidden; aspect-ratio:1.6/1; border-radius:10px; cursor:pointer;
+            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+            padding:4px; box-sizing:border-box;
+        `;
+        mapToggle.innerHTML = `<span style="position:relative; z-index:1; font-size:26px;">🗺️</span>
+            <span style="position:relative; z-index:1; font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">요기요 최적화</span>`;
+        const mapLabel = document.createElement('span');
+        mapLabel.style.cssText = 'position:relative; z-index:1; font-size:12px; font-weight:bold; letter-spacing:0.5px;';
+        mapLabel.textContent = state.isMapOpt ? 'ON' : 'OFF';
+        mapToggle.appendChild(mapLabel);
+        paintToggleTile(mapToggle, state.isMapOpt, T);
+        attachNeonHover(mapToggle, () => state.isMapOpt);
+        attachHoldToggle(mapToggle, {
+            onShortClick: () => mapInfoBtn.click(), // 기존 설명 팝업 그대로 재사용
+            onHold: () => {
+                state.isMapOpt = !state.isMapOpt;
+                localStorage.setItem('neubie_opt_map', state.isMapOpt);
+                mapLabel.textContent = state.isMapOpt ? 'ON' : 'OFF';
+                paintToggleTile(mapToggle, state.isMapOpt, T);
+                injectMapStyle();
+            },
+        });
 
         // ⓘ 요기요 페이지 최적화 기능 설명 버튼
         const mapInfoBtn = document.createElement('button');
@@ -1485,14 +1629,14 @@
                 mapInfoBox.appendChild(mapInfoTitle);
                 mapInfoBox.appendChild(mapInfoContent);
                 mapInfoOverlay.appendChild(mapInfoBox);
-                const r0 = dashboard.getBoundingClientRect();
+                const r0 = getAboveTilesRect();
                 mapInfoOverlay.style.top = r0.top + 'px';
                 mapInfoOverlay.style.left = r0.left + 'px';
                 mapInfoOverlay.style.width = r0.width + 'px';
                 mapInfoOverlay.style.height = r0.height + 'px';
                 document.body.appendChild(mapInfoOverlay);
             } else {
-                const r = dashboard.getBoundingClientRect();
+                const r = getAboveTilesRect();
                 mapInfoOverlay.style.top = r.top + 'px';
                 mapInfoOverlay.style.left = r.left + 'px';
                 mapInfoOverlay.style.width = r.width + 'px';
@@ -1500,28 +1644,38 @@
                 mapInfoOverlay.style.display = 'flex';
             }
         };
-        mapCard.appendChild(mapInfoBtn);
-        mapCard.appendChild(mapToggle);
 
-        const queueCard = document.createElement('div');
-        queueCard.style.cssText = `background:${T.card}; padding:8px 12px; border-radius:15px; border:1px solid ${T.border}; display:flex; justify-content:space-between; align-items:center;`;
-        queueCard.innerHTML = `<span style="font-weight:bold; font-size:15px;">🖥️ 다중 모니터링 기능</span>`;
+		// 다중 모니터링 기능 — 스트림덱 타일
         const queueEnabled = localStorage.getItem('neubie_handover_enabled') === 'true';
         const queueToggle = document.createElement('button');
-        queueToggle.textContent = queueEnabled ? 'ON' : 'OFF';
-        queueToggle.style.cssText = `background:${queueEnabled ? '#2563eb' : '#444'}; color:white; border:none; padding:4px 0; border-radius:6px; cursor:pointer; font-weight:bold; font-size:13px; width:44px; text-align:center;`;
-        queueToggle.onclick = () => {
-            const next = queueToggle.textContent === 'OFF';
-            localStorage.setItem('neubie_handover_enabled', next);
-            queueToggle.textContent = next ? 'ON' : 'OFF';
-            queueToggle.style.background = next ? '#2563eb' : '#444';
-            const bar = document.getElementById('neubie-brightness-bar');
-            if (!next && bar) {
-                bar.remove();
-            } else if (next && !bar && isBrightnessPage()) {
-                injectMasterBrightness();
-            }
-        };
+        queueToggle.style.cssText = `
+            position:relative; overflow:hidden; aspect-ratio:1.6/1; border-radius:10px; cursor:pointer;
+            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+            padding:4px; box-sizing:border-box;
+        `;
+        queueToggle.innerHTML = `<span style="position:relative; z-index:1; font-size:26px;">🖥️</span>
+            <span style="position:relative; z-index:1; font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">다중 모니터링 기능</span>`;
+        const queueLabel = document.createElement('span');
+        queueLabel.style.cssText = 'position:relative; z-index:1; font-size:12px; font-weight:bold; letter-spacing:0.5px;';
+        queueLabel.textContent = queueEnabled ? 'ON' : 'OFF';
+        queueToggle.appendChild(queueLabel);
+        paintToggleTile(queueToggle, queueEnabled, T);
+        attachNeonHover(queueToggle, () => queueLabel.textContent === 'ON');
+        attachHoldToggle(queueToggle, {
+            onShortClick: () => queueInfoBtn.click(), // 기존 설명 팝업 그대로 재사용
+            onHold: () => {
+                const next = queueLabel.textContent === 'OFF';
+                localStorage.setItem('neubie_handover_enabled', next);
+                queueLabel.textContent = next ? 'ON' : 'OFF';
+                paintToggleTile(queueToggle, next, T);
+                const bar = document.getElementById('neubie-brightness-bar');
+                if (!next && bar) {
+                    bar.remove();
+                } else if (next && !bar && isBrightnessPage()) {
+                    injectMasterBrightness();
+                }
+            },
+        });
 
         if (!document.getElementById('neubie-blink-style')) {
             const blinkStyle = document.createElement('style');
@@ -1594,7 +1748,7 @@
                 queueInfoBox.appendChild(queueInfoTitle);
                 queueInfoBox.appendChild(queueInfoContent);
                 queueInfoOverlay.appendChild(queueInfoBox);
-                const r0 = dashboard.getBoundingClientRect();
+                const r0 = getAboveTilesRect();
                 queueInfoOverlay.style.position = 'fixed';
                 queueInfoOverlay.style.top = r0.top + 'px';
                 queueInfoOverlay.style.left = r0.left + 'px';
@@ -1602,7 +1756,7 @@
                 queueInfoOverlay.style.height = r0.height + 'px';
                 document.body.appendChild(queueInfoOverlay);
             } else {
-                const r = dashboard.getBoundingClientRect();
+                const r = getAboveTilesRect();
                 queueInfoOverlay.style.top = r.top + 'px';
                 queueInfoOverlay.style.left = r.left + 'px';
                 queueInfoOverlay.style.width = r.width + 'px';
@@ -1610,18 +1764,24 @@
                 queueInfoOverlay.style.display = 'flex';
             }
         };
-        queueCard.appendChild(queueInfoBtn);
-        queueCard.appendChild(queueToggle);
 
-        // 반반 2열
+        // 스트림덱 스타일 4열 타일 그리드 (8개)
         const bottomRow = document.createElement('div');
-        bottomRow.style.cssText = "display:grid; grid-template-columns:1fr 1fr; gap:8px;";
+        bottomRow.id = 'neubie-streamdeck-grid';
+        bottomRow.style.cssText = "display:grid; grid-template-columns:repeat(4, 1fr); gap:8px;";
 
-        // 스케줄 비교 카드
         const scheduleCard = document.createElement('div');
-        scheduleCard.style.cssText = `background:${T.card}; padding:8px 12px; border-radius:15px; border:1px solid ${T.border}; cursor:pointer; display:flex; align-items:center;`;
-        scheduleCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">📅 스케줄표 + 좌석 배치도</div>`;
+        scheduleCard.style.cssText = `
+            position:relative; aspect-ratio:1.6/1; border-radius:10px; cursor:pointer;
+            background:${T.card}; border:1px solid #ff4fa3;
+            box-shadow:0 0 6px rgba(255,79,163,0.35), inset 0 0 8px rgba(255,79,163,0.1);
+            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+            padding:4px; box-sizing:border-box; transition:box-shadow 0.15s;
+        `;
+        scheduleCard.innerHTML = `<span style="font-size:26px;">📅</span>
+            <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">스케줄표 & 좌석도</span>`;
         window._neubieScheduleCard = scheduleCard;
+        attachStaticNeonHover(scheduleCard, '255,79,163');
         scheduleCard.onclick = () => {
             const isActive = scheduleCard.style.outline !== 'none' && scheduleCard.style.outline !== '';
             scheduleCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
@@ -1629,30 +1789,41 @@
         };
 
         const rouletteCard = document.createElement('div');
-        rouletteCard.style.cssText = `background:${T.card}; padding:8px 12px; border-radius:15px; border:1px solid ${T.border}; cursor:pointer; display:flex; align-items:center;`;
-        rouletteCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">🌤️ 날씨 & 룰렛 & 기타</div>`; 
+        rouletteCard.style.cssText = `
+            position:relative; aspect-ratio:1.6/1; border-radius:10px; cursor:pointer;
+            background:${T.card}; border:1px solid #2ce6d9;
+            box-shadow:0 0 6px rgba(44,230,217,0.35), inset 0 0 8px rgba(44,230,217,0.1);
+            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+            padding:4px; box-sizing:border-box; transition:box-shadow 0.15s;
+        `;
+        rouletteCard.innerHTML = `<span style="font-size:26px;">🌤️</span>
+            <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">날씨 & 기타</span>`;
         window._neubieRouletteCard = rouletteCard;
+        attachStaticNeonHover(rouletteCard, '44,230,217');
         rouletteCard.onclick = () => {
             const isActive = rouletteCard.style.outline !== 'none' && rouletteCard.style.outline !== '';
             rouletteCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
             if (!isActive) {
-                openMoreToolsOverlay();   // ← openRouletteOverlay() 대신 새 메뉴 오버레이 호출
+                openMoreToolsOverlay();
             } else {
                 const moreOverlay = document.getElementById('neubie-moretools-overlay');
                 if (moreOverlay) moreOverlay.style.display = 'none';
             }
         };
 
-        // 배터리 현황
         const isBatteryOpen = batteryPopup.style.display === 'block';
         const batteryCard = document.createElement('div');
-        batteryCard.style.cssText = `background:${T.card}; padding:8px 12px; border-radius:15px; border:1px solid ${T.border}; display:flex; justify-content:space-between; align-items:center;`;
-        batteryCard.innerHTML = `
-            <div style="flex:1;">
-                <div style="font-weight:bold; font-size:15px; margin-bottom:3px;">🔋 실시간 성남 배터리 현황</div>
-            </div>`;
-        batteryCard.style.cursor = 'pointer';
+        batteryCard.style.cssText = `
+            position:relative; aspect-ratio:1.6/1; border-radius:10px; cursor:pointer;
+            background:${T.card}; border:1px solid #facc15;
+            box-shadow:0 0 6px rgba(250,204,21,0.35), inset 0 0 8px rgba(250,204,21,0.1);
+            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+            padding:4px; box-sizing:border-box; transition:box-shadow 0.15s;
+        `;
+        batteryCard.innerHTML = `<span style="font-size:26px;">🔋</span>
+            <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">성남 배터리 현황</span>`;
         window._neubieBatteryCard = batteryCard;
+        attachStaticNeonHover(batteryCard, '250,204,21');
         batteryCard.onclick = () => {
             const isActive = batteryCard.style.outline !== 'none' && batteryCard.style.outline !== '';
             batteryCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
@@ -1663,26 +1834,39 @@
         };
 
         const weatherCard = document.createElement('div');
-        weatherCard.style.cssText = `background:${T.card}; padding:8px 12px; border-radius:15px; border:1px solid ${T.border}; cursor:pointer; display:flex; align-items:center;`;
-        weatherCard.innerHTML = `<div style="font-weight:bold; font-size:15px;">🎨 레이아웃 색상</div>`; 
+        weatherCard.style.cssText = `
+            position:relative; aspect-ratio:1.6/1; border-radius:10px; cursor:pointer;
+            background:${T.card}; border:1px solid #9d5cff;
+            box-shadow:0 0 6px rgba(157,92,255,0.35), inset 0 0 8px rgba(157,92,255,0.1);
+            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+            padding:4px; box-sizing:border-box; transition:box-shadow 0.15s;
+        `;
+        weatherCard.innerHTML = `<span style="font-size:26px;">🎨</span>
+            <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">레이아웃 색상</span>`;
         window._neubieWeatherCard = weatherCard;
+        attachStaticNeonHover(weatherCard, '157,92,255');
         weatherCard.onclick = () => {
             const isActive = weatherCard.style.outline !== 'none' && weatherCard.style.outline !== '';
             weatherCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
             if (!isActive) {
-                openDriveThemeOverlay();  
+                openDriveThemeOverlay();
             } else {
                 const dtOverlay = document.getElementById('neubie-drivetheme-overlay');
                 if (dtOverlay) dtOverlay.style.display = 'none';
             }
         };
 
-        bottomRow.appendChild(mapCard);      // 지도 최적화
+        // 1행: 요기요 최적화 - 다중 모니터링 - 게임패드 - 성남 배터리
+        bottomRow.appendChild(mapToggle);    // 요기요 최적화 (ON/OFF)
+        bottomRow.appendChild(queueToggle);  // 다중 모니터링 (ON/OFF)
+        bottomRow.appendChild(gamepadBtn);   // 게임패드 (ON/OFF)
         bottomRow.appendChild(batteryCard);  // 성남 배터리
-        bottomRow.appendChild(queueCard);    // 다중 도우미
-        bottomRow.appendChild(scheduleCard); // 스케줄표
-        bottomRow.appendChild(weatherCard); // 날씨
-        bottomRow.appendChild(rouletteCard);     // 최적화 팁
+
+        // 2행: 레이아웃 색상 - 게시판 - 날씨 & 기타 - 스케줄 좌석
+        bottomRow.appendChild(weatherCard);  // 레이아웃 색상
+        bottomRow.appendChild(boardBtn);     // 게시판
+        bottomRow.appendChild(rouletteCard); // 날씨 & 기타
+        bottomRow.appendChild(scheduleCard); // 스케줄 좌석
 
         list.appendChild(bottomRow);
 
@@ -4572,15 +4756,33 @@
                 const isOff = isDpadBindingOff();
                 let overlay = document.getElementById('neubie-gamepad-guide-overlay');
 
+                // 스트림덱 타일(bottomRow) 바로 위 영역에 앉히기 — 못 찾으면 전체 화면 중앙으로 폴백
+                const dashboardEl = document.getElementById('neubie-dashboard');
+                const tilesEl = document.getElementById('neubie-streamdeck-grid');
+                let posRect = null;
+                if (dashboardEl && tilesEl) {
+                    const d = dashboardEl.getBoundingClientRect();
+                    const t = tilesEl.getBoundingClientRect();
+                    posRect = { top: d.top, left: d.left, width: d.width, height: Math.max(120, t.top - d.top) };
+                }
+
                 if (!overlay) {
                     overlay = document.createElement('div');
                     overlay.id = 'neubie-gamepad-guide-overlay';
                     overlay.style.cssText = `
-                        position:fixed; inset:0; z-index:2147483646;
+                        position:fixed; z-index:2147483646;
                         display:flex; align-items:center; justify-content:center;
                         font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif; pointer-events:none;
                     `;
                     document.body.appendChild(overlay);
+                }
+                if (posRect) {
+                    overlay.style.top = posRect.top + 'px';
+                    overlay.style.left = posRect.left + 'px';
+                    overlay.style.width = posRect.width + 'px';
+                    overlay.style.height = posRect.height + 'px';
+                } else {
+                    overlay.style.inset = '0';
                 }
                 overlay.style.display = 'flex';
                 overlay.innerHTML = `
@@ -4603,6 +4805,7 @@
                     } else {
                         localStorage.setItem('neubie_dpad_binding', 'off');
                     }
+                    window.syncGamepadTile?.(); // Alt+Q 메인 레이아웃의 게임패드 타일 즉시 동기화
                     openGamepadGuideOverlay();
                 };
                 overlay.querySelector('#gp-close').onclick = () => { overlay.style.display = 'none'; };
@@ -5020,7 +5223,7 @@
     });
 
     // 화면 어디든 클릭했을 때 주소 확인
-    // NCC에서 메뉴를 클릭해 이동할 때 즉각 닫히게
+    // NCC에서 메뉴를 클릭해 이동 시 즉각 닫히게
     document.addEventListener('click', () => {
         setTimeout(() => {
             if (location.href !== lastUrl) {
