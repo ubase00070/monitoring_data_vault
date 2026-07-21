@@ -1332,14 +1332,14 @@
         // 게시판 / 게임패드는 더 이상 헤더 탭이 아니라 아래 스트림덱 그리드의 타일로 들어감
         const boardBtn = document.createElement('button');
         boardBtn.style.cssText = `
-            position:relative; overflow:hidden; aspect-ratio:1.6/1; border-radius:10px; cursor:pointer;
+            position:relative; overflow:hidden; aspect-ratio:1.8/1; border-radius:10px; cursor:pointer;
             display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
             padding:4px; box-sizing:border-box; background:${T.card}; border:1px solid #60a5fa;
             box-shadow:0 0 6px rgba(96,165,250,0.35), inset 0 0 8px rgba(96,165,250,0.1);
             transition:box-shadow 0.15s;
         `;
         boardBtn.innerHTML = `
-            <span style="font-size:22px; margin-top:6px;">📌</span>
+            <span style="font-size:18px; margin-top:6px;">📌</span>
             <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">게시판</span>
         `;
         boardBtn.onclick = () => openBoardOverlay();
@@ -1347,11 +1347,11 @@
 
         const gamepadBtn = document.createElement('button');
         gamepadBtn.style.cssText = `
-            position:relative; overflow:hidden; aspect-ratio:1.6/1; border-radius:10px; cursor:pointer;
+            position:relative; overflow:hidden; aspect-ratio:1.8/1; border-radius:10px; cursor:pointer;
             display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
             padding:4px; box-sizing:border-box;
         `;
-        gamepadBtn.innerHTML = `<span style="position:relative; z-index:1; font-size:22px;">🎮</span>
+        gamepadBtn.innerHTML = `<span style="position:relative; z-index:1; font-size:18px;">🎮</span>
             <span style="position:relative; z-index:1; font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">게임패드</span>`;
         const gamepadLabel = document.createElement('span');
         gamepadLabel.style.cssText = 'position:relative; z-index:1; font-size:12px; font-weight:bold; letter-spacing:0.5px;';
@@ -1549,11 +1549,11 @@
         // 요기요 최적화 — 스트림덱 타일 (아이콘 + 라벨 + ON/OFF)
         const mapToggle = document.createElement('button');
         mapToggle.style.cssText = `
-            position:relative; overflow:hidden; aspect-ratio:1.6/1; border-radius:10px; cursor:pointer;
+            position:relative; overflow:hidden; aspect-ratio:1.8/1; border-radius:10px; cursor:pointer;
             display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
             padding:4px; box-sizing:border-box;
         `;
-        mapToggle.innerHTML = `<span style="position:relative; z-index:1; font-size:22px;">🗺️</span>
+        mapToggle.innerHTML = `<span style="position:relative; z-index:1; font-size:18px;">🗺️</span>
             <span style="position:relative; z-index:1; font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">맵 최적화 기능</span>`;
         const mapLabel = document.createElement('span');
         mapLabel.style.cssText = 'position:relative; z-index:1; font-size:12px; font-weight:bold; letter-spacing:0.5px;';
@@ -1649,11 +1649,11 @@
         const queueEnabled = localStorage.getItem('neubie_handover_enabled') === 'true';
         const queueToggle = document.createElement('button');
         queueToggle.style.cssText = `
-            position:relative; overflow:hidden; aspect-ratio:1.6/1; border-radius:10px; cursor:pointer;
+            position:relative; overflow:hidden; aspect-ratio:1.8/1; border-radius:10px; cursor:pointer;
             display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
             padding:4px; box-sizing:border-box;
         `;
-        queueToggle.innerHTML = `<span style="position:relative; z-index:1; font-size:22px;">🖥️</span>
+        queueToggle.innerHTML = `<span style="position:relative; z-index:1; font-size:18px;">🖥️</span>
             <span style="position:relative; z-index:1; font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">다중 모니터링 기능</span>`;
         const queueLabel = document.createElement('span');
         queueLabel.style.cssText = 'position:relative; z-index:1; font-size:12px; font-weight:bold; letter-spacing:0.5px;';
@@ -1772,13 +1772,13 @@
 
         const scheduleCard = document.createElement('div');
         scheduleCard.style.cssText = `
-            position:relative; aspect-ratio:1.6/1; border-radius:10px; cursor:pointer;
+            position:relative; aspect-ratio:1.8/1; border-radius:10px; cursor:pointer;
             background:${T.card}; border:1px solid #ff4fa3;
             box-shadow:0 0 6px rgba(255,79,163,0.35), inset 0 0 8px rgba(255,79,163,0.1);
             display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
             padding:4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
-        scheduleCard.innerHTML = `<span style="font-size:22px;">📅</span>
+        scheduleCard.innerHTML = `<span style="font-size:18px;">📅</span>
             <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">스케줄표 & 좌석도</span>`;
         window._neubieScheduleCard = scheduleCard;
         attachStaticNeonHover(scheduleCard, '255,79,163');
@@ -1790,13 +1790,13 @@
 
         const rouletteCard = document.createElement('div');
         rouletteCard.style.cssText = `
-            position:relative; aspect-ratio:1.6/1; border-radius:10px; cursor:pointer;
+            position:relative; aspect-ratio:1.8/1; border-radius:10px; cursor:pointer;
             background:${T.card}; border:1px solid #2ce6d9;
             box-shadow:0 0 6px rgba(44,230,217,0.35), inset 0 0 8px rgba(44,230,217,0.1);
             display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
             padding:4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
-        rouletteCard.innerHTML = `<span style="font-size:22px;">🌤️</span>
+        rouletteCard.innerHTML = `<span style="font-size:18px;">🌤️</span>
             <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">날씨 & 기타</span>`;
         window._neubieRouletteCard = rouletteCard;
         attachStaticNeonHover(rouletteCard, '44,230,217');
@@ -1814,13 +1814,13 @@
         const isBatteryOpen = batteryPopup.style.display === 'block';
         const batteryCard = document.createElement('div');
         batteryCard.style.cssText = `
-            position:relative; aspect-ratio:1.6/1; border-radius:10px; cursor:pointer;
+            position:relative; aspect-ratio:1.8/1; border-radius:10px; cursor:pointer;
             background:${T.card}; border:1px solid #facc15;
             box-shadow:0 0 6px rgba(250,204,21,0.35), inset 0 0 8px rgba(250,204,21,0.1);
             display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
             padding:4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
-        batteryCard.innerHTML = `<span style="font-size:22px;">🔋</span>
+        batteryCard.innerHTML = `<span style="font-size:18px;">🔋</span>
             <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">성남 배터리 현황</span>`;
         window._neubieBatteryCard = batteryCard;
         attachStaticNeonHover(batteryCard, '250,204,21');
@@ -1835,13 +1835,13 @@
 
         const weatherCard = document.createElement('div');
         weatherCard.style.cssText = `
-            position:relative; aspect-ratio:1.6/1; border-radius:10px; cursor:pointer;
+            position:relative; aspect-ratio:1.8/1; border-radius:10px; cursor:pointer;
             background:${T.card}; border:1px solid #9d5cff;
             box-shadow:0 0 6px rgba(157,92,255,0.35), inset 0 0 8px rgba(157,92,255,0.1);
             display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
             padding:4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
-        weatherCard.innerHTML = `<span style="font-size:22px;">🎨</span>
+        weatherCard.innerHTML = `<span style="font-size:18px;">🎨</span>
             <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">레이아웃 색상</span>`;
         window._neubieWeatherCard = weatherCard;
         attachStaticNeonHover(weatherCard, '157,92,255');
