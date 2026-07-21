@@ -553,6 +553,7 @@
             targetEl.style.left = rect.left + 'px';
             targetEl.style.top = rect.top + 'px';
             targetEl.style.right = 'auto';
+            targetEl.style.bottom = 'auto';
 
             startX = e.clientX;
             startY = e.clientY;
