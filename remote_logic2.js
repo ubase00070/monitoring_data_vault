@@ -1327,15 +1327,17 @@
         const boardBtn = document.createElement('button');
         boardBtn.style.cssText = `
             position:relative; overflow:hidden; aspect-ratio:1; border-radius:10px; cursor:pointer;
-            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
-            padding:4px; box-sizing:border-box; background:${T.card}; border:1px solid ${T.border};
+            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+            padding:4px; box-sizing:border-box; background:${T.card}; border:1px solid #60a5fa;
+            box-shadow:0 0 6px rgba(96,165,250,0.35), inset 0 0 8px rgba(96,165,250,0.1);
+            transition:box-shadow 0.15s;
         `;
         boardBtn.innerHTML = `
-            <span style="font-size:16px;">📌</span>
-            <span style="font-size:9px; line-height:1.2; text-align:center; color:${T.text};">게시판</span>
+            <span style="font-size:22px;">📌</span>
+            <span style="font-size:12px; font-weight:500; line-height:1.2; text-align:center; color:${T.text};">게시판</span>
         `;
         boardBtn.onclick = () => openBoardOverlay();
-        attachStaticNeonHover(boardBtn, 'rgba(96,165,250,0.55)');
+        attachStaticNeonHover(boardBtn, 'rgba(96,165,250,0.7)');
 
         const gamepadBtn = document.createElement('button');
         gamepadBtn.style.cssText = `
@@ -1343,10 +1345,10 @@
             display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
             padding:4px; box-sizing:border-box;
         `;
-        gamepadBtn.innerHTML = `<span style="position:relative; z-index:1; font-size:16px;">🎮</span>
-            <span style="position:relative; z-index:1; font-size:9px; line-height:1.2; text-align:center;">게임패드</span>`;
+        gamepadBtn.innerHTML = `<span style="position:relative; z-index:1; font-size:22px;">🎮</span>
+            <span style="position:relative; z-index:1; font-size:12px; font-weight:500; line-height:1.2; text-align:center;">게임패드</span>`;
         const gamepadLabel = document.createElement('span');
-        gamepadLabel.style.cssText = 'position:relative; z-index:1; font-size:8px; font-weight:bold; letter-spacing:0.5px;';
+        gamepadLabel.style.cssText = 'position:relative; z-index:1; font-size:11px; font-weight:bold; letter-spacing:0.5px;';
         gamepadLabel.textContent = isDpadBindingOff() ? 'OFF' : 'ON';
         gamepadBtn.appendChild(gamepadLabel);
         paintToggleTile(gamepadBtn, !isDpadBindingOff(), T);
@@ -1491,6 +1493,9 @@
             btn.style.border = `1px solid ${isOn ? '#22c55e' : (isDark ? '#666' : '#999')}`;
             btn.style.color = isOn ? '#22c55e' : (isDark ? '#bbb' : '#555');
             btn.style.borderRadius = '6px';
+            btn.style.boxShadow = isOn
+                ? '0 0 6px rgba(34,197,94,0.4), inset 0 0 8px rgba(34,197,94,0.12)'
+                : '0 0 4px rgba(255,255,255,0.12)';
             btn.style.transition = 'box-shadow 0.15s, border-color 0.15s';
         }
 
@@ -1517,10 +1522,10 @@
             display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
             padding:4px; box-sizing:border-box;
         `;
-        mapToggle.innerHTML = `<span style="position:relative; z-index:1; font-size:16px;">🗺️</span>
-            <span style="position:relative; z-index:1; font-size:9px; line-height:1.2; text-align:center;">요기요<br>최적화</span>`;
+        mapToggle.innerHTML = `<span style="position:relative; z-index:1; font-size:22px;">🗺️</span>
+            <span style="position:relative; z-index:1; font-size:12px; font-weight:500; line-height:1.2; text-align:center;">요기요<br>최적화</span>`;
         const mapLabel = document.createElement('span');
-        mapLabel.style.cssText = 'position:relative; z-index:1; font-size:8px; font-weight:bold; letter-spacing:0.5px;';
+        mapLabel.style.cssText = 'position:relative; z-index:1; font-size:11px; font-weight:bold; letter-spacing:0.5px;';
         mapLabel.textContent = state.isMapOpt ? 'ON' : 'OFF';
         mapToggle.appendChild(mapLabel);
         paintToggleTile(mapToggle, state.isMapOpt, T);
@@ -1617,10 +1622,10 @@
             display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
             padding:4px; box-sizing:border-box;
         `;
-        queueToggle.innerHTML = `<span style="position:relative; z-index:1; font-size:16px;">🖥️</span>
-            <span style="position:relative; z-index:1; font-size:9px; line-height:1.2; text-align:center;">다중<br>모니터링</span>`;
+        queueToggle.innerHTML = `<span style="position:relative; z-index:1; font-size:22px;">🖥️</span>
+            <span style="position:relative; z-index:1; font-size:12px; font-weight:500; line-height:1.2; text-align:center;">다중<br>모니터링</span>`;
         const queueLabel = document.createElement('span');
-        queueLabel.style.cssText = 'position:relative; z-index:1; font-size:8px; font-weight:bold; letter-spacing:0.5px;';
+        queueLabel.style.cssText = 'position:relative; z-index:1; font-size:11px; font-weight:bold; letter-spacing:0.5px;';
         queueLabel.textContent = queueEnabled ? 'ON' : 'OFF';
         queueToggle.appendChild(queueLabel);
         paintToggleTile(queueToggle, queueEnabled, T);
@@ -1736,40 +1741,88 @@
         const scheduleCard = document.createElement('div');
         scheduleCard.style.cssText = `
             position:relative; aspect-ratio:1; border-radius:10px; cursor:pointer;
-            background:${T.card}; border:1px solid ${T.border};
-            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
-            padding:4px; box-sizing:border-box;
+            background:${T.card}; border:1px solid #ff4fa3;
+            box-shadow:0 0 6px rgba(255,79,163,0.35), inset 0 0 8px rgba(255,79,163,0.1);
+            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+            padding:4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
-        scheduleCard.innerHTML = `<span style="font-size:16px;">📅</span>
-            <span style="font-size:9px; line-height:1.2; text-align:center; color:${T.text};">스케줄<br>좌석</span>`;
+        scheduleCard.innerHTML = `<span style="font-size:22px;">📅</span>
+            <span style="font-size:12px; font-weight:500; line-height:1.2; text-align:center; color:${T.text};">스케줄<br>좌석</span>`;
         window._neubieScheduleCard = scheduleCard;
-        attachStaticNeonHover(scheduleCard, 'rgba(236,72,153,0.55)');
-        scheduleCard.onclick = () => { /* 기존과 완전히 동일 (openScheduleOverlay 등) */ };
+        attachStaticNeonHover(scheduleCard, 'rgba(255,79,163,0.7)');
+        scheduleCard.onclick = () => {
+            const isActive = scheduleCard.style.outline !== 'none' && scheduleCard.style.outline !== '';
+            scheduleCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
+            if (!isActive) openScheduleOverlay();
+        };
 
         const rouletteCard = document.createElement('div');
-        rouletteCard.style.cssText = ` /* 위와 동일한 타일 스타일 */ `;
-        rouletteCard.innerHTML = `<span style="font-size:16px;">🌤️</span>
-            <span style="font-size:9px; line-height:1.2; text-align:center; color:${T.text};">날씨<br>&기타</span>`;
+        rouletteCard.style.cssText = `
+            position:relative; aspect-ratio:1; border-radius:10px; cursor:pointer;
+            background:${T.card}; border:1px solid #2ce6d9;
+            box-shadow:0 0 6px rgba(44,230,217,0.35), inset 0 0 8px rgba(44,230,217,0.1);
+            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+            padding:4px; box-sizing:border-box; transition:box-shadow 0.15s;
+        `;
+        rouletteCard.innerHTML = `<span style="font-size:22px;">🌤️</span>
+            <span style="font-size:12px; font-weight:500; line-height:1.2; text-align:center; color:${T.text};">날씨<br>&기타</span>`;
         window._neubieRouletteCard = rouletteCard;
-        attachStaticNeonHover(rouletteCard, 'rgba(44,230,217,0.55)');
-        rouletteCard.onclick = () => { /* 기존과 완전히 동일 */ };
+        attachStaticNeonHover(rouletteCard, 'rgba(44,230,217,0.7)');
+        rouletteCard.onclick = () => {
+            const isActive = rouletteCard.style.outline !== 'none' && rouletteCard.style.outline !== '';
+            rouletteCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
+            if (!isActive) {
+                openMoreToolsOverlay();
+            } else {
+                const moreOverlay = document.getElementById('neubie-moretools-overlay');
+                if (moreOverlay) moreOverlay.style.display = 'none';
+            }
+        };
 
         const isBatteryOpen = batteryPopup.style.display === 'block';
         const batteryCard = document.createElement('div');
-        batteryCard.style.cssText = ` /* 타일 스타일 */ `;
-        batteryCard.innerHTML = `<span style="font-size:16px;">🔋</span>
-            <span style="font-size:9px; line-height:1.2; text-align:center; color:${T.text};">배터리<br>현황</span>`;
+        batteryCard.style.cssText = `
+            position:relative; aspect-ratio:1; border-radius:10px; cursor:pointer;
+            background:${T.card}; border:1px solid #34d158;
+            box-shadow:0 0 6px rgba(52,209,88,0.35), inset 0 0 8px rgba(52,209,88,0.1);
+            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+            padding:4px; box-sizing:border-box; transition:box-shadow 0.15s;
+        `;
+        batteryCard.innerHTML = `<span style="font-size:22px;">🔋</span>
+            <span style="font-size:12px; font-weight:500; line-height:1.2; text-align:center; color:${T.text};">배터리<br>현황</span>`;
         window._neubieBatteryCard = batteryCard;
-        attachStaticNeonHover(batteryCard, 'rgba(52,209,88,0.55)');
-        batteryCard.onclick = () => { /* 기존과 완전히 동일 (toggleBattery 등) */ };
+        attachStaticNeonHover(batteryCard, 'rgba(52,209,88,0.7)');
+        batteryCard.onclick = () => {
+            const isActive = batteryCard.style.outline !== 'none' && batteryCard.style.outline !== '';
+            batteryCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
+            toggleBattery();
+            if (window.currentMyTasks && window.currentMyTasks.length > 0) {
+                renderTaskList(window.currentMyTasks);
+            }
+        };
 
         const weatherCard = document.createElement('div');
-        weatherCard.style.cssText = ` /* 타일 스타일 */ `;
-        weatherCard.innerHTML = `<span style="font-size:16px;">🎨</span>
-            <span style="font-size:9px; line-height:1.2; text-align:center; color:${T.text};">레이아웃<br>색상</span>`;
+        weatherCard.style.cssText = `
+            position:relative; aspect-ratio:1; border-radius:10px; cursor:pointer;
+            background:${T.card}; border:1px solid #9d5cff;
+            box-shadow:0 0 6px rgba(157,92,255,0.35), inset 0 0 8px rgba(157,92,255,0.1);
+            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+            padding:4px; box-sizing:border-box; transition:box-shadow 0.15s;
+        `;
+        weatherCard.innerHTML = `<span style="font-size:22px;">🎨</span>
+            <span style="font-size:12px; font-weight:500; line-height:1.2; text-align:center; color:${T.text};">레이아웃<br>색상</span>`;
         window._neubieWeatherCard = weatherCard;
-        attachStaticNeonHover(weatherCard, 'rgba(157,92,255,0.55)');
-        weatherCard.onclick = () => { /* 기존과 완전히 동일 */ };
+        attachStaticNeonHover(weatherCard, 'rgba(157,92,255,0.7)');
+        weatherCard.onclick = () => {
+            const isActive = weatherCard.style.outline !== 'none' && weatherCard.style.outline !== '';
+            weatherCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
+            if (!isActive) {
+                openDriveThemeOverlay();
+            } else {
+                const dtOverlay = document.getElementById('neubie-drivetheme-overlay');
+                if (dtOverlay) dtOverlay.style.display = 'none';
+            }
+        };
 
         bottomRow.appendChild(mapToggle);    // 요기요 최적화 (ON/OFF)
         bottomRow.appendChild(batteryCard);
