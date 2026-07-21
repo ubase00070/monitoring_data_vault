@@ -1063,7 +1063,10 @@
         };
 
         card.innerHTML = `
-            <div style="color:${T.accent}; font-weight:bold; font-size:18px; margin-bottom:10px;">🏷️ 영상 파일명 생성기</div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <span style="color:${T.accent}; font-weight:bold; font-size:18px;">🏷️ 영상 파일명 생성기</span>
+                <button id="openDriveTodayBtn" style="background:#444; color:#ddd; border:1px solid #666; padding:4px 8px; border-radius:6px; font-size:11px; cursor:pointer; white-space:nowrap;">📂 영상 드라이브 열기</button>
+            </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px 5px; margin-bottom: 10px;">
                 <div style="position: relative; min-width: 0;">
                     <select id="robotSelector" style="width: 100%; background: #333; color: white; border: 1px solid #555; border-radius: 4px; font-size: 15px; padding: 0 20px 0 8px; height: 32px; line-height: 32px; box-sizing: border-box; appearance: none; -webkit-appearance: none; -moz-appearance: none;">
@@ -1088,6 +1091,31 @@
         }
 
         setTimeout(() => {
+			// 영상 드라이브 열기 → 오늘 날짜 폴더로 이동 (없으면 루트 폴더로 폴백)
+            const openDriveBtn = card.querySelector('#openDriveTodayBtn');
+            if (openDriveBtn) {
+                openDriveBtn.onclick = async () => {
+                    const ROOT_FOLDER_URL = 'https://drive.google.com/drive/folders/0AJPzAP1RZ6FhUk9PVA';
+                    const todayStr = getFormattedDate(new Date()); // 예: "20260721"
+
+                    let targetUrl = ROOT_FOLDER_URL;
+
+                    try {
+                        const res = await fetch('https://multimonitoring.vercel.app/api/drive');
+                        const data = await res.json();
+                        if (data?.folders?.[todayStr]) {
+                            targetUrl = data.folders[todayStr];
+                        } else if (data?.root) {
+                            targetUrl = data.root; // 오늘자 폴더 없으면 루트로 폴백
+                        }
+                    } catch (e) {
+                        console.warn('[영상 드라이브] 폴더 정보 조회 실패 → 루트로 이동:', e);
+                    }
+
+                    window.open(targetUrl, '_blank');
+                };
+            }
+			
             // 개별 기체 파일명 복사
             const copyBtn = card.querySelector('#copyFileName');
             if (copyBtn) {
@@ -1674,35 +1702,10 @@
 
     // 팝업 열 때만 생성
     function toggleBattery() {
-        const isMulti = isMonitoringPage(); // 다중 모니터링 페이지 여부
-
         if (batteryPopup.style.display !== 'block') {
 
-            updateBatteryStatus();
-
-            batteryPopup.style.transition = 'none';
-
-            if (isMulti) {
-                // 다중 모니터링 페이지: 기존 고정 좌표 그대로
-                batteryPopup.style.top = '20px';
-                batteryPopup.style.left = 'auto';
-                batteryPopup.style.right = '20px';
-                batteryPopup.style.zIndex = '1000000';
-            } else {
-                // Alt+Q 메인 레이아웃 우측에 도킹
-                const dRect = dashboard.getBoundingClientRect();
-                batteryPopup.style.top = dRect.top + 'px';
-                batteryPopup.style.left = (dRect.right + 12) + 'px';
-                batteryPopup.style.right = 'auto';
-                batteryPopup.style.zIndex = '999999'; // 대시보드(1000000)보다 낮게 → 항상 뒤쪽에 깔림
-            }
-
-            batteryPopup.style.transform = 'translateX(100%)'; // 제자리보다 오른쪽(화면 바깥)에서 시작
+            updateBatteryStatus();  
             batteryPopup.style.display = 'block';
-
-            void batteryPopup.offsetWidth; // 강제 리플로우 → transition 적용 보장
-            batteryPopup.style.transition = 'transform 0.3s ease-out';
-            batteryPopup.style.transform = 'translateX(0)'; // 좌측(제자리)으로 슬라이드
 
             // 5초 후 1회 갱신 → 필요없으니 삭제, 바로 1분 간격으로
 			if (batteryRefreshInterval) clearInterval(batteryRefreshInterval); // 중복 방지
@@ -1712,14 +1715,7 @@
             }, 60000);
 
         } else {
-            batteryPopup.style.transition = 'transform 0.3s ease-out';
-            batteryPopup.style.transform = 'translateX(100%)'; // 다시 우측 바깥으로 슬라이드 아웃
-            setTimeout(() => {
-                if (batteryPopup.style.transform === 'translateX(100%)') {
-                    batteryPopup.style.display = 'none';
-                }
-            }, 300);
-
+            batteryPopup.style.display = 'none';
             if (window._neubieBatteryCard) window._neubieBatteryCard.style.outline = 'none';
             clearInterval(batteryRefreshInterval);
         }
