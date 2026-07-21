@@ -534,7 +534,7 @@
         document.head.appendChild(st);
     })();
 	
-    const batteryPopup = createContainer('neubie-battery-popup', '420px', '20px', 'auto', '20px');
+    const batteryPopup = createContainer('neubie-battery-popup', '400px', '20px', 'auto', '20px');
 
     function makeDraggable(handleEl, targetEl) {
         let isDragging = false, startX, startY, startLeft, startTop;
@@ -606,7 +606,7 @@
         const header = document.createElement('div');
         header.style.cssText = `display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid ${T.border}; padding-bottom:10px;`;
         const titleB = document.createElement('b');
-        titleB.textContent = "🔋 실시간 성남 배터리 현황";
+        titleB.textContent = "🔋 실시간 성남 배터리";
         titleB.style.cssText = `color:${T.text}; font-size:18px;`;
 
         const headerRight = document.createElement('div');
@@ -616,9 +616,10 @@
         copyBtn.textContent = '복사';
         Object.assign(copyBtn.style, {
             background:'#3b82f6', color:'white', border:'none',
-            padding:'6px 16px',
-            borderRadius:'8px', cursor:'pointer', fontWeight:'bold',
-            fontSize:'14px',
+            height:'24px', padding:'0 14px',
+            borderRadius:'6px', cursor:'pointer', fontWeight:'bold',
+            fontSize:'13px',
+            display:'flex', alignItems:'center', justifyContent:'center',
             transition:'0.2s'
         });
         copyBtn.onclick = (e) => copyToClipboard(e.target);
@@ -1909,13 +1910,19 @@
     function toggleBattery() {
         if (batteryPopup.style.display !== 'block') {
 
-            // 다른 팝업들과 동일하게 스트림덱 바로 위(bottom 라인)에 맞춰 등장
-            if (typeof getSharedPopupRect === 'function') {
+            // Alt+Q 메인 레이아웃이 떠있을 때만 스트림덱 바로 위(bottom 라인)에 맞춤,
+            // 아니면(Alt+B 단독 호출 등) 기존 우상단 고정 위치 그대로
+            if (dashboard.style.display === 'block' && typeof getSharedPopupRect === 'function') {
                 const r = getSharedPopupRect();
                 batteryPopup.style.top = 'auto';
                 batteryPopup.style.left = r.left + 'px';
                 batteryPopup.style.right = 'auto';
                 batteryPopup.style.bottom = r.bottom + 'px';
+            } else {
+                batteryPopup.style.top = '20px';
+                batteryPopup.style.left = 'auto';
+                batteryPopup.style.right = '20px';
+                batteryPopup.style.bottom = 'auto';
             }
 
             updateBatteryStatus();  
