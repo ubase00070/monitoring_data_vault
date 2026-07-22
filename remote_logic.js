@@ -1771,13 +1771,12 @@
             queueInfoContent.id = 'neubie-queue-info-content';
             queueInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:${T.text}; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;`;
             queueInfoContent.innerHTML = `
-				07:47, 08:47 - 현재 모니터링 기체 업로드<br>
+				07:57 or 08:47 - 현재 모니터링 기체 업로드<br>
 				기체별 화질 조절<br>
                 기체별 헤드램프 토글<br>
 				기체 카메라 밝기 한 번에 조절<br>
 				카메라 위치 스왑<br>
-				multimonitoring.vercel.app 이용 시에도 기체 업로드 가능<br>
-				'NCC 도우미'만 이용하더라도 교대 기체 업로드 및 받기 가능<br>
+				'NCC 도우미'만 이용하더라도 교대 기체 받기는 가능<br>
             `;
 
             queueInfoBox.appendChild(queueInfoClose);
