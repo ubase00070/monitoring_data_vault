@@ -1771,6 +1771,7 @@
             queueInfoContent.id = 'neubie-queue-info-content';
             queueInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:${T.text}; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;`;
             queueInfoContent.innerHTML = `
+				07:47, 08:47 - 현재 모니터링 기체 업로드<br>
 				기체별 화질 조절<br>
                 기체별 헤드램프 토글<br>
 				기체 카메라 밝기 한 번에 조절<br>
@@ -5554,15 +5555,23 @@
 
     let lastNotifiedMin = -1; 
 
-    setInterval(() => {
-        const now = new Date();
-        const currentFullMin = now.getHours() * 60 + now.getMinutes();
-
-        if (lastNotifiedMin === currentFullMin) return;
-
-        lastNotifiedMin = currentFullMin; 
-        syncTasksFromServer(); 
-        
-    }, 1000);
+	setInterval(() => {
+	    const now = new Date();
+	    const currentFullMin = now.getHours() * 60 + now.getMinutes();
+	
+	    if (lastNotifiedMin === currentFullMin) return;
+	
+	    lastNotifiedMin = currentFullMin; 
+	    syncTasksFromServer(); 
+	
+	    // 07:47, 08:47 — 딱 이 두 시간대만 handover 자동 업로드 시도
+	    if (getKSTMinutes() === 47) {
+	        const kstHour = getKSTDate().getHours();
+	        if (kstHour === 7 || kstHour === 8) {
+	            runAutoHandoverUpload();
+	        }
+	    }
+	    
+	}, 1000);
 
 })();
