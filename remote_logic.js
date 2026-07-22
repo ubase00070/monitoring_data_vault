@@ -5491,58 +5491,71 @@
 	    }, 100);
 	}
 
-	async function runAutoHandoverUpload() {
-        if (!isMonitoringPage()) return;
-		if (localStorage.getItem('neubie_handover_enabled') === 'false') return;
+	const NON_TOOL_USER = '이도연';
+
+    async function runAutoHandoverUpload() {
+        if (localStorage.getItem('neubie_handover_enabled') === 'false') return;
 
         const myName = _getMyName();
-        if (!myName) return; // 이름 없음 = 시크릿탭 취급, 원천 봉쇄 (요구사항 3)
+        if (!myName) return;
 
-        if (!isScheduledMonitorNow(myName)) return;
+        if (!state.insuData?.schedule) return;
+        const schedule = state.insuData.schedule;
+
+        const kstHour = getKSTDate().getHours();
+        const kstMin = getKSTMinutes();
+
+        let targetName = null;
+
+        if (kstHour === 7 && kstMin === 57 && schedule['07:00'] === NON_TOOL_USER) {
+            targetName = schedule['08:00'];
+        } else if (kstHour === 8 && kstMin === 47 && schedule['08:00'] === NON_TOOL_USER) {
+            targetName = schedule['07:00'];
+        } else {
+            return; // 조건 불충족 - skip
+        }
+
+        if (!targetName || targetName !== myName) return; // 선정자 아니면 skip
 
         const now = new Date();
-        const fireKey = `neubie_ho_fired_${now.getFullYear()}${now.getMonth()}${now.getDate()}_${now.getHours()}`;
+        const fireKey = `neubie_ho_fired_${now.getFullYear()}${now.getMonth()}${now.getDate()}`;
         if (localStorage.getItem(fireKey)) return;
-        localStorage.setItem(fireKey, '1'); // 체크 직후 즉시 세팅 (일반탭 다중 방어)
-
-        showHandoverToast('현재 모니터링 기체 업로드 중...', 'progress');
+        localStorage.setItem(fireKey, '1');
 
         try {
-			// 최근에 이미 갱신됐는지 확인 (수동 업로드와의 충돌 방지) + taken 백업
-            const beforeRes = await fetchWithTimeout('https://multimonitoring.vercel.app/api/handover');   // ← fetch → fetchWithTimeout
+            const beforeRes = await fetchWithTimeout('https://multimonitoring.vercel.app/api/handover');
             const before = beforeRes.ok ? await beforeRes.json() : null;
 
             if (before) {
                 const secondsSinceUpdate = (Date.now() - new Date(before.updatedAt).getTime()) / 1000;
-                if (secondsSinceUpdate < 180) {
-                    return; // 최근 3분 내 이미 갱신됨 - 자동화는 양보하고 조용히 종료
-                }
+                if (secondsSinceUpdate < 180) return;
             }
             const preservedTaken = before?.taken || [];
-			
+
             const allRobots = await fetchAllRobotsForHandover();
             const units = allRobots
                 .filter(r => r.isMonitoring === true)
                 .map(r => r.nickname || r.name);
 
-            if (!units.length) {
-                showHandoverToast('모니터링 기체 업로드 실패', 'fail');
-                return; // 실패 시 그대로 종료, 추가 신호 없음 (요구사항 2)
-            }
+            if (!units.length) return;
 
-            const res = await fetchWithTimeout('https://multimonitoring.vercel.app/api/handover', {   // ← fetch → fetchWithTimeout
+            const res = await fetchWithTimeout('https://multimonitoring.vercel.app/api/handover', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ handover_by: myName, units })
+                body: JSON.stringify({ handover_by: NON_TOOL_USER, units })
             });
 
-            if (res.ok) {
-                showHandoverToast('모니터링 기체 업로드 성공', 'success');
-            } else {1
-                showHandoverToast('모니터링 기체 업로드 실패', 'fail');
+            if (!res.ok) return;
+
+            if (preservedTaken.length) {
+                await fetchWithTimeout('https://multimonitoring.vercel.app/api/handover', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ addTaken: preservedTaken })
+                });
             }
         } catch (e) {
-            showHandoverToast('모니터링 기체 업로드 실패', 'fail');
+            // 조용히 종료 후 다음날 자연 회복
         }
     }
 
@@ -5564,13 +5577,7 @@
 	    lastNotifiedMin = currentFullMin; 
 	    syncTasksFromServer(); 
 	
-	    // 07:47, 08:47 — 딱 이 두 시간대만 handover 자동 업로드 시도
-	    if (getKSTMinutes() === 47) {
-	        const kstHour = getKSTDate().getHours();
-	        if (kstHour === 7 || kstHour === 8) {
-	            runAutoHandoverUpload();
-	        }
-	    }
+	    runAutoHandoverUpload();
 	    
 	}, 1000);
 
