@@ -328,6 +328,21 @@
 		.bb-walker-arrow:hover { background:rgba(20,20,22,.85); }
 		.bb-walker-arrow:active { transform:translateY(-50%) scale(0.9); }
 
+		#bb-walker-bubble {
+			position:absolute; top:-18px; left:-35px; width:220px; min-height:44px;
+			background:#fdf6e3; border-radius:16px; padding:8px 14px;
+			font-size:12px; color:#5c4a2a; font-weight:700; line-height:1.4;
+			box-shadow:0 4px 12px rgba(0,0,0,.35);
+			z-index:3; display:none;
+			font-family:'Paperlogy','Lato',-apple-system,sans-serif; -webkit-text-stroke:0;
+		}
+		#bb-walker-bubble.open { display:block; }
+		#bb-walker-bubble::after {
+			content:''; position:absolute; bottom:-7px; left:38px;
+			width:14px; height:14px; background:#fdf6e3;
+			border-radius:0 0 0 7px; transform:rotate(45deg);
+		}
+
         #bb-walker-toggle {
             position:absolute; top:4px; right:4px;
             min-width:38px; height:22px; padding:0 7px;
@@ -563,6 +578,7 @@
 					<div class="bb-delivery-chips" id="bb-delivery-chips"></div>
 					<button id="bb-walker-toggle" title="동숲 주민 표시/숨김"></button>
 					<div id="bb-walker-wrap">
+						<div id="bb-walker-bubble"><span id="bb-walker-bubble-text"></span></div>
 						<div id="bb-walker"></div>
 						<button id="bb-walker-prev" class="bb-walker-arrow left" title="이전 캐릭터">‹</button>
 						<button id="bb-walker-next" class="bb-walker-arrow right" title="다음 캐릭터">›</button>
@@ -1707,7 +1723,7 @@
 			renderWalker();
 		}
 
-		walkerEl.addEventListener('click', () => goToChar(1));
+		walkerEl.addEventListener('click', () => toggleBubble());
 
 		document.getElementById('bb-walker-prev').addEventListener('click', (e) => {
 			e.stopPropagation();
@@ -1717,6 +1733,139 @@
 			e.stopPropagation();
 			goToChar(1);
 		});
+		
+		// ============================================================
+		// 말풍선 — 알림 순차 재생 + 잡담
+		// ============================================================
+		const bubbleEl = document.getElementById('bb-walker-bubble');
+		const bubbleTextEl = document.getElementById('bb-walker-bubble-text');
+		let bubbleVisible = false;
+		let bubbleTypeTimer = null;
+		let bubbleNextTimer = null;
+		let bubbleStepIdx = 0;
+
+		// 캐릭터별 고유 말투(맨 끝에 붙는 접미사). 없는 캐릭터는 알림/잡담 텍스트만 표기.
+		const SPEECH_SUFFIX = {
+			Bluebear: '두근',
+			Bob:      '고양이',
+			Bones:    '옙',
+			Curt:     '음',
+			Filbert:  '예용',
+			Flurry:   '뽀드득',
+			Joey:     '그래유',
+			Ketchup:  '찌익',
+			Scoot:    '꾸왁',
+			Walker:   '컹컹',
+		};
+		function applySpeech(name, msg) {
+			const suffix = SPEECH_SUFFIX[name];
+			return {
+				plain: suffix ? `${msg} ${suffix}` : msg,
+				suffix: suffix || '',
+			};
+		}
+
+		// 잡담 30개 (자유롭게 가감/수정하세요)
+		const IDLE_LINES = [
+			'오늘 날씨엔 낚시하기 딱이야.',
+			'타란튤라 섬에 몰래 다녀올까 고민 중이야.',
+			'이번 주 순무 가격이 심상치 않아.',
+			'박물관 화석 코너 아직도 안 채웠어...',
+			'마음의 소리는 가끔 들어야 몸이 편해.',
+			'커피 한 잔이면 오전이 다 풀린다니까.',
+			'낙엽 밟는 소리, 이게 인생이지.',
+			'책상 정리하다가 옛날 편지를 발견했어.',
+			'별똥별 소원은 세 번 빌어야 진짜래.',
+			'오늘의 명언: 물은 셀프.',
+			'새 가구 배치 고민하다 하루가 다 갔어.',
+			'달팽이도 자기 속도로는 1등이야.',
+			'K.K.의 노래는 언제 들어도 좋아.',
+			'잠깐 쉬었다 가는 것도 순찰이지.',
+			'매미 소리 들으니까 여름이구나 싶다.',
+			'오늘 벨 좀 빌려줄 사람~',
+			'구름 모양이 딱 도넛 같아.',
+			'발밑 조심, 두더지 구멍이야.',
+			'가끔은 멍 때리는 것도 회복이더라.',
+			'섬 주민 평균 행복 지수, 오늘은 맑음.',
+			'화분에 물 주는 걸 깜빡했어, 큰일이야.',
+			'물고기 그림자만 봐도 심장이 뛰어.',
+			'오늘의 다짐: 내일은 미루지 말자, 아마도.',
+			'옷장 앞에서 30분째 고민 중이야.',
+			'잔디 밟을 땐 사뿐사뿐.',
+			'야간 순찰엔 별이 최고의 동료지.',
+			'물때 맞춰야 조개 캐기 성공이야.',
+			'누가 내 등껍질 좀 대신 메줘...',
+			'오늘도 무사히, 그거면 충분해.',
+			'가끔은 아무 이유 없이 그냥 좋은 날도 있어.',
+		];
+
+		// 현재 떠있는 알림을 종류별로 묶어서 "라벨 N건" 문자열 배열로 반환
+		function getAlertGroupLines() {
+			const groups = {};
+			currentAlerts.forEach(a => {
+				if (!groups[a.type]) groups[a.type] = [];
+				groups[a.type].push(a);
+			});
+			return Object.keys(groups)
+				.sort((a, b) => (ALERT_META[a]?.order ?? 9) - (ALERT_META[b]?.order ?? 9))
+				.map(type => {
+					const meta = ALERT_META[type] || { label: type };
+					return `${meta.label} ${groups[type].length}건`;
+				});
+		}
+
+		function typeBubbleText({ plain, suffix }) {
+			clearInterval(bubbleTypeTimer);
+			bubbleTextEl.textContent = '';
+			let i = 0;
+			bubbleTypeTimer = setInterval(() => {
+				bubbleTextEl.textContent += plain[i];
+				i++;
+				if (i >= plain.length) {
+					clearInterval(bubbleTypeTimer);
+					if (suffix) {
+						const base = plain.slice(0, plain.length - suffix.length);
+						bubbleTextEl.innerHTML = `${base}<b>${suffix}</b>`;   // 타이핑 끝난 순간 접미사만 볼드로 교체
+					}
+					bubbleNextTimer = setTimeout(playNextBubbleStep, 2000);
+				}
+			}, 40);
+		}
+
+		function playNextBubbleStep() {
+			if (!bubbleVisible) return;
+			const lines = getAlertGroupLines();          // 매번 새로 읽음 → 중간에 알림 꺼져도 자동 반영
+			const charName = walkerFiles[charIdx].name;
+
+			if (lines.length === 0) {
+				// 알림 자체가 없으면 잡담만 계속
+				const line = IDLE_LINES[Math.floor(Math.random() * IDLE_LINES.length)];
+				typeBubbleText(applySpeech(charName, line));
+				return;
+			}
+
+			if (bubbleStepIdx < lines.length) {
+				typeBubbleText(applySpeech(charName, lines[bubbleStepIdx]));
+				bubbleStepIdx++;
+			} else {
+				// 알림 다 돌았으면 잡담 하나 → 다음엔 다시 알림 처음부터
+				const line = IDLE_LINES[Math.floor(Math.random() * IDLE_LINES.length)];
+				typeBubbleText(applySpeech(charName, line));
+				bubbleStepIdx = 0;
+			}
+		}
+
+		function toggleBubble() {
+			bubbleVisible = !bubbleVisible;
+			bubbleEl.classList.toggle('open', bubbleVisible);
+			if (bubbleVisible) {
+				bubbleStepIdx = 0;
+				playNextBubbleStep();
+			} else {
+				clearInterval(bubbleTypeTimer);
+				clearTimeout(bubbleNextTimer);
+			}
+		}
 
 		// 교체 시점을 놓치지 않도록 주기적으로 재확인 (API 호출 없음, 순수 화면 갱신)
 		setInterval(renderWalker, 60 * 1000);   // 1분마다 체크
@@ -1731,7 +1880,9 @@
 			toggleEl.classList.toggle('off', !walkerOn);
 			toggleEl.textContent = walkerOn ? '동숲' : '🚫';
 			toggleEl.title = walkerOn ? '동숲 주민 끄기' : '동숲 주민 켜기';
+			if (!walkerOn && bubbleVisible) toggleBubble();   // 캐릭터 끌 때 말풍선/타이머도 같이 정리
 		}
+		
 		applyWalkerToggle();
 
 		toggleEl.addEventListener('click', () => {
