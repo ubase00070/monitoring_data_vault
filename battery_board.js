@@ -1685,7 +1685,7 @@
 			{ name: 'Walker',   variants: ['Walker.webp', 'Walker_2.webp', 'Walker_3.webp'] },
 			{ name: 'Scoot',   variants: ['Scoot.webp', 'Scoot_2.webp', 'Scoot_3.webp'] },
 			{ name: 'Flurry',   variants: ['Flurry.gif'] },
-			{ name: 'Octacian', variants: ['Octavian.webp', 'Octavian_2.webp', 'Octavian_3.webp'] },
+			{ name: 'Octavian', variants: ['Octavian.webp', 'Octavian_2.webp', 'Octavian_3.webp'] },
 			{ name: 'Blathers', variants: ['Blathers.webp', 'Blathers_2.webp', 'Blathers_3.webp'] },
 			{ name: 'Bluebear', variants: ['Bluebear.webp', 'Bluebear_2.webp', 'Bluebear_3.webp'] },
 			{ name: 'Bob',      variants: ['Bob.webp'] },
