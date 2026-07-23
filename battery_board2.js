@@ -293,9 +293,8 @@
 
         /* 기타 배달 */
         .bb-delivery-area {
-			flex:1; padding:7px 10px; display:flex; flex-direction:column; gap:5px; min-height:0;
-			position:relative;
-			overflow:hidden;
+		    flex:1; padding:7px 10px; display:flex; flex-direction:column; gap:5px; min-height:0;
+		    position:relative;
 		}
 		#bb-walker-wrap {
 			position:absolute;
