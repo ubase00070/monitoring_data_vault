@@ -329,18 +329,18 @@
 		.bb-walker-arrow:active { transform:translateY(-50%) scale(0.9); }
 
 		#bb-walker-bubble {
-			position:absolute; top:-18px; left:-35px; width:220px; min-height:44px;
-			background:#fdf6e3; border-radius:16px; padding:8px 14px;
-			font-size:12px; color:#5c4a2a; font-weight:700; line-height:1.4;
+			position:absolute; bottom:175px; left:-46px; width:285px; min-height:58px;
+			background:#fdf6e3; border-radius:20px; padding:10px 18px;
+			font-size:16px; color:#5c4a2a; font-weight:700; line-height:1.4;
 			box-shadow:0 4px 12px rgba(0,0,0,.35);
 			z-index:3; display:none;
 			font-family:'Paperlogy','Lato',-apple-system,sans-serif; -webkit-text-stroke:0;
 		}
 		#bb-walker-bubble.open { display:block; }
 		#bb-walker-bubble::after {
-			content:''; position:absolute; bottom:-7px; left:38px;
-			width:14px; height:14px; background:#fdf6e3;
-			border-radius:0 0 0 7px; transform:rotate(45deg);
+			content:''; position:absolute; bottom:-9px; left:49px;
+			width:18px; height:18px; background:#fdf6e3;
+			border-radius:0 0 0 9px; transform:rotate(45deg);
 		}
 
         #bb-walker-toggle {
@@ -1739,7 +1739,7 @@
 		// ============================================================
 		const bubbleEl = document.getElementById('bb-walker-bubble');
 		const bubbleTextEl = document.getElementById('bb-walker-bubble-text');
-		let bubbleVisible = false;
+		let bubbleVisible = true;
 		let bubbleTypeTimer = null;
 		let bubbleNextTimer = null;
 		let bubbleStepIdx = 0;
@@ -1809,8 +1809,11 @@
 			return Object.keys(groups)
 				.sort((a, b) => (ALERT_META[a]?.order ?? 9) - (ALERT_META[b]?.order ?? 9))
 				.map(type => {
-					const meta = ALERT_META[type] || { label: type };
-					return `${meta.label} ${groups[type].length}건`;
+					const meta  = ALERT_META[type] || { label: type };
+					const items = groups[type];
+					const first = items[0]?.name || '';
+					const nameText = items.length > 1 ? `${first} 등 ${items.length}대` : first;
+					return `${meta.label} ${items.length}건 ${nameText}`;
 				});
 		}
 
@@ -1827,7 +1830,7 @@
 						const base = plain.slice(0, plain.length - suffix.length);
 						bubbleTextEl.innerHTML = `${base}<b>${suffix}</b>`;   // 타이핑 끝난 순간 접미사만 볼드로 교체
 					}
-					bubbleNextTimer = setTimeout(playNextBubbleStep, 2000);
+					bubbleNextTimer = setTimeout(playNextBubbleStep, 5000);
 				}
 			}, 40);
 		}
@@ -1866,6 +1869,11 @@
 				clearTimeout(bubbleNextTimer);
 			}
 		}
+		
+		// ── 기본값 ON이므로 페이지 로드 시 바로 재생 시작 ──
+		bubbleEl.classList.add('open');
+		bubbleStepIdx = 0;
+		playNextBubbleStep();
 
 		// 교체 시점을 놓치지 않도록 주기적으로 재확인 (API 호출 없음, 순수 화면 갱신)
 		setInterval(renderWalker, 60 * 1000);   // 1분마다 체크
