@@ -293,8 +293,8 @@
 
         /* 기타 배달 */
         .bb-delivery-area {
-		    flex:1; padding:7px 10px; display:flex; flex-direction:column; gap:5px; min-height:0;
-		    position:relative;
+			flex:1; padding:7px 10px; display:flex; flex-direction:column; gap:5px; min-height:0;
+			position:relative;
 		}
 		#bb-walker-wrap {
 			position:absolute;
@@ -328,7 +328,7 @@
 		.bb-walker-arrow:active { transform:translateY(-50%) scale(0.9); }
 
 		#bb-walker-bubble {
-			position:absolute; bottom:175px; left:-46px; width:285px; min-height:58px;
+			position:absolute; bottom:175px; right:-10px; width:285px; min-height:58px;
 			background:#fdf6e3; border-radius:20px; padding:10px 18px;
 			font-size:16px; color:#5c4a2a; font-weight:700; line-height:1.4;
 			box-shadow:0 4px 12px rgba(0,0,0,.35);
@@ -337,7 +337,7 @@
 		}
 		#bb-walker-bubble.open { display:block; }
 		#bb-walker-bubble::after {
-			content:''; position:absolute; bottom:-9px; left:49px;
+			content:''; position:absolute; bottom:-9px; right:30px;
 			width:18px; height:18px; background:#fdf6e3;
 			border-radius:0 0 0 9px; transform:rotate(45deg);
 		}
@@ -1812,7 +1812,7 @@
 					const items = groups[type];
 					const first = items[0]?.name || '';
 					const nameText = items.length > 1 ? `${first} 등 ${items.length}대` : first;
-					return `${meta.label} ${items.length}건 ${nameText}`;
+					return `[${meta.label} ${items.length}건] ${nameText}.`;
 				});
 		}
 
