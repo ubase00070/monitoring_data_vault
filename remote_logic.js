@@ -5507,12 +5507,14 @@
         let targetName = null;
 
         if (kstHour === 7 && kstMin === 57 && schedule['07:00'] === NON_TOOL_USER) {
-            targetName = schedule['08:00'];
-        } else if (kstHour === 8 && kstMin === 47 && schedule['08:00'] === NON_TOOL_USER) {
-            targetName = schedule['07:00'];
-        } else {
-            return; // 조건 불충족 - skip
-        }
+		    targetName = schedule['08:00'];
+		} else if (kstHour === 8 && kstMin === 47 && schedule['08:00'] === NON_TOOL_USER) {
+		    targetName = schedule['07:00'];
+		} else if (kstHour === 9 && kstMin === 47 && schedule['09:00'] === NON_TOOL_USER) {
+		    targetName = schedule['08:00'];
+		} else {
+		    return; // 조건 불충족 - skip
+		}
 
         if (!targetName || targetName !== myName) return; // 선정자 아니면 skip
 
