@@ -2652,6 +2652,7 @@
 
 		if (window._missionThemeObserver) window._missionThemeObserver.disconnect();
 
+		const watchTarget = missionCard.parentElement || missionCard;   // ← 카드 자신이 아니라 부모를 감시
 		let selfWriting = false;
 		window._missionThemeObserver = new MutationObserver(() => {
 			if (selfWriting) return;
@@ -2659,10 +2660,14 @@
 			if (saved !== 'light') return;
 
 			selfWriting = true;
-			driveThemeMark(missionCard, DRIVE_THEMES.light);
-			requestAnimationFrame(() => { selfWriting = false; });
+			const freshCard = driveThemeFindByText('도착 처리');   // ← 매번 다시 찾음 (교체됐어도 최신 노드 확보)
+			if (freshCard) driveThemeMark(freshCard, DRIVE_THEMES.light);
+			requestAnimationFrame(() => {
+				selfWriting = false;
+				watchMissionProgressCard();   // ← 감시 대상이 바뀌었을 수 있으니 스스로 재등록
+			});
 		});
-		window._missionThemeObserver.observe(missionCard, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
+		window._missionThemeObserver.observe(watchTarget, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
 	}
 
 	function watchLogPanel() {
