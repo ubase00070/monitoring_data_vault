@@ -36,13 +36,13 @@
     "rawTime": "12:00"
   },
   {
-    "user": "장재원",
+    "user": "한승완",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "13:00"
   },
   {
-    "user": "박은선",
+    "user": "장재원",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "14:00"
@@ -54,7 +54,7 @@
     "rawTime": "15:00"
   },
   {
-    "user": "한승완",
+    "user": "이기완",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "16:00"
@@ -204,13 +204,13 @@
     "rawTime": "11:00"
   },
   {
-    "user": "석승찬",
+    "user": "김동진",
     "type": "task",
     "content": "[11:55] 파주LGD(현대밴디스) 임무받기 OFF [평일]",
     "rawTime": "11:55"
   },
   {
-    "user": "신은정",
+    "user": "김지훈",
     "type": "task",
     "content": "[12:00~13:00] 부산국립과학관 170,171호기 임무 [화,수,목,금,토,일]",
     "rawTime": "12:00"
@@ -222,7 +222,7 @@
     "rawTime": "13:00"
   },
   {
-    "user": "김지훈",
+    "user": "석승찬",
     "type": "task",
     "content": "[13:00] 무선기체 충전 상태 확인",
     "rawTime": "13:00"
@@ -240,7 +240,7 @@
     "rawTime": "13:50"
   },
   {
-    "user": "권재윤",
+    "user": "신은정",
     "type": "task",
     "content": "[14:00~15:00] 부산국립과학관 170,171호기 임무 [화,수,목,금,토,일]",
     "rawTime": "14:00"
@@ -264,7 +264,7 @@
     "rawTime": "15:30"
   },
   {
-    "user": "석승찬",
+    "user": "장재원",
     "type": "task",
     "content": "[16:00~17:00] 부산국립과학관 170,171호기 임무 후 주차, 임무받기 OFF [화,수,목,금,토,일]",
     "rawTime": "16:00"
