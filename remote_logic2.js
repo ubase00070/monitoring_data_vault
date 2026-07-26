@@ -1330,36 +1330,10 @@
         `;
         boardBtn.innerHTML = `
             <span style="font-size:18px; margin-top:6px;">📌</span>
-            <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">게시판 & 문제해결</span>
+            <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">게시판</span>
         `;
-        boardBtn.onclick = () => {
-            if (isSharedPopupOpen('board-menu')) {
-                hideSharedPopup();
-                return;
-            }
-            openBoardMenuOverlay();
-        };
+        boardBtn.onclick = () => openBoardOverlay();
         attachStaticNeonHover(boardBtn, '96,165,250');
-
-        window.openBoardMenuOverlay = function() {
-            const T = getNbTheme();
-            const box = document.createElement('div');
-            box.style.cssText = `background:${T.card}; color:${T.text}; border-radius:16px; padding:20px; width:100%; box-sizing:border-box; box-shadow:0 4px 40px rgba(0,0,0,0.7); pointer-events:auto;`;
-            box.innerHTML = `
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-                    <span style="font-size:16px;font-weight:700;">📌 게시판 & 문제해결</span>
-                    <button id="bm-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
-                </div>
-                <div style="display:flex; flex-direction:column; gap:8px;">
-                    <button id="bm-board" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">📌 게시판</button>
-                    <button id="bm-trouble" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🛠️ 문제해결</button>
-                </div>
-            `;
-            box.querySelector('#bm-close').onclick = () => window.hideSharedPopup();
-            box.querySelector('#bm-board').onclick = () => { window.hideSharedPopup(); openBoardOverlay(); };
-            box.querySelector('#bm-trouble').onclick = () => { window.hideSharedPopup(); openTroubleshootOverlay(); };
-            window.showSharedPopup('board-menu', box);
-        };
 
         const gamepadBtn = document.createElement('button');
         gamepadBtn.style.cssText = `
@@ -4597,6 +4571,7 @@
                         <button id="mto-weather" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🌤️ 실시간 날씨 (기상청 API)</button>
                         <button id="mto-roulette" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🎡 룰렛 돌리기</button>
                         <button id="mto-tips" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">💡 SW 설정</button>
+                        <button id="mto-trouble" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🛠️ 문제해결</button>
                     </div>
                 `;
                 box.querySelector('#mto-close').onclick = () => {
@@ -4606,6 +4581,7 @@
                 box.querySelector('#mto-weather').onclick = () => openWeatherOverlay();
                 box.querySelector('#mto-roulette').onclick = () => openRouletteOverlay();
                 box.querySelector('#mto-tips').onclick = () => openTipsOverlay();
+                box.querySelector('#mto-trouble').onclick = () => { window.hideSharedPopup(); openTroubleshootOverlay(); };
                 window.showSharedPopup('moretools', box);
             };
 
@@ -4900,8 +4876,8 @@
                         <button id="gpm-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
                     </div>
                     <div style="display:flex; flex-direction:column; gap:8px;">
-                        <button id="gpm-guide" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🕹️ D-PAD 기능변경 설명</button>
-                        <button id="gpm-tester" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🎮 컨트롤러 테스터</button>
+                        <button id="gpm-guide" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🕹️ D-PAD 기능 변경점 설명</button>
+                        <button id="gpm-tester" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🎮 컨트롤러 기능 작동 테스터</button>
                     </div>
                 `;
                 box.querySelector('#gpm-close').onclick = () => window.hideSharedPopup();
@@ -4916,7 +4892,7 @@
                 box.style.cssText = `background:#1e1e2e; color:#e2e8f0; border-radius:16px; padding:12px; width:100%; box-sizing:border-box; max-height:80vh; overflow-y:auto; box-shadow:0 10px 50px rgba(0,0,0,0.7); pointer-events:auto;`;
                 box.innerHTML = `
                     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; gap:10px;">
-                        <span style="font-size:15px; font-weight:700;">🎮 컨트롤러 테스터</span>
+                        <span style="font-size:15px; font-weight:700;">🎮 컨트롤러 기능 작동 테스터</span>
                         <button id="gpt-close" style="width:26px; height:26px; border:none; border-radius:5px; background:#3b0000; border:1px solid #ef4444; color:#ef4444; font-size:14px; cursor:pointer;">✕</button>
                     </div>
                     <div id="gpt-status" style="text-align:center; font-size:11px; color:#94a3b8; margin-bottom:6px;">컨트롤러의 아무 버튼이나 눌러 연결하세요</div>
@@ -5051,7 +5027,7 @@
                 box.style.cssText = `background:#1e1e2e; color:#e2e8f0; border-radius:16px; padding:16px; width:100%; box-sizing:border-box; max-height:90vh; overflow-y:auto; box-shadow:0 10px 50px rgba(0,0,0,0.7); pointer-events:auto; display:flex; flex-direction:column;`;
                 box.innerHTML = `
                     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; gap:10px;">
-                        <span style="font-size:16px; font-weight:700;">🎮 D-PAD 기능변경 설명</span>
+                        <span style="font-size:16px; font-weight:700;">🎮 D-PAD 기능 변경점 설명</span>
                         <button id="gp-close" style="width:28px; height:28px; border:none; border-radius:5px; background:#3b0000; border:1px solid #ef4444; color:#ef4444; font-size:16px; cursor:pointer;">✕</button>
                     </div>
                     <img src="https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/xbox_binding.jpg"
