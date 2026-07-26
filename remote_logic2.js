@@ -4763,9 +4763,12 @@
                     id: '바탕화면',
                     title: '바탕화면 [이 사진에 대한...] 아이콘 없애기',
                     body: '바탕화면에 [이 사진에 대한 자세한 정보]라는 아이콘이 떠 있는 경우, 아래의 파일을 다운받고 실행 적용하세요.',
+                    images: [
+                        'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/desktop_weirdo.png',
+                    ],
                     links: [
-                        { label: '아이콘 없애기.reg', url: 'https://drive.google.com/file/d/1IjWGiN__VT1hmZdfm7YkYUpa4Wd89A9f/view?usp=drive_link' },
-                        { label: '아이콘 되돌리기.reg', url: 'https://drive.google.com/file/d/1Vuqf8nWPLi5KuTnLLkJ3WJdHAgD8F-xz/view?usp=drive_link' },
+                        { label: '[이 사진에 대한 자세한 정보] 아이콘 없애기.reg', url: 'https://drive.google.com/file/d/1IjWGiN__VT1hmZdfm7YkYUpa4Wd89A9f/view?usp=drive_link' },
+                        { label: '[이 사진에 대한 자세한 정보] 아이콘 되돌리기.reg', url: 'https://drive.google.com/file/d/1Vuqf8nWPLi5KuTnLLkJ3WJdHAgD8F-xz/view?usp=drive_link' },
                     ],
                 },
                 {
