@@ -4776,7 +4776,7 @@
                     title: 'FortiClientVPN 접속 불가 시',
                     body: 'VPN 설정을 스샷과 같이 설정해보세요. 미해결시 시도해볼 VPN 설치 파일도 첨부했습니다.',
                     images: [
-                        'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/desktop_weirdo.png',
+                        'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/forticlientvpn.png',
                     ],
                     links: [],
                 },
@@ -4859,12 +4859,12 @@
 
                     if (post.images && post.images.length) {
                         const imgWrap = document.createElement('div');
-                        imgWrap.style.cssText = 'display:flex; flex-direction:column; gap:10px; margin-top:14px;';
+                        imgWrap.style.cssText = 'display:flex; flex-direction:column; align-items:center; gap:10px; margin-top:14px;';
                         post.images.forEach(src => {
                             const img = document.createElement('img');
                             img.src = src;
                             img.loading = 'lazy';
-                            img.style.cssText = 'max-width:100%; border-radius:8px; display:block;';
+                            img.style.cssText = 'max-width:320px; width:100%; height:auto; border-radius:8px; display:block;';
                             imgWrap.appendChild(img);
                         });
                         box.appendChild(imgWrap);
