@@ -523,9 +523,6 @@
             #neubie-board-overlay, #neubie-board-overlay *,
             #neubie-secret-overlay, #neubie-secret-overlay *,
             #neubie-schedule-overlay, #neubie-schedule-overlay *,
-            #neubie-weather-overlay, #neubie-weather-overlay *,
-            #neubie-roulette-overlay, #neubie-roulette-overlay *,
-            #neubie-tips-overlay, #neubie-tips-overlay *,
             #neubie-shared-popup, #neubie-shared-popup * {
                 font-family: 'Paperlogy', 'Pretendard', 'Noto Sans KR', sans-serif !important;
             }
@@ -537,7 +534,7 @@
         document.head.appendChild(st);
     })();
 	
-    const batteryPopup = createContainer('neubie-battery-popup', '380px', '20px', 'auto', '20px');
+    const batteryPopup = createContainer('neubie-battery-popup', '400px', '20px', 'auto', '20px');
 
     function makeDraggable(handleEl, targetEl) {
         let isDragging = false, startX, startY, startLeft, startTop;
@@ -556,6 +553,7 @@
             targetEl.style.left = rect.left + 'px';
             targetEl.style.top = rect.top + 'px';
             targetEl.style.right = 'auto';
+            targetEl.style.bottom = 'auto';
 
             startX = e.clientX;
             startY = e.clientY;
@@ -608,19 +606,31 @@
         const header = document.createElement('div');
         header.style.cssText = `display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid ${T.border}; padding-bottom:10px;`;
         const titleB = document.createElement('b');
-        titleB.textContent = "🔋 실시간 성남 배터리 현황";
+        titleB.textContent = "🔋 실시간 성남 배터리";
         titleB.style.cssText = `color:${T.text}; font-size:18px;`;
+
+        const headerRight = document.createElement('div');
+        headerRight.style.cssText = `display:flex; align-items:center; gap:8px;`;
+
         const copyBtn = document.createElement('button');
         copyBtn.textContent = '복사';
         Object.assign(copyBtn.style, {
             background:'#3b82f6', color:'white', border:'none',
-            padding:'10px 20px',
-            borderRadius:'8px', cursor:'pointer', fontWeight:'bold',
-            fontSize:'15px',
+            height:'24px', padding:'0 14px',
+            borderRadius:'6px', cursor:'pointer', fontWeight:'bold',
+            fontSize:'13px',
+            display:'flex', alignItems:'center', justifyContent:'center',
             transition:'0.2s'
         });
         copyBtn.onclick = (e) => copyToClipboard(e.target);
-        header.append(titleB, copyBtn);
+
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = '✕';
+        closeBtn.style.cssText = `background:#ef4444; color:white; border:none; border-radius:4px; width:22px; height:22px; cursor:pointer; font-weight:bold; display:flex; align-items:center; justify-content:center; font-size:14px;`;
+        closeBtn.onclick = () => toggleBattery();
+
+        headerRight.append(copyBtn, closeBtn);
+        header.append(titleB, headerRight);
         batteryPopup.appendChild(header);
         makeDraggable(header, batteryPopup);
 
@@ -633,19 +643,19 @@
             item.dataset.batteryId = c.id;
             item.style.cssText = `
                 background:${T.bg === '#111111' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)'};
-                padding:9px 20px;
-                border-radius:12px;
-                margin-bottom:8px;
+                padding:6px 16px;
+                border-radius:10px;
+                margin-bottom:6px;
                 border-left:5px solid #666;
                 font-size: 16px !important;
             `;
             item.innerHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
                     <span style="font-weight:500;" class="bat-name">⚪ ${c.name}</span>
-                    <span style="font-weight:bold; font-size: 20px;" class="bat-val">- %</span>
+                    <span style="font-weight:bold; font-size: 16px;" class="bat-val">- %</span>
                 </div>
-                <div class="bat-bar-track" style="width:100%; height:10px; background:${T.bg === '#111111' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'}; border-radius:5px; overflow:hidden;">
-                    <div class="bat-bar-fill" style="height:100%; width:0%; background:#666; border-radius:5px; transition:width 0.3s ease, background 0.3s ease;"></div>
+                <div class="bat-bar-track" style="width:100%; height:6px; background:${T.bg === '#111111' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'}; border-radius:3px; overflow:hidden;">
+                    <div class="bat-bar-fill" style="height:100%; width:0%; background:#666; border-radius:3px; transition:width 0.3s ease, background 0.3s ease;"></div>
                 </div>
             `;
             list.appendChild(item);
@@ -961,18 +971,20 @@
                 align-items: center;
                 gap: 6px;
                 overflow: hidden;
+                height: 39px;
+                box-sizing: border-box;
             `;
 
             const displayTime = (String(timeKey).length > 10) ? String(timeKey).match(/\d{2}:\d{2}/)?.[0] : timeKey;
 
-            const needsMarquee = t.content.length > 40;
-            const contentSpan = needsMarquee
-                ? `<span class="marquee-text" style="${textStyle}">${t.content}</span>`
-                : `<span style="${textStyle}">${t.content}</span>`;
+            const isLong = t.content.length > 40;
+            const contentSpan = isLong
+                ? `<span style="${textStyle} font-size:12px; line-height:1.15; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">${t.content}</span>`
+                : `<span style="${textStyle} font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${t.content}</span>`;
 
             item.innerHTML = `
                 <span style="color:${status.isExpired ? '#777' : '#fbbf24'}; white-space:nowrap;">${displayTime || ''}</span>
-                <div class="marquee-wrap" style="${textStyle} font-weight:500;">
+                <div style="font-weight:500; min-width:0; overflow:hidden;">
                     ${contentSpan}
                 </div>
                 <div style="font-size:14px; white-space:nowrap;">${status.isExpired ? '✅' : '⏳'}</div>
@@ -1248,9 +1260,6 @@
 						'임무 종료된 리센츠/엘스/한성대/진천 페이지 이탈 5초 후 자동 사이드',
                         '게임패드 커스텀 바인딩 설명 페이지',
 						'다중 자동 교대시작 최대 12대까지',
-                        '다크/라이트 모드 선택',
-                        '룰렛 돌리기 & 동전 던지기 & 개인 메모',
-                        '실시간 날씨(지역검색 가능 / 기상청 API 데이터)',
 						'불규칙 순찰 기체 모니터링 미추가 시 알림 기능',
 						'개입카드 현재 조작자 표기 / 상태 바 재배치(스크롤 제거)',
                     ]
@@ -1348,7 +1357,13 @@
             paintToggleTile(gamepadBtn, !isDpadBindingOff(), T);
         };
         attachHoldToggle(gamepadBtn, {
-            onShortClick: () => openGamepadGuideOverlay(),
+            onShortClick: () => {
+                if (window.isSharedPopupOpen && window.isSharedPopupOpen('gamepad-menu')) {
+                    window.hideSharedPopup();
+                } else {
+                    openGamepadMenuOverlay();
+                }
+            },
             onHold: () => {
                 localStorage.setItem('neubie_dpad_binding', isDpadBindingOff() ? 'on' : 'off');
                 window.syncGamepadTile();
@@ -1756,12 +1771,12 @@
             queueInfoContent.id = 'neubie-queue-info-content';
             queueInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:${T.text}; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;`;
             queueInfoContent.innerHTML = `
+				07:57 or 08:47 - 현재 모니터링 기체 업로드<br>
 				기체별 화질 조절<br>
                 기체별 헤드램프 토글<br>
 				기체 카메라 밝기 한 번에 조절<br>
 				카메라 위치 스왑<br>
-				multimonitoring.vercel.app 이용 시에도 기체 업로드 가능<br>
-				'NCC 도우미'만 이용하더라도 교대 기체 업로드 및 받기 가능<br>
+				'NCC 도우미'만 이용하더라도 교대 기체 받기는 가능<br>
             `;
 
             queueInfoBox.appendChild(queueInfoClose);
@@ -1803,8 +1818,8 @@
             display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
             padding:4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
-        rouletteCard.innerHTML = `<span style="font-size:18px;">🌤️</span>
-            <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">날씨 & 기타</span>`;
+        rouletteCard.innerHTML = `<span style="font-size:18px;">🧰</span>
+            <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">날씨 & 룰렛 & 기타</span>`;
         window._neubieRouletteCard = rouletteCard;
         attachStaticNeonHover(rouletteCard, '44,230,217');
         rouletteCard.onclick = () => {
@@ -1869,10 +1884,10 @@
         bottomRow.appendChild(gamepadBtn);   // 게임패드 (ON/OFF)
         bottomRow.appendChild(batteryCard);  // 성남 배터리
 
-        // 2행: 레이아웃 색상 - 게시판 - 날씨 & 기타 - 스케줄 좌석
+        // 2행: 레이아웃 색상 - 날씨 & 룰렛 - 게시판 - 스케줄 좌석
         bottomRow.appendChild(weatherCard);  // 레이아웃 색상
+        bottomRow.appendChild(rouletteCard); // 날씨 & 룰렛
         bottomRow.appendChild(boardBtn);     // 게시판
-        bottomRow.appendChild(rouletteCard); // 날씨 & 기타
         bottomRow.appendChild(scheduleCard); // 스케줄 좌석
 
         list.appendChild(bottomRow);
@@ -1894,6 +1909,21 @@
     // 팝업 열 때만 생성
     function toggleBattery() {
         if (batteryPopup.style.display !== 'block') {
+
+            // Alt+Q 메인 레이아웃이 떠있을 때만 스트림덱 바로 위(bottom 라인)에 맞춤,
+            // 아니면(Alt+B 단독 호출 등) 기존 우상단 고정 위치 그대로
+            if (dashboard.style.display === 'block' && typeof getSharedPopupRect === 'function') {
+                const r = getSharedPopupRect();
+                batteryPopup.style.top = 'auto';
+                batteryPopup.style.left = r.left + 'px';
+                batteryPopup.style.right = 'auto';
+                batteryPopup.style.bottom = r.bottom + 'px';
+            } else {
+                batteryPopup.style.top = '20px';
+                batteryPopup.style.left = 'auto';
+                batteryPopup.style.right = '20px';
+                batteryPopup.style.bottom = 'auto';
+            }
 
             updateBatteryStatus();  
             batteryPopup.style.display = 'block';
@@ -1922,20 +1952,12 @@
 		
         const sharedPopup = document.getElementById('neubie-shared-popup');
         if (sharedPopup) sharedPopup.style.display = 'none';
-        const tipsOverlay = document.getElementById('neubie-tips-overlay');
-        if (tipsOverlay) tipsOverlay.style.display = 'none';
         const boardOverlay = document.getElementById('neubie-board-overlay');
         if (boardOverlay) boardOverlay.style.display='none';
         const secretOverlay = document.getElementById('neubie-secret-overlay');
         if (secretOverlay) secretOverlay.style.display='none';
-        const weatherOverlay = document.getElementById('neubie-weather-overlay');
-        if (weatherOverlay) weatherOverlay.style.display='none';
         if (window._neubieWeatherCard) window._neubieWeatherCard.style.outline = 'none';
-        const rouletteOverlay = document.getElementById('neubie-roulette-overlay');
-        if (rouletteOverlay) rouletteOverlay.style.display = 'none';
         if (window._neubieRouletteCard) window._neubieRouletteCard.style.outline = 'none';
-        const gamepadGuideOverlay = document.getElementById('neubie-gamepad-guide-overlay'); 
-		if (gamepadGuideOverlay) gamepadGuideOverlay.style.display = 'none';
     }
 
     // ── 유효성 검증 (1시간 이내 데이터) ──
@@ -2630,6 +2652,7 @@
 
 		if (window._missionThemeObserver) window._missionThemeObserver.disconnect();
 
+		const watchTarget = missionCard.parentElement || missionCard;   // ← 카드 자신이 아니라 부모를 감시
 		let selfWriting = false;
 		window._missionThemeObserver = new MutationObserver(() => {
 			if (selfWriting) return;
@@ -2637,10 +2660,14 @@
 			if (saved !== 'light') return;
 
 			selfWriting = true;
-			driveThemeMark(missionCard, DRIVE_THEMES.light);
-			requestAnimationFrame(() => { selfWriting = false; });
+			const freshCard = driveThemeFindByText('도착 처리');   // ← 매번 다시 찾음 (교체됐어도 최신 노드 확보)
+			if (freshCard) driveThemeMark(freshCard, DRIVE_THEMES.light);
+			requestAnimationFrame(() => {
+				selfWriting = false;
+				watchMissionProgressCard();   // ← 감시 대상이 바뀌었을 수 있으니 스스로 재등록
+			});
 		});
-		window._missionThemeObserver.observe(missionCard, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
+		window._missionThemeObserver.observe(watchTarget, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
 	}
 
 	function watchLogPanel() {
@@ -3129,7 +3156,6 @@
                 <div id="nb-board-header" style="display:flex; align-items:center; gap:8px; padding:12px 16px; border-bottom:0.5px solid rgba(255,255,255,0.12); cursor:grab;">
                     <span style="font-size:15px; font-weight:600; color:#fff; flex:1;"><span class="nb-emoji">📋</span> NCC 게시판</span>
                     <button id="nb-secret-inline-btn" style="height:28px; padding:0 10px; font-size:12px; font-weight:500; background:transparent; border:1px solid #a78bfa; color:#a78bfa; border-radius:6px; cursor:pointer;">🔒 문의</button>
-                    <button id="nb-tips-btn" style="height:28px; padding:0 10px; font-size:12px; font-weight:500; background:#f59e0b; color:#1a1a1a; border:none; border-radius:6px; cursor:pointer;" title="최적화 팁">💡 최적화 팁</button>
                     <button id="nb-refresh-btn" style="height:28px; width:28px; background:rgba(255,255,255,0.1); color:white; border:none; border-radius:6px; cursor:pointer; font-size:14px;" title="새로고침">↺</button>
 					<button id="nb-write-btn" style="height:28px; padding:0 12px; font-size:12px; font-weight:500; background:#6366f1; color:white; border:none; border-radius:6px; cursor:pointer;">✏️ 글쓰기</button>
                     <button id="nb-board-close" style="background:rgba(255,255,255,0.1); border:none; color:#fff; width:26px; height:26px; border-radius:50%; cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center;">✕</button>
@@ -3239,7 +3265,6 @@
 			document.getElementById('nb-edit-submit').onclick = submitEdit;
 			document.getElementById('nb-refresh-btn').onclick = () => loadPosts();
             document.getElementById('nb-secret-inline-btn').onclick = () => openSecretOverlay();
-            document.getElementById('nb-tips-btn').onclick = () => openTipsOverlay();
             document.getElementById('nb-write-btn').onclick = () => {
                 if (!myEmail) return alert('로그인 정보가 없어 글쓰기가 불가합니다.');
                 showWriteScreen();
@@ -4508,7 +4533,7 @@
                     btn.onclick = () => {
                         const next = btn.dataset.nbt;
                         localStorage.setItem('neubie_theme', next);
-                        ['neubie-shared-popup', 'neubie-weather-overlay', 'neubie-roulette-overlay', 'neubie-tips-overlay', 'neubie-secret-overlay', 'neubie-gamepad-guide-overlay'].forEach(id => {
+                        ['neubie-shared-popup', 'neubie-secret-overlay'].forEach(id => {
                             const el = document.getElementById(id);
                             if (el) el.remove();
                         });
@@ -4537,54 +4562,34 @@
                 box.style.cssText = `background:${T.card}; color:${T.text}; border-radius:16px; padding:20px; width:100%; box-sizing:border-box; box-shadow:0 4px 40px rgba(0,0,0,0.7); pointer-events:auto;`;
                 box.innerHTML = `
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-                        <span style="font-size:16px;font-weight:700;">🌤️ 날씨 & 룰렛 & 기타</span>
+                        <span style="font-size:16px;font-weight:700;">🧰 날씨 & 룰렛 & 기타</span>
                         <button id="mto-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
                     </div>
                     <div style="display:flex; flex-direction:column; gap:8px;">
                         <button id="mto-weather" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🌤️ 실시간 날씨 (기상청 API)</button>
-                        <button id="mto-roulette" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🎡 룰렛 & 동전 & 메모</button>
+                        <button id="mto-roulette" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🎡 룰렛 돌리기</button>
+                        <button id="mto-tips" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">💡 최적화 팁</button>
                     </div>
                 `;
                 box.querySelector('#mto-close').onclick = () => {
                     window.hideSharedPopup();
                     if (window._neubieRouletteCard) window._neubieRouletteCard.style.outline = 'none';
                 };
-                box.querySelector('#mto-weather').onclick = () => {
-                    window.hideSharedPopup();
-                    if (window._neubieRouletteCard) window._neubieRouletteCard.style.outline = 'none';
-                    openWeatherOverlay();
-                };
-                box.querySelector('#mto-roulette').onclick = () => {
-                    window.hideSharedPopup();
-                    if (window._neubieRouletteCard) window._neubieRouletteCard.style.outline = 'none';
-                    openRouletteOverlay();
-                };
+                box.querySelector('#mto-weather').onclick = () => openWeatherOverlay();
+                box.querySelector('#mto-roulette').onclick = () => openRouletteOverlay();
+                box.querySelector('#mto-tips').onclick = () => openTipsOverlay();
                 window.showSharedPopup('moretools', box);
             };
 
             window.openWeatherOverlay = async function() {
                 const T = getNbTheme();
-                let overlay = document.getElementById('neubie-weather-overlay');
-                if (overlay) { overlay.style.display = 'flex'; renderWeather(overlay); return; }
-
-                overlay = document.createElement('div');
-                overlay.id = 'neubie-weather-overlay';
-                overlay.style.cssText = `
-                    position:fixed; inset:0; z-index:2147483646;
-                    background:transparent;
-                    display:flex; align-items:flex-start; justify-content:center; padding-top:20px;
-                    font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;
-                    pointer-events:none;
-                `;
                 const box = document.createElement('div');
                 box.style.cssText = `
                     background:${T.card}; color:${T.text};
                     border-radius:16px; padding:20px;
-                    width:min(96vw,720px);
+                    width:100%; box-sizing:border-box;
                     box-shadow:0 4px 40px rgba(0,0,0,0.7);
                     pointer-events:auto;
-                    transform: scale(1.25);
-                    transform-origin: top center;
                 `;
                 box.innerHTML = `
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
@@ -4593,14 +4598,12 @@
                     </div>
                     <div id="nwo-body" style="font-size:13px;color:#64748b;">불러오는 중...</div>
                 `;
-                overlay.appendChild(box);
-                document.body.appendChild(overlay);
                 box.querySelector('#nwo-close').onclick = () => {
-                    overlay.style.display = 'none';
-                    window._neubieWeatherCard.style.outline = 'none';
+                    window.hideSharedPopup();
+                    if (window._neubieRouletteCard) window._neubieRouletteCard.style.outline = 'none';
                 };
-
-                renderWeather(overlay);
+                window.showSharedPopup('weather', box);
+                renderWeather(box);
             };
 
             async function renderWeather(overlay, nx = WEATHER_CONFIG.nx, ny = WEATHER_CONFIG.ny, label = '송내') {
@@ -4618,11 +4621,13 @@
                     </div>`).join('');
 
                 const dailyHtml = data.daily.map(d => `
-                    <div style="background:#1a1c24;border-radius:10px;padding:10px 6px;text-align:center;flex:1;">
-                        <div style="font-size:12px;color:#94a3b8;margin-bottom:4px;">${formatDailyLabel(d.date)}</div>
-                        <div style="font-size:18px;">${d.icon}</div>
-                        <div style="font-size:13px;font-weight:700;margin-top:6px;">${d.min}° / ${d.max}°</div>
-                        <div style="font-size:11px;color:${d.pop > 0 ? '#4f8ef7' : '#64748b'};margin-top:2px;">${d.pop > 0 ? '강수 ' + d.pop + '%' : '강수 없음'}</div>
+                    <div style="background:#1a1c24;border-radius:8px;padding:6px 8px;flex:1;">
+                        <div style="display:flex;align-items:center;justify-content:space-between;">
+                            <span style="font-size:11px;color:#94a3b8;">${formatDailyLabel(d.date)}</span>
+                            <span style="font-size:14px;">${d.icon}</span>
+                        </div>
+                        <div style="font-size:12px;font-weight:700;margin-top:3px;">${d.min}° / ${d.max}°</div>
+                        <div style="font-size:9px;color:${d.pop > 0 ? '#4f8ef7' : '#64748b'};margin-top:1px;">${d.pop > 0 ? '강수 ' + d.pop + '%' : '강수 없음'}</div>
                     </div>`).join('');
 
                 const favs = JSON.parse(localStorage.getItem('neubie_weather_favs') || '[]');
@@ -4730,186 +4735,248 @@
                 return data;
             }
 
-            window.openGamepadGuideOverlay = function() {
-                const isOff = isDpadBindingOff();
-                let overlay = document.getElementById('neubie-gamepad-guide-overlay');
-
-                // 스트림덱 타일(bottomRow) 바로 위 영역에 앉히기 — 못 찾으면 전체 화면 중앙으로 폴백
-                const dashboardEl = document.getElementById('neubie-dashboard');
-                const tilesEl = document.getElementById('neubie-streamdeck-grid');
-                let posRect = null;
-                if (dashboardEl && tilesEl) {
-                    const d = dashboardEl.getBoundingClientRect();
-                    const t = tilesEl.getBoundingClientRect();
-                    posRect = { top: d.top, left: d.left, width: d.width, height: Math.max(120, t.top - d.top) };
-                }
-
-                if (!overlay) {
-                    overlay = document.createElement('div');
-                    overlay.id = 'neubie-gamepad-guide-overlay';
-                    overlay.style.cssText = `
-                        position:fixed; z-index:2147483646;
-                        display:flex; align-items:center; justify-content:center;
-                        font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif; pointer-events:none;
-                    `;
-                    document.body.appendChild(overlay);
-                }
-                if (posRect) {
-                    overlay.style.top = posRect.top + 'px';
-                    overlay.style.left = posRect.left + 'px';
-                    overlay.style.width = posRect.width + 'px';
-                    overlay.style.height = posRect.height + 'px';
-                } else {
-                    overlay.style.inset = '0';
-                }
-                overlay.style.display = 'flex';
-                overlay.innerHTML = `
-                    <div style="background:#1e1e2e; color:#e2e8f0; border-radius:16px; padding:16px; max-width:92vw; max-height:90vh; box-shadow:0 10px 50px rgba(0,0,0,0.7); pointer-events:auto; display:flex; flex-direction:column;">
-                        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; gap:10px;">
-                            <div style="display:flex; align-items:center; gap:10px;">
-                                <span style="font-size:16px; font-weight:700;">🎮 D-PAD 기능변경 설명</span>
-                                <button id="gp-toggle" style="width:110px; padding:6px 0; border-radius:8px; border:1px solid ${isOff ? '#ef4444' : '#22c55e'}; background:${isOff ? 'rgba(239,68,68,0.15)' : 'rgba(34,197,94,0.15)'}; color:${isOff ? '#ef4444' : '#22c55e'}; font-weight:700; font-size:13px; cursor:pointer; text-align:center;">${isOff ? '기능 OFF됨' : '기능 ON됨'}</button>
-                            </div>
-                            <button id="gp-close" style="width:28px; height:28px; border:none; border-radius:5px; background:#3b0000; border:1px solid #ef4444; color:#ef4444; font-size:16px; cursor:pointer;">✕</button>
-                        </div>
-                        <img src="https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/xbox_binding.jpg"
-                             width="960" height="540"
-                             style="border-radius:8px; display:block; max-width:90vw; max-height:80vh;" />
+            // 게임패드 타일을 누르면 뜨는 선택 바 — '날씨 & 룰렛 & 기타'와 동일한 패턴
+            window.openGamepadMenuOverlay = function() {
+                const T = getNbTheme();
+                const box = document.createElement('div');
+                box.style.cssText = `background:${T.card}; color:${T.text}; border-radius:16px; padding:20px; width:100%; box-sizing:border-box; box-shadow:0 4px 40px rgba(0,0,0,0.7); pointer-events:auto;`;
+                box.innerHTML = `
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                        <span style="font-size:16px;font-weight:700;">🎮 게임패드</span>
+                        <button id="gpm-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:8px;">
+                        <button id="gpm-guide" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🕹️ D패드 기능변경 설명</button>
+                        <button id="gpm-tester" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🎮 컨트롤러 테스터</button>
                     </div>
                 `;
-                overlay.querySelector('#gp-toggle').onclick = () => {
-                    if (isDpadBindingOff()) {
-                        localStorage.setItem('neubie_dpad_binding', 'on');   
-                    } else {
-                        localStorage.setItem('neubie_dpad_binding', 'off');
+                box.querySelector('#gpm-close').onclick = () => window.hideSharedPopup();
+                box.querySelector('#gpm-guide').onclick = () => openGamepadGuideOverlay();
+                box.querySelector('#gpm-tester').onclick = () => openGamepadTesterOverlay();
+                window.showSharedPopup('gamepad-menu', box);
+            };
+
+            // 실시간 컨트롤러 테스터 — gamepad-tester.com과 동일한 원리(Gamepad API 폴링)
+            window.openGamepadTesterOverlay = function() {
+                const box = document.createElement('div');
+                box.style.cssText = `background:#1e1e2e; color:#e2e8f0; border-radius:16px; padding:16px; width:100%; box-sizing:border-box; box-shadow:0 10px 50px rgba(0,0,0,0.7); pointer-events:auto;`;
+                box.innerHTML = `
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; gap:10px;">
+                        <span style="font-size:16px; font-weight:700;">🎮 컨트롤러 테스터</span>
+                        <button id="gpt-close" style="width:28px; height:28px; border:none; border-radius:5px; background:#3b0000; border:1px solid #ef4444; color:#ef4444; font-size:16px; cursor:pointer;">✕</button>
+                    </div>
+                    <div id="gpt-status" style="text-align:center; font-size:12px; color:#94a3b8; margin-bottom:10px;">컨트롤러의 아무 버튼이나 눌러 연결하세요</div>
+
+                    <div style="display:flex; justify-content:space-between; gap:16px; margin-bottom:8px;">
+                        <div style="flex:1;">
+                            <div style="font-size:10px; color:#64748b; margin-bottom:3px;">LT</div>
+                            <div style="height:8px; border-radius:4px; background:#12131a; overflow:hidden;"><div id="gpt-lt" style="height:100%; width:0%; background:#4f8ef7;"></div></div>
+                        </div>
+                        <div style="flex:1;">
+                            <div style="font-size:10px; color:#64748b; margin-bottom:3px;">RT</div>
+                            <div style="height:8px; border-radius:4px; background:#12131a; overflow:hidden;"><div id="gpt-rt" style="height:100%; width:0%; background:#4f8ef7;"></div></div>
+                        </div>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; gap:16px; margin-bottom:14px;">
+                        <div style="flex:1; height:12px; border-radius:4px; background:#12131a; display:flex; align-items:center; justify-content:center; font-size:9px; color:#64748b;" id="gpt-lb">LB</div>
+                        <div style="flex:1; height:12px; border-radius:4px; background:#12131a; display:flex; align-items:center; justify-content:center; font-size:9px; color:#64748b;" id="gpt-rb">RB</div>
+                    </div>
+
+                    <div style="display:flex; align-items:center; justify-content:space-between;">
+                        <div style="position:relative; width:64px; height:64px; border-radius:50%; background:#12131a; flex-shrink:0;">
+                            <div id="gpt-ls-dot" style="position:absolute; left:22px; top:22px; width:20px; height:20px; border-radius:50%; background:#3a3f52;"></div>
+                        </div>
+
+                        <div style="position:relative; width:52px; height:52px; flex-shrink:0;">
+                            <div id="gpt-dpad-up" style="position:absolute; left:16px; top:0; width:20px; height:16px; background:#12131a; border-radius:3px;"></div>
+                            <div id="gpt-dpad-down" style="position:absolute; left:16px; top:36px; width:20px; height:16px; background:#12131a; border-radius:3px;"></div>
+                            <div id="gpt-dpad-left" style="position:absolute; left:0; top:16px; width:16px; height:20px; background:#12131a; border-radius:3px;"></div>
+                            <div id="gpt-dpad-right" style="position:absolute; left:36px; top:16px; width:16px; height:20px; background:#12131a; border-radius:3px;"></div>
+                        </div>
+
+                        <div style="display:flex; flex-direction:column; align-items:center; gap:4px; flex-shrink:0;">
+                            <div style="display:flex; gap:10px;">
+                                <div id="gpt-view" style="width:16px; height:16px; border-radius:50%; background:#12131a; opacity:0.5;"></div>
+                                <div id="gpt-xbox" style="width:20px; height:20px; border-radius:50%; background:#12131a; opacity:0.5; display:flex; align-items:center; justify-content:center; font-size:9px; color:#4f8ef7;">X</div>
+                                <div id="gpt-menu" style="width:16px; height:16px; border-radius:50%; background:#12131a; opacity:0.5;"></div>
+                            </div>
+                        </div>
+
+                        <div style="position:relative; width:64px; height:64px; flex-shrink:0;">
+                            <div id="gpt-y" style="position:absolute; left:22px; top:0; width:20px; height:20px; border-radius:50%; background:#12131a; opacity:0.4; display:flex; align-items:center; justify-content:center; font-size:10px;">Y</div>
+                            <div id="gpt-x" style="position:absolute; left:0; top:22px; width:20px; height:20px; border-radius:50%; background:#12131a; opacity:0.4; display:flex; align-items:center; justify-content:center; font-size:10px;">X</div>
+                            <div id="gpt-b" style="position:absolute; left:44px; top:22px; width:20px; height:20px; border-radius:50%; background:#12131a; opacity:0.4; display:flex; align-items:center; justify-content:center; font-size:10px;">B</div>
+                            <div id="gpt-a" style="position:absolute; left:22px; top:44px; width:20px; height:20px; border-radius:50%; background:#12131a; opacity:0.4; display:flex; align-items:center; justify-content:center; font-size:10px;">A</div>
+                        </div>
+
+                        <div style="position:relative; width:64px; height:64px; border-radius:50%; background:#12131a; flex-shrink:0;">
+                            <div id="gpt-rs-dot" style="position:absolute; left:22px; top:22px; width:20px; height:20px; border-radius:50%; background:#3a3f52;"></div>
+                        </div>
+                    </div>
+
+                    <div id="gpt-raw" style="margin-top:12px; font-size:10px; color:#4b5563; text-align:center;">axes / 버튼 index는 연결 후 표시됩니다</div>
+                `;
+
+                box.querySelector('#gpt-close').onclick = () => window.hideSharedPopup();
+                window.showSharedPopup('gamepad-tester', box);
+
+                // 이 오버레이가 화면에서 사라지면(다른 타일 클릭으로 내용 교체됨) rAF 루프 자동 정지
+                const ids = { a:'gpt-a', b:'gpt-b', x:'gpt-x', y:'gpt-y', lb:'gpt-lb', rb:'gpt-rb', view:'gpt-view', menu:'gpt-menu', up:'gpt-dpad-up', down:'gpt-dpad-down', left:'gpt-dpad-left', right:'gpt-dpad-right' };
+                const btnMap = { 0:ids.a, 1:ids.b, 2:ids.x, 3:ids.y, 4:ids.lb, 5:ids.rb, 8:ids.view, 9:ids.menu, 12:ids.up, 13:ids.down, 14:ids.left, 15:ids.right };
+                let connected = false;
+
+                function gpTesterLoop() {
+                    if (!document.body.contains(box)) return; // 팝업이 다른 내용으로 교체/닫힘 → 루프 종료
+                    const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+                    const gp = pads[0];
+                    const statusEl = box.querySelector('#gpt-status');
+                    if (gp) {
+                        if (!connected) { connected = true; if (statusEl) statusEl.textContent = '✅ ' + gp.id; }
+                        for (const idx in btnMap) {
+                            const el = box.querySelector('#' + btnMap[idx]);
+                            if (!el) continue;
+                            const pressed = gp.buttons[idx] && gp.buttons[idx].pressed;
+                            el.style.background = pressed ? '#4f8ef7' : '#12131a';
+                            el.style.opacity = pressed ? '1' : (el.id === ids.view || el.id === ids.menu ? '0.5' : '0.4');
+                        }
+                        const xboxEl = box.querySelector('#gpt-xbox');
+                        if (xboxEl) {
+                            const xboxPressed = gp.buttons[16] && gp.buttons[16].pressed;
+                            xboxEl.style.background = xboxPressed ? '#4f8ef7' : '#12131a';
+                        }
+                        const lt = gp.buttons[6] ? gp.buttons[6].value : 0;
+                        const rt = gp.buttons[7] ? gp.buttons[7].value : 0;
+                        const ltEl = box.querySelector('#gpt-lt'), rtEl = box.querySelector('#gpt-rt');
+                        if (ltEl) ltEl.style.width = Math.round(lt * 100) + '%';
+                        if (rtEl) rtEl.style.width = Math.round(rt * 100) + '%';
+                        const lx = gp.axes[0] || 0, ly = gp.axes[1] || 0, rx = gp.axes[2] || 0, ry = gp.axes[3] || 0;
+                        const lsDot = box.querySelector('#gpt-ls-dot'), rsDot = box.querySelector('#gpt-rs-dot');
+                        if (lsDot) { lsDot.style.transform = `translate(${lx * 18}px,${ly * 18}px)`; lsDot.style.background = (Math.abs(lx) > 0.05 || Math.abs(ly) > 0.05) ? '#4f8ef7' : '#3a3f52'; }
+                        if (rsDot) { rsDot.style.transform = `translate(${rx * 18}px,${ry * 18}px)`; rsDot.style.background = (Math.abs(rx) > 0.05 || Math.abs(ry) > 0.05) ? '#4f8ef7' : '#3a3f52'; }
+                        const rawEl = box.querySelector('#gpt-raw');
+                        if (rawEl) rawEl.textContent = `LT ${lt.toFixed(2)} / RT ${rt.toFixed(2)} / LX ${lx.toFixed(2)} LY ${ly.toFixed(2)} / RX ${rx.toFixed(2)} RY ${ry.toFixed(2)}`;
+                    } else if (connected) {
+                        connected = false;
+                        if (statusEl) statusEl.textContent = '컨트롤러의 아무 버튼이나 눌러 연결하세요';
                     }
-                    window.syncGamepadTile?.(); // Alt+Q 메인 레이아웃의 게임패드 타일 즉시 동기화
-                    openGamepadGuideOverlay();
-                };
-                overlay.querySelector('#gp-close').onclick = () => { overlay.style.display = 'none'; };
+                    requestAnimationFrame(gpTesterLoop);
+                }
+                requestAnimationFrame(gpTesterLoop);
+            };
+
+            window.openGamepadGuideOverlay = function() {
+                const box = document.createElement('div');
+                box.style.cssText = `background:#1e1e2e; color:#e2e8f0; border-radius:16px; padding:16px; width:100%; box-sizing:border-box; max-height:90vh; overflow-y:auto; box-shadow:0 10px 50px rgba(0,0,0,0.7); pointer-events:auto; display:flex; flex-direction:column;`;
+                box.innerHTML = `
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; gap:10px;">
+                        <span style="font-size:16px; font-weight:700;">🎮 D-PAD 기능변경 설명</span>
+                        <button id="gp-close" style="width:28px; height:28px; border:none; border-radius:5px; background:#3b0000; border:1px solid #ef4444; color:#ef4444; font-size:16px; cursor:pointer;">✕</button>
+                    </div>
+                    <img src="https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/xbox_binding.jpg"
+                         style="border-radius:8px; display:block; width:100%; height:auto;" />
+                `;
+                box.querySelector('#gp-close').onclick = () => window.hideSharedPopup();
+                window.showSharedPopup('gamepad-guide', box);
             };
 
             window.openTipsOverlay = function() {
                 const T = getNbTheme();
-                const dashboardEl = document.getElementById('neubie-dashboard');
-                let tipsOverlay = document.getElementById('neubie-tips-overlay');
-                if (!tipsOverlay) {
-                    tipsOverlay = document.createElement('div');
-                    tipsOverlay.id = 'neubie-tips-overlay';
-                    tipsOverlay.style.cssText = `
-                        position:fixed; inset:0; background:transparent; pointer-events:none;
-                        z-index:2147483646; display:flex; align-items:center; justify-content:center;
-                        font-family:Pretendard, sans-serif; border-radius:20px; overflow:hidden;
-                    `;
-                    const tipsBox = document.createElement('div');
-                    tipsBox.style.cssText = `
-                        background:#1e1e2e; color:#e2e8f0; border-radius:18px; pointer-events:auto;
-                        border:1.5px solid #f59e0b; padding:28px 32px 24px 32px;
-                        max-width:560px; width:90%; max-height:80vh; overflow-y:auto;
-                        position:relative; box-shadow:0 10px 50px rgba(0,0,0,0.7);
-                    `;
-                    const tipsTitle = document.createElement('div');
-                    tipsTitle.textContent = '최적화 팁';
-                    tipsTitle.style.cssText = `font-size:20px; font-weight:bold; margin-bottom:20px; color:#fcd34d;`;
+                const box = document.createElement('div');
+                box.style.cssText = `
+                    background:${T.card}; color:${T.text}; border-radius:18px;
+                    border:1.5px solid #f59e0b; padding:28px 32px 24px 32px;
+                    width:100%; box-sizing:border-box; max-height:80vh; overflow-y:auto;
+                    position:relative; box-shadow:0 10px 50px rgba(0,0,0,0.7); pointer-events:auto;
+                `;
+                const tipsTitle = document.createElement('div');
+                tipsTitle.textContent = '최적화 팁';
+                tipsTitle.style.cssText = `font-size:20px; font-weight:bold; margin-bottom:20px; color:#fcd34d;`;
 
-                    const tipsClose = document.createElement('button');
-                    tipsClose.textContent = '✕';
-                    tipsClose.style.cssText = `
-                        position:absolute; top:16px; right:18px;
-                        background:transparent; border:none; color:#aaa;
-                        font-size:20px; cursor:pointer; line-height:1; padding:4px 8px;
-                        border-radius:6px; transition:color 0.2s;
-                    `;
-                    tipsClose.onmouseenter = () => { tipsClose.style.color='#fff'; };
-                    tipsClose.onmouseleave = () => { tipsClose.style.color='#aaa'; };
-                    tipsClose.onclick = () => { tipsOverlay.style.display = 'none'; };
+                const tipsClose = document.createElement('button');
+                tipsClose.textContent = '✕';
+                tipsClose.style.cssText = `
+                    position:absolute; top:16px; right:18px;
+                    background:transparent; border:none; color:#aaa;
+                    font-size:20px; cursor:pointer; line-height:1; padding:4px 8px;
+                    border-radius:6px; transition:color 0.2s;
+                `;
+                tipsClose.onmouseenter = () => { tipsClose.style.color='#fff'; };
+                tipsClose.onmouseleave = () => { tipsClose.style.color='#aaa'; };
+                tipsClose.onclick = () => {
+                    window.hideSharedPopup();
+                    if (window._neubieRouletteCard) window._neubieRouletteCard.style.outline = 'none';
+                };
 
-                    const tipsItems = [
-                        { title: "슬랙 PWA 버전 사용법", url: "https://telling-ink-a85.notion.site/PWA-366a8cf5ba7b80eebb43e017c095702c?pvs=74" },
-                        { title: "OBS 설정법", url: "https://telling-ink-a85.notion.site/OBS-366a8cf5ba7b80dfb101cfa149eaefcf?pvs=74" },
-                        { title: "CYH's 추천 프로그램", url: "https://telling-ink-a85.notion.site/366a8cf5ba7b80958575eadb8809f313" },
-                    ];
-                    const tipsContent = document.createElement('div');
-                    tipsContent.style.cssText = "display:grid; gap:10px;";
-                    tipsItems.forEach(item => {
-                        const row = document.createElement('div');
-                        row.style.cssText = `
-                            display:flex; justify-content:space-between; align-items:center;
-                            background:#252525; border:1px solid #333333; border-radius:12px;
-                            padding:13px 16px; gap:12px;
-                        `;
-                        const rowTitle = document.createElement('span');
-                        rowTitle.textContent = item.title;
-                        rowTitle.style.cssText = "font-size:14px; font-weight:600; color:#e2e8f0; flex:1;";
-                        const rowBtn = document.createElement('button');
-                        rowBtn.textContent = '열기';
-                        rowBtn.style.cssText = `
-                            background:#f59e0b; color:#1a1a1a; border:none;
-                            padding:7px 16px; border-radius:8px; cursor:pointer;
-                            font-weight:bold; font-size:13px; white-space:nowrap;
-                            transition:background 0.2s;
-                        `;
-                        rowBtn.onmouseenter = () => { rowBtn.style.background='#fbbf24'; };
-                        rowBtn.onmouseleave = () => { rowBtn.style.background='#f59e0b'; };
-                        rowBtn.onclick = () => { window.open(item.url, '_blank'); };
-                        row.appendChild(rowTitle);
-                        row.appendChild(rowBtn);
-                        tipsContent.appendChild(row);
-                    });
-                    tipsBox.appendChild(tipsClose);
-                    tipsBox.appendChild(tipsTitle);
-                    tipsBox.appendChild(tipsContent);
-                    tipsOverlay.appendChild(tipsBox);
-                    document.body.appendChild(tipsOverlay);
-                }
-                const r0 = dashboardEl.getBoundingClientRect();
-                tipsOverlay.style.top = r0.top + 'px';
-                tipsOverlay.style.left = r0.left + 'px';
-                tipsOverlay.style.width = r0.width + 'px';
-                tipsOverlay.style.height = r0.height + 'px';
-                tipsOverlay.style.display = 'flex';
+                const tipsItems = [
+                    { title: "슬랙 PWA 버전 사용법", url: "https://telling-ink-a85.notion.site/PWA-366a8cf5ba7b80eebb43e017c095702c?pvs=74" },
+                    { title: "OBS 설정법", url: "https://telling-ink-a85.notion.site/OBS-366a8cf5ba7b80dfb101cfa149eaefcf?pvs=74" },
+                    { title: "CYH's 추천 프로그램", url: "https://telling-ink-a85.notion.site/366a8cf5ba7b80958575eadb8809f313" },
+                ];
+                const tipsContent = document.createElement('div');
+                tipsContent.style.cssText = "display:grid; gap:10px;";
+                tipsItems.forEach(item => {
+                    const row = document.createElement('div');
+                    row.style.cssText = `
+                        display:flex; justify-content:space-between; align-items:center;
+                        background:${T.bg === '#111111' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)'};
+                        border:1px solid ${T.border}; border-radius:12px;
+                        padding:13px 16px; gap:12px;
+                    `;
+                    const rowTitle = document.createElement('span');
+                    rowTitle.textContent = item.title;
+                    rowTitle.style.cssText = `font-size:14px; font-weight:600; color:${T.text}; flex:1;`;
+                    const rowBtn = document.createElement('button');
+                    rowBtn.textContent = '열기';
+                    rowBtn.style.cssText = `
+                        background:#f59e0b; color:#1a1a1a; border:none;
+                        padding:7px 16px; border-radius:8px; cursor:pointer;
+                        font-weight:bold; font-size:13px; white-space:nowrap;
+                        transition:background 0.2s;
+                    `;
+                    rowBtn.onmouseenter = () => { rowBtn.style.background='#fbbf24'; };
+                    rowBtn.onmouseleave = () => { rowBtn.style.background='#f59e0b'; };
+                    rowBtn.onclick = () => { window.open(item.url, '_blank'); };
+                    row.appendChild(rowTitle);
+                    row.appendChild(rowBtn);
+                    tipsContent.appendChild(row);
+                });
+                box.appendChild(tipsClose);
+                box.appendChild(tipsTitle);
+                box.appendChild(tipsContent);
+                window.showSharedPopup('tips', box);
             };
 
             window.openRouletteOverlay = function() {
                 const T = getNbTheme();
-                let overlay = document.getElementById('neubie-roulette-overlay');
-                if (overlay) { overlay.style.display = 'flex'; return; }
-
-                overlay = document.createElement('div');
-                overlay.id = 'neubie-roulette-overlay';
-                overlay.style.cssText = `
-                    position:fixed; inset:0; z-index:2147483646;
-                    background:transparent; pointer-events:none;
-                    display:flex; align-items:center; justify-content:center;
-                    font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;
-                `;
                 const box = document.createElement('div');
                 box.style.cssText = `
                     background:${T.card}; color:${T.text};
                     border-radius:16px; padding:20px;
-                    width:min(94vw,620px);
+                    width:100%; box-sizing:border-box;
                     box-shadow:0 4px 40px rgba(0,0,0,0.7);
                     pointer-events:auto;
                 `;
                 box.innerHTML = `
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-                        <span style="font-size:18px;font-weight:700;color:#4f8ef7;">🎡 룰렛 돌리기 & 동전 던지기 & 개인 메모</span>
+                        <span style="font-size:18px;font-weight:700;color:#4f8ef7;">🎡 룰렛 돌리기</span>
                         <button id="rc-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
                     </div>
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-                        <div style="background:${T.bg};border-radius:12px;padding:14px;">
+                        <div style="background:${T.bg};border-radius:12px;padding:14px;display:flex;flex-direction:column;box-sizing:border-box;">
                             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-                                <span style="font-size:14px;font-weight:700;color:#94a3b8;">룰렛</span>
+                                <span style="font-size:14px;font-weight:700;color:#94a3b8;">룰렛 설정</span>
                                 <div style="display:flex;gap:6px;">
                                     <button id="rc-preset-lunch" style="font-size:11px;padding:4px 8px;background:#252525;border:1px solid #333;color:#e2e8f0;border-radius:6px;cursor:pointer;">식사 메뉴</button>
                                     <button id="rc-preset-people" style="font-size:11px;padding:4px 8px;background:#252525;border:1px solid #333;color:#e2e8f0;border-radius:6px;cursor:pointer;">사람 이름</button>
                                     <button id="rc-preset-etc" style="font-size:11px;padding:4px 8px;background:#252525;border:1px solid #333;color:#e2e8f0;border-radius:6px;cursor:pointer;">기타</button>
                                 </div>
                             </div>
-                            <textarea id="rc-input" rows="6" style="width:100%;box-sizing:border-box;resize:none;font-size:12px;background:#111319;color:#e2e8f0;border:1px solid #333;border-radius:8px;padding:6px 8px;"></textarea>
+                            <textarea id="rc-input" style="width:100%;flex:1;min-height:120px;box-sizing:border-box;resize:none;font-size:12px;background:#111319;color:#e2e8f0;border:1px solid #333;border-radius:8px;padding:6px 8px;"></textarea>
                             <button id="rc-build" style="width:100%;margin-top:6px;padding:6px;background:#252525;border:1px solid #333;color:#e2e8f0;border-radius:8px;cursor:pointer;font-size:12px;">룰렛 만들기 (엔터로 구분)</button>
+                        </div>
+                        <div style="background:${T.bg};border-radius:12px;padding:14px;display:flex;flex-direction:column;align-items:center;box-sizing:border-box;">
                             <div id="rc-capture-area" style="background:${T.card};border-radius:12px;padding:8px 0;">
-                                <div style="position:relative;width:190px;height:190px;margin:16px auto 6px;">
+                                <div style="position:relative;width:190px;height:190px;margin:0 auto 6px;">
                                     <div id="rc-pointer" style="position:absolute;top:-4px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:13px solid #e2e8f0;z-index:3;transition:transform .15s ease;"></div>
                                     <div id="rc-wheel-wrap" style="position:relative;width:190px;height:190px;transition:transform 5s cubic-bezier(.13,.72,.1,1);">
                                         <canvas id="rc-canvas" width="190" height="190" style="display:block;position:relative;z-index:1;pointer-events:none;"></canvas>
@@ -4924,39 +4991,11 @@
                             <button id="rc-spin" style="width:100%;padding:8px;background:#4f8ef7;border:none;color:#0f1117;font-weight:700;border-radius:8px;cursor:pointer;font-size:13px;">돌리기</button>
                             <button id="rc-copy-img" style="visibility:hidden;width:100%;margin-top:8px;padding:6px;background:#252525;border:1px solid #333;color:#e2e8f0;border-radius:8px;cursor:pointer;font-size:12px;">📋 결과 이미지 복사</button>
                         </div>
-                        <div style="background:${T.bg};border-radius:12px;padding:14px;display:flex;flex-direction:column;align-items:center;height:100%;box-sizing:border-box;">
-                            <div style="font-size:14px;font-weight:700;margin-bottom:12px;color:#94a3b8;align-self:flex-start;">동전 던지기</div>
-                            <div style="width:65px;height:65px;perspective:500px;margin:10px 0 12px;">
-                                <div id="rc-coin" style="width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform 2.6s cubic-bezier(.17,.67,.2,1);">
-                                    <div style="position:absolute;inset:0;border-radius:50%;background:#3a2a10;border:2px solid #f59e0b;display:flex;align-items:center;justify-content:center;backface-visibility:hidden;">
-                                        <div style="width:80%;height:80%;border-radius:50%;border:1px dashed #f59e0b;display:flex;align-items:center;justify-content:center;">
-                                            <span style="font-size:14px;font-weight:700;color:#fbbf24;">앞</span>
-                                        </div>
-                                    </div>
-                                    <div style="position:absolute;inset:0;border-radius:50%;background:#12233b;border:2px solid #4f8ef7;display:flex;align-items:center;justify-content:center;backface-visibility:hidden;transform:rotateY(180deg);">
-                                        <div style="width:80%;height:80%;border-radius:50%;border:1px dashed #4f8ef7;display:flex;align-items:center;justify-content:center;">
-                                            <span style="font-size:14px;font-weight:700;color:#4f8ef7;">뒤</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <button id="rc-flip" style="width:100%;padding:8px;background:#4f8ef7;border:none;color:#0f1117;font-weight:700;border-radius:8px;cursor:pointer;font-size:13px;">던지기</button>
-                            <div style="text-align:center;min-height:28px;margin-top:8px;">
-                                <span id="rc-coin-result" style="display:none;font-size:12px;font-weight:700;padding:4px 12px;border-radius:999px;"></span>
-                            </div>
-                            <div style="width:100%;margin-top:14px;border-top:1px solid #2e3347;padding-top:12px;flex:1;display:flex;flex-direction:column;min-height:0;">
-                                <div style="font-size:14px;color:#94a3b8;margin-bottom:6px;">개인 메모 (본인 브라우저에만 저장됨)</div>
-                                <textarea id="rc-memo" maxlength="500" style="width:100%;box-sizing:border-box;resize:none;overflow-y:auto;font-size:12px;background:#111319;color:#e2e8f0;border:1px solid #333;border-radius:8px;padding:6px 8px;flex:1;min-height:0;" placeholder="메모를 입력하세요..."></textarea>
-                                <div id="rc-memo-count" style="text-align:right;font-size:10px;color:#64748b;margin-top:2px;">0/500</div>
-                            </div>
-                        </div>
                     </div>
                 `;
-                overlay.appendChild(box);
-                document.body.appendChild(overlay);
 
                 box.querySelector('#rc-close').onclick = () => {
-                    overlay.style.display = 'none';
+                    window.hideSharedPopup();
                     if (window._neubieRouletteCard) window._neubieRouletteCard.style.outline = 'none';
                 };
 
@@ -5116,41 +5155,15 @@
                 rcRebuild();
                 rcSetActiveButton('lunch');
 
-                let coinRot = 0;
-                box.querySelector('#rc-flip').onclick = () => {
-                    const isHeads = Math.random() < 0.5;
-                    coinRot += 6 * 360 + (isHeads ? 0 : 180);
-                    box.querySelector('#rc-coin').style.transform = `rotateY(${coinRot}deg)`;
-                    const badge = box.querySelector('#rc-coin-result');
-                    badge.style.display = 'none';
-                    setTimeout(() => {
-                        badge.textContent = isHeads ? '앞면' : '뒷면';
-                        badge.style.background = isHeads ? '#3a2a10' : '#12233b';
-                        badge.style.color = isHeads ? '#fbbf24' : '#4f8ef7';
-                        badge.style.display = 'inline-block';
-                    }, 2650);
-                };
-                
-                const RC_MEMO_KEY = 'neubie_roulette_memo';
-                const memoEl = box.querySelector('#rc-memo');
-                const memoCountEl = box.querySelector('#rc-memo-count');
-                const savedMemo = localStorage.getItem(RC_MEMO_KEY);
-                if (savedMemo) {
-                    memoEl.value = savedMemo;
-                    memoCountEl.textContent = savedMemo.length + '/500';
-                }
-                memoEl.addEventListener('input', () => {
-                    localStorage.setItem(RC_MEMO_KEY, memoEl.value);
-                    memoCountEl.textContent = memoEl.value.length + '/500';
-                });
+                window.showSharedPopup('roulette', box);
             };
 
 			// 그 외 페이지는 기존 대시보드
-			const tipsOverlayEl = document.getElementById('neubie-tips-overlay');
+			const sharedPopupEl = document.getElementById('neubie-shared-popup');
 			const scheduleOverlayEl = document.getElementById('neubie-schedule-overlay');
               const isAnyOpen = (dashboard.style.display === 'block' || 
               batteryPopup.style.display === 'block' ||
-              (tipsOverlayEl && tipsOverlayEl.style.display === 'flex') ||
+              (sharedPopupEl && sharedPopupEl.style.display === 'flex') ||
               (scheduleOverlayEl && scheduleOverlayEl.style.display === 'flex'));
 			
 			if (isAnyOpen) {
@@ -5611,58 +5624,73 @@
 	    }, 100);
 	}
 
-	async function runAutoHandoverUpload() {
-        if (!isMonitoringPage()) return;
-		if (localStorage.getItem('neubie_handover_enabled') === 'false') return;
+	const NON_TOOL_USER = '이도연';
+
+    async function runAutoHandoverUpload() {
+        if (localStorage.getItem('neubie_handover_enabled') === 'false') return;
 
         const myName = _getMyName();
-        if (!myName) return; // 이름 없음 = 시크릿탭 취급, 원천 봉쇄 (요구사항 3)
+        if (!myName) return;
 
-        if (!isScheduledMonitorNow(myName)) return;
+        if (!state.insuData?.schedule) return;
+        const schedule = state.insuData.schedule;
+
+        const kstHour = getKSTDate().getHours();
+        const kstMin = getKSTMinutes();
+
+        let targetName = null;
+
+        if (kstHour === 7 && kstMin === 57 && schedule['07:00'] === NON_TOOL_USER) {
+		    targetName = schedule['08:00'];
+		} else if (kstHour === 8 && kstMin === 47 && schedule['08:00'] === NON_TOOL_USER) {
+		    targetName = schedule['07:00'];
+		} else if (kstHour === 9 && kstMin === 47 && schedule['09:00'] === NON_TOOL_USER) {
+		    targetName = schedule['08:00'];
+		} else {
+		    return; // 조건 불충족 - skip
+		}
+
+        if (!targetName || targetName !== myName) return; // 선정자 아니면 skip
 
         const now = new Date();
-        const fireKey = `neubie_ho_fired_${now.getFullYear()}${now.getMonth()}${now.getDate()}_${now.getHours()}`;
+        const fireKey = `neubie_ho_fired_${now.getFullYear()}${now.getMonth()}${now.getDate()}`;
         if (localStorage.getItem(fireKey)) return;
-        localStorage.setItem(fireKey, '1'); // 체크 직후 즉시 세팅 (일반탭 다중 방어)
-
-        showHandoverToast('현재 모니터링 기체 업로드 중...', 'progress');
+        localStorage.setItem(fireKey, '1');
 
         try {
-			// 최근에 이미 갱신됐는지 확인 (수동 업로드와의 충돌 방지) + taken 백업
-            const beforeRes = await fetchWithTimeout('https://multimonitoring.vercel.app/api/handover');   // ← fetch → fetchWithTimeout
+            const beforeRes = await fetchWithTimeout('https://multimonitoring.vercel.app/api/handover');
             const before = beforeRes.ok ? await beforeRes.json() : null;
 
             if (before) {
                 const secondsSinceUpdate = (Date.now() - new Date(before.updatedAt).getTime()) / 1000;
-                if (secondsSinceUpdate < 180) {
-                    return; // 최근 3분 내 이미 갱신됨 - 자동화는 양보하고 조용히 종료
-                }
+                if (secondsSinceUpdate < 180) return;
             }
             const preservedTaken = before?.taken || [];
-			
+
             const allRobots = await fetchAllRobotsForHandover();
             const units = allRobots
                 .filter(r => r.isMonitoring === true)
                 .map(r => r.nickname || r.name);
 
-            if (!units.length) {
-                showHandoverToast('모니터링 기체 업로드 실패', 'fail');
-                return; // 실패 시 그대로 종료, 추가 신호 없음 (요구사항 2)
-            }
+            if (!units.length) return;
 
-            const res = await fetchWithTimeout('https://multimonitoring.vercel.app/api/handover', {   // ← fetch → fetchWithTimeout
+            const res = await fetchWithTimeout('https://multimonitoring.vercel.app/api/handover', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ handover_by: myName, units })
+                body: JSON.stringify({ handover_by: NON_TOOL_USER, units })
             });
 
-            if (res.ok) {
-                showHandoverToast('모니터링 기체 업로드 성공', 'success');
-            } else {1
-                showHandoverToast('모니터링 기체 업로드 실패', 'fail');
+            if (!res.ok) return;
+
+            if (preservedTaken.length) {
+                await fetchWithTimeout('https://multimonitoring.vercel.app/api/handover', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ addTaken: preservedTaken })
+                });
             }
         } catch (e) {
-            showHandoverToast('모니터링 기체 업로드 실패', 'fail');
+            // 조용히 종료 후 다음날 자연 회복
         }
     }
 
@@ -5675,15 +5703,17 @@
 
     let lastNotifiedMin = -1; 
 
-    setInterval(() => {
-        const now = new Date();
-        const currentFullMin = now.getHours() * 60 + now.getMinutes();
-
-        if (lastNotifiedMin === currentFullMin) return;
-
-        lastNotifiedMin = currentFullMin; 
-        syncTasksFromServer(); 
-        
-    }, 1000);
+	setInterval(() => {
+	    const now = new Date();
+	    const currentFullMin = now.getHours() * 60 + now.getMinutes();
+	
+	    if (lastNotifiedMin === currentFullMin) return;
+	
+	    lastNotifiedMin = currentFullMin; 
+	    syncTasksFromServer(); 
+	
+	    runAutoHandoverUpload();
+	    
+	}, 1000);
 
 })();
