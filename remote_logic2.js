@@ -1192,7 +1192,7 @@
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
 		// 문자열을 넣으면 패치노트에 빨간 '`' 뱃지가 점멸하며 뜸.
 		// 빈 문자열('')로 비우면 뱃지가 사라짐.
-		const PATCH_NOTE_NEW_CONTENT = '컨트롤러 테스터';
+		const PATCH_NOTE_NEW_CONTENT = '컨트롤러 테스터, 문제해결';
 		
         const patchBtn = document.createElement('button');
         patchBtn.textContent = '패치노트';
@@ -1256,6 +1256,7 @@
                     version: 'v1.4',
                     date: '2026-07-28',
                     items: [
+                        '문제해결 페이지',
                         '패드 작동 테스터',
 						'스트림덱 스타일 적용(길게 누르면 기능 ON/OFF됨)',
 						'임무 종료된 리센츠/엘스/한성대/진천 페이지 이탈 5초 후 자동 사이드',
@@ -1772,7 +1773,7 @@
             queueInfoContent.id = 'neubie-queue-info-content';
             queueInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:${T.text}; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;`;
             queueInfoContent.innerHTML = `
-				07:57 or 08:47 - 현재 모니터링 기체 업로드<br>
+				07:57 / 08:47 / 09:47 - 현재 모니터링 기체 업로드<br>
 				기체별 화질 조절<br>
                 기체별 헤드램프 토글<br>
 				기체 카메라 밝기 한 번에 조절<br>
@@ -1820,7 +1821,7 @@
             padding:4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
         rouletteCard.innerHTML = `<span style="font-size:18px;">🧰</span>
-            <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">날씨 & 룰렛 & 기타</span>`;
+            <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">날씨 & 룰렛 & SW</span>`;
         window._neubieRouletteCard = rouletteCard;
         attachStaticNeonHover(rouletteCard, '44,230,217');
         rouletteCard.onclick = () => {
@@ -4564,7 +4565,7 @@
                 box.style.cssText = `background:${T.card}; color:${T.text}; border-radius:16px; padding:20px; width:100%; box-sizing:border-box; box-shadow:0 4px 40px rgba(0,0,0,0.7); pointer-events:auto;`;
                 box.innerHTML = `
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-                        <span style="font-size:16px;font-weight:700;">🧰 날씨 & 룰렛 & 기타</span>
+                        <span style="font-size:16px;font-weight:700;">🧰 날씨 & 룰렛 & SW</span>
                         <button id="mto-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
                     </div>
                     <div style="display:flex; flex-direction:column; gap:8px;">
