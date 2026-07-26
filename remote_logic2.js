@@ -1346,7 +1346,7 @@
                 <span style="font-size:18px;">🎮</span>
                 <span class="nb-onoff" style="font-size:12px; font-weight:bold; letter-spacing:0.5px;"></span>
             </div>
-            <span style="position:relative; z-index:1; font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">게임패드</span>
+            <span style="position:relative; z-index:1; font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">게임패드 기능 & 테스터</span>
         `;
         const gamepadLabel = gamepadBtn.querySelector('.nb-onoff');
         gamepadLabel.textContent = isDpadBindingOff() ? 'OFF' : 'ON';
