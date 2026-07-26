@@ -1312,8 +1312,9 @@
         troubleBtn.onmouseenter = () => { troubleBtn.style.borderColor='#3b82f6'; troubleBtn.style.color='#3b82f6'; };
         troubleBtn.onmouseleave = () => { troubleBtn.style.borderColor=T.border; troubleBtn.style.color=T.text; };
         troubleBtn.onclick = () => {
-            if (isSharedPopupOpen('troubleshoot')) {
-                hideSharedPopup();
+            const existing = document.getElementById('neubie-troubleshoot-overlay');
+            if (existing) {
+                existing.remove();
                 return;
             }
             openTroubleshootOverlay();
@@ -1975,6 +1976,7 @@
         if (sharedPopup) sharedPopup.style.display = 'none';
         const boardOverlay = document.getElementById('neubie-board-overlay');
         if (boardOverlay) boardOverlay.style.display='none';
+        document.getElementById('neubie-troubleshoot-overlay')?.remove();
         const secretOverlay = document.getElementById('neubie-secret-overlay');
         if (secretOverlay) secretOverlay.style.display='none';
         if (window._neubieWeatherCard) window._neubieWeatherCard.style.outline = 'none';
@@ -4808,8 +4810,26 @@
 
             window.openTroubleshootOverlay = function() {
                 const T = getNbTheme();
+                const dashboardEl = document.getElementById('neubie-dashboard');
+                const r = dashboardEl.getBoundingClientRect();
+
+                const overlay = document.createElement('div');
+                overlay.id = 'neubie-troubleshoot-overlay';
+                Object.assign(overlay.style, {
+                    position: 'fixed',
+                    top: r.top + 'px',
+                    left: r.left + 'px',
+                    width: r.width + 'px',
+                    height: '560px',
+                    zIndex: '1000001',
+                    borderRadius: '16px',
+                    overflow: 'hidden',
+                });
+
                 const box = document.createElement('div');
-                box.style.cssText = `background:${T.card}; color:${T.text}; border-radius:16px; padding:20px; width:100%; box-sizing:border-box; max-height:80vh; overflow-y:auto; box-shadow:0 4px 40px rgba(0,0,0,0.7); pointer-events:auto;`;
+                box.style.cssText = `background:${T.card}; color:${T.text}; border-radius:16px; padding:20px; width:100%; height:100%; box-sizing:border-box; overflow-y:auto; box-shadow:0 10px 50px rgba(0,0,0,0.7); pointer-events:auto;`;
+                overlay.appendChild(box);
+                document.body.appendChild(overlay);
 
                 function renderGrid() {
                     box.innerHTML = '';
@@ -4819,7 +4839,7 @@
                     const closeBtn = document.createElement('button');
                     closeBtn.textContent = '✕';
                     closeBtn.style.cssText = 'width:28px; height:28px; border:none; border-radius:5px; background:#3b0000; border:1px solid #ef4444; color:#ef4444; font-size:16px; cursor:pointer;';
-                    closeBtn.onclick = () => window.hideSharedPopup();
+                    closeBtn.onclick = () => overlay.remove();
                     header.appendChild(closeBtn);
 
                     const grid = document.createElement('div');
@@ -4864,7 +4884,7 @@
                             const img = document.createElement('img');
                             img.src = src;
                             img.loading = 'lazy';
-                            img.style.cssText = 'max-width:320px; width:100%; height:auto; border-radius:8px; display:block;';
+                            img.style.cssText = 'max-width:100%; max-height:360px; width:auto; height:auto; object-fit:contain; border-radius:8px; display:block; margin:0 auto;';
                             imgWrap.appendChild(img);
                         });
                         box.appendChild(imgWrap);
@@ -4887,7 +4907,6 @@
                 }
 
                 renderGrid();
-                window.showSharedPopup('troubleshoot', box);
             };
 
             window.openGamepadMenuOverlay = function() {
@@ -5346,7 +5365,8 @@
               const isAnyOpen = (dashboard.style.display === 'block' || 
               batteryPopup.style.display === 'block' ||
               (sharedPopupEl && sharedPopupEl.style.display === 'flex') ||
-              (scheduleOverlayEl && scheduleOverlayEl.style.display === 'flex'));
+              (scheduleOverlayEl && scheduleOverlayEl.style.display === 'flex') ||
+              !!document.getElementById('neubie-troubleshoot-overlay'));
 			
 			if (isAnyOpen) {
 				closeAllPopups();
