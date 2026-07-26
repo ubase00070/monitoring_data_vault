@@ -1330,7 +1330,7 @@
         `;
         boardBtn.innerHTML = `
             <span style="font-size:18px; margin-top:6px;">📌</span>
-            <span style="font-size:12px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">게시판 & 문제해결</span>
+            <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">게시판 & 문제해결</span>
         `;
         boardBtn.onclick = () => {
             if (isSharedPopupOpen('board-menu')) {
@@ -4596,7 +4596,7 @@
                     <div style="display:flex; flex-direction:column; gap:8px;">
                         <button id="mto-weather" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🌤️ 실시간 날씨 (기상청 API)</button>
                         <button id="mto-roulette" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🎡 룰렛 돌리기</button>
-                        <button id="mto-tips" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">💡 최적화 팁</button>
+                        <button id="mto-tips" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">💡 SW 설정</button>
                     </div>
                 `;
                 box.querySelector('#mto-close').onclick = () => {
@@ -5071,7 +5071,7 @@
                     position:relative; box-shadow:0 10px 50px rgba(0,0,0,0.7); pointer-events:auto;
                 `;
                 const tipsTitle = document.createElement('div');
-                tipsTitle.textContent = '최적화 팁';
+                tipsTitle.textContent = 'SW 설정';
                 tipsTitle.style.cssText = `font-size:20px; font-weight:bold; margin-bottom:20px; color:#fcd34d;`;
 
                 const tipsClose = document.createElement('button');
