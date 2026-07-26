@@ -1300,26 +1300,6 @@
             showSharedPopup('patch', patchBox);
         };
 
-        const troubleBtn = document.createElement('button');
-        troubleBtn.textContent = '문제해결';
-        troubleBtn.title = '문제해결';
-        troubleBtn.style.cssText = `
-            background:transparent; border:1px solid ${T.border}; color:${T.text};
-            border-radius:6px; padding:4px 10px; cursor:pointer;
-            font-size:14px; margin-left:6px; vertical-align:middle;
-            transition:all 0.2s;
-        `;
-        troubleBtn.onmouseenter = () => { troubleBtn.style.borderColor='#3b82f6'; troubleBtn.style.color='#3b82f6'; };
-        troubleBtn.onmouseleave = () => { troubleBtn.style.borderColor=T.border; troubleBtn.style.color=T.text; };
-        troubleBtn.onclick = () => {
-            const existing = document.getElementById('neubie-troubleshoot-overlay');
-            if (existing) {
-                existing.remove();
-                return;
-            }
-            openTroubleshootOverlay();
-        };
-
         // 이름 입력 및 닫기 버튼 영역
         const nameArea = document.createElement('div');
         nameArea.style.cssText = "display:flex; align-items:center; gap:8px; font-size:15px; color:#64748b;";
@@ -1338,7 +1318,6 @@
         titleWrap.style.cssText = "display:flex; align-items:center; gap:0;";
         titleWrap.appendChild(title);
         titleWrap.appendChild(patchBtn);
-        titleWrap.appendChild(troubleBtn);
         
         // 게시판 / 게임패드는 더 이상 헤더 탭이 아니라 아래 스트림덱 그리드의 타일로 들어감
         const boardBtn = document.createElement('button');
@@ -1351,10 +1330,36 @@
         `;
         boardBtn.innerHTML = `
             <span style="font-size:18px; margin-top:6px;">📌</span>
-            <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">게시판</span>
+            <span style="font-size:12px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">게시판 & 문제해결</span>
         `;
-        boardBtn.onclick = () => openBoardOverlay();
+        boardBtn.onclick = () => {
+            if (isSharedPopupOpen('board-menu')) {
+                hideSharedPopup();
+                return;
+            }
+            openBoardMenuOverlay();
+        };
         attachStaticNeonHover(boardBtn, '96,165,250');
+
+        window.openBoardMenuOverlay = function() {
+            const T = getNbTheme();
+            const box = document.createElement('div');
+            box.style.cssText = `background:${T.card}; color:${T.text}; border-radius:16px; padding:20px; width:100%; box-sizing:border-box; box-shadow:0 4px 40px rgba(0,0,0,0.7); pointer-events:auto;`;
+            box.innerHTML = `
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                    <span style="font-size:16px;font-weight:700;">📌 게시판 & 문제해결</span>
+                    <button id="bm-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    <button id="bm-board" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">📌 게시판</button>
+                    <button id="bm-trouble" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🛠️ 문제해결</button>
+                </div>
+            `;
+            box.querySelector('#bm-close').onclick = () => window.hideSharedPopup();
+            box.querySelector('#bm-board').onclick = () => { window.hideSharedPopup(); openBoardOverlay(); };
+            box.querySelector('#bm-trouble').onclick = () => { window.hideSharedPopup(); openTroubleshootOverlay(); };
+            window.showSharedPopup('board-menu', box);
+        };
 
         const gamepadBtn = document.createElement('button');
         gamepadBtn.style.cssText = `
@@ -4764,7 +4769,7 @@
                 {
                     id: '바탕화면',
                     title: '바탕화면 [이 사진에 대한...] 아이콘 없애기',
-                    body: '바탕화면에 [이 사진에 대한 자세한 정보]라는 아이콘이 떠 있는 경우, 아래의 파일을 다운받고 실행 적용하세요.',
+                    body: '바탕화면에 [이 사진에 대한 자세한 정보]라는 아이콘이 떠 있는 경우, 아래의 파일을 다운받고 실행하고 새로고침하세요.',
                     images: [
                         'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/desktop_weirdo.png',
                     ],
@@ -4780,30 +4785,6 @@
                     images: [
                         'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/forticlientvpn.png',
                     ],
-                    links: [],
-                },
-                {
-                    id: 'network',
-                    title: '네트워크 연결 끊김',
-                    body: '여기에 내용을 채워주세요.',
-                    links: [],
-                },
-                {
-                    id: 'camera',
-                    title: '카메라 화면 안 뜸',
-                    body: '여기에 내용을 채워주세요.',
-                    links: [],
-                },
-                {
-                    id: 'ncc-login',
-                    title: 'NCC 로그인 오류',
-                    body: '여기에 내용을 채워주세요.',
-                    links: [],
-                },
-                {
-                    id: 'etc',
-                    title: '기타 문의',
-                    body: '여기에 내용을 채워주세요.',
                     links: [],
                 },
             ];
