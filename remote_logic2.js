@@ -1254,9 +1254,9 @@
             const patchItems = [
                 {
                     version: 'v1.4',
-                    date: '2026-07-21',
+                    date: '2026-07-28',
                     items: [
-                        '컨트롤러 테스터',
+                        '패드 작동 테스터',
 						'스트림덱 스타일 적용(길게 누르면 기능 ON/OFF됨)',
 						'임무 종료된 리센츠/엘스/한성대/진천 페이지 이탈 5초 후 자동 사이드',
                         '게임패드 커스텀 바인딩 설명 페이지',
@@ -1300,6 +1300,25 @@
             showSharedPopup('patch', patchBox);
         };
 
+        const troubleBtn = document.createElement('button');
+        troubleBtn.textContent = '문제해결';
+        troubleBtn.title = '문제해결';
+        troubleBtn.style.cssText = `
+            background:transparent; border:1px solid ${T.border}; color:${T.text};
+            border-radius:6px; padding:4px 10px; cursor:pointer;
+            font-size:14px; margin-left:6px; vertical-align:middle;
+            transition:all 0.2s;
+        `;
+        troubleBtn.onmouseenter = () => { troubleBtn.style.borderColor='#3b82f6'; troubleBtn.style.color='#3b82f6'; };
+        troubleBtn.onmouseleave = () => { troubleBtn.style.borderColor=T.border; troubleBtn.style.color=T.text; };
+        troubleBtn.onclick = () => {
+            if (isSharedPopupOpen('troubleshoot')) {
+                hideSharedPopup();
+                return;
+            }
+            openTroubleshootOverlay();
+        };
+
         // 이름 입력 및 닫기 버튼 영역
         const nameArea = document.createElement('div');
         nameArea.style.cssText = "display:flex; align-items:center; gap:8px; font-size:15px; color:#64748b;";
@@ -1318,6 +1337,7 @@
         titleWrap.style.cssText = "display:flex; align-items:center; gap:0;";
         titleWrap.appendChild(title);
         titleWrap.appendChild(patchBtn);
+        titleWrap.appendChild(troubleBtn);
         
         // 게시판 / 게임패드는 더 이상 헤더 탭이 아니라 아래 스트림덱 그리드의 타일로 들어감
         const boardBtn = document.createElement('button');
@@ -4736,18 +4756,132 @@
                 return data;
             }
 
-            // 게임패드 타일을 누르면 뜨는 선택 바 — '날씨 & 룰렛 & 기타'와 동일한 패턴
+            // ── 문제해결 게시판 ──────────────────────────────────────
+            // links에 넣은 url은 게시글 안에서 클릭하면 바로 새 탭으로 열립니다 (구글드라이브 .reg 등 파일 링크 가능)
+            const troubleshootPosts = [
+                {
+                    id: '바탕화면',
+                    title: '바탕화면 [이 사진에 대한...] 아이콘 없애기',
+                    body: '바탕화면에 [이 사진에 대한 자세한 정보]라는 아이콘이 떠 있는 경우, 아래의 파일을 다운받고 실행 적용하세요.',
+                    links: [
+                        { label: '아이콘 없애기.reg', url: 'https://drive.google.com/file/d/1IjWGiN__VT1hmZdfm7YkYUpa4Wd89A9f/view?usp=drive_link' },
+                        { label: '아이콘 되돌리기.reg', url: 'https://drive.google.com/file/d/1Vuqf8nWPLi5KuTnLLkJ3WJdHAgD8F-xz/view?usp=drive_link' },
+                    ],
+                },
+                {
+                    id: 'obs',
+                    title: 'OBS 녹화 안 될 때',
+                    body: '여기에 내용을 채워주세요.',
+                    links: [],
+                },
+                {
+                    id: 'network',
+                    title: '네트워크 연결 끊김',
+                    body: '여기에 내용을 채워주세요.',
+                    links: [],
+                },
+                {
+                    id: 'camera',
+                    title: '카메라 화면 안 뜸',
+                    body: '여기에 내용을 채워주세요.',
+                    links: [],
+                },
+                {
+                    id: 'ncc-login',
+                    title: 'NCC 로그인 오류',
+                    body: '여기에 내용을 채워주세요.',
+                    links: [],
+                },
+                {
+                    id: 'etc',
+                    title: '기타 문의',
+                    body: '여기에 내용을 채워주세요.',
+                    links: [],
+                },
+            ];
+
+            window.openTroubleshootOverlay = function() {
+                const T = getNbTheme();
+                const box = document.createElement('div');
+                box.style.cssText = `background:${T.card}; color:${T.text}; border-radius:16px; padding:20px; width:100%; box-sizing:border-box; max-height:80vh; overflow-y:auto; box-shadow:0 4px 40px rgba(0,0,0,0.7); pointer-events:auto;`;
+
+                function renderGrid() {
+                    box.innerHTML = '';
+                    const header = document.createElement('div');
+                    header.style.cssText = 'display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;';
+                    header.innerHTML = `<span style="font-size:16px; font-weight:700;">🛠️ 문제해결</span>`;
+                    const closeBtn = document.createElement('button');
+                    closeBtn.textContent = '✕';
+                    closeBtn.style.cssText = 'width:28px; height:28px; border:none; border-radius:5px; background:#3b0000; border:1px solid #ef4444; color:#ef4444; font-size:16px; cursor:pointer;';
+                    closeBtn.onclick = () => window.hideSharedPopup();
+                    header.appendChild(closeBtn);
+
+                    const grid = document.createElement('div');
+                    grid.style.cssText = 'display:grid; grid-template-columns:1fr 1fr; gap:8px;';
+                    troubleshootPosts.forEach(post => {
+                        const btn = document.createElement('button');
+                        btn.textContent = post.title;
+                        btn.style.cssText = `padding:14px 10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:center; font-size:14px;`;
+                        btn.onmouseenter = () => { btn.style.borderColor = '#3b82f6'; btn.style.color = '#3b82f6'; };
+                        btn.onmouseleave = () => { btn.style.borderColor = T.border; btn.style.color = T.text; };
+                        btn.onclick = () => renderPost(post);
+                        grid.appendChild(btn);
+                    });
+
+                    box.appendChild(header);
+                    box.appendChild(grid);
+                }
+
+                function renderPost(post) {
+                    box.innerHTML = '';
+                    const header = document.createElement('div');
+                    header.style.cssText = 'display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;';
+                    header.innerHTML = `<span style="font-size:16px; font-weight:700;">${post.title}</span>`;
+                    const closeBtn = document.createElement('button');
+                    closeBtn.textContent = '✕';
+                    closeBtn.title = '목록으로';
+                    closeBtn.style.cssText = 'width:28px; height:28px; border:none; border-radius:5px; background:#3b0000; border:1px solid #ef4444; color:#ef4444; font-size:16px; cursor:pointer;';
+                    closeBtn.onclick = () => renderGrid();
+                    header.appendChild(closeBtn);
+
+                    const body = document.createElement('div');
+                    body.style.cssText = `font-size:14px; line-height:1.7; color:${T.text}; white-space:pre-wrap;`;
+                    body.textContent = post.body;
+
+                    box.appendChild(header);
+                    box.appendChild(body);
+
+                    if (post.links && post.links.length) {
+                        const linkWrap = document.createElement('div');
+                        linkWrap.style.cssText = 'display:flex; flex-direction:column; gap:8px; margin-top:16px;';
+                        post.links.forEach(link => {
+                            const a = document.createElement('a');
+                            a.href = link.url;
+                            a.target = '_blank';
+                            a.rel = 'noopener noreferrer';
+                            a.textContent = '📎 ' + link.label;
+                            a.style.cssText = `display:block; padding:10px 12px; border-radius:8px; border:1px solid #3b82f6; color:#3b82f6; text-decoration:none; font-size:13px; text-align:center;`;
+                            linkWrap.appendChild(a);
+                        });
+                        box.appendChild(linkWrap);
+                    }
+                }
+
+                renderGrid();
+                window.showSharedPopup('troubleshoot', box);
+            };
+
             window.openGamepadMenuOverlay = function() {
                 const T = getNbTheme();
                 const box = document.createElement('div');
                 box.style.cssText = `background:${T.card}; color:${T.text}; border-radius:16px; padding:20px; width:100%; box-sizing:border-box; box-shadow:0 4px 40px rgba(0,0,0,0.7); pointer-events:auto;`;
                 box.innerHTML = `
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-                        <span style="font-size:16px;font-weight:700;">🎮 게임패드 기능 & 테스터</span>
+                        <span style="font-size:16px;font-weight:700;">🎮 패드 기능 & 테스터</span>
                         <button id="gpm-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
                     </div>
                     <div style="display:flex; flex-direction:column; gap:8px;">
-                        <button id="gpm-guide" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🕹️ D패드 기능변경 설명</button>
+                        <button id="gpm-guide" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🕹️ D-PAD 기능변경 설명</button>
                         <button id="gpm-tester" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🎮 컨트롤러 테스터</button>
                     </div>
                 `;
