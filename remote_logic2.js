@@ -4890,14 +4890,14 @@
             // 실시간 컨트롤러 테스터 — 사용자가 벡터화한 xbox_skeleton.svg 원본(여백 크롭) + 버튼별 투명 오버레이 + 스틱 기울임 시 캡 이동
             window.openGamepadTesterOverlay = function() {
                 const box = document.createElement('div');
-                box.style.cssText = `background:#1e1e2e; color:#e2e8f0; border-radius:16px; padding:12px; width:100%; box-sizing:border-box; max-height:80vh; overflow-y:auto; box-shadow:0 10px 50px rgba(0,0,0,0.7); pointer-events:auto;`;
+                box.style.cssText = `background:#1e1e2e; color:#e2e8f0; border-radius:16px; padding:12px; width:100%; box-sizing:border-box; max-height:90vh; overflow-y:auto; box-shadow:0 10px 50px rgba(0,0,0,0.7); pointer-events:auto;`;
                 box.innerHTML = `
                     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; gap:10px;">
                         <span style="font-size:15px; font-weight:700;">🎮 컨트롤러 기능 작동 테스터</span>
                         <button id="gpt-close" style="width:26px; height:26px; border:none; border-radius:5px; background:#3b0000; border:1px solid #ef4444; color:#ef4444; font-size:14px; cursor:pointer;">✕</button>
                     </div>
                     <div id="gpt-status" style="text-align:center; font-size:11px; color:#94a3b8; margin-bottom:6px;">컨트롤러의 아무 버튼이나 눌러 연결하세요</div>
-                    <div style="background:#f4ede0; border-radius:10px; padding:4px; max-width:260px; margin:0 auto;">
+                    <div style="background:#f4ede0; border-radius:10px; padding:8px; width:100%; box-sizing:border-box;">
                     <svg viewBox="71 65 1251 1094" xmlns="http://www.w3.org/2000/svg" style="width:100%; height:auto; display:block;">
 <path d="M0 0 C17.02 14.78 28.91 33.44 34.51 55.31 C34.81 56.29 35.11 57.27 35.41 58.28 C41.36 80.44 38.7 106.8 28.51 127.31 C28.23 127.89 27.95 128.47 27.67 129.06 C14.18 156.81 -7.86 175 -36.3 186.12 C-62.17 194.83 -91.15 193.22 -115.75 181.46 C-146.03 166.39 -164.89 143.27 -175.63 111.42 C-178.14 102.33 -178.8 93.86 -178.74 84.44 C-178.75 83.25 -178.75 82.06 -178.76 80.83 C-178.7 51.36 -166.63 26.24 -146.49 5.31 C-145.63 4.34 -145.63 4.34 -144.75 3.35 C-107.92 -37.09 -39.44 -33.37 0 0 Z " fill="#FDFDFD" transform="translate(1069.48876953125,444.68798828125)"/>
 <path d="M0 0 C0.74 0.59 1.47 1.18 2.23 1.79 C21.3 17.65 33.82 42.58 37 67 C38.5 90.55 36.07 109.77 26 131 C25.52 132.04 25.03 133.08 24.53 134.15 C11.41 160.12 -12.6 176.82 -39.38 186.44 C-67.86 194.91 -98.01 191.08 -123.89 177.18 C-151.24 161.85 -168.06 136.95 -177.1 107.4 C-183.94 79.09 -177.99 49.25 -163.27 24.61 C-160.23 19.7 -156.9 15.26 -153 11 C-152.27 10.2 -152.27 10.2 -151.53 9.38 C-111.59 -33.94 -45.08 -38.44 0 0 Z " fill="#FDFDFD" transform="translate(617,662)"/>
