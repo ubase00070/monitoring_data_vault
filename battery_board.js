@@ -665,7 +665,8 @@
     const STI = { charging:'🟢', patrolling:'🔵', delivering:'🩷', standby:'⚪', docking:'🟡', off:'⚫' };
 
     const DELIVERY_TYPES = ['ALL', 'OPENAPI_DELIVERY', 'NB_ORDER_DELIVERY', 'DELIVERY'];
-    const DELIVERY_SITE_IDS = [25,27,44,47,48,53,56,65,86,109,118,141,180];
+    const FORCE_PATROL_SITE_IDS = [24];   // 삼성인력개발원
+	const DELIVERY_SITE_IDS = [25,27,44,47,48,53,56,65,86,109,118,141,180];
 
     const QUICK_SITE_IDS = [109, 65, 56, 44, 86];
     const OTHER_DELIVERY_SITE_IDS = DELIVERY_SITE_IDS.filter(id => !QUICK_SITE_IDS.includes(id));
@@ -741,11 +742,11 @@
             status = 'charging';
         } else if (rs.isOnWirelessChargerDock) {
             status = 'docking';
-        } else if (['PATROL','OPENAPI_PATROL'].includes(raw.service?.serviceType)) {
-            status = raw.currentScenario ? 'patrolling' : 'standby';
-        } else if (DELIVERY_TYPES.includes(raw.service?.serviceType)) {
-            status = raw.currentScenario ? 'delivering' : 'standby';
-        } else {
+        } else if (FORCE_PATROL_SITE_IDS.includes(raw.site?.id) || ['PATROL','OPENAPI_PATROL'].includes(raw.service?.serviceType)) {
+			status = raw.currentScenario ? 'patrolling' : 'standby';
+		} else if (DELIVERY_TYPES.includes(raw.service?.serviceType)) {
+			status = raw.currentScenario ? 'delivering' : 'standby';
+		} else {
             status = 'standby';
         }
         return { battery: Math.round(battery), status };
@@ -786,8 +787,9 @@
             const rs   = raw.robotStatus ?? {};
             const { status, battery } = parseRobotStatus(raw);
             const isDelivery =
-                DELIVERY_TYPES.includes(raw.service?.serviceType) ||
-                DELIVERY_SITE_IDS.includes(raw.site?.id);
+				!FORCE_PATROL_SITE_IDS.includes(raw.site?.id) &&
+				(DELIVERY_TYPES.includes(raw.service?.serviceType) ||
+				 DELIVERY_SITE_IDS.includes(raw.site?.id));
 
             // ── 기능1: 대기중 방치 (배터리 50% 미만인 경우에만)
             if (!isDelivery && status === 'standby') {
