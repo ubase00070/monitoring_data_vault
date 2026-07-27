@@ -4758,11 +4758,13 @@
                 {
                     id: 'VPN',
                     title: 'FortiClientVPN 접속 불가 시',
-                    body: 'VPN 설정을 스샷과 같이 설정해보세요. 미해결시 시도해볼 VPN 설치 파일도 첨부했습니다.',
+                    body: 'VPN 설정을 스샷과 같이 설정해보세요. 미해결시 아래 파일로 재설치 후 시도바랍니다.',
                     images: [
                         'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/forticlientvpn.png',
                     ],
-                    links: [],
+                    links: [
+						{ label: 'FortiClientVPN 설치파일', url: 'https://drive.google.com/file/d/1pjHTVSYomXSGTYLf4OVGk3g3QvzRJSMd/view?usp=drive_link' },
+					],
                 },
             ];
 
