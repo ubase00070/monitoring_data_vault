@@ -1,6 +1,89 @@
 {
-  "updatedAt": "2026-07-28 11:39:46",
+  "updatedAt": "2026-07-28 12:09:44",
   "recentHistory": [
+    {
+      "at": "2026-07-28 12:09:44",
+      "changes": [
+        {
+          "type": "변경",
+          "site": "쉴더스",
+          "status": "uncertain",
+          "reason": "변경"
+        },
+        {
+          "type": "변경",
+          "site": "쉴더스",
+          "status": "uncertain",
+          "reason": "변경"
+        },
+        {
+          "type": "변경",
+          "site": "쉴더스",
+          "status": "uncertain",
+          "reason": "변경"
+        },
+        {
+          "type": "변경",
+          "site": "쉴더스",
+          "status": "uncertain",
+          "reason": "변경"
+        },
+        {
+          "type": "변경",
+          "site": "쉴더스",
+          "status": "uncertain",
+          "reason": "변경"
+        },
+        {
+          "type": "변경",
+          "site": "쉴더스",
+          "status": "uncertain",
+          "reason": "변경"
+        },
+        {
+          "type": "변경",
+          "site": "쉴더스",
+          "status": "uncertain",
+          "reason": "변경"
+        },
+        {
+          "type": "변경",
+          "site": "쉴더스",
+          "status": "uncertain",
+          "reason": "변경"
+        },
+        {
+          "type": "변경",
+          "site": "쉴더스",
+          "status": "uncertain",
+          "reason": "변경"
+        },
+        {
+          "type": "변경",
+          "site": "쉴더스",
+          "status": "uncertain",
+          "reason": "변경"
+        },
+        {
+          "type": "변경",
+          "site": "쉴더스",
+          "status": "uncertain",
+          "reason": "변경"
+        },
+        {
+          "type": "변경",
+          "site": "쉴더스",
+          "status": "uncertain",
+          "reason": "변경"
+        },
+        {
+          "type": "변경",
+          "site": "[상태변경] 쉴더스: suspended → active",
+          "status": "uncertain",
+          "reason": "[상태변경] 쉴더스: suspended → active"
+        }
+      ]
+    },
     {
       "at": "2026-07-28 11:39:46",
       "changes": [
@@ -509,59 +592,6 @@
         {
           "type": "변경",
           "site": "롯데이노베이트_구관",
-          "status": "uncertain",
-          "reason": "변경"
-        }
-      ]
-    },
-    {
-      "at": "2026-07-26 22:54:45",
-      "changes": [
-        {
-          "type": "추가",
-          "site": "신동백",
-          "status": "uncertain",
-          "reason": "순찰 준비"
-        },
-        {
-          "type": "삭제",
-          "site": "신동백",
-          "status": "active",
-          "reason": "순찰 준비"
-        },
-        {
-          "type": "변경",
-          "site": "신동백",
-          "status": "uncertain",
-          "reason": "변경"
-        },
-        {
-          "type": "변경",
-          "site": "신동백",
-          "status": "uncertain",
-          "reason": "변경"
-        },
-        {
-          "type": "추가",
-          "site": "신동백",
-          "status": "uncertain",
-          "reason": "순찰 준비"
-        },
-        {
-          "type": "삭제",
-          "site": "신동백",
-          "status": "active",
-          "reason": "순찰 준비"
-        },
-        {
-          "type": "변경",
-          "site": "신동백",
-          "status": "uncertain",
-          "reason": "변경"
-        },
-        {
-          "type": "변경",
-          "site": "신동백",
           "status": "uncertain",
           "reason": "변경"
         }
@@ -1082,7 +1112,7 @@
       },
       {
         "task": "[18:50] 쉴더스_롯데마트부산CFC - 출차(순찰준비)",
-        "note": "순회중단(휠틀어짐)"
+        "note": ""
       },
       {
         "task": "[18:50] 구리 롯데캐슬 시그니처 - 순찰 (기체 출근 확인)",
@@ -1132,7 +1162,7 @@
       },
       {
         "task": "[19:00] 쉴더스_롯데마트부산CFC",
-        "note": "순회중단(휠틀어짐)"
+        "note": ""
       },
       {
         "task": "[19:20] 롯데이노베이트_구관 - 출차 (순찰준비)",
@@ -1186,7 +1216,7 @@
       },
       {
         "task": "[20:50] 쉴더스_롯데마트부산CFC - 출차(순찰 준비)",
-        "note": "순회중단(휠틀어짐)"
+        "note": ""
       },
       {
         "task": "[20:50] 창원대 1호기 - 출차 (순찰 준비)",
@@ -1220,7 +1250,7 @@
       },
       {
         "task": "[21:00] 쉴더스_롯데마트부산CFC - 순찰",
-        "note": "순회중단(휠틀어짐)"
+        "note": ""
       },
       {
         "task": "[21:00] 성남시 율동공원 1호기 - 순찰 ( 19:00 ~ 22:00 )",
@@ -1338,7 +1368,7 @@
       },
       {
         "task": "[22:50] 쉴더스_롯데마트부산CFC - 출차(순찰준비)",
-        "note": "순회중단(휠틀어짐)"
+        "note": ""
       }
     ],
     "23:00": [
@@ -1376,7 +1406,7 @@
       },
       {
         "task": "[23:00] 쉴더스_롯데마트부산CFC - 순찰",
-        "note": "순회중단(휠틀어짐)"
+        "note": ""
       },
       {
         "task": "[23:30] 에스원_인재개발원 1호기 - 순찰",
@@ -1462,7 +1492,7 @@
       },
       {
         "task": "[00:50] 쉴더스_롯데마트부산CFC - 출차(순찰준비)",
-        "note": "순회중단(휠틀어짐)"
+        "note": ""
       },
       {
         "task": "[00:50] 부산 더샵남천프레스티지 - 출차 (순찰준비)",
@@ -1508,7 +1538,7 @@
       },
       {
         "task": "[01:00] 쉴더스_롯데마트부산CFC - 순찰",
-        "note": "순회중단(휠틀어짐)"
+        "note": ""
       },
       {
         "task": "[01:00] 전주시전주천 - 순찰 ( 01:00 ~ 04:00 )",
@@ -1610,7 +1640,7 @@
       },
       {
         "task": "[02:50] 쉴더스_롯데마트부산CFC - 출차(순찰준비)",
-        "note": "순회중단(휠틀어짐)"
+        "note": ""
       },
       {
         "task": "[02:50] 부산 더샵남천프레스티지 - 출차 (순찰준비)",
@@ -1664,7 +1694,7 @@
       },
       {
         "task": "[03:00] 쉴더스_롯데마트부산CFC",
-        "note": "순회중단(휠틀어짐)"
+        "note": ""
       },
       {
         "task": "[03:00] 전주시전주천 - 순찰 ( 01:00 ~ 04:00 )",
@@ -1730,7 +1760,7 @@
       },
       {
         "task": "[04:50] 쉴더스_롯데마트부산CFC - 출차(순찰준비)",
-        "note": "순회중단(휠틀어짐)"
+        "note": ""
       },
       {
         "task": "[04:50] 부산 더샵남천프레스티지 - 출차 (순찰준비)",
@@ -1760,7 +1790,7 @@
       },
       {
         "task": "[05:00] 쉴더스_롯데마트부산CFC - 순찰",
-        "note": "순회중단(휠틀어짐)"
+        "note": ""
       },
       {
         "task": "[05:00] 부산 더샵남천프레스티지 - 순찰",
@@ -1802,271 +1832,271 @@
     "용인 고진": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-28 11:39:46",
+      "updatedAt": "2026-07-28 12:09:44",
       "syncIssue": false
     },
     "서강대": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-28 11:39:46",
+      "updatedAt": "2026-07-28 12:09:44",
       "syncIssue": false
     },
     "경희대": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-28 11:39:46",
+      "updatedAt": "2026-07-28 12:09:44",
       "syncIssue": false
     },
     "성남 율동": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-28 11:39:46",
+      "updatedAt": "2026-07-28 12:09:44",
       "syncIssue": false
     },
     "성남 야탑": {
       "status": "suspended",
       "reason": "순찰중단",
-      "updatedAt": "2026-07-28 11:39:46",
+      "updatedAt": "2026-07-28 12:09:44",
       "syncIssue": false
     },
     "구리 롯데캐슬": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-28 11:39:46",
+      "updatedAt": "2026-07-28 12:09:44",
       "syncIssue": false
     },
     "부산 호반 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-28 11:39:46",
+      "updatedAt": "2026-07-28 12:09:44",
       "syncIssue": false
     },
     "부산 수자인 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-28 11:39:46",
+      "updatedAt": "2026-07-28 12:09:44",
       "syncIssue": false
     },
     "파주": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-28 11:39:46",
+      "updatedAt": "2026-07-28 12:09:44",
       "syncIssue": false
     },
     "리센츠 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-28 11:39:46",
+      "updatedAt": "2026-07-28 12:09:44",
       "syncIssue": false
     },
     "리센츠 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-28 11:39:46",
+      "updatedAt": "2026-07-28 12:09:44",
       "syncIssue": false
     },
     "평택 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-28 11:39:46",
+      "updatedAt": "2026-07-28 12:09:44",
       "syncIssue": false
     },
     "평택 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-28 11:39:46",
+      "updatedAt": "2026-07-28 12:09:44",
       "syncIssue": false
     },
     "DMZ": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-28 11:39:46",
+      "updatedAt": "2026-07-28 12:09:44",
       "syncIssue": false
     },
     "부산 서면": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-28 11:39:46",
+      "updatedAt": "2026-07-28 12:09:44",
       "syncIssue": false
     },
     "부천 위브": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-28 11:39:46",
+      "updatedAt": "2026-07-28 12:09:44",
       "syncIssue": false
     },
     "성남 판교": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-28 11:39:46",
+      "updatedAt": "2026-07-28 12:09:44",
       "syncIssue": false
     },
     "성남 서현": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-28 11:39:46",
+      "updatedAt": "2026-07-28 12:09:44",
       "syncIssue": false
     },
     "잠실 레이크": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-28 11:39:46",
+      "updatedAt": "2026-07-28 12:09:44",
       "syncIssue": false
     },
     "고양 래미안": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-28 11:39:46",
+      "updatedAt": "2026-07-28 12:09:44",
       "syncIssue": false
     },
     "인력개발원": {
       "status": "suspended",
       "reason": "기체 cali 틀어짐 및 head top cover 파손",
-      "updatedAt": "2026-07-28 11:39:46",
+      "updatedAt": "2026-07-28 12:09:44",
       "syncIssue": false
     },
     "부산 호반 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-28 11:39:46",
+      "updatedAt": "2026-07-28 12:09:44",
       "syncIssue": false
     },
     "부산 수자인 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-28 11:39:46",
+      "updatedAt": "2026-07-28 12:09:44",
       "syncIssue": false
     },
     "엘스": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-28 11:39:46",
+      "updatedAt": "2026-07-28 12:09:44",
       "syncIssue": false
     },
     "창원대 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-28 11:39:46",
+      "updatedAt": "2026-07-28 12:09:44",
       "syncIssue": false
     },
     "창원대 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-28 11:39:46",
+      "updatedAt": "2026-07-28 12:09:44",
       "syncIssue": false
     },
     "한성대": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-28 11:39:46",
+      "updatedAt": "2026-07-28 12:09:44",
       "syncIssue": false
     },
     "김포 풍무": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-28 11:39:46",
+      "updatedAt": "2026-07-28 12:09:44",
       "syncIssue": false
     },
     "부경대": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-28 11:39:46",
+      "updatedAt": "2026-07-28 12:09:44",
       "syncIssue": false
     },
     "김포 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-28 11:39:46",
+      "updatedAt": "2026-07-28 12:09:44",
       "syncIssue": false
     },
     "김포 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-28 11:39:46",
+      "updatedAt": "2026-07-28 12:09:44",
       "syncIssue": false
     },
     "부산 더샵남천": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-28 11:39:46",
+      "updatedAt": "2026-07-28 12:09:44",
       "syncIssue": false
     },
     "광교 풍경채": {
       "status": "uncertain",
       "reason": "대기장소까지 관제로 이동 및 관제실 직접 배차 진행",
-      "updatedAt": "2026-07-28 11:39:46",
+      "updatedAt": "2026-07-28 12:09:44",
       "syncIssue": false
     },
     "지제": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-28 11:39:46",
+      "updatedAt": "2026-07-28 12:09:44",
       "syncIssue": false
     },
     "쉴더스": {
-      "status": "suspended",
-      "reason": "휠틀어짐",
-      "updatedAt": "2026-07-28 11:39:46",
+      "status": "active",
+      "reason": "",
+      "updatedAt": "2026-07-28 12:09:44",
       "syncIssue": false
     },
     "두루아이 5": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-28 11:39:46",
+      "updatedAt": "2026-07-28 12:09:44",
       "syncIssue": false
     },
     "잠실 르엘": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-28 11:39:46",
+      "updatedAt": "2026-07-28 12:09:44",
       "syncIssue": false
     },
     "중앙대": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-28 11:39:46",
+      "updatedAt": "2026-07-28 12:09:44",
       "syncIssue": false
     },
     "신동백": {
       "status": "suspended",
       "reason": "타이어마모",
-      "updatedAt": "2026-07-28 11:39:46",
+      "updatedAt": "2026-07-28 12:09:44",
       "syncIssue": false
     },
     "청담 르엘": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-28 11:39:46",
+      "updatedAt": "2026-07-28 12:09:44",
       "syncIssue": false
     },
     "전주천": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-28 11:39:46",
+      "updatedAt": "2026-07-28 12:09:44",
       "syncIssue": false
     },
     "동백SK": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-28 11:39:46",
+      "updatedAt": "2026-07-28 12:09:44",
       "syncIssue": false
     },
     "두루아이 4": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-28 11:39:46",
+      "updatedAt": "2026-07-28 12:09:44",
       "syncIssue": false
     },
     "아주대": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-28 11:39:46",
+      "updatedAt": "2026-07-28 12:09:44",
       "syncIssue": false
     },
     "인재개발원": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-28 11:39:46",
+      "updatedAt": "2026-07-28 12:09:44",
       "syncIssue": false
     }
   }
