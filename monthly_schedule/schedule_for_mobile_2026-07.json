@@ -1525,16 +1525,16 @@
           "raw": "1"
         },
         "7/29": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "7/30": {
           "status": "half",
           "working": true,
           "present": true,
           "raw": "반차"
+        },
+        "7/30": {
+          "status": "annual",
+          "working": true,
+          "present": false,
+          "raw": "연차"
         },
         "7/31": {
           "status": "off",
@@ -4227,10 +4227,10 @@
           "raw": "1"
         },
         "7/29": {
-          "status": "work",
+          "status": "half",
           "working": true,
           "present": true,
-          "raw": "1"
+          "raw": "반차"
         },
         "7/30": {
           "status": "off",
@@ -8141,6 +8141,6 @@
     "7/31"
   ],
   "mainMonth": 7,
-  "updatedAt": "2026-07-27T03:53:10.526Z",
+  "updatedAt": "2026-07-28T03:53:07.067Z",
   "sheetName": "2026년_07월 스케줄"
 }
