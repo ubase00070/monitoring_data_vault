@@ -134,10 +134,10 @@
 
         /* ── 알림바 + 검색 ── */
         .bb-alert-row {
-            display:flex; align-items:stretch;
-            border-bottom:1px solid var(--bd); flex-shrink:0; min-height:56px;
-            position:relative;
-        }
+		    display:flex; align-items:stretch;
+		    border-bottom:1px solid var(--bd); flex-shrink:0; height:70px;
+		    position:relative;
+		}
         .bb-alert-bar {
             flex:1; display:flex; align-items:center; gap:10px;
             padding:8px 12px; background:var(--bg);
