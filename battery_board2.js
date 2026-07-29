@@ -70,7 +70,7 @@
             display:none; position:fixed; top:50%; left:50%;
             transform:translate(-50%,-50%);
             width:1310px;
-            max-height:92vh; overflow-y:auto;
+            max-height:92vh; overflow-y:auto; overflow-x:hidden;
             border:3px solid transparent; border-radius:16px;
             background-image: linear-gradient(var(--bg), var(--bg)), linear-gradient(135deg, #6366f1, #ec4899);
             background-origin: border-box;
@@ -130,7 +130,7 @@
         /* ── 알림바 + 검색 ── */
         .bb-alert-row {
             display:flex; align-items:stretch;
-            border-bottom:1px solid var(--bd); flex-shrink:0; min-height:44px;
+            border-bottom:1px solid var(--bd); flex-shrink:0; min-height:96px;
             position:relative;
         }
         .bb-alert-bar {
@@ -205,19 +205,19 @@
         .bb-di-plus { font-size:15px; color:var(--gn); font-weight:900; flex-shrink:0; margin-left:4px; }
 
         /* ── 카드 그리드 ── */
-        .bb-gw { padding:10px 12px; flex-shrink:0; }
+        .bb-gw { padding:10px 12px; flex:1; }
         .bb-gr { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:6px; }
 
-        .bb-main-split { display:flex; gap:10px; min-height:0; }
+        .bb-main-split { display:flex; gap:10px; min-height:0; padding-left:14px; }
         .bb-main-right { flex:1; min-width:0; display:flex; flex-direction:column; gap:8px; }
 
         .bb-cluster-side {
-            width:240px; flex-shrink:0; display:flex; flex-direction:column; gap:8px;
+            width:240px; flex-shrink:0; display:flex; flex-direction:column; gap:5px;
             overflow-y:auto;
         }
         .bb-cluster-group {
             background:var(--sur2); border:1px solid var(--bd2); border-radius:12px;
-            padding:8px 8px 6px; flex-shrink:0;
+            padding:6px 8px 4px; flex-shrink:0;
         }
         .bb-cluster-group-label {
             font-size:13px; font-weight:900; color:#c9a24a; margin-bottom:5px; padding-left:3px;
@@ -355,7 +355,7 @@
 		.bb-walker-arrow:active { transform:translateY(-50%) scale(0.9); }
 
 		#bb-walker-bubble {
-			position:absolute; bottom:175px; right:-10px; width:285px; min-height:58px;
+			position:absolute; bottom:175px; right:calc(100% + 8px); width:285px; min-height:58px;
 			background:#fdf6e3; border-radius:20px; padding:10px 18px;
 			font-size:16px; color:#5c4a2a; font-weight:700; line-height:1.4;
 			box-shadow:0 4px 12px rgba(0,0,0,.35);
@@ -364,7 +364,7 @@
 		}
 		#bb-walker-bubble.open { display:block; }
 		#bb-walker-bubble::after {
-			content:''; position:absolute; bottom:-9px; right:30px;
+			content:''; position:absolute; bottom:-9px; right:16px;
 			width:18px; height:18px; background:#fdf6e3;
 			border-radius:0 0 0 9px; transform:rotate(45deg);
 		}
@@ -608,7 +608,7 @@
                     <div class="bb-bottom">
                         <div class="bb-mg" id="bb-mg"></div>
                         <div class="bb-delivery-area">
-                            <div class="bb-delivery-title">🚗 배달 중 (캠핑장 및 기타)</div>
+                            <div class="bb-delivery-title">🚗 기타 배달 중</div>
                             <div class="bb-delivery-chips" id="bb-delivery-chips"></div>
                             <button id="bb-walker-toggle" title="동숲 주민 표시/숨김"></button>
                             <div id="bb-walker-wrap">
@@ -2047,7 +2047,7 @@
 
     // ── 줌 기능
     (function() {
-        const ZOOM_KEY = 'bb_zoom', ZOOM_MIN = 1.0, ZOOM_MAX = 1.2, ZOOM_STEP = 0.1;
+        const ZOOM_KEY = 'bb_zoom', ZOOM_MIN = 0.8, ZOOM_MAX = 1.2, ZOOM_STEP = 0.1;
         let zoom = parseFloat(localStorage.getItem(ZOOM_KEY)) || 1.0;
 
         function applyZoom() {
