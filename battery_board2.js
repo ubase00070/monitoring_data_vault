@@ -112,7 +112,10 @@
             font-family:inherit; font-weight:700; cursor:pointer; white-space:nowrap;
         }
         .bb-btn:hover { border-color:var(--mu); }
-        .bb-btn.rm { border-color:rgba(239,68,68,.3); color:var(--rd); background:rgba(239,68,68,.15); }
+        .bb-btn.rm { 
+            border-color:rgba(239,68,68,.3); color:var(--rd); background:rgba(239,68,68,.15); 
+            min-width:76px; text-align:center;   /* ← 이 두 개 추가 */
+        }
         .bb-btn.rm:hover { background:rgba(239,68,68,.25); }
         .bb-btn.info { border-color:rgba(156,163,175,.2); color:var(--tx); background:var(--sur2); font-size:14px; padding:5px 10px; }
         .bb-xbtn {
@@ -379,7 +382,7 @@
 		.bb-walker-arrow:active { transform:translateY(-50%) scale(0.9); }
 
 		#bb-walker-bubble {
-			position:absolute; top:4px; left:150px; width:250px; min-height:50px;
+			position:absolute; top:4px; left:180px; width:250px; min-height:50px;
 			background:#fdf6e3; border-radius:20px; padding:10px 18px;
 			font-size:15px; color:#5c4a2a; font-weight:700; line-height:1.4;
 			box-shadow:0 4px 12px rgba(0,0,0,.35);
