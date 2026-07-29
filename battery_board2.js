@@ -617,7 +617,7 @@
                 <div class="bb-search-wrap">
                     <button class="bb-btn" id="bb-sortname-btn">이름 순 정렬</button>
                     <button class="bb-btn" id="bb-inforequest-btn">정보 검색</button>
-                    <button class="bb-btn rm" id="bb-rmbtn">카드 제거</button>
+                    <button class="bb-btn" id="bb-rmbtn">카드 제거</button>
                     <div class="bb-si-wrap">
                         <span class="bb-si-icon">🔍</span>
                         <input class="bb-si" id="bb-si" placeholder="기체명 검색 후 클릭하여 추가" autocomplete="off">
