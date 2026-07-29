@@ -721,7 +721,6 @@
         { siteIds: [193], label: '창원대학교' },
         { siteIds: [132], label: '경희대학교' },
         { siteIds: [207], label: '자연스런 캠핑장' },
-        { names: ['배송 띠띠', '순찰 띠띠'], label: '띠띠' },
     ];
     const CLUSTER_AC = {
         charging:'var(--gn)', patrolling:'var(--bl)', standby:'#c8ccd4',
