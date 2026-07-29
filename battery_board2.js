@@ -132,18 +132,18 @@
         /* ── 알림바 + 검색 ── */
         .bb-alert-row {
             display:flex; align-items:stretch;
-            border-bottom:1px solid var(--bd); flex-shrink:0; min-height:90px;
+            border-bottom:1px solid var(--bd); flex-shrink:0; min-height:56px;
             position:relative;
         }
         .bb-alert-bar {
-            flex:1; display:flex; flex-direction:column; align-items:flex-start; justify-content:center; gap:5px;
+            flex:1; display:flex; align-items:center; gap:10px;
             padding:8px 12px; background:var(--bg);
         }
         .bb-alert-label {
             font-size:15px; font-weight:900; color:var(--tx);
             flex-shrink:0; white-space:nowrap;
         }
-        .bb-alert-chips { display:flex; gap:5px; flex-wrap:wrap; align-items:center; }
+        .bb-alert-chips { display:flex; gap:5px; flex-wrap:wrap; flex:1; align-items:center; min-width:0; }
         .bb-chip {
             display:flex; flex-direction:column; gap:2px;
             padding:5px 12px; border-radius:10px;
@@ -175,7 +175,7 @@
         .bb-search-wrap {
             width:240px; flex-shrink:0; padding:6px 10px;
             border-left:1px solid var(--bd); background:var(--bg);
-            position:relative; display:flex; align-items:center;
+            position:relative; display:flex; flex-direction:column; gap:5px; justify-content:center;
         }
         .bb-si-wrap { position:relative; width:100%; }
         .bb-si {
@@ -389,7 +389,7 @@
             color:var(--rd); border-color:rgba(239,68,68,.3); background:rgba(239,68,68,.1);
         }
 		
-        .bb-delivery-title { font-size:15px; font-weight:900; color:var(--mu); letter-spacing:.3px; flex-shrink:0; }
+        .bb-delivery-title { font-size:15px; font-weight:900; color:var(--mu); letter-spacing:.3px; flex-shrink:0; margin-top:14px; }
         .bb-delivery-chips {
             display:flex; flex-wrap:wrap; gap:4px;
             overflow-y:auto; max-height:100px; padding-right:2px;
@@ -562,7 +562,7 @@
             <div class="bb-hd">
                 <div class="bb-hd-left">
                     <button class="bb-btn info" id="bb-infobtn">사용 설명서</button>
-                    <button class="bb-btn" id="bb-inforequest-btn">기체정보</button>
+                    <button class="bb-btn" id="bb-sortname-btn">이름 순 정렬</button>
                     <button id="bb-zoom-out" class="zoom-btn">－</button>
                     <span id="bb-zoom-label" class="zoom-label">100%</span>
                     <button id="bb-zoom-in"  class="zoom-btn">＋</button>
@@ -586,11 +586,12 @@
 
             <!-- 알림바 + 검색 -->
             <div class="bb-alert-row">
-                <div class="bb-alert-bar">
+                <div class="bb-alert-bar" id="bb-alert-bar">
                     <span class="bb-alert-label">🚨 알림</span>
                     <div class="bb-alert-chips" id="bb-alert-chips"></div>
                 </div>
                 <div class="bb-search-wrap">
+                    <button class="bb-btn" id="bb-inforequest-btn" style="width:100%;">기체정보</button>
                     <div class="bb-si-wrap">
                         <span class="bb-si-icon">🔍</span>
                         <input class="bb-si" id="bb-si" placeholder="기체명 검색 후 클릭하여 추가" autocomplete="off">
@@ -1009,11 +1010,15 @@
                 const meta   = ALERT_META[type] || { label: type };
                 const items  = groups[type];
                 const count  = items.length;
-                const first  = items[0]?.name || '';
-                const preview = count > 1 ? `${first} 등 ${count}대` : first;
+                let previewLines;
+                if (count <= 2) {
+                    previewLines = items.map(a => `<div class="bb-chip-l2">${a.name}</div>`).join('');
+                } else {
+                    previewLines = `<div class="bb-chip-l2">${items[0].name} 등 ${count}대</div>`;
+                }
                 return `<div class="bb-chip ${type}" data-type="${type}">
                     <div class="bb-chip-l1">${meta.label} <strong>${count}건</strong></div>
-                    <div class="bb-chip-l2">${preview}</div>
+                    ${previewLines}
                 </div>`;
             }).join('');
 
@@ -1062,6 +1067,35 @@
 
         panel.classList.add('open');
         panel.style.zIndex = ++topmostZ;
+
+        const barEl = document.getElementById('bb-alert-bar');
+        if (barEl) {
+            const r = barEl.getBoundingClientRect();
+            panel.style.position = 'fixed';
+            panel.style.top = (r.bottom + 8) + 'px';
+            panel.style.left = (r.left + r.width / 2) + 'px';
+            panel.style.transform = 'translateX(-50%)';
+        }
+        registerAlertPanelClose();
+    }
+
+    let _alertPanelCloseHandler = null;
+    function registerAlertPanelClose() {
+        const panel = document.getElementById('bb-alert-panel');
+        if (_alertPanelCloseHandler) {
+            document.removeEventListener('mousedown', _alertPanelCloseHandler);
+            _alertPanelCloseHandler = null;
+        }
+        setTimeout(() => {
+            _alertPanelCloseHandler = function closeAlert(e) {
+                if (!panel.contains(e.target) && !e.target.closest('.bb-chip[data-type]')) {
+                    panel.classList.remove('open');
+                    document.removeEventListener('mousedown', _alertPanelCloseHandler);
+                    _alertPanelCloseHandler = null;
+                }
+            };
+            document.addEventListener('mousedown', _alertPanelCloseHandler);
+        }, 100);
     }
 
     function dismiss(key) {
@@ -1704,7 +1738,7 @@
         const siEl = document.getElementById('bb-si');
         const ddEl = document.getElementById('bb-dd');
         const q    = siEl.value.trim();
-        const res  = DB.filter(r => (q===''||r.name.includes(q)) && !ids.includes(r.id))
+        const res  = DB.filter(r => (q===''||r.name.includes(q)) && !ids.includes(r.id) && !isClusterMember(r))
                        .sort((a,b) => a.name.localeCompare(b.name,'ko'));
 
         if (ids.length >= MAX) {
@@ -1752,6 +1786,16 @@
     document.getElementById('bb-inforequest-btn').addEventListener('click', (e) => {
         e.stopPropagation();
         openInfoSearchMode();
+    });
+
+    document.getElementById('bb-sortname-btn').addEventListener('click', () => {
+        ids.sort((a, b) => {
+            const ra = DB.find(x => x.id === a);
+            const rb = DB.find(x => x.id === b);
+            return (ra?.name || '').localeCompare(rb?.name || '', 'ko');
+        });
+        save();
+        render();
     });
 
     document.getElementById('bb-infobtn').addEventListener('click', () => {
