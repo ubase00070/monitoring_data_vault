@@ -31,7 +31,7 @@
 		}
 		@import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap');
         :root {
-			--bg:#111113; --sur:#141416; --sur2:#1a1a1e;
+			--bg:#111113; --sur:#18181c; --sur2:#1a1a1e;
 			--bd:#242428; --bd2:#2e2e34; --tx:#e8e8f0; --mu:#52525e;
 			--gn:#22c55e; --gn2:rgba(34,197,94,.10);
 			--bl:#3b82f6; --bl2:rgba(59,130,246,.10);
@@ -207,7 +207,7 @@
         .bb-di-plus { font-size:15px; color:var(--gn); font-weight:900; flex-shrink:0; margin-left:4px; }
 
         /* ── 카드 그리드 ── */
-        .bb-gw { padding:10px 12px; flex:1; }
+        .bb-gw { padding:10px 12px; flex:1; min-height:530px; }
         .bb-gr { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:6px; }
 
         .bb-main-split { display:flex; gap:10px; min-height:0; padding-left:14px; margin-top:8px; }
@@ -226,8 +226,10 @@
         }
         .bb-cluster-row {
             display:flex; align-items:center; gap:7px; padding:3px 5px; border-radius:6px; cursor:pointer;
-            border:1px solid transparent; user-select:none;
+            border:1px solid transparent; user-select:none; margin-bottom:2px;
         }
+        .bb-cluster-row:last-child { margin-bottom:0; }
+        .bb-cluster-row.warn-bat { animation:bb-warnBlink .8s infinite; }
         .bb-cluster-row:hover { background:rgba(255,255,255,.07); border-color:rgba(255,255,255,.18); }
         .bb-cluster-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
         .bb-cluster-name { flex:1; font-size:13px; font-weight:700; color:var(--tx); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -366,9 +368,11 @@
 		}
 		#bb-walker-bubble.open { display:block; }
 		#bb-walker-bubble::after {
-			content:''; position:absolute; bottom:-8px; right:20px;
-			width:16px; height:16px; background:#fdf6e3;
-			border-radius:0 0 0 8px; transform:rotate(45deg);
+			content:''; position:absolute; top:50%; right:-13px; transform:translateY(-50%);
+			width:0; height:0;
+			border-top:8px solid transparent;
+			border-bottom:8px solid transparent;
+			border-left:14px solid #fdf6e3;
 		}
 		#bb-walker-bubble b {
 			font-weight:900;      /* 본문(700)보다 한 단계 더 굵게 */
@@ -389,10 +393,11 @@
             color:var(--rd); border-color:rgba(239,68,68,.3); background:rgba(239,68,68,.1);
         }
 		
-        .bb-delivery-title { font-size:16.5px; font-weight:900; color:var(--mu); letter-spacing:.3px; flex-shrink:0; margin-top:14px; }
+        .bb-delivery-title { font-size:16.5px; font-weight:900; color:var(--mu); letter-spacing:.3px; flex-shrink:0; padding:5px 6px; }
         .bb-delivery-chips {
             display:flex; flex-wrap:wrap; gap:4px;
             overflow-y:auto; max-height:100px; padding-right:2px;
+            margin-top:20px;
         }
         .bb-delivery-chips::-webkit-scrollbar { width:4px; }
         .bb-delivery-chips::-webkit-scrollbar-thumb { background:var(--bd2); border-radius:2px; }
@@ -410,7 +415,7 @@
             top:50%; left:50%; transform:translate(-50%,-50%);
             width:552px; max-height:86vh; overflow-y:auto;
             border:3px solid transparent; border-radius:14px;
-            background-image: linear-gradient(#0a0a0c, #0a0a0c), linear-gradient(135deg, #6366f1, #ec4899);
+            background-image: linear-gradient(var(--sur), var(--sur)), linear-gradient(135deg, #6366f1, #ec4899);
             background-origin: border-box;
             background-clip: padding-box, border-box;
             box-shadow:0 24px 64px rgba(0,0,0,.9);
@@ -419,7 +424,7 @@
         #bb-alert-panel.open { display:block; }
         .bb-ap-hd {
             padding:14px 16px; border-bottom:1px solid #4a5070;
-            background:#0a0a0c;
+            background:var(--sur);
             border-radius:12px 12px 0 0;
             display:flex; justify-content:space-between; align-items:center;
             position:sticky; top:0; z-index:1;
@@ -433,7 +438,7 @@
         }
         .bb-ap-item {
             padding:13px 16px; border-bottom:1px solid #3a3f62;
-            display:flex; align-items:flex-start; gap:12px; background:#0a0a0c;
+            display:flex; align-items:flex-start; gap:12px; background:var(--sur);
         }
         .bb-ap-item:last-child { border-bottom:none; }
         .bb-ap-item:hover { background:#323558; }
@@ -453,7 +458,7 @@
             color:#a0a8cc; font-size:11px; font-weight:700; cursor:pointer; font-family:inherit;
         }
         .bb-ap-item:hover .bb-ap-dismiss { display:block; }
-        .bb-ap-empty { padding:28px 16px; text-align:center; font-size:14px; color:#8890b8; font-weight:700; background:#0a0a0c; border-radius:0 0 12px 12px; }
+        .bb-ap-empty { padding:28px 16px; text-align:center; font-size:14px; color:#8890b8; font-weight:700; background:var(--sur); border-radius:0 0 12px 12px; }
 
         #bb-alert-panel.bb-light {
 			--bg:#ded3b8; --sur:#f8f3e6; --sur2:#efe6d2;
@@ -611,7 +616,7 @@
                     <div class="bb-bottom">
                         <div class="bb-mg" id="bb-mg"></div>
                         <div class="bb-delivery-area">
-                            <div class="bb-delivery-title">🚗 기타 배달 중</div>
+                            <div class="bb-delivery-title">🚗 기타 배달 기체</div>
                             <div class="bb-delivery-chips" id="bb-delivery-chips"></div>
                             <div id="bb-walker-bubble"><span id="bb-walker-bubble-text"></span></div>
                             <button id="bb-walker-toggle" title="동숲 주민 표시/숨김"></button>
@@ -1352,8 +1357,9 @@
 
             members.forEach(r => {
                 const ac = CLUSTER_AC[r.status] || 'var(--mu)';
+                const lowBat = r.status !== 'off' && r.battery <= 21;
                 const row = document.createElement('div');
-                row.className = 'bb-cluster-row';
+                row.className = `bb-cluster-row${lowBat ? ' warn-bat' : ''}`;
                 row.innerHTML = `
                     <span class="bb-cluster-dot" style="background:${ac};"></span>
                     <span class="bb-cluster-name">${r.name}</span>
@@ -1996,6 +2002,33 @@
 			'너굴 상점 앞은 항상 줄이 길어.',
 			'돌 캐다가 벌한테 습격당했어.',
 			'오늘의 목표: 무리하지 않기. 아마도.',
+			'순무 산 값에 팔면 그게 바로 인생이지.',
+			'화석 감정받으러 박물관 뛰어갔다 왔어.',
+			'모닥불 앞에선 다들 말이 많아지더라.',
+			'섬 이름 짓다가 하루가 다 갔어.',
+			'낚싯대 부러졌어... 오늘 운세 왜 이래.',
+			'텐트 치다가 말뚝을 잃어버렸어.',
+			'별자리 도감 채우는 재미, 은근 쏠쏠해.',
+			'조개껍데기 팔찌, 오늘도 하나 완성.',
+			'모래성 쌓다가 파도에 다 무너졌어.',
+			'이슬 맺힌 아침, 왠지 상쾌하다냥.',
+			'선물 상자 흔들어보는 거, 그거 반칙이야.',
+			'오늘은 유독 매미가 시끄럽네.',
+			'단풍잎 하나 주워서 책갈피로 썼어.',
+			'모닥불 장작, 누가 좀 더 넣어줄래.',
+			'튤립 심어놓고 매일 물 주는 중이야.',
+			'뗏목 타고 무인도 다녀오는 길이야.',
+			'오늘의 다도해: 마음이 잔잔하다.',
+			'우체통에 편지가 쌓였어, 답장부터 하자.',
+			'모기한테 물렸어... 여름은 늘 그렇지.',
+			'양초 만들다가 손에 다 묻었어.',
+			'섬 주민 인사는 언제 들어도 정겨워.',
+			'그물 던졌는데 장화만 걸렸어.',
+			'단골 카페 자리, 오늘도 그 자리.',
+			'별똥별 놓쳤어... 다음엔 꼭 본다.',
+			'낙엽 쓸다가 또 놀아버렸어.',
+			'오늘의 격언: 서두르면 물고기 놓친다.',
+			'마음 편한 하루, 그게 최고의 하루야.',
 		];
 
 		// 현재 떠있는 알림을 종류별로 묶어서 "라벨 N건" 문자열 배열로 반환
