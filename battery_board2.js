@@ -176,12 +176,11 @@
 
         /* 검색 */
         .bb-search-wrap {
-            width:300px; flex-shrink:0; padding:6px 10px;
-            border-left:1px solid var(--bd); background:var(--bg);
-            position:relative; display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr); gap:5px; align-content:center;
-            justify-items:start;
-        }
-        .bb-search-wrap .bb-si-wrap { grid-column: 1 / -1; justify-self:stretch; }
+		    width:300px; flex-shrink:0; padding:6px 10px;
+		    border-left:1px solid var(--bd); background:var(--bg);
+		    position:relative; display:flex; flex-wrap:wrap; gap:5px; align-content:center;
+		}
+		.bb-search-wrap .bb-si-wrap { flex-basis:100%; }
         .bb-si-wrap { position:relative; width:100%; }
         .bb-si {
             width:100%; background:var(--sur2); border:1px solid var(--bd2);
