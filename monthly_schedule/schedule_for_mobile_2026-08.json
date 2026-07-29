@@ -5989,10 +5989,10 @@
       "workTime": "15:00~24:00B",
       "schedule": {
         "8/1": {
-          "status": "work",
+          "status": "annual",
           "working": true,
-          "present": true,
-          "raw": "1"
+          "present": false,
+          "raw": "연차"
         },
         "8/2": {
           "status": "work",
@@ -8141,6 +8141,6 @@
     "8/31"
   ],
   "mainMonth": 8,
-  "updatedAt": "2026-07-28T03:53:19.479Z",
+  "updatedAt": "2026-07-29T03:53:19.680Z",
   "sheetName": "2026년_08월 스케줄"
 }
