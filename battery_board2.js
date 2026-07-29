@@ -31,7 +31,7 @@
 		}
 		@import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap');
         :root {
-			--bg:#111113; --sur:#18181c; --sur2:#1a1a1e;
+			--bg:#111113; --sur:#1c1c22; --sur2:#232329;
 			--bd:#242428; --bd2:#2e2e34; --tx:#e8e8f0; --mu:#52525e;
 			--gn:#22c55e; --gn2:rgba(34,197,94,.10);
 			--bl:#3b82f6; --bl2:rgba(59,130,246,.10);
@@ -175,9 +175,10 @@
         .bb-search-wrap {
             width:300px; flex-shrink:0; padding:6px 10px;
             border-left:1px solid var(--bd); background:var(--bg);
-            position:relative; display:grid; grid-template-columns:1fr 1fr; gap:5px; align-content:center;
+            position:relative; display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px; align-content:center;
+            justify-items:start;
         }
-        .bb-search-wrap .bb-si-wrap { grid-column: 2; }
+        .bb-search-wrap .bb-si-wrap { grid-column: 1 / -1; justify-self:stretch; }
         .bb-si-wrap { position:relative; width:100%; }
         .bb-si {
             width:100%; background:var(--sur2); border:1px solid var(--bd2);
@@ -241,10 +242,10 @@
         }
         .bb-cluster-pct-val, .bb-cluster-pct-off {
             position:absolute; top:0; right:0; white-space:nowrap;
-            animation:bb-pctSlide 4s ease-in-out infinite;
+            animation:bb-pctSlide 8s ease-in-out infinite;
         }
         .bb-cluster-pct-val { font-size:12px; font-weight:900; font-family:'Lato',monospace; }
-        .bb-cluster-pct-off { font-size:10px; font-weight:900; color:#fb923c; animation-delay:-2s; }
+        .bb-cluster-pct-off { font-size:10px; font-weight:900; color:rgba(239,68,68,.8); animation-delay:-4s; }
         @keyframes bb-pctSlide {
             0%     { transform:translateX(0);    opacity:1; }
             42%    { transform:translateX(0);    opacity:1; }
@@ -613,7 +614,7 @@
                 </div>
                 <div class="bb-search-wrap">
                     <button class="bb-btn" id="bb-sortname-btn">이름 순 정렬</button>
-                    <button class="bb-btn" id="bb-inforequest-btn">기체정보만 검색</button>
+                    <button class="bb-btn" id="bb-inforequest-btn">기체정보 검색</button>
                     <button class="bb-btn rm" id="bb-rmbtn">카드 제거</button>
                     <div class="bb-si-wrap">
                         <span class="bb-si-icon">🔍</span>
@@ -746,7 +747,7 @@
         { siteIds: [180], label: '부산 국립과학관' },
         { siteIds: [193], label: '창원대학교' },
         { siteIds: [132], label: '경희대학교' },
-        { siteIds: [202], label: '자연스런 캠핑장' },
+        { siteIds: [207], label: '자연스런 캠핑장' },
     ];
     const CLUSTER_AC = {
         charging:'var(--gn)', patrolling:'var(--bl)', standby:'#c8ccd4',
