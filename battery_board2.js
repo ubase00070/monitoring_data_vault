@@ -68,7 +68,7 @@
         #bb {
             display:none; position:fixed; top:50%; left:50%;
             transform:translate(-50%,-50%);
-            width:1310px;
+            width:1370px;
             max-height:95vh; overflow-y:auto; overflow-x:hidden;
             border:3px solid transparent; border-radius:16px;
             background-image: linear-gradient(var(--bg), var(--bg)), linear-gradient(135deg, #6366f1, #ec4899);
@@ -173,10 +173,11 @@
 
         /* 검색 */
         .bb-search-wrap {
-            width:240px; flex-shrink:0; padding:6px 10px;
+            width:300px; flex-shrink:0; padding:6px 10px;
             border-left:1px solid var(--bd); background:var(--bg);
-            position:relative; display:flex; flex-direction:column; gap:5px; justify-content:center;
+            position:relative; display:grid; grid-template-columns:1fr 1fr; gap:5px; align-content:center;
         }
+        .bb-search-wrap .bb-si-wrap { grid-column: 2; }
         .bb-si-wrap { position:relative; width:100%; }
         .bb-si {
             width:100%; background:var(--sur2); border:1px solid var(--bd2);
@@ -234,9 +235,27 @@
         .bb-cluster-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
         .bb-cluster-name { flex:1; font-size:13px; font-weight:700; color:var(--tx); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .bb-cluster-pct { font-size:12px; font-weight:900; font-family:'Lato',monospace; flex-shrink:0; }
+        .bb-cluster-pct-wrap {
+            position:relative; display:inline-block; width:56px; height:14px;
+            overflow:hidden; flex-shrink:0; text-align:right;
+        }
+        .bb-cluster-pct-val, .bb-cluster-pct-off {
+            position:absolute; top:0; right:0; white-space:nowrap;
+            animation:bb-pctSlide 4s ease-in-out infinite;
+        }
+        .bb-cluster-pct-val { font-size:12px; font-weight:900; font-family:'Lato',monospace; }
+        .bb-cluster-pct-off { font-size:10px; font-weight:900; color:#fb923c; animation-delay:-2s; }
+        @keyframes bb-pctSlide {
+            0%     { transform:translateX(0);    opacity:1; }
+            42%    { transform:translateX(0);    opacity:1; }
+            50%    { transform:translateX(-8px);  opacity:0; }
+            50.01% { transform:translateX(8px);   opacity:0; }
+            92%    { transform:translateX(8px);   opacity:0; }
+            100%   { transform:translateX(0);    opacity:1; }
+        }
         .bb-ca {
 			height:80px; background:var(--sur);
-			border-radius:18px; padding:6px 8px;
+			border-radius:14px; padding:6px 8px;
 			cursor:grab; position:relative; overflow:hidden;
 			display:flex; flex-direction:column; justify-content:space-between;
 			border:2px solid var(--ac-border,var(--bd));
@@ -397,7 +416,7 @@
         .bb-delivery-chips {
             display:flex; flex-wrap:wrap; gap:4px;
             overflow-y:auto; max-height:100px; padding-right:2px;
-            margin-top:20px;
+            margin-top:20px; max-width:calc(100% - 155px);
         }
         .bb-delivery-chips::-webkit-scrollbar { width:4px; }
         .bb-delivery-chips::-webkit-scrollbar-thumb { background:var(--bd2); border-radius:2px; }
@@ -452,12 +471,11 @@
         .bb-ap-desc { font-size:14.5px; font-weight:700; color:#c4c8e8; line-height:1.55; }
         .bb-ap-time { font-size:11px; color:#8890b8; font-family:'Lato',monospace; }
         .bb-ap-dismiss {
-            display:none; flex-shrink:0; align-self:center;
+            display:flex; flex-shrink:0; align-self:center;
             padding:4px 11px; border-radius:6px;
             border:1px solid #4a5070; background:#3a3f62;
             color:#a0a8cc; font-size:11px; font-weight:700; cursor:pointer; font-family:inherit;
         }
-        .bb-ap-item:hover .bb-ap-dismiss { display:block; }
         .bb-ap-empty { padding:28px 16px; text-align:center; font-size:14px; color:#8890b8; font-weight:700; background:var(--sur); border-radius:0 0 12px 12px; }
 
         #bb-alert-panel.bb-light {
@@ -567,7 +585,6 @@
             <div class="bb-hd">
                 <div class="bb-hd-left">
                     <button class="bb-btn info" id="bb-infobtn">사용 설명서</button>
-                    <button class="bb-btn" id="bb-sortname-btn">이름 순 정렬</button>
                     <button id="bb-zoom-out" class="zoom-btn">－</button>
                     <span id="bb-zoom-label" class="zoom-label">100%</span>
                     <button id="bb-zoom-in"  class="zoom-btn">＋</button>
@@ -584,7 +601,6 @@
                     <button id="bb-theme-btn" class="bb-btn">다크</button>
                     <button id="bb-backup-btn" class="bb-btn">목록 백업</button>
                     <button id="bb-restore-btn" class="bb-btn">목록 복원</button>
-                    <button class="bb-btn rm" id="bb-rmbtn">카드 제거</button>
                     <div class="bb-xbtn" id="bb-closebtn">✕</div>
                 </div>
             </div>
@@ -596,7 +612,9 @@
                     <div class="bb-alert-chips" id="bb-alert-chips"></div>
                 </div>
                 <div class="bb-search-wrap">
-                    <button class="bb-btn" id="bb-inforequest-btn" style="width:100%;">기체정보만 검색</button>
+                    <button class="bb-btn" id="bb-sortname-btn">이름 순 정렬</button>
+                    <button class="bb-btn" id="bb-inforequest-btn">기체정보만 검색</button>
+                    <button class="bb-btn rm" id="bb-rmbtn">카드 제거</button>
                     <div class="bb-si-wrap">
                         <span class="bb-si-icon">🔍</span>
                         <input class="bb-si" id="bb-si" placeholder="기체명 검색 후 클릭하여 추가" autocomplete="off">
@@ -728,7 +746,7 @@
         { siteIds: [180], label: '부산 국립과학관' },
         { siteIds: [193], label: '창원대학교' },
         { siteIds: [132], label: '경희대학교' },
-        { siteIds: [207], label: '자연스런 캠핑장' },
+        { siteIds: [202], label: '자연스런 캠핑장' },
     ];
     const CLUSTER_AC = {
         charging:'var(--gn)', patrolling:'var(--bl)', standby:'#c8ccd4',
@@ -1357,13 +1375,22 @@
 
             members.forEach(r => {
                 const ac = CLUSTER_AC[r.status] || 'var(--mu)';
-                const lowBat = r.status !== 'off' && r.battery <= 21;
+                const off = r.status === 'off';
+                const lowBat = !off && r.battery <= 21;
+                const showMissionOff = !r.canDispatch && !off && !r.loading
+                    && r.status !== 'patrolling' && r.status !== 'delivering';
                 const row = document.createElement('div');
-                row.className = `bb-cluster-row${lowBat ? ' warn-bat' : ''}`;
+                row.className = `bb-cluster-row${lowBat ? ' warn-bat' : ''}${showMissionOff ? ' mission-off' : ''}`;
+                const pctHtml = showMissionOff
+                    ? `<span class="bb-cluster-pct-wrap">
+                           <span class="bb-cluster-pct-val" style="color:${ac};">${off ? 'OFF' : r.battery+'%'}</span>
+                           <span class="bb-cluster-pct-off">임무 OFF</span>
+                       </span>`
+                    : `<span class="bb-cluster-pct" style="color:${ac};">${off ? 'OFF' : r.battery+'%'}</span>`;
                 row.innerHTML = `
                     <span class="bb-cluster-dot" style="background:${ac};"></span>
-                    <span class="bb-cluster-name">${r.name}</span>
-                    <span class="bb-cluster-pct" style="color:${ac};">${r.status==='off' ? 'OFF' : r.battery+'%'}</span>
+                    <span class="bb-cluster-name" title="${STL[r.status] || ''}">${r.name}</span>
+                    ${pctHtml}
                 `;
                 row.addEventListener('dblclick', e => {
                     e.stopPropagation();
@@ -1947,6 +1974,12 @@
 			'코웨이 선생님의 ASMR이 필요해...',
 			'오늘 날씨엔 순찰하기 딱이야.',
 			'본사에 몰래 다녀올까 고민 중이야.',
+            '영양맛점 8500원... 너무 혜자야',
+            '영화는 정보를 모르고 보는 것도 재밌어',
+            '시간으로 쌓은 관계는 계속 생각나는 법이야.',
+            '오해가 있으면 풀면 되지',
+            '우리 나이엔 건강부터 챙겨야지.',
+            '현철님은 매크로도 이겨...',
 			'이번 주 무값이 심상치 않아.',
 			'박물관 화석 도감 아직도 다 못 채웠어...',
 			'마음의 소리는 가끔 들어야 몸이 편해.',
@@ -1989,40 +2022,27 @@
 			'울타리 색깔 고르다가 밤샜어.',
 			'카페 커피 한 잔이면 하루가 리셋돼.',
 			'미술관 그림, 가짜인지 진짜인지 아직도 헷갈려.',
-			'무인도 탈출, 오늘은 진짜 하고 만다.',
-			'축제 준비하느라 다들 분주하네.',
 			'잡초는 뽑아도 뽑아도 끝이 없어.',
 			'비 오는 날엔 집콕이 최고지.',
-			'땅속에서 뭔가 딱딱한 게 파여.',
 			'편지 쓰다가 할 말이 너무 많아졌어.',
 			'벌한테 쐬였어... 안 웃겨.',
 			'도구는 꼭 닳기 직전에 부러지더라.',
 			'장대높이뛰기, 오늘도 실패했어.',
 			'가리비 캐려고 잠수했다가 숨 넘어갈 뻔.',
-			'너굴 상점 앞은 항상 줄이 길어.',
 			'돌 캐다가 벌한테 습격당했어.',
 			'오늘의 목표: 무리하지 않기. 아마도.',
-			'순무 산 값에 팔면 그게 바로 인생이지.',
-			'화석 감정받으러 박물관 뛰어갔다 왔어.',
-			'모닥불 앞에선 다들 말이 많아지더라.',
-			'섬 이름 짓다가 하루가 다 갔어.',
 			'낚싯대 부러졌어... 오늘 운세 왜 이래.',
 			'텐트 치다가 말뚝을 잃어버렸어.',
 			'별자리 도감 채우는 재미, 은근 쏠쏠해.',
-			'조개껍데기 팔찌, 오늘도 하나 완성.',
 			'모래성 쌓다가 파도에 다 무너졌어.',
-			'이슬 맺힌 아침, 왠지 상쾌하다냥.',
 			'선물 상자 흔들어보는 거, 그거 반칙이야.',
 			'오늘은 유독 매미가 시끄럽네.',
 			'단풍잎 하나 주워서 책갈피로 썼어.',
-			'모닥불 장작, 누가 좀 더 넣어줄래.',
 			'튤립 심어놓고 매일 물 주는 중이야.',
 			'뗏목 타고 무인도 다녀오는 길이야.',
-			'오늘의 다도해: 마음이 잔잔하다.',
 			'우체통에 편지가 쌓였어, 답장부터 하자.',
 			'모기한테 물렸어... 여름은 늘 그렇지.',
 			'양초 만들다가 손에 다 묻었어.',
-			'섬 주민 인사는 언제 들어도 정겨워.',
 			'그물 던졌는데 장화만 걸렸어.',
 			'단골 카페 자리, 오늘도 그 자리.',
 			'별똥별 놓쳤어... 다음엔 꼭 본다.',
