@@ -59,10 +59,9 @@
 		#bb.bb-light .bb-chip.cam    { background:var(--sur); color:#c2410c; }
 		#bb.bb-light .bb-chip.nomap  { background:var(--sur); color:#c2410c; }
 		#bb.bb-light .bb-chip.idle   { background:var(--sur); color:#1d4ed8; }
-		#bb.bb-light .bb-cluster-card { background:var(--sur); border-color:#a16207; }
-		#bb.bb-light .bb-cluster-label { color:#a16207; }
+		#bb.bb-light .bb-cluster-side { background:var(--sur); }
+		#bb.bb-light .bb-cluster-group-label { color:#a16207; }
 		#bb.bb-light .bb-cluster-row:hover { background:rgba(0,0,0,.05); }
-		#bb.bb-light .bb-cluster-row-bar { background:rgba(0,0,0,.08); }
 
         #bb-wrap * { box-sizing:border-box; }
 
@@ -70,7 +69,7 @@
         #bb {
             display:none; position:fixed; top:50%; left:50%;
             transform:translate(-50%,-50%);
-            width:1180px;
+            width:1340px;
             max-height:92vh; overflow-y:auto;
             border:3px solid transparent; border-radius:16px;
             background-image: linear-gradient(var(--bg), var(--bg)), linear-gradient(135deg, #6366f1, #ec4899);
@@ -207,38 +206,28 @@
 
         /* ── 카드 그리드 ── */
         .bb-gw { padding:10px 12px; flex-shrink:0; }
-        .bb-gr { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; }
+        .bb-gr { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; }
 
-        .bb-cluster-grid { display:grid; grid-template-columns:repeat(7,1fr); grid-auto-rows:104px; gap:6px; margin-top:6px; }
+        .bb-main-split { display:flex; gap:10px; min-height:0; }
+        .bb-main-right { flex:1; min-width:0; display:flex; flex-direction:column; gap:8px; }
 
-        .bb-cluster-card {
-            background:#17171c; border-radius:16px; padding:7px 11px;
-            border:2px dashed #c9a24a; display:flex; flex-direction:column; min-width:0;
+        .bb-cluster-side {
+            width:270px; flex-shrink:0; background:var(--sur2); border-radius:14px;
+            padding:12px; overflow-y:auto;
         }
-        .bb-cluster-card.size2 { grid-column:span 2; }
-        .bb-cluster-card.size4 { grid-column:span 4; }
-
-        .bb-cluster-label {
-            font-size:11px; font-weight:900; color:#c9a24a; margin-bottom:3px; flex-shrink:0;
-            white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+        .bb-cluster-group { margin-bottom:12px; }
+        .bb-cluster-group:last-child { margin-bottom:0; }
+        .bb-cluster-group-label {
+            font-size:12px; font-weight:900; color:#c9a24a; margin-bottom:4px; padding-left:5px;
         }
-
-        .bb-cluster-card.size2 .bb-cluster-body { display:flex; flex-direction:column; gap:3px; flex:1; justify-content:center; }
-
-        .bb-cluster-card.size4 .bb-cluster-body {
-            flex:1; display:grid; grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; gap:2px;
+        .bb-cluster-row {
+            display:flex; align-items:center; gap:7px; padding:3px 5px; border-radius:6px; cursor:pointer;
         }
-        .bb-cluster-card.size4 .bb-cluster-row {
-            flex-direction:column; align-items:flex-start; justify-content:center; gap:2px;
-            border-left:2px solid var(--ac,var(--mu)); padding-left:6px;
-        }
-
-        .bb-cluster-row { display:flex; align-items:center; gap:5px; cursor:pointer; border-radius:6px; padding:2px 3px; line-height:1.3; }
         .bb-cluster-row:hover { background:rgba(255,255,255,.06); }
-        .bb-cluster-row-name { flex:1; font-size:12px; font-weight:700; color:var(--tx); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-        .bb-cluster-row-status { font-size:10px; font-weight:700; white-space:nowrap; }
-        .bb-cluster-row-bar { width:32px; height:7px; background:rgba(255,255,255,.07); border-radius:3px; overflow:hidden; flex-shrink:0; }
-        .bb-cluster-row-fill { height:100%; }
+        .bb-cluster-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+        .bb-cluster-name { flex:1; font-size:13px; font-weight:700; color:var(--tx); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .bb-cluster-pct { font-size:12px; font-weight:900; font-family:'Lato',monospace; flex-shrink:0; }
+        .bb-cluster-divider { height:1px; background:var(--bd); margin:8px 0; }
         .bb-ca {
 			height:80px; background:var(--sur);
 			border-radius:18px; padding:6px 8px;
@@ -606,26 +595,29 @@
                 </div>
             </div>
 
-            <!-- 카드 그리드 -->
-            <div class="bb-gw"><div class="bb-gr" id="bb-gr"></div></div>
+            <!-- 메인 영역: 좌측 묶음 리스트 + 우측 카드/퀵바/배달 -->
+            <div class="bb-main-split">
+                <div class="bb-cluster-side" id="bb-cluster-side"></div>
+                <div class="bb-main-right">
+                    <!-- 카드 그리드 -->
+                    <div class="bb-gw"><div class="bb-gr" id="bb-gr"></div></div>
 
-			<!-- 묶음 그리드 (사이트 단위로 항상 표시) -->
-			<div class="bb-cw"><div class="bb-cluster-grid" id="bb-cluster-grid"></div></div>
-
-            <!-- 하단: 퀵바 + 기타 배달 -->
-            <div class="bb-bottom">
-                <div class="bb-mg" id="bb-mg"></div>
-                <div class="bb-delivery-area">
-					<div class="bb-delivery-title">🚗 배달 중 (캠핑장 및 기타)</div>
-					<div class="bb-delivery-chips" id="bb-delivery-chips"></div>
-					<button id="bb-walker-toggle" title="동숲 주민 표시/숨김"></button>
-					<div id="bb-walker-wrap">
-						<div id="bb-walker-bubble"><span id="bb-walker-bubble-text"></span></div>
-						<div id="bb-walker"></div>
-						<button id="bb-walker-prev" class="bb-walker-arrow left" title="이전 캐릭터">‹</button>
-						<button id="bb-walker-next" class="bb-walker-arrow right" title="다음 캐릭터">›</button>
-					</div>
-				</div>
+                    <!-- 하단: 퀵바 + 기타 배달 -->
+                    <div class="bb-bottom">
+                        <div class="bb-mg" id="bb-mg"></div>
+                        <div class="bb-delivery-area">
+                            <div class="bb-delivery-title">🚗 배달 중 (캠핑장 및 기타)</div>
+                            <div class="bb-delivery-chips" id="bb-delivery-chips"></div>
+                            <button id="bb-walker-toggle" title="동숲 주민 표시/숨김"></button>
+                            <div id="bb-walker-wrap">
+                                <div id="bb-walker-bubble"><span id="bb-walker-bubble-text"></span></div>
+                                <div id="bb-walker"></div>
+                                <button id="bb-walker-prev" class="bb-walker-arrow left" title="이전 캐릭터">‹</button>
+                                <button id="bb-walker-next" class="bb-walker-arrow right" title="다음 캐릭터">›</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- 사용 설명서 패널 -->
@@ -717,23 +709,21 @@
         177,179,180,181,182,187,193,196,202,203,207,214,216,221,224,230,235,
     ];
 
-	// ============================================================
-	// 묶음 그리드 설정 — site id만 넣으면 그 사이트 소속 기체들이 자동으로 묶여서
-	// 별도 영역에 표시됨. 배열에 넣은 순서대로 카드가 나열됨.
-	// ============================================================
-	const CLUSTER_GROUPS = [
-		{ siteIds: [142, 145, 144, 143], label: '성남시 순찰' },
-		{ siteIds: [150, 151], label: '부산 EDC' },
-		{ siteIds: [180], label: '부산 국립과학관' },
-		{ siteIds: [193], label: '창원대학교' },
-		{ siteIds: [132], label: '경희대학교' },
-		{ siteIds: [207], label: '자연스런 캠핑장' },
-		// { siteIds: [46], label: '🎓 커스텀 라벨' },   // 필요하면 라벨 직접 지정 가능
-	];
-	const CLUSTER_AC = {
-		charging:'var(--gn)', patrolling:'var(--bl)', standby:'#c8ccd4',
-		off:'#4b5563', delivering:'var(--pk)', docking:'var(--ye)',
-	};
+    // ============================================================
+    // 묶음 그리드 설정 — siteIds 또는 names로 매칭. 배열 순서대로 표시됨.
+    // ============================================================
+    const CLUSTER_GROUPS = [
+        { siteIds: [142, 145, 144, 143], label: '성남시 순찰' },
+        { siteIds: [150, 151], label: '부산 EDC' },
+        { siteIds: [180], label: '부산 국립과학관' },
+        { siteIds: [193], label: '창원대학교' },
+        { siteIds: [132], label: '경희대학교' },
+        { siteIds: [207], label: '자연스런 캠핑장' },
+    ];
+    const CLUSTER_AC = {
+        charging:'var(--gn)', patrolling:'var(--bl)', standby:'#c8ccd4',
+        off:'#4b5563', delivering:'var(--pk)', docking:'var(--ye)',
+    };
 
     const MONITOR_GROUPS = [
         { id:'yeoksam',  label:'역삼 요기요',    keywords:['역삼동'] },
@@ -1280,47 +1270,46 @@
     }
 
     function renderClusterGrid() {
-        const wrap = document.getElementById('bb-cluster-grid');
+        const wrap = document.getElementById('bb-cluster-side');
         if (!wrap) return;
         wrap.innerHTML = '';
 
-        CLUSTER_GROUPS.forEach(group => {
-            const members = DB.filter(r => group.siteIds.includes(r.siteId));
+        CLUSTER_GROUPS.forEach((group) => {
+            const members = DB.filter(r =>
+                (group.siteIds && group.siteIds.includes(r.siteId)) ||
+                (group.names && group.names.includes(r.name))
+            );
             if (members.length === 0) return;
 
-            const label = group.label || members[0].raw?.site?.name || '묶음';
-            const slots = Math.max(2, Math.ceil(members.length / 2) * 2);
+            if (wrap.children.length > 0) {
+                wrap.appendChild(document.createElement('div')).className = 'bb-cluster-divider';
+            }
 
-            const card = document.createElement('div');
-            card.className = `bb-cluster-card size${slots >= 4 ? 4 : 2}`;
+            const groupEl = document.createElement('div');
+            groupEl.className = 'bb-cluster-group';
 
             const labelEl = document.createElement('div');
-            labelEl.className = 'bb-cluster-label';
-            labelEl.textContent = `${label} (${members.length}대)`;
-            card.appendChild(labelEl);
-
-            const body = document.createElement('div');
-            body.className = 'bb-cluster-body';
-            card.appendChild(body);
+            labelEl.className = 'bb-cluster-group-label';
+            labelEl.textContent = `${group.label} (${members.length}대)`;
+            groupEl.appendChild(labelEl);
 
             members.forEach(r => {
                 const ac = CLUSTER_AC[r.status] || 'var(--mu)';
                 const row = document.createElement('div');
                 row.className = 'bb-cluster-row';
-                row.style.setProperty('--ac', ac);
                 row.innerHTML = `
-                    <span class="bb-cluster-row-name">${r.name}</span>
-                    <span class="bb-cluster-row-status" style="color:${ac};">${STL[r.status] || ''}</span>
-                    <div class="bb-cluster-row-bar"><div class="bb-cluster-row-fill" style="width:${r.status==='off'?0:r.battery}%;background:${ac};"></div></div>
+                    <span class="bb-cluster-dot" style="background:${ac};"></span>
+                    <span class="bb-cluster-name">${r.name}</span>
+                    <span class="bb-cluster-pct" style="color:${ac};">${r.status==='off' ? 'OFF' : r.battery+'%'}</span>
                 `;
                 row.addEventListener('dblclick', e => {
                     e.stopPropagation();
                     openInfoCardPanel(r);
                 });
-                body.appendChild(row);
+                groupEl.appendChild(row);
             });
 
-            wrap.appendChild(card);
+            wrap.appendChild(groupEl);
         });
     }
 
@@ -2045,7 +2034,7 @@
 
     // ── 줌 기능
     (function() {
-        const ZOOM_KEY = 'bb_zoom', ZOOM_MIN = 1.0, ZOOM_MAX = 2.0, ZOOM_STEP = 0.1;
+        const ZOOM_KEY = 'bb_zoom', ZOOM_MIN = 1.0, ZOOM_MAX = 1.2, ZOOM_STEP = 0.1;
         let zoom = parseFloat(localStorage.getItem(ZOOM_KEY)) || 1.0;
 
         function applyZoom() {
