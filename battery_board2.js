@@ -69,7 +69,7 @@
             display:none; position:fixed; top:50%; left:50%;
             transform:translate(-50%,-50%);
             width:1310px;
-            max-height:92vh; overflow-y:auto; overflow-x:hidden;
+            max-height:95vh; overflow-y:auto; overflow-x:hidden;
             border:3px solid transparent; border-radius:16px;
             background-image: linear-gradient(var(--bg), var(--bg)), linear-gradient(135deg, #6366f1, #ec4899);
             background-origin: border-box;
@@ -116,7 +116,7 @@
         .bb-btn.rm:hover { background:rgba(239,68,68,.25); }
         .bb-btn.info { border-color:rgba(156,163,175,.2); color:var(--tx); background:var(--sur2); font-size:14px; padding:5px 10px; }
         .bb-xbtn {
-            width:24px; height:24px; border-radius:6px;
+            width:32px; height:32px; border-radius:6px;
             background:rgba(239,68,68,.15); border:1px solid rgba(239,68,68,.3);
             color:var(--rd); font-size:13px; cursor:pointer;
             display:flex; align-items:center; justify-content:center; font-weight:900;
@@ -327,7 +327,7 @@
 		}
 		#bb-walker-wrap {
 			position:absolute;
-			bottom:4px; right:4px;
+			bottom:4px; right:-4px;
 			width:145px; height:145px;
 			z-index:1;
 		}
@@ -389,7 +389,7 @@
             color:var(--rd); border-color:rgba(239,68,68,.3); background:rgba(239,68,68,.1);
         }
 		
-        .bb-delivery-title { font-size:15px; font-weight:900; color:var(--mu); letter-spacing:.3px; flex-shrink:0; margin-top:14px; }
+        .bb-delivery-title { font-size:16.5px; font-weight:900; color:var(--mu); letter-spacing:.3px; flex-shrink:0; margin-top:14px; }
         .bb-delivery-chips {
             display:flex; flex-wrap:wrap; gap:4px;
             overflow-y:auto; max-height:100px; padding-right:2px;
@@ -577,9 +577,9 @@
                 </div>
                 <div class="bb-hd-right">
                     <button id="bb-theme-btn" class="bb-btn">다크</button>
-                    <button id="bb-backup-btn" class="bb-btn">백업</button>
-                    <button id="bb-restore-btn" class="bb-btn">복원</button>
-                    <button class="bb-btn rm" id="bb-rmbtn">제거</button>
+                    <button id="bb-backup-btn" class="bb-btn">목록 백업</button>
+                    <button id="bb-restore-btn" class="bb-btn">목록 복원</button>
+                    <button class="bb-btn rm" id="bb-rmbtn">카드 제거</button>
                     <div class="bb-xbtn" id="bb-closebtn">✕</div>
                 </div>
             </div>
@@ -591,7 +591,7 @@
                     <div class="bb-alert-chips" id="bb-alert-chips"></div>
                 </div>
                 <div class="bb-search-wrap">
-                    <button class="bb-btn" id="bb-inforequest-btn" style="width:100%;">기체정보</button>
+                    <button class="bb-btn" id="bb-inforequest-btn" style="width:100%;">기체정보만 검색</button>
                     <div class="bb-si-wrap">
                         <span class="bb-si-icon">🔍</span>
                         <input class="bb-si" id="bb-si" placeholder="기체명 검색 후 클릭하여 추가" autocomplete="off">
@@ -680,7 +680,7 @@
         bbEl.classList.toggle('bb-light', theme === 'light');
         document.getElementById('bb-alert-panel').classList.toggle('bb-light', theme === 'light');
         document.getElementById('bb-info-card-panel').classList.toggle('bb-light', theme === 'light');
-        document.getElementById('bb-theme-btn').textContent = theme === 'light' ? '라이트' : '다크';
+        document.getElementById('bb-theme-btn').textContent = theme === 'light' ? '☀️ 라이트' : '🌙 다크';
     };
     applyBbTheme();
     document.getElementById('bb-theme-btn').addEventListener('click', () => {
@@ -1331,7 +1331,15 @@
         wrap.innerHTML = '';
 
         CLUSTER_GROUPS.forEach((group) => {
-            const members = DB.filter(r => matchesClusterGroup(r, group));
+            const members = DB.filter(r => matchesClusterGroup(r, group))
+                .sort((a, b) => {
+                    const ia = group.siteIds ? group.siteIds.indexOf(a.siteId) : (group.names?.indexOf(a.name) ?? 0);
+                    const ib = group.siteIds ? group.siteIds.indexOf(b.siteId) : (group.names?.indexOf(b.name) ?? 0);
+                    if (ia !== ib) return ia - ib;
+                    const na = parseInt(a.name.match(/(\d+)호기/)?.[1] || '0', 10);
+                    const nb = parseInt(b.name.match(/(\d+)호기/)?.[1] || '0', 10);
+                    return na - nb;
+                });
             if (members.length === 0) return;
 
             const groupEl = document.createElement('div');
@@ -1711,7 +1719,7 @@
     function updateRmUI() {
         const btn = document.getElementById('bb-rmbtn');
         if (rmMode) { btn.classList.add('rm'); btn.textContent = '완료'; }
-        else        { btn.classList.remove('rm'); btn.textContent = '제거'; }
+        else        { btn.classList.remove('rm'); btn.textContent = '카드 제거'; }
     }
 
     function toggleSel(id) {
