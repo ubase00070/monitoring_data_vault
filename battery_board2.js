@@ -59,9 +59,9 @@
 		#bb.bb-light .bb-chip.cam    { background:var(--sur); color:#c2410c; }
 		#bb.bb-light .bb-chip.nomap  { background:var(--sur); color:#c2410c; }
 		#bb.bb-light .bb-chip.idle   { background:var(--sur); color:#1d4ed8; }
-		#bb.bb-light .bb-cluster-side { background:var(--sur); }
+		#bb.bb-light .bb-cluster-group { background:var(--sur); }
 		#bb.bb-light .bb-cluster-group-label { color:#a16207; }
-		#bb.bb-light .bb-cluster-row:hover { background:rgba(0,0,0,.05); }
+		#bb.bb-light .bb-cluster-row:hover { background:rgba(0,0,0,.05); border-color:rgba(0,0,0,.12); }
 
         #bb-wrap * { box-sizing:border-box; }
 
@@ -69,7 +69,7 @@
         #bb {
             display:none; position:fixed; top:50%; left:50%;
             transform:translate(-50%,-50%);
-            width:1340px;
+            width:1310px;
             max-height:92vh; overflow-y:auto;
             border:3px solid transparent; border-radius:16px;
             background-image: linear-gradient(var(--bg), var(--bg)), linear-gradient(135deg, #6366f1, #ec4899);
@@ -206,28 +206,30 @@
 
         /* ── 카드 그리드 ── */
         .bb-gw { padding:10px 12px; flex-shrink:0; }
-        .bb-gr { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; }
+        .bb-gr { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:6px; }
 
         .bb-main-split { display:flex; gap:10px; min-height:0; }
         .bb-main-right { flex:1; min-width:0; display:flex; flex-direction:column; gap:8px; }
 
         .bb-cluster-side {
-            width:270px; flex-shrink:0; background:var(--sur2); border-radius:14px;
-            padding:12px; overflow-y:auto;
+            width:240px; flex-shrink:0; display:flex; flex-direction:column; gap:8px;
+            overflow-y:auto;
         }
-        .bb-cluster-group { margin-bottom:12px; }
-        .bb-cluster-group:last-child { margin-bottom:0; }
+        .bb-cluster-group {
+            background:var(--sur2); border:1px solid var(--bd2); border-radius:12px;
+            padding:8px 8px 6px; flex-shrink:0;
+        }
         .bb-cluster-group-label {
-            font-size:12px; font-weight:900; color:#c9a24a; margin-bottom:4px; padding-left:5px;
+            font-size:13px; font-weight:900; color:#c9a24a; margin-bottom:5px; padding-left:3px;
         }
         .bb-cluster-row {
             display:flex; align-items:center; gap:7px; padding:3px 5px; border-radius:6px; cursor:pointer;
+            border:1px solid transparent; user-select:none;
         }
-        .bb-cluster-row:hover { background:rgba(255,255,255,.06); }
+        .bb-cluster-row:hover { background:rgba(255,255,255,.07); border-color:rgba(255,255,255,.18); }
         .bb-cluster-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
         .bb-cluster-name { flex:1; font-size:13px; font-weight:700; color:var(--tx); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .bb-cluster-pct { font-size:12px; font-weight:900; font-family:'Lato',monospace; flex-shrink:0; }
-        .bb-cluster-divider { height:1px; background:var(--bd); margin:8px 0; }
         .bb-ca {
 			height:80px; background:var(--sur);
 			border-radius:18px; padding:6px 8px;
@@ -719,6 +721,7 @@
         { siteIds: [193], label: '창원대학교' },
         { siteIds: [132], label: '경희대학교' },
         { siteIds: [207], label: '자연스런 캠핑장' },
+        { names: ['배송 띠띠', '순찰 띠띠'], label: '띠띠' },
     ];
     const CLUSTER_AC = {
         charging:'var(--gn)', patrolling:'var(--bl)', standby:'#c8ccd4',
@@ -1014,7 +1017,14 @@
             }).join('');
 
             el.querySelectorAll('.bb-chip[data-type]').forEach(chip => {
-                chip.addEventListener('click', () => openAlertPanel(chip.dataset.type, groups));
+                chip.addEventListener('click', () => {
+                    const panel = document.getElementById('bb-alert-panel');
+                    if (panel.classList.contains('open') && currentAlertType === chip.dataset.type) {
+                        panel.classList.remove('open');
+                    } else {
+                        openAlertPanel(chip.dataset.type, groups);
+                    }
+                });
             });
         }
     }
@@ -1108,7 +1118,10 @@
                 });
             });
             if (DB.length > 0) {
-                ids = ids.filter(id => DB.some(r => r.id === id));
+                ids = ids.filter(id => {
+                    const r = DB.find(x => x.id === id);
+                    return r && !isClusterMember(r);
+                });
                 save();
             }
 
@@ -1269,28 +1282,29 @@
         });
     }
 
+    function matchesClusterGroup(r, group) {
+        return (group.siteIds && group.siteIds.includes(r.siteId)) ||
+               (group.names && group.names.includes(r.name));
+    }
+    function isClusterMember(r) {
+        return CLUSTER_GROUPS.some(g => matchesClusterGroup(r, g));
+    }
+
     function renderClusterGrid() {
         const wrap = document.getElementById('bb-cluster-side');
         if (!wrap) return;
         wrap.innerHTML = '';
 
         CLUSTER_GROUPS.forEach((group) => {
-            const members = DB.filter(r =>
-                (group.siteIds && group.siteIds.includes(r.siteId)) ||
-                (group.names && group.names.includes(r.name))
-            );
+            const members = DB.filter(r => matchesClusterGroup(r, group));
             if (members.length === 0) return;
-
-            if (wrap.children.length > 0) {
-                wrap.appendChild(document.createElement('div')).className = 'bb-cluster-divider';
-            }
 
             const groupEl = document.createElement('div');
             groupEl.className = 'bb-cluster-group';
 
             const labelEl = document.createElement('div');
             labelEl.className = 'bb-cluster-group-label';
-            labelEl.textContent = `${group.label} (${members.length}대)`;
+            labelEl.textContent = group.label;
             groupEl.appendChild(labelEl);
 
             members.forEach(r => {
