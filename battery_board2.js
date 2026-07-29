@@ -46,7 +46,6 @@
             --bd:#cabf9d; --bd2:#b3a687; --tx:#2b2418; --mu:#7a6f5c;
             --wh:rgba(0,0,0,.05);
         }
-        #bb.bb-light .bb-hd-title { color:#2b2418; }
         #bb.bb-light .bb-delivery-title { color:#2b2418; }
         #bb.bb-light .bb-delivery-empty { color:#2b2418; }
         #bb.bb-light .bb-ca.standby { --ac:#8a7f68; --ac-border:rgba(138,127,104,.35); }
@@ -90,12 +89,15 @@
         /* ── 헤더 ── */
         .bb-hd {
             display:flex; flex-direction:column; align-items:center;
-            padding:11px 14px 9px; border-bottom:1px solid var(--bd);
+            padding:9px 14px 7px; border-bottom:1px solid var(--bd);
             background:var(--bg); border-radius:16px 16px 0 0;
             flex-shrink:0; position:relative; gap:3px;
         }
         .bb-hd-title {
-            font-size:22px; font-weight:900; color:#e2b82c;
+            font-size:22px; font-weight:900;
+            background:linear-gradient(135deg, #6366f1, #ec4899);
+            -webkit-background-clip:text; background-clip:text; color:transparent;
+            text-shadow:0 0 10px rgba(99,102,241,.45), 0 0 14px rgba(236,72,153,.35);
             display:flex; align-items:center; gap:7px; cursor:grab;
         }
         .bb-hd-time { display:flex; align-items:baseline; gap:8px; }
@@ -130,18 +132,18 @@
         /* ── 알림바 + 검색 ── */
         .bb-alert-row {
             display:flex; align-items:stretch;
-            border-bottom:1px solid var(--bd); flex-shrink:0; min-height:96px;
+            border-bottom:1px solid var(--bd); flex-shrink:0; min-height:90px;
             position:relative;
         }
         .bb-alert-bar {
-            flex:1; display:flex; align-items:center; gap:8px;
-            padding:6px 12px; background:var(--bg);
+            flex:1; display:flex; flex-direction:column; align-items:flex-start; justify-content:center; gap:5px;
+            padding:8px 12px; background:var(--bg);
         }
         .bb-alert-label {
             font-size:15px; font-weight:900; color:var(--tx);
             flex-shrink:0; white-space:nowrap;
         }
-        .bb-alert-chips { display:flex; gap:5px; flex-wrap:wrap; flex:1; align-items:center; }
+        .bb-alert-chips { display:flex; gap:5px; flex-wrap:wrap; align-items:center; }
         .bb-chip {
             display:flex; flex-direction:column; gap:2px;
             padding:5px 12px; border-radius:10px;
@@ -208,7 +210,7 @@
         .bb-gw { padding:10px 12px; flex:1; }
         .bb-gr { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:6px; }
 
-        .bb-main-split { display:flex; gap:10px; min-height:0; padding-left:14px; }
+        .bb-main-split { display:flex; gap:10px; min-height:0; padding-left:14px; margin-top:8px; }
         .bb-main-right { flex:1; min-width:0; display:flex; flex-direction:column; gap:8px; }
 
         .bb-cluster-side {
@@ -355,18 +357,18 @@
 		.bb-walker-arrow:active { transform:translateY(-50%) scale(0.9); }
 
 		#bb-walker-bubble {
-			position:absolute; bottom:175px; right:calc(100% + 8px); width:285px; min-height:58px;
+			position:absolute; top:4px; left:150px; width:250px; min-height:50px;
 			background:#fdf6e3; border-radius:20px; padding:10px 18px;
-			font-size:16px; color:#5c4a2a; font-weight:700; line-height:1.4;
+			font-size:15px; color:#5c4a2a; font-weight:700; line-height:1.4;
 			box-shadow:0 4px 12px rgba(0,0,0,.35);
 			z-index:3; display:none;
 			font-family:'Paperlogy','Lato',-apple-system,sans-serif; -webkit-text-stroke:0;
 		}
 		#bb-walker-bubble.open { display:block; }
 		#bb-walker-bubble::after {
-			content:''; position:absolute; bottom:-9px; right:16px;
-			width:18px; height:18px; background:#fdf6e3;
-			border-radius:0 0 0 9px; transform:rotate(45deg);
+			content:''; position:absolute; bottom:-8px; right:20px;
+			width:16px; height:16px; background:#fdf6e3;
+			border-radius:0 0 0 8px; transform:rotate(45deg);
 		}
 		#bb-walker-bubble b {
 			font-weight:900;      /* 본문(700)보다 한 단계 더 굵게 */
@@ -610,9 +612,9 @@
                         <div class="bb-delivery-area">
                             <div class="bb-delivery-title">🚗 기타 배달 중</div>
                             <div class="bb-delivery-chips" id="bb-delivery-chips"></div>
+                            <div id="bb-walker-bubble"><span id="bb-walker-bubble-text"></span></div>
                             <button id="bb-walker-toggle" title="동숲 주민 표시/숨김"></button>
                             <div id="bb-walker-wrap">
-                                <div id="bb-walker-bubble"><span id="bb-walker-bubble-text"></span></div>
                                 <div id="bb-walker"></div>
                                 <button id="bb-walker-prev" class="bb-walker-arrow left" title="이전 캐릭터">‹</button>
                                 <button id="bb-walker-next" class="bb-walker-arrow right" title="다음 캐릭터">›</button>
@@ -2047,7 +2049,7 @@
 
     // ── 줌 기능
     (function() {
-        const ZOOM_KEY = 'bb_zoom', ZOOM_MIN = 0.8, ZOOM_MAX = 1.2, ZOOM_STEP = 0.1;
+        const ZOOM_KEY = 'bb_zoom', ZOOM_MIN = 0.8, ZOOM_MAX = 1.5, ZOOM_STEP = 0.1;
         let zoom = parseFloat(localStorage.getItem(ZOOM_KEY)) || 1.0;
 
         function applyZoom() {
