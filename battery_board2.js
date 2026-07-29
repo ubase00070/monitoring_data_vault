@@ -718,10 +718,11 @@
     // ============================================================
     const CLUSTER_GROUPS = [
         { siteIds: [142, 145, 144, 143], label: '성남시 순찰' },   // 라벨 생략 시 사이트명 자동 사용
-        { siteIds: [150, 151] label: '부산 EDC' },
-		{ siteIds: [180] label: '부산 국립과학관' },
-		{ siteIds: [193] label: '창원대학교' },
-		{ siteIds: [132] label: '경희대학교' },
+        { siteIds: [150, 151], label: '부산 EDC' },
+		{ siteIds: [180], label: '부산 국립과학관' },
+		{ siteIds: [193], label: '창원대학교' },
+		{ siteIds: [132], label: '경희대학교' },
+		{ siteIds: [207], label: '자연스런 캠핑장' },
         // { siteIds: [46], label: '🎓 커스텀 라벨' },   // 필요하면 라벨 직접 지정 가능
     ];
     const CLUSTER_AC = {
