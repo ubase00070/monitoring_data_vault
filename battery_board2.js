@@ -18,7 +18,7 @@
 			src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-4Regular.woff2') format('woff2');
 		}
 		@font-face {
-			font-family: 'Paperlogy';
+			font-family: 'Paperlogy';``
 			font-weight: 700;
 			font-display: swap;
 			src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-7Bold.woff2') format('woff2');
@@ -59,6 +59,10 @@
 		#bb.bb-light .bb-chip.cam    { background:var(--sur); color:#c2410c; }
 		#bb.bb-light .bb-chip.nomap  { background:var(--sur); color:#c2410c; }
 		#bb.bb-light .bb-chip.idle   { background:var(--sur); color:#1d4ed8; }
+		#bb.bb-light .bb-cluster-card { background:var(--sur); border-color:#a16207; }
+		#bb.bb-light .bb-cluster-label { color:#a16207; }
+		#bb.bb-light .bb-cluster-row:hover { background:rgba(0,0,0,.05); }
+		#bb.bb-light .bb-cluster-row-bar { background:rgba(0,0,0,.08); }
 
         #bb-wrap * { box-sizing:border-box; }
 
@@ -66,7 +70,8 @@
         #bb {
             display:none; position:fixed; top:50%; left:50%;
             transform:translate(-50%,-50%);
-            width:960px;
+            width:1180px;
+            max-height:92vh; overflow-y:auto;
             border:3px solid transparent; border-radius:16px;
             background-image: linear-gradient(var(--bg), var(--bg)), linear-gradient(135deg, #6366f1, #ec4899);
             background-origin: border-box;
@@ -202,9 +207,9 @@
 
         /* ── 카드 그리드 ── */
         .bb-gw { padding:10px 12px; flex-shrink:0; }
-        .bb-gr { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; }
+        .bb-gr { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; }
 
-        .bb-cluster-grid { display:grid; grid-template-columns:repeat(5,1fr); grid-auto-rows:80px; gap:6px; margin-top:6px; }
+        .bb-cluster-grid { display:grid; grid-template-columns:repeat(7,1fr); grid-auto-rows:104px; gap:6px; margin-top:6px; }
 
         .bb-cluster-card {
             background:#17171c; border-radius:16px; padding:7px 11px;
@@ -228,11 +233,11 @@
             border-left:2px solid var(--ac,var(--mu)); padding-left:6px;
         }
 
-        .bb-cluster-row { display:flex; align-items:center; gap:5px; cursor:pointer; border-radius:6px; padding:1px 3px; }
+        .bb-cluster-row { display:flex; align-items:center; gap:5px; cursor:pointer; border-radius:6px; padding:2px 3px; line-height:1.3; }
         .bb-cluster-row:hover { background:rgba(255,255,255,.06); }
-        .bb-cluster-row-name { flex:1; font-size:11px; font-weight:700; color:var(--tx); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-        .bb-cluster-row-status { font-size:9px; font-weight:700; white-space:nowrap; }
-        .bb-cluster-row-bar { width:28px; height:6px; background:rgba(255,255,255,.07); border-radius:3px; overflow:hidden; flex-shrink:0; }
+        .bb-cluster-row-name { flex:1; font-size:12px; font-weight:700; color:var(--tx); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .bb-cluster-row-status { font-size:10px; font-weight:700; white-space:nowrap; }
+        .bb-cluster-row-bar { width:32px; height:7px; background:rgba(255,255,255,.07); border-radius:3px; overflow:hidden; flex-shrink:0; }
         .bb-cluster-row-fill { height:100%; }
         .bb-ca {
 			height:80px; background:var(--sur);
