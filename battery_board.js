@@ -637,7 +637,7 @@
                     <div class="bb-clock" id="bb-clk">00:00:00</div>
                     <div class="bb-ref" id="bb-ref">— 초 후 갱신</div>
                 </div>
-                <div class="bb-hd-right">
+                <div class="bb-hd-right" id="bb-hd-right">
                     <button id="bb-theme-btn" class="bb-btn">다크</button>
                     <button id="bb-backup-btn" class="bb-btn">목록 백업</button>
                     <button id="bb-restore-btn" class="bb-btn">목록 복원</button>
@@ -651,7 +651,7 @@
                     <span class="bb-alert-label">🚨 알림</span>
                     <div class="bb-alert-chips" id="bb-alert-chips"></div>
                 </div>
-                <div class="bb-search-wrap">
+                <div class="bb-search-wrap" id="bb-search-wrap">
                     <button class="bb-btn" id="bb-sortname-btn">이름 순 정렬</button>
                     <button class="bb-btn" id="bb-inforequest-btn">정보 검색</button>
                     <button class="bb-btn" id="bb-rmbtn">카드 제거</button>
@@ -750,11 +750,26 @@
         document.getElementById('bb-theme-btn').textContent = theme === 'light' ? '☀️ 라이트' : '🌙 다크';
     };
     applyBbTheme();
+
+    // 헤더 우측 버튼 그룹(라이트/목록 백업/목록 복원) 폭에 맞춰
+    // 하단 검색줄(이름 순 정렬/정보 검색/카드 제거 + 검색창) 폭을 실측 동기화
+    function syncSearchWrapWidth() {
+        const hdRight = document.getElementById('bb-hd-right');
+        const searchWrap = document.getElementById('bb-search-wrap');
+        if (!hdRight || !searchWrap) return;
+        const w = hdRight.offsetWidth;
+        if (w > 0) searchWrap.style.width = w + 'px';
+    }
+    syncSearchWrapWidth();
+    if (document.fonts?.ready) document.fonts.ready.then(syncSearchWrapWidth).catch(() => {});
+    window.addEventListener('resize', syncSearchWrapWidth);
+
     document.getElementById('bb-theme-btn').addEventListener('click', () => {
         const next = (localStorage.getItem('neubie_bb_theme') || 'light') === 'light' ? 'dark' : 'light';
         localStorage.setItem('neubie_bb_theme', next);
         applyBbTheme();
         render();
+        syncSearchWrapWidth();
     });
 
     // ============================================================
@@ -1263,6 +1278,7 @@
         render();
         renderMonitorGrid(lastRaw);
         renderDeliveryChips(lastRaw);
+        syncSearchWrapWidth();
     }
     function closeBoard() {
         isOpen = false;
