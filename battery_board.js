@@ -1425,7 +1425,8 @@
                 const showPlug = (off || r.status === 'charging') && !!r.raw?.robotStatus?.isWiredChargerConnected;
 				const row = document.createElement('div');
                 row.className = `bb-cluster-row${lowBat ? ' warn-bat' : ''}${showMissionOff ? ' mission-off' : ''}`;
-                const pctHtml = showMissionOff
+                const plugPrefix = showPlug ? '🔌 ' : '';
+				const pctHtml = showMissionOff
                     ? `<span class="bb-cluster-pct-wrap">
                            <span class="bb-cluster-pct-val" style="color:${ac};">${off ? 'OFF' : r.battery+'%'}</span>
                            <span class="bb-cluster-pct-off">임무 OFF</span>
@@ -1433,7 +1434,6 @@
                     : `<span class="bb-cluster-pct" style="color:${ac};">${off ? 'OFF' : r.battery+'%'}</span>`;
                 row.innerHTML = `
                     <span class="bb-cluster-dot" style="background:${ac};"></span>
-                    ${showPlug ? '<span class="bb-cluster-plug" title="유선 충전 연결됨">🔌</span>' : ''}
 					<span class="bb-cluster-name" title="${STL[r.status] || ''}">${r.name}</span>
                     ${pctHtml}
                 `;
