@@ -68,7 +68,7 @@
         #bb {
             display:none; position:fixed; top:50%; left:50%;
             transform:translate(-50%,-50%);
-            width:1020px;
+            width:1370px;
             max-height:95vh; overflow-y:auto; overflow-x:hidden;
             border:3px solid transparent; border-radius:16px;
             background-image: linear-gradient(var(--bg), var(--bg)), linear-gradient(135deg, #6366f1, #ec4899);
@@ -211,31 +211,40 @@
         .bb-di-plus { font-size:15px; color:var(--gn); font-weight:900; flex-shrink:0; margin-left:4px; }
 
         /* ── 카드 그리드 ── */
-        .bb-gw { padding:10px 12px; }
+        .bb-gw { padding:10px 12px; flex:1; min-height:530px; }
         .bb-gr { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:6px; }
 
-        /* ── 묶음 그리드 드롭다운 ── */
+        .bb-main-split { display:flex; gap:10px; min-height:0; padding-left:14px; margin-top:8px; }
+        .bb-main-right { flex:1; min-width:0; display:flex; flex-direction:column; gap:8px; }
+
+        .bb-cluster-side {
+            width:240px; flex-shrink:0; display:flex; flex-direction:column; gap:5px;
+            overflow-y:auto;
+        }
+
+        /* ── 절반 모드(윈도우 스냅 절반 폭 대응) ── */
         .bb-cluster-toggle {
-            display:flex; align-items:center; justify-content:space-between;
-            margin:8px 14px 0; padding:8px 12px;
+            display:none; align-items:center; justify-content:space-between;
+            margin-bottom:8px; padding:8px 12px;
             background:var(--sur2); border:1px solid var(--bd2); border-radius:10px;
             font-size:13px; font-weight:900; color:var(--tx); cursor:pointer; user-select:none;
         }
         .bb-cluster-toggle:hover { border-color:var(--mu); }
         .bb-cluster-arrow { transition:transform .2s; color:var(--mu); }
-        .bb-cluster-toggle.open .bb-cluster-arrow { transform:rotate(180deg); }
-        .bb-cluster-dropdown {
-            max-height:0; overflow:hidden; transition:max-height .3s ease;
-            margin:0 14px;
+        #bb.cluster-open .bb-cluster-arrow { transform:rotate(180deg); }
+
+        #bb.bb-half { width:1020px; }
+        #bb.bb-half .bb-main-split { flex-direction:column; padding-left:0; }
+        #bb.bb-half .bb-cluster-toggle { display:flex; }
+        #bb.bb-half .bb-cluster-side {
+            width:100%; display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:8px;
+            max-height:0; overflow:hidden; transition:max-height .3s ease; margin:0;
         }
-        .bb-cluster-dropdown.open { max-height:420px; }
-        .bb-cluster-dropdown-body {
-            display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:8px;
-            padding:10px 2px; max-height:400px; overflow-y:auto;
-        }
+        #bb.bb-half.cluster-open .bb-cluster-side { max-height:380px; overflow-y:auto; margin-bottom:4px; }
+
         .bb-cluster-group {
             background:var(--sur2); border:1px solid var(--bd2); border-radius:12px;
-            padding:6px 8px 4px;
+            padding:6px 8px 4px; flex-shrink:0;
         }
         .bb-cluster-group-label {
             font-size:13px; font-weight:900; color:#c9a24a; margin-bottom:5px; padding-left:3px;
@@ -613,6 +622,7 @@
                     <div class="bb-ref" id="bb-ref">— 초 후 갱신</div>
                 </div>
                 <div class="bb-hd-right">
+                    <button id="bb-half-btn" class="bb-btn">🗔 절반 모드</button>
                     <button id="bb-theme-btn" class="bb-btn">다크</button>
                     <button id="bb-backup-btn" class="bb-btn">목록 백업</button>
                     <button id="bb-restore-btn" class="bb-btn">목록 복원</button>
@@ -638,30 +648,31 @@
                 </div>
             </div>
 
-            <!-- 묶음 그리드: 드롭다운 토글 -->
-            <div class="bb-cluster-toggle" id="bb-cluster-toggle">
-                <span>📦 묶음 그리드</span>
-                <span class="bb-cluster-arrow" id="bb-cluster-arrow">▾</span>
-            </div>
-            <div class="bb-cluster-dropdown" id="bb-cluster-dropdown">
-                <div class="bb-cluster-dropdown-body" id="bb-cluster-side"></div>
-            </div>
+            <!-- 메인 영역: 좌측 묶음 리스트(기본) / 절반모드에선 상단 드롭다운으로 전환 -->
+            <div class="bb-main-split">
+                <div class="bb-cluster-toggle" id="bb-cluster-toggle">
+                    <span>📦 묶음 그리드</span>
+                    <span class="bb-cluster-arrow" id="bb-cluster-arrow">▾</span>
+                </div>
+                <div class="bb-cluster-side" id="bb-cluster-side"></div>
+                <div class="bb-main-right">
+                    <!-- 카드 그리드 -->
+                    <div class="bb-gw"><div class="bb-gr" id="bb-gr"></div></div>
 
-            <!-- 카드 그리드 -->
-            <div class="bb-gw"><div class="bb-gr" id="bb-gr"></div></div>
-
-            <!-- 하단: 퀵바 + 기타 배달 -->
-            <div class="bb-bottom">
-                <div class="bb-mg" id="bb-mg"></div>
-                <div class="bb-delivery-area">
-                    <div class="bb-delivery-title">🚗 기타 배달 기체</div>
-                    <div class="bb-delivery-chips" id="bb-delivery-chips"></div>
-                    <div id="bb-walker-bubble"><span id="bb-walker-bubble-text"></span></div>
-                    <button id="bb-walker-toggle" title="동숲 주민 표시/숨김"></button>
-                    <div id="bb-walker-wrap">
-                        <div id="bb-walker"></div>
-                        <button id="bb-walker-prev" class="bb-walker-arrow left" title="이전 캐릭터">‹</button>
-                        <button id="bb-walker-next" class="bb-walker-arrow right" title="다음 캐릭터">›</button>
+                    <!-- 하단: 퀵바 + 기타 배달 -->
+                    <div class="bb-bottom">
+                        <div class="bb-mg" id="bb-mg"></div>
+                        <div class="bb-delivery-area">
+                            <div class="bb-delivery-title">🚗 기타 배달 기체</div>
+                            <div class="bb-delivery-chips" id="bb-delivery-chips"></div>
+                            <div id="bb-walker-bubble"><span id="bb-walker-bubble-text"></span></div>
+                            <button id="bb-walker-toggle" title="동숲 주민 표시/숨김"></button>
+                            <div id="bb-walker-wrap">
+                                <div id="bb-walker"></div>
+                                <button id="bb-walker-prev" class="bb-walker-arrow left" title="이전 캐릭터">‹</button>
+                                <button id="bb-walker-next" class="bb-walker-arrow right" title="다음 캐릭터">›</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1842,21 +1853,32 @@
         document.getElementById('bb-info-card-panel').classList.remove('open');
     });
 
-    // 묶음 그리드 드롭다운 토글
+    // 절반 모드 토글 (윈도우 스냅 절반 폭 대응)
     (function() {
+        const HALF_KEY = 'bb_half_mode';
         const CLUSTER_OPEN_KEY = 'bb_cluster_open';
-        const toggleEl = document.getElementById('bb-cluster-toggle');
-        const dropEl = document.getElementById('bb-cluster-dropdown');
-        let isOpenCluster = localStorage.getItem(CLUSTER_OPEN_KEY) === '1';
-        function applyClusterOpen() {
-            toggleEl.classList.toggle('open', isOpenCluster);
-            dropEl.classList.toggle('open', isOpenCluster);
+        const btn = document.getElementById('bb-half-btn');
+        const toggleBar = document.getElementById('bb-cluster-toggle');
+        let isHalf = localStorage.getItem(HALF_KEY) === '1';
+        let isClusterOpen = localStorage.getItem(CLUSTER_OPEN_KEY) === '1';
+
+        function applyHalf() {
+            bbEl.classList.toggle('bb-half', isHalf);
+            bbEl.classList.toggle('cluster-open', isHalf && isClusterOpen);
+            btn.textContent = isHalf ? '🖥️ 기본 모드' : '🗔 절반 모드';
         }
-        applyClusterOpen();
-        toggleEl.addEventListener('click', () => {
-            isOpenCluster = !isOpenCluster;
-            localStorage.setItem(CLUSTER_OPEN_KEY, isOpenCluster ? '1' : '0');
-            applyClusterOpen();
+        applyHalf();
+
+        btn.addEventListener('click', () => {
+            isHalf = !isHalf;
+            localStorage.setItem(HALF_KEY, isHalf ? '1' : '0');
+            applyHalf();
+        });
+
+        toggleBar.addEventListener('click', () => {
+            isClusterOpen = !isClusterOpen;
+            localStorage.setItem(CLUSTER_OPEN_KEY, isClusterOpen ? '1' : '0');
+            applyHalf();
         });
     })();
 
