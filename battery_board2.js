@@ -69,7 +69,7 @@
             display:none; position:fixed; top:50%; left:50%;
             transform:translate(-50%,-50%);
             width:1490px;
-            max-height:97vh; overflow-y:auto; overflow-x:hidden;
+            max-height:100vh; overflow-y:auto; overflow-x:hidden;
             border:3px solid transparent; border-radius:16px;
             background-image: linear-gradient(var(--bg), var(--bg)), linear-gradient(135deg, #6366f1, #ec4899);
             background-origin: border-box;
