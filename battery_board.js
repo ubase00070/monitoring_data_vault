@@ -176,10 +176,10 @@
 
         /* 검색 */
         .bb-search-wrap {
-            flex:1; padding:6px 10px;
-            background:var(--bg);
-            position:relative; display:flex; align-items:center;
-        }
+		    width:300px; flex-shrink:0; padding:6px 10px;
+		    border-left:1px solid var(--bd); background:var(--bg);
+		    position:relative; display:flex; flex-wrap:wrap; gap:5px; align-content:center;
+		}
 		.bb-search-wrap .bb-si-wrap { flex-basis:100%; }
         .bb-si-wrap { position:relative; width:100%; }
         .bb-si {
@@ -640,9 +640,6 @@
                     <button id="bb-theme-btn" class="bb-btn">다크</button>
                     <button id="bb-backup-btn" class="bb-btn">목록 백업</button>
                     <button id="bb-restore-btn" class="bb-btn">목록 복원</button>
-                    <button class="bb-btn" id="bb-sortname-btn">이름 순 정렬</button>
-                    <button class="bb-btn" id="bb-inforequest-btn">정보 검색</button>
-                    <button class="bb-btn" id="bb-rmbtn">카드 제거</button>
                     <div class="bb-xbtn" id="bb-closebtn">✕</div>
                 </div>
             </div>
@@ -654,6 +651,9 @@
                     <div class="bb-alert-chips" id="bb-alert-chips"></div>
                 </div>
                 <div class="bb-search-wrap">
+                    <button class="bb-btn" id="bb-sortname-btn">이름 순 정렬</button>
+                    <button class="bb-btn" id="bb-inforequest-btn">정보 검색</button>
+                    <button class="bb-btn" id="bb-rmbtn">카드 제거</button>
                     <div class="bb-si-wrap">
                         <span class="bb-si-icon">🔍</span>
                         <input class="bb-si" id="bb-si" placeholder="기체명 검색 후 클릭하여 추가" autocomplete="off">
