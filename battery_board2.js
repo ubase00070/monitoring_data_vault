@@ -154,9 +154,9 @@
             font-family:inherit; max-width:180px;
             transition:filter .15s, box-shadow .15s;
         }
-        .bb-chip-l1 { white-space:nowrap; }
+        .bb-chip-l1 { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
         .bb-chip-l2 {
-            font-size:11px; font-weight:500; opacity:.8;
+            font-size:13px; font-weight:500; opacity:.8;
             white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
         }
         .bb-chip:hover { filter:brightness(1.15); }
