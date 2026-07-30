@@ -664,7 +664,7 @@
             <!-- 메인 영역: 좌측 묶음 리스트(기본) / 절반모드에선 상단 드롭다운으로 전환 -->
             <div class="bb-main-split">
                 <div class="bb-cluster-toggle" id="bb-cluster-toggle">
-                    <span>📦 무선 기체 사이트</span>
+                    <span>⚡ 무선 기체 사이트</span>
                     <span class="bb-cluster-arrow" id="bb-cluster-arrow">▾</span>
                 </div>
                 <div class="bb-cluster-side" id="bb-cluster-side"></div>
