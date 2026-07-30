@@ -1464,7 +1464,6 @@
         const showMissionOff = !r.canDispatch && !off && !r.loading
 		    && r.status !== 'patrolling' && r.status !== 'delivering' && r.status !== 'standby'
 		const showPlug = r.status !== 'patrolling' && r.status !== 'delivering' && !!r.raw?.robotStatus?.isWiredChargerConnected;
-		const showPlug = (off || r.status === 'charging') && !!r.raw?.robotStatus?.isWiredChargerConnected;
         const isLight = bbEl.classList.contains('bb-light');
         const batColor  = isLight ? 'rgba(30,25,15,.95)' : 'rgba(240,240,255,.93)';
         const batShadow = isLight
