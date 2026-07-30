@@ -1,6 +1,23 @@
 {
-  "updatedAt": "2026-07-30 17:54:45",
+  "updatedAt": "2026-07-30 19:24:44",
   "recentHistory": [
+    {
+      "at": "2026-07-30 19:24:44",
+      "changes": [
+        {
+          "type": "변경",
+          "site": "중앙대",
+          "status": "uncertain",
+          "reason": "변경"
+        },
+        {
+          "type": "변경",
+          "site": "[상태변경] 중앙대: active → suspended",
+          "status": "uncertain",
+          "reason": "[상태변경] 중앙대: active → suspended"
+        }
+      ]
+    },
     {
       "at": "2026-07-30 17:54:45",
       "changes": [
@@ -517,53 +534,6 @@
           "site": "[상태변경] 쉴더스: suspended → active",
           "status": "uncertain",
           "reason": "[상태변경] 쉴더스: suspended → active"
-        }
-      ]
-    },
-    {
-      "at": "2026-07-28 11:39:46",
-      "changes": [
-        {
-          "type": "변경",
-          "site": "부산 호반 2",
-          "status": "uncertain",
-          "reason": "변경"
-        },
-        {
-          "type": "변경",
-          "site": "부산 호반 2",
-          "status": "uncertain",
-          "reason": "변경"
-        },
-        {
-          "type": "변경",
-          "site": "부산 호반 2",
-          "status": "uncertain",
-          "reason": "변경"
-        },
-        {
-          "type": "변경",
-          "site": "부산 호반 2",
-          "status": "uncertain",
-          "reason": "변경"
-        },
-        {
-          "type": "변경",
-          "site": "부산 호반 2",
-          "status": "uncertain",
-          "reason": "변경"
-        },
-        {
-          "type": "변경",
-          "site": "부산 호반 2",
-          "status": "uncertain",
-          "reason": "변경"
-        },
-        {
-          "type": "변경",
-          "site": "[상태변경] 부산 호반 2: suspended → active",
-          "status": "uncertain",
-          "reason": "[상태변경] 부산 호반 2: suspended → active"
         }
       ]
     }
@@ -1174,7 +1144,7 @@
       },
       {
         "task": "[20:00] LIT_중앙대학교 - 순찰",
-        "note": "두루아이2호기 대체"
+        "note": "해당 시간대만 순회 보류"
       },
       {
         "task": "[20:50] 창원대 1호기 - 출차 (순찰 준비)",
@@ -1762,271 +1732,271 @@
     "용인 고진": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-30 17:54:45",
+      "updatedAt": "2026-07-30 19:24:44",
       "syncIssue": false
     },
     "서강대": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-30 17:54:45",
+      "updatedAt": "2026-07-30 19:24:44",
       "syncIssue": false
     },
     "경희대": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-30 17:54:45",
+      "updatedAt": "2026-07-30 19:24:44",
       "syncIssue": false
     },
     "성남 율동": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-30 17:54:45",
+      "updatedAt": "2026-07-30 19:24:44",
       "syncIssue": false
     },
     "성남 야탑": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-30 17:54:45",
+      "updatedAt": "2026-07-30 19:24:44",
       "syncIssue": false
     },
     "구리 롯데캐슬": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-30 17:54:45",
+      "updatedAt": "2026-07-30 19:24:44",
       "syncIssue": false
     },
     "부산 호반 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-30 17:54:45",
+      "updatedAt": "2026-07-30 19:24:44",
       "syncIssue": false
     },
     "부산 수자인 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-30 17:54:45",
+      "updatedAt": "2026-07-30 19:24:44",
       "syncIssue": false
     },
     "파주": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-30 17:54:45",
+      "updatedAt": "2026-07-30 19:24:44",
       "syncIssue": false
     },
     "리센츠 1": {
       "status": "suspended",
       "reason": "타이어마모",
-      "updatedAt": "2026-07-30 17:54:45",
+      "updatedAt": "2026-07-30 19:24:44",
       "syncIssue": false
     },
     "리센츠 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-30 17:54:45",
+      "updatedAt": "2026-07-30 19:24:44",
       "syncIssue": false
     },
     "평택 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-30 17:54:45",
+      "updatedAt": "2026-07-30 19:24:44",
       "syncIssue": false
     },
     "평택 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-30 17:54:45",
+      "updatedAt": "2026-07-30 19:24:44",
       "syncIssue": false
     },
     "DMZ": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-30 17:54:45",
+      "updatedAt": "2026-07-30 19:24:44",
       "syncIssue": false
     },
     "부산 서면": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-30 17:54:45",
+      "updatedAt": "2026-07-30 19:24:44",
       "syncIssue": false
     },
     "부천 위브": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-30 17:54:45",
+      "updatedAt": "2026-07-30 19:24:44",
       "syncIssue": false
     },
     "성남 판교": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-30 17:54:45",
+      "updatedAt": "2026-07-30 19:24:44",
       "syncIssue": false
     },
     "성남 서현": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-30 17:54:45",
+      "updatedAt": "2026-07-30 19:24:44",
       "syncIssue": false
     },
     "잠실 레이크": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-30 17:54:45",
+      "updatedAt": "2026-07-30 19:24:44",
       "syncIssue": false
     },
     "고양 래미안": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-30 17:54:45",
+      "updatedAt": "2026-07-30 19:24:44",
       "syncIssue": false
     },
     "인력개발원": {
       "status": "suspended",
       "reason": "기체 cali 틀어짐 및 head top cover 파손",
-      "updatedAt": "2026-07-30 17:54:45",
+      "updatedAt": "2026-07-30 19:24:44",
       "syncIssue": false
     },
     "부산 호반 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-30 17:54:45",
+      "updatedAt": "2026-07-30 19:24:44",
       "syncIssue": false
     },
     "부산 수자인 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-30 17:54:45",
+      "updatedAt": "2026-07-30 19:24:44",
       "syncIssue": false
     },
     "엘스": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-30 17:54:45",
+      "updatedAt": "2026-07-30 19:24:44",
       "syncIssue": false
     },
     "창원대 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-30 17:54:45",
+      "updatedAt": "2026-07-30 19:24:44",
       "syncIssue": false
     },
     "창원대 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-30 17:54:45",
+      "updatedAt": "2026-07-30 19:24:44",
       "syncIssue": false
     },
     "한성대": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-30 17:54:45",
+      "updatedAt": "2026-07-30 19:24:44",
       "syncIssue": false
     },
     "김포 풍무": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-30 17:54:45",
+      "updatedAt": "2026-07-30 19:24:44",
       "syncIssue": false
     },
     "부경대": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-30 17:54:45",
+      "updatedAt": "2026-07-30 19:24:44",
       "syncIssue": false
     },
     "김포 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-30 17:54:45",
+      "updatedAt": "2026-07-30 19:24:44",
       "syncIssue": false
     },
     "김포 2": {
       "status": "suspended",
       "reason": "충전/미충전반대로인식",
-      "updatedAt": "2026-07-30 17:54:45",
+      "updatedAt": "2026-07-30 19:24:44",
       "syncIssue": false
     },
     "부산 더샵남천": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-30 17:54:45",
+      "updatedAt": "2026-07-30 19:24:44",
       "syncIssue": false
     },
     "광교 풍경채": {
       "status": "uncertain",
       "reason": "대기장소까지 관제로 이동 및 관제실 직접 배차 진행",
-      "updatedAt": "2026-07-30 17:54:45",
+      "updatedAt": "2026-07-30 19:24:44",
       "syncIssue": false
     },
     "지제": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-30 17:54:45",
+      "updatedAt": "2026-07-30 19:24:44",
       "syncIssue": false
     },
     "두루아이 5": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-30 17:54:45",
+      "updatedAt": "2026-07-30 19:24:44",
       "syncIssue": false
     },
     "잠실 르엘": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-30 17:54:45",
+      "updatedAt": "2026-07-30 19:24:44",
       "syncIssue": false
     },
     "중앙대": {
-      "status": "active",
-      "reason": "두루아이2호기 대체",
-      "updatedAt": "2026-07-30 17:54:45",
+      "status": "suspended",
+      "reason": "해당 시간대만 순회 보류",
+      "updatedAt": "2026-07-30 19:24:44",
       "syncIssue": false
     },
     "신동백": {
       "status": "suspended",
       "reason": "단지내공사",
-      "updatedAt": "2026-07-30 17:54:45",
+      "updatedAt": "2026-07-30 19:24:44",
       "syncIssue": false
     },
     "청담 르엘": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-30 17:54:45",
+      "updatedAt": "2026-07-30 19:24:44",
       "syncIssue": false
     },
     "전주천": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-30 17:54:45",
+      "updatedAt": "2026-07-30 19:24:44",
       "syncIssue": false
     },
     "동백SK": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-30 17:54:45",
+      "updatedAt": "2026-07-30 19:24:44",
       "syncIssue": false
     },
     "아주대": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-30 17:54:45",
+      "updatedAt": "2026-07-30 19:24:44",
       "syncIssue": false
     },
     "인재개발원": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-30 17:54:45",
+      "updatedAt": "2026-07-30 19:24:44",
       "syncIssue": false
     },
     "쉴더스": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-30 17:54:45",
+      "updatedAt": "2026-07-30 19:24:44",
       "syncIssue": false
     },
     "두루아이 4": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-07-30 17:54:45",
+      "updatedAt": "2026-07-30 19:24:44",
       "syncIssue": false
     }
   }
