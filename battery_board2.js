@@ -334,7 +334,7 @@
         .bb-ca-name.bb-marquee { overflow:visible; animation:bb-marquee 3s linear 0.5s 1 forwards; }
         @keyframes bb-marquee { 0%{transform:translateX(0)} 100%{transform:translateX(-60%)} }
         .bb-ca-mid  { display:flex; justify-content:space-between; align-items:center; }
-        .bb-ca-st   { font-size:12px; font-weight:700; color:var(--ac,var(--mu)); opacity:.9; }
+        .bb-ca-st   { font-size:14px; font-weight:700; color:var(--ac,var(--mu)); opacity:.9; }
         .bb-mission-off { font-size:11px; font-weight:900; color:rgba(239,68,68,.8); }
         .bb-ca-bar-wrap { position:relative; }
         .bb-ca-bar  { height:14px; background:rgba(255,255,255,.07); border-radius:4px; overflow:hidden; }
