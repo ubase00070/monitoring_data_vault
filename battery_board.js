@@ -135,7 +135,7 @@
         /* ── 알림바 + 검색 ── */
         .bb-alert-row {
 		    display:flex; align-items:stretch;
-		    border-bottom:1px solid var(--bd); flex-shrink:0; height:70px;
+		    border-bottom:1px solid var(--bd); flex-shrink:0; height:66px;
 		    position:relative;
 		}
         .bb-alert-bar {
