@@ -89,7 +89,7 @@
         /* ── 헤더 ── */
         .bb-hd {
             display:flex; flex-direction:column; align-items:center;
-            padding:9px 14px 7px; border-bottom:1px solid var(--bd);
+            padding:9px 14px 7px;
             background:var(--bg); border-radius:16px 16px 0 0;
             flex-shrink:0; position:relative; gap:3px;
         }
@@ -107,17 +107,18 @@
         .bb-hd-right { position:absolute; right:14px; top:50%; transform:translateY(-50%); display:flex; align-items:center; gap:10px; }
 
         .bb-btn {
-            padding:5px 12px; border-radius:6px; border:1px solid var(--bd2);
+            height:32px; padding:0 12px; border-radius:6px; border:1px solid var(--bd2);
             background:var(--sur2); color:var(--tx); font-size:14px;
             font-family:inherit; font-weight:700; cursor:pointer; white-space:nowrap;
+            display:inline-flex; align-items:center; justify-content:center; box-sizing:border-box;
         }
         .bb-btn:hover { border-color:var(--mu); }
-        .bb-btn.rm { 
-            border-color:rgba(239,68,68,.3); color:var(--rd); background:rgba(239,68,68,.15); 
+        .bb-btn.rm {
+            border-color:rgba(239,68,68,.3); color:var(--rd); background:rgba(239,68,68,.15);
             min-width:76px; text-align:center;   /* ← 이 두 개 추가 */
         }
         .bb-btn.rm:hover { background:rgba(239,68,68,.25); }
-        .bb-btn.info { border-color:rgba(156,163,175,.2); color:var(--tx); background:var(--sur2); font-size:14px; padding:5px 10px; }
+        .bb-btn.info { border-color:rgba(156,163,175,.2); color:var(--tx); background:var(--sur2); font-size:14px; padding:0 10px; }
         .bb-xbtn {
             width:32px; height:32px; border-radius:6px;
             background:rgba(239,68,68,.15); border:1px solid rgba(239,68,68,.3);
