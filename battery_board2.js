@@ -68,7 +68,7 @@
         #bb {
             display:none; position:fixed; top:50%; left:50%;
             transform:translate(-50%,-50%);
-            width:1370px;
+            width:1490px;
             max-height:95vh; overflow-y:auto; overflow-x:hidden;
             border:3px solid transparent; border-radius:16px;
             background-image: linear-gradient(var(--bg), var(--bg)), linear-gradient(135deg, #6366f1, #ec4899);
@@ -211,14 +211,14 @@
         .bb-di-plus { font-size:15px; color:var(--gn); font-weight:900; flex-shrink:0; margin-left:4px; }
 
         /* ── 카드 그리드 ── */
-        .bb-gw { padding:10px 12px; flex:1; min-height:530px; }
+        .bb-gw { padding:10px 12px; flex:1; min-height:566px; }
         .bb-gr { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:6px; }
 
         .bb-main-split { display:flex; gap:10px; min-height:0; padding-left:14px; margin-top:8px; }
         .bb-main-right { flex:1; min-width:0; display:flex; flex-direction:column; gap:8px; }
 
         .bb-cluster-side {
-            width:240px; flex-shrink:0; display:flex; flex-direction:column; gap:5px;
+            width:360px; flex-shrink:0; display:flex; flex-direction:column; gap:5px;
             overflow-y:auto;
         }
 
@@ -287,7 +287,7 @@
             100%   { transform:translateX(0);    opacity:1; }
         }
         .bb-ca {
-			height:80px; background:var(--sur);
+			height:86px; background:var(--sur);
 			border-radius:14px; padding:6px 8px;
 			cursor:grab; position:relative; overflow:hidden;
 			display:flex; flex-direction:column; justify-content:space-between;
