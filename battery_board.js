@@ -1421,8 +1421,7 @@
                 const off = r.status === 'off';
                 const lowBat = !off && r.battery <= 21;
                 const showMissionOff = !r.canDispatch && !off && !r.loading
-                    && r.status !== 'patrolling' && r.status !== 'delivering'
-					&& r.battery > 21
+				    && r.status !== 'patrolling' && r.status !== 'delivering' && r.status !== 'standby'
                 const showPlug = r.status !== 'patrolling' && r.status !== 'delivering' && !!r.raw?.robotStatus?.isWiredChargerConnected;
 				const row = document.createElement('div');
                 row.className = `bb-cluster-row${lowBat ? ' warn-bat' : ''}${showMissionOff ? ' mission-off' : ''}`;
