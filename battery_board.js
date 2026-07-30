@@ -135,7 +135,7 @@
         /* ── 알림바 + 검색 ── */
         .bb-alert-row {
 		    display:flex; align-items:stretch;
-		    border-bottom:1px solid var(--bd); flex-shrink:0; height:66px;
+		    flex-shrink:0; height:66px;
 		    position:relative;
 		}
         .bb-alert-bar {
@@ -176,11 +176,11 @@
 
         /* 검색 */
         .bb-search-wrap {
-		    width:300px; flex-shrink:0; padding:6px 10px;
-		    border-left:1px solid var(--bd); background:var(--bg);
-		    position:relative; display:flex; flex-wrap:wrap; gap:5px; align-content:center;
-		}
-		.bb-search-wrap .bb-si-wrap { flex-basis:100%; }
+            width:300px; flex-shrink:0; padding:6px 10px;
+            background:var(--bg);
+            position:relative; display:flex; flex-wrap:wrap; justify-content:flex-end; gap:5px; align-content:center;
+        }
+        .bb-search-wrap .bb-si-wrap { flex-basis:100%; }
         .bb-si-wrap { position:relative; width:100%; }
         .bb-si {
             width:100%; background:var(--sur2); border:1px solid var(--bd2);
