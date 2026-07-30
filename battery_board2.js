@@ -218,7 +218,7 @@
         .bb-main-right { flex:1; min-width:0; display:flex; flex-direction:column; gap:8px; }
 
         .bb-cluster-side {
-            width:360px; flex-shrink:0; display:flex; flex-direction:column; gap:5px;
+            width:280px; flex-shrink:0; display:flex; flex-direction:column; gap:5px;
             overflow-y:auto;
         }
 
