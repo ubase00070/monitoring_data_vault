@@ -177,9 +177,9 @@
 
         /* 검색 */
         .bb-search-wrap {
-            width:300px; flex-shrink:0; padding:6px 10px;
+            width:max-content; flex-shrink:0; padding:6px 14px;
             background:var(--bg);
-            position:relative; display:flex; flex-wrap:wrap; justify-content:flex-end; gap:5px; align-content:center;
+            position:relative; display:flex; flex-wrap:wrap; justify-content:flex-end; gap:10px; align-content:center;
         }
         .bb-search-wrap .bb-si-wrap { flex-basis:100%; }
         .bb-si-wrap { position:relative; width:100%; }
