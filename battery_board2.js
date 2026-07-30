@@ -676,7 +676,7 @@
                     <div class="bb-bottom">
                         <div class="bb-mg" id="bb-mg"></div>
                         <div class="bb-delivery-area">
-                            <div class="bb-delivery-title">🚗 기타 배달 기체</div>
+                            <div class="bb-delivery-title">기타 배달 기체</div>
                             <div class="bb-delivery-chips" id="bb-delivery-chips"></div>
                             <div id="bb-walker-bubble"><span id="bb-walker-bubble-text"></span></div>
                             <button id="bb-walker-toggle" title="동숲 주민 표시/숨김"></button>
