@@ -265,9 +265,9 @@
         .bb-cluster-row.warn-bat { animation:bb-warnBlink .8s infinite; }
         .bb-cluster-row:hover { background:rgba(255,255,255,.07); border-color:rgba(255,255,255,.18); }
         .bb-cluster-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
-        .bb-cluster-name { flex:1; font-size:15px; font-weight:700; color:var(--tx); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .bb-cluster-name { flex:1; min-width:0; font-size:15px; font-weight:700; color:var(--tx); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .bb-cluster-name.bb-marquee { overflow:visible; animation:bb-marquee 3s linear 0.5s 1 forwards; }
-        .bb-cluster-pct { font-size:12px; font-weight:900; font-family:'Lato',monospace; flex-shrink:0; -webkit-text-stroke:0.5px currentColor; }
+        .bb-cluster-pct { font-size:12px; font-weight:900; font-family:'Paperlogy','Lato',monospace; flex-shrink:0; -webkit-text-stroke:0.5px currentColor; }
         .bb-cluster-pct-wrap {
             position:relative; display:inline-block; width:56px; height:14px;
             overflow:hidden; flex-shrink:0; text-align:right;
@@ -276,7 +276,7 @@
             position:absolute; top:0; right:0; white-space:nowrap;
             animation:bb-pctSlide 8s ease-in-out infinite;
         }
-        .bb-cluster-pct-val { font-size:12px; font-weight:900; font-family:'Lato',monospace; -webkit-text-stroke:0.5px currentColor; }
+        .bb-cluster-pct-val { font-size:12px; font-weight:900; font-family:'Paperlogy','Lato',monospace; -webkit-text-stroke:0.5px currentColor; }
         .bb-cluster-pct-off { font-size:10px; font-weight:900; color:rgba(239,68,68,.8); animation-delay:-4s; }
         @keyframes bb-pctSlide {
             0%     { transform:translateX(0);    opacity:1; }
@@ -362,9 +362,9 @@
         .bb-mi {
             width:100%; aspect-ratio:1; border-radius:50%;
             border:2px solid var(--ac,var(--gy));
-            color:var(--ac,var(--gy)); font-size:11px; font-weight:900;
+            color:var(--ac,var(--gy)); font-size:13px; font-weight:900;
             display:flex; align-items:center; justify-content:center;
-            font-family:'Lato',monospace; box-shadow:0 0 4px var(--ac);
+            font-family:'Paperlogy','Lato',monospace; box-shadow:0 0 4px var(--ac);
         }
         .bb-mi.empty { border-color:var(--bd2); color:transparent; box-shadow:none; opacity:.12; }
         .bb-mi.charging   { --ac:var(--gn); }
@@ -1489,7 +1489,7 @@
                             : `left:calc(${pct}% + 5px);top:50%;transform:translateY(-50%);`}
                         font-size:11px;font-weight:900;-webkit-text-stroke:0.65px currentColor;
                         color:${batColor};
-                        font-family:'Lato',monospace;
+                        font-family:'Paperlogy','Lato',monospace;
                         text-shadow:${batShadow};
                         line-height:1;pointer-events:none;">${r.battery}%</span>
                 `}
