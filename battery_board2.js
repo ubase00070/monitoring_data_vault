@@ -1420,7 +1420,7 @@
                 const off = r.status === 'off';
                 const lowBat = !off && r.battery <= 21;
                 const showMissionOff = !r.canDispatch && !off && !r.loading
-                    && r.status !== 'patrolling' && r.status !== 'delivering';
+                    && r.status !== 'patrolling' && r.status !== 'delivering'
 					&& r.status !== 'charging';
                 const row = document.createElement('div');
                 row.className = `bb-cluster-row${lowBat ? ' warn-bat' : ''}${showMissionOff ? ' mission-off' : ''}`;
