@@ -221,6 +221,7 @@
             width:280px; flex-shrink:0; display:flex; flex-direction:column; gap:5px;
             overflow-y:auto;
         }
+		.bb-cluster-plug { font-size:10px; line-height:1; flex-shrink:0; }
 
         /* ── 절반 모드(윈도우 스냅 절반 폭 대응) ── */
         .bb-cluster-toggle {
@@ -1421,7 +1422,8 @@
                 const lowBat = !off && r.battery <= 21;
                 const showMissionOff = !r.canDispatch && !off && !r.loading
                     && r.status !== 'patrolling' && r.status !== 'delivering'
-                const row = document.createElement('div');
+                const showPlug = (off || r.status === 'charging') && !!r.raw?.robotStatus?.isWiredChargerConnected;
+				const row = document.createElement('div');
                 row.className = `bb-cluster-row${lowBat ? ' warn-bat' : ''}${showMissionOff ? ' mission-off' : ''}`;
                 const pctHtml = showMissionOff
                     ? `<span class="bb-cluster-pct-wrap">
@@ -1431,7 +1433,8 @@
                     : `<span class="bb-cluster-pct" style="color:${ac};">${off ? 'OFF' : r.battery+'%'}</span>`;
                 row.innerHTML = `
                     <span class="bb-cluster-dot" style="background:${ac};"></span>
-                    <span class="bb-cluster-name" title="${STL[r.status] || ''}">${r.name}</span>
+                    ${showPlug ? '<span class="bb-cluster-plug" title="유선 충전 연결됨">🔌</span>' : ''}
+					<span class="bb-cluster-name" title="${STL[r.status] || ''}">${r.name}</span>
                     ${pctHtml}
                 `;
                 row.addEventListener('dblclick', e => {
@@ -1460,6 +1463,7 @@
         const inside = pct >= 28;
         const showMissionOff = !r.canDispatch && !off && !r.loading
             && r.status !== 'patrolling' && r.status !== 'delivering'
+		const showPlug = (off || r.status === 'charging') && !!r.raw?.robotStatus?.isWiredChargerConnected;
         const isLight = bbEl.classList.contains('bb-light');
         const batColor  = isLight ? 'rgba(30,25,15,.95)' : 'rgba(240,240,255,.93)';
         const batShadow = isLight
@@ -1475,7 +1479,7 @@
         c.innerHTML = `
             <div class="bb-ca-name">${r.name}</div>
             <div class="bb-ca-mid">
-                <div class="bb-ca-st">${r.loading ? '⏳ 로딩 중' : STI[r.status]+' '+STL[r.status]}</div>
+                <div class="bb-ca-st">${r.loading ? '⏳ 로딩 중' : STI[r.status]+' '+STL[r.status]}${showPlug ? ' 🔌' : ''}</div>
                 ${showMissionOff ? '<div class="bb-mission-off">임무 OFF</div>' : ''}
             </div>
             <div class="bb-ca-bar-wrap">
