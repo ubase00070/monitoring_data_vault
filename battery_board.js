@@ -1423,7 +1423,7 @@
                 const showMissionOff = !r.canDispatch && !off && !r.loading
                     && r.status !== 'patrolling' && r.status !== 'delivering'
 					&& r.battery > 21
-                const showPlug = (off || r.status === 'charging') && !!r.raw?.robotStatus?.isWiredChargerConnected;
+                const showPlug = r.status !== 'patrolling' && r.status !== 'delivering' && !!r.raw?.robotStatus?.isWiredChargerConnected;
 				const row = document.createElement('div');
                 row.className = `bb-cluster-row${lowBat ? ' warn-bat' : ''}${showMissionOff ? ' mission-off' : ''}`;
                 const plugPrefix = showPlug ? '🔌 ' : '';
