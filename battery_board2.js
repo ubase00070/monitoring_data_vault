@@ -234,13 +234,17 @@
         #bb.cluster-open .bb-cluster-arrow { transform:rotate(180deg); }
 
         #bb.bb-half { width:1020px; }
-        #bb.bb-half .bb-main-split { flex-direction:column; padding-left:0; }
+        #bb.bb-half .bb-main-split { flex-direction:column; padding-left:0; position:relative; }
         #bb.bb-half .bb-cluster-toggle { display:flex; }
         #bb.bb-half .bb-cluster-side {
-            width:100%; display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:8px;
+            position:absolute; top:46px; left:0; right:0; z-index:60;
+            background:var(--bg); border:1px solid var(--bd2); border-radius:12px;
+            box-shadow:0 16px 40px rgba(0,0,0,.55);
+            padding:8px; width:auto;
+            display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:8px;
             max-height:0; overflow:hidden; transition:max-height .3s ease; margin:0;
         }
-        #bb.bb-half.cluster-open .bb-cluster-side { max-height:380px; overflow-y:auto; margin-bottom:4px; }
+        #bb.bb-half.cluster-open .bb-cluster-side { max-height:380px; overflow-y:auto; padding:8px; }
 
         .bb-cluster-group {
             background:var(--sur2); border:1px solid var(--bd2); border-radius:12px;
@@ -257,7 +261,7 @@
         .bb-cluster-row.warn-bat { animation:bb-warnBlink .8s infinite; }
         .bb-cluster-row:hover { background:rgba(255,255,255,.07); border-color:rgba(255,255,255,.18); }
         .bb-cluster-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
-        .bb-cluster-name { flex:1; font-size:13px; font-weight:700; color:var(--tx); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .bb-cluster-name { flex:1; font-size:15px; font-weight:700; color:var(--tx); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .bb-cluster-pct { font-size:12px; font-weight:900; font-family:'Lato',monospace; flex-shrink:0; -webkit-text-stroke:0.5px currentColor; }
         .bb-cluster-pct-wrap {
             position:relative; display:inline-block; width:56px; height:14px;
@@ -410,6 +414,9 @@
 			font-family:'Paperlogy','Lato',-apple-system,sans-serif; -webkit-text-stroke:0;
 		}
 		#bb-walker-bubble.open { display:block; }
+		#bb.bb-half #bb-walker-bubble {
+			width:140px; padding:7px 12px; font-size:11px; min-height:38px;
+		}
 		#bb-walker-bubble::after {
 			content:''; position:absolute; top:50%; right:-13px; transform:translateY(-50%);
 			width:0; height:0;
@@ -609,6 +616,7 @@
             <div class="bb-hd">
                 <div class="bb-hd-left">
                     <button class="bb-btn info" id="bb-infobtn">사용 설명서</button>
+                    <button id="bb-half-btn" class="bb-btn">🗔 절반 모드</button>
                     <button id="bb-zoom-out" class="zoom-btn">－</button>
                     <span id="bb-zoom-label" class="zoom-label">100%</span>
                     <button id="bb-zoom-in"  class="zoom-btn">＋</button>
@@ -622,7 +630,6 @@
                     <div class="bb-ref" id="bb-ref">— 초 후 갱신</div>
                 </div>
                 <div class="bb-hd-right">
-                    <button id="bb-half-btn" class="bb-btn">🗔 절반 모드</button>
                     <button id="bb-theme-btn" class="bb-btn">다크</button>
                     <button id="bb-backup-btn" class="bb-btn">목록 백업</button>
                     <button id="bb-restore-btn" class="bb-btn">목록 복원</button>
@@ -651,7 +658,7 @@
             <!-- 메인 영역: 좌측 묶음 리스트(기본) / 절반모드에선 상단 드롭다운으로 전환 -->
             <div class="bb-main-split">
                 <div class="bb-cluster-toggle" id="bb-cluster-toggle">
-                    <span>📦 묶음 그리드</span>
+                    <span>📦 무선 기체 사이트</span>
                     <span class="bb-cluster-arrow" id="bb-cluster-arrow">▾</span>
                 </div>
                 <div class="bb-cluster-side" id="bb-cluster-side"></div>
@@ -1875,9 +1882,19 @@
             applyHalf();
         });
 
-        toggleBar.addEventListener('click', () => {
+        toggleBar.addEventListener('click', (e) => {
+            e.stopPropagation();
             isClusterOpen = !isClusterOpen;
             localStorage.setItem(CLUSTER_OPEN_KEY, isClusterOpen ? '1' : '0');
+            applyHalf();
+        });
+
+        document.addEventListener('mousedown', (e) => {
+            if (!isClusterOpen) return;
+            const side = document.getElementById('bb-cluster-side');
+            if (side.contains(e.target) || toggleBar.contains(e.target)) return;
+            isClusterOpen = false;
+            localStorage.setItem(CLUSTER_OPEN_KEY, '0');
             applyHalf();
         });
     })();
