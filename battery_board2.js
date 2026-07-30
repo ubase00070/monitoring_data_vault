@@ -329,6 +329,7 @@
 		    font-size:15px; font-weight:900; color:var(--tx); line-height:1.1; 
 		    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 		    -webkit-text-stroke: 0.4px currentColor;
+			margin-top:2px;
 		}
         .bb-ca-name.bb-marquee { overflow:visible; animation:bb-marquee 3s linear 0.5s 1 forwards; }
         @keyframes bb-marquee { 0%{transform:translateX(0)} 100%{transform:translateX(-60%)} }
