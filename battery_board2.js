@@ -185,11 +185,11 @@
         .bb-si {
             width:100%; background:var(--sur2); border:1px solid var(--bd2);
             border-radius:7px; padding:6px 10px 6px 26px;
-            color:var(--tx); font-size:12px; outline:none; font-family:inherit;
+            color:var(--tx); font-size:14px; outline:none; font-family:inherit;
         }
         .bb-si:focus { border-color:var(--bl); }
         .bb-si::placeholder { color:var(--mu); }
-        .bb-si-icon { position:absolute; left:8px; top:50%; transform:translateY(-50%); font-size:12px; color:var(--mu); pointer-events:none; }
+        .bb-si-icon { position:absolute; left:8px; top:50%; transform:translateY(-50%); font-size:14px; color:var(--mu); pointer-events:none; }
         #bb-dd {
             position:absolute; top:calc(100% + 4px); left:0; right:0;
             background:var(--sur2); border:1px solid var(--bd2);
@@ -199,7 +199,7 @@
         }
         #bb-dd.open { display:block; }
         .bb-di {
-            padding:8px 12px; font-size:12px; font-weight:700; cursor:pointer;
+            padding:8px 12px; font-size:14px; font-weight:700; cursor:pointer;
             display:flex; align-items:center; gap:6px;
             border-bottom:1px solid var(--bd); color:var(--tx);
             transition:background .1s;
@@ -570,9 +570,9 @@
             border-bottom:1px solid var(--bd);
             display:flex; justify-content:space-between; align-items:center;
         }
-        .bb-icp-title { font-size:14px; font-weight:900; color:var(--tx); flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .bb-icp-title { font-size:16px; font-weight:900; color:var(--tx); flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .bb-icp-badge {
-            font-size:11px; font-weight:900; padding:3px 8px;
+            font-size:13px; font-weight:900; padding:3px 8px;
             border-radius:5px; flex-shrink:0; margin-left:6px;
         }
         .bb-icp-badge.ok       { background:rgba(34,197,94,.15);  color:var(--gn); }
@@ -585,7 +585,7 @@
         .bb-icp-close {
             width:22px; height:22px; border-radius:5px; flex-shrink:0;
             background:rgba(239,68,68,.15); border:1px solid rgba(239,68,68,.3);
-            color:var(--rd); font-size:12px; cursor:pointer;
+            color:var(--rd); font-size:14px; cursor:pointer;
             display:flex; align-items:center; justify-content:center; font-weight:900;
             margin-left:6px;
         }
@@ -594,16 +594,16 @@
         }
         .bb-icp-section:last-child { border-bottom:none; }
         .bb-icp-section-title {
-            font-size:11px; font-weight:900; color:var(--mu);
+            font-size:13px; font-weight:900; color:var(--mu);
             letter-spacing:.5px; margin-bottom:4px; text-transform:uppercase;
         }
         .bb-icp-row {
             display:flex; justify-content:space-between; align-items:center;
-            padding:3px 0; font-size:13px;
+            padding:3px 0; font-size:15px;
         }
         .bb-icp-label { color:var(--mu); font-weight:700; }
         .bb-icp-value { color:var(--tx); font-weight:700; text-align:right; display:flex; align-items:center; gap:4px; }
-        .bb-icp-bar { font-size:11px; color:var(--gn); letter-spacing:-1px; }
+        .bb-icp-bar { font-size:13px; color:var(--gn); letter-spacing:-1px; }
 
         /* ── 제거 힌트 ── */
         .bb-rmhint { font-size:12px; color:var(--rd); font-weight:700; display:none; opacity:.85; }
