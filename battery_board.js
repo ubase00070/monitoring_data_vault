@@ -148,8 +148,8 @@
         }
         .bb-alert-chips { display:flex; gap:5px; flex-wrap:wrap; flex:1; align-items:center; min-width:0; }
         .bb-chip {
-            display:flex; flex-direction:column; gap:2px;
-            padding:5px 12px; border-radius:10px;
+            display:flex; flex-direction:column; gap:1px;
+            padding:3px 12px; border-radius:10px;
             font-size:15px; font-weight:700; cursor:pointer;
             font-family:inherit; max-width:180px;
             transition:filter .15s, box-shadow .15s;
