@@ -326,7 +326,7 @@
             50%     { border-color:transparent; box-shadow:none; }
         }
         .bb-ca-name { 
-		    font-size:15px; font-weight:900; color:var(--tx); line-height:1.1; 
+		    font-size:16px; font-weight:900; color:var(--tx); line-height:1.1; 
 		    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 		    -webkit-text-stroke: 0.4px currentColor;
 			margin-top:2px;
@@ -412,7 +412,7 @@
 		.bb-walker-arrow:active { transform:translateY(-50%) scale(0.9); }
 
 		#bb-walker-bubble {
-			position:absolute; top:4px; left:220px; width:250px; min-height:50px;
+			position:absolute; top:4px; left:260px; width:250px; min-height:50px;
 			background:#fdf6e3; border-radius:20px; padding:10px 18px;
 			font-size:15px; color:#5c4a2a; font-weight:700; line-height:1.4;
 			box-shadow:0 4px 12px rgba(0,0,0,.35);
