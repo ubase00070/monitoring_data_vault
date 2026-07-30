@@ -104,7 +104,7 @@
         .bb-clock { font-family:'Lato',monospace; font-size:13px; font-weight:900; color:var(--mu); letter-spacing:.8px; }
         .bb-ref   { font-size:12px; color:var(--mu); font-weight:700; }
         .bb-hd-left  { position:absolute; left:14px; top:50%; transform:translateY(-50%); display:flex; align-items:center; gap:6px; }
-        .bb-hd-right { position:absolute; right:14px; top:50%; transform:translateY(-50%); display:flex; align-items:center; gap:10px; }
+        .bb-hd-right { position:absolute; right:14px; top:50%; transform:translateY(-50%); display:flex; align-items:center; justify-content:flex-end; gap:10px; }
 
         .bb-btn {
             height:32px; padding:0 12px; border-radius:6px; border:1px solid var(--bd2);
@@ -751,14 +751,21 @@
     };
     applyBbTheme();
 
-    // 헤더 우측 버튼 그룹(라이트/목록 백업/목록 복원) 폭에 맞춰
-    // 하단 검색줄(이름 순 정렬/정보 검색/카드 제거 + 검색창) 폭을 실측 동기화
+    // 헤더 우측 버튼 그룹(라이트/목록 백업/목록 복원)과
+    // 하단 검색줄(이름 순 정렬/정보 검색/카드 제거 + 검색창) 폭을 서로 동기화.
+    // 다크/라이트 전환처럼 버튼 텍스트 길이가 바뀌어도 두 줄 다 "둘 중 더 넓은 쪽"에
+    // 맞춰지도록 해서, 폭이 좁아져 버튼이 줄바꿈되는 문제 없이 항상 같은 폭을 유지.
     function syncSearchWrapWidth() {
         const hdRight = document.getElementById('bb-hd-right');
         const searchWrap = document.getElementById('bb-search-wrap');
         if (!hdRight || !searchWrap) return;
-        const w = hdRight.offsetWidth;
-        if (w > 0) searchWrap.style.width = w + 'px';
+        hdRight.style.width = '';
+        searchWrap.style.width = '';
+        const w = Math.max(hdRight.offsetWidth, searchWrap.offsetWidth);
+        if (w > 0) {
+            hdRight.style.width = w + 'px';
+            searchWrap.style.width = w + 'px';
+        }
     }
     syncSearchWrapWidth();
     if (document.fonts?.ready) document.fonts.ready.then(syncSearchWrapWidth).catch(() => {});
