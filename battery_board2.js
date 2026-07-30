@@ -238,13 +238,17 @@
         #bb.bb-half .bb-cluster-toggle { display:flex; }
         #bb.bb-half .bb-cluster-side {
             position:absolute; top:46px; left:0; right:0; z-index:60;
-            background:var(--bg); border:1px solid var(--bd2); border-radius:12px;
-            box-shadow:0 16px 40px rgba(0,0,0,.55);
-            padding:8px; width:auto;
+            background:transparent; border:1px solid transparent; border-radius:12px;
+            box-shadow:none; padding:0; width:auto;
             display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:8px;
-            max-height:0; overflow:hidden; transition:max-height .3s ease; margin:0;
+            max-height:0; overflow:hidden; margin:0;
+            transition:max-height .3s ease, padding .2s ease;
         }
-        #bb.bb-half.cluster-open .bb-cluster-side { max-height:380px; overflow-y:auto; padding:8px; }
+        #bb.bb-half.cluster-open .bb-cluster-side {
+            max-height:380px; overflow-y:auto; padding:8px;
+            background:var(--bg); border-color:var(--bd2);
+            box-shadow:0 16px 40px rgba(0,0,0,.55);
+        }
 
         .bb-cluster-group {
             background:var(--sur2); border:1px solid var(--bd2); border-radius:12px;
@@ -262,6 +266,7 @@
         .bb-cluster-row:hover { background:rgba(255,255,255,.07); border-color:rgba(255,255,255,.18); }
         .bb-cluster-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
         .bb-cluster-name { flex:1; font-size:15px; font-weight:700; color:var(--tx); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .bb-cluster-name.bb-marquee { overflow:visible; animation:bb-marquee 3s linear 0.5s 1 forwards; }
         .bb-cluster-pct { font-size:12px; font-weight:900; font-family:'Lato',monospace; flex-shrink:0; -webkit-text-stroke:0.5px currentColor; }
         .bb-cluster-pct-wrap {
             position:relative; display:inline-block; width:56px; height:14px;
@@ -415,7 +420,7 @@
 		}
 		#bb-walker-bubble.open { display:block; }
 		#bb.bb-half #bb-walker-bubble {
-			width:140px; padding:7px 12px; font-size:11px; min-height:38px;
+			left:130px;
 		}
 		#bb-walker-bubble::after {
 			content:''; position:absolute; top:50%; right:-13px; transform:translateY(-50%);
@@ -1431,6 +1436,14 @@
                 row.addEventListener('dblclick', e => {
                     e.stopPropagation();
                     openInfoCardPanel(r);
+                });
+                const clusterNameEl = row.querySelector('.bb-cluster-name');
+                row.addEventListener('mouseenter', () => {
+                    if (clusterNameEl.scrollWidth > clusterNameEl.clientWidth) clusterNameEl.classList.add('bb-marquee');
+                });
+                row.addEventListener('mouseleave', () => {
+                    clusterNameEl.classList.remove('bb-marquee');
+                    clusterNameEl.style.transform = '';
                 });
                 groupEl.appendChild(row);
             });
