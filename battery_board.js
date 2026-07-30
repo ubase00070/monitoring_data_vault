@@ -698,7 +698,7 @@
                     <div class="bb-xbtn" id="bb-info-close">✕</div>
                 </div>
                 <div id="bb-info-body">
-                    * 오직 '알림 센터' 페이지에서 ALT+Z 작동<br>
+                    * 오직 '알림 센터' 페이지에서만 ALT+Z 눌러 레이아웃 열기<br>
                     * 추가한 기체 카드와 배치는 로컬 스토리지에 저장됨(최대 30대. 드래그로 배치 변경 가능)<br>
                     * 카드 더블클릭/기체정보 검색창: 기체 상세 Info 패널 (CPU, GPS, 섀시 온도, 마지막 조작자 등)<br>
                     * 알림 전송 조건<br>
@@ -1427,11 +1427,11 @@
                 row.className = `bb-cluster-row${lowBat ? ' warn-bat' : ''}${showMissionOff ? ' mission-off' : ''}`;
                 const plugPrefix = showPlug ? '🔌 ' : '';
 				const pctHtml = showMissionOff
-                    ? `<span class="bb-cluster-pct-wrap">
-                           <span class="bb-cluster-pct-val" style="color:${ac};">${off ? 'OFF' : r.battery+'%'}</span>
-                           <span class="bb-cluster-pct-off">임무 OFF</span>
-                       </span>`
-                    : `<span class="bb-cluster-pct" style="color:${ac};">${off ? 'OFF' : r.battery+'%'}</span>`;
+					? `<span class="bb-cluster-pct-wrap">
+						   <span class="bb-cluster-pct-val" style="color:${ac};">${plugPrefix}${off ? 'OFF' : r.battery+'%'}</span>
+						   <span class="bb-cluster-pct-off">임무 OFF</span>
+					   </span>`
+					: `<span class="bb-cluster-pct" style="color:${ac};">${plugPrefix}${off ? 'OFF' : r.battery+'%'}</span>`;
                 row.innerHTML = `
                     <span class="bb-cluster-dot" style="background:${ac};"></span>
 					<span class="bb-cluster-name" title="${STL[r.status] || ''}">${r.name}</span>
