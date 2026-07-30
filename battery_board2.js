@@ -414,7 +414,7 @@
 		#bb-walker-bubble {
 			position:absolute; top:4px; left:260px; width:250px; min-height:50px;
 			background:#fdf6e3; border-radius:20px; padding:10px 18px;
-			font-size:15px; color:#5c4a2a; font-weight:700; line-height:1.4;
+			font-size:16px; color:#5c4a2a; font-weight:700; line-height:1.4;
 			box-shadow:0 4px 12px rgba(0,0,0,.35);
 			z-index:3; display:none;
 			font-family:'Paperlogy','Lato',-apple-system,sans-serif; -webkit-text-stroke:0;
