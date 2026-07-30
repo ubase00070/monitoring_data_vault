@@ -766,6 +766,19 @@
             hdRight.style.width = w + 'px';
             searchWrap.style.width = w + 'px';
         }
+
+        // 검색창/드롭다운 폭은 컨테이너 전체가 아니라
+        // '이름 순 정렬' ~ '카드 제거' 버튼이 실제로 차지하는 폭에만 맞춤
+        const siWrap   = searchWrap.querySelector('.bb-si-wrap');
+        const firstBtn = document.getElementById('bb-sortname-btn');
+        const lastBtn  = document.getElementById('bb-rmbtn');
+        if (siWrap && firstBtn && lastBtn) {
+            const tight = (lastBtn.offsetLeft + lastBtn.offsetWidth) - firstBtn.offsetLeft;
+            if (tight > 0) {
+                siWrap.style.maxWidth  = tight + 'px';
+                siWrap.style.marginLeft = 'auto';
+            }
+        }
     }
     syncSearchWrapWidth();
     if (document.fonts?.ready) document.fonts.ready.then(syncSearchWrapWidth).catch(() => {});
