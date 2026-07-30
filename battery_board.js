@@ -1422,6 +1422,7 @@
                 const lowBat = !off && r.battery <= 21;
                 const showMissionOff = !r.canDispatch && !off && !r.loading
                     && r.status !== 'patrolling' && r.status !== 'delivering'
+					&& r.battery > 21
                 const showPlug = (off || r.status === 'charging') && !!r.raw?.robotStatus?.isWiredChargerConnected;
 				const row = document.createElement('div');
                 row.className = `bb-cluster-row${lowBat ? ' warn-bat' : ''}${showMissionOff ? ' mission-off' : ''}`;
@@ -1463,6 +1464,7 @@
         const inside = pct >= 28;
         const showMissionOff = !r.canDispatch && !off && !r.loading
             && r.status !== 'patrolling' && r.status !== 'delivering'
+			&& r.battery > 21
 		const showPlug = (off || r.status === 'charging') && !!r.raw?.robotStatus?.isWiredChargerConnected;
         const isLight = bbEl.classList.contains('bb-light');
         const batColor  = isLight ? 'rgba(30,25,15,.95)' : 'rgba(240,240,255,.93)';
@@ -2219,7 +2221,7 @@
 		bubbleStepIdx = 0;
 		playNextBubbleStep();
 
-		// 교체 시점을 놓치지 않도록 주기적으로 재확인 (API 호출 없음)
+		// 교체 시점을 놓치지 않도록 주기적으로 재확인 (API 호출 없음, 순수 화면 갱신)
 		setInterval(renderWalker, 60 * 1000);   // 1분마다 체크
 
 		// ── 표시 on/off 토글 (기본 ON, localStorage 저장) ──
