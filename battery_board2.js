@@ -68,7 +68,7 @@
         #bb {
             display:none; position:fixed; top:50%; left:50%;
             transform:translate(-50%,-50%);
-            width:1370px;
+            width:1020px;
             max-height:95vh; overflow-y:auto; overflow-x:hidden;
             border:3px solid transparent; border-radius:16px;
             background-image: linear-gradient(var(--bg), var(--bg)), linear-gradient(135deg, #6366f1, #ec4899);
@@ -211,19 +211,31 @@
         .bb-di-plus { font-size:15px; color:var(--gn); font-weight:900; flex-shrink:0; margin-left:4px; }
 
         /* ── 카드 그리드 ── */
-        .bb-gw { padding:10px 12px; flex:1; min-height:530px; }
+        .bb-gw { padding:10px 12px; }
         .bb-gr { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:6px; }
 
-        .bb-main-split { display:flex; gap:10px; min-height:0; padding-left:14px; margin-top:8px; }
-        .bb-main-right { flex:1; min-width:0; display:flex; flex-direction:column; gap:8px; }
-
-        .bb-cluster-side {
-            width:240px; flex-shrink:0; display:flex; flex-direction:column; gap:5px;
-            overflow-y:auto;
+        /* ── 묶음 그리드 드롭다운 ── */
+        .bb-cluster-toggle {
+            display:flex; align-items:center; justify-content:space-between;
+            margin:8px 14px 0; padding:8px 12px;
+            background:var(--sur2); border:1px solid var(--bd2); border-radius:10px;
+            font-size:13px; font-weight:900; color:var(--tx); cursor:pointer; user-select:none;
+        }
+        .bb-cluster-toggle:hover { border-color:var(--mu); }
+        .bb-cluster-arrow { transition:transform .2s; color:var(--mu); }
+        .bb-cluster-toggle.open .bb-cluster-arrow { transform:rotate(180deg); }
+        .bb-cluster-dropdown {
+            max-height:0; overflow:hidden; transition:max-height .3s ease;
+            margin:0 14px;
+        }
+        .bb-cluster-dropdown.open { max-height:420px; }
+        .bb-cluster-dropdown-body {
+            display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:8px;
+            padding:10px 2px; max-height:400px; overflow-y:auto;
         }
         .bb-cluster-group {
             background:var(--sur2); border:1px solid var(--bd2); border-radius:12px;
-            padding:6px 8px 4px; flex-shrink:0;
+            padding:6px 8px 4px;
         }
         .bb-cluster-group-label {
             font-size:13px; font-weight:900; color:#c9a24a; margin-bottom:5px; padding-left:3px;
@@ -237,7 +249,7 @@
         .bb-cluster-row:hover { background:rgba(255,255,255,.07); border-color:rgba(255,255,255,.18); }
         .bb-cluster-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
         .bb-cluster-name { flex:1; font-size:13px; font-weight:700; color:var(--tx); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-        .bb-cluster-pct { font-size:12px; font-weight:900; font-family:'Lato',monospace; flex-shrink:0; }
+        .bb-cluster-pct { font-size:12px; font-weight:900; font-family:'Lato',monospace; flex-shrink:0; -webkit-text-stroke:0.5px currentColor; }
         .bb-cluster-pct-wrap {
             position:relative; display:inline-block; width:56px; height:14px;
             overflow:hidden; flex-shrink:0; text-align:right;
@@ -246,7 +258,7 @@
             position:absolute; top:0; right:0; white-space:nowrap;
             animation:bb-pctSlide 8s ease-in-out infinite;
         }
-        .bb-cluster-pct-val { font-size:12px; font-weight:900; font-family:'Lato',monospace; }
+        .bb-cluster-pct-val { font-size:12px; font-weight:900; font-family:'Lato',monospace; -webkit-text-stroke:0.5px currentColor; }
         .bb-cluster-pct-off { font-size:10px; font-weight:900; color:rgba(239,68,68,.8); animation-delay:-4s; }
         @keyframes bb-pctSlide {
             0%     { transform:translateX(0);    opacity:1; }
@@ -626,27 +638,30 @@
                 </div>
             </div>
 
-            <!-- 메인 영역: 좌측 묶음 리스트 + 우측 카드/퀵바/배달 -->
-            <div class="bb-main-split">
-                <div class="bb-cluster-side" id="bb-cluster-side"></div>
-                <div class="bb-main-right">
-                    <!-- 카드 그리드 -->
-                    <div class="bb-gw"><div class="bb-gr" id="bb-gr"></div></div>
+            <!-- 묶음 그리드: 드롭다운 토글 -->
+            <div class="bb-cluster-toggle" id="bb-cluster-toggle">
+                <span>📦 묶음 그리드</span>
+                <span class="bb-cluster-arrow" id="bb-cluster-arrow">▾</span>
+            </div>
+            <div class="bb-cluster-dropdown" id="bb-cluster-dropdown">
+                <div class="bb-cluster-dropdown-body" id="bb-cluster-side"></div>
+            </div>
 
-                    <!-- 하단: 퀵바 + 기타 배달 -->
-                    <div class="bb-bottom">
-                        <div class="bb-mg" id="bb-mg"></div>
-                        <div class="bb-delivery-area">
-                            <div class="bb-delivery-title">🚗 기타 배달 기체</div>
-                            <div class="bb-delivery-chips" id="bb-delivery-chips"></div>
-                            <div id="bb-walker-bubble"><span id="bb-walker-bubble-text"></span></div>
-                            <button id="bb-walker-toggle" title="동숲 주민 표시/숨김"></button>
-                            <div id="bb-walker-wrap">
-                                <div id="bb-walker"></div>
-                                <button id="bb-walker-prev" class="bb-walker-arrow left" title="이전 캐릭터">‹</button>
-                                <button id="bb-walker-next" class="bb-walker-arrow right" title="다음 캐릭터">›</button>
-                            </div>
-                        </div>
+            <!-- 카드 그리드 -->
+            <div class="bb-gw"><div class="bb-gr" id="bb-gr"></div></div>
+
+            <!-- 하단: 퀵바 + 기타 배달 -->
+            <div class="bb-bottom">
+                <div class="bb-mg" id="bb-mg"></div>
+                <div class="bb-delivery-area">
+                    <div class="bb-delivery-title">🚗 기타 배달 기체</div>
+                    <div class="bb-delivery-chips" id="bb-delivery-chips"></div>
+                    <div id="bb-walker-bubble"><span id="bb-walker-bubble-text"></span></div>
+                    <button id="bb-walker-toggle" title="동숲 주민 표시/숨김"></button>
+                    <div id="bb-walker-wrap">
+                        <div id="bb-walker"></div>
+                        <button id="bb-walker-prev" class="bb-walker-arrow left" title="이전 캐릭터">‹</button>
+                        <button id="bb-walker-next" class="bb-walker-arrow right" title="다음 캐릭터">›</button>
                     </div>
                 </div>
             </div>
@@ -1441,7 +1456,7 @@
                         ${inside
                             ? 'right:5px;top:50%;transform:translateY(-50%);'
                             : `left:calc(${pct}% + 5px);top:50%;transform:translateY(-50%);`}
-                        font-size:11px;font-weight:900;-webkit-text-stroke:0.45px currentColor;
+                        font-size:11px;font-weight:900;-webkit-text-stroke:0.65px currentColor;
                         color:${batColor};
                         font-family:'Lato',monospace;
                         text-shadow:${batShadow};
@@ -1826,6 +1841,24 @@
     document.getElementById('bb-icp-close').addEventListener('click', () => {
         document.getElementById('bb-info-card-panel').classList.remove('open');
     });
+
+    // 묶음 그리드 드롭다운 토글
+    (function() {
+        const CLUSTER_OPEN_KEY = 'bb_cluster_open';
+        const toggleEl = document.getElementById('bb-cluster-toggle');
+        const dropEl = document.getElementById('bb-cluster-dropdown');
+        let isOpenCluster = localStorage.getItem(CLUSTER_OPEN_KEY) === '1';
+        function applyClusterOpen() {
+            toggleEl.classList.toggle('open', isOpenCluster);
+            dropEl.classList.toggle('open', isOpenCluster);
+        }
+        applyClusterOpen();
+        toggleEl.addEventListener('click', () => {
+            isOpenCluster = !isOpenCluster;
+            localStorage.setItem(CLUSTER_OPEN_KEY, isOpenCluster ? '1' : '0');
+            applyClusterOpen();
+        });
+    })();
 
     document.getElementById('bb-inforequest-btn').addEventListener('click', (e) => {
         e.stopPropagation();
