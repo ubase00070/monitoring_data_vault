@@ -283,7 +283,7 @@
         @keyframes bb-pctSlide {
             0%     { transform:translateX(0);    opacity:1; }
             42%    { transform:translateX(0);    opacity:1; }
-            50%    { transform:translateX(-8px);  opacity:0; }
+            50%    { transform:translateX(-10px);  opacity:0; }
             50.01% { transform:translateX(8px);   opacity:0; }
             92%    { transform:translateX(8px);   opacity:0; }
             100%   { transform:translateX(0);    opacity:1; }
@@ -673,7 +673,7 @@
                 </div>
                 <div class="bb-hd-title" id="bb-drag-handle">
                     관리자용 배터리 현황판
-                    <span style="font-size:16px;color:var(--mu);font-weight:400;">by CYH</span>
+                    <span id="bb-cyh-tag" style="font-size:16px;color:var(--mu);font-weight:400;cursor:default;">by CYH</span>
                 </div>
                 <div class="bb-hd-time">
                     <div class="bb-clock" id="bb-clk">00:00:00</div>
@@ -744,8 +744,14 @@
                 <div id="bb-info-body">
                     * 오직 '알림 센터' 페이지에서만 ALT+Z 눌러 레이아웃 열기<br>
                     * 추가한 기체 카드와 배치는 로컬 스토리지에 저장됨(최대 30대. 드래그로 배치 변경 가능)<br>
-                    * 카드 더블클릭/기체정보 검색창: 기체 상세 Info 패널 (CPU, GPS, 섀시 온도, 마지막 조작자 등)<br>
-                    * 알림 전송 조건<br>
+                    * 카드 더블클릭/기체정보 검색창: 기체 상세 Info 패널 / 배터리 증감 추이 그래프<br>
+                    * 배터리 증감 추이 기능<br>
+					&nbsp;&nbsp;&nbsp;&nbsp;- 08:00부터 다음 날 03:00까지 10분 간격으로 배터리 수치 기록<br> 
+					&nbsp;&nbsp;&nbsp;&nbsp;- 하루가 지난 데이터는 자동 폐기<br> 
+					&nbsp;&nbsp;&nbsp;&nbsp;- 그래프 상에서도 기체 현재 상태별로 기록<br>
+					&nbsp;&nbsp;&nbsp;&nbsp;- 배터리 소모 속도 빠른 순 5대 표기(시간당 소모량 확인 가능)<br> 
+					&nbsp;&nbsp;&nbsp;&nbsp;- 배터리 충전 속도 느린 순 5대 표기(시간당 소모량 확인 가능)<br> 
+					* 알림 전송 조건<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;- 비상정지 버튼 눌림<br> 
                     &nbsp;&nbsp;&nbsp;&nbsp;- 배터리 부족(21% 이하)<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;- 무선 도킹됨<br>
@@ -1316,6 +1322,9 @@
             }
 
             logBatteryPattern(DB);
+            wblHandoverUploadTick();
+            wblHandoverDownloadTick();
+            wblMidnightCleanupTick();
 
             const alerts = detectAlerts(allRaw);
             renderAlertChips(alerts);
@@ -1743,7 +1752,7 @@
         const entry = data.entries[robotId];
         if (!entry || entry.log.length === 0) return '<div style="font-size:13px;color:var(--mu);padding:30px;text-align:center;">오늘 기록된 데이터 없음</div>';
 
-        const PX_PER_MIN = 4, H = 210, PADX = 16, PADT = 14, PADB = 26;
+        const PX_PER_MIN = 4.8, H = 252, PADX = 19, PADT = 17, PADB = 31;
         const dayStartMin = 8 * 60;
         const nowMin = (() => { const n=new Date(); let m=n.getHours()*60+n.getMinutes(); if (n.getHours()<3) m += 1440; return m; })();
         const spanMin = Math.max(60, nowMin - dayStartMin);
@@ -1785,7 +1794,7 @@
 
         const polylines = colorSegs.map(seg => {
             const pts = seg.points.map(pt => `${xOf(pt.t).toFixed(1)},${yOf(pt.battery).toFixed(1)}`).join(' ');
-            return `<polyline points="${pts}" fill="none" style="stroke:${colorOf(seg.status)}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
+            return `<polyline points="${pts}" fill="none" style="stroke:${colorOf(seg.status)}" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/>`;
         });
         const areaFills = colorSegs.map(seg => {
             const pts = seg.points.map(pt => `${xOf(pt.t).toFixed(1)},${yOf(pt.battery).toFixed(1)}`).join(' ');
@@ -1794,14 +1803,14 @@
             return `<polygon points="${x0},${base} ${pts} ${x1},${base}" style="fill:${colorOf(seg.status)}" fill-opacity="0.12"/>`;
         });
         const dots = colorSegs.flatMap(seg => seg.points.map(pt =>
-            `<circle cx="${xOf(pt.t).toFixed(1)}" cy="${yOf(pt.battery).toFixed(1)}" r="3.5" style="fill:${colorOf(pt.status)}" stroke="#0d1117" stroke-width="1.5"/>`
+            `<circle cx="${xOf(pt.t).toFixed(1)}" cy="${yOf(pt.battery).toFixed(1)}" r="4.2" style="fill:${colorOf(pt.status)}" stroke="#0d1117" stroke-width="1.5"/>`
         ));
         const dotLabels = colorSegs.flatMap(seg => seg.points.map(pt => {
             const above = pt.battery >= 92;   // 100%에 가까우면 그래프 상단에 눌려서 잘리니 아래쪽에 표기
             const ty = yOf(pt.battery) + (above ? 14 : -8);
-            return `<text x="${xOf(pt.t).toFixed(1)}" y="${ty.toFixed(1)}" font-size="9" font-weight="700"
-                        text-anchor="middle" fill="${colorOf(pt.status)}"
-                        stroke="#0d1117" stroke-width="2.5" paint-order="stroke fill">${pt.battery}%</text>`;
+            return `<text x="${xOf(pt.t).toFixed(1)}" y="${ty.toFixed(1)}" font-size="14" font-weight="700"
+                        text-anchor="middle" fill="#e5e7eb"
+                        stroke="#0d1117" stroke-width="3" paint-order="stroke fill">${pt.battery}%</text>`;
         }));
 
         // x축: 정시(00분) 라벨
@@ -1812,12 +1821,12 @@
         }
 
         const yLabels = [100,75,50,25,0].map(p =>
-            `<div style="position:absolute;top:${(yOf(p)-8).toFixed(1)}px;left:0;font-size:12px;font-weight:700;color:#9ca3af;">${p}</div>`
+            `<div style="position:absolute;top:${(yOf(p)-8).toFixed(1)}px;left:0;font-size:14px;font-weight:700;color:#9ca3af;">${p}</div>`
         ).join('');
 
         return `
             <div style="display:flex;">
-                <div style="position:relative;width:26px;height:${H}px;flex-shrink:0;">${yLabels}</div>
+                <div style="position:relative;width:31px;height:${H}px;flex-shrink:0;">${yLabels}</div>
                 <div class="bb-wbl-scroll" id="bb-wbl-scroll">
                     <svg width="${W}" height="${H}" style="display:block;">
                         ${[0,25,50,75,100].map(p => `<line x1="${PADX}" y1="${yOf(p)}" x2="${W-PADX}" y2="${yOf(p)}" stroke="${p===0||p===100?'#3a3a40':'#242428'}" stroke-width="1" stroke-dasharray="${p===0||p===100?'0':'3,3'}"/>`).join('')}
@@ -1826,7 +1835,7 @@
                         ${polylines.join('')}
                         ${dots.join('')}
                         ${dotLabels.join('')}
-                        ${xTicks.map(t => `<text x="${t.x.toFixed(1)}" y="${H-8}" font-size="12" font-weight="700" fill="#9ca3af" text-anchor="middle">${t.label}</text>`).join('')}
+                        ${xTicks.map(t => `<text x="${t.x.toFixed(1)}" y="${H-8}" font-size="14" font-weight="700" fill="#9ca3af" text-anchor="middle">${t.label}</text>`).join('')}
                     </svg>
                 </div>
             </div>
@@ -1862,6 +1871,106 @@
 		wblSave(local);
 		return true;
 	}
+
+	// ============================================================
+	// 주간 → 야간 인계 로직 (17:50~18:00 업로드 / 17:52~18:20 수신)
+	// ============================================================
+	const WBL_HANDOVER_NAME = '배터리 증감 추이 데이터';
+
+	function wblTodayStr() {
+		return new Date().toISOString().slice(0, 10);
+	}
+
+	// 서버에 "오늘, 17:50 이후" 저장된 인계 데이터가 이미 있는지 확인
+	async function wblIsHandoverDoneToday() {
+		try {
+			const res = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent(WBL_HANDOVER_NAME)}`);
+			if (!res.ok) return false;
+			const remote = await res.json();
+			if (!remote?.savedAt) return false;
+			const saved = new Date(remote.savedAt);
+			const now = new Date();
+			const sameDay = saved.getFullYear() === now.getFullYear()
+				&& saved.getMonth() === now.getMonth()
+				&& saved.getDate() === now.getDate();
+			const isHandoverTime = saved.getHours() > 17 || (saved.getHours() === 17 && saved.getMinutes() >= 50);
+			return sameDay && isHandoverTime;
+		} catch { return false; }
+	}
+
+	// 주간 PC(CYH: 17:50~, 동료: 17:52~)가 2분 간격으로 업로드 시도, 이미 올라와있으면 중단
+	async function wblHandoverUploadTick() {
+		const now = new Date();
+		const h = now.getHours(), m = now.getMinutes();
+		const inWindow = (h === 17 && m >= 50) || (h === 18 && m === 0);
+		if (!inWindow) return;
+
+		const isCYH = localStorage.getItem('bb_is_cyh') === '1';
+		const myStart = isCYH ? 50 : 52;
+		if (h === 17 && m < myStart) return;
+
+		const tickKey = `${wblTodayStr()}_upload_${h}:${m}`;
+		if (localStorage.getItem('bb_handover_upload_tick') === tickKey) return;
+		localStorage.setItem('bb_handover_upload_tick', tickKey);
+
+		if (await wblIsHandoverDoneToday()) return;   // 이미 누군가 올렸으면 중단
+
+		try {
+			const data = wblLoad();
+			if (!data || data.day !== wblGetDayKey()) return;
+			await fetch(BACKUP_BASE, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ name: WBL_HANDOVER_NAME, data }),
+			});
+			console.log(`[BB] 주간 인계 업로드 완료 (${isCYH ? 'CYH' : '동료'}, ${h}:${String(m).padStart(2,'0')})`);
+		} catch (e) { console.log('[BB] 주간 인계 업로드 실패:', e.message); }
+	}
+
+	// 야간 PC가 17:52~18:20 사이 2분 간격으로 수신 시도, 성공하면 중단
+	async function wblHandoverDownloadTick() {
+		const now = new Date();
+		const h = now.getHours(), m = now.getMinutes();
+		const inWindow = (h === 17 && m >= 52) || (h === 18 && m <= 20);
+		if (!inWindow) return;
+
+		if (localStorage.getItem('bb_handover_pulled_day') === wblTodayStr()) return;   // 이미 성공했으면 재시도 안 함
+
+		const tickKey = `${wblTodayStr()}_pull_${h}:${m}`;
+		if (localStorage.getItem('bb_handover_pull_tick') === tickKey) return;
+		localStorage.setItem('bb_handover_pull_tick', tickKey);
+
+		try {
+			const res = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent(WBL_HANDOVER_NAME)}`);
+			if (!res.ok) return;
+			const remote = await res.json();
+			if (!remote?.savedAt) return;
+			const saved = new Date(remote.savedAt);
+			const now2 = new Date();
+			const sameDay = saved.getFullYear() === now2.getFullYear()
+				&& saved.getMonth() === now2.getMonth()
+				&& saved.getDate() === now2.getDate();
+			if (!sameDay || !remote.data) return;
+
+			const ok = wblMergeImported(remote.data);
+			if (ok) {
+				localStorage.setItem('bb_handover_pulled_day', wblTodayStr());
+				console.log(`[BB] 주간 데이터 인계받기 완료 (${h}:${String(m).padStart(2,'0')})`);
+			}
+		} catch (e) { console.log('[BB] 인계받기 시도 실패:', e.message); }
+	}
+
+	// 03:30 — 그날의 배터리 로그를 로컬에서 정리 (다음날 첫 접속에서도 wblEnsureDay가 자동으로 새로 시작하지만, 켜져있는 상태라면 더 일찍 정리)
+	function wblMidnightCleanupTick() {
+		const now = new Date();
+		if (now.getHours() !== 3 || now.getMinutes() < 30) return;
+		const doneKey = wblTodayStr();
+		if (localStorage.getItem('bb_cleanup_done_day') === doneKey) return;
+		localStorage.setItem('bb_cleanup_done_day', doneKey);
+		localStorage.removeItem('bb_battery_log');
+		console.log('[BB] 03:30 - 배터리 로그 정리 완료');
+	}
+
 
     // 그래프 좌우 드래그(패닝) — 전역에 한 번만 등록해서 패널 열 때마다 리스너가 쌓이지 않게 함
     let _wblDragEl = null, _wblDragStartX = 0, _wblDragStartScroll = 0;
@@ -2193,7 +2302,7 @@
             bodyEl.innerHTML = `
                 <div style="padding:10px 14px;">
                     <div class="bb-si-wrap" style="position:relative;">
-                        <span class="bb-si-icon" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--mu);">🔍</span>
+                        <span class="bb-si-icon" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--mu);">🔍</span>
                         <input class="bb-si" id="bb-info-search-input" placeholder="기체명 검색" autocomplete="off"
                             style="width:100%; background:var(--sur2); border:1px solid var(--bd2); border-radius:7px; padding:6px 10px 6px 26px; color:var(--tx); font-size:12px; outline:none; font-family:inherit; box-sizing:border-box;">
                     </div>
@@ -2336,6 +2445,27 @@
     document.getElementById('bb-icp-close').addEventListener('click', () => {
         closeInfoCardPanel();
     });
+
+    // ── "by CYH" 5회 연속 클릭(2초 이내) → 이 PC를 제작자(CYH) PC로 표시 ──
+    (function() {
+        const tag = document.getElementById('bb-cyh-tag');
+        let clickTimes = [];
+        function applyCyhStyle() {
+            tag.style.color = localStorage.getItem('bb_is_cyh') === '1' ? '#eab308' : 'var(--mu)';
+        }
+        applyCyhStyle();
+        tag.addEventListener('click', () => {
+            const now = Date.now();
+            clickTimes.push(now);
+            clickTimes = clickTimes.filter(t => now - t <= 2000);
+            if (clickTimes.length >= 5) {
+                clickTimes = [];
+                const cur = localStorage.getItem('bb_is_cyh') === '1';
+                localStorage.setItem('bb_is_cyh', cur ? '0' : '1');
+                applyCyhStyle();
+            }
+        });
+    })();
 
     // 절반 모드 토글 (윈도우 스냅 절반 폭 대응)
     (function() {
@@ -2789,17 +2919,18 @@
 		try {
 			const listRes = await fetch('https://multimonitoring.vercel.app/api/battery');
 			const listData = await listRes.json();
-			const names = listData.names || [];
+			const names = (listData.names || []).filter(n => n !== '배터리 증감 추이 데이터');
 			const choice = prompt(`복원할 백업을 선택하세요:\n\n0. 배터리 증감 추이 데이터\n${names.map((n,i) => `${i+1}. ${n}`).join('\n')}\n\n번호 또는 이름 입력:`);
 			if (!choice) return;
 
-			// ── 0번: 배터리 증감 추이 데이터 (GitHub JSON, 별도 경로) ──
+			// ── 0번: 배터리 증감 추이 데이터 (기존 백업 서버 재사용) ──
 			if (choice.trim() === '0') {
-				const wblRes = await fetch('https://raw.githubusercontent.com/ubase00070/monitoring_no_limit/main/battery.json?v=' + Date.now());
-				if (!wblRes.ok) { alert('❌ battery.json을 찾을 수 없음'); return; }
+				const wblRes = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent('배터리 증감 추이 데이터')}`);
+				if (!wblRes.ok) { alert('❌ 서버에 저장된 데이터 없음'); return; }
 				const remote = await wblRes.json();
-				const merged = wblMergeImported(remote);
-				if (!merged) { alert('❌ 오늘 날짜 데이터가 아니라 병합할 수 없음 (날짜: ' + (remote?.day || '없음') + ')'); return; }
+				const remoteData = remote?.data || remote;
+				const merged = wblMergeImported(remoteData);
+				if (!merged) { alert('❌ 오늘 날짜 데이터가 아니라 병합할 수 없음 (날짜: ' + (remoteData?.day || '없음') + ')'); return; }
 				alert('✅ 배터리 증감 추이 데이터 복원 완료');
 				return;
 			}
