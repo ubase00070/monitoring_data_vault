@@ -2789,7 +2789,7 @@
 		try {
 			const listRes = await fetch('https://multimonitoring.vercel.app/api/battery');
 			const listData = await listRes.json();
-			const names = listData.names || [];
+			const names = (listData.names || []).filter(n => n !== '배터리 증감 추이 데이터');
 			const choice = prompt(`복원할 백업을 선택하세요:\n\n0. 배터리 증감 추이 데이터\n${names.map((n,i) => `${i+1}. ${n}`).join('\n')}\n\n번호 또는 이름 입력:`);
 			if (!choice) return;
 
