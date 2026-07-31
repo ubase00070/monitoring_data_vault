@@ -2793,13 +2793,14 @@
 			const choice = prompt(`복원할 백업을 선택하세요:\n\n0. 배터리 증감 추이 데이터\n${names.map((n,i) => `${i+1}. ${n}`).join('\n')}\n\n번호 또는 이름 입력:`);
 			if (!choice) return;
 
-			// ── 0번: 배터리 증감 추이 데이터 (GitHub JSON, 별도 경로) ──
+			// ── 0번: 배터리 증감 추이 데이터 (기존 백업 서버 재사용) ──
 			if (choice.trim() === '0') {
-				const wblRes = await fetch('https://raw.githubusercontent.com/ubase00070/monitoring_no_limit/main/battery.json?v=' + Date.now());
-				if (!wblRes.ok) { alert('❌ battery.json을 찾을 수 없음'); return; }
+				const wblRes = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent('배터리 증감 추이 데이터')}`);
+				if (!wblRes.ok) { alert('❌ 서버에 저장된 데이터 없음'); return; }
 				const remote = await wblRes.json();
-				const merged = wblMergeImported(remote);
-				if (!merged) { alert('❌ 오늘 날짜 데이터가 아니라 병합할 수 없음 (날짜: ' + (remote?.day || '없음') + ')'); return; }
+				const remoteData = remote?.data || remote;
+				const merged = wblMergeImported(remoteData);
+				if (!merged) { alert('❌ 오늘 날짜 데이터가 아니라 병합할 수 없음 (날짜: ' + (remoteData?.day || '없음') + ')'); return; }
 				alert('✅ 배터리 증감 추이 데이터 복원 완료');
 				return;
 			}
