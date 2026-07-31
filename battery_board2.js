@@ -494,21 +494,21 @@
         #bb-top5-panel.open { display:block; }
         .bb-top5-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:14px; }
         .bb-top5-col { background:var(--bg); border-radius:12px; padding:12px; }
-        .bb-top5-col-title { font-size:12px; font-weight:900; margin-bottom:8px; }
+        .bb-top5-col-title { font-size:14px; font-weight:900; margin-bottom:8px; }
         .bb-top5-row {
             display:flex; align-items:center; gap:8px; padding:6px 4px;
             border-bottom:1px solid var(--bd); cursor:pointer;
         }
         .bb-top5-row:last-child { border-bottom:none; }
         .bb-top5-row:hover { background:rgba(255,255,255,.05); }
-        .bb-top5-name { flex:1; font-size:12px; font-weight:700; color:var(--tx); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-        .bb-top5-rate { font-size:11px; font-weight:900; font-family:'Paperlogy','Lato',monospace; flex-shrink:0; }
-        .bb-top5-empty { font-size:11px; color:var(--mu); padding:10px 0; }
-		#bb-top5-panel.bb-light {
-		    --bg:#ded3b8; --sur:#f8f3e6; --sur2:#efe6d2;
-		    --bd:#cabf9d; --bd2:#b3a687; --tx:#2b2418; --mu:#7a6f5c;
+        .bb-top5-name { flex:1; font-size:14px; font-weight:700; color:var(--tx); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .bb-top5-rate { font-size:13px; font-weight:900; font-family:'Paperlogy','Lato',monospace; flex-shrink:0; }
+        .bb-top5-empty { font-size:13px; color:var(--mu); padding:10px 0; }
+        #bb-top5-panel.bb-light {
+			--bg:#ded3b8; --sur:#f8f3e6; --sur2:#efe6d2;
+			--bd:#cabf9d; --bd2:#b3a687; --tx:#2b2418; --mu:#7a6f5c;
 		}
-        #bb-top5-panel.bb-light .bb-top5-col { background:var(--sur); }
+		#bb-top5-panel.bb-light .bb-top5-col { background:var(--sur); }
         #bb-top5-panel.bb-light .bb-top5-row { border-bottom-color:var(--bd); }
         #bb-top5-panel.bb-light .bb-top5-row:hover { background:var(--sur2); }
         #bb-top5-panel.bb-light .bb-top5-col-title { color:#a16207; }
@@ -557,6 +557,7 @@
 		}
 		#bb-alert-panel.bb-light .bb-ap-hd { background:var(--sur); border-bottom-color:var(--bd); }
 		#bb-alert-panel.bb-light .bb-ap-title { color:var(--tx); }
+		#bb-top5-panel.bb-light .bb-ap-title { color:var(--tx); }
 		#bb-alert-panel.bb-light .bb-ap-close { color:#b91c1c; }
 		#bb-alert-panel.bb-light .bb-ap-item { background:var(--sur); border-bottom-color:var(--bd); }
 		#bb-alert-panel.bb-light .bb-ap-item:hover { background:var(--sur2); }
@@ -1900,11 +1901,11 @@
 
         bodyEl.innerHTML = `
             <div class="bb-top5-col">
-                <div class="bb-top5-col-title" style="color:#ef4444;">🔻 소모 속도 급한 순</div>
+                <div class="bb-top5-col-title" style="color:#ef4444;">🔻 배터리 소모 속도 빠른 순</div>
                 ${drops.length ? drops.map(d => row(d, true)).join('') : '<div class="bb-top5-empty">오늘 기록 없음</div>'}
             </div>
             <div class="bb-top5-col">
-                <div class="bb-top5-col-title" style="color:#fb923c;">🐢 충전 속도 느린 순</div>
+                <div class="bb-top5-col-title" style="color:#fb923c;">🐢 배터리 충전 속도 느린 순</div>
                 ${charges.length ? charges.map(c => row(c, false)).join('') : '<div class="bb-top5-empty">오늘 기록 없음</div>'}
             </div>
         `;
@@ -1912,7 +1913,11 @@
         bodyEl.querySelectorAll('.bb-top5-row').forEach(el => {
             el.addEventListener('click', () => {
                 const r = DB.find(x => x.id === el.dataset.id);
-                if (r) { panel.classList.remove('open'); openInfoCardPanel(r); }
+                if (r) {
+                    panel.classList.remove('open');
+                    _infoPanelReturnToTop5 = true;
+                    openInfoCardPanel(r);
+                }
             });
         });
 
@@ -2084,6 +2089,14 @@
         }
 
         let _infoPanelCloseHandler = null;
+        let _infoPanelReturnToTop5 = false;
+        function closeInfoCardPanel() {
+            document.getElementById('bb-info-card-panel').classList.remove('open');
+            if (_infoPanelReturnToTop5) {
+                _infoPanelReturnToTop5 = false;
+                openTop5Panel();
+            }
+        }
         function registerInfoPanelClose() {
             const panel = document.getElementById('bb-info-card-panel');
             if (_infoPanelCloseHandler) {
@@ -2093,7 +2106,7 @@
             setTimeout(() => {
                 _infoPanelCloseHandler = function closeInfo(e) {
                     if (!panel.contains(e.target)) {
-                        panel.classList.remove('open');
+                        closeInfoCardPanel();
                         document.removeEventListener('mousedown', _infoPanelCloseHandler);
                         _infoPanelCloseHandler = null;
                     }
@@ -2286,7 +2299,7 @@
     });
 
     document.getElementById('bb-icp-close').addEventListener('click', () => {
-        document.getElementById('bb-info-card-panel').classList.remove('open');
+        closeInfoCardPanel();
     });
 
     // 절반 모드 토글 (윈도우 스냅 절반 폭 대응)
@@ -2626,7 +2639,7 @@
 			}
 		}
 		
-		// ── 기본값 ON이므로 페이지 로드 시 바로 재생 ──
+		// ── 기본값 ON이므로 페이지 로드 시 바로 재생 시작 ──
 		bubbleEl.classList.add('open');
 		bubbleStepIdx = 0;
 		playNextBubbleStep();
