@@ -2795,7 +2795,7 @@
 
 			// ── 0번: 배터리 증감 추이 데이터 (GitHub JSON, 별도 경로) ──
 			if (choice.trim() === '0') {
-				const wblRes = await fetch('https://raw.githubusercontent.com/ubase00070/monitoring_no_limit/main/battery_json?v=' + Date.now());
+				const wblRes = await fetch('https://raw.githubusercontent.com/ubase00070/monitoring_no_limit/main/battery.json?v=' + Date.now());
 				if (!wblRes.ok) { alert('❌ battery.json을 찾을 수 없음'); return; }
 				const remote = await wblRes.json();
 				const merged = wblMergeImported(remote);
