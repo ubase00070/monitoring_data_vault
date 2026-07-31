@@ -1796,6 +1796,13 @@
         const dots = colorSegs.flatMap(seg => seg.points.map(pt =>
             `<circle cx="${xOf(pt.t).toFixed(1)}" cy="${yOf(pt.battery).toFixed(1)}" r="3.5" style="fill:${colorOf(pt.status)}" stroke="#0d1117" stroke-width="1.5"/>`
         ));
+        const dotLabels = colorSegs.flatMap(seg => seg.points.map(pt => {
+            const above = pt.battery >= 92;   // 100%에 가까우면 그래프 상단에 눌려서 잘리니 아래쪽에 표기
+            const ty = yOf(pt.battery) + (above ? 14 : -8);
+            return `<text x="${xOf(pt.t).toFixed(1)}" y="${ty.toFixed(1)}" font-size="9" font-weight="700"
+                        text-anchor="middle" fill="${colorOf(pt.status)}"
+                        stroke="#0d1117" stroke-width="2.5" paint-order="stroke fill">${pt.battery}%</text>`;
+        }));
 
         // x축: 정시(00분) 라벨
         const xTicks = [];
@@ -1818,6 +1825,7 @@
                         ${areaFills.join('')}
                         ${polylines.join('')}
                         ${dots.join('')}
+                        ${dotLabels.join('')}
                         ${xTicks.map(t => `<text x="${t.x.toFixed(1)}" y="${H-8}" font-size="12" font-weight="700" fill="#9ca3af" text-anchor="middle">${t.label}</text>`).join('')}
                     </svg>
                 </div>
@@ -1833,6 +1841,27 @@
             </div>
         `;
     }
+	
+	function wblMergeImported(remote) {
+		if (!remote || remote.day !== wblGetDayKey()) return false;
+		const local = wblEnsureDay();
+		if (!local) return false;
+
+		Object.keys(remote.entries).forEach(id => {
+			const remoteEntry = remote.entries[id];
+			if (!local.entries[id]) {
+				local.entries[id] = remoteEntry;
+			} else {
+				const existingTimes = new Set(local.entries[id].log.map(p => p.t));
+				const toPrepend = remoteEntry.log.filter(p => !existingTimes.has(p.t));
+				local.entries[id].log = [...toPrepend, ...local.entries[id].log]
+					.sort((a, b) => wblToMin(a.t) - wblToMin(b.t));
+			}
+		});
+
+		wblSave(local);
+		return true;
+	}
 
     // 그래프 좌우 드래그(패닝) — 전역에 한 번만 등록해서 패널 열 때마다 리스너가 쌓이지 않게 함
     let _wblDragEl = null, _wblDragStartX = 0, _wblDragStartScroll = 0;
@@ -1853,11 +1882,12 @@
         if (_wblDragEl) { _wblDragEl.style.cursor = 'grab'; _wblDragEl = null; }
     });
 	document.addEventListener('wheel', (e) => {
-	    const el = e.target.closest('.bb-wbl-scroll');
-	    if (!el) return;
-	    el.scrollLeft += e.deltaY;
-	    e.preventDefault();
+		const el = e.target.closest('.bb-wbl-scroll');
+		if (!el) return;
+		el.scrollLeft += e.deltaY;
+		e.preventDefault();
 	}, { passive: false });
+
 
     function wblComputeTop5() {
         const dayKey = wblGetDayKey();
@@ -2755,29 +2785,42 @@
         } catch { alert('❌ 백업 실패 (네트워크 오류)'); }
     });
 
-    document.getElementById('bb-restore-btn').addEventListener('click', async () => {
-        try {
-            const listRes = await fetch('https://multimonitoring.vercel.app/api/battery');
-            const listData = await listRes.json();
-            const names = listData.names || [];
-            if (!names.length) { alert('❌ 저장된 백업 없음'); return; }
-            const choice = prompt(`복원할 백업을 선택하세요:\n\n${names.map((n,i) => `${i+1}. ${n}`).join('\n')}\n\n번호 또는 이름 입력:`);
-            if (!choice) return;
-            const num = parseInt(choice);
-            const name = (!isNaN(num) && num >= 1 && num <= names.length)
-                ? names[num - 1]
-                : names.find(n => n === choice.trim());
-            if (!name) { alert('❌ 해당 백업 없음'); return; }
-            const res = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent(name)}`);
-            const data = await res.json();
-            if (!data.ids || !data.ids.length) { alert('❌ 백업 데이터 없음'); return; }
-            if (!confirm(`"${name}" 백업으로 복원하시겠습니까?\n현재 목록(${ids.length}대)이 교체됩니다.`)) return;
-            ids.length = 0;
-            data.ids.forEach(id => ids.push(id));
-            save(); render();
-            alert(`✅ "${name}" 복원 완료 (${data.ids.length}대)`);
-        } catch { alert('❌ 복원 실패 (네트워크 오류)'); }
-    });
+	document.getElementById('bb-restore-btn').addEventListener('click', async () => {
+		try {
+			const listRes = await fetch('https://multimonitoring.vercel.app/api/battery');
+			const listData = await listRes.json();
+			const names = listData.names || [];
+			const choice = prompt(`복원할 백업을 선택하세요:\n\n0. 배터리 증감 추이 데이터\n${names.map((n,i) => `${i+1}. ${n}`).join('\n')}\n\n번호 또는 이름 입력:`);
+			if (!choice) return;
+
+			// ── 0번: 배터리 증감 추이 데이터 (GitHub JSON, 별도 경로) ──
+			if (choice.trim() === '0') {
+				const wblRes = await fetch('https://raw.githubusercontent.com/ubase00070/monitoring_no_limit/main/battery.json?v=' + Date.now());
+				if (!wblRes.ok) { alert('❌ battery.json을 찾을 수 없음'); return; }
+				const remote = await wblRes.json();
+				const merged = wblMergeImported(remote);
+				if (!merged) { alert('❌ 오늘 날짜 데이터가 아니라 병합할 수 없음 (날짜: ' + (remote?.day || '없음') + ')'); return; }
+				alert('✅ 배터리 증감 추이 데이터 복원 완료');
+				return;
+			}
+
+			// ── 기존: 개별 카드 목록 백업 ──
+			if (!names.length) { alert('❌ 저장된 백업 없음'); return; }
+			const num = parseInt(choice);
+			const name = (!isNaN(num) && num >= 1 && num <= names.length)
+				? names[num - 1]
+				: names.find(n => n === choice.trim());
+			if (!name) { alert('❌ 해당 백업 없음'); return; }
+			const res = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent(name)}`);
+			const data = await res.json();
+			if (!data.ids || !data.ids.length) { alert('❌ 백업 데이터 없음'); return; }
+			if (!confirm(`"${name}" 백업으로 복원하시겠습니까?\n현재 목록(${ids.length}대)이 교체됩니다.`)) return;
+			ids.length = 0;
+			data.ids.forEach(id => ids.push(id));
+			save(); render();
+			alert(`✅ "${name}" 복원 완료 (${data.ids.length}대)`);
+		} catch { alert('❌ 복원 실패 (네트워크 오류)'); }
+	});
 
     // ============================================================
     // SECTION 15. 토큰 발송
