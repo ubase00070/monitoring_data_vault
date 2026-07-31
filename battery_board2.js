@@ -577,7 +577,7 @@
         #bb-info-card-panel {
             display:none; position:fixed;
             top:50%; left:50%; transform:translate(-50%,-50%);
-            width:368px;
+            width:760px;
             border:3px solid transparent; border-radius:12px;
             background-image: linear-gradient(var(--sur), var(--sur)), linear-gradient(135deg, #6366f1, #ec4899);
             background-origin: border-box;
@@ -586,6 +586,11 @@
             z-index:999999999; font-family:'Lato',sans-serif;
             color:var(--tx); overflow:hidden;
         }
+        .bb-icp-flex { display:flex; align-items:stretch; }
+        .bb-icp-left { flex:0 0 300px; min-width:0; }
+        .bb-icp-right { flex:1; min-width:0; border-left:1px solid var(--bd); padding:10px 16px; }
+        .bb-icp-wbl-log { margin-top:10px; display:flex; flex-direction:column; gap:6px; }
+        .bb-icp-wbl-line { font-size:13px; line-height:1.5; color:var(--tx); }
         #bb-info-card-panel.bb-light {
             --bg:#ded3b8; --sur:#f8f3e6; --sur2:#efe6d2;
             --bd:#cabf9d; --bd2:#b3a687; --tx:#2b2418; --mu:#7a6f5c;
@@ -1701,26 +1706,33 @@
             const durMin = Math.max(10, wblToMin(seg.end) - wblToMin(seg.start) + 10);
             const durTxt = durMin >= 60 ? `${Math.floor(durMin/60)}시간${durMin%60 ? ' '+(durMin%60)+'분' : ''}` : `${durMin}분`;
             const label = WBL_STL[seg.status] || seg.status;
+            const icon  = STI[seg.status] || '⚪';
 
             if (seg.status === 'off' || seg.startBattery == null || seg.endBattery == null) {
-                return `${label} ${seg.start}~${seg.end} (${durTxt})`;
+                return `${icon} ${label} (${seg.start}~${seg.end}, ${durTxt}): 기록 없음`;
             }
             const delta = seg.endBattery - seg.startBattery;
-            const rate  = durMin > 0 ? (delta / durMin * 60).toFixed(1) : '0';
-            return `${label} ${seg.start}~${seg.end} (${durTxt}): ${seg.startBattery}%→${seg.endBattery}% (${delta>0?'+':''}${delta}%, 시간당 ${rate>=0?'+':''}${rate}%)`;
+            const rate  = durMin > 0 ? Math.abs(delta / durMin * 60).toFixed(1) : '0';
+
+            if (delta === 0) {
+                return `${icon} ${label} (${seg.start}~${seg.end}, ${durTxt}): 배터리 ${seg.startBattery}%로 변화 없음`;
+            }
+            const trend = delta > 0 ? '충전돼서 증가' : '소모돼서 감소';
+            const speed = delta > 0 ? `시간당 ${rate}%씩 충전됨` : `시간당 ${rate}%씩 소모됨`;
+            return `${icon} ${label} (${seg.start}~${seg.end}, ${durTxt}): 배터리 ${seg.startBattery}% → ${seg.endBattery}%로 ${trend} — ${speed}`;
         });
     }
 
     // 오늘 08:00 기준 분(min) 좌표로 SVG 선그래프 그리기 (미측정 구간은 점선으로 끊음)
     function wblRenderChartSVG(robotId) {
         const dayKey = wblGetDayKey();
-        if (!dayKey) return '<div style="font-size:11px;color:var(--mu);padding:20px;text-align:center;">비활성 시간대(03~08시)입니다</div>';
+        if (!dayKey) return '<div style="font-size:13px;color:var(--mu);padding:30px;text-align:center;">비활성 시간대(03~08시)입니다</div>';
         const data = wblLoad();
-        if (!data || data.day !== dayKey) return '<div style="font-size:11px;color:var(--mu);padding:20px;text-align:center;">오늘 기록된 데이터 없음</div>';
+        if (!data || data.day !== dayKey) return '<div style="font-size:13px;color:var(--mu);padding:30px;text-align:center;">오늘 기록된 데이터 없음</div>';
         const entry = data.entries[robotId];
-        if (!entry || entry.log.length === 0) return '<div style="font-size:11px;color:var(--mu);padding:20px;text-align:center;">오늘 기록된 데이터 없음</div>';
+        if (!entry || entry.log.length === 0) return '<div style="font-size:13px;color:var(--mu);padding:30px;text-align:center;">오늘 기록된 데이터 없음</div>';
 
-        const W = 480, H = 130, PAD = 24;
+        const W = 620, H = 210, PADL = 34, PADR = 14, PADT = 14, PADB = 26;
         const dayStartMin = 8 * 60;
         const nowMin = (() => { const n=new Date(); let m=n.getHours()*60+n.getMinutes(); if (n.getHours()<3) m += 1440; return m; })();
         const spanMin = Math.max(60, nowMin - dayStartMin);
@@ -1728,9 +1740,9 @@
         const xOf = (hhmm) => {
             let m = wblToMin(hhmm);
             if (m < dayStartMin) m += 1440;
-            return PAD + ((m - dayStartMin) / spanMin) * (W - PAD*2);
+            return PADL + ((m - dayStartMin) / spanMin) * (W - PADL - PADR);
         };
-        const yOf = (pct) => PAD/2 + (1 - pct/100) * (H - PAD);
+        const yOf = (pct) => PADT + (1 - pct/100) * (H - PADT - PADB);
 
         // 실측 포인트만 모아서 연속 구간(polyline)으로 쪼갬 — 미측정(off 또는 값 없음)이 나오면 선을 끊음
         const runs = [];
@@ -1739,24 +1751,39 @@
             const last = runs[runs.length - 1];
             if (Array.isArray(last)) last.push(pt); else runs.push([pt]);
         });
+        const dataRuns = runs.filter(Array.isArray);
 
-        const polylines = runs.filter(Array.isArray).map(run =>
+        const polylines = dataRuns.map(run =>
             run.map(pt => `${xOf(pt.t).toFixed(1)},${yOf(pt.battery).toFixed(1)}`).join(' ')
         );
+        const areaFills = dataRuns.map(run => {
+            const pts = run.map(pt => `${xOf(pt.t).toFixed(1)},${yOf(pt.battery).toFixed(1)}`).join(' ');
+            const x0 = xOf(run[0].t).toFixed(1), x1 = xOf(run[run.length-1].t).toFixed(1);
+            const base = yOf(0).toFixed(1);
+            return `<polygon points="${x0},${base} ${pts} ${x1},${base}" fill="#3b82f6" fill-opacity="0.12"/>`;
+        });
+        const dots = dataRuns.flatMap(run => run.map(pt =>
+            `<circle cx="${xOf(pt.t).toFixed(1)}" cy="${yOf(pt.battery).toFixed(1)}" r="3.5" fill="#3b82f6" stroke="#0d1117" stroke-width="1.5"/>`
+        ));
 
-        // x축 시간 라벨 (앞/뒤 + 대략 중간 하나)
-        const firstT = entry.log[0].t, lastT = entry.log[entry.log.length-1].t;
+        // x축: 정시(00분) 라벨만 추려서 표기 (너무 촘촘하지 않게)
+        const xTicks = [];
+        for (let m = Math.ceil(dayStartMin/60)*60; m <= dayStartMin + spanMin; m += 60) {
+            const hh = String(Math.floor((m % 1440) / 60)).padStart(2,'0');
+            const label = `${hh}:00`;
+            const x = PADL + ((m - dayStartMin) / spanMin) * (W - PADL - PADR);
+            xTicks.push({ x, label });
+        }
 
         return `
-            <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:${H}px;">
-                <line x1="${PAD}" y1="${yOf(0)}" x2="${W-PAD}" y2="${yOf(0)}" stroke="#242428" stroke-width="1"/>
-                <line x1="${PAD}" y1="${yOf(50)}" x2="${W-PAD}" y2="${yOf(50)}" stroke="#242428" stroke-width="1" stroke-dasharray="2,3"/>
-                <line x1="${PAD}" y1="${yOf(100)}" x2="${W-PAD}" y2="${yOf(100)}" stroke="#242428" stroke-width="1"/>
-                ${polylines.map(pts => `<polyline points="${pts}" fill="none" stroke="#3b82f6" stroke-width="2"/>`).join('')}
-                <text x="${PAD}" y="${H-2}" font-size="9" fill="#6b7280">${firstT}</text>
-                <text x="${W-PAD}" y="${H-2}" font-size="9" fill="#6b7280" text-anchor="end">${lastT}</text>
-                <text x="2" y="${yOf(100)+8}" font-size="9" fill="#6b7280">100</text>
-                <text x="2" y="${yOf(0)+4}" font-size="9" fill="#6b7280">0</text>
+            <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="width:100%;height:${H}px;display:block;">
+                ${[0,25,50,75,100].map(p => `<line x1="${PADL}" y1="${yOf(p)}" x2="${W-PADR}" y2="${yOf(p)}" stroke="${p===0||p===100?'#3a3a40':'#242428'}" stroke-width="1" stroke-dasharray="${p===0||p===100?'0':'3,3'}"/>`).join('')}
+                ${xTicks.map(t => `<line x1="${t.x.toFixed(1)}" y1="${PADT}" x2="${t.x.toFixed(1)}" y2="${H-PADB}" stroke="#1c1c20" stroke-width="1"/>`).join('')}
+                ${areaFills.join('')}
+                ${polylines.map(pts => `<polyline points="${pts}" fill="none" stroke="#3b82f6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`).join('')}
+                ${dots.join('')}
+                ${[0,25,50,75,100].map(p => `<text x="6" y="${yOf(p)+4}" font-size="12" font-weight="700" fill="#9ca3af">${p}</text>`).join('')}
+                ${xTicks.map(t => `<text x="${t.x.toFixed(1)}" y="${H-8}" font-size="12" font-weight="700" fill="#9ca3af" text-anchor="middle">${t.label}</text>`).join('')}
             </svg>
         `;
     }
@@ -1917,64 +1944,68 @@
         const wblChartSvg = wblRenderChartSVG(r.id);
         const wblLines = wblSummarizeToday(r.id);
         const wblHtml = wblLines
-            ? wblLines.map(line => `<div class="bb-icp-row"><span class="bb-icp-value" style="width:100%;">${line}</span></div>`).join('')
-            : `<div class="bb-icp-row"><span class="bb-icp-value" style="color:var(--mu);">오늘 기록된 데이터 없음</span></div>`;
+            ? wblLines.map(line => `<div class="bb-icp-wbl-line">${line}</div>`).join('')
+            : `<div class="bb-icp-wbl-line" style="color:var(--mu);">오늘 기록된 데이터 없음</div>`;
 
         bodyEl.innerHTML = `
-            <div class="bb-icp-section">
-                <div class="bb-icp-section-title">오늘 배터리 증감 추이</div>
-                ${wblChartSvg}
-                ${wblHtml}
-            </div>
-            <div class="bb-icp-section">
-                <div class="bb-icp-section-title">조작/연결 기록</div>
-                <div class="bb-icp-row">
-                    <span class="bb-icp-label">마지막 조작자</span>
-                    <span class="bb-icp-value">${lastOp}</span>
+            <div class="bb-icp-flex">
+                <div class="bb-icp-left">
+                    <div class="bb-icp-section">
+                        <div class="bb-icp-section-title">조작/연결 기록</div>
+                        <div class="bb-icp-row">
+                            <span class="bb-icp-label">마지막 조작자</span>
+                            <span class="bb-icp-value">${lastOp}</span>
+                        </div>
+                        <div class="bb-icp-row">
+                            <span class="bb-icp-label">마지막 개입 시간</span>
+                            <span class="bb-icp-value">${lastOpAt}</span>
+                        </div>
+                        <div class="bb-icp-row">
+                            <span class="bb-icp-label">마지막 기체 연결 끊김</span>
+                            <span class="bb-icp-value">${lastConnAt}</span>
+                        </div>
+                    </div>
+                    <div class="bb-icp-section">
+                        <div class="bb-icp-section-title">기체 상태 지표</div>
+                        <div class="bb-icp-row">
+                            <span class="bb-icp-label">CPU</span>
+                            <span class="bb-icp-value">
+                                <span class="bb-icp-bar">${cpuBar}</span>${cpu}% ${cpuDot}
+                            </span>
+                        </div>
+                        <div class="bb-icp-row">
+                            <span class="bb-icp-label">GPS 정확도</span>
+                            <span class="bb-icp-value">${gpsTxt}</span>
+                        </div>
+                        <div class="bb-icp-row">
+                            <span class="bb-icp-label">섀시 온도</span>
+                            <span class="bb-icp-value">${tmpTxt} ${tmpDot}</span>
+                        </div>
+                        <div class="bb-icp-row">
+                            <span class="bb-icp-label">ADAS</span>
+                            <span class="bb-icp-value">${rs.isOnAdas ? 'ON' : 'OFF'} ${adasDot}</span>
+                        </div>
+                    </div>
+                    <div class="bb-icp-section">
+                        <div class="bb-icp-section-title">하드웨어</div>
+                        <div class="bb-icp-row">
+                            <span class="bb-icp-label">SW 버전</span>
+                            <span class="bb-icp-value">${swShort}</span>
+                        </div>
+                        <div class="bb-icp-row">
+                            <span class="bb-icp-label">기체 세대</span>
+                            <span class="bb-icp-value">${mdVer}세대</span>
+                        </div>
+                        <div class="bb-icp-row">
+                            <span class="bb-icp-label">Relay FW</span>
+                            <span class="bb-icp-value">${relayMajor}.${relayMinor}</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="bb-icp-row">
-                    <span class="bb-icp-label">마지막 개입 시간</span>
-                    <span class="bb-icp-value">${lastOpAt}</span>
-                </div>
-                <div class="bb-icp-row">
-                    <span class="bb-icp-label">마지막 기체 연결 끊김</span>
-                    <span class="bb-icp-value">${lastConnAt}</span>
-                </div>
-            </div>
-            <div class="bb-icp-section">
-                <div class="bb-icp-section-title">기체 상태 지표</div>
-                <div class="bb-icp-row">
-                    <span class="bb-icp-label">CPU</span>
-                    <span class="bb-icp-value">
-                        <span class="bb-icp-bar">${cpuBar}</span>${cpu}% ${cpuDot}
-                    </span>
-                </div>
-                <div class="bb-icp-row">
-                    <span class="bb-icp-label">GPS 정확도</span>
-                    <span class="bb-icp-value">${gpsTxt}</span>
-                </div>
-                <div class="bb-icp-row">
-                    <span class="bb-icp-label">섀시 온도</span>
-                    <span class="bb-icp-value">${tmpTxt} ${tmpDot}</span>
-                </div>
-                <div class="bb-icp-row">
-                    <span class="bb-icp-label">ADAS</span>
-                    <span class="bb-icp-value">${rs.isOnAdas ? 'ON' : 'OFF'} ${adasDot}</span>
-                </div>
-            </div>
-            <div class="bb-icp-section">
-                <div class="bb-icp-section-title">하드웨어</div>
-                <div class="bb-icp-row">
-                    <span class="bb-icp-label">SW 버전</span>
-                    <span class="bb-icp-value">${swShort}</span>
-                </div>
-                <div class="bb-icp-row">
-                    <span class="bb-icp-label">기체 세대</span>
-                    <span class="bb-icp-value">${mdVer}세대</span>
-                </div>
-                <div class="bb-icp-row">
-                    <span class="bb-icp-label">Relay FW</span>
-                    <span class="bb-icp-value">${relayMajor}.${relayMinor}</span>
+                <div class="bb-icp-right">
+                    <div class="bb-icp-section-title">오늘 배터리 증감 추이</div>
+                    ${wblChartSvg}
+                    <div class="bb-icp-wbl-log">${wblHtml}</div>
                 </div>
             </div>
         `;
