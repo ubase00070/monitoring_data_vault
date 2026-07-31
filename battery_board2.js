@@ -483,7 +483,7 @@
         #bb-top5-panel {
             display:none; position:fixed;
             top:50%; left:50%; transform:translate(-50%,-50%);
-            width:720px; max-height:86vh; overflow-y:auto;
+            width:600px; max-height:86vh; overflow-y:auto;
             border:3px solid transparent; border-radius:14px;
             background-image: linear-gradient(var(--sur), var(--sur)), linear-gradient(135deg, #6366f1, #ec4899);
             background-origin: border-box;
@@ -492,18 +492,18 @@
             z-index:99999999;
         }
         #bb-top5-panel.open { display:block; }
-        .bb-top5-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; padding:17px; }
-		.bb-top5-col { background:var(--bg); border-radius:14px; padding:14px; }
-		.bb-top5-col-title { font-size:14px; font-weight:900; margin-bottom:10px; }
-		.bb-top5-row {
-			display:flex; align-items:center; gap:10px; padding:7px 5px;
-			border-bottom:1px solid var(--bd); cursor:pointer;
-		}
+        .bb-top5-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:14px; }
+        .bb-top5-col { background:var(--bg); border-radius:12px; padding:12px; }
+        .bb-top5-col-title { font-size:12px; font-weight:900; margin-bottom:8px; }
+        .bb-top5-row {
+            display:flex; align-items:center; gap:8px; padding:6px 4px;
+            border-bottom:1px solid var(--bd); cursor:pointer;
+        }
         .bb-top5-row:last-child { border-bottom:none; }
         .bb-top5-row:hover { background:rgba(255,255,255,.05); }
-        .bb-top5-name { flex:1; font-size:14px; font-weight:700; color:var(--tx); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-		.bb-top5-rate { font-size:13px; font-weight:900; font-family:'Paperlogy','Lato',monospace; flex-shrink:0; }
-		.bb-top5-empty { font-size:13px; color:var(--mu); padding:12px 0; }
+        .bb-top5-name { flex:1; font-size:12px; font-weight:700; color:var(--tx); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .bb-top5-rate { font-size:11px; font-weight:900; font-family:'Paperlogy','Lato',monospace; flex-shrink:0; }
+        .bb-top5-empty { font-size:11px; color:var(--mu); padding:10px 0; }
         #bb-alert-panel.open { display:block; }
         .bb-ap-hd {
             padding:14px 16px; border-bottom:1px solid #4a5070;
@@ -589,7 +589,7 @@
         .bb-icp-flex { display:flex; align-items:stretch; }
         .bb-icp-left { flex:0 0 300px; min-width:0; }
         .bb-icp-right { flex:1; min-width:0; border-left:1px solid var(--bd); padding:10px 16px; }
-        .bb-icp-wbl-log { margin-top:10px; display:flex; flex-direction:column; gap:6px; max-height:180px; overflow-y:auto; padding-right:4px; }
+        .bb-icp-wbl-log { margin-top:10px; display:flex; flex-direction:column; gap:6px; }
         .bb-icp-wbl-line { font-size:13px; line-height:1.5; color:var(--tx); }
         #bb-info-card-panel.bb-light {
             --bg:#ded3b8; --sur:#f8f3e6; --sur2:#efe6d2;
@@ -1744,7 +1744,7 @@
         };
         const yOf = (pct) => PADT + (1 - pct/100) * (H - PADT - PADB);
 
-        // 실측 포인트만 모아서 연속 구간(polyline)으로 쪼갬 — 미측정(off 또는 값 없음)이 나오면 선을 끊음
+        // 실측 포인트만 모아서 연속 구간으로 쪼갬 — 미측정(off 또는 값 없음)이 나오면 선을 끊음
         const runs = [];
         entry.log.forEach(pt => {
             if (pt.battery == null) { runs.push(null); return; }
@@ -1753,17 +1753,36 @@
         });
         const dataRuns = runs.filter(Array.isArray);
 
-        const polylines = dataRuns.map(run =>
-            run.map(pt => `${xOf(pt.t).toFixed(1)},${yOf(pt.battery).toFixed(1)}`).join(' ')
-        );
-        const areaFills = dataRuns.map(run => {
-            const pts = run.map(pt => `${xOf(pt.t).toFixed(1)},${yOf(pt.battery).toFixed(1)}`).join(' ');
-            const x0 = xOf(run[0].t).toFixed(1), x1 = xOf(run[run.length-1].t).toFixed(1);
-            const base = yOf(0).toFixed(1);
-            return `<polygon points="${x0},${base} ${pts} ${x1},${base}" fill="#3b82f6" fill-opacity="0.12"/>`;
+        // 각 run 안에서도 상태가 바뀌는 지점마다 색이 바뀌도록 다시 쪼갬(경계점은 공유해서 선은 끊기지 않게)
+        const colorSegs = [];
+        dataRuns.forEach(run => {
+            let cur = [run[0]];
+            for (let i = 1; i < run.length; i++) {
+                if (run[i].status !== cur[cur.length - 1].status) {
+                    cur.push(run[i]);               // 상태 바뀌는 지점을 경계점으로 공유
+                    colorSegs.push({ status: cur[0].status, points: cur });
+                    cur = [run[i]];
+                } else {
+                    cur.push(run[i]);
+                }
+            }
+            colorSegs.push({ status: cur[0].status, points: cur });
         });
-        const dots = dataRuns.flatMap(run => run.map(pt =>
-            `<circle cx="${xOf(pt.t).toFixed(1)}" cy="${yOf(pt.battery).toFixed(1)}" r="3.5" fill="#3b82f6" stroke="#0d1117" stroke-width="1.5"/>`
+
+        const colorOf = (status) => CLUSTER_AC[status] || '#3b82f6';
+
+        const polylines = colorSegs.map(seg => {
+            const pts = seg.points.map(pt => `${xOf(pt.t).toFixed(1)},${yOf(pt.battery).toFixed(1)}`).join(' ');
+            return `<polyline points="${pts}" fill="none" style="stroke:${colorOf(seg.status)}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
+        });
+        const areaFills = colorSegs.map(seg => {
+            const pts = seg.points.map(pt => `${xOf(pt.t).toFixed(1)},${yOf(pt.battery).toFixed(1)}`).join(' ');
+            const x0 = xOf(seg.points[0].t).toFixed(1), x1 = xOf(seg.points[seg.points.length-1].t).toFixed(1);
+            const base = yOf(0).toFixed(1);
+            return `<polygon points="${x0},${base} ${pts} ${x1},${base}" style="fill:${colorOf(seg.status)}" fill-opacity="0.12"/>`;
+        });
+        const dots = colorSegs.flatMap(seg => seg.points.map(pt =>
+            `<circle cx="${xOf(pt.t).toFixed(1)}" cy="${yOf(pt.battery).toFixed(1)}" r="3.5" style="fill:${colorOf(pt.status)}" stroke="#0d1117" stroke-width="1.5"/>`
         ));
 
         // x축: 정시(00분) 라벨만 추려서 표기 (너무 촘촘하지 않게)
@@ -1780,11 +1799,17 @@
                 ${[0,25,50,75,100].map(p => `<line x1="${PADL}" y1="${yOf(p)}" x2="${W-PADR}" y2="${yOf(p)}" stroke="${p===0||p===100?'#3a3a40':'#242428'}" stroke-width="1" stroke-dasharray="${p===0||p===100?'0':'3,3'}"/>`).join('')}
                 ${xTicks.map(t => `<line x1="${t.x.toFixed(1)}" y1="${PADT}" x2="${t.x.toFixed(1)}" y2="${H-PADB}" stroke="#1c1c20" stroke-width="1"/>`).join('')}
                 ${areaFills.join('')}
-                ${polylines.map(pts => `<polyline points="${pts}" fill="none" stroke="#3b82f6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`).join('')}
+                ${polylines.join('')}
                 ${dots.join('')}
                 ${[0,25,50,75,100].map(p => `<text x="6" y="${yOf(p)+4}" font-size="12" font-weight="700" fill="#9ca3af">${p}</text>`).join('')}
                 ${xTicks.map(t => `<text x="${t.x.toFixed(1)}" y="${H-8}" font-size="12" font-weight="700" fill="#9ca3af" text-anchor="middle">${t.label}</text>`).join('')}
             </svg>
+            <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:6px; padding:0 4px;">
+                ${Object.keys(WBL_STL).map(st => `
+                    <span style="display:flex; align-items:center; gap:4px; font-size:11px; color:var(--mu);">
+                        <span style="width:10px; height:10px; border-radius:50%; background:${colorOf(st)};"></span>${WBL_STL[st]}
+                    </span>`).join('')}
+            </div>
         `;
     }
 
