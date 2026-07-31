@@ -2626,7 +2626,7 @@
 			}
 		}
 		
-		// ── 기본값 ON이므로 페이지 로드 시 바로 재생 시작 ──
+		// ── 기본값 ON이므로 페이지 로드 시 바로 재생 ──
 		bubbleEl.classList.add('open');
 		bubbleStepIdx = 0;
 		playNextBubbleStep();
