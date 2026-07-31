@@ -1705,6 +1705,12 @@
 
     function wblToMin(hhmm) { const [h,m] = hhmm.split(':').map(Number); return h*60+m; }
 
+    // 08:00~익일 03:00 하루 주기를 반영한 분(min) 값 -- 00~02시대는 "그날의 끝자락"이라 +1440(하루)를 더해 정렬/좌표 계산에 씀
+    function wblDayAdjMin(hhmm) {
+        const m = wblToMin(hhmm);
+        return m < 8 * 60 ? m + 1440 : m;
+    }
+
     // 연속된 같은 상태를 하나의 구간으로 묶기
     function wblGetSegments(robotId) {
         const dayKey = wblGetDayKey();
@@ -1713,9 +1719,10 @@
         if (!data || data.day !== dayKey) return [];
         const entry = data.entries[robotId];
         if (!entry || entry.log.length === 0) return [];
+        const sortedLog = [...entry.log].sort((a, b) => wblDayAdjMin(a.t) - wblDayAdjMin(b.t));
 
         const segments = [];
-        entry.log.forEach(pt => {
+        sortedLog.forEach(pt => {
             const last = segments[segments.length - 1];
             if (last && last.status === pt.status) {
                 last.end = pt.t;
@@ -1774,8 +1781,9 @@
         const yOf = (pct) => PADT + (1 - pct/100) * (H - PADT - PADB);
 
         // 실측 포인트만 모아서 연속 구간으로 쪼갬 — 미측정(off 또는 값 없음)이 나오면 선을 끊음
+        const sortedLog = [...entry.log].sort((a, b) => wblDayAdjMin(a.t) - wblDayAdjMin(b.t));
         const runs = [];
-        entry.log.forEach(pt => {
+        sortedLog.forEach(pt => {
             if (pt.battery == null) { runs.push(null); return; }
             const last = runs[runs.length - 1];
             if (Array.isArray(last)) last.push(pt); else runs.push([pt]);
@@ -1872,7 +1880,7 @@
 				const existingTimes = new Set(local.entries[id].log.map(p => p.t));
 				const toPrepend = remoteEntry.log.filter(p => !existingTimes.has(p.t));
 				local.entries[id].log = [...toPrepend, ...local.entries[id].log]
-					.sort((a, b) => wblToMin(a.t) - wblToMin(b.t));
+					.sort((a, b) => wblDayAdjMin(a.t) - wblDayAdjMin(b.t));
 			}
 		});
 
