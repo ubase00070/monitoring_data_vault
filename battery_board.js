@@ -283,7 +283,7 @@
         @keyframes bb-pctSlide {
             0%     { transform:translateX(0);    opacity:1; }
             42%    { transform:translateX(0);    opacity:1; }
-            50%    { transform:translateX(-8px);  opacity:0; }
+            50%    { transform:translateX(-10px);  opacity:0; }
             50.01% { transform:translateX(8px);   opacity:0; }
             92%    { transform:translateX(8px);   opacity:0; }
             100%   { transform:translateX(0);    opacity:1; }
@@ -1749,7 +1749,7 @@
         const entry = data.entries[robotId];
         if (!entry || entry.log.length === 0) return '<div style="font-size:13px;color:var(--mu);padding:30px;text-align:center;">오늘 기록된 데이터 없음</div>';
 
-        const PX_PER_MIN = 4, H = 210, PADX = 16, PADT = 14, PADB = 26;
+        const PX_PER_MIN = 4.8, H = 252, PADX = 19, PADT = 17, PADB = 31;
         const dayStartMin = 8 * 60;
         const nowMin = (() => { const n=new Date(); let m=n.getHours()*60+n.getMinutes(); if (n.getHours()<3) m += 1440; return m; })();
         const spanMin = Math.max(60, nowMin - dayStartMin);
@@ -1791,7 +1791,7 @@
 
         const polylines = colorSegs.map(seg => {
             const pts = seg.points.map(pt => `${xOf(pt.t).toFixed(1)},${yOf(pt.battery).toFixed(1)}`).join(' ');
-            return `<polyline points="${pts}" fill="none" style="stroke:${colorOf(seg.status)}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
+            return `<polyline points="${pts}" fill="none" style="stroke:${colorOf(seg.status)}" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/>`;
         });
         const areaFills = colorSegs.map(seg => {
             const pts = seg.points.map(pt => `${xOf(pt.t).toFixed(1)},${yOf(pt.battery).toFixed(1)}`).join(' ');
@@ -1800,14 +1800,14 @@
             return `<polygon points="${x0},${base} ${pts} ${x1},${base}" style="fill:${colorOf(seg.status)}" fill-opacity="0.12"/>`;
         });
         const dots = colorSegs.flatMap(seg => seg.points.map(pt =>
-            `<circle cx="${xOf(pt.t).toFixed(1)}" cy="${yOf(pt.battery).toFixed(1)}" r="3.5" style="fill:${colorOf(pt.status)}" stroke="#0d1117" stroke-width="1.5"/>`
+            `<circle cx="${xOf(pt.t).toFixed(1)}" cy="${yOf(pt.battery).toFixed(1)}" r="4.2" style="fill:${colorOf(pt.status)}" stroke="#0d1117" stroke-width="1.5"/>`
         ));
         const dotLabels = colorSegs.flatMap(seg => seg.points.map(pt => {
             const above = pt.battery >= 92;   // 100%에 가까우면 그래프 상단에 눌려서 잘리니 아래쪽에 표기
             const ty = yOf(pt.battery) + (above ? 14 : -8);
-            return `<text x="${xOf(pt.t).toFixed(1)}" y="${ty.toFixed(1)}" font-size="10" font-weight="700"
+            return `<text x="${xOf(pt.t).toFixed(1)}" y="${ty.toFixed(1)}" font-size="14" font-weight="700"
                         text-anchor="middle" fill="#e5e7eb"
-                        stroke="#0d1117" stroke-width="2.5" paint-order="stroke fill">${pt.battery}%</text>`;
+                        stroke="#0d1117" stroke-width="3" paint-order="stroke fill">${pt.battery}%</text>`;
         }));
 
         // x축: 정시(00분) 라벨
@@ -1818,12 +1818,12 @@
         }
 
         const yLabels = [100,75,50,25,0].map(p =>
-            `<div style="position:absolute;top:${(yOf(p)-8).toFixed(1)}px;left:0;font-size:12px;font-weight:700;color:#9ca3af;">${p}</div>`
+            `<div style="position:absolute;top:${(yOf(p)-8).toFixed(1)}px;left:0;font-size:14px;font-weight:700;color:#9ca3af;">${p}</div>`
         ).join('');
 
         return `
             <div style="display:flex;">
-                <div style="position:relative;width:26px;height:${H}px;flex-shrink:0;">${yLabels}</div>
+                <div style="position:relative;width:31px;height:${H}px;flex-shrink:0;">${yLabels}</div>
                 <div class="bb-wbl-scroll" id="bb-wbl-scroll">
                     <svg width="${W}" height="${H}" style="display:block;">
                         ${[0,25,50,75,100].map(p => `<line x1="${PADX}" y1="${yOf(p)}" x2="${W-PADX}" y2="${yOf(p)}" stroke="${p===0||p===100?'#3a3a40':'#242428'}" stroke-width="1" stroke-dasharray="${p===0||p===100?'0':'3,3'}"/>`).join('')}
@@ -1832,7 +1832,7 @@
                         ${polylines.join('')}
                         ${dots.join('')}
                         ${dotLabels.join('')}
-                        ${xTicks.map(t => `<text x="${t.x.toFixed(1)}" y="${H-8}" font-size="12" font-weight="700" fill="#9ca3af" text-anchor="middle">${t.label}</text>`).join('')}
+                        ${xTicks.map(t => `<text x="${t.x.toFixed(1)}" y="${H-8}" font-size="14" font-weight="700" fill="#9ca3af" text-anchor="middle">${t.label}</text>`).join('')}
                     </svg>
                 </div>
             </div>
@@ -2199,7 +2199,7 @@
             bodyEl.innerHTML = `
                 <div style="padding:10px 14px;">
                     <div class="bb-si-wrap" style="position:relative;">
-                        <span class="bb-si-icon" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--mu);">🔍</span>
+                        <span class="bb-si-icon" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--mu);">🔍</span>
                         <input class="bb-si" id="bb-info-search-input" placeholder="기체명 검색" autocomplete="off"
                             style="width:100%; background:var(--sur2); border:1px solid var(--bd2); border-radius:7px; padding:6px 10px 6px 26px; color:var(--tx); font-size:12px; outline:none; font-family:inherit; box-sizing:border-box;">
                     </div>
