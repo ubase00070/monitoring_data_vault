@@ -1357,10 +1357,10 @@
       "workTime": "07:00~16:00",
       "schedule": {
         "8/1": {
-          "status": "annual",
-          "working": true,
+          "status": "off",
+          "working": false,
           "present": false,
-          "raw": "연차"
+          "raw": "휴무"
         },
         "8/2": {
           "status": "off",
@@ -1387,10 +1387,10 @@
           "raw": "1"
         },
         "8/6": {
-          "status": "off",
-          "working": false,
+          "status": "annual",
+          "working": true,
           "present": false,
-          "raw": "휴무"
+          "raw": "연차"
         },
         "8/7": {
           "status": "off",
@@ -1447,10 +1447,10 @@
           "raw": "휴무"
         },
         "8/16": {
-          "status": "annual",
-          "working": true,
+          "status": "off",
+          "working": false,
           "present": false,
-          "raw": "연차"
+          "raw": "휴무"
         },
         "8/17": {
           "status": "work",
@@ -1471,10 +1471,10 @@
           "raw": "1"
         },
         "8/20": {
-          "status": "off",
-          "working": false,
+          "status": "annual",
+          "working": true,
           "present": false,
-          "raw": "휴무"
+          "raw": "연차"
         },
         "8/21": {
           "status": "off",
@@ -1531,16 +1531,16 @@
           "raw": "1"
         },
         "8/30": {
-          "status": "annual",
-          "working": true,
-          "present": false,
-          "raw": "연차"
-        },
-        "8/31": {
           "status": "off",
           "working": false,
           "present": false,
           "raw": "휴무"
+        },
+        "8/31": {
+          "status": "annual",
+          "working": true,
+          "present": false,
+          "raw": "연차"
         }
       }
     },
@@ -1936,10 +1936,10 @@
       "workTime": "08:00~17:00",
       "schedule": {
         "8/1": {
-          "status": "annual",
-          "working": true,
+          "status": "off",
+          "working": false,
           "present": false,
-          "raw": "연차"
+          "raw": "휴무"
         },
         "8/2": {
           "status": "work",
@@ -1960,10 +1960,10 @@
           "raw": "1"
         },
         "8/5": {
-          "status": "off",
-          "working": false,
+          "status": "annual",
+          "working": true,
           "present": false,
-          "raw": "휴무"
+          "raw": "연차"
         },
         "8/6": {
           "status": "off",
@@ -2020,10 +2020,10 @@
           "raw": "1"
         },
         "8/15": {
-          "status": "annual",
-          "working": true,
+          "status": "off",
+          "working": false,
           "present": false,
-          "raw": "연차"
+          "raw": "휴무"
         },
         "8/16": {
           "status": "off",
@@ -2050,10 +2050,10 @@
           "raw": "1"
         },
         "8/20": {
-          "status": "off",
-          "working": false,
+          "status": "annual",
+          "working": true,
           "present": false,
-          "raw": "휴무"
+          "raw": "연차"
         },
         "8/21": {
           "status": "off",
@@ -3823,16 +3823,16 @@
           "raw": "1"
         },
         "8/26": {
-          "status": "off",
-          "working": false,
+          "status": "annual",
+          "working": true,
           "present": false,
-          "raw": "휴무"
+          "raw": "연차"
         },
         "8/27": {
-          "status": "off",
-          "working": false,
+          "status": "annual",
+          "working": true,
           "present": false,
-          "raw": "휴무"
+          "raw": "연차"
         },
         "8/28": {
           "status": "annual",
@@ -3841,16 +3841,16 @@
           "raw": "연차"
         },
         "8/29": {
-          "status": "annual",
-          "working": true,
+          "status": "off",
+          "working": false,
           "present": false,
-          "raw": "연차"
+          "raw": "휴무"
         },
         "8/30": {
-          "status": "annual",
-          "working": true,
+          "status": "off",
+          "working": false,
           "present": false,
-          "raw": "연차"
+          "raw": "휴무"
         },
         "8/31": {
           "status": "work",
@@ -3926,16 +3926,16 @@
           "raw": "1"
         },
         "8/11": {
-          "status": "off",
-          "working": false,
+          "status": "annual",
+          "working": true,
           "present": false,
-          "raw": "휴무"
+          "raw": "연차"
         },
         "8/12": {
-          "status": "off",
-          "working": false,
+          "status": "annual",
+          "working": true,
           "present": false,
-          "raw": "휴무"
+          "raw": "연차"
         },
         "8/13": {
           "status": "work",
@@ -3950,16 +3950,16 @@
           "raw": "연차"
         },
         "8/15": {
-          "status": "annual",
-          "working": true,
+          "status": "off",
+          "working": false,
           "present": false,
-          "raw": "연차"
+          "raw": "휴무"
         },
         "8/16": {
-          "status": "annual",
-          "working": true,
+          "status": "off",
+          "working": false,
           "present": false,
-          "raw": "연차"
+          "raw": "휴무"
         },
         "8/17": {
           "status": "off",
@@ -4933,10 +4933,10 @@
           "raw": "휴무"
         },
         "8/18": {
-          "status": "off",
-          "working": false,
+          "status": "annual",
+          "working": true,
           "present": false,
-          "raw": "휴무"
+          "raw": "연차"
         },
         "8/19": {
           "status": "work",
@@ -5005,10 +5005,10 @@
           "raw": "휴무"
         },
         "8/30": {
-          "status": "annual",
-          "working": true,
+          "status": "off",
+          "working": false,
           "present": false,
-          "raw": "연차"
+          "raw": "휴무"
         },
         "8/31": {
           "status": "work",
@@ -5440,16 +5440,16 @@
           "raw": "1"
         },
         "8/6": {
-          "status": "off",
-          "working": false,
+          "status": "annual",
+          "working": true,
           "present": false,
-          "raw": "휴무"
+          "raw": "연차"
         },
         "8/7": {
-          "status": "off",
-          "working": false,
+          "status": "annual",
+          "working": true,
           "present": false,
-          "raw": "휴무"
+          "raw": "연차"
         },
         "8/8": {
           "status": "work",
@@ -5578,16 +5578,16 @@
           "raw": "반차"
         },
         "8/29": {
-          "status": "annual",
-          "working": true,
+          "status": "off",
+          "working": false,
           "present": false,
-          "raw": "연차"
+          "raw": "휴무"
         },
         "8/30": {
-          "status": "annual",
-          "working": true,
+          "status": "off",
+          "working": false,
           "present": false,
-          "raw": "연차"
+          "raw": "휴무"
         },
         "8/31": {
           "status": "annual",
@@ -5633,16 +5633,16 @@
           "raw": "1"
         },
         "8/6": {
-          "status": "off",
-          "working": false,
+          "status": "annual",
+          "working": true,
           "present": false,
-          "raw": "휴무"
+          "raw": "연차"
         },
         "8/7": {
-          "status": "off",
-          "working": false,
+          "status": "annual",
+          "working": true,
           "present": false,
-          "raw": "휴무"
+          "raw": "연차"
         },
         "8/8": {
           "status": "off",
@@ -5771,16 +5771,16 @@
           "raw": "반차"
         },
         "8/29": {
-          "status": "annual",
-          "working": true,
+          "status": "off",
+          "working": false,
           "present": false,
-          "raw": "연차"
+          "raw": "휴무"
         },
         "8/30": {
-          "status": "annual",
-          "working": true,
+          "status": "off",
+          "working": false,
           "present": false,
-          "raw": "연차"
+          "raw": "휴무"
         },
         "8/31": {
           "status": "annual",
@@ -6073,10 +6073,10 @@
           "raw": "휴무"
         },
         "8/15": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": "OT"
         },
         "8/16": {
           "status": "work",
@@ -8141,6 +8141,6 @@
     "8/31"
   ],
   "mainMonth": 8,
-  "updatedAt": "2026-07-30T03:53:17.918Z",
+  "updatedAt": "2026-07-31T03:53:15.879Z",
   "sheetName": "2026년_08월 스케줄"
 }
