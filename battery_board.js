@@ -479,6 +479,39 @@
             box-shadow:0 24px 64px rgba(0,0,0,.9);
             z-index:99999999;
         }
+
+        #bb-top5-panel {
+            display:none; position:fixed;
+            top:50%; left:50%; transform:translate(-50%,-50%);
+            width:600px; max-height:86vh; overflow-y:auto;
+            border:3px solid transparent; border-radius:14px;
+            background-image: linear-gradient(var(--sur), var(--sur)), linear-gradient(135deg, #6366f1, #ec4899);
+            background-origin: border-box;
+            background-clip: padding-box, border-box;
+            box-shadow:0 24px 64px rgba(0,0,0,.9);
+            z-index:99999999;
+        }
+        #bb-top5-panel.open { display:block; }
+        .bb-top5-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:14px; }
+        .bb-top5-col { background:var(--bg); border-radius:12px; padding:12px; }
+        .bb-top5-col-title { font-size:14px; font-weight:900; margin-bottom:8px; }
+        .bb-top5-row {
+            display:flex; align-items:center; gap:8px; padding:6px 4px;
+            border-bottom:1px solid var(--bd); cursor:pointer;
+        }
+        .bb-top5-row:last-child { border-bottom:none; }
+        .bb-top5-row:hover { background:rgba(255,255,255,.05); }
+        .bb-top5-name { flex:1; font-size:14px; font-weight:700; color:var(--tx); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .bb-top5-rate { font-size:13px; font-weight:900; font-family:'Paperlogy','Lato',monospace; flex-shrink:0; }
+        .bb-top5-empty { font-size:13px; color:var(--mu); padding:10px 0; }
+        #bb-top5-panel.bb-light {
+			--bg:#ded3b8; --sur:#f8f3e6; --sur2:#efe6d2;
+			--bd:#cabf9d; --bd2:#b3a687; --tx:#2b2418; --mu:#7a6f5c;
+		}
+		#bb-top5-panel.bb-light .bb-top5-col { background:var(--sur); }
+        #bb-top5-panel.bb-light .bb-top5-row { border-bottom-color:var(--bd); }
+        #bb-top5-panel.bb-light .bb-top5-row:hover { background:var(--sur2); }
+        #bb-top5-panel.bb-light .bb-top5-col-title { color:#a16207; }
         #bb-alert-panel.open { display:block; }
         .bb-ap-hd {
             padding:14px 16px; border-bottom:1px solid #4a5070;
@@ -524,6 +557,7 @@
 		}
 		#bb-alert-panel.bb-light .bb-ap-hd { background:var(--sur); border-bottom-color:var(--bd); }
 		#bb-alert-panel.bb-light .bb-ap-title { color:var(--tx); }
+		#bb-top5-panel.bb-light .bb-ap-title { color:var(--tx); }
 		#bb-alert-panel.bb-light .bb-ap-close { color:#b91c1c; }
 		#bb-alert-panel.bb-light .bb-ap-item { background:var(--sur); border-bottom-color:var(--bd); }
 		#bb-alert-panel.bb-light .bb-ap-item:hover { background:var(--sur2); }
@@ -552,7 +586,7 @@
         #bb-info-card-panel {
             display:none; position:fixed;
             top:50%; left:50%; transform:translate(-50%,-50%);
-            width:368px;
+            width:760px;
             border:3px solid transparent; border-radius:12px;
             background-image: linear-gradient(var(--sur), var(--sur)), linear-gradient(135deg, #6366f1, #ec4899);
             background-origin: border-box;
@@ -561,6 +595,14 @@
             z-index:999999999; font-family:'Lato',sans-serif;
             color:var(--tx); overflow:hidden;
         }
+        .bb-icp-flex { display:flex; align-items:stretch; }
+        .bb-icp-left { flex:0 0 300px; min-width:0; }
+        .bb-icp-right { flex:1; min-width:0; border-left:1px solid var(--bd); padding:10px 16px; }
+        .bb-icp-wbl-log { margin-top:10px; display:flex; flex-direction:column; gap:6px; }
+        .bb-icp-wbl-line { font-size:13px; line-height:1.5; color:var(--tx); }
+        .bb-wbl-scroll { flex:1; min-width:0; overflow-x:auto; overflow-y:hidden; cursor:grab; scrollbar-width:thin; }
+        .bb-wbl-scroll::-webkit-scrollbar { height:6px; }
+        .bb-wbl-scroll::-webkit-scrollbar-thumb { background:var(--bd2); border-radius:3px; }
         #bb-info-card-panel.bb-light {
             --bg:#ded3b8; --sur:#f8f3e6; --sur2:#efe6d2;
             --bd:#cabf9d; --bd2:#b3a687; --tx:#2b2418; --mu:#7a6f5c;
@@ -638,6 +680,7 @@
                     <div class="bb-ref" id="bb-ref">— 초 후 갱신</div>
                 </div>
                 <div class="bb-hd-right" id="bb-hd-right">
+                    <button id="bb-top5-btn" class="bb-btn">🔥 배터리 증감 추이</button>
                     <button id="bb-theme-btn" class="bb-btn">다크</button>
                     <button id="bb-backup-btn" class="bb-btn">목록 백업</button>
                     <button id="bb-restore-btn" class="bb-btn">목록 복원</button>
@@ -729,6 +772,15 @@
             </div>
         </div>
 
+        <!-- 배터리 증감 추이 브리핑 패널 -->
+        <div id="bb-top5-panel">
+            <div class="bb-ap-hd">
+                <div class="bb-ap-title">🔥 배터리 증감 추이 Top5</div>
+                <div class="bb-ap-close" id="bb-top5-close">✕</div>
+            </div>
+            <div id="bb-top5-body" class="bb-top5-grid"></div>
+        </div>
+
         <!-- 기체 Info 패널 -->
         <div id="bb-info-card-panel">
             <div class="bb-icp-hd">
@@ -743,12 +795,13 @@
 
     const bbEl = document.getElementById('bb');
     const applyBbTheme = () => {
-        const theme = localStorage.getItem('neubie_bb_theme') || 'light';
-        bbEl.classList.toggle('bb-light', theme === 'light');
-        document.getElementById('bb-alert-panel').classList.toggle('bb-light', theme === 'light');
-        document.getElementById('bb-info-card-panel').classList.toggle('bb-light', theme === 'light');
-        document.getElementById('bb-theme-btn').textContent = theme === 'light' ? '☀️ 라이트' : '🌙 다크';
-    };
+		const theme = localStorage.getItem('neubie_bb_theme') || 'light';
+		bbEl.classList.toggle('bb-light', theme === 'light');
+		document.getElementById('bb-alert-panel').classList.toggle('bb-light', theme === 'light');
+		document.getElementById('bb-info-card-panel').classList.toggle('bb-light', theme === 'light');
+		document.getElementById('bb-top5-panel').classList.toggle('bb-light', theme === 'light');
+		document.getElementById('bb-theme-btn').textContent = theme === 'light' ? '☀️ 라이트' : '🌙 다크';
+	};
     applyBbTheme();
 
     // 헤더 우측 버튼 그룹(라이트/목록 백업/목록 복원)과
@@ -1262,6 +1315,8 @@
                 save();
             }
 
+            logBatteryPattern(DB);
+
             const alerts = detectAlerts(allRaw);
             renderAlertChips(alerts);
 
@@ -1568,6 +1623,342 @@
     // ============================================================
     // SECTION 9b. 기체 Info 패널
     // ============================================================
+    // ============================================================
+    // 배터리 증감 로그 (당일 08:00~익일 03:00만 보관, 자동 초기화)
+    // ============================================================
+    const WBL_KEY = 'bb_battery_log';
+
+    function wblGetDayKey() {
+        const now = new Date();
+        const h = now.getHours();
+        if (h >= 8) return now.toISOString().slice(0, 10);
+        if (h < 3) {
+            const y = new Date(now); y.setDate(y.getDate() - 1);
+            return y.toISOString().slice(0, 10);
+        }
+        return null;   // 03~08시: 비활성 구간
+    }
+
+    function wblLoad() {
+        try { const raw = localStorage.getItem(WBL_KEY); return raw ? JSON.parse(raw) : null; }
+        catch { return null; }
+    }
+    function wblSave(data) {
+        try { localStorage.setItem(WBL_KEY, JSON.stringify(data)); } catch {}
+    }
+    function wblEnsureDay() {
+        const dayKey = wblGetDayKey();
+        if (!dayKey) return null;
+        let data = wblLoad();
+        if (!data || data.day !== dayKey) {
+            data = { day: dayKey, entries: {} };   // 날짜 바뀌면 통째로 초기화(=자동 삭제)
+            wblSave(data);
+        }
+        return data;
+    }
+
+    let _wblLastSlot = null;
+
+    function logBatteryPattern(dbList) {
+        const dayKey = wblGetDayKey();
+        if (!dayKey) return;
+
+        const now = new Date();
+        const slotMin = Math.floor(now.getMinutes() / 10) * 10;
+        const slotLabel = `${String(now.getHours()).padStart(2,'0')}:${String(slotMin).padStart(2,'0')}`;
+        if (_wblLastSlot === slotLabel) return;   // 같은 10분 슬롯 중복 기록 방지
+        _wblLastSlot = slotLabel;
+
+        const data = wblEnsureDay();
+        if (!data) return;
+
+        dbList.forEach(r => {
+            if (!data.entries[r.id]) data.entries[r.id] = { name: r.name, log: [] };
+            data.entries[r.id].log.push({
+                t: slotLabel,
+                status: r.status,
+                battery: r.status === 'off' ? null : r.battery,
+            });
+        });
+
+        wblSave(data);
+    }
+
+    const WBL_STL = { charging:'충전 중', patrolling:'순찰 중', delivering:'배달 중', standby:'대기 중', docking:'도킹 중', off:'OFF' };
+
+    function wblToMin(hhmm) { const [h,m] = hhmm.split(':').map(Number); return h*60+m; }
+
+    // 연속된 같은 상태를 하나의 구간으로 묶기
+    function wblGetSegments(robotId) {
+        const dayKey = wblGetDayKey();
+        if (!dayKey) return [];
+        const data = wblLoad();
+        if (!data || data.day !== dayKey) return [];
+        const entry = data.entries[robotId];
+        if (!entry || entry.log.length === 0) return [];
+
+        const segments = [];
+        entry.log.forEach(pt => {
+            const last = segments[segments.length - 1];
+            if (last && last.status === pt.status) {
+                last.end = pt.t;
+                last.endBattery = pt.battery;
+                last.points.push(pt);
+            } else {
+                segments.push({ status: pt.status, start: pt.t, end: pt.t, startBattery: pt.battery, endBattery: pt.battery, points: [pt] });
+            }
+        });
+        return segments;
+    }
+
+    function wblSummarizeToday(robotId) {
+        const segments = wblGetSegments(robotId);
+        if (segments.length === 0) return null;
+
+        return segments.map(seg => {
+            const durMin = Math.max(10, wblToMin(seg.end) - wblToMin(seg.start) + 10);
+            const durTxt = durMin >= 60 ? `${Math.floor(durMin/60)}시간${durMin%60 ? ' '+(durMin%60)+'분' : ''}` : `${durMin}분`;
+            const label = WBL_STL[seg.status] || seg.status;
+            const icon  = STI[seg.status] || '⚪';
+            const head  = `${icon} ${label} ${seg.start}~${seg.end} (${durTxt})`;
+
+            if (seg.status === 'off' || seg.startBattery == null || seg.endBattery == null) {
+                return `${head}`;
+            }
+            const delta = seg.endBattery - seg.startBattery;
+            if (delta === 0) {
+                return `${head} · ${seg.startBattery}% 유지`;
+            }
+            const rate = durMin > 0 ? (delta / durMin * 60).toFixed(1) : '0';
+            return `${head} · ${seg.startBattery}%→${seg.endBattery}% (시간당 ${rate>0?'+':''}${rate}%)`;
+        });
+    }
+
+    // 오늘 08:00 기준 분(min) 좌표로 SVG 선그래프 그리기 (미측정 구간은 점선으로 끊음)
+    function wblRenderChartSVG(robotId) {
+        const dayKey = wblGetDayKey();
+        if (!dayKey) return '<div style="font-size:13px;color:var(--mu);padding:30px;text-align:center;">비활성 시간대(03~08시)입니다</div>';
+        const data = wblLoad();
+        if (!data || data.day !== dayKey) return '<div style="font-size:13px;color:var(--mu);padding:30px;text-align:center;">오늘 기록된 데이터 없음</div>';
+        const entry = data.entries[robotId];
+        if (!entry || entry.log.length === 0) return '<div style="font-size:13px;color:var(--mu);padding:30px;text-align:center;">오늘 기록된 데이터 없음</div>';
+
+        const PX_PER_MIN = 4, H = 210, PADX = 16, PADT = 14, PADB = 26;
+        const dayStartMin = 8 * 60;
+        const nowMin = (() => { const n=new Date(); let m=n.getHours()*60+n.getMinutes(); if (n.getHours()<3) m += 1440; return m; })();
+        const spanMin = Math.max(60, nowMin - dayStartMin);
+        const W = Math.round(spanMin * PX_PER_MIN + PADX * 2);
+
+        const xOf = (hhmm) => {
+            let m = wblToMin(hhmm);
+            if (m < dayStartMin) m += 1440;
+            return PADX + (m - dayStartMin) * PX_PER_MIN;
+        };
+        const yOf = (pct) => PADT + (1 - pct/100) * (H - PADT - PADB);
+
+        // 실측 포인트만 모아서 연속 구간으로 쪼갬 — 미측정(off 또는 값 없음)이 나오면 선을 끊음
+        const runs = [];
+        entry.log.forEach(pt => {
+            if (pt.battery == null) { runs.push(null); return; }
+            const last = runs[runs.length - 1];
+            if (Array.isArray(last)) last.push(pt); else runs.push([pt]);
+        });
+        const dataRuns = runs.filter(Array.isArray);
+
+        // 각 run 안에서도 상태가 바뀌는 지점마다 색이 바뀌도록 다시 쪼갬(경계점은 공유해서 선은 끊기지 않게)
+        const colorSegs = [];
+        dataRuns.forEach(run => {
+            let cur = [run[0]];
+            for (let i = 1; i < run.length; i++) {
+                if (run[i].status !== cur[cur.length - 1].status) {
+                    cur.push(run[i]);               // 상태 바뀌는 지점을 경계점으로 공유
+                    colorSegs.push({ status: cur[0].status, points: cur });
+                    cur = [run[i]];
+                } else {
+                    cur.push(run[i]);
+                }
+            }
+            colorSegs.push({ status: cur[0].status, points: cur });
+        });
+
+        const colorOf = (status) => CLUSTER_AC[status] || '#3b82f6';
+
+        const polylines = colorSegs.map(seg => {
+            const pts = seg.points.map(pt => `${xOf(pt.t).toFixed(1)},${yOf(pt.battery).toFixed(1)}`).join(' ');
+            return `<polyline points="${pts}" fill="none" style="stroke:${colorOf(seg.status)}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
+        });
+        const areaFills = colorSegs.map(seg => {
+            const pts = seg.points.map(pt => `${xOf(pt.t).toFixed(1)},${yOf(pt.battery).toFixed(1)}`).join(' ');
+            const x0 = xOf(seg.points[0].t).toFixed(1), x1 = xOf(seg.points[seg.points.length-1].t).toFixed(1);
+            const base = yOf(0).toFixed(1);
+            return `<polygon points="${x0},${base} ${pts} ${x1},${base}" style="fill:${colorOf(seg.status)}" fill-opacity="0.12"/>`;
+        });
+        const dots = colorSegs.flatMap(seg => seg.points.map(pt =>
+            `<circle cx="${xOf(pt.t).toFixed(1)}" cy="${yOf(pt.battery).toFixed(1)}" r="3.5" style="fill:${colorOf(pt.status)}" stroke="#0d1117" stroke-width="1.5"/>`
+        ));
+        const dotLabels = colorSegs.flatMap(seg => seg.points.map(pt => {
+            const above = pt.battery >= 92;   // 100%에 가까우면 그래프 상단에 눌려서 잘리니 아래쪽에 표기
+            const ty = yOf(pt.battery) + (above ? 14 : -8);
+            return `<text x="${xOf(pt.t).toFixed(1)}" y="${ty.toFixed(1)}" font-size="10" font-weight="700"
+                        text-anchor="middle" fill="#e5e7eb"
+                        stroke="#0d1117" stroke-width="2.5" paint-order="stroke fill">${pt.battery}%</text>`;
+        }));
+
+        // x축: 정시(00분) 라벨
+        const xTicks = [];
+        for (let m = Math.ceil(dayStartMin/60)*60; m <= dayStartMin + spanMin; m += 60) {
+            const hh = String(Math.floor((m % 1440) / 60)).padStart(2,'0');
+            xTicks.push({ x: PADX + (m - dayStartMin) * PX_PER_MIN, label: `${hh}:00` });
+        }
+
+        const yLabels = [100,75,50,25,0].map(p =>
+            `<div style="position:absolute;top:${(yOf(p)-8).toFixed(1)}px;left:0;font-size:12px;font-weight:700;color:#9ca3af;">${p}</div>`
+        ).join('');
+
+        return `
+            <div style="display:flex;">
+                <div style="position:relative;width:26px;height:${H}px;flex-shrink:0;">${yLabels}</div>
+                <div class="bb-wbl-scroll" id="bb-wbl-scroll">
+                    <svg width="${W}" height="${H}" style="display:block;">
+                        ${[0,25,50,75,100].map(p => `<line x1="${PADX}" y1="${yOf(p)}" x2="${W-PADX}" y2="${yOf(p)}" stroke="${p===0||p===100?'#3a3a40':'#242428'}" stroke-width="1" stroke-dasharray="${p===0||p===100?'0':'3,3'}"/>`).join('')}
+                        ${xTicks.map(t => `<line x1="${t.x.toFixed(1)}" y1="${PADT}" x2="${t.x.toFixed(1)}" y2="${H-PADB}" stroke="#1c1c20" stroke-width="1"/>`).join('')}
+                        ${areaFills.join('')}
+                        ${polylines.join('')}
+                        ${dots.join('')}
+                        ${dotLabels.join('')}
+                        ${xTicks.map(t => `<text x="${t.x.toFixed(1)}" y="${H-8}" font-size="12" font-weight="700" fill="#9ca3af" text-anchor="middle">${t.label}</text>`).join('')}
+                    </svg>
+                </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:6px; margin-top:4px; padding:0 4px 0 30px; font-size:10px; color:#6b7280;">
+                ↔️ 그래프를 좌우로 드래그하면 시간대를 이동할 수 있어요
+            </div>
+            <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:6px; padding:0 4px 0 30px;">
+                ${Object.keys(WBL_STL).map(st => `
+                    <span style="display:flex; align-items:center; gap:4px; font-size:11px; color:var(--mu);">
+                        <span style="width:10px; height:10px; border-radius:50%; background:${colorOf(st)};"></span>${WBL_STL[st]}
+                    </span>`).join('')}
+            </div>
+        `;
+    }
+	
+	function wblMergeImported(remote) {
+		if (!remote || remote.day !== wblGetDayKey()) return false;
+		const local = wblEnsureDay();
+		if (!local) return false;
+
+		Object.keys(remote.entries).forEach(id => {
+			const remoteEntry = remote.entries[id];
+			if (!local.entries[id]) {
+				local.entries[id] = remoteEntry;
+			} else {
+				const existingTimes = new Set(local.entries[id].log.map(p => p.t));
+				const toPrepend = remoteEntry.log.filter(p => !existingTimes.has(p.t));
+				local.entries[id].log = [...toPrepend, ...local.entries[id].log]
+					.sort((a, b) => wblToMin(a.t) - wblToMin(b.t));
+			}
+		});
+
+		wblSave(local);
+		return true;
+	}
+
+    // 그래프 좌우 드래그(패닝) — 전역에 한 번만 등록해서 패널 열 때마다 리스너가 쌓이지 않게 함
+    let _wblDragEl = null, _wblDragStartX = 0, _wblDragStartScroll = 0;
+    document.addEventListener('mousedown', (e) => {
+        const el = e.target.closest('.bb-wbl-scroll');
+        if (!el) return;
+        _wblDragEl = el;
+        _wblDragStartX = e.pageX;
+        _wblDragStartScroll = el.scrollLeft;
+        el.style.cursor = 'grabbing';
+        e.preventDefault();
+    });
+    document.addEventListener('mousemove', (e) => {
+        if (!_wblDragEl) return;
+        _wblDragEl.scrollLeft = _wblDragStartScroll - (e.pageX - _wblDragStartX);
+    });
+    document.addEventListener('mouseup', () => {
+        if (_wblDragEl) { _wblDragEl.style.cursor = 'grab'; _wblDragEl = null; }
+    });
+	document.addEventListener('wheel', (e) => {
+		const el = e.target.closest('.bb-wbl-scroll');
+		if (!el) return;
+		el.scrollLeft += e.deltaY;
+		e.preventDefault();
+	}, { passive: false });
+
+
+    function wblComputeTop5() {
+        const dayKey = wblGetDayKey();
+        if (!dayKey) return { drops: [], charges: [] };
+        const data = wblLoad();
+        if (!data || data.day !== dayKey) return { drops: [], charges: [] };
+
+        const drops = [];   // {id, name, rate}  rate: 시간당 %, 음수
+        const charges = []; // {id, name, rate}  rate: 시간당 %, 양수(작을수록 느림)
+
+        Object.keys(data.entries).forEach(robotId => {
+            const segments = wblGetSegments(robotId);
+            let worstDrop = null;
+            let slowestCharge = null;
+
+            segments.forEach(seg => {
+                if (seg.startBattery == null || seg.endBattery == null) return;
+                const durMin = Math.max(10, wblToMin(seg.end) - wblToMin(seg.start) + 10);
+                const rate = (seg.endBattery - seg.startBattery) / durMin * 60;
+
+                if (rate < 0 && (worstDrop === null || rate < worstDrop)) worstDrop = rate;
+                if (seg.status === 'charging' && rate > 0 && (slowestCharge === null || rate < slowestCharge)) slowestCharge = rate;
+            });
+
+            const name = data.entries[robotId].name;
+            if (worstDrop !== null) drops.push({ id: robotId, name, rate: worstDrop });
+            if (slowestCharge !== null) charges.push({ id: robotId, name, rate: slowestCharge });
+        });
+
+        drops.sort((a, b) => a.rate - b.rate);        // 더 큰 음수(급한 소모) 먼저
+        charges.sort((a, b) => a.rate - b.rate);       // 더 작은 양수(느린 충전) 먼저
+
+        return { drops: drops.slice(0, 5), charges: charges.slice(0, 5) };
+    }
+
+    function openTop5Panel() {
+        const { drops, charges } = wblComputeTop5();
+        const panel = document.getElementById('bb-top5-panel');
+        const bodyEl = document.getElementById('bb-top5-body');
+
+        const row = (item, isDrop) => `
+            <div class="bb-top5-row" data-id="${item.id}">
+                <span class="bb-top5-name">${item.name}</span>
+                <span class="bb-top5-rate" style="color:${isDrop ? '#ef4444' : '#fb923c'};">시간당 ${item.rate>0?'+':''}${item.rate.toFixed(1)}%</span>
+            </div>`;
+
+        bodyEl.innerHTML = `
+            <div class="bb-top5-col">
+                <div class="bb-top5-col-title" style="color:#ef4444;">🔻 배터리 소모 속도 빠른 순</div>
+                ${drops.length ? drops.map(d => row(d, true)).join('') : '<div class="bb-top5-empty">오늘 기록 없음</div>'}
+            </div>
+            <div class="bb-top5-col">
+                <div class="bb-top5-col-title" style="color:#fb923c;">🐢 배터리 충전 속도 느린 순</div>
+                ${charges.length ? charges.map(c => row(c, false)).join('') : '<div class="bb-top5-empty">오늘 기록 없음</div>'}
+            </div>
+        `;
+
+        bodyEl.querySelectorAll('.bb-top5-row').forEach(el => {
+            el.addEventListener('click', () => {
+                const r = DB.find(x => x.id === el.dataset.id);
+                if (r) {
+                    panel.classList.remove('open');
+                    _infoPanelReturnToTop5 = true;
+                    openInfoCardPanel(r);
+                }
+            });
+        });
+
+        panel.classList.add('open');
+    }
+
     function openInfoCardPanel(r) {
         const raw = r.raw;
         if (!raw) return;
@@ -1654,56 +2045,71 @@
         const relayMajor = raw.version?.relayVersion?.relayFwMajor ?? 1;
         const relayMinor = raw.version?.relayVersion?.relayFwMinor ?? 0;
 
+        const wblChartSvg = wblRenderChartSVG(r.id);
+        const wblLines = wblSummarizeToday(r.id);
+        const wblHtml = wblLines
+            ? wblLines.map(line => `<div class="bb-icp-wbl-line">${line}</div>`).join('')
+            : `<div class="bb-icp-wbl-line" style="color:var(--mu);">오늘 기록된 데이터 없음</div>`;
+
         bodyEl.innerHTML = `
-            <div class="bb-icp-section">
-                <div class="bb-icp-section-title">조작/연결 기록</div>
-                <div class="bb-icp-row">
-                    <span class="bb-icp-label">마지막 조작자</span>
-                    <span class="bb-icp-value">${lastOp}</span>
+            <div class="bb-icp-flex">
+                <div class="bb-icp-left">
+                    <div class="bb-icp-section">
+                        <div class="bb-icp-section-title">조작/연결 기록</div>
+                        <div class="bb-icp-row">
+                            <span class="bb-icp-label">마지막 조작자</span>
+                            <span class="bb-icp-value">${lastOp}</span>
+                        </div>
+                        <div class="bb-icp-row">
+                            <span class="bb-icp-label">마지막 개입 시간</span>
+                            <span class="bb-icp-value">${lastOpAt}</span>
+                        </div>
+                        <div class="bb-icp-row">
+                            <span class="bb-icp-label">마지막 기체 연결 끊김</span>
+                            <span class="bb-icp-value">${lastConnAt}</span>
+                        </div>
+                    </div>
+                    <div class="bb-icp-section">
+                        <div class="bb-icp-section-title">기체 상태 지표</div>
+                        <div class="bb-icp-row">
+                            <span class="bb-icp-label">CPU</span>
+                            <span class="bb-icp-value">
+                                <span class="bb-icp-bar">${cpuBar}</span>${cpu}% ${cpuDot}
+                            </span>
+                        </div>
+                        <div class="bb-icp-row">
+                            <span class="bb-icp-label">GPS 정확도</span>
+                            <span class="bb-icp-value">${gpsTxt}</span>
+                        </div>
+                        <div class="bb-icp-row">
+                            <span class="bb-icp-label">섀시 온도</span>
+                            <span class="bb-icp-value">${tmpTxt} ${tmpDot}</span>
+                        </div>
+                        <div class="bb-icp-row">
+                            <span class="bb-icp-label">ADAS</span>
+                            <span class="bb-icp-value">${rs.isOnAdas ? 'ON' : 'OFF'} ${adasDot}</span>
+                        </div>
+                    </div>
+                    <div class="bb-icp-section">
+                        <div class="bb-icp-section-title">하드웨어</div>
+                        <div class="bb-icp-row">
+                            <span class="bb-icp-label">SW 버전</span>
+                            <span class="bb-icp-value">${swShort}</span>
+                        </div>
+                        <div class="bb-icp-row">
+                            <span class="bb-icp-label">기체 세대</span>
+                            <span class="bb-icp-value">${mdVer}세대</span>
+                        </div>
+                        <div class="bb-icp-row">
+                            <span class="bb-icp-label">Relay FW</span>
+                            <span class="bb-icp-value">${relayMajor}.${relayMinor}</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="bb-icp-row">
-                    <span class="bb-icp-label">마지막 개입 시간</span>
-                    <span class="bb-icp-value">${lastOpAt}</span>
-                </div>
-                <div class="bb-icp-row">
-                    <span class="bb-icp-label">마지막 기체 연결 끊김</span>
-                    <span class="bb-icp-value">${lastConnAt}</span>
-                </div>
-            </div>
-            <div class="bb-icp-section">
-                <div class="bb-icp-section-title">기체 상태 지표</div>
-                <div class="bb-icp-row">
-                    <span class="bb-icp-label">CPU</span>
-                    <span class="bb-icp-value">
-                        <span class="bb-icp-bar">${cpuBar}</span>${cpu}% ${cpuDot}
-                    </span>
-                </div>
-                <div class="bb-icp-row">
-                    <span class="bb-icp-label">GPS 정확도</span>
-                    <span class="bb-icp-value">${gpsTxt}</span>
-                </div>
-                <div class="bb-icp-row">
-                    <span class="bb-icp-label">섀시 온도</span>
-                    <span class="bb-icp-value">${tmpTxt} ${tmpDot}</span>
-                </div>
-                <div class="bb-icp-row">
-                    <span class="bb-icp-label">ADAS</span>
-                    <span class="bb-icp-value">${rs.isOnAdas ? 'ON' : 'OFF'} ${adasDot}</span>
-                </div>
-            </div>
-            <div class="bb-icp-section">
-                <div class="bb-icp-section-title">하드웨어</div>
-                <div class="bb-icp-row">
-                    <span class="bb-icp-label">SW 버전</span>
-                    <span class="bb-icp-value">${swShort}</span>
-                </div>
-                <div class="bb-icp-row">
-                    <span class="bb-icp-label">기체 세대</span>
-                    <span class="bb-icp-value">${mdVer}세대</span>
-                </div>
-                <div class="bb-icp-row">
-                    <span class="bb-icp-label">Relay FW</span>
-                    <span class="bb-icp-value">${relayMajor}.${relayMinor}</span>
+                <div class="bb-icp-right">
+                    <div class="bb-icp-section-title">오늘 배터리 증감 추이</div>
+                    ${wblChartSvg}
+                    <div class="bb-icp-wbl-log">${wblHtml}</div>
                 </div>
             </div>
         `;
@@ -1711,9 +2117,21 @@
         panel.classList.add('open');
         panel.style.zIndex = ++topmostZ;
         registerInfoPanelClose();
+        requestAnimationFrame(() => {
+            const sc = document.getElementById('bb-wbl-scroll');
+            if (sc) sc.scrollLeft = sc.scrollWidth;
+        });
         }
 
         let _infoPanelCloseHandler = null;
+        let _infoPanelReturnToTop5 = false;
+        function closeInfoCardPanel() {
+            document.getElementById('bb-info-card-panel').classList.remove('open');
+            if (_infoPanelReturnToTop5) {
+                _infoPanelReturnToTop5 = false;
+                openTop5Panel();
+            }
+        }
         function registerInfoPanelClose() {
             const panel = document.getElementById('bb-info-card-panel');
             if (_infoPanelCloseHandler) {
@@ -1723,7 +2141,7 @@
             setTimeout(() => {
                 _infoPanelCloseHandler = function closeInfo(e) {
                     if (!panel.contains(e.target)) {
-                        panel.classList.remove('open');
+                        closeInfoCardPanel();
                         document.removeEventListener('mousedown', _infoPanelCloseHandler);
                         _infoPanelCloseHandler = null;
                     }
@@ -1910,8 +2328,13 @@
         document.getElementById('bb-alert-panel').classList.remove('open');
     });
 
+    document.getElementById('bb-top5-btn').addEventListener('click', openTop5Panel);
+    document.getElementById('bb-top5-close').addEventListener('click', () => {
+        document.getElementById('bb-top5-panel').classList.remove('open');
+    });
+
     document.getElementById('bb-icp-close').addEventListener('click', () => {
-        document.getElementById('bb-info-card-panel').classList.remove('open');
+        closeInfoCardPanel();
     });
 
     // 절반 모드 토글 (윈도우 스냅 절반 폭 대응)
@@ -2362,29 +2785,42 @@
         } catch { alert('❌ 백업 실패 (네트워크 오류)'); }
     });
 
-    document.getElementById('bb-restore-btn').addEventListener('click', async () => {
-        try {
-            const listRes = await fetch('https://multimonitoring.vercel.app/api/battery');
-            const listData = await listRes.json();
-            const names = listData.names || [];
-            if (!names.length) { alert('❌ 저장된 백업 없음'); return; }
-            const choice = prompt(`복원할 백업을 선택하세요:\n\n${names.map((n,i) => `${i+1}. ${n}`).join('\n')}\n\n번호 또는 이름 입력:`);
-            if (!choice) return;
-            const num = parseInt(choice);
-            const name = (!isNaN(num) && num >= 1 && num <= names.length)
-                ? names[num - 1]
-                : names.find(n => n === choice.trim());
-            if (!name) { alert('❌ 해당 백업 없음'); return; }
-            const res = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent(name)}`);
-            const data = await res.json();
-            if (!data.ids || !data.ids.length) { alert('❌ 백업 데이터 없음'); return; }
-            if (!confirm(`"${name}" 백업으로 복원하시겠습니까?\n현재 목록(${ids.length}대)이 교체됩니다.`)) return;
-            ids.length = 0;
-            data.ids.forEach(id => ids.push(id));
-            save(); render();
-            alert(`✅ "${name}" 복원 완료 (${data.ids.length}대)`);
-        } catch { alert('❌ 복원 실패 (네트워크 오류)'); }
-    });
+	document.getElementById('bb-restore-btn').addEventListener('click', async () => {
+		try {
+			const listRes = await fetch('https://multimonitoring.vercel.app/api/battery');
+			const listData = await listRes.json();
+			const names = listData.names || [];
+			const choice = prompt(`복원할 백업을 선택하세요:\n\n0. 배터리 증감 추이 데이터\n${names.map((n,i) => `${i+1}. ${n}`).join('\n')}\n\n번호 또는 이름 입력:`);
+			if (!choice) return;
+
+			// ── 0번: 배터리 증감 추이 데이터 (GitHub JSON, 별도 경로) ──
+			if (choice.trim() === '0') {
+				const wblRes = await fetch('https://raw.githubusercontent.com/ubase00070/monitoring_no_limit/main/battery_json?v=' + Date.now());
+				if (!wblRes.ok) { alert('❌ battery.json을 찾을 수 없음'); return; }
+				const remote = await wblRes.json();
+				const merged = wblMergeImported(remote);
+				if (!merged) { alert('❌ 오늘 날짜 데이터가 아니라 병합할 수 없음 (날짜: ' + (remote?.day || '없음') + ')'); return; }
+				alert('✅ 배터리 증감 추이 데이터 복원 완료');
+				return;
+			}
+
+			// ── 기존: 개별 카드 목록 백업 ──
+			if (!names.length) { alert('❌ 저장된 백업 없음'); return; }
+			const num = parseInt(choice);
+			const name = (!isNaN(num) && num >= 1 && num <= names.length)
+				? names[num - 1]
+				: names.find(n => n === choice.trim());
+			if (!name) { alert('❌ 해당 백업 없음'); return; }
+			const res = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent(name)}`);
+			const data = await res.json();
+			if (!data.ids || !data.ids.length) { alert('❌ 백업 데이터 없음'); return; }
+			if (!confirm(`"${name}" 백업으로 복원하시겠습니까?\n현재 목록(${ids.length}대)이 교체됩니다.`)) return;
+			ids.length = 0;
+			data.ids.forEach(id => ids.push(id));
+			save(); render();
+			alert(`✅ "${name}" 복원 완료 (${data.ids.length}대)`);
+		} catch { alert('❌ 복원 실패 (네트워크 오류)'); }
+	});
 
     // ============================================================
     // SECTION 15. 토큰 발송
