@@ -504,6 +504,10 @@
         .bb-top5-name { flex:1; font-size:12px; font-weight:700; color:var(--tx); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .bb-top5-rate { font-size:11px; font-weight:900; font-family:'Paperlogy','Lato',monospace; flex-shrink:0; }
         .bb-top5-empty { font-size:11px; color:var(--mu); padding:10px 0; }
+		#bb-top5-panel.bb-light {
+		    --bg:#ded3b8; --sur:#f8f3e6; --sur2:#efe6d2;
+		    --bd:#cabf9d; --bd2:#b3a687; --tx:#2b2418; --mu:#7a6f5c;
+		}
         #bb-top5-panel.bb-light .bb-top5-col { background:var(--sur); }
         #bb-top5-panel.bb-light .bb-top5-row { border-bottom-color:var(--bd); }
         #bb-top5-panel.bb-light .bb-top5-row:hover { background:var(--sur2); }
