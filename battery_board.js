@@ -758,7 +758,7 @@
                     &nbsp;&nbsp;&nbsp;&nbsp;- 대기 중 배터리 50% 미만(배달 사이트 기체 제외)<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;- 좀비: 전원 ON인데 배터리·GPS 수신값이 잡히지 않는 경우<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;- 캠 미노출(F, Fd, Fl, Fr, Bl, Br)<br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;- 미니맵 기체 위치 미노출<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- GPS 미수신<br>
                     * 하단 퀵바: 역삼·송도·성수·삼평서현 ON/OFF 및 상태 확인용<br>
                     * 기타 배달: 퀵바 외 배달 사이트 기체 실시간 표시<br>
                     * Alt+Z: 현황판 열기/닫기<br>
@@ -1112,7 +1112,7 @@
                     const key = alertKey('nomap', id);
                     if (!dismissedAlerts.has(key)) alerts.push({
                         key, type:'nomap', dot:'or', name,
-                        desc:`GPS 수신값 0 — 미니맵 위치 미노출 | 현장 재부팅 필요`,
+                        desc:`GPS 수신값 0 — 재부팅 조치 필요`,
                         time: fmt(new Date().toISOString())
                     });
                 }
@@ -1637,13 +1637,21 @@
     // ============================================================
     const WBL_KEY = 'bb_battery_log';
 
+    // toISOString()은 UTC 기준이라 한국 시각 새벽 0~9시대엔 날짜가 하루 밀려버림 -> 로컬 날짜를 직접 조립
+    function wblLocalDateStr(d) {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${dd}`;
+    }
+
     function wblGetDayKey() {
         const now = new Date();
         const h = now.getHours();
-        if (h >= 8) return now.toISOString().slice(0, 10);
+        if (h >= 8) return wblLocalDateStr(now);
         if (h < 3) {
             const y = new Date(now); y.setDate(y.getDate() - 1);
-            return y.toISOString().slice(0, 10);
+            return wblLocalDateStr(y);
         }
         return null;   // 03~08시: 비활성 구간
     }
@@ -1878,7 +1886,7 @@
 	const WBL_HANDOVER_NAME = '배터리 증감 추이 데이터';
 
 	function wblTodayStr() {
-		return new Date().toISOString().slice(0, 10);
+		return wblLocalDateStr(new Date());
 	}
 
 	// 서버에 "오늘, 17:50 이후" 저장된 인계 데이터가 이미 있는지 확인
