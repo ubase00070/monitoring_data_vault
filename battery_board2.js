@@ -1852,7 +1852,12 @@
     document.addEventListener('mouseup', () => {
         if (_wblDragEl) { _wblDragEl.style.cursor = 'grab'; _wblDragEl = null; }
     });
-
+	document.addEventListener('wheel', (e) => {
+	    const el = e.target.closest('.bb-wbl-scroll');
+	    if (!el) return;
+	    el.scrollLeft += e.deltaY;
+	    e.preventDefault();
+	}, { passive: false });
 
     function wblComputeTop5() {
         const dayKey = wblGetDayKey();
