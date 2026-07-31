@@ -504,6 +504,10 @@
         .bb-top5-name { flex:1; font-size:12px; font-weight:700; color:var(--tx); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .bb-top5-rate { font-size:11px; font-weight:900; font-family:'Paperlogy','Lato',monospace; flex-shrink:0; }
         .bb-top5-empty { font-size:11px; color:var(--mu); padding:10px 0; }
+        #bb-top5-panel.bb-light .bb-top5-col { background:var(--sur); }
+        #bb-top5-panel.bb-light .bb-top5-row { border-bottom-color:var(--bd); }
+        #bb-top5-panel.bb-light .bb-top5-row:hover { background:var(--sur2); }
+        #bb-top5-panel.bb-light .bb-top5-col-title { color:#a16207; }
         #bb-alert-panel.open { display:block; }
         .bb-ap-hd {
             padding:14px 16px; border-bottom:1px solid #4a5070;
@@ -591,6 +595,9 @@
         .bb-icp-right { flex:1; min-width:0; border-left:1px solid var(--bd); padding:10px 16px; }
         .bb-icp-wbl-log { margin-top:10px; display:flex; flex-direction:column; gap:6px; }
         .bb-icp-wbl-line { font-size:13px; line-height:1.5; color:var(--tx); }
+        .bb-wbl-scroll { flex:1; min-width:0; overflow-x:auto; overflow-y:hidden; cursor:grab; scrollbar-width:thin; }
+        .bb-wbl-scroll::-webkit-scrollbar { height:6px; }
+        .bb-wbl-scroll::-webkit-scrollbar-thumb { background:var(--bd2); border-radius:3px; }
         #bb-info-card-panel.bb-light {
             --bg:#ded3b8; --sur:#f8f3e6; --sur2:#efe6d2;
             --bd:#cabf9d; --bd2:#b3a687; --tx:#2b2418; --mu:#7a6f5c;
@@ -668,7 +675,7 @@
                     <div class="bb-ref" id="bb-ref">— 초 후 갱신</div>
                 </div>
                 <div class="bb-hd-right" id="bb-hd-right">
-                    <button id="bb-top5-btn" class="bb-btn">🔥 오늘의 Top5</button>
+                    <button id="bb-top5-btn" class="bb-btn">🔥 배터리 증감 추이</button>
                     <button id="bb-theme-btn" class="bb-btn">다크</button>
                     <button id="bb-backup-btn" class="bb-btn">목록 백업</button>
                     <button id="bb-restore-btn" class="bb-btn">목록 복원</button>
@@ -760,10 +767,10 @@
             </div>
         </div>
 
-        <!-- 오늘의 Top5 브리핑 패널 -->
+        <!-- 배터리 증감 추이 브리핑 패널 -->
         <div id="bb-top5-panel">
             <div class="bb-ap-hd">
-                <div class="bb-ap-title">🔥 오늘의 배터리 이상 Top5</div>
+                <div class="bb-ap-title">🔥 배터리 증감 추이 Top5</div>
                 <div class="bb-ap-close" id="bb-top5-close">✕</div>
             </div>
             <div id="bb-top5-body" class="bb-top5-grid"></div>
@@ -783,12 +790,13 @@
 
     const bbEl = document.getElementById('bb');
     const applyBbTheme = () => {
-        const theme = localStorage.getItem('neubie_bb_theme') || 'light';
-        bbEl.classList.toggle('bb-light', theme === 'light');
-        document.getElementById('bb-alert-panel').classList.toggle('bb-light', theme === 'light');
-        document.getElementById('bb-info-card-panel').classList.toggle('bb-light', theme === 'light');
-        document.getElementById('bb-theme-btn').textContent = theme === 'light' ? '☀️ 라이트' : '🌙 다크';
-    };
+		const theme = localStorage.getItem('neubie_bb_theme') || 'light';
+		bbEl.classList.toggle('bb-light', theme === 'light');
+		document.getElementById('bb-alert-panel').classList.toggle('bb-light', theme === 'light');
+		document.getElementById('bb-info-card-panel').classList.toggle('bb-light', theme === 'light');
+		document.getElementById('bb-top5-panel').classList.toggle('bb-light', theme === 'light');
+		document.getElementById('bb-theme-btn').textContent = theme === 'light' ? '☀️ 라이트' : '🌙 다크';
+	};
     applyBbTheme();
 
     // 헤더 우측 버튼 그룹(라이트/목록 백업/목록 복원)과
@@ -1707,19 +1715,17 @@
             const durTxt = durMin >= 60 ? `${Math.floor(durMin/60)}시간${durMin%60 ? ' '+(durMin%60)+'분' : ''}` : `${durMin}분`;
             const label = WBL_STL[seg.status] || seg.status;
             const icon  = STI[seg.status] || '⚪';
+            const head  = `${icon} ${label} ${seg.start}~${seg.end} (${durTxt})`;
 
             if (seg.status === 'off' || seg.startBattery == null || seg.endBattery == null) {
-                return `${icon} ${label} (${seg.start}~${seg.end}, ${durTxt}): 기록 없음`;
+                return `${head}`;
             }
             const delta = seg.endBattery - seg.startBattery;
-            const rate  = durMin > 0 ? Math.abs(delta / durMin * 60).toFixed(1) : '0';
-
             if (delta === 0) {
-                return `${icon} ${label} (${seg.start}~${seg.end}, ${durTxt}): 배터리 ${seg.startBattery}%로 변화 없음`;
+                return `${head} · ${seg.startBattery}% 유지`;
             }
-            const trend = delta > 0 ? '충전돼서 증가' : '소모돼서 감소';
-            const speed = delta > 0 ? `시간당 ${rate}%씩 충전됨` : `시간당 ${rate}%씩 소모됨`;
-            return `${icon} ${label} (${seg.start}~${seg.end}, ${durTxt}): 배터리 ${seg.startBattery}% → ${seg.endBattery}%로 ${trend} — ${speed}`;
+            const rate = durMin > 0 ? (delta / durMin * 60).toFixed(1) : '0';
+            return `${head} · ${seg.startBattery}%→${seg.endBattery}% (시간당 ${rate>0?'+':''}${rate}%)`;
         });
     }
 
@@ -1732,15 +1738,16 @@
         const entry = data.entries[robotId];
         if (!entry || entry.log.length === 0) return '<div style="font-size:13px;color:var(--mu);padding:30px;text-align:center;">오늘 기록된 데이터 없음</div>';
 
-        const W = 620, H = 210, PADL = 34, PADR = 14, PADT = 14, PADB = 26;
+        const PX_PER_MIN = 4, H = 210, PADX = 16, PADT = 14, PADB = 26;
         const dayStartMin = 8 * 60;
         const nowMin = (() => { const n=new Date(); let m=n.getHours()*60+n.getMinutes(); if (n.getHours()<3) m += 1440; return m; })();
         const spanMin = Math.max(60, nowMin - dayStartMin);
+        const W = Math.round(spanMin * PX_PER_MIN + PADX * 2);
 
         const xOf = (hhmm) => {
             let m = wblToMin(hhmm);
             if (m < dayStartMin) m += 1440;
-            return PADL + ((m - dayStartMin) / spanMin) * (W - PADL - PADR);
+            return PADX + (m - dayStartMin) * PX_PER_MIN;
         };
         const yOf = (pct) => PADT + (1 - pct/100) * (H - PADT - PADB);
 
@@ -1785,26 +1792,35 @@
             `<circle cx="${xOf(pt.t).toFixed(1)}" cy="${yOf(pt.battery).toFixed(1)}" r="3.5" style="fill:${colorOf(pt.status)}" stroke="#0d1117" stroke-width="1.5"/>`
         ));
 
-        // x축: 정시(00분) 라벨만 추려서 표기 (너무 촘촘하지 않게)
+        // x축: 정시(00분) 라벨
         const xTicks = [];
         for (let m = Math.ceil(dayStartMin/60)*60; m <= dayStartMin + spanMin; m += 60) {
             const hh = String(Math.floor((m % 1440) / 60)).padStart(2,'0');
-            const label = `${hh}:00`;
-            const x = PADL + ((m - dayStartMin) / spanMin) * (W - PADL - PADR);
-            xTicks.push({ x, label });
+            xTicks.push({ x: PADX + (m - dayStartMin) * PX_PER_MIN, label: `${hh}:00` });
         }
 
+        const yLabels = [100,75,50,25,0].map(p =>
+            `<div style="position:absolute;top:${(yOf(p)-8).toFixed(1)}px;left:0;font-size:12px;font-weight:700;color:#9ca3af;">${p}</div>`
+        ).join('');
+
         return `
-            <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="width:100%;height:${H}px;display:block;">
-                ${[0,25,50,75,100].map(p => `<line x1="${PADL}" y1="${yOf(p)}" x2="${W-PADR}" y2="${yOf(p)}" stroke="${p===0||p===100?'#3a3a40':'#242428'}" stroke-width="1" stroke-dasharray="${p===0||p===100?'0':'3,3'}"/>`).join('')}
-                ${xTicks.map(t => `<line x1="${t.x.toFixed(1)}" y1="${PADT}" x2="${t.x.toFixed(1)}" y2="${H-PADB}" stroke="#1c1c20" stroke-width="1"/>`).join('')}
-                ${areaFills.join('')}
-                ${polylines.join('')}
-                ${dots.join('')}
-                ${[0,25,50,75,100].map(p => `<text x="6" y="${yOf(p)+4}" font-size="12" font-weight="700" fill="#9ca3af">${p}</text>`).join('')}
-                ${xTicks.map(t => `<text x="${t.x.toFixed(1)}" y="${H-8}" font-size="12" font-weight="700" fill="#9ca3af" text-anchor="middle">${t.label}</text>`).join('')}
-            </svg>
-            <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:6px; padding:0 4px;">
+            <div style="display:flex;">
+                <div style="position:relative;width:26px;height:${H}px;flex-shrink:0;">${yLabels}</div>
+                <div class="bb-wbl-scroll" id="bb-wbl-scroll">
+                    <svg width="${W}" height="${H}" style="display:block;">
+                        ${[0,25,50,75,100].map(p => `<line x1="${PADX}" y1="${yOf(p)}" x2="${W-PADX}" y2="${yOf(p)}" stroke="${p===0||p===100?'#3a3a40':'#242428'}" stroke-width="1" stroke-dasharray="${p===0||p===100?'0':'3,3'}"/>`).join('')}
+                        ${xTicks.map(t => `<line x1="${t.x.toFixed(1)}" y1="${PADT}" x2="${t.x.toFixed(1)}" y2="${H-PADB}" stroke="#1c1c20" stroke-width="1"/>`).join('')}
+                        ${areaFills.join('')}
+                        ${polylines.join('')}
+                        ${dots.join('')}
+                        ${xTicks.map(t => `<text x="${t.x.toFixed(1)}" y="${H-8}" font-size="12" font-weight="700" fill="#9ca3af" text-anchor="middle">${t.label}</text>`).join('')}
+                    </svg>
+                </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:6px; margin-top:4px; padding:0 4px 0 30px; font-size:10px; color:#6b7280;">
+                ↔️ 그래프를 좌우로 드래그하면 시간대를 이동할 수 있어요
+            </div>
+            <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:6px; padding:0 4px 0 30px;">
                 ${Object.keys(WBL_STL).map(st => `
                     <span style="display:flex; align-items:center; gap:4px; font-size:11px; color:var(--mu);">
                         <span style="width:10px; height:10px; border-radius:50%; background:${colorOf(st)};"></span>${WBL_STL[st]}
@@ -1813,7 +1829,26 @@
         `;
     }
 
-    // 오늘 전체 로봇 중 소모 급한 순 / 충전 느린 순 Top5 계산
+    // 그래프 좌우 드래그(패닝) — 전역에 한 번만 등록해서 패널 열 때마다 리스너가 쌓이지 않게 함
+    let _wblDragEl = null, _wblDragStartX = 0, _wblDragStartScroll = 0;
+    document.addEventListener('mousedown', (e) => {
+        const el = e.target.closest('.bb-wbl-scroll');
+        if (!el) return;
+        _wblDragEl = el;
+        _wblDragStartX = e.pageX;
+        _wblDragStartScroll = el.scrollLeft;
+        el.style.cursor = 'grabbing';
+        e.preventDefault();
+    });
+    document.addEventListener('mousemove', (e) => {
+        if (!_wblDragEl) return;
+        _wblDragEl.scrollLeft = _wblDragStartScroll - (e.pageX - _wblDragStartX);
+    });
+    document.addEventListener('mouseup', () => {
+        if (_wblDragEl) { _wblDragEl.style.cursor = 'grab'; _wblDragEl = null; }
+    });
+
+
     function wblComputeTop5() {
         const dayKey = wblGetDayKey();
         if (!dayKey) return { drops: [], charges: [] };
@@ -2038,6 +2073,10 @@
         panel.classList.add('open');
         panel.style.zIndex = ++topmostZ;
         registerInfoPanelClose();
+        requestAnimationFrame(() => {
+            const sc = document.getElementById('bb-wbl-scroll');
+            if (sc) sc.scrollLeft = sc.scrollWidth;
+        });
         }
 
         let _infoPanelCloseHandler = null;
