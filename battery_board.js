@@ -673,7 +673,7 @@
                 </div>
                 <div class="bb-hd-title" id="bb-drag-handle">
                     관리자용 배터리 현황판
-                    <span style="font-size:16px;color:var(--mu);font-weight:400;">by CYH</span>
+                    <span id="bb-cyh-tag" style="font-size:16px;color:var(--mu);font-weight:400;cursor:default;">by CYH</span>
                 </div>
                 <div class="bb-hd-time">
                     <div class="bb-clock" id="bb-clk">00:00:00</div>
@@ -1322,6 +1322,9 @@
             }
 
             logBatteryPattern(DB);
+            wblHandoverUploadTick();
+            wblHandoverDownloadTick();
+            wblMidnightCleanupTick();
 
             const alerts = detectAlerts(allRaw);
             renderAlertChips(alerts);
@@ -1869,6 +1872,106 @@
 		return true;
 	}
 
+	// ============================================================
+	// 주간 → 야간 인계 로직 (17:50~18:00 업로드 / 17:52~18:20 수신)
+	// ============================================================
+	const WBL_HANDOVER_NAME = '배터리 증감 추이 데이터';
+
+	function wblTodayStr() {
+		return new Date().toISOString().slice(0, 10);
+	}
+
+	// 서버에 "오늘, 17:50 이후" 저장된 인계 데이터가 이미 있는지 확인
+	async function wblIsHandoverDoneToday() {
+		try {
+			const res = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent(WBL_HANDOVER_NAME)}`);
+			if (!res.ok) return false;
+			const remote = await res.json();
+			if (!remote?.savedAt) return false;
+			const saved = new Date(remote.savedAt);
+			const now = new Date();
+			const sameDay = saved.getFullYear() === now.getFullYear()
+				&& saved.getMonth() === now.getMonth()
+				&& saved.getDate() === now.getDate();
+			const isHandoverTime = saved.getHours() > 17 || (saved.getHours() === 17 && saved.getMinutes() >= 50);
+			return sameDay && isHandoverTime;
+		} catch { return false; }
+	}
+
+	// 주간 PC(CYH: 17:50~, 동료: 17:52~)가 2분 간격으로 업로드 시도, 이미 올라와있으면 중단
+	async function wblHandoverUploadTick() {
+		const now = new Date();
+		const h = now.getHours(), m = now.getMinutes();
+		const inWindow = (h === 17 && m >= 50) || (h === 18 && m === 0);
+		if (!inWindow) return;
+
+		const isCYH = localStorage.getItem('bb_is_cyh') === '1';
+		const myStart = isCYH ? 50 : 52;
+		if (h === 17 && m < myStart) return;
+
+		const tickKey = `${wblTodayStr()}_upload_${h}:${m}`;
+		if (localStorage.getItem('bb_handover_upload_tick') === tickKey) return;
+		localStorage.setItem('bb_handover_upload_tick', tickKey);
+
+		if (await wblIsHandoverDoneToday()) return;   // 이미 누군가 올렸으면 중단
+
+		try {
+			const data = wblLoad();
+			if (!data || data.day !== wblGetDayKey()) return;
+			await fetch(BACKUP_BASE, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ name: WBL_HANDOVER_NAME, data }),
+			});
+			console.log(`[BB] 주간 인계 업로드 완료 (${isCYH ? 'CYH' : '동료'}, ${h}:${String(m).padStart(2,'0')})`);
+		} catch (e) { console.log('[BB] 주간 인계 업로드 실패:', e.message); }
+	}
+
+	// 야간 PC가 17:52~18:20 사이 2분 간격으로 수신 시도, 성공하면 중단
+	async function wblHandoverDownloadTick() {
+		const now = new Date();
+		const h = now.getHours(), m = now.getMinutes();
+		const inWindow = (h === 17 && m >= 52) || (h === 18 && m <= 20);
+		if (!inWindow) return;
+
+		if (localStorage.getItem('bb_handover_pulled_day') === wblTodayStr()) return;   // 이미 성공했으면 재시도 안 함
+
+		const tickKey = `${wblTodayStr()}_pull_${h}:${m}`;
+		if (localStorage.getItem('bb_handover_pull_tick') === tickKey) return;
+		localStorage.setItem('bb_handover_pull_tick', tickKey);
+
+		try {
+			const res = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent(WBL_HANDOVER_NAME)}`);
+			if (!res.ok) return;
+			const remote = await res.json();
+			if (!remote?.savedAt) return;
+			const saved = new Date(remote.savedAt);
+			const now2 = new Date();
+			const sameDay = saved.getFullYear() === now2.getFullYear()
+				&& saved.getMonth() === now2.getMonth()
+				&& saved.getDate() === now2.getDate();
+			if (!sameDay || !remote.data) return;
+
+			const ok = wblMergeImported(remote.data);
+			if (ok) {
+				localStorage.setItem('bb_handover_pulled_day', wblTodayStr());
+				console.log(`[BB] 주간 데이터 인계받기 완료 (${h}:${String(m).padStart(2,'0')})`);
+			}
+		} catch (e) { console.log('[BB] 인계받기 시도 실패:', e.message); }
+	}
+
+	// 03:30 — 그날의 배터리 로그를 로컬에서 정리 (다음날 첫 접속에서도 wblEnsureDay가 자동으로 새로 시작하지만, 켜져있는 상태라면 더 일찍 정리)
+	function wblMidnightCleanupTick() {
+		const now = new Date();
+		if (now.getHours() !== 3 || now.getMinutes() < 30) return;
+		const doneKey = wblTodayStr();
+		if (localStorage.getItem('bb_cleanup_done_day') === doneKey) return;
+		localStorage.setItem('bb_cleanup_done_day', doneKey);
+		localStorage.removeItem('bb_battery_log');
+		console.log('[BB] 03:30 - 배터리 로그 정리 완료');
+	}
+
+
     // 그래프 좌우 드래그(패닝) — 전역에 한 번만 등록해서 패널 열 때마다 리스너가 쌓이지 않게 함
     let _wblDragEl = null, _wblDragStartX = 0, _wblDragStartScroll = 0;
     document.addEventListener('mousedown', (e) => {
@@ -2342,6 +2445,27 @@
     document.getElementById('bb-icp-close').addEventListener('click', () => {
         closeInfoCardPanel();
     });
+
+    // ── "by CYH" 5회 연속 클릭(2초 이내) → 이 PC를 제작자(CYH) PC로 표시 ──
+    (function() {
+        const tag = document.getElementById('bb-cyh-tag');
+        let clickTimes = [];
+        function applyCyhStyle() {
+            tag.style.color = localStorage.getItem('bb_is_cyh') === '1' ? '#eab308' : 'var(--mu)';
+        }
+        applyCyhStyle();
+        tag.addEventListener('click', () => {
+            const now = Date.now();
+            clickTimes.push(now);
+            clickTimes = clickTimes.filter(t => now - t <= 2000);
+            if (clickTimes.length >= 5) {
+                clickTimes = [];
+                const cur = localStorage.getItem('bb_is_cyh') === '1';
+                localStorage.setItem('bb_is_cyh', cur ? '0' : '1');
+                applyCyhStyle();
+            }
+        });
+    })();
 
     // 절반 모드 토글 (윈도우 스냅 절반 폭 대응)
     (function() {
