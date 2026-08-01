@@ -887,7 +887,7 @@
         { siteIds: [207], label: '자연스런 캠핑장' },
     ];
     const CLUSTER_AC = {
-        charging:'var(--gn)', patrolling:'var(--bl)', standby:'#000000',
+        charging:'var(--gn)', patrolling:'var(--bl)', standby:'var(--tx)',
         off:'#4b5563', delivering:'var(--pk)', docking:'var(--ye)',
     };
 
