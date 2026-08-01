@@ -104,7 +104,7 @@
         .bb-clock { font-family:'Lato',monospace; font-size:13px; font-weight:900; color:var(--mu); letter-spacing:.8px; }
         .bb-ref   { font-size:12px; color:var(--mu); font-weight:700; }
         .bb-hd-left  { position:absolute; left:14px; top:50%; transform:translateY(-50%); display:flex; align-items:center; gap:6px; }
-        .bb-hd-right { position:absolute; right:14px; top:50%; transform:translateY(-50%); display:flex; align-items:center; justify-content:flex-end; gap:10px; }
+        .bb-hd-right { position:absolute; right:14px; top:50%; transform:translateY(-50%); display:flex; align-items:center; justify-content:flex-end; gap:6px; }
 
         .bb-btn {
             height:32px; padding:0 12px; border-radius:6px; border:1px solid var(--bd2);
@@ -177,9 +177,9 @@
 
         /* 검색 */
         .bb-search-wrap {
-            width:max-content; flex-shrink:0; padding:6px 14px;
+            width:max-content; flex-shrink:0; padding:6px 10px;
             background:var(--bg);
-            position:relative; display:flex; flex-wrap:wrap; justify-content:flex-end; gap:10px; align-content:center;
+            position:relative; display:flex; flex-wrap:wrap; justify-content:flex-end; gap:6px; align-content:center;
         }
         .bb-search-wrap .bb-si-wrap { flex-basis:100%; }
         .bb-si-wrap { position:relative; width:100%; }
@@ -235,9 +235,11 @@
         .bb-cluster-arrow { transition:transform .2s; color:var(--mu); }
         #bb.cluster-open .bb-cluster-arrow { transform:rotate(180deg); }
 
-        #bb.bb-half { width:1020px; }
+        #bb.bb-half { width:1140px; }
         #bb.bb-half .bb-main-split { flex-direction:column; padding-left:0; position:relative; }
         #bb.bb-half .bb-cluster-toggle { display:flex; }
+        #bb.bb-half .bb-search-wrap { gap:4px; padding:6px 8px; }
+        #bb.bb-half .bb-search-wrap .bb-btn { padding:4px 7px; font-size:11px; }
         #bb.bb-half .bb-cluster-side {
             position:absolute; top:46px; left:0; right:0; z-index:60;
             background:transparent; border:1px solid transparent; border-radius:12px;
@@ -695,9 +697,9 @@
                     <div class="bb-alert-chips" id="bb-alert-chips"></div>
                 </div>
                 <div class="bb-search-wrap" id="bb-search-wrap">
-                    <button class="bb-btn" id="bb-wbl-upload-btn" style="display:none;">📤 업로드</button>
-                    <button class="bb-btn" id="bb-wbl-download-btn">📥 불러오기</button>
-                    <button class="bb-btn" id="bb-sortname-btn">이름 순 정렬</button>
+                    <button class="bb-btn" id="bb-wbl-upload-btn" style="display:none;">📤 UP</button>
+                    <button class="bb-btn" id="bb-wbl-download-btn">📥 배터리 로드</button>
+                    <button class="bb-btn" id="bb-sortname-btn">이름 순</button>
                     <button class="bb-btn" id="bb-inforequest-btn">정보 검색</button>
                     <button class="bb-btn" id="bb-rmbtn">카드 제거</button>
                     <div class="bb-si-wrap">
@@ -1957,23 +1959,26 @@
 		if (localStorage.getItem('bb_is_cyh') === '1') return;
 		if (!wblGetDayKey()) return;   // 03~08시 비활성 구간
 
-		const now = new Date();
-		const slot = wblSlotLabel30(now);
-		if (localStorage.getItem('bb_wbl_dl_slot') === slot) return;   // 이번 슬롯은 이미 처리(성공이든, 재시도까지 다 실패든)
-		if (localStorage.getItem('bb_wbl_dl_pending_slot') === slot) return;   // 이번 슬롯 1차 시도 이미 나감, 재시도 대기 중
+		const last = parseInt(localStorage.getItem('bb_wbl_dl_last') || '0', 10);
+		if (Date.now() - last < 30 * 60 * 1000) return;   // 마지막 시도(또는 새로고침 시 즉시 로드)로부터 30분 안 지남
 
-		localStorage.setItem('bb_wbl_dl_pending_slot', slot);
+		localStorage.setItem('bb_wbl_dl_last', String(Date.now()));   // 이번 시도로 30분 카운트 리셋
 		const ok = await wblDoDownload();
-		if (ok) {
-			localStorage.setItem('bb_wbl_dl_slot', slot);
-			return;
-		}
-		// 1분 뒤 딱 1회만 재시도
+		if (ok) return;
+
+		// 1분 뒤 딱 1회만 재시도 (성공하든 실패하든, 다음 자동 시도는 위에서 이미 리셋해둔 30분 뒤)
 		if (_wblDlRetryTimer) clearTimeout(_wblDlRetryTimer);
 		_wblDlRetryTimer = setTimeout(async () => {
 			await wblDoDownload();
-			localStorage.setItem('bb_wbl_dl_slot', slot);   // 성공하든 실패하든 이번 슬롯은 종료 처리
 		}, 60 * 1000);
+	}
+
+	// 새로고침(스크립트 재실행) 시점에 한 번 즉시 로드 — 그 시점부터 30분 카운트가 자연스럽게 시작됨
+	function wblTriggerImmediateLoadOnRefresh() {
+		if (localStorage.getItem('bb_is_cyh') === '1') return;
+		if (!wblGetDayKey()) return;
+		localStorage.setItem('bb_wbl_dl_last', String(Date.now()));
+		wblDoDownload();
 	}
 
 	// 03:30 — 그날의 배터리 로그를 로컬에서 정리 (다음날 첫 접속에서도 wblEnsureDay가 자동으로 새로 시작하지만, 켜져있는 상태라면 더 일찍 정리)
@@ -2488,6 +2493,7 @@
 
     // ── 강제 업로드/불러오기 버튼 (사이클과 무관하게 즉시 실행) ──
     document.getElementById('bb-wbl-upload-btn').addEventListener('click', async (e) => {
+        if (!confirm('배터리 데이터를 업로드 하시겠습니까?')) return;
         const btn = e.currentTarget;
         const orig = btn.textContent;
         btn.textContent = '⏳ 업로드 중...'; btn.disabled = true;
@@ -2496,6 +2502,7 @@
         setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 1500);
     });
     document.getElementById('bb-wbl-download-btn').addEventListener('click', async (e) => {
+        if (!confirm('배터리 데이터를 불러오시겠습니까?')) return;
         const btn = e.currentTarget;
         const orig = btn.textContent;
         btn.textContent = '⏳ 불러오는 중...'; btn.disabled = true;
@@ -2946,6 +2953,8 @@
 
     // ── 백업/복원
     const BACKUP_BASE = 'https://multimonitoring.vercel.app/api/battery';
+
+    wblTriggerImmediateLoadOnRefresh();
 
     document.getElementById('bb-backup-btn').addEventListener('click', async () => {
         const name = prompt('백업 이름을 입력하세요 (예: 최윤혁)');
