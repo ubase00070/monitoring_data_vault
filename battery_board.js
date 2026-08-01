@@ -434,7 +434,7 @@
 		}
 		#bb-walker-bubble b {
 			font-weight:900;      /* 본문(700)보다 한 단계 더 굵게 */
-			color:#a8460c;        /* 색까지 살짝 다르게 줘서 확실히 구분 */
+			color:#a8460c;        /* 색까지 살짝 다르게 줘서 구분 */
 		}
 
         #bb-walker-toggle {
