@@ -42,10 +42,10 @@
           "raw": "1"
         },
         "8/7": {
-          "status": "work",
+          "status": "annual",
           "working": true,
-          "present": true,
-          "raw": "1"
+          "present": false,
+          "raw": "연차"
         },
         "8/8": {
           "status": "off",
@@ -84,10 +84,10 @@
           "raw": "1"
         },
         "8/14": {
-          "status": "work",
+          "status": "annual",
           "working": true,
-          "present": true,
-          "raw": "1"
+          "present": false,
+          "raw": "연차"
         },
         "8/15": {
           "status": "off",
@@ -126,10 +126,10 @@
           "raw": "1"
         },
         "8/21": {
-          "status": "work",
+          "status": "annual",
           "working": true,
-          "present": true,
-          "raw": "1"
+          "present": false,
+          "raw": "연차"
         },
         "8/22": {
           "status": "off",
@@ -168,10 +168,10 @@
           "raw": "1"
         },
         "8/28": {
-          "status": "work",
+          "status": "annual",
           "working": true,
-          "present": true,
-          "raw": "1"
+          "present": false,
+          "raw": "연차"
         },
         "8/29": {
           "status": "off",
@@ -8141,6 +8141,6 @@
     "8/31"
   ],
   "mainMonth": 8,
-  "updatedAt": "2026-07-31T03:53:15.879Z",
+  "updatedAt": "2026-08-01T03:53:17.308Z",
   "sheetName": "2026년_08월 스케줄"
 }
