@@ -2160,7 +2160,7 @@
 		const lastOp = rs.lastOperatedUserName || '-';
 		const lastOpAt = formatRelTime(rs.lastOperatedAt);
 		
-		// 마지막 연결
+		// 마지막 통신 신호
 		const lastConnAt = formatRelTime(rs.lastConnectedAt);
 
         // SW 버전 & 하드웨어
@@ -2190,7 +2190,7 @@
                             <span class="bb-icp-value">${lastOpAt}</span>
                         </div>
                         <div class="bb-icp-row">
-                            <span class="bb-icp-label">마지막 기체 연결 끊김</span>
+                            <span class="bb-icp-label">마지막 통신 신호</span>
                             <span class="bb-icp-value">${lastConnAt}</span>
                         </div>
                     </div>
