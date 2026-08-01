@@ -887,7 +887,7 @@
         { siteIds: [207], label: '자연스런 캠핑장' },
     ];
     const CLUSTER_AC = {
-        charging:'var(--gn)', patrolling:'var(--bl)', standby:'#c8ccd4',
+        charging:'var(--gn)', patrolling:'var(--bl)', standby:'#000000',
         off:'#4b5563', delivering:'var(--pk)', docking:'var(--ye)',
     };
 
@@ -2649,12 +2649,17 @@
 			Bluebear: '두근',
 			Bob:      '고양이',
 			Bones:    '옙',
+            Coco:     '삐용',
+            Cookie:   '초롱초롱',
 			Curt:     '음',
+            Egbert:   '짜잔',
 			Filbert:  '예용',
 			Flurry:   '뽀드득',
 			Joey:     '그래유',
 			Ketchup:  '찌익',
+            Marina:   '캬캬',
 			Octavian: '쭉쭉',
+            Rudy:     '그러거나',
 			Scoot:    '꾸왁',
 			Walker:   '컹컹',
 		};
