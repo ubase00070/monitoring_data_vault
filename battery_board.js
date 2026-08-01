@@ -2574,22 +2574,26 @@
 	(function() {
 		const WALKER_BASE = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/';
 		const walkerFiles = [
-			{ name: 'Walker',   variants: ['Walker.webp', 'Walker_2.webp', 'Walker_3.webp'] },
-			{ name: 'Scoot',   variants: ['Scoot.webp', 'Scoot_2.webp', 'Scoot_3.webp'] },
+			{ name: 'Walker',   variants: ['Walker.webp', 'Walker_2.webp', 'Walker_3.webp', 'Walker_4.webp', 'Walker_5.webp'] },
+			{ name: 'Scoot',    variants: ['Scoot.webp', 'Scoot_2.webp', 'Scoot_3.webp'] },
 			{ name: 'Flurry',   variants: ['Flurry.gif'] },
 			{ name: 'Octavian', variants: ['Octavian.webp', 'Octavian_2.webp', 'Octavian_3.webp'] },
 			{ name: 'Blathers', variants: ['Blathers.webp', 'Blathers_2.webp', 'Blathers_3.webp'] },
 			{ name: 'Bluebear', variants: ['Bluebear.webp', 'Bluebear_2.webp', 'Bluebear_3.webp'] },
 			{ name: 'Bob',      variants: ['Bob.webp'] },
-			{ name: 'Bones',    variants: ['Bones.webp', 'Bones_2.webp', 'Bones_3.webp'] },
-			{ name: 'Curt',     variants: ['Curt.webp'] },
-			{ name: 'Filbert',  variants: ['Filbert.webp', 'Filbert_2.webp', 'Filbert_3.webp'] },
+			{ name: 'Bones',    variants: ['Bones.webp', 'Bones_2.webp', 'Bones_3.webp', 'Bones_4.webp', 'Bones_5.webp'] },
+			{ name: 'Coco',     variants: ['Coco.webp', 'Coco_2.webp', 'Coco_3.webp', 'Coco_4.webp'] },
+            { name: 'Cookie',   variants: ['Cookie.webp', 'Cookie_2.webp', 'Cookie_3.webp'] },
+            { name: 'Curt',     variants: ['Curt.webp'] },
+			{ name: 'Egbert',   variants: ['Egbert.webp', 'Egbert_2.webp', 'Egbert_3.webp', 'Egbert_4.webp'] },
+            { name: 'Filbert',  variants: ['Filbert.webp', 'Filbert_2.webp', 'Filbert_3.webp'] },
 			{ name: 'Joey',     variants: ['Joey.webp'] },
 			{ name: 'Ketchup',  variants: ['Ketchup.webp', 'Ketchup_2.webp'] },
-			{ name: 'Sable',    variants: ['Sable.webp', 'Sable_2.webp'] },
+			{ name: 'Marina',   variants: ['Marina.webp', 'Marina_2.webp', 'Marina_3.webp', 'Marina_4.webp'] },
+            { name: 'Rudy',     variants: ['Rudy.webp', 'Rudy_2.webp', 'Rudy_3.webp', 'Rudy_4.webp'] },
+            { name: 'Sable',    variants: ['Sable.webp', 'Sable_2.webp', 'Sable_3.webp'] },
 			{ name: 'Sherb',    variants: ['Sherb.webp', 'Sherb_2.webp'] },
 			{ name: 'Wisp',     variants: ['Wisp.webp', 'Wisp_2.webp'] },
-			
 		];
 		
 		const ROTATE_MS = 2 * 60 * 60 * 1000;   // 2시간마다 배리에이션 교체 (원하는 시간으로 조정)
