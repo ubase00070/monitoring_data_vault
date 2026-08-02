@@ -1718,11 +1718,25 @@
     }
 
     // 연속된 같은 상태를 하나의 구간으로 묶기
-    function wblGetSegments(robotId) {
+    // source: 'today'(기본) 또는 'yesterday' — 각각 알맞은 저장소에서 그날 데이터를 반환, 없으면 null
+    function wblGetSourceData(source) {
+        if (source === 'yesterday') {
+            try {
+                const data = JSON.parse(localStorage.getItem('bb_battery_log_yesterday') || 'null');
+                if (!data || data.day !== wblYesterdayDayKey()) return null;
+                return data;
+            } catch { return null; }
+        }
         const dayKey = wblGetDayKey();
-        if (!dayKey) return [];
+        if (!dayKey) return null;
         const data = wblLoad();
-        if (!data || data.day !== dayKey) return [];
+        if (!data || data.day !== dayKey) return null;
+        return data;
+    }
+
+    function wblGetSegments(robotId, source) {
+        const data = wblGetSourceData(source);
+        if (!data) return [];
         const entry = data.entries[robotId];
         if (!entry || entry.log.length === 0) return [];
         const sortedLog = [...entry.log].sort((a, b) => wblDayAdjMin(a.t) - wblDayAdjMin(b.t));
@@ -1741,8 +1755,8 @@
         return segments;
     }
 
-    function wblSummarizeToday(robotId) {
-        const segments = wblGetSegments(robotId);
+    function wblSummarizeToday(robotId, source) {
+        const segments = wblGetSegments(robotId, source);
         if (segments.length === 0) return null;
 
         return segments.map(seg => {
@@ -1765,18 +1779,21 @@
     }
 
     // 오늘 08:00 기준 분(min) 좌표로 SVG 선그래프 그리기 (미측정 구간은 점선으로 끊음)
-    function wblRenderChartSVG(robotId) {
-        const dayKey = wblGetDayKey();
-        if (!dayKey) return '<div style="font-size:13px;color:var(--mu);padding:30px;text-align:center;">비활성 시간대(03~08시)입니다</div>';
-        const data = wblLoad();
-        if (!data || data.day !== dayKey) return '<div style="font-size:13px;color:var(--mu);padding:30px;text-align:center;">오늘 기록된 데이터 없음</div>';
+    function wblRenderChartSVG(robotId, source) {
+        if (source !== 'yesterday') {
+            const dayKey = wblGetDayKey();
+            if (!dayKey) return '<div style="font-size:13px;color:var(--mu);padding:30px;text-align:center;">비활성 시간대(03~08시)입니다</div>';
+        }
+        const data = wblGetSourceData(source);
+        if (!data) return `<div style="font-size:13px;color:var(--mu);padding:30px;text-align:center;">${source==='yesterday' ? '어제' : '오늘'} 기록된 데이터 없음</div>`;
         const entry = data.entries[robotId];
-        if (!entry || entry.log.length === 0) return '<div style="font-size:13px;color:var(--mu);padding:30px;text-align:center;">오늘 기록된 데이터 없음</div>';
+        if (!entry || entry.log.length === 0) return `<div style="font-size:13px;color:var(--mu);padding:30px;text-align:center;">${source==='yesterday' ? '어제' : '오늘'} 기록된 데이터 없음</div>`;
 
         const PX_PER_MIN = 4.8, H = 252, PADX = 19, PADT = 17, PADB = 31;
         const dayStartMin = 8 * 60;
-        const nowMin = (() => { const n=new Date(); let m=n.getHours()*60+n.getMinutes(); if (n.getHours()<3) m += 1440; return m; })();
-        const spanMin = Math.max(60, nowMin - dayStartMin);
+        const spanMin = source === 'yesterday'
+            ? 19 * 60   // 어제는 이미 끝난 하루(08:00~익일03:00)이니 항상 전체 구간
+            : Math.max(60, (() => { const n=new Date(); let m=n.getHours()*60+n.getMinutes(); if (n.getHours()<3) m += 1440; return m; })() - dayStartMin);
         const W = Math.round(spanMin * PX_PER_MIN + PADX * 2);
 
         const xOf = (hhmm) => {
@@ -1899,11 +1916,13 @@
 
 	// ============================================================
 	// CYH 전용 배터리 로그 업로드 / 그 외 전원 다운로드
-	// - 업로드: CYH만, 08:00~17:30, 30분 주기 자동 (+ 수동 강제 버튼)
+	// - 업로드: CYH만, 08:00~17:30 자동(30분 주기, 실패시 1분 뒤 1회 재시도) / 수동은 08:00~23:59 가능(00:00~08:00은 거부)
 	// - 다운로드: CYH 제외 전원, 08:00~익일 03:00, 30분 주기 자동(실패시 1분 뒤 1회 재시도) (+ 수동 강제 버튼)
 	// - 병합: CYH 데이터가 겹치는 시간대는 덮어씀(더 연속적이고 정확하다고 판단)
+	// - 어제 데이터: 트래킹 데이(08:00~익일03:00) 기준 하루 전 스냅샷, 세션당 1회만 로드
 	// ============================================================
 	const WBL_HANDOVER_NAME = '배터리 증감 추이 데이터';
+	const WBL_YESTERDAY_NAME = '배터리 증감 추이 데이터_어제';
 
 	function wblTodayStr() {
 		return wblLocalDateStr(new Date());
@@ -1914,10 +1933,45 @@
 		return `${wblTodayStr()}_${String(now.getHours()).padStart(2,'0')}:${String(slotMin).padStart(2,'0')}`;
 	}
 
+	// 트래킹 데이 기준 "어제" 날짜 계산 (08:00~익일03:00 하루 주기를 그대로 하루 앞으로 민 것)
+	function wblYesterdayDayKey() {
+		const todayTrackingKey = wblGetDayKey() || wblLocalDateStr(new Date());
+		const d = new Date(todayTrackingKey + 'T12:00:00');
+		d.setDate(d.getDate() - 1);
+		return wblLocalDateStr(d);
+	}
+
+	async function wblUploadNamed(name, data) {
+		try {
+			await fetch(BACKUP_BASE, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ name, data }),
+			});
+			return true;
+		} catch (e) { console.log(`[BB] ${name} 업로드 실패:`, e.message); return false; }
+	}
+
 	async function wblDoUpload() {
 		const data = wblLoad();
 		if (!data || data.day !== wblGetDayKey()) return false;
 		try {
+			// 오늘 첫 업로드라면, 서버에 남은 게 "어제 것"인지 확인해서 어제용 파일로 먼저 보존
+			const archivedFor = localStorage.getItem('bb_wbl_archived_day');
+			if (archivedFor !== data.day) {
+				try {
+					const existingRes = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent(WBL_HANDOVER_NAME)}`);
+					if (existingRes.ok) {
+						const existing = await existingRes.json();
+						if (existing?.data?.day && existing.data.day !== data.day) {
+							await wblUploadNamed(WBL_YESTERDAY_NAME, existing.data);
+							console.log('[BB] 어제자 데이터 보존 완료 (' + existing.data.day + ')');
+						}
+					}
+				} catch (e) { console.log('[BB] 어제자 보존 시도 실패(무시하고 계속 진행):', e.message); }
+				localStorage.setItem('bb_wbl_archived_day', data.day);
+			}
+
 			await fetch(BACKUP_BASE, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
@@ -1940,7 +1994,8 @@
 		} catch (e) { console.log('[BB] 배터리 로그 불러오기 실패:', e.message); return false; }
 	}
 
-	// CYH 자동 업로드 — 08:00~17:30만, 30분 슬롯당 1회
+	// CYH 자동 업로드 — 08:00~17:30만, 30분 슬롯당 1회 시도, 실패시 1분 뒤 1회만 재시도
+	let _wblUpRetryTimer = null;
 	async function wblCyhAutoUploadTick() {
 		if (localStorage.getItem('bb_is_cyh') !== '1') return;
 		const now = new Date();
@@ -1950,9 +2005,18 @@
 
 		const slot = wblSlotLabel30(now);
 		if (localStorage.getItem('bb_wbl_up_slot') === slot) return;
-		localStorage.setItem('bb_wbl_up_slot', slot);
 
-		await wblDoUpload();
+		const ok = await wblDoUpload();
+		if (ok) {
+			localStorage.setItem('bb_wbl_up_slot', slot);
+			return;
+		}
+		// 1분 뒤 딱 1회만 재시도 (그 결과와 무관하게 이번 슬롯은 종료 처리 -> 다음 슬롯부터 재개)
+		if (_wblUpRetryTimer) clearTimeout(_wblUpRetryTimer);
+		_wblUpRetryTimer = setTimeout(async () => {
+			await wblDoUpload();
+			localStorage.setItem('bb_wbl_up_slot', slot);
+		}, 60 * 1000);
 	}
 
 	// 그 외 사용자 자동 다운로드 — 08:00~익일 03:00, 30분 슬롯당 1회 시도, 실패시 1분 뒤 1회만 재시도
@@ -1981,6 +2045,21 @@
 		if (!wblGetDayKey()) return;
 		localStorage.setItem('bb_wbl_dl_last', String(Date.now()));
 		wblDoDownload();
+	}
+
+	// 어제자 데이터 — 세션(접속)당 딱 1회만 로드, 성공하면 그 뒤로는 재시도 안 함. 오늘 데이터랑 별도 저장소에 보관.
+	async function wblLoadYesterdayOnce() {
+		const targetKey = wblYesterdayDayKey();
+		if (localStorage.getItem('bb_wbl_yesterday_loaded_for') === targetKey) return;   // 이미 이 '어제'는 확보됨
+		try {
+			const res = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent(WBL_YESTERDAY_NAME)}`);
+			if (!res.ok) return;
+			const remote = await res.json();
+			if (!remote?.data || remote.data.day !== targetKey) return;   // 원하는 날짜가 아니면 저장 안 함
+			localStorage.setItem('bb_battery_log_yesterday', JSON.stringify(remote.data));
+			localStorage.setItem('bb_wbl_yesterday_loaded_for', targetKey);
+			console.log('[BB] 어제자 배터리 로그 로드 완료 (' + targetKey + ')');
+		} catch (e) { console.log('[BB] 어제자 배터리 로그 로드 실패:', e.message); }
 	}
 
 	// 03:30 — 그날의 배터리 로그를 로컬에서 정리 (다음날 첫 접속에서도 wblEnsureDay가 자동으로 새로 시작하지만, 켜져있는 상태라면 더 일찍 정리)
@@ -2177,8 +2256,8 @@
         const relayMajor = raw.version?.relayVersion?.relayFwMajor ?? 1;
         const relayMinor = raw.version?.relayVersion?.relayFwMinor ?? 0;
 
-        const wblChartSvg = wblRenderChartSVG(r.id);
-        const wblLines = wblSummarizeToday(r.id);
+        const wblChartSvg = wblRenderChartSVG(r.id, 'today');
+        const wblLines = wblSummarizeToday(r.id, 'today');
         const wblHtml = wblLines
             ? wblLines.map(line => `<div class="bb-icp-wbl-line">${line}</div>`).join('')
             : `<div class="bb-icp-wbl-line" style="color:var(--mu);">오늘 기록된 데이터 없음</div>`;
@@ -2239,9 +2318,12 @@
                     </div>
                 </div>
                 <div class="bb-icp-right">
-                    <div class="bb-icp-section-title">오늘 배터리 증감 추이</div>
-                    ${wblChartSvg}
-                    <div class="bb-icp-wbl-log">${wblHtml}</div>
+                    <div class="bb-icp-section-title" style="display:flex;align-items:center;justify-content:space-between;">
+                        <span id="bb-icp-wbl-title-text">오늘 배터리 증감 추이</span>
+                        <button class="bb-btn" id="bb-icp-wbl-toggle" style="font-size:11px;padding:3px 8px;">어제 데이터</button>
+                    </div>
+                    <div id="bb-icp-wbl-chart">${wblChartSvg}</div>
+                    <div class="bb-icp-wbl-log" id="bb-icp-wbl-log">${wblHtml}</div>
                 </div>
             </div>
         `;
@@ -2249,6 +2331,18 @@
         panel.classList.add('open');
         panel.style.zIndex = ++topmostZ;
         registerInfoPanelClose();
+
+        let wblCurrentSource = 'today';
+        document.getElementById('bb-icp-wbl-toggle').addEventListener('click', () => {
+            wblCurrentSource = wblCurrentSource === 'today' ? 'yesterday' : 'today';
+            document.getElementById('bb-icp-wbl-title-text').textContent = wblCurrentSource === 'today' ? '오늘 배터리 증감 추이' : '어제 배터리 증감 추이';
+            document.getElementById('bb-icp-wbl-toggle').textContent = wblCurrentSource === 'today' ? '어제 데이터' : '오늘 데이터';
+            document.getElementById('bb-icp-wbl-chart').innerHTML = wblRenderChartSVG(r.id, wblCurrentSource);
+            const lines = wblSummarizeToday(r.id, wblCurrentSource);
+            document.getElementById('bb-icp-wbl-log').innerHTML = lines
+                ? lines.map(line => `<div class="bb-icp-wbl-line">${line}</div>`).join('')
+                : `<div class="bb-icp-wbl-line" style="color:var(--mu);">${wblCurrentSource === 'yesterday' ? '어제' : '오늘'} 기록된 데이터 없음</div>`;
+        });
         requestAnimationFrame(() => {
             const sc = document.getElementById('bb-wbl-scroll');
             if (sc) sc.scrollLeft = sc.scrollWidth;
@@ -2495,6 +2589,7 @@
 
     // ── 강제 업로드/불러오기 버튼 (사이클과 무관하게 즉시 실행) ──
     document.getElementById('bb-wbl-upload-btn').addEventListener('click', async (e) => {
+        if (new Date().getHours() < 8) { alert('❌ 지금은 업로드할 수 없는 시간대입니다 (08:00 이후에 다시 시도해주세요)'); return; }
         if (!confirm('배터리 데이터를 업로드 하시겠습니까?')) return;
         const btn = e.currentTarget;
         const orig = btn.textContent;
@@ -2957,6 +3052,7 @@
     const BACKUP_BASE = 'https://multimonitoring.vercel.app/api/battery';
 
     wblTriggerImmediateLoadOnRefresh();
+    wblLoadYesterdayOnce();
 
     document.getElementById('bb-backup-btn').addEventListener('click', async () => {
         const name = prompt('백업 이름을 입력하세요 (예: 최윤혁)');
