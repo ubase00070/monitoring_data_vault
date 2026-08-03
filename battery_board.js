@@ -751,7 +751,7 @@
                     * 카드 더블클릭/기체정보 검색창: 기체 상세 Info 패널 / 배터리 증감 추이 그래프<br>
                     * 배터리 증감 추이 기능<br>
 					&nbsp;&nbsp;&nbsp;&nbsp;- 08:00부터 다음 날 03:00까지 10분 간격으로 배터리 수치 기록<br> 
-					&nbsp;&nbsp;&nbsp;&nbsp;- 하루가 지난 데이터는 자동 폐기<br> 
+					&nbsp;&nbsp;&nbsp;&nbsp;- 오늘/어제 자 데이터 까지만 보존(<br> 
 					&nbsp;&nbsp;&nbsp;&nbsp;- 그래프 상에서도 기체 현재 상태별로 기록<br>
 					&nbsp;&nbsp;&nbsp;&nbsp;- 배터리 소모 속도 빠른 순 5대 표기(시간당 소모량 확인 가능)<br> 
 					&nbsp;&nbsp;&nbsp;&nbsp;- 배터리 충전 속도 느린 순 5대 표기(시간당 소모량 확인 가능)<br> 
