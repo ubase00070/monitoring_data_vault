@@ -39,6 +39,7 @@
 			--rd:#d16464; --rd2:rgba(209,100,100,.14); --ye:#d1a355;
 			--or:#cf8a4f; --or2:rgba(207,138,79,.12);
 			--pk:#d1729a; --pk2:rgba(209,114,154,.12);
+			--offdot:#4b5563;
 		}
 
         #bb.bb-light {
@@ -51,6 +52,7 @@
             --rd:#ef4444; --rd2:rgba(239,68,68,.12); --ye:#fbbf24;
             --or:#f97316; --or2:rgba(249,115,22,.12);
             --pk:#ec4899; --pk2:rgba(236,72,153,.10);
+            --offdot:#b4b2a9;
         }
         #bb.bb-light .bb-delivery-title { color:#2b2418; }
         #bb.bb-light .bb-delivery-empty { color:#2b2418; }
@@ -625,6 +627,7 @@
             --rd:#ef4444; --rd2:rgba(239,68,68,.12); --ye:#fbbf24;
             --or:#f97316; --or2:rgba(249,115,22,.12);
             --pk:#ec4899; --pk2:rgba(236,72,153,.10);
+            --offdot:#b4b2a9;
         }  
         #bb-info-card-panel.open { display:block; }
         .bb-icp-hd {
@@ -908,7 +911,7 @@
     ];
     const CLUSTER_AC = {
         charging:'var(--gn)', patrolling:'var(--bl)', standby:'var(--tx)',
-        off:'#4b5563', delivering:'var(--pk)', docking:'var(--ye)',
+        off:'var(--offdot)', delivering:'var(--pk)', docking:'var(--ye)',
     };
 
     const MONITOR_GROUPS = [
