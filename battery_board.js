@@ -2320,7 +2320,7 @@
                 <div class="bb-icp-right">
                     <div class="bb-icp-section-title" style="display:flex;align-items:center;justify-content:space-between;">
                         <span id="bb-icp-wbl-title-text">오늘 배터리 증감 추이</span>
-                        <button class="bb-btn" id="bb-icp-wbl-toggle" style="font-size:11px;padding:3px 8px;">어제 데이터</button>
+                        <button class="bb-btn" id="bb-icp-wbl-toggle" style="font-size:11px;padding:3px 8px;">어제 데이터 보기</button>
                     </div>
                     <div id="bb-icp-wbl-chart">${wblChartSvg}</div>
                     <div class="bb-icp-wbl-log" id="bb-icp-wbl-log">${wblHtml}</div>
@@ -2336,7 +2336,7 @@
         document.getElementById('bb-icp-wbl-toggle').addEventListener('click', () => {
             wblCurrentSource = wblCurrentSource === 'today' ? 'yesterday' : 'today';
             document.getElementById('bb-icp-wbl-title-text').textContent = wblCurrentSource === 'today' ? '오늘 배터리 증감 추이' : '어제 배터리 증감 추이';
-            document.getElementById('bb-icp-wbl-toggle').textContent = wblCurrentSource === 'today' ? '어제 데이터' : '오늘 데이터';
+            document.getElementById('bb-icp-wbl-toggle').textContent = wblCurrentSource === 'today' ? '어제 데이터 보기' : '오늘 데이터 보기';
             document.getElementById('bb-icp-wbl-chart').innerHTML = wblRenderChartSVG(r.id, wblCurrentSource);
             const lines = wblSummarizeToday(r.id, wblCurrentSource);
             document.getElementById('bb-icp-wbl-log').innerHTML = lines
