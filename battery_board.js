@@ -340,9 +340,13 @@
         .bb-ca-mid  { display:flex; justify-content:space-between; align-items:center; }
         .bb-ca-st   { font-size:14px; font-weight:700; color:var(--ac,var(--mu)); opacity:.9; }
         .bb-mission-off { font-size:11px; font-weight:900; color:rgba(239,68,68,.8); }
-        .bb-ca-bar-wrap { position:relative; }
-        .bb-ca-bar  { height:14px; background:rgba(255,255,255,.07); border-radius:4px; overflow:hidden; }
-        .bb-ca-fill { height:100%; border-radius:4px; background:var(--ac,var(--gy)); transition:width .6s ease; }
+        .bb-ca-batt-row { display:flex; align-items:center; gap:6px; }
+        .bb-ca-dots { display:grid; grid-template-columns:repeat(10,1fr); gap:2px; flex:1; height:12px; }
+        .bb-ca-dot  { border-radius:1px; background:rgba(255,255,255,.08); transition:background .3s ease; }
+        .bb-ca-batt-pct {
+            font-size:15px; font-weight:900; color:var(--tx); flex-shrink:0;
+            font-family:'Paperlogy','Lato',monospace; -webkit-text-stroke:0.4px currentColor;
+        }
 
         /* ── 하단 영역 ── */
         .bb-bottom {
@@ -1565,15 +1569,21 @@
         const off    = r.status === 'off';
         const lowBat = !r.loading && !off && r.battery <= 21;
         const pct    = (off || r.loading) ? 0 : r.battery;
-        const inside = pct >= 28;
         const showMissionOff = !r.canDispatch && !off && !r.loading
 		    && r.status !== 'patrolling' && r.status !== 'delivering' && r.status !== 'standby'
 		const showPlug = r.status !== 'patrolling' && r.status !== 'delivering' && !!r.raw?.robotStatus?.isWiredChargerConnected;
-        const isLight = bbEl.classList.contains('bb-light');
-        const batColor  = isLight ? 'rgba(30,25,15,.95)' : 'rgba(240,240,255,.93)';
-        const batShadow = isLight
-            ? (inside ? '0 0 3px rgba(255,255,255,.85)' : '0 1px 2px rgba(255,255,255,.9), 0 0 4px rgba(255,255,255,.6)')
-            : (inside ? '0 0 4px rgba(0,0,0,.8)' : '0 1px 3px rgba(0,0,0,.95), 0 0 6px rgba(0,0,0,.7)');
+        const lit = Math.floor(pct / 10);
+        const showHalfDot = pct > 0 && lit === 0;
+        const dotColor = lowBat ? 'var(--rd)' : 'var(--ac,var(--gy))';
+        const dotsHtml = Array.from({ length: 10 })
+            .map((_, i) => {
+                if (i < lit) return `<div class="bb-ca-dot" style="background:${dotColor}"></div>`;
+                if (i === 0 && showHalfDot) {
+                    return `<div class="bb-ca-dot" style="background:linear-gradient(90deg, ${dotColor} 50%, rgba(255,255,255,.08) 50%)"></div>`;
+                }
+                return `<div class="bb-ca-dot" style="background:rgba(255,255,255,.08)"></div>`;
+            })
+            .join('');
 
         const c = document.createElement('div');
         c.className = `bb-ca ${r.loading ? 'loading' : r.status}${lowBat ? ' warn-bat' : ''}`;
@@ -1587,21 +1597,9 @@
                 <div class="bb-ca-st">${r.loading ? '⏳ 로딩 중' : STI[r.status]+' '+STL[r.status]}${showPlug ? ' 🔌' : ''}</div>
                 ${showMissionOff ? '<div class="bb-mission-off">임무 OFF</div>' : ''}
             </div>
-            <div class="bb-ca-bar-wrap">
-                <div class="bb-ca-bar">
-                    <div class="bb-ca-fill" style="width:${pct}%"></div>
-                </div>
-                ${(off || r.loading) ? '' : `
-                    <span style="position:absolute;
-                        ${inside
-                            ? 'right:5px;top:50%;transform:translateY(-50%);'
-                            : `left:calc(${pct}% + 5px);top:50%;transform:translateY(-50%);`}
-                        font-size:11px;font-weight:900;-webkit-text-stroke:0.65px currentColor;
-                        color:${batColor};
-                        font-family:'Paperlogy','Lato',monospace;
-                        text-shadow:${batShadow};
-                        line-height:1;pointer-events:none;">${r.battery}%</span>
-                `}
+            <div class="bb-ca-batt-row" style="${(off || r.loading) ? 'visibility:hidden' : ''}">
+                <div class="bb-ca-dots">${dotsHtml}</div>
+                <span class="bb-ca-batt-pct">${r.battery}%</span>
             </div>
         `;
 
@@ -2001,8 +1999,7 @@
 		const now = new Date();
 		const h = now.getHours(), m = now.getMinutes();
 
-		// 17:50 라스트 업로드
-		if (h === 17 && m >= 50) {
+        if (h === 17 && m >= 50) {
 			const exKey = `bb_wbl_up_1750_${wblTodayStr()}`;
 			if (localStorage.getItem(exKey) !== '1') {
 				localStorage.setItem(exKey, '1');
@@ -2010,7 +2007,7 @@
 			}
 			return;
 		}
-		
+        
 		const minsSince8 = (h - 8) * 60 + m;
 		if (minsSince8 < 0 || minsSince8 > 570) return;   // 08:00~17:30 범위 밖
 
