@@ -619,6 +619,12 @@
             --bg:#ded3b8; --sur:#f8f3e6; --sur2:#efe6d2;
             --bd:#cabf9d; --bd2:#b3a687; --tx:#2b2418; --mu:#7a6f5c;
             --wh:rgba(0,0,0,.05);
+            --gn:#22c55e; --gn2:rgba(34,197,94,.10);
+            --bl:#3b82f6; --bl2:rgba(59,130,246,.10);
+            --gy:#4b5563;
+            --rd:#ef4444; --rd2:rgba(239,68,68,.12); --ye:#fbbf24;
+            --or:#f97316; --or2:rgba(249,115,22,.12);
+            --pk:#ec4899; --pk2:rgba(236,72,153,.10);
         }  
         #bb-info-card-panel.open { display:block; }
         .bb-icp-hd {
