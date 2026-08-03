@@ -3101,24 +3101,11 @@
 		try {
 			const listRes = await fetch('https://multimonitoring.vercel.app/api/battery');
 			const listData = await listRes.json();
-			const names = (listData.names || []).filter(n => n !== '배터리 증감 추이 데이터');
-			const choice = prompt(`복원할 백업을 선택하세요:\n\n0. 배터리 증감 추이 데이터\n${names.map((n,i) => `${i+1}. ${n}`).join('\n')}\n\n번호 또는 이름 입력:`);
+			const names = (listData.names || []).filter(n => n !== WBL_HANDOVER_NAME && n !== WBL_YESTERDAY_NAME);
+			if (!names.length) { alert('❌ 저장된 백업 없음'); return; }
+			const choice = prompt(`복원할 백업을 선택하세요:\n\n${names.map((n,i) => `${i+1}. ${n}`).join('\n')}\n\n번호 또는 이름 입력:`);
 			if (!choice) return;
 
-			// ── 0번: 배터리 증감 추이 데이터 (기존 백업 서버 재사용) ──
-			if (choice.trim() === '0') {
-				const wblRes = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent('배터리 증감 추이 데이터')}`);
-				if (!wblRes.ok) { alert('❌ 서버에 저장된 데이터 없음'); return; }
-				const remote = await wblRes.json();
-				const remoteData = remote?.data || remote;
-				const merged = wblMergeImported(remoteData);
-				if (!merged) { alert('❌ 오늘 날짜 데이터가 아니라 병합할 수 없음 (날짜: ' + (remoteData?.day || '없음') + ')'); return; }
-				alert('✅ 배터리 증감 추이 데이터 복원 완료');
-				return;
-			}
-
-			// ── 기존: 개별 카드 목록 백업 ──
-			if (!names.length) { alert('❌ 저장된 백업 없음'); return; }
 			const num = parseInt(choice);
 			const name = (!isNaN(num) && num >= 1 && num <= names.length)
 				? names[num - 1]
