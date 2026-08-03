@@ -2000,6 +2000,17 @@
 		if (localStorage.getItem('bb_is_cyh') !== '1') return;
 		const now = new Date();
 		const h = now.getHours(), m = now.getMinutes();
+
+		// 17:50 라스트 업로드
+		if (h === 17 && m >= 50) {
+			const exKey = `bb_wbl_up_1750_${wblTodayStr()}`;
+			if (localStorage.getItem(exKey) !== '1') {
+				localStorage.setItem(exKey, '1');
+				await wblDoUpload();
+			}
+			return;
+		}
+		
 		const minsSince8 = (h - 8) * 60 + m;
 		if (minsSince8 < 0 || minsSince8 > 570) return;   // 08:00~17:30 범위 밖
 
