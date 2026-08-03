@@ -1776,8 +1776,9 @@
             const durMin = Math.max(10, wblToMin(seg.end) - wblToMin(seg.start) + 10);
             const durTxt = durMin >= 60 ? `${Math.floor(durMin/60)}시간${durMin%60 ? ' '+(durMin%60)+'분' : ''}` : `${durMin}분`;
             const label = WBL_STL[seg.status] || seg.status;
-            const icon  = STI[seg.status] || '⚪';
-            const head  = `${icon} ${label} ${seg.start}~${seg.end} (${durTxt})`;
+            const dotColor = CLUSTER_AC[seg.status] || 'var(--mu)';
+            const dot = `<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${dotColor};margin-right:2px;vertical-align:1px;"></span>`;
+            const head  = `${dot} ${label} ${seg.start}~${seg.end} (${durTxt})`;
 
             if (seg.status === 'off' || seg.startBattery == null || seg.endBattery == null) {
                 return `${head}`;
