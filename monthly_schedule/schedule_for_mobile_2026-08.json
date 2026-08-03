@@ -1423,10 +1423,10 @@
           "raw": "1"
         },
         "8/12": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "8/13": {
           "status": "off",
@@ -1447,10 +1447,10 @@
           "raw": "휴무"
         },
         "8/16": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "8/17": {
           "status": "work",
@@ -3154,10 +3154,10 @@
           "raw": "1"
         },
         "8/11": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "8/12": {
           "status": "work",
@@ -3238,10 +3238,10 @@
           "raw": "반차"
         },
         "8/25": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "8/26": {
           "status": "off",
@@ -3347,10 +3347,10 @@
           "raw": "1"
         },
         "8/11": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "8/12": {
           "status": "work",
@@ -3431,10 +3431,10 @@
           "raw": "1"
         },
         "8/25": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "8/26": {
           "status": "work",
@@ -3823,16 +3823,16 @@
           "raw": "1"
         },
         "8/26": {
-          "status": "annual",
+          "status": "work",
           "working": true,
-          "present": false,
-          "raw": "연차"
+          "present": true,
+          "raw": "1"
         },
         "8/27": {
-          "status": "annual",
+          "status": "half",
           "working": true,
-          "present": false,
-          "raw": "연차"
+          "present": true,
+          "raw": "반차"
         },
         "8/28": {
           "status": "annual",
@@ -8141,6 +8141,6 @@
     "8/31"
   ],
   "mainMonth": 8,
-  "updatedAt": "2026-08-02T03:53:06.026Z",
+  "updatedAt": "2026-08-03T03:53:04.382Z",
   "sheetName": "2026년_08월 스케줄"
 }
