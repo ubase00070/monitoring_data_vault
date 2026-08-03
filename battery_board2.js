@@ -1784,6 +1784,14 @@
 
     // 오늘 08:00 기준 분(min) 좌표로 SVG 선그래프 그리기 (미측정 구간은 점선으로 끊음)
     function wblRenderChartSVG(robotId, source) {
+        const isLight = bbEl.classList.contains('bb-light');
+        const gridEdge  = isLight ? '#b3a687' : '#3a3a40';
+        const gridMid   = isLight ? '#cabf9d' : '#242428';
+        const tickLine  = isLight ? '#cabf9d' : '#1c1c20';
+        const labelText = isLight ? '#7a6f5c' : '#9ca3af';
+        const hintText  = isLight ? '#7a6f5c' : '#6b7280';
+        const dotFill   = isLight ? '#2b2418' : '#e5e7eb';
+        const haloColor = isLight ? '#f8f3e6' : '#0d1117';
         if (source !== 'yesterday') {
             const dayKey = wblGetDayKey();
             if (!dayKey) return '<div style="font-size:13px;color:var(--mu);padding:30px;text-align:center;">비활성 시간대(03~08시)입니다</div>';
@@ -1846,14 +1854,14 @@
             return `<polygon points="${x0},${base} ${pts} ${x1},${base}" style="fill:${colorOf(seg.status)}" fill-opacity="0.12"/>`;
         });
         const dots = colorSegs.flatMap(seg => seg.points.map(pt =>
-            `<circle cx="${xOf(pt.t).toFixed(1)}" cy="${yOf(pt.battery).toFixed(1)}" r="4.2" style="fill:${colorOf(pt.status)}" stroke="#0d1117" stroke-width="1.5"/>`
+            `<circle cx="${xOf(pt.t).toFixed(1)}" cy="${yOf(pt.battery).toFixed(1)}" r="4.2" style="fill:${colorOf(pt.status)}" stroke="${haloColor}" stroke-width="1.5"/>`
         ));
         const dotLabels = colorSegs.flatMap(seg => seg.points.map(pt => {
             const above = pt.battery >= 92;   // 100%에 가까우면 그래프 상단에 눌려서 잘리니 아래쪽에 표기
             const ty = yOf(pt.battery) + (above ? 14 : -8);
             return `<text x="${xOf(pt.t).toFixed(1)}" y="${ty.toFixed(1)}" font-size="14" font-weight="700"
-                        text-anchor="middle" fill="#e5e7eb"
-                        stroke="#0d1117" stroke-width="3" paint-order="stroke fill">${pt.battery}%</text>`;
+                        text-anchor="middle" fill="${dotFill}"
+                        stroke="${haloColor}" stroke-width="3" paint-order="stroke fill">${pt.battery}%</text>`;
         }));
 
         // x축: 정시(00분) 라벨
@@ -1864,7 +1872,7 @@
         }
 
         const yLabels = [100,75,50,25,0].map(p =>
-            `<div style="position:absolute;top:${(yOf(p)-8).toFixed(1)}px;left:0;font-size:14px;font-weight:700;color:#9ca3af;">${p}</div>`
+            `<div style="position:absolute;top:${(yOf(p)-8).toFixed(1)}px;left:0;font-size:14px;font-weight:700;color:${labelText};">${p}</div>`
         ).join('');
 
         return `
@@ -1872,17 +1880,17 @@
                 <div style="position:relative;width:31px;height:${H}px;flex-shrink:0;">${yLabels}</div>
                 <div class="bb-wbl-scroll" id="bb-wbl-scroll">
                     <svg width="${W}" height="${H}" style="display:block;">
-                        ${[0,25,50,75,100].map(p => `<line x1="${PADX}" y1="${yOf(p)}" x2="${W-PADX}" y2="${yOf(p)}" stroke="${p===0||p===100?'#3a3a40':'#242428'}" stroke-width="1" stroke-dasharray="${p===0||p===100?'0':'3,3'}"/>`).join('')}
-                        ${xTicks.map(t => `<line x1="${t.x.toFixed(1)}" y1="${PADT}" x2="${t.x.toFixed(1)}" y2="${H-PADB}" stroke="#1c1c20" stroke-width="1"/>`).join('')}
+                        ${[0,25,50,75,100].map(p => `<line x1="${PADX}" y1="${yOf(p)}" x2="${W-PADX}" y2="${yOf(p)}" stroke="${p===0||p===100?gridEdge:gridMid}" stroke-width="1" stroke-dasharray="${p===0||p===100?'0':'3,3'}"/>`).join('')}
+                        ${xTicks.map(t => `<line x1="${t.x.toFixed(1)}" y1="${PADT}" x2="${t.x.toFixed(1)}" y2="${H-PADB}" stroke="${tickLine}" stroke-width="1"/>`).join('')}
                         ${areaFills.join('')}
                         ${polylines.join('')}
                         ${dots.join('')}
                         ${dotLabels.join('')}
-                        ${xTicks.map(t => `<text x="${t.x.toFixed(1)}" y="${H-8}" font-size="14" font-weight="700" fill="#9ca3af" text-anchor="middle">${t.label}</text>`).join('')}
+                        ${xTicks.map(t => `<text x="${t.x.toFixed(1)}" y="${H-8}" font-size="14" font-weight="700" fill="${labelText}" text-anchor="middle">${t.label}</text>`).join('')}
                     </svg>
                 </div>
             </div>
-            <div style="display:flex; align-items:center; gap:6px; margin-top:4px; padding:0 4px 0 30px; font-size:10px; color:#6b7280;">
+            <div style="display:flex; align-items:center; gap:6px; margin-top:4px; padding:0 4px 0 30px; font-size:10px; color:${hintText};">
                 ↔️ 그래프를 좌우로 드래그하면 시간대를 이동할 수 있어요
             </div>
             <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:6px; padding:0 4px 0 30px;">
