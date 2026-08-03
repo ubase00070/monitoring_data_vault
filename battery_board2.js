@@ -31,14 +31,14 @@
 		}
 		@import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap');
         :root {
-			--bg:#111113; --sur:#1c1c22; --sur2:#232329;
-			--bd:#242428; --bd2:#2e2e34; --tx:#e8e8f0; --mu:#52525e;
-			--gn:#22c55e; --gn2:rgba(34,197,94,.10);
-			--bl:#3b82f6; --bl2:rgba(59,130,246,.10);
-			--wh:rgba(240,240,255,.06); --gy:#4b5563;
-			--rd:#ef4444; --rd2:rgba(239,68,68,.12); --ye:#fbbf24;
-			--or:#f97316; --or2:rgba(249,115,22,.12);
-			--pk:#ec4899; --pk2:rgba(236,72,153,.10);
+			--bg:#1b1e24; --sur:#242830; --sur2:#2c313a;
+			--bd:#343a44; --bd2:#3d434e; --tx:#e4e6ea; --mu:#8b929c;
+			--gn:#4d9d6d; --gn2:rgba(77,157,109,.12);
+			--bl:#5b8fd1; --bl2:rgba(91,143,209,.12);
+			--wh:rgba(228,230,234,.05); --gy:#5a6069;
+			--rd:#d16464; --rd2:rgba(209,100,100,.14); --ye:#d1a355;
+			--or:#cf8a4f; --or2:rgba(207,138,79,.12);
+			--pk:#d1729a; --pk2:rgba(209,114,154,.12);
 		}
 
         #bb.bb-light {
