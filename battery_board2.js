@@ -1573,10 +1573,16 @@
 		    && r.status !== 'patrolling' && r.status !== 'delivering' && r.status !== 'standby'
 		const showPlug = r.status !== 'patrolling' && r.status !== 'delivering' && !!r.raw?.robotStatus?.isWiredChargerConnected;
         const lit = Math.floor(pct / 10);
-		const showHalfDot = pct > 0 && lit === 0;
+        const showHalfDot = pct > 0 && lit === 0;
         const dotColor = lowBat ? 'var(--rd)' : 'var(--ac,var(--gy))';
         const dotsHtml = Array.from({ length: 10 })
-            .map((_, i) => `<div class="bb-ca-dot" style="background:${i < lit ? dotColor : 'rgba(255,255,255,.08)'}"></div>`)
+            .map((_, i) => {
+                if (i < lit) return `<div class="bb-ca-dot" style="background:${dotColor}"></div>`;
+                if (i === 0 && showHalfDot) {
+                    return `<div class="bb-ca-dot" style="background:linear-gradient(90deg, ${dotColor} 50%, rgba(255,255,255,.08) 50%)"></div>`;
+                }
+                return `<div class="bb-ca-dot" style="background:rgba(255,255,255,.08)"></div>`;
+            })
             .join('');
 
         const c = document.createElement('div');
