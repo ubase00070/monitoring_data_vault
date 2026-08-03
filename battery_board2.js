@@ -320,7 +320,7 @@
         .bb-ca.charging   { --ac:var(--gn); --ac-border:var(--gn);  background:var(--sur); }
 		.bb-ca.patrolling { --ac:var(--bl); --ac-border:var(--bl); background:var(--sur); }
 		.bb-ca.standby    { --ac:#c8ccd4;  --ac-border:rgba(200,204,212,.3);  background:var(--sur); }
-		.bb-ca.off        { --ac:#4b5563; --ac-border:rgba(75,85,99,.3);     background:var(--sur); border-style:dashed; }
+		.bb-ca.off        { --ac:#4b5563; --ac-border:rgba(75,85,99,.3);     background:var(--sur); }
 		.bb-ca.delivering { --ac:var(--pk); --ac-border:var(--pk); background:var(--sur); }
 		.bb-ca.docking    { --ac:var(--ye); --ac-border:var(--ye); background:var(--sur); }
 		.bb-ca.loading    { --ac:#52525e; --ac-border:rgba(75,85,99,.2); background:var(--sur); opacity:.5; }
