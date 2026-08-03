@@ -320,7 +320,7 @@
         .bb-ca.charging   { --ac:var(--gn); --ac-border:var(--gn);  background:var(--sur); }
 		.bb-ca.patrolling { --ac:var(--bl); --ac-border:var(--bl); background:var(--sur); }
 		.bb-ca.standby    { --ac:#c8ccd4;  --ac-border:rgba(200,204,212,.3);  background:var(--sur); }
-		.bb-ca.off        { --ac:#4b5563; --ac-border:rgba(75,85,99,.3);     background:var(--sur); }
+		.bb-ca.off        { --ac:#4b5563; --ac-border:rgba(75,85,99,.3);     background:var(--sur); border-style:dashed; }
 		.bb-ca.delivering { --ac:var(--pk); --ac-border:var(--pk); background:var(--sur); }
 		.bb-ca.docking    { --ac:var(--ye); --ac-border:var(--ye); background:var(--sur); }
 		.bb-ca.loading    { --ac:#52525e; --ac-border:rgba(75,85,99,.2); background:var(--sur); opacity:.5; }
@@ -340,15 +340,13 @@
         .bb-ca-mid  { display:flex; justify-content:space-between; align-items:center; }
         .bb-ca-st   { font-size:14px; font-weight:700; color:var(--ac,var(--mu)); opacity:.9; }
         .bb-mission-off { font-size:11px; font-weight:900; color:rgba(239,68,68,.8); }
-        .bb-ca-batt-row  { display:flex; align-items:center; gap:6px; }
-        .bb-ca-batt-icon { position:relative; width:52px; height:20px; flex-shrink:0; box-sizing:border-box; border:2px solid var(--ac,var(--gy)); border-radius:4px; }
-        .bb-ca-batt-icon::after {
-            content:''; position:absolute; right:-4px; top:6px; width:2px; height:8px;
-            background:var(--ac,var(--gy)); border-radius:0 2px 2px 0;
+        .bb-ca-batt-row { display:flex; align-items:center; gap:6px; }
+        .bb-ca-dots { display:grid; grid-template-columns:repeat(10,1fr); gap:2px; flex:1; height:12px; }
+        .bb-ca-dot  { border-radius:1px; background:rgba(255,255,255,.08); transition:background .3s ease; }
+        .bb-ca-batt-pct {
+            font-size:15px; font-weight:900; color:var(--tx); flex-shrink:0;
+            font-family:'Paperlogy','Lato',monospace; -webkit-text-stroke:0.4px currentColor;
         }
-        .bb-ca-batt-fill { position:absolute; left:2px; top:2px; bottom:2px; background:var(--ac,var(--gy)); border-radius:2px; transition:width .6s ease; }
-        .bb-ca-batt-pct  { font-size:14px; font-weight:900; color:var(--tx); font-family:'Paperlogy','Lato',monospace; -webkit-text-stroke:0.4px currentColor; }
-        .bb-ca-plug      { font-size:13px; line-height:1; flex-shrink:0; }
 
         /* ── 하단 영역 ── */
         .bb-bottom {
@@ -1574,7 +1572,11 @@
         const showMissionOff = !r.canDispatch && !off && !r.loading
 		    && r.status !== 'patrolling' && r.status !== 'delivering' && r.status !== 'standby'
 		const showPlug = r.status !== 'patrolling' && r.status !== 'delivering' && !!r.raw?.robotStatus?.isWiredChargerConnected;
-        const battFillPx = (off || r.loading) ? 0 : Math.round((pct / 100) * 44);
+        const lit = Math.floor(pct / 10);
+        const dotColor = lowBat ? 'var(--rd)' : 'var(--ac,var(--gy))';
+        const dotsHtml = Array.from({ length: 10 })
+            .map((_, i) => `<div class="bb-ca-dot" style="background:${i < lit ? dotColor : 'rgba(255,255,255,.08)'}"></div>`)
+            .join('');
 
         const c = document.createElement('div');
         c.className = `bb-ca ${r.loading ? 'loading' : r.status}${lowBat ? ' warn-bat' : ''}`;
@@ -1585,15 +1587,12 @@
         c.innerHTML = `
             <div class="bb-ca-name">${r.name}</div>
             <div class="bb-ca-mid">
-                <div class="bb-ca-st">${r.loading ? '⏳ 로딩 중' : STI[r.status]+' '+STL[r.status]}</div>
+                <div class="bb-ca-st">${r.loading ? '⏳ 로딩 중' : STI[r.status]+' '+STL[r.status]}${showPlug ? ' 🔌' : ''}</div>
                 ${showMissionOff ? '<div class="bb-mission-off">임무 OFF</div>' : ''}
             </div>
-            <div class="bb-ca-batt-row">
-                <div class="bb-ca-batt-icon">
-                    <div class="bb-ca-batt-fill" style="width:${battFillPx}px"></div>
-                </div>
-                <span class="bb-ca-batt-pct">${(off || r.loading) ? '-' : r.battery + '%'}</span>
-                ${showPlug ? '<span class="bb-ca-plug">🔌</span>' : ''}
+            <div class="bb-ca-batt-row" style="${(off || r.loading) ? 'visibility:hidden' : ''}">
+                <div class="bb-ca-dots">${dotsHtml}</div>
+                <span class="bb-ca-batt-pct">${r.battery}%</span>
             </div>
         `;
 
