@@ -129,7 +129,8 @@
         .bb-clock { font-family:'Lato',monospace; font-size:13px; font-weight:900; color:var(--mu); letter-spacing:.8px; }
         .bb-ref   { font-size:12px; color:var(--mu); font-weight:700; }
         .bb-hd-left  { position:absolute; left:14px; top:50%; transform:translateY(-50%); display:flex; align-items:center; gap:6px; }
-        .bb-hd-right { position:absolute; right:14px; top:50%; transform:translateY(-50%); display:flex; align-items:center; justify-content:flex-end; gap:6px; }
+        .bb-hd-right { position:absolute; right:14px; top:50%; transform:translateY(-50%); display:flex; flex-direction:column; align-items:flex-end; gap:6px; }
+        .bb-hd-right-row { display:flex; align-items:center; justify-content:flex-end; gap:6px; }
 
         .bb-btn {
             height:32px; padding:0 12px; border-radius:6px; border:1px solid var(--bd2);
@@ -165,6 +166,7 @@
 		    display:flex; align-items:stretch;
 		    flex-shrink:0; height:66px;
 		    position:relative;
+		    border-bottom:1px solid var(--bd);
 		}
         .bb-alert-bar {
             flex:1; display:flex; align-items:center; gap:10px;
@@ -177,7 +179,7 @@
         .bb-alert-chips { display:flex; gap:5px; flex-wrap:wrap; flex:1; align-items:center; min-width:0; }
         .bb-chip {
             display:flex; flex-direction:column; gap:1px;
-            padding:3px 12px; border-radius:10px;
+            padding:3px 16px; border-radius:10px;
             font-size:15px; font-weight:700; cursor:pointer;
             font-family:inherit; max-width:198px;
             transition:filter .15s, box-shadow .15s;
@@ -210,10 +212,6 @@
         }
 
         /* 검색 */
-        .bb-search-wrap {
-            width:max-content; flex-shrink:0; padding:6px 10px;
-            position:relative; display:flex; flex-wrap:nowrap; justify-content:flex-end; align-items:center; gap:6px;
-        }
         .bb-si-wrap { position:relative; }
         .bb-si {
             width:26.5ch; max-width:100%; background:var(--sur2); border:1px solid var(--bd2);
@@ -252,7 +250,7 @@
 
         .bb-cluster-side {
             width:280px; flex-shrink:0; display:flex; flex-direction:column; gap:5px;
-            overflow-y:auto;
+            overflow-y:auto; padding-top:10px;
         }
 		.bb-cluster-plug { font-size:10px; line-height:1; flex-shrink:0; }
 
@@ -449,7 +447,7 @@
 		.bb-walker-arrow:active { transform:translateY(-50%) scale(0.9); }
 
 		#bb-walker-bubble {
-			position:absolute; top:6px; left:260px; width:250px; min-height:50px;
+			position:absolute; top:6px; left:190px; width:250px; min-height:50px;
 			background:#fdf6e3; border-radius:20px; padding:10px 18px;
 			font-size:16px; color:#5c4a2a; font-weight:700; line-height:1.4;
 			box-shadow:0 4px 12px rgba(0,0,0,.35);
@@ -487,7 +485,7 @@
             font-size:16.5px; font-weight:900; color:var(--tx); letter-spacing:.3px;
             padding:5px 6px; border:1px solid var(--bd); background:var(--sur);
             text-align:center; border-radius:8px; flex-shrink:0;
-            width:30%; box-sizing:border-box; margin:6px 0 0 6px;
+            width:30%; box-sizing:border-box; margin:10px 0 0 8px;
         }
         .bb-delivery-chips {
             display:flex; flex-wrap:wrap; gap:4px;
@@ -733,30 +731,32 @@
                     </div>
                 </div>
                 <div class="bb-hd-right" id="bb-hd-right">
-                    <button id="bb-top5-btn" class="bb-btn">🔥 배터리 증감 추이</button>
-                    <button class="bb-btn" id="bb-wbl-download-btn">📥 배터리 값 로드</button>
-                    <button id="bb-backup-btn" class="bb-btn">기체 목록 백업</button>
-                    <button id="bb-restore-btn" class="bb-btn">기체 목록 복원</button>
-                    <div class="bb-xbtn" id="bb-closebtn">✕</div>
+                    <div class="bb-hd-right-row">
+                        <button id="bb-top5-btn" class="bb-btn">🔥 배터리 증감 추이</button>
+                        <button class="bb-btn" id="bb-wbl-download-btn">📥 배터리 값 로드</button>
+                        <button id="bb-backup-btn" class="bb-btn">기체 목록 백업</button>
+                        <button id="bb-restore-btn" class="bb-btn">기체 목록 복원</button>
+                        <div class="bb-xbtn" id="bb-closebtn">✕</div>
+                    </div>
+                    <div class="bb-hd-right-row" id="bb-search-wrap">
+                        <button class="bb-btn" id="bb-wbl-upload-btn" style="display:none;">📤 UP</button>
+                        <button class="bb-btn" id="bb-inforequest-btn">기체 정보 보기</button>
+                        <button class="bb-btn" id="bb-sortname-btn">이름 순 정렬</button>
+                        <button class="bb-btn" id="bb-rmbtn">카드 제거</button>
+                        <div class="bb-si-wrap">
+                            <span class="bb-si-icon">🔍</span>
+                            <input class="bb-si" id="bb-si" placeholder="기체명 검색 후 클릭하여 추가" autocomplete="off">
+                            <div id="bb-dd"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- 알림바 + 검색 -->
+            <!-- 알림바 -->
             <div class="bb-alert-row">
                 <div class="bb-alert-bar" id="bb-alert-bar">
                     <span class="bb-alert-label">🚨 알림</span>
                     <div class="bb-alert-chips" id="bb-alert-chips"></div>
-                </div>
-                <div class="bb-search-wrap" id="bb-search-wrap">
-                    <button class="bb-btn" id="bb-wbl-upload-btn" style="display:none;">📤 UP</button>
-                    <button class="bb-btn" id="bb-inforequest-btn">기체 정보 보기</button>
-                    <button class="bb-btn" id="bb-sortname-btn">이름 순 정렬</button>
-                    <button class="bb-btn" id="bb-rmbtn">카드 제거</button>
-                    <div class="bb-si-wrap">
-                        <span class="bb-si-icon">🔍</span>
-                        <input class="bb-si" id="bb-si" placeholder="기체명 검색 후 클릭하여 추가" autocomplete="off">
-                        <div id="bb-dd"></div>
-                    </div>
                 </div>
             </div>
 
@@ -2823,7 +2823,7 @@
     });
 
     document.addEventListener('mousedown', e => {
-        if (!e.target.closest('.bb-search-wrap') && !e.target.closest('#bb-dd')) hideDd();
+        if (!e.target.closest('#bb-search-wrap') && !e.target.closest('#bb-dd')) hideDd();
     });
 
 	// 동숲 주민
