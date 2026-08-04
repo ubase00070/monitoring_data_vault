@@ -1258,7 +1258,7 @@
                     version: 'v1.4',
                     date: '2026-08-04',
                     items: [
-						'D-PAD UP 1.5초간 홀드 -> 해결 완료 후 확인',
+						'D-PAD UP 개입진입 시간 / 진입당시 시나리오 표기',
 						'다음 개입 요청 자동 OFF',
                         '문제해결 페이지',
                         '패드 작동 테스터',
@@ -5372,6 +5372,8 @@
         }
     });
 
+	let neubieInterventionEntry = { time: null, scenario: null };
+
     let lastUrl = location.href;
 
     // 브라우저의 뒤로가기/앞으로가기 대응 (이벤트 발생 시에만)
@@ -5416,6 +5418,7 @@
 
                 if (/\/driving\/\d+/.test(location.pathname)) {
                     _startOperatorWatch();
+					setTimeout(() => captureInterventionEntry(), 1500);
                 } else {
                     _stopOperatorWatch();
                 }
@@ -5461,6 +5464,7 @@
 
             if (/\/driving\/\d+/.test(location.pathname)) {
                 _startOperatorWatch();
+				setTimeout(() => captureInterventionEntry(), 1500);
             } else {
                 _stopOperatorWatch();
             }
@@ -5572,6 +5576,41 @@
             showAutoSideNotice(`❌ ${robotName} 사이드 브레이크 명령 전송 실패`, 'rgba(220,38,38,0.92)');
         }
 	}
+	
+	// ── 개입 카드 진입 정보 캡처 + 표시 ──
+    function captureInterventionEntry() {
+        if (!/\/driving\/\d+/.test(location.pathname)) return;
+        const scenarioEl = document.querySelector('.max-w-190.font-size-14.truncate.font-medium.text-mono-800');
+        neubieInterventionEntry = {
+            time: Date.now(),
+            scenario: scenarioEl ? scenarioEl.textContent.trim() : null
+        };
+    }
+
+    function showInterventionInfoOverlay() {
+        const entry = neubieInterventionEntry;
+        if (!entry.time) return;
+
+        document.getElementById('neubie-intervention-info')?.remove();
+        const panel = document.createElement('div');
+        panel.id = 'neubie-intervention-info';
+        panel.style.cssText = `
+            position:fixed; top:80px; left:50%; transform:translateX(-50%);
+            z-index:999999; pointer-events:none;
+            background:rgba(18,18,36,0.95); border:1px solid #6a6aaa; border-radius:14px;
+            padding:14px 24px; font-family:'Pretendard','Noto Sans KR',sans-serif;
+            color:#e2e8f0; text-align:center; box-shadow:0 4px 20px rgba(0,0,0,0.5);
+        `;
+        const timeStr = new Date(entry.time).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+        panel.innerHTML = `
+            <div style="font-size:12px; color:#aab; margin-bottom:4px;">진입 시각</div>
+            <div style="font-size:16px; font-weight:700; margin-bottom:8px;">${timeStr}</div>
+            <div style="font-size:12px; color:#aab; margin-bottom:4px;">진입 당시 시나리오</div>
+            <div style="font-size:15px; font-weight:600; color:#ffd080;">${entry.scenario || '(확인 안 됨)'}</div>
+        `;
+        document.body.appendChild(panel);
+        setTimeout(() => panel.remove(), 3000);
+    }
 	
 	// ── 개입 페이지 레이아웃 ──
     function patchDrivingPageLayout() {
@@ -5759,24 +5798,13 @@
 				return;
 	        }
 	
-	        // D-pad up (12) — 1.5초 홀드 시 "해결 완료" → 팝업 "확인"까지 자동 처리
+	        // D-pad up (12) — 누르면 진입 시각/시나리오 정보 3초간 표시
 			const upBtn = gp.buttons[12];
-			if (upBtn?.pressed) {
-				if (!dpadUpHoldStart) {
-					dpadUpHoldStart = Date.now();
-				} else if (!dpadUpTriggered && Date.now() - dpadUpHoldStart >= 1500) {
-					dpadUpTriggered = true;
-					const resolveBtn = Array.from(document.querySelectorAll('button'))
-						.find(el => el.textContent.trim() === '해결 완료' || el.textContent.trim() === '해결완료');
-					resolveBtn?.click();
-					setTimeout(() => {
-						const confirmBtn = document.querySelector('[data-qk="undefined-confirm-button"]');
-						confirmBtn?.click();
-					}, 300);   // 팝업이 렌더링될 시간을 짧게 대기
-				}
-			} else {
-				dpadUpHoldStart = null;
-				dpadUpTriggered = false;
+			if (upBtn?.pressed && !dpadWasPressed.up) {
+				dpadWasPressed.up = true;
+				showInterventionInfoOverlay();
+			} else if (!upBtn?.pressed) {
+				dpadWasPressed.up = false;
 			}
 	
 	        // D-pad right (15) — 밝기 올리기 + 맵 재동기화
