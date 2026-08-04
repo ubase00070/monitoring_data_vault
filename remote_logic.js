@@ -5597,16 +5597,22 @@
         panel.style.cssText = `
             position:fixed; top:4px; left:50%; transform:translateX(-50%);
             z-index:999999; pointer-events:none;
+            display:flex; align-items:center; gap:20px;
             background:rgba(18,18,36,0.95); border:1px solid #6a6aaa; border-radius:14px;
-            padding:14px 24px; font-family:'Pretendard','Noto Sans KR',sans-serif;
-            color:#e2e8f0; text-align:center; box-shadow:0 4px 20px rgba(0,0,0,0.5);
+            padding:12px 28px; font-family:'Pretendard','Noto Sans KR',sans-serif;
+            color:#e2e8f0; white-space:nowrap; box-shadow:0 4px 20px rgba(0,0,0,0.5);
         `;
         const timeStr = new Date(entry.time).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
         panel.innerHTML = `
-            <div style="font-size:12px; color:#aab; margin-bottom:4px;">진입 시각</div>
-            <div style="font-size:16px; font-weight:700; margin-bottom:8px;">${timeStr}</div>
-            <div style="font-size:12px; color:#aab; margin-bottom:4px;">진입 당시 시나리오</div>
-            <div style="font-size:15px; font-weight:600; color:#ffd080;">${entry.scenario || '(확인 안 됨)'}</div>
+            <div style="text-align:center;">
+                <div style="font-size:11px; color:#aab; margin-bottom:2px;">진입 시각</div>
+                <div style="font-size:16px; font-weight:700;">${timeStr}</div>
+            </div>
+            <div style="width:1px; height:28px; background:#3a3a5a;"></div>
+            <div style="text-align:center;">
+                <div style="font-size:11px; color:#aab; margin-bottom:2px;">진입 당시 시나리오</div>
+                <div style="font-size:15px; font-weight:600; color:#ffd080;">${entry.scenario || '(확인 안 됨)'}</div>
+            </div>
         `;
         document.body.appendChild(panel);
         setTimeout(() => panel.remove(), 3000);
@@ -5798,11 +5804,12 @@
 				return;
 	        }
 	
-	        // D-pad up (12) — 누르면 진입 시각/시나리오 정보 3초간 표시
+	        // D-pad up (12) — 누르면 진입 시각/시나리오 정보 3초간 표시 + 맵 재동기화
 			const upBtn = gp.buttons[12];
 			if (upBtn?.pressed && !dpadWasPressed.up) {
 				dpadWasPressed.up = true;
 				showInterventionInfoOverlay();
+				syncMap();
 			} else if (!upBtn?.pressed) {
 				dpadWasPressed.up = false;
 			}
