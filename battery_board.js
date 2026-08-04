@@ -1,6 +1,6 @@
 /* ============================================================
    battery_board.js v3.1
-   뉴비고 배터리 현황판 — 템퍼몽키 inject
+   NCC 기체 모니터 — 템퍼몽키 inject
    ============================================================ */
 
 (function () {
@@ -271,7 +271,7 @@
             padding:6px 8px 4px; flex-shrink:0;
         }
         .bb-cluster-group-label {
-            font-size:13px; font-weight:900; color:#c9a24a; margin-bottom:6px; padding-left:3px;
+            font-size:13px; font-weight:900; color:#c9a24a; margin-bottom:3px; padding-left:3px;
             padding-bottom:5px; border-bottom:1px solid var(--bd2);
         }
         .bb-cluster-row {
@@ -293,7 +293,7 @@
         .bb-cluster-batt-fill { position:absolute; left:0; top:0; bottom:0; transition:width .5s ease; }
         .bb-cluster-batt-pct {
             position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-            font-size:10px; font-weight:900; font-family:'Paperlogy','Lato',monospace;
+            font-size:10.5px; font-weight:900; font-family:'Paperlogy','Lato',monospace;
             color:var(--pct-fill); text-shadow:var(--pct-shadow);
             letter-spacing:-0.3px; pointer-events:none; white-space:nowrap;
         }
@@ -717,7 +717,7 @@
                     <button id="bb-zoom-in"  class="zoom-btn">＋</button>
                 </div>
                 <div class="bb-hd-title" id="bb-drag-handle">
-                    관리자용 배터리 현황판
+                    NCC 기체 모니터
                     <span id="bb-cyh-tag" style="font-size:16px;color:var(--mu);font-weight:400;cursor:default;">by CYH</span>
                 </div>
                 <div class="bb-hd-time">
@@ -727,8 +727,8 @@
                 <div class="bb-hd-right" id="bb-hd-right">
                     <button id="bb-top5-btn" class="bb-btn">🔥 배터리 증감 추이</button>
                     <button id="bb-theme-btn" class="bb-btn">다크</button>
-                    <button id="bb-backup-btn" class="bb-btn">목록 백업</button>
-                    <button id="bb-restore-btn" class="bb-btn">목록 복원</button>
+                    <button id="bb-backup-btn" class="bb-btn">기체 백업</button>
+                    <button id="bb-restore-btn" class="bb-btn">기체 복원</button>
                     <div class="bb-xbtn" id="bb-closebtn">✕</div>
                 </div>
             </div>
@@ -828,7 +828,7 @@
         <!-- 배터리 증감 추이 브리핑 패널 -->
         <div id="bb-top5-panel">
             <div class="bb-ap-hd">
-                <div class="bb-ap-title">🔥 배터리 증감 추이 Top5</div>
+                <div class="bb-ap-title">🔥 배터리 증감 추이 TOP5</div>
                 <div class="bb-ap-close" id="bb-top5-close">✕</div>
             </div>
             <div id="bb-top5-body" class="bb-top5-grid"></div>
@@ -857,7 +857,7 @@
 	};
     applyBbTheme();
 
-    // 헤더 우측 버튼 그룹(라이트/목록 백업/목록 복원)과
+    // 헤더 우측 버튼 그룹(라이트/기체 백업/기체 복원)과
     // 하단 검색줄(이름 순 정렬/정보 검색/카드 제거 + 검색창) 폭을 서로 동기화.
     // 다크/라이트 전환처럼 버튼 텍스트 길이가 바뀌어도 두 줄 다 "둘 중 더 넓은 쪽"에
     // 맞춰지도록 해서, 폭이 좁아져 버튼이 줄바꿈되는 문제 없이 항상 같은 폭을 유지.
