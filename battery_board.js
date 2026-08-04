@@ -62,6 +62,8 @@
             --pct-fill:rgba(30,25,15,.95);
             --pct-shadow:0 1px 2px rgba(255,255,255,.9), 0 0 4px rgba(255,255,255,.6);
         }
+        #bb.bb-light.theme-sunset  { --bg-fill:linear-gradient(180deg, #f7d4c4 0%, #f0dfc9 45%, #ded3b8 85%); }
+        #bb.bb-light.theme-blossom { --bg-fill:linear-gradient(180deg, #f6dde3 0%, #f2e2d2 45%, #ded3b8 85%); }
         #bb.bb-light .bb-delivery-title { color:#2b2418; }
         #bb.bb-light .bb-delivery-empty { color:#2b2418; }
         #bb.bb-light .bb-ca.standby { --ac:#8a7f68; --ac-border:rgba(138,127,104,.35); }
@@ -695,6 +697,7 @@
                 <div class="bb-hd-left">
                     <button class="bb-btn info" id="bb-infobtn">사용 설명서</button>
                     <button id="bb-theme-btn" class="bb-btn">다크</button>
+                    <button id="bb-lighttheme-btn" class="bb-btn">☁️ 구름</button>
                     <button id="bb-zoom-out" class="zoom-btn">－</button>
                     <span id="bb-zoom-label" class="zoom-label">100%</span>
                     <button id="bb-zoom-in"  class="zoom-btn">＋</button>
@@ -836,6 +839,23 @@
 		document.getElementById('bb-theme-btn').textContent = theme === 'light' ? '☀️ 라이트' : '🌙 다크';
 	};
     applyBbTheme();
+
+    // 라이트모드 배경 테마 순환: 구름(기본) → 노을 → 벚꽃 → 구름 ...
+    const LIGHT_THEME_LABELS = { cloud: '☁️ 구름', sunset: '🌇 노을', blossom: '🌸 벚꽃' };
+    const LIGHT_THEME_ORDER  = ['cloud', 'sunset', 'blossom'];
+    const applyLightTheme = () => {
+        const t = localStorage.getItem('bb_light_theme') || 'cloud';
+        bbEl.classList.toggle('theme-sunset', t === 'sunset');
+        bbEl.classList.toggle('theme-blossom', t === 'blossom');
+        document.getElementById('bb-lighttheme-btn').textContent = LIGHT_THEME_LABELS[t];
+    };
+    applyLightTheme();
+    document.getElementById('bb-lighttheme-btn').addEventListener('click', () => {
+        const cur = localStorage.getItem('bb_light_theme') || 'cloud';
+        const next = LIGHT_THEME_ORDER[(LIGHT_THEME_ORDER.indexOf(cur) + 1) % LIGHT_THEME_ORDER.length];
+        localStorage.setItem('bb_light_theme', next);
+        applyLightTheme();
+    });
 
     // 헤더 우측 버튼 그룹(배터리 값 로드/기체 목록 백업/기체 목록 복원)과
     // 하단 검색줄(기체 정보 검색/이름 순 정렬/카드 제거 + 검색창) 폭을 서로 동기화.
