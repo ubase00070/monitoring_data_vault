@@ -271,8 +271,8 @@
             padding-bottom:5px; border-bottom:1px solid var(--bd2);
         }
         .bb-cluster-row {
-            display:flex; align-items:center; gap:7px; padding:3px 5px; border-radius:6px; cursor:pointer;
-            border:1px solid transparent; user-select:none; margin-bottom:2px;
+            display:flex; align-items:center; gap:7px; padding:2px 5px; border-radius:6px; cursor:pointer;
+            border:1px solid transparent; user-select:none; margin-bottom:1px;
         }
         .bb-cluster-row:last-child { margin-bottom:0; }
         .bb-cluster-row.warn-bat { animation:bb-warnBlink .8s infinite; }
@@ -304,7 +304,7 @@
 			border-radius:14px; padding:6px 8px;
 			cursor:grab; position:relative; overflow:hidden;
 			display:flex; flex-direction:column; justify-content:space-between;
-			border:2px solid var(--ac-border,var(--bd));
+			border:3px solid var(--ac-border,var(--bd));
 			transition:transform .25s cubic-bezier(.34,1.56,.64,1),
 					   box-shadow .25s cubic-bezier(.34,1.56,.64,1),
 					   border-color .2s, background .2s, opacity .15s;
@@ -363,7 +363,7 @@
         }
 
         /* 퀵바 */
-        .bb-mg { display:flex; flex-direction:row; gap:5px; padding:7px 8px; border-right:1px solid var(--bd); flex-shrink:0; }
+        .bb-mg { display:flex; flex-direction:row; gap:5px; padding:10px 8px; border-right:1px solid var(--bd); flex-shrink:0; }
         .bb-mg-col { display:flex; flex-direction:column; border:2px solid var(--bd2); border-radius:8px; background:var(--bg); overflow:hidden; }
         .bb-mg-col-title {
             padding:5px 6px; font-size:16.5px; font-weight:900; color:var(--tx);
@@ -1817,7 +1817,7 @@
         const entry = data.entries[robotId];
         if (!entry || entry.log.length === 0) return `<div style="font-size:13px;color:var(--mu);padding:30px;text-align:center;">${source==='yesterday' ? '어제' : '오늘'} 기록된 데이터 없음</div>`;
 
-        const PX_PER_MIN = 4.8, H = 252, PADX = 19, PADT = 17, PADB = 31;
+        const PX_PER_MIN = 2.1, H = 252, PADX = 19, PADT = 17, PADB = 31;
         const dayStartMin = 8 * 60;
         const spanMin = source === 'yesterday'
             ? 19 * 60   // 어제는 이미 끝난 하루(08:00~익일03:00)이니 항상 전체 구간
@@ -1870,14 +1870,14 @@
             return `<polygon points="${x0},${base} ${pts} ${x1},${base}" style="fill:${colorOf(seg.status)}" fill-opacity="0.12"/>`;
         });
         const dots = colorSegs.flatMap(seg => seg.points.map(pt =>
-            `<circle cx="${xOf(pt.t).toFixed(1)}" cy="${yOf(pt.battery).toFixed(1)}" r="4.2" style="fill:${colorOf(pt.status)}" stroke="${haloColor}" stroke-width="1.5"/>`
+            `<circle cx="${xOf(pt.t).toFixed(1)}" cy="${yOf(pt.battery).toFixed(1)}" r="3.4" style="fill:${colorOf(pt.status)}" stroke="${haloColor}" stroke-width="1.3"/>`
         ));
         const dotLabels = colorSegs.flatMap(seg => seg.points.map(pt => {
             const above = pt.battery >= 92;   // 100%에 가까우면 그래프 상단에 눌려서 잘리니 아래쪽에 표기
-            const ty = yOf(pt.battery) + (above ? 14 : -8);
-            return `<text x="${xOf(pt.t).toFixed(1)}" y="${ty.toFixed(1)}" font-size="14" font-weight="700"
+            const ty = yOf(pt.battery) + (above ? 13 : -7);
+            return `<text x="${xOf(pt.t).toFixed(1)}" y="${ty.toFixed(1)}" font-size="10" font-weight="700"
                         text-anchor="middle" fill="${dotFill}"
-                        stroke="${haloColor}" stroke-width="3" paint-order="stroke fill">${pt.battery}%</text>`;
+                        stroke="${haloColor}" stroke-width="2.4" paint-order="stroke fill">${pt.battery}%</text>`;
         }));
 
         // x축: 정시(00분) 라벨
