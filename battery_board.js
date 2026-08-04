@@ -40,6 +40,8 @@
 			--or:#cf8a4f; --or2:rgba(207,138,79,.12);
 			--pk:#d1729a; --pk2:rgba(209,114,154,.12);
 			--offdot:#4b5563;
+			--pct-fill:rgba(240,240,255,.93);
+			--pct-shadow:0 1px 3px rgba(0,0,0,.95), 0 0 6px rgba(0,0,0,.7);
 		}
 
         #bb.bb-light {
@@ -53,6 +55,8 @@
             --or:#f97316; --or2:rgba(249,115,22,.12);
             --pk:#ec4899; --pk2:rgba(236,72,153,.10);
             --offdot:#b4b2a9;
+            --pct-fill:rgba(30,25,15,.95);
+            --pct-shadow:0 1px 2px rgba(255,255,255,.9), 0 0 4px rgba(255,255,255,.6);
         }
         #bb.bb-light .bb-delivery-title { color:#2b2418; }
         #bb.bb-light .bb-delivery-empty { color:#2b2418; }
@@ -281,8 +285,21 @@
         .bb-cluster-name { flex:1; min-width:0; font-size:15px; font-weight:700; color:var(--tx); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .bb-cluster-name.bb-marquee { overflow:visible; animation:bb-marquee 3s linear 0.5s 1 forwards; }
         .bb-cluster-pct { font-size:12px; font-weight:900; font-family:'Paperlogy','Lato',monospace; flex-shrink:0; -webkit-text-stroke:0.5px currentColor; }
+        .bb-cluster-batt {
+            position:relative; display:inline-block; width:48px; height:16px; border-radius:4px;
+            background:var(--sur2); border:1.5px solid var(--bd2);
+            overflow:hidden; box-sizing:border-box; vertical-align:middle; flex-shrink:0;
+        }
+        .bb-cluster-batt-fill { position:absolute; left:0; top:0; bottom:0; transition:width .5s ease; }
+        .bb-cluster-batt-pct {
+            position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+            font-size:10px; font-weight:900; font-family:'Paperlogy','Lato',monospace;
+            color:var(--pct-fill); text-shadow:var(--pct-shadow);
+            letter-spacing:-0.3px; pointer-events:none; white-space:nowrap;
+        }
+        .bb-cluster-plug { font-size:11px; margin-left:3px; flex-shrink:0; }
         .bb-cluster-pct-wrap {
-            position:relative; display:inline-block; width:56px; height:14px;
+            position:relative; display:inline-block; width:50px; height:16px;
             overflow:hidden; flex-shrink:0; text-align:right;
         }
         .bb-cluster-pct-val, .bb-cluster-pct-off {
@@ -352,6 +369,11 @@
         .bb-mission-off { font-size:11px; font-weight:900; color:rgba(239,68,68,.8); }
         .bb-ca-batt-row { display:flex; align-items:center; gap:6px; }
         .bb-ca-dots { display:grid; grid-template-columns:repeat(10,1fr); gap:2px; flex:1; height:12px; }
+        .bb-ca-dots.full-charge { animation:bb-fullCharge 1.8s ease-in-out infinite; }
+        @keyframes bb-fullCharge {
+            0%, 100% { opacity:1; }
+            50%      { opacity:.55; }
+        }
         .bb-ca-dot  { border-radius:1px; background:rgba(255,255,255,.08); transition:background .3s ease; }
         .bb-ca-batt-pct {
             font-size:15px; font-weight:900; color:var(--tx); flex-shrink:0;
@@ -1551,13 +1573,19 @@
                 const showPlug = r.status !== 'patrolling' && r.status !== 'delivering' && !!r.raw?.robotStatus?.isWiredChargerConnected;
 				const row = document.createElement('div');
                 row.className = `bb-cluster-row${lowBat ? ' warn-bat' : ''}${showMissionOff ? ' mission-off' : ''}`;
-                const plugPrefix = showPlug ? '🔌 ' : '';
-				const pctHtml = showMissionOff
-					? `<span class="bb-cluster-pct-wrap">
-						   <span class="bb-cluster-pct-val" style="color:${ac};">${plugPrefix}${off ? 'OFF' : r.battery+'%'}</span>
-						   <span class="bb-cluster-pct-off">임무 OFF</span>
-					   </span>`
-					: `<span class="bb-cluster-pct" style="color:${ac};">${plugPrefix}${off ? 'OFF' : r.battery+'%'}</span>`;
+                const plugHtml = showPlug ? '<span class="bb-cluster-plug">🔌</span>' : '';
+                const battInner = off
+                    ? `<span class="bb-cluster-pct" style="color:${ac};">OFF</span>`
+                    : `<span class="bb-cluster-batt" style="border-color:${ac};">
+                           <span class="bb-cluster-batt-fill" style="width:${r.battery}%;background:${ac};"></span>
+                           <span class="bb-cluster-batt-pct">${r.battery}%</span>
+                       </span>`;
+                const pctHtml = showMissionOff
+                    ? `<span class="bb-cluster-pct-wrap">
+                           <span class="bb-cluster-pct-val">${battInner}</span>
+                           <span class="bb-cluster-pct-off">임무 OFF</span>
+                       </span>${plugHtml}`
+                    : `${battInner}${plugHtml}`;
                 row.innerHTML = `
                     <span class="bb-cluster-dot" style="background:${ac};"></span>
 					<span class="bb-cluster-name" title="${STL[r.status] || ''}">${r.name}</span>
@@ -1585,6 +1613,7 @@
     function makeCard(r) {
         const off    = r.status === 'off';
         const lowBat = !r.loading && !off && r.battery <= 21;
+        const fullCharge = !r.loading && !off && r.status === 'charging' && r.battery === 100;
         const pct    = (off || r.loading) ? 0 : r.battery;
         const showMissionOff = !r.canDispatch && !off && !r.loading
 		    && r.status !== 'patrolling' && r.status !== 'delivering' && r.status !== 'standby'
@@ -1615,7 +1644,7 @@
                 ${showMissionOff ? '<div class="bb-mission-off">임무 OFF</div>' : ''}
             </div>
             <div class="bb-ca-batt-row" style="${(off || r.loading) ? 'visibility:hidden' : ''}">
-                <div class="bb-ca-dots">${dotsHtml}</div>
+                <div class="bb-ca-dots${fullCharge ? ' full-charge' : ''}">${dotsHtml}</div>
                 <span class="bb-ca-batt-pct">${r.battery}%</span>
             </div>
         `;
