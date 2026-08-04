@@ -203,10 +203,9 @@
         /* 검색 */
         .bb-search-wrap {
             width:max-content; flex-shrink:0; padding:6px 10px;
-            position:relative; display:flex; flex-wrap:wrap; justify-content:flex-end; gap:6px; align-content:center;
+            position:relative; display:flex; flex-wrap:nowrap; justify-content:flex-end; align-items:center; gap:6px;
         }
-        .bb-search-wrap .bb-si-wrap { flex-basis:100%; }
-        .bb-si-wrap { position:relative; width:100%; }
+        .bb-si-wrap { position:relative; }
         .bb-si {
             width:26.5ch; max-width:100%; background:var(--sur2); border:1px solid var(--bd2);
             border-radius:7px; padding:6px 10px 6px 26px;
@@ -857,38 +856,11 @@
         applyLightTheme();
     });
 
-    function syncSearchWrapWidth() {
-        const searchWrap = document.getElementById('bb-search-wrap');
-        if (!searchWrap) return;
-        const siWrap   = searchWrap.querySelector('.bb-si-wrap');
-        const firstBtn = document.getElementById('bb-inforequest-btn');
-        const lastBtn  = document.getElementById('bb-rmbtn');
-        if (!siWrap || !firstBtn || !lastBtn) return;
-
-        // 1) 검색줄 자체 폭을 일단 풀어서, 버튼들(UP 제외 - 평소 숨김)이 원래 크기로 자연스럽게 눕도록 함
-        searchWrap.style.width = 'max-content';
-
-        // 2) '기체 정보 검색' ~ '카드 제거' 버튼 실제 span을 측정해서
-        //    검색줄 컨테이너 자체의 폭을 그 값으로 못박음
-        const tight = Math.ceil(lastBtn.getBoundingClientRect().right - firstBtn.getBoundingClientRect().left);
-        if (tight > 0) searchWrap.style.width = tight + 'px';
-
-        // 3) 검색창은 그 컨테이너의 100%를 그대로 채우면 되므로 별도 max-width/margin 계산 불필요
-        siWrap.style.flexBasis  = '';
-        siWrap.style.width      = '100%';
-        siWrap.style.maxWidth   = '';
-        siWrap.style.marginLeft = '';
-    }
-    syncSearchWrapWidth();
-    if (document.fonts?.ready) document.fonts.ready.then(syncSearchWrapWidth).catch(() => {});
-    window.addEventListener('resize', syncSearchWrapWidth);
-
     document.getElementById('bb-theme-btn').addEventListener('click', () => {
         const next = (localStorage.getItem('neubie_bb_theme') || 'light') === 'light' ? 'dark' : 'light';
         localStorage.setItem('neubie_bb_theme', next);
         applyBbTheme();
         render();
-        syncSearchWrapWidth();
     });
 
     // ============================================================
@@ -1403,7 +1375,6 @@
         render();
         renderMonitorGrid(lastRaw);
         renderDeliveryChips(lastRaw);
-        syncSearchWrapWidth();
     }
     function closeBoard() {
         isOpen = false;
