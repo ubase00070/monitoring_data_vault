@@ -857,40 +857,16 @@
         applyLightTheme();
     });
 
-    // 헤더 우측 버튼 그룹(배터리 값 로드/기체 목록 백업/기체 목록 복원)과
-    // 하단 검색줄(기체 정보 검색/이름 순 정렬/카드 제거 + 검색창) 폭을 서로 동기화.
-    // 다크/라이트 전환처럼 버튼 텍스트 길이가 바뀌어도 두 줄 다 "둘 중 더 넓은 쪽"에
-    // 맞춰지도록 해서, 폭이 좁아져 버튼이 줄바꿈되는 문제 없이 항상 같은 폭을 유지.
     function syncSearchWrapWidth() {
-        const hdRight = document.getElementById('bb-hd-right');
         const searchWrap = document.getElementById('bb-search-wrap');
-        if (!hdRight || !searchWrap) return;
-        hdRight.style.width = '';
-        searchWrap.style.width = '';
-        const w = Math.max(hdRight.offsetWidth, searchWrap.offsetWidth);
-        if (w > 0) {
-            hdRight.style.width = w + 'px';
-            searchWrap.style.width = w + 'px';
+        if (!searchWrap) return;
+        const siWrap = searchWrap.querySelector('.bb-si-wrap');
+        if (siWrap) {
+            siWrap.style.flexBasis  = '';
+            siWrap.style.width      = '100%';
+            siWrap.style.maxWidth   = '';
+            siWrap.style.marginLeft = '';
         }
-
-        // 검색창/드롭다운 폭은 컨테이너 전체가 아니라
-        // '기체 정보 검색' ~ '카드 제거' 버튼이 실제로 차지하는 폭에만 맞춤
-        const siWrap   = searchWrap.querySelector('.bb-si-wrap');
-        const firstBtn = document.getElementById('bb-inforequest-btn');
-		const lastBtn  = document.getElementById('bb-rmbtn');
-		if (siWrap && firstBtn && lastBtn) {
-		    const wrapRect  = searchWrap.getBoundingClientRect();
-		    const firstRect = firstBtn.getBoundingClientRect();
-		    const lastRect  = lastBtn.getBoundingClientRect();
-		    const tight      = Math.round(lastRect.right - firstRect.left);
-		    const leftOffset = Math.round(firstRect.left - wrapRect.left);
-		    if (tight > 0) {
-		        siWrap.style.flexBasis  = tight + 'px';
-		        siWrap.style.width      = tight + 'px';
-		        siWrap.style.maxWidth   = tight + 'px';
-		        siWrap.style.marginLeft = leftOffset + 'px';
-		    }
-		}
     }
     syncSearchWrapWidth();
     if (document.fonts?.ready) document.fonts.ready.then(syncSearchWrapWidth).catch(() => {});
