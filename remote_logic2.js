@@ -1507,7 +1507,7 @@
             btn.addEventListener('mouseleave', cancelHold);
         }
 
-        // ON/OFF 상태에 맞춰 버튼 색(다크/라이트 모두 대응) 칠하기
+        // ON/OFF 상태에 맞춰 버튼 색(다크/라이트 대응) 칠하기
         function paintToggleTile(btn, isOn, T) {
             const isDark = T.bg === '#111111';
             btn.style.background = isOn
