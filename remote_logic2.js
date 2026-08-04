@@ -877,7 +877,7 @@
         }
         const alarmDiv = document.createElement('div');
         alarmDiv.style.cssText = `
-            position:fixed; top:20px; left:50%; transform:translateX(-50%);
+            position:fixed; top:16px; left:50%; transform:translateX(-50%);
             background:linear-gradient(135deg,#fbbf24,#f59e0b);
             color:#000; padding:15px 30px; border-radius:14px;
             z-index:9999999; font-weight:bold; font-size:16px;
