@@ -2073,10 +2073,17 @@
 
 	// 새로고침(스크립트 재실행) 시점에 한 번 즉시 로드 — 그 시점부터 30분 카운트가 자연스럽게 시작됨
 	function wblTriggerImmediateLoadOnRefresh() {
-		if (localStorage.getItem('bb_is_cyh') === '1') return;
-		if (!wblGetDayKey()) return;
-		localStorage.setItem('bb_wbl_dl_last', String(Date.now()));
-		wblDoDownload();
+	    if (localStorage.getItem('bb_is_cyh') === '1') {
+	        const dayKey = wblGetDayKey();
+	        if (!dayKey) return;
+	        const local = wblLoad();
+	        const hasToday = local && local.day === dayKey && Object.keys(local.entries || {}).length > 0;
+	        if (!hasToday) wblDoDownload();   // 새 브라우저 등 → 서버 진행분으로 한 번 따라잡기 (병합 방식이라 안전)
+	        return;
+	    }
+	    if (!wblGetDayKey()) return;
+	    localStorage.setItem('bb_wbl_dl_last', String(Date.now()));
+	    wblDoDownload();
 	}
 
 	// 어제자 데이터 — 이미 확보된 상태면 재조회 안 함(가벼운 guard). 성공 전이면 호출될 때마다 서버를 다시 확인.
