@@ -1662,6 +1662,13 @@
         return `${y}-${m}-${dd}`;
     }
 
+    // 'YYYY-MM-DD' -> '00월 00일'
+    function wblFormatMonthDay(dayKey) {
+        if (!dayKey) return '';
+        const [, m, d] = dayKey.split('-');
+        return `${m}월 ${d}일`;
+    }
+
     function wblGetDayKey() {
         const now = new Date();
         const h = now.getHours();
@@ -2374,7 +2381,7 @@
                 </div>
                 <div class="bb-icp-right">
                     <div class="bb-icp-section-title" style="display:flex;align-items:center;justify-content:space-between;">
-                        <span id="bb-icp-wbl-title-text">오늘 배터리 증감 추이</span>
+                        <span id="bb-icp-wbl-title-text">오늘 배터리 증감 추이${wblGetSourceData('today')?.day ? ' [' + wblFormatMonthDay(wblGetSourceData('today').day) + ']' : ''}</span>
                         <button class="bb-btn" id="bb-icp-wbl-toggle" style="font-size:11px;padding:3px 8px;">어제 데이터 보기</button>
                     </div>
                     <div id="bb-icp-wbl-chart">${wblChartSvg}</div>
@@ -2390,11 +2397,13 @@
         let wblCurrentSource = 'today';
         document.getElementById('bb-icp-wbl-toggle').addEventListener('click', async () => {
             wblCurrentSource = wblCurrentSource === 'today' ? 'yesterday' : 'today';
-            document.getElementById('bb-icp-wbl-title-text').textContent = wblCurrentSource === 'today' ? '오늘 배터리 증감 추이' : '어제 배터리 증감 추이';
             document.getElementById('bb-icp-wbl-toggle').textContent = wblCurrentSource === 'today' ? '어제 데이터 보기' : '오늘 데이터 보기';
             if (wblCurrentSource === 'yesterday') {
                 await wblLoadYesterdayOnce();   // 새로고침 없이도 방금 이관된 최신 데이터를 확인
             }
+            const wblDay = wblGetSourceData(wblCurrentSource)?.day;
+            const wblDateSuffix = wblDay ? ` [${wblFormatMonthDay(wblDay)}]` : '';
+            document.getElementById('bb-icp-wbl-title-text').textContent = (wblCurrentSource === 'today' ? '오늘 배터리 증감 추이' : '어제 배터리 증감 추이') + wblDateSuffix;
             document.getElementById('bb-icp-wbl-chart').innerHTML = wblRenderChartSVG(r.id, wblCurrentSource);
             const lines = wblSummarizeToday(r.id, wblCurrentSource);
             document.getElementById('bb-icp-wbl-log').innerHTML = lines
