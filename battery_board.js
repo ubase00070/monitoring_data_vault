@@ -192,7 +192,7 @@
         .bb-search-wrap .bb-si-wrap { flex-basis:100%; }
         .bb-si-wrap { position:relative; width:100%; }
         .bb-si {
-            width:100%; background:var(--sur2); border:1px solid var(--bd2);
+            width:23ch; background:var(--sur2); border:1px solid var(--bd2);
             border-radius:7px; padding:6px 10px 6px 26px;
             color:var(--tx); font-size:14px; outline:none; font-family:inherit;
         }
@@ -263,11 +263,12 @@
         }
 
         .bb-cluster-group {
-            background:var(--sur2); border:1px solid var(--bd2); border-radius:12px;
+            background:var(--sur2); border:2px solid var(--bd2); border-radius:12px;
             padding:6px 8px 4px; flex-shrink:0;
         }
         .bb-cluster-group-label {
-            font-size:13px; font-weight:900; color:#c9a24a; margin-bottom:5px; padding-left:3px;
+            font-size:13px; font-weight:900; color:#c9a24a; margin-bottom:6px; padding-left:3px;
+            padding-bottom:5px; border-bottom:1px solid var(--bd2);
         }
         .bb-cluster-row {
             display:flex; align-items:center; gap:7px; padding:3px 5px; border-radius:6px; cursor:pointer;
@@ -314,7 +315,6 @@
 			border-color:var(--ye);
 		}
 		.bb-ca:active { cursor:grabbing; transform:translateY(-1px) scale(0.99); }
-		.bb-ca::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--ac,var(--gy)); border-radius:16px 16px 0 0; }
         .bb-ca.dragging { opacity:.3; }
         .bb-ca.dragover { border-color:var(--bl)!important; box-shadow:0 0 0 1px var(--bl); }
         .bb-ca.selectable { cursor:pointer; }
@@ -364,7 +364,7 @@
 
         /* 퀵바 */
         .bb-mg { display:flex; flex-direction:row; gap:5px; padding:7px 8px; border-right:1px solid var(--bd); flex-shrink:0; }
-        .bb-mg-col { display:flex; flex-direction:column; border:1px solid var(--bd2); border-radius:8px; background:var(--bg); overflow:hidden; }
+        .bb-mg-col { display:flex; flex-direction:column; border:2px solid var(--bd2); border-radius:8px; background:var(--bg); overflow:hidden; }
         .bb-mg-col-title {
             padding:5px 6px; font-size:16.5px; font-weight:900; color:var(--tx);
             border-bottom:1px solid var(--bd); background:var(--sur);
@@ -600,7 +600,7 @@
         #bb-info-card-panel {
             display:none; position:fixed;
             top:50%; left:50%; transform:translate(-50%,-50%);
-            width:760px;
+            width:840px;
             border:3px solid transparent; border-radius:12px;
             background-image: linear-gradient(var(--sur), var(--sur)), linear-gradient(135deg, #6366f1, #ec4899);
             background-origin: border-box;
@@ -610,7 +610,7 @@
             color:var(--tx); overflow:hidden;
         }
         .bb-icp-flex { display:flex; align-items:stretch; }
-        .bb-icp-left { flex:0 0 300px; min-width:0; }
+        .bb-icp-left { flex:0 0 260px; min-width:0; }
         .bb-icp-right { flex:1; min-width:0; border-left:1px solid var(--bd); padding:10px 16px; }
         .bb-icp-wbl-log { margin-top:10px; display:flex; flex-direction:column; gap:6px; }
         .bb-icp-wbl-line { font-size:13px; line-height:1.5; color:var(--tx); }
@@ -1781,11 +1781,10 @@
 
         return segments.map(seg => {
             const durMin = Math.max(10, wblToMin(seg.end) - wblToMin(seg.start) + 10);
-            const durTxt = durMin >= 60 ? `${Math.floor(durMin/60)}시간${durMin%60 ? ' '+(durMin%60)+'분' : ''}` : `${durMin}분`;
             const label = WBL_STL[seg.status] || seg.status;
             const dotColor = CLUSTER_AC[seg.status] || 'var(--mu)';
             const dot = `<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${dotColor};margin-right:2px;vertical-align:1px;"></span>`;
-            const head  = `${dot} ${label} ${seg.start}~${seg.end} (${durTxt})`;
+            const head  = `${dot} ${label} ${seg.start}~${seg.end}`;
 
             if (seg.status === 'off' || seg.startBattery == null || seg.endBattery == null) {
                 return `${head}`;
@@ -2196,6 +2195,25 @@
         return { drops: drops.slice(0, 5), charges: charges.slice(0, 5) };
     }
 
+    let _top5CloseHandler = null;
+    function registerTop5PanelClose() {
+        const panel = document.getElementById('bb-top5-panel');
+        if (_top5CloseHandler) {
+            document.removeEventListener('mousedown', _top5CloseHandler);
+            _top5CloseHandler = null;
+        }
+        setTimeout(() => {
+            _top5CloseHandler = function closeTop5(e) {
+                if (!panel.contains(e.target)) {
+                    panel.classList.remove('open');
+                    document.removeEventListener('mousedown', _top5CloseHandler);
+                    _top5CloseHandler = null;
+                }
+            };
+            document.addEventListener('mousedown', _top5CloseHandler);
+        }, 100);
+    }
+
     function openTop5Panel() {
         const { drops, charges } = wblComputeTop5();
         const panel = document.getElementById('bb-top5-panel');
@@ -2230,6 +2248,7 @@
         });
 
         panel.classList.add('open');
+        registerTop5PanelClose();
     }
 
     function openInfoCardPanel(r) {
@@ -2624,6 +2643,10 @@
     document.getElementById('bb-top5-btn').addEventListener('click', openTop5Panel);
     document.getElementById('bb-top5-close').addEventListener('click', () => {
         document.getElementById('bb-top5-panel').classList.remove('open');
+        if (_top5CloseHandler) {
+            document.removeEventListener('mousedown', _top5CloseHandler);
+            _top5CloseHandler = null;
+        }
     });
 
     document.getElementById('bb-icp-close').addEventListener('click', () => {
