@@ -129,7 +129,7 @@
         .bb-clock { font-family:'Lato',monospace; font-size:13px; font-weight:900; color:var(--mu); letter-spacing:.8px; }
         .bb-ref   { font-size:12px; color:var(--mu); font-weight:700; }
         .bb-hd-left  { position:absolute; left:14px; top:50%; transform:translateY(-50%); display:flex; align-items:center; gap:6px; }
-        .bb-hd-right { position:absolute; right:14px; top:50%; transform:translateY(-50%); display:flex; flex-direction:column; align-items:flex-end; gap:6px; }
+        .bb-hd-right { position:absolute; right:14px; top:50%; transform:translateY(-50%); display:flex; flex-direction:column; align-items:flex-end; gap:6px; z-index:500; }
         .bb-hd-right-row { display:flex; align-items:center; justify-content:flex-end; gap:6px; }
 
         .bb-btn {
@@ -164,7 +164,7 @@
         /* ── 알림바 + 검색 ── */
         .bb-alert-row {
 		    display:flex; align-items:stretch;
-		    flex-shrink:0; height:66px;
+		    flex-shrink:0; height:80px;
 		    position:relative;
 		    border-bottom:1px solid var(--bd);
 		}
@@ -225,7 +225,7 @@
             position:absolute; top:calc(100% + 4px); left:0; right:0;
             background:var(--sur2); border:1px solid var(--bd2);
             border-radius:8px; overflow:hidden;
-            box-shadow:0 8px 24px rgba(0,0,0,.7); z-index:200; display:none;
+            box-shadow:0 8px 24px rgba(0,0,0,.7); z-index:99999999; display:none;
             max-height:240px; overflow-y:auto;
         }
         #bb-dd.open { display:block; }
@@ -250,7 +250,8 @@
 
         .bb-cluster-side {
             width:280px; flex-shrink:0; display:flex; flex-direction:column; gap:5px;
-            overflow-y:auto; padding-top:10px;
+            overflow-y:auto; padding-top:10px; padding-right:10px;
+            border-right:1px solid var(--bd);
         }
 		.bb-cluster-plug { font-size:10px; line-height:1; flex-shrink:0; }
 
@@ -413,7 +414,6 @@
         .bb-delivery-area {
 			flex:1; display:flex; flex-direction:column; min-height:0;
 			position:relative;
-			border:2px solid var(--bd2); border-radius:8px; background:var(--bg);
 		}
 		#bb-walker-wrap {
 			position:absolute;
