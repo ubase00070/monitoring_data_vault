@@ -5808,13 +5808,9 @@
 			const upBtn = gp.buttons[12];
 			if (upBtn?.pressed && !dpadWasPressed.up) {
 				dpadWasPressed.up = true;
-				console.log('[진단] Up 눌림 감지됨');
 				showInterventionInfoOverlay();
-				console.log('[진단] showInterventionInfoOverlay 호출 완료, entry:', neubieInterventionEntry);
 				const syncBtn = document.querySelector('[data-qk="location-robot-sync-button"]');
-				console.log('[진단] syncMap 호출 직전 — sync 버튼 재확인:', !!syncBtn, syncBtn?.disabled);
 				syncMap();
-				console.log('[진단] syncMap 호출 완료');
 			} else if (!upBtn?.pressed) {
 				dpadWasPressed.up = false;
 			}
