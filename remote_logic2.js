@@ -5595,7 +5595,7 @@
         const panel = document.createElement('div');
         panel.id = 'neubie-intervention-info';
         panel.style.cssText = `
-            position:fixed; top:80px; left:50%; transform:translateX(-50%);
+            position:fixed; top:32px; left:50%; transform:translateX(-50%);
             z-index:999999; pointer-events:none;
             background:rgba(18,18,36,0.95); border:1px solid #6a6aaa; border-radius:14px;
             padding:14px 24px; font-family:'Pretendard','Noto Sans KR',sans-serif;
