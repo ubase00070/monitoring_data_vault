@@ -41,6 +41,7 @@
 			--pk:#d1729a; --pk2:rgba(209,114,154,.12);
 			--offdot:#4b5563;
 			--standby-batt:var(--tx);
+			--bg-fill:linear-gradient(var(--bg), var(--bg));
 			--pct-fill:rgba(240,240,255,.93);
 			--pct-shadow:0 1px 3px rgba(0,0,0,.95), 0 0 6px rgba(0,0,0,.7);
 		}
@@ -57,6 +58,7 @@
             --pk:#ec4899; --pk2:rgba(236,72,153,.10);
             --offdot:#b4b2a9;
             --standby-batt:#98a2ae;
+            --bg-fill:linear-gradient(180deg, #cfe8f0 0%, #e8ecdc 45%, #ded3b8 85%);
             --pct-fill:rgba(30,25,15,.95);
             --pct-shadow:0 1px 2px rgba(255,255,255,.9), 0 0 4px rgba(255,255,255,.6);
         }
@@ -85,7 +87,7 @@
             width:1490px;
             max-height:100vh; overflow-y:auto; overflow-x:hidden;
             border:3px solid transparent; border-radius:16px;
-            background-image: linear-gradient(var(--bg), var(--bg)), linear-gradient(135deg, #6366f1, #ec4899);
+            background-image: var(--bg-fill), linear-gradient(135deg, #6366f1, #ec4899);
             background-origin: border-box;
             background-clip: padding-box, border-box;
             box-shadow:0 24px 60px rgba(0,0,0,.75);
@@ -104,7 +106,7 @@
         .bb-hd {
             display:flex; flex-direction:column; align-items:center;
             padding:9px 14px 7px;
-            background:var(--bg); border-radius:16px 16px 0 0;
+            border-radius:16px 16px 0 0;
             flex-shrink:0; position:relative; gap:3px;
         }
         .bb-hd-titlebox {
@@ -162,7 +164,7 @@
 		}
         .bb-alert-bar {
             flex:1; display:flex; align-items:center; gap:10px;
-            padding:8px 12px; background:var(--bg);
+            padding:8px 12px;
         }
         .bb-alert-label {
             font-size:15px; font-weight:900; color:var(--tx);
@@ -199,7 +201,6 @@
         /* 검색 */
         .bb-search-wrap {
             width:max-content; flex-shrink:0; padding:6px 10px;
-            background:var(--bg);
             position:relative; display:flex; flex-wrap:wrap; justify-content:flex-end; gap:6px; align-content:center;
         }
         .bb-search-wrap .bb-si-wrap { flex-basis:100%; }
