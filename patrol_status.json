@@ -1,6 +1,473 @@
 {
-  "updatedAt": "2026-08-04 12:09:44",
+  "updatedAt": "2026-08-04 15:09:46",
   "recentHistory": [
+    {
+      "at": "2026-08-04 15:09:46",
+      "changes": [
+        {
+          "type": "추가",
+          "site": "부산 호반 1",
+          "status": "uncertain",
+          "reason": "[추가] 08:00 - [08:00] [자동출차] 부산 EDC 호반써밋 1호기 - 순찰"
+        },
+        {
+          "type": "추가",
+          "site": "부산 수자인 1",
+          "status": "uncertain",
+          "reason": "[추가] 08:00 - [08:00] [자동출차] 부산 EDC 수자인 1호기 - 순찰"
+        },
+        {
+          "type": "삭제",
+          "site": "부산 호반 1",
+          "status": "active",
+          "reason": "[삭제] 08:00 - [08:00] 부산 EDC 호반써밋 1호기 - 순찰"
+        },
+        {
+          "type": "삭제",
+          "site": "부산 수자인 1",
+          "status": "active",
+          "reason": "[삭제] 08:00 - [08:00] 부산 EDC 수자인 1호기 - 순찰"
+        },
+        {
+          "type": "삭제",
+          "site": "한국장애인고용공단 1,2호기",
+          "status": "active",
+          "reason": "순찰 준비"
+        },
+        {
+          "type": "추가",
+          "site": "부산 호반 1",
+          "status": "uncertain",
+          "reason": "[추가] 09:00 - [09:00] [자동출차] 부산 EDC 호반써밋 1호기 - 순찰"
+        },
+        {
+          "type": "추가",
+          "site": "부산 수자인 1",
+          "status": "uncertain",
+          "reason": "[추가] 09:00 - [09:00] [자동출차] 부산 EDC 수자인 1호기 - 순찰"
+        },
+        {
+          "type": "추가",
+          "site": "장애인고용공단 1",
+          "status": "uncertain",
+          "reason": "빅웨이브"
+        },
+        {
+          "type": "추가",
+          "site": "장애인고용공단 2",
+          "status": "uncertain",
+          "reason": "빅웨이브"
+        },
+        {
+          "type": "추가",
+          "site": "장애인고용공단 1",
+          "status": "uncertain",
+          "reason": "빅웨이브"
+        },
+        {
+          "type": "추가",
+          "site": "장애인고용공단 2",
+          "status": "uncertain",
+          "reason": "빅웨이브"
+        },
+        {
+          "type": "삭제",
+          "site": "부산 호반 1",
+          "status": "active",
+          "reason": "[삭제] 09:00 - [09:00] 부산 EDC 호반써밋 1호기 - 순찰"
+        },
+        {
+          "type": "삭제",
+          "site": "부산 수자인 1",
+          "status": "active",
+          "reason": "[삭제] 09:00 - [09:00] 부산 EDC 수자인 1호기 - 순찰"
+        },
+        {
+          "type": "삭제",
+          "site": "장애인고용공단 1",
+          "status": "active",
+          "reason": "빅웨이브"
+        },
+        {
+          "type": "삭제",
+          "site": "장애인고용공단 2",
+          "status": "active",
+          "reason": "빅웨이브"
+        },
+        {
+          "type": "삭제",
+          "site": "장애인고용공단 1",
+          "status": "active",
+          "reason": "빅웨이브"
+        },
+        {
+          "type": "삭제",
+          "site": "장애인고용공단 2",
+          "status": "active",
+          "reason": "빅웨이브"
+        },
+        {
+          "type": "추가",
+          "site": "부산 호반 2",
+          "status": "uncertain",
+          "reason": "[추가] 10:00 - [10:00] [자동출차] 부산 EDC 호반써밋 2호기 - 순찰"
+        },
+        {
+          "type": "추가",
+          "site": "부산 수자인 2",
+          "status": "uncertain",
+          "reason": "[추가] 10:00 - [10:00] [자동출차] 부산 EDC 수자인 2호기 - 순찰"
+        },
+        {
+          "type": "삭제",
+          "site": "부산 호반 2",
+          "status": "active",
+          "reason": "[삭제] 10:00 - [10:00] 부산 EDC 호반써밋 2호기 - 순찰"
+        },
+        {
+          "type": "삭제",
+          "site": "부산 수자인 2",
+          "status": "active",
+          "reason": "[삭제] 10:00 - [10:00] 부산 EDC 수자인 2호기 - 순찰"
+        },
+        {
+          "type": "추가",
+          "site": "부산 호반 2",
+          "status": "uncertain",
+          "reason": "[추가] 11:00 - [11:00] [자동출차] 부산 EDC 호반써밋 2호기 - 순찰"
+        },
+        {
+          "type": "추가",
+          "site": "부산 수자인 2",
+          "status": "uncertain",
+          "reason": "[추가] 11:00 - [11:00] [자동출차] 부산 EDC 수자인 2호기 - 순찰"
+        },
+        {
+          "type": "추가",
+          "site": "장애인고용공단 1",
+          "status": "uncertain",
+          "reason": "빅웨이브"
+        },
+        {
+          "type": "삭제",
+          "site": "부산 호반 2",
+          "status": "active",
+          "reason": "[삭제] 11:00 - [11:00] 부산 EDC 호반써밋 2호기 - 순찰"
+        },
+        {
+          "type": "삭제",
+          "site": "부산 수자인 2",
+          "status": "active",
+          "reason": "[삭제] 11:00 - [11:00] 부산 EDC 수자인 2호기 - 순찰"
+        },
+        {
+          "type": "삭제",
+          "site": "장애인고용공단 1",
+          "status": "active",
+          "reason": "빅웨이브"
+        },
+        {
+          "type": "추가",
+          "site": "부산 호반 1",
+          "status": "uncertain",
+          "reason": "[추가] 12:00 - [12:00] [자동출차] 부산 EDC 호반써밋 1호기 - 순찰"
+        },
+        {
+          "type": "추가",
+          "site": "부산 수자인 1",
+          "status": "uncertain",
+          "reason": "[추가] 12:00 - [12:00] [자동출차] 부산 EDC 수자인 1호기 - 순찰"
+        },
+        {
+          "type": "추가",
+          "site": "장애인고용공단 2",
+          "status": "uncertain",
+          "reason": "빅웨이브"
+        },
+        {
+          "type": "추가",
+          "site": "장애인고용공단 2",
+          "status": "uncertain",
+          "reason": "빅웨이브"
+        },
+        {
+          "type": "삭제",
+          "site": "부산 호반 1",
+          "status": "active",
+          "reason": "[삭제] 12:00 - [12:00] 부산 EDC 호반써밋 1호기 - 순찰"
+        },
+        {
+          "type": "삭제",
+          "site": "부산 수자인 1",
+          "status": "active",
+          "reason": "[삭제] 12:00 - [12:00] 부산 EDC 수자인 1호기 - 순찰"
+        },
+        {
+          "type": "삭제",
+          "site": "장애인고용공단 2",
+          "status": "active",
+          "reason": "빅웨이브"
+        },
+        {
+          "type": "삭제",
+          "site": "장애인고용공단 2",
+          "status": "active",
+          "reason": "빅웨이브"
+        },
+        {
+          "type": "추가",
+          "site": "장애인고용공단 1",
+          "status": "uncertain",
+          "reason": "빅웨이브"
+        },
+        {
+          "type": "추가",
+          "site": "부산 호반 1",
+          "status": "uncertain",
+          "reason": "[추가] 13:00 - [13:00] [자동출차] 부산 EDC 호반써밋 1호기 - 순찰"
+        },
+        {
+          "type": "추가",
+          "site": "부산 수자인 1",
+          "status": "uncertain",
+          "reason": "[추가] 13:00 - [13:00] [자동출차] 부산 EDC 수자인 1호기 - 순찰"
+        },
+        {
+          "type": "삭제",
+          "site": "장애인고용공단 1",
+          "status": "active",
+          "reason": "빅웨이브"
+        },
+        {
+          "type": "삭제",
+          "site": "부산 호반 1",
+          "status": "active",
+          "reason": "[삭제] 13:00 - [13:00] 부산 EDC 호반써밋 1호기 - 순찰"
+        },
+        {
+          "type": "삭제",
+          "site": "부산 수자인 1",
+          "status": "active",
+          "reason": "[삭제] 13:00 - [13:00] 부산 EDC 수자인 1호기 - 순찰"
+        },
+        {
+          "type": "추가",
+          "site": "부산 호반 2",
+          "status": "uncertain",
+          "reason": "[추가] 14:00 - [14:00] [자동출차] 부산 EDC 호반써밋 2호기 - 순찰"
+        },
+        {
+          "type": "추가",
+          "site": "부산 수자인 2",
+          "status": "uncertain",
+          "reason": "[추가] 14:00 - [14:00] [자동출차] 부산 EDC 수자인 2호기 - 순찰"
+        },
+        {
+          "type": "추가",
+          "site": "부산 더샵남천",
+          "status": "uncertain",
+          "reason": "순찰준비"
+        },
+        {
+          "type": "삭제",
+          "site": "부산 호반 2",
+          "status": "active",
+          "reason": "[삭제] 14:00 - [14:00] 부산 EDC 호반써밋 2호기 - 순찰"
+        },
+        {
+          "type": "삭제",
+          "site": "부산 수자인 2",
+          "status": "active",
+          "reason": "[삭제] 14:00 - [14:00] 부산 EDC 수자인 2호기 - 순찰"
+        },
+        {
+          "type": "삭제",
+          "site": "부산 더샵남천",
+          "status": "active",
+          "reason": "순찰준비"
+        },
+        {
+          "type": "추가",
+          "site": "부산 호반 2",
+          "status": "uncertain",
+          "reason": "[추가] 15:00 - [15:00] [자동출차] 부산 EDC 호반써밋 2호기 - 순찰"
+        },
+        {
+          "type": "추가",
+          "site": "부산 수자인 2",
+          "status": "uncertain",
+          "reason": "[추가] 15:00 - [15:00] [자동출차] 부산 EDC 수자인 2호기 - 순찰"
+        },
+        {
+          "type": "추가",
+          "site": "장애인고용공단 1",
+          "status": "uncertain",
+          "reason": "빅웨이브"
+        },
+        {
+          "type": "삭제",
+          "site": "부산 호반 2",
+          "status": "active",
+          "reason": "[삭제] 15:00 - [15:00] 부산 EDC 호반써밋 2호기 - 순찰"
+        },
+        {
+          "type": "삭제",
+          "site": "부산 수자인 2",
+          "status": "active",
+          "reason": "[삭제] 15:00 - [15:00] 부산 EDC 수자인 2호기 - 순찰"
+        },
+        {
+          "type": "삭제",
+          "site": "장애인고용공단 1",
+          "status": "active",
+          "reason": "빅웨이브"
+        },
+        {
+          "type": "추가",
+          "site": "부산 호반 1",
+          "status": "uncertain",
+          "reason": "[추가] 16:00 - [16:00] [자동출차] 부산 EDC 호반써밋 1호기 - 순찰"
+        },
+        {
+          "type": "추가",
+          "site": "부산 수자인 1",
+          "status": "uncertain",
+          "reason": "[추가] 16:00 - [16:00] [자동출차] 부산 EDC 수자인 1호기 - 순찰"
+        },
+        {
+          "type": "추가",
+          "site": "장애인고용공단 2",
+          "status": "uncertain",
+          "reason": "빅웨이브"
+        },
+        {
+          "type": "추가",
+          "site": "장애인고용공단 2",
+          "status": "uncertain",
+          "reason": "빅웨이브"
+        },
+        {
+          "type": "삭제",
+          "site": "부산 호반 1",
+          "status": "active",
+          "reason": "[삭제] 16:00 - [16:00] 부산 EDC 호반써밋 1호기 - 순찰"
+        },
+        {
+          "type": "삭제",
+          "site": "부산 수자인 1",
+          "status": "active",
+          "reason": "[삭제] 16:00 - [16:00] 부산 EDC 수자인 1호기 - 순찰"
+        },
+        {
+          "type": "삭제",
+          "site": "장애인고용공단 2",
+          "status": "active",
+          "reason": "빅웨이브"
+        },
+        {
+          "type": "삭제",
+          "site": "장애인고용공단 2",
+          "status": "active",
+          "reason": "빅웨이브"
+        },
+        {
+          "type": "추가",
+          "site": "장애인고용공단 1",
+          "status": "uncertain",
+          "reason": "빅웨이브"
+        },
+        {
+          "type": "추가",
+          "site": "부산 호반 1",
+          "status": "uncertain",
+          "reason": "[추가] 17:00 - [17:00] [자동출차] 부산 EDC 호반써밋 1호기 - 순찰"
+        },
+        {
+          "type": "추가",
+          "site": "부산 수자인 1",
+          "status": "uncertain",
+          "reason": "[추가] 17:00 - [17:00] [자동출차] 부산 EDC 수자인 1호기 - 순찰"
+        },
+        {
+          "type": "추가",
+          "site": "장애인고용공단 2",
+          "status": "uncertain",
+          "reason": "빅웨이브"
+        },
+        {
+          "type": "삭제",
+          "site": "장애인고용공단 1",
+          "status": "active",
+          "reason": "빅웨이브"
+        },
+        {
+          "type": "삭제",
+          "site": "부산 호반 1",
+          "status": "active",
+          "reason": "[삭제] 17:00 - [17:00] 부산 EDC 호반써밋 1호기 - 순찰"
+        },
+        {
+          "type": "삭제",
+          "site": "부산 수자인 1",
+          "status": "active",
+          "reason": "[삭제] 17:00 - [17:00] 부산 EDC 수자인 1호기 - 순찰"
+        },
+        {
+          "type": "삭제",
+          "site": "장애인고용공단 2",
+          "status": "active",
+          "reason": "빅웨이브"
+        },
+        {
+          "type": "추가",
+          "site": "부산 호반 2",
+          "status": "uncertain",
+          "reason": "[추가] 18:00 - [18:00] [자동출차] 부산 EDC 호반써밋 2호기 - 순찰"
+        },
+        {
+          "type": "추가",
+          "site": "부산 수자인 2",
+          "status": "uncertain",
+          "reason": "[추가] 18:00 - [18:00] [자동출차] 부산 EDC 수자인 2호기 - 순찰"
+        },
+        {
+          "type": "삭제",
+          "site": "부산 호반 2",
+          "status": "active",
+          "reason": "[삭제] 18:00 - [18:00] 부산 EDC 호반써밋 2호기 - 순찰"
+        },
+        {
+          "type": "삭제",
+          "site": "부산 수자인 2",
+          "status": "active",
+          "reason": "[삭제] 18:00 - [18:00] 부산 EDC 수자인 2호기 - 순찰"
+        },
+        {
+          "type": "추가",
+          "site": "부산 호반 2",
+          "status": "uncertain",
+          "reason": "[추가] 19:00 - [19:00] [자동출차] 부산 EDC 호반써밋 2호기 - 순찰"
+        },
+        {
+          "type": "추가",
+          "site": "부산 수자인 2",
+          "status": "uncertain",
+          "reason": "[추가] 19:00 - [19:00] [자동출차] 부산 EDC 수자인 2호기 - 순찰"
+        },
+        {
+          "type": "삭제",
+          "site": "부산 호반 2",
+          "status": "active",
+          "reason": "[삭제] 19:00 - [19:00] 부산 EDC 호반써밋 2호기 - 순찰"
+        },
+        {
+          "type": "삭제",
+          "site": "부산 수자인 2",
+          "status": "active",
+          "reason": "[삭제] 19:00 - [19:00] 부산 EDC 수자인 2호기 - 순찰"
+        }
+      ]
+    },
     {
       "at": "2026-08-04 12:09:44",
       "changes": [
@@ -567,23 +1034,6 @@
           "reason": "[삭제] 01:00 - [01:00] 광교 풍경채 어바니티 - 순찰"
         }
       ]
-    },
-    {
-      "at": "2026-08-01 19:39:45",
-      "changes": [
-        {
-          "type": "변경",
-          "site": "중앙대",
-          "status": "uncertain",
-          "reason": "변경"
-        },
-        {
-          "type": "변경",
-          "site": "[상태변경] 중앙대: suspended → active",
-          "status": "uncertain",
-          "reason": "[상태변경] 중앙대: suspended → active"
-        }
-      ]
     }
   ],
   "patrol_schedule": {
@@ -619,11 +1069,11 @@
         "note": ""
       },
       {
-        "task": "[08:00] 부산 EDC 호반써밋 1호기 - 순찰",
+        "task": "[08:00] [자동출차] 부산 EDC 호반써밋 1호기 - 순찰",
         "note": "순찰중단(타이어마모)"
       },
       {
-        "task": "[08:00] 부산 EDC 수자인 1호기 - 순찰",
+        "task": "[08:00] [자동출차] 부산 EDC 수자인 1호기 - 순찰",
         "note": ""
       },
       {
@@ -637,10 +1087,6 @@
       {
         "task": "[08:50] 파주 - 출차 (순찰준비)",
         "note": ""
-      },
-      {
-        "task": "[08:50] 한국장애인고용공단 1,2호기 - 출차(순찰 준비) (평일)",
-        "note": ""
       }
     ],
     "09:00": [
@@ -649,11 +1095,11 @@
         "note": ""
       },
       {
-        "task": "[09:00] 부산 EDC 호반써밋 1호기 - 순찰",
+        "task": "[09:00] [자동출차] 부산 EDC 호반써밋 1호기 - 순찰",
         "note": "순찰중단(타이어마모)"
       },
       {
-        "task": "[09:00] 부산 EDC 수자인 1호기 - 순찰",
+        "task": "[09:00] [자동출차] 부산 EDC 수자인 1호기 - 순찰",
         "note": ""
       },
       {
@@ -697,19 +1143,19 @@
         "note": ""
       },
       {
-        "task": "[09:00] 한국장애인고용공단 자체순찰01 (빅웨이브) - 순찰 [평일]",
+        "task": "[09:00] [자동출차] 한국장애인고용공단 자체순찰01 (빅웨이브) - 순찰 [평일]",
         "note": "순찰중단(cctv미송출)"
       },
       {
-        "task": "[09:15] 한국장애인고용공단 자체순찰02 (빅웨이브) - 순회 [평일]",
+        "task": "[09:15] [자동출차] 한국장애인고용공단 자체순찰02 (빅웨이브) - 순회 [평일]",
         "note": ""
       },
       {
-        "task": "[09:30] 한국장애인고용공단 자체순찰01 (빅웨이브) - 순찰 [평일]",
+        "task": "[09:30] [자동출차] 한국장애인고용공단 자체순찰01 (빅웨이브) - 순찰 [평일]",
         "note": "순찰중단(cctv미송출)"
       },
       {
-        "task": "[09:45] 한국장애인고용공단 자체순찰02 (빅웨이브) - 순찰 [평일]",
+        "task": "[09:45] [자동출차] 한국장애인고용공단 자체순찰02 (빅웨이브) - 순찰 [평일]",
         "note": ""
       },
       {
@@ -735,11 +1181,11 @@
         "note": "순찰중단(기체 cali 틀어짐 및 head top cover 파손)"
       },
       {
-        "task": "[10:00] 부산 EDC 호반써밋 2호기 - 순찰",
+        "task": "[10:00] [자동출차] 부산 EDC 호반써밋 2호기 - 순찰",
         "note": ""
       },
       {
-        "task": "[10:00] 부산 EDC 수자인 2호기 - 순찰",
+        "task": "[10:00] [자동출차] 부산 EDC 수자인 2호기 - 순찰",
         "note": ""
       },
       {
@@ -801,11 +1247,11 @@
         "note": ""
       },
       {
-        "task": "[11:00] 부산 EDC 호반써밋 2호기 - 순찰",
+        "task": "[11:00] [자동출차] 부산 EDC 호반써밋 2호기 - 순찰",
         "note": ""
       },
       {
-        "task": "[11:00] 부산 EDC 수자인 2호기 - 순찰",
+        "task": "[11:00] [자동출차] 부산 EDC 수자인 2호기 - 순찰",
         "note": ""
       },
       {
@@ -821,7 +1267,7 @@
         "note": ""
       },
       {
-        "task": "[11:30] 한국장애인고용공단 자체순찰01 (빅웨이브) - 순찰 [평일]",
+        "task": "[11:30] [자동출차] 한국장애인고용공단 자체순찰01 (빅웨이브) - 순찰 [평일]",
         "note": "순찰중단(cctv미송출)"
       },
       {
@@ -831,11 +1277,11 @@
     ],
     "12:00": [
       {
-        "task": "[12:00] 부산 EDC 호반써밋 1호기 - 순찰",
+        "task": "[12:00] [자동출차] 부산 EDC 호반써밋 1호기 - 순찰",
         "note": "순찰중단(타이어마모)"
       },
       {
-        "task": "[12:00] 부산 EDC 수자인 1호기 - 순찰",
+        "task": "[12:00] [자동출차] 부산 EDC 수자인 1호기 - 순찰",
         "note": ""
       },
       {
@@ -851,11 +1297,11 @@
         "note": ""
       },
       {
-        "task": "[12:15] 한국장애인고용공단 자체순찰02 (빅웨이브) - 순찰 [평일]",
+        "task": "[12:15] [자동출차] 한국장애인고용공단 자체순찰02 (빅웨이브) - 순찰 [평일]",
         "note": ""
       },
       {
-        "task": "[12:45] 한국장애인고용공단 자체순찰02 (빅웨이브) - 순찰 [평일]",
+        "task": "[12:45] [자동출차] 한국장애인고용공단 자체순찰02 (빅웨이브) - 순찰 [평일]",
         "note": ""
       },
       {
@@ -869,7 +1315,7 @@
     ],
     "13:00": [
       {
-        "task": "[13:00] 한국장애인고용공단 자체순찰01 (빅웨이브) - 순찰 [평일]",
+        "task": "[13:00] [자동출차] 한국장애인고용공단 자체순찰01 (빅웨이브) - 순찰 [평일]",
         "note": "순찰중단(cctv미송출)"
       },
       {
@@ -877,11 +1323,11 @@
         "note": "순찰중단(기체 cali 틀어짐 및 head top cover 파손)"
       },
       {
-        "task": "[13:00] 부산 EDC 호반써밋 1호기 - 순찰",
+        "task": "[13:00] [자동출차] 부산 EDC 호반써밋 1호기 - 순찰",
         "note": "순찰중단(타이어마모)"
       },
       {
-        "task": "[13:00] 부산 EDC 수자인 1호기 - 순찰",
+        "task": "[13:00] [자동출차] 부산 EDC 수자인 1호기 - 순찰",
         "note": ""
       },
       {
@@ -895,11 +1341,11 @@
     ],
     "14:00": [
       {
-        "task": "[14:00] 부산 EDC 호반써밋 2호기 - 순찰",
+        "task": "[14:00] [자동출차] 부산 EDC 호반써밋 2호기 - 순찰",
         "note": ""
       },
       {
-        "task": "[14:00] 부산 EDC 수자인 2호기 - 순찰",
+        "task": "[14:00] [자동출차] 부산 EDC 수자인 2호기 - 순찰",
         "note": ""
       },
       {
@@ -951,7 +1397,7 @@
         "note": ""
       },
       {
-        "task": "[14:50] 부산 더샵남천프레스티지 - 출차 (순찰준비)",
+        "task": "[14:50] [자동출차] 부산 더샵남천프레스티지 - 출차 (순찰준비)",
         "note": ""
       }
     ],
@@ -961,11 +1407,11 @@
         "note": "순찰중단(기체 cali 틀어짐 및 head top cover 파손)"
       },
       {
-        "task": "[15:00] 부산 EDC 호반써밋 2호기 - 순찰",
+        "task": "[15:00] [자동출차] 부산 EDC 호반써밋 2호기 - 순찰",
         "note": ""
       },
       {
-        "task": "[15:00] 부산 EDC 수자인 2호기 - 순찰",
+        "task": "[15:00] [자동출차] 부산 EDC 수자인 2호기 - 순찰",
         "note": ""
       },
       {
@@ -1009,7 +1455,7 @@
         "note": ""
       },
       {
-        "task": "[15:30] 한국장애인고용공단 자체순찰01 (빅웨이브) - 순찰 [평일]",
+        "task": "[15:30] [자동출차] 한국장애인고용공단 자체순찰01 (빅웨이브) - 순찰 [평일]",
         "note": "순찰중단(cctv미송출)"
       },
       {
@@ -1047,11 +1493,11 @@
         "note": ""
       },
       {
-        "task": "[16:00] 부산 EDC 호반써밋 1호기 - 순찰",
+        "task": "[16:00] [자동출차] 부산 EDC 호반써밋 1호기 - 순찰",
         "note": "순찰중단(타이어마모)"
       },
       {
-        "task": "[16:00] 부산 EDC 수자인 1호기 - 순찰",
+        "task": "[16:00] [자동출차] 부산 EDC 수자인 1호기 - 순찰",
         "note": ""
       },
       {
@@ -1071,7 +1517,7 @@
         "note": ""
       },
       {
-        "task": "[16:15] 한국장애인고용공단 자체순찰02 (빅웨이브) - 순회 [평일]",
+        "task": "[16:15] [자동출차] 한국장애인고용공단 자체순찰02 (빅웨이브) - 순회 [평일]",
         "note": ""
       },
       {
@@ -1083,13 +1529,13 @@
         "note": "순찰중단(깃대 고정 볼트 이슈)"
       },
       {
-        "task": "[16:45] 한국장애인고용공단 자체순찰02 (빅웨이브) - 순회 [평일]",
+        "task": "[16:45] [자동출차] 한국장애인고용공단 자체순찰02 (빅웨이브) - 순회 [평일]",
         "note": ""
       }
     ],
     "17:00": [
       {
-        "task": "[17:00] 한국장애인고용공단 자체순찰01 (빅웨이브) - 순회 [평일]",
+        "task": "[17:00] [자동출차] 한국장애인고용공단 자체순찰01 (빅웨이브) - 순회 [평일]",
         "note": "순찰중단(cctv미송출)"
       },
       {
@@ -1101,11 +1547,11 @@
         "note": ""
       },
       {
-        "task": "[17:00] 부산 EDC 호반써밋 1호기 - 순찰",
+        "task": "[17:00] [자동출차] 부산 EDC 호반써밋 1호기 - 순찰",
         "note": "순찰중단(타이어마모)"
       },
       {
-        "task": "[17:00] 부산 EDC 수자인 1호기 - 순찰",
+        "task": "[17:00] [자동출차] 부산 EDC 수자인 1호기 - 순찰",
         "note": ""
       },
       {
@@ -1117,7 +1563,7 @@
         "note": ""
       },
       {
-        "task": "[17:45] 한국장애인고용공단 자체순찰02 (빅웨이브) - 순회 [평일]",
+        "task": "[17:45] [자동출차] 한국장애인고용공단 자체순찰02 (빅웨이브) - 순회 [평일]",
         "note": ""
       },
       {
@@ -1127,11 +1573,11 @@
     ],
     "18:00": [
       {
-        "task": "[18:00] 부산 EDC 호반써밋 2호기 - 순찰",
+        "task": "[18:00] [자동출차] 부산 EDC 호반써밋 2호기 - 순찰",
         "note": ""
       },
       {
-        "task": "[18:00] 부산 EDC 수자인 2호기 - 순찰",
+        "task": "[18:00] [자동출차] 부산 EDC 수자인 2호기 - 순찰",
         "note": ""
       },
       {
@@ -1165,11 +1611,11 @@
         "note": ""
       },
       {
-        "task": "[19:00] 부산 EDC 호반써밋 2호기 - 순찰",
+        "task": "[19:00] [자동출차] 부산 EDC 호반써밋 2호기 - 순찰",
         "note": ""
       },
       {
-        "task": "[19:00] 부산 EDC 수자인 2호기 - 순찰",
+        "task": "[19:00] [자동출차] 부산 EDC 수자인 2호기 - 순찰",
         "note": ""
       },
       {
@@ -1828,283 +2274,283 @@
     "용인 고진": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-08-04 12:09:44",
+      "updatedAt": "2026-08-04 15:09:46",
       "syncIssue": false
     },
     "서강대": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-08-04 12:09:44",
+      "updatedAt": "2026-08-04 15:09:46",
       "syncIssue": false
     },
     "경희대": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-08-04 12:09:44",
+      "updatedAt": "2026-08-04 15:09:46",
       "syncIssue": false
     },
     "성남 율동": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-08-04 12:09:44",
+      "updatedAt": "2026-08-04 15:09:46",
       "syncIssue": false
     },
     "성남 야탑": {
       "status": "suspended",
       "reason": "적재함 불량",
-      "updatedAt": "2026-08-04 12:09:44",
+      "updatedAt": "2026-08-04 15:09:46",
       "syncIssue": false
     },
     "구리 롯데캐슬": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-08-04 12:09:44",
+      "updatedAt": "2026-08-04 15:09:46",
       "syncIssue": false
     },
     "부산 호반 1": {
       "status": "suspended",
       "reason": "타이어마모",
-      "updatedAt": "2026-08-04 12:09:44",
+      "updatedAt": "2026-08-04 15:09:46",
       "syncIssue": false
     },
     "부산 수자인 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-08-04 12:09:44",
+      "updatedAt": "2026-08-04 15:09:46",
       "syncIssue": false
     },
     "파주": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-08-04 12:09:44",
+      "updatedAt": "2026-08-04 15:09:46",
       "syncIssue": false
     },
     "리센츠 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-08-04 12:09:44",
+      "updatedAt": "2026-08-04 15:09:46",
       "syncIssue": false
     },
     "리센츠 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-08-04 12:09:44",
+      "updatedAt": "2026-08-04 15:09:46",
       "syncIssue": false
     },
     "평택 1": {
       "status": "suspended",
       "reason": "깃대 고정 볼트 이슈",
-      "updatedAt": "2026-08-04 12:09:44",
+      "updatedAt": "2026-08-04 15:09:46",
       "syncIssue": false
     },
     "평택 2": {
       "status": "suspended",
       "reason": "깃대 고정 볼트 이슈",
-      "updatedAt": "2026-08-04 12:09:44",
+      "updatedAt": "2026-08-04 15:09:46",
       "syncIssue": false
     },
     "DMZ": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-08-04 12:09:44",
+      "updatedAt": "2026-08-04 15:09:46",
       "syncIssue": false
     },
     "부산 서면": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-08-04 12:09:44",
+      "updatedAt": "2026-08-04 15:09:46",
       "syncIssue": false
     },
     "부천 위브": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-08-04 12:09:44",
+      "updatedAt": "2026-08-04 15:09:46",
       "syncIssue": false
     },
     "장애인고용공단 1": {
       "status": "suspended",
       "reason": "cctv미송출",
-      "updatedAt": "2026-08-04 12:09:44",
+      "updatedAt": "2026-08-04 15:09:46",
       "syncIssue": false
     },
     "장애인고용공단 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-08-04 12:09:44",
+      "updatedAt": "2026-08-04 15:09:46",
       "syncIssue": false
     },
     "성남 판교": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-08-04 12:09:44",
+      "updatedAt": "2026-08-04 15:09:46",
       "syncIssue": false
     },
     "성남 서현": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-08-04 12:09:44",
+      "updatedAt": "2026-08-04 15:09:46",
       "syncIssue": false
     },
     "잠실 레이크": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-08-04 12:09:44",
+      "updatedAt": "2026-08-04 15:09:46",
       "syncIssue": false
     },
     "고양 래미안": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-08-04 12:09:44",
+      "updatedAt": "2026-08-04 15:09:46",
       "syncIssue": false
     },
     "인력개발원": {
       "status": "suspended",
       "reason": "기체 cali 틀어짐 및 head top cover 파손",
-      "updatedAt": "2026-08-04 12:09:44",
+      "updatedAt": "2026-08-04 15:09:46",
       "syncIssue": false
     },
     "부산 호반 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-08-04 12:09:44",
+      "updatedAt": "2026-08-04 15:09:46",
       "syncIssue": false
     },
     "부산 수자인 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-08-04 12:09:44",
+      "updatedAt": "2026-08-04 15:09:46",
       "syncIssue": false
     },
     "엘스": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-08-04 12:09:44",
+      "updatedAt": "2026-08-04 15:09:46",
       "syncIssue": false
     },
     "창원대 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-08-04 12:09:44",
+      "updatedAt": "2026-08-04 15:09:46",
       "syncIssue": false
     },
     "창원대 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-08-04 12:09:44",
+      "updatedAt": "2026-08-04 15:09:46",
       "syncIssue": false
     },
     "한성대": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-08-04 12:09:44",
+      "updatedAt": "2026-08-04 15:09:46",
       "syncIssue": false
     },
     "김포 풍무": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-08-04 12:09:44",
+      "updatedAt": "2026-08-04 15:09:46",
       "syncIssue": false
     },
     "부경대": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-08-04 12:09:44",
+      "updatedAt": "2026-08-04 15:09:46",
       "syncIssue": false
     },
     "김포 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-08-04 12:09:44",
+      "updatedAt": "2026-08-04 15:09:46",
       "syncIssue": false
     },
     "김포 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-08-04 12:09:44",
+      "updatedAt": "2026-08-04 15:09:46",
       "syncIssue": false
     },
     "부산 더샵남천": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-08-04 12:09:44",
+      "updatedAt": "2026-08-04 15:09:46",
       "syncIssue": false
     },
     "광교 풍경채": {
       "status": "uncertain",
       "reason": "2바퀴",
-      "updatedAt": "2026-08-04 12:09:44",
+      "updatedAt": "2026-08-04 15:09:46",
       "syncIssue": false
     },
     "지제": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-08-04 12:09:44",
+      "updatedAt": "2026-08-04 15:09:46",
       "syncIssue": false
     },
     "두루아이 5": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-08-04 12:09:44",
+      "updatedAt": "2026-08-04 15:09:46",
       "syncIssue": false
     },
     "잠실 르엘": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-08-04 12:09:44",
+      "updatedAt": "2026-08-04 15:09:46",
       "syncIssue": false
     },
     "중앙대": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-08-04 12:09:44",
+      "updatedAt": "2026-08-04 15:09:46",
       "syncIssue": false
     },
     "신동백": {
       "status": "uncertain",
       "reason": "임시코스",
-      "updatedAt": "2026-08-04 12:09:44",
+      "updatedAt": "2026-08-04 15:09:46",
       "syncIssue": false
     },
     "청담 르엘": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-08-04 12:09:44",
+      "updatedAt": "2026-08-04 15:09:46",
       "syncIssue": false
     },
     "전주천": {
       "status": "suspended",
       "reason": "네트워크",
-      "updatedAt": "2026-08-04 12:09:44",
+      "updatedAt": "2026-08-04 15:09:46",
       "syncIssue": false
     },
     "동백SK": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-08-04 12:09:44",
+      "updatedAt": "2026-08-04 15:09:46",
       "syncIssue": false
     },
     "아주대": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-08-04 12:09:44",
+      "updatedAt": "2026-08-04 15:09:46",
       "syncIssue": false
     },
     "인재개발원": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-08-04 12:09:44",
+      "updatedAt": "2026-08-04 15:09:46",
       "syncIssue": false
     },
     "쉴더스": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-08-04 12:09:44",
+      "updatedAt": "2026-08-04 15:09:46",
       "syncIssue": false
     },
     "두루아이 4": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-08-04 12:09:44",
+      "updatedAt": "2026-08-04 15:09:46",
       "syncIssue": false
     }
   }
