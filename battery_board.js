@@ -877,14 +877,20 @@
         // '기체 정보 검색' ~ '카드 제거' 버튼이 실제로 차지하는 폭에만 맞춤
         const siWrap   = searchWrap.querySelector('.bb-si-wrap');
         const firstBtn = document.getElementById('bb-inforequest-btn');
-        const lastBtn  = document.getElementById('bb-rmbtn');
-        if (siWrap && firstBtn && lastBtn) {
-            const tight = (lastBtn.offsetLeft + lastBtn.offsetWidth) - firstBtn.offsetLeft;
-            if (tight > 0) {
-                siWrap.style.maxWidth  = tight + 'px';
-                siWrap.style.marginLeft = 'auto';
-            }
-        }
+		const lastBtn  = document.getElementById('bb-rmbtn');
+		if (siWrap && firstBtn && lastBtn) {
+		    const wrapRect  = searchWrap.getBoundingClientRect();
+		    const firstRect = firstBtn.getBoundingClientRect();
+		    const lastRect  = lastBtn.getBoundingClientRect();
+		    const tight      = Math.round(lastRect.right - firstRect.left);
+		    const leftOffset = Math.round(firstRect.left - wrapRect.left);
+		    if (tight > 0) {
+		        siWrap.style.flexBasis  = tight + 'px';
+		        siWrap.style.width      = tight + 'px';
+		        siWrap.style.maxWidth   = tight + 'px';
+		        siWrap.style.marginLeft = leftOffset + 'px';
+		    }
+		}
     }
     syncSearchWrapWidth();
     if (document.fonts?.ready) document.fonts.ready.then(syncSearchWrapWidth).catch(() => {});
