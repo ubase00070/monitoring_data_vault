@@ -311,8 +311,7 @@
 		}
 		.bb-ca:hover {
 			transform:translateY(-3px) scale(1.03);
-			box-shadow:0 6px 0 rgba(0,0,0,.2), 0 0 16px rgba(255,224,130,.25);
-			border-color:var(--ye);
+			box-shadow:0 6px 0 rgba(0,0,0,.2);
 		}
 		.bb-ca:active { cursor:grabbing; transform:translateY(-1px) scale(0.99); }
         .bb-ca.dragging { opacity:.3; }
@@ -1817,7 +1816,7 @@
         const entry = data.entries[robotId];
         if (!entry || entry.log.length === 0) return `<div style="font-size:13px;color:var(--mu);padding:30px;text-align:center;">${source==='yesterday' ? '어제' : '오늘'} 기록된 데이터 없음</div>`;
 
-        const PX_PER_MIN = 2.1, H = 252, PADX = 19, PADT = 17, PADB = 31;
+        const PX_PER_MIN = 2.9, H = 252, PADX = 19, PADT = 17, PADB = 31;
         const dayStartMin = 8 * 60;
         const spanMin = source === 'yesterday'
             ? 19 * 60   // 어제는 이미 끝난 하루(08:00~익일03:00)이니 항상 전체 구간
