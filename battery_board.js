@@ -188,13 +188,20 @@
             white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
         }
         .bb-chip:hover { filter:brightness(1.15); }
-        .bb-chip.estop { background:var(--rd2); color:var(--rd); border:2px solid rgba(239,68,68,.7); box-shadow:0 0 10px rgba(239,68,68,.4); animation:chipPulse .5s infinite, chipBorder .5s infinite; }
-        .bb-chip.bat    { background:var(--rd2); color:var(--rd); border:2px solid rgba(239,68,68,.55); box-shadow:0 0 8px rgba(239,68,68,.25); animation:chipPulse 1s infinite, chipBorder 1s infinite; }
-        .bb-chip.dock   { background:rgba(251,191,36,.12); color:var(--ye); border:2px solid rgba(251,191,36,.5); box-shadow:0 0 6px rgba(251,191,36,.2); animation:chipPulse 1s infinite, chipBorder 1s infinite; }
-        .bb-chip.zombie { background:rgba(249,115,22,.12); color:var(--or); border:2px solid rgba(249,115,22,.5); box-shadow:0 0 8px rgba(249,115,22,.2); animation:chipPulse .7s infinite, chipBorder .7s infinite; }
-        .bb-chip.cam    { background:rgba(249,115,22,.12); color:var(--or); border:2px solid rgba(249,115,22,.45); box-shadow:0 0 6px rgba(249,115,22,.15); animation:chipPulse 1s infinite, chipBorder 1s infinite; }
-        .bb-chip.nomap  { background:rgba(249,115,22,.12); color:var(--or); border:2px solid rgba(249,115,22,.45); box-shadow:0 0 6px rgba(249,115,22,.15); animation:chipPulse 1s infinite, chipBorder 1s infinite; }
-        .bb-chip.idle   { background:rgba(59,130,246,.10); color:var(--bl); border:2px solid rgba(59,130,246,.45); box-shadow:0 0 6px rgba(59,130,246,.15); animation:chipPulse 1.2s infinite, chipBorder 1.2s infinite; }
+        .bb-chip.estop { background:var(--rd2); color:var(--rd); border:2px solid rgba(239,68,68,.7); animation:chipPulse .5s infinite, chipBorder .5s infinite; }
+        .bb-chip.bat    { background:var(--rd2); color:var(--rd); border:2px solid rgba(239,68,68,.55); animation:chipPulse 1s infinite, chipBorder 1s infinite; }
+        .bb-chip.dock   { background:rgba(251,191,36,.12); color:var(--ye); border:2px solid rgba(251,191,36,.5); animation:chipPulse 1s infinite, chipBorder 1s infinite; }
+        .bb-chip.zombie { background:rgba(249,115,22,.12); color:var(--or); border:2px solid rgba(249,115,22,.5); animation:chipPulse .7s infinite, chipBorder .7s infinite; }
+        .bb-chip.cam    { background:rgba(249,115,22,.12); color:var(--or); border:2px solid rgba(249,115,22,.45); animation:chipPulse 1s infinite, chipBorder 1s infinite; }
+        .bb-chip.nomap  { background:rgba(249,115,22,.12); color:var(--or); border:2px solid rgba(249,115,22,.45); animation:chipPulse 1s infinite, chipBorder 1s infinite; }
+        .bb-chip.idle   { background:rgba(59,130,246,.10); color:var(--bl); border:2px solid rgba(59,130,246,.45); animation:chipPulse 1.2s infinite, chipBorder 1.2s infinite; }
+        #bb.bb-light .bb-chip.estop  { box-shadow:0 0 10px rgba(239,68,68,.4); }
+        #bb.bb-light .bb-chip.bat    { box-shadow:0 0 8px rgba(239,68,68,.25); }
+        #bb.bb-light .bb-chip.dock   { box-shadow:0 0 6px rgba(251,191,36,.2); }
+        #bb.bb-light .bb-chip.zombie { box-shadow:0 0 8px rgba(249,115,22,.2); }
+        #bb.bb-light .bb-chip.cam    { box-shadow:0 0 6px rgba(249,115,22,.15); }
+        #bb.bb-light .bb-chip.nomap  { box-shadow:0 0 6px rgba(249,115,22,.15); }
+        #bb.bb-light .bb-chip.idle   { box-shadow:0 0 6px rgba(59,130,246,.15); }
         .bb-chip-none   { font-size:12px; color:var(--mu); font-weight:700; }
         @keyframes chipPulse { 0%,100%{opacity:1} 50%{opacity:.85} }
         @keyframes chipBorder {
@@ -386,15 +393,16 @@
             padding:5px; display:grid;
             grid-template-columns:repeat(4,1fr);
             grid-template-rows:repeat(4,1fr);
-            gap:3px; width:120px; height:120px;
+            gap:3px; width:135px; flex:1;
         }
         .bb-mi {
             width:100%; aspect-ratio:1; border-radius:50%;
             border:2px solid var(--ac,var(--gy));
             color:var(--ac,var(--gy)); font-size:13px; font-weight:900;
             display:flex; align-items:center; justify-content:center;
-            font-family:'Paperlogy','Lato',monospace; box-shadow:0 0 4px var(--ac);
+            font-family:'Paperlogy','Lato',monospace;
         }
+        #bb.bb-light .bb-mi:not(.empty) { box-shadow:0 0 4px var(--ac); }
         .bb-mi.empty { border-color:var(--bd2); color:transparent; box-shadow:none; opacity:.12; }
         .bb-mi.charging   { --ac:var(--gn); }
         .bb-mi.patrolling { --ac:var(--bl); }
@@ -441,7 +449,7 @@
 		.bb-walker-arrow:active { transform:translateY(-50%) scale(0.9); }
 
 		#bb-walker-bubble {
-			position:absolute; top:36px; left:260px; width:250px; min-height:50px;
+			position:absolute; top:6px; left:260px; width:250px; min-height:50px;
 			background:#fdf6e3; border-radius:20px; padding:10px 18px;
 			font-size:16px; color:#5c4a2a; font-weight:700; line-height:1.4;
 			box-shadow:0 4px 12px rgba(0,0,0,.35);
@@ -462,7 +470,7 @@
 		}
 
         #bb-walker-toggle {
-            position:absolute; top:36px; right:8px;
+            position:absolute; top:6px; right:8px;
             min-width:38px; height:22px; padding:0 7px;
             border-radius:6px;
             background:var(--sur2); border:1px solid var(--bd2);
@@ -477,13 +485,14 @@
 		
         .bb-delivery-title {
             font-size:16.5px; font-weight:900; color:var(--tx); letter-spacing:.3px;
-            padding:5px 6px; border-bottom:1px solid var(--bd); background:var(--sur);
-            text-align:center; border-radius:6px 6px 0 0; flex-shrink:0;
+            padding:5px 6px; border:1px solid var(--bd); background:var(--sur);
+            text-align:center; border-radius:8px; flex-shrink:0;
+            width:30%; box-sizing:border-box; margin:6px 0 0 6px;
         }
         .bb-delivery-chips {
             display:flex; flex-wrap:wrap; gap:4px;
             overflow-y:auto; max-height:100px; padding:7px 10px 7px 10px;
-            margin-top:20px; max-width:calc(100% - 155px);
+            margin-top:4px; max-width:calc(100% - 155px);
             box-sizing:border-box;
         }
         .bb-delivery-chips::-webkit-scrollbar { width:4px; }
@@ -598,7 +607,9 @@
 
         /* ── 사용 설명서 패널 ── */
         #bb-info-panel {
-            display:none; position:absolute; top:0; left:0; right:0; bottom:0;
+            display:none; position:fixed;
+            top:50%; left:50%; transform:translate(-50%,-50%);
+            width:745px; max-height:50vh;
             background:var(--sur2); border:1px solid var(--bd2);
             border-radius:12px; box-shadow:0 16px 48px rgba(0,0,0,.85);
             z-index:9999999999; padding:16px; overflow-y:auto;
@@ -738,7 +749,7 @@
                 </div>
                 <div class="bb-search-wrap" id="bb-search-wrap">
                     <button class="bb-btn" id="bb-wbl-upload-btn" style="display:none;">📤 UP</button>
-                    <button class="bb-btn" id="bb-inforequest-btn">기체 정보 검색</button>
+                    <button class="bb-btn" id="bb-inforequest-btn">기체 정보 보기</button>
                     <button class="bb-btn" id="bb-sortname-btn">이름 순 정렬</button>
                     <button class="bb-btn" id="bb-rmbtn">카드 제거</button>
                     <div class="bb-si-wrap">
@@ -2511,7 +2522,7 @@
             const badgeEl = document.getElementById('bb-icp-badge');
             const bodyEl  = document.getElementById('bb-icp-body');
 
-            titleEl.textContent = '기체 정보 검색';
+            titleEl.textContent = '기체 정보 보기';
             badgeEl.style.display = 'none';
             panel.classList.add('search-mode');
 
@@ -2757,11 +2768,36 @@
         render();
     });
 
+    let _infoPanelSimpleCloseHandler = null;
+    function registerInfoPanelSimpleClose() {
+        const panel = document.getElementById('bb-info-panel');
+        if (_infoPanelSimpleCloseHandler) {
+            document.removeEventListener('mousedown', _infoPanelSimpleCloseHandler);
+            _infoPanelSimpleCloseHandler = null;
+        }
+        setTimeout(() => {
+            _infoPanelSimpleCloseHandler = function closeInfo(e) {
+                if (!panel.contains(e.target)) {
+                    panel.classList.remove('open');
+                    document.removeEventListener('mousedown', _infoPanelSimpleCloseHandler);
+                    _infoPanelSimpleCloseHandler = null;
+                }
+            };
+            document.addEventListener('mousedown', _infoPanelSimpleCloseHandler);
+        }, 100);
+    }
+
     document.getElementById('bb-infobtn').addEventListener('click', () => {
-        document.getElementById('bb-info-panel').classList.toggle('open');
+        const panel = document.getElementById('bb-info-panel');
+        const nowOpen = panel.classList.toggle('open');
+        if (nowOpen) registerInfoPanelSimpleClose();
     });
     document.getElementById('bb-info-close').addEventListener('click', () => {
         document.getElementById('bb-info-panel').classList.remove('open');
+        if (_infoPanelSimpleCloseHandler) {
+            document.removeEventListener('mousedown', _infoPanelSimpleCloseHandler);
+            _infoPanelSimpleCloseHandler = null;
+        }
     });
 
     const siEl = document.getElementById('bb-si');
