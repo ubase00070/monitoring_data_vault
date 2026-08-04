@@ -31,8 +31,8 @@
 		}
 		@import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap');
         :root {
-			--bg:#1b1e24; --sur:#242830; --sur2:#2c313a;
-			--bd:#343a44; --bd2:#3d434e; --tx:#e4e6ea; --mu:#8b929c;
+			--bg:#1b1e24; --sur:#35383d; --sur2:#41454b;
+			--bd:#4c5058; --bd2:#565b64; --tx:#e4e6ea; --mu:#8b929c;
 			--gn:#4d9d6d; --gn2:rgba(77,157,109,.12);
 			--bl:#5b8fd1; --bl2:rgba(91,143,209,.12);
 			--wh:rgba(228,230,234,.05); --gy:#5a6069;
@@ -504,7 +504,7 @@
         #bb-top5-panel {
             display:none; position:fixed;
             top:50%; left:50%; transform:translate(-50%,-50%);
-            width:600px; max-height:86vh; overflow-y:auto;
+            width:720px; max-height:86vh; overflow-y:auto;
             border:3px solid transparent; border-radius:14px;
             background-image: linear-gradient(var(--sur), var(--sur)), linear-gradient(135deg, #6366f1, #ec4899);
             background-origin: border-box;
@@ -616,6 +616,7 @@
             z-index:999999999; font-family:'Lato',sans-serif;
             color:var(--tx); overflow:hidden;
         }
+        #bb-info-card-panel.search-mode { width:588px; }
         .bb-icp-flex { display:flex; align-items:stretch; }
         .bb-icp-left { flex:0 0 260px; min-width:0; }
         .bb-icp-right { flex:1; min-width:0; border-left:1px solid var(--bd); padding:10px 16px; }
@@ -2294,6 +2295,7 @@
         const badgeEl = document.getElementById('bb-icp-badge');
         const bodyEl  = document.getElementById('bb-icp-body');
 
+        panel.classList.remove('search-mode');
         titleEl.textContent = r.name;
 
         // 이상 판단
@@ -2504,6 +2506,7 @@
 
             titleEl.textContent = '기체 정보 검색';
             badgeEl.style.display = 'none';
+            panel.classList.add('search-mode');
 
             let searchFocusIdx = -1;
 
