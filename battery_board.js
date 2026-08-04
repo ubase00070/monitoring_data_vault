@@ -2008,7 +2008,7 @@
 		const data = wblLoad();
 		if (!data || data.day !== wblGetDayKey()) return false;
 		try {
-			// 오늘 첫 업로드라면, 서버에 남은 게 "어제 것"인지 확인해서 어제용 파일로 먼저 보존
+			// 오늘 첫 업로드면, 서버에 남은 게 "어제 것"인지 확인해서 어제용 파일로 먼저 보존
 			const archivedFor = localStorage.getItem('bb_wbl_archived_day');
 			if (archivedFor !== data.day) {
 				try {
