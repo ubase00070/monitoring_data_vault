@@ -305,12 +305,15 @@
 			cursor:grab; position:relative; overflow:hidden;
 			display:flex; flex-direction:column; justify-content:space-between;
 			border:3px solid var(--ac-border,var(--bd));
+			transform:translateZ(0);
+			backface-visibility:hidden;
+			will-change:transform;
 			transition:transform .25s cubic-bezier(.34,1.56,.64,1),
 					   box-shadow .25s cubic-bezier(.34,1.56,.64,1),
 					   border-color .2s, background .2s, opacity .15s;
 		}
 		.bb-ca:hover {
-			transform:translateY(-3px) scale(1.03);
+			transform:translateY(-3px) scale(1.03) translateZ(0);
 			box-shadow:0 6px 0 rgba(0,0,0,.2);
 		}
 		.bb-ca:active { cursor:grabbing; transform:translateY(-1px) scale(0.99); }
@@ -1871,19 +1874,40 @@
         const dots = colorSegs.flatMap(seg => seg.points.map(pt =>
             `<circle cx="${xOf(pt.t).toFixed(1)}" cy="${yOf(pt.battery).toFixed(1)}" r="3.4" style="fill:${colorOf(pt.status)}" stroke="${haloColor}" stroke-width="1.3"/>`
         ));
-        const dotLabels = colorSegs.flatMap(seg => seg.points.map(pt => {
-            const above = pt.battery >= 92;   // 100%에 가까우면 그래프 상단에 눌려서 잘리니 아래쪽에 표기
-            const ty = yOf(pt.battery) + (above ? 13 : -7);
-            return `<text x="${xOf(pt.t).toFixed(1)}" y="${ty.toFixed(1)}" font-size="10" font-weight="700"
-                        text-anchor="middle" fill="${dotFill}"
-                        stroke="${haloColor}" stroke-width="2.4" paint-order="stroke fill">${pt.battery}%</text>`;
-        }));
+        // 같은 배터리 값이 연속되면(예: 09:00~16:00 계속 100%) 중간은 점만 찍고,
+        // 그 구간의 시작점과 끝점에만 숫자를 표기해서 가독성을 높임
+        const dotLabels = [];
+        colorSegs.forEach(seg => {
+            const pts = seg.points;
+            let i = 0;
+            while (i < pts.length) {
+                let j = i;
+                while (j + 1 < pts.length && pts[j + 1].battery === pts[i].battery) j++;
+                const idxToLabel = j > i ? [i, j] : [i];   // 같은 값 구간이면 시작+끝, 단일 지점이면 그 지점만
+                idxToLabel.forEach(idx => {
+                    const pt = pts[idx];
+                    const above = pt.battery >= 92;   // 100%에 가까우면 그래프 상단에 눌려서 잘리니 아래쪽에 표기
+                    const ty = yOf(pt.battery) + (above ? 13 : -7);
+                    dotLabels.push(`<text x="${xOf(pt.t).toFixed(1)}" y="${ty.toFixed(1)}" font-size="10" font-weight="700"
+                                text-anchor="middle" fill="${dotFill}"
+                                stroke="${haloColor}" stroke-width="2.4" paint-order="stroke fill">${pt.battery}%</text>`);
+                });
+                i = j + 1;
+            }
+        });
 
         // x축: 정시(00분) 라벨
         const xTicks = [];
         for (let m = Math.ceil(dayStartMin/60)*60; m <= dayStartMin + spanMin; m += 60) {
             const hh = String(Math.floor((m % 1440) / 60)).padStart(2,'0');
             xTicks.push({ x: PADX + (m - dayStartMin) * PX_PER_MIN, label: `${hh}:00` });
+        }
+
+        // x축: 정시 사이 10분 단위 보조 눈금(10/20/30/40/50) — 시간대를 더 세밀하게 가늠할 수 있도록
+        const xMinorTicks = [];
+        for (let m = dayStartMin; m <= dayStartMin + spanMin; m += 10) {
+            if (m % 60 === 0) continue;   // 정시는 xTicks에서 이미 표기
+            xMinorTicks.push({ x: PADX + (m - dayStartMin) * PX_PER_MIN, label: String(m % 60) });
         }
 
         const yLabels = [100,75,50,25,0].map(p =>
@@ -1902,6 +1926,7 @@
                         ${dots.join('')}
                         ${dotLabels.join('')}
                         ${xTicks.map(t => `<text x="${t.x.toFixed(1)}" y="${H-8}" font-size="14" font-weight="700" fill="${labelText}" text-anchor="middle">${t.label}</text>`).join('')}
+                        ${xMinorTicks.map(t => `<text x="${t.x.toFixed(1)}" y="${H-8}" font-size="8" font-weight="500" fill="${labelText}" fill-opacity="0.55" text-anchor="middle">${t.label}</text>`).join('')}
                     </svg>
                 </div>
             </div>
