@@ -2079,18 +2079,34 @@
 		wblDoDownload();
 	}
 
-	// 어제자 데이터 — 세션(접속)당 딱 1회만 로드, 성공하면 그 뒤로는 재시도 안 함. 오늘 데이터랑 별도 저장소에 보관.
+	// 어제자 데이터 — 이미 확보된 상태면 재조회 안 함(가벼운 guard). 성공 전이면 호출될 때마다 서버를 다시 확인.
+	// _어제 이관이 아직 안 됐다면(= CYH가 아직 그날 첫 업로드를 안 한 상태), 지금 이 데이터를 확인 중인 사람이
+	// WBL_HANDOVER_NAME(진행분)을 대신 확인해서 어제 것이 맞으면 직접 이관해준다.
 	async function wblLoadYesterdayOnce() {
 		const targetKey = wblYesterdayDayKey();
 		if (localStorage.getItem('bb_wbl_yesterday_loaded_for') === targetKey) return;   // 이미 이 '어제'는 확보됨
 		try {
 			const res = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent(WBL_YESTERDAY_NAME)}`);
-			if (!res.ok) return;
-			const remote = await res.json();
-			if (!remote?.data || remote.data.day !== targetKey) return;   // 원하는 날짜가 아니면 저장 안 함
-			localStorage.setItem('bb_battery_log_yesterday', JSON.stringify(remote.data));
+			if (res.ok) {
+				const remote = await res.json();
+				if (remote?.data?.day === targetKey) {
+					localStorage.setItem('bb_battery_log_yesterday', JSON.stringify(remote.data));
+					localStorage.setItem('bb_wbl_yesterday_loaded_for', targetKey);
+					console.log('[BB] 어제자 배터리 로그 로드 완료 (' + targetKey + ')');
+					return;
+				}
+			}
+
+			// _어제 자리에 아직 없다면 — 진행분(WBL_HANDOVER_NAME)이 어제 것인지 확인해서 대신 이관
+			const handoverRes = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent(WBL_HANDOVER_NAME)}`);
+			if (!handoverRes.ok) return;
+			const handover = await handoverRes.json();
+			if (handover?.data?.day !== targetKey) return;   // 그것도 어제 게 아니면 정말 데이터 없음
+
+			await wblUploadNamed(WBL_YESTERDAY_NAME, handover.data);
+			localStorage.setItem('bb_battery_log_yesterday', JSON.stringify(handover.data));
 			localStorage.setItem('bb_wbl_yesterday_loaded_for', targetKey);
-			console.log('[BB] 어제자 배터리 로그 로드 완료 (' + targetKey + ')');
+			console.log('[BB] 어제자 배터리 로그 이관+로드 완료 (' + targetKey + ')');
 		} catch (e) { console.log('[BB] 어제자 배터리 로그 로드 실패:', e.message); }
 	}
 
@@ -2365,10 +2381,13 @@
         registerInfoPanelClose();
 
         let wblCurrentSource = 'today';
-        document.getElementById('bb-icp-wbl-toggle').addEventListener('click', () => {
+        document.getElementById('bb-icp-wbl-toggle').addEventListener('click', async () => {
             wblCurrentSource = wblCurrentSource === 'today' ? 'yesterday' : 'today';
             document.getElementById('bb-icp-wbl-title-text').textContent = wblCurrentSource === 'today' ? '오늘 배터리 증감 추이' : '어제 배터리 증감 추이';
             document.getElementById('bb-icp-wbl-toggle').textContent = wblCurrentSource === 'today' ? '어제 데이터 보기' : '오늘 데이터 보기';
+            if (wblCurrentSource === 'yesterday') {
+                await wblLoadYesterdayOnce();   // 새로고침 없이도 방금 이관된 최신 데이터를 확인
+            }
             document.getElementById('bb-icp-wbl-chart').innerHTML = wblRenderChartSVG(r.id, wblCurrentSource);
             const lines = wblSummarizeToday(r.id, wblCurrentSource);
             document.getElementById('bb-icp-wbl-log').innerHTML = lines
