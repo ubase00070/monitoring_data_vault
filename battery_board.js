@@ -1,6 +1,6 @@
 /* ============================================================
    battery_board.js v3.1
-   NCC 기체 모니터 — 템퍼몽키 inject
+   NCC 종합 모니터 — 템퍼몽키 inject
    ============================================================ */
 
 (function () {
@@ -40,6 +40,7 @@
 			--or:#cf8a4f; --or2:rgba(207,138,79,.12);
 			--pk:#d1729a; --pk2:rgba(209,114,154,.12);
 			--offdot:#4b5563;
+			--standby-batt:#98a2ae;
 			--pct-fill:rgba(240,240,255,.93);
 			--pct-shadow:0 1px 3px rgba(0,0,0,.95), 0 0 6px rgba(0,0,0,.7);
 		}
@@ -105,6 +106,13 @@
             background:var(--bg); border-radius:16px 16px 0 0;
             flex-shrink:0; position:relative; gap:3px;
         }
+        .bb-hd-titlebox {
+            display:inline-flex; flex-direction:column; align-items:center; gap:3px;
+            padding:7px 28px 6px; border-radius:12px;
+            border:1.5px solid transparent;
+            background-image: linear-gradient(var(--bg), var(--bg)), linear-gradient(135deg, rgba(99,102,241,.55), rgba(236,72,153,.55));
+            background-origin: border-box; background-clip: padding-box, border-box;
+        }
         .bb-hd-title {
             font-size:22px; font-weight:900;
             background:linear-gradient(135deg, #6366f1, #ec4899);
@@ -164,7 +172,7 @@
             display:flex; flex-direction:column; gap:1px;
             padding:3px 12px; border-radius:10px;
             font-size:15px; font-weight:700; cursor:pointer;
-            font-family:inherit; max-width:180px;
+            font-family:inherit; max-width:198px;
             transition:filter .15s, box-shadow .15s;
         }
         .bb-chip-l1 { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
@@ -274,6 +282,7 @@
             font-size:13px; font-weight:900; color:#c9a24a; margin-bottom:3px; padding-left:3px;
             padding-bottom:5px; border-bottom:1px solid var(--bd2);
         }
+        .bb-cluster-missing { font-size:10px; font-weight:500; color:var(--mu); margin-left:5px; }
         .bb-cluster-row {
             display:flex; align-items:center; gap:7px; padding:2px 5px; border-radius:6px; cursor:pointer;
             border:1px solid transparent; user-select:none; margin-bottom:1px;
@@ -293,7 +302,7 @@
         .bb-cluster-batt-fill { position:absolute; left:0; top:0; bottom:0; transition:width .5s ease; }
         .bb-cluster-batt-pct {
             position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-            font-size:10.5px; font-weight:900; font-family:'Paperlogy','Lato',monospace;
+            font-size:11px; font-weight:900; font-family:'Paperlogy','Lato',monospace;
             color:var(--pct-fill); text-shadow:var(--pct-shadow);
             letter-spacing:-0.3px; pointer-events:none; white-space:nowrap;
         }
@@ -307,7 +316,7 @@
             animation:bb-pctSlide 8s ease-in-out infinite;
         }
         .bb-cluster-pct-val { font-size:12px; font-weight:900; font-family:'Paperlogy','Lato',monospace; -webkit-text-stroke:0.5px currentColor; }
-        .bb-cluster-pct-off { font-size:10px; font-weight:900; color:rgba(239,68,68,.8); animation-delay:-4s; }
+        .bb-cluster-pct-off { font-size:11px; font-weight:900; color:rgba(239,68,68,.8); animation-delay:-4s; }
         @keyframes bb-pctSlide {
             0%     { transform:translateX(0);    opacity:1; }
             42%    { transform:translateX(0);    opacity:1; }
@@ -716,13 +725,15 @@
                     <span id="bb-zoom-label" class="zoom-label">100%</span>
                     <button id="bb-zoom-in"  class="zoom-btn">＋</button>
                 </div>
-                <div class="bb-hd-title" id="bb-drag-handle">
-                    NCC 기체 모니터
-                    <span id="bb-cyh-tag" style="font-size:16px;color:var(--mu);font-weight:400;cursor:default;">by CYH</span>
-                </div>
-                <div class="bb-hd-time">
-                    <div class="bb-clock" id="bb-clk">00:00:00</div>
-                    <div class="bb-ref" id="bb-ref">— 초 후 갱신</div>
+                <div class="bb-hd-titlebox">
+                    <div class="bb-hd-title" id="bb-drag-handle">
+                        NCC 종합 모니터
+                        <span id="bb-cyh-tag" style="font-size:16px;color:var(--mu);font-weight:400;cursor:default;">by CYH</span>
+                    </div>
+                    <div class="bb-hd-time">
+                        <div class="bb-clock" id="bb-clk">00:00:00</div>
+                        <div class="bb-ref" id="bb-ref">— 초 후 갱신</div>
+                    </div>
                 </div>
                 <div class="bb-hd-right" id="bb-hd-right">
                     <button id="bb-top5-btn" class="bb-btn">🔥 배터리 증감 추이</button>
@@ -875,18 +886,22 @@
 
         // 검색창/드롭다운 폭은 컨테이너 전체가 아니라
         // '이름 순 정렬' ~ '카드 제거' 버튼이 실제로 차지하는 폭에만 맞춤
+        // (offsetLeft 대신 getBoundingClientRect로 측정해 좌표계 어긋남 없이 정확히 계산하고,
+        //  max-width가 아니라 width를 직접 강제해서 "그 이하로만 캡"되는 문제를 없앰)
         const siWrap   = searchWrap.querySelector('.bb-si-wrap');
         const firstBtn = document.getElementById('bb-sortname-btn');
         const lastBtn  = document.getElementById('bb-rmbtn');
         if (siWrap && firstBtn && lastBtn) {
-            const tight = (lastBtn.offsetLeft + lastBtn.offsetWidth) - firstBtn.offsetLeft;
+            const tight = lastBtn.getBoundingClientRect().right - firstBtn.getBoundingClientRect().left;
             if (tight > 0) {
+                siWrap.style.width     = tight + 'px';
                 siWrap.style.maxWidth  = tight + 'px';
                 siWrap.style.marginLeft = 'auto';
             }
         }
     }
     syncSearchWrapWidth();
+    setTimeout(syncSearchWrapWidth, 300);   // 폰트/알림칩 등 비동기 렌더링 이후 한 번 더 재보정
     if (document.fonts?.ready) document.fonts.ready.then(syncSearchWrapWidth).catch(() => {});
     window.addEventListener('resize', syncSearchWrapWidth);
 
@@ -926,12 +941,12 @@
     // 묶음 그리드 설정 — siteIds 또는 names로 매칭. 배열 순서대로 표시됨.
     // ============================================================
     const CLUSTER_GROUPS = [
-        { siteIds: [142, 145, 144, 143], label: '성남시 순찰' },
-        { siteIds: [150, 151], label: '부산 EDC' },
-        { siteIds: [180], label: '부산 국립과학관' },
-        { siteIds: [193], label: '창원대학교' },
-        { siteIds: [132], label: '경희대학교' },
-        { siteIds: [137], label: '한국장애인고용공단' },
+        { siteIds: [142, 145, 144, 143], label: '성남시 순찰', expectedNames: ['성남시 판교역 1호기', '성남시 서현역 １호기', '성남시 율동공원 1호기', '성남시 야탑역 1호기'] },
+        { siteIds: [150, 151], label: '부산 EDC', expectedNames: ['부산 EDC 호반써밋 1호기', '부산 EDC 호반써밋 2호기', '부산 EDC 수자인 1호기', '부산 EDC 수자인 2호기'] },
+        { siteIds: [180], label: '부산 국립과학관', expectedNames: ['배송 띠띠', '순찰 띠띠'] },
+        { siteIds: [193], label: '창원대학교', expectedNames: ['창원대학교 1호기', '창원대학교 2호기'] },
+        { siteIds: [132], label: '경희대학교', expectedNames: ['경희대학교 국제캠퍼스 1호기', '경희대학교 국제캠퍼스 2호기'] },
+        { siteIds: [137], label: '한국장애인고용공단', expectedNames: ['한국장애인고용공단 1호기', '한국장애인고용공단 2호기'] },
     ];
     const CLUSTER_AC = {
         charging:'var(--gn)', patrolling:'var(--bl)', standby:'var(--tx)',
@@ -1222,7 +1237,8 @@
                 if (count <= 2) {
                     previewLines = items.map(a => `<div class="bb-chip-l2">${a.name}</div>`).join('');
                 } else {
-                    previewLines = `<div class="bb-chip-l2">${items[0].name} 등 ${count}대</div>`;
+                    previewLines = items.slice(0, 2).map(a => `<div class="bb-chip-l2">${a.name}</div>`).join('')
+                        + `<div class="bb-chip-l2">외 ${count - 2}건</div>`;
                 }
                 return `<div class="bb-chip ${type}" data-type="${type}">
                     <div class="bb-chip-l1">${meta.label} <strong>${count}건</strong></div>
@@ -1554,14 +1570,18 @@
                     const nb = parseInt(b.name.match(/(\d+)호기/)?.[1] || '0', 10);
                     return na - nb;
                 });
-            if (members.length === 0) return;
+            if (members.length === 0 && !(group.expectedNames && group.expectedNames.length)) return;
 
             const groupEl = document.createElement('div');
             groupEl.className = 'bb-cluster-group';
 
             const labelEl = document.createElement('div');
             labelEl.className = 'bb-cluster-group-label';
-            labelEl.textContent = group.label;
+            const memberNames = members.map(m => m.name);
+            const missingNames = (group.expectedNames || []).filter(n => !memberNames.includes(n));
+            labelEl.innerHTML = group.label + (missingNames.length
+                ? `<span class="bb-cluster-missing">(${missingNames.join(', ')} 입고됨)</span>`
+                : '');
             groupEl.appendChild(labelEl);
 
             members.forEach(r => {
@@ -1574,10 +1594,11 @@
 				const row = document.createElement('div');
                 row.className = `bb-cluster-row${lowBat ? ' warn-bat' : ''}${showMissionOff ? ' mission-off' : ''}`;
                 const plugHtml = showPlug ? '<span class="bb-cluster-plug">🔌</span>' : '';
+                const battAc = r.status === 'standby' ? 'var(--standby-batt)' : ac;
                 const battInner = off
                     ? `<span class="bb-cluster-pct" style="color:${ac};">OFF</span>`
-                    : `<span class="bb-cluster-batt" style="border-color:${ac};">
-                           <span class="bb-cluster-batt-fill" style="width:${r.battery}%;background:${ac};"></span>
+                    : `<span class="bb-cluster-batt" style="border-color:${battAc};">
+                           <span class="bb-cluster-batt-fill" style="width:${r.battery}%;background:${battAc};"></span>
                            <span class="bb-cluster-batt-pct">${r.battery}%</span>
                        </span>`;
                 const pctHtml = showMissionOff
@@ -3130,7 +3151,7 @@
 
     // ── 줌 기능
     (function() {
-        const ZOOM_KEY = 'bb_zoom', ZOOM_MIN = 0.8, ZOOM_MAX = 1.5, ZOOM_STEP = 0.1;
+        const ZOOM_KEY = 'bb_zoom', ZOOM_MIN = 0.8, ZOOM_MAX = 1.3, ZOOM_STEP = 0.1;
         let zoom = parseFloat(localStorage.getItem(ZOOM_KEY)) || 1.0;
 
         function applyZoom() {
