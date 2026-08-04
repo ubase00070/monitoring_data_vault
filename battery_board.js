@@ -40,7 +40,7 @@
 			--or:#cf8a4f; --or2:rgba(207,138,79,.12);
 			--pk:#d1729a; --pk2:rgba(209,114,154,.12);
 			--offdot:#4b5563;
-			--standby-batt:#98a2ae;
+			--standby-batt:var(--tx);
 			--pct-fill:rgba(240,240,255,.93);
 			--pct-shadow:0 1px 3px rgba(0,0,0,.95), 0 0 6px rgba(0,0,0,.7);
 		}
@@ -56,6 +56,7 @@
             --or:#f97316; --or2:rgba(249,115,22,.12);
             --pk:#ec4899; --pk2:rgba(236,72,153,.10);
             --offdot:#b4b2a9;
+            --standby-batt:#98a2ae;
             --pct-fill:rgba(30,25,15,.95);
             --pct-shadow:0 1px 2px rgba(255,255,255,.9), 0 0 4px rgba(255,255,255,.6);
         }
@@ -109,8 +110,8 @@
         .bb-hd-titlebox {
             display:inline-flex; flex-direction:column; align-items:center; gap:3px;
             padding:7px 28px 6px; border-radius:12px;
-            border:1.5px solid transparent;
-            background-image: linear-gradient(var(--bg), var(--bg)), linear-gradient(135deg, rgba(99,102,241,.55), rgba(236,72,153,.55));
+            border:2.5px solid transparent;
+            background-image: linear-gradient(var(--bg), var(--bg)), linear-gradient(135deg, rgba(99,102,241,.7), rgba(236,72,153,.7));
             background-origin: border-box; background-clip: padding-box, border-box;
         }
         .bb-hd-title {
@@ -281,8 +282,12 @@
         .bb-cluster-group-label {
             font-size:13px; font-weight:900; color:#c9a24a; margin-bottom:3px; padding-left:3px;
             padding-bottom:5px; border-bottom:1px solid var(--bd2);
+            display:flex; align-items:baseline; min-width:0;
         }
-        .bb-cluster-missing { font-size:10px; font-weight:500; color:var(--mu); margin-left:5px; }
+        .bb-cluster-group-title { flex-shrink:0; }
+        .bb-cluster-missing-wrap { flex:1; min-width:0; overflow:hidden; margin-left:5px; }
+        .bb-cluster-missing { display:inline-block; white-space:nowrap; font-size:10px; font-weight:500; color:var(--mu); }
+        .bb-cluster-missing.bb-marquee { animation:bb-marquee 3s linear 0.5s 1 forwards; }
         .bb-cluster-row {
             display:flex; align-items:center; gap:7px; padding:2px 5px; border-radius:6px; cursor:pointer;
             border:1px solid transparent; user-select:none; margin-bottom:1px;
@@ -661,6 +666,7 @@
             --or:#f97316; --or2:rgba(249,115,22,.12);
             --pk:#ec4899; --pk2:rgba(236,72,153,.10);
             --offdot:#b4b2a9;
+            --standby-batt:#98a2ae;
         }  
         #bb-info-card-panel.open { display:block; }
         .bb-icp-hd {
@@ -886,22 +892,18 @@
 
         // 검색창/드롭다운 폭은 컨테이너 전체가 아니라
         // '이름 순 정렬' ~ '카드 제거' 버튼이 실제로 차지하는 폭에만 맞춤
-        // (offsetLeft 대신 getBoundingClientRect로 측정해 좌표계 어긋남 없이 정확히 계산하고,
-        //  max-width가 아니라 width를 직접 강제해서 "그 이하로만 캡"되는 문제를 없앰)
         const siWrap   = searchWrap.querySelector('.bb-si-wrap');
         const firstBtn = document.getElementById('bb-sortname-btn');
         const lastBtn  = document.getElementById('bb-rmbtn');
         if (siWrap && firstBtn && lastBtn) {
-            const tight = lastBtn.getBoundingClientRect().right - firstBtn.getBoundingClientRect().left;
+            const tight = (lastBtn.offsetLeft + lastBtn.offsetWidth) - firstBtn.offsetLeft;
             if (tight > 0) {
-                siWrap.style.width     = tight + 'px';
                 siWrap.style.maxWidth  = tight + 'px';
                 siWrap.style.marginLeft = 'auto';
             }
         }
     }
     syncSearchWrapWidth();
-    setTimeout(syncSearchWrapWidth, 300);   // 폰트/알림칩 등 비동기 렌더링 이후 한 번 더 재보정
     if (document.fonts?.ready) document.fonts.ready.then(syncSearchWrapWidth).catch(() => {});
     window.addEventListener('resize', syncSearchWrapWidth);
 
@@ -949,7 +951,7 @@
         { siteIds: [137], label: '한국장애인고용공단', expectedNames: ['한국장애인고용공단 1호기', '한국장애인고용공단 2호기'] },
     ];
     const CLUSTER_AC = {
-        charging:'var(--gn)', patrolling:'var(--bl)', standby:'var(--tx)',
+        charging:'var(--gn)', patrolling:'var(--bl)', standby:'var(--standby-batt)',
         off:'var(--offdot)', delivering:'var(--pk)', docking:'var(--ye)',
     };
 
@@ -1579,10 +1581,22 @@
             labelEl.className = 'bb-cluster-group-label';
             const memberNames = members.map(m => m.name);
             const missingNames = (group.expectedNames || []).filter(n => !memberNames.includes(n));
-            labelEl.innerHTML = group.label + (missingNames.length
-                ? `<span class="bb-cluster-missing">(${missingNames.join(', ')} 입고됨)</span>`
+            labelEl.innerHTML = `<span class="bb-cluster-group-title">${group.label}</span>` + (missingNames.length
+                ? `<span class="bb-cluster-missing-wrap"><span class="bb-cluster-missing">(${missingNames.join(', ')} 입고)</span></span>`
                 : '');
             groupEl.appendChild(labelEl);
+
+            if (missingNames.length) {
+                const missingWrapEl = labelEl.querySelector('.bb-cluster-missing-wrap');
+                const missingEl = labelEl.querySelector('.bb-cluster-missing');
+                labelEl.addEventListener('mouseenter', () => {
+                    if (missingEl.scrollWidth > missingWrapEl.clientWidth) missingEl.classList.add('bb-marquee');
+                });
+                labelEl.addEventListener('mouseleave', () => {
+                    missingEl.classList.remove('bb-marquee');
+                    missingEl.style.transform = '';
+                });
+            }
 
             members.forEach(r => {
                 const ac = CLUSTER_AC[r.status] || 'var(--mu)';
@@ -1594,11 +1608,10 @@
 				const row = document.createElement('div');
                 row.className = `bb-cluster-row${lowBat ? ' warn-bat' : ''}${showMissionOff ? ' mission-off' : ''}`;
                 const plugHtml = showPlug ? '<span class="bb-cluster-plug">🔌</span>' : '';
-                const battAc = r.status === 'standby' ? 'var(--standby-batt)' : ac;
                 const battInner = off
                     ? `<span class="bb-cluster-pct" style="color:${ac};">OFF</span>`
-                    : `<span class="bb-cluster-batt" style="border-color:${battAc};">
-                           <span class="bb-cluster-batt-fill" style="width:${r.battery}%;background:${battAc};"></span>
+                    : `<span class="bb-cluster-batt" style="border-color:${ac};">
+                           <span class="bb-cluster-batt-fill" style="width:${r.battery}%;background:${ac};"></span>
                            <span class="bb-cluster-batt-pct">${r.battery}%</span>
                        </span>`;
                 const pctHtml = showMissionOff
