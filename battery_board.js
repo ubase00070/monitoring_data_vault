@@ -95,9 +95,9 @@
             box-shadow:0 24px 60px rgba(0,0,0,.75);
             z-index:9999999; font-family:'Paperlogy','Lato',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
 			font-weight:900;
-			-webkit-text-stroke: 0.4px currentColor;
 			color:var(--tx); flex-direction:column;
         }
+        #bb.bb-light { -webkit-text-stroke: 0.4px currentColor; }
         #bb.open { display:flex; }
 		
 		#bb, #bb * {
@@ -138,6 +138,8 @@
             display:inline-flex; align-items:center; justify-content:center; box-sizing:border-box;
         }
         .bb-btn:hover { border-color:var(--mu); }
+        #bb:not(.bb-light) #bb-lighttheme-btn { cursor:not-allowed; opacity:.45; }
+        #bb:not(.bb-light) #bb-lighttheme-btn:hover { border-color:var(--bd2); }
         .bb-btn.rm {
             border-color:rgba(239,68,68,.3); color:var(--rd); background:rgba(239,68,68,.15);
             min-width:76px; text-align:center;   /* ← 이 두 개 추가 */
@@ -169,7 +171,7 @@
             padding:8px 12px;
         }
         .bb-alert-label {
-            font-size:15px; font-weight:900; color:var(--tx);
+            font-size:17px; font-weight:900; color:var(--tx);
             flex-shrink:0; white-space:nowrap;
         }
         .bb-alert-chips { display:flex; gap:5px; flex-wrap:wrap; flex:1; align-items:center; min-width:0; }
@@ -403,8 +405,9 @@
 
         /* 기타 배달 */
         .bb-delivery-area {
-			flex:1; padding:7px 10px; display:flex; flex-direction:column; gap:5px; min-height:0;
+			flex:1; display:flex; flex-direction:column; min-height:0;
 			position:relative;
+			border:2px solid var(--bd2); border-radius:8px; background:var(--bg);
 		}
 		#bb-walker-wrap {
 			position:absolute;
@@ -424,9 +427,9 @@
 
 		.bb-walker-arrow {
 			position:absolute; top:50%; transform:translateY(-50%);
-			width:22px; height:22px; border-radius:50%;
+			width:25px; height:25px; border-radius:50%;
 			background:rgba(20,20,22,.55); border:1px solid rgba(255,255,255,.2);
-			color:#fff; font-size:14px; font-weight:900; line-height:1; padding:0;
+			color:#fff; font-size:16px; font-weight:900; line-height:1; padding:0;
 			display:flex; align-items:center; justify-content:center;
 			cursor:pointer; z-index:2;
 			opacity:0; transition:opacity .15s, background .15s;
@@ -438,7 +441,7 @@
 		.bb-walker-arrow:active { transform:translateY(-50%) scale(0.9); }
 
 		#bb-walker-bubble {
-			position:absolute; top:4px; left:260px; width:250px; min-height:50px;
+			position:absolute; top:36px; left:260px; width:250px; min-height:50px;
 			background:#fdf6e3; border-radius:20px; padding:10px 18px;
 			font-size:16px; color:#5c4a2a; font-weight:700; line-height:1.4;
 			box-shadow:0 4px 12px rgba(0,0,0,.35);
@@ -459,7 +462,7 @@
 		}
 
         #bb-walker-toggle {
-            position:absolute; top:4px; right:4px;
+            position:absolute; top:36px; right:8px;
             min-width:38px; height:22px; padding:0 7px;
             border-radius:6px;
             background:var(--sur2); border:1px solid var(--bd2);
@@ -472,11 +475,16 @@
             color:var(--rd); border-color:rgba(239,68,68,.3); background:rgba(239,68,68,.1);
         }
 		
-        .bb-delivery-title { font-size:16.5px; font-weight:900; color:var(--mu); letter-spacing:.3px; flex-shrink:0; padding:5px 6px; }
+        .bb-delivery-title {
+            font-size:16.5px; font-weight:900; color:var(--tx); letter-spacing:.3px;
+            padding:5px 6px; border-bottom:1px solid var(--bd); background:var(--sur);
+            text-align:center; border-radius:6px 6px 0 0; flex-shrink:0;
+        }
         .bb-delivery-chips {
             display:flex; flex-wrap:wrap; gap:4px;
-            overflow-y:auto; max-height:100px; padding-right:2px;
+            overflow-y:auto; max-height:100px; padding:7px 10px 7px 10px;
             margin-top:20px; max-width:calc(100% - 155px);
+            box-sizing:border-box;
         }
         .bb-delivery-chips::-webkit-scrollbar { width:4px; }
         .bb-delivery-chips::-webkit-scrollbar-thumb { background:var(--bd2); border-radius:2px; }
@@ -671,6 +679,7 @@
             font-size:13px; font-weight:900; color:var(--mu);
             letter-spacing:.5px; margin-bottom:4px; text-transform:uppercase;
         }
+        #bb-icp-wbl-title-text { font-weight:900; font-size:15px; }
         .bb-icp-row {
             display:flex; justify-content:space-between; align-items:center;
             padding:3px 0; font-size:15px;
@@ -848,6 +857,7 @@
     };
     applyLightTheme();
     document.getElementById('bb-lighttheme-btn').addEventListener('click', () => {
+        if (!bbEl.classList.contains('bb-light')) return;   // 다크모드에서는 비활성 (라이트모드 전용 기능)
         const cur = localStorage.getItem('bb_light_theme') || 'cloud';
         const next = LIGHT_THEME_ORDER[(LIGHT_THEME_ORDER.indexOf(cur) + 1) % LIGHT_THEME_ORDER.length];
         localStorage.setItem('bb_light_theme', next);
@@ -2346,7 +2356,7 @@
 		    if (!isoStr) return '-';
 		    const d = new Date(isoStr);
 		    const diffMin = Math.floor((Date.now() - d.getTime()) / 60000);
-		    const hm = d.toLocaleTimeString('ko-KR', { hour:'2-digit', minute:'2-digit' });
+		    const hm = d.toLocaleTimeString('ko-KR', { hour:'2-digit', minute:'2-digit', hour12:false });
 		
 		    if (diffMin < 60) return `${hm} (${diffMin}분 전)`;
 		    if (diffMin < 1440) return `${hm} (${Math.floor(diffMin / 60)}시간 전)`;
@@ -2434,7 +2444,7 @@
                 <div class="bb-icp-right">
                     <div class="bb-icp-section-title" style="display:flex;align-items:center;justify-content:space-between;">
                         <span id="bb-icp-wbl-title-text">오늘 배터리 증감 추이${wblGetSourceData('today')?.day ? ' [' + wblFormatMonthDay(wblGetSourceData('today').day) + ']' : ''}</span>
-                        <button class="bb-btn" id="bb-icp-wbl-toggle" style="font-size:11px;padding:3px 8px;">어제 데이터 보기</button>
+                        <button class="bb-btn" id="bb-icp-wbl-toggle" style="font-size:13px;font-weight:900;padding:3px 8px;">어제 데이터 보기</button>
                     </div>
                     <div id="bb-icp-wbl-chart">${wblChartSvg}</div>
                     <div class="bb-icp-wbl-log" id="bb-icp-wbl-log">${wblHtml}</div>
