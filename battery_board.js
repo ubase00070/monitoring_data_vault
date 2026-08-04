@@ -1857,7 +1857,7 @@
             let cur = [run[0]];
             for (let i = 1; i < run.length; i++) {
                 if (run[i].status !== cur[cur.length - 1].status) {
-                    cur.push(run[i]);               // 상태 바뀌는 지점을 경계점으로 공유
+                    cur.push(run[i]);               // 상태 바뀌는 지점을 경계점
                     colorSegs.push({ status: cur[0].status, points: cur });
                     cur = [run[i]];
                 } else {
