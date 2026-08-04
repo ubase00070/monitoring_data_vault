@@ -772,15 +772,13 @@
                     <div class="bb-xbtn" id="bb-info-close">✕</div>
                 </div>
                 <div id="bb-info-body">
-                    * 오직 '알림 센터' 페이지에서만 ALT+Z 눌러 레이아웃 열기<br>
-                    * 추가한 기체 카드와 배치는 로컬 스토리지에 저장됨(최대 30대. 드래그로 배치 변경 가능)<br>
+                    * '알림 센터' 페이지 새로고침 시 자동으로 레이아웃 열림(ALT+Z로 열고 닫기)<br>
+                    * 기체 카드와 배치는 로컬 스토리지에 저장됨(최대 30대. 드래그로 배치 변경 가능)<br>
                     * 카드 더블클릭/기체정보 검색창: 기체 상세 Info 패널 / 배터리 증감 추이 그래프<br>
                     * 배터리 증감 추이 기능<br>
 					&nbsp;&nbsp;&nbsp;&nbsp;- 08:00 ~ 다음 날 03:00까지 10분 간격으로 배터리 수치 기록<br> 
 					&nbsp;&nbsp;&nbsp;&nbsp;- 오늘/어제 자 데이터 까지만 보존<br> 
-					&nbsp;&nbsp;&nbsp;&nbsp;- 그래프 상에서도 기체 현재 상태별로 기록<br>
-					&nbsp;&nbsp;&nbsp;&nbsp;- 배터리 소모 속도 빠른 순 5대 표기(시간당 소모량 확인 가능)<br> 
-					&nbsp;&nbsp;&nbsp;&nbsp;- 배터리 충전 속도 느린 순 5대 표기(시간당 소모량 확인 가능)<br> 
+					&nbsp;&nbsp;&nbsp;&nbsp;- 배터리 소모 속도 빠른 순 / 느린 순 5대 표기(시간당 소모량 확인 가능)<br> 
 					* 알림 전송 조건<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;- 비상정지 버튼 눌림<br> 
                     &nbsp;&nbsp;&nbsp;&nbsp;- 배터리 부족(21% 이하)<br>
@@ -791,7 +789,6 @@
                     &nbsp;&nbsp;&nbsp;&nbsp;- GPS 미수신<br>
                     * 하단 퀵바: 역삼·송도·성수·삼평서현 ON/OFF 및 상태 확인용<br>
                     * 기타 배달: 퀵바 외 배달 사이트 기체 실시간 표시<br>
-                    * Alt+Z: 현황판 열기/닫기<br>
                     * 개선 피드백 받습니다(수정 시 자동 실시간 반영).
                 </div>
             </div>
@@ -2791,9 +2788,7 @@
 			{ name: 'Scoot',    variants: ['Scoot.webp', 'Scoot_2.webp', 'Scoot_3.webp'] },
 			{ name: 'Flurry',   variants: ['Flurry.gif'] },
 			{ name: 'Octavian', variants: ['Octavian.webp', 'Octavian_2.webp', 'Octavian_3.webp'] },
-			{ name: 'Blathers', variants: ['Blathers.webp', 'Blathers_2.webp', 'Blathers_3.webp'] },
 			{ name: 'Bluebear', variants: ['Bluebear.webp', 'Bluebear_2.webp', 'Bluebear_3.webp'] },
-			{ name: 'Bob',      variants: ['Bob.webp'] },
 			{ name: 'Bones',    variants: ['Bones.webp', 'Bones_2.webp', 'Bones_3.webp', 'Bones_4.webp', 'Bones_5.webp'] },
 			{ name: 'Coco',     variants: ['Coco.webp', 'Coco_2.webp', 'Coco_3.webp', 'Coco_4.webp'] },
             { name: 'Cookie',   variants: ['Cookie.webp', 'Cookie_2.webp', 'Cookie_3.webp'] },
@@ -2801,12 +2796,10 @@
 			{ name: 'Egbert',   variants: ['Egbert.webp', 'Egbert_2.webp', 'Egbert_3.webp', 'Egbert_4.webp'] },
             { name: 'Filbert',  variants: ['Filbert.webp', 'Filbert_2.webp', 'Filbert_3.webp'] },
 			{ name: 'Joey',     variants: ['Joey.webp'] },
-			{ name: 'Ketchup',  variants: ['Ketchup.webp', 'Ketchup_2.webp'] },
 			{ name: 'Marina',   variants: ['Marina.webp', 'Marina_2.webp', 'Marina_3.webp', 'Marina_4.webp'] },
             { name: 'Rudy',     variants: ['Rudy.webp', 'Rudy_2.webp', 'Rudy_3.webp', 'Rudy_4.webp'] },
             { name: 'Sable',    variants: ['Sable.webp', 'Sable_2.webp', 'Sable_3.webp'] },
 			{ name: 'Sherb',    variants: ['Sherb.webp', 'Sherb_2.webp'] },
-			{ name: 'Wisp',     variants: ['Wisp.webp', 'Wisp_2.webp'] },
 		];
 		
 		const ROTATE_MS = 2 * 60 * 60 * 1000;   // 2시간마다 배리에이션 교체 (원하는 시간으로 조정)
@@ -2860,7 +2853,6 @@
 		// 캐릭터별 고유 말투(맨 끝에 붙는 접미사). 없는 캐릭터는 알림/잡담 텍스트만 표기.
 		const SPEECH_SUFFIX = {
 			Bluebear: '두근',
-			Bob:      '고양이',
 			Bones:    '옙',
             Coco:     '삐용',
             Cookie:   '초롱초롱',
@@ -2869,7 +2861,6 @@
 			Filbert:  '예용',
 			Flurry:   '뽀드득',
 			Joey:     '그래유',
-			Ketchup:  '찌익',
             Marina:   '캬캬',
 			Octavian: '쭉쭉',
             Rudy:     '그러거나',
