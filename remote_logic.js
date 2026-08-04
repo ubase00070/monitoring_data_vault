@@ -877,7 +877,7 @@
         }
         const alarmDiv = document.createElement('div');
         alarmDiv.style.cssText = `
-            position:fixed; top:20px; left:50%; transform:translateX(-50%);
+            position:fixed; top:16px; left:50%; transform:translateX(-50%);
             background:linear-gradient(135deg,#fbbf24,#f59e0b);
             color:#000; padding:15px 30px; border-radius:14px;
             z-index:9999999; font-weight:bold; font-size:16px;
@@ -1194,7 +1194,7 @@
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
 		// 문자열을 넣으면 패치노트에 빨간 '`' 뱃지가 점멸하며 뜸.
 		// 빈 문자열('')로 비우면 뱃지가 사라짐.
-		const PATCH_NOTE_NEW_CONTENT = '';
+		const PATCH_NOTE_NEW_CONTENT = '1.5초 홀드 해결완료';
 		
         const patchBtn = document.createElement('button');
         patchBtn.textContent = '패치노트';
@@ -1256,8 +1256,10 @@
             const patchItems = [
                 {
                     version: 'v1.4',
-                    date: '2026-07-28',
+                    date: '2026-08-04',
                     items: [
+						'D-PAD UP 개입진입 시간 / 진입당시 시나리오 표기',
+						'다음 개입 요청 자동 OFF',
                         '문제해결 페이지',
                         '패드 작동 테스터',
 						'스트림덱 스타일 적용(길게 누르면 기능 ON/OFF됨)',
@@ -1505,7 +1507,7 @@
             btn.addEventListener('mouseleave', cancelHold);
         }
 
-        // ON/OFF 상태에 맞춰 버튼 색(다크/라이트 모두 대응) 칠하기
+        // ON/OFF 상태에 맞춰 버튼 색(다크/라이트 대응) 칠하기
         function paintToggleTile(btn, isOn, T) {
             const isDark = T.bg === '#111111';
             btn.style.background = isOn
@@ -5370,6 +5372,8 @@
         }
     });
 
+	let neubieInterventionEntry = { time: null, scenario: null };
+
     let lastUrl = location.href;
 
     // 브라우저의 뒤로가기/앞으로가기 대응 (이벤트 발생 시에만)
@@ -5414,6 +5418,7 @@
 
                 if (/\/driving\/\d+/.test(location.pathname)) {
                     _startOperatorWatch();
+					setTimeout(() => captureInterventionEntry(), 1500);
                 } else {
                     _stopOperatorWatch();
                 }
@@ -5459,6 +5464,7 @@
 
             if (/\/driving\/\d+/.test(location.pathname)) {
                 _startOperatorWatch();
+				setTimeout(() => captureInterventionEntry(), 1500);
             } else {
                 _stopOperatorWatch();
             }
@@ -5571,6 +5577,41 @@
         }
 	}
 	
+	// ── 개입 카드 진입 정보 캡처 + 표시 ──
+    function captureInterventionEntry() {
+        if (!/\/driving\/\d+/.test(location.pathname)) return;
+        const scenarioEl = document.querySelector('.max-w-190.font-size-14.truncate.font-medium.text-mono-800');
+        neubieInterventionEntry = {
+            time: Date.now(),
+            scenario: scenarioEl ? scenarioEl.textContent.trim() : null
+        };
+    }
+
+    function showInterventionInfoOverlay() {
+        const entry = neubieInterventionEntry;
+        if (!entry.time) return;
+
+        document.getElementById('neubie-intervention-info')?.remove();
+        const panel = document.createElement('div');
+        panel.id = 'neubie-intervention-info';
+        panel.style.cssText = `
+            position:fixed; top:16px; left:50%; transform:translateX(-50%);
+            z-index:999999; pointer-events:none;
+            background:rgba(18,18,36,0.95); border:1px solid #6a6aaa; border-radius:14px;
+            padding:14px 24px; font-family:'Pretendard','Noto Sans KR',sans-serif;
+            color:#e2e8f0; text-align:center; box-shadow:0 4px 20px rgba(0,0,0,0.5);
+        `;
+        const timeStr = new Date(entry.time).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+        panel.innerHTML = `
+            <div style="font-size:12px; color:#aab; margin-bottom:4px;">진입 시각</div>
+            <div style="font-size:16px; font-weight:700; margin-bottom:8px;">${timeStr}</div>
+            <div style="font-size:12px; color:#aab; margin-bottom:4px;">진입 당시 시나리오</div>
+            <div style="font-size:15px; font-weight:600; color:#ffd080;">${entry.scenario || '(확인 안 됨)'}</div>
+        `;
+        document.body.appendChild(panel);
+        setTimeout(() => panel.remove(), 3000);
+    }
+	
 	// ── 개입 페이지 레이아웃 ──
     function patchDrivingPageLayout() {
         if (!location.href.includes('/remote/multiple/driving/')) return;
@@ -5646,6 +5687,8 @@
 	if (!window.neubieGamepadBound) {
 	    window.neubieGamepadBound = true;
 	    let dpadWasPressed = { up: false, right: false, down: false, left: false };
+		let dpadUpHoldStart = null;
+	    let dpadUpTriggered = false;
 	
         // ── 신버전 대응: data-qk 없는 라벨 버튼 하이브리드 파인더 ──
         function findLabelButton(label) {
@@ -5750,20 +5793,19 @@
                 : getLabelButtonState('게임패드') === 'ON';
 	        if (!isGamepadOn) {
 	            dpadWasPressed = { up: false, right: false, down: false, left: false };
-	            return;
+	            dpadUpHoldStart = null; 
+				dpadUpTriggered = false;
+				return;
 	        }
 	
-	        // D-pad up (12) — 다음 개입 요청 받기 토글 + 맵 재동기화
-	        /* const upBtn = gp.buttons[12];
-	        if (upBtn?.pressed && !dpadWasPressed.up) {
-	            dpadWasPressed.up = true;
-	            const el = document.querySelector('[data-qk="auto-intervention-change-switch"]');
-	            el?.querySelector('label')?.click() || el?.click();
-	            syncMap();
-	        } else if (!upBtn?.pressed) {
-	            dpadWasPressed.up = false;
-	        }
-			*/
+	        // D-pad up (12) — 누르면 진입 시각/시나리오 정보 3초간 표시
+			const upBtn = gp.buttons[12];
+			if (upBtn?.pressed && !dpadWasPressed.up) {
+				dpadWasPressed.up = true;
+				showInterventionInfoOverlay();
+			} else if (!upBtn?.pressed) {
+				dpadWasPressed.up = false;
+			}
 	
 	        // D-pad right (15) — 밝기 올리기 + 맵 재동기화
 	        const rightBtn = gp.buttons[15];
