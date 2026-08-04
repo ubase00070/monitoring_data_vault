@@ -205,7 +205,7 @@
         .bb-search-wrap .bb-si-wrap { flex-basis:100%; }
         .bb-si-wrap { position:relative; width:100%; }
         .bb-si {
-            width:23ch; background:var(--sur2); border:1px solid var(--bd2);
+            width:26.5ch; max-width:100%; background:var(--sur2); border:1px solid var(--bd2);
             border-radius:7px; padding:6px 10px 6px 26px;
             color:var(--tx); font-size:14px; outline:none; font-family:inherit;
         }
@@ -244,36 +244,6 @@
             overflow-y:auto;
         }
 		.bb-cluster-plug { font-size:10px; line-height:1; flex-shrink:0; }
-
-        /* ── 절반 모드(윈도우 스냅 절반 폭 대응) ── */
-        .bb-cluster-toggle {
-            display:none; align-items:center; justify-content:space-between;
-            margin-bottom:8px; padding:8px 12px;
-            background:var(--sur2); border:1px solid var(--bd2); border-radius:10px;
-            font-size:13px; font-weight:900; color:var(--tx); cursor:pointer; user-select:none;
-        }
-        .bb-cluster-toggle:hover { border-color:var(--mu); }
-        .bb-cluster-arrow { transition:transform .2s; color:var(--mu); }
-        #bb.cluster-open .bb-cluster-arrow { transform:rotate(180deg); }
-
-        #bb.bb-half { width:1140px; }
-        #bb.bb-half .bb-main-split { flex-direction:column; padding-left:0; position:relative; }
-        #bb.bb-half .bb-cluster-toggle { display:flex; }
-        #bb.bb-half .bb-search-wrap { gap:4px; padding:6px 8px; }
-        #bb.bb-half .bb-search-wrap .bb-btn { padding:4px 7px; font-size:11px; }
-        #bb.bb-half .bb-cluster-side {
-            position:absolute; top:46px; left:0; right:0; z-index:60;
-            background:transparent; border:1px solid transparent; border-radius:12px;
-            box-shadow:none; padding:0; width:auto;
-            display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:8px;
-            max-height:0; overflow:hidden; margin:0;
-            transition:max-height .3s ease, padding .2s ease;
-        }
-        #bb.bb-half.cluster-open .bb-cluster-side {
-            max-height:380px; overflow-y:auto; padding:8px;
-            background:var(--bg); border-color:var(--bd2);
-            box-shadow:0 16px 40px rgba(0,0,0,.55);
-        }
 
         .bb-cluster-group {
             background:var(--sur2); border:2px solid var(--bd2); border-radius:12px;
@@ -474,9 +444,6 @@
 			font-family:'Paperlogy','Lato',-apple-system,sans-serif; -webkit-text-stroke:0;
 		}
 		#bb-walker-bubble.open { display:block; }
-		#bb.bb-half #bb-walker-bubble {
-			left:130px;
-		}
 		#bb-walker-bubble::after {
 			content:''; position:absolute; top:50%; right:-13px; transform:translateY(-50%);
 			width:0; height:0;
@@ -726,7 +693,7 @@
             <div class="bb-hd">
                 <div class="bb-hd-left">
                     <button class="bb-btn info" id="bb-infobtn">사용 설명서</button>
-                    <button id="bb-half-btn" class="bb-btn">🗔 절반 모드</button>
+                    <button id="bb-theme-btn" class="bb-btn">다크</button>
                     <button id="bb-zoom-out" class="zoom-btn">－</button>
                     <span id="bb-zoom-label" class="zoom-label">100%</span>
                     <button id="bb-zoom-in"  class="zoom-btn">＋</button>
@@ -743,9 +710,9 @@
                 </div>
                 <div class="bb-hd-right" id="bb-hd-right">
                     <button id="bb-top5-btn" class="bb-btn">🔥 배터리 증감 추이</button>
-                    <button id="bb-theme-btn" class="bb-btn">다크</button>
-                    <button id="bb-backup-btn" class="bb-btn">기체 백업</button>
-                    <button id="bb-restore-btn" class="bb-btn">기체 복원</button>
+                    <button class="bb-btn" id="bb-wbl-download-btn">📥 배터리 값 로드</button>
+                    <button id="bb-backup-btn" class="bb-btn">기체 목록 백업</button>
+                    <button id="bb-restore-btn" class="bb-btn">기체 목록 복원</button>
                     <div class="bb-xbtn" id="bb-closebtn">✕</div>
                 </div>
             </div>
@@ -758,9 +725,8 @@
                 </div>
                 <div class="bb-search-wrap" id="bb-search-wrap">
                     <button class="bb-btn" id="bb-wbl-upload-btn" style="display:none;">📤 UP</button>
-                    <button class="bb-btn" id="bb-wbl-download-btn">📥 배터리 로드</button>
-                    <button class="bb-btn" id="bb-sortname-btn">이름 순</button>
-                    <button class="bb-btn" id="bb-inforequest-btn">정보 검색</button>
+                    <button class="bb-btn" id="bb-inforequest-btn">기체 정보 검색</button>
+                    <button class="bb-btn" id="bb-sortname-btn">이름 순 정렬</button>
                     <button class="bb-btn" id="bb-rmbtn">카드 제거</button>
                     <div class="bb-si-wrap">
                         <span class="bb-si-icon">🔍</span>
@@ -770,12 +736,8 @@
                 </div>
             </div>
 
-            <!-- 메인 영역: 좌측 묶음 리스트(기본) / 절반모드에선 상단 드롭다운으로 전환 -->
+            <!-- 메인 영역: 좌측 묶음 리스트 -->
             <div class="bb-main-split">
-                <div class="bb-cluster-toggle" id="bb-cluster-toggle">
-                    <span>⚡ 무선 기체 사이트</span>
-                    <span class="bb-cluster-arrow" id="bb-cluster-arrow">▾</span>
-                </div>
                 <div class="bb-cluster-side" id="bb-cluster-side"></div>
                 <div class="bb-main-right">
                     <!-- 카드 그리드 -->
@@ -874,8 +836,8 @@
 	};
     applyBbTheme();
 
-    // 헤더 우측 버튼 그룹(라이트/기체 백업/기체 복원)과
-    // 하단 검색줄(이름 순 정렬/정보 검색/카드 제거 + 검색창) 폭을 서로 동기화.
+    // 헤더 우측 버튼 그룹(배터리 값 로드/기체 목록 백업/기체 목록 복원)과
+    // 하단 검색줄(기체 정보 검색/이름 순 정렬/카드 제거 + 검색창) 폭을 서로 동기화.
     // 다크/라이트 전환처럼 버튼 텍스트 길이가 바뀌어도 두 줄 다 "둘 중 더 넓은 쪽"에
     // 맞춰지도록 해서, 폭이 좁아져 버튼이 줄바꿈되는 문제 없이 항상 같은 폭을 유지.
     function syncSearchWrapWidth() {
@@ -891,9 +853,9 @@
         }
 
         // 검색창/드롭다운 폭은 컨테이너 전체가 아니라
-        // '이름 순 정렬' ~ '카드 제거' 버튼이 실제로 차지하는 폭에만 맞춤
+        // '기체 정보 검색' ~ '카드 제거' 버튼이 실제로 차지하는 폭에만 맞춤
         const siWrap   = searchWrap.querySelector('.bb-si-wrap');
-        const firstBtn = document.getElementById('bb-sortname-btn');
+        const firstBtn = document.getElementById('bb-inforequest-btn');
         const lastBtn  = document.getElementById('bb-rmbtn');
         if (siWrap && firstBtn && lastBtn) {
             const tight = (lastBtn.offsetLeft + lastBtn.offsetWidth) - firstBtn.offsetLeft;
@@ -2784,45 +2746,6 @@
         btn.textContent = ok ? '✅ 완료' : '❌ 실패(오늘 데이터 없음)';
         setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 1500);
     });
-
-    // 절반 모드 토글 (윈도우 스냅 절반 폭 대응)
-    (function() {
-        const HALF_KEY = 'bb_half_mode';
-        const CLUSTER_OPEN_KEY = 'bb_cluster_open';
-        const btn = document.getElementById('bb-half-btn');
-        const toggleBar = document.getElementById('bb-cluster-toggle');
-        let isHalf = localStorage.getItem(HALF_KEY) === '1';
-        let isClusterOpen = localStorage.getItem(CLUSTER_OPEN_KEY) === '1';
-
-        function applyHalf() {
-            bbEl.classList.toggle('bb-half', isHalf);
-            bbEl.classList.toggle('cluster-open', isHalf && isClusterOpen);
-            btn.textContent = isHalf ? '🖥️ 기본 모드' : '🗔 절반 모드';
-        }
-        applyHalf();
-
-        btn.addEventListener('click', () => {
-            isHalf = !isHalf;
-            localStorage.setItem(HALF_KEY, isHalf ? '1' : '0');
-            applyHalf();
-        });
-
-        toggleBar.addEventListener('click', (e) => {
-            e.stopPropagation();
-            isClusterOpen = !isClusterOpen;
-            localStorage.setItem(CLUSTER_OPEN_KEY, isClusterOpen ? '1' : '0');
-            applyHalf();
-        });
-
-        document.addEventListener('mousedown', (e) => {
-            if (!isClusterOpen) return;
-            const side = document.getElementById('bb-cluster-side');
-            if (side.contains(e.target) || toggleBar.contains(e.target)) return;
-            isClusterOpen = false;
-            localStorage.setItem(CLUSTER_OPEN_KEY, '0');
-            applyHalf();
-        });
-    })();
 
     document.getElementById('bb-inforequest-btn').addEventListener('click', (e) => {
         e.stopPropagation();
