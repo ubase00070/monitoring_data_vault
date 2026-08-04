@@ -5603,6 +5603,19 @@
 		if (statusBar && redBadge) {
 			redBadge.parentElement.insertBefore(statusBar, redBadge.nextSibling);
 			statusBar.style.marginLeft = '';
+
+			// 신규 추가 — 상태바가 확실히 상단으로 이동(=개입 해결 확인)되면 "다음 개입 요청"을 자동 OFF
+			try {
+				const switchEl = document.querySelector('[data-qk="auto-intervention-change-switch"]');
+				if (switchEl) {
+					const input = switchEl.querySelector('input[type="checkbox"]');
+					const isOn = input ? input.checked : switchEl.getAttribute('aria-checked') === 'true';
+					if (isOn) {
+						switchEl.querySelector('label')?.click() || switchEl.click();
+					}
+				}
+			} catch (e) { /* 상태 판별 실패 시 아무 것도 안 하고 조용히 넘어감 (안전) */ }
+			
 		} else if (statusBar && resolveBtn) {
 			resolveBtn.parentElement.insertBefore(statusBar, resolveBtn);
 			statusBar.style.marginLeft = '-240px';
@@ -5741,7 +5754,7 @@
 	        }
 	
 	        // D-pad up (12) — 다음 개입 요청 받기 토글 + 맵 재동기화
-	        const upBtn = gp.buttons[12];
+	        /* const upBtn = gp.buttons[12];
 	        if (upBtn?.pressed && !dpadWasPressed.up) {
 	            dpadWasPressed.up = true;
 	            const el = document.querySelector('[data-qk="auto-intervention-change-switch"]');
@@ -5750,6 +5763,7 @@
 	        } else if (!upBtn?.pressed) {
 	            dpadWasPressed.up = false;
 	        }
+			*/
 	
 	        // D-pad right (15) — 밝기 올리기 + 맵 재동기화
 	        const rightBtn = gp.buttons[15];
