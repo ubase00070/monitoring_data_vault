@@ -2386,11 +2386,11 @@
                             <span class="bb-icp-value">${lastOp}</span>
                         </div>
                         <div class="bb-icp-row">
-                            <span class="bb-icp-label">마지막 개입 시간</span>
+                            <span class="bb-icp-label">마지막 개입</span>
                             <span class="bb-icp-value">${lastOpAt}</span>
                         </div>
                         <div class="bb-icp-row">
-                            <span class="bb-icp-label">마지막 통신 신호</span>
+                            <span class="bb-icp-label">마지막 통신</span>
                             <span class="bb-icp-value">${lastConnAt}</span>
                         </div>
                     </div>
