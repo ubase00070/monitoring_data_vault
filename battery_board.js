@@ -363,7 +363,7 @@
         .bb-mission-off { font-size:11px; font-weight:900; color:rgba(239,68,68,.8); }
         .bb-ca-batt-row { display:flex; align-items:center; gap:6px; }
         .bb-ca-dots { display:grid; grid-template-columns:repeat(10,1fr); gap:2px; flex:1; height:12px; }
-        .bb-ca-dots.full-charge { animation:bb-fullCharge 1.8s ease-in-out infinite; }
+        .bb-ca-dots.charging-pulse { animation:bb-fullCharge 1.8s ease-in-out infinite; }
         @keyframes bb-fullCharge {
             0%, 100% { opacity:1; }
             50%      { opacity:.55; }
@@ -1639,7 +1639,7 @@
     function makeCard(r) {
         const off    = r.status === 'off';
         const lowBat = !r.loading && !off && r.battery <= 21;
-        const fullCharge = !r.loading && !off && r.status === 'charging' && r.battery === 100;
+        const chargingPulse = !r.loading && !off && r.status === 'charging' && r.battery < 100;
         const pct    = (off || r.loading) ? 0 : r.battery;
         const showMissionOff = !r.canDispatch && !off && !r.loading
 		    && r.status !== 'patrolling' && r.status !== 'delivering' && r.status !== 'standby'
@@ -1671,7 +1671,7 @@
                 ${showMissionOff ? '<div class="bb-mission-off">임무 OFF</div>' : ''}
             </div>
             <div class="bb-ca-batt-row" style="${(off || r.loading) ? 'visibility:hidden' : ''}">
-                <div class="bb-ca-dots${fullCharge ? ' full-charge' : ''}">${dotsHtml}</div>
+                <div class="bb-ca-dots${chargingPulse ? ' charging-pulse' : ''}">${dotsHtml}</div>
                 <span class="bb-ca-batt-pct">${r.battery}%</span>
             </div>
         `;
