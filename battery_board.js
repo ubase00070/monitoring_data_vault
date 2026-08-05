@@ -1775,7 +1775,7 @@
     }
 
     // 연속된 같은 상태를 하나의 구간으로 묶기
-    // source: 'today'(기본) 또는 'yesterday' — 각각 알맞은 저장소에서 그날 데이터를 반환, 없으면 null
+    // source: 'today'(기본) 또는 'yesterday' — 각각 알맞은 저장소에서 그날 데이터 반환, 없으면 null
     function wblGetSourceData(source) {
         if (source === 'yesterday') {
             try {
