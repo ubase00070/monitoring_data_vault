@@ -413,7 +413,9 @@
         /* 기타 배달 */
         .bb-delivery-area {
 			flex:1; display:flex; flex-direction:column; min-height:0;
-			position:relative;
+			position:relative; border-radius:8px; overflow:hidden;
+			background-image:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/ac_camping.png');
+			background-size:cover; background-position:center;
 		}
 		#bb-walker-wrap {
 			position:absolute;
@@ -501,7 +503,7 @@
 			background:var(--pk2); border:1px solid rgba(236,72,153,.3);
 			color:var(--pk); font-size:14px; font-weight:700; white-space:nowrap;
 		}
-        .bb-delivery-empty { font-size:14px; color:var(--mu); font-weight:700; }
+        .bb-delivery-empty { font-size:14px; color:var(--mu); font-weight:700; text-shadow:0 1px 3px var(--sur), 0 0 6px var(--sur); }
 
         /* ── 알림 상세 패널 ── */
         #bb-alert-panel {
