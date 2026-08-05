@@ -414,7 +414,6 @@
         .bb-delivery-area {
 			flex:1; display:flex; flex-direction:column; min-height:0;
 			position:relative; border-radius:8px; overflow:hidden;
-			background-image:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/ac_camping.webp');
 			background-size:cover; background-position:center;
 		}
 		#bb-walker-wrap {
@@ -1324,6 +1323,27 @@
     }
 
     // ============================================================
+    // SECTION 5.5 동숲 배경 - 시간대별 전환 (한국시간 기준)
+    // ============================================================
+    // 08~10:1  10~12:2  12~14:3  14~16:4  16~18:5
+    // 18~20:5  20~22:4  22~24:3  00~02:2  02~08:1
+    const CAMPING_HOUR_MAP = [2,2,1,1,1,1,1,1,1,1,2,2,3,3,4,4,5,5,5,5,4,4,3,3];
+    let _lastCampingIdx = null;
+    function applyCampingBackground() {
+        const hour = parseInt(
+            new Date().toLocaleString('en-US', { timeZone: 'Asia/Seoul', hour: '2-digit', hour12: false }),
+            10
+        );
+        const idx = CAMPING_HOUR_MAP[hour % 24];
+        if (idx === _lastCampingIdx) return;
+        _lastCampingIdx = idx;
+        const area = document.querySelector('.bb-delivery-area');
+        if (area) {
+            area.style.backgroundImage = `url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/ac_camping${idx}.webp')`;
+        }
+    }
+
+    // ============================================================
     // SECTION 6. bb_robots_data 리스너
     // ============================================================
     document.addEventListener('bb_robots_data', function(e) {
@@ -1377,6 +1397,7 @@
 
             renderMonitorGrid(allRaw);
             renderDeliveryChips(allRaw);
+            applyCampingBackground();
 
             if (isOpen) {
                 render();
@@ -2003,7 +2024,7 @@
 
 	// ============================================================
 	// CYH 전용 배터리 로그 업로드 / 그 외 전원 다운로드
-	// - 업로드: CYH만, 08:00~17:30 자동(30분 주기, 실패시 1분 뒤 1회 재시도) / 수동은 08:00~23:59 가능(00:00~08:00은 거부)
+	// - 업로드: CYH만, 08:00~17:30 자동(30분 주기, 실패시 1분 뒤 1회 재시도) / 수동은 08:00~익일03:10 가능(03:10~08:00은 거부)
 	// - 다운로드: CYH 제외 전원, 08:00~익일 03:00, 30분 주기 자동(실패시 1분 뒤 1회 재시도) (+ 수동 강제 버튼)
 	// - 병합: CYH 데이터가 겹치는 시간대는 덮어씀(더 연속적이고 정확하다고 판단)
 	// - 어제 데이터: 트래킹 데이(08:00~익일03:00) 기준 하루 전 스냅샷, 세션당 1회만 로드
@@ -2740,7 +2761,9 @@
 
     // ── 강제 업로드/불러오기 버튼 (사이클과 무관하게 즉시 실행) ──
     document.getElementById('bb-wbl-upload-btn').addEventListener('click', async (e) => {
-        if (new Date().getHours() < 8) { alert('❌ 지금은 업로드할 수 없는 시간대입니다 (08:00 이후에 다시 시도해주세요)'); return; }
+        const _now = new Date();
+        const _minutesNow = _now.getHours() * 60 + _now.getMinutes();
+        if (_minutesNow >= 190 && _minutesNow < 480) { alert('❌ 지금은 업로드할 수 없는 시간대입니다 (08:00~익일 03:10 사이에 이용해주세요)'); return; }
         if (!confirm('배터리 데이터를 업로드 하시겠습니까?')) return;
         const btn = e.currentTarget;
         const orig = btn.textContent;
@@ -3239,5 +3262,6 @@
     }, 200);
 
     render();
+    applyCampingBackground();
 
 })();
