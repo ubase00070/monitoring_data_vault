@@ -146,7 +146,7 @@
             min-width:76px; text-align:center;   /* ← 이 두 개 추가 */
         }
         .bb-btn.rm:hover { background:rgba(239,68,68,.25); }
-        .bb-btn.info { border-color:rgba(156,163,175,.2); color:var(--tx); background:var(--sur2); font-size:14px; padding:0 10px; }
+        .bb-btn.info { border-color:var(--bd2); color:var(--tx); background:var(--sur2); font-size:14px; padding:0 10px; }
         .bb-xbtn {
             width:32px; height:32px; border-radius:6px;
             background:rgba(239,68,68,.15); border:1px solid rgba(239,68,68,.3);
@@ -607,7 +607,7 @@
         #bb-info-panel {
             display:none; position:fixed;
             top:50%; left:50%; transform:translate(-50%,-50%);
-            width:745px; max-height:60vh;
+            width:745px; max-height:100vh;
             background-image: linear-gradient(var(--sur2), var(--sur2)), linear-gradient(135deg, #6366f1, #ec4899);
             background-origin: border-box;
             background-clip: padding-box, border-box;
