@@ -1256,8 +1256,9 @@
             const patchItems = [
                 {
                     version: 'v1.4',
-                    date: '2026-08-04',
+                    date: '2026-08-05',
                     items: [
+						'for 이도연/최정기 ^_^',
 						'D-PAD UP 개입진입 시간 / 진입당시 시나리오 표기',
 						'다음 개입 요청 자동 OFF',
                         '문제해결 페이지',
@@ -1777,7 +1778,6 @@
             queueInfoContent.id = 'neubie-queue-info-content';
             queueInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:${T.text}; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;`;
             queueInfoContent.innerHTML = `
-				07:57 / 08:47 / 09:47 - 현재 모니터링 기체 업로드<br>
 				기체별 화질 조절<br>
                 기체별 헤드램프 토글<br>
 				기체 카메라 밝기 한 번에 조절<br>
@@ -5647,9 +5647,15 @@
 			.find(el => el.textContent.includes('LTE') && !el.querySelector('.bg-red-50') && el.getBoundingClientRect().height < 60);
 		const resolveBtn = Array.from(document.querySelectorAll('button'))
 			.find(el => el.textContent.trim() === '해결 완료' || el.textContent.trim() === '해결완료');
+
+		// 예외 사용자('최정기')는 상태바 재배치(위로 올리기)만 건너뜀 — 다음 개입 요청 자동 OFF / 지도(레이아웃) 정렬은 그대로 수행
+		const isStatusBarExceptionUser = (localStorage.getItem('neubie_user_name') || '') === '최정기';
+
 		if (statusBar && redBadge) {
-			redBadge.parentElement.insertBefore(statusBar, redBadge.nextSibling);
-			statusBar.style.marginLeft = '';
+			if (!isStatusBarExceptionUser) {
+				redBadge.parentElement.insertBefore(statusBar, redBadge.nextSibling);
+				statusBar.style.marginLeft = '';
+			}
 
 			// 신규 추가 — 상태바가 확실히 상단으로 이동(=개입 해결 확인)되면 "다음 개입 요청"을 자동 OFF
 			try {
@@ -5664,8 +5670,10 @@
 			} catch (e) { /* 상태 판별 실패 시 아무 것도 안 하고 조용히 넘어감 (안전) */ }
 			
 		} else if (statusBar && resolveBtn) {
-			resolveBtn.parentElement.insertBefore(statusBar, resolveBtn);
-			statusBar.style.marginLeft = '-240px';
+			if (!isStatusBarExceptionUser) {
+				resolveBtn.parentElement.insertBefore(statusBar, resolveBtn);
+				statusBar.style.marginLeft = '-240px';
+			}
 		}
 
         // 임무 바 높이 조정
