@@ -607,8 +607,11 @@
         #bb-info-panel {
             display:none; position:fixed;
             top:50%; left:50%; transform:translate(-50%,-50%);
-            width:745px; max-height:50vh;
-            background:var(--sur2); border:1px solid var(--bd2);
+            width:745px; max-height:60vh;
+            background-image: linear-gradient(var(--sur2), var(--sur2)), linear-gradient(135deg, #6366f1, #ec4899);
+            background-origin: border-box;
+            background-clip: padding-box, border-box;
+            border:3px solid transparent;
             border-radius:12px; box-shadow:0 16px 48px rgba(0,0,0,.85);
             z-index:9999999999; padding:16px; overflow-y:auto;
             font-size:16px; line-height:1.85; color:var(--tx);
@@ -719,6 +722,7 @@
                     <button id="bb-zoom-out" class="zoom-btn">－</button>
                     <span id="bb-zoom-label" class="zoom-label">100%</span>
                     <button id="bb-zoom-in"  class="zoom-btn">＋</button>
+                    <button class="bb-btn" id="bb-wbl-upload-btn" style="display:none;">📤 UP</button>
                 </div>
                 <div class="bb-hd-titlebox">
                     <div class="bb-hd-title" id="bb-drag-handle">
@@ -739,8 +743,7 @@
                         <div class="bb-xbtn" id="bb-closebtn">✕</div>
                     </div>
                     <div class="bb-hd-right-row" id="bb-search-wrap">
-                        <button class="bb-btn" id="bb-wbl-upload-btn" style="display:none;">📤 UP</button>
-                        <button class="bb-btn" id="bb-inforequest-btn">기체 정보 보기</button>
+                        <button class="bb-btn" id="bb-inforequest-btn">기체 정보 조회</button>
                         <button class="bb-btn" id="bb-sortname-btn">이름 순 정렬</button>
                         <button class="bb-btn" id="bb-rmbtn">카드 제거</button>
                         <div class="bb-si-wrap">
@@ -1618,6 +1621,7 @@
         const showMissionOff = !r.canDispatch && !off && !r.loading
 		    && r.status !== 'patrolling' && r.status !== 'delivering' && r.status !== 'standby'
 		const showPlug = r.status !== 'patrolling' && r.status !== 'delivering' && !!r.raw?.robotStatus?.isWiredChargerConnected;
+        const showWireless = !r.loading && !off && r.status === 'charging' && !r.raw?.robotStatus?.isWiredChargerConnected;
         const lit = Math.floor(pct / 10);
         const showHalfDot = pct > 0 && lit === 0;
         const dotColor = lowBat ? 'var(--rd)' : 'var(--ac,var(--gy))';
@@ -1640,7 +1644,7 @@
         c.innerHTML = `
             <div class="bb-ca-name">${r.name}</div>
             <div class="bb-ca-mid">
-                <div class="bb-ca-st">${r.loading ? '⏳ 로딩 중' : STI[r.status]+' '+STL[r.status]}${showPlug ? ' 🔌' : ''}</div>
+                <div class="bb-ca-st">${r.loading ? '⏳ 로딩 중' : STI[r.status]+' '+STL[r.status]}${showPlug ? ' 🔌' : ''}${showWireless ? ' ⚡' : ''}</div>
                 ${showMissionOff ? '<div class="bb-mission-off">임무 OFF</div>' : ''}
             </div>
             <div class="bb-ca-batt-row" style="${(off || r.loading) ? 'visibility:hidden' : ''}">
@@ -2522,7 +2526,7 @@
             const badgeEl = document.getElementById('bb-icp-badge');
             const bodyEl  = document.getElementById('bb-icp-body');
 
-            titleEl.textContent = '기체 정보 보기';
+            titleEl.textContent = '기체 정보 조회';
             badgeEl.style.display = 'none';
             panel.classList.add('search-mode');
 
