@@ -249,7 +249,7 @@
         .bb-main-right { flex:1; min-width:0; display:flex; flex-direction:column; gap:8px; }
 
         .bb-cluster-side {
-            width:330px; flex-shrink:0; display:flex; flex-direction:column; gap:5px;
+            width:300px; flex-shrink:0; display:flex; flex-direction:column; gap:5px;
             overflow-y:auto; padding-top:10px; padding-right:10px;
             border-right:1px solid var(--bd);
         }
