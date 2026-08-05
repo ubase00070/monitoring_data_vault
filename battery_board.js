@@ -414,7 +414,7 @@
         .bb-delivery-area {
 			flex:1; display:flex; flex-direction:column; min-height:0;
 			position:relative; border-radius:8px; overflow:hidden;
-			background-image:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/ac_camping.png');
+			background-image:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/ac_camping.webp');
 			background-size:cover; background-position:center;
 		}
 		#bb-walker-wrap {
