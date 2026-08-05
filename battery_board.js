@@ -2838,7 +2838,6 @@
 		const walkerFiles = [
 			{ name: 'Walker',   variants: ['Walker.webp', 'Walker_2.webp', 'Walker_3.webp', 'Walker_4.webp', 'Walker_5.webp'] },
 			{ name: 'Scoot',    variants: ['Scoot.webp', 'Scoot_2.webp', 'Scoot_3.webp'] },
-			{ name: 'Flurry',   variants: ['Flurry.gif'] },
 			{ name: 'Octavian', variants: ['Octavian.webp', 'Octavian_2.webp', 'Octavian_3.webp'] },
 			{ name: 'Bluebear', variants: ['Bluebear.webp', 'Bluebear_2.webp', 'Bluebear_3.webp'] },
 			{ name: 'Bones',    variants: ['Bones.webp', 'Bones_2.webp', 'Bones_3.webp', 'Bones_4.webp', 'Bones_5.webp'] },
@@ -2911,7 +2910,6 @@
 			Curt:     '음',
             Egbert:   '짜잔',
 			Filbert:  '예용',
-			Flurry:   '뽀드득',
 			Joey:     '그래유',
             Marina:   '캬캬',
 			Octavian: '쭉쭉',
