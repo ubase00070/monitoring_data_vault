@@ -1116,7 +1116,7 @@
             // 배송 띠띠 활성 여부에 따라 버튼 라벨 갱신 (신규 추가)
             const combinedBtnLabel = card.querySelector('#btnCombined');
             if (combinedBtnLabel) {
-                combinedBtnLabel.textContent = TTIDDI_CONFIG.deliveryActive ? '배송/순찰 띠띠' : '순찰 띠띠';
+                combinedBtnLabel.textContent = TTIDDI_CONFIG.deliveryActive ? '배송/순찰 띠띠' : '순찰 띠띠(배송 띠띠 입고됨)';
             }
 
 			// 영상 드라이브 열기 → 오늘 날짜 폴더로 이동 (없으면 루트 폴더로 폴백)
