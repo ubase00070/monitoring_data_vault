@@ -118,13 +118,14 @@
             border:2.5px solid transparent;
             background-image: linear-gradient(var(--bg), var(--bg)), linear-gradient(135deg, rgba(99,102,241,.7), rgba(236,72,153,.7));
             background-origin: border-box; background-clip: padding-box, border-box;
+            cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_grab.png') 32 32, grab;
         }
         .bb-hd-title {
             font-size:22px; font-weight:900;
             background:linear-gradient(135deg, #6366f1, #ec4899);
             -webkit-background-clip:text; background-clip:text; color:transparent;
             text-shadow:0 0 10px rgba(99,102,241,.45), 0 0 14px rgba(236,72,153,.35);
-            display:flex; align-items:center; gap:7px; cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_grab.png') 32 32, grab;
+            display:flex; align-items:center; gap:7px;
         }
         .bb-hd-time { display:flex; align-items:baseline; gap:8px; }
         .bb-clock { font-family:'Lato',monospace; font-size:13px; font-weight:900; color:var(--mu); letter-spacing:.8px; }
@@ -214,7 +215,7 @@
 
         /* 검색 */
         .bb-si-wrap { position:relative; }
-        .bb-si { cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_text.png') 32 32, text; }
+        .bb-si { cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_default.png') 4 4, auto; }
         .bb-si {
             width:26.5ch; max-width:100%; background:var(--sur2); border:1px solid var(--bd2);
             border-radius:7px; padding:6px 10px 6px 26px;
@@ -518,6 +519,7 @@
             background-clip: padding-box, border-box;
             box-shadow:0 24px 64px rgba(0,0,0,.9);
             z-index:99999999;
+            cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_default.png') 4 4, auto;
         }
 
         #bb-top5-panel {
@@ -530,6 +532,7 @@
             background-clip: padding-box, border-box;
             box-shadow:0 24px 64px rgba(0,0,0,.9);
             z-index:99999999;
+            cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_default.png') 4 4, auto;
         }
         #bb-top5-panel.open { display:block; }
         .bb-top5-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:14px; }
@@ -619,6 +622,7 @@
             border-radius:12px; box-shadow:0 16px 48px rgba(0,0,0,.85);
             z-index:9999999999; padding:16px; overflow-y:auto;
             font-size:16px; line-height:1.85; color:var(--tx);
+            cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_default.png') 4 4, auto;
         }
         #bb-info-panel.open { display:block; }
         .bb-info-hd {
@@ -639,6 +643,7 @@
             box-shadow:0 16px 48px rgba(0,0,0,.9);
             z-index:999999999; font-family:'Lato',sans-serif;
             color:var(--tx); overflow:hidden;
+            cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_default.png') 4 4, auto;
         }
         #bb-info-card-panel.search-mode { width:588px; }
         .bb-icp-flex { display:flex; align-items:stretch; }
@@ -728,10 +733,10 @@
                     <button id="bb-zoom-in"  class="zoom-btn">＋</button>
                     <button class="bb-btn" id="bb-wbl-upload-btn" style="display:none;">📤 UP</button>
                 </div>
-                <div class="bb-hd-titlebox">
-                    <div class="bb-hd-title" id="bb-drag-handle">
+                <div class="bb-hd-titlebox" id="bb-drag-handle">
+                    <div class="bb-hd-title">
                         NCC 종합 모니터
-                        <span id="bb-cyh-tag" style="font-size:16px;color:var(--mu);font-weight:400;cursor:default;">by CYH</span>
+                        <span id="bb-cyh-tag" style="font-size:16px;color:var(--mu);font-weight:400;">by CYH</span>
                     </div>
                     <div class="bb-hd-time">
                         <div class="bb-clock" id="bb-clk">00:00:00</div>
