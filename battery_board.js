@@ -31,8 +31,8 @@
 		}
 		@import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap');
         :root {
-			--bg:#1b1e24; --sur:#35383d; --sur2:#41454b;
-			--bd:#4c5058; --bd2:#565b64; --tx:#e4e6ea; --mu:#8b929c;
+			--bg:#15171b; --sur:#40444b; --sur2:#4b5058;
+			--bd:#565b64; --bd2:#626875; --tx:#e4e6ea; --mu:#8b929c;
 			--gn:#4d9d6d; --gn2:rgba(77,157,109,.12);
 			--bl:#5b8fd1; --bl2:rgba(91,143,209,.12);
 			--wh:rgba(228,230,234,.05); --gy:#5a6069;
@@ -183,7 +183,7 @@
             display:flex; flex-direction:column; gap:1px;
             padding:3px 16px; border-radius:10px;
             font-size:15px; font-weight:700; cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_pointer.png') 4 4, pointer;
-            font-family:inherit; max-width:198px;
+            font-family:inherit; width:max-content; max-width:320px;
             transition:filter .15s, box-shadow .15s;
         }
         .bb-chip-l1 { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
@@ -494,7 +494,7 @@
         .bb-delivery-chips {
             display:flex; flex-wrap:wrap; gap:4px;
             overflow-y:auto; max-height:100px; padding:7px 10px 7px 10px;
-            margin-top:4px; max-width:calc(100% - 155px);
+            margin-top:16px; max-width:calc(100% - 155px);
             box-sizing:border-box;
         }
         .bb-delivery-chips::-webkit-scrollbar { width:4px; }
@@ -1189,7 +1189,7 @@
         zombie: { label:'👻 좀비',        order:2 },
         idle:   { label:'⏳ 방치',        order:3 },
         cam:    { label:'🎥 캠 미송출',   order:4 },
-        nomap:  { label:'🗺️ 위치 미노출', order:5 },
+        nomap:  { label:'🗺️ GPS 수신', order:5 },
     };
 
     function renderAlertChips(alerts) {
