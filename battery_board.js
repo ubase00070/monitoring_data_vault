@@ -47,7 +47,7 @@
 		}
 
         #bb.bb-light {
-            --bg:#ded3b8; --sur:#f8f3e6; --sur2:#efe6d2;
+            --bg:#f2e4c4; --sur:#f8f3e6; --sur2:#efe6d2;
             --bd:#cabf9d; --bd2:#b3a687; --tx:#2b2418; --mu:#7a6f5c;
             --wh:rgba(0,0,0,.05);
             --gn:#22c55e; --gn2:rgba(34,197,94,.10);
@@ -58,12 +58,12 @@
             --pk:#ec4899; --pk2:rgba(236,72,153,.10);
             --offdot:#b4b2a9;
             --standby-batt:#98a2ae;
-            --bg-fill:linear-gradient(180deg, #cfe8f0 0%, #e8ecdc 45%, #ded3b8 85%);
+            --bg-fill:linear-gradient(180deg, #cfe8f0 0%, #e8ecdc 45%, #f2e4c4 85%);
             --pct-fill:rgba(30,25,15,.95);
             --pct-shadow:0 1px 2px rgba(255,255,255,.9), 0 0 4px rgba(255,255,255,.6);
         }
-        #bb.bb-light.theme-sunset  { --bg-fill:linear-gradient(180deg, #f7d4c4 0%, #f0dfc9 45%, #ded3b8 85%); }
-        #bb.bb-light.theme-blossom { --bg-fill:linear-gradient(180deg, #f6dde3 0%, #f2e2d2 45%, #ded3b8 85%); }
+        #bb.bb-light.theme-sunset  { --bg-fill:linear-gradient(180deg, #f7d4c4 0%, #f0dfc9 45%, #f2e4c4 85%); }
+        #bb.bb-light.theme-blossom { --bg-fill:linear-gradient(180deg, #f6dde3 0%, #f2e2d2 45%, #f2e4c4 85%); }
         #bb.bb-light .bb-delivery-title { color:#2b2418; }
         #bb.bb-light .bb-delivery-empty { color:#2b2418; }
         #bb.bb-light .bb-ca.standby { --ac:#8a7f68; --ac-border:rgba(138,127,104,.35); }
@@ -330,7 +330,7 @@
 			transform:translateY(-3px) scale(1.03) translateZ(0);
 			box-shadow:0 6px 0 rgba(0,0,0,.2);
 		}
-		.bb-ca:active { cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_grab.png') 32 32, grabbing; transform:translateY(-1px) scale(0.99); }
+		.bb-ca:active { cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_hold.png') 32 32, grabbing; transform:translateY(-1px) scale(0.99); }
         .bb-ca.dragging { opacity:.3; }
         .bb-ca.dragover { border-color:var(--bl)!important; box-shadow:0 0 0 1px var(--bl); }
         .bb-ca.selectable { cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_pointer.png') 4 4, pointer; }
@@ -507,9 +507,9 @@
 		}
         .bb-delivery-empty {
             display:inline-block;
-            font-size:14px; color:var(--mu); font-weight:700;
-            padding:4px 10px; border:1px solid var(--bd); background:var(--sur);
-            border-radius:6px;
+            font-size:12px; color:var(--mu); font-weight:700;
+            padding:2px 7px; border:1px solid var(--bd); background:var(--sur);
+            border-radius:5px;
         }
 
         /* ── 알림 상세 패널 ── */
@@ -552,7 +552,7 @@
         .bb-top5-rate { font-size:13px; font-weight:900; font-family:'Paperlogy','Lato',monospace; flex-shrink:0; }
         .bb-top5-empty { font-size:13px; color:var(--mu); padding:10px 0; }
         #bb-top5-panel.bb-light {
-			--bg:#ded3b8; --sur:#f8f3e6; --sur2:#efe6d2;
+			--bg:#f2e4c4; --sur:#f8f3e6; --sur2:#efe6d2;
 			--bd:#cabf9d; --bd2:#b3a687; --tx:#2b2418; --mu:#7a6f5c;
 		}
 		#bb-top5-panel.bb-light .bb-top5-col { background:var(--sur); }
@@ -598,7 +598,7 @@
         .bb-ap-empty { padding:28px 16px; text-align:center; font-size:14px; color:#8890b8; font-weight:700; background:var(--sur); border-radius:0 0 12px 12px; }
 
         #bb-alert-panel.bb-light {
-			--bg:#ded3b8; --sur:#f8f3e6; --sur2:#efe6d2;
+			--bg:#f2e4c4; --sur:#f8f3e6; --sur2:#efe6d2;
 			--bd:#cabf9d; --bd2:#b3a687; --tx:#2b2418; --mu:#7a6f5c;
 			--wh:rgba(0,0,0,.05);
 		}
@@ -659,7 +659,7 @@
         .bb-wbl-scroll::-webkit-scrollbar { height:6px; }
         .bb-wbl-scroll::-webkit-scrollbar-thumb { background:var(--bd2); border-radius:3px; }
         #bb-info-card-panel.bb-light {
-            --bg:#ded3b8; --sur:#f8f3e6; --sur2:#efe6d2;
+            --bg:#f2e4c4; --sur:#f8f3e6; --sur2:#efe6d2;
             --bd:#cabf9d; --bd2:#b3a687; --tx:#2b2418; --mu:#7a6f5c;
             --wh:rgba(0,0,0,.05);
             --gn:#22c55e; --gn2:rgba(34,197,94,.10);
@@ -1532,7 +1532,7 @@
             return OTHER_DELIVERY_SITE_IDS.includes(siteId) && parsed.status === 'delivering';
         });
         if (!others.length) {
-            el.innerHTML = '<span class="bb-delivery-empty">기타 배달 없음</span>';
+            el.innerHTML = '<span class="bb-delivery-empty">배달 중인 기타 기체 없음</span>';
             return;
         }
         el.innerHTML = others.map(r =>
@@ -2273,7 +2273,7 @@
         _wblDragEl = el;
         _wblDragStartX = e.pageX;
         _wblDragStartScroll = el.scrollLeft;
-        el.style.cursor = 'grabbing';
+        el.style.cursor = "url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_hold.png') 32 32, grabbing";
         e.preventDefault();
     });
     document.addEventListener('mousemove', (e) => {
@@ -2281,7 +2281,7 @@
         _wblDragEl.scrollLeft = _wblDragStartScroll - (e.pageX - _wblDragStartX);
     });
     document.addEventListener('mouseup', () => {
-        if (_wblDragEl) { _wblDragEl.style.cursor = 'grab'; _wblDragEl = null; }
+        if (_wblDragEl) { _wblDragEl.style.cursor = ''; _wblDragEl = null; }
     });
 	document.addEventListener('wheel', (e) => {
 		const el = e.target.closest('.bb-wbl-scroll');
@@ -3233,7 +3233,7 @@
             const rect = bb.getBoundingClientRect();
             ox = e.clientX - rect.left;
             oy = e.clientY - rect.top;
-            handle.style.cursor = 'grabbing';
+            handle.style.cursor = "url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_hold.png') 32 32, grabbing";
             e.preventDefault();
         });
         document.addEventListener('mousemove', e => {
@@ -3252,7 +3252,7 @@
         });
         document.addEventListener('mouseup', () => {
             dragging = false;
-            handle.style.cursor = 'grab';
+            handle.style.cursor = '';
         });
     })();
 
