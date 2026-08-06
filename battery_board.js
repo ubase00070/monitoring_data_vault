@@ -2010,7 +2010,7 @@
 				local.entries[id] = remoteEntry;   // 로컬에 아예 없던 로봇 -> 통째로 채움
 			} else {
 				// CYH(원격) 데이터가 더 신뢰도 높음 -> 겹치는 시간대는 CYH 값으로 덮어쓰고,
-				// 로컬에만 있는 시간대(CYH가 아직 안 올린 이후 시간대 등)는 그대로 유지
+				// 로컬에만 있는 시간대(CYH가 아직 안 올린 이후 시간대)는 그대로 유지
 				const seen = new Set();
 				const merged = [];
 				remoteEntry.log.forEach(p => { merged.push(p); seen.add(p.t); });
