@@ -2388,10 +2388,10 @@
           "raw": "휴무"
         },
         "8/12": {
-          "status": "work",
+          "status": "half-half",
           "working": true,
           "present": true,
-          "raw": "1"
+          "raw": "반반차"
         },
         "8/13": {
           "status": "work",
@@ -3160,10 +3160,10 @@
           "raw": "1"
         },
         "8/12": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "8/13": {
           "status": "work",
@@ -3214,10 +3214,10 @@
           "raw": "휴무"
         },
         "8/21": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "8/22": {
           "status": "work",
@@ -3546,10 +3546,10 @@
           "raw": "1"
         },
         "8/12": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "8/13": {
           "status": "off",
@@ -3600,10 +3600,10 @@
           "raw": "휴무"
         },
         "8/21": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "8/22": {
           "status": "work",
@@ -8141,6 +8141,6 @@
     "8/31"
   ],
   "mainMonth": 8,
-  "updatedAt": "2026-08-06T03:53:01.741Z",
+  "updatedAt": "2026-08-06T06:59:42.635Z",
   "sheetName": "2026년_08월 스케줄"
 }
