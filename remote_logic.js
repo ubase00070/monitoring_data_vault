@@ -1077,6 +1077,13 @@
             }, 1500);
         };
 
+        // ── 부산 국립과학관 배송/순찰 띠띠 설정 (유연 토글용) ──
+        const TTIDDI_CONFIG = {
+            site: '부산 국립과학관',
+            units: { delivery: '#171', patrol: '#170' },  
+            deliveryActive: false   // ← 배송 띠띠 기체 입고 중이면 false, 복귀하면 true로 딱 한 글자만 바꾸면 끝
+        };
+
         card.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                 <span style="color:${T.accent}; font-weight:bold; font-size:18px;">🏷️ 영상 파일명 생성기</span>
@@ -1106,6 +1113,12 @@
         }
 
         setTimeout(() => {
+            // 배송 띠띠 활성 여부에 따라 버튼 라벨 갱신 (신규 추가)
+            const combinedBtnLabel = card.querySelector('#btnCombined');
+            if (combinedBtnLabel) {
+                combinedBtnLabel.textContent = TTIDDI_CONFIG.deliveryActive ? '배송/순찰 띠띠' : '순찰 띠띠';
+            }
+
 			// 영상 드라이브 열기 → 오늘 날짜 폴더로 이동 (없으면 루트 폴더로 폴백)
             const openDriveBtn = card.querySelector('#openDriveTodayBtn');
             if (openDriveBtn) {
@@ -1164,10 +1177,14 @@
 			if (combinedBtn) combinedBtn.onclick = (e) => {
 				const time = getCalculatedTime(40);
 				const myName = localStorage.getItem('neubie_user_name') || '';
-				const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_부산 국립과학관_#171, #170${myName ? '_' + myName : ''}`;
+				const unitsText = TTIDDI_CONFIG.deliveryActive
+					? `${TTIDDI_CONFIG.units.delivery}, ${TTIDDI_CONFIG.units.patrol}`
+					: TTIDDI_CONFIG.units.patrol;
+				const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_${TTIDDI_CONFIG.site}_${unitsText}${myName ? '_' + myName : ''}`;
 				navigator.clipboard.writeText(finalName);
 				applyCopyEffect(e.target);
 			};
+            
         }, 10);
 
         return card;
