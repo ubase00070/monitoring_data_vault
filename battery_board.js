@@ -31,8 +31,8 @@
 		}
 		@import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap');
         :root {
-			--bg:#1b1e24; --sur:#35383d; --sur2:#41454b;
-			--bd:#4c5058; --bd2:#565b64; --tx:#e4e6ea; --mu:#8b929c;
+			--bg:#141519; --sur:#232630; --sur2:#2a2e3a;
+			--bd:#3a3f4c; --bd2:#454b5a; --tx:#e4e6ea; --mu:#8b929c;
 			--gn:#4d9d6d; --gn2:rgba(77,157,109,.12);
 			--bl:#5b8fd1; --bl2:rgba(91,143,209,.12);
 			--wh:rgba(228,230,234,.05); --gy:#5a6069;
@@ -281,7 +281,7 @@
         .bb-cluster-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
         .bb-cluster-name { flex:1; min-width:0; font-size:15px; font-weight:700; color:var(--tx); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .bb-cluster-name.bb-marquee { overflow:visible; animation:bb-marquee 3s linear 0.5s 1 forwards; }
-        .bb-cluster-pct { font-size:12px; font-weight:900; font-family:'Paperlogy','Lato',monospace; flex-shrink:0; -webkit-text-stroke:0.5px currentColor; }
+        .bb-cluster-pct { font-size:12px; font-weight:900; font-family:'Paperlogy','Lato',monospace; flex-shrink:0; }
         .bb-cluster-batt {
             position:relative; display:inline-block; width:48px; height:16px; border-radius:4px;
             background:var(--sur2); border:1.5px solid var(--bd2);
@@ -303,7 +303,7 @@
             position:absolute; top:0; right:0; white-space:nowrap;
             animation:bb-pctSlide 8s ease-in-out infinite;
         }
-        .bb-cluster-pct-val { font-size:12px; font-weight:900; font-family:'Paperlogy','Lato',monospace; -webkit-text-stroke:0.5px currentColor; }
+        .bb-cluster-pct-val { font-size:12px; font-weight:900; font-family:'Paperlogy','Lato',monospace; }
         .bb-cluster-pct-off { font-size:11px; font-weight:900; color:rgba(239,68,68,.8); animation-delay:-4s; }
         @keyframes bb-pctSlide {
             0%     { transform:translateX(0);    opacity:1; }
@@ -356,7 +356,6 @@
         .bb-ca-name { 
 		    font-size:16px; font-weight:900; color:var(--tx); line-height:1.1; 
 		    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-		    -webkit-text-stroke: 0.4px currentColor;
 			margin-top:2px;
 		}
         .bb-ca-name.bb-marquee { overflow:visible; animation:bb-marquee 3s linear 0.5s 1 forwards; }
@@ -374,7 +373,7 @@
         .bb-ca-dot  { border-radius:1px; background:rgba(255,255,255,.08); transition:background .3s ease; }
         .bb-ca-batt-pct {
             font-size:15px; font-weight:900; color:var(--tx); flex-shrink:0;
-            font-family:'Paperlogy','Lato',monospace; -webkit-text-stroke:0.4px currentColor;
+            font-family:'Paperlogy','Lato',monospace;
         }
 
         /* ── 하단 영역 ── */
@@ -494,7 +493,7 @@
         .bb-delivery-chips {
             display:flex; flex-wrap:wrap; gap:4px;
             overflow-y:auto; max-height:100px; padding:7px 10px 7px 10px;
-            margin-top:4px; max-width:calc(100% - 155px);
+            margin-top:16px; max-width:calc(100% - 155px);
             box-sizing:border-box;
         }
         .bb-delivery-chips::-webkit-scrollbar { width:4px; }
@@ -506,7 +505,12 @@
 			color:var(--pk); font-size:14px; font-weight:700; white-space:nowrap;
 			box-shadow:0 1px 4px rgba(0,0,0,.35);
 		}
-        .bb-delivery-empty { font-size:14px; color:var(--mu); font-weight:700; text-shadow:0 1px 3px var(--sur), 0 0 6px var(--sur); }
+        .bb-delivery-empty {
+            display:inline-block;
+            font-size:14px; color:var(--mu); font-weight:700;
+            padding:4px 10px; border:1px solid var(--bd); background:var(--sur);
+            border-radius:6px;
+        }
 
         /* ── 알림 상세 패널 ── */
         #bb-alert-panel {
