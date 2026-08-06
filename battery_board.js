@@ -1532,7 +1532,7 @@
             return OTHER_DELIVERY_SITE_IDS.includes(siteId) && parsed.status === 'delivering';
         });
         if (!others.length) {
-            el.innerHTML = '<span class="bb-delivery-empty">배달 중인 기타 기체 없음</span>';
+            el.innerHTML = '<span class="bb-delivery-empty">기타 배달 없음</span>';
             return;
         }
         el.innerHTML = others.map(r =>
