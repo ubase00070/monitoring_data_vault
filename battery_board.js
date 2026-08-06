@@ -499,8 +499,9 @@
         .bb-delivery-chip {
 			display:flex; align-items:center; gap:4px;
 			padding:3px 9px; border-radius:6px;
-			background:var(--pk2); border:1px solid rgba(236,72,153,.3);
+			background:var(--sur); border:1px solid rgba(236,72,153,.3);
 			color:var(--pk); font-size:14px; font-weight:700; white-space:nowrap;
+			box-shadow:0 1px 4px rgba(0,0,0,.35);
 		}
         .bb-delivery-empty { font-size:14px; color:var(--mu); font-weight:700; text-shadow:0 1px 3px var(--sur), 0 0 6px var(--sur); }
 
