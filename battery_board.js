@@ -31,8 +31,8 @@
 		}
 		@import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&display=swap');
         :root {
-			--bg:#15171b; --sur:#40444b; --sur2:#4b5058;
-			--bd:#565b64; --bd2:#626875; --tx:#e4e6ea; --mu:#8b929c;
+			--bg:#1b1e24; --sur:#35383d; --sur2:#41454b;
+			--bd:#4c5058; --bd2:#565b64; --tx:#e4e6ea; --mu:#8b929c;
 			--gn:#4d9d6d; --gn2:rgba(77,157,109,.12);
 			--bl:#5b8fd1; --bl2:rgba(91,143,209,.12);
 			--wh:rgba(228,230,234,.05); --gy:#5a6069;
@@ -183,7 +183,7 @@
             display:flex; flex-direction:column; gap:1px;
             padding:3px 16px; border-radius:10px;
             font-size:15px; font-weight:700; cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_pointer.png') 4 4, pointer;
-            font-family:inherit; width:max-content; max-width:320px;
+            font-family:inherit; max-width:198px;
             transition:filter .15s, box-shadow .15s;
         }
         .bb-chip-l1 { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
@@ -494,7 +494,7 @@
         .bb-delivery-chips {
             display:flex; flex-wrap:wrap; gap:4px;
             overflow-y:auto; max-height:100px; padding:7px 10px 7px 10px;
-            margin-top:16px; max-width:calc(100% - 155px);
+            margin-top:4px; max-width:calc(100% - 155px);
             box-sizing:border-box;
         }
         .bb-delivery-chips::-webkit-scrollbar { width:4px; }
@@ -1389,6 +1389,7 @@
             logBatteryPattern(DB);
             wblCyhAutoUploadTick();
             wblOthersAutoDownloadTick();
+            wblNightUploadTick();
             wblMidnightCleanupTick();
 
             const alerts = detectAlerts(allRaw);
@@ -2163,6 +2164,43 @@
 		_wblDlRetryTimer = setTimeout(async () => {
 			await wblDoDownload();
 		}, 60 * 1000);
+	}
+
+	// 야간 업로드(02:50) — CYH가 자리를 비웠을 때를 대비해, 그 시간에 접속해있는 아무나(비-CYH)가 대신 최종본을 올려줌.
+	// 별도 역할 설정 없음: 그냥 02:50에 켜져있는 PC가 시도. 두 명이 동시에 켜져있어도 서버 "락" 파일로 한쪽만 실제 업로드.
+	// (완전한 원자적 락은 아니지만, 랜덤 지연 + 2명뿐인 상황이라 실질적으로 충분 — 설령 겹쳐도 데이터가 깨지는 구조는 아님)
+	const WBL_NIGHT_LOCK_NAME = '배터리_야간업로드_락';
+	async function wblNightUploadTick() {
+		if (localStorage.getItem('bb_is_cyh') === '1') return;   // CYH는 본인 낮 로직으로 이미 커버
+		const now = new Date();
+		if (now.getHours() !== 2 || now.getMinutes() < 50) return;   // 02:50 이후에만
+
+		const dayKey = wblGetDayKey();
+		if (!dayKey) return;
+
+		const doneKey = `bb_wbl_night_up_${dayKey}`;
+		if (localStorage.getItem(doneKey) === '1') return;   // 이 PC는 오늘치 이미 시도함(성공/스킵 무관, 1회만)
+		localStorage.setItem(doneKey, '1');
+
+		// 여러 PC가 동시에 02:50을 맞이해도 정확히 같은 순간에 몰리지 않도록 짧게 랜덤 대기
+		await new Promise(r => setTimeout(r, Math.random() * 5000));
+
+		try {
+			const lockRes = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent(WBL_NIGHT_LOCK_NAME)}`);
+			if (lockRes.ok) {
+				const lockData = await lockRes.json();
+				if (lockData?.data?.day === dayKey) {
+					console.log('[BB] 야간 업로드: 이미 다른 PC가 처리함, 스킵');
+					return;
+				}
+			}
+		} catch (e) { /* 락 확인 실패 시엔 없는 셈 치고 계속 진행 */ }
+
+		await wblUploadNamed(WBL_NIGHT_LOCK_NAME, { day: dayKey, claimedAt: Date.now() });   // 락 선점
+
+		await wblDoDownload();   // 혹시 그 사이 CYH가 막판에 올린 게 있으면 먼저 반영
+		const ok = await wblDoUpload();
+		console.log('[BB] 야간 업로드(02:50)', ok ? '완료' : '실패');
 	}
 
 	// 새로고침(스크립트 재실행) 시점에 한 번 즉시 로드 — 그 시점부터 30분 카운트가 자연스럽게 시작됨
