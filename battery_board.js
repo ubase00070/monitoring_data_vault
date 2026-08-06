@@ -96,6 +96,7 @@
             z-index:9999999; font-family:'Paperlogy','Lato',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
 			font-weight:900;
 			color:var(--tx); flex-direction:column;
+			cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_default.png') 4 4, auto;
         }
         #bb.bb-light { -webkit-text-stroke: 0.4px currentColor; }
         #bb.open { display:flex; }
@@ -123,7 +124,7 @@
             background:linear-gradient(135deg, #6366f1, #ec4899);
             -webkit-background-clip:text; background-clip:text; color:transparent;
             text-shadow:0 0 10px rgba(99,102,241,.45), 0 0 14px rgba(236,72,153,.35);
-            display:flex; align-items:center; gap:7px; cursor:grab;
+            display:flex; align-items:center; gap:7px; cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_grab.png') 32 32, grab;
         }
         .bb-hd-time { display:flex; align-items:baseline; gap:8px; }
         .bb-clock { font-family:'Lato',monospace; font-size:13px; font-weight:900; color:var(--mu); letter-spacing:.8px; }
@@ -135,7 +136,7 @@
         .bb-btn {
             height:32px; padding:0 12px; border-radius:6px; border:1px solid var(--bd2);
             background:var(--sur2); color:var(--tx); font-size:14px;
-            font-family:inherit; font-weight:700; cursor:pointer; white-space:nowrap;
+            font-family:inherit; font-weight:700; cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_pointer.png') 4 4, pointer; white-space:nowrap;
             display:inline-flex; align-items:center; justify-content:center; box-sizing:border-box;
         }
         .bb-btn:hover { border-color:var(--mu); }
@@ -150,14 +151,14 @@
         .bb-xbtn {
             width:32px; height:32px; border-radius:6px;
             background:rgba(239,68,68,.15); border:1px solid rgba(239,68,68,.3);
-            color:var(--rd); font-size:13px; cursor:pointer;
+            color:var(--rd); font-size:13px; cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_pointer.png') 4 4, pointer;
             display:flex; align-items:center; justify-content:center; font-weight:900;
         }
         .bb-xbtn:hover { background:rgba(239,68,68,.3); }
         .zoom-btn {
             padding:3px 8px; border-radius:5px; border:1px solid var(--bd2);
             background:var(--sur2); color:var(--tx); font-size:12px;
-            font-weight:900; cursor:pointer; line-height:1.5; font-family:inherit;
+            font-weight:900; cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_pointer.png') 4 4, pointer; line-height:1.5; font-family:inherit;
         }
         .zoom-label { font-size:14px; color:var(--tx); font-weight:700; min-width:34px; text-align:center; }
 
@@ -180,7 +181,7 @@
         .bb-chip {
             display:flex; flex-direction:column; gap:1px;
             padding:3px 16px; border-radius:10px;
-            font-size:15px; font-weight:700; cursor:pointer;
+            font-size:15px; font-weight:700; cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_pointer.png') 4 4, pointer;
             font-family:inherit; max-width:198px;
             transition:filter .15s, box-shadow .15s;
         }
@@ -213,6 +214,7 @@
 
         /* 검색 */
         .bb-si-wrap { position:relative; }
+        .bb-si { cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_text.png') 32 32, text; }
         .bb-si {
             width:26.5ch; max-width:100%; background:var(--sur2); border:1px solid var(--bd2);
             border-radius:7px; padding:6px 10px 6px 26px;
@@ -230,7 +232,7 @@
         }
         #bb-dd.open { display:block; }
         .bb-di {
-            padding:8px 12px; font-size:14px; font-weight:700; cursor:pointer;
+            padding:8px 12px; font-size:14px; font-weight:700; cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_pointer.png') 4 4, pointer;
             display:flex; align-items:center; gap:6px;
             border-bottom:1px solid var(--bd); color:var(--tx);
             transition:background .1s;
@@ -269,7 +271,7 @@
         .bb-cluster-missing { display:inline-block; white-space:nowrap; font-size:10px; font-weight:500; color:var(--mu); }
         .bb-cluster-missing.bb-marquee { animation:bb-marquee 3s linear 0.5s 1 forwards; }
         .bb-cluster-row {
-            display:flex; align-items:center; gap:7px; padding:2px 5px; border-radius:6px; cursor:pointer;
+            display:flex; align-items:center; gap:7px; padding:2px 5px; border-radius:6px; cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_pointer.png') 4 4, pointer;
             border:1px solid transparent; user-select:none; margin-bottom:1px;
         }
         .bb-cluster-row:last-child { margin-bottom:0; }
@@ -313,7 +315,7 @@
         .bb-ca {
 			height:86px; background:var(--sur);
 			border-radius:14px; padding:6px 8px;
-			cursor:grab; position:relative; overflow:hidden;
+			cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_grab.png') 32 32, grab; position:relative; overflow:hidden;
 			display:flex; flex-direction:column; justify-content:space-between;
 			border:3px solid var(--ac-border,var(--bd));
 			transform:translateZ(0);
@@ -327,10 +329,10 @@
 			transform:translateY(-3px) scale(1.03) translateZ(0);
 			box-shadow:0 6px 0 rgba(0,0,0,.2);
 		}
-		.bb-ca:active { cursor:grabbing; transform:translateY(-1px) scale(0.99); }
+		.bb-ca:active { cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_grab.png') 32 32, grabbing; transform:translateY(-1px) scale(0.99); }
         .bb-ca.dragging { opacity:.3; }
         .bb-ca.dragover { border-color:var(--bl)!important; box-shadow:0 0 0 1px var(--bl); }
-        .bb-ca.selectable { cursor:pointer; }
+        .bb-ca.selectable { cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_pointer.png') 4 4, pointer; }
         .bb-ca.selectable:hover { border-color:rgba(239,68,68,.5); background:rgba(239,68,68,.04); }
         .bb-ca.selected { border-color:var(--rd)!important; background:var(--rd2)!important; box-shadow:0 0 0 1px var(--rd); }
         .bb-ca.selected::after {
@@ -427,7 +429,7 @@
 			background-size:contain;
 			background-repeat:no-repeat;
 			background-position:center;
-			cursor:pointer;
+			cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_pointer.png') 4 4, pointer;
 			transition:transform .15s;
 		}
 		#bb-walker:active { transform:scale(0.92); }
@@ -438,7 +440,7 @@
 			background:rgba(20,20,22,.55); border:1px solid rgba(255,255,255,.2);
 			color:#fff; font-size:16px; font-weight:900; line-height:1; padding:0;
 			display:flex; align-items:center; justify-content:center;
-			cursor:pointer; z-index:2;
+			cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_pointer.png') 4 4, pointer; z-index:2;
 			opacity:0; transition:opacity .15s, background .15s;
 		}
 		#bb-walker-wrap:hover .bb-walker-arrow { opacity:1; }
@@ -473,7 +475,7 @@
             min-width:38px; height:22px; padding:0 7px;
             border-radius:6px;
             background:var(--sur2); border:1px solid var(--bd2);
-            color:var(--tx); font-size:12px; font-weight:900; cursor:pointer;
+            color:var(--tx); font-size:12px; font-weight:900; cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_pointer.png') 4 4, pointer;
             display:flex; align-items:center; justify-content:center;
             z-index:2; transition:background .15s, color .15s;
         }
@@ -535,7 +537,7 @@
         .bb-top5-col-title { font-size:14px; font-weight:900; margin-bottom:8px; }
         .bb-top5-row {
             display:flex; align-items:center; gap:8px; padding:6px 4px;
-            border-bottom:1px solid var(--bd); cursor:pointer;
+            border-bottom:1px solid var(--bd); cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_pointer.png') 4 4, pointer;
         }
         .bb-top5-row:last-child { border-bottom:none; }
         .bb-top5-row:hover { background:rgba(255,255,255,.05); }
@@ -562,7 +564,7 @@
         .bb-ap-close {
             width:26px; height:26px; border-radius:7px;
             background:rgba(239,68,68,.25); border:1px solid rgba(239,68,68,.6);
-            color:#fca5a5; font-size:14px; cursor:pointer;
+            color:#fca5a5; font-size:14px; cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_pointer.png') 4 4, pointer;
             display:flex; align-items:center; justify-content:center; font-weight:900;
         }
         .bb-ap-item {
@@ -584,7 +586,7 @@
             display:flex; flex-shrink:0; align-self:center;
             padding:4px 11px; border-radius:6px;
             border:1px solid #4a5070; background:#3a3f62;
-            color:#a0a8cc; font-size:11px; font-weight:700; cursor:pointer; font-family:inherit;
+            color:#a0a8cc; font-size:11px; font-weight:700; cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_pointer.png') 4 4, pointer; font-family:inherit;
         }
         .bb-ap-empty { padding:28px 16px; text-align:center; font-size:14px; color:#8890b8; font-weight:700; background:var(--sur); border-radius:0 0 12px 12px; }
 
@@ -644,7 +646,7 @@
         .bb-icp-right { flex:1; min-width:0; border-left:1px solid var(--bd); padding:10px 16px; }
         .bb-icp-wbl-log { margin-top:10px; display:flex; flex-direction:column; gap:6px; }
         .bb-icp-wbl-line { font-size:13px; line-height:1.5; color:var(--tx); }
-        .bb-wbl-scroll { flex:1; min-width:0; overflow-x:auto; overflow-y:hidden; cursor:grab; scrollbar-width:thin; }
+        .bb-wbl-scroll { flex:1; min-width:0; overflow-x:auto; overflow-y:hidden; cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_grab.png') 32 32, grab; scrollbar-width:thin; }
         .bb-wbl-scroll::-webkit-scrollbar { height:6px; }
         .bb-wbl-scroll::-webkit-scrollbar-thumb { background:var(--bd2); border-radius:3px; }
         #bb-info-card-panel.bb-light {
@@ -681,7 +683,7 @@
         .bb-icp-close {
             width:22px; height:22px; border-radius:5px; flex-shrink:0;
             background:rgba(239,68,68,.15); border:1px solid rgba(239,68,68,.3);
-            color:var(--rd); font-size:14px; cursor:pointer;
+            color:var(--rd); font-size:14px; cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_pointer.png') 4 4, pointer;
             display:flex; align-items:center; justify-content:center; font-weight:900;
             margin-left:6px;
         }
