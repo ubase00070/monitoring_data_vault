@@ -1484,7 +1484,7 @@
             const fill = document.createElement('div');
             fill.style.cssText = `
                 position:absolute; top:0; left:0; height:100%; width:0%;
-                background:rgba(255,255,255,0.28); pointer-events:none; z-index:0;
+                background:rgba(245,158,11,0.55); border-right:2px solid rgba(245,158,11,0.9); pointer-events:none; z-index:0;
             `;
             btn.insertBefore(fill, btn.firstChild);
 
