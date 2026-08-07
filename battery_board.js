@@ -1607,7 +1607,7 @@
                 const ac = CLUSTER_AC[r.status] || 'var(--mu)';
                 const off = r.status === 'off';
                 const lowBat = !off && r.battery <= 21;
-                const showMissionOff = !r.canDispatch && !off && !r.loading
+                const showMissionOff = !r.canDispatch && !off && !r.loading && !lowBat
 				    && r.status !== 'patrolling' && r.status !== 'delivering' && r.status !== 'standby'
                 const showPlug = r.status !== 'patrolling' && r.status !== 'delivering' && !!r.raw?.robotStatus?.isWiredChargerConnected;
 				const row = document.createElement('div');
@@ -1654,7 +1654,7 @@
         const lowBat = !r.loading && !off && r.battery <= 21;
         const chargingPulse = !r.loading && !off && r.status === 'charging' && r.battery < 100;
         const pct    = (off || r.loading) ? 0 : r.battery;
-        const showMissionOff = !r.canDispatch && !off && !r.loading
+        const showMissionOff = !r.canDispatch && !off && !r.loading && !lowBat
 		    && r.status !== 'patrolling' && r.status !== 'delivering' && r.status !== 'standby'
 		const showPlug = r.status !== 'patrolling' && r.status !== 'delivering' && !!r.raw?.robotStatus?.isWiredChargerConnected;
         const showWireless = !r.loading && !off && r.status === 'charging' && !r.raw?.robotStatus?.isWiredChargerConnected;
