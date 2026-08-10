@@ -1443,7 +1443,10 @@
         hideDd();
     }
 
-    openBoard();
+    // 근태(Pointless) 페이지에서는 자동으로 열지 않음
+    if (!/\/awayboard\.html/i.test(location.pathname)) {
+        openBoard();
+    }
 
     document.addEventListener('keydown', e => {
         if (!e.altKey || e.code !== 'KeyZ') return;
