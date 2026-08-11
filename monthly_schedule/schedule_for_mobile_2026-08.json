@@ -7726,190 +7726,190 @@
       "workTime": "",
       "schedule": {
         "8/1": {
-          "status": "empty",
+          "status": "off",
           "working": false,
           "present": false,
-          "raw": "육아휴직"
+          "raw": "휴무"
         },
         "8/2": {
-          "status": "empty",
+          "status": "off",
           "working": false,
           "present": false,
-          "raw": "육아휴직"
+          "raw": "휴무"
         },
         "8/3": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "육아휴직"
+          "raw": "산전후휴가"
         },
         "8/4": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "육아휴직"
+          "raw": "산전후휴가"
         },
         "8/5": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "육아휴직"
+          "raw": "산전후휴가"
         },
         "8/6": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "육아휴직"
+          "raw": "산전후휴가"
         },
         "8/7": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "육아휴직"
+          "raw": "산전후휴가"
         },
         "8/8": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "육아휴직"
+          "raw": "산전후휴가"
         },
         "8/9": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "육아휴직"
+          "raw": "산전후휴가"
         },
         "8/10": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "육아휴직"
+          "raw": "산전후휴가"
         },
         "8/11": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "육아휴직"
+          "raw": "산전후휴가"
         },
         "8/12": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "육아휴직"
+          "raw": "산전후휴가"
         },
         "8/13": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "육아휴직"
+          "raw": "산전후휴가"
         },
         "8/14": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "육아휴직"
+          "raw": "산전후휴가"
         },
         "8/15": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "육아휴직"
+          "raw": "산전후휴가"
         },
         "8/16": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "육아휴직"
+          "raw": "산전후휴가"
         },
         "8/17": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "육아휴직"
+          "raw": "산전후휴가"
         },
         "8/18": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "육아휴직"
+          "raw": "산전후휴가"
         },
         "8/19": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "육아휴직"
+          "raw": "산전후휴가"
         },
         "8/20": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "육아휴직"
+          "raw": "산전후휴가"
         },
         "8/21": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "육아휴직"
+          "raw": "산전후휴가"
         },
         "8/22": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "육아휴직"
+          "raw": "산전후휴가"
         },
         "8/23": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "육아휴직"
+          "raw": "산전후휴가"
         },
         "8/24": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "육아휴직"
+          "raw": "산전후휴가"
         },
         "8/25": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "육아휴직"
+          "raw": "산전후휴가"
         },
         "8/26": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "육아휴직"
+          "raw": "산전후휴가"
         },
         "8/27": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "육아휴직"
+          "raw": "산전후휴가"
         },
         "8/28": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "육아휴직"
+          "raw": "산전후휴가"
         },
         "8/29": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "육아휴직"
+          "raw": "산전후휴가"
         },
         "8/30": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "육아휴직"
+          "raw": "산전후휴가"
         },
         "8/31": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "육아휴직"
+          "raw": "산전후휴가"
         }
       }
     },
@@ -8141,6 +8141,6 @@
     "8/31"
   ],
   "mainMonth": 8,
-  "updatedAt": "2026-08-10T03:53:10.774Z",
+  "updatedAt": "2026-08-11T03:53:05.121Z",
   "sheetName": "2026년_08월 스케줄"
 }
