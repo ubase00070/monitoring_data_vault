@@ -1081,7 +1081,7 @@
         const TTIDDI_CONFIG = {
             site: '부산 국립과학관',
             units: { delivery: '#171', patrol: '#170' },  
-            deliveryActive: false   // ← 배송 띠띠 기체 입고 중이면 false, 복귀하면 true로 딱 한 글자만 바꾸면 끝
+            deliveryActive: true   // ← 배송 띠띠 기체 입고 중이면 false, 복귀하면 true로 딱 한 글자만 바꾸면 끝
         };
 
         card.innerHTML = `
