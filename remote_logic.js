@@ -2538,7 +2538,10 @@
 	}
 
     function isNewDrivingPage() {
-		return NEUBIE_HOSTS.some(h => location.href.includes(`${h}/ko/remote/robot/`)) && location.href.includes('/new');
+	    const isNeubieHost = NEUBIE_HOSTS.some(h => location.href.includes(h));
+	    if (!isNeubieHost || !location.href.includes('/new')) return false;
+	    // 기체 원격조종(단일) + 개입 페이지(다중, 리뉴얼) 둘 다 동일 라이트 테마 대상
+	    return location.href.includes('/ko/remote/robot/') || location.href.includes('/ko/remote/multiple/driving/');
 	}
 
     // 게임패드 커스텀 바인딩 — 명시적으로 켜거나 끈 적이 없으면 이름으로 기본값 결정 ('오정훈'만 기본 OFF)
