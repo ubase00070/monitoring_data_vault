@@ -2696,6 +2696,31 @@
 		window._missionThemeObserver.observe(watchTarget, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
 	}
 
+	function watchMissionSettingCard() {
+		// "임무 설정" 버튼 기준으로 상위 .contents 래퍼까지 올라가서 감시
+		// (상태 텍스트/알림 내용이 갱신될 때 이 래퍼 하위가 다시 그려지며 칠한 스타일이 날아감)
+		const missionBtn = driveThemeFindByText('임무 설정');
+		const wrap = missionBtn ? (missionBtn.closest('.contents') || missionBtn.parentElement) : null;
+		if (!wrap) return;
+
+		if (window._missionSettingThemeObserver) window._missionSettingThemeObserver.disconnect();
+
+		let selfWriting = false;
+		window._missionSettingThemeObserver = new MutationObserver(() => {
+			if (selfWriting) return;
+			const saved = localStorage.getItem(DRIVE_THEME_KEY) || 'dark';
+			if (saved !== 'light') return;
+
+			selfWriting = true;
+			driveThemeMark(wrap, DRIVE_THEMES.light);
+			requestAnimationFrame(() => {
+				selfWriting = false;
+				watchMissionSettingCard();   // 감시 대상이 교체됐을 수 있으니 스스로 재등록
+			});
+		});
+		window._missionSettingThemeObserver.observe(wrap, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
+	}
+
 	function watchLogPanel() {
 		const logPanel = document.querySelector('.rounded-small.bg-mono-100.w-full.min-h-50');
 		if (!logPanel) return;
@@ -2743,7 +2768,8 @@
 	function clearDriveTheme() {
 		document.getElementById('neubie-drive-theme-style')?.remove();
 		if (window._soundInputThemeObserver) { window._soundInputThemeObserver.disconnect(); window._soundInputThemeObserver = null; }
-        if (window._missionThemeObserver) { window._missionThemeObserver.disconnect(); window._missionThemeObserver = null; } 
+        if (window._missionThemeObserver) { window._missionThemeObserver.disconnect(); window._missionThemeObserver = null; }
+		if (window._missionSettingThemeObserver) { window._missionSettingThemeObserver.disconnect(); window._missionSettingThemeObserver = null; }
 		if (window._logPanelThemeObserver) { window._logPanelThemeObserver.disconnect(); window._logPanelThemeObserver = null; }
 		if (window._toggleThemeObservers) { window._toggleThemeObservers.forEach(obs => obs.disconnect()); window._toggleThemeObservers = null; }
 		document.querySelectorAll('[data-neubie-theme-touched]').forEach(el => {
@@ -2779,6 +2805,7 @@
 		if (inputEl) driveThemeMark(driveThemeClimb(inputEl), t);
         watchSoundInputCard();
 		watchMissionProgressCard();
+		watchMissionSettingCard();
 
         // 주행 로그 패널 — 텍스트가 매번 바뀌어(시간값) 라벨 매칭이 불가능해 클래스로 직접 지정
 		// ※ 사이트 개편 시 이 클래스 조합이 바뀌면 재확인 필요
