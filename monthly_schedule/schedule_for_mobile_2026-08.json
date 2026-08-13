@@ -1634,10 +1634,10 @@
           "raw": "1"
         },
         "8/15": {
-          "status": "work",
+          "status": "half",
           "working": true,
           "present": true,
-          "raw": "1"
+          "raw": "반차"
         },
         "8/16": {
           "status": "work",
@@ -6815,16 +6815,16 @@
           "raw": "휴무"
         },
         "8/10": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
-        },
-        "8/11": {
           "status": "annual",
           "working": true,
           "present": false,
           "raw": "연차"
+        },
+        "8/11": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "8/12": {
           "status": "work",
@@ -8141,6 +8141,6 @@
     "8/31"
   ],
   "mainMonth": 8,
-  "updatedAt": "2026-08-12T03:56:22.533Z",
+  "updatedAt": "2026-08-13T03:53:09.112Z",
   "sheetName": "2026년_08월 스케줄"
 }
