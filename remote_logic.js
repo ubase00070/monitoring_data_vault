@@ -4,7 +4,7 @@
     if (window.neubieEngineLoaded) return;
     window.neubieEngineLoaded = true;
 
-	// ── Paperlogy 웹폰트 ──
+	// ── Paperlogy 폰트 ──
     (function loadPaperlogyFont() {
         if (document.getElementById('neubie-paperlogy-font')) return;
         const link = document.createElement('link');
@@ -2538,10 +2538,10 @@
 	}
 
     function isNewDrivingPage() {
-	    const isNeubieHost = NEUBIE_HOSTS.some(h => location.href.includes(h));
-	    if (!isNeubieHost || !location.href.includes('/new')) return false;
-	    // 기체 원격조종(단일) + 개입 페이지(다중, 리뉴얼) 둘 다 동일 라이트 테마 대상
-	    return location.href.includes('/ko/remote/robot/') || location.href.includes('/ko/remote/multiple/driving/');
+		const isNeubieHost = NEUBIE_HOSTS.some(h => location.href.includes(h));
+		if (!isNeubieHost || !location.href.includes('/new')) return false;
+		// 기체 원격조종(단일) + 개입 페이지(다중, 리뉴얼) 둘 다 동일 라이트 테마 대상
+		return location.href.includes('/ko/remote/robot/') || location.href.includes('/ko/remote/multiple/driving/');
 	}
 
     // 게임패드 커스텀 바인딩 — 명시적으로 켜거나 끈 적이 없으면 이름으로 기본값 결정 ('오정훈'만 기본 OFF)
@@ -2696,6 +2696,31 @@
 		window._missionThemeObserver.observe(watchTarget, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
 	}
 
+	function watchMissionSettingCard() {
+		// "임무 설정" 버튼 기준으로 상위 .contents 래퍼까지 올라가서 감시
+		// (상태 텍스트/알림 내용이 갱신될 때 이 래퍼 하위가 다시 그려지며 칠한 스타일이 날아감)
+		const missionBtn = driveThemeFindByText('임무 설정');
+		const wrap = missionBtn ? (missionBtn.closest('.contents') || missionBtn.parentElement) : null;
+		if (!wrap) return;
+
+		if (window._missionSettingThemeObserver) window._missionSettingThemeObserver.disconnect();
+
+		let selfWriting = false;
+		window._missionSettingThemeObserver = new MutationObserver(() => {
+			if (selfWriting) return;
+			const saved = localStorage.getItem(DRIVE_THEME_KEY) || 'dark';
+			if (saved !== 'light') return;
+
+			selfWriting = true;
+			driveThemeMark(wrap, DRIVE_THEMES.light);
+			requestAnimationFrame(() => {
+				selfWriting = false;
+				watchMissionSettingCard();   // 감시 대상이 교체됐을 수 있으니 스스로 재등록
+			});
+		});
+		window._missionSettingThemeObserver.observe(wrap, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
+	}
+
 	function watchLogPanel() {
 		const logPanel = document.querySelector('.rounded-small.bg-mono-100.w-full.min-h-50');
 		if (!logPanel) return;
@@ -2743,7 +2768,8 @@
 	function clearDriveTheme() {
 		document.getElementById('neubie-drive-theme-style')?.remove();
 		if (window._soundInputThemeObserver) { window._soundInputThemeObserver.disconnect(); window._soundInputThemeObserver = null; }
-        if (window._missionThemeObserver) { window._missionThemeObserver.disconnect(); window._missionThemeObserver = null; } 
+        if (window._missionThemeObserver) { window._missionThemeObserver.disconnect(); window._missionThemeObserver = null; }
+		if (window._missionSettingThemeObserver) { window._missionSettingThemeObserver.disconnect(); window._missionSettingThemeObserver = null; }
 		if (window._logPanelThemeObserver) { window._logPanelThemeObserver.disconnect(); window._logPanelThemeObserver = null; }
 		if (window._toggleThemeObservers) { window._toggleThemeObservers.forEach(obs => obs.disconnect()); window._toggleThemeObservers = null; }
 		document.querySelectorAll('[data-neubie-theme-touched]').forEach(el => {
@@ -2779,6 +2805,7 @@
 		if (inputEl) driveThemeMark(driveThemeClimb(inputEl), t);
         watchSoundInputCard();
 		watchMissionProgressCard();
+		watchMissionSettingCard();
 
         // 주행 로그 패널 — 텍스트가 매번 바뀌어(시간값) 라벨 매칭이 불가능해 클래스로 직접 지정
 		// ※ 사이트 개편 시 이 클래스 조합이 바뀌면 재확인 필요
