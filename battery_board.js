@@ -1358,8 +1358,14 @@
     // ============================================================
     // SECTION 6. bb_robots_data 리스너
     // ============================================================
+    // 실제 데이터 갱신 주기: 로더(뉴비고 도우미)가 2분마다 이벤트를 쏘도록 이미 바뀌었지만,
+    // 혹시 모를 이중 안전장치로 여기서도 최소 UPDATE_INTERVAL_MS(2분)에 한 번만 처리
+    const UPDATE_INTERVAL_MS = 2 * 60 * 1000;
+    let _lastProcessedAt = 0;
     document.addEventListener('bb_robots_data', function(e) {
         if (fetchLock) return;
+        if (Date.now() - _lastProcessedAt < UPDATE_INTERVAL_MS) return;
+        _lastProcessedAt = Date.now();
         fetchLock = true;
         try {
             let allRaw;
@@ -1469,7 +1475,7 @@
     }
     setInterval(tick, 1000); tick();
 
-    const RS = 30; let ns = RS;
+    const RS = 120; let ns = RS;
     setInterval(() => {
         ns--;
         if (ns <= 0) ns = RS;
