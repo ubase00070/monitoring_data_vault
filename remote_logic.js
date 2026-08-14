@@ -666,15 +666,21 @@
     }
 
     let _batteryFetching = false;
+    let _lastBatteryFetchAt = 0;
+    const BATTERY_REFRESH_MS = 2 * 60 * 1000;   // 2분: 이 안에 다시 열어도 새로 요청 안 함
     async function updateBatteryStatus() {
         if (batteryPopup.dataset.dragging === 'true') return;
         if (_batteryFetching) return;
+
+        if (!_batteryInitialized || !batteryPopup.querySelector('#neubie-battery-list')) {
+            buildBatteryShell();
+        }
+
+        // 마지막으로 실제 조회한 지 2분이 안 지났으면, 서버 요청 없이 기존 값 그대로 둠
+        if (_lastBatteryFetchAt && (Date.now() - _lastBatteryFetchAt) < BATTERY_REFRESH_MS) return;
+
         _batteryFetching = true;
         try {
-            if (!_batteryInitialized || !batteryPopup.querySelector('#neubie-battery-list')) {
-                buildBatteryShell();
-            }
-
             state.lastBatteryData = [];
 
             const results = await Promise.all(
@@ -730,6 +736,8 @@
                     }
                 }
             });
+
+            _lastBatteryFetchAt = Date.now();
         } finally {
             _batteryFetching = false;
         }
@@ -1211,7 +1219,7 @@
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
 		// 문자열을 넣으면 패치노트에 빨간 '`' 뱃지가 점멸하며 뜸.
 		// 빈 문자열('')로 비우면 뱃지가 사라짐.
-		const PATCH_NOTE_NEW_CONTENT = '';
+		const PATCH_NOTE_NEW_CONTENT = '장난쳐?';
 		
         const patchBtn = document.createElement('button');
         patchBtn.textContent = '패치노트';
@@ -1273,8 +1281,9 @@
             const patchItems = [
                 {
                     version: 'v1.4',
-                    date: '2026-08-05',
+                    date: '2026-08-14',
                     items: [
+						'Are you Joking?',
 						'D-PAD UP 개입진입 시간 / 진입당시 시나리오 표기',
 						'다음 개입 요청 자동 OFF',
                         '문제해결 페이지',
@@ -1283,7 +1292,6 @@
 						'임무 종료된 리센츠/엘스/한성대/진천 페이지 이탈 5초 후 자동 사이드',
                         '게임패드 커스텀 바인딩 설명 페이지',
 						'다중 자동 교대시작 최대 12대까지',
-						'불규칙 순찰 기체 모니터링 미추가 시 알림 기능',
 						'개입카드 현재 조작자 표기 / 상태 바 재배치(스크롤 제거)',
                     ]
                 },
@@ -1926,8 +1934,6 @@
         }
     }
 
-    let batteryRefreshInterval = null;
-
     // 팝업 열 때만 생성
     function toggleBattery() {
         if (batteryPopup.style.display !== 'block') {
@@ -1947,20 +1953,14 @@
                 batteryPopup.style.bottom = 'auto';
             }
 
-            updateBatteryStatus();  
+            // 열 때마다 호출하지만, 실제 서버 요청은 updateBatteryStatus 내부의
+            // 2분 게이트가 알아서 걸러줌 (2분 안 지났으면 기존 값 그대로 표시)
+            updateBatteryStatus();
             batteryPopup.style.display = 'block';
-
-            // 5초 후 1회 갱신 → 필요없으니 삭제, 바로 1분 간격으로
-			if (batteryRefreshInterval) clearInterval(batteryRefreshInterval); // 중복 방지
-            batteryRefreshInterval = setInterval(() => {
-                if (batteryPopup.style.display === 'block') updateBatteryStatus();
-                else clearInterval(batteryRefreshInterval);
-            }, 60000);
 
         } else {
             batteryPopup.style.display = 'none';
             if (window._neubieBatteryCard) window._neubieBatteryCard.style.outline = 'none';
-            clearInterval(batteryRefreshInterval);
         }
     }
 
@@ -2442,92 +2442,6 @@
 	}
 	// ── 핸드오버 레이아웃 끝 ──────────────────────────────
 	
-	/* ============================================================
-    SECTION 미모니터링 순찰 감지
-   ============================================================ */
-	const UNMONITORED_WATCH = [
-		{ id: 219, name: '경희대 1호기' },
-		{ id: 234, name: 'DMZ' },
-		{ id: 76, name: '부산 서면 1호기' },
-		{ id: 74, name: '부천 위브 1호기' },
-	];
-	const UNMONITORED_PANEL_ID = 'neubie-unmonitored-panel';
-
-    let _unmonitoredRunning = false;
-    async function checkUnmonitoredRobots() {
-        if (!isHandoverPage()) return;
-        if (_unmonitoredRunning) return;
-        _unmonitoredRunning = true;
-        try {
-            const alerts = [];
-            for (const robot of UNMONITORED_WATCH) {
-                try {
-                    const res = await fetch(
-                        `https://core.neubie.ai/robots/${robot.id}/`,
-                        { credentials: 'include',
-                          headers: getAuthHeaders()
-                        }
-                    );
-                    const data = await res.json();
-                    if (data.currentScenario !== null && data.isMonitoring === false) {
-                        alerts.push(`${robot.name} ${data.currentScenarioTypeText || '임무'} 중!`);
-                    }
-                } catch(e) {}
-            }
-            const panel = document.getElementById(UNMONITORED_PANEL_ID);
-            if (alerts.length > 0) {
-                _showUnmonitoredPanel(alerts);
-            } else if (panel) {
-                panel.remove();
-            }
-        } finally {
-            _unmonitoredRunning = false;
-        }
-    }
-
-	function _showUnmonitoredPanel(alerts) {
-		let panel = document.getElementById(UNMONITORED_PANEL_ID);
-		if (!panel) {
-			panel = document.createElement('div');
-			panel.id = UNMONITORED_PANEL_ID;
-			panel.style.cssText = `
-				position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
-				z-index:999999; pointer-events:none;
-				display:flex; flex-direction:column; gap:4px; align-items:center;
-			`;
-			document.body.appendChild(panel);
-		}
-
-		// 2개씩 묶어서 행으로
-		const rows = [];
-		for (let i = 0; i < Math.min(alerts.length, 4); i += 2) {
-			rows.push(alerts.slice(i, i + 2));
-		}
-
-		panel.innerHTML = rows.map(row => `
-			<div style="display:flex; gap:6px;">
-				${row.map(msg => `
-					<div style="
-						display:flex; align-items:center; gap:8px;
-						background:rgba(30,20,60,0.92); border:1px solid #a78bfa;
-						border-radius:20px; padding:7px 18px;
-						box-shadow:0 4px 16px rgba(0,0,0,0.4);
-						font-family:'Pretendard','Noto Sans KR',sans-serif;
-						white-space:nowrap;
-					">
-						<span style="font-size:12px;color:#c4b5fd;">⚠️</span>
-						<span style="font-size:14px;font-weight:700;color:#ede9fe;">${msg}</span>
-					</div>
-				`).join('')}
-			</div>
-		`).join('');
-	}
-
-	if (isHandoverPage() && localStorage.getItem('neubie_handover_enabled') !== 'false') {
-		checkUnmonitoredRobots();
-		setInterval(checkUnmonitoredRobots, 30000);
-	}
-
 	/* ============================================================
     SECTION 화질 조절 버튼 (모니터링 페이지 전용)
    ============================================================ */
