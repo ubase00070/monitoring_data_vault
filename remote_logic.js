@@ -2840,7 +2840,7 @@
 								currentLevel = newLevel;
 								labelEl.innerText = `화질 ${LEVEL_LABELS[currentLevel]}`;
 							} catch(e) {}
-							setTimeout(() => { isCooling = false; btn.style.opacity = '1'; }, 1000);
+							setTimeout(() => { isCooling = false; btn.style.opacity = '1'; }, 2000);
 						});
 						return btn;
 					};
@@ -2886,7 +2886,7 @@
 							}
 						} catch(e) {}
 						lampBtn.style.opacity = '1';
-						setTimeout(() => isLampCooling = false, 1000);
+						setTimeout(() => isLampCooling = false, 5000);
 					});
 
 					wrapper.appendChild(makeBtn('▲', 1));
