@@ -1219,7 +1219,7 @@
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
 		// 문자열을 넣으면 패치노트에 빨간 '`' 뱃지가 점멸하며 뜸.
 		// 빈 문자열('')로 비우면 뱃지가 사라짐.
-		const PATCH_NOTE_NEW_CONTENT = '장난쳐?';
+		const PATCH_NOTE_NEW_CONTENT = '';
 		
         const patchBtn = document.createElement('button');
         patchBtn.textContent = '패치노트';
@@ -2017,9 +2017,9 @@
 		panel.id = 'ho-remote-panel';
 		Object.assign(panel.style, {
 			position: 'fixed', top: '0px', left: '50%', transform: 'translateX(-50%)',
-			zIndex: '2147483646', width: '560px',
+			zIndex: '2147483646', width: '616px',
 			background: 'rgba(200, 200, 200, 0.98)',
-			borderRadius: '0 0 14px 14px', padding: '5px 8px 7px',
+			borderRadius: '0 0 14px 14px', padding: '6px 8px 8px',
 			fontFamily: 'Pretendard,sans-serif',
 			boxShadow: '0 8px 32px rgba(0,0,0,0.35)',
 			border: '1px solid rgba(200,210,230,0.7)', borderTop: 'none',
@@ -2066,7 +2066,7 @@
 			b.textContent = text;
 			Object.assign(b.style, {
 				background: bg, color: '#fff', border: 'none',
-				padding: '3px 9px', borderRadius: '6px', fontSize: '11px',
+				padding: '3px 9px', borderRadius: '6px', fontSize: '12px',
 				fontWeight: '700', cursor: 'pointer', fontFamily: 'Pretendard,sans-serif',
 				whiteSpace: 'nowrap', flexShrink: '0',
 				...extra,
@@ -2120,7 +2120,7 @@
 		Object.assign(rightBtns.style, { marginLeft: 'auto', display: 'flex', gap: '5px', flexShrink: '0' });
 
 		const autoBtn = mkBtn('자동 시작', '#6366f1');
-		const posBtn = mkBtn('기체 위치', '#64748b');
+		const posBtn = mkBtn('카메라 위치', '#64748b');
 
 		rightBtns.appendChild(autoBtn);
 		rightBtns.appendChild(posBtn);
@@ -2142,7 +2142,7 @@
 			cell.dataset.done = 'false';
 			cell.textContent = '—';
 			Object.assign(cell.style, {
-				height: '26px', borderRadius: '7px', border: '1.5px dashed #c8d2e0',
+				height: '27px', borderRadius: '7px', border: '1.5px dashed #c8d2e0',
 				background: 'rgba(255,255,255,0.45)', color: '#b0bec5', fontSize: '10px',
 				fontFamily: 'Pretendard,sans-serif', cursor: 'default',
 				display: 'flex', alignItems: 'center', justifyContent: 'center',
