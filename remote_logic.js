@@ -4730,6 +4730,17 @@
 						{ label: 'FortiClientVPN 설치파일', url: 'https://drive.google.com/file/d/1pjHTVSYomXSGTYLf4OVGk3g3QvzRJSMd/view?usp=drive_link' },
 					],
                 },
+				{
+                    id: 'Refresh',
+                    title: '멀티플 계정 새로고침 불가 시',
+                    body: 'NCC 도메인 변경 이후, 크롬 시크릿 탭에서 새로고침하면 계정로그인이 풀리는 현상 수정. 하단 주소에 접속하셔서 서드 파티 쿠키 사용이 허용된 사이트 ->  추가 버튼 [*.]neubility.ai 추가하시면 시크릿 탭에서 새로고침해도 세션이 튕기지 않습니다(현재 시크릿 탭에서는 본인 계정이든 멀티플 계정이든 새로고침하면 튕깁니다).',
+                    images: [
+                        'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/domain_refresh.png',
+                    ],
+                    links: [
+						{ label: '크롬 서드파티 쿠키 설정', url: 'chrome://settings/cookies' },
+					],
+                },
             ];
 
             window.openTroubleshootOverlay = function() {
