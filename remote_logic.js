@@ -1121,7 +1121,7 @@
         }
 
         setTimeout(() => {
-            // 배송 띠띠 활성 여부에 따라 버튼 라벨 갱신 (신규 추가)
+            // 배송 띠띠 활성 여부에 따라 버튼 라벨 갱신
             const combinedBtnLabel = card.querySelector('#btnCombined');
             if (combinedBtnLabel) {
                 combinedBtnLabel.textContent = TTIDDI_CONFIG.deliveryActive ? '배송/순찰 띠띠' : '순찰 띠띠 (배송 띠띠 입고)';
