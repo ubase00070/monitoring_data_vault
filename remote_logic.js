@@ -1121,7 +1121,7 @@
         }
 
         setTimeout(() => {
-            // 배송 띠띠 활성 여부에 따라 버튼 라벨 갱신
+            // 배송 띠띠 활성 여부에 따라 버튼 라벨 갱신 (신규 추가)
             const combinedBtnLabel = card.querySelector('#btnCombined');
             if (combinedBtnLabel) {
                 combinedBtnLabel.textContent = TTIDDI_CONFIG.deliveryActive ? '배송/순찰 띠띠' : '순찰 띠띠 (배송 띠띠 입고)';
@@ -4743,6 +4743,29 @@
                 },
             ];
 
+            // ── 사진 원본 크기 보기 (클릭 시 확대, 다시 클릭 시 닫힘) ──
+            function openImageLightbox(src) {
+                const existing = document.getElementById('neubie-img-lightbox');
+                if (existing) { existing.remove(); return; }
+
+                const lb = document.createElement('div');
+                lb.id = 'neubie-img-lightbox';
+                Object.assign(lb.style, {
+                    position: 'fixed', top: '0', left: '0', width: '100vw', height: '100vh',
+                    background: 'rgba(0,0,0,0.88)', zIndex: '2147483647',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'zoom-out',
+                });
+
+                const fullImg = document.createElement('img');
+                fullImg.src = src;
+                fullImg.style.cssText = 'max-width:95vw; max-height:95vh; width:auto; height:auto; object-fit:contain; border-radius:6px; box-shadow:0 10px 60px rgba(0,0,0,0.6); cursor:zoom-out;';
+
+                lb.appendChild(fullImg);
+                lb.onclick = () => lb.remove();
+                document.body.appendChild(lb);
+            }
+
             window.openTroubleshootOverlay = function() {
                 const T = getNbTheme();
                 const dashboardEl = document.getElementById('neubie-dashboard');
@@ -4819,7 +4842,9 @@
                             const img = document.createElement('img');
                             img.src = src;
                             img.loading = 'lazy';
-                            img.style.cssText = 'max-width:100%; max-height:360px; width:auto; height:auto; object-fit:contain; border-radius:8px; display:block; margin:0 auto;';
+                            img.title = '클릭하면 원본 크기로 보기';
+                            img.style.cssText = 'max-width:100%; max-height:360px; width:auto; height:auto; object-fit:contain; border-radius:8px; display:block; margin:0 auto; cursor:zoom-in;';
+                            img.onclick = () => openImageLightbox(src);
                             imgWrap.appendChild(img);
                         });
                         box.appendChild(imgWrap);
@@ -4829,13 +4854,34 @@
                         const linkWrap = document.createElement('div');
                         linkWrap.style.cssText = 'display:flex; flex-direction:column; gap:8px; margin-top:16px;';
                         post.links.forEach(link => {
-                            const a = document.createElement('a');
-                            a.href = link.url;
-                            a.target = '_blank';
-                            a.rel = 'noopener noreferrer';
-                            a.textContent = '📎 ' + link.label;
-                            a.style.cssText = `display:block; padding:10px 12px; border-radius:8px; border:1px solid #3b82f6; color:#3b82f6; text-decoration:none; font-size:13px; text-align:center;`;
-                            linkWrap.appendChild(a);
+                            if (link.url.startsWith('chrome://')) {
+                                // chrome:// 내부 페이지는 브라우저 정책상 웹페이지(및 유저스크립트)에서
+                                // <a> 클릭이나 window.open으로 절대 이동시킬 수 없음 → 주소 복사로 대체
+                                const btn = document.createElement('button');
+                                const defaultLabel = '📋 ' + link.label + ' 주소 복사 (새 탭에 직접 붙여넣기)';
+                                btn.textContent = defaultLabel;
+                                btn.style.cssText = `display:block; width:100%; padding:10px 12px; border-radius:8px; border:1px solid #3b82f6; background:transparent; color:#3b82f6; text-decoration:none; font-size:13px; text-align:center; cursor:pointer; font-family:inherit;`;
+                                btn.onclick = () => {
+                                    navigator.clipboard.writeText(link.url);
+                                    btn.textContent = '✅ 복사됨! 새 탭 열고 주소창에 붙여넣기(Ctrl+V) 하세요';
+                                    btn.style.borderColor = '#22c55e';
+                                    btn.style.color = '#22c55e';
+                                    setTimeout(() => {
+                                        btn.textContent = defaultLabel;
+                                        btn.style.borderColor = '#3b82f6';
+                                        btn.style.color = '#3b82f6';
+                                    }, 2500);
+                                };
+                                linkWrap.appendChild(btn);
+                            } else {
+                                const a = document.createElement('a');
+                                a.href = link.url;
+                                a.target = '_blank';
+                                a.rel = 'noopener noreferrer';
+                                a.textContent = '📎 ' + link.label;
+                                a.style.cssText = `display:block; padding:10px 12px; border-radius:8px; border:1px solid #3b82f6; color:#3b82f6; text-decoration:none; font-size:13px; text-align:center;`;
+                                linkWrap.appendChild(a);
+                            }
                         });
                         box.appendChild(linkWrap);
                     }
