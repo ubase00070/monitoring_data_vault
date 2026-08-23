@@ -168,7 +168,16 @@
 		"262": { site: "자연스런캠핑장 2호기", unit: "#235" }, // 자연스런 2호기
     };
 
-    const isAutoTarget = config.targetIds.some(id => currUrl.includes(`/monitoring/${id}`));
+    // "/monitoring/56"이 "/monitoring/560"에도 부분매칭되는 걸 방지 — 숫자를 정확히 추출해서 완전일치로 비교
+    function isTargetMonitoringUrl(url) {
+        const m = url && url.match(/\/monitoring\/(\d+)/);
+        return !!(m && config.targetIds.includes(m[1]));
+    }
+    const isAutoTarget = isTargetMonitoringUrl(currUrl);
+    // 수동 토글(localStorage) 값은 그대로 존중하고, "현재 사이트가 대상인지"만 매번 새로 계산하는 헬퍼
+    function computeIsMapOpt() {
+        return localStorage.getItem('neubie_opt_map') === 'true' || isTargetMonitoringUrl(location.href);
+    }
     const state = {
         isMapOpt: localStorage.getItem('neubie_opt_map') === 'true' || isAutoTarget,
         isQueueOpt: localStorage.getItem('neubie_opt_queue') === 'true',
@@ -381,27 +390,33 @@
     };
 
     function injectMapStyle() {
-        // 타겟 사이트가 아니면 즉시 리턴
         const currentUrl = window.location.href;
-        const isCurrentTarget = config.targetIds.some(id => currentUrl.includes(`/monitoring/${id}`));
-        if (!isCurrentTarget) return;
-
+        const isCurrentTarget = isTargetMonitoringUrl(currentUrl);
         let style = document.getElementById('neubie-map-opt-style');
+
+        // 타겟 사이트가 아니거나 최적화가 꺼져있으면, 이전에 켜져 있던 스타일을 확실히 비워서 해제
+        if (!isCurrentTarget || !state.isMapOpt) {
+            if (style) style.textContent = "";
+            return;
+        }
+
         if (!style) {
             style = document.createElement('style');
             style.id = 'neubie-map-opt-style';
             document.head.appendChild(style);
         }
 
-        if (!state.isMapOpt) {
-            style.textContent = "";
-            return;
-        }
-
         style.textContent = `
             /* [1] 노드(Path 점) 제거: 렌더링 부하의 주범 차단 */
             [data-qk^="node-marker"],
             gmp-advanced-marker:has([data-qk^="node-marker"]) {
+                display: none !important;
+            }
+
+            /* [1-1] data-qk가 아예 없는 마커(대부분 경로 위 흰 점) 제거.
+               기체/대기장소/스테이션은 모두 data-qk를 갖고 있으므로 이 규칙에 걸리지 않음.
+               미니맵은 아래 [3]에서 이 규칙보다 나중에(우선순위 높게) 다시 보존시킴. */
+            gmp-advanced-marker:not(:has([data-qk])) {
                 display: none !important;
             }
 
@@ -430,9 +445,9 @@
                 transform: rotate(0deg) !important; 
             }
 
-            /* [3] 기체 및 미니맵 마커 절대 보존 */
-            gmp-advanced-marker:not(:has([data-qk])),
+            /* [3] 기체·스테이션·미니맵 마커 절대 보존 */
             gmp-advanced-marker:has([data-qk*="robot"]),
+            gmp-advanced-marker:has([data-qk*="station-marker"]),
             div[class*="MiniMap"] gmp-advanced-marker {
                 display: block !important;
                 visibility: visible !important;
@@ -1095,7 +1110,7 @@
         card.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                 <span style="color:${T.accent}; font-weight:bold; font-size:18px;">🏷️ 영상 파일명 생성기</span>
-                <button id="openDriveTodayBtn" style="background:#444; color:#ddd; border:1px solid #666; padding:4px 8px; border-radius:6px; font-size:13px; cursor:pointer; white-space:nowrap;">📂 영상 드라이브 열기</button>
+                <button id="openDriveTodayBtn" style="background:#444; color:#ddd; border:1px solid #666; padding:4px 8px; border-radius:6px; font-size:13px; cursor:pointer; white-space:nowrap;">📂 금일 구글 드라이브</button>
             </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px 5px; margin-bottom: 10px;">
                 <div style="position: relative; min-width: 0;">
@@ -1219,7 +1234,7 @@
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
 		// 문자열을 넣으면 패치노트에 빨간 '`' 뱃지가 점멸하며 뜸.
 		// 빈 문자열('')로 비우면 뱃지가 사라짐.
-		const PATCH_NOTE_NEW_CONTENT = '';
+		const PATCH_NOTE_NEW_CONTENT = 'Passion';
 		
         const patchBtn = document.createElement('button');
         patchBtn.textContent = '패치노트';
@@ -1281,18 +1296,15 @@
             const patchItems = [
                 {
                     version: 'v1.4',
-                    date: '2026-08-14',
+                    date: '2026-08-24',
                     items: [
-						'Are you Joking?',
-						'D-PAD UP 개입진입 시간 / 진입당시 시나리오 표기',
+						'맵 최적화 속도 개선(Dot 제거, 비타겟 site 이동 반영)',
 						'다음 개입 요청 자동 OFF',
                         '문제해결 페이지',
-                        '패드 작동 테스터',
 						'스트림덱 스타일 적용(길게 누르면 기능 ON/OFF됨)',
 						'임무 종료된 리센츠/엘스/한성대/진천 페이지 이탈 5초 후 자동 사이드',
-                        '게임패드 커스텀 바인딩 설명 페이지',
+                        '게임패드 D-PAD 설명 / 게임패드 테스터',
 						'다중 자동 교대시작 최대 12대까지',
-						'개입카드 현재 조작자 표기 / 상태 바 재배치(스크롤 제거)',
                     ]
                 },
             ];
@@ -1699,8 +1711,9 @@
             mapInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:${T.text};`;
             mapInfoContent.innerHTML = `
                 역삼 요기요 / 송도 요기요 / 성수 요기요 / 성남 삼평동<br>
-                페이지에서 흰색 마커를 숨겨서 최적화.<br>
-                대기장소 마커(주황)를 역방향으로 뒤집어서 보기 쉽도록 함.<br>
+                흰색 마커 및 Dot을 숨겨서 페이지 최적화.<br>
+                비타겟 site로 이동 시 원래대로 보임.<br>
+                대기장소 마커(주황)를 역방향으로 뒤집어서 식별하기 쉽도록 함.<br>
                 기존 NCC 상의 아이콘 숨기기 기능은 여전히 작동.<br>
             `;
             mapInfoBox.appendChild(mapInfoClose);
@@ -1849,7 +1862,7 @@
             padding:4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
         rouletteCard.innerHTML = `<span style="font-size:18px;">🧰</span>
-            <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">날씨 & 룰렛 & SW</span>`;
+            <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">날씨 & SW & 헬프</span>`;
         window._neubieRouletteCard = rouletteCard;
         attachStaticNeonHover(rouletteCard, '44,230,217');
         rouletteCard.onclick = () => {
@@ -4529,7 +4542,7 @@
                 box.style.cssText = `background:${T.card}; color:${T.text}; border-radius:16px; padding:20px; width:100%; box-sizing:border-box; box-shadow:0 4px 40px rgba(0,0,0,0.7); pointer-events:auto;`;
                 box.innerHTML = `
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-                        <span style="font-size:16px;font-weight:700;">🧰 날씨 & 룰렛 & SW</span>
+                        <span style="font-size:16px;font-weight:700;">🧰 날씨 & SW & 헬프</span>
                         <button id="mto-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
                     </div>
                     <div style="display:flex; flex-direction:column; gap:8px;">
@@ -5419,13 +5432,12 @@
 
                 closeAllPopups();
                 updateRobotContext();
-                // 맵 최적화 페이지 전환 시 재적용
-                const isTarget = config.targetIds.some(id => location.href.includes(`/monitoring/${id}`));
-                if (isTarget && state.isMapOpt) {
-                    setTimeout(() => injectMapStyle(), 1000);
-                    setTimeout(() => injectMapStyle(), 3000);
-                    setTimeout(() => injectMapStyle(), 6000);
-                }
+                state.isMapOpt = computeIsMapOpt();
+                // 맵 최적화 재적용/해제 — 타겟 여부와 무관하게 항상 호출 (비타겟이면 함수 내부에서 스타일을 비움)
+                injectMapStyle();
+                setTimeout(() => injectMapStyle(), 1000);
+                setTimeout(() => injectMapStyle(), 3000);
+                setTimeout(() => injectMapStyle(), 6000);
 				
 				setTimeout(() => patchDrivingPageLayout(), 1500);
                 setTimeout(() => patchDrivingPageLayout(), 3000);
@@ -5465,13 +5477,12 @@
             closeAllPopups();
             updateRobotContext();
 
-            // 맵 최적화 페이지 전환 시 재적용
-            const isTarget = config.targetIds.some(id => location.href.includes(`/monitoring/${id}`));
-            if (isTarget && state.isMapOpt) {
-                setTimeout(() => injectMapStyle(), 1000);
-                setTimeout(() => injectMapStyle(), 3000);
-                setTimeout(() => injectMapStyle(), 6000);
-            }
+            state.isMapOpt = computeIsMapOpt();
+            // 맵 최적화 재적용/해제 — 타겟 여부와 무관하게 항상 호출 (비타겟이면 함수 내부에서 스타일을 비움)
+            injectMapStyle();
+            setTimeout(() => injectMapStyle(), 1000);
+            setTimeout(() => injectMapStyle(), 3000);
+            setTimeout(() => injectMapStyle(), 6000);
 			
 			setTimeout(() => patchDrivingPageLayout(), 1500);
             setTimeout(() => patchDrivingPageLayout(), 3000);
@@ -5948,6 +5959,14 @@
     }
 
     injectConfigUI();
+    // 맵 최적화 초기 적용 (기존엔 SPA 라우트 전환 시에만 호출되어, 새로고침/최초 진입 시
+    // fetch 차단이 레이스에서 밀리면 CSS 백업이 한 번도 안 걸리는 경우가 있었음)
+    if (state.isMapOpt) {
+        setTimeout(() => injectMapStyle(), 300);
+        setTimeout(() => injectMapStyle(), 1000);
+        setTimeout(() => injectMapStyle(), 3000);
+        setTimeout(() => injectMapStyle(), 6000);
+    }
     setTimeout(() => initDriveTheme(), 1000);
     
     if (localStorage.getItem('neubie_user_name')) {
