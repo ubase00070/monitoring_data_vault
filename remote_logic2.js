@@ -413,6 +413,13 @@
                 display: none !important;
             }
 
+            /* [1-1] data-qk가 아예 없는 마커(대부분 경로 위 흰 점) 제거.
+               기체/대기장소/스테이션은 모두 data-qk를 갖고 있으므로 이 규칙에 걸리지 않음.
+               미니맵은 아래 [3]에서 이 규칙보다 나중에(우선순위 높게) 다시 보존시킴. */
+            gmp-advanced-marker:not(:has([data-qk])) {
+                display: none !important;
+            }
+
             /* [2] 대기장소 마커 반전 로직 (글자 방향 보존) */
             gmp-advanced-marker:has([data-qk*="base-marker-대기장소"]) {
                 display: block !important;
@@ -438,9 +445,9 @@
                 transform: rotate(0deg) !important; 
             }
 
-            /* [3] 기체 및 미니맵 마커 절대 보존 */
-            gmp-advanced-marker:not(:has([data-qk])),
+            /* [3] 기체·스테이션·미니맵 마커 절대 보존 */
             gmp-advanced-marker:has([data-qk*="robot"]),
+            gmp-advanced-marker:has([data-qk*="station-marker"]),
             div[class*="MiniMap"] gmp-advanced-marker {
                 display: block !important;
                 visibility: visible !important;
@@ -1227,7 +1234,7 @@
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
 		// 문자열을 넣으면 패치노트에 빨간 '`' 뱃지가 점멸하며 뜸.
 		// 빈 문자열('')로 비우면 뱃지가 사라짐.
-		const PATCH_NOTE_NEW_CONTENT = '';
+		const PATCH_NOTE_NEW_CONTENT = 'Passion';
 		
         const patchBtn = document.createElement('button');
         patchBtn.textContent = '패치노트';
@@ -1289,18 +1296,15 @@
             const patchItems = [
                 {
                     version: 'v1.4',
-                    date: '2026-08-14',
+                    date: '2026-08-25',
                     items: [
-						'Are you Joking?',
-						'D-PAD UP 개입진입 시간 / 진입당시 시나리오 표기',
+						'맵 최적화 기능 개선',
 						'다음 개입 요청 자동 OFF',
                         '문제해결 페이지',
-                        '패드 작동 테스터',
 						'스트림덱 스타일 적용(길게 누르면 기능 ON/OFF됨)',
 						'임무 종료된 리센츠/엘스/한성대/진천 페이지 이탈 5초 후 자동 사이드',
-                        '게임패드 커스텀 바인딩 설명 페이지',
+                        '게임패드 D-PAD 설명 / 게임패드 테스터',
 						'다중 자동 교대시작 최대 12대까지',
-						'개입카드 현재 조작자 표기 / 상태 바 재배치(스크롤 제거)',
                     ]
                 },
             ];
