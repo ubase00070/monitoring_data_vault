@@ -168,11 +168,15 @@
 		"262": { site: "자연스런캠핑장 2호기", unit: "#235" }, // 자연스런 2호기
     };
 
-    const isAutoTarget = config.targetIds.some(id => currUrl.includes(`/monitoring/${id}`));
+    // "/monitoring/56"이 "/monitoring/560"에도 부분매칭되는 걸 방지 — 숫자를 정확히 추출해서 완전일치로 비교
+    function isTargetMonitoringUrl(url) {
+        const m = url && url.match(/\/monitoring\/(\d+)/);
+        return !!(m && config.targetIds.includes(m[1]));
+    }
+    const isAutoTarget = isTargetMonitoringUrl(currUrl);
     // 수동 토글(localStorage) 값은 그대로 존중하고, "현재 사이트가 대상인지"만 매번 새로 계산하는 헬퍼
     function computeIsMapOpt() {
-        const isCurrentTarget = config.targetIds.some(id => location.href.includes(`/monitoring/${id}`));
-        return localStorage.getItem('neubie_opt_map') === 'true' || isCurrentTarget;
+        return localStorage.getItem('neubie_opt_map') === 'true' || isTargetMonitoringUrl(location.href);
     }
     const state = {
         isMapOpt: localStorage.getItem('neubie_opt_map') === 'true' || isAutoTarget,
@@ -386,21 +390,20 @@
     };
 
     function injectMapStyle() {
-        // 타겟 사이트가 아니면 즉시 리턴
         const currentUrl = window.location.href;
-        const isCurrentTarget = config.targetIds.some(id => currentUrl.includes(`/monitoring/${id}`));
-        if (!isCurrentTarget) return;
-
+        const isCurrentTarget = isTargetMonitoringUrl(currentUrl);
         let style = document.getElementById('neubie-map-opt-style');
+
+        // 타겟 사이트가 아니거나 최적화가 꺼져있으면, 이전에 켜져 있던 스타일을 확실히 비워서 해제
+        if (!isCurrentTarget || !state.isMapOpt) {
+            if (style) style.textContent = "";
+            return;
+        }
+
         if (!style) {
             style = document.createElement('style');
             style.id = 'neubie-map-opt-style';
             document.head.appendChild(style);
-        }
-
-        if (!state.isMapOpt) {
-            style.textContent = "";
-            return;
         }
 
         style.textContent = `
@@ -5425,13 +5428,11 @@
                 closeAllPopups();
                 updateRobotContext();
                 state.isMapOpt = computeIsMapOpt();
-                // 맵 최적화 페이지 전환 시 재적용
-                const isTarget = config.targetIds.some(id => location.href.includes(`/monitoring/${id}`));
-                if (isTarget && state.isMapOpt) {
-                    setTimeout(() => injectMapStyle(), 1000);
-                    setTimeout(() => injectMapStyle(), 3000);
-                    setTimeout(() => injectMapStyle(), 6000);
-                }
+                // 맵 최적화 재적용/해제 — 타겟 여부와 무관하게 항상 호출 (비타겟이면 함수 내부에서 스타일을 비움)
+                injectMapStyle();
+                setTimeout(() => injectMapStyle(), 1000);
+                setTimeout(() => injectMapStyle(), 3000);
+                setTimeout(() => injectMapStyle(), 6000);
 				
 				setTimeout(() => patchDrivingPageLayout(), 1500);
                 setTimeout(() => patchDrivingPageLayout(), 3000);
@@ -5472,13 +5473,11 @@
             updateRobotContext();
 
             state.isMapOpt = computeIsMapOpt();
-            // 맵 최적화 페이지 전환 시 재적용
-            const isTarget = config.targetIds.some(id => location.href.includes(`/monitoring/${id}`));
-            if (isTarget && state.isMapOpt) {
-                setTimeout(() => injectMapStyle(), 1000);
-                setTimeout(() => injectMapStyle(), 3000);
-                setTimeout(() => injectMapStyle(), 6000);
-            }
+            // 맵 최적화 재적용/해제 — 타겟 여부와 무관하게 항상 호출 (비타겟이면 함수 내부에서 스타일을 비움)
+            injectMapStyle();
+            setTimeout(() => injectMapStyle(), 1000);
+            setTimeout(() => injectMapStyle(), 3000);
+            setTimeout(() => injectMapStyle(), 6000);
 			
 			setTimeout(() => patchDrivingPageLayout(), 1500);
             setTimeout(() => patchDrivingPageLayout(), 3000);
