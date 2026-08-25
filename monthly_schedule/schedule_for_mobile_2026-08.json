@@ -1706,10 +1706,10 @@
           "raw": "휴무"
         },
         "8/27": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "8/28": {
           "status": "work",
@@ -1724,10 +1724,10 @@
           "raw": "휴무"
         },
         "8/30": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "8/31": {
           "status": "off",
@@ -2092,10 +2092,10 @@
           "raw": "1"
         },
         "8/27": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "8/28": {
           "status": "off",
@@ -2110,10 +2110,10 @@
           "raw": "1"
         },
         "8/30": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "8/31": {
           "status": "work",
@@ -8141,6 +8141,6 @@
     "8/31"
   ],
   "mainMonth": 8,
-  "updatedAt": "2026-08-25T03:53:07.126Z",
+  "updatedAt": "2026-08-25T08:07:21.435Z",
   "sheetName": "2026년_08월 스케줄"
 }
