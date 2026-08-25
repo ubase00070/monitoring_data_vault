@@ -48,7 +48,7 @@
     "rawTime": "14:00"
   },
   {
-    "user": "박은선",
+    "user": "박효빈",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "15:00"
@@ -66,7 +66,7 @@
     "rawTime": "17:00"
   },
   {
-    "user": "박효빈",
+    "user": "박은선",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "18:00"
@@ -228,25 +228,25 @@
     "rawTime": "13:00"
   },
   {
-    "user": "이도연",
+    "user": "신은정",
     "type": "task",
     "content": "[13:05] 파주LGD(현대밴디스) 임무받기 ON [평일]",
     "rawTime": "13:05"
   },
   {
-    "user": "권재윤",
+    "user": "이도연",
     "type": "task",
     "content": "[14:00~15:00] 부산국립과학관 170,171호기 임무 [화,수,목,금,토,일]",
     "rawTime": "14:00"
   },
   {
-    "user": "이준",
+    "user": "권재윤",
     "type": "task",
     "content": "[15:00~16:00] 부산국립과학관 170,171호기 임무 [화,수,목,금,토,일]",
     "rawTime": "15:00"
   },
   {
-    "user": "박효빈",
+    "user": "이준",
     "type": "task",
     "content": "[15:30~16:00] 역삼요기요 주/야 영업 기체 교대 체크 후 임무 ON",
     "rawTime": "15:30"
@@ -270,7 +270,7 @@
     "rawTime": "16:00"
   },
   {
-    "user": "김도형",
+    "user": "박효빈",
     "type": "task",
     "content": "[16:30] 파주LGD(현대밴디스) 기체 퇴근 처리 후 임무 OFF [평일]",
     "rawTime": "16:30"
