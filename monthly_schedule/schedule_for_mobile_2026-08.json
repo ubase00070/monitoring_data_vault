@@ -729,10 +729,10 @@
           "raw": "1"
         },
         "8/25": {
-          "status": "half-half",
+          "status": "half",
           "working": true,
           "present": true,
-          "raw": "반반차"
+          "raw": "반차"
         },
         "8/26": {
           "status": "off",
@@ -8141,6 +8141,6 @@
     "8/31"
   ],
   "mainMonth": 8,
-  "updatedAt": "2026-08-25T08:07:21.435Z",
+  "updatedAt": "2026-08-26T03:53:03.326Z",
   "sheetName": "2026년_08월 스케줄"
 }
