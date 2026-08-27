@@ -8,7 +8,8 @@
       "성남 야탑"
     ],
     "out": [],
-    "night_excluded": []
+    "night_excluded": [],
+    "auto_dispatch": []
   },
   "08": {
     "plan": [
@@ -19,7 +20,11 @@
     "out": [
       "파주"
     ],
-    "night_excluded": []
+    "night_excluded": [],
+    "auto_dispatch": [
+      "부산 호반 1",
+      "부산 수자인 1"
+    ]
   },
   "09": {
     "plan": [
@@ -42,7 +47,12 @@
       "고양 래미안",
       "덕수궁"
     ],
-    "night_excluded": []
+    "night_excluded": [],
+    "auto_dispatch": [
+      "서울 양원LH",
+      "장애인고용공단 1",
+      "장애인고용공단 2"
+    ]
   },
   "10": {
     "plan": [
@@ -63,7 +73,13 @@
       "창원대 2",
       "한성대"
     ],
-    "night_excluded": []
+    "night_excluded": [],
+    "auto_dispatch": [
+      "부산 호반 2",
+      "부산 수자인 2",
+      "장애인고용공단 2",
+      "장애인고용공단 1"
+    ]
   },
   "11": {
     "plan": [
@@ -77,7 +93,10 @@
     "out": [
       "파주"
     ],
-    "night_excluded": []
+    "night_excluded": [],
+    "auto_dispatch": [
+      "장애인고용공단 1"
+    ]
   },
   "12": {
     "plan": [
@@ -92,7 +111,13 @@
       "성남 야탑",
       "덕수궁"
     ],
-    "night_excluded": []
+    "night_excluded": [],
+    "auto_dispatch": [
+      "서울 양원LH",
+      "부산 호반 1",
+      "부산 수자인 1",
+      "장애인고용공단 2"
+    ]
   },
   "13": {
     "plan": [
@@ -103,7 +128,10 @@
       "성남 야탑"
     ],
     "out": [],
-    "night_excluded": []
+    "night_excluded": [],
+    "auto_dispatch": [
+      "장애인고용공단 1"
+    ]
   },
   "14": {
     "plan": [
@@ -124,7 +152,12 @@
       "고양 래미안",
       "파주"
     ],
-    "night_excluded": []
+    "night_excluded": [],
+    "auto_dispatch": [
+      "부산 호반 2",
+      "부산 수자인 2",
+      "장애인고용공단 2"
+    ]
   },
   "15": {
     "plan": [
@@ -145,7 +178,12 @@
       "한성대",
       "덕수궁"
     ],
-    "night_excluded": []
+    "night_excluded": [],
+    "auto_dispatch": [
+      "장애인고용공단 1",
+      "서울 양원LH",
+      "더샵남천"
+    ]
   },
   "16": {
     "plan": [
@@ -164,7 +202,12 @@
       "평택 2"
     ],
     "out": [],
-    "night_excluded": []
+    "night_excluded": [],
+    "auto_dispatch": [
+      "부산 호반 1",
+      "부산 수자인 1",
+      "장애인고용공단 2"
+    ]
   },
   "17": {
     "plan": [
@@ -176,7 +219,11 @@
     "out": [
       "파주"
     ],
-    "night_excluded": []
+    "night_excluded": [],
+    "auto_dispatch": [
+      "장애인고용공단 1",
+      "장애인고용공단 2"
+    ]
   },
   "18": {
     "plan": [
@@ -188,7 +235,11 @@
       "성남 율동",
       "성남 야탑"
     ],
-    "night_excluded": []
+    "night_excluded": [],
+    "auto_dispatch": [
+      "부산 호반 2",
+      "부산 수자인 2"
+    ]
   },
   "19": {
     "plan": [
@@ -207,7 +258,10 @@
       "잠실 레이크",
       "덕수궁"
     ],
-    "night_excluded": []
+    "night_excluded": [],
+    "auto_dispatch": [
+      "서울 양원LH"
+    ]
   },
   "20": {
     "plan": [
@@ -225,7 +279,8 @@
     ],
     "night_excluded": [
       "부천 위브 (유선기체: 야간 일정제외)"
-    ]
+    ],
+    "auto_dispatch": []
   },
   "21": {
     "plan": [
@@ -247,6 +302,9 @@
     ],
     "night_excluded": [
       "부산 서면 (유선기체: 야간 일정제외)"
+    ],
+    "auto_dispatch": [
+      "서울 양원LH"
     ]
   },
   "22": {
@@ -267,7 +325,8 @@
       "평택 2 (유선기체: 야간 일정제외)",
       "아주대 1 (유선기체: 야간 일정제외)",
       "아주대 2 (유선기체: 야간 일정제외)"
-    ]
+    ],
+    "auto_dispatch": []
   },
   "23": {
     "plan": [
@@ -281,7 +340,8 @@
       "파주",
       "덕수궁"
     ],
-    "night_excluded": []
+    "night_excluded": [],
+    "auto_dispatch": []
   },
   "00": {
     "plan": [
@@ -298,7 +358,10 @@
       "성남 야탑",
       "잠실 레이크"
     ],
-    "night_excluded": []
+    "night_excluded": [],
+    "auto_dispatch": [
+      "서울 양원LH"
+    ]
   },
   "01": {
     "plan": [
@@ -322,6 +385,9 @@
     "night_excluded": [
       "김포 1 (유선기체: 야간 일정제외)",
       "김포 2 (유선기체: 야간 일정제외)"
+    ],
+    "auto_dispatch": [
+      "더샵남천"
     ]
   },
   "02": {
@@ -342,7 +408,8 @@
       "두루아이 4",
       "덕수궁"
     ],
-    "night_excluded": []
+    "night_excluded": [],
+    "auto_dispatch": []
   },
   "03": {
     "plan": [
@@ -363,7 +430,11 @@
       "고양 래미안",
       "두루아이 3"
     ],
-    "night_excluded": []
+    "night_excluded": [],
+    "auto_dispatch": [
+      "서울 양원LH",
+      "더샵남천"
+    ]
   },
   "04": {
     "plan": [
@@ -376,7 +447,8 @@
       "두루아이 4"
     ],
     "out": [],
-    "night_excluded": []
+    "night_excluded": [],
+    "auto_dispatch": []
   },
   "05": {
     "plan": [
@@ -389,7 +461,10 @@
     "out": [
       "파주"
     ],
-    "night_excluded": []
+    "night_excluded": [],
+    "auto_dispatch": [
+      "더샵남천"
+    ]
   },
   "06": {
     "plan": [
@@ -400,6 +475,9 @@
       "성남 율동",
       "성남 야탑"
     ],
-    "night_excluded": []
+    "night_excluded": [],
+    "auto_dispatch": [
+      "서울 양원LH"
+    ]
   }
 }
