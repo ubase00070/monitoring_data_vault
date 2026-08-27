@@ -66,6 +66,7 @@
         #bb.bb-light.theme-blossom { --bg-fill:linear-gradient(180deg, #f6dde3 0%, #f2e2d2 45%, #f2e4c4 85%); }
         #bb.bb-light .bb-delivery-title { color:#2b2418; }
         #bb.bb-light .bb-delivery-empty { color:#2b2418; }
+        #bb.bb-light .bb-ca-bar-pct { color:#2b2418; text-shadow:0 1px 1px rgba(255,255,255,.65); }
         #bb.bb-light .bb-ca.standby { --ac:#8a7f68; --ac-border:rgba(138,127,104,.35); }
 		#bb.bb-light .bb-mi.standby { --ac:#8a7f68; }
         #bb.bb-light .bb-mi:not(.empty) { color:#2b2418; }
@@ -315,10 +316,11 @@
         }
         .bb-ca {
 			height:86px; background:var(--sur);
-			border-radius:14px; padding:6px 8px;
+			border-radius:16px; padding:0;
 			cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_grab.png') 32 32, grab; position:relative; overflow:hidden;
 			display:flex; flex-direction:column; justify-content:space-between;
-			border:3px solid var(--ac-border,var(--bd));
+			border:4px solid var(--ac-border,var(--bd));
+			box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);
 			transform:translateZ(0);
 			backface-visibility:hidden;
 			will-change:transform;
@@ -328,51 +330,68 @@
 		}
 		.bb-ca:hover {
 			transform:translateY(-3px) scale(1.03) translateZ(0);
-			box-shadow:0 6px 0 rgba(0,0,0,.2);
+			box-shadow:inset 0 0 0 1px rgba(255,255,255,.06), 0 6px 0 rgba(0,0,0,.2);
 		}
 		.bb-ca:active { cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_hold.png') 32 32, grabbing; transform:translateY(-1px) scale(0.99); }
         .bb-ca.dragging { opacity:.3; }
-        .bb-ca.dragover { border-color:var(--bl)!important; box-shadow:0 0 0 1px var(--bl); }
+        .bb-ca.dragover { border-color:var(--bl)!important; box-shadow:inset 0 0 0 1px rgba(255,255,255,.06), 0 0 0 1px var(--bl); }
         .bb-ca.selectable { cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_pointer.png') 4 4, pointer; }
         .bb-ca.selectable:hover { border-color:rgba(239,68,68,.5); background:rgba(239,68,68,.04); }
-        .bb-ca.selected { border-color:var(--rd)!important; background:var(--rd2)!important; box-shadow:0 0 0 1px var(--rd); }
+        .bb-ca.selected { border-color:var(--rd)!important; background:var(--rd2)!important; box-shadow:inset 0 0 0 1px rgba(255,255,255,.06), 0 0 0 1px var(--rd); }
         .bb-ca.selected::after {
             content:'✕'; position:absolute; top:50%; left:50%;
             transform:translate(-50%,-50%);
             color:var(--rd); font-size:22px; font-weight:900; opacity:.9; pointer-events:none;
         }
-        .bb-ca.charging   { --ac:var(--gn); --ac-border:var(--gn);  background:var(--sur); }
-		.bb-ca.patrolling { --ac:var(--bl); --ac-border:var(--bl); background:var(--sur); }
-		.bb-ca.standby    { --ac:#c8ccd4;  --ac-border:rgba(200,204,212,.3);  background:var(--sur); }
-		.bb-ca.off        { --ac:#4b5563; --ac-border:rgba(75,85,99,.3);     background:var(--sur); }
-		.bb-ca.delivering { --ac:var(--pk); --ac-border:var(--pk); background:var(--sur); }
-		.bb-ca.docking    { --ac:var(--ye); --ac-border:var(--ye); background:var(--sur); }
-		.bb-ca.loading    { --ac:#52525e; --ac-border:rgba(75,85,99,.2); background:var(--sur); opacity:.5; }
+        .bb-ca.charging   { --ac:var(--gn); --ac-border:var(--gn);  --ac-tint:var(--gn2); background:var(--sur); }
+		.bb-ca.patrolling { --ac:var(--bl); --ac-border:var(--bl); --ac-tint:var(--bl2); background:var(--sur); }
+		.bb-ca.standby    { --ac:#c8ccd4;  --ac-border:rgba(200,204,212,.3);  --ac-tint:rgba(200,204,212,.08); background:var(--sur); }
+		.bb-ca.off        { --ac:#4b5563; --ac-border:rgba(75,85,99,.3);     --ac-tint:rgba(75,85,99,.08); background:var(--sur); }
+		.bb-ca.delivering { --ac:var(--pk); --ac-border:var(--pk); --ac-tint:var(--pk2); background:var(--sur); }
+		.bb-ca.docking    { --ac:var(--ye); --ac-border:var(--ye); --ac-tint:rgba(209,163,85,.12); background:var(--sur); }
+		.bb-ca.loading    { --ac:#52525e; --ac-border:rgba(75,85,99,.2); --ac-tint:rgba(75,85,99,.06); background:var(--sur); opacity:.5; }
         .bb-ca.warn-bat   { animation:bb-warnBlink .8s infinite; }
         @keyframes bb-warnBlink {
-            0%,100% { border-color:var(--rd); box-shadow:0 0 0 1px var(--rd); }
+            0%,100% { border-color:var(--rd); box-shadow:inset 0 0 0 1px rgba(255,255,255,.06), 0 0 0 1px var(--rd); }
             50%     { border-color:transparent; box-shadow:none; }
+        }
+        .bb-ca-badge {
+            position:absolute; top:6px; right:7px; width:20px; height:20px; border-radius:50%;
+            background:var(--ac,var(--gy)); box-shadow:0 0 0 2px var(--sur);
+            display:flex; align-items:center; justify-content:center;
+            font-size:11px; line-height:1; z-index:1;
+            color:#fff; text-shadow:0 1px 1px rgba(0,0,0,.35);
+        }
+        .bb-ca-head {
+            background:var(--ac-tint,transparent); padding:7px 30px 5px 10px;
+            border-bottom:1px solid var(--ac-border,var(--bd));
         }
         .bb-ca-name { 
 		    font-size:16px; font-weight:900; color:var(--tx); line-height:1.1; 
 		    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-			margin-top:2px;
 		}
         .bb-ca-name.bb-marquee { overflow:visible; animation:bb-marquee 3s linear 0.5s 1 forwards; }
         @keyframes bb-marquee { 0%{transform:translateX(0)} 100%{transform:translateX(-60%)} }
-        .bb-ca-mid  { display:flex; justify-content:space-between; align-items:center; }
-        .bb-ca-st   { font-size:14px; font-weight:700; color:var(--ac,var(--mu)); opacity:.9; }
+        .bb-ca-mid  { display:flex; justify-content:space-between; align-items:center; margin-top:2px; }
+        .bb-ca-st   { font-size:13px; font-weight:700; color:var(--ac,var(--mu)); opacity:.95; }
         .bb-mission-off { font-size:11px; font-weight:900; color:rgba(239,68,68,.8); }
-        .bb-ca-batt-row { display:flex; align-items:center; gap:6px; }
-        .bb-ca-dots { display:grid; grid-template-columns:repeat(10,1fr); gap:2px; flex:1; height:12px; }
-        .bb-ca-dots.charging-pulse { animation:bb-fullCharge 1.8s ease-in-out infinite; }
+        .bb-ca-batt-row { padding:6px 10px 8px; }
+        .bb-ca-bar {
+            position:relative; width:100%; height:16px; border-radius:8px;
+            border:2px solid var(--ac,var(--bd2)); overflow:hidden; background:rgba(255,255,255,.05);
+        }
+        .bb-ca-bar-fill {
+            position:absolute; top:0; left:0; bottom:0; background:var(--ac);
+            transition:width .5s ease;
+        }
+        .bb-ca-bar-fill.charging-pulse { animation:bb-fullCharge 1.8s ease-in-out infinite; }
         @keyframes bb-fullCharge {
             0%, 100% { opacity:1; }
             50%      { opacity:.55; }
         }
-        .bb-ca-dot  { border-radius:1px; background:rgba(255,255,255,.08); transition:background .3s ease; }
-        .bb-ca-batt-pct {
-            font-size:15px; font-weight:900; color:var(--tx); flex-shrink:0;
+        .bb-ca-bar-pct {
+            position:relative; display:block; text-align:center; font-size:11px; font-weight:900;
+            line-height:12px; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.65);
             font-family:'Paperlogy','Lato',monospace;
         }
 
@@ -907,6 +926,7 @@
 
     const STL = { charging:'충전 중', patrolling:'순찰 중', delivering:'배달 중', standby:'대기 중', docking:'도킹 중', off:'OFF' };
     const STI = { charging:'🟢', patrolling:'🔵', delivering:'🩷', standby:'⚪', docking:'🟡', off:'⚫' };
+    const BADGE_ICON = { charging:'⚡', patrolling:'🚶', delivering:'📦', standby:'💤', docking:'🅿️', off:'⏻' };
 
     const DELIVERY_TYPES = ['ALL', 'OPENAPI_DELIVERY', 'NB_ORDER_DELIVERY', 'DELIVERY'];
     const FORCE_PATROL_SITE_IDS = [24];   // 삼성인력개발원
@@ -1667,18 +1687,8 @@
 		    && r.status !== 'patrolling' && r.status !== 'delivering' && r.status !== 'standby'
 		const showPlug = r.status !== 'patrolling' && r.status !== 'delivering' && !!r.raw?.robotStatus?.isWiredChargerConnected;
         const showWireless = !r.loading && !off && r.status === 'charging' && !r.raw?.robotStatus?.isWiredChargerConnected;
-        const lit = Math.floor(pct / 10);
-        const showHalfDot = pct > 0 && lit === 0;
-        const dotColor = lowBat ? 'var(--rd)' : 'var(--ac,var(--gy))';
-        const dotsHtml = Array.from({ length: 10 })
-            .map((_, i) => {
-                if (i < lit) return `<div class="bb-ca-dot" style="background:${dotColor}"></div>`;
-                if (i === 0 && showHalfDot) {
-                    return `<div class="bb-ca-dot" style="background:linear-gradient(90deg, ${dotColor} 50%, rgba(255,255,255,.08) 50%)"></div>`;
-                }
-                return `<div class="bb-ca-dot" style="background:rgba(255,255,255,.08)"></div>`;
-            })
-            .join('');
+        const barColor  = lowBat ? 'var(--rd)' : 'var(--ac,var(--gy))';
+        const badgeIcon = r.loading ? '⏳' : (BADGE_ICON[r.status] || '•');
 
         const c = document.createElement('div');
         c.className = `bb-ca ${r.loading ? 'loading' : r.status}${lowBat ? ' warn-bat' : ''}`;
@@ -1687,14 +1697,19 @@
         if (rmSet.has(r.id)) c.classList.add('selected');
 
         c.innerHTML = `
-            <div class="bb-ca-name">${r.name}</div>
-            <div class="bb-ca-mid">
-                <div class="bb-ca-st">${r.loading ? '⏳ 로딩 중' : STI[r.status]+' '+STL[r.status]}${showPlug ? ' 🔌' : ''}${showWireless ? ' ⚡' : ''}</div>
-                ${showMissionOff ? '<div class="bb-mission-off">임무 OFF</div>' : ''}
+            <div class="bb-ca-badge" style="background:${barColor}">${badgeIcon}</div>
+            <div class="bb-ca-head">
+                <div class="bb-ca-name">${r.name}</div>
+                <div class="bb-ca-mid">
+                    <div class="bb-ca-st">${r.loading ? '⏳ 로딩 중' : STI[r.status]+' '+STL[r.status]}${showPlug ? ' 🔌' : ''}${showWireless ? ' ⚡' : ''}</div>
+                    ${showMissionOff ? '<div class="bb-mission-off">임무 OFF</div>' : ''}
+                </div>
             </div>
             <div class="bb-ca-batt-row" style="${(off || r.loading) ? 'visibility:hidden' : ''}">
-                <div class="bb-ca-dots${chargingPulse ? ' charging-pulse' : ''}">${dotsHtml}</div>
-                <span class="bb-ca-batt-pct">${r.battery}%</span>
+                <div class="bb-ca-bar" style="border-color:${barColor}">
+                    <div class="bb-ca-bar-fill${chargingPulse ? ' charging-pulse' : ''}" style="width:${pct}%;background:${barColor}"></div>
+                    <span class="bb-ca-bar-pct">${r.battery}%</span>
+                </div>
             </div>
         `;
 
