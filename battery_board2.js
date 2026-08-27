@@ -79,7 +79,7 @@
 		#bb.bb-light .bb-chip.idle   { background:var(--sur); color:#1d4ed8; }
 		#bb.bb-light .bb-cluster-group { background:var(--sur); }
 		#bb.bb-light .bb-cluster-group-label { color:#a16207; }
-		#bb.bb-light .bb-cluster-row:hover { background:rgba(0,0,0,.05); border-color:rgba(0,0,0,.12); }
+		#bb.bb-light .bb-cluster-row:hover { background:rgba(0,0,0,.03); }
 
         #bb-wrap * { box-sizing:border-box; }
 
@@ -257,14 +257,13 @@
             overflow-y:auto; padding-top:10px; padding-right:10px;
             border-right:1px solid var(--bd);
         }
-		.bb-cluster-plug { font-size:10px; line-height:1; flex-shrink:0; }
 
         .bb-cluster-group {
             background:var(--sur2); border:2px solid var(--bd2); border-radius:12px;
-            padding:6px 8px 4px; flex-shrink:0;
+            padding:6px 8px 8px; flex-shrink:0;
         }
         .bb-cluster-group-label {
-            font-size:13px; font-weight:900; color:#c9a24a; margin-bottom:3px; padding-left:3px;
+            font-size:13px; font-weight:900; color:#c9a24a; margin-bottom:6px; padding-left:3px;
             padding-bottom:5px; border-bottom:1px solid var(--bd2);
             display:flex; align-items:baseline; min-width:0;
         }
@@ -272,47 +271,49 @@
         .bb-cluster-missing-wrap { flex:1; min-width:0; overflow:hidden; margin-left:5px; }
         .bb-cluster-missing { display:inline-block; white-space:nowrap; font-size:10px; font-weight:500; color:var(--mu); }
         .bb-cluster-missing.bb-marquee { animation:bb-marquee 3s linear 0.5s 1 forwards; }
+
+        /* ── 무선기체 리스트 로우 : 기체 카드와 동일한 프레임 테마 ── */
         .bb-cluster-row {
-            display:flex; align-items:center; gap:7px; padding:2px 5px; border-radius:6px; cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_pointer.png') 4 4, pointer;
-            border:1px solid transparent; user-select:none; margin-bottom:1px;
+            position:relative; border-radius:11px; margin-bottom:7px;
+            border:3px solid var(--ac-border,var(--bd));
+            box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);
+            overflow:hidden; cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_pointer.png') 4 4, pointer;
+            transition:box-shadow .2s, border-color .2s;
         }
         .bb-cluster-row:last-child { margin-bottom:0; }
-        .bb-cluster-row.warn-bat { animation:bb-warnBlink .8s infinite; }
-        .bb-cluster-row:hover { background:rgba(255,255,255,.07); border-color:rgba(255,255,255,.18); }
-        .bb-cluster-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
-        .bb-cluster-name { flex:1; min-width:0; font-size:15px; font-weight:700; color:var(--tx); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .bb-cluster-row:hover { box-shadow:inset 0 0 0 1px rgba(255,255,255,.06), 0 0 0 1px var(--ac-border,var(--bd)); }
+        .bb-cluster-row.warn-bat { animation:bb-clusterWarnBlink .8s infinite; }
+        @keyframes bb-clusterWarnBlink {
+            0%,100% { border-color:var(--rd); box-shadow:inset 0 0 0 1px rgba(255,255,255,.06), 0 0 0 1px var(--rd); }
+            50%     { border-color:transparent; box-shadow:none; }
+        }
+        .bb-cluster-badge {
+            position:absolute; top:4px; right:5px; width:15px; height:15px; border-radius:50%;
+            background:var(--ac,var(--gy)); box-shadow:0 0 0 2px var(--sur2);
+            display:flex; align-items:center; justify-content:center;
+            font-size:8.5px; line-height:1; z-index:1; color:#fff; text-shadow:0 1px 1px rgba(0,0,0,.35);
+        }
+        .bb-cluster-head {
+            background:var(--ac-tint,transparent); padding:4px 24px 3px 8px;
+            border-bottom:1px solid var(--ac-border,var(--bd));
+            display:flex; align-items:baseline; gap:5px; min-width:0;
+        }
+        .bb-cluster-name { flex:1; min-width:0; font-size:13px; font-weight:700; color:var(--tx); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .bb-cluster-name.bb-marquee { overflow:visible; animation:bb-marquee 3s linear 0.5s 1 forwards; }
-        .bb-cluster-pct { font-size:12px; font-weight:900; font-family:'Paperlogy','Lato',monospace; flex-shrink:0; }
+        .bb-cluster-plug { font-size:10px; line-height:1; flex-shrink:0; }
+        .bb-mission-off-tag { font-size:9px; font-weight:900; color:rgba(239,68,68,.85); flex-shrink:0; }
+        .bb-cluster-body { padding:4px 6px 5px; }
         .bb-cluster-batt {
-            position:relative; display:inline-block; width:48px; height:16px; border-radius:4px;
-            background:var(--sur2); border:1.5px solid var(--bd2);
-            overflow:hidden; box-sizing:border-box; vertical-align:middle; flex-shrink:0;
+            position:relative; display:block; width:100%; height:14px; border-radius:7px;
+            background:rgba(255,255,255,.05); border:1.5px solid var(--ac,var(--bd2));
+            overflow:hidden; box-sizing:border-box;
         }
         .bb-cluster-batt-fill { position:absolute; left:0; top:0; bottom:0; transition:width .5s ease; }
         .bb-cluster-batt-pct {
-            position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-            font-size:11px; font-weight:900; font-family:'Paperlogy','Lato',monospace;
+            position:relative; display:block; text-align:center; line-height:12px;
+            font-size:10px; font-weight:900; font-family:'Paperlogy','Lato',monospace;
             color:var(--pct-fill); text-shadow:var(--pct-shadow);
             letter-spacing:-0.3px; pointer-events:none; white-space:nowrap;
-        }
-        .bb-cluster-plug { font-size:11px; margin-left:3px; flex-shrink:0; }
-        .bb-cluster-pct-wrap {
-            position:relative; display:inline-block; width:50px; height:16px;
-            overflow:hidden; flex-shrink:0; text-align:right;
-        }
-        .bb-cluster-pct-val, .bb-cluster-pct-off {
-            position:absolute; top:0; right:0; white-space:nowrap;
-            animation:bb-pctSlide 8s ease-in-out infinite;
-        }
-        .bb-cluster-pct-val { font-size:12px; font-weight:900; font-family:'Paperlogy','Lato',monospace; }
-        .bb-cluster-pct-off { font-size:11px; font-weight:900; color:rgba(239,68,68,.8); animation-delay:-4s; }
-        @keyframes bb-pctSlide {
-            0%     { transform:translateX(0);    opacity:1; }
-            42%    { transform:translateX(0);    opacity:1; }
-            50%    { transform:translateX(-10px);  opacity:0; }
-            50.01% { transform:translateX(8px);   opacity:0; }
-            92%    { transform:translateX(8px);   opacity:0; }
-            100%   { transform:translateX(0);    opacity:1; }
         }
         .bb-ca {
 			height:86px; background:var(--sur);
@@ -956,6 +957,10 @@
     const CLUSTER_AC = {
         charging:'var(--gn)', patrolling:'var(--bl)', standby:'var(--standby-batt)',
         off:'var(--offdot)', delivering:'var(--pk)', docking:'var(--ye)',
+    };
+    const CLUSTER_TINT = {
+        charging:'var(--gn2)', patrolling:'var(--bl2)', standby:'rgba(200,204,212,.08)',
+        off:'rgba(75,85,99,.08)', delivering:'var(--pk2)', docking:'rgba(209,163,85,.12)',
     };
 
     const MONITOR_GROUPS = [
@@ -1634,30 +1639,31 @@
 
             members.forEach(r => {
                 const ac = CLUSTER_AC[r.status] || 'var(--mu)';
+                const tint = CLUSTER_TINT[r.status] || 'transparent';
                 const off = r.status === 'off';
                 const lowBat = !off && r.battery <= 21;
                 const showMissionOff = !r.canDispatch && !off && !r.loading && !lowBat
-				    && r.status !== 'patrolling' && r.status !== 'delivering' && r.status !== 'standby'
+					    && r.status !== 'patrolling' && r.status !== 'delivering' && r.status !== 'standby'
                 const showPlug = r.status !== 'patrolling' && r.status !== 'delivering' && !!r.raw?.robotStatus?.isWiredChargerConnected;
+                const badgeIcon = BADGE_ICON[r.status] || '•';
 				const row = document.createElement('div');
-                row.className = `bb-cluster-row${lowBat ? ' warn-bat' : ''}${showMissionOff ? ' mission-off' : ''}`;
+                row.className = `bb-cluster-row${lowBat ? ' warn-bat' : ''}`;
+                row.style.cssText = `--ac:${ac};--ac-border:${ac};--ac-tint:${tint};`;
                 const plugHtml = showPlug ? '<span class="bb-cluster-plug">🔌</span>' : '';
-                const battInner = off
-                    ? `<span class="bb-cluster-pct" style="color:${ac};">OFF</span>`
-                    : `<span class="bb-cluster-batt" style="border-color:${ac};">
-                           <span class="bb-cluster-batt-fill" style="width:${r.battery}%;background:${ac};"></span>
-                           <span class="bb-cluster-batt-pct">${r.battery}%</span>
-                       </span>`;
-                const pctHtml = showMissionOff
-                    ? `<span class="bb-cluster-pct-wrap">
-                           <span class="bb-cluster-pct-val">${battInner}</span>
-                           <span class="bb-cluster-pct-off">임무 OFF</span>
-                       </span>${plugHtml}`
-                    : `${battInner}${plugHtml}`;
+                const missionOffHtml = showMissionOff ? '<span class="bb-mission-off-tag">임무 OFF</span>' : '';
+                const barColor = lowBat ? 'var(--rd)' : ac;
                 row.innerHTML = `
-                    <span class="bb-cluster-dot" style="background:${ac};"></span>
-					<span class="bb-cluster-name" title="${STL[r.status] || ''}">${r.name}</span>
-                    ${pctHtml}
+                    <div class="bb-cluster-badge">${badgeIcon}</div>
+                    <div class="bb-cluster-head">
+					    <span class="bb-cluster-name" title="${STL[r.status] || ''}">${r.name}</span>
+                        ${plugHtml}${missionOffHtml}
+                    </div>
+                    <div class="bb-cluster-body">
+                        <span class="bb-cluster-batt" style="border-color:${off ? ac : barColor};">
+                            <span class="bb-cluster-batt-fill" style="width:${off ? 0 : r.battery}%;background:${barColor};"></span>
+                            <span class="bb-cluster-batt-pct">${off ? 'OFF' : r.battery + '%'}</span>
+                        </span>
+                    </div>
                 `;
                 row.addEventListener('dblclick', e => {
                     e.stopPropagation();
