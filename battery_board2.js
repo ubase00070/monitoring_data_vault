@@ -66,6 +66,7 @@
         #bb.bb-light.theme-blossom { --bg-fill:linear-gradient(180deg, #f6dde3 0%, #f2e2d2 45%, #f2e4c4 85%); }
         #bb.bb-light .bb-delivery-title { color:#2b2418; }
         #bb.bb-light .bb-delivery-empty { color:#2b2418; }
+        #bb.bb-light .bb-ca-bar-pct { color:#2b2418; text-shadow:0 1px 1px rgba(255,255,255,.65); }
         #bb.bb-light .bb-ca.standby { --ac:#8a7f68; --ac-border:rgba(138,127,104,.35); }
 		#bb.bb-light .bb-mi.standby { --ac:#8a7f68; }
         #bb.bb-light .bb-mi:not(.empty) { color:#2b2418; }
@@ -359,6 +360,7 @@
             background:var(--ac,var(--gy)); box-shadow:0 0 0 2px var(--sur);
             display:flex; align-items:center; justify-content:center;
             font-size:11px; line-height:1; z-index:1;
+            color:#fff; text-shadow:0 1px 1px rgba(0,0,0,.35);
         }
         .bb-ca-head {
             background:var(--ac-tint,transparent); padding:7px 30px 5px 10px;
@@ -924,7 +926,7 @@
 
     const STL = { charging:'충전 중', patrolling:'순찰 중', delivering:'배달 중', standby:'대기 중', docking:'도킹 중', off:'OFF' };
     const STI = { charging:'🟢', patrolling:'🔵', delivering:'🩷', standby:'⚪', docking:'🟡', off:'⚫' };
-    const BADGE_ICON = { charging:'⚡', patrolling:'🧭', delivering:'📦', standby:'💤', docking:'🅿️', off:'⏻' };
+    const BADGE_ICON = { charging:'⚡', patrolling:'🚶', delivering:'📦', standby:'💤', docking:'🅿️', off:'⏻' };
 
     const DELIVERY_TYPES = ['ALL', 'OPENAPI_DELIVERY', 'NB_ORDER_DELIVERY', 'DELIVERY'];
     const FORCE_PATROL_SITE_IDS = [24];   // 삼성인력개발원
