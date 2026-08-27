@@ -6756,10 +6756,10 @@
           "raw": "1"
         },
         "9/4": {
-          "status": "off",
-          "working": false,
+          "status": "annual",
+          "working": true,
           "present": false,
-          "raw": "휴무"
+          "raw": "연차"
         },
         "9/5": {
           "status": "off",
@@ -6768,10 +6768,10 @@
           "raw": "휴무"
         },
         "9/6": {
-          "status": "annual",
-          "working": true,
+          "status": "off",
+          "working": false,
           "present": false,
-          "raw": "연차"
+          "raw": "휴무"
         },
         "9/7": {
           "status": "work",
@@ -7888,6 +7888,6 @@
     "9/30"
   ],
   "mainMonth": 9,
-  "updatedAt": "2026-08-26T03:53:18.636Z",
+  "updatedAt": "2026-08-27T03:53:18.617Z",
   "sheetName": "2026년_09월 스케줄"
 }
