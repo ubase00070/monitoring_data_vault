@@ -42,45 +42,6 @@
     // 오프라인 모드 — true로 바꾸면 이 도구의 NCC 외부 통신이 즉시 차단됩니다.
     const OFFLINE_MODE = false;
 
-    // 날씨 위젯 설정 (근무지: 뉴코아중동백화점 기준 격자좌표)
-    const WEATHER_CONFIG = {
-        nx: 57, ny: 126,
-        proxyUrl: 'https://multimonitoring.vercel.app/api/weather'
-    };
-	
-	const REGION_GRID = { 
-        '서울': { nx: 60, ny: 127 }, '강남': { nx: 61, ny: 126 }, '강북': { nx: 61, ny: 128 },
-        '강서': { nx: 58, ny: 126 }, '관악': { nx: 59, ny: 125 }, '마포': { nx: 59, ny: 127 },
-        '송파': { nx: 62, ny: 126 }, '노원': { nx: 61, ny: 130 }, '중구(서울)': { nx: 60, ny: 127 },
-        '인천': { nx: 55, ny: 124 }, '수원': { nx: 60, ny: 121 }, '성남': { nx: 63, ny: 124 },
-        '부천': { nx: 56, ny: 125 }, '고양': { nx: 57, ny: 128 }, '용인': { nx: 64, ny: 119 },
-        '안양': { nx: 59, ny: 123 }, '파주': { nx: 58, ny: 131 }, '화성': { nx: 57, ny: 119 },
-        '광명': { nx: 58, ny: 125 }, '평택': { nx: 62, ny: 114 }, '시흥': { nx: 57, ny: 123 },
-        '군포': { nx: 59, ny: 122 }, '의왕': { nx: 60, ny: 122 }, '하남': { nx: 65, ny: 130 },
-        '남양주': { nx: 64, ny: 133 }, '김포': { nx: 55, ny: 128 }, '광주(경기)': { nx: 65, ny: 125 },
-        '양주': { nx: 61, ny: 133 }, '구리': { nx: 62, ny: 127 }, '안산': { nx: 58, ny: 121 },
-        '이천': { nx: 68, ny: 121 }, '오산': { nx: 62, ny: 118 }, '안성': { nx: 65, ny: 115 },
-        '의정부': { nx: 61, ny: 130 }, '동두천': { nx: 61, ny: 136 }, '가평': { nx: 69, ny: 133 },
-        '양평': { nx: 69, ny: 125 }, '여주': { nx: 71, ny: 121 }, '포천': { nx: 64, ny: 138 },
-        '연천': { nx: 61, ny: 139 }, '과천': { nx: 60, ny: 124 },
-        '춘천': { nx: 73, ny: 134 }, '원주': { nx: 76, ny: 122 }, '강릉': { nx: 92, ny: 131 },
-        '속초': { nx: 87, ny: 141 }, '동해': { nx: 97, ny: 127 }, '삼척': { nx: 98, ny: 125 },
-        '홍천': { nx: 75, ny: 130 }, '태백': { nx: 95, ny: 119 },
-        '대전': { nx: 67, ny: 100 }, '청주': { nx: 69, ny: 106 }, '천안': { nx: 63, ny: 110 },
-        '세종': { nx: 66, ny: 103 }, '충주': { nx: 76, ny: 114 }, '제천': { nx: 81, ny: 118 },
-        '아산': { nx: 60, ny: 110 }, '서산': { nx: 51, ny: 117 }, '보령': { nx: 55, ny: 106 },
-        '논산': { nx: 62, ny: 97 },
-        '전주': { nx: 63, ny: 89 }, '광주(전남)': { nx: 58, ny: 74 }, '군산': { nx: 56, ny: 92 },
-        '익산': { nx: 60, ny: 91 }, '목포': { nx: 50, ny: 67 }, '여수': { nx: 73, ny: 66 },
-        '순천': { nx: 70, ny: 70 }, '나주': { nx: 56, ny: 71 }, '정읍': { nx: 58, ny: 83 },
-        '부산': { nx: 98, ny: 76 }, '대구': { nx: 89, ny: 90 }, '울산': { nx: 102, ny: 84 },
-        '포항': { nx: 102, ny: 94 }, '창원': { nx: 90, ny: 77 }, '진주': { nx: 81, ny: 75 },
-        '구미': { nx: 84, ny: 96 }, '경주': { nx: 100, ny: 91 }, '김해': { nx: 95, ny: 77 },
-        '양산': { nx: 97, ny: 79 }, '거제': { nx: 90, ny: 69 }, '통영': { nx: 87, ny: 68 },
-        '안동': { nx: 91, ny: 106 }, '경산': { nx: 91, ny: 90 },
-        '제주': { nx: 52, ny: 38 }, '서귀포': { nx: 52, ny: 33 },
-    };
-
     const NB_THEMES = {
         light: { bg: '#ece5d4', card: '#f7f2e6', border: '#d9cdb0', text: '#2b2418', accent: '#1e3a5f', purple: '#7c3aed' },
         dark:  { bg: '#111111', card: '#252525', border: '#333333', text: '#e2e8f0', accent: '#3b82f6', purple: '#c4b5fd' }
@@ -89,8 +50,6 @@
     function getNbTheme() {
         return NB_THEMES[localStorage.getItem('neubie_theme') || 'dark'];
     }
-
-    fetch(WEATHER_CONFIG.proxyUrl).catch(() => {});
 
     // 기체 네이밍 매핑 데이터
     const ROBOT_MAP = {
@@ -1862,7 +1821,7 @@
             padding:4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
         rouletteCard.innerHTML = `<span style="font-size:18px;">🧰</span>
-            <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">날씨 & SW & 헬프</span>`;
+            <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">SW & 헬프</span>`;
         window._neubieRouletteCard = rouletteCard;
         attachStaticNeonHover(rouletteCard, '44,230,217');
         rouletteCard.onclick = () => {
@@ -1927,9 +1886,9 @@
         bottomRow.appendChild(gamepadBtn);   // 게임패드 (ON/OFF)
         bottomRow.appendChild(batteryCard);  // 성남 배터리
 
-        // 2행: 레이아웃 색상 - 날씨 & 룰렛 - 게시판 - 스케줄 좌석
+        // 2행: 레이아웃 색상 - SW & 헬프 - 게시판 - 스케줄 좌석
         bottomRow.appendChild(weatherCard);  // 레이아웃 색상
-        bottomRow.appendChild(rouletteCard); // 날씨 & 룰렛
+        bottomRow.appendChild(rouletteCard); // SW & 헬프
         bottomRow.appendChild(boardBtn);     // 게시판
         bottomRow.appendChild(scheduleCard); // 스케줄 좌석
 
@@ -4217,12 +4176,10 @@
                 box.style.cssText = `background:${T.card}; color:${T.text}; border-radius:16px; padding:20px; width:100%; box-sizing:border-box; box-shadow:0 4px 40px rgba(0,0,0,0.7); pointer-events:auto;`;
                 box.innerHTML = `
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-                        <span style="font-size:16px;font-weight:700;">🧰 날씨 & SW & 헬프</span>
+                        <span style="font-size:16px;font-weight:700;">🧰 SW & 헬프</span>
                         <button id="mto-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
                     </div>
                     <div style="display:flex; flex-direction:column; gap:8px;">
-                        <button id="mto-weather" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🌤️ 실시간 날씨 (기상청 API)</button>
-                        <button id="mto-roulette" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🎡 룰렛 돌리기</button>
                         <button id="mto-tips" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">💡 SW 설정</button>
                         <button id="mto-trouble" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🛠️ 문제해결</button>
                     </div>
@@ -4231,166 +4188,10 @@
                     window.hideSharedPopup();
                     if (window._neubieRouletteCard) window._neubieRouletteCard.style.outline = 'none';
                 };
-                box.querySelector('#mto-weather').onclick = () => openWeatherOverlay();
-                box.querySelector('#mto-roulette').onclick = () => openRouletteOverlay();
                 box.querySelector('#mto-tips').onclick = () => openTipsOverlay();
                 box.querySelector('#mto-trouble').onclick = () => { window.hideSharedPopup(); openTroubleshootOverlay(); };
                 window.showSharedPopup('moretools', box);
             };
-
-            window.openWeatherOverlay = async function() {
-                const T = getNbTheme();
-                const box = document.createElement('div');
-                box.style.cssText = `
-                    background:${T.card}; color:${T.text};
-                    border-radius:16px; padding:20px;
-                    width:100%; box-sizing:border-box;
-                    box-shadow:0 4px 40px rgba(0,0,0,0.7);
-                    pointer-events:auto;
-                `;
-                box.innerHTML = `
-                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-                        <span style="font-size:18px;font-weight:700;color:#4f8ef7;">🌤️ 실시간 날씨 (기상청 API)</span>
-                        <button id="nwo-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
-                    </div>
-                    <div id="nwo-body" style="font-size:13px;color:#64748b;">불러오는 중...</div>
-                `;
-                box.querySelector('#nwo-close').onclick = () => {
-                    window.hideSharedPopup();
-                    if (window._neubieRouletteCard) window._neubieRouletteCard.style.outline = 'none';
-                };
-                window.showSharedPopup('weather', box);
-                renderWeather(box);
-            };
-
-            async function renderWeather(overlay, nx = WEATHER_CONFIG.nx, ny = WEATHER_CONFIG.ny, label = '송내') {
-                const body = overlay.querySelector('#nwo-body');
-                if (body) body.innerHTML = `<div style="text-align:center;padding:30px;color:#64748b;">${label} 날씨 불러오는 중...</div>`;
-				
-				const data = await fetchWeatherReal(nx, ny);
-
-                const hourlyHtml = data.hourly.map((h, i) => `
-                    <div style="flex:1;min-width:0;text-align:center;padding:6px 0;${i < 6 ? 'opacity:1;' : 'opacity:0.65;'}${i === 0 ? 'background:#1e3a5f;border-radius:8px;' : ''}">
-                        <div style="font-size:11px;color:#94a3b8;">${i === 0 ? '지금' : h.hour + '시'}</div>
-                        <div style="font-size:16px;margin:4px 0;">${h.icon}</div>
-                        <div style="font-size:13px;">${h.temp}°</div>
-                        ${h.pop > 0 ? `<div style="font-size:10px;color:#4f8ef7;">💧${h.pop}%</div>` : ''}
-                    </div>`).join('');
-
-                const dailyHtml = data.daily.map(d => `
-                    <div style="background:#1a1c24;border-radius:8px;padding:6px 8px;flex:1;">
-                        <div style="display:flex;align-items:center;justify-content:space-between;">
-                            <span style="font-size:11px;color:#94a3b8;">${formatDailyLabel(d.date)}</span>
-                            <span style="font-size:14px;">${d.icon}</span>
-                        </div>
-                        <div style="font-size:12px;font-weight:700;margin-top:3px;">${d.min}° / ${d.max}°</div>
-                        <div style="font-size:9px;color:${d.pop > 0 ? '#4f8ef7' : '#64748b'};margin-top:1px;">${d.pop > 0 ? '강수 ' + d.pop + '%' : '강수 없음'}</div>
-                    </div>`).join('');
-
-                const favs = JSON.parse(localStorage.getItem('neubie_weather_favs') || '[]');
-                const favChips = favs.map(f => `
-                    <button class="nwo-fav-chip" data-nx="${f.nx}" data-ny="${f.ny}" data-label="${f.label}" style="padding:4px 4px 4px 10px;border-radius:12px;border:1px solid #333;background:${f.label===label?'#1e3a5f':'transparent'};color:#e2e8f0;font-size:11px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">
-                        ${f.label}
-                        <span class="nwo-fav-remove" data-label="${f.label}" style="padding:0 4px;color:#94a3b8;font-weight:bold;">✕</span>
-                    </button>
-                `).join('');
-
-                body.innerHTML = `
-                    <div style="display:flex;gap:6px;margin-bottom:10px;align-items:center;">
-                        <input id="nwo-search" placeholder="지역 검색 (예: 파주)" style="flex:1;padding:6px 10px;border-radius:8px;border:1px solid #333;background:#1a1c24;color:#e2e8f0;font-size:12px;">
-                        <button id="nwo-search-btn" style="padding:6px 12px;border-radius:8px;border:none;background:#4f8ef7;color:#fff;font-size:12px;cursor:pointer;">검색</button>
-                    </div>
-                    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
-                        <button class="nwo-fav-chip" data-nx="${WEATHER_CONFIG.nx}" data-ny="${WEATHER_CONFIG.ny}" data-label="송내" style="padding:4px 10px;border-radius:12px;border:1px solid #333;background:${label==='송내'?'#1e3a5f':'transparent'};color:#e2e8f0;font-size:11px;cursor:pointer;">📍 송내</button>
-                        ${favChips}
-                    </div>
-                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
-                        <div style="font-size:24px;">${data.current.icon}</div>
-                        <div>
-                            <div style="font-size:11px;color:#94a3b8;margin-bottom:2px;">${label} · ${data.updatedAt.getMonth()+1}/${data.updatedAt.getDate()}(${['일','월','화','수','목','금','토'][data.updatedAt.getDay()]})</div>
-                            <div style="font-size:22px;font-weight:700;line-height:1.1;">${data.current.temp}°</div>
-                            <div style="font-size:11px;color:#64748b;">${data.updatedAt.toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit', hour12:false})} 기준</div>
-                        </div>
-                        ${label !== '송내' ? `<button id="nwo-add-fav" style="margin-left:auto;padding:5px 10px;border-radius:8px;border:1px solid #f59e0b;background:transparent;color:#f59e0b;font-size:11px;cursor:pointer;">⭐ 즐겨찾기 추가</button>` : ''}
-                    </div>
-                    <div style="display:flex;gap:4px;margin-bottom:10px;">${hourlyHtml}</div>
-                    <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;">
-                        <span style="font-size:10px;color:#64748b;">0~6h 정밀</span>
-                        <div style="flex:1;height:1px;background:#2e3347;"></div>
-                        <span style="font-size:10px;color:#64748b;">6~12h 예상</span>
-                    </div>
-                    <div style="border-top:1px solid #2e3347;padding-top:10px;display:flex;gap:8px;">${dailyHtml}</div>
-                `;
-
-                const doSearch = () => {
-                    const raw = body.querySelector('#nwo-search').value.trim();
-                    const q = raw.replace(/(특별시|광역시|특별자치시|특별자치도|도|시|군|구)$/g, '').trim();
-                    const match = Object.keys(REGION_GRID).find(k => {
-                        const key = k.replace(/\(.+\)/, '');
-                        return key.includes(q) || q.includes(key);
-                    });
-                    if (!match) { alert('해당 지역을 찾을 수 없습니다. (시/군 단위로 검색해주세요)'); return; }
-                    renderWeather(overlay, REGION_GRID[match].nx, REGION_GRID[match].ny, match.replace(/\(.+\)/, ''));
-                };
-                body.querySelector('#nwo-search-btn').onclick = doSearch;
-                body.querySelector('#nwo-search').onkeydown = (e) => { if (e.key === 'Enter') doSearch(); };
-
-                body.querySelectorAll('.nwo-fav-chip').forEach(chip => {
-                    chip.onclick = () => renderWeather(overlay, Number(chip.dataset.nx), Number(chip.dataset.ny), chip.dataset.label);
-                });
-
-                body.querySelectorAll('.nwo-fav-remove').forEach(removeBtn => {
-                    removeBtn.onclick = (e) => {
-                        e.stopPropagation();
-                        const targetLabel = removeBtn.dataset.label;
-                        const favs = JSON.parse(localStorage.getItem('neubie_weather_favs') || '[]');
-                        const updated = favs.filter(f => f.label !== targetLabel);
-                        localStorage.setItem('neubie_weather_favs', JSON.stringify(updated));
-                        renderWeather(overlay, nx, ny, label);   // 현재 보고 있던 지역은 유지한 채 목록만 갱신
-                    };
-                });
-
-                const addFavBtn = body.querySelector('#nwo-add-fav');
-                if (addFavBtn) {
-                    addFavBtn.onclick = () => {
-                        const favs = JSON.parse(localStorage.getItem('neubie_weather_favs') || '[]');
-                        if (!favs.some(f => f.label === label)) {
-                            favs.push({ nx, ny, label });
-                            localStorage.setItem('neubie_weather_favs', JSON.stringify(favs));
-                        }
-                        renderWeather(overlay, nx, ny, label);
-                    };
-                }
-            }
-
-            function formatDailyLabel(dateStr) {
-                const y = Number(dateStr.slice(0, 4)), m = Number(dateStr.slice(4, 6)), d = Number(dateStr.slice(6, 8));
-                const dow = ['일', '월', '화', '수', '목', '금', '토'][new Date(y, m - 1, d).getDay()];
-                return `${m}/${d}(${dow})`;
-            }
-
-            async function fetchWeatherReal(nx = WEATHER_CONFIG.nx, ny = WEATHER_CONFIG.ny) {
-                const cacheKey = `neubie_weather_cache_${nx}_${ny}`;
-                const CACHE_TTL_MS = 5 * 60 * 1000;   // 5분 — 서버 캐시(10분)보다 살짝 짧게 잡아 데이터 신선도 확보
-
-                try {
-                    const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
-                    if (cached && (Date.now() - cached.savedAt) < CACHE_TTL_MS) {
-                        cached.data.updatedAt = new Date(cached.data.updatedAt);
-                        return cached.data;   // ← 캐시 적중 시 네트워크 요청 자체를 안 함
-                    }
-                } catch (e) { /* 캐시 파싱 실패는 무시하고 새로 받아옴 */ }
-
-                const res = await fetch(`${WEATHER_CONFIG.proxyUrl}?nx=${nx}&ny=${ny}`);
-                const data = await res.json();
-
-                try {
-                    localStorage.setItem(cacheKey, JSON.stringify({ savedAt: Date.now(), data }));
-                } catch (e) { /* 저장 실패(용량 초과 등)해도 기능엔 지장 없음 */ }
-
-                data.updatedAt = new Date(data.updatedAt);
-                return data;
-            }
 
             // ── 문제해결 게시판 ──────────────────────────────────────
             // links에 넣은 url은 게시글 안에서 클릭하면 바로 새 탭으로 열립니다 (구글드라이브 .reg 등 파일 링크 가능)
@@ -4814,218 +4615,6 @@
                 box.appendChild(tipsTitle);
                 box.appendChild(tipsContent);
                 window.showSharedPopup('tips', box);
-            };
-
-            window.openRouletteOverlay = function() {
-                const T = getNbTheme();
-                const box = document.createElement('div');
-                box.style.cssText = `
-                    background:${T.card}; color:${T.text};
-                    border-radius:16px; padding:20px;
-                    width:100%; box-sizing:border-box;
-                    box-shadow:0 4px 40px rgba(0,0,0,0.7);
-                    pointer-events:auto;
-                `;
-                box.innerHTML = `
-                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-                        <span style="font-size:18px;font-weight:700;color:#4f8ef7;">🎡 룰렛 돌리기</span>
-                        <button id="rc-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
-                    </div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-                        <div style="background:${T.bg};border-radius:12px;padding:14px;display:flex;flex-direction:column;box-sizing:border-box;">
-                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-                                <span style="font-size:14px;font-weight:700;color:#94a3b8;">룰렛 설정</span>
-                                <div style="display:flex;gap:6px;">
-                                    <button id="rc-preset-lunch" style="font-size:11px;padding:4px 8px;background:#252525;border:1px solid #333;color:#e2e8f0;border-radius:6px;cursor:pointer;">식사 메뉴</button>
-                                    <button id="rc-preset-people" style="font-size:11px;padding:4px 8px;background:#252525;border:1px solid #333;color:#e2e8f0;border-radius:6px;cursor:pointer;">사람 이름</button>
-                                    <button id="rc-preset-etc" style="font-size:11px;padding:4px 8px;background:#252525;border:1px solid #333;color:#e2e8f0;border-radius:6px;cursor:pointer;">기타</button>
-                                </div>
-                            </div>
-                            <textarea id="rc-input" style="width:100%;flex:1;min-height:120px;box-sizing:border-box;resize:none;font-size:12px;background:#111319;color:#e2e8f0;border:1px solid #333;border-radius:8px;padding:6px 8px;"></textarea>
-                            <button id="rc-build" style="width:100%;margin-top:6px;padding:6px;background:#252525;border:1px solid #333;color:#e2e8f0;border-radius:8px;cursor:pointer;font-size:12px;">룰렛 만들기 (엔터로 구분)</button>
-                        </div>
-                        <div style="background:${T.bg};border-radius:12px;padding:14px;display:flex;flex-direction:column;align-items:center;box-sizing:border-box;">
-                            <div id="rc-capture-area" style="background:${T.card};border-radius:12px;padding:8px 0;">
-                                <div style="position:relative;width:190px;height:190px;margin:0 auto 6px;">
-                                    <div id="rc-pointer" style="position:absolute;top:-4px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:13px solid #e2e8f0;z-index:3;transition:transform .15s ease;"></div>
-                                    <div id="rc-wheel-wrap" style="position:relative;width:190px;height:190px;transition:transform 5s cubic-bezier(.13,.72,.1,1);">
-                                        <canvas id="rc-canvas" width="190" height="190" style="display:block;position:relative;z-index:1;pointer-events:none;"></canvas>
-                                        <div id="rc-labels" style="position:absolute;inset:0;z-index:2;pointer-events:none;"></div>
-                                    </div>
-                                    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:30px;height:30px;border-radius:50%;background:#1a1c24;border:2px solid #0f1117;z-index:3;"></div>
-                                </div>
-                                <div style="text-align:center;min-height:28px;margin-top:8px;">
-                                    <span id="rc-result" style="display:none;font-size:12px;font-weight:700;padding:4px 12px;border-radius:999px;background:#1e3a5f;color:#4f8ef7;"></span>
-                                </div>
-                            </div>
-                            <button id="rc-spin" style="width:100%;padding:8px;background:#4f8ef7;border:none;color:#0f1117;font-weight:700;border-radius:8px;cursor:pointer;font-size:13px;">돌리기</button>
-                            <button id="rc-copy-img" style="visibility:hidden;width:100%;margin-top:8px;padding:6px;background:#252525;border:1px solid #333;color:#e2e8f0;border-radius:8px;cursor:pointer;font-size:12px;">📋 결과 이미지 복사</button>
-                        </div>
-                    </div>
-                `;
-
-                box.querySelector('#rc-close').onclick = () => {
-                    window.hideSharedPopup();
-                    if (window._neubieRouletteCard) window._neubieRouletteCard.style.outline = 'none';
-                };
-
-                const palette = ['#7F77DD','#1D9E75','#D85A30','#D4537E'];
-                const canvas = box.querySelector('#rc-canvas');
-                const ctx = canvas.getContext('2d');
-                let rcItems = [];
-                let rcRotation = 0;
-                let rcSpinning = false;
-                const RC_KEYS = { lunch: 'neubie_roulette_lunch', people: 'neubie_roulette_people', etc: 'neubie_roulette_etc' };
-                let rcCategory = 'lunch';
-
-                function rcDraw() {
-                    const n = rcItems.length || 1;
-                    const cx = 95, cy = 95, r = 90;
-                    ctx.clearRect(0, 0, 190, 190);
-                    const slice = 2 * Math.PI / n;
-                    for (let i = 0; i < n; i++) {
-                        const start = i * slice - Math.PI / 2;
-                        ctx.beginPath();
-                        ctx.moveTo(cx, cy);
-                        ctx.arc(cx, cy, r, start, start + slice);
-                        ctx.closePath();
-                        ctx.fillStyle = palette[i % palette.length];
-                        ctx.fill();
-                        ctx.strokeStyle = '#1a1c24';
-                        ctx.lineWidth = 3;
-                        ctx.stroke();
-                    }
-                    const labelsEl = box.querySelector('#rc-labels');
-                    labelsEl.innerHTML = '';
-                    const labelR = 58;
-                    for (let i = 0; i < n; i++) {
-                        const angle = i * slice + slice / 2 - Math.PI / 2;
-                        const x = cx + labelR * Math.cos(angle);
-                        const y = cy + labelR * Math.sin(angle);
-                        const lab = document.createElement('div');
-                        lab.className = 'rc-label';
-                        lab.style.cssText = `position:absolute;left:${x}px;top:${y}px;transform:translate(-50%,-50%) rotate(${-rcRotation}deg);color:#fff;font-size:11px;font-weight:500;white-space:nowrap;transition:transform 5s cubic-bezier(.13,.72,.1,1);`;
-                        lab.textContent = (rcItems[i] || '').slice(0, 7);
-                        labelsEl.appendChild(lab);
-                    }
-                }
-
-                function rcRebuild() {
-                    rcItems = box.querySelector('#rc-input').value.split('\n').map(s => s.trim()).filter(Boolean);
-                    box.querySelector('#rc-result').style.display = 'none';
-                    rcDraw();
-                }
-
-                box.querySelector('#rc-build').onclick = rcRebuild;
-
-                function rcSetActiveButton(cat) {
-                    ['lunch', 'people', 'etc'].forEach(c => {
-                        const btn = box.querySelector('#rc-preset-' + c);
-                        if (c === cat) {
-                            btn.style.background = '#4f8ef7';
-                            btn.style.color = '#0f1117';
-                            btn.style.borderColor = '#4f8ef7';
-                        } else {
-                            btn.style.background = '#252525';
-                            btn.style.color = '#e2e8f0';
-                            btn.style.borderColor = '#333';
-                        }
-                    });
-                }
-
-                function rcSetControlsDisabled(disabled) {
-                    ['rc-preset-lunch', 'rc-preset-people', 'rc-preset-etc', 'rc-build', 'rc-spin'].forEach(id => {
-                        const el = box.querySelector('#' + id);
-                        el.disabled = disabled;
-                        el.style.opacity = disabled ? '0.5' : '1';
-                        el.style.cursor = disabled ? 'not-allowed' : 'pointer';
-                    });
-                    box.querySelector('#rc-input').disabled = disabled;
-                }
-
-                function rcLoadHtml2Canvas() {
-                    return new Promise((resolve, reject) => {
-                        if (window.html2canvas) return resolve();
-                        const s = document.createElement('script');
-                        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-                        s.onload = () => resolve();
-                        s.onerror = reject;
-                        document.head.appendChild(s);
-                    });
-                }
-
-                box.querySelector('#rc-copy-img').onclick = async () => {
-                    const btn = box.querySelector('#rc-copy-img');
-                    const original = btn.textContent;
-                    btn.textContent = '캡처 중...';
-                    btn.disabled = true;
-                    try {
-                        await rcLoadHtml2Canvas();
-                        const target = box.querySelector('#rc-capture-area');
-                        const blobPromise = window.html2canvas(target, { backgroundColor: '#0f1117' })
-                            .then(canvas => new Promise(resolve => canvas.toBlob(resolve, 'image/png')));
-                        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blobPromise })]);
-                        btn.textContent = '복사됨!';
-                    } catch (e) {
-                        console.error(e);
-                        btn.textContent = '복사 실패';
-                    }
-                    setTimeout(() => { btn.textContent = original; btn.disabled = false; }, 1500);
-                };
-
-                function rcLoadCategory(cat, fallback) {
-                    rcCategory = cat;
-                    rcSetActiveButton(cat);
-                    const saved = localStorage.getItem(RC_KEYS[cat]);
-                    box.querySelector('#rc-input').value = (saved !== null && saved !== '') ? saved : fallback;
-                    rcRebuild();
-                }
-                box.querySelector('#rc-preset-lunch').onclick = () => rcLoadCategory('lunch', '한식\n중식\n일식\n분식');
-                box.querySelector('#rc-preset-people').onclick = () => rcLoadCategory('people', '유재석\n김연아\n손흥민\n김용욱');
-                box.querySelector('#rc-preset-etc').onclick = () => rcLoadCategory('etc', '1\n2\n3\n4');
-                box.querySelector('#rc-input').addEventListener('input', () => {
-                    localStorage.setItem(RC_KEYS[rcCategory], box.querySelector('#rc-input').value);
-                });
-
-                box.querySelector('#rc-spin').onclick = () => {
-                    if (rcSpinning || rcItems.length === 0) return;
-                    rcSpinning = true;
-                    rcSetControlsDisabled(true);
-                    box.querySelector('#rc-copy-img').style.visibility = 'hidden';
-                    const n = rcItems.length;
-                    const sliceDeg = 360 / n;
-                    const targetIndex = Math.floor(Math.random() * n);
-                    const targetCenterDeg = targetIndex * sliceDeg + sliceDeg / 2;
-                    const extraSpins = 5 * 360;
-                    rcRotation = rcRotation - (rcRotation % 360) + extraSpins + (360 - targetCenterDeg);
-                    const wheelWrap = box.querySelector('#rc-wheel-wrap');
-                    wheelWrap.style.transition = 'transform 5s cubic-bezier(.13,.72,.1,1)';
-                    wheelWrap.style.transform = `rotate(${rcRotation}deg)`;
-                    box.querySelectorAll('.rc-label').forEach(lab => {
-                        lab.style.transition = 'transform 5s cubic-bezier(.13,.72,.1,1)';
-                        lab.style.transform = `translate(-50%,-50%) rotate(${-rcRotation}deg)`;
-                    });
-                    const pointer = box.querySelector('#rc-pointer');
-                    const badge = box.querySelector('#rc-result');
-                    badge.style.display = 'none';
-                    setTimeout(() => {
-                        pointer.style.transform = 'translateX(-50%) rotate(-14deg)';
-                        setTimeout(() => { pointer.style.transform = 'translateX(-50%) rotate(10deg)'; }, 110);
-                        setTimeout(() => { pointer.style.transform = 'translateX(-50%) rotate(0deg)'; }, 220);
-                        badge.textContent = '당첨: ' + rcItems[targetIndex];
-                        badge.style.display = 'inline-block';
-                        box.querySelector('#rc-copy-img').style.visibility = 'visible';
-                        rcSpinning = false;
-                        rcSetControlsDisabled(false);
-                    }, 5050);
-                };
-
-                const savedLunch = localStorage.getItem(RC_KEYS.lunch);
-                if (savedLunch) box.querySelector('#rc-input').value = savedLunch;
-                rcRebuild();
-                rcSetActiveButton('lunch');
-
-                window.showSharedPopup('roulette', box);
             };
 
 			// 그 외 페이지는 기존 대시보드
