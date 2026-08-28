@@ -1193,7 +1193,7 @@
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
 		// 문자열을 넣으면 패치노트에 빨간 '`' 뱃지가 점멸하며 뜸.
 		// 빈 문자열('')로 비우면 뱃지가 사라짐.
-		const PATCH_NOTE_NEW_CONTENT = 'Passion';
+		const PATCH_NOTE_NEW_CONTENT = '로봇추가 모달 우측 고정';
 		
         const patchBtn = document.createElement('button');
         patchBtn.textContent = '패치노트';
@@ -1255,8 +1255,9 @@
             const patchItems = [
                 {
                     version: 'v1.4',
-                    date: '2026-08-24',
+                    date: '2026-08-29',
                     items: [
+                        '다중 모니터링 모니터링 생성 모달 우측 고정',
 						'맵 최적화 속도 개선(Dot 제거, 비타겟 site 이동 반영)',
 						'다음 개입 요청 자동 OFF',
                         '문제해결 페이지',
@@ -1774,6 +1775,7 @@
             queueInfoContent.id = 'neubie-queue-info-content';
             queueInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:${T.text}; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;`;
             queueInfoContent.innerHTML = `
+                모니터링 생성 모달 우측 고정<br>
 				기체별 화질 조절<br>
                 기체별 헤드램프 토글<br>
 				기체 카메라 밝기 한 번에 조절<br>
@@ -5221,6 +5223,117 @@
             // 조용히 종료 후 다음날 자연 회복
         }
     }
+
+    // ══════════════════════════════════════════════════════════
+    //  모니터링 생성 모달 위치 조정
+    //  — 기체가 1대 이상 연결돼 있으면 우측 "로봇 (n)" 패널 자리에 맞춰 도킹
+    //    (기체 카메라 화면을 가리지 않도록), 0대(패널 없음)면 NCC 기본(중앙) 유지
+    // ══════════════════════════════════════════════════════════
+    function setupMonitoringDialogReposition() {
+        const STYLE_ID = 'nb-modal-reposition';
+        let cachedPanel = null;   // 이미 찾은 패널을 재사용 — 매번 전체 DOM을 다시 스캔하지 않기 위함
+
+        // "로봇 (n)" 헤더 텍스트를 가진 우측 패널 DOM을 찾는다 (캐시 우선)
+        function findRobotPanel() {
+            if (cachedPanel && cachedPanel.isConnected) return cachedPanel;
+
+            const headers = [...document.querySelectorAll('span, div')].filter(el =>
+                el.children.length === 0 && /^로봇\s*\(\d+\)$/.test(el.textContent.trim())
+            );
+            if (!headers.length) { cachedPanel = null; return null; }
+
+            let headerBlock = headers[0];
+            while (headerBlock && !(headerBlock.className && headerBlock.className.includes('border-b'))) {
+                headerBlock = headerBlock.parentElement;
+            }
+            if (!headerBlock) headerBlock = headers[0].parentElement;
+
+            const headerRect = headerBlock.getBoundingClientRect();
+            let panel = headerBlock, guard = 0;
+            while (panel.parentElement && guard++ < 15) {
+                const parent = panel.parentElement;
+                const pRect = parent.getBoundingClientRect();
+                if (pRect.width - headerRect.width > 100) break;   // 너비가 갑자기 커지면 오버슈트 → 직전 걸로 확정
+                panel = parent;
+                if (pRect.height > headerRect.height * 1.3) break; // 헤더보다 확실히 커지면 여기가 패널
+            }
+            cachedPanel = panel;
+            return panel;
+        }
+
+        function applyModalPosition() {
+            const modal = document.querySelector('[data-qk="remote-multiple-select-robot-dialog"]');
+            let style = document.getElementById(STYLE_ID);
+
+            if (!modal) { if (style) style.remove(); return; }
+
+            const panel = findRobotPanel();
+            if (!panel) { if (style) style.remove(); return; }  // 기체 0대 → NCC 기본(중앙) 유지
+
+            const rect = panel.getBoundingClientRect();
+            if (!style) {
+                style = document.createElement('style');
+                style.id = STYLE_ID;
+                document.head.appendChild(style);
+            }
+            style.textContent = `
+                div:has(> [data-qk="remote-multiple-select-robot-dialog"]) {
+                    left: auto !important;
+                    right: ${window.innerWidth - rect.right}px !important;
+                    top: ${rect.top}px !important;
+                    height: ${rect.height}px !important;
+                    bottom: auto !important;
+                    transform: none !important;
+                }
+                [data-qk="remote-multiple-select-robot-dialog"] {
+                    width: clamp(260px, ${rect.width}px, 38vw) !important;
+                    max-width: clamp(260px, ${rect.width}px, 38vw) !important;
+                    height: 100% !important;
+                    max-height: 100% !important;
+                    border-radius: 10px !important;
+                    display: flex !important;
+                    flex-direction: column !important;
+                    overflow-y: auto !important;
+                }
+            `;
+        }
+
+        let debounceTimer = null;
+        const scheduleApply = () => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(applyModalPosition, 80);
+        };
+
+        // ── 감시 범위를 body 전체가 아니라, 모달/패널이 실제로 그려지는
+        //    좁은 포탈 컨테이너(#modal, #nonModal)만으로 한정 ──
+        //    카메라 영상·상태 텍스트 등 실시간 갱신은 이 컨테이너들 밖에서 일어나므로,
+        //    평소(모달이 안 열려있을 때)엔 이 옵저버가 사실상 아무 일도 하지 않는다.
+        function attachNarrowObserver() {
+            const targets = ['modal', 'nonModal'].map(id => document.getElementById(id)).filter(Boolean);
+            if (!targets.length) return false;
+            const obs = new MutationObserver(scheduleApply);
+            targets.forEach(t => obs.observe(t, { childList: true, subtree: true }));
+            window._nbMonitoringDialogObserver = obs;
+            return true;
+        }
+
+        if (!attachNarrowObserver()) {
+            // 레이아웃이 아직 안 그려진 극초반 타이밍 대비 — 컨테이너가 나타날 때까지만
+            // body를 임시로 지켜보다가, 찾는 즉시 좁은 감시로 전환하고 이 임시 옵저버는 끈다
+            const bootObs = new MutationObserver(() => {
+                if (attachNarrowObserver()) { bootObs.disconnect(); scheduleApply(); }
+            });
+            bootObs.observe(document.body, { childList: true, subtree: true });
+        }
+
+        // 창 크기 변경(윈도우 스냅 등) 시, 모달이 떠 있으면 위치·폭 재계산
+        window.addEventListener('resize', () => {
+            if (document.querySelector('[data-qk="remote-multiple-select-robot-dialog"]')) {
+                scheduleApply();
+            }
+        });
+    }
+    setupMonitoringDialogReposition();
 
     injectConfigUI();
     // 맵 최적화 초기 적용 (기존엔 SPA 라우트 전환 시에만 호출되어, 새로고침/최초 진입 시
