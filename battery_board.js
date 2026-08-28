@@ -572,8 +572,8 @@
         }
         #bb-alertlog-all-panel.open { display:block; }
         .bb-alertlog-day { margin-bottom:14px; }
-        .bb-alertlog-day-title { font-size:14px; font-weight:900; color:var(--mu); margin:0 14px 6px; }
-        .bb-alertlog-row { display:flex; align-items:baseline; gap:8px; font-size:13px; padding:5px 14px; }
+        .bb-alertlog-day-title { font-size:16px; font-weight:900; color:var(--mu); margin:0 14px 6px; }
+        .bb-alertlog-row { display:flex; align-items:baseline; gap:8px; font-size:15px; padding:6px 14px; }
         .bb-alertlog-row:nth-child(even) { background:var(--bg); }
         .bb-alertlog-time { color:var(--mu); min-width:150px; flex-shrink:0; }
         .bb-alertlog-name { color:var(--tx); flex-shrink:0; }
@@ -644,6 +644,7 @@
 		#bb-alert-panel.bb-light .bb-ap-hd { background:var(--sur); border-bottom-color:var(--bd); }
 		#bb-alert-panel.bb-light .bb-ap-title { color:var(--tx); }
 		#bb-top5-panel.bb-light .bb-ap-title { color:var(--tx); }
+		#bb-alertlog-all-panel.bb-light .bb-ap-title { color:var(--tx); }
 		#bb-alert-panel.bb-light .bb-ap-close { color:#b91c1c; }
 		#bb-alert-panel.bb-light .bb-ap-item { background:var(--sur); border-bottom-color:var(--bd); }
 		#bb-alert-panel.bb-light .bb-ap-item:hover { background:var(--sur2); }
@@ -693,7 +694,7 @@
         .bb-icp-left { flex:0 0 260px; min-width:0; }
         .bb-icp-right { flex:1; min-width:0; border-left:1px solid var(--bd); padding:10px 16px; }
         .bb-icp-wbl-log { margin-top:10px; display:flex; flex-direction:column; gap:6px; }
-        .bb-icp-wbl-line { font-size:13px; line-height:1.5; color:var(--tx); }
+        .bb-icp-wbl-line { font-size:15px; line-height:1.5; color:var(--tx); }
         .bb-wbl-scroll { flex:1; min-width:0; overflow-x:auto; overflow-y:hidden; cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_grab.png') 32 32, grab; scrollbar-width:thin; }
         .bb-wbl-scroll::-webkit-scrollbar { height:6px; }
         .bb-wbl-scroll::-webkit-scrollbar-thumb { background:var(--bd2); border-radius:3px; }
@@ -917,6 +918,7 @@
 		document.getElementById('bb-alert-panel').classList.toggle('bb-light', theme === 'light');
 		document.getElementById('bb-info-card-panel').classList.toggle('bb-light', theme === 'light');
 		document.getElementById('bb-top5-panel').classList.toggle('bb-light', theme === 'light');
+		document.getElementById('bb-alertlog-all-panel').classList.toggle('bb-light', theme === 'light');
 		document.getElementById('bb-theme-btn').textContent = theme === 'light' ? '☀️ 라이트' : '🌙 다크';
 	};
     applyBbTheme();
