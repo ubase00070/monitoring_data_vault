@@ -1193,7 +1193,7 @@
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
 		// 문자열을 넣으면 패치노트에 빨간 '`' 뱃지가 점멸하며 뜸.
 		// 빈 문자열('')로 비우면 뱃지가 사라짐.
-		const PATCH_NOTE_NEW_CONTENT = 'Passion';
+		const PATCH_NOTE_NEW_CONTENT = '다중 모니터링 모달 우측 고정';
 		
         const patchBtn = document.createElement('button');
         patchBtn.textContent = '패치노트';
@@ -1255,8 +1255,9 @@
             const patchItems = [
                 {
                     version: 'v1.4',
-                    date: '2026-08-24',
+                    date: '2026-08-29',
                     items: [
+						'다중 모니터링 모니터링 생성 모달 우측 고정',
 						'맵 최적화 속도 개선(Dot 제거, 비타겟 site 이동 반영)',
 						'다음 개입 요청 자동 OFF',
                         '문제해결 페이지',
@@ -1774,6 +1775,7 @@
             queueInfoContent.id = 'neubie-queue-info-content';
             queueInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:${T.text}; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;`;
             queueInfoContent.innerHTML = `
+				모니터링 생성 모달 우측 고정<br>
 				기체별 화질 조절<br>
                 기체별 헤드램프 토글<br>
 				기체 카메라 밝기 한 번에 조절<br>
