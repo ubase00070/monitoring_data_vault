@@ -558,6 +558,26 @@
             cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_default.png') 4 4, auto;
         }
         #bb-top5-panel.open { display:block; }
+        #bb-alertlog-all-panel {
+            display:none; position:fixed;
+            top:50%; left:50%; transform:translate(-50%,-50%);
+            width:860px; max-height:82vh; overflow-y:auto;
+            border:3px solid transparent; border-radius:14px;
+            background-image: linear-gradient(var(--sur), var(--sur)), linear-gradient(135deg, #6366f1, #ec4899);
+            background-origin: border-box;
+            background-clip: padding-box, border-box;
+            box-shadow:0 24px 64px rgba(0,0,0,.9);
+            z-index:99999999;
+            cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_default.png') 4 4, auto;
+        }
+        #bb-alertlog-all-panel.open { display:block; }
+        .bb-alertlog-day { margin-bottom:14px; }
+        .bb-alertlog-day-title { font-size:14px; font-weight:900; color:var(--mu); margin:0 14px 6px; }
+        .bb-alertlog-row { display:flex; align-items:baseline; gap:8px; font-size:13px; padding:5px 14px; }
+        .bb-alertlog-row:nth-child(even) { background:var(--bg); }
+        .bb-alertlog-time { color:var(--mu); min-width:150px; flex-shrink:0; }
+        .bb-alertlog-name { color:var(--tx); flex-shrink:0; }
+        .bb-alertlog-type { color:var(--or); }
         .bb-top5-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:14px; }
         .bb-top5-col { background:var(--bg); border-radius:12px; padding:12px; }
         .bb-top5-col-title { font-size:14px; font-weight:900; margin-bottom:8px; }
@@ -793,6 +813,15 @@
                     <span class="bb-alert-label">🚨 알림</span>
                     <div class="bb-alert-chips" id="bb-alert-chips"></div>
                 </div>
+                <button class="bb-btn" id="bb-alertlog-all-btn" style="font-size:13px;font-weight:900;align-self:center;margin-right:12px;flex-shrink:0;">📋 전체 알림 로그</button>
+            </div>
+
+            <div id="bb-alertlog-all-panel">
+                <div class="bb-ap-hd">
+                    <div class="bb-ap-title">📋 전체 알림 로그</div>
+                    <div class="bb-ap-close" id="bb-alertlog-all-close">✕</div>
+                </div>
+                <div id="bb-alertlog-all-body"></div>
             </div>
 
             <!-- 메인 영역: 좌측 묶음 리스트 -->
@@ -830,7 +859,6 @@
                     * '알림 센터' 페이지 새로고침 시 자동으로 레이아웃 열림(ALT+Z로 열고 닫기)<br>
                     * 기체 카드와 배치는 로컬 스토리지에 저장됨(최대 30대. 드래그로 배치 변경 가능)<br>
                     * 카드 더블클릭/기체정보 검색창: 기체 상세 Info 패널 / 배터리 증감 추이 그래프<br>
-					* 기체별 주요 알림 누적 로그<br>
                     * 배터리 증감 추이 기능<br>
 					&nbsp;&nbsp;&nbsp;&nbsp;- 08:00 ~ 다음 날 03:00까지 10분 간격으로 배터리 수치 기록<br> 
 					&nbsp;&nbsp;&nbsp;&nbsp;- 오늘/어제 자 데이터 까지만 보존<br> 
@@ -1431,6 +1459,7 @@
             wblMidnightCleanupTick();
             alertLogCyhTick();
             alertLogNonCyhTick();
+            alertLogDownloadTick();
             alertLogFinalizeYesterdayOnce();
 
             const alerts = detectAlerts(allRaw);
@@ -2451,25 +2480,88 @@
 		} catch (e) { console.log('[BB] 알림 로그 확정 실패:', e.message); }
 	}
 
-	// 특정 기체의 알림 로그 히스토리 조회 (최신순)
-	async function alertLogFetchForRobot(robotId) {
+	// 오늘치 알림 원시로그를 30분마다 다운로드해서 캐시 — CYH/비CYH 둘 다(기존 배터리 다운로드와 달리 여긴 역할 구분 없음)
+	let _alertLogDlLast = 0;
+	async function alertLogDownloadTick() {
+		if (Date.now() - _alertLogDlLast < 30 * 60 * 1000) return;
+		_alertLogDlLast = Date.now();
+		const dayKey = wblGetDayKey();
+		if (!dayKey) return;
+		try {
+			const res = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent(ALERT_LOG_RAW_NAME_PREFIX + dayKey)}`);
+			if (!res.ok) return;
+			const remote = await res.json();
+			if (remote?.data?.day === dayKey) {
+				localStorage.setItem('bb_alertlog_today_cache', JSON.stringify(remote.data));
+			}
+		} catch (e) {}
+	}
+
+	// 오늘치 캐시(서버 최신본)를 구간화해서 반환 — 다음날 확정 전이라도 "오늘 아까"를 바로 조회 가능
+	function alertLogTodayItems() {
+		const dayKey = wblGetDayKey();
+		if (!dayKey) return [];
+		let raw;
+		try { raw = JSON.parse(localStorage.getItem('bb_alertlog_today_cache') || 'null'); } catch { raw = null; }
+		if (!raw || raw.day !== dayKey) return [];
+		const items = [];
+		Object.keys(raw.entries).forEach(id => {
+			const entry = raw.entries[id];
+			ALERT_LOG_TYPES.forEach(type => {
+				const pts = entry.points?.[type];
+				if (!pts || !pts.length) return;
+				alertLogPointsToIntervals(pts).forEach(iv => {
+					items.push({ robotId: id, name: entry.name, type, start: iv.start, end: iv.end, day: dayKey });
+				});
+			});
+		});
+		return items;
+	}
+
+	// 히스토리(확정된 과거) 통째로 로드
+	async function alertLogFetchHistory() {
 		try {
 			const res = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent(ALERT_LOG_HISTORY_NAME)}`);
 			if (!res.ok) return [];
 			const data = await res.json();
-			const history = Array.isArray(data?.data) ? data.data : [];
-			const rows = [];
-			history.forEach(dayEntry => {
-				(dayEntry.items || []).forEach(it => {
-					if (String(it.robotId) === String(robotId)) {
-						rows.push({ day: dayEntry.day, type: it.type, start: it.start, end: it.end });
-					}
-				});
-			});
-			rows.sort((a, b) => (a.day + a.start).localeCompare(b.day + b.start));
-			return rows.reverse();
+			return Array.isArray(data?.data) ? data.data : [];
 		} catch (e) { return []; }
 	}
+
+	// 특정 기체의 알림 로그 히스토리 조회 (최신순)
+	async function alertLogFetchForRobot(robotId) {
+		const history = await alertLogFetchHistory();
+		const rows = [];
+		history.forEach(dayEntry => {
+			(dayEntry.items || []).forEach(it => {
+				if (String(it.robotId) === String(robotId)) {
+					rows.push({ day: dayEntry.day, type: it.type, start: it.start, end: it.end });
+				}
+			});
+		});
+		alertLogTodayItems().forEach(it => {
+			if (String(it.robotId) === String(robotId)) rows.push({ day: it.day, type: it.type, start: it.start, end: it.end });
+		});
+		rows.sort((a, b) => (a.day + a.start).localeCompare(b.day + b.start));
+		return rows.reverse();
+	}
+
+	// 전체 기체 × 전체 일자 로그 (일자별로 묶어서 반환, 최신 일자가 먼저)
+	async function alertLogFetchAll() {
+		const grouped = {};
+		(await alertLogFetchHistory()).forEach(dayEntry => {
+			grouped[dayEntry.day] = (dayEntry.items || []).slice();
+		});
+		const todayKey = wblGetDayKey();
+		const todayItems = alertLogTodayItems();
+		if (todayKey && todayItems.length) grouped[todayKey] = todayItems;
+
+		return Object.keys(grouped).sort().reverse().map(day => ({
+			day,
+			items: grouped[day].slice().sort((a, b) => a.start.localeCompare(b.start)),
+		}));
+	}
+
 
 	// 03:30 — 그날의 배터리 로그를 로컬에서 정리 (다음날 첫 접속에서도 wblEnsureDay가 자동으로 새로 시작하지만, 켜져있는 상태라면 더 일찍 정리)
 	function wblMidnightCleanupTick() {
@@ -2597,6 +2689,53 @@
 
         panel.classList.add('open');
         registerTop5PanelClose();
+    }
+
+    let _alertLogAllCloseHandler = null;
+    function registerAlertLogAllPanelClose() {
+        const panel = document.getElementById('bb-alertlog-all-panel');
+        if (_alertLogAllCloseHandler) {
+            document.removeEventListener('mousedown', _alertLogAllCloseHandler);
+            _alertLogAllCloseHandler = null;
+        }
+        setTimeout(() => {
+            _alertLogAllCloseHandler = function closeAlertLogAll(e) {
+                if (!panel.contains(e.target)) {
+                    panel.classList.remove('open');
+                    document.removeEventListener('mousedown', _alertLogAllCloseHandler);
+                    _alertLogAllCloseHandler = null;
+                }
+            };
+            document.addEventListener('mousedown', _alertLogAllCloseHandler);
+        }, 100);
+    }
+
+    async function openAlertLogAllPanel() {
+        const panel  = document.getElementById('bb-alertlog-all-panel');
+        const bodyEl = document.getElementById('bb-alertlog-all-body');
+        bodyEl.innerHTML = `<div class="bb-alertlog-row" style="color:var(--mu);">불러오는 중...</div>`;
+        panel.classList.add('open');
+        registerAlertLogAllPanelClose();
+
+        const days = await alertLogFetchAll();
+        if (!days.length) {
+            bodyEl.innerHTML = `<div class="bb-alertlog-row" style="color:var(--mu);">기록된 알림 로그 없음</div>`;
+            return;
+        }
+        bodyEl.innerHTML = days.map(d => `
+            <div class="bb-alertlog-day">
+                <div class="bb-alertlog-day-title">${wblFormatMonthDay(d.day)}</div>
+                ${d.items.map(it => {
+                    const label = ALERT_LOG_LABELS[it.type] || it.type;
+                    const timeStr = it.start === it.end ? it.start : `${it.start}~${it.end}`;
+                    return `<div class="bb-alertlog-row">
+                        <span class="bb-alertlog-time">${timeStr}</span>
+                        <span class="bb-alertlog-name">${it.name}</span>
+                        <span class="bb-alertlog-type">${label}</span>
+                    </div>`;
+                }).join('')}
+            </div>
+        `).join('');
     }
 
     function openInfoCardPanel(r) {
@@ -3039,6 +3178,15 @@
         if (_top5CloseHandler) {
             document.removeEventListener('mousedown', _top5CloseHandler);
             _top5CloseHandler = null;
+        }
+    });
+
+    document.getElementById('bb-alertlog-all-btn').addEventListener('click', openAlertLogAllPanel);
+    document.getElementById('bb-alertlog-all-close').addEventListener('click', () => {
+        document.getElementById('bb-alertlog-all-panel').classList.remove('open');
+        if (_alertLogAllCloseHandler) {
+            document.removeEventListener('mousedown', _alertLogAllCloseHandler);
+            _alertLogAllCloseHandler = null;
         }
     });
 
