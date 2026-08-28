@@ -1537,10 +1537,10 @@
           "raw": "휴무"
         },
         "8/31": {
-          "status": "annual",
+          "status": "half",
           "working": true,
-          "present": false,
-          "raw": "연차"
+          "present": true,
+          "raw": "반차"
         }
       }
     },
@@ -8141,6 +8141,6 @@
     "8/31"
   ],
   "mainMonth": 8,
-  "updatedAt": "2026-08-27T03:53:04.638Z",
+  "updatedAt": "2026-08-28T03:53:14.409Z",
   "sheetName": "2026년_08월 스케줄"
 }
