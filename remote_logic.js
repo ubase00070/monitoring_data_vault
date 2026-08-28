@@ -1193,7 +1193,7 @@
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
 		// 문자열을 넣으면 패치노트에 빨간 '`' 뱃지가 점멸하며 뜸.
 		// 빈 문자열('')로 비우면 뱃지가 사라짐.
-		const PATCH_NOTE_NEW_CONTENT = '로봇추가 모달 우측 고정';
+		const PATCH_NOTE_NEW_CONTENT = 'Passion';
 		
         const patchBtn = document.createElement('button');
         patchBtn.textContent = '패치노트';
@@ -1255,9 +1255,8 @@
             const patchItems = [
                 {
                     version: 'v1.4',
-                    date: '2026-08-29',
+                    date: '2026-08-24',
                     items: [
-                        '다중 모니터링 모니터링 생성 모달 우측 고정',
 						'맵 최적화 속도 개선(Dot 제거, 비타겟 site 이동 반영)',
 						'다음 개입 요청 자동 OFF',
                         '문제해결 페이지',
@@ -1775,7 +1774,6 @@
             queueInfoContent.id = 'neubie-queue-info-content';
             queueInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:${T.text}; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;`;
             queueInfoContent.innerHTML = `
-                모니터링 생성 모달 우측 고정<br>
 				기체별 화질 조절<br>
                 기체별 헤드램프 토글<br>
 				기체 카메라 밝기 한 번에 조절<br>
@@ -5301,29 +5299,18 @@
             debounceTimer = setTimeout(applyModalPosition, 80);
         };
 
-        // ── "모달이 뜨는 걸 감지해서 반응"하지 않고, 로봇 목록 패널(#nonModal)의
-        //    상태를 항상 미리 CSS 규칙에 반영해둔다. 이러면 모달이 언제 태어나든
+        // ── "모달이 뜨는 걸 감지해서 반응"하지 않고, 로봇 목록 패널의 상태를
+        //    항상 미리 CSS 규칙에 반영해둔다. 이러면 모달이 언제 태어나든
         //    그 순간 이미 우측 도킹용 규칙이 스타일시트에 있어서, 중앙에 잠깐
-        //    그려졌다가 우측으로 튀는 깜빡임 없이 처음부터 최종 위치로 그려진다. ──
-        function attachNarrowObserver() {
-            const target = document.getElementById('nonModal');
-            if (!target) return false;
-            const obs = new MutationObserver(scheduleApply);
-            obs.observe(target, { childList: true, subtree: true });
-            window._nbMonitoringDialogObserver = obs;
-            return true;
-        }
+        //    그려졌다가 우측으로 튀는 깜빡임 없이 처음부터 최종 위치로 그려진다.
+        //    (감시 범위는 body 전체지만, 콜백 자체는 setTimeout 재설정뿐이라 가볍고
+        //    실제 무거운 연산(findRobotPanel 전체 스캔)은 캐시 덕분에 패널이 이미
+        //    확보돼 있으면 건너뛰므로 지속적인 부담은 없다) ──
+        const obs = new MutationObserver(scheduleApply);
+        obs.observe(document.body, { childList: true, subtree: true });
+        window._nbMonitoringDialogObserver = obs;
 
-        if (attachNarrowObserver()) {
-            applyModalPosition();   // 스크립트 로드 시 이미 기체가 연결돼 있을 수 있으므로 최초 1회 즉시 동기화
-        } else {
-            // 레이아웃이 아직 안 그려진 극초반 타이밍 대비 — 컨테이너가 나타날 때까지만
-            // body를 임시로 지켜보다가, 찾는 즉시 좁은 감시로 전환하고 이 임시 옵저버는 끈다
-            const bootObs = new MutationObserver(() => {
-                if (attachNarrowObserver()) { bootObs.disconnect(); applyModalPosition(); }
-            });
-            bootObs.observe(document.body, { childList: true, subtree: true });
-        }
+        applyModalPosition();   // 스크립트 로드 시 이미 기체가 연결돼 있을 수 있으므로 최초 1회 즉시 동기화
 
         // 창 크기 변경(윈도우 스냅 등) 시 항상 재계산 — 모달 열림 여부와 무관하게
         // 규칙을 최신 상태로 유지해야 다음에 모달이 열릴 때도 깜빡임이 없다
