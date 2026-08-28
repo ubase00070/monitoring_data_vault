@@ -830,6 +830,7 @@
                     * '알림 센터' 페이지 새로고침 시 자동으로 레이아웃 열림(ALT+Z로 열고 닫기)<br>
                     * 기체 카드와 배치는 로컬 스토리지에 저장됨(최대 30대. 드래그로 배치 변경 가능)<br>
                     * 카드 더블클릭/기체정보 검색창: 기체 상세 Info 패널 / 배터리 증감 추이 그래프<br>
+					* 기체별 주요 알림 누적 로그<br>
                     * 배터리 증감 추이 기능<br>
 					&nbsp;&nbsp;&nbsp;&nbsp;- 08:00 ~ 다음 날 03:00까지 10분 간격으로 배터리 수치 기록<br> 
 					&nbsp;&nbsp;&nbsp;&nbsp;- 오늘/어제 자 데이터 까지만 보존<br> 
@@ -1049,6 +1050,7 @@
 
     function detectAlerts(rawList) {
         const alerts = [];
+        const rawAlertSignals = [];   // 알림 로그용 — dismiss 여부와 무관한 실제 발생 여부
         const now = Date.now();
         const zombie = loadZombie();
 
@@ -1128,6 +1130,7 @@
                 }
                 if (zombie[id] && zombie[id].count >= 4) {
                     const key = alertKey('zombie', id);
+                    rawAlertSignals.push({ id, name, type: 'zombie' });
                     if (!dismissedAlerts.has(key)) {
                         const mins = Math.floor((now - zombie[id].firstSeen) / 60000);
                         alerts.push({
@@ -1148,6 +1151,7 @@
                         .map(([, label]) => label);
                     if (offCams.length > 0) {
                         const key = alertKey('cam', id);
+                        rawAlertSignals.push({ id, name, type: 'cam' });
                         if (!dismissedAlerts.has(key)) alerts.push({
                             key, type:'cam', dot:'or', name,
                             desc:`캠 미노출: ${offCams.join(', ')}`,
@@ -1177,6 +1181,7 @@
                 }
                 if (zombie[id + '_gps'] && zombie[id + '_gps'].count >= 4) {
                     const key = alertKey('nomap', id);
+                    rawAlertSignals.push({ id, name, type: 'nomap' });
                     if (!dismissedAlerts.has(key)) alerts.push({
                         key, type:'nomap', dot:'or', name,
                         desc:`GPS 수신값 0 — 재부팅 조치 필요`,
@@ -1188,6 +1193,7 @@
             // ── 기능7: 비상정지
             if (raw.isEmergency === true) {
                 const key = alertKey('estop', id);
+                rawAlertSignals.push({ id, name, type: 'estop' });
                 if (!dismissedAlerts.has(key)) alerts.push({
                     key, type:'estop', dot:'rd', name,
                     desc:`🚨 비상정지 버튼 눌림 | 현장 해제 필요`,
@@ -1200,6 +1206,8 @@
 
         saveZombie(zombie);
         window._bbAlerts = alerts;
+        window._bbAlertLogRaw = rawAlertSignals;
+        alertLogRecord(rawAlertSignals);
         return alerts;
     }
 
@@ -1421,6 +1429,9 @@
             wblOthersAutoDownloadTick();
             wblNightUploadTick();
             wblMidnightCleanupTick();
+            alertLogCyhTick();
+            alertLogNonCyhTick();
+            alertLogFinalizeYesterdayOnce();
 
             const alerts = detectAlerts(allRaw);
             renderAlertChips(alerts);
@@ -2277,6 +2288,189 @@
 		} catch (e) { console.log('[BB] 어제자 배터리 로그 로드 실패:', e.message); }
 	}
 
+	// ============================================================
+	// SECTION 알림 로그 — 좀비/캠 미노출/미니맵 미노출/비상정지 4종
+	// 목적: "이거 언제부터 이랬지?"를 나중에 확인하기 위한 기록.
+	// 배터리 로그와 달리 CYH 우선순위가 필요 없음 — "언제 목격했나"는 순수 사실이라
+	// 여러 사람의 기록을 그냥 합치면 됨(합집합). 그래서 락도 필요 없음.
+	// ============================================================
+	const ALERT_LOG_TYPES = ['zombie', 'cam', 'nomap', 'estop'];
+	const ALERT_LOG_LABELS = { zombie: '🧟 좀비', cam: '📷 캠 미노출', nomap: '🗺️ 미니맵 미노출', estop: '🆘 비상정지' };
+	const ALERT_LOG_RAW_NAME_PREFIX = '배터리_알림원시로그_';   // + dayKey
+	const ALERT_LOG_HISTORY_NAME = '배터리_알림로그_히스토리';
+	const ALERT_LOG_GAP_MIN = 10;   // 이 시간 이상 안 보이면 "끊긴 것"으로 판단(재발생 구분 기준)
+
+	function alertLogBufKey() { return 'bb_alertlog_buffer'; }
+
+	// 매 렌더 사이클마다 호출 — 로컬에 "이 시각에 봤다"는 점만 쌓음(업로드는 별도 주기로)
+	function alertLogRecord(rawSignals) {
+		const dayKey = wblGetDayKey();
+		if (!dayKey) return;   // 03~08시 비활성 구간
+		if (!rawSignals || !rawSignals.length) return;
+
+		let buf;
+		try { buf = JSON.parse(localStorage.getItem(alertLogBufKey()) || 'null'); } catch { buf = null; }
+		if (!buf || buf.day !== dayKey) buf = { day: dayKey, entries: {} };
+
+		const now = new Date();
+		const hm = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+		rawSignals.forEach(({ id, name, type }) => {
+			if (!buf.entries[id]) buf.entries[id] = { name, points: {} };
+			buf.entries[id].name = name;
+			if (!buf.entries[id].points[type]) buf.entries[id].points[type] = [];
+			const arr = buf.entries[id].points[type];
+			if (arr[arr.length - 1] !== hm) arr.push(hm);
+		});
+
+		try { localStorage.setItem(alertLogBufKey(), JSON.stringify(buf)); } catch {}
+	}
+
+	// 로컬에 쌓인 버퍼를 서버(오늘치 원시로그)에 병합 업로드. 버퍼 비어있으면 요청 자체를 안 보냄.
+	async function alertLogUpload() {
+		let buf;
+		try { buf = JSON.parse(localStorage.getItem(alertLogBufKey()) || 'null'); } catch { buf = null; }
+		if (!buf || !buf.day || Object.keys(buf.entries).length === 0) return true;   // 올릴 게 없음
+
+		const remoteName = ALERT_LOG_RAW_NAME_PREFIX + buf.day;
+		try {
+			let merged = { day: buf.day, entries: {} };
+			try {
+				const res = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent(remoteName)}`);
+				if (res.ok) {
+					const remote = await res.json();
+					if (remote?.data?.day === buf.day) merged = remote.data;
+				}
+			} catch (e) {}
+
+			// 합집합 병합: 로컬 점들을 원격 기록에 없는 것만 추가
+			Object.keys(buf.entries).forEach(id => {
+				const local = buf.entries[id];
+				if (!merged.entries[id]) merged.entries[id] = { name: local.name, points: {} };
+				merged.entries[id].name = local.name;
+				ALERT_LOG_TYPES.forEach(type => {
+					const localArr = local.points[type] || [];
+					if (!localArr.length) return;
+					if (!merged.entries[id].points[type]) merged.entries[id].points[type] = [];
+					const set = new Set(merged.entries[id].points[type]);
+					localArr.forEach(t => set.add(t));
+					merged.entries[id].points[type] = Array.from(set).sort();
+				});
+			});
+
+			const ok = await wblUploadNamed(remoteName, merged);
+			if (ok) {
+				localStorage.setItem(alertLogBufKey(), JSON.stringify({ day: buf.day, entries: {} }));   // 업로드 성공한 것만 비움
+				console.log('[BB] 알림 로그 업로드 완료 (' + new Date().toTimeString().slice(0,5) + ')');
+			}
+			return ok;
+		} catch (e) { console.log('[BB] 알림 로그 업로드 실패:', e.message); return false; }
+	}
+
+	// CYH — 기존 배터리 업로드와 같은 30분 슬롯에 얹어서 시도
+	async function alertLogCyhTick() {
+		if (localStorage.getItem('bb_is_cyh') !== '1') return;
+		const slot = wblSlotLabel30(new Date());
+		if (localStorage.getItem('bb_alertlog_up_slot') === slot) return;
+		localStorage.setItem('bb_alertlog_up_slot', slot);
+		await alertLogUpload();
+	}
+
+	// 비CYH — 매시 50분에 한 번만 시도(그마저도 쌓인 게 있을 때만 실제 요청이 나감)
+	async function alertLogNonCyhTick() {
+		if (localStorage.getItem('bb_is_cyh') === '1') return;
+		const now = new Date();
+		if (now.getMinutes() < 50) return;
+		const hourKey = `bb_alertlog_up_hr_${wblLocalDateStr(now)}_${now.getHours()}`;
+		if (localStorage.getItem(hourKey) === '1') return;
+		localStorage.setItem(hourKey, '1');
+		await alertLogUpload();
+	}
+
+	// 원시 점(point) 배열 -> 연속 구간(interval)으로 변환. 10분 이상 벌어지면 재발생으로 구분.
+	function alertLogPointsToIntervals(points) {
+		if (!points || !points.length) return [];
+		const sorted = [...points].sort();
+		const toMin = hm => { const [h, m] = hm.split(':').map(Number); return h * 60 + m; };
+		const intervals = [];
+		let curStart = sorted[0], curEnd = sorted[0];
+		for (let i = 1; i < sorted.length; i++) {
+			const gap = toMin(sorted[i]) - toMin(curEnd);
+			if (gap > ALERT_LOG_GAP_MIN) {
+				intervals.push({ start: curStart, end: curEnd });
+				curStart = sorted[i];
+			}
+			curEnd = sorted[i];
+		}
+		intervals.push({ start: curStart, end: curEnd });
+		return intervals;
+	}
+
+	// 어제(트래킹 데이) 원시 로그를 구간화해서 히스토리에 반영. 세션당 1회만 시도.
+	async function alertLogFinalizeYesterdayOnce() {
+		const targetKey = wblYesterdayDayKey();
+		if (localStorage.getItem('bb_alertlog_finalized_for') === targetKey) return;
+
+		try {
+			const res = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent(ALERT_LOG_RAW_NAME_PREFIX + targetKey)}`);
+			if (!res.ok) { localStorage.setItem('bb_alertlog_finalized_for', targetKey); return; }
+			const remote = await res.json();
+			const raw = remote?.data;
+			if (!raw || raw.day !== targetKey) { localStorage.setItem('bb_alertlog_finalized_for', targetKey); return; }
+
+			const items = [];
+			Object.keys(raw.entries).forEach(id => {
+				const entry = raw.entries[id];
+				ALERT_LOG_TYPES.forEach(type => {
+					const pts = entry.points?.[type];
+					if (!pts || !pts.length) return;
+					alertLogPointsToIntervals(pts).forEach(iv => {
+						items.push({ robotId: id, name: entry.name, type, start: iv.start, end: iv.end });
+					});
+				});
+			});
+			items.sort((a, b) => a.start.localeCompare(b.start));
+
+			let history = [];
+			try {
+				const hRes = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent(ALERT_LOG_HISTORY_NAME)}`);
+				if (hRes.ok) {
+					const hData = await hRes.json();
+					if (Array.isArray(hData?.data)) history = hData.data;
+				}
+			} catch (e) {}
+
+			history = history.filter(d => d.day !== targetKey);
+			history.push({ day: targetKey, items });
+			history.sort((a, b) => a.day.localeCompare(b.day));
+			if (history.length > 60) history = history.slice(history.length - 60);   // 최근 60일만 유지
+
+			await wblUploadNamed(ALERT_LOG_HISTORY_NAME, history);
+			localStorage.setItem('bb_alertlog_finalized_for', targetKey);
+			console.log('[BB] 알림 로그 확정 완료 (' + targetKey + ', ' + items.length + '건)');
+		} catch (e) { console.log('[BB] 알림 로그 확정 실패:', e.message); }
+	}
+
+	// 특정 기체의 알림 로그 히스토리 조회 (최신순)
+	async function alertLogFetchForRobot(robotId) {
+		try {
+			const res = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent(ALERT_LOG_HISTORY_NAME)}`);
+			if (!res.ok) return [];
+			const data = await res.json();
+			const history = Array.isArray(data?.data) ? data.data : [];
+			const rows = [];
+			history.forEach(dayEntry => {
+				(dayEntry.items || []).forEach(it => {
+					if (String(it.robotId) === String(robotId)) {
+						rows.push({ day: dayEntry.day, type: it.type, start: it.start, end: it.end });
+					}
+				});
+			});
+			rows.sort((a, b) => (a.day + a.start).localeCompare(b.day + b.start));
+			return rows.reverse();
+		} catch (e) { return []; }
+	}
+
 	// 03:30 — 그날의 배터리 로그를 로컬에서 정리 (다음날 첫 접속에서도 wblEnsureDay가 자동으로 새로 시작하지만, 켜져있는 상태라면 더 일찍 정리)
 	function wblMidnightCleanupTick() {
 		const now = new Date();
@@ -2554,9 +2748,12 @@
                     </div>
                 </div>
                 <div class="bb-icp-right">
-                    <div class="bb-icp-section-title" style="display:flex;align-items:center;justify-content:space-between;">
+                    <div class="bb-icp-section-title" style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
                         <span id="bb-icp-wbl-title-text">오늘 배터리 증감 추이${wblGetSourceData('today')?.day ? ' [' + wblFormatMonthDay(wblGetSourceData('today').day) + ']' : ''}</span>
-                        <button class="bb-btn" id="bb-icp-wbl-toggle" style="font-size:13px;font-weight:900;padding:3px 8px;">어제 데이터 보기</button>
+                        <span style="display:flex;gap:6px;flex-shrink:0;">
+                            <button class="bb-btn" id="bb-icp-wbl-toggle" style="font-size:13px;font-weight:900;padding:3px 8px;">어제 데이터 보기</button>
+                            <button class="bb-btn" id="bb-icp-alertlog-toggle" style="font-size:13px;font-weight:900;padding:3px 8px;">알림 로그 보기</button>
+                        </span>
                     </div>
                     <div id="bb-icp-wbl-chart">${wblChartSvg}</div>
                     <div class="bb-icp-wbl-log" id="bb-icp-wbl-log">${wblHtml}</div>
@@ -2587,6 +2784,46 @@
         requestAnimationFrame(() => {
             const sc = document.getElementById('bb-wbl-scroll');
             if (sc) sc.scrollLeft = sc.scrollWidth;
+        });
+
+        let alertLogViewOn = false;
+        document.getElementById('bb-icp-alertlog-toggle').addEventListener('click', async () => {
+            alertLogViewOn = !alertLogViewOn;
+            const toggleBtn   = document.getElementById('bb-icp-alertlog-toggle');
+            const wblToggleBtn= document.getElementById('bb-icp-wbl-toggle');
+            const titleTextEl = document.getElementById('bb-icp-wbl-title-text');
+            const chartEl     = document.getElementById('bb-icp-wbl-chart');
+            const logEl       = document.getElementById('bb-icp-wbl-log');
+
+            if (alertLogViewOn) {
+                toggleBtn.textContent = '배터리 그래프 보기';
+                wblToggleBtn.style.display = 'none';
+                titleTextEl.textContent = '알림 로그';
+                chartEl.style.display = 'none';
+                logEl.style.cssText = 'margin-top:10px; display:flex; flex-direction:column; gap:6px; max-height:340px; overflow-y:auto;';
+                logEl.innerHTML = `<div class="bb-icp-wbl-line" style="color:var(--mu);">불러오는 중...</div>`;
+                const rows = await alertLogFetchForRobot(r.id);
+                logEl.innerHTML = rows.length
+                    ? rows.map(row => {
+                        const label = ALERT_LOG_LABELS[row.type] || row.type;
+                        const dateStr = wblFormatMonthDay(row.day);
+                        const timeStr = row.start === row.end ? row.start : `${row.start}~${row.end}`;
+                        return `<div class="bb-icp-wbl-line">${dateStr} ${timeStr} — ${label}</div>`;
+                    }).join('')
+                    : `<div class="bb-icp-wbl-line" style="color:var(--mu);">기록된 알림 로그 없음</div>`;
+            } else {
+                toggleBtn.textContent = '알림 로그 보기';
+                wblToggleBtn.style.display = '';
+                chartEl.style.display = '';
+                logEl.style.cssText = '';
+                const wblDay = wblGetSourceData('today')?.day;
+                titleTextEl.textContent = '오늘 배터리 증감 추이' + (wblDay ? ` [${wblFormatMonthDay(wblDay)}]` : '');
+                chartEl.innerHTML = wblRenderChartSVG(r.id, 'today');
+                const lines = wblSummarizeToday(r.id, 'today');
+                logEl.innerHTML = lines
+                    ? lines.map(line => `<div class="bb-icp-wbl-line">${line}</div>`).join('')
+                    : `<div class="bb-icp-wbl-line" style="color:var(--mu);">오늘 기록된 데이터 없음</div>`;
+            }
         });
         }
 
