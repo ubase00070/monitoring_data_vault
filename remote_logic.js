@@ -5262,12 +5262,9 @@
         }
 
         function applyModalPosition() {
-            const modal = document.querySelector('[data-qk="remote-multiple-select-robot-dialog"]');
+            const panel = findRobotPanel();
             let style = document.getElementById(STYLE_ID);
 
-            if (!modal) { if (style) style.remove(); return; }
-
-            const panel = findRobotPanel();
             if (!panel) { if (style) style.remove(); return; }  // 기체 0대 → NCC 기본(중앙) 유지
 
             const rect = panel.getBoundingClientRect();
@@ -5304,34 +5301,33 @@
             debounceTimer = setTimeout(applyModalPosition, 80);
         };
 
-        // ── 감시 범위를 body 전체가 아니라, 모달/패널이 실제로 그려지는
-        //    좁은 포탈 컨테이너(#modal, #nonModal)만으로 한정 ──
-        //    카메라 영상·상태 텍스트 등 실시간 갱신은 이 컨테이너들 밖에서 일어나므로,
-        //    평소(모달이 안 열려있을 때)엔 이 옵저버가 사실상 아무 일도 하지 않는다.
+        // ── "모달이 뜨는 걸 감지해서 반응"하지 않고, 로봇 목록 패널(#nonModal)의
+        //    상태를 항상 미리 CSS 규칙에 반영해둔다. 이러면 모달이 언제 태어나든
+        //    그 순간 이미 우측 도킹용 규칙이 스타일시트에 있어서, 중앙에 잠깐
+        //    그려졌다가 우측으로 튀는 깜빡임 없이 처음부터 최종 위치로 그려진다. ──
         function attachNarrowObserver() {
-            const targets = ['modal', 'nonModal'].map(id => document.getElementById(id)).filter(Boolean);
-            if (!targets.length) return false;
+            const target = document.getElementById('nonModal');
+            if (!target) return false;
             const obs = new MutationObserver(scheduleApply);
-            targets.forEach(t => obs.observe(t, { childList: true, subtree: true }));
+            obs.observe(target, { childList: true, subtree: true });
             window._nbMonitoringDialogObserver = obs;
             return true;
         }
 
-        if (!attachNarrowObserver()) {
+        if (attachNarrowObserver()) {
+            applyModalPosition();   // 스크립트 로드 시 이미 기체가 연결돼 있을 수 있으므로 최초 1회 즉시 동기화
+        } else {
             // 레이아웃이 아직 안 그려진 극초반 타이밍 대비 — 컨테이너가 나타날 때까지만
             // body를 임시로 지켜보다가, 찾는 즉시 좁은 감시로 전환하고 이 임시 옵저버는 끈다
             const bootObs = new MutationObserver(() => {
-                if (attachNarrowObserver()) { bootObs.disconnect(); scheduleApply(); }
+                if (attachNarrowObserver()) { bootObs.disconnect(); applyModalPosition(); }
             });
             bootObs.observe(document.body, { childList: true, subtree: true });
         }
 
-        // 창 크기 변경(윈도우 스냅 등) 시, 모달이 떠 있으면 위치·폭 재계산
-        window.addEventListener('resize', () => {
-            if (document.querySelector('[data-qk="remote-multiple-select-robot-dialog"]')) {
-                scheduleApply();
-            }
-        });
+        // 창 크기 변경(윈도우 스냅 등) 시 항상 재계산 — 모달 열림 여부와 무관하게
+        // 규칙을 최신 상태로 유지해야 다음에 모달이 열릴 때도 깜빡임이 없다
+        window.addEventListener('resize', scheduleApply);
     }
     setupMonitoringDialogReposition();
 
