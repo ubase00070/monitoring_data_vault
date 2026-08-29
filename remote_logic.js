@@ -1995,7 +1995,7 @@
 			position: 'fixed', top: '0px', left: '50%', transform: 'translateX(-50%)',
 			zIndex: '2147483646', width: '616px',
 			background: 'rgba(200, 200, 200, 0.98)',
-			borderRadius: '0 0 14px 14px', padding: '6px 8px 8px',
+			borderRadius: '0 0 14px 14px', padding: '7px 8px 9px',
 			fontFamily: 'Pretendard,sans-serif',
 			boxShadow: '0 8px 32px rgba(0,0,0,0.35)',
 			border: '1px solid rgba(200,210,230,0.7)', borderTop: 'none',
@@ -2003,16 +2003,16 @@
 		});
 		document.body.appendChild(panel);
 
-		// ── DP 상태 메시지 ──
+		// ── DP 상태 메시지 (로그 바 — 잘 안 보인다는 피드백으로 텍스트 확대) ──
 		const dpMsg = document.createElement('span');
 		dpMsg.id = 'ho-dp-msg';
 		Object.assign(dpMsg.style, {
-			fontSize: '10px', color: '#64748b',
+			fontSize: '12px', color: '#64748b',
 			overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
 			flex: '1', minWidth: '0',
             background: 'rgba(255,255,255,0.85)',
             borderRadius: '5px',
-            padding: '2px 7px',
+            padding: '3px 8px',
 		});
 		dpMsg.textContent = '로딩 중...';
 
@@ -2042,7 +2042,7 @@
 			b.textContent = text;
 			Object.assign(b.style, {
 				background: bg, color: '#fff', border: 'none',
-				padding: '3px 9px', borderRadius: '6px', fontSize: '12px',
+				padding: '4px 10px', borderRadius: '6px', fontSize: '13px',
 				fontWeight: '700', cursor: 'pointer', fontFamily: 'Pretendard,sans-serif',
 				whiteSpace: 'nowrap', flexShrink: '0',
 				...extra,
@@ -2054,52 +2054,28 @@
 		const headerRow = document.createElement('div');
 		Object.assign(headerRow.style, {
 			display: 'flex', alignItems: 'center', gap: '5px',
-			marginBottom: '4px', paddingBottom: '4px',
+			marginBottom: '5px', paddingBottom: '5px',
 			borderBottom: '1px solid rgba(0,0,0,0.08)',
 			flexWrap: 'nowrap',
 		});
 
-		// 다중 모니터링 버튼
-		const multiBtn = mkBtn('다중 파일명', '#475569', { minWidth: '70px' });
-		multiBtn.onclick = () => {
-			const time = getCalculatedTime(10);
-			const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_다중모니터링`;
-			navigator.clipboard.writeText(finalName);
-			multiBtn.textContent = '복사됨';
-            multiBtn.style.background = '#22c55e';
-			setTimeout(() => {
-                multiBtn.textContent = '다중 파일명';
-                multiBtn.style.background = '#475569';
-            }, 1500);
-		};
-
-		// 성남 배터리 버튼
-		const battBtn = mkBtn('성남 배터리', '#475569');
-		battBtn.id = 'ho-batt-btn';
-		battBtn.onclick = () => {
-			toggleBattery();
-			const isOpen = batteryPopup.style.display === 'block';
-            battBtn.textContent = isOpen ? '배터리 닫기' : '성남 배터리';
-            battBtn.style.background = isOpen ? '#ef4444' : '#475569';
-		};
+		// 카메라 위치 새로고침 버튼 (기존 '다중 파일명'/'성남 배터리' 자리로 이동)
+		const posBtn = mkBtn('카메라 위치 새로고침', '#64748b');
 
 		// 교대 받기 버튼
 		const fetchBtn = mkBtn('교대 기체 로드', '#3b82f6');
 
-		headerRow.appendChild(multiBtn);
-		headerRow.appendChild(battBtn);
+		headerRow.appendChild(posBtn);
 		headerRow.appendChild(fetchBtn);
 		headerRow.appendChild(dpMsg);
 
-		// 우측: 자동/수동 시작
+		// 우측: 자동 시작
 		const rightBtns = document.createElement('div');
 		Object.assign(rightBtns.style, { marginLeft: 'auto', display: 'flex', gap: '5px', flexShrink: '0' });
 
 		const autoBtn = mkBtn('자동 시작', '#6366f1');
-		const posBtn = mkBtn('카메라 위치', '#64748b');
 
 		rightBtns.appendChild(autoBtn);
-		rightBtns.appendChild(posBtn);
 		headerRow.appendChild(rightBtns);
 		panel.appendChild(headerRow);
 
@@ -2118,7 +2094,7 @@
 			cell.dataset.done = 'false';
 			cell.textContent = '—';
 			Object.assign(cell.style, {
-				height: '27px', borderRadius: '7px', border: '1.5px dashed #c8d2e0',
+				height: '31px', borderRadius: '7px', border: '1.5px dashed #c8d2e0',
 				background: 'rgba(255,255,255,0.45)', color: '#b0bec5', fontSize: '10px',
 				fontFamily: 'Pretendard,sans-serif', cursor: 'default',
 				display: 'flex', alignItems: 'center', justifyContent: 'center',
