@@ -1257,7 +1257,7 @@
                     version: 'v1.4',
                     date: '2026-08-29',
                     items: [
-						'다중 관제 휴지통 버튼에 삭제 기체명 표기',
+						'다중 관제 휴지통 레이아웃에 삭제 중인 기체명 표기',
 						'다중 관제 시 모니터링 생성 모달 우측 고정',
 						'맵 최적화 속도 개선(Dot 제거, 비타겟 site 이동 반영)',
 						'다음 개입 요청 자동 OFF',
@@ -1776,6 +1776,7 @@
             queueInfoContent.id = 'neubie-queue-info-content';
             queueInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:${T.text}; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;`;
             queueInfoContent.innerHTML = `
+				삭제 레이아웃 기체명 표기<br>
 				모니터링 생성 모달 우측 고정<br>
 				기체별 화질 조절<br>
                 기체별 헤드램프 토글<br>
