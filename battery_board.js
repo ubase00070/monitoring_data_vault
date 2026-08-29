@@ -572,7 +572,13 @@
         }
         #bb-alertlog-all-panel.open { display:block; }
         .bb-alertlog-day { margin-bottom:14px; }
-        .bb-alertlog-day-title { font-size:16px; font-weight:900; color:var(--mu); margin:0 14px 6px; }
+        .bb-alertlog-day-title {
+            display:flex; align-items:center; gap:10px;
+            font-size:17px; font-weight:900; color:var(--tx);
+            margin:14px 14px 8px;
+        }
+        .bb-alertlog-day-title::after { content:''; flex:1; height:1px; background:var(--bd2); }
+        .bb-alertlog-day:first-child .bb-alertlog-day-title { margin-top:2px; }
         .bb-alertlog-row { display:flex; align-items:baseline; gap:8px; font-size:15px; padding:6px 14px; }
         .bb-alertlog-row:nth-child(even) { background:var(--bg); }
         .bb-alertlog-time { color:var(--mu); min-width:150px; flex-shrink:0; }
@@ -2944,14 +2950,22 @@
                 logEl.style.cssText = 'margin-top:10px; display:flex; flex-direction:column; gap:6px; max-height:340px; overflow-y:auto;';
                 logEl.innerHTML = `<div class="bb-icp-wbl-line" style="color:var(--mu);">불러오는 중...</div>`;
                 const rows = await alertLogFetchForRobot(r.id);
-                logEl.innerHTML = rows.length
-                    ? rows.map(row => {
-                        const label = ALERT_LOG_LABELS[row.type] || row.type;
-                        const dateStr = wblFormatMonthDay(row.day);
-                        const timeStr = row.start === row.end ? row.start : `${row.start}~${row.end}`;
-                        return `<div class="bb-icp-wbl-line">${dateStr} ${timeStr} — ${label}</div>`;
-                    }).join('')
-                    : `<div class="bb-icp-wbl-line" style="color:var(--mu);">기록된 알림 로그 없음</div>`;
+                if (!rows.length) {
+                    logEl.innerHTML = `<div class="bb-icp-wbl-line" style="color:var(--mu);">기록된 알림 로그 없음</div>`;
+                } else {
+                    const byDay = {};
+                    rows.forEach(row => { (byDay[row.day] ||= []).push(row); });
+                    logEl.innerHTML = Object.keys(byDay).sort().reverse().map(day => `
+                        <div class="bb-alertlog-day">
+                            <div class="bb-alertlog-day-title">${wblFormatMonthDay(day)}</div>
+                            ${byDay[day].map(row => {
+                                const label = ALERT_LOG_LABELS[row.type] || row.type;
+                                const timeStr = row.start === row.end ? row.start : `${row.start}~${row.end}`;
+                                return `<div class="bb-alertlog-row"><span class="bb-alertlog-time">${timeStr}</span><span class="bb-alertlog-type">${label}</span></div>`;
+                            }).join('')}
+                        </div>
+                    `).join('');
+                }
             } else {
                 toggleBtn.textContent = '알림 로그 보기';
                 wblToggleBtn.style.display = '';
