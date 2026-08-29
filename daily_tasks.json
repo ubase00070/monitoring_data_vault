@@ -60,13 +60,13 @@
     "rawTime": "16:00"
   },
   {
-    "user": "최성환",
+    "user": "호덕진",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "17:00"
   },
   {
-    "user": "호덕진",
+    "user": "이기완",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "18:00"
@@ -246,7 +246,7 @@
     "rawTime": "17:40"
   },
   {
-    "user": "김도형",
+    "user": "이기완",
     "type": "task",
     "content": "[20:30] 성수동1가, 송도신도시, 역삼요기요 영업 종료 - 기체 전원 임무 OFF",
     "rawTime": "20:30"
