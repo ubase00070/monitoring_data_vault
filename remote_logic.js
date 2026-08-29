@@ -1193,7 +1193,7 @@
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
 		// 문자열을 넣으면 패치노트에 빨간 '`' 뱃지가 점멸하며 뜸.
 		// 빈 문자열('')로 비우면 뱃지가 사라짐.
-		const PATCH_NOTE_NEW_CONTENT = '다중 모니터링 모달 우측 고정';
+		const PATCH_NOTE_NEW_CONTENT = '모달 우측 고정 및 삭제 기체명 표기';
 		
         const patchBtn = document.createElement('button');
         patchBtn.textContent = '패치노트';
@@ -1257,6 +1257,7 @@
                     version: 'v1.4',
                     date: '2026-08-29',
                     items: [
+						'다중 관제 휴지통 버튼에 삭제 기체명 표기',
 						'다중 관제 시 모니터링 생성 모달 우측 고정',
 						'맵 최적화 속도 개선(Dot 제거, 비타겟 site 이동 반영)',
 						'다음 개입 요청 자동 OFF',
@@ -5319,6 +5320,53 @@
         window.addEventListener('resize', scheduleApply);
     }
     setupMonitoringDialogReposition();
+
+    // ══════════════════════════════════════════════════════════
+    //  로봇 삭제 확인 팝업에 대상 기체명 표기
+    //  — "로봇을 삭제하시겠습니까?"만 뜨면 어떤 기체인지 헷갈리므로,
+    //    휴지통 버튼을 누른 시점의 기체명을 캡처해뒀다가 팝업 제목에 삽입
+    // ══════════════════════════════════════════════════════════
+    function setupDeleteConfirmRobotName() {
+        // 한글 종성(받침) 유무에 따라 '을/를' 조사 선택
+        // (이름 끝에 괄호 등 비한글 문자가 붙는 경우를 대비해, 마지막 '한글' 글자를 기준으로 판단)
+        function withEulReul(word) {
+            if (!word) return word;
+            const match = word.trim().match(/[가-힣](?=[^가-힣]*$)/);
+            if (!match) return word; // 한글 완성형 글자가 없으면(영문/숫자만) 그대로
+            const code = match[0].charCodeAt(0);
+            const hasBatchim = (code - 0xAC00) % 28 !== 0;
+            return word + (hasBatchim ? '을' : '를');
+        }
+
+        // 기체명 뒤에 붙는 시리얼번호(N + 영숫자 5~8자리) 제거
+        function stripSerial(text) {
+            return text ? text.replace(/\s*N[0-9A-Z]{5,8}\s*$/i, '').trim() : text;
+        }
+
+        let lastDeleteRobotName = null;
+
+        document.addEventListener('click', (e) => {
+            const btn = e.target.closest('[data-qk="monitoring-robots-dialog-delete-button"]');
+            if (!btn) return;
+            const row = btn.parentElement;
+            const infoBlock = row && row.querySelector('.space-y-6');
+            const nameEl = infoBlock && infoBlock.firstElementChild;
+            lastDeleteRobotName = stripSerial(nameEl ? nameEl.textContent.trim() : null);
+        }, true);
+
+        const obs = new MutationObserver(() => {
+            const titleEl = [...document.querySelectorAll('div, p, span')].find(el =>
+                el.children.length === 0 && el.textContent.trim() === '로봇을 삭제하시겠습니까?'
+            );
+            if (titleEl && lastDeleteRobotName && !titleEl.dataset.nbPatched) {
+                titleEl.textContent = `'${withEulReul(lastDeleteRobotName)}' 삭제하시겠습니까?`;
+                titleEl.dataset.nbPatched = '1';
+            }
+        });
+        obs.observe(document.body, { childList: true, subtree: true });
+        window._nbDeleteConfirmObserver = obs;
+    }
+    setupDeleteConfirmRobotName();
 
     injectConfigUI();
     // 맵 최적화 초기 적용 (기존엔 SPA 라우트 전환 시에만 호출되어, 새로고침/최초 진입 시
