@@ -5362,7 +5362,7 @@
                 el.children.length === 0 && el.textContent.trim() === '로봇을 삭제하시겠습니까?'
             );
             if (titleEl && lastDeleteRobotName && !titleEl.dataset.nbPatched) {
-                titleEl.textContent = `'${withEulReul(lastDeleteRobotName)}' 삭제하시겠습니까?`;
+                titleEl.textContent = `'${lastDeleteRobotName}'${withEulReul(lastDeleteRobotName).slice(lastDeleteRobotName.length)} 삭제하시겠습니까?`;
                 titleEl.dataset.nbPatched = '1';
             }
         });
