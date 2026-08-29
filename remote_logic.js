@@ -5339,9 +5339,11 @@
             return word + (hasBatchim ? '을' : '를');
         }
 
-        // 기체명 뒤에 붙는 시리얼번호(N + 영숫자 5~8자리) 제거
+        // 기체명 뒤에 붙는 시리얼번호 제거
+        // - 자체 기체: N + 영숫자 5~8자리 (예: N15021L9)
+        // - 제휴사(요기요 등) 기체: N + 영문 + '-' + 숫자 (예: NAAAKA1-1221226038)
         function stripSerial(text) {
-            return text ? text.replace(/\s*N[0-9A-Z]{5,8}\s*$/i, '').trim() : text;
+            return text ? text.replace(/\s*N[0-9A-Z]{4,20}(-[0-9A-Z]+)?\s*$/i, '').trim() : text;
         }
 
         let lastDeleteRobotName = null;
