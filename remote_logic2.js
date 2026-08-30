@@ -49,7 +49,13 @@
 
     // NCC 패널 제목과 동일한 네온 그린(블랙 믹싱) 그라데이션 텍스트 스타일 — 토글/2x2 버튼 라벨,
     // 일일 업무 카드 제목, 파일명 생성기 제목 등 '제목'류 텍스트에 공통으로 재사용
-    const NEON_GREEN_TEXT = 'background:linear-gradient(90deg,#083344,#22c55e); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent;';
+    // NCC 패널 메인 제목 전용 그라데이션(블랙→그린) — 하위 라벨들은 가독성 문제로
+    // 그라데이션을 걷어내고 테마 기본 텍스트색(라이트=검정/다크=흰색)으로 되돌림
+    const NCC_TITLE_GRADIENT = 'background:linear-gradient(90deg,#083344,#22c55e); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent;';
+
+    // 호버 효과 공통 파란색 — 라이트/다크 상관없이 항상 이 톤 하나로 통일
+    // (T.accent를 쓰면 라이트모드에서 짙은 네이비가 나와 너무 진해 보이는 문제가 있었음)
+    const HOVER_ACCENT = '#5b9bf7';
 
     function getNbTheme() {
         return NB_THEMES[localStorage.getItem('neubie_theme') || 'dark'];
@@ -1223,8 +1229,9 @@
         const neutralBtnBg = T.isDark ? '#444' : '#f0ede1';
         const neutralBtnBorder = T.isDark ? '#666' : T.border;
         const neutralBtnText = T.isDark ? '#ddd' : T.text;
-        const neutralBtnHoverBg = T.isDark ? '#555' : '#e6e0cc';
-        const neutralBtnHoverBorder = T.isDark ? '#888' : '#a8946a';
+        const neutralBtnHoverBg = T.isDark ? '#555' : HOVER_ACCENT;
+        const neutralBtnHoverBorder = T.isDark ? '#888' : HOVER_ACCENT;
+        const neutralBtnHoverText = T.isDark ? neutralBtnText : '#fff';
         const card = document.createElement('div');
         card.id = 'namingSection';
         card.style.cssText = `
@@ -1284,7 +1291,7 @@
 
         card.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                <span style="font-size:18px;">🏷️ <span style="${NEON_GREEN_TEXT} font-weight:bold;">영상 파일명 생성기</span></span>
+                <span style="font-size:18px;">🏷️ <span style="color:${T.text}; font-weight:bold;">영상 파일명 생성기</span></span>
                 <button id="openDriveTodayBtn" style="background:${neutralBtnBg}; color:${neutralBtnText}; border:1px solid ${neutralBtnBorder}; padding:4px 8px; border-radius:6px; font-size:13px; font-weight:bold; cursor:pointer; white-space:nowrap;">📂 구글 영상 드라이브</button>
             </div>
             <div style="display: flex; gap: 12px; margin-bottom: 10px;">
@@ -1314,7 +1321,7 @@
             btnStyleTag.id = 'naming-btn-style';
             document.head.appendChild(btnStyleTag);
         }
-        btnStyleTag.textContent = `.sub-btn { background: ${neutralBtnBg}; color: ${neutralBtnText}; border: 1px solid ${neutralBtnBorder}; padding: 6px 4px; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; flex: 1; min-width: 0; transition: 0.2s; } .sub-btn:hover { background: ${neutralBtnHoverBg}; border-color: ${neutralBtnHoverBorder}; }`;
+        btnStyleTag.textContent = `.sub-btn { background: ${neutralBtnBg}; color: ${neutralBtnText}; border: 1px solid ${neutralBtnBorder}; padding: 6px 4px; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; flex: 1; min-width: 0; transition: 0.2s; } .sub-btn:hover { background: ${neutralBtnHoverBg}; border-color: ${neutralBtnHoverBorder}; color: ${neutralBtnHoverText}; }`;
 
         setTimeout(() => {
             // 배송 띠띠 활성 여부에 따라 버튼 라벨 갱신 (신규 추가)
@@ -1329,10 +1336,12 @@
                 openDriveBtn.onmouseenter = () => {
                     openDriveBtn.style.background = neutralBtnHoverBg;
                     openDriveBtn.style.borderColor = neutralBtnHoverBorder;
+                    openDriveBtn.style.color = neutralBtnHoverText;
                 };
                 openDriveBtn.onmouseleave = () => {
                     openDriveBtn.style.background = neutralBtnBg;
                     openDriveBtn.style.borderColor = neutralBtnBorder;
+                    openDriveBtn.style.color = neutralBtnText;
                 };
                 openDriveBtn.onclick = async () => {
                     const ROOT_FOLDER_URL = 'https://drive.google.com/drive/folders/0AJPzAP1RZ6FhUk9PVA';
@@ -1420,7 +1429,7 @@
         title.textContent = OFFLINE_MODE ? "오프라인 모드" : "NCC 패널";
         title.style.cssText = OFFLINE_MODE
             ? `color:${T.accent}; font-size:21px; margin:0; font-weight:bold; white-space:nowrap;`
-            : `${NEON_GREEN_TEXT} font-size:21px; margin:0; font-weight:bold; white-space:nowrap;`;
+            : `${NCC_TITLE_GRADIENT} font-size:21px; margin:0; font-weight:bold; white-space:nowrap;`;
 
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
 		// 문자열을 넣으면 패치노트에 빨간 '`' 뱃지가 점멸하며 뜸.
@@ -1658,12 +1667,14 @@
 
                 remindTestBtn.onmouseenter = () => {
                     if (remindTestBtn.disabled) return;
-                    remindTestBtn.style.background = T.accent;
+                    remindTestBtn.style.background = HOVER_ACCENT;
+                    remindTestBtn.style.borderColor = HOVER_ACCENT;
                     remindTestBtn.style.color = '#fff';
                 };
                 remindTestBtn.onmouseleave = () => {
                     if (remindTestBtn.disabled) return;
                     remindTestBtn.style.background = 'transparent';
+                    remindTestBtn.style.borderColor = T.accent;
                     remindTestBtn.style.color = T.accent;
                 };
                 remindTestBtn.onclick = () => {
@@ -1709,7 +1720,7 @@
         taskCard.innerHTML = `
             <div style="margin-bottom:10px;">
                 <div style="display:flex; align-items:center; gap:6px; margin-bottom:8px; flex-wrap:nowrap;">
-                    <div style="font-weight:bold; font-size:17px; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📋 <span style="color:${T.text};">${storedName}</span><span style="${NEON_GREEN_TEXT}">의 일일 업무</span></div>
+                    <div style="font-weight:bold; font-size:17px; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📋 <span style="color:${T.text};">${storedName}</span><span style="color:${T.text};">의 일일 업무</span></div>
                     <button id="remind-test-btn" style="background:transparent; color:${T.accent}; border:1px solid ${T.accent}; font-size:12px; font-weight:bold; border-radius:4px; padding:2px 8px; cursor:pointer; white-space:nowrap;">알림 테스트</button>
                     <select id="remind-inline" style="background:${T.isDark ? '#333' : '#f0ede1'}; color:${T.isDark ? '#fff' : T.text}; border:1px solid ${T.isDark ? '#555' : T.border}; font-size:13px; font-weight:bold; border-radius:4px; padding:2px;">
                         <option value="0" ${currentInt === '0' ? 'selected' : ''}>알림 없음</option>
@@ -1751,7 +1762,7 @@
                 : '';
             row.innerHTML = `
                 <span class="nb-toggle-label" style="display:flex; align-items:center; gap:9px; font-size:15px; font-weight:600;">
-                    <span style="font-size:18px;">${icon}</span><span style="${NEON_GREEN_TEXT}">${label}</span>${clickHint}
+                    <span style="font-size:18px;">${icon}</span><span style="color:${T.text};">${label}</span>${clickHint}
                 </span>
                 <label style="position:relative; display:inline-block; width:54px; height:24px; flex-shrink:0; cursor:pointer;">
                     <input type="checkbox" ${isOn ? 'checked' : ''} class="nb-toggle-input" style="opacity:0; width:0; height:0;">
@@ -1783,8 +1794,8 @@
                 row.style.cursor = 'pointer';
                 row.style.transition = 'border-color 0.15s, background 0.15s';
                 row.onmouseenter = () => {
-                    row.style.borderColor = T.accent;
-                    row.style.background = T.isDark ? 'rgba(91,155,247,0.14)' : 'rgba(30,58,95,0.08)';
+                    row.style.borderColor = HOVER_ACCENT;
+                    row.style.background = 'rgba(91,155,247,0.14)';
                 };
                 row.onmouseleave = () => {
                     row.style.borderColor = T.border;
@@ -2026,15 +2037,15 @@
         const scheduleCard = document.createElement('div');
         scheduleCard.style.cssText = `
             position:relative; min-height:52px; border-radius:10px; cursor:pointer;
-            background:${T.card}; border:1px solid #ff4fa3;
-            box-shadow:0 0 6px rgba(255,79,163,0.35), inset 0 0 8px rgba(255,79,163,0.1);
+            background:${T.card}; border:1px solid #15803d;
+            box-shadow:0 0 6px rgba(21,128,61,0.35), inset 0 0 8px rgba(21,128,61,0.1);
             display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
             padding:7px 4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
         scheduleCard.innerHTML = `<span style="font-size:16px;">📅</span>
-            <span style="font-size:14px; font-weight:600; line-height:1.2; text-align:center; ${NEON_GREEN_TEXT}">스케줄표/좌석도</span>`;
+            <span style="font-size:14px; font-weight:600; line-height:1.2; text-align:center; color:${T.text};">스케줄표/좌석도</span>`;
         window._neubieScheduleCard = scheduleCard;
-        attachStaticNeonHover(scheduleCard, '255,79,163');
+        attachStaticNeonHover(scheduleCard, '21,128,61');
         scheduleCard.onclick = () => {
             const isActive = scheduleCard.style.outline !== 'none' && scheduleCard.style.outline !== '';
             scheduleCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
@@ -2044,15 +2055,15 @@
         const rouletteCard = document.createElement('div');
         rouletteCard.style.cssText = `
             position:relative; min-height:52px; border-radius:10px; cursor:pointer;
-            background:${T.card}; border:1px solid #2ce6d9;
-            box-shadow:0 0 6px rgba(44,230,217,0.35), inset 0 0 8px rgba(44,230,217,0.1);
+            background:${T.card}; border:1px solid #16a34a;
+            box-shadow:0 0 6px rgba(22,163,74,0.35), inset 0 0 8px rgba(22,163,74,0.1);
             display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
             padding:7px 4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
         rouletteCard.innerHTML = `<span style="font-size:16px;">🧰</span>
-            <span style="font-size:14px; font-weight:600; line-height:1.2; text-align:center; ${NEON_GREEN_TEXT}">SW 설정/헬프</span>`;
+            <span style="font-size:14px; font-weight:600; line-height:1.2; text-align:center; color:${T.text};">SW 설정/헬프</span>`;
         window._neubieRouletteCard = rouletteCard;
-        attachStaticNeonHover(rouletteCard, '44,230,217');
+        attachStaticNeonHover(rouletteCard, '22,163,74');
         rouletteCard.onclick = () => {
             const isActive = rouletteCard.style.outline !== 'none' && rouletteCard.style.outline !== '';
             rouletteCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
@@ -2068,15 +2079,15 @@
         const batteryCard = document.createElement('div');
         batteryCard.style.cssText = `
             position:relative; min-height:52px; border-radius:10px; cursor:pointer;
-            background:${T.card}; border:1px solid #facc15;
-            box-shadow:0 0 6px rgba(250,204,21,0.35), inset 0 0 8px rgba(250,204,21,0.1);
+            background:${T.card}; border:1px solid #22c55e;
+            box-shadow:0 0 6px rgba(34,197,94,0.35), inset 0 0 8px rgba(34,197,94,0.1);
             display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
             padding:7px 4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
         batteryCard.innerHTML = `<span style="font-size:16px;">🔋</span>
-            <span style="font-size:14px; font-weight:600; line-height:1.2; text-align:center; ${NEON_GREEN_TEXT}">성남 배터리 현황</span>`;
+            <span style="font-size:14px; font-weight:600; line-height:1.2; text-align:center; color:${T.text};">성남 배터리 현황</span>`;
         window._neubieBatteryCard = batteryCard;
-        attachStaticNeonHover(batteryCard, '250,204,21');
+        attachStaticNeonHover(batteryCard, '34,197,94');
         batteryCard.onclick = () => {
             const isActive = batteryCard.style.outline !== 'none' && batteryCard.style.outline !== '';
             batteryCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
@@ -2089,15 +2100,15 @@
         const weatherCard = document.createElement('div');
         weatherCard.style.cssText = `
             position:relative; min-height:52px; border-radius:10px; cursor:pointer;
-            background:${T.card}; border:1px solid #9d5cff;
-            box-shadow:0 0 6px rgba(157,92,255,0.35), inset 0 0 8px rgba(157,92,255,0.1);
+            background:${T.card}; border:1px solid #86efac;
+            box-shadow:0 0 6px rgba(134,239,172,0.35), inset 0 0 8px rgba(134,239,172,0.1);
             display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
             padding:7px 4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
         weatherCard.innerHTML = `<span style="font-size:16px;">🎨</span>
-            <span style="font-size:14px; font-weight:600; line-height:1.2; text-align:center; ${NEON_GREEN_TEXT}">다크/라이트 모드</span>`;
+            <span style="font-size:14px; font-weight:600; line-height:1.2; text-align:center; color:${T.text};">다크/라이트 모드</span>`;
         window._neubieWeatherCard = weatherCard;
-        attachStaticNeonHover(weatherCard, '157,92,255');
+        attachStaticNeonHover(weatherCard, '134,239,172');
         weatherCard.onclick = () => {
             const isActive = weatherCard.style.outline !== 'none' && weatherCard.style.outline !== '';
             weatherCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
