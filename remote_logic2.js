@@ -604,7 +604,7 @@
         const header = document.createElement('div');
         header.style.cssText = `display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid ${T.border}; padding-bottom:10px;`;
         const titleB = document.createElement('b');
-        titleB.textContent = "🔋 실시간 성남 배터리";
+        titleB.textContent = "🔋 성남 배터리 현황";
         titleB.style.cssText = `color:${T.text}; font-size:18px;`;
 
         const headerRight = document.createElement('div');
@@ -1039,10 +1039,11 @@
             const status = t.type === 'tomorrow_07'
                 ? { isExpired: false, remainMin: 999, score: 0 }
                 : getTaskStatus(timeKey, isMon);
-            const textStyle = status.isExpired 
-                ? 'text-decoration: line-through; color: #777; opacity: 0.7;' 
+            const prefixStyle = status.isExpired
+                ? 'text-decoration: line-through; color: #777; opacity: 0.7;'
                 : `color: ${T.text};`;
-            
+            const chainDimStyle = status.isExpired ? 'opacity: 0.55;' : '';
+
             item.style.cssText = `
                 background:${status.isExpired ? 'rgba(60, 60, 60, 0.1)' : (isMon ? 'rgba(59, 130, 246, 0.15)' : 'rgba(251, 191, 36, 0.15)')};
                 border-left:4px solid ${status.isExpired ? '#555' : (isMon ? '#3b82f6' : '#fbbf24')};
@@ -1063,7 +1064,10 @@
             const handoverKey = getHandoverGroupKey(t);
             const neighbors = getHandoverNeighbors(t, window.currentAllTasks);
             const nameChip = (name, isSelf) => `<span style="display:inline-flex; align-items:center; justify-content:center; min-width:36px; padding:2px 6px; margin:0 1px; border-radius:6px; box-sizing:border-box; font-size:${isSelf ? '12px' : '11px'}; font-weight:${isSelf ? '800' : '500'}; background:${isSelf ? '#3b82f6' : (T.isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)')}; color:${isSelf ? '#ffffff' : (T.isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.65)')};">${name}</span>`;
-            let displayContent = t.content;
+            // 취소선은 '업무텍스트' 부분에만 걸리도록 별도 span으로 분리 — 이름박스/화살표를 감싸는
+            // 조상 요소엔 text-decoration을 절대 두지 않는다(자식에서 none으로 덮어써도 브라우저에 따라
+            // 취소선이 새어나오는 문제가 있었음). 이름박스는 대신 opacity로만 흐리게 처리.
+            let displayContent = `<span style="${prefixStyle}">${t.content}</span>`;
             let layoutLen = t.content.length;
             if (neighbors && (neighbors.prev || neighbors.next)) {
                 const chainParts = [];
@@ -1072,14 +1076,14 @@
                 if (neighbors.next) chainParts.push(nameChip(neighbors.next, false));
                 const chainHtml = chainParts.join(' <span style="font-size:10px; opacity:0.55;">→</span> ');
                 const prefix = HANDOVER_DISPLAY_LABEL[handoverKey] || t.content;
-                displayContent = `${prefix}<span style="margin-left:10px; text-decoration:none;">${chainHtml}</span>`;
+                displayContent = `<span style="${prefixStyle}">${prefix}</span><span style="margin-left:10px; ${chainDimStyle}">${chainHtml}</span>`;
                 layoutLen = prefix.length + 25; // 체인 표기가 붙으면 길어진 것으로 간주해 2줄 표시 판단
             }
 
             const isLong = layoutLen > 40;
             const contentSpan = isLong
-                ? `<span style="${textStyle} font-size:12px; line-height:1.15; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">${displayContent}</span>`
-                : `<span style="${textStyle} font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${displayContent}</span>`;
+                ? `<span style="font-size:12px; line-height:1.15; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">${displayContent}</span>`
+                : `<span style="font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${displayContent}</span>`;
 
             item.innerHTML = `
                 <span style="color:${status.isExpired ? '#777' : '#fbbf24'}; white-space:nowrap;">${displayTime || ''}</span>
@@ -1332,15 +1336,37 @@
 		// 문자열을 넣으면 패치노트에 빨간 '`' 뱃지가 점멸하며 뜸.
 		// 빈 문자열('')로 비우면 뱃지가 사라짐.
 		const PATCH_NOTE_NEW_CONTENT = '모달 우측 고정 및 삭제 기체명 표기';
-		
+
+        // ── 패치노트 내용 ──────────────────────────────────────
+        // 아래 patchItems 배열에 버전별 내용을 추가하세요 (버튼 라벨의 날짜도 이 배열의
+        // 맨 위(patchItems[0].date) 값을 그대로 가져다 쓰므로, 여기 날짜만 바꾸면 버튼도 같이 갱신됨)
+        const patchItems = [
+            {
+                version: 'v1.4',
+                date: '2026-08-29',
+                items: [
+					'다중 관제 휴지통 레이아웃에 삭제 중인 기체명 표기',
+					'다중 관제 시 모니터링 생성 모달 우측 고정',
+					'맵 최적화 속도 개선(Dot 제거, 비타겟 site 이동 반영)',
+					'다음 개입 요청 자동 OFF',
+                    '문제해결 페이지',
+					'스트림덱 스타일 적용(길게 누르면 기능 ON/OFF됨)',
+					'임무 종료된 리센츠/엘스/한성대/진천 페이지 이탈 5초 후 자동 사이드',
+                    '게임패드 D-PAD 설명 / 게임패드 테스터',
+					'다중 자동 교대시작 최대 12대까지',
+                ]
+            },
+        ];
+        const latestPatchShortDate = patchItems[0].date.slice(2).replace(/-/g, '.'); // '2026-08-29' → '26.08.29'
+
         const patchBtn = document.createElement('button');
-        patchBtn.textContent = '패치노트';
+        patchBtn.textContent = `${latestPatchShortDate} 패치노트`;
         patchBtn.title = '패치노트';
         patchBtn.style.cssText = `
 			position:relative;
             background:transparent; border:1px solid ${T.border}; color:${T.text};
             border-radius:6px; padding:4px 10px; cursor:pointer;
-            font-size:14px; margin-left:6px; vertical-align:middle;
+            font-size:14px; margin-left:6px; vertical-align:middle; white-space:nowrap;
             transition:all 0.2s;
         `;
 		
@@ -1388,26 +1414,7 @@
             patchClose.onmouseleave = () => { patchClose.style.color='#aaa'; };
             patchClose.onclick = () => hideSharedPopup();
 
-            // ── 패치노트 내용 ──────────────────────────────────────
-            // 아래 patchItems 배열에 버전별 내용을 추가하세요
-            const patchItems = [
-                {
-                    version: 'v1.4',
-                    date: '2026-08-29',
-                    items: [
-						'다중 관제 휴지통 레이아웃에 삭제 중인 기체명 표기',
-						'다중 관제 시 모니터링 생성 모달 우측 고정',
-						'맵 최적화 속도 개선(Dot 제거, 비타겟 site 이동 반영)',
-						'다음 개입 요청 자동 OFF',
-                        '문제해결 페이지',
-						'스트림덱 스타일 적용(길게 누르면 기능 ON/OFF됨)',
-						'임무 종료된 리센츠/엘스/한성대/진천 페이지 이탈 5초 후 자동 사이드',
-                        '게임패드 D-PAD 설명 / 게임패드 테스터',
-						'다중 자동 교대시작 최대 12대까지',
-                    ]
-                },
-            ];
-            // ────────────────────────────────────────────────────────
+            // patchItems는 위(버튼 라벨 생성 시점)에서 이미 선언됨 — 여기서는 그대로 재사용
 
             const patchContent = document.createElement('div');
             patchContent.style.cssText = "display:grid; gap:16px;";
@@ -1506,6 +1513,29 @@
             if (input) {
                 input.onchange = () => {
                     const newName = input.value.trim();
+
+                    // 오늘 시스템 데이터(스케줄/할일 목록)에 등록된 근무자명이 아니면
+                    // 저장하지 않고 디폴트('사용자') 상태로 되돌림
+                    if (newName) {
+                        const knownNames = new Set();
+                        if (state.insuData && state.insuData.schedule) {
+                            Object.values(state.insuData.schedule).forEach(n => knownNames.add(n));
+                        }
+                        if (Array.isArray(window.currentAllTasks)) {
+                            window.currentAllTasks.forEach(t => { if (t.user) knownNames.add(t.user); });
+                        }
+
+                        if (knownNames.size > 0 && !knownNames.has(newName)) {
+                            input.style.borderColor = '#ef4444';
+                            localStorage.removeItem('neubie_user_name');
+                            setTimeout(() => {
+                                syncTasksFromServer();
+                                renderDashboard();
+                            }, 350);
+                            return;
+                        }
+                    }
+
                     localStorage.setItem('neubie_user_name', newName);
                     
                     // 이름 저장 시 현재 선택된 알림 시간도 강제로 한 번 더 저장
