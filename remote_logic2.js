@@ -614,7 +614,7 @@
         copyBtn.textContent = '복사';
         Object.assign(copyBtn.style, {
             background:'#3b82f6', color:'white', border:'none',
-            height:'24px', padding:'0 14px',
+            height:'24px', width:'66px', flexShrink:'0', padding:'0',
             borderRadius:'6px', cursor:'pointer', fontWeight:'bold',
             fontSize:'13px',
             display:'flex', alignItems:'center', justifyContent:'center',
@@ -907,7 +907,7 @@
             s.textContent = `
                 @keyframes neubie-alarm-blink {
                     0%, 100% { border-color: #000; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-                    50% { border-color: #ff0000; box-shadow: 0 0 30px rgba(255,0,0,0.9); }
+                    50% { border-color: #10b981; box-shadow: 0 0 30px rgba(16,185,129,0.9); }
                 }
                 @keyframes neubie-fadein {
                     from { opacity:0; transform:translateX(-50%) translateY(-10px); }
@@ -919,8 +919,8 @@
         const alarmDiv = document.createElement('div');
         alarmDiv.style.cssText = `
             position:fixed; top:16px; left:50%; transform:translateX(-50%);
-            background:linear-gradient(135deg,#fbbf24,#f59e0b);
-            color:#000; padding:15px 30px; border-radius:14px;
+            background:linear-gradient(135deg,#10b981,#2dd4bf);
+            color:#fff; padding:15px 30px; border-radius:14px;
             z-index:9999999; font-weight:bold; font-size:16px;
             border:3px solid #000; display:flex; align-items:center; gap:10px;
             box-shadow:0 8px 30px rgba(0,0,0,0.5);
@@ -1116,19 +1116,25 @@
             const handoverKey = getHandoverGroupKey(t);
             const neighbors = getHandoverNeighbors(t, window.currentAllTasks);
 
+            // displayTime이 이미 시간을 따로 보여주고 있으니, 본문 텍스트 맨 앞의
+            // "[09:30~10:00]" 같은 중복 시간 표기는 제거한다 (task류에만 붙어있던 표기)
+            const bodyText = t.type === 'task'
+                ? String(t.content || '').replace(/^\[\d{2}:\d{2}(~\d{2}:\d{2})?\]\s*/, '')
+                : t.content;
+
             const nameChip = (name, isSelf) => `<span style="display:inline-flex; align-items:center; justify-content:center; min-width:36px; padding:2px 6px; margin:0 1px; border-radius:6px; box-sizing:border-box; font-size:${isSelf ? '12px' : '11px'}; font-weight:${isSelf ? '800' : '500'}; background:${isSelf ? '#3b82f6' : (T.isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)')}; color:${isSelf ? '#ffffff' : (T.isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.65)')};">${name}</span>`;
             // 취소선은 '업무텍스트' 부분에만 걸리도록 별도 span으로 분리 — 이름박스/화살표를 감싸는
             // 조상 요소엔 text-decoration을 절대 두지 않는다(자식에서 none으로 덮어써도 브라우저에 따라
             // 취소선이 새어나오는 문제가 있었음). 이름박스는 대신 opacity로만 흐리게 처리.
-            let displayContent = `<span style="${prefixStyle}">${t.content}</span>`;
-            let layoutLen = t.content.length;
+            let displayContent = `<span style="${prefixStyle}">${bodyText}</span>`;
+            let layoutLen = bodyText.length;
             if (neighbors && (neighbors.prev || neighbors.next)) {
                 const chainParts = [];
                 if (neighbors.prev) chainParts.push(nameChip(neighbors.prev, false));
                 chainParts.push(nameChip(t.user, true));
                 if (neighbors.next) chainParts.push(nameChip(neighbors.next, false));
                 const chainHtml = chainParts.join(' <span style="font-size:10px; opacity:0.55;">→</span> ');
-                const prefix = HANDOVER_DISPLAY_LABEL[handoverKey] || t.content;
+                const prefix = HANDOVER_DISPLAY_LABEL[handoverKey] || bodyText;
                 displayContent = `<span style="${prefixStyle}">${prefix}</span><span style="margin-left:10px; ${chainDimStyle}">${chainHtml}</span>`;
                 layoutLen = prefix.length + 25; // 체인 표기가 붙으면 길어진 것으로 간주해 2줄 표시 판단
             }
@@ -1279,7 +1285,7 @@
                 <div style="width: 1px; align-self: stretch; background: ${T.border};"></div>
                 <div style="flex: 1; display: flex; flex-direction: column; gap: 8px; min-width: 0;">
                     <button id="btnMulti" class="sub-btn">다중 모니터링 (${multiHourLabel})</button>
-                    <button id="btnCombined" class="sub-btn" ${isTiddiActive ? '' : 'disabled'} style="${tiddiLockStyle}">배송/순찰 띠띠 (${combinedHourLabel})</button>
+                    <button id="btnCombined" class="sub-btn" ${isTiddiActive ? '' : 'disabled'} style="${tiddiLockStyle}">배송/순찰 띠띠${isTiddiActive ? ` (${combinedHourLabel})` : ''}</button>
                 </div>
             </div>
         `;
@@ -1296,7 +1302,7 @@
             // 배송 띠띠 활성 여부에 따라 버튼 라벨 갱신 (신규 추가)
             const combinedBtnLabel = card.querySelector('#btnCombined');
             if (combinedBtnLabel) {
-                combinedBtnLabel.textContent = (TTIDDI_CONFIG.deliveryActive ? '배송/순찰 띠띠' : '순찰 띠띠 (배송 띠띠 입고)') + ` (${combinedHourLabel})`;
+                combinedBtnLabel.textContent = (TTIDDI_CONFIG.deliveryActive ? '배송/순찰 띠띠' : '순찰 띠띠 (배송 띠띠 입고)') + (isTiddiActive ? ` (${combinedHourLabel})` : '');
             }
 
 			// 영상 드라이브 열기 → 오늘 날짜 폴더로 이동 (없으면 루트 폴더로 폴백)
@@ -1520,9 +1526,9 @@
         nameArea.innerHTML = `
             <span>성명:</span>
             <input type="text" id="inline-name-input" value="${currentName}" placeholder="이름"
-                style="width:60px; border:1px solid #cbd5e1; outline:none; padding:5px 6px; 
-                    font-size:15px; font-weight:bold; color:#252525; background:white; 
-                    border-radius:4px; text-align:center; box-sizing:border-box;">
+                style="width:60px; border:1px solid #a7d8b8; outline:none; padding:5px 6px; 
+                    font-size:15px; font-weight:bold; color:#1f3d2a; background:#dff3e6; 
+                    border-radius:10px; text-align:center; box-sizing:border-box;">
             <button id="all-close-btn" style="background:#ef4444; color:white; border:none; border-radius:4px; width:26px; height:26px; cursor:pointer; font-weight:bold; display:flex; align-items:center; justify-content:center; font-size:14px; box-sizing:border-box;">✕</button>
         `;
 
@@ -1624,6 +1630,11 @@
                 };
             }
 
+            const remindTestBtn = document.getElementById('remind-test-btn');
+            if (remindTestBtn) {
+                remindTestBtn.onclick = () => triggerReminder('일일 업무 테스트 알림', 5);
+            }
+
             // X 버튼 클릭 시 통합 종료 실행
             const closeBtn = document.getElementById('all-close-btn');
             if (closeBtn) closeBtn.onclick = closeAllPopups;
@@ -1647,6 +1658,7 @@
             <div style="margin-bottom:10px;">
                 <div style="display:flex; align-items:center; gap:6px; margin-bottom:8px; flex-wrap:nowrap;">
                     <div style="font-weight:bold; font-size:17px; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📋 ${storedName}의 일일 업무</div>
+                    <button id="remind-test-btn" style="background:transparent; color:${T.accent}; border:1px solid ${T.accent}; font-size:12px; font-weight:bold; border-radius:4px; padding:2px 8px; cursor:pointer; white-space:nowrap;">알림 테스트</button>
                     <select id="remind-inline" style="background:${T.isDark ? '#333' : '#f0ede1'}; color:${T.isDark ? '#fff' : T.text}; border:1px solid ${T.isDark ? '#555' : T.border}; font-size:13px; font-weight:bold; border-radius:4px; padding:2px;">
                         <option value="0" ${currentInt === '0' ? 'selected' : ''}>알림 없음</option>
                         <option value="3" ${currentInt === '3' ? 'selected' : ''}>3분 전 알림</option>
