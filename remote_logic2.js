@@ -751,7 +751,7 @@
             const originalText = btn.textContent;
             const originalBg   = btn.style.background;
             btn.textContent    = '복사됨';
-            btn.style.background = '#22c55e';
+            btn.style.background = '#4ade80';
             setTimeout(() => {
                 btn.textContent    = originalText;
                 btn.style.background = originalBg;
@@ -1234,13 +1234,18 @@
         }).join('');
 
         // 복사 효과 공통 함수
+        const COPY_SUCCESS_COLOR = '#4ade80'; // 평소(엠에럴드)와 뚜렷이 구분되는 밝은 네온 라임그린
         const applyCopyEffect = (btn) => {
             const originalText = btn.textContent;
-            const originalBg = btn.style.background || "#444";
-            
+            // getComputedStyle로 실제 렌더링된 배경을 캡처 — 인라인 스타일이든(copyFileName)
+            // CSS 클래스(.sub-btn)든 상관없이 정확한 원래 색으로 복귀시키기 위함
+            // (이전엔 btn.style.background만 읽어서, 클래스로 배경을 정하는 .sub-btn 버튼은
+            //  항상 빈 값 → 하드코딩된 '#444'로 복귀해버리는 버그가 있었음)
+            const originalBg = getComputedStyle(btn).backgroundColor;
+
             btn.textContent = '복사됨';
-            btn.style.background = '#22c55e';
-            
+            btn.style.background = COPY_SUCCESS_COLOR;
+
             setTimeout(() => {
                 btn.textContent = originalText;
                 btn.style.background = originalBg;
@@ -1390,6 +1395,9 @@
     function renderDashboard() {
         dashboard.innerHTML = '';
         const T = getNbTheme();
+        // NCC 패널 제목과 동일한 네온 그린 그라데이션 텍스트 스타일 — 토글/2x2 버튼 라벨,
+        // 일일 업무 카드 제목 등 '제목'류 텍스트에 공통으로 재사용
+        const NEON_GREEN_TEXT = 'background:linear-gradient(135deg,#10b981,#2dd4bf); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent;';
         dashboard.style.backgroundColor = T.bg;
         dashboard.style.color = T.text;
         dashboard.style.backgroundImage = `linear-gradient(${T.bg}, ${T.bg}), linear-gradient(135deg, #10b981, #2dd4bf)`;
@@ -1691,7 +1699,7 @@
         taskCard.innerHTML = `
             <div style="margin-bottom:10px;">
                 <div style="display:flex; align-items:center; gap:6px; margin-bottom:8px; flex-wrap:nowrap;">
-                    <div style="font-weight:bold; font-size:17px; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📋 ${storedName}의 일일 업무</div>
+                    <div style="font-weight:bold; font-size:17px; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📋 <span style="color:${T.text};">${storedName}</span><span style="${NEON_GREEN_TEXT}">의 일일 업무</span></div>
                     <button id="remind-test-btn" style="background:transparent; color:${T.accent}; border:1px solid ${T.accent}; font-size:12px; font-weight:bold; border-radius:4px; padding:2px 8px; cursor:pointer; white-space:nowrap;">알림 테스트</button>
                     <select id="remind-inline" style="background:${T.isDark ? '#333' : '#f0ede1'}; color:${T.isDark ? '#fff' : T.text}; border:1px solid ${T.isDark ? '#555' : T.border}; font-size:13px; font-weight:bold; border-radius:4px; padding:2px;">
                         <option value="0" ${currentInt === '0' ? 'selected' : ''}>알림 없음</option>
@@ -1732,8 +1740,8 @@
                    </span>`
                 : '';
             row.innerHTML = `
-                <span class="nb-toggle-label" style="display:flex; align-items:center; gap:9px; font-size:15px; font-weight:600; color:${T.text};">
-                    <span style="font-size:18px;">${icon}</span>${label}${clickHint}
+                <span class="nb-toggle-label" style="display:flex; align-items:center; gap:9px; font-size:15px; font-weight:600;">
+                    <span style="font-size:18px;">${icon}</span><span style="${NEON_GREEN_TEXT}">${label}</span>${clickHint}
                 </span>
                 <label style="position:relative; display:inline-block; width:54px; height:24px; flex-shrink:0; cursor:pointer;">
                     <input type="checkbox" ${isOn ? 'checked' : ''} class="nb-toggle-input" style="opacity:0; width:0; height:0;">
@@ -2004,7 +2012,7 @@
             padding:7px 4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
         scheduleCard.innerHTML = `<span style="font-size:16px;">📅</span>
-            <span style="font-size:14px; font-weight:600; line-height:1.2; text-align:center; color:${T.text};">스케줄표/좌석도</span>`;
+            <span style="font-size:14px; font-weight:600; line-height:1.2; text-align:center; ${NEON_GREEN_TEXT}">스케줄표/좌석도</span>`;
         window._neubieScheduleCard = scheduleCard;
         attachStaticNeonHover(scheduleCard, '255,79,163');
         scheduleCard.onclick = () => {
@@ -2022,7 +2030,7 @@
             padding:7px 4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
         rouletteCard.innerHTML = `<span style="font-size:16px;">🧰</span>
-            <span style="font-size:14px; font-weight:600; line-height:1.2; text-align:center; color:${T.text};">SW/헬프</span>`;
+            <span style="font-size:14px; font-weight:600; line-height:1.2; text-align:center; ${NEON_GREEN_TEXT}">SW 설정/헬프</span>`;
         window._neubieRouletteCard = rouletteCard;
         attachStaticNeonHover(rouletteCard, '44,230,217');
         rouletteCard.onclick = () => {
@@ -2046,7 +2054,7 @@
             padding:7px 4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
         batteryCard.innerHTML = `<span style="font-size:16px;">🔋</span>
-            <span style="font-size:14px; font-weight:600; line-height:1.2; text-align:center; color:${T.text};">성남 배터리 현황</span>`;
+            <span style="font-size:14px; font-weight:600; line-height:1.2; text-align:center; ${NEON_GREEN_TEXT}">성남 배터리 현황</span>`;
         window._neubieBatteryCard = batteryCard;
         attachStaticNeonHover(batteryCard, '250,204,21');
         batteryCard.onclick = () => {
@@ -2067,7 +2075,7 @@
             padding:7px 4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
         weatherCard.innerHTML = `<span style="font-size:16px;">🎨</span>
-            <span style="font-size:14px; font-weight:600; line-height:1.2; text-align:center; color:${T.text};">다크/라이트 모드</span>`;
+            <span style="font-size:14px; font-weight:600; line-height:1.2; text-align:center; ${NEON_GREEN_TEXT}">다크/라이트 모드</span>`;
         window._neubieWeatherCard = weatherCard;
         attachStaticNeonHover(weatherCard, '157,92,255');
         weatherCard.onclick = () => {
