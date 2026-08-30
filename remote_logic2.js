@@ -466,7 +466,7 @@
             borderRadius: '24px', padding: '20px', zIndex: '1000000',
             fontFamily: 'Pretendard, sans-serif', boxShadow: '0 20px 50px rgba(0,0,0,0.8)',
             border: '4px solid transparent', display: 'none', transform: left === '50%' ? 'translate(-50%, -50%)' : 'none',
-            backgroundImage: 'linear-gradient(#111111, #111111), linear-gradient(135deg, #6366f1, #ec4899)',
+            backgroundImage: 'linear-gradient(#111111, #111111), linear-gradient(135deg, #10b981, #2dd4bf)',
             backgroundOrigin: 'border-box',
             backgroundClip: 'padding-box, border-box',
             maxHeight: '90vh', overflowY: 'auto', overflowX: 'hidden',
@@ -481,7 +481,7 @@
     // ── 대시보드 전체 배율(줌) 조정 ──
     // 콘솔/코드에서 window.setDashboardZoom(0.95) 처럼 호출하면 즉시 반영되고
     // localStorage에 저장돼 다음 로드 때도 유지된다. window.adjustDashboardZoom(3)은
-    // 현재 값에 +3%p 하는 식으로 상대 조정할 때 쓰면 편함.
+    // 현재 값에 +3%p 하는 식으로 상대 조정할 때 쓰면 편하다.
     const DEFAULT_DASHBOARD_ZOOM = 0.95;
     function getDashboardZoom() {
         const saved = parseFloat(localStorage.getItem('neubie_dashboard_zoom'));
@@ -597,7 +597,7 @@
     function buildBatteryShell() {
         const T = getNbTheme();
         batteryPopup.style.backgroundColor = T.bg;
-        batteryPopup.style.backgroundImage = `linear-gradient(${T.bg}, ${T.bg}), linear-gradient(135deg, #6366f1, #ec4899)`;
+        batteryPopup.style.backgroundImage = `linear-gradient(${T.bg}, ${T.bg}), linear-gradient(135deg, #10b981, #2dd4bf)`;
         batteryPopup.style.color = T.text;
 
         batteryPopup.innerHTML = '';
@@ -962,14 +962,23 @@
             if (!timeMatch) return null;
             const hourNum = parseInt(timeMatch[0].slice(0, 2), 10);
 
-            // 07시는 GAS가 매일 07:00~17:59 사이 계속 갱신해서 미리 만들어둔 통합
-            // 인계 스냅샷(next_0700_handover)을 그대로 사용한다. 이 스냅샷은 daily_tasks.json
-            // 안에 항상 같이 실려오기 때문에, 07시 시트 갱신 전이든 후든, 심지어 그날
-            // 처음 켠 시점이 몇 시든 상관없이 항상 동일한(정확한) 전임/후임이 뜬다.
-            if (hourNum === 7 && Array.isArray(allTasks)) {
-                const snap = allTasks.find(t => t.type === 'next_0700_handover' && t.selfUser === myTask.user);
-                if (snap) {
-                    return { prev: snap.prevUser || null, next: snap.nextUser || null };
+            // 06시(오늘 로테이션의 마지막 순번)와 07시(내일 로테이션의 첫 순번)는
+            // 서로 다른 하루 주기를 넘나드는 경계다. schedule은 '하나의 07:00~06:00'
+            // 주기만 담고 있어서, 06시의 '다음'을 단순히 schedule['07:00']으로 구하면
+            // 그건 내일이 아니라 '오늘 자신의(이미 지나간) 07시'를 가리키게 되는 버그가
+            // 있었다 — 이 두 경계 방향은 GAS가 만들어둔 next_0700_handover 스냅샷으로
+            // 정확히 채운다.
+            if (Array.isArray(allTasks)) {
+                if (hourNum === 7) {
+                    const snap = allTasks.find(t => t.type === 'next_0700_handover' && t.selfUser === myTask.user);
+                    if (snap) return { prev: snap.prevUser || null, next: snap.nextUser || null };
+                }
+                if (hourNum === 6) {
+                    const snap = allTasks.find(t => t.type === 'next_0700_handover' && t.prevUser === myTask.user);
+                    if (snap) {
+                        const prevSchedule = (state.insuData && state.insuData.schedule) ? state.insuData.schedule['05:00'] : null;
+                        return { prev: prevSchedule || null, next: snap.selfUser || null };
+                    }
                 }
                 // 스냅샷을 못 찾으면(구버전 데이터 등) 아래 스케줄 기반 계산으로 안전하게 폴백
             }
@@ -1041,8 +1050,11 @@
                 return content.trim() !== "" && !String(rawTime).includes("1899");
             })
             .sort((a, b) => {
-                const scoreA = getTaskStatus(a.rawTime || a.time).score;
-                const scoreB = getTaskStatus(b.rawTime || b.time).score;
+                // '내일 07시' 미리보기(next_0700_handover)는 rawTime이 '07:00'이라
+                // 상대점수 계산상 항상 0점(=가장 이른 순번)이 나와버려서, 그대로 두면
+                // 리스트 맨 위로 올라가는 문제가 있었다 — 항상 맨 아래로 고정한다.
+                const scoreA = a.type === 'next_0700_handover' ? Infinity : getTaskStatus(a.rawTime || a.time).score;
+                const scoreB = b.type === 'next_0700_handover' ? Infinity : getTaskStatus(b.rawTime || b.time).score;
                 return scoreA - scoreB;
             });
 
@@ -1193,7 +1205,7 @@
         card.id = 'namingSection';
         card.style.cssText = `
             padding:10px 15px; border-radius:15px; margin-top:5px; border:1px solid transparent;
-            background-image: linear-gradient(${T.card}, ${T.card}), linear-gradient(135deg, #6366f1, #ec4899);
+            background-image: linear-gradient(${T.card}, ${T.card}), linear-gradient(135deg, #10b981, #2dd4bf);
             background-origin: border-box; background-clip: padding-box, border-box;
             box-shadow:0 0 5px rgba(150,120,255,0.25);
         `;
@@ -1232,18 +1244,18 @@
         card.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                 <span style="color:${T.accent}; font-weight:bold; font-size:18px;">🏷️ 영상 파일명 생성기</span>
-                <button id="openDriveTodayBtn" style="background:${neutralBtnBg}; color:${neutralBtnText}; border:1px solid ${neutralBtnBorder}; padding:4px 8px; border-radius:6px; font-size:13px; cursor:pointer; white-space:nowrap;">📂 구글 영상 드라이브</button>
+                <button id="openDriveTodayBtn" style="background:${neutralBtnBg}; color:${neutralBtnText}; border:1px solid ${neutralBtnBorder}; padding:4px 8px; border-radius:6px; font-size:13px; font-weight:bold; cursor:pointer; white-space:nowrap;">📂 구글 영상 드라이브</button>
             </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px 5px; margin-bottom: 10px;">
                 <div style="position: relative; min-width: 0;">
-                    <select id="robotSelector" style="width: 100%; background: ${fieldBg}; color: ${fieldText}; border: 1px solid ${fieldBorder}; border-radius: 4px; font-size: 15px; padding: 0 20px 0 8px; height: 32px; line-height: 32px; box-sizing: border-box; appearance: none; -webkit-appearance: none; -moz-appearance: none;">
+                    <select id="robotSelector" style="width: 100%; background: ${fieldBg}; color: ${fieldText}; border: 1px solid ${fieldBorder}; border-radius: 4px; font-size: 15px; font-weight: bold; padding: 0 20px 0 8px; height: 32px; line-height: 32px; box-sizing: border-box; appearance: none; -webkit-appearance: none; -moz-appearance: none;">
                         ${dropdownOptions || '<option>최근 배달 기체 미감지</option>'}
                     </select>
                     <span style="position: absolute; right: 6px; top: 50%; transform: translateY(-50%); pointer-events: none; color: #aaa; font-size: 11px;">▾</span>
                 </div>
                 <button id="btnMulti" class="sub-btn">다중 모니터링 (${multiHourLabel})</button>
                 <div style="display: flex; gap: 5px; min-width: 0;">
-                    <input type="text" id="taskInput" placeholder="주문번호를 붙여넣으세요." style="flex: 1; min-width: 0; background: ${fieldBg}; color: ${fieldText}; border: 1px solid ${fieldBorder}; padding: 0 8px; border-radius: 4px; font-size: 15px; height: 32px; line-height: 32px; box-sizing: border-box;">
+                    <input type="text" id="taskInput" placeholder="주문번호를 붙여넣으세요." style="flex: 1; min-width: 0; background: ${fieldBg}; color: ${fieldText}; border: 1px solid ${fieldBorder}; padding: 0 8px; border-radius: 4px; font-size: 15px; font-weight: bold; height: 32px; line-height: 32px; box-sizing: border-box;">
                     <button id="copyFileName" style="width: 70px; flex-shrink: 0; background: #007bff; color: white; border: none; padding: 0 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 15px; white-space: nowrap; overflow: hidden; height: 32px; line-height: 32px; box-sizing: border-box;">복사</button>
                 </div>
                 <button id="btnCombined" class="sub-btn">배송/순찰 띠띠 (${combinedHourLabel})</button>
@@ -1256,7 +1268,7 @@
             btnStyleTag.id = 'naming-btn-style';
             document.head.appendChild(btnStyleTag);
         }
-        btnStyleTag.textContent = `.sub-btn { background: ${neutralBtnBg}; color: ${neutralBtnText}; border: 1px solid ${neutralBtnBorder}; padding: 6px 4px; border-radius: 6px; font-size: 15px; cursor: pointer; flex: 1; min-width: 0; transition: 0.2s; } .sub-btn:hover { background: ${neutralBtnHoverBg}; border-color: ${neutralBtnHoverBorder}; }`;
+        btnStyleTag.textContent = `.sub-btn { background: ${neutralBtnBg}; color: ${neutralBtnText}; border: 1px solid ${neutralBtnBorder}; padding: 6px 4px; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; flex: 1; min-width: 0; transition: 0.2s; } .sub-btn:hover { background: ${neutralBtnHoverBg}; border-color: ${neutralBtnHoverBorder}; }`;
 
         setTimeout(() => {
             // 배송 띠띠 활성 여부에 따라 버튼 라벨 갱신 (신규 추가)
@@ -1352,7 +1364,7 @@
         const T = getNbTheme();
         dashboard.style.backgroundColor = T.bg;
         dashboard.style.color = T.text;
-        dashboard.style.backgroundImage = `linear-gradient(${T.bg}, ${T.bg}), linear-gradient(135deg, #6366f1, #ec4899)`;
+        dashboard.style.backgroundImage = `linear-gradient(${T.bg}, ${T.bg}), linear-gradient(135deg, #10b981, #2dd4bf)`;
         
         // 헤더 컨테이너 (제목 + 성명 입력창 + X 버튼 인라인 배치)
         const headerContainer = document.createElement('div');
@@ -1603,7 +1615,7 @@
         const taskCard = document.createElement('div');
         taskCard.style.cssText = `
             padding:15px; border-radius:15px; border:1px solid transparent;
-            background-image: linear-gradient(${T.card}, ${T.card}), linear-gradient(135deg, #6366f1, #ec4899);
+            background-image: linear-gradient(${T.card}, ${T.card}), linear-gradient(135deg, #10b981, #2dd4bf);
             background-origin: border-box; background-clip: padding-box, border-box;
             box-shadow:0 0 5px rgba(150,120,255,0.25);
         `;
@@ -1646,7 +1658,10 @@
                 background:${T.card}; gap:10px;
             `;
             const clickHint = onLabelClick
-                ? `<span class="nb-click-hint" style="font-size:10px; font-weight:700; color:${T.accent}; animation:neubie-blink 2.2s ease-in-out infinite; margin-left:2px;">Click!</span>`
+                ? `<span class="nb-click-hint" style="display:inline-flex; flex-direction:column; align-items:center; justify-content:center; line-height:1.05; margin-left:3px; animation:neubie-blink 2.2s ease-in-out infinite;">
+                        <span style="font-size:8px; font-weight:800; color:${T.accent};">설명</span>
+                        <span style="font-size:8px; font-weight:800; color:${T.accent};">Click!</span>
+                   </span>`
                 : '';
             row.innerHTML = `
                 <span class="nb-toggle-label" style="display:flex; align-items:center; gap:9px; font-size:15px; font-weight:600; color:${T.text};">
