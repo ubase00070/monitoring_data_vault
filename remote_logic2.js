@@ -1072,7 +1072,7 @@
                 if (neighbors.next) chainParts.push(nameChip(neighbors.next, false));
                 const chainHtml = chainParts.join(' <span style="font-size:10px; opacity:0.55;">→</span> ');
                 const prefix = HANDOVER_DISPLAY_LABEL[handoverKey] || t.content;
-                displayContent = `${prefix}<span style="margin-left:10px;">${chainHtml}</span>`;
+                displayContent = `${prefix}<span style="margin-left:10px; text-decoration:none;">${chainHtml}</span>`;
                 layoutLen = prefix.length + 25; // 체인 표기가 붙으면 길어진 것으로 간주해 2줄 표시 판단
             }
 
@@ -1234,6 +1234,14 @@
 			// 영상 드라이브 열기 → 오늘 날짜 폴더로 이동 (없으면 루트 폴더로 폴백)
             const openDriveBtn = card.querySelector('#openDriveTodayBtn');
             if (openDriveBtn) {
+                openDriveBtn.onmouseenter = () => {
+                    openDriveBtn.style.background = neutralBtnHoverBg;
+                    openDriveBtn.style.borderColor = neutralBtnHoverBorder;
+                };
+                openDriveBtn.onmouseleave = () => {
+                    openDriveBtn.style.background = neutralBtnBg;
+                    openDriveBtn.style.borderColor = neutralBtnBorder;
+                };
                 openDriveBtn.onclick = async () => {
                     const ROOT_FOLDER_URL = 'https://drive.google.com/drive/folders/0AJPzAP1RZ6FhUk9PVA';
                     const todayStr = getFormattedDate(new Date()); // 예: "20260721"
@@ -1467,7 +1475,7 @@
         titleWrap.appendChild(patchBtn);
         titleWrap.appendChild(boardBtn);
 
-        const gamepadToggleUI = createToggleRow('🎮', '패드 기능 & 테스터', !isDpadBindingOff(),
+        const gamepadToggleUI = createToggleRow('🎮', '패드기능/테스터', !isDpadBindingOff(),
             (on) => {
                 localStorage.setItem('neubie_dpad_binding', on ? 'on' : 'off');
             },
@@ -1586,9 +1594,12 @@
                 border:1px solid ${T.border}; border-radius:10px; padding:8px 14px;
                 background:${T.card}; gap:10px;
             `;
+            const clickHint = onLabelClick
+                ? `<span class="nb-click-hint" style="font-size:10px; font-weight:700; color:${T.accent}; animation:neubie-blink 2.2s ease-in-out infinite; margin-left:2px;">Click!</span>`
+                : '';
             row.innerHTML = `
                 <span class="nb-toggle-label" style="display:flex; align-items:center; gap:9px; font-size:15px; font-weight:600; color:${T.text};">
-                    <span style="font-size:18px;">${icon}</span>${label}
+                    <span style="font-size:18px;">${icon}</span>${label}${clickHint}
                 </span>
                 <label style="position:relative; display:inline-block; width:54px; height:24px; flex-shrink:0; cursor:pointer;">
                     <input type="checkbox" ${isOn ? 'checked' : ''} class="nb-toggle-input" style="opacity:0; width:0; height:0;">
@@ -1901,7 +1912,7 @@
             padding:7px 4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
         batteryCard.innerHTML = `<span style="font-size:16px;">🔋</span>
-            <span style="font-size:14px; font-weight:600; line-height:1.2; text-align:center; color:${T.text};">성남 배터리</span>`;
+            <span style="font-size:14px; font-weight:600; line-height:1.2; text-align:center; color:${T.text};">성남 배터리 현황</span>`;
         window._neubieBatteryCard = batteryCard;
         attachStaticNeonHover(batteryCard, '250,204,21');
         batteryCard.onclick = () => {
@@ -1922,7 +1933,7 @@
             padding:7px 4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
         weatherCard.innerHTML = `<span style="font-size:16px;">🎨</span>
-            <span style="font-size:14px; font-weight:600; line-height:1.2; text-align:center; color:${T.text};">레이아웃 설정</span>`;
+            <span style="font-size:14px; font-weight:600; line-height:1.2; text-align:center; color:${T.text};">레이아웃 색상</span>`;
         window._neubieWeatherCard = weatherCard;
         attachStaticNeonHover(weatherCard, '157,92,255');
         weatherCard.onclick = () => {
