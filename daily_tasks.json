@@ -144,12 +144,6 @@
     "rawTime": "06:00"
   },
   {
-    "user": "안대관",
-    "type": "yesterday_06",
-    "content": "다중 모니터링",
-    "rawTime": "06:00"
-  },
-  {
     "user": "이민수",
     "type": "task",
     "content": "[08:50] 부산과학관 170호기 임무 HUB B 출근 / 자비에 재부팅 / 임무받기 ON 진행 [화,수,목,금,토,일]",
@@ -265,14 +259,12 @@
   },
   {
     "user": "오정훈",
-    "type": "tomorrow_07",
+    "type": "next_0700_handover",
     "content": "다중 모니터링",
-    "rawTime": "07:00"
-  },
-  {
-    "user": "김지훈",
-    "type": "tomorrow_08",
-    "content": "다중 모니터링",
-    "rawTime": "08:00"
+    "rawTime": "07:00",
+    "forDate": "2026-08-31",
+    "prevUser": "안대관",
+    "selfUser": "오정훈",
+    "nextUser": "김지훈"
   }
 ]
