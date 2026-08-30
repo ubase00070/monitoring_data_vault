@@ -764,9 +764,43 @@
     /* ============================================================
         SECTION 4-1. [서버 동기화] GitHub JSON 기반 업무 로드
        ============================================================ */
+    // ── 전체 근무자 명단 (오늘 휴무자 포함) ──
+    // seat_map.json은 좌석배치용 2차원 배열이라, 한 칸에 "안대관/이준"처럼 여러 명이
+    // '/'로 같이 적혀있는 경우가 있어 개별 이름으로 쪼개서 평탄화한다.
+    // 세션 중엔 한 번만 받아오면 되므로 메모리에 캐싱(부담 없는 가벼운 조회).
+    let cachedStaffRoster = null;
+    async function getStaffRoster() {
+        if (cachedStaffRoster) return cachedStaffRoster;
+        try {
+            const res = await fetch(
+                'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/monthly_schedule/seat_map.json',
+                { cache: 'no-store' }
+            );
+            const seatMap = await res.json();
+            const names = new Set();
+            (seatMap || []).forEach(row => {
+                (row || []).forEach(cell => {
+                    String(cell).split('/').forEach(n => {
+                        const trimmed = n.trim();
+                        if (trimmed) names.add(trimmed);
+                    });
+                });
+            });
+            cachedStaffRoster = names;
+            return names;
+        } catch (e) {
+            console.warn('[이름 검증] 근무자 명단 로드 실패:', e);
+            return null; // 조회 실패 시엔 검증을 건너뛰어 정상 이름까지 막지 않도록 함
+        }
+    }
+
     function syncTasksFromServer() {
         const myName = localStorage.getItem('neubie_user_name');
-        if (!myName) return;
+        if (!myName) {
+            window.currentMyTasks = [];
+            renderTaskList([]); // 이름이 비어있으면 즉시 '배정된 업무가 없습니다' 상태로 표시
+            return;
+        }
 
         const dataUrl = `https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/daily_tasks.json?t=${Date.now()}`;
 		const insuUrl = `https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/insu_data.json?t=${Date.now()}`;
@@ -1455,11 +1489,11 @@
         
         nameArea.innerHTML = `
             <span>성명:</span>
-            <input type="text" id="inline-name-input" value="${currentName}" placeholder="이름 입력"
-                style="width:60px; border:1px solid #cbd5e1; outline:none; padding:2px 6px; 
+            <input type="text" id="inline-name-input" value="${currentName}" placeholder="이름"
+                style="width:60px; border:1px solid #cbd5e1; outline:none; padding:5px 6px; 
                     font-size:15px; font-weight:bold; color:#252525; background:white; 
-                    border-radius:4px; text-align:center;">
-            <button id="all-close-btn" style="background:#ef4444; color:white; border:none; border-radius:4px; width:22px; height:22px; cursor:pointer; font-weight:bold; display:flex; align-items:center; justify-content:center; font-size:14px;">✕</button>
+                    border-radius:4px; text-align:center; box-sizing:border-box;">
+            <button id="all-close-btn" style="background:#ef4444; color:white; border:none; border-radius:4px; width:26px; height:26px; cursor:pointer; font-weight:bold; display:flex; align-items:center; justify-content:center; font-size:14px; box-sizing:border-box;">✕</button>
         `;
 
         // 게시판은 헤더의 패치노트 옆으로 이동, 게임패드는 아래 토글 행으로
@@ -1482,7 +1516,7 @@
         titleWrap.appendChild(patchBtn);
         titleWrap.appendChild(boardBtn);
 
-        const gamepadToggleUI = createToggleRow('🎮', '패드기능/테스터', !isDpadBindingOff(),
+        const gamepadToggleUI = createToggleRow('🎮', '패드 키변경/테스트', !isDpadBindingOff(),
             (on) => {
                 localStorage.setItem('neubie_dpad_binding', on ? 'on' : 'off');
             },
@@ -1511,27 +1545,18 @@
         setTimeout(() => {
             const input = document.getElementById('inline-name-input');
             if (input) {
-                input.onchange = () => {
+                input.onchange = async () => {
                     const newName = input.value.trim();
 
-                    // 오늘 시스템 데이터(스케줄/할일 목록)에 등록된 근무자명이 아니면
-                    // 저장하지 않고 디폴트('사용자') 상태로 되돌림
+                    // 전체 근무자 명단(오늘 휴무자 포함)에 없는 이름이면 저장하지 않고
+                    // 디폴트('사용자') 상태로 되돌림. 명단 조회 실패 시엔 검증을 건너뜀.
                     if (newName) {
-                        const knownNames = new Set();
-                        if (state.insuData && state.insuData.schedule) {
-                            Object.values(state.insuData.schedule).forEach(n => knownNames.add(n));
-                        }
-                        if (Array.isArray(window.currentAllTasks)) {
-                            window.currentAllTasks.forEach(t => { if (t.user) knownNames.add(t.user); });
-                        }
-
-                        if (knownNames.size > 0 && !knownNames.has(newName)) {
+                        const roster = await getStaffRoster();
+                        if (roster && roster.size > 0 && !roster.has(newName)) {
                             input.style.borderColor = '#ef4444';
                             localStorage.removeItem('neubie_user_name');
-                            setTimeout(() => {
-                                syncTasksFromServer();
-                                renderDashboard();
-                            }, 350);
+                            syncTasksFromServer();
+                            setTimeout(() => renderDashboard(), 350);
                             return;
                         }
                     }
@@ -1727,7 +1752,7 @@
         window.isSharedPopupOpen = isSharedPopupOpen;
 
         // 요기요 최적화 — 토글 행 (아이콘 + 라벨 클릭=설명, 스위치 클릭=on/off)
-        const mapToggleUI = createToggleRow('🗺️', '맵 최적화 기능', state.isMapOpt,
+        const mapToggleUI = createToggleRow('🗺️', 'NCC 맵 최적화', state.isMapOpt,
             (on) => {
                 state.isMapOpt = on;
                 localStorage.setItem('neubie_opt_map', state.isMapOpt);
@@ -1799,7 +1824,7 @@
 
 		// 다중 모니터링 기능 — 토글 행
         const queueEnabled = localStorage.getItem('neubie_handover_enabled') === 'true';
-        const queueToggleUI = createToggleRow('🖥️', '다중 모니터링 기능', queueEnabled,
+        const queueToggleUI = createToggleRow('🖥️', '다중 모니터링 도우미', queueEnabled,
             (on) => {
                 localStorage.setItem('neubie_handover_enabled', on);
                 const bar = document.getElementById('neubie-brightness-bar');
