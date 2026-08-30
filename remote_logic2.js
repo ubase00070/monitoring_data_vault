@@ -481,7 +481,7 @@
     // ── 대시보드 전체 배율(줌) 조정 ──
     // 콘솔/코드에서 window.setDashboardZoom(0.95) 처럼 호출하면 즉시 반영되고
     // localStorage에 저장돼 다음 로드 때도 유지된다. window.adjustDashboardZoom(3)은
-    // 현재 값에 +3%p 하는 식으로 상대 조정할 때 쓰면 편하다.
+    // 현재 값에 +3%p 하는 식으로 상대 조정할 때 쓰면 편함.
     const DEFAULT_DASHBOARD_ZOOM = 0.95;
     function getDashboardZoom() {
         const saved = parseFloat(localStorage.getItem('neubie_dashboard_zoom'));
