@@ -44,7 +44,7 @@
 
     const NB_THEMES = {
         light: { bg: '#f3ecdb', card: '#e2d7bd', border: '#cbbd98', text: '#2b2418', accent: '#1e3a5f', purple: '#7c3aed', isDark: false },
-        dark:  { bg: '#1c1c1f', card: '#39383f', border: '#4c4b53', text: '#e8e9ec', accent: '#5b9bf7', purple: '#c9b8fb', isDark: true }
+        dark:  { bg: '#232327', card: '#403f47', border: '#54535c', text: '#e8e9ec', accent: '#5b9bf7', purple: '#c9b8fb', isDark: true }
     };
 
     function getNbTheme() {
@@ -613,7 +613,7 @@
         const copyBtn = document.createElement('button');
         copyBtn.textContent = '복사';
         Object.assign(copyBtn.style, {
-            background:'#3b82f6', color:'white', border:'none',
+            background:'#10b981', color:'white', border:'none',
             height:'24px', width:'66px', flexShrink:'0', padding:'0',
             borderRadius:'6px', cursor:'pointer', fontWeight:'bold',
             fontSize:'13px',
@@ -1279,7 +1279,7 @@
                     </div>
                     <div style="display: flex; gap: 5px; min-width: 0;">
                         <input type="text" id="taskInput" placeholder="주문번호를 붙여넣으세요." style="flex: 1; min-width: 0; background: ${fieldBg}; color: ${fieldText}; border: 1px solid ${fieldBorder}; padding: 0 8px; border-radius: 4px; font-size: 15px; font-weight: bold; height: 32px; line-height: 32px; box-sizing: border-box;">
-                        <button id="copyFileName" style="width: 70px; flex-shrink: 0; background: #007bff; color: white; border: none; padding: 0 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 15px; white-space: nowrap; overflow: hidden; height: 32px; line-height: 32px; box-sizing: border-box;">복사</button>
+                        <button id="copyFileName" style="width: 70px; flex-shrink: 0; background: #10b981; color: white; border: none; padding: 0 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 15px; white-space: nowrap; overflow: hidden; height: 32px; line-height: 32px; box-sizing: border-box;">복사</button>
                     </div>
                 </div>
                 <div style="width: 1px; align-self: stretch; background: ${T.border};"></div>
@@ -1399,8 +1399,10 @@
         headerContainer.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; padding-right:5px;";
 
         const title = document.createElement('h2');
-        title.textContent = OFFLINE_MODE ? "오프라인 모드" : "NCC 도우미";
-        title.style.cssText = `color:${T.accent}; font-size:20px; margin:0; font-weight:bold; white-space:nowrap;`;
+        title.textContent = OFFLINE_MODE ? "오프라인 모드" : "NCC 패널";
+        title.style.cssText = OFFLINE_MODE
+            ? `color:${T.accent}; font-size:20px; margin:0; font-weight:bold; white-space:nowrap;`
+            : `background:linear-gradient(135deg,#10b981,#2dd4bf); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent; font-size:20px; margin:0; font-weight:bold; white-space:nowrap;`;
 
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
 		// 문자열을 넣으면 패치노트에 빨간 '`' 뱃지가 점멸하며 뜸.
@@ -1632,7 +1634,39 @@
 
             const remindTestBtn = document.getElementById('remind-test-btn');
             if (remindTestBtn) {
-                remindTestBtn.onclick = () => triggerReminder('일일 업무 테스트 알림', 5);
+                const ALARM_VISIBLE_MS = 7000; // triggerReminder의 표시 유지시간
+                const ALARM_FADE_MS = 500;     // 사라지는 페이드 시간
+                const LOCK_MS = ALARM_VISIBLE_MS + ALARM_FADE_MS;
+
+                remindTestBtn.onmouseenter = () => {
+                    if (remindTestBtn.disabled) return;
+                    remindTestBtn.style.background = T.accent;
+                    remindTestBtn.style.color = '#fff';
+                };
+                remindTestBtn.onmouseleave = () => {
+                    if (remindTestBtn.disabled) return;
+                    remindTestBtn.style.background = 'transparent';
+                    remindTestBtn.style.color = T.accent;
+                };
+                remindTestBtn.onclick = () => {
+                    triggerReminder('일일 업무 테스트 알림', 5);
+
+                    // 알림이 화면에 떠있는 동안(+ 사라지는 시간)엔 중복 클릭 방지를 위해 잠금
+                    remindTestBtn.disabled = true;
+                    remindTestBtn.style.cursor = 'not-allowed';
+                    remindTestBtn.style.opacity = '0.5';
+                    remindTestBtn.style.background = 'transparent';
+                    remindTestBtn.style.color = T.accent;
+                    const originalText = remindTestBtn.textContent;
+                    remindTestBtn.textContent = '테스트 중...';
+
+                    setTimeout(() => {
+                        remindTestBtn.disabled = false;
+                        remindTestBtn.style.cursor = 'pointer';
+                        remindTestBtn.style.opacity = '1';
+                        remindTestBtn.textContent = originalText;
+                    }, LOCK_MS);
+                };
             }
 
             // X 버튼 클릭 시 통합 종료 실행
@@ -1945,7 +1979,7 @@
                 기체별 헤드램프 토글<br>
 				기체 카메라 밝기 한 번에 조절<br>
 				카메라 위치 스왑<br>
-				'NCC 도우미'만 이용하더라도 교대 기체 받기는 가능<br>
+				'NCC 패널'만 이용하더라도 교대 기체 받기는 가능<br>
             `;
 
             queueInfoBox.appendChild(queueInfoClose);
@@ -2033,7 +2067,7 @@
             padding:7px 4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
         weatherCard.innerHTML = `<span style="font-size:16px;">🎨</span>
-            <span style="font-size:14px; font-weight:600; line-height:1.2; text-align:center; color:${T.text};">레이아웃 색상</span>`;
+            <span style="font-size:14px; font-weight:600; line-height:1.2; text-align:center; color:${T.text};">다크/라이트 모드</span>`;
         window._neubieWeatherCard = weatherCard;
         attachStaticNeonHover(weatherCard, '157,92,255');
         weatherCard.onclick = () => {
@@ -4263,7 +4297,7 @@
                 box.style.cssText = `background:${T.card}; color:${T.text}; border-radius:16px; padding:20px; width:100%; box-sizing:border-box; box-shadow:0 4px 40px rgba(0,0,0,0.7); pointer-events:auto;`;
                 box.innerHTML = `
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-                        <span style="font-size:16px;font-weight:700;">🎨 레이아웃 색상 설정</span>
+                        <span style="font-size:16px;font-weight:700;">🎨 다크/라이트 모드 설정</span>
                         <button id="dto-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
                     </div>
 
