@@ -44,7 +44,7 @@
 
     const NB_THEMES = {
         light: { bg: '#f3ecdb', card: '#e2d7bd', border: '#cbbd98', text: '#2b2418', accent: '#1e3a5f', purple: '#7c3aed', isDark: false },
-        dark:  { bg: '#1c1c1f', card: '#302f37', border: '#44434c', text: '#e8e9ec', accent: '#5b9bf7', purple: '#c9b8fb', isDark: true }
+        dark:  { bg: '#1c1c1f', card: '#39383f', border: '#4c4b53', text: '#e8e9ec', accent: '#5b9bf7', purple: '#c9b8fb', isDark: true }
     };
 
     function getNbTheme() {
@@ -996,21 +996,22 @@
 
             const displayTime = (String(timeKey).length > 10) ? String(timeKey).match(/\d{2}:\d{2}/)?.[0] : timeKey;
 
-            // 인계 체인 표기 — '다중 모니터링' / '부산 국립과학관' 업무는 전임자/후임자를 같이 표기
+            // 인계 체인 표기 — '다중 모니터링' / '부산 국립과학관' 업무는 전임자/후임자를 이름 박스로 표기
             const HANDOVER_DISPLAY_LABEL = { '다중 모니터링': '다중 모니터링', '부산 국립과학관': '부산국립과학관' };
             const handoverKey = getHandoverGroupKey(t);
             const neighbors = getHandoverNeighbors(t, window.currentAllTasks);
+            const nameChip = (name, isSelf) => `<span style="display:inline-flex; align-items:center; justify-content:center; min-width:36px; padding:2px 6px; margin:0 1px; border-radius:6px; box-sizing:border-box; font-size:${isSelf ? '12px' : '11px'}; font-weight:${isSelf ? '800' : '500'}; background:${isSelf ? '#3b82f6' : (T.isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)')}; color:${isSelf ? '#ffffff' : (T.isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.65)')};">${name}</span>`;
             let displayContent = t.content;
             let layoutLen = t.content.length;
             if (neighbors && (neighbors.prev || neighbors.next)) {
                 const chainParts = [];
-                if (neighbors.prev) chainParts.push(`<span style="font-size:11px; opacity:0.7;">${neighbors.prev}</span>`);
-                chainParts.push(`<span style="font-weight:800; font-size:14px;">${t.user}</span>`);
-                if (neighbors.next) chainParts.push(`<span style="font-size:11px; opacity:0.7;">${neighbors.next}</span>`);
-                const chainHtml = chainParts.join(' <span style="opacity:0.45;">›</span> ');
+                if (neighbors.prev) chainParts.push(nameChip(neighbors.prev, false));
+                chainParts.push(nameChip(t.user, true));
+                if (neighbors.next) chainParts.push(nameChip(neighbors.next, false));
+                const chainHtml = chainParts.join(' <span style="opacity:0.45; font-size:11px;">›</span> ');
                 const prefix = HANDOVER_DISPLAY_LABEL[handoverKey] || t.content;
-                displayContent = `${prefix} (${chainHtml})`;
-                layoutLen = prefix.length + 20; // 체인 표기가 붙으면 길어진 것으로 간주해 2줄 표시 판단
+                displayContent = `${prefix} ${chainHtml}`;
+                layoutLen = prefix.length + 25; // 체인 표기가 붙으면 길어진 것으로 간주해 2줄 표시 판단
             }
 
             const isLong = layoutLen > 40;
@@ -1772,14 +1773,14 @@
 
         const scheduleCard = document.createElement('div');
         scheduleCard.style.cssText = `
-            position:relative; aspect-ratio:2.0/1; border-radius:10px; cursor:pointer;
+            position:relative; min-height:52px; border-radius:10px; cursor:pointer;
             background:${T.card}; border:1px solid #ff4fa3;
             box-shadow:0 0 6px rgba(255,79,163,0.35), inset 0 0 8px rgba(255,79,163,0.1);
-            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
-            padding:4px; box-sizing:border-box; transition:box-shadow 0.15s;
+            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+            padding:7px 4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
-        scheduleCard.innerHTML = `<span style="font-size:18px;">📅</span>
-            <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">스케줄표</span>`;
+        scheduleCard.innerHTML = `<span style="font-size:16px;">📅</span>
+            <span style="font-size:12px; font-weight:500; line-height:1.2; text-align:center; color:${T.text};">스케줄표 & 좌석도</span>`;
         window._neubieScheduleCard = scheduleCard;
         attachStaticNeonHover(scheduleCard, '255,79,163');
         scheduleCard.onclick = () => {
@@ -1790,14 +1791,14 @@
 
         const rouletteCard = document.createElement('div');
         rouletteCard.style.cssText = `
-            position:relative; aspect-ratio:2.0/1; border-radius:10px; cursor:pointer;
+            position:relative; min-height:52px; border-radius:10px; cursor:pointer;
             background:${T.card}; border:1px solid #2ce6d9;
             box-shadow:0 0 6px rgba(44,230,217,0.35), inset 0 0 8px rgba(44,230,217,0.1);
-            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
-            padding:4px; box-sizing:border-box; transition:box-shadow 0.15s;
+            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+            padding:7px 4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
-        rouletteCard.innerHTML = `<span style="font-size:18px;">🧰</span>
-            <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">SW & 헬프</span>`;
+        rouletteCard.innerHTML = `<span style="font-size:16px;">🧰</span>
+            <span style="font-size:12px; font-weight:500; line-height:1.2; text-align:center; color:${T.text};">SW & 헬프</span>`;
         window._neubieRouletteCard = rouletteCard;
         attachStaticNeonHover(rouletteCard, '44,230,217');
         rouletteCard.onclick = () => {
@@ -1814,14 +1815,14 @@
         const isBatteryOpen = batteryPopup.style.display === 'block';
         const batteryCard = document.createElement('div');
         batteryCard.style.cssText = `
-            position:relative; aspect-ratio:2.0/1; border-radius:10px; cursor:pointer;
+            position:relative; min-height:52px; border-radius:10px; cursor:pointer;
             background:${T.card}; border:1px solid #facc15;
             box-shadow:0 0 6px rgba(250,204,21,0.35), inset 0 0 8px rgba(250,204,21,0.1);
-            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
-            padding:4px; box-sizing:border-box; transition:box-shadow 0.15s;
+            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+            padding:7px 4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
-        batteryCard.innerHTML = `<span style="font-size:18px;">🔋</span>
-            <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">성남 배터리</span>`;
+        batteryCard.innerHTML = `<span style="font-size:16px;">🔋</span>
+            <span style="font-size:12px; font-weight:500; line-height:1.2; text-align:center; color:${T.text};">성남 배터리</span>`;
         window._neubieBatteryCard = batteryCard;
         attachStaticNeonHover(batteryCard, '250,204,21');
         batteryCard.onclick = () => {
@@ -1835,14 +1836,14 @@
 
         const weatherCard = document.createElement('div');
         weatherCard.style.cssText = `
-            position:relative; aspect-ratio:2.0/1; border-radius:10px; cursor:pointer;
+            position:relative; min-height:52px; border-radius:10px; cursor:pointer;
             background:${T.card}; border:1px solid #9d5cff;
             box-shadow:0 0 6px rgba(157,92,255,0.35), inset 0 0 8px rgba(157,92,255,0.1);
-            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
-            padding:4px; box-sizing:border-box; transition:box-shadow 0.15s;
+            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+            padding:7px 4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
-        weatherCard.innerHTML = `<span style="font-size:18px;">🎨</span>
-            <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">레이아웃 설정</span>`;
+        weatherCard.innerHTML = `<span style="font-size:16px;">🎨</span>
+            <span style="font-size:12px; font-weight:500; line-height:1.2; text-align:center; color:${T.text};">레이아웃 설정</span>`;
         window._neubieWeatherCard = weatherCard;
         attachStaticNeonHover(weatherCard, '157,92,255');
         weatherCard.onclick = () => {
