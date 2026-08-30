@@ -96,7 +96,7 @@
     "rawTime": "22:00"
   },
   {
-    "user": "강철환",
+    "user": "김소연",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "23:00"
@@ -108,7 +108,7 @@
     "rawTime": "00:00"
   },
   {
-    "user": "김소연",
+    "user": "강철환",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "01:00"
@@ -140,6 +140,12 @@
   {
     "user": "안대관",
     "type": "monitoring",
+    "content": "다중 모니터링",
+    "rawTime": "06:00"
+  },
+  {
+    "user": "안대관",
+    "type": "yesterday_06",
     "content": "다중 모니터링",
     "rawTime": "06:00"
   },
