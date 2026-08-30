@@ -43,9 +43,21 @@
     const OFFLINE_MODE = false;
 
     const NB_THEMES = {
-        light: { bg: '#ece5d4', card: '#f7f2e6', border: '#d9cdb0', text: '#2b2418', accent: '#1e3a5f', purple: '#7c3aed' },
-        dark:  { bg: '#111111', card: '#252525', border: '#333333', text: '#e2e8f0', accent: '#3b82f6', purple: '#c4b5fd' }
+        light: { bg: '#f3ecdb', card: '#e2d7bd', border: '#cbbd98', text: '#2b2418', accent: '#1e3a5f', purple: '#7c3aed', isDark: false },
+        dark:  { bg: '#232327', card: '#403f47', border: '#54535c', text: '#e8e9ec', accent: '#5b9bf7', purple: '#c9b8fb', isDark: true }
     };
+
+    // NCC 패널 제목과 동일한 네온 그린(블랙 믹싱) 그라데이션 텍스트 스타일 — 토글/2x2 버튼 라벨,
+    // 일일 업무 카드 제목, 파일명 생성기 제목 등 '제목'류 텍스트에 공통으로 재사용
+    // NCC 패널 메인 제목 전용 그라데이션(블랙→그린) — 하위 라벨들은 가독성 문제로
+    // 그라데이션을 걷어내고 테마 기본 텍스트색(라이트=검정/다크=흰색)으로 되돌림
+    const NCC_TITLE_GRADIENT = 'background:linear-gradient(90deg,#0e7490,#22c55e); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent;';
+
+    // 호버 효과 공통 파란색 — 라이트/다크 상관없이 항상 이 톤 하나로 통일
+    // (T.accent를 쓰면 라이트모드에서 짙은 네이비가 나와 너무 진해 보이는 문제가 있었음)
+    const HOVER_ACCENT = '#5b9bf7';
+    // 온오프 토글의 ON 상태와 동일한 그린 — 알림테스트/다중모니터링/배송순찰띠띠 호버 전용
+    const GREEN_HOVER = '#22c55e';
 
     function getNbTheme() {
         return NB_THEMES[localStorage.getItem('neubie_theme') || 'dark'];
@@ -466,7 +478,7 @@
             borderRadius: '24px', padding: '20px', zIndex: '1000000',
             fontFamily: 'Pretendard, sans-serif', boxShadow: '0 20px 50px rgba(0,0,0,0.8)',
             border: '4px solid transparent', display: 'none', transform: left === '50%' ? 'translate(-50%, -50%)' : 'none',
-            backgroundImage: 'linear-gradient(#111111, #111111), linear-gradient(135deg, #6366f1, #ec4899)',
+            backgroundImage: 'linear-gradient(#111111, #111111), linear-gradient(135deg, #10b981, #2dd4bf)',
             backgroundOrigin: 'border-box',
             backgroundClip: 'padding-box, border-box',
             maxHeight: '90vh', overflowY: 'auto', overflowX: 'hidden',
@@ -476,7 +488,29 @@
     }
 
     const dashboard = createContainer('neubie-dashboard', 'min(580px, 94vw)', '50%', '50%');
-	
+    dashboard.style.padding = '15px'; // 전체 레이아웃이 커 보인다는 피드백 — 외곽 패딩만 살짝 축소
+
+    // ── 대시보드 전체 배율(줌) 조정 ──
+    // 콘솔/코드에서 window.setDashboardZoom(0.95) 처럼 호출하면 즉시 반영되고
+    // localStorage에 저장돼 다음 로드 때도 유지된다. window.adjustDashboardZoom(3)은
+    // 현재 값에 +3%p 하는 식으로 상대 조정할 때 쓰면 편하다.
+    const DEFAULT_DASHBOARD_ZOOM = 0.95;
+    function getDashboardZoom() {
+        const saved = parseFloat(localStorage.getItem('neubie_dashboard_zoom'));
+        return isNaN(saved) ? DEFAULT_DASHBOARD_ZOOM : saved;
+    }
+    window.setDashboardZoom = function(scale) {
+        localStorage.setItem('neubie_dashboard_zoom', scale);
+        dashboard.style.zoom = scale;
+        console.log(`✅ 대시보드 배율 ${Math.round(scale * 100)}%로 설정됨`);
+    };
+    window.adjustDashboardZoom = function(deltaPercent) {
+        const next = Math.round((getDashboardZoom() * 100 + deltaPercent)) / 100;
+        window.setDashboardZoom(next);
+    };
+    dashboard.style.zoom = getDashboardZoom();
+
+
     (function ensureNoOverflowForUser() {
         const userName = localStorage.getItem('neubie_user_name');
         const styleId = 'neubie-dash-overflow-fix';
@@ -575,14 +609,14 @@
     function buildBatteryShell() {
         const T = getNbTheme();
         batteryPopup.style.backgroundColor = T.bg;
-        batteryPopup.style.backgroundImage = `linear-gradient(${T.bg}, ${T.bg}), linear-gradient(135deg, #6366f1, #ec4899)`;
+        batteryPopup.style.backgroundImage = `linear-gradient(${T.bg}, ${T.bg}), linear-gradient(135deg, #10b981, #2dd4bf)`;
         batteryPopup.style.color = T.text;
 
         batteryPopup.innerHTML = '';
         const header = document.createElement('div');
         header.style.cssText = `display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid ${T.border}; padding-bottom:10px;`;
         const titleB = document.createElement('b');
-        titleB.textContent = "🔋 실시간 성남 배터리";
+        titleB.textContent = "🔋 성남 배터리 현황";
         titleB.style.cssText = `color:${T.text}; font-size:18px;`;
 
         const headerRight = document.createElement('div');
@@ -591,8 +625,8 @@
         const copyBtn = document.createElement('button');
         copyBtn.textContent = '복사';
         Object.assign(copyBtn.style, {
-            background:'#3b82f6', color:'white', border:'none',
-            height:'24px', padding:'0 14px',
+            background:'#10b981', color:'white', border:'none',
+            height:'24px', width:'66px', flexShrink:'0', padding:'0',
             borderRadius:'6px', cursor:'pointer', fontWeight:'bold',
             fontSize:'13px',
             display:'flex', alignItems:'center', justifyContent:'center',
@@ -618,7 +652,7 @@
             const item = document.createElement('div');
             item.dataset.batteryId = c.id;
             item.style.cssText = `
-                background:${T.bg === '#111111' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)'};
+                background:${T.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)'};
                 padding:6px 16px;
                 border-radius:10px;
                 margin-bottom:6px;
@@ -630,7 +664,7 @@
                     <span style="font-weight:500;" class="bat-name">⚪ ${c.name}</span>
                     <span style="font-weight:bold; font-size: 16px;" class="bat-val">- %</span>
                 </div>
-                <div class="bat-bar-track" style="width:100%; height:6px; background:${T.bg === '#111111' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'}; border-radius:3px; overflow:hidden;">
+                <div class="bat-bar-track" style="width:100%; height:6px; background:${T.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'}; border-radius:3px; overflow:hidden;">
                     <div class="bat-bar-fill" style="height:100%; width:0%; background:#666; border-radius:3px; transition:width 0.3s ease, background 0.3s ease;"></div>
                 </div>
             `;
@@ -728,11 +762,14 @@
         navigator.clipboard.writeText(copyText).then(() => {
             const originalText = btn.textContent;
             const originalBg   = btn.style.background;
+            const originalColor = btn.style.color;
             btn.textContent    = '복사됨';
-            btn.style.background = '#22c55e';
+            btn.style.background = HOVER_ACCENT;
+            btn.style.color = '#fff';
             setTimeout(() => {
                 btn.textContent    = originalText;
                 btn.style.background = originalBg;
+                btn.style.color = originalColor;
             }, 1500);
         }).catch(() => {
             alert('복사 실패 — 클립보드 권한을 확인해주세요.');
@@ -742,9 +779,43 @@
     /* ============================================================
         SECTION 4-1. [서버 동기화] GitHub JSON 기반 업무 로드
        ============================================================ */
+    // ── 전체 근무자 명단 (오늘 휴무자 포함) ──
+    // seat_map.json은 좌석배치용 2차원 배열이라, 한 칸에 "안대관/이준"처럼 여러 명이
+    // '/'로 같이 적혀있는 경우가 있어 개별 이름으로 쪼개서 평탄화한다.
+    // 세션 중엔 한 번만 받아오면 되므로 메모리에 캐싱(부담 없는 가벼운 조회).
+    let cachedStaffRoster = null;
+    async function getStaffRoster() {
+        if (cachedStaffRoster) return cachedStaffRoster;
+        try {
+            const res = await fetch(
+                'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/monthly_schedule/seat_map.json',
+                { cache: 'no-store' }
+            );
+            const seatMap = await res.json();
+            const names = new Set();
+            (seatMap || []).forEach(row => {
+                (row || []).forEach(cell => {
+                    String(cell).split('/').forEach(n => {
+                        const trimmed = n.trim();
+                        if (trimmed) names.add(trimmed);
+                    });
+                });
+            });
+            cachedStaffRoster = names;
+            return names;
+        } catch (e) {
+            console.warn('[이름 검증] 근무자 명단 로드 실패:', e);
+            return null; // 조회 실패 시엔 검증을 건너뛰어 정상 이름까지 막지 않도록 함
+        }
+    }
+
     function syncTasksFromServer() {
         const myName = localStorage.getItem('neubie_user_name');
-        if (!myName) return;
+        if (!myName) {
+            window.currentMyTasks = [];
+            renderTaskList([]); // 이름이 비어있으면 즉시 '배정된 업무가 없습니다' 상태로 표시
+            return;
+        }
 
         const dataUrl = `https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/daily_tasks.json?t=${Date.now()}`;
 		const insuUrl = `https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/insu_data.json?t=${Date.now()}`;
@@ -755,11 +826,14 @@
             fetch(insuUrl, {cache: 'no-store'}).then(r => r.json()),
         ]).then(([data, insu]) => {
             state.insuData = insu;
+            window.currentAllTasks = data; // 인계 체인(전임자/후임자) 조회용 — 필터링 전 전체 목록
 
             const myTasks = data.filter(t => {
                 if (t.user !== myName) return false;
-                // tomorrow_07 타입은 00:00~07:10 사이에만 표시
-                if (t.type === 'tomorrow_07') {
+                // next_0700_handover(내일 07시 다중모니터링 통합 인계 스냅샷)는
+                // 00:00~07:10 사이에만 미리보기로 표시. 그 이후엔 같은 07:00 업무가
+                // 정규 monitoring 항목으로 자연스럽게 이어지므로 중복 표시를 막는다.
+                if (t.type === 'next_0700_handover') {
                     return new Date().getHours() < 7;
                 }
                 return true;
@@ -848,7 +922,7 @@
             s.textContent = `
                 @keyframes neubie-alarm-blink {
                     0%, 100% { border-color: #000; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-                    50% { border-color: #ff0000; box-shadow: 0 0 30px rgba(255,0,0,0.9); }
+                    50% { border-color: #10b981; box-shadow: 0 0 30px rgba(16,185,129,0.9); }
                 }
                 @keyframes neubie-fadein {
                     from { opacity:0; transform:translateX(-50%) translateY(-10px); }
@@ -860,8 +934,8 @@
         const alarmDiv = document.createElement('div');
         alarmDiv.style.cssText = `
             position:fixed; top:16px; left:50%; transform:translateX(-50%);
-            background:linear-gradient(135deg,#fbbf24,#f59e0b);
-            color:#000; padding:15px 30px; border-radius:14px;
+            background:linear-gradient(135deg,#10b981,#2dd4bf);
+            color:#fff; padding:15px 30px; border-radius:14px;
             z-index:9999999; font-weight:bold; font-size:16px;
             border:3px solid #000; display:flex; align-items:center; gap:10px;
             box-shadow:0 8px 30px rgba(0,0,0,0.5);
@@ -879,6 +953,82 @@
     /* ============================================================
     SECTION 4-3. UI 렌더링 및 07시 기준 정렬/알림 제어
    ============================================================ */
+    // ── 인계 체인(전임자 > 본인 > 후임자) 대상 업무 판별 ──
+    // '다중 모니터링'과 '부산 국립과학관' 관련 업무만 하루 동안 여러 사람이 돌아가며
+    // 맡는 로테이션 성격이라, 같은 그룹의 전체 인원을 시간순으로 나열해 앞뒤를 찾는다.
+    function getHandoverGroupKey(t) {
+        if (!t || !t.content) return null;
+        if (t.content.includes('다중 모니터링')) return '다중 모니터링';
+        // '부산과학관 ... HUB B 출근 / 자비에 재부팅 / 임무받기 ON' 업무는 제외하고,
+        // '부산국립과학관 170,171호기 임무'만 인계 체인 대상으로 삼는다 ('국립' 포함 여부로 구분)
+        if (t.content.includes('국립과학관')) return '부산 국립과학관';
+        return null;
+    }
+
+    function getHandoverNeighbors(myTask, allTasks) {
+        const key = getHandoverGroupKey(myTask);
+        if (!key) return null;
+
+        // '다중 모니터링'은 daily_tasks(개인별 할일)가 아니라 insu_data.json의
+        // 24시간 로테이션 표(schedule)가 진짜 출처 — 이걸 안 쓰면 개인별 항목
+        // 매칭 오차로 "본인 → 본인" 같은 오류가 생길 수 있다.
+        if (key === '다중 모니터링') {
+            const timeMatch = String(myTask.rawTime || myTask.time).match(/\d{2}:\d{2}/);
+            if (!timeMatch) return null;
+            const hourNum = parseInt(timeMatch[0].slice(0, 2), 10);
+
+            // 06시(오늘 로테이션의 마지막 순번)와 07시(내일 로테이션의 첫 순번)는
+            // 서로 다른 하루 주기를 넘나드는 경계다. schedule은 '하나의 07:00~06:00'
+            // 주기만 담고 있어서, 06시의 '다음'을 단순히 schedule['07:00']으로 구하면
+            // 그건 내일이 아니라 '오늘 자신의(이미 지나간) 07시'를 가리키게 되는 버그가
+            // 있었다 — 이 두 경계 방향은 GAS가 만들어둔 next_0700_handover 스냅샷으로
+            // 정확히 채운다.
+            if (Array.isArray(allTasks)) {
+                if (hourNum === 7) {
+                    const snap = allTasks.find(t => t.type === 'next_0700_handover' && t.selfUser === myTask.user);
+                    if (snap) return { prev: snap.prevUser || null, next: snap.nextUser || null };
+                }
+                if (hourNum === 6) {
+                    const snap = allTasks.find(t => t.type === 'next_0700_handover' && t.prevUser === myTask.user);
+                    if (snap) {
+                        const prevSchedule = (state.insuData && state.insuData.schedule) ? state.insuData.schedule['05:00'] : null;
+                        return { prev: prevSchedule || null, next: snap.selfUser || null };
+                    }
+                }
+                // 스냅샷을 못 찾으면(구버전 데이터 등) 아래 스케줄 기반 계산으로 안전하게 폴백
+            }
+
+            if (!state.insuData || !state.insuData.schedule) return null;
+            const schedule = state.insuData.schedule;
+            const prevHourKey = String((hourNum - 1 + 24) % 24).padStart(2, '0') + ':00';
+            const nextHourKey = String((hourNum + 1) % 24).padStart(2, '0') + ':00';
+            return {
+                prev: schedule[prevHourKey] || null,
+                next: schedule[nextHourKey] || null,
+            };
+        }
+
+        // 그 외('부산 국립과학관' 등)는 daily_tasks 전체에서 같은 그룹을 시간순 정렬해서 앞뒤 탐색
+        if (!Array.isArray(allTasks)) return null;
+
+        const group = allTasks
+            .filter(t => getHandoverGroupKey(t) === key)
+            .map(t => ({ t, score: getTaskStatus(t.rawTime || t.time).score }))
+            .sort((a, b) => a.score - b.score);
+
+        const idx = group.findIndex(g =>
+            g.t.user === myTask.user &&
+            (g.t.rawTime || g.t.time) === (myTask.rawTime || myTask.time) &&
+            g.t.content === myTask.content
+        );
+        if (idx === -1) return null;
+
+        return {
+            prev: idx > 0 ? group[idx - 1].t.user : null,
+            next: idx < group.length - 1 ? group[idx + 1].t.user : null,
+        };
+    }
+
     function renderTaskList(tasks) {
         const T = getNbTheme();
         const currentInt = localStorage.getItem('neubie_remind_int') || '0';
@@ -915,8 +1065,11 @@
                 return content.trim() !== "" && !String(rawTime).includes("1899");
             })
             .sort((a, b) => {
-                const scoreA = getTaskStatus(a.rawTime || a.time).score;
-                const scoreB = getTaskStatus(b.rawTime || b.time).score;
+                // '내일 07시' 미리보기(next_0700_handover)는 rawTime이 '07:00'이라
+                // 상대점수 계산상 항상 0점(=가장 이른 순번)이 나와버려서, 그대로 두면
+                // 리스트 맨 위로 올라가는 문제가 있었다 — 항상 맨 아래로 고정한다.
+                const scoreA = a.type === 'next_0700_handover' ? Infinity : getTaskStatus(a.rawTime || a.time).score;
+                const scoreB = b.type === 'next_0700_handover' ? Infinity : getTaskStatus(b.rawTime || b.time).score;
                 return scoreA - scoreB;
             });
 
@@ -938,14 +1091,15 @@
             const targetInterval = isMultiMon ? (interval + 10) : interval;
 
             const item = document.createElement('div');
-            const isMon = t.type === 'monitoring' || t.type === 'tomorrow_07';
-            const status = t.type === 'tomorrow_07'
+            const isMon = t.type === 'monitoring' || t.type === 'next_0700_handover';
+            const status = t.type === 'next_0700_handover'
                 ? { isExpired: false, remainMin: 999, score: 0 }
                 : getTaskStatus(timeKey, isMon);
-            const textStyle = status.isExpired 
-                ? 'text-decoration: line-through; color: #777; opacity: 0.7;' 
+            const prefixStyle = status.isExpired
+                ? 'text-decoration: line-through; color: #777; opacity: 0.7;'
                 : `color: ${T.text};`;
-            
+            const chainDimStyle = status.isExpired ? 'opacity: 0.55;' : '';
+
             item.style.cssText = `
                 background:${status.isExpired ? 'rgba(60, 60, 60, 0.1)' : (isMon ? 'rgba(59, 130, 246, 0.15)' : 'rgba(251, 191, 36, 0.15)')};
                 border-left:4px solid ${status.isExpired ? '#555' : (isMon ? '#3b82f6' : '#fbbf24')};
@@ -959,12 +1113,51 @@
                 box-sizing: border-box;
             `;
 
-            const displayTime = (String(timeKey).length > 10) ? String(timeKey).match(/\d{2}:\d{2}/)?.[0] : timeKey;
+            // 시간 표시는 원칙적으로 '업무 텍스트에 실제로 적힌 그대로'를 따른다.
+            // task류('부산 국립과학관' 포함) 콘텐츠는 항상 "[09:30~10:00] ..."처럼 맨 앞에
+            // 실제 시간(범위 또는 단일 시각)이 박혀있으므로 그걸 그대로 추출해서 보여준다.
+            // 다중 모니터링(monitoring/next_0700_handover)은 콘텐츠에 시간 정보가 없으니
+            // 기존처럼 rawTime의 단일 시각("09:00")을 그대로 쓴다.
+            let displayTime;
+            if (t.type === 'task') {
+                const rangeMatch = String(t.content || '').match(/\d{2}:\d{2}(~\d{2}:\d{2})?/);
+                displayTime = rangeMatch ? rangeMatch[0] : ((String(timeKey).length > 10) ? String(timeKey).match(/\d{2}:\d{2}/)?.[0] : timeKey);
+            } else {
+                displayTime = (String(timeKey).length > 10) ? String(timeKey).match(/\d{2}:\d{2}/)?.[0] : timeKey;
+            }
 
-            const isLong = t.content.length > 40;
+            // 인계 체인 표기 — '다중 모니터링' / '부산 국립과학관' 업무는 전임자/후임자를 이름 박스로 표기
+            const HANDOVER_DISPLAY_LABEL = { '다중 모니터링': '다중 모니터링', '부산 국립과학관': '부산국립과학관' };
+            const handoverKey = getHandoverGroupKey(t);
+            const neighbors = getHandoverNeighbors(t, window.currentAllTasks);
+
+            // displayTime이 이미 시간을 따로 보여주고 있으니, 본문 텍스트 맨 앞의
+            // "[09:30~10:00]" 같은 중복 시간 표기는 제거한다 (task류에만 붙어있던 표기)
+            const bodyText = t.type === 'task'
+                ? String(t.content || '').replace(/^\[\d{2}:\d{2}(~\d{2}:\d{2})?\]\s*/, '')
+                : t.content;
+
+            const nameChip = (name, isSelf) => `<span style="display:inline-flex; align-items:center; justify-content:center; min-width:36px; padding:2px 6px; margin:0 1px; border-radius:6px; box-sizing:border-box; font-size:${isSelf ? '12px' : '11px'}; font-weight:${isSelf ? '800' : '500'}; background:${isSelf ? '#22c55e' : (T.isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)')}; color:${isSelf ? '#062e13' : (T.isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.65)')};">${name}</span>`;
+            // 취소선은 '업무텍스트' 부분에만 걸리도록 별도 span으로 분리 — 이름박스/화살표를 감싸는
+            // 조상 요소엔 text-decoration을 절대 두지 않는다(자식에서 none으로 덮어써도 브라우저에 따라
+            // 취소선이 새어나오는 문제가 있었음). 이름박스는 대신 opacity로만 흐리게 처리.
+            let displayContent = `<span style="${prefixStyle}">${bodyText}</span>`;
+            let layoutLen = bodyText.length;
+            if (neighbors && (neighbors.prev || neighbors.next)) {
+                const chainParts = [];
+                if (neighbors.prev) chainParts.push(nameChip(neighbors.prev, false));
+                chainParts.push(nameChip(t.user, true));
+                if (neighbors.next) chainParts.push(nameChip(neighbors.next, false));
+                const chainHtml = chainParts.join(' <span style="font-size:10px; opacity:0.55;">→</span> ');
+                const prefix = HANDOVER_DISPLAY_LABEL[handoverKey] || bodyText;
+                displayContent = `<span style="${prefixStyle}">${prefix}</span><span style="margin-left:10px; ${chainDimStyle}">${chainHtml}</span>`;
+                layoutLen = prefix.length + 25; // 체인 표기가 붙으면 길어진 것으로 간주해 2줄 표시 판단
+            }
+
+            const isLong = layoutLen > 40;
             const contentSpan = isLong
-                ? `<span style="${textStyle} font-size:12px; line-height:1.15; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">${t.content}</span>`
-                : `<span style="${textStyle} font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${t.content}</span>`;
+                ? `<span style="font-size:12px; line-height:1.15; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">${displayContent}</span>`
+                : `<span style="font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${displayContent}</span>`;
 
             item.innerHTML = `
                 <span style="color:${status.isExpired ? '#777' : '#fbbf24'}; white-space:nowrap;">${displayTime || ''}</span>
@@ -1030,11 +1223,26 @@
     function createNamingCard() {
         const isWknd = isWeekend();
         const T = getNbTheme();
+        // 라이트모드에서도 다크 전용 색이 그대로 남아있던 문제 — 입력칸/버튼을 테마에 맞게 분기
+        // (순백색은 너무 튀어서, 크림톤과는 구분되는 차분한 아이보리 톤을 사용)
+        const fieldBg = T.isDark ? '#333' : '#f0ede1';
+        const fieldBorder = T.isDark ? '#555' : T.border;
+        const fieldText = T.isDark ? '#fff' : T.text;
+        const neutralBtnBg = T.isDark ? '#444' : '#f0ede1';
+        const neutralBtnBorder = T.isDark ? '#666' : T.border;
+        const neutralBtnText = T.isDark ? '#ddd' : T.text;
+        const neutralBtnHoverBg = T.isDark ? '#555' : HOVER_ACCENT;
+        const neutralBtnHoverBorder = T.isDark ? '#888' : HOVER_ACCENT;
+        const neutralBtnHoverText = T.isDark ? neutralBtnText : '#fff';
+        // 다중 모니터링 / 배송·순찰 띠띠 전용 호버 — 온오프 토글과 동일한 그린, 다크/라이트 공통
+        const subBtnHoverBg = GREEN_HOVER;
+        const subBtnHoverBorder = GREEN_HOVER;
+        const subBtnHoverText = '#062e13';
         const card = document.createElement('div');
         card.id = 'namingSection';
         card.style.cssText = `
-            padding:10px 15px; border-radius:15px; margin-top:5px; border:1px solid transparent;
-            background-image: linear-gradient(${T.card}, ${T.card}), linear-gradient(135deg, #6366f1, #ec4899);
+            padding:10px 15px 6px; border-radius:15px; margin-top:5px; border:1px solid transparent;
+            background-image: linear-gradient(${T.card}, ${T.card}), linear-gradient(135deg, #10b981, #2dd4bf);
             background-origin: border-box; background-clip: padding-box, border-box;
             box-shadow:0 0 5px rgba(150,120,255,0.25);
         `;
@@ -1046,16 +1254,25 @@
         }).join('');
 
         // 복사 효과 공통 함수
+        const COPY_SUCCESS_COLOR = HOVER_ACCENT; // 알림 테스트 호버와 동일한 블루톤
+        const COPY_SUCCESS_TEXT = '#fff';
         const applyCopyEffect = (btn) => {
             const originalText = btn.textContent;
-            const originalBg = btn.style.background || "#444";
-            
+            // getComputedStyle로 실제 렌더링된 배경/글자색을 캡처 — 인라인 스타일이든(copyFileName)
+            // CSS 클래스(.sub-btn)든 상관없이 정확한 원래 색으로 복귀시키기 위함
+            // (이전엔 btn.style.background만 읽어서, 클래스로 배경을 정하는 .sub-btn 버튼은
+            //  항상 빈 값 → 하드코딩된 '#444'로 복귀해버리는 버그가 있었음)
+            const originalBg = getComputedStyle(btn).backgroundColor;
+            const originalColor = getComputedStyle(btn).color;
+
             btn.textContent = '복사됨';
-            btn.style.background = '#22c55e';
-            
+            btn.style.background = COPY_SUCCESS_COLOR;
+            btn.style.color = COPY_SUCCESS_TEXT;
+
             setTimeout(() => {
                 btn.textContent = originalText;
                 btn.style.background = originalBg;
+                btn.style.color = originalColor;
             }, 1500);
         };
 
@@ -1066,44 +1283,72 @@
             deliveryActive: true   // ← 배송 띠띠 기체 입고 중이면 false, 복귀하면 true로 한 글자만 바꾸면 끝
         };
 
+        // 버튼에 표기할 '유효 시간대' — 실제 복사 시 쓰이는 getCalculatedTime()과 동일한 보정 로직
+        const multiHourLabel = getFormattedHour(getCalculatedTime(10)) + '시';
+        const combinedHourLabel = getFormattedHour(getCalculatedTime(10)) + '시';
+
+        // 배송/순찰 띠띠 버튼 활성 시간대 — 실제 업무는 09~17시지만, 업로드가 늦어질 수
+        // 있으니 18시 정각까지는 눌리도록 하고, 18:00부터 다음날 09:00 전까진 잠근다.
+        const curHour = new Date().getHours();
+        const isTiddiActive = curHour >= 9 && curHour < 18;
+        const tiddiLockStyle = isTiddiActive ? '' : (T.isDark
+            ? 'background:#3a3a3a; color:#777; cursor:not-allowed; opacity:0.7;'
+            : 'background:#4d6b57; color:#d7e8dc; cursor:not-allowed; opacity:0.9;');
+
         card.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                <span style="color:${T.accent}; font-weight:bold; font-size:18px;">🏷️ 영상 파일명 생성기</span>
-                <button id="openDriveTodayBtn" style="background:#444; color:#ddd; border:1px solid #666; padding:4px 8px; border-radius:6px; font-size:13px; cursor:pointer; white-space:nowrap;">📂 금일 구글 드라이브</button>
+                <span style="font-size:18px;">🏷️ <span style="color:${T.text}; font-weight:bold;">영상 파일명 생성기</span></span>
+                <button id="openDriveTodayBtn" style="background:${neutralBtnBg}; color:${neutralBtnText}; border:1px solid ${neutralBtnBorder}; padding:4px 8px; border-radius:6px; font-size:13px; font-weight:bold; cursor:pointer; white-space:nowrap;">📂 구글 영상 드라이브</button>
             </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px 5px; margin-bottom: 10px;">
-                <div style="position: relative; min-width: 0;">
-                    <select id="robotSelector" style="width: 100%; background: #333; color: white; border: 1px solid #555; border-radius: 4px; font-size: 15px; padding: 0 20px 0 8px; height: 32px; line-height: 32px; box-sizing: border-box; appearance: none; -webkit-appearance: none; -moz-appearance: none;">
-                        ${dropdownOptions || '<option>최근 배달 기체 미감지</option>'}
-                    </select>
-                    <span style="position: absolute; right: 6px; top: 50%; transform: translateY(-50%); pointer-events: none; color: #aaa; font-size: 11px;">▾</span>
+            <div style="display: flex; gap: 12px; margin-bottom: 10px;">
+                <div style="flex: 1; display: flex; flex-direction: column; gap: 8px; min-width: 0;">
+                    <div style="position: relative; min-width: 0;">
+                        <select id="robotSelector" style="width: 100%; background: ${fieldBg}; color: ${fieldText}; border: 1px solid ${fieldBorder}; border-radius: 4px; font-size: 15px; font-weight: bold; padding: 0 20px 0 8px; height: 32px; line-height: 32px; box-sizing: border-box; appearance: none; -webkit-appearance: none; -moz-appearance: none;">
+                            ${dropdownOptions || '<option>최근 배달 기체 미감지</option>'}
+                        </select>
+                        <span style="position: absolute; right: 6px; top: 50%; transform: translateY(-50%); pointer-events: none; color: #aaa; font-size: 11px;">▾</span>
+                    </div>
+                    <div style="display: flex; gap: 5px; min-width: 0;">
+                        <input type="text" id="taskInput" placeholder="주문번호를 붙여넣으세요." style="flex: 1; min-width: 0; background: ${fieldBg}; color: ${fieldText}; border: 1px solid ${fieldBorder}; padding: 0 8px; border-radius: 4px; font-size: 15px; font-weight: bold; height: 32px; line-height: 32px; box-sizing: border-box;">
+                        <button id="copyFileName" style="width: 70px; flex-shrink: 0; background: #10b981; color: white; border: none; padding: 0 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 15px; white-space: nowrap; overflow: hidden; height: 32px; line-height: 32px; box-sizing: border-box;">복사</button>
+                    </div>
                 </div>
-                <div style="display: flex; gap: 5px; min-width: 0;">
-                    <input type="text" id="taskInput" placeholder="주문번호를 붙여넣으세요." style="flex: 1; min-width: 0; background: #333; color: white; border: 1px solid #555; padding: 0 8px; border-radius: 4px; font-size: 15px; height: 32px; line-height: 32px; box-sizing: border-box;">
-                    <button id="copyFileName" style="width: 70px; flex-shrink: 0; background: #007bff; color: white; border: none; padding: 0 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 15px; white-space: nowrap; overflow: hidden; height: 32px; line-height: 32px; box-sizing: border-box;">복사</button>
+                <div style="width: 1px; align-self: stretch; background: ${T.border};"></div>
+                <div style="flex: 1; display: flex; flex-direction: column; gap: 8px; min-width: 0;">
+                    <button id="btnMulti" class="sub-btn">다중 모니터링 (${multiHourLabel})</button>
+                    <button id="btnCombined" class="sub-btn" ${isTiddiActive ? '' : 'disabled'} style="${tiddiLockStyle}">배송/순찰 띠띠${isTiddiActive ? ` (${combinedHourLabel})` : ''}</button>
                 </div>
-                <button id="btnMulti" class="sub-btn">다중 모니터링</button>
-                <button id="btnCombined" class="sub-btn">배송/순찰 띠띠</button>
             </div>
         `;
 
-        if (!document.getElementById('naming-btn-style')) {
-            const style = document.createElement('style');
-            style.id = 'naming-btn-style';
-            style.textContent = `.sub-btn { background: #444; color: #ddd; border: 1px solid #666; padding: 6px 4px; border-radius: 6px; font-size: 15px; cursor: pointer; flex: 1; min-width: 0; transition: 0.2s; } .sub-btn:hover { background: #555; border-color: #888; }`;
-            document.head.appendChild(style);
+        let btnStyleTag = document.getElementById('naming-btn-style');
+        if (!btnStyleTag) {
+            btnStyleTag = document.createElement('style');
+            btnStyleTag.id = 'naming-btn-style';
+            document.head.appendChild(btnStyleTag);
         }
+        btnStyleTag.textContent = `.sub-btn { background: ${neutralBtnBg}; color: ${neutralBtnText}; border: 1px solid ${neutralBtnBorder}; padding: 6px 4px; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; flex: 1; min-width: 0; transition: 0.2s; } .sub-btn:hover { background: ${subBtnHoverBg}; border-color: ${subBtnHoverBorder}; color: ${subBtnHoverText}; }`;
 
         setTimeout(() => {
             // 배송 띠띠 활성 여부에 따라 버튼 라벨 갱신 (신규 추가)
             const combinedBtnLabel = card.querySelector('#btnCombined');
             if (combinedBtnLabel) {
-                combinedBtnLabel.textContent = TTIDDI_CONFIG.deliveryActive ? '배송/순찰 띠띠' : '순찰 띠띠 (배송 띠띠 입고)';
+                combinedBtnLabel.textContent = (TTIDDI_CONFIG.deliveryActive ? '배송/순찰 띠띠' : '순찰 띠띠 (배송 띠띠 입고)') + (isTiddiActive ? ` (${combinedHourLabel})` : '');
             }
 
 			// 영상 드라이브 열기 → 오늘 날짜 폴더로 이동 (없으면 루트 폴더로 폴백)
             const openDriveBtn = card.querySelector('#openDriveTodayBtn');
             if (openDriveBtn) {
+                openDriveBtn.onmouseenter = () => {
+                    openDriveBtn.style.background = subBtnHoverBg;
+                    openDriveBtn.style.borderColor = subBtnHoverBorder;
+                    openDriveBtn.style.color = subBtnHoverText;
+                };
+                openDriveBtn.onmouseleave = () => {
+                    openDriveBtn.style.background = neutralBtnBg;
+                    openDriveBtn.style.borderColor = neutralBtnBorder;
+                    openDriveBtn.style.color = neutralBtnText;
+                };
                 openDriveBtn.onclick = async () => {
                     const ROOT_FOLDER_URL = 'https://drive.google.com/drive/folders/0AJPzAP1RZ6FhUk9PVA';
                     const todayStr = getFormattedDate(new Date()); // 예: "20260721"
@@ -1157,7 +1402,7 @@
             // 배송/순찰 띠띠 버튼
             const combinedBtn = card.querySelector('#btnCombined');
 			if (combinedBtn) combinedBtn.onclick = (e) => {
-				const time = getCalculatedTime(40);
+				const time = getCalculatedTime(10);
 				const myName = localStorage.getItem('neubie_user_name') || '';
 				const unitsText = TTIDDI_CONFIG.deliveryActive
 					? `${TTIDDI_CONFIG.units.delivery}, ${TTIDDI_CONFIG.units.patrol}`
@@ -1180,29 +1425,53 @@
         const T = getNbTheme();
         dashboard.style.backgroundColor = T.bg;
         dashboard.style.color = T.text;
-        dashboard.style.backgroundImage = `linear-gradient(${T.bg}, ${T.bg}), linear-gradient(135deg, #6366f1, #ec4899)`;
+        dashboard.style.backgroundImage = `linear-gradient(${T.bg}, ${T.bg}), linear-gradient(135deg, #10b981, #2dd4bf)`;
         
         // 헤더 컨테이너 (제목 + 성명 입력창 + X 버튼 인라인 배치)
         const headerContainer = document.createElement('div');
-        headerContainer.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; padding-right:5px;";
+        headerContainer.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; padding-right:5px;";
 
         const title = document.createElement('h2');
-        title.textContent = OFFLINE_MODE ? "오프라인 모드" : "NCC 도우미";
-        title.style.cssText = `color:${T.accent}; font-size:20px; margin:0; font-weight:bold; white-space:nowrap;`;
+        title.textContent = OFFLINE_MODE ? "오프라인 모드" : "NCC 패널";
+        title.style.cssText = OFFLINE_MODE
+            ? `color:${T.accent}; font-size:21px; margin:0; font-weight:bold; white-space:nowrap;`
+            : `${NCC_TITLE_GRADIENT} font-size:21px; margin:0; font-weight:bold; white-space:nowrap;`;
 
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
 		// 문자열을 넣으면 패치노트에 빨간 '`' 뱃지가 점멸하며 뜸.
 		// 빈 문자열('')로 비우면 뱃지가 사라짐.
-		const PATCH_NOTE_NEW_CONTENT = '모달 우측 고정 및 삭제 기체명 표기';
-		
+		const PATCH_NOTE_NEW_CONTENT = '네온 그린';
+
+        // ── 패치노트 내용 ──────────────────────────────────────
+        // 아래 patchItems 배열에 버전별 내용을 추가하세요 (버튼 라벨의 날짜도 이 배열의
+        // 맨 위(patchItems[0].date) 값을 그대로 가져다 쓰므로, 여기 날짜만 바꾸면 버튼도 같이 갱신됨)
+        const patchItems = [
+            {
+                version: 'v1.5',
+                date: '2026-08-31',
+                items: [
+                    '다중/과학관 업무 전임/후임자 표기',
+                    '레이아웃 전체에 그린 톤 테마 적용',
+					'다중 관제 기체 삭제 시 선택한 기체명 표기',
+					'다중 관제 시 모니터링 생성 모달을 우측에 고정',
+					'맵 최적화 속도 개선(Dot 제거, 비타겟 site 이동 반영)',
+					'개입카드 진입 시 다음 개입 요청 토글 자동으로 OFF',
+					'임무 종료된 리센츠/엘스/한성대/진천 페이지 이탈 5초 후 자동 사이드',
+                    '게임패드 D-PAD 키변경 및 패드 테스터 기능 추가',
+					'다중 모니터링 자동 교대시작은 최대 12대까지 가능',
+                ]
+            },
+        ];
+        const latestPatchShortDate = patchItems[0].date.slice(2).replace(/-/g, '.'); // '2026-08-29' → '26.08.29'
+
         const patchBtn = document.createElement('button');
-        patchBtn.textContent = '패치노트';
+        patchBtn.textContent = `${latestPatchShortDate} 패치노트`;
         patchBtn.title = '패치노트';
         patchBtn.style.cssText = `
 			position:relative;
             background:transparent; border:1px solid ${T.border}; color:${T.text};
             border-radius:6px; padding:4px 10px; cursor:pointer;
-            font-size:14px; margin-left:6px; vertical-align:middle;
+            font-size:14px; margin-left:6px; vertical-align:middle; white-space:nowrap;
             transition:all 0.2s;
         `;
 		
@@ -1220,7 +1489,7 @@
 			patchBtn.appendChild(newBadge);
 		}
 		
-        patchBtn.onmouseenter = () => { patchBtn.style.borderColor='#3b82f6'; patchBtn.style.color='#3b82f6'; };
+        patchBtn.onmouseenter = () => { patchBtn.style.borderColor=GREEN_HOVER; patchBtn.style.color=GREEN_HOVER; };
         patchBtn.onmouseleave = () => { patchBtn.style.borderColor=T.border; patchBtn.style.color=T.text; };
         patchBtn.onclick = () => {
             // 이미 열려있으면(패치노트 버튼 재클릭) 닫기만 하고 종료 — X버튼 없이도 닫는 방법
@@ -1250,26 +1519,7 @@
             patchClose.onmouseleave = () => { patchClose.style.color='#aaa'; };
             patchClose.onclick = () => hideSharedPopup();
 
-            // ── 패치노트 내용 ──────────────────────────────────────
-            // 아래 patchItems 배열에 버전별 내용을 추가하세요
-            const patchItems = [
-                {
-                    version: 'v1.4',
-                    date: '2026-08-29',
-                    items: [
-						'다중 관제 휴지통 레이아웃에 삭제 중인 기체명 표기',
-						'다중 관제 시 모니터링 생성 모달 우측 고정',
-						'맵 최적화 속도 개선(Dot 제거, 비타겟 site 이동 반영)',
-						'다음 개입 요청 자동 OFF',
-                        '문제해결 페이지',
-						'스트림덱 스타일 적용(길게 누르면 기능 ON/OFF됨)',
-						'임무 종료된 리센츠/엘스/한성대/진천 페이지 이탈 5초 후 자동 사이드',
-                        '게임패드 D-PAD 설명 / 게임패드 테스터',
-						'다중 자동 교대시작 최대 12대까지',
-                    ]
-                },
-            ];
-            // ────────────────────────────────────────────────────────
+            // patchItems는 위(버튼 라벨 생성 시점)에서 이미 선언됨 — 여기서는 그대로 재사용
 
             const patchContent = document.createElement('div');
             patchContent.style.cssText = "display:grid; gap:16px;";
@@ -1310,69 +1560,52 @@
         
         nameArea.innerHTML = `
             <span>성명:</span>
-            <input type="text" id="inline-name-input" value="${currentName}" placeholder="이름 입력"
-                style="width:60px; border:1px solid #cbd5e1; outline:none; padding:2px 6px; 
-                    font-size:15px; font-weight:bold; color:#252525; background:white; 
-                    border-radius:4px; text-align:center;">
-            <button id="all-close-btn" style="background:#ef4444; color:white; border:none; border-radius:4px; width:22px; height:22px; cursor:pointer; font-weight:bold; display:flex; align-items:center; justify-content:center; font-size:14px;">✕</button>
+            <input type="text" id="inline-name-input" value="${currentName}" placeholder="이름"
+                style="width:60px; border:1px solid #a7d8b8; outline:none; padding:5px 6px; 
+                    font-size:15px; font-weight:bold; color:#1f3d2a; background:#dff3e6; 
+                    border-radius:10px; text-align:center; box-sizing:border-box;">
+            <button id="all-close-btn" style="background:#ef4444; color:white; border:none; border-radius:4px; width:26px; height:26px; cursor:pointer; font-weight:bold; display:flex; align-items:center; justify-content:center; font-size:14px; box-sizing:border-box;">✕</button>
         `;
+
+        // 게시판은 헤더의 패치노트 옆으로 이동, 게임패드는 아래 토글 행으로
+        const boardBtn = document.createElement('button');
+        boardBtn.style.cssText = `
+            display:flex; align-items:center; gap:6px;
+            background:transparent; border:1px solid ${T.border}; color:${T.text};
+            border-radius:6px; padding:4px 10px; cursor:pointer;
+            font-size:14px; margin-left:6px;
+            transition:all 0.2s;
+        `;
+        boardBtn.innerHTML = `<span style="font-size:14px;">📌</span>게시판`;
+        boardBtn.onmouseenter = () => { boardBtn.style.borderColor=GREEN_HOVER; boardBtn.style.color=GREEN_HOVER; };
+        boardBtn.onmouseleave = () => { boardBtn.style.borderColor=T.border; boardBtn.style.color=T.text; };
+        boardBtn.onclick = () => openBoardOverlay();
 
         const titleWrap = document.createElement('div');
         titleWrap.style.cssText = "display:flex; align-items:center; gap:0;";
         titleWrap.appendChild(title);
         titleWrap.appendChild(patchBtn);
-        
-        // 게시판 / 게임패드는 더 이상 헤더 탭이 아니라 아래 스트림덱 그리드의 타일로 들어감
-        const boardBtn = document.createElement('button');
-        boardBtn.style.cssText = `
-            position:relative; overflow:hidden; aspect-ratio:2.0/1; border-radius:10px; cursor:pointer;
-            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
-            padding:4px; box-sizing:border-box; background:${T.card}; border:1px solid #60a5fa;
-            box-shadow:0 0 6px rgba(96,165,250,0.35), inset 0 0 8px rgba(96,165,250,0.1);
-            transition:box-shadow 0.15s;
-        `;
-        boardBtn.innerHTML = `
-            <span style="font-size:18px; margin-top:6px;">📌</span>
-            <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">게시판</span>
-        `;
-        boardBtn.onclick = () => openBoardOverlay();
-        attachStaticNeonHover(boardBtn, '96,165,250');
+        titleWrap.appendChild(boardBtn);
 
-        const gamepadBtn = document.createElement('button');
-        gamepadBtn.style.cssText = `
-            position:relative; overflow:hidden; aspect-ratio:2.0/1; border-radius:10px; cursor:pointer;
-            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
-            padding:4px; box-sizing:border-box;
-        `;
-        gamepadBtn.innerHTML = `
-            <div style="position:relative; z-index:1; display:flex; align-items:center; justify-content:center; gap:6px;">
-                <span style="font-size:18px;">🎮</span>
-                <span class="nb-onoff" style="font-size:12px; font-weight:bold; letter-spacing:0.5px;"></span>
-            </div>
-            <span style="position:relative; z-index:1; font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">패드 기능 & 테스터</span>
-        `;
-        const gamepadLabel = gamepadBtn.querySelector('.nb-onoff');
-        gamepadLabel.textContent = isDpadBindingOff() ? 'OFF' : 'ON';
-        paintToggleTile(gamepadBtn, !isDpadBindingOff(), T);
-        attachNeonHover(gamepadBtn, () => !isDpadBindingOff());
-        // 게임패드 가이드 오버레이(#gp-toggle)에서 토글해도 이 타일이 즉시 반영되도록 전역 sync 함수 노출
-        window.syncGamepadTile = () => {
-            gamepadLabel.textContent = isDpadBindingOff() ? 'OFF' : 'ON';
-            paintToggleTile(gamepadBtn, !isDpadBindingOff(), T);
-        };
-        attachHoldToggle(gamepadBtn, {
-            onShortClick: () => {
+        const gamepadToggleUI = createToggleRow('🎮', '패드 키변경/테스트', !isDpadBindingOff(),
+            (on) => {
+                localStorage.setItem('neubie_dpad_binding', on ? 'on' : 'off');
+            },
+            () => {
                 if (window.isSharedPopupOpen && window.isSharedPopupOpen('gamepad-menu')) {
                     window.hideSharedPopup();
                 } else {
                     openGamepadMenuOverlay();
                 }
-            },
-            onHold: () => {
-                localStorage.setItem('neubie_dpad_binding', isDpadBindingOff() ? 'on' : 'off');
-                window.syncGamepadTile();
-            },
-        });
+            }
+        );
+        const gamepadBtn = gamepadToggleUI.row;
+        // 게임패드 가이드 오버레이(#gp-toggle)에서 토글해도 이 행이 즉시 반영되도록 전역 sync 함수 노출
+        window.syncGamepadTile = () => {
+            const on = !isDpadBindingOff();
+            gamepadToggleUI.input.checked = on;
+            gamepadToggleUI.applyVisual(on);
+        };
 
         headerContainer.appendChild(titleWrap);
         headerContainer.appendChild(nameArea);
@@ -1383,8 +1616,22 @@
         setTimeout(() => {
             const input = document.getElementById('inline-name-input');
             if (input) {
-                input.onchange = () => {
+                input.onchange = async () => {
                     const newName = input.value.trim();
+
+                    // 전체 근무자 명단(오늘 휴무자 포함)에 없는 이름이면 저장하지 않고
+                    // 디폴트('사용자') 상태로 되돌림. 명단 조회 실패 시엔 검증을 건너뜀.
+                    if (newName) {
+                        const roster = await getStaffRoster();
+                        if (roster && roster.size > 0 && !roster.has(newName)) {
+                            input.style.borderColor = '#ef4444';
+                            localStorage.removeItem('neubie_user_name');
+                            syncTasksFromServer();
+                            setTimeout(() => renderDashboard(), 350);
+                            return;
+                        }
+                    }
+
                     localStorage.setItem('neubie_user_name', newName);
                     
                     // 이름 저장 시 현재 선택된 알림 시간도 강제로 한 번 더 저장
@@ -1418,6 +1665,45 @@
                 };
             }
 
+            const remindTestBtn = document.getElementById('remind-test-btn');
+            if (remindTestBtn) {
+                const ALARM_VISIBLE_MS = 7000; // triggerReminder의 표시 유지시간
+                const ALARM_FADE_MS = 500;     // 사라지는 페이드 시간
+                const LOCK_MS = ALARM_VISIBLE_MS + ALARM_FADE_MS;
+
+                remindTestBtn.onmouseenter = () => {
+                    if (remindTestBtn.disabled) return;
+                    remindTestBtn.style.background = GREEN_HOVER;
+                    remindTestBtn.style.borderColor = GREEN_HOVER;
+                    remindTestBtn.style.color = '#062e13';
+                };
+                remindTestBtn.onmouseleave = () => {
+                    if (remindTestBtn.disabled) return;
+                    remindTestBtn.style.background = 'transparent';
+                    remindTestBtn.style.borderColor = T.accent;
+                    remindTestBtn.style.color = T.accent;
+                };
+                remindTestBtn.onclick = () => {
+                    triggerReminder('일일 업무 테스트 알림', 5);
+
+                    // 알림이 화면에 떠있는 동안(+ 사라지는 시간)엔 중복 클릭 방지를 위해 잠금
+                    remindTestBtn.disabled = true;
+                    remindTestBtn.style.cursor = 'not-allowed';
+                    remindTestBtn.style.opacity = '0.5';
+                    remindTestBtn.style.background = 'transparent';
+                    remindTestBtn.style.color = T.accent;
+                    const originalText = remindTestBtn.textContent;
+                    remindTestBtn.textContent = '테스트 중...';
+
+                    setTimeout(() => {
+                        remindTestBtn.disabled = false;
+                        remindTestBtn.style.cursor = 'pointer';
+                        remindTestBtn.style.opacity = '1';
+                        remindTestBtn.textContent = originalText;
+                    }, LOCK_MS);
+                };
+            }
+
             // X 버튼 클릭 시 통합 종료 실행
             const closeBtn = document.getElementById('all-close-btn');
             if (closeBtn) closeBtn.onclick = closeAllPopups;
@@ -1425,13 +1711,13 @@
 
         const list = document.createElement('div');
         list.id = 'dashboard-list';
-        list.style.cssText = "display:grid; gap:8px; width:100%; box-sizing:border-box;";
+        list.style.cssText = "display:grid; gap:6px; width:100%; box-sizing:border-box;";
 
         // 1. 업무 알림 설정 (태스크 리스트 인라인 삽입)
         const taskCard = document.createElement('div');
         taskCard.style.cssText = `
             padding:15px; border-radius:15px; border:1px solid transparent;
-            background-image: linear-gradient(${T.card}, ${T.card}), linear-gradient(135deg, #6366f1, #ec4899);
+            background-image: linear-gradient(${T.card}, ${T.card}), linear-gradient(135deg, #10b981, #2dd4bf);
             background-origin: border-box; background-clip: padding-box, border-box;
             box-shadow:0 0 5px rgba(150,120,255,0.25);
         `;
@@ -1440,11 +1726,12 @@
         taskCard.innerHTML = `
             <div style="margin-bottom:10px;">
                 <div style="display:flex; align-items:center; gap:6px; margin-bottom:8px; flex-wrap:nowrap;">
-                    <div style="font-weight:bold; font-size:17px; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📋 ${storedName}의 일일 업무</div>
-                    <select id="remind-inline" style="background:#333; color:white; border:1px solid #555; font-size:13px; border-radius:4px; padding:2px;">
+                    <div style="font-weight:bold; font-size:17px; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📋 <span style="color:${T.text};">${storedName}</span><span style="color:${T.text};">의 일일 업무</span></div>
+                    <button id="remind-test-btn" style="background:transparent; color:${T.accent}; border:1px solid ${T.accent}; font-size:12px; font-weight:bold; border-radius:4px; padding:2px 8px; cursor:pointer; white-space:nowrap;">알림 테스트</button>
+                    <select id="remind-inline" style="background:${T.isDark ? '#333' : '#f0ede1'}; color:${T.isDark ? '#fff' : T.text}; border:1px solid ${T.isDark ? '#555' : T.border}; font-size:13px; font-weight:bold; border-radius:4px; padding:2px;">
                         <option value="0" ${currentInt === '0' ? 'selected' : ''}>알림 없음</option>
-                        <option value="3" ${currentInt === '3' ? 'selected' : ''}>3분 전</option>
-                        <option value="5" ${currentInt === '5' ? 'selected' : ''}>5분 전</option>
+                        <option value="3" ${currentInt === '3' ? 'selected' : ''}>3분 전 알림</option>
+                        <option value="5" ${currentInt === '5' ? 'selected' : ''}>5분 전 알림</option>
                     </select>
                 </div>
             </div>
@@ -1455,81 +1742,73 @@
         taskCard.appendChild(taskInline);
         list.appendChild(taskCard);
 
-		// 스트림덱 스타일 홀드 토글: 짧게 클릭 = 기존 설명 동작, 2초 홀드(좌→우 채움) = ON/OFF 토글
-        function attachHoldToggle(btn, { onHold, onShortClick }) {
-            const HOLD_MS = 1500;
-            const SHORT_CLICK_MS = 300; // 이 시간 안에 뗐을 때만 '짧은 클릭'으로 인정
-            btn.style.position = 'relative';
-            btn.style.overflow = 'hidden';
-
-            const fill = document.createElement('div');
-            fill.style.cssText = `
-                position:absolute; top:0; left:0; height:100%; width:0%;
-                background:rgba(245,158,11,0.55); border-right:2px solid rgba(245,158,11,0.9); pointer-events:none; z-index:0;
+        // ON/OFF 상태를 색이 채워진 알약형 배지로 명확하게 표기
+        function styleOnOffBadge(el, isOn) {
+            el.style.cssText = `
+                font-size:11px; font-weight:800; letter-spacing:0.4px;
+                padding:2px 8px; border-radius:999px; line-height:1.4;
+                background:${isOn ? '#22c55e' : 'rgba(148,148,148,0.55)'};
+                color:${isOn ? '#062e13' : '#fff'};
             `;
-            btn.insertBefore(fill, btn.firstChild);
+        }
 
-            let holdTimer = null, fired = false, pressStart = 0;
-
-            const startHold = (e) => {
-                e.preventDefault();
-                fired = false;
-                pressStart = Date.now();
-                fill.style.transition = 'none';
-                fill.style.width = '0%';
-                requestAnimationFrame(() => {
-                    fill.style.transition = `width ${HOLD_MS}ms linear`;
-                    fill.style.width = '100%'; // 좌 → 우로 채워짐
-                });
-                holdTimer = setTimeout(() => {
-                    fired = true;
-                    onHold();
-                    fill.style.transition = 'none';
-                    fill.style.width = '0%';
-                }, HOLD_MS);
+        // 세로로 긴 토글 행 — 아이콘+라벨(클릭 시 설명 팝업) + 확실한 클릭형 ON/OFF 스위치
+        function createToggleRow(icon, label, isOn, onToggle, onLabelClick) {
+            const row = document.createElement('div');
+            row.style.cssText = `
+                display:flex; align-items:center; justify-content:space-between;
+                border:1px solid ${T.border}; border-radius:10px; padding:8px 14px;
+                background:${T.card}; gap:10px;
+            `;
+            const clickHint = onLabelClick
+                ? `<span class="nb-click-hint" style="display:inline-flex; flex-direction:column; align-items:center; justify-content:center; line-height:1.05; margin-left:3px; animation:neubie-blink 2.2s ease-in-out infinite;">
+                        <span style="font-size:8.5px; font-weight:800; color:${T.accent};">설명</span>
+                        <span style="font-size:8px; font-weight:800; color:${T.accent};">Click!</span>
+                   </span>`
+                : '';
+            row.innerHTML = `
+                <span class="nb-toggle-label" style="display:flex; align-items:center; gap:9px; font-size:15px; font-weight:600;">
+                    <span style="font-size:18px;">${icon}</span><span style="color:${T.text};">${label}</span>${clickHint}
+                </span>
+                <label style="position:relative; display:inline-block; width:54px; height:24px; flex-shrink:0; cursor:pointer;">
+                    <input type="checkbox" ${isOn ? 'checked' : ''} class="nb-toggle-input" style="opacity:0; width:0; height:0;">
+                    <span class="nb-toggle-track" style="position:absolute; inset:0; background:${isOn ? '#22c55e' : (T.isDark ? '#55545c' : '#c9be9c')}; border-radius:999px; transition:background .15s;">
+                        <span class="nb-toggle-text" style="position:absolute; top:50%; transform:translateY(-50%); ${isOn ? 'left:7px;' : 'right:6px;'} font-size:9px; font-weight:800; letter-spacing:0.3px; color:#fff;">${isOn ? 'ON' : 'OFF'}</span>
+                    </span>
+                    <span class="nb-toggle-knob" style="position:absolute; top:3px; left:${isOn ? '33px' : '3px'}; width:18px; height:18px; background:#fff; border-radius:50%; transition:left .15s; box-shadow:0 1px 3px rgba(0,0,0,0.3);"></span>
+                </label>
+            `;
+            const input = row.querySelector('.nb-toggle-input');
+            const track = row.querySelector('.nb-toggle-track');
+            const knob = row.querySelector('.nb-toggle-knob');
+            const text = row.querySelector('.nb-toggle-text');
+            const applyVisual = (on) => {
+                track.style.background = on ? '#22c55e' : (T.isDark ? '#55545c' : '#c9be9c');
+                knob.style.left = on ? '33px' : '3px';
+                text.textContent = on ? 'ON' : 'OFF';
+                text.style.left = on ? '7px' : 'auto';
+                text.style.right = on ? 'auto' : '6px';
             };
-            const cancelHold = () => {
-                clearTimeout(holdTimer);
-                fill.style.transition = 'width 0.15s ease-out';
-                fill.style.width = '0%';
-            };
-
-            btn.addEventListener('mousedown', startHold);
-            btn.addEventListener('mouseup', () => {
-                const wasFired = fired;
-                const heldMs = Date.now() - pressStart;
-                cancelHold();
-                // 완주(wasFired)도 아니고, 빠른 탭(SHORT_CLICK_MS 이내)도 아니면 — 홀드하다 만 것이므로 아무 것도 하지 않음
-                if (!wasFired && heldMs < SHORT_CLICK_MS) onShortClick?.();
+            input.addEventListener('change', () => {
+                applyVisual(input.checked);
+                onToggle(input.checked);
             });
-            btn.addEventListener('mouseleave', cancelHold);
-        }
-
-        // ON/OFF 상태에 맞춰 버튼 색(다크/라이트 대응) 칠하기
-        function paintToggleTile(btn, isOn, T) {
-            const isDark = T.bg === '#111111';
-            btn.style.background = isOn
-                ? (isDark ? 'rgba(34,197,94,0.18)' : 'rgba(34,197,94,0.15)')
-                : (isDark ? '#3a3a3a' : '#e2e2e2');
-            btn.style.border = `1px solid ${isOn ? '#22c55e' : (isDark ? '#666' : '#999')}`;
-            btn.style.color = isOn ? '#22c55e' : (isDark ? '#bbb' : '#555');
-            btn.style.borderRadius = '6px';
-            btn.style.boxShadow = isOn
-                ? '0 0 6px rgba(34,197,94,0.4), inset 0 0 8px rgba(34,197,94,0.12)'
-                : '0 0 4px rgba(255,255,255,0.12)';
-            btn.style.transition = 'box-shadow 0.15s, border-color 0.15s';
-        }
-
-        // 호버 시 뚜렷한 네온 효과 (ON=초록 글로우, OFF=중립 글로우) — 평상시 은은한 글로우는 유지, 호버 시에만 확 밝아짐
-        function attachNeonHover(btn, getIsOn) {
-            const baseShadow = (on) => on
-                ? '0 0 6px rgba(34,197,94,0.4), inset 0 0 8px rgba(34,197,94,0.12)'
-                : '0 0 4px rgba(255,255,255,0.12)';
-            const hoverShadow = (on) => on
-                ? '0 0 18px 2px rgba(34,197,94,0.95), 0 0 5px rgba(34,197,94,0.8), inset 0 0 10px rgba(34,197,94,0.3)'
-                : '0 0 16px 2px rgba(226,232,240,0.8), inset 0 0 8px rgba(226,232,240,0.2)';
-            btn.onmouseenter = () => { btn.style.boxShadow = hoverShadow(getIsOn()); };
-            btn.onmouseleave = () => { btn.style.boxShadow = baseShadow(getIsOn()); };
+            if (onLabelClick) {
+                const labelEl = row.querySelector('.nb-toggle-label');
+                labelEl.style.cursor = 'pointer';
+                labelEl.onclick = onLabelClick;
+                row.style.cursor = 'pointer';
+                row.style.transition = 'border-color 0.15s, background 0.15s';
+                row.onmouseenter = () => {
+                    row.style.borderColor = HOVER_ACCENT;
+                    row.style.background = 'rgba(91,155,247,0.14)';
+                };
+                row.onmouseleave = () => {
+                    row.style.borderColor = T.border;
+                    row.style.background = T.card;
+                };
+            }
+            return { row, input, applyVisual };
         }
 
         // ON/OFF가 없는 일반 타일용 — 고정 색상 네온 호버 (rgb 트리플렛만 전달, 예: '52,209,88')
@@ -1596,34 +1875,16 @@
         window.hideSharedPopup = hideSharedPopup;
         window.isSharedPopupOpen = isSharedPopupOpen;
 
-        // 요기요 최적화 — 스트림덱 타일 (아이콘 + 라벨 + ON/OFF)
-        const mapToggle = document.createElement('button');
-        mapToggle.style.cssText = `
-            position:relative; overflow:hidden; aspect-ratio:2.0/1; border-radius:10px; cursor:pointer;
-            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
-            padding:4px; box-sizing:border-box;
-        `;
-        mapToggle.innerHTML = `
-            <div style="position:relative; z-index:1; display:flex; align-items:center; justify-content:center; gap:6px;">
-                <span style="font-size:18px;">🗺️</span>
-                <span class="nb-onoff" style="font-size:12px; font-weight:bold; letter-spacing:0.5px;"></span>
-            </div>
-            <span style="position:relative; z-index:1; font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">맵 최적화 기능</span>
-        `;
-        const mapLabel = mapToggle.querySelector('.nb-onoff');
-        mapLabel.textContent = state.isMapOpt ? 'ON' : 'OFF';
-        paintToggleTile(mapToggle, state.isMapOpt, T);
-        attachNeonHover(mapToggle, () => state.isMapOpt);
-        attachHoldToggle(mapToggle, {
-            onShortClick: () => mapInfoBtn.click(), // 기존 설명 팝업 그대로 재사용
-            onHold: () => {
-                state.isMapOpt = !state.isMapOpt;
+        // 요기요 최적화 — 토글 행 (아이콘 + 라벨 클릭=설명, 스위치 클릭=on/off)
+        const mapToggleUI = createToggleRow('🗺️', 'NCC 맵 최적화', state.isMapOpt,
+            (on) => {
+                state.isMapOpt = on;
                 localStorage.setItem('neubie_opt_map', state.isMapOpt);
-                mapLabel.textContent = state.isMapOpt ? 'ON' : 'OFF';
-                paintToggleTile(mapToggle, state.isMapOpt, T);
                 injectMapStyle();
             },
-        });
+            () => mapInfoBtn.click() // 기존 설명 팝업 그대로 재사용
+        );
+        const mapToggle = mapToggleUI.row;
 
         // ⓘ 요기요 페이지 최적화 기능 설명 버튼
         const mapInfoBtn = document.createElement('button');
@@ -1672,10 +1933,10 @@
             mapInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:${T.text};`;
             mapInfoContent.innerHTML = `
                 역삼 요기요 / 송도 요기요 / 성수 요기요 / 성남 삼평동<br>
-                흰색 마커 및 Dot을 숨겨서 페이지 최적화.<br>
-                비타겟 site로 이동 시 원래대로 보임.<br>
-                대기장소 마커(주황)를 역방향으로 뒤집어서 식별하기 쉽도록 함.<br>
-                기존 NCC 상의 아이콘 숨기기 기능은 여전히 작동.<br>
+                흰색 마커 및 Dot을 숨겨서 페이지 최적화<br>
+                비타겟 site로 이동 시 원래대로 보임<br>
+                대기장소 마커(주황)을 역방향으로 뒤집어서 식별하기 쉽도록 함<br>
+                기존 NCC 상 아이콘 숨기기 기능은 여전히 작동<br>
             `;
             mapInfoBox.appendChild(mapInfoClose);
             mapInfoBox.appendChild(mapInfoTitle);
@@ -1685,40 +1946,21 @@
             showSharedPopup('map-info', mapInfoBox);
         };
 
-		// 다중 모니터링 기능 — 스트림덱 타일
+		// 다중 모니터링 기능 — 토글 행
         const queueEnabled = localStorage.getItem('neubie_handover_enabled') === 'true';
-        const queueToggle = document.createElement('button');
-        queueToggle.style.cssText = `
-            position:relative; overflow:hidden; aspect-ratio:2.0/1; border-radius:10px; cursor:pointer;
-            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
-            padding:4px; box-sizing:border-box;
-        `;
-        queueToggle.innerHTML = `
-            <div style="position:relative; z-index:1; display:flex; align-items:center; justify-content:center; gap:6px;">
-                <span style="font-size:18px;">🖥️</span>
-                <span class="nb-onoff" style="font-size:12px; font-weight:bold; letter-spacing:0.5px;"></span>
-            </div>
-            <span style="position:relative; z-index:1; font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">다중 모니터링 기능</span>
-        `;
-        const queueLabel = queueToggle.querySelector('.nb-onoff');
-        queueLabel.textContent = queueEnabled ? 'ON' : 'OFF';
-        paintToggleTile(queueToggle, queueEnabled, T);
-        attachNeonHover(queueToggle, () => queueLabel.textContent === 'ON');
-        attachHoldToggle(queueToggle, {
-            onShortClick: () => queueInfoBtn.click(), // 기존 설명 팝업 그대로 재사용
-            onHold: () => {
-                const next = queueLabel.textContent === 'OFF';
-                localStorage.setItem('neubie_handover_enabled', next);
-                queueLabel.textContent = next ? 'ON' : 'OFF';
-                paintToggleTile(queueToggle, next, T);
+        const queueToggleUI = createToggleRow('🖥️', '다중 모니터링 도우미', queueEnabled,
+            (on) => {
+                localStorage.setItem('neubie_handover_enabled', on);
                 const bar = document.getElementById('neubie-brightness-bar');
-                if (!next && bar) {
+                if (!on && bar) {
                     bar.remove();
-                } else if (next && !bar && isBrightnessPage()) {
+                } else if (on && !bar && isBrightnessPage()) {
                     injectMasterBrightness();
                 }
             },
-        });
+            () => queueInfoBtn.click() // 기존 설명 팝업 그대로 재사용
+        );
+        const queueToggle = queueToggleUI.row;
 
         if (!document.getElementById('neubie-blink-style')) {
             const blinkStyle = document.createElement('style');
@@ -1782,7 +2024,7 @@
                 기체별 헤드램프 토글<br>
 				기체 카메라 밝기 한 번에 조절<br>
 				카메라 위치 스왑<br>
-				'NCC 도우미'만 이용하더라도 교대 기체 받기는 가능<br>
+				'NCC 패널'만 이용하더라도 교대 기체 받기는 가능<br>
             `;
 
             queueInfoBox.appendChild(queueInfoClose);
@@ -1796,20 +2038,20 @@
         // 스트림덱 스타일 4열 타일 그리드 (8개)
         const bottomRow = document.createElement('div');
         bottomRow.id = 'neubie-streamdeck-grid';
-        bottomRow.style.cssText = "display:grid; grid-template-columns:repeat(4, 1fr); gap:8px;";
+        bottomRow.style.cssText = "display:flex; gap:8px;";
 
         const scheduleCard = document.createElement('div');
         scheduleCard.style.cssText = `
-            position:relative; aspect-ratio:2.0/1; border-radius:10px; cursor:pointer;
-            background:${T.card}; border:1px solid #ff4fa3;
-            box-shadow:0 0 6px rgba(255,79,163,0.35), inset 0 0 8px rgba(255,79,163,0.1);
-            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
-            padding:4px; box-sizing:border-box; transition:box-shadow 0.15s;
+            position:relative; min-height:52px; border-radius:10px; cursor:pointer;
+            background:${T.card}; border:1px solid #15803d;
+            box-shadow:0 0 6px rgba(21,128,61,0.35), inset 0 0 8px rgba(21,128,61,0.1);
+            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+            padding:7px 4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
-        scheduleCard.innerHTML = `<span style="font-size:18px;">📅</span>
-            <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">스케줄표 & 좌석도</span>`;
+        scheduleCard.innerHTML = `<span style="font-size:16px;">📅</span>
+            <span style="font-size:14px; font-weight:600; line-height:1.2; text-align:center; color:${T.text};">스케줄표/좌석도</span>`;
         window._neubieScheduleCard = scheduleCard;
-        attachStaticNeonHover(scheduleCard, '255,79,163');
+        attachStaticNeonHover(scheduleCard, '21,128,61');
         scheduleCard.onclick = () => {
             const isActive = scheduleCard.style.outline !== 'none' && scheduleCard.style.outline !== '';
             scheduleCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
@@ -1818,16 +2060,16 @@
 
         const rouletteCard = document.createElement('div');
         rouletteCard.style.cssText = `
-            position:relative; aspect-ratio:2.0/1; border-radius:10px; cursor:pointer;
-            background:${T.card}; border:1px solid #2ce6d9;
-            box-shadow:0 0 6px rgba(44,230,217,0.35), inset 0 0 8px rgba(44,230,217,0.1);
-            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
-            padding:4px; box-sizing:border-box; transition:box-shadow 0.15s;
+            position:relative; min-height:52px; border-radius:10px; cursor:pointer;
+            background:${T.card}; border:1px solid #16a34a;
+            box-shadow:0 0 6px rgba(22,163,74,0.35), inset 0 0 8px rgba(22,163,74,0.1);
+            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+            padding:7px 4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
-        rouletteCard.innerHTML = `<span style="font-size:18px;">🧰</span>
-            <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">SW & 헬프</span>`;
+        rouletteCard.innerHTML = `<span style="font-size:16px;">🧰</span>
+            <span style="font-size:14px; font-weight:600; line-height:1.2; text-align:center; color:${T.text};">SW 설정/헬프</span>`;
         window._neubieRouletteCard = rouletteCard;
-        attachStaticNeonHover(rouletteCard, '44,230,217');
+        attachStaticNeonHover(rouletteCard, '22,163,74');
         rouletteCard.onclick = () => {
             const isActive = rouletteCard.style.outline !== 'none' && rouletteCard.style.outline !== '';
             rouletteCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
@@ -1842,16 +2084,16 @@
         const isBatteryOpen = batteryPopup.style.display === 'block';
         const batteryCard = document.createElement('div');
         batteryCard.style.cssText = `
-            position:relative; aspect-ratio:2.0/1; border-radius:10px; cursor:pointer;
-            background:${T.card}; border:1px solid #facc15;
-            box-shadow:0 0 6px rgba(250,204,21,0.35), inset 0 0 8px rgba(250,204,21,0.1);
-            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
-            padding:4px; box-sizing:border-box; transition:box-shadow 0.15s;
+            position:relative; min-height:52px; border-radius:10px; cursor:pointer;
+            background:${T.card}; border:1px solid #22c55e;
+            box-shadow:0 0 6px rgba(34,197,94,0.35), inset 0 0 8px rgba(34,197,94,0.1);
+            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+            padding:7px 4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
-        batteryCard.innerHTML = `<span style="font-size:18px;">🔋</span>
-            <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">성남 배터리 현황</span>`;
+        batteryCard.innerHTML = `<span style="font-size:16px;">🔋</span>
+            <span style="font-size:14px; font-weight:600; line-height:1.2; text-align:center; color:${T.text};">성남 배터리 현황</span>`;
         window._neubieBatteryCard = batteryCard;
-        attachStaticNeonHover(batteryCard, '250,204,21');
+        attachStaticNeonHover(batteryCard, '34,197,94');
         batteryCard.onclick = () => {
             const isActive = batteryCard.style.outline !== 'none' && batteryCard.style.outline !== '';
             batteryCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
@@ -1863,16 +2105,16 @@
 
         const weatherCard = document.createElement('div');
         weatherCard.style.cssText = `
-            position:relative; aspect-ratio:2.0/1; border-radius:10px; cursor:pointer;
-            background:${T.card}; border:1px solid #9d5cff;
-            box-shadow:0 0 6px rgba(157,92,255,0.35), inset 0 0 8px rgba(157,92,255,0.1);
-            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
-            padding:4px; box-sizing:border-box; transition:box-shadow 0.15s;
+            position:relative; min-height:52px; border-radius:10px; cursor:pointer;
+            background:${T.card}; border:1px solid #86efac;
+            box-shadow:0 0 6px rgba(134,239,172,0.35), inset 0 0 8px rgba(134,239,172,0.1);
+            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+            padding:7px 4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
-        weatherCard.innerHTML = `<span style="font-size:18px;">🎨</span>
-            <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">레이아웃 색상</span>`;
+        weatherCard.innerHTML = `<span style="font-size:16px;">🎨</span>
+            <span style="font-size:14px; font-weight:600; line-height:1.2; text-align:center; color:${T.text};">다크/라이트 모드</span>`;
         window._neubieWeatherCard = weatherCard;
-        attachStaticNeonHover(weatherCard, '157,92,255');
+        attachStaticNeonHover(weatherCard, '134,239,172');
         weatherCard.onclick = () => {
             const isActive = weatherCard.style.outline !== 'none' && weatherCard.style.outline !== '';
             weatherCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
@@ -1884,17 +2126,21 @@
             }
         };
 
-        // 1행: 요기요 최적화 - 다중 모니터링 - 게임패드 - 성남 배터리
-        bottomRow.appendChild(mapToggle);    // 요기요 최적화 (ON/OFF)
-        bottomRow.appendChild(queueToggle);  // 다중 모니터링 (ON/OFF)
-        bottomRow.appendChild(gamepadBtn);   // 게임패드 (ON/OFF)
-        bottomRow.appendChild(batteryCard);  // 성남 배터리
+        const toggleCol = document.createElement('div');
+        toggleCol.style.cssText = "flex:1.3; display:flex; flex-direction:column; gap:6px;";
+        toggleCol.appendChild(mapToggle);    // 맵 최적화 기능 (ON/OFF)
+        toggleCol.appendChild(queueToggle);  // 다중 모니터링 기능 (ON/OFF)
+        toggleCol.appendChild(gamepadBtn);   // 패드 기능 & 테스터 (ON/OFF)
 
-        // 2행: 레이아웃 색상 - SW & 헬프 - 게시판 - 스케줄 좌석
-        bottomRow.appendChild(weatherCard);  // 레이아웃 색상
-        bottomRow.appendChild(rouletteCard); // SW & 헬프
-        bottomRow.appendChild(boardBtn);     // 게시판
-        bottomRow.appendChild(scheduleCard); // 스케줄 좌석
+        const navGrid = document.createElement('div');
+        navGrid.style.cssText = "flex:1; display:grid; grid-template-columns:repeat(2, 1fr); grid-template-rows:repeat(2, 1fr); gap:6px;";
+        navGrid.appendChild(weatherCard);   // 레이아웃 설정
+        navGrid.appendChild(batteryCard);   // 성남 배터리
+        navGrid.appendChild(rouletteCard);  // SW & 헬프
+        navGrid.appendChild(scheduleCard);  // 스케줄표
+
+        bottomRow.appendChild(toggleCol);
+        bottomRow.appendChild(navGrid);
 
         list.appendChild(bottomRow);
 
@@ -4096,7 +4342,7 @@
                 box.style.cssText = `background:${T.card}; color:${T.text}; border-radius:16px; padding:20px; width:100%; box-sizing:border-box; box-shadow:0 4px 40px rgba(0,0,0,0.7); pointer-events:auto;`;
                 box.innerHTML = `
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-                        <span style="font-size:16px;font-weight:700;">🎨 레이아웃 색상 설정</span>
+                        <span style="font-size:16px;font-weight:700;">🎨 다크/라이트 모드 설정</span>
                         <button id="dto-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
                     </div>
 
@@ -4569,7 +4815,7 @@
                     const row = document.createElement('div');
                     row.style.cssText = `
                         display:flex; justify-content:space-between; align-items:center;
-                        background:${T.bg === '#111111' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)'};
+                        background:${T.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)'};
                         border:1px solid ${T.border}; border-radius:12px;
                         padding:13px 16px; gap:12px;
                     `;
