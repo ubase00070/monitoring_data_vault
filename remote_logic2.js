@@ -1008,7 +1008,7 @@
                 if (neighbors.prev) chainParts.push(nameChip(neighbors.prev, false));
                 chainParts.push(nameChip(t.user, true));
                 if (neighbors.next) chainParts.push(nameChip(neighbors.next, false));
-                const chainHtml = chainParts.join(' <span style="opacity:0.45; font-size:11px;">›</span> ');
+                const chainHtml = chainParts.join(' ➡️ ');
                 const prefix = HANDOVER_DISPLAY_LABEL[handoverKey] || t.content;
                 displayContent = `${prefix} ${chainHtml}`;
                 layoutLen = prefix.length + 25; // 체인 표기가 붙으면 길어진 것으로 간주해 2줄 표시 판단
@@ -1483,8 +1483,8 @@
                     <div style="font-weight:bold; font-size:17px; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📋 ${storedName}의 일일 업무</div>
                     <select id="remind-inline" style="background:#333; color:white; border:1px solid #555; font-size:13px; border-radius:4px; padding:2px;">
                         <option value="0" ${currentInt === '0' ? 'selected' : ''}>알림 없음</option>
-                        <option value="3" ${currentInt === '3' ? 'selected' : ''}>3분 전</option>
-                        <option value="5" ${currentInt === '5' ? 'selected' : ''}>5분 전</option>
+                        <option value="3" ${currentInt === '3' ? 'selected' : ''}>3분 전 알림</option>
+                        <option value="5" ${currentInt === '5' ? 'selected' : ''}>5분 전 알림</option>
                     </select>
                 </div>
             </div>
@@ -1510,25 +1510,31 @@
             const row = document.createElement('div');
             row.style.cssText = `
                 display:flex; align-items:center; justify-content:space-between;
-                border:1px solid ${T.border}; border-radius:10px; padding:11px 14px;
+                border:1px solid ${T.border}; border-radius:10px; padding:8px 14px;
                 background:${T.card}; gap:10px;
             `;
             row.innerHTML = `
-                <span class="nb-toggle-label" style="display:flex; align-items:center; gap:9px; font-size:14px; font-weight:500; color:${T.text};">
+                <span class="nb-toggle-label" style="display:flex; align-items:center; gap:9px; font-size:15px; font-weight:500; color:${T.text};">
                     <span style="font-size:18px;">${icon}</span>${label}
                 </span>
-                <label style="position:relative; display:inline-block; width:42px; height:23px; flex-shrink:0; cursor:pointer;">
+                <label style="position:relative; display:inline-block; width:54px; height:24px; flex-shrink:0; cursor:pointer;">
                     <input type="checkbox" ${isOn ? 'checked' : ''} class="nb-toggle-input" style="opacity:0; width:0; height:0;">
-                    <span class="nb-toggle-track" style="position:absolute; inset:0; background:${isOn ? '#22c55e' : (T.isDark ? '#55545c' : '#c9be9c')}; border-radius:999px; transition:background .15s;"></span>
-                    <span class="nb-toggle-knob" style="position:absolute; top:3px; left:${isOn ? '22px' : '3px'}; width:17px; height:17px; background:#fff; border-radius:50%; transition:left .15s; box-shadow:0 1px 3px rgba(0,0,0,0.3);"></span>
+                    <span class="nb-toggle-track" style="position:absolute; inset:0; background:${isOn ? '#22c55e' : (T.isDark ? '#55545c' : '#c9be9c')}; border-radius:999px; transition:background .15s;">
+                        <span class="nb-toggle-text" style="position:absolute; top:50%; transform:translateY(-50%); ${isOn ? 'left:7px;' : 'right:6px;'} font-size:9px; font-weight:800; letter-spacing:0.3px; color:#fff;">${isOn ? 'ON' : 'OFF'}</span>
+                    </span>
+                    <span class="nb-toggle-knob" style="position:absolute; top:3px; left:${isOn ? '33px' : '3px'}; width:18px; height:18px; background:#fff; border-radius:50%; transition:left .15s; box-shadow:0 1px 3px rgba(0,0,0,0.3);"></span>
                 </label>
             `;
             const input = row.querySelector('.nb-toggle-input');
             const track = row.querySelector('.nb-toggle-track');
             const knob = row.querySelector('.nb-toggle-knob');
+            const text = row.querySelector('.nb-toggle-text');
             const applyVisual = (on) => {
                 track.style.background = on ? '#22c55e' : (T.isDark ? '#55545c' : '#c9be9c');
-                knob.style.left = on ? '22px' : '3px';
+                knob.style.left = on ? '33px' : '3px';
+                text.textContent = on ? 'ON' : 'OFF';
+                text.style.left = on ? '7px' : 'auto';
+                text.style.right = on ? 'auto' : '6px';
             };
             input.addEventListener('change', () => {
                 applyVisual(input.checked);
@@ -1780,7 +1786,7 @@
             padding:7px 4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
         scheduleCard.innerHTML = `<span style="font-size:16px;">📅</span>
-            <span style="font-size:12px; font-weight:500; line-height:1.2; text-align:center; color:${T.text};">스케줄표 & 좌석도</span>`;
+            <span style="font-size:13px; font-weight:500; line-height:1.2; text-align:center; color:${T.text};">스케줄표/좌석도</span>`;
         window._neubieScheduleCard = scheduleCard;
         attachStaticNeonHover(scheduleCard, '255,79,163');
         scheduleCard.onclick = () => {
@@ -1798,7 +1804,7 @@
             padding:7px 4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
         rouletteCard.innerHTML = `<span style="font-size:16px;">🧰</span>
-            <span style="font-size:12px; font-weight:500; line-height:1.2; text-align:center; color:${T.text};">SW & 헬프</span>`;
+            <span style="font-size:13px; font-weight:500; line-height:1.2; text-align:center; color:${T.text};">SW/헬프</span>`;
         window._neubieRouletteCard = rouletteCard;
         attachStaticNeonHover(rouletteCard, '44,230,217');
         rouletteCard.onclick = () => {
@@ -1822,7 +1828,7 @@
             padding:7px 4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
         batteryCard.innerHTML = `<span style="font-size:16px;">🔋</span>
-            <span style="font-size:12px; font-weight:500; line-height:1.2; text-align:center; color:${T.text};">성남 배터리</span>`;
+            <span style="font-size:13px; font-weight:500; line-height:1.2; text-align:center; color:${T.text};">성남 배터리</span>`;
         window._neubieBatteryCard = batteryCard;
         attachStaticNeonHover(batteryCard, '250,204,21');
         batteryCard.onclick = () => {
@@ -1843,7 +1849,7 @@
             padding:7px 4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
         weatherCard.innerHTML = `<span style="font-size:16px;">🎨</span>
-            <span style="font-size:12px; font-weight:500; line-height:1.2; text-align:center; color:${T.text};">레이아웃 설정</span>`;
+            <span style="font-size:13px; font-weight:500; line-height:1.2; text-align:center; color:${T.text};">레이아웃 설정</span>`;
         window._neubieWeatherCard = weatherCard;
         attachStaticNeonHover(weatherCard, '157,92,255');
         weatherCard.onclick = () => {
