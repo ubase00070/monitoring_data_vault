@@ -886,7 +886,9 @@
     function getHandoverGroupKey(t) {
         if (!t || !t.content) return null;
         if (t.content.includes('다중 모니터링')) return '다중 모니터링';
-        if (t.content.includes('부산') && t.content.includes('과학관')) return '부산 국립과학관';
+        // '부산과학관 ... HUB B 출근 / 자비에 재부팅 / 임무받기 ON' 업무는 제외하고,
+        // '부산국립과학관 170,171호기 임무'만 인계 체인 대상으로 삼는다 ('국립' 포함 여부로 구분)
+        if (t.content.includes('국립과학관')) return '부산 국립과학관';
         return null;
     }
 
@@ -995,6 +997,8 @@
             const displayTime = (String(timeKey).length > 10) ? String(timeKey).match(/\d{2}:\d{2}/)?.[0] : timeKey;
 
             // 인계 체인 표기 — '다중 모니터링' / '부산 국립과학관' 업무는 전임자/후임자를 같이 표기
+            const HANDOVER_DISPLAY_LABEL = { '다중 모니터링': '다중 모니터링', '부산 국립과학관': '부산국립과학관' };
+            const handoverKey = getHandoverGroupKey(t);
             const neighbors = getHandoverNeighbors(t, window.currentAllTasks);
             let displayContent = t.content;
             let layoutLen = t.content.length;
@@ -1004,8 +1008,9 @@
                 chainParts.push(`<span style="font-weight:800; font-size:14px;">${t.user}</span>`);
                 if (neighbors.next) chainParts.push(`<span style="font-size:11px; opacity:0.7;">${neighbors.next}</span>`);
                 const chainHtml = chainParts.join(' <span style="opacity:0.45;">›</span> ');
-                displayContent = `${t.content} (${chainHtml})`;
-                layoutLen = t.content.length + 20; // 체인 표기가 붙으면 길어진 것으로 간주해 2줄 표시 판단
+                const prefix = HANDOVER_DISPLAY_LABEL[handoverKey] || t.content;
+                displayContent = `${prefix} (${chainHtml})`;
+                layoutLen = prefix.length + 20; // 체인 표기가 붙으면 길어진 것으로 간주해 2줄 표시 판단
             }
 
             const isLong = layoutLen > 40;
@@ -1113,10 +1118,14 @@
             deliveryActive: true   // ← 배송 띠띠 기체 입고 중이면 false, 복귀하면 true로 한 글자만 바꾸면 끝
         };
 
+        // 버튼에 표기할 '유효 시간대' — 실제 복사 시 쓰이는 getCalculatedTime()과 동일한 보정 로직
+        const multiHourLabel = getFormattedHour(getCalculatedTime(10)) + '시';
+        const combinedHourLabel = getFormattedHour(getCalculatedTime(40)) + '시';
+
         card.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                 <span style="color:${T.accent}; font-weight:bold; font-size:18px;">🏷️ 영상 파일명 생성기</span>
-                <button id="openDriveTodayBtn" style="background:#444; color:#ddd; border:1px solid #666; padding:4px 8px; border-radius:6px; font-size:13px; cursor:pointer; white-space:nowrap;">📂 금일 구글 드라이브</button>
+                <button id="openDriveTodayBtn" style="background:#444; color:#ddd; border:1px solid #666; padding:4px 8px; border-radius:6px; font-size:13px; cursor:pointer; white-space:nowrap;">📂 구글 영상 드라이브</button>
             </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px 5px; margin-bottom: 10px;">
                 <div style="position: relative; min-width: 0;">
@@ -1125,12 +1134,12 @@
                     </select>
                     <span style="position: absolute; right: 6px; top: 50%; transform: translateY(-50%); pointer-events: none; color: #aaa; font-size: 11px;">▾</span>
                 </div>
+                <button id="btnMulti" class="sub-btn">다중 모니터링 (${multiHourLabel})</button>
                 <div style="display: flex; gap: 5px; min-width: 0;">
                     <input type="text" id="taskInput" placeholder="주문번호를 붙여넣으세요." style="flex: 1; min-width: 0; background: #333; color: white; border: 1px solid #555; padding: 0 8px; border-radius: 4px; font-size: 15px; height: 32px; line-height: 32px; box-sizing: border-box;">
                     <button id="copyFileName" style="width: 70px; flex-shrink: 0; background: #007bff; color: white; border: none; padding: 0 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 15px; white-space: nowrap; overflow: hidden; height: 32px; line-height: 32px; box-sizing: border-box;">복사</button>
                 </div>
-                <button id="btnMulti" class="sub-btn">다중 모니터링</button>
-                <button id="btnCombined" class="sub-btn">배송/순찰 띠띠</button>
+                <button id="btnCombined" class="sub-btn">배송/순찰 띠띠 (${combinedHourLabel})</button>
             </div>
         `;
 
@@ -1145,7 +1154,7 @@
             // 배송 띠띠 활성 여부에 따라 버튼 라벨 갱신 (신규 추가)
             const combinedBtnLabel = card.querySelector('#btnCombined');
             if (combinedBtnLabel) {
-                combinedBtnLabel.textContent = TTIDDI_CONFIG.deliveryActive ? '배송/순찰 띠띠' : '순찰 띠띠 (배송 띠띠 입고)';
+                combinedBtnLabel.textContent = (TTIDDI_CONFIG.deliveryActive ? '배송/순찰 띠띠' : '순찰 띠띠 (배송 띠띠 입고)') + ` (${combinedHourLabel})`;
             }
 
 			// 영상 드라이브 열기 → 오늘 날짜 폴더로 이동 (없으면 루트 폴더로 폴백)
@@ -1364,64 +1373,45 @@
             <button id="all-close-btn" style="background:#ef4444; color:white; border:none; border-radius:4px; width:22px; height:22px; cursor:pointer; font-weight:bold; display:flex; align-items:center; justify-content:center; font-size:14px;">✕</button>
         `;
 
+        // 게시판은 헤더의 패치노트 옆으로 이동, 게임패드는 아래 토글 행으로
+        const boardBtn = document.createElement('button');
+        boardBtn.style.cssText = `
+            display:flex; align-items:center; gap:6px;
+            background:transparent; border:1px solid ${T.border}; color:${T.text};
+            border-radius:6px; padding:4px 10px; cursor:pointer;
+            font-size:14px; margin-left:6px;
+            transition:all 0.2s;
+        `;
+        boardBtn.innerHTML = `<span style="font-size:14px;">📌</span>게시판`;
+        boardBtn.onmouseenter = () => { boardBtn.style.borderColor='#60a5fa'; boardBtn.style.color='#60a5fa'; };
+        boardBtn.onmouseleave = () => { boardBtn.style.borderColor=T.border; boardBtn.style.color=T.text; };
+        boardBtn.onclick = () => openBoardOverlay();
+
         const titleWrap = document.createElement('div');
         titleWrap.style.cssText = "display:flex; align-items:center; gap:0;";
         titleWrap.appendChild(title);
         titleWrap.appendChild(patchBtn);
-        
-        // 게시판 / 게임패드는 더 이상 헤더 탭이 아니라 아래 스트림덱 그리드의 타일로 들어감
-        const boardBtn = document.createElement('button');
-        boardBtn.style.cssText = `
-            position:relative; overflow:hidden; aspect-ratio:2.0/1; border-radius:10px; cursor:pointer;
-            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
-            padding:4px; box-sizing:border-box; background:${T.card}; border:1px solid #60a5fa;
-            box-shadow:0 0 6px rgba(96,165,250,0.35), inset 0 0 8px rgba(96,165,250,0.1);
-            transition:box-shadow 0.15s;
-        `;
-        boardBtn.innerHTML = `
-            <span style="font-size:18px; margin-top:6px;">📌</span>
-            <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">게시판</span>
-        `;
-        boardBtn.onclick = () => openBoardOverlay();
-        attachStaticNeonHover(boardBtn, '96,165,250');
+        titleWrap.appendChild(boardBtn);
 
-        const gamepadBtn = document.createElement('button');
-        gamepadBtn.style.cssText = `
-            position:relative; overflow:hidden; aspect-ratio:2.0/1; border-radius:10px; cursor:pointer;
-            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
-            padding:4px; box-sizing:border-box;
-        `;
-        gamepadBtn.innerHTML = `
-            <div style="position:relative; z-index:1; display:flex; align-items:center; justify-content:center; gap:6px;">
-                <span style="font-size:18px;">🎮</span>
-                <span class="nb-onoff" style="font-size:12px; font-weight:bold; letter-spacing:0.5px;"></span>
-            </div>
-            <span style="position:relative; z-index:1; font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">패드 기능 & 테스터</span>
-        `;
-        const gamepadLabel = gamepadBtn.querySelector('.nb-onoff');
-        gamepadLabel.textContent = isDpadBindingOff() ? 'OFF' : 'ON';
-        styleOnOffBadge(gamepadLabel, !isDpadBindingOff());
-        paintToggleTile(gamepadBtn, !isDpadBindingOff(), T);
-        attachNeonHover(gamepadBtn, () => !isDpadBindingOff());
-        // 게임패드 가이드 오버레이(#gp-toggle)에서 토글해도 이 타일이 즉시 반영되도록 전역 sync 함수 노출
-        window.syncGamepadTile = () => {
-            gamepadLabel.textContent = isDpadBindingOff() ? 'OFF' : 'ON';
-            styleOnOffBadge(gamepadLabel, !isDpadBindingOff());
-            paintToggleTile(gamepadBtn, !isDpadBindingOff(), T);
-        };
-        attachHoldToggle(gamepadBtn, {
-            onShortClick: () => {
+        const gamepadToggleUI = createToggleRow('🎮', '패드 기능 & 테스터', !isDpadBindingOff(),
+            (on) => {
+                localStorage.setItem('neubie_dpad_binding', on ? 'on' : 'off');
+            },
+            () => {
                 if (window.isSharedPopupOpen && window.isSharedPopupOpen('gamepad-menu')) {
                     window.hideSharedPopup();
                 } else {
                     openGamepadMenuOverlay();
                 }
-            },
-            onHold: () => {
-                localStorage.setItem('neubie_dpad_binding', isDpadBindingOff() ? 'on' : 'off');
-                window.syncGamepadTile();
-            },
-        });
+            }
+        );
+        const gamepadBtn = gamepadToggleUI.row;
+        // 게임패드 가이드 오버레이(#gp-toggle)에서 토글해도 이 행이 즉시 반영되도록 전역 sync 함수 노출
+        window.syncGamepadTile = () => {
+            const on = !isDpadBindingOff();
+            gamepadToggleUI.input.checked = on;
+            gamepadToggleUI.applyVisual(on);
+        };
 
         headerContainer.appendChild(titleWrap);
         headerContainer.appendChild(nameArea);
@@ -1504,56 +1494,6 @@
         taskCard.appendChild(taskInline);
         list.appendChild(taskCard);
 
-		// 스트림덱 스타일 홀드 토글: 짧게 클릭 = 기존 설명 동작, 2초 홀드(좌→우 채움) = ON/OFF 토글
-        function attachHoldToggle(btn, { onHold, onShortClick }) {
-            const HOLD_MS = 1500;
-            const SHORT_CLICK_MS = 300; // 이 시간 안에 뗐을 때만 '짧은 클릭'으로 인정
-            btn.style.position = 'relative';
-            btn.style.overflow = 'hidden';
-
-            const fill = document.createElement('div');
-            fill.style.cssText = `
-                position:absolute; top:0; left:0; height:100%; width:0%;
-                background:rgba(245,158,11,0.55); border-right:2px solid rgba(245,158,11,0.9); pointer-events:none; z-index:0;
-            `;
-            btn.insertBefore(fill, btn.firstChild);
-
-            let holdTimer = null, fired = false, pressStart = 0;
-
-            const startHold = (e) => {
-                e.preventDefault();
-                fired = false;
-                pressStart = Date.now();
-                fill.style.transition = 'none';
-                fill.style.width = '0%';
-                requestAnimationFrame(() => {
-                    fill.style.transition = `width ${HOLD_MS}ms linear`;
-                    fill.style.width = '100%'; // 좌 → 우로 채워짐
-                });
-                holdTimer = setTimeout(() => {
-                    fired = true;
-                    onHold();
-                    fill.style.transition = 'none';
-                    fill.style.width = '0%';
-                }, HOLD_MS);
-            };
-            const cancelHold = () => {
-                clearTimeout(holdTimer);
-                fill.style.transition = 'width 0.15s ease-out';
-                fill.style.width = '0%';
-            };
-
-            btn.addEventListener('mousedown', startHold);
-            btn.addEventListener('mouseup', () => {
-                const wasFired = fired;
-                const heldMs = Date.now() - pressStart;
-                cancelHold();
-                // 완주(wasFired)도 아니고, 빠른 탭(SHORT_CLICK_MS 이내)도 아니면 — 홀드하다 만 것이므로 아무 것도 하지 않음
-                if (!wasFired && heldMs < SHORT_CLICK_MS) onShortClick?.();
-            });
-            btn.addEventListener('mouseleave', cancelHold);
-        }
-
         // ON/OFF 상태를 색이 채워진 알약형 배지로 명확하게 표기
         function styleOnOffBadge(el, isOn) {
             el.style.cssText = `
@@ -1564,31 +1504,41 @@
             `;
         }
 
-        // ON/OFF 상태에 맞춰 버튼 색(다크/라이트 대응) 칠하기
-        function paintToggleTile(btn, isOn, T) {
-            const isDark = T.isDark;
-            btn.style.background = isOn
-                ? (isDark ? 'rgba(34,197,94,0.18)' : 'rgba(34,197,94,0.15)')
-                : (isDark ? '#3a3a3a' : '#e2e2e2');
-            btn.style.border = `1px solid ${isOn ? '#22c55e' : (isDark ? '#666' : '#999')}`;
-            btn.style.color = isOn ? '#22c55e' : (isDark ? '#bbb' : '#555');
-            btn.style.borderRadius = '6px';
-            btn.style.boxShadow = isOn
-                ? '0 0 6px rgba(34,197,94,0.4), inset 0 0 8px rgba(34,197,94,0.12)'
-                : '0 0 4px rgba(255,255,255,0.12)';
-            btn.style.transition = 'box-shadow 0.15s, border-color 0.15s';
-        }
-
-        // 호버 시 뚜렷한 네온 효과 (ON=초록 글로우, OFF=중립 글로우) — 평상시 은은한 글로우는 유지, 호버 시에만 확 밝아짐
-        function attachNeonHover(btn, getIsOn) {
-            const baseShadow = (on) => on
-                ? '0 0 6px rgba(34,197,94,0.4), inset 0 0 8px rgba(34,197,94,0.12)'
-                : '0 0 4px rgba(255,255,255,0.12)';
-            const hoverShadow = (on) => on
-                ? '0 0 18px 2px rgba(34,197,94,0.95), 0 0 5px rgba(34,197,94,0.8), inset 0 0 10px rgba(34,197,94,0.3)'
-                : '0 0 16px 2px rgba(226,232,240,0.8), inset 0 0 8px rgba(226,232,240,0.2)';
-            btn.onmouseenter = () => { btn.style.boxShadow = hoverShadow(getIsOn()); };
-            btn.onmouseleave = () => { btn.style.boxShadow = baseShadow(getIsOn()); };
+        // 세로로 긴 토글 행 — 아이콘+라벨(클릭 시 설명 팝업) + 확실한 클릭형 ON/OFF 스위치
+        function createToggleRow(icon, label, isOn, onToggle, onLabelClick) {
+            const row = document.createElement('div');
+            row.style.cssText = `
+                display:flex; align-items:center; justify-content:space-between;
+                border:1px solid ${T.border}; border-radius:10px; padding:11px 14px;
+                background:${T.card}; gap:10px;
+            `;
+            row.innerHTML = `
+                <span class="nb-toggle-label" style="display:flex; align-items:center; gap:9px; font-size:14px; font-weight:500; color:${T.text};">
+                    <span style="font-size:18px;">${icon}</span>${label}
+                </span>
+                <label style="position:relative; display:inline-block; width:42px; height:23px; flex-shrink:0; cursor:pointer;">
+                    <input type="checkbox" ${isOn ? 'checked' : ''} class="nb-toggle-input" style="opacity:0; width:0; height:0;">
+                    <span class="nb-toggle-track" style="position:absolute; inset:0; background:${isOn ? '#22c55e' : (T.isDark ? '#55545c' : '#c9be9c')}; border-radius:999px; transition:background .15s;"></span>
+                    <span class="nb-toggle-knob" style="position:absolute; top:3px; left:${isOn ? '22px' : '3px'}; width:17px; height:17px; background:#fff; border-radius:50%; transition:left .15s; box-shadow:0 1px 3px rgba(0,0,0,0.3);"></span>
+                </label>
+            `;
+            const input = row.querySelector('.nb-toggle-input');
+            const track = row.querySelector('.nb-toggle-track');
+            const knob = row.querySelector('.nb-toggle-knob');
+            const applyVisual = (on) => {
+                track.style.background = on ? '#22c55e' : (T.isDark ? '#55545c' : '#c9be9c');
+                knob.style.left = on ? '22px' : '3px';
+            };
+            input.addEventListener('change', () => {
+                applyVisual(input.checked);
+                onToggle(input.checked);
+            });
+            if (onLabelClick) {
+                const labelEl = row.querySelector('.nb-toggle-label');
+                labelEl.style.cursor = 'pointer';
+                labelEl.onclick = onLabelClick;
+            }
+            return { row, input, applyVisual };
         }
 
         // ON/OFF가 없는 일반 타일용 — 고정 색상 네온 호버 (rgb 트리플렛만 전달, 예: '52,209,88')
@@ -1655,36 +1605,16 @@
         window.hideSharedPopup = hideSharedPopup;
         window.isSharedPopupOpen = isSharedPopupOpen;
 
-        // 요기요 최적화 — 스트림덱 타일 (아이콘 + 라벨 + ON/OFF)
-        const mapToggle = document.createElement('button');
-        mapToggle.style.cssText = `
-            position:relative; overflow:hidden; aspect-ratio:2.0/1; border-radius:10px; cursor:pointer;
-            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
-            padding:4px; box-sizing:border-box;
-        `;
-        mapToggle.innerHTML = `
-            <div style="position:relative; z-index:1; display:flex; align-items:center; justify-content:center; gap:6px;">
-                <span style="font-size:18px;">🗺️</span>
-                <span class="nb-onoff" style="font-size:12px; font-weight:bold; letter-spacing:0.5px;"></span>
-            </div>
-            <span style="position:relative; z-index:1; font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">맵 최적화 기능</span>
-        `;
-        const mapLabel = mapToggle.querySelector('.nb-onoff');
-        mapLabel.textContent = state.isMapOpt ? 'ON' : 'OFF';
-        styleOnOffBadge(mapLabel, state.isMapOpt);
-        paintToggleTile(mapToggle, state.isMapOpt, T);
-        attachNeonHover(mapToggle, () => state.isMapOpt);
-        attachHoldToggle(mapToggle, {
-            onShortClick: () => mapInfoBtn.click(), // 기존 설명 팝업 그대로 재사용
-            onHold: () => {
-                state.isMapOpt = !state.isMapOpt;
+        // 요기요 최적화 — 토글 행 (아이콘 + 라벨 클릭=설명, 스위치 클릭=on/off)
+        const mapToggleUI = createToggleRow('🗺️', '맵 최적화 기능', state.isMapOpt,
+            (on) => {
+                state.isMapOpt = on;
                 localStorage.setItem('neubie_opt_map', state.isMapOpt);
-                mapLabel.textContent = state.isMapOpt ? 'ON' : 'OFF';
-                styleOnOffBadge(mapLabel, state.isMapOpt);
-                paintToggleTile(mapToggle, state.isMapOpt, T);
                 injectMapStyle();
             },
-        });
+            () => mapInfoBtn.click() // 기존 설명 팝업 그대로 재사용
+        );
+        const mapToggle = mapToggleUI.row;
 
         // ⓘ 요기요 페이지 최적화 기능 설명 버튼
         const mapInfoBtn = document.createElement('button');
@@ -1746,42 +1676,21 @@
             showSharedPopup('map-info', mapInfoBox);
         };
 
-		// 다중 모니터링 기능 — 스트림덱 타일
+		// 다중 모니터링 기능 — 토글 행
         const queueEnabled = localStorage.getItem('neubie_handover_enabled') === 'true';
-        const queueToggle = document.createElement('button');
-        queueToggle.style.cssText = `
-            position:relative; overflow:hidden; aspect-ratio:2.0/1; border-radius:10px; cursor:pointer;
-            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
-            padding:4px; box-sizing:border-box;
-        `;
-        queueToggle.innerHTML = `
-            <div style="position:relative; z-index:1; display:flex; align-items:center; justify-content:center; gap:6px;">
-                <span style="font-size:18px;">🖥️</span>
-                <span class="nb-onoff" style="font-size:12px; font-weight:bold; letter-spacing:0.5px;"></span>
-            </div>
-            <span style="position:relative; z-index:1; font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">다중 모니터링 기능</span>
-        `;
-        const queueLabel = queueToggle.querySelector('.nb-onoff');
-        queueLabel.textContent = queueEnabled ? 'ON' : 'OFF';
-        styleOnOffBadge(queueLabel, queueEnabled);
-        paintToggleTile(queueToggle, queueEnabled, T);
-        attachNeonHover(queueToggle, () => queueLabel.textContent === 'ON');
-        attachHoldToggle(queueToggle, {
-            onShortClick: () => queueInfoBtn.click(), // 기존 설명 팝업 그대로 재사용
-            onHold: () => {
-                const next = queueLabel.textContent === 'OFF';
-                localStorage.setItem('neubie_handover_enabled', next);
-                queueLabel.textContent = next ? 'ON' : 'OFF';
-                styleOnOffBadge(queueLabel, next);
-                paintToggleTile(queueToggle, next, T);
+        const queueToggleUI = createToggleRow('🖥️', '다중 모니터링 기능', queueEnabled,
+            (on) => {
+                localStorage.setItem('neubie_handover_enabled', on);
                 const bar = document.getElementById('neubie-brightness-bar');
-                if (!next && bar) {
+                if (!on && bar) {
                     bar.remove();
-                } else if (next && !bar && isBrightnessPage()) {
+                } else if (on && !bar && isBrightnessPage()) {
                     injectMasterBrightness();
                 }
             },
-        });
+            () => queueInfoBtn.click() // 기존 설명 팝업 그대로 재사용
+        );
+        const queueToggle = queueToggleUI.row;
 
         if (!document.getElementById('neubie-blink-style')) {
             const blinkStyle = document.createElement('style');
@@ -1859,7 +1768,7 @@
         // 스트림덱 스타일 4열 타일 그리드 (8개)
         const bottomRow = document.createElement('div');
         bottomRow.id = 'neubie-streamdeck-grid';
-        bottomRow.style.cssText = "display:grid; grid-template-columns:repeat(4, 1fr); gap:8px;";
+        bottomRow.style.cssText = "display:flex; gap:10px;";
 
         const scheduleCard = document.createElement('div');
         scheduleCard.style.cssText = `
@@ -1870,7 +1779,7 @@
             padding:4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
         scheduleCard.innerHTML = `<span style="font-size:18px;">📅</span>
-            <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">스케줄표 & 좌석도</span>`;
+            <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">스케줄표</span>`;
         window._neubieScheduleCard = scheduleCard;
         attachStaticNeonHover(scheduleCard, '255,79,163');
         scheduleCard.onclick = () => {
@@ -1912,7 +1821,7 @@
             padding:4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
         batteryCard.innerHTML = `<span style="font-size:18px;">🔋</span>
-            <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">성남 배터리 현황</span>`;
+            <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">성남 배터리</span>`;
         window._neubieBatteryCard = batteryCard;
         attachStaticNeonHover(batteryCard, '250,204,21');
         batteryCard.onclick = () => {
@@ -1933,7 +1842,7 @@
             padding:4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
         weatherCard.innerHTML = `<span style="font-size:18px;">🎨</span>
-            <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">레이아웃 색상</span>`;
+            <span style="font-size:14px; font-weight:500; white-space:nowrap; text-align:center; color:${T.text};">레이아웃 설정</span>`;
         window._neubieWeatherCard = weatherCard;
         attachStaticNeonHover(weatherCard, '157,92,255');
         weatherCard.onclick = () => {
@@ -1947,17 +1856,21 @@
             }
         };
 
-        // 1행: 요기요 최적화 - 다중 모니터링 - 게임패드 - 성남 배터리
-        bottomRow.appendChild(mapToggle);    // 요기요 최적화 (ON/OFF)
-        bottomRow.appendChild(queueToggle);  // 다중 모니터링 (ON/OFF)
-        bottomRow.appendChild(gamepadBtn);   // 게임패드 (ON/OFF)
-        bottomRow.appendChild(batteryCard);  // 성남 배터리
+        const toggleCol = document.createElement('div');
+        toggleCol.style.cssText = "flex:1.3; display:flex; flex-direction:column; gap:8px;";
+        toggleCol.appendChild(mapToggle);    // 맵 최적화 기능 (ON/OFF)
+        toggleCol.appendChild(queueToggle);  // 다중 모니터링 기능 (ON/OFF)
+        toggleCol.appendChild(gamepadBtn);   // 패드 기능 & 테스터 (ON/OFF)
 
-        // 2행: 레이아웃 색상 - SW & 헬프 - 게시판 - 스케줄 좌석
-        bottomRow.appendChild(weatherCard);  // 레이아웃 색상
-        bottomRow.appendChild(rouletteCard); // SW & 헬프
-        bottomRow.appendChild(boardBtn);     // 게시판
-        bottomRow.appendChild(scheduleCard); // 스케줄 좌석
+        const navGrid = document.createElement('div');
+        navGrid.style.cssText = "flex:1; display:grid; grid-template-columns:repeat(2, 1fr); grid-template-rows:repeat(2, 1fr); gap:8px;";
+        navGrid.appendChild(weatherCard);   // 레이아웃 설정
+        navGrid.appendChild(batteryCard);   // 성남 배터리
+        navGrid.appendChild(rouletteCard);  // SW & 헬프
+        navGrid.appendChild(scheduleCard);  // 스케줄표
+
+        bottomRow.appendChild(toggleCol);
+        bottomRow.appendChild(navGrid);
 
         list.appendChild(bottomRow);
 
