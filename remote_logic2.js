@@ -51,11 +51,13 @@
     // 일일 업무 카드 제목, 파일명 생성기 제목 등 '제목'류 텍스트에 공통으로 재사용
     // NCC 패널 메인 제목 전용 그라데이션(블랙→그린) — 하위 라벨들은 가독성 문제로
     // 그라데이션을 걷어내고 테마 기본 텍스트색(라이트=검정/다크=흰색)으로 되돌림
-    const NCC_TITLE_GRADIENT = 'background:linear-gradient(90deg,#083344,#22c55e); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent;';
+    const NCC_TITLE_GRADIENT = 'background:linear-gradient(90deg,#0e7490,#22c55e); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent;';
 
     // 호버 효과 공통 파란색 — 라이트/다크 상관없이 항상 이 톤 하나로 통일
     // (T.accent를 쓰면 라이트모드에서 짙은 네이비가 나와 너무 진해 보이는 문제가 있었음)
     const HOVER_ACCENT = '#5b9bf7';
+    // 온오프 토글의 ON 상태와 동일한 그린 — 알림테스트/다중모니터링/배송순찰띠띠 호버 전용
+    const GREEN_HOVER = '#22c55e';
 
     function getNbTheme() {
         return NB_THEMES[localStorage.getItem('neubie_theme') || 'dark'];
@@ -762,8 +764,8 @@
             const originalBg   = btn.style.background;
             const originalColor = btn.style.color;
             btn.textContent    = '복사됨';
-            btn.style.background = '#38bdf8';
-            btn.style.color = '#0c4a6e';
+            btn.style.background = HOVER_ACCENT;
+            btn.style.color = '#fff';
             setTimeout(() => {
                 btn.textContent    = originalText;
                 btn.style.background = originalBg;
@@ -1232,6 +1234,10 @@
         const neutralBtnHoverBg = T.isDark ? '#555' : HOVER_ACCENT;
         const neutralBtnHoverBorder = T.isDark ? '#888' : HOVER_ACCENT;
         const neutralBtnHoverText = T.isDark ? neutralBtnText : '#fff';
+        // 다중 모니터링 / 배송·순찰 띠띠 전용 호버 — 온오프 토글과 동일한 그린, 다크/라이트 공통
+        const subBtnHoverBg = GREEN_HOVER;
+        const subBtnHoverBorder = GREEN_HOVER;
+        const subBtnHoverText = '#062e13';
         const card = document.createElement('div');
         card.id = 'namingSection';
         card.style.cssText = `
@@ -1248,8 +1254,8 @@
         }).join('');
 
         // 복사 효과 공통 함수
-        const COPY_SUCCESS_COLOR = '#38bdf8'; // 옅지만 채도 높은 네온 블루
-        const COPY_SUCCESS_TEXT = '#0c4a6e';  // 하늘색 배경 위에서 대비 확보용 짙은 남색
+        const COPY_SUCCESS_COLOR = HOVER_ACCENT; // 알림 테스트 호버와 동일한 블루톤
+        const COPY_SUCCESS_TEXT = '#fff';
         const applyCopyEffect = (btn) => {
             const originalText = btn.textContent;
             // getComputedStyle로 실제 렌더링된 배경/글자색을 캡처 — 인라인 스타일이든(copyFileName)
@@ -1321,7 +1327,7 @@
             btnStyleTag.id = 'naming-btn-style';
             document.head.appendChild(btnStyleTag);
         }
-        btnStyleTag.textContent = `.sub-btn { background: ${neutralBtnBg}; color: ${neutralBtnText}; border: 1px solid ${neutralBtnBorder}; padding: 6px 4px; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; flex: 1; min-width: 0; transition: 0.2s; } .sub-btn:hover { background: ${neutralBtnHoverBg}; border-color: ${neutralBtnHoverBorder}; color: ${neutralBtnHoverText}; }`;
+        btnStyleTag.textContent = `.sub-btn { background: ${neutralBtnBg}; color: ${neutralBtnText}; border: 1px solid ${neutralBtnBorder}; padding: 6px 4px; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; flex: 1; min-width: 0; transition: 0.2s; } .sub-btn:hover { background: ${subBtnHoverBg}; border-color: ${subBtnHoverBorder}; color: ${subBtnHoverText}; }`;
 
         setTimeout(() => {
             // 배송 띠띠 활성 여부에 따라 버튼 라벨 갱신 (신규 추가)
@@ -1483,7 +1489,7 @@
 			patchBtn.appendChild(newBadge);
 		}
 		
-        patchBtn.onmouseenter = () => { patchBtn.style.borderColor='#3b82f6'; patchBtn.style.color='#3b82f6'; };
+        patchBtn.onmouseenter = () => { patchBtn.style.borderColor=HOVER_ACCENT; patchBtn.style.color=HOVER_ACCENT; };
         patchBtn.onmouseleave = () => { patchBtn.style.borderColor=T.border; patchBtn.style.color=T.text; };
         patchBtn.onclick = () => {
             // 이미 열려있으면(패치노트 버튼 재클릭) 닫기만 하고 종료 — X버튼 없이도 닫는 방법
@@ -1571,7 +1577,7 @@
             transition:all 0.2s;
         `;
         boardBtn.innerHTML = `<span style="font-size:14px;">📌</span>게시판`;
-        boardBtn.onmouseenter = () => { boardBtn.style.borderColor='#60a5fa'; boardBtn.style.color='#60a5fa'; };
+        boardBtn.onmouseenter = () => { boardBtn.style.borderColor=HOVER_ACCENT; boardBtn.style.color=HOVER_ACCENT; };
         boardBtn.onmouseleave = () => { boardBtn.style.borderColor=T.border; boardBtn.style.color=T.text; };
         boardBtn.onclick = () => openBoardOverlay();
 
@@ -1667,9 +1673,9 @@
 
                 remindTestBtn.onmouseenter = () => {
                     if (remindTestBtn.disabled) return;
-                    remindTestBtn.style.background = HOVER_ACCENT;
-                    remindTestBtn.style.borderColor = HOVER_ACCENT;
-                    remindTestBtn.style.color = '#fff';
+                    remindTestBtn.style.background = GREEN_HOVER;
+                    remindTestBtn.style.borderColor = GREEN_HOVER;
+                    remindTestBtn.style.color = '#062e13';
                 };
                 remindTestBtn.onmouseleave = () => {
                     if (remindTestBtn.disabled) return;
