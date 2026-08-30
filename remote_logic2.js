@@ -49,7 +49,7 @@
 
     // NCC 패널 제목과 동일한 네온 그린(블랙 믹싱) 그라데이션 텍스트 스타일 — 토글/2x2 버튼 라벨,
     // 일일 업무 카드 제목, 파일명 생성기 제목 등 '제목'류 텍스트에 공통으로 재사용
-    const NEON_GREEN_TEXT = 'background:linear-gradient(90deg,#0e7490,#22c55e); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent;';
+    const NEON_GREEN_TEXT = 'background:linear-gradient(90deg,#083344,#22c55e); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent;';
 
     function getNbTheme() {
         return NB_THEMES[localStorage.getItem('neubie_theme') || 'dark'];
@@ -1228,7 +1228,7 @@
         const card = document.createElement('div');
         card.id = 'namingSection';
         card.style.cssText = `
-            padding:10px 15px; border-radius:15px; margin-top:5px; border:1px solid transparent;
+            padding:10px 15px 6px; border-radius:15px; margin-top:5px; border:1px solid transparent;
             background-image: linear-gradient(${T.card}, ${T.card}), linear-gradient(135deg, #10b981, #2dd4bf);
             background-origin: border-box; background-clip: padding-box, border-box;
             box-shadow:0 0 5px rgba(150,120,255,0.25);
@@ -1414,13 +1414,13 @@
         
         // 헤더 컨테이너 (제목 + 성명 입력창 + X 버튼 인라인 배치)
         const headerContainer = document.createElement('div');
-        headerContainer.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; padding-right:5px;";
+        headerContainer.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; padding-right:5px;";
 
         const title = document.createElement('h2');
         title.textContent = OFFLINE_MODE ? "오프라인 모드" : "NCC 패널";
         title.style.cssText = OFFLINE_MODE
-            ? `color:${T.accent}; font-size:20px; margin:0; font-weight:bold; white-space:nowrap;`
-            : `${NEON_GREEN_TEXT} font-size:20px; margin:0; font-weight:bold; white-space:nowrap;`;
+            ? `color:${T.accent}; font-size:21px; margin:0; font-weight:bold; white-space:nowrap;`
+            : `${NEON_GREEN_TEXT} font-size:21px; margin:0; font-weight:bold; white-space:nowrap;`;
 
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
 		// 문자열을 넣으면 패치노트에 빨간 '`' 뱃지가 점멸하며 뜸.
@@ -1780,6 +1780,16 @@
                 const labelEl = row.querySelector('.nb-toggle-label');
                 labelEl.style.cursor = 'pointer';
                 labelEl.onclick = onLabelClick;
+                row.style.cursor = 'pointer';
+                row.style.transition = 'border-color 0.15s, background 0.15s';
+                row.onmouseenter = () => {
+                    row.style.borderColor = T.accent;
+                    row.style.background = T.isDark ? 'rgba(91,155,247,0.14)' : 'rgba(30,58,95,0.08)';
+                };
+                row.onmouseleave = () => {
+                    row.style.borderColor = T.border;
+                    row.style.background = T.card;
+                };
             }
             return { row, input, applyVisual };
         }
