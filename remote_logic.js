@@ -817,7 +817,10 @@
             return;
         }
 
-        const dataUrl = `https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/daily_tasks.json?t=${Date.now()}`;
+        // daily_tasks는 서버리스 프록시(api/tasks) 경유 — GitHub Contents API를
+        // 인증된 채로 직접 조회해서 raw.githubusercontent.com의 CDN 캐시 지연(몇 분)을
+        // 우회함. insu_data는 변동이 잦지 않아 기존 raw 방식 그대로 유지.
+        const dataUrl = `https://multimonitoring.vercel.app/api/tasks?t=${Date.now()}`;
 		const insuUrl = `https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/insu_data.json?t=${Date.now()}`;
 
         // daily_tasks + insu_data 병렬 fetch
