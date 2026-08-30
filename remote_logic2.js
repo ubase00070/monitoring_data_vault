@@ -49,7 +49,7 @@
 
     // NCC 패널 제목과 동일한 네온 그린(블랙 믹싱) 그라데이션 텍스트 스타일 — 토글/2x2 버튼 라벨,
     // 일일 업무 카드 제목, 파일명 생성기 제목 등 '제목'류 텍스트에 공통으로 재사용
-    const NEON_GREEN_TEXT = 'background:linear-gradient(90deg,#050505,#22c55e); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent;';
+    const NEON_GREEN_TEXT = 'background:linear-gradient(90deg,#0e7490,#22c55e); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent;';
 
     function getNbTheme() {
         return NB_THEMES[localStorage.getItem('neubie_theme') || 'dark'];
@@ -756,7 +756,7 @@
             const originalBg   = btn.style.background;
             const originalColor = btn.style.color;
             btn.textContent    = '복사됨';
-            btn.style.background = '#7dd3fc';
+            btn.style.background = '#38bdf8';
             btn.style.color = '#0c4a6e';
             setTimeout(() => {
                 btn.textContent    = originalText;
@@ -1241,7 +1241,7 @@
         }).join('');
 
         // 복사 효과 공통 함수
-        const COPY_SUCCESS_COLOR = '#7dd3fc'; // 옅은 하늘색
+        const COPY_SUCCESS_COLOR = '#38bdf8'; // 옅지만 채도 높은 네온 블루
         const COPY_SUCCESS_TEXT = '#0c4a6e';  // 하늘색 배경 위에서 대비 확보용 짙은 남색
         const applyCopyEffect = (btn) => {
             const originalText = btn.textContent;
@@ -1284,7 +1284,7 @@
 
         card.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                <span style="${NEON_GREEN_TEXT} font-weight:bold; font-size:18px;">🏷️ 영상 파일명 생성기</span>
+                <span style="font-size:18px;">🏷️ <span style="${NEON_GREEN_TEXT} font-weight:bold;">영상 파일명 생성기</span></span>
                 <button id="openDriveTodayBtn" style="background:${neutralBtnBg}; color:${neutralBtnText}; border:1px solid ${neutralBtnBorder}; padding:4px 8px; border-radius:6px; font-size:13px; font-weight:bold; cursor:pointer; white-space:nowrap;">📂 구글 영상 드라이브</button>
             </div>
             <div style="display: flex; gap: 12px; margin-bottom: 10px;">
