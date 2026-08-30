@@ -47,6 +47,10 @@
         dark:  { bg: '#232327', card: '#403f47', border: '#54535c', text: '#e8e9ec', accent: '#5b9bf7', purple: '#c9b8fb', isDark: true }
     };
 
+    // NCC 패널 제목과 동일한 네온 그린(블랙 믹싱) 그라데이션 텍스트 스타일 — 토글/2x2 버튼 라벨,
+    // 일일 업무 카드 제목, 파일명 생성기 제목 등 '제목'류 텍스트에 공통으로 재사용
+    const NEON_GREEN_TEXT = 'background:linear-gradient(90deg,#050505,#22c55e); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent;';
+
     function getNbTheme() {
         return NB_THEMES[localStorage.getItem('neubie_theme') || 'dark'];
     }
@@ -750,11 +754,14 @@
         navigator.clipboard.writeText(copyText).then(() => {
             const originalText = btn.textContent;
             const originalBg   = btn.style.background;
+            const originalColor = btn.style.color;
             btn.textContent    = '복사됨';
-            btn.style.background = '#4ade80';
+            btn.style.background = '#7dd3fc';
+            btn.style.color = '#0c4a6e';
             setTimeout(() => {
                 btn.textContent    = originalText;
                 btn.style.background = originalBg;
+                btn.style.color = originalColor;
             }, 1500);
         }).catch(() => {
             alert('복사 실패 — 클립보드 권한을 확인해주세요.');
@@ -1122,7 +1129,7 @@
                 ? String(t.content || '').replace(/^\[\d{2}:\d{2}(~\d{2}:\d{2})?\]\s*/, '')
                 : t.content;
 
-            const nameChip = (name, isSelf) => `<span style="display:inline-flex; align-items:center; justify-content:center; min-width:36px; padding:2px 6px; margin:0 1px; border-radius:6px; box-sizing:border-box; font-size:${isSelf ? '12px' : '11px'}; font-weight:${isSelf ? '800' : '500'}; background:${isSelf ? '#3b82f6' : (T.isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)')}; color:${isSelf ? '#ffffff' : (T.isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.65)')};">${name}</span>`;
+            const nameChip = (name, isSelf) => `<span style="display:inline-flex; align-items:center; justify-content:center; min-width:36px; padding:2px 6px; margin:0 1px; border-radius:6px; box-sizing:border-box; font-size:${isSelf ? '12px' : '11px'}; font-weight:${isSelf ? '800' : '500'}; background:${isSelf ? '#22c55e' : (T.isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)')}; color:${isSelf ? '#062e13' : (T.isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.65)')};">${name}</span>`;
             // 취소선은 '업무텍스트' 부분에만 걸리도록 별도 span으로 분리 — 이름박스/화살표를 감싸는
             // 조상 요소엔 text-decoration을 절대 두지 않는다(자식에서 none으로 덮어써도 브라우저에 따라
             // 취소선이 새어나오는 문제가 있었음). 이름박스는 대신 opacity로만 흐리게 처리.
@@ -1234,21 +1241,25 @@
         }).join('');
 
         // 복사 효과 공통 함수
-        const COPY_SUCCESS_COLOR = '#4ade80'; // 평소(엠에럴드)와 뚜렷이 구분되는 밝은 네온 라임그린
+        const COPY_SUCCESS_COLOR = '#7dd3fc'; // 옅은 하늘색
+        const COPY_SUCCESS_TEXT = '#0c4a6e';  // 하늘색 배경 위에서 대비 확보용 짙은 남색
         const applyCopyEffect = (btn) => {
             const originalText = btn.textContent;
-            // getComputedStyle로 실제 렌더링된 배경을 캡처 — 인라인 스타일이든(copyFileName)
+            // getComputedStyle로 실제 렌더링된 배경/글자색을 캡처 — 인라인 스타일이든(copyFileName)
             // CSS 클래스(.sub-btn)든 상관없이 정확한 원래 색으로 복귀시키기 위함
             // (이전엔 btn.style.background만 읽어서, 클래스로 배경을 정하는 .sub-btn 버튼은
             //  항상 빈 값 → 하드코딩된 '#444'로 복귀해버리는 버그가 있었음)
             const originalBg = getComputedStyle(btn).backgroundColor;
+            const originalColor = getComputedStyle(btn).color;
 
             btn.textContent = '복사됨';
             btn.style.background = COPY_SUCCESS_COLOR;
+            btn.style.color = COPY_SUCCESS_TEXT;
 
             setTimeout(() => {
                 btn.textContent = originalText;
                 btn.style.background = originalBg;
+                btn.style.color = originalColor;
             }, 1500);
         };
 
@@ -1267,11 +1278,13 @@
         // 있으니 18시 정각까지는 눌리도록 하고, 18:00부터 다음날 09:00 전까진 잠근다.
         const curHour = new Date().getHours();
         const isTiddiActive = curHour >= 9 && curHour < 18;
-        const tiddiLockStyle = isTiddiActive ? '' : 'background:#3a3a3a; color:#777; cursor:not-allowed; opacity:0.7;';
+        const tiddiLockStyle = isTiddiActive ? '' : (T.isDark
+            ? 'background:#3a3a3a; color:#777; cursor:not-allowed; opacity:0.7;'
+            : 'background:#4d6b57; color:#d7e8dc; cursor:not-allowed; opacity:0.9;');
 
         card.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                <span style="color:${T.accent}; font-weight:bold; font-size:18px;">🏷️ 영상 파일명 생성기</span>
+                <span style="${NEON_GREEN_TEXT} font-weight:bold; font-size:18px;">🏷️ 영상 파일명 생성기</span>
                 <button id="openDriveTodayBtn" style="background:${neutralBtnBg}; color:${neutralBtnText}; border:1px solid ${neutralBtnBorder}; padding:4px 8px; border-radius:6px; font-size:13px; font-weight:bold; cursor:pointer; white-space:nowrap;">📂 구글 영상 드라이브</button>
             </div>
             <div style="display: flex; gap: 12px; margin-bottom: 10px;">
@@ -1395,9 +1408,6 @@
     function renderDashboard() {
         dashboard.innerHTML = '';
         const T = getNbTheme();
-        // NCC 패널 제목과 동일한 네온 그린 그라데이션 텍스트 스타일 — 토글/2x2 버튼 라벨,
-        // 일일 업무 카드 제목 등 '제목'류 텍스트에 공통으로 재사용
-        const NEON_GREEN_TEXT = 'background:linear-gradient(135deg,#10b981,#2dd4bf); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent;';
         dashboard.style.backgroundColor = T.bg;
         dashboard.style.color = T.text;
         dashboard.style.backgroundImage = `linear-gradient(${T.bg}, ${T.bg}), linear-gradient(135deg, #10b981, #2dd4bf)`;
@@ -1410,7 +1420,7 @@
         title.textContent = OFFLINE_MODE ? "오프라인 모드" : "NCC 패널";
         title.style.cssText = OFFLINE_MODE
             ? `color:${T.accent}; font-size:20px; margin:0; font-weight:bold; white-space:nowrap;`
-            : `background:linear-gradient(135deg,#10b981,#2dd4bf); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent; font-size:20px; margin:0; font-weight:bold; white-space:nowrap;`;
+            : `${NEON_GREEN_TEXT} font-size:20px; margin:0; font-weight:bold; white-space:nowrap;`;
 
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
 		// 문자열을 넣으면 패치노트에 빨간 '`' 뱃지가 점멸하며 뜸.
