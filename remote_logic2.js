@@ -1098,7 +1098,18 @@
                 box-sizing: border-box;
             `;
 
-            const displayTime = (String(timeKey).length > 10) ? String(timeKey).match(/\d{2}:\d{2}/)?.[0] : timeKey;
+            // 시간 표시는 원칙적으로 '업무 텍스트에 실제로 적힌 그대로'를 따른다.
+            // task류('부산 국립과학관' 포함) 콘텐츠는 항상 "[09:30~10:00] ..."처럼 맨 앞에
+            // 실제 시간(범위 또는 단일 시각)이 박혀있으므로 그걸 그대로 추출해서 보여준다.
+            // 다중 모니터링(monitoring/next_0700_handover)은 콘텐츠에 시간 정보가 없으니
+            // 기존처럼 rawTime의 단일 시각("09:00")을 그대로 쓴다.
+            let displayTime;
+            if (t.type === 'task') {
+                const rangeMatch = String(t.content || '').match(/\d{2}:\d{2}(~\d{2}:\d{2})?/);
+                displayTime = rangeMatch ? rangeMatch[0] : ((String(timeKey).length > 10) ? String(timeKey).match(/\d{2}:\d{2}/)?.[0] : timeKey);
+            } else {
+                displayTime = (String(timeKey).length > 10) ? String(timeKey).match(/\d{2}:\d{2}/)?.[0] : timeKey;
+            }
 
             // 인계 체인 표기 — '다중 모니터링' / '부산 국립과학관' 업무는 전임자/후임자를 이름 박스로 표기
             const HANDOVER_DISPLAY_LABEL = { '다중 모니터링': '다중 모니터링', '부산 국립과학관': '부산국립과학관' };
@@ -1241,24 +1252,35 @@
         const multiHourLabel = getFormattedHour(getCalculatedTime(10)) + '시';
         const combinedHourLabel = getFormattedHour(getCalculatedTime(10)) + '시';
 
+        // 배송/순찰 띠띠 버튼 활성 시간대 — 실제 업무는 09~17시지만, 업로드가 늦어질 수
+        // 있으니 18시 정각까지는 눌리도록 하고, 18:00부터 다음날 09:00 전까진 잠근다.
+        const curHour = new Date().getHours();
+        const isTiddiActive = curHour >= 9 && curHour < 18;
+        const tiddiLockStyle = isTiddiActive ? '' : 'background:#3a3a3a; color:#777; cursor:not-allowed; opacity:0.7;';
+
         card.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                 <span style="color:${T.accent}; font-weight:bold; font-size:18px;">🏷️ 영상 파일명 생성기</span>
                 <button id="openDriveTodayBtn" style="background:${neutralBtnBg}; color:${neutralBtnText}; border:1px solid ${neutralBtnBorder}; padding:4px 8px; border-radius:6px; font-size:13px; font-weight:bold; cursor:pointer; white-space:nowrap;">📂 구글 영상 드라이브</button>
             </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px 5px; margin-bottom: 10px;">
-                <div style="position: relative; min-width: 0;">
-                    <select id="robotSelector" style="width: 100%; background: ${fieldBg}; color: ${fieldText}; border: 1px solid ${fieldBorder}; border-radius: 4px; font-size: 15px; font-weight: bold; padding: 0 20px 0 8px; height: 32px; line-height: 32px; box-sizing: border-box; appearance: none; -webkit-appearance: none; -moz-appearance: none;">
-                        ${dropdownOptions || '<option>최근 배달 기체 미감지</option>'}
-                    </select>
-                    <span style="position: absolute; right: 6px; top: 50%; transform: translateY(-50%); pointer-events: none; color: #aaa; font-size: 11px;">▾</span>
+            <div style="display: flex; gap: 12px; margin-bottom: 10px;">
+                <div style="flex: 1; display: flex; flex-direction: column; gap: 8px; min-width: 0;">
+                    <div style="position: relative; min-width: 0;">
+                        <select id="robotSelector" style="width: 100%; background: ${fieldBg}; color: ${fieldText}; border: 1px solid ${fieldBorder}; border-radius: 4px; font-size: 15px; font-weight: bold; padding: 0 20px 0 8px; height: 32px; line-height: 32px; box-sizing: border-box; appearance: none; -webkit-appearance: none; -moz-appearance: none;">
+                            ${dropdownOptions || '<option>최근 배달 기체 미감지</option>'}
+                        </select>
+                        <span style="position: absolute; right: 6px; top: 50%; transform: translateY(-50%); pointer-events: none; color: #aaa; font-size: 11px;">▾</span>
+                    </div>
+                    <div style="display: flex; gap: 5px; min-width: 0;">
+                        <input type="text" id="taskInput" placeholder="주문번호를 붙여넣으세요." style="flex: 1; min-width: 0; background: ${fieldBg}; color: ${fieldText}; border: 1px solid ${fieldBorder}; padding: 0 8px; border-radius: 4px; font-size: 15px; font-weight: bold; height: 32px; line-height: 32px; box-sizing: border-box;">
+                        <button id="copyFileName" style="width: 70px; flex-shrink: 0; background: #007bff; color: white; border: none; padding: 0 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 15px; white-space: nowrap; overflow: hidden; height: 32px; line-height: 32px; box-sizing: border-box;">복사</button>
+                    </div>
                 </div>
-                <button id="btnMulti" class="sub-btn">다중 모니터링 (${multiHourLabel})</button>
-                <div style="display: flex; gap: 5px; min-width: 0;">
-                    <input type="text" id="taskInput" placeholder="주문번호를 붙여넣으세요." style="flex: 1; min-width: 0; background: ${fieldBg}; color: ${fieldText}; border: 1px solid ${fieldBorder}; padding: 0 8px; border-radius: 4px; font-size: 15px; font-weight: bold; height: 32px; line-height: 32px; box-sizing: border-box;">
-                    <button id="copyFileName" style="width: 70px; flex-shrink: 0; background: #007bff; color: white; border: none; padding: 0 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 15px; white-space: nowrap; overflow: hidden; height: 32px; line-height: 32px; box-sizing: border-box;">복사</button>
+                <div style="width: 1px; align-self: stretch; background: ${T.border};"></div>
+                <div style="flex: 1; display: flex; flex-direction: column; gap: 8px; min-width: 0;">
+                    <button id="btnMulti" class="sub-btn">다중 모니터링 (${multiHourLabel})</button>
+                    <button id="btnCombined" class="sub-btn" ${isTiddiActive ? '' : 'disabled'} style="${tiddiLockStyle}">배송/순찰 띠띠 (${combinedHourLabel})</button>
                 </div>
-                <button id="btnCombined" class="sub-btn">배송/순찰 띠띠 (${combinedHourLabel})</button>
             </div>
         `;
 
@@ -1625,7 +1647,7 @@
             <div style="margin-bottom:10px;">
                 <div style="display:flex; align-items:center; gap:6px; margin-bottom:8px; flex-wrap:nowrap;">
                     <div style="font-weight:bold; font-size:17px; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📋 ${storedName}의 일일 업무</div>
-                    <select id="remind-inline" style="background:${T.isDark ? '#333' : '#f0ede1'}; color:${T.isDark ? '#fff' : T.text}; border:1px solid ${T.isDark ? '#555' : T.border}; font-size:13px; border-radius:4px; padding:2px;">
+                    <select id="remind-inline" style="background:${T.isDark ? '#333' : '#f0ede1'}; color:${T.isDark ? '#fff' : T.text}; border:1px solid ${T.isDark ? '#555' : T.border}; font-size:13px; font-weight:bold; border-radius:4px; padding:2px;">
                         <option value="0" ${currentInt === '0' ? 'selected' : ''}>알림 없음</option>
                         <option value="3" ${currentInt === '3' ? 'selected' : ''}>3분 전 알림</option>
                         <option value="5" ${currentInt === '5' ? 'selected' : ''}>5분 전 알림</option>
@@ -1659,7 +1681,7 @@
             `;
             const clickHint = onLabelClick
                 ? `<span class="nb-click-hint" style="display:inline-flex; flex-direction:column; align-items:center; justify-content:center; line-height:1.05; margin-left:3px; animation:neubie-blink 2.2s ease-in-out infinite;">
-                        <span style="font-size:8px; font-weight:800; color:${T.accent};">설명</span>
+                        <span style="font-size:8.5px; font-weight:800; color:${T.accent};">설명</span>
                         <span style="font-size:8px; font-weight:800; color:${T.accent};">Click!</span>
                    </span>`
                 : '';
