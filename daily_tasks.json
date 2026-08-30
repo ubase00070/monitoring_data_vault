@@ -268,5 +268,11 @@
     "type": "tomorrow_07",
     "content": "다중 모니터링",
     "rawTime": "07:00"
+  },
+  {
+    "user": "김지훈",
+    "type": "tomorrow_08",
+    "content": "다중 모니터링",
+    "rawTime": "08:00"
   }
 ]
