@@ -476,7 +476,29 @@
     }
 
     const dashboard = createContainer('neubie-dashboard', 'min(580px, 94vw)', '50%', '50%');
-	
+    dashboard.style.padding = '15px'; // 전체 레이아웃이 커 보인다는 피드백 — 외곽 패딩만 살짝 축소
+
+    // ── 대시보드 전체 배율(줌) 조정 ──
+    // 콘솔/코드에서 window.setDashboardZoom(0.95) 처럼 호출하면 즉시 반영되고
+    // localStorage에 저장돼 다음 로드 때도 유지된다. window.adjustDashboardZoom(3)은
+    // 현재 값에 +3%p 하는 식으로 상대 조정할 때 쓰면 편하다.
+    const DEFAULT_DASHBOARD_ZOOM = 0.95;
+    function getDashboardZoom() {
+        const saved = parseFloat(localStorage.getItem('neubie_dashboard_zoom'));
+        return isNaN(saved) ? DEFAULT_DASHBOARD_ZOOM : saved;
+    }
+    window.setDashboardZoom = function(scale) {
+        localStorage.setItem('neubie_dashboard_zoom', scale);
+        dashboard.style.zoom = scale;
+        console.log(`✅ 대시보드 배율 ${Math.round(scale * 100)}%로 설정됨`);
+    };
+    window.adjustDashboardZoom = function(deltaPercent) {
+        const next = Math.round((getDashboardZoom() * 100 + deltaPercent)) / 100;
+        window.setDashboardZoom(next);
+    };
+    dashboard.style.zoom = getDashboardZoom();
+
+
     (function ensureNoOverflowForUser() {
         const userName = localStorage.getItem('neubie_user_name');
         const styleId = 'neubie-dash-overflow-fix';
@@ -759,6 +781,9 @@
 
             const myTasks = data.filter(t => {
                 if (t.user !== myName) return false;
+                // yesterday_06 / tomorrow_08는 화면에 별도 업무로 표시하지 않는, 07시 경계
+                // 인계 체인 조회 전용 참조 데이터 — 항상 숨긴다
+                if (t.type === 'yesterday_06' || t.type === 'tomorrow_08') return false;
                 // tomorrow_07 타입은 00:00~07:10 사이에만 표시
                 if (t.type === 'tomorrow_07') {
                     return new Date().getHours() < 7;
@@ -900,6 +925,23 @@
         // 24시간 로테이션 표(schedule)가 진짜 출처 — 이걸 안 쓰면 개인별 항목
         // 매칭 오차로 "본인 → 본인" 같은 오류가 생길 수 있다.
         if (key === '다중 모니터링') {
+            // 07시 경계 케이스(내일 07시 근무자가 이른 새벽에 미리 보는 화면)는
+            // 그 시점의 schedule이 막 갱신되려는 애매한 타이밍이라 신뢰할 수 없다.
+            // 이럴 때를 위해 미리 심어둔 yesterday_06 / tomorrow_08 참조 데이터를 우선 사용한다.
+            if (myTask.type === 'tomorrow_07' && Array.isArray(allTasks)) {
+                const findRef = (type, hour) => allTasks.find(t =>
+                    t.type === type &&
+                    t.content && t.content.includes('다중 모니터링') &&
+                    String(t.rawTime || t.time).startsWith(hour)
+                );
+                const prevEntry = findRef('yesterday_06', '06:00');
+                const nextEntry = findRef('tomorrow_08', '08:00');
+                return {
+                    prev: prevEntry ? prevEntry.user : null,
+                    next: nextEntry ? nextEntry.user : null,
+                };
+            }
+
             if (!state.insuData || !state.insuData.schedule) return null;
             const schedule = state.insuData.schedule;
             const timeMatch = String(myTask.rawTime || myTask.time).match(/\d{2}:\d{2}/);
@@ -1104,13 +1146,14 @@
         const isWknd = isWeekend();
         const T = getNbTheme();
         // 라이트모드에서도 다크 전용 색이 그대로 남아있던 문제 — 입력칸/버튼을 테마에 맞게 분기
-        const fieldBg = T.isDark ? '#333' : '#ffffff';
+        // (순백색은 너무 튀어서, 크림톤과는 구분되는 차분한 아이보리 톤을 사용)
+        const fieldBg = T.isDark ? '#333' : '#f0ede1';
         const fieldBorder = T.isDark ? '#555' : T.border;
         const fieldText = T.isDark ? '#fff' : T.text;
-        const neutralBtnBg = T.isDark ? '#444' : '#ffffff';
+        const neutralBtnBg = T.isDark ? '#444' : '#f0ede1';
         const neutralBtnBorder = T.isDark ? '#666' : T.border;
         const neutralBtnText = T.isDark ? '#ddd' : T.text;
-        const neutralBtnHoverBg = T.isDark ? '#555' : '#f3ecdb';
+        const neutralBtnHoverBg = T.isDark ? '#555' : '#e6e0cc';
         const neutralBtnHoverBorder = T.isDark ? '#888' : '#a8946a';
         const card = document.createElement('div');
         card.id = 'namingSection';
@@ -1150,7 +1193,7 @@
 
         // 버튼에 표기할 '유효 시간대' — 실제 복사 시 쓰이는 getCalculatedTime()과 동일한 보정 로직
         const multiHourLabel = getFormattedHour(getCalculatedTime(10)) + '시';
-        const combinedHourLabel = getFormattedHour(getCalculatedTime(40)) + '시';
+        const combinedHourLabel = getFormattedHour(getCalculatedTime(10)) + '시';
 
         card.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
@@ -1244,7 +1287,7 @@
             // 배송/순찰 띠띠 버튼
             const combinedBtn = card.querySelector('#btnCombined');
 			if (combinedBtn) combinedBtn.onclick = (e) => {
-				const time = getCalculatedTime(40);
+				const time = getCalculatedTime(10);
 				const myName = localStorage.getItem('neubie_user_name') || '';
 				const unitsText = TTIDDI_CONFIG.deliveryActive
 					? `${TTIDDI_CONFIG.units.delivery}, ${TTIDDI_CONFIG.units.patrol}`
@@ -1495,7 +1538,7 @@
 
         const list = document.createElement('div');
         list.id = 'dashboard-list';
-        list.style.cssText = "display:grid; gap:8px; width:100%; box-sizing:border-box;";
+        list.style.cssText = "display:grid; gap:6px; width:100%; box-sizing:border-box;";
 
         // 1. 업무 알림 설정 (태스크 리스트 인라인 삽입)
         const taskCard = document.createElement('div');
@@ -1511,7 +1554,7 @@
             <div style="margin-bottom:10px;">
                 <div style="display:flex; align-items:center; gap:6px; margin-bottom:8px; flex-wrap:nowrap;">
                     <div style="font-weight:bold; font-size:17px; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📋 ${storedName}의 일일 업무</div>
-                    <select id="remind-inline" style="background:${T.isDark ? '#333' : '#ffffff'}; color:${T.isDark ? '#fff' : T.text}; border:1px solid ${T.isDark ? '#555' : T.border}; font-size:13px; border-radius:4px; padding:2px;">
+                    <select id="remind-inline" style="background:${T.isDark ? '#333' : '#f0ede1'}; color:${T.isDark ? '#fff' : T.text}; border:1px solid ${T.isDark ? '#555' : T.border}; font-size:13px; border-radius:4px; padding:2px;">
                         <option value="0" ${currentInt === '0' ? 'selected' : ''}>알림 없음</option>
                         <option value="3" ${currentInt === '3' ? 'selected' : ''}>3분 전 알림</option>
                         <option value="5" ${currentInt === '5' ? 'selected' : ''}>5분 전 알림</option>
@@ -1805,7 +1848,7 @@
         // 스트림덱 스타일 4열 타일 그리드 (8개)
         const bottomRow = document.createElement('div');
         bottomRow.id = 'neubie-streamdeck-grid';
-        bottomRow.style.cssText = "display:flex; gap:10px;";
+        bottomRow.style.cssText = "display:flex; gap:8px;";
 
         const scheduleCard = document.createElement('div');
         scheduleCard.style.cssText = `
@@ -1894,13 +1937,13 @@
         };
 
         const toggleCol = document.createElement('div');
-        toggleCol.style.cssText = "flex:1.3; display:flex; flex-direction:column; gap:8px;";
+        toggleCol.style.cssText = "flex:1.3; display:flex; flex-direction:column; gap:6px;";
         toggleCol.appendChild(mapToggle);    // 맵 최적화 기능 (ON/OFF)
         toggleCol.appendChild(queueToggle);  // 다중 모니터링 기능 (ON/OFF)
         toggleCol.appendChild(gamepadBtn);   // 패드 기능 & 테스터 (ON/OFF)
 
         const navGrid = document.createElement('div');
-        navGrid.style.cssText = "flex:1; display:grid; grid-template-columns:repeat(2, 1fr); grid-template-rows:repeat(2, 1fr); gap:8px;";
+        navGrid.style.cssText = "flex:1; display:grid; grid-template-columns:repeat(2, 1fr); grid-template-rows:repeat(2, 1fr); gap:6px;";
         navGrid.appendChild(weatherCard);   // 레이아웃 설정
         navGrid.appendChild(batteryCard);   // 성남 배터리
         navGrid.appendChild(rouletteCard);  // SW & 헬프
