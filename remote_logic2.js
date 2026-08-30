@@ -894,7 +894,27 @@
 
     function getHandoverNeighbors(myTask, allTasks) {
         const key = getHandoverGroupKey(myTask);
-        if (!key || !Array.isArray(allTasks)) return null;
+        if (!key) return null;
+
+        // '다중 모니터링'은 daily_tasks(개인별 할일)가 아니라 insu_data.json의
+        // 24시간 로테이션 표(schedule)가 진짜 출처 — 이걸 안 쓰면 개인별 항목
+        // 매칭 오차로 "본인 → 본인" 같은 오류가 생길 수 있다.
+        if (key === '다중 모니터링') {
+            if (!state.insuData || !state.insuData.schedule) return null;
+            const schedule = state.insuData.schedule;
+            const timeMatch = String(myTask.rawTime || myTask.time).match(/\d{2}:\d{2}/);
+            if (!timeMatch) return null;
+            const hourNum = parseInt(timeMatch[0].slice(0, 2), 10);
+            const prevHourKey = String((hourNum - 1 + 24) % 24).padStart(2, '0') + ':00';
+            const nextHourKey = String((hourNum + 1) % 24).padStart(2, '0') + ':00';
+            return {
+                prev: schedule[prevHourKey] || null,
+                next: schedule[nextHourKey] || null,
+            };
+        }
+
+        // 그 외('부산 국립과학관' 등)는 daily_tasks 전체에서 같은 그룹을 시간순 정렬해서 앞뒤 탐색
+        if (!Array.isArray(allTasks)) return null;
 
         const group = allTasks
             .filter(t => getHandoverGroupKey(t) === key)
@@ -1008,9 +1028,9 @@
                 if (neighbors.prev) chainParts.push(nameChip(neighbors.prev, false));
                 chainParts.push(nameChip(t.user, true));
                 if (neighbors.next) chainParts.push(nameChip(neighbors.next, false));
-                const chainHtml = chainParts.join(' ➡️ ');
+                const chainHtml = chainParts.join(' <span style="font-size:10px; opacity:0.55;">→</span> ');
                 const prefix = HANDOVER_DISPLAY_LABEL[handoverKey] || t.content;
-                displayContent = `${prefix} ${chainHtml}`;
+                displayContent = `${prefix}<span style="margin-left:10px;">${chainHtml}</span>`;
                 layoutLen = prefix.length + 25; // 체인 표기가 붙으면 길어진 것으로 간주해 2줄 표시 판단
             }
 
@@ -1083,6 +1103,15 @@
     function createNamingCard() {
         const isWknd = isWeekend();
         const T = getNbTheme();
+        // 라이트모드에서도 다크 전용 색이 그대로 남아있던 문제 — 입력칸/버튼을 테마에 맞게 분기
+        const fieldBg = T.isDark ? '#333' : '#ffffff';
+        const fieldBorder = T.isDark ? '#555' : T.border;
+        const fieldText = T.isDark ? '#fff' : T.text;
+        const neutralBtnBg = T.isDark ? '#444' : '#ffffff';
+        const neutralBtnBorder = T.isDark ? '#666' : T.border;
+        const neutralBtnText = T.isDark ? '#ddd' : T.text;
+        const neutralBtnHoverBg = T.isDark ? '#555' : '#f3ecdb';
+        const neutralBtnHoverBorder = T.isDark ? '#888' : '#a8946a';
         const card = document.createElement('div');
         card.id = 'namingSection';
         card.style.cssText = `
@@ -1126,30 +1155,31 @@
         card.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                 <span style="color:${T.accent}; font-weight:bold; font-size:18px;">🏷️ 영상 파일명 생성기</span>
-                <button id="openDriveTodayBtn" style="background:#444; color:#ddd; border:1px solid #666; padding:4px 8px; border-radius:6px; font-size:13px; cursor:pointer; white-space:nowrap;">📂 구글 영상 드라이브</button>
+                <button id="openDriveTodayBtn" style="background:${neutralBtnBg}; color:${neutralBtnText}; border:1px solid ${neutralBtnBorder}; padding:4px 8px; border-radius:6px; font-size:13px; cursor:pointer; white-space:nowrap;">📂 구글 영상 드라이브</button>
             </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px 5px; margin-bottom: 10px;">
                 <div style="position: relative; min-width: 0;">
-                    <select id="robotSelector" style="width: 100%; background: #333; color: white; border: 1px solid #555; border-radius: 4px; font-size: 15px; padding: 0 20px 0 8px; height: 32px; line-height: 32px; box-sizing: border-box; appearance: none; -webkit-appearance: none; -moz-appearance: none;">
+                    <select id="robotSelector" style="width: 100%; background: ${fieldBg}; color: ${fieldText}; border: 1px solid ${fieldBorder}; border-radius: 4px; font-size: 15px; padding: 0 20px 0 8px; height: 32px; line-height: 32px; box-sizing: border-box; appearance: none; -webkit-appearance: none; -moz-appearance: none;">
                         ${dropdownOptions || '<option>최근 배달 기체 미감지</option>'}
                     </select>
                     <span style="position: absolute; right: 6px; top: 50%; transform: translateY(-50%); pointer-events: none; color: #aaa; font-size: 11px;">▾</span>
                 </div>
                 <button id="btnMulti" class="sub-btn">다중 모니터링 (${multiHourLabel})</button>
                 <div style="display: flex; gap: 5px; min-width: 0;">
-                    <input type="text" id="taskInput" placeholder="주문번호를 붙여넣으세요." style="flex: 1; min-width: 0; background: #333; color: white; border: 1px solid #555; padding: 0 8px; border-radius: 4px; font-size: 15px; height: 32px; line-height: 32px; box-sizing: border-box;">
+                    <input type="text" id="taskInput" placeholder="주문번호를 붙여넣으세요." style="flex: 1; min-width: 0; background: ${fieldBg}; color: ${fieldText}; border: 1px solid ${fieldBorder}; padding: 0 8px; border-radius: 4px; font-size: 15px; height: 32px; line-height: 32px; box-sizing: border-box;">
                     <button id="copyFileName" style="width: 70px; flex-shrink: 0; background: #007bff; color: white; border: none; padding: 0 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 15px; white-space: nowrap; overflow: hidden; height: 32px; line-height: 32px; box-sizing: border-box;">복사</button>
                 </div>
                 <button id="btnCombined" class="sub-btn">배송/순찰 띠띠 (${combinedHourLabel})</button>
             </div>
         `;
 
-        if (!document.getElementById('naming-btn-style')) {
-            const style = document.createElement('style');
-            style.id = 'naming-btn-style';
-            style.textContent = `.sub-btn { background: #444; color: #ddd; border: 1px solid #666; padding: 6px 4px; border-radius: 6px; font-size: 15px; cursor: pointer; flex: 1; min-width: 0; transition: 0.2s; } .sub-btn:hover { background: #555; border-color: #888; }`;
-            document.head.appendChild(style);
+        let btnStyleTag = document.getElementById('naming-btn-style');
+        if (!btnStyleTag) {
+            btnStyleTag = document.createElement('style');
+            btnStyleTag.id = 'naming-btn-style';
+            document.head.appendChild(btnStyleTag);
         }
+        btnStyleTag.textContent = `.sub-btn { background: ${neutralBtnBg}; color: ${neutralBtnText}; border: 1px solid ${neutralBtnBorder}; padding: 6px 4px; border-radius: 6px; font-size: 15px; cursor: pointer; flex: 1; min-width: 0; transition: 0.2s; } .sub-btn:hover { background: ${neutralBtnHoverBg}; border-color: ${neutralBtnHoverBorder}; }`;
 
         setTimeout(() => {
             // 배송 띠띠 활성 여부에 따라 버튼 라벨 갱신 (신규 추가)
@@ -1481,7 +1511,7 @@
             <div style="margin-bottom:10px;">
                 <div style="display:flex; align-items:center; gap:6px; margin-bottom:8px; flex-wrap:nowrap;">
                     <div style="font-weight:bold; font-size:17px; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📋 ${storedName}의 일일 업무</div>
-                    <select id="remind-inline" style="background:#333; color:white; border:1px solid #555; font-size:13px; border-radius:4px; padding:2px;">
+                    <select id="remind-inline" style="background:${T.isDark ? '#333' : '#ffffff'}; color:${T.isDark ? '#fff' : T.text}; border:1px solid ${T.isDark ? '#555' : T.border}; font-size:13px; border-radius:4px; padding:2px;">
                         <option value="0" ${currentInt === '0' ? 'selected' : ''}>알림 없음</option>
                         <option value="3" ${currentInt === '3' ? 'selected' : ''}>3분 전 알림</option>
                         <option value="5" ${currentInt === '5' ? 'selected' : ''}>5분 전 알림</option>
@@ -1514,7 +1544,7 @@
                 background:${T.card}; gap:10px;
             `;
             row.innerHTML = `
-                <span class="nb-toggle-label" style="display:flex; align-items:center; gap:9px; font-size:15px; font-weight:500; color:${T.text};">
+                <span class="nb-toggle-label" style="display:flex; align-items:center; gap:9px; font-size:15px; font-weight:600; color:${T.text};">
                     <span style="font-size:18px;">${icon}</span>${label}
                 </span>
                 <label style="position:relative; display:inline-block; width:54px; height:24px; flex-shrink:0; cursor:pointer;">
@@ -1786,7 +1816,7 @@
             padding:7px 4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
         scheduleCard.innerHTML = `<span style="font-size:16px;">📅</span>
-            <span style="font-size:13px; font-weight:500; line-height:1.2; text-align:center; color:${T.text};">스케줄표/좌석도</span>`;
+            <span style="font-size:14px; font-weight:600; line-height:1.2; text-align:center; color:${T.text};">스케줄표/좌석도</span>`;
         window._neubieScheduleCard = scheduleCard;
         attachStaticNeonHover(scheduleCard, '255,79,163');
         scheduleCard.onclick = () => {
@@ -1804,7 +1834,7 @@
             padding:7px 4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
         rouletteCard.innerHTML = `<span style="font-size:16px;">🧰</span>
-            <span style="font-size:13px; font-weight:500; line-height:1.2; text-align:center; color:${T.text};">SW/헬프</span>`;
+            <span style="font-size:14px; font-weight:600; line-height:1.2; text-align:center; color:${T.text};">SW/헬프</span>`;
         window._neubieRouletteCard = rouletteCard;
         attachStaticNeonHover(rouletteCard, '44,230,217');
         rouletteCard.onclick = () => {
@@ -1828,7 +1858,7 @@
             padding:7px 4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
         batteryCard.innerHTML = `<span style="font-size:16px;">🔋</span>
-            <span style="font-size:13px; font-weight:500; line-height:1.2; text-align:center; color:${T.text};">성남 배터리</span>`;
+            <span style="font-size:14px; font-weight:600; line-height:1.2; text-align:center; color:${T.text};">성남 배터리</span>`;
         window._neubieBatteryCard = batteryCard;
         attachStaticNeonHover(batteryCard, '250,204,21');
         batteryCard.onclick = () => {
@@ -1849,7 +1879,7 @@
             padding:7px 4px; box-sizing:border-box; transition:box-shadow 0.15s;
         `;
         weatherCard.innerHTML = `<span style="font-size:16px;">🎨</span>
-            <span style="font-size:13px; font-weight:500; line-height:1.2; text-align:center; color:${T.text};">레이아웃 설정</span>`;
+            <span style="font-size:14px; font-weight:600; line-height:1.2; text-align:center; color:${T.text};">레이아웃 설정</span>`;
         window._neubieWeatherCard = weatherCard;
         attachStaticNeonHover(weatherCard, '157,92,255');
         weatherCard.onclick = () => {
