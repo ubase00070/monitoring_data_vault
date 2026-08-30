@@ -815,11 +815,10 @@
 
             const myTasks = data.filter(t => {
                 if (t.user !== myName) return false;
-                // yesterday_06 / tomorrow_08는 화면에 별도 업무로 표시하지 않는, 07시 경계
-                // 인계 체인 조회 전용 참조 데이터 — 항상 숨긴다
-                if (t.type === 'yesterday_06' || t.type === 'tomorrow_08') return false;
-                // tomorrow_07 타입은 00:00~07:10 사이에만 표시
-                if (t.type === 'tomorrow_07') {
+                // next_0700_handover(내일 07시 다중모니터링 통합 인계 스냅샷)는
+                // 00:00~07:10 사이에만 미리보기로 표시. 그 이후엔 같은 07:00 업무가
+                // 정규 monitoring 항목으로 자연스럽게 이어지므로 중복 표시를 막는다.
+                if (t.type === 'next_0700_handover') {
                     return new Date().getHours() < 7;
                 }
                 return true;
@@ -959,28 +958,24 @@
         // 24시간 로테이션 표(schedule)가 진짜 출처 — 이걸 안 쓰면 개인별 항목
         // 매칭 오차로 "본인 → 본인" 같은 오류가 생길 수 있다.
         if (key === '다중 모니터링') {
-            // 07시 경계 케이스(내일 07시 근무자가 이른 새벽에 미리 보는 화면)는
-            // 그 시점의 schedule이 막 갱신되려는 애매한 타이밍이라 신뢰할 수 없다.
-            // 이럴 때를 위해 미리 심어둔 yesterday_06 / tomorrow_08 참조 데이터를 우선 사용한다.
-            if (myTask.type === 'tomorrow_07' && Array.isArray(allTasks)) {
-                const findRef = (type, hour) => allTasks.find(t =>
-                    t.type === type &&
-                    t.content && t.content.includes('다중 모니터링') &&
-                    String(t.rawTime || t.time).startsWith(hour)
-                );
-                const prevEntry = findRef('yesterday_06', '06:00');
-                const nextEntry = findRef('tomorrow_08', '08:00');
-                return {
-                    prev: prevEntry ? prevEntry.user : null,
-                    next: nextEntry ? nextEntry.user : null,
-                };
+            const timeMatch = String(myTask.rawTime || myTask.time).match(/\d{2}:\d{2}/);
+            if (!timeMatch) return null;
+            const hourNum = parseInt(timeMatch[0].slice(0, 2), 10);
+
+            // 07시는 GAS가 매일 07:00~17:59 사이 계속 갱신해서 미리 만들어둔 통합
+            // 인계 스냅샷(next_0700_handover)을 그대로 사용한다. 이 스냅샷은 daily_tasks.json
+            // 안에 항상 같이 실려오기 때문에, 07시 시트 갱신 전이든 후든, 심지어 그날
+            // 처음 켠 시점이 몇 시든 상관없이 항상 동일한(정확한) 전임/후임이 뜬다.
+            if (hourNum === 7 && Array.isArray(allTasks)) {
+                const snap = allTasks.find(t => t.type === 'next_0700_handover' && t.selfUser === myTask.user);
+                if (snap) {
+                    return { prev: snap.prevUser || null, next: snap.nextUser || null };
+                }
+                // 스냅샷을 못 찾으면(구버전 데이터 등) 아래 스케줄 기반 계산으로 안전하게 폴백
             }
 
             if (!state.insuData || !state.insuData.schedule) return null;
             const schedule = state.insuData.schedule;
-            const timeMatch = String(myTask.rawTime || myTask.time).match(/\d{2}:\d{2}/);
-            if (!timeMatch) return null;
-            const hourNum = parseInt(timeMatch[0].slice(0, 2), 10);
             const prevHourKey = String((hourNum - 1 + 24) % 24).padStart(2, '0') + ':00';
             const nextHourKey = String((hourNum + 1) % 24).padStart(2, '0') + ':00';
             return {
@@ -1069,8 +1064,8 @@
             const targetInterval = isMultiMon ? (interval + 10) : interval;
 
             const item = document.createElement('div');
-            const isMon = t.type === 'monitoring' || t.type === 'tomorrow_07';
-            const status = t.type === 'tomorrow_07'
+            const isMon = t.type === 'monitoring' || t.type === 'next_0700_handover';
+            const status = t.type === 'next_0700_handover'
                 ? { isExpired: false, remainMin: 999, score: 0 }
                 : getTaskStatus(timeKey, isMon);
             const prefixStyle = status.isExpired
@@ -1097,6 +1092,7 @@
             const HANDOVER_DISPLAY_LABEL = { '다중 모니터링': '다중 모니터링', '부산 국립과학관': '부산국립과학관' };
             const handoverKey = getHandoverGroupKey(t);
             const neighbors = getHandoverNeighbors(t, window.currentAllTasks);
+
             const nameChip = (name, isSelf) => `<span style="display:inline-flex; align-items:center; justify-content:center; min-width:36px; padding:2px 6px; margin:0 1px; border-radius:6px; box-sizing:border-box; font-size:${isSelf ? '12px' : '11px'}; font-weight:${isSelf ? '800' : '500'}; background:${isSelf ? '#3b82f6' : (T.isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)')}; color:${isSelf ? '#ffffff' : (T.isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.65)')};">${name}</span>`;
             // 취소선은 '업무텍스트' 부분에만 걸리도록 별도 span으로 분리 — 이름박스/화살표를 감싸는
             // 조상 요소엔 text-decoration을 절대 두지 않는다(자식에서 none으로 덮어써도 브라우저에 따라
