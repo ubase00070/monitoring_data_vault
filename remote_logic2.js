@@ -1340,9 +1340,9 @@
             const openDriveBtn = card.querySelector('#openDriveTodayBtn');
             if (openDriveBtn) {
                 openDriveBtn.onmouseenter = () => {
-                    openDriveBtn.style.background = neutralBtnHoverBg;
-                    openDriveBtn.style.borderColor = neutralBtnHoverBorder;
-                    openDriveBtn.style.color = neutralBtnHoverText;
+                    openDriveBtn.style.background = subBtnHoverBg;
+                    openDriveBtn.style.borderColor = subBtnHoverBorder;
+                    openDriveBtn.style.color = subBtnHoverText;
                 };
                 openDriveBtn.onmouseleave = () => {
                     openDriveBtn.style.background = neutralBtnBg;
@@ -1489,7 +1489,7 @@
 			patchBtn.appendChild(newBadge);
 		}
 		
-        patchBtn.onmouseenter = () => { patchBtn.style.borderColor=HOVER_ACCENT; patchBtn.style.color=HOVER_ACCENT; };
+        patchBtn.onmouseenter = () => { patchBtn.style.borderColor=GREEN_HOVER; patchBtn.style.color=GREEN_HOVER; };
         patchBtn.onmouseleave = () => { patchBtn.style.borderColor=T.border; patchBtn.style.color=T.text; };
         patchBtn.onclick = () => {
             // 이미 열려있으면(패치노트 버튼 재클릭) 닫기만 하고 종료 — X버튼 없이도 닫는 방법
@@ -1577,7 +1577,7 @@
             transition:all 0.2s;
         `;
         boardBtn.innerHTML = `<span style="font-size:14px;">📌</span>게시판`;
-        boardBtn.onmouseenter = () => { boardBtn.style.borderColor=HOVER_ACCENT; boardBtn.style.color=HOVER_ACCENT; };
+        boardBtn.onmouseenter = () => { boardBtn.style.borderColor=GREEN_HOVER; boardBtn.style.color=GREEN_HOVER; };
         boardBtn.onmouseleave = () => { boardBtn.style.borderColor=T.border; boardBtn.style.color=T.text; };
         boardBtn.onclick = () => openBoardOverlay();
 
