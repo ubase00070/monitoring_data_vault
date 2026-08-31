@@ -2347,11 +2347,12 @@
 			flexWrap: 'nowrap',
 		});
 
-		// 카메라 위치 새로고침 버튼 (기존 '다중 파일명'/'성남 배터리' 자리로 이동)
-		const posBtn = mkBtn('카메라 위치 새로고침', '#26292f', { border: '1px solid #22c55e', color: '#4ade80' });
+		// 카메라 배치 새로고침 버튼 (기존 '다중 파일명'/'성남 배터리' 자리로 이동)
+		const posBtn = mkBtn('카메라 배치 새로고침', '#26292f', { border: '1px solid #22c55e', color: '#4ade80' });
 
 		// 교대 받기 버튼
-		const fetchBtn = mkBtn('교대 기체 로드', '#22c55e', { color: '#062e13' });
+		const fetchBtn = mkBtn('교대 기체 로드', 'linear-gradient(135deg, #16a34a, #4ade80)',
+			{ color: '#062e13', boxShadow: '0 0 10px rgba(74,222,128,0.55)' });
 
 		headerRow.appendChild(posBtn);
 		headerRow.appendChild(fetchBtn);
@@ -2361,7 +2362,8 @@
 		const rightBtns = document.createElement('div');
 		Object.assign(rightBtns.style, { marginLeft: 'auto', display: 'flex', gap: '5px', flexShrink: '0' });
 
-		const autoBtn = mkBtn('자동 시작', '#16a34a');
+		const autoBtn = mkBtn('자동 시작', 'linear-gradient(135deg, #0f766e, #22c55e)',
+			{ color: '#fff', boxShadow: '0 0 10px rgba(34,197,94,0.4)' });
 
 		rightBtns.appendChild(autoBtn);
 		headerRow.appendChild(rightBtns);
@@ -3026,6 +3028,8 @@
 						opacity: 0;
 						transition: opacity 0.2s;
 						background: rgba(20,20,20,0.8);
+						border: 1px solid rgba(34,197,94,0.4);
+						box-shadow: 0 0 6px rgba(34,197,94,0.15);
 						border-radius: 8px;
 						padding: 3px 6px;
 					`;
@@ -3263,7 +3267,7 @@
             display: 'flex',
             flexDirection: 'column',
             gap: '3px',
-            width: '108px', // 기존보다 살짝 좁게 — 카메라 좌상단 끄트머리 안 가리도록
+            width: '119px', // 슬라이더가 살짝 작다는 피드백 — 기존 108px 대비 약 10% 확대
             boxSizing: 'border-box',
             boxShadow: '0 2px 14px rgba(0,0,0,0.5), 0 0 10px rgba(34,197,94,0.12)',
             fontFamily: 'Pretendard, sans-serif',
@@ -3278,7 +3282,7 @@
 
         const label1 = document.createElement('span');
         label1.textContent = '전체 기체 밝기';
-        label1.style.cssText = 'color:#86efac; font-size:10px; font-weight:600; white-space:nowrap;';
+        label1.style.cssText = 'color:#86efac; font-size:11px; font-weight:600; white-space:nowrap;';
 
         const infoBtn = document.createElement('span');
         infoBtn.textContent = 'i';
@@ -3337,16 +3341,23 @@
         const existing = document.getElementById('neubie-brightness-info');
         if (existing) { existing.remove(); return; }
 
+        // 팝업 시작 위치를 '전체 기체 밝기' 바에 딱 맞춰 정렬 — 뷰포트 좌상단 모서리가 아니라
+        // 실제 바의 위치를 실측해서 그 바로 아래, 왼쪽 끝을 맞춰 배치한다.
+        const bar = document.getElementById('neubie-brightness-bar');
+        const barRect = bar ? bar.getBoundingClientRect() : { left: 60, bottom: 45 };
+
         const popup = document.createElement('div');
         popup.id = 'neubie-brightness-info';
         Object.assign(popup.style, {
-            position: 'fixed', top: '0px', left: '0px',
+            position: 'fixed',
+            top: `${barRect.bottom + 4}px`,
+            left: `${barRect.left}px`,
             zIndex: '2147483641',
             background: '#dcfce7',
             color: '#14532d',
             fontSize: '10px', fontWeight: '500', lineHeight: '1.4',
             padding: '6px 10px',
-            borderRadius: '0 0 8px 0',
+            borderRadius: '8px',
             boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
             cursor: 'pointer',
             maxWidth: '190px',
