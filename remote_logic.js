@@ -1490,7 +1490,7 @@
                 version: 'v1.5',
                 date: '2026-08-31',
                 items: [
-                    '다중/과학관 업무 전임/후임자 표기',
+                    '다중/과학관 업무 전임자/후임자 표기',
                     '레이아웃 전체에 그린 톤 테마 적용',
 					'다중 관제 기체 삭제 시 선택한 기체명 표기',
 					'다중 관제 시 모니터링 생성 모달을 우측에 고정',
@@ -2280,11 +2280,13 @@
 		Object.assign(panel.style, {
 			position: 'fixed', top: '0px', left: '50%', transform: 'translateX(-50%)',
 			zIndex: '2147483646', width: '616px',
-			background: 'rgba(200, 200, 200, 0.98)',
+			background: '#1c1c1f',
+			backgroundImage: 'linear-gradient(#1c1c1f, #1c1c1f), linear-gradient(90deg, #0e7490, #22c55e)',
+			backgroundOrigin: 'border-box', backgroundClip: 'padding-box, border-box',
 			borderRadius: '0 0 14px 14px', padding: '7px 8px 9px',
 			fontFamily: 'Pretendard,sans-serif',
-			boxShadow: '0 8px 32px rgba(0,0,0,0.35)',
-			border: '1px solid rgba(200,210,230,0.7)', borderTop: 'none',
+			boxShadow: '0 8px 32px rgba(0,0,0,0.5), 0 0 16px rgba(34,197,94,0.12)',
+			border: '1px solid transparent', borderTop: 'none',
 			transition: 'top 0.28s cubic-bezier(0.4,0,0.2,1)',
 		});
 		document.body.appendChild(panel);
@@ -2293,16 +2295,16 @@
 		const dpMsg = document.createElement('span');
 		dpMsg.id = 'ho-dp-msg';
 		Object.assign(dpMsg.style, {
-			fontSize: '12px', color: '#64748b',
+			fontSize: '12px', color: '#9ca3af',
 			overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
 			flex: '1', minWidth: '0',
-            background: 'rgba(255,255,255,0.85)',
+            background: 'rgba(255,255,255,0.06)',
             borderRadius: '5px',
             padding: '3px 8px',
 		});
 		dpMsg.textContent = '로딩 중...';
 
-		const setDpMsg = (msg, color = '#64748b') => {
+		const setDpMsg = (msg, color = '#9ca3af') => {
 			dpMsg.textContent = msg;
 			dpMsg.style.color = color;
 		};
@@ -2311,14 +2313,14 @@
 		const MAX_UNITS = 6;
 
 		const cellIdle = c => {
-			Object.assign(c.style, { background: 'rgba(255,255,255,0.85)', color: '#252525',
-				border: '1.5px solid #93c5fd', cursor: 'pointer', fontWeight: '600' });
+			Object.assign(c.style, { background: 'rgba(34,197,94,0.12)', color: '#e5f9ee',
+				border: '1.5px solid #4ade80', cursor: 'pointer', fontWeight: '600' });
 			c.dataset.selected = 'false';
 		};
 		const cellEmpty = c => {
 			c.textContent = '—';
-			Object.assign(c.style, { background: 'rgba(255,255,255,0.45)', color: '#b0bec5',
-				border: '1.5px dashed #c8d2e0', cursor: 'default', fontWeight: '400' });
+			Object.assign(c.style, { background: 'rgba(255,255,255,0.03)', color: '#6b7280',
+				border: '1.5px dashed rgba(34,197,94,0.35)', cursor: 'default', fontWeight: '400' });
 			c.dataset.unit = ''; c.dataset.selected = 'false'; c.dataset.done = 'false';
 		};
 
@@ -2341,15 +2343,16 @@
 		Object.assign(headerRow.style, {
 			display: 'flex', alignItems: 'center', gap: '5px',
 			marginBottom: '5px', paddingBottom: '5px',
-			borderBottom: '1px solid rgba(0,0,0,0.08)',
+			borderBottom: '1px solid rgba(255,255,255,0.08)',
 			flexWrap: 'nowrap',
 		});
 
-		// 카메라 위치 새로고침 버튼 (기존 '다중 파일명'/'성남 배터리' 자리로 이동)
-		const posBtn = mkBtn('카메라 위치 새로고침', '#64748b');
+		// 카메라 배치 새로고침 버튼 (기존 '다중 파일명'/'성남 배터리' 자리로 이동)
+		const posBtn = mkBtn('카메라 배치 새로고침', '#26292f', { border: '1px solid #22c55e', color: '#4ade80' });
 
 		// 교대 받기 버튼
-		const fetchBtn = mkBtn('교대 기체 로드', '#3b82f6');
+		const fetchBtn = mkBtn('교대 기체 로드', 'linear-gradient(135deg, #16a34a, #4ade80)',
+			{ color: '#062e13', boxShadow: '0 0 10px rgba(74,222,128,0.55)' });
 
 		headerRow.appendChild(posBtn);
 		headerRow.appendChild(fetchBtn);
@@ -2359,7 +2362,8 @@
 		const rightBtns = document.createElement('div');
 		Object.assign(rightBtns.style, { marginLeft: 'auto', display: 'flex', gap: '5px', flexShrink: '0' });
 
-		const autoBtn = mkBtn('자동 시작', '#6366f1');
+		const autoBtn = mkBtn('자동 시작', 'linear-gradient(135deg, #0f766e, #22c55e)',
+			{ color: '#fff', boxShadow: '0 0 10px rgba(34,197,94,0.4)' });
 
 		rightBtns.appendChild(autoBtn);
 		headerRow.appendChild(rightBtns);
@@ -2380,8 +2384,8 @@
 			cell.dataset.done = 'false';
 			cell.textContent = '—';
 			Object.assign(cell.style, {
-				height: '31px', borderRadius: '7px', border: '1.5px dashed #c8d2e0',
-				background: 'rgba(255,255,255,0.45)', color: '#b0bec5', fontSize: '10px',
+				height: '31px', borderRadius: '7px', border: '1.5px dashed rgba(34,197,94,0.35)',
+				background: 'rgba(255,255,255,0.03)', color: '#6b7280', fontSize: '10px',
 				fontFamily: 'Pretendard,sans-serif', cursor: 'default',
 				display: 'flex', alignItems: 'center', justifyContent: 'center',
 				textAlign: 'center', lineHeight: '1.3', padding: '3px',
@@ -3024,6 +3028,8 @@
 						opacity: 0;
 						transition: opacity 0.2s;
 						background: rgba(20,20,20,0.8);
+						border: 1px solid rgba(34,197,94,0.4);
+						box-shadow: 0 0 6px rgba(34,197,94,0.15);
 						border-radius: 8px;
 						padding: 3px 6px;
 					`;
@@ -3206,6 +3212,44 @@
 
         const savedVal = parseInt(localStorage.getItem(BRIGHTNESS.STORAGE_KEY) ?? BRIGHTNESS.DEFAULT);
 
+        // 슬라이더 자체(트랙+손잡이) 커스텀 스타일 — 네온 그린 메탈릭 느낌
+        if (!document.getElementById('neubie-brightness-style')) {
+            const style = document.createElement('style');
+            style.id = 'neubie-brightness-style';
+            style.textContent = `
+                #neubie-master-brightness {
+                    -webkit-appearance: none;
+                    appearance: none;
+                    background: linear-gradient(90deg, #052e1c, #10b981 45%, #6ee7b7 100%);
+                    border-radius: 999px;
+                    height: 5px;
+                    outline: none;
+                }
+                #neubie-master-brightness::-webkit-slider-thumb {
+                    -webkit-appearance: none;
+                    width: 13px; height: 13px; border-radius: 50%;
+                    background: linear-gradient(135deg, #d1fae5, #22c55e);
+                    border: 1.5px solid #052e1c;
+                    box-shadow: 0 0 6px rgba(34,197,94,0.9), 0 1px 2px rgba(0,0,0,0.4);
+                    cursor: pointer;
+                    margin-top: -4px;
+                }
+                #neubie-master-brightness::-moz-range-thumb {
+                    width: 13px; height: 13px; border-radius: 50%;
+                    background: linear-gradient(135deg, #d1fae5, #22c55e);
+                    border: 1.5px solid #052e1c;
+                    box-shadow: 0 0 6px rgba(34,197,94,0.9);
+                    cursor: pointer;
+                }
+                #neubie-master-brightness::-moz-range-track {
+                    background: linear-gradient(90deg, #052e1c, #10b981 45%, #6ee7b7 100%);
+                    border-radius: 999px;
+                    height: 5px;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
         const bar = document.createElement('div');
         bar.id = 'neubie-brightness-bar';
         Object.assign(bar.style, {
@@ -3213,22 +3257,49 @@
             top: '4px',
             left: '60px',
             zIndex: '2147483640',
-            background: 'rgba(15,15,15,0.75)',
-            backdropFilter: 'blur(8px)',
-            border: '1px solid rgba(255,255,255,0.13)',
+            background: '#14161a',
+            backgroundImage: 'linear-gradient(#14161a, #14161a), linear-gradient(90deg, #0e7490, #22c55e)',
+            backgroundOrigin: 'border-box',
+            backgroundClip: 'padding-box, border-box',
+            border: '1px solid transparent',
             borderRadius: '8px',
-            padding: '3px 6px',
+            padding: '4px 8px',
             display: 'flex',
-            alignItems: 'center',
+            flexDirection: 'column',
             gap: '3px',
-            boxShadow: '0 2px 12px rgba(0,0,0,0.4)',
+            width: '119px', // 슬라이더가 살짝 작다는 피드백 — 기존 108px 대비 약 10% 확대
+            boxSizing: 'border-box',
+            boxShadow: '0 2px 14px rgba(0,0,0,0.5), 0 0 10px rgba(34,197,94,0.12)',
             fontFamily: 'Pretendard, sans-serif',
             userSelect: 'none',
         });
 
-        const icon = document.createElement('span');
-        icon.textContent = '☀️';
-        icon.style.cssText = 'font-size:14px; line-height:1;';
+        // ── 1행: '전체 기체 밝기' 라벨 + 인포 아이콘 ──
+        const topRow = document.createElement('div');
+        Object.assign(topRow.style, {
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px',
+        });
+
+        const label1 = document.createElement('span');
+        label1.textContent = '전체 기체 밝기';
+        label1.style.cssText = 'color:#86efac; font-size:11px; font-weight:600; white-space:nowrap;';
+
+        const infoBtn = document.createElement('span');
+        infoBtn.textContent = 'i';
+        Object.assign(infoBtn.style, {
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            width: '12px', height: '12px', borderRadius: '50%', flexShrink: '0',
+            background: '#3b82f6', color: '#fff', fontSize: '9px', fontWeight: '700',
+            fontStyle: 'italic', fontFamily: 'Georgia, serif',
+            cursor: 'pointer',
+        });
+
+        topRow.appendChild(label1);
+        topRow.appendChild(infoBtn);
+
+        // ── 2행: 슬라이더 + 수치 ──
+        const bottomRow = document.createElement('div');
+        Object.assign(bottomRow.style, { display: 'flex', alignItems: 'center', gap: '5px' });
 
         const slider = document.createElement('input');
         slider.type = 'range';
@@ -3237,17 +3308,11 @@
         slider.max = BRIGHTNESS.MAX;
         slider.value = savedVal;
         Object.assign(slider.style, {
-            width: '76px',
-            height: '4px',
-            accentColor: '#ffffff',
-            cursor: 'pointer',
-            outline: 'none',
-            border: 'none',
-            background: 'rgba(255,255,255,0.4)',
+            flex: '1', minWidth: '0', cursor: 'pointer',
         });
 
         const label = document.createElement('span');
-        label.style.cssText = 'color:#fff; font-size:13px; font-weight:600; min-width:22px; text-align:right;';
+        label.style.cssText = 'color:#4ade80; font-size:12px; font-weight:700; min-width:20px; text-align:right;';
         label.textContent = savedVal;
 
         slider.addEventListener('input', () => {
@@ -3256,12 +3321,60 @@
             applyBrightnessToAll(v);
         });
 
-        bar.appendChild(icon);
-        bar.appendChild(slider);
-        bar.appendChild(label);
+        bottomRow.appendChild(slider);
+        bottomRow.appendChild(label);
+
+        bar.appendChild(topRow);
+        bar.appendChild(bottomRow);
         document.body.appendChild(bar);
 
+        infoBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleBrightnessInfoPopup();
+        });
+
         setTimeout(() => applyBrightnessToAll(savedVal), 800);
+    }
+
+    // ── 밝기 인포 팝업 — 화면 좌상단 끝에 붙어서 뜨고, 바깥 클릭/자기 자신 클릭 시 닫힘 ──
+    function toggleBrightnessInfoPopup() {
+        const existing = document.getElementById('neubie-brightness-info');
+        if (existing) { existing.remove(); return; }
+
+        // 팝업 시작 위치를 '전체 기체 밝기' 바에 딱 맞춰 정렬 — 뷰포트 좌상단 모서리가 아니라
+        // 실제 바의 위치를 실측해서 그 바로 아래, 왼쪽 끝을 맞춰 배치한다.
+        const bar = document.getElementById('neubie-brightness-bar');
+        const barRect = bar ? bar.getBoundingClientRect() : { left: 60, bottom: 45 };
+
+        const popup = document.createElement('div');
+        popup.id = 'neubie-brightness-info';
+        Object.assign(popup.style, {
+            position: 'fixed',
+            top: `${barRect.bottom + 4}px`,
+            left: `${barRect.left}px`,
+            zIndex: '2147483641',
+            background: '#dcfce7',
+            color: '#14532d',
+            fontSize: '10px', fontWeight: '500', lineHeight: '1.4',
+            padding: '6px 10px',
+            borderRadius: '8px',
+            boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
+            cursor: 'pointer',
+            maxWidth: '190px',
+            fontFamily: 'Pretendard, sans-serif',
+        });
+        popup.innerHTML = 'ALT+Q를 눌러서 교대 기체를 자동 로드하거나<br>기체 카메라위치를 변경해보세요.';
+        popup.addEventListener('click', (e) => { e.stopPropagation(); popup.remove(); });
+        document.body.appendChild(popup);
+
+        setTimeout(() => {
+            document.addEventListener('click', function outsideClose(ev) {
+                if (!popup.contains(ev.target)) {
+                    popup.remove();
+                    document.removeEventListener('click', outsideClose);
+                }
+            });
+        }, 0);
     }
 
     // ── multiple/driving 페이지 진입 시 자동 주입 / 이탈 시 제거 ──
