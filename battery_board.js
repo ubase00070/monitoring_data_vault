@@ -1468,7 +1468,6 @@
             alertLogCyhTick();
             alertLogNonCyhTick();
             alertLogDownloadTick();
-            alertLogFinalizeYesterdayOnce();
 
             const alerts = detectAlerts(allRaw);
             renderAlertChips(alerts);
@@ -2330,16 +2329,21 @@
 	// 목적: "이거 언제부터 이랬지?"를 나중에 확인하기 위한 기록.
 	// 배터리 로그와 달리 CYH 우선순위가 필요 없음 — "언제 목격했나"는 순수 사실이라
 	// 여러 사람의 기록을 그냥 합치면 됨(합집합). 그래서 락도 필요 없음.
+	//
+	// 저장 방식: alarm/ 폴더의 단일 파일 하나(배터리_알림로그)에 최근 15일치를 다 담음.
+	// 원본 시각(예: 190개 타임스탬프)을 그대로 저장하지 않고, 업로드 시점에 바로
+	// "구간(시작~끝)"으로 압축해서 저장 — 장시간 상습 알림 기체가 있어도 용량이 안 불어남.
+	// 매 업로드마다 15일 넘은 날짜는 자동으로 잘라내서, 파일 크기가 무한정 커지지 않음.
 	// ============================================================
 	const ALERT_LOG_TYPES = ['zombie', 'cam', 'nomap', 'estop'];
 	const ALERT_LOG_LABELS = { zombie: '🧟 좀비', cam: '📷 캠 미노출', nomap: '🗺️ 미니맵 미노출', estop: '🆘 비상정지' };
-	const ALERT_LOG_RAW_NAME_PREFIX = '배터리_알림원시로그_';   // + dayKey
-	const ALERT_LOG_HISTORY_NAME = '배터리_알림로그_히스토리';
+	const ALERT_LOG_RETENTION_DAYS = 15;
+	const ALERT_LOG_NAME = '배터리_알림로그';
 	const ALERT_LOG_GAP_MIN = 10;   // 이 시간 이상 안 보이면 "끊긴 것"으로 판단(재발생 구분 기준)
 
 	function alertLogBufKey() { return 'bb_alertlog_buffer'; }
 
-	// 매 렌더 사이클마다 호출 — 로컬에 "이 시각에 봤다"는 점만 쌓음(업로드는 별도 주기로)
+	// 매 렌더 사이클마다 호출 — 로컬에 "이 시각에 봤다"는 원본 점만 쌓음(업로드 시점에 구간으로 압축됨)
 	function alertLogRecord(rawSignals) {
 		const dayKey = wblGetDayKey();
 		if (!dayKey) return;   // 03~08시 비활성 구간
@@ -2363,39 +2367,92 @@
 		try { localStorage.setItem(alertLogBufKey(), JSON.stringify(buf)); } catch {}
 	}
 
-	// 로컬에 쌓인 버퍼를 서버(오늘치 원시로그)에 병합 업로드. 버퍼 비어있으면 요청 자체를 안 보냄.
+	// 원시 점(point) 배열 -> 연속 구간(interval)으로 변환. 10분 이상 벌어지면 재발생으로 구분.
+	function alertLogPointsToIntervals(points) {
+		if (!points || !points.length) return [];
+		const sorted = [...points].sort();
+		const toMin = hm => { const [h, m] = hm.split(':').map(Number); return h * 60 + m; };
+		const intervals = [];
+		let curStart = sorted[0], curEnd = sorted[0];
+		for (let i = 1; i < sorted.length; i++) {
+			const gap = toMin(sorted[i]) - toMin(curEnd);
+			if (gap > ALERT_LOG_GAP_MIN) {
+				intervals.push({ start: curStart, end: curEnd });
+				curStart = sorted[i];
+			}
+			curEnd = sorted[i];
+		}
+		intervals.push({ start: curStart, end: curEnd });
+		return intervals;
+	}
+
+	// 이미 구간(interval) 형태인 두 목록을 병합 — 서로 다른 사람이 관측한 부분 구간들이
+	// 이어붙으면 하나로 합쳐지도록, 다시 갭 기준으로 재정렬-재병합함.
+	function alertLogMergeIntervals(existing, fresh) {
+		const toMin = hm => { const [h, m] = hm.split(':').map(Number); return h * 60 + m; };
+		const all = [...(existing || []), ...(fresh || [])].sort((a, b) => a.start.localeCompare(b.start));
+		if (!all.length) return [];
+		const merged = [all[0]];
+		for (let i = 1; i < all.length; i++) {
+			const last = merged[merged.length - 1];
+			const gap = toMin(all[i].start) - toMin(last.end);
+			if (gap <= ALERT_LOG_GAP_MIN) {
+				if (all[i].end > last.end) last.end = all[i].end;
+			} else {
+				merged.push({ ...all[i] });
+			}
+		}
+		return merged;
+	}
+
+	// 단일 파일 로드
+	async function alertLogFetchFile() {
+		try {
+			const res = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent(ALERT_LOG_NAME)}`);
+			if (!res.ok) return { days: {} };
+			const data = await res.json();
+			return (data?.data && typeof data.data === 'object') ? data.data : { days: {} };
+		} catch (e) { return { days: {} }; }
+	}
+
+	// 15일 넘은 날짜는 잘라냄
+	function alertLogPrune(fileObj) {
+		const cutoff = Math.floor(Date.now() / 86400000) - (ALERT_LOG_RETENTION_DAYS - 1);
+		const days = fileObj.days || {};
+		Object.keys(days).forEach(dayStr => {
+			const idx = Math.floor(new Date(dayStr + 'T00:00:00Z').getTime() / 86400000);
+			if (idx < cutoff) delete days[dayStr];
+		});
+		fileObj.days = days;
+		return fileObj;
+	}
+
+	// 로컬 버퍼(오늘 원시 점)를 구간으로 압축해서 단일 파일에 병합 업로드. 버퍼 비어있으면 요청 자체를 안 보냄.
 	async function alertLogUpload() {
 		let buf;
 		try { buf = JSON.parse(localStorage.getItem(alertLogBufKey()) || 'null'); } catch { buf = null; }
 		if (!buf || !buf.day || Object.keys(buf.entries).length === 0) return true;   // 올릴 게 없음
 
-		const remoteName = ALERT_LOG_RAW_NAME_PREFIX + buf.day;
 		try {
-			let merged = { day: buf.day, entries: {} };
-			try {
-				const res = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent(remoteName)}`);
-				if (res.ok) {
-					const remote = await res.json();
-					if (remote?.data?.day === buf.day) merged = remote.data;
-				}
-			} catch (e) {}
+			const fileObj = await alertLogFetchFile();
+			if (!fileObj.days[buf.day]) fileObj.days[buf.day] = {};
+			const todayEntries = fileObj.days[buf.day];
 
-			// 합집합 병합: 로컬 점들을 원격 기록에 없는 것만 추가
 			Object.keys(buf.entries).forEach(id => {
 				const local = buf.entries[id];
-				if (!merged.entries[id]) merged.entries[id] = { name: local.name, points: {} };
-				merged.entries[id].name = local.name;
+				if (!todayEntries[id]) todayEntries[id] = { name: local.name, intervals: {} };
+				todayEntries[id].name = local.name;
 				ALERT_LOG_TYPES.forEach(type => {
-					const localArr = local.points[type] || [];
-					if (!localArr.length) return;
-					if (!merged.entries[id].points[type]) merged.entries[id].points[type] = [];
-					const set = new Set(merged.entries[id].points[type]);
-					localArr.forEach(t => set.add(t));
-					merged.entries[id].points[type] = Array.from(set).sort();
+					const pts = local.points[type];
+					if (!pts || !pts.length) return;
+					const freshIv = alertLogPointsToIntervals(pts);
+					todayEntries[id].intervals[type] = alertLogMergeIntervals(todayEntries[id].intervals[type], freshIv);
 				});
 			});
 
-			const ok = await wblUploadNamed(remoteName, merged);
+			alertLogPrune(fileObj);
+
+			const ok = await wblUploadNamed(ALERT_LOG_NAME, fileObj);
 			if (ok) {
 				localStorage.setItem(alertLogBufKey(), JSON.stringify({ day: buf.day, entries: {} }));   // 업로드 성공한 것만 비움
 				console.log('[BB] 알림 로그 업로드 완료 (' + new Date().toTimeString().slice(0,5) + ')');
@@ -2424,131 +2481,35 @@
 		await alertLogUpload();
 	}
 
-	// 원시 점(point) 배열 -> 연속 구간(interval)으로 변환. 10분 이상 벌어지면 재발생으로 구분.
-	function alertLogPointsToIntervals(points) {
-		if (!points || !points.length) return [];
-		const sorted = [...points].sort();
-		const toMin = hm => { const [h, m] = hm.split(':').map(Number); return h * 60 + m; };
-		const intervals = [];
-		let curStart = sorted[0], curEnd = sorted[0];
-		for (let i = 1; i < sorted.length; i++) {
-			const gap = toMin(sorted[i]) - toMin(curEnd);
-			if (gap > ALERT_LOG_GAP_MIN) {
-				intervals.push({ start: curStart, end: curEnd });
-				curStart = sorted[i];
-			}
-			curEnd = sorted[i];
-		}
-		intervals.push({ start: curStart, end: curEnd });
-		return intervals;
-	}
-
-	// 어제(트래킹 데이) 원시 로그를 구간화해서 히스토리에 반영. 세션당 1회만 시도.
-	async function alertLogFinalizeYesterdayOnce() {
-		const targetKey = wblYesterdayDayKey();
-		if (localStorage.getItem('bb_alertlog_finalized_for') === targetKey) return;
-
-		try {
-			const res = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent(ALERT_LOG_RAW_NAME_PREFIX + targetKey)}`);
-			if (!res.ok) { localStorage.setItem('bb_alertlog_finalized_for', targetKey); return; }
-			const remote = await res.json();
-			const raw = remote?.data;
-			if (!raw || raw.day !== targetKey) { localStorage.setItem('bb_alertlog_finalized_for', targetKey); return; }
-
-			const items = [];
-			Object.keys(raw.entries).forEach(id => {
-				const entry = raw.entries[id];
-				ALERT_LOG_TYPES.forEach(type => {
-					const pts = entry.points?.[type];
-					if (!pts || !pts.length) return;
-					alertLogPointsToIntervals(pts).forEach(iv => {
-						items.push({ robotId: id, name: entry.name, type, start: iv.start, end: iv.end });
-					});
-				});
-			});
-			items.sort((a, b) => a.start.localeCompare(b.start));
-
-			let history = [];
-			try {
-				const hRes = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent(ALERT_LOG_HISTORY_NAME)}`);
-				if (hRes.ok) {
-					const hData = await hRes.json();
-					if (Array.isArray(hData?.data)) history = hData.data;
-				}
-			} catch (e) {}
-
-			history = history.filter(d => d.day !== targetKey);
-			history.push({ day: targetKey, items });
-			history.sort((a, b) => a.day.localeCompare(b.day));
-			if (history.length > 60) history = history.slice(history.length - 60);   // 최근 60일만 유지
-
-			await wblUploadNamed(ALERT_LOG_HISTORY_NAME, history);
-			localStorage.setItem('bb_alertlog_finalized_for', targetKey);
-			console.log('[BB] 알림 로그 확정 완료 (' + targetKey + ', ' + items.length + '건)');
-		} catch (e) { console.log('[BB] 알림 로그 확정 실패:', e.message); }
-	}
-
-	// 오늘치 알림 원시로그를 30분마다 다운로드해서 캐시 — CYH/비CYH 둘 다(기존 배터리 다운로드와 달리 여긴 역할 구분 없음)
+	// 30분마다 단일 파일을 통째로 받아와서 로컬 캐시 — CYH/비CYH 둘 다(당일 실시간 조회용)
 	let _alertLogDlLast = 0;
 	async function alertLogDownloadTick() {
 		if (Date.now() - _alertLogDlLast < 30 * 60 * 1000) return;
 		_alertLogDlLast = Date.now();
-		const dayKey = wblGetDayKey();
-		if (!dayKey) return;
-		try {
-			const res = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent(ALERT_LOG_RAW_NAME_PREFIX + dayKey)}`);
-			if (!res.ok) return;
-			const remote = await res.json();
-			if (remote?.data?.day === dayKey) {
-				localStorage.setItem('bb_alertlog_today_cache', JSON.stringify(remote.data));
-			}
-		} catch (e) {}
+		const fileObj = await alertLogFetchFile();
+		try { localStorage.setItem('bb_alertlog_file_cache', JSON.stringify(fileObj)); } catch {}
 	}
 
-	// 오늘치 캐시(서버 최신본)를 구간화해서 반환 — 다음날 확정 전이라도 "오늘 아까"를 바로 조회 가능
-	function alertLogTodayItems() {
-		const dayKey = wblGetDayKey();
-		if (!dayKey) return [];
-		let raw;
-		try { raw = JSON.parse(localStorage.getItem('bb_alertlog_today_cache') || 'null'); } catch { raw = null; }
-		if (!raw || raw.day !== dayKey) return [];
-		const items = [];
-		Object.keys(raw.entries).forEach(id => {
-			const entry = raw.entries[id];
+	function alertLogCachedFile() {
+		try {
+			const cached = JSON.parse(localStorage.getItem('bb_alertlog_file_cache') || 'null');
+			if (cached && cached.days) return cached;
+		} catch {}
+		return { days: {} };
+	}
+
+	// 특정 기체의 알림 로그 조회 (최신순) — 캐시된 15일치 파일에서 바로 필터링, 별도 요청 없음
+	async function alertLogFetchForRobot(robotId) {
+		const fileObj = alertLogCachedFile();
+		const rows = [];
+		Object.keys(fileObj.days || {}).forEach(day => {
+			const entry = fileObj.days[day][robotId];
+			if (!entry) return;
 			ALERT_LOG_TYPES.forEach(type => {
-				const pts = entry.points?.[type];
-				if (!pts || !pts.length) return;
-				alertLogPointsToIntervals(pts).forEach(iv => {
-					items.push({ robotId: id, name: entry.name, type, start: iv.start, end: iv.end, day: dayKey });
+				(entry.intervals?.[type] || []).forEach(iv => {
+					rows.push({ day, type, start: iv.start, end: iv.end });
 				});
 			});
-		});
-		return items;
-	}
-
-	// 히스토리(확정된 과거) 통째로 로드
-	async function alertLogFetchHistory() {
-		try {
-			const res = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent(ALERT_LOG_HISTORY_NAME)}`);
-			if (!res.ok) return [];
-			const data = await res.json();
-			return Array.isArray(data?.data) ? data.data : [];
-		} catch (e) { return []; }
-	}
-
-	// 특정 기체의 알림 로그 히스토리 조회 (최신순)
-	async function alertLogFetchForRobot(robotId) {
-		const history = await alertLogFetchHistory();
-		const rows = [];
-		history.forEach(dayEntry => {
-			(dayEntry.items || []).forEach(it => {
-				if (String(it.robotId) === String(robotId)) {
-					rows.push({ day: dayEntry.day, type: it.type, start: it.start, end: it.end });
-				}
-			});
-		});
-		alertLogTodayItems().forEach(it => {
-			if (String(it.robotId) === String(robotId)) rows.push({ day: it.day, type: it.type, start: it.start, end: it.end });
 		});
 		rows.sort((a, b) => (a.day + a.start).localeCompare(b.day + b.start));
 		return rows.reverse();
@@ -2556,18 +2517,22 @@
 
 	// 전체 기체 × 전체 일자 로그 (일자별로 묶어서 반환, 최신 일자가 먼저)
 	async function alertLogFetchAll() {
-		const grouped = {};
-		(await alertLogFetchHistory()).forEach(dayEntry => {
-			grouped[dayEntry.day] = (dayEntry.items || []).slice();
+		const fileObj = alertLogCachedFile();
+		const days = Object.keys(fileObj.days || {}).sort().reverse();
+		return days.map(day => {
+			const items = [];
+			const entries = fileObj.days[day];
+			Object.keys(entries).forEach(id => {
+				const entry = entries[id];
+				ALERT_LOG_TYPES.forEach(type => {
+					(entry.intervals?.[type] || []).forEach(iv => {
+						items.push({ robotId: id, name: entry.name, type, start: iv.start, end: iv.end });
+					});
+				});
+			});
+			items.sort((a, b) => a.start.localeCompare(b.start));
+			return { day, items };
 		});
-		const todayKey = wblGetDayKey();
-		const todayItems = alertLogTodayItems();
-		if (todayKey && todayItems.length) grouped[todayKey] = todayItems;
-
-		return Object.keys(grouped).sort().reverse().map(day => ({
-			day,
-			items: grouped[day].slice().sort((a, b) => a.start.localeCompare(b.start)),
-		}));
 	}
 
 
