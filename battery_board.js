@@ -583,7 +583,8 @@
         .bb-alertlog-row:nth-child(even) { background:var(--bg); }
         .bb-alertlog-time { color:var(--mu); min-width:150px; flex-shrink:0; }
         .bb-alertlog-name { color:var(--tx); flex-shrink:0; }
-        .bb-alertlog-type { color:var(--or); }
+        .bb-alertlog-icon { font-size:20px; line-height:1; }
+        .bb-alertlog-type { font-weight:900; }
         .bb-top5-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:14px; }
         .bb-top5-col { background:var(--bg); border-radius:12px; padding:12px; }
         .bb-top5-col-title { font-size:14px; font-weight:900; margin-bottom:8px; }
@@ -796,13 +797,12 @@
                 <div class="bb-hd-right" id="bb-hd-right">
                     <div class="bb-hd-right-row">
                         <button id="bb-top5-btn" class="bb-btn">🔥 배터리 증감 추이</button>
-                        <button class="bb-btn" id="bb-wbl-download-btn">📥 배터리 값 로드</button>
+                        <button class="bb-btn" id="bb-inforequest-btn">기체 정보 조회</button>
                         <button id="bb-backup-btn" class="bb-btn">기체 목록 백업</button>
                         <button id="bb-restore-btn" class="bb-btn">기체 목록 복원</button>
                         <div class="bb-xbtn" id="bb-closebtn">✕</div>
                     </div>
                     <div class="bb-hd-right-row" id="bb-search-wrap">
-                        <button class="bb-btn" id="bb-inforequest-btn">기체 정보 조회</button>
                         <button class="bb-btn" id="bb-sortname-btn">이름 순 정렬</button>
                         <button class="bb-btn" id="bb-rmbtn">카드 제거</button>
                         <div class="bb-si-wrap">
@@ -820,12 +820,12 @@
                     <span class="bb-alert-label">🚨 알림</span>
                     <div class="bb-alert-chips" id="bb-alert-chips"></div>
                 </div>
-                <button class="bb-btn" id="bb-alertlog-all-btn" style="font-size:13px;font-weight:900;align-self:center;margin-right:12px;flex-shrink:0;">📋 전체 알림 로그</button>
+                <button class="bb-btn" id="bb-alertlog-all-btn" style="font-size:13px;font-weight:900;align-self:center;margin-right:12px;flex-shrink:0;">📋 최근 15일 알림 로그</button>
             </div>
 
             <div id="bb-alertlog-all-panel">
                 <div class="bb-ap-hd">
-                    <div class="bb-ap-title">📋 전체 알림 로그</div>
+                    <div class="bb-ap-title">📋 최근 15일 알림 로그</div>
                     <div class="bb-ap-close" id="bb-alertlog-all-close">✕</div>
                 </div>
                 <div id="bb-alertlog-all-body"></div>
@@ -2336,7 +2336,12 @@
 	// 매 업로드마다 15일 넘은 날짜는 자동으로 잘라내서, 파일 크기가 무한정 커지지 않음.
 	// ============================================================
 	const ALERT_LOG_TYPES = ['zombie', 'cam', 'nomap', 'estop'];
-	const ALERT_LOG_LABELS = { zombie: '🧟 좀비', cam: '📷 캠 미노출', nomap: '🗺️ 미니맵 미노출', estop: '🆘 비상정지' };
+	const ALERT_LOG_META = {
+		zombie: { icon: '👻', text: '좀비',        color: 'var(--or)' },
+		cam:    { icon: '🎥', text: '캠 미노출',    color: 'var(--bl)' },
+		nomap:  { icon: '🗺️', text: '미니맵 미노출', color: 'var(--ye)' },
+		estop:  { icon: '🆘', text: '비상정지',     color: 'var(--rd)' },
+	};
 	const ALERT_LOG_RETENTION_DAYS = 15;
 	const ALERT_LOG_NAME = '배터리_알림로그';
 	const ALERT_LOG_GAP_MIN = 10;   // 이 시간 이상 안 보이면 "끊긴 것"으로 판단(재발생 구분 기준)
@@ -2344,10 +2349,10 @@
 	function alertLogBufKey() { return 'bb_alertlog_buffer'; }
 
 	// 매 렌더 사이클마다 호출 — 로컬에 "이 시각에 봤다"는 원본 점만 쌓음(업로드 시점에 구간으로 압축됨)
+	// 배터리 로그(wblGetDayKey)와 달리 업무일 롤백을 안 함 — 자정 넘은 알림은 실제 달력 날짜 그대로 기록
 	function alertLogRecord(rawSignals) {
-		const dayKey = wblGetDayKey();
-		if (!dayKey) return;   // 03~08시 비활성 구간
 		if (!rawSignals || !rawSignals.length) return;
+		const dayKey = wblLocalDateStr(new Date());
 
 		let buf;
 		try { buf = JSON.parse(localStorage.getItem(alertLogBufKey()) || 'null'); } catch { buf = null; }
@@ -2699,12 +2704,13 @@
             <div class="bb-alertlog-day">
                 <div class="bb-alertlog-day-title">${wblFormatMonthDay(d.day)}</div>
                 ${d.items.map(it => {
-                    const label = ALERT_LOG_LABELS[it.type] || it.type;
+                    const meta = ALERT_LOG_META[it.type] || { icon:'', text:it.type, color:'var(--tx)' };
                     const timeStr = it.start === it.end ? it.start : `${it.start}~${it.end}`;
                     return `<div class="bb-alertlog-row">
                         <span class="bb-alertlog-time">${timeStr}</span>
                         <span class="bb-alertlog-name">${it.name}</span>
-                        <span class="bb-alertlog-type">${label}</span>
+                        <span class="bb-alertlog-icon">${meta.icon}</span>
+                        <span class="bb-alertlog-type" style="color:${meta.color};">${meta.text}</span>
                     </div>`;
                 }).join('')}
             </div>
@@ -2924,9 +2930,9 @@
                         <div class="bb-alertlog-day">
                             <div class="bb-alertlog-day-title">${wblFormatMonthDay(day)}</div>
                             ${byDay[day].map(row => {
-                                const label = ALERT_LOG_LABELS[row.type] || row.type;
+                                const meta = ALERT_LOG_META[row.type] || { icon:'', text:row.type, color:'var(--tx)' };
                                 const timeStr = row.start === row.end ? row.start : `${row.start}~${row.end}`;
-                                return `<div class="bb-alertlog-row"><span class="bb-alertlog-time">${timeStr}</span><span class="bb-alertlog-type">${label}</span></div>`;
+                                return `<div class="bb-alertlog-row"><span class="bb-alertlog-time">${timeStr}</span><span class="bb-alertlog-icon">${meta.icon}</span><span class="bb-alertlog-type" style="color:${meta.color};">${meta.text}</span></div>`;
                             }).join('')}
                         </div>
                     `).join('');
@@ -3212,16 +3218,6 @@
         btn.textContent = ok ? '✅ 완료' : '❌ 실패';
         setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 1500);
     });
-    document.getElementById('bb-wbl-download-btn').addEventListener('click', async (e) => {
-        if (!confirm('배터리 데이터를 불러오시겠습니까?')) return;
-        const btn = e.currentTarget;
-        const orig = btn.textContent;
-        btn.textContent = '⏳ 불러오는 중...'; btn.disabled = true;
-        const ok = await wblDoDownload();
-        btn.textContent = ok ? '✅ 완료' : '❌ 실패(오늘 데이터 없음)';
-        setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 1500);
-    });
-
     document.getElementById('bb-inforequest-btn').addEventListener('click', (e) => {
         e.stopPropagation();
         openInfoSearchMode();
@@ -3671,7 +3667,7 @@
 		try {
 			const listRes = await fetch('https://multimonitoring.vercel.app/api/battery');
 			const listData = await listRes.json();
-			const names = (listData.names || []).filter(n => n !== WBL_HANDOVER_NAME && n !== WBL_YESTERDAY_NAME);
+			const names = (listData.names || []).filter(n => !n.startsWith('배터리'));   // 내부 시스템 파일(배터리 증감/야간락/알림로그 등) 전부 제외, 사람 이름만
 			if (!names.length) { alert('❌ 저장된 백업 없음'); return; }
 			const choice = prompt(`복원할 백업을 선택하세요:\n\n${names.map((n,i) => `${i+1}. ${n}`).join('\n')}\n\n번호 또는 이름 입력:`);
 			if (!choice) return;
