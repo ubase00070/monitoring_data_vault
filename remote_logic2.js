@@ -3221,9 +3221,9 @@
                 #neubie-master-brightness {
                     -webkit-appearance: none;
                     appearance: none;
-                    background: linear-gradient(90deg, #052e1c, #10b981 45%, #6ee7b7 100%);
+                    background: rgba(255,255,255,0.08);
                     border-radius: 999px;
-                    height: 16px;
+                    height: 15px;
                     width: 100%;
                     margin: 0; padding: 0;
                     outline: none;
@@ -3231,7 +3231,7 @@
                 }
                 #neubie-master-brightness::-webkit-slider-thumb {
                     -webkit-appearance: none;
-                    width: 13px; height: 13px; border-radius: 50%;
+                    width: 12px; height: 12px; border-radius: 50%;
                     background: linear-gradient(135deg, #d1fae5, #22c55e);
                     border: 1.5px solid #052e1c;
                     box-shadow: 0 0 6px rgba(34,197,94,0.9), 0 1px 2px rgba(0,0,0,0.4);
@@ -3239,16 +3239,16 @@
                     margin-top: 1.5px;
                 }
                 #neubie-master-brightness::-moz-range-thumb {
-                    width: 13px; height: 13px; border-radius: 50%;
+                    width: 12px; height: 12px; border-radius: 50%;
                     background: linear-gradient(135deg, #d1fae5, #22c55e);
                     border: 1.5px solid #052e1c;
                     box-shadow: 0 0 6px rgba(34,197,94,0.9);
                     cursor: pointer;
                 }
                 #neubie-master-brightness::-moz-range-track {
-                    background: linear-gradient(90deg, #052e1c, #10b981 45%, #6ee7b7 100%);
+                    background: rgba(255,255,255,0.08);
                     border-radius: 999px;
-                    height: 16px;
+                    height: 15px;
                 }
             `;
             document.head.appendChild(style);
@@ -3267,7 +3267,7 @@
             backgroundClip: 'padding-box, border-box',
             border: '1px solid transparent',
             borderRadius: '8px',
-            padding: '5px 8px',
+            padding: '4px 8px',
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
@@ -3280,7 +3280,7 @@
 
         // ── 슬라이더 + 그 위에 스며든 '전체 밝기' 라벨 ──
         const sliderWrap = document.createElement('div');
-        Object.assign(sliderWrap.style, { position: 'relative', flex: '1', minWidth: '0', height: '16px' });
+        Object.assign(sliderWrap.style, { position: 'relative', flex: '1', minWidth: '0', height: '15px' });
 
         const slider = document.createElement('input');
         slider.type = 'range';
@@ -3297,7 +3297,8 @@
             position: 'absolute', inset: '0',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: '9px', fontWeight: '700', letterSpacing: '0.2px',
-            color: 'rgba(5,15,10,0.55)',
+            color: '#fff',
+            textShadow: '0 0 3px rgba(0,0,0,0.65), 0 1px 2px rgba(0,0,0,0.55)',
             pointerEvents: 'none',
         });
 
@@ -3318,9 +3319,18 @@
         valueLabel.style.cssText = 'color:#4ade80; font-size:12px; font-weight:700; min-width:20px; text-align:right; flex-shrink:0;';
         valueLabel.textContent = savedVal;
 
+        // 슬라이더 값에 맞춰 채워진(초록) 구간과 안 채워진(어두운) 구간의 경계를 실시간 계산
+        const updateSliderFill = (v) => {
+            const pct = ((v - BRIGHTNESS.MIN) / (BRIGHTNESS.MAX - BRIGHTNESS.MIN)) * 100;
+            slider.style.background =
+                `linear-gradient(90deg, #10b981 0%, #6ee7b7 ${pct}%, rgba(255,255,255,0.08) ${pct}%, rgba(255,255,255,0.08) 100%)`;
+        };
+        updateSliderFill(savedVal);
+
         slider.addEventListener('input', () => {
             const v = slider.value;
             valueLabel.textContent = v;
+            updateSliderFill(v);
             applyBrightnessToAll(v);
         });
 
