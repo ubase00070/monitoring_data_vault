@@ -817,7 +817,10 @@
             return;
         }
 
-        const dataUrl = `https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/daily_tasks.json?t=${Date.now()}`;
+        // daily_tasks는 서버리스 프록시(api/tasks) 경유 — GitHub Contents API를
+        // 인증된 채로 직접 조회해서 raw.githubusercontent.com의 CDN 캐시 지연(몇 분)을
+        // 우회함. insu_data는 변동이 잦지 않아 기존 raw 방식 그대로 유지.
+        const dataUrl = `https://multimonitoring.vercel.app/api/tasks?t=${Date.now()}`;
 		const insuUrl = `https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/insu_data.json?t=${Date.now()}`;
 
         // daily_tasks + insu_data 병렬 fetch
@@ -842,6 +845,7 @@
             checkAndTriggerNotifications(myTasks);
 
             renderTaskList(myTasks);
+            if (typeof window.syncTiddiButtonState === 'function') window.syncTiddiButtonState();
         }).catch(err => console.log("Sync failed"));
     }
 
@@ -1285,15 +1289,57 @@
 
         // 버튼에 표기할 '유효 시간대' — 실제 복사 시 쓰이는 getCalculatedTime()과 동일한 보정 로직
         const multiHourLabel = getFormattedHour(getCalculatedTime(10)) + '시';
-        const combinedHourLabel = getFormattedHour(getCalculatedTime(10)) + '시';
 
-        // 배송/순찰 띠띠 버튼 활성 시간대 — 실제 업무는 09~17시지만, 업로드가 늦어질 수
-        // 있으니 18시 정각까지는 눌리도록 하고, 18:00부터 다음날 09:00 전까진 잠근다.
-        const curHour = new Date().getHours();
-        const isTiddiActive = curHour >= 9 && curHour < 18;
-        const tiddiLockStyle = isTiddiActive ? '' : (T.isDark
-            ? 'background:#3a3a3a; color:#777; cursor:not-allowed; opacity:0.7;'
-            : 'background:#4d6b57; color:#d7e8dc; cursor:not-allowed; opacity:0.9;');
+        // ── 배송/순찰 띠띠 버튼 상태 계산 (휴관 여부 + 09~18시 시간대 잠금) ──
+        // 카드 최초 렌더링과, syncTasksFromServer가 도는 매분 주기적 동기화 양쪽에서 재사용.
+        // 휴관일이면 시간 표기 없이 항상 '(휴관)'만 붙고, 시간대와 무관하게 항상 잠긴다.
+        // 개관일이면 09~18시에만 '(##시)'와 함께 풀리고, 그 외엔 잠긴다.
+        function computeTiddiButtonState() {
+            // GAS 쪽에서 담당자란에 '휴무'가 적힌 행은 daily_tasks.json에 아예 안 실리므로,
+            // 오늘자 전체 업무 목록에 '국립과학관' 업무가 하나도 없으면 휴관으로 판단한다.
+            // 요일을 하드코딩하지 않아 대체공휴일로 휴관일이 밀려도 자동으로 맞게 반영됨.
+            // (window.currentAllTasks가 아직 로드 전이면 섣불리 '휴관'으로 단정하지 않음)
+            const isClosed = Array.isArray(window.currentAllTasks)
+                && !window.currentAllTasks.some(t => t.content && t.content.includes('국립과학관'));
+            const hourNow = new Date().getHours();
+            const isActive = !isClosed && hourNow >= 9 && hourNow < 18;
+            const hourLabel = getFormattedHour(getCalculatedTime(10)) + '시';
+            const suffix = isClosed ? ' (휴관)' : (isActive ? ` (${hourLabel})` : '');
+            const lockStyle = isActive ? '' : (T.isDark
+                ? 'background:#3a3a3a; color:#777; cursor:not-allowed; opacity:0.7;'
+                : 'background:#4d6b57; color:#d7e8dc; cursor:not-allowed; opacity:0.9;');
+            const baseLabel = TTIDDI_CONFIG.deliveryActive ? '배송/순찰 띠띠' : '순찰 띠띠 (배송 띠띠 입고)';
+            return { isClosed, isActive, lockStyle, text: baseLabel + suffix };
+        }
+
+        const tiddiState = computeTiddiButtonState();
+        const isTiddiActive = tiddiState.isActive;
+        const tiddiLockStyle = tiddiState.lockStyle;
+
+        // 매분 syncTasksFromServer가 돌 때 같이 호출되어, 새로고침 없이도 09시 진입/이탈이나
+        // 휴관 여부 변화를 그때그때 버튼에 반영한다. (패널이 닫혀있으면 btnCombined가 없어
+        // 조용히 아무 일도 하지 않음)
+        // 다만 매분 호출되긴 해도, 계산 결과가 직전과 동일하면 DOM은 아예 건드리지 않는다
+        // (상태가 실제로 바뀌는 순간 — 09시/18시 경계, 휴관 상태 전환 — 에만 실제로 갱신됨).
+        window.syncTiddiButtonState = function() {
+            const btn = document.getElementById('btnCombined');
+            if (!btn) return;
+            const s = computeTiddiButtonState();
+            const stateKey = s.isActive + '|' + s.text;
+            if (window._nbLastTiddiStateKey === stateKey) return; // 변화 없음 → 스킵
+            window._nbLastTiddiStateKey = stateKey;
+
+            btn.disabled = !s.isActive;
+            if (s.isActive) {
+                btn.style.background = '';
+                btn.style.color = '';
+                btn.style.cursor = '';
+                btn.style.opacity = '';
+            } else {
+                btn.style.cssText += s.lockStyle;
+            }
+            btn.textContent = s.text;
+        };
 
         card.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
@@ -1316,7 +1362,7 @@
                 <div style="width: 1px; align-self: stretch; background: ${T.border};"></div>
                 <div style="flex: 1; display: flex; flex-direction: column; gap: 8px; min-width: 0;">
                     <button id="btnMulti" class="sub-btn">다중 모니터링 (${multiHourLabel})</button>
-                    <button id="btnCombined" class="sub-btn" ${isTiddiActive ? '' : 'disabled'} style="${tiddiLockStyle}">배송/순찰 띠띠${isTiddiActive ? ` (${combinedHourLabel})` : ''}</button>
+                    <button id="btnCombined" class="sub-btn" ${isTiddiActive ? '' : 'disabled'} style="${tiddiLockStyle}">${tiddiState.text}</button>
                 </div>
             </div>
         `;
@@ -1330,12 +1376,6 @@
         btnStyleTag.textContent = `.sub-btn { background: ${neutralBtnBg}; color: ${neutralBtnText}; border: 1px solid ${neutralBtnBorder}; padding: 6px 4px; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; flex: 1; min-width: 0; transition: 0.2s; } .sub-btn:hover { background: ${subBtnHoverBg}; border-color: ${subBtnHoverBorder}; color: ${subBtnHoverText}; }`;
 
         setTimeout(() => {
-            // 배송 띠띠 활성 여부에 따라 버튼 라벨 갱신 (신규 추가)
-            const combinedBtnLabel = card.querySelector('#btnCombined');
-            if (combinedBtnLabel) {
-                combinedBtnLabel.textContent = (TTIDDI_CONFIG.deliveryActive ? '배송/순찰 띠띠' : '순찰 띠띠 (배송 띠띠 입고)') + (isTiddiActive ? ` (${combinedHourLabel})` : '');
-            }
-
 			// 영상 드라이브 열기 → 오늘 날짜 폴더로 이동 (없으면 루트 폴더로 폴백)
             const openDriveBtn = card.querySelector('#openDriveTodayBtn');
             if (openDriveBtn) {
@@ -1440,25 +1480,25 @@
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
 		// 문자열을 넣으면 패치노트에 빨간 '`' 뱃지가 점멸하며 뜸.
 		// 빈 문자열('')로 비우면 뱃지가 사라짐.
-		const PATCH_NOTE_NEW_CONTENT = '모달 우측 고정 및 삭제 기체명 표기';
+		const PATCH_NOTE_NEW_CONTENT = '네온 그린';
 
         // ── 패치노트 내용 ──────────────────────────────────────
         // 아래 patchItems 배열에 버전별 내용을 추가하세요 (버튼 라벨의 날짜도 이 배열의
         // 맨 위(patchItems[0].date) 값을 그대로 가져다 쓰므로, 여기 날짜만 바꾸면 버튼도 같이 갱신됨)
         const patchItems = [
             {
-                version: 'v1.4',
-                date: '2026-08-29',
+                version: 'v1.5',
+                date: '2026-08-31',
                 items: [
-					'다중 관제 휴지통 레이아웃에 삭제 중인 기체명 표기',
-					'다중 관제 시 모니터링 생성 모달 우측 고정',
+                    '다중/과학관 업무 전임/후임자 표기',
+                    '레이아웃 전체에 그린 톤 테마 적용',
+					'다중 관제 기체 삭제 시 선택한 기체명 표기',
+					'다중 관제 시 모니터링 생성 모달을 우측에 고정',
 					'맵 최적화 속도 개선(Dot 제거, 비타겟 site 이동 반영)',
-					'다음 개입 요청 자동 OFF',
-                    '문제해결 페이지',
-					'스트림덱 스타일 적용(길게 누르면 기능 ON/OFF됨)',
+					'개입카드 진입 시 다음 개입 요청 토글 자동으로 OFF',
 					'임무 종료된 리센츠/엘스/한성대/진천 페이지 이탈 5초 후 자동 사이드',
-                    '게임패드 D-PAD 설명 / 게임패드 테스터',
-					'다중 자동 교대시작 최대 12대까지',
+                    '게임패드 D-PAD 키변경 및 패드 테스터 기능 추가',
+					'다중 모니터링 자동 교대시작은 최대 12대까지 가능',
                 ]
             },
         ];
@@ -1933,10 +1973,10 @@
             mapInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:${T.text};`;
             mapInfoContent.innerHTML = `
                 역삼 요기요 / 송도 요기요 / 성수 요기요 / 성남 삼평동<br>
-                흰색 마커 및 Dot을 숨겨서 페이지 최적화.<br>
-                비타겟 site로 이동 시 원래대로 보임.<br>
-                대기장소 마커(주황)를 역방향으로 뒤집어서 식별하기 쉽도록 함.<br>
-                기존 NCC 상의 아이콘 숨기기 기능은 여전히 작동.<br>
+                흰색 마커 및 Dot을 숨겨서 페이지 최적화<br>
+                비타겟 site로 이동 시 원래대로 보임<br>
+                대기장소 마커(주황)을 역방향으로 뒤집어서 식별하기 쉽도록 함<br>
+                기존 NCC 상 아이콘 숨기기 기능은 여전히 작동<br>
             `;
             mapInfoBox.appendChild(mapInfoClose);
             mapInfoBox.appendChild(mapInfoTitle);
@@ -2240,11 +2280,13 @@
 		Object.assign(panel.style, {
 			position: 'fixed', top: '0px', left: '50%', transform: 'translateX(-50%)',
 			zIndex: '2147483646', width: '616px',
-			background: 'rgba(200, 200, 200, 0.98)',
+			background: '#1c1c1f',
+			backgroundImage: 'linear-gradient(#1c1c1f, #1c1c1f), linear-gradient(90deg, #0e7490, #22c55e)',
+			backgroundOrigin: 'border-box', backgroundClip: 'padding-box, border-box',
 			borderRadius: '0 0 14px 14px', padding: '7px 8px 9px',
 			fontFamily: 'Pretendard,sans-serif',
-			boxShadow: '0 8px 32px rgba(0,0,0,0.35)',
-			border: '1px solid rgba(200,210,230,0.7)', borderTop: 'none',
+			boxShadow: '0 8px 32px rgba(0,0,0,0.5), 0 0 16px rgba(34,197,94,0.12)',
+			border: '1px solid transparent', borderTop: 'none',
 			transition: 'top 0.28s cubic-bezier(0.4,0,0.2,1)',
 		});
 		document.body.appendChild(panel);
@@ -2253,16 +2295,16 @@
 		const dpMsg = document.createElement('span');
 		dpMsg.id = 'ho-dp-msg';
 		Object.assign(dpMsg.style, {
-			fontSize: '12px', color: '#64748b',
+			fontSize: '12px', color: '#9ca3af',
 			overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
 			flex: '1', minWidth: '0',
-            background: 'rgba(255,255,255,0.85)',
+            background: 'rgba(255,255,255,0.06)',
             borderRadius: '5px',
             padding: '3px 8px',
 		});
 		dpMsg.textContent = '로딩 중...';
 
-		const setDpMsg = (msg, color = '#64748b') => {
+		const setDpMsg = (msg, color = '#9ca3af') => {
 			dpMsg.textContent = msg;
 			dpMsg.style.color = color;
 		};
@@ -2271,14 +2313,14 @@
 		const MAX_UNITS = 6;
 
 		const cellIdle = c => {
-			Object.assign(c.style, { background: 'rgba(255,255,255,0.85)', color: '#252525',
-				border: '1.5px solid #93c5fd', cursor: 'pointer', fontWeight: '600' });
+			Object.assign(c.style, { background: 'rgba(34,197,94,0.12)', color: '#e5f9ee',
+				border: '1.5px solid #4ade80', cursor: 'pointer', fontWeight: '600' });
 			c.dataset.selected = 'false';
 		};
 		const cellEmpty = c => {
 			c.textContent = '—';
-			Object.assign(c.style, { background: 'rgba(255,255,255,0.45)', color: '#b0bec5',
-				border: '1.5px dashed #c8d2e0', cursor: 'default', fontWeight: '400' });
+			Object.assign(c.style, { background: 'rgba(255,255,255,0.03)', color: '#6b7280',
+				border: '1.5px dashed rgba(34,197,94,0.35)', cursor: 'default', fontWeight: '400' });
 			c.dataset.unit = ''; c.dataset.selected = 'false'; c.dataset.done = 'false';
 		};
 
@@ -2301,15 +2343,15 @@
 		Object.assign(headerRow.style, {
 			display: 'flex', alignItems: 'center', gap: '5px',
 			marginBottom: '5px', paddingBottom: '5px',
-			borderBottom: '1px solid rgba(0,0,0,0.08)',
+			borderBottom: '1px solid rgba(255,255,255,0.08)',
 			flexWrap: 'nowrap',
 		});
 
 		// 카메라 위치 새로고침 버튼 (기존 '다중 파일명'/'성남 배터리' 자리로 이동)
-		const posBtn = mkBtn('카메라 위치 새로고침', '#64748b');
+		const posBtn = mkBtn('카메라 위치 새로고침', '#26292f', { border: '1px solid #22c55e', color: '#4ade80' });
 
 		// 교대 받기 버튼
-		const fetchBtn = mkBtn('교대 기체 로드', '#3b82f6');
+		const fetchBtn = mkBtn('교대 기체 로드', '#22c55e', { color: '#062e13' });
 
 		headerRow.appendChild(posBtn);
 		headerRow.appendChild(fetchBtn);
@@ -2319,7 +2361,7 @@
 		const rightBtns = document.createElement('div');
 		Object.assign(rightBtns.style, { marginLeft: 'auto', display: 'flex', gap: '5px', flexShrink: '0' });
 
-		const autoBtn = mkBtn('자동 시작', '#6366f1');
+		const autoBtn = mkBtn('자동 시작', '#16a34a');
 
 		rightBtns.appendChild(autoBtn);
 		headerRow.appendChild(rightBtns);
@@ -2340,8 +2382,8 @@
 			cell.dataset.done = 'false';
 			cell.textContent = '—';
 			Object.assign(cell.style, {
-				height: '31px', borderRadius: '7px', border: '1.5px dashed #c8d2e0',
-				background: 'rgba(255,255,255,0.45)', color: '#b0bec5', fontSize: '10px',
+				height: '31px', borderRadius: '7px', border: '1.5px dashed rgba(34,197,94,0.35)',
+				background: 'rgba(255,255,255,0.03)', color: '#6b7280', fontSize: '10px',
 				fontFamily: 'Pretendard,sans-serif', cursor: 'default',
 				display: 'flex', alignItems: 'center', justifyContent: 'center',
 				textAlign: 'center', lineHeight: '1.3', padding: '3px',
@@ -3166,6 +3208,44 @@
 
         const savedVal = parseInt(localStorage.getItem(BRIGHTNESS.STORAGE_KEY) ?? BRIGHTNESS.DEFAULT);
 
+        // 슬라이더 자체(트랙+손잡이) 커스텀 스타일 — 네온 그린 메탈릭 느낌
+        if (!document.getElementById('neubie-brightness-style')) {
+            const style = document.createElement('style');
+            style.id = 'neubie-brightness-style';
+            style.textContent = `
+                #neubie-master-brightness {
+                    -webkit-appearance: none;
+                    appearance: none;
+                    background: linear-gradient(90deg, #052e1c, #10b981 45%, #6ee7b7 100%);
+                    border-radius: 999px;
+                    height: 5px;
+                    outline: none;
+                }
+                #neubie-master-brightness::-webkit-slider-thumb {
+                    -webkit-appearance: none;
+                    width: 13px; height: 13px; border-radius: 50%;
+                    background: linear-gradient(135deg, #d1fae5, #22c55e);
+                    border: 1.5px solid #052e1c;
+                    box-shadow: 0 0 6px rgba(34,197,94,0.9), 0 1px 2px rgba(0,0,0,0.4);
+                    cursor: pointer;
+                    margin-top: -4px;
+                }
+                #neubie-master-brightness::-moz-range-thumb {
+                    width: 13px; height: 13px; border-radius: 50%;
+                    background: linear-gradient(135deg, #d1fae5, #22c55e);
+                    border: 1.5px solid #052e1c;
+                    box-shadow: 0 0 6px rgba(34,197,94,0.9);
+                    cursor: pointer;
+                }
+                #neubie-master-brightness::-moz-range-track {
+                    background: linear-gradient(90deg, #052e1c, #10b981 45%, #6ee7b7 100%);
+                    border-radius: 999px;
+                    height: 5px;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
         const bar = document.createElement('div');
         bar.id = 'neubie-brightness-bar';
         Object.assign(bar.style, {
@@ -3173,22 +3253,49 @@
             top: '4px',
             left: '60px',
             zIndex: '2147483640',
-            background: 'rgba(15,15,15,0.75)',
-            backdropFilter: 'blur(8px)',
-            border: '1px solid rgba(255,255,255,0.13)',
+            background: '#14161a',
+            backgroundImage: 'linear-gradient(#14161a, #14161a), linear-gradient(90deg, #0e7490, #22c55e)',
+            backgroundOrigin: 'border-box',
+            backgroundClip: 'padding-box, border-box',
+            border: '1px solid transparent',
             borderRadius: '8px',
-            padding: '3px 6px',
+            padding: '4px 8px',
             display: 'flex',
-            alignItems: 'center',
+            flexDirection: 'column',
             gap: '3px',
-            boxShadow: '0 2px 12px rgba(0,0,0,0.4)',
+            width: '108px', // 기존보다 살짝 좁게 — 카메라 좌상단 끄트머리 안 가리도록
+            boxSizing: 'border-box',
+            boxShadow: '0 2px 14px rgba(0,0,0,0.5), 0 0 10px rgba(34,197,94,0.12)',
             fontFamily: 'Pretendard, sans-serif',
             userSelect: 'none',
         });
 
-        const icon = document.createElement('span');
-        icon.textContent = '☀️';
-        icon.style.cssText = 'font-size:14px; line-height:1;';
+        // ── 1행: '전체 기체 밝기' 라벨 + 인포 아이콘 ──
+        const topRow = document.createElement('div');
+        Object.assign(topRow.style, {
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px',
+        });
+
+        const label1 = document.createElement('span');
+        label1.textContent = '전체 기체 밝기';
+        label1.style.cssText = 'color:#86efac; font-size:10px; font-weight:600; white-space:nowrap;';
+
+        const infoBtn = document.createElement('span');
+        infoBtn.textContent = 'i';
+        Object.assign(infoBtn.style, {
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            width: '12px', height: '12px', borderRadius: '50%', flexShrink: '0',
+            background: '#3b82f6', color: '#fff', fontSize: '9px', fontWeight: '700',
+            fontStyle: 'italic', fontFamily: 'Georgia, serif',
+            cursor: 'pointer',
+        });
+
+        topRow.appendChild(label1);
+        topRow.appendChild(infoBtn);
+
+        // ── 2행: 슬라이더 + 수치 ──
+        const bottomRow = document.createElement('div');
+        Object.assign(bottomRow.style, { display: 'flex', alignItems: 'center', gap: '5px' });
 
         const slider = document.createElement('input');
         slider.type = 'range';
@@ -3197,17 +3304,11 @@
         slider.max = BRIGHTNESS.MAX;
         slider.value = savedVal;
         Object.assign(slider.style, {
-            width: '76px',
-            height: '4px',
-            accentColor: '#ffffff',
-            cursor: 'pointer',
-            outline: 'none',
-            border: 'none',
-            background: 'rgba(255,255,255,0.4)',
+            flex: '1', minWidth: '0', cursor: 'pointer',
         });
 
         const label = document.createElement('span');
-        label.style.cssText = 'color:#fff; font-size:13px; font-weight:600; min-width:22px; text-align:right;';
+        label.style.cssText = 'color:#4ade80; font-size:12px; font-weight:700; min-width:20px; text-align:right;';
         label.textContent = savedVal;
 
         slider.addEventListener('input', () => {
@@ -3216,12 +3317,53 @@
             applyBrightnessToAll(v);
         });
 
-        bar.appendChild(icon);
-        bar.appendChild(slider);
-        bar.appendChild(label);
+        bottomRow.appendChild(slider);
+        bottomRow.appendChild(label);
+
+        bar.appendChild(topRow);
+        bar.appendChild(bottomRow);
         document.body.appendChild(bar);
 
+        infoBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleBrightnessInfoPopup();
+        });
+
         setTimeout(() => applyBrightnessToAll(savedVal), 800);
+    }
+
+    // ── 밝기 인포 팝업 — 화면 좌상단 끝에 붙어서 뜨고, 바깥 클릭/자기 자신 클릭 시 닫힘 ──
+    function toggleBrightnessInfoPopup() {
+        const existing = document.getElementById('neubie-brightness-info');
+        if (existing) { existing.remove(); return; }
+
+        const popup = document.createElement('div');
+        popup.id = 'neubie-brightness-info';
+        Object.assign(popup.style, {
+            position: 'fixed', top: '0px', left: '0px',
+            zIndex: '2147483641',
+            background: '#dcfce7',
+            color: '#14532d',
+            fontSize: '10px', fontWeight: '500', lineHeight: '1.4',
+            padding: '6px 10px',
+            borderRadius: '0 0 8px 0',
+            boxShadow: '0 2px 10px rgba(0,0,0,0.3)',
+            cursor: 'pointer',
+            maxWidth: '190px',
+            fontFamily: 'Pretendard, sans-serif',
+        });
+        popup.innerHTML = 'ALT+Q를 눌러서 교대 기체를 자동 로드하거나<br>기체 카메라위치를 변경해보세요.';
+        popup.addEventListener('click', (e) => { e.stopPropagation(); popup.remove(); });
+        document.body.appendChild(popup);
+
+        setTimeout(() => {
+            document.addEventListener('click', function outsideClose(ev) {
+                if (!popup.contains(ev.target)) {
+                    popup.remove();
+                    document.removeEventListener('click', outsideClose);
+                }
+            });
+        }, 0);
     }
 
     // ── multiple/driving 페이지 진입 시 자동 주입 / 이탈 시 제거 ──
