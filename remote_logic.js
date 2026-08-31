@@ -3212,7 +3212,8 @@
 
         const savedVal = parseInt(localStorage.getItem(BRIGHTNESS.STORAGE_KEY) ?? BRIGHTNESS.DEFAULT);
 
-        // 슬라이더 자체(트랙+손잡이) 커스텀 스타일 — 네온 그린 메탈릭 느낌
+        // 슬라이더 자체(트랙+손잡이) 커스텀 스타일 — 네온 그린 메탈릭 느낌.
+        // 트랙을 두껍게(16px) 만들어서 '전체 밝기' 라벨이 그 안에 자연스럽게 스며들도록 함.
         if (!document.getElementById('neubie-brightness-style')) {
             const style = document.createElement('style');
             style.id = 'neubie-brightness-style';
@@ -3220,31 +3221,34 @@
                 #neubie-master-brightness {
                     -webkit-appearance: none;
                     appearance: none;
-                    background: linear-gradient(90deg, #052e1c, #10b981 45%, #6ee7b7 100%);
+                    background: rgba(255,255,255,0.08);
                     border-radius: 999px;
-                    height: 4px;
+                    height: 15px;
+                    width: 100%;
+                    margin: 0; padding: 0;
                     outline: none;
+                    display: block;
                 }
                 #neubie-master-brightness::-webkit-slider-thumb {
                     -webkit-appearance: none;
-                    width: 11px; height: 11px; border-radius: 50%;
+                    width: 12px; height: 12px; border-radius: 50%;
                     background: linear-gradient(135deg, #d1fae5, #22c55e);
                     border: 1.5px solid #052e1c;
                     box-shadow: 0 0 6px rgba(34,197,94,0.9), 0 1px 2px rgba(0,0,0,0.4);
                     cursor: pointer;
-                    margin-top: -3.5px;
+                    margin-top: 1.5px;
                 }
                 #neubie-master-brightness::-moz-range-thumb {
-                    width: 11px; height: 11px; border-radius: 50%;
+                    width: 12px; height: 12px; border-radius: 50%;
                     background: linear-gradient(135deg, #d1fae5, #22c55e);
                     border: 1.5px solid #052e1c;
                     box-shadow: 0 0 6px rgba(34,197,94,0.9);
                     cursor: pointer;
                 }
                 #neubie-master-brightness::-moz-range-track {
-                    background: linear-gradient(90deg, #052e1c, #10b981 45%, #6ee7b7 100%);
+                    background: rgba(255,255,255,0.08);
                     border-radius: 999px;
-                    height: 4px;
+                    height: 15px;
                 }
             `;
             document.head.appendChild(style);
@@ -3263,26 +3267,43 @@
             backgroundClip: 'padding-box, border-box',
             border: '1px solid transparent',
             borderRadius: '8px',
-            padding: '3px 7px',
+            padding: '4px 8px',
             display: 'flex',
-            flexDirection: 'column',
-            gap: '2px',
-            width: '119px', // 슬라이더가 살짝 작다는 피드백 — 기존 108px 대비 약 10% 확대
+            alignItems: 'center',
+            gap: '6px',
+            width: '150px',
             boxSizing: 'border-box',
             boxShadow: '0 2px 14px rgba(0,0,0,0.5), 0 0 10px rgba(34,197,94,0.12)',
             fontFamily: 'Pretendard, sans-serif',
             userSelect: 'none',
         });
 
-        // ── 1행: '전체 기체 밝기' 라벨 + 인포 아이콘 ──
-        const topRow = document.createElement('div');
-        Object.assign(topRow.style, {
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px',
+        // ── 슬라이더 + 그 위에 스며든 '전체 밝기' 라벨 ──
+        const sliderWrap = document.createElement('div');
+        Object.assign(sliderWrap.style, { position: 'relative', flex: '1', minWidth: '0', height: '15px' });
+
+        const slider = document.createElement('input');
+        slider.type = 'range';
+        slider.id = 'neubie-master-brightness';
+        slider.min = BRIGHTNESS.MIN;
+        slider.max = BRIGHTNESS.MAX;
+        slider.value = savedVal;
+        slider.style.cursor = 'pointer';
+
+        // 라벨은 트랙 위에 얹히기만 하고, 클릭/드래그는 그대로 아래 슬라이더로 통과시킴
+        const trackLabel = document.createElement('span');
+        trackLabel.textContent = '기체 전체 밝기';
+        Object.assign(trackLabel.style, {
+            position: 'absolute', inset: '0',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '9px', fontWeight: '700', letterSpacing: '0.2px',
+            color: '#fff',
+            textShadow: '0 0 3px rgba(0,0,0,0.65), 0 1px 2px rgba(0,0,0,0.55)',
+            pointerEvents: 'none',
         });
 
-        const label1 = document.createElement('span');
-        label1.textContent = '전체 기체 밝기';
-        label1.style.cssText = 'color:#86efac; font-size:11px; font-weight:600; white-space:nowrap;';
+        sliderWrap.appendChild(slider);
+        sliderWrap.appendChild(trackLabel);
 
         const infoBtn = document.createElement('span');
         infoBtn.textContent = 'i';
@@ -3294,38 +3315,28 @@
             cursor: 'pointer',
         });
 
-        topRow.appendChild(label1);
-        topRow.appendChild(infoBtn);
+        const valueLabel = document.createElement('span');
+        valueLabel.style.cssText = 'color:#4ade80; font-size:12px; font-weight:700; min-width:20px; text-align:right; flex-shrink:0;';
+        valueLabel.textContent = savedVal;
 
-        // ── 2행: 슬라이더 + 수치 ──
-        const bottomRow = document.createElement('div');
-        Object.assign(bottomRow.style, { display: 'flex', alignItems: 'center', gap: '5px' });
-
-        const slider = document.createElement('input');
-        slider.type = 'range';
-        slider.id = 'neubie-master-brightness';
-        slider.min = BRIGHTNESS.MIN;
-        slider.max = BRIGHTNESS.MAX;
-        slider.value = savedVal;
-        Object.assign(slider.style, {
-            flex: '1', minWidth: '0', cursor: 'pointer',
-        });
-
-        const label = document.createElement('span');
-        label.style.cssText = 'color:#4ade80; font-size:12px; font-weight:700; min-width:20px; text-align:right;';
-        label.textContent = savedVal;
+        // 슬라이더 값에 맞춰 채워진(초록) 구간과 안 채워진(어두운) 구간의 경계를 실시간 계산
+        const updateSliderFill = (v) => {
+            const pct = ((v - BRIGHTNESS.MIN) / (BRIGHTNESS.MAX - BRIGHTNESS.MIN)) * 100;
+            slider.style.background =
+                `linear-gradient(90deg, #10b981 0%, #6ee7b7 ${pct}%, rgba(255,255,255,0.08) ${pct}%, rgba(255,255,255,0.08) 100%)`;
+        };
+        updateSliderFill(savedVal);
 
         slider.addEventListener('input', () => {
             const v = slider.value;
-            label.textContent = v;
+            valueLabel.textContent = v;
+            updateSliderFill(v);
             applyBrightnessToAll(v);
         });
 
-        bottomRow.appendChild(slider);
-        bottomRow.appendChild(label);
-
-        bar.appendChild(topRow);
-        bar.appendChild(bottomRow);
+        bar.appendChild(sliderWrap);
+        bar.appendChild(valueLabel);
+        bar.appendChild(infoBtn);
         document.body.appendChild(bar);
 
         infoBtn.addEventListener('click', (e) => {
