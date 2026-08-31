@@ -3222,20 +3222,20 @@
                     appearance: none;
                     background: linear-gradient(90deg, #052e1c, #10b981 45%, #6ee7b7 100%);
                     border-radius: 999px;
-                    height: 5px;
+                    height: 4px;
                     outline: none;
                 }
                 #neubie-master-brightness::-webkit-slider-thumb {
                     -webkit-appearance: none;
-                    width: 13px; height: 13px; border-radius: 50%;
+                    width: 11px; height: 11px; border-radius: 50%;
                     background: linear-gradient(135deg, #d1fae5, #22c55e);
                     border: 1.5px solid #052e1c;
                     box-shadow: 0 0 6px rgba(34,197,94,0.9), 0 1px 2px rgba(0,0,0,0.4);
                     cursor: pointer;
-                    margin-top: -4px;
+                    margin-top: -3.5px;
                 }
                 #neubie-master-brightness::-moz-range-thumb {
-                    width: 13px; height: 13px; border-radius: 50%;
+                    width: 11px; height: 11px; border-radius: 50%;
                     background: linear-gradient(135deg, #d1fae5, #22c55e);
                     border: 1.5px solid #052e1c;
                     box-shadow: 0 0 6px rgba(34,197,94,0.9);
@@ -3244,7 +3244,7 @@
                 #neubie-master-brightness::-moz-range-track {
                     background: linear-gradient(90deg, #052e1c, #10b981 45%, #6ee7b7 100%);
                     border-radius: 999px;
-                    height: 5px;
+                    height: 4px;
                 }
             `;
             document.head.appendChild(style);
@@ -3254,7 +3254,7 @@
         bar.id = 'neubie-brightness-bar';
         Object.assign(bar.style, {
             position: 'fixed',
-            top: '4px',
+            top: '2px',
             left: '60px',
             zIndex: '2147483640',
             background: '#14161a',
@@ -3263,10 +3263,10 @@
             backgroundClip: 'padding-box, border-box',
             border: '1px solid transparent',
             borderRadius: '8px',
-            padding: '4px 8px',
+            padding: '3px 7px',
             display: 'flex',
             flexDirection: 'column',
-            gap: '3px',
+            gap: '2px',
             width: '119px', // 슬라이더가 살짝 작다는 피드백 — 기존 108px 대비 약 10% 확대
             boxSizing: 'border-box',
             boxShadow: '0 2px 14px rgba(0,0,0,0.5), 0 0 10px rgba(34,197,94,0.12)',
@@ -3363,7 +3363,7 @@
             maxWidth: '190px',
             fontFamily: 'Pretendard, sans-serif',
         });
-        popup.innerHTML = 'ALT+Q를 눌러서 교대 기체를 자동 로드하거나<br>기체 카메라위치를 변경해보세요.';
+        popup.innerHTML = 'ALT+Q로 교대 기체를 자동 시작하거나<br>카메라 배치를 변경해보세요.';
         popup.addEventListener('click', (e) => { e.stopPropagation(); popup.remove(); });
         document.body.appendChild(popup);
 
