@@ -3401,7 +3401,7 @@
 
     // URL 변경 감지 (기존 setInterval과 연동)
     const _origCheckBrightness = checkBrightnessBar;
-    setInterval(_origCheckBrightness, 1500);
+    setInterval(_origCheckBrightness, 400);
     _origCheckBrightness(); // 최초 1회
 
     window.addEventListener('keydown', (e) => {
