@@ -3363,7 +3363,7 @@
             maxWidth: '190px',
             fontFamily: 'Pretendard, sans-serif',
         });
-        popup.innerHTML = 'ALT+Q로 교대 기체를 자동 시작하거나<br>카메라 배치를 변경해보세요.';
+        popup.innerHTML = 'ALT+Q를 눌러서 교대 기체를 자동 로드하거나<br>기체 카메라위치를 변경해보세요.';
         popup.addEventListener('click', (e) => { e.stopPropagation(); popup.remove(); });
         document.body.appendChild(popup);
 
