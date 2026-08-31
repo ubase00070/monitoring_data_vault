@@ -3292,7 +3292,7 @@
 
         // 라벨은 트랙 위에 얹히기만 하고, 클릭/드래그는 그대로 아래 슬라이더로 통과시킴
         const trackLabel = document.createElement('span');
-        trackLabel.textContent = '기체 전체 밝기';
+        trackLabel.textContent = '전체 밝기 조절';
         Object.assign(trackLabel.style, {
             position: 'absolute', inset: '0',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
