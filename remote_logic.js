@@ -845,6 +845,7 @@
             checkAndTriggerNotifications(myTasks);
 
             renderTaskList(myTasks);
+            if (typeof window.syncTiddiButtonState === 'function') window.syncTiddiButtonState();
         }).catch(err => console.log("Sync failed"));
     }
 
@@ -1288,15 +1289,57 @@
 
         // 버튼에 표기할 '유효 시간대' — 실제 복사 시 쓰이는 getCalculatedTime()과 동일한 보정 로직
         const multiHourLabel = getFormattedHour(getCalculatedTime(10)) + '시';
-        const combinedHourLabel = getFormattedHour(getCalculatedTime(10)) + '시';
 
-        // 배송/순찰 띠띠 버튼 활성 시간대 — 실제 업무는 09~17시지만, 업로드가 늦어질 수
-        // 있으니 18시 정각까지는 눌리도록 하고, 18:00부터 다음날 09:00 전까진 잠근다.
-        const curHour = new Date().getHours();
-        const isTiddiActive = curHour >= 9 && curHour < 18;
-        const tiddiLockStyle = isTiddiActive ? '' : (T.isDark
-            ? 'background:#3a3a3a; color:#777; cursor:not-allowed; opacity:0.7;'
-            : 'background:#4d6b57; color:#d7e8dc; cursor:not-allowed; opacity:0.9;');
+        // ── 배송/순찰 띠띠 버튼 상태 계산 (휴관 여부 + 09~18시 시간대 잠금) ──
+        // 카드 최초 렌더링과, syncTasksFromServer가 도는 매분 주기적 동기화 양쪽에서 재사용.
+        // 휴관일이면 시간 표기 없이 항상 '(휴관)'만 붙고, 시간대와 무관하게 항상 잠긴다.
+        // 개관일이면 09~18시에만 '(##시)'와 함께 풀리고, 그 외엔 잠긴다.
+        function computeTiddiButtonState() {
+            // GAS 쪽에서 담당자란에 '휴무'가 적힌 행은 daily_tasks.json에 아예 안 실리므로,
+            // 오늘자 전체 업무 목록에 '국립과학관' 업무가 하나도 없으면 휴관으로 판단한다.
+            // 요일을 하드코딩하지 않아 대체공휴일로 휴관일이 밀려도 자동으로 맞게 반영됨.
+            // (window.currentAllTasks가 아직 로드 전이면 섣불리 '휴관'으로 단정하지 않음)
+            const isClosed = Array.isArray(window.currentAllTasks)
+                && !window.currentAllTasks.some(t => t.content && t.content.includes('국립과학관'));
+            const hourNow = new Date().getHours();
+            const isActive = !isClosed && hourNow >= 9 && hourNow < 18;
+            const hourLabel = getFormattedHour(getCalculatedTime(10)) + '시';
+            const suffix = isClosed ? ' (휴관)' : (isActive ? ` (${hourLabel})` : '');
+            const lockStyle = isActive ? '' : (T.isDark
+                ? 'background:#3a3a3a; color:#777; cursor:not-allowed; opacity:0.7;'
+                : 'background:#4d6b57; color:#d7e8dc; cursor:not-allowed; opacity:0.9;');
+            const baseLabel = TTIDDI_CONFIG.deliveryActive ? '배송/순찰 띠띠' : '순찰 띠띠 (배송 띠띠 입고)';
+            return { isClosed, isActive, lockStyle, text: baseLabel + suffix };
+        }
+
+        const tiddiState = computeTiddiButtonState();
+        const isTiddiActive = tiddiState.isActive;
+        const tiddiLockStyle = tiddiState.lockStyle;
+
+        // 매분 syncTasksFromServer가 돌 때 같이 호출되어, 새로고침 없이도 09시 진입/이탈이나
+        // 휴관 여부 변화를 그때그때 버튼에 반영한다. (패널이 닫혀있으면 btnCombined가 없어
+        // 조용히 아무 일도 하지 않음)
+        // 다만 매분 호출되긴 해도, 계산 결과가 직전과 동일하면 DOM은 아예 건드리지 않는다
+        // (상태가 실제로 바뀌는 순간 — 09시/18시 경계, 휴관 상태 전환 — 에만 실제로 갱신됨).
+        window.syncTiddiButtonState = function() {
+            const btn = document.getElementById('btnCombined');
+            if (!btn) return;
+            const s = computeTiddiButtonState();
+            const stateKey = s.isActive + '|' + s.text;
+            if (window._nbLastTiddiStateKey === stateKey) return; // 변화 없음 → 스킵
+            window._nbLastTiddiStateKey = stateKey;
+
+            btn.disabled = !s.isActive;
+            if (s.isActive) {
+                btn.style.background = '';
+                btn.style.color = '';
+                btn.style.cursor = '';
+                btn.style.opacity = '';
+            } else {
+                btn.style.cssText += s.lockStyle;
+            }
+            btn.textContent = s.text;
+        };
 
         card.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
@@ -1319,7 +1362,7 @@
                 <div style="width: 1px; align-self: stretch; background: ${T.border};"></div>
                 <div style="flex: 1; display: flex; flex-direction: column; gap: 8px; min-width: 0;">
                     <button id="btnMulti" class="sub-btn">다중 모니터링 (${multiHourLabel})</button>
-                    <button id="btnCombined" class="sub-btn" ${isTiddiActive ? '' : 'disabled'} style="${tiddiLockStyle}">배송/순찰 띠띠${isTiddiActive ? ` (${combinedHourLabel})` : ''}</button>
+                    <button id="btnCombined" class="sub-btn" ${isTiddiActive ? '' : 'disabled'} style="${tiddiLockStyle}">${tiddiState.text}</button>
                 </div>
             </div>
         `;
@@ -1333,12 +1376,6 @@
         btnStyleTag.textContent = `.sub-btn { background: ${neutralBtnBg}; color: ${neutralBtnText}; border: 1px solid ${neutralBtnBorder}; padding: 6px 4px; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; flex: 1; min-width: 0; transition: 0.2s; } .sub-btn:hover { background: ${subBtnHoverBg}; border-color: ${subBtnHoverBorder}; color: ${subBtnHoverText}; }`;
 
         setTimeout(() => {
-            // 배송 띠띠 활성 여부에 따라 버튼 라벨 갱신 (신규 추가)
-            const combinedBtnLabel = card.querySelector('#btnCombined');
-            if (combinedBtnLabel) {
-                combinedBtnLabel.textContent = (TTIDDI_CONFIG.deliveryActive ? '배송/순찰 띠띠' : '순찰 띠띠 (배송 띠띠 입고)') + (isTiddiActive ? ` (${combinedHourLabel})` : '');
-            }
-
 			// 영상 드라이브 열기 → 오늘 날짜 폴더로 이동 (없으면 루트 폴더로 폴백)
             const openDriveBtn = card.querySelector('#openDriveTodayBtn');
             if (openDriveBtn) {
