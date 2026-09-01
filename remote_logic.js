@@ -861,7 +861,12 @@
             const isMultiMon = t.content && t.content.includes("다중 모니터링");
             const targetInterval = isMultiMon ? (interval + 10) : interval;
 
-            if (status.remainMin === targetInterval) {
+            // 예전엔 remainMin이 targetInterval과 '정확히' 같을 때만 발동했는데, 그 1분을
+            // 체크가 못 잡고 지나가면(예: 탭이 백그라운드라 크롬이 타이머를 스로틀링해서
+            // 그 순간 체크가 늦게 돎) 그날은 영영 알림이 안 가는 문제가 있었다.
+            // '정확히 그 1분' 대신 '그 이하 ~ 2분 이내' 범위로 넉넉하게 잡아서,
+            // 체크 한두 번을 놓쳐도 그다음 체크에서 여전히 잡히도록 한다.
+            if (status.remainMin <= targetInterval && status.remainMin > targetInterval - 2) {
                 const taskKey = `${t.content}_${timeKey}_${targetInterval}`;
                 const storageKey = `neubie_notified_${taskKey}`;
                 const notifiedCount = parseInt(localStorage.getItem(storageKey) || '0');
@@ -1675,26 +1680,13 @@
                     localStorage.setItem('neubie_user_name', newName);
                     
                     // 이름 저장 시 현재 선택된 알림 시간도 강제로 한 번 더 저장
-                    const intervalSelect = document.getElementById('remind-interval');
+                    const intervalSelect = document.getElementById('remind-inline');
                     if (intervalSelect) {
                         localStorage.setItem('neubie_remind_int', intervalSelect.value);
                     }
 
                     syncTasksFromServer();
                     renderDashboard();
-                };
-            }
-
-            // 알림 설정 드롭다운 선택 시 즉시 저장 로직
-            const intervalSelect = document.getElementById('remind-interval');
-            if (intervalSelect) {
-                intervalSelect.onchange = () => {
-                    const selectedValue = intervalSelect.value;
-                    localStorage.setItem('neubie_remind_int', selectedValue);
-                    
-                    intervalSelect.style.backgroundColor = '#fef9c3'; 
-                    setTimeout(() => { intervalSelect.style.backgroundColor = 'white'; }, 300);
-                    
                 };
             }
 
