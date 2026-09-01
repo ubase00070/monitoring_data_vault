@@ -42,6 +42,11 @@
     // 오프라인 모드 — true로 바꾸면 이 도구의 NCC 외부 통신이 즉시 차단됩니다.
     const OFFLINE_MODE = false;
 
+    // NCC 로봇 제어 API 베이스 도메인 — 현재 9곳에서 이 도메인을 호출 중.
+    // 나중에 리브랜딩으로 도메인만 바뀌는 경우, 이 한 줄만 고치면 전체 반영됨.
+    // (API 경로/스키마 자체가 바뀌는 구조 변경이라면 이 상수만으론 부족하니 별도 대응 필요)
+    const NCC_API_BASE = 'https://core.neubie.ai';
+
     const NB_THEMES = {
         light: { bg: '#f3ecdb', card: '#e2d7bd', border: '#cbbd98', text: '#2b2418', accent: '#1e3a5f', purple: '#7c3aed', isDark: false },
         dark:  { bg: '#232327', card: '#403f47', border: '#54535c', text: '#e8e9ec', accent: '#5b9bf7', purple: '#c9b8fb', isDark: true }
@@ -177,27 +182,6 @@
         }
     }
 	
-	async function fetchAllRobotsForHandover() {
-        const res = await fetchWithTimeout('https://core.neubie.ai/robots/?limit=200', {   // ← fetch → fetchWithTimeout
-            credentials: 'include',
-            headers: getAuthHeaders()
-        });
-        if (!res.ok) throw new Error(`robots fetch failed: ${res.status}`);
-        const data = await res.json();
-        let all = data.results;
-        let next = data.next;
-        let guard = 0;
-        while (next && guard < 10) {
-            const r2 = await fetchWithTimeout(next, { credentials: 'include', headers: getAuthHeaders() });   // ← fetch → fetchWithTimeout
-            if (!r2.ok) break;
-            const d2 = await r2.json();
-            all = all.concat(d2.results);
-            next = d2.next;
-            guard++;
-        }
-        return all;
-    }
-
     function showHandoverToast(message, type) {
         const existing = document.getElementById('neubie-ho-toast');
         if (existing) existing.remove();
@@ -261,7 +245,7 @@
         return new URLSearchParams(location.search).get('robot-id');
     }
     async function _fetchSingleRobot(robotId) {
-        const res = await fetch(`https://core.neubie.ai/robots/${robotId}/`, {
+        const res = await fetch(`${NCC_API_BASE}/robots/${robotId}/`, {
             credentials: 'include',
             headers: getAuthHeaders()
         });
@@ -346,7 +330,7 @@
     window.fetch = async (...args) => {
         const url = typeof args[0] === 'string' ? args[0] : args[0].url;
         // 오프라인 모드: NCC(core.neubie.ai) API 호출만 차단. 본인 인프라(Vercel/GitHub)는 그대로 통과.
-        if (OFFLINE_MODE && url && url.includes('core.neubie.ai')) {
+        if (OFFLINE_MODE && url && url.includes(NCC_API_BASE.replace('https://', ''))) {
             throw new Error('오프라인 모드: NCC API 요청이 차단되었습니다.');
         }
         // 최적화 대상 URL 감지
@@ -693,7 +677,7 @@
 
             const results = await Promise.all(
                 config.batteryIds.map(c =>
-                    fetch(`https://core.neubie.ai/robots/${c.id}/`, {
+                    fetch(`${NCC_API_BASE}/robots/${c.id}/`, {
                         credentials: 'include',
                         headers: getAuthHeaders()
                     })
@@ -3006,7 +2990,7 @@
 
 				try {
 					const res = await fetch(
-                        `https://core.neubie.ai/robots/?nickname=${encodeURIComponent(robotName)}`,
+                        `${NCC_API_BASE}/robots/?nickname=${encodeURIComponent(robotName)}`,
                         { credentials: 'include', headers: getAuthHeaders() }
                     );
 					if (!res.ok) { card.dataset.bitrateInjected = ''; return; }
@@ -3077,7 +3061,7 @@
 							isCooling = true;
 							btn.style.opacity = '0.4';
 							try {
-								await fetch(`https://core.neubie.ai/robots/${robot.id}/video-bitrate-level/`, {
+								await fetch(`${NCC_API_BASE}/robots/${robot.id}/video-bitrate-level/`, {
                                     method: 'PUT',
                                     credentials: 'include',
                                     headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
@@ -3119,7 +3103,7 @@
 						isLampCooling = true;
 						lampBtn.style.opacity = '0.4';
 						try {
-							const r = await fetch(`https://core.neubie.ai/robots/${robot.id}/head-light/`, {
+							const r = await fetch(`${NCC_API_BASE}/robots/${robot.id}/head-light/`, {
                                 method: 'PUT',
                                 credentials: 'include',
                                 headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
@@ -5214,7 +5198,7 @@
 		try {
 			await new Promise(r => setTimeout(r, 2000));
 			
-			const res = await fetch(`https://core.neubie.ai/robots/${robotId}/`, {
+			const res = await fetch(`${NCC_API_BASE}/robots/${robotId}/`, {
                 credentials: 'include',
                 headers: getAuthHeaders()
             });
@@ -5228,7 +5212,7 @@
 			setTimeout(async () => {
 				// 5초 후 다시 확인
 				try {
-					const res2 = await fetch(`https://core.neubie.ai/robots/${robotId}/`, {
+					const res2 = await fetch(`${NCC_API_BASE}/robots/${robotId}/`, {
                         credentials: 'include',
                         headers: getAuthHeaders()
                     });
@@ -5236,7 +5220,7 @@
 					if (data2.currentScenario) { _autoSideInProgress.delete(robotId); return; }
 					if (!data2.robotStatus.isMovable) { _autoSideInProgress.delete(robotId); return; }
 
-					const res3 = await fetch(`https://core.neubie.ai/robots/${robotId}/control/`, {
+					const res3 = await fetch(`${NCC_API_BASE}/robots/${robotId}/control/`, {
 						method: 'PUT',
 						credentials: 'include',
 						headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
@@ -5544,76 +5528,6 @@
 	    }, 100);
 	}
 
-	const NON_TOOL_USER = '이도연';
-
-    async function runAutoHandoverUpload() {
-        if (localStorage.getItem('neubie_handover_enabled') === 'false') return;
-
-        const myName = _getMyName();
-        if (!myName) return;
-
-        if (!state.insuData?.schedule) return;
-        const schedule = state.insuData.schedule;
-
-        const kstHour = getKSTDate().getHours();
-        const kstMin = getKSTMinutes();
-
-        let targetName = null;
-
-        if (kstHour === 7 && kstMin === 57 && schedule['07:00'] === NON_TOOL_USER) {
-		    targetName = schedule['08:00'];
-		} else if (kstHour === 8 && kstMin === 47 && schedule['08:00'] === NON_TOOL_USER) {
-		    targetName = schedule['07:00'];
-		} else if (kstHour === 9 && kstMin === 47 && schedule['09:00'] === NON_TOOL_USER) {
-		    targetName = schedule['08:00'];
-		} else {
-		    return; // 조건 불충족 - skip
-		}
-
-        if (!targetName || targetName !== myName) return; // 선정자 아니면 skip
-
-        const now = new Date();
-        const fireKey = `neubie_ho_fired_${now.getFullYear()}${now.getMonth()}${now.getDate()}`;
-        if (localStorage.getItem(fireKey)) return;
-        localStorage.setItem(fireKey, '1');
-
-        try {
-            const beforeRes = await fetchWithTimeout('https://multimonitoring.vercel.app/api/handover');
-            const before = beforeRes.ok ? await beforeRes.json() : null;
-
-            if (before) {
-                const secondsSinceUpdate = (Date.now() - new Date(before.updatedAt).getTime()) / 1000;
-                if (secondsSinceUpdate < 180) return;
-            }
-            const preservedTaken = before?.taken || [];
-
-            const allRobots = await fetchAllRobotsForHandover();
-            const units = allRobots
-                .filter(r => r.isMonitoring === true)
-                .map(r => r.nickname || r.name);
-
-            if (!units.length) return;
-
-            const res = await fetchWithTimeout('https://multimonitoring.vercel.app/api/handover', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ handover_by: NON_TOOL_USER, units })
-            });
-
-            if (!res.ok) return;
-
-            if (preservedTaken.length) {
-                await fetchWithTimeout('https://multimonitoring.vercel.app/api/handover', {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ addTaken: preservedTaken })
-                });
-            }
-        } catch (e) {
-            // 조용히 종료 후 다음날 자연 회복
-        }
-    }
-
     // ══════════════════════════════════════════════════════════
     //  모니터링 생성 모달 위치 조정
     //  — 기체가 1대 이상 연결돼 있으면 우측 "로봇 (n)" 패널 자리에 맞춰 도킹
@@ -5784,8 +5698,6 @@
 	
 	    lastNotifiedMin = currentFullMin; 
 	    syncTasksFromServer(); 
-	
-	    runAutoHandoverUpload();
 	    
 	}, 1000);
 
