@@ -1164,7 +1164,7 @@
                 : `<span style="font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${displayContent}</span>`;
 
             item.innerHTML = `
-                <span style="color:${status.isExpired ? '#777' : '#fbbf24'}; white-space:nowrap;">${displayTime || ''}</span>
+                <span style="color:${status.isExpired ? '#777' : (T.isDark ? '#fbbf24' : '#1a1a1a')}; white-space:nowrap;">${displayTime || ''}</span>
                 <div style="font-weight:500; min-width:0; overflow:hidden;">
                     ${contentSpan}
                 </div>
