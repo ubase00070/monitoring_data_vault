@@ -854,6 +854,11 @@
         const interval = parseInt(localStorage.getItem('neubie_remind_int') || '0');
         if (interval === 0) return;
 
+        // 매일 반복되는 동일한 이름의 업무가 많아서(예: '역삼요기요 15:30' 매일 반복),
+        // '오늘 날짜'를 값에 같이 저장해두고 읽을 때마다 비교한다 — 날짜가 다르면(어제
+        // 이전 값이 자정 정리 없이 그대로 남아있는 경우) 오늘 처음 보는 것으로 간주해 리셋.
+        const todayStr = new Date().toDateString();
+
         tasks.forEach(t => {
             const timeKey = t.rawTime || t.time;
             const status = getTaskStatus(timeKey); 
@@ -869,16 +874,21 @@
             if (status.remainMin <= targetInterval && status.remainMin > targetInterval - 2) {
                 const taskKey = `${t.content}_${timeKey}_${targetInterval}`;
                 const storageKey = `neubie_notified_${taskKey}`;
-                const notifiedCount = parseInt(localStorage.getItem(storageKey) || '0');
+
+                // 저장 형식: "YYYY년 M월 D일 요일:카운트". 날짜가 오늘이 아니면(=예전 값이
+                // 정리 안 되고 남아있는 것) 무조건 0부터 다시 시작한다. 예전엔 setTimeout으로
+                // 자정에 지우는 방식이었는데, 탭이 자정 전에 닫히면 그 정리가 영영 실행되지
+                // 않아 예전 카운트가 계속 남아 다음날 알림을 영구적으로 막아버리는 문제가 있었다.
+                const raw = localStorage.getItem(storageKey) || '';
+                const sepIdx = raw.lastIndexOf(':');
+                const storedDate = sepIdx >= 0 ? raw.slice(0, sepIdx) : '';
+                const storedCount = sepIdx >= 0 ? raw.slice(sepIdx + 1) : '';
+                const notifiedCount = (storedDate === todayStr) ? (parseInt(storedCount) || 0) : 0;
 
                 if (notifiedCount < 2) {
                     const displayMin = isMultiMon ? status.remainMin - 10 : status.remainMin;
                     triggerReminder(t.content, displayMin);
-                    localStorage.setItem(storageKey, String(notifiedCount + 1));
-
-                    const now = new Date();
-                    const msUntilMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1) - now;
-                    setTimeout(() => localStorage.removeItem(storageKey), msUntilMidnight);
+                    localStorage.setItem(storageKey, `${todayStr}:${notifiedCount + 1}`);
                 }
             }
         });
