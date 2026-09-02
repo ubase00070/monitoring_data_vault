@@ -1544,142 +1544,142 @@
           "raw": "휴무"
         },
         "9/8": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": "퇴사"
         },
         "9/9": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": "퇴사"
         },
         "9/10": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": "퇴사"
         },
         "9/11": {
-          "status": "off",
+          "status": "empty",
           "working": false,
           "present": false,
-          "raw": "휴무"
+          "raw": "퇴사"
         },
         "9/12": {
-          "status": "off",
+          "status": "empty",
           "working": false,
           "present": false,
-          "raw": "휴무"
+          "raw": "퇴사"
         },
         "9/13": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": "퇴사"
         },
         "9/14": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": "퇴사"
         },
         "9/15": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": "퇴사"
         },
         "9/16": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": "퇴사"
         },
         "9/17": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": "퇴사"
         },
         "9/18": {
-          "status": "off",
+          "status": "empty",
           "working": false,
           "present": false,
-          "raw": "휴무"
+          "raw": "퇴사"
         },
         "9/19": {
-          "status": "off",
+          "status": "empty",
           "working": false,
           "present": false,
-          "raw": "휴무"
+          "raw": "퇴사"
         },
         "9/20": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": "퇴사"
         },
         "9/21": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": "퇴사"
         },
         "9/22": {
-          "status": "off",
+          "status": "empty",
           "working": false,
           "present": false,
-          "raw": "휴무"
+          "raw": "퇴사"
         },
         "9/23": {
-          "status": "off",
+          "status": "empty",
           "working": false,
           "present": false,
-          "raw": "휴무"
+          "raw": "퇴사"
         },
         "9/24": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": "퇴사"
         },
         "9/25": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": "퇴사"
         },
         "9/26": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": "퇴사"
         },
         "9/27": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": "퇴사"
         },
         "9/28": {
-          "status": "off",
+          "status": "empty",
           "working": false,
           "present": false,
-          "raw": "휴무"
+          "raw": "퇴사"
         },
         "9/29": {
-          "status": "off",
+          "status": "empty",
           "working": false,
           "present": false,
-          "raw": "휴무"
+          "raw": "퇴사"
         },
         "9/30": {
-          "status": "annual",
-          "working": true,
+          "status": "empty",
+          "working": false,
           "present": false,
-          "raw": "연차"
+          "raw": "퇴사"
         }
       }
     },
@@ -3004,10 +3004,10 @@
           "raw": "휴무"
         },
         "9/2": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "9/3": {
           "status": "work",
@@ -3142,10 +3142,10 @@
           "raw": "1"
         },
         "9/25": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "9/26": {
           "status": "off",
@@ -8075,6 +8075,6 @@
     "9/30"
   ],
   "mainMonth": 9,
-  "updatedAt": "2026-09-01T03:53:04.151Z",
+  "updatedAt": "2026-09-02T03:53:07.929Z",
   "sheetName": "2026년_09월 스케줄"
 }
