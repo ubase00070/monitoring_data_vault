@@ -91,12 +91,14 @@
             seatEmptyBg: '#0f1117',
             seatEmptyBorder: '#2e3347',
             seatOffBg: '#22263a',
+            presentText: '#22c55e',
+            presentSoft: 'rgba(34,197,94,.65)',
             closeBg: '#3b0000',
             closeBorder: '#ef4444',
             closeColor: '#ef4444',
         },
         light: {
-            bgImage: "linear-gradient(to bottom, #f3ecdb 0%, #f3ecdb 10%, transparent 40%), url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/snoopy_waves.jpg')",
+            bgImage: "linear-gradient(to bottom, #f3ecdb 0%, #f3ecdb 10%, transparent 40%), url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/snoopy_waves.png')",
             bgColor: '#f3ecdb',
             text: '#2b2418',
             muted: '#7a6f57',
@@ -114,6 +116,8 @@
             seatEmptyBg: '#f8f3e7',
             seatEmptyBorder: '#cbbd98',
             seatOffBg: '#e2d7bd',
+            presentText: '#15803d',
+            presentSoft: 'rgba(21,128,61,.8)',
             closeBg: '#fbe4e4',
             closeBorder: '#dc2626',
             closeColor: '#dc2626',
@@ -4102,6 +4106,7 @@
                     '--nso-day-bg': NT.dayBg, '--nso-day-border': NT.dayBorder,
                     '--nso-btn-bg': NT.btnBg, '--nso-btn-color': NT.btnColor,
                     '--nso-seat-empty-bg': NT.seatEmptyBg, '--nso-seat-empty-border': NT.seatEmptyBorder, '--nso-seat-off-bg': NT.seatOffBg,
+                    '--nso-present-text': NT.presentText, '--nso-present-soft': NT.presentSoft,
                     '--nso-close-bg': NT.closeBg, '--nso-close-border': NT.closeBorder, '--nso-close-color': NT.closeColor,
                 }).forEach(([k, v]) => overlay.style.setProperty(k, v));
                 box.style.color = NT.text;
@@ -4229,7 +4234,7 @@
                 const info=compareResult?compareResult[label]:null;
                 const isToday=today.getFullYear()===year&&today.getMonth()===m0-1&&today.getDate()===d;
                 const el=document.createElement('div');
-                el.style.cssText=`background:var(--nso-day-bg);border:1px solid ${isToday?'#4f8ef7':'var(--nso-day-border)'};border-radius:6px;padding:5px 4px;min-height:70px;cursor:pointer;transition:all .12s;position:relative;`;
+                el.style.cssText=`background:var(--nso-day-bg);border:1.5px solid ${isToday?'#4f8ef7':'var(--nso-day-border)'};border-radius:6px;padding:5px 4px;min-height:70px;cursor:pointer;transition:all .12s;position:relative;`;
                 const numEl=document.createElement('div');
                 numEl.style.cssText=`font-size:14px;font-weight:600;color:${dow===0?'#f87171':dow===6?'#60a5fa':isToday?'#4f8ef7':'var(--nso-muted2)'};margin-bottom:3px;`;
                 numEl.textContent=d; el.appendChild(numEl);
@@ -4359,7 +4364,7 @@
                     const raw=SEAT_MAP[row][col]; idx++;
                     const el=document.createElement('div');
                     if(!raw){
-                    el.style.cssText='background:var(--nso-seat-empty-bg);border:1px dashed var(--nso-seat-empty-border);border-radius:6px;padding:6px 2px;min-height:100px;';
+                    el.style.cssText='background:var(--nso-seat-empty-bg);border:1.5px dashed var(--nso-seat-empty-border);border-radius:6px;padding:6px 2px;min-height:100px;';
                     el.innerHTML=`<span style="position:absolute;top:2px;right:3px;font-size:12px;color:var(--nso-idx);">${idx}</span>`;
                     grid.appendChild(el); continue;
                     }
@@ -4369,7 +4374,7 @@
                     const isHalf=isOn&&onPpl.some(n=>pMap[n].status==='half'||pMap[n].status==='half-half');
                     const bg=isOn?(isHalf?'rgba(234,179,8,.12)':'rgba(34,197,94,.15)'):'var(--nso-seat-off-bg)';
                     const bc=isOn?(isHalf?'#eab308':'#22c55e'):'var(--nso-card-border)';
-                    el.style.cssText=`background:${bg};border:1px solid ${bc};border-radius:6px;padding:6px 2px;text-align:center;font-size:.62rem;font-weight:600;min-height:100px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;position:relative;${isOn?'':`opacity:.35;`}`;
+                    el.style.cssText=`background:${bg};border:1.5px solid ${bc};border-radius:6px;padding:6px 2px;text-align:center;font-size:.62rem;font-weight:600;min-height:100px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;position:relative;${isOn?'':`opacity:.35;`}`;
                     el.innerHTML=`<span style="position:absolute;top:2px;right:3px;font-size:.48rem;color:var(--nso-idx);">${idx}</span>`;
                     if(occ.length>1){
                     const sd=document.createElement('div');
@@ -4379,7 +4384,7 @@
                         const sp=document.createElement('div');
                         sp.style.cssText='display:flex;flex-direction:column;align-items:center;';
                         const ne=document.createElement('div');
-                        ne.style.cssText=`font-size:13px;line-height:1.25;font-weight:700;color:${w?(isHalf?'#eab308':'#22c55e'):'var(--nso-muted2)'};`;
+                        ne.style.cssText=`font-size:13px;line-height:1.25;font-weight:700;color:${w?(isHalf?'#eab308':'var(--nso-present-text)'):'var(--nso-muted2)'};`;
                         ne.textContent=name; sp.appendChild(ne);
                         if(leaveMap[name]){
                         const bd=document.createElement('div');
@@ -4393,7 +4398,7 @@
                         }
                         if(w){
                         const te=document.createElement('div');
-                        te.style.cssText=`font-size:13px;color:${isHalf?'rgba(234,179,8,.75)':'rgba(34,197,94,.65)'};line-height:1.2;margin-top:1px;`;
+                        te.style.cssText=`font-size:13px;color:${isHalf?'rgba(234,179,8,.75)':'var(--nso-present-soft)'};line-height:1.2;margin-top:1px;`;
                         te.textContent=w.workTime||w.shiftType||''; sp.appendChild(te);
                         }
                         sd.appendChild(sp);
@@ -4407,7 +4412,7 @@
                     } else {
                     const w=pMap[raw];
                     const ne=document.createElement('div');
-                    ne.style.cssText=`font-size:13px;line-height:1.25;font-weight:700;color:${isOn?(isHalf?'#eab308':'#22c55e'):'var(--nso-muted)'};`;
+                    ne.style.cssText=`font-size:13px;line-height:1.25;font-weight:700;color:${isOn?(isHalf?'#eab308':'var(--nso-present-text)'):'var(--nso-muted)'};`;
                     ne.textContent=raw; el.appendChild(ne);
                     if(leaveMap[raw]){
                         const bd=document.createElement('div');
@@ -4421,7 +4426,7 @@
                         bd.textContent=w.status==='half'?'반차':'반반차'; el.appendChild(bd);
                         }
                         const te=document.createElement('div');
-                        te.style.cssText=`font-size:13px;color:${isHalf?'rgba(234,179,8,.75)':'rgba(34,197,94,.65)'};line-height:1.2;margin-top:1px;`;
+                        te.style.cssText=`font-size:13px;color:${isHalf?'rgba(234,179,8,.75)':'var(--nso-present-soft)'};line-height:1.2;margin-top:1px;`;
                         te.textContent=w.workTime||w.shiftType||''; el.appendChild(te);
                     }
                     }
