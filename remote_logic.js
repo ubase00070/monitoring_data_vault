@@ -68,6 +68,65 @@
         return NB_THEMES[localStorage.getItem('neubie_theme') || 'dark'];
     }
 
+    // ── 스케줄표+좌석배치도(nso) 위젯 전용 다크/라이트 테마 ──
+    // 메인 ALT+Q 레이아웃(neubie_theme/NB_THEMES)과는 별개의 상태로 관리.
+    // 다크 = 기존 snoopy_camping 배경, 라이트 = snoopy_waves 배경 + ALT+Q 라이트모드와 같은 크림톤.
+    const NSO_THEMES = {
+        dark: {
+            bgImage: "linear-gradient(to bottom, #1a2240 0%, transparent 30%), url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/snoopy_camping.jpg')",
+            bgColor: '#1a2240',
+            text: '#e2e8f0',
+            muted: '#94a3b8',
+            muted2: '#64748b',
+            idx: '#333333',
+            calWrapBg: 'rgba(15,17,23,.3)',
+            dowBg: 'rgba(15,17,23,.7)',
+            cardBg: '#1a1d27',
+            cardBorder: '#2e3347',
+            inputBg: '#0f1117',
+            dayBg: '#1a1d27',
+            dayBorder: '#2e3347',
+            btnBg: '#22263a',
+            btnColor: '#94a3b8',
+            seatEmptyBg: '#0f1117',
+            seatEmptyBorder: '#2e3347',
+            seatOffBg: '#22263a',
+            presentText: '#22c55e',
+            presentSoft: 'rgba(34,197,94,.65)',
+            closeBg: '#3b0000',
+            closeBorder: '#ef4444',
+            closeColor: '#ef4444',
+        },
+        light: {
+            bgImage: "linear-gradient(to bottom, #f3ecdb 0%, #f3ecdb 10%, transparent 40%), url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/snoopy_waves.jpg')",
+            bgColor: '#f3ecdb',
+            text: '#2b2418',
+            muted: '#7a6f57',
+            muted2: '#8a7f66',
+            idx: '#a89b7c',
+            calWrapBg: 'rgba(226,215,189,.55)',
+            dowBg: 'rgba(226,215,189,.85)',
+            cardBg: '#e2d7bd',
+            cardBorder: '#cbbd98',
+            inputBg: '#f8f3e7',
+            dayBg: '#ebe2cc',
+            dayBorder: '#cbbd98',
+            btnBg: '#e2d7bd',
+            btnColor: '#5c5340',
+            seatEmptyBg: '#f8f3e7',
+            seatEmptyBorder: '#cbbd98',
+            seatOffBg: '#e2d7bd',
+            presentText: '#15803d',
+            presentSoft: 'rgba(21,128,61,.8)',
+            closeBg: '#fbe4e4',
+            closeBorder: '#dc2626',
+            closeColor: '#dc2626',
+        }
+    };
+    function getNsoTheme() {
+        return NSO_THEMES[localStorage.getItem('nv_nso_theme') === 'dark' ? 'dark' : 'light'];
+    }
+
     // 기체 네이밍 매핑 데이터
     const ROBOT_MAP = {
         "20": { site: "송도 요기요", unit: "#013" }, // 1호기
@@ -1487,8 +1546,9 @@
         const patchItems = [
             {
                 version: 'v1.5',
-                date: '2026-08-31',
+                date: '2026-09-02',
                 items: [
+                    '스케줄표/좌석도 라이트/다크 모드(디폴트 라이트)',
                     '다중/과학관 업무 전임자/후임자 표기',
                     '레이아웃 전체에 그린 톤 테마 적용',
 					'다중 관제 기체 삭제 시 선택한 기체명 표기',
@@ -4021,21 +4081,41 @@
                 font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;
             `;
 
+            let nsoTheme = localStorage.getItem('nv_nso_theme') === 'dark' ? 'dark' : 'light';
+
             const box = document.createElement('div');
             box.style.cssText = `
-                background:#0f1117; color:#e2e8f0;
                 border-radius:16px; padding:20px;
                 width:min(96vw,820px); max-height:92vh;
 				margin-top:0;
                 overflow-y:auto; position:relative;
-                background-image: linear-gradient(to bottom, #1a2240 0%, transparent 30%),
-                url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/snoopy_camping.jpg');
                 background-size: 100% auto;
                 background-position: center bottom;
                 background-repeat: no-repeat;
-                background-color: #1a2240;
                 box-shadow: 0 4px 40px rgba(0,0,0,0.7);
+                transition: background-color .2s ease;
             `;
+
+            // CSS 변수는 overlay에 설정 — 좌석 모달이 나중에 box 밖(overlay 직속)으로
+            // 옮겨가도(openSeat 참고) 같은 값을 계속 상속받도록 하기 위함
+            function applyNsoTheme() {
+                const NT = NSO_THEMES[nsoTheme];
+                Object.entries({
+                    '--nso-text': NT.text, '--nso-muted': NT.muted, '--nso-muted2': NT.muted2, '--nso-idx': NT.idx,
+                    '--nso-cal-wrap-bg': NT.calWrapBg, '--nso-dow-bg': NT.dowBg,
+                    '--nso-card-bg': NT.cardBg, '--nso-card-border': NT.cardBorder, '--nso-input-bg': NT.inputBg,
+                    '--nso-day-bg': NT.dayBg, '--nso-day-border': NT.dayBorder,
+                    '--nso-btn-bg': NT.btnBg, '--nso-btn-color': NT.btnColor,
+                    '--nso-seat-empty-bg': NT.seatEmptyBg, '--nso-seat-empty-border': NT.seatEmptyBorder, '--nso-seat-off-bg': NT.seatOffBg,
+                    '--nso-present-text': NT.presentText, '--nso-present-soft': NT.presentSoft,
+                    '--nso-close-bg': NT.closeBg, '--nso-close-border': NT.closeBorder, '--nso-close-color': NT.closeColor,
+                }).forEach(([k, v]) => overlay.style.setProperty(k, v));
+                box.style.color = NT.text;
+                box.style.backgroundImage = NT.bgImage;
+                box.style.backgroundColor = NT.bgColor;
+                const toggleBtn = box.querySelector('#nso-theme-toggle');
+                if (toggleBtn) toggleBtn.textContent = nsoTheme === 'light' ? '☀️' : '🌙';
+            }
 
             let nsoZoom = parseInt(localStorage.getItem('nv_nso_zoom') || '100');
             let scheduleData = null, compareResult = null;
@@ -4051,26 +4131,27 @@
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
                 <div style="display:flex;align-items:center;gap:8px;">
                     <span style="font-size:20px;font-weight:700;color:#4f8ef7;">📅 스케줄표 + 좌석 배치도</span>
-                    <span id="nso-status" style="font-size:12px;color:#94a3b8;">로딩 중...</span>
+                    <span id="nso-status" style="font-size:12px;color:var(--nso-muted);">로딩 중...</span>
                     <span id="nso-dot" style="width:7px;height:7px;border-radius:50%;background:#eab308;display:inline-block;"></span>
-                    <span id="nso-updated" style="font-size:12px;color:#64748b;"></span>
+                    <span id="nso-updated" style="font-size:12px;color:var(--nso-muted2);"></span>
                 </div>
                 <div style="display:flex;align-items:center;gap:6px;">
-                  <button id="nso-zoom-out" style="width:26px;height:26px;border:none;border-radius:5px;background:#22263a;color:#94a3b8;font-size:14px;cursor:pointer;">-</button>
-                  <span id="nso-zoom-label" style="font-size:12px;color:#94a3b8;min-width:36px;text-align:center;">100%</span>
-                  <button id="nso-zoom-in" style="width:26px;height:26px;border:none;border-radius:5px;background:#22263a;color:#94a3b8;font-size:14px;cursor:pointer;">+</button>
-                  <button id="nso-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
+                  <button id="nso-theme-toggle" title="다크/라이트 모드 전환" style="width:26px;height:26px;border:none;border-radius:5px;background:var(--nso-btn-bg);color:var(--nso-btn-color);font-size:14px;cursor:pointer;">🌙</button>
+                  <button id="nso-zoom-out" style="width:26px;height:26px;border:none;border-radius:5px;background:var(--nso-btn-bg);color:var(--nso-btn-color);font-size:14px;cursor:pointer;">-</button>
+                  <span id="nso-zoom-label" style="font-size:12px;color:var(--nso-muted);min-width:36px;text-align:center;">100%</span>
+                  <button id="nso-zoom-in" style="width:26px;height:26px;border:none;border-radius:5px;background:var(--nso-btn-bg);color:var(--nso-btn-color);font-size:14px;cursor:pointer;">+</button>
+                  <button id="nso-close" style="width:28px;height:28px;border:none;border-radius:5px;background:var(--nso-close-bg);border:1px solid var(--nso-close-border);color:var(--nso-close-color);font-size:16px;cursor:pointer;">✕</button>
                 </div>
                 </div>
 
                 <!-- 달력 -->
-                <div style="margin-bottom:120px;background:rgba(15,17,23,.3);border-radius:12px;padding:12px;">
+                <div style="margin-bottom:120px;background:var(--nso-cal-wrap-bg);border-radius:12px;padding:12px;">
                 <div style="display:flex;align-items:center;margin-bottom:10px;position:relative;">
-                  <div style="font-size:11px;color:#475569;position:absolute;left:0;">(날짜 클릭 → 좌석 배치도)</div>
+                  <div style="font-size:11px;color:var(--nso-muted2);position:absolute;left:0;">(날짜 클릭 → 좌석 배치도)</div>
                   <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;">
-                    <button id="nso-prev" style="width:28px;height:28px;border:1px solid #2e3347;border-radius:5px;background:#22263a;color:#94a3b8;font-size:14px;cursor:pointer;">◀</button>
-                    <div id="nso-cal-title" style="font-size:16px;font-weight:700;color:#e2e8f0;">로딩 중...</div>
-                    <button id="nso-next" style="width:28px;height:28px;border:1px solid #2e3347;border-radius:5px;background:#22263a;color:#94a3b8;font-size:14px;cursor:pointer;">▶</button>
+                    <button id="nso-prev" style="width:28px;height:28px;border:1px solid var(--nso-card-border);border-radius:5px;background:var(--nso-btn-bg);color:var(--nso-btn-color);font-size:14px;cursor:pointer;">◀</button>
+                    <div id="nso-cal-title" style="font-size:16px;font-weight:700;color:var(--nso-text);">로딩 중...</div>
+                    <button id="nso-next" style="width:28px;height:28px;border:1px solid var(--nso-card-border);border-radius:5px;background:var(--nso-btn-bg);color:var(--nso-btn-color);font-size:14px;cursor:pointer;">▶</button>
                   </div>
                   <button id="nso-cal-mode" style="position:absolute;right:0;font-size:12px;padding:3px 8px;border-radius:6px;border:1px solid #f97316;background:rgba(249,115,22,0.1);color:#f97316;cursor:pointer;white-space:nowrap;">근무 기준</button>
                 </div>
@@ -4078,36 +4159,36 @@
                 </div>
 
                 <!-- 검색 패널 -->
-                <div style="position:sticky;bottom:0;background:#1a1d27;border:1px solid #2e3347;border-radius:9px;padding:12px 14px;margin-top:12px;">
-                <div style="font-size:14px;color:#94a3b8;margin-bottom:9px;">👥 스케줄 비교(입력 시 저장됨)</div>
+                <div style="position:sticky;bottom:0;background:var(--nso-card-bg);border:1px solid var(--nso-card-border);border-radius:9px;padding:12px 14px;margin-top:12px;">
+                <div style="font-size:14px;color:var(--nso-muted);margin-bottom:9px;">👥 스케줄 비교(입력 시 저장됨)</div>
                 <div style="display:flex;gap:6px;align-items:center;width:100%;">
                     <div style="flex:1;min-width:0;">
                     <input id="nso-name1" type="text" placeholder="이름..." autocomplete="off"
-                        style="width:100%;background:#0f1117;border:1.5px solid #f97316;border-radius:5px;padding:8px 10px;color:#e2e8f0;font-size:14px;box-sizing:border-box;"/>
+                        style="width:100%;background:var(--nso-input-bg);border:1.5px solid #f97316;border-radius:5px;padding:8px 10px;color:var(--nso-text);font-size:14px;box-sizing:border-box;"/>
                     </div>
                     <div style="flex:1;min-width:0;">
                     <input id="nso-name2" type="text" placeholder="이름..." autocomplete="off"
-                        style="width:100%;background:#0f1117;border:1.5px solid #a855f7;border-radius:5px;padding:8px 10px;color:#e2e8f0;font-size:14px;box-sizing:border-box;"/>
+                        style="width:100%;background:var(--nso-input-bg);border:1.5px solid #a855f7;border-radius:5px;padding:8px 10px;color:var(--nso-text);font-size:14px;box-sizing:border-box;"/>
                     </div>
                     <button id="nso-compare" style="flex-shrink:0;padding:6px 14px;border:none;border-radius:5px;cursor:pointer;font-size:14px;font-weight:600;background:#4f8ef7;color:#fff;white-space:nowrap;">비교</button>
-                    <button id="nso-clear" style="flex-shrink:0;padding:6px 14px;border:none;border-radius:5px;cursor:pointer;font-size:14px;font-weight:600;background:#22263a;color:#94a3b8;border:1px solid #2e3347;white-space:nowrap;">초기화</button>
+                    <button id="nso-clear" style="flex-shrink:0;padding:6px 14px;border:none;border-radius:5px;cursor:pointer;font-size:14px;font-weight:600;background:var(--nso-btn-bg);color:var(--nso-muted);border:1px solid var(--nso-card-border);white-space:nowrap;">초기화</button>
                 </div>
-                <div id="nso-overlap" style="font-size:13px;color:#94a3b8;padding:5px 10px;background:#22263a;border-radius:5px;margin-top:7px;display:none;"></div>
+                <div id="nso-overlap" style="font-size:13px;color:var(--nso-muted);padding:5px 10px;background:var(--nso-btn-bg);border-radius:5px;margin-top:7px;display:none;"></div>
                 </div>
 
                 <!-- 좌석 모달 -->
                 <div id="nso-seat-modal" style="position:fixed;inset:0;background:transparent;display:flex;align-items:center;justify-content:center;z-index:2147483647;opacity:0;pointer-events:none;transition:opacity .18s;">
-                <div style="background:#1a1d27;border:1px solid #2e3347;border-radius:12px;padding:18px;width:min(96vw,900px);max-height:92vh;overflow-y:auto;">
+                <div style="background:var(--nso-card-bg);border:1px solid var(--nso-card-border);border-radius:12px;padding:18px;width:min(96vw,900px);max-height:92vh;overflow-y:auto;">
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
                     <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
-                      <div style="font-size:16px;font-weight:700;color:#ffffff;">🪑 좌석 배치 — <span id="nso-seat-date" style="color:#4f8ef7;"></span></div>
-                      <div style="font-size:16px;color:#475569;">(아무 데나 클릭하면 닫힘)</div>
+                      <div style="font-size:16px;font-weight:700;color:var(--nso-text);">🪑 좌석 배치 — <span id="nso-seat-date" style="color:#4f8ef7;"></span></div>
+                      <div style="font-size:16px;color:var(--nso-muted2);">(아무 데나 클릭하면 닫힘)</div>
                     </div>
                     </div>
-                    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:11px;font-size:12px;color:#94a3b8;">
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:11px;font-size:12px;color:var(--nso-muted);">
                     <span><span style="width:8px;height:8px;border-radius:2px;background:#22c55e;display:inline-block;margin-right:3px;"></span>출근</span>
                     <span><span style="width:8px;height:8px;border-radius:2px;background:#eab308;display:inline-block;margin-right:3px;"></span>연차/반차/반반차/공가</span>
-                    <span><span style="width:8px;height:8px;border-radius:2px;background:#22263a;border:1px solid #2e3347;display:inline-block;margin-right:3px;"></span>미출근</span>
+                    <span><span style="width:8px;height:8px;border-radius:2px;background:var(--nso-seat-off-bg);border:1px solid var(--nso-card-border);display:inline-block;margin-right:3px;"></span>미출근</span>
                     </div>
                     <div id="nso-seat-grid" style="display:grid;grid-template-columns:repeat(9,1fr);gap:6px;"></div>
                 </div>
@@ -4116,9 +4197,18 @@
 
             overlay.appendChild(box);
             document.body.appendChild(overlay);
+            applyNsoTheme();
+
+            box.querySelector('#nso-theme-toggle').onclick = () => {
+                nsoTheme = nsoTheme === 'light' ? 'dark' : 'light';
+                localStorage.setItem('nv_nso_theme', nsoTheme);
+                applyNsoTheme();
+                renderCal();
+                if (sel1 || sel2) runCompare();
+            };
 
             const DOW=['일','월','화','수','목','금','토'];
-            const DOW_CLS=['#f87171','#94a3b8','#94a3b8','#94a3b8','#94a3b8','#94a3b8','#60a5fa'];
+            const DOW_CLS=['#f87171','var(--nso-muted)','var(--nso-muted)','var(--nso-muted)','var(--nso-muted)','var(--nso-muted)','#60a5fa'];
 
             function renderCal() {
                 const grid = box.querySelector('#nso-cal-grid');
@@ -4132,7 +4222,7 @@
                 grid.innerHTML='';
                 DOW.forEach((d,i)=>{
                 const el=document.createElement('div');
-                el.style.cssText=`text-align:center;font-size:14px;font-weight:600;padding:4px 0;color:${DOW_CLS[i]};background:rgba(15,17,23,.7);border-radius:3px;`;
+                el.style.cssText=`text-align:center;font-size:14px;font-weight:600;padding:4px 0;color:${DOW_CLS[i]};background:var(--nso-dow-bg);border-radius:3px;`;
                 el.textContent=d; grid.appendChild(el);
                 });
                 const firstDow=new Date(year,m0-1,1).getDay();
@@ -4145,9 +4235,9 @@
                 const info=compareResult?compareResult[label]:null;
                 const isToday=today.getFullYear()===year&&today.getMonth()===m0-1&&today.getDate()===d;
                 const el=document.createElement('div');
-                el.style.cssText=`background:#1a1d27;border:1px solid ${isToday?'#4f8ef7':'#2e3347'};border-radius:6px;padding:5px 4px;min-height:70px;cursor:pointer;transition:all .12s;position:relative;`;
+                el.style.cssText=`background:var(--nso-day-bg);border:1.5px solid ${isToday?'#4f8ef7':'var(--nso-day-border)'};border-radius:6px;padding:5px 4px;min-height:70px;cursor:pointer;transition:all .12s;position:relative;`;
                 const numEl=document.createElement('div');
-                numEl.style.cssText=`font-size:14px;font-weight:600;color:${dow===0?'#f87171':dow===6?'#60a5fa':isToday?'#4f8ef7':'#64748b'};margin-bottom:3px;`;
+                numEl.style.cssText=`font-size:14px;font-weight:600;color:${dow===0?'#f87171':dow===6?'#60a5fa':isToday?'#4f8ef7':'var(--nso-muted2)'};margin-bottom:3px;`;
                 numEl.textContent=d; el.appendChild(numEl);
                 if(info){
                     const {d1,d2,w1,w2}=info;
@@ -4268,25 +4358,25 @@
                 for(let row=0;row<SEAT_MAP.length;row++){
                 if(row===PARTITION_AFTER+1){
                     const pl=document.createElement('div');
-                    pl.style.cssText='grid-column:1/-1;height:2px;background:linear-gradient(90deg,transparent,#64748b 20%,#64748b 80%,transparent);border-radius:1px;margin:3px 0;opacity:.35;';
+                    pl.style.cssText='grid-column:1/-1;height:2px;background:linear-gradient(90deg,transparent,var(--nso-muted2) 20%,var(--nso-muted2) 80%,transparent);border-radius:1px;margin:3px 0;opacity:.35;';
                     grid.appendChild(pl);
                 }
                 for(let col=0;col<SEAT_MAP[row].length;col++){
                     const raw=SEAT_MAP[row][col]; idx++;
                     const el=document.createElement('div');
                     if(!raw){
-                    el.style.cssText='background:#0f1117;border:1px dashed #2e3347;border-radius:6px;padding:6px 2px;min-height:100px;';
-                    el.innerHTML=`<span style="position:absolute;top:2px;right:3px;font-size:12px;color:#333333;">${idx}</span>`;
+                    el.style.cssText='background:var(--nso-seat-empty-bg);border:1.5px dashed var(--nso-seat-empty-border);border-radius:6px;padding:6px 2px;min-height:100px;';
+                    el.innerHTML=`<span style="position:absolute;top:2px;right:3px;font-size:12px;color:var(--nso-idx);">${idx}</span>`;
                     grid.appendChild(el); continue;
                     }
                     const occ=raw.split('/').map(n=>n.trim());
                     const onPpl=occ.filter(n=>pMap[n]);
                     const isOn=onPpl.length>0;
                     const isHalf=isOn&&onPpl.some(n=>pMap[n].status==='half'||pMap[n].status==='half-half');
-                    const bg=isOn?(isHalf?'rgba(234,179,8,.12)':'rgba(34,197,94,.15)'):'#22263a';
-                    const bc=isOn?(isHalf?'#eab308':'#22c55e'):'#2e3347';
-                    el.style.cssText=`background:${bg};border:1px solid ${bc};border-radius:6px;padding:6px 2px;text-align:center;font-size:.62rem;font-weight:600;min-height:100px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;position:relative;${isOn?'':`opacity:.35;`}`;
-                    el.innerHTML=`<span style="position:absolute;top:2px;right:3px;font-size:.48rem;color:#333333;">${idx}</span>`;
+                    const bg=isOn?(isHalf?'rgba(234,179,8,.12)':'rgba(34,197,94,.15)'):'var(--nso-seat-off-bg)';
+                    const bc=isOn?(isHalf?'#eab308':'#22c55e'):'var(--nso-card-border)';
+                    el.style.cssText=`background:${bg};border:1.5px solid ${bc};border-radius:6px;padding:6px 2px;text-align:center;font-size:.62rem;font-weight:600;min-height:100px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;position:relative;${isOn?'':`opacity:.35;`}`;
+                    el.innerHTML=`<span style="position:absolute;top:2px;right:3px;font-size:.48rem;color:var(--nso-idx);">${idx}</span>`;
                     if(occ.length>1){
                     const sd=document.createElement('div');
                     sd.style.cssText='display:flex;flex-direction:column;align-items:center;width:100%;gap:0;';
@@ -4295,7 +4385,7 @@
                         const sp=document.createElement('div');
                         sp.style.cssText='display:flex;flex-direction:column;align-items:center;';
                         const ne=document.createElement('div');
-                        ne.style.cssText=`font-size:13px;line-height:1.25;font-weight:700;color:${w?(isHalf?'#eab308':'#22c55e'):'#64748b'};`;
+                        ne.style.cssText=`font-size:13px;line-height:1.25;font-weight:700;color:${w?(isHalf?'#eab308':'var(--nso-present-text)'):'var(--nso-muted2)'};`;
                         ne.textContent=name; sp.appendChild(ne);
                         if(leaveMap[name]){
                         const bd=document.createElement('div');
@@ -4309,13 +4399,13 @@
                         }
                         if(w){
                         const te=document.createElement('div');
-                        te.style.cssText=`font-size:13px;color:${isHalf?'rgba(234,179,8,.75)':'rgba(34,197,94,.65)'};line-height:1.2;margin-top:1px;`;
+                        te.style.cssText=`font-size:13px;color:${isHalf?'rgba(234,179,8,.75)':'var(--nso-present-soft)'};line-height:1.2;margin-top:1px;`;
                         te.textContent=w.workTime||w.shiftType||''; sp.appendChild(te);
                         }
                         sd.appendChild(sp);
                         if(i<occ.length-1){
                         const dv=document.createElement('div');
-                        dv.style.cssText='font-size:.46rem;color:#64748b;line-height:1;';
+                        dv.style.cssText='font-size:.46rem;color:var(--nso-muted2);line-height:1;';
                         dv.textContent='/'; sd.appendChild(dv);
                         }
                     });
@@ -4323,7 +4413,7 @@
                     } else {
                     const w=pMap[raw];
                     const ne=document.createElement('div');
-                    ne.style.cssText=`font-size:13px;line-height:1.25;font-weight:700;color:${isOn?(isHalf?'#eab308':'#22c55e'):'#94a3b8'};`;
+                    ne.style.cssText=`font-size:13px;line-height:1.25;font-weight:700;color:${isOn?(isHalf?'#eab308':'var(--nso-present-text)'):'var(--nso-muted)'};`;
                     ne.textContent=raw; el.appendChild(ne);
                     if(leaveMap[raw]){
                         const bd=document.createElement('div');
@@ -4337,27 +4427,28 @@
                         bd.textContent=w.status==='half'?'반차':'반반차'; el.appendChild(bd);
                         }
                         const te=document.createElement('div');
-                        te.style.cssText=`font-size:13px;color:${isHalf?'rgba(234,179,8,.75)':'rgba(34,197,94,.65)'};line-height:1.2;margin-top:1px;`;
+                        te.style.cssText=`font-size:13px;color:${isHalf?'rgba(234,179,8,.75)':'var(--nso-present-soft)'};line-height:1.2;margin-top:1px;`;
                         te.textContent=w.workTime||w.shiftType||''; el.appendChild(te);
                     }
                     }
                     el.addEventListener('mouseenter', ev=>{
+                    const NT=getNsoTheme();
                     let tip=document.getElementById('nso-tooltip');
                     if(!tip){ tip=document.createElement('div'); tip.id='nso-tooltip';
-                        tip.style.cssText='position:fixed;background:#1a1d27;border:1px solid #2e3347;border-radius:7px;padding:9px 12px;font-size:12px;z-index:2147483647;pointer-events:none;max-width:210px;line-height:1.55;box-shadow:0 4px 24px rgba(0,0,0,.45);';
                         document.body.appendChild(tip);
                     }
+                    tip.style.cssText=`position:fixed;background:${NT.cardBg};border:1px solid ${NT.cardBorder};border-radius:7px;padding:9px 12px;font-size:12px;z-index:2147483647;pointer-events:none;max-width:210px;line-height:1.55;box-shadow:0 4px 24px rgba(0,0,0,.45);`;
                     let html='';
                     occ.forEach((name,i)=>{
                         const w=pMap[name];
-                        html+=`<div style="font-weight:700;color:#e2e8f0;margin-bottom:2px;">${name}</div>`;
+                        html+=`<div style="font-weight:700;color:${NT.text};margin-bottom:2px;">${name}</div>`;
                         if(w){
                         const ko={work:'출근',half:'반차','half-half':'반반차',annual:'연차',public:'공가',dispatch:'파견',off:'휴무',empty:'미출근'};
-                        html+=`<div style="color:#94a3b8;">근무조: <span style="color:#e2e8f0;">${w.shiftType}</span></div>`;
-                        html+=`<div style="color:#94a3b8;">시간: <span style="color:#e2e8f0;">${w.workTime}</span></div>`;
-                        html+=`<div style="color:#94a3b8;">상태: <span style="color:#e2e8f0;">${ko[w.status]||w.status}</span></div>`;
-                        } else { html+=`<div style="color:#64748b;">미출근</div>`; }
-                        if(i<occ.length-1) html+=`<hr style="border:none;border-top:1px solid #2e3347;margin:4px 0;">`;
+                        html+=`<div style="color:${NT.muted};">근무조: <span style="color:${NT.text};">${w.shiftType}</span></div>`;
+                        html+=`<div style="color:${NT.muted};">시간: <span style="color:${NT.text};">${w.workTime}</span></div>`;
+                        html+=`<div style="color:${NT.muted};">상태: <span style="color:${NT.text};">${ko[w.status]||w.status}</span></div>`;
+                        } else { html+=`<div style="color:${NT.muted2};">미출근</div>`; }
+                        if(i<occ.length-1) html+=`<hr style="border:none;border-top:1px solid ${NT.cardBorder};margin:4px 0;">`;
                     });
                     tip.innerHTML=html;
                     tip.style.display='block';
