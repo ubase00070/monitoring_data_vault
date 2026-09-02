@@ -98,7 +98,7 @@
             closeColor: '#ef4444',
         },
         light: {
-            bgImage: "linear-gradient(to bottom, #f3ecdb 0%, #f3ecdb 10%, transparent 40%), url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/snoopy_waves.png')",
+            bgImage: "linear-gradient(to bottom, #f3ecdb 0%, #f3ecdb 10%, transparent 40%), url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/snoopy_waves.jpg')",
             bgColor: '#f3ecdb',
             text: '#2b2418',
             muted: '#7a6f57',
