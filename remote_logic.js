@@ -1546,8 +1546,9 @@
         const patchItems = [
             {
                 version: 'v1.5',
-                date: '2026-09-02',
+                date: '2026-09-03',
                 items: [
+					'다중 관제 시 다음 시각 자동출차기체 자동시작 버튼',
                     '스케줄표/좌석도 라이트/다크 모드(디폴트 라이트)',
                     '다중/과학관 업무 전임자/후임자 표기',
                     '레이아웃 전체에 그린 톤 테마 적용',
@@ -2104,6 +2105,7 @@
             queueInfoContent.id = 'neubie-queue-info-content';
             queueInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:${T.text}; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;`;
             queueInfoContent.innerHTML = `
+				다음 시간 자동출차 기체 자동 시작 기능<br>
 				삭제 레이아웃 기체명 표기<br>
 				모니터링 생성 모달 우측 고정<br>
 				기체별 화질 조절<br>
@@ -2409,9 +2411,15 @@
 		Object.assign(rightBtns.style, { marginLeft: 'auto', display: 'flex', gap: '5px', flexShrink: '0' });
 
 		const autoBtn = mkBtn('자동 시작', 'linear-gradient(135deg, #0f766e, #22c55e)',
-			{ color: '#fff', boxShadow: '0 0 10px rgba(34,197,94,0.4)' });
+			{ color: '#fff', boxShadow: '0 0 10px rgba(34,197,94,0.4)', padding: '4px 8px' });
+
+		// 자동출차 기체 시작 (2줄 라벨) — 매시 45~59분(정시 임박)에만 동작
+		const dispatchBtn = mkBtn('자동출차\n기체 시작', 'linear-gradient(135deg, #7c3aed, #a78bfa)',
+			{ color: '#fff', boxShadow: '0 0 10px rgba(167,139,250,0.4)',
+			  whiteSpace: 'pre-line', lineHeight: '1.2', padding: '2px 8px', fontSize: '11px' });
 
 		rightBtns.appendChild(autoBtn);
+		rightBtns.appendChild(dispatchBtn);
 		headerRow.appendChild(rightBtns);
 		panel.appendChild(headerRow);
 
@@ -2464,6 +2472,33 @@
 				if (!res.ok) console.log('patchTaken 실패:', res.status);
 			} catch (e) {
 				console.log('patchTaken 오류:', e);
+			}
+		};
+
+		// ── 자동출차 전용 GET/PATCH (handover.json과 별개 파일에 저장되지만
+		//    같은 API 라우트를 type 파라미터로 공유) ──
+		const dispatchGet = async () => {
+			try {
+				const res = await fetch(
+					`https://multimonitoring.vercel.app/api/handover?type=dispatch&t=${Date.now()}`,
+					{ cache: 'no-store' }
+				);
+				if (!res.ok) return null;
+				const data = await res.json();
+				return { data };
+			} catch(e) { console.log('dispatchGet error:', e); return null; }
+		};
+
+		const patchDispatchTaken = async (names) => {
+			try {
+				const res = await fetch(`https://multimonitoring.vercel.app/api/handover`, {
+					method: 'PATCH',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ type: 'dispatch', addTaken: names }),
+				});
+				if (!res.ok) console.log('patchDispatchTaken 실패:', res.status);
+			} catch (e) {
+				console.log('patchDispatchTaken 오류:', e);
 			}
 		};
 
@@ -2630,6 +2665,50 @@
 			if (confirmed) {
 				await patchTaken(checkedUnits);
 				setDpMsg(`${checkedUnits.length}대 시작 및 서버 반영 완료`, '#22c55e');
+			} else {
+				setDpMsg(`${checkedUnits.join(', ')} 체크됨 — 시작하기 버튼을 직접 누르면 taken 반영은 되지 않습니다`, '#f59e0b');
+			}
+		});
+
+		dispatchBtn.addEventListener('click', async () => {
+			// 클라이언트 측 즉시 게이트 — 네트워크 왕복 없이 바로 안내
+			if (new Date().getMinutes() < 45) {
+				setDpMsg('교대 시간이 아닙니다', '#f59e0b');
+				return;
+			}
+
+			const modal = document.querySelector('[data-qk="remote-multiple-select-robot-dialog"]');
+			if (!modal) {
+				setDpMsg('NCC에서 기체 선택 모달을 먼저 열어주세요', '#f59e0b');
+				return;
+			}
+
+			const result = await dispatchGet();
+			if (!result || !result.data) {
+				setDpMsg('자동출차 데이터를 불러오지 못했습니다', '#ef4444');
+				return;
+			}
+
+			const { windowOpen, units = [], taken = [], hour } = result.data;
+			// 서버 측 판단도 한 번 더 확인 (클라이언트 시계 오차 대비)
+			if (!windowOpen) {
+				setDpMsg('교대 시간이 아닙니다', '#f59e0b');
+				return;
+			}
+
+			const available = units.filter(u => !taken.includes(u)).slice(0, 6);
+			if (!available.length) {
+				setDpMsg(`${hour}시 자동출차 기체 없음 (전체 연결 완료 또는 대상 없음)`, '#94a3b8');
+				return;
+			}
+
+			const { confirmed, checkedUnits } = await runAutoSelect(available, new Array(available.length).fill(null));
+
+			if (!checkedUnits.length) return;
+
+			if (confirmed) {
+				await patchDispatchTaken(checkedUnits);
+				setDpMsg(`${hour}시 자동출차 ${checkedUnits.length}대 시작 및 서버 반영 완료`, '#22c55e');
 			} else {
 				setDpMsg(`${checkedUnits.join(', ')} 체크됨 — 시작하기 버튼을 직접 누르면 taken 반영은 되지 않습니다`, '#f59e0b');
 			}
