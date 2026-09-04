@@ -3883,21 +3883,66 @@
 					}
 					listEl.innerHTML = mine.map(m => `
 						<div style="padding:10px 12px; margin-bottom:8px; background:rgba(255,255,255,0.06); border-radius:8px;">
-							<div style="font-size:12px; color:#e2e8f0; white-space:pre-wrap; line-height:1.5;">${m.content}</div>
-							<div style="font-size:10.5px; color:rgba(255,255,255,0.4); margin-top:4px;">${formatDate(m.createdAt)}</div>
-							${m.reply ? `
-								<div style="margin-top:8px; padding:8px 10px; background:rgba(99,102,241,0.15); border-left:2px solid #818cf8; border-radius:4px;">
-									<div style="font-size:11px; color:#a5b4fc; margin-bottom:2px;">↩ 답장</div>
-									<div style="font-size:12px; color:#e2e8f0; white-space:pre-wrap; line-height:1.5;">${m.reply.text}</div>
-									<div style="font-size:10px; color:rgba(255,255,255,0.35); margin-top:4px;">${formatDate(m.reply.repliedAt)}</div>
+							<div id="nb-mail-view-${m.id}">
+								<div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+									<div id="nb-mail-content-${m.id}" style="font-size:12px; color:#e2e8f0; white-space:pre-wrap; line-height:1.5; flex:1;">${m.content}</div>
+									${!m.reply ? `<button onclick="window._nbToggleEditMail('${m.id}')" style="background:none;border:none;font-size:11px;color:#a5b4fc;cursor:pointer;padding:0;flex-shrink:0;">수정</button>` : ''}
 								</div>
-							` : `<div style="font-size:11px; color:rgba(234,179,8,0.85); margin-top:6px;">⏳ 답장 대기중</div>`}
+								<div style="font-size:10.5px; color:rgba(255,255,255,0.4); margin-top:4px;">${formatDate(m.createdAt)}${m.updatedAt ? ' (수정됨)' : ''}</div>
+								${m.reply ? `
+									<div style="margin-top:8px; padding:8px 10px; background:rgba(99,102,241,0.15); border-left:2px solid #818cf8; border-radius:4px;">
+										<div style="font-size:11px; color:#a5b4fc; margin-bottom:2px;">↩ 답장</div>
+										<div style="font-size:12px; color:#e2e8f0; white-space:pre-wrap; line-height:1.5;">${m.reply.text}</div>
+										<div style="font-size:10px; color:rgba(255,255,255,0.35); margin-top:4px;">${formatDate(m.reply.repliedAt)}</div>
+									</div>
+								` : `<div style="font-size:11px; color:rgba(234,179,8,0.85); margin-top:6px;">⏳ 답장 대기중</div>`}
+							</div>
+							<div id="nb-mail-edit-${m.id}" style="display:none; margin-top:4px;">
+								<textarea id="nb-mail-edit-text-${m.id}" style="width:100%; min-height:60px; font-size:12px; padding:8px; border-radius:6px; border:0.5px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.08); color:#fff; outline:none; resize:none; font-family:inherit; box-sizing:border-box;"></textarea>
+								<div style="display:flex; gap:6px; margin-top:6px; justify-content:flex-end;">
+									<button onclick="window._nbCancelEditMail('${m.id}')" style="height:24px;padding:0 10px;font-size:11px;background:rgba(255,255,255,0.1);border:none;color:#fff;border-radius:6px;cursor:pointer;">취소</button>
+									<button onclick="window._nbSubmitEditMail('${m.id}', this)" style="height:24px;padding:0 10px;font-size:11px;background:#6366f1;border:none;color:#fff;border-radius:6px;cursor:pointer;">저장</button>
+								</div>
+							</div>
 						</div>
 					`).join('');
 				} catch(e) {
 					listEl.innerHTML = `<div style="text-align:center; padding:20px; color:#fca5a5; font-size:12px;">불러오기 실패</div>`;
 				}
 			}
+
+			window._nbToggleEditMail = (id) => {
+				const editBox = document.getElementById('nb-mail-edit-' + id);
+				if (!editBox) return;
+				const isOpen = editBox.style.display !== 'none';
+				if (isOpen) {
+					editBox.style.display = 'none';
+				} else {
+					const current = document.getElementById('nb-mail-content-' + id)?.textContent || '';
+					document.getElementById('nb-mail-edit-text-' + id).value = current;
+					editBox.style.display = 'block';
+				}
+			};
+
+			window._nbCancelEditMail = (id) => {
+				const editBox = document.getElementById('nb-mail-edit-' + id);
+				if (editBox) editBox.style.display = 'none';
+			};
+
+			window._nbSubmitEditMail = async (id, btn) => {
+				const text = document.getElementById('nb-mail-edit-text-' + id)?.value.trim();
+				if (!text) return;
+				btn.disabled = true; btn.textContent = '저장 중...';
+				try {
+					await fetch(MAIL_API, {
+						method: 'PUT',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ id, senderEmail: myEmail, senderName: myName, content: text })
+					});
+					await loadMyMail();
+				} catch(e) { alert('수정 실패'); }
+				finally { btn.disabled = false; btn.textContent = '저장'; }
+			};
 
 			document.getElementById('nb-mail-user-back').onclick = () => showList();
 			document.getElementById('nb-mail-user-submit').onclick = async () => {
@@ -3953,24 +3998,36 @@
 						<div style="padding:10px 12px; margin-bottom:8px; background:rgba(255,255,255,0.06); border-radius:8px;">
 							<div style="font-size:12px; color:#e2e8f0; white-space:pre-wrap; line-height:1.5;">${m.content}</div>
 							<div style="font-size:10.5px; color:rgba(255,255,255,0.4); margin-top:4px;">${formatDate(m.createdAt)}</div>
-							${m.reply ? `
+							<div id="nb-mail-reply-view-${m.id}" style="${m.reply ? '' : 'display:none;'}">
 								<div style="margin-top:8px; padding:8px 10px; background:rgba(34,197,94,0.12); border-left:2px solid #4ade80; border-radius:4px;">
-									<div style="font-size:11px; color:#86efac; margin-bottom:2px;">↩ 내 답장</div>
-									<div style="font-size:12px; color:#e2e8f0; white-space:pre-wrap; line-height:1.5;">${m.reply.text}</div>
-									<div style="font-size:10px; color:rgba(255,255,255,0.35); margin-top:4px;">${formatDate(m.reply.repliedAt)}</div>
+									<div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+										<div style="flex:1;">
+											<div style="font-size:11px; color:#86efac; margin-bottom:2px;">↩ 내 답장</div>
+											<div id="nb-mail-reply-text-view-${m.id}" style="font-size:12px; color:#e2e8f0; white-space:pre-wrap; line-height:1.5;">${m.reply ? m.reply.text : ''}</div>
+											<div style="font-size:10px; color:rgba(255,255,255,0.35); margin-top:4px;">${m.reply ? formatDate(m.reply.repliedAt) : ''}</div>
+										</div>
+										<button onclick="window._nbToggleEditMailReply('${m.id}')" style="background:none;border:none;font-size:11px;color:#86efac;cursor:pointer;padding:0;flex-shrink:0;">수정</button>
+									</div>
 								</div>
-							` : `
-								<div style="margin-top:8px; display:flex; gap:6px;">
-									<textarea id="nb-mail-reply-${m.id}" placeholder="답장 작성..." style="flex:1; min-height:44px; font-size:12px; padding:6px 8px; border-radius:6px; border:0.5px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.08); color:#fff; outline:none; resize:none; font-family:inherit;"></textarea>
-									<button onclick="window._nbSubmitMailReply('${m.id}', this)" style="align-self:flex-end; background:#6366f1; border:none; color:white; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:12px; white-space:nowrap;">답장</button>
-								</div>
-							`}
+							</div>
+							<div id="nb-mail-reply-edit-${m.id}" style="${m.reply ? 'display:none;' : ''} margin-top:8px; display:flex; gap:6px;">
+								<textarea id="nb-mail-reply-${m.id}" placeholder="답장 작성..." style="flex:1; min-height:44px; font-size:12px; padding:6px 8px; border-radius:6px; border:0.5px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.08); color:#fff; outline:none; resize:none; font-family:inherit;"></textarea>
+								<button onclick="window._nbSubmitMailReply('${m.id}', this)" style="align-self:flex-end; background:#6366f1; border:none; color:white; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:12px; white-space:nowrap;">답장</button>
+							</div>
 						</div>
 					`).join('');
 				} catch(e) {
 					listEl.innerHTML = `<div style="text-align:center; padding:20px; color:#fca5a5; font-size:12px;">불러오기 실패</div>`;
 				}
 			}
+
+			window._nbToggleEditMailReply = (id) => {
+				document.getElementById('nb-mail-reply-view-' + id).style.display = 'none';
+				const editBox = document.getElementById('nb-mail-reply-edit-' + id);
+				editBox.style.display = 'flex';
+				const current = document.getElementById('nb-mail-reply-text-view-' + id)?.textContent || '';
+				document.getElementById('nb-mail-reply-' + id).value = current;
+			};
 
 			window._nbSubmitMailReply = async (id, btn) => {
 				const text = document.getElementById(`nb-mail-reply-${id}`)?.value.trim();
