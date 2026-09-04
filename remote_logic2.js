@@ -1546,8 +1546,9 @@
         const patchItems = [
             {
                 version: 'v1.5',
-                date: '2026-09-02',
+                date: '2026-09-03',
                 items: [
+					'다중 관제 시 다음 시각 자동출차기체 자동시작 버튼(베타)',
                     '스케줄표/좌석도 라이트/다크 모드(디폴트 라이트)',
                     '다중/과학관 업무 전임자/후임자 표기',
                     '레이아웃 전체에 그린 톤 테마 적용',
@@ -1680,11 +1681,19 @@
         boardBtn.onmouseleave = () => { boardBtn.style.borderColor=T.border; boardBtn.style.color=T.text; };
         boardBtn.onclick = () => openBoardOverlay();
 
+        // 익명 편지 알림 배지 — '최윤혁' 로컬 계정에서만 실제로 켜짐 (checkMailNotification 참고)
+        const mailBadge = document.createElement('span');
+        mailBadge.id = 'nb-mail-badge';
+        mailBadge.className = 'nb-emoji';
+        mailBadge.textContent = '✉️';
+        mailBadge.style.cssText = `margin-left:6px; font-size:14px; display:${window.__nbMailUnread ? 'inline' : 'none'}; animation: nbMailBlink 1s infinite;`;
+
         const titleWrap = document.createElement('div');
         titleWrap.style.cssText = "display:flex; align-items:center; gap:0;";
         titleWrap.appendChild(title);
         titleWrap.appendChild(patchBtn);
         titleWrap.appendChild(boardBtn);
+        titleWrap.appendChild(mailBadge);
 
         const gamepadToggleUI = createToggleRow('🎮', '패드 키변경/테스트', !isDpadBindingOff(),
             (on) => {
@@ -2104,6 +2113,7 @@
             queueInfoContent.id = 'neubie-queue-info-content';
             queueInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:${T.text}; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;`;
             queueInfoContent.innerHTML = `
+				다음 시간 자동출차 기체 자동 시작 기능<br>
 				삭제 레이아웃 기체명 표기<br>
 				모니터링 생성 모달 우측 고정<br>
 				기체별 화질 조절<br>
@@ -2635,7 +2645,50 @@
 			}
 		};
 
+		// ── 자동출차 전용: 모달의 실제 자리(최대 6대) 여유를 계산해서 후보를 자른다.
+		//    autoBtn(인계) 쪽은 건드리지 않음 — 기존 사용자 경험 100% 유지 목적. ──
+		const MAX_MONITOR_SLOTS = 6;
+
+		const countCheckedInModal = (modal) => {
+			let count = 0;
+			modal.querySelectorAll('label').forEach(label => {
+				const text = label.querySelector('div.px-12 span')?.textContent.trim();
+				if (!text) return;
+				if (label.querySelector('input[type="checkbox"]')?.checked) count++;
+			});
+			return count;
+		};
+
+		// candidates: 시도해볼 기체명 배열 (이미 taken인 것은 호출 전에 걸러진 상태)
+		// 반환: 실제로 시도해도 되는 기체명 배열
+		//   - 이미 체크된 기체는 자리 소모 없이 그대로 포함(그냥 taken 반영용)
+		//   - 안 체크된 기체는 남은 자리 수만큼만 앞에서부터 포함, 나머지는 이번엔 스킵
+		const capByRemainingSlots = (modal, candidates) => {
+			const labels = [...modal.querySelectorAll('label')];
+			const findLabel = (name) => labels.find(l =>
+				l.querySelector('div.px-12 span')?.textContent.trim() === name
+			);
+
+			let remaining = Math.max(0, MAX_MONITOR_SLOTS - countCheckedInModal(modal));
+			const picked = [];
+			for (const name of candidates) {
+				const alreadyChecked = !!findLabel(name)?.querySelector('input[type="checkbox"]')?.checked;
+				if (alreadyChecked) {
+					picked.push(name); // 자리 소모 없음
+				} else if (remaining > 0) {
+					picked.push(name);
+					remaining--;
+				}
+				// else: 자리 없음 — 이번 실행에선 스킵 (다음 시도 때 다시 후보가 됨)
+			}
+			return picked;
+		};
+
 		autoBtn.addEventListener('click', async () => {
+			if (autoBtn.disabled) return;
+			autoBtn.disabled = true;
+			setTimeout(() => { autoBtn.disabled = false; }, 2000);
+
 			const modal = document.querySelector('[data-qk="remote-multiple-select-robot-dialog"]');
 			if (!modal) {
 				setDpMsg('NCC에서 기체 선택 모달을 먼저 열어주세요', '#f59e0b');
@@ -2669,6 +2722,10 @@
 		});
 
 		dispatchBtn.addEventListener('click', async () => {
+			if (dispatchBtn.disabled) return;
+			dispatchBtn.disabled = true;
+			setTimeout(() => { dispatchBtn.disabled = false; }, 2000);
+
 			// 클라이언트 측 즉시 게이트 — 네트워크 왕복 없이 바로 안내
 			if (new Date().getMinutes() < 45) {
 				setDpMsg('교대 시간이 아닙니다', '#f59e0b');
@@ -2700,13 +2757,21 @@
 				return;
 			}
 
-			const { confirmed, checkedUnits } = await runAutoSelect(available, new Array(available.length).fill(null));
+			// 모달의 실제 남은 자리(최대 6대)만큼만 시도하도록 자름
+			const capped = capByRemainingSlots(modal, available);
+			if (!capped.length) {
+				setDpMsg('이미 6대 모니터링 중입니다. 자리가 없어 추가할 수 없습니다', '#94a3b8');
+				return;
+			}
+
+			const { confirmed, checkedUnits } = await runAutoSelect(capped, new Array(capped.length).fill(null));
 
 			if (!checkedUnits.length) return;
 
 			if (confirmed) {
 				await patchDispatchTaken(checkedUnits);
-				setDpMsg(`${hour}시 자동출차 ${checkedUnits.length}대 시작 및 서버 반영 완료`, '#22c55e');
+				const skipped = capped.length < available.length ? ` (자리 부족으로 ${available.length - capped.length}대는 건너뜀)` : '';
+				setDpMsg(`${hour}시 자동출차 ${checkedUnits.length}대 시작 및 서버 반영 완료${skipped}`, '#22c55e');
 			} else {
 				setDpMsg(`${checkedUnits.join(', ')} 체크됨 — 시작하기 버튼을 직접 누르면 taken 반영은 되지 않습니다`, '#f59e0b');
 			}
@@ -3527,6 +3592,30 @@
     setInterval(_origCheckBrightness, 1500);
     _origCheckBrightness(); // 최초 1회
 
+    // ── 익명 1:1 편지함 알림 (최윤혁 로컬 계정 전용) ──
+    // 답장 안 한 편지가 있으면 게시판 버튼 옆 ✉️ 아이콘이 깜빡임.
+    if (!document.getElementById('nb-mail-badge-style')) {
+        const nbMailStyle = document.createElement('style');
+        nbMailStyle.id = 'nb-mail-badge-style';
+        nbMailStyle.textContent = `@keyframes nbMailBlink { 0%,100% { opacity:1; } 50% { opacity:0.2; } }`;
+        document.head.appendChild(nbMailStyle);
+    }
+    window.__nbMailUnread = window.__nbMailUnread || false;
+    window.checkMailNotification = async function checkMailNotification() {
+        if ((localStorage.getItem('neubie_user_name') || '') !== '최윤혁') return;
+        try {
+            const res = await fetch(`https://multimonitoring.vercel.app/api/mail?type=inbox&t=${Date.now()}`);
+            const data = await res.json();
+            window.__nbMailUnread = (data.mails || []).some(m => !m.reply);
+        } catch (e) {
+            // 네트워크 실패 시 기존 표시 상태 유지
+        }
+        const badge = document.getElementById('nb-mail-badge');
+        if (badge) badge.style.display = window.__nbMailUnread ? 'inline' : 'none';
+    };
+    setInterval(window.checkMailNotification, 60 * 60 * 1000); // 1시간마다
+    window.checkMailNotification(); // 최초 1회
+
     window.addEventListener('keydown', (e) => {
         if (e.altKey && e.code === 'KeyQ') {
 			e.preventDefault();
@@ -3545,7 +3634,9 @@
 
             window.openBoardOverlay = async function() {
             const BOARD_API = 'https://multimonitoring.vercel.app/api/board';
-            const BG_IMG = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/animal_crossing_isabelle.png';
+            const MAIL_API = 'https://multimonitoring.vercel.app/api/mail';
+            const ADMIN_NAME = '최윤혁';
+            const BG_IMG = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/snoopy_charlie.jpg';
 
             function getMyEmail() {
                 try {
@@ -3607,6 +3698,7 @@
             <div style="width:100%; height:100%; background:rgba(10,10,30,0.72); backdrop-filter:blur(2px); display:flex; flex-direction:column; border-radius:24px;">
                 <div id="nb-board-header" style="display:flex; align-items:center; gap:8px; padding:12px 16px; border-bottom:0.5px solid rgba(255,255,255,0.12); cursor:grab;">
                     <span style="font-size:15px; font-weight:600; color:#fff; flex:1;"><span class="nb-emoji">📋</span> NCC 게시판</span>
+                    <button id="nb-mail-lock-btn" style="height:28px; width:28px; background:rgba(255,255,255,0.1); color:white; border:none; border-radius:6px; cursor:pointer; font-size:14px;" title="익명 편지함">🔒</button>
                     <button id="nb-refresh-btn" style="height:28px; width:28px; background:rgba(255,255,255,0.1); color:white; border:none; border-radius:6px; cursor:pointer; font-size:14px;" title="새로고침">↺</button>
 					<button id="nb-write-btn" style="height:28px; padding:0 12px; font-size:12px; font-weight:500; background:#6366f1; color:white; border:none; border-radius:6px; cursor:pointer;">✏️ 글쓰기</button>
                     <button id="nb-board-close" style="background:rgba(255,255,255,0.1); border:none; color:#fff; width:26px; height:26px; border-radius:50%; cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center;">✕</button>
@@ -3666,6 +3758,27 @@
                     </div>
                 </div>
 
+                <div id="nb-screen-mail-user" style="display:none; flex-direction:column; flex:1; overflow:hidden;">
+                    <div style="padding:10px 16px; border-bottom:0.5px solid rgba(255,255,255,0.1); display:flex; align-items:center; gap:8px;">
+                        <button id="nb-mail-user-back" style="background:rgba(255,255,255,0.1); border:none; color:#fff; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:12px;"><span class="nb-emoji">←</span> 목록</button>
+                        <span style="font-size:13px; color:#e2e8f0; flex:1;">💌 익명 편지함</span>
+                        <button id="nb-mail-user-submit" style="background:#6366f1; border:none; color:white; padding:4px 14px; border-radius:6px; cursor:pointer; font-size:12px; font-weight:500;">보내기</button>
+                    </div>
+                    <div style="padding:16px 16px 8px; display:flex; flex-direction:column; gap:8px;">
+                        <textarea id="nb-mail-user-content" placeholder="최윤혁님께 익명으로 전달할 내용을 적어주세요..." style="min-height:70px; font-size:13px; padding:10px; border-radius:6px; border:0.5px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.08); color:#fff; outline:none; resize:none; font-family:inherit;"></textarea>
+                    </div>
+                    <div style="padding:6px 16px 2px; font-size:12px; color:rgba(255,255,255,0.5);">📮 내가 보낸 편지</div>
+                    <div id="nb-mail-user-list" style="flex:1; overflow-y:auto; padding:8px 16px 16px;"></div>
+                </div>
+
+                <div id="nb-screen-mail-admin" style="display:none; flex-direction:column; flex:1; overflow:hidden;">
+                    <div style="padding:10px 16px; border-bottom:0.5px solid rgba(255,255,255,0.1); display:flex; align-items:center; gap:8px;">
+                        <button id="nb-mail-admin-back" style="background:rgba(255,255,255,0.1); border:none; color:#fff; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:12px;"><span class="nb-emoji">←</span> 목록</button>
+                        <span style="font-size:13px; color:#e2e8f0; flex:1;">💌 받은 익명 편지</span>
+                    </div>
+                    <div id="nb-mail-admin-list" style="flex:1; overflow-y:auto; padding:8px 16px 16px;"></div>
+                </div>
+
                 <div style="padding:6px 16px; border-top:0.5px solid rgba(255,255,255,0.1); text-align:right;">
                     <span id="nb-user-badge" style="font-size:11px; color:rgba(255,255,255,0.5);"></span>
                 </div>
@@ -3715,6 +3828,16 @@
 			};
 			document.getElementById('nb-edit-submit').onclick = submitEdit;
 			document.getElementById('nb-refresh-btn').onclick = () => loadPosts();
+			document.getElementById('nb-mail-lock-btn').onclick = () => {
+				if (myName === ADMIN_NAME) {
+					const pw = prompt('비밀번호를 입력하세요');
+					if (pw === null) return; // 취소
+					if (pw !== '0000') { alert('비밀번호가 틀렸습니다.'); return; }
+					showMailAdmin();
+				} else {
+					showMailUser();
+				}
+			};
             document.getElementById('nb-write-btn').onclick = () => {
                 if (!myEmail) return alert('로그인 정보가 없어 글쓰기가 불가합니다.');
                 showWriteScreen();
@@ -3727,15 +3850,152 @@
                 document.getElementById('nb-screen-list').style.display = 'block';
                 document.getElementById('nb-screen-detail').style.display = 'none';
                 document.getElementById('nb-screen-write').style.display = 'none';
+				document.getElementById('nb-screen-mail-user').style.display = 'none';
+				document.getElementById('nb-screen-mail-admin').style.display = 'none';
                 document.getElementById('nb-list-toolbar').style.display = 'flex';
                 renderList(allPosts, false)
             }
+
+			// ── 익명 1:1 편지함 (사용자) ──
+			async function showMailUser() {
+				document.getElementById('nb-screen-list').style.display = 'none';
+				document.getElementById('nb-screen-detail').style.display = 'none';
+				document.getElementById('nb-screen-write').style.display = 'none';
+				document.getElementById('nb-screen-edit').style.display = 'none';
+				document.getElementById('nb-list-toolbar').style.display = 'none';
+				document.getElementById('nb-screen-mail-admin').style.display = 'none';
+				document.getElementById('nb-screen-mail-user').style.display = 'flex';
+				document.getElementById('nb-mail-user-content').value = '';
+				await loadMyMail();
+			}
+
+			async function loadMyMail() {
+				const listEl = document.getElementById('nb-mail-user-list');
+				listEl.innerHTML = `<div style="text-align:center; padding:20px; color:rgba(255,255,255,0.4); font-size:12px;">불러오는 중...</div>`;
+				try {
+					const params = new URLSearchParams({ type: 'sent', email: myEmail, name: myName, t: Date.now() });
+					const res = await fetch(`${MAIL_API}?${params}`);
+					const data = await res.json();
+					const mine = (data.mails || []).slice().reverse();
+					if (!mine.length) {
+						listEl.innerHTML = `<div style="text-align:center; padding:20px; color:rgba(255,255,255,0.35); font-size:12px;">보낸 편지가 없습니다</div>`;
+						return;
+					}
+					listEl.innerHTML = mine.map(m => `
+						<div style="padding:10px 12px; margin-bottom:8px; background:rgba(255,255,255,0.06); border-radius:8px;">
+							<div style="font-size:12px; color:#e2e8f0; white-space:pre-wrap; line-height:1.5;">${m.content}</div>
+							<div style="font-size:10.5px; color:rgba(255,255,255,0.4); margin-top:4px;">${formatDate(m.createdAt)}</div>
+							${m.reply ? `
+								<div style="margin-top:8px; padding:8px 10px; background:rgba(99,102,241,0.15); border-left:2px solid #818cf8; border-radius:4px;">
+									<div style="font-size:11px; color:#a5b4fc; margin-bottom:2px;">↩ 답장</div>
+									<div style="font-size:12px; color:#e2e8f0; white-space:pre-wrap; line-height:1.5;">${m.reply.text}</div>
+									<div style="font-size:10px; color:rgba(255,255,255,0.35); margin-top:4px;">${formatDate(m.reply.repliedAt)}</div>
+								</div>
+							` : `<div style="font-size:11px; color:rgba(234,179,8,0.85); margin-top:6px;">⏳ 답장 대기중</div>`}
+						</div>
+					`).join('');
+				} catch(e) {
+					listEl.innerHTML = `<div style="text-align:center; padding:20px; color:#fca5a5; font-size:12px;">불러오기 실패</div>`;
+				}
+			}
+
+			document.getElementById('nb-mail-user-back').onclick = () => showList();
+			document.getElementById('nb-mail-user-submit').onclick = async () => {
+				if (!myEmail) return alert('로그인 정보가 없어 편지 작성이 불가합니다.');
+				const content = document.getElementById('nb-mail-user-content').value.trim();
+				if (!content) return;
+				const btn = document.getElementById('nb-mail-user-submit');
+				btn.disabled = true; btn.textContent = '전송 중...';
+				try {
+					await fetch(MAIL_API, {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ senderEmail: myEmail, senderName: myName, content })
+					});
+					document.getElementById('nb-mail-user-content').value = '';
+					await loadMyMail();
+				} catch(e) { alert('전송 실패'); }
+				finally { btn.disabled = false; btn.textContent = '보내기'; }
+			};
+
+			// ── 익명 1:1 편지함 (관리자: 최윤혁) ──
+			async function showMailAdmin() {
+				document.getElementById('nb-screen-list').style.display = 'none';
+				document.getElementById('nb-screen-detail').style.display = 'none';
+				document.getElementById('nb-screen-write').style.display = 'none';
+				document.getElementById('nb-screen-edit').style.display = 'none';
+				document.getElementById('nb-list-toolbar').style.display = 'none';
+				document.getElementById('nb-screen-mail-user').style.display = 'none';
+				document.getElementById('nb-screen-mail-admin').style.display = 'flex';
+				await loadInboxMail();
+			}
+
+			let _inboxUnreadCount = 0;
+
+			async function loadInboxMail() {
+				const listEl = document.getElementById('nb-mail-admin-list');
+				listEl.innerHTML = `<div style="text-align:center; padding:20px; color:rgba(255,255,255,0.4); font-size:12px;">불러오는 중...</div>`;
+				try {
+					const res = await fetch(`${MAIL_API}?type=inbox&t=${Date.now()}`);
+					const data = await res.json();
+					const mails = (data.mails || []).slice().reverse();
+					_inboxUnreadCount = mails.filter(m => !m.reply).length;
+					// 편지함 열어본 김에 배지도 바로 갱신 (추가 네트워크 요청 없이)
+					window.__nbMailUnread = _inboxUnreadCount > 0;
+					const badge = document.getElementById('nb-mail-badge');
+					if (badge) badge.style.display = window.__nbMailUnread ? 'inline' : 'none';
+
+					if (!mails.length) {
+						listEl.innerHTML = `<div style="text-align:center; padding:20px; color:rgba(255,255,255,0.35); font-size:12px;">받은 편지가 없습니다</div>`;
+						return;
+					}
+					listEl.innerHTML = mails.map(m => `
+						<div style="padding:10px 12px; margin-bottom:8px; background:rgba(255,255,255,0.06); border-radius:8px;">
+							<div style="font-size:12px; color:#e2e8f0; white-space:pre-wrap; line-height:1.5;">${m.content}</div>
+							<div style="font-size:10.5px; color:rgba(255,255,255,0.4); margin-top:4px;">${formatDate(m.createdAt)}</div>
+							${m.reply ? `
+								<div style="margin-top:8px; padding:8px 10px; background:rgba(34,197,94,0.12); border-left:2px solid #4ade80; border-radius:4px;">
+									<div style="font-size:11px; color:#86efac; margin-bottom:2px;">↩ 내 답장</div>
+									<div style="font-size:12px; color:#e2e8f0; white-space:pre-wrap; line-height:1.5;">${m.reply.text}</div>
+									<div style="font-size:10px; color:rgba(255,255,255,0.35); margin-top:4px;">${formatDate(m.reply.repliedAt)}</div>
+								</div>
+							` : `
+								<div style="margin-top:8px; display:flex; gap:6px;">
+									<textarea id="nb-mail-reply-${m.id}" placeholder="답장 작성..." style="flex:1; min-height:44px; font-size:12px; padding:6px 8px; border-radius:6px; border:0.5px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.08); color:#fff; outline:none; resize:none; font-family:inherit;"></textarea>
+									<button onclick="window._nbSubmitMailReply('${m.id}', this)" style="align-self:flex-end; background:#6366f1; border:none; color:white; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:12px; white-space:nowrap;">답장</button>
+								</div>
+							`}
+						</div>
+					`).join('');
+				} catch(e) {
+					listEl.innerHTML = `<div style="text-align:center; padding:20px; color:#fca5a5; font-size:12px;">불러오기 실패</div>`;
+				}
+			}
+
+			window._nbSubmitMailReply = async (id, btn) => {
+				const text = document.getElementById(`nb-mail-reply-${id}`)?.value.trim();
+				if (!text) return;
+				btn.disabled = true; btn.textContent = '전송 중...';
+				try {
+					await fetch(MAIL_API, {
+						method: 'PATCH',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify({ id, replyText: text })
+					});
+					await loadInboxMail();
+				} catch(e) { alert('답장 등록 실패'); }
+				finally { btn.disabled = false; btn.textContent = '답장'; }
+			};
+
+			document.getElementById('nb-mail-admin-back').onclick = () => showList();
 
             function showWriteScreen() {
                 document.getElementById('nb-screen-list').style.display = 'none';
                 document.getElementById('nb-screen-detail').style.display = 'none';
                 document.getElementById('nb-screen-write').style.display = 'flex';
                 document.getElementById('nb-list-toolbar').style.display = 'none';
+				document.getElementById('nb-screen-mail-user').style.display = 'none';
+				document.getElementById('nb-screen-mail-admin').style.display = 'none';
                 document.getElementById('nb-write-title').value = '';
                 document.getElementById('nb-write-content').value = '';
             }
@@ -3745,6 +4005,8 @@
                 document.getElementById('nb-screen-write').style.display = 'none';
 				document.getElementById('nb-screen-edit').style.display = 'none';
 				document.getElementById('nb-list-toolbar').style.display = 'none';
+				document.getElementById('nb-screen-mail-user').style.display = 'none';
+				document.getElementById('nb-screen-mail-admin').style.display = 'none';
                 const editBtn = document.getElementById('nb-edit-post-btn');
 				editBtn.style.display = (myEmail && post.email === myEmail) ? 'block' : 'none';
 				editBtn.onclick = () => showEditScreen(post);
@@ -3932,6 +4194,8 @@
 				document.getElementById('nb-screen-write').style.display = 'none';
 				document.getElementById('nb-screen-edit').style.display = 'flex';
 				document.getElementById('nb-list-toolbar').style.display = 'none';
+				document.getElementById('nb-screen-mail-user').style.display = 'none';
+				document.getElementById('nb-screen-mail-admin').style.display = 'none';
                 document.getElementById('nb-edit-title').value = post.title;
 				document.getElementById('nb-edit-content').value = post.content;
 			}
