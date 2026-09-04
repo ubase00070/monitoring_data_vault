@@ -3601,8 +3601,18 @@
         document.head.appendChild(nbMailStyle);
     }
     window.__nbMailUnread = window.__nbMailUnread || false;
+    // posthog가 NCC 로그인 시 심어주는 검증된 이름 — neubie_user_name(alt+Q에서 자유 수정 가능)과
+    // 달리 로컬에서 조작 불가능하므로, 관리자(최윤혁) 판별은 반드시 이 값 기준으로 한다.
+    function getVerifiedNccName() {
+        try {
+            const lsKey = Object.keys(localStorage).find(k => k.startsWith('ph_phc_') && k.endsWith('_posthog'));
+            if (!lsKey) return '';
+            const ph = JSON.parse(localStorage.getItem(lsKey));
+            return ph?.$stored_person_properties?.name || '';
+        } catch (e) { return ''; }
+    }
     window.checkMailNotification = async function checkMailNotification() {
-        if ((localStorage.getItem('neubie_user_name') || '') !== '최윤혁') return;
+        if (getVerifiedNccName() !== '최윤혁') return;
         try {
             const res = await fetch(`https://multimonitoring.vercel.app/api/mail?type=inbox&t=${Date.now()}`);
             const data = await res.json();
@@ -3648,7 +3658,17 @@
                 } catch(e) { return ''; }
             }
 
-            function getMyName() { return localStorage.getItem('neubie_user_name') || '익명'; }
+            // 이름은 alt+Q에서 수정 가능한 neubie_user_name이 아니라,
+            // NCC 로그인 시 posthog가 서버에서 받아 심어두는 검증된 이름을 사용한다.
+            // 이 값은 사용자가 로컬에서 건드릴 방법이 없음 (getMyEmail과 동일한 신뢰 수준).
+            function getMyName() {
+                try {
+                    const lsKey = Object.keys(localStorage).find(k => k.startsWith('ph_phc_') && k.endsWith('_posthog'));
+                    if (!lsKey) return '';
+                    const ph = JSON.parse(localStorage.getItem(lsKey));
+                    return ph?.$stored_person_properties?.name || '';
+                } catch(e) { return ''; }
+            }
             function initials(name) { return name ? name.slice(0,1) : '?'; }
             function formatDate(iso) {
                 const d = new Date(iso);
@@ -3698,7 +3718,7 @@
             <div style="width:100%; height:100%; background:rgba(10,10,30,0.72); backdrop-filter:blur(2px); display:flex; flex-direction:column; border-radius:24px;">
                 <div id="nb-board-header" style="display:flex; align-items:center; gap:8px; padding:12px 16px; border-bottom:0.5px solid rgba(255,255,255,0.12); cursor:grab;">
                     <span style="font-size:15px; font-weight:600; color:#fff; flex:1;"><span class="nb-emoji">📋</span> NCC 게시판</span>
-                    <button id="nb-mail-lock-btn" style="height:28px; width:28px; background:rgba(255,255,255,0.1); color:white; border:none; border-radius:6px; cursor:pointer; font-size:14px;" title="익명 편지함">🔒</button>
+                    <button id="nb-mail-lock-btn" style="height:28px; padding:0 10px; background:rgba(255,255,255,0.1); color:white; border:none; border-radius:6px; cursor:pointer; font-size:12px; display:flex; align-items:center; gap:4px; white-space:nowrap;" title="익명 편지함">🔒 익명 문의</button>
                     <button id="nb-refresh-btn" style="height:28px; width:28px; background:rgba(255,255,255,0.1); color:white; border:none; border-radius:6px; cursor:pointer; font-size:14px;" title="새로고침">↺</button>
 					<button id="nb-write-btn" style="height:28px; padding:0 12px; font-size:12px; font-weight:500; background:#6366f1; color:white; border:none; border-radius:6px; cursor:pointer;">✏️ 글쓰기</button>
                     <button id="nb-board-close" style="background:rgba(255,255,255,0.1); border:none; color:#fff; width:26px; height:26px; border-radius:50%; cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center;">✕</button>
@@ -3791,6 +3811,12 @@
             const myEmail = getMyEmail();
             const myName = getMyName();
 
+            // ── 신원 확인 ──
+            // myEmail, myName 둘 다 posthog가 NCC 로그인 시 심어주는 검증된 값이라
+            // 로컬에서 조작 불가능함. 둘 중 하나라도 비어있으면(=로그인 세션 정보를 못 읽었으면)
+            // 신원 불명으로 취급.
+            const identityOk = !!myEmail && !!myName;
+
             // ── 게시판 드래그 (scale 유지) ──
             (function makeBoardDraggable() {
                 const handle = document.getElementById('nb-board-header');
@@ -3818,7 +3844,7 @@
                 });
             })();
 
-            document.getElementById('nb-user-badge').textContent = myEmail ? `${myName} (${myEmail})` : '⚠️ 로그인 정보 없음 — 읽기 전용';
+            document.getElementById('nb-user-badge').textContent = identityOk ? `${myName} (${myEmail})` : '⚠️ 로그인 정보 없음 — 읽기 전용';
             document.getElementById('nb-board-close').onclick = () => { overlay.style.display = 'none'; };
             document.getElementById('nb-back-btn').onclick = () => showList();
             document.getElementById('nb-write-cancel').onclick = () => showList();
@@ -3839,7 +3865,7 @@
 				}
 			};
             document.getElementById('nb-write-btn').onclick = () => {
-                if (!myEmail) return alert('로그인 정보가 없어 글쓰기가 불가합니다.');
+                if (!identityOk) return alert('로그인 정보가 없어 글쓰기가 불가합니다.');
                 showWriteScreen();
             };
             document.getElementById('nb-write-submit').onclick = submitPost;
@@ -3946,7 +3972,7 @@
 
 			document.getElementById('nb-mail-user-back').onclick = () => showList();
 			document.getElementById('nb-mail-user-submit').onclick = async () => {
-				if (!myEmail) return alert('로그인 정보가 없어 편지 작성이 불가합니다.');
+				if (!identityOk) return alert('로그인 정보가 없어 편지 작성이 불가합니다.');
 				const content = document.getElementById('nb-mail-user-content').value.trim();
 				if (!content) return;
 				const btn = document.getElementById('nb-mail-user-submit');
@@ -4303,6 +4329,7 @@
             };
 
             window._nbSubmitComment = async (btn) => {
+                if (!identityOk) return alert('로그인 정보가 없어 댓글 작성이 불가합니다.');
                 const text = document.getElementById('nb-comment-input')?.value.trim();
                 if (!text) return;
 				const isAnon = document.getElementById('nb-comment-anon')?.checked;
@@ -4323,6 +4350,7 @@
             };
 
             window._nbSubmitReply = async (cId, btn) => {
+                if (!identityOk) return alert('로그인 정보가 없어 답글 작성이 불가합니다.');
                 const text = document.getElementById('nb-reply-text-' + cId)?.value.trim();
                 if (!text) return;
 				const isAnon = document.getElementById('nb-reply-anon-' + cId)?.checked;
