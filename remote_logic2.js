@@ -3707,15 +3707,14 @@
 				height: '400px',
 				zIndex: '1000001', display: 'flex',
 				alignItems: 'center', justifyContent: 'center',
-				backgroundImage: `url(${BG_IMG})`,
-				backgroundSize: 'cover', backgroundPosition: 'center',
+				background: '#8BAA4F',
 				borderRadius: '28px', overflow: 'hidden',
-				transform: 'scale(1.275)', // 기존 1.5에서 15% 축소
+				transform: 'scale(1.66)', // 1.275에서 30% 확대
 				transformOrigin: 'center center',
 			});
 
             overlay.innerHTML = `
-            <div style="width:calc(100% - 20px); height:calc(100% - 20px); margin:10px; background:#FFFDF8; border:4px solid #8BAA4F; box-sizing:border-box; display:flex; flex-direction:column; border-radius:24px;">
+            <div style="width:calc(100% - 20px); height:calc(100% - 20px); margin:10px; background-image:linear-gradient(rgba(255,253,248,0.88), rgba(255,253,248,0.88)), url(${BG_IMG}); background-size:cover; background-position:center; border:4px solid #8BAA4F; box-sizing:border-box; display:flex; flex-direction:column; border-radius:24px;">
                 <div id="nb-board-header" style="display:flex; align-items:center; gap:8px; padding:12px 16px; border-bottom:1.5px solid #E3EFD1; cursor:grab;">
                     <span style="font-size:15px; font-weight:600; color:#2F4A1D; flex:1;"><span class="nb-emoji">🍃</span> NCC 게시판</span>
                     <button id="nb-mail-lock-btn" style="height:28px; padding:0 10px; background:#F1F7E6; color:#4B6633; border:none; border-radius:14px; cursor:pointer; font-size:12px; display:flex; align-items:center; gap:4px; white-space:nowrap;" title="익명 편지함">🔒 익명 문의</button>
@@ -4119,13 +4118,11 @@
                 const isPaged = posts === allPosts; // 검색 중엔 페이지네이션 숨김
 
                 el.innerHTML = paged.map(p => `
-                    <div onclick="window._nbOpenPost('${p.id}')" style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 16px; border-bottom:1.5px solid #E3EFD1; cursor:pointer; transition:background 0.12s;" onmouseenter="this.style.background='#F6FAEE'" onmouseleave="this.style.background='transparent'">
-                        <div style="font-size:13px; font-weight:500; color:#2F4A1D; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; min-width:0;">${p.title}</div>
-                        <div style="font-size:11px; color:#6B7F55; white-space:nowrap; flex-shrink:0; display:flex; align-items:center; gap:6px;">
-                            <span>${p.author}</span>
-                            <span>${formatDate(p.createdAt)}</span>
-                            ${(p.commentCount||0) > 0 ? `<span style="color:#5C7A3C;">💬 ${p.commentCount}</span>` : ''}
-                        </div>
+                    <div onclick="window._nbOpenPost('${p.id}')" style="display:grid; grid-template-columns:1fr 34px 64px 68px; align-items:center; gap:10px; padding:10px 16px; border-bottom:1.5px solid #E3EFD1; cursor:pointer; transition:background 0.12s;" onmouseenter="this.style.background='#F6FAEE'" onmouseleave="this.style.background='transparent'">
+                        <div style="font-size:13px; font-weight:500; color:#2F4A1D; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0;">${p.title}</div>
+                        <div style="font-size:11px; color:#5C7A3C; white-space:nowrap; text-align:right;">${(p.commentCount||0) > 0 ? `💬 ${p.commentCount}` : ''}</div>
+                        <div style="font-size:11px; color:#6B7F55; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:right;">${p.author}</div>
+                        <div style="font-size:11px; color:#6B7F55; white-space:nowrap; text-align:right;">${formatDate(p.createdAt)}</div>
                     </div>
                 `).join('');
 
@@ -4266,7 +4263,17 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ email: myEmail, author: isAnon ? '익명' : myName, anon: isAnon, title, content })
                     });
-                    await loadPosts();
+                    // 서버 재조회 대신 방금 쓴 글을 바로 목록에 얹는다 — GitHub Contents API가
+                    // 커밋 직후 읽기에 반영 지연을 보일 때가 있어 재조회에 의존하지 않음.
+                    allPosts.unshift({
+                        id: Date.now().toString(),
+                        author: isAnon ? '익명' : myName,
+                        title, content,
+                        createdAt: new Date().toISOString(),
+                        email: myEmail, anon: !!isAnon,
+                        commentCount: 0, comments: []
+                    });
+                    showList();
                 } catch(e) { alert('등록 실패'); }
                 finally { btn.disabled = false; btn.textContent = '등록'; }
             }
@@ -4340,11 +4347,19 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ email: myEmail, author: isAnon ? '익명' : myName, anon: isAnon, postId: currentPostId, text })
                     });
-                    const res = await fetch('https://multimonitoring.vercel.app/api/board?t=' + Date.now() + '&email=' + encodeURIComponent(myEmail));
-                    const data = await res.json();
-                    allPosts = data.posts || [];
+                    // 서버 재조회 대신 방금 쓴 댓글을 현재 글 객체에 바로 얹는다.
                     const post = allPosts.find(p => p.id === currentPostId);
-                    if (post) renderDetailBody(post);
+                    if (post) {
+                        if (!post.comments) post.comments = [];
+                        post.comments.push({
+                            id: 'c' + Date.now(),
+                            email: myEmail, author: isAnon ? '익명' : myName, text,
+                            anon: !!isAnon, createdAt: new Date().toISOString(), replies: []
+                        });
+                        post.commentCount = post.comments.reduce((a, c) => a + 1 + (c.replies || []).length, 0);
+                        renderDetailBody(post);
+                    }
+                    document.getElementById('nb-comment-input').value = '';
                 } catch(e) { alert('댓글 등록 실패'); }
                 finally { btn.disabled = false; btn.textContent = '댓글 등록'; }
             };
@@ -4361,11 +4376,19 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ email: myEmail, author: isAnon ? '익명' : myName, anon: isAnon, postId: currentPostId, commentId: cId, text })
                     });
-                    const res = await fetch('https://multimonitoring.vercel.app/api/board?t=' + Date.now() + '&email=' + encodeURIComponent(myEmail));
-                    const data = await res.json();
-                    allPosts = data.posts || [];
+                    // 서버 재조회 대신 방금 쓴 답글을 현재 글 객체에 바로 얹는다.
                     const post = allPosts.find(p => p.id === currentPostId);
-                    if (post) renderDetailBody(post);
+                    const comment = post?.comments?.find(c => c.id === cId);
+                    if (comment) {
+                        if (!comment.replies) comment.replies = [];
+                        comment.replies.push({
+                            id: 'r' + Date.now(),
+                            email: myEmail, author: isAnon ? '익명' : myName, text,
+                            anon: !!isAnon, createdAt: new Date().toISOString()
+                        });
+                        post.commentCount = post.comments.reduce((a, c) => a + 1 + (c.replies || []).length, 0);
+                        renderDetailBody(post);
+                    }
                 } catch(e) { alert('답글 등록 실패'); }
                 finally { btn.disabled = false; btn.textContent = '등록'; }
             };
