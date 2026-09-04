@@ -3715,7 +3715,7 @@
 			});
 
             overlay.innerHTML = `
-            <div style="width:calc(100% - 20px); height:calc(100% - 20px); margin:10px; background-image:linear-gradient(rgba(255,253,248,0.62), rgba(255,253,248,0.62)), url(${BG_IMG}); background-size:cover; background-position:center; border:4px solid #8BAA4F; box-sizing:border-box; display:flex; flex-direction:column; border-radius:24px;">
+            <div style="width:calc(100% - 20px); height:calc(100% - 20px); margin:10px; background-image:linear-gradient(rgba(255,253,248,0.72), rgba(255,253,248,0.72)), url(${BG_IMG}); background-size:cover; background-position:center; border:4px solid #8BAA4F; box-sizing:border-box; display:flex; flex-direction:column; border-radius:24px;">
                 <div id="nb-board-header" style="display:flex; align-items:center; gap:8px; padding:8px 14px; border-bottom:1.5px solid #E3EFD1; cursor:grab;">
                     <span style="font-size:13px; font-weight:600; color:#2F4A1D; flex:1;"><span class="nb-emoji">🍃</span> NCC 게시판</span>
                     <button id="nb-mail-lock-btn" style="height:28px; padding:0 10px; background:#F1F7E6; color:#4B6633; border:none; border-radius:14px; cursor:pointer; font-size:10.5px; display:flex; align-items:center; gap:4px; white-space:nowrap;" title="익명 편지함">🔒 익명 문의</button>
