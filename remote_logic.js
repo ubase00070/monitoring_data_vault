@@ -6189,28 +6189,32 @@
             return text ? text.replace(/\s*N[0-9A-Z]{4,20}(-[0-9A-Z]+)?\s*$/i, '').trim() : text;
         }
 
-        let lastDeleteRobotName = null;
-
         document.addEventListener('click', (e) => {
             const btn = e.target.closest('[data-qk="monitoring-robots-dialog-delete-button"]');
             if (!btn) return;
             const row = btn.parentElement;
             const infoBlock = row && row.querySelector('.space-y-6');
             const nameEl = infoBlock && infoBlock.firstElementChild;
-            lastDeleteRobotName = stripSerial(nameEl ? nameEl.textContent.trim() : null);
-        }, true);
+            const robotName = stripSerial(nameEl ? nameEl.textContent.trim() : null);
+            if (!robotName) return;
 
-        const obs = new MutationObserver(() => {
-            const titleEl = [...document.querySelectorAll('div, p, span')].find(el =>
-                el.children.length === 0 && el.textContent.trim() === '로봇을 삭제하시겠습니까?'
-            );
-            if (titleEl && lastDeleteRobotName && !titleEl.dataset.nbPatched) {
-                titleEl.textContent = `'${lastDeleteRobotName}'${withEulReul(lastDeleteRobotName).slice(lastDeleteRobotName.length)} 삭제하시겠습니까?`;
-                titleEl.dataset.nbPatched = '1';
-            }
-        });
-        obs.observe(document.body, { childList: true, subtree: true });
-        window._nbDeleteConfirmObserver = obs;
+            // 상시 옵저버 대신, 삭제 버튼을 누른 그 순간에만 짧게(최대 2초, 100ms 간격)
+            // 확인 팝업이 뜨는지 지켜본다 — 평소엔 이 클릭 리스너 하나 말고 아무 비용이 없음.
+            let attempts = 0;
+            const poll = setInterval(() => {
+                attempts++;
+                const titleEl = [...document.querySelectorAll('div, p, span')].find(el =>
+                    el.children.length === 0 && el.textContent.trim() === '로봇을 삭제하시겠습니까?'
+                );
+                if (titleEl && !titleEl.dataset.nbPatched) {
+                    titleEl.textContent = `'${robotName}'${withEulReul(robotName).slice(robotName.length)} 삭제하시겠습니까?`;
+                    titleEl.dataset.nbPatched = '1';
+                    clearInterval(poll);
+                } else if (attempts >= 20) {
+                    clearInterval(poll); // 2초 내 못 찾으면 포기 (좀비 타이머 방지)
+                }
+            }, 100);
+        }, true);
     }
     setupDeleteConfirmRobotName();
 
