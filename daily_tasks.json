@@ -48,7 +48,7 @@
     "rawTime": "14:00"
   },
   {
-    "user": "박은선",
+    "user": "이준",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "15:00"
@@ -60,88 +60,82 @@
     "rawTime": "16:00"
   },
   {
-    "user": "이준",
+    "user": "송태영",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "17:00"
   },
   {
-    "user": "송태영",
+    "user": "호덕진",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "18:00"
   },
   {
-    "user": "호덕진",
+    "user": "권재윤",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "19:00"
   },
   {
-    "user": "권재윤",
+    "user": "김가은",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "20:00"
   },
   {
-    "user": "김가은",
+    "user": "최성환",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "21:00"
   },
   {
-    "user": "최성환",
+    "user": "강철환",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "22:00"
   },
   {
-    "user": "강철환",
+    "user": "최정기",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "23:00"
   },
   {
-    "user": "최정기",
+    "user": "임다연",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "00:00"
   },
   {
-    "user": "임다연",
+    "user": "강철환",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "01:00"
   },
   {
-    "user": "강철환",
+    "user": "안대관",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "02:00"
   },
   {
-    "user": "안대관",
+    "user": "최정기",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "03:00"
   },
   {
-    "user": "최정기",
+    "user": "임다연",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "04:00"
   },
   {
-    "user": "임다연",
-    "type": "monitoring",
-    "content": "다중 모니터링",
-    "rawTime": "05:00"
-  },
-  {
     "user": "안대관",
     "type": "monitoring",
     "content": "다중 모니터링",
-    "rawTime": "06:00"
+    "rawTime": "05:00"
   },
   {
     "user": "신현철",
@@ -256,16 +250,6 @@
     "type": "task",
     "content": "[23:00] 무선충전 기체 주차 상태 (충전중⚡) 확인 + 00:00~23:00 리부팅 안된 무선 기체 Xavier 재부팅",
     "rawTime": "23:00"
-  },
-  {
-    "user": "박계원",
-    "type": "next_0700_handover",
-    "content": "다중 모니터링",
-    "rawTime": "07:00",
-    "forDate": "2026-09-07",
-    "prevUser": "안대관",
-    "selfUser": "박계원",
-    "nextUser": "김지훈"
   },
   {
     "user": "김지훈",
