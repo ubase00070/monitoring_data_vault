@@ -3554,7 +3554,7 @@
       }
     },
     {
-      "name": "유재현",
+      "name": "유재헌",
       "shiftType": "주간1",
       "workTime": "",
       "schedule": {
@@ -4115,7 +4115,7 @@
       }
     },
     {
-      "name": "홍수진",
+      "name": "김지영",
       "shiftType": "주간1",
       "workTime": "",
       "schedule": {
@@ -4298,6 +4298,380 @@
           "working": true,
           "present": true,
           "raw": "1"
+        }
+      }
+    },
+    {
+      "name": "백진홍",
+      "shiftType": "주간1",
+      "workTime": "",
+      "schedule": {
+        "9/1": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/2": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/3": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/4": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/5": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/6": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/7": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/8": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/9": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/10": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/11": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/12": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
+        },
+        "9/13": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
+        },
+        "9/14": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/15": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/16": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/17": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/18": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/19": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
+        },
+        "9/20": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
+        },
+        "9/21": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/22": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/23": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/24": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
+        },
+        "9/25": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
+        },
+        "9/26": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
+        },
+        "9/27": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
+        },
+        "9/28": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/29": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/30": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        }
+      }
+    },
+    {
+      "name": "황수진",
+      "shiftType": "주간1",
+      "workTime": "",
+      "schedule": {
+        "9/1": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/2": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/3": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/4": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/5": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/6": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/7": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/8": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/9": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/10": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/11": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/12": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/13": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/14": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/15": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/16": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/17": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/18": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/19": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/20": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/21": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/22": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/23": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/24": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/25": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/26": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/27": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/28": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/29": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/30": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
         }
       }
     },
@@ -9197,6 +9571,6 @@
     "9/30"
   ],
   "mainMonth": 9,
-  "updatedAt": "2026-09-04T03:53:07.989Z",
+  "updatedAt": "2026-09-05T03:53:05.921Z",
   "sheetName": "2026년_09월 스케줄"
 }
