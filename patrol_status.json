@@ -1,6 +1,17 @@
 {
-  "updatedAt": "2026-09-06 08:09:44",
+  "updatedAt": "2026-09-06 13:12:23",
   "recentHistory": [
+    {
+      "at": "2026-09-06 13:12:23",
+      "changes": [
+        {
+          "type": "변경",
+          "site": "[상태변경] 순천향: uncertain → suspended",
+          "status": "uncertain",
+          "reason": "[상태변경] 순천향: uncertain → suspended"
+        }
+      ]
+    },
     {
       "at": "2026-09-04 13:24:44",
       "changes": [
@@ -397,845 +408,6 @@
           "site": "서강대",
           "status": "active",
           "reason": "[삭제] 05:00 - [05:00] 서강대 - 순찰"
-        }
-      ]
-    },
-    {
-      "at": "2026-08-31 20:39:44",
-      "changes": [
-        {
-          "type": "추가",
-          "site": "성남 율동",
-          "status": "uncertain",
-          "reason": " 07:00 ~ 10:00 "
-        },
-        {
-          "type": "추가",
-          "site": "성남 야탑",
-          "status": "uncertain",
-          "reason": " 07:00 ~ 10:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "성남 율동",
-          "status": "active",
-          "reason": " 07:00 ~ 10:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "성남 야탑",
-          "status": "active",
-          "reason": " 07:00 ~ 10:00 "
-        },
-        {
-          "type": "추가",
-          "site": "성남 율동",
-          "status": "uncertain",
-          "reason": " 07:00 ~ 10:00 "
-        },
-        {
-          "type": "추가",
-          "site": "성남 야탑",
-          "status": "uncertain",
-          "reason": " 07:00 ~ 10:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "성남 율동",
-          "status": "active",
-          "reason": " 07:00 ~ 10:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "성남 야탑",
-          "status": "active",
-          "reason": " 07:00 ~ 10:00 "
-        },
-        {
-          "type": "추가",
-          "site": "성남 율동",
-          "status": "uncertain",
-          "reason": " 07:00 ~ 10:00 "
-        },
-        {
-          "type": "추가",
-          "site": "성남 야탑",
-          "status": "uncertain",
-          "reason": " 07:00 ~ 10:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "성남 율동",
-          "status": "active",
-          "reason": " 07:00 ~ 10:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "성남 야탑",
-          "status": "active",
-          "reason": " 07:00 ~ 10:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "성남 서현",
-          "status": "active",
-          "reason": "순찰 준비"
-        },
-        {
-          "type": "삭제",
-          "site": "잠실 레이크",
-          "status": "active",
-          "reason": "순찰 준비"
-        },
-        {
-          "type": "추가",
-          "site": "고양 래미안",
-          "status": "uncertain",
-          "reason": "[추가] 10:00 - [10:00] [자동출차]고양시 래미안 휴레스트 1호기 - 순찰"
-        },
-        {
-          "type": "추가",
-          "site": "성남 판교",
-          "status": "uncertain",
-          "reason": " 10:00 ~ 13:00 "
-        },
-        {
-          "type": "추가",
-          "site": "성남 서현",
-          "status": "uncertain",
-          "reason": " 10:00 ~ 13:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "고양 래미안",
-          "status": "active",
-          "reason": "[삭제] 10:00 - [10:00] 고양시 래미안 휴레스트 1호기 - 순찰"
-        },
-        {
-          "type": "삭제",
-          "site": "성남 판교",
-          "status": "active",
-          "reason": " 10:00 ~ 13:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "성남 서현",
-          "status": "active",
-          "reason": " 10:00 ~ 13:00 "
-        },
-        {
-          "type": "추가",
-          "site": "성남 판교",
-          "status": "uncertain",
-          "reason": " 10:00 ~ 13:00 "
-        },
-        {
-          "type": "추가",
-          "site": "성남 서현",
-          "status": "uncertain",
-          "reason": " 10:00 ~ 13:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "성남 판교",
-          "status": "active",
-          "reason": " 10:00 ~ 13:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "성남 서현",
-          "status": "active",
-          "reason": " 10:00 ~ 13:00 "
-        },
-        {
-          "type": "추가",
-          "site": "성남 판교",
-          "status": "uncertain",
-          "reason": " 10:00 ~ 13:00 "
-        },
-        {
-          "type": "추가",
-          "site": "성남 서현",
-          "status": "uncertain",
-          "reason": " 10:00 ~ 13:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "성남 판교",
-          "status": "active",
-          "reason": " 10:00 ~ 13:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "성남 서현",
-          "status": "active",
-          "reason": " 10:00 ~ 13:00 "
-        },
-        {
-          "type": "추가",
-          "site": "성남 율동",
-          "status": "uncertain",
-          "reason": " 13:00 ~ 16:00 "
-        },
-        {
-          "type": "추가",
-          "site": "성남 야탑",
-          "status": "uncertain",
-          "reason": " 13:00 ~ 16:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "성남 율동",
-          "status": "active",
-          "reason": " 13:00 ~ 16:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "성남 야탑",
-          "status": "active",
-          "reason": " 13:00 ~ 16:00 "
-        },
-        {
-          "type": "추가",
-          "site": "성남 율동",
-          "status": "uncertain",
-          "reason": " 13:00 ~ 16:00 "
-        },
-        {
-          "type": "추가",
-          "site": "성남 야탑",
-          "status": "uncertain",
-          "reason": " 13:00 ~ 16:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "성남 율동",
-          "status": "active",
-          "reason": " 13:00 ~ 16:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "성남 야탑",
-          "status": "active",
-          "reason": " 13:00 ~ 16:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "잠실 레이크",
-          "status": "active",
-          "reason": "순찰 준비"
-        },
-        {
-          "type": "추가",
-          "site": "성남 율동",
-          "status": "uncertain",
-          "reason": " 13:00 ~ 16:00 "
-        },
-        {
-          "type": "추가",
-          "site": "성남 야탑",
-          "status": "uncertain",
-          "reason": " 13:00 ~ 16:00 "
-        },
-        {
-          "type": "추가",
-          "site": "고양 래미안",
-          "status": "uncertain",
-          "reason": "[추가] 15:00 - [15:00] [자동출차]고양시 래미안 휴레스트 1호기 - 주말 순찰"
-        },
-        {
-          "type": "삭제",
-          "site": "성남 율동",
-          "status": "active",
-          "reason": " 13:00 ~ 16:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "성남 야탑",
-          "status": "active",
-          "reason": " 13:00 ~ 16:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "고양 래미안",
-          "status": "active",
-          "reason": "[삭제] 15:00 - [15:00] 고양시 래미안 휴레스트 1호기 - 주말 순찰"
-        },
-        {
-          "type": "추가",
-          "site": "성남 판교",
-          "status": "uncertain",
-          "reason": " 16:00 ~ 19:00 "
-        },
-        {
-          "type": "추가",
-          "site": "성남 서현",
-          "status": "uncertain",
-          "reason": " 16:00 ~ 19:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "성남 판교",
-          "status": "active",
-          "reason": " 16:00 ~ 19:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "성남 서현",
-          "status": "active",
-          "reason": " 16:00 ~ 19:00 "
-        },
-        {
-          "type": "추가",
-          "site": "성남 판교",
-          "status": "uncertain",
-          "reason": " 16:00 ~ 19:00 "
-        },
-        {
-          "type": "추가",
-          "site": "성남 서현",
-          "status": "uncertain",
-          "reason": " 16:00 ~ 19:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "성남 판교",
-          "status": "active",
-          "reason": " 16:00 ~ 19:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "성남 서현",
-          "status": "active",
-          "reason": " 16:00 ~ 19:00 "
-        },
-        {
-          "type": "추가",
-          "site": "성남 판교",
-          "status": "uncertain",
-          "reason": " 16:00 ~ 19:00 "
-        },
-        {
-          "type": "추가",
-          "site": "성남 서현",
-          "status": "uncertain",
-          "reason": " 16:00 ~ 19:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "성남 판교",
-          "status": "active",
-          "reason": " 16:00 ~ 19:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "성남 서현",
-          "status": "active",
-          "reason": " 16:00 ~ 19:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "성남 율동",
-          "status": "active",
-          "reason": "순찰 준비"
-        },
-        {
-          "type": "삭제",
-          "site": "성남 야탑",
-          "status": "active",
-          "reason": "순찰 준비"
-        },
-        {
-          "type": "추가",
-          "site": "성남 율동",
-          "status": "uncertain",
-          "reason": " 19:00 ~ 22:00 "
-        },
-        {
-          "type": "추가",
-          "site": "성남 야탑",
-          "status": "uncertain",
-          "reason": " 19:00 ~ 22:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "성남 율동",
-          "status": "active",
-          "reason": " 19:00 ~ 22:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "성남 야탑",
-          "status": "active",
-          "reason": " 19:00 ~ 22:00 "
-        },
-        {
-          "type": "추가",
-          "site": "성남 율동",
-          "status": "uncertain",
-          "reason": " 19:00 ~ 22:00 "
-        },
-        {
-          "type": "추가",
-          "site": "성남 야탑",
-          "status": "uncertain",
-          "reason": " 19:00 ~ 22:00 "
-        },
-        {
-          "type": "추가",
-          "site": "잠실 르엘",
-          "status": "uncertain",
-          "reason": "[추가] 20:00 - [20:00] [자동출차]잠실 르엘 - 순찰"
-        },
-        {
-          "type": "삭제",
-          "site": "성남 율동",
-          "status": "active",
-          "reason": " 19:00 ~ 22:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "성남 야탑",
-          "status": "active",
-          "reason": " 19:00 ~ 22:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "잠실 르엘",
-          "status": "active",
-          "reason": "[삭제] 20:00 - [20:00] 잠실 르엘 - 순찰"
-        },
-        {
-          "type": "추가",
-          "site": "성남 율동",
-          "status": "uncertain",
-          "reason": " 19:00 ~ 22:00 "
-        },
-        {
-          "type": "추가",
-          "site": "성남 야탑",
-          "status": "uncertain",
-          "reason": " 19:00 ~ 22:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "성남 율동",
-          "status": "active",
-          "reason": " 19:00 ~ 22:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "성남 야탑",
-          "status": "active",
-          "reason": " 19:00 ~ 22:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "성남 판교",
-          "status": "active",
-          "reason": "순찰 준비"
-        },
-        {
-          "type": "추가",
-          "site": "성남 판교",
-          "status": "uncertain",
-          "reason": " 22:00 ~ 01:00 "
-        },
-        {
-          "type": "추가",
-          "site": "성남 서현",
-          "status": "uncertain",
-          "reason": " 22:00 ~ 01:00 "
-        },
-        {
-          "type": "추가",
-          "site": "청담 르엘",
-          "status": "uncertain",
-          "reason": " 22:00 ~ 01:00 "
-        },
-        {
-          "type": "추가",
-          "site": "고양 래미안",
-          "status": "uncertain",
-          "reason": "[추가] 22:00 - [22:00] [자동출차]고양시 래미안 휴레스트 1호기 - 순찰"
-        },
-        {
-          "type": "삭제",
-          "site": "성남 판교",
-          "status": "active",
-          "reason": " 22:00 ~ 01:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "성남 서현",
-          "status": "active",
-          "reason": " 22:00 ~ 01:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "청담 르엘",
-          "status": "active",
-          "reason": " 22:00 ~ 01:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "고양 래미안",
-          "status": "active",
-          "reason": "[삭제] 22:00 - [22:00] 고양시 래미안 휴레스트 1호기 - 순찰"
-        },
-        {
-          "type": "추가",
-          "site": "성남 판교",
-          "status": "uncertain",
-          "reason": " 22:00 ~ 01:00 "
-        },
-        {
-          "type": "추가",
-          "site": "성남 서현",
-          "status": "uncertain",
-          "reason": " 22:00 ~ 01:00 "
-        },
-        {
-          "type": "추가",
-          "site": "청담 르엘",
-          "status": "uncertain",
-          "reason": " 22:00 ~ 01:00 "
-        },
-        {
-          "type": "추가",
-          "site": "서강대",
-          "status": "uncertain",
-          "reason": "[추가] 23:00 - [23:00] [자동출차]서강대 - 순찰"
-        },
-        {
-          "type": "삭제",
-          "site": "성남 판교",
-          "status": "active",
-          "reason": " 22:00 ~ 01:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "성남 서현",
-          "status": "active",
-          "reason": " 22:00 ~ 01:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "청담 르엘",
-          "status": "active",
-          "reason": " 22:00 ~ 01:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "서강대",
-          "status": "active",
-          "reason": "[삭제] 23:00 - [23:00] 서강대 - 순찰"
-        },
-        {
-          "type": "추가",
-          "site": "성남 판교",
-          "status": "uncertain",
-          "reason": " 22:00 ~ 01:00 "
-        },
-        {
-          "type": "추가",
-          "site": "성남 서현",
-          "status": "uncertain",
-          "reason": " 22:00 ~ 01:00 "
-        },
-        {
-          "type": "추가",
-          "site": "청담 르엘",
-          "status": "uncertain",
-          "reason": " 22:00 ~ 01:00 "
-        },
-        {
-          "type": "추가",
-          "site": "잠실 르엘",
-          "status": "uncertain",
-          "reason": "00:00 ~ 02:00"
-        },
-        {
-          "type": "삭제",
-          "site": "성남 판교",
-          "status": "active",
-          "reason": " 22:00 ~ 01:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "성남 서현",
-          "status": "active",
-          "reason": " 22:00 ~ 01:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "청담 르엘",
-          "status": "active",
-          "reason": " 22:00 ~ 01:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "잠실 르엘",
-          "status": "active",
-          "reason": "00:00 ~ 02:00"
-        },
-        {
-          "type": "추가",
-          "site": "성남 율동",
-          "status": "uncertain",
-          "reason": " 01:00 ~ 04:00 "
-        },
-        {
-          "type": "추가",
-          "site": "성남 야탑",
-          "status": "uncertain",
-          "reason": " 01:00 ~ 04:00 "
-        },
-        {
-          "type": "추가",
-          "site": "잠실 르엘",
-          "status": "uncertain",
-          "reason": "00:00 ~ 02:00"
-        },
-        {
-          "type": "추가",
-          "site": "서강대",
-          "status": "uncertain",
-          "reason": "[추가] 01:00 - [01:00] [자동출차]서강대 - 순찰"
-        },
-        {
-          "type": "삭제",
-          "site": "성남 율동",
-          "status": "active",
-          "reason": " 01:00 ~ 04:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "성남 야탑",
-          "status": "active",
-          "reason": " 01:00 ~ 04:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "잠실 르엘",
-          "status": "active",
-          "reason": "00:00 ~ 02:00"
-        },
-        {
-          "type": "삭제",
-          "site": "서강대",
-          "status": "active",
-          "reason": "[삭제] 01:00 - [01:00] 서강대 - 순찰"
-        },
-        {
-          "type": "삭제",
-          "site": "청담 르엘",
-          "status": "active",
-          "reason": "순찰 준비"
-        },
-        {
-          "type": "삭제",
-          "site": "동백SK",
-          "status": "active",
-          "reason": "순찰 준비"
-        },
-        {
-          "type": "추가",
-          "site": "성남 율동",
-          "status": "uncertain",
-          "reason": " 01:00 ~ 04:00 "
-        },
-        {
-          "type": "추가",
-          "site": "성남 야탑",
-          "status": "uncertain",
-          "reason": " 01:00 ~ 04:00 "
-        },
-        {
-          "type": "추가",
-          "site": "청담 르엘",
-          "status": "uncertain",
-          "reason": " 02:00 ~ 05:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "성남 율동",
-          "status": "active",
-          "reason": " 01:00 ~ 04:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "성남 야탑",
-          "status": "active",
-          "reason": " 01:00 ~ 04:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "청담 르엘",
-          "status": "active",
-          "reason": " 02:00 ~ 05:00 "
-        },
-        {
-          "type": "추가",
-          "site": "성남 율동",
-          "status": "uncertain",
-          "reason": " 01:00 ~ 04:00 "
-        },
-        {
-          "type": "추가",
-          "site": "성남 야탑",
-          "status": "uncertain",
-          "reason": " 01:00 ~ 04:00 "
-        },
-        {
-          "type": "추가",
-          "site": "청담 르엘",
-          "status": "uncertain",
-          "reason": " 02:00 ~ 05:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "성남 율동",
-          "status": "active",
-          "reason": " 01:00 ~ 04:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "성남 야탑",
-          "status": "active",
-          "reason": " 01:00 ~ 04:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "청담 르엘",
-          "status": "active",
-          "reason": " 02:00 ~ 05:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "성남 판교",
-          "status": "active",
-          "reason": "순찰 준비"
-        },
-        {
-          "type": "삭제",
-          "site": "성남 서현",
-          "status": "active",
-          "reason": "순찰 준비"
-        },
-        {
-          "type": "삭제",
-          "site": "고양 래미안",
-          "status": "active",
-          "reason": "순찰 준비"
-        },
-        {
-          "type": "추가",
-          "site": "성남 판교",
-          "status": "uncertain",
-          "reason": " 04:00 ~ 07:00 "
-        },
-        {
-          "type": "추가",
-          "site": "성남 서현",
-          "status": "uncertain",
-          "reason": " 04:00 ~ 07:00 "
-        },
-        {
-          "type": "추가",
-          "site": "청담 르엘",
-          "status": "uncertain",
-          "reason": " 02:00 ~ 05:00 "
-        },
-        {
-          "type": "추가",
-          "site": "고양 래미안",
-          "status": "uncertain",
-          "reason": "[추가] 04:00 - [04:00] [자동출차]고양시 래미안 휴레스트 1호기 - 순찰"
-        },
-        {
-          "type": "삭제",
-          "site": "성남 판교",
-          "status": "active",
-          "reason": " 04:00 ~ 07:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "성남 서현",
-          "status": "active",
-          "reason": " 04:00 ~ 07:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "청담 르엘",
-          "status": "active",
-          "reason": " 02:00 ~ 05:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "고양 래미안",
-          "status": "active",
-          "reason": "[삭제] 04:00 - [04:00] 고양시 래미안 휴레스트 1호기 - 순찰"
-        },
-        {
-          "type": "추가",
-          "site": "성남 판교",
-          "status": "uncertain",
-          "reason": " 04:00 ~ 07:00 "
-        },
-        {
-          "type": "추가",
-          "site": "성남 서현",
-          "status": "uncertain",
-          "reason": " 04:00 ~ 07:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "성남 판교",
-          "status": "active",
-          "reason": " 04:00 ~ 07:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "성남 서현",
-          "status": "active",
-          "reason": " 04:00 ~ 07:00 "
-        },
-        {
-          "type": "추가",
-          "site": "성남 판교",
-          "status": "uncertain",
-          "reason": " 04:00 ~ 07:00 "
-        },
-        {
-          "type": "추가",
-          "site": "성남 서현",
-          "status": "uncertain",
-          "reason": " 04:00 ~ 07:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "성남 판교",
-          "status": "active",
-          "reason": " 04:00 ~ 07:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "성남 서현",
-          "status": "active",
-          "reason": " 04:00 ~ 07:00 "
-        },
-        {
-          "type": "삭제",
-          "site": "성남 율동",
-          "status": "active",
-          "reason": "순찰 준비"
-        },
-        {
-          "type": "삭제",
-          "site": "성남 야탑",
-          "status": "active",
-          "reason": "순찰 준비"
         }
       ]
     }
@@ -2430,307 +1602,307 @@
     "용인 고진": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "서강대": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "경희대 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "성남 율동": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "성남 야탑": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "구리 롯데캐슬": {
       "status": "suspended",
       "reason": "cctv미송출",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "부산 호반 1": {
       "status": "suspended",
       "reason": "구동부이슈",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "부산 수자인 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "파주": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "양원LH": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "리센츠 1": {
       "status": "suspended",
       "reason": "cali 비정상",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "리센츠 2": {
       "status": "suspended",
       "reason": "타이어마모",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "평택 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "평택 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "DMZ": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "부산 서면": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "부천 위브": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "장애인고용공단 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "장애인고용공단 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "순천향": {
-      "status": "uncertain",
+      "status": "suspended",
       "reason": "9/8 00시부터",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "인력개발원": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "부산 호반 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "부산 수자인 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "고양 래미안": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "성남 판교": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "성남 서현": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "잠실 레이크": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "덕수궁": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "엘스": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "창원대 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "창원대 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "한성대": {
       "status": "suspended",
       "reason": "타이어마모",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "김포 풍무": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "부경대": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "동대문구 회기동": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "김포 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "김포 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "더샵남천": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "지제": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "두루아이 4": {
       "status": "suspended",
       "reason": "타이어마모",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "잠실 르엘": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "중앙대": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "신동백": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "전주천": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "동백SK": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "청담 르엘": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "아주대 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "아주대 2": {
       "status": "suspended",
       "reason": "타이어마모",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "인재개발원": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "두루아이 3": {
       "status": "suspended",
       "reason": "타이어마모",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     },
     "쉴더스": {
       "status": "suspended",
       "reason": "현장확인전까지",
-      "updatedAt": "2026-09-06 08:09:44",
+      "updatedAt": "2026-09-06 13:12:23",
       "syncIssue": false
     }
   }
