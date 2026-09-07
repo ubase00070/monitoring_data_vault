@@ -1266,28 +1266,28 @@
           "raw": "1"
         },
         "9/24": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "9/25": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/26": {
           "status": "off",
           "working": false,
           "present": false,
           "raw": "휴무"
         },
-        "9/26": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
         "9/27": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "9/28": {
           "status": "work",
@@ -4485,193 +4485,6 @@
           "working": true,
           "present": true,
           "raw": "1"
-        }
-      }
-    },
-    {
-      "name": "황수진",
-      "shiftType": "주간1",
-      "workTime": "",
-      "schedule": {
-        "9/1": {
-          "status": "empty",
-          "working": false,
-          "present": false,
-          "raw": ""
-        },
-        "9/2": {
-          "status": "empty",
-          "working": false,
-          "present": false,
-          "raw": ""
-        },
-        "9/3": {
-          "status": "empty",
-          "working": false,
-          "present": false,
-          "raw": ""
-        },
-        "9/4": {
-          "status": "empty",
-          "working": false,
-          "present": false,
-          "raw": ""
-        },
-        "9/5": {
-          "status": "empty",
-          "working": false,
-          "present": false,
-          "raw": ""
-        },
-        "9/6": {
-          "status": "empty",
-          "working": false,
-          "present": false,
-          "raw": ""
-        },
-        "9/7": {
-          "status": "empty",
-          "working": false,
-          "present": false,
-          "raw": ""
-        },
-        "9/8": {
-          "status": "empty",
-          "working": false,
-          "present": false,
-          "raw": ""
-        },
-        "9/9": {
-          "status": "empty",
-          "working": false,
-          "present": false,
-          "raw": ""
-        },
-        "9/10": {
-          "status": "empty",
-          "working": false,
-          "present": false,
-          "raw": ""
-        },
-        "9/11": {
-          "status": "empty",
-          "working": false,
-          "present": false,
-          "raw": ""
-        },
-        "9/12": {
-          "status": "empty",
-          "working": false,
-          "present": false,
-          "raw": ""
-        },
-        "9/13": {
-          "status": "empty",
-          "working": false,
-          "present": false,
-          "raw": ""
-        },
-        "9/14": {
-          "status": "empty",
-          "working": false,
-          "present": false,
-          "raw": ""
-        },
-        "9/15": {
-          "status": "empty",
-          "working": false,
-          "present": false,
-          "raw": ""
-        },
-        "9/16": {
-          "status": "empty",
-          "working": false,
-          "present": false,
-          "raw": ""
-        },
-        "9/17": {
-          "status": "empty",
-          "working": false,
-          "present": false,
-          "raw": ""
-        },
-        "9/18": {
-          "status": "empty",
-          "working": false,
-          "present": false,
-          "raw": ""
-        },
-        "9/19": {
-          "status": "empty",
-          "working": false,
-          "present": false,
-          "raw": ""
-        },
-        "9/20": {
-          "status": "empty",
-          "working": false,
-          "present": false,
-          "raw": ""
-        },
-        "9/21": {
-          "status": "empty",
-          "working": false,
-          "present": false,
-          "raw": ""
-        },
-        "9/22": {
-          "status": "empty",
-          "working": false,
-          "present": false,
-          "raw": ""
-        },
-        "9/23": {
-          "status": "empty",
-          "working": false,
-          "present": false,
-          "raw": ""
-        },
-        "9/24": {
-          "status": "empty",
-          "working": false,
-          "present": false,
-          "raw": ""
-        },
-        "9/25": {
-          "status": "empty",
-          "working": false,
-          "present": false,
-          "raw": ""
-        },
-        "9/26": {
-          "status": "empty",
-          "working": false,
-          "present": false,
-          "raw": ""
-        },
-        "9/27": {
-          "status": "empty",
-          "working": false,
-          "present": false,
-          "raw": ""
-        },
-        "9/28": {
-          "status": "empty",
-          "working": false,
-          "present": false,
-          "raw": ""
-        },
-        "9/29": {
-          "status": "empty",
-          "working": false,
-          "present": false,
-          "raw": ""
-        },
-        "9/30": {
-          "status": "empty",
-          "working": false,
-          "present": false,
-          "raw": ""
         }
       }
     },
@@ -9571,6 +9384,6 @@
     "9/30"
   ],
   "mainMonth": 9,
-  "updatedAt": "2026-09-06T03:53:07.096Z",
+  "updatedAt": "2026-09-07T03:53:07.582Z",
   "sheetName": "2026년_09월 스케줄"
 }
