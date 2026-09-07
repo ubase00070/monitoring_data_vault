@@ -5587,6 +5587,17 @@
 
     let lastUrl = location.href;
 
+    // ── 신형 개입 페이지를 새로고침하거나 링크로 직접 열어 들어온 경우 대응 ──
+    // 아래 URL 변경 감지(클릭 리스너/2초 폴링)는 location.href가 lastUrl과
+    // "달라지는 순간"에만 _startOperatorWatch()를 호출한다. 그런데 lastUrl이
+    // 스크립트 로드 시점의 현재 URL로 초기화되기 때문에, 처음부터 개입 페이지에
+    // 떠 있던 경우(새로고침/직접 진입)에는 변경이 감지되지 않아 조작자 감시가
+    // 영영 시작되지 않는 문제가 있었다. 최초 1회, 지금 이미 대상 페이지인지
+    // 확인해서 필요하면 즉시 감시를 시작한다.
+    if (/\/driving\/\d+/.test(location.pathname)) {
+        setTimeout(() => _startOperatorWatch(), 1500);
+    }
+
     // 브라우저의 뒤로가기/앞으로가기 대응 (이벤트 발생 시에만)
     window.addEventListener('popstate', () => {
         closeAllPopups();
