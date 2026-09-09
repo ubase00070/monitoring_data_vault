@@ -1,6 +1,383 @@
 {
-  "updatedAt": "2026-09-09 11:39:45",
+  "updatedAt": "2026-09-09 14:24:44",
   "recentHistory": [
+    {
+      "at": "2026-09-09 14:24:44",
+      "changes": [
+        {
+          "type": "추가",
+          "site": "용인 고진",
+          "status": "uncertain",
+          "reason": "[추가] 07:00 - [07:00] 용인 고진역 힐스테이트 - 순찰 [예약배차]"
+        },
+        {
+          "type": "추가",
+          "site": "경희대 1",
+          "status": "uncertain",
+          "reason": "[추가] 07:00 - [07:00] 경희대 1호기 - 순찰 [사이트 배차]"
+        },
+        {
+          "type": "삭제",
+          "site": "용인 고진",
+          "status": "active",
+          "reason": "[삭제] 07:00 - [07:00] 용인 고진역 힐스테이트 - 순찰"
+        },
+        {
+          "type": "삭제",
+          "site": "경희대 1",
+          "status": "active",
+          "reason": "[삭제] 07:00 - [07:00] 경희대 1호기 - 순찰"
+        },
+        {
+          "type": "추가",
+          "site": "구리 롯데캐슬",
+          "status": "uncertain",
+          "reason": "8회전"
+        },
+        {
+          "type": "추가",
+          "site": "파주",
+          "status": "uncertain",
+          "reason": "[추가] 08:00 - [08:50] 파주 - 순찰 [출차]"
+        },
+        {
+          "type": "삭제",
+          "site": "구리 롯데캐슬",
+          "status": "active",
+          "reason": "8회전"
+        },
+        {
+          "type": "추가",
+          "site": "파주",
+          "status": "uncertain",
+          "reason": "[추가] 09:00 - [09:00] 파주 - 순찰 [예약 배차]"
+        },
+        {
+          "type": "추가",
+          "site": "구리 롯데캐슬",
+          "status": "uncertain",
+          "reason": "8회전"
+        },
+        {
+          "type": "추가",
+          "site": "리센츠 1",
+          "status": "uncertain",
+          "reason": "[추가] 09:00 - [09:00] 잠실 리센츠 1호기 - 첫번째 순찰 A 코스  [관제실 배차]"
+        },
+        {
+          "type": "추가",
+          "site": "리센츠 2",
+          "status": "uncertain",
+          "reason": "[추가] 09:00 - [09:00] 잠실 리센츠 2호기 - 첫번째 순찰 B 코스  [관제실 배차]"
+        },
+        {
+          "type": "추가",
+          "site": "평택 1",
+          "status": "uncertain",
+          "reason": "[추가] 09:00 - [09:00] 평택 1호기 - 순찰 [사이트 배차]"
+        },
+        {
+          "type": "추가",
+          "site": "평택 2",
+          "status": "uncertain",
+          "reason": "[추가] 09:00 - [09:00] 평택 2호기 - 순찰 [사이트 배차]"
+        },
+        {
+          "type": "추가",
+          "site": "DMZ",
+          "status": "uncertain",
+          "reason": "[추가] 09:00 - [09:00] DMZ - 순찰 [랜덤 사이트 배차]"
+        },
+        {
+          "type": "추가",
+          "site": "부산 서면",
+          "status": "uncertain",
+          "reason": "[추가] 09:00 - [09:00] 부산 서면 - 순찰 [사이트 배차]"
+        },
+        {
+          "type": "추가",
+          "site": "부천 위브",
+          "status": "uncertain",
+          "reason": "[추가] 09:00 - [09:00] 부천 중동 - 순찰 [사이트 배차]"
+        },
+        {
+          "type": "삭제",
+          "site": "파주",
+          "status": "active",
+          "reason": "[삭제] 09:00 - [09:00] 파주 - 순찰"
+        },
+        {
+          "type": "삭제",
+          "site": "구리 롯데캐슬",
+          "status": "active",
+          "reason": "8회전"
+        },
+        {
+          "type": "삭제",
+          "site": "리센츠 1",
+          "status": "active",
+          "reason": "[삭제] 09:00 - [09:00] 잠실 리센츠 1호기 - 첫번째 순찰 A 코스"
+        },
+        {
+          "type": "삭제",
+          "site": "리센츠 2",
+          "status": "active",
+          "reason": "[삭제] 09:00 - [09:00] 잠실 리센츠 2호기 - 첫번째 순찰 B 코스"
+        },
+        {
+          "type": "삭제",
+          "site": "평택 1",
+          "status": "active",
+          "reason": "[삭제] 09:00 - [09:00] 평택 1호기 - 순찰"
+        },
+        {
+          "type": "삭제",
+          "site": "평택 2",
+          "status": "active",
+          "reason": "[삭제] 09:00 - [09:00] 평택 2호기 - 순찰"
+        },
+        {
+          "type": "삭제",
+          "site": "DMZ",
+          "status": "active",
+          "reason": "랜덤"
+        },
+        {
+          "type": "삭제",
+          "site": "부산 서면",
+          "status": "active",
+          "reason": "[삭제] 09:00 - [09:00] 부산 서면 - 순찰"
+        },
+        {
+          "type": "삭제",
+          "site": "부천 위브",
+          "status": "active",
+          "reason": "[삭제] 09:00 - [09:00] 부천 중동 - 순찰"
+        },
+        {
+          "type": "변경",
+          "site": "부산 호반 2",
+          "status": "suspended",
+          "reason": "변경"
+        },
+        {
+          "type": "변경",
+          "site": "성남 판교",
+          "status": "suspended",
+          "reason": "변경"
+        },
+        {
+          "type": "추가",
+          "site": "순천향",
+          "status": "uncertain",
+          "reason": "[추가] 10:00 - [10:00] [SK쉴더스] 순천향대학교 1호기 - 순찰 [예약 배차]"
+        },
+        {
+          "type": "추가",
+          "site": "동대문구 회기동",
+          "status": "uncertain",
+          "reason": "쉴드플러스"
+        },
+        {
+          "type": "추가",
+          "site": "인력개발원",
+          "status": "uncertain",
+          "reason": "[추가] 10:00 - [10:00] 삼성인력개발원 - 순찰 [평일] [예약 배차]"
+        },
+        {
+          "type": "추가",
+          "site": "리센츠 1",
+          "status": "uncertain",
+          "reason": "[추가] 10:00 - [10:00] 잠실 리센츠 1호기 - 두번째 순찰 B 코스 [관제실 배차]"
+        },
+        {
+          "type": "추가",
+          "site": "리센츠 2",
+          "status": "uncertain",
+          "reason": "[추가] 10:00 - [10:00] 잠실 리센츠 2호기 - 두번째 순찰 A 코스 [관제실 배차]"
+        },
+        {
+          "type": "추가",
+          "site": "엘스",
+          "status": "uncertain",
+          "reason": "A, B코스"
+        },
+        {
+          "type": "삭제",
+          "site": "순천향",
+          "status": "active",
+          "reason": "[삭제] 10:00 - [10:00] [SK쉴더스] 순천향대학교 1호기 - 순찰"
+        },
+        {
+          "type": "삭제",
+          "site": "동대문구 회기동",
+          "status": "active",
+          "reason": "쉴드플러스"
+        },
+        {
+          "type": "삭제",
+          "site": "인력개발원",
+          "status": "active",
+          "reason": "[삭제] 10:00 - [10:00] 삼성인력개발원 - 순찰 [평일]"
+        },
+        {
+          "type": "삭제",
+          "site": "리센츠 1",
+          "status": "active",
+          "reason": "[삭제] 10:00 - [10:00] 잠실 리센츠 1호기 - 두번째 순찰 B 코스"
+        },
+        {
+          "type": "삭제",
+          "site": "리센츠 2",
+          "status": "active",
+          "reason": "[삭제] 10:00 - [10:00] 잠실 리센츠 2호기 - 두번째 순찰 A 코스"
+        },
+        {
+          "type": "삭제",
+          "site": "엘스",
+          "status": "active",
+          "reason": "A, B코스"
+        },
+        {
+          "type": "변경",
+          "site": "부산 호반 2",
+          "status": "suspended",
+          "reason": "변경"
+        },
+        {
+          "type": "변경",
+          "site": "성남 판교",
+          "status": "suspended",
+          "reason": "변경"
+        },
+        {
+          "type": "추가",
+          "site": "파주",
+          "status": "uncertain",
+          "reason": "[추가] 11:00 - [11:50] 파주 - 순찰 [출차]"
+        },
+        {
+          "type": "변경",
+          "site": "성남 판교",
+          "status": "suspended",
+          "reason": "변경"
+        },
+        {
+          "type": "변경",
+          "site": "부산 호반 2",
+          "status": "suspended",
+          "reason": "변경"
+        },
+        {
+          "type": "추가",
+          "site": "파주",
+          "status": "uncertain",
+          "reason": "[추가] 14:00 - [14:50] 파주 - 순찰 [출차]"
+        },
+        {
+          "type": "변경",
+          "site": "부산 호반 2",
+          "status": "suspended",
+          "reason": "변경"
+        },
+        {
+          "type": "변경",
+          "site": "성남 판교",
+          "status": "suspended",
+          "reason": "변경"
+        },
+        {
+          "type": "변경",
+          "site": "성남 판교",
+          "status": "suspended",
+          "reason": "변경"
+        },
+        {
+          "type": "추가",
+          "site": "파주",
+          "status": "uncertain",
+          "reason": "[추가] 17:00 - [17:50] 파주 - 순찰 [출차]"
+        },
+        {
+          "type": "변경",
+          "site": "부산 호반 2",
+          "status": "suspended",
+          "reason": "변경"
+        },
+        {
+          "type": "변경",
+          "site": "성남 판교",
+          "status": "suspended",
+          "reason": "변경"
+        },
+        {
+          "type": "변경",
+          "site": "부산 호반 2",
+          "status": "suspended",
+          "reason": "변경"
+        },
+        {
+          "type": "추가",
+          "site": "파주",
+          "status": "uncertain",
+          "reason": "[추가] 20:00 - [21:50] 파주 - 순찰 [출차]"
+        },
+        {
+          "type": "변경",
+          "site": "성남 판교",
+          "status": "suspended",
+          "reason": "변경"
+        },
+        {
+          "type": "변경",
+          "site": "성남 판교",
+          "status": "suspended",
+          "reason": "변경"
+        },
+        {
+          "type": "추가",
+          "site": "파주",
+          "status": "uncertain",
+          "reason": "[추가] 23:00 - [23:50] 파주 - 순찰 [출차]"
+        },
+        {
+          "type": "변경",
+          "site": "성남 판교",
+          "status": "suspended",
+          "reason": "변경"
+        },
+        {
+          "type": "변경",
+          "site": "성남 판교",
+          "status": "suspended",
+          "reason": "변경"
+        },
+        {
+          "type": "변경",
+          "site": "성남 판교",
+          "status": "suspended",
+          "reason": "변경"
+        },
+        {
+          "type": "변경",
+          "site": "성남 판교",
+          "status": "suspended",
+          "reason": "변경"
+        },
+        {
+          "type": "변경",
+          "site": "[상태변경] 부산 호반 2: active → suspended",
+          "status": "uncertain",
+          "reason": "[상태변경] 부산 호반 2: active → suspended"
+        },
+        {
+          "type": "변경",
+          "site": "[상태변경] 성남 판교: active → suspended",
+          "status": "uncertain",
+          "reason": "[상태변경] 성남 판교: active → suspended"
+        }
+      ]
+    },
     {
       "at": "2026-09-09 11:39:45",
       "changes": [
@@ -345,65 +722,6 @@
           "reason": "순찰준비"
         }
       ]
-    },
-    {
-      "at": "2026-09-07 19:54:44",
-      "changes": [
-        {
-          "type": "삭제",
-          "site": "한성대",
-          "status": "active",
-          "reason": "순찰 준비"
-        },
-        {
-          "type": "추가",
-          "site": "한성대",
-          "status": "uncertain",
-          "reason": "6바퀴"
-        },
-        {
-          "type": "삭제",
-          "site": "한성대",
-          "status": "active",
-          "reason": "6바퀴"
-        },
-        {
-          "type": "삭제",
-          "site": "한성대",
-          "status": "active",
-          "reason": "순찰 준비"
-        },
-        {
-          "type": "추가",
-          "site": "한성대",
-          "status": "uncertain",
-          "reason": "6바퀴"
-        },
-        {
-          "type": "삭제",
-          "site": "한성대",
-          "status": "active",
-          "reason": "6바퀴"
-        },
-        {
-          "type": "삭제",
-          "site": "한성대",
-          "status": "active",
-          "reason": "순찰 준비"
-        },
-        {
-          "type": "추가",
-          "site": "한성대",
-          "status": "uncertain",
-          "reason": "6바퀴"
-        },
-        {
-          "type": "삭제",
-          "site": "한성대",
-          "status": "active",
-          "reason": "6바퀴"
-        }
-      ]
     }
   ],
   "patrol_schedule": {
@@ -421,11 +739,11 @@
         "note": ""
       },
       {
-        "task": "[07:00] 용인 고진역 힐스테이트 - 순찰",
+        "task": "[07:00] 용인 고진역 힐스테이트 - 순찰 [예약배차]",
         "note": ""
       },
       {
-        "task": "[07:00] 경희대 1호기 - 순찰",
+        "task": "[07:00] 경희대 1호기 - 순찰 [사이트 배차]",
         "note": ""
       },
       {
@@ -451,8 +769,12 @@
         "note": ""
       },
       {
-        "task": "[08:00] 구리 롯데캐슬 시그니처 - 순찰 (8회전)",
+        "task": "[08:00] 구리 롯데캐슬 시그니처 - 순찰 (8회전)  [예약 배차]",
         "note": "순찰중단(cctv미송출)"
+      },
+      {
+        "task": "[08:50] 파주 - 순찰 [출차]",
+        "note": ""
       }
     ],
     "09:00": [
@@ -493,39 +815,39 @@
         "note": ""
       },
       {
-        "task": "[09:00] 파주 - 순찰",
+        "task": "[09:00] 파주 - 순찰 [예약 배차]",
         "note": ""
       },
       {
-        "task": "[09:00] 구리 롯데캐슬 시그니처 - 순찰 (8회전)",
+        "task": "[09:00] 구리 롯데캐슬 시그니처 - 순찰 (8회전) [예약 배차]",
         "note": "순찰중단(cctv미송출)"
       },
       {
-        "task": "[09:00] 잠실 리센츠 1호기 - 첫번째 순찰 A 코스",
+        "task": "[09:00] 잠실 리센츠 1호기 - 첫번째 순찰 A 코스  [관제실 배차]",
         "note": "순찰중단(cali 비정상)"
       },
       {
-        "task": "[09:00] 잠실 리센츠 2호기 - 첫번째 순찰 B 코스",
+        "task": "[09:00] 잠실 리센츠 2호기 - 첫번째 순찰 B 코스  [관제실 배차]",
         "note": "순찰중단(타이어마모)"
       },
       {
-        "task": "[09:00] 평택 1호기 - 순찰",
+        "task": "[09:00] 평택 1호기 - 순찰 [사이트 배차]",
         "note": ""
       },
       {
-        "task": "[09:00] 평택 2호기 - 순찰",
+        "task": "[09:00] 평택 2호기 - 순찰 [사이트 배차]",
         "note": ""
       },
       {
-        "task": "[09:00] DMZ - 순찰 (랜덤)",
+        "task": "[09:00] DMZ - 순찰 [랜덤 사이트 배차]",
         "note": ""
       },
       {
-        "task": "[09:00] 부산 서면 - 순찰",
+        "task": "[09:00] 부산 서면 - 순찰 [사이트 배차]",
         "note": ""
       },
       {
-        "task": "[09:00] 부천 중동 - 순찰",
+        "task": "[09:00] 부천 중동 - 순찰 [사이트 배차]",
         "note": ""
       }
     ],
@@ -536,7 +858,7 @@
       },
       {
         "task": "[10:00] [자동출차] 부산 EDC 호반써밋 2호기 - 순찰",
-        "note": ""
+        "note": "순찰중단(타이어마모)"
       },
       {
         "task": "[10:00] [자동출차] 부산 EDC 수자인 2호기 - 순찰",
@@ -548,7 +870,7 @@
       },
       {
         "task": "[10:00] [자동출차]성남시 판교역 1호기 - 순찰 ( 10:00 ~ 13:00 )",
-        "note": ""
+        "note": "순찰중단(타이어마모)"
       },
       {
         "task": "[10:00] [자동출차]성남시 서현역 1호기 - 순찰 ( 10:00 ~ 13:00 )",
@@ -575,27 +897,27 @@
         "note": ""
       },
       {
-        "task": "[10:00] [SK쉴더스] 순천향대학교 1호기 - 순찰",
+        "task": "[10:00] [SK쉴더스] 순천향대학교 1호기 - 순찰 [예약 배차]",
         "note": ""
       },
       {
-        "task": "[10:00] 동대문구회기동 1호기(쉴드플러스) - 순찰 [평일]",
+        "task": "[10:00] 동대문구회기동 1호기(쉴드플러스) - 순찰 [평일] [예약 배차]",
         "note": ""
       },
       {
-        "task": "[10:00] 삼성인력개발원 - 순찰 [평일]",
+        "task": "[10:00] 삼성인력개발원 - 순찰 [평일] [예약 배차]",
         "note": ""
       },
       {
-        "task": "[10:00] 잠실 리센츠 1호기 - 두번째 순찰 B 코스",
+        "task": "[10:00] 잠실 리센츠 1호기 - 두번째 순찰 B 코스 [관제실 배차]",
         "note": "순찰중단(cali 비정상)"
       },
       {
-        "task": "[10:00] 잠실 리센츠 2호기 - 두번째 순찰 A 코스",
+        "task": "[10:00] 잠실 리센츠 2호기 - 두번째 순찰 A 코스 [관제실 배차]",
         "note": "순찰중단(타이어마모)"
       },
       {
-        "task": "[10:30] 잠실 엘스 - 순찰 (A, B코스)",
+        "task": "[10:30] 잠실 엘스 - 순찰 (A, B코스) [관제실 배차]",
         "note": ""
       }
     ],
@@ -610,7 +932,7 @@
       },
       {
         "task": "[11:00] [자동출차] 부산 EDC 호반써밋 2호기 - 순찰",
-        "note": ""
+        "note": "순찰중단(타이어마모)"
       },
       {
         "task": "[11:00] [자동출차] 부산 EDC 수자인 2호기 - 순찰",
@@ -618,7 +940,7 @@
       },
       {
         "task": "[11:00] [자동출차]성남시 판교역 1호기 - 순찰 ( 10:00 ~ 13:00 )",
-        "note": ""
+        "note": "순찰중단(타이어마모)"
       },
       {
         "task": "[11:00] [자동출차]성남시 서현역 1호기 - 순찰 ( 10:00 ~ 13:00 )",
@@ -643,6 +965,10 @@
       {
         "task": "[11:00] 부경대 - 순찰",
         "note": ""
+      },
+      {
+        "task": "[11:50] 파주 - 순찰 [출차]",
+        "note": ""
       }
     ],
     "12:00": [
@@ -660,7 +986,7 @@
       },
       {
         "task": "[12:00] [자동출차]성남시 판교역 1호기 - 순찰 ( 10:00 ~ 13:00 )",
-        "note": ""
+        "note": "순찰중단(타이어마모)"
       },
       {
         "task": "[12:00] [자동출차]성남시 서현역 1호기 - 순찰 ( 10:00 ~ 13:00 )",
@@ -716,7 +1042,7 @@
     "14:00": [
       {
         "task": "[14:00] [자동출차] 부산 EDC 호반써밋 2호기 - 순찰",
-        "note": ""
+        "note": "순찰중단(타이어마모)"
       },
       {
         "task": "[14:00] [자동출차] 부산 EDC 수자인 2호기 - 순찰",
@@ -773,6 +1099,10 @@
       {
         "task": "[14:30] 김포 2호기 - 순찰",
         "note": ""
+      },
+      {
+        "task": "[14:50] 파주 - 순찰 [출차]",
+        "note": ""
       }
     ],
     "15:00": [
@@ -786,7 +1116,7 @@
       },
       {
         "task": "[15:00] [자동출차] 부산 EDC 호반써밋 2호기 - 순찰",
-        "note": ""
+        "note": "순찰중단(타이어마모)"
       },
       {
         "task": "[15:00] [자동출차] 부산 EDC 수자인 2호기 - 순찰",
@@ -852,7 +1182,7 @@
       },
       {
         "task": "[16:00] [자동출차]성남시 판교역 1호기 - 순찰  ( 16:00 ~ 19:00 )",
-        "note": ""
+        "note": "순찰중단(타이어마모)"
       },
       {
         "task": "[16:00] [자동출차]성남시 서현역 1호기 - 순찰  ( 16:00 ~ 19:00 )",
@@ -914,7 +1244,7 @@
       },
       {
         "task": "[17:00] [자동출차]성남시 판교역 1호기 - 순찰  ( 16:00 ~ 19:00 )",
-        "note": ""
+        "note": "순찰중단(타이어마모)"
       },
       {
         "task": "[17:00] [자동출차]성남시 서현역 1호기 - 순찰  ( 16:00 ~ 19:00 )",
@@ -935,12 +1265,16 @@
       {
         "task": "[17:00] 지제역 푸르지오엘리아치 - 순찰",
         "note": ""
+      },
+      {
+        "task": "[17:50] 파주 - 순찰 [출차]",
+        "note": ""
       }
     ],
     "18:00": [
       {
         "task": "[18:00] [자동출차] 부산 EDC 호반써밋 2호기 - 순찰",
-        "note": ""
+        "note": "순찰중단(타이어마모)"
       },
       {
         "task": "[18:00] [자동출차] 부산 EDC 수자인 2호기 - 순찰",
@@ -948,7 +1282,7 @@
       },
       {
         "task": "[18:00] [자동출차]성남시 판교역 1호기 - 순찰  ( 16:00 ~ 19:00 )",
-        "note": ""
+        "note": "순찰중단(타이어마모)"
       },
       {
         "task": "[18:00] [자동출차]성남시 서현역 1호기 - 순찰  ( 16:00 ~ 19:00 )",
@@ -970,7 +1304,7 @@
       },
       {
         "task": "[19:00] [자동출차] 부산 EDC 호반써밋 2호기 - 순찰",
-        "note": ""
+        "note": "순찰중단(타이어마모)"
       },
       {
         "task": "[19:00] [자동출차] 부산 EDC 수자인 2호기 - 순찰",
@@ -1045,6 +1379,10 @@
       {
         "task": "[20:00] 지제역 푸르지오엘리아치 - 순찰",
         "note": ""
+      },
+      {
+        "task": "[21:50] 파주 - 순찰 [출차]",
+        "note": ""
       }
     ],
     "21:00": [
@@ -1092,7 +1430,7 @@
     "22:00": [
       {
         "task": "[22:00] [자동출차]성남시 판교역 1호기 - 순찰  ( 22:00 ~ 01:00 )",
-        "note": ""
+        "note": "순찰중단(타이어마모)"
       },
       {
         "task": "[22:00] [자동출차]성남시 서현역 1호기- 순찰  ( 22:00 ~ 01:00 )",
@@ -1146,7 +1484,7 @@
     "23:00": [
       {
         "task": "[23:00] [자동출차]성남시 판교역 1호기 - 순찰  ( 22:00 ~ 01:00 )",
-        "note": ""
+        "note": "순찰중단(타이어마모)"
       },
       {
         "task": "[23:00] [자동출차]성남시 서현역 1호기 - 순찰  ( 22:00 ~ 01:00 )",
@@ -1179,6 +1517,10 @@
       {
         "task": "[23:00] 지제역 푸르지오엘리아치 - 순찰",
         "note": ""
+      },
+      {
+        "task": "[23:50] 파주 - 순찰 [출차]",
+        "note": ""
       }
     ],
     "00:00": [
@@ -1192,7 +1534,7 @@
       },
       {
         "task": "[00:00] [자동출차]성남시 판교역 1호기 - 순찰  ( 22:00 ~ 01:00 )",
-        "note": ""
+        "note": "순찰중단(타이어마모)"
       },
       {
         "task": "[00:00] [자동출차]성남시 서현역 1호기 - 순찰  ( 22:00 ~ 01:00 )",
@@ -1400,7 +1742,7 @@
       },
       {
         "task": "[04:00] [자동출차]성남시 판교역 1호기 - 순찰  ( 04:00 ~ 07:00 )",
-        "note": ""
+        "note": "순찰중단(타이어마모)"
       },
       {
         "task": "[04:00] [자동출차]성남시 서현역 1호기 - 순찰  ( 04:00 ~ 07:00 )",
@@ -1434,7 +1776,7 @@
     "05:00": [
       {
         "task": "[05:00] [자동출차]성남시 판교역 1호기 - 순찰  ( 04:00 ~ 07:00 )",
-        "note": ""
+        "note": "순찰중단(타이어마모)"
       },
       {
         "task": "[05:00] [자동출차]성남시 서현역 1호기 - 순찰  ( 04:00 ~ 07:00 )",
@@ -1468,7 +1810,7 @@
       },
       {
         "task": "[06:00] [자동출차]성남시 판교역 1호기 - 순찰  ( 04:00 ~ 07:00 )",
-        "note": ""
+        "note": "순찰중단(타이어마모)"
       },
       {
         "task": "[06:00] [자동출차]성남시 서현역 1호기 - 순찰  ( 04:00 ~ 07:00 )",
@@ -1484,307 +1826,307 @@
     "서강대": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-09 11:39:45",
+      "updatedAt": "2026-09-09 14:24:44",
       "syncIssue": false
     },
     "성남 율동": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-09 11:39:45",
+      "updatedAt": "2026-09-09 14:24:44",
       "syncIssue": false
     },
     "성남 야탑": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-09 11:39:45",
+      "updatedAt": "2026-09-09 14:24:44",
       "syncIssue": false
     },
     "용인 고진": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-09 11:39:45",
+      "updatedAt": "2026-09-09 14:24:44",
       "syncIssue": false
     },
     "경희대 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-09 11:39:45",
+      "updatedAt": "2026-09-09 14:24:44",
       "syncIssue": false
     },
     "구리 롯데캐슬": {
       "status": "suspended",
       "reason": "cctv미송출",
-      "updatedAt": "2026-09-09 11:39:45",
+      "updatedAt": "2026-09-09 14:24:44",
       "syncIssue": false
     },
     "부산 호반 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-09 11:39:45",
+      "updatedAt": "2026-09-09 14:24:44",
       "syncIssue": false
     },
     "부산 수자인 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-09 11:39:45",
-      "syncIssue": false
-    },
-    "양원LH": {
-      "status": "active",
-      "reason": "",
-      "updatedAt": "2026-09-09 11:39:45",
-      "syncIssue": false
-    },
-    "장애인고용공단 1": {
-      "status": "active",
-      "reason": "",
-      "updatedAt": "2026-09-09 11:39:45",
-      "syncIssue": false
-    },
-    "장애인고용공단 2": {
-      "status": "active",
-      "reason": "",
-      "updatedAt": "2026-09-09 11:39:45",
+      "updatedAt": "2026-09-09 14:24:44",
       "syncIssue": false
     },
     "파주": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-09 11:39:45",
+      "updatedAt": "2026-09-09 14:24:44",
+      "syncIssue": false
+    },
+    "양원LH": {
+      "status": "active",
+      "reason": "",
+      "updatedAt": "2026-09-09 14:24:44",
+      "syncIssue": false
+    },
+    "장애인고용공단 1": {
+      "status": "active",
+      "reason": "",
+      "updatedAt": "2026-09-09 14:24:44",
+      "syncIssue": false
+    },
+    "장애인고용공단 2": {
+      "status": "active",
+      "reason": "",
+      "updatedAt": "2026-09-09 14:24:44",
       "syncIssue": false
     },
     "리센츠 1": {
       "status": "suspended",
       "reason": "cali 비정상",
-      "updatedAt": "2026-09-09 11:39:45",
+      "updatedAt": "2026-09-09 14:24:44",
       "syncIssue": false
     },
     "리센츠 2": {
       "status": "suspended",
       "reason": "타이어마모",
-      "updatedAt": "2026-09-09 11:39:45",
+      "updatedAt": "2026-09-09 14:24:44",
       "syncIssue": false
     },
     "평택 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-09 11:39:45",
+      "updatedAt": "2026-09-09 14:24:44",
       "syncIssue": false
     },
     "평택 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-09 11:39:45",
+      "updatedAt": "2026-09-09 14:24:44",
       "syncIssue": false
     },
     "DMZ": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-09 11:39:45",
+      "updatedAt": "2026-09-09 14:24:44",
       "syncIssue": false
     },
     "부산 서면": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-09 11:39:45",
+      "updatedAt": "2026-09-09 14:24:44",
       "syncIssue": false
     },
     "부천 위브": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-09 11:39:45",
+      "updatedAt": "2026-09-09 14:24:44",
       "syncIssue": false
     },
     "부산 호반 2": {
-      "status": "active",
-      "reason": "",
-      "updatedAt": "2026-09-09 11:39:45",
+      "status": "suspended",
+      "reason": "타이어마모",
+      "updatedAt": "2026-09-09 14:24:44",
       "syncIssue": false
     },
     "부산 수자인 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-09 11:39:45",
+      "updatedAt": "2026-09-09 14:24:44",
       "syncIssue": false
     },
     "고양 래미안": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-09 11:39:45",
+      "updatedAt": "2026-09-09 14:24:44",
       "syncIssue": false
     },
     "성남 판교": {
-      "status": "active",
-      "reason": "",
-      "updatedAt": "2026-09-09 11:39:45",
+      "status": "suspended",
+      "reason": "타이어마모",
+      "updatedAt": "2026-09-09 14:24:44",
       "syncIssue": false
     },
     "성남 서현": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-09 11:39:45",
+      "updatedAt": "2026-09-09 14:24:44",
       "syncIssue": false
     },
     "잠실 레이크": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-09 11:39:45",
+      "updatedAt": "2026-09-09 14:24:44",
       "syncIssue": false
     },
     "덕수궁": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-09 11:39:45",
+      "updatedAt": "2026-09-09 14:24:44",
       "syncIssue": false
     },
     "순천향": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-09 11:39:45",
+      "updatedAt": "2026-09-09 14:24:44",
       "syncIssue": false
     },
     "동대문구 회기동": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-09 11:39:45",
+      "updatedAt": "2026-09-09 14:24:44",
       "syncIssue": false
     },
     "인력개발원": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-09 11:39:45",
+      "updatedAt": "2026-09-09 14:24:44",
       "syncIssue": false
     },
     "엘스": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-09 11:39:45",
+      "updatedAt": "2026-09-09 14:24:44",
       "syncIssue": false
     },
     "한성대": {
       "status": "suspended",
       "reason": "타이어마모",
-      "updatedAt": "2026-09-09 11:39:45",
+      "updatedAt": "2026-09-09 14:24:44",
       "syncIssue": false
     },
     "김포 풍무": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-09 11:39:45",
+      "updatedAt": "2026-09-09 14:24:44",
       "syncIssue": false
     },
     "창원대 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-09 11:39:45",
+      "updatedAt": "2026-09-09 14:24:44",
       "syncIssue": false
     },
     "창원대 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-09 11:39:45",
+      "updatedAt": "2026-09-09 14:24:44",
       "syncIssue": false
     },
     "부경대": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-09 11:39:45",
+      "updatedAt": "2026-09-09 14:24:44",
       "syncIssue": false
     },
     "김포 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-09 11:39:45",
+      "updatedAt": "2026-09-09 14:24:44",
       "syncIssue": false
     },
     "김포 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-09 11:39:45",
+      "updatedAt": "2026-09-09 14:24:44",
       "syncIssue": false
     },
     "더샵남천": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-09 11:39:45",
+      "updatedAt": "2026-09-09 14:24:44",
       "syncIssue": false
     },
     "지제": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-09 11:39:45",
+      "updatedAt": "2026-09-09 14:24:44",
       "syncIssue": false
     },
     "두루아이 4": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-09 11:39:45",
+      "updatedAt": "2026-09-09 14:24:44",
       "syncIssue": false
     },
     "잠실 르엘": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-09 11:39:45",
+      "updatedAt": "2026-09-09 14:24:44",
       "syncIssue": false
     },
     "중앙대": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-09 11:39:45",
+      "updatedAt": "2026-09-09 14:24:44",
       "syncIssue": false
     },
     "청담 르엘": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-09 11:39:45",
+      "updatedAt": "2026-09-09 14:24:44",
       "syncIssue": false
     },
     "동백SK": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-09 11:39:45",
+      "updatedAt": "2026-09-09 14:24:44",
       "syncIssue": false
     },
     "신동백": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-09 11:39:45",
+      "updatedAt": "2026-09-09 14:24:44",
       "syncIssue": false
     },
     "전주천": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-09 11:39:45",
+      "updatedAt": "2026-09-09 14:24:44",
       "syncIssue": false
     },
     "아주대 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-09 11:39:45",
+      "updatedAt": "2026-09-09 14:24:44",
       "syncIssue": false
     },
     "아주대 2": {
       "status": "suspended",
       "reason": "타이어마모",
-      "updatedAt": "2026-09-09 11:39:45",
+      "updatedAt": "2026-09-09 14:24:44",
       "syncIssue": false
     },
     "인재개발원": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-09 11:39:45",
+      "updatedAt": "2026-09-09 14:24:44",
       "syncIssue": false
     },
     "쉴더스": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-09 11:39:45",
+      "updatedAt": "2026-09-09 14:24:44",
       "syncIssue": false
     },
     "두루아이 3": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-09-09 11:39:45",
+      "updatedAt": "2026-09-09 14:24:44",
       "syncIssue": false
     }
   }
