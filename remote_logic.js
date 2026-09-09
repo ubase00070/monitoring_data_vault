@@ -1947,12 +1947,25 @@
             overlay.dataset.key = key;
             overlay.innerHTML = '';
             overlay.appendChild(boxEl);
-            const r = getSharedPopupRect();
-            overlay.style.top = 'auto';
-            overlay.style.left = r.left + 'px';
-            overlay.style.width = r.width + 'px';
-            overlay.style.bottom = r.bottom + 'px';
-            overlay.style.height = 'auto';
+
+            if (key === 'patch') {
+                // 패치노트만 예외 — 스트림덱 기준이 아니라 대시보드 전체 위에 겹쳐서(중앙 정렬) 뜸
+                const d = dashboard.getBoundingClientRect();
+                overlay.style.alignItems = 'center';
+                overlay.style.top = d.top + 'px';
+                overlay.style.left = d.left + 'px';
+                overlay.style.width = d.width + 'px';
+                overlay.style.height = d.height + 'px';
+                overlay.style.bottom = 'auto';
+            } else {
+                overlay.style.alignItems = 'flex-end';
+                const r = getSharedPopupRect();
+                overlay.style.top = 'auto';
+                overlay.style.left = r.left + 'px';
+                overlay.style.width = r.width + 'px';
+                overlay.style.bottom = r.bottom + 'px';
+                overlay.style.height = 'auto';
+            }
             overlay.style.display = 'flex';
         }
 
@@ -2941,12 +2954,6 @@
 		el.querySelectorAll('*').forEach(c => {
 			// 닫기(X) 버튼 레드 원본 유지
 			if (c.closest && c.closest('.bg-red-400')) return;
-
-			// 구글맵(미니맵) 전체 제외 — 기체 위치 마커 등 지도 자체 렌더링에 손대면 안 됨.
-			// (카드 폭이 좁으면 driveThemeClimb가 지도까지 같은 카드로 묶어서 마커가
-			//  진한 단색으로 뭉개져 큰 과녁처럼 보이는 문제가 있었음)
-			if (c.closest && c.closest('.gm-style')) return;
-			if (c.closest && c.closest('[data-qk="robot-location-marker"]')) return;
 
 			// 신규 추가 — 시나리오 진행바(체크포인트 완료 표시)는 상태색이 의미를 가지므로 원본 그대로 유지
 			if (typeof c.className === 'string' && c.className.includes('bg-primary')) return;
