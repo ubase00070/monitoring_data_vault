@@ -13,7 +13,11 @@
       "서강대",
       "성남 율동",
       "성남 야탑"
-    ]
+    ],
+    "reserved_dispatch": [
+      "용인 고진"
+    ],
+    "control_dispatch": []
   },
   "08": {
     "plan": [
@@ -28,7 +32,11 @@
     "auto_dispatch": [
       "부산 호반 1",
       "부산 수자인 1"
-    ]
+    ],
+    "reserved_dispatch": [
+      "구리 롯데캐슬"
+    ],
+    "control_dispatch": []
   },
   "09": {
     "plan": [
@@ -50,6 +58,13 @@
       "양원LH",
       "장애인고용공단 1",
       "장애인고용공단 2"
+    ],
+    "reserved_dispatch": [
+      "파주"
+    ],
+    "control_dispatch": [
+      "리센츠 1",
+      "리센츠 2"
     ]
   },
   "10": {
@@ -80,6 +95,14 @@
       "덕수궁",
       "장애인고용공단 2",
       "장애인고용공단 1"
+    ],
+    "reserved_dispatch": [
+      "순천향",
+      "동대문구 회기동",
+      "인력개발원"
+    ],
+    "control_dispatch": [
+      "엘스"
     ]
   },
   "11": {
@@ -98,7 +121,13 @@
     "auto_dispatch": [
       "한성대",
       "장애인고용공단 1"
-    ]
+    ],
+    "reserved_dispatch": [
+      "김포 풍무",
+      "창원대 1",
+      "창원대 2"
+    ],
+    "control_dispatch": []
   },
   "12": {
     "plan": [
@@ -115,7 +144,11 @@
       "부산 호반 1",
       "부산 수자인 1",
       "장애인고용공단 2"
-    ]
+    ],
+    "reserved_dispatch": [
+      "파주"
+    ],
+    "control_dispatch": []
   },
   "13": {
     "plan": [
@@ -132,7 +165,11 @@
       "덕수궁",
       "성남 율동",
       "성남 야탑"
-    ]
+    ],
+    "reserved_dispatch": [
+      "인력개발원"
+    ],
+    "control_dispatch": []
   },
   "14": {
     "plan": [
@@ -157,6 +194,14 @@
       "부산 호반 2",
       "부산 수자인 2",
       "장애인고용공단 2"
+    ],
+    "reserved_dispatch": [
+      "동대문구 회기동",
+      "순천향"
+    ],
+    "control_dispatch": [
+      "리센츠 1",
+      "리센츠 2"
     ]
   },
   "15": {
@@ -178,7 +223,12 @@
       "고양 래미안",
       "잠실 레이크",
       "더샵남천"
-    ]
+    ],
+    "reserved_dispatch": [
+      "파주",
+      "인력개발원"
+    ],
+    "control_dispatch": []
   },
   "16": {
     "plan": [
@@ -207,6 +257,15 @@
       "성남 서현",
       "덕수궁",
       "장애인고용공단 2"
+    ],
+    "reserved_dispatch": [
+      "순천향",
+      "창원대 1",
+      "창원대 2",
+      "용인 고진"
+    ],
+    "control_dispatch": [
+      "엘스"
     ]
   },
   "17": {
@@ -224,7 +283,13 @@
     "auto_dispatch": [
       "장애인고용공단 1",
       "장애인고용공단 2"
-    ]
+    ],
+    "reserved_dispatch": [
+      "동대문구 회기동",
+      "김포 풍무",
+      "지제"
+    ],
+    "control_dispatch": []
   },
   "18": {
     "plan": [
@@ -237,7 +302,11 @@
     "auto_dispatch": [
       "부산 호반 2",
       "부산 수자인 2"
-    ]
+    ],
+    "reserved_dispatch": [
+      "파주"
+    ],
+    "control_dispatch": []
   },
   "19": {
     "plan": [
@@ -258,6 +327,13 @@
       "성남 율동",
       "성남 야탑",
       "두루아이 4"
+    ],
+    "reserved_dispatch": [
+      "구리 롯데캐슬",
+      "용인 고진"
+    ],
+    "control_dispatch": [
+      "엘스"
     ]
   },
   "20": {
@@ -276,7 +352,9 @@
       "덕수궁",
       "잠실 레이크",
       "잠실 르엘"
-    ]
+    ],
+    "reserved_dispatch": [],
+    "control_dispatch": []
   },
   "21": {
     "plan": [
@@ -295,7 +373,9 @@
     "auto_dispatch": [
       "양원LH",
       "두루아이 4"
-    ]
+    ],
+    "reserved_dispatch": [],
+    "control_dispatch": []
   },
   "22": {
     "plan": [
@@ -322,7 +402,9 @@
       "청담 르엘",
       "고양 래미안",
       "두루아이 4"
-    ]
+    ],
+    "reserved_dispatch": [],
+    "control_dispatch": []
   },
   "23": {
     "plan": [
@@ -337,7 +419,9 @@
     "night_excluded": [],
     "auto_dispatch": [
       "서강대"
-    ]
+    ],
+    "reserved_dispatch": [],
+    "control_dispatch": []
   },
   "00": {
     "plan": [
@@ -357,7 +441,9 @@
       "덕수궁",
       "두루아이 4",
       "잠실 르엘"
-    ]
+    ],
+    "reserved_dispatch": [],
+    "control_dispatch": []
   },
   "01": {
     "plan": [
@@ -383,7 +469,9 @@
       "서강대",
       "더샵남천",
       "두루아이 4"
-    ]
+    ],
+    "reserved_dispatch": [],
+    "control_dispatch": []
   },
   "02": {
     "plan": [
@@ -400,7 +488,9 @@
     "night_excluded": [],
     "auto_dispatch": [
       "청담 르엘"
-    ]
+    ],
+    "reserved_dispatch": [],
+    "control_dispatch": []
   },
   "03": {
     "plan": [
@@ -423,7 +513,9 @@
       "서강대",
       "더샵남천",
       "두루아이 4"
-    ]
+    ],
+    "reserved_dispatch": [],
+    "control_dispatch": []
   },
   "04": {
     "plan": [
@@ -443,7 +535,9 @@
       "성남 서현",
       "고양 래미안",
       "두루아이 4"
-    ]
+    ],
+    "reserved_dispatch": [],
+    "control_dispatch": []
   },
   "05": {
     "plan": [
@@ -458,7 +552,9 @@
     "auto_dispatch": [
       "서강대",
       "더샵남천"
-    ]
+    ],
+    "reserved_dispatch": [],
+    "control_dispatch": []
   },
   "06": {
     "plan": [
@@ -469,6 +565,8 @@
     "night_excluded": [],
     "auto_dispatch": [
       "양원LH"
-    ]
+    ],
+    "reserved_dispatch": [],
+    "control_dispatch": []
   }
 }
