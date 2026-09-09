@@ -21,7 +21,9 @@
       "부산 수자인 1",
       "구리 롯데캐슬"
     ],
-    "out": [],
+    "out": [
+      "파주"
+    ],
     "night_excluded": [],
     "auto_dispatch": [
       "부산 호반 1",
@@ -89,7 +91,9 @@
       "창원대 2",
       "부경대"
     ],
-    "out": [],
+    "out": [
+      "파주"
+    ],
     "night_excluded": [],
     "auto_dispatch": [
       "한성대",
@@ -145,7 +149,9 @@
       "김포 1",
       "김포 2"
     ],
-    "out": [],
+    "out": [
+      "파주"
+    ],
     "night_excluded": [],
     "auto_dispatch": [
       "부산 호반 2",
@@ -211,7 +217,9 @@
       "김포 풍무",
       "지제"
     ],
-    "out": [],
+    "out": [
+      "파주"
+    ],
     "night_excluded": [],
     "auto_dispatch": [
       "장애인고용공단 1",
@@ -323,7 +331,9 @@
       "용인 고진",
       "지제"
     ],
-    "out": [],
+    "out": [
+      "파주"
+    ],
     "night_excluded": [],
     "auto_dispatch": [
       "서강대"
