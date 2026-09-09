@@ -1266,28 +1266,28 @@
           "raw": "1"
         },
         "9/24": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "9/25": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
+        },
+        "9/26": {
           "status": "work",
           "working": true,
           "present": true,
           "raw": "1"
         },
-        "9/26": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
-        },
         "9/27": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "9/28": {
           "status": "work",
@@ -1312,7 +1312,7 @@
     {
       "name": "박계원",
       "shiftType": "주간1",
-      "workTime": "07:00~16:00",
+      "workTime": "19:00~04:00",
       "schedule": {
         "9/1": {
           "status": "work",
@@ -5052,7 +5052,7 @@
     {
       "name": "박은선",
       "shiftType": "주간2",
-      "workTime": "11:00~20:00A",
+      "workTime": "19:00~04:00",
       "schedule": {
         "9/1": {
           "status": "work",
@@ -5987,7 +5987,7 @@
     {
       "name": "호덕진",
       "shiftType": "주간2",
-      "workTime": "11:00~20:00B",
+      "workTime": "07:00~16:00",
       "schedule": {
         "9/1": {
           "status": "work",
@@ -6361,7 +6361,7 @@
     {
       "name": "이기완",
       "shiftType": "야간1",
-      "workTime": "14:00~23:00",
+      "workTime": "07:00~16:00",
       "schedule": {
         "9/1": {
           "status": "work",
@@ -9384,6 +9384,6 @@
     "9/30"
   ],
   "mainMonth": 9,
-  "updatedAt": "2026-09-08T03:53:03.400Z",
+  "updatedAt": "2026-09-09T03:53:05.659Z",
   "sheetName": "2026년_09월 스케줄"
 }
