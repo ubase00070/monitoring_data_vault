@@ -876,7 +876,10 @@
             window.currentAllTasks = data; // 인계 체인(전임자/후임자) 조회용 — 필터링 전 전체 목록
 
             const myTasks = data.filter(t => {
-                if (t.user !== myName) return false;
+                // 담당자란에 '홍길동/임꺽정'처럼 여러 명이 슬래시로 같이 적힌 경우, 그중 한 명이라도
+                // 나와 일치하면 그 업무는 나한테도 표시되어야 함 (seat_map.json 파싱 때와 동일한 관례)
+                const assignees = String(t.user || '').split('/').map(n => n.trim());
+                if (!assignees.includes(myName)) return false;
                 // next_0700_handover(내일 07시 다중모니터링 통합 인계 스냅샷)는
                 // 00:00~07:10 사이에만 미리보기로 표시. 그 이후엔 같은 07:00 업무가
                 // 정규 monitoring 항목으로 자연스럽게 이어지므로 중복 표시를 막는다.
@@ -1539,7 +1542,7 @@
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
 		// 문자열을 넣으면 패치노트에 빨간 '`' 뱃지가 점멸하며 뜸.
 		// 빈 문자열('')로 비우면 뱃지가 사라짐.
-		const PATCH_NOTE_NEW_CONTENT = '';
+		const PATCH_NOTE_NEW_CONTENT = '익명문의';
 
         // ── 패치노트 내용 ──────────────────────────────────────
         // 아래 patchItems 배열에 버전별 내용을 추가하세요 (버튼 라벨의 날짜도 이 배열의
@@ -2954,6 +2957,12 @@
 		el.querySelectorAll('*').forEach(c => {
 			// 닫기(X) 버튼 레드 원본 유지
 			if (c.closest && c.closest('.bg-red-400')) return;
+
+			// 구글맵(미니맵) 전체 제외 — 기체 위치 마커 등 지도 자체 렌더링에 손대면 안 됨.
+			// (카드 폭이 좁으면 driveThemeClimb가 지도까지 같은 카드로 묶어서 마커가
+			//  진한 단색으로 뭉개져 큰 과녁처럼 보이는 문제가 있었음)
+			if (c.closest && c.closest('.gm-style')) return;
+			if (c.closest && c.closest('[data-qk="robot-location-marker"]')) return;
 
 			// 신규 추가 — 시나리오 진행바(체크포인트 완료 표시)는 상태색이 의미를 가지므로 원본 그대로 유지
 			if (typeof c.className === 'string' && c.className.includes('bg-primary')) return;
