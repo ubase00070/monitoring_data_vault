@@ -36,25 +36,25 @@
     "rawTime": "12:00"
   },
   {
-    "user": "이수성",
+    "user": "석승찬",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "13:00"
   },
   {
-    "user": "석승찬",
+    "user": "백진홍",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "14:00"
   },
   {
-    "user": "백진홍",
+    "user": "유재헌",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "15:00"
   },
   {
-    "user": "유재헌",
+    "user": "이민수",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "16:00"
@@ -240,7 +240,7 @@
     "rawTime": "14:00"
   },
   {
-    "user": "김지영",
+    "user": "김미소",
     "type": "task",
     "content": "[15:00~16:00] 부산국립과학관 170,171호기 임무 [화,수,목,금,토,일]",
     "rawTime": "15:00"
