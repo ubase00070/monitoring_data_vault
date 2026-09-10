@@ -42,6 +42,38 @@
     // 오프라인 모드 — true로 바꾸면 이 도구의 NCC 외부 통신이 즉시 차단됩니다.
     const OFFLINE_MODE = false;
 
+    // ── [관리자 원격 설정] ────────────────────────────────────────────
+    // monitoring_data_vault 레포의 remote_admin_config.json 값을 읽어온다.
+    // admin이 이 JSON 파일 하나만 GitHub에서 직접 고치면, 모든 사용자는 새로고침 시
+    // 아래 값을 그대로 반영받는다(재배포 불필요).
+    //   { "maxMonitorSlots": 6, "locked": false }
+    // fetch 실패 시엔 안전 기본값(6대 / 잠금 해제)으로 지금까지와 동일하게 동작한다.
+    let ADMIN_CONFIG = { maxMonitorSlots: 6, locked: false };
+    const adminConfigReady = (async () => {
+        try {
+            const res = await fetch(
+                `https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/remote_admin_config.json?t=${Date.now()}`,
+                { cache: 'no-store' }
+            );
+            if (!res.ok) return;
+            const cfg = await res.json();
+            if (typeof cfg.maxMonitorSlots === 'number' && cfg.maxMonitorSlots > 0) {
+                ADMIN_CONFIG.maxMonitorSlots = cfg.maxMonitorSlots;
+            }
+            if (typeof cfg.locked === 'boolean') {
+                ADMIN_CONFIG.locked = cfg.locked;
+            }
+        } catch (e) {
+            console.log('remote_admin_config 로드 실패, 기본값(6대 / 잠금 해제) 유지:', e);
+        }
+    })();
+
+    // 다중 모니터링 도우미 기능이 (사용자 토글 ON) && (관리자 잠금 아님) 상태인지 —
+    // 기존에 여러 곳에서 반복되던 localStorage 직접 조회를 이 함수 하나로 통일한다.
+    // 반드시 adminConfigReady가 끝난 뒤에 호출해야 ADMIN_CONFIG.locked가 최신값이다.
+    const isHandoverFeatureOn = () =>
+        !ADMIN_CONFIG.locked && localStorage.getItem('neubie_handover_enabled') !== 'false';
+
     // NCC 로봇 제어 API 베이스 도메인 — 현재 9곳에서 이 도메인을 호출 중.
     // 나중에 리브랜딩으로 도메인만 바뀌는 경우, 이 한 줄만 고치면 전체 반영됨.
     // (API 경로/스키마 자체가 바뀌는 구조 변경이라면 이 상수만으론 부족하니 별도 대응 필요)
@@ -1522,7 +1554,8 @@
     /* ============================================================
         SECTION 8. 대시보드 및 초기화
        ============================================================ */
-    function renderDashboard() {
+    async function renderDashboard() {
+        await adminConfigReady; // 관리자 잠금(locked) 여부를 토글 그리기 전에 확정
         dashboard.innerHTML = '';
         const T = getNbTheme();
         dashboard.style.backgroundColor = T.bg;
@@ -2059,10 +2092,12 @@
             showSharedPopup('map-info', mapInfoBox);
         };
 
-		// 다중 모니터링 기능 — 토글 행
-        const queueEnabled = localStorage.getItem('neubie_handover_enabled') === 'true';
-        const queueToggleUI = createToggleRow('🖥️', '다중 모니터링 도우미', queueEnabled,
+		// 다중 모니터링 기능 — 토글 행 (관리자 잠금 시 회색으로 비활성화)
+        const queueLocked = ADMIN_CONFIG.locked;
+        const queueEnabled = !queueLocked && localStorage.getItem('neubie_handover_enabled') === 'true';
+        const queueToggleUI = createToggleRow('🖥️', queueLocked ? '다중 모니터링 도우미 (관리자 잠금)' : '다중 모니터링 도우미', queueEnabled,
             (on) => {
+                if (queueLocked) return; // input.disabled로 이미 막히지만 방어적으로 한 번 더 체크
                 localStorage.setItem('neubie_handover_enabled', on);
                 const bar = document.getElementById('neubie-brightness-bar');
                 if (!on && bar) {
@@ -2074,6 +2109,12 @@
             () => queueInfoBtn.click() // 기존 설명 팝업 그대로 재사용
         );
         const queueToggle = queueToggleUI.row;
+        if (queueLocked) {
+            queueToggleUI.input.disabled = true;
+            queueToggle.style.opacity = '0.45';
+            queueToggle.style.filter = 'grayscale(1)';
+            queueToggle.style.cursor = 'not-allowed';
+        }
 
         if (!document.getElementById('neubie-blink-style')) {
             const blinkStyle = document.createElement('style');
@@ -2329,6 +2370,7 @@
 
     // ── 핸드오버 레이아웃 ──────────────────────────────────
 	async function initHandoverLayout() {
+		await adminConfigReady; // maxMonitorSlots 확정 후 진행
 		let panel = document.getElementById('ho-remote-panel');
         if (panel) {
             panel.style.top = '0px';
@@ -2384,7 +2426,7 @@
 		};
 
 		// ── 그리드 셀 ──
-		const MAX_UNITS = 6;
+		const MAX_UNITS = ADMIN_CONFIG.maxMonitorSlots; // 관리자 설정값 (기본 6, 확장 시 9)
 
 		const cellIdle = c => {
 			Object.assign(c.style, { background: 'rgba(34,197,94,0.12)', color: '#e5f9ee',
@@ -2439,8 +2481,11 @@
 		const autoBtn = mkBtn('자동 시작', 'linear-gradient(135deg, #0f766e, #22c55e)',
 			{ color: '#fff', boxShadow: '0 0 10px rgba(34,197,94,0.4)', padding: '4px 8px' });
 
-		// 자동출차 기체 시작 (2줄 라벨) — 매시 45~59분(정시 임박)에만 동작
-		const dispatchBtn = mkBtn('자동출차\n기체 시작', 'linear-gradient(135deg, #7c3aed, #a78bfa)',
+		// 예정기체 자동 시작 (2줄 라벨) — 매시 45~59분(정시 임박)에만 동작.
+		// [2026-09 확장] 기존엔 auto_dispatch 태그된 소수 기체만 대상이었으나, 이제 그 시간대
+		// 예정기체(plan) 전체가 대상. 체크박스가 막혀서(이미 모니터링 중/off 등) 못 켜지는
+		// 기체는 runAutoSelect 내부에서 자연스럽게 스킵되고, 켤 수 있는 만큼만 시도/반영됨.
+		const dispatchBtn = mkBtn('예정기체\n자동 시작', 'linear-gradient(135deg, #7c3aed, #a78bfa)',
 			{ color: '#fff', boxShadow: '0 0 10px rgba(167,139,250,0.4)',
 			  whiteSpace: 'pre-line', lineHeight: '1.2', padding: '2px 8px', fontSize: '11px' });
 
@@ -2452,7 +2497,7 @@
 		// ── 그리드 ──
 		const grid = document.createElement('div');
 		Object.assign(grid.style, {
-			display: 'grid', gridTemplateColumns: 'repeat(6,1fr)', gap: '3px',
+			display: 'grid', gridTemplateColumns: `repeat(${MAX_UNITS},1fr)`, gap: '3px',
 		});
 
 		const cells = Array.from({ length: MAX_UNITS }, (_, i) => {
@@ -2589,15 +2634,24 @@
             });
             if (!isReady) { setDpMsg('기체 목록 로딩 실패 (타임아웃)', '#ef4444'); return { confirmed: false, checkedUnits: [] }; }
 
-            const reactCheck = (label) => {
+            // 클릭 이벤트만 쐈다고 바로 성공 처리하지 않고, 실제로 checkbox.checked가 바뀌는지
+            // 짧게 폴링해서 확인한다. "이미 실시간 모니터링 중"/"off 상태" 등으로 체크가 막혀있는
+            // 기체는 클릭해도 checked가 안 바뀌므로 false를 반환 → 자연스럽게 스킵된다.
+            const reactCheck = async (label) => {
 				if (!label) return false;
 				const checkbox = label.querySelector('input[type="checkbox"]');
-				if (checkbox?.checked) return true;
+				if (!checkbox) return false;
+				if (checkbox.checked) return true;
 				label.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
-				return true;
+				for (let i = 0; i < 6; i++) {
+					await new Promise(r => setTimeout(r, 50));
+					if (checkbox.checked) return true;
+				}
+				return false; // 클릭해도 반영 안 됨 — 체크 불가 기체로 판단, 스킵
 			};
 
 			const checkedUnits = [];
+			const skippedUnits = [];
 			for (let i = 0; i < units.length; i++) {
 				const name = units[i];
 				setDpMsg(`${name} (${i+1}/${units.length})`, '#3b82f6');
@@ -2608,16 +2662,17 @@
 					const text = label.querySelector('div.px-12 span')?.textContent.trim();
 					if (!text) continue;
 					if (text === name) {
-						if (reactCheck(label)) { clicked = true; break; }
+						clicked = await reactCheck(label);
+						break;
 					}
 				}
 
-				if (clicked) checkedUnits.push(name);
+				if (clicked) checkedUnits.push(name); else skippedUnits.push(name);
 				await new Promise(r => setTimeout(r, 80));
 			}
 
 			if (!checkedUnits.length) {
-				setDpMsg('선택된 기체 없음', '#ef4444');
+				setDpMsg(skippedUnits.length ? `선택된 기체 없음 (전부 체크 불가: ${skippedUnits.join(', ')})` : '선택된 기체 없음', '#ef4444');
 				return { confirmed: false, checkedUnits: [] };
 			}
 
@@ -2636,17 +2691,16 @@
 				confirmBtn.click();
 				setDpMsg('추가 확인 중...', '#3b82f6');
 
-				// 전부 아니면 전무이므로, 대표로 하나라도 카드가 뜨는지만 확인 (최대 4초)
-				const success = await new Promise(resolve => {
+				// [수정] "하나라도 뜨면 전부 성공"으로 뭉개지 않고, 시도한 기체 각각이 실제로
+				// 카드로 나타났는지 개별 확인한다. taken 처리는 이 확인을 통과한 기체만 대상이 된다.
+				const confirmedUnits = await new Promise(resolve => {
 					const deadline = Date.now() + 4000;
 					const check = () => {
 						const cardNames = [...document.querySelectorAll('.flex.h-full.w-full.items-center.justify-center.overflow-hidden .p-3')]
 							.map(el => el.textContent.trim());
-						const anyAppeared = checkedUnits.some(name => cardNames.some(c => c.includes(name)));
-						if (anyAppeared) {
-							resolve(true);
-						} else if (Date.now() > deadline) {
-							resolve(false);
+						const appeared = checkedUnits.filter(name => cardNames.some(c => c.includes(name)));
+						if (appeared.length === checkedUnits.length || Date.now() > deadline) {
+							resolve(appeared);
 						} else {
 							setTimeout(check, 300);
 						}
@@ -2654,9 +2708,14 @@
 					check();
 				});
 
-				if (success) {
-					setDpMsg('완료! ✅', '#22c55e');
-					return { confirmed: true, checkedUnits };
+				if (confirmedUnits.length) {
+					const rejected = checkedUnits.filter(n => !confirmedUnits.includes(n));
+					if (rejected.length) {
+						setDpMsg(`${confirmedUnits.length}/${checkedUnits.length}대 반영 완료 (거절: ${rejected.join(', ')})`, '#f59e0b');
+					} else {
+						setDpMsg('완료! ✅', '#22c55e');
+					}
+					return { confirmed: true, checkedUnits: confirmedUnits };  // ← 실제로 붙은 기체만 taken 대상으로 반환
 				} else {
 					setDpMsg(`거절됨 (이미 모니터링 중 등) — taken 처리 안 함, 다시 시도해주세요`, '#ef4444');
 					return { confirmed: false, checkedUnits: [] };   // ← 실패 시 완전히 빈 배열 반환
@@ -2669,7 +2728,7 @@
 
 		// ── 자동출차 전용: 모달의 실제 자리(최대 6대) 여유를 계산해서 후보를 자른다.
 		//    autoBtn(인계) 쪽은 건드리지 않음 — 기존 사용자 경험 100% 유지 목적. ──
-		const MAX_MONITOR_SLOTS = 6;
+		const MAX_MONITOR_SLOTS = ADMIN_CONFIG.maxMonitorSlots; // 관리자 설정값 (MAX_UNITS와 동일 값 공유)
 
 		const countCheckedInModal = (modal) => {
 			let count = 0;
@@ -2724,7 +2783,7 @@
 			}
 
 			const { units = [], taken = [] } = result.data;
-			const available = units.filter(u => !taken.includes(u)).slice(0, 6);
+			const available = units.filter(u => !taken.includes(u)).slice(0, MAX_MONITOR_SLOTS);
 
 			if (!available.length) {
 				setDpMsg('배정 가능한 기체가 없습니다 (전체 배정 완료)', '#94a3b8');
@@ -2778,7 +2837,7 @@
 				return;
 			}
 
-			const available = units.filter(u => !taken.includes(u)).slice(0, 6);
+			const available = units.filter(u => !taken.includes(u)).slice(0, MAX_MONITOR_SLOTS);
 			if (!available.length) {
 				setDpMsg(`${hour}시 자동출차 기체 없음 (전체 연결 완료 또는 대상 없음)`, '#94a3b8');
 				return;
@@ -3396,7 +3455,7 @@
 
 	function registerBitrateObserver() {
 		if (!isMonitoringPage()) return;
-		if (localStorage.getItem('neubie_handover_enabled') === 'false') return;
+		if (!isHandoverFeatureOn()) return;
 		if (window._bitrateObserver) window._bitrateObserver.disconnect();
 		let _bitrateThrottle = null;
         window._bitrateObserver = new MutationObserver(() => {
@@ -3410,7 +3469,7 @@
 		window._bitrateObserver.observe(document.body, { childList: true, subtree: true });
 	}
 
-	if (isMonitoringPage() && localStorage.getItem('neubie_handover_enabled') !== 'false') {
+	if (isMonitoringPage() && isHandoverFeatureOn()) {
 		registerBitrateObserver();
 	}
 
@@ -3616,7 +3675,7 @@
 
     // ── multiple/driving 페이지 진입 시 자동 주입 / 이탈 시 제거 ──
     function checkBrightnessBar() {
-		const enabled = localStorage.getItem('neubie_handover_enabled') !== 'false';
+		const enabled = isHandoverFeatureOn();
 		const bar = document.getElementById('neubie-brightness-bar');
 		if (isBrightnessPage() && !bar && enabled) {
 			injectMasterBrightness();
@@ -3669,7 +3728,7 @@
 			e.preventDefault();
 
 			// remote/multiple 페이지면 핸드오버 레이아웃
-			if (isHandoverPage() && localStorage.getItem('neubie_handover_enabled') !== 'false') {
+			if (isHandoverPage() && isHandoverFeatureOn()) {
 				const existing = document.getElementById('ho-remote-panel');
 				if (existing) {
 					const isOpen = existing.style.top === '0px';
@@ -5680,7 +5739,7 @@
                 } else {
                     _stopOperatorWatch();
                 }
-				if (isMonitoringPage() && localStorage.getItem('neubie_handover_enabled') !== 'false') {
+				if (isMonitoringPage() && isHandoverFeatureOn()) {
 					registerBitrateObserver();
 				}
             }
@@ -5725,7 +5784,7 @@
             } else {
                 _stopOperatorWatch();
             }
-			if (isMonitoringPage() && localStorage.getItem('neubie_handover_enabled') !== 'false') {
+			if (isMonitoringPage() && isHandoverFeatureOn()) {
 				registerBitrateObserver();
 			}
         }
