@@ -5,8 +5,7 @@
       "성남 율동",
       "성남 야탑",
       "용인 고진",
-      "경희대 1",
-      "구리 롯데캐슬"
+      "경희대 1"
     ],
     "out": [],
     "night_excluded": [],
@@ -27,7 +26,8 @@
   "08": {
     "plan": [
       "부산 호반 1",
-      "부산 수자인 1"
+      "부산 수자인 1",
+      "구리 롯데캐슬"
     ],
     "out": [
       "파주"
@@ -38,7 +38,9 @@
       "부산 수자인 1"
     ],
     "reserved_dispatch": [],
-    "control_dispatch": [],
+    "control_dispatch": [
+      "구리 롯데캐슬"
+    ],
     "site_dispatch": [],
     "random_site_dispatch": []
   },
@@ -400,7 +402,10 @@
       "중앙대",
       "지제"
     ],
-    "out": [],
+    "out": [
+      "파주",
+      "순천향"
+    ],
     "night_excluded": [
       "부천 위브 (유선기체: 야간 일정제외)"
     ],
@@ -409,7 +414,10 @@
       "잠실 레이크",
       "잠실 르엘"
     ],
-    "reserved_dispatch": [],
+    "reserved_dispatch": [
+      "중앙대",
+      "지제"
+    ],
     "control_dispatch": [],
     "site_dispatch": [],
     "random_site_dispatch": []
@@ -422,7 +430,8 @@
       "파주",
       "중앙대",
       "창원대 1",
-      "창원대 2"
+      "창원대 2",
+      "동백SK"
     ],
     "out": [],
     "night_excluded": [
@@ -432,9 +441,16 @@
       "양원LH",
       "두루아이 4"
     ],
-    "reserved_dispatch": [],
+    "reserved_dispatch": [
+      "순천향",
+      "파주",
+      "중앙대"
+    ],
     "control_dispatch": [],
-    "site_dispatch": [],
+    "site_dispatch": [
+      "창원대 1",
+      "창원대 2"
+    ],
     "random_site_dispatch": []
   },
   "22": {
@@ -444,7 +460,6 @@
       "청담 르엘",
       "고양 래미안",
       "두루아이 4",
-      "동백SK",
       "신동백",
       "전주천",
       "중앙대"
