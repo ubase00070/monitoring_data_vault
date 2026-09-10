@@ -547,7 +547,11 @@
       "중앙대",
       "용인 고진"
     ],
-    "out": [],
+    "out": [
+      "쉴더스",
+      "두루아이 3",
+      "동백SK"
+    ],
     "night_excluded": [
       "김포 1 (유선기체: 야간 일정제외)",
       "김포 2 (유선기체: 야간 일정제외)"
@@ -572,16 +576,23 @@
       "두루아이 3",
       "동백SK",
       "신동백",
+      "지제",
       "인재개발원",
-      "중앙대",
-      "지제"
+      "중앙대"
     ],
-    "out": [],
+    "out": [
+      "창원대 1",
+      "창원대 2"
+    ],
     "night_excluded": [],
     "auto_dispatch": [
       "청담 르엘"
     ],
-    "reserved_dispatch": [],
+    "reserved_dispatch": [
+      "지제",
+      "인재개발원",
+      "중앙대"
+    ],
     "control_dispatch": [],
     "site_dispatch": [],
     "random_site_dispatch": []
@@ -593,7 +604,6 @@
       "서강대",
       "더샵남천",
       "두루아이 4",
-      "순천향",
       "창원대 1",
       "창원대 2",
       "파주",
@@ -611,7 +621,12 @@
       "더샵남천",
       "두루아이 4"
     ],
-    "reserved_dispatch": [],
+    "reserved_dispatch": [
+      "창원대 1",
+      "창원대 2",
+      "파주",
+      "용인 고진"
+    ],
     "control_dispatch": [],
     "site_dispatch": [],
     "random_site_dispatch": []
