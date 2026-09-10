@@ -430,10 +430,13 @@
       "파주",
       "중앙대",
       "창원대 1",
-      "창원대 2",
-      "동백SK"
+      "창원대 2"
     ],
-    "out": [],
+    "out": [
+      "동백SK",
+      "신동백",
+      "전주천"
+    ],
     "night_excluded": [
       "부산 서면 (유선기체: 야간 일정제외)"
     ],
@@ -460,6 +463,7 @@
       "청담 르엘",
       "고양 래미안",
       "두루아이 4",
+      "동백SK",
       "신동백",
       "전주천",
       "중앙대"
@@ -478,7 +482,12 @@
       "고양 래미안",
       "두루아이 4"
     ],
-    "reserved_dispatch": [],
+    "reserved_dispatch": [
+      "동백SK",
+      "신동백",
+      "전주천",
+      "중앙대"
+    ],
     "control_dispatch": [],
     "site_dispatch": [],
     "random_site_dispatch": []
@@ -590,7 +599,10 @@
       "파주",
       "용인 고진"
     ],
-    "out": [],
+    "out": [
+      "중앙대",
+      "두루아이 3"
+    ],
     "night_excluded": [],
     "auto_dispatch": [
       "양원LH",
@@ -623,7 +635,10 @@
       "고양 래미안",
       "두루아이 4"
     ],
-    "reserved_dispatch": [],
+    "reserved_dispatch": [
+      "중앙대",
+      "두루아이 3"
+    ],
     "control_dispatch": [],
     "site_dispatch": [],
     "random_site_dispatch": []
@@ -644,7 +659,11 @@
       "서강대",
       "더샵남천"
     ],
-    "reserved_dispatch": [],
+    "reserved_dispatch": [
+      "중앙대",
+      "용인 고진",
+      "지제"
+    ],
     "control_dispatch": [],
     "site_dispatch": [],
     "random_site_dispatch": []
@@ -659,7 +678,9 @@
     "auto_dispatch": [
       "양원LH"
     ],
-    "reserved_dispatch": [],
+    "reserved_dispatch": [
+      "파주"
+    ],
     "control_dispatch": [],
     "site_dispatch": [],
     "random_site_dispatch": []
