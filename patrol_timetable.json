@@ -502,17 +502,14 @@
     ],
     "out": [
       "창원대 1",
-      "창원대 2"
+      "창원대 2",
+      "파주"
     ],
     "night_excluded": [],
     "auto_dispatch": [
       "청담 르엘"
     ],
-    "reserved_dispatch": [
-      "지제",
-      "인재개발원",
-      "중앙대"
-    ],
+    "reserved_dispatch": [],
     "control_dispatch": [],
     "site_dispatch": [],
     "random_site_dispatch": []
@@ -541,12 +538,7 @@
       "더샵남천",
       "두루아이 4"
     ],
-    "reserved_dispatch": [
-      "창원대 1",
-      "창원대 2",
-      "파주",
-      "용인 고진"
-    ],
+    "reserved_dispatch": [],
     "control_dispatch": [],
     "site_dispatch": [],
     "random_site_dispatch": []
@@ -570,10 +562,7 @@
       "고양 래미안",
       "두루아이 4"
     ],
-    "reserved_dispatch": [
-      "중앙대",
-      "두루아이 3"
-    ],
+    "reserved_dispatch": [],
     "control_dispatch": [],
     "site_dispatch": [],
     "random_site_dispatch": []
@@ -594,11 +583,7 @@
       "서강대",
       "더샵남천"
     ],
-    "reserved_dispatch": [
-      "중앙대",
-      "용인 고진",
-      "지제"
-    ],
+    "reserved_dispatch": [],
     "control_dispatch": [],
     "site_dispatch": [],
     "random_site_dispatch": []
@@ -613,9 +598,7 @@
     "auto_dispatch": [
       "양원LH"
     ],
-    "reserved_dispatch": [
-      "파주"
-    ],
+    "reserved_dispatch": [],
     "control_dispatch": [],
     "site_dispatch": [],
     "random_site_dispatch": []
