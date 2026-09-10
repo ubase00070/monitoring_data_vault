@@ -98,14 +98,8 @@
       "장애인고용공단 2",
       "장애인고용공단 1"
     ],
-    "reserved_dispatch": [
-      "순천향",
-      "동대문구 회기동",
-      "인력개발원"
-    ],
-    "control_dispatch": [
-      "엘스"
-    ],
+    "reserved_dispatch": [],
+    "control_dispatch": [],
     "site_dispatch": [],
     "random_site_dispatch": []
   },
@@ -126,16 +120,10 @@
       "한성대",
       "장애인고용공단 1"
     ],
-    "reserved_dispatch": [
-      "김포 풍무",
-      "창원대 1",
-      "창원대 2"
-    ],
+    "reserved_dispatch": [],
     "control_dispatch": [],
     "site_dispatch": [],
-    "random_site_dispatch": [
-      "부경대"
-    ]
+    "random_site_dispatch": []
   },
   "12": {
     "plan": [
@@ -153,9 +141,7 @@
       "부산 수자인 1",
       "장애인고용공단 2"
     ],
-    "reserved_dispatch": [
-      "파주"
-    ],
+    "reserved_dispatch": [],
     "control_dispatch": [],
     "site_dispatch": [],
     "random_site_dispatch": []
@@ -178,9 +164,7 @@
       "성남 율동",
       "성남 야탑"
     ],
-    "reserved_dispatch": [
-      "인력개발원"
-    ],
+    "reserved_dispatch": [],
     "control_dispatch": [],
     "site_dispatch": [],
     "random_site_dispatch": []
@@ -208,20 +192,9 @@
       "부산 수자인 2",
       "장애인고용공단 2"
     ],
-    "reserved_dispatch": [
-      "동대문구 회기동"
-    ],
-    "control_dispatch": [
-      "리센츠 1",
-      "리센츠 2"
-    ],
-    "site_dispatch": [
-      "부천 위브",
-      "평택 1",
-      "평택 2",
-      "김포 1",
-      "김포 2"
-    ],
+    "reserved_dispatch": [],
+    "control_dispatch": [],
+    "site_dispatch": [],
     "random_site_dispatch": []
   },
   "15": {
@@ -244,14 +217,9 @@
       "잠실 레이크",
       "더샵남천"
     ],
-    "reserved_dispatch": [
-      "파주",
-      "인력개발원"
-    ],
+    "reserved_dispatch": [],
     "control_dispatch": [],
-    "site_dispatch": [
-      "부산 서면"
-    ],
+    "site_dispatch": [],
     "random_site_dispatch": []
   },
   "16": {
@@ -284,19 +252,9 @@
       "덕수궁",
       "장애인고용공단 2"
     ],
-    "reserved_dispatch": [
-      "순천향",
-      "창원대 1",
-      "창원대 2",
-      "용인 고진"
-    ],
-    "control_dispatch": [
-      "엘스"
-    ],
-    "site_dispatch": [
-      "평택 1",
-      "평택 2"
-    ],
+    "reserved_dispatch": [],
+    "control_dispatch": [],
+    "site_dispatch": [],
     "random_site_dispatch": []
   },
   "17": {
@@ -316,9 +274,7 @@
       "장애인고용공단 2"
     ],
     "reserved_dispatch": [
-      "동대문구 회기동",
-      "김포 풍무",
-      "지제"
+      "동대문구 회기동"
     ],
     "control_dispatch": [],
     "site_dispatch": [],
@@ -336,9 +292,7 @@
       "부산 호반 2",
       "부산 수자인 2"
     ],
-    "reserved_dispatch": [
-      "파주"
-    ],
+    "reserved_dispatch": [],
     "control_dispatch": [],
     "site_dispatch": [],
     "random_site_dispatch": []
@@ -355,7 +309,9 @@
       "리센츠 1",
       "리센츠 2"
     ],
-    "out": [],
+    "out": [
+      "중앙대"
+    ],
     "night_excluded": [],
     "auto_dispatch": [
       "양원LH",
@@ -363,17 +319,9 @@
       "성남 야탑",
       "두루아이 4"
     ],
-    "reserved_dispatch": [
-      "용인 고진"
-    ],
-    "control_dispatch": [
-      "구리 롯데캐슬",
-      "엘스"
-    ],
-    "site_dispatch": [
-      "리센츠 1",
-      "리센츠 2"
-    ],
+    "reserved_dispatch": [],
+    "control_dispatch": [],
+    "site_dispatch": [],
     "random_site_dispatch": []
   },
   "20": {
@@ -396,10 +344,7 @@
       "잠실 레이크",
       "잠실 르엘"
     ],
-    "reserved_dispatch": [
-      "중앙대",
-      "지제"
-    ],
+    "reserved_dispatch": [],
     "control_dispatch": [],
     "site_dispatch": [],
     "random_site_dispatch": []
@@ -426,16 +371,9 @@
       "양원LH",
       "두루아이 4"
     ],
-    "reserved_dispatch": [
-      "순천향",
-      "파주",
-      "중앙대"
-    ],
+    "reserved_dispatch": [],
     "control_dispatch": [],
-    "site_dispatch": [
-      "창원대 1",
-      "창원대 2"
-    ],
+    "site_dispatch": [],
     "random_site_dispatch": []
   },
   "22": {
@@ -464,12 +402,7 @@
       "고양 래미안",
       "두루아이 4"
     ],
-    "reserved_dispatch": [
-      "동백SK",
-      "신동백",
-      "전주천",
-      "중앙대"
-    ],
+    "reserved_dispatch": [],
     "control_dispatch": [],
     "site_dispatch": [],
     "random_site_dispatch": []
