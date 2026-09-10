@@ -2495,9 +2495,11 @@
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({ addTaken: names }),
 				});
-				if (!res.ok) console.log('patchTaken 실패:', res.status);
+				if (!res.ok) { console.log('patchTaken 실패:', res.status); return false; }
+				return true;
 			} catch (e) {
 				console.log('patchTaken 오류:', e);
+				return false;
 			}
 		};
 
@@ -2522,9 +2524,11 @@
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({ type: 'dispatch', addTaken: names }),
 				});
-				if (!res.ok) console.log('patchDispatchTaken 실패:', res.status);
+				if (!res.ok) { console.log('patchDispatchTaken 실패:', res.status); return false; }
+				return true;
 			} catch (e) {
 				console.log('patchDispatchTaken 오류:', e);
+				return false;
 			}
 		};
 
@@ -2732,8 +2736,13 @@
 			if (!checkedUnits.length) return;
 
 			if (confirmed) {
-				await patchTaken(checkedUnits);
-				setDpMsg(`${checkedUnits.length}대 시작 및 서버 반영 완료`, '#22c55e');
+				let ok = await patchTaken(checkedUnits);
+				if (!ok) ok = await patchTaken(checkedUnits); // 실패 시 1회 자동 재시도
+				if (ok) {
+					setDpMsg(`${checkedUnits.length}대 시작 및 서버 반영 완료`, '#22c55e');
+				} else {
+					setDpMsg(`${checkedUnits.join(', ')} 카메라는 연결됐지만 서버 반영에 실패했어요 — 다른 탭에서 중복 시도될 수 있으니 새로고침 후 확인해주세요`, '#ef4444');
+				}
 			} else {
 				setDpMsg(`${checkedUnits.join(', ')} 체크됨 — 시작하기 버튼을 직접 누르면 taken 반영은 되지 않습니다`, '#f59e0b');
 			}
@@ -2787,9 +2796,14 @@
 			if (!checkedUnits.length) return;
 
 			if (confirmed) {
-				await patchDispatchTaken(checkedUnits);
+				let ok = await patchDispatchTaken(checkedUnits);
+				if (!ok) ok = await patchDispatchTaken(checkedUnits); // 실패 시 1회 자동 재시도
 				const skipped = capped.length < available.length ? ` (자리 부족으로 ${available.length - capped.length}대는 건너뜀)` : '';
-				setDpMsg(`${hour}시 자동출차 ${checkedUnits.length}대 시작 및 서버 반영 완료${skipped}`, '#22c55e');
+				if (ok) {
+					setDpMsg(`${hour}시 자동출차 ${checkedUnits.length}대 시작 및 서버 반영 완료${skipped}`, '#22c55e');
+				} else {
+					setDpMsg(`${checkedUnits.join(', ')} 카메라는 연결됐지만 서버 반영에 실패했어요 — 다른 탭에서 중복 시도될 수 있으니 새로고침 후 확인해주세요`, '#ef4444');
+				}
 			} else {
 				setDpMsg(`${checkedUnits.join(', ')} 체크됨 — 시작하기 버튼을 직접 누르면 taken 반영은 되지 않습니다`, '#f59e0b');
 			}
