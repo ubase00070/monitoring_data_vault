@@ -5,7 +5,8 @@
       "성남 율동",
       "성남 야탑",
       "용인 고진",
-      "경희대 1"
+      "경희대 1",
+      "구리 롯데캐슬"
     ],
     "out": [],
     "night_excluded": [],
@@ -26,8 +27,7 @@
   "08": {
     "plan": [
       "부산 호반 1",
-      "부산 수자인 1",
-      "구리 롯데캐슬"
+      "부산 수자인 1"
     ],
     "out": [
       "파주"
@@ -37,9 +37,7 @@
       "부산 호반 1",
       "부산 수자인 1"
     ],
-    "reserved_dispatch": [
-      "구리 롯데캐슬"
-    ],
+    "reserved_dispatch": [],
     "control_dispatch": [],
     "site_dispatch": [],
     "random_site_dispatch": []
@@ -616,7 +614,9 @@
       "용인 고진",
       "지제"
     ],
-    "out": [],
+    "out": [
+      "파주"
+    ],
     "night_excluded": [],
     "auto_dispatch": [
       "서강대",
