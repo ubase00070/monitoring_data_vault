@@ -570,19 +570,20 @@
 	        const idMatch = path.match(/\/ko\/remote\/robot\/(\d+)/);
 	        const robotNum = idMatch ? idMatch[1] : null;
 	        if (robotNum && ROBOT_MAP[robotNum]) {
-	            let history = JSON.parse(localStorage.getItem('neubie_robot_history') || '[]');
+	            const isJejuRobot = ROBOT_MAP[robotNum].site === '제주 전국장애인체전';
 	            const newData = { id: robotNum, timestamp: Date.now() };
-	            history = [newData, ...history.filter(h => h.id !== robotNum)].slice(0, 3);
-	            localStorage.setItem('neubie_robot_history', JSON.stringify(history));
 
-	            // ── [임시] 제주 전국장애인체전 전용 이력 (최대 2대) ──
-	            // 위 전체 이력(최대 3대)과 완전히 동일한 dedup + 최신순 로직이되,
-	            // 제주 사이트 기체를 방문했을 때만 별도 키에 최대 2개까지 쌓는다.
-	            // → 영상 파일명 생성기의 '제주 전국장애인체전' 행에서 사용.
-	            if (ROBOT_MAP[robotNum].site === '제주 전국장애인체전') {
+	            if (isJejuRobot) {
+	                // ── [임시] 제주 전국장애인체전 전용 이력 (최대 2대) ──
+	                // 기존 배달기체 3칸 이력(neubie_robot_history)과는 완전히 별개 저장소.
+	                // 제주 기체를 방문해도 배달기체 드롭다운(최근 배달 기체 3칸)엔 절대 섞이지 않는다.
 	                let jejuHistory = JSON.parse(localStorage.getItem('neubie_jeju_robot_history') || '[]');
 	                jejuHistory = [newData, ...jejuHistory.filter(h => h.id !== robotNum)].slice(0, 2);
 	                localStorage.setItem('neubie_jeju_robot_history', JSON.stringify(jejuHistory));
+	            } else {
+	                let history = JSON.parse(localStorage.getItem('neubie_robot_history') || '[]');
+	                history = [newData, ...history.filter(h => h.id !== robotNum)].slice(0, 3);
+	                localStorage.setItem('neubie_robot_history', JSON.stringify(history));
 	            }
 	        }
 	    }
