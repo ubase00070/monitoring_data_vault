@@ -605,6 +605,52 @@
         #bb-top5-panel.bb-light .bb-top5-row { border-bottom-color:var(--bd); }
         #bb-top5-panel.bb-light .bb-top5-row:hover { background:var(--sur2); }
         #bb-top5-panel.bb-light .bb-top5-col-title { color:#a16207; }
+
+        /* ── 제주 배터리 로그 패널 ── */
+        #bb-jeju-log-panel {
+            display:none; position:fixed;
+            top:50%; left:50%; transform:translate(-50%,-50%);
+            width:1180px; max-height:86vh; overflow-y:auto;
+            border:3px solid transparent; border-radius:14px;
+            background-image: linear-gradient(var(--sur), var(--sur)), linear-gradient(135deg, #6366f1, #ec4899);
+            background-origin: border-box;
+            background-clip: padding-box, border-box;
+            box-shadow:0 24px 64px rgba(0,0,0,.9);
+            z-index:99999999;
+            cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_default.png') 4 4, auto;
+        }
+        #bb-jeju-log-panel.open { display:block; }
+        #bb-jeju-log-panel.bb-light {
+			--bg:#f2e4c4; --sur:#f8f3e6; --sur2:#efe6d2;
+			--bd:#cabf9d; --bd2:#b3a687; --tx:#2b2418; --mu:#7a6f5c;
+		}
+		#bb-jeju-log-panel.bb-light .bb-ap-title { color:var(--tx); }
+        .bb-jl-body { padding:10px 14px 16px; display:flex; flex-direction:column; gap:8px; }
+        .bb-jl-row {
+            display:flex; align-items:center; gap:10px;
+            background:var(--bg); border-radius:10px; padding:7px 10px;
+            cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_pointer.png') 4 4, pointer;
+        }
+        .bb-jl-row:hover { filter:brightness(1.06); }
+        .bb-jl-name {
+            width:150px; flex-shrink:0; font-size:13px; font-weight:900; color:var(--tx);
+            white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+        }
+        .bb-jl-batt {
+            width:44px; flex-shrink:0; font-size:12px; font-weight:900; text-align:center;
+            font-family:'Paperlogy','Lato',monospace; color:var(--mu);
+        }
+        .bb-jl-chart { flex:1; min-width:0; overflow-x:auto; overflow-y:hidden; }
+        .bb-jl-chart svg { display:block; }
+        .bb-jl-copy {
+            flex-shrink:0; height:28px; padding:0 10px; border-radius:6px; border:1px solid var(--bd2);
+            background:var(--sur2); color:var(--tx); font-size:12px; font-weight:700; font-family:inherit;
+            cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_pointer.png') 4 4, pointer; white-space:nowrap;
+        }
+        .bb-jl-copy:hover { border-color:var(--mu); }
+        .bb-jl-copy.done { background:var(--gn2); border-color:var(--gn); color:var(--gn); }
+        .bb-jl-empty { padding:30px 16px; text-align:center; font-size:14px; color:var(--mu); font-weight:700; }
+
         #bb-alert-panel.open { display:block; }
         .bb-ap-hd {
             padding:14px 16px; border-bottom:1px solid #4a5070;
@@ -803,6 +849,7 @@
                         <div class="bb-xbtn" id="bb-closebtn">✕</div>
                     </div>
                     <div class="bb-hd-right-row" id="bb-search-wrap">
+                        <button class="bb-btn" id="bb-jeju-log-btn">🏝️ 제주 배터리 로그</button>
                         <button class="bb-btn" id="bb-sortname-btn">이름 순 정렬</button>
                         <button class="bb-btn" id="bb-rmbtn">카드 제거</button>
                         <div class="bb-si-wrap">
@@ -905,6 +952,15 @@
             <div id="bb-top5-body" class="bb-top5-grid"></div>
         </div>
 
+        <!-- 제주 배터리 로그 패널 -->
+        <div id="bb-jeju-log-panel">
+            <div class="bb-ap-hd">
+                <div class="bb-ap-title">🏝️ 제주 월드컵 경기장 배터리 로그 (종합 증감추이)<span id="bb-jl-daytext" style="font-size:12px;font-weight:700;color:var(--mu);margin-left:8px;"></span></div>
+                <div class="bb-ap-close" id="bb-jeju-log-close">✕</div>
+            </div>
+            <div id="bb-jeju-log-body" class="bb-jl-body"></div>
+        </div>
+
         <!-- 기체 Info 패널 -->
         <div id="bb-info-card-panel">
             <div class="bb-icp-hd">
@@ -924,6 +980,7 @@
 		document.getElementById('bb-alert-panel').classList.toggle('bb-light', theme === 'light');
 		document.getElementById('bb-info-card-panel').classList.toggle('bb-light', theme === 'light');
 		document.getElementById('bb-top5-panel').classList.toggle('bb-light', theme === 'light');
+		document.getElementById('bb-jeju-log-panel').classList.toggle('bb-light', theme === 'light');
 		document.getElementById('bb-alertlog-all-panel').classList.toggle('bb-light', theme === 'light');
 		document.getElementById('bb-theme-btn').textContent = theme === 'light' ? '☀️ 라이트' : '🌙 다크';
 	};
@@ -978,6 +1035,9 @@
         132,134,137,138,140,141,142,143,144,145,146,150,151,171,
         177,178,179,180,181,182,187,193,196,202,203,207,214,216,224,230,235,241,244,245,246,257
     ];
+
+    // 제주 월드컵 경기장_전국장애인체전 (https://ncc.neubility.ai/ko/monitoring/257)
+    const JEJU_WORLDCUP_SITE_ID = 257;
 
     // ============================================================
     // 묶음 그리드 설정 — siteIds 또는 names로 매칭. 배열 순서대로 표시됨.
@@ -1940,6 +2000,105 @@
         });
     }
 
+    // wblSummarizeToday의 순수 텍스트 버전 (HTML 태그 없음) — 클립보드 복사용
+    function wblSummarizeTodayPlain(robotId, source) {
+        const segments = wblGetSegments(robotId, source);
+        if (segments.length === 0) return null;
+
+        return segments.map(seg => {
+            const durMin = Math.max(10, wblToMin(seg.end) - wblToMin(seg.start) + 10);
+            const label = WBL_STL[seg.status] || seg.status;
+            const head = `${label} ${seg.start}~${seg.end}`;
+
+            if (seg.status === 'off' || seg.startBattery == null || seg.endBattery == null) {
+                return head;
+            }
+            const delta = seg.endBattery - seg.startBattery;
+            if (delta === 0) {
+                return `${head} · ${seg.startBattery}% 유지`;
+            }
+            const rate = durMin > 0 ? (delta / durMin * 60).toFixed(1) : '0';
+            return `${head} · ${seg.startBattery}%→${seg.endBattery}% (시간당 ${rate>0?'+':''}${rate}%)`;
+        });
+    }
+
+    // 제주 배터리 로그: 한 줄(compact) 압축형 SVG 그래프 — 축 라벨/범례 없이 추이선만 표시
+    function wblRenderMiniChartSVG(robotId, source, targetWidth) {
+        const isLight = bbEl.classList.contains('bb-light');
+        const gridEdge  = isLight ? '#b3a687' : '#3a3a40';
+        const dotFill   = isLight ? '#2b2418' : '#e5e7eb';
+        const haloColor = isLight ? '#f8f3e6' : '#0d1117';
+
+        if (source !== 'yesterday') {
+            const dayKey = wblGetDayKey();
+            if (!dayKey) return `<div style="font-size:11px;color:var(--mu);padding:10px 4px;">비활성 시간대(03~08시)</div>`;
+        }
+        const data = wblGetSourceData(source);
+        const entry = data?.entries?.[robotId];
+        if (!entry || entry.log.length === 0) {
+            return `<div style="font-size:11px;color:var(--mu);padding:10px 4px;">${source==='yesterday' ? '어제' : '오늘'} 기록 없음</div>`;
+        }
+
+        const H = 44, PADX = 6, PADT = 6, PADB = 6;
+        const dayStartMin = 8 * 60;
+        const spanMin = source === 'yesterday'
+            ? 19 * 60
+            : Math.max(60, (() => { const n=new Date(); let m=n.getHours()*60+n.getMinutes(); if (n.getHours()<3) m += 1440; return m; })() - dayStartMin);
+        const W = targetWidth || 600;
+        const pxPerMin = (W - PADX * 2) / spanMin;
+
+        const xOf = (hhmm) => { let m = wblToMin(hhmm); if (m < dayStartMin) m += 1440; return PADX + (m - dayStartMin) * pxPerMin; };
+        const yOf = (pct) => PADT + (1 - pct/100) * (H - PADT - PADB);
+
+        const sortedLog = [...entry.log].sort((a, b) => wblDayAdjMin(a.t) - wblDayAdjMin(b.t));
+        const runs = [];
+        sortedLog.forEach(pt => {
+            if (pt.battery == null) { runs.push(null); return; }
+            const last = runs[runs.length - 1];
+            if (Array.isArray(last)) last.push(pt); else runs.push([pt]);
+        });
+        const dataRuns = runs.filter(Array.isArray);
+
+        const colorSegs = [];
+        dataRuns.forEach(run => {
+            let cur = [run[0]];
+            for (let i = 1; i < run.length; i++) {
+                if (run[i].status !== cur[cur.length - 1].status) {
+                    cur.push(run[i]);
+                    colorSegs.push({ status: cur[0].status, points: cur });
+                    cur = [run[i]];
+                } else {
+                    cur.push(run[i]);
+                }
+            }
+            colorSegs.push({ status: cur[0].status, points: cur });
+        });
+
+        const colorOf = (status) => CLUSTER_AC[status] || '#3b82f6';
+        const polylines = colorSegs.map(seg => {
+            const pts = seg.points.map(pt => `${xOf(pt.t).toFixed(1)},${yOf(pt.battery).toFixed(1)}`).join(' ');
+            return `<polyline points="${pts}" fill="none" style="stroke:${colorOf(seg.status)}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>`;
+        });
+        const dots = colorSegs.flatMap(seg => seg.points.map(pt =>
+            `<circle cx="${xOf(pt.t).toFixed(1)}" cy="${yOf(pt.battery).toFixed(1)}" r="2" style="fill:${colorOf(pt.status)}" stroke="${haloColor}" stroke-width="0.8"/>`
+        ));
+
+        // 공간이 좁으므로 시작/끝 배터리 %만 표기
+        const first = sortedLog.find(p => p.battery != null);
+        const lastPt = [...sortedLog].reverse().find(p => p.battery != null);
+        const labels = [];
+        if (first) labels.push(`<text x="${xOf(first.t).toFixed(1)}" y="${(yOf(first.battery) - 5).toFixed(1)}" font-size="9" font-weight="700" text-anchor="start" fill="${dotFill}" stroke="${haloColor}" stroke-width="2" paint-order="stroke fill">${first.battery}%</text>`);
+        if (lastPt && lastPt !== first) labels.push(`<text x="${xOf(lastPt.t).toFixed(1)}" y="${(yOf(lastPt.battery) - 5).toFixed(1)}" font-size="9" font-weight="700" text-anchor="end" fill="${dotFill}" stroke="${haloColor}" stroke-width="2" paint-order="stroke fill">${lastPt.battery}%</text>`);
+
+        return `<svg width="${W}" height="${H}" style="display:block;">
+            <line x1="${PADX}" y1="${yOf(0).toFixed(1)}" x2="${W-PADX}" y2="${yOf(0).toFixed(1)}" stroke="${gridEdge}" stroke-width="1"/>
+            <line x1="${PADX}" y1="${yOf(100).toFixed(1)}" x2="${W-PADX}" y2="${yOf(100).toFixed(1)}" stroke="${gridEdge}" stroke-width="1"/>
+            ${polylines.join('')}
+            ${dots.join('')}
+            ${labels.join('')}
+        </svg>`;
+    }
+
     // 오늘 08:00 기준 분(min) 좌표로 SVG 선그래프 그리기 (미측정 구간은 점선으로 끊음)
     function wblRenderChartSVG(robotId, source) {
         const isLight = bbEl.classList.contains('bb-light');
@@ -2669,6 +2828,94 @@
         registerTop5PanelClose();
     }
 
+    // ============================================================
+    // 제주 배터리 로그 (siteId=257, 사이트 내 전 기체 종합 증감추이 — 한 줄 압축형)
+    // ============================================================
+    let _jejuLogCloseHandler = null;
+    function registerJejuLogPanelClose() {
+        const panel = document.getElementById('bb-jeju-log-panel');
+        if (_jejuLogCloseHandler) {
+            document.removeEventListener('mousedown', _jejuLogCloseHandler);
+            _jejuLogCloseHandler = null;
+        }
+        setTimeout(() => {
+            _jejuLogCloseHandler = function closeJejuLog(e) {
+                if (!panel.contains(e.target)) {
+                    panel.classList.remove('open');
+                    document.removeEventListener('mousedown', _jejuLogCloseHandler);
+                    _jejuLogCloseHandler = null;
+                }
+            };
+            document.addEventListener('mousedown', _jejuLogCloseHandler);
+        }, 100);
+    }
+
+    function openJejuLogPanel() {
+        const panel  = document.getElementById('bb-jeju-log-panel');
+        const bodyEl = document.getElementById('bb-jeju-log-body');
+        const dayTextEl = document.getElementById('bb-jl-daytext');
+
+        const robots = DB.filter(r => r.siteId === JEJU_WORLDCUP_SITE_ID)
+                          .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ko'));
+
+        const dayKey = wblGetSourceData('today')?.day;
+        dayTextEl.textContent = dayKey ? `[${wblFormatMonthDay(dayKey)}]` : '';
+
+        if (!robots.length) {
+            bodyEl.innerHTML = `<div class="bb-jl-empty">제주 월드컵 경기장(사이트 ${JEJU_WORLDCUP_SITE_ID}) 소속 기체를 찾을 수 없습니다</div>`;
+        } else {
+            const CHART_W = 700;   // 패널 폭에서 이름/배터리/복사버튼 영역을 뺀 그래프 폭
+            bodyEl.innerHTML = robots.map(r => {
+                const chartSvg = wblRenderMiniChartSVG(r.id, 'today', CHART_W);
+                const battTxt = r.status === 'off' ? 'OFF' : `${r.battery ?? '-'}%`;
+                return `
+                    <div class="bb-jl-row" data-id="${r.id}">
+                        <span class="bb-jl-name" title="${r.name}">${r.name}</span>
+                        <span class="bb-jl-batt">${battTxt}</span>
+                        <div class="bb-jl-chart">${chartSvg}</div>
+                        <button class="bb-jl-copy" data-id="${r.id}" type="button">📋 복사</button>
+                    </div>`;
+            }).join('');
+
+            // 행 클릭 → 해당 기체 상세 Info 패널로 이동(복사 버튼 클릭은 제외)
+            bodyEl.querySelectorAll('.bb-jl-row').forEach(rowEl => {
+                rowEl.addEventListener('click', (e) => {
+                    if (e.target.closest('.bb-jl-copy')) return;
+                    const r = DB.find(x => x.id === rowEl.dataset.id);
+                    if (r) {
+                        panel.classList.remove('open');
+                        _infoPanelReturnToJejuLog = true;
+                        openInfoCardPanel(r);
+                    }
+                });
+            });
+
+            // 기체별 "금일 배터리 소요현황" 텍스트 복사
+            bodyEl.querySelectorAll('.bb-jl-copy').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    const r = robots.find(x => x.id === btn.dataset.id);
+                    if (!r) return;
+                    const lines = wblSummarizeTodayPlain(r.id, 'today');
+                    const bodyTxt = lines ? lines.join('\n') : '오늘 기록된 데이터 없음';
+                    const header = `[${r.name}] 금일 배터리 소요현황${dayKey ? ' (' + wblFormatMonthDay(dayKey) + ')' : ''}`;
+                    const text = `${header}\n${bodyTxt}`;
+                    try {
+                        await navigator.clipboard.writeText(text);
+                        btn.textContent = '✅ 복사됨';
+                        btn.classList.add('done');
+                    } catch {
+                        btn.textContent = '❌ 실패';
+                    }
+                    setTimeout(() => { btn.textContent = '📋 복사'; btn.classList.remove('done'); }, 1500);
+                });
+            });
+        }
+
+        panel.classList.add('open');
+        registerJejuLogPanelClose();
+    }
+
     let _alertLogAllCloseHandler = null;
     function registerAlertLogAllPanelClose() {
         const panel = document.getElementById('bb-alertlog-all-panel');
@@ -2955,11 +3202,16 @@
 
         let _infoPanelCloseHandler = null;
         let _infoPanelReturnToTop5 = false;
+        let _infoPanelReturnToJejuLog = false;
         function closeInfoCardPanel() {
             document.getElementById('bb-info-card-panel').classList.remove('open');
             if (_infoPanelReturnToTop5) {
                 _infoPanelReturnToTop5 = false;
                 openTop5Panel();
+            }
+            if (_infoPanelReturnToJejuLog) {
+                _infoPanelReturnToJejuLog = false;
+                openJejuLogPanel();
             }
         }
         function registerInfoPanelClose() {
@@ -3165,6 +3417,15 @@
         if (_top5CloseHandler) {
             document.removeEventListener('mousedown', _top5CloseHandler);
             _top5CloseHandler = null;
+        }
+    });
+
+    document.getElementById('bb-jeju-log-btn').addEventListener('click', openJejuLogPanel);
+    document.getElementById('bb-jeju-log-close').addEventListener('click', () => {
+        document.getElementById('bb-jeju-log-panel').classList.remove('open');
+        if (_jejuLogCloseHandler) {
+            document.removeEventListener('mousedown', _jejuLogCloseHandler);
+            _jejuLogCloseHandler = null;
         }
     });
 
