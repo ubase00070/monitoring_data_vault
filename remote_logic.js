@@ -1585,6 +1585,11 @@
         const jejuUnit0 = jejuUnits[0] || '';
         const jejuUnit1 = jejuUnits[1] || '';
 
+        // ── [임시] 제주 파일명 시간 선택 옵션 (현재 시각 기준 뒤로 최대 2시간) ──
+        // 영상이 길어서 임무 시작 시각을 직접 골라야 할 때 대비. 기본 선택값은 항상 현재 시각.
+        const jejuNowHour = new Date().getHours();
+        const jejuHourOptions = [2, 1, 0].map(offset => (jejuNowHour - offset + 24) % 24);
+
         // 복사 효과 공통 함수
         const COPY_SUCCESS_COLOR = HOVER_ACCENT; // 알림 테스트 호버와 동일한 블루톤
         const COPY_SUCCESS_TEXT = '#fff';
@@ -1694,11 +1699,14 @@
                 </div>
             </div>
             <div style="width:100%; height:1px; background:${T.border}; margin:2px 0 10px;"></div>
-            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; min-width:0; margin-bottom:6px;">
+            <div id="jejuNamingRow" style="display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap; min-width:0; margin-bottom:6px; padding:4px 8px; border-radius:10px;">
                 <span style="font-size:14px; font-weight:bold; color:${T.text}; white-space:nowrap;">🏝️ 제주 전국장애인체전</span>
+                <select id="jejuHourSelect" style="background:${fieldBg}; color:${fieldText}; border:1px solid ${fieldBorder}; border-radius:6px; font-size:14px; font-weight:bold; height:28px; padding:0 4px; box-sizing:border-box;">
+                    ${jejuHourOptions.map(h => `<option value="${h}" ${h === jejuNowHour ? 'selected' : ''}>${String(h).padStart(2,'0')}시</option>`).join('')}
+                </select>
                 <div id="jejuUnitChip0" class="jeju-unit-chip${jejuUnit0 ? '' : ' is-empty'}" data-active="true" data-unit="${jejuUnit0}">${jejuUnit0 || '—'}</div>
                 <div id="jejuUnitChip1" class="jeju-unit-chip${jejuUnit1 ? '' : ' is-empty'}" data-active="true" data-unit="${jejuUnit1}">${jejuUnit1 || '—'}</div>
-                <button id="copyJejuFileName" style="margin-left:auto; width:70px; flex-shrink:0; background:#10b981; color:white; border:none; padding:0 10px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:14px; white-space:nowrap; height:28px; line-height:28px; box-sizing:border-box;">복사</button>
+                <button id="copyJejuFileName" style="width:70px; flex-shrink:0; background:#10b981; color:white; border:none; padding:0 10px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:14px; white-space:nowrap; height:28px; line-height:28px; box-sizing:border-box;">복사</button>
             </div>
         `;
 
@@ -1712,7 +1720,9 @@
             .jeju-unit-chip { display:inline-flex; align-items:center; justify-content:center; min-width:52px; height:28px; padding:0 8px; border-radius:6px; font-size:14px; font-weight:bold; border:1px solid ${neutralBtnBorder}; background:${neutralBtnBg}; color:${neutralBtnText}; cursor:pointer; white-space:nowrap; user-select:none; transition:0.2s; box-sizing:border-box; }
             .jeju-unit-chip:hover:not(.is-empty) { background:${subBtnHoverBg}; border-color:${subBtnHoverBorder}; color:${subBtnHoverText}; }
             .jeju-unit-chip.is-off { opacity:0.4; text-decoration:line-through; }
-            .jeju-unit-chip.is-empty { opacity:0.35; cursor:default; }`;
+            .jeju-unit-chip.is-empty { opacity:0.35; cursor:default; }
+            @keyframes jejuNewFeatureBlink { 0%, 100% { background-color: transparent; } 50% { background-color: rgba(239,68,68,0.18); } }
+            #jejuNamingRow { animation: jejuNewFeatureBlink 2s ease-in-out infinite; }`;
 
         setTimeout(() => {
 			// 영상 드라이브 열기 → 오늘 날짜 폴더로 이동 (없으면 루트 폴더로 폴백)
@@ -1815,6 +1825,13 @@
                         }
                     });
                     const time = new Date();
+                    const selectedHourRaw = card.querySelector('#jejuHourSelect')?.value;
+                    const selectedHour = selectedHourRaw !== undefined ? parseInt(selectedHourRaw, 10) : time.getHours();
+                    if (!isNaN(selectedHour)) {
+                        // 자정을 넘겨 이전 시간을 고른 경우(예: 지금 01시에 23시를 선택) 날짜도 하루 앞으로 보정
+                        if (selectedHour > time.getHours()) time.setDate(time.getDate() - 1);
+                        time.setHours(selectedHour);
+                    }
                     const myName = localStorage.getItem('neubie_user_name') || '';
                     const unitsPart = activeUnits.length ? `_#${activeUnits.join(', ')}` : '';
                     const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_제주 전국장애인체전${unitsPart}${myName ? '_' + myName : ''}`;
