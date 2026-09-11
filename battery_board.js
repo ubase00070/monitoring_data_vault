@@ -664,7 +664,7 @@
         .bb-jl-chart svg { display:block; }
         .bb-jl-empty { padding:30px 16px; text-align:center; font-size:14px; color:var(--mu); font-weight:700; }
 
-        /* 금일 운영 배터리 로그(임무 단위 표) */
+        /* 금일 운영 배터리 로그(기체당 1행 + 임무별 칩) */
         .bb-jl-ops-toolbar { display:flex; justify-content:flex-end; padding:0 0 8px; }
         .bb-jl-ops-copy {
             flex-shrink:0; height:28px; padding:0 12px; border-radius:6px; border:1px solid var(--bd2);
@@ -679,12 +679,20 @@
             text-align:left; font-size:12px; color:var(--mu); font-weight:900;
             padding:6px 10px; border-bottom:1px solid var(--bd2);
         }
-        .bb-jl-ops-table td { padding:8px 10px; border-bottom:1px solid var(--bd); color:var(--tx); }
+        .bb-jl-ops-table td { padding:9px 10px; border-bottom:1px solid var(--bd); color:var(--tx); vertical-align:middle; }
         .bb-jl-ops-table tr:nth-child(even) td { background:var(--wh); }
         .bb-jl-ops-name { font-weight:900; white-space:nowrap; }
-        .bb-jl-ops-idx { font-size:11px; color:var(--mu); margin-left:4px; font-weight:700; }
-        .bb-jl-ops-ongoing { color:var(--or); font-weight:900; }
         .bb-jl-ops-empty td { color:var(--mu); }
+        .bb-jl-ops-chips { display:flex; flex-wrap:wrap; gap:6px; }
+        .bb-jl-ops-chip {
+            display:inline-flex; align-items:center; gap:3px;
+            padding:3px 9px; border-radius:999px; border:1px solid var(--bd2);
+            background:var(--sur2); color:var(--tx); font-size:12px; font-weight:700; white-space:nowrap;
+        }
+        .bb-jl-ops-chip b { font-weight:900; color:var(--bl); margin-right:1px; }
+        .bb-jl-ops-chip.ongoing { border-color:var(--or); color:var(--or); background:var(--or2); }
+        .bb-jl-ops-chip.ongoing b { color:var(--or); }
+
 
 
         #bb-alert-panel.open { display:block; }
@@ -2057,7 +2065,7 @@
         const labelText = isLight ? '#7a6f5c' : '#9ca3af';
         const tickLine  = isLight ? '#cabf9d' : '#3a3a40';
         const { dayStartMin, spanMin, W, xOf } = wblMiniAxisParams(source, targetWidth);
-        const H = 20;
+        const H = 24;
 
         const xTicks = [];
         for (let m = Math.ceil(dayStartMin/60)*60; m <= dayStartMin + spanMin; m += 60) {
@@ -2067,7 +2075,7 @@
 
         return `<svg width="${W}" height="${H}" style="display:block;">
             ${xTicks.map(t => `<line x1="${t.x.toFixed(1)}" y1="0" x2="${t.x.toFixed(1)}" y2="${H}" stroke="${tickLine}" stroke-width="1"/>`).join('')}
-            ${xTicks.map(t => `<text x="${t.x.toFixed(1)}" y="${H-6}" font-size="10" font-weight="700" fill="${labelText}" text-anchor="middle">${t.label}</text>`).join('')}
+            ${xTicks.map(t => `<text x="${t.x.toFixed(1)}" y="${H-7}" font-size="12" font-weight="900" fill="${labelText}" text-anchor="middle">${t.label}</text>`).join('')}
         </svg>`;
     }
 
@@ -2088,9 +2096,11 @@
             return `<div style="font-size:11px;color:var(--mu);padding:10px 4px;">${source==='yesterday' ? '어제' : '오늘'} 기록 없음</div>`;
         }
 
-        const H = 44, PADT = 6, PADB = 6;
+        const H = 60, PADT = 15, PADB = 10;
         const { PADX, W, xOf } = wblMiniAxisParams(source, targetWidth);
         const yOf = (pct) => PADT + (1 - pct/100) * (H - PADT - PADB);
+        // 100%에 가까우면 라벨이 그래프 위로 잘리니 dot 아래쪽에, 그 외에는 위쪽에 표기
+        const labelYOf = (pct) => yOf(pct) + (pct >= 90 ? 15 : -8);
 
         const sortedLog = [...entry.log].sort((a, b) => wblDayAdjMin(a.t) - wblDayAdjMin(b.t));
         const runs = [];
@@ -2120,18 +2130,18 @@
         const colorOf = (status) => CLUSTER_AC[status] || '#3b82f6';
         const polylines = colorSegs.map(seg => {
             const pts = seg.points.map(pt => `${xOf(pt.t).toFixed(1)},${yOf(pt.battery).toFixed(1)}`).join(' ');
-            return `<polyline points="${pts}" fill="none" style="stroke:${colorOf(seg.status)}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>`;
+            return `<polyline points="${pts}" fill="none" style="stroke:${colorOf(seg.status)}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>`;
         });
         const dots = colorSegs.flatMap(seg => seg.points.map(pt =>
-            `<circle cx="${xOf(pt.t).toFixed(1)}" cy="${yOf(pt.battery).toFixed(1)}" r="2.3" style="fill:${colorOf(pt.status)}" stroke="${haloColor}" stroke-width="0.8"/>`
+            `<circle cx="${xOf(pt.t).toFixed(1)}" cy="${yOf(pt.battery).toFixed(1)}" r="2.8" style="fill:${colorOf(pt.status)}" stroke="${haloColor}" stroke-width="1"/>`
         ));
 
-        // 공간이 좁으므로 시작/끝 배터리 %만 표기
+        // 공간이 좁으므로 시작/끝 배터리 %만 표기 (글자 크기를 키워 가독성 확보)
         const first = sortedLog.find(p => p.battery != null);
         const lastPt = [...sortedLog].reverse().find(p => p.battery != null);
         const labels = [];
-        if (first) labels.push(`<text x="${xOf(first.t).toFixed(1)}" y="${(yOf(first.battery) - 5).toFixed(1)}" font-size="9" font-weight="700" text-anchor="start" fill="${dotFill}" stroke="${haloColor}" stroke-width="2" paint-order="stroke fill">${first.battery}%</text>`);
-        if (lastPt && lastPt !== first) labels.push(`<text x="${xOf(lastPt.t).toFixed(1)}" y="${(yOf(lastPt.battery) - 5).toFixed(1)}" font-size="9" font-weight="700" text-anchor="end" fill="${dotFill}" stroke="${haloColor}" stroke-width="2" paint-order="stroke fill">${lastPt.battery}%</text>`);
+        if (first) labels.push(`<text x="${xOf(first.t).toFixed(1)}" y="${labelYOf(first.battery).toFixed(1)}" font-size="12" font-weight="900" text-anchor="start" fill="${dotFill}" stroke="${haloColor}" stroke-width="3" paint-order="stroke fill">${first.battery}%</text>`);
+        if (lastPt && lastPt !== first) labels.push(`<text x="${xOf(lastPt.t).toFixed(1)}" y="${labelYOf(lastPt.battery).toFixed(1)}" font-size="12" font-weight="900" text-anchor="end" fill="${dotFill}" stroke="${haloColor}" stroke-width="3" paint-order="stroke fill">${lastPt.battery}%</text>`);
 
         return `<svg width="${W}" height="${H}" style="display:block;">
             <line x1="${PADX}" y1="${yOf(0).toFixed(1)}" x2="${W-PADX}" y2="${yOf(0).toFixed(1)}" stroke="${gridEdge}" stroke-width="1"/>
@@ -2151,7 +2161,7 @@
     }
 
     // 금일 운영 배터리 로그: '대기 중(standby)'이 아닌 모든 구간을 하나의 '임무'로 묶고,
-    // 다시 '대기 중'으로 전환되는 시점을 임무 종료로 판단해 시작/종료 배터리와 총 소요시간을 산출
+    // 다시 '대기 중'으로 전환되는 시점을 임무 종료로 판단해 시작/종료 시각·배터리와 총 소요시간을 산출
     function wblComputeMissions(robotId, source) {
         const segments = wblGetSegments(robotId, source);
         if (!segments.length) return [];
@@ -2165,6 +2175,8 @@
                     missions.push({
                         startBattery: cur.startBattery,
                         endBattery: seg.startBattery != null ? seg.startBattery : (cur.lastBattery ?? cur.startBattery),
+                        startTimeStr: cur.startTimeStr,
+                        endTimeStr: seg.start,
                         startMin: cur.startMin,
                         endMin: wblDayAdjMin(seg.start),
                         ongoing: false,
@@ -2172,9 +2184,10 @@
                     cur = null;
                 }
             } else {
-                if (!cur) cur = { startBattery: seg.startBattery, startMin: wblDayAdjMin(seg.start) };
+                if (!cur) cur = { startBattery: seg.startBattery, startTimeStr: seg.start, startMin: wblDayAdjMin(seg.start) };
                 if (seg.endBattery != null) {
                     cur.lastBattery = seg.endBattery;
+                    cur.lastTimeStr = seg.end;
                     cur.lastMin = wblDayAdjMin(seg.end);
                 }
             }
@@ -2185,6 +2198,8 @@
             missions.push({
                 startBattery: cur.startBattery,
                 endBattery: cur.lastBattery ?? cur.startBattery,
+                startTimeStr: cur.startTimeStr,
+                endTimeStr: cur.lastTimeStr ?? cur.startTimeStr,
                 startMin: cur.startMin,
                 endMin: cur.lastMin ?? cur.startMin,
                 ongoing: true,
@@ -3036,39 +3051,21 @@
     // ── 뷰 2. 금일 운영 배터리 로그 — '대기 중' 전환 시점을 임무 종료로 판단해 임무 단위로 집계 ──
     function renderJejuOpsLogView(bodyEl, robots) {
         const dayKey = wblGetSourceData('today')?.day;
-
-        const rows = [];
-        robots.forEach(r => {
-            const missions = wblComputeMissions(r.id, 'today');
-            if (!missions.length) {
-                rows.push({ name: r.name, empty: true });
-                return;
-            }
-            missions.forEach((m, idx) => {
-                rows.push({
-                    name: r.name,
-                    idx: missions.length > 1 ? idx + 1 : null,
-                    startBattery: m.startBattery,
-                    endBattery: m.endBattery,
-                    durationMin: m.endMin - m.startMin,
-                    ongoing: m.ongoing,
-                });
-            });
-        });
-
         const fmtBatt = v => (v == null ? '-' : `${v}%`);
-        const trHtml = rows.map((row, i) => {
-            if (row.empty) {
-                return `<tr class="bb-jl-ops-empty"><td class="bb-jl-ops-name">${row.name}</td><td colspan="3">오늘 임무 기록 없음</td></tr>`;
+
+        // 기체 1대당 1행 — 하루에 여러 번 나간 임무를 전부 같은 행 안에 칩으로 압축 표시(캡처했을 때 한눈에 보이도록)
+        const robotMissions = robots.map(r => ({ r, missions: wblComputeMissions(r.id, 'today') }));
+
+        const trHtml = robotMissions.map(({ r, missions }) => {
+            if (!missions.length) {
+                return `<tr class="bb-jl-ops-empty"><td class="bb-jl-ops-name">${r.name}</td><td>오늘 임무 기록 없음</td></tr>`;
             }
-            const idxTag = row.idx ? `<span class="bb-jl-ops-idx">#${row.idx}</span>` : '';
-            const durTxt = (row.ongoing ? '진행중 · ' : '') + wblFormatDuration(row.durationMin);
-            return `<tr>
-                <td class="bb-jl-ops-name">${row.name}${idxTag}</td>
-                <td>${fmtBatt(row.startBattery)}</td>
-                <td>${fmtBatt(row.endBattery)}</td>
-                <td class="${row.ongoing ? 'bb-jl-ops-ongoing' : ''}">${durTxt}</td>
-            </tr>`;
+            const chips = missions.map((m, idx) => {
+                const tag = missions.length > 1 ? `<b>#${idx + 1}</b> ` : '';
+                const durTxt = wblFormatDuration(m.endMin - m.startMin) + (m.ongoing ? ' (진행중)' : '');
+                return `<span class="bb-jl-ops-chip${m.ongoing ? ' ongoing' : ''}">${tag}${fmtBatt(m.startBattery)}→${fmtBatt(m.endBattery)} · ${durTxt}</span>`;
+            }).join('');
+            return `<tr><td class="bb-jl-ops-name">${r.name}</td><td><div class="bb-jl-ops-chips">${chips}</div></td></tr>`;
         }).join('');
 
         bodyEl.innerHTML = `
@@ -3077,22 +3074,27 @@
             </div>
             <table class="bb-jl-ops-table">
                 <thead><tr>
-                    <th>기체 이름</th><th>임무 시작 배터리</th><th>임무 종료 배터리</th><th>총 임무 소요시간</th>
+                    <th style="width:180px;">기체 이름</th><th>금일 임무별 배터리 추이 (시작%→종료% · 소요시간)</th>
                 </tr></thead>
                 <tbody>${trHtml}</tbody>
             </table>
         `;
 
+        // 클립보드 복사용: 기체명 줄 + 임무별 불릿 목록(시작 시각+배터리 - 종료 시각+배터리 - 총 소요시간)
         document.getElementById('bb-jl-ops-copy-btn').addEventListener('click', async (e) => {
             const btn = e.currentTarget;
-            const lines = rows.map(row => {
-                if (row.empty) return `${row.name} · 오늘 임무 기록 없음`;
-                const idxTag = row.idx ? ` (#${row.idx})` : '';
-                const durTxt = (row.ongoing ? '진행중 · ' : '') + wblFormatDuration(row.durationMin);
-                return `${row.name}${idxTag} · ${fmtBatt(row.startBattery)}→${fmtBatt(row.endBattery)} · 총 ${durTxt}`;
+            const blocks = robotMissions.map(({ r, missions }) => {
+                if (!missions.length) return `${r.name}\n• 오늘 임무 기록 없음`;
+                const lines = missions.map((m, idx) => {
+                    const tag = missions.length > 1 ? `#${idx + 1} ` : '';
+                    const durTxt = wblFormatDuration(m.endMin - m.startMin) + (m.ongoing ? ' (진행중)' : '');
+                    const endPart = m.ongoing ? `진행중 ${fmtBatt(m.endBattery)}` : `${m.endTimeStr} ${fmtBatt(m.endBattery)}`;
+                    return `• ${tag}${m.startTimeStr} ${fmtBatt(m.startBattery)} - ${endPart} - 총 ${durTxt}`;
+                });
+                return `${r.name}\n${lines.join('\n')}`;
             });
             const header = `🏝️ 제주 월드컵 경기장 금일 운영 배터리 로그${dayKey ? ' [' + wblFormatMonthDay(dayKey) + ']' : ''}`;
-            const text = `${header}\n${lines.join('\n')}`;
+            const text = `${header}\n\n${blocks.join('\n\n')}`;
             try {
                 await navigator.clipboard.writeText(text);
                 btn.textContent = '✅ 복사됨';
