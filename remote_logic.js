@@ -1801,7 +1801,7 @@
         const latestPatchShortDate = patchItems[0].date.slice(2).replace(/-/g, '.'); // '2026-08-29' → '26.08.29'
 
         const patchBtn = document.createElement('button');
-        patchBtn.textContent = `${latestPatchShortDate} 패치노트`;
+        patchBtn.textContent = `패치노트`;
         patchBtn.title = '패치노트';
         patchBtn.style.cssText = `
 			position:relative;
@@ -1926,7 +1926,7 @@
                 display:flex; align-items:center; gap:6px;
                 background:transparent; border:1px solid ${T.border}; color:${T.text};
                 border-radius:6px; padding:4px 10px; cursor:pointer;
-                font-size:14px; margin-left:6px;
+                font-size:14px; margin-left:6px; white-space:nowrap; flex-shrink:0;
                 transition:all 0.2s;
             `;
             jejuBatteryBtn.innerHTML = `<span style="font-size:14px;">🌴</span>제주 배터리`;
@@ -2564,18 +2564,13 @@
         if (!isJejuBatteryWindowOpen() || !isJejuBatteryUser()) return;
 
         if (jejuBatteryPopup.style.display !== 'block') {
-            if (dashboard.style.display === 'block' && typeof getSharedPopupRect === 'function') {
-                const r = getSharedPopupRect();
-                jejuBatteryPopup.style.top = 'auto';
-                jejuBatteryPopup.style.left = r.left + 'px';
-                jejuBatteryPopup.style.right = 'auto';
-                jejuBatteryPopup.style.bottom = r.bottom + 'px';
-            } else {
-                jejuBatteryPopup.style.top = '20px';
-                jejuBatteryPopup.style.left = 'auto';
-                jejuBatteryPopup.style.right = '20px';
-                jejuBatteryPopup.style.bottom = 'auto';
-            }
+            // 성남 배터리(4개)와 달리 15대 리스트라 우측 도킹 방식은 화면 밖으로 잘릴 수 있음 —
+            // 항상 Alt+Q 레이아웃(대시보드)과 같은 정중앙 위치에 띄워서 팝업 전체가 다 보이게 함
+            jejuBatteryPopup.style.top = '50%';
+            jejuBatteryPopup.style.left = '50%';
+            jejuBatteryPopup.style.right = 'auto';
+            jejuBatteryPopup.style.bottom = 'auto';
+            jejuBatteryPopup.style.transform = 'translate(-50%, -50%)';
 
             // 열 때마다 호출하지만, 실제 서버 요청은 updateJejuBatteryStatus 내부의
             // 2분 게이트가 알아서 걸러줌 (성남 배터리와 동일 정책)
