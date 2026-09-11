@@ -897,7 +897,7 @@
         const header = document.createElement('div');
         header.style.cssText = `display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid ${T.border}; padding-bottom:10px;`;
         const titleB = document.createElement('b');
-        titleB.textContent = "🔋 제주 홍보용역 배터리 현황";
+        titleB.textContent = "🔋 제주 전국장애인체전 배터리 현황";
         titleB.style.cssText = `color:${T.text}; font-size:18px;`;
 
         const headerRight = document.createElement('div');
@@ -1029,9 +1029,10 @@
         const now = new Date();
         let hour = now.getHours();
         if (now.getMinutes() >= 50) hour = (hour + 1) % 24;
-        let copyText = `[${String(hour).padStart(2,'0')}시 제주 홍보용역 배터리 현황]\n`;
+        let copyText = `[${String(hour).padStart(2,'0')}시 제주 전국장애인체전 배터리 현황]\n`;
         (state.lastJejuBatteryData || []).forEach(item => {
-            copyText += `${item.shortName}: ${item.isOff ? 'OFF' : item.battery}\n`;
+            if (item.isOff) return; // 화면(팝업)에는 OFF도 표기하지만, 복사 텍스트엔 배터리 값 있는 기체만 포함
+            copyText += `${item.shortName}: ${item.battery}\n`;
         });
         navigator.clipboard.writeText(copyText).then(() => {
             const originalText = btn.textContent;
