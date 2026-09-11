@@ -628,19 +628,43 @@
 		#bb-jeju-log-panel.bb-light .bb-ap-title { color:var(--tx); }
         #bb-jeju-log-panel .bb-ap-hd { flex-shrink:0; gap:10px; }
         #bb-jeju-log-panel .bb-ap-title { display:flex; align-items:center; flex-wrap:wrap; gap:4px; flex:1; }
-        /* 헤더 부근 참고용 시간 표기(08:00 09:00 …) — 정밀한 그래프 축이 아니라 단순 안내용 텍스트 */
-        .bb-jl-timestrip {
-            flex-shrink:0; display:flex; flex-wrap:wrap; align-items:center; gap:8px;
-            padding:8px 14px; font-size:12px; color:var(--mu); font-weight:700;
-            border-bottom:1px solid var(--bd2); background:var(--sur);
-        }
-        .bb-jl-timestrip b { color:var(--tx); font-weight:900; margin-right:2px; }
-        .bb-jl-timestrip .bb-jl-timestrip-hour { color:var(--tx); font-family:'Paperlogy','Lato',monospace; }
+        #bb-jl-opslog-toggle { flex-shrink:0; font-size:13px; font-weight:900; padding:4px 10px; }
 
         .bb-jl-body { flex:1 1 auto; min-height:0; overflow-y:auto; padding:10px 14px 16px; }
+
+        /* 상단 고정 시간축 + 상태 범례 */
+        .bb-jl-sticky-head {
+            position:sticky; top:-1px; z-index:5;
+            background:var(--sur); padding:4px 0 6px; margin:-4px 0 4px;
+            border-bottom:1px solid var(--bd2);
+        }
+        .bb-jl-timeaxis-row { display:flex; align-items:flex-end; gap:10px; }
+        .bb-jl-legend { display:flex; flex-wrap:wrap; gap:10px; padding:6px 0 0 214px; }
+        .bb-jl-legend-item { display:flex; align-items:center; gap:4px; font-size:11px; color:var(--mu); font-weight:700; }
+        .bb-jl-legend-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+
+        .bb-jl-rows { display:flex; flex-direction:column; gap:8px; margin-top:8px; }
+        .bb-jl-row {
+            display:flex; align-items:center; gap:10px;
+            background:var(--bg); border-radius:10px; padding:7px 10px;
+            cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_pointer.png') 4 4, pointer;
+        }
+        .bb-jl-row:hover { filter:brightness(1.06); }
+        .bb-jl-namecol { width:150px; flex-shrink:0; }
+        .bb-jl-battcol { width:44px; flex-shrink:0; }
+        .bb-jl-name {
+            font-size:13px; font-weight:900; color:var(--tx);
+            white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block;
+        }
+        .bb-jl-batt {
+            font-size:12px; font-weight:900; text-align:center; display:block;
+            font-family:'Paperlogy','Lato',monospace; color:var(--mu);
+        }
+        .bb-jl-chart { flex:1; min-width:0; }
+        .bb-jl-chart svg { display:block; }
         .bb-jl-empty { padding:30px 16px; text-align:center; font-size:14px; color:var(--mu); font-weight:700; }
 
-        /* 금일 운영 배터리 로그(기체당 1행 + 임무별 칩) */
+        /* 금일 운영 배터리 로그(임무 단위 표) */
         .bb-jl-ops-toolbar { display:flex; justify-content:flex-end; padding:0 0 8px; }
         .bb-jl-ops-copy {
             flex-shrink:0; height:28px; padding:0 12px; border-radius:6px; border:1px solid var(--bd2);
@@ -655,25 +679,12 @@
             text-align:left; font-size:12px; color:var(--mu); font-weight:900;
             padding:6px 10px; border-bottom:1px solid var(--bd2);
         }
-        .bb-jl-ops-table td { padding:9px 10px; border-bottom:1px solid var(--bd); color:var(--tx); vertical-align:middle; }
+        .bb-jl-ops-table td { padding:8px 10px; border-bottom:1px solid var(--bd); color:var(--tx); }
         .bb-jl-ops-table tr:nth-child(even) td { background:var(--wh); }
-        /* 기체 라인 클릭 → 개별 기체 상세 레이아웃으로 이동 */
-        .bb-jl-ops-table tbody tr {
-            cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_pointer.png') 4 4, pointer;
-        }
-        .bb-jl-ops-table tbody tr:hover td { filter:brightness(1.08); }
         .bb-jl-ops-name { font-weight:900; white-space:nowrap; }
+        .bb-jl-ops-idx { font-size:11px; color:var(--mu); margin-left:4px; font-weight:700; }
+        .bb-jl-ops-ongoing { color:var(--or); font-weight:900; }
         .bb-jl-ops-empty td { color:var(--mu); }
-        .bb-jl-ops-chips { display:flex; flex-wrap:wrap; gap:6px; }
-        .bb-jl-ops-chip {
-            display:inline-flex; align-items:center; gap:3px;
-            padding:3px 9px; border-radius:999px; border:1px solid var(--bd2);
-            background:var(--sur2); color:var(--tx); font-size:12px; font-weight:700; white-space:nowrap;
-        }
-        .bb-jl-ops-chip b { font-weight:900; color:var(--bl); margin-right:1px; }
-        .bb-jl-ops-chip.ongoing { border-color:var(--or); color:var(--or); background:var(--or2); }
-        .bb-jl-ops-chip.ongoing b { color:var(--or); }
-
 
 
         #bb-alert-panel.open { display:block; }
@@ -981,9 +992,9 @@
         <div id="bb-jeju-log-panel">
             <div class="bb-ap-hd">
                 <div class="bb-ap-title">🏝️ 제주 월드컵 경기장 배터리 로그<span id="bb-jl-daytext" style="font-size:12px;font-weight:700;color:var(--mu);"></span></div>
+                <button class="bb-btn" id="bb-jl-opslog-toggle">📋 금일 운영 배터리 로그</button>
                 <div class="bb-ap-close" id="bb-jeju-log-close">✕</div>
             </div>
-            <div id="bb-jl-timestrip" class="bb-jl-timestrip"></div>
             <div id="bb-jeju-log-body" class="bb-jl-body"></div>
         </div>
 
@@ -2026,23 +2037,109 @@
         });
     }
 
-    // 제주 배터리 로그 헤더 부근에 표기할 참고용 시간 라벨(08:00, 09:00 …) — 그래프 축이 아닌 단순 텍스트 안내
-    function jejuBuildHourLabels() {
+    // 제주 배터리 로그: 여러 기체의 압축 그래프가 동일한 x축(시간)을 공유하도록 하는 공용 축 계산
+    // — 헤더(시간 눈금)와 각 기체 행(그래프)이 반드시 이 함수를 통해서만 좌표를 계산해야 서로 어긋나지 않음
+    function wblMiniAxisParams(source, targetWidth) {
+        const PADX = 6;
         const dayStartMin = 8 * 60;
-        const spanMin = Math.max(60, (() => { const n=new Date(); let m=n.getHours()*60+n.getMinutes(); if (n.getHours()<3) m += 1440; return m; })() - dayStartMin);
-        const labels = [];
-        for (let m = Math.ceil(dayStartMin/60)*60; m <= dayStartMin + spanMin; m += 60) {
-            labels.push(String(Math.floor((m % 1440) / 60)).padStart(2, '0') + ':00');
-        }
-        return labels;
+        const spanMin = source === 'yesterday'
+            ? 19 * 60
+            : Math.max(60, (() => { const n=new Date(); let m=n.getHours()*60+n.getMinutes(); if (n.getHours()<3) m += 1440; return m; })() - dayStartMin);
+        const W = targetWidth || 600;
+        const pxPerMin = (W - PADX * 2) / spanMin;
+        const xOf = (hhmm) => { let m = wblToMin(hhmm); if (m < dayStartMin) m += 1440; return PADX + (m - dayStartMin) * pxPerMin; };
+        return { PADX, dayStartMin, spanMin, W, pxPerMin, xOf };
     }
 
-    // 제주 배터리 로그 전용 표기명: 원래 이름의 "N호기"에서 숫자만 뽑아 "3" + 2자리로 재구성 (1호기→301호기, 12호기→312호기)
-    function jejuDisplayName(rawName) {
-        const m = String(rawName || '').match(/(\d+)\s*호기/);
-        if (!m) return rawName;
-        const num = parseInt(m[1], 10);
-        return `3${String(num).padStart(2, '0')}호기`;
+    // 제주 배터리 로그 상단에 한 번만 그리는 고정 시간축(눈금) — 모든 기체 행과 x좌표가 일치함
+    function wblRenderMiniTimeHeaderSVG(source, targetWidth) {
+        const isLight = bbEl.classList.contains('bb-light');
+        const labelText = isLight ? '#7a6f5c' : '#9ca3af';
+        const tickLine  = isLight ? '#cabf9d' : '#3a3a40';
+        const { dayStartMin, spanMin, W, xOf } = wblMiniAxisParams(source, targetWidth);
+        const H = 20;
+
+        const xTicks = [];
+        for (let m = Math.ceil(dayStartMin/60)*60; m <= dayStartMin + spanMin; m += 60) {
+            const hh = String(Math.floor((m % 1440) / 60)).padStart(2,'0');
+            xTicks.push({ x: xOf(`${hh}:00`), label: `${hh}:00` });
+        }
+
+        return `<svg width="${W}" height="${H}" style="display:block;">
+            ${xTicks.map(t => `<line x1="${t.x.toFixed(1)}" y1="0" x2="${t.x.toFixed(1)}" y2="${H}" stroke="${tickLine}" stroke-width="1"/>`).join('')}
+            ${xTicks.map(t => `<text x="${t.x.toFixed(1)}" y="${H-6}" font-size="10" font-weight="700" fill="${labelText}" text-anchor="middle">${t.label}</text>`).join('')}
+        </svg>`;
+    }
+
+    // 제주 배터리 로그: 한 줄(compact) 압축형 SVG 그래프 — 축 라벨/범례는 상단 공용 헤더가 담당, 여기서는 추이선+상태 dot만 표시
+    function wblRenderMiniChartSVG(robotId, source, targetWidth) {
+        const isLight = bbEl.classList.contains('bb-light');
+        const gridEdge  = isLight ? '#b3a687' : '#3a3a40';
+        const dotFill   = isLight ? '#2b2418' : '#e5e7eb';
+        const haloColor = isLight ? '#f8f3e6' : '#0d1117';
+
+        if (source !== 'yesterday') {
+            const dayKey = wblGetDayKey();
+            if (!dayKey) return `<div style="font-size:11px;color:var(--mu);padding:10px 4px;">비활성 시간대(03~08시)</div>`;
+        }
+        const data = wblGetSourceData(source);
+        const entry = data?.entries?.[robotId];
+        if (!entry || entry.log.length === 0) {
+            return `<div style="font-size:11px;color:var(--mu);padding:10px 4px;">${source==='yesterday' ? '어제' : '오늘'} 기록 없음</div>`;
+        }
+
+        const H = 44, PADT = 6, PADB = 6;
+        const { PADX, W, xOf } = wblMiniAxisParams(source, targetWidth);
+        const yOf = (pct) => PADT + (1 - pct/100) * (H - PADT - PADB);
+
+        const sortedLog = [...entry.log].sort((a, b) => wblDayAdjMin(a.t) - wblDayAdjMin(b.t));
+        const runs = [];
+        sortedLog.forEach(pt => {
+            if (pt.battery == null) { runs.push(null); return; }
+            const last = runs[runs.length - 1];
+            if (Array.isArray(last)) last.push(pt); else runs.push([pt]);
+        });
+        const dataRuns = runs.filter(Array.isArray);
+
+        const colorSegs = [];
+        dataRuns.forEach(run => {
+            let cur = [run[0]];
+            for (let i = 1; i < run.length; i++) {
+                if (run[i].status !== cur[cur.length - 1].status) {
+                    cur.push(run[i]);
+                    colorSegs.push({ status: cur[0].status, points: cur });
+                    cur = [run[i]];
+                } else {
+                    cur.push(run[i]);
+                }
+            }
+            colorSegs.push({ status: cur[0].status, points: cur });
+        });
+
+        // 상태별 색상(순찰/대기/충전/배달/도킹/OFF 등)을 dot으로 표기하는 기존 로직 그대로 유지
+        const colorOf = (status) => CLUSTER_AC[status] || '#3b82f6';
+        const polylines = colorSegs.map(seg => {
+            const pts = seg.points.map(pt => `${xOf(pt.t).toFixed(1)},${yOf(pt.battery).toFixed(1)}`).join(' ');
+            return `<polyline points="${pts}" fill="none" style="stroke:${colorOf(seg.status)}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>`;
+        });
+        const dots = colorSegs.flatMap(seg => seg.points.map(pt =>
+            `<circle cx="${xOf(pt.t).toFixed(1)}" cy="${yOf(pt.battery).toFixed(1)}" r="2.3" style="fill:${colorOf(pt.status)}" stroke="${haloColor}" stroke-width="0.8"/>`
+        ));
+
+        // 공간이 좁으므로 시작/끝 배터리 %만 표기
+        const first = sortedLog.find(p => p.battery != null);
+        const lastPt = [...sortedLog].reverse().find(p => p.battery != null);
+        const labels = [];
+        if (first) labels.push(`<text x="${xOf(first.t).toFixed(1)}" y="${(yOf(first.battery) - 5).toFixed(1)}" font-size="9" font-weight="700" text-anchor="start" fill="${dotFill}" stroke="${haloColor}" stroke-width="2" paint-order="stroke fill">${first.battery}%</text>`);
+        if (lastPt && lastPt !== first) labels.push(`<text x="${xOf(lastPt.t).toFixed(1)}" y="${(yOf(lastPt.battery) - 5).toFixed(1)}" font-size="9" font-weight="700" text-anchor="end" fill="${dotFill}" stroke="${haloColor}" stroke-width="2" paint-order="stroke fill">${lastPt.battery}%</text>`);
+
+        return `<svg width="${W}" height="${H}" style="display:block;">
+            <line x1="${PADX}" y1="${yOf(0).toFixed(1)}" x2="${W-PADX}" y2="${yOf(0).toFixed(1)}" stroke="${gridEdge}" stroke-width="1"/>
+            <line x1="${PADX}" y1="${yOf(100).toFixed(1)}" x2="${W-PADX}" y2="${yOf(100).toFixed(1)}" stroke="${gridEdge}" stroke-width="1"/>
+            ${polylines.join('')}
+            ${dots.join('')}
+            ${labels.join('')}
+        </svg>`;
     }
 
     // "H시간 M분" 포맷
@@ -2054,7 +2151,7 @@
     }
 
     // 금일 운영 배터리 로그: '대기 중(standby)'이 아닌 모든 구간을 하나의 '임무'로 묶고,
-    // 다시 '대기 중'으로 전환되는 시점을 임무 종료로 판단해 시작/종료 시각·배터리와 총 소요시간을 산출
+    // 다시 '대기 중'으로 전환되는 시점을 임무 종료로 판단해 시작/종료 배터리와 총 소요시간을 산출
     function wblComputeMissions(robotId, source) {
         const segments = wblGetSegments(robotId, source);
         if (!segments.length) return [];
@@ -2068,8 +2165,6 @@
                     missions.push({
                         startBattery: cur.startBattery,
                         endBattery: seg.startBattery != null ? seg.startBattery : (cur.lastBattery ?? cur.startBattery),
-                        startTimeStr: cur.startTimeStr,
-                        endTimeStr: seg.start,
                         startMin: cur.startMin,
                         endMin: wblDayAdjMin(seg.start),
                         ongoing: false,
@@ -2077,10 +2172,9 @@
                     cur = null;
                 }
             } else {
-                if (!cur) cur = { startBattery: seg.startBattery, startTimeStr: seg.start, startMin: wblDayAdjMin(seg.start) };
+                if (!cur) cur = { startBattery: seg.startBattery, startMin: wblDayAdjMin(seg.start) };
                 if (seg.endBattery != null) {
                     cur.lastBattery = seg.endBattery;
-                    cur.lastTimeStr = seg.end;
                     cur.lastMin = wblDayAdjMin(seg.end);
                 }
             }
@@ -2091,8 +2185,6 @@
             missions.push({
                 startBattery: cur.startBattery,
                 endBattery: cur.lastBattery ?? cur.startBattery,
-                startTimeStr: cur.startTimeStr,
-                endTimeStr: cur.lastTimeStr ?? cur.startTimeStr,
                 startMin: cur.startMin,
                 endMin: cur.lastMin ?? cur.startMin,
                 ongoing: true,
@@ -2859,11 +2951,8 @@
         const dayKey = wblGetSourceData('today')?.day;
         document.getElementById('bb-jl-daytext').textContent = dayKey ? `[${wblFormatMonthDay(dayKey)}]` : '';
 
-        // 헤더 부근 참고용 시간 표기(08:00 09:00 10:00 …) — 정밀 그래프 축이 아닌 단순 텍스트 안내
-        const hourLabels = jejuBuildHourLabels();
-        document.getElementById('bb-jl-timestrip').innerHTML =
-            `<b>🕐 운영 시간대</b>${hourLabels.map(h => `<span class="bb-jl-timestrip-hour">${h}</span>`).join(' · ')}`;
-
+        _jejuViewMode = 'chart';   // 열 때마다 그래프 보기로 시작
+        document.getElementById('bb-jl-opslog-toggle').textContent = '📋 금일 운영 배터리 로그';
         renderJejuLogBody();
 
         panel.classList.add('open');
@@ -2880,6 +2969,8 @@
                   .sort((a, b) => jejuNaturalNameCompare(a.name, b.name));
     }
 
+    let _jejuViewMode = 'chart';   // 'chart'(종합 증감추이) | 'ops'(금일 운영 배터리 로그)
+
     function renderJejuLogBody() {
         const bodyEl = document.getElementById('bb-jeju-log-body');
         const robots = jejuGetSortedRobots();
@@ -2889,45 +2980,48 @@
             return;
         }
 
-        renderJejuOpsLogView(bodyEl, robots);
+        if (_jejuViewMode === 'ops') {
+            renderJejuOpsLogView(bodyEl, robots);
+        } else {
+            renderJejuChartView(bodyEl, robots);
+        }
         bodyEl.scrollTop = 0;
     }
 
-    // 금일 운영 배터리 로그 — '대기 중' 전환 시점을 임무 종료로 판단해 임무 단위로 집계.
-    // 기체 1대당 1행에 하루치 임무를 전부 칩으로 압축 표시(캡처용) + 행 클릭 시 개별 기체 상세 레이아웃으로 이동.
-    function renderJejuOpsLogView(bodyEl, robots) {
-        const dayKey = wblGetSourceData('today')?.day;
-        const fmtBatt = v => (v == null ? '-' : `${v}%`);
+    // ── 뷰 1. 종합 증감추이(한 줄 압축 그래프) — 상단에 시간축을 한 번만 고정 표기 ──
+    function renderJejuChartView(bodyEl, robots) {
+        const CHART_W = 700;   // 패널 폭에서 이름/배터리 영역을 뺀 그래프 폭 (헤더와 모든 행이 동일하게 사용)
+        const timeHeaderSvg = wblRenderMiniTimeHeaderSVG('today', CHART_W);
+        const legendHtml = Object.keys(WBL_STL).map(st => `
+            <span class="bb-jl-legend-item">
+                <span class="bb-jl-legend-dot" style="background:${CLUSTER_AC[st] || 'var(--mu)'};"></span>${WBL_STL[st]}
+            </span>`).join('');
 
-        const robotMissions = robots.map(r => ({ r, missions: wblComputeMissions(r.id, 'today') }));
-
-        const trHtml = robotMissions.map(({ r, missions }) => {
-            const dispName = jejuDisplayName(r.name);
-            if (!missions.length) {
-                return `<tr class="bb-jl-ops-empty" data-id="${r.id}"><td class="bb-jl-ops-name">${dispName}</td><td>오늘 임무 기록 없음</td></tr>`;
-            }
-            const chips = missions.map((m, idx) => {
-                const tag = missions.length > 1 ? `<b>#${idx + 1}</b> ` : '';
-                const durTxt = wblFormatDuration(m.endMin - m.startMin) + (m.ongoing ? ' (진행중)' : '');
-                return `<span class="bb-jl-ops-chip${m.ongoing ? ' ongoing' : ''}">${tag}${fmtBatt(m.startBattery)}→${fmtBatt(m.endBattery)} · ${durTxt}</span>`;
-            }).join('');
-            return `<tr data-id="${r.id}"><td class="bb-jl-ops-name">${dispName}</td><td><div class="bb-jl-ops-chips">${chips}</div></td></tr>`;
+        const rowsHtml = robots.map(r => {
+            const chartSvg = wblRenderMiniChartSVG(r.id, 'today', CHART_W);
+            const battTxt = r.status === 'off' ? 'OFF' : `${r.battery ?? '-'}%`;
+            return `
+                <div class="bb-jl-row" data-id="${r.id}">
+                    <span class="bb-jl-namecol"><span class="bb-jl-name" title="${r.name}">${r.name}</span></span>
+                    <span class="bb-jl-battcol"><span class="bb-jl-batt">${battTxt}</span></span>
+                    <div class="bb-jl-chart">${chartSvg}</div>
+                </div>`;
         }).join('');
 
         bodyEl.innerHTML = `
-            <div class="bb-jl-ops-toolbar">
-                <button class="bb-jl-ops-copy" id="bb-jl-ops-copy-btn" type="button">📋 전체 복사</button>
+            <div class="bb-jl-sticky-head">
+                <div class="bb-jl-timeaxis-row">
+                    <span class="bb-jl-namecol"></span>
+                    <span class="bb-jl-battcol"></span>
+                    <div class="bb-jl-chart">${timeHeaderSvg}</div>
+                </div>
+                <div class="bb-jl-legend">${legendHtml}</div>
             </div>
-            <table class="bb-jl-ops-table">
-                <thead><tr>
-                    <th style="width:120px;">기체 이름</th><th>금일 임무별 배터리 추이 (시작%→종료% · 소요시간)</th>
-                </tr></thead>
-                <tbody>${trHtml}</tbody>
-            </table>
+            <div class="bb-jl-rows">${rowsHtml}</div>
         `;
 
-        // 기체 라인 클릭 → 해당 기체 상세 Info 패널로 이동 (기존 그래프 행 클릭 로직을 그대로 이식)
-        bodyEl.querySelectorAll('.bb-jl-ops-table tbody tr').forEach(rowEl => {
+        // 행 클릭 → 해당 기체 상세 Info 패널로 이동
+        bodyEl.querySelectorAll('.bb-jl-row').forEach(rowEl => {
             rowEl.addEventListener('click', () => {
                 const r = DB.find(x => x.id === rowEl.dataset.id);
                 if (r) {
@@ -2937,25 +3031,68 @@
                 }
             });
         });
+    }
 
-        // 클립보드 복사용: 기체명 줄 + 임무별 불릿 목록(시작 시각+배터리 - 종료 시각+배터리 - 총 소요시간)
-        // — '오늘 임무 기록 없음'인 기체는 복사 대상에서 제외
+    // ── 뷰 2. 금일 운영 배터리 로그 — '대기 중' 전환 시점을 임무 종료로 판단해 임무 단위로 집계 ──
+    function renderJejuOpsLogView(bodyEl, robots) {
+        const dayKey = wblGetSourceData('today')?.day;
+
+        const rows = [];
+        robots.forEach(r => {
+            const missions = wblComputeMissions(r.id, 'today');
+            if (!missions.length) {
+                rows.push({ name: r.name, empty: true });
+                return;
+            }
+            missions.forEach((m, idx) => {
+                rows.push({
+                    name: r.name,
+                    idx: missions.length > 1 ? idx + 1 : null,
+                    startBattery: m.startBattery,
+                    endBattery: m.endBattery,
+                    durationMin: m.endMin - m.startMin,
+                    ongoing: m.ongoing,
+                });
+            });
+        });
+
+        const fmtBatt = v => (v == null ? '-' : `${v}%`);
+        const trHtml = rows.map((row, i) => {
+            if (row.empty) {
+                return `<tr class="bb-jl-ops-empty"><td class="bb-jl-ops-name">${row.name}</td><td colspan="3">오늘 임무 기록 없음</td></tr>`;
+            }
+            const idxTag = row.idx ? `<span class="bb-jl-ops-idx">#${row.idx}</span>` : '';
+            const durTxt = (row.ongoing ? '진행중 · ' : '') + wblFormatDuration(row.durationMin);
+            return `<tr>
+                <td class="bb-jl-ops-name">${row.name}${idxTag}</td>
+                <td>${fmtBatt(row.startBattery)}</td>
+                <td>${fmtBatt(row.endBattery)}</td>
+                <td class="${row.ongoing ? 'bb-jl-ops-ongoing' : ''}">${durTxt}</td>
+            </tr>`;
+        }).join('');
+
+        bodyEl.innerHTML = `
+            <div class="bb-jl-ops-toolbar">
+                <button class="bb-jl-ops-copy" id="bb-jl-ops-copy-btn" type="button">📋 전체 복사</button>
+            </div>
+            <table class="bb-jl-ops-table">
+                <thead><tr>
+                    <th>기체 이름</th><th>임무 시작 배터리</th><th>임무 종료 배터리</th><th>총 임무 소요시간</th>
+                </tr></thead>
+                <tbody>${trHtml}</tbody>
+            </table>
+        `;
+
         document.getElementById('bb-jl-ops-copy-btn').addEventListener('click', async (e) => {
             const btn = e.currentTarget;
-            const blocks = robotMissions
-                .filter(({ missions }) => missions.length > 0)
-                .map(({ r, missions }) => {
-                    const dispName = jejuDisplayName(r.name);
-                    const lines = missions.map((m, idx) => {
-                        const tag = missions.length > 1 ? `#${idx + 1} ` : '';
-                        const durTxt = wblFormatDuration(m.endMin - m.startMin) + (m.ongoing ? ' (진행중)' : '');
-                        const endPart = m.ongoing ? `진행중 ${fmtBatt(m.endBattery)}` : `${m.endTimeStr} ${fmtBatt(m.endBattery)}`;
-                        return `• ${tag}${m.startTimeStr} ${fmtBatt(m.startBattery)} - ${endPart} - 총 ${durTxt}`;
-                    });
-                    return `${dispName}\n${lines.join('\n')}`;
-                });
+            const lines = rows.map(row => {
+                if (row.empty) return `${row.name} · 오늘 임무 기록 없음`;
+                const idxTag = row.idx ? ` (#${row.idx})` : '';
+                const durTxt = (row.ongoing ? '진행중 · ' : '') + wblFormatDuration(row.durationMin);
+                return `${row.name}${idxTag} · ${fmtBatt(row.startBattery)}→${fmtBatt(row.endBattery)} · 총 ${durTxt}`;
+            });
             const header = `🏝️ 제주 월드컵 경기장 금일 운영 배터리 로그${dayKey ? ' [' + wblFormatMonthDay(dayKey) + ']' : ''}`;
-            const text = blocks.length ? `${header}\n\n${blocks.join('\n\n')}` : `${header}\n\n오늘 임무 기록이 있는 기체가 없습니다`;
+            const text = `${header}\n${lines.join('\n')}`;
             try {
                 await navigator.clipboard.writeText(text);
                 btn.textContent = '✅ 복사됨';
@@ -3478,6 +3615,11 @@
             document.removeEventListener('mousedown', _jejuLogCloseHandler);
             _jejuLogCloseHandler = null;
         }
+    });
+    document.getElementById('bb-jl-opslog-toggle').addEventListener('click', (e) => {
+        _jejuViewMode = _jejuViewMode === 'chart' ? 'ops' : 'chart';
+        e.currentTarget.textContent = _jejuViewMode === 'chart' ? '📋 금일 운영 배터리 로그' : '📈 그래프 보기';
+        renderJejuLogBody();
     });
 
     document.getElementById('bb-alertlog-all-btn').addEventListener('click', openAlertLogAllPanel);
