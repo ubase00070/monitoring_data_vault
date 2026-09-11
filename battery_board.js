@@ -2944,7 +2944,7 @@
         });
 
         // 클립보드 복사용: "301호기 (순회시작 시간 / 시작% / 종료% / 총 소요시간)" 형태.
-        // 임무가 여럿이면 기체명 한 줄 아래에 불릿(•)으로 구분해 각 임무를 다음 줄에 나열.
+        // 임무가 여럿이면 '[기체명] --------------------' 구분줄 아래에 불릿(•)으로 각 임무를 나열.
         // 그룹(운용 조) 사이는 빈 줄로 구분하고, '오늘 임무 기록 없음'인 기체는 복사 대상에서 제외
         document.getElementById('bb-jl-ops-copy-btn').addEventListener('click', async (e) => {
             const btn = e.currentTarget;
@@ -2956,12 +2956,12 @@
                 const blocks = g
                     .filter(({ missions }) => missions.length > 0)
                     .map(({ r, missions }) => {
-                        const dispName = jejuDisplayName(r.name);
+                        const nameHeader = `[${jejuDisplayName(r.name)}] ${'-'.repeat(20)}`;
                         if (missions.length === 1) {
-                            return `${dispName} ${missionText(missions[0])}`;
+                            return `${nameHeader}\n${missionText(missions[0])}`;
                         }
                         const lines = missions.map(m => `• ${missionText(m)}`);
-                        return `${dispName}\n${lines.join('\n')}`;
+                        return `${nameHeader}\n${lines.join('\n')}`;
                     });
                 return blocks.join('\n');   // 같은 그룹 안에서는 줄바꿈만(빈 줄 없이)
             }).filter(t => t.length > 0);
