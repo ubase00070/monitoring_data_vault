@@ -39,6 +39,28 @@
         sheetId: "1tLo6Xeq6KJx6zW-fcw8H38jdjxyS2yre5oWY7cxky70"
     };
 
+    // ── [임시] 제주 홍보용역 배터리 조회 (09/11~09/16 한정) ──────────────
+    // 종료일이 지나면 버튼이 자동으로 숨겨지므로, 기간이 지나도 이 블록을
+    // 별도로 지울 필요는 없음(필요 시 endDate만 조정해서 연장 가능).
+    const JEJU_BATTERY_CONFIG = {
+        siteId: 257,                              // ncc.neubility.ai/ko/monitoring/257
+        allowedNames: ['안혜림', '최윤혁'],          // getVerifiedNccName() 기준
+        startDate: '2026-09-11',
+        endDate: '2026-09-16',                    // 이 날짜까지(KST 23:59:59) 노출
+    };
+
+    // 오늘 날짜(KST)가 노출 기간 안인지 — 문자열(YYYY-MM-DD) 비교라 타임존 파싱 이슈 없음
+    function isJejuBatteryWindowOpen() {
+        const kstDateStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' }).format(new Date());
+        return kstDateStr >= JEJU_BATTERY_CONFIG.startDate && kstDateStr <= JEJU_BATTERY_CONFIG.endDate;
+    }
+
+    // 허용된 로그인 아이디인지 — getVerifiedNccName()은 아래 SECTION에서 정의되지만
+    // function 선언이라 호이스팅되어 여기서 참조 가능 (게시판/편지함과 동일 판별 로직 재사용)
+    function isJejuBatteryUser() {
+        return JEJU_BATTERY_CONFIG.allowedNames.includes(getVerifiedNccName());
+    }
+
     // 오프라인 모드 — true로 바꾸면 이 도구의 NCC 외부 통신이 즉시 차단됩니다.
     const OFFLINE_MODE = false;
 
@@ -251,6 +273,7 @@
         isQueueOpt: localStorage.getItem('neubie_opt_queue') === 'true',
         isTaskVisible: localStorage.getItem('neubie_opt_task') === 'true',
         lastBatteryData: [],
+        lastJejuBatteryData: [],
         myTodayTasks: JSON.parse(localStorage.getItem('neubie_my_tasks') || "[]"),
         insuData: null,
     };
@@ -606,6 +629,7 @@
 
             #neubie-dashboard, #neubie-dashboard *,
             #neubie-battery-popup, #neubie-battery-popup *,
+            #neubie-jeju-battery-popup, #neubie-jeju-battery-popup *,
             #neubie-board-overlay, #neubie-board-overlay *,
             #neubie-secret-overlay, #neubie-secret-overlay *,
             #neubie-schedule-overlay, #neubie-schedule-overlay *,
@@ -621,6 +645,7 @@
     })();
 	
     const batteryPopup = createContainer('neubie-battery-popup', '400px', '20px', 'auto', '20px');
+    const jejuBatteryPopup = createContainer('neubie-jeju-battery-popup', '400px', '20px', 'auto', '20px');
 
     function makeDraggable(handleEl, targetEl) {
         let isDragging = false, startX, startY, startLeft, startTop;
@@ -671,7 +696,7 @@
 
     const injectUI = () => { 
         if (document.body) {
-            document.body.append(dashboard, batteryPopup);
+            document.body.append(dashboard, batteryPopup, jejuBatteryPopup);
         } 
     };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', injectUI);
@@ -834,6 +859,179 @@
         let copyText = `[${String(hour).padStart(2,'0')}시 성남 기체 배터리 현황]\n`;
         state.lastBatteryData.forEach(item => {
             copyText += `• ${item.shortName}: ${item.battery} (${item.statusText})\n`;
+        });
+        navigator.clipboard.writeText(copyText).then(() => {
+            const originalText = btn.textContent;
+            const originalBg   = btn.style.background;
+            const originalColor = btn.style.color;
+            btn.textContent    = '복사됨';
+            btn.style.background = HOVER_ACCENT;
+            btn.style.color = '#fff';
+            setTimeout(() => {
+                btn.textContent    = originalText;
+                btn.style.background = originalBg;
+                btn.style.color = originalColor;
+            }, 1500);
+        }).catch(() => {
+            alert('복사 실패 — 클립보드 권한을 확인해주세요.');
+        });
+    }
+
+    /* ============================================================
+        SECTION 4-0. [임시] 제주 홍보용역 배터리 조회 (09/11~09/16)
+        — 성남 배터리와 동일한 UI/쓰로틀 패턴을 쓰되, 개별 기체 15번 호출 대신
+          사이트 단위 일괄 조회(1회) API를 써서 오히려 네트워크 부하는 더 낮음.
+       ============================================================ */
+    let _jejuBatteryInitialized = false;
+    let _jejuBatteryFetching = false;
+    let _lastJejuBatteryFetchAt = 0;
+    const JEJU_BATTERY_REFRESH_MS = 2 * 60 * 1000; // 2분 — 성남 배터리와 동일 정책
+
+    function buildJejuBatteryShell() {
+        const T = getNbTheme();
+        jejuBatteryPopup.style.backgroundColor = T.bg;
+        jejuBatteryPopup.style.backgroundImage = `linear-gradient(${T.bg}, ${T.bg}), linear-gradient(135deg, #10b981, #2dd4bf)`;
+        jejuBatteryPopup.style.color = T.text;
+
+        jejuBatteryPopup.innerHTML = '';
+        const header = document.createElement('div');
+        header.style.cssText = `display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid ${T.border}; padding-bottom:10px;`;
+        const titleB = document.createElement('b');
+        titleB.textContent = "🔋 제주 홍보용역 배터리 현황";
+        titleB.style.cssText = `color:${T.text}; font-size:18px;`;
+
+        const headerRight = document.createElement('div');
+        headerRight.style.cssText = `display:flex; align-items:center; gap:8px;`;
+
+        const copyBtn = document.createElement('button');
+        copyBtn.textContent = '복사';
+        Object.assign(copyBtn.style, {
+            background:'#10b981', color:'white', border:'none',
+            height:'24px', width:'66px', flexShrink:'0', padding:'0',
+            borderRadius:'6px', cursor:'pointer', fontWeight:'bold',
+            fontSize:'13px',
+            display:'flex', alignItems:'center', justifyContent:'center',
+            transition:'0.2s'
+        });
+        copyBtn.onclick = (e) => copyJejuBatteryToClipboard(e.target);
+
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = '✕';
+        closeBtn.style.cssText = `background:#ef4444; color:white; border:none; border-radius:4px; width:22px; height:22px; cursor:pointer; font-weight:bold; display:flex; align-items:center; justify-content:center; font-size:14px;`;
+        closeBtn.onclick = () => toggleJejuBattery();
+
+        headerRight.append(copyBtn, closeBtn);
+        header.append(titleB, headerRight);
+        jejuBatteryPopup.appendChild(header);
+        makeDraggable(header, jejuBatteryPopup);
+
+        const list = document.createElement('div');
+        list.id = 'neubie-jeju-battery-list';
+        list.innerHTML = `<div style="color:#888; font-size:13px; padding:6px 2px;">불러오는 중...</div>`;
+        jejuBatteryPopup.appendChild(list);
+
+        _jejuBatteryInitialized = true;
+    }
+
+    async function updateJejuBatteryStatus() {
+        if (jejuBatteryPopup.dataset.dragging === 'true') return;
+        if (_jejuBatteryFetching) return;
+
+        if (!_jejuBatteryInitialized || !jejuBatteryPopup.querySelector('#neubie-jeju-battery-list')) {
+            buildJejuBatteryShell();
+        }
+
+        // 마지막 조회 후 2분 안 지났으면 서버 요청 없이 기존 값 그대로 둠 (성남과 동일)
+        if (_lastJejuBatteryFetchAt && (Date.now() - _lastJejuBatteryFetchAt) < JEJU_BATTERY_REFRESH_MS) return;
+
+        _jejuBatteryFetching = true;
+        const list = jejuBatteryPopup.querySelector('#neubie-jeju-battery-list');
+        try {
+            // 기체 15대 개별 호출이 아니라, 사이트 단위 일괄 조회 1회로 처리
+            const res = await fetch(
+                `${NCC_API_BASE}/robots/?offset=0&limit=99999&sites=${JEJU_BATTERY_CONFIG.siteId}`,
+                { credentials: 'include', headers: getAuthHeaders() }
+            );
+            const data = res.ok ? await res.json() : null;
+            const results = Array.isArray(data?.results) ? data.results : [];
+
+            // 표기명(301호기, 302호기 ...) 기준 오름차순 정렬
+            const sorted = results
+                .map(r => ({ raw: r, code: parseInt(r.name, 10) }))
+                .filter(r => !isNaN(r.code))
+                .sort((a, b) => a.code - b.code);
+
+            const T = getNbTheme();
+            state.lastJejuBatteryData = [];
+            list.innerHTML = '';
+
+            if (sorted.length === 0) {
+                list.innerHTML = `<div style="color:#888; font-size:13px; padding:6px 2px;">조회된 기체가 없습니다.</div>`;
+            }
+
+            sorted.forEach(({ raw, code }) => {
+                const rs = raw?.robotStatus ?? {};
+                const shortName = `${code}호기`;
+
+                let batteryVal = "- %", statusText = "OFF", accentColor = "#666", statusIcon = "⚪", batteryPct = 0, isOff = true;
+
+                if (raw && rs.isConnecting) {
+                    isOff = false;
+                    const battery = Math.round(raw.battery ?? rs.battery ?? 0);
+                    batteryVal = `${battery}%`;
+                    batteryPct = Math.min(100, Math.max(0, battery));
+
+                    if (rs.isCharging || rs.isWirelessChargerConnected) {
+                        accentColor = "#22c55e"; statusIcon = "🟢"; statusText = "충전 중";
+                    } else if (raw.currentScenario) {
+                        accentColor = "#3b82f6"; statusIcon = "🔵"; statusText = "순찰 중";
+                    } else {
+                        accentColor = "#888888"; statusIcon = "⚪"; statusText = "대기 중";
+                    }
+
+                    if (battery <= 20 && !(rs.isCharging || rs.isWirelessChargerConnected)) {
+                        accentColor = "#ef4444";
+                    }
+                }
+
+                state.lastJejuBatteryData.push({ shortName, battery: batteryVal, statusText, isOff });
+
+                const item = document.createElement('div');
+                item.style.cssText = `
+                    background:${T.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)'};
+                    padding:6px 16px;
+                    border-radius:10px;
+                    margin-bottom:6px;
+                    border-left:5px solid ${accentColor};
+                    font-size: 16px !important;
+                `;
+                item.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                        <span style="font-weight:500;">${statusIcon} ${shortName}</span>
+                        <span style="font-weight:bold; font-size: 16px; color:${accentColor};">${batteryVal}</span>
+                    </div>
+                    <div style="width:100%; height:6px; background:${T.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'}; border-radius:3px; overflow:hidden;">
+                        <div style="height:100%; width:${batteryPct}%; background:${accentColor}; border-radius:3px; transition:width 0.3s ease, background 0.3s ease;"></div>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+
+            _lastJejuBatteryFetchAt = Date.now();
+        } catch (e) {
+            list.innerHTML = `<div style="color:#ef4444; font-size:13px; padding:6px 2px;">조회 실패 — 잠시 후 다시 시도해주세요.</div>`;
+        } finally {
+            _jejuBatteryFetching = false;
+        }
+    }
+
+    function copyJejuBatteryToClipboard(btn) {
+        const now = new Date();
+        let hour = now.getHours();
+        if (now.getMinutes() >= 50) hour = (hour + 1) % 24;
+        let copyText = `[${String(hour).padStart(2,'0')}시 제주 홍보용역 배터리 현황]\n`;
+        (state.lastJejuBatteryData || []).forEach(item => {
+            copyText += `${item.shortName}: ${item.isOff ? 'OFF' : item.battery}\n`;
         });
         navigator.clipboard.writeText(copyText).then(() => {
             const originalText = btn.textContent;
@@ -1719,6 +1917,24 @@
         boardBtn.onmouseleave = () => { boardBtn.style.borderColor=T.border; boardBtn.style.color=T.text; };
         boardBtn.onclick = () => openBoardOverlay();
 
+        // ── [임시] 제주 홍보용역 배터리 버튼 — 09/11~09/16 한정, 안혜림/최윤혁 계정에서만 노출 ──
+        // (getVerifiedNccName() 기준 — 게시판/편지함과 동일한 판별 로직 재사용)
+        let jejuBatteryBtn = null;
+        if (isJejuBatteryWindowOpen() && isJejuBatteryUser()) {
+            jejuBatteryBtn = document.createElement('button');
+            jejuBatteryBtn.style.cssText = `
+                display:flex; align-items:center; gap:6px;
+                background:transparent; border:1px solid ${T.border}; color:${T.text};
+                border-radius:6px; padding:4px 10px; cursor:pointer;
+                font-size:14px; margin-left:6px;
+                transition:all 0.2s;
+            `;
+            jejuBatteryBtn.innerHTML = `<span style="font-size:14px;">🌴</span>제주 배터리`;
+            jejuBatteryBtn.onmouseenter = () => { jejuBatteryBtn.style.borderColor=GREEN_HOVER; jejuBatteryBtn.style.color=GREEN_HOVER; };
+            jejuBatteryBtn.onmouseleave = () => { jejuBatteryBtn.style.borderColor=T.border; jejuBatteryBtn.style.color=T.text; };
+            jejuBatteryBtn.onclick = () => toggleJejuBattery();
+        }
+
         // 익명 편지 알림 배지 — '최윤혁' 로컬 계정에서만 실제로 켜짐 (checkMailNotification 참고)
         const mailBadge = document.createElement('span');
         mailBadge.id = 'nb-mail-badge';
@@ -1731,6 +1947,7 @@
         titleWrap.appendChild(title);
         titleWrap.appendChild(patchBtn);
         titleWrap.appendChild(boardBtn);
+        if (jejuBatteryBtn) titleWrap.appendChild(jejuBatteryBtn);
         titleWrap.appendChild(mailBadge);
 
         const gamepadToggleUI = createToggleRow('🎮', '패드 키변경/테스트', !isDpadBindingOff(),
@@ -2341,9 +2558,38 @@
         }
     }
 
+    // 팝업 열 때만 생성 — 제주 홍보용역 배터리 (기간/아이디 방어적 재확인 포함)
+    function toggleJejuBattery() {
+        // 버튼 자체가 조건부 렌더링이지만, 혹시 모를 직접 호출(콘솔 등)에 대비해 한 번 더 확인
+        if (!isJejuBatteryWindowOpen() || !isJejuBatteryUser()) return;
+
+        if (jejuBatteryPopup.style.display !== 'block') {
+            if (dashboard.style.display === 'block' && typeof getSharedPopupRect === 'function') {
+                const r = getSharedPopupRect();
+                jejuBatteryPopup.style.top = 'auto';
+                jejuBatteryPopup.style.left = r.left + 'px';
+                jejuBatteryPopup.style.right = 'auto';
+                jejuBatteryPopup.style.bottom = r.bottom + 'px';
+            } else {
+                jejuBatteryPopup.style.top = '20px';
+                jejuBatteryPopup.style.left = 'auto';
+                jejuBatteryPopup.style.right = '20px';
+                jejuBatteryPopup.style.bottom = 'auto';
+            }
+
+            // 열 때마다 호출하지만, 실제 서버 요청은 updateJejuBatteryStatus 내부의
+            // 2분 게이트가 알아서 걸러줌 (성남 배터리와 동일 정책)
+            updateJejuBatteryStatus();
+            jejuBatteryPopup.style.display = 'block';
+        } else {
+            jejuBatteryPopup.style.display = 'none';
+        }
+    }
+
     function closeAllPopups() {
         dashboard.style.display = 'none';
         batteryPopup.style.display = 'none';
+        jejuBatteryPopup.style.display = 'none';
         if (window._neubieBatteryCard) window._neubieBatteryCard.style.outline = 'none';
 
 		document.getElementById('ho-remote-peek')?.remove();
