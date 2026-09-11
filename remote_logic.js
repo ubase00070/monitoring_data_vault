@@ -2738,20 +2738,13 @@
 			}
 		};
 
-		// ── 예정기체 자동 시작 전용: 모달의 실제 남은 자리를 센다.
-		//    (앞으로 몇 대나 "새로" 체크해도 되는지는 runAutoSelect에 maxSuccesses로 넘겨서,
-		//     그 안에서 실패한 후보를 건너뛰고 계속 다음 후보로 채워나가도록 한다) ──
+		// ── 예정기체 자동 시작 전용 상한값 ──
+		// [수정] 원래 여기 있던 countCheckedInModal()(모달 안 체크된 라벨 전체를 세서
+		// "남은 자리"를 미리 계산하던 함수)을 제거함. 실측 결과 이 카운트가 실제 라이브
+		// 모니터링 대수와 안 맞아서, 자리가 남아있는데도 "이미 N대 모니터링 중"으로
+		// 오탐 차단되는 버그가 있었음. 이제는 신뢰가 검증된 방식(후보 이름 하나하나를
+		// 찾아서 그 라벨만 확인하는 reactCheck/wasAlreadyChecked)에만 의존한다.
 		const MAX_MONITOR_SLOTS = ADMIN_CONFIG.maxMonitorSlots; // 관리자 설정값 (MAX_UNITS와 동일 값 공유)
-
-		const countCheckedInModal = (modal) => {
-			let count = 0;
-			modal.querySelectorAll('label').forEach(label => {
-				const text = label.querySelector('div.px-12 span')?.textContent.trim();
-				if (!text) return;
-				if (label.querySelector('input[type="checkbox"]')?.checked) count++;
-			});
-			return count;
-		};
 
 		autoBtn.addEventListener('click', async () => {
 			if (autoBtn.disabled) return;
@@ -2833,13 +2826,10 @@
 				return;
 			}
 
-			const remainingSlots = Math.max(0, MAX_MONITOR_SLOTS - countCheckedInModal(modal));
-			if (remainingSlots <= 0) {
-				setDpMsg(`이미 ${MAX_MONITOR_SLOTS}대 모니터링 중입니다. 자리가 없어 추가할 수 없습니다`, '#94a3b8');
-				return;
-			}
-
-			const { confirmed, checkedUnits } = await runAutoSelect(available, remainingSlots);
+			// [수정] 모달 전체를 훑어 "남은 자리"를 미리 계산하던 방식은 실측에서 신뢰할 수
+			// 없는 것으로 확인됨(오탐 차단 원인). 이제는 후보를 이름으로 하나씩 찾아 확인하는
+			// runAutoSelect 내부 로직에 맡기고, 이번 클릭에서 "새로" 시작할 상한만 넘긴다.
+			const { confirmed, checkedUnits } = await runAutoSelect(available, MAX_MONITOR_SLOTS);
 
 			if (!checkedUnits.length) return;
 
