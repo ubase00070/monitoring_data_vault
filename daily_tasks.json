@@ -54,7 +54,7 @@
     "rawTime": "15:00"
   },
   {
-    "user": "송주현",
+    "user": "신은정",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "16:00"
@@ -66,7 +66,7 @@
     "rawTime": "17:00"
   },
   {
-    "user": "신은정",
+    "user": "송주현",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "18:00"
@@ -222,7 +222,7 @@
     "rawTime": "15:30"
   },
   {
-    "user": "한승완",
+    "user": "서형민",
     "type": "task",
     "content": "[15:30~16:00] 성수1가 요기요 주/야 영업 기체 교대 체크 후 임무 ON",
     "rawTime": "15:30"
