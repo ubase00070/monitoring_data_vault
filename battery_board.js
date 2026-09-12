@@ -3209,7 +3209,7 @@
                 return missions.map((m, idx) => `   • ${label} #${idx + 1} ${dispatchTail(m)}`);
             });
 
-            const title = `제주 전국장애인체전 ${scopeLabel ? scopeLabel + ' ' : ''}기체 배터리 현황`;
+            const title = `*제주 전국장애인체전 ${scopeLabel ? scopeLabel + ' ' : ''}기체 현황*`;
             const sectionHeader = `● *${roundLabel}*`;   // 큰 불렛틴 기호 + 볼드체
             const body = lines.length ? `${sectionHeader}\n${lines.join('\n')}` : `${sectionHeader}\n   • 대상 기체가 없습니다`;
             return `${title}\n\n${body}`;
