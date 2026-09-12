@@ -3036,7 +3036,6 @@
     // 기체 1대당 1행에 하루치 임무를 전부 칩으로 압축 표시(캡처용) + 행 클릭 시 개별 기체 상세 레이아웃으로 이동.
     // groups: [[robot, ...], [robot, ...], ...] — jejuGetSortedRobots()가 반환하는 운용 조 단위 배열
     function renderJejuOpsLogView(bodyEl, groups) {
-        const dayKey = wblGetSourceData('today')?.day;
         const fmtBatt = v => (v == null ? '-' : `${v}%`);
 
         // 그룹 구성은 그대로 유지한 채, 각 기체의 금일 임무 데이터를 계산 + 사용자가 직접 입력한 시작시간 보정을 적용
@@ -3150,7 +3149,7 @@
             const missions = filterRealMissions(rawMissions);
             const nameHeader = `[${jejuDisplayName(r.name)}] ${'-'.repeat(20)}`;
             if (!missions.length) {
-                return `${nameHeader}\n(${nowHHMM()} / ${fmtBatt(r.battery)} / -)`;
+                return `${nameHeader}\n(${nowHHMM()} / ${fmtBatt(r.battery)} / - )`;
             }
             if (missions.length === 1) {
                 return `${nameHeader}\n${missionText(missions[0])}`;
@@ -3158,8 +3157,7 @@
             const lines = missions.map(m => `• ${missionText(m)}`);
             return `${nameHeader}\n${lines.join('\n')}`;
         };
-        const dateStr = dayKey ? dayKey.split('-').slice(1).join('/') : '';
-        const buildHeader = scopeLabel => `제주 전국장애인체전 ${scopeLabel ? scopeLabel + ' ' : ''}기체 배터리 로그${dateStr ? ' [' + dateStr + ']' : ''}`;
+        const buildHeader = scopeLabel => `제주 전국장애인체전 ${scopeLabel ? scopeLabel + ' ' : ''}기체 배터리 현황 [${nowHHMM()}]`;
 
         // 전체 복사: 운용 조 편성 그룹(301,302,303,312,313,314 / 304,305,306,315,316,317 / 나머지) 순서 그대로 유지
         function buildJejuCopyTextGrouped(scopeLabel, filterFn) {
