@@ -3172,8 +3172,9 @@
             return groupTexts.length ? `${header}\n\n${groupTexts.join('\n\n')}` : `${header}\n\n대상 기체가 없습니다`;
         }
 
-        // 오전/오후 목록: 운용 조 그룹 구조를 무시하고 기체 번호 오름차순으로 정렬(예: 304,306,308,309,312,316)
-        function buildJejuCopyTextByNumber(scopeLabel, filterFn) {
+        // 1차/2차 배차 결과 보고용: "* {roundLabel}" 상위 불릿 아래 "* 301 (시작% / 종료% / 총소요시간(배차시각 배차))" 형태로 나열.
+        // 종료 시점에 취합해서 공유하는 보고 포맷이라, 기체명은 "호기" 없이 번호만 쓰고 별도 안내문 없이 바로 목록만 나온다.
+        function buildJejuDispatchReport(scopeLabel, roundLabel, filterFn) {
             const list = groupData.flat()
                 .filter(({ r }) => !filterFn || filterFn(r))
                 .sort((a, b) => {
@@ -3183,9 +3184,31 @@
                     if (nb != null) return 1;
                     return jejuNaturalNameCompare(a.r.name, b.r.name);
                 });
-            const blocks = list.map(({ r, missions }) => robotBlock(r, missions));
+
+            const numLabel = r => {
+                const n = jejuExtractNum(r.name);
+                return n != null ? `3${String(n).padStart(2, '0')}` : jejuDisplayName(r.name).replace(/호기$/, '');
+            };
+            const dispatchTail = (m) => {
+                const endExpr = m.ongoing ? '-' : fmtBatt(m.endBattery);
+                return `(${fmtBatt(m.startBattery)} / ${endExpr} / ${wblFormatDuration(m.endMin - m.startMin)}(${m.startTimeStr} 배차))`;
+            };
+
+            const lines = list.flatMap(({ r, missions: rawMissions }) => {
+                const missions = filterRealMissions(rawMissions);
+                const label = numLabel(r);
+                if (!missions.length) {
+                    return [`   * ${label} (${fmtBatt(r.battery)} / - / 대기 중)`];
+                }
+                if (missions.length === 1) {
+                    return [`   * ${label} ${dispatchTail(missions[0])}`];
+                }
+                return missions.map((m, idx) => `   * ${label} #${idx + 1} ${dispatchTail(m)}`);
+            });
+
             const header = buildHeader(scopeLabel);
-            return blocks.length ? `${header}\n\n${blocks.join('\n')}` : `${header}\n\n대상 기체가 없습니다`;
+            const body = lines.length ? `* ${roundLabel}\n${lines.join('\n')}` : `* ${roundLabel}\n   * 대상 기체가 없습니다`;
+            return `${header}\n\n${body}`;
         }
 
         async function copyAndFlash(btn, defaultLabel, text) {
@@ -3199,17 +3222,17 @@
             setTimeout(() => { btn.textContent = defaultLabel; btn.classList.remove('done'); }, 1500);
         }
 
-        // 오전 10시부터 출발 예정: 304, 306, 308, 309, 312, 316 (번호 오름차순으로 나열)
+        // 오전 10시부터 출발 예정: 304, 306, 308, 309, 312, 316 (번호 오름차순으로 나열) — 배차 결과 보고 포맷(1차)
         document.getElementById('bb-jl-ops-copy-morning').addEventListener('click', (e) => {
             const btn = e.currentTarget;
-            const text = buildJejuCopyTextByNumber('오전 기체', r => JEJU_MORNING_NUMS.has(jejuExtractNum(r.name)));
+            const text = buildJejuDispatchReport('오전 기체', '1차', r => JEJU_MORNING_NUMS.has(jejuExtractNum(r.name)));
             copyAndFlash(btn, '🌅 오전 기체 목록', text);
         });
 
-        // 오전 목록에 속하지 않는 나머지 전부 (번호 오름차순으로 나열)
+        // 오전 목록에 속하지 않는 나머지 전부 (번호 오름차순으로 나열) — 배차 결과 보고 포맷(2차)
         document.getElementById('bb-jl-ops-copy-afternoon').addEventListener('click', (e) => {
             const btn = e.currentTarget;
-            const text = buildJejuCopyTextByNumber('오후 기체', r => !JEJU_MORNING_NUMS.has(jejuExtractNum(r.name)));
+            const text = buildJejuDispatchReport('오후 기체', '2차', r => !JEJU_MORNING_NUMS.has(jejuExtractNum(r.name)));
             copyAndFlash(btn, '🌇 오후 기체 목록', text);
         });
 
