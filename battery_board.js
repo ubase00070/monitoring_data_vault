@@ -2040,9 +2040,12 @@
         return m > 0 ? `${h}시간 ${m}분` : `${h}시간`;
     }
 
-    // 금일 운영 배터리 로그: '대기 중(standby)'이 아닌 모든 구간을 하나의 '임무'로 묶고,
-    // 다시 '대기 중'으로 전환되는 시점을 임무 종료로 판단해 시작/종료 시각·배터리와 총 소요시간을 산출
+    // 금일 운영 배터리 로그: '순찰 중/배달 중' 상태로 실제 출동했을 때만 임무를 시작하고,
+    // 다시 '대기 중'으로 전환되는 시점을 임무 종료로 판단해 시작/종료 시각·배터리와 총 소요시간을 산출.
+    // (충전 중/도킹 중/OFF 상태는 그 자체로는 임무를 시작시키지 않음 — 아침에 충전만 하고 아직 출동 전인 기체가
+    //  임무로 잘못 잡히는 것을 막기 위함. 다만 이미 시작된 임무 중간에 잠깐 충전/도킹이 끼면 임무는 계속 이어짐)
     function wblComputeMissions(robotId, source) {
+        const DEPLOY_STATUSES = new Set(['patrolling', 'delivering']);
         const segments = wblGetSegments(robotId, source);
         if (!segments.length) return [];
 
@@ -2063,14 +2066,26 @@
                     });
                     cur = null;
                 }
-            } else {
-                if (!cur) cur = { startBattery: seg.startBattery, startTimeStr: seg.start, startMin: wblDayAdjMin(seg.start) };
+                return;
+            }
+
+            if (cur) {
+                // 이미 임무가 진행 중이면 충전/도킹 등이 잠깐 섞여도 계속 이어감
+                if (seg.endBattery != null) {
+                    cur.lastBattery = seg.endBattery;
+                    cur.lastTimeStr = seg.end;
+                    cur.lastMin = wblDayAdjMin(seg.end);
+                }
+            } else if (DEPLOY_STATUSES.has(seg.status)) {
+                // 실제 순찰/배달 상태일 때만 새 임무 시작
+                cur = { startBattery: seg.startBattery, startTimeStr: seg.start, startMin: wblDayAdjMin(seg.start) };
                 if (seg.endBattery != null) {
                     cur.lastBattery = seg.endBattery;
                     cur.lastTimeStr = seg.end;
                     cur.lastMin = wblDayAdjMin(seg.end);
                 }
             }
+            // else: 충전 중/도킹 중/OFF 이고 아직 임무가 시작되지 않았다면 대기 연장으로 취급(무시)
         });
 
         // 대기 중으로 마무리되지 않고 데이터가 끝난 경우 = 아직 진행 중인 임무
