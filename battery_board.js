@@ -619,7 +619,7 @@
             z-index:99999999;
             cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_default.png') 4 4, auto;
         }
-        /* 패널 자체는 스크롤하지 않고, 내부 바디(.bb-jl-body)만 스크롤 → 시간축/헤더를 정확히 고정하기 위함 */
+        /* 패널 자체는 스크롤하지 않고, 내부 바디(.bb-jl-body)만 스크롤 → 시간축/헤더를 정확히 고정 위함 */
         #bb-jeju-log-panel.open { display:flex; flex-direction:column; }
         #bb-jeju-log-panel.bb-light {
 			--bg:#f2e4c4; --sur:#f8f3e6; --sur2:#efe6d2;
