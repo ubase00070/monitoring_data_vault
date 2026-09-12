@@ -2948,30 +2948,58 @@
             });
         });
 
-        // 클립보드 복사용 텍스트 생성: "[301호기] --------------------" 구분줄 아래에 임무 정보(순회시작 시간 / 시작% / 종료% / 총 소요시간).
-        // 임무가 여럿이면 불릿(•)으로 각 임무를 다음 줄에 나열. 그룹(운용 조) 사이는 빈 줄로 구분.
-        // filterFn(r)이 주어지면 해당 조건을 만족하는 기체만 포함(오전/오후 목록용) — '오늘 임무 기록 없음'인 기체는 항상 제외.
-        function buildJejuCopyText(scopeLabel, filterFn) {
-            const missionText = (m) => {
-                const durTxt = wblFormatDuration(m.endMin - m.startMin) + (m.ongoing ? ' (진행중)' : '');
-                return `(${m.startTimeStr} / ${fmtBatt(m.startBattery)} / ${fmtBatt(m.endBattery)} / 총 ${durTxt})`;
-            };
+        // 클립보드 복사용 텍스트 조각: "[301호기] --------------------" 구분줄 아래에 임무 정보 한 줄(또는 여러 줄).
+        // - 오늘 임무가 아예 없으면(대기 중) → (현재시각 / 현재% / -)
+        // - 임무가 진행중(아직 대기중으로 안 돌아옴) → (시작시각 / 시작%->- / 총 소요시간)
+        // - 임무가 종료됐으면 → (시작시각 / 시작%->종료% / 총 소요시간)
+        const missionText = (m) => {
+            const battExpr = m.ongoing ? `${fmtBatt(m.startBattery)} -> -` : `${fmtBatt(m.startBattery)} -> ${fmtBatt(m.endBattery)}`;
+            return `(${m.startTimeStr} / ${battExpr} / 총 ${wblFormatDuration(m.endMin - m.startMin)})`;
+        };
+        const nowHHMM = () => {
+            const n = new Date();
+            return `${String(n.getHours()).padStart(2, '0')}:${String(n.getMinutes()).padStart(2, '0')}`;
+        };
+        const robotBlock = (r, missions) => {
+            const nameHeader = `[${jejuDisplayName(r.name)}] ${'-'.repeat(20)}`;
+            if (!missions.length) {
+                return `${nameHeader}\n(${nowHHMM()} / ${fmtBatt(r.battery)} / -)`;
+            }
+            if (missions.length === 1) {
+                return `${nameHeader}\n${missionText(missions[0])}`;
+            }
+            const lines = missions.map(m => `• ${missionText(m)}`);
+            return `${nameHeader}\n${lines.join('\n')}`;
+        };
+        const buildHeader = scopeLabel => `🏝️ 제주 월드컵 경기장 금일 운영 배터리 로그${scopeLabel ? ' - ' + scopeLabel : ''}${dayKey ? ' [' + wblFormatMonthDay(dayKey) + ']' : ''}`;
+
+        // 전체 복사: 운용 조 편성 그룹(301,302,303,312,313,314 / 304,305,306,315,316,317 / 나머지) 순서 그대로 유지
+        function buildJejuCopyTextGrouped(scopeLabel, filterFn) {
             const groupTexts = groupData.map(g => {
                 const blocks = g
-                    .filter(({ r, missions }) => missions.length > 0 && (!filterFn || filterFn(r)))
-                    .map(({ r, missions }) => {
-                        const nameHeader = `[${jejuDisplayName(r.name)}] ${'-'.repeat(20)}`;
-                        if (missions.length === 1) {
-                            return `${nameHeader}\n${missionText(missions[0])}`;
-                        }
-                        const lines = missions.map(m => `• ${missionText(m)}`);
-                        return `${nameHeader}\n${lines.join('\n')}`;
-                    });
+                    .filter(({ r }) => !filterFn || filterFn(r))
+                    .map(({ r, missions }) => robotBlock(r, missions));
                 return blocks.join('\n');   // 같은 그룹 안에서는 줄바꿈만(빈 줄 없이)
             }).filter(t => t.length > 0);
 
-            const header = `🏝️ 제주 월드컵 경기장 금일 운영 배터리 로그${scopeLabel ? ' - ' + scopeLabel : ''}${dayKey ? ' [' + wblFormatMonthDay(dayKey) + ']' : ''}`;
-            return groupTexts.length ? `${header}\n\n${groupTexts.join('\n\n')}` : `${header}\n\n오늘 임무 기록이 있는 기체가 없습니다`;
+            const header = buildHeader(scopeLabel);
+            return groupTexts.length ? `${header}\n\n${groupTexts.join('\n\n')}` : `${header}\n\n대상 기체가 없습니다`;
+        }
+
+        // 오전/오후 목록: 운용 조 그룹 구조를 무시하고 기체 번호 오름차순으로 정렬(예: 304,306,308,309,312,316)
+        function buildJejuCopyTextByNumber(scopeLabel, filterFn) {
+            const list = groupData.flat()
+                .filter(({ r }) => !filterFn || filterFn(r))
+                .sort((a, b) => {
+                    const na = jejuExtractNum(a.r.name), nb = jejuExtractNum(b.r.name);
+                    if (na != null && nb != null) return na - nb;
+                    if (na != null) return -1;
+                    if (nb != null) return 1;
+                    return jejuNaturalNameCompare(a.r.name, b.r.name);
+                });
+            const blocks = list.map(({ r, missions }) => robotBlock(r, missions));
+            const header = buildHeader(scopeLabel);
+            return blocks.length ? `${header}\n\n${blocks.join('\n')}` : `${header}\n\n대상 기체가 없습니다`;
         }
 
         async function copyAndFlash(btn, defaultLabel, text) {
@@ -2985,23 +3013,23 @@
             setTimeout(() => { btn.textContent = defaultLabel; btn.classList.remove('done'); }, 1500);
         }
 
-        // 오전 10시부터 출발 예정: 304, 306, 308, 309, 312, 316
+        // 오전 10시부터 출발 예정: 304, 306, 308, 309, 312, 316 (번호 오름차순으로 나열)
         document.getElementById('bb-jl-ops-copy-morning').addEventListener('click', (e) => {
             const btn = e.currentTarget;
-            const text = buildJejuCopyText('오전 기체', r => JEJU_MORNING_NUMS.has(jejuExtractNum(r.name)));
+            const text = buildJejuCopyTextByNumber('오전 기체', r => JEJU_MORNING_NUMS.has(jejuExtractNum(r.name)));
             copyAndFlash(btn, '🌅 오전 기체 목록', text);
         });
 
-        // 오전 목록에 속하지 않는 나머지 전부
+        // 오전 목록에 속하지 않는 나머지 전부 (번호 오름차순으로 나열)
         document.getElementById('bb-jl-ops-copy-afternoon').addEventListener('click', (e) => {
             const btn = e.currentTarget;
-            const text = buildJejuCopyText('오후 기체', r => !JEJU_MORNING_NUMS.has(jejuExtractNum(r.name)));
+            const text = buildJejuCopyTextByNumber('오후 기체', r => !JEJU_MORNING_NUMS.has(jejuExtractNum(r.name)));
             copyAndFlash(btn, '🌇 오후 기체 목록', text);
         });
 
         document.getElementById('bb-jl-ops-copy-btn').addEventListener('click', (e) => {
             const btn = e.currentTarget;
-            const text = buildJejuCopyText('', null);
+            const text = buildJejuCopyTextGrouped('', null);
             copyAndFlash(btn, '📋 전체 복사', text);
         });
     }
