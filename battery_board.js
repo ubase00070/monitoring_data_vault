@@ -3004,6 +3004,10 @@
     // 오전 10시부터 출발 예정인 기체(304, 306, 308, 309, 312, 316 → 원래 번호 4,6,8,9,12,16)
     const JEJU_MORNING_NUMS = new Set([4, 6, 8, 9, 12, 16]);
 
+    // 오후 기체(306, 308, 309, 312 → 원래 번호 6,8,9,12). 오전에도 뛴 기체가 겹치므로,
+    // 오후 집계는 14:30 이후에 부여된 임무만 대상으로 하고 그 안에서 다시 #1부터 번호를 매긴다.
+    const JEJU_AFTERNOON_NUMS = new Set([6, 8, 9, 12]);
+
     // 그룹(운용 조) 단위 배열을 반환: [그룹A 기체들], [그룹B 기체들], [그 외 나머지 기체들-이름순]
     function jejuGetSortedRobots() {
         const all = DB.filter(r => r.siteId === JEJU_WORLDCUP_SITE_ID);
@@ -3177,7 +3181,10 @@
 
         // 1차/2차 배차 결과 보고용: "* {roundLabel}" 상위 불릿 아래 "* 301 (시작% / 종료% / 총소요시간(배차시각 배차))" 형태로 나열.
         // 종료 시점에 취합해서 공유하는 보고 포맷이라, 기체명은 "호기" 없이 번호만 쓰고 별도 안내문 없이 바로 목록만 나온다.
-        function buildJejuDispatchReport(scopeLabel, roundLabel, filterFn) {
+        // opts.cutoffMin이 있으면 해당 시각(day-adj분) 이후에 시작된 임무만 포함(예: 오전에도 뛴 기체의 오후 임무만 집계).
+        // opts.forceIndex가 true면 임무가 1건이어도 "#1"을 강제로 붙인다(별도 카운팅 리셋임을 명확히 표시).
+        function buildJejuDispatchReport(scopeLabel, roundLabel, filterFn, opts = {}) {
+            const { cutoffMin = null, forceIndex = false } = opts;
             const list = groupData.flat()
                 .filter(({ r }) => !filterFn || filterFn(r))
                 .sort((a, b) => {
@@ -3198,12 +3205,13 @@
             };
 
             const lines = list.flatMap(({ r, missions: rawMissions }) => {
-                const missions = filterRealMissions(rawMissions);
+                let missions = filterRealMissions(rawMissions);
+                if (cutoffMin != null) missions = missions.filter(m => m.startMin >= cutoffMin);
                 const label = `*${numLabel(r)}*`;   // 볼드체
                 if (!missions.length) {
                     return [`   • ${label} (${fmtBatt(r.battery)} / - / 대기 중)`];
                 }
-                if (missions.length === 1) {
+                if (missions.length === 1 && !forceIndex) {
                     return [`   • ${label} ${dispatchTail(missions[0])}`];
                 }
                 return missions.map((m, idx) => `   • ${label} #${idx + 1} ${dispatchTail(m)}`);
@@ -3265,10 +3273,15 @@
             copyAndFlash(btn, '🌅 오전 기체 목록', text);
         });
 
-        // 오전 목록에 속하지 않는 나머지 전부 (번호 오름차순으로 나열) — 배차 결과 보고 포맷(2차)
+        // 오후 기체: 306, 308, 309, 312 (오전에도 뛴 기체 포함) — 14:30 이후 부여된 임무만 집계해서 #1부터 새로 카운팅(배차 결과 보고 포맷 2차)
         document.getElementById('bb-jl-ops-copy-afternoon').addEventListener('click', (e) => {
             const btn = e.currentTarget;
-            const text = buildJejuDispatchReport('오후 기체', '2차', r => !JEJU_MORNING_NUMS.has(jejuExtractNum(r.name)));
+            const cutoffMin = wblDayAdjMin('14:30');
+            const text = buildJejuDispatchReport(
+                '오후 기체', '2차',
+                r => JEJU_AFTERNOON_NUMS.has(jejuExtractNum(r.name)),
+                { cutoffMin, forceIndex: true }
+            );
             copyAndFlash(btn, '🌇 오후 기체 목록', text);
         });
 
