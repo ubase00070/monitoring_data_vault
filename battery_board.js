@@ -633,7 +633,7 @@
         .bb-jl-empty { padding:30px 16px; text-align:center; font-size:14px; color:var(--mu); font-weight:700; }
 
         /* 금일 운영 배터리 로그(기체당 1행 + 임무별 칩) */
-        .bb-jl-ops-toolbar { display:flex; justify-content:flex-end; padding:0 0 8px; }
+        .bb-jl-ops-toolbar { display:flex; justify-content:flex-end; gap:8px; padding:0 0 8px; }
         .bb-jl-ops-copy {
             flex-shrink:0; height:28px; padding:0 12px; border-radius:6px; border:1px solid var(--bd2);
             background:var(--sur2); color:var(--tx); font-size:12px; font-weight:700; font-family:inherit;
@@ -2861,6 +2861,9 @@
     const JEJU_GROUP_A = [1, 2, 3, 12, 13, 14];
     const JEJU_GROUP_B = [4, 5, 6, 15, 16, 17];
 
+    // 오전 10시부터 출발 예정인 기체(304, 306, 308, 309, 312, 316 → 원래 번호 4,6,8,9,12,16)
+    const JEJU_MORNING_NUMS = new Set([4, 6, 8, 9, 12, 16]);
+
     // 그룹(운용 조) 단위 배열을 반환: [그룹A 기체들], [그룹B 기체들], [그 외 나머지 기체들-이름순]
     function jejuGetSortedRobots() {
         const all = DB.filter(r => r.siteId === JEJU_WORLDCUP_SITE_ID);
@@ -2921,6 +2924,8 @@
 
         bodyEl.innerHTML = `
             <div class="bb-jl-ops-toolbar">
+                <button class="bb-jl-ops-copy" id="bb-jl-ops-copy-morning" type="button">🌅 오전 기체 목록</button>
+                <button class="bb-jl-ops-copy" id="bb-jl-ops-copy-afternoon" type="button">🌇 오후 기체 목록</button>
                 <button class="bb-jl-ops-copy" id="bb-jl-ops-copy-btn" type="button">📋 전체 복사</button>
             </div>
             <table class="bb-jl-ops-table">
@@ -2943,18 +2948,17 @@
             });
         });
 
-        // 클립보드 복사용: "301호기 (순회시작 시간 / 시작% / 종료% / 총 소요시간)" 형태.
-        // 임무가 여럿이면 '[기체명] --------------------' 구분줄 아래에 불릿(•)으로 각 임무를 나열.
-        // 그룹(운용 조) 사이는 빈 줄로 구분하고, '오늘 임무 기록 없음'인 기체는 복사 대상에서 제외
-        document.getElementById('bb-jl-ops-copy-btn').addEventListener('click', async (e) => {
-            const btn = e.currentTarget;
+        // 클립보드 복사용 텍스트 생성: "[301호기] --------------------" 구분줄 아래에 임무 정보(순회시작 시간 / 시작% / 종료% / 총 소요시간).
+        // 임무가 여럿이면 불릿(•)으로 각 임무를 다음 줄에 나열. 그룹(운용 조) 사이는 빈 줄로 구분.
+        // filterFn(r)이 주어지면 해당 조건을 만족하는 기체만 포함(오전/오후 목록용) — '오늘 임무 기록 없음'인 기체는 항상 제외.
+        function buildJejuCopyText(scopeLabel, filterFn) {
             const missionText = (m) => {
                 const durTxt = wblFormatDuration(m.endMin - m.startMin) + (m.ongoing ? ' (진행중)' : '');
                 return `(${m.startTimeStr} / ${fmtBatt(m.startBattery)} / ${fmtBatt(m.endBattery)} / 총 ${durTxt})`;
             };
             const groupTexts = groupData.map(g => {
                 const blocks = g
-                    .filter(({ missions }) => missions.length > 0)
+                    .filter(({ r, missions }) => missions.length > 0 && (!filterFn || filterFn(r)))
                     .map(({ r, missions }) => {
                         const nameHeader = `[${jejuDisplayName(r.name)}] ${'-'.repeat(20)}`;
                         if (missions.length === 1) {
@@ -2966,8 +2970,11 @@
                 return blocks.join('\n');   // 같은 그룹 안에서는 줄바꿈만(빈 줄 없이)
             }).filter(t => t.length > 0);
 
-            const header = `🏝️ 제주 월드컵 경기장 금일 운영 배터리 로그${dayKey ? ' [' + wblFormatMonthDay(dayKey) + ']' : ''}`;
-            const text = groupTexts.length ? `${header}\n\n${groupTexts.join('\n\n')}` : `${header}\n\n오늘 임무 기록이 있는 기체가 없습니다`;
+            const header = `🏝️ 제주 월드컵 경기장 금일 운영 배터리 로그${scopeLabel ? ' - ' + scopeLabel : ''}${dayKey ? ' [' + wblFormatMonthDay(dayKey) + ']' : ''}`;
+            return groupTexts.length ? `${header}\n\n${groupTexts.join('\n\n')}` : `${header}\n\n오늘 임무 기록이 있는 기체가 없습니다`;
+        }
+
+        async function copyAndFlash(btn, defaultLabel, text) {
             try {
                 await navigator.clipboard.writeText(text);
                 btn.textContent = '✅ 복사됨';
@@ -2975,7 +2982,27 @@
             } catch {
                 btn.textContent = '❌ 실패';
             }
-            setTimeout(() => { btn.textContent = '📋 전체 복사'; btn.classList.remove('done'); }, 1500);
+            setTimeout(() => { btn.textContent = defaultLabel; btn.classList.remove('done'); }, 1500);
+        }
+
+        // 오전 10시부터 출발 예정: 304, 306, 308, 309, 312, 316
+        document.getElementById('bb-jl-ops-copy-morning').addEventListener('click', (e) => {
+            const btn = e.currentTarget;
+            const text = buildJejuCopyText('오전 기체', r => JEJU_MORNING_NUMS.has(jejuExtractNum(r.name)));
+            copyAndFlash(btn, '🌅 오전 기체 목록', text);
+        });
+
+        // 오전 목록에 속하지 않는 나머지 전부
+        document.getElementById('bb-jl-ops-copy-afternoon').addEventListener('click', (e) => {
+            const btn = e.currentTarget;
+            const text = buildJejuCopyText('오후 기체', r => !JEJU_MORNING_NUMS.has(jejuExtractNum(r.name)));
+            copyAndFlash(btn, '🌇 오후 기체 목록', text);
+        });
+
+        document.getElementById('bb-jl-ops-copy-btn').addEventListener('click', (e) => {
+            const btn = e.currentTarget;
+            const text = buildJejuCopyText('', null);
+            copyAndFlash(btn, '📋 전체 복사', text);
         });
     }
 
