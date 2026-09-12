@@ -3213,14 +3213,46 @@
             return `${title}\n\n${body}`;
         }
 
+        // '*텍스트*'로 표시해둔 볼드 마크업을 실제 서식(HTML <b>)으로도 함께 클립보드에 담는다.
+        // - 서식 붙여넣기를 지원하는 곳(Slack, Gmail, 워드, 노션, 구글독스 등)에서는 진짜 굵은 글씨로 보임
+        // - 서식을 지원하지 않는 곳(메모장 등)에서는 별표 없는 일반 텍스트로 깔끔하게 붙여짐
+        function jejuStripMarkdown(text) {
+            return text.replace(/\*(.+?)\*/g, '$1');
+        }
+        function jejuMarkdownToHtml(text) {
+            const escaped = text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/\*(.+?)\*/g, '<b>$1</b>')
+                .replace(/\n/g, '<br>');
+            return `<div style="white-space:pre-wrap;">${escaped}</div>`;
+        }
+
         async function copyAndFlash(btn, defaultLabel, text) {
+            const plain = jejuStripMarkdown(text);
+            let ok = false;
             try {
-                await navigator.clipboard.writeText(text);
-                btn.textContent = '✅ 복사됨';
-                btn.classList.add('done');
-            } catch {
-                btn.textContent = '❌ 실패';
+                if (navigator.clipboard?.write && typeof ClipboardItem !== 'undefined') {
+                    const html = jejuMarkdownToHtml(text);
+                    const item = new ClipboardItem({
+                        'text/plain': new Blob([plain], { type: 'text/plain' }),
+                        'text/html': new Blob([html], { type: 'text/html' }),
+                    });
+                    await navigator.clipboard.write([item]);
+                    ok = true;
+                }
+            } catch { /* 아래에서 일반 텍스트 복사로 재시도 */ }
+
+            if (!ok) {
+                try {
+                    await navigator.clipboard.writeText(plain);
+                    ok = true;
+                } catch { ok = false; }
             }
+
+            btn.textContent = ok ? '✅ 복사됨' : '❌ 실패';
+            if (ok) btn.classList.add('done');
             setTimeout(() => { btn.textContent = defaultLabel; btn.classList.remove('done'); }, 1500);
         }
 
