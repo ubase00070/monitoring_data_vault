@@ -1539,6 +1539,7 @@
             }
 
             logBatteryPattern(DB);
+            jejuLogFine(DB);
             wblCyhAutoUploadTick();
             wblOthersAutoDownloadTick();
             wblNightUploadTick();
@@ -1947,6 +1948,86 @@
         wblSave(data);
     }
 
+    // ============================================================
+    // 제주 배터리 로그 전용: 2분 간격 정밀 기록
+    // (일반 배터리 로그는 10분 슬롯 단위로만 저장되지만, 제주 임무 시작/종료 판정은
+    //  실제 데이터 갱신 주기인 2분 단위로 더 정확하게 잡기 위해 별도 저장소를 둠)
+    // ============================================================
+    const JEJU_FINE_KEY = 'bb_battery_log_jeju_fine';
+
+    function jejuFineLoad() {
+        try { const raw = localStorage.getItem(JEJU_FINE_KEY); return raw ? JSON.parse(raw) : null; }
+        catch { return null; }
+    }
+    function jejuFineSave(data) {
+        try { localStorage.setItem(JEJU_FINE_KEY, JSON.stringify(data)); } catch {}
+    }
+    function jejuFineEnsureDay() {
+        const dayKey = wblGetDayKey();
+        if (!dayKey) return null;
+        let data = jejuFineLoad();
+        if (!data || data.day !== dayKey) {
+            data = { day: dayKey, entries: {} };   // 날짜 바뀌면 통째로 초기화
+            jejuFineSave(data);
+        }
+        return data;
+    }
+
+    let _jejuFineLastSlot = null;
+
+    // 제주 사이트 기체만 대상으로, 10분 슬롯 제한 없이 매 호출(=2분마다)마다 기록
+    function jejuLogFine(dbList) {
+        const dayKey = wblGetDayKey();
+        if (!dayKey) return;
+
+        const now = new Date();
+        const slotMin = Math.floor(now.getMinutes() / 2) * 2;   // 2분 슬롯
+        const slotLabel = `${String(now.getHours()).padStart(2,'0')}:${String(slotMin).padStart(2,'0')}`;
+        if (_jejuFineLastSlot === slotLabel) return;   // 같은 2분 슬롯 중복 기록 방지
+        _jejuFineLastSlot = slotLabel;
+
+        const data = jejuFineEnsureDay();
+        if (!data) return;
+
+        dbList.forEach(r => {
+            if (r.siteId !== JEJU_WORLDCUP_SITE_ID) return;   // 제주 사이트 기체만 기록(용량 절약)
+            if (!data.entries[r.id]) data.entries[r.id] = { name: r.name, log: [] };
+            const log = data.entries[r.id].log;
+            if (log.length > 0 && log[log.length - 1].t === slotLabel) return;
+            log.push({
+                t: slotLabel,
+                status: r.status,
+                battery: r.status === 'off' ? null : r.battery,
+            });
+        });
+
+        jejuFineSave(data);
+    }
+
+    // wblGetSegments와 동일한 방식으로 연속 구간을 묶되, 제주 전용 2분 정밀 로그에서 읽어옴
+    function jejuGetFineSegments(robotId) {
+        const dayKey = wblGetDayKey();
+        if (!dayKey) return [];
+        const data = jejuFineLoad();
+        if (!data || data.day !== dayKey) return [];
+        const entry = data.entries[robotId];
+        if (!entry || entry.log.length === 0) return [];
+
+        const sortedLog = [...entry.log].sort((a, b) => wblDayAdjMin(a.t) - wblDayAdjMin(b.t));
+        const segments = [];
+        sortedLog.forEach(pt => {
+            const last = segments[segments.length - 1];
+            if (last && last.status === pt.status) {
+                last.end = pt.t;
+                last.endBattery = pt.battery;
+                last.points.push(pt);
+            } else {
+                segments.push({ status: pt.status, start: pt.t, end: pt.t, startBattery: pt.battery, endBattery: pt.battery, points: [pt] });
+            }
+        });
+        return segments;
+    }
+
     const WBL_STL = { charging:'충전 중', patrolling:'순찰 중', delivering:'배달 중', standby:'대기 중', docking:'도킹 중', off:'OFF' };
 
     function wblToMin(hhmm) { const [h,m] = hhmm.split(':').map(Number); return h*60+m; }
@@ -2044,9 +2125,10 @@
     // 다시 '대기 중'으로 전환되는 시점을 임무 종료로 판단해 시작/종료 시각·배터리와 총 소요시간을 산출.
     // (충전 중/도킹 중/OFF 상태는 그 자체로는 임무를 시작시키지 않음 — 아침에 충전만 하고 아직 출동 전인 기체가
     //  임무로 잘못 잡히는 것을 막기 위함. 다만 이미 시작된 임무 중간에 잠깐 충전/도킹이 끼면 임무는 계속 이어짐)
+    // — 일반 배터리 로그(10분 슬롯)가 아니라 제주 전용 2분 정밀 로그를 사용해 임무 시작/종료 시점을 더 정확히 잡음
     function wblComputeMissions(robotId, source) {
         const DEPLOY_STATUSES = new Set(['patrolling', 'delivering']);
-        const segments = wblGetSegments(robotId, source);
+        const segments = jejuGetFineSegments(robotId);
         if (!segments.length) return [];
 
         const missions = [];
