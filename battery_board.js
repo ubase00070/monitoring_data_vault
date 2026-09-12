@@ -619,7 +619,7 @@
             z-index:99999999;
             cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_default.png') 4 4, auto;
         }
-        /* 패널 자체는 스크롤하지 않고, 내부 바디(.bb-jl-body)만 스크롤 → 시간축/헤더를 정확히 고정 위함 */
+        /* 패널 자체는 스크롤하지 않고, 내부 바디(.bb-jl-body)만 스크롤 → 시간축/헤더를 정확히 고정하기 위함 */
         #bb-jeju-log-panel.open { display:flex; flex-direction:column; }
         #bb-jeju-log-panel.bb-light {
 			--bg:#f2e4c4; --sur:#f8f3e6; --sur2:#efe6d2;
@@ -665,6 +665,13 @@
         .bb-jl-ops-chip b { font-weight:900; color:var(--bl); margin-right:1px; }
         .bb-jl-ops-chip.ongoing { border-color:var(--or); color:var(--or); background:var(--or2); }
         .bb-jl-ops-chip.ongoing b { color:var(--or); }
+        .bb-jl-ops-chip.overridden { border-color:#8b5cf6; }
+        .bb-jl-ops-chip.overridden sup { color:#8b5cf6; font-weight:900; }
+        .bb-jl-ops-edit-time {
+            border:none; background:transparent; cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_pointer.png') 4 4, pointer;
+            font-size:11px; padding:2px 3px; margin-right:2px; border-radius:6px; vertical-align:middle;
+        }
+        .bb-jl-ops-edit-time:hover { background:var(--sur2); }
         .bb-jl-ops-sep td { height:14px; padding:0; border:none; background:transparent; }
 
 
@@ -2028,6 +2035,42 @@
         return segments;
     }
 
+    // ============================================================
+    // 제주 배터리 로그: 임무 시작 시간 수동 보정(override)
+    // — 2분 폴링 간격 때문에 실제 임무 부여 시각과 몇 분 어긋날 수 있어, 사용자가 직접 정확한 시작
+    //   시각을 입력하면 그 값을 기준으로 총 소요시간까지 재계산해 텍스트 복사에 반영한다.
+    //   (그래프/추이 로그 자체는 손대지 않고, 텍스트 복사 렌더링 단계에서만 값을 덮어씀)
+    // ============================================================
+    const JEJU_OVERRIDE_KEY = 'bb_jeju_mission_overrides';
+
+    function jejuLoadOverrideMap() {
+        const dayKey = wblGetDayKey();
+        if (!dayKey) return {};
+        try {
+            const raw = JSON.parse(localStorage.getItem(JEJU_OVERRIDE_KEY) || 'null');
+            if (!raw || raw.day !== dayKey) return {};
+            return raw.map || {};
+        } catch { return {}; }
+    }
+
+    function jejuGetOverrideStart(robotId, origStartTimeStr) {
+        const map = jejuLoadOverrideMap();
+        return map[`${robotId}::${origStartTimeStr}`] || null;
+    }
+
+    // newStartTimeStr이 falsy(빈 값)면 보정을 지워서 자동 감지값으로 되돌림
+    function jejuSetOverrideStart(robotId, origStartTimeStr, newStartTimeStr) {
+        const dayKey = wblGetDayKey();
+        if (!dayKey) return;
+        let raw;
+        try { raw = JSON.parse(localStorage.getItem(JEJU_OVERRIDE_KEY) || 'null'); } catch { raw = null; }
+        if (!raw || raw.day !== dayKey) raw = { day: dayKey, map: {} };
+        const key = `${robotId}::${origStartTimeStr}`;
+        if (newStartTimeStr) raw.map[key] = newStartTimeStr;
+        else delete raw.map[key];
+        try { localStorage.setItem(JEJU_OVERRIDE_KEY, JSON.stringify(raw)); } catch {}
+    }
+
     const WBL_STL = { charging:'충전 중', patrolling:'순찰 중', delivering:'배달 중', standby:'대기 중', docking:'도킹 중', off:'OFF' };
 
     function wblToMin(hhmm) { const [h,m] = hhmm.split(':').map(Number); return h*60+m; }
@@ -2996,14 +3039,25 @@
         const dayKey = wblGetSourceData('today')?.day;
         const fmtBatt = v => (v == null ? '-' : `${v}%`);
 
-        // 그룹 구성은 그대로 유지한 채, 각 기체의 금일 임무 데이터만 미리 계산
-        const groupData = groups.map(g => g.map(r => ({ r, missions: wblComputeMissions(r.id, 'today') })));
+        // 그룹 구성은 그대로 유지한 채, 각 기체의 금일 임무 데이터를 계산 + 사용자가 직접 입력한 시작시간 보정을 적용
+        const groupData = groups.map(g => g.map(r => {
+            const missions = wblComputeMissions(r.id, 'today').map(m => {
+                const origStartTimeStr = m.startTimeStr;
+                const override = jejuGetOverrideStart(r.id, origStartTimeStr);
+                if (override) {
+                    return { ...m, startTimeStr: override, startMin: wblDayAdjMin(override), origStartTimeStr, overridden: true };
+                }
+                return { ...m, origStartTimeStr, overridden: false };
+            });
+            return { r, missions };
+        }));
 
-        // 화면(칩) 표기용: "#idx 시작시간 경 / 시작%→종료% / 소요시간"
+        // 화면(칩) 표기용: "#idx 시작시간 경 / 시작%→종료% / 소요시간" (+ 시작시간 직접 입력 버튼)
         const chipLabel = (m, idx, total) => {
             const tag = total > 1 ? `<b>#${idx + 1}</b> ` : '';
             const durTxt = wblFormatDuration(m.endMin - m.startMin) + (m.ongoing ? ' (진행중)' : '');
-            return `${tag}${m.startTimeStr} 경 / ${fmtBatt(m.startBattery)}→${fmtBatt(m.endBattery)} / ${durTxt}`;
+            const timeLabel = m.overridden ? `${m.startTimeStr}<sup title="자동감지: ${m.origStartTimeStr}">*</sup>` : m.startTimeStr;
+            return `${tag}${timeLabel} 경 / ${fmtBatt(m.startBattery)}→${fmtBatt(m.endBattery)} / ${durTxt}`;
         };
 
         const trHtml = groupData.map((g, gi) => {
@@ -3012,7 +3066,10 @@
                 if (!missions.length) {
                     return `<tr class="bb-jl-ops-empty" data-id="${r.id}"><td class="bb-jl-ops-name">${dispName}</td><td>오늘 임무 기록 없음</td></tr>`;
                 }
-                const chips = missions.map((m, idx) => `<span class="bb-jl-ops-chip${m.ongoing ? ' ongoing' : ''}">${chipLabel(m, idx, missions.length)}</span>`).join('');
+                const chips = missions.map((m, idx) => `
+                    <span class="bb-jl-ops-chip${m.ongoing ? ' ongoing' : ''}${m.overridden ? ' overridden' : ''}">${chipLabel(m, idx, missions.length)}</span>
+                    <button class="bb-jl-ops-edit-time" type="button" title="임무 시작 시간 직접 입력" data-robot-id="${r.id}" data-orig="${m.origStartTimeStr}" data-current="${m.startTimeStr}">✏️</button>
+                `).join('');
                 return `<tr data-id="${r.id}"><td class="bb-jl-ops-name">${dispName}</td><td><div class="bb-jl-ops-chips">${chips}</div></td></tr>`;
             }).join('');
             // 그룹(운용 조) 사이에는 빈 줄로 구분
@@ -3027,11 +3084,41 @@
             </div>
             <table class="bb-jl-ops-table">
                 <thead><tr>
-                    <th style="width:120px;">기체 이름</th><th>금일 임무별 배터리 추이 (시작시간 / 시작%→종료% / 소요시간)</th>
+                    <th style="width:120px;">기체 이름</th><th>금일 임무별 배터리 추이 (시작시간 / 시작%→종료% / 소요시간) — ✏️로 시작시간 직접 입력 가능</th>
                 </tr></thead>
                 <tbody>${trHtml}</tbody>
             </table>
         `;
+
+        // 시작시간 직접 입력 버튼 → prompt로 HH:MM 입력받아 보정값 저장 후 재렌더링 (총 소요시간도 그 값 기준으로 재계산됨)
+        bodyEl.querySelectorAll('.bb-jl-ops-edit-time').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const robotId = btn.dataset.robotId;
+                const orig = btn.dataset.orig;
+                const current = btn.dataset.current;
+                const input = prompt(`임무 시작 시간을 직접 입력하세요 (HH:MM)\n자동 감지값: ${orig}\n\n비워두고 확인을 누르면 자동 감지값으로 되돌립니다.`, current);
+                if (input === null) return;   // 취소
+                const trimmed = input.trim();
+                if (trimmed === '') {
+                    jejuSetOverrideStart(robotId, orig, null);
+                    renderJejuLogBody();
+                    return;
+                }
+                if (!/^\d{1,2}:\d{2}$/.test(trimmed)) {
+                    alert('시간 형식이 올바르지 않습니다. 예: 09:05, 14:30');
+                    return;
+                }
+                const [hh, mm] = trimmed.split(':').map(Number);
+                if (hh < 0 || hh > 23 || mm < 0 || mm > 59) {
+                    alert('시간 형식이 올바르지 않습니다. 예: 09:05, 14:30');
+                    return;
+                }
+                const normalized = `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+                jejuSetOverrideStart(robotId, orig, normalized);
+                renderJejuLogBody();
+            });
+        });
 
         // 기체 라인 클릭 → 해당 기체 상세 Info 패널로 이동 (기존 그래프 행 클릭 로직을 그대로 이식, 구분용 빈 행은 제외)
         bodyEl.querySelectorAll('.bb-jl-ops-table tbody tr[data-id]').forEach(rowEl => {
