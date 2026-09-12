@@ -3191,24 +3191,26 @@
             };
             const dispatchTail = (m) => {
                 const endExpr = m.ongoing ? '-' : fmtBatt(m.endBattery);
-                return `(${fmtBatt(m.startBattery)} / ${endExpr} / ${wblFormatDuration(m.endMin - m.startMin)}(${m.startTimeStr} 배차))`;
+                const durMin = Math.round(m.endMin - m.startMin);
+                return `(${fmtBatt(m.startBattery)} / ${endExpr} / 총 ${durMin}분(${m.startTimeStr} 배차))`;
             };
 
             const lines = list.flatMap(({ r, missions: rawMissions }) => {
                 const missions = filterRealMissions(rawMissions);
-                const label = numLabel(r);
+                const label = `*${numLabel(r)}*`;   // 볼드체
                 if (!missions.length) {
-                    return [`   * ${label} (${fmtBatt(r.battery)} / - / 대기 중)`];
+                    return [`   • ${label} (${fmtBatt(r.battery)} / - / 대기 중)`];
                 }
                 if (missions.length === 1) {
-                    return [`   * ${label} ${dispatchTail(missions[0])}`];
+                    return [`   • ${label} ${dispatchTail(missions[0])}`];
                 }
-                return missions.map((m, idx) => `   * ${label} #${idx + 1} ${dispatchTail(m)}`);
+                return missions.map((m, idx) => `   • ${label} #${idx + 1} ${dispatchTail(m)}`);
             });
 
-            const header = buildHeader(scopeLabel);
-            const body = lines.length ? `* ${roundLabel}\n${lines.join('\n')}` : `* ${roundLabel}\n   * 대상 기체가 없습니다`;
-            return `${header}\n\n${body}`;
+            const title = `제주 전국장애인체전 ${scopeLabel ? scopeLabel + ' ' : ''}기체 배터리 현황`;
+            const sectionHeader = `● *${roundLabel}*`;   // 큰 불렛틴 기호 + 볼드체
+            const body = lines.length ? `${sectionHeader}\n${lines.join('\n')}` : `${sectionHeader}\n   • 대상 기체가 없습니다`;
+            return `${title}\n\n${body}`;
         }
 
         async function copyAndFlash(btn, defaultLabel, text) {
