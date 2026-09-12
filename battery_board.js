@@ -2975,7 +2975,10 @@
             const n = new Date();
             return `${String(n.getHours()).padStart(2, '0')}:${String(n.getMinutes()).padStart(2, '0')}`;
         };
-        const robotBlock = (r, missions) => {
+        // 종료까지 10분 미만 걸린 임무는 테스트성 시나리오로 보고 텍스트 복사에서는 '임무 미부여'로 간주(진행중인 임무는 아직 얼마나 걸릴지 모르니 제외 대상에서 뺌)
+        const filterRealMissions = missions => missions.filter(m => m.ongoing || (m.endMin - m.startMin) >= 10);
+        const robotBlock = (r, rawMissions) => {
+            const missions = filterRealMissions(rawMissions);
             const nameHeader = `[${jejuDisplayName(r.name)}] ${'-'.repeat(20)}`;
             if (!missions.length) {
                 return `${nameHeader}\n(${nowHHMM()} / ${fmtBatt(r.battery)} / -)`;
@@ -2986,7 +2989,8 @@
             const lines = missions.map(m => `• ${missionText(m)}`);
             return `${nameHeader}\n${lines.join('\n')}`;
         };
-        const buildHeader = scopeLabel => `🏝️ 제주 월드컵 경기장 금일 운영 배터리 로그${scopeLabel ? ' - ' + scopeLabel : ''}${dayKey ? ' [' + wblFormatMonthDay(dayKey) + ']' : ''}`;
+        const dateStr = dayKey ? dayKey.split('-').slice(1).join('/') : '';
+        const buildHeader = scopeLabel => `제주 전국장애인체전 ${scopeLabel ? scopeLabel + ' ' : ''}기체 배터리 로그${dateStr ? ' [' + dateStr + ']' : ''}`;
 
         // 전체 복사: 운용 조 편성 그룹(301,302,303,312,313,314 / 304,305,306,315,316,317 / 나머지) 순서 그대로 유지
         function buildJejuCopyTextGrouped(scopeLabel, filterFn) {
