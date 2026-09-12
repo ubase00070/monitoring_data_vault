@@ -3037,6 +3037,13 @@
     // groups: [[robot, ...], [robot, ...], ...] — jejuGetSortedRobots()가 반환하는 운용 조 단위 배열
     function renderJejuOpsLogView(bodyEl, groups) {
         const fmtBatt = v => (v == null ? '-' : `${v}%`);
+        const nowHHMM = () => {
+            const n = new Date();
+            return `${String(n.getHours()).padStart(2, '0')}:${String(n.getMinutes()).padStart(2, '0')}`;
+        };
+        // 진행중인 임무는 마지막으로 폴링된 시각이 아니라, "지금 이 순간(호출되는 시점)"을 종료 기준으로 삼아 소요시간을 계산.
+        // → 리프레시 간격(2분) 때문에 몇 분 과거 시각으로 계산되던 문제를 해결. 화면(칩)은 렌더링 시점, 복사 텍스트는 버튼 클릭 시점 기준.
+        const missionDurMin = m => Math.round((m.ongoing ? wblDayAdjMin(nowHHMM()) : m.endMin) - m.startMin);
 
         // 그룹 구성은 그대로 유지한 채, 각 기체의 금일 임무 데이터를 계산 + 사용자가 직접 입력한 시작시간 보정을 적용
         const groupData = groups.map(g => g.map(r => {
@@ -3054,7 +3061,7 @@
         // 화면(칩) 표기용: "#idx 시작시간 경 / 시작%→종료% / 소요시간" (+ 시작시간 직접 입력 버튼)
         const chipLabel = (m, idx, total) => {
             const tag = total > 1 ? `<b>#${idx + 1}</b> ` : '';
-            const durTxt = wblFormatDuration(m.endMin - m.startMin) + (m.ongoing ? ' (진행중)' : '');
+            const durTxt = wblFormatDuration(missionDurMin(m)) + (m.ongoing ? ' (진행중)' : '');
             const timeLabel = m.overridden ? `${m.startTimeStr}<sup title="자동감지: ${m.origStartTimeStr}">*</sup>` : m.startTimeStr;
             return `${tag}${timeLabel} 경 / ${fmtBatt(m.startBattery)}→${fmtBatt(m.endBattery)} / ${durTxt}`;
         };
@@ -3137,14 +3144,10 @@
         // - 임무가 종료됐으면 → (시작시각 / 시작%->종료% / 총 소요시간)
         const missionText = (m) => {
             const battExpr = m.ongoing ? `${fmtBatt(m.startBattery)} -> -` : `${fmtBatt(m.startBattery)} -> ${fmtBatt(m.endBattery)}`;
-            return `(${m.startTimeStr} / ${battExpr} / 총 ${wblFormatDuration(m.endMin - m.startMin)})`;
-        };
-        const nowHHMM = () => {
-            const n = new Date();
-            return `${String(n.getHours()).padStart(2, '0')}:${String(n.getMinutes()).padStart(2, '0')}`;
+            return `(${m.startTimeStr} / ${battExpr} / 총 ${wblFormatDuration(missionDurMin(m))})`;
         };
         // 종료까지 10분 미만 걸린 임무는 테스트성 시나리오로 보고 텍스트 복사에서는 '임무 미부여'로 간주(진행중인 임무는 아직 얼마나 걸릴지 모르니 제외 대상에서 뺌)
-        const filterRealMissions = missions => missions.filter(m => m.ongoing || (m.endMin - m.startMin) >= 10);
+        const filterRealMissions = missions => missions.filter(m => m.ongoing || missionDurMin(m) >= 10);
         const robotBlock = (r, rawMissions) => {
             const missions = filterRealMissions(rawMissions);
             const nameHeader = `[${jejuDisplayName(r.name)}] ${'-'.repeat(20)}`;
@@ -3191,8 +3194,7 @@
             };
             const dispatchTail = (m) => {
                 const endExpr = m.ongoing ? '-' : fmtBatt(m.endBattery);
-                const durMin = Math.round(m.endMin - m.startMin);
-                return `(${fmtBatt(m.startBattery)} / ${endExpr} / 총 ${durMin}분(${m.startTimeStr} 배차))`;
+                return `(${fmtBatt(m.startBattery)} / ${endExpr} / 총 ${missionDurMin(m)}분(${m.startTimeStr} 배차))`;
             };
 
             const lines = list.flatMap(({ r, missions: rawMissions }) => {
