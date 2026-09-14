@@ -1224,10 +1224,10 @@
           "raw": "1"
         },
         "9/17": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "9/18": {
           "status": "annual",
@@ -1302,17 +1302,17 @@
           "raw": "1"
         },
         "9/30": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         }
       }
     },
     {
-      "name": "박계원",
+      "name": "호덕진",
       "shiftType": "주간1",
-      "workTime": "19:00~04:00",
+      "workTime": "07:00~16:00",
       "schedule": {
         "9/1": {
           "status": "work",
@@ -1333,10 +1333,10 @@
           "raw": "1"
         },
         "9/4": {
-          "status": "annual",
-          "working": true,
+          "status": "off",
+          "working": false,
           "present": false,
-          "raw": "연차"
+          "raw": "휴무"
         },
         "9/5": {
           "status": "off",
@@ -1355,6 +1355,193 @@
           "working": true,
           "present": true,
           "raw": "1"
+        },
+        "9/8": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/9": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/10": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/11": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
+        },
+        "9/12": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
+        },
+        "9/13": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/14": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/15": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/16": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/17": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/18": {
+          "status": "annual",
+          "working": true,
+          "present": false,
+          "raw": "연차"
+        },
+        "9/19": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
+        },
+        "9/20": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/21": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/22": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
+        },
+        "9/23": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
+        },
+        "9/24": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/25": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/26": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/27": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/28": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
+        },
+        "9/29": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
+        },
+        "9/30": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
+        }
+      }
+    },
+    {
+      "name": "이기완",
+      "shiftType": "주간1",
+      "workTime": "07:00~16:00",
+      "schedule": {
+        "9/1": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/2": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/3": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/4": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/5": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/6": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
+        },
+        "9/7": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "9/8": {
           "status": "work",
@@ -1405,10 +1592,10 @@
           "raw": "1"
         },
         "9/16": {
-          "status": "annual",
-          "working": true,
+          "status": "off",
+          "working": false,
           "present": false,
-          "raw": "연차"
+          "raw": "휴무"
         },
         "9/17": {
           "status": "off",
@@ -1435,10 +1622,10 @@
           "raw": "1"
         },
         "9/21": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "9/22": {
           "status": "work",
@@ -1447,10 +1634,10 @@
           "raw": "1"
         },
         "9/23": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "9/24": {
           "status": "off",
@@ -1483,16 +1670,16 @@
           "raw": "1"
         },
         "9/29": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "9/30": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         }
       }
     },
@@ -2943,10 +3130,10 @@
           "raw": "1"
         },
         "9/23": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "9/24": {
           "status": "off",
@@ -2955,10 +3142,10 @@
           "raw": "휴무"
         },
         "9/25": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "9/26": {
           "status": "work",
@@ -3182,7 +3369,7 @@
     {
       "name": "김미소",
       "shiftType": "주간1",
-      "workTime": "",
+      "workTime": "09:00~18:00",
       "schedule": {
         "9/1": {
           "status": "empty",
@@ -3369,7 +3556,7 @@
     {
       "name": "이규은",
       "shiftType": "주간1",
-      "workTime": "",
+      "workTime": "09:00~18:00",
       "schedule": {
         "9/1": {
           "status": "empty",
@@ -3556,7 +3743,7 @@
     {
       "name": "유재헌",
       "shiftType": "주간1",
-      "workTime": "",
+      "workTime": "09:00~18:00",
       "schedule": {
         "9/1": {
           "status": "empty",
@@ -3743,7 +3930,7 @@
     {
       "name": "조천호",
       "shiftType": "주간1",
-      "workTime": "",
+      "workTime": "09:00~18:00",
       "schedule": {
         "9/1": {
           "status": "empty",
@@ -3930,7 +4117,7 @@
     {
       "name": "이수성",
       "shiftType": "주간1",
-      "workTime": "",
+      "workTime": "09:00~18:00",
       "schedule": {
         "9/1": {
           "status": "empty",
@@ -3987,10 +4174,10 @@
           "raw": "1"
         },
         "9/10": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "9/11": {
           "status": "work",
@@ -3999,10 +4186,10 @@
           "raw": "1"
         },
         "9/12": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "9/13": {
           "status": "off",
@@ -4117,7 +4304,7 @@
     {
       "name": "김지영",
       "shiftType": "주간1",
-      "workTime": "",
+      "workTime": "09:00~18:00",
       "schedule": {
         "9/1": {
           "status": "empty",
@@ -4304,7 +4491,7 @@
     {
       "name": "백진홍",
       "shiftType": "주간1",
-      "workTime": "",
+      "workTime": "09:00~18:00",
       "schedule": {
         "9/1": {
           "status": "empty",
@@ -4383,6 +4570,193 @@
           "working": false,
           "present": false,
           "raw": "휴무"
+        },
+        "9/14": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/15": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/16": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/17": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/18": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/19": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
+        },
+        "9/20": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
+        },
+        "9/21": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/22": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/23": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/24": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
+        },
+        "9/25": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
+        },
+        "9/26": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
+        },
+        "9/27": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
+        },
+        "9/28": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/29": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/30": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        }
+      }
+    },
+    {
+      "name": "임미선",
+      "shiftType": "주간1",
+      "workTime": "",
+      "schedule": {
+        "9/1": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/2": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/3": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/4": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/5": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/6": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/7": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/8": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/9": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/10": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/11": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/12": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/13": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
         },
         "9/14": {
           "status": "work",
@@ -5050,196 +5424,9 @@
       }
     },
     {
-      "name": "박은선",
-      "shiftType": "주간2",
-      "workTime": "19:00~04:00",
-      "schedule": {
-        "9/1": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/2": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/3": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
-        },
-        "9/4": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
-        },
-        "9/5": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/6": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/7": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/8": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/9": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/10": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
-        },
-        "9/11": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
-        },
-        "9/12": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/13": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/14": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
-        },
-        "9/15": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
-        },
-        "9/16": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/17": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/18": {
-          "status": "annual",
-          "working": true,
-          "present": false,
-          "raw": "연차"
-        },
-        "9/19": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
-        },
-        "9/20": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/21": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/22": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/23": {
-          "status": "annual",
-          "working": true,
-          "present": false,
-          "raw": "연차"
-        },
-        "9/24": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
-        },
-        "9/25": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/26": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/27": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/28": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/29": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
-        },
-        "9/30": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
-        }
-      }
-    },
-    {
       "name": "송주현",
       "shiftType": "주간2",
-      "workTime": "11:00~20:00A",
+      "workTime": "11:00~20:00",
       "schedule": {
         "9/1": {
           "status": "work",
@@ -5426,7 +5613,7 @@
     {
       "name": "송태영",
       "shiftType": "주간2",
-      "workTime": "11:00~20:00A",
+      "workTime": "11:00~20:00",
       "schedule": {
         "9/1": {
           "status": "off",
@@ -5613,7 +5800,7 @@
     {
       "name": "신은정",
       "shiftType": "주간2",
-      "workTime": "11:00~20:00B",
+      "workTime": "11:00~20:00",
       "schedule": {
         "9/1": {
           "status": "work",
@@ -5800,7 +5987,7 @@
     {
       "name": "장재원",
       "shiftType": "주간2",
-      "workTime": "11:00~20:00B",
+      "workTime": "11:00~20:00",
       "schedule": {
         "9/1": {
           "status": "off",
@@ -5975,193 +6162,6 @@
           "working": true,
           "present": true,
           "raw": "1"
-        },
-        "9/30": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        }
-      }
-    },
-    {
-      "name": "호덕진",
-      "shiftType": "주간2",
-      "workTime": "07:00~16:00",
-      "schedule": {
-        "9/1": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/2": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/3": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/4": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
-        },
-        "9/5": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
-        },
-        "9/6": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/7": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/8": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/9": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/10": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/11": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
-        },
-        "9/12": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
-        },
-        "9/13": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/14": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/15": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/16": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/17": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
-        },
-        "9/18": {
-          "status": "annual",
-          "working": true,
-          "present": false,
-          "raw": "연차"
-        },
-        "9/19": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/20": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/21": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/22": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
-        },
-        "9/23": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
-        },
-        "9/24": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/25": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/26": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/27": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
-        },
-        "9/28": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
-        },
-        "9/29": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
         },
         "9/30": {
           "status": "work",
@@ -6355,193 +6355,6 @@
           "working": true,
           "present": true,
           "raw": "1"
-        }
-      }
-    },
-    {
-      "name": "이기완",
-      "shiftType": "야간1",
-      "workTime": "07:00~16:00",
-      "schedule": {
-        "9/1": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/2": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/3": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/4": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/5": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/6": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
-        },
-        "9/7": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
-        },
-        "9/8": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/9": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/10": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/11": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/12": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/13": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
-        },
-        "9/14": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
-        },
-        "9/15": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/16": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/17": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
-        },
-        "9/18": {
-          "status": "annual",
-          "working": true,
-          "present": false,
-          "raw": "연차"
-        },
-        "9/19": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/20": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/21": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/22": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/23": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/24": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
-        },
-        "9/25": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
-        },
-        "9/26": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
-        },
-        "9/27": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/28": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/29": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
-        },
-        "9/30": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
         }
       }
     },
@@ -7109,7 +6922,7 @@
     {
       "name": "김도형",
       "shiftType": "야간1",
-      "workTime": "15:00~24:00B",
+      "workTime": "15:00~24:00A",
       "schedule": {
         "9/1": {
           "status": "off",
@@ -7244,10 +7057,10 @@
           "raw": "1"
         },
         "9/23": {
-          "status": "work",
+          "status": "half",
           "working": true,
           "present": true,
-          "raw": "1"
+          "raw": "반차"
         },
         "9/24": {
           "status": "off",
@@ -7483,7 +7296,7 @@
     {
       "name": "이규순",
       "shiftType": "야간1",
-      "workTime": "18:00~03:00A",
+      "workTime": "18:00~03:00",
       "schedule": {
         "9/1": {
           "status": "work",
@@ -7670,7 +7483,7 @@
     {
       "name": "강철환",
       "shiftType": "야간1",
-      "workTime": "18:00~03:00A",
+      "workTime": "18:00~03:00",
       "schedule": {
         "9/1": {
           "status": "off",
@@ -7855,6 +7668,380 @@
       }
     },
     {
+      "name": "박은선",
+      "shiftType": "야간2",
+      "workTime": "19:00~04:00A",
+      "schedule": {
+        "9/1": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/2": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/3": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
+        },
+        "9/4": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
+        },
+        "9/5": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/6": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/7": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/8": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/9": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/10": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
+        },
+        "9/11": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
+        },
+        "9/12": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/13": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/14": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
+        },
+        "9/15": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/16": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/17": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/18": {
+          "status": "annual",
+          "working": true,
+          "present": false,
+          "raw": "연차"
+        },
+        "9/19": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
+        },
+        "9/20": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/21": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/22": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/23": {
+          "status": "annual",
+          "working": true,
+          "present": false,
+          "raw": "연차"
+        },
+        "9/24": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
+        },
+        "9/25": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
+        },
+        "9/26": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/27": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/28": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/29": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
+        },
+        "9/30": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
+        }
+      }
+    },
+    {
+      "name": "박계원",
+      "shiftType": "야간2",
+      "workTime": "19:00~04:00B",
+      "schedule": {
+        "9/1": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/2": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/3": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/4": {
+          "status": "annual",
+          "working": true,
+          "present": false,
+          "raw": "연차"
+        },
+        "9/5": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
+        },
+        "9/6": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/7": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/8": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/9": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/10": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/11": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
+        },
+        "9/12": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
+        },
+        "9/13": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
+        },
+        "9/14": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/15": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/16": {
+          "status": "annual",
+          "working": true,
+          "present": false,
+          "raw": "연차"
+        },
+        "9/17": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
+        },
+        "9/18": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/19": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/20": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/21": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
+        },
+        "9/22": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/23": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/24": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
+        },
+        "9/25": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
+        },
+        "9/26": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
+        },
+        "9/27": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
+        },
+        "9/28": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/29": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/30": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        }
+      }
+    },
+    {
       "name": "최정기",
       "shiftType": "야간2",
       "workTime": "20:00~05:00",
@@ -7914,10 +8101,10 @@
           "raw": "1"
         },
         "9/10": {
-          "status": "work",
+          "status": "half",
           "working": true,
           "present": true,
-          "raw": "1"
+          "raw": "반차"
         },
         "9/11": {
           "status": "work",
@@ -9384,6 +9571,6 @@
     "9/30"
   ],
   "mainMonth": 9,
-  "updatedAt": "2026-09-13T03:53:03.255Z",
-  "sheetName": "2026년_09월 스케줄_1"
+  "updatedAt": "2026-09-14T03:14:56.727Z",
+  "sheetName": "2026년_09월 스케줄"
 }
