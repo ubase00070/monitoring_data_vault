@@ -1878,7 +1878,7 @@
         const patchItems = [
             {
                 version: 'v1.5',
-                date: '2026-09-11',
+                date: '2026-09-14',
                 items: [
                     '제주 전국장애인체전 파일명 복사',
                     '익명문의 부활(게시판)',
@@ -2828,8 +2828,62 @@
 			{ color: '#fff', boxShadow: '0 0 10px rgba(167,139,250,0.4)',
 			  whiteSpace: 'pre-line', lineHeight: '1.2', padding: '2px 8px', fontSize: '11px' });
 
+		// ── [임시] 예정기체 버튼 옆 안내 말풍선 (45~50분에만 노출) ──
+		// 배치(batch) 전송 방식 특성상, 다른 탭에서 이미 점유된 기체가 섞여있으면 배치 전체가
+		// 거부될 수 있음(2026-09 진단됨). 교대 기체 연결이 끝난 뒤 새로고침을 하면 모달의
+		// 체크박스 상태가 최신으로 갱신돼서(이미 점유된 기체=비활성화) 이 문제를 우회할 수
+		// 있으므로, 그 사용법을 넌지시 안내하는 말풍선. 클릭하면 그 시간대(해당 hour)엔 다시 안 뜸.
+		const dispatchWrap = document.createElement('div');
+		Object.assign(dispatchWrap.style, { position: 'relative', display: 'inline-flex', flexShrink: '0' });
+
+		const dispatchHint = document.createElement('div');
+		dispatchHint.id = 'ho-dispatch-hint';
+		dispatchHint.innerHTML = `
+			<div style="position:absolute; left:-6px; top:50%; transform:translateY(-50%); width:0; height:0; border-top:6px solid transparent; border-bottom:6px solid transparent; border-right:6px solid #292524;"></div>
+			교대기체 연결완료 시<br>새로고침 후 예정기체를 시작해보세요
+		`;
+		Object.assign(dispatchHint.style, {
+			position: 'absolute', left: 'calc(100% + 8px)', top: '50%', transform: 'translateY(-50%)',
+			width: '150px', background: '#292524', color: '#f4f4f5',
+			fontSize: '11px', lineHeight: '1.45', fontWeight: '500',
+			padding: '7px 10px', borderRadius: '8px',
+			boxShadow: '0 4px 14px rgba(0,0,0,0.4)',
+			border: '1px solid rgba(167,139,250,0.5)',
+			cursor: 'pointer', zIndex: '2147483647',
+			display: 'none', textAlign: 'left',
+		});
+
+		// 닫힘 상태는 '시(hour)' 단위가 아니라 '이번 열림 세션' 단위로만 유지됨.
+		// → Alt+Q로 껐다가 다시 켜면(같은 시각이라도) reopenDispatchHint()가 초기화해줌.
+		let dispatchHintDismissed = false;
+		const updateDispatchHintVisibility = () => {
+			if (panel.style.top !== '0px') return; // 패널 닫혀있으면 스킵
+			const minute = new Date().getMinutes();
+			const inWindow = minute >= 45 || minute === 0; // 45분~00분(정시 직후 포함)
+			if (!inWindow || dispatchHintDismissed) {
+				dispatchHint.style.display = 'none';
+				return;
+			}
+			dispatchHint.style.display = 'block';
+		};
+		dispatchHint.addEventListener('click', () => {
+			dispatchHint.style.display = 'none';
+			dispatchHintDismissed = true;
+		});
+		updateDispatchHintVisibility();
+		setInterval(updateDispatchHintVisibility, 15000);
+
+		// Alt+Q로 패널을 다시 열 때(토글 open) 호출되는 훅 — 닫힘 상태를 초기화하고 즉시 재평가.
+		panel._reopenDispatchHint = () => {
+			dispatchHintDismissed = false;
+			updateDispatchHintVisibility();
+		};
+
+		dispatchWrap.appendChild(dispatchBtn);
+		dispatchWrap.appendChild(dispatchHint);
+
 		rightBtns.appendChild(autoBtn);
-		rightBtns.appendChild(dispatchBtn);
+		rightBtns.appendChild(dispatchWrap);
 		headerRow.appendChild(rightBtns);
 		panel.appendChild(headerRow);
 
@@ -4052,6 +4106,7 @@
 				if (existing) {
 					const isOpen = existing.style.top === '0px';
 					existing.style.top = isOpen ? '-300px' : '0px';
+					if (!isOpen) existing._reopenDispatchHint?.(); // 닫혀있다가 지금 여는 경우 — 말풍선 닫힘 상태 초기화
 				} else {
 					initHandoverLayout();
 				}
