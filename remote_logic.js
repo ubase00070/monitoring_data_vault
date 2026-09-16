@@ -1615,7 +1615,7 @@
                 };
             });
 
-            // 제주 전국장애인체전 파일명 복사 — 활성화(켜진) 칩만 순서대로 포함
+            // 제주 전국장애인체전 파일명 복사 — 활성화 칩만 순서대로 포함
             const copyJejuBtn = card.querySelector('#copyJejuFileName');
             if (copyJejuBtn) {
                 copyJejuBtn.onclick = (e) => {
