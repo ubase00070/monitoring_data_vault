@@ -1038,7 +1038,7 @@
     }
 
     function triggerReminder(content, remainMin) {
-        // notifType 체크 제거 — 항상 Type1(점멸)만 실행
+        // notifType 체크 제거
         if (!document.getElementById('neubie-alarm-style')) {
             const s = document.createElement('style');
             s.id = 'neubie-alarm-style';
