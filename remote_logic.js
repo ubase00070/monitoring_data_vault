@@ -1454,7 +1454,7 @@
         // 매분 syncTasksFromServer가 돌 때 같이 호출되어, 새로고침 없이도 09시 진입/이탈이나
         // 휴관 여부 변화를 그때그때 버튼에 반영한다. (패널이 닫혀있으면 btnCombined가 없어
         // 조용히 아무 일도 하지 않음)
-        // 다만 매분 호출되긴 해도, 계산 결과가 직전과 동일하면 DOM은 아예 건드리지 않는다
+        // 다만 매분 호출되도, 계산 결과가 직전과 동일하면 DOM은 아예 건드리지 않는다
         // (상태가 실제로 바뀌는 순간 — 09시/18시 경계, 휴관 상태 전환 — 에만 실제로 갱신됨).
         window.syncTiddiButtonState = function() {
             const btn = document.getElementById('btnCombined');
