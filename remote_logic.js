@@ -232,22 +232,6 @@
         "236": { site: "Hitachi Building Systems", unit: "#178" }, // 히타치 배달
         "168": { site: "서산 뜨레 바베큐", unit: "#145" }, // 서산 뜨레 바베큐
 		"256": { site: "충남대학교병원", unit: "#229" }, // 충남대학교병원 두비
-
-        "295": { site: "제주 전국장애인체전", unit: "#301" }, // 제주 301호기
-		"294": { site: "제주 전국장애인체전", unit: "#302" }, // 제주 302호기
-        "296": { site: "제주 전국장애인체전", unit: "#303" }, // 제주 303호기
-        "297": { site: "제주 전국장애인체전", unit: "#304" }, // 제주 304호기
-        "298": { site: "제주 전국장애인체전", unit: "#305" }, // 제주 305호기
-        "299": { site: "제주 전국장애인체전", unit: "#306" }, // 제주 306호기
-        "300": { site: "제주 전국장애인체전", unit: "#307" }, // 제주 307호기
-        "301": { site: "제주 전국장애인체전", unit: "#308" }, // 제주 308호기
-        "302": { site: "제주 전국장애인체전", unit: "#309" }, // 제주 309호기
-        "305": { site: "제주 전국장애인체전", unit: "#312" }, // 제주 312호기
-        "306": { site: "제주 전국장애인체전", unit: "#313" }, // 제주 313호기
-        "307": { site: "제주 전국장애인체전", unit: "#314" }, // 제주 314호기
-        "308": { site: "제주 전국장애인체전", unit: "#315" }, // 제주 315호기
-        "309": { site: "제주 전국장애인체전", unit: "#316" }, // 제주 316호기
-        "310": { site: "제주 전국장애인체전", unit: "#317" }, // 제주 317호기
     };
 
     // "/monitoring/56"이 "/monitoring/560"에도 부분매칭되는 걸 방지 — 숫자를 정확히 추출해서 완전일치로 비교
@@ -547,21 +531,10 @@
 	        const idMatch = path.match(/\/ko\/remote\/robot\/(\d+)/);
 	        const robotNum = idMatch ? idMatch[1] : null;
 	        if (robotNum && ROBOT_MAP[robotNum]) {
-	            const isJejuRobot = ROBOT_MAP[robotNum].site === '제주 전국장애인체전';
+	            let history = JSON.parse(localStorage.getItem('neubie_robot_history') || '[]');
 	            const newData = { id: robotNum, timestamp: Date.now() };
-
-	            if (isJejuRobot) {
-	                // ── [임시] 제주 전국장애인체전 전용 이력 (최대 2대) ──
-	                // 기존 배달기체 3칸 이력(neubie_robot_history)과는 완전히 별개 저장소.
-	                // 제주 기체를 방문해도 배달기체 드롭다운(최근 배달 기체 3칸)엔 절대 섞이지 않는다.
-	                let jejuHistory = JSON.parse(localStorage.getItem('neubie_jeju_robot_history') || '[]');
-	                jejuHistory = [newData, ...jejuHistory.filter(h => h.id !== robotNum)].slice(0, 2);
-	                localStorage.setItem('neubie_jeju_robot_history', JSON.stringify(jejuHistory));
-	            } else {
-	                let history = JSON.parse(localStorage.getItem('neubie_robot_history') || '[]');
-	                history = [newData, ...history.filter(h => h.id !== robotNum)].slice(0, 3);
-	                localStorage.setItem('neubie_robot_history', JSON.stringify(history));
-	            }
+	            history = [newData, ...history.filter(h => h.id !== robotNum)].slice(0, 3);
+	            localStorage.setItem('neubie_robot_history', JSON.stringify(history));
 	        }
 	    }
 	}
@@ -1038,7 +1011,7 @@
     }
 
     function triggerReminder(content, remainMin) {
-        // notifType 체크 제거
+        // notifType 체크 제거 — 항상 Type1(점멸)만 실행
         if (!document.getElementById('neubie-alarm-style')) {
             const s = document.createElement('style');
             s.id = 'neubie-alarm-style';
@@ -1255,7 +1228,7 @@
             const neighbors = getHandoverNeighbors(t, window.currentAllTasks);
 
             // displayTime이 이미 시간을 따로 보여주고 있으니, 본문 텍스트 맨 앞의
-            // "[09:30~10:00]" 같은 중복 시간 표기는 제거한다 (task류에만 있던 표기)
+            // "[09:30~10:00]" 같은 중복 시간 표기는 제거한다 (task류에만 붙어있던 표기)
             const bodyText = t.type === 'task'
                 ? String(t.content || '').replace(/^\[\d{2}:\d{2}(~\d{2}:\d{2})?\]\s*/, '')
                 : t.content;
@@ -1376,22 +1349,6 @@
             return `<option value="${h.id}">${info.site} ${info.unit}</option>`;
         }).join('');
 
-        // ── [임시] 제주 전국장애인체전 기체 이력 (최대 2대) ──
-        // localStorage엔 최신 방문이 배열 맨 앞(recency-first)으로 쌓이므로,
-        // 화면엔 방문한 순서 그대로(과거→최근, 왼쪽→오른쪽) 보이도록 뒤집어서 사용한다.
-        // 예: 316→302→303 순으로 접속했다면 이력엔 [303,302]가 남고, 뒤집으면 [302,303].
-        const jejuHistoryRaw = JSON.parse(localStorage.getItem('neubie_jeju_robot_history') || '[]');
-        const jejuUnits = [...jejuHistoryRaw].reverse()
-            .map(h => (ROBOT_MAP[h.id] && ROBOT_MAP[h.id].unit) || null)
-            .filter(Boolean);
-        const jejuUnit0 = jejuUnits[0] || '';
-        const jejuUnit1 = jejuUnits[1] || '';
-
-        // ── [임시] 제주 파일명 시간 선택 옵션 (현재 시각 기준 뒤로 최대 2시간) ──
-        // 영상이 길어서 임무 시작 시각을 직접 골라야 할 때 대비. 기본 선택값은 항상 현재 시각.
-        const jejuNowHour = new Date().getHours();
-        const jejuHourOptions = [2, 1, 0].map(offset => (jejuNowHour - offset + 24) % 24);
-
         // 복사 효과 공통 함수
         const COPY_SUCCESS_COLOR = HOVER_ACCENT; // 알림 테스트 호버와 동일한 블루톤
         const COPY_SUCCESS_TEXT = '#fff';
@@ -1454,7 +1411,7 @@
         // 매분 syncTasksFromServer가 돌 때 같이 호출되어, 새로고침 없이도 09시 진입/이탈이나
         // 휴관 여부 변화를 그때그때 버튼에 반영한다. (패널이 닫혀있으면 btnCombined가 없어
         // 조용히 아무 일도 하지 않음)
-        // 다만 매분 호출되도, 계산 결과가 직전과 동일하면 DOM은 아예 건드리지 않는다
+        // 다만 매분 호출되긴 해도, 계산 결과가 직전과 동일하면 DOM은 아예 건드리지 않는다
         // (상태가 실제로 바뀌는 순간 — 09시/18시 경계, 휴관 상태 전환 — 에만 실제로 갱신됨).
         window.syncTiddiButtonState = function() {
             const btn = document.getElementById('btnCombined');
@@ -1500,16 +1457,6 @@
                     <button id="btnCombined" class="sub-btn" ${isTiddiActive ? '' : 'disabled'} style="${tiddiLockStyle}">${tiddiState.text}</button>
                 </div>
             </div>
-            <div style="width:100%; height:1px; background:${T.border}; margin:2px 0 10px;"></div>
-            <div id="jejuNamingRow" style="display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap; min-width:0; margin-bottom:6px; padding:4px 8px; border-radius:10px;">
-                <span style="font-size:14px; font-weight:bold; color:${T.text}; white-space:nowrap;">🏝️ 제주 전국장애인체전</span>
-                <select id="jejuHourSelect" style="background:${fieldBg}; color:${fieldText}; border:1px solid ${fieldBorder}; border-radius:6px; font-size:14px; font-weight:bold; height:28px; padding:0 4px; box-sizing:border-box;">
-                    ${jejuHourOptions.map(h => `<option value="${h}" ${h === jejuNowHour ? 'selected' : ''}>${String(h).padStart(2,'0')}시</option>`).join('')}
-                </select>
-                <div id="jejuUnitChip0" class="jeju-unit-chip${jejuUnit0 ? '' : ' is-empty'}" data-active="true" data-unit="${jejuUnit0}">${jejuUnit0 || '—'}</div>
-                <div id="jejuUnitChip1" class="jeju-unit-chip${jejuUnit1 ? '' : ' is-empty'}" data-active="true" data-unit="${jejuUnit1}">${jejuUnit1 || '—'}</div>
-                <button id="copyJejuFileName" style="width:70px; flex-shrink:0; background:#10b981; color:white; border:none; padding:0 10px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:14px; white-space:nowrap; height:28px; line-height:28px; box-sizing:border-box;">복사</button>
-            </div>
         `;
 
         let btnStyleTag = document.getElementById('naming-btn-style');
@@ -1518,13 +1465,7 @@
             btnStyleTag.id = 'naming-btn-style';
             document.head.appendChild(btnStyleTag);
         }
-        btnStyleTag.textContent = `.sub-btn { background: ${neutralBtnBg}; color: ${neutralBtnText}; border: 1px solid ${neutralBtnBorder}; padding: 6px 4px; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; flex: 1; min-width: 0; transition: 0.2s; } .sub-btn:hover { background: ${subBtnHoverBg}; border-color: ${subBtnHoverBorder}; color: ${subBtnHoverText}; }
-            .jeju-unit-chip { display:inline-flex; align-items:center; justify-content:center; min-width:52px; height:28px; padding:0 8px; border-radius:6px; font-size:14px; font-weight:bold; border:1px solid ${neutralBtnBorder}; background:${neutralBtnBg}; color:${neutralBtnText}; cursor:pointer; white-space:nowrap; user-select:none; transition:0.2s; box-sizing:border-box; }
-            .jeju-unit-chip:hover:not(.is-empty) { background:${subBtnHoverBg}; border-color:${subBtnHoverBorder}; color:${subBtnHoverText}; }
-            .jeju-unit-chip.is-off { opacity:0.4; text-decoration:line-through; }
-            .jeju-unit-chip.is-empty { opacity:0.35; cursor:default; }
-            @keyframes jejuNewFeatureBlink { 0%, 100% { background-color: transparent; } 50% { background-color: rgba(239,68,68,0.18); } }
-            #jejuNamingRow { animation: jejuNewFeatureBlink 2s ease-in-out infinite; }`;
+        btnStyleTag.textContent = `.sub-btn { background: ${neutralBtnBg}; color: ${neutralBtnText}; border: 1px solid ${neutralBtnBorder}; padding: 6px 4px; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; flex: 1; min-width: 0; transition: 0.2s; } .sub-btn:hover { background: ${subBtnHoverBg}; border-color: ${subBtnHoverBorder}; color: ${subBtnHoverText}; }`;
 
         setTimeout(() => {
 			// 영상 드라이브 열기 → 오늘 날짜 폴더로 이동 (없으면 루트 폴더로 폴백)
@@ -1603,45 +1544,6 @@
 				applyCopyEffect(e.target);
 			};
 
-            // ── [임시] 제주 전국장애인체전 기체 칩 토글 (기본 활성화) ──
-            // 유닛이 배정된 칸만 클릭으로 켜고 끌 수 있고, 빈 칸("—")은 클릭 무시.
-            ['0', '1'].forEach(i => {
-                const chip = card.querySelector(`#jejuUnitChip${i}`);
-                if (!chip || !chip.dataset.unit) return; // 빈 칸은 토글 대상 아님
-                chip.onclick = () => {
-                    const isActive = chip.dataset.active === 'true';
-                    chip.dataset.active = isActive ? 'false' : 'true';
-                    chip.classList.toggle('is-off', isActive);
-                };
-            });
-
-            // 제주 전국장애인체전 파일명 복사 — 활성화 칩만 순서대로 포함
-            const copyJejuBtn = card.querySelector('#copyJejuFileName');
-            if (copyJejuBtn) {
-                copyJejuBtn.onclick = (e) => {
-                    const activeUnits = [];
-                    ['0', '1'].forEach(i => {
-                        const chip = card.querySelector(`#jejuUnitChip${i}`);
-                        if (chip && chip.dataset.unit && chip.dataset.active === 'true') {
-                            activeUnits.push(chip.dataset.unit.replace('#', ''));
-                        }
-                    });
-                    const time = new Date();
-                    const selectedHourRaw = card.querySelector('#jejuHourSelect')?.value;
-                    const selectedHour = selectedHourRaw !== undefined ? parseInt(selectedHourRaw, 10) : time.getHours();
-                    if (!isNaN(selectedHour)) {
-                        // 자정을 넘겨 이전 시간을 고른 경우(예: 지금 01시에 23시를 선택) 날짜도 하루 앞으로 보정
-                        if (selectedHour > time.getHours()) time.setDate(time.getDate() - 1);
-                        time.setHours(selectedHour);
-                    }
-                    const myName = localStorage.getItem('neubie_user_name') || '';
-                    const unitsPart = activeUnits.length ? `_#${activeUnits.join(', ')}` : '';
-                    const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_제주 전국장애인체전${unitsPart}${myName ? '_' + myName : ''}`;
-                    navigator.clipboard.writeText(finalName);
-                    applyCopyEffect(e.target);
-                };
-            }
-
         }, 10);
 
         return card;
@@ -1671,7 +1573,7 @@
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
 		// 문자열을 넣으면 패치노트에 빨간 '`' 뱃지가 점멸하며 뜸.
 		// 빈 문자열('')로 비우면 뱃지가 사라짐.
-		const PATCH_NOTE_NEW_CONTENT = '제주 체전';
+		const PATCH_NOTE_NEW_CONTENT = '';
 
         // ── 패치노트 내용 ──────────────────────────────────────
         // 아래 patchItems 배열에 버전별 내용을 추가하세요 (버튼 라벨의 날짜도 이 배열의
@@ -1754,7 +1656,7 @@
             patchClose.onmouseleave = () => { patchClose.style.color='#aaa'; };
             patchClose.onclick = () => hideSharedPopup();
 
-            // patchItems는 위에서 이미 선언됨 — 여기서는 그대로 재사용
+            // patchItems는 위(버튼 라벨 생성 시점)에서 이미 선언됨 — 여기서는 그대로 재사용
 
             const patchContent = document.createElement('div');
             patchContent.style.cssText = "display:grid; gap:16px;";
@@ -6140,7 +6042,7 @@
         }
     }
 
-    // 페이지 진입 + URL 변경 시 자동 실행 (DOM 렌더링 대기)
+    // 페이지 진입 시 + URL 변경 시 자동 실행 (DOM 렌더링 대기)
     setTimeout(() => patchDrivingPageLayout(), 1500);
     setTimeout(() => patchDrivingPageLayout(), 3000);
     setTimeout(() => patchDrivingPageLayout(), 6000);
