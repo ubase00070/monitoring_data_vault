@@ -1754,7 +1754,7 @@
             patchClose.onmouseleave = () => { patchClose.style.color='#aaa'; };
             patchClose.onclick = () => hideSharedPopup();
 
-            // patchItems는 위(버튼 라벨 생성 시점)에서 이미 선언됨 — 여기서는 그대로 재사용
+            // patchItems는 위에서 이미 선언됨 — 여기서는 그대로 재사용
 
             const patchContent = document.createElement('div');
             patchContent.style.cssText = "display:grid; gap:16px;";
