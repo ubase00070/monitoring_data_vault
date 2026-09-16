@@ -42,19 +42,19 @@
     "rawTime": "13:00"
   },
   {
-    "user": "송태영/임미선",
+    "user": "송태영",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "14:00"
   },
   {
-    "user": "이수성",
+    "user": "임미선",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "15:00"
   },
   {
-    "user": "김지영",
+    "user": "이수성",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "16:00"
@@ -174,7 +174,7 @@
     "rawTime": "10:00"
   },
   {
-    "user": "호덕진",
+    "user": "이수성",
     "type": "task",
     "content": "[10:30] 성수동1가 요기요 임무받기 ON",
     "rawTime": "10:30"
