@@ -6140,7 +6140,7 @@
         }
     }
 
-    // 페이지 진입 시 + URL 변경 시 자동 실행 (DOM 렌더링 대기)
+    // 페이지 진입 + URL 변경 시 자동 실행 (DOM 렌더링 대기)
     setTimeout(() => patchDrivingPageLayout(), 1500);
     setTimeout(() => patchDrivingPageLayout(), 3000);
     setTimeout(() => patchDrivingPageLayout(), 6000);
