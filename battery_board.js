@@ -606,76 +606,6 @@
         #bb-top5-panel.bb-light .bb-top5-row:hover { background:var(--sur2); }
         #bb-top5-panel.bb-light .bb-top5-col-title { color:#a16207; }
 
-        /* ── 제주 배터리 로그 패널 ── */
-        #bb-jeju-log-panel {
-            display:none; position:fixed;
-            top:50%; left:50%; transform:translate(-50%,-50%);
-            width:1180px; max-height:86vh;
-            border:3px solid transparent; border-radius:14px;
-            background-image: linear-gradient(var(--sur), var(--sur)), linear-gradient(135deg, #6366f1, #ec4899);
-            background-origin: border-box;
-            background-clip: padding-box, border-box;
-            box-shadow:0 24px 64px rgba(0,0,0,.9);
-            z-index:99999999;
-            cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_default.png') 4 4, auto;
-        }
-        /* 패널 자체는 스크롤하지 않고, 내부 바디(.bb-jl-body)만 스크롤 → 시간축/헤더를 정확히 고정하기 위함 */
-        #bb-jeju-log-panel.open { display:flex; flex-direction:column; }
-        #bb-jeju-log-panel.bb-light {
-			--bg:#f2e4c4; --sur:#f8f3e6; --sur2:#efe6d2;
-			--bd:#cabf9d; --bd2:#b3a687; --tx:#2b2418; --mu:#7a6f5c;
-		}
-		#bb-jeju-log-panel.bb-light .bb-ap-title { color:var(--tx); }
-        #bb-jeju-log-panel .bb-ap-hd { flex-shrink:0; gap:10px; }
-        #bb-jeju-log-panel .bb-ap-title { display:flex; align-items:center; flex-wrap:wrap; gap:4px; flex:1; }
-
-        .bb-jl-body { flex:1 1 auto; min-height:0; overflow-y:auto; padding:10px 14px 16px; }
-        .bb-jl-empty { padding:30px 16px; text-align:center; font-size:14px; color:var(--mu); font-weight:700; }
-
-        /* 금일 운영 배터리 로그(기체당 1행 + 임무별 칩) */
-        .bb-jl-ops-toolbar { display:flex; justify-content:flex-end; gap:8px; padding:0 0 8px; }
-        .bb-jl-ops-copy {
-            flex-shrink:0; height:28px; padding:0 12px; border-radius:6px; border:1px solid var(--bd2);
-            background:var(--sur2); color:var(--tx); font-size:12px; font-weight:700; font-family:inherit;
-            cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_pointer.png') 4 4, pointer;
-        }
-        .bb-jl-ops-copy:hover { border-color:var(--mu); }
-        .bb-jl-ops-copy.done { background:var(--gn2); border-color:var(--gn); color:var(--gn); }
-        .bb-jl-ops-table { width:100%; border-collapse:collapse; font-size:13px; }
-        .bb-jl-ops-table th {
-            position:sticky; top:0; z-index:4; background:var(--sur);
-            text-align:left; font-size:12px; color:var(--mu); font-weight:900;
-            padding:6px 10px; border-bottom:1px solid var(--bd2);
-        }
-        .bb-jl-ops-table td { padding:9px 10px; border-bottom:1px solid var(--bd); color:var(--tx); vertical-align:middle; }
-        .bb-jl-ops-table tr:nth-child(even) td { background:var(--wh); }
-        /* 기체 라인 클릭 → 개별 기체 상세 레이아웃으로 이동 */
-        .bb-jl-ops-table tbody tr {
-            cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_pointer.png') 4 4, pointer;
-        }
-        .bb-jl-ops-table tbody tr:hover td { filter:brightness(1.08); }
-        .bb-jl-ops-name { font-weight:900; white-space:nowrap; }
-        .bb-jl-ops-empty td { color:var(--mu); }
-        .bb-jl-ops-chips { display:flex; flex-wrap:wrap; gap:6px; }
-        .bb-jl-ops-chip {
-            display:inline-flex; align-items:center; gap:3px;
-            padding:3px 9px; border-radius:999px; border:1px solid var(--bd2);
-            background:var(--sur2); color:var(--tx); font-size:12px; font-weight:700; white-space:nowrap;
-        }
-        .bb-jl-ops-chip b { font-weight:900; color:var(--bl); margin-right:1px; }
-        .bb-jl-ops-chip.ongoing { border-color:var(--or); color:var(--or); background:var(--or2); }
-        .bb-jl-ops-chip.ongoing b { color:var(--or); }
-        .bb-jl-ops-chip.overridden { border-color:#8b5cf6; }
-        .bb-jl-ops-chip.overridden sup { color:#8b5cf6; font-weight:900; }
-        .bb-jl-ops-edit-time {
-            border:none; background:transparent; cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_pointer.png') 4 4, pointer;
-            font-size:11px; padding:2px 3px; margin-right:2px; border-radius:6px; vertical-align:middle;
-        }
-        .bb-jl-ops-edit-time:hover { background:var(--sur2); }
-        .bb-jl-ops-sep td { height:14px; padding:0; border:none; background:transparent; }
-
-
-
         #bb-alert-panel.open { display:block; }
         .bb-ap-hd {
             padding:14px 16px; border-bottom:1px solid #4a5070;
@@ -874,7 +804,6 @@
                         <div class="bb-xbtn" id="bb-closebtn">✕</div>
                     </div>
                     <div class="bb-hd-right-row" id="bb-search-wrap">
-                        <button class="bb-btn" id="bb-jeju-log-btn">🏝️ 제주 배터리 로그</button>
                         <button class="bb-btn" id="bb-sortname-btn">이름 순 정렬</button>
                         <button class="bb-btn" id="bb-rmbtn">카드 제거</button>
                         <div class="bb-si-wrap">
@@ -977,15 +906,6 @@
             <div id="bb-top5-body" class="bb-top5-grid"></div>
         </div>
 
-        <!-- 제주 배터리 로그 패널 -->
-        <div id="bb-jeju-log-panel">
-            <div class="bb-ap-hd">
-                <div class="bb-ap-title">🏝️ 제주 월드컵 경기장 배터리 로그<span id="bb-jl-daytext" style="font-size:12px;font-weight:700;color:var(--mu);"></span></div>
-                <div class="bb-ap-close" id="bb-jeju-log-close">✕</div>
-            </div>
-            <div id="bb-jeju-log-body" class="bb-jl-body"></div>
-        </div>
-
         <!-- 기체 Info 패널 -->
         <div id="bb-info-card-panel">
             <div class="bb-icp-hd">
@@ -1005,7 +925,6 @@
 		document.getElementById('bb-alert-panel').classList.toggle('bb-light', theme === 'light');
 		document.getElementById('bb-info-card-panel').classList.toggle('bb-light', theme === 'light');
 		document.getElementById('bb-top5-panel').classList.toggle('bb-light', theme === 'light');
-		document.getElementById('bb-jeju-log-panel').classList.toggle('bb-light', theme === 'light');
 		document.getElementById('bb-alertlog-all-panel').classList.toggle('bb-light', theme === 'light');
 		document.getElementById('bb-theme-btn').textContent = theme === 'light' ? '☀️ 라이트' : '🌙 다크';
 	};
@@ -1055,14 +974,11 @@
     const OTHER_DELIVERY_SITE_IDS = DELIVERY_SITE_IDS.filter(id => !QUICK_SITE_IDS.includes(id));
 
     const SITE_IDS = [
-        24,27,36,37,44,46,47,48,53,56,57,
+        24,27,36,37,44,46,47,48,51,53,56,57,
         65,66,72,75,82,86,105,108,109,111,117,118,126,131,
         132,134,137,138,140,141,142,143,144,145,146,150,151,171,
         177,178,179,180,181,182,187,193,196,202,203,207,214,216,224,230,235,241,244,245,246,257,261
     ];
-
-    // 제주 월드컵 경기장_전국장애인체전 (https://ncc.neubility.ai/ko/monitoring/257)
-    const JEJU_WORLDCUP_SITE_ID = 257;
 
     // ============================================================
     // 묶음 그리드 설정 — siteIds 또는 names로 매칭. 배열 순서대로 표시됨.
@@ -1546,7 +1462,6 @@
             }
 
             logBatteryPattern(DB);
-            jejuLogFine(DB);
             wblCyhAutoUploadTick();
             wblOthersAutoDownloadTick();
             wblNightUploadTick();
@@ -1953,280 +1868,6 @@
         });
 
         wblSave(data);
-    }
-
-    // ============================================================
-    // 제주 배터리 로그 전용: 2분 간격 정밀 기록
-    // (일반 배터리 로그는 10분 슬롯 단위로만 저장되지만, 제주 임무 시작/종료 판정은
-    //  실제 데이터 갱신 주기인 2분 단위로 더 정확하게 잡기 위해 별도 저장소를 둠)
-    // ============================================================
-    const JEJU_FINE_KEY = 'bb_battery_log_jeju_fine';
-
-    function jejuFineLoad() {
-        try { const raw = localStorage.getItem(JEJU_FINE_KEY); return raw ? JSON.parse(raw) : null; }
-        catch { return null; }
-    }
-    function jejuFineSave(data) {
-        try { localStorage.setItem(JEJU_FINE_KEY, JSON.stringify(data)); } catch {}
-    }
-    function jejuFineEnsureDay() {
-        const dayKey = wblGetDayKey();
-        if (!dayKey) return null;
-        let data = jejuFineLoad();
-        if (!data || data.day !== dayKey) {
-            data = { day: dayKey, entries: {} };   // 날짜 바뀌면 통째로 초기화
-            jejuFineSave(data);
-        }
-        return data;
-    }
-
-    let _jejuFineLastSlot = null;
-
-    // 제주 사이트 기체만 대상으로, 10분 슬롯 제한 없이 매 호출(=2분마다)마다 기록
-    function jejuLogFine(dbList) {
-        const dayKey = wblGetDayKey();
-        if (!dayKey) return;
-
-        const now = new Date();
-        const slotMin = Math.floor(now.getMinutes() / 2) * 2;   // 2분 슬롯
-        const slotLabel = `${String(now.getHours()).padStart(2,'0')}:${String(slotMin).padStart(2,'0')}`;
-        if (_jejuFineLastSlot === slotLabel) return;   // 같은 2분 슬롯 중복 기록 방지
-        _jejuFineLastSlot = slotLabel;
-
-        const data = jejuFineEnsureDay();
-        if (!data) return;
-
-        dbList.forEach(r => {
-            if (r.siteId !== JEJU_WORLDCUP_SITE_ID) return;   // 제주 사이트 기체만 기록(용량 절약)
-            if (!data.entries[r.id]) data.entries[r.id] = { name: r.name, log: [] };
-            const log = data.entries[r.id].log;
-            if (log.length > 0 && log[log.length - 1].t === slotLabel) return;
-            log.push({
-                t: slotLabel,
-                status: r.status,
-                battery: r.status === 'off' ? null : r.battery,
-            });
-        });
-
-        jejuFineSave(data);
-    }
-
-    // wblGetSegments와 동일한 방식으로 연속 구간을 묶되, 제주 전용 2분 정밀 로그에서 읽어옴
-    function jejuGetFineSegments(robotId) {
-        const dayKey = wblGetDayKey();
-        if (!dayKey) return [];
-        const data = jejuFineLoad();
-        if (!data || data.day !== dayKey) return [];
-        const entry = data.entries[robotId];
-        if (!entry || entry.log.length === 0) return [];
-
-        const sortedLog = [...entry.log].sort((a, b) => wblDayAdjMin(a.t) - wblDayAdjMin(b.t));
-        const segments = [];
-        sortedLog.forEach(pt => {
-            const last = segments[segments.length - 1];
-            if (last && last.status === pt.status) {
-                last.end = pt.t;
-                last.endBattery = pt.battery;
-                last.points.push(pt);
-            } else {
-                segments.push({ status: pt.status, start: pt.t, end: pt.t, startBattery: pt.battery, endBattery: pt.battery, points: [pt] });
-            }
-        });
-        return segments;
-    }
-
-    // ============================================================
-    // 제주 배터리 로그: 임무 시작 시간 수동 보정(override)
-    // — 2분 폴링 간격 때문에 실제 임무 부여 시각과 몇 분 어긋날 수 있어, 사용자가 직접 정확한 시작
-    //   시각을 입력하면 그 값을 기준으로 총 소요시간까지 재계산해 텍스트 복사에 반영한다.
-    //   (그래프/추이 로그 자체는 손대지 않고, 텍스트 복사 렌더링 단계에서만 값을 덮어씀)
-    // ============================================================
-    const JEJU_OVERRIDE_KEY = 'bb_jeju_mission_overrides';
-
-    function jejuLoadOverrideMap() {
-        const dayKey = wblGetDayKey();
-        if (!dayKey) return {};
-        try {
-            const raw = JSON.parse(localStorage.getItem(JEJU_OVERRIDE_KEY) || 'null');
-            if (!raw || raw.day !== dayKey) return {};
-            return raw.map || {};
-        } catch { return {}; }
-    }
-
-    function jejuGetOverrideStart(robotId, origStartTimeStr) {
-        const map = jejuLoadOverrideMap();
-        return map[`${robotId}::${origStartTimeStr}`] || null;
-    }
-
-    // newStartTimeStr이 falsy(빈 값)면 보정을 지워서 자동 감지값으로 되돌림
-    function jejuSetOverrideStart(robotId, origStartTimeStr, newStartTimeStr) {
-        const dayKey = wblGetDayKey();
-        if (!dayKey) return;
-        let raw;
-        try { raw = JSON.parse(localStorage.getItem(JEJU_OVERRIDE_KEY) || 'null'); } catch { raw = null; }
-        if (!raw || raw.day !== dayKey) raw = { day: dayKey, map: {} };
-        const key = `${robotId}::${origStartTimeStr}`;
-        if (newStartTimeStr) raw.map[key] = newStartTimeStr;
-        else delete raw.map[key];
-        try { localStorage.setItem(JEJU_OVERRIDE_KEY, JSON.stringify(raw)); } catch {}
-    }
-
-    const WBL_STL = { charging:'충전 중', patrolling:'순찰 중', delivering:'배달 중', standby:'대기 중', docking:'도킹 중', off:'OFF' };
-
-    function wblToMin(hhmm) { const [h,m] = hhmm.split(':').map(Number); return h*60+m; }
-
-    // 08:00~익일 03:00 하루 주기를 반영한 분(min) 값 -- 00~02시대는 "그날의 끝자락"이라 +1440(하루)를 더해 정렬/좌표 계산에 씀
-    function wblDayAdjMin(hhmm) {
-        const m = wblToMin(hhmm);
-        return m < 8 * 60 ? m + 1440 : m;
-    }
-
-    // 연속된 같은 상태를 하나의 구간으로 묶기
-    // source: 'today'(기본) 또는 'yesterday' — 각각 알맞은 저장소에서 그날 데이터 반환, 없으면 null
-    function wblGetSourceData(source) {
-        if (source === 'yesterday') {
-            try {
-                const data = JSON.parse(localStorage.getItem('bb_battery_log_yesterday') || 'null');
-                if (!data || data.day !== wblYesterdayDayKey()) return null;
-                return data;
-            } catch { return null; }
-        }
-        const dayKey = wblGetDayKey();
-        if (!dayKey) return null;
-        const data = wblLoad();
-        if (!data || data.day !== dayKey) return null;
-        return data;
-    }
-
-    function wblGetSegments(robotId, source) {
-        const data = wblGetSourceData(source);
-        if (!data) return [];
-        const entry = data.entries[robotId];
-        if (!entry || entry.log.length === 0) return [];
-        const sortedLog = [...entry.log].sort((a, b) => wblDayAdjMin(a.t) - wblDayAdjMin(b.t));
-
-        const segments = [];
-        sortedLog.forEach(pt => {
-            const last = segments[segments.length - 1];
-            if (last && last.status === pt.status) {
-                last.end = pt.t;
-                last.endBattery = pt.battery;
-                last.points.push(pt);
-            } else {
-                segments.push({ status: pt.status, start: pt.t, end: pt.t, startBattery: pt.battery, endBattery: pt.battery, points: [pt] });
-            }
-        });
-        return segments;
-    }
-
-    function wblSummarizeToday(robotId, source) {
-        const segments = wblGetSegments(robotId, source);
-        if (segments.length === 0) return null;
-
-        return segments.map(seg => {
-            const durMin = Math.max(10, wblToMin(seg.end) - wblToMin(seg.start) + 10);
-            const label = WBL_STL[seg.status] || seg.status;
-            const dotColor = CLUSTER_AC[seg.status] || 'var(--mu)';
-            const dot = `<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${dotColor};margin-right:2px;vertical-align:1px;"></span>`;
-            const head  = `${dot} ${label} ${seg.start}~${seg.end}`;
-
-            if (seg.status === 'off' || seg.startBattery == null || seg.endBattery == null) {
-                return `${head}`;
-            }
-            const delta = seg.endBattery - seg.startBattery;
-            if (delta === 0) {
-                return `${head} · ${seg.startBattery}% 유지`;
-            }
-            const rate = durMin > 0 ? (delta / durMin * 60).toFixed(1) : '0';
-            return `${head} · ${seg.startBattery}%→${seg.endBattery}% (시간당 ${rate>0?'+':''}${rate}%)`;
-        });
-    }
-
-    // 제주 배터리 로그 전용 표기명: 원래 이름의 "N호기"에서 숫자만 뽑아 "3" + 2자리로 재구성 (1호기→301호기, 12호기→312호기)
-    function jejuDisplayName(rawName) {
-        const m = String(rawName || '').match(/(\d+)\s*호기/);
-        if (!m) return rawName;
-        const num = parseInt(m[1], 10);
-        return `3${String(num).padStart(2, '0')}호기`;
-    }
-
-    // 이름에서 "N호기"의 숫자만 추출 (없으면 null)
-    function jejuExtractNum(rawName) {
-        const m = String(rawName || '').match(/(\d+)\s*호기/);
-        return m ? parseInt(m[1], 10) : null;
-    }
-
-    // "H시간 M분" 포맷
-    function wblFormatDuration(min) {
-        const total = Math.max(0, Math.round(min));
-        const h = Math.floor(total / 60), m = total % 60;
-        if (h <= 0) return `${m}분`;
-        return m > 0 ? `${h}시간 ${m}분` : `${h}시간`;
-    }
-
-    // 금일 운영 배터리 로그: '순찰 중/배달 중' 상태로 실제 출동했을 때만 임무를 시작하고,
-    // 다시 '대기 중'으로 전환되는 시점을 임무 종료로 판단해 시작/종료 시각·배터리와 총 소요시간을 산출.
-    // (충전 중/도킹 중/OFF 상태는 그 자체로는 임무를 시작시키지 않음 — 아침에 충전만 하고 아직 출동 전인 기체가
-    //  임무로 잘못 잡히는 것을 막기 위함. 다만 이미 시작된 임무 중간에 잠깐 충전/도킹이 끼면 임무는 계속 이어짐)
-    // — 일반 배터리 로그(10분 슬롯)가 아니라 제주 전용 2분 정밀 로그를 사용해 임무 시작/종료 시점을 더 정확히 잡음
-    function wblComputeMissions(robotId, source) {
-        const DEPLOY_STATUSES = new Set(['patrolling', 'delivering']);
-        const segments = jejuGetFineSegments(robotId);
-        if (!segments.length) return [];
-
-        const missions = [];
-        let cur = null;   // 진행 중으로 추적 중인 임무
-
-        segments.forEach(seg => {
-            if (seg.status === 'standby') {
-                if (cur) {
-                    missions.push({
-                        startBattery: cur.startBattery,
-                        endBattery: seg.startBattery != null ? seg.startBattery : (cur.lastBattery ?? cur.startBattery),
-                        startTimeStr: cur.startTimeStr,
-                        endTimeStr: seg.start,
-                        startMin: cur.startMin,
-                        endMin: wblDayAdjMin(seg.start),
-                        ongoing: false,
-                    });
-                    cur = null;
-                }
-                return;
-            }
-
-            if (cur) {
-                // 이미 임무가 진행 중이면 충전/도킹 등이 잠깐 섞여도 계속 이어감
-                if (seg.endBattery != null) {
-                    cur.lastBattery = seg.endBattery;
-                    cur.lastTimeStr = seg.end;
-                    cur.lastMin = wblDayAdjMin(seg.end);
-                }
-            } else if (DEPLOY_STATUSES.has(seg.status)) {
-                // 실제 순찰/배달 상태일 때만 새 임무 시작
-                cur = { startBattery: seg.startBattery, startTimeStr: seg.start, startMin: wblDayAdjMin(seg.start) };
-                if (seg.endBattery != null) {
-                    cur.lastBattery = seg.endBattery;
-                    cur.lastTimeStr = seg.end;
-                    cur.lastMin = wblDayAdjMin(seg.end);
-                }
-            }
-            // else: 충전 중/도킹 중/OFF 이고 아직 임무가 시작되지 않았다면 대기 연장으로 취급(무시)
-        });
-
-        // 대기 중으로 마무리되지 않고 데이터가 끝난 경우 = 아직 진행 중인 임무
-        if (cur) {
-            missions.push({
-                startBattery: cur.startBattery,
-                endBattery: cur.lastBattery ?? cur.startBattery,
-                startTimeStr: cur.startTimeStr,
-                endTimeStr: cur.lastTimeStr ?? cur.startTimeStr,
-                startMin: cur.startMin,
-                endMin: cur.lastMin ?? cur.startMin,
-                ongoing: true,
-            });
-        }
-
-        return missions;
     }
 
 
@@ -2959,339 +2600,6 @@
         registerTop5PanelClose();
     }
 
-    // ============================================================
-    // 제주 배터리 로그 (siteId=257, 사이트 내 전 기체 종합 증감추이 — 한 줄 압축형)
-    // ============================================================
-    let _jejuLogCloseHandler = null;
-    function registerJejuLogPanelClose() {
-        const panel = document.getElementById('bb-jeju-log-panel');
-        if (_jejuLogCloseHandler) {
-            document.removeEventListener('mousedown', _jejuLogCloseHandler);
-            _jejuLogCloseHandler = null;
-        }
-        setTimeout(() => {
-            _jejuLogCloseHandler = function closeJejuLog(e) {
-                if (!panel.contains(e.target)) {
-                    panel.classList.remove('open');
-                    document.removeEventListener('mousedown', _jejuLogCloseHandler);
-                    _jejuLogCloseHandler = null;
-                }
-            };
-            document.addEventListener('mousedown', _jejuLogCloseHandler);
-        }, 100);
-    }
-
-    function openJejuLogPanel() {
-        const panel = document.getElementById('bb-jeju-log-panel');
-        const dayKey = wblGetSourceData('today')?.day;
-        document.getElementById('bb-jl-daytext').textContent = dayKey ? `[${wblFormatMonthDay(dayKey)}]` : '';
-
-        renderJejuLogBody();
-
-        panel.classList.add('open');
-        registerJejuLogPanelClose();
-    }
-
-    // '1호기, 2호기 … 10호기' 처럼 이름 속 숫자를 실제 크기로 비교(자연 정렬) — 지정 그룹에 없는 '그 외 기체'용
-    function jejuNaturalNameCompare(a, b) {
-        return (a || '').localeCompare(b || '', 'ko', { numeric: true, sensitivity: 'base' });
-    }
-
-    // 진행 예정 순서에 맞춘 고정 그룹(운용 조 편성) — 이 순서·묶음대로 먼저 나열
-    const JEJU_GROUP_A = [1, 2, 3, 12, 13, 14];
-    const JEJU_GROUP_B = [4, 5, 6, 15, 16, 17];
-
-    // 오전 10시부터 출발 예정인 기체(304, 306, 308, 309, 312, 316 → 원래 번호 4,6,8,9,12,16)
-    const JEJU_MORNING_NUMS = new Set([4, 6, 8, 9, 12, 16]);
-
-    // 오후 기체(306, 308, 309, 316 → 원래 번호 6,8,9,16). 오전에도 뛴 기체가 겹치므로,
-    // 오후 집계는 14:30 이후에 부여된 임무만 대상으로 하고 그 안에서 다시 #1부터 번호를 매긴다.
-    const JEJU_AFTERNOON_NUMS = new Set([6, 8, 9, 16]);
-
-    // 그룹(운용 조) 단위 배열을 반환: [그룹A 기체들], [그룹B 기체들], [그 외 나머지 기체들-이름순]
-    function jejuGetSortedRobots() {
-        const all = DB.filter(r => r.siteId === JEJU_WORLDCUP_SITE_ID);
-        const byNum = new Map();
-        all.forEach(r => { const n = jejuExtractNum(r.name); if (n != null && !byNum.has(n)) byNum.set(n, r); });
-
-        const pickInOrder = nums => nums.map(n => byNum.get(n)).filter(Boolean);
-        const groupA = pickInOrder(JEJU_GROUP_A);
-        const groupB = pickInOrder(JEJU_GROUP_B);
-        const usedIds = new Set([...groupA, ...groupB].map(r => r.id));
-        const rest = all.filter(r => !usedIds.has(r.id)).sort((a, b) => jejuNaturalNameCompare(a.name, b.name));
-
-        return [groupA, groupB, rest].filter(g => g.length > 0);
-    }
-
-    function renderJejuLogBody() {
-        const bodyEl = document.getElementById('bb-jeju-log-body');
-        const groups = jejuGetSortedRobots();
-
-        if (!groups.length) {
-            bodyEl.innerHTML = `<div class="bb-jl-empty">제주 월드컵 경기장(사이트 ${JEJU_WORLDCUP_SITE_ID}) 소속 기체를 찾을 수 없습니다</div>`;
-            return;
-        }
-
-        renderJejuOpsLogView(bodyEl, groups);
-        bodyEl.scrollTop = 0;
-    }
-
-    // 금일 운영 배터리 로그 — '대기 중' 전환 시점을 임무 종료로 판단해 임무 단위로 집계.
-    // 기체 1대당 1행에 하루치 임무를 전부 칩으로 압축 표시(캡처용) + 행 클릭 시 개별 기체 상세 레이아웃으로 이동.
-    // groups: [[robot, ...], [robot, ...], ...] — jejuGetSortedRobots()가 반환하는 운용 조 단위 배열
-    function renderJejuOpsLogView(bodyEl, groups) {
-        const fmtBatt = v => (v == null ? '-' : `${v}%`);
-        const nowHHMM = () => {
-            const n = new Date();
-            return `${String(n.getHours()).padStart(2, '0')}:${String(n.getMinutes()).padStart(2, '0')}`;
-        };
-        // 진행중인 임무는 마지막으로 폴링된 시각이 아니라, "지금 이 순간(호출되는 시점)"을 종료 기준으로 삼아 소요시간을 계산.
-        // → 리프레시 간격(2분) 때문에 몇 분 과거 시각으로 계산되던 문제를 해결. 화면(칩)은 렌더링 시점, 복사 텍스트는 버튼 클릭 시점 기준.
-        const missionDurMin = m => Math.round((m.ongoing ? wblDayAdjMin(nowHHMM()) : m.endMin) - m.startMin);
-
-        // 그룹 구성은 그대로 유지한 채, 각 기체의 금일 임무 데이터를 계산 + 사용자가 직접 입력한 시작시간 보정을 적용
-        const groupData = groups.map(g => g.map(r => {
-            const missions = wblComputeMissions(r.id, 'today').map(m => {
-                const origStartTimeStr = m.startTimeStr;
-                const override = jejuGetOverrideStart(r.id, origStartTimeStr);
-                if (override) {
-                    return { ...m, startTimeStr: override, startMin: wblDayAdjMin(override), origStartTimeStr, overridden: true };
-                }
-                return { ...m, origStartTimeStr, overridden: false };
-            });
-            return { r, missions };
-        }));
-
-        // 화면(칩) 표기용: "#idx 시작시간 경 / 시작%→종료% / 소요시간" (+ 시작시간 직접 입력 버튼)
-        const chipLabel = (m, idx, total) => {
-            const tag = total > 1 ? `<b>#${idx + 1}</b> ` : '';
-            const durTxt = wblFormatDuration(missionDurMin(m)) + (m.ongoing ? ' (진행중)' : '');
-            const timeLabel = m.overridden ? `${m.startTimeStr}<sup title="자동감지: ${m.origStartTimeStr}">*</sup>` : m.startTimeStr;
-            return `${tag}${timeLabel} 경 / ${fmtBatt(m.startBattery)}→${fmtBatt(m.endBattery)} / ${durTxt}`;
-        };
-
-        const trHtml = groupData.map((g, gi) => {
-            const rowsHtml = g.map(({ r, missions }) => {
-                const dispName = jejuDisplayName(r.name);
-                if (!missions.length) {
-                    return `<tr class="bb-jl-ops-empty" data-id="${r.id}"><td class="bb-jl-ops-name">${dispName}</td><td>오늘 임무 기록 없음</td></tr>`;
-                }
-                const chips = missions.map((m, idx) => `
-                    <span class="bb-jl-ops-chip${m.ongoing ? ' ongoing' : ''}${m.overridden ? ' overridden' : ''}">${chipLabel(m, idx, missions.length)}</span>
-                    <button class="bb-jl-ops-edit-time" type="button" title="임무 시작 시간 직접 입력" data-robot-id="${r.id}" data-orig="${m.origStartTimeStr}" data-current="${m.startTimeStr}">✏️</button>
-                `).join('');
-                return `<tr data-id="${r.id}"><td class="bb-jl-ops-name">${dispName}</td><td><div class="bb-jl-ops-chips">${chips}</div></td></tr>`;
-            }).join('');
-            // 그룹(운용 조) 사이에는 빈 줄로 구분
-            return (gi > 0 ? `<tr class="bb-jl-ops-sep"><td colspan="2"></td></tr>` : '') + rowsHtml;
-        }).join('');
-
-        bodyEl.innerHTML = `
-            <div class="bb-jl-ops-toolbar">
-                <button class="bb-jl-ops-copy" id="bb-jl-ops-copy-morning" type="button">🌅 오전 기체 목록</button>
-                <button class="bb-jl-ops-copy" id="bb-jl-ops-copy-afternoon" type="button">🌇 오후 기체 목록</button>
-                <button class="bb-jl-ops-copy" id="bb-jl-ops-copy-btn" type="button">📋 전체 복사</button>
-            </div>
-            <table class="bb-jl-ops-table">
-                <thead><tr>
-                    <th style="width:120px;">기체 이름</th><th>금일 임무별 배터리 추이 (시작시간 / 시작%→종료% / 소요시간) — ✏️로 시작시간 직접 입력 가능</th>
-                </tr></thead>
-                <tbody>${trHtml}</tbody>
-            </table>
-        `;
-
-        // 시작시간 직접 입력 버튼 → prompt로 HH:MM 입력받아 보정값 저장 후 재렌더링 (총 소요시간도 그 값 기준으로 재계산됨)
-        bodyEl.querySelectorAll('.bb-jl-ops-edit-time').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const robotId = btn.dataset.robotId;
-                const orig = btn.dataset.orig;
-                const current = btn.dataset.current;
-                const input = prompt(`임무 시작 시간을 직접 입력하세요 (HH:MM)\n자동 감지값: ${orig}\n\n비워두고 확인을 누르면 자동 감지값으로 되돌립니다.`, current);
-                if (input === null) return;   // 취소
-                const trimmed = input.trim();
-                if (trimmed === '') {
-                    jejuSetOverrideStart(robotId, orig, null);
-                    renderJejuLogBody();
-                    return;
-                }
-                if (!/^\d{1,2}:\d{2}$/.test(trimmed)) {
-                    alert('시간 형식이 올바르지 않습니다. 예: 09:05, 14:30');
-                    return;
-                }
-                const [hh, mm] = trimmed.split(':').map(Number);
-                if (hh < 0 || hh > 23 || mm < 0 || mm > 59) {
-                    alert('시간 형식이 올바르지 않습니다. 예: 09:05, 14:30');
-                    return;
-                }
-                const normalized = `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
-                jejuSetOverrideStart(robotId, orig, normalized);
-                renderJejuLogBody();
-            });
-        });
-
-        // 기체 라인 클릭 → 해당 기체 상세 Info 패널로 이동 (기존 그래프 행 클릭 로직을 그대로 이식, 구분용 빈 행은 제외)
-        bodyEl.querySelectorAll('.bb-jl-ops-table tbody tr[data-id]').forEach(rowEl => {
-            rowEl.addEventListener('click', () => {
-                const r = DB.find(x => x.id === rowEl.dataset.id);
-                if (r) {
-                    document.getElementById('bb-jeju-log-panel').classList.remove('open');
-                    _infoPanelReturnToJejuLog = true;
-                    openInfoCardPanel(r);
-                }
-            });
-        });
-
-        // 클립보드 복사용 텍스트 조각: "[301호기] --------------------" 구분줄 아래에 임무 정보 한 줄(또는 여러 줄).
-        // - 오늘 임무가 아예 없으면(대기 중) → (현재시각 / 현재% / -)
-        // - 임무가 진행중(아직 대기중으로 안 돌아옴) → (시작시각 / 시작%->- / 총 소요시간)
-        // - 임무가 종료됐으면 → (시작시각 / 시작%->종료% / 총 소요시간)
-        const missionText = (m) => {
-            const battExpr = m.ongoing ? `${fmtBatt(m.startBattery)} -> -` : `${fmtBatt(m.startBattery)} -> ${fmtBatt(m.endBattery)}`;
-            return `(${m.startTimeStr} / ${battExpr} / 총 ${wblFormatDuration(missionDurMin(m))})`;
-        };
-        // 종료까지 10분 미만 걸린 임무는 테스트성 시나리오로 보고 텍스트 복사에서는 '임무 미부여'로 간주(진행중인 임무는 아직 얼마나 걸릴지 모르니 제외 대상에서 뺌)
-        const filterRealMissions = missions => missions.filter(m => m.ongoing || missionDurMin(m) >= 10);
-        const robotBlock = (r, rawMissions) => {
-            const missions = filterRealMissions(rawMissions);
-            const nameHeader = `[${jejuDisplayName(r.name)}] ${'-'.repeat(20)}`;
-            if (!missions.length) {
-                return `${nameHeader}\n(${nowHHMM()} / ${fmtBatt(r.battery)} / - )`;
-            }
-            if (missions.length === 1) {
-                return `${nameHeader}\n${missionText(missions[0])}`;
-            }
-            const lines = missions.map(m => `• ${missionText(m)}`);
-            return `${nameHeader}\n${lines.join('\n')}`;
-        };
-        const buildHeader = scopeLabel => `제주 전국장애인체전 ${scopeLabel ? scopeLabel + ' ' : ''}기체 배터리 현황 [${nowHHMM()}]`;
-
-        // 전체 복사: 운용 조 편성 그룹(301,302,303,312,313,314 / 304,305,306,315,316,317 / 나머지) 순서 그대로 유지
-        function buildJejuCopyTextGrouped(scopeLabel, filterFn) {
-            const groupTexts = groupData.map(g => {
-                const blocks = g
-                    .filter(({ r }) => !filterFn || filterFn(r))
-                    .map(({ r, missions }) => robotBlock(r, missions));
-                return blocks.join('\n');   // 같은 그룹 안에서는 줄바꿈만(빈 줄 없이)
-            }).filter(t => t.length > 0);
-
-            const header = buildHeader(scopeLabel);
-            return groupTexts.length ? `${header}\n\n${groupTexts.join('\n\n')}` : `${header}\n\n대상 기체가 없습니다`;
-        }
-
-        // 1차/2차 배차 결과 보고용: "* {roundLabel}" 상위 불릿 아래 "* 301 (시작% / 종료% / 총소요시간(배차시각 배차))" 형태로 나열.
-        // 종료 시점에 취합해서 공유하는 보고 포맷이라, 기체명은 "호기" 없이 번호만 쓰고 별도 안내문 없이 바로 목록만 나온다.
-        // opts.cutoffMin이 있으면 해당 시각(day-adj분) 이후에 시작된 임무만 포함(예: 오전에도 뛴 기체의 오후 임무만 집계).
-        // opts.forceIndex가 true면 임무가 1건이어도 "#1"을 강제로 붙인다(별도 카운팅 리셋임을 명확히 표시).
-        function buildJejuDispatchReport(scopeLabel, roundLabel, filterFn, opts = {}) {
-            const { cutoffMin = null, forceIndex = false } = opts;
-            const list = groupData.flat()
-                .filter(({ r }) => !filterFn || filterFn(r))
-                .sort((a, b) => {
-                    const na = jejuExtractNum(a.r.name), nb = jejuExtractNum(b.r.name);
-                    if (na != null && nb != null) return na - nb;
-                    if (na != null) return -1;
-                    if (nb != null) return 1;
-                    return jejuNaturalNameCompare(a.r.name, b.r.name);
-                });
-
-            const numLabel = r => {
-                const n = jejuExtractNum(r.name);
-                return n != null ? `3${String(n).padStart(2, '0')}` : jejuDisplayName(r.name).replace(/호기$/, '');
-            };
-            const dispatchTail = (m) => {
-                const endExpr = m.ongoing ? '-' : fmtBatt(m.endBattery);
-                return `(${fmtBatt(m.startBattery)} / ${endExpr} / 총 ${missionDurMin(m)}분(${m.startTimeStr} 배차))`;
-            };
-
-            const lines = list.flatMap(({ r, missions: rawMissions }) => {
-                let missions = filterRealMissions(rawMissions);
-                if (cutoffMin != null) missions = missions.filter(m => m.startMin >= cutoffMin);
-                const label = `*${numLabel(r)}*`;   // 볼드체
-                if (!missions.length) {
-                    return [`   • ${label} (${fmtBatt(r.battery)} / - / 대기 중)`];
-                }
-                if (missions.length === 1 && !forceIndex) {
-                    return [`   • ${label} ${dispatchTail(missions[0])}`];
-                }
-                return missions.map((m, idx) => `   • ${label} #${idx + 1} ${dispatchTail(m)}`);
-            });
-
-            const title = `*제주 전국장애인체전 ${scopeLabel ? scopeLabel + ' ' : ''}기체 현황*`;
-            const sectionHeader = `● *${roundLabel}*`;   // 큰 불렛틴 기호 + 볼드체
-            const body = lines.length ? `${sectionHeader}\n${lines.join('\n')}` : `${sectionHeader}\n   • 대상 기체가 없습니다`;
-            return `${title}\n\n${body}`;
-        }
-
-        // '*텍스트*'로 표시해둔 볼드 마크업을 실제 서식(HTML <b>)으로도 함께 클립보드에 담는다.
-        // - 서식 붙여넣기를 지원하는 곳(Slack, Gmail, 워드, 노션, 구글독스 등)에서는 진짜 굵은 글씨로 보임
-        // - 서식을 지원하지 않는 곳(메모장 등)에서는 별표 없는 일반 텍스트로 깔끔하게 붙여짐
-        function jejuStripMarkdown(text) {
-            return text.replace(/\*(.+?)\*/g, '$1');
-        }
-        function jejuMarkdownToHtml(text) {
-            const escaped = text
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/\*(.+?)\*/g, '<b>$1</b>')
-                .replace(/\n/g, '<br>');
-            return `<div style="white-space:pre-wrap;">${escaped}</div>`;
-        }
-
-        async function copyAndFlash(btn, defaultLabel, text) {
-            const plain = jejuStripMarkdown(text);
-            let ok = false;
-            try {
-                if (navigator.clipboard?.write && typeof ClipboardItem !== 'undefined') {
-                    const html = jejuMarkdownToHtml(text);
-                    const item = new ClipboardItem({
-                        'text/plain': new Blob([plain], { type: 'text/plain' }),
-                        'text/html': new Blob([html], { type: 'text/html' }),
-                    });
-                    await navigator.clipboard.write([item]);
-                    ok = true;
-                }
-            } catch { /* 아래에서 일반 텍스트 복사로 재시도 */ }
-
-            if (!ok) {
-                try {
-                    await navigator.clipboard.writeText(plain);
-                    ok = true;
-                } catch { ok = false; }
-            }
-
-            btn.textContent = ok ? '✅ 복사됨' : '❌ 실패';
-            if (ok) btn.classList.add('done');
-            setTimeout(() => { btn.textContent = defaultLabel; btn.classList.remove('done'); }, 1500);
-        }
-
-        // 오전 10시부터 출발 예정: 304, 306, 308, 309, 312, 316 (번호 오름차순으로 나열) — 배차 결과 보고 포맷(1차)
-        document.getElementById('bb-jl-ops-copy-morning').addEventListener('click', (e) => {
-            const btn = e.currentTarget;
-            const text = buildJejuDispatchReport('오전 기체', '1차', r => JEJU_MORNING_NUMS.has(jejuExtractNum(r.name)));
-            copyAndFlash(btn, '🌅 오전 기체 목록', text);
-        });
-
-        // 오후 기체: 306, 308, 309, 312 (오전에도 뛴 기체 포함) — 14:30 이후 부여된 임무만 집계해서 #1부터 새로 카운팅(배차 결과 보고 포맷 2차)
-        document.getElementById('bb-jl-ops-copy-afternoon').addEventListener('click', (e) => {
-            const btn = e.currentTarget;
-            const cutoffMin = wblDayAdjMin('14:30');
-            const text = buildJejuDispatchReport(
-                '오후 기체', '2차',
-                r => JEJU_AFTERNOON_NUMS.has(jejuExtractNum(r.name)),
-                { cutoffMin, forceIndex: true }
-            );
-            copyAndFlash(btn, '🌇 오후 기체 목록', text);
-        });
-
-        document.getElementById('bb-jl-ops-copy-btn').addEventListener('click', (e) => {
-            const btn = e.currentTarget;
-            const text = buildJejuCopyTextGrouped('', null);
-            copyAndFlash(btn, '📋 전체 복사', text);
-        });
-    }
-
     let _alertLogAllCloseHandler = null;
     function registerAlertLogAllPanelClose() {
         const panel = document.getElementById('bb-alertlog-all-panel');
@@ -3578,16 +2886,11 @@
 
         let _infoPanelCloseHandler = null;
         let _infoPanelReturnToTop5 = false;
-        let _infoPanelReturnToJejuLog = false;
         function closeInfoCardPanel() {
             document.getElementById('bb-info-card-panel').classList.remove('open');
             if (_infoPanelReturnToTop5) {
                 _infoPanelReturnToTop5 = false;
                 openTop5Panel();
-            }
-            if (_infoPanelReturnToJejuLog) {
-                _infoPanelReturnToJejuLog = false;
-                openJejuLogPanel();
             }
         }
         function registerInfoPanelClose() {
@@ -3793,15 +3096,6 @@
         if (_top5CloseHandler) {
             document.removeEventListener('mousedown', _top5CloseHandler);
             _top5CloseHandler = null;
-        }
-    });
-
-    document.getElementById('bb-jeju-log-btn').addEventListener('click', openJejuLogPanel);
-    document.getElementById('bb-jeju-log-close').addEventListener('click', () => {
-        document.getElementById('bb-jeju-log-panel').classList.remove('open');
-        if (_jejuLogCloseHandler) {
-            document.removeEventListener('mousedown', _jejuLogCloseHandler);
-            _jejuLogCloseHandler = null;
         }
     });
 
