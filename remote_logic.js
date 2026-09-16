@@ -2828,7 +2828,7 @@
 
 			if (confirmed) {
 				let ok = await patchTaken(checkedUnits);
-				if (!ok) ok = await patchTaken(checkedUnits); // 실패 시 1회 자동 재시도
+				if (!ok) ok = await patchTaken(checkedUnits); // 실패 시 1회 재시도
 				if (ok) {
 					setDpMsg(`${checkedUnits.length}대 시작 및 서버 반영 완료`, '#22c55e');
 				} else {
