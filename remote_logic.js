@@ -1255,7 +1255,7 @@
             const neighbors = getHandoverNeighbors(t, window.currentAllTasks);
 
             // displayTime이 이미 시간을 따로 보여주고 있으니, 본문 텍스트 맨 앞의
-            // "[09:30~10:00]" 같은 중복 시간 표기는 제거한다 (task류에만 붙어있던 표기)
+            // "[09:30~10:00]" 같은 중복 시간 표기는 제거한다 (task류에만 있던 표기)
             const bodyText = t.type === 'task'
                 ? String(t.content || '').replace(/^\[\d{2}:\d{2}(~\d{2}:\d{2})?\]\s*/, '')
                 : t.content;
