@@ -1870,6 +1870,74 @@
         wblSave(data);
     }
 
+    const WBL_STL = { charging:'충전 중', patrolling:'순찰 중', delivering:'배달 중', standby:'대기 중', docking:'도킹 중', off:'OFF' };
+
+    function wblToMin(hhmm) { const [h,m] = hhmm.split(':').map(Number); return h*60+m; }
+
+    // 대기 시각을 "오늘 08:00을 0분"으로 하는 절대 분으로 변환 (00:00~02:59는 다음날로 간주해 +1440)
+    function wblDayAdjMin(hhmm) {
+        const m = wblToMin(hhmm);
+        return m < 8*60 ? m + 1440 : m;
+    }
+
+    function wblLoadYesterdaySnapshot() {
+        try { const raw = localStorage.getItem('bb_battery_log_yesterday'); return raw ? JSON.parse(raw) : null; }
+        catch { return null; }
+    }
+
+    function wblGetSourceData(source) {
+        if (source === 'yesterday') {
+            return wblLoadYesterdaySnapshot();
+        }
+        const dayKey = wblGetDayKey();
+        if (!dayKey) return null;
+        return wblEnsureDay();
+    }
+
+    // 원시 로그 포인트를 상태가 이어지는 구간(segment) 단위로 묶음
+    function wblGetSegments(robotId, source) {
+        const data = wblGetSourceData(source);
+        const entry = data?.entries?.[robotId];
+        if (!entry || entry.log.length === 0) return [];
+
+        const sortedLog = [...entry.log].sort((a, b) => wblDayAdjMin(a.t) - wblDayAdjMin(b.t));
+        const segments = [];
+        sortedLog.forEach(pt => {
+            const last = segments[segments.length - 1];
+            if (last && last.status === pt.status) {
+                last.end = pt.t;
+                last.endBattery = pt.battery;
+            } else {
+                segments.push({ status: pt.status, start: pt.t, end: pt.t, startBattery: pt.battery, endBattery: pt.battery });
+            }
+        });
+        return segments;
+    }
+
+    // 상태별 색상 dot + 구간 요약 텍스트(HTML) 목록 반환 — 기체 Info 패널의 "오늘 배터리 증감 추이" 로그에 사용
+    function wblSummarizeToday(robotId, source) {
+        const segments = wblGetSegments(robotId, source);
+        if (segments.length === 0) return null;
+
+        return segments.map(seg => {
+            const durMin = Math.max(10, wblToMin(seg.end) - wblToMin(seg.start) + 10);
+            const label = WBL_STL[seg.status] || seg.status;
+            const dotColor = CLUSTER_AC[seg.status] || '#3b82f6';
+            const dot = `<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${dotColor};margin-right:5px;"></span>`;
+            const head = `${dot}${label} ${seg.start}~${seg.end}`;
+
+            if (seg.status === 'off' || seg.startBattery == null || seg.endBattery == null) {
+                return head;
+            }
+            const delta = seg.endBattery - seg.startBattery;
+            if (delta === 0) {
+                return `${head} · ${seg.startBattery}% 유지`;
+            }
+            const rate = durMin > 0 ? (delta / durMin * 60).toFixed(1) : '0';
+            return `${head} · ${seg.startBattery}%→${seg.endBattery}% (시간당 ${rate>0?'+':''}${rate}%)`;
+        });
+    }
+
 
     // 오늘 08:00 기준 분(min) 좌표로 SVG 선그래프 그리기 (미측정 구간은 점선으로 끊음)
     function wblRenderChartSVG(robotId, source) {
