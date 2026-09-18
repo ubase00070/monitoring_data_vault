@@ -1453,7 +1453,10 @@
                 </div>
                 <div style="width: 1px; align-self: stretch; background: ${T.border};"></div>
                 <div style="flex: 1; display: flex; flex-direction: column; gap: 8px; min-width: 0;">
-                    <button id="btnMulti" class="sub-btn">다중 모니터링 (${multiHourLabel})</button>
+                    <div style="display:flex; gap:1px; min-width:0;">
+                        <button id="btnMulti" class="sub-btn" style="flex:4; min-width:0; border-top-right-radius:0; border-bottom-right-radius:0;">다중 모니터링 (${multiHourLabel})</button>
+                        <button id="btnMultiSub" class="sub-btn" style="flex:1; min-width:0; padding:6px 2px; font-size:13px; border-top-left-radius:0; border-bottom-left-radius:0;">서브</button>
+                    </div>
                     <button id="btnCombined" class="sub-btn" ${isTiddiActive ? '' : 'disabled'} style="${tiddiLockStyle}">${tiddiState.text}</button>
                 </div>
             </div>
@@ -1526,6 +1529,18 @@
                     const time = getCalculatedTime(10); 
                     const myName = localStorage.getItem('neubie_user_name') || '';
 					const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_다중모니터링${myName ? '_' + myName : ''}`;
+                    navigator.clipboard.writeText(finalName);
+                    applyCopyEffect(e.target);
+                };
+            }
+
+            // 서브 모니터링 버튼 — 다중 모니터링과 완전히 동일한 로직, 복사되는 텍스트만 "서브모니터링"
+            const multiSubBtn = card.querySelector('#btnMultiSub');
+            if (multiSubBtn) {
+                multiSubBtn.onclick = (e) => {
+                    const time = getCalculatedTime(10);
+                    const myName = localStorage.getItem('neubie_user_name') || '';
+					const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_서브모니터링${myName ? '_' + myName : ''}`;
                     navigator.clipboard.writeText(finalName);
                     applyCopyEffect(e.target);
                 };
