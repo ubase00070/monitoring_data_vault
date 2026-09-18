@@ -1353,22 +1353,32 @@
         const COPY_SUCCESS_COLOR = HOVER_ACCENT; // 알림 테스트 호버와 동일한 블루톤
         const COPY_SUCCESS_TEXT = '#fff';
         const applyCopyEffect = (btn) => {
-            const originalText = btn.textContent;
-            // getComputedStyle로 실제 렌더링된 배경/글자색을 캡처 — 인라인 스타일이든(copyFileName)
-            // CSS 클래스(.sub-btn)든 상관없이 정확한 원래 색으로 복귀시키기 위함
-            // (이전엔 btn.style.background만 읽어서, 클래스로 배경을 정하는 .sub-btn 버튼은
-            //  항상 빈 값 → 하드코딩된 '#444'로 복귀해버리는 버그가 있었음)
-            const originalBg = getComputedStyle(btn).backgroundColor;
-            const originalColor = getComputedStyle(btn).color;
+            // 이전에 걸어둔 복귀 타이머가 남아있으면 취소 — 짧은 시간 안에 같은 버튼을
+            // 다시 클릭했을 때(더블클릭 등) 타이머끼리 꼬이는 걸 방지.
+            if (btn._copyEffectTimer) clearTimeout(btn._copyEffectTimer);
+
+            // "원래 색"은 초록(복사됨) 상태가 아닐 때 딱 한 번만 캡처해서 캐싱해둔다.
+            // 캐싱 없이 클릭할 때마다 getComputedStyle로 새로 읽으면, 이미 초록으로
+            // 바뀐 상태에서 다시 클릭했을 때 "초록"을 원래 색으로 잘못 캡처해버려서
+            // 나중에 그 초록색으로 "복귀"하며 고정되는 버그가 있었음(Alt+Q 재오픈 =
+            // 카드 전체 재생성이라 정상 색으로 보였던 것).
+            if (btn.dataset.copyEffectActive !== 'true') {
+                btn.dataset.copyOriginalText = btn.textContent;
+                btn.dataset.copyOriginalBg = getComputedStyle(btn).backgroundColor;
+                btn.dataset.copyOriginalColor = getComputedStyle(btn).color;
+                btn.dataset.copyEffectActive = 'true';
+            }
 
             btn.textContent = '복사됨';
             btn.style.background = COPY_SUCCESS_COLOR;
             btn.style.color = COPY_SUCCESS_TEXT;
 
-            setTimeout(() => {
-                btn.textContent = originalText;
-                btn.style.background = originalBg;
-                btn.style.color = originalColor;
+            btn._copyEffectTimer = setTimeout(() => {
+                btn.textContent = btn.dataset.copyOriginalText;
+                btn.style.background = btn.dataset.copyOriginalBg;
+                btn.style.color = btn.dataset.copyOriginalColor;
+                btn.dataset.copyEffectActive = 'false'; // 다음 클릭 때 다시 정상적으로 캡처
+                btn._copyEffectTimer = null;
             }, 1500);
         };
 
