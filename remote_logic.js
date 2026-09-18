@@ -1350,22 +1350,18 @@
         }).join('');
 
         // 복사 효과 공통 함수
+        // resetBg/resetColor를 명시적으로 받는 이유: getComputedStyle로 "클릭 시점"의 색을
+        // 읽으면, 클릭이라는 행위 자체가 마우스가 버튼 위에 있어야만 가능하므로 항상
+        // :hover 상태의 색(.sub-btn 버튼들은 초록)을 "원래 색"으로 잘못 캡처하게 됨.
+        // 그 값을 인라인 스타일로 복원하면 인라인이 CSS보다 우선이라 hover가 끝나도
+        // 계속 초록으로 고정되는 버그가 있었음 — 그래서 실제 평상시 색을 파라미터로 직접 넘김.
         const COPY_SUCCESS_COLOR = HOVER_ACCENT; // 알림 테스트 호버와 동일한 블루톤
         const COPY_SUCCESS_TEXT = '#fff';
-        const applyCopyEffect = (btn) => {
-            // 이전에 걸어둔 복귀 타이머가 남아있으면 취소 — 짧은 시간 안에 같은 버튼을
-            // 다시 클릭했을 때(더블클릭 등) 타이머끼리 꼬이는 걸 방지.
+        const applyCopyEffect = (btn, resetBg, resetColor) => {
             if (btn._copyEffectTimer) clearTimeout(btn._copyEffectTimer);
 
-            // "원래 색"은 초록(복사됨) 상태가 아닐 때 딱 한 번만 캡처해서 캐싱해둔다.
-            // 캐싱 없이 클릭할 때마다 getComputedStyle로 새로 읽으면, 이미 초록으로
-            // 바뀐 상태에서 다시 클릭했을 때 "초록"을 원래 색으로 잘못 캡처해버려서
-            // 나중에 그 초록색으로 "복귀"하며 고정되는 버그가 있었음(Alt+Q 재오픈 =
-            // 카드 전체 재생성이라 정상 색으로 보였던 것).
             if (btn.dataset.copyEffectActive !== 'true') {
                 btn.dataset.copyOriginalText = btn.textContent;
-                btn.dataset.copyOriginalBg = getComputedStyle(btn).backgroundColor;
-                btn.dataset.copyOriginalColor = getComputedStyle(btn).color;
                 btn.dataset.copyEffectActive = 'true';
             }
 
@@ -1375,9 +1371,9 @@
 
             btn._copyEffectTimer = setTimeout(() => {
                 btn.textContent = btn.dataset.copyOriginalText;
-                btn.style.background = btn.dataset.copyOriginalBg;
-                btn.style.color = btn.dataset.copyOriginalColor;
-                btn.dataset.copyEffectActive = 'false'; // 다음 클릭 때 다시 정상적으로 캡처
+                btn.style.background = resetBg;
+                btn.style.color = resetColor;
+                btn.dataset.copyEffectActive = 'false';
                 btn._copyEffectTimer = null;
             }, 1500);
         };
@@ -1528,7 +1524,7 @@
                     const myName = localStorage.getItem('neubie_user_name') || '';
 					const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_${info.site}_${info.unit}${taskNo}${myName ? '_' + myName : ''}`;
                     navigator.clipboard.writeText(finalName);
-                    applyCopyEffect(e.target);
+                    applyCopyEffect(e.target, '#10b981', 'white');
                 };
             }
 
@@ -1540,7 +1536,7 @@
                     const myName = localStorage.getItem('neubie_user_name') || '';
 					const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_다중모니터링${myName ? '_' + myName : ''}`;
                     navigator.clipboard.writeText(finalName);
-                    applyCopyEffect(e.target);
+                    applyCopyEffect(e.target, neutralBtnBg, neutralBtnText);
                 };
             }
 
@@ -1552,7 +1548,7 @@
                     const myName = localStorage.getItem('neubie_user_name') || '';
 					const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_서브모니터링${myName ? '_' + myName : ''}`;
                     navigator.clipboard.writeText(finalName);
-                    applyCopyEffect(e.target);
+                    applyCopyEffect(e.target, neutralBtnBg, neutralBtnText);
                 };
             }
 
@@ -1566,7 +1562,7 @@
 					: TTIDDI_CONFIG.units.patrol;
 				const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_${TTIDDI_CONFIG.site}_${unitsText}${myName ? '_' + myName : ''}`;
 				navigator.clipboard.writeText(finalName);
-				applyCopyEffect(e.target);
+				applyCopyEffect(e.target, neutralBtnBg, neutralBtnText);
 			};
 
         }, 10);
@@ -1606,8 +1602,9 @@
         const patchItems = [
             {
                 version: 'v1.5',
-                date: '2026-09-16',
+                date: '2026-09-18',
                 items: [
+					'서브모니터링 버튼 추가',
 					'다중 관제 시 다음 시각 자동출차기체 자동시작 버튼(베타)',
                     '스케줄표/좌석도 라이트/다크 모드(디폴트 라이트)',
                     '다중/과학관 업무 전임자/후임자 표기',
