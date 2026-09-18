@@ -3198,6 +3198,7 @@
             showPatrolBanner(robotName);
         } else if (st.phase === 'escalating') {
             st.escalateCount++;
+			showPatrolBanner(robotName);
             if (st.escalateCount >= PATROL_ESCALATE_MAX) {
                 st.phase = 'done';           // 소진 — 더 이상 조회하지 않음
                 hidePatrolBanner(robotName); // 감지 종료와 함께 배너도 제거
