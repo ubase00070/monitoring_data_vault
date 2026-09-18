@@ -1596,7 +1596,7 @@
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
 		// 문자열을 넣으면 패치노트에 빨간 '`' 뱃지가 점멸하며 뜸.
 		// 빈 문자열('')로 비우면 뱃지가 사라짐.
-		const PATCH_NOTE_NEW_CONTENT = '엘스 인개원';
+		const PATCH_NOTE_NEW_CONTENT = '서브모니터링';
 
         // ── 패치노트 내용 ──────────────────────────────────────
         // 아래 patchItems 배열에 버전별 내용을 추가하세요 (버튼 라벨의 날짜도 이 배열의
@@ -1606,7 +1606,6 @@
                 version: 'v1.5',
                 date: '2026-09-18',
                 items: [
-                    '잠실 엘스, 인력개발원 다중 연결 확인 알림 기능',
 					'서브모니터링 버튼 추가',
 					'다중 관제 시 다음 시각 자동출차기체 자동시작 버튼(베타)',
                     '스케줄표/좌석도 라이트/다크 모드(디폴트 라이트)',
@@ -2194,8 +2193,6 @@
             queueInfoContent.id = 'neubie-queue-info-content';
             queueInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:${T.text}; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;`;
             queueInfoContent.innerHTML = `
-                잠실 엘스, 인력개발원 다중 연결 확인 기능<br>
-				다음 시간 자동출차 기체 자동 시작 기능<br>
 				삭제 레이아웃 기체명 표기<br>
 				모니터링 생성 모달 우측 고정<br>
 				기체별 화질 조절<br>
@@ -2504,70 +2501,13 @@
 		const autoBtn = mkBtn('자동 시작', 'linear-gradient(135deg, #0f766e, #22c55e)',
 			{ color: '#fff', boxShadow: '0 0 10px rgba(34,197,94,0.4)', padding: '4px 8px' });
 
-		// 예정기체 자동 시작 (2줄 라벨) — 매시 45~59분(정시 임박)에만 동작.
-		// [2026-09 확장] 기존엔 auto_dispatch 태그된 소수 기체만 대상이었으나, 이제 그 시간대
-		// 예정기체(plan) 전체가 대상. 체크박스가 막혀서(이미 모니터링 중/off 등) 못 켜지는
-		// 기체는 runAutoSelect 내부에서 자연스럽게 스킵되고, 켤 수 있는 만큼만 시도/반영됨.
-		const dispatchBtn = mkBtn('예정기체\n자동 시작', 'linear-gradient(135deg, #7c3aed, #a78bfa)',
-			{ color: '#fff', boxShadow: '0 0 10px rgba(167,139,250,0.4)',
-			  whiteSpace: 'pre-line', lineHeight: '1.2', padding: '2px 8px', fontSize: '11px' });
-
-		// ── [임시] 예정기체 버튼 옆 안내 말풍선 (45~50분에만 노출) ──
-		// 배치(batch) 전송 방식 특성상, 다른 탭에서 이미 점유된 기체가 섞여있으면 배치 전체가
-		// 거부될 수 있음(2026-09 진단됨). 교대 기체 연결이 끝난 뒤 새로고침을 하면 모달의
-		// 체크박스 상태가 최신으로 갱신돼서(이미 점유된 기체=비활성화) 이 문제를 우회할 수
-		// 있으므로, 그 사용법을 넌지시 안내하는 말풍선. 클릭하면 그 시간대(해당 hour)엔 다시 안 뜸.
-		const dispatchWrap = document.createElement('div');
-		Object.assign(dispatchWrap.style, { position: 'relative', display: 'inline-flex', flexShrink: '0' });
-
-		const dispatchHint = document.createElement('div');
-		dispatchHint.id = 'ho-dispatch-hint';
-		dispatchHint.innerHTML = `
-			<div style="position:absolute; left:-6px; top:50%; transform:translateY(-50%); width:0; height:0; border-top:6px solid transparent; border-bottom:6px solid transparent; border-right:6px solid #292524;"></div>
-			교대기체 연결완료 시<br>새로고침 후 예정기체를 시작해보세요
-		`;
-		Object.assign(dispatchHint.style, {
-			position: 'absolute', left: 'calc(100% + 8px)', top: '50%', transform: 'translateY(-50%)',
-			width: '150px', background: '#292524', color: '#f4f4f5',
-			fontSize: '11px', lineHeight: '1.45', fontWeight: '500',
-			padding: '7px 10px', borderRadius: '8px',
-			boxShadow: '0 4px 14px rgba(0,0,0,0.4)',
-			border: '1px solid rgba(167,139,250,0.5)',
-			cursor: 'pointer', zIndex: '2147483647',
-			display: 'none', textAlign: 'left',
-		});
-
-		// 닫힘 상태는 '시(hour)' 단위가 아니라 '이번 열림 세션' 단위로만 유지됨.
-		// → Alt+Q로 껐다가 다시 켜면(같은 시각이라도) reopenDispatchHint()가 초기화해줌.
-		let dispatchHintDismissed = false;
-		const updateDispatchHintVisibility = () => {
-			if (panel.style.top !== '0px') return; // 패널 닫혀있으면 스킵
-			const minute = new Date().getMinutes();
-			const inWindow = minute >= 45 || minute === 0; // 45분~00분(정시 직후 포함)
-			if (!inWindow || dispatchHintDismissed) {
-				dispatchHint.style.display = 'none';
-				return;
-			}
-			dispatchHint.style.display = 'block';
-		};
-		dispatchHint.addEventListener('click', () => {
-			dispatchHint.style.display = 'none';
-			dispatchHintDismissed = true;
-		});
-		updateDispatchHintVisibility();
-		setInterval(updateDispatchHintVisibility, 15000);
-
-		// Alt+Q로 패널을 다시 열 때(토글 open) 호출되는 훅 — 닫힘 상태를 초기화하고 즉시 재평가.
-		panel._reopenDispatchHint = () => {
-			dispatchHintDismissed = false;
-			updateDispatchHintVisibility();
-		};
-
-		dispatchWrap.appendChild(dispatchBtn);
-		dispatchWrap.appendChild(dispatchHint);
+		// [2026-09 임시 비활성화] '예정기체 자동 시작' 기능은 버그가 많아 로직/안내 말풍선을
+		// 모두 제거하고, 자리만 남겨둔 빈 버튼으로 대체함. 클릭해도 아무 동작도 하지 않음.
+		const dispatchBtn = mkBtn('빈 기능', 'linear-gradient(135deg, #7c3aed, #a78bfa)',
+			{ color: '#fff', boxShadow: '0 0 10px rgba(167,139,250,0.4)', padding: '4px 8px' });
 
 		rightBtns.appendChild(autoBtn);
-		rightBtns.appendChild(dispatchWrap);
+		rightBtns.appendChild(dispatchBtn);
 		headerRow.appendChild(rightBtns);
 		panel.appendChild(headerRow);
 
@@ -2625,34 +2565,8 @@
 			}
 		};
 
-		// ── 자동출차 전용 GET/PATCH (handover.json과 별개 파일에 저장되지만
-		//    같은 API 라우트를 type 파라미터로 공유) ──
-		const dispatchGet = async () => {
-			try {
-				const res = await fetch(
-					`https://multimonitoring.vercel.app/api/handover?type=dispatch&t=${Date.now()}`,
-					{ cache: 'no-store' }
-				);
-				if (!res.ok) return null;
-				const data = await res.json();
-				return { data };
-			} catch(e) { console.log('dispatchGet error:', e); return null; }
-		};
-
-		const patchDispatchTaken = async (names) => {
-			try {
-				const res = await fetch(`https://multimonitoring.vercel.app/api/handover`, {
-					method: 'PATCH',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ type: 'dispatch', addTaken: names }),
-				});
-				if (!res.ok) { console.log('patchDispatchTaken 실패:', res.status); return false; }
-				return true;
-			} catch (e) {
-				console.log('patchDispatchTaken 오류:', e);
-				return false;
-			}
-		};
+		// [2026-09] dispatchGet/patchDispatchTaken('예정기체 자동 시작' 전용 GET/PATCH)은
+		// 해당 기능 비활성화와 함께 제거함.
 
 		// ── 교대받기 버튼 ──
 		let _fetchBtnRunning = false;
@@ -2865,65 +2779,9 @@
 			}
 		});
 
-		dispatchBtn.addEventListener('click', async () => {
-			if (dispatchBtn.disabled) return;
-			dispatchBtn.disabled = true;
-			setTimeout(() => { dispatchBtn.disabled = false; }, 2000);
-
-			// 클라이언트 측 즉시 게이트 — 네트워크 왕복 없이 바로 안내
-			if (new Date().getMinutes() < 45) {
-				setDpMsg('교대 시간이 아닙니다', '#f59e0b');
-				return;
-			}
-
-			const modal = document.querySelector('[data-qk="remote-multiple-select-robot-dialog"]');
-			if (!modal) {
-				setDpMsg('NCC에서 기체 선택 모달을 먼저 열어주세요', '#f59e0b');
-				return;
-			}
-
-			const result = await dispatchGet();
-			if (!result || !result.data) {
-				setDpMsg('자동출차 데이터를 불러오지 못했습니다', '#ef4444');
-				return;
-			}
-
-			const { windowOpen, units = [], taken = [], hour } = result.data;
-			// 서버 측 판단도 한 번 더 확인 (클라이언트 시계 오차 대비)
-			if (!windowOpen) {
-				setDpMsg('교대 시간이 아닙니다', '#f59e0b');
-				return;
-			}
-
-			// [수정] 앞에서부터 잘라내지 않고 전체 후보를 넘긴다 — 앞쪽 후보가 체크 불가(이미
-			// 모니터링 중/off 등)로 실패해도 자리를 낭비하지 않고, 뒤쪽 후보로 계속 채워나간다.
-			const available = units.filter(u => !taken.includes(u));
-			if (!available.length) {
-				setDpMsg(`${hour}시 예정기체 없음 (전체 연결 완료 또는 대상 없음)`, '#94a3b8');
-				return;
-			}
-
-			// [수정] 모달 전체를 훑어 "남은 자리"를 미리 계산하던 방식은 실측에서 신뢰할 수
-			// 없는 것으로 확인됨(오탐 차단 원인). 이제는 후보를 이름으로 하나씩 찾아 확인하는
-			// runAutoSelect 내부 로직에 맡기고, 이번 클릭에서 "새로" 시작할 상한만 넘긴다.
-			const { confirmed, checkedUnits } = await runAutoSelect(available, MAX_MONITOR_SLOTS);
-
-			if (!checkedUnits.length) return;
-
-			if (confirmed) {
-				let ok = await patchDispatchTaken(checkedUnits);
-				if (!ok) ok = await patchDispatchTaken(checkedUnits); // 실패 시 1회 자동 재시도
-				const remainAfter = available.length - checkedUnits.length;
-				const note = remainAfter > 0 ? ` (자리 부족/체크 불가로 ${remainAfter}대는 다음 시도로 남음)` : '';
-				if (ok) {
-					setDpMsg(`${hour}시 예정기체 ${checkedUnits.length}대 시작 및 서버 반영 완료${note}`, '#22c55e');
-				} else {
-					setDpMsg(`${checkedUnits.join(', ')} 카메라는 연결됐지만 서버 반영에 실패했어요 — 다른 탭에서 중복 시도될 수 있으니 새로고침 후 확인해주세요`, '#ef4444');
-				}
-			} else {
-				setDpMsg(`${checkedUnits.join(', ')} 체크됨 — 시작하기 버튼을 직접 누르면 taken 반영은 되지 않습니다`, '#f59e0b');
-			}
-		});
+		// [2026-09 임시 비활성화] '예정기체 자동 시작' 로직 전체 제거 — 클릭해도 아무 일도
+		// 일어나지 않는 빈 버튼으로 남겨둠.
+		dispatchBtn.addEventListener('click', () => {});
 
 		posBtn.addEventListener('click', () => {
 			const cards = [...document.querySelectorAll(
@@ -3198,7 +3056,6 @@
             showPatrolBanner(robotName);
         } else if (st.phase === 'escalating') {
             st.escalateCount++;
-			showPatrolBanner(robotName);
             if (st.escalateCount >= PATROL_ESCALATE_MAX) {
                 st.phase = 'done';           // 소진 — 더 이상 조회하지 않음
                 hidePatrolBanner(robotName); // 감지 종료와 함께 배너도 제거
