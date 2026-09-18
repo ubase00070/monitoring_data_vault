@@ -1078,7 +1078,7 @@
     // 이 배터리보드는 그 함수에 "누가/언제/무슨 이벤트"만 POST로 알려준다. 실제 GitHub 커밋과
     // 동시수정 충돌 재시도는 그 서버 쪽 코드(api/reminder.js)에서 처리한다.
     // ============================================================
-    const REMINDER_API_URL = 'https://multi-monitoring.vercel.app/api/reminder';   // ← 실제 배포 도메인으로 교체
+    const REMINDER_API_URL = 'https://multimonitoring.vercel.app/api/reminder';   // 기존 BACKUP_BASE와 동일한 배포 도메인 사용
     // const REMINDER_API_KEY = '';   // 서버(REMINDER_API_KEY 환경변수)에서 인증을 켰다면 여기 같은 값을 채우고 아래 헤더 주석도 해제
 
     // 감시 대상 3대 + 감지할 상태 전환 + (있다면) 허용 시간대
