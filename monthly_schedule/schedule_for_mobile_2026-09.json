@@ -4676,6 +4676,193 @@
       }
     },
     {
+      "name": "이현경",
+      "shiftType": "주간1",
+      "workTime": "09:00~18:00",
+      "schedule": {
+        "9/1": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/2": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/3": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/4": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/5": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/6": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/7": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/8": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/9": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/10": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/11": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/12": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/13": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/14": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/15": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/16": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/17": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/18": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/19": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/20": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "9/21": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/22": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/23": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/24": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
+        },
+        "9/25": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
+        },
+        "9/26": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
+        },
+        "9/27": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
+        },
+        "9/28": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/29": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        },
+        "9/30": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
+        }
+      }
+    },
+    {
       "name": "석승찬",
       "shiftType": "주간2",
       "workTime": "10:00~19:00",
@@ -9384,6 +9571,6 @@
     "9/30"
   ],
   "mainMonth": 9,
-  "updatedAt": "2026-09-17T03:53:09.253Z",
+  "updatedAt": "2026-09-18T03:53:09.939Z",
   "sheetName": "2026년_09월 스케줄"
 }
