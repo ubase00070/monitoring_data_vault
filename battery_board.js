@@ -1071,97 +1071,6 @@
     }
 
     // ============================================================
-    // SECTION 3b. 리마인더 — 특정 3대의 상태 전환을 감지해 서버리스 프록시를 거쳐 reminder.json에 기록
-    // (다른 스크립트가 이 파일을 읽어서 "오늘 이 시간대 순찰을 깜빡하지 않았는지" 리마인드하는 용도)
-    //
-    // GitHub 쓰기 토큰은 이 파일에 절대 두지 않는다 — Vercel 서버리스 함수(REMINDER_API_URL)만 토큰을 갖고,
-    // 이 배터리보드는 그 함수에 "누가/언제/무슨 이벤트"만 POST로 알려준다. 실제 GitHub 커밋과
-    // 동시수정 충돌 재시도는 그 서버 쪽 코드(api/reminder.js)에서 처리한다.
-    // ============================================================
-    const REMINDER_API_URL = 'https://multimonitoring.vercel.app/api/reminder';   // 기존 BACKUP_BASE와 동일한 배포 도메인 사용
-    // const REMINDER_API_KEY = '';   // 서버(REMINDER_API_KEY 환경변수)에서 인증을 켰다면 여기 같은 값을 채우고 아래 헤더 주석도 해제
-
-    // 감시 대상 3대 + 감지할 상태 전환 + (있다면) 허용 시간대
-    const REMINDER_TARGETS = {
-        '경희대학교 국제캠퍼스 1호기': { from: 'standby', to: 'patrolling', event: 'patrol', slots: null },
-        '잠실 엘스 아파트 1호기':      { from: 'off', to: 'standby', event: 'standby', slots: ['10:30', '16:00', '19:00', '00:00'] },
-        '삼성인력개발원 1호기':        { from: 'off', to: 'standby', event: 'standby', slots: ['10:00', '13:00', '15:00'] },
-    };
-
-    // 새로고침해도 "직전 상태"를 잃어버리지 않도록 로컬에 보관(대상 3대뿐이라 용량 부담 없음)
-    const REMINDER_LAST_STATUS_KEY = 'bb_reminder_last_status';
-    function reminderLoadLastStatus() {
-        try { return JSON.parse(localStorage.getItem(REMINDER_LAST_STATUS_KEY) || '{}'); } catch { return {}; }
-    }
-    function reminderSaveLastStatus(map) {
-        try { localStorage.setItem(REMINDER_LAST_STATUS_KEY, JSON.stringify(map)); } catch {}
-    }
-
-    // 지금 시각이 slots 중 하나의 ±10분 이내면 그 슬롯 문자열을, 시간 제한이 없으면 '__ANY__', 해당 없으면 null 반환
-    function reminderMatchSlot(slots) {
-        if (!slots) return '__ANY__';
-        const now = new Date();
-        const nowMin = now.getHours() * 60 + now.getMinutes();
-        for (const slot of slots) {
-            const [h, m] = slot.split(':').map(Number);
-            const slotMin = h * 60 + m;
-            let diff = Math.abs(nowMin - slotMin);
-            diff = Math.min(diff, 1440 - diff);   // 00:00 슬롯처럼 자정을 넘나드는 경우까지 커버
-            if (diff <= 10) return slot;
-        }
-        return null;
-    }
-
-    // 감지된 전환 1건을 서버리스 프록시로 전달. 실제 GitHub 커밋/충돌 재시도는 서버(api/reminder.js)가 처리.
-    async function reminderRecordEvent(name, event, slot) {
-        try {
-            const res = await fetch(REMINDER_API_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    // 'x-reminder-key': REMINDER_API_KEY,   // 서버에서 REMINDER_API_KEY를 쓰기로 했다면 주석 해제
-                },
-                body: JSON.stringify({ name, event, slot: (slot && slot !== '__ANY__') ? slot : null }),
-            });
-            if (res.ok) {
-                console.log('[BB][reminder] 기록 완료:', name, slot, event);
-                return true;
-            }
-            const errJson = await res.json().catch(() => null);
-            console.log('[BB][reminder] 기록 실패:', res.status, errJson?.error || '');
-            return false;
-        } catch (e) {
-            console.log('[BB][reminder] 오류(네트워크 등):', e.message);
-            return false;
-        }
-    }
-
-    // 매 틱(약 2분)마다 대상 3대의 상태를 직전 상태와 비교해 지정된 전환이 일어났는지 확인
-    function reminderCheckTick(dbList) {
-        const lastStatus = reminderLoadLastStatus();
-        let changed = false;
-
-        Object.entries(REMINDER_TARGETS).forEach(([name, cfg]) => {
-            const r = dbList.find(x => x.name === name);
-            if (!r) return;
-            const prevStatus = lastStatus[name];
-            const curStatus = r.status;
-
-            if (prevStatus === cfg.from && curStatus === cfg.to) {
-                const slot = reminderMatchSlot(cfg.slots);
-                if (slot) reminderRecordEvent(name, cfg.event, slot);   // 비동기, 결과를 기다리지 않고 다음 기체로 진행
-            }
-
-            if (prevStatus !== curStatus) {
-                lastStatus[name] = curStatus;
-                changed = true;
-            }
-        });
-
-        if (changed) reminderSaveLastStatus(lastStatus);
-    }
-
-    // ============================================================
     // SECTION 4. 알림 감지
     // ============================================================
     function fmt(isoStr) {
@@ -1553,7 +1462,6 @@
             }
 
             logBatteryPattern(DB);
-            reminderCheckTick(DB);
             wblCyhAutoUploadTick();
             wblOthersAutoDownloadTick();
             wblNightUploadTick();
