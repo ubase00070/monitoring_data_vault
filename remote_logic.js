@@ -1596,7 +1596,7 @@
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
 		// 문자열을 넣으면 패치노트에 빨간 '`' 뱃지가 점멸하며 뜸.
 		// 빈 문자열('')로 비우면 뱃지가 사라짐.
-		const PATCH_NOTE_NEW_CONTENT = '서브모니터링';
+		const PATCH_NOTE_NEW_CONTENT = '엘스 인개원';
 
         // ── 패치노트 내용 ──────────────────────────────────────
         // 아래 patchItems 배열에 버전별 내용을 추가하세요 (버튼 라벨의 날짜도 이 배열의
@@ -1606,6 +1606,7 @@
                 version: 'v1.5',
                 date: '2026-09-18',
                 items: [
+                    '잠실 엘스, 인력개발원 다중 연결 확인 알림 기능',
 					'서브모니터링 버튼 추가',
 					'다중 관제 시 다음 시각 자동출차기체 자동시작 버튼(베타)',
                     '스케줄표/좌석도 라이트/다크 모드(디폴트 라이트)',
@@ -2193,6 +2194,7 @@
             queueInfoContent.id = 'neubie-queue-info-content';
             queueInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:${T.text}; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;`;
             queueInfoContent.innerHTML = `
+                잠실 엘스, 인력개발원 다중 연결 확인 기능<br>
 				다음 시간 자동출차 기체 자동 시작 기능<br>
 				삭제 레이아웃 기체명 표기<br>
 				모니터링 생성 모달 우측 고정<br>
@@ -3026,6 +3028,246 @@
 	function isMonitoringPage() {
 		return NEUBIE_HOSTS.some(h => location.href.includes(`${h}/ko/remote/multiple/monitoring`));
 	}
+
+/* ============================================================
+   SECTION. 순찰 리마인더 (엘스 1호기 / 인력개발원 1호기)
+   ------------------------------------------------------------
+   전제: 이 블록은 remote_logic.js의 기존 IIFE 안, NCC_API_BASE /
+   getAuthHeaders / fetchWithTimeout / isMonitoringPage 가 이미
+   선언된 지점 "이후"에 붙여넣어야 합니다. (동일 스코프 재사용)
+
+   동작 요약
+   - 대상 기체별로 정해진 조회 창(엘스: 슬롯 ±5분 / 인력개발원:
+     슬롯 시각부터 +5분까지)에서만 2분 간격으로 조회한다.
+   - 조회 결과, 기체가 ON 상태(robotStatus.isConnecting === true)
+     인데 isMonitoring=false라면:
+       1) 즉시 하단 중앙에 배너를 띄운다.
+       2) 그 순간부터 30초 간격으로 최대 2회 더 재조회한다.
+       3) 그 중 한 번이라도 true → 즉시 종료 + 배너 제거.
+       4) 2회 모두 false로 소진돼도 → 즉시 종료 + 배너 제거.
+          (둘 중 어느 경우든 감지 종료 시점에 배너도 함께 사라짐)
+   - 기체가 OFF 상태(isConnecting === false)라면 애초에 모니터링
+     대상이 될 수 없으므로 리마인드하지 않고, 창이 끝날 때까지
+     기본 간격(2분)으로 ON이 되는지만 계속 지켜본다.
+   - 일반 탭(로컬스토리지에 neubie_user_name이 저장된 탭)에서만
+     동작한다. 시크릿 탭은 이 값이 없으므로 API 호출 자체가 발생
+     하지 않는다.
+   ============================================================ */
+
+(function initPatrolReminder() {
+
+    // ── 대상 기체 · 슬롯 타임테이블 · 조회 창(분) ──
+    // beforeMin: 슬롯 시각보다 몇 분 전부터 조회 시작할지
+    // afterMin : 슬롯 시각 이후 몇 분까지 조회를 계속할지
+    const PATROL_REMINDER_TARGETS = {
+        '잠실 엘스 아파트 1호기': { slots: ['10:30', '16:00', '19:00', '00:00'], beforeMin: 5, afterMin: 5 },
+        '삼성인력개발원 1호기':   { slots: ['10:00', '13:00', '15:00'],         beforeMin: 0, afterMin: 5 },
+    };
+
+    const PATROL_TICK_MS       = 30 * 1000;         // 내부 스케줄러 하트비트(네트워크 호출 아님)
+    const PATROL_BASE_MS       = 2 * 60 * 1000;     // 창 안 기본 조회 간격
+    const PATROL_ESCALATE_MS   = 30 * 1000;         // false 감지 후 재조회 간격
+    const PATROL_ESCALATE_MAX  = 2;                 // 재조회 최대 횟수
+
+    // key: `${robotName}__${slotStr}` → 진행 상태
+    const _patrolState = {};
+
+    // ── 일반 탭 판별: 시크릿 탭엔 이 값이 있을 수 없음 ──
+    function isPatrolNormalTab() {
+        return !!localStorage.getItem('neubie_user_name');
+    }
+
+    // 주어진 "HH:MM" 슬롯에 대해, 지금 시각과 가장 가까운 occurrence(전날/오늘/내일 중)를
+    // 찾고, 그게 [slot-beforeMin, slot+afterMin] 창 안에 있을 때만 반환한다.
+    // (자정 슬롯의 날짜 경계 문제를 전날/오늘/내일 후보 비교로 자연스럽게 처리)
+    function findPatrolOccurrence(hhmm, beforeMin, afterMin, nowMs) {
+        const [h, m] = hhmm.split(':').map(Number);
+        const now = new Date(nowMs);
+        let best = null, bestAbsDiff = Infinity;
+        for (const offset of [-1, 0, 1]) {
+            const d = new Date(now);
+            d.setDate(d.getDate() + offset);
+            d.setHours(h, m, 0, 0);
+            const absDiff = Math.abs(d.getTime() - nowMs);
+            if (absDiff < bestAbsDiff) { bestAbsDiff = absDiff; best = d; }
+        }
+        const signedDiff = nowMs - best.getTime(); // >0: 슬롯 이후 경과, <0: 슬롯 이전
+        const beforeMs = beforeMin * 60 * 1000;
+        const afterMs  = afterMin * 60 * 1000;
+        if (signedDiff < -beforeMs || signedDiff > afterMs) return null;
+        return { dateStr: best.toISOString().slice(0, 10) };
+    }
+
+    // ── 배너 UI ──
+    function ensurePatrolBannerStyle() {
+        if (document.getElementById('neubie-patrol-banner-style')) return;
+        const s = document.createElement('style');
+        s.id = 'neubie-patrol-banner-style';
+        s.textContent = `
+            @keyframes neubie-patrol-blink {
+                0%, 100% { opacity: 1; }
+                50%      { opacity: 0.55; }
+            }
+            .neubie-patrol-banner {
+                pointer-events: auto;
+                background: #dcfce7;
+                color: #14532d;
+                border: 1px solid #86efac;
+                padding: 7px 22px;
+                border-radius: 999px;
+                font-size: 13px;
+                font-weight: 600;
+                font-family: 'Pretendard', sans-serif;
+                white-space: nowrap;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+                cursor: pointer;
+                animation: neubie-patrol-blink 2.6s ease-in-out infinite;
+            }
+        `;
+        document.head.appendChild(s);
+    }
+
+    function ensurePatrolBannerContainer() {
+        let c = document.getElementById('neubie-patrol-banner-container');
+        if (!c) {
+            c = document.createElement('div');
+            c.id = 'neubie-patrol-banner-container';
+            c.style.cssText = `
+                position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%);
+                z-index: 999999; display: flex; flex-direction: column; gap: 6px;
+                align-items: center; pointer-events: none;
+            `;
+            document.body.appendChild(c);
+        }
+        return c;
+    }
+
+    function showPatrolBanner(robotName) {
+        ensurePatrolBannerStyle();
+        const container = ensurePatrolBannerContainer();
+        const id = `neubie-patrol-banner-${robotName}`;
+        if (document.getElementById(id)) return; // 이미 표시 중
+        const el = document.createElement('div');
+        el.id = id;
+        el.className = 'neubie-patrol-banner';
+        el.textContent = `${robotName}: 순찰 시간입니다.`;
+        el.addEventListener('click', () => el.remove());
+        container.appendChild(el);
+    }
+
+    function hidePatrolBanner(robotName) {
+        const el = document.getElementById(`neubie-patrol-banner-${robotName}`);
+        if (el) el.remove();
+    }
+
+    // ── 실제 조회 ──
+    async function checkPatrolRobot(robotName, key, st) {
+        let isOn, isMonitoring;
+        try {
+            const res = await fetchWithTimeout(
+                `${NCC_API_BASE}/robots/?nickname=${encodeURIComponent(robotName)}`,
+                { credentials: 'include', headers: getAuthHeaders() }
+            );
+            if (!res.ok) return;
+            const json = await res.json();
+            const robot = json.results?.[0];
+            if (!robot) return;
+            // ON/OFF 판별: battery_board.js의 기존 off 판정 로직과 동일한 필드/극성을 사용
+            // (robotStatus.isConnecting) — 두 도구 간 'ON/OFF' 개념을 일치시키기 위함.
+            isOn = !!robot.robotStatus?.isConnecting;
+            isMonitoring = !!robot.isMonitoring; // 응답 최상위 필드
+        } catch (e) {
+            console.log('[순찰 리마인더] 조회 실패:', robotName, e);
+            return;
+        }
+
+        if (isMonitoring) {
+            st.phase = 'done';
+            hidePatrolBanner(robotName);
+            return;
+        }
+
+        if (!isOn) {
+            // 꺼져 있으면 리마인드 대상 아님 — 다음 기본 간격까지 그냥 지켜만 봄
+            return;
+        }
+
+        if (st.phase === 'idle') {
+            st.phase = 'escalating';
+            st.escalateCount = 0;
+            showPatrolBanner(robotName);
+        } else if (st.phase === 'escalating') {
+            st.escalateCount++;
+            if (st.escalateCount >= PATROL_ESCALATE_MAX) {
+                st.phase = 'done';           // 소진 — 더 이상 조회하지 않음
+                hidePatrolBanner(robotName); // 감지 종료와 함께 배너도 제거
+            }
+        }
+    }
+
+    // ── 스케줄러 ──
+    function patrolReminderTick() {
+        if (!isMonitoringPage() || !isPatrolNormalTab()) return;
+
+        // 방어 로직: 지금 이 시간대의 '다중 모니터링' 담당자 본인일 때만 동작.
+        // insu_data.json 스케줄(state.insuData.schedule, 이미 syncTasksFromServer()가
+        // 1분 간격으로 최신 상태 유지 중)에서 현재 시(hourKey)의 담당자와
+        // 로컬스토리지에 저장된 내 이름이 일치하는지를 기존 isScheduledMonitorNow()로
+        // 그대로 검사한다 — 별도 fetch 없이 이미 있는 데이터를 재사용.
+        const myName = localStorage.getItem('neubie_user_name');
+        if (!isScheduledMonitorNow(myName)) return;
+
+        const now = Date.now();
+
+        for (const [robotName, cfg] of Object.entries(PATROL_REMINDER_TARGETS)) {
+            for (const slotStr of cfg.slots) {
+                const key = `${robotName}__${slotStr}`;
+                const occ = findPatrolOccurrence(slotStr, cfg.beforeMin, cfg.afterMin, now);
+
+                if (!occ) {
+                    // 창 밖 — 진행 중이던 idle 상태가 있으면 정리(다음 창을 위해)
+                    const prev = _patrolState[key];
+                    if (prev && prev.phase !== 'escalating') delete _patrolState[key];
+                    continue;
+                }
+
+                let st = _patrolState[key];
+                if (!st || st.occDateStr !== occ.dateStr) {
+                    st = _patrolState[key] = {
+                        occDateStr: occ.dateStr, phase: 'idle',
+                        escalateCount: 0, lastCheckAt: 0,
+                    };
+                }
+                if (st.phase === 'done') continue;
+
+                const interval = st.phase === 'escalating' ? PATROL_ESCALATE_MS : PATROL_BASE_MS;
+                if (now - st.lastCheckAt < interval) continue;
+
+                st.lastCheckAt = now;
+                checkPatrolRobot(robotName, key, st);
+            }
+        }
+    }
+
+    setInterval(patrolReminderTick, PATROL_TICK_MS);
+    patrolReminderTick(); // 최초 1회 즉시 실행
+
+    // ── 실제 상황 재현용 콘솔 테스트 훅 ──
+    // 사용법: 핸드오버 페이지(다중 모니터링) 콘솔에서
+    //   __testPatrolBanner('잠실 엘스 아파트 1호기')
+    //   __testPatrolBanner('삼성인력개발원 1호기')
+    // 로 배너를 강제로 띄워볼 수 있고,
+    //   __hideTestPatrolBanner('잠실 엘스 아파트 1호기')
+    // 로 지울 수 있습니다. 실제 조회 로직과는 무관하게 UI만 확인하는 용도입니다.
+    window.__testPatrolBanner = function (name) {
+        showPatrolBanner(name || '잠실 엘스 아파트 1호기');
+    };
+    window.__hideTestPatrolBanner = function (name) {
+        hidePatrolBanner(name || '잠실 엘스 아파트 1호기');
+    };
+
+})();
+
 
     function isNewDrivingPage() {
 		const isNeubieHost = NEUBIE_HOSTS.some(h => location.href.includes(h));
