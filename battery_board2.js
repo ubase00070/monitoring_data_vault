@@ -1,5 +1,5 @@
 /* ============================================================
-   battery_board.js v3.2 (통합 리스트 그리드)
+   battery_board.js v3.3 (통합 리스트 + 하단 퀵바)
    NCC 종합 모니터 — 템퍼몽키 inject
    ============================================================ */
 
@@ -64,10 +64,9 @@
         }
         #bb.bb-light.theme-sunset  { --bg-fill:linear-gradient(180deg, #f7d4c4 0%, #f0dfc9 45%, #f2e4c4 85%); }
         #bb.bb-light.theme-blossom { --bg-fill:linear-gradient(180deg, #f6dde3 0%, #f2e2d2 45%, #f2e4c4 85%); }
-        /* [주석처리: 퀵바/기타배달] #bb.bb-light .bb-delivery-title { color:#2b2418; } */
-        /* [주석처리: 퀵바/기타배달] #bb.bb-light .bb-delivery-empty { color:#2b2418; } */
-        /* [주석처리: 퀵바/기타배달] #bb.bb-light .bb-mi.standby { --ac:#8a7f68; } */
-        /* [주석처리: 퀵바/기타배달] #bb.bb-light .bb-mi:not(.empty) { color:#2b2418; } */
+        /* [주석처리: 기타 배달] #bb.bb-light .bb-delivery-title { color:#2b2418; } */
+        /* [주석처리: 기타 배달] #bb.bb-light .bb-delivery-empty { color:#2b2418; } */
+        #bb.bb-light .bb-mi.standby { --ac:#8a7f68; }
         #bb.bb-light .bb-chip.estop { background:var(--sur); color:#dc2626; }
         #bb.bb-light .bb-chip.bat    { background:var(--sur); color:#b91c1c; }
 		#bb.bb-light .bb-chip.dock   { background:var(--sur); color:#a16207; }
@@ -144,7 +143,6 @@
             min-width:76px; text-align:center;   /* ← 이 두 개 추가 */
         }
         .bb-btn.rm:hover { background:rgba(239,68,68,.25); }
-        .bb-btn.info { border-color:var(--bd2); color:var(--tx); background:var(--sur2); font-size:14px; padding:0 10px; }
         .bb-xbtn {
             width:32px; height:32px; border-radius:6px;
             background:rgba(239,68,68,.15); border:1px solid rgba(239,68,68,.3);
@@ -241,7 +239,7 @@
         .bb-di-plus { font-size:15px; color:var(--gn); font-weight:900; flex-shrink:0; margin-left:4px; }
 
         /* ── 기체 리스트 (통합 그리드: 한 줄 = 기체 1대) ── */
-        .bb-list-wrap { padding:14px 16px 18px; min-height:420px; }
+        .bb-list-wrap { padding:14px 16px 18px; min-height:500px; }   /* 알림 바(80px) 제거분만큼 확장 */
         .bb-list {
             display:grid;
             grid-template-columns:repeat(4,minmax(0,1fr));
@@ -321,43 +319,41 @@
         .bb-row-pct-off { font-size:11px; font-weight:900; line-height:18px; color:rgba(239,68,68,.8); animation-delay:-4s; }
         .bb-row-plug { width:16px; text-align:center; font-size:11px; line-height:1; flex-shrink:0; }
 
-        /* [주석처리: 하단 퀵바 / 기타 배달 / 동숲] — 필요 시 이 주석만 풀면 복구
-        [ ── 하단 영역 ── ]
-        .bb-bottom {
-            display:flex; border-top:1px solid var(--bd);
-            background:var(--bg); flex-shrink:0; border-radius:0 0 16px 16px;
+        /* ── 하단 퀵바: 그룹당 한 줄 ── */
+        .bb-quick {
+            display:flex; flex-direction:column; gap:5px;
+            padding:10px 16px 14px; border-top:1px solid var(--bd);
         }
-
-        [ 퀵바 ]
-        .bb-mg { display:flex; flex-direction:row; gap:5px; padding:10px 8px; border-right:1px solid var(--bd); flex-shrink:0; }
-        .bb-mg-col { display:flex; flex-direction:column; border:2px solid var(--bd2); border-radius:8px; background:var(--bg); overflow:hidden; }
-        .bb-mg-col-title {
-            padding:5px 6px; font-size:16.5px; font-weight:900; color:var(--tx);
-            border-bottom:1px solid var(--bd); background:var(--sur);
-            text-align:center; white-space:nowrap;
+        .bb-qline {
+            display:flex; align-items:stretch; min-height:38px;
+            border:2px solid var(--bd2); border-radius:8px;
+            background:var(--bg); overflow:hidden;
         }
-        .bb-mg-grid {
-            padding:5px; display:grid;
-            grid-template-columns:repeat(4,1fr);
-            grid-template-rows:repeat(4,1fr);
-            gap:3px; width:135px; flex:1;
+        .bb-qline-title {
+            flex:0 0 150px; display:flex; align-items:center; justify-content:center;
+            padding:0 8px; font-size:16.5px; font-weight:900; color:var(--tx);
+            background:var(--sur); border-right:1px solid var(--bd); white-space:nowrap;
         }
+        .bb-qline-circles {
+            flex:1; min-width:0; display:flex; flex-wrap:wrap; align-items:center;
+            gap:4px; padding:4px 10px;
+        }
+        .bb-qline-none { font-size:13px; color:var(--mu); }
         .bb-mi {
-            width:100%; aspect-ratio:1; border-radius:50%;
+            width:28px; height:28px; border-radius:50%; flex-shrink:0;
             border:2px solid var(--ac,var(--gy));
             color:var(--ac,var(--gy)); font-size:13px; font-weight:900;
             display:flex; align-items:center; justify-content:center;
             font-family:'Paperlogy','Lato',monospace;
         }
-        #bb.bb-light .bb-mi:not(.empty) { box-shadow:0 0 4px var(--ac); }
-        .bb-mi.empty { border-color:var(--bd2); color:transparent; box-shadow:none; opacity:.12; }
+        #bb.bb-light .bb-mi { color:#2b2418; box-shadow:0 0 4px var(--ac); }
         .bb-mi.charging   { --ac:var(--gn); }
         .bb-mi.patrolling { --ac:var(--bl); }
         .bb-mi.delivering { --ac:var(--pk); }
         .bb-mi.standby    { --ac:#c8ccd4; }
         .bb-mi.docking    { --ac:var(--ye); }
-        .bb-mi.off        { opacity:.12; }
 
+        /* [주석처리: 기타 배달 / 동숲] — 필요 시 이 주석만 풀면 복구
         [ 기타 배달 ]
         .bb-delivery-area {
 			flex:1; display:flex; flex-direction:column; min-height:0;
@@ -473,19 +469,6 @@
             cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_default.png') 4 4, auto;
         }
 
-        #bb-top5-panel {
-            display:none; position:fixed;
-            top:50%; left:50%; transform:translate(-50%,-50%);
-            width:720px; max-height:86vh; overflow-y:auto;
-            border:3px solid transparent; border-radius:14px;
-            background-image: linear-gradient(var(--sur), var(--sur)), linear-gradient(135deg, #6366f1, #ec4899);
-            background-origin: border-box;
-            background-clip: padding-box, border-box;
-            box-shadow:0 24px 64px rgba(0,0,0,.9);
-            z-index:99999999;
-            cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_default.png') 4 4, auto;
-        }
-        #bb-top5-panel.open { display:block; }
         #bb-alertlog-all-panel {
             display:none; position:fixed;
             top:50%; left:50%; transform:translate(-50%,-50%);
@@ -513,26 +496,6 @@
         .bb-alertlog-name { color:var(--tx); flex-shrink:0; }
         .bb-alertlog-icon { font-size:20px; line-height:1; }
         .bb-alertlog-type { font-weight:900; }
-        .bb-top5-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:14px; }
-        .bb-top5-col { background:var(--bg); border-radius:12px; padding:12px; }
-        .bb-top5-col-title { font-size:14px; font-weight:900; margin-bottom:8px; }
-        .bb-top5-row {
-            display:flex; align-items:center; gap:8px; padding:6px 4px;
-            border-bottom:1px solid var(--bd); cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_pointer.png') 4 4, pointer;
-        }
-        .bb-top5-row:last-child { border-bottom:none; }
-        .bb-top5-row:hover { background:rgba(255,255,255,.05); }
-        .bb-top5-name { flex:1; font-size:14px; font-weight:700; color:var(--tx); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-        .bb-top5-rate { font-size:13px; font-weight:900; font-family:'Paperlogy','Lato',monospace; flex-shrink:0; }
-        .bb-top5-empty { font-size:13px; color:var(--mu); padding:10px 0; }
-        #bb-top5-panel.bb-light {
-			--bg:#f2e4c4; --sur:#f8f3e6; --sur2:#efe6d2;
-			--bd:#cabf9d; --bd2:#b3a687; --tx:#2b2418; --mu:#7a6f5c;
-		}
-		#bb-top5-panel.bb-light .bb-top5-col { background:var(--sur); }
-        #bb-top5-panel.bb-light .bb-top5-row { border-bottom-color:var(--bd); }
-        #bb-top5-panel.bb-light .bb-top5-row:hover { background:var(--sur2); }
-        #bb-top5-panel.bb-light .bb-top5-col-title { color:#a16207; }
 
         #bb-alert-panel.open { display:block; }
         .bb-ap-hd {
@@ -579,7 +542,6 @@
 		}
 		#bb-alert-panel.bb-light .bb-ap-hd { background:var(--sur); border-bottom-color:var(--bd); }
 		#bb-alert-panel.bb-light .bb-ap-title { color:var(--tx); }
-		#bb-top5-panel.bb-light .bb-ap-title { color:var(--tx); }
 		#bb-alertlog-all-panel.bb-light .bb-ap-title { color:var(--tx); }
 		#bb-alert-panel.bb-light .bb-ap-close { color:#b91c1c; }
 		#bb-alert-panel.bb-light .bb-ap-item { background:var(--sur); border-bottom-color:var(--bd); }
@@ -589,27 +551,6 @@
 		#bb-alert-panel.bb-light .bb-ap-time { color:var(--mu); }
 		#bb-alert-panel.bb-light .bb-ap-dismiss { background:var(--sur2); border-color:var(--bd2); color:var(--tx); }
 		#bb-alert-panel.bb-light .bb-ap-empty { background:var(--sur); color:var(--mu); }
-
-        /* ── 사용 설명서 패널 ── */
-        #bb-info-panel {
-            display:none; position:fixed;
-            top:50%; left:50%; transform:translate(-50%,-50%);
-            width:745px; max-height:100vh;
-            background-image: linear-gradient(var(--sur2), var(--sur2)), linear-gradient(135deg, #6366f1, #ec4899);
-            background-origin: border-box;
-            background-clip: padding-box, border-box;
-            border:3px solid transparent;
-            border-radius:12px; box-shadow:0 16px 48px rgba(0,0,0,.85);
-            z-index:9999999999; padding:16px; overflow-y:auto;
-            font-size:16px; line-height:1.85; color:var(--tx);
-            cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_default.png') 4 4, auto;
-        }
-        #bb-info-panel.open { display:block; }
-        .bb-info-hd {
-            display:flex; justify-content:space-between; align-items:center;
-            margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid var(--bd);
-        }
-        .bb-info-title { font-size:17px; font-weight:900; }
 
         /* ── 기체 Info 패널 ── */
         #bb-info-card-panel {
@@ -705,13 +646,13 @@
             <!-- 헤더 -->
             <div class="bb-hd">
                 <div class="bb-hd-left">
-                    <button class="bb-btn info" id="bb-infobtn">사용 설명서</button>
                     <button id="bb-theme-btn" class="bb-btn">다크</button>
                     <button id="bb-lighttheme-btn" class="bb-btn">☁️ 구름</button>
                     <button id="bb-zoom-out" class="zoom-btn">－</button>
                     <span id="bb-zoom-label" class="zoom-label">100%</span>
                     <button id="bb-zoom-in"  class="zoom-btn">＋</button>
                     <button class="bb-btn" id="bb-wbl-upload-btn" style="display:none;">📤 UP</button>
+                    <button class="bb-btn" id="bb-alertlog-all-btn">📋 최근 15일 알림 로그</button>
                 </div>
                 <div class="bb-hd-titlebox" id="bb-drag-handle">
                     <div class="bb-hd-title">
@@ -725,15 +666,14 @@
                 </div>
                 <div class="bb-hd-right" id="bb-hd-right">
                     <div class="bb-hd-right-row">
-                        <button id="bb-top5-btn" class="bb-btn">🔥 배터리 증감 추이</button>
+                        <button class="bb-btn" id="bb-sortname-btn">이름 순 정렬</button>
+                        <button class="bb-btn" id="bb-rmbtn">카드 제거</button>
                         <button class="bb-btn" id="bb-inforequest-btn">기체 정보 조회</button>
                         <button id="bb-backup-btn" class="bb-btn">기체 목록 백업</button>
                         <button id="bb-restore-btn" class="bb-btn">기체 목록 복원</button>
                         <div class="bb-xbtn" id="bb-closebtn">✕</div>
                     </div>
                     <div class="bb-hd-right-row" id="bb-search-wrap">
-                        <button class="bb-btn" id="bb-sortname-btn">이름 순 정렬</button>
-                        <button class="bb-btn" id="bb-rmbtn">카드 제거</button>
                         <div class="bb-si-wrap">
                             <span class="bb-si-icon">🔍</span>
                             <input class="bb-si" id="bb-si" placeholder="기체명 검색 후 클릭하여 추가" autocomplete="off">
@@ -743,14 +683,15 @@
                 </div>
             </div>
 
-            <!-- 알림바 -->
+            <!-- [주석처리: 알림 바(배터리/도킹 등 알림 칩)] — 필요 시 이 주석만 풀면 복구
+                 알림 감지·로그 기록은 그대로 동작하고, 화면 표시만 막은 상태
             <div class="bb-alert-row">
                 <div class="bb-alert-bar" id="bb-alert-bar">
                     <span class="bb-alert-label">🚨 알림</span>
                     <div class="bb-alert-chips" id="bb-alert-chips"></div>
                 </div>
-                <button class="bb-btn" id="bb-alertlog-all-btn" style="font-size:13px;font-weight:900;align-self:center;margin-right:12px;flex-shrink:0;">📋 최근 15일 알림 로그</button>
             </div>
+            -->
 
             <div id="bb-alertlog-all-panel">
                 <div class="bb-ap-hd">
@@ -765,9 +706,11 @@
                 <div class="bb-list" id="bb-list"></div>
             </div>
 
-            <!-- [주석처리: 하단 퀵바(역삼/송도/성수/삼평서현) + 기타 배달 기체(동숲)] — 필요 시 이 주석만 풀면 복구
+            <!-- 하단 퀵바: 역삼/송도/성수 요기요 · 성남 삼평/서현 (켜진 기체만, 그룹당 한 줄) -->
+            <div class="bb-quick" id="bb-quick"></div>
+
+            <!-- [주석처리: 기타 배달 기체(동숲)] — 필요 시 이 주석만 풀면 복구 (.bb-quick 아래에 배치)
             <div class="bb-bottom">
-                <div class="bb-mg" id="bb-mg"></div>
                 <div class="bb-delivery-area">
                     <div class="bb-delivery-title">기타 배달 기체</div>
                     <div class="bb-delivery-chips" id="bb-delivery-chips"></div>
@@ -782,35 +725,6 @@
             </div>
             -->
 
-            <!-- 사용 설명서 패널 -->
-            <div id="bb-info-panel">
-                <div class="bb-info-hd">
-                    <div class="bb-info-title">📖 사용 설명서</div>
-                    <div class="bb-xbtn" id="bb-info-close">✕</div>
-                </div>
-                <div id="bb-info-body">
-                    * '알림 센터' 페이지 새로고침 시 자동으로 레이아웃 열림(ALT+Z로 열고 닫기)<br>
-                    * 기체 카드와 배치는 로컬 스토리지에 저장됨(최대 100대. 드래그로 배치 변경 가능)<br>
-                    * 기체 더블클릭/기체정보 검색창: 기체 상세 Info 패널 / 배터리 증감 추이 그래프<br>
-                    * 배터리 증감 추이 기능<br>
-					&nbsp;&nbsp;&nbsp;&nbsp;- 08:00 ~ 다음 날 03:00까지 10분 간격으로 배터리 수치 기록<br> 
-					&nbsp;&nbsp;&nbsp;&nbsp;- 오늘/어제 자 데이터 까지만 보존<br> 
-					&nbsp;&nbsp;&nbsp;&nbsp;- 배터리 소모 속도 빠른 순 / 느린 순 5대 표기(시간당 소모량 확인 가능)<br> 
-					* 알림 전송 조건<br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;- 비상정지 버튼 눌림<br> 
-                    &nbsp;&nbsp;&nbsp;&nbsp;- 배터리 부족(21% 이하)<br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;- 무선 도킹됨<br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;- 대기 중 배터리 50% 미만(배달 사이트 기체 제외)<br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;- 좀비: 전원 ON인데 배터리·GPS 수신값이 잡히지 않는 경우<br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;- 캠 미노출(F, Fd, Fl, Fr, Bl, Br)<br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;- GPS 미수신<br>
-                    <!-- [주석처리]
-                    * 하단 퀵바: 역삼·송도·성수·삼평서현 ON/OFF 및 상태 확인용<br>
-                    * 기타 배달: 퀵바 외 배달 사이트 기체 실시간 표시<br>
-                    -->
-                    * 개선 피드백 받습니다(수정 시 자동 실시간 반영).
-                </div>
-            </div>
         </div>
 
         <!-- 알림 상세 패널 -->
@@ -822,15 +736,6 @@
             <div id="bb-ap-body">
                 <div class="bb-ap-empty">이상 없음 ✓</div>
             </div>
-        </div>
-
-        <!-- 배터리 증감 추이 브리핑 패널 -->
-        <div id="bb-top5-panel">
-            <div class="bb-ap-hd">
-                <div class="bb-ap-title">🔥 배터리 증감 추이 TOP5</div>
-                <div class="bb-ap-close" id="bb-top5-close">✕</div>
-            </div>
-            <div id="bb-top5-body" class="bb-top5-grid"></div>
         </div>
 
         <!-- 기체 Info 패널 -->
@@ -851,7 +756,6 @@
 		bbEl.classList.toggle('bb-light', theme === 'light');
 		document.getElementById('bb-alert-panel').classList.toggle('bb-light', theme === 'light');
 		document.getElementById('bb-info-card-panel').classList.toggle('bb-light', theme === 'light');
-		document.getElementById('bb-top5-panel').classList.toggle('bb-light', theme === 'light');
 		document.getElementById('bb-alertlog-all-panel').classList.toggle('bb-light', theme === 'light');
 		document.getElementById('bb-theme-btn').textContent = theme === 'light' ? '☀️ 라이트' : '🌙 다크';
 	};
@@ -922,13 +826,13 @@
         off:'var(--offdot)', delivering:'var(--pk)', docking:'var(--ye)',
     };
 
-    // [주석처리: 퀵바(요기요/삼평서현)] — 필요 시 주석만 풀면 복구
-    // const MONITOR_GROUPS = [
-    //     { id:'yeoksam',  label:'역삼 요기요',    keywords:['역삼동'] },
-    //     { id:'songdo',   label:'송도 요기요',    keywords:['송도 신도시'] },
-    //     { id:'seongsu',  label:'성수 요기요',    keywords:['성수동'] },
-    //     { id:'seongnam', label:'성남 삼평/서현', keywords:['성남형'] },
-    // ];
+    // 하단 퀵바 그룹 — keywords가 기체명에 포함되면 해당 그룹. 켜진 기체만 표시됨.
+    const MONITOR_GROUPS = [
+        { id:'yeoksam',  label:'역삼 요기요',    keywords:['역삼동'] },
+        { id:'songdo',   label:'송도 요기요',    keywords:['송도 신도시'] },
+        { id:'seongsu',  label:'성수 요기요',    keywords:['성수동'] },
+        { id:'seongnam', label:'성남 삼평/서현', keywords:['성남형'] },
+    ];
 
     const CAM_LABELS = {
         isOnCamF:  'F(전면)',
@@ -1409,8 +1313,8 @@
                 openAlertPanel(currentAlertType, groups);
             }
 
-            // [주석처리: 퀵바/기타 배달/동숲]
-            // renderMonitorGrid(allRaw);
+            renderMonitorGrid(allRaw);   // 하단 퀵바
+            // [주석처리: 기타 배달/동숲]
             // renderDeliveryChips(allRaw);
             // applyCampingBackground();
 
@@ -1432,8 +1336,8 @@
         isOpen = true;
         document.getElementById('bb').classList.add('open');
         render();
-        // [주석처리: 퀵바/기타 배달]
-        // renderMonitorGrid(lastRaw);
+        renderMonitorGrid(lastRaw);   // 하단 퀵바
+        // [주석처리: 기타 배달]
         // renderDeliveryChips(lastRaw);
     }
     function closeBoard() {
@@ -1480,55 +1384,48 @@
         if (el) el.textContent = m > 0 ? `${m}분 ${String(s).padStart(2,'0')}초 후 갱신` : `${s}초 후 갱신`;
     }, 1000);
 
-/* [주석처리: 퀵바 / 기타 배달 렌더] — 필요 시 이 주석만 풀면 복구
     // ============================================================
-    // SECTION 8b. 퀵바 렌더
+    // SECTION 8b. 하단 퀵바 렌더 — 그룹당 한 줄, 켜진 기체만 동그라미로 표시
+    //   동그라미 색 = 현재 상태(충전/순찰/배달/대기/도킹), 숫자 = 호기, 마우스 올리면 기체명 | 상태
     // ============================================================
     function renderMonitorGrid(rawList) {
-        const mgEl = document.getElementById('bb-mg');
-        mgEl.innerHTML = '';
+        const el = document.getElementById('bb-quick');
+        if (!el) return;
+        el.innerHTML = '';
+
+        const nameOf = r => r.nickname || r.name || '';
+        const numOf  = r => parseInt(nameOf(r).match(/(\d+)호기/)?.[1] || '0', 10);
 
         MONITOR_GROUPS.forEach(group => {
-            const robots = rawList.filter(r => {
-                const name = r.nickname || r.name || '';
-                return group.keywords.some(kw => name.includes(kw));
-            }).sort((a, b) => {
-                const na = parseInt((a.nickname || a.name || '').match(/(\d+)호기/)?.[1] || '0');
-                const nb = parseInt((b.nickname || b.name || '').match(/(\d+)호기/)?.[1] || '0');
-                return na - nb;
-            });
+            const onRobots = rawList
+                .filter(r => group.keywords.some(kw => nameOf(r).includes(kw)))
+                .sort((a, b) => numOf(a) - numOf(b))
+                .filter(r => parseRobotStatus(r).status !== 'off');
 
-            const onRobots = robots.filter(r => parseRobotStatus(r).status !== 'off');
-            const SLOTS = 16;
+            const line = document.createElement('div');
+            line.className = 'bb-qline';
+            line.innerHTML = `<div class="bb-qline-title">${group.label}</div>`;
 
-            const col = document.createElement('div');
-            col.className = 'bb-mg-col';
-            col.innerHTML = `<div class="bb-mg-col-title">${group.label}</div>`;
-            const grid = document.createElement('div');
-            grid.className = 'bb-mg-grid';
-
-            for (let i = 0; i < SLOTS; i++) {
-                const r = onRobots[i];
-                const el = document.createElement('div');
-                if (r) {
-                    const parsed = parseRobotStatus(r);
-                    const num = (r.nickname || r.name || '').match(/(\d+)호기/)?.[1] || (i + 1);
-                    el.className = `bb-mi ${parsed.status}`;
-                    el.title = `${r.nickname || r.name} | ${STL[parsed.status]}`;
-                    el.textContent = num;
-                } else {
-                    el.className = 'bb-mi empty';
-                }
-                grid.appendChild(el);
+            const circles = document.createElement('div');
+            circles.className = 'bb-qline-circles';
+            if (onRobots.length === 0) {
+                circles.innerHTML = '<span class="bb-qline-none">가동 중인 기체 없음</span>';
             }
-            col.appendChild(grid);
-            mgEl.appendChild(col);
+            onRobots.forEach((r, i) => {
+                const parsed = parseRobotStatus(r);
+                const c = document.createElement('div');
+                c.className = `bb-mi ${parsed.status}`;
+                c.title = `${nameOf(r)} | ${STL[parsed.status]}`;
+                c.textContent = nameOf(r).match(/(\d+)호기/)?.[1] || (i + 1);
+                circles.appendChild(c);
+            });
+            line.appendChild(circles);
+            el.appendChild(line);
         });
     }
 
-    // ============================================================
+/* [주석처리: 기타 배달 칩 렌더(동숲 영역)] — 필요 시 이 주석만 풀면 복구
     // SECTION 8c. 기타 배달 칩 렌더
-    // ============================================================
     function renderDeliveryChips(rawList) {
         const el = document.getElementById('bb-delivery-chips');
         if (!el) return;
@@ -2437,96 +2334,6 @@
 	}, { passive: false });
 
 
-    function wblComputeTop5() {
-        const dayKey = wblGetDayKey();
-        if (!dayKey) return { drops: [], charges: [] };
-        const data = wblLoad();
-        if (!data || data.day !== dayKey) return { drops: [], charges: [] };
-
-        const drops = [];   // {id, name, rate}  rate: 시간당 %, 음수
-        const charges = []; // {id, name, rate}  rate: 시간당 %, 양수(작을수록 느림)
-
-        Object.keys(data.entries).forEach(robotId => {
-            const segments = wblGetSegments(robotId);
-            let worstDrop = null;
-            let slowestCharge = null;
-
-            segments.forEach(seg => {
-                if (seg.startBattery == null || seg.endBattery == null) return;
-                const durMin = Math.max(10, wblToMin(seg.end) - wblToMin(seg.start) + 10);
-                const rate = (seg.endBattery - seg.startBattery) / durMin * 60;
-
-                if (rate < 0 && (worstDrop === null || rate < worstDrop)) worstDrop = rate;
-                if (seg.status === 'charging' && rate > 0 && (slowestCharge === null || rate < slowestCharge)) slowestCharge = rate;
-            });
-
-            const name = data.entries[robotId].name;
-            if (worstDrop !== null) drops.push({ id: robotId, name, rate: worstDrop });
-            if (slowestCharge !== null) charges.push({ id: robotId, name, rate: slowestCharge });
-        });
-
-        drops.sort((a, b) => a.rate - b.rate);        // 더 큰 음수(급한 소모) 먼저
-        charges.sort((a, b) => a.rate - b.rate);       // 더 작은 양수(느린 충전) 먼저
-
-        return { drops: drops.slice(0, 5), charges: charges.slice(0, 5) };
-    }
-
-    let _top5CloseHandler = null;
-    function registerTop5PanelClose() {
-        const panel = document.getElementById('bb-top5-panel');
-        if (_top5CloseHandler) {
-            document.removeEventListener('mousedown', _top5CloseHandler);
-            _top5CloseHandler = null;
-        }
-        setTimeout(() => {
-            _top5CloseHandler = function closeTop5(e) {
-                if (!panel.contains(e.target)) {
-                    panel.classList.remove('open');
-                    document.removeEventListener('mousedown', _top5CloseHandler);
-                    _top5CloseHandler = null;
-                }
-            };
-            document.addEventListener('mousedown', _top5CloseHandler);
-        }, 100);
-    }
-
-    function openTop5Panel() {
-        const { drops, charges } = wblComputeTop5();
-        const panel = document.getElementById('bb-top5-panel');
-        const bodyEl = document.getElementById('bb-top5-body');
-
-        const row = (item, isDrop) => `
-            <div class="bb-top5-row" data-id="${item.id}">
-                <span class="bb-top5-name">${item.name}</span>
-                <span class="bb-top5-rate" style="color:${isDrop ? '#ef4444' : '#fb923c'};">시간당 ${item.rate>0?'+':''}${item.rate.toFixed(1)}%</span>
-            </div>`;
-
-        bodyEl.innerHTML = `
-            <div class="bb-top5-col">
-                <div class="bb-top5-col-title" style="color:#ef4444;">🔻 배터리 소모 속도 빠른 순</div>
-                ${drops.length ? drops.map(d => row(d, true)).join('') : '<div class="bb-top5-empty">오늘 기록 없음</div>'}
-            </div>
-            <div class="bb-top5-col">
-                <div class="bb-top5-col-title" style="color:#fb923c;">🐢 배터리 충전 속도 느린 순</div>
-                ${charges.length ? charges.map(c => row(c, false)).join('') : '<div class="bb-top5-empty">오늘 기록 없음</div>'}
-            </div>
-        `;
-
-        bodyEl.querySelectorAll('.bb-top5-row').forEach(el => {
-            el.addEventListener('click', () => {
-                const r = DB.find(x => x.id === el.dataset.id);
-                if (r) {
-                    panel.classList.remove('open');
-                    _infoPanelReturnToTop5 = true;
-                    openInfoCardPanel(r);
-                }
-            });
-        });
-
-        panel.classList.add('open');
-        registerTop5PanelClose();
-    }
-
     let _alertLogAllCloseHandler = null;
     function registerAlertLogAllPanelClose() {
         const panel = document.getElementById('bb-alertlog-all-panel');
@@ -2812,13 +2619,8 @@
         }
 
         let _infoPanelCloseHandler = null;
-        let _infoPanelReturnToTop5 = false;
         function closeInfoCardPanel() {
             document.getElementById('bb-info-card-panel').classList.remove('open');
-            if (_infoPanelReturnToTop5) {
-                _infoPanelReturnToTop5 = false;
-                openTop5Panel();
-            }
         }
         function registerInfoPanelClose() {
             const panel = document.getElementById('bb-info-card-panel');
@@ -3017,15 +2819,6 @@
         document.getElementById('bb-alert-panel').classList.remove('open');
     });
 
-    document.getElementById('bb-top5-btn').addEventListener('click', openTop5Panel);
-    document.getElementById('bb-top5-close').addEventListener('click', () => {
-        document.getElementById('bb-top5-panel').classList.remove('open');
-        if (_top5CloseHandler) {
-            document.removeEventListener('mousedown', _top5CloseHandler);
-            _top5CloseHandler = null;
-        }
-    });
-
     document.getElementById('bb-alertlog-all-btn').addEventListener('click', openAlertLogAllPanel);
     document.getElementById('bb-alertlog-all-close').addEventListener('click', () => {
         document.getElementById('bb-alertlog-all-panel').classList.remove('open');
@@ -3089,38 +2882,6 @@
         });
         save();
         render();
-    });
-
-    let _infoPanelSimpleCloseHandler = null;
-    function registerInfoPanelSimpleClose() {
-        const panel = document.getElementById('bb-info-panel');
-        if (_infoPanelSimpleCloseHandler) {
-            document.removeEventListener('mousedown', _infoPanelSimpleCloseHandler);
-            _infoPanelSimpleCloseHandler = null;
-        }
-        setTimeout(() => {
-            _infoPanelSimpleCloseHandler = function closeInfo(e) {
-                if (!panel.contains(e.target)) {
-                    panel.classList.remove('open');
-                    document.removeEventListener('mousedown', _infoPanelSimpleCloseHandler);
-                    _infoPanelSimpleCloseHandler = null;
-                }
-            };
-            document.addEventListener('mousedown', _infoPanelSimpleCloseHandler);
-        }, 100);
-    }
-
-    document.getElementById('bb-infobtn').addEventListener('click', () => {
-        const panel = document.getElementById('bb-info-panel');
-        const nowOpen = panel.classList.toggle('open');
-        if (nowOpen) registerInfoPanelSimpleClose();
-    });
-    document.getElementById('bb-info-close').addEventListener('click', () => {
-        document.getElementById('bb-info-panel').classList.remove('open');
-        if (_infoPanelSimpleCloseHandler) {
-            document.removeEventListener('mousedown', _infoPanelSimpleCloseHandler);
-            _infoPanelSimpleCloseHandler = null;
-        }
     });
 
     const siEl = document.getElementById('bb-si');
