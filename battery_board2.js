@@ -1,5 +1,5 @@
 /* ============================================================
-   battery_board.js v3.8 (헤더 2줄 · 동숲 캐릭터 · 백업 팝업)
+   battery_board.js v3.9 (호버 즉시 반응 · 헤더 정리 · 말풍선 좌측)
    NCC 종합 모니터 — 템퍼몽키 inject
    ============================================================ */
 
@@ -186,9 +186,9 @@
         }
         #bb-walker-toggle:hover { border-color:var(--mu); }
         #bb-walker-toggle.off { opacity:1; color:var(--rd); border-color:rgba(239,68,68,.3); background:rgba(239,68,68,.1); }
-        /* 말풍선: 캐릭터 아래로 뜸(클릭하면 켜짐/꺼짐). 클릭을 가로채지 않도록 pointer-events:none */
+        /* 말풍선: 캐릭터 왼쪽으로 뜸(가운데 제목 위를 덮어도 무방). 클릭을 가로채지 않도록 pointer-events:none */
         #bb-walker-bubble {
-            position:absolute; top:calc(100% + 8px); left:50%; transform:translateX(-50%);
+            position:absolute; top:50%; right:calc(100% + 14px); transform:translateY(-50%);
             width:250px; min-height:50px; box-sizing:border-box;
             background:#fdf6e3; border-radius:20px; padding:10px 18px;
             font-size:15px; color:#5c4a2a; font-weight:700; line-height:1.4;
@@ -198,10 +198,10 @@
         }
         #bb-walker-bubble.open { display:block; }
         #bb-walker-bubble::after {
-            content:''; position:absolute; top:-13px; left:50%; transform:translateX(-50%);
+            content:''; position:absolute; top:50%; right:-13px; transform:translateY(-50%);
             width:0; height:0;
-            border-left:8px solid transparent; border-right:8px solid transparent;
-            border-bottom:14px solid #fdf6e3;
+            border-top:8px solid transparent; border-bottom:8px solid transparent;
+            border-left:14px solid #fdf6e3;
         }
         #bb-walker-bubble b { font-weight:900; color:#a8460c; }
 
@@ -212,6 +212,7 @@
             display:inline-flex; align-items:center; justify-content:center; box-sizing:border-box;
         }
         .bb-btn:hover { border-color:var(--mu); }
+        #bb-theme-btn, #bb-lighttheme-btn { min-width:38px; padding:0 8px; font-size:16px; }   /* 이모지만 표시 */
         #bb:not(.bb-light) #bb-lighttheme-btn { cursor:not-allowed; opacity:.45; }
         #bb:not(.bb-light) #bb-lighttheme-btn:hover { border-color:var(--bd2); }
         .bb-btn.rm {
@@ -235,7 +236,7 @@
 
         /* ── 알림 영역 (헤더 좌측) + 검색 ── */
         .bb-alert-zone {   /* 이 영역 안에서만 버튼이 뜸 — overflow:hidden 으로 밖으로 삐져나오지 않음 */
-            position:absolute; left:14px; top:50%; transform:translateY(-50%);
+            position:absolute; left:14px; top:50%; transform:translateY(calc(-50% - 6px));   /* 헤더 중앙보다 6px 위 */
             width:680px; box-sizing:border-box; padding:3px; overflow:hidden;
         }
         .bb-alert-label { font-size:16px; font-weight:900; color:var(--tx); white-space:nowrap; padding:0 2px 5px; }
@@ -274,9 +275,9 @@
         }
 
         /* 검색 */
-        .bb-si-wrap { position:relative; }
+        .bb-si-wrap { position:relative; flex:1 1 200px; min-width:200px; }   /* 2줄에서 남는 폭을 채움 (최소 200px) */
         .bb-si {
-            width:14.5ch; max-width:100%; background:var(--sur2); border:1px solid var(--bd2);
+            width:100%; box-sizing:border-box; max-width:100%; background:var(--sur2); border:1px solid var(--bd2);
             border-radius:7px; padding:6px 10px 6px 26px;
             color:var(--tx); font-size:14px; outline:none; font-family:inherit;
         }
@@ -350,7 +351,7 @@
             background:var(--sur); border:1.5px solid var(--bd);
             cursor:grab;
             user-select:none;
-            transition:border-color .15s, box-shadow .15s, background .15s, opacity .15s;
+            transition:background .15s, opacity .15s;   /* 외곽선(border-color/box-shadow)은 transition 없이 즉시 반응 */
         }
         .bb-row:hover { border-color:#f9a8d4; box-shadow:0 0 0 1px #f9a8d4; }   /* 연핑크, 1.5px → 약 2.5px */
         .bb-row:active { cursor:grabbing; }
@@ -733,8 +734,11 @@
                     <div class="bb-hd-right" id="bb-hd-right">
                         <div class="bb-hd-right-row spread">
                             <div class="bb-hd-grp">
-                                <button id="bb-theme-btn" class="bb-btn">다크</button>
-                                <button id="bb-lighttheme-btn" class="bb-btn">☁️ 구름</button>
+                                <button id="bb-theme-btn" class="bb-btn" title="라이트/다크 전환">☀️</button>
+                                <button id="bb-lighttheme-btn" class="bb-btn" title="배경 테마 전환">☁️</button>
+                                <button id="bb-zoom-out" class="zoom-btn">－</button>
+                                <span id="bb-zoom-label" class="zoom-label">100%</span>
+                                <button id="bb-zoom-in"  class="zoom-btn">＋</button>
                             </div>
                             <div class="bb-hd-grp">
                                 <button class="bb-btn" id="bb-inforequest-btn">정보 조회</button>
@@ -746,9 +750,6 @@
                         <div class="bb-hd-right-row">
                             <button class="bb-btn" id="bb-sortname-btn">이름 순 정렬</button>
                             <button class="bb-btn" id="bb-rmbtn">카드 제거</button>
-                            <button id="bb-zoom-out" class="zoom-btn">－</button>
-                            <span id="bb-zoom-label" class="zoom-label">100%</span>
-                            <button id="bb-zoom-in"  class="zoom-btn">＋</button>
                             <button class="bb-btn" id="bb-alertlog-all-btn">📋 알림 로그</button>
                             <div class="bb-si-wrap" id="bb-search-wrap">
                                 <span class="bb-si-icon">🔍</span>
@@ -758,7 +759,7 @@
                         </div>
                         <!-- 목록 백업/복원 팝업: 이름 버튼을 누르면 확인 후 실행 -->
                         <div id="bb-bk-pop">
-                            <div class="bb-bk-title" id="bb-bk-title">목록 백업</div>
+                            <div class="bb-bk-title" id="bb-bk-title">누구 이름으로 백업하시겠습니까?</div>
                             <div class="bb-bk-btns">
                                 <button class="bb-btn bb-bk-name" data-name="최윤혁">최윤혁</button>
                                 <button class="bb-btn bb-bk-name" data-name="안혜림">안혜림</button>
@@ -786,7 +787,7 @@
                         <div class="bb-list" id="bb-list"></div>
                     </div>
 
-                    <!-- 하단 퀵바: 역삼 | 송도 | 성수 | 삼평서현 (켜진 기체만, 한 줄) -->
+                    <!-- 하단 퀵바: 역삼 | 송도 | 성수 | 삼평/서현 (켜진 기체만, 한 줄) -->
                     <div class="bb-quick" id="bb-quick"></div>
                 </div>
 
@@ -843,18 +844,23 @@
 		document.getElementById('bb-alert-panel').classList.toggle('bb-light', theme === 'light');
 		document.getElementById('bb-info-card-panel').classList.toggle('bb-light', theme === 'light');
 		document.getElementById('bb-alertlog-all-panel').classList.toggle('bb-light', theme === 'light');
-		document.getElementById('bb-theme-btn').textContent = theme === 'light' ? '☀️ 라이트' : '🌙 다크';
+		const themeBtn = document.getElementById('bb-theme-btn');
+		themeBtn.textContent = theme === 'light' ? '☀️' : '🌙';
+		themeBtn.title = theme === 'light' ? '라이트 모드 (클릭: 다크 모드로)' : '다크 모드 (클릭: 라이트 모드로)';
 	};
     applyBbTheme();
 
     // 라이트모드 배경 테마 순환: 구름(기본) → 노을 → 벚꽃 → 구름 ...
-    const LIGHT_THEME_LABELS = { cloud: '☁️ 구름', sunset: '🌇 노을', blossom: '🌸 벚꽃' };
+    const LIGHT_THEME_LABELS = { cloud: '☁️', sunset: '🌇', blossom: '🌸' };                       // 버튼에는 이모지만
+    const LIGHT_THEME_NAMES  = { cloud: '구름', sunset: '노을', blossom: '벚꽃' };                 // 툴팁용 이름
     const LIGHT_THEME_ORDER  = ['cloud', 'sunset', 'blossom'];
     const applyLightTheme = () => {
         const t = localStorage.getItem('bb_light_theme') || 'cloud';
         bbEl.classList.toggle('theme-sunset', t === 'sunset');
         bbEl.classList.toggle('theme-blossom', t === 'blossom');
-        document.getElementById('bb-lighttheme-btn').textContent = LIGHT_THEME_LABELS[t];
+        const ltBtn = document.getElementById('bb-lighttheme-btn');
+        ltBtn.textContent = LIGHT_THEME_LABELS[t];
+        ltBtn.title = `배경 테마: ${LIGHT_THEME_NAMES[t]} (클릭: 다음 테마)`;
     };
     applyLightTheme();
     document.getElementById('bb-lighttheme-btn').addEventListener('click', () => {
@@ -918,7 +924,7 @@
         { id:'yeoksam',  label:'역삼',     full:'역삼 요기요',    keywords:['역삼동'] },
         { id:'songdo',   label:'송도',     full:'송도 요기요',    keywords:['송도 신도시'] },
         { id:'seongsu',  label:'성수',     full:'성수 요기요',    keywords:['성수동'] },
-        { id:'seongnam', label:'삼평서현', full:'성남 삼평/서현', keywords:['성남형'] },
+        { id:'seongnam', label:'삼평/서현', full:'성남 삼평/서현', keywords:['성남형'] },
     ];
 
     const CAM_LABELS = {
@@ -3426,7 +3432,7 @@
     function toggleBkPop(mode) {
         if (bkMode === mode) { closeBkPop(); return; }   // 같은 버튼을 다시 누르면 닫힘
         bkMode = mode;
-        document.getElementById('bb-bk-title').textContent = mode === 'backup' ? '목록 백업 — 누구 이름으로?' : '목록 복원 — 누구 백업을?';
+        document.getElementById('bb-bk-title').textContent = mode === 'backup' ? '누구 이름으로 백업하시겠습니까?' : '누구의 백업으로 복원하시겠습니까?';
         bkPop.classList.add('open');
     }
     document.getElementById('bb-backup-btn').addEventListener('click', e => { e.stopPropagation(); toggleBkPop('backup'); });
@@ -3454,17 +3460,17 @@
                 body: JSON.stringify({ ids: [...favIds, ...ids], fav: favIds, name })   // ids = 전체(구버전 호환), fav = 즐겨찾기 순서
             });
             const data = await res.json();
-            if (data.ok) alert(`✅ "${name}" 백업 완료 (${total}대)`);
-            else alert('❌ 백업 실패');
-        } catch { alert('❌ 백업 실패 (네트워크 오류)'); }
+            if (data.ok) alert(`✅ 현재 목록 ${total}대를 "${name}" 이름으로 백업했습니다.`);
+            else alert('❌ 백업하지 못했습니다. 잠시 후 다시 시도해 주세요.');
+        } catch { alert('❌ 네트워크 오류로 백업하지 못했습니다. 연결 상태를 확인해 주세요.'); }
     }
 
     async function doRestore(name) {
-        if (!confirm(`"${name}" 백업으로 복원하시겠습니까?\n현재 목록(${ids.length + favIds.length}대)이 교체됩니다.`)) return;
+        if (!confirm(`"${name}" 님의 백업으로 복원하시겠습니까?\n현재 목록(${ids.length + favIds.length}대)은 백업 내용으로 교체됩니다.`)) return;
         try {
             const res = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent(name)}`);
             const data = await res.json();
-            if (!data.ids || !data.ids.length) { alert(`❌ "${name}" 님의 백업 데이터가 없습니다`); return; }
+            if (!data.ids || !data.ids.length) { alert(`❌ "${name}" 님의 백업이 저장되어 있지 않습니다.`); return; }
             // 백업의 ids = 전체(즐겨찾기 + 일반), fav = 즐겨찾기 순서. fav 가 없는 백업(이전 버전)은 전부 일반으로 복원
             const allIds = data.ids.slice();
             favIds = (Array.isArray(data.fav) ? data.fav : []).filter(id => allIds.includes(id));
@@ -3473,8 +3479,8 @@
             const hasLegacy = [...favIds, ...ids].some(id => LEGACY_FIXED_SITE_IDS.includes(DB.find(x => x.id === id)?.siteId));
             if (!hasLegacy) prependLegacyFixed();
             save(); render();
-            alert(`✅ "${name}" 복원 완료 (${ids.length + favIds.length}대)`);
-        } catch { alert('❌ 복원 실패 (네트워크 오류)'); }
+            alert(`✅ "${name}" 님의 백업으로 복원했습니다. (현재 목록 ${ids.length + favIds.length}대)`);
+        } catch { alert('❌ 네트워크 오류로 복원하지 못했습니다. 연결 상태를 확인해 주세요.'); }
     }
 
     // ============================================================
