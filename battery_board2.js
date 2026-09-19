@@ -1,5 +1,5 @@
 /* ============================================================
-   battery_board.js v3.4 (다중 모니터링 영역 확보)
+   battery_board.js v3.5 (다중 모니터링 연동)
    NCC 종합 모니터 — 템퍼몽키 inject
    ============================================================ */
 
@@ -326,21 +326,43 @@
             position:absolute; inset:0; display:flex; flex-direction:column;
             border:2px solid var(--bd2); border-radius:8px; background:var(--bg); overflow:hidden;
         }
-        .bb-mm-title {
-            flex:0 0 auto; padding:5px 8px; text-align:center;
-            font-size:16.5px; font-weight:900; color:var(--tx);
+        .bb-mm-head {
+            flex:0 0 auto; padding:5px 8px 4px; text-align:center;
             background:var(--sur); border-bottom:1px solid var(--bd);
         }
+        .bb-mm-title { font-size:16.5px; font-weight:900; color:var(--tx); }
+        .bb-mm-sub { margin-top:1px; font-size:11.5px; line-height:1.3; color:var(--mu); }
+        .bb-mm-sub.warn { color:var(--or); }
         .bb-mm-body {
             flex:1 1 auto; min-height:0; overflow-y:auto;
             display:flex; flex-direction:column; gap:5px; padding:6px;
         }
+        .bb-mm-body.stale { opacity:.5; }   /* 피드가 오래됐거나 불러오기 실패 → 옛 정보임을 흐림으로 표시 */
         .bb-mm-body:empty::before {   /* 카드가 들어오면 자동으로 사라지는 빈 상태 문구 */
             content:'다중 모니터링 중인 기체 없음'; margin:auto; font-size:13px; color:var(--mu);
         }
         .bb-mm-card {   /* 기체 카드 = 기존 행(30px) 두 줄 두께 (30 + 5 + 30) */
             flex:0 0 auto; height:65px; box-sizing:border-box;
+            display:flex; flex-direction:column; justify-content:center; gap:5px;
+            padding:0 10px;
             background:var(--sur); border:1.5px solid var(--bd); border-radius:8px;
+        }
+        .bb-mm-l1 { display:flex; align-items:baseline; gap:8px; min-width:0; }
+        .bb-mm-name {
+            flex:1; min-width:0; font-size:15px; font-weight:700; color:var(--tx);
+            white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+        }
+        .bb-mm-staff { flex-shrink:0; max-width:55%; font-size:13px; color:var(--mu); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .bb-mm-l2 { display:flex; align-items:center; gap:6px; min-width:0; font-size:13px; }
+        .bb-mm-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; background:var(--bl); }
+        .bb-mm-st { min-width:0; color:var(--bl); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .bb-mm-card.anomaly { border-color:var(--or); animation:bb-mmBlink 1s infinite; }
+        .bb-mm-card.anomaly .bb-mm-dot { background:var(--or); }
+        .bb-mm-card.anomaly .bb-mm-st { color:var(--or); }
+        #bb.bb-light .bb-mm-card.anomaly .bb-mm-st, #bb.bb-light .bb-mm-sub.warn { color:#c2410c; }
+        @keyframes bb-mmBlink {
+            0%,100% { border-color:var(--or); box-shadow:0 0 0 1px var(--or); }
+            50%     { border-color:transparent; box-shadow:none; }
         }
 
         /* ── 하단 퀵바: 한 줄에 4개 그룹 (제목 | 켜진 기체 동그라미) ── */
@@ -733,10 +755,13 @@
                     <div class="bb-quick" id="bb-quick"></div>
                 </div>
 
-                <!-- 다중 모니터링 중 기체 — 공간만 확보. 이식 시 #bb-mm-body 안에 .bb-mm-card 를 렌더 -->
+                <!-- 다중 모니터링 중 기체 — patrol_watch_live.json 을 1분마다 받아 #bb-mm-body 에 카드 렌더 (SECTION 16) -->
                 <div class="bb-mm">
                     <div class="bb-mm-box">
-                        <div class="bb-mm-title">다중 모니터링 중 기체</div>
+                        <div class="bb-mm-head">
+                            <div class="bb-mm-title">다중 모니터링 중 기체</div>
+                            <div class="bb-mm-sub" id="bb-mm-sub">불러오는 중…</div>
+                        </div>
                         <div class="bb-mm-body" id="bb-mm-body"></div>
                     </div>
                 </div>
@@ -3359,6 +3384,131 @@
             console.log('[BB] AccessToken 없음');
         }
     }, 200);
+
+    // ============================================================
+    // SECTION 16. 다중 모니터링 — patrol_watch_live.json (Cloudflare Worker가 약 1분 간격으로 Gist에 게시)
+    //  - 목적: 다중 모니터링 순찰 기체가 정상 진행 중인지, 정체/방치인지 확인
+    //  - 판정은 Worker(index.js)가 한다: 기체별 예외 허용 시간(SLOW_POI_OVERRIDE_MIN / POI_SEGMENT_OVERRIDE_MIN /
+    //    SKIP_IF_NEVER_MOVED)이 이미 status 에 반영돼 내려오므로, 여기서는 stale_min 으로 다시 판정하지 않고
+    //    status 를 그대로 쓴다. (클라이언트에 별도 임계값을 두면 Worker 예외 로직과 어긋남)
+    //  - 표시 대상: status === 'ongoing' | 'anomaly'  (finished / wrong_duplicate 는 숨김)
+    // ============================================================
+    const PATROL_LIVE_URL = 'https://gist.githubusercontent.com/ubase00070/bd7773a059217fb81b0be90c961fcc22/raw/patrol_watch_live.json';
+    const PATROL_REFRESH_MS = 60 * 1000;
+    const PATROL_FEED_STALE_SEC = 3 * 60;   // Worker 게시가 이 시간 넘게 멈추면 "갱신 지연" 경고
+    let _patrolBusy = false;
+    let _patrolSig = null;
+    let _patrolLastUpdated = null;
+
+    function patrolKstNowSec() {
+        const p = new Intl.DateTimeFormat('en-GB', {
+            timeZone: 'Asia/Seoul', hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit',
+        }).formatToParts(new Date());
+        const g = t => parseInt(p.find(x => x.type === t).value, 10) % 24;
+        return g('hour') * 3600 + g('minute') * 60 + g('second');
+    }
+    function patrolFeedAgeSec(updatedAt) {   // "HH:MM:SS"(KST) → 지금까지 경과 초 (자정 넘김 보정)
+        const m = /^(\d{1,2}):(\d{2}):(\d{2})$/.exec(updatedAt || '');
+        if (!m) return null;
+        const upd = (+m[1]) * 3600 + (+m[2]) * 60 + (+m[3]);
+        return (patrolKstNowSec() - upd + 86400) % 86400;
+    }
+
+    // records → 표시용 카드 (이상 우선, 이후 이름순)
+    function buildPatrolCards(records) {
+        const seen = new Set();
+        return (records || [])
+            .filter(r => r && (r.status === 'ongoing' || r.status === 'anomaly'))
+            .filter(r => {   // 완전히 동일한 레코드만 중복 제거 (짧은 이름이 같은 다른 기체는 그대로 둠)
+                const k = [r.robot, r.start_hhmm, r.poi_text].join('|');
+                if (seen.has(k)) return false;
+                seen.add(k);
+                return true;
+            })
+            .map(r => ({
+                robot: r.robot || '(이름 없음)',
+                staff: Array.isArray(r.staff_list) ? r.staff_list : [],
+                anomaly: r.status === 'anomaly',
+                stale: Number.isFinite(r.stale_min) ? r.stale_min : 0,
+                start: r.start_hhmm || '',
+                poi: r.poi_text || '',
+            }))
+            .sort((a, b) =>
+                (b.anomaly - a.anomaly) ||
+                (a.anomaly ? b.stale - a.stale : a.robot.localeCompare(b.robot, 'ko', { numeric: true })));
+    }
+
+    function renderPatrolCards(cards) {
+        const body = document.getElementById('bb-mm-body');
+        if (!body) return;
+        const frag = document.createDocumentFragment();
+        cards.forEach(c => {
+            const el = document.createElement('div');
+            el.className = 'bb-mm-card' + (c.anomaly ? ' anomaly' : '');
+            el.title = `${c.robot} | 시작 ${c.start} | ${c.poi}`;
+
+            const l1 = document.createElement('div'); l1.className = 'bb-mm-l1';
+            const name = document.createElement('span'); name.className = 'bb-mm-name'; name.textContent = c.robot;
+            const staff = document.createElement('span'); staff.className = 'bb-mm-staff';
+            staff.textContent = c.staff.length ? c.staff.join('·') : '담당 없음';
+            l1.append(name, staff);
+
+            const l2 = document.createElement('div'); l2.className = 'bb-mm-l2';
+            const dot = document.createElement('span'); dot.className = 'bb-mm-dot';
+            const st = document.createElement('span'); st.className = 'bb-mm-st';
+            st.textContent = c.anomaly ? `POI 정보 ${c.stale}분째 미갱신` : '순찰 중';
+            l2.append(dot, st);
+
+            el.append(l1, l2);
+            frag.appendChild(el);
+        });
+        body.replaceChildren(frag);   // 카드가 없으면 body 가 비어 빈 상태 문구(:empty)가 자동 표시됨
+    }
+
+    function setPatrolStatus(text, warn) {
+        const sub = document.getElementById('bb-mm-sub');
+        const body = document.getElementById('bb-mm-body');
+        if (sub) { sub.textContent = text; sub.classList.toggle('warn', !!warn); }
+        if (body) body.classList.toggle('stale', !!warn);
+    }
+
+    async function refreshPatrolLive() {
+        if (_patrolBusy) return;
+        _patrolBusy = true;
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), 15000);
+        try {
+            const res = await fetch(`${PATROL_LIVE_URL}?t=${Date.now()}`, { cache: 'no-store', signal: ctrl.signal });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const data = await res.json();
+            if (!data || !Array.isArray(data.records)) throw new Error('데이터 형식 오류');
+
+            _patrolLastUpdated = data.updated_at || null;
+            const cards = buildPatrolCards(data.records);
+            const sig = JSON.stringify(cards);
+            if (sig !== _patrolSig) {   // 바뀐 게 없으면 다시 그리지 않음 (점멸 애니메이션/스크롤 유지)
+                _patrolSig = sig;
+                renderPatrolCards(cards);
+            }
+
+            const age = patrolFeedAgeSec(_patrolLastUpdated);
+            if (age !== null && age > PATROL_FEED_STALE_SEC) {
+                setPatrolStatus(`⚠ 갱신 지연 · ${_patrolLastUpdated} 기준`, true);
+            } else {
+                setPatrolStatus(`${_patrolLastUpdated || '-'} 기준`, false);
+            }
+        } catch (e) {
+            console.warn('[BB] 다중 모니터링 갱신 실패:', e.message);
+            setPatrolStatus(_patrolLastUpdated
+                ? `⚠ 불러오기 실패 · 마지막 ${_patrolLastUpdated} 기준`
+                : '⚠ 불러오기 실패', true);
+        } finally {
+            clearTimeout(timer);
+            _patrolBusy = false;
+        }
+    }
+    refreshPatrolLive();
+    setInterval(refreshPatrolLive, PATROL_REFRESH_MS);
 
     render();
     // [주석처리: 동숲] applyCampingBackground();
