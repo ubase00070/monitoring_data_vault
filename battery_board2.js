@@ -1,5 +1,5 @@
 /* ============================================================
-   battery_board.js v3.9 (호버 즉시 반응 · 헤더 정리 · 말풍선 좌측)
+   battery_board.js v4.1 (핫핑크 배달 · 즐겨찾기 2열 · 순찰 시작 시각)
    NCC 종합 모니터 — 템퍼몽키 inject
    ============================================================ */
 
@@ -38,7 +38,7 @@
 			--wh:rgba(228,230,234,.05); --gy:#5a6069;
 			--rd:#d16464; --rd2:rgba(209,100,100,.14); --ye:#d1a355;
 			--or:#cf8a4f; --or2:rgba(207,138,79,.12);
-			--pk:#d1729a; --pk2:rgba(209,114,154,.12);
+			--pk:#ff2d92; --pk2:rgba(255,45,146,.14);   /* 배달 = 진한 핫핑크 (카드 호버의 연핑크와 확실히 구분) */
 			--offdot:#4b5563;
 			--fav-bd:#8b929c;   /* 즐겨찾기 테두리 — 다크에서는 검정이 안 보여 밝은 회색 */
 			--standby-batt:var(--tx);
@@ -56,7 +56,7 @@
             --gy:#4b5563;
             --rd:#ef4444; --rd2:rgba(239,68,68,.12); --ye:#fbbf24;
             --or:#f97316; --or2:rgba(249,115,22,.12);
-            --pk:#ec4899; --pk2:rgba(236,72,153,.10);
+            --pk:#ff1493; --pk2:rgba(255,20,147,.10);
             --offdot:#b4b2a9;
             --standby-batt:#98a2ae;
             --bg-fill:linear-gradient(180deg, #cfe8f0 0%, #e8ecdc 45%, #f2e4c4 85%);
@@ -134,6 +134,15 @@
         .bb-hd-right-row { display:flex; align-items:center; gap:6px; }
         .bb-hd-right-row.spread { justify-content:space-between; }   /* 1줄: 테마 버튼(좌) ··· 정보/백업/복원/✕(우) */
         .bb-hd-grp { display:flex; align-items:center; gap:6px; }
+
+        /* 제목 박스 바로 아래 작은 범례 (기체 카드 점 / 하단 동그라미 색 = 현재 상태) */
+        .bb-legend {
+            position:absolute; left:50%; bottom:4px; transform:translateX(-50%);
+            display:flex; align-items:center; gap:9px; white-space:nowrap;
+            font-size:10.5px; line-height:14px; color:var(--mu);
+        }
+        .bb-legend-item { display:inline-flex; align-items:center; gap:4px; }
+        .bb-legend-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
 
         /* UP: CYH 전용이라 "by CYH" 아래 타이틀 박스 테두리에 아주 작게 얹어 둠 (CYH 모드일 때만 보임) */
         .bb-up-mini {
@@ -275,7 +284,7 @@
         }
 
         /* 검색 */
-        .bb-si-wrap { position:relative; flex:1 1 200px; min-width:200px; }   /* 2줄에서 남는 폭을 채움 (최소 200px) */
+        .bb-si-wrap { position:relative; flex:1 1 230px; min-width:230px; }   /* 2줄에서 남는 폭을 채움 (최소 230px — 안내 문구가 잘리지 않는 폭) */
         .bb-si {
             width:100%; box-sizing:border-box; max-width:100%; background:var(--sur2); border:1px solid var(--bd2);
             border-radius:7px; padding:6px 10px 6px 26px;
@@ -306,22 +315,36 @@
 
         /* ── 기체 리스트 (통합 그리드: 한 줄 = 기체 1대) ── */
         /* 본문 = 좌(기체 리스트 + 퀵바) | 우(다중 모니터링 중 기체) */
-        .bb-body { display:flex; align-items:stretch; flex-shrink:0; }   /* flex-shrink:0 → 내용이 길 때 줄어들며 잘리지 않고 패널 스크롤 */
-        .bb-main { flex:0 0 1340px; min-width:0; display:flex; flex-direction:column; }   /* 1340 = 카드 318×4 + 간격 12×3 + 좌우 여백 16×2 (퀵바 내용이 길어져도 우측 영역을 밀지 않도록 고정) */
-        .bb-list-wrap { display:flex; align-items:stretch; gap:12px; padding:14px 16px 18px; min-height:500px; }
+        .bb-body { display:flex; align-items:stretch; flex:1 1 auto; min-height:0; }   /* 남는 높이를 차지하고, 넘치면 카드 영역이 줄어들며 그 안에서 스크롤 */
+        .bb-main { flex:0 0 1340px; min-width:0; min-height:0; display:flex; flex-direction:column; }   /* 1340 = 카드 318×4 + 간격 12×3 + 좌우 여백 16×2 (퀵바 내용이 길어져도 우측 영역을 밀지 않도록 고정) */
+        /* 기체 카드 영역: 기체가 많아 창이 화면보다 커지면 창 전체가 아니라 이 영역 안에서만 스크롤 (스크롤바 = 다중 모니터링 영역 바로 왼쪽) */
+        .bb-list-wrap {
+            flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden;
+            padding:14px 8px 18px 16px; scrollbar-gutter:stable;   /* 스크롤바 자리를 항상 확보 → 생겼다 사라져도 카드가 밀리지 않음 */
+        }
+        .bb-list-wrap::-webkit-scrollbar { width:6px; }
+        .bb-list-wrap::-webkit-scrollbar-track { background:transparent; }
+        .bb-list-wrap::-webkit-scrollbar-thumb { background:var(--bd2); border-radius:3px; }
+        .bb-list-wrap::-webkit-scrollbar-thumb:hover { background:var(--mu); }
+        @supports not selector(::-webkit-scrollbar) { .bb-list-wrap { scrollbar-width:thin; scrollbar-color:var(--bd2) transparent; } }
+        .bb-lists { display:flex; align-items:stretch; gap:12px; min-height:420px; min-height:max(420px, 100%); }   /* 즐겨찾기 테두리가 카드 끝까지 이어지도록 내용 높이만큼 늘어남 */
         /* 1열 = 즐겨찾기: 여기에 끌어다 놓으면 이름 순 정렬을 해도 일반 기체와 섞이지 않고 이 영역 안에서만 정렬됨 */
-        .bb-fav {
-            flex:0 0 318px; width:318px; box-sizing:border-box;
-            display:flex; flex-direction:column; gap:5px;
+        .bb-fav {   /* 2열 (318px × 2 + 간격 12px = 648px), 일반 기체와 같은 방식으로 세로 우선 채움 */
+            flex:0 0 648px; width:648px; box-sizing:border-box;
+            display:grid; align-content:start;
+            grid-template-columns:repeat(2,318px);
+            grid-auto-flow:column;
+            gap:5px 12px;
             outline:1px solid var(--fav-bd); outline-offset:5px; border-radius:8px;   /* 아주 얇은 테두리 (outline → 카드 폭에 영향 없음) */
         }
+        .bb-fav:empty { align-content:center; }
         .bb-fav:empty::before {
-            content:'즐겨찾기 — 카드를 끌어다 놓으세요'; margin:auto; padding:0 12px;
+            content:'즐겨찾기 — 카드를 끌어다 놓으세요'; grid-column:1 / -1; padding:0 12px;
             text-align:center; font-size:13px; color:var(--mu);
         }
-        .bb-list {   /* 일반 기체: 3열 (세로 우선 채움 → 이름순 정렬 시 위→아래로 읽힘, 행 수는 JS가 지정) */
+        .bb-list {   /* 일반 기체: 2열 (세로 우선 채움 → 이름순 정렬 시 위→아래로 읽힘, 행 수는 JS가 지정) */
             flex:0 0 auto; display:grid; align-content:start;
-            grid-template-columns:repeat(3,318px);
+            grid-template-columns:repeat(2,318px);
             grid-auto-flow:column;
             gap:5px 12px;
         }
@@ -353,6 +376,7 @@
             user-select:none;
             transition:background .15s, opacity .15s;   /* 외곽선(border-color/box-shadow)은 transition 없이 즉시 반응 */
         }
+        .bb-row.delivering { border-color:var(--pk); box-shadow:0 0 0 1px var(--pk); }   /* 배달 중: 핫핑크 외곽선 (호버보다 먼저 선언 → 호버 시에는 연핑크로 바뀜) */
         .bb-row:hover { border-color:#f9a8d4; box-shadow:0 0 0 1px #f9a8d4; }   /* 연핑크, 1.5px → 약 2.5px */
         .bb-row:active { cursor:grabbing; }
         .bb-row.warn-bat { animation:bb-warnBlink .8s infinite; }
@@ -400,7 +424,7 @@
         .bb-row-plug { width:14px; text-align:center; font-size:11px; line-height:1; flex-shrink:0; }
 
         /* ── 우측: 다중 모니터링 중 기체 (세로 직사각형 영역) ── */
-        .bb-mm { flex:1 1 0; min-width:0; position:relative; margin:14px 16px 14px 0; }
+        .bb-mm { flex:1 1 0; min-width:0; position:relative; margin:14px 16px 14px 6px; }
         .bb-mm-box {
             position:absolute; inset:0; display:flex; flex-direction:column;
             border:2px solid var(--bd2); border-radius:8px; background:var(--bg); overflow:hidden;
@@ -410,6 +434,7 @@
             background:var(--sur); border-bottom:1px solid var(--bd);
         }
         .bb-mm-title { font-size:16.5px; font-weight:900; color:var(--tx); }
+        .bb-mm-count { color:var(--rd); }
         .bb-mm-sub { margin-top:1px; font-size:11.5px; line-height:1.3; color:var(--mu); }
         .bb-mm-sub.warn { color:var(--or); }
         .bb-mm-body {
@@ -424,8 +449,10 @@
             display:flex; flex-direction:column; justify-content:center; gap:5px;
             padding:0 10px;
             background:var(--sur); border:1.5px solid var(--bd); border-radius:8px;
+            cursor:pointer;   /* 클릭하면 기체 정보 창 */
         }
-        /* 1줄: 기체명 · 순찰 중 ··········· 요원 */
+        .bb-mm-card:hover { border-color:#f9a8d4; box-shadow:0 0 0 1px #f9a8d4; }
+        /* 1줄: 기체명 · 순찰 중 · 시작 시각 ··········· 요원 */
         .bb-mm-l1 { display:flex; align-items:baseline; gap:8px; min-width:0; }
         .bb-mm-name {
             flex:0 1 auto; min-width:0; font-size:15px; font-weight:700; color:var(--tx);
@@ -433,10 +460,13 @@
         }
         .bb-mm-st { flex-shrink:0; display:inline-flex; align-items:center; gap:5px; font-size:13px; color:var(--bl); white-space:nowrap; }
         .bb-mm-dot { width:8px; height:8px; border-radius:50%; background:var(--bl); }
+        .bb-mm-since { flex-shrink:0; margin-left:-3px; font-size:12px; color:var(--mu); white-space:nowrap; }
         .bb-mm-staff {
             flex:0 1 auto; min-width:0; max-width:45%; margin-left:auto;
-            font-size:13px; color:var(--mu); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+            font-size:13px; color:var(--tx); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
         }
+        #bb .bb-mm-staff { font-weight:700 !important; }   /* #bb * 의 전역 굵기(450 !important)를 덮어써서 볼드 */
+        #bb.bb-light .bb-mm-staff { color:#000; }           /* 라이트: 검정 (다크는 배경이 어두워 밝은 글자색 유지) */
         /* 2줄: 현재 POI ··········· N분째 미갱신 */
         .bb-mm-l2 { display:flex; align-items:baseline; gap:6px; min-width:0; font-size:13px; }
         .bb-mm-poi { flex:0 1 auto; min-width:0; color:var(--tx); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -451,7 +481,7 @@
 
         /* ── 하단 퀵바: 한 줄에 4개 그룹 (제목 | 켜진 기체 동그라미) ── */
         .bb-quick {
-            display:flex; flex-wrap:nowrap; align-items:stretch; gap:8px;
+            flex-shrink:0; display:flex; flex-wrap:nowrap; align-items:stretch; gap:8px;
             padding:10px 16px 14px; border-top:1px solid var(--bd);
         }
         .bb-qline {
@@ -645,7 +675,7 @@
             --gy:#4b5563;
             --rd:#ef4444; --rd2:rgba(239,68,68,.12); --ye:#fbbf24;
             --or:#f97316; --or2:rgba(249,115,22,.12);
-            --pk:#ec4899; --pk2:rgba(236,72,153,.10);
+            --pk:#ff1493; --pk2:rgba(255,20,147,.10);
             --offdot:#b4b2a9;
             --standby-batt:#98a2ae;
         }  
@@ -655,6 +685,8 @@
             border-bottom:1px solid var(--bd);
             display:flex; justify-content:space-between; align-items:center;
         }
+        .bb-icp-asof { font-size:12px; color:var(--mu); font-weight:400; margin-left:4px; }
+        .bb-icp-hd { cursor:move; }
         .bb-icp-title { font-size:16px; font-weight:900; color:var(--tx); flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .bb-icp-badge {
             font-size:13px; font-weight:900; padding:3px 8px;
@@ -664,7 +696,7 @@
 		.bb-icp-badge.warn     { background:rgba(251,191,36,.15); color:var(--ye); }
 		.bb-icp-badge.crit     { background:rgba(239,68,68,.15);  color:var(--rd); }
 		.bb-icp-badge.patrol   { background:rgba(59,130,246,.15); color:var(--bl); }
-		.bb-icp-badge.deliver  { background:rgba(236,72,153,.15); color:var(--pk); }
+		.bb-icp-badge.deliver  { background:rgba(255,20,147,.15); color:var(--pk); }
 		.bb-icp-badge.standby  { background:rgba(200,204,212,.15); color:#c8ccd4; }
 		.bb-icp-badge.off      { background:rgba(75,85,99,.15);   color:#6b7280; }
         .bb-icp-close {
@@ -722,6 +754,8 @@
                     </div>
                     <button id="bb-wbl-upload-btn" class="bb-up-mini" style="display:none;" title="배터리 데이터 업로드 (CYH 전용)">📤 UP</button>
                 </div>
+                <!-- 제목 아래: 상태 색 범례 -->
+                <div class="bb-legend" id="bb-legend" title="기체 카드의 점 · 하단 동그라미 색 = 기체의 현재 상태"></div>
                 <!-- 우: 동숲 캐릭터 + 버튼 2줄 -->
                 <div class="bb-hd-rightwrap">
                     <div id="bb-walker-wrap">
@@ -753,7 +787,7 @@
                             <button class="bb-btn" id="bb-alertlog-all-btn">📋 알림 로그</button>
                             <div class="bb-si-wrap" id="bb-search-wrap">
                                 <span class="bb-si-icon">🔍</span>
-                                <input class="bb-si" id="bb-si" placeholder="기체명 검색" title="기체명 검색 후 클릭하여 추가" autocomplete="off">
+                                <input class="bb-si" id="bb-si" placeholder="기체를 검색해서 추가하세요" title="기체명을 검색한 뒤 목록에서 클릭하면 추가됩니다" autocomplete="off">
                                 <div id="bb-dd"></div>
                             </div>
                         </div>
@@ -783,8 +817,10 @@
             <div class="bb-body">
                 <div class="bb-main">
                     <div class="bb-list-wrap">
+                      <div class="bb-lists">
                         <div class="bb-fav" id="bb-fav" title="즐겨찾기 — 여기에 끌어다 놓은 기체는 이 영역 안에서만 정렬됩니다"></div>
                         <div class="bb-list" id="bb-list"></div>
+                      </div>
                     </div>
 
                     <!-- 하단 퀵바: 역삼 | 송도 | 성수 | 삼평/서현 (켜진 기체만, 한 줄) -->
@@ -918,6 +954,18 @@
         charging:'var(--gn)', patrolling:'var(--bl)', standby:'var(--standby-batt)',
         off:'var(--offdot)', delivering:'var(--pk)', docking:'var(--ye)',
     };
+
+    // 제목 아래 범례 — STL(이름) / STATUS_AC(색)과 같은 값을 써서 실제 화면 색과 항상 일치
+    (function renderLegend() {
+        const el = document.getElementById('bb-legend');
+        if (!el) return;
+        ['charging', 'patrolling', 'delivering', 'standby', 'docking', 'off'].forEach(k => {
+            const item = document.createElement('span'); item.className = 'bb-legend-item';
+            const dot = document.createElement('i');   dot.className = 'bb-legend-dot'; dot.style.background = STATUS_AC[k];
+            item.append(dot, document.createTextNode(STL[k]));
+            el.appendChild(item);
+        });
+    })();
 
     // 하단 퀵바 그룹 — keywords가 기체명에 포함되면 해당 그룹. 켜진 기체만 표시됨.
     const MONITOR_GROUPS = [
@@ -1448,7 +1496,7 @@
         isOpen = false;
         document.getElementById('bb').classList.remove('open');
         document.getElementById('bb-alert-panel').classList.remove('open');
-        document.getElementById('bb-info-card-panel').classList.remove('open');
+        // (기체 정보 창은 보드를 닫아도 유지 — 창의 ✕ 로만 닫음)
         if (rmMode) { rmMode = false; rmSet.clear(); updateRmUI(); }
         hideDd();
     }
@@ -1551,7 +1599,8 @@
     // ============================================================
     // SECTION 9. 기체 리스트 렌더 (통합 그리드: 한 줄 = 기체 1대)
     // ============================================================
-    const LIST_COLS = 3;   // CSS(.bb-list)의 열 수와 맞출 것 (4열 중 1열은 즐겨찾기)
+    const LIST_COLS = 2;   // CSS(.bb-list)의 열 수와 맞출 것 (4열 중 2열은 즐겨찾기)
+    const FAV_COLS  = 2;   // CSS(.bb-fav)의 열 수와 맞출 것
 
     // 예전 고정 그리드 사이트의 기체를 ids 앞쪽에 편입 (이미 있는 기체는 건너뜀)
     function prependLegacyFixed() {
@@ -1580,6 +1629,7 @@
         const robots    = pick(ids);
 
         fav.replaceChildren(...favRobots.map(r => makeRow(r, true)));   // 비면 :empty 안내 문구가 보임
+        fav.style.gridTemplateRows = favRobots.length ? `repeat(${Math.ceil(favRobots.length / FAV_COLS)}, auto)` : '';
 
         list.innerHTML = '';
         if (robots.length === 0) {
@@ -1605,7 +1655,7 @@
         const showPlug = r.status !== 'patrolling' && r.status !== 'delivering' && !!r.raw?.robotStatus?.isWiredChargerConnected;
 
         const row = document.createElement('div');
-        row.className = `bb-row${lowBat ? ' warn-bat' : ''}${rmMode ? ' selectable' : ''}${rmSet.has(r.id) ? ' selected' : ''}`;
+        row.className = `bb-row${r.status === 'delivering' ? ' delivering' : ''}${lowBat ? ' warn-bat' : ''}${rmMode ? ' selectable' : ''}${rmSet.has(r.id) ? ' selected' : ''}`;
         row.dataset.id = r.id;
         row.dataset.fav = isFav ? '1' : '';
         row.title = `${r.name} | ${STL[r.status] || ''}`;
@@ -2504,7 +2554,13 @@
         const bodyEl  = document.getElementById('bb-icp-body');
 
         panel.classList.remove('search-mode');
+        badgeEl.style.display = '';   // 검색 모드에서 숨겨 둔 배지 복구
         titleEl.textContent = r.name;
+        const asof = document.createElement('span');   // 창이 오래 열려 있어도 언제 기준 정보인지 알 수 있게
+        asof.className = 'bb-icp-asof';
+        const _n = new Date(), _p = x => String(x).padStart(2, '0');
+        asof.textContent = ` ${_p(_n.getHours())}:${_p(_n.getMinutes())}:${_p(_n.getSeconds())} 조회`;
+        titleEl.appendChild(asof);
 
         // 이상 판단
         const cpu  = rs.cpuUsage ?? 0;
@@ -2730,27 +2786,11 @@
         });
         }
 
-        let _infoPanelCloseHandler = null;
         function closeInfoCardPanel() {
             document.getElementById('bb-info-card-panel').classList.remove('open');
         }
-        function registerInfoPanelClose() {
-            const panel = document.getElementById('bb-info-card-panel');
-            if (_infoPanelCloseHandler) {
-                document.removeEventListener('mousedown', _infoPanelCloseHandler);
-                _infoPanelCloseHandler = null;
-            }
-            setTimeout(() => {
-                _infoPanelCloseHandler = function closeInfo(e) {
-                    if (!panel.contains(e.target)) {
-                        closeInfoCardPanel();
-                        document.removeEventListener('mousedown', _infoPanelCloseHandler);
-                        _infoPanelCloseHandler = null;
-                    }
-                };
-                document.addEventListener('mousedown', _infoPanelCloseHandler);
-            }, 100);
-        }
+        // 예전에는 창 바깥을 누르면 닫혔지만, 보드를 닫아도 창이 남아 여러 대를 이어서 볼 수 있도록 ✕ 로만 닫히게 함
+        function registerInfoPanelClose() {}
 
         function openInfoSearchMode() {
             const panel   = document.getElementById('bb-info-card-panel');
@@ -2982,6 +3022,30 @@
         closeInfoCardPanel();
     });
 
+    // ── 기체 정보 창 이동: 헤더를 잡고 끌기 (창이 계속 떠 있으므로 원하는 곳으로 옮겨 둘 수 있게)
+    (function() {
+        const panel = document.getElementById('bb-info-card-panel');
+        const hd = panel.querySelector('.bb-icp-hd');
+        let drag = null;
+        hd.addEventListener('mousedown', e => {
+            if (e.target.closest('#bb-icp-close, button, input')) return;
+            const r = panel.getBoundingClientRect();
+            panel.style.left = r.left + 'px';
+            panel.style.top = r.top + 'px';
+            panel.style.transform = 'none';   // 중앙 정렬(translate) 해제 후 px 좌표로 이동
+            drag = { dx: e.clientX - r.left, dy: e.clientY - r.top };
+            e.preventDefault();
+        });
+        document.addEventListener('mousemove', e => {
+            if (!drag) return;
+            const x = Math.max(0, Math.min(window.innerWidth - panel.offsetWidth, e.clientX - drag.dx));
+            const y = Math.max(0, Math.min(window.innerHeight - 60, e.clientY - drag.dy));   // 헤더는 항상 화면 안에
+            panel.style.left = x + 'px';
+            panel.style.top = y + 'px';
+        });
+        document.addEventListener('mouseup', () => { drag = null; });
+    })();
+
     // ── "by CYH" 5회 연속 클릭(2초 이내) → 이 PC를 제작자(CYH) PC로 표시 ──
     (function() {
         const tag = document.getElementById('bb-cyh-tag');
@@ -3174,7 +3238,6 @@
             '시간으로 쌓은 관계는 계속 생각나는 법이야.',
             '오해가 있으면 풀면 되지',
             '우리 나이엔 건강부터 챙겨야지.',
-            '현철님은 매크로도 이겨...',
 			'동Zlㄴ 늼!',
             '인생이 치킨인 것인가, 치킨이 인생인 것인가',
             '외계인이 어딨냐고? 저기 있잖아. 달.',
@@ -3512,66 +3575,67 @@
     let _patrolSig = null;
     let _patrolLastUpdated = null;
 
-    // ── 기체별 POI 미갱신 허용 시간(분) ──────────────────────────────
-    // 키 = patrol_watch_live.json 의 robot(짧은 이름). 이 시간 이상 POI 가 안 바뀌면 "N분째 POI 미갱신" + 주황 점멸.
-    // 숫자만 고치면 즉시 반영된다. (오른쪽 주석 = 원래 기체명)
-    const PATROL_STALE_LIMIT_MIN = {
-        '용인 고진': 10,   // 용인 고진역 힐스테이트 1호기
-        '경희대 1':  5,   // 경희대학교 국제캠퍼스 1호기
-        '경희대 2':  5,   // 경희대학교 국제캠퍼스 2호기
-        '성남 판교': 10,   // 성남시 판교역 1호기
-        '성남 서현':  5,   // 성남시 서현역 １호기
-        '성남 율동': 10,   // 성남시 율동공원 1호기
-        '성남 야탑': 10,   // 성남시 야탑역 1호기
-        '부산 호반 1': 10,   // 부산 EDC 호반써밋 1호기
-        '부산 호반 2': 10,   // 부산 EDC 호반써밋 2호기
-        '부산 수자인 1': 10,   // 부산 EDC 수자인 1호기
-        '부산 수자인 2': 10,   // 부산 EDC 수자인 2호기
-        '파주':  5,   // 파주 디에트르더클래스 1호기
-        '리센츠 1': 15,   // 잠실 리센츠 아파트 1호기
-        '리센츠 2': 15,   // 잠실 리센츠 아파트 2호기
-        '평택 1':  5,   // 평택고덕 디에트르 1호기
-        '평택 2':  5,   // 평택고덕 디에트르 2호기
-        '부산 서면':  5,   // 부산 서면비스타동원 1호기
-        '부천 위브': 15,   // 부천 위브 1호기
-        '잠실 레이크': 15,   // 잠실 레이크팰리스 1호기
-        '엘스 1': 15,   // 잠실 엘스 아파트 1호기
-        '엘스 2': 15,   // 잠실 엘스 아파트 2호기
-        '인력개발원': 15,   // 삼성인력개발원 1호기
-        '고양 래미안': 10,   // 고양 래미안 휴레스트 1호기
-        '창원대 1': 15,   // 창원대학교 1호기
-        '창원대 2': 15,   // 창원대학교 2호기
-        '한성대': 15,   // 한성대학교 1호기
-        '김포 풍무':  5,   // 김포풍무센트럴푸르지오 1호기
-        '강남 래미안': 10,   // 강남 래미안블레스티지 1호기
-        '김포 1': 10,   // 김포 캐슬앤파밀리에 1호기
-        '김포 2': 10,   // 김포 캐슬앤파밀리에 2호기
-        '지제': 15,   // 지제역 푸르지오엘리아츠 1호기
-        '부경대': 10,   // 부경대 1호기 · 부경대 2호기
-        'DMZ':  5,   // DMZ 캠프 그리브스 1호기
-        '쉴더스': 10,   // 롯데마트부산CFC(쉴더스) 1호기
-        '두루아이 3':  5,   // 두루아이 3호기
-        '두루아이 4':  5,   // 두루아이 4호기
-        '두루아이 5':  5,   // 두루아이 5호기
-        '중앙대': 15,   // 중앙대학교 1호기 · 두루아이 2호기
-        '잠실 르엘': 10,   // 잠실 르엘 1호기
-        '신동백': 15,   // 신동백 롯데캐슬 에코1단지 1호기
-        '청담 르엘': 10,   // 청담르엘 1호기
-        '전주천': 10,   // 전주시 전주천 1호기
-        '인재개발원': 10,   // 인재개발원 1호기
-        '아주대 1': 15,   // 아주대학교 1호기
-        '아주대 2': 15,   // 아주대학교 2호기
-        '서강대': 10,   // 서강대학교 1호기
-        '광교 풍경채': 15,   // 광교 풍경채 1호기 · 광교풍경채(대체 기체) 1호기
-        '동백SK': 10,   // 동백SK아펠바움 1차 1호기
-        '구리 롯데캐슬': 10,   // 구리역 롯데캐슬 시그니처 1호기
-        '동대문구 회기동': 10,   // 동대문구회기동 1호기(쉴드플러스)
-        '더샵남천': 10,   // 더샵남천프레스티지 1호기
-        '장애인고용공단 1': 10,   // 한국장애인고용공단 1호기
-        '장애인고용공단 2': 10,   // 한국장애인고용공단 2호기
-        '양원LH':  5,   // 서울 양원 LH 1단지 1호기
-        '덕수궁': 10,   // 덕수궁 1호기
-        '순천향': 10,   // 순천향대학교 1호기
+    // ── 기체 표: 간소화명(patrol_watch_live.json 의 robot) → 허용 시간 + 전체 기체명 ──────────────
+    //  min  = 이 시간(분) 이상 POI 가 안 바뀌면 "N분째 POI 미갱신" + 주황 점멸. 숫자만 고치면 즉시 반영된다.
+    //  full = NCC 기체명(전체). 다중 모니터링 카드를 눌렀을 때 기체 정보 창을 여는 매칭에 쓴다.
+    //         (같은 간소화명을 쓰는 기체가 여럿이면 배열 — 예: 부경대 1·2호기)
+    const PATROL_UNITS = {
+        '용인 고진': { min: 10, full: '용인 고진역 힐스테이트 1호기' },
+        '경희대 1': { min:  5, full: '경희대학교 국제캠퍼스 1호기' },
+        '경희대 2': { min:  5, full: '경희대학교 국제캠퍼스 2호기' },
+        '성남 판교': { min: 10, full: '성남시 판교역 1호기' },
+        '성남 서현': { min:  5, full: '성남시 서현역 １호기' },
+        '성남 율동': { min: 10, full: '성남시 율동공원 1호기' },
+        '성남 야탑': { min: 10, full: '성남시 야탑역 1호기' },
+        '부산 호반 1': { min: 10, full: '부산 EDC 호반써밋 1호기' },
+        '부산 호반 2': { min: 10, full: '부산 EDC 호반써밋 2호기' },
+        '부산 수자인 1': { min: 10, full: '부산 EDC 수자인 1호기' },
+        '부산 수자인 2': { min: 10, full: '부산 EDC 수자인 2호기' },
+        '파주': { min:  5, full: '파주 디에트르더클래스 1호기' },
+        '리센츠 1': { min: 15, full: '잠실 리센츠 아파트 1호기' },
+        '리센츠 2': { min: 15, full: '잠실 리센츠 아파트 2호기' },
+        '평택 1': { min:  5, full: '평택고덕 디에트르 1호기' },
+        '평택 2': { min:  5, full: '평택고덕 디에트르 2호기' },
+        '부산 서면': { min:  5, full: '부산 서면비스타동원 1호기' },
+        '부천 위브': { min: 15, full: '부천 위브 1호기' },
+        '잠실 레이크': { min: 15, full: '잠실 레이크팰리스 1호기' },
+        '엘스 1': { min: 15, full: '잠실 엘스 아파트 1호기' },
+        '엘스 2': { min: 15, full: '잠실 엘스 아파트 2호기' },
+        '인력개발원': { min: 15, full: '삼성인력개발원 1호기' },
+        '고양 래미안': { min: 10, full: '고양 래미안 휴레스트 1호기' },
+        '창원대 1': { min: 15, full: '창원대학교 1호기' },
+        '창원대 2': { min: 15, full: '창원대학교 2호기' },
+        '한성대': { min: 15, full: '한성대학교 1호기' },
+        '김포 풍무': { min:  5, full: '김포풍무센트럴푸르지오 1호기' },
+        '강남 래미안': { min: 10, full: '강남 래미안블레스티지 1호기' },
+        '김포 1': { min: 10, full: '김포 캐슬앤파밀리에 1호기' },
+        '김포 2': { min: 10, full: '김포 캐슬앤파밀리에 2호기' },
+        '지제': { min: 15, full: '지제역 푸르지오엘리아츠 1호기' },
+        '부경대': { min: 10, full: ['부경대 1호기', '부경대 2호기'] },
+        'DMZ': { min:  5, full: 'DMZ 캠프 그리브스 1호기' },
+        '쉴더스': { min: 10, full: '롯데마트부산CFC(쉴더스) 1호기' },
+        '두루아이 3': { min:  5, full: '두루아이 3호기' },
+        '두루아이 4': { min:  5, full: '두루아이 4호기' },
+        '두루아이 5': { min:  5, full: '두루아이 5호기' },
+        '중앙대': { min: 15, full: ['중앙대학교 1호기', '두루아이 2호기'] },
+        '잠실 르엘': { min: 10, full: '잠실 르엘 1호기' },
+        '신동백': { min: 15, full: '신동백 롯데캐슬 에코1단지 1호기' },
+        '청담 르엘': { min: 10, full: '청담르엘 1호기' },
+        '전주천': { min: 10, full: '전주시 전주천 1호기' },
+        '인재개발원': { min: 10, full: '인재개발원 1호기' },
+        '아주대 1': { min: 15, full: '아주대학교 1호기' },
+        '아주대 2': { min: 15, full: '아주대학교 2호기' },
+        '서강대': { min: 10, full: '서강대학교 1호기' },
+        '광교 풍경채': { min: 15, full: ['광교 풍경채 1호기', '광교풍경채(대체 기체) 1호기'] },
+        '동백SK': { min: 10, full: '동백SK아펠바움 1차 1호기' },
+        '구리 롯데캐슬': { min: 10, full: '구리역 롯데캐슬 시그니처 1호기' },
+        '동대문구 회기동': { min: 10, full: '동대문구회기동 1호기(쉴드플러스)' },
+        '더샵남천': { min: 10, full: '더샵남천프레스티지 1호기' },
+        '장애인고용공단 1': { min: 10, full: '한국장애인고용공단 1호기' },
+        '장애인고용공단 2': { min: 10, full: '한국장애인고용공단 2호기' },
+        '양원LH': { min:  5, full: '서울 양원 LH 1단지 1호기' },
+        '덕수궁': { min: 10, full: '덕수궁 1호기' },
+        '순천향': { min: 10, full: '순천향대학교 1호기' },
     };
 
     // POI 구간별 예외: 해당 POI 에 있는 동안(이동 중 · 도착 모두)만 기본값 대신 이 시간을 적용
@@ -3584,7 +3648,7 @@
 
     // 표에 없는 기체는 허용 시간을 알 수 없으므로 Worker 가 낸 status(anomaly) 를 그대로 따른다.
     function patrolLimitMin(robot, poi, poiText) {
-        const base = PATROL_STALE_LIMIT_MIN[robot];
+        const base = PATROL_UNITS[robot]?.min;
         if (base === undefined) return undefined;
         const ov = PATROL_STALE_POI_OVERRIDE_MIN[robot];
         if (ov) {
@@ -3595,14 +3659,14 @@
         return base;
     }
 
-    // poi_text → { poi: 현재 POI명, act: 이동 중/도착/복귀 중 }
+    // poi_text → { poi: 현재 POI명, act: 이동 중/도착/복귀 중, unit: 기체 전체 이름(있을 때) }
     //  예) "[사이트][기체] [명덕동 코스5]로 이동합니다."  → { poi:'명덕동 코스5', act:'이동 중' }
     //      "[[SK쉴더스] 순천향대학교][순천향대학교 1호기] 대기장소에 도착했어요." → { poi:'대기장소', act:'도착' }
     //      "(아직 POI 갱신 없음)" → { poi:'아직 POI 갱신 없음', act:'' }
     function patrolParsePoi(text) {
         const raw = (text || '').trim();
-        if (!raw) return { poi: '', act: '' };
-        if (/^\(.*\)$/.test(raw)) return { poi: raw.slice(1, -1), act: '' };
+        if (!raw) return { poi: '', act: '', unit: '' };
+        if (/^\(.*\)$/.test(raw)) return { poi: raw.slice(1, -1), act: '', unit: '' };
 
         // 앞쪽 최상위 [ ] 묶음 최대 3개 = 사이트 / 기체 / POI (중첩 괄호 대응)
         let i = 0;
@@ -3633,7 +3697,7 @@
         if (/이동/.test(tail)) act = '이동 중';
         else if (/도착/.test(tail)) act = '도착';
         else if (/복귀/.test(tail)) act = '복귀 중';
-        return { poi: poi.replace(/[.\s]+$/, ''), act };
+        return { poi: poi.replace(/[.\s]+$/, ''), act, unit: groups[1] || '' };   // unit = 메시지의 [기체 전체 이름]
     }
 
     // records → 표시용 카드 (이상 우선, 이후 이름순)
@@ -3664,12 +3728,36 @@
                     anomaly, stale,
                     poi: p.poi || r.poi_text || '-',
                     act: p.act,
-                    tip: `${r.robot} | 시작 ${r.start_hhmm || '-'} | ${r.poi_text || ''}` + (limit !== undefined ? ` | 허용 ${limit}분` : ''),
+                    unit: p.unit,
+                    start: r.start_hhmm || '',   // 순찰 시작 시각 (Worker 의 start_hhmm)
+                    tip: `${r.robot} | 시작 ${r.start_hhmm || '-'} | ${r.poi_text || ''}` + (limit !== undefined ? ` | 허용 ${limit}분` : '') + ' | 클릭: 기체 정보',
                 };
             })
             .sort((a, b) =>
                 (b.anomaly - a.anomaly) ||
                 (a.anomaly ? b.stale - a.stale : a.robot.localeCompare(b.robot, 'ko', { numeric: true })));
+    }
+
+    // ── 카드 → NCC 기체(DB) 매칭 ─────────────────────────────────────
+    const normName = n => String(n || '').normalize('NFKC').replace(/\s+/g, ' ').trim();   // 전각 '１호기' 등도 같게 취급
+
+    function findPatrolRobot(c) {
+        const byName = new Map(DB.map(r => [normName(r.name), r]));
+        // 1) POI 메시지에 들어 있는 기체 전체 이름 (같은 간소화명을 쓰는 기체도 정확히 구분됨)
+        if (c.unit) {
+            const hit = byName.get(normName(c.unit));
+            if (hit) return hit;
+        }
+        // 2) 하드코딩 표: 간소화명 → 전체 기체명
+        const found = [].concat(PATROL_UNITS[c.robot]?.full || []).map(f => byName.get(normName(f))).filter(Boolean);
+        if (found.length <= 1) return found[0] || null;
+        return found.find(r => r.status === 'patrolling') || found[0];   // 후보가 여럿이면 순찰 중인 기체 우선
+    }
+
+    function openPatrolRobotInfo(c) {
+        const r = findPatrolRobot(c);
+        if (!r) { flashPatrolNotice(`⚠ "${c.robot}" 기체를 기체 목록에서 찾지 못했습니다`); return; }
+        openInfoCardPanel(r);
     }
 
     function renderPatrolCards(cards) {
@@ -3693,6 +3781,7 @@
             l1.append(
                 mk('span', 'bb-mm-name', c.robot),
                 st,
+                ...(c.start ? [mk('span', 'bb-mm-since', `${c.start}부터`)] : []),   // 예: 22:35부터 (순찰 중 옆)
                 mk('span', 'bb-mm-staff', c.staff.length ? c.staff.join('·') : '담당 없음')
             );
 
@@ -3703,18 +3792,38 @@
             if (c.anomaly) l2.append(mk('span', 'bb-mm-stale', `${c.stale}분째 POI 미갱신`));
 
             el.append(l1, l2);
+            el.addEventListener('click', () => openPatrolRobotInfo(c));   // 클릭 → 기체 정보 창
             frag.appendChild(el);
         });
         body.replaceChildren(frag);   // 카드가 없으면 body 가 비어 빈 상태 문구(:empty)가 자동 표시됨
     }
 
-    function setPatrolStatus(text, warn) {
+    let _patrolStatus = { text: '불러오는 중…', warn: false };
+    let _patrolFlashTimer = null;
+    function paintPatrolStatus(text, warn) {
         const sub = document.getElementById('bb-mm-sub');
         if (sub) { sub.textContent = text; sub.classList.toggle('warn', !!warn); }
     }
+    function setPatrolStatus(text, warn) {
+        _patrolStatus = { text, warn: !!warn };
+        if (!_patrolFlashTimer) paintPatrolStatus(text, warn);   // 안내 문구가 떠 있는 동안은 끝난 뒤 최신 상태로 복구
+    }
+    function flashPatrolNotice(msg) {   // 잠깐(3초) 보였다가 원래 상태 문구로 복구
+        paintPatrolStatus(msg, true);
+        clearTimeout(_patrolFlashTimer);
+        _patrolFlashTimer = setTimeout(() => {
+            _patrolFlashTimer = null;
+            paintPatrolStatus(_patrolStatus.text, _patrolStatus.warn);
+        }, 3000);
+    }
     function setPatrolTitle(count) {
         const t = document.getElementById('bb-mm-title');
-        if (t) t.textContent = `다중 모니터링 기체 ${count}대`;
+        if (!t) return;
+        t.textContent = '';
+        const n = document.createElement('span');
+        n.className = 'bb-mm-count';   // 대수만 빨간색
+        n.textContent = `${count}대`;
+        t.append('다중 모니터링 기체 ', n);
     }
 
     async function refreshPatrolLive() {
