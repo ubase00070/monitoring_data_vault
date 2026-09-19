@@ -1,5 +1,5 @@
 /* ============================================================
-   battery_board.js v3.7 (즐겨찾기 · 헤더 재배치 · 알림 버튼)
+   battery_board.js v3.8 (헤더 2줄 · 동숲 캐릭터 · 백업 팝업)
    NCC 종합 모니터 — 템퍼몽키 inject
    ============================================================ */
 
@@ -108,7 +108,7 @@
             flex-shrink:0; position:relative; gap:3px;
         }
         .bb-hd-titlebox {
-            display:inline-flex; flex-direction:column; align-items:center; gap:3px;
+            position:relative; display:inline-flex; flex-direction:column; align-items:center; gap:3px;
             padding:7px 28px 6px; border-radius:12px;
             border:2.5px solid transparent;
             background-image: linear-gradient(var(--bg), var(--bg)), linear-gradient(135deg, rgba(99,102,241,.7), rgba(236,72,153,.7));
@@ -125,8 +125,85 @@
         .bb-hd-time { display:flex; align-items:baseline; gap:8px; }
         .bb-clock { font-family:'Lato',monospace; font-size:13px; font-weight:900; color:var(--mu); letter-spacing:.8px; }
         .bb-ref   { font-size:12px; color:var(--mu); font-weight:700; }
-        .bb-hd-right { position:absolute; right:14px; top:50%; transform:translateY(-50%); display:flex; flex-direction:column; align-items:flex-end; gap:6px; z-index:500; }
-        .bb-hd-right-row { display:flex; align-items:center; justify-content:flex-end; gap:6px; }
+        /* 헤더 우측 = [동숲 캐릭터] + [버튼 2줄]. 캐릭터가 버튼 폭에 밀려 겹치지 않도록 한 묶음(flex)으로 배치 */
+        .bb-hd-rightwrap {
+            position:absolute; right:14px; top:50%; transform:translateY(-50%);
+            display:flex; align-items:center; gap:10px; z-index:500;
+        }
+        .bb-hd-right { position:relative; display:flex; flex-direction:column; align-items:stretch; gap:6px; }
+        .bb-hd-right-row { display:flex; align-items:center; gap:6px; }
+        .bb-hd-right-row.spread { justify-content:space-between; }   /* 1줄: 테마 버튼(좌) ··· 정보/백업/복원/✕(우) */
+        .bb-hd-grp { display:flex; align-items:center; gap:6px; }
+
+        /* UP: CYH 전용이라 "by CYH" 아래 타이틀 박스 테두리에 아주 작게 얹어 둠 (CYH 모드일 때만 보임) */
+        .bb-up-mini {
+            position:absolute; right:16px; bottom:-9px; z-index:1;
+            height:16px; padding:0 6px; border-radius:5px; border:1px solid var(--bd2);
+            background:var(--sur2); color:var(--mu); font-size:10px; line-height:1; font-family:inherit;
+            display:inline-flex; align-items:center; cursor:pointer;
+        }
+        .bb-up-mini:hover { color:var(--tx); border-color:var(--mu); }
+
+        /* 목록 백업/복원 팝업 */
+        #bb-bk-pop {
+            display:none; position:absolute; top:100%; right:0; margin-top:8px; z-index:600;
+            padding:8px 10px 10px; border-radius:10px;
+            background:var(--bg); border:2px solid var(--bd2); box-shadow:0 8px 24px rgba(0,0,0,.45);
+        }
+        #bb-bk-pop.open { display:block; }
+        .bb-bk-title { font-size:13px; font-weight:900; color:var(--tx); margin-bottom:7px; white-space:nowrap; }
+        .bb-bk-btns { display:flex; gap:6px; }
+        .bb-bk-name { min-width:64px; }
+
+        /* 동숲 캐릭터 (헤더 우측, 버튼 묶음 왼쪽) — 캐릭터 선택/저장은 예전 그대로, 캠핑장 배경만 제외 */
+        #bb-walker-wrap { position:relative; flex:0 0 auto; width:100px; height:100px; }
+        #bb-walker {
+            width:100%; height:100%;
+            background-size:contain; background-repeat:no-repeat; background-position:center bottom;
+            cursor:pointer; transition:transform .15s;
+        }
+        #bb-walker:active { transform:scale(0.92); }
+        .bb-walker-arrow {
+            position:absolute; top:50%; transform:translateY(-50%);
+            width:22px; height:22px; border-radius:50%;
+            background:rgba(20,20,22,.55); border:1px solid rgba(255,255,255,.2);
+            color:#fff; font-size:15px; font-weight:900; line-height:1; padding:0;
+            display:flex; align-items:center; justify-content:center;
+            cursor:pointer; z-index:2;
+            opacity:0; transition:opacity .15s, background .15s;
+        }
+        #bb-walker-wrap:hover .bb-walker-arrow, #bb-walker-wrap:hover #bb-walker-toggle { opacity:1; }
+        .bb-walker-arrow.left  { left:0; }
+        .bb-walker-arrow.right { right:0; }
+        .bb-walker-arrow:hover { background:rgba(20,20,22,.85); }
+        .bb-walker-arrow:active { transform:translateY(-50%) scale(0.9); }
+        #bb-walker-toggle {
+            position:absolute; top:0; right:0; min-width:34px; height:20px; padding:0 6px;
+            border-radius:6px; background:var(--sur2); border:1px solid var(--bd2);
+            color:var(--tx); font-size:11px; font-weight:900; cursor:pointer;
+            display:flex; align-items:center; justify-content:center;
+            z-index:2; opacity:0; transition:opacity .15s, background .15s, color .15s;
+        }
+        #bb-walker-toggle:hover { border-color:var(--mu); }
+        #bb-walker-toggle.off { opacity:1; color:var(--rd); border-color:rgba(239,68,68,.3); background:rgba(239,68,68,.1); }
+        /* 말풍선: 캐릭터 아래로 뜸(클릭하면 켜짐/꺼짐). 클릭을 가로채지 않도록 pointer-events:none */
+        #bb-walker-bubble {
+            position:absolute; top:calc(100% + 8px); left:50%; transform:translateX(-50%);
+            width:250px; min-height:50px; box-sizing:border-box;
+            background:#fdf6e3; border-radius:20px; padding:10px 18px;
+            font-size:15px; color:#5c4a2a; font-weight:700; line-height:1.4;
+            box-shadow:0 4px 12px rgba(0,0,0,.35);
+            z-index:3; display:none; pointer-events:none;
+            font-family:'Paperlogy','Lato',-apple-system,sans-serif; -webkit-text-stroke:0;
+        }
+        #bb-walker-bubble.open { display:block; }
+        #bb-walker-bubble::after {
+            content:''; position:absolute; top:-13px; left:50%; transform:translateX(-50%);
+            width:0; height:0;
+            border-left:8px solid transparent; border-right:8px solid transparent;
+            border-bottom:14px solid #fdf6e3;
+        }
+        #bb-walker-bubble b { font-weight:900; color:#a8460c; }
 
         .bb-btn {
             height:32px; padding:0 12px; border-radius:6px; border:1px solid var(--bd2);
@@ -161,6 +238,7 @@
             position:absolute; left:14px; top:50%; transform:translateY(-50%);
             width:680px; box-sizing:border-box; padding:3px; overflow:hidden;
         }
+        .bb-alert-label { font-size:16px; font-weight:900; color:var(--tx); white-space:nowrap; padding:0 2px 5px; }
         .bb-alert-chips { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; }
         .bb-chip {   /* 가로로 긴 한 줄 버튼: [아이콘 종류 N건  ··· 기체명] */
             display:flex; align-items:center; gap:10px; min-width:0;
@@ -198,7 +276,7 @@
         /* 검색 */
         .bb-si-wrap { position:relative; }
         .bb-si {
-            width:26.5ch; max-width:100%; background:var(--sur2); border:1px solid var(--bd2);
+            width:14.5ch; max-width:100%; background:var(--sur2); border:1px solid var(--bd2);
             border-radius:7px; padding:6px 10px 6px 26px;
             color:var(--tx); font-size:14px; outline:none; font-family:inherit;
         }
@@ -206,7 +284,7 @@
         .bb-si::placeholder { color:var(--mu); }
         .bb-si-icon { position:absolute; left:8px; top:50%; transform:translateY(-50%); font-size:14px; color:var(--mu); pointer-events:none; }
         #bb-dd {
-            position:absolute; top:calc(100% + 4px); left:0; right:0;
+            position:absolute; top:calc(100% + 4px); right:0; width:300px;   /* 입력창은 좁아도 목록은 넓게 */
             background:var(--sur2); border:1px solid var(--bd2);
             border-radius:8px; overflow:hidden;
             box-shadow:0 8px 24px rgba(0,0,0,.7); z-index:99999999; display:none;
@@ -272,15 +350,15 @@
             background:var(--sur); border:1.5px solid var(--bd);
             cursor:grab;
             user-select:none;
-            transition:border-color .15s, background .15s, opacity .15s;
+            transition:border-color .15s, box-shadow .15s, background .15s, opacity .15s;
         }
-        .bb-row:hover { border-color:var(--mu); }
+        .bb-row:hover { border-color:#f9a8d4; box-shadow:0 0 0 1px #f9a8d4; }   /* 연핑크, 1.5px → 약 2.5px */
         .bb-row:active { cursor:grabbing; }
         .bb-row.warn-bat { animation:bb-warnBlink .8s infinite; }
         .bb-row.dragging { opacity:.3; }
         .bb-row.dragover { border-color:var(--bl)!important; box-shadow:0 0 0 1px var(--bl); }
         .bb-row.selectable { cursor:pointer; }
-        .bb-row.selectable:hover { border-color:rgba(239,68,68,.5); background:rgba(239,68,68,.04); }
+        .bb-row.selectable:hover { border-color:rgba(239,68,68,.5); background:rgba(239,68,68,.04); box-shadow:0 0 0 1px rgba(239,68,68,.5); }
         .bb-row.selected { border-color:var(--rd)!important; background:var(--rd2)!important; }
         .bb-row.selected::after {
             content:'✕'; position:absolute; top:50%; left:50%;
@@ -404,79 +482,13 @@
         .bb-mi.standby    { --ac:#c8ccd4; }
         .bb-mi.docking    { --ac:var(--ye); }
 
-        /* [주석처리: 기타 배달 / 동숲] — 필요 시 이 주석만 풀면 복구
+        /* [주석처리: 기타 배달] — 필요 시 이 주석만 풀면 복구
         [ 기타 배달 ]
         .bb-delivery-area {
 			flex:1; display:flex; flex-direction:column; min-height:0;
 			position:relative; border-radius:8px; overflow:hidden;
 			background-size:cover; background-position:center;
 		}
-		#bb-walker-wrap {
-			position:absolute;
-			bottom:4px; right:-4px;
-			width:145px; height:145px;
-			z-index:1;
-		}
-		#bb-walker {
-			width:100%; height:100%;
-			background-size:contain;
-			background-repeat:no-repeat;
-			background-position:center;
-			cursor:pointer;
-			transition:transform .15s;
-		}
-		#bb-walker:active { transform:scale(0.92); }
-
-		.bb-walker-arrow {
-			position:absolute; top:50%; transform:translateY(-50%);
-			width:25px; height:25px; border-radius:50%;
-			background:rgba(20,20,22,.55); border:1px solid rgba(255,255,255,.2);
-			color:#fff; font-size:16px; font-weight:900; line-height:1; padding:0;
-			display:flex; align-items:center; justify-content:center;
-			cursor:pointer; z-index:2;
-			opacity:0; transition:opacity .15s, background .15s;
-		}
-		#bb-walker-wrap:hover .bb-walker-arrow { opacity:1; }
-		.bb-walker-arrow.left  { left:2px; }
-		.bb-walker-arrow.right { right:2px; }
-		.bb-walker-arrow:hover { background:rgba(20,20,22,.85); }
-		.bb-walker-arrow:active { transform:translateY(-50%) scale(0.9); }
-
-		#bb-walker-bubble {
-			position:absolute; top:6px; left:190px; width:250px; min-height:50px;
-			background:#fdf6e3; border-radius:20px; padding:10px 18px;
-			font-size:16px; color:#5c4a2a; font-weight:700; line-height:1.4;
-			box-shadow:0 4px 12px rgba(0,0,0,.35);
-			z-index:3; display:none;
-			font-family:'Paperlogy','Lato',-apple-system,sans-serif; -webkit-text-stroke:0;
-		}
-		#bb-walker-bubble.open { display:block; }
-		#bb-walker-bubble::after {
-			content:''; position:absolute; top:50%; right:-13px; transform:translateY(-50%);
-			width:0; height:0;
-			border-top:8px solid transparent;
-			border-bottom:8px solid transparent;
-			border-left:14px solid #fdf6e3;
-		}
-		#bb-walker-bubble b {
-			font-weight:900;      [ 본문(700)보다 한 단계 더 굵게 ]
-			color:#a8460c;        [ 색까지 살짝 다르게 줘서 구분 ]
-		}
-
-        #bb-walker-toggle {
-            position:absolute; top:6px; right:8px;
-            min-width:38px; height:22px; padding:0 7px;
-            border-radius:6px;
-            background:var(--sur2); border:1px solid var(--bd2);
-            color:var(--tx); font-size:12px; font-weight:900; cursor:pointer;
-            display:flex; align-items:center; justify-content:center;
-            z-index:2; transition:background .15s, color .15s;
-        }
-        #bb-walker-toggle:hover { border-color:var(--mu); }
-        #bb-walker-toggle.off {
-            color:var(--rd); border-color:rgba(239,68,68,.3); background:rgba(239,68,68,.1);
-        }
-		
         .bb-delivery-title {
             font-size:16.5px; font-weight:900; color:var(--tx); letter-spacing:.3px;
             padding:5px 6px; border:1px solid var(--bd); background:var(--sur);
@@ -695,6 +707,7 @@
             <div class="bb-hd">
                 <!-- 좌: 알림 버튼 영역 (배터리 / 좀비 / 방치 / 캠 미송출) -->
                 <div class="bb-alert-zone" id="bb-alert-bar">
+                    <div class="bb-alert-label">🚨 알림</div>
                     <div class="bb-alert-chips" id="bb-alert-chips"></div>
                 </div>
                 <div class="bb-hd-titlebox" id="bb-drag-handle">
@@ -706,31 +719,52 @@
                         <div class="bb-clock" id="bb-clk">00:00:00</div>
                         <div class="bb-ref" id="bb-ref">— 초 후 갱신</div>
                     </div>
+                    <button id="bb-wbl-upload-btn" class="bb-up-mini" style="display:none;" title="배터리 데이터 업로드 (CYH 전용)">📤 UP</button>
                 </div>
-                <!-- 우: 모든 버튼 -->
-                <div class="bb-hd-right" id="bb-hd-right">
-                    <div class="bb-hd-right-row">
-                        <button class="bb-btn" id="bb-sortname-btn">이름 순 정렬</button>
-                        <button class="bb-btn" id="bb-rmbtn">카드 제거</button>
-                        <button class="bb-btn" id="bb-inforequest-btn">정보 조회</button>
-                        <button id="bb-backup-btn" class="bb-btn">목록 백업</button>
-                        <button id="bb-restore-btn" class="bb-btn">목록 복원</button>
-                        <div class="bb-xbtn" id="bb-closebtn">✕</div>
+                <!-- 우: 동숲 캐릭터 + 버튼 2줄 -->
+                <div class="bb-hd-rightwrap">
+                    <div id="bb-walker-wrap">
+                        <div id="bb-walker" title="클릭: 말풍선 켜기/끄기"></div>
+                        <button id="bb-walker-prev" class="bb-walker-arrow left" title="이전 캐릭터">‹</button>
+                        <button id="bb-walker-next" class="bb-walker-arrow right" title="다음 캐릭터">›</button>
+                        <button id="bb-walker-toggle" title="동숲 주민 끄기">동숲</button>
+                        <div id="bb-walker-bubble"><span id="bb-walker-bubble-text"></span></div>
                     </div>
-                    <div class="bb-hd-right-row">
-                        <button id="bb-theme-btn" class="bb-btn">다크</button>
-                        <button id="bb-lighttheme-btn" class="bb-btn">☁️ 구름</button>
-                        <button id="bb-zoom-out" class="zoom-btn">－</button>
-                        <span id="bb-zoom-label" class="zoom-label">100%</span>
-                        <button id="bb-zoom-in"  class="zoom-btn">＋</button>
-                        <button class="bb-btn" id="bb-wbl-upload-btn" style="display:none;">📤 UP</button>
-                        <button class="bb-btn" id="bb-alertlog-all-btn">📋 알림 로그</button>
-                    </div>
-                    <div class="bb-hd-right-row" id="bb-search-wrap">
-                        <div class="bb-si-wrap">
-                            <span class="bb-si-icon">🔍</span>
-                            <input class="bb-si" id="bb-si" placeholder="기체명 검색 후 클릭하여 추가" autocomplete="off">
-                            <div id="bb-dd"></div>
+                    <div class="bb-hd-right" id="bb-hd-right">
+                        <div class="bb-hd-right-row spread">
+                            <div class="bb-hd-grp">
+                                <button id="bb-theme-btn" class="bb-btn">다크</button>
+                                <button id="bb-lighttheme-btn" class="bb-btn">☁️ 구름</button>
+                            </div>
+                            <div class="bb-hd-grp">
+                                <button class="bb-btn" id="bb-inforequest-btn">정보 조회</button>
+                                <button id="bb-backup-btn" class="bb-btn">목록 백업</button>
+                                <button id="bb-restore-btn" class="bb-btn">목록 복원</button>
+                                <div class="bb-xbtn" id="bb-closebtn">✕</div>
+                            </div>
+                        </div>
+                        <div class="bb-hd-right-row">
+                            <button class="bb-btn" id="bb-sortname-btn">이름 순 정렬</button>
+                            <button class="bb-btn" id="bb-rmbtn">카드 제거</button>
+                            <button id="bb-zoom-out" class="zoom-btn">－</button>
+                            <span id="bb-zoom-label" class="zoom-label">100%</span>
+                            <button id="bb-zoom-in"  class="zoom-btn">＋</button>
+                            <button class="bb-btn" id="bb-alertlog-all-btn">📋 알림 로그</button>
+                            <div class="bb-si-wrap" id="bb-search-wrap">
+                                <span class="bb-si-icon">🔍</span>
+                                <input class="bb-si" id="bb-si" placeholder="기체명 검색" title="기체명 검색 후 클릭하여 추가" autocomplete="off">
+                                <div id="bb-dd"></div>
+                            </div>
+                        </div>
+                        <!-- 목록 백업/복원 팝업: 이름 버튼을 누르면 확인 후 실행 -->
+                        <div id="bb-bk-pop">
+                            <div class="bb-bk-title" id="bb-bk-title">목록 백업</div>
+                            <div class="bb-bk-btns">
+                                <button class="bb-btn bb-bk-name" data-name="최윤혁">최윤혁</button>
+                                <button class="bb-btn bb-bk-name" data-name="안혜림">안혜림</button>
+                                <button class="bb-btn bb-bk-name" data-name="신지섭">신지섭</button>
+                                <button class="bb-btn bb-bk-name" data-name="박수연">박수연</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -768,18 +802,11 @@
                 </div>
             </div>
 
-            <!-- [주석처리: 기타 배달 기체(동숲)] — 필요 시 이 주석만 풀면 복구 (.bb-quick 아래에 배치)
+            <!-- [주석처리: 기타 배달 기체] — 필요 시 이 주석만 풀면 복구 (.bb-quick 아래에 배치)
             <div class="bb-bottom">
                 <div class="bb-delivery-area">
                     <div class="bb-delivery-title">기타 배달 기체</div>
                     <div class="bb-delivery-chips" id="bb-delivery-chips"></div>
-                    <div id="bb-walker-bubble"><span id="bb-walker-bubble-text"></span></div>
-                    <button id="bb-walker-toggle" title="동숲 주민 표시/숨김"></button>
-                    <div id="bb-walker-wrap">
-                        <div id="bb-walker"></div>
-                        <button id="bb-walker-prev" class="bb-walker-arrow left" title="이전 캐릭터">‹</button>
-                        <button id="bb-walker-next" class="bb-walker-arrow right" title="다음 캐릭터">›</button>
-                    </div>
                 </div>
             </div>
             -->
@@ -911,6 +938,7 @@
     let lastRaw = [];
     let topmostZ = 100000000;
     let currentAlertType = null;
+    let _patrolReady = false;   // SECTION 16(다중 모니터링) 초기화 끝난 뒤 true
     let currentAlerts = [];
 
     function loadDismissed() {
@@ -1408,6 +1436,7 @@
         renderMonitorGrid(lastRaw);   // 하단 퀵바
         // [주석처리: 기타 배달]
         // renderDeliveryChips(lastRaw);
+        if (_patrolReady) refreshPatrolLive();   // 다시 열면 즉시 최신 정보로
     }
     function closeBoard() {
         isOpen = false;
@@ -1478,7 +1507,7 @@
             const circles = document.createElement('div');
             circles.className = 'bb-qline-circles';
             if (onRobots.length === 0) {
-                circles.innerHTML = '<span class="bb-qline-none">가동 없음</span>';
+                circles.innerHTML = '<span class="bb-qline-none">모든 기체 OFF</span>';
             }
             onRobots.forEach((r, i) => {
                 const parsed = parseRobotStatus(r);
@@ -3027,8 +3056,7 @@
         if (!e.target.closest('#bb-search-wrap') && !e.target.closest('#bb-dd')) hideDd();
     });
 
-/* [주석처리: 동숲 주민 (말풍선/캐릭터)] — 필요 시 이 주석만 풀면 복구
-	// 동숲 주민
+	// 동숲 주민 (헤더 우측) — 캐릭터 선택(bb_walker_idx)·표시 on/off(bb_walker_on)는 예전 그대로, 캠핑장 배경만 제외
 	(function() {
 		const WALKER_BASE = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/';
 		const walkerFiles = [
@@ -3076,7 +3104,11 @@
 			renderWalker();
 		}
 
-		walkerEl.addEventListener('click', () => toggleBubble());
+		const BUBBLE_KEY = 'bb_walker_bubble';   // 말풍선 켜짐 여부 저장
+		walkerEl.addEventListener('click', () => {
+			toggleBubble();
+			localStorage.setItem(BUBBLE_KEY, bubbleVisible ? '1' : '0');
+		});
 
 		document.getElementById('bb-walker-prev').addEventListener('click', (e) => {
 			e.stopPropagation();
@@ -3218,7 +3250,7 @@
 		// 현재 떠있는 알림을 종류별로 묶어서 "라벨 N건" 문자열 배열로 반환
 		function getAlertGroupLines() {
 			const groups = {};
-			currentAlerts.forEach(a => {
+			currentAlerts.filter(a => ALERT_CHIP_TYPES.includes(a.type)).forEach(a => {   // 화면 알림 버튼과 같은 4종만
 				if (!groups[a.type]) groups[a.type] = [];
 				groups[a.type].push(a);
 			});
@@ -3286,10 +3318,10 @@
 			}
 		}
 		
-		// ── 기본값 ON이므로 페이지 로드 시 바로 재생 시작 ──
-		bubbleEl.classList.add('open');
-		bubbleStepIdx = 0;
-		playNextBubbleStep();
+		// ── 말풍선은 기본 꺼짐 (켜두면 리스트 위쪽을 가려서). 캐릭터를 클릭하면 켜지고, 선택은 저장됨 ──
+		bubbleVisible = localStorage.getItem(BUBBLE_KEY) === '1';
+		bubbleEl.classList.toggle('open', bubbleVisible);
+		if (bubbleVisible) { bubbleStepIdx = 0; playNextBubbleStep(); }
 
 		// 교체 시점을 놓치지 않도록 주기적으로 재확인 (API 호출 없음, 순수 화면 갱신)
 		setInterval(renderWalker, 60 * 1000);   // 1분마다 체크
@@ -3315,7 +3347,6 @@
 			applyWalkerToggle();
 		});
     })();
-*/
 
     // ── 줌 기능
     (function() {
@@ -3353,6 +3384,7 @@
         const bb     = document.getElementById('bb');
         let dragging = false, ox = 0, oy = 0;
         handle.addEventListener('mousedown', e => {
+            if (e.target.closest('button')) return;   // UP 같은 버튼 클릭은 드래그로 취급하지 않음
             dragging = true;
             const rect = bb.getBoundingClientRect();
             ox = e.clientX - rect.left;
@@ -3386,50 +3418,64 @@
     wblTriggerImmediateLoadOnRefresh();
     wblLoadYesterdayOnce();
 
-    document.getElementById('bb-backup-btn').addEventListener('click', async () => {
-        const name = prompt('백업 이름을 입력하세요 (예: 최윤혁)');
-        if (!name || !name.trim()) return;
+    const BACKUP_NAMES = ['최윤혁', '안혜림', '신지섭', '박수연'];   // 팝업 버튼 순서 (HTML #bb-bk-pop 과 동일)
+    const bkPop = document.getElementById('bb-bk-pop');
+    let bkMode = null;   // 'backup' | 'restore'
+
+    function closeBkPop() { bkPop.classList.remove('open'); bkMode = null; }
+    function toggleBkPop(mode) {
+        if (bkMode === mode) { closeBkPop(); return; }   // 같은 버튼을 다시 누르면 닫힘
+        bkMode = mode;
+        document.getElementById('bb-bk-title').textContent = mode === 'backup' ? '목록 백업 — 누구 이름으로?' : '목록 복원 — 누구 백업을?';
+        bkPop.classList.add('open');
+    }
+    document.getElementById('bb-backup-btn').addEventListener('click', e => { e.stopPropagation(); toggleBkPop('backup'); });
+    document.getElementById('bb-restore-btn').addEventListener('click', e => { e.stopPropagation(); toggleBkPop('restore'); });
+    bkPop.addEventListener('click', e => {
+        const b = e.target.closest('.bb-bk-name');
+        if (!b) return;
+        const mode = bkMode, name = b.dataset.name;
+        closeBkPop();
+        if (mode === 'backup') doBackup(name); else if (mode === 'restore') doRestore(name);
+    });
+    document.addEventListener('mousedown', e => {   // 바깥을 누르면 닫힘
+        if (!bkMode) return;
+        if (bkPop.contains(e.target) || e.target.closest('#bb-backup-btn, #bb-restore-btn')) return;
+        closeBkPop();
+    });
+
+    async function doBackup(name) {
+        const total = ids.length + favIds.length;
+        if (!confirm(`"${name}" 이름으로 현재 목록(${total}대)을 백업하시겠습니까?`)) return;
         try {
             const res = await fetch(BACKUP_BASE, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ids: [...favIds, ...ids], fav: favIds, name: name.trim() })   // ids = 전체(구버전 호환), fav = 즐겨찾기 순서
+                body: JSON.stringify({ ids: [...favIds, ...ids], fav: favIds, name })   // ids = 전체(구버전 호환), fav = 즐겨찾기 순서
             });
             const data = await res.json();
-            if (data.ok) alert(`✅ "${name.trim()}" 백업 완료 (${ids.length + favIds.length}대)`);
+            if (data.ok) alert(`✅ "${name}" 백업 완료 (${total}대)`);
             else alert('❌ 백업 실패');
         } catch { alert('❌ 백업 실패 (네트워크 오류)'); }
-    });
+    }
 
-	document.getElementById('bb-restore-btn').addEventListener('click', async () => {
-		try {
-			const listRes = await fetch('https://multimonitoring.vercel.app/api/battery');
-			const listData = await listRes.json();
-			const names = (listData.names || []).filter(n => !n.startsWith('배터리'));   // 내부 시스템 파일(배터리 증감/야간락/알림로그 등) 전부 제외, 사람 이름만
-			if (!names.length) { alert('❌ 저장된 백업 없음'); return; }
-			const choice = prompt(`복원할 백업을 선택하세요:\n\n${names.map((n,i) => `${i+1}. ${n}`).join('\n')}\n\n번호 또는 이름 입력:`);
-			if (!choice) return;
-
-			const num = parseInt(choice);
-			const name = (!isNaN(num) && num >= 1 && num <= names.length)
-				? names[num - 1]
-				: names.find(n => n === choice.trim());
-			if (!name) { alert('❌ 해당 백업 없음'); return; }
-			const res = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent(name)}`);
-			const data = await res.json();
-			if (!data.ids || !data.ids.length) { alert('❌ 백업 데이터 없음'); return; }
-			if (!confirm(`"${name}" 백업으로 복원하시겠습니까?\n현재 목록(${ids.length + favIds.length}대)이 교체됩니다.`)) return;
-			// 백업의 ids = 전체(즐겨찾기 + 일반), fav = 즐겨찾기 순서. fav 가 없는 백업(이전 버전)은 전부 일반으로 복원
-			const allIds = data.ids.slice();
-			favIds = (Array.isArray(data.fav) ? data.fav : []).filter(id => allIds.includes(id));
-			ids = allIds.filter(id => !favIds.includes(id));
-			// 통합 리스트 이전 전에 만든 백업에는 예전 고정 그리드 기체가 없음 → 하나도 없으면 앞쪽에 편입
-			const hasLegacy = [...favIds, ...ids].some(id => LEGACY_FIXED_SITE_IDS.includes(DB.find(x => x.id === id)?.siteId));
-			if (!hasLegacy) prependLegacyFixed();
-			save(); render();
-			alert(`✅ "${name}" 복원 완료 (${ids.length + favIds.length}대)`);
-		} catch { alert('❌ 복원 실패 (네트워크 오류)'); }
-	});
+    async function doRestore(name) {
+        if (!confirm(`"${name}" 백업으로 복원하시겠습니까?\n현재 목록(${ids.length + favIds.length}대)이 교체됩니다.`)) return;
+        try {
+            const res = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent(name)}`);
+            const data = await res.json();
+            if (!data.ids || !data.ids.length) { alert(`❌ "${name}" 님의 백업 데이터가 없습니다`); return; }
+            // 백업의 ids = 전체(즐겨찾기 + 일반), fav = 즐겨찾기 순서. fav 가 없는 백업(이전 버전)은 전부 일반으로 복원
+            const allIds = data.ids.slice();
+            favIds = (Array.isArray(data.fav) ? data.fav : []).filter(id => allIds.includes(id));
+            ids = allIds.filter(id => !favIds.includes(id));
+            // 통합 리스트 이전 전에 만든 백업에는 예전 고정 그리드 기체가 없음 → 하나도 없으면 앞쪽에 편입
+            const hasLegacy = [...favIds, ...ids].some(id => LEGACY_FIXED_SITE_IDS.includes(DB.find(x => x.id === id)?.siteId));
+            if (!hasLegacy) prependLegacyFixed();
+            save(); render();
+            alert(`✅ "${name}" 복원 완료 (${ids.length + favIds.length}대)`);
+        } catch { alert('❌ 복원 실패 (네트워크 오류)'); }
+    }
 
     // ============================================================
     // SECTION 15. 토큰 발송
@@ -3448,13 +3494,14 @@
 
     // ============================================================
     // SECTION 16. 다중 모니터링 — patrol_watch_live.json (Cloudflare Worker가 약 1분 간격으로 Gist에 게시)
-    //  - 갱신 주기: 기체 데이터(bb_robots_data, 2분)와 무관하게 이 파일만 60초마다 독립적으로 받아온다.
+    //  - 갱신 주기: 기체 데이터(bb_robots_data, 2분)와 무관하게 이 파일만 30초마다 독립적으로 받아온다.
+    //    (Worker 가 파일을 새로 게시하는 주기는 약 1분 — 30초 조회는 새 게시본을 최대 30초 안에 잡아내기 위함)
     //  - 표시 대상: status 가 'ongoing' | 'anomaly' 인 기체 (finished / wrong_duplicate 는 숨김)
     //  - "N분째 POI 미갱신" 표시 여부는 아래 기체별 허용 시간으로 이 파일에서 판정한다.
     //    기체마다 순찰 시 POI 간격이 달라서, 수십 분 동안 POI 가 안 바뀌어도 정상인 기체가 있기 때문.
     // ============================================================
     const PATROL_LIVE_URL = 'https://gist.githubusercontent.com/ubase00070/bd7773a059217fb81b0be90c961fcc22/raw/patrol_watch_live.json';
-    const PATROL_REFRESH_MS = 60 * 1000;
+    const PATROL_REFRESH_MS = 30 * 1000;   // 30초마다 조회 (NCC API 와 무관 — gist 파일만 읽음)
     let _patrolBusy = false;
     let _patrolSig = null;
     let _patrolLastUpdated = null;
@@ -3694,8 +3741,10 @@
             _patrolBusy = false;
         }
     }
-    refreshPatrolLive();
-    setInterval(refreshPatrolLive, PATROL_REFRESH_MS);
+    // 보드가 열려 있을 때만 조회 (닫혀 있으면 요청 없음). 열 때(openBoard)마다 즉시 한 번 더 조회
+    setInterval(() => { if (isOpen) refreshPatrolLive(); }, PATROL_REFRESH_MS);
+    _patrolReady = true;
+    if (isOpen) refreshPatrolLive();
 
     render();
     // [주석처리: 동숲] applyCampingBackground();
