@@ -1,5 +1,5 @@
 /* ============================================================
-   battery_board.js v4.3 (알림 라벨 삭제 · 최신 순찰 순 정렬 · UP 위치)
+   battery_board.js v4.4 (즐겨찾기 백업/복원 수정)
    NCC 종합 모니터 — 템퍼몽키 inject
    ============================================================ */
 
@@ -3520,18 +3520,48 @@
         closeBkPop();
     });
 
+    // 백업 서버는 {ids, name} 형식이면 ids · name · savedAt 만 저장하고 그 밖의 필드(예: fav)는 버린다.
+    // 그래서 즐겨찾기 배열은 배터리 로그/알림 로그가 쓰는 {name, data} 형식의 별도 기록으로 함께 저장한다.
+    //   최윤혁                  → { ids: [...전체(즐겨찾기 먼저)...], name, savedAt }
+    //   배터리_즐겨찾기_최윤혁   → { data: { fav: [...즐겨찾기 순서...], savedAt }, name, savedAt }
+    const FAV_BACKUP_PREFIX = '배터리_즐겨찾기_';
+
+    async function postJson(body) {
+        const res = await fetch(BACKUP_BASE, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        let json = {};
+        try { json = await res.json(); } catch {}
+        return { ok: res.ok && json.ok !== false, json };
+    }
+    // 저장된 즐겨찾기 기록 읽기 → 배열, 기록이 없으면 null
+    async function fetchFavBackup(name) {
+        try {
+            const res = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent(FAV_BACKUP_PREFIX + name)}`, { cache: 'no-store' });
+            if (!res.ok) return null;
+            const json = await res.json();
+            const fav = json?.data?.fav;
+            return Array.isArray(fav) ? fav.map(String) : null;
+        } catch { return null; }
+    }
+
     async function doBackup(name) {
         const total = ids.length + favIds.length;
         if (!confirm(`"${name}" 이름으로 현재 목록(${total}대)을 백업하시겠습니까?`)) return;
         try {
-            const res = await fetch(BACKUP_BASE, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ids: [...favIds, ...ids], fav: favIds, name })   // ids = 전체(구버전 호환), fav = 즐겨찾기 순서
-            });
-            const data = await res.json();
-            if (data.ok) alert(`✅ 현재 목록 ${total}대를 "${name}" 이름으로 백업했습니다.`);
-            else alert('❌ 백업하지 못했습니다. 잠시 후 다시 시도해 주세요.');
+            const main = await postJson({ ids: [...favIds, ...ids], name });   // ids = 전체(구버전 호환)
+            if (!main.ok || main.json.ok !== true) { alert('❌ 백업하지 못했습니다. 잠시 후 다시 시도해 주세요.'); return; }   // 기존과 같은 성공 기준(서버가 ok:true 응답)
+
+            // 즐겨찾기 배열 저장 + 실제로 저장됐는지 다시 읽어서 확인
+            let favSaved = false;
+            try {
+                const favRes = await postJson({ name: FAV_BACKUP_PREFIX + name, data: { fav: favIds, savedAt: new Date().toISOString() } });
+                if (favRes.ok) {
+                    const back = await fetchFavBackup(name);
+                    favSaved = !!back && JSON.stringify(back) === JSON.stringify(favIds.map(String));
+                }
+            } catch {}
+
+            if (favSaved) alert(`✅ 현재 목록 ${total}대(즐겨찾기 ${favIds.length}대 포함)를 "${name}" 이름으로 백업했습니다.`);
+            else alert(`⚠️ 현재 목록 ${total}대는 "${name}" 이름으로 백업했지만, 즐겨찾기 정보는 저장하지 못했습니다.\n잠시 후 다시 백업해 주세요.`);
         } catch { alert('❌ 네트워크 오류로 백업하지 못했습니다. 연결 상태를 확인해 주세요.'); }
     }
 
@@ -3541,15 +3571,30 @@
             const res = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent(name)}`);
             const data = await res.json();
             if (!data.ids || !data.ids.length) { alert(`❌ "${name}" 님의 백업이 저장되어 있지 않습니다.`); return; }
-            // 백업의 ids = 전체(즐겨찾기 + 일반), fav = 즐겨찾기 순서. fav 가 없는 백업(이전 버전)은 전부 일반으로 복원
-            const allIds = data.ids.slice();
-            favIds = (Array.isArray(data.fav) ? data.fav : []).filter(id => allIds.includes(id));
+
+            const allIds = data.ids.map(String);   // 전체 목록 (즐겨찾기 + 일반)
+            let favBackup = await fetchFavBackup(name);   // 별도로 저장된 즐겨찾기 순서 (없으면 null)
+            if (!favBackup && Array.isArray(data.fav)) favBackup = data.fav.map(String);   // 서버가 fav 를 함께 돌려주는 경우 대비
+
+            if (favBackup) {
+                favIds = favBackup.filter((id, i, a) => allIds.includes(id) && a.indexOf(id) === i);
+            } else {
+                favIds = favIds.filter(id => allIds.includes(id));   // 즐겨찾기 정보가 없는 백업 → 지금 즐겨찾기를 유지(백업에 있는 기체만)
+            }
             ids = allIds.filter(id => !favIds.includes(id));
             // 통합 리스트 이전 전에 만든 백업에는 예전 고정 그리드 기체가 없음 → 하나도 없으면 앞쪽에 편입
             const hasLegacy = [...favIds, ...ids].some(id => LEGACY_FIXED_SITE_IDS.includes(DB.find(x => x.id === id)?.siteId));
             if (!hasLegacy) prependLegacyFixed();
             save(); render();
-            alert(`✅ "${name}" 님의 백업으로 복원했습니다. (현재 목록 ${ids.length + favIds.length}대)`);
+
+            const total = ids.length + favIds.length;
+            if (favBackup) {
+                alert(`✅ "${name}" 님의 백업으로 복원했습니다. (현재 목록 ${total}대, 즐겨찾기 ${favIds.length}대 포함)`);
+            } else if (favIds.length) {
+                alert(`✅ "${name}" 님의 백업으로 복원했습니다. (현재 목록 ${total}대)\n이 백업에는 즐겨찾기 정보가 없어서, 지금 쓰시던 즐겨찾기 ${favIds.length}대를 그대로 유지했습니다.`);
+            } else {
+                alert(`✅ "${name}" 님의 백업으로 복원했습니다. (현재 목록 ${total}대)\n이 백업에는 즐겨찾기 정보가 없어서 모두 일반 목록으로 불러왔습니다.\n즐겨찾기를 지정한 뒤 다시 백업하시면 다음부터 함께 복원됩니다.`);
+            }
         } catch { alert('❌ 네트워크 오류로 복원하지 못했습니다. 연결 상태를 확인해 주세요.'); }
     }
 
