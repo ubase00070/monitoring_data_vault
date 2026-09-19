@@ -1,5 +1,5 @@
 /* ============================================================
-   battery_board.js v4.1 (핫핑크 배달 · 즐겨찾기 2열 · 순찰 시작 시각)
+   battery_board.js v4.2 (조회창 유지 · 즐겨찾기 1열 복귀 · 카드 한 번 클릭)
    NCC 종합 모니터 — 템퍼몽키 inject
    ============================================================ */
 
@@ -329,22 +329,18 @@
         @supports not selector(::-webkit-scrollbar) { .bb-list-wrap { scrollbar-width:thin; scrollbar-color:var(--bd2) transparent; } }
         .bb-lists { display:flex; align-items:stretch; gap:12px; min-height:420px; min-height:max(420px, 100%); }   /* 즐겨찾기 테두리가 카드 끝까지 이어지도록 내용 높이만큼 늘어남 */
         /* 1열 = 즐겨찾기: 여기에 끌어다 놓으면 이름 순 정렬을 해도 일반 기체와 섞이지 않고 이 영역 안에서만 정렬됨 */
-        .bb-fav {   /* 2열 (318px × 2 + 간격 12px = 648px), 일반 기체와 같은 방식으로 세로 우선 채움 */
-            flex:0 0 648px; width:648px; box-sizing:border-box;
-            display:grid; align-content:start;
-            grid-template-columns:repeat(2,318px);
-            grid-auto-flow:column;
-            gap:5px 12px;
+        .bb-fav {
+            flex:0 0 318px; width:318px; box-sizing:border-box;
+            display:flex; flex-direction:column; gap:5px;
             outline:1px solid var(--fav-bd); outline-offset:5px; border-radius:8px;   /* 아주 얇은 테두리 (outline → 카드 폭에 영향 없음) */
         }
-        .bb-fav:empty { align-content:center; }
         .bb-fav:empty::before {
-            content:'즐겨찾기 — 카드를 끌어다 놓으세요'; grid-column:1 / -1; padding:0 12px;
+            content:'즐겨찾기 — 카드를 끌어다 놓으세요'; margin:auto; padding:0 12px;
             text-align:center; font-size:13px; color:var(--mu);
         }
-        .bb-list {   /* 일반 기체: 2열 (세로 우선 채움 → 이름순 정렬 시 위→아래로 읽힘, 행 수는 JS가 지정) */
+        .bb-list {   /* 일반 기체: 3열 (세로 우선 채움 → 이름순 정렬 시 위→아래로 읽힘, 행 수는 JS가 지정) */
             flex:0 0 auto; display:grid; align-content:start;
-            grid-template-columns:repeat(2,318px);
+            grid-template-columns:repeat(3,318px);
             grid-auto-flow:column;
             gap:5px 12px;
         }
@@ -465,8 +461,7 @@
             flex:0 1 auto; min-width:0; max-width:45%; margin-left:auto;
             font-size:13px; color:var(--tx); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
         }
-        #bb .bb-mm-staff { font-weight:700 !important; }   /* #bb * 의 전역 굵기(450 !important)를 덮어써서 볼드 */
-        #bb.bb-light .bb-mm-staff { color:#000; }           /* 라이트: 검정 (다크는 배경이 어두워 밝은 글자색 유지) */
+        #bb.bb-light .bb-mm-staff { color:#000; }   /* 라이트: 검정 (굵기는 기본) — 다크는 배경이 어두워 밝은 글자색 유지 */
         /* 2줄: 현재 POI ··········· N분째 미갱신 */
         .bb-mm-l2 { display:flex; align-items:baseline; gap:6px; min-width:0; font-size:13px; }
         .bb-mm-poi { flex:0 1 auto; min-width:0; color:var(--tx); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -993,6 +988,8 @@
     let topmostZ = 100000000;
     let currentAlertType = null;
     let _patrolReady = false;   // SECTION 16(다중 모니터링) 초기화 끝난 뒤 true
+    // 정보 조회 창: 조회(검색) 창이 열려 있는 동안 true → 기체 정보를 ✕ 로 닫으면 조회 목록으로 돌아감 (검색어/스크롤도 유지)
+    let _infoSearchActive = false, _infoSearchQuery = '', _infoSearchScroll = 0;
     let currentAlerts = [];
 
     function loadDismissed() {
@@ -1599,8 +1596,7 @@
     // ============================================================
     // SECTION 9. 기체 리스트 렌더 (통합 그리드: 한 줄 = 기체 1대)
     // ============================================================
-    const LIST_COLS = 2;   // CSS(.bb-list)의 열 수와 맞출 것 (4열 중 2열은 즐겨찾기)
-    const FAV_COLS  = 2;   // CSS(.bb-fav)의 열 수와 맞출 것
+    const LIST_COLS = 3;   // CSS(.bb-list)의 열 수와 맞출 것 (4열 중 1열은 즐겨찾기)
 
     // 예전 고정 그리드 사이트의 기체를 ids 앞쪽에 편입 (이미 있는 기체는 건너뜀)
     function prependLegacyFixed() {
@@ -1629,7 +1625,6 @@
         const robots    = pick(ids);
 
         fav.replaceChildren(...favRobots.map(r => makeRow(r, true)));   // 비면 :empty 안내 문구가 보임
-        fav.style.gridTemplateRows = favRobots.length ? `repeat(${Math.ceil(favRobots.length / FAV_COLS)}, auto)` : '';
 
         list.innerHTML = '';
         if (robots.length === 0) {
@@ -1689,7 +1684,7 @@
             row.addEventListener('dragleave', dleave);
             row.addEventListener('drop',      ddrop);
             row.addEventListener('dragend',   dend);
-            row.addEventListener('dblclick', e => {   // 더블클릭 → Info 패널
+            row.addEventListener('click', e => {   // 한 번 클릭 → Info 패널 (드래그로 옮길 때는 click 이 발생하지 않음)
                 e.stopPropagation();
                 openInfoCardPanel(r);
             });
@@ -2787,12 +2782,20 @@
         }
 
         function closeInfoCardPanel() {
-            document.getElementById('bb-info-card-panel').classList.remove('open');
+            const panel = document.getElementById('bb-info-card-panel');
+            if (_infoSearchActive && !panel.classList.contains('search-mode')) {
+                openInfoSearchMode(true);   // 기체 정보만 닫고 조회 목록은 남김 → 다음 기체를 바로 고를 수 있음
+                return;
+            }
+            _infoSearchActive = false;      // 조회 목록(또는 조회 없이 연 기체 정보)에서 ✕ → 완전히 닫음
+            panel.classList.remove('open');
         }
         // 예전에는 창 바깥을 누르면 닫혔지만, 보드를 닫아도 창이 남아 여러 대를 이어서 볼 수 있도록 ✕ 로만 닫히게 함
         function registerInfoPanelClose() {}
 
-        function openInfoSearchMode() {
+        function openInfoSearchMode(keep) {   // keep=true: 기체 정보에서 돌아올 때 검색어/스크롤 유지
+            _infoSearchActive = true;
+            if (!keep) { _infoSearchQuery = ''; _infoSearchScroll = 0; }
             const panel   = document.getElementById('bb-info-card-panel');
             const titleEl = document.getElementById('bb-icp-title');
             const badgeEl = document.getElementById('bb-icp-badge');
@@ -2805,6 +2808,7 @@
             let searchFocusIdx = -1;
 
             function renderList(query) {
+                _infoSearchQuery = query;
                 const q = query.trim();
                 const res = DB.filter(r => q === '' || r.name.includes(q))
                             .sort((a,b) => a.name.localeCompare(b.name, 'ko'));
@@ -2845,7 +2849,11 @@
             `;
 
             const inputEl = bodyEl.querySelector('#bb-info-search-input');
-            renderList('');
+            const listBoxEl = bodyEl.querySelector('#bb-info-search-list');
+            inputEl.value = _infoSearchQuery;
+            renderList(_infoSearchQuery);
+            listBoxEl.scrollTop = _infoSearchScroll;
+            listBoxEl.addEventListener('scroll', () => { _infoSearchScroll = listBoxEl.scrollTop; });
             inputEl.focus();
 
             inputEl.addEventListener('input', () => { searchFocusIdx = -1; renderList(inputEl.value); });
