@@ -1,5 +1,5 @@
 /* ============================================================
-   battery_board.js v3.6 (다중 모니터링 카드 개편)
+   battery_board.js v3.7 (즐겨찾기 · 헤더 재배치 · 알림 버튼)
    NCC 종합 모니터 — 템퍼몽키 inject
    ============================================================ */
 
@@ -40,6 +40,7 @@
 			--or:#cf8a4f; --or2:rgba(207,138,79,.12);
 			--pk:#d1729a; --pk2:rgba(209,114,154,.12);
 			--offdot:#4b5563;
+			--fav-bd:#8b929c;   /* 즐겨찾기 테두리 — 다크에서는 검정이 안 보여 밝은 회색 */
 			--standby-batt:var(--tx);
 			--bg-fill:linear-gradient(var(--bg), var(--bg));
 			--pct-fill:rgba(240,240,255,.93);
@@ -47,7 +48,7 @@
 		}
 
         #bb.bb-light {
-            --bg:#f2e4c4; --sur:#f8f3e6; --sur2:#efe6d2;
+            --bg:#f2e4c4; --fav-bd:#000; --sur:#f8f3e6; --sur2:#efe6d2;
             --bd:#cabf9d; --bd2:#b3a687; --tx:#2b2418; --mu:#7a6f5c;
             --wh:rgba(0,0,0,.05);
             --gn:#22c55e; --gn2:rgba(34,197,94,.10);
@@ -102,7 +103,7 @@
         /* ── 헤더 ── */
         .bb-hd {
             display:flex; flex-direction:column; align-items:center;
-            padding:9px 14px 7px;
+            padding:9px 14px 7px; min-height:124px; justify-content:center;   /* 우측 3줄 + 좌측 알림 영역 */
             border-radius:16px 16px 0 0;
             flex-shrink:0; position:relative; gap:3px;
         }
@@ -124,7 +125,6 @@
         .bb-hd-time { display:flex; align-items:baseline; gap:8px; }
         .bb-clock { font-family:'Lato',monospace; font-size:13px; font-weight:900; color:var(--mu); letter-spacing:.8px; }
         .bb-ref   { font-size:12px; color:var(--mu); font-weight:700; }
-        .bb-hd-left  { position:absolute; left:14px; top:50%; transform:translateY(-50%); display:flex; align-items:center; gap:6px; }
         .bb-hd-right { position:absolute; right:14px; top:50%; transform:translateY(-50%); display:flex; flex-direction:column; align-items:flex-end; gap:6px; z-index:500; }
         .bb-hd-right-row { display:flex; align-items:center; justify-content:flex-end; gap:6px; }
 
@@ -156,32 +156,21 @@
         }
         .zoom-label { font-size:14px; color:var(--tx); font-weight:700; min-width:34px; text-align:center; }
 
-        /* ── 알림바 + 검색 ── */
-        .bb-alert-row {
-		    display:flex; align-items:stretch;
-		    flex-shrink:0; height:80px;
-		    position:relative;
-		    border-bottom:1px solid var(--bd);
-		}
-        .bb-alert-bar {
-            flex:1; display:flex; align-items:center; gap:10px;
-            padding:8px 12px;
+        /* ── 알림 영역 (헤더 좌측) + 검색 ── */
+        .bb-alert-zone {   /* 이 영역 안에서만 버튼이 뜸 — overflow:hidden 으로 밖으로 삐져나오지 않음 */
+            position:absolute; left:14px; top:50%; transform:translateY(-50%);
+            width:680px; box-sizing:border-box; padding:3px; overflow:hidden;
         }
-        .bb-alert-label {
-            font-size:17px; font-weight:900; color:var(--tx);
-            flex-shrink:0; white-space:nowrap;
-        }
-        .bb-alert-chips { display:flex; gap:5px; flex-wrap:wrap; flex:1; align-items:center; min-width:0; }
-        .bb-chip {
-            display:flex; flex-direction:column; gap:1px;
-            padding:3px 16px; border-radius:10px;
-            font-size:15px; font-weight:700; cursor:pointer;
-            font-family:inherit; max-width:198px;
+        .bb-alert-chips { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; }
+        .bb-chip {   /* 가로로 긴 한 줄 버튼: [아이콘 종류 N건  ··· 기체명] */
+            display:flex; align-items:center; gap:10px; min-width:0;
+            height:32px; padding:0 14px; box-sizing:border-box; border-radius:8px;
+            font-size:14px; font-weight:700; cursor:pointer; font-family:inherit;
             transition:filter .15s, box-shadow .15s;
         }
-        .bb-chip-l1 { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+        .bb-chip-l1 { flex-shrink:0; white-space:nowrap; }
         .bb-chip-l2 {
-            font-size:13px; font-weight:500; opacity:.8;
+            flex:1; min-width:0; font-size:13px; font-weight:500; opacity:.8;
             white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
         }
         .bb-chip:hover { filter:brightness(1.15); }
@@ -199,7 +188,7 @@
         #bb.bb-light .bb-chip.cam    { box-shadow:0 0 6px rgba(249,115,22,.15); }
         #bb.bb-light .bb-chip.nomap  { box-shadow:0 0 6px rgba(249,115,22,.15); }
         #bb.bb-light .bb-chip.idle   { box-shadow:0 0 6px rgba(59,130,246,.15); }
-        .bb-chip-none   { font-size:12px; color:var(--mu); font-weight:700; }
+        .bb-chip-none   { grid-column:1 / -1; font-size:13px; color:var(--mu); font-weight:700; padding:6px 4px; }
         @keyframes chipPulse { 0%,100%{opacity:1} 50%{opacity:.85} }
         @keyframes chipBorder {
             0%,100% { box-shadow:0 0 0 2px currentColor; }
@@ -240,13 +229,24 @@
         /* 본문 = 좌(기체 리스트 + 퀵바) | 우(다중 모니터링 중 기체) */
         .bb-body { display:flex; align-items:stretch; flex-shrink:0; }   /* flex-shrink:0 → 내용이 길 때 줄어들며 잘리지 않고 패널 스크롤 */
         .bb-main { flex:0 0 1340px; min-width:0; display:flex; flex-direction:column; }   /* 1340 = 카드 318×4 + 간격 12×3 + 좌우 여백 16×2 (퀵바 내용이 길어져도 우측 영역을 밀지 않도록 고정) */
-        .bb-list-wrap { padding:14px 16px 18px; min-height:500px; }   /* 알림 바(80px) 제거분만큼 확장 */
-        .bb-list {
-            display:grid;
-            grid-template-columns:repeat(4,318px);   /* 기존 약 354px 대비 -10% */
-            grid-auto-flow:column;   /* 세로 우선 채움 → 이름 순 정렬 시 위→아래로 읽힘 (행 수는 JS가 지정) */
+        .bb-list-wrap { display:flex; align-items:stretch; gap:12px; padding:14px 16px 18px; min-height:500px; }
+        /* 1열 = 즐겨찾기: 여기에 끌어다 놓으면 이름 순 정렬을 해도 일반 기체와 섞이지 않고 이 영역 안에서만 정렬됨 */
+        .bb-fav {
+            flex:0 0 318px; width:318px; box-sizing:border-box;
+            display:flex; flex-direction:column; gap:5px;
+            outline:1px solid var(--fav-bd); outline-offset:5px; border-radius:8px;   /* 아주 얇은 테두리 (outline → 카드 폭에 영향 없음) */
+        }
+        .bb-fav:empty::before {
+            content:'즐겨찾기 — 카드를 끌어다 놓으세요'; margin:auto; padding:0 12px;
+            text-align:center; font-size:13px; color:var(--mu);
+        }
+        .bb-list {   /* 일반 기체: 3열 (세로 우선 채움 → 이름순 정렬 시 위→아래로 읽힘, 행 수는 JS가 지정) */
+            flex:0 0 auto; display:grid; align-content:start;
+            grid-template-columns:repeat(3,318px);
+            grid-auto-flow:column;
             gap:5px 12px;
         }
+        .bb-fav.bb-drop-over, .bb-list.bb-drop-over { background:rgba(99,102,241,.08); border-radius:8px; }
         .bb-list-empty {
             grid-column:1 / -1; padding:56px 0; text-align:center;
             font-size:15px; color:var(--mu);
@@ -693,14 +693,9 @@
         <div id="bb">
             <!-- 헤더 -->
             <div class="bb-hd">
-                <div class="bb-hd-left">
-                    <button id="bb-theme-btn" class="bb-btn">다크</button>
-                    <button id="bb-lighttheme-btn" class="bb-btn">☁️ 구름</button>
-                    <button id="bb-zoom-out" class="zoom-btn">－</button>
-                    <span id="bb-zoom-label" class="zoom-label">100%</span>
-                    <button id="bb-zoom-in"  class="zoom-btn">＋</button>
-                    <button class="bb-btn" id="bb-wbl-upload-btn" style="display:none;">📤 UP</button>
-                    <button class="bb-btn" id="bb-alertlog-all-btn">📋 최근 15일 알림 로그</button>
+                <!-- 좌: 알림 버튼 영역 (배터리 / 좀비 / 방치 / 캠 미송출) -->
+                <div class="bb-alert-zone" id="bb-alert-bar">
+                    <div class="bb-alert-chips" id="bb-alert-chips"></div>
                 </div>
                 <div class="bb-hd-titlebox" id="bb-drag-handle">
                     <div class="bb-hd-title">
@@ -712,14 +707,24 @@
                         <div class="bb-ref" id="bb-ref">— 초 후 갱신</div>
                     </div>
                 </div>
+                <!-- 우: 모든 버튼 -->
                 <div class="bb-hd-right" id="bb-hd-right">
                     <div class="bb-hd-right-row">
                         <button class="bb-btn" id="bb-sortname-btn">이름 순 정렬</button>
                         <button class="bb-btn" id="bb-rmbtn">카드 제거</button>
-                        <button class="bb-btn" id="bb-inforequest-btn">기체 정보 조회</button>
-                        <button id="bb-backup-btn" class="bb-btn">기체 목록 백업</button>
-                        <button id="bb-restore-btn" class="bb-btn">기체 목록 복원</button>
+                        <button class="bb-btn" id="bb-inforequest-btn">정보 조회</button>
+                        <button id="bb-backup-btn" class="bb-btn">목록 백업</button>
+                        <button id="bb-restore-btn" class="bb-btn">목록 복원</button>
                         <div class="bb-xbtn" id="bb-closebtn">✕</div>
+                    </div>
+                    <div class="bb-hd-right-row">
+                        <button id="bb-theme-btn" class="bb-btn">다크</button>
+                        <button id="bb-lighttheme-btn" class="bb-btn">☁️ 구름</button>
+                        <button id="bb-zoom-out" class="zoom-btn">－</button>
+                        <span id="bb-zoom-label" class="zoom-label">100%</span>
+                        <button id="bb-zoom-in"  class="zoom-btn">＋</button>
+                        <button class="bb-btn" id="bb-wbl-upload-btn" style="display:none;">📤 UP</button>
+                        <button class="bb-btn" id="bb-alertlog-all-btn">📋 알림 로그</button>
                     </div>
                     <div class="bb-hd-right-row" id="bb-search-wrap">
                         <div class="bb-si-wrap">
@@ -730,16 +735,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- [주석처리: 알림 바(배터리/도킹 등 알림 칩)] — 필요 시 이 주석만 풀면 복구
-                 알림 감지·로그 기록은 그대로 동작하고, 화면 표시만 막은 상태
-            <div class="bb-alert-row">
-                <div class="bb-alert-bar" id="bb-alert-bar">
-                    <span class="bb-alert-label">🚨 알림</span>
-                    <div class="bb-alert-chips" id="bb-alert-chips"></div>
-                </div>
-            </div>
-            -->
 
             <div id="bb-alertlog-all-panel">
                 <div class="bb-ap-hd">
@@ -753,6 +748,7 @@
             <div class="bb-body">
                 <div class="bb-main">
                     <div class="bb-list-wrap">
+                        <div class="bb-fav" id="bb-fav" title="즐겨찾기 — 여기에 끌어다 놓은 기체는 이 영역 안에서만 정렬됩니다"></div>
                         <div class="bb-list" id="bb-list"></div>
                     </div>
 
@@ -764,7 +760,7 @@
                 <div class="bb-mm">
                     <div class="bb-mm-box">
                         <div class="bb-mm-head">
-                            <div class="bb-mm-title">다중 모니터링 중 기체</div>
+                            <div class="bb-mm-title" id="bb-mm-title">다중 모니터링 기체</div>
                             <div class="bb-mm-sub" id="bb-mm-sub">불러오는 중…</div>
                         </div>
                         <div class="bb-mm-body" id="bb-mm-body"></div>
@@ -854,6 +850,7 @@
     // ============================================================
     const MAX = 100;
     const LS = 'bb_ids';
+    const LS_FAV = 'bb_fav_ids';   // 즐겨찾기(1열) 기체 — ids 와 겹치지 않음
     const LS_ZOMBIE = 'bb_zombie';
 
     const STL = { charging:'충전 중', patrolling:'순찰 중', delivering:'배달 중', standby:'대기 중', docking:'도킹 중', off:'OFF' };
@@ -908,6 +905,7 @@
 
     let DB = [];
     let ids = load();
+    let favIds = loadFav().filter(id => !ids.includes(id));
     let rmMode = false, rmSet = new Set(), isOpen = false;
     let fetchLock = false;
     let lastRaw = [];
@@ -937,7 +935,16 @@
             return Array.isArray(p) ? p.slice(0, MAX) : [];
         } catch { return []; }
     }
-    function save() { localStorage.setItem(LS, JSON.stringify(ids)); }
+    function loadFav() {
+        try {
+            const p = JSON.parse(localStorage.getItem(LS_FAV) || '[]');
+            return Array.isArray(p) ? p.slice(0, MAX) : [];
+        } catch { return []; }
+    }
+    function save() {
+        localStorage.setItem(LS, JSON.stringify(ids));
+        localStorage.setItem(LS_FAV, JSON.stringify(favIds));
+    }
     function loadZombie()  { try { return JSON.parse(localStorage.getItem(LS_ZOMBIE) || '{}'); } catch { return {}; } }
     function saveZombie(d) { localStorage.setItem(LS_ZOMBIE, JSON.stringify(d)); }
 
@@ -1155,13 +1162,17 @@
         nomap:  { label:'🗺️ GPS 수신', order:5 },
     };
 
+    // 화면에 버튼으로 띄우는 알림은 4종: 배터리 / 좀비 / 방치 / 캠 미송출
+    // (비상정지·도킹·GPS 는 감지와 알림 로그 기록은 그대로 두고 버튼만 숨김 — 다시 보이려면 이 배열에 추가)
+    const ALERT_CHIP_TYPES = ['bat', 'zombie', 'idle', 'cam'];
+
     function renderAlertChips(alerts) {
         currentAlerts = alerts;
         const el = document.getElementById('bb-alert-chips');
         if (!el) return;
 
         const groups = {};
-        alerts.forEach(a => {
+        alerts.filter(a => ALERT_CHIP_TYPES.includes(a.type)).forEach(a => {
             if (!groups[a.type]) groups[a.type] = [];
             groups[a.type].push(a);
         });
@@ -1174,19 +1185,13 @@
             el.innerHTML = '<span class="bb-chip-none">이상 없음 ✓</span>';
         } else {
             el.innerHTML = types.map(type => {
-                const meta   = ALERT_META[type] || { label: type };
-                const items  = groups[type];
-                const count  = items.length;
-                let previewLines;
-                if (count <= 2) {
-                    previewLines = items.map(a => `<div class="bb-chip-l2">${a.name}</div>`).join('');
-                } else {
-                    previewLines = items.slice(0, 2).map(a => `<div class="bb-chip-l2">${a.name}</div>`).join('')
-                        + `<div class="bb-chip-l2">외 ${count - 2}건</div>`;
-                }
-                return `<div class="bb-chip ${type}" data-type="${type}">
-                    <div class="bb-chip-l1">${meta.label} <strong>${count}건</strong></div>
-                    ${previewLines}
+                const meta    = ALERT_META[type] || { label: type };
+                const items   = groups[type];
+                const count   = items.length;
+                const preview = count === 1 ? items[0].name : `${items[0].name} 외 ${count - 1}건`;
+                return `<div class="bb-chip ${type}" data-type="${type}" title="${items.map(a => a.name).join(', ')}">
+                    <span class="bb-chip-l1">${meta.label} <strong>${count}건</strong></span>
+                    <span class="bb-chip-l2">${preview}</span>
                 </div>`;
             }).join('');
 
@@ -1352,6 +1357,7 @@
             if (DB.length > 0) {
                 migrateLegacyFixed();   // 구 고정 그리드 기체를 통합 리스트로 1회 편입
                 ids = ids.filter(id => DB.some(x => x.id === id));
+                favIds = favIds.filter(id => DB.some(x => x.id === id));
                 save();
             }
 
@@ -1510,13 +1516,13 @@
     // ============================================================
     // SECTION 9. 기체 리스트 렌더 (통합 그리드: 한 줄 = 기체 1대)
     // ============================================================
-    const LIST_COLS = 4;   // CSS(.bb-list)의 열 수와 맞출 것
+    const LIST_COLS = 3;   // CSS(.bb-list)의 열 수와 맞출 것 (4열 중 1열은 즐겨찾기)
 
     // 예전 고정 그리드 사이트의 기체를 ids 앞쪽에 편입 (이미 있는 기체는 건너뜀)
     function prependLegacyFixed() {
         const order = s => { const i = LEGACY_FIXED_SITE_IDS.indexOf(s); return i === -1 ? 999 : i; };
         const num = n => parseInt((n.match(/(\d+)호기/) || [])[1] || '0', 10);
-        const legacy = DB.filter(r => LEGACY_FIXED_SITE_IDS.includes(r.siteId) && !ids.includes(r.id))
+        const legacy = DB.filter(r => LEGACY_FIXED_SITE_IDS.includes(r.siteId) && !ids.includes(r.id) && !favIds.includes(r.id))
             .sort((a, b) => (order(a.siteId) - order(b.siteId)) || (num(a.name) - num(b.name)))
             .map(r => r.id);
         if (legacy.length) ids = [...legacy, ...ids];
@@ -1532,23 +1538,30 @@
 
     function render() {
         const list = document.getElementById('bb-list');
-        if (!list) return;
-        list.innerHTML = '';
-        const robots = ids.map(id => DB.find(x => x.id === id)).filter(Boolean);
+        const fav  = document.getElementById('bb-fav');
+        if (!list || !fav) return;
+        const pick = arr => arr.map(id => DB.find(x => x.id === id)).filter(Boolean);
+        const favRobots = pick(favIds);
+        const robots    = pick(ids);
 
+        fav.replaceChildren(...favRobots.map(r => makeRow(r, true)));   // 비면 :empty 안내 문구가 보임
+
+        list.innerHTML = '';
         if (robots.length === 0) {
             list.style.gridTemplateRows = '';
-            list.innerHTML = `<div class="bb-list-empty">${DB.length === 0
-                ? '기체 데이터 로딩 중...'
-                : '표시할 기체가 없습니다. 오른쪽 위 검색창에서 기체를 추가하세요.'}</div>`;
+            if (favRobots.length === 0) {
+                list.innerHTML = `<div class="bb-list-empty">${DB.length === 0
+                    ? '기체 데이터 로딩 중...'
+                    : '표시할 기체가 없습니다. 오른쪽 위 검색창에서 기체를 추가하세요.'}</div>`;
+            }
             return;
         }
         // 세로 우선 흐름: 열당 행 수를 지정해야 위→아래로 채워짐
         list.style.gridTemplateRows = `repeat(${Math.ceil(robots.length / LIST_COLS)}, auto)`;
-        robots.forEach(r => list.appendChild(makeRow(r)));
+        robots.forEach(r => list.appendChild(makeRow(r, false)));
     }
 
-    function makeRow(r) {
+    function makeRow(r, isFav) {
         const ac = STATUS_AC[r.status] || 'var(--mu)';
         const off = r.status === 'off';
         const lowBat = !off && !r.loading && r.battery <= 21;
@@ -1559,6 +1572,7 @@
         const row = document.createElement('div');
         row.className = `bb-row${lowBat ? ' warn-bat' : ''}${rmMode ? ' selectable' : ''}${rmSet.has(r.id) ? ' selected' : ''}`;
         row.dataset.id = r.id;
+        row.dataset.fav = isFav ? '1' : '';
         row.title = `${r.name} | ${STL[r.status] || ''}`;
 
         const battInner = off
@@ -2805,7 +2819,7 @@
     function toggleRm() {
         if (!rmMode) { rmMode = true; rmSet.clear(); }
         else {
-            if (rmSet.size > 0) { ids = ids.filter(id => !rmSet.has(id)); save(); }
+            if (rmSet.size > 0) { ids = ids.filter(id => !rmSet.has(id)); favIds = favIds.filter(id => !rmSet.has(id)); save(); }
             rmMode = false; rmSet.clear();
         }
         updateRmUI(); render();
@@ -2827,10 +2841,48 @@
     // ============================================================
     let dsrc = null;
     function dstart(e) { dsrc = this.dataset.id; this.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', dsrc); }
-    function dover(e)  { if (!dsrc || this.dataset.id === dsrc) return; e.preventDefault(); document.querySelectorAll('.bb-row.dragover').forEach(c => { if (c !== this) c.classList.remove('dragover'); }); this.classList.add('dragover'); }
+    function dover(e)  {
+        e.stopPropagation();   // 영역(즐겨찾기/일반) 하이라이트와 겹치지 않게
+        if (!dsrc || this.dataset.id === dsrc) return;
+        e.preventDefault();
+        document.querySelectorAll('.bb-row.dragover').forEach(c => { if (c !== this) c.classList.remove('dragover'); });
+        this.classList.add('dragover');
+    }
     function dleave(e) { if (this.contains(e.relatedTarget)) return; this.classList.remove('dragover'); }
-    function ddrop(e)  { e.preventDefault(); const tid = this.dataset.id; if (!dsrc || tid === dsrc) return; this.classList.remove('dragover'); const si = ids.indexOf(dsrc), di = ids.indexOf(tid); if (si===-1||di===-1) return; ids.splice(si,1); ids.splice(di,0,dsrc); save(); render(); }
-    function dend()    { dsrc = null; document.querySelectorAll('.bb-row').forEach(c => c.classList.remove('dragging','dragover')); }
+    function ddrop(e)  {
+        e.preventDefault(); e.stopPropagation();
+        const tid = this.dataset.id;
+        if (!dsrc || tid === dsrc) return;
+        this.classList.remove('dragover');
+        moveRobot(dsrc, this.dataset.fav === '1', tid);   // 놓은 카드가 속한 영역(즐겨찾기/일반)으로, 그 카드 자리에 삽입
+    }
+    function dend() {
+        dsrc = null;
+        document.querySelectorAll('.bb-row').forEach(c => c.classList.remove('dragging', 'dragover'));
+        document.querySelectorAll('.bb-drop-over').forEach(c => c.classList.remove('bb-drop-over'));
+    }
+
+    // id 를 toFav 영역으로 이동. beforeId 가 있으면 그 카드 자리에, 없으면 영역 맨 끝에 넣음
+    function moveRobot(id, toFav, beforeId) {
+        const srcArr = favIds.includes(id) ? favIds : ids;
+        const dstArr = toFav ? favIds : ids;
+        const si = srcArr.indexOf(id);
+        if (si === -1) return;
+        const di = beforeId ? dstArr.indexOf(beforeId) : -1;
+        if (beforeId && di === -1) return;
+        srcArr.splice(si, 1);
+        dstArr.splice(beforeId ? di : dstArr.length, 0, id);
+        save(); render();
+    }
+    // 빈 공간에 놓기: 즐겨찾기 영역이면 즐겨찾기 맨 끝, 일반 영역이면 일반 맨 끝 (즐겨찾기 해제)
+    function bindDropZone(el, toFav) {
+        if (!el) return;
+        el.addEventListener('dragover',  e => { if (!dsrc) return; e.preventDefault(); el.classList.add('bb-drop-over'); });
+        el.addEventListener('dragleave', e => { if (el.contains(e.relatedTarget)) return; el.classList.remove('bb-drop-over'); });
+        el.addEventListener('drop',      e => { e.preventDefault(); el.classList.remove('bb-drop-over'); if (dsrc) moveRobot(dsrc, toFav, null); });
+    }
+    bindDropZone(document.getElementById('bb-fav'),  true);
+    bindDropZone(document.getElementById('bb-list'), false);
 
     // ============================================================
     // SECTION 12. 검색 & 드롭다운
@@ -2841,10 +2893,10 @@
         const siEl = document.getElementById('bb-si');
         const ddEl = document.getElementById('bb-dd');
         const q    = siEl.value.trim();
-        const res  = DB.filter(r => (q===''||r.name.includes(q)) && !ids.includes(r.id))
+        const res  = DB.filter(r => (q===''||r.name.includes(q)) && !ids.includes(r.id) && !favIds.includes(r.id))
                        .sort((a,b) => a.name.localeCompare(b.name,'ko',{numeric:true}));
 
-        if (ids.length >= MAX) {
+        if (ids.length + favIds.length >= MAX) {
             ddEl.innerHTML = `<div class="bb-di" style="color:var(--mu);cursor:default;">이미 최대 ${MAX}대 등록됨</div>`;
         } else if (res.length === 0) {
             ddEl.innerHTML = `<div class="bb-di" style="color:var(--mu);cursor:default;">${DB.length===0?'기체 데이터 로딩 중...':'검색 결과 없음'}</div>`;
@@ -2867,8 +2919,8 @@
 
     function hideDd() { const d = document.getElementById('bb-dd'); if (d) d.classList.remove('open'); }
     function addRobot(id) {
-        if (ids.length >= MAX) return;
-        if (!ids.includes(id)) { ids.push(id); save(); render(); }
+        if (ids.length + favIds.length >= MAX) return;
+        if (!ids.includes(id) && !favIds.includes(id)) { ids.push(id); save(); render(); }
         showDd(); document.getElementById('bb-si').focus();
     }
 
@@ -2938,11 +2990,13 @@
     });
 
     document.getElementById('bb-sortname-btn').addEventListener('click', () => {
-        ids.sort((a, b) => {
+        const byName = (a, b) => {
             const ra = DB.find(x => x.id === a);
             const rb = DB.find(x => x.id === b);
             return (ra?.name || '').localeCompare(rb?.name || '', 'ko', { numeric: true });   // 1호기 < 2호기 < 10호기
-        });
+        };
+        ids.sort(byName);      // 일반 영역
+        favIds.sort(byName);   // 즐겨찾기 영역 — 서로 섞이지 않고 각자 정렬
         save();
         render();
     });
@@ -3339,10 +3393,10 @@
             const res = await fetch(BACKUP_BASE, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ids, name: name.trim() })
+                body: JSON.stringify({ ids: [...favIds, ...ids], fav: favIds, name: name.trim() })   // ids = 전체(구버전 호환), fav = 즐겨찾기 순서
             });
             const data = await res.json();
-            if (data.ok) alert(`✅ "${name.trim()}" 백업 완료 (${ids.length}대)`);
+            if (data.ok) alert(`✅ "${name.trim()}" 백업 완료 (${ids.length + favIds.length}대)`);
             else alert('❌ 백업 실패');
         } catch { alert('❌ 백업 실패 (네트워크 오류)'); }
     });
@@ -3364,14 +3418,16 @@
 			const res = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent(name)}`);
 			const data = await res.json();
 			if (!data.ids || !data.ids.length) { alert('❌ 백업 데이터 없음'); return; }
-			if (!confirm(`"${name}" 백업으로 복원하시겠습니까?\n현재 목록(${ids.length}대)이 교체됩니다.`)) return;
-			ids.length = 0;
-			data.ids.forEach(id => ids.push(id));
+			if (!confirm(`"${name}" 백업으로 복원하시겠습니까?\n현재 목록(${ids.length + favIds.length}대)이 교체됩니다.`)) return;
+			// 백업의 ids = 전체(즐겨찾기 + 일반), fav = 즐겨찾기 순서. fav 가 없는 백업(이전 버전)은 전부 일반으로 복원
+			const allIds = data.ids.slice();
+			favIds = (Array.isArray(data.fav) ? data.fav : []).filter(id => allIds.includes(id));
+			ids = allIds.filter(id => !favIds.includes(id));
 			// 통합 리스트 이전 전에 만든 백업에는 예전 고정 그리드 기체가 없음 → 하나도 없으면 앞쪽에 편입
-			const hasLegacy = ids.some(id => LEGACY_FIXED_SITE_IDS.includes(DB.find(x => x.id === id)?.siteId));
+			const hasLegacy = [...favIds, ...ids].some(id => LEGACY_FIXED_SITE_IDS.includes(DB.find(x => x.id === id)?.siteId));
 			if (!hasLegacy) prependLegacyFixed();
 			save(); render();
-			alert(`✅ "${name}" 복원 완료 (${ids.length}대)`);
+			alert(`✅ "${name}" 복원 완료 (${ids.length + favIds.length}대)`);
 		} catch { alert('❌ 복원 실패 (네트워크 오류)'); }
 	});
 
@@ -3393,16 +3449,98 @@
     // ============================================================
     // SECTION 16. 다중 모니터링 — patrol_watch_live.json (Cloudflare Worker가 약 1분 간격으로 Gist에 게시)
     //  - 갱신 주기: 기체 데이터(bb_robots_data, 2분)와 무관하게 이 파일만 60초마다 독립적으로 받아온다.
-    //  - 받아오기만 한다: 피드 신선도(지연) 판정은 하지 않음. 이상 여부는 Worker(index.js)가 낸 status 그대로 사용.
-    //    (기체별 예외 허용 시간 SLOW_POI_OVERRIDE_MIN / POI_SEGMENT_OVERRIDE_MIN / SKIP_IF_NEVER_MOVED 는
-    //     Worker 가 이미 status 에 반영해서 내려주므로 여기서 stale_min 으로 다시 판정하지 않는다.)
-    //  - 표시 대상: status === 'ongoing' | 'anomaly'  (finished / wrong_duplicate 는 숨김)
+    //  - 표시 대상: status 가 'ongoing' | 'anomaly' 인 기체 (finished / wrong_duplicate 는 숨김)
+    //  - "N분째 POI 미갱신" 표시 여부는 아래 기체별 허용 시간으로 이 파일에서 판정한다.
+    //    기체마다 순찰 시 POI 간격이 달라서, 수십 분 동안 POI 가 안 바뀌어도 정상인 기체가 있기 때문.
     // ============================================================
     const PATROL_LIVE_URL = 'https://gist.githubusercontent.com/ubase00070/bd7773a059217fb81b0be90c961fcc22/raw/patrol_watch_live.json';
     const PATROL_REFRESH_MS = 60 * 1000;
     let _patrolBusy = false;
     let _patrolSig = null;
     let _patrolLastUpdated = null;
+
+    // ── 기체별 POI 미갱신 허용 시간(분) ──────────────────────────────
+    // 키 = patrol_watch_live.json 의 robot(짧은 이름). 이 시간 이상 POI 가 안 바뀌면 "N분째 POI 미갱신" + 주황 점멸.
+    // 숫자만 고치면 즉시 반영된다. (오른쪽 주석 = 원래 기체명)
+    const PATROL_STALE_LIMIT_MIN = {
+        '용인 고진': 10,   // 용인 고진역 힐스테이트 1호기
+        '경희대 1':  5,   // 경희대학교 국제캠퍼스 1호기
+        '경희대 2':  5,   // 경희대학교 국제캠퍼스 2호기
+        '성남 판교': 10,   // 성남시 판교역 1호기
+        '성남 서현':  5,   // 성남시 서현역 １호기
+        '성남 율동': 10,   // 성남시 율동공원 1호기
+        '성남 야탑': 10,   // 성남시 야탑역 1호기
+        '부산 호반 1': 10,   // 부산 EDC 호반써밋 1호기
+        '부산 호반 2': 10,   // 부산 EDC 호반써밋 2호기
+        '부산 수자인 1': 10,   // 부산 EDC 수자인 1호기
+        '부산 수자인 2': 10,   // 부산 EDC 수자인 2호기
+        '파주':  5,   // 파주 디에트르더클래스 1호기
+        '리센츠 1': 15,   // 잠실 리센츠 아파트 1호기
+        '리센츠 2': 15,   // 잠실 리센츠 아파트 2호기
+        '평택 1':  5,   // 평택고덕 디에트르 1호기
+        '평택 2':  5,   // 평택고덕 디에트르 2호기
+        '부산 서면':  5,   // 부산 서면비스타동원 1호기
+        '부천 위브': 15,   // 부천 위브 1호기
+        '잠실 레이크': 15,   // 잠실 레이크팰리스 1호기
+        '엘스 1': 15,   // 잠실 엘스 아파트 1호기
+        '엘스 2': 15,   // 잠실 엘스 아파트 2호기
+        '인력개발원': 15,   // 삼성인력개발원 1호기
+        '고양 래미안': 10,   // 고양 래미안 휴레스트 1호기
+        '창원대 1': 15,   // 창원대학교 1호기
+        '창원대 2': 15,   // 창원대학교 2호기
+        '한성대': 15,   // 한성대학교 1호기
+        '김포 풍무':  5,   // 김포풍무센트럴푸르지오 1호기
+        '강남 래미안': 10,   // 강남 래미안블레스티지 1호기
+        '김포 1': 10,   // 김포 캐슬앤파밀리에 1호기
+        '김포 2': 10,   // 김포 캐슬앤파밀리에 2호기
+        '지제': 15,   // 지제역 푸르지오엘리아츠 1호기
+        '부경대': 10,   // 부경대 1호기 · 부경대 2호기
+        'DMZ':  5,   // DMZ 캠프 그리브스 1호기
+        '쉴더스': 10,   // 롯데마트부산CFC(쉴더스) 1호기
+        '두루아이 3':  5,   // 두루아이 3호기
+        '두루아이 4':  5,   // 두루아이 4호기
+        '두루아이 5':  5,   // 두루아이 5호기
+        '중앙대': 15,   // 중앙대학교 1호기 · 두루아이 2호기
+        '잠실 르엘': 10,   // 잠실 르엘 1호기
+        '신동백': 15,   // 신동백 롯데캐슬 에코1단지 1호기
+        '청담 르엘': 10,   // 청담르엘 1호기
+        '전주천': 10,   // 전주시 전주천 1호기
+        '인재개발원': 10,   // 인재개발원 1호기
+        '아주대 1': 15,   // 아주대학교 1호기
+        '아주대 2': 15,   // 아주대학교 2호기
+        '서강대': 10,   // 서강대학교 1호기
+        '광교 풍경채': 15,   // 광교 풍경채 1호기 · 광교풍경채(대체 기체) 1호기
+        '동백SK': 10,   // 동백SK아펠바움 1차 1호기
+        '구리 롯데캐슬': 10,   // 구리역 롯데캐슬 시그니처 1호기
+        '동대문구 회기동': 10,   // 동대문구회기동 1호기(쉴드플러스)
+        '더샵남천': 10,   // 더샵남천프레스티지 1호기
+        '장애인고용공단 1': 10,   // 한국장애인고용공단 1호기
+        '장애인고용공단 2': 10,   // 한국장애인고용공단 2호기
+        '양원LH':  5,   // 서울 양원 LH 1단지 1호기
+        '덕수궁': 10,   // 덕수궁 1호기
+        '순천향': 10,   // 순천향대학교 1호기
+    };
+
+    // POI 구간별 예외: 해당 POI 에 있는 동안(이동 중 · 도착 모두)만 기본값 대신 이 시간을 적용
+    const PATROL_STALE_POI_OVERRIDE_MIN = {
+        '전주천': { '전주천변_01': 50, '전주천변_04': 50 },   // 그 외 POI 는 위 기본값(10분)
+    };
+
+    // 배정 직후 첫 POI 도 없이 멈춰 있는 것(“(아직 POI 갱신 없음)”)을 이상으로 보지 않을 기체 (Worker 의 SKIP_IF_NEVER_MOVED 그대로)
+    const PATROL_SKIP_IF_NEVER_MOVED = new Set(['평택 1', '평택 2']);
+
+    // 표에 없는 기체는 허용 시간을 알 수 없으므로 Worker 가 낸 status(anomaly) 를 그대로 따른다.
+    function patrolLimitMin(robot, poi, poiText) {
+        const base = PATROL_STALE_LIMIT_MIN[robot];
+        if (base === undefined) return undefined;
+        const ov = PATROL_STALE_POI_OVERRIDE_MIN[robot];
+        if (ov) {
+            for (const [name, min] of Object.entries(ov)) {
+                if (poi === name || (poiText || '').includes(`[${name}]`)) return min;
+            }
+        }
+        return base;
+    }
 
     // poi_text → { poi: 현재 POI명, act: 이동 중/도착/복귀 중 }
     //  예) "[사이트][기체] [명덕동 코스5]로 이동합니다."  → { poi:'명덕동 코스5', act:'이동 중' }
@@ -3458,14 +3596,22 @@
             })
             .map(r => {
                 const p = patrolParsePoi(r.poi_text);
+                const stale = Number.isFinite(r.stale_min) ? r.stale_min : 0;
+                const limit = patrolLimitMin(r.robot, p.poi, r.poi_text);
+                const neverMoved = /^\(아직 POI/.test((r.poi_text || '').trim());
+
+                let anomaly;
+                if (limit === undefined) anomaly = r.status === 'anomaly';                       // 표에 없는 기체 → Worker 판정
+                else if (neverMoved && PATROL_SKIP_IF_NEVER_MOVED.has(r.robot)) anomaly = false;  // 첫 POI 전 예외
+                else anomaly = stale >= limit;                                                    // 기체별 허용 시간
+
                 return {
                     robot: r.robot || '(이름 없음)',
                     staff: Array.isArray(r.staff_list) ? r.staff_list : [],
-                    anomaly: r.status === 'anomaly',
-                    stale: Number.isFinite(r.stale_min) ? r.stale_min : 0,
+                    anomaly, stale,
                     poi: p.poi || r.poi_text || '-',
                     act: p.act,
-                    tip: `${r.robot} | 시작 ${r.start_hhmm || '-'} | ${r.poi_text || ''}`,
+                    tip: `${r.robot} | 시작 ${r.start_hhmm || '-'} | ${r.poi_text || ''}` + (limit !== undefined ? ` | 허용 ${limit}분` : ''),
                 };
             })
             .sort((a, b) =>
@@ -3497,11 +3643,11 @@
                 mk('span', 'bb-mm-staff', c.staff.length ? c.staff.join('·') : '담당 없음')
             );
 
-            // 2줄: 현재 POI ··· N분째 미갱신(이상일 때만, 우측)
+            // 2줄: 현재 POI ··· N분째 POI 미갱신(이상일 때만, 우측)
             const l2 = mk('div', 'bb-mm-l2');
             l2.append(mk('span', 'bb-mm-poi', c.poi));
             if (c.act) l2.append(mk('span', 'bb-mm-act', c.act));
-            if (c.anomaly) l2.append(mk('span', 'bb-mm-stale', `${c.stale}분째 미갱신`));
+            if (c.anomaly) l2.append(mk('span', 'bb-mm-stale', `${c.stale}분째 POI 미갱신`));
 
             el.append(l1, l2);
             frag.appendChild(el);
@@ -3512,6 +3658,10 @@
     function setPatrolStatus(text, warn) {
         const sub = document.getElementById('bb-mm-sub');
         if (sub) { sub.textContent = text; sub.classList.toggle('warn', !!warn); }
+    }
+    function setPatrolTitle(count) {
+        const t = document.getElementById('bb-mm-title');
+        if (t) t.textContent = `다중 모니터링 기체 ${count}대`;
     }
 
     async function refreshPatrolLive() {
@@ -3532,6 +3682,7 @@
                 _patrolSig = sig;
                 renderPatrolCards(cards);
             }
+            setPatrolTitle(cards.length);
             setPatrolStatus(`${_patrolLastUpdated || '-'} 기준`, false);   // 게시 시각만 그대로 표시
         } catch (e) {
             console.warn('[BB] 다중 모니터링 갱신 실패:', e.message);
