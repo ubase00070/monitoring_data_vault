@@ -1,5 +1,5 @@
 /* ============================================================
-   battery_board.js v4.4 (즐겨찾기 백업/복원 수정)
+   battery_board.js v4.5 (즐겨찾기를 백업 JSON 한 파일에 저장)
    NCC 종합 모니터 — 템퍼몽키 inject
    ============================================================ */
 
@@ -3520,11 +3520,10 @@
         closeBkPop();
     });
 
-    // 백업 서버는 {ids, name} 형식이면 ids · name · savedAt 만 저장하고 그 밖의 필드(예: fav)는 버린다.
-    // 그래서 즐겨찾기 배열은 배터리 로그/알림 로그가 쓰는 {name, data} 형식의 별도 기록으로 함께 저장한다.
-    //   최윤혁                  → { ids: [...전체(즐겨찾기 먼저)...], name, savedAt }
-    //   배터리_즐겨찾기_최윤혁   → { data: { fav: [...즐겨찾기 순서...], savedAt }, name, savedAt }
-    const FAV_BACKUP_PREFIX = '배터리_즐겨찾기_';
+    // 목록 백업 = 서버의 이름별 JSON 한 파일에 전부 저장:
+    //   최윤혁 → { ids: [...전체(즐겨찾기 먼저)...], fav: [...즐겨찾기 순서...], name, savedAt }
+    // (서버 api/battery 가 fav 를 함께 저장하도록 업데이트되어 있어야 함. 구버전 서버는 fav 를 버리므로 저장 후 다시 읽어 확인한다.)
+    const FAV_BACKUP_PREFIX = '배터리_즐겨찾기_';   // 예전 방식(별도 기록)으로 저장된 백업을 복원할 때만 읽음
 
     async function postJson(body) {
         const res = await fetch(BACKUP_BASE, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
@@ -3532,49 +3531,46 @@
         try { json = await res.json(); } catch {}
         return { ok: res.ok && json.ok !== false, json };
     }
-    // 저장된 즐겨찾기 기록 읽기 → 배열, 기록이 없으면 null
-    async function fetchFavBackup(name) {
+    async function fetchBackup(name) {   // 이름별 백업 기록 읽기 (없으면 null)
         try {
-            const res = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent(FAV_BACKUP_PREFIX + name)}`, { cache: 'no-store' });
+            const res = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent(name)}`, { cache: 'no-store' });
             if (!res.ok) return null;
-            const json = await res.json();
-            const fav = json?.data?.fav;
-            return Array.isArray(fav) ? fav.map(String) : null;
+            return await res.json();
         } catch { return null; }
+    }
+    // 예전 방식: 즐겨찾기만 별도 기록({data:{fav}})으로 저장했던 백업 → 배열, 없으면 null
+    async function fetchLegacyFavBackup(name) {
+        const json = await fetchBackup(FAV_BACKUP_PREFIX + name);
+        const fav = json?.data?.fav;
+        return Array.isArray(fav) ? fav.map(String) : null;
     }
 
     async function doBackup(name) {
         const total = ids.length + favIds.length;
         if (!confirm(`"${name}" 이름으로 현재 목록(${total}대)을 백업하시겠습니까?`)) return;
         try {
-            const main = await postJson({ ids: [...favIds, ...ids], name });   // ids = 전체(구버전 호환)
-            if (!main.ok || main.json.ok !== true) { alert('❌ 백업하지 못했습니다. 잠시 후 다시 시도해 주세요.'); return; }   // 기존과 같은 성공 기준(서버가 ok:true 응답)
+            const main = await postJson({ ids: [...favIds, ...ids], fav: favIds, name });   // ids = 전체(구버전 호환), fav = 즐겨찾기 순서
+            if (!main.ok || main.json.ok !== true) { alert('❌ 백업하지 못했습니다. 잠시 후 다시 시도해 주세요.'); return; }
 
-            // 즐겨찾기 배열 저장 + 실제로 저장됐는지 다시 읽어서 확인
-            let favSaved = false;
-            try {
-                const favRes = await postJson({ name: FAV_BACKUP_PREFIX + name, data: { fav: favIds, savedAt: new Date().toISOString() } });
-                if (favRes.ok) {
-                    const back = await fetchFavBackup(name);
-                    favSaved = !!back && JSON.stringify(back) === JSON.stringify(favIds.map(String));
-                }
-            } catch {}
+            // fav 가 실제로 저장됐는지 다시 읽어서 확인 (서버가 fav 를 지원하지 않으면 조용히 버려지기 때문)
+            const back = await fetchBackup(name);
+            const favSaved = Array.isArray(back?.fav) && JSON.stringify(back.fav.map(String)) === JSON.stringify(favIds.map(String));
 
             if (favSaved) alert(`✅ 현재 목록 ${total}대(즐겨찾기 ${favIds.length}대 포함)를 "${name}" 이름으로 백업했습니다.`);
-            else alert(`⚠️ 현재 목록 ${total}대는 "${name}" 이름으로 백업했지만, 즐겨찾기 정보는 저장하지 못했습니다.\n잠시 후 다시 백업해 주세요.`);
+            else alert(`⚠️ 현재 목록 ${total}대는 "${name}" 이름으로 백업했지만, 즐겨찾기 정보는 저장하지 못했습니다.\n백업 서버가 즐겨찾기 저장을 지원하도록 업데이트되어 있는지 확인해 주세요.`);
         } catch { alert('❌ 네트워크 오류로 백업하지 못했습니다. 연결 상태를 확인해 주세요.'); }
     }
 
     async function doRestore(name) {
         if (!confirm(`"${name}" 님의 백업으로 복원하시겠습니까?\n현재 목록(${ids.length + favIds.length}대)은 백업 내용으로 교체됩니다.`)) return;
         try {
-            const res = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent(name)}`);
+            const res = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent(name)}`, { cache: 'no-store' });
             const data = await res.json();
             if (!data.ids || !data.ids.length) { alert(`❌ "${name}" 님의 백업이 저장되어 있지 않습니다.`); return; }
 
             const allIds = data.ids.map(String);   // 전체 목록 (즐겨찾기 + 일반)
-            let favBackup = await fetchFavBackup(name);   // 별도로 저장된 즐겨찾기 순서 (없으면 null)
-            if (!favBackup && Array.isArray(data.fav)) favBackup = data.fav.map(String);   // 서버가 fav 를 함께 돌려주는 경우 대비
+            let favBackup = Array.isArray(data.fav) ? data.fav.map(String) : null;   // 같은 파일에 저장된 즐겨찾기 순서
+            if (!favBackup) favBackup = await fetchLegacyFavBackup(name);            // 예전 방식으로 저장된 백업 호환
 
             if (favBackup) {
                 favIds = favBackup.filter((id, i, a) => allIds.includes(id) && a.indexOf(id) === i);
