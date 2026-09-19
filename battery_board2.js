@@ -1,5 +1,5 @@
 /* ============================================================
-   battery_board.js v4.2 (조회창 유지 · 즐겨찾기 1열 복귀 · 카드 한 번 클릭)
+   battery_board.js v4.3 (알림 라벨 삭제 · 최신 순찰 순 정렬 · UP 위치)
    NCC 종합 모니터 — 템퍼몽키 inject
    ============================================================ */
 
@@ -144,10 +144,10 @@
         .bb-legend-item { display:inline-flex; align-items:center; gap:4px; }
         .bb-legend-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
 
-        /* UP: CYH 전용이라 "by CYH" 아래 타이틀 박스 테두리에 아주 작게 얹어 둠 (CYH 모드일 때만 보임) */
+        /* UP: CYH 전용 — 제목 박스 안, "NCC" 글자 바로 밑(시계 왼쪽 빈 자리)에 아주 작게 (CYH 모드일 때만 보임) */
         .bb-up-mini {
-            position:absolute; right:16px; bottom:-9px; z-index:1;
-            height:16px; padding:0 6px; border-radius:5px; border:1px solid var(--bd2);
+            position:absolute; left:30px; bottom:8px; z-index:1;
+            height:15px; padding:0 5px; border-radius:5px; border:1px solid var(--bd2);
             background:var(--sur2); color:var(--mu); font-size:10px; line-height:1; font-family:inherit;
             display:inline-flex; align-items:center; cursor:pointer;
         }
@@ -245,10 +245,9 @@
 
         /* ── 알림 영역 (헤더 좌측) + 검색 ── */
         .bb-alert-zone {   /* 이 영역 안에서만 버튼이 뜸 — overflow:hidden 으로 밖으로 삐져나오지 않음 */
-            position:absolute; left:14px; top:50%; transform:translateY(calc(-50% - 6px));   /* 헤더 중앙보다 6px 위 */
+            position:absolute; left:14px; top:50%; transform:translateY(calc(-50% - 3px));   /* 헤더 중앙보다 3px 위. 6칸(3줄) = 114px 이라 이 이상 올리면 위가 잘림 */
             width:680px; box-sizing:border-box; padding:3px; overflow:hidden;
         }
-        .bb-alert-label { font-size:16px; font-weight:900; color:var(--tx); white-space:nowrap; padding:0 2px 5px; }
         .bb-alert-chips { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; }
         .bb-chip {   /* 가로로 긴 한 줄 버튼: [아이콘 종류 N건  ··· 기체명] */
             display:flex; align-items:center; gap:10px; min-width:0;
@@ -276,7 +275,7 @@
         #bb.bb-light .bb-chip.cam    { box-shadow:0 0 6px rgba(249,115,22,.15); }
         #bb.bb-light .bb-chip.nomap  { box-shadow:0 0 6px rgba(249,115,22,.15); }
         #bb.bb-light .bb-chip.idle   { box-shadow:0 0 6px rgba(59,130,246,.15); }
-        .bb-chip-none   { grid-column:1 / -1; font-size:13px; color:var(--mu); font-weight:700; padding:6px 4px; }
+        .bb-chip-none   { grid-column:1 / -1; font-size:14px; color:var(--mu); font-weight:700; padding:6px 4px; }
         @keyframes chipPulse { 0%,100%{opacity:1} 50%{opacity:.85} }
         @keyframes chipBorder {
             0%,100% { box-shadow:0 0 0 2px currentColor; }
@@ -735,7 +734,6 @@
             <div class="bb-hd">
                 <!-- 좌: 알림 버튼 영역 (배터리 / 좀비 / 방치 / 캠 미송출) -->
                 <div class="bb-alert-zone" id="bb-alert-bar">
-                    <div class="bb-alert-label">🚨 알림</div>
                     <div class="bb-alert-chips" id="bb-alert-chips"></div>
                 </div>
                 <div class="bb-hd-titlebox" id="bb-drag-handle">
@@ -747,7 +745,7 @@
                         <div class="bb-clock" id="bb-clk">00:00:00</div>
                         <div class="bb-ref" id="bb-ref">— 초 후 갱신</div>
                     </div>
-                    <button id="bb-wbl-upload-btn" class="bb-up-mini" style="display:none;" title="배터리 데이터 업로드 (CYH 전용)">📤 UP</button>
+                    <button id="bb-wbl-upload-btn" class="bb-up-mini" style="display:none;" title="배터리 데이터 업로드 (CYH 전용)">UP</button>
                 </div>
                 <!-- 제목 아래: 상태 색 범례 -->
                 <div class="bb-legend" id="bb-legend" title="기체 카드의 점 · 하단 동그라미 색 = 기체의 현재 상태"></div>
@@ -1242,7 +1240,8 @@
     };
 
     // 화면에 버튼으로 띄우는 알림은 4종: 배터리 / 좀비 / 방치 / 캠 미송출
-    // (비상정지·도킹·GPS 는 감지와 알림 로그 기록은 그대로 두고 버튼만 숨김 — 다시 보이려면 이 배열에 추가)
+    // (비상정지 'estop' · 도킹 'dock' · GPS 'nomap' 은 감지와 알림 로그 기록은 그대로 두고 버튼만 숨김 — 다시 보이려면 이 배열에 추가)
+    // 알림 영역은 2열 × 3줄 = 최대 6칸까지 잘리지 않고 들어간다 (7종 이상이면 넘침)
     const ALERT_CHIP_TYPES = ['bat', 'zombie', 'idle', 'cam'];
 
     function renderAlertChips(alerts) {
@@ -1261,7 +1260,7 @@
         );
 
         if (!types.length) {
-            el.innerHTML = '<span class="bb-chip-none">이상 없음 ✓</span>';
+            el.innerHTML = '<span class="bb-chip-none">기체 이상 알림 없음 ✓</span>';
         } else {
             el.innerHTML = types.map(type => {
                 const meta    = ALERT_META[type] || { label: type };
@@ -3086,9 +3085,9 @@
         if (!confirm('배터리 데이터를 업로드 하시겠습니까?')) return;
         const btn = e.currentTarget;
         const orig = btn.textContent;
-        btn.textContent = '⏳ 업로드 중...'; btn.disabled = true;
+        btn.textContent = '⏳'; btn.disabled = true;
         const ok = await wblDoUpload();
-        btn.textContent = ok ? '✅ 완료' : '❌ 실패';
+        btn.textContent = ok ? '✅' : '❌';
         setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 1500);
     });
     document.getElementById('bb-inforequest-btn').addEventListener('click', (e) => {
@@ -3708,8 +3707,22 @@
         return { poi: poi.replace(/[.\s]+$/, ''), act, unit: groups[1] || '' };   // unit = 메시지의 [기체 전체 이름]
     }
 
-    // records → 표시용 카드 (이상 우선, 이후 이름순)
-    function buildPatrolCards(records) {
+    // "HH:MM(:SS)" → 하루 중 분 (잘못된 값이면 null)
+    function patrolHm(str) {
+        const m = /^(\d{1,2}):(\d{2})/.exec(str || '');
+        return m ? (+m[1]) * 60 + (+m[2]) : null;
+    }
+    // 순찰 시작 후 경과 분: 기준 시각(피드 게시 시각) - 시작 시각. 자정을 넘겨도 맞도록 24시간 순환 처리
+    function patrolAgeMin(startHhmm, refMin) {
+        const st = patrolHm(startHhmm);
+        if (st === null || refMin === null) return null;
+        let age = (refMin - st + 1440) % 1440;
+        if (age > 720) age -= 1440;   // 기준 시각보다 살짝 뒤(시계 오차)로 찍힌 값은 "방금 시작"으로 취급
+        return age;
+    }
+
+    // records → 표시용 카드: 이상(anomaly) 먼저(오래 멈춘 순), 이상 없는 기체는 순찰 시작이 최근인 순 (위가 최신)
+    function buildPatrolCards(records, refMin = null) {
         const seen = new Set();
         return (records || [])
             .filter(r => r && (r.status === 'ongoing' || r.status === 'anomaly'))
@@ -3738,12 +3751,20 @@
                     act: p.act,
                     unit: p.unit,
                     start: r.start_hhmm || '',   // 순찰 시작 시각 (Worker 의 start_hhmm)
+                    age: patrolAgeMin(r.start_hhmm, refMin),   // 시작 후 경과 분 (작을수록 최근)
                     tip: `${r.robot} | 시작 ${r.start_hhmm || '-'} | ${r.poi_text || ''}` + (limit !== undefined ? ` | 허용 ${limit}분` : '') + ' | 클릭: 기체 정보',
                 };
             })
-            .sort((a, b) =>
-                (b.anomaly - a.anomaly) ||
-                (a.anomaly ? b.stale - a.stale : a.robot.localeCompare(b.robot, 'ko', { numeric: true })));
+            .sort((a, b) => {
+                if (a.anomaly !== b.anomaly) return b.anomaly - a.anomaly;
+                if (a.anomaly) return (b.stale - a.stale) || a.robot.localeCompare(b.robot, 'ko', { numeric: true });
+                // 이상 없음: 최근에 시작한 순찰이 위. 시작 시각 정보가 없는 카드는 맨 아래
+                const aa = a.age ?? Infinity, bb = b.age ?? Infinity;
+                if (aa !== bb) return aa - bb;
+                // 기준 시각을 모를 때(피드에 updated_at 없음)는 시각 문자열 내림차순
+                if (a.age === null && b.age === null && a.start !== b.start) return b.start.localeCompare(a.start);
+                return a.robot.localeCompare(b.robot, 'ko', { numeric: true });
+            });
     }
 
     // ── 카드 → NCC 기체(DB) 매칭 ─────────────────────────────────────
@@ -3846,7 +3867,7 @@
             if (!data || !Array.isArray(data.records)) throw new Error('데이터 형식 오류');
 
             _patrolLastUpdated = data.updated_at || null;
-            const cards = buildPatrolCards(data.records);
+            const cards = buildPatrolCards(data.records, patrolHm(data.updated_at));   // 기준 = Worker 가 게시한 시각(KST)
             const sig = JSON.stringify(cards);
             if (sig !== _patrolSig) {   // 바뀐 게 없으면 다시 그리지 않음 (점멸 애니메이션/스크롤 유지)
                 _patrolSig = sig;
