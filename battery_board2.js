@@ -1,5 +1,5 @@
 /* ============================================================
-   battery_board.js v3.5 (다중 모니터링 연동)
+   battery_board.js v3.6 (다중 모니터링 카드 개편)
    NCC 종합 모니터 — 템퍼몽키 inject
    ============================================================ */
 
@@ -337,7 +337,6 @@
             flex:1 1 auto; min-height:0; overflow-y:auto;
             display:flex; flex-direction:column; gap:5px; padding:6px;
         }
-        .bb-mm-body.stale { opacity:.5; }   /* 피드가 오래됐거나 불러오기 실패 → 옛 정보임을 흐림으로 표시 */
         .bb-mm-body:empty::before {   /* 카드가 들어오면 자동으로 사라지는 빈 상태 문구 */
             content:'다중 모니터링 중인 기체 없음'; margin:auto; font-size:13px; color:var(--mu);
         }
@@ -347,19 +346,25 @@
             padding:0 10px;
             background:var(--sur); border:1.5px solid var(--bd); border-radius:8px;
         }
+        /* 1줄: 기체명 · 순찰 중 ··········· 요원 */
         .bb-mm-l1 { display:flex; align-items:baseline; gap:8px; min-width:0; }
         .bb-mm-name {
-            flex:1; min-width:0; font-size:15px; font-weight:700; color:var(--tx);
+            flex:0 1 auto; min-width:0; font-size:15px; font-weight:700; color:var(--tx);
             white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
         }
-        .bb-mm-staff { flex-shrink:0; max-width:55%; font-size:13px; color:var(--mu); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-        .bb-mm-l2 { display:flex; align-items:center; gap:6px; min-width:0; font-size:13px; }
-        .bb-mm-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; background:var(--bl); }
-        .bb-mm-st { min-width:0; color:var(--bl); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .bb-mm-st { flex-shrink:0; display:inline-flex; align-items:center; gap:5px; font-size:13px; color:var(--bl); white-space:nowrap; }
+        .bb-mm-dot { width:8px; height:8px; border-radius:50%; background:var(--bl); }
+        .bb-mm-staff {
+            flex:0 1 auto; min-width:0; max-width:45%; margin-left:auto;
+            font-size:13px; color:var(--mu); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+        }
+        /* 2줄: 현재 POI ··········· N분째 미갱신 */
+        .bb-mm-l2 { display:flex; align-items:baseline; gap:6px; min-width:0; font-size:13px; }
+        .bb-mm-poi { flex:0 1 auto; min-width:0; color:var(--tx); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .bb-mm-act { flex-shrink:0; font-size:12px; color:var(--mu); white-space:nowrap; }
+        .bb-mm-stale { flex-shrink:0; margin-left:auto; color:var(--or); white-space:nowrap; }
         .bb-mm-card.anomaly { border-color:var(--or); animation:bb-mmBlink 1s infinite; }
-        .bb-mm-card.anomaly .bb-mm-dot { background:var(--or); }
-        .bb-mm-card.anomaly .bb-mm-st { color:var(--or); }
-        #bb.bb-light .bb-mm-card.anomaly .bb-mm-st, #bb.bb-light .bb-mm-sub.warn { color:#c2410c; }
+        #bb.bb-light .bb-mm-stale, #bb.bb-light .bb-mm-sub.warn { color:#c2410c; }
         @keyframes bb-mmBlink {
             0%,100% { border-color:var(--or); box-shadow:0 0 0 1px var(--or); }
             50%     { border-color:transparent; box-shadow:none; }
@@ -3387,31 +3392,57 @@
 
     // ============================================================
     // SECTION 16. 다중 모니터링 — patrol_watch_live.json (Cloudflare Worker가 약 1분 간격으로 Gist에 게시)
-    //  - 목적: 다중 모니터링 순찰 기체가 정상 진행 중인지, 정체/방치인지 확인
-    //  - 판정은 Worker(index.js)가 한다: 기체별 예외 허용 시간(SLOW_POI_OVERRIDE_MIN / POI_SEGMENT_OVERRIDE_MIN /
-    //    SKIP_IF_NEVER_MOVED)이 이미 status 에 반영돼 내려오므로, 여기서는 stale_min 으로 다시 판정하지 않고
-    //    status 를 그대로 쓴다. (클라이언트에 별도 임계값을 두면 Worker 예외 로직과 어긋남)
+    //  - 갱신 주기: 기체 데이터(bb_robots_data, 2분)와 무관하게 이 파일만 60초마다 독립적으로 받아온다.
+    //  - 받아오기만 한다: 피드 신선도(지연) 판정은 하지 않음. 이상 여부는 Worker(index.js)가 낸 status 그대로 사용.
+    //    (기체별 예외 허용 시간 SLOW_POI_OVERRIDE_MIN / POI_SEGMENT_OVERRIDE_MIN / SKIP_IF_NEVER_MOVED 는
+    //     Worker 가 이미 status 에 반영해서 내려주므로 여기서 stale_min 으로 다시 판정하지 않는다.)
     //  - 표시 대상: status === 'ongoing' | 'anomaly'  (finished / wrong_duplicate 는 숨김)
     // ============================================================
     const PATROL_LIVE_URL = 'https://gist.githubusercontent.com/ubase00070/bd7773a059217fb81b0be90c961fcc22/raw/patrol_watch_live.json';
     const PATROL_REFRESH_MS = 60 * 1000;
-    const PATROL_FEED_STALE_SEC = 3 * 60;   // Worker 게시가 이 시간 넘게 멈추면 "갱신 지연" 경고
     let _patrolBusy = false;
     let _patrolSig = null;
     let _patrolLastUpdated = null;
 
-    function patrolKstNowSec() {
-        const p = new Intl.DateTimeFormat('en-GB', {
-            timeZone: 'Asia/Seoul', hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit',
-        }).formatToParts(new Date());
-        const g = t => parseInt(p.find(x => x.type === t).value, 10) % 24;
-        return g('hour') * 3600 + g('minute') * 60 + g('second');
-    }
-    function patrolFeedAgeSec(updatedAt) {   // "HH:MM:SS"(KST) → 지금까지 경과 초 (자정 넘김 보정)
-        const m = /^(\d{1,2}):(\d{2}):(\d{2})$/.exec(updatedAt || '');
-        if (!m) return null;
-        const upd = (+m[1]) * 3600 + (+m[2]) * 60 + (+m[3]);
-        return (patrolKstNowSec() - upd + 86400) % 86400;
+    // poi_text → { poi: 현재 POI명, act: 이동 중/도착/복귀 중 }
+    //  예) "[사이트][기체] [명덕동 코스5]로 이동합니다."  → { poi:'명덕동 코스5', act:'이동 중' }
+    //      "[[SK쉴더스] 순천향대학교][순천향대학교 1호기] 대기장소에 도착했어요." → { poi:'대기장소', act:'도착' }
+    //      "(아직 POI 갱신 없음)" → { poi:'아직 POI 갱신 없음', act:'' }
+    function patrolParsePoi(text) {
+        const raw = (text || '').trim();
+        if (!raw) return { poi: '', act: '' };
+        if (/^\(.*\)$/.test(raw)) return { poi: raw.slice(1, -1), act: '' };
+
+        // 앞쪽 최상위 [ ] 묶음 최대 3개 = 사이트 / 기체 / POI (중첩 괄호 대응)
+        let i = 0;
+        const groups = [];
+        while (groups.length < 3) {
+            while (i < raw.length && /\s/.test(raw[i])) i++;
+            if (raw[i] !== '[') break;
+            let depth = 0, j = i;
+            for (; j < raw.length; j++) {
+                if (raw[j] === '[') depth++;
+                else if (raw[j] === ']' && --depth === 0) break;
+            }
+            if (j >= raw.length) break;
+            groups.push(raw.slice(i + 1, j));
+            i = j + 1;
+        }
+        const rest = raw.slice(i).trim();
+
+        let poi, tail;
+        if (groups.length >= 3) {
+            poi = groups[2]; tail = rest;
+        } else {   // [POI] 없이 "대기장소에 도착했어요." / "스테이션에 도착했어요." 형태
+            const m = /^(.*?)(?:으로|로|에)?\s*(이동합니다|도착했습니다|도착했어요|복귀합니다)/.exec(rest);
+            poi = m ? m[1].trim() : rest;
+            tail = m ? m[2] : '';
+        }
+        let act = '';
+        if (/이동/.test(tail)) act = '이동 중';
+        else if (/도착/.test(tail)) act = '도착';
+        else if (/복귀/.test(tail)) act = '복귀 중';
+        return { poi: poi.replace(/[.\s]+$/, ''), act };
     }
 
     // records → 표시용 카드 (이상 우선, 이후 이름순)
@@ -3425,14 +3456,18 @@
                 seen.add(k);
                 return true;
             })
-            .map(r => ({
-                robot: r.robot || '(이름 없음)',
-                staff: Array.isArray(r.staff_list) ? r.staff_list : [],
-                anomaly: r.status === 'anomaly',
-                stale: Number.isFinite(r.stale_min) ? r.stale_min : 0,
-                start: r.start_hhmm || '',
-                poi: r.poi_text || '',
-            }))
+            .map(r => {
+                const p = patrolParsePoi(r.poi_text);
+                return {
+                    robot: r.robot || '(이름 없음)',
+                    staff: Array.isArray(r.staff_list) ? r.staff_list : [],
+                    anomaly: r.status === 'anomaly',
+                    stale: Number.isFinite(r.stale_min) ? r.stale_min : 0,
+                    poi: p.poi || r.poi_text || '-',
+                    act: p.act,
+                    tip: `${r.robot} | 시작 ${r.start_hhmm || '-'} | ${r.poi_text || ''}`,
+                };
+            })
             .sort((a, b) =>
                 (b.anomaly - a.anomaly) ||
                 (a.anomaly ? b.stale - a.stale : a.robot.localeCompare(b.robot, 'ko', { numeric: true })));
@@ -3441,23 +3476,32 @@
     function renderPatrolCards(cards) {
         const body = document.getElementById('bb-mm-body');
         if (!body) return;
+        const mk = (tag, cls, text) => {
+            const el = document.createElement(tag);
+            el.className = cls;
+            if (text !== undefined) el.textContent = text;
+            return el;
+        };
         const frag = document.createDocumentFragment();
         cards.forEach(c => {
-            const el = document.createElement('div');
-            el.className = 'bb-mm-card' + (c.anomaly ? ' anomaly' : '');
-            el.title = `${c.robot} | 시작 ${c.start} | ${c.poi}`;
+            const el = mk('div', 'bb-mm-card' + (c.anomaly ? ' anomaly' : ''));
+            el.title = c.tip;
 
-            const l1 = document.createElement('div'); l1.className = 'bb-mm-l1';
-            const name = document.createElement('span'); name.className = 'bb-mm-name'; name.textContent = c.robot;
-            const staff = document.createElement('span'); staff.className = 'bb-mm-staff';
-            staff.textContent = c.staff.length ? c.staff.join('·') : '담당 없음';
-            l1.append(name, staff);
+            // 1줄: 기체명 · 순찰 중 ··· 요원
+            const l1 = mk('div', 'bb-mm-l1');
+            const st = mk('span', 'bb-mm-st');
+            st.append(mk('span', 'bb-mm-dot'), document.createTextNode('순찰 중'));
+            l1.append(
+                mk('span', 'bb-mm-name', c.robot),
+                st,
+                mk('span', 'bb-mm-staff', c.staff.length ? c.staff.join('·') : '담당 없음')
+            );
 
-            const l2 = document.createElement('div'); l2.className = 'bb-mm-l2';
-            const dot = document.createElement('span'); dot.className = 'bb-mm-dot';
-            const st = document.createElement('span'); st.className = 'bb-mm-st';
-            st.textContent = c.anomaly ? `POI 정보 ${c.stale}분째 미갱신` : '순찰 중';
-            l2.append(dot, st);
+            // 2줄: 현재 POI ··· N분째 미갱신(이상일 때만, 우측)
+            const l2 = mk('div', 'bb-mm-l2');
+            l2.append(mk('span', 'bb-mm-poi', c.poi));
+            if (c.act) l2.append(mk('span', 'bb-mm-act', c.act));
+            if (c.anomaly) l2.append(mk('span', 'bb-mm-stale', `${c.stale}분째 미갱신`));
 
             el.append(l1, l2);
             frag.appendChild(el);
@@ -3467,9 +3511,7 @@
 
     function setPatrolStatus(text, warn) {
         const sub = document.getElementById('bb-mm-sub');
-        const body = document.getElementById('bb-mm-body');
         if (sub) { sub.textContent = text; sub.classList.toggle('warn', !!warn); }
-        if (body) body.classList.toggle('stale', !!warn);
     }
 
     async function refreshPatrolLive() {
@@ -3490,13 +3532,7 @@
                 _patrolSig = sig;
                 renderPatrolCards(cards);
             }
-
-            const age = patrolFeedAgeSec(_patrolLastUpdated);
-            if (age !== null && age > PATROL_FEED_STALE_SEC) {
-                setPatrolStatus(`⚠ 갱신 지연 · ${_patrolLastUpdated} 기준`, true);
-            } else {
-                setPatrolStatus(`${_patrolLastUpdated || '-'} 기준`, false);
-            }
+            setPatrolStatus(`${_patrolLastUpdated || '-'} 기준`, false);   // 게시 시각만 그대로 표시
         } catch (e) {
             console.warn('[BB] 다중 모니터링 갱신 실패:', e.message);
             setPatrolStatus(_patrolLastUpdated
