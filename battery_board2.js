@@ -1,5 +1,5 @@
 /* ============================================================
-   battery_board.js v3.3 (통합 리스트 + 하단 퀵바)
+   battery_board.js v3.4 (다중 모니터링 영역 확보)
    NCC 종합 모니터 — 템퍼몽키 inject
    ============================================================ */
 
@@ -81,7 +81,7 @@
         #bb {
             display:none; position:fixed; top:50%; left:50%;
             transform:translate(-50%,-50%);
-            width:1490px;
+            width:1714px;   /* 1490px 대비 +15% — 우측 다중 모니터링 영역 확보 */
             max-height:100vh; overflow-y:auto; overflow-x:hidden;
             border:3px solid transparent; border-radius:16px;
             background-image: var(--bg-fill), linear-gradient(135deg, #6366f1, #ec4899);
@@ -91,8 +91,7 @@
             z-index:9999999; font-family:'Paperlogy','Lato',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
 			font-weight:900;
 			color:var(--tx); flex-direction:column;
-			cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_default.png') 4 4, auto;
-        }
+			        }
         #bb.bb-light { -webkit-text-stroke: 0.4px currentColor; }
         #bb.open { display:flex; }
 		
@@ -113,7 +112,7 @@
             border:2.5px solid transparent;
             background-image: linear-gradient(var(--bg), var(--bg)), linear-gradient(135deg, rgba(99,102,241,.7), rgba(236,72,153,.7));
             background-origin: border-box; background-clip: padding-box, border-box;
-            cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_grab.png') 32 32, grab;
+            cursor:grab;
         }
         .bb-hd-title {
             font-size:22px; font-weight:900;
@@ -132,7 +131,7 @@
         .bb-btn {
             height:32px; padding:0 12px; border-radius:6px; border:1px solid var(--bd2);
             background:var(--sur2); color:var(--tx); font-size:14px;
-            font-family:inherit; font-weight:700; cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_pointer.png') 4 4, pointer; white-space:nowrap;
+            font-family:inherit; font-weight:700; cursor:pointer; white-space:nowrap;
             display:inline-flex; align-items:center; justify-content:center; box-sizing:border-box;
         }
         .bb-btn:hover { border-color:var(--mu); }
@@ -146,14 +145,14 @@
         .bb-xbtn {
             width:32px; height:32px; border-radius:6px;
             background:rgba(239,68,68,.15); border:1px solid rgba(239,68,68,.3);
-            color:var(--rd); font-size:13px; cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_pointer.png') 4 4, pointer;
+            color:var(--rd); font-size:13px; cursor:pointer;
             display:flex; align-items:center; justify-content:center; font-weight:900;
         }
         .bb-xbtn:hover { background:rgba(239,68,68,.3); }
         .zoom-btn {
             padding:3px 8px; border-radius:5px; border:1px solid var(--bd2);
             background:var(--sur2); color:var(--tx); font-size:12px;
-            font-weight:900; cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_pointer.png') 4 4, pointer; line-height:1.5; font-family:inherit;
+            font-weight:900; cursor:pointer; line-height:1.5; font-family:inherit;
         }
         .zoom-label { font-size:14px; color:var(--tx); font-weight:700; min-width:34px; text-align:center; }
 
@@ -176,7 +175,7 @@
         .bb-chip {
             display:flex; flex-direction:column; gap:1px;
             padding:3px 16px; border-radius:10px;
-            font-size:15px; font-weight:700; cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_pointer.png') 4 4, pointer;
+            font-size:15px; font-weight:700; cursor:pointer;
             font-family:inherit; max-width:198px;
             transition:filter .15s, box-shadow .15s;
         }
@@ -209,7 +208,6 @@
 
         /* 검색 */
         .bb-si-wrap { position:relative; }
-        .bb-si { cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_default.png') 4 4, auto; }
         .bb-si {
             width:26.5ch; max-width:100%; background:var(--sur2); border:1px solid var(--bd2);
             border-radius:7px; padding:6px 10px 6px 26px;
@@ -227,7 +225,7 @@
         }
         #bb-dd.open { display:block; }
         .bb-di {
-            padding:8px 12px; font-size:14px; font-weight:700; cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_pointer.png') 4 4, pointer;
+            padding:8px 12px; font-size:14px; font-weight:700; cursor:pointer;
             display:flex; align-items:center; gap:6px;
             border-bottom:1px solid var(--bd); color:var(--tx);
             transition:background .1s;
@@ -239,10 +237,13 @@
         .bb-di-plus { font-size:15px; color:var(--gn); font-weight:900; flex-shrink:0; margin-left:4px; }
 
         /* ── 기체 리스트 (통합 그리드: 한 줄 = 기체 1대) ── */
+        /* 본문 = 좌(기체 리스트 + 퀵바) | 우(다중 모니터링 중 기체) */
+        .bb-body { display:flex; align-items:stretch; flex-shrink:0; }   /* flex-shrink:0 → 내용이 길 때 줄어들며 잘리지 않고 패널 스크롤 */
+        .bb-main { flex:0 0 1340px; min-width:0; display:flex; flex-direction:column; }   /* 1340 = 카드 318×4 + 간격 12×3 + 좌우 여백 16×2 (퀵바 내용이 길어져도 우측 영역을 밀지 않도록 고정) */
         .bb-list-wrap { padding:14px 16px 18px; min-height:500px; }   /* 알림 바(80px) 제거분만큼 확장 */
         .bb-list {
             display:grid;
-            grid-template-columns:repeat(4,minmax(0,1fr));
+            grid-template-columns:repeat(4,318px);   /* 기존 약 354px 대비 -10% */
             grid-auto-flow:column;   /* 세로 우선 채움 → 이름 순 정렬 시 위→아래로 읽힘 (행 수는 JS가 지정) */
             gap:5px 12px;
         }
@@ -266,19 +267,19 @@
         }
 
         .bb-row {
-            position:relative; display:flex; align-items:center; gap:8px;
-            height:30px; padding:0 8px 0 10px; border-radius:8px;
+            position:relative; display:flex; align-items:center; gap:6px;
+            height:30px; padding:0 6px 0 8px; border-radius:8px;
             background:var(--sur); border:1.5px solid var(--bd);
-            cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_grab.png') 32 32, grab;
+            cursor:grab;
             user-select:none;
             transition:border-color .15s, background .15s, opacity .15s;
         }
         .bb-row:hover { border-color:var(--mu); }
-        .bb-row:active { cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_hold.png') 32 32, grabbing; }
+        .bb-row:active { cursor:grabbing; }
         .bb-row.warn-bat { animation:bb-warnBlink .8s infinite; }
         .bb-row.dragging { opacity:.3; }
         .bb-row.dragover { border-color:var(--bl)!important; box-shadow:0 0 0 1px var(--bl); }
-        .bb-row.selectable { cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_pointer.png') 4 4, pointer; }
+        .bb-row.selectable { cursor:pointer; }
         .bb-row.selectable:hover { border-color:rgba(239,68,68,.5); background:rgba(239,68,68,.04); }
         .bb-row.selected { border-color:var(--rd)!important; background:var(--rd2)!important; }
         .bb-row.selected::after {
@@ -294,9 +295,9 @@
         .bb-row-name.bb-marquee { overflow:visible; animation:bb-marquee 3s linear 0.5s 1 forwards; }
 
         /* 우측 배터리 슬롯 — 폭을 고정해 모든 행의 배터리 바 위치를 열 안에서 정렬 */
-        .bb-row-off { width:60px; text-align:center; font-size:12px; font-weight:900; font-family:'Paperlogy','Lato',monospace; flex-shrink:0; }
+        .bb-row-off { width:56px; text-align:center; font-size:12px; font-weight:900; font-family:'Paperlogy','Lato',monospace; flex-shrink:0; }
         .bb-row-batt {
-            position:relative; display:inline-block; width:60px; height:18px; border-radius:4px;
+            position:relative; display:inline-block; width:56px; height:18px; border-radius:4px;
             background:var(--sur2); border:1.5px solid var(--bd2);
             overflow:hidden; box-sizing:border-box; vertical-align:middle; flex-shrink:0;
         }
@@ -308,7 +309,7 @@
             letter-spacing:-0.3px; pointer-events:none; white-space:nowrap;
         }
         .bb-row-pct-wrap {
-            position:relative; display:inline-block; width:60px; height:18px;
+            position:relative; display:inline-block; width:56px; height:18px;
             overflow:hidden; flex-shrink:0; text-align:right;
         }
         .bb-row-pct-val, .bb-row-pct-off {
@@ -317,28 +318,51 @@
         }
         .bb-row-pct-val { display:flex; align-items:center; height:18px; }
         .bb-row-pct-off { font-size:11px; font-weight:900; line-height:18px; color:rgba(239,68,68,.8); animation-delay:-4s; }
-        .bb-row-plug { width:16px; text-align:center; font-size:11px; line-height:1; flex-shrink:0; }
+        .bb-row-plug { width:14px; text-align:center; font-size:11px; line-height:1; flex-shrink:0; }
 
-        /* ── 하단 퀵바: 그룹당 한 줄 ── */
+        /* ── 우측: 다중 모니터링 중 기체 (세로 직사각형 영역) ── */
+        .bb-mm { flex:1 1 0; min-width:0; position:relative; margin:14px 16px 14px 0; }
+        .bb-mm-box {
+            position:absolute; inset:0; display:flex; flex-direction:column;
+            border:2px solid var(--bd2); border-radius:8px; background:var(--bg); overflow:hidden;
+        }
+        .bb-mm-title {
+            flex:0 0 auto; padding:5px 8px; text-align:center;
+            font-size:16.5px; font-weight:900; color:var(--tx);
+            background:var(--sur); border-bottom:1px solid var(--bd);
+        }
+        .bb-mm-body {
+            flex:1 1 auto; min-height:0; overflow-y:auto;
+            display:flex; flex-direction:column; gap:5px; padding:6px;
+        }
+        .bb-mm-body:empty::before {   /* 카드가 들어오면 자동으로 사라지는 빈 상태 문구 */
+            content:'다중 모니터링 중인 기체 없음'; margin:auto; font-size:13px; color:var(--mu);
+        }
+        .bb-mm-card {   /* 기체 카드 = 기존 행(30px) 두 줄 두께 (30 + 5 + 30) */
+            flex:0 0 auto; height:65px; box-sizing:border-box;
+            background:var(--sur); border:1.5px solid var(--bd); border-radius:8px;
+        }
+
+        /* ── 하단 퀵바: 한 줄에 4개 그룹 (제목 | 켜진 기체 동그라미) ── */
         .bb-quick {
-            display:flex; flex-direction:column; gap:5px;
+            display:flex; flex-wrap:nowrap; align-items:stretch; gap:8px;
             padding:10px 16px 14px; border-top:1px solid var(--bd);
         }
         .bb-qline {
-            display:flex; align-items:stretch; min-height:38px;
+            flex:1 1 auto; min-width:0; display:flex; align-items:stretch; min-height:38px;
             border:2px solid var(--bd2); border-radius:8px;
             background:var(--bg); overflow:hidden;
         }
         .bb-qline-title {
-            flex:0 0 150px; display:flex; align-items:center; justify-content:center;
-            padding:0 8px; font-size:16.5px; font-weight:900; color:var(--tx);
+            flex:0 0 auto; display:flex; align-items:center; justify-content:center;
+            padding:0 12px; font-size:16.5px; font-weight:900; color:var(--tx);
             background:var(--sur); border-right:1px solid var(--bd); white-space:nowrap;
         }
         .bb-qline-circles {
             flex:1; min-width:0; display:flex; flex-wrap:wrap; align-items:center;
             gap:4px; padding:4px 10px;
         }
-        .bb-qline-none { font-size:13px; color:var(--mu); }
+        .bb-qline-none { font-size:13px; color:var(--mu); white-space:nowrap; }
         .bb-mi {
             width:28px; height:28px; border-radius:50%; flex-shrink:0;
             border:2px solid var(--ac,var(--gy));
@@ -371,7 +395,7 @@
 			background-size:contain;
 			background-repeat:no-repeat;
 			background-position:center;
-			cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_pointer.png') 4 4, pointer;
+			cursor:pointer;
 			transition:transform .15s;
 		}
 		#bb-walker:active { transform:scale(0.92); }
@@ -382,7 +406,7 @@
 			background:rgba(20,20,22,.55); border:1px solid rgba(255,255,255,.2);
 			color:#fff; font-size:16px; font-weight:900; line-height:1; padding:0;
 			display:flex; align-items:center; justify-content:center;
-			cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_pointer.png') 4 4, pointer; z-index:2;
+			cursor:pointer; z-index:2;
 			opacity:0; transition:opacity .15s, background .15s;
 		}
 		#bb-walker-wrap:hover .bb-walker-arrow { opacity:1; }
@@ -417,7 +441,7 @@
             min-width:38px; height:22px; padding:0 7px;
             border-radius:6px;
             background:var(--sur2); border:1px solid var(--bd2);
-            color:var(--tx); font-size:12px; font-weight:900; cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_pointer.png') 4 4, pointer;
+            color:var(--tx); font-size:12px; font-weight:900; cursor:pointer;
             display:flex; align-items:center; justify-content:center;
             z-index:2; transition:background .15s, color .15s;
         }
@@ -466,8 +490,7 @@
             background-clip: padding-box, border-box;
             box-shadow:0 24px 64px rgba(0,0,0,.9);
             z-index:99999999;
-            cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_default.png') 4 4, auto;
-        }
+                    }
 
         #bb-alertlog-all-panel {
             display:none; position:fixed;
@@ -479,8 +502,7 @@
             background-clip: padding-box, border-box;
             box-shadow:0 24px 64px rgba(0,0,0,.9);
             z-index:99999999;
-            cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_default.png') 4 4, auto;
-        }
+                    }
         #bb-alertlog-all-panel.open { display:block; }
         .bb-alertlog-day { margin-bottom:14px; }
         .bb-alertlog-day-title {
@@ -509,7 +531,7 @@
         .bb-ap-close {
             width:26px; height:26px; border-radius:7px;
             background:rgba(239,68,68,.25); border:1px solid rgba(239,68,68,.6);
-            color:#fca5a5; font-size:14px; cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_pointer.png') 4 4, pointer;
+            color:#fca5a5; font-size:14px; cursor:pointer;
             display:flex; align-items:center; justify-content:center; font-weight:900;
         }
         .bb-ap-item {
@@ -531,7 +553,7 @@
             display:flex; flex-shrink:0; align-self:center;
             padding:4px 11px; border-radius:6px;
             border:1px solid #4a5070; background:#3a3f62;
-            color:#a0a8cc; font-size:11px; font-weight:700; cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_pointer.png') 4 4, pointer; font-family:inherit;
+            color:#a0a8cc; font-size:11px; font-weight:700; cursor:pointer; font-family:inherit;
         }
         .bb-ap-empty { padding:28px 16px; text-align:center; font-size:14px; color:#8890b8; font-weight:700; background:var(--sur); border-radius:0 0 12px 12px; }
 
@@ -564,15 +586,14 @@
             box-shadow:0 16px 48px rgba(0,0,0,.9);
             z-index:999999999; font-family:'Lato',sans-serif;
             color:var(--tx); overflow:hidden;
-            cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_default.png') 4 4, auto;
-        }
+                    }
         #bb-info-card-panel.search-mode { width:588px; }
         .bb-icp-flex { display:flex; align-items:stretch; }
         .bb-icp-left { flex:0 0 260px; min-width:0; }
         .bb-icp-right { flex:1; min-width:0; border-left:1px solid var(--bd); padding:10px 16px; }
         .bb-icp-wbl-log { margin-top:10px; display:flex; flex-direction:column; gap:6px; }
         .bb-icp-wbl-line { font-size:15px; line-height:1.5; color:var(--tx); }
-        .bb-wbl-scroll { flex:1; min-width:0; overflow-x:auto; overflow-y:hidden; cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_grab.png') 32 32, grab; scrollbar-width:thin; }
+        .bb-wbl-scroll { flex:1; min-width:0; overflow-x:auto; overflow-y:hidden; cursor:grab; scrollbar-width:thin; }
         .bb-wbl-scroll::-webkit-scrollbar { height:6px; }
         .bb-wbl-scroll::-webkit-scrollbar-thumb { background:var(--bd2); border-radius:3px; }
         #bb-info-card-panel.bb-light {
@@ -609,7 +630,7 @@
         .bb-icp-close {
             width:22px; height:22px; border-radius:5px; flex-shrink:0;
             background:rgba(239,68,68,.15); border:1px solid rgba(239,68,68,.3);
-            color:var(--rd); font-size:14px; cursor:url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_pointer.png') 4 4, pointer;
+            color:var(--rd); font-size:14px; cursor:pointer;
             display:flex; align-items:center; justify-content:center; font-weight:900;
             margin-left:6px;
         }
@@ -701,13 +722,25 @@
                 <div id="bb-alertlog-all-body"></div>
             </div>
 
-            <!-- 메인 영역: 통합 기체 리스트 -->
-            <div class="bb-list-wrap">
-                <div class="bb-list" id="bb-list"></div>
-            </div>
+            <!-- 본문: 좌(기체 리스트 + 하단 퀵바) | 우(다중 모니터링 중 기체) -->
+            <div class="bb-body">
+                <div class="bb-main">
+                    <div class="bb-list-wrap">
+                        <div class="bb-list" id="bb-list"></div>
+                    </div>
 
-            <!-- 하단 퀵바: 역삼/송도/성수 요기요 · 성남 삼평/서현 (켜진 기체만, 그룹당 한 줄) -->
-            <div class="bb-quick" id="bb-quick"></div>
+                    <!-- 하단 퀵바: 역삼 | 송도 | 성수 | 삼평서현 (켜진 기체만, 한 줄) -->
+                    <div class="bb-quick" id="bb-quick"></div>
+                </div>
+
+                <!-- 다중 모니터링 중 기체 — 공간만 확보. 이식 시 #bb-mm-body 안에 .bb-mm-card 를 렌더 -->
+                <div class="bb-mm">
+                    <div class="bb-mm-box">
+                        <div class="bb-mm-title">다중 모니터링 중 기체</div>
+                        <div class="bb-mm-body" id="bb-mm-body"></div>
+                    </div>
+                </div>
+            </div>
 
             <!-- [주석처리: 기타 배달 기체(동숲)] — 필요 시 이 주석만 풀면 복구 (.bb-quick 아래에 배치)
             <div class="bb-bottom">
@@ -828,10 +861,10 @@
 
     // 하단 퀵바 그룹 — keywords가 기체명에 포함되면 해당 그룹. 켜진 기체만 표시됨.
     const MONITOR_GROUPS = [
-        { id:'yeoksam',  label:'역삼 요기요',    keywords:['역삼동'] },
-        { id:'songdo',   label:'송도 요기요',    keywords:['송도 신도시'] },
-        { id:'seongsu',  label:'성수 요기요',    keywords:['성수동'] },
-        { id:'seongnam', label:'성남 삼평/서현', keywords:['성남형'] },
+        { id:'yeoksam',  label:'역삼',     full:'역삼 요기요',    keywords:['역삼동'] },
+        { id:'songdo',   label:'송도',     full:'송도 요기요',    keywords:['송도 신도시'] },
+        { id:'seongsu',  label:'성수',     full:'성수 요기요',    keywords:['성수동'] },
+        { id:'seongnam', label:'삼평서현', full:'성남 삼평/서현', keywords:['성남형'] },
     ];
 
     const CAM_LABELS = {
@@ -1385,7 +1418,7 @@
     }, 1000);
 
     // ============================================================
-    // SECTION 8b. 하단 퀵바 렌더 — 그룹당 한 줄, 켜진 기체만 동그라미로 표시
+    // SECTION 8b. 하단 퀵바 렌더 — 한 줄에 4개 그룹, 켜진 기체만 동그라미로 표시
     //   동그라미 색 = 현재 상태(충전/순찰/배달/대기/도킹), 숫자 = 호기, 마우스 올리면 기체명 | 상태
     // ============================================================
     function renderMonitorGrid(rawList) {
@@ -1404,12 +1437,12 @@
 
             const line = document.createElement('div');
             line.className = 'bb-qline';
-            line.innerHTML = `<div class="bb-qline-title">${group.label}</div>`;
+            line.innerHTML = `<div class="bb-qline-title" title="${group.full || group.label}">${group.label}</div>`;
 
             const circles = document.createElement('div');
             circles.className = 'bb-qline-circles';
             if (onRobots.length === 0) {
-                circles.innerHTML = '<span class="bb-qline-none">가동 중인 기체 없음</span>';
+                circles.innerHTML = '<span class="bb-qline-none">가동 없음</span>';
             }
             onRobots.forEach((r, i) => {
                 const parsed = parseRobotStatus(r);
@@ -2316,7 +2349,7 @@
         _wblDragEl = el;
         _wblDragStartX = e.pageX;
         _wblDragStartScroll = el.scrollLeft;
-        el.style.cursor = "url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_hold.png') 32 32, grabbing";
+        el.style.cursor = 'grabbing';
         e.preventDefault();
     });
     document.addEventListener('mousemove', (e) => {
@@ -3240,7 +3273,7 @@
             const rect = bb.getBoundingClientRect();
             ox = e.clientX - rect.left;
             oy = e.clientY - rect.top;
-            handle.style.cursor = "url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/cur_hold.png') 32 32, grabbing";
+            handle.style.cursor = 'grabbing';
             e.preventDefault();
         });
         document.addEventListener('mousemove', e => {
