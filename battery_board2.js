@@ -1,5 +1,5 @@
 /* ============================================================
-   battery_board.js v4.5 (즐겨찾기를 백업 JSON 한 파일에 저장)
+   battery_board.js v4.6 (미갱신 판정 기준을 Worker 한 곳으로 통일)
    NCC 종합 모니터 — 템퍼몽키 inject
    ============================================================ */
 
@@ -3614,8 +3614,9 @@
     //  - 갱신 주기: 기체 데이터(bb_robots_data, 2분)와 무관하게 이 파일만 30초마다 독립적으로 받아온다.
     //    (Worker 가 파일을 새로 게시하는 주기는 약 1분 — 30초 조회는 새 게시본을 최대 30초 안에 잡아내기 위함)
     //  - 표시 대상: status 가 'ongoing' | 'anomaly' 인 기체 (finished / wrong_duplicate 는 숨김)
-    //  - "N분째 POI 미갱신" 표시 여부는 아래 기체별 허용 시간으로 이 파일에서 판정한다.
-    //    기체마다 순찰 시 POI 간격이 달라서, 수십 분 동안 POI 가 안 바뀌어도 정상인 기체가 있기 때문.
+    //  - "N분째 POI 미갱신" 판정과 기체별 허용 시간은 Worker(index.js)가 유일한 기준이다.
+    //    (기체마다 순찰 시 POI 간격이 달라 기체별 허용 시간이 다름 — 표는 Worker 의 UNITS / POI_OVERRIDE_MIN)
+    //    여기서는 status('anomaly') 와 limit_min 을 그대로 표시만 한다. 판정 기준을 이 파일에 또 두면 두 파일이 어긋난다.
     // ============================================================
     const PATROL_LIVE_URL = 'https://gist.githubusercontent.com/ubase00070/bd7773a059217fb81b0be90c961fcc22/raw/patrol_watch_live.json';
     const PATROL_REFRESH_MS = 30 * 1000;   // 30초마다 조회 (NCC API 와 무관 — gist 파일만 읽음)
@@ -3623,89 +3624,67 @@
     let _patrolSig = null;
     let _patrolLastUpdated = null;
 
-    // ── 기체 표: 간소화명(patrol_watch_live.json 의 robot) → 허용 시간 + 전체 기체명 ──────────────
-    //  min  = 이 시간(분) 이상 POI 가 안 바뀌면 "N분째 POI 미갱신" + 주황 점멸. 숫자만 고치면 즉시 반영된다.
-    //  full = NCC 기체명(전체). 다중 모니터링 카드를 눌렀을 때 기체 정보 창을 여는 매칭에 쓴다.
-    //         (같은 간소화명을 쓰는 기체가 여럿이면 배열 — 예: 부경대 1·2호기)
-    const PATROL_UNITS = {
-        '용인 고진': { min: 10, full: '용인 고진역 힐스테이트 1호기' },
-        '경희대 1': { min:  5, full: '경희대학교 국제캠퍼스 1호기' },
-        '경희대 2': { min:  5, full: '경희대학교 국제캠퍼스 2호기' },
-        '성남 판교': { min: 10, full: '성남시 판교역 1호기' },
-        '성남 서현': { min:  5, full: '성남시 서현역 １호기' },
-        '성남 율동': { min: 10, full: '성남시 율동공원 1호기' },
-        '성남 야탑': { min: 10, full: '성남시 야탑역 1호기' },
-        '부산 호반 1': { min: 10, full: '부산 EDC 호반써밋 1호기' },
-        '부산 호반 2': { min: 10, full: '부산 EDC 호반써밋 2호기' },
-        '부산 수자인 1': { min: 10, full: '부산 EDC 수자인 1호기' },
-        '부산 수자인 2': { min: 10, full: '부산 EDC 수자인 2호기' },
-        '파주': { min:  5, full: '파주 디에트르더클래스 1호기' },
-        '리센츠 1': { min: 15, full: '잠실 리센츠 아파트 1호기' },
-        '리센츠 2': { min: 15, full: '잠실 리센츠 아파트 2호기' },
-        '평택 1': { min:  5, full: '평택고덕 디에트르 1호기' },
-        '평택 2': { min:  5, full: '평택고덕 디에트르 2호기' },
-        '부산 서면': { min:  5, full: '부산 서면비스타동원 1호기' },
-        '부천 위브': { min: 15, full: '부천 위브 1호기' },
-        '잠실 레이크': { min: 15, full: '잠실 레이크팰리스 1호기' },
-        '엘스 1': { min: 15, full: '잠실 엘스 아파트 1호기' },
-        '엘스 2': { min: 15, full: '잠실 엘스 아파트 2호기' },
-        '인력개발원': { min: 15, full: '삼성인력개발원 1호기' },
-        '고양 래미안': { min: 10, full: '고양 래미안 휴레스트 1호기' },
-        '창원대 1': { min: 15, full: '창원대학교 1호기' },
-        '창원대 2': { min: 15, full: '창원대학교 2호기' },
-        '한성대': { min: 15, full: '한성대학교 1호기' },
-        '김포 풍무': { min:  5, full: '김포풍무센트럴푸르지오 1호기' },
-        '강남 래미안': { min: 10, full: '강남 래미안블레스티지 1호기' },
-        '김포 1': { min: 10, full: '김포 캐슬앤파밀리에 1호기' },
-        '김포 2': { min: 10, full: '김포 캐슬앤파밀리에 2호기' },
-        '지제': { min: 15, full: '지제역 푸르지오엘리아츠 1호기' },
-        '부경대': { min: 10, full: ['부경대 1호기', '부경대 2호기'] },
-        'DMZ': { min:  5, full: 'DMZ 캠프 그리브스 1호기' },
-        '쉴더스': { min: 10, full: '롯데마트부산CFC(쉴더스) 1호기' },
-        '두루아이 3': { min:  5, full: '두루아이 3호기' },
-        '두루아이 4': { min:  5, full: '두루아이 4호기' },
-        '두루아이 5': { min:  5, full: '두루아이 5호기' },
-        '중앙대': { min: 15, full: ['중앙대학교 1호기', '두루아이 2호기'] },
-        '잠실 르엘': { min: 10, full: '잠실 르엘 1호기' },
-        '신동백': { min: 15, full: '신동백 롯데캐슬 에코1단지 1호기' },
-        '청담 르엘': { min: 10, full: '청담르엘 1호기' },
-        '전주천': { min: 10, full: '전주시 전주천 1호기' },
-        '인재개발원': { min: 10, full: '인재개발원 1호기' },
-        '아주대 1': { min: 15, full: '아주대학교 1호기' },
-        '아주대 2': { min: 15, full: '아주대학교 2호기' },
-        '서강대': { min: 10, full: '서강대학교 1호기' },
-        '광교 풍경채': { min: 15, full: ['광교 풍경채 1호기', '광교풍경채(대체 기체) 1호기'] },
-        '동백SK': { min: 10, full: '동백SK아펠바움 1차 1호기' },
-        '구리 롯데캐슬': { min: 10, full: '구리역 롯데캐슬 시그니처 1호기' },
-        '동대문구 회기동': { min: 10, full: '동대문구회기동 1호기(쉴드플러스)' },
-        '더샵남천': { min: 10, full: '더샵남천프레스티지 1호기' },
-        '장애인고용공단 1': { min: 10, full: '한국장애인고용공단 1호기' },
-        '장애인고용공단 2': { min: 10, full: '한국장애인고용공단 2호기' },
-        '양원LH': { min:  5, full: '서울 양원 LH 1단지 1호기' },
-        '덕수궁': { min: 10, full: '덕수궁 1호기' },
-        '순천향': { min: 10, full: '순천향대학교 1호기' },
+    // ── (호환용) 간소화명 → NCC 기체명(전체) ─────────────────────────
+    //  Worker 가 records[].robot_full 을 내려주므로 평소에는 쓰이지 않는다. 예전 Worker 가 게시한 JSON 이거나
+    //  robot_full 이 없을 때만 카드 클릭 매칭에 사용. (같은 간소화명을 쓰는 기체가 여럿이면 배열)
+    const PATROL_FULL_NAMES = {
+        '용인 고진': '용인 고진역 힐스테이트 1호기',
+        '경희대 1': '경희대학교 국제캠퍼스 1호기',
+        '경희대 2': '경희대학교 국제캠퍼스 2호기',
+        '성남 판교': '성남시 판교역 1호기',
+        '성남 서현': '성남시 서현역 １호기',
+        '성남 율동': '성남시 율동공원 1호기',
+        '성남 야탑': '성남시 야탑역 1호기',
+        '부산 호반 1': '부산 EDC 호반써밋 1호기',
+        '부산 호반 2': '부산 EDC 호반써밋 2호기',
+        '부산 수자인 1': '부산 EDC 수자인 1호기',
+        '부산 수자인 2': '부산 EDC 수자인 2호기',
+        '파주': '파주 디에트르더클래스 1호기',
+        '리센츠 1': '잠실 리센츠 아파트 1호기',
+        '리센츠 2': '잠실 리센츠 아파트 2호기',
+        '평택 1': '평택고덕 디에트르 1호기',
+        '평택 2': '평택고덕 디에트르 2호기',
+        '부산 서면': '부산 서면비스타동원 1호기',
+        '부천 위브': '부천 위브 1호기',
+        '잠실 레이크': '잠실 레이크팰리스 1호기',
+        '엘스 1': '잠실 엘스 아파트 1호기',
+        '엘스 2': '잠실 엘스 아파트 2호기',
+        '인력개발원': '삼성인력개발원 1호기',
+        '고양 래미안': '고양 래미안 휴레스트 1호기',
+        '창원대 1': '창원대학교 1호기',
+        '창원대 2': '창원대학교 2호기',
+        '한성대': '한성대학교 1호기',
+        '김포 풍무': '김포풍무센트럴푸르지오 1호기',
+        '강남 래미안': '강남 래미안블레스티지 1호기',
+        '김포 1': '김포 캐슬앤파밀리에 1호기',
+        '김포 2': '김포 캐슬앤파밀리에 2호기',
+        '지제': '지제역 푸르지오엘리아츠 1호기',
+        '부경대': ['부경대 1호기', '부경대 2호기'],
+        'DMZ': 'DMZ 캠프 그리브스 1호기',
+        '쉴더스': '롯데마트부산CFC(쉴더스) 1호기',
+        '두루아이 3': '두루아이 3호기',
+        '두루아이 4': '두루아이 4호기',
+        '두루아이 5': '두루아이 5호기',
+        '중앙대': ['중앙대학교 1호기', '두루아이 2호기'],
+        '잠실 르엘': '잠실 르엘 1호기',
+        '신동백': '신동백 롯데캐슬 에코1단지 1호기',
+        '청담 르엘': '청담르엘 1호기',
+        '전주천': '전주시 전주천 1호기',
+        '인재개발원': '인재개발원 1호기',
+        '아주대 1': '아주대학교 1호기',
+        '아주대 2': '아주대학교 2호기',
+        '서강대': '서강대학교 1호기',
+        '광교 풍경채': ['광교 풍경채 1호기', '광교풍경채(대체 기체) 1호기'],
+        '동백SK': '동백SK아펠바움 1차 1호기',
+        '구리 롯데캐슬': '구리역 롯데캐슬 시그니처 1호기',
+        '동대문구 회기동': '동대문구회기동 1호기(쉴드플러스)',
+        '더샵남천': '더샵남천프레스티지 1호기',
+        '장애인고용공단 1': '한국장애인고용공단 1호기',
+        '장애인고용공단 2': '한국장애인고용공단 2호기',
+        '양원LH': '서울 양원 LH 1단지 1호기',
+        '덕수궁': '덕수궁 1호기',
+        '순천향': '순천향대학교 1호기',
     };
-
-    // POI 구간별 예외: 해당 POI 에 있는 동안(이동 중 · 도착 모두)만 기본값 대신 이 시간을 적용
-    const PATROL_STALE_POI_OVERRIDE_MIN = {
-        '전주천': { '전주천변_01': 50, '전주천변_04': 50 },   // 그 외 POI 는 위 기본값(10분)
-    };
-
-    // 배정 직후 첫 POI 도 없이 멈춰 있는 것(“(아직 POI 갱신 없음)”)을 이상으로 보지 않을 기체 (Worker 의 SKIP_IF_NEVER_MOVED 그대로)
-    const PATROL_SKIP_IF_NEVER_MOVED = new Set(['평택 1', '평택 2']);
-
-    // 표에 없는 기체는 허용 시간을 알 수 없으므로 Worker 가 낸 status(anomaly) 를 그대로 따른다.
-    function patrolLimitMin(robot, poi, poiText) {
-        const base = PATROL_UNITS[robot]?.min;
-        if (base === undefined) return undefined;
-        const ov = PATROL_STALE_POI_OVERRIDE_MIN[robot];
-        if (ov) {
-            for (const [name, min] of Object.entries(ov)) {
-                if (poi === name || (poiText || '').includes(`[${name}]`)) return min;
-            }
-        }
-        return base;
-    }
 
     // poi_text → { poi: 현재 POI명, act: 이동 중/도착/복귀 중, unit: 기체 전체 이름(있을 때) }
     //  예) "[사이트][기체] [명덕동 코스5]로 이동합니다."  → { poi:'명덕동 코스5', act:'이동 중' }
@@ -3776,13 +3755,8 @@
             .map(r => {
                 const p = patrolParsePoi(r.poi_text);
                 const stale = Number.isFinite(r.stale_min) ? r.stale_min : 0;
-                const limit = patrolLimitMin(r.robot, p.poi, r.poi_text);
-                const neverMoved = /^\(아직 POI/.test((r.poi_text || '').trim());
-
-                let anomaly;
-                if (limit === undefined) anomaly = r.status === 'anomaly';                       // 표에 없는 기체 → Worker 판정
-                else if (neverMoved && PATROL_SKIP_IF_NEVER_MOVED.has(r.robot)) anomaly = false;  // 첫 POI 전 예외
-                else anomaly = stale >= limit;                                                    // 기체별 허용 시간
+                const limit = Number.isFinite(r.limit_min) ? r.limit_min : undefined;   // Worker 가 판정에 쓴 허용 시간(분)
+                const anomaly = r.status === 'anomaly';                                  // 판정은 Worker 것을 그대로 (기준이 한 곳)
 
                 return {
                     robot: r.robot || '(이름 없음)',
@@ -3791,6 +3765,7 @@
                     poi: p.poi || r.poi_text || '-',
                     act: p.act,
                     unit: p.unit,
+                    full: r.robot_full || '',   // NCC 기체명(전체) — Worker 가 내려줌
                     start: r.start_hhmm || '',   // 순찰 시작 시각 (Worker 의 start_hhmm)
                     age: patrolAgeMin(r.start_hhmm, refMin),   // 시작 후 경과 분 (작을수록 최근)
                     tip: `${r.robot} | 시작 ${r.start_hhmm || '-'} | ${r.poi_text || ''}` + (limit !== undefined ? ` | 허용 ${limit}분` : '') + ' | 클릭: 기체 정보',
@@ -3813,13 +3788,14 @@
 
     function findPatrolRobot(c) {
         const byName = new Map(DB.map(r => [normName(r.name), r]));
-        // 1) POI 메시지에 들어 있는 기체 전체 이름 (같은 간소화명을 쓰는 기체도 정확히 구분됨)
-        if (c.unit) {
-            const hit = byName.get(normName(c.unit));
+        // 1) Worker 가 내려준 기체 전체 이름 (가장 정확)
+        for (const name of [c.full, c.unit]) {   // 2) 없으면 POI 메시지 속 [기체 전체 이름]
+            if (!name) continue;
+            const hit = byName.get(normName(name));
             if (hit) return hit;
         }
-        // 2) 하드코딩 표: 간소화명 → 전체 기체명
-        const found = [].concat(PATROL_UNITS[c.robot]?.full || []).map(f => byName.get(normName(f))).filter(Boolean);
+        // 3) (호환) 하드코딩 표: 간소화명 → 전체 기체명
+        const found = [].concat(PATROL_FULL_NAMES[c.robot] || []).map(f => byName.get(normName(f))).filter(Boolean);
         if (found.length <= 1) return found[0] || null;
         return found.find(r => r.status === 'patrolling') || found[0];   // 후보가 여럿이면 순찰 중인 기체 우선
     }
