@@ -1,5 +1,5 @@
 /* ============================================================
-   battery_board.js v4.9 (OFF 마지막 통신 · 카드 높이 +10% · 즐겨찾기 15대 · 최대 80대)
+   battery_board.js v5.0 (OFF 슬롯 정렬 · 유선충전 마크 이동 · 즐겨찾기 20대 · 세로 공간 확보)
    NCC 종합 모니터 — 템퍼몽키 inject
    ============================================================ */
 
@@ -104,7 +104,7 @@
         /* ── 헤더 ── */
         .bb-hd {
             display:flex; flex-direction:column; align-items:center;
-            padding:9px 14px 7px; min-height:124px; justify-content:center;   /* 우측 3줄 + 좌측 알림 영역 */
+            padding:9px 14px 7px; min-height:104px; justify-content:center;   /* 124 → 104: 세로 공간을 카드 영역에 돌려줌 (동숲 주민 100px 이 들어가는 높이) */
             border-radius:16px 16px 0 0;
             flex-shrink:0; position:relative; gap:3px;
         }
@@ -138,7 +138,7 @@
 
         /* 제목 박스 바로 아래 작은 범례 (기체 카드 점 / 하단 동그라미 색 = 현재 상태) */
         .bb-legend {
-            position:absolute; left:50%; bottom:4px; transform:translateX(-50%);
+            position:absolute; left:50%; bottom:3px; transform:translateX(-50%);
             display:flex; align-items:center; gap:9px; white-space:nowrap;
             font-size:10.5px; line-height:14px; color:var(--mu);
         }
@@ -255,13 +255,13 @@
 
         /* ── 알림 영역 (헤더 좌측) + 검색 ── */
         .bb-alert-zone {   /* 이 영역 안에서만 버튼이 뜸 — overflow:hidden 으로 밖으로 삐져나오지 않음 */
-            position:absolute; left:14px; top:50%; transform:translateY(calc(-50% - 3px));   /* 헤더 중앙보다 3px 위. 6칸(3줄) = 114px 이라 이 이상 올리면 위가 잘림 */
+            position:absolute; left:14px; top:50%; transform:translateY(-50%);   /* 헤더 세로 중앙. 6칸(3줄) = 104px 로 헤더 높이와 같아 위아래로 잘리지 않음 */
             width:570px; box-sizing:border-box; padding:3px; overflow:hidden;   /* 570 = 좌측 동숲 주민(100px) 자리를 남긴 폭 */
         }
-        .bb-alert-chips { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; }
+        .bb-alert-chips { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:4px 6px; }
         .bb-chip {   /* 가로로 긴 한 줄 버튼: [아이콘 종류 N건  ··· 기체명] */
             display:flex; align-items:center; gap:10px; min-width:0;
-            height:32px; padding:0 14px; box-sizing:border-box; border-radius:8px;
+            height:30px; padding:0 14px; box-sizing:border-box; border-radius:8px;
             font-size:14px; font-weight:700; cursor:pointer; font-family:inherit;
             transition:filter .15s, box-shadow .15s;
         }
@@ -329,7 +329,7 @@
         /* 기체 카드 영역: 기체가 많아 창이 화면보다 커지면 창 전체가 아니라 이 영역 안에서만 스크롤 (스크롤바 = 다중 모니터링 영역 바로 왼쪽) */
         .bb-list-wrap {
             flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden;
-            padding:14px 8px 18px 16px; scrollbar-gutter:stable;   /* 스크롤바 자리를 항상 확보 → 생겼다 사라져도 카드가 밀리지 않음 */
+            padding:10px 8px 10px 16px; scrollbar-gutter:stable;   /* 스크롤바 자리를 항상 확보 → 생겼다 사라져도 카드가 밀리지 않음 */
         }
         .bb-list-wrap::-webkit-scrollbar { width:6px; }
         .bb-list-wrap::-webkit-scrollbar-track { background:transparent; }
@@ -349,7 +349,7 @@
         }
         .bb-fav:not(:empty)::after {   /* 기체가 들어 있을 때: 영역 하단에 작은 안내 (비어 있을 때는 위의 가운데 문구) */
             content:var(--fav-note, '즐겨찾기 — 카드를 끌어다 놓으세요');   /* 가득 찼을 때는 JS 가 --fav-note 로 경고 문구를 잠깐 씀 */
-            position:sticky; bottom:6px; margin-top:auto; padding-top:8px;   /* 영역이 길어 스크롤돼도 보이는 하단에 고정 */
+            position:sticky; bottom:4px; margin-top:auto; padding-top:2px;   /* 영역이 길어 스크롤돼도 보이는 하단에 고정 */
             text-align:center; font-size:10px; line-height:12px; color:var(--mu); opacity:.85;
             text-shadow:0 0 3px var(--bg), 0 0 3px var(--bg);   /* 카드 위에 걸쳐도 읽히도록 */
             pointer-events:none;
@@ -412,18 +412,20 @@
 
         /* 우측 배터리 슬롯 — 폭을 고정해 모든 행의 배터리 바 위치를 열 안에서 정렬 */
         /* 전원 OFF 슬롯: 두 줄 (1줄 "OFF | 마지막 통신" / 2줄 "09/19, 17:53"), 오른쪽 정렬 */
-        .bb-row-off {
-            display:flex; flex-direction:column; align-items:flex-end; justify-content:center;
+        .bb-row-off {   /* 두 줄 모두 왼쪽 정렬 (슬롯 자체는 카드 오른쪽 끝에 붙음) */
+            display:flex; flex-direction:column; align-items:flex-start; justify-content:center;
             flex-shrink:0; min-width:56px; line-height:1;
         }
-        .bb-off-l1 { display:flex; align-items:baseline; white-space:nowrap; }
+        .bb-off-l1, .bb-off-l2 { display:flex; align-items:baseline; white-space:nowrap; }
+        .bb-off-a { display:inline-block; min-width:29px; }   /* 두 줄의 첫 칸 폭을 맞춰 "|" 가 세로로 정렬됨 */
         .bb-off-tag { font-size:11px; font-weight:900; letter-spacing:.2px; color:var(--off-main); }
         .bb-off-sep { font-style:normal; font-size:10px; margin:0 4px; color:var(--off-sub); opacity:.55; }
         .bb-off-lbl { font-size:9.5px; color:var(--off-sub); }
         .bb-off-l2 {
-            margin-top:3px; font-size:10.5px; color:var(--off-date); white-space:nowrap;
+            margin-top:3px; font-size:10.5px; color:var(--off-date);
             font-variant-numeric:tabular-nums; letter-spacing:.2px;
         }
+        .bb-off-none { color:var(--off-date); }
         .bb-row-batt {
             position:relative; display:inline-block; width:56px; height:20px; border-radius:4px;
             background:var(--sur2); border:1.5px solid var(--bd2);
@@ -446,10 +448,10 @@
         }
         .bb-row-pct-val { display:flex; align-items:center; height:20px; }
         .bb-row-pct-off { font-size:11px; font-weight:900; line-height:20px; color:rgba(239,68,68,.8); animation-delay:-4s; }
-        .bb-row-plug { width:14px; text-align:center; font-size:11px; line-height:1; flex-shrink:0; }
+        .bb-row-plug { font-size:11px; line-height:1; flex-shrink:0; }   /* 있을 때만 표시 (자리 예약 없음) — 배터리 바 왼쪽 */
 
         /* ── 우측: 다중 모니터링 중 기체 (세로 직사각형 영역) ── */
-        .bb-mm { flex:1 1 0; min-width:0; position:relative; margin:14px 16px 14px 6px; }
+        .bb-mm { flex:1 1 0; min-width:0; position:relative; margin:10px 16px 10px 6px; }
         .bb-mm-box {
             position:absolute; inset:0; display:flex; flex-direction:column;
             border:2px solid var(--bd2); border-radius:8px; background:var(--bg); overflow:hidden;
@@ -507,10 +509,10 @@
         /* ── 하단 퀵바: 한 줄에 4개 그룹 (제목 | 켜진 기체 동그라미) ── */
         .bb-quick {
             flex-shrink:0; display:flex; flex-wrap:nowrap; align-items:stretch; gap:8px;
-            padding:10px 16px 14px; border-top:1px solid var(--bd);
+            padding:8px 16px 8px; border-top:1px solid var(--bd);   /* 10/14 → 8/8 */
         }
         .bb-qline {
-            flex:1 1 auto; min-width:0; display:flex; align-items:stretch; min-height:38px;
+            flex:1 1 auto; min-width:0; display:flex; align-items:stretch; min-height:34px;
             border:2px solid var(--bd2); border-radius:8px;
             background:var(--bg); overflow:hidden;
         }
@@ -521,13 +523,13 @@
         }
         .bb-qline-circles {
             flex:1; min-width:0; display:flex; flex-wrap:wrap; align-items:center;
-            gap:4px; padding:4px 10px;
+            gap:4px; padding:2px 10px;
         }
         .bb-qline-none { font-size:13px; color:var(--mu); white-space:nowrap; }
         .bb-mi {
-            width:28px; height:28px; border-radius:50%; flex-shrink:0;
+            width:26px; height:26px; border-radius:50%; flex-shrink:0;
             border:2px solid var(--ac,var(--gy));
-            color:var(--ac,var(--gy)); font-size:13px; font-weight:900;
+            color:var(--ac,var(--gy)); font-size:12.5px; font-weight:900;
             display:flex; align-items:center; justify-content:center;
             font-family:'Paperlogy','Lato',monospace;
         }
@@ -850,7 +852,7 @@
                 <div class="bb-main">
                     <div class="bb-list-wrap">
                       <div class="bb-lists">
-                        <div class="bb-fav" id="bb-fav" title="즐겨찾기(최대 15대) — 여기에 끌어다 놓은 기체는 이 영역 안에서만 정렬됩니다"></div>
+                        <div class="bb-fav" id="bb-fav" title="즐겨찾기(최대 20대) — 여기에 끌어다 놓은 기체는 이 영역 안에서만 정렬됩니다"></div>
                         <div class="bb-list" id="bb-list"></div>
                       </div>
                     </div>
@@ -1019,7 +1021,7 @@
     let DB = [];
     let ids = load();
     let favIds = loadFav().filter(id => !ids.includes(id));
-    const FAV_MAX = 15;   // 즐겨찾기는 최대 15대 (그래야 아래 안내 문구가 항상 보임)
+    const FAV_MAX = 20;   // 즐겨찾기는 최대 20대 (20대 + 하단 안내 문구까지 한 화면에 들어가도록 세로 공간을 잡아 둠)
     // 20대를 넘긴 즐겨찾기(예: 저장된 값, 백업 복원)는 초과분을 일반 목록 앞쪽으로 옮김. 옮긴 대수를 반환
     function clampFav() {
         if (favIds.length <= FAV_MAX) return 0;
@@ -1700,7 +1702,7 @@
         robots.forEach(r => list.appendChild(makeRow(r, false)));
     }
 
-    // 마지막 통신 시각(ISO) → { short:'09/19, 17:53', full:'2026-09-19 17:53:12' } (한국 시간 기준, 없으면 null)
+    // 마지막 통신 시각(ISO) → { date:'09/19', time:'17:53', short:'09/19 | 17:53', full:'2026-09-19 17:53:12' } (한국 시간 기준, 없으면 null)
     const _kstFmt = new Intl.DateTimeFormat('en-GB', {
         timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit',
         hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23',
@@ -1711,7 +1713,7 @@
         if (isNaN(d.getTime())) return null;
         const p = Object.fromEntries(_kstFmt.formatToParts(d).map(x => [x.type, x.value]));
         const hh = p.hour === '24' ? '00' : p.hour;
-        return { short: `${p.month}/${p.day}, ${hh}:${p.minute}`, full: `${p.year}-${p.month}-${p.day} ${hh}:${p.minute}:${p.second}` };
+        return { date: `${p.month}/${p.day}`, time: `${hh}:${p.minute}`, short: `${p.month}/${p.day} | ${hh}:${p.minute}`, full: `${p.year}-${p.month}-${p.day} ${hh}:${p.minute}:${p.second}` };
     }
 
     function makeRow(r, isFav) {
@@ -1731,8 +1733,10 @@
 
         const battInner = off
             ? `<span class="bb-row-off">
-                   <span class="bb-off-l1"><b class="bb-off-tag">OFF</b><i class="bb-off-sep">|</i><span class="bb-off-lbl">마지막 통신</span></span>
-                   <span class="bb-off-l2">${lastConn ? lastConn.short : '기록 없음'}</span>
+                   <span class="bb-off-l1"><b class="bb-off-a bb-off-tag">OFF</b><i class="bb-off-sep">|</i><span class="bb-off-lbl">마지막 통신</span></span>
+                   <span class="bb-off-l2">${lastConn
+                       ? `<span class="bb-off-a bb-off-date">${lastConn.date}</span><i class="bb-off-sep">|</i><span class="bb-off-time">${lastConn.time}</span>`
+                       : '<span class="bb-off-none">기록 없음</span>'}</span>
                </span>`
             : `<span class="bb-row-batt" style="border-color:${ac};">
                    <span class="bb-row-batt-fill" style="width:${r.battery}%;background:${ac};"></span>
@@ -1748,8 +1752,8 @@
         row.innerHTML = `
             <span class="bb-row-dot" style="background:${ac};"></span>
             <span class="bb-row-name">${r.name}</span>
+            ${showPlug ? '<span class="bb-row-plug" title="유선 충전 연결">🔌</span>' : ''}
             ${battHtml}
-            <span class="bb-row-plug">${showPlug ? '🔌' : ''}</span>
         `;
 
         if (rmMode) {
