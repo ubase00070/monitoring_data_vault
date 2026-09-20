@@ -1,5 +1,5 @@
 /* ============================================================
-   battery_board.js v5.7 (이름 순 정렬 · 카드 제거 버튼을 카드 영역 마지막 칸으로 이동)
+   battery_board.js v5.8 (고정 버튼 3종 모두 숫자 배지 · 정렬/제거 버튼 색)
    NCC 종합 모니터 — 템퍼몽키 inject
    ============================================================ */
 
@@ -177,7 +177,7 @@
         }
         .bb-fb:hover { border-color:var(--mu); }
         .bb-fb.active { background:var(--bg); border-color:var(--tx); }
-        .bb-fb-n {   /* 버튼 모서리에 겹쳐 뜨는 숫자 배지 (폭을 차지하지 않음, 0이면 숨김) */
+        .bb-fb-n {   /* 버튼 모서리에 겹쳐 뜨는 숫자 배지 (폭을 차지하지 않음). 3개 버튼 모두 표시, 0 이면 연한 회색 */
             display:none; position:absolute; top:-7px; right:-5px; min-width:17px; height:17px; padding:0 4px;
             border-radius:9px; box-sizing:border-box; color:#fff; font-size:10px; font-weight:900; line-height:17px;
             text-align:center; box-shadow:0 1px 3px rgba(0,0,0,.3);
@@ -185,6 +185,8 @@
         .bb-fb-n.on { display:block; }
         .bb-fb-n.r { background:#dc2626; }
         .bb-fb-n.o { background:#ea580c; }
+        .bb-fb-n.b { background:#3b82f6; }
+        .bb-fb-n.z { background:var(--sur); color:var(--mu); border:1px solid var(--bd2); line-height:15px; box-shadow:none; }   /* 0대 */
 
         /* 고정 버튼 목록 창 (버튼 아래에 뜸, 열어 둔 채로 2분마다 자동 갱신) */
         .bb-fbp {
@@ -434,6 +436,12 @@
         }
         .bb-tool-btn { flex:1 1 0; min-width:0; height:33px; padding:0 8px; gap:6px; font-size:14px; }
         .bb-tool-btn.rm { min-width:0; }
+        #bb-sortname-btn { background:#d6f3b9; border-color:#a9d97f; color:#33421f; }              /* 이름 순 정렬: 파스텔 연두 */
+        #bb-sortname-btn:hover { background:#c8eea3; border-color:#8fc95f; }
+        #bb-rmbtn { background:#ffd9e4; border-color:#f2a7bf; color:#5c2233; }                     /* 카드 제거: 파스텔 연핑크 */
+        #bb-rmbtn:hover { background:#ffc9d9; border-color:#ea86a5; }
+        #bb-rmbtn.rm { background:#ff9fbb; border-color:#e5557f; color:#7f1236; }                  /* 제거 모드(완료 대기): 진한 핑크로 활성 표시 */
+        #bb-rmbtn.rm:hover { background:#ff8fb0; }
         .bb-tool-ico { display:inline-flex; width:16px; height:16px; flex-shrink:0; }
         .bb-tool-ico svg { width:16px; height:16px; display:block; }
         .bb-list-empty {
@@ -850,9 +858,9 @@
                 </div>
                 <!-- 좌: 고정 버튼 3종 (왼쪽 동숲 주민의 왼쪽) -->
                 <div class="bb-fixbtns" id="bb-fixbtns">
-                    <button id="bb-fb-dis" class="bb-fb" data-mode="dis" title="최근 24시간 배터리 로그에서 2% 이하에 도달한 뒤 OFF 된 기체">최근 방전 기체(24H)<b class="bb-fb-n"></b></button>
-                    <button id="bb-fb-slow" class="bb-fb" data-mode="slow" title="충전 중(100% 미만)인 기체를 충전을 시작한 때부터 지금까지의 평균 속도가 더딘 순으로 (상위 5대)">저속충전 기체 TOP5<b class="bb-fb-n"></b></button>
-                    <button id="bb-fb-moff" class="bb-fb" data-mode="moff" title="현재 임무가 OFF 인 기체">임무 OFF 기체<b class="bb-fb-n"></b></button>
+                    <button id="bb-fb-dis" class="bb-fb" data-mode="dis" title="최근 24시간 배터리 로그에서 2% 이하에 도달한 뒤 OFF 된 기체 · 오른쪽 위 숫자 = 해당 기체 수">최근 방전 기체(24H)<b class="bb-fb-n"></b></button>
+                    <button id="bb-fb-slow" class="bb-fb" data-mode="slow" title="충전 중(100% 미만)인 기체를 충전을 시작한 때부터 지금까지의 평균 속도가 더딘 순으로 (상위 5대) · 오른쪽 위 숫자 = 지금 충전 속도를 측정 중인 기체 수">저속충전 기체 TOP5<b class="bb-fb-n"></b></button>
+                    <button id="bb-fb-moff" class="bb-fb" data-mode="moff" title="현재 임무가 OFF 인 기체 · 오른쪽 위 숫자 = 해당 기체 수">임무 OFF 기체<b class="bb-fb-n"></b></button>
                     <div class="bb-fbp" id="bb-fbp">
                         <div class="bb-fbp-hd">
                             <span class="bb-fbp-title" id="bb-fbp-title"></span>
@@ -3828,7 +3836,7 @@
         const b = document.querySelector(`#${btnId} .bb-fb-n`);
         if (!b) return;
         b.textContent = n > 99 ? '99+' : String(n);
-        b.className = 'bb-fb-n' + (n > 0 ? ` on ${cls}` : '');
+        b.className = `bb-fb-n on ${n > 0 ? cls : 'z'}`;   // 0 이어도 숫자를 보여줌 (0 은 연한 회색)
     }
     function fbStateChip(cur) {
         if (!cur) return { ac: 'var(--mu)', txt: '조회 불가' };
@@ -3864,7 +3872,7 @@
         const sc = d.sc;
         let h = `<div class="bb-fbp-note">충전을 시작한 뒤 지금까지의 평균 속도가 느린 순 ${FB_SLOW_TOP}대 · 막대가 붉을수록 더딤</div>`;
         if (!sc.charging) return h + `<div class="bb-fbp-empty">현재 충전 중인 기체가 없습니다.</div>`;
-        if (!sc.measured) return h + `<div class="bb-fbp-empty">충전 속도를 측정 중입니다<br><span style="font-size:11px;font-weight:600;">충전 ${FB_CHG_MIN_MIN}분 이상 지나야 계산됩니다 · 충전 중 ${sc.charging}대</span></div>`;
+        if (!sc.measured) return h + `<div class="bb-fbp-empty">아직 충전 속도를 계산할 데이터가 부족합니다<br><span style="font-size:11px;font-weight:600;">충전 ${FB_CHG_MIN_MIN}분 이상 지나야 계산됩니다 · 충전 중 ${sc.charging}대</span></div>`;
         h += sc.top.map(m => {
             const r = m.r;
             const rateTxt = m.rate > 0 ? `+${m.rate.toFixed(1)}%/h` : m.rate === 0 ? '증가 없음' : `${m.rate.toFixed(1)}%/h (감소)`;
@@ -3882,7 +3890,7 @@
                 <div class="bb-sc-l3"><b>${since}</b> · ${dur} · ${m.startBat}% → ${r.battery}%</div>
             </div>`;
         }).join('');
-        return h + `<div class="bb-fbp-foot">충전 중 ${sc.charging}대 · 측정 ${sc.measured}대${sc.measuring ? ` · 측정 중 ${sc.measuring}대` : ''}</div>`;
+        return h + `<div class="bb-fbp-foot">충전 중 ${sc.charging}대 · 측정 중 ${sc.measured}대${sc.measuring ? ` · 데이터 부족 ${sc.measuring}대` : ''}</div>`;
     }
     function fbHtmlMoff(d) {
         const note = `<div class="bb-fbp-note">전원 ON 기체 기준.</div>`;
@@ -3919,7 +3927,7 @@
         try {
             fbCompute();
             fbSetBadge('bb-fb-dis', _fbData.dis.events.length, _fbData.dis.sure > 0 ? 'r' : 'o');   // 확정 방전이 있으면 빨강, 추정만 있으면 주황
-            fbSetBadge('bb-fb-slow', _fbData.sc.severe, 'r');
+            fbSetBadge('bb-fb-slow', _fbData.sc.measured, 'b');   // 저속충전: 지금 충전 속도를 측정 중인 기체 수 (데이터가 부족해 아직 계산 못 하는 기체는 제외)
             fbSetBadge('bb-fb-moff', _fbData.mo.length, 'o');
             fbRender();
         } catch (err) { console.error('[BB] 고정 버튼 갱신 오류:', err); }
