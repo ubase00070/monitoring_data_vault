@@ -1,5 +1,5 @@
 /* ============================================================
-   battery_board.js v4.8 (즐겨찾기 최대 20대 · 우측 주민 위치)
+   battery_board.js v4.9 (OFF 마지막 통신 · 카드 높이 +10% · 즐겨찾기 15대 · 최대 80대)
    NCC 종합 모니터 — 템퍼몽키 inject
    ============================================================ */
 
@@ -40,6 +40,7 @@
 			--or:#cf8a4f; --or2:rgba(207,138,79,.12);
 			--pk:#ff2d92; --pk2:rgba(255,45,146,.14);   /* 배달 = 진한 핫핑크 (카드 호버의 연핑크와 확실히 구분) */
 			--offdot:#4b5563;
+			--off-main:#c3c9d4; --off-date:#b3bac6; --off-sub:#9aa3b2;   /* OFF 슬롯 글자색 (다크) */
 			--fav-bd:#8b929c;   /* 즐겨찾기 테두리 — 다크에서는 검정이 안 보여 밝은 회색 */
 			--standby-batt:var(--tx);
 			--bg-fill:linear-gradient(var(--bg), var(--bg));
@@ -48,7 +49,7 @@
 		}
 
         #bb.bb-light {
-            --bg:#f2e4c4; --fav-bd:#000; --sur:#f8f3e6; --sur2:#efe6d2;
+            --bg:#f2e4c4; --fav-bd:#000; --off-main:#5b5442; --off-date:#635c4a; --off-sub:#736b58;   /* OFF 슬롯 글자색 (라이트: 대비 5~7:1) */ --sur:#f8f3e6; --sur2:#efe6d2;
             --bd:#cabf9d; --bd2:#b3a687; --tx:#2b2418; --mu:#7a6f5c;
             --wh:rgba(0,0,0,.05);
             --gn:#22c55e; --gn2:rgba(34,197,94,.10);
@@ -382,7 +383,7 @@
 
         .bb-row {
             position:relative; display:flex; align-items:center; gap:6px;
-            height:30px; padding:0 6px 0 8px; border-radius:8px;
+            height:33px; padding:0 6px 0 8px;   /* 30px → 33px (+10%) */ border-radius:8px;
             background:var(--sur); border:1.5px solid var(--bd);
             cursor:grab;
             user-select:none;
@@ -410,9 +411,21 @@
         .bb-row-name.bb-marquee { overflow:visible; animation:bb-marquee 3s linear 0.5s 1 forwards; }
 
         /* 우측 배터리 슬롯 — 폭을 고정해 모든 행의 배터리 바 위치를 열 안에서 정렬 */
-        .bb-row-off { width:56px; text-align:center; font-size:12px; font-weight:900; font-family:'Paperlogy','Lato',monospace; flex-shrink:0; }
+        /* 전원 OFF 슬롯: 두 줄 (1줄 "OFF | 마지막 통신" / 2줄 "09/19, 17:53"), 오른쪽 정렬 */
+        .bb-row-off {
+            display:flex; flex-direction:column; align-items:flex-end; justify-content:center;
+            flex-shrink:0; min-width:56px; line-height:1;
+        }
+        .bb-off-l1 { display:flex; align-items:baseline; white-space:nowrap; }
+        .bb-off-tag { font-size:11px; font-weight:900; letter-spacing:.2px; color:var(--off-main); }
+        .bb-off-sep { font-style:normal; font-size:10px; margin:0 4px; color:var(--off-sub); opacity:.55; }
+        .bb-off-lbl { font-size:9.5px; color:var(--off-sub); }
+        .bb-off-l2 {
+            margin-top:3px; font-size:10.5px; color:var(--off-date); white-space:nowrap;
+            font-variant-numeric:tabular-nums; letter-spacing:.2px;
+        }
         .bb-row-batt {
-            position:relative; display:inline-block; width:56px; height:18px; border-radius:4px;
+            position:relative; display:inline-block; width:56px; height:20px; border-radius:4px;
             background:var(--sur2); border:1.5px solid var(--bd2);
             overflow:hidden; box-sizing:border-box; vertical-align:middle; flex-shrink:0;
         }
@@ -424,15 +437,15 @@
             letter-spacing:-0.3px; pointer-events:none; white-space:nowrap;
         }
         .bb-row-pct-wrap {
-            position:relative; display:inline-block; width:56px; height:18px;
+            position:relative; display:inline-block; width:56px; height:20px;
             overflow:hidden; flex-shrink:0; text-align:right;
         }
         .bb-row-pct-val, .bb-row-pct-off {
             position:absolute; top:0; right:0; white-space:nowrap;
             animation:bb-pctSlide 8s ease-in-out infinite;
         }
-        .bb-row-pct-val { display:flex; align-items:center; height:18px; }
-        .bb-row-pct-off { font-size:11px; font-weight:900; line-height:18px; color:rgba(239,68,68,.8); animation-delay:-4s; }
+        .bb-row-pct-val { display:flex; align-items:center; height:20px; }
+        .bb-row-pct-off { font-size:11px; font-weight:900; line-height:20px; color:rgba(239,68,68,.8); animation-delay:-4s; }
         .bb-row-plug { width:14px; text-align:center; font-size:11px; line-height:1; flex-shrink:0; }
 
         /* ── 우측: 다중 모니터링 중 기체 (세로 직사각형 영역) ── */
@@ -837,7 +850,7 @@
                 <div class="bb-main">
                     <div class="bb-list-wrap">
                       <div class="bb-lists">
-                        <div class="bb-fav" id="bb-fav" title="즐겨찾기(최대 20대) — 여기에 끌어다 놓은 기체는 이 영역 안에서만 정렬됩니다"></div>
+                        <div class="bb-fav" id="bb-fav" title="즐겨찾기(최대 15대) — 여기에 끌어다 놓은 기체는 이 영역 안에서만 정렬됩니다"></div>
                         <div class="bb-list" id="bb-list"></div>
                       </div>
                     </div>
@@ -936,7 +949,7 @@
     // ============================================================
     // SECTION 1. 상수 & 상태
     // ============================================================
-    const MAX = 100;
+    const MAX = 80;   // 기체 카드(즐겨찾기 + 일반) 최대 80대
     const LS = 'bb_ids';
     const LS_FAV = 'bb_fav_ids';   // 즐겨찾기(1열) 기체 — ids 와 겹치지 않음
     const LS_ZOMBIE = 'bb_zombie';
@@ -1006,7 +1019,7 @@
     let DB = [];
     let ids = load();
     let favIds = loadFav().filter(id => !ids.includes(id));
-    const FAV_MAX = 20;   // 즐겨찾기는 최대 20대 (그래야 아래 안내 문구가 항상 보임)
+    const FAV_MAX = 15;   // 즐겨찾기는 최대 15대 (그래야 아래 안내 문구가 항상 보임)
     // 20대를 넘긴 즐겨찾기(예: 저장된 값, 백업 복원)는 초과분을 일반 목록 앞쪽으로 옮김. 옮긴 대수를 반환
     function clampFav() {
         if (favIds.length <= FAV_MAX) return 0;
@@ -1014,7 +1027,19 @@
         ids = [...overflow, ...ids];
         return overflow.length;
     }
-    if (clampFav()) save();
+    // 카드 총 개수가 MAX(80대)를 넘으면 일반 목록의 뒤쪽부터 뺌 (기체 데이터 자체는 그대로, 필요하면 검색해서 다시 추가). 뺀 대수를 반환
+    function clampTotal() {
+        const over = ids.length + favIds.length - MAX;
+        if (over <= 0) return 0;
+        ids.splice(ids.length - over, over);
+        return over;
+    }
+    let _trimNotice = 0;   // 시작할 때 목록을 줄였다면 그 대수 (화면이 뜬 뒤 한 번 안내)
+    {
+        const movedFav = clampFav();
+        _trimNotice = clampTotal();
+        if (movedFav || _trimNotice) save();
+    }
     let rmMode = false, rmSet = new Set(), isOpen = false;
     let fetchLock = false;
     let lastRaw = [];
@@ -1044,13 +1069,13 @@
             const s = localStorage.getItem(LS);
             if (!s) return [];
             const p = JSON.parse(s);
-            return Array.isArray(p) ? p.slice(0, MAX) : [];
+            return Array.isArray(p) ? p : [];
         } catch { return []; }
     }
     function loadFav() {
         try {
             const p = JSON.parse(localStorage.getItem(LS_FAV) || '[]');
-            return Array.isArray(p) ? p.slice(0, MAX) : [];
+            return Array.isArray(p) ? p : [];
         } catch { return []; }
     }
     function save() {
@@ -1675,6 +1700,20 @@
         robots.forEach(r => list.appendChild(makeRow(r, false)));
     }
 
+    // 마지막 통신 시각(ISO) → { short:'09/19, 17:53', full:'2026-09-19 17:53:12' } (한국 시간 기준, 없으면 null)
+    const _kstFmt = new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23',
+    });
+    function fmtLastConn(iso) {
+        if (!iso) return null;
+        const d = new Date(iso);
+        if (isNaN(d.getTime())) return null;
+        const p = Object.fromEntries(_kstFmt.formatToParts(d).map(x => [x.type, x.value]));
+        const hh = p.hour === '24' ? '00' : p.hour;
+        return { short: `${p.month}/${p.day}, ${hh}:${p.minute}`, full: `${p.year}-${p.month}-${p.day} ${hh}:${p.minute}:${p.second}` };
+    }
+
     function makeRow(r, isFav) {
         const ac = STATUS_AC[r.status] || 'var(--mu)';
         const off = r.status === 'off';
@@ -1687,10 +1726,14 @@
         row.className = `bb-row${r.status === 'delivering' ? ' delivering' : ''}${lowBat ? ' warn-bat' : ''}${rmMode ? ' selectable' : ''}${rmSet.has(r.id) ? ' selected' : ''}`;
         row.dataset.id = r.id;
         row.dataset.fav = isFav ? '1' : '';
-        row.title = `${r.name} | ${STL[r.status] || ''}`;
+        const lastConn = off ? fmtLastConn(r.raw?.robotStatus?.lastConnectedAt) : null;
+        row.title = `${r.name} | ${STL[r.status] || ''}` + (off ? ` | 마지막 통신 ${lastConn ? lastConn.full : '기록 없음'}` : '');
 
         const battInner = off
-            ? `<span class="bb-row-off" style="color:${ac};">OFF</span>`
+            ? `<span class="bb-row-off">
+                   <span class="bb-off-l1"><b class="bb-off-tag">OFF</b><i class="bb-off-sep">|</i><span class="bb-off-lbl">마지막 통신</span></span>
+                   <span class="bb-off-l2">${lastConn ? lastConn.short : '기록 없음'}</span>
+               </span>`
             : `<span class="bb-row-batt" style="border-color:${ac};">
                    <span class="bb-row-batt-fill" style="width:${r.battery}%;background:${ac};"></span>
                    <span class="bb-row-batt-pct">${r.battery}%</span>
@@ -3683,7 +3726,9 @@
             }
             ids = allIds.filter(id => !favIds.includes(id));
             const moved = clampFav();   // 즐겨찾기 20대 초과분은 일반 목록으로
-            const clampNote = moved ? `\n즐겨찾기는 최대 ${FAV_MAX}대까지라서 초과한 ${moved}대는 일반 목록으로 옮겼습니다.` : '';
+            const trimmed = clampTotal();   // 카드 총 80대 초과분은 일반 목록의 뒤쪽부터 뺌
+            const clampNote = (moved ? `\n즐겨찾기는 최대 ${FAV_MAX}대까지라서 초과한 ${moved}대는 일반 목록으로 옮겼습니다.` : '')
+                + (trimmed ? `\n기체 카드는 최대 ${MAX}대까지라서 목록 뒤쪽 ${trimmed}대는 뺐습니다.` : '');
             // 통합 리스트 이전 전에 만든 백업에는 예전 고정 그리드 기체가 없음 → 하나도 없으면 앞쪽에 편입
             const hasLegacy = [...favIds, ...ids].some(id => LEGACY_FIXED_SITE_IDS.includes(DB.find(x => x.id === id)?.siteId));
             if (!hasLegacy) prependLegacyFixed();
@@ -4018,6 +4063,10 @@
     if (isOpen) refreshPatrolLive();
 
     render();
+    if (_trimNotice) {
+        alert(`기체 카드는 최대 ${MAX}대까지라서, 저장돼 있던 목록에서 뒤쪽 ${_trimNotice}대를 뺐습니다.\n필요한 기체는 오른쪽 위 검색창에서 다시 추가해 주세요.`);
+        _trimNotice = 0;
+    }
     // [주석처리: 동숲] applyCampingBackground();
 
 })();
