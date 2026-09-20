@@ -1,5 +1,5 @@
 /* ============================================================
-   battery_board.js v4.7 (즐겨찾기 안내 · POI 정체 감지 표기 · 좌측 동숲 주민)
+   battery_board.js v4.8 (즐겨찾기 최대 20대 · 우측 주민 위치)
    NCC 종합 모니터 — 템퍼몽키 inject
    ============================================================ */
 
@@ -125,7 +125,7 @@
         .bb-hd-time { display:flex; align-items:baseline; gap:8px; }
         .bb-clock { font-family:'Lato',monospace; font-size:13px; font-weight:900; color:var(--mu); letter-spacing:.8px; }
         .bb-ref   { font-size:12px; color:var(--mu); font-weight:700; }
-        /* 헤더 우측 = [동숲 캐릭터] + [버튼 2줄]. 캐릭터가 버튼 폭에 밀려 겹치지 않도록 한 묶음(flex)으로 배치 */
+        /* 헤더 우측 = [버튼 2줄] (동숲 주민은 제목 박스 좌우에 따로 배치) */
         .bb-hd-rightwrap {
             position:absolute; right:14px; top:50%; transform:translateY(-50%);
             display:flex; align-items:center; gap:10px; z-index:500;
@@ -164,8 +164,11 @@
         .bb-bk-btns { display:flex; gap:6px; }
         .bb-bk-name { min-width:64px; }
 
-        /* 동숲 캐릭터 (헤더 우측, 버튼 묶음 왼쪽) — 캐릭터 선택/저장은 예전 그대로, 캠핑장 배경만 제외 */
-        #bb-walker-wrap { position:relative; flex:0 0 auto; width:100px; height:100px; }
+        /* 동숲 캐릭터 (헤더: 제목 박스 오른쪽) — 캐릭터 선택/저장은 예전 그대로, 캠핑장 배경만 제외 */
+        #bb-walker-wrap {   /* 우측 주민: 제목 박스 오른쪽 (좌측 주민과 좌우 대칭, 제목 박스에서 10px 띄움) */
+            position:absolute; left:calc(50% + 151px); top:50%; transform:translateY(-50%);
+            width:100px; height:100px; z-index:2;
+        }
         #bb-walker, #bb-walker-l {
             width:100%; height:100%;
             background-size:contain; background-repeat:no-repeat; background-position:center bottom;
@@ -344,12 +347,13 @@
             text-align:center; font-size:13px; color:var(--mu);
         }
         .bb-fav:not(:empty)::after {   /* 기체가 들어 있을 때: 영역 하단에 작은 안내 (비어 있을 때는 위의 가운데 문구) */
-            content:'즐겨찾기 — 카드를 끌어다 놓으세요';
+            content:var(--fav-note, '즐겨찾기 — 카드를 끌어다 놓으세요');   /* 가득 찼을 때는 JS 가 --fav-note 로 경고 문구를 잠깐 씀 */
             position:sticky; bottom:6px; margin-top:auto; padding-top:8px;   /* 영역이 길어 스크롤돼도 보이는 하단에 고정 */
             text-align:center; font-size:10px; line-height:12px; color:var(--mu); opacity:.85;
             text-shadow:0 0 3px var(--bg), 0 0 3px var(--bg);   /* 카드 위에 걸쳐도 읽히도록 */
             pointer-events:none;
         }
+        .bb-fav.warn::after { color:var(--rd); opacity:1; font-weight:700; }
         .bb-list {   /* 일반 기체: 3열 (세로 우선 채움 → 이름순 정렬 시 위→아래로 읽힘, 행 수는 JS가 지정) */
             flex:0 0 auto; display:grid; align-content:start;
             grid-template-columns:repeat(3,318px);
@@ -770,15 +774,16 @@
                 </div>
                 <!-- 제목 아래: 상태 색 범례 -->
                 <div class="bb-legend" id="bb-legend" title="기체 카드의 점 · 하단 동그라미 색 = 기체의 현재 상태"></div>
-                <!-- 우: 동숲 캐릭터 + 버튼 2줄 -->
+                <!-- 우: 동숲 주민 1 (제목 박스 오른쪽, 말풍선 있음) -->
+                <div id="bb-walker-wrap">
+                    <div id="bb-walker" title="클릭: 말풍선 켜기/끄기"></div>
+                    <button id="bb-walker-prev" class="bb-walker-arrow left" title="이전 캐릭터">‹</button>
+                    <button id="bb-walker-next" class="bb-walker-arrow right" title="다음 캐릭터">›</button>
+                    <button id="bb-walker-toggle" title="동숲 주민 끄기">동숲</button>
+                    <div id="bb-walker-bubble"><span id="bb-walker-bubble-text"></span></div>
+                </div>
+                <!-- 우: 버튼 2줄 -->
                 <div class="bb-hd-rightwrap">
-                    <div id="bb-walker-wrap">
-                        <div id="bb-walker" title="클릭: 말풍선 켜기/끄기"></div>
-                        <button id="bb-walker-prev" class="bb-walker-arrow left" title="이전 캐릭터">‹</button>
-                        <button id="bb-walker-next" class="bb-walker-arrow right" title="다음 캐릭터">›</button>
-                        <button id="bb-walker-toggle" title="동숲 주민 끄기">동숲</button>
-                        <div id="bb-walker-bubble"><span id="bb-walker-bubble-text"></span></div>
-                    </div>
                     <div class="bb-hd-right" id="bb-hd-right">
                         <div class="bb-hd-right-row spread">
                             <div class="bb-hd-grp">
@@ -832,7 +837,7 @@
                 <div class="bb-main">
                     <div class="bb-list-wrap">
                       <div class="bb-lists">
-                        <div class="bb-fav" id="bb-fav" title="즐겨찾기 — 여기에 끌어다 놓은 기체는 이 영역 안에서만 정렬됩니다"></div>
+                        <div class="bb-fav" id="bb-fav" title="즐겨찾기(최대 20대) — 여기에 끌어다 놓은 기체는 이 영역 안에서만 정렬됩니다"></div>
                         <div class="bb-list" id="bb-list"></div>
                       </div>
                     </div>
@@ -1001,6 +1006,15 @@
     let DB = [];
     let ids = load();
     let favIds = loadFav().filter(id => !ids.includes(id));
+    const FAV_MAX = 20;   // 즐겨찾기는 최대 20대 (그래야 아래 안내 문구가 항상 보임)
+    // 20대를 넘긴 즐겨찾기(예: 저장된 값, 백업 복원)는 초과분을 일반 목록 앞쪽으로 옮김. 옮긴 대수를 반환
+    function clampFav() {
+        if (favIds.length <= FAV_MAX) return 0;
+        const overflow = favIds.splice(FAV_MAX);
+        ids = [...overflow, ...ids];
+        return overflow.length;
+    }
+    if (clampFav()) save();
     let rmMode = false, rmSet = new Set(), isOpen = false;
     let fetchLock = false;
     let lastRaw = [];
@@ -2966,11 +2980,21 @@
     }
 
     // id 를 toFav 영역으로 이동. beforeId 가 있으면 그 카드 자리에, 없으면 영역 맨 끝에 넣음
+    let _favWarnTimer = null;
+    function flashFavFull() {   // 하단 안내 문구를 잠깐 경고로 바꿈 (2.5초)
+        const el = document.getElementById('bb-fav');
+        if (!el) return;
+        el.style.setProperty('--fav-note', `'즐겨찾기는 최대 ${FAV_MAX}대까지 등록할 수 있습니다'`);
+        el.classList.add('warn');
+        clearTimeout(_favWarnTimer);
+        _favWarnTimer = setTimeout(() => { el.style.removeProperty('--fav-note'); el.classList.remove('warn'); }, 2500);
+    }
     function moveRobot(id, toFav, beforeId) {
         const srcArr = favIds.includes(id) ? favIds : ids;
         const dstArr = toFav ? favIds : ids;
         const si = srcArr.indexOf(id);
         if (si === -1) return;
+        if (toFav && !favIds.includes(id) && favIds.length >= FAV_MAX) { flashFavFull(); return; }   // 가득 찼으면 등록 안 함
         const di = beforeId ? dstArr.indexOf(beforeId) : -1;
         if (beforeId && di === -1) return;
         srcArr.splice(si, 1);
@@ -3658,18 +3682,21 @@
                 favIds = favIds.filter(id => allIds.includes(id));   // 즐겨찾기 정보가 없는 백업 → 지금 즐겨찾기를 유지(백업에 있는 기체만)
             }
             ids = allIds.filter(id => !favIds.includes(id));
+            const moved = clampFav();   // 즐겨찾기 20대 초과분은 일반 목록으로
+            const clampNote = moved ? `\n즐겨찾기는 최대 ${FAV_MAX}대까지라서 초과한 ${moved}대는 일반 목록으로 옮겼습니다.` : '';
             // 통합 리스트 이전 전에 만든 백업에는 예전 고정 그리드 기체가 없음 → 하나도 없으면 앞쪽에 편입
             const hasLegacy = [...favIds, ...ids].some(id => LEGACY_FIXED_SITE_IDS.includes(DB.find(x => x.id === id)?.siteId));
             if (!hasLegacy) prependLegacyFixed();
             save(); render();
 
             const total = ids.length + favIds.length;
+            const say = m => alert(m);
             if (favBackup) {
-                alert(`✅ "${name}" 님의 백업으로 복원했습니다. (현재 목록 ${total}대, 즐겨찾기 ${favIds.length}대 포함)`);
+                say(`✅ "${name}" 님의 백업으로 복원했습니다. (현재 목록 ${total}대, 즐겨찾기 ${favIds.length}대 포함)` + clampNote);
             } else if (favIds.length) {
-                alert(`✅ "${name}" 님의 백업으로 복원했습니다. (현재 목록 ${total}대)\n이 백업에는 즐겨찾기 정보가 없어서, 지금 쓰시던 즐겨찾기 ${favIds.length}대를 그대로 유지했습니다.`);
+                say(`✅ "${name}" 님의 백업으로 복원했습니다. (현재 목록 ${total}대)\n이 백업에는 즐겨찾기 정보가 없어서, 지금 쓰시던 즐겨찾기 ${favIds.length}대를 그대로 유지했습니다.` + clampNote);
             } else {
-                alert(`✅ "${name}" 님의 백업으로 복원했습니다. (현재 목록 ${total}대)\n이 백업에는 즐겨찾기 정보가 없어서 모두 일반 목록으로 불러왔습니다.\n즐겨찾기를 지정한 뒤 다시 백업하시면 다음부터 함께 복원됩니다.`);
+                say(`✅ "${name}" 님의 백업으로 복원했습니다. (현재 목록 ${total}대)\n이 백업에는 즐겨찾기 정보가 없어서 모두 일반 목록으로 불러왔습니다.\n즐겨찾기를 지정한 뒤 다시 백업하시면 다음부터 함께 복원됩니다.` + clampNote);
             }
         } catch { alert('❌ 네트워크 오류로 복원하지 못했습니다. 연결 상태를 확인해 주세요.'); }
     }
