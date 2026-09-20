@@ -1,5 +1,5 @@
 /* ============================================================
-   battery_board.js v5.2 (알림 6종 · 비상정지 삭제 · 고정 버튼 3종)
+   battery_board.js v5.3 (고정 버튼 3행 · 저속충전 TOP5(충전 전체 기간) · 배터리 로그 24시간 연속)
    NCC 종합 모니터 — 템퍼몽키 inject
    ============================================================ */
 
@@ -164,17 +164,16 @@
         .bb-bk-name { min-width:64px; }
 
 
-        /* ── 고정 버튼 3종 (왼쪽 동숲 주민의 왼쪽): 1줄 [최근 방전 기체(24H)] / 2줄 [저속충전 기체 TOP10] [임무 OFF 기체] ── */
+        /* ── 고정 버튼 3종 (왼쪽 동숲 주민의 왼쪽): 3행 — [최근 방전 기체(24H)] / [저속충전 기체 TOP5] / [임무 OFF 기체] ── */
         .bb-fixbtns {
             position:absolute; right:calc(50% + 261px); top:50%; transform:translateY(-50%);   /* 오른쪽 끝 = 왼쪽 동숲 주민(제목 왼쪽 151~251px)에서 10px 왼쪽 */
-            width:244px; display:grid; grid-template-columns:auto auto; justify-content:space-between; gap:5px 4px; z-index:3;
+            width:140px; display:grid; grid-template-columns:1fr; gap:4px; z-index:3;   /* 높이 3×26 + 2×4 = 86px (헤더 104px 안) */
         }
         .bb-fb {
-            position:relative; height:27px; padding:0 7px; border-radius:7px; border:1.5px solid var(--bd2);
+            position:relative; height:26px; padding:0 7px; border-radius:7px; border:1.5px solid var(--bd2);
             background:var(--sur2); color:var(--tx); font-size:12px; font-weight:800; font-family:inherit;
             cursor:pointer; white-space:nowrap; box-sizing:border-box;
         }
-        .bb-fb.wide { grid-column:1 / -1; }
         .bb-fb:hover { border-color:var(--mu); }
         .bb-fb.active { background:var(--bg); border-color:var(--tx); }
         .bb-fb-n {   /* 버튼 모서리에 겹쳐 뜨는 숫자 배지 (폭을 차지하지 않음, 0이면 숨김) */
@@ -228,6 +227,8 @@
         .bb-sc-pct { font-size:12px; font-weight:900; white-space:nowrap; }
         .bb-sc-pct.sev-r { color:#dc2626; } .bb-sc-pct.sev-o { color:#c2410c; } .bb-sc-pct.sev-g { color:#15803d; }
         .bb-sc-rate, .bb-sc-eta { font-size:11px; color:var(--mu); white-space:nowrap; }
+        .bb-sc-l3 { margin-top:4px; font-size:11px; color:var(--mu); }
+        .bb-sc-l3 b { color:var(--tx); font-weight:800; }
         .bb-sc-eta { margin-left:auto; }
 
         /* 동숲 캐릭터 (헤더: 제목 박스 오른쪽) — 캐릭터 선택/저장은 예전 그대로, 캠핑장 배경만 제외 */
@@ -319,7 +320,7 @@
         /* ── 알림 영역 (헤더 좌측) + 검색 ── */
         .bb-alert-zone {   /* 이 영역 안에서만 버튼이 뜸 — overflow:hidden 으로 밖으로 삐져나오지 않음 */
             position:absolute; left:14px; top:50%; transform:translateY(-50%);   /* 헤더 세로 중앙. 6칸(3줄) = 104px 로 헤더 높이와 같아 위아래로 잘리지 않음 */
-            width:325px; box-sizing:border-box; padding:3px; overflow:hidden;   /* 325 = 왼쪽 동숲 주민(100px) + 고정 버튼 3종(244px) 자리를 남긴 폭 */
+            width:429px; box-sizing:border-box; padding:3px; overflow:hidden;   /* 429 = 왼쪽 동숲 주민(100px) + 고정 버튼 3행(140px) 자리를 남긴 폭 */
         }
         .bb-alert-chips { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:4px 6px; }
         .bb-chip {   /* 가로로 긴 한 줄 버튼: [아이콘 종류 N건  ··· 기체명] */
@@ -832,8 +833,8 @@
                 </div>
                 <!-- 좌: 고정 버튼 3종 (왼쪽 동숲 주민의 왼쪽) -->
                 <div class="bb-fixbtns" id="bb-fixbtns">
-                    <button id="bb-fb-dis" class="bb-fb wide" data-mode="dis" title="최근 24시간 배터리 로그에서 2% 이하에 도달한 뒤 OFF 된 기체">최근 방전 기체(24H)<b class="bb-fb-n"></b></button>
-                    <button id="bb-fb-slow" class="bb-fb" data-mode="slow" title="충전 중인 기체를 충전 속도가 더딘 순으로">저속충전 기체 TOP10<b class="bb-fb-n"></b></button>
+                    <button id="bb-fb-dis" class="bb-fb" data-mode="dis" title="최근 24시간 배터리 로그에서 2% 이하에 도달한 뒤 OFF 된 기체">최근 방전 기체(24H)<b class="bb-fb-n"></b></button>
+                    <button id="bb-fb-slow" class="bb-fb" data-mode="slow" title="충전 중(100% 미만)인 기체를 충전을 시작한 때부터 지금까지의 평균 속도가 더딘 순으로 (상위 5대)">저속충전 기체 TOP5<b class="bb-fb-n"></b></button>
                     <button id="bb-fb-moff" class="bb-fb" data-mode="moff" title="현재 임무가 OFF 인 기체">임무 OFF 기체<b class="bb-fb-n"></b></button>
                     <div class="bb-fbp" id="bb-fbp">
                         <div class="bb-fbp-hd">
@@ -1559,7 +1560,6 @@
             wblCyhAutoUploadTick();
             wblOthersAutoDownloadTick();
             wblNightUploadTick();
-            wblMidnightCleanupTick();
             alertLogCyhTick();
             alertLogNonCyhTick();
             alertLogDownloadTick();
@@ -1851,7 +1851,7 @@
     // SECTION 9b. 기체 Info 패널
     // ============================================================
     // ============================================================
-    // 배터리 증감 로그 (당일 08:00~익일 03:00만 보관, 자동 초기화)
+    // 배터리 증감 로그 (하루 = 03:00~익일 03:00, 24시간 연속 기록 / 날짜가 바뀌면 자동 초기화)
     // ============================================================
     const WBL_KEY = 'bb_battery_log';
 
@@ -1870,15 +1870,11 @@
         return `${m}월 ${d}일`;
     }
 
-    function wblGetDayKey() {
+    function wblGetDayKey() {   // 로그의 하루 = 03:00 ~ 익일 03:00. 쉬는 시간대 없이 항상 값이 있음 (00~02시는 전날 것)
         const now = new Date();
-        const h = now.getHours();
-        if (h >= 8) return wblLocalDateStr(now);
-        if (h < 3) {
-            const y = new Date(now); y.setDate(y.getDate() - 1);
-            return wblLocalDateStr(y);
-        }
-        return null;   // 03~08시: 비활성 구간
+        if (now.getHours() >= 3) return wblLocalDateStr(now);
+        const y = new Date(now); y.setDate(y.getDate() - 1);
+        return wblLocalDateStr(y);
     }
 
     function wblLoad() {
@@ -1932,10 +1928,10 @@
 
     function wblToMin(hhmm) { const [h,m] = hhmm.split(':').map(Number); return h*60+m; }
 
-    // 대기 시각을 "오늘 08:00을 0분"으로 하는 절대 분으로 변환 (00:00~02:59는 다음날로 간주해 +1440)
+    // 로그 시각을 그날 00:00 기준 분으로 변환 (하루가 03:00에 시작하므로 00:00~02:59는 다음날로 간주해 +1440)
     function wblDayAdjMin(hhmm) {
         const m = wblToMin(hhmm);
-        return m < 8*60 ? m + 1440 : m;
+        return m < 3*60 ? m + 1440 : m;
     }
 
     function wblLoadYesterdaySnapshot() {
@@ -1978,7 +1974,7 @@
         if (segments.length === 0) return null;
 
         return segments.map(seg => {
-            const durMin = Math.max(10, wblToMin(seg.end) - wblToMin(seg.start) + 10);
+            const durMin = Math.max(10, wblDayAdjMin(seg.end) - wblDayAdjMin(seg.start) + 10);   // 자정을 넘는 구간도 정확히
             const label = WBL_STL[seg.status] || seg.status;
             const dotColor = STATUS_AC[seg.status] || '#3b82f6';
             const dot = `<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${dotColor};margin-right:5px;"></span>`;
@@ -1997,7 +1993,7 @@
     }
 
 
-    // 오늘 08:00 기준 분(min) 좌표로 SVG 선그래프 그리기 (미측정 구간은 점선으로 끊음)
+    // 오늘 03:00 기준 분(min) 좌표로 SVG 선그래프 그리기 (하루 24시간) (미측정 구간은 점선으로 끊음)
     function wblRenderChartSVG(robotId, source) {
         const isLight = bbEl.classList.contains('bb-light');
         const gridEdge  = isLight ? '#b3a687' : '#3a3a40';
@@ -2007,19 +2003,15 @@
         const hintText  = isLight ? '#7a6f5c' : '#6b7280';
         const dotFill   = isLight ? '#2b2418' : '#e5e7eb';
         const haloColor = isLight ? '#f8f3e6' : '#0d1117';
-        if (source !== 'yesterday') {
-            const dayKey = wblGetDayKey();
-            if (!dayKey) return '<div style="font-size:13px;color:var(--mu);padding:30px;text-align:center;">비활성 시간대(03~08시)입니다</div>';
-        }
         const data = wblGetSourceData(source);
         if (!data) return `<div style="font-size:13px;color:var(--mu);padding:30px;text-align:center;">${source==='yesterday' ? '어제' : '오늘'} 기록된 데이터 없음</div>`;
         const entry = data.entries[robotId];
         if (!entry || entry.log.length === 0) return `<div style="font-size:13px;color:var(--mu);padding:30px;text-align:center;">${source==='yesterday' ? '어제' : '오늘'} 기록된 데이터 없음</div>`;
 
         const PX_PER_MIN = 2.9, H = 252, PADX = 19, PADT = 17, PADB = 31;
-        const dayStartMin = 8 * 60;
+        const dayStartMin = 3 * 60;
         const spanMin = source === 'yesterday'
-            ? 19 * 60   // 어제는 이미 끝난 하루(08:00~익일03:00)이니 항상 전체 구간
+            ? 24 * 60   // 어제는 이미 끝난 하루(03:00~익일03:00, 24시간)이니 항상 전체 구간
             : Math.max(60, (() => { const n=new Date(); let m=n.getHours()*60+n.getMinutes(); if (n.getHours()<3) m += 1440; return m; })() - dayStartMin);
         const W = Math.round(spanMin * PX_PER_MIN + PADX * 2);
 
@@ -2165,10 +2157,10 @@
 
 	// ============================================================
 	// CYH 전용 배터리 로그 업로드 / 그 외 전원 다운로드
-	// - 업로드: CYH만, 08:00~17:30 자동(30분 주기, 실패시 1분 뒤 1회 재시도) / 수동은 08:00~익일03:10 가능(03:10~08:00은 거부)
-	// - 다운로드: CYH 제외 전원, 08:00~익일 03:00, 30분 주기 자동(실패시 1분 뒤 1회 재시도) (+ 수동 강제 버튼)
+	// - 업로드: CYH만, 08:00~17:30 자동(30분 주기, 실패시 1분 뒤 1회 재시도) / 수동은 언제든 가능 / 심야 업로드는 02:50 (아래)
+	// - 다운로드: CYH 제외 전원, 24시간 30분 주기 자동(실패시 1분 뒤 1회 재시도) (+ 수동 강제 버튼)
 	// - 병합: CYH 데이터가 겹치는 시간대는 덮어씀(더 연속적이고 정확하다고 판단)
-	// - 어제 데이터: 트래킹 데이(08:00~익일03:00) 기준 하루 전 스냅샷, 세션당 1회만 로드
+	// - 어제 데이터: 트래킹 데이(03:00~익일03:00) 기준 하루 전 스냅샷, 세션당 1회만 로드
 	// ============================================================
 	const WBL_HANDOVER_NAME = '배터리 증감 추이 데이터';
 	const WBL_YESTERDAY_NAME = '배터리 증감 추이 데이터_어제';
@@ -2182,7 +2174,7 @@
 		return `${wblTodayStr()}_${String(now.getHours()).padStart(2,'0')}:${String(slotMin).padStart(2,'0')}`;
 	}
 
-	// 트래킹 데이 기준 "어제" 날짜 계산 (08:00~익일03:00 하루 주기를 그대로 하루 앞으로 민 것)
+	// 트래킹 데이 기준 "어제" 날짜 계산 (03:00~익일03:00 하루 주기를 그대로 하루 앞으로 민 것)
 	function wblYesterdayDayKey() {
 		const todayTrackingKey = wblGetDayKey() || wblLocalDateStr(new Date());
 		const d = new Date(todayTrackingKey + 'T12:00:00');
@@ -2278,11 +2270,10 @@
 		}, 60 * 1000);
 	}
 
-	// 그 외 사용자 자동 다운로드 — 08:00~익일 03:00, 30분 슬롯당 1회 시도, 실패시 1분 뒤 1회만 재시도
+	// 그 외 사용자 자동 다운로드 — 24시간, 30분 슬롯당 1회 시도, 실패시 1분 뒤 1회만 재시도
 	let _wblDlRetryTimer = null;
 	async function wblOthersAutoDownloadTick() {
 		if (localStorage.getItem('bb_is_cyh') === '1') return;
-		if (!wblGetDayKey()) return;   // 03~08시 비활성 구간
 
 		const last = parseInt(localStorage.getItem('bb_wbl_dl_last') || '0', 10);
 		if (Date.now() - last < 30 * 60 * 1000) return;   // 마지막 시도(또는 새로고침 시 즉시 로드)로부터 30분 안 지남
@@ -2339,13 +2330,11 @@
 	function wblTriggerImmediateLoadOnRefresh() {
 	    if (localStorage.getItem('bb_is_cyh') === '1') {
 	        const dayKey = wblGetDayKey();
-	        if (!dayKey) return;
 	        const local = wblLoad();
 	        const hasToday = local && local.day === dayKey && Object.keys(local.entries || {}).length > 0;
 	        if (!hasToday) wblDoDownload();   // 새 브라우저 등 → 서버 진행분으로 한 번 따라잡기 (병합 방식이라 안전)
 	        return;
 	    }
-	    if (!wblGetDayKey()) return;
 	    localStorage.setItem('bb_wbl_dl_last', String(Date.now()));
 	    wblDoDownload();
 	}
@@ -2594,18 +2583,6 @@
 			items.sort((a, b) => a.start.localeCompare(b.start));
 			return { day, items };
 		});
-	}
-
-
-	// 03:30 — 그날의 배터리 로그를 로컬에서 정리 (다음날 첫 접속에서도 wblEnsureDay가 자동으로 새로 시작하지만, 켜져있는 상태라면 더 일찍 정리)
-	function wblMidnightCleanupTick() {
-		const now = new Date();
-		if (now.getHours() !== 3 || now.getMinutes() < 30) return;
-		const doneKey = wblTodayStr();
-		if (localStorage.getItem('bb_cleanup_done_day') === doneKey) return;
-		localStorage.setItem('bb_cleanup_done_day', doneKey);
-		localStorage.removeItem('bb_battery_log');
-		console.log('[BB] 03:30 - 배터리 로그 정리 완료');
 	}
 
 
@@ -3234,9 +3211,6 @@
 
     // ── 강제 업로드/불러오기 버튼 (사이클과 무관하게 즉시 실행) ──
     document.getElementById('bb-wbl-upload-btn').addEventListener('click', async (e) => {
-        const _now = new Date();
-        const _minutesNow = _now.getHours() * 60 + _now.getMinutes();
-        if (_minutesNow >= 190 && _minutesNow < 480) { alert('❌ 지금은 업로드할 수 없는 시간대입니다 (08:00~익일 03:10 사이에 이용해주세요)'); return; }
         if (!confirm('배터리 데이터를 업로드 하시겠습니까?')) return;
         const btn = e.currentTarget;
         const orig = btn.textContent;
@@ -3641,14 +3615,15 @@
 
     // ============================================================
     // SECTION 17. 고정 버튼 3종 (제목 영역, 왼쪽 동숲 주민의 왼쪽)
-    //   최근 방전 기체(24H) / 저속충전 기체 TOP10 / 임무 OFF 기체
+    //   최근 방전 기체(24H) / 저속충전 기체 TOP5 / 임무 OFF 기체
     //   2분마다 데이터가 갱신될 때 버튼의 숫자 배지와, 열려 있는 목록 창이 함께 새로고침됨 (창을 띄워 둔 채로도)
     //   계산량은 기체 수(≈90대)에 비례하는 반복 몇 번뿐이라 갱신 한 번에 수 ms 수준
     // ============================================================
     const FB_DISCHARGE_PCT = 2;          // 배터리가 이 값(%) 이하에 도달한 뒤 OFF 되면 "방전"
     const FB_DISCHARGE_WINDOW_H = 24;    // 최근 24시간
     const FB_CHG_MIN_MIN = 20;           // 충전 속도를 재려면 연속 충전이 이만큼(분) 이상 관측돼야 함
-    const FB_CHG_WIN_MIN = 60;           // 충전 속도 = 최근 이 시간(분) 동안의 배터리 변화
+    const FB_CHG_GAP_MIN = 40;           // 기록이 이 시간(분) 넘게 끊기면 그 사이 충전이 이어졌는지 알 수 없어 그 앞은 자름
+    const FB_SLOW_TOP = 5;               // 저속충전 목록에 보여줄 기체 수
     const FB_CHG_PEER_PCT = 15;          // "동급" = 배터리 % 차이가 이 이내인 충전 중 기체
     const FB_CHG_PEER_MIN = 3;           // 동급이 이 수 이상이어야 그 중앙값을 기준으로 삼음 (모자라면 충전 중 전체 중앙값)
     const FB_CHG_BUF_MS = 3 * 3600 * 1000;
@@ -3659,31 +3634,16 @@
         const d = new Date(ts), p = n => String(n).padStart(2, '0');
         return `${p(d.getMonth() + 1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
     }
-    // 배터리 로그 점 → 실제 시각(ms). 로그의 하루는 08:00 시작 ~ 익일 03:00 (00~07시 표기는 다음 날로 봄)
+    // 배터리 로그 점 → 실제 시각(ms). 로그의 하루는 03:00 시작 ~ 익일 03:00 (00~02시 표기는 다음 날로 봄)
     function fbPointTs(dayKey, t) {
         const [y, m, d] = dayKey.split('-').map(Number);
         return new Date(y, m - 1, d).getTime() + wblDayAdjMin(t) * 60000;
     }
 
-    // ── 충전 속도 계산용: 2분마다의 관측(시각·배터리·상태)을 최근 3시간만 메모리에 보관 ──
+    // ── 충전 속도 계산용: 2분마다의 관측(시각·배터리·상태)을 최근 3시간만 메모리에 보관 (10분 단위 로그를 촘촘하게 보완) ──
     const chgBuf = new Map();
-    let _chgSeeded = false;
-    function seedChargeBuffer(now) {   // 새로고침 직후에도 바로 계산되도록 오늘 배터리 로그(10분 단위)로 미리 채움
-        const data = wblLoad();
-        if (!data || !data.day || !data.entries) return;
-        Object.entries(data.entries).forEach(([id, e]) => {
-            const arr = [];
-            (e.log || []).forEach(p => {
-                const ts = fbPointTs(data.day, p.t);
-                if (ts <= now && ts >= now - FB_CHG_BUF_MS) arr.push({ ts, bat: p.battery, st: p.status });
-            });
-            arr.sort((a, b) => a.ts - b.ts);
-            if (arr.length) chgBuf.set(id, arr);
-        });
-    }
     function sampleChargeBuffer(list) {
         const now = Date.now();
-        if (!_chgSeeded) { _chgSeeded = true; try { seedChargeBuffer(now); } catch {} }
         list.forEach(r => {
             let a = chgBuf.get(r.id);
             if (!a) { a = []; chgBuf.set(r.id, a); }
@@ -3705,12 +3665,12 @@
         });
         return byId;
     }
-    function computeDischarged() {
+    function computeDischarged(logs) {
         const now = Date.now(), from = now - FB_DISCHARGE_WINDOW_H * 3600000;
         const curById = new Map(DB.map(r => [r.id, r]));
         const events = [];
         let earliest = Infinity;
-        fbLoadLogs().forEach((o, id) => {
+        logs.forEach((o, id) => {
             const pts = [...o.pts.values()].sort((a, b) => a.ts - b.ts);
             if (pts.length && pts[0].ts < earliest) earliest = pts[0].ts;
             const cur = curById.get(id);
@@ -3735,28 +3695,42 @@
         return { events, earliest, from };
     }
 
-    // ── 저속충전 기체 TOP10: 충전 중(100% 미만) 기체를 충전 속도가 더딘 순으로 ──
-    function fbChargeRate(id) {
-        const a = chgBuf.get(id);
-        if (!a || a.length < 2) return null;
-        const newest = a[a.length - 1];
-        if (newest.st !== 'charging' || newest.bat == null) return null;
-        let oldest = newest;
-        for (let i = a.length - 2; i >= 0; i--) {   // 지금까지 이어진 '충전 중' 구간을 최대 60분까지 거슬러 올라감
-            if (a[i].st !== 'charging' || a[i].bat == null) break;
-            if (newest.ts - a[i].ts > FB_CHG_WIN_MIN * 60000) break;
-            oldest = a[i];
-        }
-        const dtMin = (newest.ts - oldest.ts) / 60000;
-        if (dtMin < FB_CHG_MIN_MIN) return null;   // 아직 재기엔 관측이 짧음
-        return { rate: (newest.bat - oldest.bat) / dtMin * 60, dtMin };   // %/시간
+    // ── 저속충전 기체 TOP5: 충전 중(100% 미만) 기체를 "충전 중 기간 전체"의 평균 속도가 더딘 순으로 ──
+    //   속도 = (지금 배터리 − 이번 충전을 시작했을 때 배터리) ÷ 충전한 시간.  60분 같은 짧은 창이 아니라 몇 시간짜리 충전 전체를 본다.
+    function fbSeriesFor(id, logs) {   // 배터리 로그(어제+오늘, 10분 단위) + 최근 2분 관측을 시간순으로 합침 (같은 시각이면 2분 관측 우선)
+        const m = new Map(logs.get(id)?.pts || []);
+        (chgBuf.get(id) || []).forEach(p => m.set(p.ts, p));
+        return [...m.values()].sort((a, b) => a.ts - b.ts);
     }
-    function computeSlowCharge() {
+    // 지금까지 이어진 '충전 중' 구간의 시작을 찾아 평균 속도를 계산.
+    //   null = 아직 재기엔 짧음(측정 중) / {full:true} = 이번 충전 중 100% 에 이미 도달한 적 있음(더딘 기체가 아님)
+    function fbChargeRun(id, logs, now, curBat) {
+        const pts = fbSeriesFor(id, logs);
+        let start = null, prevTs = now, trunc = true, hitFull = false;
+        for (let i = pts.length - 1; i >= 0; i--) {   // 최신부터 거꾸로, 충전 중이 이어지는 동안
+            const p = pts[i];
+            if (p.ts > now) continue;
+            if (p.st !== 'charging' || p.bat == null) { trunc = false; break; }        // 충전이 아닌 지점을 만나면 거기가 시작 직전
+            if (prevTs - p.ts > FB_CHG_GAP_MIN * 60000) { trunc = false; break; }      // 기록이 오래 끊겼으면 그 앞은 알 수 없음
+            if (p.bat >= 100) hitFull = true;
+            start = p; prevTs = p.ts;
+        }
+        if (!start) return null;
+        if (hitFull) return { full: true };
+        const dtMin = (now - start.ts) / 60000;
+        if (dtMin < FB_CHG_MIN_MIN) return null;
+        return { rate: (curBat - start.bat) / dtMin * 60, dtMin, startBat: start.bat, startTs: start.ts, trunc };   // rate = %/시간
+    }
+    function computeSlowCharge(logs) {
+        const now = Date.now();
         const charging = DB.filter(r => r.status === 'charging' && !r.loading && r.battery < 100);
         const measured = [], measuring = [];
+        let fullHist = 0;
         charging.forEach(r => {
-            const m = fbChargeRate(r.id);
-            if (m) measured.push({ r, rate: m.rate, dtMin: m.dtMin }); else measuring.push(r);
+            const run = fbChargeRun(r.id, logs, now, r.battery);
+            if (!run) measuring.push(r);
+            else if (run.full) fullHist++;
+            else measured.push({ r, ...run });
         });
         measured.forEach(m => {
             // 충전 속도는 배터리가 찰수록 자연히 느려지므로, 배터리 %가 비슷한 기체끼리 비교 (동급이 모자라면 충전 중 전체와 비교)
@@ -3771,8 +3745,12 @@
                                   : (m.rate <= 0.5 ? 'r' : m.eta > 24 ? 'o' : 'g');
         });
         measured.sort((a, b) => a.score - b.score || a.rate - b.rate);
-        return { top: measured.slice(0, 10), measured: measured.length, measuring: measuring.length, charging: charging.length,
+        return { top: measured.slice(0, FB_SLOW_TOP), measured: measured.length, measuring: measuring.length, fullHist, charging: charging.length,
                  severe: measured.filter(m => m.sev === 'r').length };
+    }
+    function fbDurText(min) {
+        const t = Math.round(min), h = Math.floor(t / 60), m = t % 60;
+        return h ? `${h}시간${m ? ` ${m}분` : ''}` : `${m}분`;
     }
     function fbEtaText(h) {
         if (h < 1) return `약 ${Math.max(1, Math.round(h * 60))}분`;
@@ -3783,9 +3761,10 @@
     // ── 화면 ──
     let _fbMode = null, _fbData = null;
     function fbCompute() {
+        const logs = fbLoadLogs();   // 어제+오늘 배터리 로그는 한 번만 읽어 방전/저속충전 계산에 함께 씀
         _fbData = {
-            dis: computeDischarged(),
-            sc: computeSlowCharge(),
+            dis: computeDischarged(logs),
+            sc: computeSlowCharge(logs),
             mo: DB.filter(isMissionOff).sort((a, b) => a.name.localeCompare(b.name, 'ko', { numeric: true })),
         };
         return _fbData;
@@ -3815,20 +3794,20 @@
                 <span class="bb-fbp-now">현재 ${fbEsc(st.txt)}</span>
             </div>`;
         }).join('');
-        let foot = '※ 배터리 로그는 08:00~익일 03:00에만 기록되어, 03:00~08:00 사이에 방전된 기체는 놓칠 수 있습니다.';
+        let foot = '※ 배터리 로그는 24시간 10분 간격으로 기록됩니다. 그래서 시각은 "경"으로 표시되고(방금 꺼진 기체는 서버의 마지막 통신 시각), 10분 사이에 2% 이하를 지나 꺼진 기체는 놓칠 수 있습니다.';
         if (isFinite(d.dis.earliest) && d.dis.earliest > d.dis.from + 3600000) foot = `※ 로그가 있는 범위: ${fbFmtTs(d.dis.earliest)}부터. ` + foot;
         return h + `<div class="bb-fbp-foot">${foot}</div>`;
     }
     function fbHtmlSlow(d) {
         const sc = d.sc;
-        let h = `<div class="bb-fbp-note">충전 중인 기체를 <b>충전 속도가 더딘 순</b>으로 보여줍니다. 막대는 배터리 %가 비슷한(±${FB_CHG_PEER_PCT}%) 충전 중 기체들의 속도(중앙값)를 <b>100%</b>로 봤을 때 이 기체의 속도입니다(비슷한 기체가 ${FB_CHG_PEER_MIN}대 미만이면 충전 중 전체와 비교) — <b>짧고 붉을수록 더딤</b>. 최근 ${FB_CHG_WIN_MIN}분의 배터리 변화 기준이며, 기체를 누르면 정보 창이 열립니다.</div>`;
+        let h = `<div class="bb-fbp-note">충전 중(100% 미만)인 기체를 <b>이번 충전을 시작한 때부터 지금까지의 평균 속도</b>가 더딘 순으로 ${FB_SLOW_TOP}대 보여줍니다. 막대는 배터리 %가 비슷한(±${FB_CHG_PEER_PCT}%) 충전 중 기체들의 속도(중앙값)를 <b>100%</b>로 봤을 때 이 기체의 속도입니다(비슷한 기체가 ${FB_CHG_PEER_MIN}대 미만이면 충전 중 전체와 비교) — <b>짧고 붉을수록 더딤</b>. 기체를 누르면 정보 창이 열립니다.</div>`;
         if (!sc.charging) return h + `<div class="bb-fbp-empty">현재 충전 중인 기체가 없습니다.</div>`;
-        if (!sc.measured) return h + `<div class="bb-fbp-empty">충전 속도를 측정 중입니다<br><span style="font-size:11px;font-weight:600;">충전이 ${FB_CHG_MIN_MIN}분 이상 관측돼야 계산됩니다 · 충전 중 ${sc.charging}대</span></div>`;
+        if (!sc.measured) return h + `<div class="bb-fbp-empty">충전 속도를 측정 중입니다<br><span style="font-size:11px;font-weight:600;">충전이 ${FB_CHG_MIN_MIN}분 이상 관측돼야 계산됩니다 · 충전 중 ${sc.charging}대${sc.fullHist ? ` · 완충 도달 이력 ${sc.fullHist}대 제외` : ''}</span></div>`;
         h += sc.top.map(m => {
             const r = m.r, pct = m.rel != null ? Math.round(m.rel * 100) : null;
             const rateTxt = m.rate > 0 ? `+${m.rate.toFixed(1)}%/h` : m.rate === 0 ? '증가 없음' : `${m.rate.toFixed(1)}%/h (감소)`;
             const eta = m.eta === Infinity ? '완충 예상 불가' : `완충까지 ${fbEtaText(m.eta)}`;
-            const tip = `${r.name} · 이 기체 ${rateTxt}` + (m.ref != null ? ` / ${m.peer ? '동급' : '충전 중 전체'} 중앙값 +${m.ref.toFixed(1)}%/h` : '');
+            const tip = `${r.name} · 충전 ${fbDurText(m.dtMin)}${m.trunc ? ' 이상' : ''} · ${m.startBat}% → ${r.battery}% · 평균 ${rateTxt}` + (m.ref != null ? ` / ${m.peer ? '동급' : '충전 중 전체'} 중앙값 +${m.ref.toFixed(1)}%/h` : '');
             return `<div class="bb-fbp-row sc" data-rid="${fbEsc(r.id)}" title="${fbEsc(tip)}">
                 <div class="bb-sc-l1"><span class="bb-fbp-dot" style="background:${STATUS_AC.charging};"></span><span class="bb-fbp-name">${fbEsc(r.name)}</span><span class="bb-sc-bat">${r.battery}%</span></div>
                 <div class="bb-sc-l2">
@@ -3837,9 +3816,10 @@
                     <span class="bb-sc-rate">${rateTxt}</span>
                     <span class="bb-sc-eta">${eta}</span>
                 </div>
+                <div class="bb-sc-l3">충전 <b>${fbDurText(m.dtMin)}${m.trunc ? ' 이상' : ''}</b>째 · ${m.startBat}% → ${r.battery}%</div>
             </div>`;
         }).join('');
-        return h + `<div class="bb-fbp-foot">충전 중 ${sc.charging}대 · 속도 측정 ${sc.measured}대${sc.measuring ? ` · 측정 중 ${sc.measuring}대(충전 ${FB_CHG_MIN_MIN}분 미만)` : ''}</div>`;
+        return h + `<div class="bb-fbp-foot">충전 중 ${sc.charging}대 · 속도 측정 ${sc.measured}대${sc.measuring ? ` · 측정 중 ${sc.measuring}대(충전 ${FB_CHG_MIN_MIN}분 미만)` : ''}${sc.fullHist ? ` · 완충 도달 이력 ${sc.fullHist}대 제외` : ''}</div>`;
     }
     function fbHtmlMoff(d) {
         let h = `<div class="bb-fbp-note">카드에 <b>"임무 OFF"</b>로 표시되는 기체와 같은 기준입니다 (전원 ON · 배터리 22% 이상 · 순찰/배달/대기 중 아님). 기체를 누르면 정보 창이 열립니다.</div>`;
@@ -3862,7 +3842,7 @@
         const d = _fbData || fbCompute();
         const T = {
             dis:  ['최근 방전 기체 (24H)',   `${d.dis.events.length}대`],
-            slow: ['저속충전 기체 TOP10',    `충전 중 ${d.sc.charging}대`],
+            slow: ['저속충전 기체 TOP5',     `충전 중 ${d.sc.charging}대`],
             moff: ['임무 OFF 기체',          `${d.mo.length}대`],
         }[_fbMode];
         document.getElementById('bb-fbp-title').textContent = T[0];
