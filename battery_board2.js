@@ -1,5 +1,5 @@
 /* ============================================================
-   battery_board.js v5.6 (CYH 24시간 정각 업로드 · 파스텔 블루 외곽선 · 가벼운 정리)
+   battery_board.js v5.7 (이름 순 정렬 · 카드 제거 버튼을 카드 영역 마지막 칸으로 이동)
    NCC 종합 모니터 — 템퍼몽키 inject
    ============================================================ */
 
@@ -131,6 +131,7 @@
         }
         .bb-hd-right { position:relative; display:flex; flex-direction:column; align-items:stretch; gap:6px; }
         .bb-hd-right-row { display:flex; align-items:center; gap:6px; }
+        .bb-hd-right-row.right { justify-content:flex-end; }   /* 2줄: 알림 로그 · 검색창을 오른쪽 끝에 (왼쪽은 비워 둠) */
         .bb-hd-right-row.spread { justify-content:space-between; }   /* 1줄: 테마 버튼(좌) ··· 정보/백업/복원/✕(우) */
         .bb-hd-grp { display:flex; align-items:center; gap:6px; }
 
@@ -357,7 +358,7 @@
         }
 
         /* 검색 */
-        .bb-si-wrap { position:relative; flex:1 1 230px; min-width:230px; }   /* 2줄에서 남는 폭을 채움 (최소 230px — 안내 문구가 잘리지 않는 폭) */
+        .bb-si-wrap { position:relative; flex:0 0 230px; min-width:230px; }   /* 폭 고정 230px (안내 문구가 잘리지 않는 폭) — 남는 자리는 채우지 않고 비워 둠 */
         .bb-si {
             width:100%; box-sizing:border-box; max-width:100%; background:var(--sur2); border:1px solid var(--bd2);
             border-radius:7px; padding:6px 10px 6px 26px;
@@ -426,6 +427,15 @@
             gap:5px 12px;
         }
         .bb-fav.bb-drop-over, .bb-list.bb-drop-over { background:rgba(96,165,250,.10); border-radius:8px; }
+        .bb-tools {   /* 카드 영역의 마지막 칸 — 그 칸 크기(318 × 카드 높이) 안에서 두 버튼이 반반. JS 가 마지막 행 번호를 지정 */
+            grid-column:3; grid-row:20;
+            position:sticky; bottom:10px; z-index:3;   /* 스크롤이 생겨도 카드 영역 오른쪽 아래에 고정 (bottom = 카드 영역 아래 여백 10px) */
+            display:flex; gap:6px; align-items:stretch;
+        }
+        .bb-tool-btn { flex:1 1 0; min-width:0; height:33px; padding:0 8px; gap:6px; font-size:14px; }
+        .bb-tool-btn.rm { min-width:0; }
+        .bb-tool-ico { display:inline-flex; width:16px; height:16px; flex-shrink:0; }
+        .bb-tool-ico svg { width:16px; height:16px; display:block; }
         .bb-list-empty {
             grid-column:1 / -1; padding:56px 0; text-align:center;
             font-size:15px; color:var(--mu);
@@ -823,6 +833,11 @@
     // ============================================================
     // SECTION 0b. HTML
     // ============================================================
+    // 카드 영역 마지막 칸 버튼용 아이콘 (SVG — 글자색을 그대로 따라감)
+    const ICON_SORT  = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3.5h9M2 8h6.5M2 12.5h4"/><path d="M12.5 3v9.5M10.2 10.3l2.3 2.5 2.3-2.5"/></svg>';
+    const ICON_TRASH = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 4.2h11"/><path d="M6.2 4.2V2.6h3.6v1.6"/><path d="M4.1 4.2l.7 9h6.4l.7-9"/><path d="M6.9 6.8v4.4M9.1 6.8v4.4"/></svg>';
+    const ICON_CHECK = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.2 3.2L13 4.8"/></svg>';
+
     const wrap = document.createElement('div');
     wrap.id = 'bb-wrap';
     wrap.innerHTML = `
@@ -893,9 +908,7 @@
                                 <div class="bb-xbtn" id="bb-closebtn">✕</div>
                             </div>
                         </div>
-                        <div class="bb-hd-right-row">
-                            <button class="bb-btn" id="bb-sortname-btn">이름 순 정렬</button>
-                            <button class="bb-btn" id="bb-rmbtn">카드 제거</button>
+                        <div class="bb-hd-right-row right">   <!-- 왼쪽은 빈 공간 (이름 순 정렬/카드 제거 버튼이 카드 영역 마지막 칸으로 이동한 자리 — 나중에 추가할 버튼용) -->
                             <button class="bb-btn" id="bb-alertlog-all-btn">📋 알림 로그</button>
                             <div class="bb-si-wrap" id="bb-search-wrap">
                                 <span class="bb-si-icon">🔍</span>
@@ -931,7 +944,13 @@
                     <div class="bb-list-wrap">
                       <div class="bb-lists">
                         <div class="bb-fav" id="bb-fav" title="즐겨찾기(최대 20대) — 여기에 끌어다 놓은 기체는 이 영역 안에서만 정렬됩니다"></div>
-                        <div class="bb-list" id="bb-list"></div>
+                        <div class="bb-list" id="bb-list">
+                        <!-- 카드 영역의 마지막 1칸(맨 오른쪽 열 · 맨 아래 행): 이름 순 정렬 / 카드 제거. 스크롤이 생겨도 이 자리에 고정 -->
+                        <div class="bb-tools" id="bb-tools">
+                            <button class="bb-btn bb-tool-btn" id="bb-sortname-btn" title="즐겨찾기 영역과 일반 영역을 각각 이름 순으로 정렬"><span class="bb-tool-ico">${ICON_SORT}</span><span class="bb-tool-lbl">이름 순 정렬</span></button>
+                            <button class="bb-btn bb-tool-btn" id="bb-rmbtn" title="카드를 골라서 목록에서 제거"><span class="bb-tool-ico">${ICON_TRASH}</span><span class="bb-tool-lbl">카드 제거</span></button>
+                        </div>
+                    </div>
                       </div>
                     </div>
 
@@ -1111,6 +1130,9 @@
         _trimNotice = clampTotal();
         if (movedFav || _trimNotice) save();
     }
+        const LIST_COLS = 3;   // CSS(.bb-list)의 열 수와 맞출 것 (4열 중 1열은 즐겨찾기)
+    const ROW_H = 33;      // 카드 한 줄 높이(px) — CSS .bb-row 와 같게
+    const MAIN_ROWS = 20;  // 한 열의 행 수 = 즐겨찾기 열(최대 20대)과 같은 높이. 한 열을 끝까지 채운 뒤 다음 열로 넘어감
     let rmMode = false, rmSet = new Set(), isOpen = false;
     let fetchLock = false;
     let lastRaw = [];
@@ -1722,8 +1744,6 @@
     // ============================================================
     // SECTION 9. 기체 리스트 렌더 (통합 그리드: 한 줄 = 기체 1대)
     // ============================================================
-    const LIST_COLS = 3;   // CSS(.bb-list)의 열 수와 맞출 것 (4열 중 1열은 즐겨찾기)
-    const MAIN_ROWS = 20;  // 한 열의 행 수 = 즐겨찾기 열(최대 20대)과 같은 높이. 한 열을 끝까지 채운 뒤 다음 열로 넘어감
 
     // 예전 고정 그리드 사이트의 기체를 ids 앞쪽에 편입 (이미 있는 기체는 건너뜀)
     function prependLegacyFixed() {
@@ -1753,18 +1773,22 @@
 
         fav.replaceChildren(...favRobots.map(r => makeRow(r, true)));   // 비면 :empty 안내 문구가 보임
 
-        list.innerHTML = '';
+        const tools = document.getElementById('bb-tools');   // 정렬/제거 버튼 칸 — 카드를 다시 그려도 지우지 않음
+        [...list.children].forEach(c => { if (c !== tools) c.remove(); });
+        // 세로 우선 흐름: 열당 행 수를 지정해야 위→아래로 채워짐. 한 열을 MAIN_ROWS(20)행까지 다 채우고 다음 열로.
+        // 마지막 1칸(맨 오른쪽 열·맨 아래 행)은 이름 순 정렬/카드 제거 버튼 자리라 카드가 들어갈 수 없으므로 칸 수에 +1 (59대까지는 20행, 그 이상은 행을 늘려 3열 안에 맞춤)
+        const rowsN = Math.max(MAIN_ROWS, Math.ceil((robots.length + 1) / LIST_COLS));
+        list.style.gridTemplateRows = `repeat(${rowsN}, minmax(${ROW_H}px, auto))`;   // 빈 행도 카드 높이만큼 유지 → 버튼 칸이 항상 맨 아래 행에 놓임
+        if (tools) tools.style.gridRow = String(rowsN);
         if (robots.length === 0) {
-            list.style.gridTemplateRows = '';
             if (favRobots.length === 0) {
-                list.innerHTML = `<div class="bb-list-empty">${DB.length === 0
-                    ? '기체 데이터 로딩 중...'
-                    : '표시할 기체가 없습니다. 오른쪽 위 검색창에서 기체를 추가하세요.'}</div>`;
+                const msg = document.createElement('div');
+                msg.className = 'bb-list-empty';
+                msg.textContent = DB.length === 0 ? '기체 데이터 로딩 중...' : '표시할 기체가 없습니다. 오른쪽 위 검색창에서 기체를 추가하세요.';
+                list.appendChild(msg);
             }
             return;
         }
-        // 세로 우선 흐름: 열당 행 수를 지정해야 위→아래로 채워짐. 한 열을 MAIN_ROWS(20)행까지 다 채우고 다음 열로 (3열 × 20행 = 60대를 넘으면 행 수를 늘려 3열 안에 맞춤)
-        list.style.gridTemplateRows = `repeat(${Math.max(MAIN_ROWS, Math.ceil(robots.length / LIST_COLS))}, auto)`;
         robots.forEach(r => list.appendChild(makeRow(r, false)));
     }
 
@@ -3025,8 +3049,9 @@
 
     function updateRmUI() {
         const btn = document.getElementById('bb-rmbtn');
-        if (rmMode) { btn.classList.add('rm'); btn.textContent = '완료'; }
-        else        { btn.classList.remove('rm'); btn.textContent = '카드 제거'; }
+        const ico = btn.querySelector('.bb-tool-ico'), lbl = btn.querySelector('.bb-tool-lbl');
+        if (rmMode) { btn.classList.add('rm'); lbl.textContent = '완료'; ico.innerHTML = ICON_CHECK; }
+        else        { btn.classList.remove('rm'); lbl.textContent = '카드 제거'; ico.innerHTML = ICON_TRASH; }
     }
 
     function toggleSel(id) {
