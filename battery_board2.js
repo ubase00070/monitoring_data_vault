@@ -1,5 +1,5 @@
 /* ============================================================
-   battery_board.js v5.0 (OFF 슬롯 정렬 · 유선충전 마크 이동 · 즐겨찾기 20대 · 세로 공간 확보)
+   battery_board.js v5.1 (기본 크기 고정 · 열 채우기 · 다크모드 삭제 · 자잘한 시각 조정)
    NCC 종합 모니터 — 템퍼몽키 inject
    ============================================================ */
 
@@ -41,7 +41,6 @@
 			--pk:#ff2d92; --pk2:rgba(255,45,146,.14);   /* 배달 = 진한 핫핑크 (카드 호버의 연핑크와 확실히 구분) */
 			--offdot:#4b5563;
 			--off-main:#c3c9d4; --off-date:#b3bac6; --off-sub:#9aa3b2;   /* OFF 슬롯 글자색 (다크) */
-			--fav-bd:#8b929c;   /* 즐겨찾기 테두리 — 다크에서는 검정이 안 보여 밝은 회색 */
 			--standby-batt:var(--tx);
 			--bg-fill:linear-gradient(var(--bg), var(--bg));
 			--pct-fill:rgba(240,240,255,.93);
@@ -49,7 +48,7 @@
 		}
 
         #bb.bb-light {
-            --bg:#f2e4c4; --fav-bd:#000; --off-main:#5b5442; --off-date:#635c4a; --off-sub:#736b58;   /* OFF 슬롯 글자색 (라이트: 대비 5~7:1) */ --sur:#f8f3e6; --sur2:#efe6d2;
+            --bg:#f2e4c4; --off-main:#5b5442; --off-date:#635c4a; --off-sub:#736b58;   /* OFF 슬롯 글자색 (라이트: 대비 5~7:1) */ --sur:#f8f3e6; --sur2:#efe6d2;
             --bd:#cabf9d; --bd2:#b3a687; --tx:#2b2418; --mu:#7a6f5c;
             --wh:rgba(0,0,0,.05);
             --gn:#22c55e; --gn2:rgba(34,197,94,.10);
@@ -84,7 +83,7 @@
             display:none; position:fixed; top:50%; left:50%;
             transform:translate(-50%,-50%);
             width:1714px;   /* 1490px 대비 +15% — 우측 다중 모니터링 영역 확보 */
-            max-height:100vh; overflow-y:auto; overflow-x:hidden;
+            height:955px; max-height:100vh; overflow-y:auto; overflow-x:hidden;   /* 기본 크기 = 즐겨찾기 20대 + 안내 문구가 들어가는 높이 (955 = 104 + 20 + 774 + 51 + 6) */
             border:3px solid transparent; border-radius:16px;
             background-image: var(--bg-fill), linear-gradient(135deg, #6366f1, #ec4899);
             background-origin: border-box;
@@ -138,7 +137,7 @@
 
         /* 제목 박스 바로 아래 작은 범례 (기체 카드 점 / 하단 동그라미 색 = 현재 상태) */
         .bb-legend {
-            position:absolute; left:50%; bottom:3px; transform:translateX(-50%);
+            position:absolute; left:50%; bottom:-2px; transform:translateX(-50%);   /* 제목 박스 테두리와 겹치지 않게 살짝 아래 (헤더 아래 여백으로 2px 걸침) */
             display:flex; align-items:center; gap:9px; white-space:nowrap;
             font-size:10.5px; line-height:14px; color:var(--mu);
         }
@@ -232,8 +231,6 @@
         }
         .bb-btn:hover { border-color:var(--mu); }
         #bb-theme-btn, #bb-lighttheme-btn { min-width:38px; padding:0 8px; font-size:16px; }   /* 이모지만 표시 */
-        #bb:not(.bb-light) #bb-lighttheme-btn { cursor:not-allowed; opacity:.45; }
-        #bb:not(.bb-light) #bb-lighttheme-btn:hover { border-color:var(--bd2); }
         .bb-btn.rm {
             border-color:rgba(239,68,68,.3); color:var(--rd); background:rgba(239,68,68,.15);
             min-width:76px; text-align:center;   /* ← 이 두 개 추가 */
@@ -341,7 +338,7 @@
         .bb-fav {
             flex:0 0 318px; width:318px; box-sizing:border-box;
             display:flex; flex-direction:column; gap:5px;
-            outline:1px solid var(--fav-bd); outline-offset:5px; border-radius:8px;   /* 아주 얇은 테두리 (outline → 카드 폭에 영향 없음) */
+            outline:2px solid var(--bd2); outline-offset:5px; border-radius:8px;   /* 다중 모니터링 영역(.bb-mm-box) 테두리와 같은 색(--bd2)·두께(2px). outline 이라 카드 폭에 영향 없음 */
         }
         .bb-fav:empty::before {
             content:'즐겨찾기 — 카드를 끌어다 놓으세요'; margin:auto; padding:0 12px;
@@ -403,7 +400,7 @@
             transform:translate(-50%,-50%);
             color:var(--rd); font-size:18px; font-weight:900; opacity:.9; pointer-events:none;
         }
-        .bb-row-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+        .bb-row-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }   /* 8 → 10px */
         .bb-row-name {
             flex:1; min-width:0; font-size:15px; font-weight:700; color:var(--tx);
             white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
@@ -527,9 +524,9 @@
         }
         .bb-qline-none { font-size:13px; color:var(--mu); white-space:nowrap; }
         .bb-mi {
-            width:26px; height:26px; border-radius:50%; flex-shrink:0;
+            width:23px; height:23px; border-radius:50%; flex-shrink:0;   /* 26 → 23px (-10%) */
             border:2px solid var(--ac,var(--gy));
-            color:var(--ac,var(--gy)); font-size:12.5px; font-weight:900;
+            color:var(--ac,var(--gy)); font-size:11.5px; font-weight:900;
             display:flex; align-items:center; justify-content:center;
             font-family:'Paperlogy','Lato',monospace;
         }
@@ -626,9 +623,9 @@
         }
         .bb-ap-title { font-size:16px; font-weight:900; color:#ffffff; }
         .bb-ap-close {
-            width:26px; height:26px; border-radius:7px;
+            width:34px; height:34px; border-radius:8px;   /* 26 → 34px (알림 상세 / 알림 로그 창) */
             background:rgba(239,68,68,.25); border:1px solid rgba(239,68,68,.6);
-            color:#fca5a5; font-size:14px; cursor:pointer;
+            color:#fca5a5; font-size:18px; cursor:pointer;
             display:flex; align-items:center; justify-content:center; font-weight:900;
         }
         .bb-ap-item {
@@ -727,9 +724,9 @@
 		.bb-icp-badge.standby  { background:rgba(200,204,212,.15); color:#c8ccd4; }
 		.bb-icp-badge.off      { background:rgba(75,85,99,.15);   color:#6b7280; }
         .bb-icp-close {
-            width:22px; height:22px; border-radius:5px; flex-shrink:0;
+            width:30px; height:30px; border-radius:6px; flex-shrink:0;   /* 22 → 30px (기체 정보 창) */
             background:rgba(239,68,68,.15); border:1px solid rgba(239,68,68,.3);
-            color:var(--rd); font-size:14px; cursor:pointer;
+            color:var(--rd); font-size:18px; cursor:pointer;
             display:flex; align-items:center; justify-content:center; font-weight:900;
             margin-left:6px;
         }
@@ -802,7 +799,7 @@
                     <div class="bb-hd-right" id="bb-hd-right">
                         <div class="bb-hd-right-row spread">
                             <div class="bb-hd-grp">
-                                <button id="bb-theme-btn" class="bb-btn" title="라이트/다크 전환">☀️</button>
+                                <button id="bb-theme-btn" class="bb-btn">-</button>
                                 <button id="bb-lighttheme-btn" class="bb-btn" title="배경 테마 전환">☁️</button>
                                 <button id="bb-zoom-out" class="zoom-btn">－</button>
                                 <span id="bb-zoom-label" class="zoom-label">100%</span>
@@ -908,15 +905,13 @@
     document.body.appendChild(wrap);
 
     const bbEl = document.getElementById('bb');
+    // 다크모드는 삭제됨 → 항상 라이트. (#bb-theme-btn 은 나중에 재활용하려고 자리만 남겨 두고 "-" 만 표시, 동작 없음)
     const applyBbTheme = () => {
-		const theme = localStorage.getItem('neubie_bb_theme') || 'light';
-		bbEl.classList.toggle('bb-light', theme === 'light');
-		document.getElementById('bb-alert-panel').classList.toggle('bb-light', theme === 'light');
-		document.getElementById('bb-info-card-panel').classList.toggle('bb-light', theme === 'light');
-		document.getElementById('bb-alertlog-all-panel').classList.toggle('bb-light', theme === 'light');
-		const themeBtn = document.getElementById('bb-theme-btn');
-		themeBtn.textContent = theme === 'light' ? '☀️' : '🌙';
-		themeBtn.title = theme === 'light' ? '라이트 모드 (클릭: 다크 모드로)' : '다크 모드 (클릭: 라이트 모드로)';
+		bbEl.classList.add('bb-light');
+		document.getElementById('bb-alert-panel').classList.add('bb-light');
+		document.getElementById('bb-info-card-panel').classList.add('bb-light');
+		document.getElementById('bb-alertlog-all-panel').classList.add('bb-light');
+		document.getElementById('bb-theme-btn').textContent = '-';
 	};
     applyBbTheme();
 
@@ -934,19 +929,12 @@
     };
     applyLightTheme();
     document.getElementById('bb-lighttheme-btn').addEventListener('click', () => {
-        if (!bbEl.classList.contains('bb-light')) return;   // 다크모드에서는 비활성 (라이트모드 전용 기능)
         const cur = localStorage.getItem('bb_light_theme') || 'cloud';
         const next = LIGHT_THEME_ORDER[(LIGHT_THEME_ORDER.indexOf(cur) + 1) % LIGHT_THEME_ORDER.length];
         localStorage.setItem('bb_light_theme', next);
         applyLightTheme();
     });
 
-    document.getElementById('bb-theme-btn').addEventListener('click', () => {
-        const next = (localStorage.getItem('neubie_bb_theme') || 'light') === 'light' ? 'dark' : 'light';
-        localStorage.setItem('neubie_bb_theme', next);
-        applyBbTheme();
-        render();
-    });
 
     // ============================================================
     // SECTION 1. 상수 & 상태
@@ -1658,6 +1646,7 @@
     // SECTION 9. 기체 리스트 렌더 (통합 그리드: 한 줄 = 기체 1대)
     // ============================================================
     const LIST_COLS = 3;   // CSS(.bb-list)의 열 수와 맞출 것 (4열 중 1열은 즐겨찾기)
+    const MAIN_ROWS = 20;  // 한 열의 행 수 = 즐겨찾기 열(최대 20대)과 같은 높이. 한 열을 끝까지 채운 뒤 다음 열로 넘어감
 
     // 예전 고정 그리드 사이트의 기체를 ids 앞쪽에 편입 (이미 있는 기체는 건너뜀)
     function prependLegacyFixed() {
@@ -1697,8 +1686,8 @@
             }
             return;
         }
-        // 세로 우선 흐름: 열당 행 수를 지정해야 위→아래로 채워짐
-        list.style.gridTemplateRows = `repeat(${Math.ceil(robots.length / LIST_COLS)}, auto)`;
+        // 세로 우선 흐름: 열당 행 수를 지정해야 위→아래로 채워짐. 한 열을 MAIN_ROWS(20)행까지 다 채우고 다음 열로 (3열 × 20행 = 60대를 넘으면 행 수를 늘려 3열 안에 맞춤)
+        list.style.gridTemplateRows = `repeat(${Math.max(MAIN_ROWS, Math.ceil(robots.length / LIST_COLS))}, auto)`;
         robots.forEach(r => list.appendChild(makeRow(r, false)));
     }
 
