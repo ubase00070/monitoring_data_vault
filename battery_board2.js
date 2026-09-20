@@ -1,5 +1,5 @@
 /* ============================================================
-   battery_board.js v4.6 (미갱신 판정 기준을 Worker 한 곳으로 통일)
+   battery_board.js v4.7 (즐겨찾기 안내 · POI 정체 감지 표기 · 좌측 동숲 주민)
    NCC 종합 모니터 — 템퍼몽키 inject
    ============================================================ */
 
@@ -166,12 +166,17 @@
 
         /* 동숲 캐릭터 (헤더 우측, 버튼 묶음 왼쪽) — 캐릭터 선택/저장은 예전 그대로, 캠핑장 배경만 제외 */
         #bb-walker-wrap { position:relative; flex:0 0 auto; width:100px; height:100px; }
-        #bb-walker {
+        #bb-walker, #bb-walker-l {
             width:100%; height:100%;
             background-size:contain; background-repeat:no-repeat; background-position:center bottom;
             cursor:pointer; transition:transform .15s;
         }
         #bb-walker:active { transform:scale(0.92); }
+        #bb-walker-l { cursor:default; }   /* 좌측 주민은 말풍선이 없어 클릭 동작 없음 */
+        #bb-walker-wrap-l {   /* 좌측 주민: 제목 박스 왼쪽 (제목 박스 왼쪽 끝에서 10px 띄워 오른쪽 끝을 맞춤) */
+            position:absolute; right:calc(50% + 151px); top:50%; transform:translateY(-50%);
+            width:100px; height:100px; z-index:1;
+        }
         .bb-walker-arrow {
             position:absolute; top:50%; transform:translateY(-50%);
             width:22px; height:22px; border-radius:50%;
@@ -181,20 +186,21 @@
             cursor:pointer; z-index:2;
             opacity:0; transition:opacity .15s, background .15s;
         }
-        #bb-walker-wrap:hover .bb-walker-arrow, #bb-walker-wrap:hover #bb-walker-toggle { opacity:1; }
+        #bb-walker-wrap:hover .bb-walker-arrow, #bb-walker-wrap:hover #bb-walker-toggle,
+        #bb-walker-wrap-l:hover .bb-walker-arrow, #bb-walker-wrap-l:hover #bb-walker-l-toggle { opacity:1; }
         .bb-walker-arrow.left  { left:0; }
         .bb-walker-arrow.right { right:0; }
         .bb-walker-arrow:hover { background:rgba(20,20,22,.85); }
         .bb-walker-arrow:active { transform:translateY(-50%) scale(0.9); }
-        #bb-walker-toggle {
+        #bb-walker-toggle, #bb-walker-l-toggle {
             position:absolute; top:0; right:0; min-width:34px; height:20px; padding:0 6px;
             border-radius:6px; background:var(--sur2); border:1px solid var(--bd2);
             color:var(--tx); font-size:11px; font-weight:900; cursor:pointer;
             display:flex; align-items:center; justify-content:center;
             z-index:2; opacity:0; transition:opacity .15s, background .15s, color .15s;
         }
-        #bb-walker-toggle:hover { border-color:var(--mu); }
-        #bb-walker-toggle.off { opacity:1; color:var(--rd); border-color:rgba(239,68,68,.3); background:rgba(239,68,68,.1); }
+        #bb-walker-toggle:hover, #bb-walker-l-toggle:hover { border-color:var(--mu); }
+        #bb-walker-toggle.off, #bb-walker-l-toggle.off { opacity:1; color:var(--rd); border-color:rgba(239,68,68,.3); background:rgba(239,68,68,.1); }
         /* 말풍선: 캐릭터 왼쪽으로 뜸(가운데 제목 위를 덮어도 무방). 클릭을 가로채지 않도록 pointer-events:none */
         #bb-walker-bubble {
             position:absolute; top:50%; right:calc(100% + 14px); transform:translateY(-50%);
@@ -246,7 +252,7 @@
         /* ── 알림 영역 (헤더 좌측) + 검색 ── */
         .bb-alert-zone {   /* 이 영역 안에서만 버튼이 뜸 — overflow:hidden 으로 밖으로 삐져나오지 않음 */
             position:absolute; left:14px; top:50%; transform:translateY(calc(-50% - 3px));   /* 헤더 중앙보다 3px 위. 6칸(3줄) = 114px 이라 이 이상 올리면 위가 잘림 */
-            width:680px; box-sizing:border-box; padding:3px; overflow:hidden;
+            width:570px; box-sizing:border-box; padding:3px; overflow:hidden;   /* 570 = 좌측 동숲 주민(100px) 자리를 남긴 폭 */
         }
         .bb-alert-chips { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; }
         .bb-chip {   /* 가로로 긴 한 줄 버튼: [아이콘 종류 N건  ··· 기체명] */
@@ -336,6 +342,13 @@
         .bb-fav:empty::before {
             content:'즐겨찾기 — 카드를 끌어다 놓으세요'; margin:auto; padding:0 12px;
             text-align:center; font-size:13px; color:var(--mu);
+        }
+        .bb-fav:not(:empty)::after {   /* 기체가 들어 있을 때: 영역 하단에 작은 안내 (비어 있을 때는 위의 가운데 문구) */
+            content:'즐겨찾기 — 카드를 끌어다 놓으세요';
+            position:sticky; bottom:6px; margin-top:auto; padding-top:8px;   /* 영역이 길어 스크롤돼도 보이는 하단에 고정 */
+            text-align:center; font-size:10px; line-height:12px; color:var(--mu); opacity:.85;
+            text-shadow:0 0 3px var(--bg), 0 0 3px var(--bg);   /* 카드 위에 걸쳐도 읽히도록 */
+            pointer-events:none;
         }
         .bb-list {   /* 일반 기체: 3열 (세로 우선 채움 → 이름순 정렬 시 위→아래로 읽힘, 행 수는 JS가 지정) */
             flex:0 0 auto; display:grid; align-content:start;
@@ -430,6 +443,7 @@
         }
         .bb-mm-title { font-size:16.5px; font-weight:900; color:var(--tx); }
         .bb-mm-count { color:var(--rd); }
+        .bb-mm-note { font-size:11.5px; font-weight:400; color:var(--mu); white-space:nowrap; }
         .bb-mm-sub { margin-top:1px; font-size:11.5px; line-height:1.3; color:var(--mu); }
         .bb-mm-sub.warn { color:var(--or); }
         .bb-mm-body {
@@ -735,6 +749,13 @@
                 <!-- 좌: 알림 버튼 영역 (배터리 / 좀비 / 방치 / 캠 미송출) -->
                 <div class="bb-alert-zone" id="bb-alert-bar">
                     <div class="bb-alert-chips" id="bb-alert-chips"></div>
+                </div>
+                <!-- 좌: 동숲 주민 2 (제목 박스 왼쪽, 말풍선 없음, 우측 주민과 다른 캐릭터) -->
+                <div id="bb-walker-wrap-l">
+                    <div id="bb-walker-l"></div>
+                    <button id="bb-walker-l-prev" class="bb-walker-arrow left" title="이전 캐릭터">‹</button>
+                    <button id="bb-walker-l-next" class="bb-walker-arrow right" title="다음 캐릭터">›</button>
+                    <button id="bb-walker-l-toggle" title="동숲 주민 끄기">동숲</button>
                 </div>
                 <div class="bb-hd-titlebox" id="bb-drag-handle">
                     <div class="bb-hd-title">
@@ -3133,10 +3154,9 @@
         if (!e.target.closest('#bb-search-wrap') && !e.target.closest('#bb-dd')) hideDd();
     });
 
-	// 동숲 주민 (헤더 우측) — 캐릭터 선택(bb_walker_idx)·표시 on/off(bb_walker_on)는 예전 그대로, 캠핑장 배경만 제외
-	(function() {
-		const WALKER_BASE = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/';
-		const walkerFiles = [
+	// 동숲 주민 공통 데이터 (우측: 말풍선 있음 / 좌측: 말풍선 없음 — 같은 캐릭터 목록을 씀)
+	const WALKER_BASE = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/';
+	const walkerFiles = [
 			{ name: 'Walker',   variants: ['Walker.webp', 'Walker_2.webp', 'Walker_3.webp', 'Walker_4.webp', 'Walker_5.webp'] },
 			{ name: 'Scoot',    variants: ['Scoot.webp', 'Scoot_2.webp', 'Scoot_3.webp', 'Scoot_4.webp', 'Scoot_5.webp'] },
 			{ name: 'Octavian', variants: ['Octavian.webp', 'Octavian_2.webp', 'Octavian_3.webp'] },
@@ -3154,8 +3174,10 @@
 			{ name: 'Sherb',    variants: ['Sherb.webp', 'Sherb_2.webp'] },
 		];
 		
-		const ROTATE_MS = 2 * 60 * 60 * 1000;   // 2시간마다 배리에이션 교체 (원하는 시간으로 조정)
+	const ROTATE_MS = 2 * 60 * 60 * 1000;   // 2시간마다 배리에이션 교체 (원하는 시간으로 조정)
 
+	// 동숲 주민 (헤더 우측) — 캐릭터 선택(bb_walker_idx)·표시 on/off(bb_walker_on)는 예전 그대로, 캠핑장 배경만 제외
+	(function() {
 		const WALKER_IDX_KEY = 'bb_walker_idx';   // 캐릭터 선택 (기존 키 그대로 유지 — 순서 안 바꿨으니 호환됨)
 		let charIdx = parseInt(localStorage.getItem(WALKER_IDX_KEY), 10);
 		if (isNaN(charIdx) || charIdx < 0 || charIdx >= walkerFiles.length) charIdx = 0;
@@ -3176,7 +3198,10 @@
 		renderWalker();
 
 		function goToChar(delta) {
-			charIdx = (charIdx + delta + walkerFiles.length) % walkerFiles.length;
+			const leftIdx = parseInt(localStorage.getItem('bb_walker_left_idx'), 10);   // 좌측 주민이 쓰는 캐릭터는 건너뜀
+			let next = charIdx;
+			do { next = (next + delta + walkerFiles.length) % walkerFiles.length; } while (next === leftIdx);
+			charIdx = next;
 			localStorage.setItem(WALKER_IDX_KEY, String(charIdx));
 			renderWalker();
 		}
@@ -3422,6 +3447,61 @@
 			localStorage.setItem(WALKER_TOGGLE_KEY, walkerOn ? '1' : '0');
 			applyWalkerToggle();
 		});
+    })();
+
+
+    // ── 동숲 주민 2 (제목 박스 왼쪽) ────────────────────────────────
+    //  우측 주민과 같은 기능(캐릭터 선택 ‹ ›, 표시 on/off, 선택 저장) — 말풍선만 없음.
+    //  우측 주민과 같은 캐릭터는 고를 수 없음: 서로가 쓰는 캐릭터를 건너뛰며 선택하고, 저장값이 겹치면 좌측이 양보.
+    (function() {
+        const wrapEl = document.getElementById('bb-walker-wrap-l');
+        if (!wrapEl) return;
+        const el = document.getElementById('bb-walker-l');
+        const toggleEl = document.getElementById('bb-walker-l-toggle');
+        const N = walkerFiles.length;
+        const LEFT_IDX_KEY = 'bb_walker_left_idx', LEFT_ON_KEY = 'bb_walker_left_on';
+
+        const rightIdx = () => {   // 우측 주민의 현재 캐릭터 (우측과 같은 규칙으로 읽음)
+            const v = parseInt(localStorage.getItem('bb_walker_idx'), 10);
+            return (isNaN(v) || v < 0 || v >= N) ? 0 : v;
+        };
+        let idx = parseInt(localStorage.getItem(LEFT_IDX_KEY), 10);
+        if (isNaN(idx) || idx < 0 || idx >= N || idx === rightIdx()) idx = (rightIdx() + 1) % N;   // 처음이거나 겹치면 우측 다음 캐릭터
+        localStorage.setItem(LEFT_IDX_KEY, String(idx));   // 저장해 두어야 우측이 이 캐릭터를 건너뜀
+
+        function variantFile() {   // 우측과 같은 방식: 시간 기준 배리에이션 교체
+            const variants = walkerFiles[idx].variants;
+            return variants[Math.floor(Date.now() / ROTATE_MS) % variants.length];
+        }
+        function render() { el.style.backgroundImage = `url('${WALKER_BASE}${variantFile()}')`; }
+        render();
+        setInterval(render, 60 * 1000);
+
+        function go(delta) {
+            let next = idx;
+            do { next = (next + delta + N) % N; } while (next === rightIdx());
+            idx = next;
+            localStorage.setItem(LEFT_IDX_KEY, String(idx));
+            render();
+        }
+        document.getElementById('bb-walker-l-prev').addEventListener('click', e => { e.stopPropagation(); go(-1); });
+        document.getElementById('bb-walker-l-next').addEventListener('click', e => { e.stopPropagation(); go(1); });
+
+        // 표시 on/off (기본 ON, 저장)
+        let on = localStorage.getItem(LEFT_ON_KEY);
+        on = on === null ? true : on === '1';
+        function applyToggle() {
+            el.style.display = on ? '' : 'none';
+            toggleEl.classList.toggle('off', !on);
+            toggleEl.textContent = on ? '동숲' : '🚫';
+            toggleEl.title = on ? '동숲 주민 끄기' : '동숲 주민 켜기';
+        }
+        applyToggle();
+        toggleEl.addEventListener('click', () => {
+            on = !on;
+            localStorage.setItem(LEFT_ON_KEY, on ? '1' : '0');
+            applyToggle();
+        });
     })();
 
     // ── 줌 기능
@@ -3869,7 +3949,10 @@
         const n = document.createElement('span');
         n.className = 'bb-mm-count';   // 대수만 빨간색
         n.textContent = `${count}대`;
-        t.append('다중 모니터링 기체 ', n);
+        const note = document.createElement('span');
+        note.className = 'bb-mm-note';   // 대수 옆 작은 설명
+        note.textContent = ' (POI 정체 감지 중)';
+        t.append('다중 모니터링 기체 ', n, note);
     }
 
     async function refreshPatrolLive() {
