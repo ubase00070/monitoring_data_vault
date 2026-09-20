@@ -1,5 +1,5 @@
 /* ============================================================
-   battery_board.js v5.4 (방전 추정 · 저속충전 배터리 바 · 바깥 클릭 닫기 · 알림 카드 크기 통일)
+   battery_board.js v5.6 (CYH 24시간 정각 업로드 · 파스텔 블루 외곽선 · 가벼운 정리)
    NCC 종합 모니터 — 템퍼몽키 inject
    ============================================================ */
 
@@ -84,7 +84,7 @@
             width:1714px;   /* 1490px 대비 +15% — 우측 다중 모니터링 영역 확보 */
             height:955px; max-height:100vh; overflow-y:auto; overflow-x:hidden;   /* 기본 크기 = 즐겨찾기 20대 + 안내 문구가 들어가는 높이 (955 = 104 + 20 + 774 + 51 + 6) */
             border:3px solid transparent; border-radius:16px;
-            background-image: var(--bg-fill), linear-gradient(135deg, #6366f1, #ec4899);
+            background-image: var(--bg-fill), linear-gradient(135deg, #9dbdff, #8fe6ff);
             background-origin: border-box;
             background-clip: padding-box, border-box;
             box-shadow:0 24px 60px rgba(0,0,0,.75);
@@ -110,7 +110,7 @@
             position:relative; display:inline-flex; flex-direction:column; align-items:center; gap:3px;
             padding:7px 28px 6px; border-radius:12px;
             border:2.5px solid transparent;
-            background-image: linear-gradient(var(--bg), var(--bg)), linear-gradient(135deg, rgba(99,102,241,.7), rgba(236,72,153,.7));
+            background-image: linear-gradient(var(--bg), var(--bg)), linear-gradient(135deg, #9dbdff, #8fe6ff);
             background-origin: border-box; background-clip: padding-box, border-box;
             cursor:grab;
         }
@@ -408,11 +408,11 @@
             outline:2px solid var(--bd2); outline-offset:5px; border-radius:8px;   /* 다중 모니터링 영역(.bb-mm-box) 테두리와 같은 색(--bd2)·두께(2px). outline 이라 카드 폭에 영향 없음 */
         }
         .bb-fav:empty::before {
-            content:'즐겨찾기 — 카드를 끌어다 놓으세요'; margin:auto; padding:0 12px;
+            content:'즐겨찾기 - 카드를 끌어다 놓으세요(최대 20대).'; margin:auto; padding:0 12px;
             text-align:center; font-size:13px; color:var(--mu);
         }
         .bb-fav:not(:empty)::after {   /* 기체가 들어 있을 때: 영역 하단에 작은 안내 (비어 있을 때는 위의 가운데 문구) */
-            content:var(--fav-note, '즐겨찾기 — 카드를 끌어다 놓으세요');   /* 가득 찼을 때는 JS 가 --fav-note 로 경고 문구를 잠깐 씀 */
+            content:var(--fav-note, '즐겨찾기 - 카드를 끌어다 놓으세요(최대 20대).');   /* 가득 찼을 때는 JS 가 --fav-note 로 경고 문구를 잠깐 씀 */
             position:sticky; bottom:4px; margin-top:auto; padding-top:2px;   /* 영역이 길어 스크롤돼도 보이는 하단에 고정 */
             text-align:center; font-size:10px; line-height:12px; color:var(--mu); opacity:.85;
             text-shadow:0 0 3px var(--bg), 0 0 3px var(--bg);   /* 카드 위에 걸쳐도 읽히도록 */
@@ -425,7 +425,7 @@
             grid-auto-flow:column;
             gap:5px 12px;
         }
-        .bb-fav.bb-drop-over, .bb-list.bb-drop-over { background:rgba(99,102,241,.08); border-radius:8px; }
+        .bb-fav.bb-drop-over, .bb-list.bb-drop-over { background:rgba(96,165,250,.10); border-radius:8px; }
         .bb-list-empty {
             grid-column:1 / -1; padding:56px 0; text-align:center;
             font-size:15px; color:var(--mu);
@@ -646,7 +646,7 @@
             top:50%; left:50%; transform:translate(-50%,-50%);
             width:552px; max-height:86vh; overflow-y:auto;
             border:3px solid transparent; border-radius:14px;
-            background-image: linear-gradient(var(--sur), var(--sur)), linear-gradient(135deg, #6366f1, #ec4899);
+            background-image: linear-gradient(var(--sur), var(--sur)), linear-gradient(135deg, #9dbdff, #8fe6ff);
             background-origin: border-box;
             background-clip: padding-box, border-box;
             box-shadow:0 24px 64px rgba(0,0,0,.9);
@@ -658,7 +658,7 @@
             top:50%; left:50%; transform:translate(-50%,-50%);
             width:860px; max-height:82vh; overflow-y:auto;
             border:3px solid transparent; border-radius:14px;
-            background-image: linear-gradient(var(--sur), var(--sur)), linear-gradient(135deg, #6366f1, #ec4899);
+            background-image: linear-gradient(var(--sur), var(--sur)), linear-gradient(135deg, #9dbdff, #8fe6ff);
             background-origin: border-box;
             background-clip: padding-box, border-box;
             box-shadow:0 24px 64px rgba(0,0,0,.9);
@@ -741,7 +741,7 @@
             top:50%; left:50%; transform:translate(-50%,-50%);
             width:840px;
             border:3px solid transparent; border-radius:12px;
-            background-image: linear-gradient(var(--sur), var(--sur)), linear-gradient(135deg, #6366f1, #ec4899);
+            background-image: linear-gradient(var(--sur), var(--sur)), linear-gradient(135deg, #9dbdff, #8fe6ff);
             background-origin: border-box;
             background-clip: padding-box, border-box;
             box-shadow:0 16px 48px rgba(0,0,0,.9);
@@ -919,7 +919,7 @@
 
             <div id="bb-alertlog-all-panel">
                 <div class="bb-ap-hd">
-                    <div class="bb-ap-title">📋 최근 15일 알림 로그</div>
+                    <div class="bb-ap-title">📋 이상 알림 로그(최근 15일)</div>
                     <div class="bb-ap-close" id="bb-alertlog-all-close">✕</div>
                 </div>
                 <div id="bb-alertlog-all-body"></div>
@@ -1439,22 +1439,29 @@
         const barEl = document.getElementById('bb-alert-bar');
         if (barEl) {
             const r = barEl.getBoundingClientRect();
+            const b = bbEl.getBoundingClientRect();   // 전체 보드 영역 (줌 배율 반영)
+            const pw = panel.offsetWidth || 552;
+            const top = r.bottom + 8;
+            // 알림 영역 폭의 중앙에 맞추되, 보드의 왼쪽·오른쪽 끝을 넘지 않도록 (알림 영역이 좁아져 창이 보드 밖으로 나가던 문제)
+            const left = Math.max(b.left + 8, Math.min(r.left + r.width / 2 - pw / 2, b.right - pw - 8));
             panel.style.position = 'fixed';
-            panel.style.top = (r.bottom + 8) + 'px';
-            panel.style.left = (r.left + r.width / 2) + 'px';
-            panel.style.transform = 'translateX(-50%)';
+            panel.style.left = left + 'px';
+            panel.style.top = top + 'px';
+            panel.style.transform = 'none';
+            if (b.bottom > top) panel.style.maxHeight = Math.max(200, b.bottom - top - 8) + 'px';   // 아래쪽도 보드 안에서 끝나게
         }
         registerAlertPanelClose();
     }
 
-    let _alertPanelCloseHandler = null;
+    let _alertPanelCloseHandler = null, _alertCloseTimer = null;
     function registerAlertPanelClose() {
         const panel = document.getElementById('bb-alert-panel');
         if (_alertPanelCloseHandler) {
             document.removeEventListener('mousedown', _alertPanelCloseHandler);
             _alertPanelCloseHandler = null;
         }
-        setTimeout(() => {
+        clearTimeout(_alertCloseTimer);   // 100ms 안에 여러 번 눌러도 리스너가 하나만 등록되게
+        _alertCloseTimer = setTimeout(() => {
             _alertPanelCloseHandler = function closeAlert(e) {
                 if (!panel.contains(e.target) && !e.target.closest('.bb-chip[data-type]')) {
                     panel.classList.remove('open');
@@ -1579,7 +1586,7 @@
             }
 
             renderMonitorGrid(allRaw);   // 하단 퀵바
-            if (_fbReady) refreshFixedTools();   // 고정 버튼 3종: 배지 + 열려 있는 목록 창 (2분마다)
+            if (_fbReady && isOpen) refreshFixedTools();   // 고정 버튼 3종: 배지 + 열려 있는 목록 창 (2분마다, 보드가 열려 있을 때만 — 닫혀 있으면 열 때 계산)
             // [주석처리: 기타 배달/동숲]
             // renderDeliveryChips(allRaw);
             // applyCampingBackground();
@@ -2159,7 +2166,7 @@
 
 	// ============================================================
 	// CYH 전용 배터리 로그 업로드 / 그 외 전원 다운로드
-	// - 업로드: CYH만, 08:00~17:30 자동(30분 주기, 실패시 1분 뒤 1회 재시도) / 수동은 언제든 가능 / 심야 업로드는 02:50 (아래)
+	// - 업로드: CYH만, 접속해 있으면 24시간 매 정각 자동(단 18:00 은 17:50 으로 대신), 각 시각 1회만 시도(재시도 없음) / 수동(UP 버튼)은 언제든 가능 / 심야 업로드는 02:50 (아래)
 	// - 다운로드: CYH 제외 전원, 24시간 30분 주기 자동(실패시 1분 뒤 1회 재시도) (+ 수동 강제 버튼)
 	// - 병합: CYH 데이터가 겹치는 시간대는 덮어씀(더 연속적이고 정확하다고 판단)
 	// - 어제 데이터: 트래킹 데이(03:00~익일03:00) 기준 하루 전 스냅샷, 세션당 1회만 로드
@@ -2237,40 +2244,25 @@
 		} catch (e) { console.log('[BB] 배터리 로그 불러오기 실패:', e.message); return false; }
 	}
 
-	// CYH 자동 업로드 — 08:00~17:30만, 30분 슬롯당 1회 시도, 실패시 1분 뒤 1회만 재시도
-	let _wblUpRetryTimer = null;
+	// CYH 자동 업로드 — 접속해 있으면 24시간 매 정각(00:00~23:00), 단 18:00 대신 17:50. 각 시각마다 딱 1회만 시도하고 실패해도 재시도 없음.
+	// 그 시각에 보드가 켜져 있지 않았으면(재부팅 등) 건너뜀 — 나중에 따라잡아 올리지 않음. 정각이 아닌 때 PC 를 끄려면 UP 버튼으로 수동 업로드.
 	async function wblCyhAutoUploadTick() {
 		if (localStorage.getItem('bb_is_cyh') !== '1') return;
 		const now = new Date();
 		const h = now.getHours(), m = now.getMinutes();
-
-        if (h === 17 && m >= 50) {
-			const exKey = `bb_wbl_up_1750_${wblTodayStr()}`;
-			if (localStorage.getItem(exKey) !== '1') {
-				localStorage.setItem(exKey, '1');
-				await wblDoUpload();
-			}
-			return;
-		}
-        
-		const minsSince8 = (h - 8) * 60 + m;
-		if (minsSince8 < 0 || minsSince8 > 570) return;   // 08:00~17:30 범위 밖
-
-		const slot = wblSlotLabel30(now);
-		if (localStorage.getItem('bb_wbl_up_slot') === slot) return;
-
-		const ok = await wblDoUpload();
-		if (ok) {
-			localStorage.setItem('bb_wbl_up_slot', slot);
-			return;
-		}
-		// 1분 뒤 딱 1회만 재시도 (그 결과와 무관하게 이번 슬롯은 종료 처리 -> 다음 슬롯부터 재개)
-		if (_wblUpRetryTimer) clearTimeout(_wblUpRetryTimer);
-		_wblUpRetryTimer = setTimeout(async () => {
-			await wblDoUpload();
-			localStorage.setItem('bb_wbl_up_slot', slot);
-		}, 60 * 1000);
+		let slot = null;
+		if (h === 17 && m === 50) slot = '1750';                                          // 18:00 대신 17:50
+		else if (m === 0 && h !== 18) slot = `${String(h).padStart(2, '0')}00`;           // 그 밖의 모든 정각 (24시간)
+		if (!slot) return;
+		const today = wblTodayStr();
+		const doneKey = `bb_wbl_up_${today}_${slot}`;
+		if (localStorage.getItem(doneKey) === '1') return;
+		Object.keys(localStorage).forEach(k => { if (k.startsWith('bb_wbl_up_') && !k.startsWith(`bb_wbl_up_${today}_`)) localStorage.removeItem(k); });   // 지난 날짜 기록 정리
+		localStorage.setItem(doneKey, '1');   // 시도하기 전에 기록 → 성공/실패와 무관하게 이 시각엔 1회만
+		await wblDoUpload();
 	}
+	// 정각(그 분 안)을 놓치지 않도록 20초마다 확인 — 데이터 갱신(2분 주기)과 무관하게 동작. 이미 한 시각은 위의 기록으로 건너뜀
+	setInterval(wblCyhAutoUploadTick, 20 * 1000);
 
 	// 그 외 사용자 자동 다운로드 — 24시간, 30분 슬롯당 1회 시도, 실패시 1분 뒤 1회만 재시도
 	let _wblDlRetryTimer = null;
@@ -2821,7 +2813,7 @@
                         <span id="bb-icp-wbl-title-text">오늘 배터리 증감 추이${wblGetSourceData('today')?.day ? ' [' + wblFormatMonthDay(wblGetSourceData('today').day) + ']' : ''}</span>
                         <span style="display:flex;gap:6px;flex-shrink:0;">
                             <button class="bb-btn" id="bb-icp-wbl-toggle" style="font-size:13px;font-weight:900;padding:3px 8px;">어제 데이터 보기</button>
-                            <button class="bb-btn" id="bb-icp-alertlog-toggle" style="font-size:13px;font-weight:900;padding:3px 8px;">알림 로그 보기</button>
+                            <button class="bb-btn" id="bb-icp-alertlog-toggle" style="font-size:13px;font-weight:900;padding:3px 8px;">이상 알림 보기</button>
                         </span>
                     </div>
                     <div id="bb-icp-wbl-chart">${wblChartSvg}</div>
@@ -2889,7 +2881,7 @@
                     `).join('');
                 }
             } else {
-                toggleBtn.textContent = '알림 로그 보기';
+                toggleBtn.textContent = '이상 알림 보기';
                 wblToggleBtn.style.display = '';
                 chartEl.style.display = '';
                 logEl.style.cssText = '';
@@ -3648,9 +3640,11 @@
         return `${p(d.getMonth() + 1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
     }
     // 배터리 로그 점 → 실제 시각(ms). 로그의 하루는 03:00 시작 ~ 익일 03:00 (00~02시 표기는 다음 날로 봄)
+    const _fbDayBase = {};   // 날짜별 00:00 시각(ms) — 점마다 Date 를 새로 만들지 않도록 하루 한 번만 계산
     function fbPointTs(dayKey, t) {
-        const [y, m, d] = dayKey.split('-').map(Number);
-        return new Date(y, m - 1, d).getTime() + wblDayAdjMin(t) * 60000;
+        let base = _fbDayBase[dayKey];
+        if (base === undefined) { const [y, m, d] = dayKey.split('-').map(Number); base = _fbDayBase[dayKey] = new Date(y, m - 1, d).getTime(); }
+        return base + wblDayAdjMin(t) * 60000;
     }
 
     // ── 충전 속도 계산용: 2분마다의 관측(시각·배터리·상태)을 최근 3시간만 메모리에 보관 (10분 단위 로그를 촘촘하게 보완) ──
@@ -3666,7 +3660,10 @@
     }
 
     // ── 최근 방전 기체(24H): 배터리 로그에서 FB_DISCHARGE_PCT% 이하 → OFF 로 이어진 기체 ──
+    let _fbLogCache = null;   // { rawY, rawT, logs } — 로그 원본 문자열이 그대로면 이전 결과를 재사용 (로그는 10분마다만 바뀜, 어제 로그는 하루 종일 그대로)
     function fbLoadLogs() {   // 어제 스냅샷 + 오늘 로그를 기체별 시간순 점으로 (같은 시각이 겹치면 오늘 것이 우선)
+        const rawY = localStorage.getItem('bb_battery_log_yesterday') || '', rawT = localStorage.getItem(WBL_KEY) || '';
+        if (_fbLogCache && _fbLogCache.rawY === rawY && _fbLogCache.rawT === rawT) return _fbLogCache.logs;
         const byId = new Map();
         [wblLoadYesterdaySnapshot(), wblLoad()].forEach(data => {
             if (!data || !data.day || !data.entries) return;
@@ -3676,6 +3673,7 @@
                 (e.log || []).forEach(p => { const ts = fbPointTs(data.day, p.t); o.pts.set(ts, { ts, st: p.status, bat: p.battery }); });
             });
         });
+        _fbLogCache = { rawY, rawT, logs: byId };
         return byId;
     }
     // OFF 직전 마지막 기록(pts[i])이 방전인지 판정:
@@ -3862,8 +3860,9 @@
         return h + `<div class="bb-fbp-foot">충전 중 ${sc.charging}대 · 측정 ${sc.measured}대${sc.measuring ? ` · 측정 중 ${sc.measuring}대` : ''}</div>`;
     }
     function fbHtmlMoff(d) {
-        if (!d.mo.length) return `<div class="bb-fbp-empty">현재 임무 OFF 인 기체가 없습니다 ✓</div>`;
-        return d.mo.map(r => {
+        const note = `<div class="bb-fbp-note">전원 ON 기체 기준.</div>`;
+        if (!d.mo.length) return note + `<div class="bb-fbp-empty">현재 임무 OFF 인 기체가 없습니다 ✓</div>`;
+        return note + d.mo.map(r => {
             const st = fbStateChip(r);
             return `<div class="bb-fbp-row" data-rid="${fbEsc(r.id)}" title="${fbEsc(r.name)}">
                 <span class="bb-fbp-dot" style="background:${st.ac};"></span>
