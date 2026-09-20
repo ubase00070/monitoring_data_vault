@@ -1,5 +1,5 @@
 /* ============================================================
-   battery_board.js v5.1 (기본 크기 고정 · 열 채우기 · 다크모드 삭제 · 자잘한 시각 조정)
+   battery_board.js v5.2 (알림 6종 · 비상정지 삭제 · 고정 버튼 3종)
    NCC 종합 모니터 — 템퍼몽키 inject
    ============================================================ */
 
@@ -68,7 +68,6 @@
         /* [주석처리: 기타 배달] #bb.bb-light .bb-delivery-title { color:#2b2418; } */
         /* [주석처리: 기타 배달] #bb.bb-light .bb-delivery-empty { color:#2b2418; } */
         #bb.bb-light .bb-mi.standby { --ac:#8a7f68; }
-        #bb.bb-light .bb-chip.estop { background:var(--sur); color:#dc2626; }
         #bb.bb-light .bb-chip.bat    { background:var(--sur); color:#b91c1c; }
 		#bb.bb-light .bb-chip.dock   { background:var(--sur); color:#a16207; }
 		#bb.bb-light .bb-chip.zombie { background:var(--sur); color:#c2410c; }
@@ -164,6 +163,73 @@
         .bb-bk-btns { display:flex; gap:6px; }
         .bb-bk-name { min-width:64px; }
 
+
+        /* ── 고정 버튼 3종 (왼쪽 동숲 주민의 왼쪽): 1줄 [최근 방전 기체(24H)] / 2줄 [저속충전 기체 TOP10] [임무 OFF 기체] ── */
+        .bb-fixbtns {
+            position:absolute; right:calc(50% + 261px); top:50%; transform:translateY(-50%);   /* 오른쪽 끝 = 왼쪽 동숲 주민(제목 왼쪽 151~251px)에서 10px 왼쪽 */
+            width:244px; display:grid; grid-template-columns:auto auto; justify-content:space-between; gap:5px 4px; z-index:3;
+        }
+        .bb-fb {
+            position:relative; height:27px; padding:0 7px; border-radius:7px; border:1.5px solid var(--bd2);
+            background:var(--sur2); color:var(--tx); font-size:12px; font-weight:800; font-family:inherit;
+            cursor:pointer; white-space:nowrap; box-sizing:border-box;
+        }
+        .bb-fb.wide { grid-column:1 / -1; }
+        .bb-fb:hover { border-color:var(--mu); }
+        .bb-fb.active { background:var(--bg); border-color:var(--tx); }
+        .bb-fb-n {   /* 버튼 모서리에 겹쳐 뜨는 숫자 배지 (폭을 차지하지 않음, 0이면 숨김) */
+            display:none; position:absolute; top:-7px; right:-5px; min-width:17px; height:17px; padding:0 4px;
+            border-radius:9px; box-sizing:border-box; color:#fff; font-size:10px; font-weight:900; line-height:17px;
+            text-align:center; box-shadow:0 1px 3px rgba(0,0,0,.3);
+        }
+        .bb-fb-n.on { display:block; }
+        .bb-fb-n.r { background:#dc2626; }
+        .bb-fb-n.o { background:#ea580c; }
+
+        /* 고정 버튼 목록 창 (버튼 아래에 뜸, 열어 둔 채로 2분마다 자동 갱신) */
+        .bb-fbp {
+            display:none; position:absolute; left:0; top:calc(100% + 10px); width:480px; max-height:560px;
+            flex-direction:column; z-index:600; background:var(--bg); border:2px solid var(--bd2);
+            border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,.35); overflow:hidden;
+        }
+        .bb-fbp.open { display:flex; }
+        .bb-fbp-hd { display:flex; align-items:center; gap:8px; padding:8px 10px 8px 14px; border-bottom:1px solid var(--bd); flex-shrink:0; }
+        .bb-fbp-title { font-size:15px; font-weight:900; color:var(--tx); }
+        .bb-fbp-cnt { flex:1; font-size:12px; font-weight:800; color:var(--mu); }
+        .bb-fbp-x {
+            width:30px; height:30px; border-radius:6px; flex-shrink:0; cursor:pointer;
+            background:rgba(239,68,68,.15); border:1px solid rgba(239,68,68,.3); color:var(--rd); font-size:18px; font-weight:900;
+            display:flex; align-items:center; justify-content:center;
+        }
+        .bb-fbp-x:hover { background:rgba(239,68,68,.3); }
+        .bb-fbp-body { overflow-y:auto; padding:6px 8px 8px; min-height:0; }
+        .bb-fbp-note { font-size:10.5px; line-height:1.45; color:var(--mu); padding:2px 6px 8px; }
+        .bb-fbp-empty { padding:22px 8px; text-align:center; font-size:13px; font-weight:700; color:var(--mu); }
+        .bb-fbp-foot { font-size:10.5px; line-height:1.45; color:var(--mu); padding:6px 6px 2px; }
+        .bb-fbp-row {
+            display:flex; align-items:center; gap:8px; padding:7px 10px; margin-bottom:5px; border-radius:8px;
+            background:var(--sur); border:1.5px solid var(--bd); cursor:pointer; color:var(--tx);
+        }
+        .bb-fbp-row:hover { background:#f9a8d4; }
+        .bb-fbp-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+        .bb-fbp-main { flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+        .bb-fbp-name { font-size:13px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .bb-fbp-sub { font-size:11px; color:var(--mu); white-space:nowrap; }
+        .bb-fbp-now { font-size:12px; font-weight:800; white-space:nowrap; flex-shrink:0; }
+        .bb-fbp-row.sc { display:block; }
+        .bb-sc-l1 { display:flex; align-items:center; gap:8px; }
+        .bb-sc-l1 .bb-fbp-name { flex:1; min-width:0; }
+        .bb-sc-bat { font-size:13px; font-weight:900; flex-shrink:0; }
+        .bb-sc-l2 { display:flex; align-items:center; gap:10px; margin-top:6px; }
+        .bb-sc-bar { position:relative; flex:0 0 150px; height:10px; border-radius:5px; background:var(--sur2); border:1px solid var(--bd2); box-sizing:border-box; overflow:hidden; }
+        .bb-sc-bar.noref { background:repeating-linear-gradient(45deg, var(--sur2), var(--sur2) 4px, var(--bd) 4px, var(--bd) 8px); }
+        .bb-sc-fill { position:absolute; left:0; top:0; bottom:0; border-radius:5px; }
+        .bb-sc-fill.sev-r { background:#dc2626; } .bb-sc-fill.sev-o { background:#ea580c; } .bb-sc-fill.sev-g { background:#16a34a; }
+        .bb-sc-pct { font-size:12px; font-weight:900; white-space:nowrap; }
+        .bb-sc-pct.sev-r { color:#dc2626; } .bb-sc-pct.sev-o { color:#c2410c; } .bb-sc-pct.sev-g { color:#15803d; }
+        .bb-sc-rate, .bb-sc-eta { font-size:11px; color:var(--mu); white-space:nowrap; }
+        .bb-sc-eta { margin-left:auto; }
+
         /* 동숲 캐릭터 (헤더: 제목 박스 오른쪽) — 캐릭터 선택/저장은 예전 그대로, 캠핑장 배경만 제외 */
         #bb-walker-wrap {   /* 우측 주민: 제목 박스 오른쪽 (좌측 주민과 좌우 대칭, 제목 박스에서 10px 띄움) */
             position:absolute; left:calc(50% + 151px); top:50%; transform:translateY(-50%);
@@ -253,13 +319,13 @@
         /* ── 알림 영역 (헤더 좌측) + 검색 ── */
         .bb-alert-zone {   /* 이 영역 안에서만 버튼이 뜸 — overflow:hidden 으로 밖으로 삐져나오지 않음 */
             position:absolute; left:14px; top:50%; transform:translateY(-50%);   /* 헤더 세로 중앙. 6칸(3줄) = 104px 로 헤더 높이와 같아 위아래로 잘리지 않음 */
-            width:570px; box-sizing:border-box; padding:3px; overflow:hidden;   /* 570 = 좌측 동숲 주민(100px) 자리를 남긴 폭 */
+            width:325px; box-sizing:border-box; padding:3px; overflow:hidden;   /* 325 = 왼쪽 동숲 주민(100px) + 고정 버튼 3종(244px) 자리를 남긴 폭 */
         }
         .bb-alert-chips { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:4px 6px; }
         .bb-chip {   /* 가로로 긴 한 줄 버튼: [아이콘 종류 N건  ··· 기체명] */
-            display:flex; align-items:center; gap:10px; min-width:0;
-            height:30px; padding:0 14px; box-sizing:border-box; border-radius:8px;
-            font-size:14px; font-weight:700; cursor:pointer; font-family:inherit;
+            display:flex; align-items:center; gap:6px; min-width:0;
+            height:30px; padding:0 9px; box-sizing:border-box; border-radius:8px;
+            font-size:13px; font-weight:700; cursor:pointer; font-family:inherit;
             transition:filter .15s, box-shadow .15s;
         }
         .bb-chip-l1 { flex-shrink:0; white-space:nowrap; }
@@ -268,14 +334,12 @@
             white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
         }
         .bb-chip:hover { filter:brightness(1.15); }
-        .bb-chip.estop { background:var(--rd2); color:var(--rd); border:2px solid rgba(239,68,68,.7); animation:chipPulse .5s infinite, chipBorder .5s infinite; }
         .bb-chip.bat    { background:var(--rd2); color:var(--rd); border:2px solid rgba(239,68,68,.55); animation:chipPulse 1s infinite, chipBorder 1s infinite; }
         .bb-chip.dock   { background:rgba(251,191,36,.12); color:var(--ye); border:2px solid rgba(251,191,36,.5); animation:chipPulse 1s infinite, chipBorder 1s infinite; }
         .bb-chip.zombie { background:rgba(249,115,22,.12); color:var(--or); border:2px solid rgba(249,115,22,.5); animation:chipPulse .7s infinite, chipBorder .7s infinite; }
         .bb-chip.cam    { background:rgba(249,115,22,.12); color:var(--or); border:2px solid rgba(249,115,22,.45); animation:chipPulse 1s infinite, chipBorder 1s infinite; }
         .bb-chip.nomap  { background:rgba(249,115,22,.12); color:var(--or); border:2px solid rgba(249,115,22,.45); animation:chipPulse 1s infinite, chipBorder 1s infinite; }
         .bb-chip.idle   { background:rgba(59,130,246,.10); color:var(--bl); border:2px solid rgba(59,130,246,.45); animation:chipPulse 1.2s infinite, chipBorder 1.2s infinite; }
-        #bb.bb-light .bb-chip.estop  { box-shadow:0 0 10px rgba(239,68,68,.4); }
         #bb.bb-light .bb-chip.bat    { box-shadow:0 0 8px rgba(239,68,68,.25); }
         #bb.bb-light .bb-chip.dock   { box-shadow:0 0 6px rgba(251,191,36,.2); }
         #bb.bb-light .bb-chip.zombie { box-shadow:0 0 8px rgba(249,115,22,.2); }
@@ -762,9 +826,23 @@
         <div id="bb">
             <!-- 헤더 -->
             <div class="bb-hd">
-                <!-- 좌: 알림 버튼 영역 (배터리 / 좀비 / 방치 / 캠 미송출) -->
+                <!-- 좌: 알림 버튼 영역 (배터리 / 도킹 / 좀비 / 방치 / 캠 미송출 / GPS 수신 — 2열 × 3줄) -->
                 <div class="bb-alert-zone" id="bb-alert-bar">
                     <div class="bb-alert-chips" id="bb-alert-chips"></div>
+                </div>
+                <!-- 좌: 고정 버튼 3종 (왼쪽 동숲 주민의 왼쪽) -->
+                <div class="bb-fixbtns" id="bb-fixbtns">
+                    <button id="bb-fb-dis" class="bb-fb wide" data-mode="dis" title="최근 24시간 배터리 로그에서 2% 이하에 도달한 뒤 OFF 된 기체">최근 방전 기체(24H)<b class="bb-fb-n"></b></button>
+                    <button id="bb-fb-slow" class="bb-fb" data-mode="slow" title="충전 중인 기체를 충전 속도가 더딘 순으로">저속충전 기체 TOP10<b class="bb-fb-n"></b></button>
+                    <button id="bb-fb-moff" class="bb-fb" data-mode="moff" title="현재 임무가 OFF 인 기체">임무 OFF 기체<b class="bb-fb-n"></b></button>
+                    <div class="bb-fbp" id="bb-fbp">
+                        <div class="bb-fbp-hd">
+                            <span class="bb-fbp-title" id="bb-fbp-title"></span>
+                            <span class="bb-fbp-cnt" id="bb-fbp-cnt"></span>
+                            <span class="bb-fbp-x" id="bb-fbp-x">✕</span>
+                        </div>
+                        <div class="bb-fbp-body" id="bb-fbp-body"></div>
+                    </div>
                 </div>
                 <!-- 좌: 동숲 주민 2 (제목 박스 왼쪽, 말풍선 없음, 우측 주민과 다른 캐릭터) -->
                 <div id="bb-walker-wrap-l">
@@ -1255,18 +1333,6 @@
                 }
             }
 
-            // ── 기능7: 비상정지
-            if (raw.isEmergency === true) {
-                const key = alertKey('estop', id);
-                rawAlertSignals.push({ id, name, type: 'estop' });
-                if (!dismissedAlerts.has(key)) alerts.push({
-                    key, type:'estop', dot:'rd', name,
-                    desc:`🚨 비상정지 버튼 눌림 | 현장 해제 필요`,
-                    time: fmt(new Date().toISOString())
-                });
-            } else {
-                clearDismiss(alertKey('estop', id));
-            }
         });
 
         saveZombie(zombie);
@@ -1280,7 +1346,6 @@
     // SECTION 5. 알림 칩 + 패널 렌더
     // ============================================================
     const ALERT_META = {
-        estop:  { label:'🆘 비상정지',    order:-1 },
         bat:    { label:'🔋 배터리',      order:0 },
         dock:   { label:'🟡 도킹',        order:1 },
         zombie: { label:'👻 좀비',        order:2 },
@@ -1289,10 +1354,9 @@
         nomap:  { label:'🗺️ GPS 수신', order:5 },
     };
 
-    // 화면에 버튼으로 띄우는 알림은 4종: 배터리 / 좀비 / 방치 / 캠 미송출
-    // (비상정지 'estop' · 도킹 'dock' · GPS 'nomap' 은 감지와 알림 로그 기록은 그대로 두고 버튼만 숨김 — 다시 보이려면 이 배열에 추가)
-    // 알림 영역은 2열 × 3줄 = 최대 6칸까지 잘리지 않고 들어간다 (7종 이상이면 넘침)
-    const ALERT_CHIP_TYPES = ['bat', 'zombie', 'idle', 'cam'];
+    // 화면에 버튼으로 띄우는 알림 6종: 배터리 / 도킹 / 좀비 / 방치 / 캠 미송출 / GPS 수신 (비상정지 알림은 삭제됨)
+    // 알림 영역은 2열 × 3줄 = 최대 6칸 — 6종이 모두 떠도 잘리지 않고 정확히 들어간다
+    const ALERT_CHIP_TYPES = ['bat', 'dock', 'zombie', 'idle', 'cam', 'nomap'];
 
     function renderAlertChips(alerts) {
         currentAlerts = alerts;
@@ -1456,6 +1520,7 @@
     // 혹시 모를 이중 안전장치로 여기서도 최소 UPDATE_INTERVAL_MS(2분)에 한 번만 처리
     const UPDATE_INTERVAL_MS = 2 * 60 * 1000;
     let _lastProcessedAt = 0;
+    let _fbReady = false;   // SECTION 17(고정 버튼) 준비 완료 여부
     document.addEventListener('bb_robots_data', function(e) {
         if (fetchLock) return;
         if (Date.now() - _lastProcessedAt < UPDATE_INTERVAL_MS) return;
@@ -1490,6 +1555,7 @@
             }
 
             logBatteryPattern(DB);
+            try { sampleChargeBuffer(DB); } catch (err) { console.error('[BB] 충전 관측 오류:', err); }   // 저속충전 계산용 (2분마다 1회 기록)
             wblCyhAutoUploadTick();
             wblOthersAutoDownloadTick();
             wblNightUploadTick();
@@ -1511,6 +1577,7 @@
             }
 
             renderMonitorGrid(allRaw);   // 하단 퀵바
+            if (_fbReady) refreshFixedTools();   // 고정 버튼 3종: 배지 + 열려 있는 목록 창 (2분마다)
             // [주석처리: 기타 배달/동숲]
             // renderDeliveryChips(allRaw);
             // applyCampingBackground();
@@ -1534,6 +1601,7 @@
         document.getElementById('bb').classList.add('open');
         render();
         renderMonitorGrid(lastRaw);   // 하단 퀵바
+        if (_fbReady) refreshFixedTools();
         // [주석처리: 기타 배달]
         // renderDeliveryChips(lastRaw);
         if (_patrolReady) refreshPatrolLive();   // 다시 열면 즉시 최신 정보로
@@ -1705,12 +1773,19 @@
         return { date: `${p.month}/${p.day}`, time: `${hh}:${p.minute}`, short: `${p.month}/${p.day} | ${hh}:${p.minute}`, full: `${p.year}-${p.month}-${p.day} ${hh}:${p.minute}:${p.second}` };
     }
 
+    // 임무 OFF 판정: 전원 ON + 임무(배차) 불가 + 배터리 22% 이상 + 순찰/배달/대기 중이 아님. 카드의 "임무 OFF" 표시와 고정 버튼 목록이 같은 기준을 쓰도록 한 곳에서 정의
+    function isMissionOff(r) {
+        const off = r.status === 'off';
+        const lowBat = !off && !r.loading && r.battery <= 21;
+        return !r.canDispatch && !off && !r.loading && !lowBat
+            && r.status !== 'patrolling' && r.status !== 'delivering' && r.status !== 'standby';
+    }
+
     function makeRow(r, isFav) {
         const ac = STATUS_AC[r.status] || 'var(--mu)';
         const off = r.status === 'off';
         const lowBat = !off && !r.loading && r.battery <= 21;
-        const showMissionOff = !r.canDispatch && !off && !r.loading && !lowBat
-            && r.status !== 'patrolling' && r.status !== 'delivering' && r.status !== 'standby';
+        const showMissionOff = isMissionOff(r);
         const showPlug = r.status !== 'patrolling' && r.status !== 'delivering' && !!r.raw?.robotStatus?.isWiredChargerConnected;
 
         const row = document.createElement('div');
@@ -2307,7 +2382,7 @@
 	}
 
 	// ============================================================
-	// SECTION 알림 로그 — 좀비/캠 미노출/미니맵 미노출/비상정지 4종
+	// SECTION 알림 로그 — 좀비/캠 미노출/미니맵 미노출 3종
 	// 목적: "이거 언제부터 이랬지?"를 나중에 확인하기 위한 기록.
 	// 배터리 로그와 달리 CYH 우선순위가 필요 없음 — "언제 목격했나"는 순수 사실이라
 	// 여러 사람의 기록을 그냥 합치면 됨(합집합). 그래서 락도 필요 없음.
@@ -2317,12 +2392,11 @@
 	// "구간(시작~끝)"으로 압축해서 저장 — 장시간 상습 알림 기체가 있어도 용량이 안 불어남.
 	// 매 업로드마다 15일 넘은 날짜는 자동으로 잘라내서, 파일 크기가 무한정 커지지 않음.
 	// ============================================================
-	const ALERT_LOG_TYPES = ['zombie', 'cam', 'nomap', 'estop'];
+	const ALERT_LOG_TYPES = ['zombie', 'cam', 'nomap'];
 	const ALERT_LOG_META = {
 		zombie: { icon: '👻', text: '좀비',        color: 'var(--or)' },
 		cam:    { icon: '🎥', text: '캠 미노출',    color: 'var(--bl)' },
 		nomap:  { icon: '🗺️', text: '미니맵 미노출', color: 'var(--ye)' },
-		estop:  { icon: '🆘', text: '비상정지',     color: 'var(--rd)' },
 	};
 	const ALERT_LOG_RETENTION_DAYS = 15;
 	const ALERT_LOG_NAME = '배터리_알림로그';
@@ -3563,6 +3637,263 @@
             applyToggle();
         });
     })();
+
+
+    // ============================================================
+    // SECTION 17. 고정 버튼 3종 (제목 영역, 왼쪽 동숲 주민의 왼쪽)
+    //   최근 방전 기체(24H) / 저속충전 기체 TOP10 / 임무 OFF 기체
+    //   2분마다 데이터가 갱신될 때 버튼의 숫자 배지와, 열려 있는 목록 창이 함께 새로고침됨 (창을 띄워 둔 채로도)
+    //   계산량은 기체 수(≈90대)에 비례하는 반복 몇 번뿐이라 갱신 한 번에 수 ms 수준
+    // ============================================================
+    const FB_DISCHARGE_PCT = 2;          // 배터리가 이 값(%) 이하에 도달한 뒤 OFF 되면 "방전"
+    const FB_DISCHARGE_WINDOW_H = 24;    // 최근 24시간
+    const FB_CHG_MIN_MIN = 20;           // 충전 속도를 재려면 연속 충전이 이만큼(분) 이상 관측돼야 함
+    const FB_CHG_WIN_MIN = 60;           // 충전 속도 = 최근 이 시간(분) 동안의 배터리 변화
+    const FB_CHG_PEER_PCT = 15;          // "동급" = 배터리 % 차이가 이 이내인 충전 중 기체
+    const FB_CHG_PEER_MIN = 3;           // 동급이 이 수 이상이어야 그 중앙값을 기준으로 삼음 (모자라면 충전 중 전체 중앙값)
+    const FB_CHG_BUF_MS = 3 * 3600 * 1000;
+
+    const fbEsc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const fbMedian = arr => { const a = [...arr].sort((x, y) => x - y), m = a.length >> 1; return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2; };
+    function fbFmtTs(ts) {
+        const d = new Date(ts), p = n => String(n).padStart(2, '0');
+        return `${p(d.getMonth() + 1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+    }
+    // 배터리 로그 점 → 실제 시각(ms). 로그의 하루는 08:00 시작 ~ 익일 03:00 (00~07시 표기는 다음 날로 봄)
+    function fbPointTs(dayKey, t) {
+        const [y, m, d] = dayKey.split('-').map(Number);
+        return new Date(y, m - 1, d).getTime() + wblDayAdjMin(t) * 60000;
+    }
+
+    // ── 충전 속도 계산용: 2분마다의 관측(시각·배터리·상태)을 최근 3시간만 메모리에 보관 ──
+    const chgBuf = new Map();
+    let _chgSeeded = false;
+    function seedChargeBuffer(now) {   // 새로고침 직후에도 바로 계산되도록 오늘 배터리 로그(10분 단위)로 미리 채움
+        const data = wblLoad();
+        if (!data || !data.day || !data.entries) return;
+        Object.entries(data.entries).forEach(([id, e]) => {
+            const arr = [];
+            (e.log || []).forEach(p => {
+                const ts = fbPointTs(data.day, p.t);
+                if (ts <= now && ts >= now - FB_CHG_BUF_MS) arr.push({ ts, bat: p.battery, st: p.status });
+            });
+            arr.sort((a, b) => a.ts - b.ts);
+            if (arr.length) chgBuf.set(id, arr);
+        });
+    }
+    function sampleChargeBuffer(list) {
+        const now = Date.now();
+        if (!_chgSeeded) { _chgSeeded = true; try { seedChargeBuffer(now); } catch {} }
+        list.forEach(r => {
+            let a = chgBuf.get(r.id);
+            if (!a) { a = []; chgBuf.set(r.id, a); }
+            a.push({ ts: now, bat: r.battery, st: r.status });
+            while (a.length && a[0].ts < now - FB_CHG_BUF_MS) a.shift();
+        });
+    }
+
+    // ── 최근 방전 기체(24H): 배터리 로그에서 FB_DISCHARGE_PCT% 이하 → OFF 로 이어진 기체 ──
+    function fbLoadLogs() {   // 어제 스냅샷 + 오늘 로그를 기체별 시간순 점으로 (같은 시각이 겹치면 오늘 것이 우선)
+        const byId = new Map();
+        [wblLoadYesterdaySnapshot(), wblLoad()].forEach(data => {
+            if (!data || !data.day || !data.entries) return;
+            Object.entries(data.entries).forEach(([id, e]) => {
+                let o = byId.get(id);
+                if (!o) { o = { name: e.name, pts: new Map() }; byId.set(id, o); }
+                (e.log || []).forEach(p => { const ts = fbPointTs(data.day, p.t); o.pts.set(ts, { ts, st: p.status, bat: p.battery }); });
+            });
+        });
+        return byId;
+    }
+    function computeDischarged() {
+        const now = Date.now(), from = now - FB_DISCHARGE_WINDOW_H * 3600000;
+        const curById = new Map(DB.map(r => [r.id, r]));
+        const events = [];
+        let earliest = Infinity;
+        fbLoadLogs().forEach((o, id) => {
+            const pts = [...o.pts.values()].sort((a, b) => a.ts - b.ts);
+            if (pts.length && pts[0].ts < earliest) earliest = pts[0].ts;
+            const cur = curById.get(id);
+            let ev = null, count = 0;
+            for (let i = 0; i < pts.length - 1; i++) {
+                const p = pts[i], q = pts[i + 1];
+                if (q.ts < from) continue;
+                if (p.st !== 'off' && p.bat != null && p.bat <= FB_DISCHARGE_PCT && q.st === 'off') {
+                    ev = { ts: q.ts, lastBat: p.bat, exact: false }; count++;
+                }
+            }
+            // 방금 꺼져서 로그에 OFF 칸이 아직 없는 경우: 마지막 로그가 2% 이하이고 지금 OFF → 마지막 통신 시각(서버 시각)을 OFF 시각으로
+            const last = pts[pts.length - 1];
+            if (cur && cur.status === 'off' && last && last.st !== 'off' && last.bat != null && last.bat <= FB_DISCHARGE_PCT && last.ts >= from) {
+                const lc = Date.parse(cur.raw?.robotStatus?.lastConnectedAt || '');
+                const exact = !!lc && lc >= last.ts;
+                ev = { ts: exact ? lc : last.ts, lastBat: last.bat, exact }; count++;
+            }
+            if (ev) events.push({ id, name: cur?.name || o.name, cur, count, ...ev });
+        });
+        events.sort((a, b) => b.ts - a.ts);
+        return { events, earliest, from };
+    }
+
+    // ── 저속충전 기체 TOP10: 충전 중(100% 미만) 기체를 충전 속도가 더딘 순으로 ──
+    function fbChargeRate(id) {
+        const a = chgBuf.get(id);
+        if (!a || a.length < 2) return null;
+        const newest = a[a.length - 1];
+        if (newest.st !== 'charging' || newest.bat == null) return null;
+        let oldest = newest;
+        for (let i = a.length - 2; i >= 0; i--) {   // 지금까지 이어진 '충전 중' 구간을 최대 60분까지 거슬러 올라감
+            if (a[i].st !== 'charging' || a[i].bat == null) break;
+            if (newest.ts - a[i].ts > FB_CHG_WIN_MIN * 60000) break;
+            oldest = a[i];
+        }
+        const dtMin = (newest.ts - oldest.ts) / 60000;
+        if (dtMin < FB_CHG_MIN_MIN) return null;   // 아직 재기엔 관측이 짧음
+        return { rate: (newest.bat - oldest.bat) / dtMin * 60, dtMin };   // %/시간
+    }
+    function computeSlowCharge() {
+        const charging = DB.filter(r => r.status === 'charging' && !r.loading && r.battery < 100);
+        const measured = [], measuring = [];
+        charging.forEach(r => {
+            const m = fbChargeRate(r.id);
+            if (m) measured.push({ r, rate: m.rate, dtMin: m.dtMin }); else measuring.push(r);
+        });
+        measured.forEach(m => {
+            // 충전 속도는 배터리가 찰수록 자연히 느려지므로, 배터리 %가 비슷한 기체끼리 비교 (동급이 모자라면 충전 중 전체와 비교)
+            let pool = measured.filter(o => o !== m && Math.abs(o.r.battery - m.r.battery) <= FB_CHG_PEER_PCT);
+            m.peer = pool.length >= FB_CHG_PEER_MIN;
+            if (!m.peer) pool = measured.filter(o => o !== m);
+            m.ref = pool.length >= FB_CHG_PEER_MIN ? fbMedian(pool.map(o => o.rate)) : null;
+            m.rel = (m.ref != null && m.ref > 0.5) ? Math.max(0, m.rate) / m.ref : null;   // 기준 속도 대비 (1 = 동급 중앙값과 같음)
+            m.score = m.rel != null ? m.rel : m.rate;
+            m.eta = m.rate > 0.5 ? (100 - m.r.battery) / m.rate : Infinity;                 // 완충까지 시간(h)
+            m.sev = m.rel != null ? (m.rel < 0.4 ? 'r' : m.rel < 0.7 ? 'o' : 'g')
+                                  : (m.rate <= 0.5 ? 'r' : m.eta > 24 ? 'o' : 'g');
+        });
+        measured.sort((a, b) => a.score - b.score || a.rate - b.rate);
+        return { top: measured.slice(0, 10), measured: measured.length, measuring: measuring.length, charging: charging.length,
+                 severe: measured.filter(m => m.sev === 'r').length };
+    }
+    function fbEtaText(h) {
+        if (h < 1) return `약 ${Math.max(1, Math.round(h * 60))}분`;
+        if (h > 48) return '48시간 이상';
+        return `약 ${h < 10 ? h.toFixed(1) : Math.round(h)}시간`;
+    }
+
+    // ── 화면 ──
+    let _fbMode = null, _fbData = null;
+    function fbCompute() {
+        _fbData = {
+            dis: computeDischarged(),
+            sc: computeSlowCharge(),
+            mo: DB.filter(isMissionOff).sort((a, b) => a.name.localeCompare(b.name, 'ko', { numeric: true })),
+        };
+        return _fbData;
+    }
+    function fbSetBadge(btnId, n, cls) {
+        const b = document.querySelector(`#${btnId} .bb-fb-n`);
+        if (!b) return;
+        b.textContent = n > 99 ? '99+' : String(n);
+        b.className = 'bb-fb-n' + (n > 0 ? ` on ${cls}` : '');
+    }
+    function fbStateChip(cur) {
+        if (!cur) return { ac: 'var(--mu)', txt: '조회 불가' };
+        return { ac: STATUS_AC[cur.status] || 'var(--mu)', txt: `${STL[cur.status] || ''}${cur.status !== 'off' ? ` ${cur.battery}%` : ''}` };
+    }
+    function fbHtmlDis(d) {
+        const ev = d.dis.events;
+        let h = `<div class="bb-fbp-note">최근 24시간 배터리 로그에서 <b>${FB_DISCHARGE_PCT}% 이하에 도달한 뒤 OFF 된</b> 기체입니다. 기체를 누르면 정보 창(배터리 그래프)이 열립니다.</div>`;
+        if (!ev.length) h += `<div class="bb-fbp-empty">최근 24시간 동안 방전된 기체가 없습니다 ✓</div>`;
+        else h += ev.map(e => {
+            const st = fbStateChip(e.cur);
+            return `<div class="bb-fbp-row" data-rid="${fbEsc(e.id)}" title="${fbEsc(e.name)}">
+                <span class="bb-fbp-dot" style="background:${st.ac};"></span>
+                <span class="bb-fbp-main">
+                    <span class="bb-fbp-name">${fbEsc(e.name)}</span>
+                    <span class="bb-fbp-sub">${fbFmtTs(e.ts)}${e.exact ? '' : '경'} OFF · 마지막 배터리 ${e.lastBat}%${e.count > 1 ? ` · 24시간 내 ${e.count}회` : ''}</span>
+                </span>
+                <span class="bb-fbp-now">현재 ${fbEsc(st.txt)}</span>
+            </div>`;
+        }).join('');
+        let foot = '※ 배터리 로그는 08:00~익일 03:00에만 기록되어, 03:00~08:00 사이에 방전된 기체는 놓칠 수 있습니다.';
+        if (isFinite(d.dis.earliest) && d.dis.earliest > d.dis.from + 3600000) foot = `※ 로그가 있는 범위: ${fbFmtTs(d.dis.earliest)}부터. ` + foot;
+        return h + `<div class="bb-fbp-foot">${foot}</div>`;
+    }
+    function fbHtmlSlow(d) {
+        const sc = d.sc;
+        let h = `<div class="bb-fbp-note">충전 중인 기체를 <b>충전 속도가 더딘 순</b>으로 보여줍니다. 막대는 배터리 %가 비슷한(±${FB_CHG_PEER_PCT}%) 충전 중 기체들의 속도(중앙값)를 <b>100%</b>로 봤을 때 이 기체의 속도입니다(비슷한 기체가 ${FB_CHG_PEER_MIN}대 미만이면 충전 중 전체와 비교) — <b>짧고 붉을수록 더딤</b>. 최근 ${FB_CHG_WIN_MIN}분의 배터리 변화 기준이며, 기체를 누르면 정보 창이 열립니다.</div>`;
+        if (!sc.charging) return h + `<div class="bb-fbp-empty">현재 충전 중인 기체가 없습니다.</div>`;
+        if (!sc.measured) return h + `<div class="bb-fbp-empty">충전 속도를 측정 중입니다<br><span style="font-size:11px;font-weight:600;">충전이 ${FB_CHG_MIN_MIN}분 이상 관측돼야 계산됩니다 · 충전 중 ${sc.charging}대</span></div>`;
+        h += sc.top.map(m => {
+            const r = m.r, pct = m.rel != null ? Math.round(m.rel * 100) : null;
+            const rateTxt = m.rate > 0 ? `+${m.rate.toFixed(1)}%/h` : m.rate === 0 ? '증가 없음' : `${m.rate.toFixed(1)}%/h (감소)`;
+            const eta = m.eta === Infinity ? '완충 예상 불가' : `완충까지 ${fbEtaText(m.eta)}`;
+            const tip = `${r.name} · 이 기체 ${rateTxt}` + (m.ref != null ? ` / ${m.peer ? '동급' : '충전 중 전체'} 중앙값 +${m.ref.toFixed(1)}%/h` : '');
+            return `<div class="bb-fbp-row sc" data-rid="${fbEsc(r.id)}" title="${fbEsc(tip)}">
+                <div class="bb-sc-l1"><span class="bb-fbp-dot" style="background:${STATUS_AC.charging};"></span><span class="bb-fbp-name">${fbEsc(r.name)}</span><span class="bb-sc-bat">${r.battery}%</span></div>
+                <div class="bb-sc-l2">
+                    <span class="bb-sc-bar${pct == null ? ' noref' : ''}">${pct == null ? '' : `<i class="bb-sc-fill sev-${m.sev}" style="width:${Math.max(3, Math.min(100, pct))}%;"></i>`}</span>
+                    <b class="bb-sc-pct sev-${m.sev}">${pct == null ? '비교 기준 부족' : `${m.peer ? '동급' : '전체'}의 ${pct}%`}</b>
+                    <span class="bb-sc-rate">${rateTxt}</span>
+                    <span class="bb-sc-eta">${eta}</span>
+                </div>
+            </div>`;
+        }).join('');
+        return h + `<div class="bb-fbp-foot">충전 중 ${sc.charging}대 · 속도 측정 ${sc.measured}대${sc.measuring ? ` · 측정 중 ${sc.measuring}대(충전 ${FB_CHG_MIN_MIN}분 미만)` : ''}</div>`;
+    }
+    function fbHtmlMoff(d) {
+        let h = `<div class="bb-fbp-note">카드에 <b>"임무 OFF"</b>로 표시되는 기체와 같은 기준입니다 (전원 ON · 배터리 22% 이상 · 순찰/배달/대기 중 아님). 기체를 누르면 정보 창이 열립니다.</div>`;
+        if (!d.mo.length) return h + `<div class="bb-fbp-empty">현재 임무 OFF 인 기체가 없습니다 ✓</div>`;
+        return h + d.mo.map(r => {
+            const st = fbStateChip(r);
+            return `<div class="bb-fbp-row" data-rid="${fbEsc(r.id)}" title="${fbEsc(r.name)}">
+                <span class="bb-fbp-dot" style="background:${st.ac};"></span>
+                <span class="bb-fbp-main"><span class="bb-fbp-name">${fbEsc(r.name)}</span></span>
+                <span class="bb-fbp-now">${fbEsc(st.txt)}</span>
+            </div>`;
+        }).join('');
+    }
+    function fbRender() {
+        const pop = document.getElementById('bb-fbp');
+        if (!pop) return;
+        document.querySelectorAll('#bb-fixbtns .bb-fb').forEach(b => b.classList.toggle('active', b.dataset.mode === _fbMode));
+        pop.classList.toggle('open', !!_fbMode);
+        if (!_fbMode) return;
+        const d = _fbData || fbCompute();
+        const T = {
+            dis:  ['최근 방전 기체 (24H)',   `${d.dis.events.length}대`],
+            slow: ['저속충전 기체 TOP10',    `충전 중 ${d.sc.charging}대`],
+            moff: ['임무 OFF 기체',          `${d.mo.length}대`],
+        }[_fbMode];
+        document.getElementById('bb-fbp-title').textContent = T[0];
+        document.getElementById('bb-fbp-cnt').textContent = T[1];
+        const body = document.getElementById('bb-fbp-body');
+        const keep = body.scrollTop;   // 2분마다 새로 그려도 보던 위치 유지
+        body.innerHTML = _fbMode === 'dis' ? fbHtmlDis(d) : _fbMode === 'slow' ? fbHtmlSlow(d) : fbHtmlMoff(d);
+        body.scrollTop = keep;
+    }
+    function refreshFixedTools() {   // 2분 갱신마다 + 열 때마다 호출: 배지와 (열려 있다면) 목록 창을 최신으로
+        try {
+            fbCompute();
+            fbSetBadge('bb-fb-dis', _fbData.dis.events.length, 'r');
+            fbSetBadge('bb-fb-slow', _fbData.sc.severe, 'r');
+            fbSetBadge('bb-fb-moff', _fbData.mo.length, 'o');
+            fbRender();
+        } catch (err) { console.error('[BB] 고정 버튼 갱신 오류:', err); }
+    }
+    document.querySelectorAll('#bb-fixbtns .bb-fb').forEach(btn => btn.addEventListener('click', () => {
+        _fbMode = _fbMode === btn.dataset.mode ? null : btn.dataset.mode;   // 같은 버튼을 다시 누르면 닫힘
+        refreshFixedTools();
+    }));
+    document.getElementById('bb-fbp-x').addEventListener('click', () => { _fbMode = null; fbRender(); });
+    document.getElementById('bb-fbp-body').addEventListener('click', e => {
+        const row = e.target.closest('[data-rid]');
+        if (!row) return;
+        const r = DB.find(x => x.id === row.dataset.rid);
+        if (r) openInfoCardPanel(r);   // 기체 정보 창(배터리 그래프 포함)
+    });
+    _fbReady = true;
+    refreshFixedTools();
 
     // ── 줌 기능
     (function() {
