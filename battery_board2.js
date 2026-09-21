@@ -1,10 +1,18 @@
 /* ============================================================
-   battery_board.js v6.2 (이석/착석 현황 슬라이드 전환 추가 · 배달 기체 로그 · 하루 기준 07:00 · 금일 배달 건수 배지 · 고정 버튼 3종 무지개 파스텔+이모지)
+   battery_board.js v6.3 (배경 이미지 · 방전 로그 · 이석/착석 현황 슬라이드 전환 추가 · 배달 기체 로그 · 하루 기준 07:00 · 금일 배달 건수 배지 · 고정 버튼 3종 무지개 파스텔+이모지)
    NCC 종합 모니터 — 템퍼몽키 inject
    ============================================================ */
 
 (function () {
     'use strict';
+
+    // ============================================================
+    // 배경 이미지 — 기체 카드 영역부터 하단까지만 (헤더의 3가지 테마 색은 그대로 보임)
+    //   레포 monitoring_data_vault/ego_trippin/snoopy_snow.jpg (1920×1080). 이미지를 바꿔 올렸다면 ?v= 숫자를 올리면 캐시가 갱신됨.
+    //   투명도: 0.05(거의 안 보임) ~ 0.15(또렷) — 카드·글자를 가리지 않고 '뒤에 그림이 있구나' 정도로만 보이게 하려면 0.08~0.10
+    // ============================================================
+    const BB_BG_URL = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/snoopy_snow.jpg?v=1';
+    const BB_BG_OPACITY = 0.09;
 
     // ============================================================
     // SECTION 0. 스타일
@@ -187,7 +195,7 @@
             position:absolute; left:calc(50% + 261px); top:50%; transform:translateY(-50%);   /* 왼쪽 = 오른쪽 동숲 주민(제목 오른쪽 151~251px)에서 10px 오른쪽 */
             width:140px; display:grid; grid-template-columns:1fr; gap:4px; z-index:3;
         }
-        .bb-rbtns > button {
+        .bb-rbtns > button, .bb-fixbtns > .bb-fb {   /* 좌·우 6개 버튼 공통: 같은 크기(140×26) · 같은 글자 크기(11px) */
             position:relative; width:100%; height:26px; padding:0 2px; gap:2px; border-radius:7px; border:1.5px solid var(--bd2);
             font-size:11px; font-weight:800;   /* 배달 로그(최근 15일) 같은 긴 이름이 140px 안에 들어가도록 (양쪽 여유 약 6px) */ font-family:inherit; white-space:nowrap; overflow:visible;
             display:inline-flex; align-items:center; justify-content:center; box-sizing:border-box; cursor:pointer;
@@ -198,8 +206,8 @@
             cursor:pointer; white-space:nowrap; box-sizing:border-box;
         }
         .bb-fb:hover { border-color:var(--mu); }
-        .bb-fb-empty { cursor:default; }   /* 빈 버튼: 자리 유지용 (기능은 나중에 추가) */
-        .bb-fb-empty:hover { border-color:var(--bd2); }
+        .bb-fixbtns > .bb-fb-empty { cursor:default; }   /* 빈 버튼: 자리 유지용 (기능은 나중에 추가) */
+        .bb-fixbtns > .bb-fb-empty:hover { border-color:var(--bd2); }
         .bb-fb.active { background:var(--bg); border-color:var(--tx); }
         /* 버튼 색: 옅은 무지개 (분홍 배달 → 주황 방전 → 파랑 이상 알림 / 노랑 저속충전 → 보라 임무 OFF). 목록 창이 열려 있으면(active) 같은 색을 한 톤 진하게 + 진한 테두리 */
         #bb-fb-dis  { background:#ffdcc2; border-color:#f0b98d; color:#5a3413; }
@@ -426,6 +434,12 @@
         /* ── 기체 리스트 (통합 그리드: 한 줄 = 기체 1대) ── */
         /* 본문 = 좌(기체 리스트 + 퀵바) | 우(다중 모니터링 중 기체) */
         .bb-body { display:flex; align-items:stretch; flex:1 1 auto; min-height:0; }   /* 남는 높이를 차지하고, 넘치면 카드 영역이 줄어들며 그 안에서 스크롤 */
+        /* 배경 이미지: 이 본문(기체 카드 영역 ~ 하단)에만 깔림. z-index:-1 = #bb 의 테마 색 배경 위, 모든 카드·글자 아래. 클릭은 통과 */
+        .bb-body { position:relative; }
+        .bb-body::before {
+            content:''; position:absolute; inset:0; z-index:-1; pointer-events:none;
+            background:url('${BB_BG_URL}') center / cover no-repeat; opacity:${BB_BG_OPACITY};
+        }
         .bb-main { flex:0 0 1340px; min-width:0; min-height:0; display:flex; flex-direction:column; }   /* 1340 = 카드 318×4 + 간격 12×3 + 좌우 여백 16×2 (퀵바 내용이 길어져도 우측 영역을 밀지 않도록 고정) */
         /* 기체 카드 영역: 기체가 많아 창이 화면보다 커지면 창 전체가 아니라 이 영역 안에서만 스크롤 (스크롤바 = 다중 모니터링 영역 바로 왼쪽) */
         .bb-list-wrap {
@@ -744,7 +758,7 @@
         #bb-att-detail { top:50%; left:50%; transform:translate(-50%,-50%); width:min(1240px, 96vw); max-height:88vh; overflow:hidden; flex-direction:column; }
         #bb-att-detail.open { display:flex; }
         .bb-att-dh { flex:0 0 auto; display:flex; align-items:center; gap:14px; padding:14px 18px; border-bottom:1px solid var(--bd); }
-        .bb-att-dh .t { font-size:20px; font-weight:900; white-space:nowrap; flex:0 0 auto; }   /* 제목은 줄바꿈 없이, 남는 자리에서 요주의 카드가 줄바꿈 */
+        .bb-att-dh .t { font-size:20px; font-weight:900; white-space:nowrap; flex:0 0 auto; }   /* 제목은 줄바꿈 없이, 남는 자리에서 포디움 카드가 줄바꿈 */
         .bb-att-dh select { height:34px; padding:0 10px; border-radius:8px; border:1.5px solid var(--bd2); background:var(--sur2); color:var(--tx); font-size:14px; font-family:inherit; }
         .bb-att-dh .w { flex:1 1 auto; min-width:0; display:flex; flex-wrap:wrap; align-items:center; gap:6px 8px; }
         .bb-att-dh .w .lb { font-size:12.5px; color:var(--mu); margin-right:2px; cursor:help; }
@@ -5476,7 +5490,7 @@
     ];
 
     /* WATCHLIST-START */
-    // 요주의 이석 근무자: '근무일수'를 뺀 9개 항목에서 1위(가장 많은 사람)를 2개 이상 차지한 근무자
+    // 이석 포디움: '근무일수'를 뺀 9개 항목에서 1위(가장 많은 사람)를 2개 이상 차지한 근무자
     //  - 값이 0인 항목은 1위 없음 (전원 0회인 항목은 계산에서 제외)
     //  - 동점이면 공동 1위로 모두 인정
     //  - 정렬: 1위 항목 수 많은 순 → 총 이석시간 많은 순 → 이름
@@ -5499,7 +5513,7 @@
         const box = $att('bb-att-watch');
         box.replaceChildren();
         if (!rows || !rows.length) return;
-        const lb = attEl('span', 'lb', '요주의 이석 근무자');
+        const lb = attEl('span', 'lb', '이석 포디움');
         lb.title = "'근무일수'를 뺀 9개 항목 중 1위를 2개 이상 차지한 근무자 (많은 순)";
         box.appendChild(lb);
         const list = attWatchList(rows);
