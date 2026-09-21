@@ -597,6 +597,8 @@
         #bb.bb-wbatt .bb-row-wbar { display:block; }
         #bb.bb-wbatt .bb-row-batt { display:none; }
         #bb.bb-wbatt .bb-row-pctx { display:inline-block; }
+        /* 카드 전체 모드: 상태 점이 채움과 같은 색이라 묻히므로 크림색 링 + 얇은 진한 테두리를 둘러 채움 위/빈 곳 어디서나 또렷하게 */
+        #bb.bb-wbatt .bb-row-dot { box-shadow:0 0 0 2px #fffaf0, 0 0 0 3px rgba(43,36,24,.5); margin:0 2px 0 1px; }
         .bb-row-plug { font-size:11px; line-height:1; flex-shrink:0; }   /* 있을 때만 표시 (자리 예약 없음) — 배터리 바 왼쪽 */
 
         /* ── 우측: 다중 모니터링 중 기체 (세로 직사각형 영역) ── */
@@ -1325,11 +1327,11 @@
     });
 
 
-    // 카드 배터리바 표기 방식 (☁️ 테마 버튼 왼쪽 버튼): 🔋 기본 = 카드 오른쪽 작은 배터리바 ↔ 🟩 = 카드 전체가 배터리바 (선택은 로컬 스토리지 'bb_batt_mode' 에 저장)
+    // 카드 배터리바 표기 방식 (☁️ 테마 버튼 왼쪽 버튼): 🟩 기본 = 카드 전체가 배터리바 ↔ 🔋 = 카드 오른쪽 작은 배터리바 (선택은 로컬 스토리지 'bb_batt_mode' 에 저장. 저장된 값이 없으면 카드 전체 모드)
     const BATT_MODE_KEY = 'bb_batt_mode';
+    const isWideBatt = () => { try { return localStorage.getItem(BATT_MODE_KEY) !== 'small'; } catch { return true; } };
     const applyBattMode = () => {
-        let wide = false;
-        try { wide = localStorage.getItem(BATT_MODE_KEY) === 'wide'; } catch {}
+        const wide = isWideBatt();
         bbEl.classList.toggle('bb-wbatt', wide);
         const btn = document.getElementById('bb-theme-btn');
         btn.textContent = wide ? '🟩' : '🔋';
@@ -1337,9 +1339,7 @@
     };
     applyBattMode();
     document.getElementById('bb-theme-btn').addEventListener('click', () => {
-        let wide = false;
-        try { wide = localStorage.getItem(BATT_MODE_KEY) === 'wide'; } catch {}
-        try { localStorage.setItem(BATT_MODE_KEY, wide ? 'small' : 'wide'); } catch {}
+        try { localStorage.setItem(BATT_MODE_KEY, isWideBatt() ? 'small' : 'wide'); } catch {}
         applyBattMode();
     });
 
