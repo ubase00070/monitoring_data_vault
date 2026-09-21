@@ -888,7 +888,52 @@
         }
     }
 
-    function syncTasksFromServer() {
+    /* TASK-SYNC-START */
+    // ── 서버 동기화 주기 ──
+    // syncTasksFromServer 는 맨 아래의 매분 타이머가 호출한다. 이 호출은 '알림 발동 / 09·18시 버튼 상태 / 남은 시간 표기'처럼
+    // 시간이 흐르면서 달라지는 것들을 분 단위로 다시 계산하는 역할도 겸하므로 매분 호출은 그대로 유지한다.
+    // 다만 '서버에서 새로 받아오는 네트워크 요청'은 시간대별로 간격을 둔다:
+    //   08:30~10:00 : 매분 (관리자가 일일업무를 집중 수정하는 시간대 — 기존과 동일)
+    //   그 외       : 5분마다 (그 사이의 매분 호출은 이미 받아 둔 데이터로 화면/알림만 다시 계산 — 네트워크 요청 없음)
+    // 이름 변경·대시보드 열기처럼 사용자가 직접 일으킨 동기화(force)는 언제나 새로 받아온다.
+    const TASK_SYNC_BUSY_FROM = 8 * 60 + 30;        // 08:30
+    const TASK_SYNC_BUSY_TO = 10 * 60;              // 10:00 (미포함)
+    const TASK_SYNC_IDLE_MS = 5 * 60 * 1000;        // 그 외 시간대의 서버 조회 간격
+    const TASK_SYNC_TOLERANCE_MS = 5000;            // 분 타이머의 미세한 오차로 한 주기(분)를 더 건너뛰지 않게 하는 여유
+    let _lastTaskSyncAt = 0;                        // 마지막으로 서버 조회를 시작한 시각 (0 = 곧바로 다시 시도)
+    function getTaskSyncIntervalMs() {
+        const d = new Date(), m = d.getHours() * 60 + d.getMinutes();
+        return (m >= TASK_SYNC_BUSY_FROM && m < TASK_SYNC_BUSY_TO) ? 0 : TASK_SYNC_IDLE_MS;   // 0 = 매분
+    }
+
+    // 받아 둔 데이터로 화면·알림을 처리한다 (네트워크 없음) — 서버에서 새로 받았을 때와, 받아 둔 데이터를 매분 다시 계산할 때 공용
+    function applyTaskData(data, insu) {
+        if (!Array.isArray(data)) throw new Error('tasks 응답 형식 오류');   // 서버 오류 응답이 정상 데이터를 덮어쓰지 않게 함
+        const myName = localStorage.getItem('neubie_user_name');
+        state.insuData = insu;
+        window.currentAllTasks = data; // 인계 체인(전임자/후임자) 조회용 — 필터링 전 전체 목록
+
+        const myTasks = data.filter(t => {
+            // 담당자란에 '홍길동/임꺽정'처럼 여러 명이 슬래시로 같이 적힌 경우, 그중 한 명이라도
+            // 나와 일치하면 그 업무는 나한테도 표시되어야 함 (seat_map.json 파싱 때와 동일한 관례)
+            const assignees = String(t.user || '').split('/').map(n => n.trim());
+            if (!assignees.includes(myName)) return false;
+            // next_0700_handover(내일 07시 다중모니터링 통합 인계 스냅샷)는
+            // 00:00~07:10 사이에만 미리보기로 표시. 그 이후엔 같은 07:00 업무가
+            // 정규 monitoring 항목으로 자연스럽게 이어지므로 중복 표시를 막는다.
+            if (t.type === 'next_0700_handover') {
+                return new Date().getHours() < 7;
+            }
+            return true;
+        });
+        window.currentMyTasks = myTasks;
+        checkAndTriggerNotifications(myTasks);
+
+        renderTaskList(myTasks);
+        if (typeof window.syncTiddiButtonState === 'function') window.syncTiddiButtonState();
+    }
+
+    function syncTasksFromServer(force) {
         const myName = localStorage.getItem('neubie_user_name');
         if (!myName) {
             window.currentMyTasks = [];
@@ -896,40 +941,34 @@
             return;
         }
 
+        // 이미 받아 둔 데이터가 있고 아직 새로 받을 때가 아니면 → 네트워크 없이 그 데이터로만 다시 계산
+        const hasCache = Array.isArray(window.currentAllTasks) && !!state.insuData;
+        if (!force && hasCache && (Date.now() - _lastTaskSyncAt) < getTaskSyncIntervalMs() - TASK_SYNC_TOLERANCE_MS) {
+            try { applyTaskData(window.currentAllTasks, state.insuData); } catch (e) { console.log('Local apply failed'); }
+            return;
+        }
+        _lastTaskSyncAt = Date.now();
+
         // daily_tasks는 서버리스 프록시(api/tasks) 경유 — GitHub Contents API를
         // 인증된 채로 직접 조회해서 raw.githubusercontent.com의 CDN 캐시 지연(몇 분)을
         // 우회함. insu_data는 변동이 잦지 않아 기존 raw 방식 그대로 유지.
-        const dataUrl = `https://multimonitoring.vercel.app/api/tasks?t=${Date.now()}`;
+        // ※ api/tasks 에는 ?t=Date.now() 나 cache:'no-store' 를 붙이지 않는다 — 서버가 시간대별로 CDN 캐시(08:30~10:00 3초 / 그 외 60초)를
+        //   걸어 두었는데, URL 이 매번 달라지면 그 캐시가 무력화되어 모든 PC 의 요청이 함수 실행으로 이어진다.
+        const dataUrl = 'https://multimonitoring.vercel.app/api/tasks';
 		const insuUrl = `https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/insu_data.json?t=${Date.now()}`;
 
         // daily_tasks + insu_data 병렬 fetch
         Promise.all([
-            fetch(dataUrl, {cache: 'no-store'}).then(r => r.json()),
+            fetch(dataUrl).then(r => r.json()),
             fetch(insuUrl, {cache: 'no-store'}).then(r => r.json()),
         ]).then(([data, insu]) => {
-            state.insuData = insu;
-            window.currentAllTasks = data; // 인계 체인(전임자/후임자) 조회용 — 필터링 전 전체 목록
-
-            const myTasks = data.filter(t => {
-                // 담당자란에 '홍길동/임꺽정'처럼 여러 명이 슬래시로 같이 적힌 경우, 그중 한 명이라도
-                // 나와 일치하면 그 업무는 나한테도 표시되어야 함 (seat_map.json 파싱 때와 동일한 관례)
-                const assignees = String(t.user || '').split('/').map(n => n.trim());
-                if (!assignees.includes(myName)) return false;
-                // next_0700_handover(내일 07시 다중모니터링 통합 인계 스냅샷)는
-                // 00:00~07:10 사이에만 미리보기로 표시. 그 이후엔 같은 07:00 업무가
-                // 정규 monitoring 항목으로 자연스럽게 이어지므로 중복 표시를 막는다.
-                if (t.type === 'next_0700_handover') {
-                    return new Date().getHours() < 7;
-                }
-                return true;
-            });
-            window.currentMyTasks = myTasks;
-            checkAndTriggerNotifications(myTasks);
-
-            renderTaskList(myTasks);
-            if (typeof window.syncTiddiButtonState === 'function') window.syncTiddiButtonState();
-        }).catch(err => console.log("Sync failed"));
+            applyTaskData(data, insu);
+        }).catch(err => {
+            _lastTaskSyncAt = 0;   // 실패하면 다음 분에 바로 다시 시도 (기존과 동일)
+            console.log("Sync failed");
+        });
     }
+    /* TASK-SYNC-END */
 
     // 레이아웃 노출 여부와 상관없이 알림만 전담하는 함수
     function checkAndTriggerNotifications(tasks) {
@@ -1796,7 +1835,7 @@
                         if (roster && roster.size > 0 && !roster.has(newName)) {
                             input.style.borderColor = '#ef4444';
                             localStorage.removeItem('neubie_user_name');
-                            syncTasksFromServer();
+                            syncTasksFromServer(true);
                             setTimeout(() => renderDashboard(), 350);
                             return;
                         }
@@ -1810,7 +1849,7 @@
                         localStorage.setItem('neubie_remind_int', intervalSelect.value);
                     }
 
-                    syncTasksFromServer();
+                    syncTasksFromServer(true);
                     renderDashboard();
                 };
             }
@@ -5810,7 +5849,7 @@
 			} else {
 				renderDashboard();
 				dashboard.style.display = 'block';
-				syncTasksFromServer();
+				syncTasksFromServer(true);
 			}
 		}
 
