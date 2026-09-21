@@ -2543,9 +2543,8 @@
 		const autoBtn = mkBtn('자동 시작', 'linear-gradient(135deg, #0f766e, #22c55e)',
 			{ color: '#fff', boxShadow: '0 0 10px rgba(34,197,94,0.4)', padding: '4px 8px' });
 
-		// [2026-09 임시 비활성화] '예정기체 자동 시작' 기능은 버그가 많아 로직/안내 말풍선을
-		// 모두 제거하고, 자리만 남겨둔 빈 버튼으로 대체함. 클릭해도 아무 동작도 하지 않음.
-		const dispatchBtn = mkBtn('빈 기능', 'linear-gradient(135deg, #7c3aed, #a78bfa)',
+		// [2026-09] 보라색 버튼 = '남은 기체 대수' 표시 버튼 (라벨/색/토스트는 아래 '남은 기체 대수' 블록에서 관리)
+		const dispatchBtn = mkBtn('…대 남음', 'linear-gradient(135deg, #7c3aed, #a78bfa)',
 			{ color: '#fff', boxShadow: '0 0 10px rgba(167,139,250,0.4)', padding: '4px 8px' });
 
 		rightBtns.appendChild(autoBtn);
@@ -2582,9 +2581,10 @@
 
 		const githubGet = async () => {
             try {
-                const res = await fetch(
+                const res = await fetchWithTimeout(
                     `https://multimonitoring.vercel.app/api/handover?t=${Date.now()}`,
-                    { cache: 'no-store' }
+                    { cache: 'no-store' },
+                    6000
                 );
                 if (!res.ok) return null;
                 const data = await res.json();
@@ -2609,6 +2609,207 @@
 
 		// [2026-09] dispatchGet/patchDispatchTaken('예정기체 자동 시작' 전용 GET/PATCH)은
 		// 해당 기능 비활성화와 함께 제거함.
+
+		// ══ 남은 기체 대수 (보라색 버튼) ═══════════════════════════════════════
+		// [성능/안전 설계]
+		//  · 폴링·setInterval·MutationObserver 없음. 네트워크 요청은 아래 3시점에만 1회씩 발생한다.
+		//      (1) 패널이 열릴 때   (2) 보라색 버튼 클릭 시   (3) 자동시작 taken 반영 직후
+		//  · 조회는 동시에 1개만 진행(_inflight 공유) + 버튼 연타는 1초 간격으로 제한 → 요청 폭주 없음
+		//  · 이 탭에서 카메라 연결이 확인된 기체(_localTaken)는 서버 응답이 늦거나 오래된 값이어도
+		//    '시작됨'으로 유지한다(서버 반영 지연으로 대수가 되돌아가는 현상 방지).
+		//  · 응답이 없거나 실패하면 0대가 아니라 '확인 불가'로 표시한다(거짓 0 방지).
+		let _lastData = null;      // 마지막 서버 JSON (null = 조회 실패)
+		let _loading = true;       // 첫 조회 전 / 패널 재오픈 직후
+		let _inflight = null;      // 진행 중인 조회 Promise
+		let _lastFetchAt = 0;
+		let _toastOpen = false;
+		let _shownKey = '';        // 버튼에 마지막으로 표시한 값 (값이 바뀔 때만 펄스 재생)
+		const _localTaken = new Set();
+		let _localSig = '';
+
+		if (!document.getElementById('ho-dispatch-style')) {
+			const st = document.createElement('style');
+			st.id = 'ho-dispatch-style';
+			st.textContent = `@keyframes ho-dispatch-pulse {
+				0%, 100% { box-shadow: 0 0 10px rgba(167,139,250,0.4); transform: scale(1); }
+				50% { box-shadow: 0 0 20px rgba(196,181,253,0.95); transform: scale(1.07); }
+			}`;
+			document.head.appendChild(st);
+		}
+
+		// 새 인계(units 목록이 달라짐)가 오면 이 탭의 로컬 taken 기록을 비운다
+		const syncSig = (data) => {
+			const units = Array.isArray(data?.units) ? data.units : [];
+			const sig = units.join('|');
+			if (sig !== _localSig) { _localSig = sig; _localTaken.clear(); }
+			return units;
+		};
+
+		// state: loading | ok | done(전부 시작됨) | expired(20분 초과) | empty(기체 없음) | error(조회 실패)
+		const calcRemaining = () => {
+			try {
+				if (_loading) return { state: 'loading', names: [] };
+				if (!_lastData) return { state: 'error', names: [] };
+				if (!isDataValid(_lastData.updatedAt)) return { state: 'expired', names: [] };
+				const units = syncSig(_lastData);
+				if (!units.length) return { state: 'empty', names: [] };
+				const done = new Set(Array.isArray(_lastData.taken) ? _lastData.taken : []);
+				_localTaken.forEach(n => done.add(n));
+				const names = units.filter(u => !done.has(u));
+				return { state: names.length ? 'ok' : 'done', names };
+			} catch (e) {
+				console.log('calcRemaining 오류:', e);
+				return { state: 'error', names: [] };
+			}
+		};
+
+		const BTN_ON  = 'linear-gradient(135deg, #7c3aed, #a78bfa)';
+		const BTN_OFF = 'linear-gradient(135deg, #4b4270, #6b6390)';
+		const BTN_ERR = 'linear-gradient(135deg, #374151, #4b5563)';
+
+		const renderDispatchBtn = (rem) => {
+			let text = '…대 남음', bg = BTN_ON, glow = '0 0 10px rgba(167,139,250,0.4)';
+			let pulse = false, key = 'loading';
+			if (rem.state === 'ok') {
+				text = `${rem.names.length}대 남음`; pulse = true; key = 'ok:' + rem.names.join('|');
+			} else if (rem.state === 'error') {
+				text = '확인 불가'; bg = BTN_ERR; glow = 'none'; key = 'error';
+			} else if (rem.state !== 'loading') {
+				text = '0대 남음'; bg = BTN_OFF; glow = 'none'; key = 'zero:' + rem.state;
+			}
+			dispatchBtn.textContent = text;
+			dispatchBtn.style.background = bg;
+			dispatchBtn.style.boxShadow = glow;
+			dispatchBtn.style.minWidth = '74px';
+			if (key !== _shownKey) {          // 값이 실제로 바뀐 경우에만 강조(3회 깜빡 후 정지 — 무한 애니메이션 아님)
+				_shownKey = key;
+				dispatchBtn.style.animation = 'none';
+				if (pulse) {
+					void dispatchBtn.offsetWidth;   // 애니메이션 재시작용 리플로우(값 변경 시 1회)
+					dispatchBtn.style.animation = 'ho-dispatch-pulse 1.1s ease-in-out 3';
+				}
+			}
+		};
+
+		// ── 우측으로 삐져나오는 토스트 (패널 자식이라 패널이 접히면 같이 사라짐) ──
+		const toast = document.createElement('div');
+		toast.id = 'ho-remain-toast';
+		Object.assign(toast.style, {
+			position: 'absolute', display: 'none', top: '6px', left: 'calc(100% + 8px)',
+			minWidth: '130px', maxWidth: '230px', boxSizing: 'border-box',
+			background: '#1c1c1f', border: '1px solid rgba(167,139,250,0.55)', borderRadius: '10px',
+			padding: '8px 10px', fontFamily: 'Pretendard,sans-serif', color: '#e5e7eb',
+			boxShadow: '0 6px 20px rgba(0,0,0,0.45), 0 0 12px rgba(167,139,250,0.18)',
+			opacity: '0', transform: 'translateX(-10px)',
+			transition: 'opacity .18s ease, transform .18s ease',
+		});
+		panel.appendChild(toast);
+
+		const TOAST_DESC = {
+			done:    '모두 시작되었어요',
+			expired: '유효한 교대 데이터가 없어요 (20분 초과)',
+			empty:   '교대 기체 데이터가 없어요',
+			error:   '서버 조회에 실패했어요. 버튼을 다시 눌러 재시도해주세요',
+		};
+
+		const renderToast = (rem) => {
+			const head = document.createElement('div');
+			Object.assign(head.style, { fontSize: '11px', fontWeight: '700', color: '#c4b5fd', marginBottom: '5px' });
+			const parts = [head];
+			if (rem.state === 'loading') {
+				head.textContent = '확인 중…';
+			} else if (rem.state === 'ok') {
+				head.textContent = `남은 기체 ${rem.names.length}대`;
+				const list = document.createElement('div');
+				Object.assign(list.style, { display: 'flex', flexDirection: 'column', gap: '3px', maxHeight: '150px', overflowY: 'auto' });
+				rem.names.forEach(n => {
+					const row = document.createElement('div');
+					row.textContent = n;   // textContent만 사용 (서버 문자열을 HTML로 해석하지 않음)
+					row.title = n;
+					Object.assign(row.style, {
+						fontSize: '12px', fontWeight: '600', color: '#f5f3ff', background: 'rgba(167,139,250,0.14)',
+						borderRadius: '5px', padding: '2px 7px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+					});
+					list.appendChild(row);
+				});
+				parts.push(list);
+			} else {
+				head.textContent = rem.state === 'error' ? '확인 불가' : '0대 남음';
+				const desc = document.createElement('div');
+				desc.textContent = TOAST_DESC[rem.state] || '';
+				Object.assign(desc.style, { fontSize: '12px', color: '#9ca3af', lineHeight: '1.4' });
+				parts.push(desc);
+			}
+			toast.replaceChildren(...parts);
+		};
+
+		// 오른쪽 공간이 모자라면(좁은 창) 패널 아래쪽 우측 정렬로 폴백
+		const placeToast = () => {
+			const r = panel.getBoundingClientRect();
+			if (r.right + 8 + 232 <= window.innerWidth) {
+				Object.assign(toast.style, { top: '6px', left: 'calc(100% + 8px)', right: 'auto' });
+			} else {
+				Object.assign(toast.style, { top: 'calc(100% + 6px)', left: 'auto', right: '0' });
+			}
+		};
+		const showToast = () => {
+			_toastOpen = true;
+			renderToast(calcRemaining());
+			placeToast();
+			toast.style.display = 'block';
+			void toast.offsetWidth;   // 슬라이드 인 트랜지션용 리플로우(열 때 1회)
+			toast.style.opacity = '1';
+			toast.style.transform = 'translateX(0)';
+		};
+		const hideToast = () => {
+			_toastOpen = false;
+			toast.style.display = 'none';
+			toast.style.opacity = '0';
+			toast.style.transform = 'translateX(-10px)';
+		};
+
+		const renderAll = () => {
+			const rem = calcRemaining();
+			renderDispatchBtn(rem);
+			if (_toastOpen) renderToast(rem);
+			return rem;
+		};
+
+		// 서버 조회 (동시에 1개만). 성공/실패와 무관하게 반드시 종료되고, 결과를 버튼·토스트에 반영한다.
+		const refreshRemaining = () => {
+			if (_inflight) return _inflight;
+			_lastFetchAt = Date.now();
+			_inflight = (async () => {
+				let r = null;
+				try { r = await githubGet(); } catch (e) { r = null; }
+				_lastData = r ? r.data : null;
+				_loading = false;
+				try { renderAll(); } catch (e) { console.log('renderAll 오류:', e); }
+				return r;
+			})().finally(() => { _inflight = null; });
+			return _inflight;
+		};
+
+		// 자동시작 직후: 카메라 연결이 확인된 기체를 즉시(0ms) 반영 — 서버 왕복을 기다리지 않는다
+		const applyLocalTaken = (data, names) => {
+			try {
+				_lastData = data; _loading = false;
+				syncSig(data);
+				names.forEach(n => _localTaken.add(n));
+				renderAll();
+			} catch (e) { console.log('applyLocalTaken 오류:', e); }
+		};
+
+		// 패널이 (다시) 열릴 때 alt+q 핸들러가 호출: 토스트 닫고 → '…대 남음' → 최신값 조회
+		panel._onOpen = () => { hideToast(); _lastData = null; _loading = true; renderAll(); refreshRemaining(); };
+		panel._renderRemaining = () => { try { renderAll(); } catch (e) {} };
+
+		dispatchBtn.addEventListener('click', () => {
+			if (_toastOpen) { hideToast(); return; }
+			showToast();                                            // 갖고 있는 값으로 즉시 표시
+			if (Date.now() - _lastFetchAt > 1000) refreshRemaining(); // 최신값 재조회 → 도착하면 자동 갱신 (연타 제한 1초)
+		});
+		// ══ 남은 기체 대수 끝 ═══════════════════════════════════════════════════
 
 		// ── 교대받기 버튼 ──
 		let _fetchBtnRunning = false;
@@ -2809,9 +3010,11 @@
 			if (!checkedUnits.length) return;
 
 			if (confirmed) {
+				applyLocalTaken(result.data, checkedUnits); // 카메라 연결 확인 즉시 '##대 남음' 반영 (서버 왕복 대기 없음)
 				let ok = await patchTaken(checkedUnits);
 				if (!ok) ok = await patchTaken(checkedUnits); // 실패 시 1회 재시도
 				if (ok) {
+					refreshRemaining(); // 서버 기준 재확인 (기다리지 않음. 실패해도 로컬 반영값 유지)
 					setDpMsg(`${checkedUnits.length}대 시작 및 서버 반영 완료`, '#22c55e');
 				} else {
 					setDpMsg(`${checkedUnits.join(', ')} 카메라는 연결됐지만 서버 반영에 실패했어요 — 다른 탭에서 중복 시도될 수 있으니 새로고침 후 확인해주세요`, '#ef4444');
@@ -2821,9 +3024,7 @@
 			}
 		});
 
-		// [2026-09 임시 비활성화] '예정기체 자동 시작' 로직 전체 제거 — 클릭해도 아무 일도
-		// 일어나지 않는 빈 버튼으로 남겨둠.
-		dispatchBtn.addEventListener('click', () => {});
+		// (보라색 버튼 클릭 핸들러는 위 '남은 기체 대수' 블록에 있음)
 
 		posBtn.addEventListener('click', () => {
 			const cards = [...document.querySelectorAll(
@@ -2886,7 +3087,7 @@
 
 		// ── 자동 Fetch (패널 열릴 때 1회) ──
 		setDpMsg('인계 데이터 확인 중...', '#3b82f6');
-		const result = await githubGet();
+		const result = await refreshRemaining();
 		if (result && isDataValid(result.data.updatedAt)) {
             const units = result.data.units || [];
             if (units.length) {
@@ -2901,22 +3102,28 @@
         }
 
         // ── 20분 만료 감시 (30초마다) ──
-        const expiryInterval = setInterval(() => {
+        clearInterval(window.__hoExpiryTimer);   // 패널 재생성 시 이전 타이머 정리 (누적 방지)
+        const expiryInterval = window.__hoExpiryTimer = setInterval(() => {
+            if (!panel.isConnected) { clearInterval(expiryInterval); return; }   // 패널이 제거됐으면 타이머 종료
             if (panel.style.top !== '0px') return;   // 패널 닫혀있으면 스킵
             if (!isDataValid(result?.data?.updatedAt)) {
                 setDpMsg('20분 초과, 기체 목록 만료됨', '#ef4444');
+                panel._renderRemaining?.();   // 만료 순간 보라색 버튼도 '0대 남음'으로
                 clearInterval(expiryInterval);
             }
         }, 30000);
 
-		// 패널 외부 클릭 시 닫기
-		document.addEventListener('mousedown', (e) => {
-			const p = document.getElementById('ho-remote-panel');
-			if (!p) return;
-			if (p.contains(e.target)) return;
-			if (e.target.closest('[data-qk="remote-multiple-select-robot-dialog"]')) return;
-			p.style.top = '-300px';
-		});
+		// 패널 외부 클릭 시 닫기 (패널이 재생성돼도 리스너는 document에 1번만 등록)
+		if (!window.__hoOutsideBound) {
+			window.__hoOutsideBound = true;
+			document.addEventListener('mousedown', (e) => {
+				const p = document.getElementById('ho-remote-panel');
+				if (!p) return;
+				if (p.contains(e.target)) return;
+				if (e.target.closest('[data-qk="remote-multiple-select-robot-dialog"]')) return;
+				p.style.top = '-300px';
+			});
+		}
 	}
 	// ── 핸드오버 레이아웃 끝 ──────────────────────────────
 	
@@ -3930,7 +4137,7 @@
 				if (existing) {
 					const isOpen = existing.style.top === '0px';
 					existing.style.top = isOpen ? '-300px' : '0px';
-					if (!isOpen) existing._reopenDispatchHint?.(); // 닫혀있다가 지금 여는 경우 — 말풍선 닫힘 상태 초기화
+					if (!isOpen) existing._onOpen?.(); // 닫혀있다가 지금 여는 경우 — 남은 기체 대수 새로 조회
 				} else {
 					initHandoverLayout();
 				}
