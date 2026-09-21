@@ -42,6 +42,7 @@
         :root {
 			--bg:#141519; --sur:#232630; --sur2:#2a2e3a;
 			--bd:#3a3f4c; --bd2:#454b5a; --tx:#e4e6ea; --mu:#8b929c;
+			--row-bd:#454b5a;   /* 기체 카드 외곽선 (--bd 보다 살짝 진하게) */
 			--gn:#4d9d6d; --gn2:rgba(77,157,109,.12);
 			--bl:#5b8fd1; --bl2:rgba(91,143,209,.12);
 			--wh:rgba(228,230,234,.05); --gy:#5a6069;
@@ -59,6 +60,7 @@
         #bb.bb-light {
             --bg:#f2e4c4; --off-main:#5b5442; --off-date:#635c4a; --off-sub:#736b58;   /* OFF 슬롯 글자색 (라이트: 대비 5~7:1) */ --sur:#f8f3e6; --sur2:#efe6d2;
             --bd:#cabf9d; --bd2:#b3a687; --tx:#2b2418; --mu:#7a6f5c;
+            --row-bd:#bcb08e;   /* 기체 카드 외곽선 (--bd 보다 살짝 진하게) */
             --wh:rgba(0,0,0,.05);
             --gn:#22c55e; --gn2:rgba(34,197,94,.10);
             --bl:#3b82f6; --bl2:rgba(59,130,246,.10);
@@ -232,6 +234,7 @@
         .bb-fb-n.r { background:#dc2626; }
         .bb-fb-n.o { background:#ea580c; }
         .bb-fb-n.b { background:#3b82f6; }
+        .bb-fb-n.g { background:#16a34a; }   /* 저속충전 배지: 충전 중인 기체 중에서 감지하는 것이라 초록 */
         .bb-fb-n.z { background:var(--sur); color:var(--mu); border:1px solid var(--bd2); line-height:15px; box-shadow:none; }   /* 0대 */
 
         /* 고정 버튼 목록 창 (버튼 아래에 뜸, 열어 둔 채로 2분마다 자동 갱신) */
@@ -522,7 +525,7 @@
         .bb-row {
             position:relative; display:flex; align-items:center; gap:6px;
             height:33px; padding:0 6px 0 8px;   /* 30px → 33px (+10%) */ border-radius:8px;
-            background:var(--sur); border:1.5px solid var(--bd);
+            background:var(--sur); border:1.5px solid var(--row-bd, var(--bd));
             cursor:grab;
             user-select:none;
             transition:background .15s, opacity .15s;   /* 외곽선(border-color/box-shadow)은 transition 없이 즉시 반응 */
@@ -763,13 +766,16 @@
         .bb-att-ll .ed { margin-left:6px; color:var(--bl); font-weight:700; }
         .bb-att-le { padding:3px 12px; font-size:13px; font-style:italic; color:var(--mu); }
 
-        #bb-att-detail { top:50%; left:50%; transform:translate(-50%,-50%); width:min(1240px, 96vw); max-height:88vh; overflow:hidden; flex-direction:column; }
+        #bb-att-detail { top:50%; left:50%; transform:translate(-50%,-50%); width:min(1240px, 96vw); max-height:88vh; overflow:hidden; flex-direction:column; font-weight:700; }   /* 폰트는 Paperlogy 맞음 — 기본(Regular 400)이 얇아 보여서 Bold(700)로 */
         #bb-att-detail.open { display:flex; }
         .bb-att-dh { flex:0 0 auto; display:flex; align-items:center; gap:14px; padding:14px 18px; border-bottom:1px solid var(--bd); }
         .bb-att-dh .t { font-size:20px; font-weight:900; white-space:nowrap; flex:0 0 auto; }   /* 제목은 줄바꿈 없이, 남는 자리에서 포디움 카드가 줄바꿈 */
         .bb-att-dh select { height:34px; padding:0 10px; border-radius:8px; border:1.5px solid var(--bd2); background:var(--sur2); color:var(--tx); font-size:14px; font-family:inherit; }
         .bb-att-dh .w { flex:1 1 auto; min-width:0; display:flex; flex-wrap:wrap; align-items:center; gap:6px 8px; }
         .bb-att-dh .w .lb { font-size:12.5px; color:var(--mu); margin-right:2px; cursor:help; }
+        .bb-att-dh .sr { flex:0 0 auto; width:150px; height:34px; padding:0 10px; border-radius:8px; border:1.5px solid var(--bd2); background:var(--sur2); color:var(--tx); font-size:14px; font-weight:700; font-family:inherit; outline:none; }
+        .bb-att-dh .sr:focus { border-color:var(--bl); background:var(--sur); }
+        .bb-att-dh .sr::placeholder { color:var(--mu); font-weight:400; }
         .bb-att-dh .w .none { font-size:13px; color:var(--mu); }
         .bb-att-wc { padding:4px 11px; border-radius:9px; border:1.5px solid #ef4444; background:rgba(239,68,68,.09); font-size:14px; white-space:nowrap; cursor:default; }
         .bb-att-wc b { font-weight:900; }
@@ -778,7 +784,7 @@
         .bb-att-dnote { flex:0 0 auto; padding:6px 18px 0; font-size:12px; color:#c2410c; }
         .bb-att-db { flex:1 1 auto; min-height:0; overflow:auto; padding:0 12px 14px; }
         .bb-att-mt { width:100%; border-collapse:collapse; font-size:15px; font-variant-numeric:tabular-nums; }
-        .bb-att-mt th { position:sticky; top:0; z-index:1; background:var(--sur); padding:14px 12px; font-size:14px; color:var(--tx); text-align:right; white-space:nowrap; border-bottom:2px solid var(--bd); cursor:pointer; user-select:none; }
+        .bb-att-mt th { font-weight:900; position:sticky; top:0; z-index:1; background:var(--sur); padding:14px 12px; font-size:14px; color:var(--tx); text-align:right; white-space:nowrap; border-bottom:2px solid var(--bd); cursor:pointer; user-select:none; }
         .bb-att-mt th:first-child { text-align:left; cursor:default; }
         /* 이름 열 전체(헤더 ~ 마지막 근무자)를 검정 틀로 감쌈 — '이름을 더블클릭하면 로그가 열림'을 알려주기 위함. 표 테두리(collapse)와 상관없이 스크롤 헤더에서도 유지되도록 inset 그림자로 그림 */
         .bb-att-mt th:first-child { box-shadow:inset 2px 0 0 #111, inset -2px 0 0 #111, inset 0 2px 0 #111; }
@@ -1269,6 +1275,7 @@
                 <div class="t" id="bb-att-dtitle">상세 로그</div>
                 <select id="bb-att-dsel"></select>
                 <div class="w" id="bb-att-watch"></div>
+                <input type="search" class="sr" id="bb-att-search" placeholder="이름 검색" autocomplete="off" spellcheck="false" title="이름을 입력하면 그 근무자만 표시 (월을 바꾸거나 창을 닫았다 열어도 유지 · 새로고침하면 초기화)">
                 <div class="x" id="bb-att-dclose">✕</div>
             </div>
             <div class="bb-att-dnote" id="bb-att-dnote"></div>
@@ -4563,7 +4570,7 @@
             m.eta = m.rate > 0.5 ? m.r.battery / m.rate : Infinity;      // 0% 까지 남은 시간(h)
         });
         const dropping = measured.filter(m => m.rate > 0).sort((a, b) => b.rate - a.rate);   // 닳고 있는 기체만, 빠른 순
-        return { top: dropping.slice(0, FB_DRAIN_TOP), measured: measured.length, measuring: measuring.length, active: active.length,
+        return { top: dropping.slice(0, FB_DRAIN_TOP), dropping: dropping.length, measured: measured.length, measuring: measuring.length, active: active.length,
                  severe: measured.filter(m => m.sev === 'r').length };
     }
     function fbDurText(min) {
@@ -4709,8 +4716,10 @@
         try {
             fbCompute();
             fbSetBadge('bb-fb-dis', _fbData.dis.robots, _fbData.dis.recentSure ? 'r' : 'o');   // 숫자 = 최근 15일 방전 기체 수. 최근 24시간 안에 확정 방전이 있으면 빨강, 그 밖에는 주황
-            fbSetBadge('bb-fb-drain', _fbData.dr.measured, 'b');   // 배터리 소모: 지금 소모 속도를 측정 중인 기체 수 (데이터가 부족한 기체는 제외)
-            fbSetBadge('bb-fb-slow', _fbData.sc.measured, 'b');   // 저속충전: 지금 충전 속도를 측정 중인 기체 수 (데이터가 부족해 아직 계산 못 하는 기체는 제외)
+            fbSetBadge('bb-fb-drain', _fbData.dr.top.length, 'b');   // 배터리 소모: 배지는 목록에 오른 기체 수 (최대 FB_DRAIN_TOP 대). 실제 대수는 버튼 툴팁에 표시
+            const bdr = document.getElementById('bb-fb-drain');
+            if (bdr) bdr.title = `충전 중이 아닌 기체를 최근 ${FB_DRAIN_WINDOW_H}시간 안의 하락 기록으로 배터리가 빨리 닳는 순으로 (상위 ${FB_DRAIN_TOP}대) · 오른쪽 위 숫자 = 목록에 오른 기체 수 (최대 ${FB_DRAIN_TOP}) · 소모 속도 측정 중 ${_fbData.dr.measured}대 (그중 배터리가 줄고 있는 기체 ${_fbData.dr.dropping}대)`;
+            fbSetBadge('bb-fb-slow', _fbData.sc.measured, 'g');   // 저속충전: 지금 충전 속도를 측정 중인 기체 수 (데이터가 부족해 아직 계산 못 하는 기체는 제외)
             fbSetBadge('bb-fb-moff', _fbData.mo.length, 'o');
             fbRender();
         } catch (err) { console.error('[BB] 고정 버튼 갱신 오류:', err); }
@@ -5254,6 +5263,7 @@
     let _attDay = null;       // { date, stats, msg } 과거 기록
     let _attFail = false, _attBusy = false, _attSig = null;
     let _attPopId = null, _attCalWhich = null, _attDetailYm = null, _attSortKey = 'avgSec', _attPlogKey = '';
+    let _attNameFilter = '', _attLast = null;   // 상세 로그 이름 검색어 (창을 닫았다 열어도/월을 바꿔도 유지, 새로고침하면 초기화 — 저장하지 않음) / 마지막으로 그린 월 데이터
     const _attMonthCache = {}, _attSchedCache = {}, _attDayCache = {}, _attSchedErr = {};
 
     const $att = id => document.getElementById(id);
@@ -5679,6 +5689,7 @@
         ym = ym || (_attDate ? _attDate.slice(0, 7) : months[1]);
         if (!months.includes(ym)) ym = months[1];
         _attDetailYm = ym;
+        $att('bb-att-search').value = _attNameFilter;
         const sel = $att('bb-att-dsel');
         sel.replaceChildren(...months.map(m => { const o = attEl('option', '', m.slice(0, 4) + '년 ' + Number(m.slice(5)) + '월'); o.value = m; return o; }));
         sel.value = ym;
@@ -5699,6 +5710,7 @@
         attRenderDetail(ym, dig, sched);
     }
     function attRenderDetail(ym, dig, sched) {
+        _attLast = { ym, dig, sched };
         const built = attBuildRows(dig, sched), dates = built.dates;
         const label = ym.slice(0, 4) + '년 ' + Number(ym.slice(5)) + '월';
         $att('bb-att-dtitle').textContent = dates.length
@@ -5710,7 +5722,12 @@
             body.replaceChildren(attEl('div', 'bb-att-msg', dig && dig.missing ? '이 달의 요약 데이터가 아직 없습니다' : '확정된 기록이 없습니다'));
             return;
         }
-        const rows = built.rows.slice().sort((a, b) => (b[_attSortKey] - a[_attSortKey]) || (a.order - b.order));
+        const q = _attNameFilter.trim().toLowerCase();   // 이름 검색어 (포함되면 표시, 대소문자 무시)
+        const rows = built.rows.filter(r => !q || r.name.toLowerCase().includes(q)).sort((a, b) => (b[_attSortKey] - a[_attSortKey]) || (a.order - b.order));
+        if (!rows.length) {
+            body.replaceChildren(attEl('div', 'bb-att-msg', `"${_attNameFilter.trim()}" 이름의 근무자가 이 달에는 없습니다`));
+            return;
+        }
         const table = attEl('table', 'bb-att-mt'), hr = table.createTHead().insertRow();
         ATT_COLS.forEach(c => {
             const th = attEl('th', (c.key === _attSortKey ? 'sorted ' : '') + (c.cls === 'warn' ? 'warn' : ''), c.label);
@@ -5807,6 +5824,10 @@
     $att('bb-att-today').addEventListener('click', attGoToday);
     $att('bb-att-dclose').addEventListener('click', attCloseDetail);
     $att('bb-att-dsel').addEventListener('change', e => attOpenDetail(e.target.value));
+    $att('bb-att-search').addEventListener('input', e => {   // 입력할 때마다 표만 다시 그림 (서버 요청 없음)
+        _attNameFilter = e.target.value;
+        if (_attLast && _attLast.ym === _attDetailYm) attRenderDetail(_attLast.ym, _attLast.dig, _attLast.sched);
+    });
     $att('bb-att-dbody').addEventListener('dblclick', e => { const td = e.target.closest('td.nm'); if (td && _attDetailYm) attOpenPlog(td.dataset.name, _attDetailYm); });   // 이름 더블클릭
     $att('bb-att-body').addEventListener('click', e => { const c = e.target.closest('.bb-att-card'); if (c) attTogglePop(c.dataset.uid); });
     document.addEventListener('click', e => {   // 바깥 클릭 → 이석 로그 / 달력 닫기 (캡처 단계: 재렌더로 대상이 사라지기 전에 판단)
