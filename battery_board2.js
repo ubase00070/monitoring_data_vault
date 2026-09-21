@@ -124,7 +124,7 @@
         .bb-hd-time { display:flex; align-items:baseline; gap:8px; }
         .bb-clock { font-family:'Lato',monospace; font-size:13px; font-weight:900; color:var(--mu); letter-spacing:.8px; }
         .bb-ref   { font-size:12px; color:var(--mu); font-weight:700; }
-        /* 헤더 우측 = [버튼 2줄] (동숲 주민은 제목 박스 좌우에 따로 배치) */
+        /* 헤더 우측 = [버튼 2줄: 테마·줌·백업·검색] (동숲 주민과 배달/방전/이상 알림 3종은 제목 박스 좌우에 따로 배치) */
         .bb-hd-rightwrap {
             position:absolute; right:14px; top:50%; transform:translateY(-50%);
             display:flex; align-items:center; gap:10px; z-index:500;
@@ -135,10 +135,7 @@
         .bb-hd-right-row.spread { justify-content:space-between; }   /* 1줄: 테마 버튼(좌) ··· 백업/복원/✕(우) */
         .bb-hd-grp { display:flex; align-items:center; gap:6px; }
 
-        /* '-' 버튼 왼쪽의 세로 2버튼: [배달 로그(최근 15일)] / [이상 알림(최근 15일)] — 오른쪽 2줄(32+6+32 = 70px)과 같은 높이 */
-        .bb-hd-lcol { display:flex; flex-direction:column; gap:6px; }
-        .bb-hd-lcol .bb-btn { width:172px; padding:0 8px; gap:5px; font-size:13px; }
-        .bb-hd-ico { font-size:15px; line-height:1; }
+        .bb-hd-ico { font-size:12px; line-height:1; }
         #bb-delivery-btn { position:relative; background:#ffd9e4; border-color:#f2a7bf; color:#5c2233; }              /* 배달 기체: 파스텔 연핑크 (카드 제거 버튼과 같은 색) */
         #bb-delivery-btn:hover { background:#ffc9d9; border-color:#ea86a5; }
         .bb-dv-badge {   /* 배달 기체 버튼 모서리에 겹쳐 뜨는 '금일 배달 건수' (폭을 차지하지 않음) — 고정 버튼의 숫자 배지와 같은 모양 */
@@ -180,10 +177,20 @@
         .bb-bk-name { min-width:64px; }
 
 
-        /* ── 고정 버튼 3종 (왼쪽 동숲 주민의 왼쪽): 3행 — [🪫 방전(최근 15일)] / [🐢 저속충전 TOP5] / [🚫 임무 OFF] ── */
+        /* ── 고정 버튼 3종 (왼쪽 동숲 주민의 왼쪽): 3행 — [빈 버튼] / [🐢 저속충전 TOP5] / [🚫 임무 OFF] ── */
         .bb-fixbtns {
             position:absolute; right:calc(50% + 261px); top:50%; transform:translateY(-50%);   /* 오른쪽 끝 = 왼쪽 동숲 주민(제목 왼쪽 151~251px)에서 10px 왼쪽 */
             width:140px; display:grid; grid-template-columns:1fr; gap:4px; z-index:3;   /* 높이 3×26 + 2×4 = 86px (헤더 104px 안) */
+        }
+        /* ── 우측 3종 버튼 (오른쪽 동숲 주민의 오른쪽): 3행 — [🛵 배달 로그] / [🪫 방전 로그] / [📋 이상 알림] — 왼쪽 고정 버튼과 같은 폭(140px)·높이(26px)·간격(4px) ── */
+        .bb-rbtns {
+            position:absolute; left:calc(50% + 261px); top:50%; transform:translateY(-50%);   /* 왼쪽 = 오른쪽 동숲 주민(제목 오른쪽 151~251px)에서 10px 오른쪽 */
+            width:140px; display:grid; grid-template-columns:1fr; gap:4px; z-index:3;
+        }
+        .bb-rbtns > button {
+            position:relative; width:100%; height:26px; padding:0 2px; gap:2px; border-radius:7px; border:1.5px solid var(--bd2);
+            font-size:11px; font-weight:800;   /* 배달 로그(최근 15일) 같은 긴 이름이 140px 안에 들어가도록 (양쪽 여유 약 6px) */ font-family:inherit; white-space:nowrap; overflow:visible;
+            display:inline-flex; align-items:center; justify-content:center; box-sizing:border-box; cursor:pointer;
         }
         .bb-fb {
             position:relative; height:26px; padding:0 7px; border-radius:7px; border:1.5px solid var(--bd2);
@@ -191,8 +198,10 @@
             cursor:pointer; white-space:nowrap; box-sizing:border-box;
         }
         .bb-fb:hover { border-color:var(--mu); }
+        .bb-fb-empty { cursor:default; }   /* 빈 버튼: 자리 유지용 (기능은 나중에 추가) */
+        .bb-fb-empty:hover { border-color:var(--bd2); }
         .bb-fb.active { background:var(--bg); border-color:var(--tx); }
-        /* 3종 버튼: 위에서 아래로 옅은 무지개 (주황 → 노랑 → 보라). 목록 창이 열려 있으면(active) 같은 색을 한 톤 진하게 + 진한 테두리 */
+        /* 버튼 색: 옅은 무지개 (분홍 배달 → 주황 방전 → 파랑 이상 알림 / 노랑 저속충전 → 보라 임무 OFF). 목록 창이 열려 있으면(active) 같은 색을 한 톤 진하게 + 진한 테두리 */
         #bb-fb-dis  { background:#ffdcc2; border-color:#f0b98d; color:#5a3413; }
         #bb-fb-dis:hover  { background:#ffd0ae; border-color:#e59d62; }
         #bb-fb-dis.active { background:#ffc59b; border-color:#8a4a17; }
@@ -1040,7 +1049,7 @@
                 </div>
                 <!-- 좌: 고정 버튼 3종 (왼쪽 동숲 주민의 왼쪽) -->
                 <div class="bb-fixbtns" id="bb-fixbtns">
-                    <button id="bb-fb-dis" class="bb-fb" data-mode="dis" title="최근 15일 동안 배터리 로그에서 2% 이하에 도달한 뒤 OFF 된 기체(방전) 기록 · 오른쪽 위 숫자 = 해당 기체 수 (최근 24시간 안에 확정 방전이 있으면 빨강)">🪫 방전(최근 15일)<b class="bb-fb-n"></b></button>
+                    <button id="bb-fb-empty" class="bb-fb bb-fb-empty" type="button" tabindex="-1" aria-hidden="true"></button>   <!-- 빈 버튼: 자리만 유지 (기능은 나중에 추가) -->
                     <button id="bb-fb-slow" class="bb-fb" data-mode="slow" title="충전 중(100% 미만)인 기체를 충전을 시작한 때부터 지금까지의 평균 속도가 더딘 순으로 (상위 5대) · 오른쪽 위 숫자 = 지금 충전 속도를 측정 중인 기체 수">🐢 저속충전 TOP5<b class="bb-fb-n"></b></button>
                     <button id="bb-fb-moff" class="bb-fb" data-mode="moff" title="현재 임무가 OFF 인 기체 · 오른쪽 위 숫자 = 해당 기체 수">🚫 임무 OFF<b class="bb-fb-n"></b></button>
                     <div class="bb-fbp" id="bb-fbp">
@@ -1080,13 +1089,14 @@
                     <button id="bb-walker-toggle" title="동숲 주민 끄기">동숲</button>
                     <div id="bb-walker-bubble"><span id="bb-walker-bubble-text"></span></div>
                 </div>
-                <!-- 우: 버튼 2줄 -->
+                <!-- 우: 3종 버튼 (오른쪽 동숲 주민의 오른쪽) — 배달 로그 / 방전 로그 / 이상 알림. 왼쪽 고정 버튼 3행과 같은 폭·높이·간격 -->
+                <div class="bb-rbtns" id="bb-fixbtns-r">
+                    <button class="bb-btn" id="bb-delivery-btn" title="최근 15일 동안 일자별로 배달을 수행한 기체와 배달 횟수"><span class="bb-hd-ico">🛵</span>배달 로그(최근 15일)<b class="bb-dv-badge z" id="bb-dv-badge">0</b></button>
+                    <button id="bb-fb-dis" class="bb-fb" data-mode="dis" title="최근 15일 방전 기록 · 오른쪽 위 숫자 = 방전 기체 수">🪫 방전 로그(최근 15일)<b class="bb-fb-n"></b></button>
+                    <button class="bb-btn" id="bb-alertlog-all-btn" title="최근 15일 동안의 좀비 / 캠 미노출 / 미니맵 미노출 기록"><span class="bb-hd-ico">📋</span>이상 알림(최근 15일)</button>
+                </div>
+                <!-- 우: 버튼 2줄 (테마/줌/백업/검색) -->
                 <div class="bb-hd-rightwrap">
-                    <!-- '-' 버튼 왼쪽: 배달 기체 / 이상 알림 (세로 2버튼) -->
-                    <div class="bb-hd-lcol">
-                        <button class="bb-btn" id="bb-delivery-btn" title="최근 15일 동안 일자별로 배달을 수행한 기체와 배달 횟수"><span class="bb-hd-ico">🛵</span>배달 로그(최근 15일)<b class="bb-dv-badge z" id="bb-dv-badge">0</b></button>
-                        <button class="bb-btn" id="bb-alertlog-all-btn" title="최근 15일 동안의 좀비 / 캠 미노출 / 미니맵 미노출 기록"><span class="bb-hd-ico">📋</span>이상 알림(최근 15일)</button>
-                    </div>
                     <div class="bb-hd-right" id="bb-hd-right">
                         <div class="bb-hd-right-row spread">
                             <div class="bb-hd-grp">
@@ -4081,7 +4091,7 @@
 
     // ============================================================
     // SECTION 17. 고정 버튼 3종 (제목 영역, 왼쪽 동숲 주민의 왼쪽)
-    //   방전(최근 15일) / 저속충전 기체 TOP5 / 임무 OFF 기체
+    //   저속충전 기체 TOP5 / 임무 OFF 기체 (왼쪽) + 방전 로그(최근 15일) (오른쪽 3종 버튼 중 가운데)
     //   2분마다 데이터가 갱신될 때 버튼의 숫자 배지와, 열려 있는 목록 창이 함께 새로고침됨 (창을 띄워 둔 채로도)
     //   계산량은 기체 수(≈90대)에 비례하는 반복 몇 번뿐이라 갱신 한 번에 수 ms 수준
     // ============================================================
@@ -4122,7 +4132,7 @@
         });
     }
 
-    // ── 방전(최근 15일): 배터리 로그에서 FB_DISCHARGE_PCT% 이하 → OFF 로 이어진 기체 ──
+    // ── 방전 로그(최근 15일): 배터리 로그에서 FB_DISCHARGE_PCT% 이하 → OFF 로 이어진 기체 ──
     let _fbLogCache = null;   // { rawY, rawT, logs } — 로그 원본 문자열이 그대로면 이전 결과를 재사용 (로그는 10분마다만 바뀜, 어제 로그는 하루 종일 그대로)
     function fbLoadLogs() {   // 어제 스냅샷 + 오늘 로그를 기체별 시간순 점으로 (같은 시각이 겹치면 오늘 것이 우선)
         const rawY = localStorage.getItem('bb_battery_log_yesterday') || '', rawT = localStorage.getItem(WBL_KEY) || '';
@@ -4159,7 +4169,7 @@
         return p.bat <= FB_EST_FALLBACK_PCT ? 'est' : null;                              // 속도를 모르면 5% 이하만
     }
     /* DISCHARGE-LOG-START */
-    // ── 방전 기록(최근 15일) ──
+    // ── 방전 로그(최근 15일) ──
     // 원본: 배터리 로그(어제+오늘, 10분 단위)에서 'FB_DISCHARGE_PCT% 이하 → OFF' 로 이어진 지점(방전) 또는 그렇게 지나친 것으로 보이는 지점(방전 추정)
     // 저장: ① 이 PC(bb_discharge_local) — 배터리 로그는 하루가 지나면 초기화되지만 방전 기록은 15일 동안 남음
     //       ② 서버 단일 파일(배터리_방전로그) — 방전이 '기록될 때만' 올림. 방전이 없으면 파일도, 업로드 요청도 없음
@@ -4458,8 +4468,8 @@
     }
     function fbHtmlDis(d) {
         const ev = d.dis.events;
-        let h = `<div class="bb-fbp-note">최근 15일 기록에서 <b>${FB_DISCHARGE_PCT}% 이하까지 떨어진 뒤 꺼진</b> 기체입니다. 10분 기록 사이에 지나친 것으로 보이면 <b>방전 추정</b>으로 표시합니다.</div>`;
-        if (!ev.length) h += `<div class="bb-fbp-empty">최근 15일 동안 기록된 방전이 없습니다 ✓</div>`;
+        let h = `<div class="bb-fbp-note">${FB_DISCHARGE_PCT}% 이하까지 떨어진 뒤 꺼진 기체 (추정 = 10분 기록 사이에 꺼짐)</div>`;
+        if (!ev.length) h += `<div class="bb-fbp-empty">최근 15일 동안 방전된 기체가 없습니다 ✓</div>`;
         else h += ev.map(e => {
             const st = fbStateChip(e.cur);
             const est = e.kind === 'est';
@@ -4473,7 +4483,7 @@
                 <span class="bb-fbp-now">현재 ${fbEsc(st.txt)}</span>
             </div>`;
         }).join('');
-        return h + `<div class="bb-fbp-foot">※ 시각은 10분 간격 로그 기준이라 "경"으로 표시됩니다. 방전이 확인될 때마다 이 PC 와 서버에 저장되고, 15일이 지나면 자동으로 지워집니다.</div>`;
+        return h;
     }
     function fbClock(ts) {   // 오늘이면 "08:50", 다른 날이면 "09/19 23:10"
         const d = new Date(ts), p = n => String(n).padStart(2, '0');
@@ -4519,12 +4529,13 @@
     function fbRender() {
         const pop = document.getElementById('bb-fbp');
         if (!pop) return;
-        document.querySelectorAll('#bb-fixbtns .bb-fb').forEach(b => b.classList.toggle('active', b.dataset.mode === _fbMode));
+        document.querySelectorAll('.bb-fb[data-mode]').forEach(b => b.classList.toggle('active', b.dataset.mode === _fbMode));
+        if (_fbMode) { const host = document.getElementById(_fbMode === 'dis' ? 'bb-fixbtns-r' : 'bb-fixbtns'); if (host && pop.parentNode !== host) host.appendChild(pop); }   // 방전 로그는 오른쪽 버튼 아래, 나머지는 왼쪽 버튼 아래에서 열림
         pop.classList.toggle('open', !!_fbMode);
         if (!_fbMode) return;
         const d = _fbData || fbCompute();
         const T = {
-            dis:  ['방전(최근 15일)',         `${d.dis.robots}대${d.dis.events.length !== d.dis.robots ? ` · ${d.dis.events.length}건` : ''}${d.dis.est ? ` (추정 ${d.dis.est}건 포함)` : ''}`],
+            dis:  ['방전 로그(최근 15일)',    `${d.dis.robots}대${d.dis.events.length !== d.dis.robots ? ` · ${d.dis.events.length}건` : ''}`],
             slow: ['저속충전 기체 TOP5',     `충전 중 ${d.sc.charging}대`],
             moff: ['임무 OFF 기체',          `${d.mo.length}대`],
         }[_fbMode];
@@ -4544,7 +4555,7 @@
             fbRender();
         } catch (err) { console.error('[BB] 고정 버튼 갱신 오류:', err); }
     }
-    document.querySelectorAll('#bb-fixbtns .bb-fb').forEach(btn => btn.addEventListener('click', () => {
+    document.querySelectorAll('.bb-fb[data-mode]').forEach(btn => btn.addEventListener('click', () => {
         _fbMode = _fbMode === btn.dataset.mode ? null : btn.dataset.mode;   // 같은 버튼을 다시 누르면 닫힘
         refreshFixedTools();
         if (_fbMode === 'dis') dcRefreshCache(DC_OPEN_REFRESH_MS).then(ok => { if (ok && _fbMode === 'dis') refreshFixedTools(); }).catch(() => {});   // 다른 PC 가 올린 방전 기록 반영 (30분 이내에 받았으면 요청 없음)
@@ -4559,7 +4570,7 @@
     // 바깥을 누르면 닫힘. 버튼/목록 창 안쪽과, 목록에서 연 기체 정보 창 안쪽은 바깥으로 보지 않음 (그 창들을 함께 쓰는 중이므로)
     document.addEventListener('mousedown', e => {
         if (!_fbMode) return;
-        if (e.target.closest && e.target.closest('#bb-fixbtns, #bb-info-card-panel')) return;
+        if (e.target.closest && e.target.closest('#bb-fixbtns, #bb-fb-dis, #bb-fbp, #bb-info-card-panel')) return;
         _fbMode = null;
         fbRender();
     }, true);
