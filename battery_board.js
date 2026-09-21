@@ -1874,6 +1874,18 @@
 
     function wblToMin(hhmm) { const [h,m] = hhmm.split(':').map(Number); return h*60+m; }
 
+    // [호환 패치] 새 버전(board2, 하루 = 07:00~익일 07:00)이 올린 데이터에는 이 버전의 하루(08:00~익일 03:00) 밖인
+    // 03:00~08:00 기록이 들어 있다. 이 버전은 그 시각을 '다음 날'로 취급해 그래프 오른쪽 끝 밖에 그리고,
+    // 구간 요약 로그 끝에 "08:00~07:50" 같은 엉뚱한 구간을 만든다 → 받아온 데이터에서 그 시간대만 제외 (서버 원본은 건드리지 않음)
+    function wblDropOutOfDayPoints(data) {
+        if (!data || !data.entries) return data;
+        Object.keys(data.entries).forEach(id => {
+            const e = data.entries[id];
+            if (e && Array.isArray(e.log)) e.log = e.log.filter(p => { const m = wblToMin(p.t); return m >= 8 * 60 || m < 3 * 60; });
+        });
+        return data;
+    }
+
     // 대기 시각을 "오늘 08:00을 0분"으로 하는 절대 분으로 변환 (00:00~02:59는 다음날로 간주해 +1440)
     function wblDayAdjMin(hhmm) {
         const m = wblToMin(hhmm);
@@ -2083,6 +2095,7 @@
 	
 	function wblMergeImported(remote) {
 		if (!remote || remote.day !== wblGetDayKey()) return false;
+		wblDropOutOfDayPoints(remote);   // [호환 패치] 03:00~08:00 기록 제외
 		const local = wblEnsureDay();
 		if (!local) return false;
 
@@ -2303,7 +2316,7 @@
 			if (res.ok) {
 				const remote = await res.json();
 				if (remote?.data?.day === targetKey) {
-					localStorage.setItem('bb_battery_log_yesterday', JSON.stringify(remote.data));
+					localStorage.setItem('bb_battery_log_yesterday', JSON.stringify(wblDropOutOfDayPoints(JSON.parse(JSON.stringify(remote.data)))));   // [호환 패치]
 					localStorage.setItem('bb_wbl_yesterday_loaded_for', targetKey);
 					console.log('[BB] 어제자 배터리 로그 로드 완료 (' + targetKey + ')');
 					return;
@@ -2317,7 +2330,7 @@
 			if (handover?.data?.day !== targetKey) return;   // 그것도 어제 게 아니면 정말 데이터 없음
 
 			await wblUploadNamed(WBL_YESTERDAY_NAME, handover.data);
-			localStorage.setItem('bb_battery_log_yesterday', JSON.stringify(handover.data));
+			localStorage.setItem('bb_battery_log_yesterday', JSON.stringify(wblDropOutOfDayPoints(JSON.parse(JSON.stringify(handover.data)))));   // [호환 패치]
 			localStorage.setItem('bb_wbl_yesterday_loaded_for', targetKey);
 			console.log('[BB] 어제자 배터리 로그 이관+로드 완료 (' + targetKey + ')');
 		} catch (e) { console.log('[BB] 어제자 배터리 로그 로드 실패:', e.message); }
