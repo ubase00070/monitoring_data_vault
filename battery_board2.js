@@ -12,7 +12,8 @@
     //   투명도: 0.05(거의 안 보임) ~ 0.15(또렷) — 카드·글자를 가리지 않고 '뒤에 그림이 있구나' 정도로만 보이게 하려면 0.08~0.10
     // ============================================================
     const BB_BG_URL = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/snoopy_snow.jpg?v=1';
-    const BB_BG_OPACITY = 0.09;
+    const BB_BG_OPACITY = 0.10;
+    const BB_BG_FADE_PX = 56;   // 배경 이미지 상단 경계를 부드럽게 풀어주는 구간(px). 0 이면 예전처럼 뚝 끊김, 클수록 더 길게 번짐
 
     // ============================================================
     // SECTION 0. 스타일
@@ -439,6 +440,9 @@
         .bb-body::before {
             content:''; position:absolute; inset:0; z-index:-1; pointer-events:none;
             background:url('${BB_BG_URL}') center / cover no-repeat; opacity:${BB_BG_OPACITY};
+            /* 상단 경계 페이드: 맨 위는 투명 → BB_BG_FADE_PX 아래부터 완전히 보임 (헤더 테마 색과 자연스럽게 섞임). ease-out 형태로 여러 단계를 줘서 띠(밴딩) 없이 부드럽게 */
+            -webkit-mask-image:linear-gradient(to bottom, transparent 0, rgba(0,0,0,.18) ${BB_BG_FADE_PX * 0.25}px, rgba(0,0,0,.5) ${BB_BG_FADE_PX * 0.55}px, rgba(0,0,0,.85) ${BB_BG_FADE_PX * 0.8}px, #000 ${BB_BG_FADE_PX}px);
+                    mask-image:linear-gradient(to bottom, transparent 0, rgba(0,0,0,.18) ${BB_BG_FADE_PX * 0.25}px, rgba(0,0,0,.5) ${BB_BG_FADE_PX * 0.55}px, rgba(0,0,0,.85) ${BB_BG_FADE_PX * 0.8}px, #000 ${BB_BG_FADE_PX}px);
         }
         .bb-main { flex:0 0 1340px; min-width:0; min-height:0; display:flex; flex-direction:column; }   /* 1340 = 카드 318×4 + 간격 12×3 + 좌우 여백 16×2 (퀵바 내용이 길어져도 우측 영역을 밀지 않도록 고정) */
         /* 기체 카드 영역: 기체가 많아 창이 화면보다 커지면 창 전체가 아니라 이 영역 안에서만 스크롤 (스크롤바 = 다중 모니터링 영역 바로 왼쪽) */
@@ -3714,11 +3718,35 @@
         setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 1500);
     });
 
+    // 이름 순 정렬 예외: 아래 묶음의 기체는 정렬해도 항상 '이 순서대로' 붙어 있음 (묶음 전체는 묶음 안에서 이름이 가장 앞서는 기체의 자리에 놓임)
+    //   기체명 비교는 공백을 빼고 전각 문자(예: '１')를 반각으로 바꾼 값으로 하므로 띄어쓰기/전각 차이에 영향받지 않음. 묶음을 추가/수정하려면 여기만 고치면 됨.
+    const SORT_PINNED_GROUPS = [
+        ['배송 띠띠', '순찰 띠띠'],
+        ['두비', '달비'],
+        ['성남시 판교역 1호기', '성남시 서현역 1호기', '성남시 율동공원 1호기', '성남시 야탑역 1호기'],
+    ];
+    const sortNormName = n => String(n || '').normalize('NFKC').replace(/\s+/g, '');
+    const sortPinInfo = (() => {   // 정규화한 기체명 → { rep: 묶음 대표 이름(묶음 내 이름순 최상위), idx: 묶음 내 순서 }
+        const m = new Map();
+        SORT_PINNED_GROUPS.forEach(g => {
+            const rep = [...g].sort((x, y) => x.localeCompare(y, 'ko', { numeric: true }))[0];
+            g.forEach((n, idx) => m.set(sortNormName(n), { rep, idx }));
+        });
+        return m;
+    })();
+
     document.getElementById('bb-sortname-btn').addEventListener('click', () => {
         const byName = (a, b) => {
-            const ra = DB.find(x => x.id === a);
-            const rb = DB.find(x => x.id === b);
-            return (ra?.name || '').localeCompare(rb?.name || '', 'ko', { numeric: true });   // 1호기 < 2호기 < 10호기
+            const na = DB.find(x => x.id === a)?.name || '';
+            const nb = DB.find(x => x.id === b)?.name || '';
+            const pa = sortPinInfo.get(sortNormName(na));
+            const pb = sortPinInfo.get(sortNormName(nb));
+            const ka = pa ? pa.rep : na;   // 묶음에 속한 기체는 묶음 대표 이름으로 자리를 정함
+            const kb = pb ? pb.rep : nb;
+            const c = ka.localeCompare(kb, 'ko', { numeric: true });   // 1호기 < 2호기 < 10호기
+            if (c !== 0) return c;
+            if (pa && pb) return pa.idx - pb.idx;   // 같은 묶음 → 지정한 순서
+            return na.localeCompare(nb, 'ko', { numeric: true });
         };
         ids.sort(byName);      // 일반 영역
         favIds.sort(byName);   // 즐겨찾기 영역 — 서로 섞이지 않고 각자 정렬
@@ -4113,6 +4141,9 @@
     const FB_EST_MAX_PCT = 10;           // '방전 추정' 후보: OFF 직전 마지막 기록이 이 값(%) 이하
     const FB_EST_FALLBACK_PCT = 5;       // 하락 속도를 알 수 없을 때는 이 값(%) 이하만 추정
     const FB_EST_MAX_GAP_MIN = 30;       // OFF 직전 기록과 OFF 확인 사이가 이보다 길면(기록 끊김) 추정하지 않음
+    const FB_ZERO_ENTRY_PCT = 10;        // '0% 유지' 방전 확정: 0% 도달 전 FB_ZERO_ENTRY_MIN 분 안에 이 값(%) 미만으로 내려온 기록이 있어야 함 (100% 인데 잠깐 0% 로 찍히는 버그성 표기 걸러내기)
+    const FB_ZERO_ENTRY_MIN = 60;
+    const FB_ZERO_NEXT_MAX_MIN = 30;     // 0% 도달 기록과 '다음 10분 기록' 사이가 이보다 길면(기록 끊김) 다음 기록으로 보지 않음
     const FB_CHG_MIN_MIN = 20;           // 충전 속도를 재려면 연속 충전이 이만큼(분) 이상 관측돼야 함
     const FB_CHG_GAP_MIN = 40;           // 기록이 이 시간(분) 넘게 끊기면 그 사이 충전이 이어졌는지 알 수 없어 그 앞은 자름
     const FB_SLOW_TOP = 5;               // 저속충전 목록에 보여줄 기체 수
@@ -4168,7 +4199,7 @@
     function fbDischargeKind(pts, i, offTs) {
         const p = pts[i];
         if (p.st === 'off' || p.bat == null) return null;
-        if (p.bat <= FB_DISCHARGE_PCT) return 'sure';
+        if (p.bat <= FB_DISCHARGE_PCT) return p.bat === 0 ? 'est' : 'sure';   // 0% 로 찍힌 직후 꺼짐은 '추정' (0% 는 버그성 표기일 수 있어서) — 1~2% 까지 정직하게 내려온 뒤 꺼짐은 확정
         if (p.st === 'charging' || p.bat > FB_EST_MAX_PCT) return null;   // 충전 중에 꺼졌거나 아직 배터리가 넉넉하면 방전으로 보지 않음
         const gapMin = (offTs - p.ts) / 60000;
         if (gapMin > FB_EST_MAX_GAP_MIN) return null;                       // 기록이 오래 끊겼으면 알 수 없음
@@ -4181,6 +4212,31 @@
         }
         if (rate > 0) return p.bat - rate * gapMin <= FB_DISCHARGE_PCT ? 'est' : null;   // 그 속도라면 OFF 시점엔 2% 이하가 됐을까
         return p.bat <= FB_EST_FALLBACK_PCT ? 'est' : null;                              // 속도를 모르면 5% 이하만
+    }
+    // 0% 유지 규칙 — 꺼지지 않고 0% 로 버티는 기체 (방전 과정에서 꼭 정직하게 꺼지지는 않음)
+    //   ① 0% 도달 전 1시간 안에 10% 미만으로 내려온 기록이 있고 → 0% 도달 → 바로 다음 10분 기록에도 0% 이면 = 방전 확정
+    //   ② 0% 도달 → 바로 다음 10분 기록에서 OFF 이면 = 방전 추정 (fbDischargeKind 에서 처리)
+    //   다음 10분 기록까지 보는 이유: 실제로는 배터리가 넉넉한데 한 번만 0% 로 찍히는 버그성 표기를 걸러내기 위해
+    const fbZeroOn = p => !!p && p.bat === 0 && p.st !== 'off' && p.st !== 'charging';   // 켜져 있으면서(충전 중 아님) 0% 인 기록
+    function fbZeroRunStart(pts, i) {   // 연속된 0% 기록 중 첫 번째 위치
+        let s = i;
+        while (s > 0 && fbZeroOn(pts[s - 1])) s--;
+        return s;
+    }
+    function fbZeroHolds(pts) {   // → Map(0% 첫 기록 위치 → 방전 확정 이벤트). 꺼지지 않고 0% 를 유지하는 방전만 여기서 잡음
+        const out = new Map();
+        for (let i = 0; i < pts.length - 1; i++) {
+            const p = pts[i], q = pts[i + 1];
+            if (!fbZeroOn(p) || fbZeroOn(pts[i - 1])) continue;                  // 0% 가 이어질 때는 첫 기록에서만 판정
+            if ((q.ts - p.ts) / 60000 > FB_ZERO_NEXT_MAX_MIN || !fbZeroOn(q)) continue;   // 바로 다음 기록도 (켜진 채) 0% 여야 함
+            let entered = false;   // 0% 도달 전 1시간 안에 10% 미만(0 초과)으로 내려온 기록
+            for (let k = i - 1; k >= 0 && p.ts - pts[k].ts <= FB_ZERO_ENTRY_MIN * 60000; k--) {
+                const o = pts[k];
+                if (o.st !== 'off' && o.st !== 'charging' && o.bat != null && o.bat > 0 && o.bat < FB_ZERO_ENTRY_PCT) { entered = true; break; }
+            }
+            if (entered) out.set(i, { ts: p.ts, bat: 0, exact: false, kind: 'sure', hold: true });
+        }
+        return out;
     }
     /* DISCHARGE-LOG-START */
     // ── 방전 로그(최근 15일) ──
@@ -4213,12 +4269,16 @@
     }
     function dcNormEv(x) {
         if (!x || !Number.isFinite(x.ts) || !DC_RANK[x.kind]) return null;
-        return { ts: Math.round(x.ts), bat: Number.isFinite(x.bat) ? x.bat : null, kind: x.kind, exact: !!x.exact };
+        const o = { ts: Math.round(x.ts), bat: Number.isFinite(x.bat) ? x.bat : null, kind: x.kind, exact: !!x.exact };
+        if (x.hold) o.hold = true;   // 꺼지지 않고 0% 를 유지한 방전
+        return o;
     }
     function dcCombine(a, b) {   // 같은 방전의 두 기록 → 더 확실한 종류(확정 > 추정)를 쓰고, 시각은 정확한 쪽이 있으면 그것을 씀
         const hi = DC_RANK[b.kind] > DC_RANK[a.kind] ? b : a;
         const ex = a.exact ? a : (b.exact ? b : null);
-        return { ts: ex ? ex.ts : hi.ts, bat: hi.bat, kind: hi.kind, exact: !!ex };
+        const o = { ts: ex ? ex.ts : hi.ts, bat: hi.bat, kind: hi.kind, exact: !!ex };
+        if (hi.hold) o.hold = true;
+        return o;
     }
     function dcMergeEvents(list, incoming) {   // list 에 incoming 을 합침. 바뀐 게 있으면 true
         let changed = false;
@@ -4228,7 +4288,7 @@
             const i = list.findIndex(e => Math.abs(e.ts - x.ts) <= DC_SAME_MS);
             if (i < 0) { list.push(x); changed = true; return; }
             const m = dcCombine(list[i], x), o = list[i];
-            if (m.ts !== o.ts || m.bat !== o.bat || m.kind !== o.kind || m.exact !== o.exact) { list[i] = m; changed = true; }
+            if (m.ts !== o.ts || m.bat !== o.bat || m.kind !== o.kind || m.exact !== o.exact || !!m.hold !== !!o.hold) { list[i] = m; changed = true; }
         });
         if (changed) list.sort((a, b) => a.ts - b.ts);
         return changed;
@@ -4250,15 +4310,18 @@
         logs.forEach((o, id) => {
             const pts = [...o.pts.values()].sort((a, b) => a.ts - b.ts);
             const cur = curById.get(id), name = cur?.name || o.name;
+            const holds = fbZeroHolds(pts);   // 꺼지지 않고 0% 를 유지한 방전 (확정)
+            holds.forEach(ev => out.push({ id, name, ev }));
             for (let i = 0; i < pts.length - 1; i++) {
                 const q = pts[i + 1];
                 if (q.st !== 'off') continue;
+                if (holds.has(fbZeroRunStart(pts, i))) continue;   // 0% 유지 방전이 이미 확정돼 있으면(뒤늦게 꺼진 것) 같은 방전을 또 넣지 않음
                 const kind = fbDischargeKind(pts, i, q.ts);
                 if (kind) out.push({ id, name, ev: { ts: q.ts, bat: pts[i].bat, exact: false, kind } });
             }
             // 방금 꺼져서 로그에 OFF 칸이 아직 없는 경우: 지금 OFF → 마지막 통신 시각(서버 시각)을 OFF 시각으로
             const last = pts[pts.length - 1];
-            if (cur && cur.status === 'off' && last && last.st !== 'off' && last.ts >= now - DC_JUST_OFF_WINDOW_MS) {
+            if (cur && cur.status === 'off' && last && last.st !== 'off' && last.ts >= now - DC_JUST_OFF_WINDOW_MS && !holds.has(fbZeroRunStart(pts, pts.length - 1))) {
                 const lc = Date.parse(cur.raw?.robotStatus?.lastConnectedAt || '');
                 const exact = !!lc && lc >= last.ts;
                 const kind = fbDischargeKind(pts, pts.length - 1, exact ? lc : last.ts + 10 * 60000);
@@ -4482,17 +4545,18 @@
     }
     function fbHtmlDis(d) {
         const ev = d.dis.events;
-        let h = `<div class="bb-fbp-note">${FB_DISCHARGE_PCT}% 이하까지 떨어진 뒤 꺼진 기체 (추정 = 10분 기록 사이에 꺼짐)</div>`;
+        let h = `<div class="bb-fbp-note">${FB_DISCHARGE_PCT}% 이하까지 떨어진 뒤 꺼졌거나, 0% 가 다음 10분 기록까지 이어진 기체 (추정 = 0% 직후 꺼짐 / 10분 기록 사이에 꺼짐)</div>`;
         if (!ev.length) h += `<div class="bb-fbp-empty">최근 15일 동안 방전된 기체가 없습니다 ✓</div>`;
         else h += ev.map(e => {
             const st = fbStateChip(e.cur);
             const est = e.kind === 'est';
-            const tip = est ? `${e.name} · 마지막 기록 ${e.bat}% 다음 10분 사이에 꺼짐 — 하락 속도로 보면 0%에 도달했을 가능성이 커서 방전으로 추정` : e.name;
+            const tip = est ? (e.bat === 0 ? `${e.name} · 0% 기록 다음에 꺼짐 — 0% 표기가 버그성일 수도 있어 방전으로 추정` : `${e.name} · 마지막 기록 ${e.bat}% 다음 10분 사이에 꺼짐 — 하락 속도로 보면 0%에 도달했을 가능성이 커서 방전으로 추정`)
+                : (e.hold ? `${e.name} · 10% 미만으로 내려온 뒤 0% 에 도달했고, 다음 10분 기록에서도 0% 라서 방전 확정 (꺼지지 않고 버티는 중일 수 있음)` : e.name);
             return `<div class="bb-fbp-row" data-rid="${fbEsc(e.id)}" title="${fbEsc(tip)}">
                 <span class="bb-fbp-dot" style="background:${st.ac};"></span>
                 <span class="bb-fbp-main">
                     <span class="bb-fbp-line"><span class="bb-fbp-name">${fbEsc(e.name)}</span><span class="bb-fbp-tag ${est ? 'est' : 'sure'}">${est ? '방전 추정' : '방전'}</span></span>
-                    <span class="bb-fbp-sub">${fbFmtTs(e.ts)}${e.exact ? '' : '경'} OFF${e.bat != null ? ` · 마지막 배터리 ${e.bat}%` : ''}${e.n > 1 ? ` · 15일 내 ${e.n}회` : ''}</span>
+                    <span class="bb-fbp-sub">${fbFmtTs(e.ts)}${e.exact ? '' : '경'} ${e.hold ? '0% 도달 · 다음 기록도 0%' : 'OFF'}${e.bat != null && !e.hold ? ` · 마지막 배터리 ${e.bat}%` : ''}${e.n > 1 ? ` · 15일 내 ${e.n}회` : ''}</span>
                 </span>
                 <span class="bb-fbp-now">현재 ${fbEsc(st.txt)}</span>
             </div>`;
