@@ -629,15 +629,19 @@
         .bb-mm-goatt { position:absolute; right:8px; top:50%; transform:translateY(-50%); }
         /* 다중 모니터링에 '미갱신' 이상이 하나라도 있으면 다중 카드(.bb-mm-card.anomaly)와 같은 색·같은 점멸 */
         .bb-att-back.alert { border-color:var(--or); color:#c2410c; animation:bb-mmBlink 1s infinite; }
+        /* « 다중 = 두 줄 버튼: 1줄 '« 다중', 2줄 '미갱신'(다중 모니터링에 미갱신 기체가 있을 때만) → 왜 깜빡이는지 한눈에 */
+        .bb-att-back { flex-direction:column; gap:1px; height:auto; align-self:stretch; padding:0 9px; line-height:1.2; }
+        .bb-att-back .l2 { display:none; font-size:11.5px; }
+        .bb-att-back.alert .l2 { display:block; }
 
-        .bb-att-head { flex:0 0 auto; position:relative; padding:6px 8px; background:var(--sur); border-bottom:1px solid var(--bd); display:flex; flex-direction:column; gap:6px; z-index:3; }
-        .bb-att-r1 { display:flex; align-items:center; gap:8px; }
-        .bb-att-title { flex:1 1 auto; min-width:0; text-align:center; font-size:15px; line-height:1.25; color:var(--tx); }
+        .bb-att-head { flex:0 0 auto; position:relative; padding:6px 8px; background:var(--sur); border-bottom:1px solid var(--bd); display:grid; grid-template-columns:auto minmax(0,1fr); column-gap:8px; row-gap:6px; align-items:center; z-index:3; }
+        .bb-att-back { grid-row:1 / 3; grid-column:1; }
+        .bb-att-title { grid-column:2; min-width:0; text-align:center; font-size:15px; line-height:1.25; color:var(--tx); }
         .bb-att-title .n { color:var(--rd); }
         .bb-att-title .sep { color:var(--mu); }
         .bb-att-title .past { color:var(--or); }
-        .bb-att-r2 { display:flex; align-items:center; gap:5px; }
-        .bb-att-mbtn { min-width:46px; }
+        .bb-att-r2 { grid-column:2; min-width:0; display:flex; align-items:center; gap:5px; }
+        .bb-att-mbtn { min-width:44px; padding:0 7px; }
         .bb-att-mbtn.on { border-color:var(--bl); color:var(--bl); background:var(--bl2); }
         .bb-att-stat { margin-left:auto; font-size:11.5px; color:var(--mu); white-space:nowrap; }
         .bb-att-stat.warn { color:#c2410c; }
@@ -1149,10 +1153,8 @@
                             </div>
                             <div class="bb-mm-page" id="bb-mm-page-att">
                                 <div class="bb-att-head">
-                                    <div class="bb-att-r1">
-                                        <button class="bb-mm-nav bb-att-back" id="bb-att-back" title="다중 모니터링으로 돌아가기">« 다중</button>
-                                        <div class="bb-att-title" id="bb-att-title">이석/착석 현황</div>
-                                    </div>
+                                    <button class="bb-mm-nav bb-att-back" id="bb-att-back" title="다중 모니터링으로 돌아가기"><span class="l1">« 다중</span><span class="l2">미갱신</span></button>
+                                    <div class="bb-att-title" id="bb-att-title">이석/착석 현황</div>
                                     <div class="bb-att-r2">
                                         <button class="bb-mm-nav bb-att-mbtn" id="bb-att-mprev">--월</button>
                                         <button class="bb-mm-nav bb-att-mbtn" id="bb-att-mcur">--월</button>
@@ -4978,6 +4980,14 @@
         attRender();
     }
 
+    async function attGetDates(ym) {   // 그 달에 기록(일별 json)이 있는 날짜 목록 (5분 캐시)
+        const c = _attMonthCache['d' + ym];
+        if (c && Date.now() - c.at < 5 * 60000) return c.v;
+        const d = await attFetchJson(ATT_API + '/attendance-data?action=dates&ym=' + ym);
+        const v = (d && Array.isArray(d.dates)) ? d.dates : [];
+        _attMonthCache['d' + ym] = { at: Date.now(), v };
+        return v;
+    }
     async function attGetMonth(ym) {   // 월별 요약 (5분 캐시). 요약이 없으면 { days:{}, missing:true }
         const c = _attMonthCache[ym];
         if (c && Date.now() - c.at < 5 * 60000) return c.v;
@@ -5035,7 +5045,9 @@
                 else text = attHM(_attLive._at) + ' 확인';
             }
         }
-        st.textContent = text; st.classList.toggle('warn', warn);
+        st.title = text;   // 전체 문구는 툴팁으로 — 화면에는 좁은 자리에 맞게 짧게
+        st.textContent = warn ? '⚠ ' + ((text.match(/\d{2}:\d{2}/) || [])[0] || '실패') : text;
+        st.classList.toggle('warn', warn);
 
         // 카드 (한 행에 3명, 서버가 근무 시작 시각순으로 정렬해서 내려줌)
         const body = $att('bb-att-body');
@@ -5149,12 +5161,14 @@
         _attCalWhich = which;
         const ym = attMonths()[which === 'prev' ? 0 : 1];
         attRenderCal(ym, null);
-        try { const dig = await attGetMonth(ym); if (_attCalWhich === which) attRenderCal(ym, dig); } catch (e) { /* 점 표시만 못 함 */ }
+        let dates; try { dates = await attGetDates(ym); } catch (e) { dates = 'fail'; }
+        if (_attCalWhich === which) attRenderCal(ym, dates);
     }
-    function attRenderCal(ym, dig) {
+    // dates = 기록 있는 날짜 배열 | null(불러오는 중) | 'fail'(목록 조회 실패 → 지난 날짜는 모두 눌러볼 수 있게 함)
+    function attRenderCal(ym, dates) {
         const cal = $att('bb-att-cal'), y = +ym.slice(0, 4), m = +ym.slice(5);
-        const liveDate = attLiveDate(), yest = attAddDays(liveDate, -1), selDate = _attDate || liveDate;
-        const has = new Set(dig && dig.days ? Object.keys(dig.days) : []);
+        const liveDate = attLiveDate(), selDate = _attDate || liveDate;
+        const has = new Set(Array.isArray(dates) ? dates : []);
         const dow = new Date(Date.UTC(y, m - 1, 1)).getUTCDay(), dim = new Date(Date.UTC(y, m, 0)).getUTCDate();
 
         const grid = attEl('div', 'bb-att-cal-grid');
@@ -5162,8 +5176,8 @@
         for (let i = 0; i < dow; i++) grid.appendChild(attEl('div'));
         for (let d = 1; d <= dim; d++) {
             const ds = ym + '-' + attPad(d);
-            // 조회 가능: 확정된 날(월별 요약에 있는 날) + 어제(05시 전환 때 이미 아카이브됨) + 오늘(실시간)
-            const ok = has.has(ds) || ds === yest || ds === liveDate;
+            // 조회 가능: 일별 기록(json)이 있는 날 + 오늘(실시간)
+            const ok = has.has(ds) || ds === liveDate || (dates === 'fail' && ds < liveDate);
             const el = attEl('div', 'bb-att-day' + (ok ? ' has' : '') + (ds === liveDate ? ' today' : '') + (ds === selDate ? ' sel' : ''), String(d));
             if (ok) {
                 if (ds !== liveDate) el.appendChild(attEl('span', 'dot'));
