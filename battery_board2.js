@@ -186,7 +186,7 @@
         .bb-bk-name { min-width:64px; }
 
 
-        /* ── 고정 버튼 3종 (왼쪽 동숲 주민의 왼쪽): 3행 — [빈 버튼] / [🐢 저속충전 TOP5] / [🚫 임무 OFF] ── */
+        /* ── 고정 버튼 3종 (왼쪽 동숲 주민의 왼쪽): 3행 — [🔥 배터리 소모 TOP5] / [🐢 저속충전 TOP5] / [🚫 임무 OFF] ── */
         .bb-fixbtns {
             position:absolute; right:calc(50% + 261px); top:50%; transform:translateY(-50%);   /* 오른쪽 끝 = 왼쪽 동숲 주민(제목 왼쪽 151~251px)에서 10px 왼쪽 */
             width:140px; display:grid; grid-template-columns:1fr; gap:4px; z-index:3;   /* 높이 3×26 + 2×4 = 86px (헤더 104px 안) */
@@ -214,6 +214,9 @@
         #bb-fb-dis  { background:#ffdcc2; border-color:#f0b98d; color:#5a3413; }
         #bb-fb-dis:hover  { background:#ffd0ae; border-color:#e59d62; }
         #bb-fb-dis.active { background:#ffc59b; border-color:#8a4a17; }
+        #bb-fb-drain { background:#ffd3cc; border-color:#f0a59c; color:#5c1d16; }
+        #bb-fb-drain:hover { background:#ffc4bb; border-color:#e5857a; }
+        #bb-fb-drain.active { background:#ffb3a7; border-color:#8a2b1f; }
         #bb-fb-slow { background:#fff3b5; border-color:#e8d374; color:#514510; }
         #bb-fb-slow:hover { background:#ffec96; border-color:#d9bd45; }
         #bb-fb-slow.active { background:#ffe680; border-color:#7d6a0a; }
@@ -278,6 +281,7 @@
         .bb-sc-l3 { margin-top:4px; font-size:11px; color:var(--mu); }
         .bb-sc-l3 b { color:var(--tx); font-weight:800; }
         .bb-sc-eta { margin-left:auto; }
+        .bb-dr-st { flex-shrink:0; font-size:11px; font-weight:700; color:var(--mu); }   /* 배터리 소모 목록: 기체의 현재 상태(순찰 중/배달 중 …) */
 
         /* 동숲 캐릭터 (헤더: 제목 박스 오른쪽) — 캐릭터 선택/저장은 예전 그대로, 캠핑장 배경만 제외 */
         #bb-walker-wrap {   /* 우측 주민: 제목 박스 오른쪽 (좌측 주민과 좌우 대칭, 제목 박스에서 10px 띄움) */
@@ -776,6 +780,11 @@
         .bb-att-mt { width:100%; border-collapse:collapse; font-size:15px; font-variant-numeric:tabular-nums; }
         .bb-att-mt th { position:sticky; top:0; z-index:1; background:var(--sur); padding:14px 12px; font-size:14px; color:var(--tx); text-align:right; white-space:nowrap; border-bottom:2px solid var(--bd); cursor:pointer; user-select:none; }
         .bb-att-mt th:first-child { text-align:left; cursor:default; }
+        /* 이름 열 전체(헤더 ~ 마지막 근무자)를 검정 틀로 감쌈 — '이름을 더블클릭하면 로그가 열림'을 알려주기 위함. 표 테두리(collapse)와 상관없이 스크롤 헤더에서도 유지되도록 inset 그림자로 그림 */
+        .bb-att-mt th:first-child { box-shadow:inset 2px 0 0 #111, inset -2px 0 0 #111, inset 0 2px 0 #111; }
+        .bb-att-mt td:first-child { box-shadow:inset 2px 0 0 #111, inset -2px 0 0 #111; }
+        .bb-att-mt tbody tr:last-child td:first-child { box-shadow:inset 2px 0 0 #111, inset -2px 0 0 #111, inset 0 -2px 0 #111; }
+        .bb-att-mt th .hint { margin-left:5px; font-size:11px; font-weight:700; color:var(--mu); }
         .bb-att-mt th.sorted { background:#ffe0d6; }
         .bb-att-mt th.sorted::after { content:' ▾'; font-size:11px; }
         .bb-att-mt td { padding:11px 12px; text-align:right; white-space:nowrap; border-bottom:1px solid var(--bd); }
@@ -1067,7 +1076,7 @@
                 </div>
                 <!-- 좌: 고정 버튼 3종 (왼쪽 동숲 주민의 왼쪽) -->
                 <div class="bb-fixbtns" id="bb-fixbtns">
-                    <button id="bb-fb-empty" class="bb-fb bb-fb-empty" type="button" tabindex="-1" aria-hidden="true"></button>   <!-- 빈 버튼: 자리만 유지 (기능은 나중에 추가) -->
+                    <button id="bb-fb-drain" class="bb-fb" data-mode="drain" title="충전 중이 아닌 기체를 최근 6시간 안의 하락 기록으로 배터리가 빨리 닳는 순으로 (상위 5대) · 오른쪽 위 숫자 = 지금 소모 속도를 측정 중인 기체 수">🔥 배터리 소모 TOP5<b class="bb-fb-n"></b></button>
                     <button id="bb-fb-slow" class="bb-fb" data-mode="slow" title="충전 중(100% 미만)인 기체를 충전을 시작한 때부터 지금까지의 평균 속도가 더딘 순으로 (상위 5대) · 오른쪽 위 숫자 = 지금 충전 속도를 측정 중인 기체 수">🐢 저속충전 TOP5<b class="bb-fb-n"></b></button>
                     <button id="bb-fb-moff" class="bb-fb" data-mode="moff" title="현재 임무가 OFF 인 기체 · 오른쪽 위 숫자 = 해당 기체 수">🚫 임무 OFF<b class="bb-fb-n"></b></button>
                     <div class="bb-fbp" id="bb-fbp">
@@ -4133,7 +4142,7 @@
 
     // ============================================================
     // SECTION 17. 고정 버튼 3종 (제목 영역, 왼쪽 동숲 주민의 왼쪽)
-    //   저속충전 기체 TOP5 / 임무 OFF 기체 (왼쪽) + 방전 로그(최근 15일) (오른쪽 3종 버튼 중 가운데)
+    //   배터리 소모 TOP5 / 저속충전 기체 TOP5 / 임무 OFF 기체 (왼쪽) + 방전 로그(최근 15일) (오른쪽 3종 버튼 중 가운데)
     //   2분마다 데이터가 갱신될 때 버튼의 숫자 배지와, 열려 있는 목록 창이 함께 새로고침됨 (창을 띄워 둔 채로도)
     //   계산량은 기체 수(≈90대)에 비례하는 반복 몇 번뿐이라 갱신 한 번에 수 ms 수준
     // ============================================================
@@ -4147,6 +4156,12 @@
     const FB_CHG_MIN_MIN = 20;           // 충전 속도를 재려면 연속 충전이 이만큼(분) 이상 관측돼야 함
     const FB_CHG_GAP_MIN = 40;           // 기록이 이 시간(분) 넘게 끊기면 그 사이 충전이 이어졌는지 알 수 없어 그 앞은 자름
     const FB_SLOW_TOP = 5;               // 저속충전 목록에 보여줄 기체 수
+    const FB_DRAIN_TOP = 5;              // 배터리 소모 목록에 보여줄 기체 수
+    const FB_DRAIN_WINDOW_H = 6;         // 배터리 소모: 최근 이 시간(h) 안의 하락 기록만 봄 (한참 전에 빨리 닳은 기록은 무시)
+    const FB_DRAIN_MIN_MIN = 30;         // 소모 속도를 재려면 (충전이 아닌 상태가) 이만큼(분) 이상 관측돼야 함 — 1% 단위 표기 오차가 속도에 크게 얹히지 않도록 충전(20분)보다 조금 길게
+    const FB_DRAIN_RISE_PCT = 2;         // 충전 표시가 없어도 배터리가 이 값(%)보다 크게 오른 지점이 있으면 그 앞은 다른 사이클로 보고 자름
+    const FB_DRAIN_REL_R = 2.0, FB_DRAIN_REL_O = 1.4;   // 기준(전체 중앙값) 대비 이 배수 이상이면 빨강 / 주황
+    const FB_DRAIN_ABS_R = 15, FB_DRAIN_ABS_O = 10;     // 기준 속도를 못 구할 때(측정된 기체가 적거나 중앙값이 ~0) 절대 속도(%/h) 기준
     const FB_CHG_PEER_PCT = 15;          // "동급" = 배터리 % 차이가 이 이내인 충전 중 기체
     const FB_CHG_PEER_MIN = 3;           // 동급이 이 수 이상이어야 그 중앙값을 기준으로 삼음 (모자라면 충전 중 전체 중앙값)
     const FB_CHG_BUF_MS = 3 * 3600 * 1000;
@@ -4512,6 +4527,45 @@
         return { top: measured.slice(0, FB_SLOW_TOP), measured: measured.length, measuring: measuring.length, fullHist, charging: charging.length,
                  severe: measured.filter(m => m.sev === 'r').length };
     }
+    // ── 배터리 소모 TOP5: 충전 중이 아닌(켜져 있는) 기체를 "최근 6시간 안" 하락 속도가 빠른 순으로 (저속충전의 반대) ──
+    //   속도 = (구간 시작 배터리 − 지금 배터리) ÷ 관측한 시간.  구간 = 지금까지 이어진 '충전/OFF 가 아닌' 기록, 단 최근 FB_DRAIN_WINDOW_H 시간까지만.
+    //   null = 아직 재기엔 짧음(측정 중) / { rate, dtMin, startBat, startTs, cap } (cap = 6시간 창에 걸려 잘림)
+    function fbDrainRun(id, logs, now, curBat) {
+        const pts = fbSeriesFor(id, logs), winStart = now - FB_DRAIN_WINDOW_H * 3600000;
+        let start = null, prevTs = now, newerBat = curBat, cap = false;
+        for (let i = pts.length - 1; i >= 0; i--) {   // 최신부터 거꾸로, 충전/OFF 가 아닌 동안
+            const p = pts[i];
+            if (p.ts > now) continue;
+            if (p.st === 'charging' || p.st === 'off' || p.bat == null) break;         // 충전/OFF 를 만나면 거기가 시작 직전
+            if (prevTs - p.ts > FB_CHG_GAP_MIN * 60000) break;                          // 기록이 오래 끊겼으면 그 앞은 알 수 없음
+            if (p.bat < newerBat - FB_DRAIN_RISE_PCT) break;                            // 충전 표시 없이 배터리가 오른 지점 → 그 앞은 다른 사이클
+            if (p.ts < winStart) { cap = true; break; }                                 // 6시간보다 오래된 기록은 보지 않음
+            start = p; prevTs = p.ts; newerBat = p.bat;
+        }
+        if (!start) return null;
+        const dtMin = (now - start.ts) / 60000;
+        if (dtMin < FB_DRAIN_MIN_MIN) return null;
+        return { rate: (start.bat - curBat) / dtMin * 60, dtMin, startBat: start.bat, startTs: start.ts, cap };   // rate = %/시간 (양수 = 닳는 중)
+    }
+    function computeFastDrain(logs) {
+        const now = Date.now();
+        const active = DB.filter(r => r.status !== 'charging' && r.status !== 'off' && !r.loading && r.battery != null);
+        const measured = [], measuring = [];
+        active.forEach(r => {
+            const run = fbDrainRun(r.id, logs, now, r.battery);
+            if (!run) measuring.push(r); else measured.push({ r, ...run });
+        });
+        const ref = measured.length >= FB_CHG_PEER_MIN ? fbMedian(measured.map(m => m.rate)) : null;   // 측정된 기체 전체의 중앙값 = 이 기체들의 '보통' 소모 속도
+        measured.forEach(m => {
+            m.rel = (ref != null && ref > 0.5) ? m.rate / ref : null;   // 1 = 보통과 같음
+            m.sev = m.rel != null ? (m.rel >= FB_DRAIN_REL_R ? 'r' : m.rel >= FB_DRAIN_REL_O ? 'o' : 'g')
+                                  : (m.rate >= FB_DRAIN_ABS_R ? 'r' : m.rate >= FB_DRAIN_ABS_O ? 'o' : 'g');
+            m.eta = m.rate > 0.5 ? m.r.battery / m.rate : Infinity;      // 0% 까지 남은 시간(h)
+        });
+        const dropping = measured.filter(m => m.rate > 0).sort((a, b) => b.rate - a.rate);   // 닳고 있는 기체만, 빠른 순
+        return { top: dropping.slice(0, FB_DRAIN_TOP), measured: measured.length, measuring: measuring.length, active: active.length,
+                 severe: measured.filter(m => m.sev === 'r').length };
+    }
     function fbDurText(min) {
         const t = Math.round(min), h = Math.floor(t / 60), m = t % 60;
         return h ? `${h}시간${m ? ` ${m}분` : ''}` : `${m}분`;
@@ -4529,6 +4583,7 @@
         _fbData = {
             dis: dcBuildView(),   // 이 PC 기록 + 서버 기록 (최근 15일)
             sc: computeSlowCharge(logs),
+            dr: computeFastDrain(logs),
             mo: DB.filter(isMissionOff).sort((a, b) => a.name.localeCompare(b.name, 'ko', { numeric: true })),
         };
         return _fbData;
@@ -4592,6 +4647,31 @@
         }).join('');
         return h + `<div class="bb-fbp-foot">충전 중 ${sc.charging}대 · 측정 중 ${sc.measured}대${sc.measuring ? ` · 데이터 부족 ${sc.measuring}대` : ''}</div>`;
     }
+    function fbHtmlDrain(d) {
+        const dr = d.dr;
+        let h = `<div class="bb-fbp-note">충전 중이 아닌 기체의 최근 ${FB_DRAIN_WINDOW_H}시간 안 하락 기록으로 소모가 빠른 순 ${FB_DRAIN_TOP}대 · 막대가 붉을수록 빠름</div>`;
+        if (!dr.active) return h + `<div class="bb-fbp-empty">충전 중이 아닌 기체가 없습니다.</div>`;
+        if (!dr.measured) return h + `<div class="bb-fbp-empty">아직 소모 속도를 계산할 데이터가 부족합니다<br><span style="font-size:11px;font-weight:600;">충전이 끝난 뒤 ${FB_DRAIN_MIN_MIN}분 이상 지나야 계산됩니다 · 사용 중 ${dr.active}대</span></div>`;
+        if (!dr.top.length) return h + `<div class="bb-fbp-empty">배터리가 줄어들고 있는 기체가 없습니다 ✓</div>` + `<div class="bb-fbp-foot">사용 중 ${dr.active}대 · 측정 중 ${dr.measured}대${dr.measuring ? ` · 데이터 부족 ${dr.measuring}대` : ''}</div>`;
+        h += dr.top.map(m => {
+            const r = m.r;
+            const rateTxt = `-${m.rate.toFixed(1)}%/h`;
+            const eta = m.eta === Infinity ? '방전 예상 불가' : `방전까지 ${fbEtaText(m.eta)}`;
+            const lo = Math.min(m.startBat, r.battery), hi = Math.max(m.startBat, r.battery);   // 막대: 회색 = 지금 남은 배터리 / 색 = 그동안 닳은 구간
+            const since = m.cap ? `최근 ${FB_DRAIN_WINDOW_H}시간 기준` : `${fbClock(m.startTs)}부터 소모`;
+            const dur = m.cap ? `${fbDurText(m.dtMin)} 관측` : `${fbDurText(m.dtMin)}째`;
+            return `<div class="bb-fbp-row sc" data-rid="${fbEsc(r.id)}" title="${fbEsc(`${r.name} · ${since} · ${m.startBat}% → ${r.battery}% · 평균 ${rateTxt}`)}">
+                <div class="bb-sc-l1"><span class="bb-fbp-dot" style="background:${STATUS_AC[r.status] || 'var(--mu)'};"></span><span class="bb-fbp-name">${fbEsc(r.name)}</span><span class="bb-dr-st">${fbEsc(STL[r.status] || '')}</span><span class="bb-sc-bat">${r.battery}%</span></div>
+                <div class="bb-sc-l2">
+                    <span class="bb-sc-bar"><i class="bb-sc-base" style="width:${lo}%;"></i><i class="bb-sc-fill sev-${m.sev}" style="left:${lo}%;width:${Math.max(1.5, hi - lo)}%;"></i></span>
+                    <span class="bb-sc-rate">${rateTxt}</span>
+                    <span class="bb-sc-eta">${eta}</span>
+                </div>
+                <div class="bb-sc-l3"><b>${since}</b> · ${dur} · ${m.startBat}% → ${r.battery}%</div>
+            </div>`;
+        }).join('');
+        return h + `<div class="bb-fbp-foot">사용 중 ${dr.active}대 · 측정 중 ${dr.measured}대${dr.measuring ? ` · 데이터 부족 ${dr.measuring}대` : ''}</div>`;
+    }
     function fbHtmlMoff(d) {
         const note = `<div class="bb-fbp-note">전원 ON 기체 기준.</div>`;
         if (!d.mo.length) return note + `<div class="bb-fbp-empty">현재 임무 OFF 인 기체가 없습니다 ✓</div>`;
@@ -4614,6 +4694,7 @@
         const d = _fbData || fbCompute();
         const T = {
             dis:  ['방전 로그(최근 15일)',    `${d.dis.robots}대${d.dis.events.length !== d.dis.robots ? ` · ${d.dis.events.length}건` : ''}`],
+            drain:['배터리 소모 기체 TOP5',   `사용 중 ${d.dr.active}대`],
             slow: ['저속충전 기체 TOP5',     `충전 중 ${d.sc.charging}대`],
             moff: ['임무 OFF 기체',          `${d.mo.length}대`],
         }[_fbMode];
@@ -4621,13 +4702,14 @@
         document.getElementById('bb-fbp-cnt').textContent = T[1];
         const body = document.getElementById('bb-fbp-body');
         const keep = body.scrollTop;   // 2분마다 새로 그려도 보던 위치 유지
-        body.innerHTML = _fbMode === 'dis' ? fbHtmlDis(d) : _fbMode === 'slow' ? fbHtmlSlow(d) : fbHtmlMoff(d);
+        body.innerHTML = _fbMode === 'dis' ? fbHtmlDis(d) : _fbMode === 'drain' ? fbHtmlDrain(d) : _fbMode === 'slow' ? fbHtmlSlow(d) : fbHtmlMoff(d);
         body.scrollTop = keep;
     }
     function refreshFixedTools() {   // 2분 갱신마다 + 열 때마다 호출: 배지와 (열려 있다면) 목록 창을 최신으로
         try {
             fbCompute();
             fbSetBadge('bb-fb-dis', _fbData.dis.robots, _fbData.dis.recentSure ? 'r' : 'o');   // 숫자 = 최근 15일 방전 기체 수. 최근 24시간 안에 확정 방전이 있으면 빨강, 그 밖에는 주황
+            fbSetBadge('bb-fb-drain', _fbData.dr.measured, 'b');   // 배터리 소모: 지금 소모 속도를 측정 중인 기체 수 (데이터가 부족한 기체는 제외)
             fbSetBadge('bb-fb-slow', _fbData.sc.measured, 'b');   // 저속충전: 지금 충전 속도를 측정 중인 기체 수 (데이터가 부족해 아직 계산 못 하는 기체는 제외)
             fbSetBadge('bb-fb-moff', _fbData.mo.length, 'o');
             fbRender();
@@ -5632,6 +5714,7 @@
         const table = attEl('table', 'bb-att-mt'), hr = table.createTHead().insertRow();
         ATT_COLS.forEach(c => {
             const th = attEl('th', (c.key === _attSortKey ? 'sorted ' : '') + (c.cls === 'warn' ? 'warn' : ''), c.label);
+            if (c.label === '이름') th.appendChild(attEl('span', 'hint', '(더블클릭하여 열람)'));   // 이름 칸을 더블클릭하면 그 달 이석 로그가 열린다는 안내
             if (c.key) th.addEventListener('click', () => { _attSortKey = c.key; attRenderDetail(ym, dig, sched); });
             hr.appendChild(th);
         });
