@@ -1,5 +1,5 @@
 /* ============================================================
-   battery_board.js v6.0 (배달 기체 로그 · 하루 기준 07:00 · 금일 배달 건수 배지 · 고정 버튼 3종 무지개 파스텔)
+   battery_board.js v6.1 (배달 기체 로그 · 하루 기준 07:00 · 금일 배달 건수 배지 · 고정 버튼 3종 무지개 파스텔+이모지)
    NCC 종합 모니터 — 템퍼몽키 inject
    ============================================================ */
 
@@ -180,7 +180,7 @@
         .bb-bk-name { min-width:64px; }
 
 
-        /* ── 고정 버튼 3종 (왼쪽 동숲 주민의 왼쪽): 3행 — [최근 방전 기체(24H)] / [저속충전 기체 TOP5] / [임무 OFF 기체] ── */
+        /* ── 고정 버튼 3종 (왼쪽 동숲 주민의 왼쪽): 3행 — [🪫 최근 방전(24H)] / [🐢 저속충전 TOP5] / [🚫 임무 OFF] ── */
         .bb-fixbtns {
             position:absolute; right:calc(50% + 261px); top:50%; transform:translateY(-50%);   /* 오른쪽 끝 = 왼쪽 동숲 주민(제목 왼쪽 151~251px)에서 10px 왼쪽 */
             width:140px; display:grid; grid-template-columns:1fr; gap:4px; z-index:3;   /* 높이 3×26 + 2×4 = 86px (헤더 104px 안) */
@@ -892,9 +892,9 @@
                 </div>
                 <!-- 좌: 고정 버튼 3종 (왼쪽 동숲 주민의 왼쪽) -->
                 <div class="bb-fixbtns" id="bb-fixbtns">
-                    <button id="bb-fb-dis" class="bb-fb" data-mode="dis" title="최근 24시간 배터리 로그에서 2% 이하에 도달한 뒤 OFF 된 기체 · 오른쪽 위 숫자 = 해당 기체 수">최근 방전 기체(24H)<b class="bb-fb-n"></b></button>
-                    <button id="bb-fb-slow" class="bb-fb" data-mode="slow" title="충전 중(100% 미만)인 기체를 충전을 시작한 때부터 지금까지의 평균 속도가 더딘 순으로 (상위 5대) · 오른쪽 위 숫자 = 지금 충전 속도를 측정 중인 기체 수">저속충전 기체 TOP5<b class="bb-fb-n"></b></button>
-                    <button id="bb-fb-moff" class="bb-fb" data-mode="moff" title="현재 임무가 OFF 인 기체 · 오른쪽 위 숫자 = 해당 기체 수">임무 OFF 기체<b class="bb-fb-n"></b></button>
+                    <button id="bb-fb-dis" class="bb-fb" data-mode="dis" title="최근 24시간 배터리 로그에서 2% 이하에 도달한 뒤 OFF 된 기체 · 오른쪽 위 숫자 = 해당 기체 수">🪫 최근 방전(24H)<b class="bb-fb-n"></b></button>
+                    <button id="bb-fb-slow" class="bb-fb" data-mode="slow" title="충전 중(100% 미만)인 기체를 충전을 시작한 때부터 지금까지의 평균 속도가 더딘 순으로 (상위 5대) · 오른쪽 위 숫자 = 지금 충전 속도를 측정 중인 기체 수">🐢 저속충전 TOP5<b class="bb-fb-n"></b></button>
+                    <button id="bb-fb-moff" class="bb-fb" data-mode="moff" title="현재 임무가 OFF 인 기체 · 오른쪽 위 숫자 = 해당 기체 수">🚫 임무 OFF<b class="bb-fb-n"></b></button>
                     <div class="bb-fbp" id="bb-fbp">
                         <div class="bb-fbp-hd">
                             <span class="bb-fbp-title" id="bb-fbp-title"></span>
@@ -1058,7 +1058,7 @@
     document.body.appendChild(wrap);
 
     const bbEl = document.getElementById('bb');
-    // 다크모드는 삭제됨 → 항상 라이트. (#bb-theme-btn 은 나중에 재활용하려고 자리만 남겨 두고 "-" 만 표시)
+    // 다크모드는 삭제됨 → 항상 라이트. (#bb-theme-btn 은 나중에 재활용하려고 자리만 남겨 두고 "-" 만 표시, 동작 없음)
     const applyBbTheme = () => {
 		bbEl.classList.add('bb-light');
 		document.getElementById('bb-alert-panel').classList.add('bb-light');
@@ -2704,17 +2704,34 @@
 	const DV_EXCLUDE_NAMES = ['배송띠띠'];   // 배달 횟수에서 뺄 기체 (기체명에서 공백을 뺀 값에 이 글자가 들어 있으면 제외) — 더 빼려면 여기에 추가
 	let _dvUploading = false;
 	function dvExcluded(name) { const k = String(name || '').replace(/\s+/g, ''); return DV_EXCLUDE_NAMES.some(x => k.includes(x)); }
-	function dvStrip(days) {   // 제외 대상이 이미 기록돼 있으면 지움 (이 PC·서버 파일 모두). 지운 게 있으면 true
+	// 집계 시작일 — 이 날짜 '이전' 기록은 (어제 오전 기록이 비어 있는 등) 신뢰할 수 없어 화면·저장·서버 파일에서 모두 뺌. 15일이 지나면 자연히 의미가 없어지므로 그때 지워도 됨
+	const DV_START_DAY = '2026-09-21';
+	// 특정 기체는 이 시각(분) '이전에 시작된' 배달은 셈에서 뺌 — 성남형 로봇배달은 11:00 전의 '배달'이 실제 배달이 아니라 대기장소 이동용 임무 부여
+	const DV_LATE_START = [{ key: '성남형로봇배달', minMin: 11 * 60 }];
+	function dvNameKey(name) { return String(name || '').replace(/\s+/g, ''); }
+	function dvMinStartMin(name) { const k = dvNameKey(name); const r = DV_LATE_START.find(x => k.includes(x.key)); return r ? r.minMin : 0; }
+	// 기록 1건에 규칙 적용한 결과. 제외 대상이거나 남는 배달이 없으면 null (t = 각 배달 시작 시각 — 그래서 예전에 이미 저장된 값도 다시 걸러낼 수 있음)
+	function dvNormEntry(x) {
+		if (!x || !(x.n > 0) || dvExcluded(x.name)) return null;
+		const lim = dvMinStartMin(x.name);
+		if (!lim) return x;
+		const t = (Array.isArray(x.t) ? x.t : []).filter(v => wblDayAdjMin(v) >= lim);
+		return t.length ? { name: x.name, n: t.length, t } : null;
+	}
+	function dvStrip(days) {   // 이미 저장된 기록에도 규칙 적용 (이 PC·서버 파일 모두). 바뀐 게 있으면 true
 		let changed = false;
 		Object.keys(days || {}).forEach(d => Object.keys(days[d] || {}).forEach(id => {
-			if (dvExcluded(days[d][id] && days[d][id].name)) { delete days[d][id]; changed = true; }
+			const e = days[d][id], y = dvNormEntry(e);
+			if (!y) { delete days[d][id]; changed = true; }
+			else if (y.n !== e.n) { days[d][id] = y; changed = true; }
 		}));
 		return changed;
 	}
 
 	function dvDayIdx(day) { return Math.floor(new Date(day + 'T00:00:00Z').getTime() / 86400000); }
-	function dvPrune(days) {   // 15일(오늘 포함) 넘은 날짜는 잘라냄
-		const cutoff = dvDayIdx(wblGetDayKey() || wblTodayStr()) - (DV_RETENTION_DAYS - 1);
+	function dvCutoffIdx() { return Math.max(dvDayIdx(wblGetDayKey() || wblTodayStr()) - (DV_RETENTION_DAYS - 1), dvDayIdx(DV_START_DAY)); }
+	function dvPrune(days) {   // 15일(오늘 포함) 넘은 날짜, 그리고 집계 시작일 이전 날짜는 잘라냄
+		const cutoff = dvCutoffIdx();
 		Object.keys(days).forEach(d => { if (dvDayIdx(d) < cutoff) delete days[d]; });
 		return days;
 	}
@@ -2729,7 +2746,8 @@
 			const log = [...(e.log || [])].sort((a, b) => wblDayAdjMin(a.t) - wblDayAdjMin(b.t));
 			const t = []; let prev = null;
 			log.forEach(p => { if (p.status === 'delivering' && prev !== 'delivering') t.push(p.t); prev = p.status; });
-			if (t.length) out[id] = { name: e.name, n: t.length, t };
+			const y = dvNormEntry({ name: e.name, n: t.length, t });   // 성남형 11:00 이전 시작분 등 규칙 적용
+			if (y) out[id] = y;
 		});
 		return out;
 	}
@@ -2737,8 +2755,8 @@
 	// dst 에 src 를 합침 — 기체별로 횟수(n)가 더 큰 쪽을 채택
 	function dvMergeDay(dst, src) {
 		Object.keys(src || {}).forEach(id => {
-			const x = src[id];
-			if (!x || !(x.n > 0) || dvExcluded(x.name)) return;
+			const x = dvNormEntry(src[id]);
+			if (!x) return;
 			const d = dst[id];
 			if (!d || x.n > d.n) dst[id] = { name: x.name || (d && d.name) || id, n: x.n, t: Array.isArray(x.t) ? x.t : [] };
 		});
@@ -2757,7 +2775,7 @@
 		const loc = dvLoadLocal();
 		let changed = false;
 		[wblLoad(), wblLoadYesterdaySnapshot()].forEach(data => {
-			if (!data || !data.day) return;
+			if (!data || !data.day || dvDayIdx(data.day) < dvCutoffIdx()) return;   // 집계 시작일 이전 로그는 세지 않음
 			const fresh = dvCountFromWbl(data);
 			if (!Object.keys(fresh).length) return;
 			const day = loc.days[data.day] || (loc.days[data.day] = {});
