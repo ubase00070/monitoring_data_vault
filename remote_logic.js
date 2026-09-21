@@ -232,9 +232,8 @@
         "236": { site: "Hitachi Building Systems", unit: "#178" }, // 히타치 배달
         "168": { site: "서산 뜨레 바베큐", unit: "#145" }, // 서산 뜨레 바베큐
 		
-		"256": { site: "충남대학교병원", unit: "#229" }, // 충남대학교병원 두비
-		"303": { site: "충남대학교병원", unit: "#310" }, // 충남대학교병원 310호기
-		"304": { site: "충남대학교병원", unit: "#311" }, // 충남대학교병원 311호기
+		"303": { site: "충남대학교병원", unit: "#310" }, // 충남대학교병원 두비
+		"304": { site: "충남대학교병원", unit: "#311" }, // 충남대학교병원 달비
 
 		"312": { site: "수원 힐스테이트 푸르지오", unit: "#318" }, // 수원 힐스테이트 318호기
 		"313": { site: "수원 힐스테이트 푸르지오", unit: "#319" }, // 수원 힐스테이트 319호기
@@ -889,7 +888,52 @@
         }
     }
 
-    function syncTasksFromServer() {
+    /* TASK-SYNC-START */
+    // ── 서버 동기화 주기 ──
+    // syncTasksFromServer 는 맨 아래의 매분 타이머가 호출한다. 이 호출은 '알림 발동 / 09·18시 버튼 상태 / 남은 시간 표기'처럼
+    // 시간이 흐르면서 달라지는 것들을 분 단위로 다시 계산하는 역할도 겸하므로 매분 호출은 그대로 유지한다.
+    // 다만 '서버에서 새로 받아오는 네트워크 요청'은 시간대별로 간격을 둔다:
+    //   08:30~10:00 : 매분 (관리자가 일일업무를 집중 수정하는 시간대 — 기존과 동일)
+    //   그 외       : 5분마다 (그 사이의 매분 호출은 이미 받아 둔 데이터로 화면/알림만 다시 계산 — 네트워크 요청 없음)
+    // 이름 변경·대시보드 열기처럼 사용자가 직접 일으킨 동기화(force)는 언제나 새로 받아온다.
+    const TASK_SYNC_BUSY_FROM = 8 * 60 + 30;        // 08:30
+    const TASK_SYNC_BUSY_TO = 10 * 60;              // 10:00 (미포함)
+    const TASK_SYNC_IDLE_MS = 5 * 60 * 1000;        // 그 외 시간대의 서버 조회 간격
+    const TASK_SYNC_TOLERANCE_MS = 5000;            // 분 타이머의 미세한 오차로 한 주기(분)를 더 건너뛰지 않게 하는 여유
+    let _lastTaskSyncAt = 0;                        // 마지막으로 서버 조회를 시작한 시각 (0 = 곧바로 다시 시도)
+    function getTaskSyncIntervalMs() {
+        const d = new Date(), m = d.getHours() * 60 + d.getMinutes();
+        return (m >= TASK_SYNC_BUSY_FROM && m < TASK_SYNC_BUSY_TO) ? 0 : TASK_SYNC_IDLE_MS;   // 0 = 매분
+    }
+
+    // 받아 둔 데이터로 화면·알림을 처리한다 (네트워크 없음) — 서버에서 새로 받았을 때와, 받아 둔 데이터를 매분 다시 계산할 때 공용
+    function applyTaskData(data, insu) {
+        if (!Array.isArray(data)) throw new Error('tasks 응답 형식 오류');   // 서버 오류 응답이 정상 데이터를 덮어쓰지 않게 함
+        const myName = localStorage.getItem('neubie_user_name');
+        state.insuData = insu;
+        window.currentAllTasks = data; // 인계 체인(전임자/후임자) 조회용 — 필터링 전 전체 목록
+
+        const myTasks = data.filter(t => {
+            // 담당자란에 '홍길동/임꺽정'처럼 여러 명이 슬래시로 같이 적힌 경우, 그중 한 명이라도
+            // 나와 일치하면 그 업무는 나한테도 표시되어야 함 (seat_map.json 파싱 때와 동일한 관례)
+            const assignees = String(t.user || '').split('/').map(n => n.trim());
+            if (!assignees.includes(myName)) return false;
+            // next_0700_handover(내일 07시 다중모니터링 통합 인계 스냅샷)는
+            // 00:00~07:10 사이에만 미리보기로 표시. 그 이후엔 같은 07:00 업무가
+            // 정규 monitoring 항목으로 자연스럽게 이어지므로 중복 표시를 막는다.
+            if (t.type === 'next_0700_handover') {
+                return new Date().getHours() < 7;
+            }
+            return true;
+        });
+        window.currentMyTasks = myTasks;
+        checkAndTriggerNotifications(myTasks);
+
+        renderTaskList(myTasks);
+        if (typeof window.syncTiddiButtonState === 'function') window.syncTiddiButtonState();
+    }
+
+    function syncTasksFromServer(force) {
         const myName = localStorage.getItem('neubie_user_name');
         if (!myName) {
             window.currentMyTasks = [];
@@ -897,40 +941,34 @@
             return;
         }
 
+        // 이미 받아 둔 데이터가 있고 아직 새로 받을 때가 아니면 → 네트워크 없이 그 데이터로만 다시 계산
+        const hasCache = Array.isArray(window.currentAllTasks) && !!state.insuData;
+        if (!force && hasCache && (Date.now() - _lastTaskSyncAt) < getTaskSyncIntervalMs() - TASK_SYNC_TOLERANCE_MS) {
+            try { applyTaskData(window.currentAllTasks, state.insuData); } catch (e) { console.log('Local apply failed'); }
+            return;
+        }
+        _lastTaskSyncAt = Date.now();
+
         // daily_tasks는 서버리스 프록시(api/tasks) 경유 — GitHub Contents API를
         // 인증된 채로 직접 조회해서 raw.githubusercontent.com의 CDN 캐시 지연(몇 분)을
         // 우회함. insu_data는 변동이 잦지 않아 기존 raw 방식 그대로 유지.
-        const dataUrl = `https://multimonitoring.vercel.app/api/tasks?t=${Date.now()}`;
+        // ※ api/tasks 에는 ?t=Date.now() 나 cache:'no-store' 를 붙이지 않는다 — 서버가 시간대별로 CDN 캐시(08:30~10:00 3초 / 그 외 60초)를
+        //   걸어 두었는데, URL 이 매번 달라지면 그 캐시가 무력화되어 모든 PC 의 요청이 함수 실행으로 이어진다.
+        const dataUrl = 'https://multimonitoring.vercel.app/api/tasks';
 		const insuUrl = `https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/insu_data.json?t=${Date.now()}`;
 
         // daily_tasks + insu_data 병렬 fetch
         Promise.all([
-            fetch(dataUrl, {cache: 'no-store'}).then(r => r.json()),
+            fetch(dataUrl).then(r => r.json()),
             fetch(insuUrl, {cache: 'no-store'}).then(r => r.json()),
         ]).then(([data, insu]) => {
-            state.insuData = insu;
-            window.currentAllTasks = data; // 인계 체인(전임자/후임자) 조회용 — 필터링 전 전체 목록
-
-            const myTasks = data.filter(t => {
-                // 담당자란에 '홍길동/임꺽정'처럼 여러 명이 슬래시로 같이 적힌 경우, 그중 한 명이라도
-                // 나와 일치하면 그 업무는 나한테도 표시되어야 함 (seat_map.json 파싱 때와 동일한 관례)
-                const assignees = String(t.user || '').split('/').map(n => n.trim());
-                if (!assignees.includes(myName)) return false;
-                // next_0700_handover(내일 07시 다중모니터링 통합 인계 스냅샷)는
-                // 00:00~07:10 사이에만 미리보기로 표시. 그 이후엔 같은 07:00 업무가
-                // 정규 monitoring 항목으로 자연스럽게 이어지므로 중복 표시를 막는다.
-                if (t.type === 'next_0700_handover') {
-                    return new Date().getHours() < 7;
-                }
-                return true;
-            });
-            window.currentMyTasks = myTasks;
-            checkAndTriggerNotifications(myTasks);
-
-            renderTaskList(myTasks);
-            if (typeof window.syncTiddiButtonState === 'function') window.syncTiddiButtonState();
-        }).catch(err => console.log("Sync failed"));
+            applyTaskData(data, insu);
+        }).catch(err => {
+            _lastTaskSyncAt = 0;   // 실패하면 다음 분에 바로 다시 시도 (기존과 동일)
+            console.log("Sync failed");
+        });
     }
+    /* TASK-SYNC-END */
 
     // 레이아웃 노출 여부와 상관없이 알림만 전담하는 함수
     function checkAndTriggerNotifications(tasks) {
@@ -1600,7 +1638,7 @@
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
 		// 문자열을 넣으면 패치노트에 빨간 '`' 뱃지가 점멸하며 뜸.
 		// 빈 문자열('')로 비우면 뱃지가 사라짐.
-		const PATCH_NOTE_NEW_CONTENT = '엘스 인개원';
+		const PATCH_NOTE_NEW_CONTENT = '커스텀 핫키 00대 시작';
 
         // ── 패치노트 내용 ──────────────────────────────────────
         // 아래 patchItems 배열에 버전별 내용을 추가하세요 (버튼 라벨의 날짜도 이 배열의
@@ -1608,8 +1646,10 @@
         const patchItems = [
             {
                 version: 'v1.5',
-                date: '2026-09-18',
+                date: '2026-09-22',
                 items: [
+                    '다중 모니터링 자동시작 남은 기체명 및 대수 표기',
+                    'D-PAD UP 커스텀 핫키(원격페이지: UP 1초 홀드 시 설정창/버튼 입력 시 적용)',
 					'잠실 엘스, 인력개발원 다중 연결 확인 알림 기능',
 					'서브모니터링 버튼 추가',
                     '스케줄표/좌석도 라이트/다크 모드(디폴트 라이트)',
@@ -1620,7 +1660,6 @@
 					'맵 최적화 속도 개선(Dot 제거, 비타겟 site 이동 반영)',
 					'개입카드 진입 시 다음 개입 요청 토글 자동으로 OFF',
 					'임무 종료된 리센츠/엘스/한성대/진천 페이지 이탈 5초 후 자동 사이드',
-                    '게임패드 D-PAD 키변경 및 패드 테스터 기능 추가',
 					'다중 모니터링 자동 교대시작은 최대 12대까지 가능',
                 ]
             },
@@ -1797,7 +1836,7 @@
                         if (roster && roster.size > 0 && !roster.has(newName)) {
                             input.style.borderColor = '#ef4444';
                             localStorage.removeItem('neubie_user_name');
-                            syncTasksFromServer();
+                            syncTasksFromServer(true);
                             setTimeout(() => renderDashboard(), 350);
                             return;
                         }
@@ -1811,7 +1850,7 @@
                         localStorage.setItem('neubie_remind_int', intervalSelect.value);
                     }
 
-                    syncTasksFromServer();
+                    syncTasksFromServer(true);
                     renderDashboard();
                 };
             }
@@ -2197,6 +2236,7 @@
             queueInfoContent.id = 'neubie-queue-info-content';
             queueInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:${T.text}; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;`;
             queueInfoContent.innerHTML = `
+                자동시작 남은 기체명 및 대수 표기<br>
 				삭제 레이아웃 기체명 표기<br>
 				모니터링 생성 모달 우측 고정<br>
 				기체별 화질 조절<br>
@@ -2505,9 +2545,8 @@
 		const autoBtn = mkBtn('자동 시작', 'linear-gradient(135deg, #0f766e, #22c55e)',
 			{ color: '#fff', boxShadow: '0 0 10px rgba(34,197,94,0.4)', padding: '4px 8px' });
 
-		// [2026-09 임시 비활성화] '예정기체 자동 시작' 기능은 버그가 많아 로직/안내 말풍선을
-		// 모두 제거하고, 자리만 남겨둔 빈 버튼으로 대체함. 클릭해도 아무 동작도 하지 않음.
-		const dispatchBtn = mkBtn('빈 기능', 'linear-gradient(135deg, #7c3aed, #a78bfa)',
+		// [2026-09] 보라색 버튼 = '남은 기체 대수' 표시 버튼 (라벨/색/토스트는 아래 '남은 기체 대수' 블록에서 관리)
+		const dispatchBtn = mkBtn('…대 남음', 'linear-gradient(135deg, #7c3aed, #a78bfa)',
 			{ color: '#fff', boxShadow: '0 0 10px rgba(167,139,250,0.4)', padding: '4px 8px' });
 
 		rightBtns.appendChild(autoBtn);
@@ -2544,9 +2583,10 @@
 
 		const githubGet = async () => {
             try {
-                const res = await fetch(
+                const res = await fetchWithTimeout(
                     `https://multimonitoring.vercel.app/api/handover?t=${Date.now()}`,
-                    { cache: 'no-store' }
+                    { cache: 'no-store' },
+                    6000
                 );
                 if (!res.ok) return null;
                 const data = await res.json();
@@ -2571,6 +2611,214 @@
 
 		// [2026-09] dispatchGet/patchDispatchTaken('예정기체 자동 시작' 전용 GET/PATCH)은
 		// 해당 기능 비활성화와 함께 제거함.
+
+		// ══ 남은 기체 대수 (보라색 버튼) ═══════════════════════════════════════
+		// [성능/안전 설계]
+		//  · 폴링·setInterval·MutationObserver 없음. 네트워크 요청은 아래 3시점에만 1회씩 발생한다.
+		//      (1) 패널이 열릴 때   (2) 보라색 버튼 클릭 시   (3) 자동시작 taken 반영 직후
+		//  · 조회는 동시에 1개만 진행(_inflight 공유) + 버튼 연타는 0.5초 간격으로 제한 → 요청 폭주 없음
+		//  · 이 탭에서 카메라 연결이 확인된 기체(_localTaken)는 서버 응답이 늦거나 오래된 값이어도
+		//    '시작됨'으로 유지한다(서버 반영 지연으로 대수가 되돌아가는 현상 방지).
+		//  · 응답이 없거나 실패하면 0대가 아니라 '확인 불가'로 표시한다(거짓 0 방지).
+		let _lastData = null;      // 마지막 서버 JSON (null = 조회 실패)
+		let _loading = true;       // 첫 조회 전 / 패널 재오픈 직후
+		let _inflight = null;      // 진행 중인 조회 Promise
+		let _lastFetchAt = 0;
+		let _toastOpen = false;
+		let _shownKey = '';        // 버튼에 마지막으로 표시한 값 (값이 바뀔 때만 펄스 재생)
+		const _localTaken = new Set();
+		let _localSig = '';
+
+		if (!document.getElementById('ho-dispatch-style')) {
+			const st = document.createElement('style');
+			st.id = 'ho-dispatch-style';
+			st.textContent = `@keyframes ho-dispatch-pulse {
+				0%, 100% { box-shadow: 0 0 10px rgba(167,139,250,0.4); transform: scale(1); }
+				50% { box-shadow: 0 0 20px rgba(196,181,253,0.95); transform: scale(1.07); }
+			}`;
+			document.head.appendChild(st);
+		}
+
+		// 새 인계(units 목록이 달라짐)가 오면 이 탭의 로컬 taken 기록을 비운다
+		const syncSig = (data) => {
+			const units = Array.isArray(data?.units) ? data.units : [];
+			const sig = units.join('|');
+			if (sig !== _localSig) { _localSig = sig; _localTaken.clear(); }
+			return units;
+		};
+
+		// state: loading | ok | done(전부 시작됨) | expired(20분 초과) | empty(기체 없음) | error(조회 실패)
+		const calcRemaining = () => {
+			try {
+				if (_loading) return { state: 'loading', names: [] };
+				if (!_lastData) return { state: 'error', names: [] };
+				if (!isDataValid(_lastData.updatedAt)) return { state: 'expired', names: [] };
+				const units = syncSig(_lastData);
+				if (!units.length) return { state: 'empty', names: [] };
+				const done = new Set(Array.isArray(_lastData.taken) ? _lastData.taken : []);
+				_localTaken.forEach(n => done.add(n));
+				const names = units.filter(u => !done.has(u));
+				return { state: names.length ? 'ok' : 'done', names };
+			} catch (e) {
+				console.log('calcRemaining 오류:', e);
+				return { state: 'error', names: [] };
+			}
+		};
+
+		const BTN_ON  = 'linear-gradient(135deg, #7c3aed, #a78bfa)';
+		const BTN_OFF = 'linear-gradient(135deg, #4b4270, #6b6390)';
+		const BTN_ERR = 'linear-gradient(135deg, #374151, #4b5563)';
+
+		const renderDispatchBtn = (rem) => {
+			let text = '…대 남음', bg = BTN_ON, glow = '0 0 10px rgba(167,139,250,0.4)';
+			let pulse = false, key = 'loading';
+			if (rem.state === 'ok') {
+				text = `${rem.names.length}대 남음`; pulse = true; key = 'ok:' + rem.names.join('|');
+			} else if (rem.state === 'error') {
+				text = '확인 불가'; bg = BTN_ERR; glow = 'none'; key = 'error';
+			} else if (rem.state !== 'loading') {
+				text = '0대 남음'; bg = BTN_OFF; glow = 'none'; key = 'zero:' + rem.state;
+			}
+			dispatchBtn.textContent = text;
+			dispatchBtn.style.background = bg;
+			dispatchBtn.style.boxShadow = glow;
+			dispatchBtn.style.minWidth = '74px';
+			if (key !== _shownKey) {          // 값이 실제로 바뀐 경우에만 강조(3회 깜빡 후 정지 — 무한 애니메이션 아님)
+				_shownKey = key;
+				dispatchBtn.style.animation = 'none';
+				if (pulse) {
+					void dispatchBtn.offsetWidth;   // 애니메이션 재시작용 리플로우(값 변경 시 1회)
+					dispatchBtn.style.animation = 'ho-dispatch-pulse 1.1s ease-in-out 3';
+				}
+			}
+		};
+
+		// ── 우측으로 삐져나오는 토스트 (패널 자식이라 패널이 접히면 같이 사라짐) ──
+		const toast = document.createElement('div');
+		toast.id = 'ho-remain-toast';
+		Object.assign(toast.style, {
+			position: 'absolute', display: 'none', top: '6px', left: 'calc(100% + 8px)',
+			minWidth: '130px', maxWidth: '230px', boxSizing: 'border-box',
+			background: '#1c1c1f', border: '1px solid rgba(167,139,250,0.55)', borderRadius: '10px',
+			padding: '8px 10px', fontFamily: 'Pretendard,sans-serif', color: '#e5e7eb',
+			boxShadow: '0 6px 20px rgba(0,0,0,0.45), 0 0 12px rgba(167,139,250,0.18)',
+			opacity: '0', transform: 'translateX(-10px)',
+			transition: 'opacity .18s ease, transform .18s ease',
+		});
+		panel.appendChild(toast);
+
+		const TOAST_DESC = {
+			done:    '모두 시작되었어요',
+			expired: '유효한 교대 데이터가 없어요 (20분 초과)',
+			empty:   '교대 기체 데이터가 없어요',
+			error:   '서버 조회에 실패했어요. 버튼을 다시 눌러 재시도해주세요',
+		};
+
+		const renderToast = (rem) => {
+			const head = document.createElement('div');
+			Object.assign(head.style, { fontSize: '11px', fontWeight: '700', color: '#c4b5fd', marginBottom: '5px' });
+			const parts = [head];
+			if (rem.state === 'loading') {
+				head.textContent = '확인 중…';
+			} else if (rem.state === 'ok') {
+				head.textContent = `남은 기체 ${rem.names.length}대`;
+				const list = document.createElement('div');
+				Object.assign(list.style, { display: 'flex', flexDirection: 'column', gap: '3px', maxHeight: '150px', overflowY: 'auto' });
+				rem.names.forEach(n => {
+					const row = document.createElement('div');
+					row.textContent = n;   // textContent만 사용 (서버 문자열을 HTML로 해석하지 않음)
+					row.title = n;
+					Object.assign(row.style, {
+						fontSize: '12px', fontWeight: '600', color: '#f5f3ff', background: 'rgba(167,139,250,0.14)',
+						borderRadius: '5px', padding: '2px 7px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+					});
+					list.appendChild(row);
+				});
+				parts.push(list);
+			} else {
+				head.textContent = rem.state === 'error' ? '확인 불가' : '0대 남음';
+				const desc = document.createElement('div');
+				desc.textContent = TOAST_DESC[rem.state] || '';
+				Object.assign(desc.style, { fontSize: '12px', color: '#9ca3af', lineHeight: '1.4' });
+				parts.push(desc);
+			}
+			toast.replaceChildren(...parts);
+		};
+
+		// 오른쪽 공간이 모자라면(좁은 창) 패널 아래쪽 우측 정렬로 폴백
+		const placeToast = () => {
+			const r = panel.getBoundingClientRect();
+			if (r.right + 8 + 232 <= window.innerWidth) {
+				Object.assign(toast.style, { top: '6px', left: 'calc(100% + 8px)', right: 'auto' });
+			} else {
+				Object.assign(toast.style, { top: 'calc(100% + 6px)', left: 'auto', right: '0' });
+			}
+		};
+		const showToast = () => {
+			_toastOpen = true;
+			renderToast(calcRemaining());
+			placeToast();
+			toast.style.display = 'block';
+			void toast.offsetWidth;   // 슬라이드 인 트랜지션용 리플로우(열 때 1회)
+			toast.style.opacity = '1';
+			toast.style.transform = 'translateX(0)';
+		};
+		const hideToast = () => {
+			_toastOpen = false;
+			toast.style.display = 'none';
+			toast.style.opacity = '0';
+			toast.style.transform = 'translateX(-10px)';
+		};
+
+		const renderAll = () => {
+			const rem = calcRemaining();
+			renderDispatchBtn(rem);
+			if (_toastOpen) renderToast(rem);
+			return rem;
+		};
+
+		// 서버 조회 (동시에 1개만). 성공/실패와 무관하게 반드시 종료되고, 결과를 버튼·토스트에 반영한다.
+		const refreshRemaining = () => {
+			if (_inflight) return _inflight;
+			_lastFetchAt = Date.now();
+			_inflight = (async () => {
+				let r = null;
+				try { r = await githubGet(); } catch (e) { r = null; }
+				_lastData = r ? r.data : null;
+				_loading = false;
+				try { renderAll(); } catch (e) { console.log('renderAll 오류:', e); }
+				return r;
+			})().finally(() => { _inflight = null; });
+			return _inflight;
+		};
+
+		// 자동시작 직후: 카메라 연결이 확인된 기체를 즉시(0ms) 반영 — 서버 왕복을 기다리지 않는다
+		const applyLocalTaken = (data, names) => {
+			try {
+				_lastData = data; _loading = false;
+				syncSig(data);
+				names.forEach(n => _localTaken.add(n));
+				renderAll();
+			} catch (e) { console.log('applyLocalTaken 오류:', e); }
+		};
+
+		// 패널이 (다시) 열릴 때 alt+q 핸들러가 호출: 토스트 닫고 → '…대 남음' → 최신값 조회
+		panel._onOpen = () => { hideToast(); _lastData = null; _loading = true; renderAll(); refreshRemaining(); };
+		panel._renderRemaining = () => { try { renderAll(); } catch (e) {} };
+
+		dispatchBtn.addEventListener('click', () => {
+			if (_toastOpen) {
+				if (calcRemaining().state === 'error') {   // 조회 실패 안내가 떠 있을 땐 '다시 누르면 재시도'
+					_lastData = null; _loading = true; renderAll();
+					refreshRemaining();
+					return;
+				}
+				hideToast(); return;
+			}
+			showToast();                                            // 갖고 있는 값으로 즉시 표시
+			if (Date.now() - _lastFetchAt > 500) refreshRemaining();  // 최신값 재조회 → 도착하면 자동 갱신 (연타 제한 0.5초)
+		});
+		// ══ 남은 기체 대수 끝 ═══════════════════════════════════════════════════
 
 		// ── 교대받기 버튼 ──
 		let _fetchBtnRunning = false;
@@ -2771,9 +3019,11 @@
 			if (!checkedUnits.length) return;
 
 			if (confirmed) {
+				applyLocalTaken(result.data, checkedUnits); // 카메라 연결 확인 즉시 '##대 남음' 반영 (서버 왕복 대기 없음)
 				let ok = await patchTaken(checkedUnits);
 				if (!ok) ok = await patchTaken(checkedUnits); // 실패 시 1회 재시도
 				if (ok) {
+					refreshRemaining(); // 서버 기준 재확인 (기다리지 않음. 실패해도 로컬 반영값 유지)
 					setDpMsg(`${checkedUnits.length}대 시작 및 서버 반영 완료`, '#22c55e');
 				} else {
 					setDpMsg(`${checkedUnits.join(', ')} 카메라는 연결됐지만 서버 반영에 실패했어요 — 다른 탭에서 중복 시도될 수 있으니 새로고침 후 확인해주세요`, '#ef4444');
@@ -2783,9 +3033,7 @@
 			}
 		});
 
-		// [2026-09 임시 비활성화] '예정기체 자동 시작' 로직 전체 제거 — 클릭해도 아무 일도
-		// 일어나지 않는 빈 버튼으로 남겨둠.
-		dispatchBtn.addEventListener('click', () => {});
+		// (보라색 버튼 클릭 핸들러는 위 '남은 기체 대수' 블록에 있음)
 
 		posBtn.addEventListener('click', () => {
 			const cards = [...document.querySelectorAll(
@@ -2848,7 +3096,7 @@
 
 		// ── 자동 Fetch (패널 열릴 때 1회) ──
 		setDpMsg('인계 데이터 확인 중...', '#3b82f6');
-		const result = await githubGet();
+		const result = await refreshRemaining();
 		if (result && isDataValid(result.data.updatedAt)) {
             const units = result.data.units || [];
             if (units.length) {
@@ -2863,22 +3111,28 @@
         }
 
         // ── 20분 만료 감시 (30초마다) ──
-        const expiryInterval = setInterval(() => {
+        clearInterval(window.__hoExpiryTimer);   // 패널 재생성 시 이전 타이머 정리 (누적 방지)
+        const expiryInterval = window.__hoExpiryTimer = setInterval(() => {
+            if (!panel.isConnected) { clearInterval(expiryInterval); return; }   // 패널이 제거됐으면 타이머 종료
             if (panel.style.top !== '0px') return;   // 패널 닫혀있으면 스킵
             if (!isDataValid(result?.data?.updatedAt)) {
                 setDpMsg('20분 초과, 기체 목록 만료됨', '#ef4444');
+                panel._renderRemaining?.();   // 만료 순간 보라색 버튼도 '0대 남음'으로
                 clearInterval(expiryInterval);
             }
         }, 30000);
 
-		// 패널 외부 클릭 시 닫기
-		document.addEventListener('mousedown', (e) => {
-			const p = document.getElementById('ho-remote-panel');
-			if (!p) return;
-			if (p.contains(e.target)) return;
-			if (e.target.closest('[data-qk="remote-multiple-select-robot-dialog"]')) return;
-			p.style.top = '-300px';
-		});
+		// 패널 외부 클릭 시 닫기 (패널이 재생성돼도 리스너는 document에 1번만 등록)
+		if (!window.__hoOutsideBound) {
+			window.__hoOutsideBound = true;
+			document.addEventListener('mousedown', (e) => {
+				const p = document.getElementById('ho-remote-panel');
+				if (!p) return;
+				if (p.contains(e.target)) return;
+				if (e.target.closest('[data-qk="remote-multiple-select-robot-dialog"]')) return;
+				p.style.top = '-300px';
+			});
+		}
 	}
 	// ── 핸드오버 레이아웃 끝 ──────────────────────────────
 	
@@ -3892,7 +4146,7 @@
 				if (existing) {
 					const isOpen = existing.style.top === '0px';
 					existing.style.top = isOpen ? '-300px' : '0px';
-					if (!isOpen) existing._reopenDispatchHint?.(); // 닫혀있다가 지금 여는 경우 — 말풍선 닫힘 상태 초기화
+					if (!isOpen) existing._onOpen?.(); // 닫혀있다가 지금 여는 경우 — 남은 기체 대수 새로 조회
 				} else {
 					initHandoverLayout();
 				}
@@ -5811,7 +6065,7 @@
 			} else {
 				renderDashboard();
 				dashboard.style.display = 'block';
-				syncTasksFromServer();
+				syncTasksFromServer(true);
 			}
 		}
 
@@ -6269,13 +6523,360 @@
             }, 150);
         };
 	
+	    // ══════════════════════════════════════════════════════════
+	    //  D-PAD ↑ 프리셋 — 짧게 누르면 저장된 값(밝기/화질/지도 확대) 일괄 적용,
+	    //  1초 홀드하면 화면 상단 중앙에 설정 토스트가 뜬다.
+	    //  · 별도 타이머/루프 없음: 아래 기존 100ms 폴링이 handleDpadUpTick()만 호출한다.
+	    //  · 토스트는 포커스를 가져가지 않으며(pointer 클릭 전까지), 조작이 없으면 3초 뒤 사라진다.
+	    //  · 일반 접속(/remote/robot/N[/new])과 개입카드(/remote/multiple/driving/...) 모두 동일 경로.
+	    // ══════════════════════════════════════════════════════════
+	    const PRESET_KEY = 'neubie_dpad_up_preset';
+	    const PRESET_HOLD_MS = 1000;
+	    const PRESET_PANEL_AUTO_CLOSE_MS = 3000;   // 마지막 조작 후 이 시간이 지나면 자동 종료
+	    const PRESET_SELECT_OPEN_GRACE_MS = 10000;  // 드롭다운 목록을 펼친 동안엔 고르는 시간을 넉넉히 준다
+	    const QUALITY_LABELS = ['최소', '낮음', '중간', '높음', '최대'];
+	    const presetSleep = ms => new Promise(r => setTimeout(r, ms));
+
+	    // 주소로 페이지 종류/신버전 여부 판별 (신버전 = 경로에 /new 세그먼트)
+	    const getPresetPageMode = () => {
+	        const p = location.pathname;
+	        return {
+	            kind: /\/remote\/robot\/\d+/.test(p) ? 'robot'
+	                : (p.includes('/remote/multiple/driving/') ? 'driving' : null),
+	            isNew: /\/new(?:\/|$)/.test(p),
+	        };
+	    };
+
+	    // ── 저장/불러오기 (localStorage) ──
+	    const sanitizePreset = (o) => {
+	        if (!o || typeof o !== 'object') return null;
+	        let b = parseFloat(o.brightness);
+	        b = Number.isFinite(b) ? Math.round(Math.min(3, Math.max(0.5, b)) * 10) / 10 : null;
+	        let q = parseInt(o.quality, 10);
+	        q = (q >= 1 && q <= 5) ? q : null;
+	        let z = parseInt(o.zoom, 10);
+	        z = (z >= 1 && z <= 5) ? z : 0;
+	        return { brightness: b, quality: q, zoom: z };   // null / 0 = "변경 안 함"
+	    };
+	    const loadPreset = () => {
+	        try { return sanitizePreset(JSON.parse(localStorage.getItem(PRESET_KEY))); }
+	        catch (e) { return null; }
+	    };
+	    const savePreset = (p) => {
+	        try { localStorage.setItem(PRESET_KEY, JSON.stringify(p)); return true; }
+	        catch (e) { return false; }
+	    };
+
+	    // ── 현재 화면 상태 읽기 ──
+	    const getBrightnessRange = () => document.querySelector('input[type="range"][min="0.5"][max="3"]');
+	    const getBrightnessWrapper = () => document.querySelector('[data-qk*="cam-brightness-select-select-wrapper"]');
+	    // 오디오 select와 data-qk가 겹치므로 input value가 1~5인 것(=영상 화질)만 선택
+	    const getQualityWrapper = () => [...document.querySelectorAll('[data-qk$="bitrate-select-select-wrapper"]')]
+	        .find(el => { const i = el.querySelector('input'); return i && /^[1-5]$/.test(i.value); });
+	    const readBrightness = () => {
+	        const r = getBrightnessRange();
+	        const raw = r ? r.value : getBrightnessWrapper()?.querySelector('input')?.value;
+	        const v = parseFloat(raw);
+	        return Number.isFinite(v) ? Math.round(v * 10) / 10 : null;
+	    };
+	    const readQuality = () => {
+	        const v = parseInt(getQualityWrapper()?.querySelector('input')?.value, 10);
+	        return (v >= 1 && v <= 5) ? v : null;
+	    };
+
+	    // ── 드롭다운에서 옵션 하나 선택 (열기 → 옵션 대기 → 클릭). 실패 시 열린 채 두지 않고 닫는다 ──
+	    const pickFromDropdown = async (wrapper, optSel, match, fallbackIdx) => {
+	        if (!wrapper) return false;
+	        const waitOpts = async (maxMs) => {
+	            for (let t = 0; t < maxMs; t += 50) {
+	                const found = [...document.querySelectorAll(optSel)];
+	                if (found.length) return found;
+	                await presetSleep(50);
+	            }
+	            return [];
+	        };
+	        let opts = [...document.querySelectorAll(optSel)];   // 이미 열려 있으면 다시 누르지 않음(닫힘 방지)
+	        if (!opts.length) {
+	            wrapper.click();
+	            opts = await waitOpts(500);
+	            if (!opts.length) {                               // 폴백: 마우스 이벤트 전체 합성
+	                const o = { bubbles: true, cancelable: true, view: window };
+	                ['mousedown', 'mouseup', 'click'].forEach(t => wrapper.dispatchEvent(new MouseEvent(t, o)));
+	                opts = await waitOpts(500);
+	            }
+	        }
+	        if (!opts.length) return false;
+	        const hit = opts.find(match) || (fallbackIdx != null ? opts[fallbackIdx] : null);
+	        if (!hit) { wrapper.click(); return false; }          // 못 찾으면 목록 닫기
+	        (hit.querySelector('span') || hit).click();
+	        await presetSleep(200);
+	        return true;
+	    };
+
+	    // ── 밝기: 신버전은 슬라이더, 구버전은 드롭다운. 주소(/new)로 우선순위를 정하고 안 되면 다른 방식으로 폴백 ──
+	    // 반환: 'same'(이미 그 값) | 'changed' | 'fail' | null(이 방식 사용 불가)
+	    const setBrightnessBySlider = (v) => {
+	        const rng = getBrightnessRange();
+	        if (!rng) return null;
+	        if (Math.abs(parseFloat(rng.value) - v) < 0.001) return 'same';
+	        const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+	        nativeSetter.call(rng, String(v));
+	        rng.dispatchEvent(new Event('input', { bubbles: true }));
+	        rng.dispatchEvent(new Event('change', { bubbles: true }));
+	        return 'changed';
+	    };
+	    const setBrightnessByDropdown = async (v) => {
+	        const wrapper = getBrightnessWrapper();
+	        if (!wrapper) return null;
+	        const cur = parseFloat(wrapper.querySelector('input')?.value);
+	        if (Math.abs(cur - v) < 0.001) return 'same';
+	        const ok = await pickFromDropdown(wrapper, '[data-qk*="cam-brightness-select-option"]',
+	            li => Math.abs(parseFloat(li.textContent.replace(/[^\d.]/g, '')) - v) < 0.001);
+	        return ok ? 'changed' : 'fail';
+	    };
+	    const setBrightness = async (v, mode) => {
+	        const bySlider = async () => setBrightnessBySlider(v);
+	        const byDropdown = () => setBrightnessByDropdown(v);
+	        for (const fn of (mode.isNew ? [bySlider, byDropdown] : [byDropdown, bySlider])) {
+	            const r = await fn();
+	            if (r === 'same' || r === 'changed') return r;
+	        }
+	        return 'fail';
+	    };
+
+	    // ── 화질: 신/구버전 공통 드롭다운 (1=최소 … 5=최대) ──
+	    const setQuality = async (level) => {
+	        const wrapper = getQualityWrapper();
+	        if (!wrapper) return 'fail';
+	        if (parseInt(wrapper.querySelector('input').value, 10) === level) return 'same';
+	        const label = QUALITY_LABELS[level - 1];
+	        const ok = await pickFromDropdown(wrapper, '[data-qk$="bitrate-select-option"]',
+	            li => li.textContent.replace(/화질/g, '').trim() === label, level - 1);
+	        return ok ? 'changed' : 'fail';
+	    };
+
+	    // ── 지도 확대: Google Map 인스턴스를 React fiber에서 1회 찾아 캐시 (이후엔 탐색 없음) ──
+	    let cachedMap = null;
+	    const findGoogleMapInstance = () => {
+	        const isMap = o => { try { return o && typeof o === 'object' && typeof o.getZoom === 'function' && typeof o.setZoom === 'function' && typeof o.getCenter === 'function'; } catch (e) { return false; } };
+	        const SKIP = new Set(['return', 'alternate', 'child', 'sibling', '_debugOwner', '_owner', '_debugHookTypes']);
+	        let budget = 60000;
+	        const search = (root, maxDepth = 5) => {
+	            const seen = new WeakSet(), q = [[root, 0]];
+	            while (q.length && budget-- > 0) {
+	                const [o, d] = q.shift();
+	                if (!o || (typeof o !== 'object' && typeof o !== 'function')) continue;
+	                if (o instanceof Node || o === window || seen.has(o)) continue;
+	                seen.add(o);
+	                if (isMap(o)) return o;
+	                if (d >= maxDepth) continue;
+	                let keys; try { keys = Object.keys(o); } catch (e) { continue; }
+	                for (const k of keys) {
+	                    if (SKIP.has(k)) continue;
+	                    let v; try { v = o[k]; } catch (e) { continue; }
+	                    q.push([v, k === 'next' ? d : d + 1]);   // 훅 연결 리스트는 깊이에 안 셈
+	                }
+	            }
+	            return null;
+	        };
+	        let node = document.querySelector('.gm-style') || document.querySelector('[aria-label="지도"]');
+	        while (node) {
+	            const fk = Object.keys(node).find(k => k.startsWith('__reactFiber$'));
+	            if (fk) {
+	                let f = node[fk];
+	                while (f) {
+	                    const m = search(f.memoizedProps) || search(f.memoizedState) ||
+	                              (f.stateNode && !(f.stateNode instanceof Node) ? search(f.stateNode) : null);
+	                    if (m) return m;
+	                    f = f.return;
+	                }
+	            }
+	            node = node.parentElement;
+	        }
+	        return null;
+	    };
+	    const getMapInstance = () => {
+	        try { if (cachedMap && cachedMap.getDiv().isConnected) return cachedMap; } catch (e) {}
+	        cachedMap = null;
+	        try { cachedMap = findGoogleMapInstance(); } catch (e) {}
+	        return cachedMap;
+	    };
+	    const zoomMapIn = (steps) => {
+	        const map = getMapInstance();
+	        if (!map) return 'fail';
+	        map.setZoom(Math.min(21, map.getZoom() + steps));   // LT를 steps번 누른 것과 같은 상대 확대
+	        return 'changed';
+	    };
+
+	    // ── 적용 결과 안내(포커스/클릭 영향 없음, 잠깐 표시 후 제거) ──
+	    let presetNoticeEl = null, presetNoticeTimer = null;
+	    const showPresetNotice = (text, ms = 2000, warn = false) => {
+	        clearTimeout(presetNoticeTimer);
+	        if (!presetNoticeEl || !presetNoticeEl.isConnected) {
+	            presetNoticeEl = document.createElement('div');
+	            presetNoticeEl.id = 'neubie-dpad-preset-notice';
+	            document.body.appendChild(presetNoticeEl);
+	        }
+	        const top = (presetPanelEl && presetPanelEl.isConnected) ? presetPanelEl.getBoundingClientRect().bottom + 6 : 4;
+	        presetNoticeEl.style.cssText = `
+	            position:fixed; top:${top}px; left:50%; transform:translateX(-50%);
+	            z-index:999999; pointer-events:none; white-space:nowrap;
+	            background:rgba(18,18,36,0.95); border:1px solid ${warn ? '#f59e0b' : '#6a6aaa'};
+	            border-radius:12px; padding:8px 18px; font-size:14px; font-weight:600;
+	            font-family:'Pretendard','Noto Sans KR',sans-serif; color:${warn ? '#fcd34d' : '#e2e8f0'};
+	            box-shadow:0 4px 20px rgba(0,0,0,0.5);
+	        `;
+	        presetNoticeEl.textContent = text;
+	        presetNoticeTimer = setTimeout(() => { presetNoticeEl?.remove(); presetNoticeEl = null; }, ms);
+	    };
+
+	    // ── 프리셋 적용 ──
+	    let presetBusy = false;
+	    const applyPreset = async () => {
+	        if (presetBusy) return;
+	        const p = loadPreset();
+	        if (!p) {                                   // 저장된 프리셋이 없으면 설정 토스트를 열어 안내
+	            openPresetPanel();
+	            showPresetNotice('저장된 프리셋이 없습니다. 값을 고르고 저장해 주세요', 2500, true);
+	            return;
+	        }
+	        if (p.brightness == null && p.quality == null && !p.zoom) {
+	            showPresetNotice('프리셋에 적용할 항목이 없습니다 (모두 변경 안 함)', 2000, true);
+	            return;
+	        }
+	        presetBusy = true;
+	        try {
+	            const mode = getPresetPageMode();
+	            const parts = [];
+	            let anyFail = false;
+	            const track = (label, r) => {
+	                if (r === 'fail') anyFail = true;
+	                parts.push(r === 'fail' ? `${label} ✕` : label);
+	            };
+	            if (p.brightness != null) track(`밝기 ${p.brightness}`, await setBrightness(p.brightness, mode));
+	            if (p.quality != null)    track(`화질 ${QUALITY_LABELS[p.quality - 1]}`, await setQuality(p.quality));
+	            syncMap();                              // 다른 D-pad 동작과 동일하게, 값이 이미 같아도 항상 맵 헤드 방향 재동기화
+	            if (p.zoom) await presetSleep(450);     // syncMap의 두 번째 클릭(400ms) 이후에 확대해야 되돌려지지 않음
+	            if (p.zoom) track(`지도 +${p.zoom}`, zoomMapIn(p.zoom));
+	            showPresetNotice(`프리셋 적용 · ${parts.join(' · ')}`, 2000, anyFail);
+	        } catch (e) {
+	            console.error('[neubie] D-pad 프리셋 적용 실패', e);
+	        } finally {
+	            presetBusy = false;
+	        }
+	    };
+
+	    // ── 설정 토스트 (포커스를 가져가지 않음. 마우스 클릭 전에는 3초 뒤 자동 종료) ──
+	    let presetPanelEl = null, presetPanelTimer = null;
+	    const closePresetPanel = () => {
+	        clearTimeout(presetPanelTimer);
+	        presetPanelTimer = null;
+	        if (presetPanelEl) { presetPanelEl.remove(); presetPanelEl = null; }
+	    };
+	    const openPresetPanel = () => {
+	        closePresetPanel();
+	        const saved = loadPreset();
+	        const init = saved || { brightness: readBrightness(), quality: readQuality(), zoom: 0 };
+
+	        const opt = (value, text, selected) => `<option value="${value}"${selected ? ' selected' : ''}>${text}</option>`;
+	        let bOpts = opt('', '변경 안 함', init.brightness == null);
+	        for (let i = 5; i <= 30; i++) {
+	            const v = i / 10;
+	            bOpts += opt(v, v, init.brightness != null && Math.abs(init.brightness - v) < 0.001);
+	        }
+	        let qOpts = opt('', '변경 안 함', init.quality == null);
+	        QUALITY_LABELS.forEach((l, i) => { qOpts += opt(i + 1, l, init.quality === i + 1); });
+	        let zOpts = opt('', '변경 안 함', !init.zoom);
+	        for (let i = 1; i <= 5; i++) zOpts += opt(i, `${i}회 확대`, init.zoom === i);
+
+	        const selCss = `background:#23233f; color:#e2e8f0; border:1px solid #4a4a7a; border-radius:6px; padding:2px 4px; font-size:12px; height:24px; color-scheme:dark; min-width:76px;`;
+	        const lblCss = `display:flex; align-items:center; gap:5px; font-size:12px; color:#aab;`;
+	        const panel = document.createElement('div');
+	        panel.id = 'neubie-dpad-preset-panel';
+	        panel.style.cssText = `
+	            position:fixed; top:4px; left:50%; transform:translateX(-50%);
+	            z-index:1000000; background:rgba(18,18,36,0.97); border:1px solid #6a6aaa; border-radius:10px;
+	            padding:4px 8px 4px 12px; font-family:'Pretendard','Noto Sans KR',sans-serif; color:#e2e8f0;
+	            box-shadow:0 4px 24px rgba(0,0,0,0.6); white-space:nowrap;
+	            display:flex; align-items:center; gap:12px;
+	        `;
+	        panel.innerHTML = `
+	            <span title="저장 후 짧게 누르면 적용 · 1초 홀드하면 이 설정창" style="font-size:12px; font-weight:700; cursor:default;">🎮 D-PAD ↑</span>
+	            <label style="${lblCss}">밝기<select data-k="brightness" style="${selCss}">${bOpts}</select></label>
+	            <label style="${lblCss}">화질<select data-k="quality" style="${selCss}">${qOpts}</select></label>
+	            <label style="${lblCss}">지도 확대<select data-k="zoom" style="${selCss}">${zOpts}</select></label>
+	            <button data-act="save" style="height:24px; padding:0 12px; border:none; border-radius:6px; background:#3b82f6; color:#fff; font-size:12px; font-weight:700; cursor:pointer;">저장</button>
+	            <button data-act="close" style="width:22px; height:22px; border:none; border-radius:5px; background:transparent; color:#94a3b8; font-size:13px; cursor:pointer; line-height:1;">✕</button>
+	        `;
+
+	        // 조작이 없으면 3초 뒤 자동 종료. 클릭/선택/포커스 해제 때마다 3초를 다시 센다.
+	        // (이벤트 리스너와 타이머는 이 패널이 떠 있는 동안에만 존재 — 상시 감시 없음)
+	        let closing = false;
+	        const bump = (ms = PRESET_PANEL_AUTO_CLOSE_MS) => {
+	            if (closing) return;
+	            clearTimeout(presetPanelTimer);
+	            presetPanelTimer = setTimeout(closePresetPanel, ms);
+	        };
+	        panel.addEventListener('pointerenter', () => { if (!closing) clearTimeout(presetPanelTimer); });   // 마우스가 도착하는 동안은 대기
+	        panel.addEventListener('pointerleave', () => bump());
+	        panel.addEventListener('pointerdown', e => bump(e.target.closest?.('select') ? PRESET_SELECT_OPEN_GRACE_MS : undefined), true);
+	        panel.addEventListener('focusout', () => bump());
+	        panel.addEventListener('change', () => bump());
+
+	        // 다른 입력창(예: 문장 송출)의 포커스를 빼앗지 않도록, 빈 곳 mousedown은 포커스 이동을 막는다
+	        panel.addEventListener('mousedown', e => { if (!e.target.closest('select, button')) e.preventDefault(); });
+	        // 패널 안 키 입력이 NCC 단축키로 새지 않게 차단 (Esc = 닫기)
+	        panel.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Escape') closePresetPanel(); });
+	        // 값을 고른 뒤 포커스를 풀어, 이후 방향키 등이 select 값을 바꾸지 않게 함
+	        panel.addEventListener('change', e => { e.target.blur?.(); });
+	        panel.addEventListener('click', e => {
+	            const act = e.target.closest('button')?.dataset.act;
+	            if (act === 'close') { closePresetPanel(); return; }
+	            if (act !== 'save') return;
+	            const g = k => panel.querySelector(`[data-k="${k}"]`).value;
+	            const ok = savePreset(sanitizePreset({ brightness: g('brightness'), quality: g('quality'), zoom: g('zoom') }));
+	            closing = true;
+	            clearTimeout(presetPanelTimer);
+	            panel.innerHTML = `<div style="padding:2px 10px; font-size:13px; font-weight:700; color:${ok ? '#86efac' : '#fca5a5'};">${ok ? '✓ 프리셋 저장됨' : '저장 실패 (브라우저 저장소 사용 불가)'}</div>`;
+	            presetPanelTimer = setTimeout(closePresetPanel, 700);
+	        });
+
+	        document.body.appendChild(panel);   // focus() 호출 없음
+	        presetPanelEl = panel;
+	        bump();
+	    };
+
+	    // ── D-pad UP 상태 머신: 기존 100ms 폴링에서 매 틱 호출 (짧게 = 떼는 순간 적용 / 1초 = 설정 토스트) ──
+	    const resetDpadUp = () => {
+	        dpadWasPressed.up = false;
+	        dpadUpHoldStart = null;
+	        dpadUpTriggered = false;
+	    };
+	    const handleDpadUpTick = (pressed) => {
+	        if (pressed) {
+	            if (!dpadWasPressed.up) {
+	                dpadWasPressed.up = true;
+	                dpadUpHoldStart = performance.now();
+	                dpadUpTriggered = false;
+	            } else if (!dpadUpTriggered && performance.now() - dpadUpHoldStart >= PRESET_HOLD_MS) {
+	                dpadUpTriggered = true;
+	                try { openPresetPanel(); } catch (e) { console.error('[neubie] 프리셋 설정창 열기 실패', e); }
+	            }
+	        } else if (dpadWasPressed.up) {
+	            const wasHold = dpadUpTriggered;
+	            resetDpadUp();
+	            if (!wasHold) applyPreset().catch(e => console.error('[neubie] 프리셋 적용 실패', e));
+	        }
+	    };
+	    window.neubieDpadPreset = { open: openPresetPanel, apply: applyPreset, close: closePresetPanel };   // 콘솔 테스트용
+
 	    setInterval(() => {
 			if(isDpadBindingOff()) return;
 	        const gp = navigator.getGamepads()[0];
-	        if (!gp) return;
+	        if (!gp) { resetDpadUp(); return; }
 	        const isDrivingPage = location.href.includes('/remote/multiple/driving/')
 	                           || location.href.includes('/remote/robot/');
-	        if (!isDrivingPage) return;
+	        if (!isDrivingPage) { closePresetPanel(); resetDpadUp(); return; }
 	        const padOnBtn = document.querySelector('[data-qk="remote-robot-controller-game-pad-segmented-control-ON"]')
                             || document.querySelector('[data-qk="remote-robot-game-pad-segmented-control-ON"]');
             const isGamepadOn = padOnBtn
@@ -6288,16 +6889,8 @@
 				return;
 	        }
 	
-	        // D-pad up (12) — 누르면 진입 시각/시나리오 정보 3초간 표시 + 맵 재동기화
-			const upBtn = gp.buttons[12];
-			if (upBtn?.pressed && !dpadWasPressed.up) {
-				dpadWasPressed.up = true;
-				showInterventionInfoOverlay();
-				const syncBtn = document.querySelector('[data-qk="location-robot-sync-button"]');
-				syncMap();
-			} else if (!upBtn?.pressed) {
-				dpadWasPressed.up = false;
-			}
+	        // D-pad up (12) — 짧게: 저장된 프리셋(밝기/화질/지도 확대) 적용 / 1.5초 홀드: 프리셋 설정 토스트
+			handleDpadUpTick(!!gp.buttons[12]?.pressed);
 	
 	        // D-pad right (15) — 밝기 올리기 + 맵 재동기화
 	        const rightBtn = gp.buttons[15];
