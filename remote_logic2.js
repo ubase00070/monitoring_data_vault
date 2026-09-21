@@ -6273,12 +6273,13 @@
 	    //  D-PAD ↑ 프리셋 — 짧게 누르면 저장된 값(밝기/화질/지도 확대) 일괄 적용,
 	    //  1초 홀드하면 화면 상단 중앙에 설정 토스트가 뜬다.
 	    //  · 별도 타이머/루프 없음: 아래 기존 100ms 폴링이 handleDpadUpTick()만 호출한다.
-	    //  · 토스트는 포커스를 가져가지 않으며(pointer 클릭 전까지), 클릭이 없으면 5초 뒤 사라진다.
+	    //  · 토스트는 포커스를 가져가지 않으며(pointer 클릭 전까지), 조작이 없으면 3초 뒤 사라진다.
 	    //  · 일반 접속(/remote/robot/N[/new])과 개입카드(/remote/multiple/driving/...) 모두 동일 경로.
 	    // ══════════════════════════════════════════════════════════
 	    const PRESET_KEY = 'neubie_dpad_up_preset';
 	    const PRESET_HOLD_MS = 1000;
-	    const PRESET_PANEL_AUTO_CLOSE_MS = 5000;
+	    const PRESET_PANEL_AUTO_CLOSE_MS = 3000;   // 마지막 조작 후 이 시간이 지나면 자동 종료
+	    const PRESET_SELECT_OPEN_GRACE_MS = 10000;  // 드롭다운 목록을 펼친 동안엔 고르는 시간을 넉넉히 준다
 	    const QUALITY_LABELS = ['최소', '낮음', '중간', '높음', '최대'];
 	    const presetSleep = ms => new Promise(r => setTimeout(r, ms));
 
@@ -6493,18 +6494,15 @@
 	        try {
 	            const mode = getPresetPageMode();
 	            const parts = [];
-	            let changed = false, anyFail = false;
+	            let anyFail = false;
 	            const track = (label, r) => {
-	                if (r === 'changed') changed = true;
 	                if (r === 'fail') anyFail = true;
 	                parts.push(r === 'fail' ? `${label} ✕` : label);
 	            };
 	            if (p.brightness != null) track(`밝기 ${p.brightness}`, await setBrightness(p.brightness, mode));
 	            if (p.quality != null)    track(`화질 ${QUALITY_LABELS[p.quality - 1]}`, await setQuality(p.quality));
-	            if (changed) {                          // 다른 D-pad 동작과 동일하게 맵 헤드 방향 재동기화
-	                syncMap();
-	                if (p.zoom) await presetSleep(450); // syncMap의 두 번째 클릭(400ms) 이후에 확대해야 되돌려지지 않음
-	            }
+	            syncMap();                              // 다른 D-pad 동작과 동일하게, 값이 이미 같아도 항상 맵 헤드 방향 재동기화
+	            if (p.zoom) await presetSleep(450);     // syncMap의 두 번째 클릭(400ms) 이후에 확대해야 되돌려지지 않음
 	            if (p.zoom) track(`지도 +${p.zoom}`, zoomMapIn(p.zoom));
 	            showPresetNotice(`프리셋 적용 · ${parts.join(' · ')}`, 2000, anyFail);
 	        } catch (e) {
@@ -6514,7 +6512,7 @@
 	        }
 	    };
 
-	    // ── 설정 토스트 (포커스를 가져가지 않음. 마우스 클릭 전에는 5초 뒤 자동 종료) ──
+	    // ── 설정 토스트 (포커스를 가져가지 않음. 마우스 클릭 전에는 3초 뒤 자동 종료) ──
 	    let presetPanelEl = null, presetPanelTimer = null;
 	    const closePresetPanel = () => {
 	        clearTimeout(presetPanelTimer);
@@ -6557,15 +6555,19 @@
 	            <button data-act="close" style="width:22px; height:22px; border:none; border-radius:5px; background:transparent; color:#94a3b8; font-size:13px; cursor:pointer; line-height:1;">✕</button>
 	        `;
 
-	        // 클릭 전까지는 5초 뒤 자동 종료. 마우스를 올려두는 동안은 멈추고, 클릭하면 저장/닫기 전까지 유지
-	        let interacted = false;
-	        const startTimer = () => {
+	        // 조작이 없으면 3초 뒤 자동 종료. 클릭/선택/포커스 해제 때마다 3초를 다시 센다.
+	        // (이벤트 리스너와 타이머는 이 패널이 떠 있는 동안에만 존재 — 상시 감시 없음)
+	        let closing = false;
+	        const bump = (ms = PRESET_PANEL_AUTO_CLOSE_MS) => {
+	            if (closing) return;
 	            clearTimeout(presetPanelTimer);
-	            presetPanelTimer = setTimeout(closePresetPanel, PRESET_PANEL_AUTO_CLOSE_MS);
+	            presetPanelTimer = setTimeout(closePresetPanel, ms);
 	        };
-	        panel.addEventListener('pointerenter', () => { if (!interacted) clearTimeout(presetPanelTimer); });
-	        panel.addEventListener('pointerleave', () => { if (!interacted) startTimer(); });
-	        panel.addEventListener('pointerdown', () => { interacted = true; clearTimeout(presetPanelTimer); }, true);
+	        panel.addEventListener('pointerenter', () => { if (!closing) clearTimeout(presetPanelTimer); });   // 마우스가 도착하는 동안은 대기
+	        panel.addEventListener('pointerleave', () => bump());
+	        panel.addEventListener('pointerdown', e => bump(e.target.closest?.('select') ? PRESET_SELECT_OPEN_GRACE_MS : undefined), true);
+	        panel.addEventListener('focusout', () => bump());
+	        panel.addEventListener('change', () => bump());
 
 	        // 다른 입력창(예: 문장 송출)의 포커스를 빼앗지 않도록, 빈 곳 mousedown은 포커스 이동을 막는다
 	        panel.addEventListener('mousedown', e => { if (!e.target.closest('select, button')) e.preventDefault(); });
@@ -6579,6 +6581,7 @@
 	            if (act !== 'save') return;
 	            const g = k => panel.querySelector(`[data-k="${k}"]`).value;
 	            const ok = savePreset(sanitizePreset({ brightness: g('brightness'), quality: g('quality'), zoom: g('zoom') }));
+	            closing = true;
 	            clearTimeout(presetPanelTimer);
 	            panel.innerHTML = `<div style="padding:2px 10px; font-size:13px; font-weight:700; color:${ok ? '#86efac' : '#fca5a5'};">${ok ? '✓ 프리셋 저장됨' : '저장 실패 (브라우저 저장소 사용 불가)'}</div>`;
 	            presetPanelTimer = setTimeout(closePresetPanel, 700);
@@ -6586,7 +6589,7 @@
 
 	        document.body.appendChild(panel);   // focus() 호출 없음
 	        presetPanelEl = panel;
-	        startTimer();
+	        bump();
 	    };
 
 	    // ── D-pad UP 상태 머신: 기존 100ms 폴링에서 매 틱 호출 (짧게 = 떼는 순간 적용 / 1초 = 설정 토스트) ──
