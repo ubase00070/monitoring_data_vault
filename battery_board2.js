@@ -135,7 +135,7 @@
         .bb-hd-right-row.spread { justify-content:space-between; }   /* 1줄: 테마 버튼(좌) ··· 백업/복원/✕(우) */
         .bb-hd-grp { display:flex; align-items:center; gap:6px; }
 
-        /* '-' 버튼 왼쪽의 세로 2버튼: [배달 기체(최근 15일)] / [이상 알림(최근 15일)] — 오른쪽 2줄(32+6+32 = 70px)과 같은 높이 */
+        /* '-' 버튼 왼쪽의 세로 2버튼: [배달 로그(최근 15일)] / [이상 알림(최근 15일)] — 오른쪽 2줄(32+6+32 = 70px)과 같은 높이 */
         .bb-hd-lcol { display:flex; flex-direction:column; gap:6px; }
         .bb-hd-lcol .bb-btn { width:172px; padding:0 8px; gap:5px; font-size:13px; }
         .bb-hd-ico { font-size:15px; line-height:1; }
@@ -626,18 +626,21 @@
             cursor:pointer; white-space:nowrap; display:inline-flex; align-items:center; justify-content:center; flex:none;
         }
         .bb-mm-nav:hover { border-color:var(--mu); }
-        .bb-mm-goatt { position:absolute; right:8px; top:50%; transform:translateY(-50%); flex-direction:column; gap:1px; height:auto; padding:4px 9px; line-height:1.2; }
-        .bb-mm-goatt .l2 { font-size:11.5px; }
+        .bb-mm-goatt { position:absolute; right:8px; top:50%; transform:translateY(-50%); height:auto; padding:5px 9px; gap:5px; }
+        /* 두 줄 버튼 공통: 화살표(« »)는 글자 옆에 따로 두고, 두 줄 글자는 같은 크기 · 가운데 정렬 */
+        .bb-mm-nav .ar { flex:none; font-size:14px; line-height:1; }
+        .bb-mm-nav .tx { display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; font-size:13px; line-height:1.25; }
+        .bb-mm-nav .tx span { font-size:13px; }
         /* 다중 모니터링에 '미갱신' 이상이 하나라도 있으면 다중 카드(.bb-mm-card.anomaly)와 같은 색·같은 점멸 */
         .bb-att-back.alert { border-color:var(--or); color:#c2410c; animation:bb-mmBlink 1s infinite; }
         /* « 다중 = 두 줄 버튼: 1줄 '« 다중', 2줄 '미갱신'(다중 모니터링에 미갱신 기체가 있을 때만) → 왜 깜빡이는지 한눈에 */
-        .bb-att-back { flex-direction:column; gap:1px; height:auto; align-self:stretch; padding:0 9px; line-height:1.2; }
-        .bb-att-back .l2 { display:none; font-size:11.5px; }
+        .bb-att-back { height:auto; align-self:stretch; padding:0 7px; gap:3px; }   /* 제목이 한 줄에 들어가도록 폭을 최소화 */
+        .bb-att-back .l2 { display:none; }
         .bb-att-back.alert .l2 { display:block; }
 
         .bb-att-head { flex:0 0 auto; position:relative; padding:6px 8px; background:var(--sur); border-bottom:1px solid var(--bd); display:grid; grid-template-columns:auto minmax(0,1fr); column-gap:8px; row-gap:6px; align-items:center; z-index:3; }
         .bb-att-back { grid-row:1 / 3; grid-column:1; }
-        .bb-att-title { grid-column:2; min-width:0; text-align:center; font-size:15px; line-height:1.25; color:var(--tx); }
+        .bb-att-title { grid-column:2; min-width:0; text-align:center; font-size:14px; line-height:1.25; color:var(--tx); }
         .bb-att-title .n { color:var(--rd); }
         .bb-att-title .sep { color:var(--mu); }
         .bb-att-title .past { color:var(--or); }
@@ -682,7 +685,7 @@
         .bb-att-legend { flex:0 0 auto; display:flex; justify-content:center; align-items:center; gap:9px; padding:5px 6px 6px; border-top:1px solid var(--bd); font-size:11px; color:var(--mu); white-space:nowrap; }
 
         /* 카드 클릭 → 이석 로그 (다중 영역 왼쪽에 뜨는 작은 창) / 상세 로그 (화면 중앙) — 둘 다 보드 밖 최상위 패널 */
-        #bb-att-pop, #bb-att-detail {
+        #bb-att-pop, #bb-att-detail, #bb-att-plog {
             --bg:#f2e4c4; --sur:#f8f3e6; --sur2:#efe6d2; --bd:#cabf9d; --bd2:#b3a687; --tx:#2b2418; --mu:#7a6f5c;
             --rd:#ef4444; --or:#f97316; --pk:#ff1493; --bl:#3b82f6; --gn:#22c55e;
             display:none; position:fixed; color:var(--tx); font-family:'Paperlogy','Lato',-apple-system,sans-serif;
@@ -691,7 +694,7 @@
             background-origin:border-box; background-clip:padding-box,border-box;
             box-shadow:0 18px 46px rgba(0,0,0,.55); z-index:99999998; box-sizing:border-box;
         }
-        #bb-att-pop * , #bb-att-detail * { box-sizing:border-box; }
+        #bb-att-pop * , #bb-att-detail *, #bb-att-plog * { box-sizing:border-box; }
         #bb-att-pop.open { display:block; }
         #bb-att-pop { width:372px; max-height:min(640px, 90vh); overflow-y:auto; padding:12px 14px 12px; }
         .bb-att-ph { display:flex; align-items:baseline; gap:8px; margin-bottom:8px; }
@@ -711,6 +714,23 @@
         .bb-att-lt .no { color:#e11d74; font-weight:700; }
         .bb-att-lt .ing { color:var(--or); font-size:12px; margin-right:4px; }
         .bb-att-lt .long { color:#e11d74; font-weight:700; }
+
+        /* 이름 더블클릭 → 그 달 일자별 이석 로그 (상세 로그 창 위에 뜸) */
+        #bb-att-plog { top:50%; left:50%; transform:translate(-50%,-50%); width:min(560px, 94vw); max-height:86vh; overflow:hidden; flex-direction:column; z-index:99999999; }
+        #bb-att-plog.open { display:flex; }
+        .bb-att-lh { flex:0 0 auto; display:flex; align-items:center; gap:10px; padding:13px 16px; border-bottom:1px solid var(--bd); }
+        .bb-att-lh .t { flex:1 1 auto; min-width:0; font-size:18px; font-weight:900; }
+        .bb-att-lh .x { flex:none; width:32px; height:32px; border-radius:8px; background:rgba(239,68,68,.18); border:1px solid rgba(239,68,68,.5); color:#b91c1c; font-size:17px; font-weight:900; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+        .bb-att-lsum { flex:0 0 auto; padding:8px 16px 0; font-size:13px; color:var(--mu); }
+        .bb-att-lb { flex:1 1 auto; min-height:0; overflow-y:auto; padding:2px 16px 16px; }
+        .bb-att-ld { margin-top:14px; }
+        .bb-att-ldh { display:flex; align-items:baseline; gap:10px; padding-bottom:4px; margin-bottom:2px; border-bottom:1px solid var(--bd); font-size:15px; font-weight:900; }
+        .bb-att-ldh .c { font-size:12px; font-weight:700; color:var(--mu); }
+        .bb-att-ll { padding:3px 12px; font-size:14px; font-variant-numeric:tabular-nums; }
+        .bb-att-ll.over { color:#e11d74; font-weight:700; }
+        .bb-att-ll.no { color:#c2410c; font-weight:700; }
+        .bb-att-ll .ed { margin-left:6px; color:var(--bl); font-weight:700; }
+        .bb-att-le { padding:3px 12px; font-size:13px; font-style:italic; color:var(--mu); }
 
         #bb-att-detail { top:50%; left:50%; transform:translate(-50%,-50%); width:min(1240px, 96vw); max-height:88vh; overflow:hidden; flex-direction:column; }
         #bb-att-detail.open { display:flex; }
@@ -737,6 +757,7 @@
         .bb-att-mt td.bad { color:#e11d74; }
         .bb-att-mt td.warn, .bb-att-mt th.warn { background:rgba(249,115,22,.10); }
         .bb-att-mt td.warn { color:#c2410c; }
+        .bb-att-mt td.nm { cursor:pointer; user-select:none; }
         .bb-att-mt tr:hover td { background:rgba(0,0,0,.035); }
         .bb-att-mt tr:hover td.warn { background:rgba(249,115,22,.16); }
 
@@ -1063,7 +1084,7 @@
                 <div class="bb-hd-rightwrap">
                     <!-- '-' 버튼 왼쪽: 배달 기체 / 이상 알림 (세로 2버튼) -->
                     <div class="bb-hd-lcol">
-                        <button class="bb-btn" id="bb-delivery-btn" title="최근 15일 동안 일자별로 배달을 수행한 기체와 배달 횟수"><span class="bb-hd-ico">🛵</span>배달 기체(최근 15일)<b class="bb-dv-badge z" id="bb-dv-badge">0</b></button>
+                        <button class="bb-btn" id="bb-delivery-btn" title="최근 15일 동안 일자별로 배달을 수행한 기체와 배달 횟수"><span class="bb-hd-ico">🛵</span>배달 로그(최근 15일)<b class="bb-dv-badge z" id="bb-dv-badge">0</b></button>
                         <button class="bb-btn" id="bb-alertlog-all-btn" title="최근 15일 동안의 좀비 / 캠 미노출 / 미니맵 미노출 기록"><span class="bb-hd-ico">📋</span>이상 알림(최근 15일)</button>
                     </div>
                     <div class="bb-hd-right" id="bb-hd-right">
@@ -1112,7 +1133,7 @@
 
             <div id="bb-delivery-panel">
                 <div class="bb-ap-hd">
-                    <div class="bb-ap-title">🛵 배달 기체(최근 15일)</div>
+                    <div class="bb-ap-title">🛵 배달 로그(최근 15일)</div>
                     <div class="bb-ap-close" id="bb-delivery-close">✕</div>
                 </div>
                 <div id="bb-delivery-body"></div>
@@ -1147,13 +1168,13 @@
                                 <div class="bb-mm-head">
                                     <div class="bb-mm-title" id="bb-mm-title">다중 모니터링 기체</div>
                                     <div class="bb-mm-sub" id="bb-mm-sub">불러오는 중…</div>
-                                    <button class="bb-mm-nav bb-mm-goatt" id="bb-mm-goatt" title="이석/착석 현황으로 전환"><span class="l1">이석 »</span><span class="l2">현황</span></button>
+                                    <button class="bb-mm-nav bb-mm-goatt" id="bb-mm-goatt" title="이석/착석 현황으로 전환"><span class="tx"><span class="l1">이석</span><span class="l2">현황</span></span><span class="ar">»</span></button>
                                 </div>
                                 <div class="bb-mm-body" id="bb-mm-body"></div>
                             </div>
                             <div class="bb-mm-page" id="bb-mm-page-att">
                                 <div class="bb-att-head">
-                                    <button class="bb-mm-nav bb-att-back" id="bb-att-back" title="다중 모니터링으로 돌아가기"><span class="l1">« 다중</span><span class="l2">미갱신</span></button>
+                                    <button class="bb-mm-nav bb-att-back" id="bb-att-back" title="다중 모니터링으로 돌아가기"><span class="ar">«</span><span class="tx"><span class="l1">다중</span><span class="l2">미갱신</span></span></button>
                                     <div class="bb-att-title" id="bb-att-title">이석/착석 현황</div>
                                     <div class="bb-att-r2">
                                         <button class="bb-mm-nav bb-att-mbtn" id="bb-att-mprev">--월</button>
@@ -1216,6 +1237,7 @@
             <div class="bb-att-dnote" id="bb-att-dnote"></div>
             <div class="bb-att-db" id="bb-att-dbody"></div>
         </div>
+        <div id="bb-att-plog"></div>
     `;
     document.body.appendChild(wrap);
 
@@ -4871,7 +4893,7 @@
     let _attLive = null;      // 마지막으로 받은 실시간 데이터
     let _attDay = null;       // { date, stats, msg } 과거 기록
     let _attFail = false, _attBusy = false, _attSig = null;
-    let _attPopId = null, _attCalWhich = null, _attDetailYm = null, _attSortKey = 'avgSec';
+    let _attPopId = null, _attCalWhich = null, _attDetailYm = null, _attSortKey = 'avgSec', _attPlogKey = '';
     const _attMonthCache = {}, _attSchedCache = {}, _attDayCache = {}, _attSchedErr = {};
 
     const $att = id => document.getElementById(id);
@@ -4921,7 +4943,7 @@
         if (v === 'att') { attRender(); if (!_attDate) attRefreshLive(); }
         else attCloseFloating();
     }
-    function attCloseFloating() { attClosePop(); attCloseCal(); attCloseDetail(); }
+    function attCloseFloating() { attClosePop(); attCloseCal(); attCloseDetail(); attClosePlog(); }
     // 보드를 다시 열 때 (openBoard 에서 호출)
     function attOnOpen() { if (_attView === 'att' && !_attDate) attRefreshLive(); }
 
@@ -5291,7 +5313,7 @@
     }
 
     async function attOpenDetail(ym) {
-        attClosePop(); attCloseCal();
+        attClosePop(); attCloseCal(); attClosePlog();
         const months = attMonths();
         ym = ym || (_attDate ? _attDate.slice(0, 7) : months[1]);
         if (!months.includes(ym)) ym = months[1];
@@ -5336,14 +5358,83 @@
         });
         const tb = table.createTBody();
         rows.forEach(r => {
-            const tr = tb.insertRow(), td0 = attEl('td', '', r.name);
+            const tr = tb.insertRow(), td0 = attEl('td', 'nm', r.name);
+            td0.dataset.name = r.name; td0.title = '더블클릭: 이 달 이석 로그';
             if (r.time) td0.appendChild(attEl('span', 'tm', '(' + r.time + ')'));
             tr.appendChild(td0);
             ATT_COLS.slice(1).forEach(c => tr.appendChild(attEl('td', c.cls || '', c.f(r))));
         });
         body.replaceChildren(table);
     }
-    function attCloseDetail() { _attDetailYm = null; $att('bb-att-detail').classList.remove('open'); }
+    function attCloseDetail() { _attDetailYm = null; $att('bb-att-detail').classList.remove('open'); attClosePlog(); }
+
+    /* ───────── 이름 더블클릭 → 그 달 일자별 이석 로그 ─────────
+       성능: 그 달 전체 로그를 서버가 파일 1개로 내려줌(월 1회 요청, 5분 캐시, 서버는 원문 전달) → 사람별 필터는 여기서 처리.
+             사람을 바꿔 여러 번 열어도 추가 요청 없음. 열기 전에는 아무것도 받지 않음. */
+    async function attGetDayLogs(ym) {
+        const c = _attMonthCache['l' + ym];
+        if (c && Date.now() - c.at < 5 * 60000) return c.v;
+        const d = await attFetchJson(ATT_API + '/attendance-data?action=daylogs&ym=' + ym, 30000);   // 서버가 처음 한 번 만들어야 하면 몇 초 걸릴 수 있음
+        const v = d._404 ? { ym, days: {}, missing: true } : d;
+        _attMonthCache['l' + ym] = { at: Date.now(), v };
+        return v;
+    }
+    function attClosePlog() { _attPlogKey = ''; $att('bb-att-plog').classList.remove('open'); }
+    // 서버 로그 형식: days[날짜][이름] = [횟수, 총초, [[이석, 착석, 소요초, 편집플래그(1=이석 메시지, 2=착석 메시지)], ...]]
+    function attPlogBody(name, doc, sched) {
+        const days = (doc && doc.days) || {}, dates = Object.keys(days).sort(), DOW = ['일', '월', '화', '수', '목', '금', '토'];
+        const entry = sched && sched.staff ? sched.staff.find(p => p.name === name) : null;
+        let cnt = 0, sec = 0, over = 0, rec = 0;
+        const list = attEl('div', 'bb-att-lb');
+        dates.forEach(dt => {
+            const p = dt.split('-').map(Number), key = p[1] + '/' + p[2];
+            const label = key + '(' + DOW[new Date(Date.UTC(p[0], p[1] - 1, p[2])).getUTCDay()] + ')';
+            const r = days[dt][name], day = attEl('div', 'bb-att-ld'), h = attEl('div', 'bb-att-ldh', label);
+            if (!r) {
+                if (entry && !attIsPresent(entry.schedule && entry.schedule[key])) return;   // 스케줄상 휴무일은 생략 (스케줄을 못 받았으면 생략 없이 표시)
+                h.appendChild(attEl('span', 'c', '기록 없음'));
+                day.append(h, attEl('div', 'bb-att-le', '이 날 이석 기록이 없어요'));
+                list.appendChild(day);
+                return;
+            }
+            rec++; cnt += r[0]; sec += r[1];
+            h.appendChild(attEl('span', 'c', '이석 ' + r[0] + '회 · 총 ' + attDurHM(r[1])));
+            day.appendChild(h);
+            r[2].forEach(e => {
+                let cls = 'bb-att-ll', text;
+                if (e[0] && e[1]) { text = e[0] + ' → ' + e[1] + '  (' + attDur(e[2]) + ')'; if (typeof e[2] === 'number' && e[2] >= 900) { cls += ' over'; over++; } }
+                else if (e[0]) { text = e[0] + ' → (미기입)'; cls += ' no'; }
+                else text = '(이석 기록 없음) → ' + e[1];
+                const line = attEl('div', cls, text);
+                if (e[3]) line.appendChild(attEl('span', 'ed', '[편집됨]'));
+                day.appendChild(line);
+            });
+            list.appendChild(day);
+        });
+        if (!rec) {
+            list.replaceChildren(attEl('div', 'bb-att-msg', doc && doc.missing ? '이 달의 이석 로그 데이터가 아직 없습니다' : '이 달 이 근무자의 이석 기록이 없어요'));
+            return [list];
+        }
+        return [attEl('div', 'bb-att-lsum', `이 달 이석 ${cnt}회 · 총 ${attDurHM(sec)} · 15분 초과 ${over}회 · 기록 ${rec}일`), list];
+    }
+    async function attOpenPlog(name, ym) {
+        const key = ym + '|' + name, box = $att('bb-att-plog');
+        _attPlogKey = key;
+        const hd = attEl('div', 'bb-att-lh'), x = attEl('div', 'x', '✕');
+        x.addEventListener('click', attClosePlog);
+        hd.append(attEl('div', 't', ym.slice(0, 4) + '년 ' + Number(ym.slice(5)) + '월 · ' + name + ' 이석 로그'), x);
+        box.replaceChildren(hd, attEl('div', 'bb-att-msg', '불러오는 중…'));
+        box.classList.add('open');
+        let doc, sched;
+        try { [doc, sched] = await Promise.all([attGetDayLogs(ym), attGetSchedule(ym)]); }
+        catch (e) {
+            console.warn('[BB] 이석 로그 조회 실패:', e.message);
+            if (_attPlogKey === key) box.replaceChildren(hd, attEl('div', 'bb-att-msg warn', '⚠ 불러오기 실패 — 잠시 후 다시 시도해 주세요'));
+            return;
+        }
+        if (_attPlogKey !== key) return;   // 그 사이 닫았거나 다른 사람으로 바꿈
+        box.replaceChildren(hd, ...attPlogBody(name, doc, sched));
+    }
 
     /* ───────── 이벤트 연결 ───────── */
     $att('bb-mm-goatt').addEventListener('click', () => attSetView('att'));
@@ -5354,14 +5445,17 @@
     $att('bb-att-today').addEventListener('click', attGoToday);
     $att('bb-att-dclose').addEventListener('click', attCloseDetail);
     $att('bb-att-dsel').addEventListener('change', e => attOpenDetail(e.target.value));
+    $att('bb-att-dbody').addEventListener('dblclick', e => { const td = e.target.closest('td.nm'); if (td && _attDetailYm) attOpenPlog(td.dataset.name, _attDetailYm); });   // 이름 더블클릭
     $att('bb-att-body').addEventListener('click', e => { const c = e.target.closest('.bb-att-card'); if (c) attTogglePop(c.dataset.uid); });
     document.addEventListener('click', e => {   // 바깥 클릭 → 이석 로그 / 달력 닫기 (캡처 단계: 재렌더로 대상이 사라지기 전에 판단)
         if (_attPopId && !e.target.closest('#bb-att-pop') && !e.target.closest('.bb-att-card')) attClosePop();
         if (_attCalWhich && !e.target.closest('#bb-att-cal') && !e.target.closest('.bb-att-mbtn')) attCloseCal();
-        if ($att('bb-att-detail').classList.contains('open') && !e.target.closest('#bb-att-detail') && !e.target.closest('#bb-att-detailbtn')) attCloseDetail();   // 상세 로그 창 바깥을 누르면 닫힘
+        if (_attPlogKey && !e.target.closest('#bb-att-plog')) attClosePlog();   // 이석 로그 창 바깥을 누르면 그 창만 닫힘 (상세 로그 창 안쪽을 눌렀다면 상세 로그는 유지)
+        if ($att('bb-att-detail').classList.contains('open') && !e.target.closest('#bb-att-detail') && !e.target.closest('#bb-att-plog') && !e.target.closest('#bb-att-detailbtn')) attCloseDetail();   // 상세 로그 창 바깥을 누르면 닫힘
     }, true);
     document.addEventListener('keydown', e => {
         if (e.key !== 'Escape') return;
+        if (_attPlogKey) { attClosePlog(); return; }
         if ($att('bb-att-detail').classList.contains('open')) attCloseDetail();
         else if (_attCalWhich) attCloseCal();
         else if (_attPopId) attClosePop();
