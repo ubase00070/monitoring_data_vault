@@ -180,7 +180,7 @@
         .bb-bk-name { min-width:64px; }
 
 
-        /* ── 고정 버튼 3종 (왼쪽 동숲 주민의 왼쪽): 3행 — [🪫 최근 방전(24H)] / [🐢 저속충전 TOP5] / [🚫 임무 OFF] ── */
+        /* ── 고정 버튼 3종 (왼쪽 동숲 주민의 왼쪽): 3행 — [🪫 방전(최근 15일)] / [🐢 저속충전 TOP5] / [🚫 임무 OFF] ── */
         .bb-fixbtns {
             position:absolute; right:calc(50% + 261px); top:50%; transform:translateY(-50%);   /* 오른쪽 끝 = 왼쪽 동숲 주민(제목 왼쪽 151~251px)에서 10px 왼쪽 */
             width:140px; display:grid; grid-template-columns:1fr; gap:4px; z-index:3;   /* 높이 3×26 + 2×4 = 86px (헤더 104px 안) */
@@ -1040,7 +1040,7 @@
                 </div>
                 <!-- 좌: 고정 버튼 3종 (왼쪽 동숲 주민의 왼쪽) -->
                 <div class="bb-fixbtns" id="bb-fixbtns">
-                    <button id="bb-fb-dis" class="bb-fb" data-mode="dis" title="최근 24시간 배터리 로그에서 2% 이하에 도달한 뒤 OFF 된 기체 · 오른쪽 위 숫자 = 해당 기체 수">🪫 최근 방전(24H)<b class="bb-fb-n"></b></button>
+                    <button id="bb-fb-dis" class="bb-fb" data-mode="dis" title="최근 15일 동안 배터리 로그에서 2% 이하에 도달한 뒤 OFF 된 기체(방전) 기록 · 오른쪽 위 숫자 = 해당 기체 수 (최근 24시간 안에 확정 방전이 있으면 빨강)">🪫 방전(최근 15일)<b class="bb-fb-n"></b></button>
                     <button id="bb-fb-slow" class="bb-fb" data-mode="slow" title="충전 중(100% 미만)인 기체를 충전을 시작한 때부터 지금까지의 평균 속도가 더딘 순으로 (상위 5대) · 오른쪽 위 숫자 = 지금 충전 속도를 측정 중인 기체 수">🐢 저속충전 TOP5<b class="bb-fb-n"></b></button>
                     <button id="bb-fb-moff" class="bb-fb" data-mode="moff" title="현재 임무가 OFF 인 기체 · 오른쪽 위 숫자 = 해당 기체 수">🚫 임무 OFF<b class="bb-fb-n"></b></button>
                     <div class="bb-fbp" id="bb-fbp">
@@ -1824,6 +1824,7 @@
 
             logBatteryPattern(DB);
             try { dvUpdateLocal(); } catch (err) { console.error('[BB] 배달 로그 계산 오류:', err); }   // 배터리 로그 → 배달 횟수 (로컬 저장)
+            try { dcUpdateLocal(); } catch (err) { console.error('[BB] 방전 기록 계산 오류:', err); }   // 배터리 로그 → 방전 기록 (로컬 저장, 최근 15일)
             try { sampleChargeBuffer(DB); } catch (err) { console.error('[BB] 충전 관측 오류:', err); }   // 저속충전 계산용 (2분마다 1회 기록)
             wblCyhAutoUploadTick();
             wblOthersAutoDownloadTick();
@@ -1832,6 +1833,7 @@
             alertLogNonCyhTick();
             alertLogDownloadTick();
             dvDownloadTick();
+            dcDownloadTick();   // 방전 기록: 페이지를 연 직후 1회 + 6시간마다 (30분마다 받지 않음)
 
             const alerts = detectAlerts(allRaw);
             renderAlertChips(alerts);
@@ -2550,6 +2552,8 @@
 		await wblDoUpload();
 		await new Promise(r => setTimeout(r, 1500));   // 같은 저장소에 커밋이 동시에 몰리지 않도록 순서대로 (배터리 → 배달)
 		await dvUpload();
+		await new Promise(r => setTimeout(r, 1500));
+		try { await dcUpload(); } catch (e) { console.log('[BB] 방전 로그 업로드 오류:', e.message); }   // 방전 기록 (있을 때만 실제 요청)
 	}
 	// 정각(그 분 안)을 놓치지 않도록 20초마다 확인 — 데이터 갱신(2분 주기)과 무관하게 동작. 이미 한 시각은 위의 기록으로 건너뜀
 	setInterval(wblCyhAutoUploadTick, 20 * 1000);
@@ -2816,6 +2820,7 @@
 		await alertLogUpload();
 		await new Promise(r => setTimeout(r, Math.random() * 15000));   // 여러 PC 가 같은 :50 에 몰려도 조금씩 어긋나게 (랜덤 0~15초)
 		await dvUpload();
+		try { await dcUpload(); } catch (e) { console.log('[BB] 방전 로그 업로드 오류:', e.message); }   // 방전 기록 (있을 때만 실제 요청)
 	}
 
 	// 30분마다 단일 파일을 통째로 받아와서 로컬 캐시 — CYH/비CYH 둘 다(당일 실시간 조회용)
@@ -3680,6 +3685,7 @@
         btn.textContent = '⏳'; btn.disabled = true;
         let ok = await wblDoUpload();
         try { ok = (await dvUpload()) && ok; } catch { ok = false; }   // 배달 로그도 함께
+        try { ok = (await dcUpload()) && ok; } catch { ok = false; }   // 방전 기록도 함께
         btn.textContent = ok ? '✅' : '❌';
         setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 1500);
     });
@@ -4075,12 +4081,11 @@
 
     // ============================================================
     // SECTION 17. 고정 버튼 3종 (제목 영역, 왼쪽 동숲 주민의 왼쪽)
-    //   최근 방전 기체(24H) / 저속충전 기체 TOP5 / 임무 OFF 기체
+    //   방전(최근 15일) / 저속충전 기체 TOP5 / 임무 OFF 기체
     //   2분마다 데이터가 갱신될 때 버튼의 숫자 배지와, 열려 있는 목록 창이 함께 새로고침됨 (창을 띄워 둔 채로도)
     //   계산량은 기체 수(≈90대)에 비례하는 반복 몇 번뿐이라 갱신 한 번에 수 ms 수준
     // ============================================================
     const FB_DISCHARGE_PCT = 2;          // 배터리가 이 값(%) 이하에 도달한 뒤 OFF 되면 "방전"
-    const FB_DISCHARGE_WINDOW_H = 24;    // 최근 24시간
     const FB_EST_MAX_PCT = 10;           // '방전 추정' 후보: OFF 직전 마지막 기록이 이 값(%) 이하
     const FB_EST_FALLBACK_PCT = 5;       // 하락 속도를 알 수 없을 때는 이 값(%) 이하만 추정
     const FB_EST_MAX_GAP_MIN = 30;       // OFF 직전 기록과 OFF 확인 사이가 이보다 길면(기록 끊김) 추정하지 않음
@@ -4117,7 +4122,7 @@
         });
     }
 
-    // ── 최근 방전 기체(24H): 배터리 로그에서 FB_DISCHARGE_PCT% 이하 → OFF 로 이어진 기체 ──
+    // ── 방전(최근 15일): 배터리 로그에서 FB_DISCHARGE_PCT% 이하 → OFF 로 이어진 기체 ──
     let _fbLogCache = null;   // { rawY, rawT, logs } — 로그 원본 문자열이 그대로면 이전 결과를 재사용 (로그는 10분마다만 바뀜, 어제 로그는 하루 종일 그대로)
     function fbLoadLogs() {   // 어제 스냅샷 + 오늘 로그를 기체별 시간순 점으로 (같은 시각이 겹치면 오늘 것이 우선)
         const rawY = localStorage.getItem('bb_battery_log_yesterday') || '', rawT = localStorage.getItem(WBL_KEY) || '';
@@ -4153,35 +4158,219 @@
         if (rate > 0) return p.bat - rate * gapMin <= FB_DISCHARGE_PCT ? 'est' : null;   // 그 속도라면 OFF 시점엔 2% 이하가 됐을까
         return p.bat <= FB_EST_FALLBACK_PCT ? 'est' : null;                              // 속도를 모르면 5% 이하만
     }
-    function computeDischarged(logs) {
-        const now = Date.now(), from = now - FB_DISCHARGE_WINDOW_H * 3600000;
-        const curById = new Map(DB.map(r => [r.id, r]));
-        const events = [];
-        let earliest = Infinity;
+    /* DISCHARGE-LOG-START */
+    // ── 방전 기록(최근 15일) ──
+    // 원본: 배터리 로그(어제+오늘, 10분 단위)에서 'FB_DISCHARGE_PCT% 이하 → OFF' 로 이어진 지점(방전) 또는 그렇게 지나친 것으로 보이는 지점(방전 추정)
+    // 저장: ① 이 PC(bb_discharge_local) — 배터리 로그는 하루가 지나면 초기화되지만 방전 기록은 15일 동안 남음
+    //       ② 서버 단일 파일(배터리_방전로그) — 방전이 '기록될 때만' 올림. 방전이 없으면 파일도, 업로드 요청도 없음
+    // 병합: 같은 기체의 90분 이내 기록은 같은 방전으로 보고 더 확실한 쪽(확정 > 추정, 정확한 시각 > 10분 슬롯 시각)을 채택
+    //       → 여러 PC 가 각자 감지해서 올려도 결과가 같고, 서버에 이미 있는 내용이면 업로드 자체를 건너뜀 (커밋이 몰리지 않음)
+    // 업로드 시점: 배달 로그와 같은 슬롯(CYH = 정각 업로드 직후 / 그 외 = 매시 50분)에 얹음. 강제 업로드 버튼에도 포함
+    // 다운로드: 방전은 드물어서 30분마다 받지 않음 — 페이지를 연 직후 1회 + 6시간마다 + 목록 창을 열 때(캐시가 30분 넘었으면)
+    const DC_LOG_NAME = '배터리_방전로그';
+    const DC_RETENTION_DAYS = 15;
+    const DC_LOCAL_KEY = 'bb_discharge_local';           // { days:{일자:{기체id:{name,ev:[{ts,bat,kind,exact}]}}}, up:{일자:마지막 업로드 서명} }
+    const DC_CACHE_KEY = 'bb_dischargelog_file_cache';   // { days:{...}, at:받아온 시각(ms) }
+    const DC_SEEN_KEY = 'bb_dc_file_seen';               // 서버 파일을 한 번이라도 확인/생성했는지 (처음 1회 예외 처리용)
+    const DC_POST_TRIES = 2;
+    const DC_SAME_MS = 90 * 60000;                       // 같은 기체의 이 시간(분) 이내 기록은 같은 방전
+    const DC_JUST_OFF_WINDOW_MS = 24 * 3600000;          // '방금 꺼져서 로그에 OFF 칸이 아직 없는' 경우는 마지막 기록이 이 시간 안일 때만 인정
+    const DC_BG_REFRESH_MS = 6 * 3600000;
+    const DC_OPEN_REFRESH_MS = 30 * 60000;
+    const DC_RANK = { sure: 2, est: 1 };
+    let _dcUploading = false;
+
+    function dcDayKey(ts) { return wblLocalDateStr(new Date(ts - WBL_DAY_START_H * 3600000)); }   // 배터리 로그의 하루(07:00~익일 07:00) 기준 날짜
+    function dcCutoffIdx() { return dvDayIdx(wblGetDayKey() || wblTodayStr()) - (DC_RETENTION_DAYS - 1); }
+    function dcPrune(days) {   // 15일(오늘 포함) 넘은 날짜는 잘라냄
+        const cutoff = dcCutoffIdx();
+        Object.keys(days).forEach(d => { if (dvDayIdx(d) < cutoff) delete days[d]; });
+        return days;
+    }
+    function dcNormEv(x) {
+        if (!x || !Number.isFinite(x.ts) || !DC_RANK[x.kind]) return null;
+        return { ts: Math.round(x.ts), bat: Number.isFinite(x.bat) ? x.bat : null, kind: x.kind, exact: !!x.exact };
+    }
+    function dcCombine(a, b) {   // 같은 방전의 두 기록 → 더 확실한 종류(확정 > 추정)를 쓰고, 시각은 정확한 쪽이 있으면 그것을 씀
+        const hi = DC_RANK[b.kind] > DC_RANK[a.kind] ? b : a;
+        const ex = a.exact ? a : (b.exact ? b : null);
+        return { ts: ex ? ex.ts : hi.ts, bat: hi.bat, kind: hi.kind, exact: !!ex };
+    }
+    function dcMergeEvents(list, incoming) {   // list 에 incoming 을 합침. 바뀐 게 있으면 true
+        let changed = false;
+        (incoming || []).forEach(raw => {
+            const x = dcNormEv(raw);
+            if (!x) return;
+            const i = list.findIndex(e => Math.abs(e.ts - x.ts) <= DC_SAME_MS);
+            if (i < 0) { list.push(x); changed = true; return; }
+            const m = dcCombine(list[i], x), o = list[i];
+            if (m.ts !== o.ts || m.bat !== o.bat || m.kind !== o.kind || m.exact !== o.exact) { list[i] = m; changed = true; }
+        });
+        if (changed) list.sort((a, b) => a.ts - b.ts);
+        return changed;
+    }
+    function dcMergeDay(dst, src) {   // dst = { 기체id:{name,ev:[]} } 에 src 를 합침
+        Object.keys(src || {}).forEach(id => {
+            const x = src[id];
+            if (!x || !Array.isArray(x.ev)) return;
+            const r = dst[id] || (dst[id] = { name: x.name || id, ev: [] });
+            if (!r.name) r.name = x.name || id;
+            dcMergeEvents(r.ev, x.ev);
+        });
+        return dst;
+    }
+
+    // 배터리 로그 전체에서 방전(추정 포함) 지점을 모두 찾음 → [{ id, name, ev:{ts,bat,kind,exact} }]
+    function dcExtract(logs) {
+        const now = Date.now(), curById = new Map(DB.map(r => [r.id, r])), out = [];
         logs.forEach((o, id) => {
             const pts = [...o.pts.values()].sort((a, b) => a.ts - b.ts);
-            if (pts.length && pts[0].ts < earliest) earliest = pts[0].ts;
-            const cur = curById.get(id);
-            let ev = null, count = 0;
+            const cur = curById.get(id), name = cur?.name || o.name;
             for (let i = 0; i < pts.length - 1; i++) {
-                const p = pts[i], q = pts[i + 1];
-                if (q.ts < from || q.st !== 'off') continue;
+                const q = pts[i + 1];
+                if (q.st !== 'off') continue;
                 const kind = fbDischargeKind(pts, i, q.ts);
-                if (kind) { ev = { ts: q.ts, lastBat: p.bat, exact: false, kind }; count++; }
+                if (kind) out.push({ id, name, ev: { ts: q.ts, bat: pts[i].bat, exact: false, kind } });
             }
             // 방금 꺼져서 로그에 OFF 칸이 아직 없는 경우: 지금 OFF → 마지막 통신 시각(서버 시각)을 OFF 시각으로
             const last = pts[pts.length - 1];
-            if (cur && cur.status === 'off' && last && last.st !== 'off' && last.ts >= from) {
+            if (cur && cur.status === 'off' && last && last.st !== 'off' && last.ts >= now - DC_JUST_OFF_WINDOW_MS) {
                 const lc = Date.parse(cur.raw?.robotStatus?.lastConnectedAt || '');
                 const exact = !!lc && lc >= last.ts;
                 const kind = fbDischargeKind(pts, pts.length - 1, exact ? lc : last.ts + 10 * 60000);
-                if (kind) { ev = { ts: exact ? lc : last.ts, lastBat: last.bat, exact, kind }; count++; }
+                if (kind) out.push({ id, name, ev: { ts: exact ? lc : last.ts, bat: last.bat, exact, kind } });
             }
-            if (ev) events.push({ id, name: cur?.name || o.name, cur, count, ...ev });
+        });
+        return out;
+    }
+
+    function dcLoadLocal() {
+        try { const o = JSON.parse(localStorage.getItem(DC_LOCAL_KEY) || 'null'); if (o && o.days) return { days: o.days, up: o.up || {} }; } catch {}
+        return { days: {}, up: {} };
+    }
+    function dcSaveLocal(o) { try { localStorage.setItem(DC_LOCAL_KEY, JSON.stringify(o)); } catch {} }
+
+    // 2분마다(데이터 갱신 때, 보드가 닫혀 있어도) 호출 — 배터리 로그에서 방전을 찾아 이 PC 의 15일 기록에 반영
+    function dcUpdateLocal() {
+        const found = dcExtract(fbLoadLogs());
+        const loc = dcLoadLocal(), cutoff = dcCutoffIdx();
+        let changed = false;
+        found.forEach(f => {
+            const day = dcDayKey(f.ev.ts);
+            if (dvDayIdx(day) < cutoff) return;
+            const d = loc.days[day] || (loc.days[day] = {});
+            const r = d[f.id] || (d[f.id] = { name: f.name, ev: [] });
+            if (f.name && r.name !== f.name) { r.name = f.name; changed = true; }
+            if (dcMergeEvents(r.ev, [f.ev])) changed = true;
+        });
+        const nb = Object.keys(loc.days).length;
+        dcPrune(loc.days);
+        if (Object.keys(loc.days).length !== nb) changed = true;
+        Object.keys(loc.up).forEach(d => { if (!loc.days[d]) delete loc.up[d]; });
+        if (changed) dcSaveLocal(loc);
+        return changed;
+    }
+
+    // 서버 파일 읽기. 실패하면 null — (빈 파일로 착각해서 서버 데이터를 덮어쓰는 사고 방지)
+    // 단, 서버에 파일이 아직 없는 '맨 처음'(방전이 한 번도 기록된 적 없음)에는 빈 파일로 취급 (404 이거나, 한 번도 확인한 적이 없을 때)
+    async function dcFetchFile() {
+        try {
+            const res = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent(DC_LOG_NAME)}`);
+            if (res.ok) {
+                const j = await res.json();
+                const f = (j && j.data && typeof j.data === 'object' && j.data.days) ? j.data : { days: {} };
+                if (j && j.data) { try { localStorage.setItem(DC_SEEN_KEY, '1'); } catch {} }
+                return f;
+            }
+            if (res.status === 404 || localStorage.getItem(DC_SEEN_KEY) !== '1') return { days: {} };
+            console.log('[BB] 방전 로그: 서버 조회 실패 (HTTP ' + res.status + ')');
+            return null;
+        } catch (e) { console.log('[BB] 방전 로그: 서버 조회 실패:', e.message); return null; }
+    }
+    function dcCachedFile() {
+        try { const c = JSON.parse(localStorage.getItem(DC_CACHE_KEY) || 'null'); if (c && c.days) return c; } catch {}
+        return { days: {}, at: 0 };
+    }
+    async function dcRefreshCache(minAgeMs) {   // 캐시가 minAgeMs 보다 오래됐을 때만 서버에서 다시 받음. 갱신했으면 true
+        if (Date.now() - dcCachedFile().at < minAgeMs) return false;
+        const f = await dcFetchFile();
+        if (!f) return false;
+        try { localStorage.setItem(DC_CACHE_KEY, JSON.stringify({ days: dcPrune(f.days || {}), at: Date.now() })); } catch {}
+        return true;
+    }
+    let _dcDlLast = 0;
+    async function dcDownloadTick() {   // 2분 갱신마다 불리지만 실제 요청은 페이지를 연 직후 1회 + 6시간마다
+        if (Date.now() - _dcDlLast < DC_BG_REFRESH_MS) return;
+        _dcDlLast = Date.now();
+        await dcRefreshCache(0);
+    }
+
+    // 업로드: 이 PC 에 '아직 안 올린' 방전이 있을 때만 → 서버 최신 파일을 읽어 병합 → 서버에 없는 내용이 있을 때만 올림. 실패하면 다시 읽어 병합해 1회 재시도.
+    async function dcUpload() {
+        if (_dcUploading) return true;
+        const loc = dcLoadLocal();
+        const dirty = Object.keys(loc.days).filter(d => Object.keys(loc.days[d]).length && loc.up[d] !== dvSig(loc.days[d]));
+        if (!dirty.length) return true;   // 방전 기록이 없거나 이미 올렸음 → 요청 자체를 안 보냄
+        const sent = {}; dirty.forEach(d => { sent[d] = dvSig(loc.days[d]); });   // 보낸 시점의 서명 (업로드 도중 값이 바뀌어도 다음에 다시 올라가도록)
+        _dcUploading = true;
+        const markSynced = file => {
+            const cur = dcLoadLocal(); dirty.forEach(d => { cur.up[d] = sent[d]; }); dcSaveLocal(cur);
+            try { localStorage.setItem(DC_SEEN_KEY, '1'); localStorage.setItem(DC_CACHE_KEY, JSON.stringify({ days: file.days, at: Date.now() })); } catch {}
+        };
+        try {
+            for (let attempt = 1; attempt <= DC_POST_TRIES; attempt++) {
+                const file = await dcFetchFile();
+                if (!file) return false;   // 서버 파일을 못 읽었으면 보류 (다음 슬롯에 다시)
+                if (!file.days) file.days = {};
+                const before = dvSig(dcPrune(file.days));
+                dirty.forEach(d => { file.days[d] = dcMergeDay(file.days[d] || {}, loc.days[d]); });
+                dcPrune(file.days);
+                if (dvSig(file.days) === before) { markSynced(file); return true; }   // 서버에 이미 같은 내용이 있음 (다른 PC 가 먼저 올림) → 올리지 않음
+                try {
+                    const res = await fetch(BACKUP_BASE, {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name: DC_LOG_NAME, data: file }),
+                    });
+                    if (res.ok) {
+                        markSynced(file);
+                        console.log('[BB] 방전 로그 업로드 완료 (' + new Date().toTimeString().slice(0, 5) + ', ' + dirty.length + '일치)');
+                        return true;
+                    }
+                    console.log('[BB] 방전 로그 업로드 거절됨 (HTTP ' + res.status + ')' + (attempt < DC_POST_TRIES ? ' — 잠시 뒤 재시도' : ''));
+                } catch (e) { console.log('[BB] 방전 로그 업로드 실패:', e.message); }
+                if (attempt < DC_POST_TRIES) await new Promise(r => setTimeout(r, 2000 + Math.random() * 4000));
+            }
+            return false;
+        } finally { _dcUploading = false; }
+    }
+
+    // 화면용: 서버 캐시 + 이 PC 기록을 합쳐서(기체별로 90분 이내는 같은 방전) 최근 순으로
+    function dcBuildView() {
+        const byRobot = new Map(), cutoff = dcCutoffIdx();
+        [dcCachedFile().days, dcLoadLocal().days].forEach(src => {
+            Object.keys(src || {}).forEach(day => {
+                if (dvDayIdx(day) < cutoff) return;
+                Object.keys(src[day] || {}).forEach(id => {
+                    const x = src[day][id];
+                    if (!x || !Array.isArray(x.ev)) return;
+                    const r = byRobot.get(id) || byRobot.set(id, { name: x.name || id, ev: [] }).get(id);
+                    if (x.name) r.name = x.name;   // 나중에 합치는 이 PC 기록의 이름이 우선
+                    dcMergeEvents(r.ev, x.ev);
+                });
+            });
+        });
+        const curById = new Map(DB.map(r => [r.id, r])), events = [], now = Date.now();
+        byRobot.forEach((r, id) => {
+            if (!r.ev.length) return;
+            const cur = curById.get(id);
+            r.ev.forEach(e => events.push({ id, name: cur?.name || r.name, cur, n: r.ev.length, ...e }));
         });
         events.sort((a, b) => b.ts - a.ts);
-        return { events, earliest, from, sure: events.filter(e => e.kind === 'sure').length, est: events.filter(e => e.kind === 'est').length };
+        const robots = new Set(events.map(e => e.id)).size;
+        return { events, robots, sure: events.filter(e => e.kind === 'sure').length, est: events.filter(e => e.kind === 'est').length,
+                 recentSure: events.some(e => e.kind === 'sure' && now - e.ts < 24 * 3600000) };
     }
+    /* DISCHARGE-LOG-END */
 
     // ── 저속충전 기체 TOP5: 충전 중(100% 미만) 기체를 "충전 중 기간 전체"의 평균 속도가 더딘 순으로 ──
     //   속도 = (지금 배터리 − 이번 충전을 시작했을 때 배터리) ÷ 충전한 시간.  60분 같은 짧은 창이 아니라 몇 시간짜리 충전 전체를 본다.
@@ -4251,7 +4440,7 @@
     function fbCompute() {
         const logs = fbLoadLogs();   // 어제+오늘 배터리 로그는 한 번만 읽어 방전/저속충전 계산에 함께 씀
         _fbData = {
-            dis: computeDischarged(logs),
+            dis: dcBuildView(),   // 이 PC 기록 + 서버 기록 (최근 15일)
             sc: computeSlowCharge(logs),
             mo: DB.filter(isMissionOff).sort((a, b) => a.name.localeCompare(b.name, 'ko', { numeric: true })),
         };
@@ -4269,24 +4458,22 @@
     }
     function fbHtmlDis(d) {
         const ev = d.dis.events;
-        let h = `<div class="bb-fbp-note">최근 24시간 로그에서 <b>${FB_DISCHARGE_PCT}% 이하까지 떨어진 뒤 꺼진</b> 기체입니다. 10분 기록 사이에 지나친 것으로 보이면 <b>방전 추정</b>으로 표시합니다.</div>`;
-        if (!ev.length) h += `<div class="bb-fbp-empty">최근 24시간 동안 방전된 기체가 없습니다 ✓</div>`;
+        let h = `<div class="bb-fbp-note">최근 15일 기록에서 <b>${FB_DISCHARGE_PCT}% 이하까지 떨어진 뒤 꺼진</b> 기체입니다. 10분 기록 사이에 지나친 것으로 보이면 <b>방전 추정</b>으로 표시합니다.</div>`;
+        if (!ev.length) h += `<div class="bb-fbp-empty">최근 15일 동안 기록된 방전이 없습니다 ✓</div>`;
         else h += ev.map(e => {
             const st = fbStateChip(e.cur);
             const est = e.kind === 'est';
-            const tip = est ? `${e.name} · 마지막 기록 ${e.lastBat}% 다음 10분 사이에 꺼짐 — 하락 속도로 보면 0%에 도달했을 가능성이 커서 방전으로 추정` : e.name;
+            const tip = est ? `${e.name} · 마지막 기록 ${e.bat}% 다음 10분 사이에 꺼짐 — 하락 속도로 보면 0%에 도달했을 가능성이 커서 방전으로 추정` : e.name;
             return `<div class="bb-fbp-row" data-rid="${fbEsc(e.id)}" title="${fbEsc(tip)}">
                 <span class="bb-fbp-dot" style="background:${st.ac};"></span>
                 <span class="bb-fbp-main">
                     <span class="bb-fbp-line"><span class="bb-fbp-name">${fbEsc(e.name)}</span><span class="bb-fbp-tag ${est ? 'est' : 'sure'}">${est ? '방전 추정' : '방전'}</span></span>
-                    <span class="bb-fbp-sub">${fbFmtTs(e.ts)}${e.exact ? '' : '경'} OFF · 마지막 배터리 ${e.lastBat}%${e.count > 1 ? ` · 24시간 내 ${e.count}회` : ''}</span>
+                    <span class="bb-fbp-sub">${fbFmtTs(e.ts)}${e.exact ? '' : '경'} OFF${e.bat != null ? ` · 마지막 배터리 ${e.bat}%` : ''}${e.n > 1 ? ` · 15일 내 ${e.n}회` : ''}</span>
                 </span>
                 <span class="bb-fbp-now">현재 ${fbEsc(st.txt)}</span>
             </div>`;
         }).join('');
-        let foot = '※ 시각은 10분 간격 로그 기준이라 "경"으로 표시됩니다.';
-        if (isFinite(d.dis.earliest) && d.dis.earliest > d.dis.from + 3600000) foot = `※ 로그가 있는 범위: ${fbFmtTs(d.dis.earliest)}부터. ` + foot;
-        return h + `<div class="bb-fbp-foot">${foot}</div>`;
+        return h + `<div class="bb-fbp-foot">※ 시각은 10분 간격 로그 기준이라 "경"으로 표시됩니다. 방전이 확인될 때마다 이 PC 와 서버에 저장되고, 15일이 지나면 자동으로 지워집니다.</div>`;
     }
     function fbClock(ts) {   // 오늘이면 "08:50", 다른 날이면 "09/19 23:10"
         const d = new Date(ts), p = n => String(n).padStart(2, '0');
@@ -4337,7 +4524,7 @@
         if (!_fbMode) return;
         const d = _fbData || fbCompute();
         const T = {
-            dis:  ['최근 방전 기체 (24H)',   `${d.dis.events.length}대${d.dis.est ? ` (추정 ${d.dis.est}대 포함)` : ''}`],
+            dis:  ['방전(최근 15일)',         `${d.dis.robots}대${d.dis.events.length !== d.dis.robots ? ` · ${d.dis.events.length}건` : ''}${d.dis.est ? ` (추정 ${d.dis.est}건 포함)` : ''}`],
             slow: ['저속충전 기체 TOP5',     `충전 중 ${d.sc.charging}대`],
             moff: ['임무 OFF 기체',          `${d.mo.length}대`],
         }[_fbMode];
@@ -4351,7 +4538,7 @@
     function refreshFixedTools() {   // 2분 갱신마다 + 열 때마다 호출: 배지와 (열려 있다면) 목록 창을 최신으로
         try {
             fbCompute();
-            fbSetBadge('bb-fb-dis', _fbData.dis.events.length, _fbData.dis.sure > 0 ? 'r' : 'o');   // 확정 방전이 있으면 빨강, 추정만 있으면 주황
+            fbSetBadge('bb-fb-dis', _fbData.dis.robots, _fbData.dis.recentSure ? 'r' : 'o');   // 숫자 = 최근 15일 방전 기체 수. 최근 24시간 안에 확정 방전이 있으면 빨강, 그 밖에는 주황
             fbSetBadge('bb-fb-slow', _fbData.sc.measured, 'b');   // 저속충전: 지금 충전 속도를 측정 중인 기체 수 (데이터가 부족해 아직 계산 못 하는 기체는 제외)
             fbSetBadge('bb-fb-moff', _fbData.mo.length, 'o');
             fbRender();
@@ -4360,6 +4547,7 @@
     document.querySelectorAll('#bb-fixbtns .bb-fb').forEach(btn => btn.addEventListener('click', () => {
         _fbMode = _fbMode === btn.dataset.mode ? null : btn.dataset.mode;   // 같은 버튼을 다시 누르면 닫힘
         refreshFixedTools();
+        if (_fbMode === 'dis') dcRefreshCache(DC_OPEN_REFRESH_MS).then(ok => { if (ok && _fbMode === 'dis') refreshFixedTools(); }).catch(() => {});   // 다른 PC 가 올린 방전 기록 반영 (30분 이내에 받았으면 요청 없음)
     }));
     document.getElementById('bb-fbp-x').addEventListener('click', () => { _fbMode = null; fbRender(); });
     document.getElementById('bb-fbp-body').addEventListener('click', e => {
@@ -4885,6 +5073,7 @@
     const ATT_API = 'https://multimonitoring.vercel.app/api';
     const ATT_REFRESH_MS = 30 * 1000;   // 서버는 1분 간격으로 수집 → 30초마다 확인해 새 데이터를 최대 30초 안에 반영
     const ATT_STALE_MIN = 15;           // 서버 갱신 시각(heartbeat 10분)이 이보다 오래되면 '수집 지연' 경고
+    const ATT_QUIET = [3 * 60, 9 * 60]; // cron-job.org 에서 수집을 멈추는 시간대(KST 03:00~09:00) — 크론 스케줄을 바꾸면 여기도 맞출 것. 이 시간대에는 '수집 지연' 경고를 내지 않음
     const ATT_VIOL_LABELS = ['15분 초과 이석', '착석 미기입', '메시지 편집됨', '출근 60분 이내 이석', '착석 60분 이내 재이석'];
     const ATT_EXCLUDE = ['차현모', '김용욱', '이연지', '정우솔'];
 
@@ -5068,14 +5257,15 @@
         if (live) {
             if (!_attLive) { text = _attFail ? '⚠ 불러오기 실패' : '불러오는 중…'; warn = _attFail; }
             else {
-                const upd = Date.parse(_attLive.updated || '');
-                if (_attFail) { text = '⚠ 불러오기 실패 · 마지막 ' + attHM(_attLive._at) + ' 기준'; warn = true; }
+                const upd = Date.parse(_attLive.updated || ''), nm = attKstMin(now), quiet = nm >= ATT_QUIET[0] && nm < ATT_QUIET[1];
+                if (quiet && !_attFail) { text = '야간 수집 중지 (03~09시) — 09시에 이어서 반영됩니다'; }
+                else if (_attFail) { text = '⚠ 불러오기 실패 · 마지막 ' + attHM(_attLive._at) + ' 기준'; warn = true; }
                 else if (Number.isFinite(upd) && (now - upd) / 60000 > ATT_STALE_MIN) { text = '⚠ 수집 지연 · 서버 마지막 갱신 ' + attHM(upd); warn = true; }
                 else text = attHM(_attLive._at) + ' 기준';
             }
         }
         st.title = text;   // 전체 문구는 툴팁으로 — 화면에는 좁은 자리에 맞게 짧게
-        st.textContent = warn ? '⚠ ' + (((text.match(/\d{2}:\d{2}/) || [])[0]) ? (text.match(/\d{2}:\d{2}/)[0] + ' 기준') : '실패') : text;
+        st.textContent = text.startsWith('야간 수집 중지') ? '야간 중지' : (warn ? '⚠ ' + (((text.match(/\d{2}:\d{2}/) || [])[0]) ? (text.match(/\d{2}:\d{2}/)[0] + ' 기준') : '실패') : text);
         st.classList.toggle('warn', warn);
 
         // 카드 (한 행에 3명, 서버가 근무 시작 시각순으로 정렬해서 내려줌)
