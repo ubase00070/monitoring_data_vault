@@ -589,6 +589,14 @@
         }
         .bb-row-pct-val { display:flex; align-items:center; height:20px; }
         .bb-row-pct-off { font-size:11px; font-weight:900; line-height:20px; color:rgba(239,68,68,.8); animation-delay:-4s; }
+        /* 카드 전체 배터리바 모드 (#bb.bb-wbatt): 카드 배경이 배터리 바가 됨 — 배터리 % 만큼 상태색으로 채워지고, 수치는 오른쪽 정렬 그대로. 두 표현을 모두 그려 두고 CSS 로만 전환 (전환할 때 다시 그리지 않음) */
+        .bb-row-wbar { display:none; position:absolute; inset:0; z-index:-1; border-radius:6.5px; overflow:hidden; pointer-events:none; }
+        .bb-row-wbar > i { position:absolute; left:0; top:0; bottom:0; }
+        .bb-row-pctx { display:none; min-width:56px; text-align:right; font-size:13px; font-weight:900; font-family:'Paperlogy','Lato',monospace; color:var(--tx); white-space:nowrap; }
+        #bb.bb-wbatt .bb-row { isolation:isolate; }   /* 채움(z-index:-1)이 카드 배경 위, 글자 아래에 깔리도록 */
+        #bb.bb-wbatt .bb-row-wbar { display:block; }
+        #bb.bb-wbatt .bb-row-batt { display:none; }
+        #bb.bb-wbatt .bb-row-pctx { display:inline-block; }
         .bb-row-plug { font-size:11px; line-height:1; flex-shrink:0; }   /* 있을 때만 표시 (자리 예약 없음) — 배터리 바 왼쪽 */
 
         /* ── 우측: 다중 모니터링 중 기체 (세로 직사각형 영역) ── */
@@ -766,7 +774,7 @@
         .bb-att-ll .ed { margin-left:6px; color:var(--bl); font-weight:700; }
         .bb-att-le { padding:3px 12px; font-size:13px; font-style:italic; color:var(--mu); }
 
-        #bb-att-detail { top:50%; left:50%; transform:translate(-50%,-50%); width:min(1240px, 96vw); max-height:88vh; overflow:hidden; flex-direction:column; font-weight:700; }   /* 폰트는 Paperlogy 맞음 — 기본(Regular 400)이 얇아 보여서 Bold(700)로 */
+        #bb-att-detail { top:50%; left:50%; transform:translate(-50%,-50%); width:min(1240px, 96vw); height:88vh; max-height:88vh; overflow:hidden; flex-direction:column; font-weight:700; }   /* 높이 고정: 이름 검색으로 표가 짧아져도 창 크기는 그대로 */   /* 폰트는 Paperlogy 맞음 — 기본(Regular 400)이 얇아 보여서 Bold(700)로 */
         #bb-att-detail.open { display:flex; }
         .bb-att-dh { flex:0 0 auto; display:flex; align-items:center; gap:14px; padding:14px 18px; border-bottom:1px solid var(--bd); }
         .bb-att-dh .t { font-size:20px; font-weight:900; white-space:nowrap; flex:0 0 auto; }   /* 제목은 줄바꿈 없이, 남는 자리에서 포디움 카드가 줄바꿈 */
@@ -1286,14 +1294,13 @@
     document.body.appendChild(wrap);
 
     const bbEl = document.getElementById('bb');
-    // 다크모드는 삭제됨 → 항상 라이트. (#bb-theme-btn 은 나중에 재활용하려고 자리만 남겨 두고 "-" 만 표시, 동작 없음)
+    // 다크모드는 삭제됨 → 항상 라이트. (#bb-theme-btn 은 아래 '카드 배터리바 표기 방식' 버튼으로 재활용)
     const applyBbTheme = () => {
 		bbEl.classList.add('bb-light');
 		document.getElementById('bb-alert-panel').classList.add('bb-light');
 		document.getElementById('bb-info-card-panel').classList.add('bb-light');
 		document.getElementById('bb-alertlog-all-panel').classList.add('bb-light');
 		document.getElementById('bb-delivery-panel').classList.add('bb-light');
-		document.getElementById('bb-theme-btn').textContent = '-';
 	};
     applyBbTheme();
 
@@ -1317,6 +1324,24 @@
         applyLightTheme();
     });
 
+
+    // 카드 배터리바 표기 방식 (☁️ 테마 버튼 왼쪽 버튼): 🔋 기본 = 카드 오른쪽 작은 배터리바 ↔ 🟩 = 카드 전체가 배터리바 (선택은 로컬 스토리지 'bb_batt_mode' 에 저장)
+    const BATT_MODE_KEY = 'bb_batt_mode';
+    const applyBattMode = () => {
+        let wide = false;
+        try { wide = localStorage.getItem(BATT_MODE_KEY) === 'wide'; } catch {}
+        bbEl.classList.toggle('bb-wbatt', wide);
+        const btn = document.getElementById('bb-theme-btn');
+        btn.textContent = wide ? '🟩' : '🔋';
+        btn.title = wide ? '카드 배터리 표시: 카드 전체가 배터리바 (클릭: 오른쪽 작은 배터리바로)' : '카드 배터리 표시: 오른쪽 작은 배터리바 (클릭: 카드 전체를 배터리바로)';
+    };
+    applyBattMode();
+    document.getElementById('bb-theme-btn').addEventListener('click', () => {
+        let wide = false;
+        try { wide = localStorage.getItem(BATT_MODE_KEY) === 'wide'; } catch {}
+        try { localStorage.setItem(BATT_MODE_KEY, wide ? 'small' : 'wide'); } catch {}
+        applyBattMode();
+    });
 
     // ============================================================
     // SECTION 1. 상수 & 상태
@@ -2114,6 +2139,8 @@
         const lastConn = off ? fmtLastConn(r.raw?.robotStatus?.lastConnectedAt) : null;
         row.title = `${r.name} | ${STL[r.status] || ''}` + (off ? ` | 마지막 통신 ${lastConn ? lastConn.full : '기록 없음'}` : '');
 
+        const fillW = Math.max(0, Math.min(100, Number(r.battery) || 0));
+        const wbar = off ? '' : `<span class="bb-row-wbar"><i style="width:${fillW}%;background:${ac};background:color-mix(in srgb, ${ac} 40%, transparent);box-shadow:inset -2px 0 0 ${ac};"></i></span>`;   // 카드 전체 배터리바 모드용 채움 (글자가 읽히도록 상태색을 옅게, 끝선만 진하게)
         const battInner = off
             ? `<span class="bb-row-off">
                    <span class="bb-off-l1"><b class="bb-off-a bb-off-tag">OFF</b><i class="bb-off-sep">|</i><span class="bb-off-lbl">마지막 통신</span></span>
@@ -2124,7 +2151,7 @@
             : `<span class="bb-row-batt" style="border-color:${ac};">
                    <span class="bb-row-batt-fill" style="width:${r.battery}%;background:${ac};"></span>
                    <span class="bb-row-batt-pct">${r.battery}%</span>
-               </span>`;
+               </span><span class="bb-row-pctx">${r.battery}%</span>`;
         const battHtml = showMissionOff
             ? `<span class="bb-row-pct-wrap">
                    <span class="bb-row-pct-val">${battInner}</span>
@@ -2133,6 +2160,7 @@
             : battInner;
 
         row.innerHTML = `
+            ${wbar}
             <span class="bb-row-dot" style="background:${ac};"></span>
             <span class="bb-row-name">${r.name}</span>
             ${showPlug ? '<span class="bb-row-plug" title="유선 충전 연결">🔌</span>' : ''}
