@@ -1058,7 +1058,7 @@
     document.body.appendChild(wrap);
 
     const bbEl = document.getElementById('bb');
-    // 다크모드는 삭제됨 → 항상 라이트. (#bb-theme-btn 은 나중에 재활용하려고 자리만 남겨 두고 "-" 만 표시, 동작 없음)
+    // 다크모드는 삭제됨 → 항상 라이트. (#bb-theme-btn 은 나중에 재활용하려고 자리만 남겨 두고 "-" 만 표시)
     const applyBbTheme = () => {
 		bbEl.classList.add('bb-light');
 		document.getElementById('bb-alert-panel').classList.add('bb-light');
