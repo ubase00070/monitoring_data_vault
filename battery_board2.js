@@ -1,5 +1,5 @@
 /* ============================================================
-   battery_board.js v6.1 (배달 기체 로그 · 하루 기준 07:00 · 금일 배달 건수 배지 · 고정 버튼 3종 무지개 파스텔+이모지)
+   battery_board.js v6.2 (이석/착석 현황 슬라이드 전환 추가 · 배달 기체 로그 · 하루 기준 07:00 · 금일 배달 건수 배지 · 고정 버튼 3종 무지개 파스텔+이모지)
    NCC 종합 모니터 — 템퍼몽키 inject
    ============================================================ */
 
@@ -560,7 +560,7 @@
         /* ── 우측: 다중 모니터링 중 기체 (세로 직사각형 영역) ── */
         .bb-mm { flex:1 1 0; min-width:0; position:relative; margin:10px 16px 10px 6px; }
         .bb-mm-box {
-            position:absolute; inset:0; display:flex; flex-direction:column;
+            position:absolute; inset:0; display:block;
             border:2px solid var(--bd2); border-radius:8px; background:var(--bg); overflow:hidden;
         }
         .bb-mm-head {
@@ -612,6 +612,129 @@
             0%,100% { border-color:var(--or); box-shadow:0 0 0 1px var(--or); }
             50%     { border-color:transparent; box-shadow:none; }
         }
+
+        /* ══════════════════════════════════════════════════════════
+           이석/착석 현황 (SECTION 17) — 다중 모니터링 영역과 좌우 슬라이드 전환
+           ══════════════════════════════════════════════════════════ */
+        .bb-mm-track { display:flex; width:200%; height:100%; transition:transform .32s cubic-bezier(.4,0,.2,1); }
+        .bb-mm-track.att { transform:translateX(-50%); }
+        .bb-mm-page { flex:0 0 50%; width:50%; min-width:0; height:100%; display:flex; flex-direction:column; position:relative; }
+        .bb-mm-head { position:relative; padding-right:66px; }   /* 우측 '이석 »' 버튼 자리 */
+        .bb-mm-nav {
+            height:26px; padding:0 9px; border-radius:6px; border:1.5px solid var(--bd2);
+            background:var(--sur2); color:var(--tx); font-size:13px; font-family:inherit;
+            cursor:pointer; white-space:nowrap; display:inline-flex; align-items:center; justify-content:center; flex:none;
+        }
+        .bb-mm-nav:hover { border-color:var(--mu); }
+        .bb-mm-goatt { position:absolute; right:8px; top:50%; transform:translateY(-50%); }
+        /* 다중 모니터링에 '미갱신' 이상이 하나라도 있으면 다중 카드(.bb-mm-card.anomaly)와 같은 색·같은 점멸 */
+        .bb-att-back.alert { border-color:var(--or); color:#c2410c; animation:bb-mmBlink 1s infinite; }
+
+        .bb-att-head { flex:0 0 auto; position:relative; padding:6px 8px; background:var(--sur); border-bottom:1px solid var(--bd); display:flex; flex-direction:column; gap:6px; z-index:3; }
+        .bb-att-r1 { display:flex; align-items:center; gap:8px; }
+        .bb-att-title { flex:1 1 auto; min-width:0; text-align:center; font-size:15px; line-height:1.25; color:var(--tx); }
+        .bb-att-title .n { color:var(--rd); }
+        .bb-att-title .sep { color:var(--mu); }
+        .bb-att-title .past { color:var(--or); }
+        .bb-att-r2 { display:flex; align-items:center; gap:5px; }
+        .bb-att-mbtn { min-width:46px; }
+        .bb-att-mbtn.on { border-color:var(--bl); color:var(--bl); background:var(--bl2); }
+        .bb-att-stat { margin-left:auto; font-size:11.5px; color:var(--mu); white-space:nowrap; }
+        .bb-att-stat.warn { color:#c2410c; }
+        .bb-att-cal {
+            display:none; position:absolute; left:8px; top:100%; margin-top:4px; width:272px; padding:10px 10px 8px;
+            background:var(--sur); border:1.5px solid var(--bd2); border-radius:10px; box-shadow:0 10px 28px rgba(0,0,0,.35);
+        }
+        .bb-att-cal.open { display:block; }
+        .bb-att-cal-title { text-align:center; font-size:14px; color:var(--tx); margin-bottom:6px; }
+        .bb-att-cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:3px; }
+        .bb-att-dow { font-size:11.5px; color:var(--mu); text-align:center; padding-bottom:3px; }
+        .bb-att-day { position:relative; height:30px; display:flex; align-items:center; justify-content:center; border-radius:6px; font-size:13px; color:var(--mu); border:1.5px solid transparent; opacity:.55; }
+        .bb-att-day.has { color:var(--tx); opacity:1; cursor:pointer; }
+        .bb-att-day.has:hover { background:var(--sur2); }
+        .bb-att-day.today { border-color:var(--bl); opacity:1; color:var(--tx); }
+        .bb-att-day.sel { background:var(--bl); color:#fff; border-color:var(--bl); opacity:1; }
+        .bb-att-day .dot { position:absolute; bottom:2px; left:50%; transform:translateX(-50%); width:3px; height:3px; border-radius:50%; background:var(--gn); }
+        .bb-att-day.sel .dot { background:#fff; }
+
+        .bb-att-body { flex:1 1 auto; min-height:0; overflow-y:auto; padding:6px; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; align-content:start; }
+        .bb-att-msg { grid-column:1 / -1; padding:34px 8px; text-align:center; font-size:13px; color:var(--mu); }
+        .bb-att-msg.warn { color:#c2410c; }
+        .bb-att-card {
+            box-sizing:border-box; min-width:0; height:58px; padding:5px 7px; border:3px solid #7fc65a; border-radius:9px; background:var(--sur);
+            display:flex; flex-direction:column; justify-content:center; gap:2px; cursor:pointer;
+        }
+        .bb-att-card:hover { filter:brightness(1.03); }
+        .bb-att-card.sel { outline:2px solid var(--tx); outline-offset:1px; }
+        /* 확인사항 개수(0~4+)에 따른 테두리 색 — awayboard 와 동일 */
+        .bb-att-card.lv0 { border-color:#7fc65a; box-shadow:0 0 9px -3px rgba(127,198,90,.75); }
+        .bb-att-card.lv1 { border-color:#ffd200; box-shadow:0 0 9px -3px rgba(255,210,0,.9); }
+        .bb-att-card.lv2 { border-color:#ffb066; box-shadow:0 0 10px -2px rgba(255,176,102,.95); }
+        .bb-att-card.lv3 { border-color:#ff7a1a; box-shadow:0 0 11px -2px rgba(255,122,26,1); }
+        .bb-att-card.lv4 { border-color:#ff3366; box-shadow:0 0 13px -1px rgba(255,51,102,1); }
+        .bb-att-card.off { background:#cfc8b4; }
+        .bb-att-card.off .bb-att-name, .bb-att-card.off .bb-att-cnt, .bb-att-card.off .bb-att-tot { color:#4a4436; }
+        .bb-att-l1 { display:flex; align-items:baseline; justify-content:space-between; gap:4px; min-width:0; }
+        .bb-att-name { min-width:0; font-size:14px; color:var(--tx); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .bb-att-cnt { flex:none; font-size:12px; color:var(--mu); }
+        .bb-att-tot { font-size:12.5px; color:var(--tx); white-space:nowrap; }
+        .bb-att-card.away .bb-att-name::before { content:''; display:inline-block; width:7px; height:7px; margin-right:4px; border-radius:50%; background:var(--pk); animation:bb-attPulse 1.4s ease-in-out infinite; }
+        @keyframes bb-attPulse { 0%,100% { opacity:1; } 50% { opacity:.25; } }
+        .bb-att-legend { flex:0 0 auto; display:flex; justify-content:center; align-items:center; gap:9px; padding:5px 6px 6px; border-top:1px solid var(--bd); font-size:11px; color:var(--mu); white-space:nowrap; }
+        .bb-att-legend i { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:3px; vertical-align:-1px; }
+
+        /* 카드 클릭 → 이석 로그 (다중 영역 왼쪽에 뜨는 작은 창) / 상세 로그 (화면 중앙) — 둘 다 보드 밖 최상위 패널 */
+        #bb-att-pop, #bb-att-detail {
+            --bg:#f2e4c4; --sur:#f8f3e6; --sur2:#efe6d2; --bd:#cabf9d; --bd2:#b3a687; --tx:#2b2418; --mu:#7a6f5c;
+            --rd:#ef4444; --or:#f97316; --pk:#ff1493; --bl:#3b82f6; --gn:#22c55e;
+            display:none; position:fixed; color:var(--tx); font-family:'Paperlogy','Lato',-apple-system,sans-serif;
+            border:3px solid transparent; border-radius:14px;
+            background-image:linear-gradient(var(--sur),var(--sur)), linear-gradient(135deg,#9dbdff,#8fe6ff);
+            background-origin:border-box; background-clip:padding-box,border-box;
+            box-shadow:0 18px 46px rgba(0,0,0,.55); z-index:99999998; box-sizing:border-box;
+        }
+        #bb-att-pop * , #bb-att-detail * { box-sizing:border-box; }
+        #bb-att-pop.open { display:block; }
+        #bb-att-pop { width:372px; max-height:min(640px, 90vh); overflow-y:auto; padding:12px 14px 12px; }
+        .bb-att-ph { display:flex; align-items:baseline; gap:8px; margin-bottom:8px; }
+        .bb-att-ph b { font-size:18px; font-weight:900; }
+        .bb-att-ph span { font-size:12px; color:var(--mu); }
+        .bb-att-ph .x { margin-left:auto; cursor:pointer; color:#b91c1c; font-size:16px; font-weight:900; padding:0 4px; }
+        .bb-att-vs { display:flex; flex-direction:column; gap:4px; padding:2px 0 10px; font-size:14px; }
+        .bb-att-vs .hit { color:#e11d74; font-weight:900; }
+        .bb-att-vs .ok { color:#9a8e6c; }
+        .bb-att-lt { width:100%; border-collapse:collapse; font-size:14px; }
+        .bb-att-lt th { text-align:left; font-size:12.5px; color:var(--mu); padding:4px 4px 6px; border-bottom:2px solid var(--bd); font-weight:700; }
+        .bb-att-lt th:last-child, .bb-att-lt td:last-child { text-align:right; }
+        .bb-att-lt td { padding:6px 4px; border-bottom:1px solid var(--bd); white-space:nowrap; font-variant-numeric:tabular-nums; }
+        .bb-att-lt td.seq { color:var(--mu); }
+        .bb-att-lt .tag { margin-left:4px; font-size:10.5px; color:var(--mu); }
+        .bb-att-lt .tag.ed { color:#e11d74; }
+        .bb-att-lt .no { color:#e11d74; font-weight:700; }
+        .bb-att-lt .ing { color:var(--or); font-size:12px; margin-right:4px; }
+        .bb-att-lt .long { color:#e11d74; font-weight:700; }
+
+        #bb-att-detail { top:50%; left:50%; transform:translate(-50%,-50%); width:min(1240px, 96vw); max-height:88vh; overflow:hidden; flex-direction:column; }
+        #bb-att-detail.open { display:flex; }
+        .bb-att-dh { flex:0 0 auto; display:flex; align-items:center; gap:14px; padding:14px 18px; border-bottom:1px solid var(--bd); }
+        .bb-att-dh .t { font-size:20px; font-weight:900; }
+        .bb-att-dh select { height:34px; padding:0 10px; border-radius:8px; border:1.5px solid var(--bd2); background:var(--sur2); color:var(--tx); font-size:14px; font-family:inherit; }
+        .bb-att-dh .x { margin-left:auto; width:34px; height:34px; border-radius:8px; background:rgba(239,68,68,.18); border:1px solid rgba(239,68,68,.5); color:#b91c1c; font-size:18px; font-weight:900; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+        .bb-att-dnote { flex:0 0 auto; padding:6px 18px 0; font-size:12px; color:#c2410c; }
+        .bb-att-db { flex:1 1 auto; min-height:0; overflow:auto; padding:0 12px 14px; }
+        .bb-att-mt { width:100%; border-collapse:collapse; font-size:15px; font-variant-numeric:tabular-nums; }
+        .bb-att-mt th { position:sticky; top:0; z-index:1; background:var(--sur); padding:14px 12px; font-size:14px; color:var(--tx); text-align:right; white-space:nowrap; border-bottom:2px solid var(--bd); cursor:pointer; user-select:none; }
+        .bb-att-mt th:first-child { text-align:left; cursor:default; }
+        .bb-att-mt th.sorted { background:#ffe0d6; }
+        .bb-att-mt th.sorted::after { content:' ▾'; font-size:11px; }
+        .bb-att-mt td { padding:11px 12px; text-align:right; white-space:nowrap; border-bottom:1px solid var(--bd); }
+        .bb-att-mt td:first-child { text-align:left; }
+        .bb-att-mt td .tm { margin-left:5px; font-size:12px; color:var(--mu); }
+        .bb-att-mt td.bad { color:#e11d74; }
+        .bb-att-mt td.warn, .bb-att-mt th.warn { background:rgba(249,115,22,.10); }
+        .bb-att-mt td.warn { color:#c2410c; }
+        .bb-att-mt tr:hover td { background:rgba(0,0,0,.035); }
+        .bb-att-mt tr:hover td.warn { background:rgba(249,115,22,.16); }
 
         /* ── 하단 퀵바: 한 줄에 4개 그룹 (제목 | 켜진 기체 동그라미) ── */
         .bb-quick {
@@ -1011,14 +1134,40 @@
                     <div class="bb-quick" id="bb-quick"></div>
                 </div>
 
-                <!-- 다중 모니터링 중 기체 — patrol_watch_live.json 을 1분마다 받아 #bb-mm-body 에 카드 렌더 (SECTION 16) -->
+                <!-- 다중 모니터링 중 기체 — patrol_watch_live.json 을 1분마다 받아 #bb-mm-body 에 카드 렌더 (SECTION 16)
+                     ↔ 이석/착석 현황 (SECTION 17): 같은 영역 안에서 좌우 슬라이드 전환. 새로고침하면 항상 다중이 기본 -->
                 <div class="bb-mm">
                     <div class="bb-mm-box">
-                        <div class="bb-mm-head">
-                            <div class="bb-mm-title" id="bb-mm-title">다중 모니터링 기체</div>
-                            <div class="bb-mm-sub" id="bb-mm-sub">불러오는 중…</div>
+                        <div class="bb-mm-track" id="bb-mm-track">
+                            <div class="bb-mm-page" id="bb-mm-page-multi">
+                                <div class="bb-mm-head">
+                                    <div class="bb-mm-title" id="bb-mm-title">다중 모니터링 기체</div>
+                                    <div class="bb-mm-sub" id="bb-mm-sub">불러오는 중…</div>
+                                    <button class="bb-mm-nav bb-mm-goatt" id="bb-mm-goatt" title="이석/착석 현황으로 전환">이석 »</button>
+                                </div>
+                                <div class="bb-mm-body" id="bb-mm-body"></div>
+                            </div>
+                            <div class="bb-mm-page" id="bb-mm-page-att">
+                                <div class="bb-att-head">
+                                    <div class="bb-att-r1">
+                                        <button class="bb-mm-nav bb-att-back" id="bb-att-back" title="다중 모니터링으로 돌아가기">« 다중</button>
+                                        <div class="bb-att-title" id="bb-att-title">이석/착석 현황</div>
+                                    </div>
+                                    <div class="bb-att-r2">
+                                        <button class="bb-mm-nav bb-att-mbtn" id="bb-att-mprev">--월</button>
+                                        <button class="bb-mm-nav bb-att-mbtn" id="bb-att-mcur">--월</button>
+                                        <button class="bb-mm-nav" id="bb-att-detailbtn" title="월별 근무자 상세 통계">상세 로그</button>
+                                        <button class="bb-mm-nav" id="bb-att-today" style="display:none" title="실시간 현황으로 돌아가기">오늘로</button>
+                                        <span class="bb-att-stat" id="bb-att-stat"></span>
+                                    </div>
+                                    <div class="bb-att-cal" id="bb-att-cal"></div>
+                                </div>
+                                <div class="bb-att-body" id="bb-att-body"></div>
+                                <div class="bb-att-legend">확인사항
+                                    <span><i style="background:#7fc65a"></i>0개</span><span><i style="background:#ffd200"></i>1개</span><span><i style="background:#ffb066"></i>2개</span><span><i style="background:#ff7a1a"></i>3개</span><span><i style="background:#ff3366"></i>4개+</span>
+                                </div>
+                            </div>
                         </div>
-                        <div class="bb-mm-body" id="bb-mm-body"></div>
                     </div>
                 </div>
             </div>
@@ -1053,6 +1202,18 @@
                 <div class="bb-icp-close" id="bb-icp-close">✕</div>
             </div>
             <div id="bb-icp-body"></div>
+        </div>
+
+        <!-- 이석 로그 창(카드 클릭) / 상세 로그 창(월별 통계) — SECTION 17 -->
+        <div id="bb-att-pop"></div>
+        <div id="bb-att-detail">
+            <div class="bb-att-dh">
+                <div class="t" id="bb-att-dtitle">상세 로그</div>
+                <select id="bb-att-dsel"></select>
+                <div class="x" id="bb-att-dclose">✕</div>
+            </div>
+            <div class="bb-att-dnote" id="bb-att-dnote"></div>
+            <div class="bb-att-db" id="bb-att-dbody"></div>
         </div>
     `;
     document.body.appendChild(wrap);
@@ -1690,6 +1851,7 @@
         // [주석처리: 기타 배달]
         // renderDeliveryChips(lastRaw);
         if (_patrolReady) refreshPatrolLive();   // 다시 열면 즉시 최신 정보로
+        if (_attReady) attOnOpen();   // 이석 화면을 보고 있었다면 즉시 최신 정보로 (SECTION 17)
     }
     function closeBoard() {
         isOpen = false;
@@ -1698,6 +1860,7 @@
         // (기체 정보 창은 보드를 닫아도 유지 — 창의 ✕ 로만 닫음)
         if (rmMode) { rmMode = false; rmSet.clear(); updateRmUI(); }
         hideDd();
+        if (_attReady) attCloseFloating();   // 이석 로그/달력/상세 로그 창도 함께 닫음 (SECTION 17)
     }
 
     // 근태(Pointless) 페이지에서는 자동으로 열지 않음
@@ -4396,6 +4559,7 @@
     let _patrolBusy = false;
     let _patrolSig = null;
     let _patrolLastUpdated = null;
+    let _patrolAnomaly = { n: 0, max: 0 };   // 미갱신(이상) 카드 수 / 최대 미갱신 분 — 이석 화면의 '« 다중' 버튼 점멸에 사용 (SECTION 17)
 
     // ── (호환용) 간소화명 → NCC 기체명(전체) ─────────────────────────
     //  Worker 가 records[].robot_full 을 내려주므로 평소에는 쓰이지 않는다. 예전 Worker 가 게시한 JSON 이거나
@@ -4661,6 +4825,9 @@
 
             _patrolLastUpdated = data.updated_at || null;
             const cards = buildPatrolCards(data.records, patrolHm(data.updated_at));   // 기준 = Worker 가 게시한 시각(KST)
+            const anomalies = cards.filter(c => c.anomaly);
+            _patrolAnomaly = { n: anomalies.length, max: anomalies.reduce((m, c) => Math.max(m, c.stale || 0), 0) };
+            syncAttBackAlert();   // 이석 화면에 가 있어도 다중의 미갱신을 놓치지 않도록
             const sig = JSON.stringify(cards);
             if (sig !== _patrolSig) {   // 바뀐 게 없으면 다시 그리지 않음 (점멸 애니메이션/스크롤 유지)
                 _patrolSig = sig;
@@ -4682,6 +4849,467 @@
     setInterval(() => { if (isOpen) refreshPatrolLive(); }, PATROL_REFRESH_MS);
     _patrolReady = true;
     if (isOpen) refreshPatrolLive();
+
+    // ============================================================
+    // SECTION 17. 이석/착석 현황 — 다중 모니터링 영역과 좌우 슬라이드 전환 (awayboard 이식)
+    //  - 데이터: multimonitoring.vercel.app/api (Slack → 서버가 1분마다 수집·정리한 결과). NCC API(2분)/다중 모니터링(30초)과 완전히 별개.
+    //  - 이석 화면이 실제로 보일 때만 30초마다 조회 (다중 화면이거나 보드가 닫혀 있거나 탭이 가려져 있으면 요청 없음)
+    //  - 확인사항 판정 / 카드 색상 레벨(lv) / 카드 순서(근무 시작 시각순)는 서버가 계산해서 내려줌 → 여기서는 표시만 한다.
+    //    (판정 기준을 이 파일에 또 두면 서버와 어긋남 — 기준은 서버 lib/attendance-core.js 한 곳)
+    //  - 새로고침하면 항상 다중 화면이 기본 (전환 상태를 저장하지 않음)
+    // ============================================================
+    var _attReady = false;   // SECTION 17 초기화가 끝난 뒤 true (openBoard 가 로딩 중에 먼저 호출되므로 var 로 선언 — _patrolReady 와 같은 방식)
+    const ATT_API = 'https://multimonitoring.vercel.app/api';
+    const ATT_REFRESH_MS = 30 * 1000;   // 서버는 1분 간격으로 수집 → 30초마다 확인해 새 데이터를 최대 30초 안에 반영
+    const ATT_STALE_MIN = 15;           // 서버 갱신 시각(heartbeat 10분)이 이보다 오래되면 '수집 지연' 경고
+    const ATT_VIOL_LABELS = ['15분 초과 이석', '착석 미기입', '메시지 편집됨', '출근 60분 이내 이석', '착석 60분 이내 재이석'];
+    const ATT_EXCLUDE = ['차현모', '김용욱', '이연지', '정우솔'];
+
+    let _attView = 'multi';   // 'multi' | 'att'
+    let _attDate = null;      // null = 실시간, 'YYYY-MM-DD' = 과거 기록
+    let _attLive = null;      // 마지막으로 받은 실시간 데이터
+    let _attDay = null;       // { date, stats, msg } 과거 기록
+    let _attFail = false, _attBusy = false, _attSig = null;
+    let _attPopId = null, _attCalWhich = null, _attDetailYm = null, _attSortKey = 'avgSec';
+    const _attMonthCache = {}, _attSchedCache = {}, _attDayCache = {};
+
+    const $att = id => document.getElementById(id);
+    const attEl = (tag, cls, text) => {
+        const el = document.createElement(tag);
+        if (cls) el.className = cls;
+        if (text !== undefined) el.textContent = text;
+        return el;
+    };
+    const attPad = n => String(n).padStart(2, '0');
+    const attKst = ms => new Date((ms === undefined ? Date.now() : ms) + 9 * 3600 * 1000);   // getUTC* 로 읽으면 KST
+    const attYmd = d => d.getUTCFullYear() + '-' + attPad(d.getUTCMonth() + 1) + '-' + attPad(d.getUTCDate());
+    const attHM = ms => { const d = attKst(ms); return attPad(d.getUTCHours()) + ':' + attPad(d.getUTCMinutes()); };
+    const attKstMin = ms => { const d = attKst(ms); return d.getUTCHours() * 60 + d.getUTCMinutes() + d.getUTCSeconds() / 60; };
+    function attAddDays(ymd, n) { const d = new Date(ymd + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return attYmd(d); }
+    function attDur(sec) {
+        if (sec === null || sec === undefined) return '-';
+        const t = Math.round(sec);
+        return Math.floor(t / 60) + '분 ' + (t % 60) + '초';
+    }
+    function attDurHM(sec) {   // 60분 미만 'N분 N초', 이상 'N시간 N분'
+        if (sec === null || sec === undefined) return '-';
+        const m = Math.floor(sec / 60);
+        return m < 60 ? attDur(sec) : (Math.floor(m / 60) + '시간 ' + (m % 60) + '분');
+    }
+    function attOnShift(shift, minOfDay) {   // shift = [시작분, 종료분] (자정 넘김 처리). 근무시간을 모르면 근무 중으로 취급
+        if (!shift) return true;
+        const s = shift[0], e = shift[1];
+        if (s === e) return true;
+        return s < e ? (minOfDay >= s && minOfDay < e) : (minOfDay >= s || minOfDay < e);
+    }
+    // 실시간 스레드 날짜 (서버가 내려준 date 우선, 아직 없으면 05:00 기준으로 추정)
+    const attLiveDate = () => (_attLive && _attLive.date) || attYmd(attKst(Date.now() - 5 * 3600 * 1000));
+    // [이전달, 이번달] = 'YYYY-MM' 2개 — 조회 가능한 달은 항상 이 두 개뿐
+    function attMonths() {
+        const p = attLiveDate().split('-').map(Number);
+        const prev = new Date(Date.UTC(p[0], p[1] - 2, 1));
+        return [prev.getUTCFullYear() + '-' + attPad(prev.getUTCMonth() + 1), p[0] + '-' + attPad(p[1])];
+    }
+
+    /* ───────── 화면 전환 ───────── */
+    function attSetView(v) {
+        _attView = v;
+        $att('bb-mm-track').classList.toggle('att', v === 'att');
+        $att('bb-mm-page-multi').inert = (v === 'att');   // 안 보이는 쪽은 클릭/탭 포커스도 막음
+        $att('bb-mm-page-att').inert = (v !== 'att');
+        if (v === 'att') { attRender(); if (!_attDate) attRefreshLive(); }
+        else attCloseFloating();
+    }
+    function attCloseFloating() { attClosePop(); attCloseCal(); attCloseDetail(); }
+    // 보드를 다시 열 때 (openBoard 에서 호출)
+    function attOnOpen() { if (_attView === 'att' && !_attDate) attRefreshLive(); }
+
+    // 다중 모니터링에 '미갱신' 이상이 하나라도 있으면 « 다중 버튼이 그 카드와 같은 색·점멸 (refreshPatrolLive 에서 호출)
+    function syncAttBackAlert() {
+        const b = $att('bb-att-back');
+        if (!b) return;
+        const a = _patrolAnomaly;
+        b.classList.toggle('alert', a.n > 0);
+        b.title = a.n > 0 ? `다중 모니터링 ${a.n}대 POI 미갱신 (최대 ${a.max}분째) — 클릭하면 다중 화면으로` : '다중 모니터링으로 돌아가기';
+    }
+
+    /* ───────── 데이터 로드 ───────── */
+    async function attFetchJson(url, ms = 15000) {
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), ms);
+        try {
+            const res = await fetch(url, { signal: ctrl.signal });
+            if (res.status === 404) return { _404: true };
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return await res.json();
+        } finally { clearTimeout(timer); }
+    }
+
+    async function attRefreshLive() {
+        if (_attBusy) return;
+        _attBusy = true;
+        try {
+            const data = await attFetchJson(ATT_API + '/attendance');
+            if (!data || !Array.isArray(data.stats)) throw new Error('데이터 형식 오류');
+            data.stats = data.stats.filter(s => !ATT_EXCLUDE.some(n => (s.name || '').includes(n)));
+            _attLive = data; _attLive._at = Date.now(); _attFail = false;
+        } catch (e) {
+            console.warn('[BB] 이석 현황 갱신 실패:', e.message);
+            _attFail = true;
+        } finally { _attBusy = false; }
+        if (_attView === 'att' && !_attDate) attRender();
+    }
+
+    async function attLoadDay(ds) {
+        const hit = _attDayCache[ds];
+        if (hit && Date.now() - hit.at < (ds >= attAddDays(attLiveDate(), -2) ? 5 * 60000 : 3600000)) { _attDay = hit.v; attRender(); return; }
+        _attDay = { date: ds, stats: null, msg: '불러오는 중…' };
+        attRender();
+        try {
+            const d = await attFetchJson(ATT_API + '/attendance-data?action=archive&date=' + ds);
+            if (_attDate !== ds) return;   // 그 사이 다른 날짜/실시간으로 바뀜
+            _attDay = d._404 ? { date: ds, stats: [], msg: '이 날짜의 기록이 없습니다' } : { date: ds, stats: d.stats || [], msg: '' };
+            _attDayCache[ds] = { at: Date.now(), v: _attDay };
+        } catch (e) {
+            console.warn('[BB] 이석 기록 조회 실패:', e.message);
+            if (_attDate !== ds) return;
+            _attDay = { date: ds, stats: null, msg: '⚠ 불러오기 실패 — 날짜를 다시 선택해 주세요', warn: true };
+        }
+        attRender();
+    }
+
+    async function attGetMonth(ym) {   // 월별 요약 (5분 캐시). 요약이 없으면 { days:{}, missing:true }
+        const c = _attMonthCache[ym];
+        if (c && Date.now() - c.at < 5 * 60000) return c.v;
+        const d = await attFetchJson(ATT_API + '/attendance-data?action=monthly&ym=' + ym);
+        const v = d._404 ? { ym, days: {}, missing: true } : d;
+        _attMonthCache[ym] = { at: Date.now(), v };
+        return v;
+    }
+    async function attGetSchedule(ym) {   // 스케줄(근무일수 계산용, 1시간 캐시). 실패하면 null → 근무일수는 '기록이 있는 날'로 대체
+        const c = _attSchedCache[ym];
+        if (c && Date.now() - c.at < (c.v ? 3600000 : 5 * 60000)) return c.v;
+        let v = null;
+        try { const d = await attFetchJson(ATT_API + '/schedule?ym=' + ym); v = (d && d.staff) ? d : null; } catch (e) { v = null; }
+        _attSchedCache[ym] = { at: Date.now(), v };
+        return v;
+    }
+
+    /* ───────── 카드 화면 ───────── */
+    const attStats = () => _attDate ? (_attDay && _attDay.date === _attDate ? _attDay.stats : null) : (_attLive ? _attLive.stats : null);
+    const attViol = s => s.v || [0, 0, 0, 0, 0];
+
+    function attRender() {
+        const live = !_attDate, stats = attStats(), now = Date.now(), nowMin = attKstMin(now);
+
+        // 제목: 이석/착석 현황 (금일 날짜) - 현재 이석 ##명
+        const ds = live ? attLiveDate() : _attDate, dp = ds.split('-').map(Number);
+        const title = $att('bb-att-title');
+        title.textContent = '이석/착석 현황 (' + dp[1] + '/' + dp[2] + ')';
+        if (live && stats) {
+            const awayN = stats.filter(s => s.lastStatus === '이석' && attOnShift(s.shift, nowMin)).length;
+            title.append(attEl('span', 'sep', ' - '), '현재 이석 ', attEl('span', 'n', awayN + '명'));
+        } else if (!live) {
+            title.append(attEl('span', 'sep', ' - '), attEl('span', 'past', '과거 기록'));
+        }
+
+        // 2번째 줄: 이전달/이번달 버튼 (자동 반영), 과거 조회 중이면 '오늘로'
+        const months = attMonths();
+        [['bb-att-mprev', months[0]], ['bb-att-mcur', months[1]]].forEach(([id, ym]) => {
+            const b = $att(id);
+            b.textContent = ym.slice(5) + '월';
+            b.title = ym.slice(0, 4) + '년 ' + Number(ym.slice(5)) + '월 — 날짜 선택';
+            b.classList.toggle('on', ds.slice(0, 7) === ym);
+        });
+        $att('bb-att-today').style.display = live ? 'none' : '';
+
+        // 상태 문구
+        const st = $att('bb-att-stat');
+        let text = '', warn = false;
+        if (live) {
+            if (!_attLive) { text = _attFail ? '⚠ 불러오기 실패' : '불러오는 중…'; warn = _attFail; }
+            else {
+                const upd = Date.parse(_attLive.updated || '');
+                if (_attFail) { text = '⚠ 불러오기 실패 · 마지막 ' + attHM(_attLive._at) + ' 확인'; warn = true; }
+                else if (Number.isFinite(upd) && (now - upd) / 60000 > ATT_STALE_MIN) { text = '⚠ 수집 지연 · 마지막 갱신 ' + attHM(upd); warn = true; }
+                else text = attHM(_attLive._at) + ' 확인';
+            }
+        }
+        st.textContent = text; st.classList.toggle('warn', warn);
+
+        // 카드 (한 행에 3명, 서버가 근무 시작 시각순으로 정렬해서 내려줌)
+        const body = $att('bb-att-body');
+        if (!stats) {
+            const m = live ? (_attFail ? '⚠ 이석 현황을 불러오지 못했습니다' : '불러오는 중…') : ((_attDay && _attDay.msg) || '불러오는 중…');
+            body.replaceChildren(attEl('div', 'bb-att-msg' + ((live ? _attFail : (_attDay && _attDay.warn)) ? ' warn' : ''), m));
+            attClosePop();
+            return;
+        }
+        if (!stats.length) {
+            body.replaceChildren(attEl('div', 'bb-att-msg', live ? '아직 이석/착석 기록이 없습니다' : ((_attDay && _attDay.msg) || '기록이 없습니다')));
+            attClosePop();
+            return;
+        }
+        const frag = document.createDocumentFragment();
+        stats.forEach(s => {
+            const v = attViol(s), n = v.filter(x => x > 0).length;
+            const off = live && !attOnShift(s.shift, nowMin);
+            const away = live && !off && s.lastStatus === '이석';
+            const el = attEl('div', 'bb-att-card lv' + Math.min(s.lv || 0, 4) + (off ? ' off' : '') + (away ? ' away' : '') + (s.userId === _attPopId ? ' sel' : ''));
+            el.dataset.uid = s.userId;
+            el.title = `${s.dn || s.name}${s.label ? ' (' + s.label + ')' : ''} · 이석 ${s.awayCount}회 · ${attDur(s.totalAwaySec)} · 확인사항 ${n}개` + (away ? ' · 이석 중' : '') + (off ? ' · 퇴근' : '');
+            const l1 = attEl('div', 'bb-att-l1');
+            l1.append(attEl('span', 'bb-att-name', s.dn || s.name), attEl('span', 'bb-att-cnt', s.awayCount + '회'));
+            el.append(l1, attEl('div', 'bb-att-tot', attDur(s.totalAwaySec)));
+            frag.appendChild(el);
+        });
+        body.replaceChildren(frag);
+        if (_attPopId) attRenderPop(true);   // 열려 있는 이석 로그도 최신 값으로 (확인사항 실시간 반영)
+    }
+
+    /* ───────── 카드 클릭 → 이석 로그 ───────── */
+    function attClosePop() {
+        _attPopId = null;
+        $att('bb-att-pop').classList.remove('open');
+        const sel = document.querySelector('.bb-att-card.sel');
+        if (sel) sel.classList.remove('sel');
+    }
+    function attTogglePop(uid) {
+        if (_attPopId === uid) { attClosePop(); return; }
+        attCloseCal();
+        _attPopId = uid;
+        document.querySelectorAll('.bb-att-card.sel').forEach(c => c.classList.remove('sel'));
+        const card = document.querySelector('.bb-att-card[data-uid="' + uid + '"]');
+        if (card) card.classList.add('sel');
+        attRenderPop(true);
+    }
+    function attRenderPop(place) {
+        const stats = attStats(), s = stats && stats.find(x => x.userId === _attPopId);
+        if (!s) { attClosePop(); return; }
+        const pop = $att('bb-att-pop'), live = !_attDate, v = attViol(s);
+
+        const hd = attEl('div', 'bb-att-ph');
+        const x = attEl('div', 'x', '✕'); x.addEventListener('click', attClosePop);
+        hd.append(attEl('b', '', s.dn || s.name), attEl('span', '', s.label || ''), x);
+
+        const vs = attEl('div', 'bb-att-vs');
+        ATT_VIOL_LABELS.forEach((label, i) => {
+            const hit = v[i] > 0;
+            vs.appendChild(attEl('div', hit ? 'hit' : 'ok', (hit ? '⚠️ ' : '✅ ') + label + (hit ? (v[i] > 1 ? ' ×' + v[i] : '') : ' 없음')));
+        });
+
+        const log = s.log || [];
+        let body;
+        if (!log.length) body = attEl('div', 'bb-att-msg', '기록 없음');
+        else {
+            body = attEl('table', 'bb-att-lt');
+            const hr = body.createTHead().insertRow();
+            ['#', '이석', '착석', '소요시간'].forEach(h => hr.appendChild(attEl('th', '', h)));
+            const tb = body.createTBody();
+            log.forEach((l, i) => {
+                const tr = tb.insertRow();
+                tr.appendChild(attEl('td', 'seq', String(i + 1)));
+                tr.appendChild(attEl('td', '', l.away || '-'));
+                const tdB = attEl('td', '');
+                if (l.back) { tdB.append(l.back); if (l.durationSec === 0) tdB.appendChild(attEl('span', 'tag', '동시기입')); }
+                else tdB.appendChild(attEl('span', 'no', '미기입'));
+                if (l.awayEdited || l.backEdited) tdB.appendChild(attEl('span', 'tag ed', '편집됨'));
+                tr.appendChild(tdB);
+                const tdD = attEl('td', '');
+                if (live && l.away && !l.back && i === log.length - 1 && s.lastStatus === '이석') {   // 지금 이석 중인 마지막 줄 → 경과 시간
+                    const p = l.away.split(':'), a = (+p[0]) * 60 + (+p[1]) + (+p[2]) / 60;
+                    let d = attKstMin(Date.now()) - a; if (d < 0) d += 1440;
+                    tdD.appendChild(attEl('span', 'ing', Math.round(d) + '분째'));
+                }
+                tdD.append(attDur(l.durationSec));
+                if (typeof l.durationSec === 'number' && l.durationSec >= 900) tdD.className = 'long';
+                tr.appendChild(tdD);
+            });
+        }
+        pop.replaceChildren(hd, vs, body);
+        pop.classList.add('open');
+        if (place) attPlacePop();
+    }
+    // 창은 다중 영역 '왼쪽'에 띄워 카드(오른쪽)를 가리지 않는다. 줌(scale)이 걸려 있어도 화면 좌표로 계산.
+    function attPlacePop() {
+        const pop = $att('bb-att-pop'), card = document.querySelector('.bb-att-card.sel'), box = document.querySelector('.bb-mm-box');
+        if (!card || !box) return;
+        const cr = card.getBoundingClientRect(), br = box.getBoundingClientRect(), w = pop.offsetWidth, h = pop.offsetHeight;
+        let left = br.left - w - 10;
+        if (left < 8) left = Math.min(br.right + 10, window.innerWidth - w - 8);
+        pop.style.left = Math.max(8, left) + 'px';
+        pop.style.top = Math.max(8, Math.min(cr.top, window.innerHeight - h - 8)) + 'px';
+    }
+
+    /* ───────── 이전달/이번달 날짜 선택 (미니 달력) ───────── */
+    function attCloseCal() { _attCalWhich = null; $att('bb-att-cal').classList.remove('open'); }
+    async function attOpenCal(which) {
+        if (_attCalWhich === which) { attCloseCal(); return; }
+        attClosePop();
+        _attCalWhich = which;
+        const ym = attMonths()[which === 'prev' ? 0 : 1];
+        attRenderCal(ym, null);
+        try { const dig = await attGetMonth(ym); if (_attCalWhich === which) attRenderCal(ym, dig); } catch (e) { /* 점 표시만 못 함 */ }
+    }
+    function attRenderCal(ym, dig) {
+        const cal = $att('bb-att-cal'), y = +ym.slice(0, 4), m = +ym.slice(5);
+        const liveDate = attLiveDate(), yest = attAddDays(liveDate, -1), selDate = _attDate || liveDate;
+        const has = new Set(dig && dig.days ? Object.keys(dig.days) : []);
+        const dow = new Date(Date.UTC(y, m - 1, 1)).getUTCDay(), dim = new Date(Date.UTC(y, m, 0)).getUTCDate();
+
+        const grid = attEl('div', 'bb-att-cal-grid');
+        ['일', '월', '화', '수', '목', '금', '토'].forEach(d => grid.appendChild(attEl('div', 'bb-att-dow', d)));
+        for (let i = 0; i < dow; i++) grid.appendChild(attEl('div'));
+        for (let d = 1; d <= dim; d++) {
+            const ds = ym + '-' + attPad(d);
+            // 조회 가능: 확정된 날(월별 요약에 있는 날) + 어제(05시 전환 때 이미 아카이브됨) + 오늘(실시간)
+            const ok = has.has(ds) || ds === yest || ds === liveDate;
+            const el = attEl('div', 'bb-att-day' + (ok ? ' has' : '') + (ds === liveDate ? ' today' : '') + (ds === selDate ? ' sel' : ''), String(d));
+            if (ok) {
+                if (ds !== liveDate) el.appendChild(attEl('span', 'dot'));
+                el.addEventListener('click', () => attSelectDate(ds));
+            }
+            grid.appendChild(el);
+        }
+        cal.replaceChildren(attEl('div', 'bb-att-cal-title', y + '년 ' + m + '월'), grid);
+        cal.classList.add('open');
+    }
+    function attSelectDate(ds) {
+        attCloseCal(); attClosePop();
+        if (ds === attLiveDate()) { attGoToday(); return; }
+        _attDate = ds;
+        attLoadDay(ds);
+    }
+    function attGoToday() {
+        _attDate = null; _attDay = null;
+        attCloseCal(); attClosePop();
+        attRender();
+        attRefreshLive();
+    }
+
+    /* ───────── 상세 로그 (월별 근무자 통계) ───────── */
+    const attIsPresent = d => !!d && (d.present || (d.raw || '').toUpperCase().includes('OT'));   // OT 는 실제 출근으로 간주
+    const attTimeLabel = wt => { const m = (wt || '').match(/(\d{2}):(\d{2})~(\d{2}):(\d{2})/); return m ? `${m[1]}${m[2]}-${m[3]}${m[4]}` : ''; };
+
+    // 일별 요약 [횟수, 총이석초, 15분초과, 미기입, 편집됨, 출근60분내, 재이석60분내] + 스케줄(근무일수) → 사람별 행
+    function attBuildRows(dig, sched) {
+        const days = (dig && dig.days) || {}, dates = Object.keys(days).sort(), agg = {};
+        dates.forEach(dt => Object.keys(days[dt]).forEach(name => {
+            if (ATT_EXCLUDE.includes(name)) return;
+            const r = days[dt][name], a = agg[name] || (agg[name] = { v: [0, 0, 0, 0, 0, 0, 0], seen: 0 });
+            for (let i = 0; i < 7; i++) a.v[i] += r[i];
+            a.seen++;
+        }));
+        const approx = !(sched && sched.staff), meta = {};
+        if (!approx) {
+            const keys = dates.map(d => (+d.slice(5, 7)) + '/' + (+d.slice(8, 10)));
+            sched.staff.forEach((p, idx) => {
+                if (ATT_EXCLUDE.includes(p.name)) return;
+                let cnt = 0; keys.forEach(k => { if (attIsPresent(p.schedule && p.schedule[k])) cnt++; });
+                if (cnt > 0) meta[p.name] = { days: cnt, time: attTimeLabel(p.workTime), order: idx };
+            });
+        } else Object.keys(agg).forEach(n => { meta[n] = { days: agg[n].seen, time: '', order: 9999 }; });
+        const rows = Object.keys(meta).map(name => {
+            const a = agg[name] ? agg[name].v : [0, 0, 0, 0, 0, 0, 0], d = meta[name].days;
+            return { name, time: meta[name].time, order: meta[name].order, days: d, totalCount: a[0], totalSec: a[1],
+                     avgCount: d ? a[0] / d : 0, avgSec: d ? a[1] / d : 0, over: a[2], unfiled: a[3], edited: a[4], early: a[5], quick: a[6] };
+        });
+        return { rows, approx, dates };
+    }
+
+    const ATT_COLS = [
+        { label: '이름', key: null },
+        { label: '근무일수', key: 'days', f: r => r.days + '일' },
+        { label: '총 이석횟수', key: 'totalCount', f: r => r.totalCount + '회' },
+        { label: '총 이석시간', key: 'totalSec', f: r => attDurHM(r.totalSec) },
+        { label: '일평균 이석횟수', key: 'avgCount', f: r => r.avgCount.toFixed(1) + '회' },
+        { label: '일평균 이석시간', key: 'avgSec', f: r => attDurHM(r.avgSec) },
+        { label: '15분 초과', key: 'over', f: r => r.over + '회', cls: 'bad' },
+        { label: '미기입', key: 'unfiled', f: r => r.unfiled + '회', cls: 'bad' },
+        { label: '편집됨', key: 'edited', f: r => r.edited + '회', cls: 'bad' },
+        { label: '출근60분내', key: 'early', f: r => r.early + '회', cls: 'warn' },
+        { label: '재이석60분내', key: 'quick', f: r => r.quick + '회', cls: 'warn' }
+    ];
+
+    async function attOpenDetail(ym) {
+        attClosePop(); attCloseCal();
+        const months = attMonths();
+        ym = ym || (_attDate ? _attDate.slice(0, 7) : months[1]);
+        if (!months.includes(ym)) ym = months[1];
+        _attDetailYm = ym;
+        const sel = $att('bb-att-dsel');
+        sel.replaceChildren(...months.map(m => { const o = attEl('option', '', m.slice(0, 4) + '년 ' + Number(m.slice(5)) + '월'); o.value = m; return o; }));
+        sel.value = ym;
+        $att('bb-att-detail').classList.add('open');
+        $att('bb-att-dtitle').textContent = '불러오는 중…';
+        $att('bb-att-dbody').replaceChildren();
+        $att('bb-att-dnote').textContent = '';
+        let dig, sched;
+        try { [dig, sched] = await Promise.all([attGetMonth(ym), attGetSchedule(ym)]); }
+        catch (e) {
+            if (_attDetailYm !== ym) return;
+            $att('bb-att-dtitle').textContent = ym.slice(0, 4) + '년 ' + Number(ym.slice(5)) + '월';
+            $att('bb-att-dbody').replaceChildren(attEl('div', 'bb-att-msg warn', '⚠ 불러오기 실패 — 잠시 후 다시 열어 주세요'));
+            return;
+        }
+        if (_attDetailYm !== ym) return;   // 그 사이 다른 달로 바꿈/닫음
+        attRenderDetail(ym, dig, sched);
+    }
+    function attRenderDetail(ym, dig, sched) {
+        const built = attBuildRows(dig, sched), dates = built.dates;
+        const label = ym.slice(0, 4) + '년 ' + Number(ym.slice(5)) + '월';
+        $att('bb-att-dtitle').textContent = dates.length
+            ? `${label} (${+dates[0].slice(8)}일 ~ ${+dates[dates.length - 1].slice(8)}일, 총 ${dates.length}일간)` : label + ' (확정된 데이터 없음)';
+        $att('bb-att-dnote').textContent = (dates.length && built.approx) ? '⚠ 스케줄을 불러오지 못해 근무일수를 "기록이 있는 날"로 계산했습니다 (기록이 없던 근무일은 빠짐)' : '';
+        const body = $att('bb-att-dbody');
+        if (!built.rows.length) {
+            body.replaceChildren(attEl('div', 'bb-att-msg', dig && dig.missing ? '이 달의 요약 데이터가 아직 없습니다' : '확정된 기록이 없습니다'));
+            return;
+        }
+        const rows = built.rows.slice().sort((a, b) => (b[_attSortKey] - a[_attSortKey]) || (a.order - b.order));
+        const table = attEl('table', 'bb-att-mt'), hr = table.createTHead().insertRow();
+        ATT_COLS.forEach(c => {
+            const th = attEl('th', (c.key === _attSortKey ? 'sorted ' : '') + (c.cls === 'warn' ? 'warn' : ''), c.label);
+            if (c.key) th.addEventListener('click', () => { _attSortKey = c.key; attRenderDetail(ym, dig, sched); });
+            hr.appendChild(th);
+        });
+        const tb = table.createTBody();
+        rows.forEach(r => {
+            const tr = tb.insertRow(), td0 = attEl('td', '', r.name);
+            if (r.time) td0.appendChild(attEl('span', 'tm', '(' + r.time + ')'));
+            tr.appendChild(td0);
+            ATT_COLS.slice(1).forEach(c => tr.appendChild(attEl('td', c.cls || '', c.f(r))));
+        });
+        body.replaceChildren(table);
+    }
+    function attCloseDetail() { _attDetailYm = null; $att('bb-att-detail').classList.remove('open'); }
+
+    /* ───────── 이벤트 연결 ───────── */
+    $att('bb-mm-goatt').addEventListener('click', () => attSetView('att'));
+    $att('bb-att-back').addEventListener('click', () => attSetView('multi'));
+    $att('bb-att-mprev').addEventListener('click', () => attOpenCal('prev'));
+    $att('bb-att-mcur').addEventListener('click', () => attOpenCal('cur'));
+    $att('bb-att-detailbtn').addEventListener('click', () => attOpenDetail());
+    $att('bb-att-today').addEventListener('click', attGoToday);
+    $att('bb-att-dclose').addEventListener('click', attCloseDetail);
+    $att('bb-att-dsel').addEventListener('change', e => attOpenDetail(e.target.value));
+    $att('bb-att-body').addEventListener('click', e => { const c = e.target.closest('.bb-att-card'); if (c) attTogglePop(c.dataset.uid); });
+    document.addEventListener('click', e => {   // 바깥 클릭 → 이석 로그 / 달력 닫기 (캡처 단계: 재렌더로 대상이 사라지기 전에 판단)
+        if (_attPopId && !e.target.closest('#bb-att-pop') && !e.target.closest('.bb-att-card')) attClosePop();
+        if (_attCalWhich && !e.target.closest('#bb-att-cal') && !e.target.closest('.bb-att-mbtn')) attCloseCal();
+    }, true);
+    document.addEventListener('keydown', e => {
+        if (e.key !== 'Escape') return;
+        if ($att('bb-att-detail').classList.contains('open')) attCloseDetail();
+        else if (_attCalWhich) attCloseCal();
+        else if (_attPopId) attClosePop();
+    });
+    // 이석 화면이 실제로 보이고, 실시간을 보는 중이고, 탭이 보일 때만 조회
+    setInterval(() => { if (isOpen && _attView === 'att' && !_attDate && !document.hidden) attRefreshLive(); }, ATT_REFRESH_MS);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden && isOpen && _attView === 'att' && !_attDate) attRefreshLive(); });
+    attSetView('multi');   // 기본 = 다중 (inert 초기화)
+    syncAttBackAlert();
+    _attReady = true;
 
     render();
     if (_trimNotice) {
