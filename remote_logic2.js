@@ -6271,13 +6271,13 @@
 	
 	    // ══════════════════════════════════════════════════════════
 	    //  D-PAD ↑ 프리셋 — 짧게 누르면 저장된 값(밝기/화질/지도 확대) 일괄 적용,
-	    //  1.5초 홀드하면 화면 상단 중앙에 설정 토스트가 뜬다.
+	    //  1초 홀드하면 화면 상단 중앙에 설정 토스트가 뜬다.
 	    //  · 별도 타이머/루프 없음: 아래 기존 100ms 폴링이 handleDpadUpTick()만 호출한다.
 	    //  · 토스트는 포커스를 가져가지 않으며(pointer 클릭 전까지), 클릭이 없으면 5초 뒤 사라진다.
 	    //  · 일반 접속(/remote/robot/N[/new])과 개입카드(/remote/multiple/driving/...) 모두 동일 경로.
 	    // ══════════════════════════════════════════════════════════
 	    const PRESET_KEY = 'neubie_dpad_up_preset';
-	    const PRESET_HOLD_MS = 1500;
+	    const PRESET_HOLD_MS = 1000;
 	    const PRESET_PANEL_AUTO_CLOSE_MS = 5000;
 	    const QUALITY_LABELS = ['최소', '낮음', '중간', '높음', '최대'];
 	    const presetSleep = ms => new Promise(r => setTimeout(r, ms));
@@ -6462,7 +6462,7 @@
 	            presetNoticeEl.id = 'neubie-dpad-preset-notice';
 	            document.body.appendChild(presetNoticeEl);
 	        }
-	        const top = (presetPanelEl && presetPanelEl.isConnected) ? presetPanelEl.getBoundingClientRect().bottom + 8 : 8;
+	        const top = (presetPanelEl && presetPanelEl.isConnected) ? presetPanelEl.getBoundingClientRect().bottom + 6 : 4;
 	        presetNoticeEl.style.cssText = `
 	            position:fixed; top:${top}px; left:50%; transform:translateX(-50%);
 	            z-index:999999; pointer-events:none; white-space:nowrap;
@@ -6537,28 +6537,24 @@
 	        let zOpts = opt('', '변경 안 함', !init.zoom);
 	        for (let i = 1; i <= 5; i++) zOpts += opt(i, `${i}회 확대`, init.zoom === i);
 
-	        const selCss = `background:#23233f; color:#e2e8f0; border:1px solid #4a4a7a; border-radius:8px; padding:6px 8px; font-size:13px; color-scheme:dark; min-width:96px;`;
-	        const lblCss = `display:flex; flex-direction:column; gap:3px; font-size:11px; color:#aab;`;
+	        const selCss = `background:#23233f; color:#e2e8f0; border:1px solid #4a4a7a; border-radius:6px; padding:2px 4px; font-size:12px; height:24px; color-scheme:dark; min-width:76px;`;
+	        const lblCss = `display:flex; align-items:center; gap:5px; font-size:12px; color:#aab;`;
 	        const panel = document.createElement('div');
 	        panel.id = 'neubie-dpad-preset-panel';
 	        panel.style.cssText = `
-	            position:fixed; top:8px; left:50%; transform:translateX(-50%);
-	            z-index:1000000; background:rgba(18,18,36,0.97); border:1px solid #6a6aaa; border-radius:14px;
-	            padding:10px 16px 12px; font-family:'Pretendard','Noto Sans KR',sans-serif; color:#e2e8f0;
+	            position:fixed; top:4px; left:50%; transform:translateX(-50%);
+	            z-index:1000000; background:rgba(18,18,36,0.97); border:1px solid #6a6aaa; border-radius:10px;
+	            padding:4px 8px 4px 12px; font-family:'Pretendard','Noto Sans KR',sans-serif; color:#e2e8f0;
 	            box-shadow:0 4px 24px rgba(0,0,0,0.6); white-space:nowrap;
+	            display:flex; align-items:center; gap:12px;
 	        `;
 	        panel.innerHTML = `
-	            <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
-	                <span style="font-size:13px; font-weight:700;">🎮 D-PAD ↑ 프리셋</span>
-	                <span style="font-size:11px; color:#94a3b8;">저장 후 짧게 누르면 적용</span>
-	                <button data-act="close" style="margin-left:auto; width:22px; height:22px; border:none; border-radius:5px; background:transparent; color:#94a3b8; font-size:14px; cursor:pointer;">✕</button>
-	            </div>
-	            <div style="display:flex; align-items:flex-end; gap:10px;">
-	                <label style="${lblCss}">밝기<select data-k="brightness" style="${selCss}">${bOpts}</select></label>
-	                <label style="${lblCss}">화질<select data-k="quality" style="${selCss}">${qOpts}</select></label>
-	                <label style="${lblCss}">지도 확대<select data-k="zoom" style="${selCss}">${zOpts}</select></label>
-	                <button data-act="save" style="padding:7px 16px; border:none; border-radius:8px; background:#3b82f6; color:#fff; font-size:13px; font-weight:700; cursor:pointer;">저장</button>
-	            </div>
+	            <span title="저장 후 짧게 누르면 적용 · 1초 홀드하면 이 설정창" style="font-size:12px; font-weight:700; cursor:default;">🎮 D-PAD ↑</span>
+	            <label style="${lblCss}">밝기<select data-k="brightness" style="${selCss}">${bOpts}</select></label>
+	            <label style="${lblCss}">화질<select data-k="quality" style="${selCss}">${qOpts}</select></label>
+	            <label style="${lblCss}">지도 확대<select data-k="zoom" style="${selCss}">${zOpts}</select></label>
+	            <button data-act="save" style="height:24px; padding:0 12px; border:none; border-radius:6px; background:#3b82f6; color:#fff; font-size:12px; font-weight:700; cursor:pointer;">저장</button>
+	            <button data-act="close" style="width:22px; height:22px; border:none; border-radius:5px; background:transparent; color:#94a3b8; font-size:13px; cursor:pointer; line-height:1;">✕</button>
 	        `;
 
 	        // 클릭 전까지는 5초 뒤 자동 종료. 마우스를 올려두는 동안은 멈추고, 클릭하면 저장/닫기 전까지 유지
@@ -6584,7 +6580,7 @@
 	            const g = k => panel.querySelector(`[data-k="${k}"]`).value;
 	            const ok = savePreset(sanitizePreset({ brightness: g('brightness'), quality: g('quality'), zoom: g('zoom') }));
 	            clearTimeout(presetPanelTimer);
-	            panel.innerHTML = `<div style="padding:6px 14px; font-size:14px; font-weight:700; color:${ok ? '#86efac' : '#fca5a5'};">${ok ? '✓ 프리셋 저장됨' : '저장 실패 (브라우저 저장소 사용 불가)'}</div>`;
+	            panel.innerHTML = `<div style="padding:2px 10px; font-size:13px; font-weight:700; color:${ok ? '#86efac' : '#fca5a5'};">${ok ? '✓ 프리셋 저장됨' : '저장 실패 (브라우저 저장소 사용 불가)'}</div>`;
 	            presetPanelTimer = setTimeout(closePresetPanel, 700);
 	        });
 
@@ -6593,7 +6589,7 @@
 	        startTimer();
 	    };
 
-	    // ── D-pad UP 상태 머신: 기존 100ms 폴링에서 매 틱 호출 (짧게 = 떼는 순간 적용 / 1.5초 = 설정 토스트) ──
+	    // ── D-pad UP 상태 머신: 기존 100ms 폴링에서 매 틱 호출 (짧게 = 떼는 순간 적용 / 1초 = 설정 토스트) ──
 	    const resetDpadUp = () => {
 	        dpadWasPressed.up = false;
 	        dpadUpHoldStart = null;
