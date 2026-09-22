@@ -93,7 +93,8 @@
             display:none; position:fixed; top:50%; left:50%;
             transform:translate(-50%,-50%);
             width:1714px;   /* 1490px 대비 +15% — 우측 다중 모니터링 영역 확보 */
-            height:955px; max-height:100vh; overflow-y:auto; overflow-x:hidden;   /* 기본 크기 = 즐겨찾기 20대 + 안내 문구가 들어가는 높이 (955 = 104 + 20 + 774 + 51 + 6) */
+            height:980px; max-height:100vh; overflow-y:auto; overflow-x:hidden;   /* 기본 크기 = 즐겨찾기 20대 + 안내 문구가 들어가는 높이 (955 = 104 + 20 + 774 + 51 + 6) + 여유 25px.
+               즐겨찾기가 정확히 최대(20대)일 때 예전엔 여유가 0이라 카드 실측 높이가 ROW_H(33px) 가정과 1~2px만 어긋나도(줄간격 렌더링 반올림 등) 카드 영역(.bb-list-wrap)에 스크롤이 생겼음 — 그 여유분 */
             border:3px solid transparent; border-radius:16px;
             background-image: var(--bg-fill), linear-gradient(135deg, #b6f2c9, #34d399);
             background-origin: border-box;
@@ -471,8 +472,11 @@
             opacity:.4; filter:saturate(.6); transition:opacity .25s ease, filter .25s ease;
         }
         #bb.bb-rm-mode .bb-list-wrap {
-            box-shadow:inset 0 0 0 3px var(--rd), inset 0 0 22px 2px rgba(239,68,68,.35); border-radius:14px; transition:box-shadow .25s ease;
+            box-shadow:inset 0 0 0 3px var(--rd), inset 0 0 22px 2px rgba(239,68,68,.35); transition:box-shadow .25s ease;
             /* 안쪽으로만 번지는 그림자(inset)를 씀 — 바깥쪽(outset) 그림자는 #bb 자체의 overflow-x:hidden 에 걸려 왼쪽이 잘려 보였음 */
+            /* border-radius 는 일부러 안 씀 — overflow-y:auto 스크롤 컨테이너에 border-radius 를 같이 주면
+               브라우저 네이티브 스크롤바가 둥근 모서리 자리에서 어긋나게 그려지면서(특히 스크롤 중) 빨간 테두리가
+               스크롤바에 걸려 잘려 보이는 현상이 있었음. 각진 테두리로 바꿔 스크롤바와 겹치는 자리를 없앰 */
         }
         .bb-lists { display:flex; align-items:stretch; gap:12px; min-height:420px; min-height:max(420px, 100%); }   /* 즐겨찾기 테두리가 카드 끝까지 이어지도록 내용 높이만큼 늘어남 */
         /* 1열 = 즐겨찾기: 여기에 끌어다 놓으면 이름 순 정렬을 해도 일반 기체와 섞이지 않고 이 영역 안에서만 정렬됨 */
@@ -493,10 +497,10 @@
             pointer-events:none;
         }
         .bb-fav.warn::after { color:var(--rd); opacity:1; font-weight:700; }
-        .bb-list {   /* 일반 기체: 3열 (세로 우선 채움 → 이름순 정렬 시 위→아래로 읽힘, 행 수는 JS가 지정) */
+        .bb-list {   /* 일반 기체: 3열 (가로 우선 채움 → 왼쪽 위부터 좌→우, 다 차면 다음 줄. 행 수는 JS가 지정) */
             flex:0 0 auto; display:grid; align-content:start;
             grid-template-columns:repeat(3,318px);
-            grid-auto-flow:column;
+            grid-auto-flow:row;
             gap:5px 12px;
         }
         .bb-fav.bb-drop-over, .bb-list.bb-drop-over { background:rgba(96,165,250,.10); border-radius:8px; }
@@ -2095,9 +2099,10 @@
 
         const tools = document.getElementById('bb-tools');   // 정렬/제거 버튼 칸 — 카드를 다시 그려도 지우지 않음
         [...list.children].forEach(c => { if (c !== tools) c.remove(); });
-        // 세로 우선 흐름: 열당 행 수를 지정해야 위→아래로 채워짐. 한 열을 다 채운 뒤 다음 열로.
-        // 맨 오른쪽 열(4열)의 맨 위 1칸은 이름 순 정렬/카드 제거 버튼 자리라 카드가 들어갈 수 없으므로 칸 수에 +1
-        // 버튼 칸이 (grid-row:1 로) 맨 위 첫 칸을 차지하고 나면, grid-auto-flow:column 이 그 칸을 건너뛰고 나머지 칸에 카드를 세로로 채운다
+        // 가로 우선 흐름: 한 행(왼쪽→오른쪽)을 다 채운 뒤 다음 행으로. 필요한 행 수만 지정하면 됨.
+        // 맨 오른쪽 열(3열)의 맨 위 1칸은 이름 순 정렬/카드 제거 버튼 자리라 카드가 들어갈 수 없으므로 칸 수에 +1
+        // 버튼 칸이 (grid-row:1 로) 맨 위 오른쪽 칸을 차지하고 나면, grid-auto-flow:row 가 그 칸을 건너뛰고 나머지 칸을 좌→우로 채운다.
+        // → 다 채워지지 않는 마지막 조각은 이제 특정 열 하단에 몰리지 않고 맨 마지막 줄의 오른쪽 몇 칸만 비게 됨
         // ※ 예전엔 여기서 최소 MAIN_ROWS(20)행을 강제했는데, 기체가 적을 때도 항상 20행분 높이를 예약해버려서
         //    실제 카드는 다 안 채워졌는데도(꽉 찬 것도 아닌데) 그 예약된 빈 칸들 때문에 카드 영역에 스크롤바가 생기는 문제가 있었음.
         //    필요한 만큼만 행을 잡도록 바꿈 — 즐겨찾기 열과의 높이 맞춤은 .bb-lists 의 align-items:stretch 가 대신 해줌
