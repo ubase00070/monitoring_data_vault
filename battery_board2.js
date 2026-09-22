@@ -3228,7 +3228,15 @@
         });
         requestAnimationFrame(() => {
             const sc = document.getElementById('bb-wbl-scroll');
-            if (sc) sc.scrollLeft = sc.scrollWidth;
+            if (sc) {
+                sc.scrollLeft = sc.scrollWidth;
+                // 마우스 휠(세로 스크롤)로도 그래프를 좌우로 넘길 수 있게. 트랙패드처럼 이미 가로로 휠하는 경우는 브라우저 기본 동작 그대로 둠
+                sc.addEventListener('wheel', e => {
+                    if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+                    e.preventDefault();
+                    sc.scrollLeft += e.deltaY;
+                }, { passive: false });
+            }
         });
         }
 
