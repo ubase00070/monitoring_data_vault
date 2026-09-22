@@ -293,7 +293,7 @@
             cursor:pointer; transition:transform .15s;
         }
         #bb-walker:active { transform:scale(0.92); }
-        #bb-walker-l { cursor:default; }   /* 좌측 주민은 말풍선이 없어 클릭 동작 없음 */
+        #bb-walker-l { cursor:default; background-size:cover; background-position:center; }   /* 아토(토끼) 슬라이드쇼: 캐릭터처럼 아래 여백 없이 영역을 꽉 채움 */
         #bb-walker-wrap-l {   /* 좌측 주민: 제목 박스 왼쪽 (제목 박스 왼쪽 끝에서 10px 띄워 오른쪽 끝을 맞춤) */
             position:absolute; right:calc(50% + 151px); top:50%; transform:translateY(-50%);
             width:100px; height:100px; z-index:1;
@@ -308,7 +308,7 @@
             opacity:0; transition:opacity .15s, background .15s;
         }
         #bb-walker-wrap:hover .bb-walker-arrow, #bb-walker-wrap:hover #bb-walker-toggle,
-        #bb-walker-wrap-l:hover .bb-walker-arrow, #bb-walker-wrap-l:hover #bb-walker-l-toggle { opacity:1; }
+        #bb-walker-wrap-l:hover #bb-walker-l-toggle { opacity:1; }   /* 좌측(아토)은 화살표가 없으므로 토글 버튼만 */
         .bb-walker-arrow.left  { left:0; }
         .bb-walker-arrow.right { right:0; }
         .bb-walker-arrow:hover { background:rgba(20,20,22,.85); }
@@ -407,6 +407,14 @@
 
         /* 검색 */
         .bb-si-wrap { position:relative; flex:0 0 230px; min-width:230px; }   /* 폭 고정 230px (안내 문구가 잘리지 않는 폭) — 남는 자리는 채우지 않고 비워 둠 */
+        .bb-si-excl {   /* 검색창 왼쪽: 요기요/성남형 배달 기체 제외 체크박스 (2줄 라벨) */
+            display:flex; align-items:center; gap:5px; flex:0 0 auto; cursor:pointer; user-select:none;
+            padding:3px 8px; border-radius:8px; border:1.5px solid var(--bd2); background:var(--sur2);
+        }
+        .bb-si-excl:hover { border-color:var(--mu); }
+        .bb-si-excl input { width:14px; height:14px; margin:0; flex-shrink:0; accent-color:var(--bl); cursor:pointer; }
+        .bb-si-excl .tx { display:flex; flex-direction:column; line-height:1.15; font-size:10.5px; font-weight:700; color:var(--mu); }
+        .bb-si-excl input:checked ~ .tx { color:var(--tx); }
         .bb-si {
             width:100%; box-sizing:border-box; max-width:100%; background:var(--sur2); border:1px solid var(--bd2);
             border-radius:7px; padding:6px 10px 6px 26px;
@@ -725,7 +733,7 @@
         .bb-att-card.sel { outline:2px solid var(--tx); outline-offset:1px; }
         /* 이석 중인 근무자 카드는 빨간 테두리 고정 (퇴근자는 회색, 그 외는 기본 테두리) */
         .bb-att-card.away { border-color:#ef4444; box-shadow:0 0 8px -2px rgba(239,68,68,.6); animation:bb-att-away-blink 2s ease-in-out infinite; }   /* 겹선(0 0 0 1px) 제거로 살짝 얇게 · 2초 주기로 아주 옅게만 점멸 */
-        @keyframes bb-att-away-blink { 0%, 100% { opacity:1; } 50% { opacity:.88; } }
+        @keyframes bb-att-away-blink { 0%, 100% { opacity:1; } 50% { opacity:.72; } }
         .bb-att-card.off { background:#cfc8b4; }
         .bb-att-card.off .bb-att-name, .bb-att-card.off .bb-att-cnt, .bb-att-card.off .bb-att-tot { color:#4a4436; }
         .bb-att-l1 { display:flex; align-items:baseline; justify-content:space-between; gap:4px; min-width:0; }
@@ -1106,12 +1114,10 @@
                         <div class="bb-fbp-body" id="bb-fbp-body"></div>
                     </div>
                 </div>
-                <!-- 좌: 동숲 주민 2 (제목 박스 왼쪽, 말풍선 없음, 우측 주민과 다른 캐릭터) -->
+                <!-- 좌: 아토(토끼) — 제목 박스 왼쪽, bunny01~20.webp 중 2분마다 랜덤 표시. 캐릭터 선택 화살표 없음 -->
                 <div id="bb-walker-wrap-l">
                     <div id="bb-walker-l"></div>
-                    <button id="bb-walker-l-prev" class="bb-walker-arrow left" title="이전 캐릭터">‹</button>
-                    <button id="bb-walker-l-next" class="bb-walker-arrow right" title="다음 캐릭터">›</button>
-                    <button id="bb-walker-l-toggle" title="동숲 주민 끄기">동숲</button>
+                    <button id="bb-walker-l-toggle" title="아토 끄기">아토</button>
                 </div>
                 <div class="bb-hd-titlebox" id="bb-drag-handle">
                     <div class="bb-hd-title">
@@ -1158,6 +1164,10 @@
                             </div>
                         </div>
                         <div class="bb-hd-right-row right">   <!-- 왼쪽은 빈 공간 (나중에 추가할 버튼용) -->
+                            <label class="bb-si-excl" id="bb-si-excl-wrap" title="체크하면 하단 퀵바의 요기요/성남형 배달 기체(역삼동·송도 신도시·성수동·성남형)는 검색 결과에서 빠집니다">
+                                <input type="checkbox" id="bb-si-excl">
+                                <span class="tx"><span class="l1">요기요/성남형</span><span class="l2">제외 검색</span></span>
+                            </label>
                             <div class="bb-si-wrap" id="bb-search-wrap">
                                 <span class="bb-si-icon">🔍</span>
                                 <input class="bb-si" id="bb-si" placeholder="기체를 검색해서 추가하세요" title="기체명을 검색한 뒤 목록에서 클릭하면 추가됩니다" autocomplete="off">
@@ -3330,7 +3340,9 @@
         const siEl = document.getElementById('bb-si');
         const ddEl = document.getElementById('bb-dd');
         const q    = siEl.value.trim();
-        const res  = DB.filter(r => (q===''||r.name.includes(q)) && !ids.includes(r.id) && !favIds.includes(r.id))
+        const exclOn = document.getElementById('bb-si-excl')?.checked;
+        const exclKws = exclOn ? MONITOR_GROUPS.flatMap(g => g.keywords) : null;   // 요기요/성남형 제외 검색: 켜져 있으면 이 키워드가 이름에 들어간 기체는 검색 결과에서 뺌
+        const res  = DB.filter(r => (q===''||r.name.includes(q)) && !ids.includes(r.id) && !favIds.includes(r.id) && (!exclKws || !exclKws.some(k => r.name.includes(k))))
                        .sort((a,b) => a.name.localeCompare(b.name,'ko',{numeric:true}));
 
         if (ids.length + favIds.length >= MAX) {
@@ -3513,6 +3525,15 @@
         if (!e.target.closest('#bb-search-wrap') && !e.target.closest('#bb-dd')) hideDd();
     });
 
+    // 요기요/성남형 제외 검색 체크박스: 선택 상태를 저장해 두고, 열려 있으면 목록을 바로 다시 그림
+    const siExclKey = 'bb_si_excl_delivery';
+    const siExclEl = document.getElementById('bb-si-excl');
+    siExclEl.checked = localStorage.getItem(siExclKey) === '1';
+    siExclEl.addEventListener('change', () => {
+        localStorage.setItem(siExclKey, siExclEl.checked ? '1' : '0');
+        if (document.getElementById('bb-dd').classList.contains('open')) showDd();
+    });
+
 	// 동숲 주민 공통 데이터 (우측: 말풍선 있음 / 좌측: 말풍선 없음 — 같은 캐릭터 목록을 씀)
 	const WALKER_BASE = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/animal_crossing/';
 	const walkerFiles = [
@@ -3557,7 +3578,7 @@
 		renderWalker();
 
 		function goToChar(delta) {
-			const leftIdx = parseInt(localStorage.getItem('bb_walker_left_idx'), 10);   // 좌측 주민이 쓰는 캐릭터는 건너뜀
+			const leftIdx = parseInt(localStorage.getItem('bb_walker_left_idx'), 10);   // (좌측이 이제 아토로 바뀌어 항상 비어있음 → 사실상 건너뜀 없이 그냥 다음 캐릭터로 이동)
 			let next = charIdx;
 			do { next = (next + delta + walkerFiles.length) % walkerFiles.length; } while (next === leftIdx);
 			charIdx = next;
@@ -3809,51 +3830,38 @@
     })();
 
 
-    // ── 동숲 주민 2 (제목 박스 왼쪽) ────────────────────────────────
-    //  우측 주민과 같은 기능(캐릭터 선택 ‹ ›, 표시 on/off, 선택 저장) — 말풍선만 없음.
-    //  우측 주민과 같은 캐릭터는 고를 수 없음: 서로가 쓰는 캐릭터를 건너뛰며 선택하고, 저장값이 겹치면 좌측이 양보.
+    // ── 아토(토끼) — 제목 박스 왼쪽 ────────────────────────────────
+    //  옛 '동숲 주민 2'를 대체: 캐릭터 선택 없이 bunny01~20.webp 중 하나를 2분마다 무작위로 보여줌. 표시 on/off·저장은 예전과 동일.
     (function() {
         const wrapEl = document.getElementById('bb-walker-wrap-l');
         if (!wrapEl) return;
         const el = document.getElementById('bb-walker-l');
         const toggleEl = document.getElementById('bb-walker-l-toggle');
-        const N = walkerFiles.length;
-        const LEFT_IDX_KEY = 'bb_walker_left_idx', LEFT_ON_KEY = 'bb_walker_left_on';
+        const BUNNY_BASE = WALKER_BASE;   // 기존 동숲 캐릭터 이미지와 같은 경로에 업로드
+        const BUNNY_COUNT = 20;
+        const BUNNY_INTERVAL_MS = 2 * 60 * 1000;   // 2분마다 교체
+        const bunnyFile = n => 'bunny' + String(n).padStart(2, '0') + '.webp';
 
-        const rightIdx = () => {   // 우측 주민의 현재 캐릭터 (우측과 같은 규칙으로 읽음)
-            const v = parseInt(localStorage.getItem('bb_walker_idx'), 10);
-            return (isNaN(v) || v < 0 || v >= N) ? 0 : v;
-        };
-        let idx = parseInt(localStorage.getItem(LEFT_IDX_KEY), 10);
-        if (isNaN(idx) || idx < 0 || idx >= N || idx === rightIdx()) idx = (rightIdx() + 1) % N;   // 처음이거나 겹치면 우측 다음 캐릭터
-        localStorage.setItem(LEFT_IDX_KEY, String(idx));   // 저장해 두어야 우측이 이 캐릭터를 건너뜀
+        for (let n = 1; n <= BUNNY_COUNT; n++) { new Image().src = BUNNY_BASE + bunnyFile(n); }   // 미리 받아둬서 교체될 때 깜빡임 없이 바로 표시
 
-        function variantFile() {   // 우측과 같은 방식: 시간 기준 배리에이션 교체
-            const variants = walkerFiles[idx].variants;
-            return variants[Math.floor(Date.now() / ROTATE_MS) % variants.length];
+        let lastN = 0;
+        function render() {
+            let n; do { n = 1 + Math.floor(Math.random() * BUNNY_COUNT); } while (BUNNY_COUNT > 1 && n === lastN);   // 같은 그림이 바로 연달아 나오지 않도록
+            lastN = n;
+            el.style.backgroundImage = `url('${BUNNY_BASE}${bunnyFile(n)}')`;
         }
-        function render() { el.style.backgroundImage = `url('${WALKER_BASE}${variantFile()}')`; }
         render();
-        setInterval(render, 60 * 1000);
-
-        function go(delta) {
-            let next = idx;
-            do { next = (next + delta + N) % N; } while (next === rightIdx());
-            idx = next;
-            localStorage.setItem(LEFT_IDX_KEY, String(idx));
-            render();
-        }
-        document.getElementById('bb-walker-l-prev').addEventListener('click', e => { e.stopPropagation(); go(-1); });
-        document.getElementById('bb-walker-l-next').addEventListener('click', e => { e.stopPropagation(); go(1); });
+        setInterval(render, BUNNY_INTERVAL_MS);
 
         // 표시 on/off (기본 ON, 저장)
+        const LEFT_ON_KEY = 'bb_walker_left_on';
         let on = localStorage.getItem(LEFT_ON_KEY);
         on = on === null ? true : on === '1';
         function applyToggle() {
             el.style.display = on ? '' : 'none';
             toggleEl.classList.toggle('off', !on);
-            toggleEl.textContent = on ? '동숲' : '🚫';
-            toggleEl.title = on ? '동숲 주민 끄기' : '동숲 주민 켜기';
+            toggleEl.textContent = on ? '아토' : '🚫';
+            toggleEl.title = on ? '아토 끄기' : '아토 켜기';
         }
         applyToggle();
         toggleEl.addEventListener('click', () => {
@@ -5406,9 +5414,6 @@
         const box = $att('bb-att-watch');
         box.replaceChildren();
         if (!rows || !rows.length) return;
-        const lb = attEl('span', 'lb', '이석 포디움');
-        lb.title = "'근무일수'를 뺀 9개 항목 중 1위를 2개 이상 차지한 근무자 (많은 순)";
-        box.appendChild(lb);
         const list = attWatchList(rows).slice(0, 4);   // 최대 4명까지만
         if (!list.length) { box.appendChild(attEl('span', 'none', '해당 근무자 없음')); return; }
         const col = k => ATT_COLS.find(c => c.key === k);
