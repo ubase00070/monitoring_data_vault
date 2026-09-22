@@ -497,10 +497,10 @@
             pointer-events:none;
         }
         .bb-fav.warn::after { color:var(--rd); opacity:1; font-weight:700; }
-        .bb-list {   /* 일반 기체: 3열 (가로 우선 채움 → 왼쪽 위부터 좌→우, 다 차면 다음 줄. 행 수는 JS가 지정) */
+        .bb-list {   /* 일반 기체: 3열 (세로 우선 채움 → 위→아래로 채워짐. 행 수는 JS가 지정) */
             flex:0 0 auto; display:grid; align-content:start;
             grid-template-columns:repeat(3,318px);
-            grid-auto-flow:row;
+            grid-auto-flow:column;
             gap:5px 12px;
         }
         .bb-fav.bb-drop-over, .bb-list.bb-drop-over { background:rgba(96,165,250,.10); border-radius:8px; }
@@ -1169,9 +1169,9 @@
                             </div>
                         </div>
                         <div class="bb-hd-right-row right">   <!-- 왼쪽은 빈 공간 (나중에 추가할 버튼용) -->
-                            <label class="bb-si-excl" id="bb-si-excl-wrap" title="체크하면 하단 퀵바의 요기요/성남형 배달 기체(역삼동·송도 신도시·성수동·성남형)는 검색 결과에서 빠집니다">
+                            <label class="bb-si-excl" id="bb-si-excl-wrap" title="체크하면 하단 퀵바의 요기요/성남형 배달 기체(역삼동·송도 신도시·성수동·성남형)와 '제주 홍보용역'이 포함된 기체는 검색 결과에서 빠집니다">
                                 <input type="checkbox" id="bb-si-excl">
-                                <span class="tx"><span class="l1">요기요/성남형</span><span class="l2">제외 검색</span></span>
+                                <span class="tx"><span class="l1">요기요/성남형</span><span class="l2">제주 제외 검색</span></span>
                             </label>
                             <div class="bb-si-wrap" id="bb-search-wrap">
                                 <span class="bb-si-icon">🔍</span>
@@ -2099,10 +2099,9 @@
 
         const tools = document.getElementById('bb-tools');   // 정렬/제거 버튼 칸 — 카드를 다시 그려도 지우지 않음
         [...list.children].forEach(c => { if (c !== tools) c.remove(); });
-        // 가로 우선 흐름: 한 행(왼쪽→오른쪽)을 다 채운 뒤 다음 행으로. 필요한 행 수만 지정하면 됨.
-        // 맨 오른쪽 열(3열)의 맨 위 1칸은 이름 순 정렬/카드 제거 버튼 자리라 카드가 들어갈 수 없으므로 칸 수에 +1
-        // 버튼 칸이 (grid-row:1 로) 맨 위 오른쪽 칸을 차지하고 나면, grid-auto-flow:row 가 그 칸을 건너뛰고 나머지 칸을 좌→우로 채운다.
-        // → 다 채워지지 않는 마지막 조각은 이제 특정 열 하단에 몰리지 않고 맨 마지막 줄의 오른쪽 몇 칸만 비게 됨
+        // 세로 우선 흐름: 열당 행 수를 지정해야 위→아래로 채워짐. 한 열을 다 채운 뒤 다음 열로.
+        // 맨 오른쪽 열(4열)의 맨 위 1칸은 이름 순 정렬/카드 제거 버튼 자리라 카드가 들어갈 수 없으므로 칸 수에 +1
+        // 버튼 칸이 (grid-row:1 로) 맨 위 첫 칸을 차지하고 나면, grid-auto-flow:column 이 그 칸을 건너뛰고 나머지 칸에 카드를 세로로 채운다
         // ※ 예전엔 여기서 최소 MAIN_ROWS(20)행을 강제했는데, 기체가 적을 때도 항상 20행분 높이를 예약해버려서
         //    실제 카드는 다 안 채워졌는데도(꽉 찬 것도 아닌데) 그 예약된 빈 칸들 때문에 카드 영역에 스크롤바가 생기는 문제가 있었음.
         //    필요한 만큼만 행을 잡도록 바꿈 — 즐겨찾기 열과의 높이 맞춤은 .bb-lists 의 align-items:stretch 가 대신 해줌
@@ -3359,7 +3358,8 @@
         const ddEl = document.getElementById('bb-dd');
         const q    = siEl.value.trim();
         const exclOn = document.getElementById('bb-si-excl')?.checked;
-        const exclKws = exclOn ? MONITOR_GROUPS.flatMap(g => g.keywords) : null;   // 요기요/성남형 제외 검색: 켜져 있으면 이 키워드가 이름에 들어간 기체는 검색 결과에서 뺌
+        const SI_EXTRA_EXCL_KWS = ['제주 홍보용역'];   // 요기요/성남형 외에 검색에서 추가로 빼는 이름 키워드 (하단 퀵바 MONITOR_GROUPS와는 무관)
+        const exclKws = exclOn ? [...MONITOR_GROUPS.flatMap(g => g.keywords), ...SI_EXTRA_EXCL_KWS] : null;   // 요기요/성남형/제주 제외 검색: 켜져 있으면 이 키워드가 이름에 들어간 기체는 검색 결과에서 뺌
         const res  = DB.filter(r => (q===''||r.name.includes(q)) && !ids.includes(r.id) && !favIds.includes(r.id) && (!exclKws || !exclKws.some(k => r.name.includes(k))))
                        .sort((a,b) => a.name.localeCompare(b.name,'ko',{numeric:true}));
 
