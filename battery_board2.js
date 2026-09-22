@@ -13,7 +13,7 @@
     // ============================================================
     const BB_BG_URL = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/snoopy_snow.jpg?v=1';
     const BB_BG_OPACITY = 0.11;
-    const BB_BG_FADE_PX = 56;   // 배경 이미지 상단 경계를 부드럽게 풀어주는 구간(px). 0 이면 예전처럼 뚝 끊김, 클수록 더 길게 번짐
+    const BB_BG_FADE_PX = 56;   // 배경 이미지 상단 경계를 부드럽게 풀어주는 구간. 0 이면 예전처럼 뚝 끊김, 클수록 더 길게 번짐
 
     // ============================================================
     // SECTION 0. 스타일
