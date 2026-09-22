@@ -1417,10 +1417,10 @@
           "raw": "1"
         },
         "9/18": {
-          "status": "annual",
+          "status": "work",
           "working": true,
-          "present": false,
-          "raw": "연차"
+          "present": true,
+          "raw": "1"
         },
         "9/19": {
           "status": "off",
@@ -1604,10 +1604,10 @@
           "raw": "휴무"
         },
         "9/18": {
-          "status": "work",
+          "status": "annual",
           "working": true,
-          "present": true,
-          "raw": "1"
+          "present": false,
+          "raw": "연차"
         },
         "9/19": {
           "status": "work",
@@ -9571,6 +9571,6 @@
     "9/30"
   ],
   "mainMonth": 9,
-  "updatedAt": "2026-09-21T03:53:05.477Z",
+  "updatedAt": "2026-09-22T03:53:05.435Z",
   "sheetName": "2026년_09월 스케줄"
 }
