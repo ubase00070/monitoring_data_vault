@@ -5032,7 +5032,7 @@
     const ATT_API = 'https://multimonitoring.vercel.app/api';
     const ATT_REFRESH_MS = 30 * 1000;   // 서버는 1분 간격으로 수집 → 30초마다 확인해 새 데이터를 최대 30초 안에 반영
     const ATT_STALE_MIN = 15;           // 서버 갱신 시각(heartbeat 10분)이 이보다 오래되면 '수집 지연' 경고
-    const ATT_QUIET = [3 * 60, 9 * 60]; // cron-job.org 에서 수집을 멈추는 시간대(KST 03:00~09:00) — 크론 스케줄을 바꾸면 여기도 맞출 것. 이 시간대에는 '수집 지연' 경고를 내지 않음
+    const ATT_QUIET = [3 * 60, 8 * 60]; // cron-job.org 에서 수집을 멈추는 시간대(KST 03:00~08:00) — 크론 스케줄을 바꾸면 여기도 맞출 것. 이 시간대에는 '수집 지연' 경고를 내지 않음
     const ATT_VIOL_LABELS = ['15분 초과 이석', '착석 미기입', '메시지 편집됨', '출근 60분 이내 이석', '착석 60분 이내 재이석'];
     const ATT_EXCLUDE = ['차현모', '김용욱', '이연지', '정우솔'];
 
