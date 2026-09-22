@@ -463,7 +463,8 @@
             opacity:.4; filter:saturate(.6); transition:opacity .25s ease, filter .25s ease;
         }
         #bb.bb-rm-mode .bb-list-wrap {
-            box-shadow:0 0 0 3px var(--rd), 0 0 26px 2px rgba(239,68,68,.4); border-radius:14px; transition:box-shadow .25s ease;
+            box-shadow:inset 0 0 0 3px var(--rd), inset 0 0 22px 2px rgba(239,68,68,.35); border-radius:14px; transition:box-shadow .25s ease;
+            /* 안쪽으로만 번지는 그림자(inset)를 씀 — 바깥쪽(outset) 그림자는 #bb 자체의 overflow-x:hidden 에 걸려 왼쪽이 잘려 보였음 */
         }
         .bb-lists { display:flex; align-items:stretch; gap:12px; min-height:420px; min-height:max(420px, 100%); }   /* 즐겨찾기 테두리가 카드 끝까지 이어지도록 내용 높이만큼 늘어남 */
         /* 1열 = 즐겨찾기: 여기에 끌어다 놓으면 이름 순 정렬을 해도 일반 기체와 섞이지 않고 이 영역 안에서만 정렬됨 */
@@ -2129,8 +2130,12 @@
         return !FORCE_PATROL_SITE_IDS.includes(r.siteId) &&
             (DELIVERY_TYPES.includes(r.raw?.service?.serviceType) || DELIVERY_SITE_IDS.includes(r.siteId));
     }
+    function ngSeriesFor(id, logs) {   // 순찰 후 미주차 판정 전용: 2분마다 쌓이는 관측(chgBuf, 충전 속도 계산용)은 섞지 않고 10분 단위 배터리 로그만 본다
+        const pts = logs.get(id)?.pts;                         //   (fbSeriesFor 는 chgBuf 를 섞어서 '기록 2회'가 20분이 아니라 몇 분 만에 채워질 수 있었음 — 그게 이 버그의 원인)
+        return pts ? [...pts.values()].sort((a, b) => a.ts - b.ts) : [];
+    }
     function ngCheck(id, logs) {   // → 방치로 판단되면 { since:대기 중으로 바뀐 시각, minutes:그 뒤 지난 분 } / 아니면 null
-        const pts = fbSeriesFor(id, logs);
+        const pts = ngSeriesFor(id, logs);
         if (pts.length < NG_MIN_RUN + 1 || pts[pts.length - 1].st !== 'standby') return null;   // 최신 기록도 대기 중이어야 함 (다시 순찰 나갔으면 해제)
         let i = pts.length - 1;
         while (i > 0 && pts[i - 1].st === 'standby') i--;   // 대기 중이 시작된 지점까지 거슬러 올라감
