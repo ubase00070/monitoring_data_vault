@@ -12,7 +12,7 @@
     //   투명도: 0.05(거의 안 보임) ~ 0.15(또렷) — 카드·글자를 가리지 않고 '뒤에 그림이 있구나' 정도로만 보이게 하려면 0.08~0.10
     // ============================================================
     const BB_BG_URL = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/snoopy_snow.jpg?v=1';
-    const BB_BG_OPACITY = 0.10;
+    const BB_BG_OPACITY = 0.11;
     const BB_BG_FADE_PX = 56;   // 배경 이미지 상단 경계를 부드럽게 풀어주는 구간(px). 0 이면 예전처럼 뚝 끊김, 클수록 더 길게 번짐
 
     // ============================================================
@@ -488,9 +488,9 @@
             gap:5px 12px;
         }
         .bb-fav.bb-drop-over, .bb-list.bb-drop-over { background:rgba(96,165,250,.10); border-radius:8px; }
-        .bb-tools {   /* 카드 영역의 마지막 칸 — 그 칸 크기(318 × 카드 높이) 안에서 두 버튼이 반반. JS 가 마지막 행 번호를 지정 */
-            grid-column:3; grid-row:20;
-            position:sticky; bottom:10px; z-index:3;   /* 스크롤이 생겨도 카드 영역 오른쪽 아래에 고정 (bottom = 카드 영역 아래 여백 10px) */
+        .bb-tools {   /* 4열(카드 영역 맨 오른쪽 열)의 첫 칸 — 그 칸 크기(318 × 카드 높이) 안에서 두 버튼이 반반. JS 가 항상 1행에 고정 배치 */
+            grid-column:3; grid-row:1;
+            position:sticky; top:0; z-index:3;   /* 스크롤이 생겨도 카드 영역 오른쪽 맨 위에 고정 */
             display:flex; gap:6px; align-items:stretch;
         }
         .bb-tool-btn { flex:1 1 0; min-width:0; height:33px; padding:0 8px; gap:6px; font-size:14px; }
@@ -598,7 +598,7 @@
         #bb.bb-wbatt .bb-row-batt { display:none; }
         #bb.bb-wbatt .bb-row-pctx { display:inline-block; }
         /* 카드 전체 모드: 상태 점이 채움과 같은 색이라 묻히므로 크림색 링 + 얇은 진한 테두리를 둘러 채움 위/빈 곳 어디서나 또렷하게 */
-        #bb.bb-wbatt .bb-row-dot { box-shadow:0 0 0 2px #fffaf0, 0 0 0 3px rgba(43,36,24,.5); margin:0 2px 0 1px; }
+        #bb.bb-wbatt .bb-row-dot { box-shadow:0 0 0 1px #fffaf0, 0 0 0 1.5px rgba(43,36,24,.5); margin:0 2px 0 1px; }
         .bb-row-plug { font-size:11px; line-height:1; flex-shrink:0; }   /* 있을 때만 표시 (자리 예약 없음) — 배터리 바 왼쪽 */
 
         /* ── 우측: 다중 모니터링 중 기체 (세로 직사각형 영역) ── */
@@ -719,13 +719,19 @@
         .bb-att-card:hover { filter:brightness(1.03); }
         .bb-att-card.sel { outline:2px solid var(--tx); outline-offset:1px; }
         /* 이석 중인 근무자 카드는 빨간 테두리 고정 (퇴근자는 회색, 그 외는 기본 테두리) */
-        .bb-att-card.away { border-color:#ef4444; box-shadow:0 0 0 1px #ef4444, 0 0 10px -1px rgba(239,68,68,.6); }
+        .bb-att-card.away { border-color:#ef4444; box-shadow:0 0 8px -2px rgba(239,68,68,.6); }   /* 겹선(0 0 0 1px) 제거로 살짝 얇게 */
         .bb-att-card.off { background:#cfc8b4; }
         .bb-att-card.off .bb-att-name, .bb-att-card.off .bb-att-cnt, .bb-att-card.off .bb-att-tot { color:#4a4436; }
         .bb-att-l1 { display:flex; align-items:baseline; justify-content:space-between; gap:4px; min-width:0; }
         .bb-att-name { min-width:0; font-size:14px; color:var(--tx); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .bb-att-cnt { flex:none; font-size:12px; color:var(--mu); }
         .bb-att-tot { font-size:12.5px; color:var(--tx); white-space:nowrap; }
+        /* 확인사항 개수(0~5개) → 이석 시간 아래 얇은 색줄로 표시 (카드 테두리는 이석 중 여부만 나타내므로 건드리지 않음). 파스텔톤: 0=연두 · 1~2=연노랑 · 3=연주황 · 4~5=연빨강 */
+        .bb-att-vbar { height:4px; border-radius:2px; margin-top:2px; }
+        .bb-att-vbar.v0 { background:#c9ecb0; }
+        .bb-att-vbar.v1 { background:#fbe9a0; }
+        .bb-att-vbar.v2 { background:#ffd8ad; }
+        .bb-att-vbar.v3 { background:#ffbcb0; }
         .bb-att-legend { flex:0 0 auto; display:flex; justify-content:center; align-items:center; gap:9px; padding:5px 6px 6px; border-top:1px solid var(--bd); font-size:11px; color:var(--mu); white-space:nowrap; }
 
         /* 카드 클릭 → 이석 로그 (다중 영역 왼쪽에 뜨는 작은 창) / 상세 로그 (화면 중앙) — 둘 다 보드 밖 최상위 패널 */
@@ -1199,7 +1205,7 @@
                       <div class="bb-lists">
                         <div class="bb-fav" id="bb-fav" title="즐겨찾기(최대 20대) — 여기에 끌어다 놓은 기체는 이 영역 안에서만 정렬됩니다"></div>
                         <div class="bb-list" id="bb-list">
-                        <!-- 카드 영역의 마지막 1칸(맨 오른쪽 열 · 맨 아래 행): 이름 순 정렬 / 카드 제거. 스크롤이 생겨도 이 자리에 고정 -->
+                        <!-- 4열(카드 영역 맨 오른쪽 열)의 맨 위 1칸: 이름 순 정렬 / 카드 제거. 스크롤이 생겨도 이 자리에 고정 -->
                         <div class="bb-tools" id="bb-tools">
                             <button class="bb-btn bb-tool-btn" id="bb-sortname-btn" title="즐겨찾기 영역과 일반 영역을 각각 이름 순으로 정렬"><span class="bb-tool-ico">${ICON_SORT}</span><span class="bb-tool-lbl">이름 순 정렬</span></button>
                             <button class="bb-btn bb-tool-btn" id="bb-rmbtn" title="카드를 골라서 목록에서 제거"><span class="bb-tool-ico">${ICON_TRASH}</span><span class="bb-tool-lbl">카드 제거</span></button>
@@ -2025,6 +2031,11 @@
                 c.className = `bb-mi ${parsed.status}`;
                 c.title = `${nameOf(r)} | ${STL[parsed.status]}`;
                 c.textContent = nameOf(r).match(/(\d+)호기/)?.[1] || (i + 1);
+                c.style.cursor = 'pointer';
+                c.addEventListener('click', () => {   // 퀵바 동그라미 클릭 → 그 기체의 Info 패널 (카드 목록에 없어도 열림)
+                    const rec = DB.find(x => x.id === String(r.id));
+                    if (rec) openInfoCardPanel(rec);
+                });
                 circles.appendChild(c);
             });
             line.appendChild(circles);
@@ -2087,10 +2098,10 @@
         const tools = document.getElementById('bb-tools');   // 정렬/제거 버튼 칸 — 카드를 다시 그려도 지우지 않음
         [...list.children].forEach(c => { if (c !== tools) c.remove(); });
         // 세로 우선 흐름: 열당 행 수를 지정해야 위→아래로 채워짐. 한 열을 MAIN_ROWS(20)행까지 다 채우고 다음 열로.
-        // 마지막 1칸(맨 오른쪽 열·맨 아래 행)은 이름 순 정렬/카드 제거 버튼 자리라 카드가 들어갈 수 없으므로 칸 수에 +1 (59대까지는 20행, 그 이상은 행을 늘려 3열 안에 맞춤)
+        // 맨 오른쪽 열(4열)의 맨 위 1칸은 이름 순 정렬/카드 제거 버튼 자리라 카드가 들어갈 수 없으므로 칸 수에 +1 (59대까지는 20행, 그 이상은 행을 늘려 3열 안에 맞춤)
+        // 버튼 칸이 (grid-row:1 로) 맨 위 첫 칸을 차지하고 나면, grid-auto-flow:column 이 그 칸을 건너뛰고 나머지 칸에 카드를 세로로 채운다
         const rowsN = Math.max(MAIN_ROWS, Math.ceil((robots.length + 1) / LIST_COLS));
-        list.style.gridTemplateRows = `repeat(${rowsN}, minmax(${ROW_H}px, auto))`;   // 빈 행도 카드 높이만큼 유지 → 버튼 칸이 항상 맨 아래 행에 놓임
-        if (tools) tools.style.gridRow = String(rowsN);
+        list.style.gridTemplateRows = `repeat(${rowsN}, minmax(${ROW_H}px, auto))`;
         if (robots.length === 0) {
             if (favRobots.length === 0) {
                 const msg = document.createElement('div');
@@ -5500,7 +5511,8 @@
             el.title = `${s.dn || s.name}${s.label ? ' (' + s.label + ')' : ''} · 이석 ${s.awayCount}회 · ${attDur(s.totalAwaySec)} · 확인사항 ${n}개` + (away ? ' · 이석 중' : '') + (off ? ' · 퇴근' : '');
             const l1 = attEl('div', 'bb-att-l1');
             l1.append(attEl('span', 'bb-att-name', s.dn || s.name), attEl('span', 'bb-att-cnt', s.awayCount + '회'));
-            el.append(l1, attEl('div', 'bb-att-tot', attDur(s.totalAwaySec)));
+            const vLv = n === 0 ? 'v0' : n <= 2 ? 'v1' : n === 3 ? 'v2' : 'v3';   // 0개=연두 · 1~2개=연노랑 · 3개=연주황 · 4~5개=연빨강
+            el.append(l1, attEl('div', 'bb-att-tot', attDur(s.totalAwaySec)), attEl('div', 'bb-att-vbar ' + vLv));
             frag.appendChild(el);
         });
         body.replaceChildren(frag);
