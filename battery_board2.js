@@ -458,6 +458,13 @@
         .bb-list-wrap::-webkit-scrollbar-thumb { background:var(--bd2); border-radius:3px; }
         .bb-list-wrap::-webkit-scrollbar-thumb:hover { background:var(--mu); }
         @supports not selector(::-webkit-scrollbar) { .bb-list-wrap { scrollbar-width:thin; scrollbar-color:var(--bd2) transparent; } }
+        /* 카드 제거 모드: '모든 기체 카드 영역'(즐겨찾기 + 카드 목록)만 또렷하게 두르고, 나머지(헤더·퀵바·다중 모니터링/이석 패널)는 살짝 어둡게 — 지금 무엇을 골라야 하는지 한눈에 보이도록 */
+        #bb.bb-rm-mode .bb-hd, #bb.bb-rm-mode .bb-quick, #bb.bb-rm-mode .bb-mm {
+            opacity:.4; filter:saturate(.6); transition:opacity .25s ease, filter .25s ease;
+        }
+        #bb.bb-rm-mode .bb-list-wrap {
+            box-shadow:0 0 0 3px var(--rd), 0 0 26px 2px rgba(239,68,68,.4); border-radius:14px; transition:box-shadow .25s ease;
+        }
         .bb-lists { display:flex; align-items:stretch; gap:12px; min-height:420px; min-height:max(420px, 100%); }   /* 즐겨찾기 테두리가 카드 끝까지 이어지도록 내용 높이만큼 늘어남 */
         /* 1열 = 즐겨찾기: 여기에 끌어다 놓으면 이름 순 정렬을 해도 일반 기체와 섞이지 않고 이 영역 안에서만 정렬됨 */
         .bb-fav {
@@ -491,8 +498,8 @@
         }
         .bb-tool-btn { flex:1 1 0; min-width:0; height:33px; padding:0 8px; gap:6px; font-size:14px; }
         .bb-tool-btn.rm { min-width:0; }
-        #bb-sortname-btn { background:#d6f3b9; border-color:#a9d97f; color:#33421f; }              /* 이름 순 정렬: 파스텔 연두 */
-        #bb-sortname-btn:hover { background:#c8eea3; border-color:#8fc95f; }
+        #bb-sortname-btn { background:#fff3b5; border-color:#e0c96a; color:#4a3f0d; }              /* 이름 순 정렬: 파스텔 연노랑 */
+        #bb-sortname-btn:hover { background:#ffec96; border-color:#d0b64f; }
         #bb-rmbtn { background:#ffd9e4; border-color:#f2a7bf; color:#5c2233; }                     /* 카드 제거: 파스텔 연핑크 */
         #bb-rmbtn:hover { background:#ffc9d9; border-color:#ea86a5; }
         #bb-rmbtn.rm { background:#ff9fbb; border-color:#e5557f; color:#7f1236; }                  /* 제거 모드(완료 대기): 진한 핑크로 활성 표시 */
@@ -1085,8 +1092,8 @@
                 <!-- 좌: 고정 버튼 3종 (왼쪽 동숲 주민의 왼쪽) -->
                 <div class="bb-fixbtns" id="bb-fixbtns">
                     <button id="bb-fb-drain" class="bb-fb" data-mode="drain" title="충전 중이 아닌 기체를 최근 6시간 안의 하락 기록으로 배터리가 빨리 닳는 순으로 (상위 5대) · 오른쪽 위 숫자 = 지금 소모 속도를 측정 중인 기체 수">🔥 배터리 소모 TOP5<b class="bb-fb-n"></b></button>
-                    <button id="bb-fb-slow" class="bb-fb" data-mode="slow" title="충전 중(100% 미만)인 기체를 충전을 시작한 때부터 지금까지의 평균 속도가 더딘 순으로 (상위 5대) · 오른쪽 위 숫자 = 지금 충전 속도를 측정 중인 기체 수">🐢 저속충전 TOP5<b class="bb-fb-n"></b></button>
-                    <button id="bb-fb-neglect" class="bb-fb" data-mode="neglect" title="순찰을 마치고 대기 중으로 바뀐 지 20분(측정 기록 2회)이 지났는데도 그대로인 기체 · 배달 전용/제외 기체는 빠짐 · 오른쪽 위 숫자 = 해당 기체 수">🅿️ 방치/미주차<b class="bb-fb-n"></b></button>
+                    <button id="bb-fb-slow" class="bb-fb" data-mode="slow" title="충전 중(100% 미만)인 기체를 충전을 시작한 때부터 지금까지의 평균 속도가 더딘 순으로 (상위 5대) · 오른쪽 위 숫자 = 목록에 오른 기체 수(최대 5) · 실제 충전 중인 기체 수는 열었을 때 표시">🐢 저속충전 TOP5<b class="bb-fb-n"></b></button>
+                    <button id="bb-fb-neglect" class="bb-fb" data-mode="neglect" title="순찰을 마치고 대기 중으로 바뀐 지 20분(측정 기록 2회)이 지났는데도 그대로인 기체 · 배달 전용 등 일부 기체는 빠짐 · 오른쪽 위 숫자 = 해당 기체 수">🅿️ 순찰 후 미주차<b class="bb-fb-n"></b></button>
                     <div class="bb-fbp" id="bb-fbp">
                         <div class="bb-fbp-hd">
                             <span class="bb-fbp-title" id="bb-fbp-title"></span>
@@ -1340,7 +1347,7 @@
 
     const DELIVERY_TYPES = ['ALL', 'OPENAPI_DELIVERY', 'NB_ORDER_DELIVERY', 'DELIVERY'];
     const FORCE_PATROL_SITE_IDS = [24];   // 삼성인력개발원
-	const DELIVERY_SITE_IDS = [25,27,44,47,48,53,56,65,86,109,118,141,171,180,207,241,265];
+	const DELIVERY_SITE_IDS = [25,27,44,47,48,53,56,65,86,109,118,141,171,180,207,241,256,265];
 
     // [주석처리: 퀵바/기타 배달] const QUICK_SITE_IDS = [109, 65, 56, 44, 86];
     // [주석처리: 퀵바/기타 배달] const OTHER_DELIVERY_SITE_IDS = DELIVERY_SITE_IDS.filter(id => !QUICK_SITE_IDS.includes(id));
@@ -1349,7 +1356,7 @@
         24,27,36,37,44,46,47,48,51,53,56,57,
         65,66,72,75,82,86,105,108,109,111,117,118,126,131,
         132,134,137,138,140,141,142,143,144,145,146,150,151,171,
-        177,178,179,180,181,182,187,193,196,202,203,207,214,216,224,230,235,241,244,245,246,257,265
+        177,178,179,180,181,182,187,193,196,202,203,207,214,216,224,230,235,241,244,245,246,256,257,265
     ];
 
     // ============================================================
@@ -3284,6 +3291,7 @@
     function updateRmUI() {
         const btn = document.getElementById('bb-rmbtn');
         const ico = btn.querySelector('.bb-tool-ico'), lbl = btn.querySelector('.bb-tool-lbl');
+        bbEl.classList.toggle('bb-rm-mode', rmMode);   // 카드 영역만 강조 + 나머지는 어둡게 (CSS)
         if (rmMode) { btn.classList.add('rm'); lbl.textContent = '완료'; ico.innerHTML = ICON_CHECK; }
         else        { btn.classList.remove('rm'); lbl.textContent = '카드 제거'; ico.innerHTML = ICON_TRASH; }
     }
@@ -4444,7 +4452,7 @@
         }).join('');
     }
     function fbHtmlNeglect(d) {
-        const note = `<div class="bb-fbp-note">순찰 중 → 대기 중으로 바뀐 지 20분(측정 기록 2회)이 지나도 그대로인 기체 · 배달 전용/제외 기체는 빠짐</div>`;
+        const note = `<div class="bb-fbp-note">순찰 중 → 대기 중으로 바뀐 지 20분(측정 기록 2회)이 지나도 그대로인 기체 · 배달 전용 등 일부 기체는 빠짐</div>`;
         if (!d.ng.length) return note + `<div class="bb-fbp-empty">현재 방치·미주차로 보이는 기체가 없습니다 ✓</div>`;
         return note + d.ng.map(x => {
             const r = x.r;
@@ -4468,7 +4476,7 @@
             drain:['배터리 소모 기체 TOP5',   `사용 중 ${d.dr.active}대`],
             slow: ['저속충전 기체 TOP5',     `충전 중 ${d.sc.charging}대`],
             moff: ['임무 OFF 기체',          `${d.mo.length}대`],
-            neglect: ['방치/미주차 기체',     `${d.ng.length}대`],
+            neglect: ['순찰 후 미주차 기체',  `${d.ng.length}대`],
         }[_fbMode];
         document.getElementById('bb-fbp-title').textContent = T[0];
         document.getElementById('bb-fbp-cnt').textContent = T[1];
@@ -4484,7 +4492,7 @@
             fbSetBadge('bb-fb-drain', _fbData.dr.top.length, 'b');   // 배터리 소모: 배지는 목록에 오른 기체 수 (최대 FB_DRAIN_TOP 대). 실제 대수는 버튼 툴팁에 표시
             const bdr = document.getElementById('bb-fb-drain');
             if (bdr) bdr.title = `충전 중이 아닌 기체를 최근 ${FB_DRAIN_WINDOW_H}시간 안의 하락 기록으로 배터리가 빨리 닳는 순으로 (상위 ${FB_DRAIN_TOP}대) · 오른쪽 위 숫자 = 목록에 오른 기체 수 (최대 ${FB_DRAIN_TOP}) · 소모 속도 측정 중 ${_fbData.dr.measured}대 (그중 배터리가 줄고 있는 기체 ${_fbData.dr.dropping}대)`;
-            fbSetBadge('bb-fb-slow', _fbData.sc.measured, 'g');   // 저속충전: 지금 충전 속도를 측정 중인 기체 수 (데이터가 부족해 아직 계산 못 하는 기체는 제외)
+            fbSetBadge('bb-fb-slow', _fbData.sc.top.length, 'g');   // 저속충전: TOP5 버튼이므로 배지는 목록에 오른 기체 수(최대 5)만. 실제 측정 대수는 열었을 때 "충전 중 ##대"로 표시
             fbSetBadge('bb-fb-moff', _fbData.mo.length, 'o');
             fbSetBadge('bb-fb-neglect', _fbData.ng.length, 'y');   // 방치/미주차: 노랑
             fbRender();
