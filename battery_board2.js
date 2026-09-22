@@ -724,8 +724,8 @@
         .bb-att-card:hover { filter:brightness(1.03); }
         .bb-att-card.sel { outline:2px solid var(--tx); outline-offset:1px; }
         /* 이석 중인 근무자 카드는 빨간 테두리 고정 (퇴근자는 회색, 그 외는 기본 테두리) */
-        .bb-att-card.away { border-color:#ef4444; box-shadow:0 0 8px -2px rgba(239,68,68,.6); animation:bb-att-away-blink 3.2s ease-in-out infinite; }   /* 겹선(0 0 0 1px) 제거로 살짝 얇게 · 아주 천천히 점멸해서 눈에 띄게 */
-        @keyframes bb-att-away-blink { 0%, 100% { opacity:1; } 50% { opacity:.55; } }
+        .bb-att-card.away { border-color:#ef4444; box-shadow:0 0 8px -2px rgba(239,68,68,.6); animation:bb-att-away-blink 2s ease-in-out infinite; }   /* 겹선(0 0 0 1px) 제거로 살짝 얇게 · 2초 주기로 아주 옅게만 점멸 */
+        @keyframes bb-att-away-blink { 0%, 100% { opacity:1; } 50% { opacity:.88; } }
         .bb-att-card.off { background:#cfc8b4; }
         .bb-att-card.off .bb-att-name, .bb-att-card.off .bb-att-cnt, .bb-att-card.off .bb-att-tot { color:#4a4436; }
         .bb-att-l1 { display:flex; align-items:baseline; justify-content:space-between; gap:4px; min-width:0; }
@@ -5412,10 +5412,10 @@
         const list = attWatchList(rows).slice(0, 4);   // 최대 4명까지만
         if (!list.length) { box.appendChild(attEl('span', 'none', '해당 근무자 없음')); return; }
         const col = k => ATT_COLS.find(c => c.key === k);
-        const RANK_DOT = ['🔴', '🟠', '🟡', '🟢'];   // 1~4위: 순위가 낮을수록(항목 적을수록) 옅은 색
+        const RANK_ORD = ['1st', '2nd', '3rd', '4th'];
         list.forEach((w, idx) => {
             const chip = attEl('div', 'bb-att-wc');
-            chip.append(`${idx + 1}번 ${RANK_DOT[idx]} `, attEl('b', '', w.row.name), ' - ', attEl('span', 'n', w.items.length + '개 항목'));
+            chip.append(`${RANK_ORD[idx]} `, attEl('b', '', w.row.name), ' - ', attEl('span', 'n', w.items.length + '개 항목'));
             chip.title = w.row.name + ' — 항목별 1위 ' + w.items.length + '개\n' + w.items.map(it => '• ' + col(it.key).label + ' ' + col(it.key).f(w.row) + (it.tied > 1 ? ' (공동 ' + it.tied + '명)' : '')).join('\n');
             box.appendChild(chip);
         });
