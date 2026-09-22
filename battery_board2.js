@@ -13,7 +13,7 @@
     // ============================================================
     const BB_BG_URL = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/snoopy_snow.jpg?v=1';
     const BB_BG_OPACITY = 0.11;
-    const BB_BG_FADE_PX = 56;   // 배경 이미지 상단 경계를 부드럽게(px). 0 이면 예전처럼 뚝 끊김, 클수록 더 길게 번짐
+    const BB_BG_FADE_PX = 56;   // 배경 이미지 상단 경계를 부드럽게 풀어주는 구간(px). 0 이면 예전처럼 뚝 끊김, 클수록 더 길게 번짐
 
     // ============================================================
     // SECTION 0. 스타일
@@ -747,6 +747,7 @@
         .bb-att-vbar.v2 { background:#ffab5c; }
         .bb-att-vbar.v3 { background:#ff7a68; }
         .bb-att-legend { flex:0 0 auto; display:flex; justify-content:center; align-items:center; gap:9px; padding:5px 6px 6px; border-top:1px solid var(--bd); font-size:12px; color:var(--mu); white-space:nowrap; }
+        .bb-mm-legend { flex:0 0 auto; display:flex; justify-content:center; align-items:center; gap:9px; padding:5px 6px 6px; border-top:1px solid var(--bd); font-size:12px; color:var(--mu); white-space:nowrap; }   /* 다중 모니터링 하단 안내 — 이석 현황 하단(.bb-att-legend)과 같은 모양 */
 
         /* 카드 클릭 → 이석 로그 (다중 영역 왼쪽에 뜨는 작은 창) / 상세 로그 (화면 중앙) — 둘 다 보드 밖 최상위 패널 */
         #bb-att-pop, #bb-att-detail, #bb-att-plog {
@@ -1228,6 +1229,7 @@
                                     <button class="bb-mm-nav bb-mm-goatt" id="bb-mm-goatt" title="이석 현황으로 전환"><span class="tx"><span class="l1">이석</span><span class="l2">현황</span></span><span class="ar">»</span></button>
                                 </div>
                                 <div class="bb-mm-body" id="bb-mm-body"></div>
+                                <div class="bb-mm-legend">일정 시간 동안 POI 미변화 시 카드가 점멸합니다.</div>
                             </div>
                             <div class="bb-mm-page" id="bb-mm-page-att">
                                 <div class="bb-att-head">
