@@ -3837,7 +3837,7 @@
         if (!wrapEl) return;
         const el = document.getElementById('bb-walker-l');
         const toggleEl = document.getElementById('bb-walker-l-toggle');
-        const BUNNY_BASE = WALKER_BASE + 'ato/';   // 기존 동숲 캐릭터 저장소 안의 ato 폴더
+        const BUNNY_BASE = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ato/';   // 저장소 바로 아래 ato 폴더 (animal_crossing 하위 아님 — 실제 업로드 위치에 맞춤)
         const BUNNY_COUNT = 30;
         const BUNNY_INTERVAL_MS = 2 * 60 * 1000;   // 2분마다 교체
         const bunnyFile = n => 'ato' + String(n).padStart(2, '0') + '.webp';
