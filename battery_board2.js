@@ -480,7 +480,7 @@
         .bb-fav:not(:empty)::after {   /* 기체가 들어 있을 때: 영역 하단에 작은 안내 (비어 있을 때는 위의 가운데 문구) */
             content:var(--fav-note, '즐겨찾기 - 카드를 끌어다 놓으세요(최대 20대).');   /* 가득 찼을 때는 JS 가 --fav-note 로 경고 문구를 잠깐 씀 */
             position:sticky; bottom:4px; margin-top:auto; padding-top:2px;   /* 영역이 길어 스크롤돼도 보이는 하단에 고정 */
-            text-align:center; font-size:10px; line-height:12px; color:var(--mu); opacity:.85;
+            text-align:center; font-size:11px; line-height:13px; color:var(--mu); opacity:.85;
             text-shadow:0 0 3px var(--bg), 0 0 3px var(--bg);   /* 카드 위에 걸쳐도 읽히도록 */
             pointer-events:none;
         }
@@ -583,6 +583,7 @@
             color:var(--pct-fill); text-shadow:var(--pct-shadow);
             letter-spacing:-0.3px; pointer-events:none; white-space:nowrap;
         }
+        .bb-row-batt-pct.lowbat, .bb-row-pctx.lowbat { color:#dc2626; }   /* 배터리 21% 이하: 수치 글자도 빨간색으로 */
         .bb-row-pct-wrap {
             position:relative; display:inline-block; width:56px; height:20px;
             overflow:hidden; flex-shrink:0; text-align:right;
@@ -723,7 +724,8 @@
         .bb-att-card:hover { filter:brightness(1.03); }
         .bb-att-card.sel { outline:2px solid var(--tx); outline-offset:1px; }
         /* 이석 중인 근무자 카드는 빨간 테두리 고정 (퇴근자는 회색, 그 외는 기본 테두리) */
-        .bb-att-card.away { border-color:#ef4444; box-shadow:0 0 8px -2px rgba(239,68,68,.6); }   /* 겹선(0 0 0 1px) 제거로 살짝 얇게 */
+        .bb-att-card.away { border-color:#ef4444; box-shadow:0 0 8px -2px rgba(239,68,68,.6); animation:bb-att-away-blink 3.2s ease-in-out infinite; }   /* 겹선(0 0 0 1px) 제거로 살짝 얇게 · 아주 천천히 점멸해서 눈에 띄게 */
+        @keyframes bb-att-away-blink { 0%, 100% { opacity:1; } 50% { opacity:.55; } }
         .bb-att-card.off { background:#cfc8b4; }
         .bb-att-card.off .bb-att-name, .bb-att-card.off .bb-att-cnt, .bb-att-card.off .bb-att-tot { color:#4a4436; }
         .bb-att-l1 { display:flex; align-items:baseline; justify-content:space-between; gap:4px; min-width:0; }
@@ -736,7 +738,7 @@
         .bb-att-vbar.v1 { background:#f5d442; }
         .bb-att-vbar.v2 { background:#ffab5c; }
         .bb-att-vbar.v3 { background:#ff7a68; }
-        .bb-att-legend { flex:0 0 auto; display:flex; justify-content:center; align-items:center; gap:9px; padding:5px 6px 6px; border-top:1px solid var(--bd); font-size:11px; color:var(--mu); white-space:nowrap; }
+        .bb-att-legend { flex:0 0 auto; display:flex; justify-content:center; align-items:center; gap:9px; padding:5px 6px 6px; border-top:1px solid var(--bd); font-size:12px; color:var(--mu); white-space:nowrap; }
 
         /* 카드 클릭 → 이석 로그 (다중 영역 왼쪽에 뜨는 작은 창) / 상세 로그 (화면 중앙) — 둘 다 보드 밖 최상위 패널 */
         #bb-att-pop, #bb-att-detail, #bb-att-plog {
@@ -793,7 +795,7 @@
         .bb-att-dh select { height:34px; padding:0 10px; border-radius:8px; border:1.5px solid var(--bd2); background:var(--sur2); color:var(--tx); font-size:14px; font-family:inherit; }
         .bb-att-dh .w { flex:1 1 auto; min-width:0; display:flex; flex-wrap:wrap; align-items:center; gap:6px 8px; }
         .bb-att-dh .w .lb { font-size:12.5px; color:var(--mu); margin-right:2px; cursor:help; }
-        .bb-att-dh .sr { flex:0 0 auto; width:150px; height:34px; padding:0 10px; border-radius:8px; border:1.5px solid var(--bd2); background:var(--sur2); color:var(--tx); font-size:14px; font-weight:700; font-family:inherit; outline:none; }
+        .bb-att-dh .sr { flex:0 0 auto; width:110px; height:34px; padding:0 10px; border-radius:8px; border:1.5px solid var(--bd2); background:var(--sur2); color:var(--tx); font-size:14px; font-weight:700; font-family:inherit; outline:none; }
         .bb-att-dh .sr:focus { border-color:var(--bl); background:var(--sur); }
         .bb-att-dh .sr::placeholder { color:var(--mu); font-weight:400; }
         .bb-att-dh .w .none { font-size:13px; color:var(--mu); }
@@ -1213,14 +1215,14 @@
                                 <div class="bb-mm-head">
                                     <div class="bb-mm-title" id="bb-mm-title">다중 모니터링 기체</div>
                                     <div class="bb-mm-sub" id="bb-mm-sub">불러오는 중…</div>
-                                    <button class="bb-mm-nav bb-mm-goatt" id="bb-mm-goatt" title="이석/착석 현황으로 전환"><span class="tx"><span class="l1">이석</span><span class="l2">현황</span></span><span class="ar">»</span></button>
+                                    <button class="bb-mm-nav bb-mm-goatt" id="bb-mm-goatt" title="이석 현황으로 전환"><span class="tx"><span class="l1">이석</span><span class="l2">현황</span></span><span class="ar">»</span></button>
                                 </div>
                                 <div class="bb-mm-body" id="bb-mm-body"></div>
                             </div>
                             <div class="bb-mm-page" id="bb-mm-page-att">
                                 <div class="bb-att-head">
                                     <button class="bb-mm-nav bb-att-back" id="bb-att-back" title="다중 모니터링으로 돌아가기"><span class="ar">«</span><span class="tx"><span class="l1">다중</span><span class="l2">미갱신</span></span></button>
-                                    <div class="bb-att-title" id="bb-att-title">이석/착석 현황</div>
+                                    <div class="bb-att-title" id="bb-att-title">이석 현황</div>
                                     <div class="bb-att-r2">
                                         <button class="bb-mm-nav bb-att-mbtn" id="bb-att-mprev">--월</button>
                                         <button class="bb-mm-nav bb-att-mbtn" id="bb-att-mcur">--월</button>
@@ -1853,6 +1855,7 @@
         if (fetchLock) return;
         if (Date.now() - _lastProcessedAt < UPDATE_INTERVAL_MS) return;
         _lastProcessedAt = Date.now();
+        ns = RS;   // 갱신 카운트다운을 실제 데이터 처리 시점에 맞춰 리셋 (독립적으로 120초를 도는 것과 실제 주기가 조금씩 어긋나던 것 보정 — ns/RS 는 아래 SECTION 8에서 선언되지만, 이 콜백은 초기 실행이 끝난 뒤 이벤트로 나중에 호출되므로 그때는 이미 선언되어 있어 문제없음)
         fetchLock = true;
         try {
             let allRaw;
@@ -2180,8 +2183,8 @@
                </span>`
             : `<span class="bb-row-batt" style="border-color:${ac};">
                    <span class="bb-row-batt-fill" style="width:${r.battery}%;background:${ac};"></span>
-                   <span class="bb-row-batt-pct">${r.battery}%</span>
-               </span><span class="bb-row-pctx">${r.battery}%</span>`;
+                   <span class="bb-row-batt-pct${lowBat ? ' lowbat' : ''}">${r.battery}%</span>
+               </span><span class="bb-row-pctx${lowBat ? ' lowbat' : ''}">${r.battery}%</span>`;
         const battHtml = showMissionOff
             ? `<span class="bb-row-pct-wrap">
                    <span class="bb-row-pct-val">${battInner}</span>
@@ -3183,7 +3186,6 @@
                         <span id="bb-icp-wbl-title-text">오늘 배터리 증감 추이${wblGetSourceData('today')?.day ? ' [' + wblFormatMonthDay(wblGetSourceData('today').day) + ']' : ''}</span>
                         <span style="display:flex;gap:6px;flex-shrink:0;">
                             <button class="bb-btn" id="bb-icp-wbl-toggle" style="font-size:13px;font-weight:900;padding:3px 8px;">어제 데이터 보기</button>
-                            <button class="bb-btn" id="bb-icp-alertlog-toggle" style="font-size:13px;font-weight:900;padding:3px 8px;">이상 알림 보기</button>
                         </span>
                     </div>
                     <div id="bb-icp-wbl-chart">${wblChartSvg}</div>
@@ -3215,54 +3217,6 @@
         requestAnimationFrame(() => {
             const sc = document.getElementById('bb-wbl-scroll');
             if (sc) sc.scrollLeft = sc.scrollWidth;
-        });
-
-        let alertLogViewOn = false;
-        document.getElementById('bb-icp-alertlog-toggle').addEventListener('click', async () => {
-            alertLogViewOn = !alertLogViewOn;
-            const toggleBtn   = document.getElementById('bb-icp-alertlog-toggle');
-            const wblToggleBtn= document.getElementById('bb-icp-wbl-toggle');
-            const titleTextEl = document.getElementById('bb-icp-wbl-title-text');
-            const chartEl     = document.getElementById('bb-icp-wbl-chart');
-            const logEl       = document.getElementById('bb-icp-wbl-log');
-
-            if (alertLogViewOn) {
-                toggleBtn.textContent = '배터리 그래프 보기';
-                wblToggleBtn.style.display = 'none';
-                titleTextEl.textContent = '알림 로그';
-                chartEl.style.display = 'none';
-                logEl.style.cssText = 'margin-top:10px; display:flex; flex-direction:column; gap:6px; max-height:340px; overflow-y:auto;';
-                logEl.innerHTML = `<div class="bb-icp-wbl-line" style="color:var(--mu);">불러오는 중...</div>`;
-                const rows = await alertLogFetchForRobot(r.id);
-                if (!rows.length) {
-                    logEl.innerHTML = `<div class="bb-icp-wbl-line" style="color:var(--mu);">기록된 알림 로그 없음</div>`;
-                } else {
-                    const byDay = {};
-                    rows.forEach(row => { (byDay[row.day] ||= []).push(row); });
-                    logEl.innerHTML = Object.keys(byDay).sort().reverse().map(day => `
-                        <div class="bb-alertlog-day">
-                            <div class="bb-alertlog-day-title">${wblFormatMonthDay(day)}</div>
-                            ${byDay[day].map(row => {
-                                const meta = ALERT_LOG_META[row.type] || { icon:'', text:row.type, color:'var(--tx)' };
-                                const timeStr = row.start === row.end ? row.start : `${row.start}~${row.end}`;
-                                return `<div class="bb-alertlog-row"><span class="bb-alertlog-time">${timeStr}</span><span class="bb-alertlog-icon">${meta.icon}</span><span class="bb-alertlog-type" style="color:${meta.color};">${meta.text}</span></div>`;
-                            }).join('')}
-                        </div>
-                    `).join('');
-                }
-            } else {
-                toggleBtn.textContent = '이상 알림 보기';
-                wblToggleBtn.style.display = '';
-                chartEl.style.display = '';
-                logEl.style.cssText = '';
-                const wblDay = wblGetSourceData('today')?.day;
-                titleTextEl.textContent = '오늘 배터리 증감 추이' + (wblDay ? ` [${wblFormatMonthDay(wblDay)}]` : '');
-                chartEl.innerHTML = wblRenderChartSVG(r.id, 'today');
-                const lines = wblSummarizeToday(r.id, 'today');
-                logEl.innerHTML = lines
-                    ? lines.map(line => `<div class="bb-icp-wbl-line">${line}</div>`).join('')
-                    : `<div class="bb-icp-wbl-line" style="color:var(--mu);">오늘 기록된 데이터 없음</div>`;
-            }
         });
         }
 
@@ -5196,7 +5150,7 @@
         // 제목: 이석/착석 현황 (금일 날짜) - 현재 이석 ##명
         const ds = live ? attLiveDate() : _attDate, dp = ds.split('-').map(Number);
         const title = $att('bb-att-title');
-        title.textContent = '이석/착석 현황 (' + dp[1] + '/' + dp[2] + ')';
+        title.textContent = '이석 현황 (' + dp[1] + '/' + dp[2] + ')';
         if (live && stats) {
             const awayN = stats.filter(s => s.lastStatus === '이석' && attOnShift(s.shift, nowMin)).length;
             title.append(attEl('span', 'sep', ' - '), '현재 이석 ', attEl('span', 'n', awayN + '명'));
@@ -5240,7 +5194,7 @@
             return;
         }
         if (!stats.length) {
-            body.replaceChildren(attEl('div', 'bb-att-msg', live ? '아직 이석/착석 기록이 없습니다' : ((_attDay && _attDay.msg) || '기록이 없습니다')));
+            body.replaceChildren(attEl('div', 'bb-att-msg', live ? '아직 이석 기록이 없습니다' : ((_attDay && _attDay.msg) || '기록이 없습니다')));
             attClosePop();
             return;
         }
@@ -5455,12 +5409,13 @@
         const lb = attEl('span', 'lb', '이석 포디움');
         lb.title = "'근무일수'를 뺀 9개 항목 중 1위를 2개 이상 차지한 근무자 (많은 순)";
         box.appendChild(lb);
-        const list = attWatchList(rows);
+        const list = attWatchList(rows).slice(0, 4);   // 최대 4명까지만
         if (!list.length) { box.appendChild(attEl('span', 'none', '해당 근무자 없음')); return; }
         const col = k => ATT_COLS.find(c => c.key === k);
-        list.forEach(w => {
+        const RANK_DOT = ['🔴', '🟠', '🟡', '🟢'];   // 1~4위: 순위가 낮을수록(항목 적을수록) 옅은 색
+        list.forEach((w, idx) => {
             const chip = attEl('div', 'bb-att-wc');
-            chip.append(attEl('b', '', w.row.name), ' - ', attEl('span', 'n', w.items.length + '개 항목'));
+            chip.append(`${idx + 1}번 ${RANK_DOT[idx]} `, attEl('b', '', w.row.name), ' - ', attEl('span', 'n', w.items.length + '개 항목'));
             chip.title = w.row.name + ' — 항목별 1위 ' + w.items.length + '개\n' + w.items.map(it => '• ' + col(it.key).label + ' ' + col(it.key).f(w.row) + (it.tied > 1 ? ' (공동 ' + it.tied + '명)' : '')).join('\n');
             box.appendChild(chip);
         });
