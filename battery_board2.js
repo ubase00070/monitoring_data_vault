@@ -2134,14 +2134,17 @@
         const pts = logs.get(id)?.pts;                         //   (fbSeriesFor 는 chgBuf 를 섞어서 '기록 2회'가 20분이 아니라 몇 분 만에 채워질 수 있었음 — 그게 이 버그의 원인)
         return pts ? [...pts.values()].sort((a, b) => a.ts - b.ts) : [];
     }
-    function ngCheck(id, logs) {   // → 방치로 판단되면 { since:대기 중으로 바뀐 시각, minutes:그 뒤 지난 분 } / 아니면 null
+    function ngCheck(id, logs) {   // → 방치로 판단되면 { since:방치 시작 추정 시각, minutes:그 뒤 지난 분(추정) } / 아니면 null
         const pts = ngSeriesFor(id, logs);
         if (pts.length < NG_MIN_RUN + 1 || pts[pts.length - 1].st !== 'standby') return null;   // 최신 기록도 대기 중이어야 함 (다시 순찰 나갔으면 해제)
         let i = pts.length - 1;
         while (i > 0 && pts[i - 1].st === 'standby') i--;   // 대기 중이 시작된 지점까지 거슬러 올라감
         if (pts.length - i < NG_MIN_RUN) return null;       // 대기 중 기록이 아직 2회가 안 됨 (20분 안 지남)
         if (i === 0 || pts[i - 1].st !== 'patrolling') return null;   // 대기 중 직전 기록이 '순찰 중'이어야 함
-        return { since: pts[i - 1].ts, minutes: Math.round((Date.now() - pts[i - 1].ts) / 60000) };   // since = 마지막으로 순찰 중이었던 시각 (그때부터 지금까지 = 방치된 시간)
+        // since = 마지막 순찰 기록과 첫 대기 기록의 중간 시각(추정) — 로그가 10분 간격이라 실제 전환 시점은 이 두 기록 사이 어딘가에 있음.
+        //   마지막 순찰 기록을 그대로 쓰면 항상 최대 10분 더 길게, 첫 대기 기록을 쓰면 항상 최대 10분 더 짧게 나와 한쪽으로 치우치므로, 중간값을 써서 오차를 양쪽 ±5분으로 줄임
+        const since = (pts[i - 1].ts + pts[i].ts) / 2;
+        return { since, minutes: Math.round((Date.now() - since) / 60000) };
     }
     function computeNeglect(logs) {
         const out = [];
@@ -4461,10 +4464,10 @@
         if (!d.ng.length) return note + `<div class="bb-fbp-empty">현재 방치·미주차로 보이는 기체가 없습니다 ✓</div>`;
         return note + d.ng.map(x => {
             const r = x.r;
-            return `<div class="bb-fbp-row" data-rid="${fbEsc(r.id)}" title="${fbEsc(`${r.name} · ${fbClock(x.since)} 순찰 종료 후 대기 중`)}">
+            return `<div class="bb-fbp-row" data-rid="${fbEsc(r.id)}" title="${fbEsc(`${r.name} · 순찰 종료~대기 전환 약 ${fbClock(x.since)} 무렵으로 추정`)}">
                 <span class="bb-fbp-dot" style="background:${STATUS_AC[r.status] || 'var(--mu)'};"></span>
                 <span class="bb-fbp-main"><span class="bb-fbp-name">${fbEsc(r.name)}</span></span>
-                <span class="bb-fbp-now">방치 ${fbDurText(x.minutes)}째</span>
+                <span class="bb-fbp-now">방치 약 ${fbDurText(x.minutes)}째</span>
             </div>`;
         }).join('');
     }
