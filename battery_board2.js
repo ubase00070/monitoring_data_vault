@@ -1444,7 +1444,7 @@
     }
         const LIST_COLS = 3;   // CSS(.bb-list)의 열 수와 맞출 것 (4열 중 1열은 즐겨찾기)
     const ROW_H = 33;      // 카드 한 줄 높이(px) — CSS .bb-row 와 같게
-    const MAIN_ROWS = 20;  // 한 열의 행 수 = 즐겨찾기 열(최대 20대)과 같은 높이. 한 열을 끝까지 채운 뒤 다음 열로 넘어감
+    const MAIN_ROWS = 20;  // (현재 미사용 — 더 이상 최소 행수를 강제하지 않음. 예전엔 즐겨찾기 열과 높이를 맞추는 데 썼음)
     let rmMode = false, rmSet = new Set(), isOpen = false;
     let fetchLock = false;
     let lastRaw = [];
@@ -2095,10 +2095,13 @@
 
         const tools = document.getElementById('bb-tools');   // 정렬/제거 버튼 칸 — 카드를 다시 그려도 지우지 않음
         [...list.children].forEach(c => { if (c !== tools) c.remove(); });
-        // 세로 우선 흐름: 열당 행 수를 지정해야 위→아래로 채워짐. 한 열을 MAIN_ROWS(20)행까지 다 채우고 다음 열로.
-        // 맨 오른쪽 열(4열)의 맨 위 1칸은 이름 순 정렬/카드 제거 버튼 자리라 카드가 들어갈 수 없으므로 칸 수에 +1 (59대까지는 20행, 그 이상은 행을 늘려 3열 안에 맞춤)
+        // 세로 우선 흐름: 열당 행 수를 지정해야 위→아래로 채워짐. 한 열을 다 채운 뒤 다음 열로.
+        // 맨 오른쪽 열(4열)의 맨 위 1칸은 이름 순 정렬/카드 제거 버튼 자리라 카드가 들어갈 수 없으므로 칸 수에 +1
         // 버튼 칸이 (grid-row:1 로) 맨 위 첫 칸을 차지하고 나면, grid-auto-flow:column 이 그 칸을 건너뛰고 나머지 칸에 카드를 세로로 채운다
-        const rowsN = Math.max(MAIN_ROWS, Math.ceil((robots.length + 1) / LIST_COLS));
+        // ※ 예전엔 여기서 최소 MAIN_ROWS(20)행을 강제했는데, 기체가 적을 때도 항상 20행분 높이를 예약해버려서
+        //    실제 카드는 다 안 채워졌는데도(꽉 찬 것도 아닌데) 그 예약된 빈 칸들 때문에 카드 영역에 스크롤바가 생기는 문제가 있었음.
+        //    필요한 만큼만 행을 잡도록 바꿈 — 즐겨찾기 열과의 높이 맞춤은 .bb-lists 의 align-items:stretch 가 대신 해줌
+        const rowsN = Math.ceil((robots.length + 1) / LIST_COLS);
         list.style.gridTemplateRows = `repeat(${rowsN}, minmax(${ROW_H}px, auto))`;
         if (robots.length === 0) {
             if (favRobots.length === 0) {
