@@ -147,14 +147,6 @@
         .bb-hd-grp { display:flex; align-items:center; gap:6px; }
 
         .bb-hd-ico { font-size:12px; line-height:1; }
-        #bb-delivery-btn { position:relative; background:#ffd9e4; border-color:#f2a7bf; color:#5c2233; }              /* 배달 기체: 파스텔 연핑크 (카드 제거 버튼과 같은 색) */
-        #bb-delivery-btn:hover { background:#ffc9d9; border-color:#ea86a5; }
-        .bb-dv-badge {   /* 배달 기체 버튼 모서리에 겹쳐 뜨는 '금일 배달 건수' (폭을 차지하지 않음) — 고정 버튼의 숫자 배지와 같은 모양 */
-            position:absolute; top:-7px; right:-5px; min-width:17px; height:17px; padding:0 4px;
-            border-radius:9px; box-sizing:border-box; background:var(--pk); color:#fff; font-size:10px; line-height:17px;
-            text-align:center; box-shadow:0 1px 3px rgba(0,0,0,.3); font-style:normal;
-        }
-        .bb-dv-badge.z { background:var(--sur); color:var(--mu); border:1px solid var(--bd2); line-height:15px; box-shadow:none; }   /* 0건 */
         #bb-alertlog-all-btn { background:#d6e9ff; border-color:#a5c8ef; color:#1e3a5f; }          /* 이상 알림: 파스텔 연파랑 */
         #bb-alertlog-all-btn:hover { background:#c4ddfb; border-color:#84b2e6; }
 
@@ -193,14 +185,14 @@
             position:absolute; right:calc(50% + 261px); top:50%; transform:translateY(-50%);   /* 오른쪽 끝 = 왼쪽 동숲 주민(제목 왼쪽 151~251px)에서 10px 왼쪽 */
             width:140px; display:grid; grid-template-columns:1fr; gap:4px; z-index:50;   /* 높이 3×26 + 2×4 = 86px (헤더 104px 안) · z-index 는 카드 영역의 .bb-tools(3) 보다 높아야 함 — 안 그러면 그 안의 방전/저속충전 팝업(.bb-fbp, z-index:600)이 같은 z-index:3 인 .bb-tools 뒤로 깔림(같은 값이면 DOM 순서로 승부가 나는데 .bb-tools 가 더 뒤에 있어서 이긴다) */
         }
-        /* ── 우측 3종 버튼 (오른쪽 동숲 주민의 오른쪽): 3행 — [🛵 배달 로그] / [🪫 방전 로그] / [📋 이상 알림] — 왼쪽 고정 버튼과 같은 폭(140px)·높이(26px)·간격(4px) ── */
+        /* ── 우측 3종 버튼 (오른쪽 동숲 주민의 오른쪽): 3행 — [🚫 임무 OFF] / [🪫 방전 로그] / [📋 이상 알림] — 왼쪽 고정 버튼과 같은 폭(140px)·높이(26px)·간격(4px) ── */
         .bb-rbtns {
             position:absolute; left:calc(50% + 261px); top:50%; transform:translateY(-50%);   /* 왼쪽 = 오른쪽 동숲 주민(제목 오른쪽 151~251px)에서 10px 오른쪽 */
             width:140px; display:grid; grid-template-columns:1fr; gap:4px; z-index:50;   /* 위와 같은 이유로 .bb-tools 보다 높게 */
         }
         .bb-rbtns > button, .bb-fixbtns > .bb-fb {   /* 좌·우 6개 버튼 공통: 같은 크기(140×26) · 같은 글자 크기(11px) */
             position:relative; width:100%; height:26px; padding:0 2px; gap:2px; border-radius:7px; border:1.5px solid var(--bd2);
-            font-size:11px; font-weight:800;   /* 배달 로그(최근 15일) 같은 긴 이름이 140px 안에 들어가도록 (양쪽 여유 약 6px) */ font-family:inherit; white-space:nowrap; overflow:visible;
+            font-size:11px; font-weight:800;   /* 방전 로그(최근 15일) 같은 긴 이름이 140px 안에 들어가도록 (양쪽 여유 약 6px) */ font-family:inherit; white-space:nowrap; overflow:visible;
             display:inline-flex; align-items:center; justify-content:center; box-sizing:border-box; cursor:pointer;
         }
         .bb-fb {
@@ -225,6 +217,9 @@
         #bb-fb-moff { background:#e6dcff; border-color:#c4b3f0; color:#3b2b66; }
         #bb-fb-moff:hover { background:#dccfff; border-color:#a893e6; }
         #bb-fb-moff.active { background:#cdbcff; border-color:#4f3a94; }
+        #bb-fb-neglect { background:#ffe1b8; border-color:#eab476; color:#5c3d12; }   /* 방치/미주차: 주차 표지판 느낌의 연한 주황빛 */
+        #bb-fb-neglect:hover { background:#ffd394; border-color:#dd9a48; }
+        #bb-fb-neglect.active { background:#ffc772; border-color:#8a5a12; }
         .bb-fb-n {   /* 버튼 모서리에 겹쳐 뜨는 숫자 배지 (폭을 차지하지 않음). 3개 버튼 모두 표시, 0 이면 연한 회색 */
             display:none; position:absolute; top:-7px; right:-5px; min-width:17px; height:17px; padding:0 4px;
             border-radius:9px; box-sizing:border-box; color:#fff; font-size:10px; font-weight:900; line-height:17px;
@@ -235,6 +230,7 @@
         .bb-fb-n.o { background:#ea580c; }
         .bb-fb-n.b { background:#3b82f6; }
         .bb-fb-n.g { background:#16a34a; }   /* 저속충전 배지: 충전 중인 기체 중에서 감지하는 것이라 초록 */
+        .bb-fb-n.y { background:#eab308; }   /* 방치/미주차 배지: 노랑 */
         .bb-fb-n.z { background:var(--sur); color:var(--mu); border:1px solid var(--bd2); line-height:15px; box-shadow:none; }   /* 0대 */
 
         /* 고정 버튼 목록 창 (버튼 아래에 뜸, 열어 둔 채로 2분마다 자동 갱신) */
@@ -902,7 +898,7 @@
             z-index:99999999;
                     }
 
-        #bb-alertlog-all-panel, #bb-delivery-panel {
+        #bb-alertlog-all-panel {
             display:none; position:fixed;
             top:50%; left:50%; transform:translate(-50%,-50%);
             width:860px; max-height:82vh; overflow-y:auto;
@@ -913,17 +909,7 @@
             box-shadow:0 24px 64px rgba(0,0,0,.9);
             z-index:99999999;
                     }
-        #bb-alertlog-all-panel.open, #bb-delivery-panel.open { display:block; }
-        /* 배달 기체 카드: 왼쪽 → 오른쪽으로 쌓이고, 칸이 모자라면 다음 줄로 */
-        .bb-dv-cards { display:flex; flex-wrap:wrap; gap:6px; padding:0 14px; }
-        .bb-dv-card {
-            display:inline-flex; align-items:baseline; gap:3px; padding:5px 11px; border-radius:9px;
-            background:#ffd9e4; border:1px solid #f2a7bf; color:#5c2233; font-size:14px; white-space:nowrap; cursor:default;
-        }
-        .bb-dv-sep { opacity:.5; }
-        .bb-dv-n { color:#c2255c; font-weight:900; }
-        .bb-dv-sum { font-size:13px; font-weight:700; color:var(--mu); }
-        .bb-dv-empty { padding:26px 14px; text-align:center; font-size:14px; color:var(--mu); }
+        #bb-alertlog-all-panel.open { display:block; }
         .bb-alertlog-day { margin-bottom:14px; }
         .bb-alertlog-day-title {
             display:flex; align-items:center; gap:10px;
@@ -984,7 +970,7 @@
 		}
 		#bb-alert-panel.bb-light .bb-ap-hd { background:var(--sur); border-bottom-color:var(--bd); }
 		#bb-alert-panel.bb-light .bb-ap-title { color:var(--tx); }
-		#bb-alertlog-all-panel.bb-light .bb-ap-title, #bb-delivery-panel.bb-light .bb-ap-title { color:var(--tx); }
+		#bb-alertlog-all-panel.bb-light .bb-ap-title { color:var(--tx); }
 		#bb-alert-panel.bb-light .bb-ap-close { color:#b91c1c; }
 		#bb-alert-panel.bb-light .bb-ap-item { background:var(--sur); border-bottom-color:var(--bd); }
 		#bb-alert-panel.bb-light .bb-ap-item:hover { background:var(--sur2); }
@@ -1100,7 +1086,7 @@
                 <div class="bb-fixbtns" id="bb-fixbtns">
                     <button id="bb-fb-drain" class="bb-fb" data-mode="drain" title="충전 중이 아닌 기체를 최근 6시간 안의 하락 기록으로 배터리가 빨리 닳는 순으로 (상위 5대) · 오른쪽 위 숫자 = 지금 소모 속도를 측정 중인 기체 수">🔥 배터리 소모 TOP5<b class="bb-fb-n"></b></button>
                     <button id="bb-fb-slow" class="bb-fb" data-mode="slow" title="충전 중(100% 미만)인 기체를 충전을 시작한 때부터 지금까지의 평균 속도가 더딘 순으로 (상위 5대) · 오른쪽 위 숫자 = 지금 충전 속도를 측정 중인 기체 수">🐢 저속충전 TOP5<b class="bb-fb-n"></b></button>
-                    <button id="bb-fb-moff" class="bb-fb" data-mode="moff" title="현재 임무가 OFF 인 기체 · 오른쪽 위 숫자 = 해당 기체 수">🚫 임무 OFF<b class="bb-fb-n"></b></button>
+                    <button id="bb-fb-neglect" class="bb-fb" data-mode="neglect" title="순찰을 마치고 대기 중으로 바뀐 지 20분(측정 기록 2회)이 지났는데도 그대로인 기체 · 배달 전용/제외 기체는 빠짐 · 오른쪽 위 숫자 = 해당 기체 수">🅿️ 방치/미주차<b class="bb-fb-n"></b></button>
                     <div class="bb-fbp" id="bb-fbp">
                         <div class="bb-fbp-hd">
                             <span class="bb-fbp-title" id="bb-fbp-title"></span>
@@ -1138,9 +1124,9 @@
                     <button id="bb-walker-toggle" title="동숲 주민 끄기">동숲</button>
                     <div id="bb-walker-bubble"><span id="bb-walker-bubble-text"></span></div>
                 </div>
-                <!-- 우: 3종 버튼 (오른쪽 동숲 주민의 오른쪽) — 배달 로그 / 방전 로그 / 이상 알림. 왼쪽 고정 버튼 3행과 같은 폭·높이·간격 -->
+                <!-- 우: 3종 버튼 (오른쪽 동숲 주민의 오른쪽) — 임무 OFF / 방전 로그 / 이상 알림. 왼쪽 고정 버튼 3행과 같은 폭·높이·간격 -->
                 <div class="bb-rbtns" id="bb-fixbtns-r">
-                    <button class="bb-btn" id="bb-delivery-btn" title="최근 15일 동안 일자별로 배달을 수행한 기체와 배달 횟수"><span class="bb-hd-ico">🛵</span>배달 로그(최근 15일)<b class="bb-dv-badge z" id="bb-dv-badge">0</b></button>
+                    <button id="bb-fb-moff" class="bb-fb" data-mode="moff" title="현재 임무가 OFF 인 기체 · 오른쪽 위 숫자 = 해당 기체 수">🚫 임무 OFF<b class="bb-fb-n"></b></button>
                     <button id="bb-fb-dis" class="bb-fb" data-mode="dis" title="최근 15일 방전 기록 · 오른쪽 위 숫자 = 방전 기체 수">🪫 방전 로그(최근 15일)<b class="bb-fb-n"></b></button>
                     <button class="bb-btn" id="bb-alertlog-all-btn" title="최근 15일 동안의 좀비 / 캠 미노출 / 미니맵 미노출 기록"><span class="bb-hd-ico">📋</span>이상 알림(최근 15일)</button>
                 </div>
@@ -1188,14 +1174,6 @@
                     <div class="bb-ap-close" id="bb-alertlog-all-close">✕</div>
                 </div>
                 <div id="bb-alertlog-all-body"></div>
-            </div>
-
-            <div id="bb-delivery-panel">
-                <div class="bb-ap-hd">
-                    <div class="bb-ap-title">🛵 배달 로그(최근 15일)</div>
-                    <div class="bb-ap-close" id="bb-delivery-close">✕</div>
-                </div>
-                <div id="bb-delivery-body"></div>
             </div>
 
             <!-- 본문: 좌(기체 리스트 + 하단 퀵바) | 우(다중 모니터링 중 기체) -->
@@ -1308,7 +1286,6 @@
 		document.getElementById('bb-alert-panel').classList.add('bb-light');
 		document.getElementById('bb-info-card-panel').classList.add('bb-light');
 		document.getElementById('bb-alertlog-all-panel').classList.add('bb-light');
-		document.getElementById('bb-delivery-panel').classList.add('bb-light');
 	};
     applyBbTheme();
 
@@ -1898,7 +1875,6 @@
             }
 
             logBatteryPattern(DB);
-            try { dvUpdateLocal(); } catch (err) { console.error('[BB] 배달 로그 계산 오류:', err); }   // 배터리 로그 → 배달 횟수 (로컬 저장)
             try { dcUpdateLocal(); } catch (err) { console.error('[BB] 방전 기록 계산 오류:', err); }   // 배터리 로그 → 방전 기록 (로컬 저장, 최근 15일)
             try { sampleChargeBuffer(DB); } catch (err) { console.error('[BB] 충전 관측 오류:', err); }   // 저속충전 계산용 (2분마다 1회 기록)
             wblCyhAutoUploadTick();
@@ -1907,7 +1883,6 @@
             alertLogCyhTick();
             alertLogNonCyhTick();
             alertLogDownloadTick();
-            dvDownloadTick();
             dcDownloadTick();   // 방전 기록: 페이지를 연 직후 1회 + 6시간마다 (30분마다 받지 않음)
 
             const alerts = detectAlerts(allRaw);
@@ -2136,6 +2111,35 @@
             && r.status !== 'patrolling' && r.status !== 'delivering' && r.status !== 'standby';
     }
 
+    // 방치/미주차 판정: 순찰 중 → 대기 중으로 바뀐 지 배터리 로그 기록 2회(10분 간격이라 20분)가 지나도 그대로인 기체.
+    //   목적: 순찰을 마치고 주차(도킹)를 안 해 다음 순찰에 지장이 가는 걸 미리 잡아내는 것 — 배달 임무 중 잠깐 대기하는 것과는 다름
+    //   도킹 중(docking)은 대기 중(standby)이 아니므로 별도 상태로 구분되어 이 판정에 걸리지 않음
+    const NG_MIN_RUN = 2;   // '대기 중' 기록이 이만큼(회) 연속돼야 방치로 봄
+    const NG_EXCLUDE_NAMES = ['배송띠띠', '순찰띠띠', '삼성인력개발원1호기', '318호기', '319호기', '두비', '달비', '인재개발원1호기', '김포풍무센트럴푸르지오1호기', '부천위브1호기', '잠실리센츠아파트1호기', '잠실리센츠아파트2호기', '잠실엘스아파트1호기', '잠실엘스아파트2호기', '김포캐슬앤파밀리에1호기', '김포캐슬앤파밀리에2호기', '부산서면비스타동원1호기', '아주대학교1호기', '아주대학교2호기'];   // 이름으로 직접 제외 (공백 무시, 정확히 일치할 때만)
+    const ngKey = name => String(name || '').replace(/\s+/g, '');
+    function ngExcluded(r) {   // 위 이름 목록이거나, 요기요/삼평서현 등 '배달'로 설정된 기체면 카운팅 대상에서 뺌
+        if (NG_EXCLUDE_NAMES.includes(ngKey(r.name))) return true;
+        return !FORCE_PATROL_SITE_IDS.includes(r.siteId) &&
+            (DELIVERY_TYPES.includes(r.raw?.service?.serviceType) || DELIVERY_SITE_IDS.includes(r.siteId));
+    }
+    function ngCheck(id, logs) {   // → 방치로 판단되면 { since:대기 중으로 바뀐 시각, minutes:그 뒤 지난 분 } / 아니면 null
+        const pts = fbSeriesFor(id, logs);
+        if (pts.length < NG_MIN_RUN + 1 || pts[pts.length - 1].st !== 'standby') return null;   // 최신 기록도 대기 중이어야 함 (다시 순찰 나갔으면 해제)
+        let i = pts.length - 1;
+        while (i > 0 && pts[i - 1].st === 'standby') i--;   // 대기 중이 시작된 지점까지 거슬러 올라감
+        if (pts.length - i < NG_MIN_RUN) return null;       // 대기 중 기록이 아직 2회가 안 됨 (20분 안 지남)
+        if (i === 0 || pts[i - 1].st !== 'patrolling') return null;   // 대기 중 직전 기록이 '순찰 중'이어야 함
+        return { since: pts[i - 1].ts, minutes: Math.round((Date.now() - pts[i - 1].ts) / 60000) };   // since = 마지막으로 순찰 중이었던 시각 (그때부터 지금까지 = 방치된 시간)
+    }
+    function computeNeglect(logs) {
+        const out = [];
+        DB.filter(r => r.status === 'standby' && !r.loading && !ngExcluded(r)).forEach(r => {
+            const hit = ngCheck(r.id, logs);
+            if (hit) out.push({ r, ...hit });
+        });
+        return out.sort((a, b) => b.minutes - a.minutes);
+    }
+
     function makeRow(r, isFav) {
         const ac = STATUS_AC[r.status] || 'var(--mu)';
         const off = r.status === 'off';
@@ -2212,7 +2216,7 @@
     // 배터리 증감 로그 (하루 = 07:00~익일 07:00, 24시간 연속 기록 / 날짜가 바뀌면 자동 초기화)
     // ============================================================
     const WBL_KEY = 'bb_battery_log';
-    const WBL_DAY_START_H = 7;   // ★ 하루 시작 시각(시). 배터리 로그·배달 로그·어제 데이터·그래프가 이 값 하나를 따름 (심야 업로드 02:50 은 별개)
+    const WBL_DAY_START_H = 7;   // ★ 하루 시작 시각(시). 배터리 로그·어제 데이터·그래프가 이 값 하나를 따름 (심야 업로드 02:50 은 별개)
     const WBL_SCHEME_V = 7;      // 데이터 버전 표식 — 기준을 07:00 으로 바꾼 뒤 만들어진 데이터에만 붙음 (표식이 없으면 예전 03:00 기준 데이터로 보고 1회 정리)
 
     // toISOString()은 UTC 기준이라 한국 시각 새벽 0~9시대엔 날짜가 하루 밀려버림 -> 로컬 날짜를 직접 조립
@@ -2633,9 +2637,7 @@
 		Object.keys(localStorage).forEach(k => { if (k.startsWith('bb_wbl_up_') && !k.startsWith(`bb_wbl_up_${today}_`)) localStorage.removeItem(k); });   // 지난 날짜 기록 정리
 		localStorage.setItem(doneKey, '1');   // 시도하기 전에 기록 → 성공/실패와 무관하게 이 시각엔 1회만
 		await wblDoUpload();
-		await new Promise(r => setTimeout(r, 1500));   // 같은 저장소에 커밋이 동시에 몰리지 않도록 순서대로 (배터리 → 배달)
-		await dvUpload();
-		await new Promise(r => setTimeout(r, 1500));
+		await new Promise(r => setTimeout(r, 1500));   // 같은 저장소에 커밋이 동시에 몰리지 않도록 순서대로
 		try { await dcUpload(); } catch (e) { console.log('[BB] 방전 로그 업로드 오류:', e.message); }   // 방전 기록 (있을 때만 실제 요청)
 	}
 	// 정각(그 분 안)을 놓치지 않도록 20초마다 확인 — 데이터 갱신(2분 주기)과 무관하게 동작. 이미 한 시각은 위의 기록으로 건너뜀
@@ -2902,7 +2904,6 @@
 		localStorage.setItem(hourKey, '1');
 		await alertLogUpload();
 		await new Promise(r => setTimeout(r, Math.random() * 15000));   // 여러 PC 가 같은 :50 에 몰려도 조금씩 어긋나게 (랜덤 0~15초)
-		await dvUpload();
 		try { await dcUpload(); } catch (e) { console.log('[BB] 방전 로그 업로드 오류:', e.message); }   // 방전 기록 (있을 때만 실제 요청)
 	}
 
@@ -2961,289 +2962,6 @@
 	}
 
 
-	// ============================================================
-	// SECTION 배달 기체 로그 — 일자별 "기체별 배달 횟수" (최근 15일)
-	// 원본: 배터리 로그(bb_battery_log)의 상태 기록 — '배달 중'이 이어진 구간 1개 = 1회 (10분 단위 로그라 10분보다 짧은 배달은 못 잡을 수 있음)
-	// 저장: ① 이 PC 의 계산 결과(bb_delivery_local) — 배터리 로그가 하루 지나 초기화돼도 남음
-	//       ② 서버 단일 파일(배터리_배달로그) — 최근 15일치, 여러 PC 가 각자 올린 것을 '기체별 횟수가 큰 쪽'으로 병합
-	// 횟수는 하루 안에서 늘기만 하므로 병합 결과는 올린 순서·중복과 무관 → 락이 필요 없고, 서로 겹쳐 올려도 다음 업로드에서 바로잡힘
-	// 업로드 시점: CYH = 배터리 로그 정각 업로드 직후(17:50 예외 포함) / 그 외 = 알림 로그와 같은 매시 50분 슬롯 (+ 랜덤 지연)
-	// ============================================================
-	const DV_LOG_NAME = '배터리_배달로그';
-	const DV_RETENTION_DAYS = 15;
-	const DV_LOCAL_KEY = 'bb_delivery_local';          // { days:{일자:{기체id:{name,n,t[]}}}, up:{일자:마지막 업로드 서명} }
-	const DV_CACHE_KEY = 'bb_deliverylog_file_cache';  // { days:{...}, at:받아온 시각(ms) }
-	const DV_SEEN_KEY  = 'bb_dv_file_seen';            // 서버 파일을 한 번이라도 확인/생성했는지 (처음 1회 예외 처리용)
-	const DV_POST_TRIES = 2;
-	const DV_EXCLUDE_NAMES = ['배송띠띠'];   // 배달 횟수에서 뺄 기체 (기체명에서 공백을 뺀 값에 이 글자가 들어 있으면 제외) — 더 빼려면 여기에 추가
-	let _dvUploading = false;
-	function dvExcluded(name) { const k = String(name || '').replace(/\s+/g, ''); return DV_EXCLUDE_NAMES.some(x => k.includes(x)); }
-	// 집계 시작일 — 이 날짜 '이전' 기록은 (어제 오전 기록이 비어 있는 등) 신뢰할 수 없어 화면·저장·서버 파일에서 모두 뺌. 15일이 지나면 자연히 의미가 없어지므로 그때 지워도 됨
-	const DV_START_DAY = '2026-09-21';
-	// 특정 기체는 이 시각(분) '이전에 시작된' 배달은 셈에서 뺌 — 성남형 로봇배달은 11:00 전의 '배달'이 실제 배달이 아니라 대기장소 이동용 임무 부여
-	const DV_LATE_START = [{ key: '성남형로봇배달', minMin: 11 * 60 }];
-	function dvNameKey(name) { return String(name || '').replace(/\s+/g, ''); }
-	function dvMinStartMin(name) { const k = dvNameKey(name); const r = DV_LATE_START.find(x => k.includes(x.key)); return r ? r.minMin : 0; }
-	// 기록 1건에 규칙 적용한 결과. 제외 대상이거나 남는 배달이 없으면 null (t = 각 배달 시작 시각 — 그래서 예전에 이미 저장된 값도 다시 걸러낼 수 있음)
-	function dvNormEntry(x) {
-		if (!x || !(x.n > 0) || dvExcluded(x.name)) return null;
-		const lim = dvMinStartMin(x.name);
-		if (!lim) return x;
-		const t = (Array.isArray(x.t) ? x.t : []).filter(v => wblDayAdjMin(v) >= lim);
-		return t.length ? { name: x.name, n: t.length, t } : null;
-	}
-	function dvStrip(days) {   // 이미 저장된 기록에도 규칙 적용 (이 PC·서버 파일 모두). 바뀐 게 있으면 true
-		let changed = false;
-		Object.keys(days || {}).forEach(d => Object.keys(days[d] || {}).forEach(id => {
-			const e = days[d][id], y = dvNormEntry(e);
-			if (!y) { delete days[d][id]; changed = true; }
-			else if (y.n !== e.n) { days[d][id] = y; changed = true; }
-		}));
-		return changed;
-	}
-
-	function dvDayIdx(day) { return Math.floor(new Date(day + 'T00:00:00Z').getTime() / 86400000); }
-	function dvCutoffIdx() { return Math.max(dvDayIdx(wblGetDayKey() || wblTodayStr()) - (DV_RETENTION_DAYS - 1), dvDayIdx(DV_START_DAY)); }
-	function dvPrune(days) {   // 15일(오늘 포함) 넘은 날짜, 그리고 집계 시작일 이전 날짜는 잘라냄
-		const cutoff = dvCutoffIdx();
-		Object.keys(days).forEach(d => { if (dvDayIdx(d) < cutoff) delete days[d]; });
-		return days;
-	}
-
-	// 배터리 로그 1일치 → { 기체id: { name, n: 배달 횟수, t: [각 배달 시작 시각] } }
-	function dvCountFromWbl(data) {
-		const out = {};
-		if (!data || !data.entries) return out;
-		Object.keys(data.entries).forEach(id => {
-			const e = data.entries[id];
-			if (dvExcluded(e.name)) return;
-			const log = [...(e.log || [])].sort((a, b) => wblDayAdjMin(a.t) - wblDayAdjMin(b.t));
-			const t = []; let prev = null;
-			log.forEach(p => { if (p.status === 'delivering' && prev !== 'delivering') t.push(p.t); prev = p.status; });
-			const y = dvNormEntry({ name: e.name, n: t.length, t });   // 성남형 11:00 이전 시작분 등 규칙 적용
-			if (y) out[id] = y;
-		});
-		return out;
-	}
-
-	// dst 에 src 를 합침 — 기체별로 횟수(n)가 더 큰 쪽을 채택
-	function dvMergeDay(dst, src) {
-		Object.keys(src || {}).forEach(id => {
-			const x = dvNormEntry(src[id]);
-			if (!x) return;
-			const d = dst[id];
-			if (!d || x.n > d.n) dst[id] = { name: x.name || (d && d.name) || id, n: x.n, t: Array.isArray(x.t) ? x.t : [] };
-		});
-		return dst;
-	}
-
-	function dvLoadLocal() {
-		try { const o = JSON.parse(localStorage.getItem(DV_LOCAL_KEY) || 'null'); if (o && o.days) return { days: o.days, up: o.up || {} }; } catch {}
-		return { days: {}, up: {} };
-	}
-	function dvSaveLocal(o) { try { localStorage.setItem(DV_LOCAL_KEY, JSON.stringify(o)); } catch {} }
-	function dvSig(o) { const s = JSON.stringify(o); let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return s.length + ':' + h; }
-
-	// 2분마다(데이터 갱신 때) 호출 — 오늘 배터리 로그 + 어제 스냅샷에서 횟수를 다시 세어 로컬 결과에 반영 (횟수는 줄지 않게 큰 쪽 유지)
-	function dvUpdateLocal() {
-		const loc = dvLoadLocal();
-		let changed = false;
-		[wblLoad(), wblLoadYesterdaySnapshot()].forEach(data => {
-			if (!data || !data.day || dvDayIdx(data.day) < dvCutoffIdx()) return;   // 집계 시작일 이전 로그는 세지 않음
-			const fresh = dvCountFromWbl(data);
-			if (!Object.keys(fresh).length) return;
-			const day = loc.days[data.day] || (loc.days[data.day] = {});
-			const before = JSON.stringify(day);
-			dvMergeDay(day, fresh);
-			if (JSON.stringify(day) !== before) changed = true;
-		});
-		if (dvStrip(loc.days)) changed = true;
-		const nb = Object.keys(loc.days).length;
-		dvPrune(loc.days);
-		if (Object.keys(loc.days).length !== nb) changed = true;
-		Object.keys(loc.up).forEach(d => { if (!loc.days[d]) delete loc.up[d]; });
-		if (changed) dvSaveLocal(loc);
-		dvUpdateBadge();
-	}
-
-	// 배달 기체 버튼 우상단 숫자 = 금일(07:00 ~ 익일 07:00 직전) 배달 건수 합계. 서버 캐시와 이 PC 계산 중 큰 쪽 기준 (0 이면 연한 회색)
-	function dvTodayTotal() {
-		const today = wblGetDayKey();
-		const day = {};
-		dvMergeDay(day, (dvCachedFile().days || {})[today]);
-		dvMergeDay(day, (dvLoadLocal().days || {})[today]);
-		return Object.keys(day).reduce((sum, id) => sum + day[id].n, 0);
-	}
-	function dvUpdateBadge() {
-		const b = document.getElementById('bb-dv-badge');
-		if (!b) return;
-		const n = dvTodayTotal();
-		b.textContent = n > 99 ? '99+' : String(n);
-		b.className = `bb-dv-badge ${n > 0 ? '' : 'z'}`;
-		const btn = document.getElementById('bb-delivery-btn');
-		if (btn) btn.title = `최근 15일 동안 일자별로 배달을 수행한 기체와 배달 횟수 · 오른쪽 위 숫자 = 금일(07:00~익일 07:00 전) 배달 ${n}건`;
-	}
-
-	// 서버 파일 읽기. 실패하면 null — (빈 파일로 착각해서 서버 데이터를 덮어쓰는 사고 방지)
-	// 단, 서버에 파일이 아직 없는 '맨 처음'에는 빈 파일로 취급 (404 이거나, 한 번도 확인한 적이 없을 때)
-	async function dvFetchFile() {
-		try {
-			const res = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent(DV_LOG_NAME)}`);
-			if (res.ok) {
-				const j = await res.json();
-				const f = (j && j.data && typeof j.data === 'object' && j.data.days) ? j.data : { days: {} };
-				if (j && j.data) { try { localStorage.setItem(DV_SEEN_KEY, '1'); } catch {} }
-				return f;
-			}
-			if (res.status === 404 || localStorage.getItem(DV_SEEN_KEY) !== '1') return { days: {} };
-			console.log('[BB] 배달 로그: 서버 조회 실패 (HTTP ' + res.status + ')');
-			return null;
-		} catch (e) { console.log('[BB] 배달 로그: 서버 조회 실패:', e.message); return null; }
-	}
-
-	function dvCachedFile() {
-		try { const c = JSON.parse(localStorage.getItem(DV_CACHE_KEY) || 'null'); if (c && c.days) return c; } catch {}
-		return { days: {}, at: 0 };
-	}
-	async function dvRefreshCache(minAgeMs) {   // 캐시가 minAgeMs 보다 오래됐을 때만 서버에서 다시 받음. 갱신했으면 true
-		if (Date.now() - dvCachedFile().at < minAgeMs) return false;
-		const f = await dvFetchFile();
-		if (!f) return false;
-		try { localStorage.setItem(DV_CACHE_KEY, JSON.stringify({ days: dvPrune(f.days || {}), at: Date.now() })); } catch {}
-		dvUpdateBadge();
-		return true;
-	}
-	let _dvDlLast = 0;
-	async function dvDownloadTick() {   // 30분마다 (CYH/비CYH 공통)
-		if (Date.now() - _dvDlLast < 30 * 60 * 1000) return;
-		_dvDlLast = Date.now();
-		await dvRefreshCache(0);
-	}
-
-	// 업로드: 마지막 업로드 이후 바뀐 날짜만 → 서버 최신 파일을 읽어 '기체별 큰 쪽'으로 병합 → 올림. 실패(충돌 등)하면 다시 읽어 병합해 1회 재시도.
-	async function dvUpload() {
-		if (_dvUploading) return false;
-		const loc = dvLoadLocal();
-		const dirty = Object.keys(loc.days).filter(d => Object.keys(loc.days[d]).length && loc.up[d] !== dvSig(loc.days[d]));
-		if (!dirty.length) return true;   // 올릴 게 없음 → 요청 자체를 안 보냄
-		const sent = {}; dirty.forEach(d => { sent[d] = dvSig(loc.days[d]); });   // 보낸 시점의 서명 (업로드 도중 값이 더 늘어도 다음에 다시 올라가도록)
-		_dvUploading = true;
-		try {
-			for (let attempt = 1; attempt <= DV_POST_TRIES; attempt++) {
-				const file = await dvFetchFile();
-				if (!file) return false;   // 서버 파일을 못 읽었으면 보류 (다음 슬롯에 다시)
-				if (!file.days) file.days = {};
-				dvStrip(file.days);   // 제외 기체가 서버 파일에 남아 있으면 이번에 함께 정리
-				dirty.forEach(d => { file.days[d] = dvMergeDay(file.days[d] || {}, loc.days[d]); });
-				dvPrune(file.days);
-				try {
-					const res = await fetch(BACKUP_BASE, {
-						method: 'POST', headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify({ name: DV_LOG_NAME, data: file }),
-					});
-					if (res.ok) {
-						const cur = dvLoadLocal(); dirty.forEach(d => { cur.up[d] = sent[d]; }); dvSaveLocal(cur);
-						try { localStorage.setItem(DV_SEEN_KEY, '1'); localStorage.setItem(DV_CACHE_KEY, JSON.stringify({ days: file.days, at: Date.now() })); } catch {}
-						dvUpdateBadge();
-						console.log('[BB] 배달 로그 업로드 완료 (' + new Date().toTimeString().slice(0, 5) + ', ' + dirty.length + '일치)');
-						return true;
-					}
-					console.log('[BB] 배달 로그 업로드 거절됨 (HTTP ' + res.status + ')' + (attempt < DV_POST_TRIES ? ' — 잠시 뒤 재시도' : ''));
-				} catch (e) { console.log('[BB] 배달 로그 업로드 실패:', e.message); }
-				if (attempt < DV_POST_TRIES) await new Promise(r => setTimeout(r, 2000 + Math.random() * 4000));
-			}
-			return false;
-		} finally { _dvUploading = false; }
-	}
-
-	// 화면용: 서버 캐시 + 이 PC 계산 결과를 합쳐서(기체별 큰 쪽) 최신 일자부터
-	function dvBuildView() {
-		const merged = {};
-		[dvCachedFile().days, dvLoadLocal().days].forEach(src => {
-			Object.keys(src || {}).forEach(day => { dvMergeDay(merged[day] || (merged[day] = {}), src[day]); });
-		});
-		dvPrune(merged);
-		return Object.keys(merged).sort().reverse().map(day => ({
-			day,
-			items: Object.keys(merged[day]).map(id => ({ id, ...merged[day][id] }))
-				.sort((a, b) => (b.n - a.n) || String(a.name).localeCompare(String(b.name), 'ko', { numeric: true })),
-		})).filter(d => d.items.length);
-	}
-
-    // 그래프 좌우 드래그(패닝) — 전역에 한 번만 등록해서 패널 열 때마다 리스너가 쌓이지 않게 함
-    let _wblDragEl = null, _wblDragStartX = 0, _wblDragStartScroll = 0;
-    document.addEventListener('mousedown', (e) => {
-        const el = e.target.closest('.bb-wbl-scroll');
-        if (!el) return;
-        _wblDragEl = el;
-        _wblDragStartX = e.pageX;
-        _wblDragStartScroll = el.scrollLeft;
-        el.style.cursor = 'grabbing';
-        e.preventDefault();
-    });
-    document.addEventListener('mousemove', (e) => {
-        if (!_wblDragEl) return;
-        _wblDragEl.scrollLeft = _wblDragStartScroll - (e.pageX - _wblDragStartX);
-    });
-    document.addEventListener('mouseup', () => {
-        if (_wblDragEl) { _wblDragEl.style.cursor = ''; _wblDragEl = null; }
-    });
-	document.addEventListener('wheel', (e) => {
-		const el = e.target.closest('.bb-wbl-scroll');
-		if (!el) return;
-		el.scrollLeft += e.deltaY;
-		e.preventDefault();
-	}, { passive: false });
-
-
-    // ── 배달 기체 패널 ──
-    let _dvCloseHandler = null;
-    function registerDeliveryPanelClose() {
-        const panel = document.getElementById('bb-delivery-panel');
-        if (_dvCloseHandler) { document.removeEventListener('mousedown', _dvCloseHandler); _dvCloseHandler = null; }
-        setTimeout(() => {
-            _dvCloseHandler = function closeDelivery(e) {
-                if (!panel.contains(e.target)) {
-                    panel.classList.remove('open');
-                    document.removeEventListener('mousedown', _dvCloseHandler);
-                    _dvCloseHandler = null;
-                }
-            };
-            document.addEventListener('mousedown', _dvCloseHandler);
-        }, 100);
-    }
-
-    function dvRenderPanel() {
-        const panel = document.getElementById('bb-delivery-panel');
-        const bodyEl = document.getElementById('bb-delivery-body');
-        const scrollTop = panel.scrollTop;
-        const view = dvBuildView();
-        if (!view.length) {
-            bodyEl.innerHTML = `<div class="bb-dv-empty">기록된 배달 로그 없음</div>`;
-            return;
-        }
-        const today = wblGetDayKey();
-        bodyEl.innerHTML = view.map(d => {
-            const total = d.items.reduce((sum, it) => sum + it.n, 0);
-            return `<div class="bb-alertlog-day">
-                <div class="bb-alertlog-day-title">${wblFormatMonthDay(d.day)}${d.day === today ? ' (오늘)' : ''}<span class="bb-dv-sum">${d.items.length}대 · ${total}회</span></div>
-                <div class="bb-dv-cards">${d.items.map(it => {
-                    const tip = (it.t && it.t.length) ? ` title="배달 시작: ${fbEsc(it.t.join(', '))}"` : '';
-                    return `<div class="bb-dv-card"${tip}><span class="bb-dv-name">${fbEsc(it.name)}</span><span class="bb-dv-sep"> - </span><b class="bb-dv-n">${it.n}회</b></div>`;
-                }).join('')}</div>
-            </div>`;
-        }).join('');
-        panel.scrollTop = scrollTop;
-    }
-
-    async function openDeliveryPanel() {
-        const panel = document.getElementById('bb-delivery-panel');
-        try { dvUpdateLocal(); } catch {}   // 열 때 최신 로그로 한 번 더 계산
-        dvRenderPanel();                    // 캐시된 것을 먼저 바로 보여 주고
-        panel.classList.add('open');
-        registerDeliveryPanelClose();
-        if (await dvRefreshCache(5 * 60 * 1000) && panel.classList.contains('open')) dvRenderPanel();   // 5분 넘게 묵었으면 서버에서 새로 받아 갱신
-    }
 
     let _alertLogAllCloseHandler = null;
     function registerAlertLogAllPanelClose() {
@@ -3684,15 +3402,6 @@
     });
 
     document.getElementById('bb-alertlog-all-btn').addEventListener('click', openAlertLogAllPanel);
-    document.getElementById('bb-delivery-btn').addEventListener('click', openDeliveryPanel);
-    try { dvUpdateBadge(); } catch {}   // 시작하자마자 이 PC·캐시에 있는 값으로 한 번 표시
-    document.getElementById('bb-delivery-close').addEventListener('click', () => {
-        document.getElementById('bb-delivery-panel').classList.remove('open');
-        if (_dvCloseHandler) {
-            document.removeEventListener('mousedown', _dvCloseHandler);
-            _dvCloseHandler = null;
-        }
-    });
     document.getElementById('bb-alertlog-all-close').addEventListener('click', () => {
         document.getElementById('bb-alertlog-all-panel').classList.remove('open');
         if (_alertLogAllCloseHandler) {
@@ -3767,7 +3476,6 @@
         const orig = btn.textContent;
         btn.textContent = '⏳'; btn.disabled = true;
         let ok = await wblDoUpload();
-        try { ok = (await dvUpload()) && ok; } catch { ok = false; }   // 배달 로그도 함께
         try { ok = (await dcUpload()) && ok; } catch { ok = false; }   // 방전 기록도 함께
         btn.textContent = ok ? '✅' : '❌';
         setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 1500);
@@ -4306,8 +4014,12 @@
     //       ② 서버 단일 파일(배터리_방전로그) — 방전이 '기록될 때만' 올림. 방전이 없으면 파일도, 업로드 요청도 없음
     // 병합: 같은 기체의 90분 이내 기록은 같은 방전으로 보고 더 확실한 쪽(확정 > 추정, 정확한 시각 > 10분 슬롯 시각)을 채택
     //       → 여러 PC 가 각자 감지해서 올려도 결과가 같고, 서버에 이미 있는 내용이면 업로드 자체를 건너뜀 (커밋이 몰리지 않음)
-    // 업로드 시점: 배달 로그와 같은 슬롯(CYH = 정각 업로드 직후 / 그 외 = 매시 50분)에 얹음. 강제 업로드 버튼에도 포함
+    // 업로드 시점: 배터리 로그와 같은 슬롯(CYH = 정각 업로드 직후 / 그 외 = 매시 50분)에 얹음. 강제 업로드 버튼에도 포함
     // 다운로드: 방전은 드물어서 30분마다 받지 않음 — 페이지를 연 직후 1회 + 6시간마다 + 목록 창을 열 때(캐시가 30분 넘었으면)
+    // 공용 헬퍼 (원래 배달 로그 섹션에 있었지만 방전 로그 쪽도 그대로 가져다 씀 — 배달 로그를 지우면서 이 두 개만 여기로 옮김)
+    function dvDayIdx(day) { return Math.floor(new Date(day + 'T00:00:00Z').getTime() / 86400000); }   // 'YYYY-MM-DD' → 1970-01-01 이후 며칠째 (날짜 비교·정리용)
+    function dvSig(o) { const s = JSON.stringify(o); let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return s.length + ':' + h; }   // 객체 내용이 바뀌었는지만 보는 간단한 서명(체크섬)
+
     const DC_LOG_NAME = '배터리_방전로그';
     const DC_RETENTION_DAYS = 15;
     const DC_LOCAL_KEY = 'bb_discharge_local';           // { days:{일자:{기체id:{name,ev:[{ts,bat,kind,exact}]}}}, up:{일자:마지막 업로드 서명} }
@@ -4631,6 +4343,7 @@
             sc: computeSlowCharge(logs),
             dr: computeFastDrain(logs),
             mo: DB.filter(isMissionOff).sort((a, b) => a.name.localeCompare(b.name, 'ko', { numeric: true })),
+            ng: computeNeglect(logs),
         };
         return _fbData;
     }
@@ -4730,11 +4443,23 @@
             </div>`;
         }).join('');
     }
+    function fbHtmlNeglect(d) {
+        const note = `<div class="bb-fbp-note">순찰 중 → 대기 중으로 바뀐 지 20분(측정 기록 2회)이 지나도 그대로인 기체 · 배달 전용/제외 기체는 빠짐</div>`;
+        if (!d.ng.length) return note + `<div class="bb-fbp-empty">현재 방치·미주차로 보이는 기체가 없습니다 ✓</div>`;
+        return note + d.ng.map(x => {
+            const r = x.r;
+            return `<div class="bb-fbp-row" data-rid="${fbEsc(r.id)}" title="${fbEsc(`${r.name} · ${fbClock(x.since)} 순찰 종료 후 대기 중`)}">
+                <span class="bb-fbp-dot" style="background:${STATUS_AC[r.status] || 'var(--mu)'};"></span>
+                <span class="bb-fbp-main"><span class="bb-fbp-name">${fbEsc(r.name)}</span></span>
+                <span class="bb-fbp-now">방치 ${fbDurText(x.minutes)}째</span>
+            </div>`;
+        }).join('');
+    }
     function fbRender() {
         const pop = document.getElementById('bb-fbp');
         if (!pop) return;
         document.querySelectorAll('.bb-fb[data-mode]').forEach(b => b.classList.toggle('active', b.dataset.mode === _fbMode));
-        if (_fbMode) { const host = document.getElementById(_fbMode === 'dis' ? 'bb-fixbtns-r' : 'bb-fixbtns'); if (host && pop.parentNode !== host) host.appendChild(pop); }   // 방전 로그는 오른쪽 버튼 아래, 나머지는 왼쪽 버튼 아래에서 열림
+        if (_fbMode) { const host = document.getElementById((_fbMode === 'dis' || _fbMode === 'moff') ? 'bb-fixbtns-r' : 'bb-fixbtns'); if (host && pop.parentNode !== host) host.appendChild(pop); }   // 방전 로그·임무 OFF 는 오른쪽 버튼 아래, 나머지는 왼쪽 버튼 아래에서 열림
         pop.classList.toggle('open', !!_fbMode);
         if (!_fbMode) return;
         const d = _fbData || fbCompute();
@@ -4743,12 +4468,13 @@
             drain:['배터리 소모 기체 TOP5',   `사용 중 ${d.dr.active}대`],
             slow: ['저속충전 기체 TOP5',     `충전 중 ${d.sc.charging}대`],
             moff: ['임무 OFF 기체',          `${d.mo.length}대`],
+            neglect: ['방치/미주차 기체',     `${d.ng.length}대`],
         }[_fbMode];
         document.getElementById('bb-fbp-title').textContent = T[0];
         document.getElementById('bb-fbp-cnt').textContent = T[1];
         const body = document.getElementById('bb-fbp-body');
         const keep = body.scrollTop;   // 2분마다 새로 그려도 보던 위치 유지
-        body.innerHTML = _fbMode === 'dis' ? fbHtmlDis(d) : _fbMode === 'drain' ? fbHtmlDrain(d) : _fbMode === 'slow' ? fbHtmlSlow(d) : fbHtmlMoff(d);
+        body.innerHTML = _fbMode === 'dis' ? fbHtmlDis(d) : _fbMode === 'drain' ? fbHtmlDrain(d) : _fbMode === 'slow' ? fbHtmlSlow(d) : _fbMode === 'neglect' ? fbHtmlNeglect(d) : fbHtmlMoff(d);
         body.scrollTop = keep;
     }
     function refreshFixedTools() {   // 2분 갱신마다 + 열 때마다 호출: 배지와 (열려 있다면) 목록 창을 최신으로
@@ -4760,6 +4486,7 @@
             if (bdr) bdr.title = `충전 중이 아닌 기체를 최근 ${FB_DRAIN_WINDOW_H}시간 안의 하락 기록으로 배터리가 빨리 닳는 순으로 (상위 ${FB_DRAIN_TOP}대) · 오른쪽 위 숫자 = 목록에 오른 기체 수 (최대 ${FB_DRAIN_TOP}) · 소모 속도 측정 중 ${_fbData.dr.measured}대 (그중 배터리가 줄고 있는 기체 ${_fbData.dr.dropping}대)`;
             fbSetBadge('bb-fb-slow', _fbData.sc.measured, 'g');   // 저속충전: 지금 충전 속도를 측정 중인 기체 수 (데이터가 부족해 아직 계산 못 하는 기체는 제외)
             fbSetBadge('bb-fb-moff', _fbData.mo.length, 'o');
+            fbSetBadge('bb-fb-neglect', _fbData.ng.length, 'y');   // 방치/미주차: 노랑
             fbRender();
         } catch (err) { console.error('[BB] 고정 버튼 갱신 오류:', err); }
     }
