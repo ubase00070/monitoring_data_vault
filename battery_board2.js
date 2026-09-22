@@ -13,7 +13,7 @@
     // ============================================================
     const BB_BG_URL = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/snoopy_snow.jpg?v=1';
     const BB_BG_OPACITY = 0.11;
-    const BB_BG_FADE_PX = 56;   // 배경 이미지 상단 경계를 부드럽게 풀어주는 구간. 0 이면 예전처럼 뚝 끊김, 클수록 더 길게 번짐
+    const BB_BG_FADE_PX = 56;   // 배경 이미지 상단 경계를 부드럽게 풀어주는 구간(px). 0 이면 예전처럼 뚝 끊김, 클수록 더 길게 번짐
 
     // ============================================================
     // SECTION 0. 스타일
@@ -287,13 +287,13 @@
             position:absolute; left:calc(50% + 151px); top:50%; transform:translateY(-50%);
             width:100px; height:100px; z-index:2;
         }
-        #bb-walker, #bb-walker-l {
+        #bb-walker {
             width:100%; height:100%;
             background-size:contain; background-repeat:no-repeat; background-position:center bottom;
             cursor:pointer; transition:transform .15s;
         }
         #bb-walker:active { transform:scale(0.92); }
-        #bb-walker-l { cursor:default; background-size:cover; background-position:center; }   /* 아토(토끼) 슬라이드쇼: 캐릭터처럼 아래 여백 없이 영역을 꽉 채움 */
+        #bb-walker-l { width:100%; height:100%; object-fit:cover; display:block; cursor:default; border:0; }   /* 아토(토끼): <img> 로 표시해야 움짤(webp)이 계속 반복 재생됨 (배경 이미지는 브라우저에 따라 한 번만 재생될 수 있음) */
         #bb-walker-wrap-l {   /* 좌측 주민: 제목 박스 왼쪽 (제목 박스 왼쪽 끝에서 10px 띄워 오른쪽 끝을 맞춤) */
             position:absolute; right:calc(50% + 151px); top:50%; transform:translateY(-50%);
             width:100px; height:100px; z-index:1;
@@ -1116,7 +1116,7 @@
                 </div>
                 <!-- 좌: 아토(토끼) — 제목 박스 왼쪽, bunny01~20.webp 중 2분마다 랜덤 표시. 캐릭터 선택 화살표 없음 -->
                 <div id="bb-walker-wrap-l">
-                    <div id="bb-walker-l"></div>
+                    <img id="bb-walker-l" alt="">
                     <button id="bb-walker-l-toggle" title="아토 끄기">아토</button>
                 </div>
                 <div class="bb-hd-titlebox" id="bb-drag-handle">
@@ -3848,7 +3848,7 @@
         function render() {
             let n; do { n = 1 + Math.floor(Math.random() * BUNNY_COUNT); } while (BUNNY_COUNT > 1 && n === lastN);   // 같은 그림이 바로 연달아 나오지 않도록
             lastN = n;
-            el.style.backgroundImage = `url('${BUNNY_BASE}${bunnyFile(n)}')`;
+            el.src = BUNNY_BASE + bunnyFile(n);   // <img> 라서 이 webp 가 움짤이면 2분 내내 반복 재생되고, 다음 교체 때만 다른 그림으로 바뀜
         }
         render();
         setInterval(render, BUNNY_INTERVAL_MS);
