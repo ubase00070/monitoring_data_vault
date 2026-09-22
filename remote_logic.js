@@ -1638,7 +1638,7 @@
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
 		// 문자열을 넣으면 패치노트에 빨간 '`' 뱃지가 점멸하며 뜸.
 		// 빈 문자열('')로 비우면 뱃지가 사라짐.
-		const PATCH_NOTE_NEW_CONTENT = '커스텀 핫키 00대 시작';
+		const PATCH_NOTE_NEW_CONTENT = '커스텀 핫키';
 
         // ── 패치노트 내용 ──────────────────────────────────────
         // 아래 patchItems 배열에 버전별 내용을 추가하세요 (버튼 라벨의 날짜도 이 배열의
@@ -1646,9 +1646,8 @@
         const patchItems = [
             {
                 version: 'v1.5',
-                date: '2026-09-22',
+                date: '2026-09-23',
                 items: [
-                    '다중 모니터링 자동시작 남은 기체명 및 대수 표기',
                     'D-PAD UP 커스텀 핫키(원격페이지: UP 1초 홀드 시 설정창/버튼 입력 시 적용)',
 					'잠실 엘스, 인력개발원 다중 연결 확인 알림 기능',
 					'서브모니터링 버튼 추가',
@@ -2236,7 +2235,6 @@
             queueInfoContent.id = 'neubie-queue-info-content';
             queueInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:${T.text}; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;`;
             queueInfoContent.innerHTML = `
-                자동시작 남은 기체명 및 대수 표기<br>
 				삭제 레이아웃 기체명 표기<br>
 				모니터링 생성 모달 우측 고정<br>
 				기체별 화질 조절<br>
@@ -2671,18 +2669,26 @@
 
 		const renderDispatchBtn = (rem) => {
 			let text = '…대 남음', bg = BTN_ON, glow = '0 0 10px rgba(167,139,250,0.4)';
-			let pulse = false, key = 'loading';
+			let pulse = false, key = 'loading', disabled = false, title = '';
 			if (rem.state === 'ok') {
 				text = `${rem.names.length}대 남음`; pulse = true; key = 'ok:' + rem.names.join('|');
 			} else if (rem.state === 'error') {
 				text = '확인 불가'; bg = BTN_ERR; glow = 'none'; key = 'error';
 			} else if (rem.state !== 'loading') {
 				text = '0대 남음'; bg = BTN_OFF; glow = 'none'; key = 'zero:' + rem.state;
+				if (rem.state === 'expired') {   // 20분 초과 데이터는 신뢰할 수 없으므로 버튼을 잠금
+					disabled = true;
+					title = '인계 데이터가 20분 넘게 갱신되지 않았어요. Alt+Q로 패널을 새로 열면 다시 확인합니다.';
+				}
 			}
 			dispatchBtn.textContent = text;
 			dispatchBtn.style.background = bg;
 			dispatchBtn.style.boxShadow = glow;
 			dispatchBtn.style.minWidth = '74px';
+			dispatchBtn.disabled = disabled;
+			dispatchBtn.style.cursor = disabled ? 'not-allowed' : 'pointer';
+			dispatchBtn.style.opacity = disabled ? '0.55' : '1';
+			dispatchBtn.title = title;
 			if (key !== _shownKey) {          // 값이 실제로 바뀐 경우에만 강조(3회 깜빡 후 정지 — 무한 애니메이션 아님)
 				_shownKey = key;
 				dispatchBtn.style.animation = 'none';
@@ -2807,6 +2813,7 @@
 		panel._renderRemaining = () => { try { renderAll(); } catch (e) {} };
 
 		dispatchBtn.addEventListener('click', () => {
+			if (dispatchBtn.disabled) return;   // 20분 초과로 잠긴 상태에서는 아무 동작도 하지 않음
 			if (_toastOpen) {
 				if (calcRemaining().state === 'error') {   // 조회 실패 안내가 떠 있을 땐 '다시 누르면 재시도'
 					_lastData = null; _loading = true; renderAll();
