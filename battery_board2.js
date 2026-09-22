@@ -95,7 +95,7 @@
             width:1714px;   /* 1490px 대비 +15% — 우측 다중 모니터링 영역 확보 */
             height:955px; max-height:100vh; overflow-y:auto; overflow-x:hidden;   /* 기본 크기 = 즐겨찾기 20대 + 안내 문구가 들어가는 높이 (955 = 104 + 20 + 774 + 51 + 6) */
             border:3px solid transparent; border-radius:16px;
-            background-image: var(--bg-fill), linear-gradient(135deg, #9dbdff, #8fe6ff);
+            background-image: var(--bg-fill), linear-gradient(135deg, #b6f2c9, #34d399);
             background-origin: border-box;
             background-clip: padding-box, border-box;
             box-shadow:0 24px 60px rgba(0,0,0,.75);
@@ -121,7 +121,7 @@
             position:relative; display:inline-flex; flex-direction:column; align-items:center; gap:3px;
             padding:7px 28px 6px; border-radius:12px;
             border:2.5px solid transparent;
-            background-image: linear-gradient(var(--bg), var(--bg)), linear-gradient(135deg, #9dbdff, #8fe6ff);
+            background-image: linear-gradient(var(--bg), var(--bg)), linear-gradient(135deg, #b6f2c9, #34d399);
             background-origin: border-box; background-clip: padding-box, border-box;
             cursor:grab;
         }
@@ -191,12 +191,12 @@
         /* ── 고정 버튼 3종 (왼쪽 동숲 주민의 왼쪽): 3행 — [🔥 배터리 소모 TOP5] / [🐢 저속충전 TOP5] / [🚫 임무 OFF] ── */
         .bb-fixbtns {
             position:absolute; right:calc(50% + 261px); top:50%; transform:translateY(-50%);   /* 오른쪽 끝 = 왼쪽 동숲 주민(제목 왼쪽 151~251px)에서 10px 왼쪽 */
-            width:140px; display:grid; grid-template-columns:1fr; gap:4px; z-index:3;   /* 높이 3×26 + 2×4 = 86px (헤더 104px 안) */
+            width:140px; display:grid; grid-template-columns:1fr; gap:4px; z-index:50;   /* 높이 3×26 + 2×4 = 86px (헤더 104px 안) · z-index 는 카드 영역의 .bb-tools(3) 보다 높아야 함 — 안 그러면 그 안의 방전/저속충전 팝업(.bb-fbp, z-index:600)이 같은 z-index:3 인 .bb-tools 뒤로 깔림(같은 값이면 DOM 순서로 승부가 나는데 .bb-tools 가 더 뒤에 있어서 이긴다) */
         }
         /* ── 우측 3종 버튼 (오른쪽 동숲 주민의 오른쪽): 3행 — [🛵 배달 로그] / [🪫 방전 로그] / [📋 이상 알림] — 왼쪽 고정 버튼과 같은 폭(140px)·높이(26px)·간격(4px) ── */
         .bb-rbtns {
             position:absolute; left:calc(50% + 261px); top:50%; transform:translateY(-50%);   /* 왼쪽 = 오른쪽 동숲 주민(제목 오른쪽 151~251px)에서 10px 오른쪽 */
-            width:140px; display:grid; grid-template-columns:1fr; gap:4px; z-index:3;
+            width:140px; display:grid; grid-template-columns:1fr; gap:4px; z-index:50;   /* 위와 같은 이유로 .bb-tools 보다 높게 */
         }
         .bb-rbtns > button, .bb-fixbtns > .bb-fb {   /* 좌·우 6개 버튼 공통: 같은 크기(140×26) · 같은 글자 크기(11px) */
             position:relative; width:100%; height:26px; padding:0 2px; gap:2px; border-radius:7px; border:1.5px solid var(--bd2);
@@ -740,7 +740,7 @@
             --rd:#ef4444; --or:#f97316; --pk:#ff1493; --bl:#3b82f6; --gn:#22c55e;
             display:none; position:fixed; color:var(--tx); font-family:'Paperlogy','Lato',-apple-system,sans-serif;
             border:3px solid transparent; border-radius:14px;
-            background-image:linear-gradient(var(--sur),var(--sur)), linear-gradient(135deg,#9dbdff,#8fe6ff);
+            background-image:linear-gradient(var(--sur),var(--sur)), linear-gradient(135deg, #b6f2c9, #34d399);
             background-origin:border-box; background-clip:padding-box,border-box;
             box-shadow:0 18px 46px rgba(0,0,0,.55); z-index:99999998; box-sizing:border-box;
         }
@@ -895,7 +895,7 @@
             top:50%; left:50%; transform:translate(-50%,-50%);
             width:552px; max-height:86vh; overflow-y:auto;
             border:3px solid transparent; border-radius:14px;
-            background-image: linear-gradient(var(--sur), var(--sur)), linear-gradient(135deg, #9dbdff, #8fe6ff);
+            background-image: linear-gradient(var(--sur), var(--sur)), linear-gradient(135deg, #b6f2c9, #34d399);
             background-origin: border-box;
             background-clip: padding-box, border-box;
             box-shadow:0 24px 64px rgba(0,0,0,.9);
@@ -907,7 +907,7 @@
             top:50%; left:50%; transform:translate(-50%,-50%);
             width:860px; max-height:82vh; overflow-y:auto;
             border:3px solid transparent; border-radius:14px;
-            background-image: linear-gradient(var(--sur), var(--sur)), linear-gradient(135deg, #9dbdff, #8fe6ff);
+            background-image: linear-gradient(var(--sur), var(--sur)), linear-gradient(135deg, #b6f2c9, #34d399);
             background-origin: border-box;
             background-clip: padding-box, border-box;
             box-shadow:0 24px 64px rgba(0,0,0,.9);
@@ -1000,7 +1000,7 @@
             top:50%; left:50%; transform:translate(-50%,-50%);
             width:840px;
             border:3px solid transparent; border-radius:12px;
-            background-image: linear-gradient(var(--sur), var(--sur)), linear-gradient(135deg, #9dbdff, #8fe6ff);
+            background-image: linear-gradient(var(--sur), var(--sur)), linear-gradient(135deg, #b6f2c9, #34d399);
             background-origin: border-box;
             background-clip: padding-box, border-box;
             box-shadow:0 16px 48px rgba(0,0,0,.9);
