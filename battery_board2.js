@@ -2104,8 +2104,14 @@
         // 버튼 칸이 (grid-row:1 로) 맨 위 첫 칸을 차지하고 나면, grid-auto-flow:column 이 그 칸을 건너뛰고 나머지 칸에 카드를 세로로 채운다
         // ※ 예전엔 여기서 최소 MAIN_ROWS(20)행을 강제했는데, 기체가 적을 때도 항상 20행분 높이를 예약해버려서
         //    실제 카드는 다 안 채워졌는데도(꽉 찬 것도 아닌데) 그 예약된 빈 칸들 때문에 카드 영역에 스크롤바가 생기는 문제가 있었음.
-        //    필요한 만큼만 행을 잡도록 바꿈 — 즐겨찾기 열과의 높이 맞춤은 .bb-lists 의 align-items:stretch 가 대신 해줌
-        const rowsN = Math.ceil((robots.length + 1) / LIST_COLS);
+        //    필요한 만큼만 행을 잡도록 바꿨었지만, 이번엔 그 반대 문제가 보고됨:
+        //    즐겨찾기 열은 (.bb-lists 의 align-items:stretch 로) 항상 자기 행 수만큼 .bb-list 박스 전체 높이를 늘려놓는데,
+        //    .bb-list 자신의 grid 행 수(rowsN)는 총 개수로만 계산해서 그보다 적게 나오면, 그 차이만큼 3열 전부의 하단이
+        //    똑같이 비어 보이면서도(align-content:start라 아래로 안 늘어남) 카드는 그 빈 칸을 못 쓰고 다음 열로 넘어감.
+        //    → 즐겨찾기 행 수만큼은 최소한 맞춰서 그 여유 공간을 실제 카드가 쓰도록 함.
+        //      (예전 버그와 다름: 그때는 즐겨찾기 수와 무관하게 무조건 20행이었지만, 지금은 '지금 즐겨찾기가 실제로 쓰는 행 수'까지만
+        //       맞추므로 최대여도 FAV_MAX(20)행 — 이미 #bb 높이 예산(980px)이 즐겨찾기 20행 기준으로 여유 있게 잡혀 있어 다시 스크롤이 생기지 않음)
+        const rowsN = Math.max(Math.ceil((robots.length + 1) / LIST_COLS), favRobots.length);
         list.style.gridTemplateRows = `repeat(${rowsN}, minmax(${ROW_H}px, auto))`;
         if (robots.length === 0) {
             if (favRobots.length === 0) {
