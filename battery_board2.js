@@ -713,7 +713,7 @@
         .bb-att-msg { grid-column:1 / -1; padding:34px 8px; text-align:center; font-size:13px; color:var(--mu); }
         .bb-att-msg.warn { color:#c2410c; }
         .bb-att-card {
-            box-sizing:border-box; min-width:0; height:58px; padding:5px 7px; border:3px solid var(--bd2); border-radius:9px; background:var(--sur);
+            box-sizing:border-box; min-width:0; height:64px; padding:5px 7px; border:3px solid var(--bd2); border-radius:9px; background:var(--sur);   /* 58 → 64px: 확인사항 색줄까지 3줄이 들어가면서 부족해진 세로 공간 확보 */
             display:flex; flex-direction:column; justify-content:center; gap:2px; cursor:pointer;
         }
         .bb-att-card:hover { filter:brightness(1.03); }
@@ -727,7 +727,7 @@
         .bb-att-cnt { flex:none; font-size:12px; color:var(--mu); }
         .bb-att-tot { font-size:12.5px; color:var(--tx); white-space:nowrap; }
         /* 확인사항 개수(0~5개) → 이석 시간 아래 얇은 색줄로 표시 (카드 테두리는 이석 중 여부만 나타내므로 건드리지 않음). 파스텔톤: 0=연두 · 1~2=연노랑 · 3=연주황 · 4~5=연빨강 */
-        .bb-att-vbar { height:4px; border-radius:2px; margin-top:2px; }
+        .bb-att-vbar { height:4px; flex:0 0 auto; border-radius:2px; }   /* flex-shrink:0 — 카드 높이가 빠듯해도 이 줄만 짜부라들지 않게 */
         .bb-att-vbar.v0 { background:#c9ecb0; }
         .bb-att-vbar.v1 { background:#fbe9a0; }
         .bb-att-vbar.v2 { background:#ffd8ad; }
