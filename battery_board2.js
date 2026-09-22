@@ -728,10 +728,10 @@
         .bb-att-tot { font-size:12.5px; color:var(--tx); white-space:nowrap; }
         /* 확인사항 개수(0~5개) → 이석 시간 아래 얇은 색줄로 표시 (카드 테두리는 이석 중 여부만 나타내므로 건드리지 않음). 파스텔톤: 0=연두 · 1~2=연노랑 · 3=연주황 · 4~5=연빨강 */
         .bb-att-vbar { height:4px; flex:0 0 auto; border-radius:2px; }   /* flex-shrink:0 — 카드 높이가 빠듯해도 이 줄만 짜부라들지 않게 */
-        .bb-att-vbar.v0 { background:#c9ecb0; }
-        .bb-att-vbar.v1 { background:#fbe9a0; }
-        .bb-att-vbar.v2 { background:#ffd8ad; }
-        .bb-att-vbar.v3 { background:#ffbcb0; }
+        .bb-att-vbar.v0 { background:#8fd66b; }
+        .bb-att-vbar.v1 { background:#f5d442; }
+        .bb-att-vbar.v2 { background:#ffab5c; }
+        .bb-att-vbar.v3 { background:#ff7a68; }
         .bb-att-legend { flex:0 0 auto; display:flex; justify-content:center; align-items:center; gap:9px; padding:5px 6px 6px; border-top:1px solid var(--bd); font-size:11px; color:var(--mu); white-space:nowrap; }
 
         /* 카드 클릭 → 이석 로그 (다중 영역 왼쪽에 뜨는 작은 창) / 상세 로그 (화면 중앙) — 둘 다 보드 밖 최상위 패널 */
