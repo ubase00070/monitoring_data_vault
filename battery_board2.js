@@ -3211,6 +3211,16 @@
         registerInfoPanelClose();
 
         let wblCurrentSource = 'today';
+        function wireWblScroll() {   // 그래프를 다시 그릴 때마다(오늘↔어제 전환 포함) #bb-wbl-scroll 이 새 DOM으로 교체되므로, 그때마다 휠 스크롤을 다시 붙여줘야 함
+            const sc = document.getElementById('bb-wbl-scroll');
+            if (!sc) return;
+            sc.scrollLeft = sc.scrollWidth;
+            sc.addEventListener('wheel', e => {   // 마우스 휠(세로 스크롤)로도 그래프를 좌우로 넘길 수 있게. 트랙패드처럼 이미 가로로 휠하는 경우는 브라우저 기본 동작 그대로 둠
+                if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+                e.preventDefault();
+                sc.scrollLeft += e.deltaY;
+            }, { passive: false });
+        }
         document.getElementById('bb-icp-wbl-toggle').addEventListener('click', async () => {
             wblCurrentSource = wblCurrentSource === 'today' ? 'yesterday' : 'today';
             document.getElementById('bb-icp-wbl-toggle').textContent = wblCurrentSource === 'today' ? '어제 데이터 보기' : '오늘 데이터 보기';
@@ -3225,19 +3235,9 @@
             document.getElementById('bb-icp-wbl-log').innerHTML = lines
                 ? lines.map(line => `<div class="bb-icp-wbl-line">${line}</div>`).join('')
                 : `<div class="bb-icp-wbl-line" style="color:var(--mu);">${wblCurrentSource === 'yesterday' ? '어제' : '오늘'} 기록된 데이터 없음</div>`;
+            requestAnimationFrame(wireWblScroll);
         });
-        requestAnimationFrame(() => {
-            const sc = document.getElementById('bb-wbl-scroll');
-            if (sc) {
-                sc.scrollLeft = sc.scrollWidth;
-                // 마우스 휠(세로 스크롤)로도 그래프를 좌우로 넘길 수 있게. 트랙패드처럼 이미 가로로 휠하는 경우는 브라우저 기본 동작 그대로 둠
-                sc.addEventListener('wheel', e => {
-                    if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
-                    e.preventDefault();
-                    sc.scrollLeft += e.deltaY;
-                }, { passive: false });
-            }
-        });
+        requestAnimationFrame(wireWblScroll);
         }
 
         function closeInfoCardPanel() {
