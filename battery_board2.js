@@ -1114,7 +1114,7 @@
                         <div class="bb-fbp-body" id="bb-fbp-body"></div>
                     </div>
                 </div>
-                <!-- 좌: 아토(토끼) — 제목 박스 왼쪽, bunny01~20.webp 중 2분마다 랜덤 표시. 캐릭터 선택 화살표 없음 -->
+                <!-- 좌: 아토(토끼) — 제목 박스 왼쪽, ato/ato01~30.webp 중 2분마다 랜덤 표시. 캐릭터 선택 화살표 없음 -->
                 <div id="bb-walker-wrap-l">
                     <img id="bb-walker-l" alt="">
                     <button id="bb-walker-l-toggle" title="아토 끄기">아토</button>
@@ -3831,16 +3831,16 @@
 
 
     // ── 아토(토끼) — 제목 박스 왼쪽 ────────────────────────────────
-    //  옛 '동숲 주민 2'를 대체: 캐릭터 선택 없이 bunny01~20.webp 중 하나를 2분마다 무작위로 보여줌. 표시 on/off·저장은 예전과 동일.
+    //  옛 '동숲 주민 2'를 대체: 캐릭터 선택 없이 ato/ato01~30.webp 중 하나를 2분마다 무작위로 보여줌. 표시 on/off·저장은 예전과 동일.
     (function() {
         const wrapEl = document.getElementById('bb-walker-wrap-l');
         if (!wrapEl) return;
         const el = document.getElementById('bb-walker-l');
         const toggleEl = document.getElementById('bb-walker-l-toggle');
-        const BUNNY_BASE = WALKER_BASE;   // 기존 동숲 캐릭터 이미지와 같은 경로에 업로드
-        const BUNNY_COUNT = 20;
+        const BUNNY_BASE = WALKER_BASE + 'ato/';   // 기존 동숲 캐릭터 저장소 안의 ato 폴더
+        const BUNNY_COUNT = 30;
         const BUNNY_INTERVAL_MS = 2 * 60 * 1000;   // 2분마다 교체
-        const bunnyFile = n => 'bunny' + String(n).padStart(2, '0') + '.webp';
+        const bunnyFile = n => 'ato' + String(n).padStart(2, '0') + '.webp';
 
         for (let n = 1; n <= BUNNY_COUNT; n++) { new Image().src = BUNNY_BASE + bunnyFile(n); }   // 미리 받아둬서 교체될 때 깜빡임 없이 바로 표시
 
@@ -3848,10 +3848,21 @@
         function render() {
             let n; do { n = 1 + Math.floor(Math.random() * BUNNY_COUNT); } while (BUNNY_COUNT > 1 && n === lastN);   // 같은 그림이 바로 연달아 나오지 않도록
             lastN = n;
-            el.src = BUNNY_BASE + bunnyFile(n);   // <img> 라서 이 webp 가 움짤이면 2분 내내 반복 재생되고, 다음 교체 때만 다른 그림으로 바뀜
+            el.src = BUNNY_BASE + bunnyFile(n);
         }
         render();
         setInterval(render, BUNNY_INTERVAL_MS);
+
+        // 애니메이션 웹피(webp)는 파일에 저장된 반복 횟수가 무한이 아니면 <img> 라도 몇 번 돌다가 멈춤(브라우저의 오래된 버그이자 흔한 인코딩 문제).
+        //   src 를 지웠다가 그대로 다시 넣으면(네트워크 요청 없이 캐시에서 즉시) 애니메이션이 처음부터 다시 재생되므로,
+        //   멈출 새도 없이 주기적으로 재시작시켜서 사실상 끊김 없이 반복되는 것처럼 보이게 함
+        const BUNNY_RESTART_MS = 6000;
+        setInterval(() => {
+            if (!on || !el.src) return;
+            const src = el.src;
+            el.src = '';
+            el.src = src;
+        }, BUNNY_RESTART_MS);
 
         // 표시 on/off (기본 ON, 저장)
         const LEFT_ON_KEY = 'bb_walker_left_on';
