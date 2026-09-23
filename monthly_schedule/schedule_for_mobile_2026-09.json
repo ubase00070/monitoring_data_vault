@@ -2183,10 +2183,10 @@
           "raw": "휴무"
         },
         "9/21": {
-          "status": "annual",
-          "working": true,
+          "status": "off",
+          "working": false,
           "present": false,
-          "raw": "연차"
+          "raw": "휴무"
         },
         "9/22": {
           "status": "work",
@@ -2195,16 +2195,16 @@
           "raw": "1"
         },
         "9/23": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
-        },
-        "9/24": {
           "status": "half-half",
           "working": true,
           "present": true,
           "raw": "반반차"
+        },
+        "9/24": {
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "9/25": {
           "status": "off",
@@ -2219,10 +2219,10 @@
           "raw": "휴무"
         },
         "9/27": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "half-half",
+          "working": true,
+          "present": true,
+          "raw": "반차+반반차"
         },
         "9/28": {
           "status": "work",
@@ -9571,6 +9571,6 @@
     "9/30"
   ],
   "mainMonth": 9,
-  "updatedAt": "2026-09-23T03:53:09.330Z",
+  "updatedAt": "2026-09-23T08:20:12.855Z",
   "sheetName": "2026년_09월 스케줄"
 }
