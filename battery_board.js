@@ -3920,6 +3920,7 @@
     const FB_ZERO_ENTRY_PCT = 10;        // '0% 유지' 방전 확정: 0% 도달 전 FB_ZERO_ENTRY_MIN 분 안에 이 값(%) 미만으로 내려온 기록이 있어야 함 (100% 인데 잠깐 0% 로 찍히는 버그성 표기 걸러내기)
     const FB_ZERO_ENTRY_MIN = 60;
     const FB_ZERO_NEXT_MAX_MIN = 30;     // 0% 도달 기록과 '다음 10분 기록' 사이가 이보다 길면(기록 끊김) 다음 기록으로 보지 않음
+    const FB_REBOOT_RECOVER_PCT = 21;    // 0% 직전·직후가 둘 다 이 값(%) 이상이면(부천 위브 1호기 사례) 방전이 아니라 재부팅 중 배터리 오표기로 보고 제외
     const FB_CHG_MIN_MIN = 20;           // 충전 속도를 재려면 연속 충전이 이만큼(분) 이상 관측돼야 함
     const FB_CHG_GAP_MIN = 40;           // 기록이 이 시간(분) 넘게 끊기면 그 사이 충전이 이어졌는지 알 수 없어 그 앞은 자름
     const FB_SLOW_TOP = 5;               // 저속충전 목록에 보여줄 기체 수
@@ -3978,10 +3979,26 @@
     }
     // OFF 직전 마지막 기록(pts[i])이 방전인지 판정:
     //   'sure' = 2% 이하가 기록된 뒤 OFF (방전) / 'est' = 로그(10분 간격) 사이에 2%~0%를 지나친 것으로 보임 (방전 추정) / null = 방전 아님
+    // 재부팅 오표기 판정: 0% 로 찍힌 지점(pts[i]) 직전 기록이 FB_REBOOT_RECOVER_PCT% 이상이었고,
+    // (OFF 로 찍힌 지점은 건너뛰고) 그다음 살아난 첫 기록도 FB_REBOOT_RECOVER_PCT% 이상이면 → 방전이 아니라 재부팅 중 0% 오표기
+    // 아직 살아난 기록이 없으면(막 꺼진 직후라 판단 불가) 기존대로 방전 추정 유지
+    function fbIsRebootGlitch(pts, i) {
+        const p = pts[i];
+        if (p.bat !== 0) return false;
+        const prev = pts[i - 1];
+        if (!prev || prev.bat == null || prev.bat < FB_REBOOT_RECOVER_PCT) return false;
+        for (let k = i + 1; k < pts.length; k++) {
+            const n = pts[k];
+            if (n.st === 'off') continue;
+            if (n.bat == null) continue;
+            return n.bat >= FB_REBOOT_RECOVER_PCT;
+        }
+        return false;
+    }
     function fbDischargeKind(pts, i, offTs) {
         const p = pts[i];
         if (p.st === 'off' || p.bat == null) return null;
-        if (p.bat <= FB_DISCHARGE_PCT) return p.bat === 0 ? 'est' : 'sure';   // 0% 로 찍힌 직후 꺼짐은 '추정' (0% 는 버그성 표기일 수 있어서) — 1~2% 까지 정직하게 내려온 뒤 꺼짐은 확정
+        if (p.bat <= FB_DISCHARGE_PCT) return p.bat === 0 && !fbIsRebootGlitch(pts, i) ? 'est' : (p.bat === 0 ? null : 'sure');   // 0% 로 찍힌 직후 꺼짐은 '추정' (0% 는 버그성 표기일 수 있어서) — 1~2% 까지 정직하게 내려온 뒤 꺼짐은 확정. 단, 재부팅 오표기(아래)로 확인되면 방전으로 보지 않음
         if (p.st === 'charging' || p.bat > FB_EST_MAX_PCT) return null;   // 충전 중에 꺼졌거나 아직 배터리가 넉넉하면 방전으로 보지 않음
         const gapMin = (offTs - p.ts) / 60000;
         if (gapMin > FB_EST_MAX_GAP_MIN) return null;                       // 기록이 오래 끊겼으면 알 수 없음
@@ -4124,8 +4141,32 @@
     function dcSaveLocal(o) { try { localStorage.setItem(DC_LOCAL_KEY, JSON.stringify(o)); } catch {} }
 
     // 2분마다(데이터 갱신 때, 보드가 닫혀 있어도) 호출 — 배터리 로그에서 방전을 찾아 이 PC 의 15일 기록에 반영
+    // 감지 당시엔 살아난 기록이 아직 없어 '방전 추정'으로 저장됐지만, 이후 로그가 쌓이며 재부팅 오표기였음이 뒤늦게 확인되는 경우 → 되돌려 지움
+    // (서버에 이미 올라간 기록은 병합이 추가만 하고 지우지는 않아 이 정정이 자동으로 안 올라감 — 필요하면 서버 파일도 따로 정리해야 함)
+    function dcPruneRebootGlitches(loc, logs) {
+        let changed = false;
+        Object.keys(loc.days).forEach(day => {
+            const d = loc.days[day];
+            Object.keys(d).forEach(id => {
+                const o = logs.get(id);
+                if (!o) return;
+                const pts = [...o.pts.values()].sort((a, b) => a.ts - b.ts);
+                const before = d[id].ev.length;
+                d[id].ev = d[id].ev.filter(ev => {
+                    if (ev.kind !== 'est' || ev.bat !== 0) return true;
+                    const i = pts.findIndex(p => p.bat === 0 && Math.abs(p.ts - ev.ts) <= 15 * 60000);
+                    return i < 0 ? true : !fbIsRebootGlitch(pts, i);
+                });
+                if (d[id].ev.length !== before) changed = true;
+                if (!d[id].ev.length) delete d[id];
+            });
+            if (!Object.keys(d).length) delete loc.days[day];
+        });
+        return changed;
+    }
     function dcUpdateLocal() {
-        const found = dcExtract(fbLoadLogs());
+        const logs = fbLoadLogs();
+        const found = dcExtract(logs);
         const loc = dcLoadLocal(), cutoff = dcCutoffIdx();
         let changed = false;
         found.forEach(f => {
@@ -4136,6 +4177,7 @@
             if (f.name && r.name !== f.name) { r.name = f.name; changed = true; }
             if (dcMergeEvents(r.ev, [f.ev])) changed = true;
         });
+        if (dcPruneRebootGlitches(loc, logs)) changed = true;
         const nb = Object.keys(loc.days).length;
         dcPrune(loc.days);
         if (Object.keys(loc.days).length !== nb) changed = true;
