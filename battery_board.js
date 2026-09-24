@@ -729,6 +729,7 @@
         .bb-att-body { flex:1 1 auto; min-height:0; overflow-y:auto; padding:6px; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; align-content:start; }
         .bb-att-msg { grid-column:1 / -1; padding:34px 8px; text-align:center; font-size:13px; color:var(--mu); }
         .bb-att-msg.warn { color:#c2410c; }
+        .bb-att-retry { text-decoration:underline; cursor:pointer; font-weight:700; }
         .bb-att-card {
             box-sizing:border-box; min-width:0; height:64px; padding:5px 7px; border:3px solid var(--bd2); border-radius:9px; background:var(--sur);   /* 58 → 64px: 확인사항 색줄까지 3줄이 들어가면서 부족해진 세로 공간 확보 */
             display:flex; flex-direction:column; justify-content:center; gap:2px; cursor:pointer;
@@ -5664,18 +5665,35 @@
     function attCloseDetail() { _attDetailYm = null; $att('bb-att-detail').classList.remove('open'); attClosePlog(); }
 
     /* ───────── 이름 더블클릭 → 그 달 일자별 이석 로그 ─────────
-       성능: 그 달 전체 로그를 서버가 파일 1개로 내려줌(월 1회 요청, 5분 캐시, 서버는 원문 전달) → 사람별 필터는 여기서 처리.
-             사람을 바꿔 여러 번 열어도 추가 요청 없음. 열기 전에는 아무것도 받지 않음.
-       동시 요청 병합: 상세 로그를 열 때 이미 백그라운드로 받아오는 중(최대 30초)일 수 있는데, 그 사이 이름을 더블클릭하면
-       예전엔 완전히 새 요청을 하나 더 쏴서 두 배로 기다렸음 → 진행 중인 요청이 있으면 그걸 그대로 같이 기다리게 함 */
+       서버의 월별 집계 파일(_logs/YYYY-MM.json)이 아직 없거나 오래됐으면 매번 그 달 전체를 새로 만들어야 해서
+       느려질 수 있어(최대 30초) — 대신 이미 빠르고 잘 캐시되는 하루치 archive(action=archive, 과거 날짜는 24시간 캐시)를
+       그 달 날짜 수만큼 병렬로 모아 클라이언트에서 같은 형태로 조립한다. 서버의 월별 사전 집계에 기대지 않아 더 안정적으로 빠르고,
+       하루치가 실패해도 그 날만 비고 나머지는 정상 표시됨.
+       동시 요청 병합: 여러 곳(상세 로그 백그라운드 프리페치 + 이름 더블클릭)에서 같은 달을 동시에 요청해도
+       매번 새로 조립하지 않고 진행 중인 조립을 그대로 같이 기다림 */
     let _attDayLogsPending = {};   // ym -> 진행 중인 Promise
     async function attGetDayLogs(ym) {
         const c = _attMonthCache['l' + ym];
         if (c && Date.now() - c.at < 5 * 60000) return c.v;
         if (_attDayLogsPending[ym]) return _attDayLogsPending[ym];
         const p = (async () => {
-            const d = await attFetchJson(ATT_API + '/attendance-data?action=daylogs&ym=' + ym, 30000);   // 서버가 처음 한 번 만들어야 하면 몇 초 걸릴 수 있음
-            const v = d._404 ? { ym, days: {}, missing: true } : d;
+            const dates = await attGetDates(ym);   // 이미 빠르고 캐시된 날짜 목록
+            const days = {};
+            for (let i = 0; i < dates.length; i += 8) {   // 8개씩 병렬 (서버 월별 집계 때 쓰던 방식과 동일)
+                await Promise.all(dates.slice(i, i + 8).map(async d => {
+                    let r;
+                    try { r = await attFetchJson(ATT_API + '/attendance-data?action=archive&date=' + d); }
+                    catch (e) { console.warn('[BB] 일자별 로그: ' + d + ' 조회 실패:', e.message); return; }   // 하루치 실패는 그 날만 비우고 나머지는 계속
+                    if (!r || r._404 || !Array.isArray(r.stats)) return;
+                    const dayObj = {};
+                    r.stats.forEach(s => {
+                        const entries = (s.log || []).map(l => [l.away || null, l.back || null, typeof l.durationSec === 'number' ? l.durationSec : null, (l.awayEdited ? 1 : 0) | (l.backEdited ? 2 : 0)]);
+                        dayObj[s.dn || s.name] = [s.awayCount || 0, Math.round(s.totalAwaySec || 0), entries];
+                    });
+                    days[d] = dayObj;
+                }));
+            }
+            const v = { ym, days, missing: !dates.length };
             _attMonthCache['l' + ym] = { at: Date.now(), v };
             return v;
         })();
@@ -5736,13 +5754,22 @@
         hd.append(attEl('div', 't', ym.slice(0, 4) + '년 ' + Number(ym.slice(5)) + '월 · ' + name + ' 이석 로그'), x);
         box.replaceChildren(hd, attEl('div', 'bb-att-msg', '불러오는 중…'));
         box.classList.add('open');
+        const slowTimer = setTimeout(() => {   // 4초 넘게 걸리면 고장처럼 보이지 않도록 문구 교체 (그 달 로그를 서버가 처음 만드는 중일 수 있음 — 최대 30초)
+            if (_attPlogKey === key) box.replaceChildren(hd, attEl('div', 'bb-att-msg', '이 달 로그를 서버가 처음 만드는 중이에요 — 최대 30초까지 걸릴 수 있어요…'));
+        }, 4000);
         let doc, sched;
         try { [doc, sched] = await Promise.all([attGetDayLogs(ym), attGetSchedule(ym)]); }
         catch (e) {
             console.warn('[BB] 이석 로그 조회 실패:', e.message);
-            if (_attPlogKey === key) box.replaceChildren(hd, attEl('div', 'bb-att-msg warn', '⚠ 불러오기 실패 — 잠시 후 다시 시도해 주세요'));
+            if (_attPlogKey === key) {
+                const msg = attEl('div', 'bb-att-msg warn', '⚠ 불러오기 실패 — ');
+                const retry = attEl('span', 'bb-att-retry', '다시 시도');
+                retry.addEventListener('click', () => attOpenPlog(name, ym));
+                msg.appendChild(retry);
+                box.replaceChildren(hd, msg);
+            }
             return;
-        }
+        } finally { clearTimeout(slowTimer); }
         if (_attPlogKey !== key) return;   // 그 사이 닫았거나 다른 사람으로 바꿈
         box.replaceChildren(hd, ...attPlogBody(name, doc, sched));
     }
