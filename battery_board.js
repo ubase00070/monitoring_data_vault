@@ -5665,14 +5665,22 @@
 
     /* ───────── 이름 더블클릭 → 그 달 일자별 이석 로그 ─────────
        성능: 그 달 전체 로그를 서버가 파일 1개로 내려줌(월 1회 요청, 5분 캐시, 서버는 원문 전달) → 사람별 필터는 여기서 처리.
-             사람을 바꿔 여러 번 열어도 추가 요청 없음. 열기 전에는 아무것도 받지 않음. */
+             사람을 바꿔 여러 번 열어도 추가 요청 없음. 열기 전에는 아무것도 받지 않음.
+       동시 요청 병합: 상세 로그를 열 때 이미 백그라운드로 받아오는 중(최대 30초)일 수 있는데, 그 사이 이름을 더블클릭하면
+       예전엔 완전히 새 요청을 하나 더 쏴서 두 배로 기다렸음 → 진행 중인 요청이 있으면 그걸 그대로 같이 기다리게 함 */
+    let _attDayLogsPending = {};   // ym -> 진행 중인 Promise
     async function attGetDayLogs(ym) {
         const c = _attMonthCache['l' + ym];
         if (c && Date.now() - c.at < 5 * 60000) return c.v;
-        const d = await attFetchJson(ATT_API + '/attendance-data?action=daylogs&ym=' + ym, 30000);   // 서버가 처음 한 번 만들어야 하면 몇 초 걸릴 수 있음
-        const v = d._404 ? { ym, days: {}, missing: true } : d;
-        _attMonthCache['l' + ym] = { at: Date.now(), v };
-        return v;
+        if (_attDayLogsPending[ym]) return _attDayLogsPending[ym];
+        const p = (async () => {
+            const d = await attFetchJson(ATT_API + '/attendance-data?action=daylogs&ym=' + ym, 30000);   // 서버가 처음 한 번 만들어야 하면 몇 초 걸릴 수 있음
+            const v = d._404 ? { ym, days: {}, missing: true } : d;
+            _attMonthCache['l' + ym] = { at: Date.now(), v };
+            return v;
+        })();
+        _attDayLogsPending[ym] = p;
+        try { return await p; } finally { delete _attDayLogsPending[ym]; }
     }
     function attClosePlog() { _attPlogKey = ''; $att('bb-att-plog').classList.remove('open'); }
     // 서버 로그 형식: days[날짜][이름] = [횟수, 총초, [[이석, 착석, 소요초, 편집플래그(1=이석 메시지, 2=착석 메시지)], ...]]
