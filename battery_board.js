@@ -5342,11 +5342,12 @@
             vs.appendChild(attEl('div', hit ? 'hit' : 'ok', (hit ? '⚠️ ' : '✅ ') + label + (hit ? (v[i] > 1 ? ' ×' + v[i] : '') : ' 없음')));
         });
 
-        // 미기입 보정: 오늘자면서 아직 근무 중(=카드가 회색 처리되기 전, 퇴근 전)이면 보류. 과거 날짜는 항상 확정된 것으로 봄
-        const nowMin = attKstMin(Date.now()), stillInProgress = live && attOnShift(s.shift, nowMin);
-        const ym = (live ? attLiveDate() : _attDate).slice(0, 7);
+        // 미기입 보정: (a)퇴근 (b)뒤에 다른 기록 있음 (c)휴게시간 돌입 — 셋 중 하나면 확정. 과거 날짜는 항상 확정으로 봄
+        const nowMin = attKstMin(Date.now()), dt = live ? attLiveDate() : _attDate;
+        const ym = dt.slice(0, 7);
         if (_attPopAvgYm !== ym) attRefreshPopAvgCache(ym);   // 아직 이 달 캐시가 없으면 백그라운드로 받아옴 (도착하면 알아서 다시 그림)
         const avgSec = _attPopAvgYm === ym && _attPopAvgMap ? (_attPopAvgMap[s.dn || s.name] ?? null) : null;
+        const tupleLog = (s.log || []).map(l => [l.away, l.back]);
 
         const log = s.log || [];
         let body;
@@ -5360,8 +5361,9 @@
                 const tr = tb.insertRow();
                 tr.appendChild(attEl('td', 'seq', String(i + 1)));
                 tr.appendChild(attEl('td', '', l.away || '-'));
-                const isLiveOngoing = live && l.away && !l.back && i === log.length - 1 && s.lastStatus === '이석';   // 지금 이석 중 → 보정 대상 아님
-                const canEstimate = !l.back && l.away && !isLiveOngoing && !stillInProgress && avgSec != null;
+                const confirmed = !l.back && l.away && attEntryConfirmed(dt, i, tupleLog, s.dn || s.name, s.shift, attLiveDate(), nowMin);
+                const isLiveOngoing = live && l.away && !l.back && i === log.length - 1 && s.lastStatus === '이석' && !confirmed;   // 확정되기 전까지만 '진행중' 카운트 표시
+                const canEstimate = confirmed && avgSec != null;
                 const tdB = attEl('td', '');
                 if (l.back) { tdB.append(l.back); if (l.durationSec === 0) tdB.appendChild(attEl('span', 'tag', '동시기입')); }
                 else if (canEstimate) tdB.appendChild(attEl('span', 'no est', '미기입'));
@@ -5375,7 +5377,7 @@
                     tdD.appendChild(attEl('span', 'ing', Math.round(d) + '분째'));
                     tdD.append(attDur(l.durationSec));
                 } else if (canEstimate) {
-                    tdD.append(attDur(avgSec) + ' 추정'); tdD.className = 'est';
+                    tdD.append(attDur(avgSec) + ' 평균값'); tdD.className = 'est';
                 } else {
                     tdD.append(attDur(l.durationSec));
                 }
@@ -5449,12 +5451,30 @@
     /* ───────── 상세 로그 (월별 근무자 통계) ───────── */
     const attIsPresent = d => !!d && (d.present || (d.raw || '').toUpperCase().includes('OT'));   // OT 는 실제 출근으로 간주
     const attTimeLabel = wt => { const m = (wt || '').match(/(\d{2}):(\d{2})~(\d{2}):(\d{2})/); return m ? `${m[1]}${m[2]}-${m[3]}${m[4]}` : ''; };
-    function attWorkShiftMin(entry) {   // 스케줄의 workTime('09:00~18:00')을 [시작분,종료분]으로
-        const m = entry && (entry.workTime || '').match(/(\d{2}):(\d{2})~(\d{2}):(\d{2})/);
-        return m ? [(+m[1]) * 60 + (+m[2]), (+m[3]) * 60 + (+m[4])] : null;
+    // 근무시간대별 휴게시간 [시작분,종료분] — [근무시작분, 근무종료분(자정 넘기면 0~1439)] 로 매칭
+    const ATT_BREAK_TABLE = [
+        [420, 960, 660, 720],     // 0700-1600 → 11:00-12:00
+        [480, 1020, 720, 780],    // 0800-1700 → 12:00-13:00
+        [540, 1080, 780, 840],    // 0900-1800 → 13:00-14:00
+        [600, 1140, 840, 900],    // 1000-1900 → 14:00-15:00
+        [660, 1200, 900, 960],    // 1100-2000 → 15:00-16:00
+        [840, 1380, 1020, 1080],  // 1400-2300 → 17:00-18:00
+        [900, 0, 1080, 1140],     // 1500-2400 → 18:00-19:00
+        [1080, 180, 1320, 1380],  // 1800-0300 → 22:00-23:00
+        [1140, 240, 1380, 1440],  // 1900-0400 → 23:00-00:00
+        [1200, 300, 1380, 1440],  // 2000-0500 → 23:00-00:00 (최정기 예외: 아래에서 22:00-23:00 로 대체)
+        [1320, 420, 60, 120],     // 2200-0700 → 01:00-02:00
+        [1410, 510, 60, 120],     // 2330-0830 → 01:00-02:00
+    ];
+    function attBreakWindow(shiftMin, name) {
+        if (!shiftMin) return null;
+        if (name === '최정기' && shiftMin[0] === 1200 && shiftMin[1] === 300) return [1320, 1380];   // 2000-0500 근무자 중 최정기만 예외
+        const row = ATT_BREAK_TABLE.find(r => r[0] === shiftMin[0] && r[1] === shiftMin[1]);
+        return row ? [row[2], row[3]] : null;
     }
+    const attElapsedSince = (min, base) => { const d = min - base; return d < 0 ? d + 1440 : d; }   // base(근무 시작) 기준으로 자정을 넘겨도 순서가 어긋나지 않게 환산
     // 미기입 보정 공용 헬퍼 (상세 로그 표 / 이름별 일자 로그 / 실시간 카드 팝업이 모두 같은 기준을 씀)
-    //   daylogs 문서에서 사람별 '정상(이석+착석 모두 기록)' 평균 소요시간을 계산 — 10건을 넘어야 신뢰할 수 있다고 보고 그 전까지는 null(추정 안 함)
+    //   daylogs 문서에서 사람별 '정상(이석+착석 모두 기록)' 평균 소요시간을 계산 — 10건을 넘어야 신뢰할 수 있다고 보고 그 전까지는 null(적용 안 함)
     function attAvgByName(doc) {
         const days = (doc && doc.days) || {}, agg = {};
         Object.keys(days).forEach(dt => Object.keys(days[dt]).forEach(name => {
@@ -5466,11 +5486,20 @@
         Object.keys(agg).forEach(name => { out[name] = agg[name].n > 10 ? agg[name].sum / agg[name].n : null; });
         return out;
     }
-    // 이 사람의 이 날짜가 '아직 집계 중인 오늘'인지(오늘 + 아직 근무시간 중=카드가 회색 처리되기 전) → 참이면 그 날짜는 보정 보류
-    function attStillInProgress(dt, name, sched, today, nowMin) {
-        if (dt !== today) return false;
-        const entry = sched && sched.staff ? sched.staff.find(p => p.name === name) : null;
-        return attOnShift(attWorkShiftMin(entry), nowMin);
+    // 이 미기입 항목(entries[idx], 이석시각 entries[idx][0])이 '확정'됐는지 — 아래 셋 중 하나면 확정:
+    //   (a) 퇴근함(근무시간 종료)  (b) 이 뒤에 다른 기록이 이어짐(= 이미 새 이석 메시지가 찍힘)  (c) 이석 이후 휴게시간이 시작됨
+    // 지난 날짜(dt !== today)는 하루가 이미 마감된 것이므로 항상 확정으로 봄. shiftMin=[근무시작분,근무종료분] (모르면 null)
+    function attEntryConfirmed(dt, idx, entries, name, shiftMin, today, nowMin) {
+        if (dt !== today) return true;
+        if (idx < entries.length - 1) return true;   // (b) 뒤에 다른 기록이 있음
+        if (!attOnShift(shiftMin, nowMin)) return true;   // (a) 퇴근함
+        const bw = attBreakWindow(shiftMin, name);   // (c) 휴게시간 자동 확정
+        if (bw) {
+            const p = (entries[idx][0] || '').split(':'), awayMin = (+p[0]) * 60 + (+p[1]) + (+p[2]) / 60;
+            const base = shiftMin[0];
+            if (attElapsedSince(awayMin, base) < attElapsedSince(bw[0], base) && attElapsedSince(nowMin, base) >= attElapsedSince(bw[0], base)) return true;
+        }
+        return false;   // 아직 미확정 — 보류
     }
 
     // 일별 요약 [횟수, 총이석초, 15분초과, 미기입, 편집됨, 출근60분내, 재이석60분내] + 스케줄(근무일수) → 사람별 행
@@ -5500,8 +5529,11 @@
             Object.keys(ddays).forEach(dt => Object.keys(ddays[dt]).forEach(name => {
                 if (ATT_EXCLUDE.includes(name)) return;
                 const avg = avgMap[name]; if (avg == null) return;
-                if (attStillInProgress(dt, name, sched, today, nowMin)) return;
-                ddays[dt][name][2].forEach(e => { if (e[0] && !e[1]) addSec[name] = (addSec[name] || 0) + avg; });
+                const shiftMin = attWorkShiftMin(sched && sched.staff ? sched.staff.find(p => p.name === name) : null);
+                const entries = ddays[dt][name][2];
+                entries.forEach((e, idx) => {
+                    if (e[0] && !e[1] && attEntryConfirmed(dt, idx, entries, name, shiftMin, today, nowMin)) addSec[name] = (addSec[name] || 0) + avg;
+                });
             }));
         }
         const rows = Object.keys(meta).map(name => {
@@ -5647,7 +5679,7 @@
         // 미기입 보정: 이 달 '정상(이석+착석 모두 기록)' 건이 10개를 넘으면 그 평균을 미기입 건의 추정 소요시간으로 씀
         // (10건도 안 되는 평균은 신뢰하기 어렵다고 판단 — 10건을 넘어서야 비로소 적용 시작). 오늘자는 근무 종료 전까지 보류
         const avgSec = attAvgByName(doc)[name] ?? null;
-        const today = attLiveDate(), nowMin = attKstMin(Date.now());
+        const today = attLiveDate(), nowMin = attKstMin(Date.now()), shiftMin = attWorkShiftMin(entry);
         let cnt = 0, sec = 0, over = 0, rec = 0;
         const list = attEl('div', 'bb-att-lb');
         dates.forEach(dt => {
@@ -5664,12 +5696,12 @@
             rec++; cnt += r[0]; sec += r[1];
             h.appendChild(attEl('span', 'c', '이석 ' + r[0] + '회 · 총 ' + attDurHM(r[1])));
             day.appendChild(h);
-            const stillInProgress = attStillInProgress(dt, name, sched, today, nowMin);   // 오늘자 + 아직 근무 중 = 추정치 보류
-            r[2].forEach(e => {
+            const entries = r[2];
+            entries.forEach((e, idx) => {
                 let cls = 'bb-att-ll', text;
                 if (e[0] && e[1]) { text = e[0] + ' → ' + e[1] + '  (' + attDur(e[2]) + ')'; if (typeof e[2] === 'number' && e[2] >= 900) { cls += ' over'; over++; } }
                 else if (e[0]) {
-                    if (avgSec != null && !stillInProgress) { text = e[0] + ' → 착석 미기입  (평균 ' + attDur(avgSec) + ' 추정)'; cls += ' no est'; }
+                    if (avgSec != null && attEntryConfirmed(dt, idx, entries, name, shiftMin, today, nowMin)) { text = e[0] + ' → 착석 미기입  (평균값 ' + attDur(avgSec) + ')'; cls += ' no est'; }
                     else { text = e[0] + ' → (미기입)'; cls += ' no'; }
                 }
                 else text = '(이석 기록 없음) → ' + e[1];
