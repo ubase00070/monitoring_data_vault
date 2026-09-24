@@ -783,6 +783,7 @@
         .bb-att-lt .no { color:#e11d74; font-weight:700; }
         .bb-att-lt .ing { color:var(--or); font-size:12px; margin-right:4px; }
         .bb-att-lt .long { color:#e11d74; font-weight:700; }
+        .bb-att-lt .est { color:#b45309; font-style:italic; }   /* 미기입 보정치가 표시된 소요시간 칸 */
 
         /* 이름 더블클릭 → 그 달 일자별 이석 로그 (상세 로그 창 위에 뜸) */
         #bb-att-plog { top:50%; left:50%; transform:translate(-50%,-50%); width:min(560px, 94vw); max-height:86vh; overflow:hidden; flex-direction:column; z-index:99999999; }
@@ -5085,6 +5086,7 @@
     let _attDay = null;       // { date, stats, msg } 과거 기록
     let _attFail = false, _attBusy = false, _attSig = null;
     let _attPopId = null, _attCalWhich = null, _attDetailYm = null, _attSortKey = 'avgSec', _attPlogKey = '';
+    let _attPopAvgYm = null, _attPopAvgMap = null;   // 카드 팝업(실시간 이석 로그)의 미기입 보정용 — 이번 달 사람별 평균 캐시
     let _attNameFilter = '', _attLast = null;   // 상세 로그 이름 검색어 (창을 닫았다 열어도/월을 바꿔도 유지, 새로고침하면 초기화 — 저장하지 않음) / 마지막으로 그린 월 데이터
     const _attMonthCache = {}, _attSchedCache = {}, _attDayCache = {}, _attSchedErr = {};
 
@@ -5318,6 +5320,13 @@
         if (card) card.classList.add('sel');
         attRenderPop(true);
     }
+    async function attRefreshPopAvgCache(ym) {   // 카드 팝업용 이번 달 사람별 평균 캐시 — 실패해도 조용히 넘어가고 다음 주기(2분마다)에 재시도
+        try {
+            const doc = await attGetDayLogs(ym);
+            _attPopAvgYm = ym; _attPopAvgMap = attAvgByName(doc);
+            if (_attPopId) attRenderPop(false);   // 캐시가 갱신됐으니 열려 있는 팝업을 최신 값으로 (위치는 그대로 유지)
+        } catch (e) { /* 다음 주기에 재시도 */ }
+    }
     function attRenderPop(place) {
         const stats = attStats(), s = stats && stats.find(x => x.userId === _attPopId);
         if (!s) { attClosePop(); return; }
@@ -5333,6 +5342,12 @@
             vs.appendChild(attEl('div', hit ? 'hit' : 'ok', (hit ? '⚠️ ' : '✅ ') + label + (hit ? (v[i] > 1 ? ' ×' + v[i] : '') : ' 없음')));
         });
 
+        // 미기입 보정: 오늘자면서 아직 근무 중(=카드가 회색 처리되기 전, 퇴근 전)이면 보류. 과거 날짜는 항상 확정된 것으로 봄
+        const nowMin = attKstMin(Date.now()), stillInProgress = live && attOnShift(s.shift, nowMin);
+        const ym = (live ? attLiveDate() : _attDate).slice(0, 7);
+        if (_attPopAvgYm !== ym) attRefreshPopAvgCache(ym);   // 아직 이 달 캐시가 없으면 백그라운드로 받아옴 (도착하면 알아서 다시 그림)
+        const avgSec = _attPopAvgYm === ym && _attPopAvgMap ? (_attPopAvgMap[s.dn || s.name] ?? null) : null;
+
         const log = s.log || [];
         let body;
         if (!log.length) body = attEl('div', 'bb-att-msg', '기록 없음');
@@ -5345,18 +5360,25 @@
                 const tr = tb.insertRow();
                 tr.appendChild(attEl('td', 'seq', String(i + 1)));
                 tr.appendChild(attEl('td', '', l.away || '-'));
+                const isLiveOngoing = live && l.away && !l.back && i === log.length - 1 && s.lastStatus === '이석';   // 지금 이석 중 → 보정 대상 아님
+                const canEstimate = !l.back && l.away && !isLiveOngoing && !stillInProgress && avgSec != null;
                 const tdB = attEl('td', '');
                 if (l.back) { tdB.append(l.back); if (l.durationSec === 0) tdB.appendChild(attEl('span', 'tag', '동시기입')); }
+                else if (canEstimate) tdB.appendChild(attEl('span', 'no est', '미기입'));
                 else tdB.appendChild(attEl('span', 'no', '미기입'));
                 if (l.awayEdited || l.backEdited) tdB.appendChild(attEl('span', 'tag ed', '편집됨'));
                 tr.appendChild(tdB);
                 const tdD = attEl('td', '');
-                if (live && l.away && !l.back && i === log.length - 1 && s.lastStatus === '이석') {   // 지금 이석 중인 마지막 줄 → 경과 시간
+                if (isLiveOngoing) {   // 지금 이석 중인 마지막 줄 → 경과 시간
                     const p = l.away.split(':'), a = (+p[0]) * 60 + (+p[1]) + (+p[2]) / 60;
                     let d = attKstMin(Date.now()) - a; if (d < 0) d += 1440;
                     tdD.appendChild(attEl('span', 'ing', Math.round(d) + '분째'));
+                    tdD.append(attDur(l.durationSec));
+                } else if (canEstimate) {
+                    tdD.append(attDur(avgSec) + ' 추정'); tdD.className = 'est';
+                } else {
+                    tdD.append(attDur(l.durationSec));
                 }
-                tdD.append(attDur(l.durationSec));
                 if (typeof l.durationSec === 'number' && l.durationSec >= 900) tdD.className = 'long';
                 tr.appendChild(tdD);
             });
@@ -5427,9 +5449,33 @@
     /* ───────── 상세 로그 (월별 근무자 통계) ───────── */
     const attIsPresent = d => !!d && (d.present || (d.raw || '').toUpperCase().includes('OT'));   // OT 는 실제 출근으로 간주
     const attTimeLabel = wt => { const m = (wt || '').match(/(\d{2}):(\d{2})~(\d{2}):(\d{2})/); return m ? `${m[1]}${m[2]}-${m[3]}${m[4]}` : ''; };
+    function attWorkShiftMin(entry) {   // 스케줄의 workTime('09:00~18:00')을 [시작분,종료분]으로
+        const m = entry && (entry.workTime || '').match(/(\d{2}):(\d{2})~(\d{2}):(\d{2})/);
+        return m ? [(+m[1]) * 60 + (+m[2]), (+m[3]) * 60 + (+m[4])] : null;
+    }
+    // 미기입 보정 공용 헬퍼 (상세 로그 표 / 이름별 일자 로그 / 실시간 카드 팝업이 모두 같은 기준을 씀)
+    //   daylogs 문서에서 사람별 '정상(이석+착석 모두 기록)' 평균 소요시간을 계산 — 10건을 넘어야 신뢰할 수 있다고 보고 그 전까지는 null(추정 안 함)
+    function attAvgByName(doc) {
+        const days = (doc && doc.days) || {}, agg = {};
+        Object.keys(days).forEach(dt => Object.keys(days[dt]).forEach(name => {
+            days[dt][name][2].forEach(e => {
+                if (e[0] && e[1] && typeof e[2] === 'number') { const a = agg[name] || (agg[name] = { sum: 0, n: 0 }); a.sum += e[2]; a.n++; }
+            });
+        }));
+        const out = {};
+        Object.keys(agg).forEach(name => { out[name] = agg[name].n > 10 ? agg[name].sum / agg[name].n : null; });
+        return out;
+    }
+    // 이 사람의 이 날짜가 '아직 집계 중인 오늘'인지(오늘 + 아직 근무시간 중=카드가 회색 처리되기 전) → 참이면 그 날짜는 보정 보류
+    function attStillInProgress(dt, name, sched, today, nowMin) {
+        if (dt !== today) return false;
+        const entry = sched && sched.staff ? sched.staff.find(p => p.name === name) : null;
+        return attOnShift(attWorkShiftMin(entry), nowMin);
+    }
 
     // 일별 요약 [횟수, 총이석초, 15분초과, 미기입, 편집됨, 출근60분내, 재이석60분내] + 스케줄(근무일수) → 사람별 행
-    function attBuildRows(dig, sched) {
+    // doc(일자별 상세 로그)을 주면, 미기입 건에 사람별 평균 소요시간을 보정치로 더해 총/평균 이석시간에 반영한다 (오늘자 집계중인 건은 제외)
+    function attBuildRows(dig, sched, doc) {
         const days = (dig && dig.days) || {}, dates = Object.keys(days).sort(), agg = {};
         dates.forEach(dt => Object.keys(days[dt]).forEach(name => {
             if (ATT_EXCLUDE.includes(name)) return;
@@ -5446,10 +5492,23 @@
                 if (cnt > 0) meta[p.name] = { days: cnt, time: attTimeLabel(p.workTime), order: idx };
             });
         } else Object.keys(agg).forEach(n => { meta[n] = { days: agg[n].seen, time: '', order: 9999 }; });
+        // 미기입 보정: 사람별로 더할 초를 미리 구해둠 (doc 이 없으면 빈 채로 — 보정 없이 기존 digest 값 그대로)
+        const addSec = {};
+        if (doc) {
+            const avgMap = attAvgByName(doc), today = attLiveDate(), nowMin = attKstMin(Date.now());
+            const ddays = doc.days || {};
+            Object.keys(ddays).forEach(dt => Object.keys(ddays[dt]).forEach(name => {
+                if (ATT_EXCLUDE.includes(name)) return;
+                const avg = avgMap[name]; if (avg == null) return;
+                if (attStillInProgress(dt, name, sched, today, nowMin)) return;
+                ddays[dt][name][2].forEach(e => { if (e[0] && !e[1]) addSec[name] = (addSec[name] || 0) + avg; });
+            }));
+        }
         const rows = Object.keys(meta).map(name => {
             const a = agg[name] ? agg[name].v : [0, 0, 0, 0, 0, 0, 0], d = meta[name].days;
-            return { name, time: meta[name].time, order: meta[name].order, days: d, totalCount: a[0], totalSec: a[1],
-                     avgCount: d ? a[0] / d : 0, avgSec: d ? a[1] / d : 0, avgPerEvent: a[0] ? a[1] / a[0] : 0,
+            const totalSec = a[1] + (addSec[name] || 0);
+            return { name, time: meta[name].time, order: meta[name].order, days: d, totalCount: a[0], totalSec,
+                     avgCount: d ? a[0] / d : 0, avgSec: d ? totalSec / d : 0, avgPerEvent: a[0] ? totalSec / a[0] : 0,
                      over: a[2], unfiled: a[3], edited: a[4], early: a[5] };
         });
         return { rows, approx, dates };
@@ -5520,8 +5579,8 @@
         $att('bb-att-dbody').replaceChildren();
         $att('bb-att-dnote').textContent = '';
         $att('bb-att-watch').replaceChildren();
-        let dig, sched;
-        try { [dig, sched] = await Promise.all([attGetMonth(ym), attGetSchedule(ym)]); }
+        let dig, sched, doc;
+        try { [dig, sched, doc] = await Promise.all([attGetMonth(ym), attGetSchedule(ym), attGetDayLogs(ym)]); }
         catch (e) {
             if (_attDetailYm !== ym) return;
             $att('bb-att-dtitle').textContent = ym.slice(0, 4) + '년 ' + Number(ym.slice(5)) + '월';
@@ -5529,11 +5588,11 @@
             return;
         }
         if (_attDetailYm !== ym) return;   // 그 사이 다른 달로 바꿈/닫음
-        attRenderDetail(ym, dig, sched);
+        attRenderDetail(ym, dig, sched, doc);
     }
-    function attRenderDetail(ym, dig, sched) {
-        _attLast = { ym, dig, sched };
-        const built = attBuildRows(dig, sched), dates = built.dates;
+    function attRenderDetail(ym, dig, sched, doc) {
+        _attLast = { ym, dig, sched, doc };
+        const built = attBuildRows(dig, sched, doc), dates = built.dates;
         const label = ym.slice(0, 4) + '년 ' + Number(ym.slice(5)) + '월';
         $att('bb-att-dtitle').textContent = dates.length
             ? `${label} (${+dates[0].slice(8)}일 ~ ${+dates[dates.length - 1].slice(8)}일, 총 ${dates.length}일간)` : label + ' (확정된 데이터 없음)';
@@ -5554,7 +5613,7 @@
         ATT_COLS.forEach(c => {
             const th = attEl('th', (c.key === _attSortKey ? 'sorted ' : '') + (c.cls === 'warn' ? 'warn' : ''), c.label);
             if (c.label === '이름') th.appendChild(attEl('span', 'hint', '(더블클릭하여 열람)'));   // 이름 칸을 더블클릭하면 그 달 이석 로그가 열린다는 안내
-            if (c.key) th.addEventListener('click', () => { _attSortKey = c.key; attRenderDetail(ym, dig, sched); });
+            if (c.key) th.addEventListener('click', () => { _attSortKey = c.key; attRenderDetail(ym, dig, sched, doc); });
             hr.appendChild(th);
         });
         const tb = table.createTBody();
@@ -5586,19 +5645,9 @@
         const days = (doc && doc.days) || {}, dates = Object.keys(days).sort(), DOW = ['일', '월', '화', '수', '목', '금', '토'];
         const entry = sched && sched.staff ? sched.staff.find(p => p.name === name) : null;
         // 미기입 보정: 이 달 '정상(이석+착석 모두 기록)' 건이 10개를 넘으면 그 평균을 미기입 건의 추정 소요시간으로 씀
-        // (10건도 안 되는 평균은 신뢰하기 어렵다고 판단 — 10건을 넘어서야 비로소 적용 시작)
-        let completeSum = 0, completeN = 0;
-        dates.forEach(dt => {
-            const r = days[dt][name]; if (!r) return;
-            r[2].forEach(e => { if (e[0] && e[1] && typeof e[2] === 'number') { completeSum += e[2]; completeN++; } });
-        });
-        const avgSec = completeN > 10 ? completeSum / completeN : null;
-        // 오늘자는 예외: 아직 근무 시간 중(=카드가 회색 처리되기 전, 퇴근 전)이면 한창 집계 중인 데이터라 추정치를 넣지 않음
+        // (10건도 안 되는 평균은 신뢰하기 어렵다고 판단 — 10건을 넘어서야 비로소 적용 시작). 오늘자는 근무 종료 전까지 보류
+        const avgSec = attAvgByName(doc)[name] ?? null;
         const today = attLiveDate(), nowMin = attKstMin(Date.now());
-        const shiftMin = (() => {
-            const m = entry && (entry.workTime || '').match(/(\d{2}):(\d{2})~(\d{2}):(\d{2})/);
-            return m ? [(+m[1]) * 60 + (+m[2]), (+m[3]) * 60 + (+m[4])] : null;
-        })();
         let cnt = 0, sec = 0, over = 0, rec = 0;
         const list = attEl('div', 'bb-att-lb');
         dates.forEach(dt => {
@@ -5615,7 +5664,7 @@
             rec++; cnt += r[0]; sec += r[1];
             h.appendChild(attEl('span', 'c', '이석 ' + r[0] + '회 · 총 ' + attDurHM(r[1])));
             day.appendChild(h);
-            const stillInProgress = dt === today && attOnShift(shiftMin, nowMin);   // 오늘자 + 아직 근무 중 = 추정치 보류
+            const stillInProgress = attStillInProgress(dt, name, sched, today, nowMin);   // 오늘자 + 아직 근무 중 = 추정치 보류
             r[2].forEach(e => {
                 let cls = 'bb-att-ll', text;
                 if (e[0] && e[1]) { text = e[0] + ' → ' + e[1] + '  (' + attDur(e[2]) + ')'; if (typeof e[2] === 'number' && e[2] >= 900) { cls += ' over'; over++; } }
@@ -5666,7 +5715,7 @@
     $att('bb-att-dsel').addEventListener('change', e => attOpenDetail(e.target.value));
     $att('bb-att-search').addEventListener('input', e => {   // 입력할 때마다 표만 다시 그림 (서버 요청 없음)
         _attNameFilter = e.target.value;
-        if (_attLast && _attLast.ym === _attDetailYm) attRenderDetail(_attLast.ym, _attLast.dig, _attLast.sched);
+        if (_attLast && _attLast.ym === _attDetailYm) attRenderDetail(_attLast.ym, _attLast.dig, _attLast.sched, _attLast.doc);
     });
     $att('bb-att-dbody').addEventListener('dblclick', e => { const td = e.target.closest('td.nm'); if (td && _attDetailYm) attOpenPlog(td.dataset.name, _attDetailYm); });   // 이름 더블클릭
     $att('bb-att-body').addEventListener('click', e => { const c = e.target.closest('.bb-att-card'); if (c) attTogglePop(c.dataset.uid); });
