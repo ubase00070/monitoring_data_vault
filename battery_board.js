@@ -5668,32 +5668,38 @@
        서버의 월별 집계 파일(_logs/YYYY-MM.json)이 아직 없거나 오래됐으면 매번 그 달 전체를 새로 만들어야 해서
        느려질 수 있어(최대 30초) — 대신 이미 빠르고 잘 캐시되는 하루치 archive(action=archive, 과거 날짜는 24시간 캐시)를
        그 달 날짜 수만큼 병렬로 모아 클라이언트에서 같은 형태로 조립한다. 서버의 월별 사전 집계에 기대지 않아 더 안정적으로 빠르고,
-       하루치가 실패해도 그 날만 비고 나머지는 정상 표시됨.
+       하루치가 실패해도(404 포함) 그 날만 비고 나머지는 정상 표시됨.
+       속도: 요청 하나하나가 Vercel 콜드 스타트로 ~2초씩 걸리는 게 실측 확인됨 → 8개씩 나눠 쏘면 그 2초가 파도 수만큼(예: 3번) 곱해져서
+       느려지므로(읽기 전용이라 나눠 쏠 이유가 없음) 전부 한꺼번에 병렬로 쏴서 ~2초 한 번으로 끝나게 함.
+       'dates' 사전 조회(약 2초)도 생략 — 그 달 1일~오늘(또는 말일)까지 날짜를 그냥 다 만들어서 같이 쏘고, 기록 없는 날은 404로 자연히 빠짐.
        동시 요청 병합: 여러 곳(상세 로그 백그라운드 프리페치 + 이름 더블클릭)에서 같은 달을 동시에 요청해도
        매번 새로 조립하지 않고 진행 중인 조립을 그대로 같이 기다림 */
+    function attDatesGuess(ym) {   // dates 조회 없이 그 달 후보 날짜를 직접 생성 (기록 없는 날은 archive 404로 알아서 빠짐)
+        const [y, m] = ym.split('-').map(Number), lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate();
+        const today = attLiveDate();
+        const n = (ym === today.slice(0, 7)) ? Math.min(lastDay, +today.slice(8, 10)) : lastDay;   // 이번 달이면 오늘까지만
+        return Array.from({ length: n }, (_, i) => ym + '-' + attPad(i + 1));
+    }
     let _attDayLogsPending = {};   // ym -> 진행 중인 Promise
     async function attGetDayLogs(ym) {
         const c = _attMonthCache['l' + ym];
         if (c && Date.now() - c.at < 5 * 60000) return c.v;
         if (_attDayLogsPending[ym]) return _attDayLogsPending[ym];
         const p = (async () => {
-            const dates = await attGetDates(ym);   // 이미 빠르고 캐시된 날짜 목록
-            const days = {};
-            for (let i = 0; i < dates.length; i += 8) {   // 8개씩 병렬 (서버 월별 집계 때 쓰던 방식과 동일)
-                await Promise.all(dates.slice(i, i + 8).map(async d => {
-                    let r;
-                    try { r = await attFetchJson(ATT_API + '/attendance-data?action=archive&date=' + d); }
-                    catch (e) { console.warn('[BB] 일자별 로그: ' + d + ' 조회 실패:', e.message); return; }   // 하루치 실패는 그 날만 비우고 나머지는 계속
-                    if (!r || r._404 || !Array.isArray(r.stats)) return;
-                    const dayObj = {};
-                    r.stats.forEach(s => {
-                        const entries = (s.log || []).map(l => [l.away || null, l.back || null, typeof l.durationSec === 'number' ? l.durationSec : null, (l.awayEdited ? 1 : 0) | (l.backEdited ? 2 : 0)]);
-                        dayObj[s.dn || s.name] = [s.awayCount || 0, Math.round(s.totalAwaySec || 0), entries];
-                    });
-                    days[d] = dayObj;
-                }));
-            }
-            const v = { ym, days, missing: !dates.length };
+            const dates = attDatesGuess(ym), days = {};
+            await Promise.all(dates.map(async d => {
+                let r;
+                try { r = await attFetchJson(ATT_API + '/attendance-data?action=archive&date=' + d); }
+                catch (e) { console.warn('[BB] 일자별 로그: ' + d + ' 조회 실패:', e.message); return; }   // 하루치 실패는 그 날만 비우고 나머지는 계속
+                if (!r || r._404 || !Array.isArray(r.stats)) return;   // 기록 없는 날(404)은 조용히 건너뜀
+                const dayObj = {};
+                r.stats.forEach(s => {
+                    const entries = (s.log || []).map(l => [l.away || null, l.back || null, typeof l.durationSec === 'number' ? l.durationSec : null, (l.awayEdited ? 1 : 0) | (l.backEdited ? 2 : 0)]);
+                    dayObj[s.dn || s.name] = [s.awayCount || 0, Math.round(s.totalAwaySec || 0), entries];
+                });
+                days[d] = dayObj;
+            }));
+            const v = { ym, days, missing: !Object.keys(days).length };
             _attMonthCache['l' + ym] = { at: Date.now(), v };
             return v;
         })();
