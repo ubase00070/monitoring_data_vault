@@ -798,6 +798,7 @@
         .bb-att-ll { padding:3px 12px; font-size:14px; font-variant-numeric:tabular-nums; }
         .bb-att-ll.over { color:#e11d74; font-weight:700; }
         .bb-att-ll.no { color:#c2410c; font-weight:700; }
+        .bb-att-ll.est { color:#b45309; font-weight:400; font-style:italic; }   /* 미기입이지만 평균으로 추정치를 채운 항목 — 순수 미기입(.no)보다는 덜 강조 */
         .bb-att-ll .ed { margin-left:6px; color:var(--bl); font-weight:700; }
         .bb-att-le { padding:3px 12px; font-size:13px; font-style:italic; color:var(--mu); }
 
@@ -5448,7 +5449,8 @@
         const rows = Object.keys(meta).map(name => {
             const a = agg[name] ? agg[name].v : [0, 0, 0, 0, 0, 0, 0], d = meta[name].days;
             return { name, time: meta[name].time, order: meta[name].order, days: d, totalCount: a[0], totalSec: a[1],
-                     avgCount: d ? a[0] / d : 0, avgSec: d ? a[1] / d : 0, over: a[2], unfiled: a[3], edited: a[4], early: a[5], quick: a[6] };
+                     avgCount: d ? a[0] / d : 0, avgSec: d ? a[1] / d : 0, avgPerEvent: a[0] ? a[1] / a[0] : 0,
+                     over: a[2], unfiled: a[3], edited: a[4], early: a[5] };
         });
         return { rows, approx, dates };
     }
@@ -5460,11 +5462,11 @@
         { label: '총 이석시간', key: 'totalSec', f: r => attDurHM(r.totalSec) },
         { label: '일평균 이석횟수', key: 'avgCount', f: r => r.avgCount.toFixed(1) + '회' },
         { label: '일평균 이석시간', key: 'avgSec', f: r => attDurHM(r.avgSec) },
+        { label: '1회당 평균 이석시간', key: 'avgPerEvent', f: r => attDurHM(r.avgPerEvent) },
         { label: '15분 초과', key: 'over', f: r => r.over + '회', cls: 'bad' },
         { label: '미기입', key: 'unfiled', f: r => r.unfiled + '회', cls: 'bad' },
         { label: '편집됨', key: 'edited', f: r => r.edited + '회', cls: 'bad' },
-        { label: '출근60분내', key: 'early', f: r => r.early + '회', cls: 'warn' },
-        { label: '재이석60분내', key: 'quick', f: r => r.quick + '회', cls: 'warn' }
+        { label: '출근60분내', key: 'early', f: r => r.early + '회', cls: 'warn' }
     ];
 
     /* WATCHLIST-START */
@@ -5472,7 +5474,7 @@
     //  - 값이 0인 항목은 1위 없음 (전원 0회인 항목은 계산에서 제외)
     //  - 동점이면 공동 1위로 모두 인정
     //  - 정렬: 1위 항목 수 많은 순 → 총 이석시간 많은 순 → 이름
-    const ATT_RANK_KEYS = ['totalCount', 'totalSec', 'avgCount', 'avgSec', 'over', 'unfiled', 'edited', 'early', 'quick'];
+    const ATT_RANK_KEYS = ['totalCount', 'totalSec', 'avgCount', 'avgSec', 'avgPerEvent', 'over', 'unfiled', 'edited', 'early'];
     function attWatchList(rows) {
         const wins = {};
         ATT_RANK_KEYS.forEach(key => {
@@ -5583,6 +5585,20 @@
     function attPlogBody(name, doc, sched) {
         const days = (doc && doc.days) || {}, dates = Object.keys(days).sort(), DOW = ['일', '월', '화', '수', '목', '금', '토'];
         const entry = sched && sched.staff ? sched.staff.find(p => p.name === name) : null;
+        // 미기입 보정: 이 달 '정상(이석+착석 모두 기록)' 건이 10개를 넘으면 그 평균을 미기입 건의 추정 소요시간으로 씀
+        // (10건도 안 되는 평균은 신뢰하기 어렵다고 판단 — 10건을 넘어서야 비로소 적용 시작)
+        let completeSum = 0, completeN = 0;
+        dates.forEach(dt => {
+            const r = days[dt][name]; if (!r) return;
+            r[2].forEach(e => { if (e[0] && e[1] && typeof e[2] === 'number') { completeSum += e[2]; completeN++; } });
+        });
+        const avgSec = completeN > 10 ? completeSum / completeN : null;
+        // 오늘자는 예외: 아직 근무 시간 중(=카드가 회색 처리되기 전, 퇴근 전)이면 한창 집계 중인 데이터라 추정치를 넣지 않음
+        const today = attLiveDate(), nowMin = attKstMin(Date.now());
+        const shiftMin = (() => {
+            const m = entry && (entry.workTime || '').match(/(\d{2}):(\d{2})~(\d{2}):(\d{2})/);
+            return m ? [(+m[1]) * 60 + (+m[2]), (+m[3]) * 60 + (+m[4])] : null;
+        })();
         let cnt = 0, sec = 0, over = 0, rec = 0;
         const list = attEl('div', 'bb-att-lb');
         dates.forEach(dt => {
@@ -5599,10 +5615,14 @@
             rec++; cnt += r[0]; sec += r[1];
             h.appendChild(attEl('span', 'c', '이석 ' + r[0] + '회 · 총 ' + attDurHM(r[1])));
             day.appendChild(h);
+            const stillInProgress = dt === today && attOnShift(shiftMin, nowMin);   // 오늘자 + 아직 근무 중 = 추정치 보류
             r[2].forEach(e => {
                 let cls = 'bb-att-ll', text;
                 if (e[0] && e[1]) { text = e[0] + ' → ' + e[1] + '  (' + attDur(e[2]) + ')'; if (typeof e[2] === 'number' && e[2] >= 900) { cls += ' over'; over++; } }
-                else if (e[0]) { text = e[0] + ' → (미기입)'; cls += ' no'; }
+                else if (e[0]) {
+                    if (avgSec != null && !stillInProgress) { text = e[0] + ' → 착석 미기입  (평균 ' + attDur(avgSec) + ' 추정)'; cls += ' no est'; }
+                    else { text = e[0] + ' → (미기입)'; cls += ' no'; }
+                }
                 else text = '(이석 기록 없음) → ' + e[1];
                 const line = attEl('div', cls, text);
                 if (e[3]) line.appendChild(attEl('span', 'ed', '[편집됨]'));
