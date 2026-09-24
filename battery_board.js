@@ -1148,7 +1148,7 @@
                 <!-- 우: 3종 버튼 (오른쪽 동숲 주민의 오른쪽) — 임무 OFF / 방전 로그 / 이상 알림. 왼쪽 고정 버튼 3행과 같은 폭·높이·간격 -->
                 <div class="bb-rbtns" id="bb-fixbtns-r">
                     <button id="bb-fb-moff" class="bb-fb" data-mode="moff" title="현재 임무가 OFF 인 기체 · 오른쪽 위 숫자 = 해당 기체 수">🚫 임무 OFF<b class="bb-fb-n"></b></button>
-                    <button id="bb-fb-dis" class="bb-fb" data-mode="dis" title="최근 15일 방전 기록 · 오른쪽 위 숫자 = 방전 기체 수">🪫 방전 로그(최근 15일)<b class="bb-fb-n"></b></button>
+                    <button id="bb-fb-dis" class="bb-fb" data-mode="dis" title="최근 15일 방전 기록 · 오른쪽 위 숫자 = 방전 건수(같은 기체라도 건별로 셈)">🪫 방전 로그(최근 15일)<b class="bb-fb-n"></b></button>
                     <button class="bb-btn" id="bb-alertlog-all-btn" title="최근 15일 동안의 좀비 / 캠 미노출 / 미니맵 미노출 기록"><span class="bb-hd-ico">📋</span>이상 알림(최근 15일)</button>
                 </div>
                 <!-- 우: 버튼 2줄 (테마/줌/백업/검색) -->
@@ -4535,7 +4535,7 @@
     function refreshFixedTools() {   // 2분 갱신마다 + 열 때마다 호출: 배지와 (열려 있다면) 목록 창을 최신으로
         try {
             fbCompute();
-            fbSetBadge('bb-fb-dis', _fbData.dis.robots, _fbData.dis.recentSure ? 'r' : 'o');   // 숫자 = 최근 15일 방전 기체 수. 최근 24시간 안에 확정 방전이 있으면 빨강, 그 밖에는 주황
+            fbSetBadge('bb-fb-dis', _fbData.dis.events.length, _fbData.dis.recentSure ? 'r' : 'o');   // 숫자 = 최근 15일 방전 '건' 수 (같은 기체라도 건별로 셈). 최근 24시간 안에 확정 방전이 있으면 빨강, 그 밖에는 주황
             fbSetBadge('bb-fb-drain', _fbData.dr.top.length, 'b');   // 배터리 소모: 배지는 목록에 오른 기체 수 (최대 FB_DRAIN_TOP 대). 실제 대수는 버튼 툴팁에 표시
             const bdr = document.getElementById('bb-fb-drain');
             if (bdr) bdr.title = `충전 중이 아닌 기체를 최근 ${FB_DRAIN_WINDOW_H}시간 안의 하락 기록으로 배터리가 빨리 닳는 순으로 (상위 ${FB_DRAIN_TOP}대) · 오른쪽 위 숫자 = 목록에 오른 기체 수 (최대 ${FB_DRAIN_TOP}) · 소모 속도 측정 중 ${_fbData.dr.measured}대 (그중 배터리가 줄고 있는 기체 ${_fbData.dr.dropping}대)`;
