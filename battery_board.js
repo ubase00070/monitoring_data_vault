@@ -5611,8 +5611,8 @@
         $att('bb-att-dbody').replaceChildren();
         $att('bb-att-dnote').textContent = '';
         $att('bb-att-watch').replaceChildren();
-        let dig, sched, doc;
-        try { [dig, sched, doc] = await Promise.all([attGetMonth(ym), attGetSchedule(ym), attGetDayLogs(ym)]); }
+        let dig, sched;
+        try { [dig, sched] = await Promise.all([attGetMonth(ym), attGetSchedule(ym)]); }
         catch (e) {
             if (_attDetailYm !== ym) return;
             $att('bb-att-dtitle').textContent = ym.slice(0, 4) + '년 ' + Number(ym.slice(5)) + '월';
@@ -5620,7 +5620,10 @@
             return;
         }
         if (_attDetailYm !== ym) return;   // 그 사이 다른 달로 바꿈/닫음
-        attRenderDetail(ym, dig, sched, doc);
+        attRenderDetail(ym, dig, sched, null);   // 우선 빠른 데이터로 표를 바로 연다 (미기입 보정 없이)
+        attGetDayLogs(ym).then(doc => {   // daylogs 는 그 달 첫 조회면 서버가 새로 만들어야 해서 최대 30초까지 걸릴 수 있어 표 열기와 분리 — 도착하면 보정치를 반영해 조용히 다시 그림
+            if (_attDetailYm === ym) attRenderDetail(ym, dig, sched, doc);
+        }).catch(e => console.warn('[BB] 일자별 로그(미기입 보정용) 조회 실패:', e.message));   // 실패해도 표는 이미 열려 있으니 그냥 보정 없이 둠
     }
     function attRenderDetail(ym, dig, sched, doc) {
         _attLast = { ym, dig, sched, doc };
