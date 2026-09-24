@@ -5452,6 +5452,10 @@
     /* ───────── 상세 로그 (월별 근무자 통계) ───────── */
     const attIsPresent = d => !!d && (d.present || (d.raw || '').toUpperCase().includes('OT'));   // OT 는 실제 출근으로 간주
     const attTimeLabel = wt => { const m = (wt || '').match(/(\d{2}):(\d{2})~(\d{2}):(\d{2})/); return m ? `${m[1]}${m[2]}-${m[3]}${m[4]}` : ''; };
+    function attWorkShiftMin(entry) {   // 스케줄의 workTime('09:00~18:00')을 [시작분,종료분]으로
+        const m = entry && (entry.workTime || '').match(/(\d{2}):(\d{2})~(\d{2}):(\d{2})/);
+        return m ? [(+m[1]) * 60 + (+m[2]), (+m[3]) * 60 + (+m[4])] : null;
+    }
     // 근무시간대별 휴게시간 [시작분,종료분] — [근무시작분, 근무종료분(자정 넘기면 0~1439)] 로 매칭
     const ATT_BREAK_TABLE = [
         [420, 960, 660, 720],     // 0700-1600 → 11:00-12:00
