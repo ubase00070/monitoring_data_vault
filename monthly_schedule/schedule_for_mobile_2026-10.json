@@ -1875,10 +1875,10 @@
           "raw": "1"
         },
         "10/23": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "10/24": {
           "status": "off",
@@ -1887,10 +1887,10 @@
           "raw": "휴무"
         },
         "10/25": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "10/26": {
           "status": "work",
@@ -2014,10 +2014,10 @@
           "raw": "1"
         },
         "10/14": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "10/15": {
           "status": "off",
@@ -2026,10 +2026,10 @@
           "raw": "휴무"
         },
         "10/16": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "10/17": {
           "status": "work",
@@ -2056,10 +2056,10 @@
           "raw": "1"
         },
         "10/21": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "10/22": {
           "status": "off",
@@ -2068,10 +2068,10 @@
           "raw": "휴무"
         },
         "10/23": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "10/24": {
           "status": "off",
@@ -2973,10 +2973,10 @@
           "raw": "휴무"
         },
         "10/13": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "10/14": {
           "status": "work",
@@ -2997,16 +2997,16 @@
           "raw": "1"
         },
         "10/17": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "10/18": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "10/19": {
           "status": "off",
@@ -3015,10 +3015,10 @@
           "raw": "휴무"
         },
         "10/20": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "10/21": {
           "status": "work",
@@ -3045,10 +3045,10 @@
           "raw": "1"
         },
         "10/25": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "10/26": {
           "status": "off",
@@ -3057,10 +3057,10 @@
           "raw": "휴무"
         },
         "10/27": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "10/28": {
           "status": "work",
@@ -3353,16 +3353,16 @@
           "raw": "휴무"
         },
         "10/12": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
-        },
-        "10/13": {
           "status": "work",
           "working": true,
           "present": true,
           "raw": "1"
+        },
+        "10/13": {
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "10/14": {
           "status": "work",
@@ -3389,10 +3389,10 @@
           "raw": "1"
         },
         "10/18": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "10/19": {
           "status": "off",
@@ -3407,10 +3407,10 @@
           "raw": "휴무"
         },
         "10/21": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "10/22": {
           "status": "work",
@@ -4873,10 +4873,10 @@
           "raw": "휴무"
         },
         "10/8": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "10/9": {
           "status": "work",
@@ -4885,10 +4885,10 @@
           "raw": "1"
         },
         "10/10": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "10/11": {
           "status": "off",
@@ -4969,10 +4969,10 @@
           "raw": "1"
         },
         "10/24": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "10/25": {
           "status": "off",
@@ -5011,10 +5011,10 @@
           "raw": "1"
         },
         "10/31": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         }
       }
     },
@@ -5066,10 +5066,10 @@
           "raw": "1"
         },
         "10/8": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "10/9": {
           "status": "work",
@@ -5078,10 +5078,10 @@
           "raw": "1"
         },
         "10/10": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "10/11": {
           "status": "off",
@@ -5120,10 +5120,10 @@
           "raw": "휴무"
         },
         "10/17": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "10/18": {
           "status": "work",
@@ -5144,10 +5144,10 @@
           "raw": "1"
         },
         "10/21": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "10/22": {
           "status": "off",
@@ -5319,10 +5319,10 @@
           "raw": "1"
         },
         "10/18": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "10/19": {
           "status": "off",
@@ -5331,10 +5331,10 @@
           "raw": "휴무"
         },
         "10/20": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "10/21": {
           "status": "work",
@@ -5355,10 +5355,10 @@
           "raw": "1"
         },
         "10/24": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "10/25": {
           "status": "off",
@@ -5397,10 +5397,10 @@
           "raw": "휴무"
         },
         "10/31": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         }
       }
     },
@@ -6188,10 +6188,10 @@
           "raw": "휴무"
         },
         "10/2": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "10/3": {
           "status": "work",
@@ -6332,10 +6332,10 @@
           "raw": "휴무"
         },
         "10/26": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "10/27": {
           "status": "work",
@@ -6960,10 +6960,10 @@
           "raw": "휴무"
         },
         "10/2": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "10/3": {
           "status": "work",
@@ -7104,10 +7104,10 @@
           "raw": "휴무"
         },
         "10/26": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "10/27": {
           "status": "work",
@@ -8896,10 +8896,10 @@
           "raw": "1"
         },
         "10/3": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "10/4": {
           "status": "off",
@@ -8914,10 +8914,10 @@
           "raw": "휴무"
         },
         "10/6": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "10/7": {
           "status": "work",
@@ -9685,6 +9685,6 @@
     "10/31"
   ],
   "mainMonth": 10,
-  "updatedAt": "2026-09-23T08:20:28.966Z",
+  "updatedAt": "2026-09-24T03:53:23.276Z",
   "sheetName": "2026년_10월 스케줄"
 }
