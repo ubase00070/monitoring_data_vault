@@ -5086,7 +5086,7 @@
     let _attLive = null;      // 마지막으로 받은 실시간 데이터
     let _attDay = null;       // { date, stats, msg } 과거 기록
     let _attFail = false, _attBusy = false, _attSig = null;
-    let _attPopId = null, _attCalWhich = null, _attDetailYm = null, _attSortKey = 'avgSec', _attPlogKey = '';
+    let _attPopId = null, _attCalWhich = null, _attDetailYm = null, _attSortKey = 'totalSec', _attPlogKey = '';
     let _attPopAvgYm = null, _attPopAvgMap = null;   // 카드 팝업(실시간 이석 로그)의 미기입 보정용 — 이번 달 사람별 평균 캐시
     let _attNameFilter = '', _attLast = null;   // 상세 로그 이름 검색어 (창을 닫았다 열어도/월을 바꿔도 유지, 새로고침하면 초기화 — 저장하지 않음) / 마지막으로 그린 월 데이터
     const _attMonthCache = {}, _attSchedCache = {}, _attDayCache = {}, _attSchedErr = {};
