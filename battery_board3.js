@@ -701,12 +701,13 @@
 
         .bb-att-head { flex:0 0 auto; position:relative; padding:6px 8px; background:var(--sur); border-bottom:1px solid var(--bd); display:grid; grid-template-columns:auto minmax(0,1fr); column-gap:8px; row-gap:6px; align-items:center; z-index:3; }
         .bb-att-back { grid-row:1 / 3; grid-column:1; }
-        .bb-att-title { grid-column:2; min-width:0; text-align:center; font-size:14px; line-height:1.25; color:var(--tx); }
+        .bb-att-title { grid-column:2; min-width:0; text-align:left; font-size:14px; line-height:1.25; color:var(--tx); }
         .bb-att-title .n { color:var(--rd); }
         .bb-att-title .sep { color:var(--mu); }
         .bb-att-title .past { color:var(--or); }
         .bb-att-r2 { grid-column:2; min-width:0; display:flex; align-items:center; gap:5px; }
-        .bb-att-mbtn { min-width:44px; padding:0 7px; }
+        .bb-att-mbtn { min-width:40px; padding:0 6px; }
+        .bb-att-r2 .bb-mm-nav { padding:0 6px; }
         .bb-att-mbtn.on { border-color:var(--bl); color:var(--bl); background:var(--bl2); }
         .bb-att-stat { margin-left:auto; font-size:11.5px; color:var(--mu); white-space:nowrap; }
         .bb-att-stat.warn { color:#c2410c; }
@@ -1245,7 +1246,7 @@
                                     <div class="bb-att-r2">
                                         <button class="bb-mm-nav bb-att-mbtn" id="bb-att-mprev">--월</button>
                                         <button class="bb-mm-nav bb-att-mbtn" id="bb-att-mcur">--월</button>
-                                        <button class="bb-mm-nav" id="bb-att-detailbtn" title="월별 근무자 상세 통계">상세 로그</button>
+                                        <button class="bb-mm-nav" id="bb-att-detailbtn" title="월별 근무자 상세 통계">자세히</button>
                                         <button class="bb-mm-nav" id="bb-att-today" style="display:none" title="실시간 현황으로 돌아가기">오늘로</button>
                                         <span class="bb-att-stat" id="bb-att-stat"></span>
                                     </div>
@@ -1295,7 +1296,7 @@
         <div id="bb-att-pop"></div>
         <div id="bb-att-detail">
             <div class="bb-att-dh">
-                <div class="t" id="bb-att-dtitle">상세 로그</div>
+                <div class="t" id="bb-att-dtitle">자세히</div>
                 <select id="bb-att-dsel"></select>
                 <div class="w" id="bb-att-watch"></div>
                 <input type="search" class="sr" id="bb-att-search" placeholder="이름 검색" autocomplete="off" spellcheck="false" title="이름을 입력하면 그 근무자만 표시 (월을 바꾸거나 창을 닫았다 열어도 유지 · 새로고침하면 초기화)">
@@ -5831,7 +5832,7 @@
     try { if (localStorage.getItem('bbIv') === '0') _ivOn = false; } catch (e) { /* 저장소 접근 불가 → 그대로 켜짐 */ }
     if (_ivOn && document.getElementById('bb-mm-page-multi') && document.querySelector('.bb-mm-box') && typeof attFetchJson === 'function') {
         // ▼▼▼ '설명' 버튼을 눌렀을 때 보이는 안내문. 줄바꿈은 <br> 로 구분해서 아래 따옴표 안에 직접 쓰세요. ▼▼▼
-        const IV_HELP = '여기에 설명을 입력하세요.<br>줄바꿈은 &lt;br&gt; 로 구분합니다.';
+        const IV_HELP = '개입카드 데이터를 수 분 이내로 받아옵니다.<br>GPS 조치 및 기타 사유로 인해 페이지 이탈한 경우를 프로그램이 명확히 구분할 수 없기 때문에 개인별 건수 카운팅에서 제외했습니다.<br>시간대별로 개입 건수가 많을 수록 녹색으로 짙어집니다.<br>NCC에 api를 전혀 호출하지 않는 로직이다보니 이름 성씨로 추정하는 경우가 발생할 수 있습니다.';
         // ▲▲▲ 여기까지 ▲▲▲
         const IV_API = ATT_API + '/intervene';
         const IV_REFRESH_MS = 30 * 1000;
@@ -5991,12 +5992,13 @@
         const page = ivEl('div'); page.id = 'bb-iv-page';
         page.innerHTML =
             '<div class="bb-iv-head">' +
-              '<button class="bb-mm-nav" id="bb-iv-help-btn" title="이 화면 설명">설명</button>' +
+              '<button class="bb-mm-nav" id="bb-iv-help-btn" title="이 화면 사용 설명"><span class="tx"><span class="l1">사용</span><span class="l2">설명</span></span></button>' +
               '<div class="bb-att-title" id="bb-iv-title">개입카드 현황</div>' +
               '<div class="bb-att-r2">' +
                 '<button class="bb-mm-nav bb-att-mbtn" id="bb-iv-today">오늘</button>' +
                 '<button class="bb-mm-nav bb-att-mbtn" id="bb-iv-cal-btn">달력</button>' +
-                '<button class="bb-mm-nav" id="bb-iv-all" title="그날 전체 처리 내역">상세 로그</button>' +
+                '<button class="bb-mm-nav" id="bb-iv-all" title="그날 전체 처리 내역">자세히</button>' +
+                '<span class="bb-att-stat" id="bb-iv-stat"></span>' +
               '</div>' +
               '<button class="bb-mm-nav bb-att-back" id="bb-iv-back" title="다중 모니터링으로 돌아가기"><span class="tx"><span class="l1">다중</span><span class="l2">미갱신</span></span><span class="ar">»</span></button>' +
               '<div class="bb-att-cal" id="bb-iv-cal"></div>' +
@@ -6005,7 +6007,7 @@
             '<div class="bb-iv-kpis" id="bb-iv-kpis"></div>' +
             '<div class="bb-iv-notes" id="bb-iv-notes"></div>' +
             '<div class="bb-iv-body" id="bb-iv-body"></div>' +
-            '<div class="bb-iv-legend"><span><i style="background:repeating-linear-gradient(135deg,#e9b824 0 2px,#f7dc6a 2px 4px)"></i>휴게시간</span><span>막대 = 시간대별 건수</span><span class="bb-att-stat" id="bb-iv-stat"></span></div>';
+            '<div class="bb-iv-legend"><span><i style="background:repeating-linear-gradient(135deg,#e9b824 0 2px,#f7dc6a 2px 4px)"></i>휴게시간</span><span>막대 = 근무 시간대별 건수</span></div>';
         page.inert = true;
         box.appendChild(page);
         $iv('bb-iv-help').innerHTML = IV_HELP;   // 직접 쓴 안내문(줄바꿈 = <br>)
@@ -6083,9 +6085,9 @@
             const cntEl = ivEl('span', 'n', (T.solved || 0) + '건');
             cntEl.style.cssText = 'font-weight:900;color:#c2410c';
             title.appendChild(cntEl);
-            stat.textContent = isToday ? attHM(d.asOf) + ' 기준' : '';
+            // 기준 시각 = 서버에서 데이터를 실제로 받아온 시각 (갱신에 실패하면 마지막으로 받은 시각을 경고색으로)
+            stat.textContent = isToday ? (_ivFail ? '⚠ ' : '') + attHM(d._at || d.asOf) + ' 기준' : '';
             stat.classList.toggle('warn', _ivFail);
-            if (_ivFail) stat.textContent = '갱신 실패';
 
             const k = (l, v, u) => { const e = ivEl('div', 'bb-iv-kpi'); e.appendChild(ivEl('span', 'l', l)); const s = ivEl('span', 'v', v); if (u) s.appendChild(ivEl('small', '', u)); e.appendChild(s); return e; };
             kp.replaceChildren(k('처리 건수', String(T.solved || 0), '건'), k('처리 인원', String(T.people || 0), '명'), k('평균 처리시간', T.avgSec == null ? '-' : ivDur(T.avgSec)));
@@ -6243,7 +6245,7 @@
             const p = special ? null : ivPersonOf(name), d = _ivDetail && !_ivDetail._fail ? _ivDetail : null;
             const head = ivEl('div', 'bb-iv-ph');
             const pt = ivEl('div', 'bb-iv-pt');
-            pt.appendChild(ivEl('b', '', name === '__all' ? '상세 로그 (' + ivMD(ivDateNow()) + ')' : name === '__unresolved' ? '이름 특정 불가' : name));
+            pt.appendChild(ivEl('b', '', name === '__all' ? '자세히 (' + ivMD(ivDateNow()) + ')' : name === '__unresolved' ? '이름 특정 불가' : name));
             if (p && p.shift) pt.appendChild(ivEl('span', '', p.shift));
             if (p && p.brk) pt.appendChild(ivEl('span', 'bg', '휴게 ' + p.brk + '시'));
             const x = ivEl('span', 'x', '✕'); x.dataset.act = 'close'; pt.appendChild(x);
