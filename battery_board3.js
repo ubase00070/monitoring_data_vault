@@ -5021,10 +5021,7 @@
         const n = document.createElement('span');
         n.className = 'bb-mm-count';   // 대수만 빨간색
         n.textContent = `${count}대`;
-        const note = document.createElement('span');
-        note.className = 'bb-mm-note';   // 대수 옆 작은 설명
-        note.textContent = ' (POI 정체 감지 중)';
-        t.append('다중 모니터링 기체 ', n, note);
+        t.append('다중 모니터링 기체 ', n);
     }
 
     async function refreshPatrolLive() {
@@ -5049,7 +5046,7 @@
                 renderPatrolCards(cards);
             }
             setPatrolTitle(cards.length);
-            setPatrolStatus(`${_patrolLastUpdated || '-'} 기준`, false);   // 게시 시각만 그대로 표시
+            setPatrolStatus(`${_patrolLastUpdated || '-'} 기준(POI 정체 감지)`, false);   // 게시 시각만 그대로 표시
         } catch (e) {
             console.warn('[BB] 다중 모니터링 갱신 실패:', e.message);
             setPatrolStatus(_patrolLastUpdated
@@ -5820,23 +5817,24 @@
     _attReady = true;
 
     // ============================================================
-    // SECTION 18. 개입카드 현황 — 이석 현황 화면 위에 덮이는 화면 (진입: 이석 화면 오른쪽 아래 '개입카드 »')
+    // SECTION 18. 개입카드 현황 — 다중 모니터링 화면의 '왼쪽'으로 슬라이드해서 들어가는 화면 (진입: 다중 모니터링 제목 왼쪽 '« 개입 현황')
     //  - 데이터: multimonitoring.vercel.app/api/intervene (서버가 GitHub 로그를 가공. 토큰은 서버에만 있음). 이석(SECTION 17)과 같은 방식.
     //  - 개입카드 화면이 실제로 보일 때만 30초마다 조회 (다른 화면이거나 보드가 닫혀 있거나 탭이 가려져 있으면 요청 없음)
     //  - 건수 = "이름이 확정된 해결 건"만. 추정/이탈/진행중/특정불가는 건수에 넣지 않고 팝업에서만 보여줌 (판정은 전부 서버 lib/intervene-core.js)
-    //  - 안전장치: ① 전체가 try/catch — 여기서 오류가 나도 기존 기능은 그대로
-    //    ② 화면 요소는 이 섹션이 직접 만들어 붙임(기존 HTML/CSS/함수를 수정하지 않음)
+    //  - 안전장치: ① 전체가 try/catch — 여기서 오류가 나도 기존 기능은 그대로 ② 화면 요소는 이 섹션이 직접 만들어 붙임(기존 함수는 수정하지 않음)
+    //    ③ 비상용 끄기: 콘솔에서 localStorage.bbIv='0' 후 새로고침
     // ============================================================
     try {
     let _ivOn = true;
-    try { if (localStorage.getItem('bbIv') === '0') _ivOn = false; } catch (e) { /* 저장소 접근 불가 → 그대로 켜짐 */ }   // 비상용 끄기: 콘솔에서 localStorage.bbIv='0'
-    if (_ivOn && document.getElementById('bb-mm-page-att') && typeof attFetchJson === 'function') {
+    try { if (localStorage.getItem('bbIv') === '0') _ivOn = false; } catch (e) { /* 저장소 접근 불가 → 그대로 켜짐 */ }
+    if (_ivOn && document.getElementById('bb-mm-page-multi') && document.querySelector('.bb-mm-box') && typeof attFetchJson === 'function') {
         const IV_API = ATT_API + '/intervene';
         const IV_REFRESH_MS = 30 * 1000;
         const IV_ROWS_STEP = 200;
         const IV_LONG_SEC = 180;
         let _ivOpen = false, _ivDate = null, _ivData = null, _ivBusy = false, _ivFail = false, _ivSeq = 0;
         let _ivPopKey = null, _ivPopName = null, _ivPopFilter = 'all', _ivPopLimit = IV_ROWS_STEP, _ivDetail = null;
+        let _ivDates = null, _ivDatesAt = 0, _ivCalOpen = false, _ivCalYm = null;
         const _ivDetailCache = {};
 
         const $iv = id => document.getElementById(id);
@@ -5846,18 +5844,33 @@
         const ivMD = ymd => { const p = ymd.split('-'); return (+p[1]) + '/' + (+p[2]); };
         const ivDur = sec => (sec == null ? '-' : Math.floor(sec / 60) + '분 ' + (Math.round(sec) % 60) + '초');
         const ivHMS = ms => { const d = attKst(ms); return attPad(d.getUTCHours()) + ':' + attPad(d.getUTCMinutes()) + ':' + attPad(d.getUTCSeconds()); };
+        // 조사: 마지막 글자에 받침이 있으면 a, 없으면 b (이/가, 을/를, 은/는)
+        const ivJosa = (word, a, b) => {
+            const c = String(word || '').charCodeAt(String(word || '').length - 1);
+            if (c < 0xAC00 || c > 0xD7A3) return b;
+            return (c - 0xAC00) % 28 ? a : b;
+        };
+        const ivWho = x => { const nm = (x && x.n) || '다른 사람'; return nm + (x && x.k === 'i' ? '(추정)' : '') + ivJosa(nm, '이', '가'); };
+        const ivGap = s => (s < 1 ? '바로 뒤' : s < 60 ? s + '초 뒤' : Math.floor(s / 60) + '분 ' + (s % 60) + '초 뒤');
 
         /* ───────── 스타일 (이 섹션 전용, 런타임 삽입) ───────── */
         const st = document.createElement('style');
         st.id = 'bb-iv-style';
         st.textContent = `
-        #bb-iv-page { display:none; position:absolute; inset:0; z-index:6; flex-direction:column; background:var(--sur); }
-        #bb-iv-page.open { display:flex; }
+        .bb-mm-head.bb-iv-hd { padding-left:66px; }   /* 왼쪽 '« 개입 현황' 버튼 자리 (오른쪽 '이석 »' 버튼 자리와 대칭) */
+        .bb-mm-goiv { position:absolute; left:8px; top:50%; transform:translateY(-50%); height:auto; padding:5px 9px; gap:5px; }
+        #bb-iv-page { position:absolute; inset:0; z-index:6; display:flex; flex-direction:column; background:var(--sur); font-family:'Paperlogy','Lato',-apple-system,sans-serif;
+            transform:translateX(-100%); visibility:hidden; transition:transform .32s cubic-bezier(.4,0,.2,1), visibility 0s linear .32s; }
+        #bb-iv-page.open { transform:translateX(0); visibility:visible; transition:transform .32s cubic-bezier(.4,0,.2,1), visibility 0s; }
+        .bb-iv-head { flex:0 0 auto; position:relative; padding:6px 8px; background:var(--sur); border-bottom:1px solid var(--bd); display:grid; grid-template-columns:minmax(0,1fr) auto; column-gap:8px; row-gap:6px; align-items:center; z-index:3; }
+        .bb-iv-head .bb-att-title { grid-column:1; }
+        .bb-iv-head .bb-att-r2 { grid-column:1; }
+        #bb-iv-back { grid-column:2; grid-row:1 / 3; align-self:stretch; height:auto; padding:0 7px; gap:3px; }
         .bb-iv-kpis { flex:0 0 auto; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); background:var(--sur2); border-bottom:1px solid var(--bd); }
         .bb-iv-kpi { padding:6px 8px; display:flex; flex-direction:column; gap:1px; border-left:1px solid var(--bd); }
         .bb-iv-kpi:first-child { border-left:0; }
         .bb-iv-kpi .l { font-size:11px; color:var(--mu); }
-        .bb-iv-kpi .v { font-size:18px; font-weight:900; font-family:'Lato',sans-serif; white-space:nowrap; }
+        .bb-iv-kpi .v { font-size:18px; font-weight:900; white-space:nowrap; }
         .bb-iv-kpi .v small { font-size:11px; color:var(--mu); font-weight:700; }
         .bb-iv-notes { flex:0 0 auto; display:flex; flex-wrap:wrap; gap:5px; padding:5px 8px; border-bottom:1px solid var(--bd); background:var(--sur); }
         .bb-iv-notes:empty { display:none; }
@@ -5868,9 +5881,9 @@
         .bb-iv-row:hover { filter:brightness(1.03); }
         .bb-iv-row.sel { outline:2px solid var(--tx); outline-offset:1px; }
         .bb-iv-row.top { border-color:#f5a524; box-shadow:0 0 8px -2px rgba(245,165,36,.7); }
-        .bb-iv-row.brk { background:#fbf3d3; }
+        .bb-iv-row.brk { background:rgba(233,184,36,.2); }
         .bb-iv-row.off { opacity:.55; }
-        .bb-iv-rank { width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11.5px; font-weight:900; font-family:'Lato',sans-serif; background:var(--sur2); color:var(--mu); border:1.5px solid var(--bd2); }
+        .bb-iv-rank { width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11.5px; font-weight:900; background:var(--sur2); color:var(--mu); border:1.5px solid var(--bd2); }
         .bb-iv-row.top .bb-iv-rank { background:#f5a524; color:#fff; border-color:#f5a524; }
         .bb-iv-mid { min-width:0; display:flex; flex-direction:column; gap:4px; }
         .bb-iv-l1 { display:flex; align-items:baseline; gap:6px; min-width:0; white-space:nowrap; }
@@ -5887,7 +5900,7 @@
         .bb-iv-seg.fut { background:transparent; border:1.5px dotted var(--bd2); }
         .bb-iv-seg.cur { box-shadow:0 0 0 1.5px var(--bl); }
         .bb-iv-cnt { text-align:right; white-space:nowrap; }
-        .bb-iv-cnt .c { font-size:18px; font-weight:900; font-family:'Lato',sans-serif; line-height:1.1; }
+        .bb-iv-cnt .c { font-size:18px; font-weight:900; line-height:1.1; }
         .bb-iv-row.top .bb-iv-cnt .c { color:#c2620a; }
         .bb-iv-cnt .c small { font-size:11px; color:var(--mu); font-weight:700; }
         .bb-iv-cnt .a { font-size:10.5px; color:var(--mu); margin-top:2px; }
@@ -5895,9 +5908,10 @@
         .bb-iv-msg.warn { color:#c2410c; }
         .bb-iv-legend { flex:0 0 auto; display:flex; justify-content:center; align-items:center; gap:10px; padding:5px 6px 6px; border-top:1px solid var(--bd); font-size:11.5px; color:var(--mu); white-space:nowrap; }
         .bb-iv-legend i { display:inline-block; width:14px; height:6px; border-radius:1px; vertical-align:middle; margin-right:4px; }
-        #bb-iv-go { margin-left:auto; position:relative; height:auto; padding:5px 9px; gap:5px; border-color:var(--bl); background:var(--bl2, #dbe8fd); color:var(--bl); }
-        .bb-att-legend.bb-iv-host { justify-content:flex-start; gap:8px; padding:6px 8px 7px; }
-        .bb-att-legend.bb-iv-host .bb-iv-lt { min-width:0; overflow:hidden; text-overflow:ellipsis; }
+        .bb-iv-cal-h { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+        .bb-iv-cal-h .t { font-size:14px; color:var(--tx); }
+        .bb-iv-cal-h button { height:24px; min-width:28px; padding:0 8px; }
+        .bb-iv-cal-h button[disabled] { opacity:.35; cursor:default; }
 
         #bb-iv-pop {
             --bg:#f2e4c4; --sur:#f8f3e6; --sur2:#efe6d2; --bd:#cabf9d; --bd2:#b3a687; --tx:#2b2418; --mu:#7a6f5c;
@@ -5919,13 +5933,13 @@
         .bb-iv-pk { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px; }
         .bb-iv-pk div { padding:6px 8px; border-radius:8px; background:var(--sur2); border:1px solid var(--bd); }
         .bb-iv-pk .l { font-size:11px; color:var(--mu); border:0; padding:0; background:none; }
-        .bb-iv-pk .v { font-size:17px; font-weight:900; font-family:'Lato',sans-serif; border:0; padding:0; background:none; white-space:nowrap; }
+        .bb-iv-pk .v { font-size:17px; font-weight:900; border:0; padding:0; background:none; white-space:nowrap; }
         .bb-iv-pk .v small { font-size:11px; color:var(--mu); font-weight:700; }
         .bb-iv-hrs { display:flex; flex-direction:column; gap:4px; }
         .bb-iv-hb, .bb-iv-hl { display:flex; gap:6px; }
         .bb-iv-hb { align-items:flex-end; height:74px; }
         .bb-iv-hc { flex:1; min-width:0; height:100%; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; gap:2px; }
-        .bb-iv-hc span { font-size:11px; font-family:'Lato',sans-serif; font-weight:700; color:var(--mu); }
+        .bb-iv-hc span { font-size:11px; font-weight:700; color:var(--mu); }
         .bb-iv-hc div { width:100%; border-radius:3px; }
         .bb-iv-hc div.n0 { background:rgba(0,0,0,.06); }
         .bb-iv-hc div.n1 { background:#d3d1c7; }
@@ -5934,22 +5948,22 @@
         .bb-iv-hc div.brk { background:repeating-linear-gradient(135deg,#e9b824 0 3px,#f7dc6a 3px 6px); }
         .bb-iv-hc div.fut { background:transparent; border:1.5px dashed var(--bd); }
         .bb-iv-hc.cur span { color:var(--bl); }
-        .bb-iv-hl span { flex:1; text-align:center; font-size:10.5px; color:var(--mu); font-family:'Lato',sans-serif; }
+        .bb-iv-hl span { flex:1; text-align:center; font-size:10.5px; color:var(--mu); }
         .bb-iv-fl { display:flex; gap:5px; align-items:center; flex-wrap:wrap; }
         .bb-iv-chip { height:24px; padding:0 10px; border-radius:999px; border:1.5px solid var(--bd2); background:transparent; color:var(--tx); font-size:12px; display:inline-flex; align-items:center; cursor:pointer; font-family:inherit; }
         .bb-iv-chip.on { border-color:var(--tx); background:var(--tx); color:var(--sur); font-weight:700; }
         .bb-iv-fl .hint { margin-left:auto; font-size:11px; color:var(--mu); }
         .bb-iv-th { flex:0 0 auto; display:grid; grid-template-columns:64px minmax(0,1fr) 84px; gap:8px; padding:5px 16px; border-top:1px solid var(--bd); border-bottom:2px solid var(--bd); background:var(--sur2); font-size:12px; font-weight:700; color:var(--mu); }
         .bb-iv-th span:last-child { text-align:right; }
-        .bb-iv-tb { flex:1 1 auto; min-height:0; overflow-y:auto; padding:0 8px 6px 16px; }
+        .bb-iv-tb { flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden; padding:0 8px 6px 16px; }
         .bb-iv-tr { display:grid; grid-template-columns:64px minmax(0,1fr) 84px; gap:8px; padding:7px 4px; border-bottom:1px solid var(--bd); align-items:center; }
         .bb-iv-tr.ab { background:rgba(249,115,22,.08); }
-        .bb-iv-tr .t { font-size:13px; color:var(--mu); font-family:'Lato',sans-serif; font-variant-numeric:tabular-nums; }
+        .bb-iv-tr .t { font-size:13px; color:var(--mu); font-variant-numeric:tabular-nums; }
         .bb-iv-tr .m { min-width:0; }
         .bb-iv-tr .m1 { font-size:14px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .bb-iv-tr .m2 { font-size:11.5px; color:var(--mu); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .bb-iv-tr .m3 { font-size:11px; color:#c2410c; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-        .bb-iv-tr .d { text-align:right; white-space:nowrap; }
+        .bb-iv-tr .d { min-width:0; text-align:right; white-space:nowrap; overflow:hidden; }
         .bb-iv-tr .d1 { font-size:13.5px; font-variant-numeric:tabular-nums; }
         .bb-iv-tr .d1.long { color:#e11d74; font-weight:700; }
         .bb-iv-tr .d2 { font-size:10.5px; color:var(--mu); }
@@ -5957,44 +5971,44 @@
         .bb-iv-tr .d2.inf { color:#b45309; font-weight:700; }
         .bb-iv-tr .who { display:inline-block; margin-right:5px; padding:0 6px; border-radius:6px; background:var(--sur2); border:1px solid var(--bd); font-size:11.5px; font-weight:700; }
         .bb-iv-more { padding:9px; text-align:center; font-size:12.5px; color:var(--bl); font-weight:700; cursor:pointer; text-decoration:underline; }
-        .bb-iv-pf { flex:0 0 auto; padding:5px 16px 7px; border-top:1px solid var(--bd); font-size:11px; color:var(--mu); display:flex; gap:10px; }
+        .bb-iv-pf { flex:0 0 auto; padding:5px 16px 7px; border-top:1px solid var(--bd); font-size:11px; color:var(--mu); display:flex; gap:10px; white-space:nowrap; }
         .bb-iv-pf span:last-child { margin-left:auto; }
         `;
         document.head.appendChild(st);
 
         /* ───────── 화면 요소 붙이기 ───────── */
-        const attPage = $iv('bb-mm-page-att');
+        const box = document.querySelector('.bb-mm-box');
+        const track = $iv('bb-mm-track');
         const page = ivEl('div'); page.id = 'bb-iv-page';
         page.innerHTML =
-            '<div class="bb-att-head">' +
-              '<button class="bb-mm-nav bb-att-back" id="bb-iv-back" title="이석 현황으로 돌아가기"><span class="ar">«</span><span class="tx"><span class="l1">이석</span><span class="l2" style="display:block">현황</span></span></button>' +
+            '<div class="bb-iv-head">' +
               '<div class="bb-att-title" id="bb-iv-title">개입카드 현황</div>' +
               '<div class="bb-att-r2">' +
                 '<button class="bb-mm-nav bb-att-mbtn" id="bb-iv-today">오늘</button>' +
-                '<button class="bb-mm-nav bb-att-mbtn" id="bb-iv-yest">어제</button>' +
+                '<button class="bb-mm-nav bb-att-mbtn" id="bb-iv-cal-btn">달력</button>' +
                 '<button class="bb-mm-nav" id="bb-iv-all" title="그날 전체 처리 내역">상세 로그</button>' +
                 '<span class="bb-att-stat" id="bb-iv-stat"></span>' +
               '</div>' +
+              '<button class="bb-mm-nav" id="bb-iv-back" title="다중 모니터링으로 돌아가기"><span class="tx"><span class="l1">다중</span></span><span class="ar">»</span></button>' +
+              '<div class="bb-att-cal" id="bb-iv-cal"></div>' +
             '</div>' +
             '<div class="bb-iv-kpis" id="bb-iv-kpis"></div>' +
             '<div class="bb-iv-notes" id="bb-iv-notes"></div>' +
             '<div class="bb-iv-body" id="bb-iv-body"></div>' +
             '<div class="bb-iv-legend"><span><i style="background:repeating-linear-gradient(135deg,#e9b824 0 2px,#f7dc6a 2px 4px)"></i>휴게시간</span><span>막대 = 근무 시간대별 건수</span></div>';
-        attPage.appendChild(page);
+        page.inert = true;
+        box.appendChild(page);
 
         const pop = ivEl('div'); pop.id = 'bb-iv-pop';
         document.body.appendChild(pop);
 
-        // 이석 화면 아래쪽 안내 줄 오른쪽 끝에 진입 버튼
-        const host = attPage.querySelector('.bb-att-legend');
-        if (host) {
-            const txt = host.textContent;
-            host.textContent = '';
-            host.classList.add('bb-iv-host');
-            host.appendChild(ivEl('span', 'bb-iv-lt', txt));
-            const go = ivEl('button', 'bb-mm-nav'); go.id = 'bb-iv-go'; go.title = '개입카드 현황으로 전환';
-            go.innerHTML = '<span class="tx"><span class="l1">개입</span><span class="l2">카드</span></span><span class="ar">»</span>';
-            host.appendChild(go);
+        // 다중 모니터링 제목 왼쪽의 진입 버튼 (오른쪽 '이석 »' 과 대칭)
+        const mmHead = document.querySelector('#bb-mm-page-multi .bb-mm-head');
+        if (mmHead) {
+            mmHead.classList.add('bb-iv-hd');
+            const go = ivEl('button', 'bb-mm-nav bb-mm-goiv'); go.id = 'bb-iv-go'; go.title = '개입카드 현황으로 전환';
+            go.innerHTML = '<span class="ar">«</span><span class="tx"><span class="l1">개입</span><span class="l2">현황</span></span>';
+            mmHead.appendChild(go);
         }
 
         /* ───────── 데이터 ───────── */
@@ -6040,7 +6054,7 @@
             const title = $iv('bb-iv-title'), stat = $iv('bb-iv-stat'), body = $iv('bb-iv-body'), kp = $iv('bb-iv-kpis'), nt = $iv('bb-iv-notes');
             const date = ivDateNow(), isToday = date === ivOpDate();
             $iv('bb-iv-today').classList.toggle('on', isToday);
-            $iv('bb-iv-yest').classList.toggle('on', date === attAddDays(ivOpDate(), -1));
+            $iv('bb-iv-cal-btn').classList.toggle('on', !isToday);
             const d = _ivData && _ivData.date === date ? _ivData : null;
             title.replaceChildren();
             title.append('개입카드 현황 (' + ivMD(date) + ')');
@@ -6052,8 +6066,12 @@
                 return;
             }
             const T = d.totals || {};
-            title.append(ivEl('span', 'sep', ' - '), isToday ? '오늘 ' : '');
-            title.appendChild(ivEl('span', 'n', (T.solved || 0) + '건')).style.cssText = 'font-weight:900;color:#c2410c';
+            title.append(ivEl('span', 'sep', ' - '));
+            if (isToday) title.append('오늘 ');
+            else { const pst = ivEl('span', 'past', '과거 '); title.appendChild(pst); }
+            const cntEl = ivEl('span', 'n', (T.solved || 0) + '건');
+            cntEl.style.cssText = 'font-weight:900;color:#c2410c';
+            title.appendChild(cntEl);
             stat.textContent = isToday ? attHM(d.asOf) + ' 기준' : '';
             stat.classList.toggle('warn', _ivFail);
             if (_ivFail) stat.textContent = '갱신 실패';
@@ -6101,10 +6119,55 @@
             body.scrollTop = keep;
         }
 
+        /* ───────── 달력 (이석 화면과 같은 모양 · 로그(JSON)가 있는 날만 선택 가능) ───────── */
+        function ivCloseCal() { _ivCalOpen = false; $iv('bb-iv-cal').classList.remove('open'); }
+        async function ivOpenCal() {
+            if (_ivCalOpen) { ivCloseCal(); return; }
+            ivClosePop();
+            _ivCalOpen = true;
+            const p = ivDateNow().split('-').map(Number);
+            _ivCalYm = { y: p[0], m: p[1] };
+            $iv('bb-iv-cal').classList.add('open');
+            ivRenderCal('loading');
+            if (!_ivDates || Date.now() - _ivDatesAt > 60000) {
+                try {
+                    const d = await attFetchJson(IV_API + '?view=dates');
+                    if (!d || d.ok !== true || !Array.isArray(d.dates)) throw new Error('데이터 형식 오류');
+                    _ivDates = new Set(d.dates); _ivDatesAt = Date.now();
+                } catch (e) { console.warn('[BB] 개입카드 날짜 목록 실패:', e.message); if (_ivCalOpen) ivRenderCal('fail'); return; }
+            }
+            if (_ivCalOpen) ivRenderCal();
+        }
+        function ivRenderCal(state) {
+            const cal = $iv('bb-iv-cal');
+            if (state) { cal.replaceChildren(ivEl('div', 'bb-iv-msg' + (state === 'fail' ? ' warn' : ''), state === 'fail' ? '날짜 목록을 불러오지 못했습니다.' : '불러오는 중…')); return; }
+            const y = _ivCalYm.y, m = _ivCalYm.m;
+            const all = [..._ivDates].sort();
+            const minYm = all.length ? all[0].slice(0, 7) : null, maxYm = all.length ? all[all.length - 1].slice(0, 7) : null;
+            const ym = y + '-' + attPad(m);
+            const head = ivEl('div', 'bb-iv-cal-h');
+            const prev = ivEl('button', 'bb-mm-nav', '‹'), next = ivEl('button', 'bb-mm-nav', '›');
+            prev.dataset.mv = '-1'; next.dataset.mv = '1';
+            prev.disabled = !minYm || ym <= minYm; next.disabled = !maxYm || ym >= maxYm;
+            head.append(prev, ivEl('span', 't', y + '년 ' + m + '월'), next);
+            const grid = ivEl('div', 'bb-att-cal-grid');
+            ['일', '월', '화', '수', '목', '금', '토'].forEach(d => grid.appendChild(ivEl('div', 'bb-att-dow', d)));
+            const dow = new Date(Date.UTC(y, m - 1, 1)).getUTCDay(), dim = new Date(Date.UTC(y, m, 0)).getUTCDate();
+            for (let i = 0; i < dow; i++) grid.appendChild(ivEl('div'));
+            const today = ivOpDate(), sel = ivDateNow();
+            for (let d = 1; d <= dim; d++) {
+                const ds = ym + '-' + attPad(d);
+                const cell = ivEl('div', 'bb-att-day', String(d));
+                if (_ivDates.has(ds)) { cell.classList.add('has'); cell.dataset.date = ds; cell.appendChild(ivEl('span', 'dot')); }
+                if (ds === today) cell.classList.add('today');
+                if (ds === sel) cell.classList.add('sel');
+                grid.appendChild(cell);
+            }
+            cal.replaceChildren(head, grid);
+        }
+
         /* ───────── 팝업 ───────── */
         function ivPlacePop() {
-            const box = document.querySelector('.bb-mm-box');
-            if (!box) return;
             const br = box.getBoundingClientRect(), w = pop.offsetWidth;
             let left = br.left - w - 10;
             if (left < 8) left = Math.min(br.right + 10, window.innerWidth - w - 8);
@@ -6119,6 +6182,7 @@
         }
         function ivOpenPop(name, flt) {
             if (_ivPopName === name && !flt && pop.classList.contains('open')) { ivClosePop(); return; }
+            ivCloseCal();
             _ivPopName = name; _ivPopFilter = flt || 'all'; _ivPopLimit = IV_ROWS_STEP; _ivDetail = null;
             _ivPopKey = ivDateNow() + '|' + name;
             document.querySelectorAll('.bb-iv-row').forEach(e => e.classList.toggle('sel', e.dataset.name === name));
@@ -6170,7 +6234,7 @@
             if (d) {
                 const C = d.counts || {};
                 const pk = ivEl('div', 'bb-iv-pk');
-                const cell = (l, v, u, st) => { const e = ivEl('div'); e.appendChild(ivEl('div', 'l', l)); const vv = ivEl('div', 'v', v); if (st) vv.style.cssText = st; if (u) vv.appendChild(ivEl('small', '', u)); e.appendChild(vv); return e; };
+                const cell = (l, v, u, stl) => { const e = ivEl('div'); e.appendChild(ivEl('div', 'l', l)); const vv = ivEl('div', 'v', v); if (stl) vv.style.cssText = stl; if (u) vv.appendChild(ivEl('small', '', u)); e.appendChild(vv); return e; };
                 pk.append(cell('처리', String(C.solved || 0), '건'), cell('평균', d.avgSec == null ? '-' : ivDur(d.avgSec)), cell('최장', d.maxSec == null ? '-' : ivDur(d.maxSec), '', d.maxSec >= IV_LONG_SEC ? 'color:#e11d74' : ''), cell('이탈', String(C.abandoned || 0), '건', C.abandoned ? 'color:var(--or)' : ''));
                 head.appendChild(pk);
             }
@@ -6185,7 +6249,7 @@
                     bar.style.height = (brk || fut ? 56 : Math.round((c / max) * 52 + 4)) + 'px';
                     col.appendChild(bar);
                     hb.appendChild(col);
-                    hl.appendChild(ivEl('span', '', String(labels[i])));
+                    hl.appendChild(ivEl('span', '', attPad(labels[i]) + '시'));
                 });
                 hrs.append(hb, hl);
                 head.appendChild(hrs);
@@ -6212,13 +6276,15 @@
                 list.slice(0, _ivPopLimit).forEach(r => tb.appendChild(ivRowEl(r, special)));
                 if (!list.length) tb.appendChild(ivEl('div', 'bb-iv-msg', '해당하는 내역이 없습니다.'));
                 if (list.length > _ivPopLimit) { const m = ivEl('div', 'bb-iv-more', '더 보기 (' + (list.length - _ivPopLimit) + '건 남음)'); m.dataset.act = 'more'; tb.appendChild(m); }
-                foot.append(ivEl('span', '', list.length + '건 중 ' + Math.min(list.length, _ivPopLimit) + '건 표시'), ivEl('span', '', '‘추정’ = 이름을 근무표·휴게시간으로 좁힌 건 (건수 미포함)'));
+                foot.append(ivEl('span', '', list.length + '건 중 ' + Math.min(list.length, _ivPopLimit) + '건 표시'), ivEl('span', '', '추정 · 이탈 · 진행은 건수 제외'));
             }
             const keep = pop.querySelector('.bb-iv-tb'), top = keep ? keep.scrollTop : 0;
             pop.replaceChildren(head, th, tb, foot);
             tb.scrollTop = top;
             ivPlacePop();
         }
+        // 추정 근거를 한 줄로 (서버 문구 → 짧은 표현)
+        const ivBasisShort = b => (/한 명/.test(b || '') ? '이니셜로 추정' : /근무표/.test(b || '') ? '근무표로 추정' : '근무시간으로 추정');
         function ivRowEl(r, special) {
             const row = ivEl('div', 'bb-iv-tr' + (r.st === 'abandoned' || r.st === 'stopped' ? ' ab' : ''));
             row.appendChild(ivEl('span', 't', ivHMS(r.t)));
@@ -6229,37 +6295,46 @@
             m.appendChild(m1);
             m.appendChild(ivEl('div', 'm2', r.why || ''));
             if (r.c && r.c.length) m.appendChild(ivEl('div', 'm2', '후보: ' + r.c.join(', ')));
-            if (r.nx) m.appendChild(ivEl('div', 'm3', r.nx.s + '초 뒤 ' + (r.nx.n || '?') + (r.nx.k === 'i' ? '(추정)' : '') + '가 점유'));
-            if (r.pv) m.appendChild(ivEl('div', 'm3', '직전에 ' + (r.pv.n || '?') + (r.pv.k === 'i' ? '(추정)' : '') + '가 이탈'));
+            if (r.nx) m.appendChild(ivEl('div', 'm3', ivGap(r.nx.s) + ' ' + ivWho(r.nx) + ' 점유'));
+            if (r.pv) m.appendChild(ivEl('div', 'm3', '직전에 ' + ivWho(r.pv) + ' 이탈'));
             row.appendChild(m);
             const dd = ivEl('div', 'd');
-            let sec = r.e ? Math.round((r.e - r.t) / 1000) : null;
+            const sec = r.e ? Math.round((r.e - r.t) / 1000) : null;
             const d1 = ivEl('div', 'd1', r.st === 'ongoing' ? '진행중' : sec == null ? '-' : (r.approx ? '~' : '') + ivDur(sec));
             if (sec != null && sec >= IV_LONG_SEC && r.st === 'resolved') d1.classList.add('long');
             dd.appendChild(d1);
-            const tag = r.inf ? '추정' : r.st === 'abandoned' ? '이탈' : r.st === 'stopped' ? '수집중단' : '';
-            if (tag) dd.appendChild(ivEl('div', 'd2 ' + (r.inf ? 'inf' : 'ab'), tag + (r.inf && r.basis ? ' · ' + r.basis : '')));
+            const tag = r.inf ? ivBasisShort(r.basis) : r.st === 'abandoned' ? '이탈' : r.st === 'stopped' ? '수집중단' : '';
+            if (tag) dd.appendChild(ivEl('div', 'd2 ' + (r.inf ? 'inf' : 'ab'), tag));
             row.appendChild(dd);
             return row;
         }
 
         /* ───────── 전환 / 이벤트 ───────── */
+        // 열기: 개입 화면이 왼쪽에서 들어오고, 다중 화면은 오른쪽으로 밀려남 (이석 화면 전환과 같은 방향감)
         function ivSetOpen(v) {
             _ivOpen = v;
             page.classList.toggle('open', v);
             page.inert = !v;
-            if (v) { ivRender(); ivRefresh(true); } else ivClosePop();
+            track.style.transform = v ? 'translateX(50%)' : '';
+            if (v) { ivRender(); ivRefresh(true); } else { ivClosePop(); ivCloseCal(); }
         }
         function ivSetDate(d) {
-            if (ivDateNow() === (d || ivOpDate()) && _ivData && _ivData.date === (d || ivOpDate())) return;
+            ivCloseCal();
+            if (d === ivOpDate()) d = null;
+            if (_ivDate === d && _ivData && _ivData.date === ivDateNow()) return;
             _ivDate = d; _ivData = null; _ivFail = false; ivClosePop();
             ivRender(); ivRefresh(true);
         }
-        page.inert = true;
         $iv('bb-iv-go').addEventListener('click', ivSafe(() => ivSetOpen(true)));
         $iv('bb-iv-back').addEventListener('click', ivSafe(() => ivSetOpen(false)));
         $iv('bb-iv-today').addEventListener('click', ivSafe(() => ivSetDate(null)));
-        $iv('bb-iv-yest').addEventListener('click', ivSafe(() => ivSetDate(attAddDays(ivOpDate(), -1))));
+        $iv('bb-iv-cal-btn').addEventListener('click', ivSafe(() => ivOpenCal()));
+        $iv('bb-iv-cal').addEventListener('click', ivSafe(e => {
+            const mv = e.target.closest('button[data-mv]');
+            if (mv && !mv.disabled) { const t = _ivCalYm.y * 12 + (_ivCalYm.m - 1) + Number(mv.dataset.mv); _ivCalYm = { y: Math.floor(t / 12), m: (t % 12) + 1 }; ivRenderCal(); return; }
+            const day = e.target.closest('.bb-att-day.has');
+            if (day) ivSetDate(day.dataset.date);
+        }));
         $iv('bb-iv-all').addEventListener('click', ivSafe(() => ivOpenPop('__all')));
         $iv('bb-iv-body').addEventListener('click', ivSafe(e => { const r = e.target.closest('.bb-iv-row'); if (r) ivOpenPop(r.dataset.name); }));
         $iv('bb-iv-notes').addEventListener('click', ivSafe(e => { const b = e.target.closest('.bb-iv-note'); if (b) ivOpenPop(b.dataset.name, b.dataset.flt); }));
@@ -6272,14 +6347,15 @@
                 else if (a.dataset.act === 'retry') { _ivDetail = null; ivRenderPop(); ivLoadDetail(false); }
             }
         }));
-        document.addEventListener('click', ivSafe(e => {   // 바깥 클릭 → 팝업 닫기
+        document.addEventListener('click', ivSafe(e => {   // 바깥 클릭 → 팝업/달력 닫기
             if (_ivPopKey && !e.target.closest('#bb-iv-pop') && !e.target.closest('.bb-iv-row') && !e.target.closest('.bb-iv-note') && !e.target.closest('#bb-iv-all')) ivClosePop();
+            if (_ivCalOpen && !e.target.closest('#bb-iv-cal') && !e.target.closest('#bb-iv-cal-btn')) ivCloseCal();
         }), true);
-        document.addEventListener('keydown', ivSafe(e => { if (e.key === 'Escape' && _ivPopKey) ivClosePop(); }));
+        document.addEventListener('keydown', ivSafe(e => { if (e.key === 'Escape') { if (_ivPopKey) ivClosePop(); else if (_ivCalOpen) ivCloseCal(); } }));
 
-        const ivVisible = () => isOpen && _attView === 'att' && _ivOpen && !document.hidden;
+        const ivVisible = () => isOpen && _ivOpen && !document.hidden;
         setInterval(ivSafe(() => {
-            if (_ivPopKey && !(isOpen && _attView === 'att' && _ivOpen)) ivClosePop();   // 보드를 닫았거나 다른 화면으로 가면 팝업도 닫음
+            if (!isOpen && (_ivPopKey || _ivCalOpen)) { ivClosePop(); ivCloseCal(); }   // 보드를 닫으면 팝업/달력도 닫음
             if (ivVisible() && !_ivDate) ivRefresh(false);
         }), IV_REFRESH_MS);
         document.addEventListener('visibilitychange', ivSafe(() => { if (ivVisible() && !_ivDate) ivRefresh(false); }));
