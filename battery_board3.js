@@ -5832,7 +5832,7 @@
     try { if (localStorage.getItem('bbIv') === '0') _ivOn = false; } catch (e) { /* 저장소 접근 불가 → 그대로 켜짐 */ }
     if (_ivOn && document.getElementById('bb-mm-page-multi') && document.querySelector('.bb-mm-box') && typeof attFetchJson === 'function') {
         // ▼▼▼ '설명' 버튼을 눌렀을 때 보이는 안내문. 줄바꿈은 <br> 로 구분해서 아래 따옴표 안에 직접 쓰세요. ▼▼▼
-        const IV_HELP = '개입카드 데이터를 수 분 이내로 받아옵니다.<br>GPS 조치 및 기타 사유로 인한 페이지 이탈을 프로그램이 명확히 구분할 수 없기 때문에 개인별 건수 카운팅에서 제외했습니다.<br>시간대별로 개입 건수가 많을 수록 진행바가 녹색으로 짙어집니다.<br>NCC에 api를 전혀 호출하지 않는 로직이다보니 이름 성씨로 개입자를 추정하는 경우가 발생할 수 있습니다.<br>NCC 개입카드 기능 자체가 이미 문제가 많은 상황입니다. 따라서 완전한 정합성을 갖춘 데이터가 될 수는 없습니다만 대체적으로 일치하기에, 개개인의 개입카드 처리패턴을 파악하는 정도로 참조해주시면 되겠습니다.';
+        const IV_HELP = '개입카드 데이터를 수 분 이내로 받아옵니다.<br>GPS 조치 및 기타 사유로 인한 페이지 이탈을 프로그램이 명확히 구분할 수 없기 때문에 개인별 건수 카운팅에서 제외했습니다.<br>시간대별로 개입 건수가 많을 수록 진행바가 녹색으로 짙어집니다.<br>NCC에 api를 전혀 호출하지 않는 로직이다보니 이름 성씨로 개입자를 추정하는 경우가 발생할 수 있습니다.<br>NCC 개입카드 기능 자체가 이미 문제가 많은 상황입니다. 따라서 완전한 정합성을 갖춘 데이터가 될 수는 없습니다만 대체적으로 일치하기에, 개개인의 개입카드 처리패턴을 파악하는 정도로 참조해주시면 되겠습니다.<br>근무자가 퇴근 시 카드가 하단으로 재정렬됩니다.';
         // ▲▲▲ 여기까지 ▲▲▲
         const IV_API = ATT_API + '/intervene';
         const IV_REFRESH_MS = 30 * 1000;
@@ -5904,6 +5904,7 @@
         .bb-iv-nm { font-size:14.5px; font-weight:700; color:var(--tx); }
         .bb-iv-meta { font-size:11px; color:var(--mu); overflow:hidden; text-overflow:ellipsis; }
         .bb-iv-badge { padding:0 6px; border-radius:999px; border:1px solid #d99a06; background:#fbe9a8; color:#8a5a00; font-weight:900; font-size:10px; line-height:15px; flex:none; }
+        .bb-iv-badge.off { border-color:var(--bd2); background:var(--sur2); color:var(--mu); font-weight:700; }
         .bb-iv-segs { display:flex; gap:2px; height:8px; }
         .bb-iv-seg { flex:1; height:8px; border-radius:2px; box-sizing:border-box; }
         .bb-iv-seg.n0 { background:rgba(0,0,0,.06); }
@@ -6126,6 +6127,7 @@
                 l1.appendChild(ivEl('span', 'bb-iv-nm', p.name));
                 l1.appendChild(ivEl('span', 'bb-iv-meta', p.shift || ''));
                 if (p.onBreak) l1.appendChild(ivEl('span', 'bb-iv-badge', '휴게중'));
+                else if (p.off) l1.appendChild(ivEl('span', 'bb-iv-badge off', p.offKind === 'before' ? '출근 전' : '퇴근'));
                 mid.appendChild(l1);
                 if (p.hours) mid.appendChild(ivSegs(p, scale));
                 r.appendChild(mid);
@@ -6245,7 +6247,8 @@
             if (f === 'all') return true;
             if (f === 'ok') return r.st === 'resolved' && !r.inf;
             if (f === 'inf') return r.inf;
-            if (f === 'ab') return !r.inf && (r.st === 'abandoned' || r.st === 'stopped');
+            if (f === 'unk') return r.n === '';
+            if (f === 'ab') return !r.inf && r.n !== '' && (r.st === 'abandoned' || r.st === 'stopped');
             return true;
         }
         function ivRenderPop() {
@@ -6260,7 +6263,7 @@
             const x = ivEl('span', 'x', '✕'); x.dataset.act = 'close'; pt.appendChild(x);
             head.appendChild(pt);
 
-            if (d) {
+            if (d && name !== '__unresolved') {
                 const C = d.counts || {};
                 const pk = ivEl('div', 'bb-iv-pk');
                 const cell = (l, v, u, stl) => { const e = ivEl('div'); e.appendChild(ivEl('div', 'l', l)); const vv = ivEl('div', 'v', v); if (stl) vv.style.cssText = stl; if (u) vv.appendChild(ivEl('small', '', u)); e.appendChild(vv); return e; };
@@ -6283,10 +6286,10 @@
                 hrs.append(hb, hl);
                 head.appendChild(hrs);
             }
-            if (d) {
+            if (d && name !== '__unresolved') {
                 const fl = ivEl('div', 'bb-iv-fl');
                 const C = d.counts || {}, tot = d.rows.length;
-                const defs = [['all', '전체', tot], ['ok', '해결', C.solved || 0], ['inf', '추정', C.inferred || 0], ['ab', '이탈', C.abandoned || 0]];
+                const defs = [['all', '전체', tot], ['ok', '해결', C.solved || 0], ['inf', '추정', C.inferred || 0], ['ab', '이탈', C.abandoned || 0], ['unk', '특정 불가', name === '__all' ? d.rows.filter(r => r.n === '').length : 0]];
                 defs.forEach(([k, l, n]) => { if (k !== 'all' && !n && _ivPopFilter !== k) return; const c = ivEl('button', 'bb-iv-chip' + (_ivPopFilter === k ? ' on' : ''), l + ' ' + n); c.dataset.flt = k; fl.appendChild(c); });
                 fl.appendChild(ivEl('span', 'hint', '긴 처리(3분↑)는 분홍'));
                 head.appendChild(fl);
