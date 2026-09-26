@@ -5891,10 +5891,14 @@
         .bb-iv-row:hover { filter:brightness(1.03); }
         .bb-iv-row.sel { outline:2px solid var(--tx); outline-offset:1px; }
         .bb-iv-row.top { border-color:#f5a524; box-shadow:0 0 8px -2px rgba(245,165,36,.7); }
+        .bb-iv-row.m2 { border-color:#a9b1ba; box-shadow:0 0 8px -2px rgba(140,150,165,.7); }
+        .bb-iv-row.m3 { border-color:#c98a4b; box-shadow:0 0 8px -2px rgba(201,138,75,.7); }
         .bb-iv-row.brk { background:rgba(233,184,36,.2); }
         .bb-iv-row.off { opacity:.55; }
         .bb-iv-rank { width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11.5px; font-weight:900; background:var(--sur2); color:var(--mu); border:1.5px solid var(--bd2); }
         .bb-iv-row.top .bb-iv-rank { background:#f5a524; color:#fff; border-color:#f5a524; }
+        .bb-iv-row.m2 .bb-iv-rank { background:#a9b1ba; color:#fff; border-color:#a9b1ba; }
+        .bb-iv-row.m3 .bb-iv-rank { background:#c98a4b; color:#fff; border-color:#c98a4b; }
         .bb-iv-mid { min-width:0; display:flex; flex-direction:column; gap:4px; }
         .bb-iv-l1 { display:flex; align-items:baseline; gap:6px; min-width:0; white-space:nowrap; }
         .bb-iv-nm { font-size:14.5px; font-weight:700; color:var(--tx); }
@@ -5912,6 +5916,8 @@
         .bb-iv-cnt { text-align:right; white-space:nowrap; }
         .bb-iv-cnt .c { font-size:18px; font-weight:900; line-height:1.1; }
         .bb-iv-row.top .bb-iv-cnt .c { color:#c2620a; }
+        .bb-iv-row.m2 .bb-iv-cnt .c { color:#6b7480; }
+        .bb-iv-row.m3 .bb-iv-cnt .c { color:#a0632a; }
         .bb-iv-cnt .c small { margin-left:2px; font-size:11px; color:var(--mu); font-weight:700; }
         .bb-iv-cnt .a { font-size:10.5px; color:var(--mu); margin-top:2px; }
         .bb-iv-msg { padding:34px 8px; text-align:center; font-size:13px; color:var(--mu); }
@@ -6086,8 +6092,12 @@
             cntEl.style.cssText = 'font-weight:900;color:#c2410c';
             title.appendChild(cntEl);
             // 기준 시각 = 서버에서 데이터를 실제로 받아온 시각 (갱신에 실패하면 마지막으로 받은 시각을 경고색으로)
-            stat.textContent = isToday ? (_ivFail ? '⚠ ' : '') + attHM(d._at || d.asOf) + ' 기준' : '';
-            stat.classList.toggle('warn', _ivFail);
+            // 기준 시각 = 확장프로그램이 GitHub에 마지막으로 올린 시각 (화면에 보이는 데이터는 그 시각까지의 내용). 못 알면 받아온 시각에 '경'
+            const up = Math.max(0, ...Object.values(d.pcs || {}).map(x => (x && x.ts) || 0));
+            const stale = up > 0 && Date.now() - up > 10 * 60 * 1000;
+            stat.textContent = !isToday ? '' : up > 0 ? (_ivFail || stale ? '⚠ ' : '') + attHM(up) + ' 기준' : (_ivFail ? '⚠ ' : '') + attHM(d._at || d.asOf) + ' 경';
+            stat.title = up > 0 ? '확장프로그램이 데이터를 마지막으로 올린 시각 (약 3분 간격)' + (stale ? ' — 10분 넘게 올라오지 않았습니다' : '') : '이 화면이 데이터를 받아온 시각';
+            stat.classList.toggle('warn', _ivFail || stale);
 
             const k = (l, v, u) => { const e = ivEl('div', 'bb-iv-kpi'); e.appendChild(ivEl('span', 'l', l)); const s = ivEl('span', 'v', v); if (u) s.appendChild(ivEl('small', '', u)); e.appendChild(s); return e; };
             kp.replaceChildren(k('처리 건수', String(T.solved || 0), '건'), k('처리 인원', String(T.people || 0), '명'), k('평균 처리시간', T.avgSec == null ? '-' : ivDur(T.avgSec)));
@@ -6096,17 +6106,17 @@
             const chip = (label, n, name, flt) => { if (n > 0) { const b = ivEl('button', 'bb-iv-note', label + ' ' + n); b.dataset.name = name; b.dataset.flt = flt; chips.push(b); } };
             chip('추정', T.inferred, '__all', 'inf');
             chip('이탈', T.abandoned, '__all', 'ab');
-            chip('진행중', T.ongoing, '__all', 'ing');
             chip('이름 특정 불가', T.unresolved, '__unresolved', 'all');
             nt.replaceChildren(...chips);
 
             const scale = d.scale || [0, 1, 3, 6];
             const rows = [];
             d.people.forEach((p, i) => {
-                if (!p.solved && !p.hours && !p.inferred && !p.abandoned && !p.ongoing) return;
+                if (!p.solved && !p.hours && !p.inferred && !p.abandoned) return;
                 const r = ivEl('div', 'bb-iv-row');
                 r.dataset.name = p.name;
-                if (i === 0 && p.solved > 0) r.classList.add('top');
+                const medal = !p.off && p.solved > 0 && rows.length < 3 ? ['top', 'm2', 'm3'][rows.length] : '';
+                if (medal) r.classList.add(medal);
                 if (p.onBreak) r.classList.add('brk');
                 if (p.off) r.classList.add('off');
                 if (_ivPopName === p.name) r.classList.add('sel');
@@ -6114,7 +6124,7 @@
                 const mid = ivEl('div', 'bb-iv-mid');
                 const l1 = ivEl('div', 'bb-iv-l1');
                 l1.appendChild(ivEl('span', 'bb-iv-nm', p.name));
-                l1.appendChild(ivEl('span', 'bb-iv-meta', (p.shift || '') + (p.brk ? ' · 휴게 ' + p.brk + '시' : '')));
+                l1.appendChild(ivEl('span', 'bb-iv-meta', p.shift || ''));
                 if (p.onBreak) l1.appendChild(ivEl('span', 'bb-iv-badge', '휴게중'));
                 mid.appendChild(l1);
                 if (p.hours) mid.appendChild(ivSegs(p, scale));
@@ -6236,7 +6246,6 @@
             if (f === 'ok') return r.st === 'resolved' && !r.inf;
             if (f === 'inf') return r.inf;
             if (f === 'ab') return !r.inf && (r.st === 'abandoned' || r.st === 'stopped');
-            if (f === 'ing') return !r.inf && r.st === 'ongoing';
             return true;
         }
         function ivRenderPop() {
@@ -6277,7 +6286,7 @@
             if (d) {
                 const fl = ivEl('div', 'bb-iv-fl');
                 const C = d.counts || {}, tot = d.rows.length;
-                const defs = [['all', '전체', tot], ['ok', '해결', C.solved || 0], ['inf', '추정', C.inferred || 0], ['ab', '이탈', C.abandoned || 0], ['ing', '진행', C.ongoing || 0]];
+                const defs = [['all', '전체', tot], ['ok', '해결', C.solved || 0], ['inf', '추정', C.inferred || 0], ['ab', '이탈', C.abandoned || 0]];
                 defs.forEach(([k, l, n]) => { if (k !== 'all' && !n && _ivPopFilter !== k) return; const c = ivEl('button', 'bb-iv-chip' + (_ivPopFilter === k ? ' on' : ''), l + ' ' + n); c.dataset.flt = k; fl.appendChild(c); });
                 fl.appendChild(ivEl('span', 'hint', '긴 처리(3분↑)는 분홍'));
                 head.appendChild(fl);
@@ -6296,7 +6305,7 @@
                 list.slice(0, _ivPopLimit).forEach(r => tb.appendChild(ivRowEl(r, special)));
                 if (!list.length) tb.appendChild(ivEl('div', 'bb-iv-msg', '해당하는 내역이 없습니다.'));
                 if (list.length > _ivPopLimit) { const m = ivEl('div', 'bb-iv-more', '더 보기 (' + (list.length - _ivPopLimit) + '건 남음)'); m.dataset.act = 'more'; tb.appendChild(m); }
-                foot.append(ivEl('span', '', list.length + '건 중 ' + Math.min(list.length, _ivPopLimit) + '건 표시'), ivEl('span', '', '추정 · 이탈 · 진행은 건수 제외'));
+                foot.append(ivEl('span', '', list.length + '건 중 ' + Math.min(list.length, _ivPopLimit) + '건 표시'), ivEl('span', '', '추정 · 이탈은 건수 제외'));
             }
             const keep = pop.querySelector('.bb-iv-tb'), top = keep ? keep.scrollTop : 0;
             pop.replaceChildren(head, th, tb, foot);
