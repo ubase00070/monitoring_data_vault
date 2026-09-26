@@ -6107,7 +6107,7 @@
             const chip = (label, n, name, flt) => { if (n > 0) { const b = ivEl('button', 'bb-iv-note', label + ' ' + n); b.dataset.name = name; b.dataset.flt = flt; chips.push(b); } };
             chip('추정', T.inferred, '__all', 'inf');
             chip('이탈', T.abandoned, '__all', 'ab');
-            chip('이름 특정 불가', T.unresolved, '__unresolved', 'all');
+            chip('이름 특정 불가', T.unresolved, '__all', 'unk');   // 세 칩 모두 같은 '자세히' 창을 열고 필터만 다르게
             nt.replaceChildren(...chips);
 
             const scale = d.scale || [0, 1, 3, 6];
