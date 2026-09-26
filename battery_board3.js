@@ -5070,6 +5070,7 @@
     //    (판정 기준을 이 파일에 또 두면 서버와 어긋남 — 기준은 서버 lib/attendance-core.js 한 곳)
     //  - 새로고침하면 항상 다중 화면이 기본 (전환 상태를 저장하지 않음)
     // ============================================================
+    var _ivAlertHook = null;   // SECTION 18 이 등록하는 '다중 »' 버튼 점멸 동기화 함수
     var _attReady = false;   // SECTION 17 초기화가 끝난 뒤 true (openBoard 가 로딩 중에 먼저 호출되므로 var 로 선언 — _patrolReady 와 같은 방식)
     const ATT_API = 'https://multimonitoring.vercel.app/api';
     const ATT_REFRESH_MS = 30 * 1000;   // 서버는 1분 간격으로 수집 → 30초마다 확인해 새 데이터를 최대 30초 안에 반영
@@ -5146,6 +5147,7 @@
         const a = _patrolAnomaly;
         b.classList.toggle('alert', a.n > 0);
         b.title = a.n > 0 ? `다중 모니터링 ${a.n}대 POI 미갱신 (최대 ${a.max}분째) — 클릭하면 다중 화면으로` : '다중 모니터링으로 돌아가기';
+        if (_ivAlertHook) _ivAlertHook();
     }
 
     /* ───────── 데이터 로드 ───────── */
@@ -5828,6 +5830,9 @@
     let _ivOn = true;
     try { if (localStorage.getItem('bbIv') === '0') _ivOn = false; } catch (e) { /* 저장소 접근 불가 → 그대로 켜짐 */ }
     if (_ivOn && document.getElementById('bb-mm-page-multi') && document.querySelector('.bb-mm-box') && typeof attFetchJson === 'function') {
+        // ▼▼▼ '설명' 버튼을 눌렀을 때 보이는 안내문. 줄바꿈은 <br> 로 구분해서 아래 따옴표 안에 직접 쓰세요. ▼▼▼
+        const IV_HELP = '여기에 설명을 입력하세요.<br>줄바꿈은 &lt;br&gt; 로 구분합니다.';
+        // ▲▲▲ 여기까지 ▲▲▲
         const IV_API = ATT_API + '/intervene';
         const IV_REFRESH_MS = 30 * 1000;
         const IV_ROWS_STEP = 200;
@@ -5862,16 +5867,20 @@
         #bb-iv-page { position:absolute; inset:0; z-index:6; display:flex; flex-direction:column; background:var(--sur); font-family:'Paperlogy','Lato',-apple-system,sans-serif;
             transform:translateX(-100%); visibility:hidden; transition:transform .32s cubic-bezier(.4,0,.2,1), visibility 0s linear .32s; }
         #bb-iv-page.open { transform:translateX(0); visibility:visible; transition:transform .32s cubic-bezier(.4,0,.2,1), visibility 0s; }
-        .bb-iv-head { flex:0 0 auto; position:relative; padding:6px 8px; background:var(--sur); border-bottom:1px solid var(--bd); display:grid; grid-template-columns:minmax(0,1fr) auto; column-gap:8px; row-gap:6px; align-items:center; z-index:3; }
-        .bb-iv-head .bb-att-title { grid-column:1; }
-        .bb-iv-head .bb-att-r2 { grid-column:1; }
-        #bb-iv-back { grid-column:2; grid-row:1 / 3; align-self:stretch; height:auto; padding:0 7px; gap:3px; }
+        .bb-iv-head { flex:0 0 auto; position:relative; padding:6px 8px; background:var(--sur); border-bottom:1px solid var(--bd); display:grid; grid-template-columns:auto minmax(0,1fr) auto; column-gap:8px; row-gap:6px; align-items:center; z-index:3; }
+        .bb-iv-head .bb-att-title { grid-column:2; }
+        .bb-iv-head .bb-att-r2 { grid-column:2; }
+        #bb-iv-help-btn { grid-column:1; grid-row:1 / 3; align-self:stretch; height:auto; padding:0 8px; }
+        #bb-iv-help-btn.on { border-color:var(--bl); color:var(--bl); background:var(--bl2, #dbe8fd); }
+        .bb-iv-help { display:none; position:absolute; left:8px; right:8px; top:100%; margin-top:4px; max-height:60vh; overflow-y:auto; padding:12px 14px; background:var(--sur); border:1.5px solid var(--bd2); border-radius:10px; box-shadow:0 10px 28px rgba(0,0,0,.35); font-size:13px; line-height:1.65; color:var(--tx); word-break:keep-all; overflow-wrap:anywhere; }
+        .bb-iv-help.open { display:block; }
+        #bb-iv-back { grid-column:3; grid-row:1 / 3; align-self:stretch; height:auto; padding:0 7px; gap:3px; }
         .bb-iv-kpis { flex:0 0 auto; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); background:var(--sur2); border-bottom:1px solid var(--bd); }
         .bb-iv-kpi { padding:6px 8px; display:flex; flex-direction:column; gap:1px; border-left:1px solid var(--bd); }
         .bb-iv-kpi:first-child { border-left:0; }
         .bb-iv-kpi .l { font-size:11px; color:var(--mu); }
         .bb-iv-kpi .v { font-size:18px; font-weight:900; white-space:nowrap; }
-        .bb-iv-kpi .v small { font-size:11px; color:var(--mu); font-weight:700; }
+        .bb-iv-kpi .v small { margin-left:3px; font-size:11px; color:var(--mu); font-weight:700; }
         .bb-iv-notes { flex:0 0 auto; display:flex; flex-wrap:wrap; gap:5px; padding:5px 8px; border-bottom:1px solid var(--bd); background:var(--sur); }
         .bb-iv-notes:empty { display:none; }
         .bb-iv-note { height:22px; padding:0 9px; border-radius:999px; border:1.5px solid var(--bd2); font-size:11.5px; color:var(--tx); background:var(--sur2); cursor:pointer; display:inline-flex; align-items:center; font-family:inherit; }
@@ -5902,7 +5911,7 @@
         .bb-iv-cnt { text-align:right; white-space:nowrap; }
         .bb-iv-cnt .c { font-size:18px; font-weight:900; line-height:1.1; }
         .bb-iv-row.top .bb-iv-cnt .c { color:#c2620a; }
-        .bb-iv-cnt .c small { font-size:11px; color:var(--mu); font-weight:700; }
+        .bb-iv-cnt .c small { margin-left:2px; font-size:11px; color:var(--mu); font-weight:700; }
         .bb-iv-cnt .a { font-size:10.5px; color:var(--mu); margin-top:2px; }
         .bb-iv-msg { padding:34px 8px; text-align:center; font-size:13px; color:var(--mu); }
         .bb-iv-msg.warn { color:#c2410c; }
@@ -5934,7 +5943,7 @@
         .bb-iv-pk div { padding:6px 8px; border-radius:8px; background:var(--sur2); border:1px solid var(--bd); }
         .bb-iv-pk .l { font-size:11px; color:var(--mu); border:0; padding:0; background:none; }
         .bb-iv-pk .v { font-size:17px; font-weight:900; border:0; padding:0; background:none; white-space:nowrap; }
-        .bb-iv-pk .v small { font-size:11px; color:var(--mu); font-weight:700; }
+        .bb-iv-pk .v small { margin-left:3px; font-size:11px; color:var(--mu); font-weight:700; }
         .bb-iv-hrs { display:flex; flex-direction:column; gap:4px; }
         .bb-iv-hb, .bb-iv-hl { display:flex; gap:6px; }
         .bb-iv-hb { align-items:flex-end; height:74px; }
@@ -5982,22 +5991,24 @@
         const page = ivEl('div'); page.id = 'bb-iv-page';
         page.innerHTML =
             '<div class="bb-iv-head">' +
+              '<button class="bb-mm-nav" id="bb-iv-help-btn" title="이 화면 설명">설명</button>' +
               '<div class="bb-att-title" id="bb-iv-title">개입카드 현황</div>' +
               '<div class="bb-att-r2">' +
                 '<button class="bb-mm-nav bb-att-mbtn" id="bb-iv-today">오늘</button>' +
                 '<button class="bb-mm-nav bb-att-mbtn" id="bb-iv-cal-btn">달력</button>' +
                 '<button class="bb-mm-nav" id="bb-iv-all" title="그날 전체 처리 내역">상세 로그</button>' +
-                '<span class="bb-att-stat" id="bb-iv-stat"></span>' +
               '</div>' +
-              '<button class="bb-mm-nav" id="bb-iv-back" title="다중 모니터링으로 돌아가기"><span class="tx"><span class="l1">다중</span></span><span class="ar">»</span></button>' +
+              '<button class="bb-mm-nav bb-att-back" id="bb-iv-back" title="다중 모니터링으로 돌아가기"><span class="tx"><span class="l1">다중</span><span class="l2">미갱신</span></span><span class="ar">»</span></button>' +
               '<div class="bb-att-cal" id="bb-iv-cal"></div>' +
+              '<div class="bb-iv-help" id="bb-iv-help"></div>' +
             '</div>' +
             '<div class="bb-iv-kpis" id="bb-iv-kpis"></div>' +
             '<div class="bb-iv-notes" id="bb-iv-notes"></div>' +
             '<div class="bb-iv-body" id="bb-iv-body"></div>' +
-            '<div class="bb-iv-legend"><span><i style="background:repeating-linear-gradient(135deg,#e9b824 0 2px,#f7dc6a 2px 4px)"></i>휴게시간</span><span>막대 = 근무 시간대별 건수</span></div>';
+            '<div class="bb-iv-legend"><span><i style="background:repeating-linear-gradient(135deg,#e9b824 0 2px,#f7dc6a 2px 4px)"></i>휴게시간</span><span>막대 = 시간대별 건수</span><span class="bb-att-stat" id="bb-iv-stat"></span></div>';
         page.inert = true;
         box.appendChild(page);
+        $iv('bb-iv-help').innerHTML = IV_HELP;   // 직접 쓴 안내문(줄바꿈 = <br>)
 
         const pop = ivEl('div'); pop.id = 'bb-iv-pop';
         document.body.appendChild(pop);
@@ -6120,10 +6131,17 @@
         }
 
         /* ───────── 달력 (이석 화면과 같은 모양 · 로그(JSON)가 있는 날만 선택 가능) ───────── */
+        function ivCloseHelp() { $iv('bb-iv-help').classList.remove('open'); $iv('bb-iv-help-btn').classList.remove('on'); }
+        function ivToggleHelp() {
+            const h = $iv('bb-iv-help'), open = !h.classList.contains('open');
+            ivCloseCal(); ivClosePop();
+            h.classList.toggle('open', open);
+            $iv('bb-iv-help-btn').classList.toggle('on', open);
+        }
         function ivCloseCal() { _ivCalOpen = false; $iv('bb-iv-cal').classList.remove('open'); }
         async function ivOpenCal() {
             if (_ivCalOpen) { ivCloseCal(); return; }
-            ivClosePop();
+            ivClosePop(); ivCloseHelp();
             _ivCalOpen = true;
             const p = ivDateNow().split('-').map(Number);
             _ivCalYm = { y: p[0], m: p[1] };
@@ -6182,7 +6200,7 @@
         }
         function ivOpenPop(name, flt) {
             if (_ivPopName === name && !flt && pop.classList.contains('open')) { ivClosePop(); return; }
-            ivCloseCal();
+            ivCloseCal(); ivCloseHelp();
             _ivPopName = name; _ivPopFilter = flt || 'all'; _ivPopLimit = IV_ROWS_STEP; _ivDetail = null;
             _ivPopKey = ivDateNow() + '|' + name;
             document.querySelectorAll('.bb-iv-row').forEach(e => e.classList.toggle('sel', e.dataset.name === name));
@@ -6295,8 +6313,8 @@
             m.appendChild(m1);
             m.appendChild(ivEl('div', 'm2', r.why || ''));
             if (r.c && r.c.length) m.appendChild(ivEl('div', 'm2', '후보: ' + r.c.join(', ')));
-            if (r.nx) m.appendChild(ivEl('div', 'm3', ivGap(r.nx.s) + ' ' + ivWho(r.nx) + ' 점유'));
-            if (r.pv) m.appendChild(ivEl('div', 'm3', '직전에 ' + ivWho(r.pv) + ' 이탈'));
+            if (r.nx) m.appendChild(ivEl('div', 'm3', '같은 기체 · ' + ivGap(r.nx.s) + ' ' + ivWho(r.nx) + ' 점유'));
+            if (r.pv) m.appendChild(ivEl('div', 'm3', '같은 기체 · 직전에 ' + ivWho(r.pv) + ' 이탈'));
             row.appendChild(m);
             const dd = ivEl('div', 'd');
             const sec = r.e ? Math.round((r.e - r.t) / 1000) : null;
@@ -6316,7 +6334,7 @@
             page.classList.toggle('open', v);
             page.inert = !v;
             track.style.transform = v ? 'translateX(50%)' : '';
-            if (v) { ivRender(); ivRefresh(true); } else { ivClosePop(); ivCloseCal(); }
+            if (v) { ivRender(); ivRefresh(true); } else { ivClosePop(); ivCloseCal(); ivCloseHelp(); }
         }
         function ivSetDate(d) {
             ivCloseCal();
@@ -6328,6 +6346,7 @@
         $iv('bb-iv-go').addEventListener('click', ivSafe(() => ivSetOpen(true)));
         $iv('bb-iv-back').addEventListener('click', ivSafe(() => ivSetOpen(false)));
         $iv('bb-iv-today').addEventListener('click', ivSafe(() => ivSetDate(null)));
+        $iv('bb-iv-help-btn').addEventListener('click', ivSafe(() => ivToggleHelp()));
         $iv('bb-iv-cal-btn').addEventListener('click', ivSafe(() => ivOpenCal()));
         $iv('bb-iv-cal').addEventListener('click', ivSafe(e => {
             const mv = e.target.closest('button[data-mv]');
@@ -6350,8 +6369,9 @@
         document.addEventListener('click', ivSafe(e => {   // 바깥 클릭 → 팝업/달력 닫기
             if (_ivPopKey && !e.target.closest('#bb-iv-pop') && !e.target.closest('.bb-iv-row') && !e.target.closest('.bb-iv-note') && !e.target.closest('#bb-iv-all')) ivClosePop();
             if (_ivCalOpen && !e.target.closest('#bb-iv-cal') && !e.target.closest('#bb-iv-cal-btn')) ivCloseCal();
+            if ($iv('bb-iv-help').classList.contains('open') && !e.target.closest('#bb-iv-help') && !e.target.closest('#bb-iv-help-btn')) ivCloseHelp();
         }), true);
-        document.addEventListener('keydown', ivSafe(e => { if (e.key === 'Escape') { if (_ivPopKey) ivClosePop(); else if (_ivCalOpen) ivCloseCal(); } }));
+        document.addEventListener('keydown', ivSafe(e => { if (e.key === 'Escape') { if (_ivPopKey) ivClosePop(); else if (_ivCalOpen) ivCloseCal(); else ivCloseHelp(); } }));
 
         const ivVisible = () => isOpen && _ivOpen && !document.hidden;
         setInterval(ivSafe(() => {
@@ -6360,6 +6380,15 @@
         }), IV_REFRESH_MS);
         document.addEventListener('visibilitychange', ivSafe(() => { if (ivVisible() && !_ivDate) ivRefresh(false); }));
         window.addEventListener('resize', ivSafe(() => { if (_ivPopKey) ivPlacePop(); }));
+        // 다중 모니터링에 '미갱신' 이상이 있으면 « 다중 버튼과 똑같이 '다중 »' 버튼도 점멸 (syncAttBackAlert 에서 호출)
+        _ivAlertHook = ivSafe(() => {
+            const b = $iv('bb-iv-back');
+            if (!b) return;
+            const a = _patrolAnomaly;
+            b.classList.toggle('alert', a.n > 0);
+            b.title = a.n > 0 ? `다중 모니터링 ${a.n}대 POI 미갱신 (최대 ${a.max}분째) — 클릭하면 다중 화면으로` : '다중 모니터링으로 돌아가기';
+        });
+        _ivAlertHook();
         console.log('[BB] 개입카드 현황 켜짐 (SECTION 18)');
     }
     } catch (e) { console.warn('[BB] 개입카드 초기화 실패 — 기존 기능에는 영향 없음:', e && e.message); }
