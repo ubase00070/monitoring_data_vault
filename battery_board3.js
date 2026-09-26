@@ -6345,7 +6345,10 @@
             page.classList.toggle('open', v);
             page.inert = !v;
             track.style.transform = v ? 'translateX(50%)' : '';
-            if (v) { ivRender(); ivRefresh(true); } else { ivClosePop(); ivCloseCal(); ivCloseHelp(); }
+            const multi = $iv('bb-mm-page-multi');
+            if (multi) multi.inert = v;   // 개입 화면이 열려 있는 동안 화면 밖으로 밀려난 다중 화면은 클릭/탭 이동 불가
+            if (v) { ivRender(); if (!_ivData || _ivData.date !== ivDateNow() || Date.now() - (_ivData._at || 0) > 10000) ivRefresh(true); }   // 왔다 갔다 해도 10초 안이면 다시 요청하지 않음
+            else { ivClosePop(); ivCloseCal(); ivCloseHelp(); }
         }
         function ivSetDate(d) {
             ivCloseCal();
