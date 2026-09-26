@@ -5839,6 +5839,8 @@
         const IV_ROWS_STEP = 200;
         const IV_LONG_SEC = 180;
         let _ivOpen = false, _ivDate = null, _ivData = null, _ivBusy = false, _ivFail = false, _ivSeq = 0;
+        let _ivSort = 'shift';
+        try { if (localStorage.getItem('bbIvSort') === 'cnt') _ivSort = 'cnt'; } catch (e) { /* 기본값 */ }
         let _ivPopKey = null, _ivPopName = null, _ivPopFilter = 'all', _ivPopLimit = IV_ROWS_STEP, _ivDetail = null;
         let _ivDates = null, _ivDatesAt = 0, _ivCalOpen = false, _ivCalYm = null;
         const _ivDetailCache = {};
@@ -5885,20 +5887,14 @@
         .bb-iv-notes { flex:0 0 auto; display:flex; flex-wrap:wrap; gap:5px; padding:5px 8px; border-bottom:1px solid var(--bd); background:var(--sur); }
         .bb-iv-notes:empty { display:none; }
         .bb-iv-note { height:22px; padding:0 9px; border-radius:999px; border:1.5px solid var(--bd2); font-size:11.5px; color:var(--tx); background:var(--sur2); cursor:pointer; display:inline-flex; align-items:center; font-family:inherit; }
+        .bb-iv-sort { margin-left:auto; }
         .bb-iv-note:hover { border-color:var(--mu); }
         .bb-iv-body { flex:1 1 auto; min-height:0; overflow-y:auto; padding:6px; display:flex; flex-direction:column; gap:5px; }
-        .bb-iv-row { flex:0 0 auto; box-sizing:border-box; display:grid; grid-template-columns:22px minmax(0,1fr) 62px; column-gap:8px; align-items:center; padding:7px 9px; border-radius:9px; border:2px solid var(--bd2); background:var(--sur); cursor:pointer; }
+        .bb-iv-row { flex:0 0 auto; box-sizing:border-box; display:grid; grid-template-columns:minmax(0,1fr) 62px; column-gap:8px; align-items:center; padding:7px 9px; border-radius:9px; border:2px solid var(--bd2); background:var(--sur); cursor:pointer; }
         .bb-iv-row:hover { filter:brightness(1.03); }
         .bb-iv-row.sel { outline:2px solid var(--tx); outline-offset:1px; }
-        .bb-iv-row.top { border-color:#f5a524; box-shadow:0 0 8px -2px rgba(245,165,36,.7); }
-        .bb-iv-row.m2 { border-color:#a9b1ba; box-shadow:0 0 8px -2px rgba(140,150,165,.7); }
-        .bb-iv-row.m3 { border-color:#c98a4b; box-shadow:0 0 8px -2px rgba(201,138,75,.7); }
         .bb-iv-row.brk { background:rgba(233,184,36,.2); }
         .bb-iv-row.off { opacity:.55; }
-        .bb-iv-rank { width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11.5px; font-weight:900; background:var(--sur2); color:var(--mu); border:1.5px solid var(--bd2); }
-        .bb-iv-row.top .bb-iv-rank { background:#f5a524; color:#fff; border-color:#f5a524; }
-        .bb-iv-row.m2 .bb-iv-rank { background:#a9b1ba; color:#fff; border-color:#a9b1ba; }
-        .bb-iv-row.m3 .bb-iv-rank { background:#c98a4b; color:#fff; border-color:#c98a4b; }
         .bb-iv-mid { min-width:0; display:flex; flex-direction:column; gap:4px; }
         .bb-iv-l1 { display:flex; align-items:baseline; gap:6px; min-width:0; white-space:nowrap; }
         .bb-iv-nm { font-size:14.5px; font-weight:700; color:var(--tx); }
@@ -5916,9 +5912,6 @@
         .bb-iv-seg.cur { box-shadow:0 0 0 1.5px var(--bl); }
         .bb-iv-cnt { text-align:right; white-space:nowrap; }
         .bb-iv-cnt .c { font-size:18px; font-weight:900; line-height:1.1; }
-        .bb-iv-row.top .bb-iv-cnt .c { color:#c2620a; }
-        .bb-iv-row.m2 .bb-iv-cnt .c { color:#6b7480; }
-        .bb-iv-row.m3 .bb-iv-cnt .c { color:#a0632a; }
         .bb-iv-cnt .c small { margin-left:2px; font-size:11px; color:var(--mu); font-weight:700; }
         .bb-iv-cnt .a { font-size:10.5px; color:var(--mu); margin-top:2px; }
         .bb-iv-msg { padding:34px 8px; text-align:center; font-size:13px; color:var(--mu); }
@@ -6070,6 +6063,21 @@
             });
             return wrap;
         }
+        // 정렬: 'shift' = 출근 시각 순(순위 없음, 기본) / 'cnt' = 처리 건수 순. 퇴근·출근 전은 어느 쪽이든 아래로.
+        function ivShiftKey(p) {
+            const m = /^(\d{2})(?::(\d{2}))?[–-](\d{2})/.exec(p.shift || '');
+            if (!m) return [9999, 9999];
+            let st = +m[1] * 60 + (+m[2] || 0);
+            if (st < 420) st += 1440;                      // 07:00 시작 근무일 기준 (00~06시 시작은 뒤로)
+            return [st, +m[3]];
+        }
+        function ivSortPeople(list) {
+            if (_ivSort === 'cnt') return list.slice();    // 서버가 이미 건수순
+            return list.slice().sort((a, b) => {
+                const ka = ivShiftKey(a), kb = ivShiftKey(b);
+                return Number(a.off) - Number(b.off) || ka[0] - kb[0] || ka[1] - kb[1] || String(a.name).localeCompare(String(b.name), 'ko');
+            });
+        }
         function ivRender() {
             const title = $iv('bb-iv-title'), stat = $iv('bb-iv-stat'), body = $iv('bb-iv-body'), kp = $iv('bb-iv-kpis'), nt = $iv('bb-iv-notes');
             const date = ivDateNow(), isToday = date === ivOpDate();
@@ -6108,20 +6116,21 @@
             chip('추정', T.inferred, '__all', 'inf');
             chip('이탈', T.abandoned, '__all', 'ab');
             chip('이름 특정 불가', T.unresolved, '__all', 'unk');   // 세 칩 모두 같은 '자세히' 창을 열고 필터만 다르게
+            const sb = ivEl('button', 'bb-iv-note bb-iv-sort', _ivSort === 'cnt' ? '건수순' : '근무시간순');
+            sb.title = '목록 정렬 방식 바꾸기';
+            sb.dataset.sort = '1';
+            chips.push(sb);
             nt.replaceChildren(...chips);
 
             const scale = d.scale || [0, 1, 3, 6];
             const rows = [];
-            d.people.forEach((p, i) => {
+            ivSortPeople(d.people).forEach((p) => {
                 if (!p.solved && !p.hours && !p.inferred && !p.abandoned) return;
                 const r = ivEl('div', 'bb-iv-row');
                 r.dataset.name = p.name;
-                const medal = !p.off && p.solved > 0 && rows.length < 3 ? ['top', 'm2', 'm3'][rows.length] : '';
-                if (medal) r.classList.add(medal);
                 if (p.onBreak) r.classList.add('brk');
                 if (p.off) r.classList.add('off');
                 if (_ivPopName === p.name) r.classList.add('sel');
-                r.appendChild(ivEl('span', 'bb-iv-rank', String(rows.length + 1)));
                 const mid = ivEl('div', 'bb-iv-mid');
                 const l1 = ivEl('div', 'bb-iv-l1');
                 l1.appendChild(ivEl('span', 'bb-iv-nm', p.name));
@@ -6373,7 +6382,7 @@
         }));
         $iv('bb-iv-all').addEventListener('click', ivSafe(() => ivOpenPop('__all')));
         $iv('bb-iv-body').addEventListener('click', ivSafe(e => { const r = e.target.closest('.bb-iv-row'); if (r) ivOpenPop(r.dataset.name); }));
-        $iv('bb-iv-notes').addEventListener('click', ivSafe(e => { const b = e.target.closest('.bb-iv-note'); if (b) ivOpenPop(b.dataset.name, b.dataset.flt); }));
+        $iv('bb-iv-notes').addEventListener('click', ivSafe(e => { const b = e.target.closest('.bb-iv-note'); if (!b) return; if (b.dataset.sort) { _ivSort = _ivSort === 'cnt' ? 'shift' : 'cnt'; try { localStorage.setItem('bbIvSort', _ivSort); } catch (x) { /* 저장 못 해도 이번엔 적용 */ } ivRender(); return; } ivOpenPop(b.dataset.name, b.dataset.flt); }));
         pop.addEventListener('click', ivSafe(e => {
             const c = e.target.closest('.bb-iv-chip'), a = e.target.closest('[data-act]');
             if (c) { _ivPopFilter = c.dataset.flt; _ivPopLimit = IV_ROWS_STEP; ivRenderPop(); }
