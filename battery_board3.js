@@ -6585,7 +6585,7 @@
             cells.push(kCell('최다 배달자', topTxt));
             kpi.replaceChildren(...cells);
             $dl('bb-dlog-note').innerHTML = isToday
-                ? '* 11:00부터 2시간마다 업데이트<br>23:00에 금일 집계 마감.'
+                ? '* 11:00부터 2시간마다 업데이트<br>23:00에 금일 집계 마감(07~23시 합산).'
                 : '* 확정된 기록입니다.';
             if (!deliveries.length) { body.innerHTML = '<div class="bb-att-msg">이 날짜의 배달 완료 기록이 없습니다.' + (isToday && pending ? ' (진행 중 ' + pending + '건은 다음 조회 때 반영됩니다)' : '') + '</div>'; return; }
             // 배달 건이 앞, 아래 줄에 배정 시각·주문번호(+복사 버튼) — 오른쪽엔 수행자 · 소요시간(라벨 포함) — 07시부터 시간순으로 쌓인 걸 최신이 맨 위로 오게 뒤집어서 보여줌
