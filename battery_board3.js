@@ -6544,12 +6544,13 @@
             cells.push(kCell('상태', stateTxt));
             kpi.replaceChildren(...cells);
             if (!deliveries.length) { body.innerHTML = '<div class="bb-att-msg">이 날짜의 배달 완료 기록이 없습니다.' + (isToday && pending ? ' (진행 중 ' + pending + '건은 다음 조회 때 반영됩니다)' : '') + '</div>'; return; }
-            // 배달 건이 앞, 수행자는 그 옆(아래 줄)에 — 최근 배정된 순
+            // 배달 건이 앞, 그 옆(아래 줄)에 시각·주문번호·수행자 — 07시부터 시간순으로 쌓인 걸 최신이 맨 위로 오게 뒤집어서 보여줌
             body.replaceChildren(...deliveries.slice().reverse().map(r => {
                 const row = dlEl('div', 'bb-fbp-row');
                 const dot = dlEl('span', 'bb-fbp-dot'); dot.style.background = 'var(--pk)';
                 const main = dlEl('span', 'bb-fbp-main');
                 main.appendChild(dlEl('span', 'bb-fbp-name', dlSiteLabel(r)));
+                main.appendChild(dlEl('span', 'bb-fbp-sub', '배정 ' + (r.assignedAt || '-') + (r.orderNo ? ' · 주문번호 ' + r.orderNo : ' · 주문번호 없음')));
                 main.appendChild(dlEl('span', 'bb-fbp-sub', dlWhoLabel(r)));
                 row.append(dot, main, dlEl('span', 'bb-fbp-now', r.durationSec != null ? attDurHM(r.durationSec) : '-'));
                 return row;
