@@ -963,6 +963,19 @@
         .bb-fbp-time { display:flex; flex-direction:column; align-items:flex-end; gap:1px; flex-shrink:0; }
         .bb-fbp-time .l { font-size:9.5px; color:var(--mu); font-weight:700; white-space:nowrap; }
         .bb-fbp-time .v { font-size:12px; font-weight:800; color:var(--tx); white-space:nowrap; }
+        /* 배달 로그 패널 안 텍스트만 1px씩 키움 (다른 고정 버튼 팝업 방전 로그 등과 공유하는 클래스라 여기서만 덮어씀) */
+        #bb-dlog-panel .bb-fbp-name { font-size:14px; }
+        #bb-dlog-panel .bb-fbp-sub { font-size:12px; }
+        #bb-dlog-panel .bb-fbp-who { font-size:13px; }
+        #bb-dlog-panel .bb-fbp-time .l { font-size:10.5px; }
+        #bb-dlog-panel .bb-fbp-time .v { font-size:13px; }
+        .bb-dlog-meta { display:flex; align-items:center; gap:12px; }   /* '배정 …' 과 '주문번호 …' 사이 간격 */
+        .bb-dlog-ord { display:inline-flex; align-items:center; gap:4px; }
+        .bb-dlog-copy {
+            border:none; background:transparent; cursor:pointer; font-size:11px; line-height:1;
+            padding:2px 3px; border-radius:4px; opacity:.75;
+        }
+        .bb-dlog-copy:hover { opacity:1; background:var(--sur2); }
         .bb-alertlog-day { margin-bottom:14px; }
         .bb-alertlog-day-title {
             display:flex; align-items:center; gap:10px;
@@ -6551,15 +6564,33 @@
             if (isToday && pending > 0) cells.push(kCell('확인 중', pending + '건'));   // 2시간 간격 폴링 특성상, 다음 조회 전까지는 실제로 끝났어도 여기 잡혀 있을 수 있음
             cells.push(kCell('상태', stateTxt));
             kpi.replaceChildren(...cells);
-            $dl('bb-dlog-note').textContent = isToday ? '* 2시간마다 업데이트되고 자정에 마감됩니다' : '* 확정된 기록입니다';
+            $dl('bb-dlog-note').textContent = isToday ? '* 2시간마다 업데이트되고 자정에 마감됩니다.' : '* 확정된 기록입니다.';
             if (!deliveries.length) { body.innerHTML = '<div class="bb-att-msg">이 날짜의 배달 완료 기록이 없습니다.' + (isToday && pending ? ' (진행 중 ' + pending + '건은 다음 조회 때 반영됩니다)' : '') + '</div>'; return; }
-            // 배달 건이 앞, 아래 줄에 배정 시각·주문번호 — 오른쪽엔 수행자 · 소요시간(라벨 포함) — 07시부터 시간순으로 쌓인 걸 최신이 맨 위로 오게 뒤집어서 보여줌
+            // 배달 건이 앞, 아래 줄에 배정 시각·주문번호(+복사 버튼) — 오른쪽엔 수행자 · 소요시간(라벨 포함) — 07시부터 시간순으로 쌓인 걸 최신이 맨 위로 오게 뒤집어서 보여줌
             body.replaceChildren(...deliveries.slice().reverse().map(r => {
                 const row = dlEl('div', 'bb-fbp-row');
                 const dot = dlEl('span', 'bb-fbp-dot'); dot.style.background = 'var(--pk)';
                 const main = dlEl('span', 'bb-fbp-main');
                 main.appendChild(dlEl('span', 'bb-fbp-name', dlSiteLabel(r)));
-                main.appendChild(dlEl('span', 'bb-fbp-sub', '배정 ' + (r.assignedAt || '-') + (r.orderNo ? ' · 주문번호 ' + r.orderNo : ' · 주문번호 없음')));
+                const meta = dlEl('span', 'bb-fbp-sub bb-dlog-meta');
+                meta.appendChild(dlEl('span', '', '배정 ' + (r.assignedAt || '-')));
+                if (r.orderNo) {
+                    const ordWrap = dlEl('span', 'bb-dlog-ord');
+                    ordWrap.appendChild(dlEl('span', '', '주문번호 ' + r.orderNo));
+                    const copyBtn = dlEl('button', 'bb-dlog-copy', '📋');
+                    copyBtn.type = 'button'; copyBtn.title = '주문번호 복사';
+                    copyBtn.addEventListener('click', async (e) => {
+                        e.stopPropagation();
+                        try { await navigator.clipboard.writeText(r.orderNo); copyBtn.textContent = '✅'; }
+                        catch (err) { copyBtn.textContent = '⚠️'; }
+                        setTimeout(() => { copyBtn.textContent = '📋'; }, 1200);
+                    });
+                    ordWrap.appendChild(copyBtn);
+                    meta.appendChild(ordWrap);
+                } else {
+                    meta.appendChild(dlEl('span', '', '주문번호 없음'));
+                }
+                main.appendChild(meta);
                 const right = dlEl('span', 'bb-fbp-right');
                 right.appendChild(dlEl('span', 'bb-fbp-who', dlWhoLabel(r)));
                 const time = dlEl('span', 'bb-fbp-time');
