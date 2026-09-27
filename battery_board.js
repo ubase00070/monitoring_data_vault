@@ -96,7 +96,7 @@
             height:980px; max-height:100vh; overflow-y:auto; overflow-x:hidden;   /* 기본 크기 = 즐겨찾기 20대 + 안내 문구가 들어가는 높이 (955 = 104 + 20 + 774 + 51 + 6) + 여유 25px.
                즐겨찾기가 정확히 최대(20대)일 때 예전엔 여유가 0이라 카드 실측 높이가 ROW_H(33px) 가정과 1~2px만 어긋나도(줄간격 렌더링 반올림 등) 카드 영역(.bb-list-wrap)에 스크롤이 생겼음 — 그 여유분 */
             border:3px solid transparent; border-radius:16px;
-            background-image: var(--bg-fill), linear-gradient(135deg, #b6f2c9, #34d399);
+            background-image: var(--bg-fill), linear-gradient(135deg, #d9b8ff, #9333ea);
             background-origin: border-box;
             background-clip: padding-box, border-box;
             box-shadow:0 24px 60px rgba(0,0,0,.75);
@@ -122,7 +122,7 @@
             position:relative; display:inline-flex; flex-direction:column; align-items:center; gap:3px;
             padding:7px 28px 6px; border-radius:12px;
             border:2.5px solid transparent;
-            background-image: linear-gradient(var(--bg), var(--bg)), linear-gradient(135deg, #b6f2c9, #34d399);
+            background-image: linear-gradient(var(--bg), var(--bg)), linear-gradient(135deg, #d9b8ff, #9333ea);
             background-origin: border-box; background-clip: padding-box, border-box;
             cursor:grab;
         }
@@ -193,7 +193,7 @@
         }
         .bb-rbtns > button, .bb-fixbtns > .bb-fb {   /* 좌·우 6개 버튼 공통: 같은 크기(140×26) · 같은 글자 크기(11px) */
             position:relative; width:100%; height:26px; padding:0 2px; gap:2px; border-radius:7px; border:1.5px solid var(--bd2);
-            font-size:11px; font-weight:800;   /* 방전 로그(최근 15일) 같은 긴 이름이 140px 안에 들어가도록 (양쪽 여유 약 6px) */ font-family:inherit; white-space:nowrap; overflow:visible;
+            font-size:11px; font-weight:800;   /* 방전 로그(최근 30일) 같은 긴 이름이 140px 안에 들어가도록 (양쪽 여유 약 6px) */ font-family:inherit; white-space:nowrap; overflow:visible;
             display:inline-flex; align-items:center; justify-content:center; box-sizing:border-box; cursor:pointer;
         }
         .bb-fb {
@@ -215,9 +215,8 @@
         #bb-fb-slow { background:#fff3b5; border-color:#e8d374; color:#514510; }
         #bb-fb-slow:hover { background:#ffec96; border-color:#d9bd45; }
         #bb-fb-slow.active { background:#ffe680; border-color:#7d6a0a; }
-        #bb-fb-moff { background:#e6dcff; border-color:#c4b3f0; color:#3b2b66; }
-        #bb-fb-moff:hover { background:#dccfff; border-color:#a893e6; }
-        #bb-fb-moff.active { background:#cdbcff; border-color:#4f3a94; }
+        #bb-fb-dlog { background:#e6dcff; border-color:#c4b3f0; color:#3b2b66; }
+        #bb-fb-dlog:hover { background:#dccfff; border-color:#a893e6; }
         #bb-fb-neglect { background:#ffe1b8; border-color:#eab476; color:#5c3d12; }   /* 방치/미주차: 주차 표지판 느낌의 연한 주황빛 */
         #bb-fb-neglect:hover { background:#ffd394; border-color:#dd9a48; }
         #bb-fb-neglect.active { background:#ffc772; border-color:#8a5a12; }
@@ -232,6 +231,7 @@
         .bb-fb-n.b { background:#3b82f6; }
         .bb-fb-n.g { background:#16a34a; }   /* 저속충전 배지: 충전 중인 기체 중에서 감지하는 것이라 초록 */
         .bb-fb-n.y { background:#eab308; }   /* 방치/미주차 배지: 노랑 */
+        .bb-fb-n.pk { background:var(--pk); }   /* 배달 로그 배지: 카드의 '배달 중' 표시와 같은 핑크 */
         .bb-fb-n.z { background:var(--sur); color:var(--mu); border:1px solid var(--bd2); line-height:15px; box-shadow:none; }   /* 0대 */
 
         /* 고정 버튼 목록 창 (버튼 아래에 뜸, 열어 둔 채로 2분마다 자동 갱신) */
@@ -687,6 +687,8 @@
             cursor:pointer; white-space:nowrap; display:inline-flex; align-items:center; justify-content:center; flex:none;
         }
         .bb-mm-nav:hover { border-color:var(--mu); }
+        #bb-att-detailbtn, #bb-iv-all { background:#ffd9e4; border-color:#f2a7bf; color:#5c2233; }   /* 이석 현황 / 개입카드 현황의 '자세히': 카드 제거(#bb-rmbtn)와 같은 파스텔 연핑크 */
+        #bb-att-detailbtn:hover, #bb-iv-all:hover { background:#ffc9d9; border-color:#ea86a5; }
         .bb-mm-goatt { position:absolute; right:8px; top:50%; transform:translateY(-50%); height:auto; padding:5px 9px; gap:5px; }
         /* 두 줄 버튼 공통: 화살표(« »)는 글자 옆에 따로 두고, 두 줄 글자는 같은 크기 · 가운데 정렬 */
         .bb-mm-nav .ar { flex:none; font-size:14px; line-height:1; }
@@ -701,12 +703,13 @@
 
         .bb-att-head { flex:0 0 auto; position:relative; padding:6px 8px; background:var(--sur); border-bottom:1px solid var(--bd); display:grid; grid-template-columns:auto minmax(0,1fr); column-gap:8px; row-gap:6px; align-items:center; z-index:3; }
         .bb-att-back { grid-row:1 / 3; grid-column:1; }
-        .bb-att-title { grid-column:2; min-width:0; text-align:center; font-size:14px; line-height:1.25; color:var(--tx); }
+        .bb-att-title { grid-column:2; min-width:0; text-align:left; font-size:14px; line-height:1.25; color:var(--tx); }
         .bb-att-title .n { color:var(--rd); }
         .bb-att-title .sep { color:var(--mu); }
         .bb-att-title .past { color:var(--or); }
         .bb-att-r2 { grid-column:2; min-width:0; display:flex; align-items:center; gap:5px; }
-        .bb-att-mbtn { min-width:44px; padding:0 7px; }
+        .bb-att-mbtn { min-width:40px; padding:0 6px; }
+        .bb-att-r2 .bb-mm-nav { padding:0 6px; }
         .bb-att-mbtn.on { border-color:var(--bl); color:var(--bl); background:var(--bl2); }
         .bb-att-stat { margin-left:auto; font-size:11.5px; color:var(--mu); white-space:nowrap; }
         .bb-att-stat.warn { color:#c2410c; }
@@ -760,7 +763,7 @@
             --rd:#ef4444; --or:#f97316; --pk:#ff1493; --bl:#3b82f6; --gn:#22c55e;
             display:none; position:fixed; color:var(--tx); font-family:'Paperlogy','Lato',-apple-system,sans-serif;
             border:3px solid transparent; border-radius:14px;
-            background-image:linear-gradient(var(--sur),var(--sur)), linear-gradient(135deg, #b6f2c9, #34d399);
+            background-image:linear-gradient(var(--sur),var(--sur)), linear-gradient(135deg, #d9b8ff, #9333ea);
             background-origin:border-box; background-clip:padding-box,border-box;
             box-shadow:0 18px 46px rgba(0,0,0,.55); z-index:99999998; box-sizing:border-box;
         }
@@ -917,7 +920,7 @@
             top:50%; left:50%; transform:translate(-50%,-50%);
             width:552px; max-height:86vh; overflow-y:auto;
             border:3px solid transparent; border-radius:14px;
-            background-image: linear-gradient(var(--sur), var(--sur)), linear-gradient(135deg, #b6f2c9, #34d399);
+            background-image: linear-gradient(var(--sur), var(--sur)), linear-gradient(135deg, #d9b8ff, #9333ea);
             background-origin: border-box;
             background-clip: padding-box, border-box;
             box-shadow:0 24px 64px rgba(0,0,0,.9);
@@ -929,13 +932,57 @@
             top:50%; left:50%; transform:translate(-50%,-50%);
             width:860px; max-height:82vh; overflow-y:auto;
             border:3px solid transparent; border-radius:14px;
-            background-image: linear-gradient(var(--sur), var(--sur)), linear-gradient(135deg, #b6f2c9, #34d399);
+            background-image: linear-gradient(var(--sur), var(--sur)), linear-gradient(135deg, #d9b8ff, #9333ea);
             background-origin: border-box;
             background-clip: padding-box, border-box;
             box-shadow:0 24px 64px rgba(0,0,0,.9);
             z-index:99999999;
                     }
         #bb-alertlog-all-panel.open { display:block; }
+        #bb-dlog-panel {
+            display:none; position:fixed;
+            top:50%; left:50%; transform:translate(-50%,-50%);
+            width:640px; max-height:82vh; overflow-y:auto;
+            border:3px solid transparent; border-radius:14px;
+            background-image: linear-gradient(var(--sur), var(--sur)), linear-gradient(135deg, #d9b8ff, #9333ea);
+            background-origin: border-box;
+            background-clip: padding-box, border-box;
+            box-shadow:0 24px 64px rgba(0,0,0,.9);
+            z-index:99999999;
+        }
+        #bb-dlog-panel.open { display:block; }
+        #bb-dlog-panel .bb-ap-title { color:var(--tx); }   /* 다른 로그 패널과 달리 항상 밝은 배경이라 검정 계열 글자로 */
+        .bb-dlog-head { position:relative; display:flex; align-items:center; gap:8px; padding:10px 14px; border-bottom:1px solid var(--bd); }
+        .bb-dlog-date-lbl { font-size:13px; font-weight:800; color:var(--mu); margin-left:2px; }
+        .bb-dlog-note { margin-left:auto; font-size:11px; font-weight:700; color:var(--mu); text-align:right; line-height:1.5; }
+        .bb-dlog-note br { content:''; }
+        #bb-dlog-panel .bb-fbp-row:hover { background:transparent; outline:1.5px solid var(--pk); outline-offset:-1.5px; }   /* 카드 전체 분홍 채움 대신 외곽선만 */
+        .bb-dlog-kpi { display:flex; gap:8px; padding:10px 14px 4px; flex-wrap:wrap; }
+        .bb-dlog-kpi > div { flex:1; min-width:88px; background:var(--sur2); border:1px solid var(--bd2); border-radius:9px; padding:8px 10px; }
+        .bb-dlog-kpi .l { font-size:11px; color:var(--mu); font-weight:700; }
+        .bb-dlog-kpi .v { font-size:18px; font-weight:900; color:var(--tx); margin-top:2px; }
+        .bb-dlog-sub { font-size:12px; font-weight:800; color:var(--mu); padding:12px 14px 4px; }
+        .bb-fbp-right { display:flex; align-items:center; gap:10px; flex-shrink:0; }
+        .bb-fbp-who { font-size:12px; font-weight:800; color:var(--tx); white-space:nowrap; }
+        .bb-fbp-time { display:flex; flex-direction:column; align-items:flex-end; gap:1px; flex-shrink:0; }
+        .bb-fbp-time .l { font-size:9.5px; color:var(--mu); font-weight:700; white-space:nowrap; }
+        .bb-fbp-time .v { font-size:12px; font-weight:800; color:var(--tx); white-space:nowrap; }
+        /* 배달 로그 패널 안 텍스트만 1px씩 키움 (다른 고정 버튼 팝업 방전 로그 등과 공유하는 클래스라 여기서만 덮어씀) */
+        #bb-dlog-panel .bb-fbp-name { font-size:14px; }
+        #bb-dlog-panel .bb-fbp-sub { font-size:12px; }
+        #bb-dlog-panel .bb-fbp-who { font-size:13px; }
+        #bb-dlog-panel .bb-fbp-time .l { font-size:10.5px; }
+        #bb-dlog-panel .bb-fbp-time .v { font-size:13px; }
+        .bb-dlog-meta { display:flex; align-items:center; gap:12px; }   /* '배정 …' 과 '주문번호 …' 사이 간격 */
+        .bb-dlog-ord { display:inline-flex; align-items:center; gap:4px; }
+        .bb-dlog-copy {
+            display:inline-flex; align-items:center; gap:2px;
+            border:none; background:transparent; cursor:pointer; line-height:1;
+            padding:2px 4px; border-radius:4px; opacity:.8;
+        }
+        .bb-dlog-copy:hover { opacity:1; background:var(--sur2); }
+        .bb-dlog-copy-ico { font-size:16px; line-height:1; }
+        .bb-dlog-copy-lbl { font-size:9px; font-weight:700; color:var(--mu); }
         .bb-alertlog-day { margin-bottom:14px; }
         .bb-alertlog-day-title {
             display:flex; align-items:center; gap:10px;
@@ -1012,7 +1059,7 @@
             top:50%; left:50%; transform:translate(-50%,-50%);
             width:840px;
             border:3px solid transparent; border-radius:12px;
-            background-image: linear-gradient(var(--sur), var(--sur)), linear-gradient(135deg, #b6f2c9, #34d399);
+            background-image: linear-gradient(var(--sur), var(--sur)), linear-gradient(135deg, #d9b8ff, #9333ea);
             background-origin: border-box;
             background-clip: padding-box, border-box;
             box-shadow:0 16px 48px rgba(0,0,0,.9);
@@ -1148,11 +1195,11 @@
                     <button id="bb-walker-toggle" title="동숲 주민 끄기">동숲</button>
                     <div id="bb-walker-bubble"><span id="bb-walker-bubble-text"></span></div>
                 </div>
-                <!-- 우: 3종 버튼 (오른쪽 동숲 주민의 오른쪽) — 임무 OFF / 방전 로그 / 이상 알림. 왼쪽 고정 버튼 3행과 같은 폭·높이·간격 -->
+                <!-- 우: 3종 버튼 (오른쪽 동숲 주민의 오른쪽) — 배달 로그 / 방전 로그 / 이상 알림. 왼쪽 고정 버튼 3행과 같은 폭·높이·간격 -->
                 <div class="bb-rbtns" id="bb-fixbtns-r">
-                    <button id="bb-fb-moff" class="bb-fb" data-mode="moff" title="현재 임무가 OFF 인 기체 · 오른쪽 위 숫자 = 해당 기체 수">🚫 임무 OFF<b class="bb-fb-n"></b></button>
-                    <button id="bb-fb-dis" class="bb-fb" data-mode="dis" title="최근 15일 방전 기록 · 오른쪽 위 숫자 = 방전 건수(같은 기체라도 건별로 셈)">🪫 방전 로그(최근 15일)<b class="bb-fb-n"></b></button>
-                    <button class="bb-btn" id="bb-alertlog-all-btn" title="최근 15일 동안의 좀비 / 캠 미노출 / 미니맵 미노출 기록"><span class="bb-hd-ico">📋</span>이상 알림(최근 15일)</button>
+                    <button id="bb-fb-dlog" class="bb-fb" title="배달 로그 · 오늘(근무일) 요약이 기본, 달력 버튼으로 다른 날짜 조회 · 오른쪽 위 숫자 = 오늘 완료 건수">🚚 배달 로그<b class="bb-fb-n"></b></button>
+                    <button id="bb-fb-dis" class="bb-fb" data-mode="dis" title="최근 30일 방전 기록 · 오른쪽 위 숫자 = 방전 건수(같은 기체라도 건별로 셈)">🪫 방전 로그(최근 30일)<b class="bb-fb-n"></b></button>
+                    <button class="bb-btn" id="bb-alertlog-all-btn" title="최근 30일 동안의 좀비 / 캠 미노출 / 미니맵 미노출 기록"><span class="bb-hd-ico">📋</span>이상 로그(최근 30일)</button>
                 </div>
                 <!-- 우: 버튼 2줄 (테마/줌/백업/검색) -->
                 <div class="bb-hd-rightwrap">
@@ -1198,10 +1245,27 @@
 
             <div id="bb-alertlog-all-panel">
                 <div class="bb-ap-hd">
-                    <div class="bb-ap-title">📋 이상 알림 로그(최근 15일)</div>
+                    <div class="bb-ap-title">📋 이상 로그(최근 30일)</div>
                     <div class="bb-ap-close" id="bb-alertlog-all-close">✕</div>
                 </div>
                 <div id="bb-alertlog-all-body"></div>
+            </div>
+
+            <div id="bb-dlog-panel">
+                <div class="bb-ap-hd">
+                    <div class="bb-ap-title">🚚 배달 로그</div>
+                    <div class="bb-ap-close" id="bb-dlog-close">✕</div>
+                </div>
+                <div class="bb-dlog-head">
+                    <button class="bb-mm-nav bb-att-mbtn" id="bb-dlog-today">오늘</button>
+                    <button class="bb-mm-nav bb-att-mbtn" id="bb-dlog-cal-btn">달력</button>
+                    <span class="bb-dlog-date-lbl" id="bb-dlog-date-lbl"></span>
+                    <span class="bb-dlog-note" id="bb-dlog-note"></span>
+                    <div class="bb-att-cal" id="bb-dlog-cal"></div>
+                </div>
+                <div class="bb-dlog-kpi" id="bb-dlog-kpi"></div>
+                <div class="bb-dlog-sub" id="bb-dlog-sub">배달 내역</div>
+                <div id="bb-dlog-body"></div>
             </div>
 
             <!-- 본문: 좌(기체 리스트 + 하단 퀵바) | 우(다중 모니터링 중 기체) -->
@@ -1245,7 +1309,7 @@
                                     <div class="bb-att-r2">
                                         <button class="bb-mm-nav bb-att-mbtn" id="bb-att-mprev">--월</button>
                                         <button class="bb-mm-nav bb-att-mbtn" id="bb-att-mcur">--월</button>
-                                        <button class="bb-mm-nav" id="bb-att-detailbtn" title="월별 근무자 상세 통계">상세 로그</button>
+                                        <button class="bb-mm-nav" id="bb-att-detailbtn" title="월별 근무자 상세 통계">자세히</button>
                                         <button class="bb-mm-nav" id="bb-att-today" style="display:none" title="실시간 현황으로 돌아가기">오늘로</button>
                                         <span class="bb-att-stat" id="bb-att-stat"></span>
                                     </div>
@@ -1295,7 +1359,7 @@
         <div id="bb-att-pop"></div>
         <div id="bb-att-detail">
             <div class="bb-att-dh">
-                <div class="t" id="bb-att-dtitle">상세 로그</div>
+                <div class="t" id="bb-att-dtitle">자세히</div>
                 <select id="bb-att-dsel"></select>
                 <div class="w" id="bb-att-watch"></div>
                 <input type="search" class="sr" id="bb-att-search" placeholder="이름 검색" autocomplete="off" spellcheck="false" title="이름을 입력하면 그 근무자만 표시 (월을 바꾸거나 창을 닫았다 열어도 유지 · 새로고침하면 초기화)">
@@ -1905,7 +1969,7 @@
             }
 
             logBatteryPattern(DB);
-            try { dcUpdateLocal(); } catch (err) { console.error('[BB] 방전 기록 계산 오류:', err); }   // 배터리 로그 → 방전 기록 (로컬 저장, 최근 15일)
+            try { dcUpdateLocal(); } catch (err) { console.error('[BB] 방전 기록 계산 오류:', err); }   // 배터리 로그 → 방전 기록 (로컬 저장, 최근 30일)
             try { sampleChargeBuffer(DB); } catch (err) { console.error('[BB] 충전 관측 오류:', err); }   // 저속충전 계산용 (2분마다 1회 기록)
             wblCyhAutoUploadTick();
             wblOthersAutoDownloadTick();
@@ -2796,10 +2860,10 @@
 	// 배터리 로그와 달리 CYH 우선순위가 필요 없음 — "언제 목격했나"는 순수 사실이라
 	// 여러 사람의 기록을 그냥 합치면 됨(합집합). 그래서 락도 필요 없음.
 	//
-	// 저장 방식: alarm/ 폴더의 단일 파일 하나(배터리_알림로그)에 최근 15일치를 다 담음.
+	// 저장 방식: alarm/ 폴더의 단일 파일 하나(배터리_알림로그)에 최근 30일치를 다 담음.
 	// 원본 시각(예: 190개 타임스탬프)을 그대로 저장하지 않고, 업로드 시점에 바로
 	// "구간(시작~끝)"으로 압축해서 저장 — 장시간 상습 알림 기체가 있어도 용량이 안 불어남.
-	// 매 업로드마다 15일 넘은 날짜는 자동으로 잘라내서, 파일 크기가 무한정 커지지 않음.
+	// 매 업로드마다 30일 넘은 날짜는 자동으로 잘라내서, 파일 크기가 무한정 커지지 않음.
 	// ============================================================
 	const ALERT_LOG_TYPES = ['zombie', 'cam', 'nomap'];
 	const ALERT_LOG_META = {
@@ -2807,7 +2871,7 @@
 		cam:    { icon: '🎥', text: '캠 미노출',    color: 'var(--bl)' },
 		nomap:  { icon: '🗺️', text: '미니맵 미노출', color: 'var(--ye)' },
 	};
-	const ALERT_LOG_RETENTION_DAYS = 15;
+	const ALERT_LOG_RETENTION_DAYS = 30;
 	const ALERT_LOG_NAME = '배터리_알림로그';
 	const ALERT_LOG_GAP_MIN = 10;   // 이 시간 이상 안 보이면 "끊긴 것"으로 판단(재발생 구분 기준)
 
@@ -2885,7 +2949,7 @@
 		} catch (e) { return { days: {} }; }
 	}
 
-	// 15일 넘은 날짜는 잘라냄
+	// 30일 넘은 날짜는 잘라냄
 	function alertLogPrune(fileObj) {
 		const cutoff = Math.floor(Date.now() / 86400000) - (ALERT_LOG_RETENTION_DAYS - 1);
 		const days = fileObj.days || {};
@@ -2970,7 +3034,7 @@
 		return { days: {} };
 	}
 
-	// 특정 기체의 알림 로그 조회 (최신순) — 캐시된 15일치 파일에서 바로 필터링, 별도 요청 없음
+	// 특정 기체의 알림 로그 조회 (최신순) — 캐시된 30일치 파일에서 바로 필터링, 별도 요청 없음
 	async function alertLogFetchForRobot(robotId) {
 		const fileObj = alertLogCachedFile();
 		const rows = [];
@@ -3885,7 +3949,7 @@
         //   멈출 새도 없이 주기적으로 재시작시켜서 사실상 끊김 없이 반복되는 것처럼 보이게 함
         const BUNNY_RESTART_MS = 6000;
         setInterval(() => {
-            if (!on || !el.src) return;
+            if (!on || !el.src || document.hidden) return;   // 탭이 백그라운드면 리페인트할 필요 없음
             const src = el.src;
             el.src = '';
             el.src = src;
@@ -3912,7 +3976,7 @@
 
     // ============================================================
     // SECTION 17. 고정 버튼 3종 (제목 영역, 왼쪽 동숲 주민의 왼쪽)
-    //   배터리 소모 TOP5 / 저속충전 기체 TOP5 / 임무 OFF 기체 (왼쪽) + 방전 로그(최근 15일) (오른쪽 3종 버튼 중 가운데)
+    //   배터리 소모 TOP5 / 저속충전 기체 TOP5 / 임무 OFF 기체 (왼쪽) + 방전 로그(최근 30일) (오른쪽 3종 버튼 중 가운데)
     //   2분마다 데이터가 갱신될 때 버튼의 숫자 배지와, 열려 있는 목록 창이 함께 새로고침됨 (창을 띄워 둔 채로도)
     //   계산량은 기체 수(≈90대)에 비례하는 반복 몇 번뿐이라 갱신 한 번에 수 ms 수준
     // ============================================================
@@ -3963,7 +4027,7 @@
         });
     }
 
-    // ── 방전 로그(최근 15일): 배터리 로그에서 FB_DISCHARGE_PCT% 이하 → OFF 로 이어진 기체 ──
+    // ── 방전 로그(최근 30일): 배터리 로그에서 FB_DISCHARGE_PCT% 이하 → OFF 로 이어진 기체 ──
     let _fbLogCache = null;   // { rawY, rawT, logs } — 로그 원본 문자열이 그대로면 이전 결과를 재사용 (로그는 10분마다만 바뀜, 어제 로그는 하루 종일 그대로)
     function fbLoadLogs() {   // 어제 스냅샷 + 오늘 로그를 기체별 시간순 점으로 (같은 시각이 겹치면 오늘 것이 우선)
         const rawY = localStorage.getItem('bb_battery_log_yesterday') || '', rawT = localStorage.getItem(WBL_KEY) || '';
@@ -4041,9 +4105,9 @@
         return out;
     }
     /* DISCHARGE-LOG-START */
-    // ── 방전 로그(최근 15일) ──
+    // ── 방전 로그(최근 30일) ──
     // 원본: 배터리 로그(어제+오늘, 10분 단위)에서 'FB_DISCHARGE_PCT% 이하 → OFF' 로 이어진 지점(방전) 또는 그렇게 지나친 것으로 보이는 지점(방전 추정)
-    // 저장: ① 이 PC(bb_discharge_local) — 배터리 로그는 하루가 지나면 초기화되지만 방전 기록은 15일 동안 남음
+    // 저장: ① 이 PC(bb_discharge_local) — 배터리 로그는 하루가 지나면 초기화되지만 방전 기록은 30일 동안 남음
     //       ② 서버 단일 파일(배터리_방전로그) — 방전이 '기록될 때만' 올림. 방전이 없으면 파일도, 업로드 요청도 없음
     // 병합: 같은 기체의 90분 이내 기록은 같은 방전으로 보고 더 확실한 쪽(확정 > 추정, 정확한 시각 > 10분 슬롯 시각)을 채택
     //       → 여러 PC 가 각자 감지해서 올려도 결과가 같고, 서버에 이미 있는 내용이면 업로드 자체를 건너뜀 (커밋이 몰리지 않음)
@@ -4054,7 +4118,7 @@
     function dvSig(o) { const s = JSON.stringify(o); let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return s.length + ':' + h; }   // 객체 내용이 바뀌었는지만 보는 간단한 서명(체크섬)
 
     const DC_LOG_NAME = '배터리_방전로그';
-    const DC_RETENTION_DAYS = 15;
+    const DC_RETENTION_DAYS = 30;
     const DC_LOCAL_KEY = 'bb_discharge_local';           // { days:{일자:{기체id:{name,ev:[{ts,bat,kind,exact}]}}}, up:{일자:마지막 업로드 서명} }
     const DC_CACHE_KEY = 'bb_dischargelog_file_cache';   // { days:{...}, at:받아온 시각(ms) }
     const DC_SEEN_KEY = 'bb_dc_file_seen';               // 서버 파일을 한 번이라도 확인/생성했는지 (처음 1회 예외 처리용)
@@ -4068,7 +4132,7 @@
 
     function dcDayKey(ts) { return wblLocalDateStr(new Date(ts - WBL_DAY_START_H * 3600000)); }   // 배터리 로그의 하루(07:00~익일 07:00) 기준 날짜
     function dcCutoffIdx() { return dvDayIdx(wblGetDayKey() || wblTodayStr()) - (DC_RETENTION_DAYS - 1); }
-    function dcPrune(days) {   // 15일(오늘 포함) 넘은 날짜는 잘라냄
+    function dcPrune(days) {   // 30일(오늘 포함) 넘은 날짜는 잘라냄
         const cutoff = dcCutoffIdx();
         Object.keys(days).forEach(d => { if (dvDayIdx(d) < cutoff) delete days[d]; });
         return days;
@@ -4143,7 +4207,7 @@
     }
     function dcSaveLocal(o) { try { localStorage.setItem(DC_LOCAL_KEY, JSON.stringify(o)); } catch {} }
 
-    // 2분마다(데이터 갱신 때, 보드가 닫혀 있어도) 호출 — 배터리 로그에서 방전을 찾아 이 PC 의 15일 기록에 반영
+    // 2분마다(데이터 갱신 때, 보드가 닫혀 있어도) 호출 — 배터리 로그에서 방전을 찾아 이 PC 의 30일 기록에 반영
     // 감지 당시엔 살아난 기록이 아직 없어 '방전 추정'으로 저장됐지만, 이후 로그가 쌓이며 재부팅 오표기였음이 뒤늦게 확인되는 경우 → 되돌려 지움
     // (서버에 이미 올라간 기록은 병합이 추가만 하고 지우지는 않아 이 정정이 자동으로 안 올라감 — 필요하면 서버 파일도 따로 정리해야 함)
     function dcPruneRebootGlitches(loc, logs) {
@@ -4397,7 +4461,7 @@
     function fbCompute() {
         const logs = fbLoadLogs();   // 어제+오늘 배터리 로그는 한 번만 읽어 방전/저속충전 계산에 함께 씀
         _fbData = {
-            dis: dcBuildView(),   // 이 PC 기록 + 서버 기록 (최근 15일)
+            dis: dcBuildView(),   // 이 PC 기록 + 서버 기록 (최근 30일)
             sc: computeSlowCharge(logs),
             dr: computeFastDrain(logs),
             mo: DB.filter(isMissionOff).sort((a, b) => a.name.localeCompare(b.name, 'ko', { numeric: true })),
@@ -4417,18 +4481,18 @@
     }
     function fbHtmlDis(d) {
         const ev = d.dis.events;
-        let h = `<div class="bb-fbp-note">${FB_DISCHARGE_PCT}% 이하까지 떨어진 뒤 꺼졌거나, 0% 가 다음 10분 기록까지 이어진 기체 (추정 = 0% 직후 꺼짐 / 10분 기록 사이에 꺼짐)</div>`;
-        if (!ev.length) h += `<div class="bb-fbp-empty">최근 15일 동안 방전된 기체가 없습니다 ✓</div>`;
+        let h = `<div class="bb-fbp-note">${FB_DISCHARGE_PCT}% 이하로 확인된 뒤 꺼졌거나, 0% 가 다음 10분 기록까지 이어지면 '방전' · 0% 로 찍힌 직후 꺼졌거나, ${FB_EST_MAX_PCT}% 이하에서 꺼져 하락 속도로 볼 때 ${FB_DISCHARGE_PCT}% 에 도달했을 것으로 보이거나, 속도를 모른 채 ${FB_EST_FALLBACK_PCT}% 이하에서 꺼지면 '방전 추정'</div>`;
+        if (!ev.length) h += `<div class="bb-fbp-empty">최근 30일 동안 방전된 기체가 없습니다 ✓</div>`;
         else h += ev.map(e => {
             const st = fbStateChip(e.cur);
             const est = e.kind === 'est';
-            const tip = est ? (e.bat === 0 ? `${e.name} · 0% 기록 다음에 꺼짐 — 0% 표기가 버그성일 수도 있어 방전으로 추정` : `${e.name} · 마지막 기록 ${e.bat}% 다음 10분 사이에 꺼짐 — 하락 속도로 보면 0%에 도달했을 가능성이 커서 방전으로 추정`)
+            const tip = est ? (e.bat === 0 ? `${e.name} · 0% 기록 다음에 꺼짐 — 0% 표기가 버그성일 수도 있어 방전으로 추정` : `${e.name} · 마지막 기록 ${e.bat}% 다음 10분 사이에 꺼짐 — ${FB_EST_MAX_PCT}% 이하에서 꺼져 하락 속도(또는 ${FB_EST_FALLBACK_PCT}% 이하 기준)로 볼 때 방전 가능성이 높아 추정`)
                 : (e.hold ? `${e.name} · 10% 미만으로 내려온 뒤 0% 에 도달했고, 다음 10분 기록에서도 0% 라서 방전 확정 (꺼지지 않고 버티는 중일 수 있음)` : e.name);
             return `<div class="bb-fbp-row" data-rid="${fbEsc(e.id)}" title="${fbEsc(tip)}">
                 <span class="bb-fbp-dot" style="background:${st.ac};"></span>
                 <span class="bb-fbp-main">
                     <span class="bb-fbp-line"><span class="bb-fbp-name">${fbEsc(e.name)}</span><span class="bb-fbp-tag ${est ? 'est' : 'sure'}">${est ? '방전 추정' : '방전'}</span></span>
-                    <span class="bb-fbp-sub">${fbFmtTs(e.ts)}${e.exact ? '' : '경'} ${e.hold ? '0% 도달 · 다음 기록도 0%' : 'OFF'}${e.bat != null && !e.hold ? ` · 마지막 배터리 ${e.bat}%` : ''}${e.n > 1 ? ` · 15일 내 ${e.n}회` : ''}</span>
+                    <span class="bb-fbp-sub">${fbFmtTs(e.ts)}${e.exact ? '' : '경'} ${e.hold ? '0% 도달 · 다음 기록도 0%' : 'OFF'}${e.bat != null && !e.hold ? ` · 마지막 배터리 ${e.bat}%` : ''}${e.n > 1 ? ` · 30일 내 ${e.n}회` : ''}</span>
                 </span>
                 <span class="bb-fbp-now">현재 ${fbEsc(st.txt)}</span>
             </div>`;
@@ -4489,18 +4553,6 @@
         }).join('');
         return h + `<div class="bb-fbp-foot">사용 중 ${dr.active}대 · 측정 중 ${dr.measured}대${dr.measuring ? ` · 데이터 부족 ${dr.measuring}대` : ''}</div>`;
     }
-    function fbHtmlMoff(d) {
-        const note = `<div class="bb-fbp-note">전원 ON 기체 기준.</div>`;
-        if (!d.mo.length) return note + `<div class="bb-fbp-empty">현재 임무 OFF 인 기체가 없습니다 ✓</div>`;
-        return note + d.mo.map(r => {
-            const st = fbStateChip(r);
-            return `<div class="bb-fbp-row" data-rid="${fbEsc(r.id)}" title="${fbEsc(r.name)}">
-                <span class="bb-fbp-dot" style="background:${st.ac};"></span>
-                <span class="bb-fbp-main"><span class="bb-fbp-name">${fbEsc(r.name)}</span></span>
-                <span class="bb-fbp-now">${fbEsc(st.txt)}</span>
-            </div>`;
-        }).join('');
-    }
     function fbHtmlNeglect(d) {
         const note = `<div class="bb-fbp-note">순찰 중 → 대기 중으로 바뀐 지 20분(측정 기록 2회)이 지나도 그대로인 기체 · 배달 전용 등 일부 기체는 빠짐</div>`;
         if (!d.ng.length) return note + `<div class="bb-fbp-empty">현재 방치·미주차로 보이는 기체가 없습니다 ✓</div>`;
@@ -4517,33 +4569,31 @@
         const pop = document.getElementById('bb-fbp');
         if (!pop) return;
         document.querySelectorAll('.bb-fb[data-mode]').forEach(b => b.classList.toggle('active', b.dataset.mode === _fbMode));
-        if (_fbMode) { const host = document.getElementById((_fbMode === 'dis' || _fbMode === 'moff') ? 'bb-fixbtns-r' : 'bb-fixbtns'); if (host && pop.parentNode !== host) host.appendChild(pop); }   // 방전 로그·임무 OFF 는 오른쪽 버튼 아래, 나머지는 왼쪽 버튼 아래에서 열림
+        if (_fbMode) { const host = document.getElementById(_fbMode === 'dis' ? 'bb-fixbtns-r' : 'bb-fixbtns'); if (host && pop.parentNode !== host) host.appendChild(pop); }   // 방전 로그는 오른쪽 버튼 아래, 나머지는 왼쪽 버튼 아래에서 열림
         pop.classList.toggle('open', !!_fbMode);
         if (!_fbMode) return;
         const d = _fbData || fbCompute();
         const T = {
-            dis:  ['방전 로그(최근 15일)',    `${d.dis.robots}대${d.dis.events.length !== d.dis.robots ? ` · ${d.dis.events.length}건` : ''}`],
+            dis:  ['방전 로그(최근 30일)',    `${d.dis.robots}대${d.dis.events.length !== d.dis.robots ? ` · ${d.dis.events.length}건` : ''}`],
             drain:['배터리 소모 기체 TOP5',   `사용 중 ${d.dr.active}대`],
             slow: ['저속충전 기체 TOP5',     `충전 중 ${d.sc.charging}대`],
-            moff: ['임무 OFF 기체',          `${d.mo.length}대`],
             neglect: ['순찰 후 미주차 기체',  `${d.ng.length}대`],
         }[_fbMode];
         document.getElementById('bb-fbp-title').textContent = T[0];
         document.getElementById('bb-fbp-cnt').textContent = T[1];
         const body = document.getElementById('bb-fbp-body');
         const keep = body.scrollTop;   // 2분마다 새로 그려도 보던 위치 유지
-        body.innerHTML = _fbMode === 'dis' ? fbHtmlDis(d) : _fbMode === 'drain' ? fbHtmlDrain(d) : _fbMode === 'slow' ? fbHtmlSlow(d) : _fbMode === 'neglect' ? fbHtmlNeglect(d) : fbHtmlMoff(d);
+        body.innerHTML = _fbMode === 'dis' ? fbHtmlDis(d) : _fbMode === 'drain' ? fbHtmlDrain(d) : _fbMode === 'slow' ? fbHtmlSlow(d) : fbHtmlNeglect(d);
         body.scrollTop = keep;
     }
     function refreshFixedTools() {   // 2분 갱신마다 + 열 때마다 호출: 배지와 (열려 있다면) 목록 창을 최신으로
         try {
             fbCompute();
-            fbSetBadge('bb-fb-dis', _fbData.dis.events.length, _fbData.dis.recentSure ? 'r' : 'o');   // 숫자 = 최근 15일 방전 '건' 수 (같은 기체라도 건별로 셈). 최근 24시간 안에 확정 방전이 있으면 빨강, 그 밖에는 주황
+            fbSetBadge('bb-fb-dis', _fbData.dis.events.length, _fbData.dis.recentSure ? 'r' : 'o');   // 숫자 = 최근 30일 방전 '건' 수 (같은 기체라도 건별로 셈). 최근 24시간 안에 확정 방전이 있으면 빨강, 그 밖에는 주황
             fbSetBadge('bb-fb-drain', _fbData.dr.top.length, 'b');   // 배터리 소모: 배지는 목록에 오른 기체 수 (최대 FB_DRAIN_TOP 대). 실제 대수는 버튼 툴팁에 표시
             const bdr = document.getElementById('bb-fb-drain');
             if (bdr) bdr.title = `충전 중이 아닌 기체를 최근 ${FB_DRAIN_WINDOW_H}시간 안의 하락 기록으로 배터리가 빨리 닳는 순으로 (상위 ${FB_DRAIN_TOP}대) · 오른쪽 위 숫자 = 목록에 오른 기체 수 (최대 ${FB_DRAIN_TOP}) · 소모 속도 측정 중 ${_fbData.dr.measured}대 (그중 배터리가 줄고 있는 기체 ${_fbData.dr.dropping}대)`;
             fbSetBadge('bb-fb-slow', _fbData.sc.top.length, 'g');   // 저속충전: TOP5 버튼이므로 배지는 목록에 오른 기체 수(최대 5)만. 실제 측정 대수는 열었을 때 "충전 중 ##대"로 표시
-            fbSetBadge('bb-fb-moff', _fbData.mo.length, 'o');
             fbSetBadge('bb-fb-neglect', _fbData.ng.length, 'y');   // 방치/미주차: 노랑
             fbRender();
         } catch (err) { console.error('[BB] 고정 버튼 갱신 오류:', err); }
@@ -5021,10 +5071,7 @@
         const n = document.createElement('span');
         n.className = 'bb-mm-count';   // 대수만 빨간색
         n.textContent = `${count}대`;
-        const note = document.createElement('span');
-        note.className = 'bb-mm-note';   // 대수 옆 작은 설명
-        note.textContent = ' (POI 정체 감지 중)';
-        t.append('다중 모니터링 기체 ', n, note);
+        t.append('다중 모니터링 기체 ', n);
     }
 
     async function refreshPatrolLive() {
@@ -5049,7 +5096,7 @@
                 renderPatrolCards(cards);
             }
             setPatrolTitle(cards.length);
-            setPatrolStatus(`${_patrolLastUpdated || '-'} 기준`, false);   // 게시 시각만 그대로 표시
+            setPatrolStatus(`${_patrolLastUpdated || '-'} 기준(POI 정체 감지)`, false);   // 게시 시각만 그대로 표시
         } catch (e) {
             console.warn('[BB] 다중 모니터링 갱신 실패:', e.message);
             setPatrolStatus(_patrolLastUpdated
@@ -5060,8 +5107,9 @@
             _patrolBusy = false;
         }
     }
-    // 보드가 열려 있을 때만 조회 (닫혀 있으면 요청 없음). 열 때(openBoard)마다 즉시 한 번 더 조회
-    setInterval(() => { if (isOpen) refreshPatrolLive(); }, PATROL_REFRESH_MS);
+    // 보드가 열려 있고 탭이 실제로 보일 때만 조회 (닫혀 있거나 백그라운드 탭이면 요청 없음). 열 때(openBoard)마다 즉시 한 번 더 조회
+    setInterval(() => { if (isOpen && !document.hidden) refreshPatrolLive(); }, PATROL_REFRESH_MS);
+    document.addEventListener('visibilitychange', () => { if (isOpen && !document.hidden) refreshPatrolLive(); });
     _patrolReady = true;
     if (isOpen) refreshPatrolLive();
 
@@ -5073,6 +5121,7 @@
     //    (판정 기준을 이 파일에 또 두면 서버와 어긋남 — 기준은 서버 lib/attendance-core.js 한 곳)
     //  - 새로고침하면 항상 다중 화면이 기본 (전환 상태를 저장하지 않음)
     // ============================================================
+    var _ivAlertHook = null;   // SECTION 18 이 등록하는 '다중 »' 버튼 점멸 동기화 함수
     var _attReady = false;   // SECTION 17 초기화가 끝난 뒤 true (openBoard 가 로딩 중에 먼저 호출되므로 var 로 선언 — _patrolReady 와 같은 방식)
     const ATT_API = 'https://multimonitoring.vercel.app/api';
     const ATT_REFRESH_MS = 30 * 1000;   // 서버는 1분 간격으로 수집 → 30초마다 확인해 새 데이터를 최대 30초 안에 반영
@@ -5149,6 +5198,7 @@
         const a = _patrolAnomaly;
         b.classList.toggle('alert', a.n > 0);
         b.title = a.n > 0 ? `다중 모니터링 ${a.n}대 POI 미갱신 (최대 ${a.max}분째) — 클릭하면 다중 화면으로` : '다중 모니터링으로 돌아가기';
+        if (_ivAlertHook) _ivAlertHook();
     }
 
     /* ───────── 데이터 로드 ───────── */
@@ -5818,6 +5868,850 @@
     attSetView('multi');   // 기본 = 다중 (inert 초기화)
     syncAttBackAlert();
     _attReady = true;
+
+    // ============================================================
+    // SECTION 18. 개입카드 현황 — 다중 모니터링 화면의 '왼쪽'으로 슬라이드해서 들어가는 화면 (진입: 다중 모니터링 제목 왼쪽 '« 개입 현황')
+    //  - 데이터: multimonitoring.vercel.app/api/intervene (서버가 GitHub 로그를 가공. 토큰은 서버에만 있음). 이석(SECTION 17)과 같은 방식.
+    //  - 개입카드 화면이 실제로 보일 때만 30초마다 조회 (다른 화면이거나 보드가 닫혀 있거나 탭이 가려져 있으면 요청 없음)
+    //  - 건수 = "이름이 확정된 해결 건"만. 추정/이탈/진행중/특정불가는 건수에 넣지 않고 팝업에서만 보여줌 (판정은 전부 서버 lib/intervene-core.js)
+    //  - 안전장치: ① 전체가 try/catch — 여기서 오류가 나도 기존 기능은 그대로 ② 화면 요소는 이 섹션이 직접 만들어 붙임(기존 함수는 수정하지 않음)
+    //    ③ 비상용 끄기: 콘솔에서 localStorage.bbIv='0' 후 새로고침
+    // ============================================================
+    try {
+    let _ivOn = true;
+    try { if (localStorage.getItem('bbIv') === '0') _ivOn = false; } catch (e) { /* 저장소 접근 불가 → 그대로 켜짐 */ }
+    if (_ivOn && document.getElementById('bb-mm-page-multi') && document.querySelector('.bb-mm-box') && typeof attFetchJson === 'function') {
+        // ▼▼▼ '설명' 버튼을 눌렀을 때 보이는 안내문. 문장 하나당 배열 한 줄로 적으면 됩니다(줄 끝에 <br>로 자동 연결). ▼▼▼
+        const IV_HELP = [
+            '개입카드 데이터 변동 시 수 분 이내로 받아옵니다.',
+            '프로그램이 GPS 조치 및 기타 사유로 인한 페이지 이탈을 명확히 구분할 수 없기 때문에 개입 건수 카운팅에서 제외했습니다.',
+            '근무자별로 할당된 다중/과학관/휴게시간이 빗금으로 표기됩니다.',
+            'NCC에 API를 전혀 호출하지 않기 때문에, 이름 성씨 및 근무표로 개입자를 추정할 수 있습니다.',
+            'NCC 개입카드 기능 자체가 이미 문제가 많은 상황입니다. 이탈 항목에서 알 수 있듯이 중복개입 또는 개입카드 점유 버그를 감안해서 카운팅 합니다.',
+            '완벽한 정합성을 갖춘 데이터가 될 수는 없습니다만, 그래도 정확도는 꽤나 높은 편입니다.',
+            '따라서 개개인의 개입카드 처리패턴 파악 용도로는 충분히 활용할 수 있지 않을까 기대해봅니다.',
+            '근무자 퇴근 시 카드가 하단으로 재정렬됩니다.'
+        ].join('<br>');
+        // ▲▲▲ 여기까지 ▲▲▲
+        const IV_API = ATT_API + '/intervene';
+        const IV_REFRESH_MS = 30 * 1000;
+        const IV_ROWS_STEP = 200;
+        const IV_LONG_SEC = 180;
+        let _ivOpen = false, _ivDate = null, _ivData = null, _ivBusy = false, _ivFail = false, _ivSeq = 0;
+        let _ivSort = 'shift';
+        try { if (localStorage.getItem('bbIvSort') === 'cnt') _ivSort = 'cnt'; } catch (e) { /* 기본값 */ }
+        let _ivPopKey = null, _ivPopName = null, _ivPopFilter = 'all', _ivPopLimit = IV_ROWS_STEP, _ivDetail = null;
+        let _ivDates = null, _ivDatesAt = 0, _ivCalOpen = false, _ivCalYm = null;
+        const _ivDetailCache = {};
+
+        const $iv = id => document.getElementById(id);
+        const ivEl = (tag, cls, text) => { const el = document.createElement(tag); if (cls) el.className = cls; if (text !== undefined && text !== null) el.textContent = text; return el; };
+        const ivSafe = fn => function () { try { return fn.apply(this, arguments); } catch (e) { console.warn('[BB] 개입카드 오류:', e && e.message); } };
+        const ivOpDate = () => attYmd(attKst(Date.now() - 7 * 3600 * 1000));   // 근무일 = 07:00 기준
+        const ivMD = ymd => { const p = ymd.split('-'); return (+p[1]) + '/' + (+p[2]); };
+        const ivDur = sec => (sec == null ? '-' : Math.floor(sec / 60) + '분 ' + (Math.round(sec) % 60) + '초');
+        const ivHMS = ms => { const d = attKst(ms); return attPad(d.getUTCHours()) + ':' + attPad(d.getUTCMinutes()) + ':' + attPad(d.getUTCSeconds()); };
+        // 조사: 마지막 글자에 받침이 있으면 a, 없으면 b (이/가, 을/를, 은/는)
+        const ivJosa = (word, a, b) => {
+            const c = String(word || '').charCodeAt(String(word || '').length - 1);
+            if (c < 0xAC00 || c > 0xD7A3) return b;
+            return (c - 0xAC00) % 28 ? a : b;
+        };
+        const ivWho = x => { const nm = (x && x.n) || '다른 사람'; return nm + (x && x.k === 'i' ? '(추정)' : '') + ivJosa(nm, '이', '가'); };
+        const ivGap = s => (s < 1 ? '바로 뒤' : s < 60 ? s + '초 뒤' : Math.floor(s / 60) + '분 ' + (s % 60) + '초 뒤');
+
+        /* ───────── 스타일 (이 섹션 전용, 런타임 삽입) ───────── */
+        const st = document.createElement('style');
+        st.id = 'bb-iv-style';
+        st.textContent = `
+        .bb-mm-head.bb-iv-hd { padding-left:66px; }   /* 왼쪽 '« 개입 현황' 버튼 자리 (오른쪽 '이석 »' 버튼 자리와 대칭) */
+        .bb-mm-goiv { position:absolute; left:8px; top:50%; transform:translateY(-50%); height:auto; padding:5px 9px; gap:5px; }
+        #bb-iv-page { position:absolute; inset:0; z-index:6; display:flex; flex-direction:column; background:var(--sur); font-family:'Paperlogy','Lato',-apple-system,sans-serif;
+            transform:translateX(-100%); visibility:hidden; transition:transform .32s cubic-bezier(.4,0,.2,1), visibility 0s linear .32s; }
+        #bb-iv-page.open { transform:translateX(0); visibility:visible; transition:transform .32s cubic-bezier(.4,0,.2,1), visibility 0s; }
+        .bb-iv-head { flex:0 0 auto; position:relative; padding:6px 8px; background:var(--sur); border-bottom:1px solid var(--bd); display:grid; grid-template-columns:auto minmax(0,1fr) auto; column-gap:8px; row-gap:6px; align-items:center; z-index:3; }
+        .bb-iv-head .bb-att-title { grid-column:2; }
+        .bb-iv-head .bb-att-r2 { grid-column:2; }
+        #bb-iv-help-btn { grid-column:1; grid-row:1 / 3; align-self:stretch; height:auto; padding:0 8px; }
+        #bb-iv-help-btn.on { border-color:var(--bl); color:var(--bl); background:var(--bl2, #dbe8fd); }
+        .bb-iv-help { display:none; position:absolute; left:8px; right:8px; top:100%; margin-top:4px; max-height:60vh; overflow-y:auto; padding:12px 14px; background:var(--sur); border:1.5px solid var(--bd2); border-radius:10px; box-shadow:0 10px 28px rgba(0,0,0,.35); font-size:13px; line-height:2.1; color:var(--tx); word-break:keep-all; overflow-wrap:anywhere; }
+        .bb-iv-help.open { display:block; }
+        #bb-iv-back { grid-column:3; grid-row:1 / 3; align-self:stretch; height:auto; padding:0 7px; gap:3px; }
+        .bb-iv-kpis { flex:0 0 auto; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); background:var(--sur2); border-bottom:1px solid var(--bd); }
+        .bb-iv-kpi { padding:6px 8px; display:flex; flex-direction:column; gap:1px; border-left:1px solid var(--bd); }
+        .bb-iv-kpi:first-child { border-left:0; }
+        .bb-iv-kpi .l { font-size:11px; color:var(--mu); }
+        .bb-iv-kpi .v { font-size:18px; font-weight:900; white-space:nowrap; }
+        .bb-iv-kpi .v small { margin-left:3px; font-size:11px; color:var(--mu); font-weight:700; }
+        .bb-iv-notes { flex:0 0 auto; display:flex; flex-wrap:wrap; gap:5px; padding:5px 8px; border-bottom:1px solid var(--bd); background:var(--sur); }
+        .bb-iv-notes:empty { display:none; }
+        .bb-iv-note { height:22px; padding:0 9px; border-radius:999px; border:1.5px solid var(--bd2); font-size:11.5px; color:var(--tx); background:var(--sur2); cursor:pointer; display:inline-flex; align-items:center; font-family:inherit; }
+        .bb-iv-sort { margin-left:auto; }
+        .bb-iv-note:hover { border-color:var(--mu); }
+        .bb-iv-body { flex:1 1 auto; min-height:0; overflow-y:auto; padding:6px; display:flex; flex-direction:column; gap:5px; }
+        .bb-iv-row { flex:0 0 auto; box-sizing:border-box; display:grid; grid-template-columns:minmax(0,1fr) 62px; column-gap:8px; align-items:center; padding:7px 9px; border-radius:9px; border:2px solid var(--bd2); background:var(--sur); cursor:pointer; }
+        .bb-iv-row:hover { border-color:#f9a8d4; box-shadow:0 0 0 1px #f9a8d4; }   /* 다중 모니터링 기체 그리드(.bb-mm-card:hover)와 같은 분홍 외곽선 */
+        .bb-iv-row.sel { outline:2px solid var(--tx); outline-offset:1px; }
+        .bb-iv-row.brk { background:rgba(233,184,36,.2); }
+        .bb-iv-row.off { opacity:.55; }
+        .bb-iv-mid { min-width:0; display:flex; flex-direction:column; gap:4px; }
+        .bb-iv-l1 { display:flex; align-items:baseline; gap:6px; min-width:0; white-space:nowrap; }
+        .bb-iv-nm { font-size:14.5px; font-weight:700; color:var(--tx); }
+        .bb-iv-meta { font-size:11px; color:var(--mu); overflow:hidden; text-overflow:ellipsis; }
+        .bb-iv-badge { padding:0 6px; border-radius:999px; border:1px solid #d99a06; background:#fbe9a8; color:#8a5a00; font-weight:900; font-size:10px; line-height:15px; flex:none; }
+        .bb-iv-badge.off { border-color:var(--bd2); background:var(--sur2); color:var(--mu); font-weight:700; }
+        .bb-iv-segs { display:flex; gap:2px; height:8px; }
+        .bb-iv-seg { flex:1; height:8px; border-radius:2px; box-sizing:border-box; }
+        .bb-iv-seg.n0 { background:rgba(0,0,0,.06); }
+        .bb-iv-seg.n1 { background:#d3d1c7; }
+        .bb-iv-seg.n2 { background:#a9dc8a; }
+        .bb-iv-seg.n3 { background:#22c55e; }
+        .bb-iv-seg.ov-b { background:repeating-linear-gradient(135deg,#e9b824 0 3px,#f7dc6a 3px 6px); }
+        .bb-iv-seg.ov-m { background:repeating-linear-gradient(135deg,#c3a6f0 0 3px,#e7dcfa 3px 6px); }
+        .bb-iv-seg.ov-s { background:repeating-linear-gradient(135deg,#86bff2 0 3px,#d5eafc 3px 6px); }
+        .bb-iv-seg.fut { background:transparent; border:1.5px dotted var(--bd2); }
+        .bb-iv-seg.cur { box-shadow:0 0 0 1.5px var(--bl); }
+        .bb-iv-cnt { text-align:right; white-space:nowrap; }
+        .bb-iv-cnt .c { font-size:18px; font-weight:900; line-height:1.1; }
+        .bb-iv-cnt .c small { margin-left:2px; font-size:11px; color:var(--mu); font-weight:700; }
+        .bb-iv-cnt .a { font-size:10.5px; color:var(--mu); margin-top:2px; }
+        .bb-iv-msg { padding:34px 8px; text-align:center; font-size:13px; color:var(--mu); }
+        .bb-iv-msg.warn { color:#c2410c; }
+        .bb-iv-legend { flex:0 0 auto; display:flex; justify-content:center; align-items:center; gap:10px; padding:5px 6px 6px; border-top:1px solid var(--bd); font-size:11.5px; color:var(--mu); white-space:nowrap; }
+        .bb-iv-legend i { display:inline-block; width:14px; height:6px; border-radius:1px; vertical-align:middle; margin-right:4px; }
+        .bb-iv-cal-h { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+        .bb-iv-cal-h .t { font-size:14px; color:var(--tx); }
+        .bb-iv-cal-h button { height:24px; min-width:28px; padding:0 8px; }
+        .bb-iv-cal-h button[disabled] { opacity:.35; cursor:default; }
+
+        #bb-iv-pop {
+            --bg:#f2e4c4; --sur:#f8f3e6; --sur2:#efe6d2; --bd:#cabf9d; --bd2:#b3a687; --tx:#2b2418; --mu:#7a6f5c;
+            --rd:#ef4444; --or:#f97316; --bl:#3b82f6; --gn:#22c55e;
+            display:none; position:fixed; width:490px; max-width:96vw; flex-direction:column; color:var(--tx); font-family:'Paperlogy','Lato',-apple-system,sans-serif;
+            border:3px solid transparent; border-radius:14px;
+            background-image:linear-gradient(var(--sur),var(--sur)), linear-gradient(135deg, #d9b8ff, #9333ea);
+            background-origin:border-box; background-clip:padding-box,border-box;
+            box-shadow:0 18px 46px rgba(0,0,0,.45); z-index:99999998; box-sizing:border-box; overflow:hidden;
+        }
+        #bb-iv-pop * { box-sizing:border-box; }
+        #bb-iv-pop.open { display:flex; }
+        .bb-iv-ph { flex:0 0 auto; padding:12px 16px 10px; display:flex; flex-direction:column; gap:10px; }
+        .bb-iv-pt { display:flex; align-items:baseline; gap:8px; }
+        .bb-iv-pt b { font-size:20px; font-weight:900; }
+        .bb-iv-pt span { font-size:12.5px; color:var(--mu); }
+        .bb-iv-pt .x { margin-left:auto; color:#b91c1c; font-size:16px; font-weight:900; padding:0 4px; cursor:pointer; }
+        .bb-iv-pt .bg { padding:1px 8px; border-radius:999px; border:1px solid #d99a06; background:#fbe9a8; color:#8a5a00; font-size:11px; font-weight:900; }
+        .bb-iv-pt .off { padding:1px 8px; border-radius:999px; border:1px solid var(--bd2); background:var(--sur2); color:var(--mu); font-size:11px; font-weight:700; }
+        .bb-iv-pk { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px; }
+        .bb-iv-pk div { padding:6px 8px; border-radius:8px; background:var(--sur2); border:1px solid var(--bd); }
+        .bb-iv-pk .l { font-size:11px; color:var(--mu); border:0; padding:0; background:none; }
+        .bb-iv-pk .v { font-size:17px; font-weight:900; border:0; padding:0; background:none; white-space:nowrap; }
+        .bb-iv-pk .v small { margin-left:3px; font-size:11px; color:var(--mu); font-weight:700; }
+        .bb-iv-hrs { display:flex; flex-direction:column; gap:4px; }
+        .bb-iv-hb, .bb-iv-hl { display:flex; gap:6px; }
+        .bb-iv-hb { align-items:flex-end; height:74px; }
+        .bb-iv-hc { flex:1; min-width:0; height:100%; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; gap:2px; }
+        .bb-iv-hc span { font-size:11px; font-weight:700; color:var(--mu); text-align:center; white-space:pre-line; line-height:1.15; }
+        .bb-iv-hc div { width:100%; border-radius:3px; }
+        .bb-iv-hc div.n0 { background:rgba(0,0,0,.06); }
+        .bb-iv-hc div.n1 { background:#d3d1c7; }
+        .bb-iv-hc div.n2 { background:#a9dc8a; }
+        .bb-iv-hc div.n3 { background:#22c55e; }
+        .bb-iv-hc div.ov-b { background:repeating-linear-gradient(135deg,#e9b824 0 3px,#f7dc6a 3px 6px); }
+        .bb-iv-hc div.ov-m { background:repeating-linear-gradient(135deg,#c3a6f0 0 3px,#e7dcfa 3px 6px); }
+        .bb-iv-hc div.ov-s { background:repeating-linear-gradient(135deg,#86bff2 0 3px,#d5eafc 3px 6px); }
+        .bb-iv-hc div.fut { background:transparent; border:1.5px dashed var(--bd); }
+        .bb-iv-hc.cur span { color:var(--bl); }
+        .bb-iv-hl span { flex:1; text-align:center; font-size:10.5px; color:var(--mu); }
+        .bb-iv-fl { display:flex; gap:5px; align-items:center; flex-wrap:wrap; }
+        .bb-iv-chip { height:24px; padding:0 10px; border-radius:999px; border:1.5px solid var(--bd2); background:transparent; color:var(--tx); font-size:12px; display:inline-flex; align-items:center; cursor:pointer; font-family:inherit; }
+        .bb-iv-chip.on { border-color:var(--tx); background:var(--tx); color:var(--sur); font-weight:700; }
+        .bb-iv-fl .hint { margin-left:auto; font-size:11px; color:var(--mu); }
+        .bb-iv-th { flex:0 0 auto; display:grid; grid-template-columns:64px minmax(0,1fr) 84px; gap:8px; padding:5px 16px; border-top:1px solid var(--bd); border-bottom:2px solid var(--bd); background:var(--sur2); font-size:12px; font-weight:700; color:var(--mu); }
+        .bb-iv-th span:last-child { text-align:right; }
+        .bb-iv-tb { flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden; padding:0 8px 6px 16px; }
+        .bb-iv-tr { display:grid; grid-template-columns:64px minmax(0,1fr) 84px; gap:8px; padding:7px 4px; border-bottom:1px solid var(--bd); align-items:center; }
+        .bb-iv-tr.ab { background:rgba(249,115,22,.08); }
+        .bb-iv-tr .t { font-size:13px; color:var(--mu); font-variant-numeric:tabular-nums; }
+        .bb-iv-tr .m { min-width:0; }
+        .bb-iv-tr .m1 { font-size:14px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .bb-iv-tr .m2 { font-size:11.5px; color:var(--mu); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .bb-iv-tr .m3 { font-size:11px; color:#c2410c; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .bb-iv-tr .d { min-width:0; text-align:right; white-space:nowrap; overflow:hidden; }
+        .bb-iv-tr .d1 { font-size:13.5px; font-variant-numeric:tabular-nums; }
+        .bb-iv-tr .d1.long { color:#e11d74; font-weight:700; }
+        .bb-iv-tr .d2 { font-size:10.5px; color:var(--mu); }
+        .bb-iv-tr .d2.ab { color:#c2410c; font-weight:700; }
+        .bb-iv-tr .d2.inf { color:#b45309; font-weight:700; }
+        .bb-iv-tr .who { display:inline-block; margin-right:5px; padding:0 6px; border-radius:6px; background:var(--sur2); border:1px solid var(--bd); font-size:11.5px; font-weight:700; }
+        .bb-iv-more { padding:9px; text-align:center; font-size:12.5px; color:var(--bl); font-weight:700; cursor:pointer; text-decoration:underline; }
+        .bb-iv-pf { flex:0 0 auto; padding:5px 16px 7px; border-top:1px solid var(--bd); font-size:11px; color:var(--mu); display:flex; gap:10px; white-space:nowrap; }
+        .bb-iv-pf span:last-child { margin-left:auto; }
+        `;
+        document.head.appendChild(st);
+
+        /* ───────── 화면 요소 붙이기 ───────── */
+        const box = document.querySelector('.bb-mm-box');
+        const track = $iv('bb-mm-track');
+        const page = ivEl('div'); page.id = 'bb-iv-page';
+        page.innerHTML =
+            '<div class="bb-iv-head">' +
+              '<button class="bb-mm-nav" id="bb-iv-help-btn" title="이 화면 사용 설명"><span class="tx"><span class="l1">사용</span><span class="l2">설명</span></span></button>' +
+              '<div class="bb-att-title" id="bb-iv-title">개입카드 현황</div>' +
+              '<div class="bb-att-r2">' +
+                '<button class="bb-mm-nav bb-att-mbtn" id="bb-iv-today">오늘</button>' +
+                '<button class="bb-mm-nav bb-att-mbtn" id="bb-iv-cal-btn">달력</button>' +
+                '<button class="bb-mm-nav" id="bb-iv-all" title="그날 전체 처리 내역">자세히</button>' +
+                '<span class="bb-att-stat" id="bb-iv-stat"></span>' +
+              '</div>' +
+              '<button class="bb-mm-nav bb-att-back" id="bb-iv-back" title="다중 모니터링으로 돌아가기"><span class="tx"><span class="l1">다중</span><span class="l2">미갱신</span></span><span class="ar">»</span></button>' +
+              '<div class="bb-att-cal" id="bb-iv-cal"></div>' +
+              '<div class="bb-iv-help" id="bb-iv-help"></div>' +
+            '</div>' +
+            '<div class="bb-iv-kpis" id="bb-iv-kpis"></div>' +
+            '<div class="bb-iv-notes" id="bb-iv-notes"></div>' +
+            '<div class="bb-iv-body" id="bb-iv-body"></div>' +
+            '<div class="bb-iv-legend">' +
+              '<span title="휴게시간으로 잡힌 시간대 (그 시간에 처리한 건이 있어도 카드에서는 빗금 유지, 자세히에서 건수만큼 막대가 높아짐)"><i style="background:repeating-linear-gradient(135deg,#e9b824 0 2px,#f7dc6a 2px 4px)"></i>휴게시간</span>' +
+              '<span title="업무 배정표(daily_tasks)상 다중 모니터링을 하는 시간대"><i style="background:repeating-linear-gradient(135deg,#c3a6f0 0 2px,#e7dcfa 2px 4px)"></i>다중 모니터링</span>' +
+              '<span title="업무 배정표(daily_tasks)상 부산국립과학관 임무를 하는 시간대"><i style="background:repeating-linear-gradient(135deg,#86bff2 0 2px,#d5eafc 2px 4px)"></i>부산국립과학관</span>' +
+            '</div>';
+        page.inert = true;
+        box.appendChild(page);
+        $iv('bb-iv-help').innerHTML = IV_HELP;   // 직접 쓴 안내문(줄바꿈 = <br>)
+
+        const pop = ivEl('div'); pop.id = 'bb-iv-pop';
+        document.body.appendChild(pop);
+
+        // 다중 모니터링 제목 왼쪽의 진입 버튼 (오른쪽 '이석 »' 과 대칭)
+        const mmHead = document.querySelector('#bb-mm-page-multi .bb-mm-head');
+        if (mmHead) {
+            mmHead.classList.add('bb-iv-hd');
+            const go = ivEl('button', 'bb-mm-nav bb-mm-goiv'); go.id = 'bb-iv-go'; go.title = '개입카드 현황으로 전환';
+            go.innerHTML = '<span class="ar">«</span><span class="tx"><span class="l1">개입</span><span class="l2">현황</span></span>';
+            mmHead.appendChild(go);
+        }
+
+        /* ───────── 데이터 ───────── */
+        const ivDateNow = () => _ivDate || ivOpDate();
+        async function ivRefresh(force) {
+            if (_ivBusy && !force) return;
+            _ivBusy = true;
+            const seq = ++_ivSeq, want = _ivDate;
+            try {
+                const d = await attFetchJson(IV_API + '?view=summary' + (want ? '&date=' + want : ''));
+                if (seq !== _ivSeq) return;   // 그 사이 날짜를 바꿨음
+                if (!d || d.ok !== true || !Array.isArray(d.people)) throw new Error('데이터 형식 오류');
+                _ivData = d; _ivData._at = Date.now(); _ivFail = false;
+            } catch (e) {
+                if (seq !== _ivSeq) return;
+                console.warn('[BB] 개입카드 갱신 실패:', e.message);
+                _ivFail = true;
+            } finally { _ivBusy = false; }
+            ivRender();
+            if (_ivPopKey && !_ivFail) ivLoadDetail(true);   // 열려 있는 팝업도 함께 갱신
+        }
+
+        /* ───────── 목록 화면 ───────── */
+        function ivHourLabels(p) {
+            const m = /^(\d{2})/.exec(p.shift || '');
+            if (!m || !p.hours) return [];
+            return p.hours.map((_, i) => (+m[1] + i) % 24);
+        }
+        const ivLvl = (c, scale) => (c >= scale[3] ? 'n3' : c >= scale[2] ? 'n2' : c >= scale[1] ? 'n1' : 'n0');
+        // 시간 칸 구분(서버 ov): b 휴게 / m 다중 모니터링 / s 부산국립과학관. 옛 서버 응답(ov 없음)이면 brkIdx로 대신한다.
+        const IV_OV_NAME = { b: '휴게시간', m: '다중 모니터링', s: '부산국립과학관' };
+        const ivOv = (p, i) => (p.ov ? p.ov[i] || '' : i === p.brkIdx ? 'b' : '');
+        function ivSegs(p, scale) {
+            const wrap = ivEl('div', 'bb-iv-segs');
+            const labels = ivHourLabels(p);
+            (p.hours || []).forEach((c, i) => {
+                const s = ivEl('span', 'bb-iv-seg');
+                const o = ivOv(p, i);
+                // 휴게·다중·과학관 칸은 그 시간에 처리한 건이 있어도 항상 빗금(칸이 좁아 색 구분이 어렵다). 건수는 툴팁/자세히에서 본다.
+                if (o) s.classList.add('ov-' + o);
+                else if (p.futFrom >= 0 && i >= p.futFrom) s.classList.add('fut');
+                else s.classList.add(ivLvl(c, scale));
+                if (i === p.curIdx) s.classList.add('cur');
+                s.title = attPad(labels[i]) + '시' + (c > 0 ? ' · ' + c + '건' : '') + (o ? ' · ' + IV_OV_NAME[o] : '');
+                wrap.appendChild(s);
+            });
+            return wrap;
+        }
+        // 정렬: 'shift' = 출근 시각 순(순위 없음, 기본) / 'cnt' = 처리 건수 순. 퇴근·출근 전은 어느 쪽이든 아래로.
+        function ivShiftKey(p) {
+            const m = /^(\d{2})(?::(\d{2}))?[–-](\d{2})/.exec(p.shift || '');
+            if (!m) return [9999, 9999];
+            let st = +m[1] * 60 + (+m[2] || 0);
+            if (st < 420) st += 1440;                      // 07:00 시작 근무일 기준 (00~06시 시작은 뒤로)
+            return [st, +m[3]];
+        }
+        function ivSortPeople(list) {
+            if (_ivSort === 'cnt') return list.slice();    // 서버가 이미 건수순
+            return list.slice().sort((a, b) => {
+                const ka = ivShiftKey(a), kb = ivShiftKey(b);
+                return Number(a.off) - Number(b.off) || ka[0] - kb[0] || ka[1] - kb[1] || String(a.name).localeCompare(String(b.name), 'ko');
+            });
+        }
+        function ivRender() {
+            const title = $iv('bb-iv-title'), stat = $iv('bb-iv-stat'), body = $iv('bb-iv-body'), kp = $iv('bb-iv-kpis'), nt = $iv('bb-iv-notes');
+            const date = ivDateNow(), isToday = date === ivOpDate();
+            $iv('bb-iv-today').classList.toggle('on', isToday);
+            $iv('bb-iv-cal-btn').classList.toggle('on', !isToday);
+            const d = _ivData && _ivData.date === date ? _ivData : null;
+            title.replaceChildren();
+            title.append('개입카드 현황 (' + ivMD(date) + ')');
+            if (!d) {
+                kp.replaceChildren(); nt.replaceChildren(); stat.textContent = '';
+                const m = ivEl('div', 'bb-iv-msg' + (_ivFail ? ' warn' : ''), _ivFail ? '불러오지 못했습니다. ' : '불러오는 중…');
+                if (_ivFail) { const r = ivEl('span', 'bb-att-retry', '다시 시도'); r.addEventListener('click', ivSafe(() => ivRefresh(true))); m.appendChild(r); }
+                body.replaceChildren(m);
+                return;
+            }
+            const T = d.totals || {};
+            title.append(ivEl('span', 'sep', ' - '));
+            if (isToday) title.append('오늘 ');
+            else { const pst = ivEl('span', 'past', '과거 '); title.appendChild(pst); }
+            const cntEl = ivEl('span', 'n', (T.solved || 0) + '건');
+            cntEl.style.cssText = 'font-weight:900;color:#c2410c';
+            title.appendChild(cntEl);
+            // 기준 시각 = 서버에서 데이터를 실제로 받아온 시각 (갱신에 실패하면 마지막으로 받은 시각을 경고색으로)
+            // 기준 시각 = 확장프로그램이 GitHub에 마지막으로 올린 시각 (화면에 보이는 데이터는 그 시각까지의 내용). 못 알면 받아온 시각에 '경'
+            const up = Math.max(0, ...Object.values(d.pcs || {}).map(x => (x && x.ts) || 0));
+            const stale = up > 0 && Date.now() - up > 10 * 60 * 1000;
+            stat.textContent = !isToday ? '' : up > 0 ? (_ivFail || stale ? '⚠ ' : '') + attHM(up) + ' 기준' : (_ivFail ? '⚠ ' : '') + attHM(d._at || d.asOf) + ' 경';
+            stat.title = up > 0 ? '확장프로그램이 데이터를 마지막으로 올린 시각 (약 3분 간격)' + (stale ? ' — 10분 넘게 올라오지 않았습니다' : '') : '이 화면이 데이터를 받아온 시각';
+            stat.classList.toggle('warn', _ivFail || stale);
+
+            const k = (l, v, u) => { const e = ivEl('div', 'bb-iv-kpi'); e.appendChild(ivEl('span', 'l', l)); const s = ivEl('span', 'v', v); if (u) s.appendChild(ivEl('small', '', u)); e.appendChild(s); return e; };
+            kp.replaceChildren(k('처리 건수', String(T.solved || 0), '건'), k('처리 인원', String(T.people || 0), '명'), k('평균 처리시간', T.avgSec == null ? '-' : ivDur(T.avgSec)));
+
+            const chips = [];
+            const chip = (label, n, name, flt) => { if (n > 0) { const b = ivEl('button', 'bb-iv-note', label + ' ' + n); b.dataset.name = name; b.dataset.flt = flt; chips.push(b); } };
+            chip('추정', T.inferred, '__all', 'inf');
+            chip('이탈', T.abandoned, '__all', 'ab');
+            chip('특정 불가', T.unresolved, '__all', 'unk');   // 세 칩 모두 같은 '자세히' 창을 열고 필터만 다르게
+            const sb = ivEl('button', 'bb-iv-note bb-iv-sort', _ivSort === 'cnt' ? '건수 순' : '근무시간 순');
+            sb.title = '목록 정렬 방식 바꾸기';
+            sb.dataset.sort = '1';
+            chips.push(sb);
+            nt.replaceChildren(...chips);
+
+            const scale = d.scale || [0, 1, 3, 6];
+            const rows = [];
+            ivSortPeople(d.people).forEach((p) => {
+                if (!p.solved && !p.hours && !p.inferred && !p.abandoned) return;
+                const r = ivEl('div', 'bb-iv-row');
+                r.dataset.name = p.name;
+                if (p.onBreak) r.classList.add('brk');
+                if (p.off) r.classList.add('off');
+                if (_ivPopName === p.name) r.classList.add('sel');
+                const mid = ivEl('div', 'bb-iv-mid');
+                const l1 = ivEl('div', 'bb-iv-l1');
+                l1.appendChild(ivEl('span', 'bb-iv-nm', p.name));
+                l1.appendChild(ivEl('span', 'bb-iv-meta', p.shift || ''));
+                if (p.onBreak) l1.appendChild(ivEl('span', 'bb-iv-badge', '휴게중'));
+                else if (p.off) l1.appendChild(ivEl('span', 'bb-iv-badge off', p.offKind === 'before' ? '출근 전' : '퇴근'));
+                mid.appendChild(l1);
+                if (p.hours) mid.appendChild(ivSegs(p, scale));
+                r.appendChild(mid);
+                const c = ivEl('div', 'bb-iv-cnt');
+                const cc = ivEl('div', 'c', String(p.solved)); cc.appendChild(ivEl('small', '', '건'));
+                c.appendChild(cc);
+                c.appendChild(ivEl('div', 'a', p.avgSec == null ? '' : '평균 ' + ivDur(p.avgSec)));
+                r.appendChild(c);
+                rows.push(r);
+            });
+            if (!rows.length) rows.push(ivEl('div', 'bb-iv-msg', isToday ? '아직 기록이 없습니다.' : '이 날짜의 기록이 없습니다.'));
+            const keep = body.scrollTop;
+            body.replaceChildren(...rows);
+            body.scrollTop = keep;
+        }
+
+        /* ───────── 달력 (이석 화면과 같은 모양 · 로그(JSON)가 있는 날만 선택 가능) ───────── */
+        function ivCloseHelp() { $iv('bb-iv-help').classList.remove('open'); $iv('bb-iv-help-btn').classList.remove('on'); }
+        function ivToggleHelp() {
+            const h = $iv('bb-iv-help'), open = !h.classList.contains('open');
+            ivCloseCal(); ivClosePop();
+            h.classList.toggle('open', open);
+            $iv('bb-iv-help-btn').classList.toggle('on', open);
+        }
+        function ivCloseCal() { _ivCalOpen = false; $iv('bb-iv-cal').classList.remove('open'); }
+        async function ivOpenCal() {
+            if (_ivCalOpen) { ivCloseCal(); return; }
+            ivClosePop(); ivCloseHelp();
+            _ivCalOpen = true;
+            const p = ivDateNow().split('-').map(Number);
+            _ivCalYm = { y: p[0], m: p[1] };
+            $iv('bb-iv-cal').classList.add('open');
+            ivRenderCal('loading');
+            if (!_ivDates || Date.now() - _ivDatesAt > 60000) {
+                try {
+                    const d = await attFetchJson(IV_API + '?view=dates');
+                    if (!d || d.ok !== true || !Array.isArray(d.dates)) throw new Error('데이터 형식 오류');
+                    _ivDates = new Set(d.dates); _ivDatesAt = Date.now();
+                } catch (e) { console.warn('[BB] 개입카드 날짜 목록 실패:', e.message); if (_ivCalOpen) ivRenderCal('fail'); return; }
+            }
+            if (_ivCalOpen) ivRenderCal();
+        }
+        function ivRenderCal(state) {
+            const cal = $iv('bb-iv-cal');
+            if (state) { cal.replaceChildren(ivEl('div', 'bb-iv-msg' + (state === 'fail' ? ' warn' : ''), state === 'fail' ? '날짜 목록을 불러오지 못했습니다.' : '불러오는 중…')); return; }
+            const y = _ivCalYm.y, m = _ivCalYm.m;
+            const all = [..._ivDates].sort();
+            const minYm = all.length ? all[0].slice(0, 7) : null, maxYm = all.length ? all[all.length - 1].slice(0, 7) : null;
+            const ym = y + '-' + attPad(m);
+            const head = ivEl('div', 'bb-iv-cal-h');
+            const prev = ivEl('button', 'bb-mm-nav', '‹'), next = ivEl('button', 'bb-mm-nav', '›');
+            prev.dataset.mv = '-1'; next.dataset.mv = '1';
+            prev.disabled = !minYm || ym <= minYm; next.disabled = !maxYm || ym >= maxYm;
+            head.append(prev, ivEl('span', 't', y + '년 ' + m + '월'), next);
+            const grid = ivEl('div', 'bb-att-cal-grid');
+            ['일', '월', '화', '수', '목', '금', '토'].forEach(d => grid.appendChild(ivEl('div', 'bb-att-dow', d)));
+            const dow = new Date(Date.UTC(y, m - 1, 1)).getUTCDay(), dim = new Date(Date.UTC(y, m, 0)).getUTCDate();
+            for (let i = 0; i < dow; i++) grid.appendChild(ivEl('div'));
+            const today = ivOpDate(), sel = ivDateNow();
+            for (let d = 1; d <= dim; d++) {
+                const ds = ym + '-' + attPad(d);
+                const cell = ivEl('div', 'bb-att-day', String(d));
+                if (_ivDates.has(ds)) { cell.classList.add('has'); cell.dataset.date = ds; cell.appendChild(ivEl('span', 'dot')); }
+                if (ds === today) cell.classList.add('today');
+                if (ds === sel) cell.classList.add('sel');
+                grid.appendChild(cell);
+            }
+            cal.replaceChildren(head, grid);
+        }
+
+        /* ───────── 팝업 ───────── */
+        function ivPlacePop() {
+            const br = box.getBoundingClientRect(), w = pop.offsetWidth;
+            let left = br.left - w - 10;
+            if (left < 8) left = Math.min(br.right + 10, window.innerWidth - w - 8);
+            pop.style.left = Math.max(8, left) + 'px';
+            pop.style.top = Math.max(8, br.top) + 'px';
+            pop.style.height = Math.min(br.height, window.innerHeight - 16) + 'px';
+        }
+        function ivClosePop() {
+            _ivPopKey = null; _ivPopName = null; _ivDetail = null;
+            pop.classList.remove('open');
+            document.querySelectorAll('.bb-iv-row.sel').forEach(e => e.classList.remove('sel'));
+        }
+        function ivOpenPop(name, flt) {
+            if (_ivPopName === name && !flt && pop.classList.contains('open')) { ivClosePop(); return; }
+            ivCloseCal(); ivCloseHelp();
+            _ivPopName = name; _ivPopFilter = flt || 'all'; _ivPopLimit = IV_ROWS_STEP; _ivDetail = null;
+            _ivPopKey = ivDateNow() + '|' + name;
+            document.querySelectorAll('.bb-iv-row').forEach(e => e.classList.toggle('sel', e.dataset.name === name));
+            pop.classList.add('open');
+            ivPlacePop();
+            ivRenderPop();
+            ivLoadDetail(false);
+        }
+        async function ivLoadDetail(silent) {
+            const key = _ivPopKey;
+            if (!key) return;
+            const cached = _ivDetailCache[key];
+            if (!silent && cached && Date.now() - cached._at < 20000) { _ivDetail = cached; ivRenderPop(); return; }
+            try {
+                const d = await attFetchJson(IV_API + '?view=person&name=' + encodeURIComponent(_ivPopName) + '&date=' + ivDateNow());
+                if (!d || d.ok !== true || !Array.isArray(d.rows)) throw new Error('데이터 형식 오류');
+                d._at = Date.now();
+                _ivDetailCache[key] = d;
+                if (_ivPopKey !== key) return;
+                _ivDetail = d;
+            } catch (e) {
+                console.warn('[BB] 개입카드 내역 실패:', e.message);
+                if (_ivPopKey !== key) return;
+                if (!silent) _ivDetail = { _fail: true };
+            }
+            ivRenderPop();
+        }
+        const ivPersonOf = name => (_ivData && _ivData.people.find(p => p.name === name)) || null;
+        function ivMatch(r, f) {
+            if (f === 'all') return true;
+            if (f === 'ok') return r.st === 'resolved' && !r.inf;
+            if (f === 'inf') return r.inf;
+            if (f === 'unk') return r.n === '';
+            if (f === 'ab') return !r.inf && r.n !== '' && (r.st === 'abandoned' || r.st === 'stopped');
+            return true;
+        }
+        function ivRenderPop() {
+            if (!_ivPopKey) return;
+            const name = _ivPopName, special = name === '__all' || name === '__unresolved';
+            const p = special ? null : ivPersonOf(name), d = _ivDetail && !_ivDetail._fail ? _ivDetail : null;
+            const head = ivEl('div', 'bb-iv-ph');
+            const pt = ivEl('div', 'bb-iv-pt');
+            pt.appendChild(ivEl('b', '', name === '__all' ? '자세히 (' + ivMD(ivDateNow()) + (ivDateNow() === ivOpDate() ? ' 오늘' : '') + ')' : name === '__unresolved' ? '이름 특정 불가' : name));
+            if (p && p.shift) pt.appendChild(ivEl('span', '', p.shift));
+            if (p && p.brk) pt.appendChild(ivEl('span', 'bg', '휴게 ' + p.brk + '시'));
+            if (p && p.off && p.offKind !== 'before') pt.appendChild(ivEl('span', 'off', '퇴근'));
+            const x = ivEl('span', 'x', '✕'); x.dataset.act = 'close'; pt.appendChild(x);
+            head.appendChild(pt);
+
+            if (d && name !== '__unresolved') {
+                const C = d.counts || {};
+                const pk = ivEl('div', 'bb-iv-pk');
+                const cell = (l, v, u, stl) => { const e = ivEl('div'); e.appendChild(ivEl('div', 'l', l)); const vv = ivEl('div', 'v', v); if (stl) vv.style.cssText = stl; if (u) vv.appendChild(ivEl('small', '', u)); e.appendChild(vv); return e; };
+                pk.append(cell('처리', String(C.solved || 0), '건'), cell('평균', d.avgSec == null ? '-' : ivDur(d.avgSec)), cell('최장', d.maxSec == null ? '-' : ivDur(d.maxSec), '', d.maxSec >= IV_LONG_SEC ? 'color:#e11d74' : ''), cell('이탈', String(C.abandoned || 0), '건', C.abandoned ? 'color:var(--or)' : ''));
+                head.appendChild(pk);
+            }
+            if (p && p.hours && _ivData) {
+                const scale = _ivData.scale || [0, 1, 3, 6], labels = ivHourLabels(p), max = Math.max(1, ...p.hours);
+                const hrs = ivEl('div', 'bb-iv-hrs'), hb = ivEl('div', 'bb-iv-hb'), hl = ivEl('div', 'bb-iv-hl');
+                p.hours.forEach((c, i) => {
+                    const col = ivEl('div', 'bb-iv-hc' + (i === p.curIdx ? ' cur' : ''));
+                    const o = ivOv(p, i), fut = !o && p.futFrom >= 0 && i >= p.futFrom;
+                    const OV_SHORT = { b: '휴게', m: '다중', s: '과학관' };
+                    // 빗금 칸: 0건이면 낮은 막대(기본), 건수가 늘면 그만큼 높아진다. 라벨은 "다중(11)"(칸이 좁아 두 줄)
+                    const lab = o ? OV_SHORT[o] + (c > 0 ? '\n(' + c + ')' : '') : fut ? '' : String(c);
+                    col.appendChild(ivEl('span', '', lab));
+                    const bar = ivEl('div', o ? 'ov-' + o : fut ? 'fut' : ivLvl(c, scale));
+                    bar.style.height = (fut ? 56 : o ? Math.max(12, Math.round((c / max) * 52 + 4)) : Math.round((c / max) * 52 + 4)) + 'px';
+                    if (o && !(c > 0)) bar.style.height = '12px';
+                    col.title = attPad(labels[i]) + '시' + (c > 0 ? ' · ' + c + '건' : '') + (o ? ' · ' + IV_OV_NAME[o] : '');
+                    col.appendChild(bar);
+                    hb.appendChild(col);
+                    hl.appendChild(ivEl('span', '', attPad(labels[i]) + '시'));
+                });
+                hrs.append(hb, hl);
+                head.appendChild(hrs);
+            }
+            if (d && name !== '__unresolved') {
+                const fl = ivEl('div', 'bb-iv-fl');
+                const C = d.counts || {}, tot = d.rows.length;
+                const defs = [['all', '전체', tot], ['ok', '해결', C.solved || 0], ['inf', '추정', C.inferred || 0], ['ab', '이탈', C.abandoned || 0], ['unk', '특정 불가', name === '__all' ? d.rows.filter(r => r.n === '').length : 0]];
+                defs.forEach(([k, l, n]) => { if (k !== 'all' && !n && _ivPopFilter !== k) return; const c = ivEl('button', 'bb-iv-chip' + (_ivPopFilter === k ? ' on' : ''), l + ' ' + n); c.dataset.flt = k; fl.appendChild(c); });
+                fl.appendChild(ivEl('span', 'hint', '3분 이상 처리 시 분홍 텍스트'));
+                head.appendChild(fl);
+            }
+
+            const th = ivEl('div', 'bb-iv-th');
+            th.append(ivEl('span', '', '시작'), ivEl('span', '', special ? '이름 · 카드 · 사유' : '카드 · 사유'), ivEl('span', '', '소요시간'));
+            const tb = ivEl('div', 'bb-iv-tb');
+            const foot = ivEl('div', 'bb-iv-pf');
+            if (!_ivDetail) tb.appendChild(ivEl('div', 'bb-iv-msg', '불러오는 중…'));
+            else if (_ivDetail._fail) {
+                const m = ivEl('div', 'bb-iv-msg warn', '불러오지 못했습니다. ');
+                const r = ivEl('span', 'bb-att-retry', '다시 시도'); r.dataset.act = 'retry'; m.appendChild(r); tb.appendChild(m);
+            } else {
+                const list = d.rows.filter(r => ivMatch(r, _ivPopFilter));
+                list.slice(0, _ivPopLimit).forEach(r => tb.appendChild(ivRowEl(r, special)));
+                if (!list.length) tb.appendChild(ivEl('div', 'bb-iv-msg', '해당하는 내역이 없습니다.'));
+                if (list.length > _ivPopLimit) { const m = ivEl('div', 'bb-iv-more', '더 보기 (' + (list.length - _ivPopLimit) + '건 남음)'); m.dataset.act = 'more'; tb.appendChild(m); }
+                foot.append(ivEl('span', '', list.length + '건 중 ' + Math.min(list.length, _ivPopLimit) + '건 표시'), ivEl('span', '', '추정 · 이탈은 건수 제외'));
+            }
+            const keep = pop.querySelector('.bb-iv-tb'), top = keep ? keep.scrollTop : 0;
+            pop.replaceChildren(head, th, tb, foot);
+            tb.scrollTop = top;
+            ivPlacePop();
+        }
+        // 추정 근거를 한 줄로 (서버 문구 → 짧은 표현)
+        const ivBasisShort = b => (/한 명/.test(b || '') ? '이니셜로 추정' : /근무표/.test(b || '') ? '근무표로 추정' : '근무시간으로 추정');
+        function ivRowEl(r, special) {
+            const row = ivEl('div', 'bb-iv-tr' + (r.st === 'abandoned' || r.st === 'stopped' ? ' ab' : ''));
+            row.appendChild(ivEl('span', 't', ivHMS(r.t)));
+            const m = ivEl('div', 'm');
+            const m1 = ivEl('div', 'm1');
+            if (special) m1.appendChild(ivEl('span', 'who', r.n ? r.n + (r.inf ? '?' : '') : '?'));
+            m1.append(r.card || '(카드 정보 숨김)');
+            m.appendChild(m1);
+            m.appendChild(ivEl('div', 'm2', r.why || ''));
+            if (r.c && r.c.length) m.appendChild(ivEl('div', 'm2', '후보: ' + r.c.join(', ')));
+            if (r.nx) m.appendChild(ivEl('div', 'm3', '같은 기체 · ' + ivGap(r.nx.s) + ' ' + ivWho(r.nx) + ' 점유'));
+            if (r.pv) m.appendChild(ivEl('div', 'm3', '같은 기체 · 직전에 ' + ivWho(r.pv) + ' 이탈'));
+            row.appendChild(m);
+            const dd = ivEl('div', 'd');
+            const sec = r.e ? Math.round((r.e - r.t) / 1000) : null;
+            const d1 = ivEl('div', 'd1', r.st === 'ongoing' ? '진행중' : sec == null ? '-' : (r.approx ? '~' : '') + ivDur(sec));
+            if (sec != null && sec >= IV_LONG_SEC && r.st === 'resolved') d1.classList.add('long');
+            dd.appendChild(d1);
+            const tag = r.inf ? ivBasisShort(r.basis) : r.st === 'abandoned' ? '이탈' : r.st === 'stopped' ? '수집중단' : '';
+            if (tag) dd.appendChild(ivEl('div', 'd2 ' + (r.inf ? 'inf' : 'ab'), tag));
+            row.appendChild(dd);
+            return row;
+        }
+
+        /* ───────── 전환 / 이벤트 ───────── */
+        // 열기: 개입 화면이 왼쪽에서 들어오고, 다중 화면은 오른쪽으로 밀려남 (이석 화면 전환과 같은 방향감)
+        function ivSetOpen(v) {
+            _ivOpen = v;
+            page.classList.toggle('open', v);
+            page.inert = !v;
+            track.style.transform = v ? 'translateX(50%)' : '';
+            const multi = $iv('bb-mm-page-multi');
+            if (multi) multi.inert = v;   // 개입 화면이 열려 있는 동안 화면 밖으로 밀려난 다중 화면은 클릭/탭 이동 불가
+            if (v) { ivRender(); if (!_ivData || _ivData.date !== ivDateNow() || Date.now() - (_ivData._at || 0) > 10000) ivRefresh(true); }   // 왔다 갔다 해도 10초 안이면 다시 요청하지 않음
+            else { ivClosePop(); ivCloseCal(); ivCloseHelp(); }
+        }
+        function ivSetDate(d) {
+            ivCloseCal();
+            if (d === ivOpDate()) d = null;
+            if (_ivDate === d && _ivData && _ivData.date === ivDateNow()) return;
+            _ivDate = d; _ivData = null; _ivFail = false; ivClosePop();
+            ivRender(); ivRefresh(true);
+        }
+        $iv('bb-iv-go').addEventListener('click', ivSafe(() => ivSetOpen(true)));
+        $iv('bb-iv-back').addEventListener('click', ivSafe(() => ivSetOpen(false)));
+        $iv('bb-iv-today').addEventListener('click', ivSafe(() => ivSetDate(null)));
+        $iv('bb-iv-help-btn').addEventListener('click', ivSafe(() => ivToggleHelp()));
+        $iv('bb-iv-cal-btn').addEventListener('click', ivSafe(() => ivOpenCal()));
+        $iv('bb-iv-cal').addEventListener('click', ivSafe(e => {
+            const mv = e.target.closest('button[data-mv]');
+            if (mv && !mv.disabled) { const t = _ivCalYm.y * 12 + (_ivCalYm.m - 1) + Number(mv.dataset.mv); _ivCalYm = { y: Math.floor(t / 12), m: (t % 12) + 1 }; ivRenderCal(); return; }
+            const day = e.target.closest('.bb-att-day.has');
+            if (day) ivSetDate(day.dataset.date);
+        }));
+        $iv('bb-iv-all').addEventListener('click', ivSafe(() => ivOpenPop('__all')));
+        $iv('bb-iv-body').addEventListener('click', ivSafe(e => { const r = e.target.closest('.bb-iv-row'); if (r) ivOpenPop(r.dataset.name); }));
+        $iv('bb-iv-notes').addEventListener('click', ivSafe(e => { const b = e.target.closest('.bb-iv-note'); if (!b) return; if (b.dataset.sort) { _ivSort = _ivSort === 'cnt' ? 'shift' : 'cnt'; try { localStorage.setItem('bbIvSort', _ivSort); } catch (x) { /* 저장 못 해도 이번엔 적용 */ } ivRender(); return; } ivOpenPop(b.dataset.name, b.dataset.flt); }));
+        pop.addEventListener('click', ivSafe(e => {
+            const c = e.target.closest('.bb-iv-chip'), a = e.target.closest('[data-act]');
+            if (c) { _ivPopFilter = c.dataset.flt; _ivPopLimit = IV_ROWS_STEP; ivRenderPop(); }
+            else if (a) {
+                if (a.dataset.act === 'close') ivClosePop();
+                else if (a.dataset.act === 'more') { _ivPopLimit += IV_ROWS_STEP; ivRenderPop(); }
+                else if (a.dataset.act === 'retry') { _ivDetail = null; ivRenderPop(); ivLoadDetail(false); }
+            }
+        }));
+        document.addEventListener('click', ivSafe(e => {   // 바깥 클릭 → 팝업/달력 닫기
+            if (_ivPopKey && !e.target.closest('#bb-iv-pop') && !e.target.closest('.bb-iv-row') && !e.target.closest('.bb-iv-note') && !e.target.closest('#bb-iv-all')) ivClosePop();
+            if (_ivCalOpen && !e.target.closest('#bb-iv-cal') && !e.target.closest('#bb-iv-cal-btn')) ivCloseCal();
+            if ($iv('bb-iv-help').classList.contains('open') && !e.target.closest('#bb-iv-help') && !e.target.closest('#bb-iv-help-btn')) ivCloseHelp();
+        }), true);
+        document.addEventListener('keydown', ivSafe(e => { if (e.key === 'Escape') { if (_ivPopKey) ivClosePop(); else if (_ivCalOpen) ivCloseCal(); else ivCloseHelp(); } }));
+
+        const ivVisible = () => isOpen && _ivOpen && !document.hidden;
+        setInterval(ivSafe(() => {
+            if (!isOpen && (_ivPopKey || _ivCalOpen)) { ivClosePop(); ivCloseCal(); }   // 보드를 닫으면 팝업/달력도 닫음
+            if (ivVisible() && !_ivDate) ivRefresh(false);
+        }), IV_REFRESH_MS);
+        document.addEventListener('visibilitychange', ivSafe(() => { if (ivVisible() && !_ivDate) ivRefresh(false); }));
+        window.addEventListener('resize', ivSafe(() => { if (_ivPopKey) ivPlacePop(); }));
+        // 다중 모니터링에 '미갱신' 이상이 있으면 « 다중 버튼과 똑같이 '다중 »' 버튼도 점멸 (syncAttBackAlert 에서 호출)
+        _ivAlertHook = ivSafe(() => {
+            const b = $iv('bb-iv-back');
+            if (!b) return;
+            const a = _patrolAnomaly;
+            b.classList.toggle('alert', a.n > 0);
+            b.title = a.n > 0 ? `다중 모니터링 ${a.n}대 POI 미갱신 (최대 ${a.max}분째) — 클릭하면 다중 화면으로` : '다중 모니터링으로 돌아가기';
+        });
+        _ivAlertHook();
+        console.log('[BB] 개입카드 현황 켜짐 (SECTION 18)');
+    }
+    } catch (e) { console.warn('[BB] 개입카드 초기화 실패 — 기존 기능에는 영향 없음:', e && e.message); }
+
+    // ============================================================
+    // SECTION 19. 배달 로그 — 옛 '임무 OFF' 자리(오른쪽 고정 버튼)에서 여는 패널
+    //  - 데이터: multimonitoring.vercel.app/api/delivery-poll?view=... (크론 폴링과 같은 엔드포인트를 조회 전용으로 겸용 — api/ 폴더를 늘리지 않으려고 합침)
+    //            GitHub 레포 delivery/YYYY-MM/YYYY-MM-DD.json 에 확정 저장된 값을 서버가 읽어서 돌려줌. 오늘 근무일은 아직 확정 전이면 Gist 의 진행 중 상태를 대신 보여줌)
+    //  - 달력 모양·동작은 개입카드(SECTION 18) 의 ivOpenCal/ivRenderCal 로직을 그대로 옮겨왔다 (같은 CSS 클래스 bb-att-cal*, bb-iv-cal-h, bb-iv-msg 재사용)
+    //  - 안전장치: 전체가 try/catch — 여기서 오류가 나도 기존 기능(배터리 카드 등)에는 영향 없음
+    // ============================================================
+    try {
+    if (document.getElementById('bb-fb-dlog') && document.getElementById('bb-dlog-panel') && typeof attFetchJson === 'function') {
+        const DL_API = ATT_API + '/delivery-poll';   // 크론 폴링과 같은 엔드포인트 — ?view=... 가 있으면 조회 전용으로 동작(인증 불필요), api/ 폴더 개수를 늘리지 않기 위함
+        const DL_BADGE_MS = 5 * 60 * 1000;
+        const $dl = id => document.getElementById(id);
+        const dlEl = (tag, cls, text) => { const el = document.createElement(tag); if (cls) el.className = cls; if (text !== undefined && text !== null) el.textContent = text; return el; };
+        const dlOpDate = () => attYmd(attKst(Date.now() - 7 * 3600 * 1000));   // 근무일 = 07:00 기준 (개입카드와 동일한 방식)
+
+        let _dlOpen = false, _dlDate = null, _dlData = null, _dlFail = false, _dlSeq = 0;
+        let _dlDates = null, _dlDatesAt = 0, _dlCalOpen = false, _dlCalYm = null;
+        const dlDateNow = () => _dlDate || dlOpDate();
+
+        function dlClosePanel() {
+            _dlOpen = false; _dlCalOpen = false;
+            $dl('bb-dlog-panel').classList.remove('open');
+            $dl('bb-dlog-cal').classList.remove('open');
+        }
+        function dlOpenPanel() {
+            if (_dlOpen) { dlClosePanel(); return; }
+            _dlOpen = true;
+            $dl('bb-dlog-panel').classList.add('open');
+            dlRender();
+            if (!_dlData || _dlData.date !== dlDateNow() || Date.now() - (_dlData._at || 0) > 30000) dlRefresh();
+        }
+        async function dlRefresh() {
+            const seq = ++_dlSeq, date = dlDateNow();
+            if (!_dlData || _dlData.date !== date) { _dlData = null; dlRender(); }
+            try {
+                const d = await attFetchJson(DL_API + '?view=day&date=' + date);
+                if (seq !== _dlSeq) return;
+                if (!d || d.ok !== true) throw new Error('데이터 형식 오류');
+                d.date = date; d._at = Date.now();
+                _dlData = d; _dlFail = false;
+            } catch (e) {
+                console.warn('[BB] 배달 로그 갱신 실패:', e.message);
+                if (seq === _dlSeq) _dlFail = true;
+            }
+            if (_dlOpen && seq === _dlSeq) dlRender();
+        }
+        function dlSetDate(d) {
+            dlCloseCal();
+            if (d === dlOpDate()) d = null;
+            if (_dlDate === d) return;
+            _dlDate = d; _dlData = null;
+            dlRender(); dlRefresh();
+        }
+
+        // 배달 건 하나의 표시용 제목 ("사이트 · 배정 기체명" — 가게명은 사이트명과 사실상 중복이라 기체 호기명으로 대체. 기체명이 없으면 가게명, 그것도 없으면 사이트명만)
+        const dlSiteLabel = r => r.robot ? (r.site + ' · ' + r.robot) : r.store ? (r.site + ' · ' + r.store) : (r.site || '(사이트 없음)');
+        // 수행자 표시 — 인계가 있었으면 "길동 → 꺽정", 대리 반응이면 "(대리)" 표기
+        const dlWhoLabel = r => {
+            const chain = (r.handoverFrom && r.handoverFrom.length ? r.handoverFrom : []).concat(r.performer ? [r.performer] : []);
+            const name = chain.length ? chain.join(' → ') : '미확인';
+            return name + (r.proxyBy ? ' (대리)' : '');
+        };
+        function dlRender() {
+            const lbl = $dl('bb-dlog-date-lbl'), kpi = $dl('bb-dlog-kpi'), body = $dl('bb-dlog-body');
+            const isToday = !_dlDate;
+            lbl.textContent = isToday ? '오늘 (' + dlDateNow() + ')' : dlDateNow();
+            $dl('bb-dlog-today').classList.toggle('on', isToday);
+            $dl('bb-dlog-cal-btn').classList.toggle('on', !isToday);
+            if (!_dlData) {
+                kpi.replaceChildren();
+                body.innerHTML = '<div class="bb-att-msg' + (_dlFail ? ' warn' : '') + '">' + (_dlFail ? '불러오지 못했습니다.' : '불러오는 중…') + '</div>';
+                return;
+            }
+            const s = _dlData.summary || { completed: 0, byPerformer: {} };
+            const deliveries = Array.isArray(_dlData.deliveries) ? _dlData.deliveries : [];
+            const pending = (_dlData.inProgress ? _dlData.inProgress.length : 0) + (_dlData.incomplete ? _dlData.incomplete.length : 0);
+            const kCell = (l, v) => { const e = dlEl('div'); e.appendChild(dlEl('div', 'l', l)); e.appendChild(dlEl('div', 'v', v)); return e; };
+            const perf = s.byPerformer || {};
+            const topName = Object.keys(perf).sort((a, b) => (perf[b].count || 0) - (perf[a].count || 0))[0];
+            const topTxt = topName ? (topName + ' (' + perf[topName].count + '건)') : '-';
+            const cells = [kCell('완료 건수', String(s.completed || 0) + '건')];
+            if (isToday && pending > 0) cells.push(kCell('확인 중', pending + '건'));   // 2시간 간격 폴링 특성상, 다음 조회 전까지는 실제로 끝났어도 여기 잡혀 있을 수 있음
+            cells.push(kCell('최다 배달자', topTxt));
+            kpi.replaceChildren(...cells);
+            $dl('bb-dlog-note').innerHTML = isToday
+                ? '* 11:00부터 2시간마다 업데이트<br>23:00에 금일 집계 마감(07~23시 합산).'
+                : '* 확정된 기록입니다.';
+            if (!deliveries.length) { body.innerHTML = '<div class="bb-att-msg">이 날짜의 배달 완료 기록이 없습니다.' + (isToday && pending ? ' (진행 중 ' + pending + '건은 다음 조회 때 반영됩니다)' : '') + '</div>'; return; }
+            // 배달 건이 앞, 아래 줄에 배정 시각·주문번호(+복사 버튼) — 오른쪽엔 수행자 · 소요시간(라벨 포함) — 07시부터 시간순으로 쌓인 걸 최신이 맨 위로 오게 뒤집어서 보여줌
+            body.replaceChildren(...deliveries.slice().reverse().map(r => {
+                const row = dlEl('div', 'bb-fbp-row');
+                const dot = dlEl('span', 'bb-fbp-dot'); dot.style.background = 'var(--pk)';
+                const main = dlEl('span', 'bb-fbp-main');
+                main.appendChild(dlEl('span', 'bb-fbp-name', dlSiteLabel(r)));
+                const meta = dlEl('span', 'bb-fbp-sub bb-dlog-meta');
+                meta.appendChild(dlEl('span', '', '기체 배정 ' + (r.assignedAt || '-')));
+                if (r.orderNo) {
+                    const ordWrap = dlEl('span', 'bb-dlog-ord');
+                    ordWrap.appendChild(dlEl('span', '', '주문번호 ' + r.orderNo));
+                    const copyBtn = dlEl('button', 'bb-dlog-copy');
+                    copyBtn.type = 'button'; copyBtn.title = '주문번호 복사';
+                    const copyIco = dlEl('span', 'bb-dlog-copy-ico', '📋');
+                    const copyLbl = dlEl('span', 'bb-dlog-copy-lbl', '복사');
+                    copyBtn.append(copyIco, copyLbl);
+                    copyBtn.addEventListener('click', async (e) => {
+                        e.stopPropagation();
+                        try { await navigator.clipboard.writeText(r.orderNo); copyIco.textContent = '✅'; }
+                        catch (err) { copyIco.textContent = '⚠️'; }
+                        setTimeout(() => { copyIco.textContent = '📋'; }, 1200);
+                    });
+                    ordWrap.appendChild(copyBtn);
+                    meta.appendChild(ordWrap);
+                } else {
+                    meta.appendChild(dlEl('span', '', '주문번호 없음'));
+                }
+                main.appendChild(meta);
+                const right = dlEl('span', 'bb-fbp-right');
+                right.appendChild(dlEl('span', 'bb-fbp-who', dlWhoLabel(r)));
+                const time = dlEl('span', 'bb-fbp-time');
+                time.appendChild(dlEl('span', 'l', '배달 소요시간'));
+                time.appendChild(dlEl('span', 'v', r.durationSec != null ? attDurHM(r.durationSec) : '-'));
+                right.appendChild(time);
+                row.append(dot, main, right);
+                return row;
+            }));
+        }
+
+        /* ───────── 달력 (개입카드와 같은 모양 · 로그(JSON)가 있는 날만 선택 가능) ───────── */
+        function dlCloseCal() { _dlCalOpen = false; $dl('bb-dlog-cal').classList.remove('open'); }
+        async function dlOpenCal() {
+            if (_dlCalOpen) { dlCloseCal(); return; }
+            _dlCalOpen = true;
+            const p = dlDateNow().split('-').map(Number);
+            _dlCalYm = { y: p[0], m: p[1] };
+            $dl('bb-dlog-cal').classList.add('open');
+            dlRenderCal('loading');
+            if (!_dlDates || Date.now() - _dlDatesAt > 60000) {
+                try {
+                    const d = await attFetchJson(DL_API + '?view=dates');
+                    if (!d || d.ok !== true || !Array.isArray(d.dates)) throw new Error('데이터 형식 오류');
+                    _dlDates = new Set(d.dates); _dlDatesAt = Date.now();
+                } catch (e) { console.warn('[BB] 배달 로그 날짜 목록 실패:', e.message); if (_dlCalOpen) dlRenderCal('fail'); return; }
+            }
+            if (_dlCalOpen) dlRenderCal();
+        }
+        function dlRenderCal(state) {
+            const cal = $dl('bb-dlog-cal');
+            if (state) { cal.replaceChildren(dlEl('div', 'bb-iv-msg' + (state === 'fail' ? ' warn' : ''), state === 'fail' ? '날짜 목록을 불러오지 못했습니다.' : '불러오는 중…')); return; }
+            const y = _dlCalYm.y, m = _dlCalYm.m;
+            const all = [..._dlDates].sort();
+            const minYm = all.length ? all[0].slice(0, 7) : null, maxYm = all.length ? all[all.length - 1].slice(0, 7) : null;
+            const ym = y + '-' + attPad(m);
+            const head = dlEl('div', 'bb-iv-cal-h');
+            const prev = dlEl('button', 'bb-mm-nav', '‹'), next = dlEl('button', 'bb-mm-nav', '›');
+            prev.dataset.mv = '-1'; next.dataset.mv = '1';
+            prev.disabled = !minYm || ym <= minYm; next.disabled = !maxYm || ym >= maxYm;
+            head.append(prev, dlEl('span', 't', y + '년 ' + m + '월'), next);
+            const grid = dlEl('div', 'bb-att-cal-grid');
+            ['일', '월', '화', '수', '목', '금', '토'].forEach(d => grid.appendChild(dlEl('div', 'bb-att-dow', d)));
+            const dow = new Date(Date.UTC(y, m - 1, 1)).getUTCDay(), dim = new Date(Date.UTC(y, m, 0)).getUTCDate();
+            for (let i = 0; i < dow; i++) grid.appendChild(dlEl('div'));
+            const today = dlOpDate(), sel = dlDateNow();
+            for (let d = 1; d <= dim; d++) {
+                const ds = ym + '-' + attPad(d);
+                const cell = dlEl('div', 'bb-att-day', String(d));
+                if (_dlDates.has(ds)) { cell.classList.add('has'); cell.dataset.date = ds; cell.appendChild(dlEl('span', 'dot')); }
+                if (ds === today) cell.classList.add('today');
+                if (ds === sel) cell.classList.add('sel');
+                grid.appendChild(cell);
+            }
+            cal.replaceChildren(head, grid);
+        }
+
+        /* ───────── 이벤트 ───────── */
+        document.getElementById('bb-fb-dlog').addEventListener('click', () => dlOpenPanel());
+        $dl('bb-dlog-close').addEventListener('click', () => dlClosePanel());
+        $dl('bb-dlog-today').addEventListener('click', () => dlSetDate(null));
+        $dl('bb-dlog-cal-btn').addEventListener('click', () => dlOpenCal());
+        $dl('bb-dlog-cal').addEventListener('click', e => {
+            const mv = e.target.closest('button[data-mv]');
+            if (mv && !mv.disabled) { const t = _dlCalYm.y * 12 + (_dlCalYm.m - 1) + Number(mv.dataset.mv); _dlCalYm = { y: Math.floor(t / 12), m: (t % 12) + 1 }; dlRenderCal(); return; }
+            const day = e.target.closest('.bb-att-day.has');
+            if (day) dlSetDate(day.dataset.date);
+        });
+        document.addEventListener('mousedown', e => {
+            if (_dlCalOpen && !e.target.closest('#bb-dlog-cal') && !e.target.closest('#bb-dlog-cal-btn')) dlCloseCal();
+            else if (_dlOpen && !e.target.closest('#bb-dlog-panel') && !e.target.closest('#bb-fb-dlog')) dlClosePanel();
+        });
+        document.addEventListener('keydown', e => {
+            if (e.key !== 'Escape') return;
+            if (_dlCalOpen) dlCloseCal();
+            else if (_dlOpen) dlClosePanel();
+        });
+        const dlVisible = () => _dlOpen && !document.hidden;
+        setInterval(() => { if (dlVisible() && !_dlDate) dlRefresh(); }, 60 * 1000);
+        document.addEventListener('visibilitychange', () => { if (dlVisible() && !_dlDate) dlRefresh(); });
+
+        // 버튼 배지 = 오늘(근무일) 완료 건수. 패널을 열지 않아도 5분마다 조용히 갱신 (다른 고정 버튼과 같은 fbSetBadge 재사용)
+        async function dlRefreshBadge() {
+            try {
+                const d = await attFetchJson(DL_API + '?view=day&date=' + dlOpDate());
+                if (!d || d.ok !== true) return;
+                fbSetBadge('bb-fb-dlog', (d.summary && d.summary.completed) || 0, 'pk');
+            } catch (e) { /* 배지 갱신 실패는 조용히 무시 (패널을 열면 다시 시도됨) */ }
+        }
+        dlRefreshBadge();
+        setInterval(dlRefreshBadge, DL_BADGE_MS);
+
+        console.log('[BB] 배달 로그 켜짐 (SECTION 19)');
+    }
+    } catch (e) { console.warn('[BB] 배달 로그 초기화 실패 — 기존 기능에는 영향 없음:', e && e.message); }
+
 
     render();
     if (_trimNotice) {
