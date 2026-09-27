@@ -96,7 +96,7 @@
             height:980px; max-height:100vh; overflow-y:auto; overflow-x:hidden;   /* 기본 크기 = 즐겨찾기 20대 + 안내 문구가 들어가는 높이 (955 = 104 + 20 + 774 + 51 + 6) + 여유 25px.
                즐겨찾기가 정확히 최대(20대)일 때 예전엔 여유가 0이라 카드 실측 높이가 ROW_H(33px) 가정과 1~2px만 어긋나도(줄간격 렌더링 반올림 등) 카드 영역(.bb-list-wrap)에 스크롤이 생겼음 — 그 여유분 */
             border:3px solid transparent; border-radius:16px;
-            background-image: var(--bg-fill), linear-gradient(135deg, #b6f2c9, #34d399);
+            background-image: var(--bg-fill), linear-gradient(135deg, #d9b8ff, #9333ea);
             background-origin: border-box;
             background-clip: padding-box, border-box;
             box-shadow:0 24px 60px rgba(0,0,0,.75);
@@ -122,7 +122,7 @@
             position:relative; display:inline-flex; flex-direction:column; align-items:center; gap:3px;
             padding:7px 28px 6px; border-radius:12px;
             border:2.5px solid transparent;
-            background-image: linear-gradient(var(--bg), var(--bg)), linear-gradient(135deg, #b6f2c9, #34d399);
+            background-image: linear-gradient(var(--bg), var(--bg)), linear-gradient(135deg, #d9b8ff, #9333ea);
             background-origin: border-box; background-clip: padding-box, border-box;
             cursor:grab;
         }
@@ -687,6 +687,8 @@
             cursor:pointer; white-space:nowrap; display:inline-flex; align-items:center; justify-content:center; flex:none;
         }
         .bb-mm-nav:hover { border-color:var(--mu); }
+        #bb-att-detailbtn, #bb-iv-all { background:#ffd9e4; border-color:#f2a7bf; color:#5c2233; }   /* 이석 현황 / 개입카드 현황의 '자세히': 카드 제거(#bb-rmbtn)와 같은 파스텔 연핑크 */
+        #bb-att-detailbtn:hover, #bb-iv-all:hover { background:#ffc9d9; border-color:#ea86a5; }
         .bb-mm-goatt { position:absolute; right:8px; top:50%; transform:translateY(-50%); height:auto; padding:5px 9px; gap:5px; }
         /* 두 줄 버튼 공통: 화살표(« »)는 글자 옆에 따로 두고, 두 줄 글자는 같은 크기 · 가운데 정렬 */
         .bb-mm-nav .ar { flex:none; font-size:14px; line-height:1; }
@@ -761,7 +763,7 @@
             --rd:#ef4444; --or:#f97316; --pk:#ff1493; --bl:#3b82f6; --gn:#22c55e;
             display:none; position:fixed; color:var(--tx); font-family:'Paperlogy','Lato',-apple-system,sans-serif;
             border:3px solid transparent; border-radius:14px;
-            background-image:linear-gradient(var(--sur),var(--sur)), linear-gradient(135deg, #b6f2c9, #34d399);
+            background-image:linear-gradient(var(--sur),var(--sur)), linear-gradient(135deg, #d9b8ff, #9333ea);
             background-origin:border-box; background-clip:padding-box,border-box;
             box-shadow:0 18px 46px rgba(0,0,0,.55); z-index:99999998; box-sizing:border-box;
         }
@@ -918,7 +920,7 @@
             top:50%; left:50%; transform:translate(-50%,-50%);
             width:552px; max-height:86vh; overflow-y:auto;
             border:3px solid transparent; border-radius:14px;
-            background-image: linear-gradient(var(--sur), var(--sur)), linear-gradient(135deg, #b6f2c9, #34d399);
+            background-image: linear-gradient(var(--sur), var(--sur)), linear-gradient(135deg, #d9b8ff, #9333ea);
             background-origin: border-box;
             background-clip: padding-box, border-box;
             box-shadow:0 24px 64px rgba(0,0,0,.9);
@@ -930,7 +932,7 @@
             top:50%; left:50%; transform:translate(-50%,-50%);
             width:860px; max-height:82vh; overflow-y:auto;
             border:3px solid transparent; border-radius:14px;
-            background-image: linear-gradient(var(--sur), var(--sur)), linear-gradient(135deg, #b6f2c9, #34d399);
+            background-image: linear-gradient(var(--sur), var(--sur)), linear-gradient(135deg, #d9b8ff, #9333ea);
             background-origin: border-box;
             background-clip: padding-box, border-box;
             box-shadow:0 24px 64px rgba(0,0,0,.9);
@@ -1054,7 +1056,7 @@
             top:50%; left:50%; transform:translate(-50%,-50%);
             width:840px;
             border:3px solid transparent; border-radius:12px;
-            background-image: linear-gradient(var(--sur), var(--sur)), linear-gradient(135deg, #b6f2c9, #34d399);
+            background-image: linear-gradient(var(--sur), var(--sur)), linear-gradient(135deg, #d9b8ff, #9333ea);
             background-origin: border-box;
             background-clip: padding-box, border-box;
             box-shadow:0 16px 48px rgba(0,0,0,.9);
@@ -4476,12 +4478,12 @@
     }
     function fbHtmlDis(d) {
         const ev = d.dis.events;
-        let h = `<div class="bb-fbp-note">${FB_DISCHARGE_PCT}% 이하까지 떨어진 뒤 꺼졌거나, 0% 가 다음 10분 기록까지 이어진 기체 (추정 = 0% 직후 꺼짐 / 10분 기록 사이에 꺼짐)</div>`;
+        let h = `<div class="bb-fbp-note">${FB_DISCHARGE_PCT}% 이하로 확인된 뒤 꺼졌거나, 0% 가 다음 10분 기록까지 이어지면 '방전' · 0% 로 찍힌 직후 꺼졌거나, ${FB_EST_MAX_PCT}% 이하에서 꺼져 하락 속도로 볼 때 ${FB_DISCHARGE_PCT}% 에 도달했을 것으로 보이거나, 속도를 모른 채 ${FB_EST_FALLBACK_PCT}% 이하에서 꺼지면 '방전 추정'</div>`;
         if (!ev.length) h += `<div class="bb-fbp-empty">최근 30일 동안 방전된 기체가 없습니다 ✓</div>`;
         else h += ev.map(e => {
             const st = fbStateChip(e.cur);
             const est = e.kind === 'est';
-            const tip = est ? (e.bat === 0 ? `${e.name} · 0% 기록 다음에 꺼짐 — 0% 표기가 버그성일 수도 있어 방전으로 추정` : `${e.name} · 마지막 기록 ${e.bat}% 다음 10분 사이에 꺼짐 — 하락 속도로 보면 0%에 도달했을 가능성이 커서 방전으로 추정`)
+            const tip = est ? (e.bat === 0 ? `${e.name} · 0% 기록 다음에 꺼짐 — 0% 표기가 버그성일 수도 있어 방전으로 추정` : `${e.name} · 마지막 기록 ${e.bat}% 다음 10분 사이에 꺼짐 — ${FB_EST_MAX_PCT}% 이하에서 꺼져 하락 속도(또는 ${FB_EST_FALLBACK_PCT}% 이하 기준)로 볼 때 방전 가능성이 높아 추정`)
                 : (e.hold ? `${e.name} · 10% 미만으로 내려온 뒤 0% 에 도달했고, 다음 10분 기록에서도 0% 라서 방전 확정 (꺼지지 않고 버티는 중일 수 있음)` : e.name);
             return `<div class="bb-fbp-row" data-rid="${fbEsc(e.id)}" title="${fbEsc(tip)}">
                 <span class="bb-fbp-dot" style="background:${st.ac};"></span>
@@ -5876,8 +5878,17 @@
     let _ivOn = true;
     try { if (localStorage.getItem('bbIv') === '0') _ivOn = false; } catch (e) { /* 저장소 접근 불가 → 그대로 켜짐 */ }
     if (_ivOn && document.getElementById('bb-mm-page-multi') && document.querySelector('.bb-mm-box') && typeof attFetchJson === 'function') {
-        // ▼▼▼ '설명' 버튼을 눌렀을 때 보이는 안내문. 줄바꿈은 <br> 로 구분해서 아래 따옴표 안에 직접 쓰세요. ▼▼▼
-        const IV_HELP = '개입카드 데이터를 수 분 이내로 받아옵니다(변동 있을 시).<br>GPS 조치 및 기타 사유로 인한 페이지 이탈을 프로그램이 명확히 구분할 수 없기 때문에 개인별 건수 카운팅에서 제외했습니다.<br>근무자별로 할당된 다중/과학관/휴게시간이 빗금으로 표기됩니다.<br>NCC에 API를 전혀 호출하지 않는 로직이다보니 이름 성씨 및 근무표로 개입자를 추정하는 경우가 발생합니다.<br>NCC 개입카드 기능 자체가 이미 문제가 많은 상황입니다. 이탈 항목을 보시면 알 수 있듯이 중복개입 또는 개입카드 점유 버그를 감안해서 이탈 케이스는 건수에서 제외됩니다.<br>따라서 완전한 정합성을 갖춘 데이터가 될 수는 없습니다만 그래도 정확도는 꽤나 높은 편입니다.<br>따라서 개개인의 개입카드 처리패턴 파악 용도로는 충분히 활용할 수 있지 않을까 싶습니다.<br>근무자 퇴근 시 카드가 하단으로 재정렬됩니다.';
+        // ▼▼▼ '설명' 버튼을 눌렀을 때 보이는 안내문. 문장 하나당 배열 한 줄로 적으면 됩니다(줄 끝에 <br>로 자동 연결). ▼▼▼
+        const IV_HELP = [
+            '개입카드 데이터를 수 분 이내로 받아옵니다(변동 있을 시).',
+            'GPS 조치 및 기타 사유로 인한 페이지 이탈을 프로그램이 명확히 구분할 수 없기 때문에 개인별 건수 카운팅에서 제외했습니다.',
+            '근무자별로 할당된 다중/과학관/휴게시간이 빗금으로 표기됩니다.',
+            'NCC에 API를 전혀 호출하지 않는 로직이다보니 이름 성씨 및 근무표로 개입자를 추정하는 경우가 발생합니다.',
+            'NCC 개입카드 기능 자체가 이미 문제가 많은 상황입니다. 이탈 항목을 보시면 알 수 있듯이 중복개입 또는 개입카드 점유 버그를 감안해서 이탈 케이스는 건수에서 제외됩니다.',
+            '따라서 완전한 정합성을 갖춘 데이터가 될 수는 없습니다만 그래도 정확도는 꽤나 높은 편입니다.',
+            '따라서 개개인의 개입카드 처리패턴 파악 용도로는 충분히 활용할 수 있지 않을까 싶습니다.',
+            '근무자 퇴근 시 카드가 하단으로 재정렬됩니다.'
+        ].join('<br>');
         // ▲▲▲ 여기까지 ▲▲▲
         const IV_API = ATT_API + '/intervene';
         const IV_REFRESH_MS = 30 * 1000;
@@ -5920,7 +5931,7 @@
         .bb-iv-head .bb-att-r2 { grid-column:2; }
         #bb-iv-help-btn { grid-column:1; grid-row:1 / 3; align-self:stretch; height:auto; padding:0 8px; }
         #bb-iv-help-btn.on { border-color:var(--bl); color:var(--bl); background:var(--bl2, #dbe8fd); }
-        .bb-iv-help { display:none; position:absolute; left:8px; right:8px; top:100%; margin-top:4px; max-height:60vh; overflow-y:auto; padding:12px 14px; background:var(--sur); border:1.5px solid var(--bd2); border-radius:10px; box-shadow:0 10px 28px rgba(0,0,0,.35); font-size:13px; line-height:1.65; color:var(--tx); word-break:keep-all; overflow-wrap:anywhere; }
+        .bb-iv-help { display:none; position:absolute; left:8px; right:8px; top:100%; margin-top:4px; max-height:60vh; overflow-y:auto; padding:12px 14px; background:var(--sur); border:1.5px solid var(--bd2); border-radius:10px; box-shadow:0 10px 28px rgba(0,0,0,.35); font-size:13px; line-height:2.1; color:var(--tx); word-break:keep-all; overflow-wrap:anywhere; }
         .bb-iv-help.open { display:block; }
         #bb-iv-back { grid-column:3; grid-row:1 / 3; align-self:stretch; height:auto; padding:0 7px; gap:3px; }
         .bb-iv-kpis { flex:0 0 auto; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); background:var(--sur2); border-bottom:1px solid var(--bd); }
@@ -5936,7 +5947,7 @@
         .bb-iv-note:hover { border-color:var(--mu); }
         .bb-iv-body { flex:1 1 auto; min-height:0; overflow-y:auto; padding:6px; display:flex; flex-direction:column; gap:5px; }
         .bb-iv-row { flex:0 0 auto; box-sizing:border-box; display:grid; grid-template-columns:minmax(0,1fr) 62px; column-gap:8px; align-items:center; padding:7px 9px; border-radius:9px; border:2px solid var(--bd2); background:var(--sur); cursor:pointer; }
-        .bb-iv-row:hover { filter:brightness(1.03); }
+        .bb-iv-row:hover { border-color:#f9a8d4; box-shadow:0 0 0 1px #f9a8d4; }   /* 다중 모니터링 기체 그리드(.bb-mm-card:hover)와 같은 분홍 외곽선 */
         .bb-iv-row.sel { outline:2px solid var(--tx); outline-offset:1px; }
         .bb-iv-row.brk { background:rgba(233,184,36,.2); }
         .bb-iv-row.off { opacity:.55; }
@@ -5975,7 +5986,7 @@
             --rd:#ef4444; --or:#f97316; --bl:#3b82f6; --gn:#22c55e;
             display:none; position:fixed; width:490px; max-width:96vw; flex-direction:column; color:var(--tx); font-family:'Paperlogy','Lato',-apple-system,sans-serif;
             border:3px solid transparent; border-radius:14px;
-            background-image:linear-gradient(var(--sur),var(--sur)), linear-gradient(135deg, #b6f2c9, #34d399);
+            background-image:linear-gradient(var(--sur),var(--sur)), linear-gradient(135deg, #d9b8ff, #9333ea);
             background-origin:border-box; background-clip:padding-box,border-box;
             box-shadow:0 18px 46px rgba(0,0,0,.45); z-index:99999998; box-sizing:border-box; overflow:hidden;
         }
@@ -5987,6 +5998,7 @@
         .bb-iv-pt span { font-size:12.5px; color:var(--mu); }
         .bb-iv-pt .x { margin-left:auto; color:#b91c1c; font-size:16px; font-weight:900; padding:0 4px; cursor:pointer; }
         .bb-iv-pt .bg { padding:1px 8px; border-radius:999px; border:1px solid #d99a06; background:#fbe9a8; color:#8a5a00; font-size:11px; font-weight:900; }
+        .bb-iv-pt .off { padding:1px 8px; border-radius:999px; border:1px solid var(--bd2); background:var(--sur2); color:var(--mu); font-size:11px; font-weight:700; }
         .bb-iv-pk { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px; }
         .bb-iv-pk div { padding:6px 8px; border-radius:8px; background:var(--sur2); border:1px solid var(--bd); }
         .bb-iv-pk .l { font-size:11px; color:var(--mu); border:0; padding:0; background:none; }
@@ -6176,7 +6188,7 @@
             chip('추정', T.inferred, '__all', 'inf');
             chip('이탈', T.abandoned, '__all', 'ab');
             chip('특정 불가', T.unresolved, '__all', 'unk');   // 세 칩 모두 같은 '자세히' 창을 열고 필터만 다르게
-            const sb = ivEl('button', 'bb-iv-note bb-iv-sort', _ivSort === 'cnt' ? '건수순' : '근무시간순');
+            const sb = ivEl('button', 'bb-iv-note bb-iv-sort', _ivSort === 'cnt' ? '건수 순' : '근무시간 순');
             sb.title = '목록 정렬 방식 바꾸기';
             sb.dataset.sort = '1';
             chips.push(sb);
@@ -6326,9 +6338,10 @@
             const p = special ? null : ivPersonOf(name), d = _ivDetail && !_ivDetail._fail ? _ivDetail : null;
             const head = ivEl('div', 'bb-iv-ph');
             const pt = ivEl('div', 'bb-iv-pt');
-            pt.appendChild(ivEl('b', '', name === '__all' ? '자세히 (' + ivMD(ivDateNow()) + ')' : name === '__unresolved' ? '이름 특정 불가' : name));
+            pt.appendChild(ivEl('b', '', name === '__all' ? '자세히 (' + ivMD(ivDateNow()) + (ivDateNow() === ivOpDate() ? ' 오늘' : '') + ')' : name === '__unresolved' ? '이름 특정 불가' : name));
             if (p && p.shift) pt.appendChild(ivEl('span', '', p.shift));
             if (p && p.brk) pt.appendChild(ivEl('span', 'bg', '휴게 ' + p.brk + '시'));
+            if (p && p.off && p.offKind !== 'before') pt.appendChild(ivEl('span', 'off', '퇴근'));
             const x = ivEl('span', 'x', '✕'); x.dataset.act = 'close'; pt.appendChild(x);
             head.appendChild(pt);
 
@@ -6365,7 +6378,7 @@
                 const C = d.counts || {}, tot = d.rows.length;
                 const defs = [['all', '전체', tot], ['ok', '해결', C.solved || 0], ['inf', '추정', C.inferred || 0], ['ab', '이탈', C.abandoned || 0], ['unk', '특정 불가', name === '__all' ? d.rows.filter(r => r.n === '').length : 0]];
                 defs.forEach(([k, l, n]) => { if (k !== 'all' && !n && _ivPopFilter !== k) return; const c = ivEl('button', 'bb-iv-chip' + (_ivPopFilter === k ? ' on' : ''), l + ' ' + n); c.dataset.flt = k; fl.appendChild(c); });
-                fl.appendChild(ivEl('span', 'hint', '긴 처리(3분↑)는 분홍'));
+                fl.appendChild(ivEl('span', 'hint', '3분 이상 처리 시 분홍 텍스트'));
                 head.appendChild(fl);
             }
 
@@ -6569,7 +6582,7 @@
             cells.push(kCell('최다 배달자', topTxt));
             kpi.replaceChildren(...cells);
             $dl('bb-dlog-note').innerHTML = isToday
-                ? '* 11:00부터 2시간마다 업데이트<br>23시에 금일 배달집계가 마감됩니다.'
+                ? '* 11:00부터 2시간마다 업데이트<br>23:00에 금일 집계 마감.'
                 : '* 확정된 기록입니다.';
             if (!deliveries.length) { body.innerHTML = '<div class="bb-att-msg">이 날짜의 배달 완료 기록이 없습니다.' + (isToday && pending ? ' (진행 중 ' + pending + '건은 다음 조회 때 반영됩니다)' : '') + '</div>'; return; }
             // 배달 건이 앞, 아래 줄에 배정 시각·주문번호(+복사 버튼) — 오른쪽엔 수행자 · 소요시간(라벨 포함) — 07시부터 시간순으로 쌓인 걸 최신이 맨 위로 오게 뒤집어서 보여줌
