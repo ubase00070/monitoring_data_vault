@@ -952,7 +952,9 @@
         #bb-dlog-panel .bb-ap-title { color:var(--tx); }   /* 다른 로그 패널과 달리 항상 밝은 배경이라 검정 계열 글자로 */
         .bb-dlog-head { position:relative; display:flex; align-items:center; gap:8px; padding:10px 14px; border-bottom:1px solid var(--bd); }
         .bb-dlog-date-lbl { font-size:13px; font-weight:800; color:var(--mu); margin-left:2px; }
-        .bb-dlog-note { margin-left:auto; font-size:11px; font-weight:700; color:var(--mu); white-space:nowrap; }
+        .bb-dlog-note { margin-left:auto; font-size:11px; font-weight:700; color:var(--mu); text-align:right; line-height:1.5; }
+        .bb-dlog-note br { content:''; }
+        #bb-dlog-panel .bb-fbp-row:hover { background:transparent; outline:1.5px solid var(--pk); outline-offset:-1.5px; }   /* 카드 전체 분홍 채움 대신 외곽선만 */
         .bb-dlog-kpi { display:flex; gap:8px; padding:10px 14px 4px; flex-wrap:wrap; }
         .bb-dlog-kpi > div { flex:1; min-width:88px; background:var(--sur2); border:1px solid var(--bd2); border-radius:9px; padding:8px 10px; }
         .bb-dlog-kpi .l { font-size:11px; color:var(--mu); font-weight:700; }
@@ -972,8 +974,8 @@
         .bb-dlog-meta { display:flex; align-items:center; gap:12px; }   /* '배정 …' 과 '주문번호 …' 사이 간격 */
         .bb-dlog-ord { display:inline-flex; align-items:center; gap:4px; }
         .bb-dlog-copy {
-            border:none; background:transparent; cursor:pointer; font-size:11px; line-height:1;
-            padding:2px 3px; border-radius:4px; opacity:.75;
+            border:none; background:transparent; cursor:pointer; font-size:16px; line-height:1;
+            padding:2px 4px; border-radius:4px; opacity:.8;
         }
         .bb-dlog-copy:hover { opacity:1; background:var(--sur2); }
         .bb-alertlog-day { margin-bottom:14px; }
@@ -5875,7 +5877,7 @@
     try { if (localStorage.getItem('bbIv') === '0') _ivOn = false; } catch (e) { /* 저장소 접근 불가 → 그대로 켜짐 */ }
     if (_ivOn && document.getElementById('bb-mm-page-multi') && document.querySelector('.bb-mm-box') && typeof attFetchJson === 'function') {
         // ▼▼▼ '설명' 버튼을 눌렀을 때 보이는 안내문. 줄바꿈은 <br> 로 구분해서 아래 따옴표 안에 직접 쓰세요. ▼▼▼
-        const IV_HELP = '개입카드 데이터를 수 분 이내로 받아옵니다(변동 있을 시).<br>GPS 조치 및 기타 사유로 인한 페이지 이탈을 프로그램이 명확히 구분할 수 없기 때문에 개인별 건수 카운팅에서 제외했습니다.<br>근무자별로 할당된 다중/과학관/휴게시간이 빗금으로 표기됩니다.<br>NCC에 API를 전혀 호출하지 않는 로직이다보니 이름 성씨 및 근무표로 개입자를 추정하게될 수 있습니다.<br>NCC 개입카드 기능 자체가 이미 문제가 많은 상황입니다. 이탈 항목을 보시면 알 수 있듯이 중복개입 또는 개입카드 점유 버그를 감안해서 이탈케이스는 건수에서 제외됩니다.<br>따라서 완전한 정합성을 갖춘 데이터가 될 수는 없습니다만 그래도 정확도는 꽤나 높은 편입니다.<br>개개인의 개입카드 처리패턴 파악 용도로 활용할 수 있지 않을까 싶습니다.<br>근무자 퇴근 시 카드가 하단으로 재정렬됩니다.';
+        const IV_HELP = '개입카드 데이터를 수 분 이내로 받아옵니다(변동 있을 시).<br>GPS 조치 및 기타 사유로 인한 페이지 이탈을 프로그램이 명확히 구분할 수 없기 때문에 개인별 건수 카운팅에서 제외했습니다.<br>근무자별로 할당된 다중/과학관/휴게시간이 빗금으로 표기됩니다.<br>NCC에 API를 전혀 호출하지 않는 로직이다보니 이름 성씨 및 근무표로 개입자를 추정하는 경우가 발생합니다.<br>NCC 개입카드 기능 자체가 이미 문제가 많은 상황입니다. 이탈 항목을 보시면 알 수 있듯이 중복개입 또는 개입카드 점유 버그를 감안해서 이탈 케이스는 건수에서 제외됩니다.<br>따라서 완전한 정합성을 갖춘 데이터가 될 수는 없습니다만 그래도 정확도는 꽤나 높은 편입니다.<br>따라서 개개인의 개입카드 처리패턴 파악 용도로는 충분히 활용할 수 있지 않을까 싶습니다.<br>근무자 퇴근 시 카드가 하단으로 재정렬됩니다.';
         // ▲▲▲ 여기까지 ▲▲▲
         const IV_API = ATT_API + '/intervene';
         const IV_REFRESH_MS = 30 * 1000;
@@ -6558,13 +6560,17 @@
             const s = _dlData.summary || { completed: 0, byPerformer: {} };
             const deliveries = Array.isArray(_dlData.deliveries) ? _dlData.deliveries : [];
             const pending = (_dlData.inProgress ? _dlData.inProgress.length : 0) + (_dlData.incomplete ? _dlData.incomplete.length : 0);
-            const stateTxt = _dlData.state === 'draft' ? '진행 중(당일 확정 전)' : _dlData.state === 'final' ? '확정' : '기록 없음';
             const kCell = (l, v) => { const e = dlEl('div'); e.appendChild(dlEl('div', 'l', l)); e.appendChild(dlEl('div', 'v', v)); return e; };
+            const perf = s.byPerformer || {};
+            const topName = Object.keys(perf).sort((a, b) => (perf[b].count || 0) - (perf[a].count || 0))[0];
+            const topTxt = topName ? (topName + ' (' + perf[topName].count + '건)') : '-';
             const cells = [kCell('완료 건수', String(s.completed || 0) + '건')];
             if (isToday && pending > 0) cells.push(kCell('확인 중', pending + '건'));   // 2시간 간격 폴링 특성상, 다음 조회 전까지는 실제로 끝났어도 여기 잡혀 있을 수 있음
-            cells.push(kCell('상태', stateTxt));
+            cells.push(kCell('최다 배달자', topTxt));
             kpi.replaceChildren(...cells);
-            $dl('bb-dlog-note').textContent = isToday ? '* 2시간마다 업데이트되고 자정에 마감됩니다.' : '* 확정된 기록입니다.';
+            $dl('bb-dlog-note').innerHTML = isToday
+                ? '* 11:00부터 2시간마다 업데이트<br>23시에 금일 배달집계가 마감됩니다.'
+                : '* 확정된 기록입니다.';
             if (!deliveries.length) { body.innerHTML = '<div class="bb-att-msg">이 날짜의 배달 완료 기록이 없습니다.' + (isToday && pending ? ' (진행 중 ' + pending + '건은 다음 조회 때 반영됩니다)' : '') + '</div>'; return; }
             // 배달 건이 앞, 아래 줄에 배정 시각·주문번호(+복사 버튼) — 오른쪽엔 수행자 · 소요시간(라벨 포함) — 07시부터 시간순으로 쌓인 걸 최신이 맨 위로 오게 뒤집어서 보여줌
             body.replaceChildren(...deliveries.slice().reverse().map(r => {
