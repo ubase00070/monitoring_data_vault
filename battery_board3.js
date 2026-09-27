@@ -7,7 +7,7 @@
     'use strict';
 
     // ============================================================
-    // 배경 이미지 — 기체 카드 영역부터 하단까지만 (헤더의 3가지 테마 색은 그대로)
+    // 배경 이미지 — 기체 카드 영역부터 하단까지만 (헤더의 3가지 테마 색은 그대로 보임)
     //   레포 monitoring_data_vault/ego_trippin/snoopy_snow.jpg (1920×1080). 이미지를 바꿔 올렸다면 ?v= 숫자를 올리면 캐시가 갱신됨.
     //   투명도: 0.05(거의 안 보임) ~ 0.15(또렷) — 카드·글자를 가리지 않고 '뒤에 그림이 있구나' 정도로만 보이게 하려면 0.08~0.10
     // ============================================================
@@ -231,6 +231,7 @@
         .bb-fb-n.b { background:#3b82f6; }
         .bb-fb-n.g { background:#16a34a; }   /* 저속충전 배지: 충전 중인 기체 중에서 감지하는 것이라 초록 */
         .bb-fb-n.y { background:#eab308; }   /* 방치/미주차 배지: 노랑 */
+        .bb-fb-n.pk { background:var(--pk); }   /* 배달 로그 배지: 카드의 '배달 중' 표시와 같은 핑크 */
         .bb-fb-n.z { background:var(--sur); color:var(--mu); border:1px solid var(--bd2); line-height:15px; box-shadow:none; }   /* 0대 */
 
         /* 고정 버튼 목록 창 (버튼 아래에 뜸, 열어 둔 채로 2분마다 자동 갱신) */
@@ -948,6 +949,7 @@
             z-index:99999999;
         }
         #bb-dlog-panel.open { display:block; }
+        #bb-dlog-panel .bb-ap-title { color:var(--tx); }   /* 다른 로그 패널과 달리 항상 밝은 배경이라 검정 계열 글자로 */
         .bb-dlog-head { position:relative; display:flex; align-items:center; gap:8px; padding:10px 14px; border-bottom:1px solid var(--bd); }
         .bb-dlog-date-lbl { font-size:13px; font-weight:800; color:var(--mu); margin-left:2px; }
         .bb-dlog-kpi { display:flex; gap:8px; padding:10px 14px 4px; flex-wrap:wrap; }
@@ -1235,7 +1237,7 @@
                     <div class="bb-att-cal" id="bb-dlog-cal"></div>
                 </div>
                 <div class="bb-dlog-kpi" id="bb-dlog-kpi"></div>
-                <div class="bb-dlog-sub" id="bb-dlog-sub">근무자별 배달 건수</div>
+                <div class="bb-dlog-sub" id="bb-dlog-sub">배달 내역</div>
                 <div id="bb-dlog-body"></div>
             </div>
 
@@ -6513,6 +6515,14 @@
             dlRender(); dlRefresh();
         }
 
+        // 배달 건 하나의 표시용 제목 ("사이트 · 가게" 또는 사이트만)
+        const dlSiteLabel = r => r.store ? (r.site + ' · ' + r.store) : (r.site || '(사이트 없음)');
+        // 수행자 표시 — 인계가 있었으면 "길동 → 꺽정", 대리 반응이면 "(대리)" 표기
+        const dlWhoLabel = r => {
+            const chain = (r.handoverFrom && r.handoverFrom.length ? r.handoverFrom : []).concat(r.performer ? [r.performer] : []);
+            const name = chain.length ? chain.join(' → ') : '미확인';
+            return name + (r.proxyBy ? ' (대리)' : '');
+        };
         function dlRender() {
             const lbl = $dl('bb-dlog-date-lbl'), kpi = $dl('bb-dlog-kpi'), body = $dl('bb-dlog-body');
             const isToday = !_dlDate;
@@ -6525,17 +6535,23 @@
                 return;
             }
             const s = _dlData.summary || { completed: 0, byPerformer: {} };
+            const deliveries = Array.isArray(_dlData.deliveries) ? _dlData.deliveries : [];
+            const pending = (_dlData.inProgress ? _dlData.inProgress.length : 0) + (_dlData.incomplete ? _dlData.incomplete.length : 0);
             const stateTxt = _dlData.state === 'draft' ? '진행 중(당일 확정 전)' : _dlData.state === 'final' ? '확정' : '기록 없음';
             const kCell = (l, v) => { const e = dlEl('div'); e.appendChild(dlEl('div', 'l', l)); e.appendChild(dlEl('div', 'v', v)); return e; };
-            kpi.replaceChildren(kCell('완료 건수', String(s.completed || 0) + '건'), kCell('상태', stateTxt));
-            const names = Object.keys(s.byPerformer || {}).sort((a, b) => (s.byPerformer[b] || 0) - (s.byPerformer[a] || 0));
-            if (!names.length) { body.innerHTML = '<div class="bb-att-msg">이 날짜의 배달 완료 기록이 없습니다.</div>'; return; }
-            body.replaceChildren(...names.map(name => {
+            const cells = [kCell('완료 건수', String(s.completed || 0) + '건')];
+            if (isToday && pending > 0) cells.push(kCell('아직 미확인', pending + '건'));   // 2시간 간격 폴링 특성상, 다음 조회 전까지는 실제로 끝났어도 여기 잡혀 있을 수 있음
+            cells.push(kCell('상태', stateTxt));
+            kpi.replaceChildren(...cells);
+            if (!deliveries.length) { body.innerHTML = '<div class="bb-att-msg">이 날짜의 배달 완료 기록이 없습니다.' + (isToday && pending ? ' (진행 중 ' + pending + '건은 다음 조회 때 반영됩니다)' : '') + '</div>'; return; }
+            // 배달 건이 앞, 수행자는 그 옆(아래 줄)에 — 최근 배정된 순
+            body.replaceChildren(...deliveries.slice().reverse().map(r => {
                 const row = dlEl('div', 'bb-fbp-row');
-                const dot = dlEl('span', 'bb-fbp-dot'); dot.style.background = 'var(--gn)';
+                const dot = dlEl('span', 'bb-fbp-dot'); dot.style.background = 'var(--pk)';
                 const main = dlEl('span', 'bb-fbp-main');
-                main.appendChild(dlEl('span', 'bb-fbp-name', name));
-                row.append(dot, main, dlEl('span', 'bb-fbp-now', s.byPerformer[name] + '건'));
+                main.appendChild(dlEl('span', 'bb-fbp-name', dlSiteLabel(r)));
+                main.appendChild(dlEl('span', 'bb-fbp-sub', dlWhoLabel(r)));
+                row.append(dot, main, dlEl('span', 'bb-fbp-now', r.durationSec != null ? attDurHM(r.durationSec) : '-'));
                 return row;
             }));
         }
@@ -6615,7 +6631,7 @@
             try {
                 const d = await attFetchJson(DL_API + '?view=day&date=' + dlOpDate());
                 if (!d || d.ok !== true) return;
-                fbSetBadge('bb-fb-dlog', (d.summary && d.summary.completed) || 0, 'b');
+                fbSetBadge('bb-fb-dlog', (d.summary && d.summary.completed) || 0, 'pk');
             } catch (e) { /* 배지 갱신 실패는 조용히 무시 (패널을 열면 다시 시도됨) */ }
         }
         dlRefreshBadge();
