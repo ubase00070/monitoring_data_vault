@@ -193,7 +193,7 @@
         }
         .bb-rbtns > button, .bb-fixbtns > .bb-fb {   /* 좌·우 6개 버튼 공통: 같은 크기(140×26) · 같은 글자 크기(11px) */
             position:relative; width:100%; height:26px; padding:0 2px; gap:2px; border-radius:7px; border:1.5px solid var(--bd2);
-            font-size:11px; font-weight:800;   /* 방전 로그(최근 15일) 같은 긴 이름이 140px 안에 들어가도록 (양쪽 여유 약 6px) */ font-family:inherit; white-space:nowrap; overflow:visible;
+            font-size:11px; font-weight:800;   /* 방전 로그(최근 30일) 같은 긴 이름이 140px 안에 들어가도록 (양쪽 여유 약 6px) */ font-family:inherit; white-space:nowrap; overflow:visible;
             display:inline-flex; align-items:center; justify-content:center; box-sizing:border-box; cursor:pointer;
         }
         .bb-fb {
@@ -215,9 +215,8 @@
         #bb-fb-slow { background:#fff3b5; border-color:#e8d374; color:#514510; }
         #bb-fb-slow:hover { background:#ffec96; border-color:#d9bd45; }
         #bb-fb-slow.active { background:#ffe680; border-color:#7d6a0a; }
-        #bb-fb-moff { background:#e6dcff; border-color:#c4b3f0; color:#3b2b66; }
-        #bb-fb-moff:hover { background:#dccfff; border-color:#a893e6; }
-        #bb-fb-moff.active { background:#cdbcff; border-color:#4f3a94; }
+        #bb-fb-dlog { background:#e6dcff; border-color:#c4b3f0; color:#3b2b66; }
+        #bb-fb-dlog:hover { background:#dccfff; border-color:#a893e6; }
         #bb-fb-neglect { background:#ffe1b8; border-color:#eab476; color:#5c3d12; }   /* 방치/미주차: 주차 표지판 느낌의 연한 주황빛 */
         #bb-fb-neglect:hover { background:#ffd394; border-color:#dd9a48; }
         #bb-fb-neglect.active { background:#ffc772; border-color:#8a5a12; }
@@ -937,6 +936,25 @@
             z-index:99999999;
                     }
         #bb-alertlog-all-panel.open { display:block; }
+        #bb-dlog-panel {
+            display:none; position:fixed;
+            top:50%; left:50%; transform:translate(-50%,-50%);
+            width:640px; max-height:82vh; overflow-y:auto;
+            border:3px solid transparent; border-radius:14px;
+            background-image: linear-gradient(var(--sur), var(--sur)), linear-gradient(135deg, #ffd8a8, #fb923c);
+            background-origin: border-box;
+            background-clip: padding-box, border-box;
+            box-shadow:0 24px 64px rgba(0,0,0,.9);
+            z-index:99999999;
+        }
+        #bb-dlog-panel.open { display:block; }
+        .bb-dlog-head { position:relative; display:flex; align-items:center; gap:8px; padding:10px 14px; border-bottom:1px solid var(--bd); }
+        .bb-dlog-date-lbl { font-size:13px; font-weight:800; color:var(--mu); margin-left:2px; }
+        .bb-dlog-kpi { display:flex; gap:8px; padding:10px 14px 4px; flex-wrap:wrap; }
+        .bb-dlog-kpi > div { flex:1; min-width:88px; background:var(--sur2); border:1px solid var(--bd2); border-radius:9px; padding:8px 10px; }
+        .bb-dlog-kpi .l { font-size:11px; color:var(--mu); font-weight:700; }
+        .bb-dlog-kpi .v { font-size:18px; font-weight:900; color:var(--tx); margin-top:2px; }
+        .bb-dlog-sub { font-size:12px; font-weight:800; color:var(--mu); padding:12px 14px 4px; }
         .bb-alertlog-day { margin-bottom:14px; }
         .bb-alertlog-day-title {
             display:flex; align-items:center; gap:10px;
@@ -1149,11 +1167,11 @@
                     <button id="bb-walker-toggle" title="동숲 주민 끄기">동숲</button>
                     <div id="bb-walker-bubble"><span id="bb-walker-bubble-text"></span></div>
                 </div>
-                <!-- 우: 3종 버튼 (오른쪽 동숲 주민의 오른쪽) — 임무 OFF / 방전 로그 / 이상 알림. 왼쪽 고정 버튼 3행과 같은 폭·높이·간격 -->
+                <!-- 우: 3종 버튼 (오른쪽 동숲 주민의 오른쪽) — 배달 로그 / 방전 로그 / 이상 알림. 왼쪽 고정 버튼 3행과 같은 폭·높이·간격 -->
                 <div class="bb-rbtns" id="bb-fixbtns-r">
-                    <button id="bb-fb-moff" class="bb-fb" data-mode="moff" title="현재 임무가 OFF 인 기체 · 오른쪽 위 숫자 = 해당 기체 수">🚫 임무 OFF<b class="bb-fb-n"></b></button>
-                    <button id="bb-fb-dis" class="bb-fb" data-mode="dis" title="최근 15일 방전 기록 · 오른쪽 위 숫자 = 방전 건수(같은 기체라도 건별로 셈)">🪫 방전 로그(최근 15일)<b class="bb-fb-n"></b></button>
-                    <button class="bb-btn" id="bb-alertlog-all-btn" title="최근 15일 동안의 좀비 / 캠 미노출 / 미니맵 미노출 기록"><span class="bb-hd-ico">📋</span>이상 알림(최근 15일)</button>
+                    <button id="bb-fb-dlog" class="bb-fb" title="배달 로그 · 오늘(근무일) 요약이 기본, 달력 버튼으로 다른 날짜 조회 · 오른쪽 위 숫자 = 오늘 완료 건수">🚚 배달 로그<b class="bb-fb-n"></b></button>
+                    <button id="bb-fb-dis" class="bb-fb" data-mode="dis" title="최근 30일 방전 기록 · 오른쪽 위 숫자 = 방전 건수(같은 기체라도 건별로 셈)">🪫 방전 로그(최근 30일)<b class="bb-fb-n"></b></button>
+                    <button class="bb-btn" id="bb-alertlog-all-btn" title="최근 30일 동안의 좀비 / 캠 미노출 / 미니맵 미노출 기록"><span class="bb-hd-ico">📋</span>이상 로그(최근 30일)</button>
                 </div>
                 <!-- 우: 버튼 2줄 (테마/줌/백업/검색) -->
                 <div class="bb-hd-rightwrap">
@@ -1199,10 +1217,26 @@
 
             <div id="bb-alertlog-all-panel">
                 <div class="bb-ap-hd">
-                    <div class="bb-ap-title">📋 이상 알림 로그(최근 15일)</div>
+                    <div class="bb-ap-title">📋 이상 로그(최근 30일)</div>
                     <div class="bb-ap-close" id="bb-alertlog-all-close">✕</div>
                 </div>
                 <div id="bb-alertlog-all-body"></div>
+            </div>
+
+            <div id="bb-dlog-panel">
+                <div class="bb-ap-hd">
+                    <div class="bb-ap-title">🚚 배달 로그</div>
+                    <div class="bb-ap-close" id="bb-dlog-close">✕</div>
+                </div>
+                <div class="bb-dlog-head">
+                    <button class="bb-mm-nav bb-att-mbtn" id="bb-dlog-today">오늘</button>
+                    <button class="bb-mm-nav bb-att-mbtn" id="bb-dlog-cal-btn">달력</button>
+                    <span class="bb-dlog-date-lbl" id="bb-dlog-date-lbl"></span>
+                    <div class="bb-att-cal" id="bb-dlog-cal"></div>
+                </div>
+                <div class="bb-dlog-kpi" id="bb-dlog-kpi"></div>
+                <div class="bb-dlog-sub" id="bb-dlog-sub">근무자별 배달 건수</div>
+                <div id="bb-dlog-body"></div>
             </div>
 
             <!-- 본문: 좌(기체 리스트 + 하단 퀵바) | 우(다중 모니터링 중 기체) -->
@@ -1906,7 +1940,7 @@
             }
 
             logBatteryPattern(DB);
-            try { dcUpdateLocal(); } catch (err) { console.error('[BB] 방전 기록 계산 오류:', err); }   // 배터리 로그 → 방전 기록 (로컬 저장, 최근 15일)
+            try { dcUpdateLocal(); } catch (err) { console.error('[BB] 방전 기록 계산 오류:', err); }   // 배터리 로그 → 방전 기록 (로컬 저장, 최근 30일)
             try { sampleChargeBuffer(DB); } catch (err) { console.error('[BB] 충전 관측 오류:', err); }   // 저속충전 계산용 (2분마다 1회 기록)
             wblCyhAutoUploadTick();
             wblOthersAutoDownloadTick();
@@ -2797,10 +2831,10 @@
 	// 배터리 로그와 달리 CYH 우선순위가 필요 없음 — "언제 목격했나"는 순수 사실이라
 	// 여러 사람의 기록을 그냥 합치면 됨(합집합). 그래서 락도 필요 없음.
 	//
-	// 저장 방식: alarm/ 폴더의 단일 파일 하나(배터리_알림로그)에 최근 15일치를 다 담음.
+	// 저장 방식: alarm/ 폴더의 단일 파일 하나(배터리_알림로그)에 최근 30일치를 다 담음.
 	// 원본 시각(예: 190개 타임스탬프)을 그대로 저장하지 않고, 업로드 시점에 바로
 	// "구간(시작~끝)"으로 압축해서 저장 — 장시간 상습 알림 기체가 있어도 용량이 안 불어남.
-	// 매 업로드마다 15일 넘은 날짜는 자동으로 잘라내서, 파일 크기가 무한정 커지지 않음.
+	// 매 업로드마다 30일 넘은 날짜는 자동으로 잘라내서, 파일 크기가 무한정 커지지 않음.
 	// ============================================================
 	const ALERT_LOG_TYPES = ['zombie', 'cam', 'nomap'];
 	const ALERT_LOG_META = {
@@ -2808,7 +2842,7 @@
 		cam:    { icon: '🎥', text: '캠 미노출',    color: 'var(--bl)' },
 		nomap:  { icon: '🗺️', text: '미니맵 미노출', color: 'var(--ye)' },
 	};
-	const ALERT_LOG_RETENTION_DAYS = 15;
+	const ALERT_LOG_RETENTION_DAYS = 30;
 	const ALERT_LOG_NAME = '배터리_알림로그';
 	const ALERT_LOG_GAP_MIN = 10;   // 이 시간 이상 안 보이면 "끊긴 것"으로 판단(재발생 구분 기준)
 
@@ -2886,7 +2920,7 @@
 		} catch (e) { return { days: {} }; }
 	}
 
-	// 15일 넘은 날짜는 잘라냄
+	// 30일 넘은 날짜는 잘라냄
 	function alertLogPrune(fileObj) {
 		const cutoff = Math.floor(Date.now() / 86400000) - (ALERT_LOG_RETENTION_DAYS - 1);
 		const days = fileObj.days || {};
@@ -2971,7 +3005,7 @@
 		return { days: {} };
 	}
 
-	// 특정 기체의 알림 로그 조회 (최신순) — 캐시된 15일치 파일에서 바로 필터링, 별도 요청 없음
+	// 특정 기체의 알림 로그 조회 (최신순) — 캐시된 30일치 파일에서 바로 필터링, 별도 요청 없음
 	async function alertLogFetchForRobot(robotId) {
 		const fileObj = alertLogCachedFile();
 		const rows = [];
@@ -3913,7 +3947,7 @@
 
     // ============================================================
     // SECTION 17. 고정 버튼 3종 (제목 영역, 왼쪽 동숲 주민의 왼쪽)
-    //   배터리 소모 TOP5 / 저속충전 기체 TOP5 / 임무 OFF 기체 (왼쪽) + 방전 로그(최근 15일) (오른쪽 3종 버튼 중 가운데)
+    //   배터리 소모 TOP5 / 저속충전 기체 TOP5 / 임무 OFF 기체 (왼쪽) + 방전 로그(최근 30일) (오른쪽 3종 버튼 중 가운데)
     //   2분마다 데이터가 갱신될 때 버튼의 숫자 배지와, 열려 있는 목록 창이 함께 새로고침됨 (창을 띄워 둔 채로도)
     //   계산량은 기체 수(≈90대)에 비례하는 반복 몇 번뿐이라 갱신 한 번에 수 ms 수준
     // ============================================================
@@ -3964,7 +3998,7 @@
         });
     }
 
-    // ── 방전 로그(최근 15일): 배터리 로그에서 FB_DISCHARGE_PCT% 이하 → OFF 로 이어진 기체 ──
+    // ── 방전 로그(최근 30일): 배터리 로그에서 FB_DISCHARGE_PCT% 이하 → OFF 로 이어진 기체 ──
     let _fbLogCache = null;   // { rawY, rawT, logs } — 로그 원본 문자열이 그대로면 이전 결과를 재사용 (로그는 10분마다만 바뀜, 어제 로그는 하루 종일 그대로)
     function fbLoadLogs() {   // 어제 스냅샷 + 오늘 로그를 기체별 시간순 점으로 (같은 시각이 겹치면 오늘 것이 우선)
         const rawY = localStorage.getItem('bb_battery_log_yesterday') || '', rawT = localStorage.getItem(WBL_KEY) || '';
@@ -4042,9 +4076,9 @@
         return out;
     }
     /* DISCHARGE-LOG-START */
-    // ── 방전 로그(최근 15일) ──
+    // ── 방전 로그(최근 30일) ──
     // 원본: 배터리 로그(어제+오늘, 10분 단위)에서 'FB_DISCHARGE_PCT% 이하 → OFF' 로 이어진 지점(방전) 또는 그렇게 지나친 것으로 보이는 지점(방전 추정)
-    // 저장: ① 이 PC(bb_discharge_local) — 배터리 로그는 하루가 지나면 초기화되지만 방전 기록은 15일 동안 남음
+    // 저장: ① 이 PC(bb_discharge_local) — 배터리 로그는 하루가 지나면 초기화되지만 방전 기록은 30일 동안 남음
     //       ② 서버 단일 파일(배터리_방전로그) — 방전이 '기록될 때만' 올림. 방전이 없으면 파일도, 업로드 요청도 없음
     // 병합: 같은 기체의 90분 이내 기록은 같은 방전으로 보고 더 확실한 쪽(확정 > 추정, 정확한 시각 > 10분 슬롯 시각)을 채택
     //       → 여러 PC 가 각자 감지해서 올려도 결과가 같고, 서버에 이미 있는 내용이면 업로드 자체를 건너뜀 (커밋이 몰리지 않음)
@@ -4055,7 +4089,7 @@
     function dvSig(o) { const s = JSON.stringify(o); let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return s.length + ':' + h; }   // 객체 내용이 바뀌었는지만 보는 간단한 서명(체크섬)
 
     const DC_LOG_NAME = '배터리_방전로그';
-    const DC_RETENTION_DAYS = 15;
+    const DC_RETENTION_DAYS = 30;
     const DC_LOCAL_KEY = 'bb_discharge_local';           // { days:{일자:{기체id:{name,ev:[{ts,bat,kind,exact}]}}}, up:{일자:마지막 업로드 서명} }
     const DC_CACHE_KEY = 'bb_dischargelog_file_cache';   // { days:{...}, at:받아온 시각(ms) }
     const DC_SEEN_KEY = 'bb_dc_file_seen';               // 서버 파일을 한 번이라도 확인/생성했는지 (처음 1회 예외 처리용)
@@ -4069,7 +4103,7 @@
 
     function dcDayKey(ts) { return wblLocalDateStr(new Date(ts - WBL_DAY_START_H * 3600000)); }   // 배터리 로그의 하루(07:00~익일 07:00) 기준 날짜
     function dcCutoffIdx() { return dvDayIdx(wblGetDayKey() || wblTodayStr()) - (DC_RETENTION_DAYS - 1); }
-    function dcPrune(days) {   // 15일(오늘 포함) 넘은 날짜는 잘라냄
+    function dcPrune(days) {   // 30일(오늘 포함) 넘은 날짜는 잘라냄
         const cutoff = dcCutoffIdx();
         Object.keys(days).forEach(d => { if (dvDayIdx(d) < cutoff) delete days[d]; });
         return days;
@@ -4144,7 +4178,7 @@
     }
     function dcSaveLocal(o) { try { localStorage.setItem(DC_LOCAL_KEY, JSON.stringify(o)); } catch {} }
 
-    // 2분마다(데이터 갱신 때, 보드가 닫혀 있어도) 호출 — 배터리 로그에서 방전을 찾아 이 PC 의 15일 기록에 반영
+    // 2분마다(데이터 갱신 때, 보드가 닫혀 있어도) 호출 — 배터리 로그에서 방전을 찾아 이 PC 의 30일 기록에 반영
     // 감지 당시엔 살아난 기록이 아직 없어 '방전 추정'으로 저장됐지만, 이후 로그가 쌓이며 재부팅 오표기였음이 뒤늦게 확인되는 경우 → 되돌려 지움
     // (서버에 이미 올라간 기록은 병합이 추가만 하고 지우지는 않아 이 정정이 자동으로 안 올라감 — 필요하면 서버 파일도 따로 정리해야 함)
     function dcPruneRebootGlitches(loc, logs) {
@@ -4398,7 +4432,7 @@
     function fbCompute() {
         const logs = fbLoadLogs();   // 어제+오늘 배터리 로그는 한 번만 읽어 방전/저속충전 계산에 함께 씀
         _fbData = {
-            dis: dcBuildView(),   // 이 PC 기록 + 서버 기록 (최근 15일)
+            dis: dcBuildView(),   // 이 PC 기록 + 서버 기록 (최근 30일)
             sc: computeSlowCharge(logs),
             dr: computeFastDrain(logs),
             mo: DB.filter(isMissionOff).sort((a, b) => a.name.localeCompare(b.name, 'ko', { numeric: true })),
@@ -4419,7 +4453,7 @@
     function fbHtmlDis(d) {
         const ev = d.dis.events;
         let h = `<div class="bb-fbp-note">${FB_DISCHARGE_PCT}% 이하까지 떨어진 뒤 꺼졌거나, 0% 가 다음 10분 기록까지 이어진 기체 (추정 = 0% 직후 꺼짐 / 10분 기록 사이에 꺼짐)</div>`;
-        if (!ev.length) h += `<div class="bb-fbp-empty">최근 15일 동안 방전된 기체가 없습니다 ✓</div>`;
+        if (!ev.length) h += `<div class="bb-fbp-empty">최근 30일 동안 방전된 기체가 없습니다 ✓</div>`;
         else h += ev.map(e => {
             const st = fbStateChip(e.cur);
             const est = e.kind === 'est';
@@ -4429,7 +4463,7 @@
                 <span class="bb-fbp-dot" style="background:${st.ac};"></span>
                 <span class="bb-fbp-main">
                     <span class="bb-fbp-line"><span class="bb-fbp-name">${fbEsc(e.name)}</span><span class="bb-fbp-tag ${est ? 'est' : 'sure'}">${est ? '방전 추정' : '방전'}</span></span>
-                    <span class="bb-fbp-sub">${fbFmtTs(e.ts)}${e.exact ? '' : '경'} ${e.hold ? '0% 도달 · 다음 기록도 0%' : 'OFF'}${e.bat != null && !e.hold ? ` · 마지막 배터리 ${e.bat}%` : ''}${e.n > 1 ? ` · 15일 내 ${e.n}회` : ''}</span>
+                    <span class="bb-fbp-sub">${fbFmtTs(e.ts)}${e.exact ? '' : '경'} ${e.hold ? '0% 도달 · 다음 기록도 0%' : 'OFF'}${e.bat != null && !e.hold ? ` · 마지막 배터리 ${e.bat}%` : ''}${e.n > 1 ? ` · 30일 내 ${e.n}회` : ''}</span>
                 </span>
                 <span class="bb-fbp-now">현재 ${fbEsc(st.txt)}</span>
             </div>`;
@@ -4490,18 +4524,6 @@
         }).join('');
         return h + `<div class="bb-fbp-foot">사용 중 ${dr.active}대 · 측정 중 ${dr.measured}대${dr.measuring ? ` · 데이터 부족 ${dr.measuring}대` : ''}</div>`;
     }
-    function fbHtmlMoff(d) {
-        const note = `<div class="bb-fbp-note">전원 ON 기체 기준.</div>`;
-        if (!d.mo.length) return note + `<div class="bb-fbp-empty">현재 임무 OFF 인 기체가 없습니다 ✓</div>`;
-        return note + d.mo.map(r => {
-            const st = fbStateChip(r);
-            return `<div class="bb-fbp-row" data-rid="${fbEsc(r.id)}" title="${fbEsc(r.name)}">
-                <span class="bb-fbp-dot" style="background:${st.ac};"></span>
-                <span class="bb-fbp-main"><span class="bb-fbp-name">${fbEsc(r.name)}</span></span>
-                <span class="bb-fbp-now">${fbEsc(st.txt)}</span>
-            </div>`;
-        }).join('');
-    }
     function fbHtmlNeglect(d) {
         const note = `<div class="bb-fbp-note">순찰 중 → 대기 중으로 바뀐 지 20분(측정 기록 2회)이 지나도 그대로인 기체 · 배달 전용 등 일부 기체는 빠짐</div>`;
         if (!d.ng.length) return note + `<div class="bb-fbp-empty">현재 방치·미주차로 보이는 기체가 없습니다 ✓</div>`;
@@ -4518,33 +4540,31 @@
         const pop = document.getElementById('bb-fbp');
         if (!pop) return;
         document.querySelectorAll('.bb-fb[data-mode]').forEach(b => b.classList.toggle('active', b.dataset.mode === _fbMode));
-        if (_fbMode) { const host = document.getElementById((_fbMode === 'dis' || _fbMode === 'moff') ? 'bb-fixbtns-r' : 'bb-fixbtns'); if (host && pop.parentNode !== host) host.appendChild(pop); }   // 방전 로그·임무 OFF 는 오른쪽 버튼 아래, 나머지는 왼쪽 버튼 아래에서 열림
+        if (_fbMode) { const host = document.getElementById(_fbMode === 'dis' ? 'bb-fixbtns-r' : 'bb-fixbtns'); if (host && pop.parentNode !== host) host.appendChild(pop); }   // 방전 로그는 오른쪽 버튼 아래, 나머지는 왼쪽 버튼 아래에서 열림
         pop.classList.toggle('open', !!_fbMode);
         if (!_fbMode) return;
         const d = _fbData || fbCompute();
         const T = {
-            dis:  ['방전 로그(최근 15일)',    `${d.dis.robots}대${d.dis.events.length !== d.dis.robots ? ` · ${d.dis.events.length}건` : ''}`],
+            dis:  ['방전 로그(최근 30일)',    `${d.dis.robots}대${d.dis.events.length !== d.dis.robots ? ` · ${d.dis.events.length}건` : ''}`],
             drain:['배터리 소모 기체 TOP5',   `사용 중 ${d.dr.active}대`],
             slow: ['저속충전 기체 TOP5',     `충전 중 ${d.sc.charging}대`],
-            moff: ['임무 OFF 기체',          `${d.mo.length}대`],
             neglect: ['순찰 후 미주차 기체',  `${d.ng.length}대`],
         }[_fbMode];
         document.getElementById('bb-fbp-title').textContent = T[0];
         document.getElementById('bb-fbp-cnt').textContent = T[1];
         const body = document.getElementById('bb-fbp-body');
         const keep = body.scrollTop;   // 2분마다 새로 그려도 보던 위치 유지
-        body.innerHTML = _fbMode === 'dis' ? fbHtmlDis(d) : _fbMode === 'drain' ? fbHtmlDrain(d) : _fbMode === 'slow' ? fbHtmlSlow(d) : _fbMode === 'neglect' ? fbHtmlNeglect(d) : fbHtmlMoff(d);
+        body.innerHTML = _fbMode === 'dis' ? fbHtmlDis(d) : _fbMode === 'drain' ? fbHtmlDrain(d) : _fbMode === 'slow' ? fbHtmlSlow(d) : fbHtmlNeglect(d);
         body.scrollTop = keep;
     }
     function refreshFixedTools() {   // 2분 갱신마다 + 열 때마다 호출: 배지와 (열려 있다면) 목록 창을 최신으로
         try {
             fbCompute();
-            fbSetBadge('bb-fb-dis', _fbData.dis.events.length, _fbData.dis.recentSure ? 'r' : 'o');   // 숫자 = 최근 15일 방전 '건' 수 (같은 기체라도 건별로 셈). 최근 24시간 안에 확정 방전이 있으면 빨강, 그 밖에는 주황
+            fbSetBadge('bb-fb-dis', _fbData.dis.events.length, _fbData.dis.recentSure ? 'r' : 'o');   // 숫자 = 최근 30일 방전 '건' 수 (같은 기체라도 건별로 셈). 최근 24시간 안에 확정 방전이 있으면 빨강, 그 밖에는 주황
             fbSetBadge('bb-fb-drain', _fbData.dr.top.length, 'b');   // 배터리 소모: 배지는 목록에 오른 기체 수 (최대 FB_DRAIN_TOP 대). 실제 대수는 버튼 툴팁에 표시
             const bdr = document.getElementById('bb-fb-drain');
             if (bdr) bdr.title = `충전 중이 아닌 기체를 최근 ${FB_DRAIN_WINDOW_H}시간 안의 하락 기록으로 배터리가 빨리 닳는 순으로 (상위 ${FB_DRAIN_TOP}대) · 오른쪽 위 숫자 = 목록에 오른 기체 수 (최대 ${FB_DRAIN_TOP}) · 소모 속도 측정 중 ${_fbData.dr.measured}대 (그중 배터리가 줄고 있는 기체 ${_fbData.dr.dropping}대)`;
             fbSetBadge('bb-fb-slow', _fbData.sc.top.length, 'g');   // 저속충전: TOP5 버튼이므로 배지는 목록에 오른 기체 수(최대 5)만. 실제 측정 대수는 열었을 때 "충전 중 ##대"로 표시
-            fbSetBadge('bb-fb-moff', _fbData.mo.length, 'o');
             fbSetBadge('bb-fb-neglect', _fbData.ng.length, 'y');   // 방치/미주차: 노랑
             fbRender();
         } catch (err) { console.error('[BB] 고정 버튼 갱신 오류:', err); }
@@ -6438,6 +6458,172 @@
         console.log('[BB] 개입카드 현황 켜짐 (SECTION 18)');
     }
     } catch (e) { console.warn('[BB] 개입카드 초기화 실패 — 기존 기능에는 영향 없음:', e && e.message); }
+
+    // ============================================================
+    // SECTION 19. 배달 로그 — 옛 '임무 OFF' 자리(오른쪽 고정 버튼)에서 여는 패널
+    //  - 데이터: multimonitoring.vercel.app/api/delivery-poll?view=... (크론 폴링과 같은 엔드포인트를 조회 전용으로 겸용 — api/ 폴더를 늘리지 않으려고 합침)
+    //            GitHub 레포 delivery/YYYY-MM/YYYY-MM-DD.json 에 확정 저장된 값을 서버가 읽어서 돌려줌. 오늘 근무일은 아직 확정 전이면 Gist 의 진행 중 상태를 대신 보여줌)
+    //  - 달력 모양·동작은 개입카드(SECTION 18) 의 ivOpenCal/ivRenderCal 로직을 그대로 옮겨왔다 (같은 CSS 클래스 bb-att-cal*, bb-iv-cal-h, bb-iv-msg 재사용)
+    //  - 안전장치: 전체가 try/catch — 여기서 오류가 나도 기존 기능(배터리 카드 등)에는 영향 없음
+    // ============================================================
+    try {
+    if (document.getElementById('bb-fb-dlog') && document.getElementById('bb-dlog-panel') && typeof attFetchJson === 'function') {
+        const DL_API = ATT_API + '/delivery-poll';   // 크론 폴링과 같은 엔드포인트 — ?view=... 가 있으면 조회 전용으로 동작(인증 불필요), api/ 폴더 개수를 늘리지 않기 위함
+        const DL_BADGE_MS = 5 * 60 * 1000;
+        const $dl = id => document.getElementById(id);
+        const dlEl = (tag, cls, text) => { const el = document.createElement(tag); if (cls) el.className = cls; if (text !== undefined && text !== null) el.textContent = text; return el; };
+        const dlOpDate = () => attYmd(attKst(Date.now() - 7 * 3600 * 1000));   // 근무일 = 07:00 기준 (개입카드와 동일한 방식)
+
+        let _dlOpen = false, _dlDate = null, _dlData = null, _dlFail = false, _dlSeq = 0;
+        let _dlDates = null, _dlDatesAt = 0, _dlCalOpen = false, _dlCalYm = null;
+        const dlDateNow = () => _dlDate || dlOpDate();
+
+        function dlClosePanel() {
+            _dlOpen = false; _dlCalOpen = false;
+            $dl('bb-dlog-panel').classList.remove('open');
+            $dl('bb-dlog-cal').classList.remove('open');
+        }
+        function dlOpenPanel() {
+            if (_dlOpen) { dlClosePanel(); return; }
+            _dlOpen = true;
+            $dl('bb-dlog-panel').classList.add('open');
+            dlRender();
+            if (!_dlData || _dlData.date !== dlDateNow() || Date.now() - (_dlData._at || 0) > 30000) dlRefresh();
+        }
+        async function dlRefresh() {
+            const seq = ++_dlSeq, date = dlDateNow();
+            if (!_dlData || _dlData.date !== date) { _dlData = null; dlRender(); }
+            try {
+                const d = await attFetchJson(DL_API + '?view=day&date=' + date);
+                if (seq !== _dlSeq) return;
+                if (!d || d.ok !== true) throw new Error('데이터 형식 오류');
+                d.date = date; d._at = Date.now();
+                _dlData = d; _dlFail = false;
+            } catch (e) {
+                console.warn('[BB] 배달 로그 갱신 실패:', e.message);
+                if (seq === _dlSeq) _dlFail = true;
+            }
+            if (_dlOpen && seq === _dlSeq) dlRender();
+        }
+        function dlSetDate(d) {
+            dlCloseCal();
+            if (d === dlOpDate()) d = null;
+            if (_dlDate === d) return;
+            _dlDate = d; _dlData = null;
+            dlRender(); dlRefresh();
+        }
+
+        function dlRender() {
+            const lbl = $dl('bb-dlog-date-lbl'), kpi = $dl('bb-dlog-kpi'), body = $dl('bb-dlog-body');
+            const isToday = !_dlDate;
+            lbl.textContent = isToday ? '오늘 (' + dlDateNow() + ')' : dlDateNow();
+            $dl('bb-dlog-today').classList.toggle('on', isToday);
+            $dl('bb-dlog-cal-btn').classList.toggle('on', !isToday);
+            if (!_dlData) {
+                kpi.replaceChildren();
+                body.innerHTML = '<div class="bb-att-msg' + (_dlFail ? ' warn' : '') + '">' + (_dlFail ? '불러오지 못했습니다.' : '불러오는 중…') + '</div>';
+                return;
+            }
+            const s = _dlData.summary || { completed: 0, byPerformer: {} };
+            const stateTxt = _dlData.state === 'draft' ? '진행 중(당일 확정 전)' : _dlData.state === 'final' ? '확정' : '기록 없음';
+            const kCell = (l, v) => { const e = dlEl('div'); e.appendChild(dlEl('div', 'l', l)); e.appendChild(dlEl('div', 'v', v)); return e; };
+            kpi.replaceChildren(kCell('완료 건수', String(s.completed || 0) + '건'), kCell('상태', stateTxt));
+            const names = Object.keys(s.byPerformer || {}).sort((a, b) => (s.byPerformer[b] || 0) - (s.byPerformer[a] || 0));
+            if (!names.length) { body.innerHTML = '<div class="bb-att-msg">이 날짜의 배달 완료 기록이 없습니다.</div>'; return; }
+            body.replaceChildren(...names.map(name => {
+                const row = dlEl('div', 'bb-fbp-row');
+                const dot = dlEl('span', 'bb-fbp-dot'); dot.style.background = 'var(--gn)';
+                const main = dlEl('span', 'bb-fbp-main');
+                main.appendChild(dlEl('span', 'bb-fbp-name', name));
+                row.append(dot, main, dlEl('span', 'bb-fbp-now', s.byPerformer[name] + '건'));
+                return row;
+            }));
+        }
+
+        /* ───────── 달력 (개입카드와 같은 모양 · 로그(JSON)가 있는 날만 선택 가능) ───────── */
+        function dlCloseCal() { _dlCalOpen = false; $dl('bb-dlog-cal').classList.remove('open'); }
+        async function dlOpenCal() {
+            if (_dlCalOpen) { dlCloseCal(); return; }
+            _dlCalOpen = true;
+            const p = dlDateNow().split('-').map(Number);
+            _dlCalYm = { y: p[0], m: p[1] };
+            $dl('bb-dlog-cal').classList.add('open');
+            dlRenderCal('loading');
+            if (!_dlDates || Date.now() - _dlDatesAt > 60000) {
+                try {
+                    const d = await attFetchJson(DL_API + '?view=dates');
+                    if (!d || d.ok !== true || !Array.isArray(d.dates)) throw new Error('데이터 형식 오류');
+                    _dlDates = new Set(d.dates); _dlDatesAt = Date.now();
+                } catch (e) { console.warn('[BB] 배달 로그 날짜 목록 실패:', e.message); if (_dlCalOpen) dlRenderCal('fail'); return; }
+            }
+            if (_dlCalOpen) dlRenderCal();
+        }
+        function dlRenderCal(state) {
+            const cal = $dl('bb-dlog-cal');
+            if (state) { cal.replaceChildren(dlEl('div', 'bb-iv-msg' + (state === 'fail' ? ' warn' : ''), state === 'fail' ? '날짜 목록을 불러오지 못했습니다.' : '불러오는 중…')); return; }
+            const y = _dlCalYm.y, m = _dlCalYm.m;
+            const all = [..._dlDates].sort();
+            const minYm = all.length ? all[0].slice(0, 7) : null, maxYm = all.length ? all[all.length - 1].slice(0, 7) : null;
+            const ym = y + '-' + attPad(m);
+            const head = dlEl('div', 'bb-iv-cal-h');
+            const prev = dlEl('button', 'bb-mm-nav', '‹'), next = dlEl('button', 'bb-mm-nav', '›');
+            prev.dataset.mv = '-1'; next.dataset.mv = '1';
+            prev.disabled = !minYm || ym <= minYm; next.disabled = !maxYm || ym >= maxYm;
+            head.append(prev, dlEl('span', 't', y + '년 ' + m + '월'), next);
+            const grid = dlEl('div', 'bb-att-cal-grid');
+            ['일', '월', '화', '수', '목', '금', '토'].forEach(d => grid.appendChild(dlEl('div', 'bb-att-dow', d)));
+            const dow = new Date(Date.UTC(y, m - 1, 1)).getUTCDay(), dim = new Date(Date.UTC(y, m, 0)).getUTCDate();
+            for (let i = 0; i < dow; i++) grid.appendChild(dlEl('div'));
+            const today = dlOpDate(), sel = dlDateNow();
+            for (let d = 1; d <= dim; d++) {
+                const ds = ym + '-' + attPad(d);
+                const cell = dlEl('div', 'bb-att-day', String(d));
+                if (_dlDates.has(ds)) { cell.classList.add('has'); cell.dataset.date = ds; cell.appendChild(dlEl('span', 'dot')); }
+                if (ds === today) cell.classList.add('today');
+                if (ds === sel) cell.classList.add('sel');
+                grid.appendChild(cell);
+            }
+            cal.replaceChildren(head, grid);
+        }
+
+        /* ───────── 이벤트 ───────── */
+        document.getElementById('bb-fb-dlog').addEventListener('click', () => dlOpenPanel());
+        $dl('bb-dlog-close').addEventListener('click', () => dlClosePanel());
+        $dl('bb-dlog-today').addEventListener('click', () => dlSetDate(null));
+        $dl('bb-dlog-cal-btn').addEventListener('click', () => dlOpenCal());
+        $dl('bb-dlog-cal').addEventListener('click', e => {
+            const mv = e.target.closest('button[data-mv]');
+            if (mv && !mv.disabled) { const t = _dlCalYm.y * 12 + (_dlCalYm.m - 1) + Number(mv.dataset.mv); _dlCalYm = { y: Math.floor(t / 12), m: (t % 12) + 1 }; dlRenderCal(); return; }
+            const day = e.target.closest('.bb-att-day.has');
+            if (day) dlSetDate(day.dataset.date);
+        });
+        document.addEventListener('mousedown', e => {
+            if (_dlCalOpen && !e.target.closest('#bb-dlog-cal') && !e.target.closest('#bb-dlog-cal-btn')) dlCloseCal();
+            else if (_dlOpen && !e.target.closest('#bb-dlog-panel') && !e.target.closest('#bb-fb-dlog')) dlClosePanel();
+        });
+        document.addEventListener('keydown', e => {
+            if (e.key !== 'Escape') return;
+            if (_dlCalOpen) dlCloseCal();
+            else if (_dlOpen) dlClosePanel();
+        });
+        const dlVisible = () => _dlOpen && !document.hidden;
+        setInterval(() => { if (dlVisible() && !_dlDate) dlRefresh(); }, 60 * 1000);
+        document.addEventListener('visibilitychange', () => { if (dlVisible() && !_dlDate) dlRefresh(); });
+
+        // 버튼 배지 = 오늘(근무일) 완료 건수. 패널을 열지 않아도 5분마다 조용히 갱신 (다른 고정 버튼과 같은 fbSetBadge 재사용)
+        async function dlRefreshBadge() {
+            try {
+                const d = await attFetchJson(DL_API + '?view=day&date=' + dlOpDate());
+                if (!d || d.ok !== true) return;
+                fbSetBadge('bb-fb-dlog', (d.summary && d.summary.completed) || 0, 'b');
+            } catch (e) { /* 배지 갱신 실패는 조용히 무시 (패널을 열면 다시 시도됨) */ }
+        }
+        dlRefreshBadge();
+        setInterval(dlRefreshBadge, DL_BADGE_MS);
+
+        console.log('[BB] 배달 로그 켜짐 (SECTION 19)');
+    }
+    } catch (e) { console.warn('[BB] 배달 로그 초기화 실패 — 기존 기능에는 영향 없음:', e && e.message); }
 
 
     render();
