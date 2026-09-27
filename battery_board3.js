@@ -5832,7 +5832,7 @@
     try { if (localStorage.getItem('bbIv') === '0') _ivOn = false; } catch (e) { /* 저장소 접근 불가 → 그대로 켜짐 */ }
     if (_ivOn && document.getElementById('bb-mm-page-multi') && document.querySelector('.bb-mm-box') && typeof attFetchJson === 'function') {
         // ▼▼▼ '설명' 버튼을 눌렀을 때 보이는 안내문. 줄바꿈은 <br> 로 구분해서 아래 따옴표 안에 직접 쓰세요. ▼▼▼
-        const IV_HELP = '개입카드 데이터를 수 분 이내로 받아옵니다.<br>GPS 조치 및 기타 사유로 인한 페이지 이탈을 프로그램이 명확히 구분할 수 없기 때문에 개인별 건수 카운팅에서 제외했습니다.<br>시간대별로 개입 건수가 많을 수록 진행바가 녹색으로 짙어집니다.<br>NCC에 API를 전혀 호출하지 않는 로직이다보니 이름 성씨로 개입자를 추정하는 경우가 발생할 수 있습니다.<br>NCC 개입카드 기능 자체가 이미 문제가 많은 상황입니다. 따라서 완전한 정합성을 갖춘 데이터가 될 수는 없습니다만 대체적으로 일치하기에, 개개인의 개입카드 처리패턴을 파악하는 정도로 참조해주시면 감사하겠습니다.<br>퇴근 시 카드가 하단으로 재정렬됩니다.';
+        const IV_HELP = '개입카드 데이터를 수 분 이내로 받아옵니다.<br>GPS 조치 및 기타 사유로 인한 페이지 이탈을 프로그램이 명확히 구분할 수 없기 때문에 개인별 건수 카운팅에서 제외했습니다.<br>근무자별로 할당된 다중/과학관/휴게시간이 빗금으로 표기됩니다.<br>NCC에 API를 전혀 호출하지 않는 로직이다보니 이름 성씨로 개입자를 추정하는 경우가 발생할 수 있습니다.<br>NCC 개입카드 기능 자체가 이미 문제가 많은 상황입니다. 따라서 완전한 정합성을 갖춘 데이터가 될 수는 없습니다만 대체적으로 일치하기에, 개개인의 개입카드 처리패턴을 파악하는 정도로 참조해주시면 감사하겠습니다.<br>퇴근 시 카드가 하단으로 재정렬됩니다.';
         // ▲▲▲ 여기까지 ▲▲▲
         const IV_API = ATT_API + '/intervene';
         const IV_REFRESH_MS = 30 * 1000;
@@ -5907,7 +5907,13 @@
         .bb-iv-seg.n1 { background:#d3d1c7; }
         .bb-iv-seg.n2 { background:#a9dc8a; }
         .bb-iv-seg.n3 { background:#22c55e; }
-        .bb-iv-seg.brk { background:repeating-linear-gradient(135deg,#e9b824 0 3px,#f7dc6a 3px 6px); }
+        .bb-iv-seg.ov-b { background:repeating-linear-gradient(135deg,#e9b824 0 3px,#f7dc6a 3px 6px); }
+        .bb-iv-seg.ov-m { background:repeating-linear-gradient(135deg,#c3a6f0 0 3px,#e7dcfa 3px 6px); }
+        .bb-iv-seg.ov-s { background:repeating-linear-gradient(135deg,#86bff2 0 3px,#d5eafc 3px 6px); }
+        /* 그 시간에 배정/휴게였지만 실제 처리 건이 있으면: 건수 색은 그대로 두고 아래에 빗금 띠만 얹는다 */
+        .bb-iv-seg.ovl-b { background-image:repeating-linear-gradient(135deg,#e9b824 0 3px,#f7dc6a 3px 6px); background-size:100% 3px; background-repeat:no-repeat; background-position:0 100%; }
+        .bb-iv-seg.ovl-m { background-image:repeating-linear-gradient(135deg,#c3a6f0 0 3px,#e7dcfa 3px 6px); background-size:100% 3px; background-repeat:no-repeat; background-position:0 100%; }
+        .bb-iv-seg.ovl-s { background-image:repeating-linear-gradient(135deg,#86bff2 0 3px,#d5eafc 3px 6px); background-size:100% 3px; background-repeat:no-repeat; background-position:0 100%; }
         .bb-iv-seg.fut { background:transparent; border:1.5px dotted var(--bd2); }
         .bb-iv-seg.cur { box-shadow:0 0 0 1.5px var(--bl); }
         .bb-iv-cnt { text-align:right; white-space:nowrap; }
@@ -5955,7 +5961,12 @@
         .bb-iv-hc div.n1 { background:#d3d1c7; }
         .bb-iv-hc div.n2 { background:#a9dc8a; }
         .bb-iv-hc div.n3 { background:#22c55e; }
-        .bb-iv-hc div.brk { background:repeating-linear-gradient(135deg,#e9b824 0 3px,#f7dc6a 3px 6px); }
+        .bb-iv-hc div.ov-b { background:repeating-linear-gradient(135deg,#e9b824 0 3px,#f7dc6a 3px 6px); }
+        .bb-iv-hc div.ov-m { background:repeating-linear-gradient(135deg,#c3a6f0 0 3px,#e7dcfa 3px 6px); }
+        .bb-iv-hc div.ov-s { background:repeating-linear-gradient(135deg,#86bff2 0 3px,#d5eafc 3px 6px); }
+        .bb-iv-hc div.ovl-b { background-image:repeating-linear-gradient(135deg,#e9b824 0 3px,#f7dc6a 3px 6px); background-size:100% 6px; background-repeat:no-repeat; background-position:0 100%; }
+        .bb-iv-hc div.ovl-m { background-image:repeating-linear-gradient(135deg,#c3a6f0 0 3px,#e7dcfa 3px 6px); background-size:100% 6px; background-repeat:no-repeat; background-position:0 100%; }
+        .bb-iv-hc div.ovl-s { background-image:repeating-linear-gradient(135deg,#86bff2 0 3px,#d5eafc 3px 6px); background-size:100% 6px; background-repeat:no-repeat; background-position:0 100%; }
         .bb-iv-hc div.fut { background:transparent; border:1.5px dashed var(--bd); }
         .bb-iv-hc.cur span { color:var(--bl); }
         .bb-iv-hl span { flex:1; text-align:center; font-size:10.5px; color:var(--mu); }
@@ -6007,7 +6018,11 @@
             '<div class="bb-iv-kpis" id="bb-iv-kpis"></div>' +
             '<div class="bb-iv-notes" id="bb-iv-notes"></div>' +
             '<div class="bb-iv-body" id="bb-iv-body"></div>' +
-            '<div class="bb-iv-legend"><span><i style="background:repeating-linear-gradient(135deg,#e9b824 0 2px,#f7dc6a 2px 4px)"></i>휴게시간</span><span>막대 = 근무 시간대별 건수</span></div>';
+            '<div class="bb-iv-legend">' +
+              '<span title="휴게시간으로 잡힌 시간대 (실제로 처리한 건이 있으면 건수 색 아래에 띠로 표시)"><i style="background:repeating-linear-gradient(135deg,#e9b824 0 2px,#f7dc6a 2px 4px)"></i>휴게시간</span>' +
+              '<span title="업무 배정표(daily_tasks)상 다중 모니터링을 하는 시간대"><i style="background:repeating-linear-gradient(135deg,#c3a6f0 0 2px,#e7dcfa 2px 4px)"></i>다중 모니터링</span>' +
+              '<span title="업무 배정표(daily_tasks)상 부산국립과학관 임무를 하는 시간대"><i style="background:repeating-linear-gradient(135deg,#86bff2 0 2px,#d5eafc 2px 4px)"></i>부산국립과학관</span>' +
+            '</div>';
         page.inert = true;
         box.appendChild(page);
         $iv('bb-iv-help').innerHTML = IV_HELP;   // 직접 쓴 안내문(줄바꿈 = <br>)
@@ -6051,14 +6066,23 @@
             return p.hours.map((_, i) => (+m[1] + i) % 24);
         }
         const ivLvl = (c, scale) => (c >= scale[3] ? 'n3' : c >= scale[2] ? 'n2' : c >= scale[1] ? 'n1' : 'n0');
+        // 시간 칸 구분(서버 ov): b 휴게 / m 다중 모니터링 / s 부산국립과학관. 옛 서버 응답(ov 없음)이면 brkIdx로 대신한다.
+        const IV_OV_NAME = { b: '휴게시간', m: '다중 모니터링', s: '부산국립과학관' };
+        const ivOv = (p, i) => (p.ov ? p.ov[i] || '' : i === p.brkIdx ? 'b' : '');
         function ivSegs(p, scale) {
             const wrap = ivEl('div', 'bb-iv-segs');
+            const labels = ivHourLabels(p);
             (p.hours || []).forEach((c, i) => {
                 const s = ivEl('span', 'bb-iv-seg');
-                if (i === p.brkIdx) s.classList.add('brk');
-                else if (p.futFrom >= 0 && i >= p.futFrom) s.classList.add('fut');
-                else s.classList.add(ivLvl(c, scale));
+                const o = ivOv(p, i);
+                if (o && !(c > 0)) s.classList.add('ov-' + o);
+                else {
+                    if (p.futFrom >= 0 && i >= p.futFrom) s.classList.add('fut');
+                    else s.classList.add(ivLvl(c, scale));
+                    if (o) s.classList.add('ovl-' + o);
+                }
                 if (i === p.curIdx) s.classList.add('cur');
+                s.title = attPad(labels[i]) + '시' + (c > 0 ? ' · ' + c + '건' : '') + (o ? ' · ' + IV_OV_NAME[o] : '');
                 wrap.appendChild(s);
             });
             return wrap;
@@ -6284,10 +6308,12 @@
                 const hrs = ivEl('div', 'bb-iv-hrs'), hb = ivEl('div', 'bb-iv-hb'), hl = ivEl('div', 'bb-iv-hl');
                 p.hours.forEach((c, i) => {
                     const col = ivEl('div', 'bb-iv-hc' + (i === p.curIdx ? ' cur' : ''));
-                    const brk = i === p.brkIdx, fut = !brk && p.futFrom >= 0 && i >= p.futFrom;
-                    col.appendChild(ivEl('span', '', brk ? '휴게' : fut ? '' : String(c)));
-                    const bar = ivEl('div', brk ? 'brk' : fut ? 'fut' : ivLvl(c, scale));
-                    bar.style.height = (brk || fut ? 56 : Math.round((c / max) * 52 + 4)) + 'px';
+                    const o = ivOv(p, i), fut = !o && p.futFrom >= 0 && i >= p.futFrom;
+                    const OV_SHORT = { b: '휴게', m: '다중', s: '과학관' };
+                    col.appendChild(ivEl('span', '', c > 0 ? String(c) : o ? OV_SHORT[o] : fut ? '' : String(c)));
+                    const bar = ivEl('div', o && !(c > 0) ? 'ov-' + o : fut ? 'fut' : ivLvl(c, scale) + (o ? ' ovl-' + o : ''));
+                    bar.style.height = ((o && !(c > 0)) || fut ? 56 : Math.round((c / max) * 52 + 4)) + 'px';
+                    col.title = attPad(labels[i]) + '시' + (c > 0 ? ' · ' + c + '건' : '') + (o ? ' · ' + IV_OV_NAME[o] : '');
                     col.appendChild(bar);
                     hb.appendChild(col);
                     hl.appendChild(ivEl('span', '', attPad(labels[i]) + '시'));
