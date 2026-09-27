@@ -944,7 +944,7 @@
             top:50%; left:50%; transform:translate(-50%,-50%);
             width:640px; max-height:82vh; overflow-y:auto;
             border:3px solid transparent; border-radius:14px;
-            background-image: linear-gradient(var(--sur), var(--sur)), linear-gradient(135deg, #ffd8a8, #fb923c);
+            background-image: linear-gradient(var(--sur), var(--sur)), linear-gradient(135deg, #d9b8ff, #9333ea);
             background-origin: border-box;
             background-clip: padding-box, border-box;
             box-shadow:0 24px 64px rgba(0,0,0,.9);
@@ -976,10 +976,13 @@
         .bb-dlog-meta { display:flex; align-items:center; gap:12px; }   /* '배정 …' 과 '주문번호 …' 사이 간격 */
         .bb-dlog-ord { display:inline-flex; align-items:center; gap:4px; }
         .bb-dlog-copy {
-            border:none; background:transparent; cursor:pointer; font-size:16px; line-height:1;
+            display:inline-flex; align-items:center; gap:2px;
+            border:none; background:transparent; cursor:pointer; line-height:1;
             padding:2px 4px; border-radius:4px; opacity:.8;
         }
         .bb-dlog-copy:hover { opacity:1; background:var(--sur2); }
+        .bb-dlog-copy-ico { font-size:16px; line-height:1; }
+        .bb-dlog-copy-lbl { font-size:9px; font-weight:700; color:var(--mu); }
         .bb-alertlog-day { margin-bottom:14px; }
         .bb-alertlog-day-title {
             display:flex; align-items:center; gap:10px;
@@ -6551,8 +6554,8 @@
             dlRender(); dlRefresh();
         }
 
-        // 배달 건 하나의 표시용 제목 ("사이트 · 가게" 또는 사이트만)
-        const dlSiteLabel = r => r.store ? (r.site + ' · ' + r.store) : (r.site || '(사이트 없음)');
+        // 배달 건 하나의 표시용 제목 ("사이트 · 배정 기체명" — 가게명은 사이트명과 사실상 중복이라 기체 호기명으로 대체. 기체명이 없으면 가게명, 그것도 없으면 사이트명만)
+        const dlSiteLabel = r => r.robot ? (r.site + ' · ' + r.robot) : r.store ? (r.site + ' · ' + r.store) : (r.site || '(사이트 없음)');
         // 수행자 표시 — 인계가 있었으면 "길동 → 꺽정", 대리 반응이면 "(대리)" 표기
         const dlWhoLabel = r => {
             const chain = (r.handoverFrom && r.handoverFrom.length ? r.handoverFrom : []).concat(r.performer ? [r.performer] : []);
@@ -6592,17 +6595,20 @@
                 const main = dlEl('span', 'bb-fbp-main');
                 main.appendChild(dlEl('span', 'bb-fbp-name', dlSiteLabel(r)));
                 const meta = dlEl('span', 'bb-fbp-sub bb-dlog-meta');
-                meta.appendChild(dlEl('span', '', '배정 ' + (r.assignedAt || '-')));
+                meta.appendChild(dlEl('span', '', '기체 배정 ' + (r.assignedAt || '-')));
                 if (r.orderNo) {
                     const ordWrap = dlEl('span', 'bb-dlog-ord');
                     ordWrap.appendChild(dlEl('span', '', '주문번호 ' + r.orderNo));
-                    const copyBtn = dlEl('button', 'bb-dlog-copy', '📋');
+                    const copyBtn = dlEl('button', 'bb-dlog-copy');
                     copyBtn.type = 'button'; copyBtn.title = '주문번호 복사';
+                    const copyIco = dlEl('span', 'bb-dlog-copy-ico', '📋');
+                    const copyLbl = dlEl('span', 'bb-dlog-copy-lbl', '복사');
+                    copyBtn.append(copyIco, copyLbl);
                     copyBtn.addEventListener('click', async (e) => {
                         e.stopPropagation();
-                        try { await navigator.clipboard.writeText(r.orderNo); copyBtn.textContent = '✅'; }
-                        catch (err) { copyBtn.textContent = '⚠️'; }
-                        setTimeout(() => { copyBtn.textContent = '📋'; }, 1200);
+                        try { await navigator.clipboard.writeText(r.orderNo); copyIco.textContent = '✅'; }
+                        catch (err) { copyIco.textContent = '⚠️'; }
+                        setTimeout(() => { copyIco.textContent = '📋'; }, 1200);
                     });
                     ordWrap.appendChild(copyBtn);
                     meta.appendChild(ordWrap);
