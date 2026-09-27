@@ -942,7 +942,7 @@
         #bb-dlog-panel {
             display:none; position:fixed;
             top:50%; left:50%; transform:translate(-50%,-50%);
-            width:640px; max-height:82vh; overflow-y:auto;
+            width:640px; min-height:420px; max-height:82vh; overflow-y:auto;   /* 최소 높이 확보 — 배달 건수가 적어 패널이 짧아지면 달력 드롭다운이 패널의 overflow-y:auto 에 잘려 스크롤이 생기던 문제 방지 */
             border:3px solid transparent; border-radius:14px;
             background-image: linear-gradient(var(--sur), var(--sur)), linear-gradient(135deg, #d9b8ff, #9333ea);
             background-origin: border-box;
