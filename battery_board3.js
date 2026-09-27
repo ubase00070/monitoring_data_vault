@@ -952,11 +952,17 @@
         #bb-dlog-panel .bb-ap-title { color:var(--tx); }   /* 다른 로그 패널과 달리 항상 밝은 배경이라 검정 계열 글자로 */
         .bb-dlog-head { position:relative; display:flex; align-items:center; gap:8px; padding:10px 14px; border-bottom:1px solid var(--bd); }
         .bb-dlog-date-lbl { font-size:13px; font-weight:800; color:var(--mu); margin-left:2px; }
+        .bb-dlog-note { margin-left:auto; font-size:11px; font-weight:700; color:var(--mu); white-space:nowrap; }
         .bb-dlog-kpi { display:flex; gap:8px; padding:10px 14px 4px; flex-wrap:wrap; }
         .bb-dlog-kpi > div { flex:1; min-width:88px; background:var(--sur2); border:1px solid var(--bd2); border-radius:9px; padding:8px 10px; }
         .bb-dlog-kpi .l { font-size:11px; color:var(--mu); font-weight:700; }
         .bb-dlog-kpi .v { font-size:18px; font-weight:900; color:var(--tx); margin-top:2px; }
         .bb-dlog-sub { font-size:12px; font-weight:800; color:var(--mu); padding:12px 14px 4px; }
+        .bb-fbp-right { display:flex; align-items:center; gap:10px; flex-shrink:0; }
+        .bb-fbp-who { font-size:12px; font-weight:800; color:var(--tx); white-space:nowrap; }
+        .bb-fbp-time { display:flex; flex-direction:column; align-items:flex-end; gap:1px; flex-shrink:0; }
+        .bb-fbp-time .l { font-size:9.5px; color:var(--mu); font-weight:700; white-space:nowrap; }
+        .bb-fbp-time .v { font-size:12px; font-weight:800; color:var(--tx); white-space:nowrap; }
         .bb-alertlog-day { margin-bottom:14px; }
         .bb-alertlog-day-title {
             display:flex; align-items:center; gap:10px;
@@ -1234,6 +1240,7 @@
                     <button class="bb-mm-nav bb-att-mbtn" id="bb-dlog-today">오늘</button>
                     <button class="bb-mm-nav bb-att-mbtn" id="bb-dlog-cal-btn">달력</button>
                     <span class="bb-dlog-date-lbl" id="bb-dlog-date-lbl"></span>
+                    <span class="bb-dlog-note" id="bb-dlog-note"></span>
                     <div class="bb-att-cal" id="bb-dlog-cal"></div>
                 </div>
                 <div class="bb-dlog-kpi" id="bb-dlog-kpi"></div>
@@ -3922,7 +3929,7 @@
         //   멈출 새도 없이 주기적으로 재시작시켜서 사실상 끊김 없이 반복되는 것처럼 보이게 함
         const BUNNY_RESTART_MS = 6000;
         setInterval(() => {
-            if (!on || !el.src) return;
+            if (!on || !el.src || document.hidden) return;   // 탭이 백그라운드면 리페인트할 필요 없음
             const src = el.src;
             el.src = '';
             el.src = src;
@@ -5080,8 +5087,9 @@
             _patrolBusy = false;
         }
     }
-    // 보드가 열려 있을 때만 조회 (닫혀 있으면 요청 없음). 열 때(openBoard)마다 즉시 한 번 더 조회
-    setInterval(() => { if (isOpen) refreshPatrolLive(); }, PATROL_REFRESH_MS);
+    // 보드가 열려 있고 탭이 실제로 보일 때만 조회 (닫혀 있거나 백그라운드 탭이면 요청 없음). 열 때(openBoard)마다 즉시 한 번 더 조회
+    setInterval(() => { if (isOpen && !document.hidden) refreshPatrolLive(); }, PATROL_REFRESH_MS);
+    document.addEventListener('visibilitychange', () => { if (isOpen && !document.hidden) refreshPatrolLive(); });
     _patrolReady = true;
     if (isOpen) refreshPatrolLive();
 
@@ -6540,19 +6548,25 @@
             const stateTxt = _dlData.state === 'draft' ? '진행 중(당일 확정 전)' : _dlData.state === 'final' ? '확정' : '기록 없음';
             const kCell = (l, v) => { const e = dlEl('div'); e.appendChild(dlEl('div', 'l', l)); e.appendChild(dlEl('div', 'v', v)); return e; };
             const cells = [kCell('완료 건수', String(s.completed || 0) + '건')];
-            if (isToday && pending > 0) cells.push(kCell('아직 미확인', pending + '건'));   // 2시간 간격 폴링 특성상, 다음 조회 전까지는 실제로 끝났어도 여기 잡혀 있을 수 있음
+            if (isToday && pending > 0) cells.push(kCell('확인 중', pending + '건'));   // 2시간 간격 폴링 특성상, 다음 조회 전까지는 실제로 끝났어도 여기 잡혀 있을 수 있음
             cells.push(kCell('상태', stateTxt));
             kpi.replaceChildren(...cells);
+            $dl('bb-dlog-note').textContent = isToday ? '* 2시간마다 업데이트되고 자정에 마감됩니다' : '* 확정된 기록입니다';
             if (!deliveries.length) { body.innerHTML = '<div class="bb-att-msg">이 날짜의 배달 완료 기록이 없습니다.' + (isToday && pending ? ' (진행 중 ' + pending + '건은 다음 조회 때 반영됩니다)' : '') + '</div>'; return; }
-            // 배달 건이 앞, 그 옆(아래 줄)에 시각·주문번호·수행자 — 07시부터 시간순으로 쌓인 걸 최신이 맨 위로 오게 뒤집어서 보여줌
+            // 배달 건이 앞, 아래 줄에 배정 시각·주문번호 — 오른쪽엔 수행자 · 소요시간(라벨 포함) — 07시부터 시간순으로 쌓인 걸 최신이 맨 위로 오게 뒤집어서 보여줌
             body.replaceChildren(...deliveries.slice().reverse().map(r => {
                 const row = dlEl('div', 'bb-fbp-row');
                 const dot = dlEl('span', 'bb-fbp-dot'); dot.style.background = 'var(--pk)';
                 const main = dlEl('span', 'bb-fbp-main');
                 main.appendChild(dlEl('span', 'bb-fbp-name', dlSiteLabel(r)));
                 main.appendChild(dlEl('span', 'bb-fbp-sub', '배정 ' + (r.assignedAt || '-') + (r.orderNo ? ' · 주문번호 ' + r.orderNo : ' · 주문번호 없음')));
-                main.appendChild(dlEl('span', 'bb-fbp-sub', dlWhoLabel(r)));
-                row.append(dot, main, dlEl('span', 'bb-fbp-now', r.durationSec != null ? attDurHM(r.durationSec) : '-'));
+                const right = dlEl('span', 'bb-fbp-right');
+                right.appendChild(dlEl('span', 'bb-fbp-who', dlWhoLabel(r)));
+                const time = dlEl('span', 'bb-fbp-time');
+                time.appendChild(dlEl('span', 'l', '배달 소요시간'));
+                time.appendChild(dlEl('span', 'v', r.durationSec != null ? attDurHM(r.durationSec) : '-'));
+                right.appendChild(time);
+                row.append(dot, main, right);
                 return row;
             }));
         }
