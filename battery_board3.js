@@ -5910,10 +5910,6 @@
         .bb-iv-seg.ov-b { background:repeating-linear-gradient(135deg,#e9b824 0 3px,#f7dc6a 3px 6px); }
         .bb-iv-seg.ov-m { background:repeating-linear-gradient(135deg,#c3a6f0 0 3px,#e7dcfa 3px 6px); }
         .bb-iv-seg.ov-s { background:repeating-linear-gradient(135deg,#86bff2 0 3px,#d5eafc 3px 6px); }
-        /* 그 시간에 배정/휴게였지만 실제 처리 건이 있으면: 건수 색은 그대로 두고 아래에 빗금 띠만 얹는다 */
-        .bb-iv-seg.ovl-b { background-image:repeating-linear-gradient(135deg,#e9b824 0 3px,#f7dc6a 3px 6px); background-size:100% 3px; background-repeat:no-repeat; background-position:0 100%; }
-        .bb-iv-seg.ovl-m { background-image:repeating-linear-gradient(135deg,#c3a6f0 0 3px,#e7dcfa 3px 6px); background-size:100% 3px; background-repeat:no-repeat; background-position:0 100%; }
-        .bb-iv-seg.ovl-s { background-image:repeating-linear-gradient(135deg,#86bff2 0 3px,#d5eafc 3px 6px); background-size:100% 3px; background-repeat:no-repeat; background-position:0 100%; }
         .bb-iv-seg.fut { background:transparent; border:1.5px dotted var(--bd2); }
         .bb-iv-seg.cur { box-shadow:0 0 0 1.5px var(--bl); }
         .bb-iv-cnt { text-align:right; white-space:nowrap; }
@@ -5955,7 +5951,7 @@
         .bb-iv-hb, .bb-iv-hl { display:flex; gap:6px; }
         .bb-iv-hb { align-items:flex-end; height:74px; }
         .bb-iv-hc { flex:1; min-width:0; height:100%; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; gap:2px; }
-        .bb-iv-hc span { font-size:11px; font-weight:700; color:var(--mu); }
+        .bb-iv-hc span { font-size:11px; font-weight:700; color:var(--mu); text-align:center; white-space:pre-line; line-height:1.15; }
         .bb-iv-hc div { width:100%; border-radius:3px; }
         .bb-iv-hc div.n0 { background:rgba(0,0,0,.06); }
         .bb-iv-hc div.n1 { background:#d3d1c7; }
@@ -5964,9 +5960,6 @@
         .bb-iv-hc div.ov-b { background:repeating-linear-gradient(135deg,#e9b824 0 3px,#f7dc6a 3px 6px); }
         .bb-iv-hc div.ov-m { background:repeating-linear-gradient(135deg,#c3a6f0 0 3px,#e7dcfa 3px 6px); }
         .bb-iv-hc div.ov-s { background:repeating-linear-gradient(135deg,#86bff2 0 3px,#d5eafc 3px 6px); }
-        .bb-iv-hc div.ovl-b { background-image:repeating-linear-gradient(135deg,#e9b824 0 3px,#f7dc6a 3px 6px); background-size:100% 6px; background-repeat:no-repeat; background-position:0 100%; }
-        .bb-iv-hc div.ovl-m { background-image:repeating-linear-gradient(135deg,#c3a6f0 0 3px,#e7dcfa 3px 6px); background-size:100% 6px; background-repeat:no-repeat; background-position:0 100%; }
-        .bb-iv-hc div.ovl-s { background-image:repeating-linear-gradient(135deg,#86bff2 0 3px,#d5eafc 3px 6px); background-size:100% 6px; background-repeat:no-repeat; background-position:0 100%; }
         .bb-iv-hc div.fut { background:transparent; border:1.5px dashed var(--bd); }
         .bb-iv-hc.cur span { color:var(--bl); }
         .bb-iv-hl span { flex:1; text-align:center; font-size:10.5px; color:var(--mu); }
@@ -6019,7 +6012,7 @@
             '<div class="bb-iv-notes" id="bb-iv-notes"></div>' +
             '<div class="bb-iv-body" id="bb-iv-body"></div>' +
             '<div class="bb-iv-legend">' +
-              '<span title="휴게시간으로 잡힌 시간대 (실제로 처리한 건이 있으면 건수 색 아래에 띠로 표시)"><i style="background:repeating-linear-gradient(135deg,#e9b824 0 2px,#f7dc6a 2px 4px)"></i>휴게시간</span>' +
+              '<span title="휴게시간으로 잡힌 시간대 (그 시간에 처리한 건이 있어도 카드에서는 빗금 유지, 자세히에서 건수만큼 막대가 높아짐)"><i style="background:repeating-linear-gradient(135deg,#e9b824 0 2px,#f7dc6a 2px 4px)"></i>휴게시간</span>' +
               '<span title="업무 배정표(daily_tasks)상 다중 모니터링을 하는 시간대"><i style="background:repeating-linear-gradient(135deg,#c3a6f0 0 2px,#e7dcfa 2px 4px)"></i>다중 모니터링</span>' +
               '<span title="업무 배정표(daily_tasks)상 부산국립과학관 임무를 하는 시간대"><i style="background:repeating-linear-gradient(135deg,#86bff2 0 2px,#d5eafc 2px 4px)"></i>부산국립과학관</span>' +
             '</div>';
@@ -6075,12 +6068,10 @@
             (p.hours || []).forEach((c, i) => {
                 const s = ivEl('span', 'bb-iv-seg');
                 const o = ivOv(p, i);
-                if (o && !(c > 0)) s.classList.add('ov-' + o);
-                else {
-                    if (p.futFrom >= 0 && i >= p.futFrom) s.classList.add('fut');
-                    else s.classList.add(ivLvl(c, scale));
-                    if (o) s.classList.add('ovl-' + o);
-                }
+                // 휴게·다중·과학관 칸은 그 시간에 처리한 건이 있어도 항상 빗금(칸이 좁아 색 구분이 어렵다). 건수는 툴팁/자세히에서 본다.
+                if (o) s.classList.add('ov-' + o);
+                else if (p.futFrom >= 0 && i >= p.futFrom) s.classList.add('fut');
+                else s.classList.add(ivLvl(c, scale));
                 if (i === p.curIdx) s.classList.add('cur');
                 s.title = attPad(labels[i]) + '시' + (c > 0 ? ' · ' + c + '건' : '') + (o ? ' · ' + IV_OV_NAME[o] : '');
                 wrap.appendChild(s);
@@ -6310,9 +6301,12 @@
                     const col = ivEl('div', 'bb-iv-hc' + (i === p.curIdx ? ' cur' : ''));
                     const o = ivOv(p, i), fut = !o && p.futFrom >= 0 && i >= p.futFrom;
                     const OV_SHORT = { b: '휴게', m: '다중', s: '과학관' };
-                    col.appendChild(ivEl('span', '', c > 0 ? String(c) : o ? OV_SHORT[o] : fut ? '' : String(c)));
-                    const bar = ivEl('div', o && !(c > 0) ? 'ov-' + o : fut ? 'fut' : ivLvl(c, scale) + (o ? ' ovl-' + o : ''));
-                    bar.style.height = ((o && !(c > 0)) || fut ? 56 : Math.round((c / max) * 52 + 4)) + 'px';
+                    // 빗금 칸: 0건이면 낮은 막대(기본), 건수가 늘면 그만큼 높아진다. 라벨은 "다중(11)"(칸이 좁아 두 줄)
+                    const lab = o ? OV_SHORT[o] + (c > 0 ? '\n(' + c + ')' : '') : fut ? '' : String(c);
+                    col.appendChild(ivEl('span', '', lab));
+                    const bar = ivEl('div', o ? 'ov-' + o : fut ? 'fut' : ivLvl(c, scale));
+                    bar.style.height = (fut ? 56 : o ? Math.max(12, Math.round((c / max) * 52 + 4)) : Math.round((c / max) * 52 + 4)) + 'px';
+                    if (o && !(c > 0)) bar.style.height = '12px';
                     col.title = attPad(labels[i]) + '시' + (c > 0 ? ' · ' + c + '건' : '') + (o ? ' · ' + IV_OV_NAME[o] : '');
                     col.appendChild(bar);
                     hb.appendChild(col);
