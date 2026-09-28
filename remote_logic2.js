@@ -4394,6 +4394,13 @@
                 } catch(e) { return ''; }
             }
             function initials(name) { return name ? name.slice(0,1) : '?'; }
+            const AVATAR_PALETTE = ['#7c9d63','#e07a5f','#4f8ef7','#c9a34e','#a0785a','#5c8c46','#6a8caf','#b3714f'];
+            function avatarColor(name) {
+                if (!name || name === '익명') return '#8b8f94';
+                let h = 0;
+                for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+                return AVATAR_PALETTE[h % AVATAR_PALETTE.length];
+            }
             function formatDate(iso) {
                 const d = new Date(iso);
                 return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
@@ -4431,108 +4438,107 @@
 				height: r.height + 'px', // ALT+Q 패널 전체와 동일한 크기로 — 기존 460px 고정 + scale(1.66) 방식은 제거
 				zIndex: '1000001', display: 'flex',
 				alignItems: 'center', justifyContent: 'center',
-				background: '#8BAA4F',
+				background: '#eef0ea',
 				borderRadius: '28px', overflow: 'hidden',
 			});
 
             overlay.innerHTML = `
-            <div style="width:calc(100% - 20px); height:calc(100% - 20px); margin:10px; background-image:linear-gradient(rgba(255,253,248,0.78), rgba(255,253,248,0.78)), url(${BG_IMG}); background-size:cover; background-position:center; border:4px solid #8BAA4F; box-sizing:border-box; display:flex; flex-direction:column; border-radius:24px;">
-                <div id="nb-board-header" style="display:flex; align-items:center; gap:8px; padding:8px 14px; border-bottom:1.5px solid #E3EFD1; cursor:grab;">
-                    <span style="font-size:17px; font-weight:600; color:#2F4A1D; flex:1;"><span class="nb-emoji">🍃</span> NCC 게시판</span>
-                    <button id="nb-mail-lock-btn" style="height:28px; padding:0 10px; background:#F1F7E6; color:#4B6633; border:none; border-radius:14px; cursor:pointer; font-size:14.5px; display:flex; align-items:center; gap:4px; white-space:nowrap;" title="익명 편지함">🔒 익명 문의</button>
-                    <button id="nb-refresh-btn" style="height:28px; width:28px; background:#F1F7E6; color:#4B6633; border:none; border-radius:14px; cursor:pointer; font-size:16px;" title="새로고침">↺</button>
-					<button id="nb-write-btn" style="height:28px; padding:0 12px; font-size:14.5px; font-weight:500; background:#7FA050; color:white; border:none; border-radius:14px; cursor:pointer;">✏️ 글쓰기</button>
-                    <button id="nb-board-close" style="background:#F1F7E6; border:none; color:#2F4A1D; width:26px; height:26px; border-radius:50%; cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center;">✕</button>
+            <div style="width:calc(100% - 20px); height:calc(100% - 20px); margin:10px; background:#ffffff; border:1px solid #ececE4; box-shadow:0 18px 46px rgba(40,50,20,0.14); box-sizing:border-box; display:flex; flex-direction:column; border-radius:22px; overflow:hidden;">
+                <div id="nb-board-header" style="display:flex; align-items:center; gap:8px; padding:10px 16px; border-bottom:1px solid #f0efe9; cursor:grab;">
+                    <span style="font-size:17px; font-weight:800; color:#22301f; flex:1; display:flex; align-items:center; gap:7px;"><span class="nb-emoji">🍃</span> NCC 게시판</span>
+                    <button id="nb-mail-lock-btn" style="height:28px; padding:0 11px; background:#f6f4ee; color:#6b6152; border:1px solid #e7e4dc; border-radius:999px; cursor:pointer; font-size:13px; font-weight:700; display:flex; align-items:center; gap:4px; white-space:nowrap;" title="익명 편지함">🔒 익명 문의</button>
+                    <button id="nb-refresh-btn" style="height:28px; width:28px; background:#ffffff; color:#5c6660; border:1px solid #e7e4dc; border-radius:10px; cursor:pointer; font-size:14px;" title="새로고침">↺</button>
+					<button id="nb-write-btn" style="height:28px; padding:0 14px; font-size:13px; font-weight:700; background:#3f6b35; color:white; border:none; border-radius:999px; cursor:pointer;">✏️ 글쓰기</button>
+                    <div style="width:1px; height:18px; background:#eceae2; margin:0 2px;"></div>
+                    <button id="nb-board-close" style="background:#ffffff; border:1px solid #e7e4dc; color:#c1462f; width:28px; height:28px; border-radius:10px; cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center;">✕</button>
                 </div>
 
-                <div id="nb-pinned-notice" style="padding:7px 14px; background:rgba(255,247,224,0.9); border-bottom:1.5px solid #F1E6C0; display:flex; flex-direction:column; gap:5px;">
-                    <div style="display:flex; align-items:center; gap:7px; flex-wrap:wrap;">
-                        <span style="font-size:15px; font-weight:800; color:#8a6d1f; white-space:nowrap;">💡 SW 설정</span>
+                <div id="nb-pinned-notice" style="padding:12px 16px 8px; display:flex; flex-direction:column; gap:7px;">
+                    <div style="display:flex; align-items:center; gap:9px; flex-wrap:wrap; background:#f2f8ee; border-radius:12px; padding:8px 12px;">
+                        <span style="font-size:12px; font-weight:800; color:#3f6b35; white-space:nowrap;">💡 SW 설정</span>
                         <div id="nb-pin-sw-list" style="display:flex; gap:6px; flex-wrap:wrap;"></div>
                     </div>
-                    <div style="display:flex; align-items:center; gap:7px; flex-wrap:wrap;">
-                        <span style="font-size:15px; font-weight:800; color:#7a5230; white-space:nowrap;">🛠️ 문제해결</span>
+                    <div style="display:flex; align-items:center; gap:9px; flex-wrap:wrap; background:#fbf3e8; border-radius:12px; padding:8px 12px;">
+                        <span style="font-size:12px; font-weight:800; color:#b45309; white-space:nowrap;">🛠️ 문제해결</span>
                         <div id="nb-pin-ts-list" style="display:flex; gap:6px; flex-wrap:wrap;"></div>
                     </div>
                 </div>
 
-                <div style="height:2px; background:#7FA050; opacity:0.5; margin:0 16px;"></div>
+                <div id="nb-screen-list" style="flex:1; overflow-y:auto; padding:2px 10px 0;"></div>
 
-                <div id="nb-screen-list" style="flex:1; overflow-y:auto; padding:4px 0; background-image:linear-gradient(rgba(255,253,248,0.55), rgba(255,253,248,0.55)), url(${BG_IMG}); background-size:cover; background-position:center;"></div>
-
-                <div id="nb-list-toolbar" style="padding:5px 14px; display:flex; align-items:center; justify-content:space-between; gap:8px; border-top:1.5px solid #F1F7E6;">
+                <div id="nb-list-toolbar" style="padding:10px 16px; display:flex; align-items:center; justify-content:space-between; gap:8px; border-top:1px solid #f0efe9;">
                     <div style="display:flex; gap:8px; flex:1; min-width:0;">
-                        <select id="nb-search-type" style="height:28px; font-size:14.5px; padding:0 6px; border-radius:14px; border:1.5px solid #C9DE9D; background:#FFFFFF; color:#4B6633; outline:none;">
+                        <select id="nb-search-type" style="height:30px; font-size:12.5px; font-weight:700; padding:0 8px; border-radius:999px; border:1px solid #e7e4dc; background:#f6f4ee; color:#6b6152; outline:none;">
                             <option value="all">전체</option>
                             <option value="title">제목</option>
                             <option value="author">작성자</option>
                         </select>
-                        <input id="nb-search-input" type="text" placeholder="검색..." style="flex:1; height:28px; font-size:14.5px; padding:0 10px; border-radius:14px; border:1.5px solid #C9DE9D; background:#F1F7E6; color:#2F4A1D; outline:none;">
+                        <input id="nb-search-input" type="text" placeholder="검색..." style="flex:1; height:30px; font-size:13px; padding:0 14px; border-radius:999px; border:none; background:#f6f4ee; color:#22301f; outline:none;">
                     </div>
                     <div id="nb-pagination" style="display:flex; align-items:center; gap:8px; flex-shrink:0;"></div>
                 </div>
 
                 <div id="nb-screen-detail" style="display:none; flex:1; overflow-y:auto; flex-direction:column;">
-                    <div style="padding:6px 14px; border-bottom:1.5px solid #F1F7E6; display:flex; align-items:center; gap:8px;">
-                        <button id="nb-back-btn" style="background:#F1F7E6; border:none; color:#2F4A1D; padding:3px 8px; border-radius:14px; cursor:pointer; font-size:14.5px;"><span class="nb-emoji">←</span> 목록</button>
-                        <span id="nb-detail-title-header" style="font-size:15.5px; color:#4B6633; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
-						<button id="nb-edit-post-btn" style="display:none; background:#EAF3DE; border:1px solid #F2CE87; color:#5C7A3C; padding:3px 8px; border-radius:14px; cursor:pointer; font-size:14.5px;">수정</button>
-                        <button id="nb-delete-post-btn" style="display:none; background:#FBEAE3; border:1px solid #F0B79A; color:#C96A45; padding:3px 8px; border-radius:14px; cursor:pointer; font-size:14.5px;">삭제</button>
+                    <div style="padding:10px 16px; border-bottom:1px solid #f0efe9; display:flex; align-items:center; gap:8px;">
+                        <button id="nb-back-btn" style="background:#f6f4ee; border:1px solid #e7e4dc; color:#5c6660; padding:5px 12px; border-radius:999px; cursor:pointer; font-size:12.5px; font-weight:700;"><span class="nb-emoji">←</span> 목록</button>
+                        <span id="nb-detail-title-header" style="font-size:13.5px; color:#6b6152; font-weight:600; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
+						<button id="nb-edit-post-btn" style="display:none; background:#f6f4ee; border:1px solid #e7e4dc; color:#3f6b35; padding:5px 11px; border-radius:999px; cursor:pointer; font-size:12.5px; font-weight:700;">수정</button>
+                        <button id="nb-delete-post-btn" style="display:none; background:#fbeae3; border:1px solid #f0c1ab; color:#c1462f; padding:5px 11px; border-radius:999px; cursor:pointer; font-size:12.5px; font-weight:700;">삭제</button>
                     </div>
-                    <div id="nb-detail-body" style="padding:10px; flex:1; overflow-y:auto;"></div>
+                    <div id="nb-detail-body" style="padding:18px 20px; flex:1; overflow-y:auto;"></div>
                 </div>
 
                 <div id="nb-screen-write" style="display:none; flex-direction:column; flex:1;">
-                    <div style="padding:6px 14px; border-bottom:1.5px solid #F1F7E6; display:flex; align-items:center; gap:8px;">
-                        <button id="nb-write-cancel" style="background:#F1F7E6; border:none; color:#2F4A1D; padding:3px 8px; border-radius:14px; cursor:pointer; font-size:14.5px;">← 취소</button>
-                        <span style="font-size:15.5px; color:#4B6633; flex:1;">새 글 작성</span>
-                        <button id="nb-write-submit" style="background:#7FA050; border:none; color:white; padding:3px 12px; border-radius:14px; cursor:pointer; font-size:14.5px; font-weight:500;">등록</button>
+                    <div style="padding:10px 16px; border-bottom:1px solid #f0efe9; display:flex; align-items:center; gap:8px;">
+                        <button id="nb-write-cancel" style="background:#f6f4ee; border:1px solid #e7e4dc; color:#5c6660; padding:5px 12px; border-radius:999px; cursor:pointer; font-size:12.5px; font-weight:700;">← 취소</button>
+                        <span style="font-size:14px; color:#22301f; font-weight:800; flex:1;">새 글 작성</span>
+                        <button id="nb-write-submit" style="background:#3f6b35; border:none; color:white; padding:6px 14px; border-radius:999px; cursor:pointer; font-size:12.5px; font-weight:700;">등록</button>
                     </div>
-                    <div style="padding:10px; display:flex; flex-direction:column; gap:10px; flex:1;">
-                        <input id="nb-write-title" type="text" placeholder="제목" style="height:36px; font-size:15.5px; padding:0 10px; border-radius:14px; border:1.5px solid #C9DE9D; background:#F1F7E6; color:#2F4A1D; outline:none;">
-                        <textarea id="nb-write-content" placeholder="내용을 입력하세요..." style="flex:1; min-height:100px; font-size:15.5px; padding:6px; border-radius:14px; border:1.5px solid #C9DE9D; background:#F1F7E6; color:#2F4A1D; outline:none; resize:none; font-family:inherit;"></textarea>
-						<label style="display:flex; align-items:center; gap:6px; font-size:14.5px; color:#4B6633; cursor:pointer; user-select:none;">
+                    <div style="padding:16px; display:flex; flex-direction:column; gap:10px; flex:1;">
+                        <input id="nb-write-title" type="text" placeholder="제목" style="height:38px; font-size:14px; padding:0 14px; border-radius:12px; border:none; background:#f6f4ee; color:#22301f; outline:none;">
+                        <textarea id="nb-write-content" placeholder="내용을 입력하세요..." style="flex:1; min-height:100px; font-size:14px; padding:12px 14px; border-radius:12px; border:none; background:#f6f4ee; color:#22301f; outline:none; resize:none; font-family:inherit; line-height:1.6;"></textarea>
+						<label style="display:flex; align-items:center; gap:6px; font-size:13px; color:#6b6152; cursor:pointer; user-select:none;">
                             <input type="checkbox" id="nb-write-anon" style="width:14px; height:14px; cursor:pointer;">
                             익명으로 작성
                         </label>
                     </div>
                 </div>
-				
+
 				<div id="nb-screen-edit" style="display:none; flex-direction:column; flex:1;">
-                    <div style="padding:6px 14px; border-bottom:1.5px solid #F1F7E6; display:flex; align-items:center; gap:8px;">
-                        <button id="nb-edit-cancel" style="background:#F1F7E6; border:none; color:#2F4A1D; padding:3px 8px; border-radius:14px; cursor:pointer; font-size:14.5px;">← 취소</button>
-                        <span style="font-size:15.5px; color:#4B6633; flex:1;">글 수정</span>
-                        <button id="nb-edit-submit" style="background:#7FA050; border:none; color:white; padding:3px 12px; border-radius:14px; cursor:pointer; font-size:14.5px; font-weight:500;">저장</button>
+                    <div style="padding:10px 16px; border-bottom:1px solid #f0efe9; display:flex; align-items:center; gap:8px;">
+                        <button id="nb-edit-cancel" style="background:#f6f4ee; border:1px solid #e7e4dc; color:#5c6660; padding:5px 12px; border-radius:999px; cursor:pointer; font-size:12.5px; font-weight:700;">← 취소</button>
+                        <span style="font-size:14px; color:#22301f; font-weight:800; flex:1;">글 수정</span>
+                        <button id="nb-edit-submit" style="background:#3f6b35; border:none; color:white; padding:6px 14px; border-radius:999px; cursor:pointer; font-size:12.5px; font-weight:700;">저장</button>
                     </div>
-                    <div style="padding:10px; display:flex; flex-direction:column; gap:10px; flex:1;">
-                        <input id="nb-edit-title" type="text" placeholder="제목" style="height:36px; font-size:15.5px; padding:0 10px; border-radius:14px; border:1.5px solid #C9DE9D; background:#F1F7E6; color:#2F4A1D; outline:none;">
-                        <textarea id="nb-edit-content" placeholder="내용" style="flex:1; min-height:100px; font-size:15.5px; padding:6px; border-radius:14px; border:1.5px solid #C9DE9D; background:#F1F7E6; color:#2F4A1D; outline:none; resize:none; font-family:inherit;"></textarea>
+                    <div style="padding:16px; display:flex; flex-direction:column; gap:10px; flex:1;">
+                        <input id="nb-edit-title" type="text" placeholder="제목" style="height:38px; font-size:14px; padding:0 14px; border-radius:12px; border:none; background:#f6f4ee; color:#22301f; outline:none;">
+                        <textarea id="nb-edit-content" placeholder="내용" style="flex:1; min-height:100px; font-size:14px; padding:12px 14px; border-radius:12px; border:none; background:#f6f4ee; color:#22301f; outline:none; resize:none; font-family:inherit; line-height:1.6;"></textarea>
                     </div>
                 </div>
 
                 <div id="nb-screen-mail-user" style="display:none; flex-direction:column; flex:1; overflow:hidden;">
-                    <div style="padding:6px 14px; border-bottom:1.5px solid #F1F7E6; display:flex; align-items:center; gap:8px;">
-                        <button id="nb-mail-user-back" style="background:#F1F7E6; border:none; color:#2F4A1D; padding:3px 8px; border-radius:14px; cursor:pointer; font-size:14.5px;"><span class="nb-emoji">←</span> 목록</button>
-                        <span style="font-size:15.5px; color:#4B6633; flex:1;">💌 익명 편지함</span>
-                        <button id="nb-mail-user-submit" style="background:#7FA050; border:none; color:white; padding:3px 12px; border-radius:14px; cursor:pointer; font-size:14.5px; font-weight:500;">보내기</button>
+                    <div style="padding:10px 16px; border-bottom:1px solid #f0efe9; display:flex; align-items:center; gap:8px;">
+                        <button id="nb-mail-user-back" style="background:#f6f4ee; border:1px solid #e7e4dc; color:#5c6660; padding:5px 12px; border-radius:999px; cursor:pointer; font-size:12.5px; font-weight:700;"><span class="nb-emoji">←</span> 목록</button>
+                        <span style="font-size:14px; color:#22301f; font-weight:800; flex:1;">💌 익명 편지함</span>
+                        <button id="nb-mail-user-submit" style="background:#3f6b35; border:none; color:white; padding:6px 14px; border-radius:999px; cursor:pointer; font-size:12.5px; font-weight:700;">보내기</button>
                     </div>
                     <div style="padding:16px 16px 8px; display:flex; flex-direction:column; gap:8px;">
-                        <textarea id="nb-mail-user-content" placeholder="최윤혁님께 익명으로 전달할 내용을 적어주세요..." style="min-height:70px; font-size:15.5px; padding:6px; border-radius:14px; border:1.5px solid #C9DE9D; background:#F1F7E6; color:#2F4A1D; outline:none; resize:none; font-family:inherit;"></textarea>
+                        <textarea id="nb-mail-user-content" placeholder="최윤혁님께 익명으로 전달할 내용을 적어주세요..." style="min-height:70px; font-size:14px; padding:10px 12px; border-radius:12px; border:none; background:#f6f4ee; color:#22301f; outline:none; resize:none; font-family:inherit; line-height:1.6;"></textarea>
                     </div>
-                    <div style="padding:6px 16px 2px; font-size:14.5px; color:#7C8F68;">📮 내가 보낸 편지</div>
+                    <div style="padding:6px 16px 2px; font-size:12.5px; color:#9a9587; font-weight:700;">📮 내가 보낸 편지</div>
                     <div id="nb-mail-user-list" style="flex:1; overflow-y:auto; padding:8px 16px 16px;"></div>
                 </div>
 
                 <div id="nb-screen-mail-admin" style="display:none; flex-direction:column; flex:1; overflow:hidden;">
-                    <div style="padding:6px 14px; border-bottom:1.5px solid #F1F7E6; display:flex; align-items:center; gap:8px;">
-                        <button id="nb-mail-admin-back" style="background:#F1F7E6; border:none; color:#2F4A1D; padding:3px 8px; border-radius:14px; cursor:pointer; font-size:14.5px;"><span class="nb-emoji">←</span> 목록</button>
-                        <span style="font-size:15.5px; color:#4B6633; flex:1;">💌 받은 익명 편지</span>
+                    <div style="padding:10px 16px; border-bottom:1px solid #f0efe9; display:flex; align-items:center; gap:8px;">
+                        <button id="nb-mail-admin-back" style="background:#f6f4ee; border:1px solid #e7e4dc; color:#5c6660; padding:5px 12px; border-radius:999px; cursor:pointer; font-size:12.5px; font-weight:700;"><span class="nb-emoji">←</span> 목록</button>
+                        <span style="font-size:14px; color:#22301f; font-weight:800; flex:1;">💌 받은 익명 편지</span>
                     </div>
                     <div id="nb-mail-admin-list" style="flex:1; overflow-y:auto; padding:8px 16px 16px;"></div>
                 </div>
 
-                <div style="padding:4px 14px; border-top:1.5px solid #F1F7E6; text-align:right;">
-                    <span id="nb-user-badge" style="font-size:14px; color:#7C8F68;"></span>
+                <div style="padding:8px 16px; border-top:1px solid #f0efe9; text-align:right;">
+                    <span id="nb-user-badge" style="font-size:11px; color:#b3ac9c; font-weight:600;"></span>
                 </div>
             </div>`;
 
@@ -4592,7 +4598,7 @@
 			setTimeout(function renderPinnedNotice() {
 				const swWrap = document.getElementById('nb-pin-sw-list');
 				const tsWrap = document.getElementById('nb-pin-ts-list');
-				const pinBtnCss = `height:24px; padding:0 9px; background:#FFFFFF; color:#8a6d1f; border:1px solid #F2CE87; border-radius:12px; cursor:pointer; font-size:14px; font-weight:600; white-space:nowrap;`;
+				const pinBtnCss = `height:24px; padding:0 10px; background:#FFFFFF; color:#3f6b35; border:1px solid #cfe3c4; border-radius:999px; cursor:pointer; font-size:12.5px; font-weight:700; white-space:nowrap;`;
 				if (swWrap) {
 					tipsItems.forEach(item => {
 						const b = document.createElement('button');
@@ -4606,7 +4612,7 @@
 					troubleshootPosts.forEach(post => {
 						const b = document.createElement('button');
 						b.textContent = post.title;
-						b.style.cssText = pinBtnCss.replace('#8a6d1f', '#7a5230');
+						b.style.cssText = pinBtnCss.replace('#3f6b35', '#b45309').replace('#cfe3c4', '#f0d9b8');
 						b.onclick = () => window.openTroubleshootOverlay(post.id);
 						tsWrap.appendChild(b);
 					});
@@ -4655,43 +4661,43 @@
 
 			async function loadMyMail() {
 				const listEl = document.getElementById('nb-mail-user-list');
-				listEl.innerHTML = `<div style="text-align:center; padding:12px; color:#7C8F68; font-size:14.5px;">불러오는 중...</div>`;
+				listEl.innerHTML = `<div style="text-align:center; padding:12px; color:#9a9587; font-size:13.5px;">불러오는 중...</div>`;
 				try {
 					const params = new URLSearchParams({ type: 'sent', email: myEmail, name: myName, t: Date.now() });
 					const res = await fetch(`${MAIL_API}?${params}`);
 					const data = await res.json();
 					const mine = (data.mails || []).slice().reverse();
 					if (!mine.length) {
-						listEl.innerHTML = `<div style="text-align:center; padding:12px; color:#94A87C; font-size:14.5px;">보낸 편지가 없습니다</div>`;
+						listEl.innerHTML = `<div style="text-align:center; padding:12px; color:#b3ac9c; font-size:13.5px;">보낸 편지가 없습니다</div>`;
 						return;
 					}
 					listEl.innerHTML = mine.map(m => `
-						<div style="padding:6px 10px; margin-bottom:8px; background:#F6FAEE; border-radius:14px;">
+						<div style="padding:6px 10px; margin-bottom:8px; background:#f8f7f3; border-radius:999px;">
 							<div id="nb-mail-view-${m.id}">
 								<div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
-									<div id="nb-mail-content-${m.id}" style="font-size:14.5px; color:#4B6633; white-space:pre-wrap; line-height:1.4; flex:1;">${m.content}</div>
-									${!m.reply ? `<button onclick="window._nbToggleEditMail('${m.id}')" style="background:none;border:none;font-size:14px;color:#5C7A3C;cursor:pointer;padding:0;flex-shrink:0;">수정</button>` : ''}
+									<div id="nb-mail-content-${m.id}" style="font-size:13.5px; color:#2f3a2c; white-space:pre-wrap; line-height:1.4; flex:1;">${m.content}</div>
+									${!m.reply ? `<button onclick="window._nbToggleEditMail('${m.id}')" style="background:none;border:none;font-size:14px;color:#5c8c46;cursor:pointer;padding:0;flex-shrink:0;">수정</button>` : ''}
 								</div>
-								<div style="font-size:13.5px; color:#7C8F68; margin-top:4px;">${formatDate(m.createdAt)}${m.updatedAt ? ' (수정됨)' : ''}</div>
+								<div style="font-size:13.5px; color:#9a9587; margin-top:4px;">${formatDate(m.createdAt)}${m.updatedAt ? ' (수정됨)' : ''}</div>
 								${m.reply ? `
-									<div style="margin-top:8px; padding:5px 8px; background:#FFF3DC; border-left:2px solid #C9A227; border-radius:10px;">
-										<div style="font-size:14px; color:#5C7A3C; margin-bottom:2px;">↩ 답장</div>
-										<div style="font-size:14.5px; color:#4B6633; white-space:pre-wrap; line-height:1.4;">${m.reply.text}</div>
-										<div style="font-size:13px; color:#94A87C; margin-top:4px;">${formatDate(m.reply.repliedAt)}</div>
+									<div style="margin-top:8px; padding:5px 8px; background:#fdf3e4; border-left:2px solid #c9a34e; border-radius:10px;">
+										<div style="font-size:14px; color:#5c8c46; margin-bottom:2px;">↩ 답장</div>
+										<div style="font-size:13.5px; color:#2f3a2c; white-space:pre-wrap; line-height:1.4;">${m.reply.text}</div>
+										<div style="font-size:13px; color:#b3ac9c; margin-top:4px;">${formatDate(m.reply.repliedAt)}</div>
 									</div>
-								` : `<div style="font-size:14px; color:#A9790A; margin-top:6px;">⏳ 답장 대기중</div>`}
+								` : `<div style="font-size:14px; color:#b45309; margin-top:6px;">⏳ 답장 대기중</div>`}
 							</div>
 							<div id="nb-mail-edit-${m.id}" style="display:none; margin-top:4px;">
-								<textarea id="nb-mail-edit-text-${m.id}" style="width:100%; min-height:60px; font-size:14.5px; padding:5px; border-radius:14px; border:1.5px solid #C9DE9D; background:#F1F7E6; color:#2F4A1D; outline:none; resize:none; font-family:inherit; box-sizing:border-box;"></textarea>
+								<textarea id="nb-mail-edit-text-${m.id}" style="width:100%; min-height:60px; font-size:13.5px; padding:5px; border-radius:999px; border:1.5px solid #e7e4dc; background:#ffffff; color:#22301f; outline:none; resize:none; font-family:inherit; box-sizing:border-box;"></textarea>
 								<div style="display:flex; gap:6px; margin-top:6px; justify-content:flex-end;">
-									<button onclick="window._nbCancelEditMail('${m.id}')" style="height:24px;padding:0 10px;font-size:14px;background:#F1F7E6;border:none;color:#2F4A1D;border-radius:14px;cursor:pointer;">취소</button>
-									<button onclick="window._nbSubmitEditMail('${m.id}', this)" style="height:24px;padding:0 10px;font-size:14px;background:#7FA050;border:none;color:#2F4A1D;border-radius:14px;cursor:pointer;">저장</button>
+									<button onclick="window._nbCancelEditMail('${m.id}')" style="height:24px;padding:0 10px;font-size:14px;background:#ffffff;border:none;color:#22301f;border-radius:999px;cursor:pointer;">취소</button>
+									<button onclick="window._nbSubmitEditMail('${m.id}', this)" style="height:24px;padding:0 10px;font-size:14px;background:#3f6b35;border:none;color:#22301f;border-radius:999px;cursor:pointer;">저장</button>
 								</div>
 							</div>
 						</div>
 					`).join('');
 				} catch(e) {
-					listEl.innerHTML = `<div style="text-align:center; padding:12px; color:#C96A45; font-size:14.5px;">불러오기 실패</div>`;
+					listEl.innerHTML = `<div style="text-align:center; padding:12px; color:#c1462f; font-size:13.5px;">불러오기 실패</div>`;
 				}
 			}
 
@@ -4763,7 +4769,7 @@
 
 			async function loadInboxMail() {
 				const listEl = document.getElementById('nb-mail-admin-list');
-				listEl.innerHTML = `<div style="text-align:center; padding:12px; color:#7C8F68; font-size:14.5px;">불러오는 중...</div>`;
+				listEl.innerHTML = `<div style="text-align:center; padding:12px; color:#9a9587; font-size:13.5px;">불러오는 중...</div>`;
 				try {
 					const res = await fetch(`${MAIL_API}?type=inbox&t=${Date.now()}`);
 					const data = await res.json();
@@ -4775,33 +4781,33 @@
 					if (badge) badge.style.display = window.__nbMailUnread ? 'inline' : 'none';
 
 					if (!mails.length) {
-						listEl.innerHTML = `<div style="text-align:center; padding:12px; color:#94A87C; font-size:14.5px;">받은 편지가 없습니다</div>`;
+						listEl.innerHTML = `<div style="text-align:center; padding:12px; color:#b3ac9c; font-size:13.5px;">받은 편지가 없습니다</div>`;
 						return;
 					}
 					listEl.innerHTML = mails.map(m => `
-						<div style="padding:6px 10px; margin-bottom:8px; background:#F6FAEE; border-radius:14px;">
-							<div style="font-size:14.5px; color:#4B6633; white-space:pre-wrap; line-height:1.4;">${m.content}</div>
-							<div style="font-size:13.5px; color:#7C8F68; margin-top:4px;">${formatDate(m.createdAt)}</div>
+						<div style="padding:6px 10px; margin-bottom:8px; background:#f8f7f3; border-radius:999px;">
+							<div style="font-size:13.5px; color:#2f3a2c; white-space:pre-wrap; line-height:1.4;">${m.content}</div>
+							<div style="font-size:13.5px; color:#9a9587; margin-top:4px;">${formatDate(m.createdAt)}</div>
 							<div id="nb-mail-reply-view-${m.id}" style="${m.reply ? '' : 'display:none;'}">
-								<div style="margin-top:8px; padding:5px 8px; background:#EAF3DE; border-left:2px solid #8BAA4F; border-radius:10px;">
+								<div style="margin-top:8px; padding:5px 8px; background:#f2f8ee; border-left:2px solid #3f6b35; border-radius:10px;">
 									<div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
 										<div style="flex:1;">
-											<div style="font-size:14px; color:#4B6633; margin-bottom:2px;">↩ 내 답장</div>
-											<div id="nb-mail-reply-text-view-${m.id}" style="font-size:14.5px; color:#4B6633; white-space:pre-wrap; line-height:1.4;">${m.reply ? m.reply.text : ''}</div>
-											<div style="font-size:13px; color:#94A87C; margin-top:4px;">${m.reply ? formatDate(m.reply.repliedAt) : ''}</div>
+											<div style="font-size:14px; color:#2f3a2c; margin-bottom:2px;">↩ 내 답장</div>
+											<div id="nb-mail-reply-text-view-${m.id}" style="font-size:13.5px; color:#2f3a2c; white-space:pre-wrap; line-height:1.4;">${m.reply ? m.reply.text : ''}</div>
+											<div style="font-size:13px; color:#b3ac9c; margin-top:4px;">${m.reply ? formatDate(m.reply.repliedAt) : ''}</div>
 										</div>
-										<button onclick="window._nbToggleEditMailReply('${m.id}')" style="background:none;border:none;font-size:14px;color:#4B6633;cursor:pointer;padding:0;flex-shrink:0;">수정</button>
+										<button onclick="window._nbToggleEditMailReply('${m.id}')" style="background:none;border:none;font-size:14px;color:#2f3a2c;cursor:pointer;padding:0;flex-shrink:0;">수정</button>
 									</div>
 								</div>
 							</div>
 							<div id="nb-mail-reply-edit-${m.id}" style="${m.reply ? 'display:none;' : ''} margin-top:8px; display:flex; gap:6px;">
-								<textarea id="nb-mail-reply-${m.id}" placeholder="답장 작성..." style="flex:1; min-height:44px; font-size:14.5px; padding:4px 6px; border-radius:14px; border:1.5px solid #C9DE9D; background:#F1F7E6; color:#2F4A1D; outline:none; resize:none; font-family:inherit;"></textarea>
-								<button onclick="window._nbSubmitMailReply('${m.id}', this)" style="align-self:flex-end; background:#7FA050; border:none; color:white; padding:4px 10px; border-radius:14px; cursor:pointer; font-size:14.5px; white-space:nowrap;">답장</button>
+								<textarea id="nb-mail-reply-${m.id}" placeholder="답장 작성..." style="flex:1; min-height:44px; font-size:13.5px; padding:4px 6px; border-radius:999px; border:1.5px solid #e7e4dc; background:#ffffff; color:#22301f; outline:none; resize:none; font-family:inherit;"></textarea>
+								<button onclick="window._nbSubmitMailReply('${m.id}', this)" style="align-self:flex-end; background:#3f6b35; border:none; color:white; padding:4px 10px; border-radius:999px; cursor:pointer; font-size:13.5px; white-space:nowrap;">답장</button>
 							</div>
 						</div>
 					`).join('');
 				} catch(e) {
-					listEl.innerHTML = `<div style="text-align:center; padding:12px; color:#C96A45; font-size:14.5px;">불러오기 실패</div>`;
+					listEl.innerHTML = `<div style="text-align:center; padding:12px; color:#c1462f; font-size:13.5px;">불러오기 실패</div>`;
 				}
 			}
 
@@ -4877,20 +4883,22 @@
                 const isPaged = posts === allPosts; // 검색 중엔 페이지네이션 숨김
 
                 el.innerHTML = paged.map(p => `
-                    <div onclick="window._nbOpenPost('${p.id}')" style="display:grid; grid-template-columns:1fr 34px 64px 68px; align-items:center; gap:10px; padding:6px 14px; border-bottom:1.5px solid #E3EFD1; cursor:pointer; transition:background 0.12s;" onmouseenter="this.style.background='#F6FAEE'" onmouseleave="this.style.background='transparent'">
-                        <div style="font-size:15.5px; font-weight:500; color:#2F4A1D; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0;">${p.title}</div>
-                        <div style="font-size:14px; color:#5C7A3C; white-space:nowrap; text-align:right;">${(p.commentCount||0) > 0 ? `💬 ${p.commentCount}` : ''}</div>
-                        <div style="font-size:14px; color:#6B7F55; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:right;">${p.author}</div>
-                        <div style="font-size:14px; color:#6B7F55; white-space:nowrap; text-align:right;">${formatDate(p.createdAt)}</div>
+                    <div onclick="window._nbOpenPost('${p.id}')" style="display:flex; align-items:center; gap:12px; padding:11px 8px; border-bottom:1px solid #f0efe9; cursor:pointer; transition:background 0.12s;" onmouseenter="this.style.background='#faf9f5'" onmouseleave="this.style.background='transparent'">
+                        <div style="width:30px; height:30px; border-radius:50%; background:${avatarColor(p.author)}; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; color:#ffffff; flex-shrink:0;">${initials(p.anon ? '' : p.author)}</div>
+                        <div style="flex:1; min-width:0;">
+                            <div style="font-size:14.5px; font-weight:700; color:#22301f; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${p.title}</div>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:5px; color:#8b8f7f; font-size:12px; flex-shrink:0; width:36px;">${(p.commentCount||0) > 0 ? `💬 ${p.commentCount}` : ''}</div>
+                        <div style="font-size:12px; color:#9a9587; width:110px; text-align:right; flex-shrink:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${p.author} · ${formatDate(p.createdAt)}</div>
                     </div>
                 `).join('');
 
                 const pagerEl = document.getElementById('nb-pagination');
                 if (isPaged && totalPages > 1) {
                     pagerEl.innerHTML = `
-                        <button onclick="window._nbPrevPage()" ${_currentPage <= 1 ? 'disabled' : ''} style="height:24px; padding:0 10px; font-size:14px; background:#F1F7E6; border:1.5px solid #D9E8C0; color:${_currentPage <= 1 ? '#C9DE9D' : '#4B6633'}; border-radius:14px; cursor:${_currentPage <= 1 ? 'default' : 'pointer'};"><span class="nb-emoji">←</span> 이전</button>
-                        <span style="font-size:14.5px; color:#7C8F68;">${_currentPage} / ${totalPages}</span>
-                        <button onclick="window._nbNextPage()" ${_currentPage >= totalPages ? 'disabled' : ''} style="height:24px; padding:0 10px; font-size:14px; background:#F1F7E6; border:1.5px solid #D9E8C0; color:${_currentPage >= totalPages ? '#C9DE9D' : '#4B6633'}; border-radius:14px; cursor:${_currentPage >= totalPages ? 'default' : 'pointer'};">다음 <span class="nb-emoji">→</span></button>
+                        <button onclick="window._nbPrevPage()" ${_currentPage <= 1 ? 'disabled' : ''} style="height:26px; padding:0 12px; font-size:12.5px; font-weight:700; background:#f6f4ee; border:1px solid #e7e4dc; color:${_currentPage <= 1 ? '#c9c2b0' : '#6b6152'}; border-radius:999px; cursor:${_currentPage <= 1 ? 'default' : 'pointer'};"><span class="nb-emoji">←</span> 이전</button>
+                        <span style="font-size:12.5px; color:#9a9587; font-weight:600;">${_currentPage} / ${totalPages}</span>
+                        <button onclick="window._nbNextPage()" ${_currentPage >= totalPages ? 'disabled' : ''} style="height:26px; padding:0 12px; font-size:12.5px; font-weight:700; background:#f6f4ee; border:1px solid #e7e4dc; color:${_currentPage >= totalPages ? '#c9c2b0' : '#6b6152'}; border-radius:999px; cursor:${_currentPage >= totalPages ? 'default' : 'pointer'};">다음 <span class="nb-emoji">→</span></button>
                     `;
                 } else {
                     pagerEl.innerHTML = '';
@@ -4904,82 +4912,83 @@
                 const comments = post.comments || [];
                 const totalComments = comments.reduce((a,c) => a + 1 + (c.replies||[]).length, 0);
                 document.getElementById('nb-detail-body').innerHTML = `
-                    <h2 style="font-size:17px; font-weight:600; color:#2F4A1D; margin:0 0 8px;">${post.title}</h2>
-                    <div style="font-size:14.5px; color:#6B7F55; margin-bottom:14px; display:flex; align-items:center; justify-content:space-between;">
-                        <span>👤 ${post.author}</span>
-                        <span>📅 ${formatDate(post.createdAt)}</span>
+                    <div style="font-size:20px; font-weight:800; color:#22301f; margin-bottom:12px;">${post.title}</div>
+                    <div style="display:flex; align-items:center; gap:9px; margin-bottom:16px;">
+                        <div style="width:30px; height:30px; border-radius:50%; background:${avatarColor(post.anon ? '' : post.author)}; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; color:#ffffff; flex-shrink:0;">${initials(post.anon ? '' : post.author)}</div>
+                        <span style="font-size:13px; font-weight:700; color:#3a4436;">${post.author}</span>
+                        <span style="font-size:12px; color:#b3ac9c;">·</span>
+                        <span style="font-size:12px; color:#9a9587;">${formatDate(post.createdAt)}</span>
                     </div>
-                    <div style="font-size:15.5px; color:#4B6633; line-height:1.5; padding:10px; background:#E3EFD1; border-radius:16px; margin-bottom:20px; white-space:pre-wrap;">${post.content}</div>
-                    <div style="font-size:15.5px; font-weight:500; color:#4B6633; margin-bottom:12px;">💬 댓글 ${totalComments}개</div>
+                    <div style="background:#f6f8f3; border-radius:16px; padding:16px 18px; margin-bottom:22px; font-size:14px; color:#2f3a2c; line-height:1.7; white-space:pre-wrap;">${post.content}</div>
+                    <div style="font-size:13px; font-weight:800; color:#22301f; margin-bottom:12px;">💬 댓글 ${totalComments}개</div>
                     ${comments.map(c => `
-                        <div style="display:flex; gap:8px; margin-bottom:14px;">
-                            <div style="width:26px; height:26px; border-radius:50%; background:#DCEAC2; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:600; color:#5C7A3C; flex-shrink:0;">${initials(c.author)}</div>
-                            <div style="flex:1;">
-                                <div style="display:flex; align-items:center; gap:8px;">
-                                    <div style="font-size:14.5px; font-weight:500; color:#2F4A1D;">${c.author}</div>
-                                    <span style="font-size:14px; color:#94A87C;">${formatDate(c.createdAt)}</span>
+                        <div style="display:flex; gap:10px; margin-bottom:14px;">
+                            <div style="width:28px; height:28px; border-radius:50%; background:${avatarColor(c.anon ? '' : c.author)}; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; color:#ffffff; flex-shrink:0;">${initials(c.anon ? '' : c.author)}</div>
+                            <div style="flex:1; background:#f8f7f3; border-radius:14px; padding:10px 14px;">
+                                <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                                    <span style="font-size:12.5px; font-weight:700; color:#3a4436;">${c.author}</span>
+                                    <span style="font-size:11px; color:#b3ac9c;">${formatDate(c.createdAt)}</span>
                                 </div>
-                                <div style="font-size:15.5px; color:#4B6633; margin:3px 0; line-height:1.45;">${c.text}</div>
-                                <div style="display:flex; align-items:center; gap:10px; margin-top:4px;">
-                                    ${myEmail ? `<button onclick="window._nbToggleReply('${c.id}')" style="background:none;border:none;font-size:14px;color:#5C7A3C;cursor:pointer;padding:0;">↩ 답글</button>` : ''}
-                                    ${(myEmail && c.email === myEmail) ? `<button onclick="window._nbDeleteComment('${c.id}')" style="background:none;border:none;font-size:14px;color:#C96A45;cursor:pointer;padding:0;">삭제</button><button onclick="window._nbToggleEditComment('${c.id}','${c.text}')" style="background:none;border:none;font-size:14px;color:#5C7A3C;cursor:pointer;padding:0;">수정</button>` : ''}
+                                <div style="font-size:13.5px; color:#2f3a2c; line-height:1.6;">${c.text}</div>
+                                <div style="display:flex; align-items:center; gap:10px; margin-top:5px;">
+                                    ${myEmail ? `<span onclick="window._nbToggleReply('${c.id}')" style="font-size:11.5px; color:#5c8c46; font-weight:700; cursor:pointer;">↩ 답글</span>` : ''}
+                                    ${(myEmail && c.email === myEmail) ? `<span onclick="window._nbDeleteComment('${c.id}')" style="font-size:11.5px; color:#c1462f; font-weight:700; cursor:pointer;">삭제</span><span onclick="window._nbToggleEditComment('${c.id}','${c.text}')" style="font-size:11.5px; color:#5c8c46; font-weight:700; cursor:pointer;">수정</span>` : ''}
                                 </div>
                                 ${(c.replies||[]).map(r => `
-                                    <div style="display:flex; gap:8px; margin-top:10px; padding-left:8px; border-left:2px solid #F5DFA8;">
-                                        <div style="width:20px; height:20px; border-radius:50%; background:#EAF3DE; display:flex; align-items:center; justify-content:center; font-size:12.5px; font-weight:600; color:#5C7A3C; flex-shrink:0;">${initials(r.author)}</div>
+                                    <div style="display:flex; gap:8px; margin-top:10px; padding-left:8px; border-left:2px solid #e7e4dc;">
+                                        <div style="width:22px; height:22px; border-radius:50%; background:${avatarColor(r.anon ? '' : r.author)}; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:800; color:#ffffff; flex-shrink:0;">${initials(r.anon ? '' : r.author)}</div>
                                         <div style="flex:1;">
                                             <div style="display:flex; align-items:center; gap:8px;">
-                                                <div style="font-size:14px; font-weight:500; color:#2F4A1D;">${r.author}</div>
-                                                <span style="font-size:13px; color:#94A87C;">${formatDate(r.createdAt)}</span>
+                                                <div style="font-size:12px; font-weight:700; color:#3a4436;">${r.author}</div>
+                                                <span style="font-size:10.5px; color:#b3ac9c;">${formatDate(r.createdAt)}</span>
                                             </div>
-                                            <div style="font-size:14.5px; color:#4B6633; margin:2px 0;">${r.text}</div>
+                                            <div style="font-size:13px; color:#2f3a2c; margin:2px 0; line-height:1.55;">${r.text}</div>
                                             <div style="display:flex; align-items:center; gap:8px; margin-top:3px;">
-                                                ${(myEmail && r.email === myEmail) ? `<button onclick="window._nbDeleteReply('${c.id}','${r.id}')" style="background:none;border:none;font-size:13px;color:#E8967A;cursor:pointer;padding:0;">삭제</button><button onclick="window._nbToggleEditReply('${c.id}','${r.id}','${r.text}')" style="background:none;border:none;font-size:13px;color:#5C7A3C;cursor:pointer;padding:0;">수정</button>` : ''}
+                                                ${(myEmail && r.email === myEmail) ? `<span onclick="window._nbDeleteReply('${c.id}','${r.id}')" style="font-size:11px; color:#c1462f; font-weight:700; cursor:pointer;">삭제</span><span onclick="window._nbToggleEditReply('${c.id}','${r.id}','${r.text}')" style="font-size:11px; color:#5c8c46; font-weight:700; cursor:pointer;">수정</span>` : ''}
                                             </div>
                                         </div>
                                     </div>
                                 `).join('')}
                                 <div id="nb-reply-box-${c.id}" style="display:none; margin-top:8px;">
-                                    <textarea id="nb-reply-text-${c.id}" placeholder="답글..." style="width:100%; height:52px; font-size:14.5px; padding:4px 6px; border-radius:14px; border:1.5px solid #C9DE9D; background:#F1F7E6; color:#2F4A1D; outline:none; resize:none; box-sizing:border-box; font-family:inherit;"></textarea>
+                                    <textarea id="nb-reply-text-${c.id}" placeholder="답글..." style="width:100%; height:52px; font-size:13.5px; padding:8px 10px; border-radius:12px; border:none; background:#ffffff; color:#22301f; outline:none; resize:none; box-sizing:border-box; font-family:inherit;"></textarea>
                                     <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
-                                        <label style="display:flex; align-items:center; gap:5px; font-size:13px; color:#7C8F68; cursor:pointer; user-select:none;">
+                                        <label style="display:flex; align-items:center; gap:5px; font-size:12px; color:#9a9587; cursor:pointer; user-select:none;">
                                             <input type="checkbox" id="nb-reply-anon-${c.id}" style="width:12px; height:12px; cursor:pointer;">
                                             익명
                                         </label>
                                         <div style="display:flex; gap:6px;">
-                                        <button onclick="window._nbToggleReply('${c.id}')" style="height:26px;padding:0 10px;font-size:14px;background:#F1F7E6;border:none;color:#2F4A1D;border-radius:14px;cursor:pointer;">취소</button>
-                                        <button onclick="window._nbSubmitReply('${c.id}', this)" style="height:26px;padding:0 10px;font-size:14px;background:#7FA050;border:none;color:white;border-radius:14px;cursor:pointer;font-weight:500;">등록</button>
+                                        <button onclick="window._nbToggleReply('${c.id}')" style="height:26px;padding:0 11px;font-size:12.5px;font-weight:700;background:#ffffff;border:1px solid #e7e4dc;color:#6b6152;border-radius:999px;cursor:pointer;">취소</button>
+                                        <button onclick="window._nbSubmitReply('${c.id}', this)" style="height:26px;padding:0 12px;font-size:12.5px;font-weight:700;background:#3f6b35;border:none;color:white;border-radius:999px;cursor:pointer;">등록</button>
 										</div>
 									</div>
                                 </div>
 								<div id="nb-edit-reply-box-${r.id}" style="display:none; margin-top:6px;">
-									<textarea id="nb-edit-reply-text-${r.id}" style="width:100%; height:46px; font-size:14px; padding:4px 6px; border-radius:14px; border:1.5px solid #F2CE87; background:#F1F7E6; color:#2F4A1D; outline:none; resize:none; box-sizing:border-box; font-family:inherit;"></textarea>
+									<textarea id="nb-edit-reply-text-${r.id}" style="width:100%; height:46px; font-size:13px; padding:6px 8px; border-radius:12px; border:1px solid #cfe3c4; background:#ffffff; color:#22301f; outline:none; resize:none; box-sizing:border-box; font-family:inherit;"></textarea>
 									<div style="display:flex; justify-content:flex-end; gap:6px; margin-top:4px;">
-										<button onclick="window._nbToggleEditReply('${c.id}','${r.id}')" style="height:24px;padding:0 8px;font-size:13px;background:#F1F7E6;border:none;color:#2F4A1D;border-radius:14px;cursor:pointer;">취소</button>
-										<button onclick="window._nbSubmitEditReply('${c.id}','${r.id}', this)" style="height:24px;padding:0 8px;font-size:13px;background:#7FA050;border:none;color:white;border-radius:14px;cursor:pointer;font-weight:500;">저장</button>
+										<button onclick="window._nbToggleEditReply('${c.id}','${r.id}')" style="height:24px;padding:0 9px;font-size:12px;font-weight:700;background:#ffffff;border:1px solid #e7e4dc;color:#6b6152;border-radius:999px;cursor:pointer;">취소</button>
+										<button onclick="window._nbSubmitEditReply('${c.id}','${r.id}', this)" style="height:24px;padding:0 9px;font-size:12px;font-weight:700;background:#3f6b35;border:none;color:white;border-radius:999px;cursor:pointer;">저장</button>
 									</div>
 								</div>
 								<div id="nb-edit-comment-box-${c.id}" style="display:none; margin-top:8px;">
-									<textarea id="nb-edit-comment-text-${c.id}" style="width:100%; height:52px; font-size:14.5px; padding:4px 6px; border-radius:14px; border:1.5px solid #F2CE87; background:#F1F7E6; color:#2F4A1D; outline:none; resize:none; box-sizing:border-box; font-family:inherit;"></textarea>
+									<textarea id="nb-edit-comment-text-${c.id}" style="width:100%; height:52px; font-size:13.5px; padding:8px 10px; border-radius:12px; border:1px solid #cfe3c4; background:#ffffff; color:#22301f; outline:none; resize:none; box-sizing:border-box; font-family:inherit;"></textarea>
 									<div style="display:flex; justify-content:flex-end; gap:6px; margin-top:6px;">
-										<button onclick="window._nbToggleEditComment('${c.id}')" style="height:26px;padding:0 10px;font-size:14px;background:#F1F7E6;border:none;color:#2F4A1D;border-radius:14px;cursor:pointer;">취소</button>
-										<button onclick="window._nbSubmitEditComment('${c.id}', this)" style="height:26px;padding:0 10px;font-size:14px;background:#7FA050;border:none;color:white;border-radius:14px;cursor:pointer;font-weight:500;">저장</button>
+										<button onclick="window._nbToggleEditComment('${c.id}')" style="height:26px;padding:0 11px;font-size:12.5px;font-weight:700;background:#ffffff;border:1px solid #e7e4dc;color:#6b6152;border-radius:999px;cursor:pointer;">취소</button>
+										<button onclick="window._nbSubmitEditComment('${c.id}', this)" style="height:26px;padding:0 12px;font-size:12.5px;font-weight:700;background:#3f6b35;border:none;color:white;border-radius:999px;cursor:pointer;">저장</button>
 									</div>
 								</div>
                             </div>
                         </div>
                     `).join('')}
                     ${myEmail ? `
-                    <div style="margin-top:16px; border-top:1.5px solid #F1F7E6; padding-top:14px;">
-                        <textarea id="nb-comment-input" placeholder="댓글을 입력하세요..." style="width:100%; height:64px; font-size:15.5px; padding:5px 8px; border-radius:14px; border:1.5px solid #C9DE9D; background:#F1F7E6; color:#2F4A1D; outline:none; resize:none; box-sizing:border-box; font-family:inherit;"></textarea>
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
-                            <label style="display:flex; align-items:center; gap:5px; font-size:14px; color:#85996B; cursor:pointer; user-select:none;">
-                                <input type="checkbox" id="nb-comment-anon" style="width:13px; height:13px; cursor:pointer;">
-                                익명
-                            </label>
-                            <button onclick="window._nbSubmitComment(this)" style="height:30px;padding:0 16px;font-size:14.5px;font-weight:500;background:#7FA050;border:none;color:white;border-radius:14px;cursor:pointer;">댓글 등록</button>
-                        </div>
-                    </div>` : `<div style="text-align:center; padding:10px; font-size:14.5px; color:#94A87C; border-top:1.5px solid #F1F7E6; margin-top:16px;">로그인 정보가 없어 댓글을 달 수 없습니다</div>`}
+                    <div style="margin-top:16px; border-top:1px solid #f0efe9; padding-top:14px; display:flex; gap:8px; align-items:flex-end;">
+                        <textarea id="nb-comment-input" placeholder="댓글을 입력하세요..." style="flex:1; height:40px; font-size:13.5px; padding:10px 16px; border-radius:999px; border:none; background:#f6f4ee; color:#22301f; outline:none; resize:none; box-sizing:border-box; font-family:inherit;"></textarea>
+                        <button onclick="window._nbSubmitComment(this)" style="width:40px; height:40px; border-radius:50%; border:none; background:#3f6b35; color:#ffffff; font-size:15px; cursor:pointer; flex-shrink:0;">➤</button>
+                    </div>
+                    <label style="display:flex; align-items:center; justify-content:flex-end; gap:5px; font-size:12px; color:#9a9587; cursor:pointer; user-select:none; margin-top:6px;">
+                        <input type="checkbox" id="nb-comment-anon" style="width:13px; height:13px; cursor:pointer;">
+                        익명
+                    </label>
+                    ` : `<div style="text-align:center; padding:10px; font-size:13px; color:#9a9587; border-top:1px solid #f0efe9; margin-top:16px;">로그인 정보가 없어 댓글을 달 수 없습니다</div>`}
                 `;
             }
 
@@ -5255,8 +5264,17 @@
 			  // 좌석모달 닫기
 			  const m = overlay.querySelector('#nso-seat-modal');
 			  if(m){ m.style.opacity='0'; m.style.pointerEvents='none'; }
-			  const b = overlay.firstElementChild;
+			  const b = overlay.querySelector('#nso-schedule-box');
 			  if(b) b.style.filter='';
+			  // ALT+Q 패널과 동일한 프레임 방식(게시판 참고) — 위치가 바뀌었을 수 있으니 재열기 시 다시 맞춤
+			  const dashboardElReopen = document.getElementById('neubie-dashboard');
+			  if (dashboardElReopen) {
+			      const rr = dashboardElReopen.getBoundingClientRect();
+			      overlay.style.top = rr.top + 'px';
+			      overlay.style.left = rr.left + 'px';
+			      overlay.style.width = rr.width + 'px';
+			      overlay.style.height = rr.height + 'px';
+			  }
 			  overlay.style.display='flex';
               // 재열기 시에도 fetch
               fetch(SCHEDULE_URL+'?t='+Date.now())
@@ -5280,27 +5298,44 @@
             SEAT_MAP = await seatRes.json();
             const PARTITION_AFTER = 1;
 
+            // ── 게시판(openBoardOverlay)과 동일한 방식: 별도로 떠 있는 작은 팝업이 아니라
+            // ALT+Q 패널 전체 영역과 같은 위치/크기에 초록 프레임으로 꽉 차게 표시 ──
             overlay = document.createElement('div');
             overlay.id = 'neubie-schedule-overlay';
-            overlay.style.cssText = `
-                position:fixed; inset:0; z-index:2147483646;
-                background:transparent;
-                display:flex; align-items:flex-start; justify-content:center; padding-top:20px;
-                font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;
+            const dashboardEl = document.getElementById('neubie-dashboard');
+            const nsoRect = dashboardEl.getBoundingClientRect();
+            Object.assign(overlay.style, {
+                position: 'fixed',
+                top: nsoRect.top + 'px',
+                left: nsoRect.left + 'px',
+                width: nsoRect.width + 'px',
+                height: nsoRect.height + 'px',
+                zIndex: '2147483646',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: '#8BAA4F',
+                borderRadius: '28px', overflow: 'hidden',
+                fontFamily: "'Apple SD Gothic Neo','Noto Sans KR',sans-serif",
+            });
+
+            // 프레임 안쪽 여백(10px) + 초록 테두리 — 게시판과 동일한 구성
+            const nsoFrame = document.createElement('div');
+            nsoFrame.style.cssText = `
+                width:calc(100% - 20px); height:calc(100% - 20px); margin:10px;
+                border:4px solid #8BAA4F; box-sizing:border-box; border-radius:24px;
+                overflow:hidden; display:flex; flex-direction:column;
             `;
 
             let nsoTheme = localStorage.getItem('nv_nso_theme') === 'dark' ? 'dark' : 'light';
 
             const box = document.createElement('div');
+            box.id = 'nso-schedule-box';
+            box.className = 'schedule-box';
             box.style.cssText = `
-                border-radius:16px; padding:20px;
-                width:min(96vw,820px); max-height:92vh;
-				margin-top:0;
+                width:100%; height:100%; box-sizing:border-box; padding:20px;
                 overflow-y:auto; position:relative;
                 background-size: 100% auto;
                 background-position: center bottom;
                 background-repeat: no-repeat;
-                box-shadow: 0 4px 40px rgba(0,0,0,0.7);
                 transition: background-color .2s ease;
             `;
 
@@ -5386,7 +5421,7 @@
 
                 <!-- 좌석 모달 -->
                 <div id="nso-seat-modal" style="position:fixed;inset:0;background:transparent;display:flex;align-items:center;justify-content:center;z-index:2147483647;opacity:0;pointer-events:none;transition:opacity .18s;">
-                <div style="background:var(--nso-card-bg);border:1px solid var(--nso-card-border);border-radius:12px;padding:18px;width:min(96vw,900px);max-height:92vh;overflow-y:auto;">
+                <div style="background:var(--nso-card-bg);border:1px solid var(--nso-card-border);border-radius:12px;padding:18px;width:min(94vw,700px);max-height:92vh;overflow-y:auto;">
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
                     <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
                       <div style="font-size:16px;font-weight:700;color:var(--nso-text);">🪑 좌석 배치 — <span id="nso-seat-date" style="color:#4f8ef7;"></span></div>
@@ -5403,7 +5438,8 @@
                 </div>
             `;
 
-            overlay.appendChild(box);
+            nsoFrame.appendChild(box);
+            overlay.appendChild(nsoFrame);
             document.body.appendChild(overlay);
             applyNsoTheme();
 
