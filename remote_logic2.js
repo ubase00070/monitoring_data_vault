@@ -4443,7 +4443,7 @@
 			});
 
             overlay.innerHTML = `
-            <div style="width:calc(100% - 20px); height:calc(100% - 20px); margin:10px; background:#ffffff; border:1px solid #ececE4; box-shadow:0 18px 46px rgba(40,50,20,0.14); box-sizing:border-box; display:flex; flex-direction:column; border-radius:22px; overflow:hidden;">
+            <div style="width:calc(100% - 20px); height:calc(100% - 20px); margin:10px; background-image:linear-gradient(rgba(255,255,255,0.94), rgba(255,255,255,0.94)), url(${BG_IMG}); background-size:cover; background-position:center; background-color:#ffffff; border:1px solid #ececE4; box-shadow:0 18px 46px rgba(40,50,20,0.14); box-sizing:border-box; display:flex; flex-direction:column; border-radius:22px; overflow:hidden;">
                 <div id="nb-board-header" style="display:flex; align-items:center; gap:8px; padding:10px 16px; border-bottom:1px solid #f0efe9; cursor:grab;">
                     <span style="font-size:17px; font-weight:800; color:#22301f; flex:1; display:flex; align-items:center; gap:7px;"><span class="nb-emoji">🍃</span> NCC 게시판</span>
                     <button id="nb-mail-lock-btn" style="height:28px; padding:0 11px; background:#f6f4ee; color:#6b6152; border:1px solid #e7e4dc; border-radius:999px; cursor:pointer; font-size:13px; font-weight:700; display:flex; align-items:center; gap:4px; white-space:nowrap;" title="익명 편지함">🔒 익명 문의</button>
@@ -5360,7 +5360,6 @@
                 if (toggleBtn) toggleBtn.textContent = nsoTheme === 'light' ? '☀️' : '🌙';
             }
 
-            let nsoZoom = parseInt(localStorage.getItem('nv_nso_zoom') || '100');
             let scheduleData = null, compareResult = null;
             let calMode = localStorage.getItem('nv_nso_cal_mode') || 'work';
             let currentMonthKey = '', sel1 = '', sel2 = '';
@@ -5371,24 +5370,33 @@
             const monthKey = d => { if(!d?.dates?.length) return ''; const [m]=d.dates[0].split('/').map(Number); return `${new Date().getFullYear()}-${String(m).padStart(2,'0')}`; };
 
             box.innerHTML = `
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-                <div style="display:flex;align-items:center;gap:8px;">
-                    <span style="font-size:20px;font-weight:700;color:#4f8ef7;">📅 스케줄표 + 좌석 배치도</span>
-                    <span id="nso-status" style="font-size:12px;color:var(--nso-muted);">로딩 중...</span>
-                    <span id="nso-dot" style="width:7px;height:7px;border-radius:50%;background:#eab308;display:inline-block;"></span>
-                    <span id="nso-updated" style="font-size:12px;color:var(--nso-muted2);"></span>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                <div style="display:flex;align-items:center;gap:8px;min-width:0;">
+                    <span style="font-size:20px;font-weight:700;color:#4f8ef7;white-space:nowrap;">📅 스케줄표 + 좌석 배치도</span>
+                    <span id="nso-status" style="font-size:12px;color:var(--nso-muted);white-space:nowrap;">로딩 중...</span>
+                    <span id="nso-dot" style="width:7px;height:7px;border-radius:50%;background:#eab308;display:inline-block;flex-shrink:0;"></span>
+                    <span id="nso-updated" style="font-size:12px;color:var(--nso-muted2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></span>
                 </div>
-                <div style="display:flex;align-items:center;gap:6px;">
+                <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
                   <button id="nso-theme-toggle" title="다크/라이트 모드 전환" style="width:26px;height:26px;border:none;border-radius:5px;background:var(--nso-btn-bg);color:var(--nso-btn-color);font-size:14px;cursor:pointer;">🌙</button>
-                  <button id="nso-zoom-out" style="width:26px;height:26px;border:none;border-radius:5px;background:var(--nso-btn-bg);color:var(--nso-btn-color);font-size:14px;cursor:pointer;">-</button>
-                  <span id="nso-zoom-label" style="font-size:12px;color:var(--nso-muted);min-width:36px;text-align:center;">100%</span>
-                  <button id="nso-zoom-in" style="width:26px;height:26px;border:none;border-radius:5px;background:var(--nso-btn-bg);color:var(--nso-btn-color);font-size:14px;cursor:pointer;">+</button>
                   <button id="nso-close" style="width:28px;height:28px;border:none;border-radius:5px;background:var(--nso-close-bg);border:1px solid var(--nso-close-border);color:var(--nso-close-color);font-size:16px;cursor:pointer;">✕</button>
                 </div>
                 </div>
 
+                <!-- 스케줄 비교 (헤더 바로 아래로 이동) -->
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px;flex-wrap:wrap;">
+                    <span style="font-size:12px;color:var(--nso-muted);white-space:nowrap;">👥 스케줄 비교</span>
+                    <input id="nso-name1" type="text" placeholder="이름..." autocomplete="off"
+                        style="width:96px;background:var(--nso-input-bg);border:1.5px solid #f97316;border-radius:5px;padding:6px 8px;color:var(--nso-text);font-size:13px;box-sizing:border-box;"/>
+                    <input id="nso-name2" type="text" placeholder="이름..." autocomplete="off"
+                        style="width:96px;background:var(--nso-input-bg);border:1.5px solid #a855f7;border-radius:5px;padding:6px 8px;color:var(--nso-text);font-size:13px;box-sizing:border-box;"/>
+                    <button id="nso-compare" style="flex-shrink:0;padding:6px 12px;border:none;border-radius:5px;cursor:pointer;font-size:13px;font-weight:600;background:#4f8ef7;color:#fff;white-space:nowrap;">비교</button>
+                    <button id="nso-clear" style="flex-shrink:0;padding:6px 12px;border:none;border-radius:5px;cursor:pointer;font-size:13px;font-weight:600;background:var(--nso-btn-bg);color:var(--nso-muted);border:1px solid var(--nso-card-border);white-space:nowrap;">초기화</button>
+                    <div id="nso-overlap" style="font-size:12.5px;color:var(--nso-muted);padding:5px 10px;background:var(--nso-btn-bg);border-radius:5px;display:none;"></div>
+                </div>
+
                 <!-- 달력 -->
-                <div style="margin-bottom:120px;background:var(--nso-cal-wrap-bg);border-radius:12px;padding:12px;">
+                <div style="background:var(--nso-cal-wrap-bg);border-radius:12px;padding:12px;">
                 <div style="display:flex;align-items:center;margin-bottom:10px;position:relative;">
                   <div style="font-size:11px;color:var(--nso-muted2);position:absolute;left:0;">(날짜 클릭 → 좌석 배치도)</div>
                   <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;">
@@ -5401,39 +5409,21 @@
                 <div id="nso-cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;"></div>
                 </div>
 
-                <!-- 검색 패널 -->
-                <div style="position:sticky;bottom:0;background:var(--nso-card-bg);border:1px solid var(--nso-card-border);border-radius:9px;padding:12px 14px;margin-top:12px;">
-                <div style="font-size:14px;color:var(--nso-muted);margin-bottom:9px;">👥 스케줄 비교(입력 시 저장됨)</div>
-                <div style="display:flex;gap:6px;align-items:center;width:100%;">
-                    <div style="flex:1;min-width:0;">
-                    <input id="nso-name1" type="text" placeholder="이름..." autocomplete="off"
-                        style="width:100%;background:var(--nso-input-bg);border:1.5px solid #f97316;border-radius:5px;padding:8px 10px;color:var(--nso-text);font-size:14px;box-sizing:border-box;"/>
-                    </div>
-                    <div style="flex:1;min-width:0;">
-                    <input id="nso-name2" type="text" placeholder="이름..." autocomplete="off"
-                        style="width:100%;background:var(--nso-input-bg);border:1.5px solid #a855f7;border-radius:5px;padding:8px 10px;color:var(--nso-text);font-size:14px;box-sizing:border-box;"/>
-                    </div>
-                    <button id="nso-compare" style="flex-shrink:0;padding:6px 14px;border:none;border-radius:5px;cursor:pointer;font-size:14px;font-weight:600;background:#4f8ef7;color:#fff;white-space:nowrap;">비교</button>
-                    <button id="nso-clear" style="flex-shrink:0;padding:6px 14px;border:none;border-radius:5px;cursor:pointer;font-size:14px;font-weight:600;background:var(--nso-btn-bg);color:var(--nso-muted);border:1px solid var(--nso-card-border);white-space:nowrap;">초기화</button>
-                </div>
-                <div id="nso-overlap" style="font-size:13px;color:var(--nso-muted);padding:5px 10px;background:var(--nso-btn-bg);border-radius:5px;margin-top:7px;display:none;"></div>
-                </div>
-
                 <!-- 좌석 모달 -->
                 <div id="nso-seat-modal" style="position:fixed;inset:0;background:transparent;display:flex;align-items:center;justify-content:center;z-index:2147483647;opacity:0;pointer-events:none;transition:opacity .18s;">
-                <div style="background:var(--nso-card-bg);border:1px solid var(--nso-card-border);border-radius:12px;padding:18px;width:min(94vw,700px);max-height:92vh;overflow-y:auto;">
-                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+                <div style="background:var(--nso-card-bg);border:1px solid var(--nso-card-border);border-radius:12px;padding:14px;width:min(90vw,700px);max-height:92vh;overflow-y:auto;box-sizing:border-box;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
                     <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
-                      <div style="font-size:16px;font-weight:700;color:var(--nso-text);">🪑 좌석 배치 — <span id="nso-seat-date" style="color:#4f8ef7;"></span></div>
-                      <div style="font-size:16px;color:var(--nso-muted2);">(아무 데나 클릭하면 닫힘)</div>
+                      <div style="font-size:15px;font-weight:700;color:var(--nso-text);">🪑 좌석 배치 — <span id="nso-seat-date" style="color:#4f8ef7;"></span></div>
+                      <div style="font-size:12px;color:var(--nso-muted2);">(아무 데나 클릭하면 닫힘)</div>
                     </div>
                     </div>
-                    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:11px;font-size:12px;color:var(--nso-muted);">
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;font-size:11px;color:var(--nso-muted);">
                     <span><span style="width:8px;height:8px;border-radius:2px;background:#22c55e;display:inline-block;margin-right:3px;"></span>출근</span>
                     <span><span style="width:8px;height:8px;border-radius:2px;background:#eab308;display:inline-block;margin-right:3px;"></span>연차/반차/반반차/공가</span>
                     <span><span style="width:8px;height:8px;border-radius:2px;background:var(--nso-seat-off-bg);border:1px solid var(--nso-card-border);display:inline-block;margin-right:3px;"></span>미출근</span>
                     </div>
-                    <div id="nso-seat-grid" style="display:grid;grid-template-columns:repeat(9,1fr);gap:6px;"></div>
+                    <div id="nso-seat-grid" style="display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:4px;"></div>
                 </div>
                 </div>
             `;
@@ -5609,8 +5599,8 @@
                     const raw=SEAT_MAP[row][col]; idx++;
                     const el=document.createElement('div');
                     if(!raw){
-                    el.style.cssText='background:var(--nso-seat-empty-bg);border:1.5px dashed var(--nso-seat-empty-border);border-radius:6px;padding:6px 2px;min-height:100px;';
-                    el.innerHTML=`<span style="position:absolute;top:2px;right:3px;font-size:12px;color:var(--nso-idx);">${idx}</span>`;
+                    el.style.cssText='background:var(--nso-seat-empty-bg);border:1.5px dashed var(--nso-seat-empty-border);border-radius:6px;padding:4px 1px;min-height:74px;';
+                    el.innerHTML=`<span style="position:absolute;top:2px;right:3px;font-size:10px;color:var(--nso-idx);">${idx}</span>`;
                     grid.appendChild(el); continue;
                     }
                     const occ=raw.split('/').map(n=>n.trim());
@@ -5619,8 +5609,8 @@
                     const isHalf=isOn&&onPpl.some(n=>pMap[n].status==='half'||pMap[n].status==='half-half');
                     const bg=isOn?(isHalf?'rgba(234,179,8,.12)':'rgba(34,197,94,.15)'):'var(--nso-seat-off-bg)';
                     const bc=isOn?(isHalf?'#eab308':'#22c55e'):'var(--nso-card-border)';
-                    el.style.cssText=`background:${bg};border:1.5px solid ${bc};border-radius:6px;padding:6px 2px;text-align:center;font-size:.62rem;font-weight:600;min-height:100px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;position:relative;${isOn?'':`opacity:.35;`}`;
-                    el.innerHTML=`<span style="position:absolute;top:2px;right:3px;font-size:.48rem;color:var(--nso-idx);">${idx}</span>`;
+                    el.style.cssText=`background:${bg};border:1.5px solid ${bc};border-radius:6px;padding:4px 1px;text-align:center;font-size:.58rem;font-weight:600;min-height:74px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;position:relative;${isOn?'':`opacity:.35;`}`;
+                    el.innerHTML=`<span style="position:absolute;top:2px;right:3px;font-size:.42rem;color:var(--nso-idx);">${idx}</span>`;
                     if(occ.length>1){
                     const sd=document.createElement('div');
                     sd.style.cssText='display:flex;flex-direction:column;align-items:center;width:100%;gap:0;';
@@ -5629,27 +5619,27 @@
                         const sp=document.createElement('div');
                         sp.style.cssText='display:flex;flex-direction:column;align-items:center;';
                         const ne=document.createElement('div');
-                        ne.style.cssText=`font-size:13px;line-height:1.25;font-weight:700;color:${w?(isHalf?'#eab308':'var(--nso-present-text)'):'var(--nso-muted2)'};`;
+                        ne.style.cssText=`font-size:10.5px;line-height:1.2;font-weight:700;color:${w?(isHalf?'#eab308':'var(--nso-present-text)'):'var(--nso-muted2)'};`;
                         ne.textContent=name; sp.appendChild(ne);
                         if(leaveMap[name]){
                         const bd=document.createElement('div');
-                        bd.style.cssText='font-size:12px;border-radius:2px;padding:0 3px;margin-top:1px;font-weight:700;background:rgba(234,179,8,.25);color:#eab308;';
+                        bd.style.cssText='font-size:9px;border-radius:2px;padding:0 2px;margin-top:1px;font-weight:700;background:rgba(234,179,8,.25);color:#eab308;';
                         bd.textContent=leaveMap[name]==='annual'?'연차':leaveMap[name]==='dispatch'?'파견':'공가'; sp.appendChild(bd);
                         }
                         if(w&&(w.status==='half'||w.status==='half-half')){
                         const bd=document.createElement('div');
-                        bd.style.cssText='font-size:12px;border-radius:2px;padding:0 3px;margin-top:1px;font-weight:700;background:rgba(234,179,8,.25);color:#eab308;';
+                        bd.style.cssText='font-size:9px;border-radius:2px;padding:0 2px;margin-top:1px;font-weight:700;background:rgba(234,179,8,.25);color:#eab308;';
                         bd.textContent=w.status==='half'?'반차':'반반차'; sp.appendChild(bd);
                         }
                         if(w){
                         const te=document.createElement('div');
-                        te.style.cssText=`font-size:13px;color:${isHalf?'rgba(234,179,8,.75)':'var(--nso-present-soft)'};line-height:1.2;margin-top:1px;`;
+                        te.style.cssText=`font-size:9.5px;color:${isHalf?'rgba(234,179,8,.75)':'var(--nso-present-soft)'};line-height:1.2;margin-top:1px;`;
                         te.textContent=w.workTime||w.shiftType||''; sp.appendChild(te);
                         }
                         sd.appendChild(sp);
                         if(i<occ.length-1){
                         const dv=document.createElement('div');
-                        dv.style.cssText='font-size:.46rem;color:var(--nso-muted2);line-height:1;';
+                        dv.style.cssText='font-size:.4rem;color:var(--nso-muted2);line-height:1;';
                         dv.textContent='/'; sd.appendChild(dv);
                         }
                     });
@@ -5657,21 +5647,21 @@
                     } else {
                     const w=pMap[raw];
                     const ne=document.createElement('div');
-                    ne.style.cssText=`font-size:13px;line-height:1.25;font-weight:700;color:${isOn?(isHalf?'#eab308':'var(--nso-present-text)'):'var(--nso-muted)'};`;
+                    ne.style.cssText=`font-size:10.5px;line-height:1.2;font-weight:700;color:${isOn?(isHalf?'#eab308':'var(--nso-present-text)'):'var(--nso-muted)'};`;
                     ne.textContent=raw; el.appendChild(ne);
                     if(leaveMap[raw]){
                         const bd=document.createElement('div');
-                        bd.style.cssText='font-size:12px;border-radius:2px;padding:0 3px;margin-top:1px;font-weight:700;background:rgba(234,179,8,.25);color:#eab308;';
+                        bd.style.cssText='font-size:9px;border-radius:2px;padding:0 2px;margin-top:1px;font-weight:700;background:rgba(234,179,8,.25);color:#eab308;';
                         bd.textContent=leaveMap[raw]==='annual'?'연차':leaveMap[raw]==='dispatch'?'파견':'공가'; el.appendChild(bd);
                     }
                     if(w){
                         if(w.status==='half'||w.status==='half-half'){
                         const bd=document.createElement('div');
-                        bd.style.cssText='font-size:12px;border-radius:2px;padding:0 3px;margin-top:1px;font-weight:700;background:rgba(234,179,8,.25);color:#eab308;';
+                        bd.style.cssText='font-size:9px;border-radius:2px;padding:0 2px;margin-top:1px;font-weight:700;background:rgba(234,179,8,.25);color:#eab308;';
                         bd.textContent=w.status==='half'?'반차':'반반차'; el.appendChild(bd);
                         }
                         const te=document.createElement('div');
-                        te.style.cssText=`font-size:13px;color:${isHalf?'rgba(234,179,8,.75)':'var(--nso-present-soft)'};line-height:1.2;margin-top:1px;`;
+                        te.style.cssText=`font-size:9.5px;color:${isHalf?'rgba(234,179,8,.75)':'var(--nso-present-soft)'};line-height:1.2;margin-top:1px;`;
                         te.textContent=w.workTime||w.shiftType||''; el.appendChild(te);
                     }
                     }
@@ -5706,19 +5696,6 @@
                 }
                 }
             }
-
-            // 줌 버튼
-            const updateZoom = (z) => {
-			  nsoZoom = Math.max(100, Math.min(150, z));
-			  localStorage.setItem('nv_nso_zoom', nsoZoom);
-			  box.style.zoom = `${nsoZoom}%`; 
-			  box.style.transform = '';      
-			  box.querySelector('#nso-zoom-label').textContent = nsoZoom + '%';
-			};
-              box.querySelector('#nso-zoom-in').onclick = () => updateZoom(nsoZoom+10);
-              box.querySelector('#nso-zoom-out').onclick = () => updateZoom(nsoZoom-10);
-              box.querySelector('#nso-zoom-label').textContent = nsoZoom + '%';
-			  box.style.zoom = `${nsoZoom}%`;
 
             box.querySelector('#nso-cal-mode').textContent = calMode==='work'?'근무 기준':'휴무 기준';
             
@@ -6106,7 +6083,6 @@
                 box.innerHTML = `
                     <div style="position:relative; background:#f4ede0; border-radius:10px; padding:8px; max-width:305px; margin:0 auto; box-sizing:border-box;">
                         <button id="gpt-close" style="position:absolute; top:6px; right:6px; width:22px; height:22px; border:none; border-radius:5px; background:${T.isDark ? '#3b0000' : '#fbe4e4'}; border:1px solid #ef4444; color:#ef4444; font-size:12px; cursor:pointer; z-index:2;">✕</button>
-                        <div id="gpt-status" style="position:absolute; top:9px; right:34px; left:8px; font-size:10.5px; font-weight:600; color:#6b7f7a; text-align:right; z-index:1; line-height:1.3;">컨트롤러의 아무 버튼이나 눌러 연결하세요</div>
                     <svg viewBox="71 229 1251 930" xmlns="http://www.w3.org/2000/svg" style="width:100%; height:auto; display:block; max-height:225px;">
 <path d="M0 0 C17.02 14.78 28.91 33.44 34.51 55.31 C34.81 56.29 35.11 57.27 35.41 58.28 C41.36 80.44 38.7 106.8 28.51 127.31 C28.23 127.89 27.95 128.47 27.67 129.06 C14.18 156.81 -7.86 175 -36.3 186.12 C-62.17 194.83 -91.15 193.22 -115.75 181.46 C-146.03 166.39 -164.89 143.27 -175.63 111.42 C-178.14 102.33 -178.8 93.86 -178.74 84.44 C-178.75 83.25 -178.75 82.06 -178.76 80.83 C-178.7 51.36 -166.63 26.24 -146.49 5.31 C-145.63 4.34 -145.63 4.34 -144.75 3.35 C-107.92 -37.09 -39.44 -33.37 0 0 Z " fill="#FDFDFD" transform="translate(1069.48876953125,444.68798828125)"/>
 <path d="M0 0 C0.74 0.59 1.47 1.18 2.23 1.79 C21.3 17.65 33.82 42.58 37 67 C38.5 90.55 36.07 109.77 26 131 C25.52 132.04 25.03 133.08 24.53 134.15 C11.41 160.12 -12.6 176.82 -39.38 186.44 C-67.86 194.91 -98.01 191.08 -123.89 177.18 C-151.24 161.85 -168.06 136.95 -177.1 107.4 C-183.94 79.09 -177.99 49.25 -163.27 24.61 C-160.23 19.7 -156.9 15.26 -153 11 C-152.27 10.2 -152.27 10.2 -151.53 9.38 C-111.59 -33.94 -45.08 -38.44 0 0 Z " fill="#FDFDFD" transform="translate(617,662)"/>
