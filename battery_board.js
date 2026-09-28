@@ -94,7 +94,7 @@
             transform:translate(-50%,-50%);
             width:1714px;   /* 1490px 대비 +15% — 우측 다중 모니터링 영역 확보 */
             height:980px; max-height:100vh; overflow-y:auto; overflow-x:hidden;   /* 기본 크기 = 즐겨찾기 20대 + 안내 문구가 들어가는 높이 (955 = 104 + 20 + 774 + 51 + 6) + 여유 25px.
-               즐겨찾기가 정확히 최대(20대)일 때 예전엔 여유가 0이라 카드 실측 높이가 ROW_H(33px) 가정과 1~2px만 어긋나도(줄간격 렌더링 반올림 등) 카드 영역(.bb-list-wrap)에 스크롤이 생겼음 — 그 여유분 */
+               즐겨찾기가 정확히 최대(20대)일 때 예전엔 여유가 0이라 카드 실측 높이가 ROW_H(33px) 가정과 1~2px만 어긋나도(줄간격 렌더링 반올림) 카드 영역(.bb-list-wrap)에 스크롤이 생겼음 — 그 여유분 */
             border:3px solid transparent; border-radius:16px;
             background-image: var(--bg-fill), linear-gradient(135deg, #d9b8ff, #9333ea);
             background-origin: border-box;
