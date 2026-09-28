@@ -3981,9 +3981,7 @@
     //   계산량은 기체 수(≈90대)에 비례하는 반복 몇 번뿐이라 갱신 한 번에 수 ms 수준
     // ============================================================
     const FB_DISCHARGE_PCT = 2;          // 배터리가 이 값(%) 이하에 도달한 뒤 OFF 되면 "방전"
-    const FB_EST_MAX_PCT = 10;           // '방전 추정' 후보: OFF 직전 마지막 기록이 이 값(%) 이하
-    const FB_EST_FALLBACK_PCT = 5;       // 하락 속도를 알 수 없을 때는 이 값(%) 이하만 추정
-    const FB_EST_MAX_GAP_MIN = 30;       // OFF 직전 기록과 OFF 확인 사이가 이보다 길면(기록 끊김) 추정하지 않음
+    const FB_EST_MAX_PCT = 3;            // '방전 추정': OFF 직전 마지막 기록이 이 값(%) 이하면 추정 (하락 속도 추산 없이 이 기록 하나만 봄)
     const FB_ZERO_ENTRY_PCT = 10;        // '0% 유지' 방전 확정: 0% 도달 전 FB_ZERO_ENTRY_MIN 분 안에 이 값(%) 미만으로 내려온 기록이 있어야 함 (100% 인데 잠깐 0% 로 찍히는 버그성 표기 걸러내기)
     const FB_ZERO_ENTRY_MIN = 60;
     const FB_ZERO_NEXT_MAX_MIN = 30;     // 0% 도달 기록과 '다음 10분 기록' 사이가 이보다 길면(기록 끊김) 다음 기록으로 보지 않음
@@ -4066,18 +4064,8 @@
         const p = pts[i];
         if (p.st === 'off' || p.bat == null) return null;
         if (p.bat <= FB_DISCHARGE_PCT) return p.bat === 0 && !fbIsRebootGlitch(pts, i) ? 'est' : (p.bat === 0 ? null : 'sure');   // 0% 로 찍힌 직후 꺼짐은 '추정' (0% 는 버그성 표기일 수 있어서) — 1~2% 까지 정직하게 내려온 뒤 꺼짐은 확정. 단, 재부팅 오표기(아래)로 확인되면 방전으로 보지 않음
-        if (p.st === 'charging' || p.bat > FB_EST_MAX_PCT) return null;   // 충전 중에 꺼졌거나 아직 배터리가 넉넉하면 방전으로 보지 않음
-        const gapMin = (offTs - p.ts) / 60000;
-        if (gapMin > FB_EST_MAX_GAP_MIN) return null;                       // 기록이 오래 끊겼으면 알 수 없음
-        let rate = 0;                                                       // 이 기체의 직전(40분 이내) 하락 속도 (%/분)
-        for (let k = i - 1; k >= 0 && p.ts - pts[k].ts <= 40 * 60000; k--) {
-            const o = pts[k];
-            if (o.st === 'off' || o.st === 'charging' || o.bat == null) break;
-            const r = (o.bat - p.bat) / ((p.ts - o.ts) / 60000);
-            if (r > 0) rate = r;
-        }
-        if (rate > 0) return p.bat - rate * gapMin <= FB_DISCHARGE_PCT ? 'est' : null;   // 그 속도라면 OFF 시점엔 2% 이하가 됐을까
-        return p.bat <= FB_EST_FALLBACK_PCT ? 'est' : null;                              // 속도를 모르면 5% 이하만
+        if (p.st === 'charging' || p.bat > FB_EST_MAX_PCT) return null;   // 충전 중에 꺼졌거나, OFF 직전 마지막 기록이 FB_EST_MAX_PCT% 초과면 방전으로 보지 않음
+        return 'est';   // FB_EST_MAX_PCT%(3%) 이하 기록을 본 뒤 꺼졌으므로 방전 추정 (하락 속도 추산은 하지 않음)
     }
     // 0% 유지 규칙 — 꺼지지 않고 0% 로 버티는 기체 (방전 과정에서 꼭 정직하게 꺼지지는 않음)
     //   ① 0% 도달 전 1시간 안에 10% 미만으로 내려온 기록이 있고 → 0% 도달 → 바로 다음 10분 기록에도 0% 이면 = 방전 확정
@@ -4481,12 +4469,12 @@
     }
     function fbHtmlDis(d) {
         const ev = d.dis.events;
-        let h = `<div class="bb-fbp-note">${FB_DISCHARGE_PCT}% 이하로 확인된 뒤 꺼졌거나, 0% 가 다음 10분 기록까지 이어지면 '방전' · 0% 로 찍힌 직후 꺼졌거나, ${FB_EST_MAX_PCT}% 이하에서 꺼져 하락 속도로 볼 때 ${FB_DISCHARGE_PCT}% 에 도달했을 것으로 보이거나, 속도를 모른 채 ${FB_EST_FALLBACK_PCT}% 이하에서 꺼지면 '방전 추정'</div>`;
+        let h = `<div class="bb-fbp-note">${FB_DISCHARGE_PCT}% 이하로 확인된 뒤 꺼졌거나, 0% 가 다음 10분 기록까지 이어지면 '방전' · 0% 로 찍힌 직후 꺼졌거나, ${FB_EST_MAX_PCT}% 이하 기록을 본 뒤 꺼지면 '방전 추정'</div>`;
         if (!ev.length) h += `<div class="bb-fbp-empty">최근 30일 동안 방전된 기체가 없습니다 ✓</div>`;
         else h += ev.map(e => {
             const st = fbStateChip(e.cur);
             const est = e.kind === 'est';
-            const tip = est ? (e.bat === 0 ? `${e.name} · 0% 기록 다음에 꺼짐 — 0% 표기가 버그성일 수도 있어 방전으로 추정` : `${e.name} · 마지막 기록 ${e.bat}% 다음 10분 사이에 꺼짐 — ${FB_EST_MAX_PCT}% 이하에서 꺼져 하락 속도(또는 ${FB_EST_FALLBACK_PCT}% 이하 기준)로 볼 때 방전 가능성이 높아 추정`)
+            const tip = est ? (e.bat === 0 ? `${e.name} · 0% 기록 다음에 꺼짐 — 0% 표기가 버그성일 수도 있어 방전으로 추정` : `${e.name} · 마지막 기록 ${e.bat}% 다음 10분 사이에 꺼짐 — ${FB_EST_MAX_PCT}% 이하 기록을 본 뒤 꺼져 방전으로 추정`)
                 : (e.hold ? `${e.name} · 10% 미만으로 내려온 뒤 0% 에 도달했고, 다음 10분 기록에서도 0% 라서 방전 확정 (꺼지지 않고 버티는 중일 수 있음)` : e.name);
             return `<div class="bb-fbp-row" data-rid="${fbEsc(e.id)}" title="${fbEsc(tip)}">
                 <span class="bb-fbp-dot" style="background:${st.ac};"></span>
