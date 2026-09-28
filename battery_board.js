@@ -5897,6 +5897,17 @@
         const IV_REFRESH_MS = 30 * 1000;
         const IV_ROWS_STEP = 200;
         const IV_LONG_SEC = 180;
+        // 근무시간이 07시 근무일 경계를 넘나드는 인원용 예외 처리. 이 이름의 사람은 '출근 전'으로 판정됐어도
+        // 개입카드를 이미 처리한 기록(건수>0)이 있으면 '퇴근'으로 표기한다 (07시 리프레시 이후 카드 처리로 로그가 꼬이는 것 방지).
+        const IV_LATE_CARD_EXCEPTIONS = new Set(['안대관']);
+        function ivApplyExceptions(data) {
+            if (!data || !Array.isArray(data.people)) return;
+            for (const p of data.people) {
+                if (IV_LATE_CARD_EXCEPTIONS.has(p.name) && p.off && p.offKind === 'before' && p.solved > 0) {
+                    p.offKind = 'after';
+                }
+            }
+        }
         let _ivOpen = false, _ivDate = null, _ivData = null, _ivBusy = false, _ivFail = false, _ivSeq = 0;
         let _ivSort = 'shift';
         try { if (localStorage.getItem('bbIvSort') === 'cnt') _ivSort = 'cnt'; } catch (e) { /* 기본값 */ }
@@ -6102,6 +6113,7 @@
                 const d = await attFetchJson(IV_API + '?view=summary' + (want ? '&date=' + want : ''));
                 if (seq !== _ivSeq) return;   // 그 사이 날짜를 바꿨음
                 if (!d || d.ok !== true || !Array.isArray(d.people)) throw new Error('데이터 형식 오류');
+                ivApplyExceptions(d);
                 _ivData = d; _ivData._at = Date.now(); _ivFail = false;
             } catch (e) {
                 if (seq !== _ivSeq) return;
