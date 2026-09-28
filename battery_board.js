@@ -748,7 +748,7 @@
         .bb-att-name { min-width:0; font-size:14px; color:var(--tx); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .bb-att-cnt { flex:none; font-size:12px; color:var(--mu); }
         .bb-att-tot { font-size:12.5px; color:var(--tx); white-space:nowrap; }
-        /* 확인사항 개수(0~5개) → 이석 시간 아래 얇은 색줄로 표시 (카드 테두리는 이석 중 여부만 나타내므로 건드리지 않음). 파스텔톤: 0=연두 · 1~2=연노랑 · 3=연주황 · 4~5=연빨강 */
+        /* 확인사항 개수(0~4개) → 이석 시간 아래 얇은 색줄로 표시 (카드 테두리는 이석 중 여부만 나타내므로 건드리지 않음). 파스텔톤: 0=연두 · 1~2=연노랑 · 3=연주황 · 4=연빨강 */
         .bb-att-vbar { height:4px; flex:0 0 auto; border-radius:2px; }   /* flex-shrink:0 — 카드 높이가 빠듯해도 이 줄만 짜부라들지 않게 */
         .bb-att-vbar.v0 { background:#8fd66b; }
         .bb-att-vbar.v1 { background:#f5d442; }
@@ -769,7 +769,7 @@
         }
         #bb-att-pop * , #bb-att-detail *, #bb-att-plog * { box-sizing:border-box; }
         #bb-att-pop.open { display:block; }
-        #bb-att-pop { width:372px; max-height:min(640px, 90vh); overflow-y:auto; padding:12px 14px 12px; }
+        #bb-att-pop { width:372px; max-height:min(640px, 90vh); overflow-y:auto; padding:12px 14px 12px; transform:scale(var(--bb-pop-zoom,1)); transform-origin:center center; }   /* #bb 밖 최상위 패널이라 본판 줌을 못 받으므로 별도 변수로 동기화 (80~90%로는 축소 안 함) */
         .bb-att-ph { display:flex; align-items:baseline; gap:8px; margin-bottom:8px; }
         .bb-att-ph b { font-size:18px; font-weight:900; }
         .bb-att-ph span { font-size:12px; color:var(--mu); }
@@ -789,8 +789,8 @@
         .bb-att-lt .long { color:#e11d74; font-weight:700; }
         .bb-att-lt .est { color:#b45309; font-style:italic; }   /* 미기입 보정치가 표시된 소요시간 칸 */
 
-        /* 이름 더블클릭 → 그 달 일자별 이석 로그 (상세 로그 창 위에 뜸) */
-        #bb-att-plog { top:50%; left:50%; transform:translate(-50%,-50%); width:min(560px, 94vw); max-height:86vh; overflow:hidden; flex-direction:column; z-index:99999999; }
+        /* 이름 클릭 → 그 달 일자별 이석 로그 (상세 로그 창 위에 뜸) */
+        #bb-att-plog { top:50%; left:50%; transform:translate(-50%,-50%) scale(var(--bb-pop-zoom,1)); width:min(560px, 94vw); max-height:86vh; overflow:hidden; flex-direction:column; z-index:99999999; }
         #bb-att-plog.open { display:flex; }
         .bb-att-lh { flex:0 0 auto; display:flex; align-items:center; gap:10px; padding:13px 16px; border-bottom:1px solid var(--bd); }
         .bb-att-lh .t { flex:1 1 auto; min-width:0; font-size:18px; font-weight:900; }
@@ -807,7 +807,7 @@
         .bb-att-ll .ed { margin-left:6px; color:var(--bl); font-weight:700; }
         .bb-att-le { padding:3px 12px; font-size:13px; font-style:italic; color:var(--mu); }
 
-        #bb-att-detail { top:50%; left:50%; transform:translate(-50%,-50%); width:min(1240px, 96vw); height:88vh; max-height:88vh; overflow:hidden; flex-direction:column; font-weight:700; }   /* 높이 고정: 이름 검색으로 표가 짧아져도 창 크기는 그대로 */   /* 폰트는 Paperlogy 맞음 — 기본(Regular 400)이 얇아 보여서 Bold(700)로 */
+        #bb-att-detail { top:50%; left:50%; transform:translate(-50%,-50%) scale(var(--bb-pop-zoom,1)); width:min(1240px, 96vw); height:88vh; max-height:88vh; overflow:hidden; flex-direction:column; font-weight:700; }   /* 높이 고정: 이름 검색으로 표가 짧아져도 창 크기는 그대로 */   /* 폰트는 Paperlogy 맞음 — 기본(Regular 400)이 얇아 보여서 Bold(700)로 */
         #bb-att-detail.open { display:flex; }
         .bb-att-dh { flex:0 0 auto; display:flex; align-items:center; gap:14px; padding:14px 18px; border-bottom:1px solid var(--bd); }
         .bb-att-dh .t { font-size:20px; font-weight:900; white-space:nowrap; flex:0 0 auto; }   /* 제목은 줄바꿈 없이, 남는 자리에서 포디움 카드가 줄바꿈 */
@@ -827,7 +827,7 @@
         .bb-att-mt { width:100%; border-collapse:collapse; font-size:15px; font-variant-numeric:tabular-nums; }
         .bb-att-mt th { font-weight:900; position:sticky; top:0; z-index:1; background:var(--sur); padding:14px 12px; font-size:14px; color:var(--tx); text-align:right; white-space:nowrap; border-bottom:2px solid var(--bd); cursor:pointer; user-select:none; }
         .bb-att-mt th:first-child { text-align:left; cursor:default; }
-        /* 이름 열 전체(헤더 ~ 마지막 근무자)를 검정 틀로 감쌈 — '이름을 더블클릭하면 로그가 열림'을 알려주기 위함. 표 테두리(collapse)와 상관없이 스크롤 헤더에서도 유지되도록 inset 그림자로 그림 */
+        /* 이름 열 전체(헤더 ~ 마지막 근무자)를 검정 틀로 감쌈 — '이름을 클릭하면 로그가 열림'을 알려주기 위함. 표 테두리(collapse)와 상관없이 스크롤 헤더에서도 유지되도록 inset 그림자로 그림 */
         .bb-att-mt th:first-child { box-shadow:inset 2px 0 0 #111, inset -2px 0 0 #111, inset 0 2px 0 #111; }
         .bb-att-mt td:first-child { box-shadow:inset 2px 0 0 #111, inset -2px 0 0 #111; }
         .bb-att-mt tbody tr:last-child td:first-child { box-shadow:inset 2px 0 0 #111, inset -2px 0 0 #111, inset 0 -2px 0 #111; }
@@ -1056,7 +1056,7 @@
         /* ── 기체 Info 패널 ── */
         #bb-info-card-panel {
             display:none; position:fixed;
-            top:50%; left:50%; transform:translate(-50%,-50%);
+            top:50%; left:50%; transform:translate(-50%,-50%) scale(var(--bb-pop-zoom,1));
             width:840px;
             border:3px solid transparent; border-radius:12px;
             background-image: linear-gradient(var(--sur), var(--sur)), linear-gradient(135deg, #d9b8ff, #9333ea);
@@ -4628,6 +4628,9 @@
             document.getElementById('bb-zoom-in').disabled  = zoom >= ZOOM_MAX;
             document.getElementById('bb-zoom-out').disabled = zoom <= ZOOM_MIN;
             localStorage.setItem(ZOOM_KEY, zoom.toFixed(1));
+            // 개입카드/다중/이석 그리드의 팝업들(#bb 밖에 떠 있는 최상위 패널)은 #bb 의 scale 변형을 상속받지 못해
+            // 줌이 걸려도 그대로였음 — 이 변수로 같이 커지게 하되, 축소(80~90%)까지는 따라가지 않도록 1 밑으로는 내려가지 않게 함
+            document.documentElement.style.setProperty('--bb-pop-zoom', Math.max(1, zoom));
         }
         document.getElementById('bb-zoom-in').addEventListener('click', () => {
             if (zoom < ZOOM_MAX) { zoom = Math.round((zoom + ZOOM_STEP) * 10) / 10; applyZoom(); }
@@ -5115,7 +5118,7 @@
     const ATT_REFRESH_MS = 30 * 1000;   // 서버는 1분 간격으로 수집 → 30초마다 확인해 새 데이터를 최대 30초 안에 반영
     const ATT_STALE_MIN = 15;           // 서버 갱신 시각(heartbeat 10분)이 이보다 오래되면 '수집 지연' 경고
     const ATT_QUIET = [3 * 60, 8 * 60]; // cron-job.org 에서 수집을 멈추는 시간대(KST 03:00~08:00) — 크론 스케줄을 바꾸면 여기도 맞출 것. 이 시간대에는 '수집 지연' 경고를 내지 않음
-    const ATT_VIOL_LABELS = ['15분 초과 이석', '착석 미기입', '메시지 편집됨', '출근 60분 이내 이석', '착석 60분 이내 재이석'];
+    const ATT_VIOL_LABELS = ['15분 초과 이석', '착석 미기입', '메시지 편집됨', '출근 60분 이내 이석'];   // '착석 60분 이내 재이석'은 '자세히' 표와 마찬가지로 근무자 카드에서도 집계·표시하지 않음
     const ATT_EXCLUDE = ['차현모', '김용욱', '이연지', '정우솔'];
 
     let _attView = 'multi';   // 'multi' | 'att'
@@ -5327,7 +5330,7 @@
         }
         const frag = document.createDocumentFragment();
         stats.forEach(s => {
-            const v = attViol(s), n = v.filter(x => x > 0).length;
+            const v = attViol(s), n = v.slice(0, ATT_VIOL_LABELS.length).filter(x => x > 0).length;   // 재이석60분내(v[4])는 더 이상 세지 않음
             const off = live && !attOnShift(s.shift, nowMin);
             const away = live && !off && s.lastStatus === '이석';
             const el = attEl('div', 'bb-att-card' + (off ? ' off' : '') + (away ? ' away' : '') + (s.userId === _attPopId ? ' sel' : ''));
@@ -5600,7 +5603,7 @@
         { label: '15분 초과', key: 'over', f: r => r.over + '회', cls: 'bad' },
         { label: '미기입', key: 'unfiled', f: r => r.unfiled + '회', cls: 'bad' },
         { label: '편집됨', key: 'edited', f: r => r.edited + '회', cls: 'bad' },
-        { label: '출근60분내', key: 'early', f: r => r.early + '회', cls: 'warn' }
+        { label: '출근60분내', key: 'early', f: r => r.early + '회', cls: 'bad' }   // 전용 적색 배경 강조는 제거 — 다른 위반 열들과 같은 글자색만
     ];
 
     /* WATCHLIST-START */
@@ -5690,14 +5693,14 @@
         const table = attEl('table', 'bb-att-mt'), hr = table.createTHead().insertRow();
         ATT_COLS.forEach(c => {
             const th = attEl('th', (c.key === _attSortKey ? 'sorted ' : '') + (c.cls === 'warn' ? 'warn' : ''), c.label);
-            if (c.label === '이름') th.appendChild(attEl('span', 'hint', '(더블클릭하여 열람)'));   // 이름 칸을 더블클릭하면 그 달 이석 로그가 열린다는 안내
+            if (c.label === '이름') th.appendChild(attEl('span', 'hint', '(클릭하여 열람)'));   // 이름 칸을 클릭하면 그 달 이석 로그가 열린다는 안내
             if (c.key) th.addEventListener('click', () => { _attSortKey = c.key; attRenderDetail(ym, dig, sched, doc); });
             hr.appendChild(th);
         });
         const tb = table.createTBody();
         rows.forEach(r => {
             const tr = tb.insertRow(), td0 = attEl('td', 'nm', r.name);
-            td0.dataset.name = r.name; td0.title = '더블클릭: 이 달 이석 로그';
+            td0.dataset.name = r.name; td0.title = '클릭: 이 달 이석 로그';
             if (r.time) td0.appendChild(attEl('span', 'tm', '(' + r.time + ')'));
             tr.appendChild(td0);
             ATT_COLS.slice(1).forEach(c => tr.appendChild(attEl('td', c.cls || '', c.f(r))));
@@ -5706,7 +5709,7 @@
     }
     function attCloseDetail() { _attDetailYm = null; $att('bb-att-detail').classList.remove('open'); attClosePlog(); }
 
-    /* ───────── 이름 더블클릭 → 그 달 일자별 이석 로그 ─────────
+    /* ───────── 이름 클릭 → 그 달 일자별 이석 로그 ─────────
        서버의 월별 집계 파일(_logs/YYYY-MM.json)이 아직 없거나 오래됐으면 매번 그 달 전체를 새로 만들어야 해서
        느려질 수 있어(최대 30초) — 대신 이미 빠르고 잘 캐시되는 하루치 archive(action=archive, 과거 날짜는 24시간 캐시)를
        그 달 날짜 수만큼 병렬로 모아 클라이언트에서 같은 형태로 조립한다. 서버의 월별 사전 집계에 기대지 않아 더 안정적으로 빠르고,
@@ -5714,7 +5717,7 @@
        속도: 요청 하나하나가 Vercel 콜드 스타트로 ~2초씩 걸리는 게 실측 확인됨 → 8개씩 나눠 쏘면 그 2초가 파도 수만큼(예: 3번) 곱해져서
        느려지므로(읽기 전용이라 나눠 쏠 이유가 없음) 전부 한꺼번에 병렬로 쏴서 ~2초 한 번으로 끝나게 함.
        'dates' 사전 조회(약 2초)도 생략 — 그 달 1일~오늘(또는 말일)까지 날짜를 그냥 다 만들어서 같이 쏘고, 기록 없는 날은 404로 자연히 빠짐.
-       동시 요청 병합: 여러 곳(상세 로그 백그라운드 프리페치 + 이름 더블클릭)에서 같은 달을 동시에 요청해도
+       동시 요청 병합: 여러 곳(상세 로그 백그라운드 프리페치 + 이름 클릭)에서 같은 달을 동시에 요청해도
        매번 새로 조립하지 않고 진행 중인 조립을 그대로 같이 기다림 */
     function attDatesGuess(ym) {   // dates 조회 없이 그 달 후보 날짜를 직접 생성 (기록 없는 날은 archive 404로 알아서 빠짐)
         const [y, m] = ym.split('-').map(Number), lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate();
@@ -5835,7 +5838,7 @@
         _attNameFilter = e.target.value;
         if (_attLast && _attLast.ym === _attDetailYm) attRenderDetail(_attLast.ym, _attLast.dig, _attLast.sched, _attLast.doc);
     });
-    $att('bb-att-dbody').addEventListener('dblclick', e => { const td = e.target.closest('td.nm'); if (td && _attDetailYm) attOpenPlog(td.dataset.name, _attDetailYm); });   // 이름 더블클릭
+    $att('bb-att-dbody').addEventListener('click', e => { const td = e.target.closest('td.nm'); if (td && _attDetailYm) attOpenPlog(td.dataset.name, _attDetailYm); });   // 이름 클릭 (예전엔 더블클릭)
     $att('bb-att-body').addEventListener('click', e => { const c = e.target.closest('.bb-att-card'); if (c) attTogglePop(c.dataset.uid); });
     document.addEventListener('click', e => {   // 바깥 클릭 → 이석 로그 / 달력 닫기 (캡처 단계: 재렌더로 대상이 사라지기 전에 판단)
         if (_attPopId && !e.target.closest('#bb-att-pop') && !e.target.closest('.bb-att-card')) attClosePop();
@@ -5950,7 +5953,7 @@
         .bb-iv-body { flex:1 1 auto; min-height:0; overflow-y:auto; padding:6px; display:flex; flex-direction:column; gap:5px; }
         .bb-iv-row { flex:0 0 auto; box-sizing:border-box; display:grid; grid-template-columns:minmax(0,1fr) 62px; column-gap:8px; align-items:center; padding:7px 9px; border-radius:9px; border:2px solid var(--bd2); background:var(--sur); cursor:pointer; }
         .bb-iv-row:hover { border-color:#f9a8d4; box-shadow:0 0 0 1px #f9a8d4; }   /* 다중 모니터링 기체 그리드(.bb-mm-card:hover)와 같은 분홍 외곽선 */
-        .bb-iv-row.sel { outline:2px solid var(--tx); outline-offset:1px; }
+        .bb-iv-row.sel { border-color:#f9a8d4; box-shadow:0 0 0 1px #f9a8d4; }   /* 클릭해서 상세 팝업이 뜬 카드 — 검정 outline 대신 호버와 같은 분홍 외곽선을 고정 표시 (마우스가 비켜나도 겹쳐 보이지 않게) */
         .bb-iv-row.brk { background:rgba(233,184,36,.2); }
         .bb-iv-row.off { opacity:.55; }
         .bb-iv-mid { min-width:0; display:flex; flex-direction:column; gap:4px; }
@@ -5988,6 +5991,7 @@
             --rd:#ef4444; --or:#f97316; --bl:#3b82f6; --gn:#22c55e;
             display:none; position:fixed; width:490px; max-width:96vw; flex-direction:column; color:var(--tx); font-family:'Paperlogy','Lato',-apple-system,sans-serif;
             border:3px solid transparent; border-radius:14px;
+            transform:scale(var(--bb-pop-zoom,1)); transform-origin:center center;   /* #bb 밖 최상위 패널 — 본판 줌에 맞춰 커지도록(축소는 안 함) */
             background-image:linear-gradient(var(--sur),var(--sur)), linear-gradient(135deg, #d9b8ff, #9333ea);
             background-origin:border-box; background-clip:padding-box,border-box;
             box-shadow:0 18px 46px rgba(0,0,0,.45); z-index:99999998; box-sizing:border-box; overflow:hidden;
