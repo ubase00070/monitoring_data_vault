@@ -88,13 +88,13 @@
     // 일일 업무 카드 제목, 파일명 생성기 제목 등 '제목'류 텍스트에 공통으로 재사용
     // NCC 패널 메인 제목 전용 그라데이션(블랙→그린) — 하위 라벨들은 가독성 문제로
     // 그라데이션을 걷어내고 테마 기본 텍스트색(라이트=검정/다크=흰색)으로 되돌림
-    const NCC_TITLE_GRADIENT = 'background:linear-gradient(90deg,#0e7490,#22c55e); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent;';
+    const NCC_TITLE_GRADIENT = 'background:linear-gradient(90deg,#ec4899,#a855f7); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent;';
 
     // 호버 효과 공통 파란색 — 라이트/다크 상관없이 항상 이 톤 하나로 통일
     // (T.accent를 쓰면 라이트모드에서 짙은 네이비가 나와 너무 진해 보이는 문제가 있었음)
     const HOVER_ACCENT = '#5b9bf7';
     // 온오프 토글의 ON 상태와 동일한 그린 — 알림테스트/다중모니터링/배송순찰띠띠 호버 전용
-    const GREEN_HOVER = '#22c55e';
+    const NEON_HOVER = '#d946ef';
 
     function getNbTheme() {
         return NB_THEMES[localStorage.getItem('neubie_theme') || 'dark'];
@@ -123,8 +123,8 @@
             seatEmptyBg: '#0f1117',
             seatEmptyBorder: '#2e3347',
             seatOffBg: '#22263a',
-            presentText: '#22c55e',
-            presentSoft: 'rgba(34,197,94,.65)',
+            presentText: '#d946ef',
+            presentSoft: 'rgba(217,70,239,.65)',
             closeBg: '#3b0000',
             closeBorder: '#ef4444',
             closeColor: '#ef4444',
@@ -148,8 +148,8 @@
             seatEmptyBg: '#f8f3e7',
             seatEmptyBorder: '#cbbd98',
             seatOffBg: '#e2d7bd',
-            presentText: '#15803d',
-            presentSoft: 'rgba(21,128,61,.8)',
+            presentText: '#7e22ce',
+            presentSoft: 'rgba(126,34,206,.8)',
             closeBg: '#fbe4e4',
             closeBorder: '#dc2626',
             closeColor: '#dc2626',
@@ -283,7 +283,7 @@
 
         const colors = {
             progress: { bg: '#1e293b', text: '#e2e8f0' },
-            success:  { bg: '#166534', text: '#ffffff' },
+            success:  { bg: '#6b21a8', text: '#ffffff' },
             fail:     { bg: '#7f1d1d', text: '#ffffff' },
         };
         const c = colors[type] || colors.progress;
@@ -557,7 +557,7 @@
             borderRadius: '24px', padding: '20px', zIndex: '1000000',
             fontFamily: 'Pretendard, sans-serif', boxShadow: '0 20px 50px rgba(0,0,0,0.8)',
             border: '4px solid transparent', display: 'none', transform: left === '50%' ? 'translate(-50%, -50%)' : 'none',
-            backgroundImage: 'linear-gradient(#111111, #111111), linear-gradient(135deg, #10b981, #2dd4bf)',
+            backgroundImage: 'linear-gradient(#111111, #111111), linear-gradient(135deg, #ec4899, #a855f7)',
             backgroundOrigin: 'border-box',
             backgroundClip: 'padding-box, border-box',
             maxHeight: '90vh', overflowY: 'auto', overflowX: 'hidden',
@@ -688,7 +688,7 @@
     function buildBatteryShell() {
         const T = getNbTheme();
         batteryPopup.style.backgroundColor = T.bg;
-        batteryPopup.style.backgroundImage = `linear-gradient(${T.bg}, ${T.bg}), linear-gradient(135deg, #10b981, #2dd4bf)`;
+        batteryPopup.style.backgroundImage = `linear-gradient(${T.bg}, ${T.bg}), linear-gradient(135deg, #ec4899, #a855f7)`;
         batteryPopup.style.color = T.text;
 
         batteryPopup.innerHTML = '';
@@ -704,7 +704,7 @@
         const copyBtn = document.createElement('button');
         copyBtn.textContent = '복사';
         Object.assign(copyBtn.style, {
-            background:'#10b981', color:'white', border:'none',
+            background:'#a855f7', color:'white', border:'none',
             height:'24px', width:'66px', flexShrink:'0', padding:'0',
             borderRadius:'6px', cursor:'pointer', fontWeight:'bold',
             fontSize:'13px',
@@ -826,7 +826,7 @@
                     batteryPct = Math.min(100, Math.max(0, battery));
 
                     if (rs.isCharging || rs.isWirelessChargerConnected) {
-                        accentColor = "#22c55e"; statusIcon = "🟢"; statusText = "충전 중";
+                        accentColor = "#d946ef"; statusIcon = "🟢"; statusText = "충전 중";
                     } else if (raw.currentScenario) {
                         accentColor = "#3b82f6"; statusIcon = "🔵"; statusText = "순찰 중";
                     } else {
@@ -1084,7 +1084,7 @@
             s.textContent = `
                 @keyframes neubie-alarm-blink {
                     0%, 100% { border-color: #000; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-                    50% { border-color: #10b981; box-shadow: 0 0 30px rgba(16,185,129,0.9); }
+                    50% { border-color: #a855f7; box-shadow: 0 0 30px rgba(168,85,247,0.9); }
                 }
                 @keyframes neubie-fadein {
                     from { opacity:0; transform:translateX(-50%) translateY(-10px); }
@@ -1096,7 +1096,7 @@
         const alarmDiv = document.createElement('div');
         alarmDiv.style.cssText = `
             position:fixed; top:16px; left:50%; transform:translateX(-50%);
-            background:linear-gradient(135deg,#10b981,#2dd4bf);
+            background:linear-gradient(135deg,#ec4899,#a855f7);
             color:#fff; padding:15px 30px; border-radius:14px;
             z-index:9999999; font-weight:bold; font-size:16px;
             border:3px solid #000; display:flex; align-items:center; gap:10px;
@@ -1299,7 +1299,7 @@
                 ? String(t.content || '').replace(/^\[\d{2}:\d{2}(~\d{2}:\d{2})?\]\s*/, '')
                 : t.content;
 
-            const nameChip = (name, isSelf) => `<span style="display:inline-flex; align-items:center; justify-content:center; min-width:36px; padding:2px 6px; margin:0 1px; border-radius:6px; box-sizing:border-box; font-size:${isSelf ? '12px' : '11px'}; font-weight:${isSelf ? '800' : '500'}; background:${isSelf ? '#22c55e' : (T.isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)')}; color:${isSelf ? '#062e13' : (T.isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.65)')};">${name}</span>`;
+            const nameChip = (name, isSelf) => `<span style="display:inline-flex; align-items:center; justify-content:center; min-width:36px; padding:2px 6px; margin:0 1px; border-radius:6px; box-sizing:border-box; font-size:${isSelf ? '12px' : '11px'}; font-weight:${isSelf ? '800' : '500'}; background:${isSelf ? '#d946ef' : (T.isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)')}; color:${isSelf ? '#3b0764' : (T.isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.65)')};">${name}</span>`;
             // 취소선은 '업무텍스트' 부분에만 걸리도록 별도 span으로 분리 — 이름박스/화살표를 감싸는
             // 조상 요소엔 text-decoration을 절대 두지 않는다(자식에서 none으로 덮어써도 브라우저에 따라
             // 취소선이 새어나오는 문제가 있었음). 이름박스는 대신 opacity로만 흐리게 처리.
@@ -1397,14 +1397,14 @@
         const neutralBtnHoverBorder = T.isDark ? '#888' : HOVER_ACCENT;
         const neutralBtnHoverText = T.isDark ? neutralBtnText : '#fff';
         // 다중 모니터링 / 배송·순찰 띠띠 전용 호버 — 온오프 토글과 동일한 그린, 다크/라이트 공통
-        const subBtnHoverBg = GREEN_HOVER;
-        const subBtnHoverBorder = GREEN_HOVER;
-        const subBtnHoverText = '#062e13';
+        const subBtnHoverBg = NEON_HOVER;
+        const subBtnHoverBorder = NEON_HOVER;
+        const subBtnHoverText = '#3b0764';
         const card = document.createElement('div');
         card.id = 'namingSection';
         card.style.cssText = `
             padding:10px 15px 6px; border-radius:15px; margin-top:5px; border:1px solid transparent;
-            background-image: linear-gradient(${T.card}, ${T.card}), linear-gradient(135deg, #10b981, #2dd4bf);
+            background-image: linear-gradient(${T.card}, ${T.card}), linear-gradient(135deg, #ec4899, #a855f7);
             background-origin: border-box; background-clip: padding-box, border-box;
             box-shadow:0 0 5px rgba(150,120,255,0.25);
         `;
@@ -1523,7 +1523,7 @@
                 </div>
                 <div style="display: flex; gap: 5px; min-width: 0;">
                     <input type="text" id="taskInput" placeholder="주문번호를 붙여넣으세요." style="flex: 1; min-width: 0; background: ${fieldBg}; color: ${fieldText}; border: 1px solid ${fieldBorder}; padding: 0 8px; border-radius: 4px; font-size: 15px; font-weight: bold; height: 32px; line-height: 32px; box-sizing: border-box;">
-                    <button id="copyFileName" style="width: 70px; flex-shrink: 0; background: #10b981; color: white; border: none; padding: 0 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 15px; white-space: nowrap; overflow: hidden; height: 32px; line-height: 32px; box-sizing: border-box;">복사</button>
+                    <button id="copyFileName" style="width: 70px; flex-shrink: 0; background: #a855f7; color: white; border: none; padding: 0 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 15px; white-space: nowrap; overflow: hidden; height: 32px; line-height: 32px; box-sizing: border-box;">복사</button>
                 </div>
             </div>
             <div id="namePreviewBox" style="background:${T.isDark ? '#181818' : '#2f3a31'}; border-radius:8px; padding:6px 10px 7px;">
@@ -1670,7 +1670,7 @@
                 copyBtn.onclick = (e) => {
                     const finalName = computeRobotFinalName();
                     navigator.clipboard.writeText(finalName);
-                    applyCopyEffect(e.target, '#10b981', 'white');
+                    applyCopyEffect(e.target, '#a855f7', 'white');
                 };
             }
 
@@ -1717,7 +1717,7 @@
         const T = getNbTheme();
         dashboard.style.backgroundColor = T.bg;
         dashboard.style.color = T.text;
-        dashboard.style.backgroundImage = `linear-gradient(${T.bg}, ${T.bg}), linear-gradient(135deg, #10b981, #2dd4bf)`;
+        dashboard.style.backgroundImage = `linear-gradient(${T.bg}, ${T.bg}), linear-gradient(135deg, #ec4899, #a855f7)`;
         
         // 헤더 컨테이너 (제목 + 성명 입력창 + X 버튼 인라인 배치)
         const headerContainer = document.createElement('div');
@@ -1785,7 +1785,7 @@
 			patchBtn.appendChild(newBadge);
 		}
 		
-        patchBtn.onmouseenter = () => { patchBtn.style.borderColor=GREEN_HOVER; patchBtn.style.color=GREEN_HOVER; };
+        patchBtn.onmouseenter = () => { patchBtn.style.borderColor=NEON_HOVER; patchBtn.style.color=NEON_HOVER; };
         patchBtn.onmouseleave = () => { patchBtn.style.borderColor=T.border; patchBtn.style.color=T.text; };
         patchBtn.onclick = () => {
             // 이미 열려있으면(패치노트 버튼 재클릭) 닫기만 하고 종료 — X버튼 없이도 닫는 방법
@@ -1832,7 +1832,7 @@
         nameArea.innerHTML = `
             <span>성명:</span>
             <input type="text" id="inline-name-input" value="${currentName}" placeholder="이름"
-                style="width:60px; border:1px solid #a7d8b8; outline:none; padding:5px 6px; 
+                style="width:60px; border:1px solid #ddd6fe; outline:none; padding:5px 6px; 
                     font-size:15px; font-weight:bold; color:#1f3d2a; background:#dff3e6; 
                     border-radius:10px; text-align:center; box-sizing:border-box;">
             <button id="all-close-btn" style="background:#ef4444; color:white; border:none; border-radius:4px; width:26px; height:26px; cursor:pointer; font-weight:bold; display:flex; align-items:center; justify-content:center; font-size:14px; box-sizing:border-box;">✕</button>
@@ -1848,7 +1848,7 @@
             transition:all 0.2s;
         `;
         boardBtn.innerHTML = `<span style="font-size:14px;">📌</span>게시판`;
-        boardBtn.onmouseenter = () => { boardBtn.style.borderColor=GREEN_HOVER; boardBtn.style.color=GREEN_HOVER; };
+        boardBtn.onmouseenter = () => { boardBtn.style.borderColor=NEON_HOVER; boardBtn.style.color=NEON_HOVER; };
         boardBtn.onmouseleave = () => { boardBtn.style.borderColor=T.border; boardBtn.style.color=T.text; };
         boardBtn.onclick = () => openBoardOverlay();
 
@@ -1862,7 +1862,7 @@
             transition:all 0.2s;
         `;
         scheduleBtn.innerHTML = `<span style="font-size:14px;">🗓️</span>스케줄표·좌석도`;
-        scheduleBtn.onmouseenter = () => { scheduleBtn.style.borderColor=GREEN_HOVER; scheduleBtn.style.color=GREEN_HOVER; };
+        scheduleBtn.onmouseenter = () => { scheduleBtn.style.borderColor=NEON_HOVER; scheduleBtn.style.color=NEON_HOVER; };
         scheduleBtn.onmouseleave = () => { scheduleBtn.style.borderColor=T.border; scheduleBtn.style.color=T.text; };
         scheduleBtn.onclick = () => openScheduleOverlay();
 
@@ -1876,7 +1876,7 @@
             transition:all 0.2s;
         `;
         controllerBtn.innerHTML = `<span style="font-size:14px;">🎮</span>컨트롤러 테스터`;
-        controllerBtn.onmouseenter = () => { controllerBtn.style.borderColor=GREEN_HOVER; controllerBtn.style.color=GREEN_HOVER; };
+        controllerBtn.onmouseenter = () => { controllerBtn.style.borderColor=NEON_HOVER; controllerBtn.style.color=NEON_HOVER; };
         controllerBtn.onmouseleave = () => { controllerBtn.style.borderColor=T.border; controllerBtn.style.color=T.text; };
         controllerBtn.onclick = () => {
             if (isTaskCardShowing('gamepad-tester')) {
@@ -1975,9 +1975,9 @@
 
                 remindTestBtn.onmouseenter = () => {
                     if (remindTestBtn.disabled) return;
-                    remindTestBtn.style.background = GREEN_HOVER;
-                    remindTestBtn.style.borderColor = GREEN_HOVER;
-                    remindTestBtn.style.color = '#062e13';
+                    remindTestBtn.style.background = NEON_HOVER;
+                    remindTestBtn.style.borderColor = NEON_HOVER;
+                    remindTestBtn.style.color = '#3b0764';
                 };
                 remindTestBtn.onmouseleave = () => {
                     if (remindTestBtn.disabled) return;
@@ -2024,7 +2024,7 @@
         taskCard.style.cssText = `
             grid-column:1; grid-row:1; display:flex; flex-direction:column; min-height:0; overflow:hidden;
             padding:15px; border-radius:15px; border:1px solid transparent;
-            background-image: linear-gradient(${T.card}, ${T.card}), linear-gradient(135deg, #10b981, #2dd4bf);
+            background-image: linear-gradient(${T.card}, ${T.card}), linear-gradient(135deg, #ec4899, #a855f7);
             background-origin: border-box; background-clip: padding-box, border-box;
             box-shadow:0 0 5px rgba(150,120,255,0.25);
         `;
@@ -2112,8 +2112,8 @@
             el.style.cssText = `
                 font-size:11px; font-weight:800; letter-spacing:0.4px;
                 padding:2px 8px; border-radius:999px; line-height:1.4;
-                background:${isOn ? '#22c55e' : 'rgba(148,148,148,0.55)'};
-                color:${isOn ? '#062e13' : '#fff'};
+                background:${isOn ? '#d946ef' : 'rgba(148,148,148,0.55)'};
+                color:${isOn ? '#3b0764' : '#fff'};
             `;
         }
 
@@ -2137,7 +2137,7 @@
                 </span>
                 <label style="position:relative; display:inline-block; width:54px; height:24px; flex-shrink:0; cursor:pointer;">
                     <input type="checkbox" ${isOn ? 'checked' : ''} class="nb-toggle-input" style="opacity:0; width:0; height:0;">
-                    <span class="nb-toggle-track" style="position:absolute; inset:0; background:${isOn ? '#22c55e' : (T.isDark ? '#55545c' : '#c9be9c')}; border-radius:999px; transition:background .15s;">
+                    <span class="nb-toggle-track" style="position:absolute; inset:0; background:${isOn ? '#d946ef' : (T.isDark ? '#55545c' : '#c9be9c')}; border-radius:999px; transition:background .15s;">
                         <span class="nb-toggle-text" style="position:absolute; top:50%; transform:translateY(-50%); ${isOn ? 'left:7px;' : 'right:6px;'} font-size:9px; font-weight:800; letter-spacing:0.3px; color:#fff;">${isOn ? 'ON' : 'OFF'}</span>
                     </span>
                     <span class="nb-toggle-knob" style="position:absolute; top:3px; left:${isOn ? '33px' : '3px'}; width:18px; height:18px; background:#fff; border-radius:50%; transition:left .15s; box-shadow:0 1px 3px rgba(0,0,0,0.3);"></span>
@@ -2148,7 +2148,7 @@
             const knob = row.querySelector('.nb-toggle-knob');
             const text = row.querySelector('.nb-toggle-text');
             const applyVisual = (on) => {
-                track.style.background = on ? '#22c55e' : (T.isDark ? '#55545c' : '#c9be9c');
+                track.style.background = on ? '#d946ef' : (T.isDark ? '#55545c' : '#c9be9c');
                 knob.style.left = on ? '33px' : '3px';
                 text.textContent = on ? 'ON' : 'OFF';
                 text.style.left = on ? '7px' : 'auto';
@@ -2198,10 +2198,10 @@
             const darkBtn = row.querySelector('[data-seg="dark"]');
             const lightBtn = row.querySelector('[data-seg="light"]');
             const applyVisual = (isDark) => {
-                darkBtn.style.background = isDark ? '#22c55e' : 'transparent';
-                darkBtn.style.color = isDark ? '#062e13' : (T.isDark ? '#ddd' : T.text);
-                lightBtn.style.background = !isDark ? '#22c55e' : 'transparent';
-                lightBtn.style.color = !isDark ? '#062e13' : (T.isDark ? '#ddd' : T.text);
+                darkBtn.style.background = isDark ? '#d946ef' : 'transparent';
+                darkBtn.style.color = isDark ? '#3b0764' : (T.isDark ? '#ddd' : T.text);
+                lightBtn.style.background = !isDark ? '#d946ef' : 'transparent';
+                lightBtn.style.color = !isDark ? '#3b0764' : (T.isDark ? '#ddd' : T.text);
             };
             applyVisual(isDarkSelected);
             darkBtn.onclick = () => { applyVisual(true); onChange(true); };
@@ -2411,7 +2411,7 @@
         batteryEmbedCard.style.cssText = `
             grid-column:2; grid-row:1; display:flex; flex-direction:column; min-height:0; overflow:hidden;
             padding:15px; border-radius:15px; border:1px solid transparent;
-            background-image: linear-gradient(${T.card}, ${T.card}), linear-gradient(135deg, #10b981, #2dd4bf);
+            background-image: linear-gradient(${T.card}, ${T.card}), linear-gradient(135deg, #ec4899, #a855f7);
             background-origin: border-box; background-clip: padding-box, border-box;
             box-shadow:0 0 5px rgba(150,120,255,0.25);
         `;
@@ -2421,7 +2421,7 @@
             <b style="color:${T.text}; font-size:17px; white-space:nowrap;">🔋 성남 배터리 현황</b>
             <div style="display:flex; align-items:center; gap:8px; flex:none;">
                 <span id="nb-batt-timer" style="font-size:11px; font-weight:700; color:${T.accent}; text-align:right; line-height:1.25;"></span>
-                <button id="nb-batt-copy" style="background:#10b981; color:white; border:none; height:24px; padding:0 10px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px;">복사</button>
+                <button id="nb-batt-copy" style="background:#a855f7; color:white; border:none; height:24px; padding:0 10px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:12px;">복사</button>
             </div>
         `;
         batteryEmbedCard.appendChild(bpHead);
@@ -2551,7 +2551,7 @@
         featureCard.style.cssText = `
             grid-column:2; grid-row:2; display:flex; flex-direction:column; min-height:0; overflow:hidden;
             padding:12px 14px; border-radius:15px; border:1px solid transparent;
-            background-image: linear-gradient(${T.card}, ${T.card}), linear-gradient(135deg, #10b981, #2dd4bf);
+            background-image: linear-gradient(${T.card}, ${T.card}), linear-gradient(135deg, #ec4899, #a855f7);
             background-origin: border-box; background-clip: padding-box, border-box;
             box-shadow:0 0 5px rgba(150,120,255,0.25);
         `;
@@ -2665,11 +2665,11 @@
 			position: 'fixed', top: '0px', left: '50%', transform: 'translateX(-50%)',
 			zIndex: '2147483646', width: '616px',
 			background: '#1c1c1f',
-			backgroundImage: 'linear-gradient(#1c1c1f, #1c1c1f), linear-gradient(90deg, #0e7490, #22c55e)',
+			backgroundImage: 'linear-gradient(#1c1c1f, #1c1c1f), linear-gradient(90deg, #ec4899, #a855f7)',
 			backgroundOrigin: 'border-box', backgroundClip: 'padding-box, border-box',
 			borderRadius: '0 0 14px 14px', padding: '7px 8px 9px',
 			fontFamily: 'Pretendard,sans-serif',
-			boxShadow: '0 8px 32px rgba(0,0,0,0.5), 0 0 16px rgba(34,197,94,0.12)',
+			boxShadow: '0 8px 32px rgba(0,0,0,0.5), 0 0 16px rgba(217,70,239,0.12)',
 			border: '1px solid transparent', borderTop: 'none',
 			transition: 'top 0.28s cubic-bezier(0.4,0,0.2,1)',
 		});
@@ -2697,14 +2697,14 @@
 		const MAX_UNITS = ADMIN_CONFIG.maxMonitorSlots; // 관리자 설정값 (기본 6, 확장 시 9)
 
 		const cellIdle = c => {
-			Object.assign(c.style, { background: 'rgba(34,197,94,0.12)', color: '#e5f9ee',
-				border: '1.5px solid #4ade80', cursor: 'pointer', fontWeight: '600' });
+			Object.assign(c.style, { background: 'rgba(217,70,239,0.12)', color: '#e5f9ee',
+				border: '1.5px solid #e879f9', cursor: 'pointer', fontWeight: '600' });
 			c.dataset.selected = 'false';
 		};
 		const cellEmpty = c => {
 			c.textContent = '—';
 			Object.assign(c.style, { background: 'rgba(255,255,255,0.03)', color: '#6b7280',
-				border: '1.5px dashed rgba(34,197,94,0.35)', cursor: 'default', fontWeight: '400' });
+				border: '1.5px dashed rgba(217,70,239,0.35)', cursor: 'default', fontWeight: '400' });
 			c.dataset.unit = ''; c.dataset.selected = 'false'; c.dataset.done = 'false';
 		};
 
@@ -2732,11 +2732,11 @@
 		});
 
 		// 카메라 배치 새로고침 버튼 (기존 '다중 파일명'/'성남 배터리' 자리로 이동)
-		const posBtn = mkBtn('카메라 배치 새로고침', '#26292f', { border: '1px solid #22c55e', color: '#4ade80' });
+		const posBtn = mkBtn('카메라 배치 새로고침', '#26292f', { border: '1px solid #d946ef', color: '#e879f9' });
 
 		// 교대 받기 버튼
-		const fetchBtn = mkBtn('교대 기체 로드', 'linear-gradient(135deg, #16a34a, #4ade80)',
-			{ color: '#062e13', boxShadow: '0 0 10px rgba(74,222,128,0.55)' });
+		const fetchBtn = mkBtn('교대 기체 로드', 'linear-gradient(135deg, #7c3aed, #e879f9)',
+			{ color: '#3b0764', boxShadow: '0 0 10px rgba(232,121,249,0.55)' });
 
 		headerRow.appendChild(posBtn);
 		headerRow.appendChild(fetchBtn);
@@ -2746,8 +2746,8 @@
 		const rightBtns = document.createElement('div');
 		Object.assign(rightBtns.style, { marginLeft: 'auto', display: 'flex', gap: '5px', flexShrink: '0' });
 
-		const autoBtn = mkBtn('자동 시작', 'linear-gradient(135deg, #0f766e, #22c55e)',
-			{ color: '#fff', boxShadow: '0 0 10px rgba(34,197,94,0.4)', padding: '4px 8px' });
+		const autoBtn = mkBtn('자동 시작', 'linear-gradient(135deg, #6d28d9, #d946ef)',
+			{ color: '#fff', boxShadow: '0 0 10px rgba(217,70,239,0.4)', padding: '4px 8px' });
 
 		// [2026-09] 보라색 버튼 = '남은 기체 대수' 표시 버튼 (라벨/색/토스트는 아래 '남은 기체 대수' 블록에서 관리)
 		const dispatchBtn = mkBtn('…대 남음', 'linear-gradient(135deg, #7c3aed, #a78bfa)',
@@ -2773,7 +2773,7 @@
 			cell.dataset.done = 'false';
 			cell.textContent = '—';
 			Object.assign(cell.style, {
-				height: '31px', borderRadius: '7px', border: '1.5px dashed rgba(34,197,94,0.35)',
+				height: '31px', borderRadius: '7px', border: '1.5px dashed rgba(217,70,239,0.35)',
 				background: 'rgba(255,255,255,0.03)', color: '#6b7280', fontSize: '10px',
 				fontFamily: 'Pretendard,sans-serif', cursor: 'default',
 				display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -3051,7 +3051,7 @@
                 }
                 const units = data.units || [];
                 if (!units.length) { setDpMsg('기체 데이터 없음', '#94a3b8'); return; }
-                setDpMsg(`교대 기체 로드됨 (${data.handover_by || '?'} - ${units.length}대)`, '#22c55e');
+                setDpMsg(`교대 기체 로드됨 (${data.handover_by || '?'} - ${units.length}대)`, '#d946ef');
             } finally {
                 _fetchBtnRunning = false;
                 fetchBtn.disabled = false;
@@ -3144,7 +3144,7 @@
 			}
 
 			const attempted = checkedUnits.length + skippedUnits.length;
-			setDpMsg(`${checkedUnits.length}/${attempted} 선택 완료, 시작하기 대기 중...`, '#22c55e');
+			setDpMsg(`${checkedUnits.length}/${attempted} 선택 완료, 시작하기 대기 중...`, '#d946ef');
 
 			// ✅ 시작하기 버튼이 활성화될 때까지 폴링 (최대 3초)
 			const confirmBtn = await new Promise(resolve => {
@@ -3181,7 +3181,7 @@
 					if (rejected.length) {
 						setDpMsg(`${confirmedUnits.length}/${checkedUnits.length}대 반영 완료 (거절: ${rejected.join(', ')})`, '#f59e0b');
 					} else {
-						setDpMsg('완료! ✅', '#22c55e');
+						setDpMsg('완료! ✅', '#d946ef');
 					}
 					return { confirmed: true, checkedUnits: confirmedUnits };  // ← 실제로 붙은 기체만 taken 대상으로 반환
 				} else {
@@ -3237,7 +3237,7 @@
 				if (!ok) ok = await patchTaken(checkedUnits); // 실패 시 1회 재시도
 				if (ok) {
 					refreshRemaining(); // 서버 기준 재확인 (기다리지 않음. 실패해도 로컬 반영값 유지)
-					setDpMsg(`${checkedUnits.length}대 시작 및 서버 반영 완료`, '#22c55e');
+					setDpMsg(`${checkedUnits.length}대 시작 및 서버 반영 완료`, '#d946ef');
 				} else {
 					setDpMsg(`${checkedUnits.join(', ')} 카메라는 연결됐지만 서버 반영에 실패했어요 — 다른 탭에서 중복 시도될 수 있으니 새로고침 후 확인해주세요`, '#ef4444');
 				}
@@ -3299,7 +3299,7 @@
 						});
 						const order = cells.filter(c => c.dataset.unit).map(c => c.dataset.unit);
 						localStorage.setItem('neubie_card_order', JSON.stringify(order));
-						setDpMsg('순서 저장됨', '#22c55e');
+						setDpMsg('순서 저장됨', '#d946ef');
 					});
 				});
 			}
@@ -3313,7 +3313,7 @@
 		if (result && isDataValid(result.data.updatedAt)) {
             const units = result.data.units || [];
             if (units.length) {
-                setDpMsg(`교대 기체 로드됨 (${result.data.handover_by || '?'} - ${units.length}대)`, '#22c55e');
+                setDpMsg(`교대 기체 로드됨 (${result.data.handover_by || '?'} - ${units.length}대)`, '#d946ef');
             } else {
                 setDpMsg('교대 기체 데이터가 없습니다', '#f59e0b');
             }
@@ -3439,9 +3439,9 @@
             }
             .neubie-patrol-banner {
                 pointer-events: auto;
-                background: #dcfce7;
-                color: #14532d;
-                border: 1px solid #86efac;
+                background: #fae8ff;
+                color: #6b21a8;
+                border: 1px solid #f0abfc;
                 padding: 7px 22px;
                 border-radius: 999px;
                 font-size: 13px;
@@ -3939,8 +3939,8 @@
 						opacity: 0;
 						transition: opacity 0.2s;
 						background: rgba(20,20,20,0.8);
-						border: 1px solid rgba(34,197,94,0.4);
-						box-shadow: 0 0 6px rgba(34,197,94,0.15);
+						border: 1px solid rgba(217,70,239,0.4);
+						box-shadow: 0 0 6px rgba(217,70,239,0.15);
 						border-radius: 8px;
 						padding: 3px 6px;
 					`;
@@ -4143,17 +4143,17 @@
                 #neubie-master-brightness::-webkit-slider-thumb {
                     -webkit-appearance: none;
                     width: 12px; height: 12px; border-radius: 50%;
-                    background: linear-gradient(135deg, #d1fae5, #22c55e);
+                    background: linear-gradient(135deg, #fae8ff, #d946ef);
                     border: 1.5px solid #052e1c;
-                    box-shadow: 0 0 6px rgba(34,197,94,0.9), 0 1px 2px rgba(0,0,0,0.4);
+                    box-shadow: 0 0 6px rgba(217,70,239,0.9), 0 1px 2px rgba(0,0,0,0.4);
                     cursor: pointer;
                     margin-top: 1.5px;
                 }
                 #neubie-master-brightness::-moz-range-thumb {
                     width: 12px; height: 12px; border-radius: 50%;
-                    background: linear-gradient(135deg, #d1fae5, #22c55e);
+                    background: linear-gradient(135deg, #fae8ff, #d946ef);
                     border: 1.5px solid #052e1c;
-                    box-shadow: 0 0 6px rgba(34,197,94,0.9);
+                    box-shadow: 0 0 6px rgba(217,70,239,0.9);
                     cursor: pointer;
                 }
                 #neubie-master-brightness::-moz-range-track {
@@ -4173,7 +4173,7 @@
             left: '60px',
             zIndex: '2147483640',
             background: '#14161a',
-            backgroundImage: 'linear-gradient(#14161a, #14161a), linear-gradient(90deg, #0e7490, #22c55e)',
+            backgroundImage: 'linear-gradient(#14161a, #14161a), linear-gradient(90deg, #ec4899, #a855f7)',
             backgroundOrigin: 'border-box',
             backgroundClip: 'padding-box, border-box',
             border: '1px solid transparent',
@@ -4184,7 +4184,7 @@
             gap: '6px',
             width: '150px',
             boxSizing: 'border-box',
-            boxShadow: '0 2px 14px rgba(0,0,0,0.5), 0 0 10px rgba(34,197,94,0.12)',
+            boxShadow: '0 2px 14px rgba(0,0,0,0.5), 0 0 10px rgba(217,70,239,0.12)',
             fontFamily: 'Pretendard, sans-serif',
             userSelect: 'none',
         });
@@ -4227,14 +4227,14 @@
         });
 
         const valueLabel = document.createElement('span');
-        valueLabel.style.cssText = 'color:#4ade80; font-size:12px; font-weight:700; min-width:20px; text-align:right; flex-shrink:0;';
+        valueLabel.style.cssText = 'color:#e879f9; font-size:12px; font-weight:700; min-width:20px; text-align:right; flex-shrink:0;';
         valueLabel.textContent = savedVal;
 
         // 슬라이더 값에 맞춰 채워진(초록) 구간과 안 채워진(어두운) 구간의 경계를 실시간 계산
         const updateSliderFill = (v) => {
             const pct = ((v - BRIGHTNESS.MIN) / (BRIGHTNESS.MAX - BRIGHTNESS.MIN)) * 100;
             slider.style.background =
-                `linear-gradient(90deg, #10b981 0%, #6ee7b7 ${pct}%, rgba(255,255,255,0.08) ${pct}%, rgba(255,255,255,0.08) 100%)`;
+                `linear-gradient(90deg, #a855f7 0%, #f0abfc ${pct}%, rgba(255,255,255,0.08) ${pct}%, rgba(255,255,255,0.08) 100%)`;
         };
         updateSliderFill(savedVal);
 
@@ -4275,8 +4275,8 @@
             top: `${barRect.bottom + 4}px`,
             left: `${barRect.left}px`,
             zIndex: '2147483641',
-            background: '#dcfce7',
-            color: '#14532d',
+            background: '#fae8ff',
+            color: '#6b21a8',
             fontSize: '10px', fontWeight: '500', lineHeight: '1.4',
             padding: '6px 10px',
             borderRadius: '8px',
@@ -4394,7 +4394,7 @@
                 } catch(e) { return ''; }
             }
             function initials(name) { return name ? name.slice(0,1) : '?'; }
-            const AVATAR_PALETTE = ['#7c9d63','#e07a5f','#4f8ef7','#c9a34e','#a0785a','#5c8c46','#6a8caf','#b3714f'];
+            const AVATAR_PALETTE = ['#be185d','#e07a5f','#4f8ef7','#c9a34e','#a0785a','#c026d3','#6a8caf','#b3714f'];
             function avatarColor(name) {
                 if (!name || name === '익명') return '#8b8f94';
                 let h = 0;
@@ -4448,14 +4448,14 @@
                     <span style="font-size:17px; font-weight:800; color:#22301f; flex:1; display:flex; align-items:center; gap:7px;"><span class="nb-emoji">🍃</span> NCC 게시판</span>
                     <button id="nb-mail-lock-btn" style="height:28px; padding:0 11px; background:#f6f4ee; color:#6b6152; border:1px solid #e7e4dc; border-radius:999px; cursor:pointer; font-size:13px; font-weight:700; display:flex; align-items:center; gap:4px; white-space:nowrap;" title="익명 편지함">🔒 익명 문의</button>
                     <button id="nb-refresh-btn" style="height:28px; width:28px; background:#ffffff; color:#5c6660; border:1px solid #e7e4dc; border-radius:10px; cursor:pointer; font-size:14px;" title="새로고침">↺</button>
-					<button id="nb-write-btn" style="height:28px; padding:0 14px; font-size:13px; font-weight:700; background:#3f6b35; color:white; border:none; border-radius:999px; cursor:pointer;">✏️ 글쓰기</button>
+					<button id="nb-write-btn" style="height:28px; padding:0 14px; font-size:13px; font-weight:700; background:#7c3aed; color:white; border:none; border-radius:999px; cursor:pointer;">✏️ 글쓰기</button>
                     <div style="width:1px; height:18px; background:#eceae2; margin:0 2px;"></div>
                     <button id="nb-board-close" style="background:#ffffff; border:1px solid #e7e4dc; color:#c1462f; width:28px; height:28px; border-radius:10px; cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center;">✕</button>
                 </div>
 
                 <div id="nb-pinned-notice" style="padding:12px 16px 8px; display:flex; flex-direction:column; gap:7px;">
-                    <div style="display:flex; align-items:center; gap:9px; flex-wrap:wrap; background:#f2f8ee; border-radius:12px; padding:8px 12px;">
-                        <span style="font-size:12px; font-weight:800; color:#3f6b35; white-space:nowrap;">💡 SW 설정</span>
+                    <div style="display:flex; align-items:center; gap:9px; flex-wrap:wrap; background:#faf5ff; border-radius:12px; padding:8px 12px;">
+                        <span style="font-size:12px; font-weight:800; color:#7c3aed; white-space:nowrap;">💡 SW 설정</span>
                         <div id="nb-pin-sw-list" style="display:flex; gap:6px; flex-wrap:wrap;"></div>
                     </div>
                     <div style="display:flex; align-items:center; gap:9px; flex-wrap:wrap; background:#fbf3e8; border-radius:12px; padding:8px 12px;">
@@ -4482,7 +4482,7 @@
                     <div style="padding:10px 16px; border-bottom:1px solid #f0efe9; display:flex; align-items:center; gap:8px;">
                         <button id="nb-back-btn" style="background:#f6f4ee; border:1px solid #e7e4dc; color:#5c6660; padding:5px 12px; border-radius:999px; cursor:pointer; font-size:12.5px; font-weight:700;"><span class="nb-emoji">←</span> 목록</button>
                         <span id="nb-detail-title-header" style="font-size:13.5px; color:#6b6152; font-weight:600; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
-						<button id="nb-edit-post-btn" style="display:none; background:#f6f4ee; border:1px solid #e7e4dc; color:#3f6b35; padding:5px 11px; border-radius:999px; cursor:pointer; font-size:12.5px; font-weight:700;">수정</button>
+						<button id="nb-edit-post-btn" style="display:none; background:#f6f4ee; border:1px solid #e7e4dc; color:#7c3aed; padding:5px 11px; border-radius:999px; cursor:pointer; font-size:12.5px; font-weight:700;">수정</button>
                         <button id="nb-delete-post-btn" style="display:none; background:#fbeae3; border:1px solid #f0c1ab; color:#c1462f; padding:5px 11px; border-radius:999px; cursor:pointer; font-size:12.5px; font-weight:700;">삭제</button>
                     </div>
                     <div id="nb-detail-body" style="padding:18px 20px; flex:1; overflow-y:auto;"></div>
@@ -4492,7 +4492,7 @@
                     <div style="padding:10px 16px; border-bottom:1px solid #f0efe9; display:flex; align-items:center; gap:8px;">
                         <button id="nb-write-cancel" style="background:#f6f4ee; border:1px solid #e7e4dc; color:#5c6660; padding:5px 12px; border-radius:999px; cursor:pointer; font-size:12.5px; font-weight:700;">← 취소</button>
                         <span style="font-size:14px; color:#22301f; font-weight:800; flex:1;">새 글 작성</span>
-                        <button id="nb-write-submit" style="background:#3f6b35; border:none; color:white; padding:6px 14px; border-radius:999px; cursor:pointer; font-size:12.5px; font-weight:700;">등록</button>
+                        <button id="nb-write-submit" style="background:#7c3aed; border:none; color:white; padding:6px 14px; border-radius:999px; cursor:pointer; font-size:12.5px; font-weight:700;">등록</button>
                     </div>
                     <div style="padding:16px; display:flex; flex-direction:column; gap:10px; flex:1;">
                         <input id="nb-write-title" type="text" placeholder="제목" style="height:38px; font-size:14px; padding:0 14px; border-radius:12px; border:none; background:#f6f4ee; color:#22301f; outline:none;">
@@ -4508,7 +4508,7 @@
                     <div style="padding:10px 16px; border-bottom:1px solid #f0efe9; display:flex; align-items:center; gap:8px;">
                         <button id="nb-edit-cancel" style="background:#f6f4ee; border:1px solid #e7e4dc; color:#5c6660; padding:5px 12px; border-radius:999px; cursor:pointer; font-size:12.5px; font-weight:700;">← 취소</button>
                         <span style="font-size:14px; color:#22301f; font-weight:800; flex:1;">글 수정</span>
-                        <button id="nb-edit-submit" style="background:#3f6b35; border:none; color:white; padding:6px 14px; border-radius:999px; cursor:pointer; font-size:12.5px; font-weight:700;">저장</button>
+                        <button id="nb-edit-submit" style="background:#7c3aed; border:none; color:white; padding:6px 14px; border-radius:999px; cursor:pointer; font-size:12.5px; font-weight:700;">저장</button>
                     </div>
                     <div style="padding:16px; display:flex; flex-direction:column; gap:10px; flex:1;">
                         <input id="nb-edit-title" type="text" placeholder="제목" style="height:38px; font-size:14px; padding:0 14px; border-radius:12px; border:none; background:#f6f4ee; color:#22301f; outline:none;">
@@ -4520,7 +4520,7 @@
                     <div style="padding:10px 16px; border-bottom:1px solid #f0efe9; display:flex; align-items:center; gap:8px;">
                         <button id="nb-mail-user-back" style="background:#f6f4ee; border:1px solid #e7e4dc; color:#5c6660; padding:5px 12px; border-radius:999px; cursor:pointer; font-size:12.5px; font-weight:700;"><span class="nb-emoji">←</span> 목록</button>
                         <span style="font-size:14px; color:#22301f; font-weight:800; flex:1;">💌 익명 편지함</span>
-                        <button id="nb-mail-user-submit" style="background:#3f6b35; border:none; color:white; padding:6px 14px; border-radius:999px; cursor:pointer; font-size:12.5px; font-weight:700;">보내기</button>
+                        <button id="nb-mail-user-submit" style="background:#7c3aed; border:none; color:white; padding:6px 14px; border-radius:999px; cursor:pointer; font-size:12.5px; font-weight:700;">보내기</button>
                     </div>
                     <div style="padding:16px 16px 8px; display:flex; flex-direction:column; gap:8px;">
                         <textarea id="nb-mail-user-content" placeholder="최윤혁님께 익명으로 전달할 내용을 적어주세요..." style="min-height:70px; font-size:14px; padding:10px 12px; border-radius:12px; border:none; background:#f6f4ee; color:#22301f; outline:none; resize:none; font-family:inherit; line-height:1.6;"></textarea>
@@ -4598,7 +4598,7 @@
 			setTimeout(function renderPinnedNotice() {
 				const swWrap = document.getElementById('nb-pin-sw-list');
 				const tsWrap = document.getElementById('nb-pin-ts-list');
-				const pinBtnCss = `height:24px; padding:0 10px; background:#FFFFFF; color:#3f6b35; border:1px solid #cfe3c4; border-radius:999px; cursor:pointer; font-size:12.5px; font-weight:700; white-space:nowrap;`;
+				const pinBtnCss = `height:24px; padding:0 10px; background:#FFFFFF; color:#7c3aed; border:1px solid #e9d5ff; border-radius:999px; cursor:pointer; font-size:12.5px; font-weight:700; white-space:nowrap;`;
 				if (swWrap) {
 					tipsItems.forEach(item => {
 						const b = document.createElement('button');
@@ -4612,7 +4612,7 @@
 					troubleshootPosts.forEach(post => {
 						const b = document.createElement('button');
 						b.textContent = post.title;
-						b.style.cssText = pinBtnCss.replace('#3f6b35', '#b45309').replace('#cfe3c4', '#f0d9b8');
+						b.style.cssText = pinBtnCss.replace('#7c3aed', '#b45309').replace('#e9d5ff', '#f0d9b8');
 						b.onclick = () => window.openTroubleshootOverlay(post.id);
 						tsWrap.appendChild(b);
 					});
@@ -4676,12 +4676,12 @@
 							<div id="nb-mail-view-${m.id}">
 								<div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
 									<div id="nb-mail-content-${m.id}" style="font-size:13.5px; color:#2f3a2c; white-space:pre-wrap; line-height:1.4; flex:1;">${m.content}</div>
-									${!m.reply ? `<button onclick="window._nbToggleEditMail('${m.id}')" style="background:none;border:none;font-size:14px;color:#5c8c46;cursor:pointer;padding:0;flex-shrink:0;">수정</button>` : ''}
+									${!m.reply ? `<button onclick="window._nbToggleEditMail('${m.id}')" style="background:none;border:none;font-size:14px;color:#c026d3;cursor:pointer;padding:0;flex-shrink:0;">수정</button>` : ''}
 								</div>
 								<div style="font-size:13.5px; color:#9a9587; margin-top:4px;">${formatDate(m.createdAt)}${m.updatedAt ? ' (수정됨)' : ''}</div>
 								${m.reply ? `
 									<div style="margin-top:8px; padding:5px 8px; background:#fdf3e4; border-left:2px solid #c9a34e; border-radius:10px;">
-										<div style="font-size:14px; color:#5c8c46; margin-bottom:2px;">↩ 답장</div>
+										<div style="font-size:14px; color:#c026d3; margin-bottom:2px;">↩ 답장</div>
 										<div style="font-size:13.5px; color:#2f3a2c; white-space:pre-wrap; line-height:1.4;">${m.reply.text}</div>
 										<div style="font-size:13px; color:#b3ac9c; margin-top:4px;">${formatDate(m.reply.repliedAt)}</div>
 									</div>
@@ -4691,7 +4691,7 @@
 								<textarea id="nb-mail-edit-text-${m.id}" style="width:100%; min-height:60px; font-size:13.5px; padding:5px; border-radius:999px; border:1.5px solid #e7e4dc; background:#ffffff; color:#22301f; outline:none; resize:none; font-family:inherit; box-sizing:border-box;"></textarea>
 								<div style="display:flex; gap:6px; margin-top:6px; justify-content:flex-end;">
 									<button onclick="window._nbCancelEditMail('${m.id}')" style="height:24px;padding:0 10px;font-size:14px;background:#ffffff;border:none;color:#22301f;border-radius:999px;cursor:pointer;">취소</button>
-									<button onclick="window._nbSubmitEditMail('${m.id}', this)" style="height:24px;padding:0 10px;font-size:14px;background:#3f6b35;border:none;color:#22301f;border-radius:999px;cursor:pointer;">저장</button>
+									<button onclick="window._nbSubmitEditMail('${m.id}', this)" style="height:24px;padding:0 10px;font-size:14px;background:#7c3aed;border:none;color:#22301f;border-radius:999px;cursor:pointer;">저장</button>
 								</div>
 							</div>
 						</div>
@@ -4789,7 +4789,7 @@
 							<div style="font-size:13.5px; color:#2f3a2c; white-space:pre-wrap; line-height:1.4;">${m.content}</div>
 							<div style="font-size:13.5px; color:#9a9587; margin-top:4px;">${formatDate(m.createdAt)}</div>
 							<div id="nb-mail-reply-view-${m.id}" style="${m.reply ? '' : 'display:none;'}">
-								<div style="margin-top:8px; padding:5px 8px; background:#f2f8ee; border-left:2px solid #3f6b35; border-radius:10px;">
+								<div style="margin-top:8px; padding:5px 8px; background:#faf5ff; border-left:2px solid #7c3aed; border-radius:10px;">
 									<div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
 										<div style="flex:1;">
 											<div style="font-size:14px; color:#2f3a2c; margin-bottom:2px;">↩ 내 답장</div>
@@ -4802,7 +4802,7 @@
 							</div>
 							<div id="nb-mail-reply-edit-${m.id}" style="${m.reply ? 'display:none;' : ''} margin-top:8px; display:flex; gap:6px;">
 								<textarea id="nb-mail-reply-${m.id}" placeholder="답장 작성..." style="flex:1; min-height:44px; font-size:13.5px; padding:4px 6px; border-radius:999px; border:1.5px solid #e7e4dc; background:#ffffff; color:#22301f; outline:none; resize:none; font-family:inherit;"></textarea>
-								<button onclick="window._nbSubmitMailReply('${m.id}', this)" style="align-self:flex-end; background:#3f6b35; border:none; color:white; padding:4px 10px; border-radius:999px; cursor:pointer; font-size:13.5px; white-space:nowrap;">답장</button>
+								<button onclick="window._nbSubmitMailReply('${m.id}', this)" style="align-self:flex-end; background:#7c3aed; border:none; color:white; padding:4px 10px; border-radius:999px; cursor:pointer; font-size:13.5px; white-space:nowrap;">답장</button>
 							</div>
 						</div>
 					`).join('');
@@ -4931,8 +4931,8 @@
                                 </div>
                                 <div style="font-size:13.5px; color:#2f3a2c; line-height:1.6;">${c.text}</div>
                                 <div style="display:flex; align-items:center; gap:10px; margin-top:5px;">
-                                    ${myEmail ? `<span onclick="window._nbToggleReply('${c.id}')" style="font-size:11.5px; color:#5c8c46; font-weight:700; cursor:pointer;">↩ 답글</span>` : ''}
-                                    ${(myEmail && c.email === myEmail) ? `<span onclick="window._nbDeleteComment('${c.id}')" style="font-size:11.5px; color:#c1462f; font-weight:700; cursor:pointer;">삭제</span><span onclick="window._nbToggleEditComment('${c.id}','${c.text}')" style="font-size:11.5px; color:#5c8c46; font-weight:700; cursor:pointer;">수정</span>` : ''}
+                                    ${myEmail ? `<span onclick="window._nbToggleReply('${c.id}')" style="font-size:11.5px; color:#c026d3; font-weight:700; cursor:pointer;">↩ 답글</span>` : ''}
+                                    ${(myEmail && c.email === myEmail) ? `<span onclick="window._nbDeleteComment('${c.id}')" style="font-size:11.5px; color:#c1462f; font-weight:700; cursor:pointer;">삭제</span><span onclick="window._nbToggleEditComment('${c.id}','${c.text}')" style="font-size:11.5px; color:#c026d3; font-weight:700; cursor:pointer;">수정</span>` : ''}
                                 </div>
                                 ${(c.replies||[]).map(r => `
                                     <div style="display:flex; gap:8px; margin-top:10px; padding-left:8px; border-left:2px solid #e7e4dc;">
@@ -4944,7 +4944,7 @@
                                             </div>
                                             <div style="font-size:13px; color:#2f3a2c; margin:2px 0; line-height:1.55;">${r.text}</div>
                                             <div style="display:flex; align-items:center; gap:8px; margin-top:3px;">
-                                                ${(myEmail && r.email === myEmail) ? `<span onclick="window._nbDeleteReply('${c.id}','${r.id}')" style="font-size:11px; color:#c1462f; font-weight:700; cursor:pointer;">삭제</span><span onclick="window._nbToggleEditReply('${c.id}','${r.id}','${r.text}')" style="font-size:11px; color:#5c8c46; font-weight:700; cursor:pointer;">수정</span>` : ''}
+                                                ${(myEmail && r.email === myEmail) ? `<span onclick="window._nbDeleteReply('${c.id}','${r.id}')" style="font-size:11px; color:#c1462f; font-weight:700; cursor:pointer;">삭제</span><span onclick="window._nbToggleEditReply('${c.id}','${r.id}','${r.text}')" style="font-size:11px; color:#c026d3; font-weight:700; cursor:pointer;">수정</span>` : ''}
                                             </div>
                                         </div>
                                     </div>
@@ -4958,22 +4958,22 @@
                                         </label>
                                         <div style="display:flex; gap:6px;">
                                         <button onclick="window._nbToggleReply('${c.id}')" style="height:26px;padding:0 11px;font-size:12.5px;font-weight:700;background:#ffffff;border:1px solid #e7e4dc;color:#6b6152;border-radius:999px;cursor:pointer;">취소</button>
-                                        <button onclick="window._nbSubmitReply('${c.id}', this)" style="height:26px;padding:0 12px;font-size:12.5px;font-weight:700;background:#3f6b35;border:none;color:white;border-radius:999px;cursor:pointer;">등록</button>
+                                        <button onclick="window._nbSubmitReply('${c.id}', this)" style="height:26px;padding:0 12px;font-size:12.5px;font-weight:700;background:#7c3aed;border:none;color:white;border-radius:999px;cursor:pointer;">등록</button>
 										</div>
 									</div>
                                 </div>
 								<div id="nb-edit-reply-box-${r.id}" style="display:none; margin-top:6px;">
-									<textarea id="nb-edit-reply-text-${r.id}" style="width:100%; height:46px; font-size:13px; padding:6px 8px; border-radius:12px; border:1px solid #cfe3c4; background:#ffffff; color:#22301f; outline:none; resize:none; box-sizing:border-box; font-family:inherit;"></textarea>
+									<textarea id="nb-edit-reply-text-${r.id}" style="width:100%; height:46px; font-size:13px; padding:6px 8px; border-radius:12px; border:1px solid #e9d5ff; background:#ffffff; color:#22301f; outline:none; resize:none; box-sizing:border-box; font-family:inherit;"></textarea>
 									<div style="display:flex; justify-content:flex-end; gap:6px; margin-top:4px;">
 										<button onclick="window._nbToggleEditReply('${c.id}','${r.id}')" style="height:24px;padding:0 9px;font-size:12px;font-weight:700;background:#ffffff;border:1px solid #e7e4dc;color:#6b6152;border-radius:999px;cursor:pointer;">취소</button>
-										<button onclick="window._nbSubmitEditReply('${c.id}','${r.id}', this)" style="height:24px;padding:0 9px;font-size:12px;font-weight:700;background:#3f6b35;border:none;color:white;border-radius:999px;cursor:pointer;">저장</button>
+										<button onclick="window._nbSubmitEditReply('${c.id}','${r.id}', this)" style="height:24px;padding:0 9px;font-size:12px;font-weight:700;background:#7c3aed;border:none;color:white;border-radius:999px;cursor:pointer;">저장</button>
 									</div>
 								</div>
 								<div id="nb-edit-comment-box-${c.id}" style="display:none; margin-top:8px;">
-									<textarea id="nb-edit-comment-text-${c.id}" style="width:100%; height:52px; font-size:13.5px; padding:8px 10px; border-radius:12px; border:1px solid #cfe3c4; background:#ffffff; color:#22301f; outline:none; resize:none; box-sizing:border-box; font-family:inherit;"></textarea>
+									<textarea id="nb-edit-comment-text-${c.id}" style="width:100%; height:52px; font-size:13.5px; padding:8px 10px; border-radius:12px; border:1px solid #e9d5ff; background:#ffffff; color:#22301f; outline:none; resize:none; box-sizing:border-box; font-family:inherit;"></textarea>
 									<div style="display:flex; justify-content:flex-end; gap:6px; margin-top:6px;">
 										<button onclick="window._nbToggleEditComment('${c.id}')" style="height:26px;padding:0 11px;font-size:12.5px;font-weight:700;background:#ffffff;border:1px solid #e7e4dc;color:#6b6152;border-radius:999px;cursor:pointer;">취소</button>
-										<button onclick="window._nbSubmitEditComment('${c.id}', this)" style="height:26px;padding:0 12px;font-size:12.5px;font-weight:700;background:#3f6b35;border:none;color:white;border-radius:999px;cursor:pointer;">저장</button>
+										<button onclick="window._nbSubmitEditComment('${c.id}', this)" style="height:26px;padding:0 12px;font-size:12.5px;font-weight:700;background:#7c3aed;border:none;color:white;border-radius:999px;cursor:pointer;">저장</button>
 									</div>
 								</div>
                             </div>
@@ -4982,7 +4982,7 @@
                     ${myEmail ? `
                     <div style="margin-top:16px; border-top:1px solid #f0efe9; padding-top:14px; display:flex; gap:8px; align-items:flex-end;">
                         <textarea id="nb-comment-input" placeholder="댓글을 입력하세요..." style="flex:1; height:40px; font-size:13.5px; padding:10px 16px; border-radius:999px; border:none; background:#f6f4ee; color:#22301f; outline:none; resize:none; box-sizing:border-box; font-family:inherit;"></textarea>
-                        <button onclick="window._nbSubmitComment(this)" style="width:40px; height:40px; border-radius:50%; border:none; background:#3f6b35; color:#ffffff; font-size:15px; cursor:pointer; flex-shrink:0;">➤</button>
+                        <button onclick="window._nbSubmitComment(this)" style="width:40px; height:40px; border-radius:50%; border:none; background:#7c3aed; color:#ffffff; font-size:15px; cursor:pointer; flex-shrink:0;">➤</button>
                     </div>
                     <label style="display:flex; align-items:center; justify-content:flex-end; gap:5px; font-size:12px; color:#9a9587; cursor:pointer; user-select:none; margin-top:6px;">
                         <input type="checkbox" id="nb-comment-anon" style="width:13px; height:13px; cursor:pointer;">
@@ -5312,16 +5312,16 @@
                 height: nsoRect.height + 'px',
                 zIndex: '2147483646',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: '#8BAA4F',
+                background: 'linear-gradient(135deg, #ec4899 0%, #f5b942 45%, #7c3aed 100%)',
                 borderRadius: '28px', overflow: 'hidden',
                 fontFamily: "'Apple SD Gothic Neo','Noto Sans KR',sans-serif",
             });
 
-            // 프레임 안쪽 여백(10px) + 초록 테두리 — 게시판과 동일한 구성
+            // 프레임 안쪽 여백(10px) + 네온 퍼플 테두리 — 게시판과 동일한 구성
             const nsoFrame = document.createElement('div');
             nsoFrame.style.cssText = `
                 width:calc(100% - 20px); height:calc(100% - 20px); margin:10px;
-                border:4px solid #8BAA4F; box-sizing:border-box; border-radius:24px;
+                border:4px solid #a855f7; box-sizing:border-box; border-radius:24px;
                 overflow:hidden; display:flex; flex-direction:column;
             `;
 
@@ -5372,10 +5372,10 @@
             box.innerHTML = `
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;">
                 <div style="display:flex;align-items:center;gap:8px;min-width:0;">
-                    <span style="font-size:18px;font-weight:700;color:#4f8ef7;white-space:nowrap;">📅 스케줄표 + 좌석 배치도</span>
-                    <span id="nso-status" style="font-size:12px;color:var(--nso-muted);white-space:nowrap;">로딩 중...</span>
+                    <span style="font-size:19px;font-weight:700;color:#4f8ef7;white-space:nowrap;">📅 스케줄표 + 좌석 배치도</span>
+                    <span id="nso-status" style="font-size:13px;color:var(--nso-muted);white-space:nowrap;">로딩 중...</span>
                     <span id="nso-dot" style="width:7px;height:7px;border-radius:50%;background:#eab308;display:inline-block;flex-shrink:0;"></span>
-                    <span id="nso-updated" style="font-size:12px;color:var(--nso-muted2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></span>
+                    <span id="nso-updated" style="font-size:13px;color:var(--nso-muted2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></span>
                 </div>
                 <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
                   <button id="nso-theme-toggle" title="다크/라이트 모드 전환" style="width:26px;height:26px;border:none;border-radius:5px;background:var(--nso-btn-bg);color:var(--nso-btn-color);font-size:14px;cursor:pointer;">🌙</button>
@@ -5385,23 +5385,23 @@
 
                 <!-- 스케줄 비교 (헤더 바로 아래로 이동) -->
                 <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-wrap:wrap;">
-                    <span style="font-size:12px;color:var(--nso-muted);white-space:nowrap;">👥 스케줄 비교</span>
+                    <span style="font-size:13px;color:var(--nso-muted);white-space:nowrap;">👥 스케줄 비교</span>
                     <input id="nso-name1" type="text" placeholder="이름..." autocomplete="off"
-                        style="width:96px;background:var(--nso-input-bg);border:1.5px solid #f97316;border-radius:5px;padding:5px 8px;color:var(--nso-text);font-size:13px;box-sizing:border-box;"/>
+                        style="width:96px;background:var(--nso-input-bg);border:1.5px solid #f97316;border-radius:5px;padding:5px 8px;color:var(--nso-text);font-size:14px;box-sizing:border-box;"/>
                     <input id="nso-name2" type="text" placeholder="이름..." autocomplete="off"
-                        style="width:96px;background:var(--nso-input-bg);border:1.5px solid #a855f7;border-radius:5px;padding:5px 8px;color:var(--nso-text);font-size:13px;box-sizing:border-box;"/>
+                        style="width:96px;background:var(--nso-input-bg);border:1.5px solid #a855f7;border-radius:5px;padding:5px 8px;color:var(--nso-text);font-size:14px;box-sizing:border-box;"/>
                     <button id="nso-compare" style="flex-shrink:0;padding:5px 12px;border:none;border-radius:5px;cursor:pointer;font-size:13px;font-weight:600;background:#4f8ef7;color:#fff;white-space:nowrap;">비교</button>
                     <button id="nso-clear" style="flex-shrink:0;padding:5px 12px;border:none;border-radius:5px;cursor:pointer;font-size:13px;font-weight:600;background:var(--nso-btn-bg);color:var(--nso-muted);border:1px solid var(--nso-card-border);white-space:nowrap;">초기화</button>
-                    <div id="nso-overlap" style="font-size:12.5px;color:var(--nso-muted);padding:4px 10px;background:var(--nso-btn-bg);border-radius:5px;display:none;"></div>
+                    <div id="nso-overlap" style="font-size:13.5px;color:var(--nso-muted);padding:4px 10px;background:var(--nso-btn-bg);border-radius:5px;display:none;"></div>
                 </div>
 
                 <!-- 달력 -->
                 <div style="background:var(--nso-cal-wrap-bg);border-radius:12px;padding:8px;">
                 <div style="display:flex;align-items:center;margin-bottom:6px;position:relative;">
-                  <div style="font-size:11px;color:var(--nso-muted2);position:absolute;left:0;">(날짜 클릭 → 좌석 배치도)</div>
+                  <div style="font-size:12px;color:var(--nso-muted2);position:absolute;left:0;">(날짜 클릭 → 좌석 배치도)</div>
                   <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;">
                     <button id="nso-prev" style="width:28px;height:28px;border:1px solid var(--nso-card-border);border-radius:5px;background:var(--nso-btn-bg);color:var(--nso-btn-color);font-size:14px;cursor:pointer;">◀</button>
-                    <div id="nso-cal-title" style="font-size:16px;font-weight:700;color:var(--nso-text);">로딩 중...</div>
+                    <div id="nso-cal-title" style="font-size:17px;font-weight:700;color:var(--nso-text);">로딩 중...</div>
                     <button id="nso-next" style="width:28px;height:28px;border:1px solid var(--nso-card-border);border-radius:5px;background:var(--nso-btn-bg);color:var(--nso-btn-color);font-size:14px;cursor:pointer;">▶</button>
                   </div>
                   <button id="nso-cal-mode" style="position:absolute;right:0;font-size:12px;padding:3px 8px;border-radius:6px;border:1px solid #f97316;background:rgba(249,115,22,0.1);color:#f97316;cursor:pointer;white-space:nowrap;">근무 기준</button>
@@ -5419,7 +5419,7 @@
                     </div>
                     </div>
                     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;font-size:11px;color:var(--nso-muted);">
-                    <span><span style="width:8px;height:8px;border-radius:2px;background:#22c55e;display:inline-block;margin-right:3px;"></span>출근</span>
+                    <span><span style="width:8px;height:8px;border-radius:2px;background:#d946ef;display:inline-block;margin-right:3px;"></span>출근</span>
                     <span><span style="width:8px;height:8px;border-radius:2px;background:#eab308;display:inline-block;margin-right:3px;"></span>연차/반차/반반차/공가</span>
                     <span><span style="width:8px;height:8px;border-radius:2px;background:var(--nso-seat-off-bg);border:1px solid var(--nso-card-border);display:inline-block;margin-right:3px;"></span>미출근</span>
                     </div>
@@ -5456,7 +5456,7 @@
                 grid.innerHTML='';
                 DOW.forEach((d,i)=>{
                 const el=document.createElement('div');
-                el.style.cssText=`text-align:center;font-size:14px;font-weight:600;padding:4px 0;color:${DOW_CLS[i]};background:var(--nso-dow-bg);border-radius:3px;`;
+                el.style.cssText=`text-align:center;font-size:15px;font-weight:600;padding:4px 0;color:${DOW_CLS[i]};background:var(--nso-dow-bg);border-radius:3px;`;
                 el.textContent=d; grid.appendChild(el);
                 });
                 const firstDow=new Date(year,m0-1,1).getDay();
@@ -5471,7 +5471,7 @@
                 const el=document.createElement('div');
                 el.style.cssText=`background:var(--nso-day-bg);border:1.5px solid ${isToday?'#4f8ef7':'var(--nso-day-border)'};border-radius:6px;padding:4px 3px;min-height:58px;cursor:pointer;transition:all .12s;position:relative;`;
                 const numEl=document.createElement('div');
-                numEl.style.cssText=`font-size:14px;font-weight:600;color:${dow===0?'#f87171':dow===6?'#60a5fa':isToday?'#4f8ef7':'var(--nso-muted2)'};margin-bottom:3px;`;
+                numEl.style.cssText=`font-size:15px;font-weight:600;color:${dow===0?'#f87171':dow===6?'#60a5fa':isToday?'#4f8ef7':'var(--nso-muted2)'};margin-bottom:3px;`;
                 numEl.textContent=d; el.appendChild(numEl);
                 if(info){
                     const {d1,d2,w1,w2}=info;
@@ -5484,7 +5484,7 @@
                       const b=document.createElement('div');
                       const st=d1?.status||'work';
                       const isOff1 = calMode!=='work';
-                      b.style.cssText=`font-size:13px;border-radius:3px;padding:1px 4px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4;
+                      b.style.cssText=`font-size:14px;border-radius:3px;padding:1px 4px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4;
                         background:rgba(249,115,22,.18);
                         color:#f97316;
                         ${st==='half'||st==='half-half'?'border:1px dashed #f97316;':''}`;
@@ -5499,7 +5499,7 @@
                       const b=document.createElement('div');
                       const st=d2?.status||'work';
                       const isOff2 = calMode!=='work';
-                      b.style.cssText=`font-size:13px;border-radius:3px;padding:1px 4px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4;
+                      b.style.cssText=`font-size:14px;border-radius:3px;padding:1px 4px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4;
                         background:rgba(168,85,247,.18);
                         color:#a855f7;
                         ${st==='half'||st==='half-half'?'border:1px dashed #a855f7;':''}`;
@@ -5607,8 +5607,8 @@
                     const onPpl=occ.filter(n=>pMap[n]);
                     const isOn=onPpl.length>0;
                     const isHalf=isOn&&onPpl.some(n=>pMap[n].status==='half'||pMap[n].status==='half-half');
-                    const bg=isOn?(isHalf?'rgba(234,179,8,.12)':'rgba(34,197,94,.15)'):'var(--nso-seat-off-bg)';
-                    const bc=isOn?(isHalf?'#eab308':'#22c55e'):'var(--nso-card-border)';
+                    const bg=isOn?(isHalf?'rgba(234,179,8,.12)':'rgba(217,70,239,.15)'):'var(--nso-seat-off-bg)';
+                    const bc=isOn?(isHalf?'#eab308':'#d946ef'):'var(--nso-card-border)';
                     el.style.cssText=`background:${bg};border:1.5px solid ${bc};border-radius:6px;padding:5px 2px;text-align:center;font-size:.64rem;font-weight:600;min-height:82px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;position:relative;${isOn?'':`opacity:.35;`}`;
                     el.innerHTML=`<span style="position:absolute;top:2px;right:3px;font-size:.42rem;color:var(--nso-idx);">${idx}</span>`;
                     if(occ.length>1){
@@ -5619,7 +5619,7 @@
                         const sp=document.createElement('div');
                         sp.style.cssText='display:flex;flex-direction:column;align-items:center;';
                         const ne=document.createElement('div');
-                        ne.style.cssText=`font-size:10.5px;line-height:1.2;font-weight:700;color:${w?(isHalf?'#eab308':'var(--nso-present-text)'):'var(--nso-muted2)'};`;
+                        ne.style.cssText=`font-size:11.5px;line-height:1.2;font-weight:700;color:${w?(isHalf?'#eab308':'var(--nso-present-text)'):'var(--nso-muted2)'};`;
                         ne.textContent=name; sp.appendChild(ne);
                         if(leaveMap[name]){
                         const bd=document.createElement('div');
@@ -5647,7 +5647,7 @@
                     } else {
                     const w=pMap[raw];
                     const ne=document.createElement('div');
-                    ne.style.cssText=`font-size:10.5px;line-height:1.2;font-weight:700;color:${isOn?(isHalf?'#eab308':'var(--nso-present-text)'):'var(--nso-muted)'};`;
+                    ne.style.cssText=`font-size:11.5px;line-height:1.2;font-weight:700;color:${isOn?(isHalf?'#eab308':'var(--nso-present-text)'):'var(--nso-muted)'};`;
                     ne.textContent=raw; el.appendChild(ne);
                     if(leaveMap[raw]){
                         const bd=document.createElement('div');
@@ -5734,7 +5734,7 @@
                 const data = await res.json();
                 setCache(newKey, data);
                 currentMonthKey=newKey; scheduleData=data;
-                status.textContent='완료'; dot.style.background='#22c55e';
+                status.textContent='완료'; dot.style.background='#d946ef';
                 renderCal();
                 if(sel1||sel2) runCompare();
             } catch(e) {
@@ -5785,7 +5785,7 @@
                 const key=monthKey(data);
                 if(key){ setCache(key,data); currentMonthKey=key; }
                 scheduleData=data;
-                status.textContent='갱신 완료'; dot.style.background='#22c55e';
+                status.textContent='갱신 완료'; dot.style.background='#d946ef';
                 if(data.updatedAt) updated.textContent=new Date(data.updatedAt).toLocaleString('ko-KR') + ' 데이터 기준';
                 renderCal();
                 const n1=box.querySelector('#nso-name1').value.trim();
@@ -5951,7 +5951,6 @@
             }
 
             window.openTroubleshootOverlay = function(initialPostId) {
-                const T = getNbTheme();
                 const dashboardEl = document.getElementById('neubie-dashboard');
                 const r = dashboardEl.getBoundingClientRect();
 
@@ -5964,60 +5963,69 @@
                     width: r.width + 'px',
                     height: r.height + 'px',
                     zIndex: '1000001',
-                    borderRadius: '16px',
+                    display: 'flex', flexDirection: 'column',
+                    background: '#ffffff',
+                    border: '1px solid #ececE4',
+                    boxShadow: '0 18px 46px rgba(40,50,20,0.14)',
+                    borderRadius: '22px',
                     overflow: 'hidden',
+                    fontFamily: "'Paperlogy','Pretendard',sans-serif",
                 });
 
-                const box = document.createElement('div');
-                box.style.cssText = `background:${T.card}; color:${T.text}; border-radius:16px; padding:20px; width:100%; height:100%; box-sizing:border-box; overflow-y:auto; box-shadow:0 10px 50px rgba(0,0,0,0.7); pointer-events:auto;`;
-                overlay.appendChild(box);
+                // 상단 고정 헤더 — 게시판(openBoardOverlay)과 동일한 패턴: 여기서 누르는 ✕는
+                // 항상 이 오버레이 전체를 닫고 게시판으로 돌아간다(내부 화면 전환과 무관).
+                const header = document.createElement('div');
+                header.style.cssText = 'display:flex; align-items:center; gap:8px; padding:10px 16px; border-bottom:1px solid #f0efe9; flex:none;';
+                header.innerHTML = `<span style="font-size:17px; font-weight:800; color:#22301f; flex:1;">🛠️ 문제해결</span>`;
+                const closeBtn = document.createElement('button');
+                closeBtn.textContent = '✕';
+                closeBtn.title = '닫기';
+                closeBtn.style.cssText = 'background:#ffffff; border:1px solid #e7e4dc; color:#c1462f; width:28px; height:28px; border-radius:10px; cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center;';
+                closeBtn.onclick = () => overlay.remove();
+                header.appendChild(closeBtn);
+
+                const body = document.createElement('div');
+                body.style.cssText = 'flex:1; min-height:0; overflow-y:auto; padding:16px 20px;';
+
+                overlay.appendChild(header);
+                overlay.appendChild(body);
                 document.body.appendChild(overlay);
 
                 function renderGrid() {
-                    box.innerHTML = '';
-                    const header = document.createElement('div');
-                    header.style.cssText = 'display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;';
-                    header.innerHTML = `<span style="font-size:16px; font-weight:700;">🛠️ 문제해결</span>`;
-                    const closeBtn = document.createElement('button');
-                    closeBtn.textContent = '✕';
-                    closeBtn.style.cssText = 'width:28px; height:28px; border:none; border-radius:5px; background:#3b0000; border:1px solid #ef4444; color:#ef4444; font-size:16px; cursor:pointer;';
-                    closeBtn.onclick = () => overlay.remove();
-                    header.appendChild(closeBtn);
-
+                    body.innerHTML = '';
                     const grid = document.createElement('div');
-                    grid.style.cssText = 'display:grid; grid-template-columns:1fr 1fr; gap:8px;';
+                    grid.style.cssText = 'display:grid; grid-template-columns:1fr 1fr; gap:10px;';
                     troubleshootPosts.forEach(post => {
                         const btn = document.createElement('button');
                         btn.textContent = post.title;
-                        btn.style.cssText = `padding:14px 10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:center; font-size:14px;`;
-                        btn.onmouseenter = () => { btn.style.borderColor = '#3b82f6'; btn.style.color = '#3b82f6'; };
-                        btn.onmouseleave = () => { btn.style.borderColor = T.border; btn.style.color = T.text; };
+                        btn.style.cssText = 'padding:16px 12px; border-radius:14px; border:1px solid #e7e4dc; background:#f6f4ee; color:#22301f; cursor:pointer; text-align:center; font-size:14px; font-weight:600; transition:all .12s;';
+                        btn.onmouseenter = () => { btn.style.borderColor = '#7c3aed'; btn.style.color = '#7c3aed'; btn.style.background = '#faf5ff'; };
+                        btn.onmouseleave = () => { btn.style.borderColor = '#e7e4dc'; btn.style.color = '#22301f'; btn.style.background = '#f6f4ee'; };
                         btn.onclick = () => renderPost(post);
                         grid.appendChild(btn);
                     });
-
-                    box.appendChild(header);
-                    box.appendChild(grid);
+                    body.appendChild(grid);
                 }
 
                 function renderPost(post) {
-                    box.innerHTML = '';
-                    const header = document.createElement('div');
-                    header.style.cssText = 'display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;';
-                    header.innerHTML = `<span style="font-size:16px; font-weight:700;">${post.title}</span>`;
-                    const closeBtn = document.createElement('button');
-                    closeBtn.textContent = '✕';
-                    closeBtn.title = '목록으로';
-                    closeBtn.style.cssText = 'width:28px; height:28px; border:none; border-radius:5px; background:#3b0000; border:1px solid #ef4444; color:#ef4444; font-size:16px; cursor:pointer;';
-                    closeBtn.onclick = () => renderGrid();
-                    header.appendChild(closeBtn);
+                    body.innerHTML = '';
+                    const subHeader = document.createElement('div');
+                    subHeader.style.cssText = 'display:flex; align-items:center; gap:8px; margin-bottom:14px;';
+                    const backBtn = document.createElement('button');
+                    backBtn.innerHTML = '← 목록';
+                    backBtn.style.cssText = 'background:#f6f4ee; border:1px solid #e7e4dc; color:#5c6660; padding:5px 12px; border-radius:999px; cursor:pointer; font-size:12.5px; font-weight:700; white-space:nowrap;';
+                    backBtn.onclick = () => renderGrid();
+                    const titleEl = document.createElement('span');
+                    titleEl.textContent = post.title;
+                    titleEl.style.cssText = 'font-size:15px; font-weight:800; color:#22301f; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;';
+                    subHeader.appendChild(backBtn);
+                    subHeader.appendChild(titleEl);
+                    body.appendChild(subHeader);
 
-                    const body = document.createElement('div');
-                    body.style.cssText = `font-size:14px; line-height:1.7; color:${T.text}; white-space:pre-wrap;`;
-                    body.textContent = post.body;
-
-                    box.appendChild(header);
-                    box.appendChild(body);
+                    const bodyText = document.createElement('div');
+                    bodyText.style.cssText = 'font-size:14px; line-height:1.7; color:#2f3a2c; white-space:pre-wrap; background:#f6f8f3; border-radius:16px; padding:16px 18px;';
+                    bodyText.textContent = post.body;
+                    body.appendChild(bodyText);
 
                     if (post.images && post.images.length) {
                         const imgWrap = document.createElement('div');
@@ -6027,11 +6035,11 @@
                             img.src = src;
                             img.loading = 'lazy';
                             img.title = '클릭하면 원본 크기로 보기';
-                            img.style.cssText = 'max-width:100%; max-height:360px; width:auto; height:auto; object-fit:contain; border-radius:8px; display:block; margin:0 auto; cursor:zoom-in;';
+                            img.style.cssText = 'max-width:100%; max-height:360px; width:auto; height:auto; object-fit:contain; border-radius:12px; display:block; margin:0 auto; cursor:zoom-in;';
                             img.onclick = () => openImageLightbox(src);
                             imgWrap.appendChild(img);
                         });
-                        box.appendChild(imgWrap);
+                        body.appendChild(imgWrap);
                     }
 
                     if (post.links && post.links.length) {
@@ -6044,16 +6052,16 @@
                                 const btn = document.createElement('button');
                                 const defaultLabel = '📋 ' + link.label + ' 주소 복사 (새 탭에 직접 붙여넣기)';
                                 btn.textContent = defaultLabel;
-                                btn.style.cssText = `display:block; width:100%; padding:10px 12px; border-radius:8px; border:1px solid #3b82f6; background:transparent; color:#3b82f6; text-decoration:none; font-size:13px; text-align:center; cursor:pointer; font-family:inherit;`;
+                                btn.style.cssText = `display:block; width:100%; padding:10px 12px; border-radius:999px; border:1px solid #7c3aed; background:#faf5ff; color:#7c3aed; text-decoration:none; font-size:13px; font-weight:600; text-align:center; cursor:pointer; font-family:inherit;`;
                                 btn.onclick = () => {
                                     navigator.clipboard.writeText(link.url);
                                     btn.textContent = '✅ 복사됨! 새 탭 열고 주소창에 붙여넣기(Ctrl+V) 하세요';
-                                    btn.style.borderColor = '#22c55e';
-                                    btn.style.color = '#22c55e';
+                                    btn.style.borderColor = '#d946ef';
+                                    btn.style.color = '#d946ef';
                                     setTimeout(() => {
                                         btn.textContent = defaultLabel;
-                                        btn.style.borderColor = '#3b82f6';
-                                        btn.style.color = '#3b82f6';
+                                        btn.style.borderColor = '#7c3aed';
+                                        btn.style.color = '#7c3aed';
                                     }, 2500);
                                 };
                                 linkWrap.appendChild(btn);
@@ -6063,11 +6071,11 @@
                                 a.target = '_blank';
                                 a.rel = 'noopener noreferrer';
                                 a.textContent = '📎 ' + link.label;
-                                a.style.cssText = `display:block; padding:10px 12px; border-radius:8px; border:1px solid #3b82f6; color:#3b82f6; text-decoration:none; font-size:13px; text-align:center;`;
+                                a.style.cssText = `display:block; padding:10px 12px; border-radius:999px; border:1px solid #7c3aed; background:#faf5ff; color:#7c3aed; text-decoration:none; font-size:13px; font-weight:600; text-align:center;`;
                                 linkWrap.appendChild(a);
                             }
                         });
-                        box.appendChild(linkWrap);
+                        body.appendChild(linkWrap);
                     }
                 }
 
@@ -6541,7 +6549,7 @@
 						body: JSON.stringify({ action: 'WAIT' })
 					});
 					if (res3.ok) {
-						showAutoSideNotice(`✅ ${robotName} 사이드 브레이크 ON`, 'rgba(22,163,74,0.92)');
+						showAutoSideNotice(`✅ ${robotName} 사이드 브레이크 ON`, 'rgba(124,58,237,0.92)');
 						_autoSideInProgress.delete(robotId);
 					} else {
 						showAutoSideNotice(`❌ ${robotName} 사이드 브레이크 명령 전송 실패`, 'rgba(220,38,38,0.92)');
@@ -7089,7 +7097,7 @@
 	            const ok = savePreset(sanitizePreset({ brightness: g('brightness'), quality: g('quality'), zoom: g('zoom') }));
 	            closing = true;
 	            clearTimeout(presetPanelTimer);
-	            panel.innerHTML = `<div style="padding:2px 10px; font-size:13px; font-weight:700; color:${ok ? '#86efac' : '#fca5a5'};">${ok ? '✓ 프리셋 저장됨' : '저장 실패 (브라우저 저장소 사용 불가)'}</div>`;
+	            panel.innerHTML = `<div style="padding:2px 10px; font-size:13px; font-weight:700; color:${ok ? '#f0abfc' : '#fca5a5'};">${ok ? '✓ 프리셋 저장됨' : '저장 실패 (브라우저 저장소 사용 불가)'}</div>`;
 	            presetPanelTimer = setTimeout(closePresetPanel, 700);
 	        });
 
