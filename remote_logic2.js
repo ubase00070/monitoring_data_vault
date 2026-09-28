@@ -4443,7 +4443,7 @@
 			});
 
             overlay.innerHTML = `
-            <div style="width:calc(100% - 20px); height:calc(100% - 20px); margin:10px; background-image:linear-gradient(rgba(255,255,255,0.94), rgba(255,255,255,0.94)), url(${BG_IMG}); background-size:cover; background-position:center; background-color:#ffffff; border:1px solid #ececE4; box-shadow:0 18px 46px rgba(40,50,20,0.14); box-sizing:border-box; display:flex; flex-direction:column; border-radius:22px; overflow:hidden;">
+            <div style="width:calc(100% - 20px); height:calc(100% - 20px); margin:10px; background-image:linear-gradient(rgba(255,255,255,0.84), rgba(255,255,255,0.84)), url(${BG_IMG}); background-size:cover; background-position:center; background-color:#ffffff; border:1px solid #ececE4; box-shadow:0 18px 46px rgba(40,50,20,0.14); box-sizing:border-box; display:flex; flex-direction:column; border-radius:22px; overflow:hidden;">
                 <div id="nb-board-header" style="display:flex; align-items:center; gap:8px; padding:10px 16px; border-bottom:1px solid #f0efe9; cursor:grab;">
                     <span style="font-size:17px; font-weight:800; color:#22301f; flex:1; display:flex; align-items:center; gap:7px;"><span class="nb-emoji">🍃</span> NCC 게시판</span>
                     <button id="nb-mail-lock-btn" style="height:28px; padding:0 11px; background:#f6f4ee; color:#6b6152; border:1px solid #e7e4dc; border-radius:999px; cursor:pointer; font-size:13px; font-weight:700; display:flex; align-items:center; gap:4px; white-space:nowrap;" title="익명 편지함">🔒 익명 문의</button>
@@ -5331,7 +5331,7 @@
             box.id = 'nso-schedule-box';
             box.className = 'schedule-box';
             box.style.cssText = `
-                width:100%; height:100%; box-sizing:border-box; padding:20px;
+                width:100%; height:100%; box-sizing:border-box; padding:14px;
                 overflow-y:auto; position:relative;
                 background-size: 100% auto;
                 background-position: center bottom;
@@ -5370,9 +5370,9 @@
             const monthKey = d => { if(!d?.dates?.length) return ''; const [m]=d.dates[0].split('/').map(Number); return `${new Date().getFullYear()}-${String(m).padStart(2,'0')}`; };
 
             box.innerHTML = `
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;">
                 <div style="display:flex;align-items:center;gap:8px;min-width:0;">
-                    <span style="font-size:20px;font-weight:700;color:#4f8ef7;white-space:nowrap;">📅 스케줄표 + 좌석 배치도</span>
+                    <span style="font-size:18px;font-weight:700;color:#4f8ef7;white-space:nowrap;">📅 스케줄표 + 좌석 배치도</span>
                     <span id="nso-status" style="font-size:12px;color:var(--nso-muted);white-space:nowrap;">로딩 중...</span>
                     <span id="nso-dot" style="width:7px;height:7px;border-radius:50%;background:#eab308;display:inline-block;flex-shrink:0;"></span>
                     <span id="nso-updated" style="font-size:12px;color:var(--nso-muted2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></span>
@@ -5384,20 +5384,20 @@
                 </div>
 
                 <!-- 스케줄 비교 (헤더 바로 아래로 이동) -->
-                <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px;flex-wrap:wrap;">
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-wrap:wrap;">
                     <span style="font-size:12px;color:var(--nso-muted);white-space:nowrap;">👥 스케줄 비교</span>
                     <input id="nso-name1" type="text" placeholder="이름..." autocomplete="off"
-                        style="width:96px;background:var(--nso-input-bg);border:1.5px solid #f97316;border-radius:5px;padding:6px 8px;color:var(--nso-text);font-size:13px;box-sizing:border-box;"/>
+                        style="width:96px;background:var(--nso-input-bg);border:1.5px solid #f97316;border-radius:5px;padding:5px 8px;color:var(--nso-text);font-size:13px;box-sizing:border-box;"/>
                     <input id="nso-name2" type="text" placeholder="이름..." autocomplete="off"
-                        style="width:96px;background:var(--nso-input-bg);border:1.5px solid #a855f7;border-radius:5px;padding:6px 8px;color:var(--nso-text);font-size:13px;box-sizing:border-box;"/>
-                    <button id="nso-compare" style="flex-shrink:0;padding:6px 12px;border:none;border-radius:5px;cursor:pointer;font-size:13px;font-weight:600;background:#4f8ef7;color:#fff;white-space:nowrap;">비교</button>
-                    <button id="nso-clear" style="flex-shrink:0;padding:6px 12px;border:none;border-radius:5px;cursor:pointer;font-size:13px;font-weight:600;background:var(--nso-btn-bg);color:var(--nso-muted);border:1px solid var(--nso-card-border);white-space:nowrap;">초기화</button>
-                    <div id="nso-overlap" style="font-size:12.5px;color:var(--nso-muted);padding:5px 10px;background:var(--nso-btn-bg);border-radius:5px;display:none;"></div>
+                        style="width:96px;background:var(--nso-input-bg);border:1.5px solid #a855f7;border-radius:5px;padding:5px 8px;color:var(--nso-text);font-size:13px;box-sizing:border-box;"/>
+                    <button id="nso-compare" style="flex-shrink:0;padding:5px 12px;border:none;border-radius:5px;cursor:pointer;font-size:13px;font-weight:600;background:#4f8ef7;color:#fff;white-space:nowrap;">비교</button>
+                    <button id="nso-clear" style="flex-shrink:0;padding:5px 12px;border:none;border-radius:5px;cursor:pointer;font-size:13px;font-weight:600;background:var(--nso-btn-bg);color:var(--nso-muted);border:1px solid var(--nso-card-border);white-space:nowrap;">초기화</button>
+                    <div id="nso-overlap" style="font-size:12.5px;color:var(--nso-muted);padding:4px 10px;background:var(--nso-btn-bg);border-radius:5px;display:none;"></div>
                 </div>
 
                 <!-- 달력 -->
-                <div style="background:var(--nso-cal-wrap-bg);border-radius:12px;padding:12px;">
-                <div style="display:flex;align-items:center;margin-bottom:10px;position:relative;">
+                <div style="background:var(--nso-cal-wrap-bg);border-radius:12px;padding:8px;">
+                <div style="display:flex;align-items:center;margin-bottom:6px;position:relative;">
                   <div style="font-size:11px;color:var(--nso-muted2);position:absolute;left:0;">(날짜 클릭 → 좌석 배치도)</div>
                   <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;">
                     <button id="nso-prev" style="width:28px;height:28px;border:1px solid var(--nso-card-border);border-radius:5px;background:var(--nso-btn-bg);color:var(--nso-btn-color);font-size:14px;cursor:pointer;">◀</button>
@@ -5406,12 +5406,12 @@
                   </div>
                   <button id="nso-cal-mode" style="position:absolute;right:0;font-size:12px;padding:3px 8px;border-radius:6px;border:1px solid #f97316;background:rgba(249,115,22,0.1);color:#f97316;cursor:pointer;white-space:nowrap;">근무 기준</button>
                 </div>
-                <div id="nso-cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;"></div>
+                <div id="nso-cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;"></div>
                 </div>
 
                 <!-- 좌석 모달 -->
                 <div id="nso-seat-modal" style="position:fixed;inset:0;background:transparent;display:flex;align-items:center;justify-content:center;z-index:2147483647;opacity:0;pointer-events:none;transition:opacity .18s;">
-                <div style="background:var(--nso-card-bg);border:1px solid var(--nso-card-border);border-radius:12px;padding:14px;width:min(90vw,700px);max-height:92vh;overflow-y:auto;box-sizing:border-box;">
+                <div style="background:var(--nso-card-bg);border:1px solid var(--nso-card-border);border-radius:12px;padding:14px;width:min(92vw,780px);max-height:92vh;overflow-y:auto;box-sizing:border-box;">
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
                     <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
                       <div style="font-size:15px;font-weight:700;color:var(--nso-text);">🪑 좌석 배치 — <span id="nso-seat-date" style="color:#4f8ef7;"></span></div>
@@ -5469,7 +5469,7 @@
                 const info=compareResult?compareResult[label]:null;
                 const isToday=today.getFullYear()===year&&today.getMonth()===m0-1&&today.getDate()===d;
                 const el=document.createElement('div');
-                el.style.cssText=`background:var(--nso-day-bg);border:1.5px solid ${isToday?'#4f8ef7':'var(--nso-day-border)'};border-radius:6px;padding:5px 4px;min-height:70px;cursor:pointer;transition:all .12s;position:relative;`;
+                el.style.cssText=`background:var(--nso-day-bg);border:1.5px solid ${isToday?'#4f8ef7':'var(--nso-day-border)'};border-radius:6px;padding:4px 3px;min-height:58px;cursor:pointer;transition:all .12s;position:relative;`;
                 const numEl=document.createElement('div');
                 numEl.style.cssText=`font-size:14px;font-weight:600;color:${dow===0?'#f87171':dow===6?'#60a5fa':isToday?'#4f8ef7':'var(--nso-muted2)'};margin-bottom:3px;`;
                 numEl.textContent=d; el.appendChild(numEl);
@@ -5599,7 +5599,7 @@
                     const raw=SEAT_MAP[row][col]; idx++;
                     const el=document.createElement('div');
                     if(!raw){
-                    el.style.cssText='background:var(--nso-seat-empty-bg);border:1.5px dashed var(--nso-seat-empty-border);border-radius:6px;padding:4px 1px;min-height:74px;';
+                    el.style.cssText='background:var(--nso-seat-empty-bg);border:1.5px dashed var(--nso-seat-empty-border);border-radius:6px;padding:4px 1px;min-height:82px;';
                     el.innerHTML=`<span style="position:absolute;top:2px;right:3px;font-size:10px;color:var(--nso-idx);">${idx}</span>`;
                     grid.appendChild(el); continue;
                     }
@@ -5609,7 +5609,7 @@
                     const isHalf=isOn&&onPpl.some(n=>pMap[n].status==='half'||pMap[n].status==='half-half');
                     const bg=isOn?(isHalf?'rgba(234,179,8,.12)':'rgba(34,197,94,.15)'):'var(--nso-seat-off-bg)';
                     const bc=isOn?(isHalf?'#eab308':'#22c55e'):'var(--nso-card-border)';
-                    el.style.cssText=`background:${bg};border:1.5px solid ${bc};border-radius:6px;padding:4px 1px;text-align:center;font-size:.58rem;font-weight:600;min-height:74px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;position:relative;${isOn?'':`opacity:.35;`}`;
+                    el.style.cssText=`background:${bg};border:1.5px solid ${bc};border-radius:6px;padding:5px 2px;text-align:center;font-size:.64rem;font-weight:600;min-height:82px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;position:relative;${isOn?'':`opacity:.35;`}`;
                     el.innerHTML=`<span style="position:absolute;top:2px;right:3px;font-size:.42rem;color:var(--nso-idx);">${idx}</span>`;
                     if(occ.length>1){
                     const sd=document.createElement('div');
@@ -5962,7 +5962,7 @@
                     top: r.top + 'px',
                     left: r.left + 'px',
                     width: r.width + 'px',
-                    height: '560px',
+                    height: r.height + 'px',
                     zIndex: '1000001',
                     borderRadius: '16px',
                     overflow: 'hidden',
