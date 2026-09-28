@@ -6556,11 +6556,15 @@
 
         // 배달 건 하나의 표시용 제목 ("사이트 · 배정 기체명" — 가게명은 사이트명과 사실상 중복이라 기체 호기명으로 대체. 기체명이 없으면 가게명, 그것도 없으면 사이트명만)
         const dlSiteLabel = r => r.robot ? (r.site + ' · ' + r.robot) : r.store ? (r.site + ' · ' + r.store) : (r.site || '(사이트 없음)');
-        // 수행자 표시 — 인계가 있었으면 "길동 → 꺽정", 대리 반응이면 "(대리)" 표기
+        // 수행자 표시 — 이름이 하나면 그 이름만, 인계·대리 등으로 여럿 걸치면 "길동 → 꺽정" 식으로 이어붙임
+        //  (예전엔 대리 수행 시 이름 뒤에 "(대리)"라는 직함 같은 꼬리표를 붙였는데, 어색해서 제거하고
+        //   proxyBy 에 이름이 실려 오면 그 이름도 그냥 화살표 체인에 끼워 넣는 방식으로 통일)
         const dlWhoLabel = r => {
-            const chain = (r.handoverFrom && r.handoverFrom.length ? r.handoverFrom : []).concat(r.performer ? [r.performer] : []);
-            const name = chain.length ? chain.join(' → ') : '미확인';
-            return name + (r.proxyBy ? ' (대리)' : '');
+            const chain = [];
+            if (typeof r.proxyBy === 'string' && r.proxyBy.trim()) chain.push(r.proxyBy.trim());
+            if (Array.isArray(r.handoverFrom)) chain.push(...r.handoverFrom);
+            if (r.performer) chain.push(r.performer);
+            return chain.length ? chain.join(' → ') : '미확인';
         };
         function dlRender() {
             const lbl = $dl('bb-dlog-date-lbl'), kpi = $dl('bb-dlog-kpi'), body = $dl('bb-dlog-body');
