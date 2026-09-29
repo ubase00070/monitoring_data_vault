@@ -489,15 +489,20 @@
         .bb-oth { width:648px; }   /* 318×2 + 12 */
         .bb-scroll {   /* 영역 안의 카드 칸 — 넘치면 이 칸만 스크롤 (스크롤바는 숨기고 휠로 이동). 안쪽 여백 2px + 음수 마진 2px = 위치는 그대로, 카드 호버 테두리가 잘리지 않게 하는 용도 */
             display:grid; grid-auto-rows:var(--row-h); row-gap:var(--row-gap); align-content:start;
-            box-sizing:border-box; padding:2px; margin:-2px; min-height:0; overflow-y:auto; overflow-x:hidden; scrollbar-width:none;
+            box-sizing:border-box; padding:2px; margin:-2px; min-height:0; overflow-y:auto; overflow-x:hidden;
         }
-        .bb-scroll::-webkit-scrollbar { display:none; }
+        .bb-scroll::-webkit-scrollbar { width:8px; }   /* 카드가 넘칠 때만 나타남 — 나타나면 카드가 8px 좁아지며 자리를 내줌 */
+        .bb-scroll::-webkit-scrollbar-track { background:rgba(0,0,0,.08); border-radius:4px; }
+        .bb-scroll::-webkit-scrollbar-thumb { background:var(--mu); border-radius:4px; }
+        .bb-scroll::-webkit-scrollbar-thumb:hover { background:var(--tx); }
+        @supports not selector(::-webkit-scrollbar) { .bb-scroll { scrollbar-width:thin; scrollbar-color:var(--mu) rgba(0,0,0,.08); } }
+        .bb-row-star { flex-shrink:0; margin-left:-2px; font-size:12px; line-height:1; color:#d4a017; }   /* 순찰/배달 열로 옮겨 간 즐겨찾기 기체 표시 */
         .bb-fcol > .bb-scroll { flex:1 1 auto; }
         .bb-sec-patrol { flex:0 0 auto; height:calc(14 * var(--row-h) + 13 * var(--row-gap) + 4px); }   /* 순찰 중 = 14칸 고정 */
         .bb-sec-deliv { flex:1 1 auto; }                                                                  /* 배달 중 = 남은 5칸 */
         .bb-scroll:empty { align-content:center; }
         .bb-scroll:empty::after { content:attr(data-empty); text-align:center; font-size:12.5px; line-height:1.4; color:var(--mu); }
-        .bb-list { grid-template-columns:repeat(2,318px); column-gap:12px; grid-auto-flow:column; }   /* 그 외: 3열 → 4열 순서로 세로 우선 채움 (행 수는 JS 가 지정) */
+        .bb-list { grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:12px; grid-auto-flow:column; }   /* 그 외: 3열 → 4열 순서로 세로 우선 채움 (행 수는 JS 가 지정) */
         .bb-scroll.bb-drop-over { background:rgba(96,165,250,.10); border-radius:8px; }
         /* 제목 줄: 카드 1줄과 같은 높이 · 글자는 크게 · 색 = 즐겨찾기 골드 / 순찰 파랑 / 배달 핑크 / 그 외 검정 */
         .bb-colhd {
@@ -510,7 +515,8 @@
         .bb-colhd.fav .n { background:rgba(63,46,0,.15); }
         .bb-colhd.patrol { background:#3b82f6; border-color:#2563eb; color:#fff; }
         .bb-colhd.deliv  { background:#ff1493; border-color:#d10a77; color:#fff; }
-        .bb-colhd.oth    { background:#2b2418; border-color:#000; color:#f8f3e6; }
+        .bb-colhd.oth    { background:#a3a9b2; border-color:#737a85; color:#1f2328; }
+        .bb-colhd.oth .n { background:rgba(255,255,255,.4); }
         .bb-colhd.warn   { background:#ef4444; border-color:#b91c1c; color:#fff; }
         .bb-oth-hd { display:grid; grid-template-columns:318px 318px; column-gap:12px; flex:0 0 auto; }   /* 3열 제목(그 외) | 4열 제목 자리(이름 순 정렬 / 카드 제거 버튼) */
         .bb-tools { display:flex; gap:6px; align-items:stretch; height:var(--row-h); }
@@ -2183,18 +2189,24 @@
         const pick = arr => arr.map(id => DB.find(x => x.id === id)).filter(Boolean);
         const favRobots = pick(favIds);
         const robots    = pick(ids);
-        // 즐겨찾기가 아닌 기체는 현재 상태로 자동 분류 (ids 순서를 그대로 따르므로 이름 순 정렬도 영역마다 따로 적용됨)
-        const patrolRobots   = robots.filter(r => r.status === 'patrolling');
-        const deliveryRobots = robots.filter(r => r.status === 'delivering');
-        const otherRobots    = robots.filter(r => r.status !== 'patrolling' && r.status !== 'delivering');
+        // 현재 상태로 자동 분류: 순찰 중 → 2열 위, 배달 중 → 2열 아래. 즐겨찾기 기체도 순찰/배달 중이면 그쪽 열로 가고(★ 표시), 끝나면 즐겨찾기로 돌아옴
+        // 각 열 안에서는 즐겨찾기 기체가 먼저, 그다음 일반 기체 (각각 ids/favIds 순서 = 이름 순 정렬도 따로 적용됨)
+        const isP = r => r.status === 'patrolling', isD = r => r.status === 'delivering';
+        const favHere        = favRobots.filter(r => !isP(r) && !isD(r));
+        const patrolRobots   = [...favRobots.filter(isP), ...robots.filter(isP)];
+        const deliveryRobots = [...favRobots.filter(isD), ...robots.filter(isD)];
+        const otherRobots    = robots.filter(r => !isP(r) && !isD(r));
+        const favRow = r => { const row = makeRow(r, true); const dot = row.querySelector('.bb-row-dot'); const st = document.createElement('span'); st.className = 'bb-row-star'; st.textContent = '★'; st.title = '즐겨찾기'; if (dot) dot.after(st); return row; };
 
         const bodies = [fav, colP, colD, list];
         const keep = bodies.map(el => el.scrollTop);   // 2분마다 다시 그려도 보던 스크롤 위치 유지
-        fav.replaceChildren(...favRobots.map(r => makeRow(r, true)));   // 비면 :empty 안내 문구가 보임
-        colP.replaceChildren(...patrolRobots.map(r => makeRow(r, false)));
-        colD.replaceChildren(...deliveryRobots.map(r => makeRow(r, false)));
+        fav.replaceChildren(...favHere.map(r => makeRow(r, true)));   // 비면 :empty 안내 문구가 보임
+        colP.replaceChildren(...patrolRobots.map(r => favIds.includes(r.id) ? favRow(r) : makeRow(r, false)));
+        colD.replaceChildren(...deliveryRobots.map(r => favIds.includes(r.id) ? favRow(r) : makeRow(r, false)));
         const setN = (id, txt) => { const n = document.querySelector(`#${id} .n`); if (n) n.textContent = txt; };
         setN('bb-hd-fav', `${favRobots.length}/${FAV_MAX}`);
+        const hdFav = document.getElementById('bb-hd-fav');
+        if (hdFav) hdFav.title = favRobots.length > favHere.length ? `즐겨찾기 ${favRobots.length}대 — 순찰/배달 중인 ${favRobots.length - favHere.length}대는 해당 열에 ★ 로 표시됩니다` : `즐겨찾기 ${favRobots.length}대`;
         setN('bb-hd-patrol', patrolRobots.length);
         setN('bb-hd-deliv', deliveryRobots.length);
         setN('bb-hd-oth', otherRobots.length);
