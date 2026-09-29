@@ -2274,8 +2274,10 @@
         const cmp = _sortMode === 'status' ? statusCmp : nameCmp;   // 모든 열 공통 정렬 (이름순 ↔ 상태별)
         const favHere = favRobots.slice().sort(cmp);
         const shown = robots.filter(r => !skip(r));
-        const deliveryRobots = shown.filter(isD).sort(cmp);
-        const otherRobots = shown.filter(r => !isD(r)).sort(cmp);
+        // 열 안에서는 그 열의 본업 기체(순찰 열 = 순찰 중, 배달 열 = 배달 중)가 항상 맨 앞 → 나머지는 선택한 정렬(이름순/상태별)
+        const first = st => (x, y) => ((y.status === st) - (x.status === st)) || cmp(x, y);
+        const deliveryRobots = shown.filter(isD).sort(first('delivering'));
+        const otherRobots = shown.filter(r => !isD(r)).sort(first('patrolling'));
 
         const bodies = [fav, colD, list];
         const keep = bodies.map(el => el.scrollTop);   // 2분마다 다시 그려도 보던 스크롤 위치 유지
