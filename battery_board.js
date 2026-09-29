@@ -485,6 +485,10 @@
             display:flex; flex-direction:column; gap:var(--row-gap);
             outline:2px solid var(--bd2); outline-offset:3px; border-radius:8px;   /* 다중 모니터링 영역(.bb-mm-box) 테두리와 같은 색·두께. 열 사이 간격 12px 안에 들어가도록 offset 3px */
         }
+        /* 영역 외곽선: 각 제목 줄과 같은 색의 얇은 선 (즐겨찾기 골드 / 순찰 파랑 / 배달 핑크) */
+        .bb-fcol { outline:1px solid #f2c230; }
+        .bb-oth  { outline:1px solid #3b82f6; }
+        .bb-mid  { outline:1px solid #ff1493; }
         .bb-fcol, .bb-mid { width:318px; }
         .bb-oth { width:648px; }   /* 순찰 기체 = 2·3열 */   /* 318×2 + 12 */
         .bb-scroll {   /* 영역 안의 카드 칸 — 넘치면 이 칸만 스크롤 (스크롤바는 숨기고 휠로 이동). 안쪽 여백 2px + 음수 마진 2px = 위치는 그대로, 카드 호버 테두리가 잘리지 않게 하는 용도 */
