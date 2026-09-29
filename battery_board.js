@@ -93,7 +93,7 @@
             display:none; position:fixed; top:50%; left:50%;
             transform:translate(-50%,-50%);
             width:1714px;   /* 1490px 대비 +15% — 우측 다중 모니터링 영역 확보 */
-            height:980px; max-height:100vh; overflow-y:auto; overflow-x:hidden;   /* 기본 크기 = 즐겨찾기 20대 + 안내 문구가 들어가는 높이 (955 = 104 + 20 + 774 + 51 + 6) + 여유 25px.
+            height:990px; max-height:100vh; overflow-y:auto; overflow-x:hidden;   /* 기본 크기 = 즐겨찾기 20대 + 안내 문구가 들어가는 높이 (955 = 104 + 20 + 774 + 51 + 6) + 여유 25px.
                즐겨찾기가 정확히 최대(20대)일 때 예전엔 여유가 0이라 카드 실측 높이가 ROW_H(33px) 가정과 1~2px만 어긋나도(줄간격 렌더링 반올림) 카드 영역(.bb-list-wrap)에 스크롤이 생겼음 — 그 여유분 */
             border:3px solid transparent; border-radius:16px;
             background-image: var(--bg-fill), linear-gradient(135deg, #d9b8ff, #9333ea);
@@ -478,41 +478,94 @@
                브라우저 네이티브 스크롤바가 둥근 모서리 자리에서 어긋나게 그려지면서(특히 스크롤 중) 빨간 테두리가
                스크롤바에 걸려 잘려 보이는 현상이 있었음. 각진 테두리로 바꿔 스크롤바와 겹치는 자리를 없앰 */
         }
-        .bb-lists { display:flex; align-items:stretch; gap:12px; min-height:420px; min-height:max(420px, 100%); }   /* 즐겨찾기 테두리가 카드 끝까지 이어지도록 내용 높이만큼 늘어남 */
-        /* 1열 = 즐겨찾기: 여기에 끌어다 놓으면 이름 순 정렬을 해도 일반 기체와 섞이지 않고 이 영역 안에서만 정렬됨 */
-        .bb-fav {
-            flex:0 0 318px; width:318px; box-sizing:border-box;
-            display:flex; flex-direction:column; gap:5px;
-            outline:2px solid var(--bd2); outline-offset:5px; border-radius:8px;   /* 다중 모니터링 영역(.bb-mm-box) 테두리와 같은 색(--bd2)·두께(2px). outline 이라 카드 폭에 영향 없음 */
+        /* 카드 영역 = [즐겨찾기] [순찰 중 + 배달 중] [그 외 (2열)] — 각 영역은 '제목 줄(카드 1줄 높이) + 카드 칸'이고, 카드가 넘치면 그 영역 안에서만 스크롤됨 */
+        .bb-lists { --row-h:33px; --row-gap:5px; --col-h:793px; display:flex; align-items:flex-start; gap:12px; }   /* 793 = 제목 1줄 + 카드 20줄 (33×21 + 5×20) */
+        .bb-fcol, .bb-mid, .bb-oth {
+            position:relative; height:var(--col-h); box-sizing:border-box; flex:0 0 auto;
+            display:flex; flex-direction:column; gap:var(--row-gap);
+            outline:2px solid var(--bd2); outline-offset:3px; border-radius:8px;   /* 다중 모니터링 영역(.bb-mm-box) 테두리와 같은 색·두께. 열 사이 간격 12px 안에 들어가도록 offset 3px */
         }
-        .bb-fav:empty::before {
-            content:'즐겨찾기 - 카드를 끌어다 놓으세요(최대 20대).'; margin:auto; padding:0 12px;
-            text-align:center; font-size:13px; color:var(--mu);
+        .bb-fcol, .bb-mid { width:318px; }
+        .bb-oth { width:648px; }   /* 318×2 + 12 */
+        .bb-scroll {   /* 영역 안의 카드 칸 — 넘치면 이 칸만 스크롤 (스크롤바는 숨기고 휠로 이동). 안쪽 여백 2px + 음수 마진 2px = 위치는 그대로, 카드 호버 테두리가 잘리지 않게 하는 용도 */
+            display:grid; grid-auto-rows:var(--row-h); row-gap:var(--row-gap); align-content:start;
+            box-sizing:border-box; padding:2px; margin:-2px; min-height:0; overflow-y:auto; overflow-x:hidden;
         }
-        .bb-fav:not(:empty)::after {   /* 기체가 들어 있을 때: 영역 하단에 작은 안내 (비어 있을 때는 위의 가운데 문구) */
-            content:var(--fav-note, '즐겨찾기 - 카드를 끌어다 놓으세요(최대 20대).');   /* 가득 찼을 때는 JS 가 --fav-note 로 경고 문구를 잠깐 씀 */
-            position:sticky; bottom:4px; margin-top:auto; padding-top:2px;   /* 영역이 길어 스크롤돼도 보이는 하단에 고정 */
-            text-align:center; font-size:11px; line-height:13px; color:var(--mu); opacity:.85;
-            text-shadow:0 0 3px var(--bg), 0 0 3px var(--bg);   /* 카드 위에 걸쳐도 읽히도록 */
-            pointer-events:none;
+        .bb-scroll::-webkit-scrollbar { width:8px; }   /* 카드가 넘칠 때만 나타남 — 나타나면 카드가 8px 좁아지며 자리를 내줌 */
+        .bb-scroll::-webkit-scrollbar-track { background:rgba(0,0,0,.08); border-radius:4px; }
+        .bb-scroll::-webkit-scrollbar-thumb { background:var(--mu); border-radius:4px; }
+        .bb-scroll::-webkit-scrollbar-thumb:hover { background:var(--tx); }
+        @supports not selector(::-webkit-scrollbar) { .bb-scroll { scrollbar-width:thin; scrollbar-color:var(--mu) rgba(0,0,0,.08); } }
+        .bb-row-star { flex-shrink:0; margin-left:-2px; font-size:12px; line-height:1; color:#d4a017; }   /* 순찰/배달 열로 옮겨 간 즐겨찾기 기체 표시 */
+        .bb-fcol > .bb-scroll { flex:1 1 auto; width:322px; }   /* 폭 고정: 접히는 동안 내용이 다시 배치되지 않고 잘리며 슬라이드됨 */
+        .bb-fcol > .bb-colhd { width:318px; }
+        /* 즐겨찾기 열 접기: 접으면 왼쪽 골드 세로줄(레일)이 되고, 오른쪽 열들이 왼쪽으로 슬라이드해서 당겨짐 */
+        .bb-fcol { overflow:clip; overflow-clip-margin:4px; transition:width .3s cubic-bezier(.4,0,.2,1); }
+        .bb-fcol.collapsed { width:46px; }
+        .bb-fcol > .bb-colhd, .bb-fcol > .bb-scroll { visibility:visible; transition:visibility 0s; }
+        .bb-fcol.collapsed > .bb-colhd, .bb-fcol.collapsed > .bb-scroll { visibility:hidden; transition:visibility 0s .3s; }   /* 접힌 뒤에는 클릭/포커스도 막음 */
+        .bb-colhd.fav { position:relative; }
+        .bb-fold, .bb-fold-rail .ar {
+            width:24px; height:24px; padding:0; flex:none; border-radius:6px; border:1px solid rgba(63,46,0,.35);
+            background:rgba(63,46,0,.12); color:#3f2e00; cursor:pointer; display:flex; align-items:center; justify-content:center;
         }
-        .bb-fav.warn::after { color:var(--rd); opacity:1; font-weight:700; }
-        .bb-list {   /* 일반 기체: 3열 (세로 우선 채움 → 위→아래로 채워짐. 행 수는 JS가 지정) */
-            flex:0 0 auto; display:grid; align-content:start;
-            grid-template-columns:repeat(3,318px);
-            grid-auto-flow:column;
-            gap:5px 12px;
+        .bb-fold:hover, .bb-fold-rail .ar:hover { background:rgba(63,46,0,.26); }
+        .bb-fold svg, .bb-fold-rail .ar svg { width:14px; height:14px; display:block; }
+        .bb-fold { position:absolute; left:5px; top:50%; transform:translateY(-50%); }
+        .bb-fold-rail {
+            position:absolute; left:0; top:0; bottom:0; width:46px; box-sizing:border-box; z-index:3;
+            display:flex; flex-direction:column; align-items:center; gap:10px; padding:6px 0 10px;
+            border-radius:8px; border:1.5px solid #c79a0a; background:#f2c230; color:#3f2e00; cursor:pointer;
+            opacity:0; pointer-events:none; transition:opacity .12s;
         }
-        .bb-fav.bb-drop-over, .bb-list.bb-drop-over { background:rgba(96,165,250,.10); border-radius:8px; }
-        .bb-tools {   /* 4열(카드 영역 맨 오른쪽 열)의 첫 칸 — 그 칸 크기(318 × 카드 높이) 안에서 두 버튼이 반반. JS 가 항상 1행에 고정 배치 */
-            grid-column:3; grid-row:1;
-            position:sticky; top:0; z-index:3;   /* 스크롤이 생겨도 카드 영역 오른쪽 맨 위에 고정 */
-            display:flex; gap:6px; align-items:stretch;
+        .bb-fcol.collapsed .bb-fold-rail { opacity:1; pointer-events:auto; transition:opacity .2s .12s; }
+        .bb-fold-rail:hover { filter:brightness(1.06); }
+        .bb-fold-rail .rt { writing-mode:vertical-rl; font-size:18px; letter-spacing:3px; white-space:nowrap; }
+        #bb .bb-fold-rail .rt { font-weight:700 !important; }
+        .bb-fold-rail .rn { min-width:26px; height:20px; padding:0 6px; box-sizing:border-box; border-radius:10px; font-size:13px; line-height:20px; text-align:center; background:rgba(63,46,0,.15); }
+        .bb-fold-rail.warn { background:#ef4444; border-color:#b91c1c; color:#fff; }
+        .bb-fold-rail.warn .rn { background:rgba(255,255,255,.28); }
+        .bb-fold-rail.bb-drop-over { filter:brightness(1.12); }
+        /* 정렬 방식 토글 (이름순 ↔ 상태별): 두 선택지가 처음부터 나란히 보이고, 노란 알약이 현재 방식 쪽에 놓임 */
+        .bb-sortseg {
+            position:relative; flex:1 1 0; min-width:0; height:var(--row-h); box-sizing:border-box; padding:2px;
+            display:grid; grid-template-columns:1fr 1fr; align-items:center; border-radius:8px; border:1.5px solid var(--bd2);
+            background:var(--sur2); cursor:pointer; user-select:none; outline:none;
         }
+        .bb-sortseg:hover, .bb-sortseg:focus-visible { border-color:var(--mu); }
+        .bb-sortseg .thumb {
+            position:absolute; top:2px; bottom:2px; left:2px; width:calc(50% - 2px); box-sizing:border-box; border-radius:6px;
+            background:#fff3b5; border:1.5px solid #d9bd45; box-shadow:0 1px 3px rgba(0,0,0,.2);
+            transition:transform .22s cubic-bezier(.4,0,.2,1);
+        }
+        .bb-sortseg.status .thumb { transform:translateX(100%); }
+        .bb-sortseg .seg { position:relative; z-index:1; text-align:center; font-size:13.5px; white-space:nowrap; color:var(--mu); transition:color .2s; }
+        #bb .bb-sortseg .seg { font-weight:700 !important; }
+        .bb-sortseg:not(.status) .seg[data-mode="name"], .bb-sortseg.status .seg[data-mode="status"] { color:#4a3f0d; }
+        .bb-sec-patrol { flex:0 0 auto; height:calc(14 * var(--row-h) + 13 * var(--row-gap) + 4px); }   /* 순찰 중 = 14칸 고정 */
+        .bb-sec-deliv { flex:1 1 auto; }                                                                  /* 배달 중 = 남은 5칸 */
+        .bb-scroll:empty { align-content:center; }
+        .bb-scroll:empty::after { content:attr(data-empty); text-align:center; font-size:12.5px; line-height:1.4; color:var(--mu); }
+        .bb-list { grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:12px; grid-auto-flow:column; }   /* 그 외: 3열 → 4열 순서로 세로 우선 채움 (행 수는 JS 가 지정) */
+        .bb-scroll.bb-drop-over { background:rgba(96,165,250,.10); border-radius:8px; }
+        /* 제목 줄: 카드 1줄과 같은 높이 · 글자는 크게 · 색 = 즐겨찾기 골드 / 순찰 파랑 / 배달 핑크 / 그 외 검정 */
+        .bb-colhd {
+            height:var(--row-h); flex:0 0 auto; box-sizing:border-box; display:flex; align-items:center; justify-content:center; gap:8px;
+            border-radius:8px; border:1.5px solid; font-size:18px; letter-spacing:.3px; white-space:nowrap; overflow:hidden;
+        }
+        #bb .bb-colhd { font-weight:700 !important; }
+        .bb-colhd .n { min-width:26px; height:20px; padding:0 7px; border-radius:10px; font-size:13px; line-height:20px; text-align:center; background:rgba(255,255,255,.28); }
+        .bb-colhd.fav    { background:#f2c230; border-color:#c79a0a; color:#3f2e00; }
+        .bb-colhd.fav .n { background:rgba(63,46,0,.15); }
+        .bb-colhd.patrol { background:#3b82f6; border-color:#2563eb; color:#fff; }
+        .bb-colhd.deliv  { background:#ff1493; border-color:#d10a77; color:#fff; }
+        .bb-colhd.oth    { background:#a3a9b2; border-color:#737a85; color:#1f2328; }
+        .bb-colhd.oth .n { background:rgba(255,255,255,.4); }
+        .bb-colhd.warn   { background:#ef4444; border-color:#b91c1c; color:#fff; }
+        .bb-oth-hd { display:grid; grid-template-columns:318px 318px; column-gap:12px; flex:0 0 auto; }   /* 3열 제목(그 외) | 4열 제목 자리(이름 순 정렬 / 카드 제거 버튼) */
+        .bb-tools { display:flex; gap:6px; align-items:stretch; height:var(--row-h); }
         .bb-tool-btn { flex:1 1 0; min-width:0; height:33px; padding:0 8px; gap:6px; font-size:14px; }
         .bb-tool-btn.rm { min-width:0; }
-        #bb-sortname-btn { background:#fff3b5; border-color:#e0c96a; color:#4a3f0d; }              /* 이름 순 정렬: 파스텔 연노랑 */
-        #bb-sortname-btn:hover { background:#ffec96; border-color:#d0b64f; }
         #bb-rmbtn { background:#ffd9e4; border-color:#f2a7bf; color:#5c2233; }                     /* 카드 제거: 파스텔 연핑크 */
         #bb-rmbtn:hover { background:#ffc9d9; border-color:#ea86a5; }
         #bb-rmbtn.rm { background:#ff9fbb; border-color:#e5557f; color:#7f1236; }                  /* 제거 모드(완료 대기): 진한 핑크로 활성 표시 */
@@ -520,7 +573,7 @@
         .bb-tool-ico { display:inline-flex; width:16px; height:16px; flex-shrink:0; }
         .bb-tool-ico svg { width:16px; height:16px; display:block; }
         .bb-list-empty {
-            grid-column:1 / -1; padding:56px 0; text-align:center;
+            grid-column:1 / -1; grid-row:1; padding:56px 8px; text-align:center;
             font-size:15px; color:var(--mu);
         }
 
@@ -1273,14 +1326,37 @@
                 <div class="bb-main">
                     <div class="bb-list-wrap">
                       <div class="bb-lists">
-                        <div class="bb-fav" id="bb-fav" title="즐겨찾기(최대 20대) — 여기에 끌어다 놓은 기체는 이 영역 안에서만 정렬됩니다"></div>
-                        <div class="bb-list" id="bb-list">
-                        <!-- 4열(카드 영역 맨 오른쪽 열)의 맨 위 1칸: 이름 순 정렬 / 카드 제거. 스크롤이 생겨도 이 자리에 고정 -->
-                        <div class="bb-tools" id="bb-tools">
-                            <button class="bb-btn bb-tool-btn" id="bb-sortname-btn" title="즐겨찾기 영역과 일반 영역을 각각 이름 순으로 정렬"><span class="bb-tool-ico">${ICON_SORT}</span><span class="bb-tool-lbl">이름 순 정렬</span></button>
-                            <button class="bb-btn bb-tool-btn" id="bb-rmbtn" title="카드를 골라서 목록에서 제거"><span class="bb-tool-ico">${ICON_TRASH}</span><span class="bb-tool-lbl">카드 제거</span></button>
+                        <!-- 1열: 즐겨찾기 (최대 20대) -->
+                        <div class="bb-fcol" id="bb-fcol">
+                            <div class="bb-colhd fav" id="bb-hd-fav">
+                                <button class="bb-fold" id="bb-fold-btn" title="즐겨찾기 열 접기"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3L5 8l5 5"/></svg></button>
+                                <span class="t">즐겨찾기</span><span class="n">0/20</span>
+                            </div>
+                            <div class="bb-scroll" id="bb-fav" data-empty="카드를 끌어다 놓으세요 (최대 20대)" title="즐겨찾기(최대 20대) — 여기에 끌어다 놓은 기체는 이 영역 안에서만 정렬됩니다"></div>
+                            <div class="bb-fold-rail" id="bb-fold-rail" title="즐겨찾기 펼치기">
+                                <button class="ar" tabindex="-1"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3l5 5-5 5"/></svg></button>
+                                <span class="rn">0</span>
+                                <span class="rt">즐겨찾기</span>
+                            </div>
                         </div>
-                    </div>
+                        <!-- 2열: 순찰 중(14칸) + 배달 중(남은 5칸) -->
+                        <div class="bb-mid">
+                            <div class="bb-colhd patrol" id="bb-hd-patrol"><span class="t">순찰 중</span><span class="n">0</span></div>
+                            <div class="bb-scroll bb-sec-patrol" id="bb-col-patrol" data-empty="순찰 중인 기체 없음" title="순찰 중인 기체 (자동 분류)"></div>
+                            <div class="bb-colhd deliv" id="bb-hd-deliv"><span class="t">배달 중</span><span class="n">0</span></div>
+                            <div class="bb-scroll bb-sec-deliv" id="bb-col-deliv" data-empty="배달 중인 기체 없음" title="배달 중인 기체 (자동 분류)"></div>
+                        </div>
+                        <!-- 3~4열: 그 외 (3열 제목 = 그 외 / 4열 제목 자리 = 이름 순 정렬, 카드 제거) -->
+                        <div class="bb-oth">
+                            <div class="bb-oth-hd">
+                                <div class="bb-colhd oth" id="bb-hd-oth"><span class="t">그 외</span><span class="n">0</span></div>
+                                <div class="bb-tools" id="bb-tools">
+                                    <div class="bb-sortseg" id="bb-sortname-btn" role="switch" aria-checked="false" tabindex="0"><i class="thumb"></i><span class="seg" data-mode="name">이름순</span><span class="seg" data-mode="status">상태별</span></div>
+                                    <button class="bb-btn bb-tool-btn" id="bb-rmbtn" title="카드를 골라서 목록에서 제거"><span class="bb-tool-ico">${ICON_TRASH}</span><span class="bb-tool-lbl">카드 제거</span></button>
+                                </div>
+                            </div>
+                            <div class="bb-scroll bb-list" id="bb-list" data-empty="해당 기체 없음"></div>
+                        </div>
                       </div>
                     </div>
 
@@ -1523,6 +1599,39 @@
     let currentAlertType = null;
     let _patrolReady = false;   // SECTION 16(다중 모니터링) 초기화 끝난 뒤 true
     let currentAlerts = [];
+    // 정렬 / 열 분류 설정 (render() 가 열 때 바로 쓰므로 여기서 먼저 선언)
+    const SORT_MODE_KEY = 'bb_sort_mode';
+    let _sortMode = 'name';   // 'name' = 이름 순 / 'status' = 상태별
+    try { if (localStorage.getItem(SORT_MODE_KEY) === 'status') _sortMode = 'status'; } catch {}
+    // 이름 순 정렬 예외: 아래 묶음의 기체는 정렬해도 항상 '이 순서대로' 붙어 있음 (묶음 전체는 묶음 안에서 이름이 가장 앞서는 기체의 자리에 놓임)
+    //   기체명 비교는 공백을 빼고 전각 문자(예: '１')를 반각으로 바꾼 값으로 하므로 띄어쓰기/전각 차이에 영향받지 않음. 묶음을 추가/수정하려면 여기만 고치면 됨.
+    const SORT_PINNED_GROUPS = [
+        ['배송 띠띠', '순찰 띠띠'],
+        ['두비', '달비'],
+        ['성남시 판교역 1호기', '성남시 서현역 1호기', '성남시 율동공원 1호기', '성남시 야탑역 1호기'],
+    ];
+    const sortNormName = n => String(n || '').normalize('NFKC').replace(/\s+/g, '');
+    const sortPinInfo = (() => {   // 정규화한 기체명 → { rep: 묶음 대표 이름(묶음 내 이름순 최상위), idx: 묶음 내 순서 }
+        const m = new Map();
+        SORT_PINNED_GROUPS.forEach(g => {
+            const rep = [...g].sort((x, y) => x.localeCompare(y, 'ko', { numeric: true }))[0];
+            g.forEach((n, idx) => m.set(sortNormName(n), { rep, idx }));
+        });
+        return m;
+    })();
+
+    const sortStatusRank = { charging: 0, docking: 1, standby: 2, off: 3 };   // 상태별 정렬 순서: 충전 중 → 도킹 중 → 대기 중 → OFF (그 밖은 맨 뒤)
+    function nameCmp(a, b) {   // 기체 객체 비교: 이름 순 (SORT_PINNED_GROUPS 묶음은 항상 지정한 순서로 붙어 있음)
+        const pa = sortPinInfo.get(sortNormName(a.name)), pb = sortPinInfo.get(sortNormName(b.name));
+        const c = (pa ? pa.rep : a.name).localeCompare(pb ? pb.rep : b.name, 'ko', { numeric: true });   // 1호기 < 2호기 < 10호기
+        if (c !== 0) return c;
+        if (pa && pb) return pa.idx - pb.idx;
+        return a.name.localeCompare(b.name, 'ko', { numeric: true });
+    }
+    function statusCmp(a, b) { return ((sortStatusRank[a.status] ?? 4) - (sortStatusRank[b.status] ?? 4)) || nameCmp(a, b); }
+    // 열 분류 예외: 이 기체는 순찰 중/배달 중이어도 해당 열에 넣지 않음 ('그 외' 또는 즐겨찾기 열에 표시)
+    const PATROL_COL_EXCLUDE = ['순찰 띠띠'].map(n => sortNormName(n));
+    const DELIVERY_COL_EXCLUDE = ['배송 띠띠'].map(n => sortNormName(n));
 
     function loadDismissed() {
         try {
@@ -2157,39 +2266,53 @@
     function render() {
         const list = document.getElementById('bb-list');
         const fav  = document.getElementById('bb-fav');
-        if (!list || !fav) return;
+        const colP = document.getElementById('bb-col-patrol');
+        const colD = document.getElementById('bb-col-deliv');
+        if (!list || !fav || !colP || !colD) return;
         const pick = arr => arr.map(id => DB.find(x => x.id === id)).filter(Boolean);
         const favRobots = pick(favIds);
         const robots    = pick(ids);
+        // 현재 상태로 자동 분류: 순찰 중 → 2열 위, 배달 중 → 2열 아래. 즐겨찾기 기체도 순찰/배달 중이면 그쪽 열로 가고(★ 표시), 끝나면 즐겨찾기로 돌아옴
+        // 순찰/배달 열 안에서는 즐겨찾기 기체가 먼저, 그다음 일반 기체 (각각 이름 순)
+        const isP = r => r.status === 'patrolling' && !PATROL_COL_EXCLUDE.includes(sortNormName(r.name));
+        const isD = r => r.status === 'delivering' && !DELIVERY_COL_EXCLUDE.includes(sortNormName(r.name));
+        const grpCmp = _sortMode === 'status' ? statusCmp : nameCmp;   // 즐겨찾기/그 외 열의 정렬
+        const favHere        = favRobots.filter(r => !isP(r) && !isD(r)).sort(grpCmp);
+        const favSet = new Set(favIds);
+        // 순찰/배달 열: 이름 순 모드 = 즐겨찾기·일반 구분 없이 이름 순 / 상태별 모드 = 즐겨찾기(★) 먼저, 그다음 일반 (각각 이름 순)
+        const orderCol = list => _sortMode === 'name' ? list.sort(nameCmp)
+            : [...list.filter(r => favSet.has(r.id)).sort(nameCmp), ...list.filter(r => !favSet.has(r.id)).sort(nameCmp)];
+        const patrolRobots   = orderCol([...favRobots.filter(isP), ...robots.filter(isP)]);
+        const deliveryRobots = orderCol([...favRobots.filter(isD), ...robots.filter(isD)]);
+        const otherRobots    = robots.filter(r => !isP(r) && !isD(r)).sort(grpCmp);
+        const favRow = r => { const row = makeRow(r, true); const dot = row.querySelector('.bb-row-dot'); const st = document.createElement('span'); st.className = 'bb-row-star'; st.textContent = '★'; st.title = '즐겨찾기'; if (dot) dot.after(st); return row; };
 
-        fav.replaceChildren(...favRobots.map(r => makeRow(r, true)));   // 비면 :empty 안내 문구가 보임
+        const bodies = [fav, colP, colD, list];
+        const keep = bodies.map(el => el.scrollTop);   // 2분마다 다시 그려도 보던 스크롤 위치 유지
+        fav.replaceChildren(...favHere.map(r => makeRow(r, true)));   // 비면 :empty 안내 문구가 보임
+        colP.replaceChildren(...patrolRobots.map(r => favIds.includes(r.id) ? favRow(r) : makeRow(r, false)));
+        colD.replaceChildren(...deliveryRobots.map(r => favIds.includes(r.id) ? favRow(r) : makeRow(r, false)));
+        const setN = (id, txt) => { const n = document.querySelector(`#${id} .n`); if (n) n.textContent = txt; };
+        setN('bb-hd-fav', `${favRobots.length}/${FAV_MAX}`);
+        const rail = document.getElementById('bb-fold-rail');   // 접힌 즐겨찾기 레일: 등록된 대수 표시
+        if (rail) { rail.querySelector('.rn').textContent = favRobots.length; rail.title = `즐겨찾기 ${favRobots.length}대 — 클릭: 펼치기`; }
+        const hdFav = document.getElementById('bb-hd-fav');
+        if (hdFav) hdFav.title = favRobots.length > favHere.length ? `즐겨찾기 ${favRobots.length}대 — 순찰/배달 중인 ${favRobots.length - favHere.length}대는 해당 열에 ★ 로 표시됩니다` : `즐겨찾기 ${favRobots.length}대`;
+        setN('bb-hd-patrol', patrolRobots.length);
+        setN('bb-hd-deliv', deliveryRobots.length);
+        setN('bb-hd-oth', otherRobots.length);
 
-        const tools = document.getElementById('bb-tools');   // 정렬/제거 버튼 칸 — 카드를 다시 그려도 지우지 않음
-        [...list.children].forEach(c => { if (c !== tools) c.remove(); });
-        // 세로 우선 흐름: 열당 행 수를 지정해야 위→아래로 채워짐. 한 열을 다 채운 뒤 다음 열로.
-        // 맨 오른쪽 열(4열)의 맨 위 1칸은 이름 순 정렬/카드 제거 버튼 자리라 카드가 들어갈 수 없으므로 칸 수에 +1
-        // 버튼 칸이 (grid-row:1 로) 맨 위 첫 칸을 차지하고 나면, grid-auto-flow:column 이 그 칸을 건너뛰고 나머지 칸에 카드를 세로로 채운다
-        // ※ 예전엔 여기서 최소 MAIN_ROWS(20)행을 강제했는데, 기체가 적을 때도 항상 20행분 높이를 예약해버려서
-        //    실제 카드는 다 안 채워졌는데도(꽉 찬 것도 아닌데) 그 예약된 빈 칸들 때문에 카드 영역에 스크롤바가 생기는 문제가 있었음.
-        //    필요한 만큼만 행을 잡도록 바꿨었지만, 이번엔 그 반대 문제가 보고됨:
-        //    즐겨찾기 열은 (.bb-lists 의 align-items:stretch 로) 항상 자기 행 수만큼 .bb-list 박스 전체 높이를 늘려놓는데,
-        //    .bb-list 자신의 grid 행 수(rowsN)는 총 개수로만 계산해서 그보다 적게 나오면, 그 차이만큼 3열 전부의 하단이
-        //    똑같이 비어 보이면서도(align-content:start라 아래로 안 늘어남) 카드는 그 빈 칸을 못 쓰고 다음 열로 넘어감.
-        //    → 즐겨찾기 행 수만큼은 최소한 맞춰서 그 여유 공간을 실제 카드가 쓰도록 함.
-        //      (예전 버그와 다름: 그때는 즐겨찾기 수와 무관하게 무조건 20행이었지만, 지금은 '지금 즐겨찾기가 실제로 쓰는 행 수'까지만
-        //       맞추므로 최대여도 FAV_MAX(20)행 — 이미 #bb 높이 예산(980px)이 즐겨찾기 20행 기준으로 여유 있게 잡혀 있어 다시 스크롤이 생기지 않음)
-        const rowsN = Math.max(Math.ceil((robots.length + 1) / LIST_COLS), favRobots.length);
-        list.style.gridTemplateRows = `repeat(${rowsN}, minmax(${ROW_H}px, auto))`;
-        if (robots.length === 0) {
-            if (favRobots.length === 0) {
-                const msg = document.createElement('div');
-                msg.className = 'bb-list-empty';
-                msg.textContent = DB.length === 0 ? '기체 데이터 로딩 중...' : '표시할 기체가 없습니다. 오른쪽 위 검색창에서 기체를 추가하세요.';
-                list.appendChild(msg);
-            }
-            return;
+        // 그 외: 2열 세로 우선 채움 (3열을 20칸 채운 뒤 4열). 40대를 넘으면 행이 늘어나고 이 영역만 스크롤
+        list.style.gridTemplateRows = `repeat(${Math.max(20, Math.ceil(otherRobots.length / 2))}, ${ROW_H}px)`;
+        if (robots.length === 0 && favRobots.length === 0) {
+            const msg = document.createElement('div');
+            msg.className = 'bb-list-empty';
+            msg.textContent = DB.length === 0 ? '기체 데이터 로딩 중...' : '표시할 기체가 없습니다. 오른쪽 위 검색창에서 기체를 추가하세요.';
+            list.replaceChildren(msg);
+        } else {
+            list.replaceChildren(...otherRobots.map(r => makeRow(r, false)));
         }
-        robots.forEach(r => list.appendChild(makeRow(r, false)));
+        bodies.forEach((el, i) => { el.scrollTop = keep[i]; });
     }
 
     // 마지막 통신 시각(ISO) → { date:'09/19', time:'17:53', short:'09/19 | 17:53', full:'2026-09-19 17:53:12' } (한국 시간 기준, 없으면 null)
@@ -3391,13 +3514,16 @@
 
     // id 를 toFav 영역으로 이동. beforeId 가 있으면 그 카드 자리에, 없으면 영역 맨 끝에 넣음
     let _favWarnTimer = null;
-    function flashFavFull() {   // 하단 안내 문구를 잠깐 경고로 바꿈 (2.5초)
-        const el = document.getElementById('bb-fav');
+    function flashFavFull() {   // 즐겨찾기 제목 줄을 잠깐 경고 문구로 바꿈 (2.5초)
+        const el = document.getElementById('bb-hd-fav');
         if (!el) return;
-        el.style.setProperty('--fav-note', `'즐겨찾기는 최대 ${FAV_MAX}대까지 등록할 수 있습니다'`);
+        const t = el.querySelector('.t');
+        t.textContent = `최대 ${FAV_MAX}대까지 등록 가능`;
         el.classList.add('warn');
+        const rail = document.getElementById('bb-fold-rail');
+        if (rail) rail.classList.add('warn');
         clearTimeout(_favWarnTimer);
-        _favWarnTimer = setTimeout(() => { el.style.removeProperty('--fav-note'); el.classList.remove('warn'); }, 2500);
+        _favWarnTimer = setTimeout(() => { t.textContent = '즐겨찾기'; el.classList.remove('warn'); if (rail) rail.classList.remove('warn'); }, 2500);
     }
     function moveRobot(id, toFav, beforeId) {
         const srcArr = favIds.includes(id) ? favIds : ids;
@@ -3419,7 +3545,22 @@
         el.addEventListener('drop',      e => { e.preventDefault(); el.classList.remove('bb-drop-over'); if (dsrc) moveRobot(dsrc, toFav, null); });
     }
     bindDropZone(document.getElementById('bb-fav'),  true);
+    bindDropZone(document.getElementById('bb-col-patrol'), false);
+    bindDropZone(document.getElementById('bb-col-deliv'), false);
     bindDropZone(document.getElementById('bb-list'), false);
+    bindDropZone(document.getElementById('bb-fold-rail'), true);   // 접힌 상태에서 카드를 레일에 놓아도 즐겨찾기로 등록
+
+    // 즐겨찾기 열 접기/펼치기 (선택은 이 PC 에 저장 — 목록 백업과는 별개)
+    const FAV_FOLD_KEY = 'bb_fav_collapsed';
+    function setFavFold(collapsed) {
+        const col = document.getElementById('bb-fcol');
+        if (!col) return;
+        col.classList.toggle('collapsed', collapsed);
+        try { localStorage.setItem(FAV_FOLD_KEY, collapsed ? '1' : '0'); } catch {}
+    }
+    try { document.getElementById('bb-fcol').classList.toggle('collapsed', localStorage.getItem(FAV_FOLD_KEY) === '1'); } catch {}
+    document.getElementById('bb-fold-btn').addEventListener('click', () => setFavFold(true));
+    document.getElementById('bb-fold-rail').addEventListener('click', () => setFavFold(false));
 
     // ============================================================
     // SECTION 12. 검색 & 드롭다운
@@ -3554,41 +3695,32 @@
         setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 1500);
     });
 
-    // 이름 순 정렬 예외: 아래 묶음의 기체는 정렬해도 항상 '이 순서대로' 붙어 있음 (묶음 전체는 묶음 안에서 이름이 가장 앞서는 기체의 자리에 놓임)
-    //   기체명 비교는 공백을 빼고 전각 문자(예: '１')를 반각으로 바꾼 값으로 하므로 띄어쓰기/전각 차이에 영향받지 않음. 묶음을 추가/수정하려면 여기만 고치면 됨.
-    const SORT_PINNED_GROUPS = [
-        ['배송 띠띠', '순찰 띠띠'],
-        ['두비', '달비'],
-        ['성남시 판교역 1호기', '성남시 서현역 1호기', '성남시 율동공원 1호기', '성남시 야탑역 1호기'],
-    ];
-    const sortNormName = n => String(n || '').normalize('NFKC').replace(/\s+/g, '');
-    const sortPinInfo = (() => {   // 정규화한 기체명 → { rep: 묶음 대표 이름(묶음 내 이름순 최상위), idx: 묶음 내 순서 }
-        const m = new Map();
-        SORT_PINNED_GROUPS.forEach(g => {
-            const rep = [...g].sort((x, y) => x.localeCompare(y, 'ko', { numeric: true }))[0];
-            g.forEach((n, idx) => m.set(sortNormName(n), { rep, idx }));
-        });
-        return m;
-    })();
-
-    document.getElementById('bb-sortname-btn').addEventListener('click', () => {
-        const byName = (a, b) => {
-            const na = DB.find(x => x.id === a)?.name || '';
-            const nb = DB.find(x => x.id === b)?.name || '';
-            const pa = sortPinInfo.get(sortNormName(na));
-            const pb = sortPinInfo.get(sortNormName(nb));
-            const ka = pa ? pa.rep : na;   // 묶음에 속한 기체는 묶음 대표 이름으로 자리를 정함
-            const kb = pb ? pb.rep : nb;
-            const c = ka.localeCompare(kb, 'ko', { numeric: true });   // 1호기 < 2호기 < 10호기
-            if (c !== 0) return c;
-            if (pa && pb) return pa.idx - pb.idx;   // 같은 묶음 → 지정한 순서
-            return na.localeCompare(nb, 'ko', { numeric: true });
-        };
-        ids.sort(byName);      // 일반 영역
-        favIds.sort(byName);   // 즐겨찾기 영역 — 서로 섞이지 않고 각자 정렬
-        save();
+    // 정렬 방식 토글: 이름 순 정렬 ↔ 상태별 정렬 (선택은 저장됨). 영역(즐겨찾기/순찰/배달/그 외)은 그대로이고 각 영역 안의 순서만 바뀜
+    function applySortBtn() {
+        const el = document.getElementById('bb-sortname-btn');
+        if (!el) return;
+        const st = _sortMode === 'status';
+        el.classList.toggle('status', st);
+        el.setAttribute('aria-checked', st ? 'true' : 'false');
+        el.title = (st ? '지금: 상태별 정렬 (충전 중 → 도킹 중 → 대기 중 → OFF, 같은 상태끼리는 이름 순 · 순찰/배달 열은 즐겨찾기 먼저)'
+                       : '지금: 이름순 정렬 (모든 열을 이름 순으로)') + ' — 클릭: 정렬 방식 전환';
+    }
+    function setSortMode(mode) {
+        if (mode === _sortMode) return;
+        _sortMode = mode;
+        try { localStorage.setItem(SORT_MODE_KEY, _sortMode); } catch {}
+        applySortBtn();
         render();
-    });
+    }
+    (function() {
+        const el = document.getElementById('bb-sortname-btn');
+        el.addEventListener('click', e => {
+            const seg = e.target.closest('.seg');
+            setSortMode(seg ? seg.dataset.mode : (_sortMode === 'status' ? 'name' : 'status'));   // 글자를 직접 누르면 그 방식으로, 그 밖(여백)을 누르면 반대쪽으로
+        });
+        el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSortMode(_sortMode === 'status' ? 'name' : 'status'); } });
+    })();
+    applySortBtn();
 
     const siEl = document.getElementById('bb-si');
     siEl.addEventListener('click', showDd);
