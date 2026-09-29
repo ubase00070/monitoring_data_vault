@@ -1549,6 +1549,39 @@
     let currentAlertType = null;
     let _patrolReady = false;   // SECTION 16(다중 모니터링) 초기화 끝난 뒤 true
     let currentAlerts = [];
+    // 정렬 / 열 분류 설정 (render() 가 열 때 바로 쓰므로 여기서 먼저 선언)
+    const SORT_MODE_KEY = 'bb_sort_mode';
+    let _sortMode = 'name';   // 'name' = 이름 순 / 'status' = 상태별
+    try { if (localStorage.getItem(SORT_MODE_KEY) === 'status') _sortMode = 'status'; } catch {}
+    // 이름 순 정렬 예외: 아래 묶음의 기체는 정렬해도 항상 '이 순서대로' 붙어 있음 (묶음 전체는 묶음 안에서 이름이 가장 앞서는 기체의 자리에 놓임)
+    //   기체명 비교는 공백을 빼고 전각 문자(예: '１')를 반각으로 바꾼 값으로 하므로 띄어쓰기/전각 차이에 영향받지 않음. 묶음을 추가/수정하려면 여기만 고치면 됨.
+    const SORT_PINNED_GROUPS = [
+        ['배송 띠띠', '순찰 띠띠'],
+        ['두비', '달비'],
+        ['성남시 판교역 1호기', '성남시 서현역 1호기', '성남시 율동공원 1호기', '성남시 야탑역 1호기'],
+    ];
+    const sortNormName = n => String(n || '').normalize('NFKC').replace(/\s+/g, '');
+    const sortPinInfo = (() => {   // 정규화한 기체명 → { rep: 묶음 대표 이름(묶음 내 이름순 최상위), idx: 묶음 내 순서 }
+        const m = new Map();
+        SORT_PINNED_GROUPS.forEach(g => {
+            const rep = [...g].sort((x, y) => x.localeCompare(y, 'ko', { numeric: true }))[0];
+            g.forEach((n, idx) => m.set(sortNormName(n), { rep, idx }));
+        });
+        return m;
+    })();
+
+    const sortStatusRank = { charging: 0, docking: 1, standby: 2, off: 3 };   // 상태별 정렬 순서: 충전 중 → 도킹 중 → 대기 중 → OFF (그 밖은 맨 뒤)
+    function nameCmp(a, b) {   // 기체 객체 비교: 이름 순 (SORT_PINNED_GROUPS 묶음은 항상 지정한 순서로 붙어 있음)
+        const pa = sortPinInfo.get(sortNormName(a.name)), pb = sortPinInfo.get(sortNormName(b.name));
+        const c = (pa ? pa.rep : a.name).localeCompare(pb ? pb.rep : b.name, 'ko', { numeric: true });   // 1호기 < 2호기 < 10호기
+        if (c !== 0) return c;
+        if (pa && pb) return pa.idx - pb.idx;
+        return a.name.localeCompare(b.name, 'ko', { numeric: true });
+    }
+    function statusCmp(a, b) { return ((sortStatusRank[a.status] ?? 4) - (sortStatusRank[b.status] ?? 4)) || nameCmp(a, b); }
+    // 열 분류 예외: 이 기체는 순찰 중/배달 중이어도 해당 열에 넣지 않음 ('그 외' 또는 즐겨찾기 열에 표시)
+    const PATROL_COL_EXCLUDE = ['순찰 띠띠'].map(n => sortNormName(n));
+    const DELIVERY_COL_EXCLUDE = ['배송 띠띠'].map(n => sortNormName(n));
 
     function loadDismissed() {
         try {
@@ -2190,12 +2223,14 @@
         const favRobots = pick(favIds);
         const robots    = pick(ids);
         // 현재 상태로 자동 분류: 순찰 중 → 2열 위, 배달 중 → 2열 아래. 즐겨찾기 기체도 순찰/배달 중이면 그쪽 열로 가고(★ 표시), 끝나면 즐겨찾기로 돌아옴
-        // 각 열 안에서는 즐겨찾기 기체가 먼저, 그다음 일반 기체 (각각 ids/favIds 순서 = 이름 순 정렬도 따로 적용됨)
-        const isP = r => r.status === 'patrolling', isD = r => r.status === 'delivering';
-        const favHere        = favRobots.filter(r => !isP(r) && !isD(r));
-        const patrolRobots   = [...favRobots.filter(isP), ...robots.filter(isP)];
-        const deliveryRobots = [...favRobots.filter(isD), ...robots.filter(isD)];
-        const otherRobots    = robots.filter(r => !isP(r) && !isD(r));
+        // 순찰/배달 열 안에서는 즐겨찾기 기체가 먼저, 그다음 일반 기체 (각각 이름 순)
+        const isP = r => r.status === 'patrolling' && !PATROL_COL_EXCLUDE.includes(sortNormName(r.name));
+        const isD = r => r.status === 'delivering' && !DELIVERY_COL_EXCLUDE.includes(sortNormName(r.name));
+        const grpCmp = _sortMode === 'status' ? statusCmp : nameCmp;   // 즐겨찾기/그 외 열의 정렬 (순찰/배달 열은 항상 이름 순)
+        const favHere        = favRobots.filter(r => !isP(r) && !isD(r)).sort(grpCmp);
+        const patrolRobots   = [...favRobots.filter(isP).sort(nameCmp), ...robots.filter(isP).sort(nameCmp)];
+        const deliveryRobots = [...favRobots.filter(isD).sort(nameCmp), ...robots.filter(isD).sort(nameCmp)];
+        const otherRobots    = robots.filter(r => !isP(r) && !isD(r)).sort(grpCmp);
         const favRow = r => { const row = makeRow(r, true); const dot = row.querySelector('.bb-row-dot'); const st = document.createElement('span'); st.className = 'bb-row-star'; st.textContent = '★'; st.title = '즐겨찾기'; if (dot) dot.after(st); return row; };
 
         const bodies = [fav, colP, colD, list];
@@ -3589,41 +3624,22 @@
         setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 1500);
     });
 
-    // 이름 순 정렬 예외: 아래 묶음의 기체는 정렬해도 항상 '이 순서대로' 붙어 있음 (묶음 전체는 묶음 안에서 이름이 가장 앞서는 기체의 자리에 놓임)
-    //   기체명 비교는 공백을 빼고 전각 문자(예: '１')를 반각으로 바꾼 값으로 하므로 띄어쓰기/전각 차이에 영향받지 않음. 묶음을 추가/수정하려면 여기만 고치면 됨.
-    const SORT_PINNED_GROUPS = [
-        ['배송 띠띠', '순찰 띠띠'],
-        ['두비', '달비'],
-        ['성남시 판교역 1호기', '성남시 서현역 1호기', '성남시 율동공원 1호기', '성남시 야탑역 1호기'],
-    ];
-    const sortNormName = n => String(n || '').normalize('NFKC').replace(/\s+/g, '');
-    const sortPinInfo = (() => {   // 정규화한 기체명 → { rep: 묶음 대표 이름(묶음 내 이름순 최상위), idx: 묶음 내 순서 }
-        const m = new Map();
-        SORT_PINNED_GROUPS.forEach(g => {
-            const rep = [...g].sort((x, y) => x.localeCompare(y, 'ko', { numeric: true }))[0];
-            g.forEach((n, idx) => m.set(sortNormName(n), { rep, idx }));
-        });
-        return m;
-    })();
-
+    // 정렬 방식 토글: 이름 순 정렬 ↔ 상태별 정렬 (선택은 저장됨). 영역(즐겨찾기/순찰/배달/그 외)은 그대로이고 각 영역 안의 순서만 바뀜
+    function applySortBtn() {
+        const btn = document.getElementById('bb-sortname-btn');
+        if (!btn) return;
+        const st = _sortMode === 'status';
+        btn.querySelector('.bb-tool-lbl').textContent = st ? '상태별 정렬' : '이름 순 정렬';
+        btn.title = st ? '지금: 상태별 정렬 (충전 중 → 도킹 중 → 대기 중 → OFF, 같은 상태끼리는 이름 순) · 클릭: 이름 순 정렬로'
+                       : '지금: 이름 순 정렬 · 클릭: 상태별 정렬로 (충전 중 → 도킹 중 → 대기 중 → OFF)';
+    }
     document.getElementById('bb-sortname-btn').addEventListener('click', () => {
-        const byName = (a, b) => {
-            const na = DB.find(x => x.id === a)?.name || '';
-            const nb = DB.find(x => x.id === b)?.name || '';
-            const pa = sortPinInfo.get(sortNormName(na));
-            const pb = sortPinInfo.get(sortNormName(nb));
-            const ka = pa ? pa.rep : na;   // 묶음에 속한 기체는 묶음 대표 이름으로 자리를 정함
-            const kb = pb ? pb.rep : nb;
-            const c = ka.localeCompare(kb, 'ko', { numeric: true });   // 1호기 < 2호기 < 10호기
-            if (c !== 0) return c;
-            if (pa && pb) return pa.idx - pb.idx;   // 같은 묶음 → 지정한 순서
-            return na.localeCompare(nb, 'ko', { numeric: true });
-        };
-        ids.sort(byName);      // 일반 영역
-        favIds.sort(byName);   // 즐겨찾기 영역 — 서로 섞이지 않고 각자 정렬
-        save();
+        _sortMode = _sortMode === 'status' ? 'name' : 'status';
+        try { localStorage.setItem(SORT_MODE_KEY, _sortMode); } catch {}
+        applySortBtn();
         render();
     });
+    applySortBtn();
 
     const siEl = document.getElementById('bb-si');
     siEl.addEventListener('click', showDd);
