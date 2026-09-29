@@ -93,7 +93,7 @@
             display:none; position:fixed; top:50%; left:50%;
             transform:translate(-50%,-50%);
             width:1714px;   /* 1490px 대비 +15% — 우측 다중 모니터링 영역 확보 */
-            height:980px; max-height:100vh; overflow-y:auto; overflow-x:hidden;   /* 기본 크기 = 즐겨찾기 20대 + 안내 문구가 들어가는 높이 (955 = 104 + 20 + 774 + 51 + 6) + 여유 25px.
+            height:990px; max-height:100vh; overflow-y:auto; overflow-x:hidden;   /* 기본 크기 = 즐겨찾기 20대 + 안내 문구가 들어가는 높이 (955 = 104 + 20 + 774 + 51 + 6) + 여유 25px.
                즐겨찾기가 정확히 최대(20대)일 때 예전엔 여유가 0이라 카드 실측 높이가 ROW_H(33px) 가정과 1~2px만 어긋나도(줄간격 렌더링 반올림) 카드 영역(.bb-list-wrap)에 스크롤이 생겼음 — 그 여유분 */
             border:3px solid transparent; border-radius:16px;
             background-image: var(--bg-fill), linear-gradient(135deg, #d9b8ff, #9333ea);
@@ -460,7 +460,7 @@
         /* 기체 카드 영역: 기체가 많아 창이 화면보다 커지면 창 전체가 아니라 이 영역 안에서만 스크롤 (스크롤바 = 다중 모니터링 영역 바로 왼쪽) */
         .bb-list-wrap {
             flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden;
-            padding:18px 8px 10px 16px; scrollbar-gutter:stable;   /* 위쪽 18px = 열 제목 알약이 테두리에 걸쳐 뜰 자리 */   /* 스크롤바 자리를 항상 확보 → 생겼다 사라져도 카드가 밀리지 않음 */
+            padding:10px 8px 10px 16px; scrollbar-gutter:stable;   /* 스크롤바 자리를 항상 확보 → 생겼다 사라져도 카드가 밀리지 않음 */
         }
         .bb-list-wrap::-webkit-scrollbar { width:6px; }
         .bb-list-wrap::-webkit-scrollbar-track { background:transparent; }
@@ -478,43 +478,42 @@
                브라우저 네이티브 스크롤바가 둥근 모서리 자리에서 어긋나게 그려지면서(특히 스크롤 중) 빨간 테두리가
                스크롤바에 걸려 잘려 보이는 현상이 있었음. 각진 테두리로 바꿔 스크롤바와 겹치는 자리를 없앰 */
         }
-        .bb-lists { display:flex; align-items:stretch; gap:12px; min-height:420px; min-height:max(420px, 100%); }   /* 즐겨찾기 테두리가 카드 끝까지 이어지도록 내용 높이만큼 늘어남 */
-        /* 1열 = 즐겨찾기: 여기에 끌어다 놓으면 이름 순 정렬을 해도 일반 기체와 섞이지 않고 이 영역 안에서만 정렬됨 */
-        .bb-fav {
-            flex:0 0 318px; width:318px; box-sizing:border-box;
-            display:flex; flex-direction:column; gap:5px;
-            outline:2px solid var(--bd2); outline-offset:5px; border-radius:8px;   /* 다중 모니터링 영역(.bb-mm-box) 테두리와 같은 색(--bd2)·두께(2px). outline 이라 카드 폭에 영향 없음 */
+        /* 카드 영역 = [즐겨찾기] [순찰 중 + 배달 중] [그 외 (2열)] — 각 영역은 '제목 줄(카드 1줄 높이) + 카드 칸'이고, 카드가 넘치면 그 영역 안에서만 스크롤됨 */
+        .bb-lists { --row-h:33px; --row-gap:5px; --col-h:793px; display:flex; align-items:flex-start; gap:12px; }   /* 793 = 제목 1줄 + 카드 20줄 (33×21 + 5×20) */
+        .bb-fcol, .bb-mid, .bb-oth {
+            position:relative; height:var(--col-h); box-sizing:border-box; flex:0 0 auto;
+            display:flex; flex-direction:column; gap:var(--row-gap);
+            outline:2px solid var(--bd2); outline-offset:3px; border-radius:8px;   /* 다중 모니터링 영역(.bb-mm-box) 테두리와 같은 색·두께. 열 사이 간격 12px 안에 들어가도록 offset 3px */
         }
-        .bb-fav:empty::before {
-            content:'즐겨찾기 - 카드를 끌어다 놓으세요(최대 20대).'; margin:auto; padding:0 12px;
-            text-align:center; font-size:13px; color:var(--mu);
+        .bb-fcol, .bb-mid { width:318px; }
+        .bb-oth { width:648px; }   /* 318×2 + 12 */
+        .bb-scroll {   /* 영역 안의 카드 칸 — 넘치면 이 칸만 스크롤 (스크롤바는 숨기고 휠로 이동). 안쪽 여백 2px + 음수 마진 2px = 위치는 그대로, 카드 호버 테두리가 잘리지 않게 하는 용도 */
+            display:grid; grid-auto-rows:var(--row-h); row-gap:var(--row-gap); align-content:start;
+            box-sizing:border-box; padding:2px; margin:-2px; min-height:0; overflow-y:auto; overflow-x:hidden; scrollbar-width:none;
         }
-        .bb-fav:not(:empty)::after {   /* 기체가 들어 있을 때: 영역 하단에 작은 안내 (비어 있을 때는 위의 가운데 문구) */
-            content:var(--fav-note, '즐겨찾기 - 카드를 끌어다 놓으세요(최대 20대).');   /* 가득 찼을 때는 JS 가 --fav-note 로 경고 문구를 잠깐 씀 */
-            position:sticky; bottom:4px; margin-top:auto; padding-top:2px;   /* 영역이 길어 스크롤돼도 보이는 하단에 고정 */
-            text-align:center; font-size:11px; line-height:13px; color:var(--mu); opacity:.85;
-            text-shadow:0 0 3px var(--bg), 0 0 3px var(--bg);   /* 카드 위에 걸쳐도 읽히도록 */
-            pointer-events:none;
+        .bb-scroll::-webkit-scrollbar { display:none; }
+        .bb-fcol > .bb-scroll { flex:1 1 auto; }
+        .bb-sec-patrol { flex:0 0 auto; height:calc(14 * var(--row-h) + 13 * var(--row-gap) + 4px); }   /* 순찰 중 = 14칸 고정 */
+        .bb-sec-deliv { flex:1 1 auto; }                                                                  /* 배달 중 = 남은 5칸 */
+        .bb-scroll:empty { align-content:center; }
+        .bb-scroll:empty::after { content:attr(data-empty); text-align:center; font-size:12.5px; line-height:1.4; color:var(--mu); }
+        .bb-list { grid-template-columns:repeat(2,318px); column-gap:12px; grid-auto-flow:column; }   /* 그 외: 3열 → 4열 순서로 세로 우선 채움 (행 수는 JS 가 지정) */
+        .bb-scroll.bb-drop-over { background:rgba(96,165,250,.10); border-radius:8px; }
+        /* 제목 줄: 카드 1줄과 같은 높이 · 글자는 크게 · 색 = 즐겨찾기 골드 / 순찰 파랑 / 배달 핑크 / 그 외 검정 */
+        .bb-colhd {
+            height:var(--row-h); flex:0 0 auto; box-sizing:border-box; display:flex; align-items:center; justify-content:center; gap:8px;
+            border-radius:8px; border:1.5px solid; font-size:18px; letter-spacing:.3px; white-space:nowrap; overflow:hidden;
         }
-        .bb-fav.warn::after { color:var(--rd); opacity:1; font-weight:700; }
-        /* 2열 = 순찰 중 / 3열 = 배달 중 / 4열 = 그 외 — 기체의 현재 상태에 따라 자동 분류되고, 이름 순 정렬도 열마다 따로 적용됨 */
-        .bb-col, .bb-list {
-            position:relative; flex:0 0 318px; width:318px; box-sizing:border-box;
-            display:flex; flex-direction:column; gap:5px; align-content:start;
-            outline:2px solid var(--bd2); outline-offset:3px; border-radius:8px;
-        }
-        .bb-fav { outline-offset:3px; }   /* 옆 열의 테두리와 겹치지 않게 (간격 12px 안에 들어가도록 5px → 3px) */
-        .bb-col::before, .bb-list::before {   /* 열 제목: 테두리 위에 걸쳐 뜨는 작은 알약 (카드 위치는 밀지 않음) */
-            content:attr(data-title); position:absolute; top:-13px; left:50%; transform:translateX(-50%); z-index:4;
-            height:18px; padding:0 10px; line-height:16px; border-radius:9px; box-sizing:border-box;
-            background:var(--sur); border:1px solid var(--bd2); font-size:11.5px; color:var(--tx); white-space:nowrap; pointer-events:none;
-        }
-        .bb-col:empty::after { content:'해당 기체 없음'; margin:auto; font-size:13px; color:var(--mu); }
-        .bb-fav.bb-drop-over, .bb-col.bb-drop-over, .bb-list.bb-drop-over { background:rgba(96,165,250,.10); border-radius:8px; }
-        .bb-tools {   /* 4열(그 외)의 맨 위 칸 — 그 칸 크기(318 × 카드 높이) 안에서 두 버튼이 반반 */
-            position:sticky; top:0; z-index:3;   /* 스크롤이 생겨도 카드 영역 오른쪽 맨 위에 고정 */
-            display:flex; gap:6px; align-items:stretch;
-        }
+        #bb .bb-colhd { font-weight:700 !important; }
+        .bb-colhd .n { min-width:26px; height:20px; padding:0 7px; border-radius:10px; font-size:13px; line-height:20px; text-align:center; background:rgba(255,255,255,.28); }
+        .bb-colhd.fav    { background:#f2c230; border-color:#c79a0a; color:#3f2e00; }
+        .bb-colhd.fav .n { background:rgba(63,46,0,.15); }
+        .bb-colhd.patrol { background:#3b82f6; border-color:#2563eb; color:#fff; }
+        .bb-colhd.deliv  { background:#ff1493; border-color:#d10a77; color:#fff; }
+        .bb-colhd.oth    { background:#2b2418; border-color:#000; color:#f8f3e6; }
+        .bb-colhd.warn   { background:#ef4444; border-color:#b91c1c; color:#fff; }
+        .bb-oth-hd { display:grid; grid-template-columns:318px 318px; column-gap:12px; flex:0 0 auto; }   /* 3열 제목(그 외) | 4열 제목 자리(이름 순 정렬 / 카드 제거 버튼) */
+        .bb-tools { display:flex; gap:6px; align-items:stretch; height:var(--row-h); }
         .bb-tool-btn { flex:1 1 0; min-width:0; height:33px; padding:0 8px; gap:6px; font-size:14px; }
         .bb-tool-btn.rm { min-width:0; }
         #bb-sortname-btn { background:#fff3b5; border-color:#e0c96a; color:#4a3f0d; }              /* 이름 순 정렬: 파스텔 연노랑 */
@@ -526,7 +525,7 @@
         .bb-tool-ico { display:inline-flex; width:16px; height:16px; flex-shrink:0; }
         .bb-tool-ico svg { width:16px; height:16px; display:block; }
         .bb-list-empty {
-            padding:56px 8px; text-align:center;
+            grid-column:1 / -1; grid-row:1; padding:56px 8px; text-align:center;
             font-size:15px; color:var(--mu);
         }
 
@@ -1279,16 +1278,29 @@
                 <div class="bb-main">
                     <div class="bb-list-wrap">
                       <div class="bb-lists">
-                        <div class="bb-fav" id="bb-fav" title="즐겨찾기(최대 20대) — 여기에 끌어다 놓은 기체는 이 영역 안에서만 정렬됩니다"></div>
-                        <div class="bb-col" id="bb-col-patrol" data-title="순찰 중" title="순찰 중인 기체 (자동 분류)"></div>
-                        <div class="bb-col" id="bb-col-deliv" data-title="배달 중" title="배달 중인 기체 (자동 분류)"></div>
-                        <div class="bb-list" id="bb-list" data-title="그 외">
-                        <!-- 4열(그 외)의 맨 위 1칸: 이름 순 정렬 / 카드 제거. 스크롤이 생겨도 이 자리에 고정 -->
-                        <div class="bb-tools" id="bb-tools">
-                            <button class="bb-btn bb-tool-btn" id="bb-sortname-btn" title="즐겨찾기 / 순찰 중 / 배달 중 / 그 외 영역을 각각 따로 이름 순으로 정렬"><span class="bb-tool-ico">${ICON_SORT}</span><span class="bb-tool-lbl">이름 순 정렬</span></button>
-                            <button class="bb-btn bb-tool-btn" id="bb-rmbtn" title="카드를 골라서 목록에서 제거"><span class="bb-tool-ico">${ICON_TRASH}</span><span class="bb-tool-lbl">카드 제거</span></button>
+                        <!-- 1열: 즐겨찾기 (최대 20대) -->
+                        <div class="bb-fcol">
+                            <div class="bb-colhd fav" id="bb-hd-fav"><span class="t">즐겨찾기</span><span class="n">0/20</span></div>
+                            <div class="bb-scroll" id="bb-fav" data-empty="카드를 끌어다 놓으세요 (최대 20대)" title="즐겨찾기(최대 20대) — 여기에 끌어다 놓은 기체는 이 영역 안에서만 정렬됩니다"></div>
                         </div>
-                    </div>
+                        <!-- 2열: 순찰 중(14칸) + 배달 중(남은 5칸) -->
+                        <div class="bb-mid">
+                            <div class="bb-colhd patrol" id="bb-hd-patrol"><span class="t">순찰 중</span><span class="n">0</span></div>
+                            <div class="bb-scroll bb-sec-patrol" id="bb-col-patrol" data-empty="순찰 중인 기체 없음" title="순찰 중인 기체 (자동 분류)"></div>
+                            <div class="bb-colhd deliv" id="bb-hd-deliv"><span class="t">배달 중</span><span class="n">0</span></div>
+                            <div class="bb-scroll bb-sec-deliv" id="bb-col-deliv" data-empty="배달 중인 기체 없음" title="배달 중인 기체 (자동 분류)"></div>
+                        </div>
+                        <!-- 3~4열: 그 외 (3열 제목 = 그 외 / 4열 제목 자리 = 이름 순 정렬, 카드 제거) -->
+                        <div class="bb-oth">
+                            <div class="bb-oth-hd">
+                                <div class="bb-colhd oth" id="bb-hd-oth"><span class="t">그 외</span><span class="n">0</span></div>
+                                <div class="bb-tools" id="bb-tools">
+                                    <button class="bb-btn bb-tool-btn" id="bb-sortname-btn" title="즐겨찾기 / 순찰 중 / 배달 중 / 그 외 영역을 각각 따로 이름 순으로 정렬"><span class="bb-tool-ico">${ICON_SORT}</span><span class="bb-tool-lbl">이름 순 정렬</span></button>
+                                    <button class="bb-btn bb-tool-btn" id="bb-rmbtn" title="카드를 골라서 목록에서 제거"><span class="bb-tool-ico">${ICON_TRASH}</span><span class="bb-tool-lbl">카드 제거</span></button>
+                                </div>
+                            </div>
+                            <div class="bb-scroll bb-list" id="bb-list" data-empty="해당 기체 없음"></div>
+                        </div>
                       </div>
                     </div>
 
@@ -2171,28 +2183,33 @@
         const pick = arr => arr.map(id => DB.find(x => x.id === id)).filter(Boolean);
         const favRobots = pick(favIds);
         const robots    = pick(ids);
-        // 즐겨찾기가 아닌 기체는 현재 상태로 3개 열에 자동 분류 (ids 순서를 그대로 따르므로 이름 순 정렬도 열마다 따로 적용됨)
+        // 즐겨찾기가 아닌 기체는 현재 상태로 자동 분류 (ids 순서를 그대로 따르므로 이름 순 정렬도 영역마다 따로 적용됨)
         const patrolRobots   = robots.filter(r => r.status === 'patrolling');
         const deliveryRobots = robots.filter(r => r.status === 'delivering');
         const otherRobots    = robots.filter(r => r.status !== 'patrolling' && r.status !== 'delivering');
 
+        const bodies = [fav, colP, colD, list];
+        const keep = bodies.map(el => el.scrollTop);   // 2분마다 다시 그려도 보던 스크롤 위치 유지
         fav.replaceChildren(...favRobots.map(r => makeRow(r, true)));   // 비면 :empty 안내 문구가 보임
         colP.replaceChildren(...patrolRobots.map(r => makeRow(r, false)));
         colD.replaceChildren(...deliveryRobots.map(r => makeRow(r, false)));
-        colP.dataset.title = `순찰 중 ${patrolRobots.length}`;
-        colD.dataset.title = `배달 중 ${deliveryRobots.length}`;
-        list.dataset.title = `그 외 ${otherRobots.length}`;
+        const setN = (id, txt) => { const n = document.querySelector(`#${id} .n`); if (n) n.textContent = txt; };
+        setN('bb-hd-fav', `${favRobots.length}/${FAV_MAX}`);
+        setN('bb-hd-patrol', patrolRobots.length);
+        setN('bb-hd-deliv', deliveryRobots.length);
+        setN('bb-hd-oth', otherRobots.length);
 
-        const tools = document.getElementById('bb-tools');   // 정렬/제거 버튼 칸 — 카드를 다시 그려도 지우지 않음
-        [...list.children].forEach(c => { if (c !== tools) c.remove(); });
+        // 그 외: 2열 세로 우선 채움 (3열을 20칸 채운 뒤 4열). 40대를 넘으면 행이 늘어나고 이 영역만 스크롤
+        list.style.gridTemplateRows = `repeat(${Math.max(20, Math.ceil(otherRobots.length / 2))}, ${ROW_H}px)`;
         if (robots.length === 0 && favRobots.length === 0) {
             const msg = document.createElement('div');
             msg.className = 'bb-list-empty';
             msg.textContent = DB.length === 0 ? '기체 데이터 로딩 중...' : '표시할 기체가 없습니다. 오른쪽 위 검색창에서 기체를 추가하세요.';
-            list.appendChild(msg);
-            return;
+            list.replaceChildren(msg);
+        } else {
+            list.replaceChildren(...otherRobots.map(r => makeRow(r, false)));
         }
-        otherRobots.forEach(r => list.appendChild(makeRow(r, false)));
+        bodies.forEach((el, i) => { el.scrollTop = keep[i]; });
     }
 
     // 마지막 통신 시각(ISO) → { date:'09/19', time:'17:53', short:'09/19 | 17:53', full:'2026-09-19 17:53:12' } (한국 시간 기준, 없으면 null)
@@ -3394,13 +3411,14 @@
 
     // id 를 toFav 영역으로 이동. beforeId 가 있으면 그 카드 자리에, 없으면 영역 맨 끝에 넣음
     let _favWarnTimer = null;
-    function flashFavFull() {   // 하단 안내 문구를 잠깐 경고로 바꿈 (2.5초)
-        const el = document.getElementById('bb-fav');
+    function flashFavFull() {   // 즐겨찾기 제목 줄을 잠깐 경고 문구로 바꿈 (2.5초)
+        const el = document.getElementById('bb-hd-fav');
         if (!el) return;
-        el.style.setProperty('--fav-note', `'즐겨찾기는 최대 ${FAV_MAX}대까지 등록할 수 있습니다'`);
+        const t = el.querySelector('.t');
+        t.textContent = `최대 ${FAV_MAX}대까지 등록 가능`;
         el.classList.add('warn');
         clearTimeout(_favWarnTimer);
-        _favWarnTimer = setTimeout(() => { el.style.removeProperty('--fav-note'); el.classList.remove('warn'); }, 2500);
+        _favWarnTimer = setTimeout(() => { t.textContent = '즐겨찾기'; el.classList.remove('warn'); }, 2500);
     }
     function moveRobot(id, toFav, beforeId) {
         const srcArr = favIds.includes(id) ? favIds : ids;
