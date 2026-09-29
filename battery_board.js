@@ -486,9 +486,9 @@
             outline:2px solid var(--bd2); outline-offset:3px; border-radius:8px;   /* 다중 모니터링 영역(.bb-mm-box) 테두리와 같은 색·두께. 열 사이 간격 12px 안에 들어가도록 offset 3px */
         }
         /* 영역 외곽선: 각 제목 줄과 같은 색의 얇은 선 (즐겨찾기 골드 / 순찰 파랑 / 배달 핑크) */
-        .bb-fcol { outline:1px solid #f2c230; }
-        .bb-oth  { outline:1px solid #3b82f6; }
-        .bb-mid  { outline:1px solid #ff1493; }
+        .bb-fcol { outline:1.5px solid #f2c230; }
+        .bb-oth  { outline:1.5px solid #3b82f6; }
+        .bb-mid  { outline:1.5px solid #ff1493; }
         .bb-fcol, .bb-mid { width:318px; }
         .bb-oth { width:648px; }   /* 순찰 기체 = 2·3열 */   /* 318×2 + 12 */
         .bb-scroll {   /* 영역 안의 카드 칸 — 넘치면 이 칸만 스크롤 (스크롤바는 숨기고 휠로 이동). 안쪽 여백 2px + 음수 마진 2px = 위치는 그대로, 카드 호버 테두리가 잘리지 않게 하는 용도 */
@@ -569,10 +569,10 @@
         .bb-tools { display:flex; gap:6px; align-items:stretch; height:var(--row-h); }
         .bb-tool-btn { flex:1 1 0; min-width:0; height:33px; padding:0 8px; gap:6px; font-size:14px; }
         .bb-tool-btn.rm { min-width:0; }
-        #bb-rmbtn { background:#ffd9e4; border-color:#f2a7bf; color:#5c2233; }                     /* 카드 제거: 파스텔 연핑크 */
-        #bb-rmbtn:hover { background:#ffc9d9; border-color:#ea86a5; }
-        #bb-rmbtn.rm { background:#ff9fbb; border-color:#e5557f; color:#7f1236; }                  /* 제거 모드(완료 대기): 진한 핑크로 활성 표시 */
-        #bb-rmbtn.rm:hover { background:#ff8fb0; }
+        #bb-rmbtn { background:#dbeeff; border-color:#a9d2f5; color:#1f4a6e; }                     /* 카드 제거: 옅은 파스텔 하늘색 */
+        #bb-rmbtn:hover { background:#c9e5ff; border-color:#87bff0; }
+        #bb-rmbtn.rm { background:#8ec8f7; border-color:#4a9fe0; color:#0f3556; }                  /* 제거 모드(완료 대기): 진한 하늘색으로 활성 표시 */
+        #bb-rmbtn.rm:hover { background:#7dbef3; }
         .bb-tool-ico { display:inline-flex; width:16px; height:16px; flex-shrink:0; }
         .bb-tool-ico svg { width:16px; height:16px; display:block; }
         .bb-list-empty {
