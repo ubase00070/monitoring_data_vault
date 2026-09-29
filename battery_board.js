@@ -486,7 +486,7 @@
             outline:2px solid var(--bd2); outline-offset:3px; border-radius:8px;   /* 다중 모니터링 영역(.bb-mm-box) 테두리와 같은 색·두께. 열 사이 간격 12px 안에 들어가도록 offset 3px */
         }
         .bb-fcol, .bb-mid { width:318px; }
-        .bb-oth { width:648px; }   /* 318×2 + 12 */
+        .bb-oth { width:648px; }   /* 순찰 기체 = 2·3열 */   /* 318×2 + 12 */
         .bb-scroll {   /* 영역 안의 카드 칸 — 넘치면 이 칸만 스크롤 (스크롤바는 숨기고 휠로 이동). 안쪽 여백 2px + 음수 마진 2px = 위치는 그대로, 카드 호버 테두리가 잘리지 않게 하는 용도 */
             display:grid; grid-auto-rows:var(--row-h); row-gap:var(--row-gap); align-content:start;
             box-sizing:border-box; padding:2px; margin:-2px; min-height:0; overflow-y:auto; overflow-x:hidden;
@@ -542,8 +542,7 @@
         .bb-sortseg .seg { position:relative; z-index:1; text-align:center; font-size:13.5px; white-space:nowrap; color:var(--mu); transition:color .2s; }
         #bb .bb-sortseg .seg { font-weight:700 !important; }
         .bb-sortseg:not(.status) .seg[data-mode="name"], .bb-sortseg.status .seg[data-mode="status"] { color:#4a3f0d; }
-        .bb-sec-patrol { flex:0 0 auto; height:calc(14 * var(--row-h) + 13 * var(--row-gap) + 4px); }   /* 순찰 중 = 14칸 고정 */
-        .bb-sec-deliv { flex:1 1 auto; }                                                                  /* 배달 중 = 남은 5칸 */
+        .bb-sec-deliv { flex:1 1 auto; }   /* 배달 기체 = 4열 전체 */
         .bb-scroll:empty { align-content:center; }
         .bb-scroll:empty::after { content:attr(data-empty); text-align:center; font-size:12.5px; line-height:1.4; color:var(--mu); }
         .bb-list { grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:12px; grid-auto-flow:column; }   /* 그 외: 3열 → 4열 순서로 세로 우선 채움 (행 수는 JS 가 지정) */
@@ -1339,23 +1338,21 @@
                                 <span class="rt">즐겨찾기</span>
                             </div>
                         </div>
-                        <!-- 2열: 순찰 중(14칸) + 배달 중(남은 5칸) -->
-                        <div class="bb-mid">
-                            <div class="bb-colhd patrol" id="bb-hd-patrol"><span class="t">순찰 중</span><span class="n">0</span></div>
-                            <div class="bb-scroll bb-sec-patrol" id="bb-col-patrol" data-empty="순찰 중인 기체 없음" title="순찰 중인 기체 (자동 분류)"></div>
-                            <div class="bb-colhd deliv" id="bb-hd-deliv"><span class="t">배달 중</span><span class="n">0</span></div>
-                            <div class="bb-scroll bb-sec-deliv" id="bb-col-deliv" data-empty="배달 중인 기체 없음" title="배달 중인 기체 (자동 분류)"></div>
-                        </div>
-                        <!-- 3~4열: 그 외 (3열 제목 = 그 외 / 4열 제목 자리 = 이름 순 정렬, 카드 제거) -->
+                        <!-- 2~3열: 순찰 기체 (2열 그리드) — 제목 옆 자리(3열 제목 자리)에 이름순/상태별 토글, 카드 제거 버튼 -->
                         <div class="bb-oth">
                             <div class="bb-oth-hd">
-                                <div class="bb-colhd oth" id="bb-hd-oth"><span class="t">그 외</span><span class="n">0</span></div>
+                                <div class="bb-colhd patrol" id="bb-hd-patrol"><span class="t">순찰 기체</span><span class="n">0</span></div>
                                 <div class="bb-tools" id="bb-tools">
                                     <div class="bb-sortseg" id="bb-sortname-btn" role="switch" aria-checked="false" tabindex="0"><i class="thumb"></i><span class="seg" data-mode="name">이름순</span><span class="seg" data-mode="status">상태별</span></div>
                                     <button class="bb-btn bb-tool-btn" id="bb-rmbtn" title="카드를 골라서 목록에서 제거"><span class="bb-tool-ico">${ICON_TRASH}</span><span class="bb-tool-lbl">카드 제거</span></button>
                                 </div>
                             </div>
                             <div class="bb-scroll bb-list" id="bb-list" data-empty="해당 기체 없음"></div>
+                        </div>
+                        <!-- 4열: 배달 기체 (DELIVERY_SITE_IDS) -->
+                        <div class="bb-mid">
+                            <div class="bb-colhd deliv" id="bb-hd-deliv"><span class="t">배달 기체</span><span class="n">0</span></div>
+                            <div class="bb-scroll bb-sec-deliv" id="bb-col-deliv" data-empty="배달 기체 없음" title="배달 기체 (사이트 기준 자동 분류)"></div>
                         </div>
                       </div>
                     </div>
@@ -1630,8 +1627,6 @@
     }
     function statusCmp(a, b) { return ((sortStatusRank[a.status] ?? 4) - (sortStatusRank[b.status] ?? 4)) || nameCmp(a, b); }
     // 열 분류 예외: 이 기체는 순찰 중/배달 중이어도 해당 열에 넣지 않음 ('그 외' 또는 즐겨찾기 열에 표시)
-    const PATROL_COL_EXCLUDE = ['순찰 띠띠'].map(n => sortNormName(n));
-    const DELIVERY_COL_EXCLUDE = ['배송 띠띠'].map(n => sortNormName(n));
 
     function loadDismissed() {
         try {
@@ -2266,41 +2261,32 @@
     function render() {
         const list = document.getElementById('bb-list');
         const fav  = document.getElementById('bb-fav');
-        const colP = document.getElementById('bb-col-patrol');
         const colD = document.getElementById('bb-col-deliv');
-        if (!list || !fav || !colP || !colD) return;
+        if (!list || !fav || !colD) return;
         const pick = arr => arr.map(id => DB.find(x => x.id === id)).filter(Boolean);
         const favRobots = pick(favIds);
         const robots    = pick(ids);
-        // 현재 상태로 자동 분류: 순찰 중 → 2열 위, 배달 중 → 2열 아래. 즐겨찾기 기체도 순찰/배달 중이면 그쪽 열로 가고(★ 표시), 끝나면 즐겨찾기로 돌아옴
-        // 순찰/배달 열 안에서는 즐겨찾기 기체가 먼저, 그다음 일반 기체 (각각 이름 순)
-        const isP = r => r.status === 'patrolling' && !PATROL_COL_EXCLUDE.includes(sortNormName(r.name));
-        const isD = r => r.status === 'delivering' && !DELIVERY_COL_EXCLUDE.includes(sortNormName(r.name));
-        const grpCmp = _sortMode === 'status' ? statusCmp : nameCmp;   // 즐겨찾기/그 외 열의 정렬
-        const favHere        = favRobots.filter(r => !isP(r) && !isD(r)).sort(grpCmp);
-        const favSet = new Set(favIds);
-        // 순찰/배달 열: 이름 순 모드 = 즐겨찾기·일반 구분 없이 이름 순 / 상태별 모드 = 즐겨찾기(★) 먼저, 그다음 일반 (각각 이름 순)
-        const orderCol = list => _sortMode === 'name' ? list.sort(nameCmp)
-            : [...list.filter(r => favSet.has(r.id)).sort(nameCmp), ...list.filter(r => !favSet.has(r.id)).sort(nameCmp)];
-        const patrolRobots   = orderCol([...favRobots.filter(isP), ...robots.filter(isP)]);
-        const deliveryRobots = orderCol([...favRobots.filter(isD), ...robots.filter(isD)]);
-        const otherRobots    = robots.filter(r => !isP(r) && !isD(r)).sort(grpCmp);
-        const favRow = r => { const row = makeRow(r, true); const dot = row.querySelector('.bb-row-dot'); const st = document.createElement('span'); st.className = 'bb-row-star'; st.textContent = '★'; st.title = '즐겨찾기'; if (dot) dot.after(st); return row; };
+        // 기체 종류로 자동 분류: 배달 기체 = DELIVERY_SITE_IDS 사이트 → 4열 / 그 외는 모두 순찰 기체 → 2·3열
+        // 제외: 하단 퀵바 기체(MONITOR_GROUPS 키워드)는 이 열들에 표시·집계하지 않음 (제주 기체는 순찰 기체로 취급). 즐겨찾기는 항상 1열
+        const inName = (r, kws) => kws.some(k => String(r.name).includes(k));
+        const skip = r => MONITOR_GROUPS.some(g => inName(r, g.keywords));
+        const isD = r => DELIVERY_SITE_IDS.includes(r.siteId);
+        const cmp = _sortMode === 'status' ? statusCmp : nameCmp;   // 모든 열 공통 정렬 (이름순 ↔ 상태별)
+        const favHere = favRobots.slice().sort(cmp);
+        const shown = robots.filter(r => !skip(r));
+        const deliveryRobots = shown.filter(isD).sort(cmp);
+        const otherRobots = shown.filter(r => !isD(r)).sort(cmp);
 
-        const bodies = [fav, colP, colD, list];
+        const bodies = [fav, colD, list];
         const keep = bodies.map(el => el.scrollTop);   // 2분마다 다시 그려도 보던 스크롤 위치 유지
         fav.replaceChildren(...favHere.map(r => makeRow(r, true)));   // 비면 :empty 안내 문구가 보임
-        colP.replaceChildren(...patrolRobots.map(r => favIds.includes(r.id) ? favRow(r) : makeRow(r, false)));
-        colD.replaceChildren(...deliveryRobots.map(r => favIds.includes(r.id) ? favRow(r) : makeRow(r, false)));
+        colD.replaceChildren(...deliveryRobots.map(r => makeRow(r, false)));
         const setN = (id, txt) => { const n = document.querySelector(`#${id} .n`); if (n) n.textContent = txt; };
         setN('bb-hd-fav', `${favRobots.length}/${FAV_MAX}`);
         const rail = document.getElementById('bb-fold-rail');   // 접힌 즐겨찾기 레일: 등록된 대수 표시
         if (rail) { rail.querySelector('.rn').textContent = favRobots.length; rail.title = `즐겨찾기 ${favRobots.length}대 — 클릭: 펼치기`; }
-        const hdFav = document.getElementById('bb-hd-fav');
-        if (hdFav) hdFav.title = favRobots.length > favHere.length ? `즐겨찾기 ${favRobots.length}대 — 순찰/배달 중인 ${favRobots.length - favHere.length}대는 해당 열에 ★ 로 표시됩니다` : `즐겨찾기 ${favRobots.length}대`;
-        setN('bb-hd-patrol', patrolRobots.length);
+        setN('bb-hd-patrol', otherRobots.length);
         setN('bb-hd-deliv', deliveryRobots.length);
-        setN('bb-hd-oth', otherRobots.length);
 
         // 그 외: 2열 세로 우선 채움 (3열을 20칸 채운 뒤 4열). 40대를 넘으면 행이 늘어나고 이 영역만 스크롤
         list.style.gridTemplateRows = `repeat(${Math.max(20, Math.ceil(otherRobots.length / 2))}, ${ROW_H}px)`;
@@ -3545,7 +3531,6 @@
         el.addEventListener('drop',      e => { e.preventDefault(); el.classList.remove('bb-drop-over'); if (dsrc) moveRobot(dsrc, toFav, null); });
     }
     bindDropZone(document.getElementById('bb-fav'),  true);
-    bindDropZone(document.getElementById('bb-col-patrol'), false);
     bindDropZone(document.getElementById('bb-col-deliv'), false);
     bindDropZone(document.getElementById('bb-list'), false);
     bindDropZone(document.getElementById('bb-fold-rail'), true);   // 접힌 상태에서 카드를 레일에 놓아도 즐겨찾기로 등록
