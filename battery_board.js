@@ -868,15 +868,9 @@
         .bb-att-dh { flex:0 0 auto; display:flex; align-items:center; gap:14px; padding:14px 18px; border-bottom:1px solid var(--bd); }
         .bb-att-dh .t { font-size:20px; font-weight:900; white-space:nowrap; flex:0 0 auto; }   /* 제목은 줄바꿈 없이, 남는 자리에서 포디움 카드가 줄바꿈 */
         .bb-att-dh select { height:34px; padding:0 10px; border-radius:8px; border:1.5px solid var(--bd2); background:var(--sur2); color:var(--tx); font-size:14px; font-family:inherit; }
-        .bb-att-dh .w { flex:1 1 auto; min-width:0; display:flex; flex-wrap:wrap; align-items:center; gap:6px 8px; }
-        .bb-att-dh .w .lb { font-size:12.5px; color:var(--mu); margin-right:2px; cursor:help; }
         .bb-att-dh .sr { flex:0 0 auto; width:110px; height:34px; padding:0 10px; border-radius:8px; border:1.5px solid var(--bd2); background:var(--sur2); color:var(--tx); font-size:14px; font-weight:700; font-family:inherit; outline:none; }
         .bb-att-dh .sr:focus { border-color:var(--bl); background:var(--sur); }
         .bb-att-dh .sr::placeholder { color:var(--mu); font-weight:400; }
-        .bb-att-dh .w .none { font-size:13px; color:var(--mu); }
-        .bb-att-wc { padding:4px 11px; border-radius:9px; border:1.5px solid #ef4444; background:rgba(239,68,68,.09); font-size:14px; white-space:nowrap; cursor:default; }
-        .bb-att-wc b { font-weight:900; }
-        .bb-att-wc .n { color:#e11d74; }
         .bb-att-dh .x { margin-left:auto; width:34px; height:34px; border-radius:8px; background:rgba(239,68,68,.18); border:1px solid rgba(239,68,68,.5); color:#b91c1c; font-size:18px; font-weight:900; cursor:pointer; display:flex; align-items:center; justify-content:center; }
         .bb-att-dnote { flex:0 0 auto; padding:6px 18px 0; font-size:12px; color:#c2410c; }
         .bb-att-db { flex:1 1 auto; min-height:0; overflow:auto; padding:0 12px 14px; }
@@ -1438,7 +1432,6 @@
             <div class="bb-att-dh">
                 <div class="t" id="bb-att-dtitle">자세히</div>
                 <select id="bb-att-dsel"></select>
-                <div class="w" id="bb-att-watch"></div>
                 <input type="search" class="sr" id="bb-att-search" placeholder="이름 검색" autocomplete="off" spellcheck="false" title="이름을 입력하면 그 근무자만 표시 (월을 바꾸거나 창을 닫았다 열어도 유지 · 새로고침하면 초기화)">
                 <div class="x" id="bb-att-dclose">✕</div>
             </div>
@@ -5729,41 +5722,6 @@
         { label: '출근60분내', key: 'early', f: r => r.early + '회', cls: 'bad' }   // 전용 적색 배경 강조는 제거 — 다른 위반 열들과 같은 글자색만
     ];
 
-    /* WATCHLIST-START */
-    // 이석 포디움: '근무일수'를 뺀 9개 항목에서 1위(가장 많은 사람)를 2개 이상 차지한 근무자
-    //  - 값이 0인 항목은 1위 없음 (전원 0회인 항목은 계산에서 제외)
-    //  - 동점이면 공동 1위로 모두 인정
-    //  - 정렬: 1위 항목 수 많은 순 → 총 이석시간 많은 순 → 이름
-    const ATT_RANK_KEYS = ['totalCount', 'totalSec', 'avgCount', 'avgSec', 'avgPerEvent', 'over', 'unfiled', 'edited', 'early'];
-    function attWatchList(rows) {
-        const wins = {};
-        ATT_RANK_KEYS.forEach(key => {
-            let max = 0;
-            rows.forEach(r => { if (r[key] > max) max = r[key]; });
-            if (max <= 0) return;
-            const tied = rows.filter(r => Math.abs(r[key] - max) < 1e-9);
-            tied.forEach(r => { (wins[r.name] = wins[r.name] || []).push({ key: key, tied: tied.length }); });
-        });
-        return rows.filter(r => wins[r.name] && wins[r.name].length >= 2)
-            .map(r => ({ row: r, items: wins[r.name] }))
-            .sort((a, b) => (b.items.length - a.items.length) || (b.row.totalSec - a.row.totalSec) || a.row.name.localeCompare(b.row.name, 'ko'));
-    }
-    /* WATCHLIST-END */
-    function attRenderWatch(rows) {
-        const box = $att('bb-att-watch');
-        box.replaceChildren();
-        if (!rows || !rows.length) return;
-        const list = attWatchList(rows).slice(0, 4);   // 최대 4명까지만
-        if (!list.length) { box.appendChild(attEl('span', 'none', '해당 근무자 없음')); return; }
-        const col = k => ATT_COLS.find(c => c.key === k);
-        const RANK_ORD = ['1st', '2nd', '3rd', '4th'];
-        list.forEach((w, idx) => {
-            const chip = attEl('div', 'bb-att-wc');
-            chip.append(`${RANK_ORD[idx]} `, attEl('b', '', w.row.name), ' - ', attEl('span', 'n', w.items.length + '개 항목'));
-            chip.title = w.row.name + ' — 항목별 1위 ' + w.items.length + '개\n' + w.items.map(it => '• ' + col(it.key).label + ' ' + col(it.key).f(w.row) + (it.tied > 1 ? ' (공동 ' + it.tied + '명)' : '')).join('\n');
-            box.appendChild(chip);
-        });
-    }
 
     async function attOpenDetail(ym) {
         attClosePop(); attCloseCal(); attClosePlog();
@@ -5779,7 +5737,6 @@
         $att('bb-att-dtitle').textContent = '불러오는 중…';
         $att('bb-att-dbody').replaceChildren();
         $att('bb-att-dnote').textContent = '';
-        $att('bb-att-watch').replaceChildren();
         let dig, sched;
         try { [dig, sched] = await Promise.all([attGetMonth(ym), attGetSchedule(ym)]); }
         catch (e) {
@@ -5801,7 +5758,6 @@
         $att('bb-att-dtitle').textContent = dates.length
             ? `${label} (${+dates[0].slice(8)}일 ~ ${+dates[dates.length - 1].slice(8)}일, 총 ${dates.length}일간)` : label + ' (확정된 데이터 없음)';
         $att('bb-att-dnote').textContent = (dates.length && built.approx) ? '⚠ 스케줄을 불러오지 못해 근무일수를 "기록이 있는 날"로 계산했습니다 (기록이 없던 근무일은 빠짐)' + (_attSchedErr[ym] ? ' [원인: ' + _attSchedErr[ym] + ']' : '') : '';
-        attRenderWatch(built.rows);   // 이번 달은 요약이 바뀔 때(하루 1회 확정분 추가) 다시 열 때마다 새로 계산됨 — 지난달은 데이터가 고정이라 결과도 고정
         const body = $att('bb-att-dbody');
         if (!built.rows.length) {
             body.replaceChildren(attEl('div', 'bb-att-msg', dig && dig.missing ? '이 달의 요약 데이터가 아직 없습니다' : '확정된 기록이 없습니다'));
