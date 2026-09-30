@@ -1638,7 +1638,7 @@
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
 		// 문자열을 넣으면 패치노트에 빨간 '`' 뱃지가 점멸하며 뜸.
 		// 빈 문자열('')로 비우면 뱃지가 사라짐.
-		const PATCH_NOTE_NEW_CONTENT = 'gist 다중교대';
+		const PATCH_NOTE_NEW_CONTENT = '';
 
         // ── 패치노트 내용 ──────────────────────────────────────
         // 아래 patchItems 배열에 버전별 내용을 추가하세요 (버튼 라벨의 날짜도 이 배열의
@@ -1648,7 +1648,7 @@
                 version: 'v1.5',
                 date: '2026-09-30',
                 items: [
-					'다중 모니터링 교대 자동시작 보험 적용(최대 6대)',
+					'다중 모니터링 자동 시작 보험 적용(최대 6대)',
 					'다중 모니터링 자동시작 남은 기체명 및 대수 표기',
                     'D-PAD UP 커스텀 핫키(원격페이지: UP 1초 홀드 시 설정창/버튼 입력 시 적용)',
 					'잠실 엘스, 인력개발원 다중 연결 확인 알림 기능',
@@ -2435,7 +2435,11 @@
 
     // ── 순찰 감지 Gist 폴백 (handover.json 데이터가 없을 때만 사용) ──
     const PATROL_LIVE_URL = 'https://gist.githubusercontent.com/ubase00070/bd7773a059217fb81b0be90c961fcc22/raw/patrol_watch_live.json';
-    let _lastSrc = 'handover'; // 'handover' | 'gist' — 마지막 조회 결과의 출처
+    let _lastSrc = 'handover';
+    // gist 폴백은 서버에 taken을 못 남기므로, 이 탭에서 시작한 기체를 교대 시각 단위로 보관 (6대 초과 시 다음 클릭에 나머지 진행)
+    const _gistTaken = { key: '', set: new Set() };
+    const gistTakenKey = () => { const k = getKSTDate(); return `${k.getDate()}-${(k.getMinutes() >= 40 ? k.getHours() + 1 : k.getHours()) % 24}`; };
+    const gistTakenList = () => { const key = gistTakenKey(); if (_gistTaken.key !== key) { _gistTaken.key = key; _gistTaken.set.clear(); } return [..._gistTaken.set]; }; // 'handover' | 'gist' — 마지막 조회 결과의 출처
     const kstStamp = () => {
         const d = getKSTDate(), p = n => String(n).padStart(2, '0');
         return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
@@ -2467,7 +2471,7 @@
             const mine = outgoing ? ongoing.filter(r => r.current_operator === outgoing) : ongoing;
             const units = [...new Set(mine.map(r => r.robot_full.trim()))];
             if (!units.length) return null;
-            return { data: { updatedAt: kstStamp(), units, taken: [], handover_by: outgoingMonitorName(), _src: 'gist' } };
+            return { data: { updatedAt: kstStamp(), units, taken: gistTakenList(), handover_by: outgoingMonitorName(), _src: 'gist' } };
         } catch (e) { console.log('gistFallback error:', e); return null; }
     };
     // handover.json 우선 → 유효 데이터(20분 이내 + 기체 있음)가 없을 때만 gist
@@ -2482,7 +2486,23 @@
             return hand;
         }
         const g = await gistFallback();
-        if (g) { _lastSrc = 'gist'; return g; }
+        if (g) {
+            // 시크릿 탭 간 taken 공유를 위해 gist 결과를 handover.json에 승격(PUT). 다른 탭은 이후 정상 handover 데이터로 읽는다.
+            try {
+                const again = await fetchWithTimeout(`https://multimonitoring.vercel.app/api/handover?t=${Date.now()}`, { cache: 'no-store' }, 6000);
+                if (again.ok) {
+                    const cur = await again.json();
+                    if (isDataValid(cur?.updatedAt) && (cur.units || []).length) { _lastSrc = 'handover'; return { data: cur }; } // 그 사이 다른 탭이 먼저 승격함
+                }
+                const put = await fetch('https://multimonitoring.vercel.app/api/handover', {
+                    method: 'PUT', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ handover_by: g.data.handover_by, units: g.data.units }),
+                });
+                if (put.ok) { _lastSrc = 'handover'; return { data: { ...g.data, taken: [] } }; }
+                console.log('gist 승격 PUT 실패:', put.status);
+            } catch (e) { console.log('gist 승격 오류:', e); }
+            _lastSrc = 'gist'; return g; // 승격 실패 시 이 탭 로컬 taken으로만 동작
+        }
         _lastSrc = 'handover';
         return hand; // 기존 '만료/없음' 메시지 흐름 유지
     };
@@ -2639,7 +2659,7 @@
 		panel.appendChild(grid);
 
 		const patchTaken = async (names) => {
-			if (_lastSrc === 'gist') return true; // gist 폴백 데이터는 handover.json에 기록하지 않음 (로컬 taken만)
+			if (_lastSrc === 'gist') { gistTakenList(); (names || []).forEach(n => _gistTaken.set.add(n)); return true; } // gist 폴백은 handover.json에 기록하지 않고 이 탭에만 보관
 			try {
 				const res = await fetch(`https://multimonitoring.vercel.app/api/handover`, {
 					method: 'PATCH',
