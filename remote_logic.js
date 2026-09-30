@@ -6598,7 +6598,7 @@
         };
 	
 	    // ══════════════════════════════════════════════════════════
-	    //  D-PAD ↑ 프리셋 — 짧게 누르면 저장된 값(밝기/화질/지도 확대) 일괄 적용,
+	    //  D-PAD ↑ 프리셋 — 짧게 누르면 저장된 값(밝기/화질/지도 확대/자동정지) 일괄 적용,
 	    //  1초 홀드하면 화면 상단 중앙에 설정 토스트가 뜬다.
 	    //  · 별도 타이머/루프 없음: 아래 기존 100ms 폴링이 handleDpadUpTick()만 호출한다.
 	    //  · 토스트는 포커스를 가져가지 않으며(pointer 클릭 전까지), 조작이 없으면 3초 뒤 사라진다.
@@ -6630,7 +6630,8 @@
 	        q = (q >= 1 && q <= 5) ? q : null;
 	        let z = parseInt(o.zoom, 10);
 	        z = (z >= 1 && z <= 5) ? z : 0;
-	        return { brightness: b, quality: q, zoom: z };   // null / 0 = "변경 안 함"
+	        const a = (o.adas === 'on' || o.adas === 'off') ? o.adas : null;   // 자동정지: 'on' | 'off' | null(변경 안 함)
+	        return { brightness: b, quality: q, zoom: z, adas: a };   // null / 0 = "변경 안 함"
 	    };
 	    const loadPreset = () => {
 	        try { return sanitizePreset(JSON.parse(localStorage.getItem(PRESET_KEY))); }
@@ -6657,6 +6658,37 @@
 	        const v = parseInt(getQualityWrapper()?.querySelector('input')?.value, 10);
 	        return (v >= 1 && v <= 5) ? v : null;
 	    };
+
+	    // ── 자동정지(ADAS) 스위치: 현재 상태 읽기 / 원하는 상태로 맞추기 (이미 같으면 건드리지 않음) ──
+	    const getAdasSwitch = () => document.querySelector('[data-qk="remote-robot-cam-adas-switch"]')
+	                             || document.querySelector('[data-qk="driving-robot-cam-adas-switch"]');
+	    const readAdas = () => {
+	        const el = getAdasSwitch();
+	        if (el) {
+	            const input = el.matches('input[type="checkbox"]') ? el : el.querySelector('input[type="checkbox"]');
+	            if (input) return input.checked ? 'on' : 'off';
+	            const aria = el.getAttribute('aria-checked') ?? el.querySelector('[aria-checked]')?.getAttribute('aria-checked');
+	            if (aria === 'true') return 'on';
+	            if (aria === 'false') return 'off';
+	            return null;
+	        }
+	        const s = getLabelButtonState('자동정지');   // 신버전: data-qk 없는 라벨 버튼 ("자동정지 ON")
+	        return s === 'ON' ? 'on' : (s === 'OFF' ? 'off' : null);
+	    };
+	    const clickAdas = () => {
+	        const el = getAdasSwitch();
+	        if (el) (el.querySelector('label') || el).click();
+	        else findLabelButton('자동정지')?.click();
+	    };
+	    const setAdas = async (want) => {
+	        const cur = readAdas();
+	        if (cur == null) return 'fail';
+	        if (cur === want) return 'same';
+	        clickAdas();
+	        await presetSleep(250);
+	        return readAdas() === want ? 'changed' : 'fail';   // 클릭 후 실제로 바뀌었는지 확인
+	    };
+
 
 	    // ── 드롭다운에서 옵션 하나 선택 (열기 → 옵션 대기 → 클릭). 실패 시 열린 채 두지 않고 닫는다 ──
 	    const pickFromDropdown = async (wrapper, optSel, match, fallbackIdx) => {
@@ -6814,7 +6846,7 @@
 	            showPresetNotice('저장된 프리셋이 없습니다. 값을 고르고 저장해 주세요', 2500, true);
 	            return;
 	        }
-	        if (p.brightness == null && p.quality == null && !p.zoom) {
+	        if (p.brightness == null && p.quality == null && !p.zoom && !p.adas) {
 	            showPresetNotice('프리셋에 적용할 항목이 없습니다 (모두 변경 안 함)', 2000, true);
 	            return;
 	        }
@@ -6829,6 +6861,7 @@
 	            };
 	            if (p.brightness != null) track(`밝기 ${p.brightness}`, await setBrightness(p.brightness, mode));
 	            if (p.quality != null)    track(`화질 ${QUALITY_LABELS[p.quality - 1]}`, await setQuality(p.quality));
+	            if (p.adas)               track(`자동정지 ${p.adas.toUpperCase()}`, await setAdas(p.adas));
 	            syncMap();                              // 다른 D-pad 동작과 동일하게, 값이 이미 같아도 항상 맵 헤드 방향 재동기화
 	            if (p.zoom) await presetSleep(450);     // syncMap의 두 번째 클릭(400ms) 이후에 확대해야 되돌려지지 않음
 	            if (p.zoom) track(`지도 +${p.zoom}`, zoomMapIn(p.zoom));
@@ -6850,7 +6883,7 @@
 	    const openPresetPanel = () => {
 	        closePresetPanel();
 	        const saved = loadPreset();
-	        const init = saved || { brightness: readBrightness(), quality: readQuality(), zoom: 0 };
+	        const init = saved || { brightness: readBrightness(), quality: readQuality(), zoom: 0, adas: null };
 
 	        const opt = (value, text, selected) => `<option value="${value}"${selected ? ' selected' : ''}>${text}</option>`;
 	        let bOpts = opt('', '변경 안 함', init.brightness == null);
@@ -6862,6 +6895,7 @@
 	        QUALITY_LABELS.forEach((l, i) => { qOpts += opt(i + 1, l, init.quality === i + 1); });
 	        let zOpts = opt('', '변경 안 함', !init.zoom);
 	        for (let i = 1; i <= 5; i++) zOpts += opt(i, `${i}회 확대`, init.zoom === i);
+	        const aOpts = opt('', '변경 안 함', !init.adas) + opt('on', 'ON', init.adas === 'on') + opt('off', 'OFF', init.adas === 'off');
 
 	        const selCss = `background:#23233f; color:#e2e8f0; border:1px solid #4a4a7a; border-radius:6px; padding:2px 4px; font-size:12px; height:24px; color-scheme:dark; min-width:76px;`;
 	        const lblCss = `display:flex; align-items:center; gap:5px; font-size:12px; color:#aab;`;
@@ -6879,6 +6913,7 @@
 	            <label style="${lblCss}">밝기<select data-k="brightness" style="${selCss}">${bOpts}</select></label>
 	            <label style="${lblCss}">화질<select data-k="quality" style="${selCss}">${qOpts}</select></label>
 	            <label style="${lblCss}">지도 확대<select data-k="zoom" style="${selCss}">${zOpts}</select></label>
+	            <label style="${lblCss}">자동정지<select data-k="adas" style="${selCss}">${aOpts}</select></label>
 	            <button data-act="save" style="height:24px; padding:0 12px; border:none; border-radius:6px; background:#3b82f6; color:#fff; font-size:12px; font-weight:700; cursor:pointer;">저장</button>
 	            <button data-act="close" style="width:22px; height:22px; border:none; border-radius:5px; background:transparent; color:#94a3b8; font-size:13px; cursor:pointer; line-height:1;">✕</button>
 	        `;
@@ -6908,7 +6943,7 @@
 	            if (act === 'close') { closePresetPanel(); return; }
 	            if (act !== 'save') return;
 	            const g = k => panel.querySelector(`[data-k="${k}"]`).value;
-	            const ok = savePreset(sanitizePreset({ brightness: g('brightness'), quality: g('quality'), zoom: g('zoom') }));
+	            const ok = savePreset(sanitizePreset({ brightness: g('brightness'), quality: g('quality'), zoom: g('zoom'), adas: g('adas') }));
 	            closing = true;
 	            clearTimeout(presetPanelTimer);
 	            panel.innerHTML = `<div style="padding:2px 10px; font-size:13px; font-weight:700; color:${ok ? '#86efac' : '#fca5a5'};">${ok ? '✓ 프리셋 저장됨' : '저장 실패 (브라우저 저장소 사용 불가)'}</div>`;
@@ -6963,7 +6998,7 @@
 				return;
 	        }
 	
-	        // D-pad up (12) — 짧게: 저장된 프리셋(밝기/화질/지도 확대) 적용 / 1.5초 홀드: 프리셋 설정 토스트
+	        // D-pad up (12) — 짧게: 저장된 프리셋(밝기/화질/지도 확대/자동정지) 적용 / 1.5초 홀드: 프리셋 설정 토스트
 			handleDpadUpTick(!!gp.buttons[12]?.pressed);
 	
 	        // D-pad right (15) — 밝기 올리기 + 맵 재동기화
