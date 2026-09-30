@@ -1638,7 +1638,7 @@
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
 		// 문자열을 넣으면 패치노트에 빨간 '`' 뱃지가 점멸하며 뜸.
 		// 빈 문자열('')로 비우면 뱃지가 사라짐.
-		const PATCH_NOTE_NEW_CONTENT = '';
+		const PATCH_NOTE_NEW_CONTENT = 'gist 다중교대';
 
         // ── 패치노트 내용 ──────────────────────────────────────
         // 아래 patchItems 배열에 버전별 내용을 추가하세요 (버튼 라벨의 날짜도 이 배열의
@@ -1646,8 +1646,9 @@
         const patchItems = [
             {
                 version: 'v1.5',
-                date: '2026-09-22',
+                date: '2026-09-30',
                 items: [
+					'다중 모니터링 교대 자동시작 보험 적용(최대 6대)',
 					'다중 모니터링 자동시작 남은 기체명 및 대수 표기',
                     'D-PAD UP 커스텀 핫키(원격페이지: UP 1초 홀드 시 설정창/버튼 입력 시 적용)',
 					'잠실 엘스, 인력개발원 다중 연결 확인 알림 기능',
@@ -2432,6 +2433,62 @@
         return (Date.now() - updated.getTime()) < 20 * 60 * 1000;
     };
 
+    // ── 순찰 감지 Gist 폴백 (handover.json 데이터가 없을 때만 사용) ──
+    const PATROL_LIVE_URL = 'https://gist.githubusercontent.com/ubase00070/bd7773a059217fb81b0be90c961fcc22/raw/patrol_watch_live.json';
+    let _lastSrc = 'handover'; // 'handover' | 'gist' — 마지막 조회 결과의 출처
+    const kstStamp = () => {
+        const d = getKSTDate(), p = n => String(n).padStart(2, '0');
+        return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+    };
+    // 표기용 이름: 교대 직전(=현시각 모니터링 요원) insu_data 스케줄. :00~:02엔 직전 시각 담당자가 인계자.
+    const outgoingMonitorName = () => {
+        const k = getKSTDate();
+        const h = k.getMinutes() >= 40 ? k.getHours() : (k.getHours() + 23) % 24;
+        return state.insuData?.schedule?.[`${String(h).padStart(2, '0')}:00`] || '순찰 감지';
+    };
+    const gistFallback = async () => {
+        const k = getKSTDate(), min = k.getMinutes();
+        if (!(min >= 40 || min <= 2)) return null; // 교대 시간대(:40~:02)에만
+        try {
+            const res = await fetchWithTimeout(`${PATROL_LIVE_URL}?t=${Date.now()}`, { cache: 'no-store' }, 6000);
+            if (!res.ok) return null;
+            const j = await res.json();
+            if (!Array.isArray(j.records)) return null;
+            const m = /^(\d{1,2}):(\d{2})/.exec(j.updated_at || '');
+            if (!m) return null;
+            const nowMin = k.getHours() * 60 + min;
+            if (((nowMin - (+m[1] * 60 + +m[2])) + 1440) % 1440 > 10) return null; // 10분 넘게 갱신 없으면 신뢰 X
+            const ongoing = j.records.filter(r => r && (r.status === 'ongoing' || r.status === 'anomaly') && r.robot_full);
+            if (!ongoing.length) return null;
+            // 가장 많은 기체를 순찰 중인 current_operator = 인계자
+            const cnt = {};
+            ongoing.forEach(r => { if (r.current_operator) cnt[r.current_operator] = (cnt[r.current_operator] || 0) + 1; });
+            const outgoing = Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a])[0];
+            const mine = outgoing ? ongoing.filter(r => r.current_operator === outgoing) : ongoing;
+            const units = [...new Set(mine.map(r => r.robot_full.trim()))];
+            if (!units.length) return null;
+            return { data: { updatedAt: kstStamp(), units, taken: [], handover_by: outgoingMonitorName(), _src: 'gist' } };
+        } catch (e) { console.log('gistFallback error:', e); return null; }
+    };
+    // handover.json 우선 → 유효 데이터(20분 이내 + 기체 있음)가 없을 때만 gist
+    const githubGet = async () => {
+        let hand = null;
+        try {
+            const res = await fetchWithTimeout(`https://multimonitoring.vercel.app/api/handover?t=${Date.now()}`, { cache: 'no-store' }, 6000);
+            if (res.ok) hand = { data: await res.json() };
+        } catch (e) { console.log('githubGet error:', e); }
+        if (hand && isDataValid(hand.data?.updatedAt) && (hand.data.units || []).length) {
+            _lastSrc = 'handover';
+            return hand;
+        }
+        const g = await gistFallback();
+        if (g) { _lastSrc = 'gist'; return g; }
+        _lastSrc = 'handover';
+        return hand; // 기존 '만료/없음' 메시지 흐름 유지
+    };
+    // 표시 문구: 이름 - (##대)
+    const loadedMsg = (data) => `${data._src === 'gist' ? '순찰감지' : '로드됨'} (${data.handover_by || '?'} - ${(data.units || []).length}대)`;
+
     // ── 핸드오버 레이아웃 ──────────────────────────────────
 	async function initHandoverLayout() {
 		await adminConfigReady; // maxMonitorSlots 확정 후 진행
@@ -2581,20 +2638,8 @@
 
 		panel.appendChild(grid);
 
-		const githubGet = async () => {
-            try {
-                const res = await fetchWithTimeout(
-                    `https://multimonitoring.vercel.app/api/handover?t=${Date.now()}`,
-                    { cache: 'no-store' },
-                    6000
-                );
-                if (!res.ok) return null;
-                const data = await res.json();
-                return { data };
-            } catch(e) { console.log('githubGet error:', e); return null; }
-        };
-		
 		const patchTaken = async (names) => {
+			if (_lastSrc === 'gist') return true; // gist 폴백 데이터는 handover.json에 기록하지 않음 (로컬 taken만)
 			try {
 				const res = await fetch(`https://multimonitoring.vercel.app/api/handover`, {
 					method: 'PATCH',
@@ -2847,7 +2892,7 @@
                 }
                 const units = data.units || [];
                 if (!units.length) { setDpMsg('기체 데이터 없음', '#94a3b8'); return; }
-                setDpMsg(`교대 기체 로드됨 (${data.handover_by || '?'} - ${units.length}대)`, '#22c55e');
+                setDpMsg(loadedMsg(data), '#22c55e');
             } finally {
                 _fetchBtnRunning = false;
                 fetchBtn.disabled = false;
@@ -3109,7 +3154,7 @@
 		if (result && isDataValid(result.data.updatedAt)) {
             const units = result.data.units || [];
             if (units.length) {
-                setDpMsg(`교대 기체 로드됨 (${result.data.handover_by || '?'} - ${units.length}대)`, '#22c55e');
+                setDpMsg(loadedMsg(result.data), '#22c55e');
             } else {
                 setDpMsg('교대 기체 데이터가 없습니다', '#f59e0b');
             }
