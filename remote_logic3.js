@@ -2486,7 +2486,7 @@
         return hand; // 기존 '만료/없음' 메시지 흐름 유지
     };
     // 표시 문구: 이름 - (##대)
-    const loadedMsg = (data) => `교대 기체 로드됨 (${data.handover_by || '?'} - ${(data.units || []).length}대)` + (data._src === 'gist' ? ' · 순찰 감지 기준' : '');
+    const loadedMsg = (data) => `${data._src === 'gist' ? '순찰감지' : '로드됨'} (${data.handover_by || '?'} - ${(data.units || []).length}대)`;
 
     // ── 핸드오버 레이아웃 ──────────────────────────────────
 	async function initHandoverLayout() {
