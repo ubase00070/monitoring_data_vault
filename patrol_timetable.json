@@ -738,7 +738,8 @@
       "리센츠 2"
     ],
     "out": [
-      "중앙대"
+      "중앙대",
+      "전주천"
     ],
     "night_excluded": [],
     "auto_dispatch": [
@@ -786,6 +787,9 @@
     "outTimes": {
       "중앙대": [
         "19:50"
+      ],
+      "전주천": [
+        "19:50"
       ]
     }
   },
@@ -815,7 +819,8 @@
     ],
     "reserved_dispatch": [
       "중앙대",
-      "지제"
+      "지제",
+      "전주천"
     ],
     "control_dispatch": [],
     "site_dispatch": [],
