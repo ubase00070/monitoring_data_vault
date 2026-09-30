@@ -2069,6 +2069,8 @@
                 save();
             }
 
+            if (_patrolReady) { try { rebuildPatrolView(); } catch (err) { console.warn('[BB] 다중 모니터링 재구성 실패:', err); } }   // 장기 순찰 기체 카드(SECTION 16)는 NCC 상태가 갱신될 때마다 다시 판단
+
             logBatteryPattern(DB);
             try { dcUpdateLocal(); } catch (err) { console.error('[BB] 방전 기록 계산 오류:', err); }   // 배터리 로그 → 방전 기록 (로컬 저장, 최근 30일)
             try { sampleChargeBuffer(DB); } catch (err) { console.error('[BB] 충전 관측 오류:', err); }   // 저속충전 계산용 (2분마다 1회 기록)
@@ -4933,6 +4935,19 @@
     let _patrolLastUpdated = null;
     let _patrolAnomaly = { n: 0, max: 0 };   // 미갱신(이상) 카드 수 / 최대 미갱신 분 — 이석 화면의 '« 다중' 버튼 점멸에 사용 (SECTION 17)
 
+    // ── 3시간 넘게 순찰하는 기체 (Worker 감시 창 초과 대응) ──────────────
+    //  Worker 는 Slack 조회 부담 때문에 최근 3시간의 배정 메시지만 보므로, 순찰이 3시간을 넘기면 피드(patrol_watch_live.json)에서 카드가 사라진다.
+    //  여기에 적은 기체는 피드에 기록이 없어도 NCC 상태가 '순찰 중'이면 보드가 카드를 대신 유지한다. (POI 는 확인할 수 없으므로 '미표기')
+    //  key = NCC 기체명(전체), 값 = 카드에 표시할 이름 (Worker UNITS 의 짧은 이름과 같게)
+    const PATROL_LONG_UNITS = {
+        '전주천(덕진구) 1호기': '전주시 전주천',
+    };
+    const PATROL_KEEP_LS = 'bb_patrol_keep';            // 마지막으로 피드에서 본 시작 시각·담당자 (새로고침해도 이어서 표시)
+    const PATROL_KEEP_MAX_MS = 3 * 3600 * 1000;         // 마지막으로 본 지 이보다 오래되면 그 정보는 쓰지 않음
+    let _patrolKeep = (() => { try { return JSON.parse(localStorage.getItem(PATROL_KEEP_LS)) || {}; } catch { return {}; } })();
+    let _patrolKeepSavedAt = 0;
+    let _patrolFeed = null;   // 마지막으로 받은 피드 { records, updated_at } — NCC 상태(DB)가 갱신될 때도 카드를 다시 판단하기 위해 보관
+
     // ── (호환용) 간소화명 → NCC 기체명(전체) ─────────────────────────
     //  Worker 가 records[].robot_full 을 내려주므로 평소에는 쓰이지 않는다. 예전 Worker 가 게시한 JSON 이거나
     //  robot_full 이 없을 때만 카드 클릭 매칭에 사용. (같은 간소화명을 쓰는 기체가 여럿이면 배열)
@@ -5054,7 +5069,7 @@
     }
 
     // records → 표시용 카드: 이상(anomaly) 먼저(오래 멈춘 순), 이상 없는 기체는 순찰 시작이 최근인 순 (위가 최신)
-    function buildPatrolCards(records, refMin = null) {
+    function buildPatrolCards(records, refMin = null, extraCards = []) {
         const seen = new Set();
         return (records || [])
             .filter(r => r && (r.status === 'ongoing' || r.status === 'anomaly'))
@@ -5083,6 +5098,7 @@
                     tip: `${r.robot} | 시작 ${r.start_hhmm || '-'} | ${r.poi_text || ''}` + (limit !== undefined ? ` | 허용 ${limit}분` : '') + ' | 클릭: 기체 정보',
                 };
             })
+            .concat(extraCards)   // 장기 순찰 기체 카드(피드에 없어서 보드가 대신 만든 것)도 같은 기준으로 정렬
             .sort((a, b) => {
                 if (a.anomaly !== b.anomaly) return b.anomaly - a.anomaly;
                 if (a.anomaly) return (b.stale - a.stale) || a.robot.localeCompare(b.robot, 'ko', { numeric: true });
@@ -5140,7 +5156,7 @@
                 mk('span', 'bb-mm-name', c.robot),
                 st,
                 ...(c.start ? [mk('span', 'bb-mm-since', `${c.start}부터`)] : []),   // 예: 22:35부터 (순찰 중 옆)
-                mk('span', 'bb-mm-staff', c.staff.length ? c.staff.join('·') : '담당 없음')
+                mk('span', 'bb-mm-staff', c.staff.length ? c.staff.join('·') : (c.carried ? '담당 미표기' : '담당 없음'))
             );
 
             // 2줄: 현재 POI ··· N분째 POI 미갱신(이상일 때만, 우측)
@@ -5184,6 +5200,70 @@
         t.append('다중 모니터링 기체 ', n);
     }
 
+    // 피드에 기록이 없는데 NCC 상태가 '순찰 중'인 장기 순찰 기체 → 대신 유지하는 카드 (POI 미표기)
+    function buildLongPatrolCards(records, refMin) {
+        const out = [];
+        for (const [full, shortName] of Object.entries(PATROL_LONG_UNITS)) {
+            const key = normName(full);
+            // Worker 가 이 기체의 기록(진행/완료/오배정 무엇이든)을 갖고 있으면 그쪽이 기준. 3시간이 지나 기록 자체가 없을 때만 대신 유지.
+            if ((records || []).some(r => r && normName(r.robot_full) === key)) continue;
+            const rb = DB.find(r => normName(r.name) === key);
+            if (!rb || rb.status !== 'patrolling') continue;   // NCC 가 순찰 중으로 알려 줄 때만
+            const k = _patrolKeep[full];
+            const keep = (k && Date.now() - k.seenAt < PATROL_KEEP_MAX_MS) ? k : null;   // 피드에서 마지막으로 본 시작 시각·담당자
+            const start = (keep && keep.start) || '';
+            out.push({
+                robot: shortName,
+                staff: (keep && Array.isArray(keep.staff)) ? keep.staff : [],
+                anomaly: false, stale: 0,
+                poi: '미표기', act: '', unit: '',
+                full,
+                start,
+                age: patrolAgeMin(start, refMin),
+                carried: true,
+                tip: `${shortName} | 순찰 3시간 초과 — NCC 상태가 순찰 중이라 카드 유지, POI 미표기 | 클릭: 기체 정보`,
+            });
+        }
+        return out;
+    }
+
+    // 피드에 있는 장기 순찰 기체의 시작 시각·담당자를 기억해 둔다 (3시간이 지나 피드에서 사라진 뒤 카드에 이어서 표시)
+    function rememberLongPatrol(cards) {
+        let changed = false;
+        for (const full of Object.keys(PATROL_LONG_UNITS)) {
+            const c = cards.find(x => !x.carried && normName(x.full) === normName(full));
+            if (!c) continue;
+            const prev = _patrolKeep[full];
+            if (!prev || prev.start !== c.start || JSON.stringify(prev.staff) !== JSON.stringify(c.staff)) changed = true;
+            _patrolKeep[full] = { start: c.start, staff: c.staff, seenAt: Date.now() };   // seenAt 은 메모리에서는 매번 갱신
+        }
+        if (changed || (Object.keys(_patrolKeep).length && Date.now() - _patrolKeepSavedAt > 5 * 60 * 1000)) {   // 저장은 바뀔 때 + 5분에 한 번
+            _patrolKeepSavedAt = Date.now();
+            try { localStorage.setItem(PATROL_KEEP_LS, JSON.stringify(_patrolKeep)); } catch {}
+        }
+    }
+
+    // 마지막으로 받은 피드 + 현재 NCC 상태(DB) → 카드 목록/카운트/미갱신 표시를 다시 계산해 그린다.
+    // (피드는 30초마다, NCC 상태는 2분마다 갱신되므로 둘 중 어느 쪽이 바뀌어도 이 함수로 다시 판단)
+    function rebuildPatrolView() {
+        if (!_patrolFeed) return;
+        const refMin = patrolHm(_patrolFeed.updated_at);   // 기준 = Worker 가 게시한 시각(KST)
+        let longCards = [];
+        try { longCards = buildLongPatrolCards(_patrolFeed.records, refMin); }
+        catch (e) { console.warn('[BB] 장기 순찰 카드 계산 실패:', e.message); }
+        const cards = buildPatrolCards(_patrolFeed.records, refMin, longCards);
+        try { rememberLongPatrol(cards); } catch {}
+        const anomalies = cards.filter(c => c.anomaly);
+        _patrolAnomaly = { n: anomalies.length, max: anomalies.reduce((m, c) => Math.max(m, c.stale || 0), 0) };
+        syncAttBackAlert();   // 이석 화면에 가 있어도 다중의 미갱신을 놓치지 않도록
+        const sig = JSON.stringify(cards);
+        if (sig !== _patrolSig) {   // 바뀐 게 없으면 다시 그리지 않음 (점멸 애니메이션/스크롤 유지)
+            _patrolSig = sig;
+            renderPatrolCards(cards);
+        }
+        setPatrolTitle(cards.length);
+    }
+
     async function refreshPatrolLive() {
         if (_patrolBusy) return;
         _patrolBusy = true;
@@ -5196,16 +5276,8 @@
             if (!data || !Array.isArray(data.records)) throw new Error('데이터 형식 오류');
 
             _patrolLastUpdated = data.updated_at || null;
-            const cards = buildPatrolCards(data.records, patrolHm(data.updated_at));   // 기준 = Worker 가 게시한 시각(KST)
-            const anomalies = cards.filter(c => c.anomaly);
-            _patrolAnomaly = { n: anomalies.length, max: anomalies.reduce((m, c) => Math.max(m, c.stale || 0), 0) };
-            syncAttBackAlert();   // 이석 화면에 가 있어도 다중의 미갱신을 놓치지 않도록
-            const sig = JSON.stringify(cards);
-            if (sig !== _patrolSig) {   // 바뀐 게 없으면 다시 그리지 않음 (점멸 애니메이션/스크롤 유지)
-                _patrolSig = sig;
-                renderPatrolCards(cards);
-            }
-            setPatrolTitle(cards.length);
+            _patrolFeed = { records: data.records, updated_at: data.updated_at };
+            rebuildPatrolView();
             setPatrolStatus(`${_patrolLastUpdated || '-'} 기준(POI 정체 감지)`, false);   // 게시 시각만 그대로 표시
         } catch (e) {
             console.warn('[BB] 다중 모니터링 갱신 실패:', e.message);
