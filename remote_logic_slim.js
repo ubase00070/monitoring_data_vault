@@ -1,27 +1,28 @@
 /* ============================================================
-   remote_logic_slim.js  v2.0
+   remote_logic_slim.js  v2.1
    NCC 화면 보조 도구 (슬림판)
 
    ■ 원칙
      - NCC(core.neubie.ai)로 보내는 요청 0건. NCC 페이지의 DOM/CSS만 만진다.
-     - 외부 통신은 본인 인프라만: GitHub raw(관리자 설정·insu_data) / Vercel(/api/handover).
-     - 일일업무·알림·파일명·스케줄·게시판·배터리 보드 등은 웹사이트(multimonitoring.vercel.app)로 이전.
+     - 외부 통신은 본인 인프라만: GitHub raw(관리자 설정·insu_data) / Vercel(/api/tasks · /api/handover · /api/drive).
+     - 이름은 입력받지 않고 NCC 로그인 정보(posthog)에서 읽는다. (읽기만 — 전송 없음)
 
    ■ 기능
-     1. 맵 최적화 (CSS 전용 · 역삼/송도/성수/삼평동 모니터링 화면)
-     2. 원격조종(/new) 라이트 테마
-     3. 전체 밝기 슬라이더 (다중 모니터링 페이지)
-     4. 다중 모니터링 도우미 패널 (Alt+Q): 교대 기체 로드 · 자동 시작 · 남은 기체 대수 · 카메라 배치
-     5. 모니터링 생성 모달 우측 고정 · 삭제 확인창 기체명 표기
-     6. 개입 페이지 레이아웃 정리 + 다음 개입 요청 자동 OFF
-     7. 게임패드 D-pad (↑ 프리셋 / 1초 홀드 설정 · ←→ 밝기 · ↓ 자동정지)
-     8. Alt+Q (다중 모니터링 페이지 밖) = 간단 설정창
+     1. NCC 패널 (Alt+Q · 화면 중앙 · 바깥을 클릭해도 닫히지 않음)
+        일일 업무 + 알림 / 영상 파일명 생성기 / 성남 배터리 현황(레이아웃만) / 토글 3종 / 다크·라이트
+     2. 맵 최적화 (CSS 전용 · 역삼/송도/성수/삼평동 모니터링 화면)
+     3. 원격조종(/new) 라이트 테마
+     4. 전체 밝기 슬라이더 (다중 모니터링 페이지)
+     5. 다중 모니터링 도우미 패널 (다중 모니터링 페이지의 Alt+Q): 교대 기체 로드 · 자동 시작 · 남은 기체 대수 · 카메라 배치
+     6. 모니터링 생성 모달 우측 고정 · 삭제 확인창 기체명 표기
+     7. 개입 페이지 레이아웃 정리 + 다음 개입 요청 자동 OFF
+     8. 게임패드 D-pad (↑ 프리셋 / 1초 홀드 설정 · ←→ 밝기 · ↓ 자동정지)
 
-   ■ 자동화 중지 스위치(offline)
-     켜지면 "사람 대신 NCC 화면을 눌러주는" 기능(자동 시작 · 개입 요청 자동 OFF · D-pad)이 멈춘다.
-     화면만 바꾸는 기능(맵 최적화·테마·밝기·모달 고정)은 그대로.
-       (1) 아래 OFFLINE_MODE 상수  (2) remote_admin_config.json 의 "offline": true
-       (3) 이 브라우저만: 콘솔에서 neubieSetOffline(true / false)
+   ■ 자동화 중지 스위치(automationOff) — D-pad 와는 무관
+     켜지면 "사람 대신 NCC 화면을 눌러주는" 기능(교대 패널의 자동 시작 · 개입 요청 자동 OFF)이 멈춘다.
+       (1) 아래 AUTOMATION_OFF 상수  (2) remote_admin_config.json 의 "automationOff": true
+       (3) 이 브라우저만: 콘솔에서 neubieSetAutomationOff(true / false)
+     ※ 예전 "offline" 키/스위치는 읽지 않는다 (구버전 remote_logic.js 전용).
    ============================================================ */
 (function () {
     'use strict';
@@ -39,15 +40,15 @@
     const config = {
         targetIds: ['44', '56', '65', '109'],   // 맵 최적화 대상: /monitoring/{siteId}
     };
-    const state = { insuData: null };           // gist 폴백의 '인계자 이름' 표기용 (필요할 때만 로드)
+    const state = { insuData: null };           // insu_data.json (일일 업무 동기화가 채움 / gist 폴백의 인계자 이름 표기)
 
     // ── 자동화 중지 스위치 ─────────────────────────────────────
-    const OFFLINE_MODE = false;
-    const OFFLINE_LS_KEY = 'neubie_offline_mode';
+    const AUTOMATION_OFF = false;
+    const AUTOMATION_LS_KEY = 'neubie_automation_off';
 
-    // remote_admin_config.json — { "maxMonitorSlots": 6, "locked": false, "offline": false }
+    // remote_admin_config.json — { "maxMonitorSlots": 6, "locked": false, "automationOff": false }
     // admin 이 이 파일만 고치면 모든 사용자가 새로고침 시 반영 (fetch 실패 시 안전 기본값)
-    let ADMIN_CONFIG = { maxMonitorSlots: 6, locked: false, offline: false };
+    let ADMIN_CONFIG = { maxMonitorSlots: 6, locked: false, automationOff: false };
     const adminConfigReady = (async () => {
         try {
             const res = await fetch(
@@ -58,20 +59,20 @@
             const cfg = await res.json();
             if (typeof cfg.maxMonitorSlots === 'number' && cfg.maxMonitorSlots > 0) ADMIN_CONFIG.maxMonitorSlots = cfg.maxMonitorSlots;
             if (typeof cfg.locked === 'boolean') ADMIN_CONFIG.locked = cfg.locked;
-            if (typeof cfg.offline === 'boolean') ADMIN_CONFIG.offline = cfg.offline;
+            if (typeof cfg.automationOff === 'boolean') ADMIN_CONFIG.automationOff = cfg.automationOff;
         } catch (e) {
             console.log('remote_admin_config 로드 실패, 기본값(6대 / 잠금 해제) 유지:', e);
         }
     })();
 
-    function isOfflineMode() {
-        if (OFFLINE_MODE || ADMIN_CONFIG.offline) return true;
-        try { return localStorage.getItem(OFFLINE_LS_KEY) === 'true'; } catch (e) { return false; }
+    function isAutomationOff() {
+        if (AUTOMATION_OFF || ADMIN_CONFIG.automationOff) return true;
+        try { return localStorage.getItem(AUTOMATION_LS_KEY) === 'true'; } catch (e) { return false; }
     }
-    // 이 브라우저 전용 스위치(콘솔). 반환값 = 실제 오프라인 여부
-    window.neubieSetOffline = (on) => {
-        try { localStorage.setItem(OFFLINE_LS_KEY, on ? 'true' : 'false'); } catch (e) {}
-        return isOfflineMode();
+    // 이 브라우저 전용 스위치(콘솔). 반환값 = 실제 중지 여부
+    window.neubieSetAutomationOff = (on) => {
+        try { localStorage.setItem(AUTOMATION_LS_KEY, on ? 'true' : 'false'); } catch (e) {}
+        return isAutomationOff();
     };
 
     // 다중 모니터링 도우미 기능이 (사용자 토글 ON) && (관리자 잠금 아님) 인지
@@ -79,16 +80,20 @@
         !ADMIN_CONFIG.locked && localStorage.getItem('neubie_handover_enabled') !== 'false';
 
     // ── 이름 ─────────────────────────────────────────────────
-    // 예외 사용자 판별('최정기' 상태바 / '오정훈' 패드 기본값)에만 쓴다.
-    // 예전에 저장된 neubie_user_name 이 있으면 그걸, 없으면 NCC 로그인 정보(posthog)의 이름을 읽는다. (로컬 읽기만)
+    // NCC 로그인 시 posthog 가 localStorage 에 심어두는 이름을 읽는다 (로컬 읽기만 · 서버 전송 없음).
+    // 없으면(예: 예전에 저장된 값이 있는 경우) neubie_user_name 으로 폴백. 100ms 폴링에서도 불리므로 15초 캐시.
+    let _nameCache = { v: null, at: 0 };
     function getMyName() {
-        const saved = localStorage.getItem('neubie_user_name');
-        if (saved) return saved;
+        const now = Date.now();
+        if (_nameCache.v !== null && now - _nameCache.at < 15000) return _nameCache.v;
+        let name = '';
         try {
             const k = Object.keys(localStorage).find(key => key.startsWith('ph_phc_') && key.endsWith('_posthog'));
-            if (!k) return '';
-            return JSON.parse(localStorage.getItem(k))?.$stored_person_properties?.name || '';
-        } catch (e) { return ''; }
+            if (k) name = (JSON.parse(localStorage.getItem(k))?.$stored_person_properties?.name || '').trim();
+        } catch (e) { /* 파싱 실패 시 폴백 */ }
+        if (!name) name = (localStorage.getItem('neubie_user_name') || '').trim();
+        _nameCache = { v: name, at: now };
+        return name;
     }
 
     // gist 폴백이 '인계자 이름'을 붙일 때만 필요 — 폴백이 실제로 쓰일 때 1회(10분 캐시) 읽는다
@@ -125,6 +130,158 @@
         const utcMs = Date.now() + (new Date().getTimezoneOffset() * 60000);
         return new Date(utcMs + 9 * 60 * 60000);
     }
+
+
+	// ── Paperlogy 폰트 ──
+    (function loadPaperlogyFont() {
+        if (document.getElementById('neubie-paperlogy-font')) return;
+        const link = document.createElement('link');
+        link.id = 'neubie-paperlogy-font';
+        link.rel = 'stylesheet';
+        link.type = 'text/css';
+        link.href = 'https://cdn.jsdelivr.net/gh/fonts-archive/Paperlogy/subsets/Paperlogy-dynamic-subset.css';
+        document.head.appendChild(link);
+    })();
+
+    const NB_THEMES = {
+        light: { bg: '#f3ecdb', card: '#e2d7bd', border: '#cbbd98', text: '#2b2418', accent: '#1e3a5f', purple: '#7c3aed', isDark: false },
+        dark:  { bg: '#232327', card: '#403f47', border: '#54535c', text: '#e8e9ec', accent: '#5b9bf7', purple: '#c9b8fb', isDark: true }
+    };
+
+    // NCC 패널 제목과 동일한 네온 그린(블랙 믹싱) 그라데이션 텍스트 스타일 — 토글/2x2 버튼 라벨,
+    // 일일 업무 카드 제목, 파일명 생성기 제목 등 '제목'류 텍스트에 공통으로 재사용
+    // NCC 패널 메인 제목 전용 그라데이션(블랙→그린) — 하위 라벨들은 가독성 문제로
+    // 그라데이션을 걷어내고 테마 기본 텍스트색(라이트=검정/다크=흰색)으로 되돌림
+    const NCC_TITLE_GRADIENT = 'background:linear-gradient(90deg,#0e7490,#22c55e); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent;';
+
+    // 호버 효과 공통 파란색 — 라이트/다크 상관없이 항상 이 톤 하나로 통일
+    // (T.accent를 쓰면 라이트모드에서 짙은 네이비가 나와 너무 진해 보이는 문제가 있었음)
+    const HOVER_ACCENT = '#5b9bf7';
+    // 온오프 토글의 ON 상태와 동일한 그린 — 알림테스트/다중모니터링/배송순찰띠띠 호버 전용
+    const GREEN_HOVER = '#22c55e';
+
+    function getNbTheme() {
+        return NB_THEMES[localStorage.getItem('neubie_theme') || 'dark'];
+    }
+
+
+    // 기체 네이밍 매핑 (중복 키 23·174·260 은 뒤 항목이 이기던 기존 동작 그대로 정리)
+    const ROBOT_MAP = {
+        "20": { site: "송도 요기요", unit: "#013" }, // 1호기
+        "86": { site: "송도 요기요", unit: "#055" }, // 2호기
+        "80": { site: "송도 요기요", unit: "#091" }, // 3호기
+        "29": { site: "송도 요기요", unit: "#023" }, // 4호기
+        "32": { site: "송도 요기요", unit: "#026" }, // 5호기
+        "87": { site: "송도 요기요", unit: "#056" }, // 6호기
+        "7": { site: "송도 요기요", unit: "#043" }, // 7호기
+        "57": { site: "송도 요기요", unit: "#061" }, // 8호기
+
+        "2": { site: "송도 요기요", unit: "#081" }, // 10호기 고장
+        "51": { site: "송도 요기요", unit: "#050" }, // 11호기 고장
+        "71": { site: "송도 요기요", unit: "#075" }, // 15호기 고장
+        "72": { site: "송도 요기요", unit: "#076" }, // 13호기
+        "129": { site: "송도 요기요", unit: "#082" }, // 14호기
+
+        "27": { site: "역삼 요기요", unit: "#021" }, // 3호기
+        "152": { site: "역삼 요기요", unit: "#114" }, // 5호기
+        "173": { site: "역삼 요기요", unit: "#153" }, // 14호기
+        "78": { site: "역삼 요기요", unit: "#086" }, // 2호기
+        "153": { site: "역삼 요기요", unit: "#118" }, // 6호기
+        "45": { site: "역삼 요기요", unit: "#044" }, // 9호기
+
+        "47": { site: "역삼 요기요", unit: "#046" }, // 1호기 고장
+        "134": { site: "역삼 요기요", unit: "#098" }, // 4호기 고장
+        "1": { site: "역삼 요기요", unit: "#016" }, // 7호기 고장
+        "146": { site: "역삼 요기요", unit: "#084" }, // 12호기 고장
+
+        "174": { site: "성수 요기요", unit: "#154" }, // 2호기
+        "23": { site: "성수 요기요", unit: "#017" }, // 3호기
+
+        "260": { site: "성수 요기요", unit: "#233" }, // 6호기
+        "261": { site: "성수 요기요", unit: "#234" }, // 7호기
+        "262": { site: "성수 요기요", unit: "#235" }, // 8호기
+
+        "46": { site: "성남 삼평동", unit: "#045" },  // 1호기
+        "53": { site: "성남 삼평동", unit: "#052" }, // 2호기
+        "54": { site: "성남 삼평동", unit: "#053" }, // 3호기
+        "55": { site: "성남 삼평동", unit: "#054" }, // 4호기
+        "133": { site: "성남 삼평동", unit: "#087" }, // 5호기
+        "132": { site: "성남 삼평동", unit: "#088" }, // 6호기
+        "135": { site: "성남 삼평동", unit: "#092" }, // 7호기
+        "136": { site: "성남 삼평동", unit: "#093" }, // 8호기
+
+        "137": { site: "성남 서현동", unit: "#094" }, // 9호기
+        "122": { site: "성남 서현동", unit: "#095" }, // 10호기
+
+        "68": { site: "파주 LGD", unit: "#072" }, // 엘리 1호기
+        "106": { site: "파주 LGD", unit: "#078" }, // 엘리 2호기
+        "62": { site: "파주 LGD", unit: "#066" }, // 엘리 3호기
+        "66": { site: "아산 스테이그린", unit: "#070" }, // 그린 1호기
+        "67": { site: "아산 스테이그린", unit: "#071" }, // 그린 2호기
+        "60": { site: "가평 니모 캠핌장", unit: "#064" }, // 가평 1호기
+        "119": { site: "가평 니모 캠핑장", unit: "#085" }, // 가평 2호기
+        "19": { site: "송도 국제캠핑장", unit: "#041" }, // 국캠 1호기
+        "92": { site: "송도 국제캠핑장", unit: "#135" }, // 국캠 2호기
+        "97": { site: "송도 국제캠핑장", unit: "#122" }, // 국캠 3호기
+        "125": { site: "대관령 솔내음 캠핑장", unit: "#110" }, // 대관령 1호기
+        "127": { site: "대관령 솔내음 캠핑장", unit: "#115" }, // 대관령 2호기
+        "214": { site: "진천 힐사이드 캠핑장", unit: "#194" }, // 진천
+        "99": { site: "삼성인력개발원", unit: "#124" }, // 인개원
+		"107": { site: "광주 낭만글램핑", unit: "#080" }, // 낭만글램핑 1호기
+		"121": { site: "광주 낭만글램핑", unit: "#090" }, // 낭만글램핑 2호기
+
+        "158": { site: "에버랜드 장미축제", unit: "#140" }, // 에버랜드
+        "236": { site: "Hitachi Building Systems", unit: "#178" }, // 히타치 배달
+        "168": { site: "서산 뜨레 바베큐", unit: "#145" }, // 서산 뜨레 바베큐
+		
+		"303": { site: "충남대학교병원", unit: "#310" }, // 충남대학교병원 두비
+		"304": { site: "충남대학교병원", unit: "#311" }, // 충남대학교병원 달비
+
+		"312": { site: "수원 힐스테이트 푸르지오", unit: "#318" }, // 수원 힐스테이트 318호기
+		"313": { site: "수원 힐스테이트 푸르지오", unit: "#319" }, // 수원 힐스테이트 319호기
+
+        "256": { site: "수원 힐스테이트 바로고", unit: "#229" }, // 수원 힐스테이트 바로고 1호기
+        "257": { site: "수원 힐스테이트 바로고", unit: "#230" }, // 수원 힐스테이트 바로고 2호기
+        "258": { site: "수원 힐스테이트 바로고", unit: "#231" }, // 수원 힐스테이트 바로고 3호기
+        "259": { site: "수원 힐스테이트 바로고", unit: "#232" }, // 수원 힐스테이트 바로고 4호기
+    
+		"315": { site: "반포 래미안 트리니원", unit: "#320" }, // 반포 래미안 트리니원 320호기
+		"316": { site: "반포 래미안 트리니원", unit: "#321" }, // 반포 래미안 트리니원 321호기
+		"317": { site: "반포 래미안 트리니원", unit: "#322" }, // 반포 래미안 트리니원 322호기
+		"318": { site: "반포 래미안 트리니원", unit: "#323" }, // 반포 래미안 트리니원 323호기
+	};
+
+    const getFormattedDate = (dateObj) => {
+        const y = dateObj.getFullYear();
+        const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const d = String(dateObj.getDate()).padStart(2, '0');
+        return `${y}${m}${d}`;
+    };
+    const getFormattedHour = (dateObj) => String(dateObj.getHours()).padStart(2, '0');
+    const getCalculatedTime = (offsetMinutes) => {
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - offsetMinutes);
+        return now;
+    };
+    const isWeekend = () => {
+        // return true;
+        const day = new Date().getDay();
+        return (day === 6 || day === 0);
+    };
+
+    function updateRobotContext() {
+	    const path = window.location.href;
+	    if (NEUBIE_HOSTS.some(h => path.includes(`${h}/ko/remote/robot/`))) {
+	        const idMatch = path.match(/\/ko\/remote\/robot\/(\d+)/);
+	        const robotNum = idMatch ? idMatch[1] : null;
+	        if (robotNum && ROBOT_MAP[robotNum]) {
+	            let history = JSON.parse(localStorage.getItem('neubie_robot_history') || '[]');
+	            const newData = { id: robotNum, timestamp: Date.now() };
+	            history = [newData, ...history.filter(h => h.id !== robotNum)].slice(0, 3);
+	            localStorage.setItem('neubie_robot_history', JSON.stringify(history));
+	        }
+	    }
+	}
 
 
     /* ============================================================
@@ -503,6 +660,1040 @@
 
 
     /* ============================================================
+        UI 컨테이너
+       ============================================================ */
+    function createContainer(id, width, top, left, right = 'auto') {
+        const el = document.createElement('div');
+        el.id = id;
+        Object.assign(el.style, {
+            position: 'fixed', top: top, left: left, right: right,
+            width: width, backgroundColor: '#111111', color: '#fff',
+            borderRadius: '24px', padding: '20px', zIndex: '1000000',
+            fontFamily: 'Pretendard, sans-serif', boxShadow: '0 20px 50px rgba(0,0,0,0.8)',
+            border: '4px solid transparent', display: 'none', transform: left === '50%' ? 'translate(-50%, -50%)' : 'none',
+            backgroundImage: 'linear-gradient(#111111, #111111), linear-gradient(135deg, #10b981, #2dd4bf)',
+            backgroundOrigin: 'border-box',
+            backgroundClip: 'padding-box, border-box',
+            maxHeight: '90vh', overflowY: 'auto', overflowX: 'hidden',
+            boxSizing: 'border-box',
+        });
+        return el;
+    }
+
+    const dashboard = createContainer('neubie-dashboard', 'min(580px, 94vw)', '50%', '50%');
+    dashboard.style.padding = '15px'; // 전체 레이아웃이 커 보인다는 피드백 — 외곽 패딩만 살짝 축소
+
+    // ── 대시보드 전체 배율(줌) 조정 ──
+    // 콘솔/코드에서 window.setDashboardZoom(0.95) 처럼 호출하면 즉시 반영되고
+    // localStorage에 저장돼 다음 로드 때도 유지된다. window.adjustDashboardZoom(3)은
+    // 현재 값에 +3%p 하는 식으로 상대 조정할 때 쓰면 편하다.
+    const DEFAULT_DASHBOARD_ZOOM = 0.95;
+    function getDashboardZoom() {
+        const saved = parseFloat(localStorage.getItem('neubie_dashboard_zoom'));
+        return isNaN(saved) ? DEFAULT_DASHBOARD_ZOOM : saved;
+    }
+    window.setDashboardZoom = function(scale) {
+        localStorage.setItem('neubie_dashboard_zoom', scale);
+        dashboard.style.zoom = scale;
+        console.log(`✅ 대시보드 배율 ${Math.round(scale * 100)}%로 설정됨`);
+    };
+    window.adjustDashboardZoom = function(deltaPercent) {
+        const next = Math.round((getDashboardZoom() * 100 + deltaPercent)) / 100;
+        window.setDashboardZoom(next);
+    };
+    dashboard.style.zoom = getDashboardZoom();
+    (function ensureNoOverflowForUser() {
+        const styleId = 'neubie-dash-overflow-fix';
+        if (document.getElementById(styleId)) return;
+        const st = document.createElement('style');
+        st.id = styleId;
+        st.textContent = `
+            #neubie-dashboard, #neubie-dashboard * {
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+            }
+            #neubie-dashboard select,
+            #neubie-dashboard input,
+            #neubie-dashboard button {
+                min-width: 0 !important;
+            }
+
+            #neubie-dashboard, #neubie-dashboard *,
+            #neubie-battery-popup, #neubie-battery-popup *,
+            #neubie-board-overlay, #neubie-board-overlay *,
+            #neubie-secret-overlay, #neubie-secret-overlay *,
+            #neubie-schedule-overlay, #neubie-schedule-overlay *,
+            #neubie-shared-popup, #neubie-shared-popup * {
+                font-family: 'Paperlogy', 'Pretendard', 'Noto Sans KR', sans-serif !important;
+            }
+
+            #nso-seat-grid, #nso-seat-grid * {
+                font-family: 'Pretendard', 'Noto Sans KR', sans-serif !important;
+            }
+        `;
+        document.head.appendChild(st);
+    })();
+    const batteryPopup = createContainer('neubie-battery-popup', '400px', '20px', 'auto', '20px');
+    function makeDraggable(handleEl, targetEl) {
+        let isDragging = false, startX, startY, startLeft, startTop;
+
+        handleEl.style.cursor = 'grab';
+
+        handleEl.addEventListener('mousedown', (e) => {
+            const tag = e.target.tagName;
+            if (tag === 'INPUT' || tag === 'BUTTON' || tag === 'SELECT' || tag === 'TEXTAREA' || tag === 'A') return;
+
+            isDragging = true;
+            targetEl.dataset.dragging = 'true';
+
+            const rect = targetEl.getBoundingClientRect();
+            targetEl.style.transform = 'none';
+            targetEl.style.left = rect.left + 'px';
+            targetEl.style.top = rect.top + 'px';
+            targetEl.style.right = 'auto';
+            targetEl.style.bottom = 'auto';
+
+            startX = e.clientX;
+            startY = e.clientY;
+            startLeft = parseFloat(targetEl.style.left);
+            startTop = parseFloat(targetEl.style.top);
+
+            handleEl.style.cursor = 'grabbing';
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            let newLeft = startLeft + (e.clientX - startX);
+            let newTop  = startTop  + (e.clientY - startY);
+
+            newLeft = Math.max(0, Math.min(newLeft, window.innerWidth  - targetEl.offsetWidth));
+            newTop  = Math.max(0, Math.min(newTop,  window.innerHeight - targetEl.offsetHeight));
+            targetEl.style.left = newLeft + 'px';
+            targetEl.style.top  = newTop  + 'px';
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (!isDragging) return;
+            isDragging = false;
+            targetEl.dataset.dragging = 'false';
+            handleEl.style.cursor = 'grab';
+        });
+    }
+
+
+    /* ============================================================
+        성남 배터리 현황 — 레이아웃만 있는 깡통
+        - 데이터 소스는 아직 없다. (성남 4기체 페이지 수집 → GitHub/Vercel → 여기서 읽기 예정)
+        - 나중에 연결할 때 만질 곳은 딱 두 곳:
+            (1) BATTERY_FEED_URL 에 JSON 주소를 넣거나,
+            (2) 콘솔/다른 코드에서 nbBattery.set(데이터) 를 호출.
+        - 받는 데이터 모양(둘 다 허용):
+            { updatedAt: "2026-10-02 19:40:00", robots: [ { id: "221", battery: 53, status: "charging" }, … ] }
+            { updatedAt: "…", robots: { "221": { battery: 53, status: "patrolling" }, … } }
+          status: charging(충전 중) | patrolling(순찰 중) | standby(대기 중) | off(OFF)
+       ============================================================ */
+    const BATTERY_FEED_URL = '';        // ← 비어 있으면 아무 요청도 하지 않는다
+    const BATTERY_STALE_MIN = 15;       // 이 시간 넘게 갱신 없으면 '오래된 데이터'로 표기
+    const BATTERY_ROBOTS = [
+        { id: '221', name: '성남 판교', shortName: '성남 판교' },
+        { id: '222', name: '성남 서현', shortName: '성남 서현' },
+        { id: '224', name: '성남 율동', shortName: '성남 율동' },
+        { id: '223', name: '성남 야탑', shortName: '성남 야탑' },
+    ];
+    const BATTERY_STATUS = {
+        charging:   { text: '충전 중', icon: '🟢', color: '#22c55e' },
+        patrolling: { text: '순찰 중', icon: '🔵', color: '#3b82f6' },
+        standby:    { text: '대기 중', icon: '⚪', color: '#888888' },
+        off:        { text: 'OFF',     icon: '⚪', color: '#666666' },
+    };
+    const BATTERY_STATUS_ALIAS = {
+        charge: 'charging', charging: 'charging', '충전': 'charging', '충전 중': 'charging', '충전중': 'charging',
+        patrol: 'patrolling', patrolling: 'patrolling', '순찰': 'patrolling', '순찰 중': 'patrolling', '순찰중': 'patrolling',
+        idle: 'standby', standby: 'standby', waiting: 'standby', '대기': 'standby', '대기 중': 'standby', '대기중': 'standby',
+        off: 'off', OFF: 'off', offline: 'off',
+    };
+
+    let batteryFeed = null;             // { updatedAt, byId: { '221': { battery, status } } }
+    let _batteryBuilt = false;
+
+    function setBatteryData(input) {
+        if (!input || typeof input !== 'object') return;
+        const byId = {};
+        const robots = input.robots ?? input;
+        const put = (id, v) => {
+            if (id == null || !v) return;
+            const st = BATTERY_STATUS_ALIAS[String(v.status ?? '').trim()] || (v.status in BATTERY_STATUS ? v.status : null);
+            const b = Number(v.battery);
+            byId[String(id)] = { battery: Number.isFinite(b) ? Math.round(b) : null, status: st };
+        };
+        if (Array.isArray(robots)) robots.forEach(r => put(r?.id, r));
+        else Object.keys(robots).forEach(k => { if (typeof robots[k] === 'object') put(k, robots[k]); });
+        batteryFeed = { updatedAt: input.updatedAt || null, byId };
+        if (_batteryBuilt) renderBatteryRows();
+    }
+    window.nbBattery = { set: setBatteryData, get: () => batteryFeed };
+
+    async function loadBatteryFeed() {
+        if (!BATTERY_FEED_URL) return;
+        try {
+            const sep = BATTERY_FEED_URL.includes('?') ? '&' : '?';
+            const r = await fetchWithTimeout(`${BATTERY_FEED_URL}${sep}t=${Date.now()}`, { cache: 'no-store' }, 6000);
+            if (r.ok) setBatteryData(await r.json());
+        } catch (e) { /* 실패 시 마지막 값 유지 */ }
+    }
+
+    // 복사용 텍스트에 쓰이는 현재 표시값
+    let lastBatteryData = [];
+
+    function buildBatteryShell() {
+        const T = getNbTheme();
+        batteryPopup.style.backgroundColor = T.bg;
+        batteryPopup.style.backgroundImage = `linear-gradient(${T.bg}, ${T.bg}), linear-gradient(135deg, #10b981, #2dd4bf)`;
+        batteryPopup.style.color = T.text;
+
+        batteryPopup.innerHTML = '';
+        const header = document.createElement('div');
+        header.style.cssText = `display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid ${T.border}; padding-bottom:10px;`;
+        const titleB = document.createElement('b');
+        titleB.textContent = '🔋 성남 배터리 현황';
+        titleB.style.cssText = `color:${T.text}; font-size:18px;`;
+
+        const headerRight = document.createElement('div');
+        headerRight.style.cssText = 'display:flex; align-items:center; gap:8px;';
+
+        const copyBtn = document.createElement('button');
+        copyBtn.textContent = '복사';
+        Object.assign(copyBtn.style, {
+            background: '#10b981', color: 'white', border: 'none',
+            height: '24px', width: '66px', flexShrink: '0', padding: '0',
+            borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', transition: '0.2s',
+        });
+        copyBtn.onclick = (e) => copyBatteryText(e.target);
+
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = '✕';
+        closeBtn.style.cssText = 'background:#ef4444; color:white; border:none; border-radius:4px; width:22px; height:22px; cursor:pointer; font-weight:bold; display:flex; align-items:center; justify-content:center; padding:0;';
+        closeBtn.onclick = () => toggleBattery();
+
+        headerRight.append(copyBtn, closeBtn);
+        header.append(titleB, headerRight);
+        batteryPopup.appendChild(header);
+        makeDraggable(header, batteryPopup);
+
+        const list = document.createElement('div');
+        list.id = 'neubie-battery-list';
+        batteryPopup.appendChild(list);
+
+        BATTERY_ROBOTS.forEach((c) => {
+            const item = document.createElement('div');
+            item.dataset.batteryId = c.id;
+            item.style.cssText = `
+                background:${T.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)'};
+                padding:6px 16px; border-radius:10px; margin-bottom:6px;
+                border-left:5px solid #666; font-size:16px;
+            `;
+            item.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; gap:8px;">
+                    <span style="font-weight:500;" class="bat-name">⚪ ${c.name}</span>
+                    <span style="display:flex; align-items:baseline; gap:8px;">
+                        <span class="bat-status" style="font-size:12px; opacity:0.75;"></span>
+                        <span class="bat-val" style="font-weight:bold; font-size:16px;">- %</span>
+                    </span>
+                </div>
+                <div style="width:100%; height:6px; background:${T.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'}; border-radius:3px; overflow:hidden;">
+                    <div class="bat-bar-fill" style="height:100%; width:0%; background:#666; border-radius:3px; transition:width 0.3s ease, background 0.3s ease;"></div>
+                </div>
+            `;
+            list.appendChild(item);
+        });
+
+        const foot = document.createElement('div');
+        foot.id = 'neubie-battery-foot';
+        foot.style.cssText = 'margin-top:8px; font-size:11px; line-height:1.4; opacity:0.7;';
+        batteryPopup.appendChild(foot);
+
+        _batteryBuilt = true;
+        renderBatteryRows();
+    }
+
+    function renderBatteryRows() {
+        lastBatteryData = [];
+        BATTERY_ROBOTS.forEach((c) => {
+            const d = batteryFeed?.byId?.[c.id];
+            let val = '- %', accent = '#666', icon = '⚪', statusText = '데이터 없음', pct = 0;
+            if (d) {
+                const meta = BATTERY_STATUS[d.status] || null;
+                if (d.battery != null) { val = `${d.battery}%`; pct = Math.min(100, Math.max(0, d.battery)); }
+                if (meta) { accent = meta.color; icon = meta.icon; statusText = meta.text; }
+                else { statusText = '-'; }
+                // 배터리 잔량이 20% 이하이면 충전 중이 아닐 때 경고색
+                if (d.battery != null && d.battery <= 20 && d.status !== 'charging' && d.status !== 'off') accent = '#ef4444';
+            }
+            lastBatteryData.push({ shortName: c.shortName, battery: val, statusText });
+
+            const item = batteryPopup.querySelector(`[data-battery-id="${c.id}"]`);
+            if (!item) return;
+            item.style.borderLeft = `5px solid ${accent}`;
+            item.querySelector('.bat-name').textContent = `${icon} ${c.name}`;
+            item.querySelector('.bat-status').textContent = statusText;
+            const valEl = item.querySelector('.bat-val');
+            valEl.textContent = val; valEl.style.color = accent;
+            const fill = item.querySelector('.bat-bar-fill');
+            fill.style.width = `${pct}%`; fill.style.background = accent;
+        });
+
+        const foot = document.getElementById('neubie-battery-foot');
+        if (foot) {
+            if (!batteryFeed) {
+                foot.textContent = '외부 수집 데이터 연동 전 — 레이아웃만 준비됨';
+                foot.style.color = '';
+            } else if (batteryFeed.updatedAt) {
+                const t = new Date(String(batteryFeed.updatedAt).replace(' ', 'T') + (/[zZ]|[+-]\d\d:?\d\d$/.test(batteryFeed.updatedAt) ? '' : '+09:00'));
+                const min = Math.floor((Date.now() - t.getTime()) / 60000);
+                const stale = Number.isFinite(min) && min >= BATTERY_STALE_MIN;
+                foot.textContent = Number.isFinite(min)
+                    ? (stale ? `⚠️ ${min}분 전 데이터 — 수집이 멈췄을 수 있어요` : `${batteryFeed.updatedAt} 기준 (${Math.max(0, min)}분 전)`)
+                    : `${batteryFeed.updatedAt} 기준`;
+                foot.style.color = stale ? '#ef4444' : '';
+            } else {
+                foot.textContent = '';
+            }
+        }
+    }
+
+    function copyBatteryText(btn) {
+        const now = new Date();
+        let hour = now.getHours();
+        if (now.getMinutes() >= 50) hour = (hour + 1) % 24;
+        let copyText = `[${String(hour).padStart(2, '0')}시 성남 기체 배터리 현황]\n`;
+        lastBatteryData.forEach(item => {
+            copyText += `• ${item.shortName}: ${item.battery} (${item.statusText})\n`;
+        });
+        navigator.clipboard.writeText(copyText).then(() => {
+            const originalText = btn.textContent;
+            const originalBg = btn.style.background;
+            btn.textContent = '복사됨';
+            btn.style.background = HOVER_ACCENT;
+            setTimeout(() => { btn.textContent = originalText; btn.style.background = originalBg; }, 1500);
+        }).catch(() => {
+            alert('복사 실패 — 클립보드 권한을 확인해주세요.');
+        });
+    }
+
+    // 열고 닫기 — 대시보드가 열려 있으면 스트림덱 바로 위, 아니면 우상단
+    function toggleBattery() {
+        if (batteryPopup.style.display !== 'block') {
+            if (dashboard.style.display === 'block') {
+                const r = getSharedPopupRect();
+                batteryPopup.style.top = 'auto';
+                batteryPopup.style.left = r.left + 'px';
+                batteryPopup.style.right = 'auto';
+                batteryPopup.style.bottom = r.bottom + 'px';
+            } else {
+                batteryPopup.style.top = '20px';
+                batteryPopup.style.left = 'auto';
+                batteryPopup.style.right = '20px';
+                batteryPopup.style.bottom = 'auto';
+            }
+            if (!_batteryBuilt || !batteryPopup.querySelector('#neubie-battery-list')) buildBatteryShell();
+            else renderBatteryRows();
+            loadBatteryFeed();
+            batteryPopup.style.display = 'block';
+        } else {
+            batteryPopup.style.display = 'none';
+            if (window._neubieBatteryCard) window._neubieBatteryCard.style.outline = 'none';
+        }
+    }
+
+
+    /* ============================================================
+        일일 업무 — /api/tasks 동기화 · 알림 · 목록 렌더
+       ============================================================ */
+    /* TASK-SYNC-START */
+    // ── 서버 동기화 주기 ──
+    // syncTasksFromServer 는 맨 아래의 매분 타이머가 호출한다. 이 호출은 '알림 발동 / 09·18시 버튼 상태 / 남은 시간 표기'처럼
+    // 시간이 흐르면서 달라지는 것들을 분 단위로 다시 계산하는 역할도 겸하므로 매분 호출은 그대로 유지한다.
+    // 다만 '서버에서 새로 받아오는 네트워크 요청'은 시간대별로 간격을 둔다:
+    //   08:30~10:00 : 매분 (관리자가 일일업무를 집중 수정하는 시간대 — 기존과 동일)
+    //   그 외       : 5분마다 (그 사이의 매분 호출은 이미 받아 둔 데이터로 화면/알림만 다시 계산 — 네트워크 요청 없음)
+    // 이름 변경·대시보드 열기처럼 사용자가 직접 일으킨 동기화(force)는 언제나 새로 받아온다.
+    const TASK_SYNC_BUSY_FROM = 8 * 60 + 30;        // 08:30
+    const TASK_SYNC_BUSY_TO = 10 * 60;              // 10:00 (미포함)
+    const TASK_SYNC_IDLE_MS = 5 * 60 * 1000;        // 그 외 시간대의 서버 조회 간격
+    const TASK_SYNC_TOLERANCE_MS = 5000;            // 분 타이머의 미세한 오차로 한 주기(분)를 더 건너뛰지 않게 하는 여유
+    let _lastTaskSyncAt = 0;                        // 마지막으로 서버 조회를 시작한 시각 (0 = 곧바로 다시 시도)
+    function getTaskSyncIntervalMs() {
+        const d = new Date(), m = d.getHours() * 60 + d.getMinutes();
+        return (m >= TASK_SYNC_BUSY_FROM && m < TASK_SYNC_BUSY_TO) ? 0 : TASK_SYNC_IDLE_MS;   // 0 = 매분
+    }
+
+    // 받아 둔 데이터로 화면·알림을 처리한다 (네트워크 없음) — 서버에서 새로 받았을 때와, 받아 둔 데이터를 매분 다시 계산할 때 공용
+    function applyTaskData(data, insu) {
+        if (!Array.isArray(data)) throw new Error('tasks 응답 형식 오류');   // 서버 오류 응답이 정상 데이터를 덮어쓰지 않게 함
+        const myName = getMyName();
+        state.insuData = insu;
+        window.currentAllTasks = data; // 인계 체인(전임자/후임자) 조회용 — 필터링 전 전체 목록
+
+        const myTasks = data.filter(t => {
+            // 담당자란에 '홍길동/임꺽정'처럼 여러 명이 슬래시로 같이 적힌 경우, 그중 한 명이라도
+            // 나와 일치하면 그 업무는 나한테도 표시되어야 함 (seat_map.json 파싱 때와 동일한 관례)
+            const assignees = String(t.user || '').split('/').map(n => n.trim());
+            if (!assignees.includes(myName)) return false;
+            // next_0700_handover(내일 07시 다중모니터링 통합 인계 스냅샷)는
+            // 00:00~07:10 사이에만 미리보기로 표시. 그 이후엔 같은 07:00 업무가
+            // 정규 monitoring 항목으로 자연스럽게 이어지므로 중복 표시를 막는다.
+            if (t.type === 'next_0700_handover') {
+                return new Date().getHours() < 7;
+            }
+            return true;
+        });
+        window.currentMyTasks = myTasks;
+        checkAndTriggerNotifications(myTasks);
+
+        renderTaskList(myTasks);
+        if (typeof window.syncTiddiButtonState === 'function') window.syncTiddiButtonState();
+    }
+
+    function syncTasksFromServer(force) {
+        const myName = getMyName();
+        if (!myName) {
+            window.currentMyTasks = [];
+            renderTaskList([]); // 이름이 비어있으면 즉시 '배정된 업무가 없습니다' 상태로 표시
+            return;
+        }
+
+        // 이미 받아 둔 데이터가 있고 아직 새로 받을 때가 아니면 → 네트워크 없이 그 데이터로만 다시 계산
+        const hasCache = Array.isArray(window.currentAllTasks) && !!state.insuData;
+        // 숨은 탭은 서버를 조회하지 않고 받아 둔 데이터로만 재계산한다 (탭이 여러 개여도 요청이 늘지 않게)
+        if (!force && hasCache && (document.hidden || (Date.now() - _lastTaskSyncAt) < getTaskSyncIntervalMs() - TASK_SYNC_TOLERANCE_MS)) {
+            try { applyTaskData(window.currentAllTasks, state.insuData); } catch (e) { console.log('Local apply failed'); }
+            return;
+        }
+        _lastTaskSyncAt = Date.now();
+
+        // daily_tasks는 서버리스 프록시(api/tasks) 경유 — GitHub Contents API를
+        // 인증된 채로 직접 조회해서 raw.githubusercontent.com의 CDN 캐시 지연(몇 분)을
+        // 우회함. insu_data는 변동이 잦지 않아 기존 raw 방식 그대로 유지.
+        // ※ api/tasks 에는 ?t=Date.now() 나 cache:'no-store' 를 붙이지 않는다 — 서버가 시간대별로 CDN 캐시(08:30~10:00 3초 / 그 외 60초)를
+        //   걸어 두었는데, URL 이 매번 달라지면 그 캐시가 무력화되어 모든 PC 의 요청이 함수 실행으로 이어진다.
+        const dataUrl = 'https://multimonitoring.vercel.app/api/tasks';
+		const insuUrl = `https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/insu_data.json?t=${Date.now()}`;
+
+        // daily_tasks + insu_data 병렬 fetch
+        Promise.all([
+            fetch(dataUrl).then(r => r.json()),
+            fetch(insuUrl, {cache: 'no-store'}).then(r => r.json()),
+        ]).then(([data, insu]) => {
+            applyTaskData(data, insu);
+        }).catch(err => {
+            _lastTaskSyncAt = 0;   // 실패하면 다음 분에 바로 다시 시도 (기존과 동일)
+            console.log("Sync failed");
+        });
+    }
+    /* TASK-SYNC-END */
+
+    // 레이아웃 노출 여부와 상관없이 알림만 전담하는 함수
+    function checkAndTriggerNotifications(tasks) {
+        const interval = parseInt(localStorage.getItem('neubie_remind_int') || '0');
+        if (interval === 0) return;
+
+        // 매일 반복되는 동일한 이름의 업무가 많아서(예: '역삼요기요 15:30' 매일 반복),
+        // '오늘 날짜'를 값에 같이 저장해두고 읽을 때마다 비교한다 — 날짜가 다르면(어제
+        // 이전 값이 자정 정리 없이 그대로 남아있는 경우) 오늘 처음 보는 것으로 간주해 리셋.
+        const todayStr = new Date().toDateString();
+
+        tasks.forEach(t => {
+            const timeKey = t.rawTime || t.time;
+            const status = getTaskStatus(timeKey); 
+            
+            const isMultiMon = t.content && t.content.includes("다중 모니터링");
+            const targetInterval = isMultiMon ? (interval + 10) : interval;
+
+            // 예전엔 remainMin이 targetInterval과 '정확히' 같을 때만 발동했는데, 그 1분을
+            // 체크가 못 잡고 지나가면(예: 탭이 백그라운드라 크롬이 타이머를 스로틀링해서
+            // 그 순간 체크가 늦게 돎) 그날은 영영 알림이 안 가는 문제가 있었다.
+            // '정확히 그 1분' 대신 '그 이하 ~ 2분 이내' 범위로 넉넉하게 잡아서,
+            // 체크 한두 번을 놓쳐도 그다음 체크에서 여전히 잡히도록 한다.
+            if (status.remainMin <= targetInterval && status.remainMin > targetInterval - 2) {
+                const taskKey = `${t.content}_${timeKey}_${targetInterval}`;
+                const storageKey = `neubie_notified_${taskKey}`;
+
+                // 저장 형식: "YYYY년 M월 D일 요일:카운트". 날짜가 오늘이 아니면(=예전 값이
+                // 정리 안 되고 남아있는 것) 무조건 0부터 다시 시작한다. 예전엔 setTimeout으로
+                // 자정에 지우는 방식이었는데, 탭이 자정 전에 닫히면 그 정리가 영영 실행되지
+                // 않아 예전 카운트가 계속 남아 다음날 알림을 영구적으로 막아버리는 문제가 있었다.
+                const raw = localStorage.getItem(storageKey) || '';
+                const sepIdx = raw.lastIndexOf(':');
+                const storedDate = sepIdx >= 0 ? raw.slice(0, sepIdx) : '';
+                const storedCount = sepIdx >= 0 ? raw.slice(sepIdx + 1) : '';
+                const notifiedCount = (storedDate === todayStr) ? (parseInt(storedCount) || 0) : 0;
+
+                if (notifiedCount < 2) {
+                    const displayMin = isMultiMon ? status.remainMin - 10 : status.remainMin;
+                    triggerReminder(t.content, displayMin);
+                    localStorage.setItem(storageKey, `${todayStr}:${notifiedCount + 1}`);
+                }
+            }
+        });
+    }
+
+    /* ============================================================
+        SECTION 4-2 시간 계산 및 상태 판단
+       ============================================================ */
+    function getTaskStatus(rawTime, isMonitoring) {
+        const times = String(rawTime).match(/\d{2}:\d{2}/g);
+        if (!times) return { isExpired: false, remainMin: 999, score: 0 };
+        
+        const now = new Date();
+        const startTimeStr = times[0];
+        const endTimeStr = times[times.length - 1];
+
+        const [sH, sM] = startTimeStr.split(':').map(Number);
+        const [eH, eM] = endTimeStr.split(':').map(Number);
+        
+        // 07시 기준 상대 점수 계산 (자정 전후 시간 역전 방지)
+        const getRelativeScore = (h, m) => {
+            let relHour = h - 7;
+            if (relHour < 0) relHour += 24;
+            return relHour * 60 + m;
+        };
+
+        const currScore = getRelativeScore(now.getHours(), now.getMinutes());
+        const startScore = getRelativeScore(sH, sM);
+        const endScore = getRelativeScore(eH, eM);
+
+        let remainMin = startScore - currScore;
+        
+        // 다중 모니터링은 10분 일찍 오도록 계산
+        if (isMonitoring) {
+            remainMin -= 10; 
+        }
+
+        return {
+            isExpired: currScore > endScore,
+            remainMin: remainMin,
+            score: startScore
+        };
+    }
+
+    function triggerReminder(content, remainMin) {
+        // notifType 체크 제거 — 항상 Type1(점멸)만 실행
+        if (!document.getElementById('neubie-alarm-style')) {
+            const s = document.createElement('style');
+            s.id = 'neubie-alarm-style';
+            s.textContent = `
+                @keyframes neubie-alarm-blink {
+                    0%, 100% { border-color: #000; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+                    50% { border-color: #10b981; box-shadow: 0 0 30px rgba(16,185,129,0.9); }
+                }
+                @keyframes neubie-fadein {
+                    from { opacity:0; transform:translateX(-50%) translateY(-10px); }
+                    to   { opacity:1; transform:translateX(-50%) translateY(0); }
+                }
+            `;
+            document.head.appendChild(s);
+        }
+        const alarmDiv = document.createElement('div');
+        alarmDiv.style.cssText = `
+            position:fixed; top:16px; left:50%; transform:translateX(-50%);
+            background:linear-gradient(135deg,#10b981,#2dd4bf);
+            color:#fff; padding:15px 30px; border-radius:14px;
+            z-index:9999999; font-weight:bold; font-size:16px;
+            border:3px solid #000; display:flex; align-items:center; gap:10px;
+            box-shadow:0 8px 30px rgba(0,0,0,0.5);
+            animation:neubie-fadein 0.3s ease, neubie-alarm-blink 0.5s step-end 0.3s infinite;
+        `;
+        alarmDiv.innerHTML = `⚠️ <b>[업무 알림]</b> ${content} 시작 ${remainMin}분 전입니다!`;
+        document.body.appendChild(alarmDiv);
+        setTimeout(() => {
+            alarmDiv.style.opacity = '0';
+            alarmDiv.style.transition = '0.5s';
+            setTimeout(() => alarmDiv.remove(), 500);
+        }, 7000);
+    }
+
+    /* ============================================================
+    SECTION 4-3. UI 렌더링 및 07시 기준 정렬/알림 제어
+   ============================================================ */
+    // ── 인계 체인(전임자 > 본인 > 후임자) 대상 업무 판별 ──
+    // '다중 모니터링'과 '부산 국립과학관' 관련 업무만 하루 동안 여러 사람이 돌아가며
+    // 맡는 로테이션 성격이라, 같은 그룹의 전체 인원을 시간순으로 나열해 앞뒤를 찾는다.
+    function getHandoverGroupKey(t) {
+        if (!t || !t.content) return null;
+        if (t.content.includes('다중 모니터링')) return '다중 모니터링';
+        // '부산과학관 ... HUB B 출근 / 자비에 재부팅 / 임무받기 ON' 업무는 제외하고,
+        // '부산국립과학관 170,171호기 임무'만 인계 체인 대상으로 삼는다 ('국립' 포함 여부로 구분)
+        if (t.content.includes('국립과학관')) return '부산 국립과학관';
+        return null;
+    }
+
+    function getHandoverNeighbors(myTask, allTasks) {
+        const key = getHandoverGroupKey(myTask);
+        if (!key) return null;
+
+        // '다중 모니터링'은 daily_tasks(개인별 할일)가 아니라 insu_data.json의
+        // 24시간 로테이션 표(schedule)가 진짜 출처 — 이걸 안 쓰면 개인별 항목
+        // 매칭 오차로 "본인 → 본인" 같은 오류가 생길 수 있다.
+        if (key === '다중 모니터링') {
+            const timeMatch = String(myTask.rawTime || myTask.time).match(/\d{2}:\d{2}/);
+            if (!timeMatch) return null;
+            const hourNum = parseInt(timeMatch[0].slice(0, 2), 10);
+
+            // 06시(오늘 로테이션의 마지막 순번)와 07시(내일 로테이션의 첫 순번)는
+            // 서로 다른 하루 주기를 넘나드는 경계다. schedule은 '하나의 07:00~06:00'
+            // 주기만 담고 있어서, 06시의 '다음'을 단순히 schedule['07:00']으로 구하면
+            // 그건 내일이 아니라 '오늘 자신의(이미 지나간) 07시'를 가리키게 되는 버그가
+            // 있었다 — 이 두 경계 방향은 GAS가 만들어둔 next_0700_handover 스냅샷으로
+            // 정확히 채운다.
+            if (Array.isArray(allTasks)) {
+                if (hourNum === 7) {
+                    const snap = allTasks.find(t => t.type === 'next_0700_handover' && t.selfUser === myTask.user);
+                    if (snap) return { prev: snap.prevUser || null, next: snap.nextUser || null };
+                }
+                if (hourNum === 6) {
+                    const snap = allTasks.find(t => t.type === 'next_0700_handover' && t.prevUser === myTask.user);
+                    if (snap) {
+                        const prevSchedule = (state.insuData && state.insuData.schedule) ? state.insuData.schedule['05:00'] : null;
+                        return { prev: prevSchedule || null, next: snap.selfUser || null };
+                    }
+                }
+                // 스냅샷을 못 찾으면(구버전 데이터 등) 아래 스케줄 기반 계산으로 안전하게 폴백
+            }
+
+            if (!state.insuData || !state.insuData.schedule) return null;
+            const schedule = state.insuData.schedule;
+            const prevHourKey = String((hourNum - 1 + 24) % 24).padStart(2, '0') + ':00';
+            const nextHourKey = String((hourNum + 1) % 24).padStart(2, '0') + ':00';
+            return {
+                prev: schedule[prevHourKey] || null,
+                next: schedule[nextHourKey] || null,
+            };
+        }
+
+        // 그 외('부산 국립과학관' 등)는 daily_tasks 전체에서 같은 그룹을 시간순 정렬해서 앞뒤 탐색
+        if (!Array.isArray(allTasks)) return null;
+
+        const group = allTasks
+            .filter(t => getHandoverGroupKey(t) === key)
+            .map(t => ({ t, score: getTaskStatus(t.rawTime || t.time).score }))
+            .sort((a, b) => a.score - b.score);
+
+        const idx = group.findIndex(g =>
+            g.t.user === myTask.user &&
+            (g.t.rawTime || g.t.time) === (myTask.rawTime || myTask.time) &&
+            g.t.content === myTask.content
+        );
+        if (idx === -1) return null;
+
+        return {
+            prev: idx > 0 ? group[idx - 1].t.user : null,
+            next: idx < group.length - 1 ? group[idx + 1].t.user : null,
+        };
+    }
+
+    function renderTaskList(tasks) {
+        const T = getNbTheme();
+        const currentInt = localStorage.getItem('neubie_remind_int') || '0';
+
+        function getTaskStatus(rawTime) {
+            if (!rawTime) return { isExpired: false, remainMin: -1, score: 0 };
+
+            const now = new Date();
+            const timeMatch = String(rawTime).match(/\d{2}:\d{2}/);
+            if (!timeMatch) return { isExpired: false, remainMin: -1, score: 0 };
+
+            const [tHour, tMin] = timeMatch[0].split(':').map(Number);
+
+            // 07시 기준 Relative Score 계산 (07:00 -> 0점, 익일 06:00 -> 1380점)
+            const getRelativeScore = (h, m) => {
+                let relHour = h - 7;
+                if (relHour < 0) relHour += 24;
+                return relHour * 60 + m;
+            };
+
+            const currScore = getRelativeScore(now.getHours(), now.getMinutes());
+            const taskScore = getRelativeScore(tHour, tMin);
+
+            const remainMin = taskScore - currScore;
+            const isExpired = taskScore < currScore;
+
+            return { isExpired, remainMin, score: taskScore };
+        }
+
+        const validTasks = tasks
+            .filter(t => {
+                const content = t.content || "";
+                const rawTime = t.rawTime || "";
+                return content.trim() !== "" && !String(rawTime).includes("1899");
+            })
+            .sort((a, b) => {
+                // '내일 07시' 미리보기(next_0700_handover)는 rawTime이 '07:00'이라
+                // 상대점수 계산상 항상 0점(=가장 이른 순번)이 나와버려서, 그대로 두면
+                // 리스트 맨 위로 올라가는 문제가 있었다 — 항상 맨 아래로 고정한다.
+                const scoreA = a.type === 'next_0700_handover' ? Infinity : getTaskStatus(a.rawTime || a.time).score;
+                const scoreB = b.type === 'next_0700_handover' ? Infinity : getTaskStatus(b.rawTime || b.time).score;
+                return scoreA - scoreB;
+            });
+
+        const inlineContainer = document.getElementById('inline-task-container');
+        if (inlineContainer) inlineContainer.innerHTML = '';
+        const container = inlineContainer || document.createElement('div'); // fallback
+
+        if (validTasks.length === 0) {
+            if (inlineContainer) inlineContainer.innerHTML = `<div style="color:#666; ...">배정된 업무가 없습니다.</div>`;
+            return;
+        }
+
+        validTasks.forEach(t => {
+            const timeKey = t.rawTime || t.time;
+            const interval = parseInt(localStorage.getItem('neubie_remind_int') || '0');
+
+            // 다중 모니터링 업무 전용 오프셋 (+10분)
+            const isMultiMon = t.content && t.content.includes("다중 모니터링");
+            const targetInterval = isMultiMon ? (interval + 10) : interval;
+
+            const item = document.createElement('div');
+            const isMon = t.type === 'monitoring' || t.type === 'next_0700_handover';
+            const status = t.type === 'next_0700_handover'
+                ? { isExpired: false, remainMin: 999, score: 0 }
+                : getTaskStatus(timeKey, isMon);
+            const prefixStyle = status.isExpired
+                ? 'text-decoration: line-through; color: #777; opacity: 0.7;'
+                : `color: ${T.text};`;
+            const chainDimStyle = status.isExpired ? 'opacity: 0.55;' : '';
+
+            item.style.cssText = `
+                background:${status.isExpired ? 'rgba(60, 60, 60, 0.1)' : (isMon ? 'rgba(59, 130, 246, 0.15)' : 'rgba(251, 191, 36, 0.15)')};
+                border-left:4px solid ${status.isExpired ? '#555' : (isMon ? '#3b82f6' : '#fbbf24')};
+                padding:10px; border-radius:8px; margin-bottom:8px; font-size:16px; transition: 0.3s;
+                display: grid;
+                grid-template-columns: auto 1fr auto;
+                align-items: center;
+                gap: 6px;
+                overflow: hidden;
+                height: 39px;
+                box-sizing: border-box;
+            `;
+
+            // 시간 표시는 원칙적으로 '업무 텍스트에 실제로 적힌 그대로'를 따른다.
+            // task류('부산 국립과학관' 포함) 콘텐츠는 항상 "[09:30~10:00] ..."처럼 맨 앞에
+            // 실제 시간(범위 또는 단일 시각)이 박혀있으므로 그걸 그대로 추출해서 보여준다.
+            // 다중 모니터링(monitoring/next_0700_handover)은 콘텐츠에 시간 정보가 없으니
+            // 기존처럼 rawTime의 단일 시각("09:00")을 그대로 쓴다.
+            let displayTime;
+            if (t.type === 'task') {
+                const rangeMatch = String(t.content || '').match(/\d{2}:\d{2}(~\d{2}:\d{2})?/);
+                displayTime = rangeMatch ? rangeMatch[0] : ((String(timeKey).length > 10) ? String(timeKey).match(/\d{2}:\d{2}/)?.[0] : timeKey);
+            } else {
+                displayTime = (String(timeKey).length > 10) ? String(timeKey).match(/\d{2}:\d{2}/)?.[0] : timeKey;
+            }
+
+            // 인계 체인 표기 — '다중 모니터링' / '부산 국립과학관' 업무는 전임자/후임자를 이름 박스로 표기
+            const HANDOVER_DISPLAY_LABEL = { '다중 모니터링': '다중 모니터링', '부산 국립과학관': '부산국립과학관' };
+            const handoverKey = getHandoverGroupKey(t);
+            const neighbors = getHandoverNeighbors(t, window.currentAllTasks);
+
+            // displayTime이 이미 시간을 따로 보여주고 있으니, 본문 텍스트 맨 앞의
+            // "[09:30~10:00]" 같은 중복 시간 표기는 제거한다 (task류에만 붙어있던 표기)
+            const bodyText = t.type === 'task'
+                ? String(t.content || '').replace(/^\[\d{2}:\d{2}(~\d{2}:\d{2})?\]\s*/, '')
+                : t.content;
+
+            const nameChip = (name, isSelf) => `<span style="display:inline-flex; align-items:center; justify-content:center; min-width:36px; padding:2px 6px; margin:0 1px; border-radius:6px; box-sizing:border-box; font-size:${isSelf ? '12px' : '11px'}; font-weight:${isSelf ? '800' : '500'}; background:${isSelf ? '#22c55e' : (T.isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)')}; color:${isSelf ? '#062e13' : (T.isDark ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.65)')};">${name}</span>`;
+            // 취소선은 '업무텍스트' 부분에만 걸리도록 별도 span으로 분리 — 이름박스/화살표를 감싸는
+            // 조상 요소엔 text-decoration을 절대 두지 않는다(자식에서 none으로 덮어써도 브라우저에 따라
+            // 취소선이 새어나오는 문제가 있었음). 이름박스는 대신 opacity로만 흐리게 처리.
+            let displayContent = `<span style="${prefixStyle}">${bodyText}</span>`;
+            let layoutLen = bodyText.length;
+            if (neighbors && (neighbors.prev || neighbors.next)) {
+                const chainParts = [];
+                if (neighbors.prev) chainParts.push(nameChip(neighbors.prev, false));
+                chainParts.push(nameChip(t.user, true));
+                if (neighbors.next) chainParts.push(nameChip(neighbors.next, false));
+                const chainHtml = chainParts.join(' <span style="font-size:10px; opacity:0.55;">→</span> ');
+                const prefix = HANDOVER_DISPLAY_LABEL[handoverKey] || bodyText;
+                displayContent = `<span style="${prefixStyle}">${prefix}</span><span style="margin-left:10px; ${chainDimStyle}">${chainHtml}</span>`;
+                layoutLen = prefix.length + 25; // 체인 표기가 붙으면 길어진 것으로 간주해 2줄 표시 판단
+            }
+
+            const isLong = layoutLen > 40;
+            const contentSpan = isLong
+                ? `<span style="font-size:12px; line-height:1.15; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">${displayContent}</span>`
+                : `<span style="font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${displayContent}</span>`;
+
+            item.innerHTML = `
+                <span style="color:${status.isExpired ? '#777' : (T.isDark ? '#fbbf24' : '#1a1a1a')}; white-space:nowrap;">${displayTime || ''}</span>
+                <div style="font-weight:500; min-width:0; overflow:hidden;">
+                    ${contentSpan}
+                </div>
+                <div style="font-size:14px; white-space:nowrap;">${status.isExpired ? '✅' : '⏳'}</div>
+            `;
+            container.appendChild(item);
+        });
+    }
+
+
+    /* ============================================================
+        영상 파일명 생성기
+       ============================================================ */
+    function createNamingCard() {
+        const isWknd = isWeekend();
+        const T = getNbTheme();
+        // 라이트모드에서도 다크 전용 색이 그대로 남아있던 문제 — 입력칸/버튼을 테마에 맞게 분기
+        // (순백색은 너무 튀어서, 크림톤과는 구분되는 차분한 아이보리 톤을 사용)
+        const fieldBg = T.isDark ? '#333' : '#f0ede1';
+        const fieldBorder = T.isDark ? '#555' : T.border;
+        const fieldText = T.isDark ? '#fff' : T.text;
+        const neutralBtnBg = T.isDark ? '#444' : '#f0ede1';
+        const neutralBtnBorder = T.isDark ? '#666' : T.border;
+        const neutralBtnText = T.isDark ? '#ddd' : T.text;
+        const neutralBtnHoverBg = T.isDark ? '#555' : HOVER_ACCENT;
+        const neutralBtnHoverBorder = T.isDark ? '#888' : HOVER_ACCENT;
+        const neutralBtnHoverText = T.isDark ? neutralBtnText : '#fff';
+        // 다중 모니터링 / 배송·순찰 띠띠 전용 호버 — 온오프 토글과 동일한 그린, 다크/라이트 공통
+        const subBtnHoverBg = GREEN_HOVER;
+        const subBtnHoverBorder = GREEN_HOVER;
+        const subBtnHoverText = '#062e13';
+        const card = document.createElement('div');
+        card.id = 'namingSection';
+        card.style.cssText = `
+            padding:10px 15px 6px; border-radius:15px; margin-top:5px; border:1px solid transparent;
+            background-image: linear-gradient(${T.card}, ${T.card}), linear-gradient(135deg, #10b981, #2dd4bf);
+            background-origin: border-box; background-clip: padding-box, border-box;
+            box-shadow:0 0 5px rgba(150,120,255,0.25);
+        `;
+
+        const history = JSON.parse(localStorage.getItem('neubie_robot_history') || '[]');
+        let dropdownOptions = history.map(h => {
+            const info = ROBOT_MAP[h.id] || { site: "미등록", unit: "#" + h.id };
+            return `<option value="${h.id}">${info.site} ${info.unit}</option>`;
+        }).join('');
+
+        // 복사 효과 공통 함수
+        // resetBg/resetColor를 명시적으로 받는 이유: getComputedStyle로 "클릭 시점"의 색을
+        // 읽으면, 클릭이라는 행위 자체가 마우스가 버튼 위에 있어야만 가능하므로 항상
+        // :hover 상태의 색(.sub-btn 버튼들은 초록)을 "원래 색"으로 잘못 캡처하게 됨.
+        // 그 값을 인라인 스타일로 복원하면 인라인이 CSS보다 우선이라 hover가 끝나도
+        // 계속 초록으로 고정되는 버그가 있었음 — 그래서 실제 평상시 색을 파라미터로 직접 넘김.
+        const COPY_SUCCESS_COLOR = HOVER_ACCENT; // 알림 테스트 호버와 동일한 블루톤
+        const COPY_SUCCESS_TEXT = '#fff';
+        const applyCopyEffect = (btn, resetBg, resetColor) => {
+            if (btn._copyEffectTimer) clearTimeout(btn._copyEffectTimer);
+
+            if (btn.dataset.copyEffectActive !== 'true') {
+                btn.dataset.copyOriginalText = btn.textContent;
+                btn.dataset.copyEffectActive = 'true';
+            }
+
+            btn.textContent = '복사됨';
+            btn.style.background = COPY_SUCCESS_COLOR;
+            btn.style.color = COPY_SUCCESS_TEXT;
+
+            btn._copyEffectTimer = setTimeout(() => {
+                btn.textContent = btn.dataset.copyOriginalText;
+                btn.style.background = resetBg;
+                btn.style.color = resetColor;
+                btn.dataset.copyEffectActive = 'false';
+                btn._copyEffectTimer = null;
+            }, 1500);
+        };
+
+        // ── 부산 국립과학관 배송/순찰 띠띠 설정 ──
+        const TTIDDI_CONFIG = {
+            site: '부산 국립과학관',
+            units: { delivery: '#171', patrol: '#170' },  
+            deliveryActive: true   // ← 배송 띠띠 기체 입고 중이면 false, 복귀하면 true로 한 글자만 바꾸면 끝
+        };
+
+        // 버튼에 표기할 '유효 시간대' — 실제 복사 시 쓰이는 getCalculatedTime()과 동일한 보정 로직
+        const multiHourLabel = getFormattedHour(getCalculatedTime(10)) + '시';
+
+        // ── 배송/순찰 띠띠 버튼 상태 계산 (휴관 여부 + 09~18시 시간대 잠금) ──
+        // 카드 최초 렌더링과, syncTasksFromServer가 도는 매분 주기적 동기화 양쪽에서 재사용.
+        // 휴관일이면 시간 표기 없이 항상 '(휴관)'만 붙고, 시간대와 무관하게 항상 잠긴다.
+        // 개관일이면 09~18시에만 '(##시)'와 함께 풀리고, 그 외엔 잠긴다.
+        function computeTiddiButtonState() {
+            // GAS 쪽에서 담당자란에 '휴무'가 적힌 행은 daily_tasks.json에 아예 안 실리므로,
+            // 오늘자 전체 업무 목록에 '국립과학관' 업무가 하나도 없으면 휴관으로 판단한다.
+            // 요일을 하드코딩하지 않아 대체공휴일로 휴관일이 밀려도 자동으로 맞게 반영됨.
+            // (window.currentAllTasks가 아직 로드 전이면 섣불리 '휴관'으로 단정하지 않음)
+            const isClosed = Array.isArray(window.currentAllTasks)
+                && !window.currentAllTasks.some(t => t.content && t.content.includes('국립과학관'));
+            const hourNow = new Date().getHours();
+            const isActive = !isClosed && hourNow >= 9 && hourNow < 18;
+            const hourLabel = getFormattedHour(getCalculatedTime(10)) + '시';
+            const suffix = isClosed ? ' (휴관)' : (isActive ? ` (${hourLabel})` : '');
+            const lockStyle = isActive ? '' : (T.isDark
+                ? 'background:#3a3a3a; color:#777; cursor:not-allowed; opacity:0.7;'
+                : 'background:#4d6b57; color:#d7e8dc; cursor:not-allowed; opacity:0.9;');
+            const baseLabel = TTIDDI_CONFIG.deliveryActive ? '배송/순찰 띠띠' : '순찰 띠띠 (배송 띠띠 입고)';
+            return { isClosed, isActive, lockStyle, text: baseLabel + suffix };
+        }
+
+        const tiddiState = computeTiddiButtonState();
+        const isTiddiActive = tiddiState.isActive;
+        const tiddiLockStyle = tiddiState.lockStyle;
+
+        // 매분 syncTasksFromServer가 돌 때 같이 호출되어, 새로고침 없이도 09시 진입/이탈이나
+        // 휴관 여부 변화를 그때그때 버튼에 반영한다. (패널이 닫혀있으면 btnCombined가 없어
+        // 조용히 아무 일도 하지 않음)
+        // 다만 매분 호출되긴 해도, 계산 결과가 직전과 동일하면 DOM은 아예 건드리지 않는다
+        // (상태가 실제로 바뀌는 순간 — 09시/18시 경계, 휴관 상태 전환 — 에만 실제로 갱신됨).
+        window.syncTiddiButtonState = function() {
+            const btn = document.getElementById('btnCombined');
+            if (!btn) return;
+            const s = computeTiddiButtonState();
+            const stateKey = s.isActive + '|' + s.text;
+            if (window._nbLastTiddiStateKey === stateKey) return; // 변화 없음 → 스킵
+            window._nbLastTiddiStateKey = stateKey;
+
+            btn.disabled = !s.isActive;
+            if (s.isActive) {
+                btn.style.background = '';
+                btn.style.color = '';
+                btn.style.cursor = '';
+                btn.style.opacity = '';
+            } else {
+                btn.style.cssText += s.lockStyle;
+            }
+            btn.textContent = s.text;
+        };
+
+        card.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <span style="font-size:18px;">🏷️ <span style="color:${T.text}; font-weight:bold;">영상 파일명 생성기</span></span>
+                <button id="openDriveTodayBtn" style="background:${neutralBtnBg}; color:${neutralBtnText}; border:1px solid ${neutralBtnBorder}; padding:4px 8px; border-radius:6px; font-size:13px; font-weight:bold; cursor:pointer; white-space:nowrap;">📂 구글 영상 드라이브</button>
+            </div>
+            <div style="display: flex; gap: 12px; margin-bottom: 10px;">
+                <div style="flex: 1; display: flex; flex-direction: column; gap: 8px; min-width: 0;">
+                    <div style="position: relative; min-width: 0;">
+                        <select id="robotSelector" style="width: 100%; background: ${fieldBg}; color: ${fieldText}; border: 1px solid ${fieldBorder}; border-radius: 4px; font-size: 15px; font-weight: bold; padding: 0 20px 0 8px; height: 32px; line-height: 32px; box-sizing: border-box; appearance: none; -webkit-appearance: none; -moz-appearance: none;">
+                            ${dropdownOptions || '<option>최근 배달 기체 미감지</option>'}
+                        </select>
+                        <span style="position: absolute; right: 6px; top: 50%; transform: translateY(-50%); pointer-events: none; color: #aaa; font-size: 11px;">▾</span>
+                    </div>
+                    <div style="display: flex; gap: 5px; min-width: 0;">
+                        <input type="text" id="taskInput" placeholder="주문번호를 붙여넣으세요." style="flex: 1; min-width: 0; background: ${fieldBg}; color: ${fieldText}; border: 1px solid ${fieldBorder}; padding: 0 8px; border-radius: 4px; font-size: 15px; font-weight: bold; height: 32px; line-height: 32px; box-sizing: border-box;">
+                        <button id="copyFileName" style="width: 70px; flex-shrink: 0; background: #10b981; color: white; border: none; padding: 0 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 15px; white-space: nowrap; overflow: hidden; height: 32px; line-height: 32px; box-sizing: border-box;">복사</button>
+                    </div>
+                </div>
+                <div style="width: 1px; align-self: stretch; background: ${T.border};"></div>
+                <div style="flex: 1; display: flex; flex-direction: column; gap: 8px; min-width: 0;">
+                    <div style="display:flex; gap:1px; min-width:0;">
+                        <button id="btnMulti" class="sub-btn" style="flex:4; min-width:0; border-top-right-radius:0; border-bottom-right-radius:0;">다중 모니터링 (${multiHourLabel})</button>
+                        <button id="btnMultiSub" class="sub-btn" style="flex:1; min-width:0; padding:6px 2px; font-size:13px; border-top-left-radius:0; border-bottom-left-radius:0;">서브</button>
+                    </div>
+                    <button id="btnCombined" class="sub-btn" ${isTiddiActive ? '' : 'disabled'} style="${tiddiLockStyle}">${tiddiState.text}</button>
+                </div>
+            </div>
+        `;
+
+        let btnStyleTag = document.getElementById('naming-btn-style');
+        if (!btnStyleTag) {
+            btnStyleTag = document.createElement('style');
+            btnStyleTag.id = 'naming-btn-style';
+            document.head.appendChild(btnStyleTag);
+        }
+        btnStyleTag.textContent = `.sub-btn { background: ${neutralBtnBg}; color: ${neutralBtnText}; border: 1px solid ${neutralBtnBorder}; padding: 6px 4px; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; flex: 1; min-width: 0; transition: 0.2s; } .sub-btn:hover { background: ${subBtnHoverBg}; border-color: ${subBtnHoverBorder}; color: ${subBtnHoverText}; }`;
+
+        setTimeout(() => {
+			// 영상 드라이브 열기 → 오늘 날짜 폴더로 이동 (없으면 루트 폴더로 폴백)
+            const openDriveBtn = card.querySelector('#openDriveTodayBtn');
+            if (openDriveBtn) {
+                openDriveBtn.onmouseenter = () => {
+                    openDriveBtn.style.background = subBtnHoverBg;
+                    openDriveBtn.style.borderColor = subBtnHoverBorder;
+                    openDriveBtn.style.color = subBtnHoverText;
+                };
+                openDriveBtn.onmouseleave = () => {
+                    openDriveBtn.style.background = neutralBtnBg;
+                    openDriveBtn.style.borderColor = neutralBtnBorder;
+                    openDriveBtn.style.color = neutralBtnText;
+                };
+                openDriveBtn.onclick = async () => {
+                    const ROOT_FOLDER_URL = 'https://drive.google.com/drive/folders/0AJPzAP1RZ6FhUk9PVA';
+                    const todayStr = getFormattedDate(new Date()); // 예: "20260721"
+
+                    let targetUrl = ROOT_FOLDER_URL;
+
+                    try {
+                        const res = await fetch('https://multimonitoring.vercel.app/api/drive');
+                        const data = await res.json();
+                        if (data?.folders?.[todayStr]) {
+                            targetUrl = data.folders[todayStr];
+                        } else if (data?.root) {
+                            targetUrl = data.root; // 오늘자 폴더 없으면 루트로 폴백
+                        }
+                    } catch (e) {
+                        console.warn('[영상 드라이브] 폴더 정보 조회 실패 → 루트로 이동:', e);
+                    }
+
+                    window.open(targetUrl, '_blank');
+                };
+            }
+			
+            // 개별 기체 파일명 복사
+            const copyBtn = card.querySelector('#copyFileName');
+            if (copyBtn) {
+                copyBtn.onclick = (e) => {
+                    const robotId = card.querySelector('#robotSelector').value;
+                    const taskRaw = card.querySelector('#taskInput').value.trim();
+                    const taskNo = taskRaw ? "_#" + taskRaw : "";
+                    const info = ROBOT_MAP[robotId] || { site: "알수없음", unit: "#000" };
+                    const time = new Date();
+                    const myName = getMyName() || '';
+					const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_${info.site}_${info.unit}${taskNo}${myName ? '_' + myName : ''}`;
+                    navigator.clipboard.writeText(finalName);
+                    applyCopyEffect(e.target, '#10b981', 'white');
+                };
+            }
+
+            // 다중 모니터링 버튼
+            const multiBtn = card.querySelector('#btnMulti');
+            if (multiBtn) {
+                multiBtn.onclick = (e) => {
+                    const time = getCalculatedTime(10); 
+                    const myName = getMyName() || '';
+					const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_다중모니터링${myName ? '_' + myName : ''}`;
+                    navigator.clipboard.writeText(finalName);
+                    applyCopyEffect(e.target, neutralBtnBg, neutralBtnText);
+                };
+            }
+
+            // 서브 모니터링 버튼 — 다중 모니터링과 완전히 동일한 로직, 복사되는 텍스트만 "서브모니터링"
+            const multiSubBtn = card.querySelector('#btnMultiSub');
+            if (multiSubBtn) {
+                multiSubBtn.onclick = (e) => {
+                    const time = getCalculatedTime(10);
+                    const myName = getMyName() || '';
+					const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_서브모니터링${myName ? '_' + myName : ''}`;
+                    navigator.clipboard.writeText(finalName);
+                    applyCopyEffect(e.target, neutralBtnBg, neutralBtnText);
+                };
+            }
+
+            // 배송/순찰 띠띠 버튼
+            const combinedBtn = card.querySelector('#btnCombined');
+			if (combinedBtn) combinedBtn.onclick = (e) => {
+				const time = getCalculatedTime(10);
+				const myName = getMyName() || '';
+				const unitsText = TTIDDI_CONFIG.deliveryActive
+					? `${TTIDDI_CONFIG.units.delivery}, ${TTIDDI_CONFIG.units.patrol}`
+					: TTIDDI_CONFIG.units.patrol;
+				const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_${TTIDDI_CONFIG.site}_${unitsText}${myName ? '_' + myName : ''}`;
+				navigator.clipboard.writeText(finalName);
+				applyCopyEffect(e.target, neutralBtnBg, neutralBtnText);
+			};
+
+        }, 10);
+
+        return card;
+    }
+
+
+    /* ============================================================
         전체 밝기 마스터 컨트롤 (다중 모니터링 페이지)
        ============================================================ */
     const BRIGHTNESS = {
@@ -715,7 +1906,7 @@
 
 
     /* ============================================================
-        다중 모니터링 도우미 패널 (Alt+Q)
+        다중 모니터링 도우미 패널 (다중 모니터링 페이지의 Alt+Q)
        ============================================================ */
     // ── 유효성 검증 (1시간 이내 데이터) ──
 	const isDataValid = (updatedAt) => {
@@ -922,11 +2113,10 @@
 		rightBtns.appendChild(autoBtn);
 		rightBtns.appendChild(dispatchBtn);
 
-		// ⚙ 간단 설정창 (슬림판에서 추가)
+		// ⚙ NCC 패널(화면 중앙) 열기 — 슬림판에서 추가
 		const gearBtn = mkBtn('⚙', '#26292f', { border: '1px solid #4b5563', color: '#9ca3af', padding: '4px 7px' });
-		gearBtn.title = '설정';
-		gearBtn.dataset.nbGear = '1';
-		gearBtn.addEventListener('click', () => toggleSettingsPopup());
+		gearBtn.title = 'NCC 패널';
+		gearBtn.addEventListener('click', () => toggleDashboard());
 		rightBtns.appendChild(gearBtn);
 		headerRow.appendChild(rightBtns);
 		panel.appendChild(headerRow);
@@ -1365,7 +2555,7 @@
 
 		autoBtn.addEventListener('click', async () => {
 			if (autoBtn.disabled) return;
-			if (isOfflineMode()) { setDpMsg('오프라인 모드: 자동 시작이 차단되었습니다', '#f59e0b'); return; }
+			if (isAutomationOff()) { setDpMsg('자동화 중지 상태: 자동 시작이 차단되었습니다', '#f59e0b'); return; }
 			autoBtn.disabled = true;
 			setTimeout(() => { autoBtn.disabled = false; }, 2000);
 
@@ -1557,7 +2747,7 @@
 				if (switchEl) {
 					const input = switchEl.querySelector('input[type="checkbox"]');
 					const isOn = input ? input.checked : switchEl.getAttribute('aria-checked') === 'true';
-					if (isOn && !isOfflineMode()) {
+					if (isOn && !isAutomationOff()) {
 						switchEl.querySelector('label')?.click() || switchEl.click();
 					}
 				}
@@ -1926,7 +3116,6 @@
 	    let presetBusy = false;
 	    const applyPreset = async () => {
 	        if (presetBusy) return;
-	        if (isOfflineMode()) { showPresetNotice('오프라인 모드: 프리셋 적용이 차단되었습니다', 2000, true); return; }
 	        const p = loadPreset();
 	        if (!p) {                                   // 저장된 프리셋이 없으면 설정 토스트를 열어 안내
 	            openPresetPanel();
@@ -2066,10 +3255,45 @@
 	    };
 	    window.neubieDpadPreset = { open: openPresetPanel, apply: applyPreset, close: closePresetPanel };   // 콘솔 테스트용
 
+	    // ── 게임패드 선택: 0번 슬롯 고정 대신, 연결된 패드 중 D-pad 가 있는 표준 패드를 고른다 ──
+	    // (가상 패드/원격 접속 프로그램이 0번을 차지해도 실제 패드를 찾는다)
+	    const pickGamepad = () => {
+	        let pads = [];
+	        try { pads = navigator.getGamepads ? [...navigator.getGamepads()] : []; } catch (e) {}
+	        const live = pads.filter(p => p && p.connected !== false && p.buttons && p.buttons.length);
+	        return live.find(p => p.mapping === 'standard' && p.buttons.length >= 16)
+	            || live.find(p => p.buttons.length >= 16)
+	            || live[0] || null;
+	    };
+	    let _dpadTicks = 0, _dpadLastTickAt = 0;
+
+	    // ── 콘솔 진단: D-pad 가 안 먹을 때 어느 조건에서 막히는지 한 번에 확인 ──
+	    window.neubieDpadDiag = () => {
+	        let pads = [];
+	        try { pads = navigator.getGamepads ? [...navigator.getGamepads()] : []; } catch (e) {}
+	        const picked = pickGamepad();
+	        const padOnBtn = document.querySelector('[data-qk="remote-robot-controller-game-pad-segmented-control-ON"]')
+	                      || document.querySelector('[data-qk="remote-robot-game-pad-segmented-control-ON"]');
+	        const isDrivingPage = location.href.includes('/remote/multiple/driving/') || location.href.includes('/remote/robot/');
+	        const isGamepadOn = padOnBtn ? padOnBtn.classList.contains('bg-white') : getLabelButtonState('게임패드') === 'ON';
+	        const r = {
+	            '① 폴링 동작 (100ms 타이머)': (_dpadTicks > 0 && Date.now() - _dpadLastTickAt < 1000) ? 'OK' : `멈춤? (틱 ${_dpadTicks}회)`,
+	            '② 패드 키 바인딩 토글': isDpadBindingOff() ? 'OFF ← 여기서 막힘 (NCC 패널에서 켜기 / localStorage neubie_dpad_binding)' : 'ON',
+	            '③ 브라우저가 본 패드': pads.filter(Boolean).map(p => `[${p.index}] ${p.id} (buttons ${p.buttons.length}, ${p.mapping || 'no-mapping'})`).join(' | ') || '없음 ← 탭에 포커스를 둔 채 패드 버튼을 한 번 눌러보세요',
+	            '④ 선택된 패드': picked ? `[${picked.index}] ${picked.id}` : '없음',
+	            '⑤ 조작 페이지(/remote/robot · /remote/multiple/driving)': isDrivingPage ? 'OK' : '아님 ← 이 페이지에선 동작 안 함',
+	            '⑥ NCC 화면의 게임패드 스위치': isGamepadOn ? 'ON' : 'OFF/못 찾음 ← NCC 컨트롤의 "게임패드"를 ON 으로',
+	            '⑦ D-pad ↑ 눌림 상태': picked ? !!picked.buttons[12]?.pressed : '-',
+	            '⑧ 자동화 중지(참고: D-pad 와 무관)': isAutomationOff() ? 'ON' : 'OFF',
+	        };
+	        console.table(r);
+	        return r;
+	    };
+
 	    setInterval(() => {
+			_dpadTicks++; _dpadLastTickAt = Date.now();
 			if(isDpadBindingOff()) return;
-			if (isOfflineMode()) { resetDpadUp(); return; }   // 오프라인: D-pad 단축키/프리셋(NCC 화면 조작) 전체 중지
-	        const gp = (navigator.getGamepads ? navigator.getGamepads() : [])[0];
+	        const gp = pickGamepad();
 	        if (!gp) { resetDpadUp(); return; }
 	        const isDrivingPage = location.href.includes('/remote/multiple/driving/')
 	                           || location.href.includes('/remote/robot/');
@@ -2280,142 +3504,355 @@
 
 
     /* ============================================================
-        간단 설정창 — 켜기/끄기만 (Alt+Q: 다중 모니터링 페이지 밖 / 교대 패널의 ⚙ 버튼)
+        NCC 패널 (Alt+Q)
+        - 화면 중앙에 뜬다. 바깥(다른 위치)을 클릭해도 닫히지 않는다.
+        - 닫는 방법: ✕ 버튼 / Alt+Q 다시 누르기 / NCC 메뉴로 페이지 이동
+        - 이름 입력칸 없음: 일일 업무·파일명 모두 NCC 로그인 이름(getMyName)을 쓴다.
        ============================================================ */
-    function closeSettingsPopup() {
-        const el = document.getElementById('nb-settings-popup');
-        if (el) { el._cleanup?.(); el.remove(); }
+    const _esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+    // ── 스트림덱 위 '공유 창' (테마 설정) — 이미 떠 있으면 내용만 교체 ──
+    const POPUP_GAP = 14;
+    function getSharedPopupRect() {
+        const d = dashboard.getBoundingClientRect();
+        const grid = document.getElementById('neubie-streamdeck-grid');
+        const t = grid ? grid.getBoundingClientRect() : d;
+        return { left: d.left, width: d.width, bottom: (window.innerHeight - t.top) + POPUP_GAP };
+    }
+    function showSharedPopup(key, boxEl) {
+        let overlay = document.getElementById('neubie-shared-popup');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = 'neubie-shared-popup';
+            overlay.style.cssText = `
+                position:fixed; z-index:2147483646; background:transparent; pointer-events:none;
+                display:flex; align-items:flex-end; justify-content:center;
+                font-family:Pretendard, sans-serif;
+            `;
+            document.body.appendChild(overlay);
+        }
+        overlay.dataset.key = key;
+        overlay.innerHTML = '';
+        overlay.appendChild(boxEl);
+        const r = getSharedPopupRect();
+        overlay.style.alignItems = 'flex-end';
+        overlay.style.top = 'auto';
+        overlay.style.left = r.left + 'px';
+        overlay.style.width = r.width + 'px';
+        overlay.style.bottom = r.bottom + 'px';
+        overlay.style.height = 'auto';
+        overlay.style.display = 'flex';
+    }
+    function hideSharedPopup() {
+        const overlay = document.getElementById('neubie-shared-popup');
+        if (overlay) overlay.style.display = 'none';
+        if (window._neubieThemeCard) window._neubieThemeCard.style.outline = 'none';
+    }
+    function isSharedPopupOpen(key) {
+        const overlay = document.getElementById('neubie-shared-popup');
+        return !!(overlay && overlay.style.display === 'flex' && overlay.dataset.key === key);
     }
 
-    function toggleSettingsPopup() {
-        if (document.getElementById('nb-settings-popup')) { closeSettingsPopup(); return; }
+    // ── 공통 UI 조각 ──
+    function attachStaticNeonHover(el, rgb) {
+        const base = `0 0 6px rgba(${rgb},0.35), inset 0 0 8px rgba(${rgb},0.1)`;
+        const hover = `0 0 18px 2px rgba(${rgb},0.95), 0 0 5px rgba(${rgb},0.8), inset 0 0 10px rgba(${rgb},0.3)`;
+        el.onmouseenter = () => { el.style.boxShadow = hover; };
+        el.onmouseleave = () => { el.style.boxShadow = base; };
+    }
 
-        const locked = ADMIN_CONFIG.locked;
-        const rows = [
-            {
-                label: '🗺️ NCC 맵 최적화',
-                sub: '역삼·송도·성수·삼평동 모니터링 화면 (흰 점 숨김, 대기장소 반전)',
-                get: () => localStorage.getItem('neubie_opt_map') !== 'false',
-                set: on => { localStorage.setItem('neubie_opt_map', on ? 'true' : 'false'); syncMapOpt(); },
-            },
-            {
-                label: locked ? '🖥️ 다중 모니터링 도우미 (관리자 잠금)' : '🖥️ 다중 모니터링 도우미',
-                sub: 'Alt+Q 교대 패널 · 전체 밝기 슬라이더',
-                get: isHandoverFeatureOn,
-                set: on => {
-                    localStorage.setItem('neubie_handover_enabled', on ? 'true' : 'false');
-                    if (!on) document.getElementById('ho-remote-panel')?.remove();
-                    checkBrightnessBar();
-                },
-                disabled: locked,
-            },
-            {
-                label: '🎮 패드 키 바인딩',
-                sub: 'D-pad ↑ 프리셋(1초 홀드: 설정) · ←→ 밝기 · ↓ 자동정지',
-                get: () => !isDpadBindingOff(),
-                set: on => localStorage.setItem('neubie_dpad_binding', on ? 'on' : 'off'),
-            },
-            {
-                label: '🎨 원격조종 라이트 테마',
-                sub: '기체 원격조종(신형 /new) 화면',
-                get: () => (localStorage.getItem(DRIVE_THEME_KEY) || 'dark') === 'light',
-                set: on => {
-                    const key = on ? 'light' : 'dark';
-                    localStorage.setItem(DRIVE_THEME_KEY, key);
-                    applyDriveTheme(key);
-                },
-            },
-        ];
+    // 세로로 긴 토글 행 — 아이콘+라벨 + 클릭형 ON/OFF 스위치
+    function createToggleRow(T, icon, label, isOn, onToggle, tip) {
+        const row = document.createElement('div');
+        row.style.cssText = `
+            display:flex; align-items:center; justify-content:space-between;
+            border:1px solid ${T.border}; border-radius:10px; padding:8px 14px;
+            background:${T.card}; gap:10px;
+        `;
+        if (tip) row.title = tip;
+        row.innerHTML = `
+            <span class="nb-toggle-label" style="display:flex; align-items:center; gap:9px; font-size:15px; font-weight:600;">
+                <span style="font-size:18px;">${icon}</span><span style="color:${T.text};">${_esc(label)}</span>
+            </span>
+            <label style="position:relative; display:inline-block; width:54px; height:24px; flex-shrink:0; cursor:pointer;">
+                <input type="checkbox" ${isOn ? 'checked' : ''} class="nb-toggle-input" style="opacity:0; width:0; height:0;">
+                <span class="nb-toggle-track" style="position:absolute; inset:0; background:${isOn ? '#22c55e' : (T.isDark ? '#55545c' : '#c9be9c')}; border-radius:999px; transition:background .15s;">
+                    <span class="nb-toggle-text" style="position:absolute; top:50%; transform:translateY(-50%); ${isOn ? 'left:7px;' : 'right:6px;'} font-size:9px; font-weight:800; letter-spacing:0.3px; color:#fff;">${isOn ? 'ON' : 'OFF'}</span>
+                </span>
+                <span class="nb-toggle-knob" style="position:absolute; top:3px; left:${isOn ? '33px' : '3px'}; width:18px; height:18px; background:#fff; border-radius:50%; transition:left .15s; box-shadow:0 1px 3px rgba(0,0,0,0.3);"></span>
+            </label>
+        `;
+        const input = row.querySelector('.nb-toggle-input');
+        const track = row.querySelector('.nb-toggle-track');
+        const knob = row.querySelector('.nb-toggle-knob');
+        const text = row.querySelector('.nb-toggle-text');
+        const applyVisual = (on) => {
+            track.style.background = on ? '#22c55e' : (T.isDark ? '#55545c' : '#c9be9c');
+            knob.style.left = on ? '33px' : '3px';
+            text.textContent = on ? 'ON' : 'OFF';
+            text.style.left = on ? '7px' : 'auto';
+            text.style.right = on ? 'auto' : '6px';
+        };
+        input.addEventListener('change', () => { applyVisual(input.checked); onToggle(input.checked); });
+        return { row, input, applyVisual };
+    }
+
+    function makeTile(T, icon, label, borderColor, rgb) {
+        const el = document.createElement('div');
+        el.style.cssText = `
+            position:relative; min-height:52px; border-radius:10px; cursor:pointer;
+            background:${T.card}; border:1px solid ${borderColor};
+            box-shadow:0 0 6px rgba(${rgb},0.35), inset 0 0 8px rgba(${rgb},0.1);
+            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+            padding:7px 4px; box-sizing:border-box; transition:box-shadow 0.15s;
+        `;
+        el.innerHTML = `<span style="font-size:16px;">${icon}</span>
+            <span style="font-size:14px; font-weight:600; line-height:1.2; text-align:center; color:${T.text};">${label}</span>`;
+        attachStaticNeonHover(el, rgb);
+        return el;
+    }
+
+    // ── 다크/라이트 모드 설정 (공유 창) ──
+    async function openDriveThemeOverlay() {
+        const T = getNbTheme();
+        const nbThemeName = localStorage.getItem('neubie_theme') || 'dark';
+        const driveTheme = localStorage.getItem(DRIVE_THEME_KEY) || 'dark';
+        const btnCss = (sel) => `flex:1; padding:10px; border-radius:8px; border:1px solid ${sel ? '#4f8ef7' : T.border}; background:${sel ? '#1e3a8a33' : 'transparent'}; color:${T.text}; font-size:14px; font-weight:600; cursor:pointer;`;
 
         const box = document.createElement('div');
-        box.id = 'nb-settings-popup';
-        box.style.cssText = `
-            position:fixed; top:56px; right:20px; z-index:2147483647; width:340px; box-sizing:border-box;
-            background:#1c1c1f; color:#e5e7eb; border:1px solid rgba(34,197,94,0.45); border-radius:14px;
-            padding:12px 16px 10px; font-family:Pretendard,'Noto Sans KR',sans-serif;
-            box-shadow:0 10px 40px rgba(0,0,0,0.6);
+        box.style.cssText = `background:${T.card}; color:${T.text}; border-radius:16px; padding:20px; width:100%; box-sizing:border-box; box-shadow:0 4px 40px rgba(0,0,0,0.7); pointer-events:auto; border:1.5px solid ${T.accent};`;
+        box.innerHTML = `
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+                <span style="font-size:16px;font-weight:700;">🎨 다크/라이트 모드 설정</span>
+                <button data-act="close" style="width:28px;height:28px;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
+            </div>
+            <div style="font-size:13px;font-weight:600;margin-bottom:6px;">ALT+Q 레이아웃</div>
+            <div style="font-size:11px;color:#94a3b8;margin-bottom:8px;">NCC 패널·배터리 창 등 도구 화면의 톤입니다.</div>
+            <div style="display:flex; gap:8px; margin-bottom:18px;">
+                <button data-nbt="dark" style="${btnCss(nbThemeName === 'dark')}">🌙 다크</button>
+                <button data-nbt="light" style="${btnCss(nbThemeName === 'light')}">☀️ 라이트</button>
+            </div>
+            <div style="border-top:1px solid ${T.border}; margin-bottom:14px;"></div>
+            <div style="font-size:13px;font-weight:600;margin-bottom:6px;">원격조종 페이지</div>
+            <div style="font-size:11px;color:#94a3b8;margin-bottom:8px;">기체 원격조종(신형, /new) 화면에만 적용됩니다.</div>
+            <div style="display:flex; gap:8px;">
+                <button data-dt="dark" style="${btnCss(driveTheme === 'dark')}">🌙 다크</button>
+                <button data-dt="light" style="${btnCss(driveTheme === 'light')}">☀️ 라이트</button>
+            </div>
         `;
+        box.querySelector('[data-act="close"]').onclick = () => hideSharedPopup();
 
-        const head = document.createElement('div');
-        head.style.cssText = 'display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; font-size:15px; font-weight:700;';
-        const title = document.createElement('span');
-        title.textContent = '🛰️ 뉴비고 도우미';
-        const closeBtn = document.createElement('button');
-        closeBtn.textContent = '✕';
-        closeBtn.style.cssText = 'width:24px; height:24px; border:none; border-radius:6px; background:transparent; color:#94a3b8; font-size:14px; cursor:pointer;';
-        closeBtn.onclick = closeSettingsPopup;
-        head.append(title, closeBtn);
-        box.appendChild(head);
-
-        rows.forEach(r => {
-            const row = document.createElement('div');
-            row.style.cssText = 'display:flex; align-items:center; justify-content:space-between; gap:10px; padding:9px 0; border-top:1px solid rgba(255,255,255,0.08);';
-
-            const left = document.createElement('div');
-            left.style.cssText = 'min-width:0;';
-            const l1 = document.createElement('div');
-            l1.style.cssText = 'font-size:13px; font-weight:600;';
-            l1.textContent = r.label;
-            const l2 = document.createElement('div');
-            l2.style.cssText = 'font-size:11px; color:#9ca3af; margin-top:2px; line-height:1.35;';
-            l2.textContent = r.sub;
-            left.append(l1, l2);
-
-            const sw = document.createElement('button');
-            sw.style.cssText = 'min-width:52px; height:24px; border:none; border-radius:999px; font-size:11px; font-weight:800; cursor:pointer; flex-shrink:0;';
-            const paint = () => {
-                const on = !!r.get();
-                sw.textContent = on ? 'ON' : 'OFF';
-                sw.style.background = on ? '#22c55e' : '#55545c';
-                sw.style.color = on ? '#062e13' : '#fff';
+        box.querySelectorAll('[data-nbt]').forEach(btn => {
+            btn.onclick = async () => {
+                localStorage.setItem('neubie_theme', btn.dataset.nbt);
+                if (_batteryBuilt) buildBatteryShell();
+                await renderDashboard();
+                openDriveThemeOverlay();   // 자기 자신은 유지한 채 선택 표시만 갱신
             };
-            paint();
-            if (r.disabled) { sw.disabled = true; sw.style.opacity = '0.45'; sw.style.cursor = 'not-allowed'; }
-            sw.onclick = () => { r.set(!r.get()); paint(); };
-
-            row.append(left, sw);
-            box.appendChild(row);
+        });
+        box.querySelectorAll('[data-dt]').forEach(btn => {
+            btn.onclick = () => {
+                localStorage.setItem(DRIVE_THEME_KEY, btn.dataset.dt);
+                applyDriveTheme(btn.dataset.dt);
+                openDriveThemeOverlay();
+            };
         });
 
-        const foot = document.createElement('div');
-        foot.style.cssText = 'border-top:1px solid rgba(255,255,255,0.08); padding-top:8px; font-size:11px; color:#9ca3af; line-height:1.5;';
-        foot.textContent = '패드 D-pad ↑ 1초 홀드: 프리셋 설정 · 다중 모니터링 페이지의 Alt+Q: 교대 패널';
-        box.appendChild(foot);
+        showSharedPopup('drivetheme', box);
+        if (window._neubieThemeCard) window._neubieThemeCard.style.outline = '2px solid #ef4444';
+    }
 
-        document.body.appendChild(box);
+    // ── 대시보드 렌더 ──
+    async function renderDashboard() {
+        await adminConfigReady; // 관리자 잠금(locked) 여부를 토글 그리기 전에 확정
+        dashboard.innerHTML = '';
+        const T = getNbTheme();
+        dashboard.style.backgroundColor = T.bg;
+        dashboard.style.color = T.text;
+        dashboard.style.backgroundImage = `linear-gradient(${T.bg}, ${T.bg}), linear-gradient(135deg, #10b981, #2dd4bf)`;
 
-        // 바깥 클릭 / Esc 로 닫기 (패널의 ⚙ 버튼은 자체 토글이라 제외)
-        const onDown = (ev) => {
-            if (box.contains(ev.target)) return;
-            if (ev.target.closest?.('[data-nb-gear]')) return;
-            closeSettingsPopup();
+        // 헤더 (제목 + X 버튼) — 헤더를 잡고 드래그
+        const headerContainer = document.createElement('div');
+        headerContainer.style.cssText = 'display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; padding-right:5px;';
+        const title = document.createElement('h2');
+        title.textContent = 'NCC 패널';
+        title.style.cssText = `${NCC_TITLE_GRADIENT} font-size:21px; margin:0; font-weight:bold; white-space:nowrap;`;
+        const closeBtn = document.createElement('button');
+        closeBtn.id = 'all-close-btn';
+        closeBtn.textContent = '✕';
+        closeBtn.title = '닫기 (Alt+Q)';
+        closeBtn.style.cssText = 'background:#ef4444; color:white; border:none; border-radius:4px; width:26px; height:26px; cursor:pointer; font-weight:bold; display:flex; align-items:center; justify-content:center; padding:0;';
+        closeBtn.onclick = closeAllPopups;
+        headerContainer.append(title, closeBtn);
+        dashboard.appendChild(headerContainer);
+        makeDraggable(headerContainer, dashboard);
+
+        const list = document.createElement('div');
+        list.id = 'dashboard-list';
+        list.style.cssText = 'display:grid; gap:6px; width:100%; box-sizing:border-box;';
+
+        // 1. 일일 업무 + 알림 설정
+        const taskCard = document.createElement('div');
+        taskCard.style.cssText = `
+            padding:15px; border-radius:15px; border:1px solid transparent;
+            background-image: linear-gradient(${T.card}, ${T.card}), linear-gradient(135deg, #10b981, #2dd4bf);
+            background-origin: border-box; background-clip: padding-box, border-box;
+            box-shadow:0 0 5px rgba(150,120,255,0.25);
+        `;
+        const myName = getMyName() || '사용자';
+        const currentInt = localStorage.getItem('neubie_remind_int') || '0';
+        taskCard.innerHTML = `
+            <div style="margin-bottom:10px;">
+                <div style="display:flex; align-items:center; gap:6px; margin-bottom:8px; flex-wrap:nowrap;">
+                    <div style="font-weight:bold; font-size:17px; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📋 <span style="color:${T.text};">${_esc(myName)}</span><span style="color:${T.text};">의 일일 업무</span></div>
+                    <button id="remind-test-btn" style="background:transparent; color:${T.accent}; border:1px solid ${T.accent}; font-size:12px; font-weight:bold; border-radius:4px; padding:2px 8px; cursor:pointer; white-space:nowrap;">알림 테스트</button>
+                    <select id="remind-inline" style="background:${T.isDark ? '#333' : '#f0ede1'}; color:${T.isDark ? '#fff' : T.text}; border:1px solid ${T.isDark ? '#555' : T.border}; font-size:13px; font-weight:bold; border-radius:4px; padding:2px;">
+                        <option value="0" ${currentInt === '0' ? 'selected' : ''}>알림 없음</option>
+                        <option value="3" ${currentInt === '3' ? 'selected' : ''}>3분 전 알림</option>
+                        <option value="5" ${currentInt === '5' ? 'selected' : ''}>5분 전 알림</option>
+                    </select>
+                </div>
+            </div>
+        `;
+        const taskInline = document.createElement('div');
+        taskInline.id = 'inline-task-container';
+        taskCard.appendChild(taskInline);
+        list.appendChild(taskCard);
+
+        const remindInline = taskCard.querySelector('#remind-inline');
+        remindInline.onchange = (e) => localStorage.setItem('neubie_remind_int', e.target.value);
+
+        const remindTestBtn = taskCard.querySelector('#remind-test-btn');
+        const ALARM_VISIBLE_MS = 7000;   // triggerReminder 의 표시 유지시간
+        const ALARM_FADE_MS = 500;       // 사라지는 페이드 시간
+        remindTestBtn.onmouseenter = () => {
+            if (remindTestBtn.disabled) return;
+            remindTestBtn.style.background = GREEN_HOVER;
+            remindTestBtn.style.borderColor = GREEN_HOVER;
+            remindTestBtn.style.color = '#062e13';
         };
-        const onKey = (ev) => { if (ev.key === 'Escape') closeSettingsPopup(); };
-        setTimeout(() => {
-            document.addEventListener('mousedown', onDown, true);
-            document.addEventListener('keydown', onKey, true);
-        }, 0);
-        box._cleanup = () => {
-            document.removeEventListener('mousedown', onDown, true);
-            document.removeEventListener('keydown', onKey, true);
+        remindTestBtn.onmouseleave = () => {
+            if (remindTestBtn.disabled) return;
+            remindTestBtn.style.background = 'transparent';
+            remindTestBtn.style.borderColor = T.accent;
+            remindTestBtn.style.color = T.accent;
         };
+        remindTestBtn.onclick = () => {
+            triggerReminder('일일 업무 테스트 알림', 5);
+            remindTestBtn.disabled = true;   // 알림이 떠 있는 동안 중복 클릭 방지
+            remindTestBtn.style.cursor = 'not-allowed';
+            remindTestBtn.style.opacity = '0.5';
+            remindTestBtn.style.background = 'transparent';
+            remindTestBtn.style.color = T.accent;
+            const originalText = remindTestBtn.textContent;
+            remindTestBtn.textContent = '테스트 중...';
+            setTimeout(() => {
+                remindTestBtn.disabled = false;
+                remindTestBtn.style.cursor = 'pointer';
+                remindTestBtn.style.opacity = '1';
+                remindTestBtn.textContent = originalText;
+            }, ALARM_VISIBLE_MS + ALARM_FADE_MS);
+        };
+
+        // 2. 스트림덱 영역: 토글 3종 + 타일 2개
+        const bottomRow = document.createElement('div');
+        bottomRow.id = 'neubie-streamdeck-grid';
+        bottomRow.style.cssText = 'display:flex; gap:8px;';
+
+        const mapToggleUI = createToggleRow(T, '🗺️', 'NCC 맵 최적화',
+            localStorage.getItem('neubie_opt_map') !== 'false',
+            (on) => { localStorage.setItem('neubie_opt_map', on ? 'true' : 'false'); syncMapOpt(); },
+            '역삼·송도·성수·삼평동 모니터링 화면: 흰 점·경로 노드 숨김, 대기장소 마커 반전');
+
+        const locked = ADMIN_CONFIG.locked;
+        const queueToggleUI = createToggleRow(T, '🖥️', locked ? '다중 모니터링 도우미 (관리자 잠금)' : '다중 모니터링 도우미',
+            isHandoverFeatureOn(),
+            (on) => {
+                if (locked) return;
+                localStorage.setItem('neubie_handover_enabled', on ? 'true' : 'false');
+                if (!on) document.getElementById('ho-remote-panel')?.remove();
+                checkBrightnessBar();
+            },
+            '다중 모니터링 페이지: Alt+Q 교대 패널(교대 기체 로드·자동 시작·카메라 배치) · 전체 밝기 슬라이더 · 모달 우측 고정');
+        if (locked) {
+            queueToggleUI.input.disabled = true;
+            queueToggleUI.row.style.opacity = '0.45';
+            queueToggleUI.row.style.filter = 'grayscale(1)';
+            queueToggleUI.row.style.cursor = 'not-allowed';
+        }
+
+        const gamepadToggleUI = createToggleRow(T, '🎮', '패드 D-pad 키 바인딩',
+            !isDpadBindingOff(),
+            (on) => localStorage.setItem('neubie_dpad_binding', on ? 'on' : 'off'),
+            'D-pad ↑ 짧게: 프리셋 적용 / 1초 홀드: 프리셋 설정 · ←→ 밝기 · ↓ 자동정지');
+
+        const toggleCol = document.createElement('div');
+        toggleCol.style.cssText = 'flex:1.3; display:flex; flex-direction:column; gap:6px;';
+        toggleCol.append(mapToggleUI.row, queueToggleUI.row, gamepadToggleUI.row);
+
+        const themeTile = makeTile(T, '🎨', '다크/라이트 모드', '#86efac', '134,239,172');
+        window._neubieThemeCard = themeTile;
+        themeTile.onclick = () => {
+            if (isSharedPopupOpen('drivetheme')) hideSharedPopup();
+            else openDriveThemeOverlay();
+        };
+
+        const batteryTile = makeTile(T, '🔋', '성남 배터리 현황', '#22c55e', '34,197,94');
+        window._neubieBatteryCard = batteryTile;
+        batteryTile.style.outline = batteryPopup.style.display === 'block' ? '2px solid #ef4444' : 'none';
+        batteryTile.onclick = () => {
+            toggleBattery();
+            batteryTile.style.outline = batteryPopup.style.display === 'block' ? '2px solid #ef4444' : 'none';
+        };
+
+        const navGrid = document.createElement('div');
+        navGrid.style.cssText = 'flex:1; display:grid; grid-template-columns:1fr; grid-template-rows:repeat(2, 1fr); gap:6px;';
+        navGrid.append(themeTile, batteryTile);
+
+        bottomRow.append(toggleCol, navGrid);
+        list.appendChild(bottomRow);
+
+        // 3. 영상 파일명 생성기
+        list.appendChild(createNamingCard());
+        dashboard.appendChild(list);
+
+        renderTaskList(window.currentMyTasks || []);
+    }
+
+    // ── 열기/닫기 ──
+    function closeAllPopups() {
+        dashboard.style.display = 'none';
+        batteryPopup.style.display = 'none';
+        hideSharedPopup();
+        if (window._neubieBatteryCard) window._neubieBatteryCard.style.outline = 'none';
+        document.getElementById('ho-remote-peek')?.remove();
+        document.getElementById('ho-remote-panel')?.remove();
+    }
+
+    async function toggleDashboard() {
+        const sharedEl = document.getElementById('neubie-shared-popup');
+        const isAnyOpen = dashboard.style.display === 'block'
+            || batteryPopup.style.display === 'block'
+            || (sharedEl && sharedEl.style.display === 'flex');
+        if (isAnyOpen) { closeAllPopups(); return; }
+
+        await renderDashboard();
+        // 열 때마다 화면 중앙으로 (드래그로 옮겼어도 초기화)
+        Object.assign(dashboard.style, { left: '50%', top: '50%', right: 'auto', bottom: 'auto', transform: 'translate(-50%, -50%)' });
+        dashboard.style.display = 'block';
+        syncTasksFromServer(true);
     }
 
 
     /* ============================================================
-        팝업 정리 · URL 변경 감지 · 단축키 · 초기화
+        URL 변경 감지 · 단축키 · 일일 업무 동기화 타이머 · 초기화
        ============================================================ */
-    function closeAllPopups() {
-        document.getElementById('ho-remote-peek')?.remove();
-        document.getElementById('ho-remote-panel')?.remove();
-        closeSettingsPopup();
-    }
-
     let lastUrl = location.href;
 
     // 주소가 바뀌었을 때(SPA 이동 포함) 한 번 실행
     function onUrlChange() {
-        closeAllPopups();
+        closeAllPopups();                 // NCC 메뉴를 눌러 이동하면 패널도 닫힘 (원본과 동일)
+        updateRobotContext();
         syncMapOpt();
         checkBrightnessBar();
         setTimeout(() => patchDrivingPageLayout(), 1500);
@@ -2438,26 +3875,54 @@
     // 클릭 없이 코드로만 주소가 바뀌는 경우 대비 (2초)
     setInterval(checkUrlChange, 2000);
 
-    // Alt+Q — 다중 모니터링 페이지: 교대 패널 토글 / 그 외: 간단 설정창
+    // Alt+Q — 다중 모니터링 페이지(도우미 ON): 교대 패널 토글 / 그 외: NCC 패널(화면 중앙)
+    // Alt+B — 성남 배터리 현황
     window.addEventListener('keydown', (e) => {
-        if (!(e.altKey && e.code === 'KeyQ')) return;
-        e.preventDefault();
+        if (!e.altKey) return;
 
-        if (isHandoverPage() && isHandoverFeatureOn()) {
-            const existing = document.getElementById('ho-remote-panel');
-            if (existing) {
-                const isOpen = existing.style.top === '0px';
-                existing.style.top = isOpen ? '-300px' : '0px';
-                if (!isOpen) existing._onOpen?.();   // 닫혀있다가 지금 여는 경우 — 남은 기체 대수 새로 조회
-            } else {
-                initHandoverLayout();
+        if (e.code === 'KeyQ') {
+            e.preventDefault();
+            if (isHandoverPage() && isHandoverFeatureOn()) {
+                const existing = document.getElementById('ho-remote-panel');
+                if (existing) {
+                    const isOpen = existing.style.top === '0px';
+                    existing.style.top = isOpen ? '-300px' : '0px';
+                    if (!isOpen) existing._onOpen?.();   // 닫혀있다가 지금 여는 경우 — 남은 기체 대수 새로 조회
+                } else {
+                    initHandoverLayout();
+                }
+                return;
             }
-            return;
+            toggleDashboard();
         }
-        toggleSettingsPopup();
+
+        if (e.code === 'KeyB') {
+            e.preventDefault();
+            toggleBattery();
+            if (window._neubieBatteryCard) {
+                window._neubieBatteryCard.style.outline = batteryPopup.style.display === 'block' ? '2px solid #ef4444' : 'none';
+            }
+        }
     });
 
+    // 일일 업무 동기화 타이머 — 분이 바뀔 때만 syncTasksFromServer() (서버 조회 간격은 그 함수 안에서 제어)
+    let lastNotifiedMin = -1;
+    setInterval(() => {
+        const now = new Date();
+        const currentFullMin = now.getHours() * 60 + now.getMinutes();
+        if (lastNotifiedMin === currentFullMin) return;
+        lastNotifiedMin = currentFullMin;
+        syncTasksFromServer();
+    }, 1000);
+    // 숨은 탭에서 돌아오면 바로 한 번 확인 (숨은 탭은 서버 조회를 건너뛴다)
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) syncTasksFromServer(); });
+
     // 초기화
+    const injectUI = () => { if (document.body) document.body.append(dashboard, batteryPopup); };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', injectUI);
+    else injectUI();
+
+    updateRobotContext();
     syncMapOpt();
     checkBrightnessBar();
     adminConfigReady.then(() => checkBrightnessBar());   // 관리자 잠금(locked) 확정 후 한 번 더
@@ -2465,5 +3930,7 @@
     setTimeout(() => patchDrivingPageLayout(), 1500);
     setTimeout(() => patchDrivingPageLayout(), 3000);
     setTimeout(() => patchDrivingPageLayout(), 6000);
+
+    console.info('[뉴비고 도우미 slim v2.1] 로드됨 · D-pad가 안 먹으면 콘솔에서 neubieDpadDiag() 실행');
 
 })();
