@@ -39,27 +39,13 @@
         sheetId: "1tLo6Xeq6KJx6zW-fcw8H38jdjxyS2yre5oWY7cxky70"
     };
 
-    // ══ 오프라인 모드 (NCC 통신 전면 중단) ═══════════════════════════════
-    // 켜지는 조건 — 하나라도 true면 켜진다 (원격 스위치는 개별 설정으로 끌 수 없음):
-    //   (1) 아래 상수 OFFLINE_MODE = true                      (코드 배포)
-    //   (2) remote_admin_config.json 에 "offline": true         (재배포 없이 전원 적용, 새로고침 시 반영)
-    //   (3) 이 브라우저만: 콘솔에서 neubieSetOffline(true / false) (즉시 적용)
-    // 켜지면 ① 이 도구가 NCC(core.neubie.ai)로 보내는 모든 요청과
-    //        ② NCC 화면을 대신 조작해 서버 요청을 만드는 기능(화질/램프 버튼, 순찰 알림, 배터리 조회,
-    //          조작자 감시, 자동 사이드브레이크, 개입 요청 자동 OFF, 자동 시작, D-pad 단축키/프리셋)이 멈춘다.
-    //   Vercel/GitHub(본인 인프라) 통신과 화면 자체 기능(밝기 슬라이더·테마·지도 최적화 CSS 등)은 그대로.
-    const OFFLINE_MODE = false;
-    // true로 두면 오프라인 모드에서 NCC 사이트 '자체'의 core.neubie.ai fetch까지 막는다.
-    // (사이트 화면이 먹통이 되므로 기본 false — 이 도구의 요청은 아래 nccFetch()에서 이미 차단됨)
-    const OFFLINE_BLOCK_SITE_FETCH = false;
-
     // ── [관리자 원격 설정] ────────────────────────────────────────────
     // monitoring_data_vault 레포의 remote_admin_config.json 값을 읽어온다.
     // admin이 이 JSON 파일 하나만 GitHub에서 직접 고치면, 모든 사용자는 새로고침 시
     // 아래 값을 그대로 반영받는다(재배포 불필요).
-    //   { "maxMonitorSlots": 6, "locked": false, "offline": false }
+    //   { "maxMonitorSlots": 6, "locked": false }
     // fetch 실패 시엔 안전 기본값(6대 / 잠금 해제)으로 지금까지와 동일하게 동작한다.
-    let ADMIN_CONFIG = { maxMonitorSlots: 6, locked: false, offline: false };
+    let ADMIN_CONFIG = { maxMonitorSlots: 6, locked: false };
     const adminConfigReady = (async () => {
         try {
             const res = await fetch(
@@ -74,48 +60,16 @@
             if (typeof cfg.locked === 'boolean') {
                 ADMIN_CONFIG.locked = cfg.locked;
             }
-            if (typeof cfg.offline === 'boolean') {
-                ADMIN_CONFIG.offline = cfg.offline;   // 원격 오프라인 스위치
-            }
         } catch (e) {
             console.log('remote_admin_config 로드 실패, 기본값(6대 / 잠금 해제) 유지:', e);
         }
     })();
-
-    // ── 오프라인 모드 판정 / NCC 요청 단일 관문 ──
-    const OFFLINE_LS_KEY = 'neubie_offline_mode';
-    function isOfflineMode() {
-        if (OFFLINE_MODE || ADMIN_CONFIG.offline) return true;
-        try { return localStorage.getItem(OFFLINE_LS_KEY) === 'true'; } catch (e) { return false; }
-    }
-    // 원격 스위치가 도착할 때까지 기다리되 최대 3초 — 무한 대기 방지. 최초 NCC 호출 직전에만 의미가 있다(이후엔 즉시 통과).
-    const offlineReady = Promise.race([adminConfigReady, new Promise(r => setTimeout(r, 3000))]);
-    // 이 도구가 NCC로 보내는 모든 요청은 반드시 이 함수를 지난다. 오프라인이면 네트워크에 닿기 전에 거절한다.
-    async function nccFetch(url, options = {}, timeoutMs) {
-        await offlineReady;
-        if (isOfflineMode()) {
-            const err = new Error('오프라인 모드: NCC 통신이 차단되었습니다.');
-            err.offline = true;
-            throw err;
-        }
-        return timeoutMs ? fetchWithTimeout(url, options, timeoutMs) : fetch(url, options);
-    }
-    // 이 브라우저 전용 스위치(콘솔). 반환값 = 실제 오프라인 여부(상수/원격 스위치가 켜져 있으면 끄려 해도 true)
-    window.neubieSetOffline = (on) => {
-        try { localStorage.setItem(OFFLINE_LS_KEY, on ? 'true' : 'false'); } catch (e) {}
-        return isOfflineMode();
-    };
 
     // 다중 모니터링 도우미 기능이 (사용자 토글 ON) && (관리자 잠금 아님) 상태인지 —
     // 기존에 여러 곳에서 반복되던 localStorage 직접 조회를 이 함수 하나로 통일한다.
     // 반드시 adminConfigReady가 끝난 뒤에 호출해야 ADMIN_CONFIG.locked가 최신값이다.
     const isHandoverFeatureOn = () =>
         !ADMIN_CONFIG.locked && localStorage.getItem('neubie_handover_enabled') !== 'false';
-
-    // NCC 로봇 제어 API 베이스 도메인 — 현재 9곳에서 이 도메인을 호출 중.
-    // 나중에 리브랜딩으로 도메인만 바뀌는 경우, 이 한 줄만 고치면 전체 반영됨.
-    // (API 경로/스키마 자체가 바뀌는 구조 변경이라면 이 상수만으론 부족하니 별도 대응 필요)
-    const NCC_API_BASE = 'https://core.neubie.ai';
 
     const NB_THEMES = {
         light: { bg: '#f3ecdb', card: '#e2d7bd', border: '#cbbd98', text: '#2b2418', accent: '#1e3a5f', purple: '#7c3aed', isDark: false },
@@ -131,7 +85,7 @@
     // 호버 효과 공통 파란색 — 라이트/다크 상관없이 항상 이 톤 하나로 통일
     // (T.accent를 쓰면 라이트모드에서 짙은 네이비가 나와 너무 진해 보이는 문제가 있었음)
     const HOVER_ACCENT = '#5b9bf7';
-    // 온오프 토글의 ON 상태와 동일한 그린 — 알림테스트/다중모니터링/배송순찰띠띠 호버 전용
+    // 온오프 토글의 ON 상태와 동일한 그린 — 다중모니터링/배송순찰띠띠 호버 전용
     const GREEN_HOVER = '#22c55e';
 
     function getNbTheme() {
@@ -305,14 +259,6 @@
         insuData: null,
     };
 
-    function getAuthHeaders() {
-        try {
-            const token = JSON.parse(localStorage.getItem('AccessToken'));
-            return token ? { 'Authorization': `Bearer ${token}` } : {};
-        } catch (e) {
-            return {};
-        }
-    }
 	
 	async function fetchWithTimeout(url, options = {}, timeoutMs = 15000) {
         const controller = new AbortController();
@@ -364,105 +310,6 @@
     function getKSTMinutes() {
         return getKSTDate().getMinutes();
     }
-    function isScheduledMonitorNow(myName) {
-        if (!myName || !state.insuData || !state.insuData.schedule) return false;
-        const hourKey = `${String(getKSTDate().getHours()).padStart(2, '0')}:00`;
-        return state.insuData.schedule[hourKey] === myName;
-    }
-
-    /* ============================================================
-    SECTION 조작자 감시 (개입 페이지 전용)
-   ============================================================ */
-    const OPERATOR_FETCH_INTERVAL = 10000;
-    const OPERATOR_FETCH_COUNT = 2;
-    const OPERATOR_PANEL_DURATION = 5000;
-    const OPERATOR_PANEL_ID = 'neubie-operator-watch-panel';
-    let _operatorFetchTimer = null;
-    let _operatorFetchDone = false;
-
-    function _getMyName() {
-        return localStorage.getItem('neubie_user_name') || null;
-    }
-    function _getRobotIdFromUrl() {
-        return new URLSearchParams(location.search).get('robot-id');
-    }
-    async function _fetchSingleRobot(robotId) {
-        const res = await nccFetch(`${NCC_API_BASE}/robots/${robotId}/`, {
-            credentials: 'include',
-            headers: getAuthHeaders()
-        });
-        return await res.json();
-    }
-    function _showOperatorPanel(name) {
-        _removeOperatorPanel();
-        const panel = document.createElement('div');
-        panel.id = OPERATOR_PANEL_ID;
-        panel.style.cssText = `
-            position:fixed; top:16px; left:70%; transform:translateX(-50%);
-            z-index:999999; pointer-events:none;
-            animation: _opFadeIn 0.2s ease;
-        `;
-        panel.innerHTML = `
-            <div style="display:flex;align-items:center;gap:10px;
-                background:rgba(18,18,36,0.97);border:1px solid #6a6aaa;
-                border-radius:24px;padding:10px 24px;
-                box-shadow:0 4px 20px rgba(0,0,0,0.5);
-                font-family:'Pretendard','Noto Sans KR',sans-serif;">
-                <span style="font-size:14px;color:#aab;">⚠️ 조작자</span>
-                <span style="font-size:18px;font-weight:700;color:#ffd080;">${name}</span>
-            </div>
-        `;
-        document.body.appendChild(panel);
-        clearTimeout(panel._hideTimer);
-        panel._hideTimer = setTimeout(() => _removeOperatorPanel(), OPERATOR_PANEL_DURATION);
-    }
-    function _removeOperatorPanel() {
-        const panel = document.getElementById(OPERATOR_PANEL_ID);
-        if (panel) { clearTimeout(panel._hideTimer); panel.remove(); }
-    }
-    function _stopOperatorWatch() {
-        if (_operatorFetchTimer) { clearInterval(_operatorFetchTimer); _operatorFetchTimer = null; }
-        _operatorFetchDone = true;
-        _removeOperatorPanel();
-    }
-    async function _startOperatorWatch() {
-        const robotId = _getRobotIdFromUrl();
-        if (!robotId) return;
-        if (isOfflineMode()) return;   // 오프라인: 조작자 감시 조회 없음
-        _stopOperatorWatch();
-        _operatorFetchDone = false;
-
-        let baselineName = null;
-        try {
-            const robot = await _fetchSingleRobot(robotId);
-            baselineName = robot?.robotStatus?.lastOperatedUserName || null;
-        } catch(e) {}
-
-        if (_operatorFetchDone) return;
-
-        let fetchCount = 0;
-        const myName = _getMyName();
-
-        const doFetch = async () => {
-            if (_operatorFetchDone) { clearInterval(_operatorFetchTimer); return; }
-            fetchCount++;
-            try {
-                const robot = await _fetchSingleRobot(robotId);
-                if (_operatorFetchDone) return;
-                const currentName = robot?.robotStatus?.lastOperatedUserName || null;
-                if (currentName && currentName !== baselineName && currentName !== myName) {
-                    _showOperatorPanel(currentName);
-                    baselineName = currentName;
-                }
-            } catch(e) {}
-            if (fetchCount >= OPERATOR_FETCH_COUNT) {
-                clearInterval(_operatorFetchTimer);
-                _operatorFetchTimer = null;
-            }
-        };
-
-        _operatorFetchTimer = setInterval(doFetch, OPERATOR_FETCH_INTERVAL);
-    }
 
     const taskChannel = new BroadcastChannel('neubie_task_sync');
 
@@ -472,10 +319,6 @@
     const originalFetch = window.fetch;
     window.fetch = async (...args) => {
         const url = typeof args[0] === 'string' ? args[0] : args[0].url;
-        // 이 도구의 NCC 요청은 nccFetch()에서 이미 차단된다. 여기서는 (선택) NCC 사이트 '자체' 요청까지 막을 때만 동작.
-        if (OFFLINE_BLOCK_SITE_FETCH && isOfflineMode() && url && url.includes(NCC_API_BASE.replace('https://', ''))) {
-            throw new Error('오프라인 모드: NCC API 요청이 차단되었습니다.');
-        }
         // 최적화 대상 URL 감지
         if (state.isMapOpt && url && (url.includes('nodes?') || url.includes('sites?') || url.includes('paths?'))) {
             // 데이터를 빈 배열로 반환하여 렌더링 방지
@@ -657,7 +500,6 @@
 
             #neubie-dashboard, #neubie-dashboard *,
             #neubie-battery-popup, #neubie-battery-popup *,
-            #neubie-board-overlay, #neubie-board-overlay *,
             #neubie-secret-overlay, #neubie-secret-overlay *,
             #neubie-schedule-overlay, #neubie-schedule-overlay *,
             #neubie-shared-popup, #neubie-shared-popup * {
@@ -800,99 +642,26 @@
         _batteryInitialized = true;
     }
 
-    let _batteryFetching = false;
-    let _lastBatteryFetchAt = 0;
-    const BATTERY_REFRESH_MS = 2 * 60 * 1000;   // 2분: 이 안에 다시 열어도 새로 요청 안 함
-    async function updateBatteryStatus() {
+    // 성남 배터리 현황: NCC를 조회하지 않는다 — 항상 '오프라인' 상태로만 표시한다.
+    function updateBatteryStatus() {
         if (batteryPopup.dataset.dragging === 'true') return;
-        if (_batteryFetching) return;
 
         if (!_batteryInitialized || !batteryPopup.querySelector('#neubie-battery-list')) {
             buildBatteryShell();
         }
 
-        // 오프라인 모드: 조회하지 않고, 실패(null)가 거짓 'OFF'로 보이지 않게 '오프라인'으로 표시한다 (복사 텍스트도 동일)
-        if (isOfflineMode()) {
-            state.lastBatteryData = [];
-            config.batteryIds.forEach(c => {
-                state.lastBatteryData.push({ shortName: c.shortName, battery: '- %', statusText: '오프라인(조회 차단)' });
-                const item = batteryPopup.querySelector(`[data-battery-id="${c.id}"]`);
-                if (!item) return;
-                item.style.borderLeft = '5px solid #666';
-                item.querySelector('.bat-name').textContent = `🔌 ${c.name}`;
-                const valEl = item.querySelector('.bat-val');
-                valEl.textContent = '오프라인'; valEl.style.color = '#888';
-                const fillEl = item.querySelector('.bat-bar-fill');
-                if (fillEl) { fillEl.style.width = '0%'; fillEl.style.background = '#666'; }
-            });
-            return;   // _lastBatteryFetchAt 는 갱신하지 않음 → 온라인 복귀 시 즉시 재조회
-        }
-
-        // 마지막으로 실제 조회한 지 2분이 안 지났으면, 서버 요청 없이 기존 값 그대로 둠
-        if (_lastBatteryFetchAt && (Date.now() - _lastBatteryFetchAt) < BATTERY_REFRESH_MS) return;
-
-        _batteryFetching = true;
-        try {
-            state.lastBatteryData = [];
-
-            const results = await Promise.all(
-                config.batteryIds.map(c =>
-                    nccFetch(`${NCC_API_BASE}/robots/${c.id}/`, {
-                        credentials: 'include',
-                        headers: getAuthHeaders()
-                    })
-                    .then(r => r.ok ? r.json() : null)
-                    .catch(() => null)
-                )
-            );
-
-            config.batteryIds.forEach((c, i) => {
-                const raw = results[i];
-                const rs  = raw?.robotStatus ?? {};
-
-                let batteryVal = "- %", statusText = "OFF", accentColor = "#666", statusIcon = "⚪", batteryPct = 0;
-
-                if (raw && rs.isConnecting) {
-                    const battery = Math.round(raw.battery ?? rs.battery ?? 0);
-                    batteryVal = `${battery}%`;
-                    batteryPct = Math.min(100, Math.max(0, battery));
-
-                    if (rs.isCharging || rs.isWirelessChargerConnected) {
-                        accentColor = "#22c55e"; statusIcon = "🟢"; statusText = "충전 중";
-                    } else if (raw.currentScenario) {
-                        accentColor = "#3b82f6"; statusIcon = "🔵"; statusText = "순찰 중";
-                    } else {
-                        accentColor = "#888888"; statusIcon = "⚪"; statusText = "대기 중";
-                    }
-
-                    // 배터리 잔량 자체가 낮으면(20% 이하) 충전/순찰 여부와 무관하게 경고색으로 강조
-                    if (battery <= 20 && !(rs.isCharging || rs.isWirelessChargerConnected)) {
-                        accentColor = "#ef4444";
-                    }
-                }
-
-                state.lastBatteryData.push({ shortName: c.shortName, battery: batteryVal, statusText });
-
-                const item = batteryPopup.querySelector(`[data-battery-id="${c.id}"]`);
-                if (item) {
-                    item.style.borderLeft = `5px solid ${accentColor}`;
-                    item.querySelector('.bat-name').textContent = `${statusIcon} ${c.name}`;
-                    const valEl = item.querySelector('.bat-val');
-                    valEl.textContent = batteryVal;
-                    valEl.style.color = accentColor;
-
-                    const fillEl = item.querySelector('.bat-bar-fill');
-                    if (fillEl) {
-                        fillEl.style.width = `${batteryPct}%`;
-                        fillEl.style.background = accentColor;
-                    }
-                }
-            });
-
-            _lastBatteryFetchAt = Date.now();
-        } finally {
-            _batteryFetching = false;
-        }
+        state.lastBatteryData = [];
+        config.batteryIds.forEach(c => {
+            state.lastBatteryData.push({ shortName: c.shortName, battery: '- %', statusText: '오프라인' });
+            const item = batteryPopup.querySelector(`[data-battery-id="${c.id}"]`);
+            if (!item) return;
+            item.style.borderLeft = '5px solid #666';
+            item.querySelector('.bat-name').textContent = `🔌 ${c.name}`;
+            const valEl = item.querySelector('.bat-val');
+            valEl.textContent = '오프라인'; valEl.style.color = '#888';
+            const fillEl = item.querySelector('.bat-bar-fill');
+            if (fillEl) { fillEl.style.width = '0%'; fillEl.style.background = '#666'; }
+        });
     }
 
     function copyToClipboard(btn) {
@@ -957,18 +726,20 @@
     // ── 서버 동기화 주기 ──
     // syncTasksFromServer 는 맨 아래의 매분 타이머가 호출한다. 이 호출은 '알림 발동 / 09·18시 버튼 상태 / 남은 시간 표기'처럼
     // 시간이 흐르면서 달라지는 것들을 분 단위로 다시 계산하는 역할도 겸하므로 매분 호출은 그대로 유지한다.
-    // 다만 '서버에서 새로 받아오는 네트워크 요청'은 시간대별로 간격을 둔다:
-    //   08:30~10:00 : 매분 (관리자가 일일업무를 집중 수정하는 시간대 — 기존과 동일)
-    //   그 외       : 5분마다 (그 사이의 매분 호출은 이미 받아 둔 데이터로 화면/알림만 다시 계산 — 네트워크 요청 없음)
+    // 다만 '서버에서 새로 받아오는 네트워크 요청'은 시간대별로 간격을 둔다 (그 사이의 매분 호출은 받아 둔 데이터로 화면/알림만 다시 계산):
+    //   09:00~09:20        : 2분마다
+    //   09:20~11:00        : 5분마다
+    //   18:00~다음날 09:00 : 1시간마다
+    //   11:00~18:00        : 20분마다
     // 이름 변경·대시보드 열기처럼 사용자가 직접 일으킨 동기화(force)는 언제나 새로 받아온다.
-    const TASK_SYNC_BUSY_FROM = 8 * 60 + 30;        // 08:30
-    const TASK_SYNC_BUSY_TO = 10 * 60;              // 10:00 (미포함)
-    const TASK_SYNC_IDLE_MS = 5 * 60 * 1000;        // 그 외 시간대의 서버 조회 간격
     const TASK_SYNC_TOLERANCE_MS = 5000;            // 분 타이머의 미세한 오차로 한 주기(분)를 더 건너뛰지 않게 하는 여유
     let _lastTaskSyncAt = 0;                        // 마지막으로 서버 조회를 시작한 시각 (0 = 곧바로 다시 시도)
     function getTaskSyncIntervalMs() {
         const d = new Date(), m = d.getHours() * 60 + d.getMinutes();
-        return (m >= TASK_SYNC_BUSY_FROM && m < TASK_SYNC_BUSY_TO) ? 0 : TASK_SYNC_IDLE_MS;   // 0 = 매분
+        if (m >= 9 * 60 && m < 9 * 60 + 20) return 2 * 60 * 1000;          // 09:00~09:20
+        if (m >= 9 * 60 + 20 && m < 11 * 60) return 5 * 60 * 1000;         // 09:20~11:00
+        if (m >= 18 * 60 || m < 9 * 60) return 60 * 60 * 1000;             // 18:00~다음날 09:00
+        return 20 * 60 * 1000;                                             // 11:00~18:00
     }
 
     // 받아 둔 데이터로 화면·알림을 처리한다 (네트워크 없음) — 서버에서 새로 받았을 때와, 받아 둔 데이터를 매분 다시 계산할 때 공용
@@ -1695,15 +1466,13 @@
         headerContainer.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; padding-right:5px;";
 
         const title = document.createElement('h2');
-        title.textContent = isOfflineMode() ? "오프라인 모드" : "NCC 패널";
-        title.style.cssText = isOfflineMode()
-            ? `color:${T.accent}; font-size:21px; margin:0; font-weight:bold; white-space:nowrap;`
-            : `${NCC_TITLE_GRADIENT} font-size:21px; margin:0; font-weight:bold; white-space:nowrap;`;
+        title.textContent = "API 호출 전혀 없습니다";
+        title.style.cssText = `${NCC_TITLE_GRADIENT} font-size:21px; margin:0; font-weight:bold; white-space:nowrap;`;
 
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
 		// 문자열을 넣으면 패치노트에 빨간 '`' 뱃지가 점멸하며 뜸.
 		// 빈 문자열('')로 비우면 뱃지가 사라짐.
-		const PATCH_NOTE_NEW_CONTENT = '';
+		const PATCH_NOTE_NEW_CONTENT = '호출없음';
 
         // ── 패치노트 내용 ──────────────────────────────────────
         // 아래 patchItems 배열에 버전별 내용을 추가하세요 (버튼 라벨의 날짜도 이 배열의
@@ -1713,11 +1482,9 @@
                 version: 'v1.0',
                 date: '2026-10-02',
                 items: [
-					'오프라인 모드 가동',
+					'NCC API 호출 기능 전체 제거',
 					'다중 모니터링 자동 시작 보험 적용(최대 6대)',
-					'다중 모니터링 자동시작 남은 기체명 및 대수 표기',
                     'D-PAD UP 커스텀 핫키(원격페이지: UP 1초 홀드 시 설정창/버튼 입력 시 적용)',
-					'잠실 엘스, 인력개발원 다중 연결 확인 알림 기능',
 					'서브모니터링 버튼 추가',
                     '스케줄표/좌석도 라이트/다크 모드(디폴트 라이트)',
                     '다중/과학관 업무 전임자/후임자 표기',
@@ -1726,7 +1493,6 @@
 					'다중 관제 시 모니터링 생성 모달을 우측에 고정',
 					'맵 최적화 속도 개선(Dot 제거, 비타겟 site 이동 반영)',
 					'개입카드 진입 시 다음 개입 요청 토글 자동으로 OFF',
-					'임무 종료된 리센츠/엘스/한성대/진천 페이지 이탈 5초 후 자동 사이드',
 					'다중 모니터링 자동 교대시작은 최대 12대까지 가능',
                 ]
             },
@@ -1818,7 +1584,6 @@
             patchBox.appendChild(patchTitle);
             patchBox.appendChild(patchContent);
             weatherCard.style.outline = 'none';
-            rouletteCard.style.outline = 'none';
             showSharedPopup('patch', patchBox);
         };
 
@@ -1836,33 +1601,10 @@
             <button id="all-close-btn" style="background:#ef4444; color:white; border:none; border-radius:4px; width:26px; height:26px; cursor:pointer; font-weight:bold; display:flex; align-items:center; justify-content:center; font-size:14px; box-sizing:border-box;">✕</button>
         `;
 
-        // 게시판은 헤더의 패치노트 옆으로 이동, 게임패드는 아래 토글 행으로
-        const boardBtn = document.createElement('button');
-        boardBtn.style.cssText = `
-            display:flex; align-items:center; gap:6px;
-            background:transparent; border:1px solid ${T.border}; color:${T.text};
-            border-radius:6px; padding:4px 10px; cursor:pointer;
-            font-size:14px; margin-left:6px;
-            transition:all 0.2s;
-        `;
-        boardBtn.innerHTML = `<span style="font-size:14px;">📌</span>게시판`;
-        boardBtn.onmouseenter = () => { boardBtn.style.borderColor=GREEN_HOVER; boardBtn.style.color=GREEN_HOVER; };
-        boardBtn.onmouseleave = () => { boardBtn.style.borderColor=T.border; boardBtn.style.color=T.text; };
-        boardBtn.onclick = () => openBoardOverlay();
-
-        // 익명 편지 알림 배지 — '최윤혁' 로컬 계정에서만 실제로 켜짐 (checkMailNotification 참고)
-        const mailBadge = document.createElement('span');
-        mailBadge.id = 'nb-mail-badge';
-        mailBadge.className = 'nb-emoji';
-        mailBadge.textContent = '✉️';
-        mailBadge.style.cssText = `margin-left:6px; font-size:14px; display:${window.__nbMailUnread ? 'inline' : 'none'}; animation: nbMailBlink 1s infinite;`;
-
         const titleWrap = document.createElement('div');
         titleWrap.style.cssText = "display:flex; align-items:center; gap:0;";
         titleWrap.appendChild(title);
         titleWrap.appendChild(patchBtn);
-        titleWrap.appendChild(boardBtn);
-        titleWrap.appendChild(mailBadge);
 
         const gamepadToggleUI = createToggleRow('🎮', '패드 키변경/테스트', !isDpadBindingOff(),
             (on) => {
@@ -1929,45 +1671,6 @@
                 };
             }
 
-            const remindTestBtn = document.getElementById('remind-test-btn');
-            if (remindTestBtn) {
-                const ALARM_VISIBLE_MS = 7000; // triggerReminder의 표시 유지시간
-                const ALARM_FADE_MS = 500;     // 사라지는 페이드 시간
-                const LOCK_MS = ALARM_VISIBLE_MS + ALARM_FADE_MS;
-
-                remindTestBtn.onmouseenter = () => {
-                    if (remindTestBtn.disabled) return;
-                    remindTestBtn.style.background = GREEN_HOVER;
-                    remindTestBtn.style.borderColor = GREEN_HOVER;
-                    remindTestBtn.style.color = '#062e13';
-                };
-                remindTestBtn.onmouseleave = () => {
-                    if (remindTestBtn.disabled) return;
-                    remindTestBtn.style.background = 'transparent';
-                    remindTestBtn.style.borderColor = T.accent;
-                    remindTestBtn.style.color = T.accent;
-                };
-                remindTestBtn.onclick = () => {
-                    triggerReminder('일일 업무 테스트 알림', 5);
-
-                    // 알림이 화면에 떠있는 동안(+ 사라지는 시간)엔 중복 클릭 방지를 위해 잠금
-                    remindTestBtn.disabled = true;
-                    remindTestBtn.style.cursor = 'not-allowed';
-                    remindTestBtn.style.opacity = '0.5';
-                    remindTestBtn.style.background = 'transparent';
-                    remindTestBtn.style.color = T.accent;
-                    const originalText = remindTestBtn.textContent;
-                    remindTestBtn.textContent = '테스트 중...';
-
-                    setTimeout(() => {
-                        remindTestBtn.disabled = false;
-                        remindTestBtn.style.cursor = 'pointer';
-                        remindTestBtn.style.opacity = '1';
-                        remindTestBtn.textContent = originalText;
-                    }, LOCK_MS);
-                };
-            }
-
             // X 버튼 클릭 시 통합 종료 실행
             const closeBtn = document.getElementById('all-close-btn');
             if (closeBtn) closeBtn.onclick = closeAllPopups;
@@ -1991,7 +1694,6 @@
             <div style="margin-bottom:10px;">
                 <div style="display:flex; align-items:center; gap:6px; margin-bottom:8px; flex-wrap:nowrap;">
                     <div style="font-weight:bold; font-size:17px; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📋 <span style="color:${T.text};">${storedName}</span><span style="color:${T.text};">의 일일 업무</span></div>
-                    <button id="remind-test-btn" style="background:transparent; color:${T.accent}; border:1px solid ${T.accent}; font-size:12px; font-weight:bold; border-radius:4px; padding:2px 8px; cursor:pointer; white-space:nowrap;">알림 테스트</button>
                     <select id="remind-inline" style="background:${T.isDark ? '#333' : '#f0ede1'}; color:${T.isDark ? '#fff' : T.text}; border:1px solid ${T.isDark ? '#555' : T.border}; font-size:13px; font-weight:bold; border-radius:4px; padding:2px;">
                         <option value="0" ${currentInt === '0' ? 'selected' : ''}>알림 없음</option>
                         <option value="3" ${currentInt === '3' ? 'selected' : ''}>3분 전 알림</option>
@@ -2219,7 +1921,6 @@
             mapInfoBox.appendChild(mapInfoTitle);
             mapInfoBox.appendChild(mapInfoContent);
             weatherCard.style.outline = 'none';
-            rouletteCard.style.outline = 'none';
             showSharedPopup('map-info', mapInfoBox);
         };
 
@@ -2303,11 +2004,8 @@
             queueInfoContent.id = 'neubie-queue-info-content';
             queueInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:${T.text}; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;`;
             queueInfoContent.innerHTML = `
-				자동시작 남은 기체명 및 대수 표기<br>
 				삭제 레이아웃 기체명 표기<br>
 				모니터링 생성 모달 우측 고정<br>
-				기체별 화질 조절<br>
-                기체별 헤드램프 토글<br>
 				기체 카메라 밝기 한 번에 조절<br>
 				카메라 위치 스왑<br>
 				'NCC 패널'만 이용하더라도 교대 기체 받기는 가능<br>
@@ -2317,7 +2015,6 @@
             queueInfoBox.appendChild(queueInfoTitle);
             queueInfoBox.appendChild(queueInfoContent);
             weatherCard.style.outline = 'none';
-            rouletteCard.style.outline = 'none';
             showSharedPopup('queue-info', queueInfoBox);
         };
 
@@ -2342,29 +2039,6 @@
             const isActive = scheduleCard.style.outline !== 'none' && scheduleCard.style.outline !== '';
             scheduleCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
             if (!isActive) openScheduleOverlay();
-        };
-
-        const rouletteCard = document.createElement('div');
-        rouletteCard.style.cssText = `
-            position:relative; min-height:52px; border-radius:10px; cursor:pointer;
-            background:${T.card}; border:1px solid #16a34a;
-            box-shadow:0 0 6px rgba(22,163,74,0.35), inset 0 0 8px rgba(22,163,74,0.1);
-            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
-            padding:7px 4px; box-sizing:border-box; transition:box-shadow 0.15s;
-        `;
-        rouletteCard.innerHTML = `<span style="font-size:16px;">🧰</span>
-            <span style="font-size:14px; font-weight:600; line-height:1.2; text-align:center; color:${T.text};">SW 설정/헬프</span>`;
-        window._neubieRouletteCard = rouletteCard;
-        attachStaticNeonHover(rouletteCard, '22,163,74');
-        rouletteCard.onclick = () => {
-            const isActive = rouletteCard.style.outline !== 'none' && rouletteCard.style.outline !== '';
-            rouletteCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
-            if (!isActive) {
-                weatherCard.style.outline = 'none'; // 공유 창 — 다른 트리거의 활성 표시는 정리
-                openMoreToolsOverlay();
-            } else {
-                hideSharedPopup();
-            }
         };
 
         const isBatteryOpen = batteryPopup.style.display === 'block';
@@ -2405,7 +2079,6 @@
             const isActive = weatherCard.style.outline !== 'none' && weatherCard.style.outline !== '';
             weatherCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
             if (!isActive) {
-                rouletteCard.style.outline = 'none'; // 공유 창 — 다른 트리거의 활성 표시는 정리
                 openDriveThemeOverlay();
             } else {
                 hideSharedPopup();
@@ -2422,7 +2095,7 @@
         navGrid.style.cssText = "flex:1; display:grid; grid-template-columns:repeat(2, 1fr); grid-template-rows:repeat(2, 1fr); gap:6px;";
         navGrid.appendChild(weatherCard);   // 레이아웃 설정
         navGrid.appendChild(batteryCard);   // 성남 배터리
-        navGrid.appendChild(rouletteCard);  // SW & 헬프
+        scheduleCard.style.gridColumn = 'span 2';   // 카드 3개 구성 — 스케줄표는 아래 줄 전체 폭
         navGrid.appendChild(scheduleCard);  // 스케줄표
 
         bottomRow.appendChild(toggleCol);
@@ -2461,8 +2134,7 @@
                 batteryPopup.style.bottom = 'auto';
             }
 
-            // 열 때마다 호출하지만, 실제 서버 요청은 updateBatteryStatus 내부의
-            // 2분 게이트가 알아서 걸러줌 (2분 안 지났으면 기존 값 그대로 표시)
+            // 열 때마다 호출하지만 서버 요청은 없다 (항상 '오프라인' 표시)
             updateBatteryStatus();
             batteryPopup.style.display = 'block';
 
@@ -2482,13 +2154,9 @@
 		
         const sharedPopup = document.getElementById('neubie-shared-popup');
         if (sharedPopup) sharedPopup.style.display = 'none';
-        const boardOverlay = document.getElementById('neubie-board-overlay');
-        if (boardOverlay) boardOverlay.style.display='none';
-        document.getElementById('neubie-troubleshoot-overlay')?.remove();
         const secretOverlay = document.getElementById('neubie-secret-overlay');
         if (secretOverlay) secretOverlay.style.display='none';
         if (window._neubieWeatherCard) window._neubieWeatherCard.style.outline = 'none';
-        if (window._neubieRouletteCard) window._neubieRouletteCard.style.outline = 'none';
     }
 
     // ── 유효성 검증 (1시간 이내 데이터) ──
@@ -2688,12 +2356,7 @@
 		const autoBtn = mkBtn('자동 시작', 'linear-gradient(135deg, #0f766e, #22c55e)',
 			{ color: '#fff', boxShadow: '0 0 10px rgba(34,197,94,0.4)', padding: '4px 8px' });
 
-		// [2026-09] 보라색 버튼 = '남은 기체 대수' 표시 버튼 (라벨/색/토스트는 아래 '남은 기체 대수' 블록에서 관리)
-		const dispatchBtn = mkBtn('…대 남음', 'linear-gradient(135deg, #7c3aed, #a78bfa)',
-			{ color: '#fff', boxShadow: '0 0 10px rgba(167,139,250,0.4)', padding: '4px 8px' });
-
 		rightBtns.appendChild(autoBtn);
-		rightBtns.appendChild(dispatchBtn);
 		headerRow.appendChild(rightBtns);
 		panel.appendChild(headerRow);
 
@@ -2739,226 +2402,6 @@
 				return false;
 			}
 		};
-
-		// [2026-09] dispatchGet/patchDispatchTaken('예정기체 자동 시작' 전용 GET/PATCH)은
-		// 해당 기능 비활성화와 함께 제거함.
-
-		// ══ 남은 기체 대수 (보라색 버튼) ═══════════════════════════════════════
-		// [성능/안전 설계]
-		//  · 폴링·setInterval·MutationObserver 없음. 네트워크 요청은 아래 3시점에만 1회씩 발생한다.
-		//      (1) 패널이 열릴 때   (2) 보라색 버튼 클릭 시   (3) 자동시작 taken 반영 직후
-		//  · 조회는 동시에 1개만 진행(_inflight 공유) + 버튼 연타는 0.5초 간격으로 제한 → 요청 폭주 없음
-		//  · 이 탭에서 카메라 연결이 확인된 기체(_localTaken)는 서버 응답이 늦거나 오래된 값이어도
-		//    '시작됨'으로 유지한다(서버 반영 지연으로 대수가 되돌아가는 현상 방지).
-		//  · 응답이 없거나 실패하면 0대가 아니라 '확인 불가'로 표시한다(거짓 0 방지).
-		let _lastData = null;      // 마지막 서버 JSON (null = 조회 실패)
-		let _loading = true;       // 첫 조회 전 / 패널 재오픈 직후
-		let _inflight = null;      // 진행 중인 조회 Promise
-		let _lastFetchAt = 0;
-		let _toastOpen = false;
-		let _shownKey = '';        // 버튼에 마지막으로 표시한 값 (값이 바뀔 때만 펄스 재생)
-		const _localTaken = new Set();
-		let _localSig = '';
-
-		if (!document.getElementById('ho-dispatch-style')) {
-			const st = document.createElement('style');
-			st.id = 'ho-dispatch-style';
-			st.textContent = `@keyframes ho-dispatch-pulse {
-				0%, 100% { box-shadow: 0 0 10px rgba(167,139,250,0.4); transform: scale(1); }
-				50% { box-shadow: 0 0 20px rgba(196,181,253,0.95); transform: scale(1.07); }
-			}`;
-			document.head.appendChild(st);
-		}
-
-		// 새 인계(units 목록이 달라짐)가 오면 이 탭의 로컬 taken 기록을 비운다
-		const syncSig = (data) => {
-			const units = Array.isArray(data?.units) ? data.units : [];
-			const sig = units.join('|');
-			if (sig !== _localSig) { _localSig = sig; _localTaken.clear(); }
-			return units;
-		};
-
-		// state: loading | ok | done(전부 시작됨) | expired(20분 초과) | empty(기체 없음) | error(조회 실패)
-		const calcRemaining = () => {
-			try {
-				if (_loading) return { state: 'loading', names: [] };
-				if (!_lastData) return { state: 'error', names: [] };
-				if (!isDataValid(_lastData.updatedAt)) return { state: 'expired', names: [] };
-				const units = syncSig(_lastData);
-				if (!units.length) return { state: 'empty', names: [] };
-				const done = new Set(Array.isArray(_lastData.taken) ? _lastData.taken : []);
-				_localTaken.forEach(n => done.add(n));
-				const names = units.filter(u => !done.has(u));
-				return { state: names.length ? 'ok' : 'done', names };
-			} catch (e) {
-				console.log('calcRemaining 오류:', e);
-				return { state: 'error', names: [] };
-			}
-		};
-
-		const BTN_ON  = 'linear-gradient(135deg, #7c3aed, #a78bfa)';
-		const BTN_OFF = 'linear-gradient(135deg, #4b4270, #6b6390)';
-		const BTN_ERR = 'linear-gradient(135deg, #374151, #4b5563)';
-
-		const renderDispatchBtn = (rem) => {
-			let text = '…대 남음', bg = BTN_ON, glow = '0 0 10px rgba(167,139,250,0.4)';
-			let pulse = false, key = 'loading', disabled = false, title = '';
-			if (rem.state === 'ok') {
-				text = `${rem.names.length}대 남음`; pulse = true; key = 'ok:' + rem.names.join('|');
-			} else if (rem.state === 'error') {
-				text = '확인 불가'; bg = BTN_ERR; glow = 'none'; key = 'error';
-			} else if (rem.state !== 'loading') {
-				text = '0대 남음'; bg = BTN_OFF; glow = 'none'; key = 'zero:' + rem.state;
-				if (rem.state === 'expired') {   // 20분 초과 데이터는 신뢰할 수 없으므로 버튼을 잠금
-					disabled = true;
-					title = '인계 데이터가 20분 넘게 갱신되지 않았어요. Alt+Q로 패널을 새로 열면 다시 확인합니다.';
-				}
-			}
-			dispatchBtn.textContent = text;
-			dispatchBtn.style.background = bg;
-			dispatchBtn.style.boxShadow = glow;
-			dispatchBtn.style.minWidth = '74px';
-			dispatchBtn.disabled = disabled;
-			dispatchBtn.style.cursor = disabled ? 'not-allowed' : 'pointer';
-			dispatchBtn.style.opacity = disabled ? '0.55' : '1';
-			dispatchBtn.title = title;
-			if (key !== _shownKey) {          // 값이 실제로 바뀐 경우에만 강조(3회 깜빡 후 정지 — 무한 애니메이션 아님)
-				_shownKey = key;
-				dispatchBtn.style.animation = 'none';
-				if (pulse) {
-					void dispatchBtn.offsetWidth;   // 애니메이션 재시작용 리플로우(값 변경 시 1회)
-					dispatchBtn.style.animation = 'ho-dispatch-pulse 1.1s ease-in-out 3';
-				}
-			}
-		};
-
-		// ── 우측으로 삐져나오는 토스트 (패널 자식이라 패널이 접히면 같이 사라짐) ──
-		const toast = document.createElement('div');
-		toast.id = 'ho-remain-toast';
-		Object.assign(toast.style, {
-			position: 'absolute', display: 'none', top: '6px', left: 'calc(100% + 8px)',
-			minWidth: '130px', maxWidth: '230px', boxSizing: 'border-box',
-			background: '#1c1c1f', border: '1px solid rgba(167,139,250,0.55)', borderRadius: '10px',
-			padding: '8px 10px', fontFamily: 'Pretendard,sans-serif', color: '#e5e7eb',
-			boxShadow: '0 6px 20px rgba(0,0,0,0.45), 0 0 12px rgba(167,139,250,0.18)',
-			opacity: '0', transform: 'translateX(-10px)',
-			transition: 'opacity .18s ease, transform .18s ease',
-		});
-		panel.appendChild(toast);
-
-		const TOAST_DESC = {
-			done:    '모두 시작되었어요',
-			expired: '유효한 교대 데이터가 없어요 (20분 초과)',
-			empty:   '교대 기체 데이터가 없어요',
-			error:   '서버 조회에 실패했어요. 버튼을 다시 눌러 재시도해주세요',
-		};
-
-		const renderToast = (rem) => {
-			const head = document.createElement('div');
-			Object.assign(head.style, { fontSize: '11px', fontWeight: '700', color: '#c4b5fd', marginBottom: '5px' });
-			const parts = [head];
-			if (rem.state === 'loading') {
-				head.textContent = '확인 중…';
-			} else if (rem.state === 'ok') {
-				head.textContent = `남은 기체 ${rem.names.length}대`;
-				const list = document.createElement('div');
-				Object.assign(list.style, { display: 'flex', flexDirection: 'column', gap: '3px', maxHeight: '150px', overflowY: 'auto' });
-				rem.names.forEach(n => {
-					const row = document.createElement('div');
-					row.textContent = n;   // textContent만 사용 (서버 문자열을 HTML로 해석하지 않음)
-					row.title = n;
-					Object.assign(row.style, {
-						fontSize: '12px', fontWeight: '600', color: '#f5f3ff', background: 'rgba(167,139,250,0.14)',
-						borderRadius: '5px', padding: '2px 7px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-					});
-					list.appendChild(row);
-				});
-				parts.push(list);
-			} else {
-				head.textContent = rem.state === 'error' ? '확인 불가' : '0대 남음';
-				const desc = document.createElement('div');
-				desc.textContent = TOAST_DESC[rem.state] || '';
-				Object.assign(desc.style, { fontSize: '12px', color: '#9ca3af', lineHeight: '1.4' });
-				parts.push(desc);
-			}
-			toast.replaceChildren(...parts);
-		};
-
-		// 오른쪽 공간이 모자라면(좁은 창) 패널 아래쪽 우측 정렬로 폴백
-		const placeToast = () => {
-			const r = panel.getBoundingClientRect();
-			if (r.right + 8 + 232 <= window.innerWidth) {
-				Object.assign(toast.style, { top: '6px', left: 'calc(100% + 8px)', right: 'auto' });
-			} else {
-				Object.assign(toast.style, { top: 'calc(100% + 6px)', left: 'auto', right: '0' });
-			}
-		};
-		const showToast = () => {
-			_toastOpen = true;
-			renderToast(calcRemaining());
-			placeToast();
-			toast.style.display = 'block';
-			void toast.offsetWidth;   // 슬라이드 인 트랜지션용 리플로우(열 때 1회)
-			toast.style.opacity = '1';
-			toast.style.transform = 'translateX(0)';
-		};
-		const hideToast = () => {
-			_toastOpen = false;
-			toast.style.display = 'none';
-			toast.style.opacity = '0';
-			toast.style.transform = 'translateX(-10px)';
-		};
-
-		const renderAll = () => {
-			const rem = calcRemaining();
-			renderDispatchBtn(rem);
-			if (_toastOpen) renderToast(rem);
-			return rem;
-		};
-
-		// 서버 조회 (동시에 1개만). 성공/실패와 무관하게 반드시 종료되고, 결과를 버튼·토스트에 반영한다.
-		const refreshRemaining = () => {
-			if (_inflight) return _inflight;
-			_lastFetchAt = Date.now();
-			_inflight = (async () => {
-				let r = null;
-				try { r = await githubGet(); } catch (e) { r = null; }
-				_lastData = r ? r.data : null;
-				_loading = false;
-				try { renderAll(); } catch (e) { console.log('renderAll 오류:', e); }
-				return r;
-			})().finally(() => { _inflight = null; });
-			return _inflight;
-		};
-
-		// 자동시작 직후: 카메라 연결이 확인된 기체를 즉시(0ms) 반영 — 서버 왕복을 기다리지 않는다
-		const applyLocalTaken = (data, names) => {
-			try {
-				_lastData = data; _loading = false;
-				syncSig(data);
-				names.forEach(n => _localTaken.add(n));
-				renderAll();
-			} catch (e) { console.log('applyLocalTaken 오류:', e); }
-		};
-
-		// 패널이 (다시) 열릴 때 alt+q 핸들러가 호출: 토스트 닫고 → '…대 남음' → 최신값 조회
-		panel._onOpen = () => { hideToast(); _lastData = null; _loading = true; renderAll(); refreshRemaining(); };
-		panel._renderRemaining = () => { try { renderAll(); } catch (e) {} };
-
-		dispatchBtn.addEventListener('click', () => {
-			if (dispatchBtn.disabled) return;   // 20분 초과로 잠긴 상태에서는 아무 동작도 하지 않음
-			if (_toastOpen) {
-				if (calcRemaining().state === 'error') {   // 조회 실패 안내가 떠 있을 땐 '다시 누르면 재시도'
-					_lastData = null; _loading = true; renderAll();
-					refreshRemaining();
-					return;
-				}
-				hideToast(); return;
-			}
-			showToast();                                            // 갖고 있는 값으로 즉시 표시
-			if (Date.now() - _lastFetchAt > 500) refreshRemaining();  // 최신값 재조회 → 도착하면 자동 갱신 (연타 제한 0.5초)
-		});
-		// ══ 남은 기체 대수 끝 ═══════════════════════════════════════════════════
 
 		// ── 교대받기 버튼 ──
 		let _fetchBtnRunning = false;
@@ -3131,7 +2574,6 @@
 
 		autoBtn.addEventListener('click', async () => {
 			if (autoBtn.disabled) return;
-			if (isOfflineMode()) { setDpMsg('오프라인 모드: 자동 시작이 차단되었습니다', '#f59e0b'); return; }
 			autoBtn.disabled = true;
 			setTimeout(() => { autoBtn.disabled = false; }, 2000);
 
@@ -3160,11 +2602,9 @@
 			if (!checkedUnits.length) return;
 
 			if (confirmed) {
-				applyLocalTaken(result.data, checkedUnits); // 카메라 연결 확인 즉시 '##대 남음' 반영 (서버 왕복 대기 없음)
 				let ok = await patchTaken(checkedUnits);
 				if (!ok) ok = await patchTaken(checkedUnits); // 실패 시 1회 재시도
 				if (ok) {
-					refreshRemaining(); // 서버 기준 재확인 (기다리지 않음. 실패해도 로컬 반영값 유지)
 					setDpMsg(`${checkedUnits.length}대 시작 및 서버 반영 완료`, '#22c55e');
 				} else {
 					setDpMsg(`${checkedUnits.join(', ')} 카메라는 연결됐지만 서버 반영에 실패했어요 — 다른 탭에서 중복 시도될 수 있으니 새로고침 후 확인해주세요`, '#ef4444');
@@ -3173,8 +2613,6 @@
 				setDpMsg(`${checkedUnits.join(', ')} 체크됨 — 시작하기 버튼을 직접 누르면 taken 반영은 되지 않습니다`, '#f59e0b');
 			}
 		});
-
-		// (보라색 버튼 클릭 핸들러는 위 '남은 기체 대수' 블록에 있음)
 
 		posBtn.addEventListener('click', () => {
 			const cards = [...document.querySelectorAll(
@@ -3237,7 +2675,7 @@
 
 		// ── 자동 Fetch (패널 열릴 때 1회) ──
 		setDpMsg('인계 데이터 확인 중...', '#3b82f6');
-		const result = await refreshRemaining();
+		const result = await githubGet().catch(() => null);
 		if (result && isDataValid(result.data.updatedAt)) {
             const units = result.data.units || [];
             if (units.length) {
@@ -3258,7 +2696,6 @@
             if (panel.style.top !== '0px') return;   // 패널 닫혀있으면 스킵
             if (!isDataValid(result?.data?.updatedAt)) {
                 setDpMsg('20분 초과, 기체 목록 만료됨', '#ef4444');
-                panel._renderRemaining?.();   // 만료 순간 보라색 버튼도 '0대 남음'으로
                 clearInterval(expiryInterval);
             }
         }, 30000);
@@ -3277,258 +2714,8 @@
 	}
 	// ── 핸드오버 레이아웃 끝 ──────────────────────────────
 	
-	/* ============================================================
-    SECTION 화질 조절 버튼 (모니터링 페이지 전용)
-   ============================================================ */
-	const LEVEL_LABELS = ['', '최소', '낮음', '중간', '높음', '최대'];
-
 	function isMonitoringPage() {
 		return NEUBIE_HOSTS.some(h => location.href.includes(`${h}/ko/remote/multiple/monitoring`));
-	}
-
-/* ============================================================
-   SECTION. 순찰 리마인더 (엘스 1호기 / 인력개발원 1호기)
-   ------------------------------------------------------------
-   전제: 이 블록은 remote_logic.js의 기존 IIFE 안, NCC_API_BASE /
-   getAuthHeaders / fetchWithTimeout / isMonitoringPage 가 이미
-   선언된 지점 "이후"에 붙여넣어야 합니다. (동일 스코프 재사용)
-
-   동작 요약
-   - 대상 기체별로 정해진 조회 창(엘스: 슬롯 ±5분 / 인력개발원:
-     슬롯 시각부터 +5분까지)에서만 2분 간격으로 조회한다.
-   - 조회 결과, 기체가 ON 상태(robotStatus.isConnecting === true)
-     인데 isMonitoring=false라면:
-       1) 즉시 하단 중앙에 배너를 띄운다.
-       2) 그 순간부터 30초 간격으로 최대 2회 더 재조회한다.
-       3) 그 중 한 번이라도 true → 즉시 종료 + 배너 제거.
-       4) 2회 모두 false로 소진돼도 → 즉시 종료 + 배너 제거.
-          (둘 중 어느 경우든 감지 종료 시점에 배너도 함께 사라짐)
-   - 기체가 OFF 상태(isConnecting === false)라면 애초에 모니터링
-     대상이 될 수 없으므로 리마인드하지 않고, 창이 끝날 때까지
-     기본 간격(2분)으로 ON이 되는지만 계속 지켜본다.
-   - 일반 탭(로컬스토리지에 neubie_user_name이 저장된 탭)에서만
-     동작한다. 시크릿 탭은 이 값이 없으므로 API 호출 자체가 발생
-     하지 않는다.
-   ============================================================ */
-
-(function initPatrolReminder() {
-
-    // ── 대상 기체 · 슬롯 타임테이블 · 조회 창(분) ──
-    // beforeMin: 슬롯 시각보다 몇 분 전부터 조회 시작할지
-    // afterMin : 슬롯 시각 이후 몇 분까지 조회를 계속할지
-    const PATROL_REMINDER_TARGETS = {
-        '잠실 엘스 아파트 1호기': { slots: ['10:30', '16:00', '19:00', '00:00'], beforeMin: 5, afterMin: 5 },
-        '삼성인력개발원 1호기':   { slots: ['10:00', '13:00', '15:00'],         beforeMin: 0, afterMin: 5 },
-    };
-
-    const PATROL_TICK_MS       = 30 * 1000;         // 내부 스케줄러 하트비트(네트워크 호출 아님)
-    const PATROL_BASE_MS       = 2 * 60 * 1000;     // 창 안 기본 조회 간격
-    const PATROL_ESCALATE_MS   = 30 * 1000;         // false 감지 후 재조회 간격
-    const PATROL_ESCALATE_MAX  = 2;                 // 재조회 최대 횟수
-
-    // key: `${robotName}__${slotStr}` → 진행 상태
-    const _patrolState = {};
-
-    // ── 일반 탭 판별: 시크릿 탭엔 이 값이 있을 수 없음 ──
-    function isPatrolNormalTab() {
-        return !!localStorage.getItem('neubie_user_name');
-    }
-
-    // 주어진 "HH:MM" 슬롯에 대해, 지금 시각과 가장 가까운 occurrence(전날/오늘/내일 중)를
-    // 찾고, 그게 [slot-beforeMin, slot+afterMin] 창 안에 있을 때만 반환한다.
-    // (자정 슬롯의 날짜 경계 문제를 전날/오늘/내일 후보 비교로 자연스럽게 처리)
-    function findPatrolOccurrence(hhmm, beforeMin, afterMin, nowMs) {
-        const [h, m] = hhmm.split(':').map(Number);
-        const now = new Date(nowMs);
-        let best = null, bestAbsDiff = Infinity;
-        for (const offset of [-1, 0, 1]) {
-            const d = new Date(now);
-            d.setDate(d.getDate() + offset);
-            d.setHours(h, m, 0, 0);
-            const absDiff = Math.abs(d.getTime() - nowMs);
-            if (absDiff < bestAbsDiff) { bestAbsDiff = absDiff; best = d; }
-        }
-        const signedDiff = nowMs - best.getTime(); // >0: 슬롯 이후 경과, <0: 슬롯 이전
-        const beforeMs = beforeMin * 60 * 1000;
-        const afterMs  = afterMin * 60 * 1000;
-        if (signedDiff < -beforeMs || signedDiff > afterMs) return null;
-        return { dateStr: best.toISOString().slice(0, 10) };
-    }
-
-    // ── 배너 UI ──
-    function ensurePatrolBannerStyle() {
-        if (document.getElementById('neubie-patrol-banner-style')) return;
-        const s = document.createElement('style');
-        s.id = 'neubie-patrol-banner-style';
-        s.textContent = `
-            @keyframes neubie-patrol-blink {
-                0%, 100% { opacity: 1; }
-                50%      { opacity: 0.55; }
-            }
-            .neubie-patrol-banner {
-                pointer-events: auto;
-                background: #dcfce7;
-                color: #14532d;
-                border: 1px solid #86efac;
-                padding: 7px 22px;
-                border-radius: 999px;
-                font-size: 13px;
-                font-weight: 600;
-                font-family: 'Pretendard', sans-serif;
-                white-space: nowrap;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.15);
-                cursor: pointer;
-                animation: neubie-patrol-blink 2.6s ease-in-out infinite;
-            }
-        `;
-        document.head.appendChild(s);
-    }
-
-    function ensurePatrolBannerContainer() {
-        let c = document.getElementById('neubie-patrol-banner-container');
-        if (!c) {
-            c = document.createElement('div');
-            c.id = 'neubie-patrol-banner-container';
-            c.style.cssText = `
-                position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%);
-                z-index: 999999; display: flex; flex-direction: column; gap: 6px;
-                align-items: center; pointer-events: none;
-            `;
-            document.body.appendChild(c);
-        }
-        return c;
-    }
-
-    function showPatrolBanner(robotName) {
-        ensurePatrolBannerStyle();
-        const container = ensurePatrolBannerContainer();
-        const id = `neubie-patrol-banner-${robotName}`;
-        if (document.getElementById(id)) return; // 이미 표시 중
-        const el = document.createElement('div');
-        el.id = id;
-        el.className = 'neubie-patrol-banner';
-        el.textContent = `${robotName}: 순찰 시간입니다.`;
-        el.addEventListener('click', () => el.remove());
-        container.appendChild(el);
-    }
-
-    function hidePatrolBanner(robotName) {
-        const el = document.getElementById(`neubie-patrol-banner-${robotName}`);
-        if (el) el.remove();
-    }
-
-    // ── 실제 조회 ──
-    async function checkPatrolRobot(robotName, key, st) {
-        let isOn, isMonitoring;
-        try {
-            const res = await nccFetch(`${NCC_API_BASE}/robots/?nickname=${encodeURIComponent(robotName)}`, { credentials: 'include', headers: getAuthHeaders() }, 15000);
-            if (!res.ok) return;
-            const json = await res.json();
-            const robot = json.results?.[0];
-            if (!robot) return;
-            // ON/OFF 판별: battery_board.js의 기존 off 판정 로직과 동일한 필드/극성을 사용
-            // (robotStatus.isConnecting) — 두 도구 간 'ON/OFF' 개념을 일치시키기 위함.
-            isOn = !!robot.robotStatus?.isConnecting;
-            isMonitoring = !!robot.isMonitoring; // 응답 최상위 필드
-        } catch (e) {
-            console.log('[순찰 리마인더] 조회 실패:', robotName, e);
-            return;
-        }
-
-        if (isMonitoring) {
-            st.phase = 'done';
-            hidePatrolBanner(robotName);
-            return;
-        }
-
-        if (!isOn) {
-            // 꺼져 있으면 리마인드 대상 아님 — 다음 기본 간격까지 그냥 지켜만 봄
-            return;
-        }
-
-        if (st.phase === 'idle') {
-            st.phase = 'escalating';
-            st.escalateCount = 0;
-            showPatrolBanner(robotName);
-        } else if (st.phase === 'escalating') {
-            st.escalateCount++;
-            if (st.escalateCount >= PATROL_ESCALATE_MAX) {
-                st.phase = 'done';           // 소진 — 더 이상 조회하지 않음
-                hidePatrolBanner(robotName); // 감지 종료와 함께 배너도 제거
-            }
-        }
-    }
-
-    // ── 스케줄러 ──
-    function patrolReminderTick() {
-        if (!isMonitoringPage() || !isPatrolNormalTab()) return;
-        if (isOfflineMode()) return;   // 오프라인: 순찰 리마인더 조회 없음
-
-        // 방어 로직: 지금 이 시간대의 '다중 모니터링' 담당자 본인일 때만 동작.
-        // insu_data.json 스케줄(state.insuData.schedule, 이미 syncTasksFromServer()가
-        // 1분 간격으로 최신 상태 유지 중)에서 현재 시(hourKey)의 담당자와
-        // 로컬스토리지에 저장된 내 이름이 일치하는지를 기존 isScheduledMonitorNow()로
-        // 그대로 검사한다 — 별도 fetch 없이 이미 있는 데이터를 재사용.
-        const myName = localStorage.getItem('neubie_user_name');
-        if (!isScheduledMonitorNow(myName)) return;
-
-        const now = Date.now();
-
-        for (const [robotName, cfg] of Object.entries(PATROL_REMINDER_TARGETS)) {
-            for (const slotStr of cfg.slots) {
-                const key = `${robotName}__${slotStr}`;
-                const occ = findPatrolOccurrence(slotStr, cfg.beforeMin, cfg.afterMin, now);
-
-                if (!occ) {
-                    // 창 밖 — 진행 중이던 idle 상태가 있으면 정리(다음 창을 위해)
-                    const prev = _patrolState[key];
-                    if (prev && prev.phase !== 'escalating') delete _patrolState[key];
-                    continue;
-                }
-
-                let st = _patrolState[key];
-                if (!st || st.occDateStr !== occ.dateStr) {
-                    st = _patrolState[key] = {
-                        occDateStr: occ.dateStr, phase: 'idle',
-                        escalateCount: 0, lastCheckAt: 0,
-                    };
-                }
-                if (st.phase === 'done') continue;
-
-                const interval = st.phase === 'escalating' ? PATROL_ESCALATE_MS : PATROL_BASE_MS;
-                if (now - st.lastCheckAt < interval) continue;
-
-                st.lastCheckAt = now;
-                checkPatrolRobot(robotName, key, st);
-            }
-        }
-    }
-
-    setInterval(patrolReminderTick, PATROL_TICK_MS);
-    patrolReminderTick(); // 최초 1회 즉시 실행
-
-    // ── 실제 상황 재현용 콘솔 테스트 훅 ──
-    // 사용법: 핸드오버 페이지(다중 모니터링) 콘솔에서
-    //   __testPatrolBanner('잠실 엘스 아파트 1호기')
-    //   __testPatrolBanner('삼성인력개발원 1호기')
-    // 로 배너를 강제로 띄워볼 수 있고,
-    //   __hideTestPatrolBanner('잠실 엘스 아파트 1호기')
-    // 로 지울 수 있습니다. 실제 조회 로직과는 무관하게 UI만 확인하는 용도입니다.
-    window.__testPatrolBanner = function (name) {
-        showPatrolBanner(name || '잠실 엘스 아파트 1호기');
-    };
-    window.__hideTestPatrolBanner = function (name) {
-        hidePatrolBanner(name || '잠실 엘스 아파트 1호기');
-    };
-
-})();
-
-
-    function isNewDrivingPage() {
-		const isNeubieHost = NEUBIE_HOSTS.some(h => location.href.includes(h));
-		if (!isNeubieHost || !location.href.includes('/new')) return false;
-		// 기체 원격조종(단일) + 개입 페이지(다중, 리뉴얼) 둘 다 동일 라이트 테마 대상
-		return location.href.includes('/ko/remote/robot/') || location.href.includes('/ko/remote/multiple/driving/');
 	}
 
     // 게임패드 커스텀 바인딩 — 명시적으로 켜거나 끈 적이 없으면 이름으로 기본값 결정 ('오정훈'만 기본 OFF)
@@ -3537,494 +2724,6 @@
 		if (stored === 'off') return true;
 		if (stored === 'on') return false;
 		return (localStorage.getItem('neubie_user_name') || '') === '오정훈';
-	}
-
-    /* ============================================================
-	   SECTION 기체 원격조종(/new) 레이아웃 색상 테마
-	   ============================================================ */
-	const DRIVE_THEME_KEY = 'neubie_drive_theme';
-	const DRIVE_THEMES = {
-		light: { card: '#ffffff', border: '#cccccc', text: '#111111', label: '☀️ 라이트' },   // card 흰색, track 필드 삭제
-	};
-	const DRIVE_TARGETS = ['적재함', '헤드램프', '게임패드', '자동정지', '임무 받기 중지', '임무 시작 시 알림이 여기에 표시됩니다.', '임무 설정', '도착 처리'];   
-
-	function driveThemeClimb(startEl, maxWidth = 320) {
-		let best = startEl, node = startEl;
-		for (let i = 0; i < 10 && node.parentElement; i++) {
-			node = node.parentElement;
-			if (node.getBoundingClientRect().width > maxWidth) break;
-			const m = getComputedStyle(node).backgroundColor.match(/rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?\)/);
-			if (m && (m[4] === undefined ? 1 : parseFloat(m[4])) > 0.15) best = node;
-		}
-		return best;
-	}
-
-	function driveThemeFindByText(label) {
-		const el = [...document.querySelectorAll('*')].find(e => e.children.length === 0 && e.textContent.trim() === label);
-		return el ? driveThemeClimb(el) : null;
-	}
-
-	function driveThemeMark(el, t) {
-		if (!el) return;
-		const cardRgb = t.card.match(/[a-f\d]{2}/gi).map(h => parseInt(h, 16)).join(', ');
-		const paint = (n) => {
-			n.style.setProperty('background-color', t.card, 'important');
-			n.style.setProperty('border', `1px solid ${t.border}`, 'important');
-			n.style.setProperty('box-shadow', 'none', 'important');
-			if (!(n.closest && n.closest('.text-warning'))) {
-				n.style.setProperty('color', t.text, 'important');
-			} else {
-				n.style.removeProperty('color');   // ON 전환 시 이전에 박힌 검정을 확실히 제거
-			}
-			n.setAttribute('data-neubie-theme-touched', '1');
-		};
-		paint(el);
-		el.querySelectorAll('*').forEach(c => {
-			// 닫기(X) 버튼 레드 원본 유지
-			if (c.closest && c.closest('.bg-red-400')) return;
-
-			// 구글맵(미니맵) 전체 제외 — 기체 위치 마커 등 지도 자체 렌더링에 손대면 안 됨.
-			// (카드 폭이 좁으면 driveThemeClimb가 지도까지 같은 카드로 묶어서 마커가
-			//  진한 단색으로 뭉개져 큰 과녁처럼 보이는 문제가 있었음)
-			if (c.closest && c.closest('.gm-style')) return;
-			if (c.closest && c.closest('[data-qk="robot-location-marker"]')) return;
-
-			// 신규 추가 — 시나리오 진행바(체크포인트 완료 표시)는 상태색이 의미를 가지므로 원본 그대로 유지
-			if (typeof c.className === 'string' && c.className.includes('bg-primary')) return;
-			
-			// 배터리 아이콘 내부 채우기(bg-mono-200) — 카드색이 아니라 글자색(진한 톤)으로. 안 그러면 흰 배경에 묻힘
-			if (typeof c.className === 'string' && c.className.includes('bg-mono-200')) {
-				c.style.setProperty('background-color', t.text, 'important');
-				c.setAttribute('data-neubie-theme-touched', '1');
-				return;
-			}
-
-			const cs = getComputedStyle(c);
-			const m = cs.backgroundColor.match(/rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?\)/);
-			const alpha = m ? (m[4] === undefined ? 1 : parseFloat(m[4])) : 0;
-			const hasGradient = cs.backgroundImage && cs.backgroundImage.includes('gradient');
-			const isWarning = c.closest && c.closest('.text-warning');   // ON 상태(주황) 여부 — 한 번만 계산해 재사용
-
-			if (alpha > 0.15) {
-				paint(c);
-			} else if (hasGradient) {
-				// rgba(38,38,38,0) 같은 투명 끝단도 놓치지 않도록 rgb/rgba 둘 다 치환
-				const newBg = cs.backgroundImage.replace(/rgba?\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*(?:,\s*[\d.]+\s*)?\)/g, (match) => {
-					const isTransparentEnd = /,\s*0\s*\)$/.test(match);
-					return isTransparentEnd ? `rgba(${cardRgb}, 0)` : `rgb(${cardRgb})`;
-				});
-				c.style.setProperty('background-image', newBg, 'important');
-				if (!isWarning) {
-					c.style.setProperty('color', t.text, 'important');
-				} else {
-					c.style.removeProperty('color');
-				}
-				c.setAttribute('data-neubie-theme-touched', '1');
-			} else {
-				if (!isWarning) {
-					c.style.setProperty('color', t.text, 'important');
-				} else {
-					c.style.removeProperty('color');
-				}
-				c.setAttribute('data-neubie-theme-touched', '1');
-			}
-
-			// 아이콘(svg/path/circle/rect) — 텍스트와 동일한 규칙으로 fill/stroke 처리
-			if (c.tagName === 'svg' || c.tagName === 'path' || c.tagName === 'circle' || c.tagName === 'rect') {
-				if (!isWarning) {
-					c.style.setProperty('fill', t.text, 'important');
-					c.style.setProperty('stroke', t.text, 'important');
-				} else {
-					c.style.removeProperty('fill');
-					c.style.removeProperty('stroke');
-				}
-				c.setAttribute('data-neubie-theme-touched', '1');
-			}
-		});
-	}
-
-    function watchSoundInputCard() {
-		const inputEl = document.querySelector('input[placeholder="문장 입력 송출"]');
-		const card = inputEl?.closest('.border-1.rounded-small.flex.w-full.shrink-0.flex-col');
-		if (!card) return;
-
-		if (window._soundInputThemeObserver) window._soundInputThemeObserver.disconnect();
-
-		let selfWriting = false;   // ← 재진입 방지 플래그
-		window._soundInputThemeObserver = new MutationObserver(() => {
-			if (selfWriting) return;   // 우리가 방금 쓴 변경이면 무시
-			const saved = localStorage.getItem(DRIVE_THEME_KEY) || 'dark';
-			if (saved !== 'light') return;
-
-			selfWriting = true;
-			driveThemeMark(card, DRIVE_THEMES.light);
-			const freshInput = document.querySelector('input[placeholder="문장 입력 송출"]');
-			if (freshInput) driveThemeMark(driveThemeClimb(freshInput), DRIVE_THEMES.light);
-			requestAnimationFrame(() => { selfWriting = false; });   // 다음 프레임부터 다시 감시 활성화
-		});
-		window._soundInputThemeObserver.observe(card, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
-	}
-	
-	function watchMissionProgressCard() {
-		const missionCard = driveThemeFindByText('도착 처리');
-		if (!missionCard) return;
-
-		if (window._missionThemeObserver) window._missionThemeObserver.disconnect();
-
-		const watchTarget = missionCard.parentElement || missionCard;   // ← 카드 자신이 아니라 부모를 감시
-		let selfWriting = false;
-		window._missionThemeObserver = new MutationObserver(() => {
-			if (selfWriting) return;
-			const saved = localStorage.getItem(DRIVE_THEME_KEY) || 'dark';
-			if (saved !== 'light') return;
-
-			selfWriting = true;
-			const freshCard = driveThemeFindByText('도착 처리');   // ← 매번 다시 찾음 (교체됐어도 최신 노드 확보)
-			if (freshCard) driveThemeMark(freshCard, DRIVE_THEMES.light);
-			requestAnimationFrame(() => {
-				selfWriting = false;
-				watchMissionProgressCard();   // ← 감시 대상이 바뀌었을 수 있으니 스스로 재등록
-			});
-		});
-		window._missionThemeObserver.observe(watchTarget, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
-	}
-
-	function watchMissionSettingCard() {
-		// "임무 설정" 버튼 기준으로 상위 .contents 래퍼까지 올라가서 감시
-		// (상태 텍스트/알림 내용이 갱신될 때 이 래퍼 하위가 다시 그려지며 칠한 스타일이 날아감)
-		const missionBtn = driveThemeFindByText('임무 설정');
-		const wrap = missionBtn ? (missionBtn.closest('.contents') || missionBtn.parentElement) : null;
-		if (!wrap) return;
-
-		if (window._missionSettingThemeObserver) window._missionSettingThemeObserver.disconnect();
-
-		let selfWriting = false;
-		window._missionSettingThemeObserver = new MutationObserver(() => {
-			if (selfWriting) return;
-			const saved = localStorage.getItem(DRIVE_THEME_KEY) || 'dark';
-			if (saved !== 'light') return;
-
-			selfWriting = true;
-			driveThemeMark(wrap, DRIVE_THEMES.light);
-			requestAnimationFrame(() => {
-				selfWriting = false;
-				watchMissionSettingCard();   // 감시 대상이 교체됐을 수 있으니 스스로 재등록
-			});
-		});
-		window._missionSettingThemeObserver.observe(wrap, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
-	}
-
-	function watchLogPanel() {
-		const logPanel = document.querySelector('.rounded-small.bg-mono-100.w-full.min-h-50');
-		if (!logPanel) return;
-
-		if (window._logPanelThemeObserver) window._logPanelThemeObserver.disconnect();
-
-		let selfWriting = false;
-		window._logPanelThemeObserver = new MutationObserver(() => {
-			if (selfWriting) return;
-			const saved = localStorage.getItem(DRIVE_THEME_KEY) || 'dark';
-			if (saved !== 'light') return;
-
-			selfWriting = true;
-			driveThemeMark(logPanel, DRIVE_THEMES.light);
-			requestAnimationFrame(() => { selfWriting = false; });
-		});
-		window._logPanelThemeObserver.observe(logPanel, { childList: true, subtree: true, attributes: true, attributeFilter: ['style'] });
-	}
-	
-	function watchToggleButtons() {
-		if (window._toggleThemeObservers) {
-			window._toggleThemeObservers.forEach(obs => obs.disconnect());
-		}
-		window._toggleThemeObservers = [];
-
-		let selfWriting = false;
-		const targets = ['헤드램프', '게임패드', '자동정지', '적재함'];
-		targets.forEach(label => {
-			const card = driveThemeFindByText(label);
-			if (!card) return;
-			const obs = new MutationObserver(() => {
-				if (selfWriting) return;
-				const saved = localStorage.getItem(DRIVE_THEME_KEY) || 'dark';
-				if (saved !== 'light') return;
-
-				selfWriting = true;
-				driveThemeMark(card, DRIVE_THEMES.light);
-				requestAnimationFrame(() => { selfWriting = false; });
-			});
-			obs.observe(card, { subtree: true, attributes: true, attributeFilter: ['class'] });
-			window._toggleThemeObservers.push(obs);
-		});
-	}
-
-	function clearDriveTheme() {
-		document.getElementById('neubie-drive-theme-style')?.remove();
-		if (window._soundInputThemeObserver) { window._soundInputThemeObserver.disconnect(); window._soundInputThemeObserver = null; }
-        if (window._missionThemeObserver) { window._missionThemeObserver.disconnect(); window._missionThemeObserver = null; }
-		if (window._missionSettingThemeObserver) { window._missionSettingThemeObserver.disconnect(); window._missionSettingThemeObserver = null; }
-		if (window._logPanelThemeObserver) { window._logPanelThemeObserver.disconnect(); window._logPanelThemeObserver = null; }
-		if (window._toggleThemeObservers) { window._toggleThemeObservers.forEach(obs => obs.disconnect()); window._toggleThemeObservers = null; }
-		document.querySelectorAll('[data-neubie-theme-touched]').forEach(el => {
-			el.style.removeProperty('background-color');
-			el.style.removeProperty('background-image');
-			el.style.removeProperty('border');
-			el.style.removeProperty('border-bottom');
-			el.style.removeProperty('box-shadow');
-			el.style.removeProperty('color');
-			el.style.removeProperty('fill');  
-			el.style.removeProperty('stroke');
-			el.removeAttribute('data-neubie-theme-touched');
-		});
-	}
-
-	function applyDriveTheme(themeKey) {
-		if (!isNewDrivingPage()) return;   // 안전장치: 이 페이지가 아니면 절대 실행 안 함
-		clearDriveTheme();
-		if (themeKey !== 'light') return;   // dark(원본)는 그냥 초기화 상태로 끝
-
-		const t = DRIVE_THEMES.light;
-		const style = document.createElement('style');
-		style.id = 'neubie-drive-theme-style';
-		style.textContent = `
-			div.bg-mono-800.dark.flex-col { background-color: ${t.card} !important; background-image: none !important; }
-			input[placeholder="문장 입력 송출"]::placeholder { color: ${t.text} !important; opacity: 0.6 !important; }
-		`;
-		document.head.appendChild(style);
-
-		DRIVE_TARGETS.forEach(label => driveThemeMark(driveThemeFindByText(label), t));
-		watchToggleButtons();
-		const inputEl = document.querySelector('input[placeholder="문장 입력 송출"]');
-		if (inputEl) driveThemeMark(driveThemeClimb(inputEl), t);
-        watchSoundInputCard();
-		watchMissionProgressCard();
-		watchMissionSettingCard();
-
-        // 주행 로그 패널 — 텍스트가 매번 바뀌어(시간값) 라벨 매칭이 불가능해 클래스로 직접 지정
-		// ※ 사이트 개편 시 이 클래스 조합이 바뀌면 재확인 필요
-		const logPanel = document.querySelector('.rounded-small.bg-mono-100.w-full.min-h-50');
-		if (logPanel) driveThemeMark(logPanel, t);
-		watchLogPanel();
-
-		const header = document.querySelector('header');
-		if (header) {
-			driveThemeMark(header, t);
-			header.style.setProperty('border', 'none', 'important');
-			header.style.setProperty('border-bottom', `2px solid ${t.border}`, 'important');
-		}
-	}
-
-	function initDriveTheme() {
-		if (!isNewDrivingPage()) return;
-		const saved = localStorage.getItem(DRIVE_THEME_KEY) || 'dark';
-		applyDriveTheme(saved);
-	}
-
-	let _bitrateRunning = false;
-
-	async function injectBitrateButtons() {
-		if (!isMonitoringPage()) return;
-		if (isOfflineMode()) return;   // 오프라인: 화질/램프 버튼의 NCC 조회·제어 없음
-		if (_bitrateRunning) return;
-		_bitrateRunning = true;
-
-		try {
-			const cards = document.querySelectorAll('.rounded-8.relative.flex.overflow-hidden');
-
-			// forEach async (병렬) + 방어는 Promise.all
-			const promises = [...cards].map(async (card) => {
-				if (card.dataset.bitrateInjected) return;
-				card.dataset.bitrateInjected = 'true';
-
-				const nameEl = card.querySelector('span.font-size-14.max-w-fit.truncate.font-bold.text-white');
-				const robotName = nameEl?.innerText.trim();
-				if (!robotName) return;
-
-				try {
-					const res = await nccFetch(
-                        `${NCC_API_BASE}/robots/?nickname=${encodeURIComponent(robotName)}`,
-                        { credentials: 'include', headers: getAuthHeaders() }
-                    );
-					if (!res.ok) { card.dataset.bitrateInjected = ''; return; }
-					const json = await res.json();
-					const robot = json.results?.[0];
-					if (!robot) { card.dataset.bitrateInjected = ''; return; }
-
-					let currentLevel = robot.robotStatus.bitrateLevel;
-					let isHeadLightOn = robot.robotStatus?.isHeadLightOn ?? false;
-
-					const wrapper = document.createElement('div');
-					wrapper.style.cssText = `
-						position: absolute;
-						top: 8px; left: 8px;
-						z-index: 999;
-						pointer-events: auto;
-						display: flex;
-						flex-direction: row;
-						align-items: center;
-						gap: 3px;
-						opacity: 0;
-						transition: opacity 0.2s;
-						background: rgba(20,20,20,0.8);
-						border: 1px solid rgba(34,197,94,0.4);
-						box-shadow: 0 0 6px rgba(34,197,94,0.15);
-						border-radius: 8px;
-						padding: 3px 6px;
-					`;
-
-					card.addEventListener('mouseenter', () => wrapper.style.opacity = '1');
-					card.addEventListener('mouseleave', () => wrapper.style.opacity = '0');
-
-					const labelEl = document.createElement('span');
-					labelEl.innerText = `화질 ${LEVEL_LABELS[currentLevel]}`;
-					labelEl.style.cssText = `
-						color: white;
-						font-size: 11px;
-						font-weight: 600;
-						font-family: 'Pretendard', sans-serif;
-						white-space: nowrap;
-					`;
-
-					let isCooling = false;
-
-					const makeBtn = (label, delta) => {
-						const btn = document.createElement('div');
-						btn.innerHTML = label;
-						btn.style.cssText = `
-							color: white;
-							font-size: 11px;
-							font-weight: 700;
-							cursor: pointer;
-							user-select: none;
-							display: flex;
-							align-items: center;
-							justify-content: center;
-							width: 14px;
-							height: 14px;
-							border-radius: 4px;
-							background: rgba(80,80,80,0.8);
-							transition: opacity 0.15s;
-						`;
-						btn.addEventListener('click', async (e) => {
-							e.stopPropagation();
-							if (isCooling) return;
-							const newLevel = currentLevel + delta;
-							if (newLevel < 1 || newLevel > 5) return;
-							isCooling = true;
-							btn.style.opacity = '0.4';
-							try {
-								await nccFetch(`${NCC_API_BASE}/robots/${robot.id}/video-bitrate-level/`, {
-                                    method: 'PUT',
-                                    credentials: 'include',
-                                    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-                                    body: JSON.stringify({ level: newLevel })
-                                });
-								currentLevel = newLevel;
-								labelEl.innerText = `화질 ${LEVEL_LABELS[currentLevel]}`;
-							} catch(e) {}
-							setTimeout(() => { isCooling = false; btn.style.opacity = '1'; }, 2000);
-						});
-						return btn;
-					};
-
-					const sep = document.createElement('span');
-					sep.style.cssText = `color:rgba(255,255,255,0.2);font-size:11px;display:flex;align-items:center;padding:0 3px;`;
-					sep.textContent = '|';
-
-					// 헤드 램프 버튼
-					let isLampCooling = false;
-					const lampBtn = document.createElement('span');
-					lampBtn.textContent = '램프';
-					lampBtn.style.cssText = `
-						color: ${isHeadLightOn ? 'rgba(255,255,255,1)' : 'rgba(255,255,255,0.25)'};
-						font-size: 11px;
-						font-weight: ${isHeadLightOn ? '700' : '400'};
-						cursor: pointer;
-						user-select: none;
-						display: flex;
-						align-items: center;
-						justify-content: center;
-						padding: 0 2px;
-						transition: color 0.2s, font-weight 0.2s;
-						white-space: nowrap;
-						height: 100%;
-					`;
-					lampBtn.addEventListener('click', async (e) => {
-						e.stopPropagation();
-						if (isLampCooling) return;
-						isLampCooling = true;
-						lampBtn.style.opacity = '0.4';
-						try {
-							const r = await nccFetch(`${NCC_API_BASE}/robots/${robot.id}/head-light/`, {
-                                method: 'PUT',
-                                credentials: 'include',
-                                headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-                                body: JSON.stringify({ isOn: !isHeadLightOn })
-                            });
-							if (r.ok) {
-								isHeadLightOn = !isHeadLightOn;
-								lampBtn.style.color = isHeadLightOn ? 'rgba(255,255,255,1)' : 'rgba(255,255,255,0.25)';
-								lampBtn.style.fontWeight = isHeadLightOn ? '700' : '400';
-							}
-						} catch(e) {}
-						lampBtn.style.opacity = '1';
-						setTimeout(() => isLampCooling = false, 5000);
-					});
-
-					wrapper.appendChild(makeBtn('▲', 1));
-					wrapper.appendChild(labelEl);
-					wrapper.appendChild(makeBtn('▼', -1));
-					wrapper.appendChild(sep);
-					wrapper.appendChild(lampBtn);
-					card.style.position = 'relative';
-					card.appendChild(wrapper);
-
-				} catch(e) {
-					console.warn('화질 버튼 삽입 실패:', e);
-					card.dataset.bitrateInjected = '';
-				}
-			});
-
-			await Promise.all(promises);
-
-		} finally {
-			_bitrateRunning = false;
-
-			const remaining = document.querySelectorAll(
-				'.rounded-8.relative.flex.overflow-hidden:not([data-bitrate-injected="true"])'
-			);
-			if (remaining.length > 0) {
-		        window._bitrateRetryCount = (window._bitrateRetryCount || 0) + 1;
-		        if (window._bitrateRetryCount <= 5) {  // 최대 5회 (10초)
-		            setTimeout(injectBitrateButtons, 2000);
-		        } else {
-		            window._bitrateRetryCount = 0;  // 초기화
-		        }
-		    } else {
-		        window._bitrateRetryCount = 0;  // 성공 시 초기화
-		    }
-		}
-	}
-
-	function registerBitrateObserver() {
-		if (!isMonitoringPage()) return;
-		if (isOfflineMode()) return;
-		if (!isHandoverFeatureOn()) return;
-		if (window._bitrateObserver) window._bitrateObserver.disconnect();
-		let _bitrateThrottle = null;
-        window._bitrateObserver = new MutationObserver(() => {
-            if (!isMonitoringPage()) return;
-            if (_bitrateThrottle) return;  
-            _bitrateThrottle = setTimeout(() => {
-                injectBitrateButtons();
-                _bitrateThrottle = null;
-            }, 1500);
-        });
-		window._bitrateObserver.observe(document.body, { childList: true, subtree: true });
-	}
-
-	if (isMonitoringPage() && isHandoverFeatureOn()) {
-		registerBitrateObserver();
 	}
 
     /* ============================================================
@@ -4243,40 +2942,6 @@
     setInterval(_origCheckBrightness, 1500);
     _origCheckBrightness(); // 최초 1회
 
-    // ── 익명 1:1 편지함 알림 (최윤혁 로컬 계정 전용) ──
-    // 답장 안 한 편지가 있으면 게시판 버튼 옆 ✉️ 아이콘이 깜빡임.
-    if (!document.getElementById('nb-mail-badge-style')) {
-        const nbMailStyle = document.createElement('style');
-        nbMailStyle.id = 'nb-mail-badge-style';
-        nbMailStyle.textContent = `@keyframes nbMailBlink { 0%,100% { opacity:1; } 50% { opacity:0.2; } }`;
-        document.head.appendChild(nbMailStyle);
-    }
-    window.__nbMailUnread = window.__nbMailUnread || false;
-    // posthog가 NCC 로그인 시 심어주는 검증된 이름 — neubie_user_name(alt+Q에서 자유 수정 가능)과
-    // 달리 로컬에서 조작 불가능하므로, 관리자(최윤혁) 판별은 반드시 이 값 기준으로 한다.
-    function getVerifiedNccName() {
-        try {
-            const lsKey = Object.keys(localStorage).find(k => k.startsWith('ph_phc_') && k.endsWith('_posthog'));
-            if (!lsKey) return '';
-            const ph = JSON.parse(localStorage.getItem(lsKey));
-            return ph?.$stored_person_properties?.name || '';
-        } catch (e) { return ''; }
-    }
-    window.checkMailNotification = async function checkMailNotification() {
-        if (getVerifiedNccName() !== '최윤혁') return;
-        try {
-            const res = await fetch(`https://multimonitoring.vercel.app/api/mail?type=inbox&t=${Date.now()}`);
-            const data = await res.json();
-            window.__nbMailUnread = (data.mails || []).some(m => !m.reply);
-        } catch (e) {
-            // 네트워크 실패 시 기존 표시 상태 유지
-        }
-        const badge = document.getElementById('nb-mail-badge');
-        if (badge) badge.style.display = window.__nbMailUnread ? 'inline' : 'none';
-    };
-    setInterval(window.checkMailNotification, 60 * 60 * 1000); // 1시간마다
-    window.checkMailNotification(); // 최초 1회
-
     window.addEventListener('keydown', (e) => {
         if (e.altKey && e.code === 'KeyQ') {
 			e.preventDefault();
@@ -4287,856 +2952,11 @@
 				if (existing) {
 					const isOpen = existing.style.top === '0px';
 					existing.style.top = isOpen ? '-300px' : '0px';
-					if (!isOpen) existing._onOpen?.(); // 닫혀있다가 지금 여는 경우 — 남은 기체 대수 새로 조회
 				} else {
 					initHandoverLayout();
 				}
 				return;
 			}
-
-            window.openBoardOverlay = async function() {
-            const BOARD_API = 'https://multimonitoring.vercel.app/api/board';
-            const MAIL_API = 'https://multimonitoring.vercel.app/api/mail';
-            const ADMIN_NAME = '최윤혁';
-            const BG_IMG = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/snoopy_charlie.jpg';
-
-            function getMyEmail() {
-                try {
-                    const lsKey = Object.keys(localStorage).find(k => k.startsWith('ph_phc_') && k.endsWith('_posthog'));
-                    if (!lsKey) return '';
-                    const ph = JSON.parse(localStorage.getItem(lsKey));
-                    const email = ph?.distinct_id || '';
-                    return (email.startsWith('ubase') && email.endsWith('@gmail.com')) ? email : '';
-                } catch(e) { return ''; }
-            }
-
-            // 이름은 alt+Q에서 수정 가능한 neubie_user_name이 아니라,
-            // NCC 로그인 시 posthog가 서버에서 받아 심어두는 검증된 이름을 사용한다.
-            // 이 값은 사용자가 로컬에서 건드릴 방법이 없음 (getMyEmail과 동일한 신뢰 수준).
-            function getMyName() {
-                try {
-                    const lsKey = Object.keys(localStorage).find(k => k.startsWith('ph_phc_') && k.endsWith('_posthog'));
-                    if (!lsKey) return '';
-                    const ph = JSON.parse(localStorage.getItem(lsKey));
-                    return ph?.$stored_person_properties?.name || '';
-                } catch(e) { return ''; }
-            }
-            function initials(name) { return name ? name.slice(0,1) : '?'; }
-            function formatDate(iso) {
-                const d = new Date(iso);
-                return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-            }
-
-            let overlay = document.getElementById('neubie-board-overlay');
-            if (overlay) {
-				overlay.remove();
-			}
-
-            const dashboard = document.getElementById('neubie-dashboard');
-            overlay = document.createElement('div');
-            overlay.id = 'neubie-board-overlay';
-			const boardFontStyle = document.createElement('style');
-			(function applyBoardFont() {
-				if (document.getElementById('neubie-board-font-style')) return;
-				const boardFontStyle = document.createElement('style');
-				boardFontStyle.id = 'neubie-board-font-style';
-				boardFontStyle.textContent = `
-					#neubie-board-overlay, #neubie-board-overlay * {
-						font-family: 'Paperlogy', 'Pretendard', sans-serif !important;   // ← 'BMJUA' → 'Paperlogy'로 교체
-					}
-					#neubie-board-overlay .nb-emoji {
-						font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif !important;
-					}
-				`;
-				document.head.appendChild(boardFontStyle);
-			})();
-            const r = dashboard.getBoundingClientRect();
-			Object.assign(overlay.style, {
-				position: 'fixed',
-				top: r.top + 'px',
-				left: r.left + 'px',
-				width: r.width + 'px',
-				height: '460px',
-				zIndex: '1000001', display: 'flex',
-				alignItems: 'center', justifyContent: 'center',
-				background: '#8BAA4F',
-				borderRadius: '28px', overflow: 'hidden',
-				transform: 'scale(1.66)', // 1.275에서 30% 확대
-				transformOrigin: 'center center',
-			});
-
-            overlay.innerHTML = `
-            <div style="width:calc(100% - 20px); height:calc(100% - 20px); margin:10px; background-image:linear-gradient(rgba(255,253,248,0.78), rgba(255,253,248,0.78)), url(${BG_IMG}); background-size:cover; background-position:center; border:4px solid #8BAA4F; box-sizing:border-box; display:flex; flex-direction:column; border-radius:24px;">
-                <div id="nb-board-header" style="display:flex; align-items:center; gap:8px; padding:8px 14px; border-bottom:1.5px solid #E3EFD1; cursor:grab;">
-                    <span style="font-size:13px; font-weight:600; color:#2F4A1D; flex:1;"><span class="nb-emoji">🍃</span> NCC 게시판</span>
-                    <button id="nb-mail-lock-btn" style="height:28px; padding:0 10px; background:#F1F7E6; color:#4B6633; border:none; border-radius:14px; cursor:pointer; font-size:10.5px; display:flex; align-items:center; gap:4px; white-space:nowrap;" title="익명 편지함">🔒 익명 문의</button>
-                    <button id="nb-refresh-btn" style="height:28px; width:28px; background:#F1F7E6; color:#4B6633; border:none; border-radius:14px; cursor:pointer; font-size:12px;" title="새로고침">↺</button>
-					<button id="nb-write-btn" style="height:28px; padding:0 12px; font-size:10.5px; font-weight:500; background:#7FA050; color:white; border:none; border-radius:14px; cursor:pointer;">✏️ 글쓰기</button>
-                    <button id="nb-board-close" style="background:#F1F7E6; border:none; color:#2F4A1D; width:26px; height:26px; border-radius:50%; cursor:pointer; font-size:12px; display:flex; align-items:center; justify-content:center;">✕</button>
-                </div>
-
-                <div style="height:2px; background:#7FA050; opacity:0.5; margin:0 16px;"></div>
-
-                <div id="nb-screen-list" style="flex:1; overflow-y:auto; padding:4px 0; background-image:linear-gradient(rgba(255,253,248,0.55), rgba(255,253,248,0.55)), url(${BG_IMG}); background-size:cover; background-position:center;"></div>
-
-                <div id="nb-list-toolbar" style="padding:5px 14px; display:flex; align-items:center; justify-content:space-between; gap:8px; border-top:1.5px solid #F1F7E6;">
-                    <div style="display:flex; gap:8px; flex:1; min-width:0;">
-                        <select id="nb-search-type" style="height:28px; font-size:10.5px; padding:0 6px; border-radius:14px; border:1.5px solid #C9DE9D; background:#FFFFFF; color:#4B6633; outline:none;">
-                            <option value="all">전체</option>
-                            <option value="title">제목</option>
-                            <option value="author">작성자</option>
-                        </select>
-                        <input id="nb-search-input" type="text" placeholder="검색..." style="flex:1; height:28px; font-size:10.5px; padding:0 10px; border-radius:14px; border:1.5px solid #C9DE9D; background:#F1F7E6; color:#2F4A1D; outline:none;">
-                    </div>
-                    <div id="nb-pagination" style="display:flex; align-items:center; gap:8px; flex-shrink:0;"></div>
-                </div>
-
-                <div id="nb-screen-detail" style="display:none; flex:1; overflow-y:auto; flex-direction:column;">
-                    <div style="padding:6px 14px; border-bottom:1.5px solid #F1F7E6; display:flex; align-items:center; gap:8px;">
-                        <button id="nb-back-btn" style="background:#F1F7E6; border:none; color:#2F4A1D; padding:3px 8px; border-radius:14px; cursor:pointer; font-size:10.5px;"><span class="nb-emoji">←</span> 목록</button>
-                        <span id="nb-detail-title-header" style="font-size:11.5px; color:#4B6633; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
-						<button id="nb-edit-post-btn" style="display:none; background:#EAF3DE; border:1px solid #F2CE87; color:#5C7A3C; padding:3px 8px; border-radius:14px; cursor:pointer; font-size:10.5px;">수정</button>
-                        <button id="nb-delete-post-btn" style="display:none; background:#FBEAE3; border:1px solid #F0B79A; color:#C96A45; padding:3px 8px; border-radius:14px; cursor:pointer; font-size:10.5px;">삭제</button>
-                    </div>
-                    <div id="nb-detail-body" style="padding:10px; flex:1; overflow-y:auto;"></div>
-                </div>
-
-                <div id="nb-screen-write" style="display:none; flex-direction:column; flex:1;">
-                    <div style="padding:6px 14px; border-bottom:1.5px solid #F1F7E6; display:flex; align-items:center; gap:8px;">
-                        <button id="nb-write-cancel" style="background:#F1F7E6; border:none; color:#2F4A1D; padding:3px 8px; border-radius:14px; cursor:pointer; font-size:10.5px;">← 취소</button>
-                        <span style="font-size:11.5px; color:#4B6633; flex:1;">새 글 작성</span>
-                        <button id="nb-write-submit" style="background:#7FA050; border:none; color:white; padding:3px 12px; border-radius:14px; cursor:pointer; font-size:10.5px; font-weight:500;">등록</button>
-                    </div>
-                    <div style="padding:10px; display:flex; flex-direction:column; gap:10px; flex:1;">
-                        <input id="nb-write-title" type="text" placeholder="제목" style="height:36px; font-size:11.5px; padding:0 10px; border-radius:14px; border:1.5px solid #C9DE9D; background:#F1F7E6; color:#2F4A1D; outline:none;">
-                        <textarea id="nb-write-content" placeholder="내용을 입력하세요..." style="flex:1; min-height:100px; font-size:11.5px; padding:6px; border-radius:14px; border:1.5px solid #C9DE9D; background:#F1F7E6; color:#2F4A1D; outline:none; resize:none; font-family:inherit;"></textarea>
-						<label style="display:flex; align-items:center; gap:6px; font-size:10.5px; color:#4B6633; cursor:pointer; user-select:none;">
-                            <input type="checkbox" id="nb-write-anon" style="width:14px; height:14px; cursor:pointer;">
-                            익명으로 작성
-                        </label>
-                    </div>
-                </div>
-				
-				<div id="nb-screen-edit" style="display:none; flex-direction:column; flex:1;">
-                    <div style="padding:6px 14px; border-bottom:1.5px solid #F1F7E6; display:flex; align-items:center; gap:8px;">
-                        <button id="nb-edit-cancel" style="background:#F1F7E6; border:none; color:#2F4A1D; padding:3px 8px; border-radius:14px; cursor:pointer; font-size:10.5px;">← 취소</button>
-                        <span style="font-size:11.5px; color:#4B6633; flex:1;">글 수정</span>
-                        <button id="nb-edit-submit" style="background:#7FA050; border:none; color:white; padding:3px 12px; border-radius:14px; cursor:pointer; font-size:10.5px; font-weight:500;">저장</button>
-                    </div>
-                    <div style="padding:10px; display:flex; flex-direction:column; gap:10px; flex:1;">
-                        <input id="nb-edit-title" type="text" placeholder="제목" style="height:36px; font-size:11.5px; padding:0 10px; border-radius:14px; border:1.5px solid #C9DE9D; background:#F1F7E6; color:#2F4A1D; outline:none;">
-                        <textarea id="nb-edit-content" placeholder="내용" style="flex:1; min-height:100px; font-size:11.5px; padding:6px; border-radius:14px; border:1.5px solid #C9DE9D; background:#F1F7E6; color:#2F4A1D; outline:none; resize:none; font-family:inherit;"></textarea>
-                    </div>
-                </div>
-
-                <div id="nb-screen-mail-user" style="display:none; flex-direction:column; flex:1; overflow:hidden;">
-                    <div style="padding:6px 14px; border-bottom:1.5px solid #F1F7E6; display:flex; align-items:center; gap:8px;">
-                        <button id="nb-mail-user-back" style="background:#F1F7E6; border:none; color:#2F4A1D; padding:3px 8px; border-radius:14px; cursor:pointer; font-size:10.5px;"><span class="nb-emoji">←</span> 목록</button>
-                        <span style="font-size:11.5px; color:#4B6633; flex:1;">💌 익명 편지함</span>
-                        <button id="nb-mail-user-submit" style="background:#7FA050; border:none; color:white; padding:3px 12px; border-radius:14px; cursor:pointer; font-size:10.5px; font-weight:500;">보내기</button>
-                    </div>
-                    <div style="padding:16px 16px 8px; display:flex; flex-direction:column; gap:8px;">
-                        <textarea id="nb-mail-user-content" placeholder="최윤혁님께 익명으로 전달할 내용을 적어주세요..." style="min-height:70px; font-size:11.5px; padding:6px; border-radius:14px; border:1.5px solid #C9DE9D; background:#F1F7E6; color:#2F4A1D; outline:none; resize:none; font-family:inherit;"></textarea>
-                    </div>
-                    <div style="padding:6px 16px 2px; font-size:10.5px; color:#7C8F68;">📮 내가 보낸 편지</div>
-                    <div id="nb-mail-user-list" style="flex:1; overflow-y:auto; padding:8px 16px 16px;"></div>
-                </div>
-
-                <div id="nb-screen-mail-admin" style="display:none; flex-direction:column; flex:1; overflow:hidden;">
-                    <div style="padding:6px 14px; border-bottom:1.5px solid #F1F7E6; display:flex; align-items:center; gap:8px;">
-                        <button id="nb-mail-admin-back" style="background:#F1F7E6; border:none; color:#2F4A1D; padding:3px 8px; border-radius:14px; cursor:pointer; font-size:10.5px;"><span class="nb-emoji">←</span> 목록</button>
-                        <span style="font-size:11.5px; color:#4B6633; flex:1;">💌 받은 익명 편지</span>
-                    </div>
-                    <div id="nb-mail-admin-list" style="flex:1; overflow-y:auto; padding:8px 16px 16px;"></div>
-                </div>
-
-                <div style="padding:4px 14px; border-top:1.5px solid #F1F7E6; text-align:right;">
-                    <span id="nb-user-badge" style="font-size:10px; color:#7C8F68;"></span>
-                </div>
-            </div>`;
-
-            document.body.appendChild(overlay);
-
-            let allPosts = [];
-            let currentPostId = null;
-            const myEmail = getMyEmail();
-            const myName = getMyName();
-
-            // ── 신원 확인 ──
-            // myEmail, myName 둘 다 posthog가 NCC 로그인 시 심어주는 검증된 값이라
-            // 로컬에서 조작 불가능함. 둘 중 하나라도 비어있으면(=로그인 세션 정보를 못 읽었으면)
-            // 신원 불명으로 취급.
-            const identityOk = !!myEmail && !!myName;
-
-            // ── 게시판 드래그 (scale 유지) ──
-            (function makeBoardDraggable() {
-                const handle = document.getElementById('nb-board-header');
-                if (!handle) return;
-                let dragging = false, sx, sy, sLeft, sTop;
-                handle.addEventListener('mousedown', (e) => {
-                    const tag = e.target.tagName;
-                    if (tag === 'INPUT' || tag === 'BUTTON' || tag === 'SELECT' || tag === 'TEXTAREA' || tag === 'A') return;
-                    dragging = true;
-                    sx = e.clientX; sy = e.clientY;
-                    sLeft = parseFloat(overlay.style.left);
-                    sTop = parseFloat(overlay.style.top);
-                    handle.style.cursor = 'grabbing';
-                    e.preventDefault();
-                });
-                document.addEventListener('mousemove', (e) => {
-                    if (!dragging) return;
-                    overlay.style.left = (sLeft + (e.clientX - sx)) + 'px';
-                    overlay.style.top  = (sTop  + (e.clientY - sy)) + 'px';
-                });
-                document.addEventListener('mouseup', () => {
-                    if (!dragging) return;
-                    dragging = false;
-                    handle.style.cursor = 'grab';
-                });
-            })();
-
-            document.getElementById('nb-user-badge').textContent = identityOk ? `${myName} (${myEmail})` : '⚠️ 로그인 정보 없음 — 읽기 전용';
-            document.getElementById('nb-board-close').onclick = () => { overlay.style.display = 'none'; };
-            document.getElementById('nb-back-btn').onclick = () => showList();
-            document.getElementById('nb-write-cancel').onclick = () => showList();
-			document.getElementById('nb-edit-cancel').onclick = () => {
-				const post = allPosts.find(p => p.id === currentPostId);
-				if (post) showDetail(post);
-			};
-			document.getElementById('nb-edit-submit').onclick = submitEdit;
-			document.getElementById('nb-refresh-btn').onclick = () => loadPosts();
-			document.getElementById('nb-mail-lock-btn').onclick = () => {
-				if (myName === ADMIN_NAME) {
-					const pw = prompt('비밀번호를 입력하세요');
-					if (pw === null) return; // 취소
-					if (pw !== '0000') { alert('비밀번호가 틀렸습니다.'); return; }
-					showMailAdmin();
-				} else {
-					showMailUser();
-				}
-			};
-            document.getElementById('nb-write-btn').onclick = () => {
-                if (!identityOk) return alert('로그인 정보가 없어 글쓰기가 불가합니다.');
-                showWriteScreen();
-            };
-            document.getElementById('nb-write-submit').onclick = submitPost;
-            document.getElementById('nb-search-input').oninput = filterPosts;
-            document.getElementById('nb-search-type').onchange = filterPosts;
-
-            function showList() {
-                document.getElementById('nb-screen-list').style.display = 'block';
-                document.getElementById('nb-screen-detail').style.display = 'none';
-                document.getElementById('nb-screen-write').style.display = 'none';
-				document.getElementById('nb-screen-mail-user').style.display = 'none';
-				document.getElementById('nb-screen-mail-admin').style.display = 'none';
-                document.getElementById('nb-list-toolbar').style.display = 'flex';
-                renderList(allPosts, false)
-            }
-
-			// ── 익명 1:1 편지함 (사용자) ──
-			async function showMailUser() {
-				document.getElementById('nb-screen-list').style.display = 'none';
-				document.getElementById('nb-screen-detail').style.display = 'none';
-				document.getElementById('nb-screen-write').style.display = 'none';
-				document.getElementById('nb-screen-edit').style.display = 'none';
-				document.getElementById('nb-list-toolbar').style.display = 'none';
-				document.getElementById('nb-screen-mail-admin').style.display = 'none';
-				document.getElementById('nb-screen-mail-user').style.display = 'flex';
-				document.getElementById('nb-mail-user-content').value = '';
-				await loadMyMail();
-			}
-
-			async function loadMyMail() {
-				const listEl = document.getElementById('nb-mail-user-list');
-				listEl.innerHTML = `<div style="text-align:center; padding:12px; color:#7C8F68; font-size:10.5px;">불러오는 중...</div>`;
-				try {
-					const params = new URLSearchParams({ type: 'sent', email: myEmail, name: myName, t: Date.now() });
-					const res = await fetch(`${MAIL_API}?${params}`);
-					const data = await res.json();
-					const mine = (data.mails || []).slice().reverse();
-					if (!mine.length) {
-						listEl.innerHTML = `<div style="text-align:center; padding:12px; color:#94A87C; font-size:10.5px;">보낸 편지가 없습니다</div>`;
-						return;
-					}
-					listEl.innerHTML = mine.map(m => `
-						<div style="padding:6px 10px; margin-bottom:8px; background:#F6FAEE; border-radius:14px;">
-							<div id="nb-mail-view-${m.id}">
-								<div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
-									<div id="nb-mail-content-${m.id}" style="font-size:10.5px; color:#4B6633; white-space:pre-wrap; line-height:1.4; flex:1;">${m.content}</div>
-									${!m.reply ? `<button onclick="window._nbToggleEditMail('${m.id}')" style="background:none;border:none;font-size:10px;color:#5C7A3C;cursor:pointer;padding:0;flex-shrink:0;">수정</button>` : ''}
-								</div>
-								<div style="font-size:9.5px; color:#7C8F68; margin-top:4px;">${formatDate(m.createdAt)}${m.updatedAt ? ' (수정됨)' : ''}</div>
-								${m.reply ? `
-									<div style="margin-top:8px; padding:5px 8px; background:#FFF3DC; border-left:2px solid #C9A227; border-radius:10px;">
-										<div style="font-size:10px; color:#5C7A3C; margin-bottom:2px;">↩ 답장</div>
-										<div style="font-size:10.5px; color:#4B6633; white-space:pre-wrap; line-height:1.4;">${m.reply.text}</div>
-										<div style="font-size:9px; color:#94A87C; margin-top:4px;">${formatDate(m.reply.repliedAt)}</div>
-									</div>
-								` : `<div style="font-size:10px; color:#A9790A; margin-top:6px;">⏳ 답장 대기중</div>`}
-							</div>
-							<div id="nb-mail-edit-${m.id}" style="display:none; margin-top:4px;">
-								<textarea id="nb-mail-edit-text-${m.id}" style="width:100%; min-height:60px; font-size:10.5px; padding:5px; border-radius:14px; border:1.5px solid #C9DE9D; background:#F1F7E6; color:#2F4A1D; outline:none; resize:none; font-family:inherit; box-sizing:border-box;"></textarea>
-								<div style="display:flex; gap:6px; margin-top:6px; justify-content:flex-end;">
-									<button onclick="window._nbCancelEditMail('${m.id}')" style="height:24px;padding:0 10px;font-size:10px;background:#F1F7E6;border:none;color:#2F4A1D;border-radius:14px;cursor:pointer;">취소</button>
-									<button onclick="window._nbSubmitEditMail('${m.id}', this)" style="height:24px;padding:0 10px;font-size:10px;background:#7FA050;border:none;color:#2F4A1D;border-radius:14px;cursor:pointer;">저장</button>
-								</div>
-							</div>
-						</div>
-					`).join('');
-				} catch(e) {
-					listEl.innerHTML = `<div style="text-align:center; padding:12px; color:#C96A45; font-size:10.5px;">불러오기 실패</div>`;
-				}
-			}
-
-			window._nbToggleEditMail = (id) => {
-				const editBox = document.getElementById('nb-mail-edit-' + id);
-				if (!editBox) return;
-				const isOpen = editBox.style.display !== 'none';
-				if (isOpen) {
-					editBox.style.display = 'none';
-				} else {
-					const current = document.getElementById('nb-mail-content-' + id)?.textContent || '';
-					document.getElementById('nb-mail-edit-text-' + id).value = current;
-					editBox.style.display = 'block';
-				}
-			};
-
-			window._nbCancelEditMail = (id) => {
-				const editBox = document.getElementById('nb-mail-edit-' + id);
-				if (editBox) editBox.style.display = 'none';
-			};
-
-			window._nbSubmitEditMail = async (id, btn) => {
-				const text = document.getElementById('nb-mail-edit-text-' + id)?.value.trim();
-				if (!text) return;
-				btn.disabled = true; btn.textContent = '저장 중...';
-				try {
-					await fetch(MAIL_API, {
-						method: 'PUT',
-						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify({ id, senderEmail: myEmail, senderName: myName, content: text })
-					});
-					await loadMyMail();
-				} catch(e) { alert('수정 실패'); }
-				finally { btn.disabled = false; btn.textContent = '저장'; }
-			};
-
-			document.getElementById('nb-mail-user-back').onclick = () => showList();
-			document.getElementById('nb-mail-user-submit').onclick = async () => {
-				if (!identityOk) return alert('로그인 정보가 없어 편지 작성이 불가합니다.');
-				const content = document.getElementById('nb-mail-user-content').value.trim();
-				if (!content) return;
-				const btn = document.getElementById('nb-mail-user-submit');
-				btn.disabled = true; btn.textContent = '전송 중...';
-				try {
-					await fetch(MAIL_API, {
-						method: 'POST',
-						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify({ senderEmail: myEmail, senderName: myName, content })
-					});
-					document.getElementById('nb-mail-user-content').value = '';
-					await loadMyMail();
-				} catch(e) { alert('전송 실패'); }
-				finally { btn.disabled = false; btn.textContent = '보내기'; }
-			};
-
-			// ── 익명 1:1 편지함 (관리자: 최윤혁) ──
-			async function showMailAdmin() {
-				document.getElementById('nb-screen-list').style.display = 'none';
-				document.getElementById('nb-screen-detail').style.display = 'none';
-				document.getElementById('nb-screen-write').style.display = 'none';
-				document.getElementById('nb-screen-edit').style.display = 'none';
-				document.getElementById('nb-list-toolbar').style.display = 'none';
-				document.getElementById('nb-screen-mail-user').style.display = 'none';
-				document.getElementById('nb-screen-mail-admin').style.display = 'flex';
-				await loadInboxMail();
-			}
-
-			let _inboxUnreadCount = 0;
-
-			async function loadInboxMail() {
-				const listEl = document.getElementById('nb-mail-admin-list');
-				listEl.innerHTML = `<div style="text-align:center; padding:12px; color:#7C8F68; font-size:10.5px;">불러오는 중...</div>`;
-				try {
-					const res = await fetch(`${MAIL_API}?type=inbox&t=${Date.now()}`);
-					const data = await res.json();
-					const mails = (data.mails || []).slice().reverse();
-					_inboxUnreadCount = mails.filter(m => !m.reply).length;
-					// 편지함 열어본 김에 배지도 바로 갱신 (추가 네트워크 요청 없이)
-					window.__nbMailUnread = _inboxUnreadCount > 0;
-					const badge = document.getElementById('nb-mail-badge');
-					if (badge) badge.style.display = window.__nbMailUnread ? 'inline' : 'none';
-
-					if (!mails.length) {
-						listEl.innerHTML = `<div style="text-align:center; padding:12px; color:#94A87C; font-size:10.5px;">받은 편지가 없습니다</div>`;
-						return;
-					}
-					listEl.innerHTML = mails.map(m => `
-						<div style="padding:6px 10px; margin-bottom:8px; background:#F6FAEE; border-radius:14px;">
-							<div style="font-size:10.5px; color:#4B6633; white-space:pre-wrap; line-height:1.4;">${m.content}</div>
-							<div style="font-size:9.5px; color:#7C8F68; margin-top:4px;">${formatDate(m.createdAt)}</div>
-							<div id="nb-mail-reply-view-${m.id}" style="${m.reply ? '' : 'display:none;'}">
-								<div style="margin-top:8px; padding:5px 8px; background:#EAF3DE; border-left:2px solid #8BAA4F; border-radius:10px;">
-									<div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
-										<div style="flex:1;">
-											<div style="font-size:10px; color:#4B6633; margin-bottom:2px;">↩ 내 답장</div>
-											<div id="nb-mail-reply-text-view-${m.id}" style="font-size:10.5px; color:#4B6633; white-space:pre-wrap; line-height:1.4;">${m.reply ? m.reply.text : ''}</div>
-											<div style="font-size:9px; color:#94A87C; margin-top:4px;">${m.reply ? formatDate(m.reply.repliedAt) : ''}</div>
-										</div>
-										<button onclick="window._nbToggleEditMailReply('${m.id}')" style="background:none;border:none;font-size:10px;color:#4B6633;cursor:pointer;padding:0;flex-shrink:0;">수정</button>
-									</div>
-								</div>
-							</div>
-							<div id="nb-mail-reply-edit-${m.id}" style="${m.reply ? 'display:none;' : ''} margin-top:8px; display:flex; gap:6px;">
-								<textarea id="nb-mail-reply-${m.id}" placeholder="답장 작성..." style="flex:1; min-height:44px; font-size:10.5px; padding:4px 6px; border-radius:14px; border:1.5px solid #C9DE9D; background:#F1F7E6; color:#2F4A1D; outline:none; resize:none; font-family:inherit;"></textarea>
-								<button onclick="window._nbSubmitMailReply('${m.id}', this)" style="align-self:flex-end; background:#7FA050; border:none; color:white; padding:4px 10px; border-radius:14px; cursor:pointer; font-size:10.5px; white-space:nowrap;">답장</button>
-							</div>
-						</div>
-					`).join('');
-				} catch(e) {
-					listEl.innerHTML = `<div style="text-align:center; padding:12px; color:#C96A45; font-size:10.5px;">불러오기 실패</div>`;
-				}
-			}
-
-			window._nbToggleEditMailReply = (id) => {
-				document.getElementById('nb-mail-reply-view-' + id).style.display = 'none';
-				const editBox = document.getElementById('nb-mail-reply-edit-' + id);
-				editBox.style.display = 'flex';
-				const current = document.getElementById('nb-mail-reply-text-view-' + id)?.textContent || '';
-				document.getElementById('nb-mail-reply-' + id).value = current;
-			};
-
-			window._nbSubmitMailReply = async (id, btn) => {
-				const text = document.getElementById(`nb-mail-reply-${id}`)?.value.trim();
-				if (!text) return;
-				btn.disabled = true; btn.textContent = '전송 중...';
-				try {
-					await fetch(MAIL_API, {
-						method: 'PATCH',
-						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify({ id, replyText: text })
-					});
-					await loadInboxMail();
-				} catch(e) { alert('답장 등록 실패'); }
-				finally { btn.disabled = false; btn.textContent = '답장'; }
-			};
-
-			document.getElementById('nb-mail-admin-back').onclick = () => showList();
-
-            function showWriteScreen() {
-                document.getElementById('nb-screen-list').style.display = 'none';
-                document.getElementById('nb-screen-detail').style.display = 'none';
-                document.getElementById('nb-screen-write').style.display = 'flex';
-                document.getElementById('nb-list-toolbar').style.display = 'none';
-				document.getElementById('nb-screen-mail-user').style.display = 'none';
-				document.getElementById('nb-screen-mail-admin').style.display = 'none';
-                document.getElementById('nb-write-title').value = '';
-                document.getElementById('nb-write-content').value = '';
-            }
-
-            function showDetail(post) {
-                document.getElementById('nb-screen-list').style.display = 'none';
-                document.getElementById('nb-screen-write').style.display = 'none';
-				document.getElementById('nb-screen-edit').style.display = 'none';
-				document.getElementById('nb-list-toolbar').style.display = 'none';
-				document.getElementById('nb-screen-mail-user').style.display = 'none';
-				document.getElementById('nb-screen-mail-admin').style.display = 'none';
-                const editBtn = document.getElementById('nb-edit-post-btn');
-				editBtn.style.display = (myEmail && post.email === myEmail) ? 'block' : 'none';
-				editBtn.onclick = () => showEditScreen(post);
-                const det = document.getElementById('nb-screen-detail');
-                det.style.display = 'flex';
-                document.getElementById('nb-detail-title-header').textContent = post.title;
-                const delBtn = document.getElementById('nb-delete-post-btn');
-                delBtn.style.display = (myEmail && post.email === myEmail) ? 'block' : 'none';
-                delBtn.onclick = () => deletePost(post.id);
-                renderDetailBody(post);
-            }
-
-            let _currentPage = 1;
-            const PAGE_SIZE = 10;
-
-            function renderList(posts, resetPage) {
-                if (resetPage) _currentPage = 1;
-                const el = document.getElementById('nb-screen-list');
-                if (!posts.length) {
-                    el.innerHTML = `<div style="text-align:center; padding:24px 14px; color:#7C8F68; font-size:11.5px;">게시글이 없습니다</div>`;
-                    document.getElementById('nb-pagination').innerHTML = '';
-                    return;
-                }
-                const totalPages = Math.ceil(posts.length / PAGE_SIZE);
-                const start = (_currentPage - 1) * PAGE_SIZE;
-                const paged = posts.slice(start, start + PAGE_SIZE);
-                const isPaged = posts === allPosts; // 검색 중엔 페이지네이션 숨김
-
-                el.innerHTML = paged.map(p => `
-                    <div onclick="window._nbOpenPost('${p.id}')" style="display:grid; grid-template-columns:1fr 34px 64px 68px; align-items:center; gap:10px; padding:6px 14px; border-bottom:1.5px solid #E3EFD1; cursor:pointer; transition:background 0.12s;" onmouseenter="this.style.background='#F6FAEE'" onmouseleave="this.style.background='transparent'">
-                        <div style="font-size:11.5px; font-weight:500; color:#2F4A1D; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0;">${p.title}</div>
-                        <div style="font-size:10px; color:#5C7A3C; white-space:nowrap; text-align:right;">${(p.commentCount||0) > 0 ? `💬 ${p.commentCount}` : ''}</div>
-                        <div style="font-size:10px; color:#6B7F55; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:right;">${p.author}</div>
-                        <div style="font-size:10px; color:#6B7F55; white-space:nowrap; text-align:right;">${formatDate(p.createdAt)}</div>
-                    </div>
-                `).join('');
-
-                const pagerEl = document.getElementById('nb-pagination');
-                if (isPaged && totalPages > 1) {
-                    pagerEl.innerHTML = `
-                        <button onclick="window._nbPrevPage()" ${_currentPage <= 1 ? 'disabled' : ''} style="height:24px; padding:0 10px; font-size:10px; background:#F1F7E6; border:1.5px solid #D9E8C0; color:${_currentPage <= 1 ? '#C9DE9D' : '#4B6633'}; border-radius:14px; cursor:${_currentPage <= 1 ? 'default' : 'pointer'};"><span class="nb-emoji">←</span> 이전</button>
-                        <span style="font-size:10.5px; color:#7C8F68;">${_currentPage} / ${totalPages}</span>
-                        <button onclick="window._nbNextPage()" ${_currentPage >= totalPages ? 'disabled' : ''} style="height:24px; padding:0 10px; font-size:10px; background:#F1F7E6; border:1.5px solid #D9E8C0; color:${_currentPage >= totalPages ? '#C9DE9D' : '#4B6633'}; border-radius:14px; cursor:${_currentPage >= totalPages ? 'default' : 'pointer'};">다음 <span class="nb-emoji">→</span></button>
-                    `;
-                } else {
-                    pagerEl.innerHTML = '';
-                }
-            }
-
-            window._nbPrevPage = () => { _currentPage--; renderList(allPosts); document.getElementById('nb-screen-list').scrollTop = 0; };
-            window._nbNextPage = () => { _currentPage++; renderList(allPosts); document.getElementById('nb-screen-list').scrollTop = 0; };
-
-            function renderDetailBody(post) {
-                const comments = post.comments || [];
-                const totalComments = comments.reduce((a,c) => a + 1 + (c.replies||[]).length, 0);
-                document.getElementById('nb-detail-body').innerHTML = `
-                    <h2 style="font-size:13px; font-weight:600; color:#2F4A1D; margin:0 0 8px;">${post.title}</h2>
-                    <div style="font-size:10.5px; color:#6B7F55; margin-bottom:14px; display:flex; align-items:center; justify-content:space-between;">
-                        <span>👤 ${post.author}</span>
-                        <span>📅 ${formatDate(post.createdAt)}</span>
-                    </div>
-                    <div style="font-size:11.5px; color:#4B6633; line-height:1.5; padding:10px; background:#E3EFD1; border-radius:16px; margin-bottom:20px; white-space:pre-wrap;">${post.content}</div>
-                    <div style="font-size:11.5px; font-weight:500; color:#4B6633; margin-bottom:12px;">💬 댓글 ${totalComments}개</div>
-                    ${comments.map(c => `
-                        <div style="display:flex; gap:8px; margin-bottom:14px;">
-                            <div style="width:26px; height:26px; border-radius:50%; background:#DCEAC2; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:600; color:#5C7A3C; flex-shrink:0;">${initials(c.author)}</div>
-                            <div style="flex:1;">
-                                <div style="display:flex; align-items:center; gap:8px;">
-                                    <div style="font-size:10.5px; font-weight:500; color:#2F4A1D;">${c.author}</div>
-                                    <span style="font-size:10px; color:#94A87C;">${formatDate(c.createdAt)}</span>
-                                </div>
-                                <div style="font-size:11.5px; color:#4B6633; margin:3px 0; line-height:1.45;">${c.text}</div>
-                                <div style="display:flex; align-items:center; gap:10px; margin-top:4px;">
-                                    ${myEmail ? `<button onclick="window._nbToggleReply('${c.id}')" style="background:none;border:none;font-size:10px;color:#5C7A3C;cursor:pointer;padding:0;">↩ 답글</button>` : ''}
-                                    ${(myEmail && c.email === myEmail) ? `<button onclick="window._nbDeleteComment('${c.id}')" style="background:none;border:none;font-size:10px;color:#C96A45;cursor:pointer;padding:0;">삭제</button><button onclick="window._nbToggleEditComment('${c.id}','${c.text}')" style="background:none;border:none;font-size:10px;color:#5C7A3C;cursor:pointer;padding:0;">수정</button>` : ''}
-                                </div>
-                                ${(c.replies||[]).map(r => `
-                                    <div style="display:flex; gap:8px; margin-top:10px; padding-left:8px; border-left:2px solid #F5DFA8;">
-                                        <div style="width:20px; height:20px; border-radius:50%; background:#EAF3DE; display:flex; align-items:center; justify-content:center; font-size:8.5px; font-weight:600; color:#5C7A3C; flex-shrink:0;">${initials(r.author)}</div>
-                                        <div style="flex:1;">
-                                            <div style="display:flex; align-items:center; gap:8px;">
-                                                <div style="font-size:10px; font-weight:500; color:#2F4A1D;">${r.author}</div>
-                                                <span style="font-size:9px; color:#94A87C;">${formatDate(r.createdAt)}</span>
-                                            </div>
-                                            <div style="font-size:10.5px; color:#4B6633; margin:2px 0;">${r.text}</div>
-                                            <div style="display:flex; align-items:center; gap:8px; margin-top:3px;">
-                                                ${(myEmail && r.email === myEmail) ? `<button onclick="window._nbDeleteReply('${c.id}','${r.id}')" style="background:none;border:none;font-size:9px;color:#E8967A;cursor:pointer;padding:0;">삭제</button><button onclick="window._nbToggleEditReply('${c.id}','${r.id}','${r.text}')" style="background:none;border:none;font-size:9px;color:#5C7A3C;cursor:pointer;padding:0;">수정</button>` : ''}
-                                            </div>
-                                        </div>
-                                    </div>
-                                `).join('')}
-                                <div id="nb-reply-box-${c.id}" style="display:none; margin-top:8px;">
-                                    <textarea id="nb-reply-text-${c.id}" placeholder="답글..." style="width:100%; height:52px; font-size:10.5px; padding:4px 6px; border-radius:14px; border:1.5px solid #C9DE9D; background:#F1F7E6; color:#2F4A1D; outline:none; resize:none; box-sizing:border-box; font-family:inherit;"></textarea>
-                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
-                                        <label style="display:flex; align-items:center; gap:5px; font-size:9px; color:#7C8F68; cursor:pointer; user-select:none;">
-                                            <input type="checkbox" id="nb-reply-anon-${c.id}" style="width:12px; height:12px; cursor:pointer;">
-                                            익명
-                                        </label>
-                                        <div style="display:flex; gap:6px;">
-                                        <button onclick="window._nbToggleReply('${c.id}')" style="height:26px;padding:0 10px;font-size:10px;background:#F1F7E6;border:none;color:#2F4A1D;border-radius:14px;cursor:pointer;">취소</button>
-                                        <button onclick="window._nbSubmitReply('${c.id}', this)" style="height:26px;padding:0 10px;font-size:10px;background:#7FA050;border:none;color:white;border-radius:14px;cursor:pointer;font-weight:500;">등록</button>
-										</div>
-									</div>
-                                </div>
-								<div id="nb-edit-reply-box-${r.id}" style="display:none; margin-top:6px;">
-									<textarea id="nb-edit-reply-text-${r.id}" style="width:100%; height:46px; font-size:10px; padding:4px 6px; border-radius:14px; border:1.5px solid #F2CE87; background:#F1F7E6; color:#2F4A1D; outline:none; resize:none; box-sizing:border-box; font-family:inherit;"></textarea>
-									<div style="display:flex; justify-content:flex-end; gap:6px; margin-top:4px;">
-										<button onclick="window._nbToggleEditReply('${c.id}','${r.id}')" style="height:24px;padding:0 8px;font-size:9px;background:#F1F7E6;border:none;color:#2F4A1D;border-radius:14px;cursor:pointer;">취소</button>
-										<button onclick="window._nbSubmitEditReply('${c.id}','${r.id}', this)" style="height:24px;padding:0 8px;font-size:9px;background:#7FA050;border:none;color:white;border-radius:14px;cursor:pointer;font-weight:500;">저장</button>
-									</div>
-								</div>
-								<div id="nb-edit-comment-box-${c.id}" style="display:none; margin-top:8px;">
-									<textarea id="nb-edit-comment-text-${c.id}" style="width:100%; height:52px; font-size:10.5px; padding:4px 6px; border-radius:14px; border:1.5px solid #F2CE87; background:#F1F7E6; color:#2F4A1D; outline:none; resize:none; box-sizing:border-box; font-family:inherit;"></textarea>
-									<div style="display:flex; justify-content:flex-end; gap:6px; margin-top:6px;">
-										<button onclick="window._nbToggleEditComment('${c.id}')" style="height:26px;padding:0 10px;font-size:10px;background:#F1F7E6;border:none;color:#2F4A1D;border-radius:14px;cursor:pointer;">취소</button>
-										<button onclick="window._nbSubmitEditComment('${c.id}', this)" style="height:26px;padding:0 10px;font-size:10px;background:#7FA050;border:none;color:white;border-radius:14px;cursor:pointer;font-weight:500;">저장</button>
-									</div>
-								</div>
-                            </div>
-                        </div>
-                    `).join('')}
-                    ${myEmail ? `
-                    <div style="margin-top:16px; border-top:1.5px solid #F1F7E6; padding-top:14px;">
-                        <textarea id="nb-comment-input" placeholder="댓글을 입력하세요..." style="width:100%; height:64px; font-size:11.5px; padding:5px 8px; border-radius:14px; border:1.5px solid #C9DE9D; background:#F1F7E6; color:#2F4A1D; outline:none; resize:none; box-sizing:border-box; font-family:inherit;"></textarea>
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
-                            <label style="display:flex; align-items:center; gap:5px; font-size:10px; color:#85996B; cursor:pointer; user-select:none;">
-                                <input type="checkbox" id="nb-comment-anon" style="width:13px; height:13px; cursor:pointer;">
-                                익명
-                            </label>
-                            <button onclick="window._nbSubmitComment(this)" style="height:30px;padding:0 16px;font-size:10.5px;font-weight:500;background:#7FA050;border:none;color:white;border-radius:14px;cursor:pointer;">댓글 등록</button>
-                        </div>
-                    </div>` : `<div style="text-align:center; padding:10px; font-size:10.5px; color:#94A87C; border-top:1.5px solid #F1F7E6; margin-top:16px;">로그인 정보가 없어 댓글을 달 수 없습니다</div>`}
-                `;
-            }
-
-            function filterPosts() {
-                const q = document.getElementById('nb-search-input').value.trim().toLowerCase();
-                const type = document.getElementById('nb-search-type').value;
-                if (!q) { renderList(allPosts); return; }
-                const filtered = allPosts.filter(p => {
-                    if (type === 'title') return p.title.toLowerCase().includes(q);
-                    if (type === 'author') return p.author.toLowerCase().includes(q);
-                    return p.title.toLowerCase().includes(q) || p.author.toLowerCase().includes(q);
-                });
-                renderList(filtered);
-            }
-
-            async function loadPosts() {
-				const listEl = document.getElementById('nb-screen-list');
-				if (!listEl) return;
-				listEl.innerHTML = `<div style="text-align:center; padding:24px; color:#7C8F68; font-size:11.5px;">불러오는 중...</div>`;
-				try {
-					const res = await fetch('https://multimonitoring.vercel.app/api/board?t=' + Date.now() + '&email=' + encodeURIComponent(myEmail));
-					const data = await res.json();
-					allPosts = data.posts || [];
-					showList();
-				} catch(e) {
-					document.getElementById('nb-screen-list').innerHTML = `<div style="text-align:center; padding:24px; color:#C96A45; font-size:11.5px;">불러오기 실패: ${e.message}</div>`;
-				}
-			}
-
-            async function submitPost() {
-                const title = document.getElementById('nb-write-title').value.trim();
-                const content = document.getElementById('nb-write-content').value.trim();
-                if (!title || !content) return;
-				const isAnon = document.getElementById('nb-write-anon')?.checked;
-                const btn = document.getElementById('nb-write-submit');
-                btn.disabled = true; btn.textContent = '등록 중...';
-                try {
-                    await fetch('https://multimonitoring.vercel.app/api/board', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email: myEmail, author: isAnon ? '익명' : myName, anon: isAnon, title, content })
-                    });
-                    // 서버 재조회 대신 방금 쓴 글을 바로 목록에 얹는다 — GitHub Contents API가
-                    // 커밋 직후 읽기에 반영 지연을 보일 때가 있어 재조회에 의존하지 않음.
-                    allPosts.unshift({
-                        id: Date.now().toString(),
-                        author: isAnon ? '익명' : myName,
-                        title, content,
-                        createdAt: new Date().toISOString(),
-                        email: myEmail, anon: !!isAnon,
-                        commentCount: 0, comments: []
-                    });
-                    showList();
-                } catch(e) { alert('등록 실패'); }
-                finally { btn.disabled = false; btn.textContent = '등록'; }
-            }
-			
-			function showEditScreen(post) {
-				document.getElementById('nb-screen-list').style.display = 'none';
-				document.getElementById('nb-screen-detail').style.display = 'none';
-				document.getElementById('nb-screen-write').style.display = 'none';
-				document.getElementById('nb-screen-edit').style.display = 'flex';
-				document.getElementById('nb-list-toolbar').style.display = 'none';
-				document.getElementById('nb-screen-mail-user').style.display = 'none';
-				document.getElementById('nb-screen-mail-admin').style.display = 'none';
-                document.getElementById('nb-edit-title').value = post.title;
-				document.getElementById('nb-edit-content').value = post.content;
-			}
-
-			async function submitEdit() {
-				const title = document.getElementById('nb-edit-title').value.trim();
-				const content = document.getElementById('nb-edit-content').value.trim();
-				if (!title || !content) return;
-				const btn = document.getElementById('nb-edit-submit');
-				btn.disabled = true; btn.textContent = '저장 중...';
-				try {
-					await fetch('https://multimonitoring.vercel.app/api/board', {
-						method: 'PUT',
-						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify({ email: myEmail, id: currentPostId, title, content })
-					});
-					await loadPosts();
-					const post = allPosts.find(p => p.id === currentPostId);
-					if (post) showDetail(post);
-				} catch(e) { alert('수정 실패'); }
-				finally { btn.disabled = false; btn.textContent = '저장'; }
-			}
-
-            async function deletePost(id) {
-                if (!confirm('삭제하시겠습니까?')) return;
-                const btn = document.getElementById('nb-delete-post-btn');
-                btn.disabled = true; btn.textContent = '삭제 중...';
-                try {
-                    await fetch('https://multimonitoring.vercel.app/api/board', {
-                        method: 'DELETE',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email: myEmail, id })
-                    });
-                    await loadPosts();
-                } catch(e) { alert('삭제 실패'); }
-                finally { btn.disabled = false; btn.textContent = '삭제'; }
-            }
-
-            window._nbOpenPost = (id) => {
-                currentPostId = id;
-                const post = allPosts.find(p => p.id === id);
-                if (post) showDetail(post);
-            };
-
-            window._nbToggleReply = (cId) => {
-                const box = document.getElementById('nb-reply-box-' + cId);
-                if (box) box.style.display = box.style.display === 'none' ? 'block' : 'none';
-            };
-
-            window._nbSubmitComment = async (btn) => {
-                if (!identityOk) return alert('로그인 정보가 없어 댓글 작성이 불가합니다.');
-                const text = document.getElementById('nb-comment-input')?.value.trim();
-                if (!text) return;
-				const isAnon = document.getElementById('nb-comment-anon')?.checked;
-                btn.disabled = true; btn.textContent = '등록 중...';
-                try {
-                    await fetch('https://multimonitoring.vercel.app/api/comment', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email: myEmail, author: isAnon ? '익명' : myName, anon: isAnon, postId: currentPostId, text })
-                    });
-                    // 서버 재조회 대신 방금 쓴 댓글을 현재 글 객체에 바로 얹는다.
-                    const post = allPosts.find(p => p.id === currentPostId);
-                    if (post) {
-                        if (!post.comments) post.comments = [];
-                        post.comments.push({
-                            id: 'c' + Date.now(),
-                            email: myEmail, author: isAnon ? '익명' : myName, text,
-                            anon: !!isAnon, createdAt: new Date().toISOString(), replies: []
-                        });
-                        post.commentCount = post.comments.reduce((a, c) => a + 1 + (c.replies || []).length, 0);
-                        renderDetailBody(post);
-                    }
-                    document.getElementById('nb-comment-input').value = '';
-                } catch(e) { alert('댓글 등록 실패'); }
-                finally { btn.disabled = false; btn.textContent = '댓글 등록'; }
-            };
-
-            window._nbSubmitReply = async (cId, btn) => {
-                if (!identityOk) return alert('로그인 정보가 없어 답글 작성이 불가합니다.');
-                const text = document.getElementById('nb-reply-text-' + cId)?.value.trim();
-                if (!text) return;
-				const isAnon = document.getElementById('nb-reply-anon-' + cId)?.checked;
-                btn.disabled = true; btn.textContent = '등록 중...';
-                try {
-                    await fetch('https://multimonitoring.vercel.app/api/comment', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email: myEmail, author: isAnon ? '익명' : myName, anon: isAnon, postId: currentPostId, commentId: cId, text })
-                    });
-                    // 서버 재조회 대신 방금 쓴 답글을 현재 글 객체에 바로 얹는다.
-                    const post = allPosts.find(p => p.id === currentPostId);
-                    const comment = post?.comments?.find(c => c.id === cId);
-                    if (comment) {
-                        if (!comment.replies) comment.replies = [];
-                        comment.replies.push({
-                            id: 'r' + Date.now(),
-                            email: myEmail, author: isAnon ? '익명' : myName, text,
-                            anon: !!isAnon, createdAt: new Date().toISOString()
-                        });
-                        post.commentCount = post.comments.reduce((a, c) => a + 1 + (c.replies || []).length, 0);
-                        renderDetailBody(post);
-                    }
-                } catch(e) { alert('답글 등록 실패'); }
-                finally { btn.disabled = false; btn.textContent = '등록'; }
-            };
-
-            window._nbDeleteComment = async (cId) => {
-                if (!confirm('댓글을 삭제하시겠습니까?')) return;
-                try {
-                    await fetch('https://multimonitoring.vercel.app/api/comment', {
-                        method: 'DELETE',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email: myEmail, postId: currentPostId, commentId: cId })
-                    });
-                    const res = await fetch('https://multimonitoring.vercel.app/api/board?t=' + Date.now() + '&email=' + encodeURIComponent(myEmail));
-                    const data = await res.json();
-                    allPosts = data.posts || [];
-                    const post = allPosts.find(p => p.id === currentPostId);
-                    if (post) renderDetailBody(post);
-                } catch(e) { alert('삭제 실패'); }
-            };
-
-            window._nbDeleteReply = async (cId, rId) => {
-                if (!confirm('답글을 삭제하시겠습니까?')) return;
-                try {
-                    await fetch('https://multimonitoring.vercel.app/api/comment', {
-                        method: 'DELETE',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email: myEmail, postId: currentPostId, commentId: cId, replyId: rId })
-                    });
-                    const res = await fetch('https://multimonitoring.vercel.app/api/board?t=' + Date.now() + '&email=' + encodeURIComponent(myEmail));
-                    const data = await res.json();
-                    allPosts = data.posts || [];
-                    const post = allPosts.find(p => p.id === currentPostId);
-                    if (post) renderDetailBody(post);
-                } catch(e) { alert('삭제 실패'); }
-            };
-			
-			window._nbToggleEditComment = (cId, originalText) => {
-				const box = document.getElementById('nb-edit-comment-box-' + cId);
-				if (!box) return;
-				const isOpen = box.style.display !== 'none';
-				box.style.display = isOpen ? 'none' : 'block';
-				if (!isOpen && originalText) {
-					document.getElementById('nb-edit-comment-text-' + cId).value = originalText;
-				}
-			};
-
-			window._nbSubmitEditComment = async (cId, btn) => {
-				const text = document.getElementById('nb-edit-comment-text-' + cId)?.value.trim();
-				if (!text) return;
-				btn.disabled = true; btn.textContent = '저장 중...';
-				try {
-					await fetch('https://multimonitoring.vercel.app/api/comment', {
-						method: 'PUT',
-						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify({ email: myEmail, postId: currentPostId, commentId: cId, text })
-					});
-					const res = await fetch('https://multimonitoring.vercel.app/api/board?t=' + Date.now() + '&email=' + encodeURIComponent(myEmail));
-					const data = await res.json();
-					allPosts = data.posts || [];
-					const post = allPosts.find(p => p.id === currentPostId);
-					if (post) renderDetailBody(post);
-				} catch(e) { alert('수정 실패'); }
-				finally { btn.disabled = false; btn.textContent = '저장'; }
-			};
-
-			window._nbToggleEditReply = (cId, rId, originalText) => {
-				const box = document.getElementById('nb-edit-reply-box-' + rId);
-				if (!box) return;
-				const isOpen = box.style.display !== 'none';
-				box.style.display = isOpen ? 'none' : 'block';
-				if (!isOpen && originalText) {
-					document.getElementById('nb-edit-reply-text-' + rId).value = originalText;
-				}
-			};
-
-			window._nbSubmitEditReply = async (cId, rId, btn) => {
-				const text = document.getElementById('nb-edit-reply-text-' + rId)?.value.trim();
-				if (!text) return;
-				btn.disabled = true; btn.textContent = '저장 중...';
-				try {
-					await fetch('https://multimonitoring.vercel.app/api/comment', {
-						method: 'PUT',
-						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify({ email: myEmail, postId: currentPostId, commentId: cId, replyId: rId, text })
-					});
-					const res = await fetch('https://multimonitoring.vercel.app/api/board?t=' + Date.now() + '&email=' + encodeURIComponent(myEmail));
-					const data = await res.json();
-					allPosts = data.posts || [];
-					const post = allPosts.find(p => p.id === currentPostId);
-					if (post) renderDetailBody(post);
-				} catch(e) { alert('수정 실패'); }
-				finally { btn.disabled = false; btn.textContent = '저장'; }
-			};
-
-            loadPosts();
-        };
 
             window.openScheduleOverlay = async function() {
             const now = new Date();
@@ -5678,7 +3498,6 @@
             window.openDriveThemeOverlay = function() {
                 const T = getNbTheme();
                 const nbThemeName = localStorage.getItem('neubie_theme') || 'dark';
-                const driveTheme = localStorage.getItem(DRIVE_THEME_KEY) || 'dark';
 
                 const box = document.createElement('div');
                 box.style.cssText = `background:${T.card}; color:${T.text}; border-radius:16px; padding:20px; width:100%; box-sizing:border-box; box-shadow:0 4px 40px rgba(0,0,0,0.7); pointer-events:auto;`;
@@ -5694,16 +3513,6 @@
                         <button data-nbt="dark" style="flex:1; padding:10px; border-radius:8px; border:1px solid ${nbThemeName==='dark'?'#4f8ef7':T.border}; background:${nbThemeName==='dark'?'#1e3a8a33':'transparent'}; color:${T.text}; cursor:pointer; font-size:13px;">🌙 다크</button>
                         <button data-nbt="light" style="flex:1; padding:10px; border-radius:8px; border:1px solid ${nbThemeName==='light'?'#4f8ef7':T.border}; background:${nbThemeName==='light'?'#1e3a8a33':'transparent'}; color:${T.text}; cursor:pointer; font-size:13px;">☀️ 라이트</button>
                     </div>
-
-                    <div style="border-top:1px solid ${T.border}; margin-bottom:14px;"></div>
-
-                    <div style="font-size:13px;font-weight:600;margin-bottom:6px;">원격조종 페이지</div>
-                    <div style="font-size:11px;color:#94a3b8;margin-bottom:8px;">기체 원격조종(신형, /new) 화면에만 적용됩니다.</div>
-                    <div style="display:flex; gap:8px;">
-                        <button data-dt="dark" style="flex:1; padding:10px; border-radius:8px; border:1px solid ${driveTheme==='dark'?'#4f8ef7':T.border}; background:${driveTheme==='dark'?'#1e3a8a33':'transparent'}; color:${T.text}; cursor:pointer; font-size:13px;">🌙 원본</button>
-                        <button data-dt="light" style="flex:1; padding:10px; border-radius:8px; border:1px solid ${driveTheme==='light'?'#4f8ef7':T.border}; background:${driveTheme==='light'?'#1e3a8a33':'transparent'}; color:${T.text}; cursor:pointer; font-size:13px;">☀️ 라이트</button>
-                    </div>
-                    <div style="font-size:11px;color:#64748b;margin-top:10px;">추후 다른 색상 테마도 여기에 추가될 예정입니다.</div>
                 `;
                 box.querySelector('#dto-close').onclick = () => {
                     window.hideSharedPopup();
@@ -5725,226 +3534,8 @@
                     };
                 });
 
-                // 원격조종 페이지 색상 토글 (기존 로직 그대로)
-                box.querySelectorAll('[data-dt]').forEach(btn => {
-                    btn.onclick = () => {
-                        const key = btn.dataset.dt;
-                        localStorage.setItem(DRIVE_THEME_KEY, key);
-                        applyDriveTheme(key);
-                        openDriveThemeOverlay();
-                    };
-                });
 
                 window.showSharedPopup('drivetheme', box);
-            };
-
-            window.openMoreToolsOverlay = function() {
-                const T = getNbTheme();
-                const box = document.createElement('div');
-                box.style.cssText = `background:${T.card}; color:${T.text}; border-radius:16px; padding:20px; width:100%; box-sizing:border-box; box-shadow:0 4px 40px rgba(0,0,0,0.7); pointer-events:auto;`;
-                box.innerHTML = `
-                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-                        <span style="font-size:16px;font-weight:700;">🧰 SW & 헬프</span>
-                        <button id="mto-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
-                    </div>
-                    <div style="display:flex; flex-direction:column; gap:8px;">
-                        <button id="mto-tips" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">💡 SW 설정</button>
-                        <button id="mto-trouble" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🛠️ 문제해결</button>
-                    </div>
-                `;
-                box.querySelector('#mto-close').onclick = () => {
-                    window.hideSharedPopup();
-                    if (window._neubieRouletteCard) window._neubieRouletteCard.style.outline = 'none';
-                };
-                box.querySelector('#mto-tips').onclick = () => openTipsOverlay();
-                box.querySelector('#mto-trouble').onclick = () => { window.hideSharedPopup(); openTroubleshootOverlay(); };
-                window.showSharedPopup('moretools', box);
-            };
-
-            // ── 문제해결 게시판 ──────────────────────────────────────
-            // links에 넣은 url은 게시글 안에서 클릭하면 바로 새 탭으로 열립니다 (구글드라이브 .reg 등 파일 링크 가능)
-            const troubleshootPosts = [
-                {
-                    id: '바탕화면',
-                    title: '바탕화면 [이 사진에 대한...] 아이콘 없애기',
-                    body: '바탕화면에 [이 사진에 대한 자세한 정보]라는 아이콘이 떠 있는 경우, 아래의 파일을 다운받고 실행하고 새로고침하세요.',
-                    images: [
-                        'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/desktop_weirdo.png',
-                    ],
-                    links: [
-                        { label: '[이 사진에 대한 자세한 정보] 아이콘 없애기.reg', url: 'https://drive.google.com/file/d/1IjWGiN__VT1hmZdfm7YkYUpa4Wd89A9f/view?usp=drive_link' },
-                        { label: '[이 사진에 대한 자세한 정보] 아이콘 되돌리기.reg', url: 'https://drive.google.com/file/d/1Vuqf8nWPLi5KuTnLLkJ3WJdHAgD8F-xz/view?usp=drive_link' },
-                    ],
-                },
-                {
-                    id: 'VPN',
-                    title: 'FortiClientVPN 접속 불가 시',
-                    body: 'VPN 설정을 스샷과 같이 설정해보세요. 미해결시 아래 파일로 재설치 후 시도바랍니다.',
-                    images: [
-                        'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/forticlientvpn.png',
-                    ],
-                    links: [
-						{ label: 'FortiClientVPN 설치파일', url: 'https://drive.google.com/file/d/1pjHTVSYomXSGTYLf4OVGk3g3QvzRJSMd/view?usp=drive_link' },
-					],
-                },
-				{
-                    id: 'Refresh',
-                    title: '멀티플 계정 새로고침 불가 시',
-                    body: 'NCC 도메인 변경 이후, 크롬 시크릿 탭에서 새로고침하면 계정로그인이 풀리는 현상 수정. 하단 주소에 접속하셔서 서드 파티 쿠키 사용이 허용된 사이트 ->  추가 버튼 [*.]neubility.ai 추가하시면 시크릿 탭에서 새로고침해도 세션이 튕기지 않습니다(현재 시크릿 탭에서는 본인 계정이든 멀티플 계정이든 새로고침하면 튕깁니다).',
-                    images: [
-                        'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/domain_refresh.png',
-                    ],
-                    links: [
-						{ label: '크롬 서드파티 쿠키 설정', url: 'chrome://settings/cookies' },
-					],
-                },
-            ];
-
-            // ── 사진 원본 크기 보기 (클릭 시 확대, 다시 클릭 시 닫힘) ──
-            function openImageLightbox(src) {
-                const existing = document.getElementById('neubie-img-lightbox');
-                if (existing) { existing.remove(); return; }
-
-                const lb = document.createElement('div');
-                lb.id = 'neubie-img-lightbox';
-                Object.assign(lb.style, {
-                    position: 'fixed', top: '0', left: '0', width: '100vw', height: '100vh',
-                    background: 'rgba(0,0,0,0.88)', zIndex: '2147483647',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    cursor: 'zoom-out',
-                });
-
-                const fullImg = document.createElement('img');
-                fullImg.src = src;
-                fullImg.style.cssText = 'max-width:95vw; max-height:95vh; width:auto; height:auto; object-fit:contain; border-radius:6px; box-shadow:0 10px 60px rgba(0,0,0,0.6); cursor:zoom-out;';
-
-                lb.appendChild(fullImg);
-                lb.onclick = () => lb.remove();
-                document.body.appendChild(lb);
-            }
-
-            window.openTroubleshootOverlay = function() {
-                const T = getNbTheme();
-                const dashboardEl = document.getElementById('neubie-dashboard');
-                const r = dashboardEl.getBoundingClientRect();
-
-                const overlay = document.createElement('div');
-                overlay.id = 'neubie-troubleshoot-overlay';
-                Object.assign(overlay.style, {
-                    position: 'fixed',
-                    top: r.top + 'px',
-                    left: r.left + 'px',
-                    width: r.width + 'px',
-                    height: '560px',
-                    zIndex: '1000001',
-                    borderRadius: '16px',
-                    overflow: 'hidden',
-                });
-
-                const box = document.createElement('div');
-                box.style.cssText = `background:${T.card}; color:${T.text}; border-radius:16px; padding:20px; width:100%; height:100%; box-sizing:border-box; overflow-y:auto; box-shadow:0 10px 50px rgba(0,0,0,0.7); pointer-events:auto;`;
-                overlay.appendChild(box);
-                document.body.appendChild(overlay);
-
-                function renderGrid() {
-                    box.innerHTML = '';
-                    const header = document.createElement('div');
-                    header.style.cssText = 'display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;';
-                    header.innerHTML = `<span style="font-size:16px; font-weight:700;">🛠️ 문제해결</span>`;
-                    const closeBtn = document.createElement('button');
-                    closeBtn.textContent = '✕';
-                    closeBtn.style.cssText = 'width:28px; height:28px; border:none; border-radius:5px; background:#3b0000; border:1px solid #ef4444; color:#ef4444; font-size:16px; cursor:pointer;';
-                    closeBtn.onclick = () => overlay.remove();
-                    header.appendChild(closeBtn);
-
-                    const grid = document.createElement('div');
-                    grid.style.cssText = 'display:grid; grid-template-columns:1fr 1fr; gap:8px;';
-                    troubleshootPosts.forEach(post => {
-                        const btn = document.createElement('button');
-                        btn.textContent = post.title;
-                        btn.style.cssText = `padding:14px 10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:center; font-size:14px;`;
-                        btn.onmouseenter = () => { btn.style.borderColor = '#3b82f6'; btn.style.color = '#3b82f6'; };
-                        btn.onmouseleave = () => { btn.style.borderColor = T.border; btn.style.color = T.text; };
-                        btn.onclick = () => renderPost(post);
-                        grid.appendChild(btn);
-                    });
-
-                    box.appendChild(header);
-                    box.appendChild(grid);
-                }
-
-                function renderPost(post) {
-                    box.innerHTML = '';
-                    const header = document.createElement('div');
-                    header.style.cssText = 'display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;';
-                    header.innerHTML = `<span style="font-size:16px; font-weight:700;">${post.title}</span>`;
-                    const closeBtn = document.createElement('button');
-                    closeBtn.textContent = '✕';
-                    closeBtn.title = '목록으로';
-                    closeBtn.style.cssText = 'width:28px; height:28px; border:none; border-radius:5px; background:#3b0000; border:1px solid #ef4444; color:#ef4444; font-size:16px; cursor:pointer;';
-                    closeBtn.onclick = () => renderGrid();
-                    header.appendChild(closeBtn);
-
-                    const body = document.createElement('div');
-                    body.style.cssText = `font-size:14px; line-height:1.7; color:${T.text}; white-space:pre-wrap;`;
-                    body.textContent = post.body;
-
-                    box.appendChild(header);
-                    box.appendChild(body);
-
-                    if (post.images && post.images.length) {
-                        const imgWrap = document.createElement('div');
-                        imgWrap.style.cssText = 'display:flex; flex-direction:column; align-items:center; gap:10px; margin-top:14px;';
-                        post.images.forEach(src => {
-                            const img = document.createElement('img');
-                            img.src = src;
-                            img.loading = 'lazy';
-                            img.title = '클릭하면 원본 크기로 보기';
-                            img.style.cssText = 'max-width:100%; max-height:360px; width:auto; height:auto; object-fit:contain; border-radius:8px; display:block; margin:0 auto; cursor:zoom-in;';
-                            img.onclick = () => openImageLightbox(src);
-                            imgWrap.appendChild(img);
-                        });
-                        box.appendChild(imgWrap);
-                    }
-
-                    if (post.links && post.links.length) {
-                        const linkWrap = document.createElement('div');
-                        linkWrap.style.cssText = 'display:flex; flex-direction:column; gap:8px; margin-top:16px;';
-                        post.links.forEach(link => {
-                            if (link.url.startsWith('chrome://')) {
-                                // chrome:// 내부 페이지는 브라우저 정책상 웹페이지(및 유저스크립트)에서
-                                // <a> 클릭이나 window.open으로 절대 이동시킬 수 없음 → 주소 복사로 대체
-                                const btn = document.createElement('button');
-                                const defaultLabel = '📋 ' + link.label + ' 주소 복사 (새 탭에 직접 붙여넣기)';
-                                btn.textContent = defaultLabel;
-                                btn.style.cssText = `display:block; width:100%; padding:10px 12px; border-radius:8px; border:1px solid #3b82f6; background:transparent; color:#3b82f6; text-decoration:none; font-size:13px; text-align:center; cursor:pointer; font-family:inherit;`;
-                                btn.onclick = () => {
-                                    navigator.clipboard.writeText(link.url);
-                                    btn.textContent = '✅ 복사됨! 새 탭 열고 주소창에 붙여넣기(Ctrl+V) 하세요';
-                                    btn.style.borderColor = '#22c55e';
-                                    btn.style.color = '#22c55e';
-                                    setTimeout(() => {
-                                        btn.textContent = defaultLabel;
-                                        btn.style.borderColor = '#3b82f6';
-                                        btn.style.color = '#3b82f6';
-                                    }, 2500);
-                                };
-                                linkWrap.appendChild(btn);
-                            } else {
-                                const a = document.createElement('a');
-                                a.href = link.url;
-                                a.target = '_blank';
-                                a.rel = 'noopener noreferrer';
-                                a.textContent = '📎 ' + link.label;
-                                a.style.cssText = `display:block; padding:10px 12px; border-radius:8px; border:1px solid #3b82f6; color:#3b82f6; text-decoration:none; font-size:13px; text-align:center;`;
-                                linkWrap.appendChild(a);
-                            }
-                        });
-                        box.appendChild(linkWrap);
-                    }
-                }
-
-                renderGrid();
             };
 
             window.openGamepadMenuOverlay = function() {
@@ -6118,81 +3709,13 @@
                 window.showSharedPopup('gamepad-guide', box);
             };
 
-            window.openTipsOverlay = function() {
-                const T = getNbTheme();
-                const box = document.createElement('div');
-                box.style.cssText = `
-                    background:${T.card}; color:${T.text}; border-radius:18px;
-                    border:1.5px solid #f59e0b; padding:28px 32px 24px 32px;
-                    width:100%; box-sizing:border-box; max-height:80vh; overflow-y:auto;
-                    position:relative; box-shadow:0 10px 50px rgba(0,0,0,0.7); pointer-events:auto;
-                `;
-                const tipsTitle = document.createElement('div');
-                tipsTitle.textContent = 'SW 설정';
-                tipsTitle.style.cssText = `font-size:20px; font-weight:bold; margin-bottom:20px; color:#fcd34d;`;
-
-                const tipsClose = document.createElement('button');
-                tipsClose.textContent = '✕';
-                tipsClose.style.cssText = `
-                    position:absolute; top:16px; right:18px;
-                    background:transparent; border:none; color:#aaa;
-                    font-size:20px; cursor:pointer; line-height:1; padding:4px 8px;
-                    border-radius:6px; transition:color 0.2s;
-                `;
-                tipsClose.onmouseenter = () => { tipsClose.style.color='#fff'; };
-                tipsClose.onmouseleave = () => { tipsClose.style.color='#aaa'; };
-                tipsClose.onclick = () => {
-                    window.hideSharedPopup();
-                    if (window._neubieRouletteCard) window._neubieRouletteCard.style.outline = 'none';
-                };
-
-                const tipsItems = [
-                    { title: "슬랙 PWA 버전 사용법", url: "https://telling-ink-a85.notion.site/PWA-366a8cf5ba7b80eebb43e017c095702c?pvs=74" },
-                    { title: "OBS 설정법", url: "https://telling-ink-a85.notion.site/OBS-366a8cf5ba7b80dfb101cfa149eaefcf?pvs=74" },
-                    { title: "CYH's 추천 프로그램", url: "https://telling-ink-a85.notion.site/366a8cf5ba7b80958575eadb8809f313" },
-                ];
-                const tipsContent = document.createElement('div');
-                tipsContent.style.cssText = "display:grid; gap:10px;";
-                tipsItems.forEach(item => {
-                    const row = document.createElement('div');
-                    row.style.cssText = `
-                        display:flex; justify-content:space-between; align-items:center;
-                        background:${T.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)'};
-                        border:1px solid ${T.border}; border-radius:12px;
-                        padding:13px 16px; gap:12px;
-                    `;
-                    const rowTitle = document.createElement('span');
-                    rowTitle.textContent = item.title;
-                    rowTitle.style.cssText = `font-size:14px; font-weight:600; color:${T.text}; flex:1;`;
-                    const rowBtn = document.createElement('button');
-                    rowBtn.textContent = '열기';
-                    rowBtn.style.cssText = `
-                        background:#f59e0b; color:#1a1a1a; border:none;
-                        padding:7px 16px; border-radius:8px; cursor:pointer;
-                        font-weight:bold; font-size:13px; white-space:nowrap;
-                        transition:background 0.2s;
-                    `;
-                    rowBtn.onmouseenter = () => { rowBtn.style.background='#fbbf24'; };
-                    rowBtn.onmouseleave = () => { rowBtn.style.background='#f59e0b'; };
-                    rowBtn.onclick = () => { window.open(item.url, '_blank'); };
-                    row.appendChild(rowTitle);
-                    row.appendChild(rowBtn);
-                    tipsContent.appendChild(row);
-                });
-                box.appendChild(tipsClose);
-                box.appendChild(tipsTitle);
-                box.appendChild(tipsContent);
-                window.showSharedPopup('tips', box);
-            };
-
 			// 그 외 페이지는 기존 대시보드
 			const sharedPopupEl = document.getElementById('neubie-shared-popup');
 			const scheduleOverlayEl = document.getElementById('neubie-schedule-overlay');
               const isAnyOpen = (dashboard.style.display === 'block' || 
               batteryPopup.style.display === 'block' ||
               (sharedPopupEl && sharedPopupEl.style.display === 'flex') ||
-              (scheduleOverlayEl && scheduleOverlayEl.style.display === 'flex') ||
-              !!document.getElementById('neubie-troubleshoot-overlay'));
+              (scheduleOverlayEl && scheduleOverlayEl.style.display === 'flex'));
 			
 			if (isAnyOpen) {
 				closeAllPopups();
@@ -6238,17 +3761,6 @@
 
     let lastUrl = location.href;
 
-    // ── 신형 개입 페이지를 새로고침하거나 링크로 직접 열어 들어온 경우 대응 ──
-    // 아래 URL 변경 감지(클릭 리스너/2초 폴링)는 location.href가 lastUrl과
-    // "달라지는 순간"에만 _startOperatorWatch()를 호출한다. 그런데 lastUrl이
-    // 스크립트 로드 시점의 현재 URL로 초기화되기 때문에, 처음부터 개입 페이지에
-    // 떠 있던 경우(새로고침/직접 진입)에는 변경이 감지되지 않아 조작자 감시가
-    // 영영 시작되지 않는 문제가 있었다. 최초 1회, 지금 이미 대상 페이지인지
-    // 확인해서 필요하면 즉시 감시를 시작한다.
-    if (/\/driving\/\d+/.test(location.pathname)) {
-        setTimeout(() => _startOperatorWatch(), 1500);
-    }
-
     // 브라우저의 뒤로가기/앞으로가기 대응 (이벤트 발생 시에만)
     window.addEventListener('popstate', () => {
         closeAllPopups();
@@ -6262,11 +3774,6 @@
                 const prevUrl = lastUrl;  // ← 이전 URL 먼저 저장
                 lastUrl = location.href;
 
-                // 자동 사이드브레이크 - 이탈 감지
-				const prevRobotId = getAutoSideRobotId(prevUrl);
-				if (prevRobotId && AUTO_SIDE_ROBOTS[prevRobotId]) {
-					triggerAutoSide(prevRobotId);
-				}
 				
 				if (!location.href.includes('/monitoring')) {
 					document.getElementById('neubie-unmonitored-panel')?.remove();
@@ -6285,18 +3792,10 @@
 				setTimeout(() => patchDrivingPageLayout(), 1500);
                 setTimeout(() => patchDrivingPageLayout(), 3000);
 				setTimeout(() => patchDrivingPageLayout(), 6000);
-                setTimeout(() => initDriveTheme(), 1500);  
-                setTimeout(() => initDriveTheme(), 3000);
 
                 if (/\/driving\/\d+/.test(location.pathname)) {
-                    _startOperatorWatch();
 					setTimeout(() => captureInterventionEntry(), 1500);
-                } else {
-                    _stopOperatorWatch();
                 }
-				if (isMonitoringPage() && isHandoverFeatureOn()) {
-					registerBitrateObserver();
-				}
             }
         }, 100);
     }, true);
@@ -6307,11 +3806,6 @@
             const prevUrl = lastUrl;  // ← 이전 URL 먼저 저장
             lastUrl = location.href;
 
-            // 자동 사이드브레이크 - 이탈 감지
-			const prevRobotId = getAutoSideRobotId(prevUrl);
-			if (prevRobotId && AUTO_SIDE_ROBOTS[prevRobotId]) {
-				triggerAutoSide(prevRobotId);
-			}
 
 			if (!location.href.includes('/monitoring')) {
 				document.getElementById('neubie-unmonitored-panel')?.remove();
@@ -6330,125 +3824,13 @@
 			setTimeout(() => patchDrivingPageLayout(), 1500);
             setTimeout(() => patchDrivingPageLayout(), 3000);
 			setTimeout(() => patchDrivingPageLayout(), 6000);
-            setTimeout(() => initDriveTheme(), 1500); 
-            setTimeout(() => initDriveTheme(), 3000);
 
             if (/\/driving\/\d+/.test(location.pathname)) {
-                _startOperatorWatch();
 				setTimeout(() => captureInterventionEntry(), 1500);
-            } else {
-                _stopOperatorWatch();
             }
-			if (isMonitoringPage() && isHandoverFeatureOn()) {
-				registerBitrateObserver();
-			}
         }
     }, 2000);
     
-    // ── 자동 사이드브레이크 ──
-	const AUTO_SIDE_ROBOTS = {
-		128: '잠실 리센츠 1호기',
-		82:  '잠실 리센츠 2호기',
-		156: '잠실 엘스 1호기',
-		157: '잠실 엘스 2호기',
-		249: '한성대 1호기',
-		214: '진천 힐사이드 캠핑장 1호기',
-	};
-
-	function getAutoSideRobotId(url) {
-		const robotMatch = url.match(/\/ko\/remote\/robot\/(\d+)/);
-		if (robotMatch) return parseInt(robotMatch[1]);
-		const params = new URLSearchParams(url.split('?')[1] || '');
-		const robotId = params.get('robot-id');
-		return robotId ? parseInt(robotId) : null;
-	}
-
-	function showAutoSideNotice(msg, color) {
-		const existing = document.getElementById('neubie-auto-side-notice');
-		if (existing) existing.remove();
-		const el = document.createElement('div');
-		el.id = 'neubie-auto-side-notice';
-		el.style.cssText = `
-			position: fixed;
-			top: 50%;
-			left: 50%;
-			transform: translate(-50%, -50%);
-			z-index: 9999;
-			background: ${color};
-			color: white;
-			font-size: 14px;
-			font-weight: 700;
-			padding: 14px 28px;
-			border-radius: 12px;
-			font-family: 'Pretendard', sans-serif;
-			box-shadow: 0 4px 16px rgba(0,0,0,0.4);
-			white-space: nowrap;
-			pointer-events: none;
-		`;
-		el.innerText = msg;
-		document.body.appendChild(el);
-		setTimeout(() => el.remove(), 4000);
-	}
-
-    const _autoSideInProgress = new Set();
-
-	async function triggerAutoSide(robotId) {
-		const robotName = AUTO_SIDE_ROBOTS[robotId];
-		if (isOfflineMode()) return;   // 오프라인: 자동 사이드브레이크(조회+제어 명령) 없음
-
-        if (_autoSideInProgress.has(robotId)) return;
-		_autoSideInProgress.add(robotId);
-
-		try {
-			await new Promise(r => setTimeout(r, 2000));
-			
-			const res = await nccFetch(`${NCC_API_BASE}/robots/${robotId}/`, {
-                credentials: 'include',
-                headers: getAuthHeaders()
-            });
-			const data = await res.json();
-			if (data.currentScenario) { _autoSideInProgress.delete(robotId); return; }
-            if (!data.robotStatus.isMovable) { _autoSideInProgress.delete(robotId); return; }
-
-			// 5초 예고 레이아웃
-			showAutoSideNotice(`5초 후 ${robotName}의 사이드 브레이크를 ON으로 변경합니다.`, 'rgba(59,130,246,0.92)');
-
-			setTimeout(async () => {
-				// 5초 후 다시 확인
-				try {
-					const res2 = await nccFetch(`${NCC_API_BASE}/robots/${robotId}/`, {
-                        credentials: 'include',
-                        headers: getAuthHeaders()
-                    });
-					const data2 = await res2.json();
-					if (data2.currentScenario) { _autoSideInProgress.delete(robotId); return; }
-					if (!data2.robotStatus.isMovable) { _autoSideInProgress.delete(robotId); return; }
-
-					const res3 = await nccFetch(`${NCC_API_BASE}/robots/${robotId}/control/`, {
-						method: 'PUT',
-						credentials: 'include',
-						headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-						body: JSON.stringify({ action: 'WAIT' })
-					});
-					if (res3.ok) {
-						showAutoSideNotice(`✅ ${robotName} 사이드 브레이크 ON`, 'rgba(22,163,74,0.92)');
-						_autoSideInProgress.delete(robotId);
-					} else {
-						showAutoSideNotice(`❌ ${robotName} 사이드 브레이크 명령 전송 실패`, 'rgba(220,38,38,0.92)');
-						_autoSideInProgress.delete(robotId);
-					}
-				} catch(e) {
-                    _autoSideInProgress.delete(robotId);
-                    showAutoSideNotice(`❌ ${robotName} 사이드 브레이크 명령 전송 실패`, 'rgba(220,38,38,0.92)');
-                }
-			}, 5000);
-
-		} catch(e) {
-            _autoSideInProgress.delete(robotId);
-            showAutoSideNotice(`❌ ${robotName} 사이드 브레이크 명령 전송 실패`, 'rgba(220,38,38,0.92)');
-        }
-	}
-	
 	// ── 개입 카드 진입 정보 캡처 + 표시 ──
     function captureInterventionEntry() {
         if (!/\/driving\/\d+/.test(location.pathname)) return;
@@ -6535,7 +3917,7 @@
 				if (switchEl) {
 					const input = switchEl.querySelector('input[type="checkbox"]');
 					const isOn = input ? input.checked : switchEl.getAttribute('aria-checked') === 'true';
-					if (isOn && !isOfflineMode()) {
+					if (isOn) {
 						switchEl.querySelector('label')?.click() || switchEl.click();
 					}
 				}
@@ -6908,7 +4290,6 @@
 	    let presetBusy = false;
 	    const applyPreset = async () => {
 	        if (presetBusy) return;
-	        if (isOfflineMode()) { showPresetNotice('오프라인 모드: 프리셋 적용이 차단되었습니다', 2000, true); return; }
 	        const p = loadPreset();
 	        if (!p) {                                   // 저장된 프리셋이 없으면 설정 토스트를 열어 안내
 	            openPresetPanel();
@@ -7050,7 +4431,6 @@
 
 	    setInterval(() => {
 			if(isDpadBindingOff()) return;
-			if (isOfflineMode()) { resetDpadUp(); return; }   // 오프라인: D-pad 단축키/프리셋(NCC 화면 조작) 전체 중지
 	        const gp = navigator.getGamepads()[0];
 	        if (!gp) { resetDpadUp(); return; }
 	        const isDrivingPage = location.href.includes('/remote/multiple/driving/')
@@ -7266,7 +4646,6 @@
         setTimeout(() => injectMapStyle(), 3000);
         setTimeout(() => injectMapStyle(), 6000);
     }
-    setTimeout(() => initDriveTheme(), 1000);
     
     if (localStorage.getItem('neubie_user_name')) {
         syncTasksFromServer();
