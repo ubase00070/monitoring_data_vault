@@ -674,7 +674,11 @@
     const BATT_STAGGER_MS = 1000;               // iframe 순차 오픈 간격
     const BATT_READ_TIMEOUT_MS = 20000;         // 기체 1대 최대 대기
     const BATT_POLL_MS = 500;                   // iframe DOM 확인 주기
-    const BATT_STABLE_POLLS = 3;                // '대기 중/OFF'는 같은 값이 연속 N번 읽혀야 확정 (로딩 중 빈 값 오판 방지)
+    // 페이지가 막 뜬 직후에는 기체명만 먼저 나오고 원격 데이터(웹소켓)가 아직 안 와서 'OFF'(꺼짐, 임무 '-')처럼 보이는
+    // 구간이 있다. 그래서 '순찰/충전'처럼 데이터가 와야만 나오는 값은 즉시 확정하고,
+    // 'OFF/대기'처럼 로딩 중 기본값과 구별이 안 되는 값은 같은 값이 일정 시간 유지돼야 확정한다.
+    const BATT_OFF_CONFIRM_MS = 3000;
+    const BATT_IDLE_CONFIRM_MS = 3000;
     const BATT_STALE_MS = 10 * 60 * 1000;       // 이보다 오래된 값이면 팝업을 열 때 자동 조회
     const BATT_CACHE_KEY = 'neubie_batt_cache';
     const BATT_NEXT_KEY = 'neubie_batt_next_at';
@@ -757,7 +761,7 @@
             f.style.cssText = 'position:fixed; left:0; top:0; width:1440px; height:900px; border:0; opacity:0; pointer-events:none; z-index:-1;';
             f.src = `${location.origin}/ko/monitoring/${c.monitoringId}`;
 
-            let done = false, lastKey = '', stable = 0;
+            let done = false, lastKey = '', stableSince = 0;
             let poll = null, killer = null;
             const finish = (r) => {
                 if (done) return;
@@ -773,11 +777,11 @@
                 try { doc = f.contentDocument; } catch (e) { finish({ ok: false }); return; }   // 교차 출처/차단
                 if (!doc || !doc.body) return;
                 const r = parseBatterySidebar(doc, c.keyword);
-                if (!r) { lastKey = ''; stable = 0; return; }
+                if (!r) { lastKey = ''; stableSince = 0; return; }
                 const key = `${r.status}|${r.battery}`;
-                stable = (key === lastKey) ? stable + 1 : 1;
-                lastKey = key;
-                if (r.definitive || stable >= BATT_STABLE_POLLS) finish({ ok: true, status: r.status, battery: r.battery });
+                if (key !== lastKey) { lastKey = key; stableSince = Date.now(); }
+                const need = r.status === 'OFF' ? BATT_OFF_CONFIRM_MS : BATT_IDLE_CONFIRM_MS;
+                if (r.definitive || Date.now() - stableSince >= need) finish({ ok: true, status: r.status, battery: r.battery });
             }, BATT_POLL_MS);
 
             document.body.appendChild(f);
@@ -846,7 +850,8 @@
             item.style.borderLeft = `5px solid ${st.border}`;
             nameEl.textContent = `${st.icon} ${c.name}`;
             valEl.textContent = hasBat ? `${r.battery}% · ${r.status}` : r.status;
-            valEl.style.color = hasBat ? barColor : '#888';
+            // 순찰 중은 배터리 잔량과 무관하게 파란색 글씨로 통일
+            valEl.style.color = r.status === '순찰 중' ? (T.isDark ? '#60a5fa' : '#2563eb') : (hasBat ? barColor : '#888');
             if (fillEl) { fillEl.style.width = hasBat ? `${r.battery}%` : '0%'; fillEl.style.background = barColor; }
         });
 
