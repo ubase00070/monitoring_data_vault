@@ -262,7 +262,7 @@
         isTaskVisible: localStorage.getItem('neubie_opt_task') === 'true',
         lastBatteryData: [],
         myTodayTasks: JSON.parse(localStorage.getItem('neubie_my_tasks') || "[]"),
-        monitorSchedule: null,
+        insuData: null,
     };
 
 	
@@ -684,10 +684,10 @@
     const BATT_NEXT_KEY = 'neubie_batt_next_at';
     const BATT_STATUS_STYLE = {
         '순찰 중':  { icon: '🔵', border: '#3b82f6' },
-        '충전 중':  { icon: '⚡', border: '#fbbf24' },
-        '대기 중':  { icon: '🟢', border: '#22c55e' },
-        'OFF':      { icon: '🔌', border: '#666' },
-        '확인 불가': { icon: '⚪', border: '#666' },
+        '충전 중':  { icon: '🟢', border: '#22c55e' },
+        '대기 중':  { icon: '⚪', border: '#9ca3af' },
+        'OFF':      { icon: '⚫', border: '#4b5563' },
+        '확인 불가': { icon: '❔', border: '#666' },
     };
     let _battRunning = false;
     let _battDone = 0;
@@ -745,8 +745,10 @@
         const charging = !!power.row.querySelector('svg, img') || /⚡|충전/.test(power.val);
         if (charging) return { status: '충전 중', battery, definitive: true };
 
+        // 임무 진행에 순찰 / 대기장소 / 스테이션이 보이면 순찰 시나리오 안에서 움직이는 중이다
+        // (대기장소·스테이션 = 순찰 중 복귀 이동). 모두 '순찰 중'으로 취급한다.
         const mission = labels['임무 진행'] ? readRow(labels['임무 진행']) : null;
-        if (mission && mission.val.includes('순찰')) return { status: '순찰 중', battery, definitive: true };
+        if (mission && /순찰|대기장소|스테이션/.test(mission.val)) return { status: '순찰 중', battery, definitive: true };
         return { status: '대기 중', battery, definitive: false };
     }
 
@@ -839,19 +841,27 @@
             }
             if (!r) {
                 item.style.borderLeft = '5px solid #666';
-                nameEl.textContent = `⚪ ${c.name}`;
+                nameEl.textContent = `❔ ${c.name}`;
                 valEl.textContent = '조회 전'; valEl.style.color = '#888';
                 if (fillEl) { fillEl.style.width = '0%'; fillEl.style.background = '#666'; }
                 return;
             }
             const st = BATT_STATUS_STYLE[r.status] || BATT_STATUS_STYLE['확인 불가'];
             const hasBat = r.battery != null;
-            const barColor = !hasBat ? '#666' : (r.battery >= 50 ? '#22c55e' : (r.battery >= 20 ? '#f59e0b' : '#ef4444'));
+            // 색 규칙: 순찰 중=파랑 글씨(막대는 잔량색으로 저배터리 경고 유지), 충전 중=잔량과 무관하게 녹색,
+            //         대기 중=회색, OFF=검정 계열
+            const levelColor = !hasBat ? '#666' : (r.battery >= 50 ? '#22c55e' : (r.battery >= 20 ? '#f59e0b' : '#ef4444'));
+            const textColor = {
+                '순찰 중': T.isDark ? '#60a5fa' : '#2563eb',
+                '충전 중': '#22c55e',
+                '대기 중': T.isDark ? '#b0b5bd' : '#6b7280',
+                'OFF':     T.isDark ? '#6b7280' : '#1f2937',
+            }[r.status] || '#888';
+            const barColor = r.status === '충전 중' ? '#22c55e' : (r.status === '대기 중' ? '#9ca3af' : levelColor);
             item.style.borderLeft = `5px solid ${st.border}`;
             nameEl.textContent = `${st.icon} ${c.name}`;
             valEl.textContent = hasBat ? `${r.battery}% · ${r.status}` : r.status;
-            // 순찰 중은 배터리 잔량과 무관하게 파란색 글씨로 통일
-            valEl.style.color = r.status === '순찰 중' ? (T.isDark ? '#60a5fa' : '#2563eb') : (hasBat ? barColor : '#888');
+            valEl.style.color = textColor;
             if (fillEl) { fillEl.style.width = hasBat ? `${r.battery}%` : '0%'; fillEl.style.background = barColor; }
         });
 
@@ -1028,24 +1038,11 @@
         return 20 * 60 * 1000;                                             // 11:00~18:00
     }
 
-    // daily_tasks 의 monitoring 항목으로 24시간 로테이션 시간표(메인/서브)를 만든다.
-    // (전임자/후임자 표기와 순찰 감지 폴백이 이 시간표를 쓴다)
-    function buildMonitorSchedule(data) {
-        const schedule = {}, subSchedule = {};
-        data.forEach(t => {
-            if (t && t.type === 'monitoring' && /^\d{2}:\d{2}$/.test(t.rawTime || '')) {
-                schedule[t.rawTime] = t.user || '';
-                subSchedule[t.rawTime] = t.subUser || '';
-            }
-        });
-        return { schedule, subSchedule };
-    }
-
     // 받아 둔 데이터로 화면·알림을 처리한다 (네트워크 없음) — 서버에서 새로 받았을 때와, 받아 둔 데이터를 매분 다시 계산할 때 공용
-    function applyTaskData(data) {
+    function applyTaskData(data, insu) {
         if (!Array.isArray(data)) throw new Error('tasks 응답 형식 오류');   // 서버 오류 응답이 정상 데이터를 덮어쓰지 않게 함
         const myName = localStorage.getItem('neubie_user_name');
-        state.monitorSchedule = buildMonitorSchedule(data);
+        state.insuData = insu;
         window.currentAllTasks = data; // 인계 체인(전임자/후임자) 조회용 — 필터링 전 전체 목록
 
         const myTasks = data.filter(t => {
@@ -1077,22 +1074,27 @@
         }
 
         // 이미 받아 둔 데이터가 있고 아직 새로 받을 때가 아니면 → 네트워크 없이 그 데이터로만 다시 계산
-        const hasCache = Array.isArray(window.currentAllTasks);
+        const hasCache = Array.isArray(window.currentAllTasks) && !!state.insuData;
         if (!force && hasCache && (Date.now() - _lastTaskSyncAt) < getTaskSyncIntervalMs() - TASK_SYNC_TOLERANCE_MS) {
-            try { applyTaskData(window.currentAllTasks); } catch (e) { console.log('Local apply failed'); }
+            try { applyTaskData(window.currentAllTasks, state.insuData); } catch (e) { console.log('Local apply failed'); }
             return;
         }
         _lastTaskSyncAt = Date.now();
 
         // daily_tasks는 서버리스 프록시(api/tasks) 경유 — GitHub Contents API를
         // 인증된 채로 직접 조회해서 raw.githubusercontent.com의 CDN 캐시 지연(몇 분)을
-        // 우회함.
+        // 우회함. insu_data는 변동이 잦지 않아 기존 raw 방식 그대로 유지.
         // ※ api/tasks 에는 ?t=Date.now() 나 cache:'no-store' 를 붙이지 않는다 — 서버가 시간대별로 CDN 캐시(08:30~10:00 3초 / 그 외 60초)를
         //   걸어 두었는데, URL 이 매번 달라지면 그 캐시가 무력화되어 모든 PC 의 요청이 함수 실행으로 이어진다.
         const dataUrl = 'https://multimonitoring.vercel.app/api/tasks';
+		const insuUrl = `https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/insu_data.json?t=${Date.now()}`;
 
-        fetch(dataUrl).then(r => r.json()).then(data => {
-            applyTaskData(data);
+        // daily_tasks + insu_data 병렬 fetch
+        Promise.all([
+            fetch(dataUrl).then(r => r.json()),
+            fetch(insuUrl, {cache: 'no-store'}).then(r => r.json()),
+        ]).then(([data, insu]) => {
+            applyTaskData(data, insu);
         }).catch(err => {
             _lastTaskSyncAt = 0;   // 실패하면 다음 분에 바로 다시 시도 (기존과 동일)
             console.log("Sync failed");
@@ -1239,9 +1241,9 @@
         const key = getHandoverGroupKey(myTask);
         if (!key) return null;
 
-        // '다중 모니터링'은 개인별 할일 매칭이 아니라, monitoring 항목으로 만든
-        // 24시간 로테이션 표(state.monitorSchedule.schedule)가 진짜 출처 —
-        // 개인별 항목으로 앞뒤를 찾으면 "본인 → 본인" 같은 오류가 생길 수 있다.
+        // '다중 모니터링'은 daily_tasks(개인별 할일)가 아니라 insu_data.json의
+        // 24시간 로테이션 표(schedule)가 진짜 출처 — 이걸 안 쓰면 개인별 항목
+        // 매칭 오차로 "본인 → 본인" 같은 오류가 생길 수 있다.
         if (key === '다중 모니터링') {
             const timeMatch = String(myTask.rawTime || myTask.time).match(/\d{2}:\d{2}/);
             if (!timeMatch) return null;
@@ -1261,15 +1263,15 @@
                 if (hourNum === 6) {
                     const snap = allTasks.find(t => t.type === 'next_0700_handover' && t.prevUser === myTask.user);
                     if (snap) {
-                        const prevSchedule = (state.monitorSchedule && state.monitorSchedule.schedule) ? state.monitorSchedule.schedule['05:00'] : null;
+                        const prevSchedule = (state.insuData && state.insuData.schedule) ? state.insuData.schedule['05:00'] : null;
                         return { prev: prevSchedule || null, next: snap.selfUser || null };
                     }
                 }
                 // 스냅샷을 못 찾으면(구버전 데이터 등) 아래 스케줄 기반 계산으로 안전하게 폴백
             }
 
-            if (!state.monitorSchedule || !state.monitorSchedule.schedule) return null;
-            const schedule = state.monitorSchedule.schedule;
+            if (!state.insuData || !state.insuData.schedule) return null;
+            const schedule = state.insuData.schedule;
             const prevHourKey = String((hourNum - 1 + 24) % 24).padStart(2, '0') + ':00';
             const nextHourKey = String((hourNum + 1) % 24).padStart(2, '0') + ':00';
             return {
@@ -2469,11 +2471,11 @@
         const d = getKSTDate(), p = n => String(n).padStart(2, '0');
         return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
     };
-    // 표기용 이름: 교대 직전(=현시각 모니터링 요원) 시간표(state.monitorSchedule). :00~:02엔 직전 시각 담당자가 인계자.
+    // 표기용 이름: 교대 직전(=현시각 모니터링 요원) insu_data 스케줄. :00~:02엔 직전 시각 담당자가 인계자.
     const outgoingMonitorName = () => {
         const k = getKSTDate();
         const h = k.getMinutes() >= 40 ? k.getHours() : (k.getHours() + 23) % 24;
-        return state.monitorSchedule?.schedule?.[`${String(h).padStart(2, '0')}:00`] || '순찰 감지';
+        return state.insuData?.schedule?.[`${String(h).padStart(2, '0')}:00`] || '순찰 감지';
     };
     const gistFallback = async () => {
         const k = getKSTDate(), min = k.getMinutes();
