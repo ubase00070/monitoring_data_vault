@@ -1,6 +1,11 @@
 (function() {
     'use strict';
 
+    // 성남 배터리 조회용 숨김 iframe(data-nb-batt-probe) 안에서는 이 스크립트를 돌리지 않는다.
+    // (부모 페이지가 같은 origin의 iframe DOM을 직접 읽으므로 iframe 쪽 주입은 불필요하고,
+    //  Alt+Q 핸들러·fetch 가로채기 등이 중복 설치되는 것을 막는다. 다른 용도의 iframe에는 영향 없음)
+    try { if (window.frameElement && window.frameElement.hasAttribute('data-nb-batt-probe')) return; } catch (e) {}
+
     if (window.neubieEngineLoaded) return;
     window.neubieEngineLoaded = true;
 
@@ -31,10 +36,11 @@
        const config = {
         targetIds: ['44', '56', '65', '109'],
         batteryIds: [
-			{ id: '221', name: '성남 판교', shortName: '성남 판교' },
-			{ id: '222', name: '성남 서현', shortName: '성남 서현' },
-			{ id: '224', name: '성남 율동', shortName: '성남 율동' },
-			{ id: '223', name: '성남 야탑', shortName: '성남 야탑' }
+			// monitoringId = NCC 모니터링 페이지 번호(/ko/monitoring/N), keyword = 사이드바 기체명 검증용
+			{ id: '221', name: '성남 판교', shortName: '성남 판교', monitoringId: '142', keyword: '판교' },
+			{ id: '222', name: '성남 서현', shortName: '성남 서현', monitoringId: '145', keyword: '서현' },
+			{ id: '224', name: '성남 율동', shortName: '성남 율동', monitoringId: '144', keyword: '율동' },
+			{ id: '223', name: '성남 야탑', shortName: '성남 야탑', monitoringId: '143', keyword: '야탑' }
 		],
         sheetId: "1tLo6Xeq6KJx6zW-fcw8H38jdjxyS2yre5oWY7cxky70"
     };
@@ -613,6 +619,19 @@
         batteryPopup.appendChild(header);
         makeDraggable(header, batteryPopup);
 
+        // ── 상태줄(기준 시각/조회 상태) + 재조회 버튼(쿨다운 카운트다운) ──
+        const toolbar = document.createElement('div');
+        toolbar.style.cssText = `display:flex; justify-content:space-between; align-items:center; gap:8px; margin:-5px 0 10px;`;
+        const metaEl = document.createElement('span');
+        metaEl.id = 'neubie-battery-meta';
+        metaEl.style.cssText = `font-size:12px; color:${T.isDark ? '#9ca3af' : '#7a6f57'}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0;`;
+        const refreshBtn = document.createElement('button');
+        refreshBtn.id = 'neubie-battery-refresh';
+        refreshBtn.style.cssText = `border:none; border-radius:6px; height:24px; min-width:104px; padding:0 10px; font-size:13px; font-weight:bold; flex-shrink:0; transition:0.2s;`;
+        refreshBtn.onclick = () => runBatteryFetch();
+        toolbar.append(metaEl, refreshBtn);
+        batteryPopup.appendChild(toolbar);
+
         const list = document.createElement('div');
         list.id = 'neubie-battery-list';
         batteryPopup.appendChild(list);
@@ -640,28 +659,290 @@
             list.appendChild(item);
         });
         _batteryInitialized = true;
+        renderBatteryRows();   // 쉘을 다시 만들어도(테마 전환 등) 캐시된 값으로 즉시 복원 — 서버 요청 없음
     }
 
-    // 성남 배터리 현황: NCC를 조회하지 않는다 — 항상 '오프라인' 상태로만 표시한다.
+    // ══════════════════════════════════════════════════════════
+    //  성남 배터리 현황 — 화면(DOM) 읽기 방식 (코드에서 API를 호출하지 않음)
+    //  · 4개 기체 페이지(/ko/monitoring/N)를 같은 origin 숨김 iframe으로 1초 간격 순차 오픈
+    //  · 사이드바 텍스트(기체명 / 로봇 전원 / 임무 진행)가 확정되면 그 iframe은 즉시 제거
+    //  · 한 번 조회하면 BATT_COOLDOWN_MS(2분) 동안 재조회 불가. 다음 조회 가능 시각을 localStorage에
+    //    저장하므로 새로고침·다른 탭에서도 카운트가 이어지고, 그동안은 마지막으로 읽은 값을 그대로 보여준다.
+    //  · 실패/타임아웃된 기체는 그 자리에서 재시도하지 않고 '확인 불가'로 두며, 다음 조회 때 다시 시도한다.
+    // ══════════════════════════════════════════════════════════
+    const BATT_COOLDOWN_MS = 2 * 60 * 1000;     // 재조회 간격
+    const BATT_STAGGER_MS = 1000;               // iframe 순차 오픈 간격
+    const BATT_READ_TIMEOUT_MS = 20000;         // 기체 1대 최대 대기
+    const BATT_POLL_MS = 500;                   // iframe DOM 확인 주기
+    const BATT_STABLE_POLLS = 3;                // '대기 중/OFF'는 같은 값이 연속 N번 읽혀야 확정 (로딩 중 빈 값 오판 방지)
+    const BATT_STALE_MS = 10 * 60 * 1000;       // 이보다 오래된 값이면 팝업을 열 때 자동 조회
+    const BATT_CACHE_KEY = 'neubie_batt_cache';
+    const BATT_NEXT_KEY = 'neubie_batt_next_at';
+    const BATT_STATUS_STYLE = {
+        '순찰 중':  { icon: '🔵', border: '#3b82f6' },
+        '충전 중':  { icon: '⚡', border: '#fbbf24' },
+        '대기 중':  { icon: '🟢', border: '#22c55e' },
+        'OFF':      { icon: '🔌', border: '#666' },
+        '확인 불가': { icon: '⚪', border: '#666' },
+    };
+    let _battRunning = false;
+    let _battDone = 0;
+    let _battTicker = null;
+    const _battLoading = new Set();
+
+    // 사이드바 텍스트로 기체 상태를 읽는다. 아직 값이 확정되지 않았으면 null.
+    // 반환: { status, battery, definitive } — definitive=true면 즉시 확정, false면 연속 일치 확인 필요
+    function parseBatterySidebar(doc, keyword) {
+        if (!doc || !doc.body) return null;
+
+        const labels = {};
+        const walker = doc.createTreeWalker(doc.body, 4 /* SHOW_TEXT */);
+        let tn;
+        while ((tn = walker.nextNode())) {
+            const t = tn.nodeValue.trim();
+            if ((t === '로봇 전원' || t === '임무 진행') && !labels[t]) labels[t] = tn.parentElement;
+            if (labels['로봇 전원'] && labels['임무 진행']) break;
+        }
+        if (!labels['로봇 전원']) return null;
+
+        // 라벨 옆의 값 텍스트 (라벨만 감싼 래퍼면 한 단계 위로 올라가서 읽음)
+        const readRow = (labelEl) => {
+            let node = labelEl;
+            for (let i = 0; i < 3; i++) {
+                const row = node.parentElement;
+                if (!row) return null;
+                const val = row.textContent.replace(node.textContent.trim(), '').trim();
+                if (val || row.children.length > 1) return { row, val };
+                node = row;
+            }
+            return null;
+        };
+
+        const power = readRow(labels['로봇 전원']);
+        if (!power) return null;
+
+        // 사이드바 카드에 기대한 기체명이 있는지 확인 (탭/페이지가 엉뚱한 기체를 가리키는 경우 방지)
+        let card = power.row, titled = false;
+        for (let i = 0; i < 8 && card; i++, card = card.parentElement) {
+            if (card.textContent.includes(keyword)) { titled = true; break; }
+        }
+        if (!titled) return null;
+
+        const isOff = power.val.includes('꺼짐');
+        const isOn = power.val.includes('켜짐');
+        if (!isOff && !isOn) return null;   // '-' 등 아직 로딩 중
+
+        if (isOff) return { status: 'OFF', battery: null, definitive: false };
+
+        const m = power.val.match(/(\d{1,3})\s*%/);
+        if (!m) return null;                // 켜짐인데 배터리 값이 아직 없음
+        const battery = parseInt(m[1], 10);
+
+        const charging = !!power.row.querySelector('svg, img') || /⚡|충전/.test(power.val);
+        if (charging) return { status: '충전 중', battery, definitive: true };
+
+        const mission = labels['임무 진행'] ? readRow(labels['임무 진행']) : null;
+        if (mission && mission.val.includes('순찰')) return { status: '순찰 중', battery, definitive: true };
+        return { status: '대기 중', battery, definitive: false };
+    }
+
+    // 숨김 iframe으로 기체 1대를 읽고, 값이 확정되면(또는 타임아웃) iframe을 제거한다. 재시도 없음.
+    function readBatteryViaIframe(c) {
+        return new Promise(resolve => {
+            const f = document.createElement('iframe');
+            f.setAttribute('data-nb-batt-probe', c.id);
+            f.setAttribute('aria-hidden', 'true');
+            f.tabIndex = -1;
+            // display:none 이면 렌더가 지연될 수 있어, 정상 크기로 두고 투명 처리만 한다
+            f.style.cssText = 'position:fixed; left:0; top:0; width:1440px; height:900px; border:0; opacity:0; pointer-events:none; z-index:-1;';
+            f.src = `${location.origin}/ko/monitoring/${c.monitoringId}`;
+
+            let done = false, lastKey = '', stable = 0;
+            let poll = null, killer = null;
+            const finish = (r) => {
+                if (done) return;
+                done = true;
+                clearInterval(poll);
+                clearTimeout(killer);
+                f.remove();
+                resolve(r);
+            };
+            killer = setTimeout(() => finish({ ok: false }), BATT_READ_TIMEOUT_MS);
+            poll = setInterval(() => {
+                let doc;
+                try { doc = f.contentDocument; } catch (e) { finish({ ok: false }); return; }   // 교차 출처/차단
+                if (!doc || !doc.body) return;
+                const r = parseBatterySidebar(doc, c.keyword);
+                if (!r) { lastKey = ''; stable = 0; return; }
+                const key = `${r.status}|${r.battery}`;
+                stable = (key === lastKey) ? stable + 1 : 1;
+                lastKey = key;
+                if (r.definitive || stable >= BATT_STABLE_POLLS) finish({ ok: true, status: r.status, battery: r.battery });
+            }, BATT_POLL_MS);
+
+            document.body.appendChild(f);
+        });
+    }
+
+    function loadBatteryCache() {
+        try {
+            const o = JSON.parse(localStorage.getItem(BATT_CACHE_KEY));
+            return (o && o.rows) ? o : { rows: {} };
+        } catch (e) { return { rows: {} }; }
+    }
+    function saveBatteryRow(id, row) {
+        const cache = loadBatteryCache();
+        cache.rows[id] = row;
+        try { localStorage.setItem(BATT_CACHE_KEY, JSON.stringify(cache)); } catch (e) {}
+    }
+    // 다음 조회까지 남은 ms (시계가 어긋나 있어도 최대 쿨다운 길이로 제한)
+    function getBatteryCooldownMs() {
+        const next = parseInt(localStorage.getItem(BATT_NEXT_KEY), 10) || 0;
+        return Math.min(BATT_COOLDOWN_MS, Math.max(0, next - Date.now()));
+    }
+    function latestBatteryReadAt(cache) {
+        return Object.values((cache || loadBatteryCache()).rows).reduce((mx, r) => Math.max(mx, (r && r.at) || 0), 0);
+    }
+
+    // 캐시(마지막으로 읽은 값)를 화면에 그리고 복사용 데이터(state.lastBatteryData)를 갱신한다. 서버 요청 없음.
+    function renderBatteryRows() {
+        const cache = loadBatteryCache();
+        const T = getNbTheme();
+
+        state.lastBatteryData = config.batteryIds.map(c => {
+            const r = cache.rows[c.id];
+            return {
+                shortName: c.shortName,
+                battery: (r && r.battery != null) ? `${r.battery}%` : '- %',
+                statusText: r ? r.status : '확인 불가',
+            };
+        });
+
+        config.batteryIds.forEach(c => {
+            const item = batteryPopup.querySelector(`[data-battery-id="${c.id}"]`);
+            if (!item) return;
+            const nameEl = item.querySelector('.bat-name');
+            const valEl = item.querySelector('.bat-val');
+            const fillEl = item.querySelector('.bat-bar-fill');
+            const r = cache.rows[c.id];
+
+            if (_battLoading.has(c.id)) {
+                item.style.borderLeft = '5px solid #666';
+                nameEl.textContent = `⏳ ${c.name}`;
+                valEl.textContent = '조회 중…'; valEl.style.color = '#888';
+                if (fillEl) { fillEl.style.width = '0%'; fillEl.style.background = '#666'; }
+                return;
+            }
+            if (!r) {
+                item.style.borderLeft = '5px solid #666';
+                nameEl.textContent = `⚪ ${c.name}`;
+                valEl.textContent = '조회 전'; valEl.style.color = '#888';
+                if (fillEl) { fillEl.style.width = '0%'; fillEl.style.background = '#666'; }
+                return;
+            }
+            const st = BATT_STATUS_STYLE[r.status] || BATT_STATUS_STYLE['확인 불가'];
+            const hasBat = r.battery != null;
+            const barColor = !hasBat ? '#666' : (r.battery >= 50 ? '#22c55e' : (r.battery >= 20 ? '#f59e0b' : '#ef4444'));
+            item.style.borderLeft = `5px solid ${st.border}`;
+            nameEl.textContent = `${st.icon} ${c.name}`;
+            valEl.textContent = hasBat ? `${r.battery}% · ${r.status}` : r.status;
+            valEl.style.color = hasBat ? barColor : '#888';
+            if (fillEl) { fillEl.style.width = hasBat ? `${r.battery}%` : '0%'; fillEl.style.background = barColor; }
+        });
+
+        updateBatteryToolbar(cache, T);
+    }
+
+    // 기준 시각 / 조회 진행 상황 / 재조회 버튼(카운트다운)
+    function updateBatteryToolbar(cache, T) {
+        const metaEl = batteryPopup.querySelector('#neubie-battery-meta');
+        const btn = batteryPopup.querySelector('#neubie-battery-refresh');
+        if (!metaEl || !btn) return;
+        cache = cache || loadBatteryCache();
+        T = T || getNbTheme();
+
+        const latest = latestBatteryReadAt(cache);
+        if (_battRunning) metaEl.textContent = `조회 중… (${_battDone}/${config.batteryIds.length})`;
+        else if (latest) metaEl.textContent = `기준 ${new Date(latest).toLocaleTimeString('ko-KR', { hour12: false })}`;
+        else metaEl.textContent = '조회 기록 없음';
+
+        const cd = getBatteryCooldownMs();
+        const canRun = !_battRunning && cd === 0;
+        if (_battRunning) btn.textContent = '조회 중…';
+        else if (cd > 0) {
+            const s = Math.ceil(cd / 1000);
+            btn.textContent = `재조회 ${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+        } else btn.textContent = '재조회';
+
+        btn.disabled = !canRun;
+        btn.style.background = canRun ? '#10b981' : (T.isDark ? '#3a3a3a' : '#cbbd98');
+        btn.style.color = canRun ? '#fff' : (T.isDark ? '#8b8b8b' : '#7a6f57');
+        btn.style.cursor = canRun ? 'pointer' : 'not-allowed';
+    }
+
+    // 팝업이 열려있는 동안만 1초마다 카운트다운 갱신 (닫히면 스스로 멈춤)
+    function startBatteryTicker() {
+        if (_battTicker) return;
+        _battTicker = setInterval(() => {
+            if (batteryPopup.style.display !== 'block') {
+                clearInterval(_battTicker);
+                _battTicker = null;
+                return;
+            }
+            updateBatteryToolbar();
+        }, 1000);
+    }
+
+    async function runBatteryFetch() {
+        if (_battRunning || getBatteryCooldownMs() > 0) return;
+        _battRunning = true;
+        _battDone = 0;
+        // 실행 시작 즉시 잠금 — 조회 도중 새로고침/다른 탭에서도 재조회가 열리지 않게 한다
+        localStorage.setItem(BATT_NEXT_KEY, String(Date.now() + BATT_COOLDOWN_MS));
+        config.batteryIds.forEach(c => _battLoading.add(c.id));
+        renderBatteryRows();
+
+        try {
+            await Promise.all(config.batteryIds.map(async (c, i) => {
+                await new Promise(r => setTimeout(r, i * BATT_STAGGER_MS));
+                let res = null;
+                try { res = await readBatteryViaIframe(c); } catch (e) { res = null; }
+                saveBatteryRow(c.id, (res && res.ok)
+                    ? { status: res.status, battery: res.battery, at: Date.now() }
+                    : { status: '확인 불가', battery: null, at: Date.now() });
+                _battLoading.delete(c.id);
+                _battDone++;
+                renderBatteryRows();
+            }));
+        } finally {
+            _battRunning = false;
+            _battLoading.clear();
+            // 마지막 iframe이 제거된 시점부터 2분
+            localStorage.setItem(BATT_NEXT_KEY, String(Date.now() + BATT_COOLDOWN_MS));
+            renderBatteryRows();
+        }
+    }
+
+    // 다른 탭이 조회한 결과/쿨다운도 열려있는 팝업에 반영
+    window.addEventListener('storage', (e) => {
+        if ((e.key === BATT_CACHE_KEY || e.key === BATT_NEXT_KEY) && batteryPopup.style.display === 'block') renderBatteryRows();
+    });
+
+    // 팝업을 열 때 호출: 마지막으로 읽은 값을 보여주고, 값이 없거나 너무 오래됐고 쿨다운도 끝났을 때만 자동 조회
     function updateBatteryStatus() {
         if (batteryPopup.dataset.dragging === 'true') return;
 
         if (!_batteryInitialized || !batteryPopup.querySelector('#neubie-battery-list')) {
             buildBatteryShell();
+        } else {
+            renderBatteryRows();
         }
 
-        state.lastBatteryData = [];
-        config.batteryIds.forEach(c => {
-            state.lastBatteryData.push({ shortName: c.shortName, battery: '- %', statusText: '오프라인' });
-            const item = batteryPopup.querySelector(`[data-battery-id="${c.id}"]`);
-            if (!item) return;
-            item.style.borderLeft = '5px solid #666';
-            item.querySelector('.bat-name').textContent = `🔌 ${c.name}`;
-            const valEl = item.querySelector('.bat-val');
-            valEl.textContent = '오프라인'; valEl.style.color = '#888';
-            const fillEl = item.querySelector('.bat-bar-fill');
-            if (fillEl) { fillEl.style.width = '0%'; fillEl.style.background = '#666'; }
-        });
+        const latest = latestBatteryReadAt();
+        if (!_battRunning && getBatteryCooldownMs() === 0 && (!latest || Date.now() - latest > BATT_STALE_MS)) {
+            runBatteryFetch();
+        }
+        startBatteryTicker();
     }
 
     function copyToClipboard(btn) {
@@ -1467,7 +1748,7 @@
 
         const title = document.createElement('h2');
         title.textContent = "API 호출 전혀 없습니다";
-        title.style.cssText = `${NCC_TITLE_GRADIENT} font-size:21px; margin:0; font-weight:bold; white-space:nowrap;`;
+        title.style.cssText = `${NCC_TITLE_GRADIENT} font-size:21px; margin:0; font-weight:bold; white-space:nowrap; min-width:0; overflow:hidden; text-overflow:ellipsis;`;
 
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
 		// 문자열을 넣으면 패치노트에 빨간 '`' 뱃지가 점멸하며 뜸.
@@ -1506,7 +1787,7 @@
 			position:relative;
             background:transparent; border:1px solid ${T.border}; color:${T.text};
             border-radius:6px; padding:4px 10px; cursor:pointer;
-            font-size:14px; margin-left:6px; vertical-align:middle; white-space:nowrap;
+            font-size:14px; margin-left:6px; vertical-align:middle; white-space:nowrap; flex-shrink:0;
             transition:all 0.2s;
         `;
 		
@@ -1583,7 +1864,6 @@
             patchBox.appendChild(patchClose);
             patchBox.appendChild(patchTitle);
             patchBox.appendChild(patchContent);
-            weatherCard.style.outline = 'none';
             showSharedPopup('patch', patchBox);
         };
 
@@ -1601,10 +1881,33 @@
             <button id="all-close-btn" style="background:#ef4444; color:white; border:none; border-radius:4px; width:26px; height:26px; cursor:pointer; font-weight:bold; display:flex; align-items:center; justify-content:center; font-size:14px; box-sizing:border-box;">✕</button>
         `;
 
+        // ── 다크/라이트 토글 (패치노트 옆, 누르면 이모지가 바뀜) ──
+        const themeBtn = document.createElement('button');
+        themeBtn.textContent = T.isDark ? '🌙' : '☀️';
+        themeBtn.title = T.isDark ? '다크 모드 (클릭: 라이트로 전환)' : '라이트 모드 (클릭: 다크로 전환)';
+        themeBtn.style.cssText = `
+            background:transparent; border:1px solid ${T.border}; color:${T.text};
+            border-radius:6px; padding:3px 7px; cursor:pointer; flex-shrink:0;
+            font-size:14px; line-height:1.3; margin-left:5px; vertical-align:middle;
+            transition:all 0.2s;
+        `;
+        themeBtn.onmouseenter = () => { themeBtn.style.borderColor = GREEN_HOVER; };
+        themeBtn.onmouseleave = () => { themeBtn.style.borderColor = T.border; };
+        themeBtn.onclick = () => {
+            localStorage.setItem('neubie_theme', T.isDark ? 'light' : 'dark');
+            ['neubie-shared-popup', 'neubie-secret-overlay'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.remove();
+            });
+            buildBatteryShell();   // 성남 배터리 팝업도 새 테마로 (캐시된 값 그대로 복원, 서버 요청 없음)
+            renderDashboard();
+        };
+
         const titleWrap = document.createElement('div');
-        titleWrap.style.cssText = "display:flex; align-items:center; gap:0;";
+        titleWrap.style.cssText = "display:flex; align-items:center; gap:0; min-width:0;";
         titleWrap.appendChild(title);
         titleWrap.appendChild(patchBtn);
+        titleWrap.appendChild(themeBtn);
 
         const gamepadToggleUI = createToggleRow('🎮', '패드 키변경/테스트', !isDpadBindingOff(),
             (on) => {
@@ -1920,7 +2223,6 @@
             mapInfoBox.appendChild(mapInfoClose);
             mapInfoBox.appendChild(mapInfoTitle);
             mapInfoBox.appendChild(mapInfoContent);
-            weatherCard.style.outline = 'none';
             showSharedPopup('map-info', mapInfoBox);
         };
 
@@ -2014,7 +2316,6 @@
             queueInfoBox.appendChild(queueInfoClose);
             queueInfoBox.appendChild(queueInfoTitle);
             queueInfoBox.appendChild(queueInfoContent);
-            weatherCard.style.outline = 'none';
             showSharedPopup('queue-info', queueInfoBox);
         };
 
@@ -2063,28 +2364,6 @@
             }
         };
 
-        const weatherCard = document.createElement('div');
-        weatherCard.style.cssText = `
-            position:relative; min-height:52px; border-radius:10px; cursor:pointer;
-            background:${T.card}; border:1px solid #86efac;
-            box-shadow:0 0 6px rgba(134,239,172,0.35), inset 0 0 8px rgba(134,239,172,0.1);
-            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
-            padding:7px 4px; box-sizing:border-box; transition:box-shadow 0.15s;
-        `;
-        weatherCard.innerHTML = `<span style="font-size:16px;">🎨</span>
-            <span style="font-size:14px; font-weight:600; line-height:1.2; text-align:center; color:${T.text};">다크/라이트 모드</span>`;
-        window._neubieWeatherCard = weatherCard;
-        attachStaticNeonHover(weatherCard, '134,239,172');
-        weatherCard.onclick = () => {
-            const isActive = weatherCard.style.outline !== 'none' && weatherCard.style.outline !== '';
-            weatherCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
-            if (!isActive) {
-                openDriveThemeOverlay();
-            } else {
-                hideSharedPopup();
-            }
-        };
-
         const toggleCol = document.createElement('div');
         toggleCol.style.cssText = "flex:1.3; display:flex; flex-direction:column; gap:6px;";
         toggleCol.appendChild(mapToggle);    // 맵 최적화 기능 (ON/OFF)
@@ -2093,9 +2372,9 @@
 
         const navGrid = document.createElement('div');
         navGrid.style.cssText = "flex:1; display:grid; grid-template-columns:repeat(2, 1fr); grid-template-rows:repeat(2, 1fr); gap:6px;";
-        navGrid.appendChild(weatherCard);   // 레이아웃 설정
+        batteryCard.style.gridColumn = 'span 2';    // 카드 2개 구성 — 각각 한 줄 전체 폭
         navGrid.appendChild(batteryCard);   // 성남 배터리
-        scheduleCard.style.gridColumn = 'span 2';   // 카드 3개 구성 — 스케줄표는 아래 줄 전체 폭
+        scheduleCard.style.gridColumn = 'span 2';
         navGrid.appendChild(scheduleCard);  // 스케줄표
 
         bottomRow.appendChild(toggleCol);
@@ -2134,7 +2413,7 @@
                 batteryPopup.style.bottom = 'auto';
             }
 
-            // 열 때마다 호출하지만 서버 요청은 없다 (항상 '오프라인' 표시)
+            // 마지막으로 읽은 값을 표시. 값이 없거나 10분 넘게 오래됐고 쿨다운이 끝났을 때만 자동 조회
             updateBatteryStatus();
             batteryPopup.style.display = 'block';
 
@@ -2156,7 +2435,6 @@
         if (sharedPopup) sharedPopup.style.display = 'none';
         const secretOverlay = document.getElementById('neubie-secret-overlay');
         if (secretOverlay) secretOverlay.style.display='none';
-        if (window._neubieWeatherCard) window._neubieWeatherCard.style.outline = 'none';
     }
 
     // ── 유효성 검증 (1시간 이내 데이터) ──
@@ -3494,49 +3772,6 @@
                 })
                 .catch(()=>{ status.textContent='로드 실패'; dot.style.background='#ef4444'; });
             }
-
-            window.openDriveThemeOverlay = function() {
-                const T = getNbTheme();
-                const nbThemeName = localStorage.getItem('neubie_theme') || 'dark';
-
-                const box = document.createElement('div');
-                box.style.cssText = `background:${T.card}; color:${T.text}; border-radius:16px; padding:20px; width:100%; box-sizing:border-box; box-shadow:0 4px 40px rgba(0,0,0,0.7); pointer-events:auto;`;
-                box.innerHTML = `
-                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-                        <span style="font-size:16px;font-weight:700;">🎨 다크/라이트 모드 설정</span>
-                        <button id="dto-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
-                    </div>
-
-                    <div style="font-size:13px;font-weight:600;margin-bottom:6px;">ALT+Q 레이아웃</div>
-                    <div style="font-size:11px;color:#94a3b8;margin-bottom:8px;">핸드오버/대시보드 등 도구 전반의 화면 톤입니다.</div>
-                    <div style="display:flex; gap:8px; margin-bottom:18px;">
-                        <button data-nbt="dark" style="flex:1; padding:10px; border-radius:8px; border:1px solid ${nbThemeName==='dark'?'#4f8ef7':T.border}; background:${nbThemeName==='dark'?'#1e3a8a33':'transparent'}; color:${T.text}; cursor:pointer; font-size:13px;">🌙 다크</button>
-                        <button data-nbt="light" style="flex:1; padding:10px; border-radius:8px; border:1px solid ${nbThemeName==='light'?'#4f8ef7':T.border}; background:${nbThemeName==='light'?'#1e3a8a33':'transparent'}; color:${T.text}; cursor:pointer; font-size:13px;">☀️ 라이트</button>
-                    </div>
-                `;
-                box.querySelector('#dto-close').onclick = () => {
-                    window.hideSharedPopup();
-                    if (window._neubieWeatherCard) window._neubieWeatherCard.style.outline = 'none';
-                };
-
-                // ALT+Q 레이아웃 색상 토글 (기존 themeBtn 로직 그대로 이식)
-                box.querySelectorAll('[data-nbt]').forEach(btn => {
-                    btn.onclick = () => {
-                        const next = btn.dataset.nbt;
-                        localStorage.setItem('neubie_theme', next);
-                        ['neubie-shared-popup', 'neubie-secret-overlay'].forEach(id => {
-                            const el = document.getElementById(id);
-                            if (el) el.remove();
-                        });
-                        buildBatteryShell();
-                        renderDashboard();
-                        openDriveThemeOverlay();   // 자기 자신은 유지한 채 선택 표시만 갱신
-                    };
-                });
-
-
-                window.showSharedPopup('drivetheme', box);
-            };
 
             window.openGamepadMenuOverlay = function() {
                 const T = getNbTheme();
