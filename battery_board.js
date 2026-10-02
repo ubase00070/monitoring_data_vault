@@ -1347,7 +1347,7 @@
                             </div>
                             <div class="bb-scroll bb-list" id="bb-list" data-empty="해당 기체 없음"></div>
                         </div>
-                        <!-- 4열: 배달 기체 (DELIVERY_SITE_IDS) -->
+                        <!-- 4열: 배달 기체 (DELIVERY_SITE_IDS + ROBOT_KIND_OVERRIDE 의 'delivery') -->
                         <div class="bb-mid">
                             <div class="bb-colhd deliv" id="bb-hd-deliv"><span class="t">배달 기체</span><span class="n">0</span></div>
                             <div class="bb-scroll bb-sec-deliv" id="bb-col-deliv" data-empty="배달 기체 없음" title="배달 기체 (사이트 기준 자동 분류)"></div>
@@ -1504,6 +1504,24 @@
     const DELIVERY_TYPES = ['ALL', 'OPENAPI_DELIVERY', 'NB_ORDER_DELIVERY', 'DELIVERY'];
     const FORCE_PATROL_SITE_IDS = [24];   // 삼성인력개발원
 	const DELIVERY_SITE_IDS = [25,27,44,47,48,53,56,65,86,109,118,141,171,180,207,241,250,256,265];
+
+    // ============================================================
+    // 기체별 순찰/배달 지정 (사이트 기본 분류보다 항상 우선)
+    //  - 순찰·배달 겸용 사이트(예: 250)처럼, 사이트 단위 분류로는 맞지 않는 기체만 여기에 적는다.
+    //  - 키 = 기체 id (이름이 바뀌어도 변하지 않음), 값 = 'delivery'(배달 기체 그리드) | 'patrol'(순찰 기체 그리드)
+    //  - 여기에 없는 기체는 기존 규칙(FORCE_PATROL_SITE_IDS / serviceType / DELIVERY_SITE_IDS) 그대로
+    //  - 예)  '12345': 'delivery',   // 250 ○○ 1호기
+    //         '12346': 'patrol',     // 250 ○○ 2호기
+    // ============================================================
+    const ROBOT_KIND_OVERRIDE = {
+        // 여기에 기체 id를 추가하세요
+    };
+    // → 'delivery' | 'patrol' | null(지정 없음). raw 객체 또는 기체 id(문자열/숫자) 모두 받음
+    function kindOverride(rawOrId) {
+        const id = (rawOrId && typeof rawOrId === 'object') ? rawOrId.id : rawOrId;
+        const k = ROBOT_KIND_OVERRIDE[String(id)];
+        return (k === 'delivery' || k === 'patrol') ? k : null;
+    }
 
     // [주석처리: 퀵바/기타 배달] const QUICK_SITE_IDS = [109, 65, 56, 44, 86];
     // [주석처리: 퀵바/기타 배달] const OTHER_DELIVERY_SITE_IDS = DELIVERY_SITE_IDS.filter(id => !QUICK_SITE_IDS.includes(id));
@@ -1673,6 +1691,10 @@
             status = 'charging';
         } else if (rs.isOnWirelessChargerDock) {
             status = 'docking';
+        } else if (kindOverride(raw) === 'patrol') {   // 기체별 지정(순찰)
+			status = raw.currentScenario ? 'patrolling' : 'standby';
+		} else if (kindOverride(raw) === 'delivery') {   // 기체별 지정(배달)
+			status = raw.currentScenario ? 'delivering' : 'standby';
         } else if (FORCE_PATROL_SITE_IDS.includes(raw.site?.id) || ['PATROL','OPENAPI_PATROL'].includes(raw.service?.serviceType)) {
 			status = raw.currentScenario ? 'patrolling' : 'standby';
 		} else if (DELIVERY_TYPES.includes(raw.service?.serviceType)) {
@@ -1718,10 +1740,11 @@
             const name = raw.nickname || raw.name || id;
             const rs   = raw.robotStatus ?? {};
             const { status, battery } = parseRobotStatus(raw);
-            const isDelivery =
-				!FORCE_PATROL_SITE_IDS.includes(raw.site?.id) &&
+            const _ko = kindOverride(raw);   // 기체별 지정이 있으면 사이트 기본 분류보다 우선
+            const isDelivery = _ko ? _ko === 'delivery' :
+				(!FORCE_PATROL_SITE_IDS.includes(raw.site?.id) &&
 				(DELIVERY_TYPES.includes(raw.service?.serviceType) ||
-				 DELIVERY_SITE_IDS.includes(raw.site?.id));
+				 DELIVERY_SITE_IDS.includes(raw.site?.id)));
 
             // ── 기능1: 대기중 방치 (배터리 50% 미만인 경우에만)
             if (!isDelivery && status === 'standby') {
@@ -2269,7 +2292,7 @@
         // 제외: 하단 퀵바 기체(MONITOR_GROUPS 키워드)는 이 열들에 표시·집계하지 않음 (제주 기체는 순찰 기체로 취급). 즐겨찾기는 항상 1열
         const inName = (r, kws) => kws.some(k => String(r.name).includes(k));
         const skip = r => MONITOR_GROUPS.some(g => inName(r, g.keywords));
-        const isD = r => DELIVERY_SITE_IDS.includes(r.siteId);
+        const isD = r => { const k = kindOverride(r.id); return k ? k === 'delivery' : DELIVERY_SITE_IDS.includes(r.siteId); };   // 기체별 지정 > 사이트 기본
         const cmp = _sortMode === 'status' ? statusCmp : nameCmp;   // 모든 열 공통 정렬 (이름순 ↔ 상태별)
         const favHere = favRobots.slice().sort(cmp);
         const shown = robots.filter(r => !skip(r));
@@ -2332,6 +2355,8 @@
     const ngKey = name => String(name || '').replace(/\s+/g, '');
     function ngExcluded(r) {   // 위 이름 목록이거나, 요기요/삼평서현 등 '배달'로 설정된 기체면 카운팅 대상에서 뺌
         if (NG_EXCLUDE_NAMES.includes(ngKey(r.name))) return true;
+        const k = kindOverride(r.id);   // 기체별 지정이 있으면 그대로 따름
+        if (k) return k === 'delivery';
         return !FORCE_PATROL_SITE_IDS.includes(r.siteId) &&
             (DELIVERY_TYPES.includes(r.raw?.service?.serviceType) || DELIVERY_SITE_IDS.includes(r.siteId));
     }
