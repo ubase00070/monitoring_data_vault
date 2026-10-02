@@ -39,16 +39,27 @@
         sheetId: "1tLo6Xeq6KJx6zW-fcw8H38jdjxyS2yre5oWY7cxky70"
     };
 
-    // 오프라인 모드 — true로 바꾸면 이 도구의 NCC 외부 통신이 즉시 차단됩니다.
+    // ══ 오프라인 모드 (NCC 통신 전면 중단) ═══════════════════════════════
+    // 켜지는 조건 — 하나라도 true면 켜진다 (원격 스위치는 개별 설정으로 끌 수 없음):
+    //   (1) 아래 상수 OFFLINE_MODE = true                      (코드 배포)
+    //   (2) remote_admin_config.json 에 "offline": true         (재배포 없이 전원 적용, 새로고침 시 반영)
+    //   (3) 이 브라우저만: 콘솔에서 neubieSetOffline(true / false) (즉시 적용)
+    // 켜지면 ① 이 도구가 NCC(core.neubie.ai)로 보내는 모든 요청과
+    //        ② NCC 화면을 대신 조작해 서버 요청을 만드는 기능(화질/램프 버튼, 순찰 알림, 배터리 조회,
+    //          조작자 감시, 자동 사이드브레이크, 개입 요청 자동 OFF, 자동 시작, D-pad 단축키/프리셋)이 멈춘다.
+    //   Vercel/GitHub(본인 인프라) 통신과 화면 자체 기능(밝기 슬라이더·테마·지도 최적화 CSS 등)은 그대로.
     const OFFLINE_MODE = false;
+    // true로 두면 오프라인 모드에서 NCC 사이트 '자체'의 core.neubie.ai fetch까지 막는다.
+    // (사이트 화면이 먹통이 되므로 기본 false — 이 도구의 요청은 아래 nccFetch()에서 이미 차단됨)
+    const OFFLINE_BLOCK_SITE_FETCH = false;
 
     // ── [관리자 원격 설정] ────────────────────────────────────────────
     // monitoring_data_vault 레포의 remote_admin_config.json 값을 읽어온다.
     // admin이 이 JSON 파일 하나만 GitHub에서 직접 고치면, 모든 사용자는 새로고침 시
     // 아래 값을 그대로 반영받는다(재배포 불필요).
-    //   { "maxMonitorSlots": 6, "locked": false }
+    //   { "maxMonitorSlots": 6, "locked": false, "offline": false }
     // fetch 실패 시엔 안전 기본값(6대 / 잠금 해제)으로 지금까지와 동일하게 동작한다.
-    let ADMIN_CONFIG = { maxMonitorSlots: 6, locked: false };
+    let ADMIN_CONFIG = { maxMonitorSlots: 6, locked: false, offline: false };
     const adminConfigReady = (async () => {
         try {
             const res = await fetch(
@@ -63,10 +74,52 @@
             if (typeof cfg.locked === 'boolean') {
                 ADMIN_CONFIG.locked = cfg.locked;
             }
+            if (typeof cfg.offline === 'boolean') {
+                ADMIN_CONFIG.offline = cfg.offline;   // 원격 오프라인 스위치
+            }
         } catch (e) {
             console.log('remote_admin_config 로드 실패, 기본값(6대 / 잠금 해제) 유지:', e);
         }
     })();
+
+    // ── 오프라인 모드 판정 / NCC 요청 단일 관문 ──
+    const OFFLINE_LS_KEY = 'neubie_offline_mode';
+    function isOfflineMode() {
+        if (OFFLINE_MODE || ADMIN_CONFIG.offline) return true;
+        try { return localStorage.getItem(OFFLINE_LS_KEY) === 'true'; } catch (e) { return false; }
+    }
+    // 원격 스위치가 도착할 때까지 기다리되 최대 3초 — 무한 대기 방지. 최초 NCC 호출 직전에만 의미가 있다(이후엔 즉시 통과).
+    const offlineReady = Promise.race([adminConfigReady, new Promise(r => setTimeout(r, 3000))]);
+    // 이 도구가 NCC로 보내는 모든 요청은 반드시 이 함수를 지난다. 오프라인이면 네트워크에 닿기 전에 거절한다.
+    async function nccFetch(url, options = {}, timeoutMs) {
+        await offlineReady;
+        if (isOfflineMode()) {
+            const err = new Error('오프라인 모드: NCC 통신이 차단되었습니다.');
+            err.offline = true;
+            throw err;
+        }
+        return timeoutMs ? fetchWithTimeout(url, options, timeoutMs) : fetch(url, options);
+    }
+    // 화면 좌하단 표시 (클릭 통과, 켜져 있는 동안만)
+    function refreshOfflineBadge() {
+        const id = 'neubie-offline-badge';
+        let el = document.getElementById(id);
+        if (!isOfflineMode()) { el?.remove(); return; }
+        if (el || !document.body) return;
+        el = document.createElement('div');
+        el.id = id;
+        el.textContent = '🔌 오프라인 모드 · NCC 통신 차단 중';
+        el.style.cssText = 'position:fixed; left:12px; bottom:12px; z-index:2147483645; padding:5px 10px; border-radius:8px; background:rgba(127,29,29,0.92); color:#fee2e2; font:700 12px Pretendard,sans-serif; border:1px solid #f87171; pointer-events:none; box-shadow:0 2px 10px rgba(0,0,0,0.4);';
+        document.body.appendChild(el);
+    }
+    // 이 브라우저 전용 스위치(콘솔). 반환값 = 실제 오프라인 여부(상수/원격 스위치가 켜져 있으면 끄려 해도 true)
+    window.neubieSetOffline = (on) => {
+        try { localStorage.setItem(OFFLINE_LS_KEY, on ? 'true' : 'false'); } catch (e) {}
+        refreshOfflineBadge();
+        return isOfflineMode();
+    };
+    adminConfigReady.then(refreshOfflineBadge);
+    document.addEventListener('DOMContentLoaded', refreshOfflineBadge);
 
     // 다중 모니터링 도우미 기능이 (사용자 토글 ON) && (관리자 잠금 아님) 상태인지 —
     // 기존에 여러 곳에서 반복되던 localStorage 직접 조회를 이 함수 하나로 통일한다.
@@ -349,7 +402,7 @@
         return new URLSearchParams(location.search).get('robot-id');
     }
     async function _fetchSingleRobot(robotId) {
-        const res = await fetch(`${NCC_API_BASE}/robots/${robotId}/`, {
+        const res = await nccFetch(`${NCC_API_BASE}/robots/${robotId}/`, {
             credentials: 'include',
             headers: getAuthHeaders()
         });
@@ -390,6 +443,7 @@
     async function _startOperatorWatch() {
         const robotId = _getRobotIdFromUrl();
         if (!robotId) return;
+        if (isOfflineMode()) return;   // 오프라인: 조작자 감시 조회 없음
         _stopOperatorWatch();
         _operatorFetchDone = false;
 
@@ -433,8 +487,8 @@
     const originalFetch = window.fetch;
     window.fetch = async (...args) => {
         const url = typeof args[0] === 'string' ? args[0] : args[0].url;
-        // 오프라인 모드: NCC(core.neubie.ai) API 호출만 차단. 본인 인프라(Vercel/GitHub)는 그대로 통과.
-        if (OFFLINE_MODE && url && url.includes(NCC_API_BASE.replace('https://', ''))) {
+        // 이 도구의 NCC 요청은 nccFetch()에서 이미 차단된다. 여기서는 (선택) NCC 사이트 '자체' 요청까지 막을 때만 동작.
+        if (OFFLINE_BLOCK_SITE_FETCH && isOfflineMode() && url && url.includes(NCC_API_BASE.replace('https://', ''))) {
             throw new Error('오프라인 모드: NCC API 요청이 차단되었습니다.');
         }
         // 최적화 대상 URL 감지
@@ -772,6 +826,23 @@
             buildBatteryShell();
         }
 
+        // 오프라인 모드: 조회하지 않고, 실패(null)가 거짓 'OFF'로 보이지 않게 '오프라인'으로 표시한다 (복사 텍스트도 동일)
+        if (isOfflineMode()) {
+            state.lastBatteryData = [];
+            config.batteryIds.forEach(c => {
+                state.lastBatteryData.push({ shortName: c.shortName, battery: '- %', statusText: '오프라인(조회 차단)' });
+                const item = batteryPopup.querySelector(`[data-battery-id="${c.id}"]`);
+                if (!item) return;
+                item.style.borderLeft = '5px solid #666';
+                item.querySelector('.bat-name').textContent = `🔌 ${c.name}`;
+                const valEl = item.querySelector('.bat-val');
+                valEl.textContent = '오프라인'; valEl.style.color = '#888';
+                const fillEl = item.querySelector('.bat-bar-fill');
+                if (fillEl) { fillEl.style.width = '0%'; fillEl.style.background = '#666'; }
+            });
+            return;   // _lastBatteryFetchAt 는 갱신하지 않음 → 온라인 복귀 시 즉시 재조회
+        }
+
         // 마지막으로 실제 조회한 지 2분이 안 지났으면, 서버 요청 없이 기존 값 그대로 둠
         if (_lastBatteryFetchAt && (Date.now() - _lastBatteryFetchAt) < BATTERY_REFRESH_MS) return;
 
@@ -781,7 +852,7 @@
 
             const results = await Promise.all(
                 config.batteryIds.map(c =>
-                    fetch(`${NCC_API_BASE}/robots/${c.id}/`, {
+                    nccFetch(`${NCC_API_BASE}/robots/${c.id}/`, {
                         credentials: 'include',
                         headers: getAuthHeaders()
                     })
@@ -1639,24 +1710,25 @@
         headerContainer.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; padding-right:5px;";
 
         const title = document.createElement('h2');
-        title.textContent = OFFLINE_MODE ? "오프라인 모드" : "NCC 패널";
-        title.style.cssText = OFFLINE_MODE
+        title.textContent = isOfflineMode() ? "오프라인 모드" : "NCC 패널";
+        title.style.cssText = isOfflineMode()
             ? `color:${T.accent}; font-size:21px; margin:0; font-weight:bold; white-space:nowrap;`
             : `${NCC_TITLE_GRADIENT} font-size:21px; margin:0; font-weight:bold; white-space:nowrap;`;
 
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
 		// 문자열을 넣으면 패치노트에 빨간 '`' 뱃지가 점멸하며 뜸.
 		// 빈 문자열('')로 비우면 뱃지가 사라짐.
-		const PATCH_NOTE_NEW_CONTENT = '';
+		const PATCH_NOTE_NEW_CONTENT = '오프라인 모드';
 
         // ── 패치노트 내용 ──────────────────────────────────────
         // 아래 patchItems 배열에 버전별 내용을 추가하세요 (버튼 라벨의 날짜도 이 배열의
         // 맨 위(patchItems[0].date) 값을 그대로 가져다 쓰므로, 여기 날짜만 바꾸면 버튼도 같이 갱신됨)
         const patchItems = [
             {
-                version: 'v1.5',
-                date: '2026-09-30',
+                version: 'v1.0',
+                date: '2026-10-02',
                 items: [
+					'오프라인 모드 가동',
 					'다중 모니터링 자동 시작 보험 적용(최대 6대)',
 					'다중 모니터링 자동시작 남은 기체명 및 대수 표기',
                     'D-PAD UP 커스텀 핫키(원격페이지: UP 1초 홀드 시 설정창/버튼 입력 시 적용)',
@@ -3074,6 +3146,7 @@
 
 		autoBtn.addEventListener('click', async () => {
 			if (autoBtn.disabled) return;
+			if (isOfflineMode()) { setDpMsg('오프라인 모드: 자동 시작이 차단되었습니다', '#f59e0b'); return; }
 			autoBtn.disabled = true;
 			setTimeout(() => { autoBtn.disabled = false; }, 2000);
 
@@ -3363,10 +3436,7 @@
     async function checkPatrolRobot(robotName, key, st) {
         let isOn, isMonitoring;
         try {
-            const res = await fetchWithTimeout(
-                `${NCC_API_BASE}/robots/?nickname=${encodeURIComponent(robotName)}`,
-                { credentials: 'include', headers: getAuthHeaders() }
-            );
+            const res = await nccFetch(`${NCC_API_BASE}/robots/?nickname=${encodeURIComponent(robotName)}`, { credentials: 'include', headers: getAuthHeaders() }, 15000);
             if (!res.ok) return;
             const json = await res.json();
             const robot = json.results?.[0];
@@ -3407,6 +3477,7 @@
     // ── 스케줄러 ──
     function patrolReminderTick() {
         if (!isMonitoringPage() || !isPatrolNormalTab()) return;
+        if (isOfflineMode()) return;   // 오프라인: 순찰 리마인더 조회 없음
 
         // 방어 로직: 지금 이 시간대의 '다중 모니터링' 담당자 본인일 때만 동작.
         // insu_data.json 스케줄(state.insuData.schedule, 이미 syncTasksFromServer()가
@@ -3768,6 +3839,7 @@
 
 	async function injectBitrateButtons() {
 		if (!isMonitoringPage()) return;
+		if (isOfflineMode()) return;   // 오프라인: 화질/램프 버튼의 NCC 조회·제어 없음
 		if (_bitrateRunning) return;
 		_bitrateRunning = true;
 
@@ -3784,7 +3856,7 @@
 				if (!robotName) return;
 
 				try {
-					const res = await fetch(
+					const res = await nccFetch(
                         `${NCC_API_BASE}/robots/?nickname=${encodeURIComponent(robotName)}`,
                         { credentials: 'include', headers: getAuthHeaders() }
                     );
@@ -3856,7 +3928,7 @@
 							isCooling = true;
 							btn.style.opacity = '0.4';
 							try {
-								await fetch(`${NCC_API_BASE}/robots/${robot.id}/video-bitrate-level/`, {
+								await nccFetch(`${NCC_API_BASE}/robots/${robot.id}/video-bitrate-level/`, {
                                     method: 'PUT',
                                     credentials: 'include',
                                     headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
@@ -3898,7 +3970,7 @@
 						isLampCooling = true;
 						lampBtn.style.opacity = '0.4';
 						try {
-							const r = await fetch(`${NCC_API_BASE}/robots/${robot.id}/head-light/`, {
+							const r = await nccFetch(`${NCC_API_BASE}/robots/${robot.id}/head-light/`, {
                                 method: 'PUT',
                                 credentials: 'include',
                                 headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
@@ -3951,6 +4023,7 @@
 
 	function registerBitrateObserver() {
 		if (!isMonitoringPage()) return;
+		if (isOfflineMode()) return;
 		if (!isHandoverFeatureOn()) return;
 		if (window._bitrateObserver) window._bitrateObserver.disconnect();
 		let _bitrateThrottle = null;
@@ -6336,6 +6409,7 @@
 
 	async function triggerAutoSide(robotId) {
 		const robotName = AUTO_SIDE_ROBOTS[robotId];
+		if (isOfflineMode()) return;   // 오프라인: 자동 사이드브레이크(조회+제어 명령) 없음
 
         if (_autoSideInProgress.has(robotId)) return;
 		_autoSideInProgress.add(robotId);
@@ -6343,7 +6417,7 @@
 		try {
 			await new Promise(r => setTimeout(r, 2000));
 			
-			const res = await fetch(`${NCC_API_BASE}/robots/${robotId}/`, {
+			const res = await nccFetch(`${NCC_API_BASE}/robots/${robotId}/`, {
                 credentials: 'include',
                 headers: getAuthHeaders()
             });
@@ -6357,7 +6431,7 @@
 			setTimeout(async () => {
 				// 5초 후 다시 확인
 				try {
-					const res2 = await fetch(`${NCC_API_BASE}/robots/${robotId}/`, {
+					const res2 = await nccFetch(`${NCC_API_BASE}/robots/${robotId}/`, {
                         credentials: 'include',
                         headers: getAuthHeaders()
                     });
@@ -6365,7 +6439,7 @@
 					if (data2.currentScenario) { _autoSideInProgress.delete(robotId); return; }
 					if (!data2.robotStatus.isMovable) { _autoSideInProgress.delete(robotId); return; }
 
-					const res3 = await fetch(`${NCC_API_BASE}/robots/${robotId}/control/`, {
+					const res3 = await nccFetch(`${NCC_API_BASE}/robots/${robotId}/control/`, {
 						method: 'PUT',
 						credentials: 'include',
 						headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
@@ -6476,7 +6550,7 @@
 				if (switchEl) {
 					const input = switchEl.querySelector('input[type="checkbox"]');
 					const isOn = input ? input.checked : switchEl.getAttribute('aria-checked') === 'true';
-					if (isOn) {
+					if (isOn && !isOfflineMode()) {
 						switchEl.querySelector('label')?.click() || switchEl.click();
 					}
 				}
@@ -6849,6 +6923,7 @@
 	    let presetBusy = false;
 	    const applyPreset = async () => {
 	        if (presetBusy) return;
+	        if (isOfflineMode()) { showPresetNotice('오프라인 모드: 프리셋 적용이 차단되었습니다', 2000, true); return; }
 	        const p = loadPreset();
 	        if (!p) {                                   // 저장된 프리셋이 없으면 설정 토스트를 열어 안내
 	            openPresetPanel();
@@ -6990,6 +7065,7 @@
 
 	    setInterval(() => {
 			if(isDpadBindingOff()) return;
+			if (isOfflineMode()) { resetDpadUp(); return; }   // 오프라인: D-pad 단축키/프리셋(NCC 화면 조작) 전체 중지
 	        const gp = navigator.getGamepads()[0];
 	        if (!gp) { resetDpadUp(); return; }
 	        const isDrivingPage = location.href.includes('/remote/multiple/driving/')
