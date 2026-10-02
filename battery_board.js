@@ -6,6 +6,67 @@
 (function () {
     'use strict';
 
+    // ══ 오프라인 모드 (NCC 통신 중단) ══════════════════════════════════════
+    // 이 파일은 NCC 로 직접 요청하지 않는다. NCC 조회는 로더(뉴비고 도우미)가 하고, 이 파일은
+    //   ① 토큰을 넘기고(bb_token)  ② 로더가 2분마다 쏘는 결과(bb_robots_data)를 받아 그리기만 한다.
+    // 켜지면:
+    //   · bb_token 을 보내지 않는다 (로더가 NCC 를 조회할 열쇠를 주지 않음)
+    //   · bb_robots_data 를 무시한다 (마지막 값 그대로 두고, 로그 기록·저장 같은 파생 처리도 하지 않음)
+    //   · 로더가 따를 수 있게 신호를 남긴다:  <html data-bb-offline="1">  +  document 'bb_offline' 이벤트 {offline:true|false}
+    //   ※ 로더가 이 신호를 확인하도록 고쳐져 있지 않으면, 이미 토큰을 받은 로더의 조회까지는 이 파일이 막을 수 없다.
+    // 켜지는 조건 (하나라도 true 면 켜짐 — 끄는 것은 모두 꺼야 함):
+    //   (1) 아래 상수 BB_OFFLINE_MODE = true
+    //   (2) remote_admin_config.json 의 "offline": true  — remote_logic.js 와 같은 키(한 번에 둘 다 적용), 새로고침 시 반영
+    //   (3) localStorage 'neubie_offline_mode' = 'true'  — 콘솔 localStorage.setItem('neubie_offline_mode','true') 또는 bbSetOffline(true). 1초 안에 반영
+    // 원복: 상수 false + 원격 키 false/삭제 + localStorage 값 'false'(또는 삭제). 토큰은 페이지당 1회만 보내므로 로더가 중복 조회 루프를 만들지 않는다.
+    const BB_OFFLINE_MODE = false;
+    const BB_OFFLINE_LS_KEY = 'neubie_offline_mode';
+    let _bbRemoteOffline = false;
+    const _bbCfgReady = (async () => {
+        try {
+            const res = await fetch(`https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/remote_admin_config.json?t=${Date.now()}`, { cache: 'no-store' });
+            if (!res.ok) return;
+            const cfg = await res.json();
+            if (typeof cfg.offline === 'boolean') _bbRemoteOffline = cfg.offline;
+        } catch { /* 실패 시 원격 스위치는 꺼짐으로 간주 — 지금까지와 동일하게 동작 */ }
+    })();
+    function bbIsOffline() {
+        if (BB_OFFLINE_MODE || _bbRemoteOffline) return true;
+        try { return localStorage.getItem(BB_OFFLINE_LS_KEY) === 'true'; } catch { return false; }
+    }
+    let _bbOfflineShown = false;     // 로더에 마지막으로 알린 상태 (시작은 '온라인' → 평소엔 이벤트가 하나도 나가지 않음)
+    let _bbTokenSent = false;
+    let _bbTokenPhaseDone = false;   // 최초 토큰 발송 판단이 끝났는지
+    function bbSendToken() {
+        const _token = localStorage.getItem('AccessToken');
+        if (_token) {
+            document.dispatchEvent(new CustomEvent('bb_token', {
+                detail: JSON.stringify({ token: _token, siteIds: SITE_IDS })
+            }));
+            _bbTokenSent = true;
+            console.log('[BB] bb_token 발송 완료');
+        } else {
+            console.log('[BB] AccessToken 없음');
+        }
+    }
+    function bbSyncOffline() {
+        const off = bbIsOffline();
+        if (off === _bbOfflineShown) return off;
+        _bbOfflineShown = off;
+        const root = document.documentElement;
+        if (off) root.setAttribute('data-bb-offline', '1'); else root.removeAttribute('data-bb-offline');
+        try { document.dispatchEvent(new CustomEvent('bb_offline', { detail: JSON.stringify({ offline: off }) })); } catch {}
+        console.log(off ? '[BB] 오프라인 모드 ON — NCC 갱신 중단' : '[BB] 오프라인 모드 OFF — NCC 갱신 재개');
+        // 오프라인으로 시작했다가 풀린 경우에만 토큰을 처음 보낸다. 이미 보낸 적이 있으면 재발송하지 않는다(로더 중복 루프 방지).
+        if (!off && _bbTokenPhaseDone && !_bbTokenSent) bbSendToken();
+        return off;
+    }
+    window.bbSetOffline = (on) => {
+        try { localStorage.setItem(BB_OFFLINE_LS_KEY, on ? 'true' : 'false'); } catch {}
+        return bbSyncOffline();   // 반환값 = 실제 오프라인 여부 (상수/원격 스위치가 켜져 있으면 끄려 해도 true)
+    };
+    bbSyncOffline();   // 상수·로컬 스위치는 즉시 신호 (원격 스위치는 설정 도착 후 아래 토큰 단계에서)
+
     // ============================================================
     // 배경 이미지 — 기체 카드 영역부터 하단까지만 (헤더의 3가지 테마 색은 그대로 보임)
     //   레포 monitoring_data_vault/ego_trippin/snoopy_snow.jpg (1920×1080). 이미지를 바꿔 올렸다면 ?v= 숫자를 올리면 캐시가 갱신됨.
@@ -2059,6 +2120,7 @@
     let _lastProcessedAt = 0;
     let _fbReady = false;   // SECTION 17(고정 버튼) 준비 완료 여부
     document.addEventListener('bb_robots_data', function(e) {
+        if (bbIsOffline()) return;   // 오프라인 모드: NCC 데이터 갱신 무시 (마지막 값 유지)
         if (fetchLock) return;
         if (Date.now() - _lastProcessedAt < UPDATE_INTERVAL_MS) return;
         _lastProcessedAt = Date.now();
@@ -2188,8 +2250,10 @@
     setInterval(() => {
         ns--;
         if (ns <= 0) ns = RS;
+        const _off = bbSyncOffline();   // 콘솔/다른 스크립트가 바꾼 스위치도 1초 안에 반영
         const m = Math.floor(ns / 60), s = ns % 60;
         const el = document.getElementById('bb-ref');
+        if (_off) { if (el) el.textContent = '🔌 오프라인 · NCC 갱신 중단'; return; }
         if (el) el.textContent = m > 0 ? `${m}분 ${String(s).padStart(2,'0')}초 후 갱신` : `${s}초 후 갱신`;
     }, 1000);
 
@@ -4932,16 +4996,13 @@
     // ============================================================
     // SECTION 15. 토큰 발송
     // ============================================================
-    setTimeout(() => {
-        const _token = localStorage.getItem('AccessToken');
-        if (_token) {
-            document.dispatchEvent(new CustomEvent('bb_token', {
-                detail: JSON.stringify({ token: _token, siteIds: SITE_IDS })
-            }));
-            console.log('[BB] bb_token 발송 완료');
-        } else {
-            console.log('[BB] AccessToken 없음');
-        }
+    setTimeout(async () => {
+        // 원격 오프라인 스위치가 도착할 때까지 잠깐(최대 3초) 기다렸다가 판단 — 평소엔 설정이 이미 와 있어 지연이 거의 없다
+        await Promise.race([_bbCfgReady, new Promise(r => setTimeout(r, 3000))]);
+        bbSyncOffline();
+        _bbTokenPhaseDone = true;
+        if (bbIsOffline()) { console.log('[BB] 오프라인 모드 — bb_token 미발송'); return; }
+        bbSendToken();
     }, 200);
 
     // ============================================================
