@@ -100,26 +100,11 @@
         }
         return timeoutMs ? fetchWithTimeout(url, options, timeoutMs) : fetch(url, options);
     }
-    // 화면 좌하단 표시 (클릭 통과, 켜져 있는 동안만)
-    function refreshOfflineBadge() {
-        const id = 'neubie-offline-badge';
-        let el = document.getElementById(id);
-        if (!isOfflineMode()) { el?.remove(); return; }
-        if (el || !document.body) return;
-        el = document.createElement('div');
-        el.id = id;
-        el.textContent = '🔌 오프라인 모드 · NCC 통신 차단 중';
-        el.style.cssText = 'position:fixed; left:12px; bottom:12px; z-index:2147483645; padding:5px 10px; border-radius:8px; background:rgba(127,29,29,0.92); color:#fee2e2; font:700 12px Pretendard,sans-serif; border:1px solid #f87171; pointer-events:none; box-shadow:0 2px 10px rgba(0,0,0,0.4);';
-        document.body.appendChild(el);
-    }
     // 이 브라우저 전용 스위치(콘솔). 반환값 = 실제 오프라인 여부(상수/원격 스위치가 켜져 있으면 끄려 해도 true)
     window.neubieSetOffline = (on) => {
         try { localStorage.setItem(OFFLINE_LS_KEY, on ? 'true' : 'false'); } catch (e) {}
-        refreshOfflineBadge();
         return isOfflineMode();
     };
-    adminConfigReady.then(refreshOfflineBadge);
-    document.addEventListener('DOMContentLoaded', refreshOfflineBadge);
 
     // 다중 모니터링 도우미 기능이 (사용자 토글 ON) && (관리자 잠금 아님) 상태인지 —
     // 기존에 여러 곳에서 반복되던 localStorage 직접 조회를 이 함수 하나로 통일한다.
@@ -744,7 +729,7 @@
     else injectUI();
 
     /* ============================================================
-        SECTION 4. 배터리 및 업무 연동
+        SECTION 4. 배터리 및 업무 연동 로직
        ============================================================ */
     let _batteryInitialized = false;
 
@@ -1718,17 +1703,16 @@
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
 		// 문자열을 넣으면 패치노트에 빨간 '`' 뱃지가 점멸하며 뜸.
 		// 빈 문자열('')로 비우면 뱃지가 사라짐.
-		const PATCH_NOTE_NEW_CONTENT = '오프라인 모드';
+		const PATCH_NOTE_NEW_CONTENT = '';
 
         // ── 패치노트 내용 ──────────────────────────────────────
         // 아래 patchItems 배열에 버전별 내용을 추가하세요 (버튼 라벨의 날짜도 이 배열의
         // 맨 위(patchItems[0].date) 값을 그대로 가져다 쓰므로, 여기 날짜만 바꾸면 버튼도 같이 갱신됨)
         const patchItems = [
             {
-                version: 'v1.0',
-                date: '2026-10-02',
+                version: 'v1.5',
+                date: '2026-09-30',
                 items: [
-					'오프라인 모드 가동',
 					'다중 모니터링 자동 시작 보험 적용(최대 6대)',
 					'다중 모니터링 자동시작 남은 기체명 및 대수 표기',
                     'D-PAD UP 커스텀 핫키(원격페이지: UP 1초 홀드 시 설정창/버튼 입력 시 적용)',
