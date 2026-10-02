@@ -1,4 +1,1 @@
-{
-  "maxMonitorSlots": 6,
-  "locked": false
-}
+   { "maxMonitorSlots": 6, "locked": false, "offline": true }
