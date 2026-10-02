@@ -1560,7 +1560,7 @@
         });
     })();
 
-    // 하단 퀵바 그룹 — keywords가 기체명에 포함되면 해당 그룹. 켜진 기체만 표시됨.
+    // 하단 퀵바 그룹 — keywords가 기체명에 포함되면 해당 그룹. 켜진 기체만 표시.
     const MONITOR_GROUPS = [
         { id:'yeoksam',  label:'역삼',     full:'역삼 요기요',    keywords:['역삼동'] },
         { id:'songdo',   label:'송도',     full:'송도 요기요',    keywords:['송도 신도시'] },
