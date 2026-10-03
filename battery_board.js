@@ -1265,8 +1265,10 @@
         /* 아토 2호 / 동숲 주민 2: 기존 캐릭터(제목 박스에서 151~251px)에서 8px 띄워 바깥쪽에 배치 */
         #bb #bb-walker-wrap-l2 { position:absolute; right:calc(50% + 259px); top:50%; transform:translateY(-50%); width:100px; height:100px; z-index:1; }
         #bb #bb-walker-l2 { width:100%; height:100%; object-fit:cover; display:block; border:0; }
-        #bb #bb-walker-wrap-r2 { position:absolute; left:calc(50% + 259px); top:50%; transform:translateY(-50%); width:100px; height:100px; z-index:2; }
+        #bb #bb-walker-wrap-r2 { position:absolute; left:calc(50% + 259px); top:calc(50% - 8px); transform:translateY(-50%); width:100px; height:100px; z-index:2; }
         #bb #bb-walker-r2 { width:100%; height:100%; background-size:contain; background-repeat:no-repeat; background-position:center bottom; }
+        #bb .bb-mm-lap { flex-shrink:0; padding:0 7px; border-radius:999px; border:1px solid var(--bd2); background:var(--sur2); font-size:11.5px; line-height:17px; color:var(--tx); white-space:nowrap; }
+        #bb-walker-wrap-r2:hover .bb-walker-arrow { opacity:1; }
         /* 테마·줌·닫기 버튼: 우상단 고정 */
         #bb .bb-hd-rightwrap { left:auto; right:14px; top:10px; transform:none; }
         #bb .bb-hd-right-row.spread { justify-content:flex-start; gap:12px; }
@@ -1290,7 +1292,7 @@
         #bb #bb-dlog-panel {
             display:flex !important; flex-direction:column; position:relative; top:auto; left:auto; transform:none;
             width:auto; min-height:0; max-height:none; flex:1 1 0; overflow:visible; z-index:auto;
-            border:2px solid var(--bd2); border-radius:8px; background:color-mix(in srgb, var(--bg) 72%, transparent); box-shadow:none;
+            border:2px solid var(--bd2); border-radius:8px; background:color-mix(in srgb, var(--bg) 60%, transparent); box-shadow:none;
         }
         #bb #bb-dlog-panel .bb-ap-hd { position:static; padding:5px 10px; border-radius:6px 6px 0 0; }
         #bb #bb-dlog-panel .bb-ap-title { font-size:15px; }
@@ -1312,7 +1314,7 @@
         #bb .bb-mm-page, #bb #bb-iv-page {
             flex:1 1 0; width:auto; min-width:0; height:100%; position:relative; inset:auto; z-index:auto;
             transform:none !important; visibility:visible !important; transition:none;
-            border:2px solid var(--bd2); border-radius:8px; background:color-mix(in srgb, var(--bg) 72%, transparent); overflow:hidden;   /* 반투명: 비율(72%)을 낮추면 배경이 더 보임 */
+            border:2px solid var(--bd2); border-radius:8px; background:color-mix(in srgb, var(--bg) 60%, transparent); overflow:hidden;   /* 반투명: 비율(60%)을 낮추면 배경이 더 보임 */
         }
         #bb #bb-mm-page-multi { order:1; }
         #bb #bb-iv-page { order:2; }
@@ -1394,6 +1396,8 @@
                 <!-- 우: 동숲 주민 2 — 주민 오른쪽에 같은 간격으로 한 명 더 (다음 캐릭터, 말풍선 없음, 켜기/끄기는 주민과 함께) -->
                 <div id="bb-walker-wrap-r2">
                     <div id="bb-walker-r2"></div>
+                    <button id="bb-walker-r2-prev" class="bb-walker-arrow left" title="이전 캐릭터">‹</button>
+                    <button id="bb-walker-r2-next" class="bb-walker-arrow right" title="다음 캐릭터">›</button>
                 </div>
                 <!-- 우: 3종 버튼 (오른쪽 동숲 주민의 오른쪽) — 배달 로그 / 방전 로그 / 이상 알림. 왼쪽 고정 버튼 3행과 같은 폭·높이·간격 -->
                 <div class="bb-rbtns" id="bb-fixbtns-r">
@@ -3951,6 +3955,9 @@
 		const WALKER_IDX_KEY = 'bb_walker_idx';   // 캐릭터 선택 (기존 키 그대로 유지 — 순서 안 바꿨으니 호환됨)
 		let charIdx = parseInt(localStorage.getItem(WALKER_IDX_KEY), 10);
 		if (isNaN(charIdx) || charIdx < 0 || charIdx >= walkerFiles.length) charIdx = 0;
+		const WALKER_IDX2_KEY = 'bb_walker_idx2';   // [UI 개편] 두 번째 주민 캐릭터 선택 (저장)
+		let charIdx2 = parseInt(localStorage.getItem(WALKER_IDX2_KEY), 10);
+		if (isNaN(charIdx2) || charIdx2 < 0 || charIdx2 >= walkerFiles.length) charIdx2 = (charIdx + 1) % walkerFiles.length;
 
 		const walkerEl = document.getElementById('bb-walker');
 		const toggleEl = document.getElementById('bb-walker-toggle');
@@ -3966,7 +3973,7 @@
 			walkerEl.style.backgroundImage = `url('${WALKER_BASE}${currentVariantFile()}')`;
 			// [UI 개편] 오른쪽 두 번째 주민: 다음 캐릭터 (같은 시간 기준 배리에이션)
 			const r2 = document.getElementById('bb-walker-r2');
-			if (r2) { const c2 = walkerFiles[(charIdx + 1) % walkerFiles.length].variants; r2.style.backgroundImage = `url('${WALKER_BASE}${c2[Math.floor(Date.now() / ROTATE_MS) % c2.length]}')`; }
+			if (r2) { const c2 = walkerFiles[charIdx2].variants; r2.style.backgroundImage = `url('${WALKER_BASE}${c2[Math.floor(Date.now() / ROTATE_MS) % c2.length]}')`; }
 		}
 		renderWalker();
 
@@ -4204,6 +4211,16 @@
 		const WALKER_TOGGLE_KEY = 'bb_walker_on';
 		let walkerOn = localStorage.getItem(WALKER_TOGGLE_KEY);
 		walkerOn = walkerOn === null ? true : walkerOn === '1';
+
+		[['bb-walker-r2-prev', -1], ['bb-walker-r2-next', 1]].forEach(([id, d]) => {   // [UI 개편] 두 번째 주민 캐릭터 고르기
+			const b = document.getElementById(id);
+			if (b) b.addEventListener('click', e => {
+				e.stopPropagation();
+				charIdx2 = (charIdx2 + d + walkerFiles.length) % walkerFiles.length;
+				localStorage.setItem(WALKER_IDX2_KEY, String(charIdx2));
+				renderWalker();
+			});
+		});
 
 		function applyWalkerToggle() {
 			walkerEl.style.display = walkerOn ? '' : 'none';
@@ -5312,6 +5329,7 @@
                     robot: r.robot || '(이름 없음)',
                     staff: Array.isArray(r.staff_list) ? r.staff_list : [],
                     anomaly, stale,
+                    lap: Number.isFinite(r.lap) ? r.lap : null, lapTotal: Number.isFinite(r.lap_total) ? r.lap_total : null,   // 바퀴수 (Worker 의 lap / lap_total)
                     poi: p.poi || r.poi_text || '-',
                     act: p.act,
                     unit: p.unit,
@@ -5379,6 +5397,7 @@
                 mk('span', 'bb-mm-name', c.robot),
                 st,
                 ...(c.start ? [mk('span', 'bb-mm-since', `${c.start}부터`)] : []),   // 예: 22:35부터 (순찰 중 옆)
+                ...((c.lap && c.lapTotal) ? [mk('span', 'bb-mm-lap', `${c.lap}/${c.lapTotal} 바퀴`)] : []),   // 예: 6/21 바퀴
                 mk('span', 'bb-mm-staff', c.staff.length ? c.staff.join('·') : (c.carried ? '담당 미표기' : '담당 없음'))
             );
 
