@@ -1266,7 +1266,14 @@
         #bb .bb-hd-right-row.spread { justify-content:flex-start; gap:12px; }
 
         /* 본문: [순찰 + 배달 열] [다중 모니터링] [개입 현황] [이석 현황] */
-        #bb .bb-main { flex:0 0 540px; }
+        /* v6.4b: 4열 동일 폭 = [배달 로그] [다중 모니터링] [개입 현황] [이석 현황] — 순찰/배달 기체 그리드는 숨김 */
+        #bb .bb-body { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); column-gap:10px; padding:0 16px; }
+        #bb .bb-main { flex:none; width:auto; min-width:0; }
+        #bb .bb-list-wrap { display:flex; flex-direction:column; padding:10px 0; scrollbar-gutter:auto; }
+        #bb .bb-lists { flex:1 1 0; min-height:0; }
+        #bb .bb-oth { display:none !important; }
+        #bb .bb-mid { flex:1 1 0; min-height:0; width:auto; height:auto; outline:none; }
+        #bb .bb-mid > .bb-colhd, #bb .bb-mid > .bb-sec-deliv { display:none !important; }
         #bb .bb-lists { flex-direction:column; align-items:stretch; gap:12px; }
         #bb .bb-oth, #bb .bb-mid { width:512px; }
         #bb .bb-oth { height:380px; }
@@ -1290,7 +1297,7 @@
         #bb #bb-dlog-body { flex:1 1 auto; min-height:0; overflow-y:auto; padding:0 6px 6px; }
 
         /* 다중 / 개입 / 이석: 한 상자 안의 슬라이드 → 나란히 놓인 3개의 그리드 */
-        #bb .bb-mm { margin:10px 16px 10px 0; }
+        #bb .bb-mm { grid-column:2 / span 3; margin:10px 0; }
         #bb .bb-mm-box { display:flex; gap:10px; border:0; background:none; border-radius:0; overflow:visible; }
         #bb .bb-mm-track { display:contents; transform:none !important; }
         #bb .bb-mm-page, #bb #bb-iv-page {
@@ -1304,7 +1311,7 @@
         #bb .bb-mm-head, #bb .bb-mm-head.bb-iv-hd { padding:5px 8px 4px; }
         #bb .bb-att-head, #bb .bb-iv-head { column-gap:0; }
         #bb .bb-att-head .bb-att-title, #bb .bb-att-head .bb-att-r2 { grid-column:1 / -1; }
-        #bb .bb-att-body { grid-template-columns:repeat(2,minmax(0,1fr)); }
+        #bb .bb-att-body { grid-template-columns:repeat(3,minmax(0,1fr)); }   /* 근무자 카드 한 줄에 3명 */
     `;
     document.head.appendChild(style);
 
@@ -1347,7 +1354,7 @@
                 </div>
                 <div class="bb-hd-titlebox" id="bb-drag-handle">
                     <div class="bb-hd-title">
-                        NCC 종합 모니터
+                        관리자용 모니터
                         <span id="bb-cyh-tag" style="font-size:16px;color:var(--mu);font-weight:400;">by CYH</span>
                     </div>
                     <div class="bb-hd-time">
