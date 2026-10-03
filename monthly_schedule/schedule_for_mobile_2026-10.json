@@ -591,10 +591,10 @@
           "raw": "1"
         },
         "10/2": {
-          "status": "work",
+          "status": "annual",
           "working": true,
-          "present": true,
-          "raw": "1"
+          "present": false,
+          "raw": "연차"
         },
         "10/3": {
           "status": "off",
@@ -3112,28 +3112,28 @@
           "raw": "1"
         },
         "10/4": {
-          "status": "work",
+          "status": "half-half",
           "working": true,
           "present": true,
-          "raw": "1"
+          "raw": "반반차"
         },
         "10/5": {
-          "status": "work",
+          "status": "half-half",
           "working": true,
           "present": true,
-          "raw": "1"
+          "raw": "반반차"
         },
         "10/6": {
-          "status": "work",
+          "status": "half-half",
           "working": true,
           "present": true,
-          "raw": "1"
+          "raw": "반반차"
         },
         "10/7": {
-          "status": "work",
+          "status": "half-half",
           "working": true,
           "present": true,
-          "raw": "1"
+          "raw": "반반차"
         },
         "10/8": {
           "status": "off",
@@ -7762,10 +7762,10 @@
           "raw": "1"
         },
         "10/7": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "10/8": {
           "status": "off",
@@ -7774,10 +7774,10 @@
           "raw": "휴무"
         },
         "10/9": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "10/10": {
           "status": "work",
@@ -8341,10 +8341,10 @@
           "raw": "1"
         },
         "10/7": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "10/8": {
           "status": "off",
@@ -8353,10 +8353,10 @@
           "raw": "휴무"
         },
         "10/9": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "10/10": {
           "status": "work",
@@ -9685,6 +9685,6 @@
     "10/31"
   ],
   "mainMonth": 10,
-  "updatedAt": "2026-10-02T03:53:03.582Z",
+  "updatedAt": "2026-10-03T03:53:05.040Z",
   "sheetName": "2026년_10월 스케줄"
 }
