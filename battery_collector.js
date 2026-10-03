@@ -106,7 +106,10 @@
     window.nbBattInflate = inflate;   // 사용자용 웹이 배포본을 받아 보드 raw 모양으로 되돌릴 때 사용
 
     // ══ 보드로 전달 ══
-    function dispatchToBoard(jsonStr) {
+    // partial = "일부 사이트만 받은 데이터". 보드는 부분 데이터면 목록 정리(없는 기체 삭제)를 건너뛴다 (data-bb-partial 속성으로 신호).
+    function dispatchToBoard(jsonStr, partial) {
+        const root = document.documentElement;
+        if (partial) root.setAttribute('data-bb-partial', '1'); else root.removeAttribute('data-bb-partial');
         document.dispatchEvent(new CustomEvent('bb_robots_data', { detail: jsonStr }));
     }
 
@@ -114,7 +117,20 @@
     function startReceiver() {
         if (typeof BroadcastChannel === 'undefined') return;
         const bc = new BroadcastChannel(BC_NAME);
-        bc.onmessage = e => { if (typeof e.data === 'string') dispatchToBoard(e.data); };
+        let warned = false, first = true;
+        bc.onmessage = e => {
+            const m = e.data;
+            const json = typeof m === 'string' ? m : (m && m.json);
+            const partial = !!(m && typeof m === 'object' && m.partial);
+            if (typeof json !== 'string') return;
+            // 예전 보드(부분 데이터를 모름)에 부분 데이터를 넘기면 목록이 지워질 수 있다 → 지원하는 보드일 때만 전달
+            if (partial && !window.__bbPartialOk) {
+                if (!warned) { warned = true; log('⚠️ 일부 사이트만 받은 데이터라 전달하지 않았습니다 — battery_board.js 를 최신 버전으로 갱신해야 합니다(또는 전체 사이트 수신을 기다리는 중)'); }
+                return;
+            }
+            if (first) { first = false; log(`수신 완료 — ${partial ? '부분' : '전체'} 데이터를 보드로 전달했습니다`); }
+            dispatchToBoard(json, partial);
+        };
         log('수신 모드 — 수집 탭의 결과를 보드로 전달합니다');
     }
 
@@ -143,7 +159,8 @@
         const badge = document.createElement('div');
         badge.style.cssText = 'position:fixed;left:8px;bottom:8px;z-index:2147483647;background:#111c;color:#9fe;font:12px/1.4 monospace;padding:6px 10px;border-radius:8px;pointer-events:none;white-space:pre';
         const mountBadge = () => { if (!badge.isConnected && document.body) document.body.appendChild(badge); };
-        const setBadge = t => { mountBadge(); badge.textContent = t + (document.hidden ? '\n⚠ 탭이 가려져 있으면 수집이 느려질 수 있습니다' : ''); };
+        let badgeNote = '';
+        const setBadge = t => { mountBadge(); badge.textContent = t + (badgeNote ? '\n' + badgeNote : '') + (document.hidden ? '\n⚠ 탭이 가려져 있으면 수집이 느려질 수 있습니다' : ''); };
 
         function makeFrame(id) {
             const f = document.createElement('iframe');
@@ -245,22 +262,25 @@
             const wait = Math.max(0, lastDispatchAt + cfg().dispatchGapMs - Date.now());
             dispatchTimer = setTimeout(() => {
                 dispatchTimer = null;
-                const json = JSON.stringify(currentAll());
+                const all = currentAll();
+                if (!all.length) return;
+                const partial = SITE_IDS.some(id => !store[id]);   // 예약 시점 기준으로 다시 판단
+                const json = JSON.stringify(all);
                 lastDispatchAt = Date.now();
-                dispatchToBoard(json);                              // 이 탭의 보드(있으면)
-                try { bc && bc.postMessage(json); } catch (e) {}    // 같은 PC 의 다른 보드 탭
+                dispatchToBoard(json, partial);                                      // 이 탭의 보드(있으면)
+                try { bc && bc.postMessage({ json, partial }); } catch (e) {}        // 같은 PC 의 다른 보드 탭
             }, wait);
         }
 
-        // 사이클 결과 처리: 전체 사이트를 다 갖고 있을 때만 보드/배포로 보낸다.
-        // (일부만 보내면 보드가 "목록에 없는 기체"를 즐겨찾기/목록에서 지워버리기 때문)
+        // 사이클 결과 처리: 받은 만큼 보드로 전달한다. 일부 사이트만 받았으면 partial 로 표시 → 보드가 목록 정리를 건너뛴다.
+        // (못 받은 사이트 하나 때문에 전체가 멈추지 않고, 시험 모드에서도 보드에 결과가 보인다)
         function finalize(C, sitesThisRun) {
             const missing = SITE_IDS.filter(id => !store[id]);
             const all = currentAll();
             window.__nbBattLast = { at: Date.now(), robots: all, missing };
 
             if (C.limit > 0) {
-                log(`시험 모드(limit=${C.limit}) — 보드/배포로 보내지 않음. 기체 ${all.length}대:`);
+                log(`시험 모드(limit=${C.limit}) — 앞 ${C.limit}개 사이트만 수집 중. 기체 ${all.length}대:`);
                 try {
                     console.table(all.map(r => ({
                         site: r.site && r.site.id, name: r.nickname || r.name, battery: r.battery,
@@ -268,20 +288,24 @@
                         dock: r.robotStatus && r.robotStatus.isOnWirelessChargerDock, scenario: !!r.currentScenario,
                     })));
                 } catch (e) {}
-                return;
-            }
-            if (missing.length) { log(`아직 받지 못한 사이트 ${missing.length}곳(${missing.join(',')}) — 보내지 않음`); return; }
+                badgeNote = `⚠ 시험 모드(limit=${C.limit}) — 전체: localStorage.setItem('bb_collect_cfg',JSON.stringify({limit:0}))`;
+            } else if (missing.length) {
+                log(`아직 받지 못한 사이트 ${missing.length}곳(${missing.join(',')}) — 받은 만큼 부분 데이터로 전달합니다(목록은 지워지지 않음)`);
+                badgeNote = `⚠ 미수신 사이트 ${missing.length}곳: ${missing.slice(0, 8).join(',')}${missing.length > 8 ? '…' : ''}`;
+            } else badgeNote = '';
+
+            if (!all.length) { log('받은 기체가 없어 전달하지 않습니다'); return; }
 
             const now = Date.now();
-            const stale = SITE_IDS.filter(id => now - store[id].at > C.staleWarnMs);
+            const stale = SITE_IDS.filter(id => store[id] && now - store[id].at > C.staleWarnMs);
             if (stale.length) log(`⚠️ 오래된 사이트(최근 ${Math.round(C.staleWarnMs / 60000)}분 내 갱신 실패): ${stale.join(',')}`);
 
             queueDispatch();
 
-            if (C.publish) publish(C, all, stale);
+            if (C.publish) publish(C, all, stale, missing);
         }
 
-        async function publish(C, all, stale) {
+        async function publish(C, all, stale, missing) {
             const robots = all.map(compact);
             const body = JSON.stringify(robots);
             let h = 0; for (let i = 0; i < body.length; i++) h = (h * 31 + body.charCodeAt(i)) | 0;
@@ -293,7 +317,7 @@
             try {
                 const res = await fetch(BACKUP_BASE, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name: C.publishName, data: { v: 1, at: new Date().toISOString(), stale, robots } }),
+                    body: JSON.stringify({ name: C.publishName, data: { v: 1, at: new Date().toISOString(), stale, missing, robots } }),
                 });
                 if (res.ok) { lastPubHash = hash; lastPubAt = now; log(`배포 완료 (${robots.length}대, ${Math.round(body.length / 1024)}KB${changed ? '' : ', 하트비트'})`); }
                 else log('배포 실패 HTTP', res.status);

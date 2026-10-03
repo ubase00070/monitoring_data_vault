@@ -6,6 +6,9 @@
 (function () {
     'use strict';
 
+    // 수집기가 "일부 사이트만 받은 데이터"(data-bb-partial=1)를 보내도 안전하게 처리할 수 있음을 알린다 (수집기가 이 값을 확인하고 전달)
+    window.__bbPartialOk = true;
+
     // ══ 오프라인 모드 (NCC 통신 중단) ══════════════════════════════════════
     // 이 파일은 NCC 로 직접 요청하지 않는다. NCC 조회는 로더(뉴비고 도우미)가 하고, 이 파일은
     //   ① 토큰을 넘기고(bb_token)  ② 로더가 2분마다 쏘는 결과(bb_robots_data)를 받아 그리기만 한다.
@@ -2150,7 +2153,9 @@
                     raw,  // Info 패널용 원본 데이터
                 });
             });
-            if (DB.length > 0) {
+            // 일부 사이트만 받은 데이터(수집기가 data-bb-partial=1 로 표시)면 목록 정리/편입을 건너뛴다 — 못 받은 사이트의 기체가 목록에서 지워지지 않도록
+            const _partialData = document.documentElement.getAttribute('data-bb-partial') === '1';
+            if (DB.length > 0 && !_partialData) {
                 migrateLegacyFixed();   // 구 고정 그리드 기체를 통합 리스트로 1회 편입
                 ids = ids.filter(id => DB.some(x => x.id === id));
                 favIds = favIds.filter(id => DB.some(x => x.id === id));
