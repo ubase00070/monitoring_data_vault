@@ -1275,9 +1275,8 @@
         #bb .bb-mid { flex:1 1 0; min-height:0; width:auto; height:auto; outline:none; }
         #bb .bb-mid > .bb-colhd, #bb .bb-mid > .bb-sec-deliv { display:none !important; }
         #bb .bb-lists { flex-direction:column; align-items:stretch; gap:12px; }
-        #bb .bb-oth, #bb .bb-mid { width:512px; }
+        #bb .bb-oth { width:512px; }
         #bb .bb-oth { height:380px; }
-        #bb .bb-mid { height:401px; }
         #bb .bb-oth-hd { grid-template-columns:1fr 1fr; }
         #bb .bb-sec-deliv { flex:0 0 118px; grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:12px; }
 
@@ -1312,6 +1311,11 @@
         #bb .bb-att-head, #bb .bb-iv-head { column-gap:0; }
         #bb .bb-att-head .bb-att-title, #bb .bb-att-head .bb-att-r2 { grid-column:1 / -1; }
         #bb .bb-att-body { grid-template-columns:repeat(3,minmax(0,1fr)); }   /* 근무자 카드 한 줄에 3명 */
+
+        /* 개입/이석 그리드 헤더: 제목·버튼 중앙정렬 */
+        #bb .bb-att-title { text-align:center; }
+        #bb .bb-att-r2 { justify-content:center; }
+        #bb .bb-att-stat { margin-left:6px; }
     `;
     document.head.appendChild(style);
 
@@ -5811,7 +5815,7 @@
     }
     // 창은 다중 영역 '왼쪽'에 띄워 카드(오른쪽)를 가리지 않는다. 줌(scale)이 걸려 있어도 화면 좌표로 계산.
     function attPlacePop() {
-        const pop = $att('bb-att-pop'), card = document.querySelector('.bb-att-card.sel'), box = document.querySelector('.bb-mm-box');
+        const pop = $att('bb-att-pop'), card = document.querySelector('.bb-att-card.sel'), box = $att('bb-mm-page-att');   // [UI 개편] 이석 그리드 자신의 왼쪽
         if (!card || !box) return;
         const cr = card.getBoundingClientRect(), br = box.getBoundingClientRect(), w = pop.offsetWidth, h = pop.offsetHeight;
         let left = br.left - w - 10;
@@ -6629,7 +6633,7 @@
 
         /* ───────── 팝업 ───────── */
         function ivPlacePop() {
-            const br = box.getBoundingClientRect(), w = pop.offsetWidth;
+            const br = page.getBoundingClientRect(), w = pop.offsetWidth;   // [UI 개편] 개입 그리드 자신의 왼쪽
             let left = br.left - w - 10;
             if (left < 8) left = Math.min(br.right + 10, window.innerWidth - w - 8);
             pop.style.left = Math.max(8, left) + 'px';
@@ -6961,7 +6965,7 @@
                         catch (err) { copyIco.textContent = '⚠️'; }
                         setTimeout(() => { copyIco.textContent = '📋'; }, 1200);
                     });
-                    ordWrap.appendChild(copyBtn);
+                    // [UI 개편] 주문번호 복사 버튼 숨김: ordWrap.appendChild(copyBtn);
                     meta.appendChild(ordWrap);
                 } else {
                     meta.appendChild(dlEl('span', '', '주문번호 없음'));
