@@ -1295,6 +1295,10 @@
         #bb #bb-dlog-panel .bb-dlog-sub { padding:6px 10px 2px; }
         #bb #bb-dlog-body { flex:1 1 auto; min-height:0; overflow-y:auto; padding:0 6px 6px; }
 
+        /* 배달 내역: 주문번호는 카드에 마우스를 올렸을 때만 표시 */
+        #bb #bb-dlog-body .bb-dlog-ord { display:none; }
+        #bb #bb-dlog-body .bb-fbp-row:hover .bb-dlog-ord { display:inline-flex; }
+
         /* 다중 / 개입 / 이석: 한 상자 안의 슬라이드 → 나란히 놓인 3개의 그리드 */
         #bb .bb-mm { grid-column:2 / span 3; margin:10px 0; }
         #bb .bb-mm-box { display:flex; gap:10px; border:0; background:none; border-radius:0; overflow:visible; }
@@ -1358,7 +1362,7 @@
                 </div>
                 <div class="bb-hd-titlebox" id="bb-drag-handle">
                     <div class="bb-hd-title">
-                        관리자용 모니터
+                        It's not over
                         <span id="bb-cyh-tag" style="font-size:16px;color:var(--mu);font-weight:400;">by CYH</span>
                     </div>
                     <div class="bb-hd-time">
@@ -6906,7 +6910,7 @@
         }
 
         // 배달 건 하나의 표시용 제목 ("사이트 · 배정 기체명" — 가게명은 사이트명과 사실상 중복이라 기체 호기명으로 대체. 기체명이 없으면 가게명, 그것도 없으면 사이트명만)
-        const dlSiteLabel = r => r.robot ? (r.site + ' · ' + r.robot) : r.store ? (r.site + ' · ' + r.store) : (r.site || '(사이트 없음)');
+        const dlSiteLabel = r => r.robot || r.store || r.site || '(기체 정보 없음)';   // [UI 개편] 사이트 표기 생략, 배정 기체명만 (기존: r.site + ' · ' + r.robot)
         // 수행자 표시 — 이름이 하나면 그 이름만, 인계·대리 등으로 여럿 걸치면 "길동 → 꺽정" 식으로 이어붙임
         //  (예전엔 대리 수행 시 이름 뒤에 "(대리)"라는 직함 같은 꼬리표를 붙였는데, 어색해서 제거하고
         //   proxyBy 에 이름이 실려 오면 그 이름도 그냥 화살표 체인에 끼워 넣는 방식으로 통일)
@@ -6940,7 +6944,7 @@
             cells.push(kCell('최다 배달자', topTxt));
             kpi.replaceChildren(...cells);
             $dl('bb-dlog-note').innerHTML = isToday
-                ? '* 11:00부터 2시간마다 업데이트<br>23:00에 금일 집계 마감(07~23시 합산).'
+                ? '* 11:00부터 2시간마다 업데이트<br>23:00에 금일 집계 마감.'
                 : '* 확정된 기록입니다.';
             if (!deliveries.length) { body.innerHTML = '<div class="bb-att-msg">이 날짜의 배달 완료 기록이 없습니다.' + (isToday && pending ? ' (진행 중 ' + pending + '건은 다음 조회 때 반영됩니다)' : '') + '</div>'; return; }
             // 배달 건이 앞, 아래 줄에 배정 시각·주문번호(+복사 버튼) — 오른쪽엔 수행자 · 소요시간(라벨 포함) — 07시부터 시간순으로 쌓인 걸 최신이 맨 위로 오게 뒤집어서 보여줌
