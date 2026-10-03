@@ -37,6 +37,8 @@
         publishMinIntervalMs: 2 * 60 * 1000,   // 값이 바뀌었을 때 최소 배포 간격
         publishHeartbeatMs: 10 * 60 * 1000,    // 값이 안 바뀌어도 이 간격마다 1회 (수집 중단 감지용)
         staleWarnMs: 10 * 60 * 1000,           // 이보다 오래된 사이트는 stale 로 표시
+        reloadEveryCycles: 15,                 // 이 횟수마다 수집 탭을 자동 새로고침 (오래 돌수록 느려지는 메모리 누적 방지). 0 = 끔
+        reloadIfSlow: true,                    // 사이클이 처음의 2배(최소 60초)보다 두 번 연속 오래 걸리면 자동 새로고침
         dispatchGapMs: 121000,                 // 보드는 직전 처리 후 2분 안에 온 이벤트를 무시한다 → 전달 간격 하한
     };
     const BACKUP_BASE = 'https://multimonitoring.vercel.app/api/battery';
@@ -156,6 +158,7 @@
         const pending = new Map();           // siteId → resolve(robots[])
         const store = {};                    // siteId → { at, robots }
         let lastPubHash = '', lastPubAt = 0, cycleNo = 0, running = false;
+        let baseMs = 0, slowStreak = 0, needReload = '';
 
         // 훅이 부르는 함수. sitesParam = "241" 또는 "241,242", text = 응답 본문(문자열)
         window.__nbBattCapture = function (sitesParam, text) {
@@ -175,8 +178,14 @@
         const badge = document.createElement('div');
         badge.style.cssText = 'position:fixed;left:8px;bottom:8px;z-index:2147483647;background:#111c;color:#9fe;font:12px/1.4 monospace;padding:6px 10px;border-radius:8px;pointer-events:none;white-space:pre';
         const mountBadge = () => { if (!badge.isConnected && document.body) document.body.appendChild(badge); };
-        let badgeNote = '';
-        const setBadge = t => { mountBadge(); badge.textContent = t + (badgeNote ? '\n' + badgeNote : '') + (document.hidden ? '\n⚠ 탭이 가려져 있으면 수집이 느려질 수 있습니다' : ''); };
+        let badgeNote = '', sentNote = '', curBadge = '';
+        const setBadge = t => { curBadge = t; mountBadge(); badge.textContent = t + (sentNote ? '\n' + sentNote : '') + (badgeNote ? '\n' + badgeNote : '') + (document.hidden ? '\n⚠ 탭이 가려져 있으면 수집이 느려질 수 있습니다' : ''); };
+        const hhmmss = () => new Date().toTimeString().slice(0, 8);
+        const noteSent = (n, partial, why) => {
+            sentNote = `보드 탭으로 전달 ${hhmmss()} (${n}대${partial ? ', 부분' : ''}${why ? ', ' + why : ''})`;
+            log(sentNote);
+            setBadge(curBadge);
+        };
 
         function makeFrame(id) {
             const f = document.createElement('iframe');
@@ -252,8 +261,18 @@
 
                 const elapsed = Date.now() - t0;
                 const avg = stats.ms.length ? Math.round(stats.ms.reduce((a, b) => a + b, 0) / stats.ms.length) : 0;
+                const heapMb = (performance && performance.memory) ? Math.round(performance.memory.usedJSHeapSize / 1048576) : 0;
+                const leftover = document.querySelectorAll('iframe[data-nb-batt-probe]').length;
                 log(`사이클 ${cycleNo}: ${stats.ok}/${sites.length} 성공, ${Math.round(elapsed / 1000)}초, 사이트당 평균 ${avg}ms` +
+                    (heapMb ? `, 힙 ${heapMb}MB` : '') + (leftover ? `, ⚠ 남은 iframe ${leftover}개` : '') +
                     (stats.fail.length ? `, 실패: ${stats.fail.join(', ')}` : ''));
+                // 자동 새로고침 판단 — 오래 돌수록 느려지는 현상 방지
+                if (C.limit === 0) {
+                    if (cycleNo <= 2) baseMs = baseMs ? Math.min(baseMs, elapsed) : elapsed;
+                    slowStreak = (cycleNo > 2 && elapsed > Math.max(60000, 2 * baseMs)) ? slowStreak + 1 : 0;
+                    if (C.reloadEveryCycles > 0 && cycleNo >= C.reloadEveryCycles) needReload = `${cycleNo}사이클 경과`;
+                    else if (C.reloadIfSlow && slowStreak >= 2) needReload = `사이클이 느려짐(${Math.round(elapsed / 1000)}초, 처음 ${Math.round(baseMs / 1000)}초)`;
+                }
                 finalize(C, sites);
                 setBadge(`마지막 완료 ${new Date().toTimeString().slice(0, 8)}  (${stats.ok}/${sites.length}, ${Math.round(elapsed / 1000)}초)`);
             } catch (e) {
@@ -261,6 +280,21 @@
             } finally {
                 running = false;
                 const wait = Math.max(0, C.cycleMs - (Date.now() - t0));
+                if (needReload) {
+                    // 배포/전달이 끝날 시간을 준 뒤 새로고침 (5분 안에 연달아 새로고침하지는 않는다)
+                    let okToReload = true;
+                    try {
+                        const last = Number(sessionStorage.getItem('bb_collector_reload_at') || 0);
+                        if (Date.now() - last < 5 * 60 * 1000) okToReload = false;
+                    } catch (e) {}
+                    if (okToReload) {
+                        log(`자동 새로고침 예정 — ${needReload} (메모리 정리)`);
+                        setBadge('자동 새로고침 준비 중…');
+                        setTimeout(() => { try { sessionStorage.setItem('bb_collector_reload_at', String(Date.now())); } catch (e) {} location.reload(); }, Math.max(8000, wait));
+                        return;
+                    }
+                    needReload = '';
+                }
                 setTimeout(runCycle, wait);
             }
         }
@@ -285,6 +319,7 @@
                 lastDispatchAt = Date.now();
                 dispatchToBoard(json, partial);                                      // 이 탭의 보드(있으면)
                 try { bc && bc.postMessage({ json, partial }); } catch (e) {}        // 같은 PC 의 다른 보드 탭
+                noteSent(all.length, partial, '정기');
             }, wait);
         }
 
@@ -294,7 +329,8 @@
             if (!(m && m.hello)) return;
             const all = currentAll();
             if (!all.length) return;
-            try { bc.postMessage({ json: JSON.stringify(all), partial: SITE_IDS.some(id => !store[id]), reply: true }); } catch (err) {}
+            const partial = SITE_IDS.some(id => !store[id]);
+            try { bc.postMessage({ json: JSON.stringify(all), partial, reply: true }); noteSent(all.length, partial, '새 탭 요청에 응답'); } catch (err) {}
         };
 
         // 사이클 결과 처리: 받은 만큼 보드로 전달한다. 일부 사이트만 받았으면 partial 로 표시 → 보드가 목록 정리를 건너뛴다.
