@@ -1,5 +1,5 @@
 /* ============================================================
-   battery_board.js v6.3 (배경 이미지 · 방전 로그 · 이석/착석 현황 슬라이드 전환 추가 · 배달 기체 로그 · 하루 기준 07:00 · 금일 배달 건수 배지 · 고정 버튼 3종 무지개 파스텔+이모지)
+   battery_board.js v6.4 [UI 전면 개편: 순찰·배달 열 + 다중/개입/이석 3분할 그리드. 로직 변경 없음 — 빠진 요소는 CSS로만 숨김] v6.3 (배경 이미지 · 방전 로그 · 이석/착석 현황 슬라이드 전환 추가 · 배달 기체 로그 · 하루 기준 07:00 · 금일 배달 건수 배지 · 고정 버튼 3종 무지개 파스텔+이모지)
    NCC 종합 모니터 — 템퍼몽키 inject
    ============================================================ */
 
@@ -1250,6 +1250,61 @@
         /* ── 제거 힌트 ── */
         .bb-rmhint { font-size:12px; color:var(--rd); font-weight:700; display:none; opacity:.85; }
         .bb-rmhint.show { display:block; }
+
+        /* ══════════════════════════════════════════════════════════
+           v6.4 UI 전면 개편 — 아래는 화면 배치만 바꾸는 오버라이드 (로직은 그대로)
+           · 숨김 처리한 요소(배터리 소모/저속충전/순찰 후 미주차/방전 로그/이상 로그/목록 백업·복원/제외 검색/기체 검색/
+             퀵바/즐겨찾기 열/전체 배터리바 버튼/UP/갱신 카운트다운)도 DOM 에는 남아 있어 기존 로직이 그대로 동작함
+           ══════════════════════════════════════════════════════════ */
+        #bb .bb-fixbtns, #bb .bb-rbtns, #bb #bb-theme-btn, #bb #bb-wbl-upload-btn, #bb #bb-backup-btn, #bb #bb-restore-btn,
+        #bb #bb-bk-pop, #bb .bb-hd-right-row.right, #bb .bb-quick, #bb .bb-fcol, #bb .bb-ref,
+        #bb .bb-mm-goatt, #bb #bb-att-back, #bb #bb-iv-go, #bb #bb-iv-back, #bb #bb-dlog-close { display:none !important; }
+
+        /* 헤더: 알림 칩은 왼쪽 빈 자리까지 넓히고, 남은 버튼(테마·줌·닫기)은 제목 영역 오른쪽에 붙임 */
+        #bb .bb-alert-zone { width:calc(50% - 275px); }
+        #bb .bb-hd-rightwrap { right:auto; left:calc(50% + 261px); }
+        #bb .bb-hd-right-row.spread { justify-content:flex-start; gap:12px; }
+
+        /* 본문: [순찰 + 배달 열] [다중 모니터링] [개입 현황] [이석 현황] */
+        #bb .bb-main { flex:0 0 540px; }
+        #bb .bb-lists { flex-direction:column; align-items:stretch; gap:12px; }
+        #bb .bb-oth, #bb .bb-mid { width:512px; }
+        #bb .bb-oth { height:380px; }
+        #bb .bb-mid { height:401px; }
+        #bb .bb-oth-hd { grid-template-columns:1fr 1fr; }
+        #bb .bb-sec-deliv { flex:0 0 118px; grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:12px; }
+
+        /* 배달 로그: 팝업 → 배달 열 안에 펼쳐서 표시 */
+        #bb #bb-dlog-panel {
+            display:flex !important; flex-direction:column; position:relative; top:auto; left:auto; transform:none;
+            width:auto; min-height:0; max-height:none; flex:1 1 0; overflow:visible; z-index:auto;
+            border:2px solid var(--bd2); border-radius:8px; background:var(--bg); box-shadow:none;
+        }
+        #bb #bb-dlog-panel .bb-ap-hd { position:static; padding:5px 10px; border-radius:6px 6px 0 0; }
+        #bb #bb-dlog-panel .bb-ap-title { font-size:15px; }
+        #bb #bb-dlog-panel .bb-dlog-head { padding:6px 10px; }
+        #bb #bb-dlog-panel .bb-att-cal { z-index:30; }
+        #bb #bb-dlog-panel .bb-dlog-kpi { padding:6px 10px 2px; }
+        #bb #bb-dlog-panel .bb-dlog-kpi .v { font-size:15px; }
+        #bb #bb-dlog-panel .bb-dlog-sub { padding:6px 10px 2px; }
+        #bb #bb-dlog-body { flex:1 1 auto; min-height:0; overflow-y:auto; padding:0 6px 6px; }
+
+        /* 다중 / 개입 / 이석: 한 상자 안의 슬라이드 → 나란히 놓인 3개의 그리드 */
+        #bb .bb-mm { margin:10px 16px 10px 0; }
+        #bb .bb-mm-box { display:flex; gap:10px; border:0; background:none; border-radius:0; overflow:visible; }
+        #bb .bb-mm-track { display:contents; transform:none !important; }
+        #bb .bb-mm-page, #bb #bb-iv-page {
+            flex:1 1 0; width:auto; min-width:0; height:100%; position:relative; inset:auto; z-index:auto;
+            transform:none !important; visibility:visible !important; transition:none;
+            border:2px solid var(--bd2); border-radius:8px; background:var(--bg); overflow:hidden;
+        }
+        #bb #bb-mm-page-multi { order:1; }
+        #bb #bb-iv-page { order:2; }
+        #bb #bb-mm-page-att { order:3; }
+        #bb .bb-mm-head, #bb .bb-mm-head.bb-iv-hd { padding:5px 8px 4px; }
+        #bb .bb-att-head, #bb .bb-iv-head { column-gap:0; }
+        #bb .bb-att-head .bb-att-title, #bb .bb-att-head .bb-att-r2 { grid-column:1 / -1; }
+        #bb .bb-att-body { grid-template-columns:repeat(2,minmax(0,1fr)); }
     `;
     document.head.appendChild(style);
 
@@ -1367,23 +1422,6 @@
                 <div id="bb-alertlog-all-body"></div>
             </div>
 
-            <div id="bb-dlog-panel">
-                <div class="bb-ap-hd">
-                    <div class="bb-ap-title">🚚 배달 로그</div>
-                    <div class="bb-ap-close" id="bb-dlog-close">✕</div>
-                </div>
-                <div class="bb-dlog-head">
-                    <button class="bb-mm-nav bb-att-mbtn" id="bb-dlog-today">오늘</button>
-                    <button class="bb-mm-nav bb-att-mbtn" id="bb-dlog-cal-btn">달력</button>
-                    <span class="bb-dlog-date-lbl" id="bb-dlog-date-lbl"></span>
-                    <span class="bb-dlog-note" id="bb-dlog-note"></span>
-                    <div class="bb-att-cal" id="bb-dlog-cal"></div>
-                </div>
-                <div class="bb-dlog-kpi" id="bb-dlog-kpi"></div>
-                <div class="bb-dlog-sub" id="bb-dlog-sub">배달 내역</div>
-                <div id="bb-dlog-body"></div>
-            </div>
-
             <!-- 본문: 좌(기체 리스트 + 하단 퀵바) | 우(다중 모니터링 중 기체) -->
             <div class="bb-body">
                 <div class="bb-main">
@@ -1417,6 +1455,22 @@
                         <div class="bb-mid">
                             <div class="bb-colhd deliv" id="bb-hd-deliv"><span class="t">배달 기체</span><span class="n">0</span></div>
                             <div class="bb-scroll bb-sec-deliv" id="bb-col-deliv" data-empty="배달 기체 없음" title="배달 기체 (사이트 기준 자동 분류)"></div>
+                    <div id="bb-dlog-panel">
+                        <div class="bb-ap-hd">
+                            <div class="bb-ap-title">🚚 배달 로그</div>
+                            <div class="bb-ap-close" id="bb-dlog-close">✕</div>
+                        </div>
+                        <div class="bb-dlog-head">
+                            <button class="bb-mm-nav bb-att-mbtn" id="bb-dlog-today">오늘</button>
+                            <button class="bb-mm-nav bb-att-mbtn" id="bb-dlog-cal-btn">달력</button>
+                            <span class="bb-dlog-date-lbl" id="bb-dlog-date-lbl"></span>
+                            <span class="bb-dlog-note" id="bb-dlog-note"></span>
+                            <div class="bb-att-cal" id="bb-dlog-cal"></div>
+                        </div>
+                        <div class="bb-dlog-kpi" id="bb-dlog-kpi"></div>
+                        <div class="bb-dlog-sub" id="bb-dlog-sub">배달 내역</div>
+                        <div id="bb-dlog-body"></div>
+                    </div>
                         </div>
                       </div>
                     </div>
@@ -5489,8 +5543,9 @@
     function attSetView(v) {
         _attView = v;
         $att('bb-mm-track').classList.toggle('att', v === 'att');
-        $att('bb-mm-page-multi').inert = (v === 'att');   // 안 보이는 쪽은 클릭/탭 포커스도 막음
-        $att('bb-mm-page-att').inert = (v !== 'att');
+        // [UI 개편: 3분할 그리드라 모두 항상 보임 — inert 처리 주석처리]
+        // $att('bb-mm-page-multi').inert = (v === 'att');
+        // $att('bb-mm-page-att').inert = (v !== 'att');
         if (v === 'att') { attRender(); if (!_attDate) attRefreshLive(); }
         else attCloseFloating();
     }
@@ -6135,7 +6190,7 @@
     // 이석 화면이 실제로 보이고, 실시간을 보는 중이고, 탭이 보일 때만 조회
     setInterval(() => { if (isOpen && _attView === 'att' && !_attDate && !document.hidden) attRefreshLive(); }, ATT_REFRESH_MS);
     document.addEventListener('visibilitychange', () => { if (!document.hidden && isOpen && _attView === 'att' && !_attDate) attRefreshLive(); });
-    attSetView('multi');   // 기본 = 다중 (inert 초기화)
+    attSetView('att');   // [UI 개편] 이석 현황도 항상 표시 → 실시간 조회 유지 (기존: 'multi')
     syncAttBackAlert();
     _attReady = true;
 
@@ -6720,9 +6775,10 @@
             _ivOpen = v;
             page.classList.toggle('open', v);
             page.inert = !v;
-            track.style.transform = v ? 'translateX(50%)' : '';
-            const multi = $iv('bb-mm-page-multi');
-            if (multi) multi.inert = v;   // 개입 화면이 열려 있는 동안 화면 밖으로 밀려난 다중 화면은 클릭/탭 이동 불가
+            // [UI 개편: 3분할 그리드라 슬라이드/inert 처리 주석처리]
+            // track.style.transform = v ? 'translateX(50%)' : '';
+            // const multi = $iv('bb-mm-page-multi');
+            // if (multi) multi.inert = v;
             if (v) { ivRender(); if (!_ivData || _ivData.date !== ivDateNow() || Date.now() - (_ivData._at || 0) > 10000) ivRefresh(true); }   // 왔다 갔다 해도 10초 안이면 다시 요청하지 않음
             else { ivClosePop(); ivCloseCal(); ivCloseHelp(); }
         }
@@ -6779,6 +6835,7 @@
             b.title = a.n > 0 ? `다중 모니터링 ${a.n}대 POI 미갱신 (최대 ${a.max}분째) — 클릭하면 다중 화면으로` : '다중 모니터링으로 돌아가기';
         });
         _ivAlertHook();
+        ivSetOpen(true);   // [UI 개편] 개입 현황 항상 표시
         console.log('[BB] 개입카드 현황 켜짐 (SECTION 18)');
     }
     } catch (e) { console.warn('[BB] 개입카드 초기화 실패 — 기존 기능에는 영향 없음:', e && e.message); }
@@ -6973,12 +7030,12 @@
         });
         document.addEventListener('mousedown', e => {
             if (_dlCalOpen && !e.target.closest('#bb-dlog-cal') && !e.target.closest('#bb-dlog-cal-btn')) dlCloseCal();
-            else if (_dlOpen && !e.target.closest('#bb-dlog-panel') && !e.target.closest('#bb-fb-dlog')) dlClosePanel();
+            // [UI 개편: 배달 로그는 항상 펼쳐져 있으므로 바깥 클릭으로 닫지 않음] else if (_dlOpen && !e.target.closest('#bb-dlog-panel') && !e.target.closest('#bb-fb-dlog')) dlClosePanel();
         });
         document.addEventListener('keydown', e => {
             if (e.key !== 'Escape') return;
             if (_dlCalOpen) dlCloseCal();
-            else if (_dlOpen) dlClosePanel();
+            // [UI 개편] else if (_dlOpen) dlClosePanel();
         });
         const dlVisible = () => _dlOpen && !document.hidden;
         setInterval(() => { if (dlVisible() && !_dlDate) dlRefresh(); }, 60 * 1000);
@@ -6995,6 +7052,7 @@
         dlRefreshBadge();
         setInterval(dlRefreshBadge, DL_BADGE_MS);
 
+        dlOpenPanel();   // [UI 개편] 배달 로그 항상 표시
         console.log('[BB] 배달 로그 켜짐 (SECTION 19)');
     }
     } catch (e) { console.warn('[BB] 배달 로그 초기화 실패 — 기존 기능에는 영향 없음:', e && e.message); }
