@@ -38,6 +38,8 @@
     let _bbTokenSent = false;
     let _bbTokenPhaseDone = false;   // 최초 토큰 발송 판단이 끝났는지
     function bbSendToken() {
+        console.log('[BB] 토큰은 보내지 않습니다 (수집기 방식 — 로더가 NCC 를 조회하지 않음)');
+        return;
         const _token = localStorage.getItem('AccessToken');
         if (_token) {
             document.dispatchEvent(new CustomEvent('bb_token', {
@@ -2120,7 +2122,8 @@
     let _lastProcessedAt = 0;
     let _fbReady = false;   // SECTION 17(고정 버튼) 준비 완료 여부
     document.addEventListener('bb_robots_data', function(e) {
-        if (bbIsOffline()) return;   // 오프라인 모드: NCC 데이터 갱신 무시 (마지막 값 유지)
+        // [수집기 방식] 데이터는 수집기(iframe 응답 읽기)가 보낸다 — NCC API 를 호출하지 않으므로 오프라인 모드와 무관하게 받는다.
+        // (수집 중단은 수집기의 bb_collect_pause / 원격 collector_off 로 한다)
         if (fetchLock) return;
         if (Date.now() - _lastProcessedAt < UPDATE_INTERVAL_MS) return;
         _lastProcessedAt = Date.now();
@@ -2250,7 +2253,8 @@
     setInterval(() => {
         ns--;
         if (ns <= 0) ns = RS;
-        const _off = bbSyncOffline();   // 콘솔/다른 스크립트가 바꾼 스위치도 1초 안에 반영
+        bbSyncOffline();
+        const _off = false;   // [수집기 방식] 오프라인 모드여도 갱신은 계속되므로 '갱신 중단' 문구를 띄우지 않는다
         const m = Math.floor(ns / 60), s = ns % 60;
         const el = document.getElementById('bb-ref');
         if (_off) { if (el) el.textContent = '🔌 오프라인 · NCC 갱신 중단'; return; }

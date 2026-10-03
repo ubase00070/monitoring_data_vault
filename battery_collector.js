@@ -177,11 +177,15 @@
             });
         }
 
-        async function isOffline() {
-            try { if (localStorage.getItem('neubie_offline_mode') === 'true') return true; } catch (e) {}
+        // 수집기 전용 일시정지 스위치. (보드/remote 의 "오프라인 모드"와는 별개 — 그 스위치는 NCC API 호출을 막으려는 것이고,
+        // 이 수집기는 NCC 로 요청을 보내지 않으므로 오프라인 모드가 켜져 있어도 돈다.)
+        //   · 이 PC:  localStorage.setItem('bb_collect_pause','1')   (해제: removeItem)
+        //   · 원격:   remote_admin_config.json 의 "collector_off": true
+        async function isPaused() {
+            try { if (localStorage.getItem('bb_collect_pause') === '1') return true; } catch (e) {}
             try {
                 const res = await fetch(`${CFG_URL}?t=${Date.now()}`, { cache: 'no-store', signal: (AbortSignal.timeout ? AbortSignal.timeout(4000) : undefined) });
-                if (res.ok) { const c = await res.json(); if (c && c.offline === true) return true; }
+                if (res.ok) { const c = await res.json(); if (c && c.collector_off === true) return true; }
             } catch (e) {}
             return false;
         }
@@ -193,7 +197,7 @@
             const t0 = Date.now();
             cycleNo++;
             try {
-                if (await isOffline()) { log('오프라인 모드 — 이번 사이클 건너뜀'); setBadge('수집 대기 (오프라인 모드)'); return; }
+                if (await isPaused()) { log('일시정지 — 이번 사이클 건너뜀'); setBadge('수집 일시정지 중'); return; }
 
                 const sites = C.limit > 0 ? SITE_IDS.slice(0, C.limit) : SITE_IDS.slice();
                 const queue = sites.slice();
