@@ -5014,8 +5014,44 @@
     //    (기체마다 순찰 시 POI 간격이 달라 기체별 허용 시간이 다름 — 표는 Worker 의 UNITS / POI_OVERRIDE_MIN)
     //    여기서는 status('anomaly') 와 limit_min 을 그대로 표시만 한다. 판정 기준을 이 파일에 또 두면 두 파일이 어긋난다.
     // ============================================================
-    const PATROL_LIVE_URL = 'https://gist.githubusercontent.com/ubase00070/bd7773a059217fb81b0be90c961fcc22/raw/patrol_watch_live.json';
-    const PATROL_REFRESH_MS = 30 * 1000;   // 30초마다 조회 (NCC API 와 무관 — gist 파일만 읽음)
+    //  읽는 순서: ① Cloudflare Worker /live (Durable Object — 원본, 30초 갱신) → ② 실패하면 Gist raw (미러·백업)
+    //  Worker 가 실패하면 60초 동안은 Worker 를 건너뛰고 Gist 만 읽는다 (장애 중 매번 15초씩 기다리지 않도록).
+    const PATROL_WORKER_URL = 'https://patrol-watch-worker.ubase00070.workers.dev/live';
+    const PATROL_LIVE_URL = 'https://gist.githubusercontent.com/ubase00070/bd7773a059217fb81b0be90c961fcc22/raw/patrol_watch_live.json';   // 백업(Gist 미러)
+    const PATROL_REFRESH_MS = 30 * 1000;   // 30초마다 조회 (NCC API 와 무관 — Worker/Gist 파일만 읽음)
+    const PATROL_WORKER_TIMEOUT_MS = 8000;
+    let _patrolWorkerFailUntil = 0;
+    let _patrolSrc = '';                   // 마지막으로 읽은 곳: 'Worker' | 'Gist(대체)'
+
+    async function fetchPatrolOne(url, ms) {
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), ms);
+        try {
+            const res = await fetch(url, { cache: 'no-store', signal: ctrl.signal });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const data = await res.json();
+            if (!data || !Array.isArray(data.records)) throw new Error('데이터 형식 오류');
+            return data;
+        } finally {
+            clearTimeout(timer);
+        }
+    }
+
+    async function fetchPatrolData() {
+        if (Date.now() >= _patrolWorkerFailUntil) {
+            try {
+                const data = await fetchPatrolOne(`${PATROL_WORKER_URL}?t=${Date.now()}`, PATROL_WORKER_TIMEOUT_MS);
+                _patrolSrc = 'Worker';
+                return data;
+            } catch (e) {
+                _patrolWorkerFailUntil = Date.now() + 60 * 1000;
+                console.warn('[BB] Worker 읽기 실패 → Gist 로 대체:', e.message);
+            }
+        }
+        const data = await fetchPatrolOne(`${PATROL_LIVE_URL}?t=${Date.now()}`, 15000);
+        _patrolSrc = 'Gist(대체)';
+        return data;
+    }
     let _patrolBusy = false;
     let _patrolSig = null;
     let _patrolLastUpdated = null;
@@ -5353,25 +5389,19 @@
     async function refreshPatrolLive() {
         if (_patrolBusy) return;
         _patrolBusy = true;
-        const ctrl = new AbortController();
-        const timer = setTimeout(() => ctrl.abort(), 15000);
         try {
-            const res = await fetch(`${PATROL_LIVE_URL}?t=${Date.now()}`, { cache: 'no-store', signal: ctrl.signal });
-            if (!res.ok) throw new Error('HTTP ' + res.status);
-            const data = await res.json();
-            if (!data || !Array.isArray(data.records)) throw new Error('데이터 형식 오류');
+            const data = await fetchPatrolData();
 
             _patrolLastUpdated = data.updated_at || null;
             _patrolFeed = { records: data.records, updated_at: data.updated_at };
             rebuildPatrolView();
-            setPatrolStatus(`${_patrolLastUpdated || '-'} 기준(POI 정체 감지)`, false);   // 게시 시각만 그대로 표시
+            setPatrolStatus(`${_patrolLastUpdated || '-'} 기준(POI 정체 감지)${_patrolSrc === 'Gist(대체)' ? ' · Gist 대체' : ''}`, false);   // 게시 시각 (Gist 로 읽었을 때만 표시)
         } catch (e) {
             console.warn('[BB] 다중 모니터링 갱신 실패:', e.message);
             setPatrolStatus(_patrolLastUpdated
                 ? `⚠ 불러오기 실패 · 마지막 ${_patrolLastUpdated} 기준`
                 : '⚠ 불러오기 실패', true);
         } finally {
-            clearTimeout(timer);
             _patrolBusy = false;
         }
     }
