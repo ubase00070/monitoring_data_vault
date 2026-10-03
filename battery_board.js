@@ -22,7 +22,7 @@
     //   (2) remote_admin_config.json 의 "offline": true  — remote_logic.js 와 같은 키(한 번에 둘 다 적용), 새로고침 시 반영
     //   (3) localStorage 'neubie_offline_mode' = 'true'  — 콘솔 localStorage.setItem('neubie_offline_mode','true') 또는 bbSetOffline(true). 1초 안에 반영
     // 원복: 상수 false + 원격 키 false/삭제 + localStorage 값 'false'(또는 삭제). 토큰은 페이지당 1회만 보내므로 로더가 중복 조회 루프를 만들지 않는다.
-    const BB_OFFLINE_MODE = false;
+    const BB_OFFLINE_MODE = true;
     const BB_OFFLINE_LS_KEY = 'neubie_offline_mode';
     let _bbRemoteOffline = false;
     const _bbCfgReady = (async () => {
