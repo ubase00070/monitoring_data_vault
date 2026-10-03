@@ -2747,7 +2747,8 @@
 		// 이미 모달에서 체크돼 있던 기체는 이 예산을 소모하지 않는다. 기본값 Infinity면
 		// 예산 제한 없이 후보 리스트를 끝까지 순서대로 시도한다(기존 자동시작/인계 버튼과 동일 동작).
 		const AUTO_CLICK_DELAY_MS = 400; // 기체 체크박스를 하나씩 누르는 간격 (기존 80ms → 눈으로 따라갈 수 있는 속도)
-		const runAutoSelect = async (units, maxSuccesses = Infinity) => {
+		// autoConfirm=false면 체크까지만 하고 '시작하기'는 누르지 않는다(사용자가 기체를 더 추가한 뒤 직접 시작).
+		const runAutoSelect = async (units, maxSuccesses = Infinity, autoConfirm = true) => {
 			let modal = document.querySelector('[data-qk="remote-multiple-select-robot-dialog"]');
 			if (!modal) {
 				setDpMsg('모달 대기 중...', '#3b82f6');
@@ -2828,6 +2829,10 @@
 			}
 
 			const attempted = checkedUnits.length + skippedUnits.length;
+			if (!autoConfirm) {
+				setDpMsg(`${checkedUnits.length}/${attempted} 선택 완료 — 기체를 더 추가하고 시작하기를 직접 눌러주세요`, '#22c55e');
+				return { confirmed: false, manual: true, checkedUnits };
+			}
 			setDpMsg(`${checkedUnits.length}/${attempted} 선택 완료, 시작하기 대기 중...`, '#22c55e');
 
 			// ✅ 시작하기 버튼이 활성화될 때까지 폴링 (최대 3초)
@@ -2914,11 +2919,15 @@
 					return;
 				}
 
-				const { confirmed, checkedUnits } = await runAutoSelect(available);
+				// 2번은 '시작하기'를 누르지 않는다 (남는 자리에 직접 기체를 검색·추가한 뒤 수동 시작)
+				const manualStart = slot === 2;
+				const { confirmed, manual, checkedUnits } = await runAutoSelect(available, Infinity, !manualStart);
 
 				if (!checkedUnits.length) return;
 
-				if (confirmed) {
+				if (manual) {
+					return; // 2번: 체크까지만. 시작은 사용자가 직접 하며 taken 반영·확인은 하지 않음
+				} else if (confirmed) {
 					let ok = await patchTaken(checkedUnits, slot);
 					if (!ok) ok = await patchTaken(checkedUnits, slot); // 실패 시 1회 재시도
 					if (ok) {
