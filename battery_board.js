@@ -1261,8 +1261,14 @@
         #bb .bb-mm-goatt, #bb #bb-att-back, #bb #bb-iv-go, #bb #bb-iv-back, #bb #bb-dlog-close { display:none !important; }
 
         /* 헤더: 알림 칩은 왼쪽 빈 자리까지 넓히고, 남은 버튼(테마·줌·닫기)은 제목 영역 오른쪽에 붙임 */
-        #bb .bb-alert-zone { width:calc(50% - 275px); }
-        #bb .bb-hd-rightwrap { right:auto; left:calc(50% + 261px); }
+        #bb .bb-alert-zone { width:calc(50% - 375px); }
+        /* 아토 2호 / 동숲 주민 2: 기존 캐릭터(제목 박스에서 151~251px)에서 8px 띄워 바깥쪽에 배치 */
+        #bb #bb-walker-wrap-l2 { position:absolute; right:calc(50% + 259px); top:50%; transform:translateY(-50%); width:100px; height:100px; z-index:1; }
+        #bb #bb-walker-l2 { width:100%; height:100%; object-fit:cover; display:block; border:0; }
+        #bb #bb-walker-wrap-r2 { position:absolute; left:calc(50% + 259px); top:50%; transform:translateY(-50%); width:100px; height:100px; z-index:2; }
+        #bb #bb-walker-r2 { width:100%; height:100%; background-size:contain; background-repeat:no-repeat; background-position:center bottom; }
+        /* 테마·줌·닫기 버튼: 우상단 고정 */
+        #bb .bb-hd-rightwrap { left:auto; right:14px; top:10px; transform:none; }
         #bb .bb-hd-right-row.spread { justify-content:flex-start; gap:12px; }
 
         /* 본문: [순찰 + 배달 열] [다중 모니터링] [개입 현황] [이석 현황] */
@@ -1284,7 +1290,7 @@
         #bb #bb-dlog-panel {
             display:flex !important; flex-direction:column; position:relative; top:auto; left:auto; transform:none;
             width:auto; min-height:0; max-height:none; flex:1 1 0; overflow:visible; z-index:auto;
-            border:2px solid var(--bd2); border-radius:8px; background:var(--bg); box-shadow:none;
+            border:2px solid var(--bd2); border-radius:8px; background:color-mix(in srgb, var(--bg) 72%, transparent); box-shadow:none;
         }
         #bb #bb-dlog-panel .bb-ap-hd { position:static; padding:5px 10px; border-radius:6px 6px 0 0; }
         #bb #bb-dlog-panel .bb-ap-title { font-size:15px; }
@@ -1306,7 +1312,7 @@
         #bb .bb-mm-page, #bb #bb-iv-page {
             flex:1 1 0; width:auto; min-width:0; height:100%; position:relative; inset:auto; z-index:auto;
             transform:none !important; visibility:visible !important; transition:none;
-            border:2px solid var(--bd2); border-radius:8px; background:var(--bg); overflow:hidden;
+            border:2px solid var(--bd2); border-radius:8px; background:color-mix(in srgb, var(--bg) 72%, transparent); overflow:hidden;   /* 반투명: 비율(72%)을 낮추면 배경이 더 보임 */
         }
         #bb #bb-mm-page-multi { order:1; }
         #bb #bb-iv-page { order:2; }
@@ -1360,6 +1366,10 @@
                     <img id="bb-walker-l" alt="">
                     <button id="bb-walker-l-toggle" title="아토 끄기">아토</button>
                 </div>
+                <!-- 좌: 아토 2호 — 아토 왼쪽에 간격을 두고 한 마리 더 (켜기/끄기는 아토와 함께) -->
+                <div id="bb-walker-wrap-l2">
+                    <img id="bb-walker-l2" alt="">
+                </div>
                 <div class="bb-hd-titlebox" id="bb-drag-handle">
                     <div class="bb-hd-title">
                         It's not over
@@ -1372,7 +1382,7 @@
                     <button id="bb-wbl-upload-btn" class="bb-up-mini" style="display:none;" title="배터리 데이터 업로드 (CYH 전용)">UP</button>
                 </div>
                 <!-- 제목 아래: 상태 색 범례 -->
-                <div class="bb-legend" id="bb-legend" title="기체 카드의 점 · 하단 동그라미 색 = 기체의 현재 상태"></div>
+                <!-- [UI 개편: 상태 표기 범례 주석처리] <div class="bb-legend" id="bb-legend" title="기체 카드의 점 · 하단 동그라미 색 = 기체의 현재 상태"></div> -->
                 <!-- 우: 동숲 주민 1 (제목 박스 오른쪽, 말풍선 있음) -->
                 <div id="bb-walker-wrap">
                     <div id="bb-walker" title="클릭: 말풍선 켜기/끄기"></div>
@@ -1380,6 +1390,10 @@
                     <button id="bb-walker-next" class="bb-walker-arrow right" title="다음 캐릭터">›</button>
                     <button id="bb-walker-toggle" title="동숲 주민 끄기">동숲</button>
                     <div id="bb-walker-bubble"><span id="bb-walker-bubble-text"></span></div>
+                </div>
+                <!-- 우: 동숲 주민 2 — 주민 오른쪽에 같은 간격으로 한 명 더 (다음 캐릭터, 말풍선 없음, 켜기/끄기는 주민과 함께) -->
+                <div id="bb-walker-wrap-r2">
+                    <div id="bb-walker-r2"></div>
                 </div>
                 <!-- 우: 3종 버튼 (오른쪽 동숲 주민의 오른쪽) — 배달 로그 / 방전 로그 / 이상 알림. 왼쪽 고정 버튼 3행과 같은 폭·높이·간격 -->
                 <div class="bb-rbtns" id="bb-fixbtns-r">
@@ -3950,6 +3964,9 @@
 
 		function renderWalker() {
 			walkerEl.style.backgroundImage = `url('${WALKER_BASE}${currentVariantFile()}')`;
+			// [UI 개편] 오른쪽 두 번째 주민: 다음 캐릭터 (같은 시간 기준 배리에이션)
+			const r2 = document.getElementById('bb-walker-r2');
+			if (r2) { const c2 = walkerFiles[(charIdx + 1) % walkerFiles.length].variants; r2.style.backgroundImage = `url('${WALKER_BASE}${c2[Math.floor(Date.now() / ROTATE_MS) % c2.length]}')`; }
 		}
 		renderWalker();
 
@@ -4190,6 +4207,7 @@
 
 		function applyWalkerToggle() {
 			walkerEl.style.display = walkerOn ? '' : 'none';
+			const r2w = document.getElementById('bb-walker-wrap-r2'); if (r2w) r2w.style.display = walkerOn ? '' : 'none';   // [UI 개편] 두 번째 주민도 함께
 			toggleEl.classList.toggle('off', !walkerOn);
 			toggleEl.textContent = walkerOn ? '동숲' : '🚫';
 			toggleEl.title = walkerOn ? '동숲 주민 끄기' : '동숲 주민 켜기';
@@ -4221,10 +4239,13 @@
         for (let n = 1; n <= BUNNY_COUNT; n++) { new Image().src = BUNNY_BASE + bunnyFile(n); }   // 미리 받아둬서 교체될 때 깜빡임 없이 바로 표시
 
         let lastN = 0;
+        const el2 = document.getElementById('bb-walker-l2'), wrapEl2 = document.getElementById('bb-walker-wrap-l2');
         function render() {
             let n; do { n = 1 + Math.floor(Math.random() * BUNNY_COUNT); } while (BUNNY_COUNT > 1 && n === lastN);   // 같은 그림이 바로 연달아 나오지 않도록
             lastN = n;
             el.src = BUNNY_BASE + bunnyFile(n);
+            // [UI 개편] 아토 2호: 아토와 다른 그림
+            if (el2) { let m; do { m = 1 + Math.floor(Math.random() * BUNNY_COUNT); } while (BUNNY_COUNT > 1 && m === n); el2.src = BUNNY_BASE + bunnyFile(m); }
         }
         render();
         setInterval(render, BUNNY_INTERVAL_MS);
@@ -4238,6 +4259,7 @@
             const src = el.src;
             el.src = '';
             el.src = src;
+            if (el2 && el2.src) { const s2 = el2.src; el2.src = ''; el2.src = s2; }
         }, BUNNY_RESTART_MS);
 
         // 표시 on/off (기본 ON, 저장)
@@ -4246,6 +4268,7 @@
         on = on === null ? true : on === '1';
         function applyToggle() {
             el.style.display = on ? '' : 'none';
+            if (wrapEl2) wrapEl2.style.display = on ? '' : 'none';
             toggleEl.classList.toggle('off', !on);
             toggleEl.textContent = on ? '아토' : '🚫';
             toggleEl.title = on ? '아토 끄기' : '아토 켜기';
