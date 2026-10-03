@@ -114,24 +114,40 @@
     }
 
     // ══ 수신 전용 탭: 수집 탭이 보낸 결과를 보드에 넘긴다 ══
+    // · 탭을 새로 열거나 새로고침하면 수집 탭에 "지금 값 줘"(hello)를 보내 바로 받는다 — 다음 사이클(최대 2분)을 기다리지 않는다.
+    // · 보드는 직전 처리 후 2분 안에 온 이벤트를 무시하므로, 이 탭에서 보드로 넘기는 간격도 dispatchGapMs 이상으로 유지한다.
     function startReceiver() {
         if (typeof BroadcastChannel === 'undefined') return;
         const bc = new BroadcastChannel(BC_NAME);
-        let warned = false, first = true;
+        let warned = false, first = true, got = false;
+        let lastAt = 0, timer = null, latest = null;
+        const deliver = () => {
+            timer = null;
+            if (!latest) return;
+            const { json, partial } = latest; latest = null;
+            lastAt = Date.now();
+            if (first) { first = false; log(`수신 완료 — ${partial ? '부분' : '전체'} 데이터를 보드로 전달했습니다`); }
+            dispatchToBoard(json, partial);
+        };
         bc.onmessage = e => {
             const m = e.data;
+            if (m && m.hello) return;   // 다른 수신 탭의 요청
             const json = typeof m === 'string' ? m : (m && m.json);
             const partial = !!(m && typeof m === 'object' && m.partial);
             if (typeof json !== 'string') return;
+            if (m && m.reply && got) return;   // 이미 받은 탭은 "새 탭을 위한 응답"을 무시
             // 예전 보드(부분 데이터를 모름)에 부분 데이터를 넘기면 목록이 지워질 수 있다 → 지원하는 보드일 때만 전달
             if (partial && !window.__bbPartialOk) {
                 if (!warned) { warned = true; log('⚠️ 일부 사이트만 받은 데이터라 전달하지 않았습니다 — battery_board.js 를 최신 버전으로 갱신해야 합니다(또는 전체 사이트 수신을 기다리는 중)'); }
                 return;
             }
-            if (first) { first = false; log(`수신 완료 — ${partial ? '부분' : '전체'} 데이터를 보드로 전달했습니다`); }
-            dispatchToBoard(json, partial);
+            got = true;
+            latest = { json, partial };
+            if (timer) return;   // 이미 예약돼 있으면 예약 시점에 최신 값을 전달
+            timer = setTimeout(deliver, Math.max(0, lastAt + cfg().dispatchGapMs - Date.now()));
         };
-        log('수신 모드 — 수집 탭의 결과를 보드로 전달합니다');
+        try { bc.postMessage({ hello: 1 }); } catch (e) {}
+        log('수신 모드 — 수집 탭의 결과를 보드로 전달합니다 (수집 탭에 현재 값을 요청했습니다)');
     }
 
     // ══ 수집 탭 ══
@@ -271,6 +287,15 @@
                 try { bc && bc.postMessage({ json, partial }); } catch (e) {}        // 같은 PC 의 다른 보드 탭
             }, wait);
         }
+
+        // 새로 열린/새로고침된 보드 탭이 현재 값을 요청하면 바로 보내준다 (다음 사이클까지 기다리지 않게)
+        if (bc) bc.onmessage = e => {
+            const m = e.data;
+            if (!(m && m.hello)) return;
+            const all = currentAll();
+            if (!all.length) return;
+            try { bc.postMessage({ json: JSON.stringify(all), partial: SITE_IDS.some(id => !store[id]), reply: true }); } catch (err) {}
+        };
 
         // 사이클 결과 처리: 받은 만큼 보드로 전달한다. 일부 사이트만 받았으면 partial 로 표시 → 보드가 목록 정리를 건너뛴다.
         // (못 받은 사이트 하나 때문에 전체가 멈추지 않고, 시험 모드에서도 보드에 결과가 보인다)
