@@ -1063,6 +1063,8 @@
             // 나와 일치하면 그 업무는 나한테도 표시되어야 함 (seat_map.json 파싱 때와 동일한 관례)
             const assignees = String(t.user || '').split('/').map(n => n.trim());
             if (!assignees.includes(myName)) return false;
+            // '서브 모니터링 임무'는 일일 업무 목록에 표시하지 않는다 (띄어쓰기 유무 모두 대응)
+            if (/서브\s*모니터링/.test(String(t.content || ''))) return false;
             // next_0700_handover(내일 07시 다중모니터링 통합 인계 스냅샷)는
             // 00:00~07:10 사이에만 미리보기로 표시. 그 이후엔 같은 07:00 업무가
             // 정규 monitoring 항목으로 자연스럽게 이어지므로 중복 표시를 막는다.
@@ -1342,7 +1344,8 @@
             .filter(t => {
                 const content = t.content || "";
                 const rawTime = t.rawTime || "";
-                return content.trim() !== "" && !String(rawTime).includes("1899");
+                return content.trim() !== "" && !String(rawTime).includes("1899")
+                    && !/서브\s*모니터링/.test(content);   // 서브 모니터링 임무는 표시 제외
             })
             .sort((a, b) => {
                 // '내일 07시' 미리보기(next_0700_handover)는 rawTime이 '07:00'이라
