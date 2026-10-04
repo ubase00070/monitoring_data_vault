@@ -674,6 +674,12 @@
     const BATT_STAGGER_MS = 1000;               // iframe 순차 오픈 간격
     const BATT_READ_TIMEOUT_MS = 20000;         // 기체 1대 최대 대기
     const BATT_POLL_MS = 500;                   // iframe DOM 확인 주기
+    // ── 저사양 PC 배려 (경량화) ──
+    //  · BATT_MAX_PARALLEL: 동시에 열어 두는 iframe 최대 수 (4대를 한꺼번에 열지 않고 N개씩 순서대로 — 값이 작을수록 가볍고 조금 느림)
+    //  · 숨김 iframe 안에서 지도 스크립트·이미지·분석 스크립트를 받지 않게 한다 (기체 상태는 화면 텍스트로 읽으므로 필요 없음).
+    //    NCC 요청(API/웹소켓)은 건드리지 않는다. 끄기(비교용): localStorage.setItem('neubie_batt_lite','0')
+    const BATT_MAX_PARALLEL = 2;
+    const BATT_LITE_KEY = 'neubie_batt_lite';
     // 페이지가 막 뜬 직후에는 기체명만 먼저 나오고 원격 데이터(웹소켓)가 아직 안 와서 'OFF'(꺼짐, 임무 '-')처럼 보이는
     // 구간이 있다. 그래서 '순찰/충전'처럼 데이터가 와야만 나오는 값은 즉시 확정하고,
     // 'OFF/대기'처럼 로딩 중 기본값과 구별이 안 되는 값은 같은 값이 일정 시간 유지돼야 확정한다.
@@ -752,6 +758,72 @@
         return { status: '대기 중', battery, definitive: false };
     }
 
+    // ── 숨김 iframe 경량화 ──
+    // 새 페이지가 막 만들어진 직후(앱 스크립트가 실행되기 전)에 같은 origin 창을 찾아 지도/이미지 로딩 경로를 막는다.
+    // 실패해도 (못 찾거나 예외) 아무 영향 없이 예전처럼 동작한다.
+    function isBattLiteOn() { try { return localStorage.getItem(BATT_LITE_KEY) !== '0'; } catch (e) { return true; } }
+    function patchProbeWindow(w) {
+        if (w.__nbLite) return;
+        w.__nbLite = 1;
+        const bump = () => { window.__nbBattLiteBlocked = (window.__nbBattLiteBlocked | 0) + 1; };   // 숫자(원시값)만 남긴다 — iframe 객체를 붙잡지 않게
+        const HEAVY = /(maps\.googleapis\.com|maps\.gstatic\.com|google\.com\/maps|googletagmanager|google-analytics|clarity\.ms|hotjar|sentry)/i;
+        try {   // 이미지: src/srcset 설정 무시 (<img>, new Image)
+            const d = Object.getOwnPropertyDescriptor(w.HTMLImageElement.prototype, 'src');
+            Object.defineProperty(w.HTMLImageElement.prototype, 'src', {
+                configurable: true, enumerable: true,
+                get() { return d.get.call(this); },
+                set() { bump(); }
+            });
+            const d2 = Object.getOwnPropertyDescriptor(w.HTMLImageElement.prototype, 'srcset');
+            if (d2) Object.defineProperty(w.HTMLImageElement.prototype, 'srcset', {
+                configurable: true, enumerable: true, get() { return d2.get.call(this); }, set() {}
+            });
+            const sa = w.Element.prototype.setAttribute;
+            w.Element.prototype.setAttribute = function (n, v) {
+                const t = this.tagName;
+                if ((t === 'IMG' || t === 'SOURCE' || t === 'VIDEO' || t === 'AUDIO') && /^(src|srcset)$/i.test(n)) { bump(); return; }
+                return sa.apply(this, arguments);
+            };
+        } catch (e) {}
+        try {   // 지도·분석 스크립트와 외부 폰트 스타일은 문서에 붙이지 않는다
+            ['appendChild', 'insertBefore'].forEach(k => {
+                const o = w.Node.prototype[k];
+                w.Node.prototype[k] = function (n) {
+                    try {
+                        if (n && n.tagName === 'SCRIPT' && HEAVY.test(String(n.src || ''))) { bump(); return n; }
+                        if (n && n.tagName === 'LINK' && /font|googleapis|gstatic/i.test(String(n.href || ''))) { bump(); return n; }
+                    } catch (e) {}
+                    return o.apply(this, arguments);
+                };
+            });
+        } catch (e) {}
+        try {   // CSS 배경 이미지
+            const st = w.document.createElement('style');
+            st.textContent = '*,*::before,*::after{background-image:none!important}';
+            (w.document.head || w.document.documentElement).appendChild(st);
+        } catch (e) {}
+    }
+    function installProbeLite(f) {
+        if (!isBattLiteOn()) return;
+        const t0 = Date.now();
+        const tick = () => {
+            try {
+                const w = f.contentWindow;
+                if (!w || !f.isConnected || w.__nbLite) return;
+                const href = w.location.href;
+                if (href && href !== 'about:blank' && w.document && w.document.documentElement) { patchProbeWindow(w); return; }
+            } catch (e) { return; }
+            if (Date.now() - t0 < 4000) setTimeout(tick, 0);
+        };
+        tick();
+    }
+    // 읽기가 끝난 iframe: 진행 중인 로딩을 멈추고 비운 뒤 제거 (저사양 PC에서 메모리/CPU를 빨리 돌려준다)
+    function killProbeFrame(f) {
+        try { f.contentWindow && f.contentWindow.stop && f.contentWindow.stop(); } catch (e) {}
+        try { f.src = 'about:blank'; } catch (e) {}
+        try { f.remove(); } catch (e) {}
+    }
+
     // 숨김 iframe으로 기체 1대를 읽고, 값이 확정되면(또는 타임아웃) iframe을 제거한다. 재시도 없음.
     function readBatteryViaIframe(c) {
         return new Promise(resolve => {
@@ -770,7 +842,7 @@
                 done = true;
                 clearInterval(poll);
                 clearTimeout(killer);
-                f.remove();
+                killProbeFrame(f);
                 resolve(r);
             };
             killer = setTimeout(() => finish({ ok: false }), BATT_READ_TIMEOUT_MS);
@@ -787,6 +859,7 @@
             }, BATT_POLL_MS);
 
             document.body.appendChild(f);
+            installProbeLite(f);   // 지도·이미지 로딩 차단 (페이지가 막 만들어지는 순간에 적용)
         });
     }
 
@@ -918,10 +991,14 @@
         renderBatteryRows();
 
         try {
+            let _slots = BATT_MAX_PARALLEL; const _waiters = [];
+            const acquire = () => new Promise(res => { if (_slots > 0) { _slots--; res(); } else _waiters.push(res); });
+            const release = () => { const n = _waiters.shift(); if (n) n(); else _slots++; };
             await Promise.all(config.batteryIds.map(async (c, i) => {
                 await new Promise(r => setTimeout(r, i * BATT_STAGGER_MS));
                 let res = null;
-                try { res = await readBatteryViaIframe(c); } catch (e) { res = null; }
+                await acquire();   // 동시에 열려 있는 iframe 수 제한
+                try { res = await readBatteryViaIframe(c); } catch (e) { res = null; } finally { release(); }
                 saveBatteryRow(c.id, (res && res.ok)
                     ? { status: res.status, battery: res.battery, at: Date.now() }
                     : { status: '확인 불가', battery: null, at: Date.now() });
