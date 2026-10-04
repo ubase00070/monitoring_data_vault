@@ -2563,8 +2563,6 @@
             const dpMsgEl = document.getElementById('ho-dp-msg');
             if (dpMsgEl) {
                 if (r && !isDataValid(r.data?.updatedAt)) {
-                    dpMsgEl.textContent = '20분 초과로 로드 실패';
-                    dpMsgEl.style.color = '#ef4444';
                     document.querySelectorAll('.ho-remote-cell').forEach(c => {
                         c.textContent = '—';
                         Object.assign(c.style, { background: 'rgba(255,255,255,0.45)', color: '#b0bec5',
@@ -2599,16 +2597,10 @@
 			fontSize: '12px', color: '#9ca3af',
 			overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
 			flex: '1', minWidth: '0',
-            background: 'rgba(255,255,255,0.06)',
-            borderRadius: '5px',
-            padding: '3px 8px',
 		});
-		dpMsg.textContent = '로딩 중...';
 
-		const setDpMsg = (msg, color = '#9ca3af') => {
-			dpMsg.textContent = msg;
-			dpMsg.style.color = color;
-		};
+		// 로그바 표시 비활성화 — 호출부는 그대로 두고 여기서 모두 무시
+		const setDpMsg = () => {};
 
 		// ── 그리드 셀 ──
 		const MAX_UNITS = ADMIN_CONFIG.maxMonitorSlots; // 관리자 설정값 (기본 6, 확장 시 9)
