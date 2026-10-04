@@ -6907,7 +6907,7 @@
     try {
     if (document.getElementById('bb-fb-dlog') && document.getElementById('bb-dlog-panel') && typeof attFetchJson === 'function') {
         const DL_API = ATT_API + '/delivery-poll';   // 크론 폴링과 같은 엔드포인트 — ?view=... 가 있으면 조회 전용으로 동작(인증 불필요), api/ 폴더 개수를 늘리지 않기 위함
-        const DL_BADGE_MS = 5 * 60 * 1000;
+        // 읽는 시점: 매시 정각 +1분(+3~8초 지터) — 서버 크론이 매시 정각 09~23시에 갱신하고, 응답은 다음 hh:01 까지 엣지 캐시됨
         const $dl = id => document.getElementById(id);
         const dlEl = (tag, cls, text) => { const el = document.createElement(tag); if (cls) el.className = cls; if (text !== undefined && text !== null) el.textContent = text; return el; };
         const dlOpDate = () => attYmd(attKst(Date.now() - 7 * 3600 * 1000));   // 근무일 = 07:00 기준 (개입카드와 동일한 방식)
@@ -6986,7 +6986,7 @@
             cells.push(kCell('최다 배달자', topTxt));
             kpi.replaceChildren(...cells);
             $dl('bb-dlog-note').innerHTML = isToday
-                ? '* 11:00부터 2시간마다 업데이트<br>23:00에 금일 집계 마감.'
+                ? '* 09:00부터 1시간마다 업데이트<br>23:00에 금일 집계 마감.'
                 : '* 확정된 기록입니다.';
             if (!deliveries.length) { body.innerHTML = '<div class="bb-att-msg">이 날짜의 배달 완료 기록이 없습니다.' + (isToday && pending ? ' (진행 중 ' + pending + '건은 다음 조회 때 반영됩니다)' : '') + '</div>'; return; }
             // 배달 건이 앞, 아래 줄에 배정 시각·주문번호(+복사 버튼) — 오른쪽엔 수행자 · 소요시간(라벨 포함) — 07시부터 시간순으로 쌓인 걸 최신이 맨 위로 오게 뒤집어서 보여줌
@@ -7094,20 +7094,32 @@
             if (_dlCalOpen) dlCloseCal();
             // [UI 개편] else if (_dlOpen) dlClosePanel();
         });
-        const dlVisible = () => _dlOpen && !document.hidden;
-        setInterval(() => { if (dlVisible() && !_dlDate) dlRefresh(); }, 60 * 1000);
-        document.addEventListener('visibilitychange', () => { if (dlVisible() && !_dlDate) dlRefresh(); });
-
-        // 버튼 배지 = 오늘(근무일) 완료 건수. 패널을 열지 않아도 5분마다 조용히 갱신 (다른 고정 버튼과 같은 fbSetBadge 재사용)
+        // 버튼 배지 = 오늘(근무일) 완료 건수 (다른 고정 버튼과 같은 fbSetBadge 재사용). 오늘 데이터 응답은 dlRefresh 와 같은 주소라 엣지 캐시를 공유함
         async function dlRefreshBadge() {
             try {
                 const d = await attFetchJson(DL_API + '?view=day&date=' + dlOpDate());
                 if (!d || d.ok !== true) return;
                 fbSetBadge('bb-fb-dlog', (d.summary && d.summary.completed) || 0, 'pk');
-            } catch (e) { /* 배지 갱신 실패는 조용히 무시 (패널을 열면 다시 시도됨) */ }
+            } catch (e) { /* 배지 갱신 실패는 조용히 무시 (다음 정각에 다시 시도됨) */ }
         }
-        dlRefreshBadge();
-        setInterval(dlRefreshBadge, DL_BADGE_MS);
+        // ── 매시 정각 +1분에 조회 (09:01 ~ 23:01) ──
+        const dlInSchedule = () => { const h = new Date().getHours(); return h >= 9 && h <= 23; };
+        function dlMsToNextSlot() {
+            const now = new Date(), t = new Date(now);
+            t.setMinutes(1, 0, 0);
+            if (t <= now) t.setHours(t.getHours() + 1);
+            return t - now + 3000 + Math.floor(Math.random() * 5000);   // 정각+1분 뒤 3~8초 (캐시 만료 직후에 읽도록)
+        }
+        function dlScheduleNext() {
+            setTimeout(() => {
+                if (dlInSchedule() && !document.hidden) { dlRefreshBadge(); if (_dlOpen && !_dlDate) dlRefresh(); }
+                dlScheduleNext();
+            }, dlMsToNextSlot());
+        }
+        dlScheduleNext();
+        // 탭이 다시 보이면 한 번 조회 (서버 캐시 덕분에 호출이 늘지 않음 — 정각 사이에 몇 번을 열어도 GitHub 호출은 최대 1회)
+        document.addEventListener('visibilitychange', () => { if (!document.hidden && _dlOpen && !_dlDate) { dlRefresh(); dlRefreshBadge(); } });
+        dlRefreshBadge();   // 처음 열었을 때 1회 (패널 자체의 첫 조회는 아래 dlOpenPanel 이 담당)
 
         dlOpenPanel();   // [UI 개편] 배달 로그 항상 표시
         console.log('[BB] 배달 로그 켜짐 (SECTION 19)');
