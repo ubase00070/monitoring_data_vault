@@ -79,7 +79,7 @@
 
     const NB_THEMES = {
         light: { bg: '#f3ecdb', card: '#e2d7bd', border: '#cbbd98', text: '#2b2418', accent: '#1e3a5f', purple: '#7c3aed', isDark: false },
-        dark:  { bg: '#232327', card: '#403f47', border: '#54535c', text: '#e8e9ec', accent: '#5b9bf7', purple: '#c9b8fb', isDark: true }
+        dark:  { bg: '#2b2b30', card: '#4a4953', border: '#62616b', text: '#e8e9ec', accent: '#5b9bf7', purple: '#c9b8fb', isDark: true }
     };
 
     // ── UI 개편: 레인보우 → 퍼플 그라데이션 외곽선 (패널·카드·버튼 공통) ──
@@ -640,7 +640,7 @@
         actions.style.cssText = 'display:flex; align-items:center; gap:6px; min-width:0;';
         const metaEl = document.createElement('span');
         metaEl.id = 'neubie-battery-meta';
-        metaEl.style.cssText = `font-size:12px; color:${T.isDark ? '#9ca3af' : '#7a6f57'}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0;`;
+        metaEl.style.cssText = `font-size:12px; color:${T.isDark ? '#b4b8c0' : '#7a6f57'}; white-space:nowrap; flex-shrink:0;`;
         const refreshBtn = document.createElement('button');
         refreshBtn.id = 'neubie-battery-refresh';
         refreshBtn.style.cssText = 'border:none; border-radius:6px; height:24px; min-width:82px; padding:0 10px; font-size:12px; font-weight:800; flex-shrink:0; white-space:nowrap; transition:0.2s;';
@@ -675,8 +675,8 @@
         cover.style.cssText = `position:absolute; inset:0; z-index:3; display:none; align-items:center; justify-content:center; border-radius:12px; background:${T.isDark ? 'rgba(30,30,34,0.55)' : 'rgba(255,255,255,0.5)'}; backdrop-filter:blur(7px); -webkit-backdrop-filter:blur(7px);`;
         const coverBtn = document.createElement('button');
         coverBtn.type = 'button';
-        coverBtn.textContent = '조회';
-        coverBtn.style.cssText = `height:43px; min-width:120px; padding:0 26px; font-size:16px; font-weight:800; cursor:pointer; color:${T.text}; border:2px solid transparent; border-radius:12px; background:${rainbowBg(T.card)}; box-shadow:0 2px 12px rgba(168,85,247,0.35);`;
+        coverBtn.textContent = '성남 배터리 조회';
+        coverBtn.style.cssText = `height:43px; min-width:150px; padding:0 22px; font-size:15px; white-space:nowrap; font-weight:800; cursor:pointer; color:${T.text}; border:2px solid transparent; border-radius:12px; background:${rainbowBg(T.card)}; box-shadow:0 2px 12px rgba(168,85,247,0.35);`;
         coverBtn.onclick = () => runBatteryFetch();
         cover.appendChild(coverBtn);
         card.appendChild(cover);
@@ -974,7 +974,7 @@
 
         const latest = latestBatteryReadAt(cache);
         if (_battRunning) metaEl.textContent = `조회 중… (${_battDone}/${config.batteryIds.length})`;
-        else if (latest) metaEl.textContent = `기준 ${new Date(latest).toLocaleTimeString('ko-KR', { hour12: false })}`;
+        else if (latest) { const d = new Date(latest); metaEl.textContent = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')} 기준`; }
         else metaEl.textContent = '조회 기록 없음';
 
         const cd = getBatteryCooldownMs();
@@ -1885,7 +1885,7 @@
             else if (x) {
                 const p = dlvSplit(x), rs = dlvResolve(x), d = new Date(dlvKeyOf(x) * 1000), hm = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
                 l1 = (rs ? '' : '⚠ ') + (p.site || p.robot || '(기체 정보 없음)'); l2 = p.site ? p.robot : '';   // 1줄 = 사이트, 2줄 = 기체명
-                time = hm + ' 배정'; fileName = dlvFileName(x, me); kind = 'item';
+                time = hm + ' 배달 건'; fileName = dlvFileName(x, me); kind = 'item';
                 title = dlvLabel(x) + '\n' + hm + ' 배정 · ' + (x.o ? '주문번호 ' + x.o : '주문번호 없음') + (x.run ? ' · 진행 중' : '') + '\n'
                     + (rs ? '기체번호: ' + rs.site + ' ' + rs.unit + ' (' + (DLV_HOW[rs.how] || rs.how) + ')' : '⚠ ROBOT_MAP 에서 기체번호를 못 찾아 슬랙 이름으로 만들었어요') + '\n→ ' + fileName + staleWarn;
             }
@@ -2097,7 +2097,7 @@
                     </div>
                     <button id="btnCombined" class="sub-btn" ${isTiddiActive ? '' : 'disabled'} style="flex:none; ${tiddiLockStyle}">${tiddiState.text}</button>
                     <div style="height:1px; background:${T.border}; flex:none; margin:1px 0;"></div>
-                    <div style="font-size:11.5px; font-weight:800; color:${T.isDark ? '#aaa' : '#6b6b6b'}; flex:none;">배달 수동 입력</div>
+                    <div style="font-size:11.5px; font-weight:800; color:${T.isDark ? '#aaa' : '#6b6b6b'}; flex:none;">배달 건 수동 입력 시</div>
                     <div style="position:relative; min-width:0; flex:none;">
                         <select id="robotSelector" style="width:100%; background:${fieldBg}; color:${fieldText}; border:1px solid ${fieldBorder}; border-radius:6px; font-size:13.5px; font-weight:bold; padding:0 20px 0 8px; height:30px; box-sizing:border-box; appearance:none; -webkit-appearance:none; -moz-appearance:none;">
                             ${dropdownOptions || '<option>최근 배달 기체 미감지</option>'}
@@ -2256,30 +2256,21 @@
                 date: '2026-10-05',
                 items: [
                     'Alt+Q 레이아웃 개편: 레인보우 외곽선, 2열 배치(일일 업무·성남 배터리 / 토글·생성기)',
-                    '일일 업무가 5개를 넘으면 카드 안에서 스크롤',
-                    '성남 배터리 현황을 Alt+Q 안으로 이동 — 자동 조회 없음, [조회] 버튼을 눌러야만 조회',
-                    '조회 후 [재조회 ##:##] 2분 대기 (새로고침해도 유지, 그동안은 마지막 값 표시)',
+                    '일일 업무가 5개를 넘으면 카드 안에서 스크롤, 긴 업무는 두 줄 → 마퀴로 표시',
+                    '성남 배터리 현황을 Alt+Q 안으로 이동 — 자동 조회 없음, [성남 배터리 조회]를 눌러야만 조회',
+                    '조회 후 [재조회 ##:##] 2분 대기 (새로고침해도 유지), 2분이 지나면 다시 가려짐',
                     '패치노트·설명(Click!)·패드 팝업이 일일 업무 카드 안에서 열림 (X → 일일 업무 복귀)',
-                    '영상 파일명 생성기 재배치: 최근 배달 3건 / 다중·서브·띠띠 / 배달 수동 입력',
+                    '영상 파일명 생성기 재배치: 최근 배달 3건 / 다중·서브·띠띠 / 배달 건 수동 입력',
                     '하단에 제주 전국체전 대기 행 추가',
-                ]
-            },
-            {
-                version: 'v1.0',
-                date: '2026-10-02',
-                items: [
-					'NCC API 호출 기능 전체 제거',
-					'다중 모니터링 자동 시작 보험 적용(최대 6대)',
+                    'NCC API 호출 기능 전체 제거',
+                    '다중 모니터링 자동 시작 보험 적용(최대 6대), 자동 교대시작은 최대 12대까지 가능',
                     'D-PAD UP 커스텀 핫키(원격페이지: UP 1초 홀드 시 설정창/버튼 입력 시 적용)',
-					'서브모니터링 버튼 추가',
+                    '서브모니터링 버튼 추가',
                     '스케줄표/좌석도 라이트/다크 모드(디폴트 라이트)',
                     '다중/과학관 업무 전임자/후임자 표기',
-                    '레이아웃 전체에 그린 톤 테마 적용',
-					'다중 관제 기체 삭제 시 선택한 기체명 표기',
-					'다중 관제 시 모니터링 생성 모달을 우측에 고정',
-					'맵 최적화 속도 개선(Dot 제거, 비타겟 site 이동 반영)',
-					'개입카드 진입 시 다음 개입 요청 토글 자동으로 OFF',
-					'다중 모니터링 자동 교대시작은 최대 12대까지 가능',
+                    '다중 관제 기체 삭제 시 선택한 기체명 표기, 모니터링 생성 모달을 우측에 고정',
+                    '맵 최적화 속도 개선(Dot 제거, 비타겟 site 이동 반영)',
+                    '개입카드 진입 시 다음 개입 요청 토글 자동으로 OFF',
                 ]
             },
         ];
@@ -2388,12 +2379,13 @@
 
         // ── 다크/라이트 토글 (패치노트 옆, 누르면 이모지가 바뀜) ──
         const themeBtn = document.createElement('button');
-        themeBtn.textContent = T.isDark ? '🌙' : '☀️';
+        const _seg = (emoji, active) => `<span style="display:inline-flex; align-items:center; justify-content:center; width:24px; height:20px; border-radius:5px; font-size:13px; line-height:1; ${active ? 'background:' + (T.isDark ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.14)') + ';' : 'opacity:0.4; filter:grayscale(0.6);'}">${emoji}</span>`;
+        themeBtn.innerHTML = _seg('🌙', T.isDark) + _seg('☀️', !T.isDark);   // 두 이모지를 항상 함께 표시, 현재 모드가 강조됨
         themeBtn.title = T.isDark ? '다크 모드 (클릭: 라이트로 전환)' : '라이트 모드 (클릭: 다크로 전환)';
         themeBtn.style.cssText = `
             background:transparent; border:1px solid ${T.border}; color:${T.text};
-            border-radius:6px; padding:3px 7px; cursor:pointer; flex-shrink:0;
-            font-size:14px; line-height:1.3; margin-left:5px; vertical-align:middle;
+            border-radius:7px; padding:2px 3px; cursor:pointer; flex-shrink:0; display:inline-flex; gap:2px; align-items:center;
+            font-size:14px; line-height:1; margin-left:5px; vertical-align:middle;
             transition:all 0.2s;
         `;
         themeBtn.onmouseenter = () => { themeBtn.style.borderColor = GREEN_HOVER; };
@@ -4314,13 +4306,13 @@
             window.openGamepadTesterOverlay = function() {
                 const box = document.createElement('div');
                 box.dataset.fit = '1';
-                box.style.cssText = `background:#1e1e2e; color:#e2e8f0; width:100%; box-sizing:border-box; pointer-events:auto;`;
+                { const TT = getNbTheme(); box.style.cssText = `background:${TT.isDark ? '#1e1e2e' : TT.card}; color:${TT.isDark ? '#e2e8f0' : TT.text}; width:100%; box-sizing:border-box; pointer-events:auto;`; }
                 box.innerHTML = `
                     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; gap:10px; flex:none; padding-right:30px;">
                         <span style="font-size:15px; font-weight:700;">🎮 컨트롤러 기능 작동 테스터</span>
                         <button id="gpt-close" style="width:26px; height:26px; border:none; border-radius:5px; background:#3b0000; border:1px solid #ef4444; color:#ef4444; font-size:14px; cursor:pointer;">✕</button>
                     </div>
-                    <div id="gpt-status" style="text-align:center; font-size:11px; color:#94a3b8; margin-bottom:4px; flex:none;">컨트롤러의 아무 버튼이나 눌러 연결하세요</div>
+                    <div id="gpt-status" style="text-align:center; font-size:11px; color:${getNbTheme().isDark ? '#94a3b8' : '#5b5340'}; margin-bottom:4px; flex:none;">컨트롤러의 아무 버튼이나 눌러 연결하세요</div>
                     <div style="background:#f4ede0; border-radius:10px; padding:6px; flex:1; min-height:0; width:100%; box-sizing:border-box; display:flex;">
                     <svg viewBox="71 229 1251 930" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" style="width:100%; height:100%; display:block; min-height:0;">
 <path d="M0 0 C17.02 14.78 28.91 33.44 34.51 55.31 C34.81 56.29 35.11 57.27 35.41 58.28 C41.36 80.44 38.7 106.8 28.51 127.31 C28.23 127.89 27.95 128.47 27.67 129.06 C14.18 156.81 -7.86 175 -36.3 186.12 C-62.17 194.83 -91.15 193.22 -115.75 181.46 C-146.03 166.39 -164.89 143.27 -175.63 111.42 C-178.14 102.33 -178.8 93.86 -178.74 84.44 C-178.75 83.25 -178.75 82.06 -178.76 80.83 C-178.7 51.36 -166.63 26.24 -146.49 5.31 C-145.63 4.34 -145.63 4.34 -144.75 3.35 C-107.92 -37.09 -39.44 -33.37 0 0 Z " fill="#FDFDFD" transform="translate(1069.48876953125,444.68798828125)"/>
@@ -4450,7 +4442,7 @@
             window.openGamepadGuideOverlay = function() {
                 const box = document.createElement('div');
                 box.dataset.fit = '1';
-                box.style.cssText = `background:#1e1e2e; color:#e2e8f0; width:100%; box-sizing:border-box; pointer-events:auto;`;
+                { const TT = getNbTheme(); box.style.cssText = `background:${TT.isDark ? '#1e1e2e' : TT.card}; color:${TT.isDark ? '#e2e8f0' : TT.text}; width:100%; box-sizing:border-box; pointer-events:auto;`; }
                 box.innerHTML = `
                     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; gap:10px; flex:none; padding-right:30px;">
                         <span style="font-size:15px; font-weight:700;">🎮 D-PAD 기능 변경점 설명</span>
