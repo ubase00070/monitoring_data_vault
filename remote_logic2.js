@@ -50,7 +50,7 @@
     // admin이 이 JSON 파일 하나만 GitHub에서 직접 고치면, 모든 사용자는 새로고침 시
     // 아래 값을 그대로 반영받는다(재배포 불필요).
     //   { "maxMonitorSlots": 6, "locked": false }
-    // fetch 실패 시엔 안전 기본값(6대 / 잠금 해제)으로 지금까지와 동일하게 동작한다.
+    // fetch 실패 시엔 안전 기본값(6대 / 잠금 해제)으로 지금까지와 동일하게 동작.
     let ADMIN_CONFIG = { maxMonitorSlots: 6, locked: false };
     const adminConfigReady = (async () => {
         try {
