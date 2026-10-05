@@ -159,91 +159,91 @@
 
     // 기체 네이밍 매핑 데이터
     const ROBOT_MAP = {
-        "20": { site: "송도 요기요", unit: "#013" }, // 1호기
-        "86": { site: "송도 요기요", unit: "#055" }, // 2호기
-        "80": { site: "송도 요기요", unit: "#091" }, // 3호기
-        "29": { site: "송도 요기요", unit: "#023" }, // 4호기
-        "32": { site: "송도 요기요", unit: "#026" }, // 5호기
-        "87": { site: "송도 요기요", unit: "#056" }, // 6호기
-        "7": { site: "송도 요기요", unit: "#043" }, // 7호기
-        "57": { site: "송도 요기요", unit: "#061" }, // 8호기
+        "20": { site: "송도 요기요", unit: "#013", ho: 1 }, // 1호기
+        "86": { site: "송도 요기요", unit: "#055", ho: 2 }, // 2호기
+        "80": { site: "송도 요기요", unit: "#091", ho: 3 }, // 3호기
+        "29": { site: "송도 요기요", unit: "#023", ho: 4 }, // 4호기
+        "32": { site: "송도 요기요", unit: "#026", ho: 5 }, // 5호기
+        "87": { site: "송도 요기요", unit: "#056", ho: 6 }, // 6호기
+        "7": { site: "송도 요기요", unit: "#043", ho: 7 }, // 7호기
+        "57": { site: "송도 요기요", unit: "#061", ho: 8 }, // 8호기
 
-        "2": { site: "송도 요기요", unit: "#081" }, // 10호기 고장
-        "51": { site: "송도 요기요", unit: "#050" }, // 11호기 고장
-        "71": { site: "송도 요기요", unit: "#075" }, // 15호기 고장
-        "72": { site: "송도 요기요", unit: "#076" }, // 13호기
-        "129": { site: "송도 요기요", unit: "#082" }, // 14호기
+        "2": { site: "송도 요기요", unit: "#081", ho: 10 }, // 10호기 고장
+        "51": { site: "송도 요기요", unit: "#050", ho: 11 }, // 11호기 고장
+        "71": { site: "송도 요기요", unit: "#075", ho: 15 }, // 15호기 고장
+        "72": { site: "송도 요기요", unit: "#076", ho: 13 }, // 13호기
+        "129": { site: "송도 요기요", unit: "#082", ho: 14 }, // 14호기
 
-        "27": { site: "역삼 요기요", unit: "#021" }, // 3호기
-        "152": { site: "역삼 요기요", unit: "#114" }, // 5호기
-        "23": { site: "역삼 요기요", unit: "#017" }, // 11호기
-        "173": { site: "역삼 요기요", unit: "#153" }, // 14호기
-        "78": { site: "역삼 요기요", unit: "#086" }, // 2호기
-        "153": { site: "역삼 요기요", unit: "#118" }, // 6호기
-        "45": { site: "역삼 요기요", unit: "#044" }, // 9호기
-        "174": { site: "역삼 요기요", unit: "#154" }, // 15호기
+        "27": { site: "역삼 요기요", unit: "#021", ho: 3 }, // 3호기
+        "152": { site: "역삼 요기요", unit: "#114", ho: 5 }, // 5호기
+        "23": { site: "역삼 요기요", unit: "#017", ho: 11 }, // 11호기
+        "173": { site: "역삼 요기요", unit: "#153", ho: 14 }, // 14호기
+        "78": { site: "역삼 요기요", unit: "#086", ho: 2 }, // 2호기
+        "153": { site: "역삼 요기요", unit: "#118", ho: 6 }, // 6호기
+        "45": { site: "역삼 요기요", unit: "#044", ho: 9 }, // 9호기
+        "174": { site: "역삼 요기요", unit: "#154", ho: 15 }, // 15호기
 
-        "47": { site: "역삼 요기요", unit: "#046" }, // 1호기 고장
-        "134": { site: "역삼 요기요", unit: "#098" }, // 4호기 고장
-        "1": { site: "역삼 요기요", unit: "#016" }, // 7호기 고장
-        "146": { site: "역삼 요기요", unit: "#084" }, // 12호기 고장
+        "47": { site: "역삼 요기요", unit: "#046", ho: 1 }, // 1호기 고장
+        "134": { site: "역삼 요기요", unit: "#098", ho: 4 }, // 4호기 고장
+        "1": { site: "역삼 요기요", unit: "#016", ho: 7 }, // 7호기 고장
+        "146": { site: "역삼 요기요", unit: "#084", ho: 12 }, // 12호기 고장
 
-        "260": { site: "성수 요기요", unit: "#233" }, // 1호기
-        "174": { site: "성수 요기요", unit: "#154" }, // 2호기
-        "23": { site: "성수 요기요", unit: "#017" }, // 3호기
+        "260": { site: "성수 요기요", unit: "#233", ho: 1 }, // 1호기
+        "174": { site: "성수 요기요", unit: "#154", ho: 2 }, // 2호기
+        "23": { site: "성수 요기요", unit: "#017", ho: 3 }, // 3호기
 
-        "260": { site: "성수 요기요", unit: "#233" }, // 6호기
-        "261": { site: "성수 요기요", unit: "#234" }, // 7호기
-        "262": { site: "성수 요기요", unit: "#235" }, // 8호기
+        "260": { site: "성수 요기요", unit: "#233", ho: 6 }, // 6호기
+        "261": { site: "성수 요기요", unit: "#234", ho: 7 }, // 7호기
+        "262": { site: "성수 요기요", unit: "#235", ho: 8 }, // 8호기
 
-        "46": { site: "성남 삼평동", unit: "#045" },  // 1호기
-        "53": { site: "성남 삼평동", unit: "#052" }, // 2호기
-        "54": { site: "성남 삼평동", unit: "#053" }, // 3호기
-        "55": { site: "성남 삼평동", unit: "#054" }, // 4호기
-        "133": { site: "성남 삼평동", unit: "#087" }, // 5호기
-        "132": { site: "성남 삼평동", unit: "#088" }, // 6호기
-        "135": { site: "성남 삼평동", unit: "#092" }, // 7호기
-        "136": { site: "성남 삼평동", unit: "#093" }, // 8호기
+        "46": { site: "성남 삼평동", unit: "#045", ho: 1 },  // 1호기
+        "53": { site: "성남 삼평동", unit: "#052", ho: 2 }, // 2호기
+        "54": { site: "성남 삼평동", unit: "#053", ho: 3 }, // 3호기
+        "55": { site: "성남 삼평동", unit: "#054", ho: 4 }, // 4호기
+        "133": { site: "성남 삼평동", unit: "#087", ho: 5 }, // 5호기
+        "132": { site: "성남 삼평동", unit: "#088", ho: 6 }, // 6호기
+        "135": { site: "성남 삼평동", unit: "#092", ho: 7 }, // 7호기
+        "136": { site: "성남 삼평동", unit: "#093", ho: 8 }, // 8호기
 
-        "137": { site: "성남 서현동", unit: "#094" }, // 9호기
-        "122": { site: "성남 서현동", unit: "#095" }, // 10호기
+        "137": { site: "성남 서현동", unit: "#094", ho: 9 }, // 9호기
+        "122": { site: "성남 서현동", unit: "#095", ho: 10 }, // 10호기
 
-        "68": { site: "파주 LGD", unit: "#072" }, // 엘리 1호기
-        "106": { site: "파주 LGD", unit: "#078" }, // 엘리 2호기
-        "62": { site: "파주 LGD", unit: "#066" }, // 엘리 3호기
-        "66": { site: "아산 스테이그린", unit: "#070" }, // 그린 1호기
-        "67": { site: "아산 스테이그린", unit: "#071" }, // 그린 2호기
-        "60": { site: "가평 니모 캠핌장", unit: "#064" }, // 가평 1호기
-        "119": { site: "가평 니모 캠핑장", unit: "#085" }, // 가평 2호기
-        "19": { site: "송도 국제캠핑장", unit: "#041" }, // 국캠 1호기
-        "92": { site: "송도 국제캠핑장", unit: "#135" }, // 국캠 2호기
-        "97": { site: "송도 국제캠핑장", unit: "#122" }, // 국캠 3호기
-        "125": { site: "대관령 솔내음 캠핑장", unit: "#110" }, // 대관령 1호기
-        "127": { site: "대관령 솔내음 캠핑장", unit: "#115" }, // 대관령 2호기
+        "68": { site: "파주 LGD", unit: "#072", ho: 1 }, // 엘리 1호기
+        "106": { site: "파주 LGD", unit: "#078", ho: 2 }, // 엘리 2호기
+        "62": { site: "파주 LGD", unit: "#066", ho: 3 }, // 엘리 3호기
+        "66": { site: "아산 스테이그린", unit: "#070", ho: 1 }, // 그린 1호기
+        "67": { site: "아산 스테이그린", unit: "#071", ho: 2 }, // 그린 2호기
+        "60": { site: "가평 니모 캠핑장", unit: "#064", ho: 1 }, // 가평 1호기
+        "119": { site: "가평 니모 캠핑장", unit: "#085", ho: 2 }, // 가평 2호기
+        "19": { site: "송도 국제캠핑장", unit: "#041", ho: 1 }, // 국캠 1호기
+        "92": { site: "송도 국제캠핑장", unit: "#135", ho: 2 }, // 국캠 2호기
+        "97": { site: "송도 국제캠핑장", unit: "#122", ho: 3 }, // 국캠 3호기
+        "125": { site: "대관령 솔내음 캠핑장", unit: "#110", ho: 1 }, // 대관령 1호기
+        "127": { site: "대관령 솔내음 캠핑장", unit: "#115", ho: 2 }, // 대관령 2호기
         "214": { site: "진천 힐사이드 캠핑장", unit: "#194" }, // 진천
         "99": { site: "삼성인력개발원", unit: "#124" }, // 인개원
-		"107": { site: "광주 낭만글램핑", unit: "#080" }, // 낭만글램핑 1호기
-		"121": { site: "광주 낭만글램핑", unit: "#090" }, // 낭만글램핑 2호기
+		"107": { site: "광주 낭만글램핑", unit: "#080", ho: 1 }, // 낭만글램핑 1호기
+		"121": { site: "광주 낭만글램핑", unit: "#090", ho: 2 }, // 낭만글램핑 2호기
 
         "158": { site: "에버랜드 장미축제", unit: "#140" }, // 에버랜드
         "236": { site: "Hitachi Building Systems", unit: "#178" }, // 히타치 배달
         "168": { site: "서산 뜨레 바베큐", unit: "#145" }, // 서산 뜨레 바베큐
 		
-		"303": { site: "충남대학교병원", unit: "#310" }, // 충남대학교병원 두비
-		"304": { site: "충남대학교병원", unit: "#311" }, // 충남대학교병원 달비
+		"303": { site: "충남대학교병원", unit: "#310", nm: "두비" }, // 충남대학교병원 두비
+		"304": { site: "충남대학교병원", unit: "#311", nm: "달비" }, // 충남대학교병원 달비
 
-		"312": { site: "수원 힐스테이트 푸르지오", unit: "#318" }, // 수원 힐스테이트 318호기
-		"313": { site: "수원 힐스테이트 푸르지오", unit: "#319" }, // 수원 힐스테이트 319호기
+		"312": { site: "수원 힐스테이트 푸르지오", unit: "#318", ho: 318 }, // 수원 힐스테이트 318호기
+		"313": { site: "수원 힐스테이트 푸르지오", unit: "#319", ho: 319 }, // 수원 힐스테이트 319호기
 
-        "256": { site: "수원 힐스테이트 바로고", unit: "#229" }, // 수원 힐스테이트 바로고 1호기
-        "257": { site: "수원 힐스테이트 바로고", unit: "#230" }, // 수원 힐스테이트 바로고 2호기
-        "258": { site: "수원 힐스테이트 바로고", unit: "#231" }, // 수원 힐스테이트 바로고 3호기
-        "259": { site: "수원 힐스테이트 바로고", unit: "#232" }, // 수원 힐스테이트 바로고 4호기
+        "256": { site: "수원 힐스테이트 바로고", unit: "#229", ho: 1 }, // 수원 힐스테이트 바로고 1호기
+        "257": { site: "수원 힐스테이트 바로고", unit: "#230", ho: 2 }, // 수원 힐스테이트 바로고 2호기
+        "258": { site: "수원 힐스테이트 바로고", unit: "#231", ho: 3 }, // 수원 힐스테이트 바로고 3호기
+        "259": { site: "수원 힐스테이트 바로고", unit: "#232", ho: 4 }, // 수원 힐스테이트 바로고 4호기
     
-		"315": { site: "반포 래미안 트리니원", unit: "#320" }, // 반포 래미안 트리니원 320호기
-		"316": { site: "반포 래미안 트리니원", unit: "#321" }, // 반포 래미안 트리니원 321호기
-		"317": { site: "반포 래미안 트리니원", unit: "#322" }, // 반포 래미안 트리니원 322호기
-		"318": { site: "반포 래미안 트리니원", unit: "#323" }, // 반포 래미안 트리니원 323호기
+		"315": { site: "반포 래미안 트리니원", unit: "#320", ho: 320 }, // 반포 래미안 트리니원 320호기
+		"316": { site: "반포 래미안 트리니원", unit: "#321", ho: 321 }, // 반포 래미안 트리니원 321호기
+		"317": { site: "반포 래미안 트리니원", unit: "#322", ho: 322 }, // 반포 래미안 트리니원 322호기
+		"318": { site: "반포 래미안 트리니원", unit: "#323", ho: 323 }, // 반포 래미안 트리니원 323호기
 	};
 
     // "/monitoring/56"이 "/monitoring/560"에도 부분매칭되는 걸 방지 — 숫자를 정확히 추출해서 완전일치로 비교
@@ -1158,6 +1158,7 @@
     }
 
     function syncTasksFromServer(force) {
+        if (typeof window.nbDlvRefresh === 'function') window.nbDlvRefresh();   // 이름이 바뀌었을 수 있음 → 내 배달 버튼도 다시 계산 (변화 없으면 아무 일도 안 함)
         const myName = localStorage.getItem('neubie_user_name');
         if (!myName) {
             window.currentMyTasks = [];
@@ -1578,6 +1579,309 @@
     }
 
     /* ============================================================
+        SECTION 6-1. 내 최근 배달 3건 → 파일명 자동 완성 (영상 파일명 생성기 하단 1행)
+       ============================================================ */
+    // 데이터 = 서버(api/delivery-poll)가 슬랙 배차 알림을 파싱해 둔 '오늘 배달 목록' — 배달 로그 보드와 같은 주소·같은 서버 캐시를 쓴다.
+    // 내 배달 = 수행자(이모지로 판정)가 내 이름이거나, 인계 전 수행자에 내 이름이 있는 건. 그중 최근 3건을 '최신 → 오래된' 순서로 왼쪽부터 버튼에 올린다.
+    // 버튼 글자 = '사이트 - 기체명', 누르면 파일명 복사: 날짜_시_사이트_기체명_#주문번호_내이름 (주문번호가 없으면 그 칸은 생략, 날짜·시는 배정 시각 기준)
+    //
+    // ■ 호출 부담 방어 (한 번에 20명 안팎이 쓰는 도구 — GitHub·Vercel 한도 보호)
+    //   1) 주소는 배달 로그 보드와 똑같이 ?view=day&date=… 만 쓴다. ?t=Date.now() 나 cache:'no-store' 를 붙이지 않는다
+    //      (서버가 60초 엣지 캐시 + 30초 stale-while-revalidate + 함수 메모를 걸어 두어, 몇 명이 부르든 GitHub 읽기는 분당 1~2번 수준)
+    //   2) 패널이 열려 있고 탭이 보일 때만, 08:00~23:00 에만 조회 — 닫혀 있거나 백그라운드 탭이면 네트워크 0
+    //   3) 2분 주기 + 탭마다 다른 0~20초 지터 (여러 PC 가 같은 초에 몰리지 않게) + 어떤 경우에도 30초 안에 두 번 부르지 않음
+    //   4) 같은 브라우저의 탭들은 localStorage 의 캐시·잠금을 공유 — 탭이 여러 개여도 2분에 한 번만 조회
+    //   5) 실패하면 지수 백오프(30초→최대 10분)하고, 마지막 성공 데이터로 버튼은 계속 동작 (서버가 GitHub 장애 때 stale 로 주는 응답도 정상 취급)
+    const DLV_API = 'https://multimonitoring.vercel.app/api/delivery-poll';
+    const DLV_POLL_MS = 2 * 60 * 1000;                              // 조회 주기
+    const DLV_JITTER_MS = Math.floor(Math.random() * 20000);        // 이 탭의 고정 지터 (0~20초)
+    const DLV_TICK_MS = 15 * 1000;                                  // '지금 조회할 때인가' 확인 간격 (확인만 — 네트워크는 쓰지 않음)
+    const DLV_MIN_GAP_MS = 30 * 1000;                               // 이 탭에서 두 조회 사이 최소 간격
+    const DLV_BACKOFF_MIN_MS = 30 * 1000, DLV_BACKOFF_MAX_MS = 10 * 60 * 1000;
+    const DLV_CACHE_KEY = 'neubie_dlv_cache', DLV_LOCK_KEY = 'neubie_dlv_lock';
+    const DLV_NAME_SEP = '_';                                       // 파일명 칸 구분자 (기존 파일명과 같은 '_')
+    const DLV_TAG = Math.random().toString(36).slice(2);            // 잠금 소유자 표시
+    let _dlvCard = null, _dlvBusy = false, _dlvTickTimer = null, _dlvLastFetchAt = 0, _dlvStatus = 'idle';
+
+    // 근무일 = 07:00 기준 (서버·배달 로그 보드와 같은 날짜 규칙. PC 시간대와 무관하게 KST 로 계산)
+    const dlvOpDate = () => {
+        const d = new Date(Date.now() + (9 - 7) * 3600 * 1000);
+        return d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0') + '-' + String(d.getUTCDate()).padStart(2, '0');
+    };
+    const dlvInWindow = () => { const d = new Date(), m = d.getHours() * 60 + d.getMinutes(); return m >= 8 * 60 && m <= 23 * 60; };   // 서버 크론 08:00~22:58 + 마지막 읽기
+    const dlvMyName = () => String(localStorage.getItem('neubie_user_name') || '').trim();
+    const dlvNorm = s => String(s || '').normalize('NFC').replace(/\s+/g, '');                // 공백·자모 분리 차이 무시
+
+    function dlvReadCache() {
+        try { const c = JSON.parse(localStorage.getItem(DLV_CACHE_KEY) || 'null'); return (c && typeof c === 'object') ? c : null; } catch (e) { return null; }
+    }
+    function dlvWriteCache(c) { try { localStorage.setItem(DLV_CACHE_KEY, JSON.stringify(c)); } catch (e) { /* 저장 공간 문제는 무시 — 이 탭 메모리 동작에는 영향 없음 */ } }
+    function dlvTryLock() {   // 다른 탭이 조회 중이면 false
+        try {
+            const now = Date.now(), cur = JSON.parse(localStorage.getItem(DLV_LOCK_KEY) || 'null');
+            if (cur && cur.until > now && cur.id !== DLV_TAG) return false;
+            localStorage.setItem(DLV_LOCK_KEY, JSON.stringify({ id: DLV_TAG, until: now + 20000 }));
+            const chk = JSON.parse(localStorage.getItem(DLV_LOCK_KEY) || 'null');
+            return !!chk && chk.id === DLV_TAG;
+        } catch (e) { return true; }   // localStorage 가 막혀 있으면 잠금 없이 진행 (위의 간격·백오프 제한은 그대로 적용)
+    }
+    function dlvUnlock() {
+        try { const cur = JSON.parse(localStorage.getItem(DLV_LOCK_KEY) || 'null'); if (cur && cur.id === DLV_TAG) localStorage.removeItem(DLV_LOCK_KEY); } catch (e) {}
+    }
+
+    // 서버 응답에서 필요한 칸만 추려 저장 (완료 건 + '배달 중'(기체 배정됨) 건)
+    function dlvSlim(d) {
+        const pick = (x, run) => ({ t: String(x.threadTs || ''), s: x.site || '', r: x.robot || '', o: x.orderNo || '', i: String(x.robotId || ''), p: x.performer || '', h: Array.isArray(x.handoverFrom) ? x.handoverFrom : [], a: Number(x.assignedTs) || 0, run: run });
+        const out = [];
+        (Array.isArray(d.deliveries) ? d.deliveries : []).forEach(x => { if (x) out.push(pick(x, 0)); });
+        (Array.isArray(d.inProgress) ? d.inProgress : []).forEach(x => { if (x && x.status === 'RUNNING' && x.robot) out.push(pick(x, 1)); });
+        return out;
+    }
+
+    async function dlvFetch() {
+        if (_dlvBusy) return;
+        _dlvBusy = true; _dlvLastFetchAt = Date.now();
+        const date = dlvOpDate();
+        const ctrl = new AbortController(), to = setTimeout(() => ctrl.abort(), 15000);
+        try {
+            const res = await fetch(DLV_API + '?view=day&date=' + date, { signal: ctrl.signal });
+            if (!res.ok) { const e = new Error('HTTP ' + res.status); e.retryAfter = parseInt(res.headers.get('retry-after') || '0', 10) || 0; throw e; }
+            const d = await res.json();
+            if (!d || d.ok !== true) throw new Error('응답 형식 오류');
+            dlvWriteCache({ date: date, at: Date.now(), nextOk: 0, fails: 0, stale: !!d.stale, items: dlvSlim(d) });
+            _dlvStatus = 'idle';
+        } catch (e) {
+            const c = dlvReadCache() || {};
+            const fails = (c.fails || 0) + 1;
+            const wait = Math.max(Math.min(DLV_BACKOFF_MAX_MS, DLV_BACKOFF_MIN_MS * Math.pow(2, fails - 1)), (e.retryAfter || 0) * 1000);
+            dlvWriteCache(Object.assign({}, c, { date: c.date || date, fails: fails, nextOk: Date.now() + wait + Math.floor(Math.random() * 5000) }));
+            _dlvStatus = 'fail';
+            console.warn('[내 배달] 조회 실패:', e.message, '→', Math.round(wait / 1000) + '초 뒤 다시 시도');
+        } finally {
+            clearTimeout(to); _dlvBusy = false; dlvUnlock(); dlvRender();
+        }
+    }
+
+    const dlvCardLive = () => !!(_dlvCard && _dlvCard.isConnected && _dlvCard.getClientRects().length > 0);   // 패널이 열려 있고 카드가 보일 때만
+    function dlvTick() {
+        if (!dlvCardLive()) return;
+        dlvRender();                                                    // 이름·캐시가 바뀐 경우에만 화면이 실제로 갱신됨
+        if (document.hidden || !dlvMyName() || !dlvInWindow()) return;
+        const now = Date.now(), c = dlvReadCache();
+        // 아래 세 검사는 PC 시계가 되감겨도(시간 동기화 등) 영영 막히지 않게, '미래 시각'으로 찍힌 값은 믿지 않는다
+        const gap = now - _dlvLastFetchAt;
+        if (gap >= 0 && gap < DLV_MIN_GAP_MS) return;
+        if (c && c.nextOk && now < c.nextOk && c.nextOk - now <= DLV_BACKOFF_MAX_MS + 10000) return;       // 백오프 중
+        const age = (c && c.at) ? now - c.at : Infinity;
+        if (c && c.date === dlvOpDate() && age >= 0 && age < (DLV_POLL_MS + DLV_JITTER_MS)) return;         // 아직 신선 (다른 탭이 받은 것 포함)
+        if (!dlvTryLock()) return;                                      // 다른 탭이 조회 중
+        dlvFetch();
+    }
+
+    // ── 내 배달 고르기 · 이름 만들기 ──
+    const dlvKeyOf = x => x.a || parseFloat(x.t) || 0;                  // 최근순 기준 = 배정 시각(없으면 스레드 시각)
+    function dlvMine(items, me) {
+        const key = dlvNorm(me);
+        if (!key) return [];
+        return items.filter(x => dlvNorm(x.p) === key || (x.h || []).some(n => dlvNorm(n) === key))
+            .sort((a, b) => dlvKeyOf(b) - dlvKeyOf(a)).slice(0, 3);
+    }
+    function dlvSplit(x) {   // 기체명이 사이트명으로 시작하면('역삼동 (요기요) 9호기') 앞부분을 떼어 사이트가 두 번 나오지 않게
+        const site = String(x.s || '').trim(), robot0 = String(x.r || '').trim();
+        const robot = (site && robot0.startsWith(site)) ? (robot0.slice(site.length).replace(/^[\s\-·_]+/, '') || robot0) : robot0;
+        return { site: site, robot: robot };
+    }
+    // ── 기체번호(#311) 찾기: 슬랙 이름 → ROBOT_MAP ──
+    // 파일명의 '충남대학교병원_#311' 은 ROBOT_MAP(로봇 id → 사이트·기체번호)의 값이다. 슬랙 글에는 '#311' 이 없는 경우가 많아 아래 순서로 연결한다.
+    //  ① slack 별칭   ROBOT_MAP 항목에 slack: '트리니원 3호기' (문자열/배열)를 적어 두면 그 이름이 곧 그 기체 — 자동 연결이 안 되는 '예외'에만 쓴다
+    //  ② 로봇 id      서버가 슬랙의 기체명 링크(/remote/robot/숫자)에서 뽑아 준 id → ROBOT_MAP[id] (이름 속 [229호기] 와 어긋나면 믿지 않음)
+    //  ③ 사이트+번호  슬랙 사이트명을 ROBOT_MAP 사이트명과 맞춘 뒤(띄어쓰기·괄호·'동'·단어 순서 무시):
+    //                 이름 속 기체번호(#229 / [229호기] / 319호기)가 있으면 그 번호로, 없으면 '9호기'(ho)·이름(nm)으로, 사이트에 기체 1대뿐이면 그 기체
+    //                 (ho / nm 은 ROBOT_MAP 줄 끝 주석 '// 9호기' 에서 자동으로 만들어 둔 값. 새 기체를 ROBOT_MAP 에 추가할 때 같이 적어 주세요)
+    //  ④ 번호만       사이트가 안 맞아도 이름 속 기체번호가 ROBOT_MAP 에 딱 하나 있으면 그 기체
+    //  못 찾으면 null → 버튼에 ⚠ 가 붙고 파일명은 슬랙 이름으로 만든다 (틀린 번호가 조용히 들어가는 것보다 낫다). 콘솔에서 nbDlvDiag() 로 못 찾은 목록을 볼 수 있다.
+    const dlvSiteKey = s => String(s || '').normalize('NFC').toLowerCase().replace(/[()\[\]{}_\-·,.]/g, ' ').split(/\s+/).filter(Boolean)
+        .map(t => (t.length > 2 && t.endsWith('동')) ? t.slice(0, -1) : t).sort().join(' ');       // '역삼동 (요기요)' = '역삼 요기요', '수원 힐스테이트_바로고' = '수원 힐스테이트 바로고'
+    function dlvLabelNums(robot) {
+        const r = String(robot || ''), br = /\[\s*(\d{2,4})\s*호기\s*\]/.exec(r);                     // '바로고 1호기 [229호기]' → 229
+        const all = [...r.replace(/\[[^\]]*\]/g, ' ').matchAll(/(\d+)\s*호기/g)].map(m => parseInt(m[1], 10));
+        const idx = all.length ? all[all.length - 1] : null;                                       // '역삼동 (요기요) 9호기' → 9
+        return { unitN: br ? parseInt(br[1], 10) : (idx !== null && idx >= 100 ? idx : null), idx: idx };   // 3자리 이상 호기('319호기')는 기체번호
+    }
+    let _dlvIdx = null;
+    function dlvIndex() {
+        if (_dlvIdx) return _dlvIdx;
+        const all = [], bySite = {};
+        Object.keys(ROBOT_MAP).forEach(id => {
+            const e = ROBOT_MAP[id]; if (!e) return;
+            const ent = { id: id, site: e.site, unit: e.unit, ho: e.ho, nm: e.nm, slack: [].concat(e.slack || []).map(dlvNorm) }, k = dlvSiteKey(e.site);
+            all.push(ent); (bySite[k] = bySite[k] || []).push(ent);
+        });
+        return (_dlvIdx = { all: all, bySite: bySite });
+    }
+    function dlvResolve(x) {
+        const ix = dlvIndex(), robot = String(x.r || ''), n = dlvLabelNums(robot), unitStr = n.unitN ? '#' + String(n.unitN).padStart(3, '0') : null;
+        const out = (e, how) => ({ site: e.site, unit: e.unit, how: how });
+        const key = dlvNorm(robot);
+        if (key) { const hit = ix.all.filter(e => e.slack.includes(key)); if (hit.length === 1) return out(hit[0], 'alias'); }                       // ①
+        const byId = x.i && ROBOT_MAP[x.i];
+        if (byId && !(unitStr && byId.unit !== unitStr)) {                                                                                           // ②
+            // 같은 기체(id)가 사이트를 옮겨 다녀 ROBOT_MAP 에 같은 id 줄이 둘 이상이면(23·174·260) JS 객체에는 마지막 줄만 남는다.
+            // 슬랙의 사이트가 ROBOT_MAP 의 '다른' 사이트로 인식되면, 기체번호는 id 에서 / 사이트 이름은 슬랙 쪽(ROBOT_MAP 표기)에서 가져온다.
+            const cs = ix.bySite[dlvSiteKey(x.s)];
+            if (cs && cs.length && dlvSiteKey(byId.site) !== dlvSiteKey(x.s)) return { site: cs[0].site, unit: byId.unit, how: 'id*' };
+            return out(byId, 'id');
+        }
+        const cands = ix.bySite[dlvSiteKey(x.s)] || [];
+        if (cands.length) {                                                                                                                         // ③
+            let hit = unitStr ? cands.filter(e => e.unit === unitStr) : [];
+            if (hit.length === 1) return out(hit[0], 'unit');
+            if (n.idx !== null) { hit = cands.filter(e => e.ho === n.idx); if (hit.length === 1) return out(hit[0], 'ho'); }
+            hit = cands.filter(e => e.nm && robot.includes(e.nm)); if (hit.length === 1) return out(hit[0], 'name');
+            if (cands.length === 1 && cands[0].ho === undefined && (n.idx === null || n.idx === 1)) return out(cands[0], 'single');
+        }
+        if (unitStr) { const hit = ix.all.filter(e => e.unit === unitStr); if (hit.length === 1) return out(hit[0], 'unit*'); }                       // ④
+        return null;
+    }
+    const DLV_HOW = { alias: 'slack 별칭', id: '링크 id', 'id*': '링크 id + 슬랙 사이트', unit: '기체번호', ho: '호기', name: '이름', single: '단일 기체', 'unit*': '기체번호(사이트명 불일치)' };
+
+    function dlvLabel(x) { const p = dlvSplit(x); return (p.site && p.robot) ? p.site + ' - ' + p.robot : (p.robot || p.site || '(기체 정보 없음)'); }
+    const dlvClean = s => String(s || '').replace(/[\\/:*?"<>|]/g, '-').replace(/\s+/g, ' ').trim();   // 파일명에 못 쓰는 글자 치환
+    function dlvFileName(x, me) {
+        const p = dlvSplit(x), d = new Date((dlvKeyOf(x) || Date.now() / 1000) * 1000), rs = dlvResolve(x);
+        const parts = [getFormattedDate(d), getFormattedHour(d)];
+        if (rs) { parts.push(dlvClean(rs.site)); parts.push(dlvClean(rs.unit)); }      // ROBOT_MAP 기준: '충남대학교병원_#311' (기존 파일명과 같은 모양)
+        else { if (p.site) parts.push(dlvClean(p.site)); if (p.robot) parts.push(dlvClean(p.robot)); }   // 못 찾으면 슬랙 이름으로
+        let name = parts.join(DLV_NAME_SEP);
+        if (x.o) name += DLV_NAME_SEP + '#' + dlvClean(x.o);
+        if (me) name += DLV_NAME_SEP + dlvClean(me);
+        return name;
+    }
+
+    // ── 화면 ──
+    function dlvBuildCss(t) {
+        return `
+            #nbDlvRow { display:flex; gap:8px; margin-bottom:10px; }
+            .nb-dlv-btn { flex:1 1 0; min-width:0; height:34px; padding:0 6px; box-sizing:border-box; overflow:hidden; white-space:nowrap; text-align:center;
+                background:${t.bg}; color:${t.text}; border:1px solid ${t.border}; border-radius:6px; font-size:14px; font-weight:bold; cursor:pointer; transition:background .2s, color .2s, border-color .2s; }
+            .nb-dlv-btn:hover:not(:disabled) { background:${t.hoverBg}; border-color:${t.hoverBorder}; color:${t.hoverText}; }
+            .nb-dlv-btn:disabled { cursor:default; }
+            .nb-dlv-btn.empty { background:transparent; border-style:dashed; opacity:.45; }
+            .nb-dlv-btn.note { font-size:13px; font-weight:600; opacity:.8; }
+            .nb-dlv-txt { display:inline-block; line-height:32px; vertical-align:top; will-change:transform; }
+            .nb-dlv-btn.mq { text-align:left; }
+            .nb-dlv-btn.mq .nb-dlv-txt { animation:nbDlvMq var(--mq-dur, 8s) ease-in-out infinite alternate; }
+            .nb-dlv-btn.mq:hover .nb-dlv-txt { animation-play-state:paused; }
+            @keyframes nbDlvMq { 0%, 15% { transform:translateX(0); } 85%, 100% { transform:translateX(var(--mq-shift, 0px)); } }
+            @media (prefers-reduced-motion: reduce) { .nb-dlv-btn.mq .nb-dlv-txt { animation:none; } .nb-dlv-btn.mq { text-overflow:ellipsis; } .nb-dlv-btn.mq .nb-dlv-txt { display:inline; } }
+        `;
+    }
+    // 글자가 버튼보다 길면 마퀴(좌우로 천천히 오가며 보여줌), 아니면 가운데 정렬 고정. (버튼이 숨겨져 폭이 0 이면 건너뜀 — 보이는 순간 ResizeObserver 가 다시 호출)
+    function dlvFit(btn) {
+        const txt = btn.querySelector('.nb-dlv-txt');
+        if (!txt || btn.dataset.copied === '1') return;
+        btn.classList.remove('mq'); btn.style.removeProperty('--mq-shift'); btn.style.removeProperty('--mq-dur');
+        if (!btn.clientWidth) return;
+        const over = txt.scrollWidth - (btn.clientWidth - 14);
+        if (over > 2) {
+            btn.classList.add('mq');
+            btn.style.setProperty('--mq-shift', (-Math.ceil(over)) + 'px');
+            btn.style.setProperty('--mq-dur', Math.max(4, over / 40 + 2.5).toFixed(1) + 's');
+        }
+    }
+    function dlvFitAll() { if (_dlvCard) _dlvCard.querySelectorAll('.nb-dlv-btn').forEach(dlvFit); }
+
+    function dlvRender() {
+        const card = _dlvCard;
+        if (!card || !card.isConnected) return;
+        const row = card.querySelector('#nbDlvRow');
+        if (!row) return;
+        const me = dlvMyName(), c = dlvReadCache();
+        const hasData = !!(c && c.date === dlvOpDate() && Array.isArray(c.items));
+        const sig = [me, c && c.at, c && c.fails, hasData, _dlvStatus].join('|');
+        if (card._dlvSig === sig) return;                               // 달라진 게 없으면 DOM 을 건드리지 않음 (마퀴가 매번 처음부터 다시 돌지 않게)
+        card._dlvSig = sig;
+
+        const mine = (me && hasData) ? dlvMine(c.items, me) : [];
+        let note = '';
+        if (!me) note = '성명을 입력하면 내 배달이 표시돼요';
+        else if (!hasData) note = (_dlvStatus === 'fail' || (c && c.fails)) ? '배달 정보를 불러오지 못했어요' : '불러오는 중…';
+        const ageMin = (c && c.at) ? Math.floor((Date.now() - c.at) / 60000) : 0;
+        const staleWarn = (ageMin >= 6 || (c && c.stale)) ? '\n⚠ ' + (c && c.stale ? '서버가 마지막 정상 데이터를 대신 보내는 중' : '마지막 갱신 ' + ageMin + '분 전') : '';
+
+        row.querySelectorAll('.nb-dlv-btn').forEach((btn, i) => {
+            const txt = btn.querySelector('.nb-dlv-txt'), x = mine[i];
+            let label = '', fileName = '', title = '', kind = 'empty';
+            if (note && i === 0) { label = note; kind = 'note'; }
+            else if (x) {
+                const rs = dlvResolve(x);
+                label = (rs ? '' : '⚠ ') + dlvLabel(x); fileName = dlvFileName(x, me); kind = 'item';
+                const d = new Date(dlvKeyOf(x) * 1000), hm = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+                title = label + '\n' + hm + ' 배정 · ' + (x.o ? '주문번호 ' + x.o : '주문번호 없음') + (x.run ? ' · 진행 중' : '') + '\n' + (rs ? '기체번호: ' + rs.site + ' ' + rs.unit + ' (' + (DLV_HOW[rs.how] || rs.how) + ')' : '⚠ ROBOT_MAP 에서 기체번호를 못 찾아 슬랙 이름으로 만들었어요') + '\n→ ' + fileName + staleWarn;
+            }
+            btn.dataset.name = fileName;
+            btn.title = title;
+            btn.disabled = kind !== 'item';
+            btn.classList.toggle('empty', kind === 'empty');
+            btn.classList.toggle('note', kind === 'note');
+            if (btn.dataset.copied === '1') { btn.dataset.label = label; return; }   // '복사됨' 표시 중이면 끝난 뒤 새 글자로 복원
+            if (txt.textContent !== label) { txt.textContent = label; }
+            dlvFit(btn);
+        });
+    }
+
+    function dlvFlash(btn, ok) {
+        const txt = btn.querySelector('.nb-dlv-txt');
+        if (btn._flashTimer) clearTimeout(btn._flashTimer);
+        if (btn.dataset.copied !== '1') { btn.dataset.copied = '1'; btn.dataset.label = txt.textContent; }
+        txt.textContent = ok ? '복사됨' : '복사 실패';
+        btn.classList.remove('mq');
+        btn.style.background = ok ? HOVER_ACCENT : '#ef4444'; btn.style.color = '#fff';
+        btn._flashTimer = setTimeout(() => {
+            txt.textContent = btn.dataset.label || '';
+            btn.style.background = ''; btn.style.color = '';
+            btn.dataset.copied = '0'; btn._flashTimer = null;
+            dlvFit(btn);
+        }, 1500);
+    }
+    async function dlvCopy(text) {
+        try { await navigator.clipboard.writeText(text); return true; } catch (e) { /* 아래 폴백 */ }
+        try {   // 클립보드 권한이 막힌 환경 폴백
+            const ta = document.createElement('textarea'); ta.value = text; ta.style.cssText = 'position:fixed;opacity:0;left:-9999px;';
+            document.body.appendChild(ta); ta.select(); const ok = document.execCommand('copy'); ta.remove(); return !!ok;
+        } catch (e) { return false; }
+    }
+
+    function dlvMount(card) {
+        _dlvCard = card;
+        const row = card.querySelector('#nbDlvRow');
+        if (!row) return;
+        row.addEventListener('click', async (e) => {
+            const btn = e.target.closest('.nb-dlv-btn');
+            if (!btn || btn.disabled || !btn.dataset.name) return;
+            dlvFlash(btn, await dlvCopy(btn.dataset.name));
+        });
+        if (typeof ResizeObserver === 'function') { try { new ResizeObserver(() => dlvFitAll()).observe(row); } catch (e) {} }
+        if (!_dlvTickTimer) {
+            _dlvTickTimer = setInterval(dlvTick, DLV_TICK_MS);
+            document.addEventListener('visibilitychange', () => { if (!document.hidden) dlvTick(); });
+            window.addEventListener('storage', e => { if (e.key === DLV_CACHE_KEY || e.key === 'neubie_user_name') dlvRender(); });   // 다른 탭이 새로 받았거나 이름이 바뀐 경우
+        }
+        setTimeout(() => { dlvRender(); dlvTick(); }, 50);              // 패널을 연 직후: 캐시가 신선하면 네트워크 없이 바로 표시
+    }
+    // 콘솔에서 nbDlvDiag() — 받아 둔 오늘 배달 전체(내 것만이 아니라 모두)가 ROBOT_MAP 에 어떻게 연결되는지 표로 보여 준다. '못 찾음'만 ROBOT_MAP 에 보강하면 된다.
+    window.nbDlvDiag = function () {
+        const c = dlvReadCache();
+        if (!c || !Array.isArray(c.items)) { console.log('[내 배달] 받아 둔 데이터가 없습니다. 패널을 연 채로 잠시 기다린 뒤 다시 실행하세요.'); return null; }
+        const rows = c.items.map(x => { const r = dlvResolve(x); return { 슬랙사이트: x.s, 슬랙기체명: x.r, 링크id: x.i || '-', 수행자: x.p || '-', 결과: r ? r.site + ' ' + r.unit : '❌ 못 찾음', 방식: r ? (DLV_HOW[r.how] || r.how) : '-' }; });
+        console.table(rows);
+        const miss = [...new Set(rows.filter(r => r.방식 === '-').map(r => r.슬랙사이트 + '  |  ' + r.슬랙기체명))];
+        console.log('[내 배달] 오늘 ' + rows.length + '건 중 못 찾은 기체 ' + miss.length + '종' + (miss.length ? ' — ROBOT_MAP 해당 줄에 slack: \'슬랙기체명\' 을 추가하세요:\n  ' + miss.join('\n  ') : ' ✔'));
+        return rows;
+    };
+    window.nbDlvRefresh = dlvRender;                                    // 이름 변경 등 외부에서 다시 그리라고 부를 때 (변화 없으면 아무 일도 안 함)
+
+    /* ============================================================
         SECTION 7. 스마트 네이밍 엔진 카드
        ============================================================ */
     function createNamingCard() {
@@ -1730,6 +2034,11 @@
                     <button id="btnCombined" class="sub-btn" ${isTiddiActive ? '' : 'disabled'} style="${tiddiLockStyle}">${tiddiState.text}</button>
                 </div>
             </div>
+            <div id="nbDlvRow">
+                <button type="button" class="nb-dlv-btn empty" data-slot="0" disabled><span class="nb-dlv-txt"></span></button>
+                <button type="button" class="nb-dlv-btn empty" data-slot="1" disabled><span class="nb-dlv-txt"></span></button>
+                <button type="button" class="nb-dlv-btn empty" data-slot="2" disabled><span class="nb-dlv-txt"></span></button>
+            </div>
         `;
 
         let btnStyleTag = document.getElementById('naming-btn-style');
@@ -1739,6 +2048,12 @@
             document.head.appendChild(btnStyleTag);
         }
         btnStyleTag.textContent = `.sub-btn { background: ${neutralBtnBg}; color: ${neutralBtnText}; border: 1px solid ${neutralBtnBorder}; padding: 6px 4px; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; flex: 1; min-width: 0; transition: 0.2s; } .sub-btn:hover { background: ${subBtnHoverBg}; border-color: ${subBtnHoverBorder}; color: ${subBtnHoverText}; }`;
+
+        // ── 내 최근 배달 3버튼 (SECTION 6-1) — 테마 색은 다른 버튼들과 같은 값을 쓴다 ──
+        let dlvStyleTag = document.getElementById('naming-dlv-style');
+        if (!dlvStyleTag) { dlvStyleTag = document.createElement('style'); dlvStyleTag.id = 'naming-dlv-style'; document.head.appendChild(dlvStyleTag); }
+        dlvStyleTag.textContent = dlvBuildCss({ bg: neutralBtnBg, text: neutralBtnText, border: neutralBtnBorder, hoverBg: subBtnHoverBg, hoverBorder: subBtnHoverBorder, hoverText: subBtnHoverText });
+        dlvMount(card);
 
         setTimeout(() => {
 			// 영상 드라이브 열기 → 오늘 날짜 폴더로 이동 (없으면 루트 폴더로 폴백)
