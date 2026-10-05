@@ -79,7 +79,7 @@
 
     const NB_THEMES = {
         light: { bg: '#f3ecdb', card: '#e2d7bd', border: '#cbbd98', text: '#2b2418', accent: '#1e3a5f', purple: '#7c3aed', isDark: false },
-        dark:  { bg: '#2b2b30', card: '#4a4953', border: '#62616b', text: '#e8e9ec', accent: '#5b9bf7', purple: '#c9b8fb', isDark: true }
+        dark:  { bg: '#2b2b30', card: '#4a4953', border: '#62616b', text: '#dedfe3', accent: '#5b9bf7', purple: '#c9b8fb', isDark: true }
     };
 
     // ── UI 개편: 레인보우 → 퍼플 그라데이션 외곽선 (패널·카드·버튼 공통) ──
@@ -1830,6 +1830,7 @@
             .nb-dlv-btn.copied, .nb-dlv-btn.copied:hover:not(:disabled) { background:${fillBg(t.accent)}; color:#fff; }
             .nb-dlv-btn.copied.fail, .nb-dlv-btn.copied.fail:hover:not(:disabled) { background:${fillBg('#ef4444')}; }
             .nb-dlv-btn:disabled { cursor:default; }
+            .nb-dlv-btn.empty .nb-dlv-ln { color:#8d8d95; font-weight:600; font-size:12.5px; }
             .nb-dlv-btn.empty, .nb-dlv-btn.note { border:1.5px dashed ${t.border}; background:transparent; box-shadow:none; opacity:.55; }
             .nb-dlv-btn.note { opacity:.85; }
             .nb-dlv-ln { display:block; min-width:0; max-width:100%; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; line-height:1.15; font-size:11.5px; font-weight:600; }
@@ -1880,7 +1881,7 @@
 
         row.querySelectorAll('.nb-dlv-slot').forEach((slot, i) => {
             const btn = slot.querySelector('.nb-dlv-btn'), tm = slot.querySelector('.nb-dlv-time'), x = mine[i];
-            let l1 = '', l2 = '', time = '', fileName = '', title = '', kind = 'empty';
+            let l1 = '배달 건 없음', l2 = '', time = '', fileName = '', title = '', kind = 'empty';
             if (note && i === 0) { l1 = note; kind = 'note'; }
             else if (x) {
                 const p = dlvSplit(x), rs = dlvResolve(x), d = new Date(dlvKeyOf(x) * 1000), hm = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
@@ -2240,7 +2241,7 @@
 
         const title = document.createElement('h2');
         title.textContent = "API 호출 전혀 없습니다";
-        title.style.cssText = `${NCC_TITLE_GRADIENT} font-size:24px; margin:0; font-weight:800; white-space:nowrap; min-width:0; overflow:hidden; text-overflow:ellipsis;`;
+        title.style.cssText = `${NCC_TITLE_GRADIENT} font-size:24px; flex:0 1 auto; width:fit-content; margin:0; font-weight:800; white-space:nowrap; min-width:0; overflow:hidden; text-overflow:ellipsis;`;
 
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
 		// 문자열을 넣으면 패치노트에 빨간 '`' 뱃지가 점멸하며 뜸.
@@ -2429,7 +2430,7 @@
         headerContainer.appendChild(nameArea);
         dashboard.appendChild(headerContainer);
 
-        makeDraggable(headerContainer, dashboard);
+        makeDraggable(title, dashboard);   // 드래그는 제목 글자를 눌렀을 때만
 
         setTimeout(() => {
             const input = document.getElementById('inline-name-input');
@@ -2540,8 +2541,8 @@
             `;
             const clickHint = onLabelClick
                 ? `<span class="nb-click-hint" style="display:inline-flex; flex-direction:column; align-items:center; justify-content:center; line-height:1.05; margin-left:3px; animation:neubie-blink 2.2s ease-in-out infinite;">
-                        <span style="font-size:8.5px; font-weight:800; color:${T.accent};">설명</span>
-                        <span style="font-size:8px; font-weight:800; color:${T.accent};">Click!</span>
+                        <span style="font-size:10.5px; font-weight:800; color:${T.accent};">설명</span>
+                        <span style="font-size:10px; font-weight:800; color:${T.accent};">Click!</span>
                    </span>`
                 : '';
             row.innerHTML = `
@@ -4289,7 +4290,7 @@
                 box.innerHTML = `
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
                         <span style="font-size:16px;font-weight:700;">🎮 패드 기능 & 테스터</span>
-                        <button id="gpm-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
+                        <button id="gpm-close" style="width:28px;height:28px;border:none;border-radius:5px;background:${getNbTheme().isDark ? '#3b0000' : '#fee2e2'};border:1px solid #ef4444;color:${getNbTheme().isDark ? '#ef4444' : '#b91c1c'};font-size:16px;cursor:pointer;">✕</button>
                     </div>
                     <div style="display:flex; flex-direction:column; gap:8px;">
                         <button id="gpm-guide" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🕹️ D-PAD 기능 변경점 설명</button>
@@ -4308,9 +4309,9 @@
                 box.dataset.fit = '1';
                 { const TT = getNbTheme(); box.style.cssText = `background:${TT.isDark ? '#1e1e2e' : TT.card}; color:${TT.isDark ? '#e2e8f0' : TT.text}; width:100%; box-sizing:border-box; pointer-events:auto;`; }
                 box.innerHTML = `
-                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; gap:10px; flex:none; padding-right:30px;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; gap:10px; flex:none;">
                         <span style="font-size:15px; font-weight:700;">🎮 컨트롤러 기능 작동 테스터</span>
-                        <button id="gpt-close" style="width:26px; height:26px; border:none; border-radius:5px; background:#3b0000; border:1px solid #ef4444; color:#ef4444; font-size:14px; cursor:pointer;">✕</button>
+                        <button id="gpt-close" style="width:26px; height:26px; border:none; border-radius:5px; background:${getNbTheme().isDark ? '#3b0000' : '#fee2e2'}; border:1px solid #ef4444; color:${getNbTheme().isDark ? '#ef4444' : '#b91c1c'}; font-size:14px; cursor:pointer;">✕</button>
                     </div>
                     <div id="gpt-status" style="text-align:center; font-size:11px; color:${getNbTheme().isDark ? '#94a3b8' : '#5b5340'}; margin-bottom:4px; flex:none;">컨트롤러의 아무 버튼이나 눌러 연결하세요</div>
                     <div style="background:#f4ede0; border-radius:10px; padding:6px; flex:1; min-height:0; width:100%; box-sizing:border-box; display:flex;">
@@ -4444,9 +4445,9 @@
                 box.dataset.fit = '1';
                 { const TT = getNbTheme(); box.style.cssText = `background:${TT.isDark ? '#1e1e2e' : TT.card}; color:${TT.isDark ? '#e2e8f0' : TT.text}; width:100%; box-sizing:border-box; pointer-events:auto;`; }
                 box.innerHTML = `
-                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; gap:10px; flex:none; padding-right:30px;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; gap:10px; flex:none;">
                         <span style="font-size:15px; font-weight:700;">🎮 D-PAD 기능 변경점 설명</span>
-                        <button id="gp-close" style="width:28px; height:28px; border:none; border-radius:5px; background:#3b0000; border:1px solid #ef4444; color:#ef4444; font-size:16px; cursor:pointer;">✕</button>
+                        <button id="gp-close" style="width:28px; height:28px; border:none; border-radius:5px; background:${getNbTheme().isDark ? '#3b0000' : '#fee2e2'}; border:1px solid #ef4444; color:${getNbTheme().isDark ? '#ef4444' : '#b91c1c'}; font-size:16px; cursor:pointer;">✕</button>
                     </div>
                     <img src="https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/xbox_binding.jpg"
                          style="border-radius:8px; display:block; width:100%; flex:1; min-height:0; object-fit:contain;" />
