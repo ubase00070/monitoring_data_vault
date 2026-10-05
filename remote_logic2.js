@@ -50,7 +50,7 @@
     // admin이 이 JSON 파일 하나만 GitHub에서 직접 고치면, 모든 사용자는 새로고침 시
     // 아래 값을 그대로 반영받는다(재배포 불필요).
     //   { "maxMonitorSlots": 6, "locked": false }
-    // fetch 실패 시엔 안전 기본값(6대 / 잠금 해제)으로 지금까지와 동일하게 동작.
+    // fetch 실패 시엔 안전 기본값(6대 / 잠금 해제)으로 지금까지와 동일하게 동작한다.
     let ADMIN_CONFIG = { maxMonitorSlots: 6, locked: false };
     const adminConfigReady = (async () => {
         try {
@@ -1759,37 +1759,53 @@
     }
 
     // ── 화면 ──
+    // ■ 폭 방어 (중요): 대시보드 목록(#dashboard-list)은 한 칸짜리 grid 라서, 안의 요소가 가진 '최소 폭'(nowrap 글자의 길이)만큼 칸이 넓어지고
+    //   옆 칸(다중 모니터링·띠띠·배터리/스케줄 카드)이 패널 밖으로 잘려 나간다. 그래서 이 행은 폭 계산에 아예 참여하지 않게 한다:
+    //   width:0 + min-width:100% (= 내용 폭은 0 으로 계산하고, 실제 폭은 부모 폭을 그대로 채움) + contain:inline-size.
+    // ■ 모양: 버튼 하나 = 두 줄(사이트 / 기체명) + 초록 외곽선 + 테두리 위에 걸친 작은 '배정 시각'(높이를 늘리지 않음).
+    //   글자가 길면 평소엔 … 으로 줄이고, 커서를 올린 동안만 좌우로 흘려 끝까지 보여준다.
     function dlvBuildCss(t) {
+        const grad = 'linear-gradient(135deg, #10b981, #2dd4bf)';   // 카드 테두리와 같은 그린 그라데이션
+        const fillBg = c => `linear-gradient(${c}, ${c}) padding-box, ${grad} border-box`;
         return `
-            #nbDlvRow { display:flex; gap:8px; margin-bottom:10px; }
-            .nb-dlv-btn { flex:1 1 0; min-width:0; height:34px; padding:0 6px; box-sizing:border-box; overflow:hidden; white-space:nowrap; text-align:center;
-                background:${t.bg}; color:${t.text}; border:1px solid ${t.border}; border-radius:6px; font-size:14px; font-weight:bold; cursor:pointer; transition:background .2s, color .2s, border-color .2s; }
-            .nb-dlv-btn:hover:not(:disabled) { background:${t.hoverBg}; border-color:${t.hoverBorder}; color:${t.hoverText}; }
+            #nbDlvRow { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:8px; margin-bottom:10px; width:0; min-width:100%; max-width:100%; contain:inline-size; }
+            .nb-dlv-slot { position:relative; min-width:0; }
+            .nb-dlv-btn { display:flex; flex-direction:column; justify-content:center; align-items:stretch; width:100%; min-width:0; height:36px; padding:1px 6px; box-sizing:border-box; overflow:hidden; text-align:center;
+                color:${t.text}; border:2px solid transparent; border-radius:8px; cursor:pointer; transition:background .2s, color .2s, box-shadow .2s;
+                background:${fillBg(t.fill)}; box-shadow:0 0 0 1px rgba(16,185,129,.18), 0 0 8px rgba(16,185,129,.30); }
+            .nb-dlv-btn:hover:not(:disabled) { background:${fillBg(t.hoverBg)}; color:${t.hoverText}; box-shadow:0 0 0 1px rgba(34,197,94,.45), 0 0 12px rgba(34,197,94,.50); }
+            .nb-dlv-btn.copied, .nb-dlv-btn.copied:hover:not(:disabled) { background:${fillBg(t.accent)}; color:#fff; }
+            .nb-dlv-btn.copied.fail, .nb-dlv-btn.copied.fail:hover:not(:disabled) { background:${fillBg('#ef4444')}; }
             .nb-dlv-btn:disabled { cursor:default; }
-            .nb-dlv-btn.empty { background:transparent; border-style:dashed; opacity:.45; }
-            .nb-dlv-btn.note { font-size:13px; font-weight:600; opacity:.8; }
-            .nb-dlv-txt { display:inline-block; line-height:32px; vertical-align:top; will-change:transform; }
-            .nb-dlv-btn.mq { text-align:left; }
-            .nb-dlv-btn.mq .nb-dlv-txt { animation:nbDlvMq var(--mq-dur, 8s) ease-in-out infinite alternate; }
-            .nb-dlv-btn.mq:hover .nb-dlv-txt { animation-play-state:paused; }
-            @keyframes nbDlvMq { 0%, 15% { transform:translateX(0); } 85%, 100% { transform:translateX(var(--mq-shift, 0px)); } }
-            @media (prefers-reduced-motion: reduce) { .nb-dlv-btn.mq .nb-dlv-txt { animation:none; } .nb-dlv-btn.mq { text-overflow:ellipsis; } .nb-dlv-btn.mq .nb-dlv-txt { display:inline; } }
+            .nb-dlv-btn.empty, .nb-dlv-btn.note { border:1.5px dashed ${t.border}; background:transparent; box-shadow:none; opacity:.55; }
+            .nb-dlv-btn.note { opacity:.85; }
+            .nb-dlv-ln { display:block; min-width:0; max-width:100%; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; line-height:1.15; font-size:11.5px; font-weight:600; }
+            .nb-dlv-ln.l1 { font-size:12.5px; font-weight:800; }
+            .nb-dlv-btn.copied .l2 { display:none; }
+            .nb-dlv-time { position:absolute; top:-6px; left:10px; z-index:2; padding:0 5px; border-radius:6px; font-size:10px; font-weight:800; line-height:12px; white-space:nowrap; pointer-events:none; background:${t.card}; color:${t.timeText}; }
+            .nb-dlv-ln.mq { text-align:left; text-overflow:clip; }
+            .nb-dlv-ln.mq .nb-dlv-txt { display:inline-block; animation:nbDlvMq var(--mq-dur, 6s) ease-in-out infinite alternate; }
+            @keyframes nbDlvMq { 0%, 18% { transform:translateX(0); } 82%, 100% { transform:translateX(var(--mq-shift, 0px)); } }
+            @media (prefers-reduced-motion: reduce) { .nb-dlv-ln.mq .nb-dlv-txt { animation:none; } }
         `;
     }
-    // 글자가 버튼보다 길면 마퀴(좌우로 천천히 오가며 보여줌), 아니면 가운데 정렬 고정. (버튼이 숨겨져 폭이 0 이면 건너뜀 — 보이는 순간 ResizeObserver 가 다시 호출)
-    function dlvFit(btn) {
-        const txt = btn.querySelector('.nb-dlv-txt');
-        if (!txt || btn.dataset.copied === '1') return;
-        btn.classList.remove('mq'); btn.style.removeProperty('--mq-shift'); btn.style.removeProperty('--mq-dur');
-        if (!btn.clientWidth) return;
-        const over = txt.scrollWidth - (btn.clientWidth - 14);
-        if (over > 2) {
-            btn.classList.add('mq');
-            btn.style.setProperty('--mq-shift', (-Math.ceil(over)) + 'px');
-            btn.style.setProperty('--mq-dur', Math.max(4, over / 40 + 2.5).toFixed(1) + 's');
-        }
+    // 커서를 올린 동안만: 칸보다 긴 줄을 좌우로 오가며 끝까지 보여준다 (평소엔 … 로 줄임). 커서를 치우면 원위치.
+    function dlvMqStart(btn) {
+        btn.querySelectorAll('.nb-dlv-ln').forEach(ln => {
+            const over = ln.scrollWidth - ln.clientWidth;
+            if (over > 2) {
+                ln.style.setProperty('--mq-shift', (-Math.ceil(over) - 2) + 'px');
+                ln.style.setProperty('--mq-dur', Math.max(3, over / 35 + 2).toFixed(1) + 's');
+                ln.classList.add('mq');
+            }
+        });
     }
-    function dlvFitAll() { if (_dlvCard) _dlvCard.querySelectorAll('.nb-dlv-btn').forEach(dlvFit); }
+    function dlvMqStop(btn) { btn.querySelectorAll('.nb-dlv-ln').forEach(ln => { ln.classList.remove('mq'); ln.style.removeProperty('--mq-shift'); ln.style.removeProperty('--mq-dur'); }); }
+    const dlvSetText = (btn, l1, l2) => {
+        const e1 = btn.querySelector('.l1'), e2 = btn.querySelector('.l2');
+        e1.querySelector('.nb-dlv-txt').textContent = l1; e1.style.display = l1 ? '' : 'none';
+        e2.querySelector('.nb-dlv-txt').textContent = l2; e2.style.display = l2 ? '' : 'none';
+    };
 
     function dlvRender() {
         const card = _dlvCard;
@@ -1799,7 +1815,7 @@
         const me = dlvMyName(), c = dlvReadCache();
         const hasData = !!(c && c.date === dlvOpDate() && Array.isArray(c.items));
         const sig = [me, c && c.at, c && c.fails, hasData, _dlvStatus].join('|');
-        if (card._dlvSig === sig) return;                               // 달라진 게 없으면 DOM 을 건드리지 않음 (마퀴가 매번 처음부터 다시 돌지 않게)
+        if (card._dlvSig === sig) return;                               // 달라진 게 없으면 DOM 을 건드리지 않음
         card._dlvSig = sig;
 
         const mine = (me && hasData) ? dlvMine(c.items, me) : [];
@@ -1809,39 +1825,35 @@
         const ageMin = (c && c.at) ? Math.floor((Date.now() - c.at) / 60000) : 0;
         const staleWarn = (ageMin >= 6 || (c && c.stale)) ? '\n⚠ ' + (c && c.stale ? '서버가 마지막 정상 데이터를 대신 보내는 중' : '마지막 갱신 ' + ageMin + '분 전') : '';
 
-        row.querySelectorAll('.nb-dlv-btn').forEach((btn, i) => {
-            const txt = btn.querySelector('.nb-dlv-txt'), x = mine[i];
-            let label = '', fileName = '', title = '', kind = 'empty';
-            if (note && i === 0) { label = note; kind = 'note'; }
+        row.querySelectorAll('.nb-dlv-slot').forEach((slot, i) => {
+            const btn = slot.querySelector('.nb-dlv-btn'), tm = slot.querySelector('.nb-dlv-time'), x = mine[i];
+            let l1 = '', l2 = '', time = '', fileName = '', title = '', kind = 'empty';
+            if (note && i === 0) { l1 = note; kind = 'note'; }
             else if (x) {
-                const rs = dlvResolve(x);
-                label = (rs ? '' : '⚠ ') + dlvLabel(x); fileName = dlvFileName(x, me); kind = 'item';
-                const d = new Date(dlvKeyOf(x) * 1000), hm = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
-                title = label + '\n' + hm + ' 배정 · ' + (x.o ? '주문번호 ' + x.o : '주문번호 없음') + (x.run ? ' · 진행 중' : '') + '\n' + (rs ? '기체번호: ' + rs.site + ' ' + rs.unit + ' (' + (DLV_HOW[rs.how] || rs.how) + ')' : '⚠ ROBOT_MAP 에서 기체번호를 못 찾아 슬랙 이름으로 만들었어요') + '\n→ ' + fileName + staleWarn;
+                const p = dlvSplit(x), rs = dlvResolve(x), d = new Date(dlvKeyOf(x) * 1000), hm = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+                l1 = (rs ? '' : '⚠ ') + (p.site || p.robot || '(기체 정보 없음)'); l2 = p.site ? p.robot : '';   // 1줄 = 사이트, 2줄 = 기체명
+                time = hm + ' 배정'; fileName = dlvFileName(x, me); kind = 'item';
+                title = dlvLabel(x) + '\n' + hm + ' 배정 · ' + (x.o ? '주문번호 ' + x.o : '주문번호 없음') + (x.run ? ' · 진행 중' : '') + '\n'
+                    + (rs ? '기체번호: ' + rs.site + ' ' + rs.unit + ' (' + (DLV_HOW[rs.how] || rs.how) + ')' : '⚠ ROBOT_MAP 에서 기체번호를 못 찾아 슬랙 이름으로 만들었어요') + '\n→ ' + fileName + staleWarn;
             }
-            btn.dataset.name = fileName;
-            btn.title = title;
-            btn.disabled = kind !== 'item';
-            btn.classList.toggle('empty', kind === 'empty');
-            btn.classList.toggle('note', kind === 'note');
-            if (btn.dataset.copied === '1') { btn.dataset.label = label; return; }   // '복사됨' 표시 중이면 끝난 뒤 새 글자로 복원
-            if (txt.textContent !== label) { txt.textContent = label; }
-            dlvFit(btn);
+            btn.dataset.name = fileName; btn.title = title; btn.disabled = kind !== 'item';
+            btn.classList.toggle('empty', kind === 'empty'); btn.classList.toggle('note', kind === 'note');
+            tm.textContent = time; tm.style.display = time ? '' : 'none';
+            if (btn.dataset.copied === '1') { btn.dataset.l1 = l1; btn.dataset.l2 = l2; return; }   // '복사됨' 표시 중이면 끝난 뒤 새 글자로 복원
+            dlvMqStop(btn); dlvSetText(btn, l1, l2);
+            if (btn.matches(':hover') && kind === 'item') dlvMqStart(btn);
         });
     }
 
     function dlvFlash(btn, ok) {
-        const txt = btn.querySelector('.nb-dlv-txt');
         if (btn._flashTimer) clearTimeout(btn._flashTimer);
-        if (btn.dataset.copied !== '1') { btn.dataset.copied = '1'; btn.dataset.label = txt.textContent; }
-        txt.textContent = ok ? '복사됨' : '복사 실패';
-        btn.classList.remove('mq');
-        btn.style.background = ok ? HOVER_ACCENT : '#ef4444'; btn.style.color = '#fff';
+        const e1 = btn.querySelector('.l1 .nb-dlv-txt'), e2 = btn.querySelector('.l2 .nb-dlv-txt');
+        if (btn.dataset.copied !== '1') { btn.dataset.copied = '1'; btn.dataset.l1 = e1.textContent; btn.dataset.l2 = e2.textContent; }
+        dlvMqStop(btn); btn.classList.add('copied'); btn.classList.toggle('fail', !ok); e1.textContent = ok ? '복사됨' : '복사 실패';
         btn._flashTimer = setTimeout(() => {
-            txt.textContent = btn.dataset.label || '';
-            btn.style.background = ''; btn.style.color = '';
-            btn.dataset.copied = '0'; btn._flashTimer = null;
-            dlvFit(btn);
+            btn.classList.remove('copied', 'fail'); btn.dataset.copied = '0'; btn._flashTimer = null;
+            dlvSetText(btn, btn.dataset.l1 || '', btn.dataset.l2 || '');
+            if (btn.matches(':hover') && !btn.disabled) dlvMqStart(btn);
         }, 1500);
     }
     async function dlvCopy(text) {
@@ -1861,7 +1873,12 @@
             if (!btn || btn.disabled || !btn.dataset.name) return;
             dlvFlash(btn, await dlvCopy(btn.dataset.name));
         });
-        if (typeof ResizeObserver === 'function') { try { new ResizeObserver(() => dlvFitAll()).observe(row); } catch (e) {} }
+        row.querySelectorAll('.nb-dlv-btn').forEach(btn => {
+            btn.addEventListener('mouseenter', () => { if (!btn.disabled && btn.dataset.copied !== '1') dlvMqStart(btn); });
+            btn.addEventListener('mouseleave', () => dlvMqStop(btn));
+            btn.addEventListener('focus', () => { if (!btn.disabled && btn.dataset.copied !== '1') dlvMqStart(btn); });
+            btn.addEventListener('blur', () => dlvMqStop(btn));
+        });
         if (!_dlvTickTimer) {
             _dlvTickTimer = setInterval(dlvTick, DLV_TICK_MS);
             document.addEventListener('visibilitychange', () => { if (!document.hidden) dlvTick(); });
@@ -1869,6 +1886,7 @@
         }
         setTimeout(() => { dlvRender(); dlvTick(); }, 50);              // 패널을 연 직후: 캐시가 신선하면 네트워크 없이 바로 표시
     }
+
     // 콘솔에서 nbDlvDiag() — 받아 둔 오늘 배달 전체(내 것만이 아니라 모두)가 ROBOT_MAP 에 어떻게 연결되는지 표로 보여 준다. '못 찾음'만 ROBOT_MAP 에 보강하면 된다.
     window.nbDlvDiag = function () {
         const c = dlvReadCache();
@@ -2021,7 +2039,7 @@
                         <span style="position: absolute; right: 6px; top: 50%; transform: translateY(-50%); pointer-events: none; color: #aaa; font-size: 11px;">▾</span>
                     </div>
                     <div style="display: flex; gap: 5px; min-width: 0;">
-                        <input type="text" id="taskInput" placeholder="주문번호를 붙여넣으세요." style="flex: 1; min-width: 0; background: ${fieldBg}; color: ${fieldText}; border: 1px solid ${fieldBorder}; padding: 0 8px; border-radius: 4px; font-size: 15px; font-weight: bold; height: 32px; line-height: 32px; box-sizing: border-box;">
+                        <input type="text" id="taskInput" placeholder="주문번호 수동입력시." style="flex: 1; min-width: 0; background: ${fieldBg}; color: ${fieldText}; border: 1px solid ${fieldBorder}; padding: 0 8px; border-radius: 4px; font-size: 15px; font-weight: bold; height: 32px; line-height: 32px; box-sizing: border-box;">
                         <button id="copyFileName" style="width: 70px; flex-shrink: 0; background: #10b981; color: white; border: none; padding: 0 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 15px; white-space: nowrap; overflow: hidden; height: 32px; line-height: 32px; box-sizing: border-box;">복사</button>
                     </div>
                 </div>
@@ -2035,9 +2053,7 @@
                 </div>
             </div>
             <div id="nbDlvRow">
-                <button type="button" class="nb-dlv-btn empty" data-slot="0" disabled><span class="nb-dlv-txt"></span></button>
-                <button type="button" class="nb-dlv-btn empty" data-slot="1" disabled><span class="nb-dlv-txt"></span></button>
-                <button type="button" class="nb-dlv-btn empty" data-slot="2" disabled><span class="nb-dlv-txt"></span></button>
+                ${[0, 1, 2].map(i => `<div class="nb-dlv-slot" data-slot="${i}"><button type="button" class="nb-dlv-btn empty" disabled><span class="nb-dlv-ln l1"><span class="nb-dlv-txt"></span></span><span class="nb-dlv-ln l2"><span class="nb-dlv-txt"></span></span></button><span class="nb-dlv-time" style="display:none"></span></div>`).join('')}
             </div>
         `;
 
@@ -2052,7 +2068,8 @@
         // ── 내 최근 배달 3버튼 (SECTION 6-1) — 테마 색은 다른 버튼들과 같은 값을 쓴다 ──
         let dlvStyleTag = document.getElementById('naming-dlv-style');
         if (!dlvStyleTag) { dlvStyleTag = document.createElement('style'); dlvStyleTag.id = 'naming-dlv-style'; document.head.appendChild(dlvStyleTag); }
-        dlvStyleTag.textContent = dlvBuildCss({ bg: neutralBtnBg, text: neutralBtnText, border: neutralBtnBorder, hoverBg: subBtnHoverBg, hoverBorder: subBtnHoverBorder, hoverText: subBtnHoverText });
+        dlvStyleTag.textContent = dlvBuildCss({ text: neutralBtnText, border: neutralBtnBorder, hoverBg: subBtnHoverBg, hoverText: subBtnHoverText, card: T.card, accent: HOVER_ACCENT,
+            fill: T.isDark ? '#3a4a43' : '#eaf1df', timeText: T.isDark ? '#6ee7b7' : '#047857' });   // 연한 그린 기운이 도는 바탕 + 시각 글자색
         dlvMount(card);
 
         setTimeout(() => {
