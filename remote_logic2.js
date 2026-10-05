@@ -3,7 +3,7 @@
 
     // 성남 배터리 조회용 숨김 iframe(data-nb-batt-probe) 안에서는 이 스크립트를 돌리지 않는다.
     // (부모 페이지가 같은 origin의 iframe DOM을 직접 읽으므로 iframe 쪽 주입은 불필요하고,
-    //  Alt+Q 핸들러·fetch 가로채기 등이 중복 설치되는 것을 막는다. 다른 용도의 iframe에는 영향 없음)
+    //  Alt+Q 핸들러·fetch 가로채기 등이 중복 설치되는 것을 막는다. 다른 용도의 iframe에는 영향 무)
     try { if (window.frameElement && window.frameElement.hasAttribute('data-nb-batt-probe')) return; } catch (e) {}
 
     if (window.neubieEngineLoaded) return;
