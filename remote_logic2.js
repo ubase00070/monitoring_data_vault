@@ -1826,7 +1826,7 @@
         return `
             #nbDlvRow { display:flex; flex-direction:column; gap:8px; min-width:0; min-height:0; height:100%; }
             .nb-dlv-slot { position:relative; min-width:0; flex:1; min-height:0; }
-            .nb-dlv-btn { display:flex; flex-direction:column; justify-content:center; align-items:stretch; width:100%; height:100%; min-width:0; padding:1px 6px; box-sizing:border-box; overflow:hidden; text-align:center;
+            .nb-dlv-btn { display:flex; flex-direction:column; justify-content:center; align-items:stretch; width:100%; height:100%; min-width:0; padding:7px 6px 2px; box-sizing:border-box; overflow:hidden; text-align:center;
                 color:${t.text}; border:2px solid transparent; border-radius:10px; cursor:pointer; transition:background .2s, color .2s, box-shadow .2s;
                 background:${fillBg(t.fill)}; }
             .nb-dlv-btn:hover:not(:disabled) { background:${fillBg(t.hoverBg)}; color:${t.hoverText}; box-shadow:0 0 10px rgba(168,85,247,.4); }
@@ -1839,7 +1839,7 @@
             .nb-dlv-ln { display:block; min-width:0; max-width:100%; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; line-height:1.15; font-size:11.5px; font-weight:600; }
             .nb-dlv-ln.l1 { font-size:12.5px; font-weight:800; }
             .nb-dlv-btn.copied .l2 { display:none; }
-            .nb-dlv-time { position:absolute; top:-6px; left:10px; z-index:2; padding:0 5px; border-radius:6px; font-size:10px; font-weight:800; line-height:12px; white-space:nowrap; pointer-events:none; background:${t.card}; color:${t.timeText}; }
+            .nb-dlv-time { position:absolute; top:-9px; left:8px; z-index:2; max-width:calc(100% - 16px); overflow:hidden; text-overflow:ellipsis; padding:0 6px; border-radius:7px; font-size:12px; font-weight:800; line-height:17px; white-space:nowrap; pointer-events:none; background:${t.card}; color:${t.timeText}; }; color:${t.timeText}; }
             .nb-dlv-ln.mq { text-align:left; text-overflow:clip; }
             .nb-dlv-ln.mq .nb-dlv-txt { display:inline-block; animation:nbDlvMq var(--mq-dur, 6s) ease-in-out infinite alternate; }
             @keyframes nbDlvMq { 0%, 18% { transform:translateX(0); } 82%, 100% { transform:translateX(var(--mq-shift, 0px)); } }
@@ -1889,7 +1889,7 @@
             else if (x) {
                 const p = dlvSplit(x), rs = dlvResolve(x), d = new Date(dlvKeyOf(x) * 1000), hm = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
                 l1 = (rs ? '' : '⚠ ') + (p.site || p.robot || '(기체 정보 없음)'); l2 = p.site ? p.robot : '';   // 1줄 = 사이트, 2줄 = 기체명
-                time = hm + ' 배달 건'; fileName = dlvFileName(x, me); kind = 'item';
+                time = hm + ' 배달 건 - ' + me; fileName = dlvFileName(x, me); kind = 'item';
                 title = dlvLabel(x) + '\n' + hm + ' 배정 · ' + (x.o ? '주문번호 ' + x.o : '주문번호 없음') + (x.run ? ' · 진행 중' : '') + '\n'
                     + (rs ? '기체번호: ' + rs.site + ' ' + rs.unit + ' (' + (DLV_HOW[rs.how] || rs.how) + ')' : '⚠ ROBOT_MAP 에서 기체번호를 못 찾아 슬랙 이름으로 만들었어요') + '\n→ ' + fileName + staleWarn;
             }
