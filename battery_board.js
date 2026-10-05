@@ -6926,6 +6926,24 @@
         let _dlDates = null, _dlDatesAt = 0, _dlCalOpen = false, _dlCalYm = null;
         const dlDateNow = () => _dlDate || dlOpDate();
 
+        // ── 마감 처리 (08:00 ~ 23:00 만 조회) ──
+        //  · 운영 시간(dlInSchedule) 밖에서는 '오늘' 데이터를 다시 조회하지 않는다 (타이머뿐 아니라 탭 복귀·패널 열기·초기 로드 등 모든 경로에 적용).
+        //  · 단, 23:00 이후(또는 08:00 이전)에 읽은 값은 서버 크론(22:58 종료)이 멈춘 뒤의 '마감 확정본'이므로 _final 로 표시하고 그 값을 그대로 보여준다.
+        //    마감 후 처음 열었는데 받아 둔 데이터가 없으면 확정본을 딱 1회만 받아온다. 08:00 이 되면 타이머가 자동으로 조회를 재개한다.
+        //  · 과거 날짜(달력으로 고른 날)는 마감과 무관하게 조회 가능.
+        const DL_OPEN_MIN = 8 * 60, DL_CLOSE_MIN = 23 * 60;
+        const dlNowMin = () => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); };
+        const dlInSchedule = () => { const m = dlNowMin(); return m >= DL_OPEN_MIN && m <= DL_CLOSE_MIN; };   // 08:00 ~ 23:00 (23:00 의 마지막 읽기까지 포함)
+        const dlPastClose = () => { const m = dlNowMin(); return m >= DL_CLOSE_MIN || m < DL_OPEN_MIN; };       // 23:00 이후 ~ 다음날 08:00 전 = 서버 폴링 종료 후
+        let _dlRefMs = Date.now();      // 진행 중 카드 경과 시간 계산 기준 시각 (dlRender 가 설정)
+        let _dlBadgeFinalDate = null;   // 배지용 조회로 마감 확정본을 이미 받은 근무일
+        function dlHasFinal(date) { return !!(_dlData && _dlData.date === date && _dlData._final); }
+        function dlMayFetchToday() {    // 오늘(근무일) 데이터를 지금 조회해도 되는가
+            if (dlInSchedule()) return true;
+            const today = dlOpDate();
+            return !dlHasFinal(today) && _dlBadgeFinalDate !== today;
+        }
+
         function dlClosePanel() {
             _dlOpen = false; _dlCalOpen = false;
             $dl('bb-dlog-panel').classList.remove('open');
@@ -6940,12 +6958,14 @@
         }
         async function dlRefresh() {
             const seq = ++_dlSeq, date = dlDateNow();
+            if (date === dlOpDate() && !dlInSchedule() && dlHasFinal(date)) { dlRender(); return; }   // 마감 후: 이미 받아 둔 마감 확정본이 있으면 재조회하지 않고 화면만 갱신
             if (!_dlData || _dlData.date !== date) { _dlData = null; dlRender(); }
+            const closedAtStart = date === dlOpDate() && dlPastClose();   // 조회 시작 시점이 마감 후면 이 응답이 확정본
             try {
                 const d = await attFetchJson(DL_API + '?view=day&date=' + date);
                 if (seq !== _dlSeq) return;
                 if (!d || d.ok !== true) throw new Error('데이터 형식 오류');
-                d.date = date; d._at = Date.now();
+                d.date = date; d._at = Date.now(); d._final = closedAtStart;
                 _dlData = d; _dlFail = false;
                 if (date === dlOpDate()) fbSetBadge('bb-fb-dlog', (d.summary && d.summary.completed) || 0, 'pk');   // 오늘 데이터면 버튼 배지도 같은 응답으로 갱신 (조회를 따로 한 번 더 하지 않음)
             } catch (e) {
@@ -7023,7 +7043,7 @@
             if (run) {
                 const since = parseFloat(waiting ? r.threadTs : (r.assignedTs || r.threadTs));   // 옛 서버 응답(필드 없음)이면 '-'
                 time.appendChild(dlEl('span', 'l', waiting ? '대기 시간' : '경과 시간'));
-                time.appendChild(dlEl('span', 'v', since > 0 ? attDurHM(Math.max(0, Math.round(Date.now() / 1000 - since))) : '-'));
+                time.appendChild(dlEl('span', 'v', since > 0 ? attDurHM(Math.max(0, Math.round(_dlRefMs / 1000 - since))) : '-'));
             } else {
                 time.appendChild(dlEl('span', 'l', '배달 소요시간'));
                 time.appendChild(dlEl('span', 'v', r.durationSec != null ? attDurHM(r.durationSec) : '-'));
@@ -7054,9 +7074,13 @@
             if (isToday && pending > 0) cells.push(kCell('확인 중', pending + '건'));   // 폴링(서버 2분 + 보드 1분) 특성상, 다음 조회 전까지는 실제로 끝났어도 여기 잡혀 있을 수 있음
             cells.push(kCell('최다 배달자', topTxt));
             kpi.replaceChildren(...cells);
-            $dl('bb-dlog-note').innerHTML = isToday
-                ? '* 08:00~23:00<br>' + (_dlData._at ? dlHMS(_dlData._at) : '--:--:--') + ' 업데이트'   // 업데이트 시각 = 이 화면이 서버에서 마지막으로 '성공적으로' 받아온 시각 (조회가 실패하면 마지막 성공 시각 그대로 남음)
-                : '* 확정된 기록입니다.';
+            const closedNow = isToday && !dlInSchedule();   // 마감 후(23:00~08:00): 더 이상 조회하지 않고 마지막 값을 그대로 보여줌
+            _dlRefMs = (closedNow && _dlData._at) ? _dlData._at : Date.now();   // 마감 후에는 진행 중 카드의 경과/대기 시간이 계속 늘어나지 않도록 마지막 조회 시각에 고정
+            $dl('bb-dlog-note').innerHTML = !isToday
+                ? '* 확정된 기록입니다.'
+                : closedNow
+                    ? '* 마감 (23:00) · 08:00 재개<br>' + (_dlData._at ? dlHMS(_dlData._at) : '--:--:--') + ' 기준'
+                    : '* 08:00~23:00<br>' + (_dlData._at ? dlHMS(_dlData._at) : '--:--:--') + ' 업데이트';   // 업데이트 시각 = 이 화면이 서버에서 마지막으로 '성공적으로' 받아온 시각 (조회가 실패하면 마지막 성공 시각 그대로 남음)
             // 진행 중(아직 완료 신호가 없는 건)은 오늘 화면에서만 맨 위에 카드로: 배달 중(최신 배정 순) → 배정 대기(최신 접수 순)
             const running = (isToday && Array.isArray(_dlData.inProgress)) ? _dlData.inProgress.slice() : [];
             const sinceOf = r => parseFloat(r.assignedTs || r.threadTs) || 0;
@@ -7140,9 +7164,12 @@
         });
         // 버튼 배지 = 오늘(근무일) 완료 건수 (다른 고정 버튼과 같은 fbSetBadge 재사용). 오늘 데이터 응답은 dlRefresh 와 같은 주소라 엣지 캐시를 공유함
         async function dlRefreshBadge() {
+            if (!dlMayFetchToday()) return;   // 마감 후 확정본을 이미 받았으면 조회하지 않음
+            const date = dlOpDate(), closedAtStart = dlPastClose();
             try {
-                const d = await attFetchJson(DL_API + '?view=day&date=' + dlOpDate());
+                const d = await attFetchJson(DL_API + '?view=day&date=' + date);
                 if (!d || d.ok !== true) return;
+                if (closedAtStart) _dlBadgeFinalDate = date;   // 마감 후 받은 값 = 확정본
                 fbSetBadge('bb-fb-dlog', (d.summary && d.summary.completed) || 0, 'pk');
             } catch (e) { /* 배지 갱신 실패는 조용히 무시 (다음 주기에 다시 시도됨) */ }
         }
@@ -7150,13 +7177,12 @@
         // 서버 크론이 2분마다 갱신하므로 그 절반 주기(1분)로 읽어야, 크론 주기와 엇갈려도 새 값이 최대 1분 안에 보인다. (2분 주기로 읽으면 크론 직전에 읽는 경우가 계속 생겨 한 주기씩 늦어짐)
         // 서버가 응답을 60초 엣지 캐시하므로 보드가 여러 대여도 GitHub 호출은 늘지 않는다. 주소에 &t=Date.now() 같은 값을 붙이지 말 것 (캐시가 매번 빗나감).
         const DL_POLL_MS = 60 * 1000;
-        const dlInSchedule = () => { const d = new Date(), m = d.getHours() * 60 + d.getMinutes(); return m >= 8 * 60 && m <= 23 * 60; };   // 08:00 ~ 23:00 (23:00 의 마지막 읽기까지 포함)
-        function dlPollToday() {   // 오늘 데이터는 한 번만 받아서 패널과 배지에 같이 반영 (패널이 닫혀 있거나 다른 날짜를 보는 중이면 배지만)
+        function dlPollToday() {   // 마감 후에는 확정본이 없을 때 1회만 실제 조회 (dlRefresh / dlRefreshBadge 안에서 판단)   // 오늘 데이터는 한 번만 받아서 패널과 배지에 같이 반영 (패널이 닫혀 있거나 다른 날짜를 보는 중이면 배지만)
             return (_dlOpen && !_dlDate) ? dlRefresh() : dlRefreshBadge();
         }
         function dlScheduleNext() {
             setTimeout(() => {
-                if (dlInSchedule() && !document.hidden) dlPollToday();
+                if (!document.hidden) dlPollToday();   // 08:00~23:00 에는 매분 조회, 그 밖에는 위 마감 처리에 따라 확정본 1회 외에는 조회하지 않음
                 dlScheduleNext();
             }, DL_POLL_MS + Math.floor(Math.random() * 3000));   // 보드가 여러 대여도 같은 초에 몰리지 않도록 0~3초 지터
         }
