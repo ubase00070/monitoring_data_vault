@@ -3,7 +3,7 @@
 
     // 성남 배터리 조회용 숨김 iframe(data-nb-batt-probe) 안에서는 이 스크립트를 돌리지 않는다.
     // (부모 페이지가 같은 origin의 iframe DOM을 직접 읽으므로 iframe 쪽 주입은 불필요하고,
-    //  Alt+Q 핸들러·fetch 가로채기 등이 중복 설치되는 것을 막는다. 다른 용도의 iframe에는 영향 무)
+    //  Alt+Q 핸들러·fetch 가로채기 등이 중복 설치되는 것을 막는다. 다른 용도의 iframe에는 영향 없음)
     try { if (window.frameElement && window.frameElement.hasAttribute('data-nb-batt-probe')) return; } catch (e) {}
 
     if (window.neubieEngineLoaded) return;
@@ -1871,14 +1871,15 @@
         if (!row) return;
         const me = dlvMyName(), c = dlvReadCache();
         const hasData = !!(c && c.date === dlvOpDate() && Array.isArray(c.items));
-        const sig = [me, c && c.at, c && c.fails, hasData, _dlvStatus].join('|');
+        const inWin = dlvInWindow();
+        const sig = [me, c && c.at, c && c.fails, hasData, _dlvStatus, inWin].join('|');
         if (card._dlvSig === sig) return;                               // 달라진 게 없으면 DOM 을 건드리지 않음
         card._dlvSig = sig;
 
         const mine = (me && hasData) ? dlvMine(c.items, me) : [];
         let note = '';
         if (!me) note = '성명을 입력하면 내 배달이 표시돼요';
-        else if (!hasData) note = (_dlvStatus === 'fail' || (c && c.fails)) ? '배달 정보를 불러오지 못했어요' : '불러오는 중…';
+        else if (!hasData && inWin) note = (_dlvStatus === 'fail' || (c && c.fails)) ? '배달 정보를 불러오지 못했어요' : '불러오는 중…';   // 조회 시간(08~23시) 밖에는 조회 자체를 안 하므로 '불러오는 중…' 대신 빈 칸('배달 건 없음')
         const ageMin = (c && c.at) ? Math.floor((Date.now() - c.at) / 60000) : 0;
         const staleWarn = (ageMin >= 6 || (c && c.stale)) ? '\n⚠ ' + (c && c.stale ? '서버가 마지막 정상 데이터를 대신 보내는 중' : '마지막 갱신 ' + ageMin + '분 전') : '';
 
@@ -2243,13 +2244,13 @@
         headerContainer.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding-right:5px; min-height:44px;";
 
         const title = document.createElement('h2');
-        title.textContent = "싱글플레이인데요";
+        title.textContent = "싱글플레이라니까 그러네";
         title.style.cssText = `${NCC_TITLE_GRADIENT} font-size:24px; flex:0 1 auto; width:fit-content; margin:0; font-weight:800; white-space:nowrap; min-width:0; overflow:hidden; text-overflow:ellipsis;`;
 
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
 		// 문자열을 넣으면 패치노트에 빨간 '`' 뱃지가 점멸하며 뜸.
 		// 빈 문자열('')로 비우면 뱃지가 사라짐.
-		const PATCH_NOTE_NEW_CONTENT = '개편하다 새기야';
+		const PATCH_NOTE_NEW_CONTENT = 'UI 개편';
 
         // ── 패치노트 내용 ──────────────────────────────────────
         // 아래 patchItems 배열에 버전별 내용을 추가하세요 (버튼 라벨의 날짜도 이 배열의
@@ -2257,15 +2258,24 @@
         const patchItems = [
             {
                 version: 'v1.1',
-                date: '2026-10-07',
+                date: '2026-10-05',
                 items: [
-                    '본 스크립트는 NCC에 요청을 보내지 않습니다.',
-                    '성남 배터리 조회 시 2분 쿨다운(api가 아닌 iframe 방식)',
+                    'Alt+Q 레이아웃 개편: 레인보우 외곽선, 2열 배치(일일 업무·성남 배터리 / 토글·생성기)',
+                    '일일 업무가 5개를 넘으면 카드 안에서 스크롤, 긴 업무는 두 줄 → 마퀴로 표시',
+                    '성남 배터리 현황을 Alt+Q 안으로 이동 — 자동 조회 없음, [성남 배터리 조회]를 눌러야만 조회',
+                    '조회 후 [재조회 ##:##] 2분 대기 (새로고침해도 유지), 2분이 지나면 다시 가려짐',
+                    '패치노트·설명(Click!)·패드 팝업이 일일 업무 카드 안에서 열림 (X → 일일 업무 복귀)',
+                    '영상 파일명 생성기 재배치: 최근 배달 3건 / 다중·서브·띠띠 / 배달 건 수동 입력',
+                    '하단에 제주 전국체전 대기 행 추가',
+                    'NCC API 호출 기능 전체 제거',
+                    '다중 모니터링 자동 시작 보험 적용(최대 6대), 자동 교대시작은 최대 12대까지 가능',
                     'D-PAD UP 커스텀 핫키(원격페이지: UP 1초 홀드 시 설정창/버튼 입력 시 적용)',
-                    '다중 및 과학관 전임자/후임자 표기',
-                    '다중 기체 삭제 기체명 표기, 모니터링 생성 모달 우측 고정',
-                    '맵 최적화 속도 개선',
-                    '다음 개입 요청 토글 자동 OFF',
+                    '서브모니터링 버튼 추가',
+                    '스케줄표/좌석도 라이트/다크 모드(디폴트 라이트)',
+                    '다중/과학관 업무 전임자/후임자 표기',
+                    '다중 관제 기체 삭제 시 선택한 기체명 표기, 모니터링 생성 모달을 우측에 고정',
+                    '맵 최적화 속도 개선(Dot 제거, 비타겟 site 이동 반영)',
+                    '개입카드 진입 시 다음 개입 요청 토글 자동으로 OFF',
                 ]
             },
         ];
