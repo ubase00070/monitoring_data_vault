@@ -2633,19 +2633,57 @@
     // 표시 문구: 이름 - (##대)
     const loadedMsg = (data) => `${data._src === 'gist' ? '순찰감지' : '로드됨'} (${data.handover_by || '?'} - ${(data.units || []).length}대)`;
 
+    // ── 새 인계 저장소(handover_new_1 / handover_new_2.json) 기준 상태 문구 ──
+    // 한 슬롯의 상태: ok(유효) / old(20분 경과) / empty(기체 없음) / none(데이터 없음) / fail(조회 실패)
+    const slotState = (result) => {
+        if (!result) return { st: 'fail' };
+        const d = result.data || {};
+        if (!d.updatedAt) return { st: 'none' };
+        const units = d.units || [];
+        if (!isDataValid(d.updatedAt)) return { st: 'old', by: d.handover_by, n: units.length };
+        if (!units.length) return { st: 'empty', by: d.handover_by };
+        const left = units.filter(u => !(d.taken || []).includes(u)).length;
+        return { st: 'ok', by: d.handover_by, n: units.length, left };
+    };
+    const slotText = (slot, x) => {
+        const who = x.by ? `${x.by} - ` : '';
+        switch (x.st) {
+            case 'ok': return `${slot}번 로드됨 (${who}${x.n}대${x.left !== x.n ? `, 남은 ${x.left}대` : ''})`;
+            case 'old': return `${slot}번 20분 경과 (${who}${x.n}대)`;
+            case 'empty': return `${slot}번 기체 없음`;
+            case 'none': return `${slot}번 데이터 없음`;
+            default: return `${slot}번 조회 실패`;
+        }
+    };
+    // results: [slot1 결과, slot2 결과] → { msg, color, anyValid, key }
+    const slotSummary = (results) => {
+        const xs = results.map(slotState);
+        const okCount = xs.filter(x => x.st === 'ok').length;
+        const hasOld = xs.some(x => x.st === 'old');
+        const msg = xs.map((x, i) => slotText(i + 1, x)).join(' · ') + (okCount && okCount < 2 && hasOld ? ' — 오래된 쪽은 사용 불가' : '');
+        let color = '#22c55e';                       // 두 슬롯 모두 유효
+        if (okCount === 0) color = hasOld ? '#ef4444' : '#f59e0b';
+        else if (okCount < 2) color = '#f59e0b';     // 한쪽만 유효
+        return { msg, color, anyValid: okCount > 0, key: xs.map(x => x.st).join(',') };
+    };
+    const checkSlots = async () => {
+        const results = await Promise.all([1, 2].map(n => githubGet(n).catch(() => null)));
+        return { results, ...slotSummary(results) };
+    };
+
     // ── 핸드오버 레이아웃 ──────────────────────────────────
 	async function initHandoverLayout() {
 		await adminConfigReady; // maxMonitorSlots 확정 후 진행
 		let panel = document.getElementById('ho-remote-panel');
         if (panel) {
             panel.style.top = '0px';
-            const r = await githubGet();
+            const r = await checkSlots();
             const dpMsgEl = document.getElementById('ho-dp-msg');
             if (dpMsgEl) {
-                if (r && !isDataValid(r.data?.updatedAt)) {
-                    dpMsgEl.textContent = '20분 초과로 로드 실패';
-                    dpMsgEl.style.color = '#ef4444';
-                    dpMsgEl.title = dpMsgEl.textContent;
+                dpMsgEl.textContent = r.msg;
+                dpMsgEl.style.color = r.color;
+                dpMsgEl.title = r.msg;
+                if (!r.anyValid) {
                     document.querySelectorAll('.ho-remote-cell').forEach(c => {
                         c.textContent = '—';
                         Object.assign(c.style, { background: 'rgba(255,255,255,0.45)', color: '#b0bec5',
@@ -2808,16 +2846,8 @@
             fetchBtn.style.opacity = '0.5';
             try {
                 setDpMsg('데이터 확인 중...', '#3b82f6');
-                const result = await githubGet();
-                if (!result) { setDpMsg('Fetch 실패', '#ef4444'); return; }
-                const { data } = result;
-                if (!isDataValid(data.updatedAt)) {
-                    setDpMsg('이전 시간 교대 기체 데이터가 없습니다', '#f59e0b');
-                    return;
-                }
-                const units = data.units || [];
-                if (!units.length) { setDpMsg('기체 데이터 없음', '#94a3b8'); return; }
-                setDpMsg(loadedMsg(data), '#22c55e');
+                const r = await checkSlots();
+                setDpMsg(r.msg, r.color);
             } finally {
                 _fetchBtnRunning = false;
                 fetchBtn.disabled = false;
@@ -3117,31 +3147,23 @@
 			setDpMsg('드래그로 순서를 변경하세요', '#3b82f6');
 		});
 
-		// ── 자동 Fetch (패널 열릴 때 1회) ──
+		// ── 자동 Fetch (패널 열릴 때 1회) — 새 인계 저장소 1번·2번 기준 ──
 		setDpMsg('인계 데이터 확인 중...', '#3b82f6');
-		const result = await githubGet().catch(() => null);
-		if (result && isDataValid(result.data.updatedAt)) {
-            const units = result.data.units || [];
-            if (units.length) {
-                setDpMsg(loadedMsg(result.data), '#22c55e');
-            } else {
-                setDpMsg('교대 기체 데이터가 없습니다', '#f59e0b');
-            }
-        } else if (result && result.data?.updatedAt) {
-            setDpMsg('이미 20분이 지난 데이터입니다', '#ef4444');
-        } else {
-            setDpMsg('교대 기체 데이터가 없습니다', '#f59e0b');
-        }
+		const slotsNow = await checkSlots();
+		setDpMsg(slotsNow.msg, slotsNow.color);
 
-        // ── 20분 만료 감시 (30초마다) ──
+        // ── 20분 만료 감시 (30초마다) — 슬롯별로 유효 여부가 바뀔 때만 문구 갱신 ──
         clearInterval(window.__hoExpiryTimer);   // 패널 재생성 시 이전 타이머 정리 (누적 방지)
+        let lastKey = slotsNow.key;
         const expiryInterval = window.__hoExpiryTimer = setInterval(() => {
             if (!panel.isConnected) { clearInterval(expiryInterval); return; }   // 패널이 제거됐으면 타이머 종료
             if (panel.style.top !== '0px') return;   // 패널 닫혀있으면 스킵
-            if (!isDataValid(result?.data?.updatedAt)) {
-                setDpMsg('20분 초과, 기체 목록 만료됨', '#ef4444');
-                clearInterval(expiryInterval);
+            const sum = slotSummary(slotsNow.results);
+            if (sum.key !== lastKey) {
+                lastKey = sum.key;
+                setDpMsg(sum.msg + ' (만료됨)', sum.color);
             }
+            if (!sum.anyValid) clearInterval(expiryInterval);
         }, 30000);
 
 		// 패널 외부 클릭 시 닫기 (패널이 재생성돼도 리스너는 document에 1번만 등록)
