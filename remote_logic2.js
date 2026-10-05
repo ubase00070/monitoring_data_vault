@@ -244,7 +244,24 @@
 		"316": { site: "반포 래미안 트리니원", unit: "#321", ho: 321 }, // 반포 래미안 트리니원 321호기
 		"317": { site: "반포 래미안 트리니원", unit: "#322", ho: 322 }, // 반포 래미안 트리니원 322호기
 		"318": { site: "반포 래미안 트리니원", unit: "#323", ho: 323 }, // 반포 래미안 트리니원 323호기
-	};
+
+        "295": { site: "제주 월드컵 경기장", unit: "#301", ho: 301 }, // 제주 월드컵 경기장 301호기
+        "294": { site: "제주 월드컵 경기장", unit: "#302", ho: 302 }, // 제주 월드컵 경기장 302호기
+        "296": { site: "제주 월드컵 경기장", unit: "#303", ho: 303 }, // 제주 월드컵 경기장 303호기
+        "297": { site: "제주 월드컵 경기장", unit: "#304", ho: 304 }, // 제주 월드컵 경기장 304호기
+        "298": { site: "제주 월드컵 경기장", unit: "#305", ho: 305 }, // 제주 월드컵 경기장 305호기
+        "299": { site: "제주 월드컵 경기장", unit: "#306", ho: 306 }, // 제주 월드컵 경기장 306호기
+        "300": { site: "제주 월드컵 경기장", unit: "#307", ho: 307 }, // 제주 월드컵 경기장 307호기
+        "301": { site: "제주 월드컵 경기장", unit: "#308", ho: 308 }, // 제주 월드컵 경기장 308호기
+        "302": { site: "제주 월드컵 경기장", unit: "#309", ho: 309 }, // 제주 월드컵 경기장 309호기
+        "305": { site: "제주 월드컵 경기장", unit: "#312", ho: 312 }, // 제주 월드컵 경기장 312호기
+        "306": { site: "제주 월드컵 경기장", unit: "#313", ho: 313 }, // 제주 월드컵 경기장 313호기
+        "307": { site: "제주 월드컵 경기장", unit: "#314", ho: 314 }, // 제주 월드컵 경기장 314호기
+        "308": { site: "제주 월드컵 경기장", unit: "#315", ho: 315 }, // 제주 월드컵 경기장 315호기
+        "309": { site: "제주 월드컵 경기장", unit: "#316", ho: 316 }, // 제주 월드컵 경기장 316호기
+        "310": { site: "제주 월드컵 경기장", unit: "#317", ho: 317 }, // 제주 월드컵 경기장 317호기
+
+    };
 
     // "/monitoring/56"이 "/monitoring/560"에도 부분매칭되는 걸 방지 — 숫자를 정확히 추출해서 완전일치로 비교
     function isTargetMonitoringUrl(url) {
@@ -1589,19 +1606,23 @@
     //   1) 주소는 배달 로그 보드와 똑같이 ?view=day&date=… 만 쓴다. ?t=Date.now() 나 cache:'no-store' 를 붙이지 않는다
     //      (서버가 60초 엣지 캐시 + 30초 stale-while-revalidate + 함수 메모를 걸어 두어, 몇 명이 부르든 GitHub 읽기는 분당 1~2번 수준)
     //   2) 패널이 열려 있고 탭이 보일 때만, 08:00~23:00 에만 조회 — 닫혀 있거나 백그라운드 탭이면 네트워크 0
-    //   3) 2분 주기 + 탭마다 다른 0~20초 지터 (여러 PC 가 같은 초에 몰리지 않게) + 어떤 경우에도 30초 안에 두 번 부르지 않음
+    //   3) 2분 주기 + 탭마다 다른 0~30초 지터 + 확인 주기(5초)의 시작 위상도 탭마다 무작위 (여러 PC 가 같은 초에 몰리지 않게) + 어떤 경우에도 30초 안에 두 번 부르지 않음
     //   4) 같은 브라우저의 탭들은 localStorage 의 캐시·잠금을 공유 — 탭이 여러 개여도 2분에 한 번만 조회
     //   5) 실패하면 지수 백오프(30초→최대 10분)하고, 마지막 성공 데이터로 버튼은 계속 동작 (서버가 GitHub 장애 때 stale 로 주는 응답도 정상 취급)
+    //   6) [동시 접속 분산] 패널을 연 직후·탭이 다시 보일 때의 조회도 0~3초 / 0~2초 무작위로 미룬다 (화면은 예전처럼 바로 그림). 교대 시간에 여러 명이 같은 초에 열어도 서버에 한꺼번에 몰리지 않는다
+    //   7) [상한 안전장치] 이 브라우저에서 최근 1시간 조회 횟수가 45번에 닿으면(정상은 약 26번) 더 부르지 않고 마지막 데이터로 버튼 유지 / 저장하는 배달 건수 상한 600
     const DLV_API = 'https://multimonitoring.vercel.app/api/delivery-poll';
     const DLV_POLL_MS = 2 * 60 * 1000;                              // 조회 주기
-    const DLV_JITTER_MS = Math.floor(Math.random() * 20000);        // 이 탭의 고정 지터 (0~20초)
-    const DLV_TICK_MS = 15 * 1000;                                  // '지금 조회할 때인가' 확인 간격 (확인만 — 네트워크는 쓰지 않음)
+    const DLV_JITTER_MS = Math.floor(Math.random() * 30000);        // 이 탭의 고정 지터 (0~30초)
+    const DLV_TICK_MS = 5 * 1000;                                   // '지금 조회할 때인가' 확인 간격 (확인만 — 네트워크는 쓰지 않음). 촘촘할수록 지터가 실제로 퍼진다(15초 단위면 3칸으로 뭉쳤음)
     const DLV_MIN_GAP_MS = 30 * 1000;                               // 이 탭에서 두 조회 사이 최소 간격
     const DLV_BACKOFF_MIN_MS = 30 * 1000, DLV_BACKOFF_MAX_MS = 10 * 60 * 1000;
     const DLV_CACHE_KEY = 'neubie_dlv_cache', DLV_LOCK_KEY = 'neubie_dlv_lock';
+    const DLV_LOG_KEY = 'neubie_dlv_fetchlog', DLV_MAX_PER_HOUR = 45;   // 안전장치: 최근 1시간 조회 횟수 상한 (정상 동작은 시간당 약 26번 — 버그·무한 반복 대비)
+    const DLV_MAX_ITEMS = 600;                                      // 안전장치: 서버가 이상하게 큰 응답을 줘도 저장·계산하는 배달 건수 상한 (하루 정상 분량은 100건 안팎)
     const DLV_NAME_SEP = '_';                                       // 파일명 칸 구분자 (기존 파일명과 같은 '_')
     const DLV_TAG = Math.random().toString(36).slice(2);            // 잠금 소유자 표시
-    let _dlvCard = null, _dlvBusy = false, _dlvTickTimer = null, _dlvLastFetchAt = 0, _dlvStatus = 'idle';
+    let _dlvCard = null, _dlvBusy = false, _dlvTickTimer = null, _dlvLastFetchAt = 0, _dlvStatus = 'idle', _dlvBreakerWarnedAt = 0;
 
     // 근무일 = 07:00 기준 (서버·배달 로그 보드와 같은 날짜 규칙. PC 시간대와 무관하게 KST 로 계산)
     const dlvOpDate = () => {
@@ -1635,12 +1656,20 @@
         const out = [];
         (Array.isArray(d.deliveries) ? d.deliveries : []).forEach(x => { if (x) out.push(pick(x, 0)); });
         (Array.isArray(d.inProgress) ? d.inProgress : []).forEach(x => { if (x && x.status === 'RUNNING' && x.robot) out.push(pick(x, 1)); });
+        if (out.length > DLV_MAX_ITEMS) out.splice(0, out.length - DLV_MAX_ITEMS);   // 상한을 넘으면 오래된 것부터 버림
         return out;
     }
 
+    // ── 안전장치: 최근 1시간 조회 횟수 (탭이 여러 개여도 같은 localStorage 로 합산. 미래 시각(시계 되감김)은 무시) ──
+    function dlvRecentFetches() {
+        try { const now = Date.now(); return (JSON.parse(localStorage.getItem(DLV_LOG_KEY) || '[]') || []).filter(t => typeof t === 'number' && t <= now && now - t < 3600000); } catch (e) { return []; }
+    }
+    function dlvLogFetch() {
+        try { const a = dlvRecentFetches(); a.push(Date.now()); localStorage.setItem(DLV_LOG_KEY, JSON.stringify(a.slice(-(DLV_MAX_PER_HOUR + 5)))); } catch (e) { /* 기록 실패는 무시 */ }
+    }
     async function dlvFetch() {
         if (_dlvBusy) return;
-        _dlvBusy = true; _dlvLastFetchAt = Date.now();
+        _dlvBusy = true; _dlvLastFetchAt = Date.now(); dlvLogFetch();
         const date = dlvOpDate();
         const ctrl = new AbortController(), to = setTimeout(() => ctrl.abort(), 15000);
         try {
@@ -1674,6 +1703,10 @@
         if (c && c.nextOk && now < c.nextOk && c.nextOk - now <= DLV_BACKOFF_MAX_MS + 10000) return;       // 백오프 중
         const age = (c && c.at) ? now - c.at : Infinity;
         if (c && c.date === dlvOpDate() && age >= 0 && age < (DLV_POLL_MS + DLV_JITTER_MS)) return;         // 아직 신선 (다른 탭이 받은 것 포함)
+        if (dlvRecentFetches().length >= DLV_MAX_PER_HOUR) {            // 안전장치 작동: 평소(시간당 약 26번)보다 훨씬 많이 불렀다면 어딘가 잘못된 것 → 더 부르지 않고 마지막 데이터로 버튼 유지
+            if (now - _dlvBreakerWarnedAt > 600000) { _dlvBreakerWarnedAt = now; console.warn('[내 배달] 최근 1시간 조회 횟수가 상한(' + DLV_MAX_PER_HOUR + '번)에 닿아 조회를 잠시 멈춥니다.'); }
+            return;
+        }
         if (!dlvTryLock()) return;                                      // 다른 탭이 조회 중
         dlvFetch();
     }
@@ -1880,11 +1913,16 @@
             btn.addEventListener('blur', () => dlvMqStop(btn));
         });
         if (!_dlvTickTimer) {
-            _dlvTickTimer = setInterval(dlvTick, DLV_TICK_MS);
-            document.addEventListener('visibilitychange', () => { if (!document.hidden) dlvTick(); });
+            _dlvTickTimer = -1;                                          // (자리 표시: 아래 타이머가 시작되기 전에 또 만들어지지 않게)
+            setTimeout(() => { _dlvTickTimer = setInterval(dlvTick, DLV_TICK_MS); }, Math.floor(Math.random() * DLV_TICK_MS));   // 확인 주기의 시작 위상을 탭마다 무작위로
+            document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(dlvTick, Math.floor(Math.random() * 2000)); });   // 탭이 다시 보일 때도 0~2초 분산
             window.addEventListener('storage', e => { if (e.key === DLV_CACHE_KEY || e.key === 'neubie_user_name') dlvRender(); });   // 다른 탭이 새로 받았거나 이름이 바뀐 경우
         }
-        setTimeout(() => { dlvRender(); dlvTick(); }, 50);              // 패널을 연 직후: 캐시가 신선하면 네트워크 없이 바로 표시
+        // 패널을 연 직후: 화면은 예전처럼 바로(50ms) 그리고, 서버 조회 확인만 무작위로 살짝 미룬다 — 교대 시간에 여러 명이 같은 초에 열어도 한꺼번에 몰리지 않게.
+        // 받아 둔 데이터가 있으면 0~3초, 없으면(그날 첫 조회라 '불러오는 중…') 0~0.8초만 미룬다. 캐시가 신선하면 어차피 네트워크는 쓰지 않는다.
+        setTimeout(dlvRender, 50);
+        const c0 = dlvReadCache(), hadCache = !!(c0 && c0.date === dlvOpDate() && Array.isArray(c0.items));
+        setTimeout(dlvTick, 50 + Math.floor(Math.random() * (hadCache ? 3000 : 800)));
     }
 
     // 콘솔에서 nbDlvDiag() — 받아 둔 오늘 배달 전체(내 것만이 아니라 모두)가 ROBOT_MAP 에 어떻게 연결되는지 표로 보여 준다. '못 찾음'만 ROBOT_MAP 에 보강하면 된다.
