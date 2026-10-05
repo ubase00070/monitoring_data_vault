@@ -2814,6 +2814,7 @@
 		// maxSuccesses: 이번 호출에서 "새로 체크"해도 되는 최대 개수(남은 모니터링 자리 수).
 		// 이미 모달에서 체크돼 있던 기체는 이 예산을 소모하지 않는다. 기본값 Infinity면
 		// 예산 제한 없이 후보 리스트를 끝까지 순서대로 시도한다(기존 자동시작/인계 버튼과 동일 동작).
+		const AUTO_CLICK_DELAY_MS = 400; // 기체 체크박스를 하나씩 누르는 간격 (눈으로 따라갈 수 있는 속도)
 		const runAutoSelect = async (units, maxSuccesses = Infinity) => {
 			let modal = document.querySelector('[data-qk="remote-multiple-select-robot-dialog"]');
 			if (!modal) {
@@ -2880,18 +2881,26 @@
 
 			const checkedUnits = [];
 			const skippedUnits = [];
+			const skipReason = {}; // 기체명 → 건너뛴 사유
+			const skipNote = () => skippedUnits.length
+				? ` · 제외 ${skippedUnits.map(n => `${n}(${skipReason[n] || '체크 불가'})`).join(', ')}`
+				: '';
 			let remaining = maxSuccesses;
 			for (let i = 0; i < units.length && remaining > 0; i++) {
 				const name = units[i];
 				setDpMsg(`${name} (${i+1}/${units.length}, 남은 자리 ${remaining === Infinity ? '-' : remaining})`, '#3b82f6');
 				let clicked = false;
 				let wasAlreadyChecked = false;
+				let foundLabel = false;
+				let blocked = false;
 
 				const labels = document.querySelectorAll('label');
 				for (const label of labels) {
 					const text = label.querySelector('div.px-12 span')?.textContent.trim();
 					if (!text) continue;
 					if (text === name) {
+						foundLabel = true;
+						blocked = isBlockedRow(label);
 						wasAlreadyChecked = !!label.querySelector('input[type="checkbox"]')?.checked;
 						clicked = await reactCheck(label);
 						break;
@@ -2903,17 +2912,18 @@
 					if (!wasAlreadyChecked) remaining--; // 원래부터 체크돼 있던 건 자리를 새로 소모하지 않음
 				} else {
 					skippedUnits.push(name); // 체크 불가 — 자리 안 쓰고 다음 후보로
+					skipReason[name] = !foundLabel ? '목록에 없음' : blocked ? 'OFF 등 선택 불가' : '체크 안 됨';
 				}
-				await new Promise(r => setTimeout(r, 80));
+				await new Promise(r => setTimeout(r, AUTO_CLICK_DELAY_MS));
 			}
 
 			if (!checkedUnits.length) {
-				setDpMsg(skippedUnits.length ? `선택된 기체 없음 (전부 체크 불가: ${skippedUnits.join(', ')})` : '선택된 기체 없음', '#ef4444');
+				setDpMsg(skippedUnits.length ? `선택된 기체 없음 (전부 체크 불가: ${skippedUnits.map(n => `${n}(${skipReason[n] || '체크 불가'})`).join(', ')})` : '선택된 기체 없음', '#ef4444');
 				return { confirmed: false, checkedUnits: [] };
 			}
 
 			const attempted = checkedUnits.length + skippedUnits.length;
-			setDpMsg(`${checkedUnits.length}/${attempted} 선택 완료, 시작하기 대기 중...`, '#22c55e');
+			setDpMsg(`${checkedUnits.length}/${attempted} 선택 완료${skipNote()}, 시작하기 대기 중...`, skippedUnits.length ? '#f59e0b' : '#22c55e');
 
 			// ✅ 시작하기 버튼이 활성화될 때까지 폴링 (최대 3초)
 			const confirmBtn = await new Promise(resolve => {
@@ -2971,45 +2981,52 @@
 		// 찾아서 그 라벨만 확인하는 reactCheck/wasAlreadyChecked)에만 의존한다.
 		const MAX_MONITOR_SLOTS = ADMIN_CONFIG.maxMonitorSlots; // 관리자 설정값 (MAX_UNITS와 동일 값 공유)
 
+		let _autoRunning = false;
 		autoBtn.addEventListener('click', async () => {
-			if (autoBtn.disabled) return;
-			autoBtn.disabled = true;
-			setTimeout(() => { autoBtn.disabled = false; }, 2000);
-
-			const modal = document.querySelector('[data-qk="remote-multiple-select-robot-dialog"]');
-			if (!modal) {
-				setDpMsg('NCC에서 기체 선택 모달을 먼저 열어주세요', '#f59e0b');
-				return;
-			}
-
-			const result = await githubGet();
-			if (!result || !isDataValid(result.data?.updatedAt)) {
-				setDpMsg('교대 기체 데이터가 없습니다. 로드 먼저 해주세요', '#f59e0b');
-				return;
-			}
-
-			const { units = [], taken = [] } = result.data;
-			const available = units.filter(u => !taken.includes(u)).slice(0, MAX_MONITOR_SLOTS);
-
-			if (!available.length) {
-				setDpMsg('배정 가능한 기체가 없습니다 (전체 배정 완료)', '#94a3b8');
-				return;
-			}
-
-			const { confirmed, checkedUnits } = await runAutoSelect(available);
-
-			if (!checkedUnits.length) return;
-
-			if (confirmed) {
-				let ok = await patchTaken(checkedUnits);
-				if (!ok) ok = await patchTaken(checkedUnits); // 실패 시 1회 재시도
-				if (ok) {
-					setDpMsg(`${checkedUnits.length}대 시작 및 서버 반영 완료`, '#22c55e');
-				} else {
-					setDpMsg(`${checkedUnits.join(', ')} 카메라는 연결됐지만 서버 반영에 실패했어요 — 다른 탭에서 중복 시도될 수 있으니 새로고침 후 확인해주세요`, '#ef4444');
+			if (_autoRunning) return;
+			_autoRunning = true;
+			autoBtn.disabled = true; autoBtn.style.opacity = '0.6';
+			try {
+				const modal = document.querySelector('[data-qk="remote-multiple-select-robot-dialog"]');
+				if (!modal) {
+					setDpMsg('NCC에서 기체 선택 모달을 먼저 열어주세요', '#f59e0b');
+					return;
 				}
-			} else {
-				setDpMsg(`${checkedUnits.join(', ')} 체크됨 — 시작하기 버튼을 직접 누르면 taken 반영은 되지 않습니다`, '#f59e0b');
+
+				const result = await githubGet();
+				if (!result || !isDataValid(result.data?.updatedAt)) {
+					setDpMsg('교대 기체 데이터가 없습니다. 로드 먼저 해주세요', '#f59e0b');
+					return;
+				}
+
+				const { units = [], taken = [] } = result.data;
+				const available = units.filter(u => !taken.includes(u)).slice(0, MAX_MONITOR_SLOTS);
+
+				if (!available.length) {
+					setDpMsg('배정 가능한 기체가 없습니다 (전체 배정 완료)', '#94a3b8');
+					return;
+				}
+
+				const { confirmed, checkedUnits } = await runAutoSelect(available);
+
+				if (!checkedUnits.length) return;
+
+				if (confirmed) {
+					let ok = await patchTaken(checkedUnits);
+					if (!ok) ok = await patchTaken(checkedUnits); // 실패 시 1회 재시도
+					if (ok) {
+						setDpMsg(`${checkedUnits.length}대 시작 및 서버 반영 완료`, '#22c55e');
+					} else {
+						setDpMsg(`${checkedUnits.join(', ')} 카메라는 연결됐지만 서버 반영에 실패했어요 — 다른 탭에서 중복 시도될 수 있으니 새로고침 후 확인해주세요`, '#ef4444');
+					}
+				} else {
+					setDpMsg(`${checkedUnits.join(', ')} 체크됨 — 시작하기 버튼을 직접 누르면 taken 반영은 되지 않습니다`, '#f59e0b');
+				}
+			} finally {
+				setTimeout(() => {
+					_autoRunning = false;
+					autoBtn.disabled = false; autoBtn.style.opacity = '1';
+				}, 2000);
 			}
 		});
 
