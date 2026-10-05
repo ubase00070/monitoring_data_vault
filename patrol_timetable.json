@@ -1645,7 +1645,7 @@
     {"btn":"중앙대","ncc":["중앙대학교 1호기"],"alwaysShow":true},
     {"btn":"쉴더스","ncc":["롯데마트부산CFC(쉴더스) 1호기"],"out":130,"alwaysShow":true},
     {"btn":"잠실 르엘","ncc":["잠실 르엘 1호기"],"out":140},
-    {"btn":"전주천(덕진구)","ncc":["전주천(덕진구) 1호기"],"out":150},
+    {"btn":"전주천(덕진구)","ncc":["전주천(덕진구) 1호기"],"out":150,"alwaysShow":true},
     {"btn":"두루아이 3","ncc":["두루아이 3호기"],"out":200,"alwaysShow":true},
     {"btn":"두루아이 4","ncc":["두루아이 4호기"],"out":210,"alwaysShow":true},
     {"btn":"두루아이 5","ncc":["두루아이 5호기"],"out":220,"alwaysShow":true},
