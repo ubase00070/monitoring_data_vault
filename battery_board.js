@@ -1099,6 +1099,15 @@
         .bb-dlog-copy:hover { opacity:1; background:var(--sur2); }
         .bb-dlog-copy-ico { font-size:16px; line-height:1; }
         .bb-dlog-copy-lbl { font-size:9px; font-weight:700; color:var(--mu); }
+        /* 진행 중 카드: 점선 분홍 테두리 + 깜빡이는 점 / 배정 대기는 연하게 */
+        .bb-dlog-grp { font-size:11px; font-weight:800; color:var(--mu); padding:8px 4px 3px; }
+        #bb-dlog-panel .bb-dlog-run { border-style:dashed; border-color:var(--pk); }
+        #bb-dlog-panel .bb-dlog-run .bb-fbp-dot { animation:bbDlogPulse 1.4s ease-in-out infinite; }
+        #bb-dlog-panel .bb-dlog-run.wait { border-color:var(--bd2); opacity:.75; }
+        #bb-dlog-panel .bb-dlog-run.wait .bb-fbp-dot { animation:none; }
+        .bb-dlog-tag { flex-shrink:0; font-size:10px; font-weight:800; padding:1px 7px; border-radius:8px; background:var(--pk2); color:var(--pk); }
+        #bb-dlog-panel .bb-dlog-run.wait .bb-dlog-tag { background:var(--sur2); color:var(--mu); }
+        @keyframes bbDlogPulse { 0%,100% { opacity:1; } 50% { opacity:.3; } }
         .bb-alertlog-day { margin-bottom:14px; }
         .bb-alertlog-day-title {
             display:flex; align-items:center; gap:10px;
@@ -6965,6 +6974,53 @@
             if (r.performer) chain.push(r.performer);
             return chain.length ? chain.join(' → ') : '미확인';
         };
+        // 주문번호 표시 (복사 버튼은 [UI 개편]으로 숨김 상태 유지) — 완료/진행 중 카드 공용
+        function dlOrdEl(r) {
+            if (!r.orderNo) return dlEl('span', '', '주문번호 없음');
+            const ordWrap = dlEl('span', 'bb-dlog-ord');
+            ordWrap.appendChild(dlEl('span', '', '주문번호 ' + r.orderNo));
+            const copyBtn = dlEl('button', 'bb-dlog-copy');
+            copyBtn.type = 'button'; copyBtn.title = '주문번호 복사';
+            const copyIco = dlEl('span', 'bb-dlog-copy-ico', '📋');
+            const copyLbl = dlEl('span', 'bb-dlog-copy-lbl', '복사');
+            copyBtn.append(copyIco, copyLbl);
+            copyBtn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                try { await navigator.clipboard.writeText(r.orderNo); copyIco.textContent = '✅'; }
+                catch (err) { copyIco.textContent = '⚠️'; }
+                setTimeout(() => { copyIco.textContent = '📋'; }, 1200);
+            });
+            // [UI 개편] 주문번호 복사 버튼 숨김: ordWrap.appendChild(copyBtn);
+            return ordWrap;
+        }
+        // 카드 한 줄. run=false: 완료 건 / run=true: 진행 중 건 (status 'RUNNING' = 배달 중, 그 외 = 기체 배정 전 '배정 대기')
+        //  진행 중 카드는 오른쪽 시간 칸이 '배달 소요시간' 대신 '경과 시간'(배정 시각부터) / '대기 시간'(주문 접수부터) — 조회 시점 기준이라 다음 조회 때 갱신됨
+        function dlMakeRow(r, run) {
+            const waiting = run && r.status !== 'RUNNING';
+            const row = dlEl('div', 'bb-fbp-row' + (run ? ' bb-dlog-run' + (waiting ? ' wait' : '') : ''));
+            const dot = dlEl('span', 'bb-fbp-dot'); dot.style.background = waiting ? 'var(--mu)' : 'var(--pk)';
+            const main = dlEl('span', 'bb-fbp-main');
+            main.appendChild(dlEl('span', 'bb-fbp-name', dlSiteLabel(r)));
+            const meta = dlEl('span', 'bb-fbp-sub bb-dlog-meta');
+            if (run) meta.appendChild(dlEl('span', 'bb-dlog-tag', waiting ? '배정 대기' : '배달 중'));
+            meta.appendChild(dlEl('span', '', waiting ? '주문 접수 ' + (r.receivedAt || '-') : '기체 배정 ' + (r.assignedAt || '-')));
+            meta.appendChild(dlOrdEl(r));
+            main.appendChild(meta);
+            const right = dlEl('span', 'bb-fbp-right');
+            right.appendChild(dlEl('span', 'bb-fbp-who', dlWhoLabel(r)));
+            const time = dlEl('span', 'bb-fbp-time');
+            if (run) {
+                const since = parseFloat(waiting ? r.threadTs : (r.assignedTs || r.threadTs));   // 옛 서버 응답(필드 없음)이면 '-'
+                time.appendChild(dlEl('span', 'l', waiting ? '대기 시간' : '경과 시간'));
+                time.appendChild(dlEl('span', 'v', since > 0 ? attDurHM(Math.max(0, Math.round(Date.now() / 1000 - since))) : '-'));
+            } else {
+                time.appendChild(dlEl('span', 'l', '배달 소요시간'));
+                time.appendChild(dlEl('span', 'v', r.durationSec != null ? attDurHM(r.durationSec) : '-'));
+            }
+            right.appendChild(time);
+            row.append(dot, main, right);
+            return row;
+        }
         function dlRender() {
             const lbl = $dl('bb-dlog-date-lbl'), kpi = $dl('bb-dlog-kpi'), body = $dl('bb-dlog-body');
             const isToday = !_dlDate;
@@ -6990,44 +7046,19 @@
             $dl('bb-dlog-note').innerHTML = isToday
                 ? '* 08:00~23:00<br>' + (_dlData._at ? dlHMS(_dlData._at) : '--:--:--') + ' 업데이트'   // 업데이트 시각 = 이 화면이 서버에서 마지막으로 '성공적으로' 받아온 시각 (조회가 실패하면 마지막 성공 시각 그대로 남음)
                 : '* 확정된 기록입니다.';
-            if (!deliveries.length) { body.innerHTML = '<div class="bb-att-msg">이 날짜의 배달 완료 기록이 없습니다.' + (isToday && pending ? ' (진행 중 ' + pending + '건은 다음 조회 때 반영됩니다)' : '') + '</div>'; return; }
-            // 배달 건이 앞, 아래 줄에 배정 시각·주문번호(+복사 버튼) — 오른쪽엔 수행자 · 소요시간(라벨 포함) — 07시부터 시간순으로 쌓인 걸 최신이 맨 위로 오게 뒤집어서 보여줌
-            body.replaceChildren(...deliveries.slice().reverse().map(r => {
-                const row = dlEl('div', 'bb-fbp-row');
-                const dot = dlEl('span', 'bb-fbp-dot'); dot.style.background = 'var(--pk)';
-                const main = dlEl('span', 'bb-fbp-main');
-                main.appendChild(dlEl('span', 'bb-fbp-name', dlSiteLabel(r)));
-                const meta = dlEl('span', 'bb-fbp-sub bb-dlog-meta');
-                meta.appendChild(dlEl('span', '', '기체 배정 ' + (r.assignedAt || '-')));
-                if (r.orderNo) {
-                    const ordWrap = dlEl('span', 'bb-dlog-ord');
-                    ordWrap.appendChild(dlEl('span', '', '주문번호 ' + r.orderNo));
-                    const copyBtn = dlEl('button', 'bb-dlog-copy');
-                    copyBtn.type = 'button'; copyBtn.title = '주문번호 복사';
-                    const copyIco = dlEl('span', 'bb-dlog-copy-ico', '📋');
-                    const copyLbl = dlEl('span', 'bb-dlog-copy-lbl', '복사');
-                    copyBtn.append(copyIco, copyLbl);
-                    copyBtn.addEventListener('click', async (e) => {
-                        e.stopPropagation();
-                        try { await navigator.clipboard.writeText(r.orderNo); copyIco.textContent = '✅'; }
-                        catch (err) { copyIco.textContent = '⚠️'; }
-                        setTimeout(() => { copyIco.textContent = '📋'; }, 1200);
-                    });
-                    // [UI 개편] 주문번호 복사 버튼 숨김: ordWrap.appendChild(copyBtn);
-                    meta.appendChild(ordWrap);
-                } else {
-                    meta.appendChild(dlEl('span', '', '주문번호 없음'));
-                }
-                main.appendChild(meta);
-                const right = dlEl('span', 'bb-fbp-right');
-                right.appendChild(dlEl('span', 'bb-fbp-who', dlWhoLabel(r)));
-                const time = dlEl('span', 'bb-fbp-time');
-                time.appendChild(dlEl('span', 'l', '배달 소요시간'));
-                time.appendChild(dlEl('span', 'v', r.durationSec != null ? attDurHM(r.durationSec) : '-'));
-                right.appendChild(time);
-                row.append(dot, main, right);
-                return row;
-            }));
+            // 진행 중(아직 완료 신호가 없는 건)은 오늘 화면에서만 맨 위에 카드로: 배달 중(최신 배정 순) → 배정 대기(최신 접수 순)
+            const running = (isToday && Array.isArray(_dlData.inProgress)) ? _dlData.inProgress.slice() : [];
+            const sinceOf = r => parseFloat(r.assignedTs || r.threadTs) || 0;
+            running.sort((x, y) => ((x.status === 'RUNNING' ? 0 : 1) - (y.status === 'RUNNING' ? 0 : 1)) || (sinceOf(y) - sinceOf(x)));
+            if (!deliveries.length && !running.length) { body.innerHTML = '<div class="bb-att-msg">이 날짜의 배달 완료 기록이 없습니다.' + (isToday && pending ? ' (확인 중 ' + pending + '건)' : '') + '</div>'; return; }
+            // 완료 건은 07시부터 시간순으로 쌓인 걸 최신이 맨 위로 오게 뒤집어서 보여줌 (아래 줄에 배정 시각·주문번호, 오른쪽엔 수행자 · 소요시간)
+            const nodes = [];
+            if (running.length) nodes.push(dlEl('div', 'bb-dlog-grp', '진행 중 ' + running.length + '건'), ...running.map(r => dlMakeRow(r, true)));
+            if (deliveries.length) {
+                if (running.length) nodes.push(dlEl('div', 'bb-dlog-grp', '완료 ' + deliveries.length + '건'));   // 진행 중 카드가 있을 때만 구분 제목
+                nodes.push(...deliveries.slice().reverse().map(r => dlMakeRow(r, false)));
+            }
+            body.replaceChildren(...nodes);
         }
 
         /* ───────── 달력 (개입카드와 같은 모양 · 로그(JSON)가 있는 날만 선택 가능) ───────── */
