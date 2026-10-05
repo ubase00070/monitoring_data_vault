@@ -2563,8 +2563,8 @@
             });
             if (onLabelClick) {
                 const labelEl = row.querySelector('.nb-toggle-label');
-                labelEl.style.cursor = 'pointer';
-                labelEl.onclick = onLabelClick;
+                // 행 어디를 눌러도 설명이 열린다 — 단, ON/OFF 스위치(<label>)를 누를 때는 제외
+                row.onclick = (e) => { if (e.target.closest('label')) return; onLabelClick(e); };
                 row.style.cursor = 'pointer';
                 row.style.transition = 'background 0.15s';
                 row.onmouseenter = () => { row.style.background = 'rgba(91,155,247,0.14)'; };
