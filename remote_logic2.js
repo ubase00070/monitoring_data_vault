@@ -2643,6 +2643,9 @@
             const dpMsgEl = document.getElementById('ho-dp-msg');
             if (dpMsgEl) {
                 if (r && !isDataValid(r.data?.updatedAt)) {
+                    dpMsgEl.textContent = '20분 초과로 로드 실패';
+                    dpMsgEl.style.color = '#ef4444';
+                    dpMsgEl.title = dpMsgEl.textContent;
                     document.querySelectorAll('.ho-remote-cell').forEach(c => {
                         c.textContent = '—';
                         Object.assign(c.style, { background: 'rgba(255,255,255,0.45)', color: '#b0bec5',
@@ -2677,10 +2680,18 @@
 			fontSize: '12px', color: '#9ca3af',
 			overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
 			flex: '1', minWidth: '0',
+			background: 'rgba(255,255,255,0.06)',
+			borderRadius: '5px',
+			padding: '3px 8px',
 		});
+		dpMsg.textContent = '로딩 중...';
 
-		// 로그바 표시 비활성화 — 호출부는 그대로 두고 여기서 모두 무시
-		const setDpMsg = () => {};
+		// 자리가 좁아 말줄임(…)될 수 있으므로 마우스를 올리면 전체 문구가 툴팁으로 보이게 한다.
+		const setDpMsg = (msg, color = '#9ca3af') => {
+			dpMsg.textContent = msg;
+			dpMsg.title = msg;
+			dpMsg.style.color = color;
+		};
 
 		// ── 그리드 셀 ──
 		const MAX_UNITS = ADMIN_CONFIG.maxMonitorSlots; // 관리자 설정값 (기본 6, 확장 시 9)
@@ -2886,18 +2897,26 @@
 
 			const checkedUnits = [];
 			const skippedUnits = [];
+			const skipReason = {}; // 기체명 → 건너뛴 사유
+			const skipNote = () => skippedUnits.length
+				? ` · 제외 ${skippedUnits.map(n => `${n}(${skipReason[n] || '체크 불가'})`).join(', ')}`
+				: '';
 			let remaining = maxSuccesses;
 			for (let i = 0; i < units.length && remaining > 0; i++) {
 				const name = units[i];
 				setDpMsg(`${name} (${i+1}/${units.length}, 남은 자리 ${remaining === Infinity ? '-' : remaining})`, '#3b82f6');
 				let clicked = false;
 				let wasAlreadyChecked = false;
+				let foundLabel = false;
+				let blocked = false;
 
 				const labels = document.querySelectorAll('label');
 				for (const label of labels) {
 					const text = label.querySelector('div.px-12 span')?.textContent.trim();
 					if (!text) continue;
 					if (text === name) {
+						foundLabel = true;
+						blocked = isBlockedRow(label);
 						wasAlreadyChecked = !!label.querySelector('input[type="checkbox"]')?.checked;
 						clicked = await reactCheck(label);
 						break;
@@ -2909,21 +2928,22 @@
 					if (!wasAlreadyChecked) remaining--; // 원래부터 체크돼 있던 건 자리를 새로 소모하지 않음
 				} else {
 					skippedUnits.push(name); // 체크 불가 — 자리 안 쓰고 다음 후보로
+					skipReason[name] = !foundLabel ? '목록에 없음' : blocked ? 'OFF 등 선택 불가' : '체크 안 됨';
 				}
 				await new Promise(r => setTimeout(r, AUTO_CLICK_DELAY_MS)); // 눈으로 체크되는 게 보일 정도의 간격
 			}
 
 			if (!checkedUnits.length) {
-				setDpMsg(skippedUnits.length ? `선택된 기체 없음 (전부 체크 불가: ${skippedUnits.join(', ')})` : '선택된 기체 없음', '#ef4444');
+				setDpMsg(skippedUnits.length ? `선택된 기체 없음 (전부 체크 불가: ${skippedUnits.map(n => `${n}(${skipReason[n] || '체크 불가'})`).join(', ')})` : '선택된 기체 없음', '#ef4444');
 				return { confirmed: false, checkedUnits: [] };
 			}
 
 			const attempted = checkedUnits.length + skippedUnits.length;
 			if (!autoConfirm) {
-				setDpMsg(`${checkedUnits.length}/${attempted} 선택 완료 — 기체를 더 추가하고 시작하기를 직접 눌러주세요`, '#22c55e');
+				setDpMsg(`${checkedUnits.length}/${attempted} 선택 완료${skipNote()} — 기체를 더 추가하고 시작하기를 직접 눌러주세요`, skippedUnits.length ? '#f59e0b' : '#22c55e');
 				return { confirmed: false, manual: true, checkedUnits };
 			}
-			setDpMsg(`${checkedUnits.length}/${attempted} 선택 완료, 시작하기 대기 중...`, '#22c55e');
+			setDpMsg(`${checkedUnits.length}/${attempted} 선택 완료${skipNote()}, 시작하기 대기 중...`, skippedUnits.length ? '#f59e0b' : '#22c55e');
 
 			// ✅ 시작하기 버튼이 활성화될 때까지 폴링 (최대 3초)
 			const confirmBtn = await new Promise(resolve => {
