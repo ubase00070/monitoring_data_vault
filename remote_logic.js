@@ -2847,10 +2847,28 @@
             // 클릭 이벤트만 쐈다고 바로 성공 처리하지 않고, 실제로 checkbox.checked가 바뀌는지
             // 짧게 폴링해서 확인한다. "이미 실시간 모니터링 중"/"off 상태" 등으로 체크가 막혀있는
             // 기체는 클릭해도 checked가 안 바뀌므로 false를 반환 → 자연스럽게 스킵된다.
+            // NCC는 선택 불가 기체(OFF 등) 행 위에 반투명 흰색 오버레이(absolute inset-0 bg-white opacity-70)를
+            // 라벨의 형제 요소로 덮어 클릭을 막는다. input은 disabled가 아니라서 합성 click은 그대로 통과해
+            // 체크돼 버리고, 그러면 '시작하기'가 all-or-nothing으로 전부 거절된다 → 오버레이가 있으면 건드리지 않는다.
+            const isBlockedRow = (label) => {
+				const p = label && label.parentElement;
+				if (!p) return false;
+				for (const el of p.children) {
+					if (el === label) continue;
+					const c = el.classList;
+					if (c && c.contains('absolute') && c.contains('inset-0') && (c.contains('bg-white') || c.contains('opacity-70'))) return true;
+				}
+				return false;
+			};
             const reactCheck = async (label) => {
 				if (!label) return false;
 				const checkbox = label.querySelector('input[type="checkbox"]');
 				if (!checkbox) return false;
+				if (isBlockedRow(label)) {
+					// 선택 불가 기체: 클릭하지 않는다. 이미 체크돼 있으면(이전 시도 잔여 등) 풀어서 시작 거절을 막는다.
+					if (checkbox.checked) label.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+					return false;
+				}
 				if (checkbox.checked) return true;
 				label.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
 				for (let i = 0; i < 6; i++) {
