@@ -1084,7 +1084,7 @@
         .bb-fbp-time .l { font-size:9.5px; color:var(--mu); font-weight:700; white-space:nowrap; }
         .bb-fbp-time .v { font-size:12px; font-weight:800; color:var(--tx); white-space:nowrap; }
         /* 배달 로그 패널 안 텍스트만 1px씩 키움 (다른 고정 버튼 팝업 방전 로그 등과 공유하는 클래스라 여기서만 덮어씀) */
-        #bb-dlog-panel .bb-fbp-name { font-size:14px; }
+        #bb-dlog-panel .bb-fbp-name { font-size:14px; white-space:normal; line-height:1.3; }   /* 긴 '사이트 - 기체명' 이 말줄임(…)으로 잘려 호기명이 가려지지 않도록 줄바꿈 허용 */
         #bb-dlog-panel .bb-fbp-sub { font-size:12px; }
         #bb-dlog-panel .bb-fbp-who { font-size:13px; }
         #bb-dlog-panel .bb-fbp-time .l { font-size:10.5px; }
@@ -6963,7 +6963,17 @@
         }
 
         // 배달 건 하나의 표시용 제목 ("사이트 · 배정 기체명" — 가게명은 사이트명과 사실상 중복이라 기체 호기명으로 대체. 기체명이 없으면 가게명, 그것도 없으면 사이트명만)
-        const dlSiteLabel = r => r.robot || r.store || r.site || '(기체 정보 없음)';   // [UI 개편] 사이트 표기 생략, 배정 기체명만 (기존: r.site + ' · ' + r.robot)
+        // 배달 건 제목 = '사이트 - 기체명'. 사이트 = 슬랙 알림의 첫 대괄호, 기체명 = '뉴비 경로' 바로 왼쪽 칸 (서버 delivery-core 가 뽑아 site / robot 으로 내려줌).
+        //  기체명이 이미 사이트 이름으로 시작하면('역삼동 (요기요) 3호기') 앞부분을 떼어 '역삼동 (요기요) - 3호기' 로 — 사이트가 두 번 나오지 않게.
+        //  한쪽이 없으면 있는 것만(옛 서버 응답 포함), 둘 다 없으면 가게명 → '(기체 정보 없음)'.
+        const dlSiteLabel = r => {
+            const site = String(r.site || '').trim(), robot = String(r.robot || '').trim();
+            if (site && robot) {
+                const rest = robot.startsWith(site) ? robot.slice(site.length).replace(/^[\s\-·]+/, '') : robot;
+                return site + ' - ' + (rest || robot);
+            }
+            return robot || site || String(r.store || '').trim() || '(기체 정보 없음)';
+        };
         // 수행자 표시 — 이름이 하나면 그 이름만, 인계·대리 등으로 여럿 걸치면 "길동 → 꺽정" 식으로 이어붙임
         //  (예전엔 대리 수행 시 이름 뒤에 "(대리)"라는 직함 같은 꼬리표를 붙였는데, 어색해서 제거하고
         //   proxyBy 에 이름이 실려 오면 그 이름도 그냥 화살표 체인에 끼워 넣는 방식으로 통일)
@@ -7000,7 +7010,8 @@
             const row = dlEl('div', 'bb-fbp-row' + (run ? ' bb-dlog-run' + (waiting ? ' wait' : '') : ''));
             const dot = dlEl('span', 'bb-fbp-dot'); dot.style.background = waiting ? 'var(--mu)' : 'var(--pk)';
             const main = dlEl('span', 'bb-fbp-main');
-            main.appendChild(dlEl('span', 'bb-fbp-name', dlSiteLabel(r)));
+            const nameEl = dlEl('span', 'bb-fbp-name', dlSiteLabel(r)); nameEl.title = nameEl.textContent;
+            main.appendChild(nameEl);
             const meta = dlEl('span', 'bb-fbp-sub bb-dlog-meta');
             if (run) meta.appendChild(dlEl('span', 'bb-dlog-tag', waiting ? '배정 대기' : '배달 중'));
             meta.appendChild(dlEl('span', '', waiting ? '주문 접수 ' + (r.receivedAt || '-') : '기체 배정 ' + (r.assignedAt || '-')));
