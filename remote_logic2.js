@@ -84,7 +84,7 @@
 
     // ── UI 개편: 레인보우 → 퍼플 그라데이션 외곽선 (패널·카드·버튼 공통) ──
     // 사용법: `border:2px solid transparent; background: linear-gradient(면색,면색) padding-box, ${RAINBOW} border-box;`
-    const RAINBOW = 'linear-gradient(115deg,#ff5d73 0%,#ff9f43 16%,#ffd93d 30%,#4cd97b 46%,#38bdf8 62%,#6366f1 78%,#a855f7 90%,#d946ef 100%)';
+    const RAINBOW = 'linear-gradient(115deg,#ff6b81 0%,#ffa94d 26%,#7ee0a4 52%,#52b6f6 76%,#a855f7 100%)';   // 색 수를 줄여 넓고 느슨하게
     const rainbowBg = (fill) => `linear-gradient(${fill}, ${fill}) padding-box, ${RAINBOW} border-box`;
 
     // 상단 안내 행(제주 전국체전 등) — 시작일 전엔 회색 '대기 중', 기간 중엔 '진행 중', 종료일 다음날부턴 자동 숨김
@@ -1547,8 +1547,11 @@
         }
         const els = Array.from(root.querySelectorAll('.nb-tk'));
         if (!els.length) return;
-        if (els[0].clientWidth === 0) {   // 대시보드가 아직 안 보이는 상태 — 보이면 다시 계산
-            if (tries < 20) setTimeout(() => nbFitTaskTexts(root, tries + 1), 150);
+        if (els[0].clientWidth === 0) {   // 열리는 중이라 아직 안 보임 — 잠깐 뒤 한두 번만 재시도 (닫힌 대시보드에선 타이머를 쌓지 않는다)
+            if (tries < 2 && root.isConnected) {
+                clearTimeout(window._nbTkTimer);
+                window._nbTkTimer = setTimeout(() => nbFitTaskTexts(root, tries + 1), 80);
+            }
             return;
         }
         els.forEach(o => {
@@ -2283,7 +2286,7 @@
         patchBtn.style.cssText = `
 			position:relative;
             background:transparent; border:1px solid ${T.border}; color:${T.text};
-            border-radius:6px; padding:4px 10px; cursor:pointer;
+            border-radius:6px; padding:0 10px; height:28px; box-sizing:border-box; cursor:pointer;
             font-size:14px; margin-left:6px; vertical-align:middle; white-space:nowrap; flex-shrink:0;
             transition:all 0.2s;
         `;
@@ -2312,15 +2315,7 @@
             }
 
             const patchBox = document.createElement('div');
-            patchBox.style.cssText = `
-                background:${T.card}; color:${T.text}; border-radius:18px; pointer-events:auto;
-                border:1.5px solid ${T.accent}; padding:28px 32px 24px 32px;
-                width:100%; box-sizing:border-box; max-height:70vh; overflow-y:auto;
-                position:relative; box-shadow:0 10px 50px rgba(0,0,0,0.7);
-            `;
-            const patchTitle = document.createElement('div');
-            patchTitle.textContent = '패치노트';
-            patchTitle.style.cssText = `font-size:17px; font-weight:800; margin-bottom:10px; color:${T.accent};`;
+            patchBox.style.cssText = `background:transparent; color:${T.text}; pointer-events:auto; width:100%; box-sizing:border-box;`;
             const patchClose = document.createElement('button');
             patchClose.textContent = '✕';
             patchClose.style.cssText = `
@@ -2328,7 +2323,7 @@
                 background:transparent; border:none; color:#aaa;
                 font-size:20px; cursor:pointer; padding:4px 8px; border-radius:6px;
             `;
-            patchClose.onmouseenter = () => { patchClose.style.color='#fff'; };
+            patchClose.onmouseenter = () => { patchClose.style.color = T.isDark ? '#fff' : '#000'; };
             patchClose.onmouseleave = () => { patchClose.style.color='#aaa'; };
             patchClose.onclick = () => hideSharedPopup();
 
@@ -2338,7 +2333,7 @@
             patchContent.style.cssText = "display:grid; gap:10px;";
             patchItems.forEach(patch => {
                 const section = document.createElement('div');
-                section.style.cssText = `background:${T.card}; border:1px solid ${T.border}; border-radius:12px; padding:14px 16px;`;
+                section.style.cssText = 'padding:2px 4px;';
                 const versionRow = document.createElement('div');
                 versionRow.style.cssText = "display:flex; align-items:center; gap:8px; margin-bottom:10px;";
                 versionRow.innerHTML = `
@@ -2359,7 +2354,6 @@
             });
 
             patchBox.appendChild(patchClose);
-            patchBox.appendChild(patchTitle);
             patchBox.appendChild(patchContent);
             showSharedPopup('patch', patchBox);
         };
@@ -2385,8 +2379,8 @@
         themeBtn.title = T.isDark ? '다크 모드 (클릭: 라이트로 전환)' : '라이트 모드 (클릭: 다크로 전환)';
         themeBtn.style.cssText = `
             background:transparent; border:1px solid ${T.border}; color:${T.text};
-            border-radius:7px; padding:2px 3px; cursor:pointer; flex-shrink:0; display:inline-flex; gap:2px; align-items:center;
-            font-size:14px; line-height:1; margin-left:5px; vertical-align:middle;
+            border-radius:6px; padding:0 4px; height:28px; box-sizing:border-box; cursor:pointer; flex-shrink:0; display:inline-flex; gap:2px; align-items:center;
+            font-size:14px; line-height:1; margin-left:6px; vertical-align:middle;
             transition:all 0.2s;
         `;
         themeBtn.onmouseenter = () => { themeBtn.style.borderColor = GREEN_HOVER; };
@@ -2539,12 +2533,7 @@
                 flex:1; min-height:40px; border-bottom:1px solid ${T.border}; border-radius:8px; padding:0 6px;
                 background:transparent; gap:10px;
             `;
-            const clickHint = onLabelClick
-                ? `<span class="nb-click-hint" style="display:inline-flex; flex-direction:column; align-items:center; justify-content:center; line-height:1.05; margin-left:3px; animation:neubie-blink 2.2s ease-in-out infinite;">
-                        <span style="font-size:10.5px; font-weight:800; color:${T.accent};">설명</span>
-                        <span style="font-size:10px; font-weight:800; color:${T.accent};">Click!</span>
-                   </span>`
-                : '';
+            const clickHint = '';   // '설명 Click!' 안내 표기 제거 — 라벨을 누르면 곧바로 팝업이 열린다
             row.innerHTML = `
                 <span class="nb-toggle-label" style="display:flex; align-items:center; gap:9px; font-size:15px; font-weight:600;">
                     <span style="font-size:18px;">${icon}</span><span style="color:${T.text};">${label}</span>${clickHint}
@@ -2681,7 +2670,7 @@
                 font-size:20px; cursor:pointer; line-height:1; padding:4px 8px;
                 border-radius:6px; transition:color 0.2s;
             `;
-            mapInfoClose.onmouseenter = () => { mapInfoClose.style.color='#fff'; };
+            mapInfoClose.onmouseenter = () => { mapInfoClose.style.color = T.isDark ? '#fff' : '#000'; };
             mapInfoClose.onmouseleave = () => { mapInfoClose.style.color='#aaa'; };
             mapInfoClose.onclick = () => hideSharedPopup();
             const mapInfoContent = document.createElement('div');
@@ -2772,7 +2761,7 @@
                 font-size:20px; cursor:pointer; line-height:1; padding:4px 8px;
                 border-radius:6px; transition:color 0.2s;
             `;
-            queueInfoClose.onmouseenter = () => { queueInfoClose.style.color='#fff'; };
+            queueInfoClose.onmouseenter = () => { queueInfoClose.style.color = T.isDark ? '#fff' : '#000'; };
             queueInfoClose.onmouseleave = () => { queueInfoClose.style.color='#aaa'; };
             queueInfoClose.onclick = () => hideSharedPopup();
             const queueInfoContent = document.createElement('div');
@@ -4290,7 +4279,7 @@
                 box.innerHTML = `
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
                         <span style="font-size:16px;font-weight:700;">🎮 패드 기능 & 테스터</span>
-                        <button id="gpm-close" style="width:28px;height:28px;border:none;border-radius:5px;background:${getNbTheme().isDark ? '#3b0000' : '#fee2e2'};border:1px solid #ef4444;color:${getNbTheme().isDark ? '#ef4444' : '#b91c1c'};font-size:16px;cursor:pointer;">✕</button>
+                        <button id="gpm-close" style="position:absolute; top:6px; right:8px; background:transparent; border:none; color:#aaa; font-size:20px; cursor:pointer; line-height:1; padding:4px 8px; border-radius:6px; transition:color 0.2s;">✕</button>
                     </div>
                     <div style="display:flex; flex-direction:column; gap:8px;">
                         <button id="gpm-guide" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🕹️ D-PAD 기능 변경점 설명</button>
@@ -4298,6 +4287,7 @@
                     </div>
                 `;
                 box.querySelector('#gpm-close').onclick = () => window.hideSharedPopup();
+                { const _x = box.querySelector('#gpm-close'); const _d = getNbTheme().isDark; _x.onmouseenter = () => { _x.style.color = _d ? '#fff' : '#000'; }; _x.onmouseleave = () => { _x.style.color = '#aaa'; }; }
                 box.querySelector('#gpm-guide').onclick = () => openGamepadGuideOverlay();
                 box.querySelector('#gpm-tester').onclick = () => openGamepadTesterOverlay();
                 window.showSharedPopup('gamepad-menu', box);
@@ -4311,7 +4301,7 @@
                 box.innerHTML = `
                     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; gap:10px; flex:none;">
                         <span style="font-size:15px; font-weight:700;">🎮 컨트롤러 기능 작동 테스터</span>
-                        <button id="gpt-close" style="width:26px; height:26px; border:none; border-radius:5px; background:${getNbTheme().isDark ? '#3b0000' : '#fee2e2'}; border:1px solid #ef4444; color:${getNbTheme().isDark ? '#ef4444' : '#b91c1c'}; font-size:14px; cursor:pointer;">✕</button>
+                        <button id="gpt-close" style="position:absolute; top:6px; right:8px; background:transparent; border:none; color:#aaa; font-size:20px; cursor:pointer; line-height:1; padding:4px 8px; border-radius:6px; transition:color 0.2s;">✕</button>
                     </div>
                     <div id="gpt-status" style="text-align:center; font-size:11px; color:${getNbTheme().isDark ? '#94a3b8' : '#5b5340'}; margin-bottom:4px; flex:none;">컨트롤러의 아무 버튼이나 눌러 연결하세요</div>
                     <div style="background:#f4ede0; border-radius:10px; padding:6px; flex:1; min-height:0; width:100%; box-sizing:border-box; display:flex;">
@@ -4380,6 +4370,7 @@
                     </div>
                 `;
                 box.querySelector('#gpt-close').onclick = () => window.hideSharedPopup();
+                { const _x = box.querySelector('#gpt-close'); const _d = getNbTheme().isDark; _x.onmouseenter = () => { _x.style.color = _d ? '#fff' : '#000'; }; _x.onmouseleave = () => { _x.style.color = '#aaa'; }; }
                 window.showSharedPopup('gamepad-tester', box);
 
                 // 버튼 index → 오버레이 id 매핑 (xbox_skeleton.svg 좌표 분석 기준)
@@ -4447,12 +4438,13 @@
                 box.innerHTML = `
                     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; gap:10px; flex:none;">
                         <span style="font-size:15px; font-weight:700;">🎮 D-PAD 기능 변경점 설명</span>
-                        <button id="gp-close" style="width:28px; height:28px; border:none; border-radius:5px; background:${getNbTheme().isDark ? '#3b0000' : '#fee2e2'}; border:1px solid #ef4444; color:${getNbTheme().isDark ? '#ef4444' : '#b91c1c'}; font-size:16px; cursor:pointer;">✕</button>
+                        <button id="gp-close" style="position:absolute; top:6px; right:8px; background:transparent; border:none; color:#aaa; font-size:20px; cursor:pointer; line-height:1; padding:4px 8px; border-radius:6px; transition:color 0.2s;">✕</button>
                     </div>
                     <img src="https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/xbox_binding.jpg"
                          style="border-radius:8px; display:block; width:100%; flex:1; min-height:0; object-fit:contain;" />
                 `;
                 box.querySelector('#gp-close').onclick = () => window.hideSharedPopup();
+                { const _x = box.querySelector('#gp-close'); const _d = getNbTheme().isDark; _x.onmouseenter = () => { _x.style.color = _d ? '#fff' : '#000'; }; _x.onmouseleave = () => { _x.style.color = '#aaa'; }; }
                 window.showSharedPopup('gamepad-guide', box);
             };
 
