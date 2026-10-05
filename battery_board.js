@@ -1098,7 +1098,7 @@
         }
         .bb-dlog-copy:hover { opacity:1; background:var(--sur2); }
         .bb-dlog-copy-ico { font-size:16px; line-height:1; }
-        .bb-dlog-copy-lbl { font-size:9px; font-weight:700; color:var(--mu); }
+        .bb-dlog-copy-lbl { display:none; }
         /* 진행 중 카드: 점선 분홍 테두리 + 깜빡이는 점 / 배정 대기는 연하게 */
         .bb-dlog-grp { font-size:11px; font-weight:800; color:var(--mu); padding:8px 4px 3px; }
         #bb-dlog-panel .bb-dlog-run { border-style:dashed; border-color:var(--pk); }
@@ -1312,9 +1312,7 @@
         #bb #bb-dlog-panel .bb-dlog-sub { padding:6px 10px 2px; }
         #bb #bb-dlog-body { flex:1 1 auto; min-height:0; overflow-y:auto; padding:0 6px 6px; }
 
-        /* 배달 내역: 주문번호는 카드에 마우스를 올렸을 때만 표시 */
-        #bb #bb-dlog-body .bb-dlog-ord { display:none; }
-        #bb #bb-dlog-body .bb-fbp-row:hover .bb-dlog-ord { display:inline-flex; }
+        /* 배달 내역: 주문번호는 카드 셋째 줄에 항상 표시 (끝에 복사 이모지 버튼) */
 
         /* 다중 / 개입 / 이석: 한 상자 안의 슬라이드 → 나란히 놓인 3개의 그리드 */
         #bb .bb-mm { grid-column:2 / span 3; margin:10px 0; }
@@ -7004,7 +7002,7 @@
             if (r.performer) chain.push(r.performer);
             return chain.length ? chain.join(' → ') : '미확인';
         };
-        // 주문번호 표시 (복사 버튼은 [UI 개편]으로 숨김 상태 유지) — 완료/진행 중 카드 공용
+        // 주문번호 표시 (끝에 📋 복사 버튼 → 클릭하면 ✔️ 로 바뀌며 복사) — 완료/진행 중 카드 공용
         function dlOrdEl(r) {
             if (!r.orderNo) return dlEl('span', '', '주문번호 없음');
             const ordWrap = dlEl('span', 'bb-dlog-ord');
@@ -7012,15 +7010,14 @@
             const copyBtn = dlEl('button', 'bb-dlog-copy');
             copyBtn.type = 'button'; copyBtn.title = '주문번호 복사';
             const copyIco = dlEl('span', 'bb-dlog-copy-ico', '📋');
-            const copyLbl = dlEl('span', 'bb-dlog-copy-lbl', '복사');
-            copyBtn.append(copyIco, copyLbl);
+            copyBtn.append(copyIco);
             copyBtn.addEventListener('click', async (e) => {
                 e.stopPropagation();
-                try { await navigator.clipboard.writeText(r.orderNo); copyIco.textContent = '✅'; }
+                try { await navigator.clipboard.writeText(r.orderNo); copyIco.textContent = '✔️'; }
                 catch (err) { copyIco.textContent = '⚠️'; }
                 setTimeout(() => { copyIco.textContent = '📋'; }, 1200);
             });
-            // [UI 개편] 주문번호 복사 버튼 숨김: ordWrap.appendChild(copyBtn);
+            ordWrap.appendChild(copyBtn);
             return ordWrap;
         }
         // 카드 한 줄. run=false: 완료 건 / run=true: 진행 중 건 (status 'RUNNING' = 배달 중, 그 외 = 기체 배정 전 '배정 대기')
@@ -7035,8 +7032,10 @@
             const meta = dlEl('span', 'bb-fbp-sub bb-dlog-meta');
             if (run) meta.appendChild(dlEl('span', 'bb-dlog-tag', waiting ? '배정 대기' : '배달 중'));
             meta.appendChild(dlEl('span', '', waiting ? '주문 접수 ' + (r.receivedAt || '-') : '기체 배정 ' + (r.assignedAt || '-')));
-            meta.appendChild(dlOrdEl(r));
             main.appendChild(meta);
+            const ordLine = dlEl('span', 'bb-fbp-sub bb-dlog-meta');   // 셋째 줄: 주문번호 + 복사 버튼
+            ordLine.appendChild(dlOrdEl(r));
+            main.appendChild(ordLine);
             const right = dlEl('span', 'bb-fbp-right');
             right.appendChild(dlEl('span', 'bb-fbp-who', dlWhoLabel(r)));
             const time = dlEl('span', 'bb-fbp-time');
