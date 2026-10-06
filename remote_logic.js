@@ -79,8 +79,35 @@
 
     const NB_THEMES = {
         light: { bg: '#f3ecdb', card: '#e2d7bd', border: '#cbbd98', text: '#2b2418', accent: '#1e3a5f', purple: '#7c3aed', isDark: false },
-        dark:  { bg: '#232327', card: '#403f47', border: '#54535c', text: '#e8e9ec', accent: '#5b9bf7', purple: '#c9b8fb', isDark: true }
+        dark:  { bg: '#2b2b30', card: '#4a4953', border: '#62616b', text: '#dedfe3', accent: '#5b9bf7', purple: '#c9b8fb', isDark: true }
     };
+
+    // ── UI 개편: 레인보우 → 퍼플 그라데이션 외곽선 (패널·카드·버튼 공통) ──
+    // 사용법: `border:2px solid transparent; background: linear-gradient(면색,면색) padding-box, ${RAINBOW} border-box;`
+    const RAINBOW = 'linear-gradient(115deg,#ff6b81 0%,#ffa94d 26%,#7ee0a4 52%,#52b6f6 76%,#a855f7 100%)';   // 색 수를 줄여 넓고 느슨하게
+    const rainbowBg = (fill) => `linear-gradient(${fill}, ${fill}) padding-box, ${RAINBOW} border-box`;
+
+    // 상단 안내 행(제주 전국체전 등) — 시작일 전엔 회색 '대기 중', 기간 중엔 '진행 중', 종료일 다음날부턴 자동 숨김
+    // 날짜는 [연, 월, 일] (월은 1~12). 행사가 바뀌면 이 객체만 고치면 된다.
+    const NB_EVENT_BANNER = { title: '제주 전국체전', start: [2026, 10, 16], end: [2026, 10, 22] };
+
+    // 선형 아이콘(이모지 대체) — nbIcon('map', 18, '#0e7490')
+    const NB_ICON_PATHS = {
+        clip:     '<path d="M9 4h6v3H9z"/><path d="M7 5H5v16h14V5h-2"/><path d="M9 12h6M9 16h4"/>',
+        map:      '<path d="M9 4l-6 2v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/>',
+        monitor:  '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>',
+        gamepad:  '<rect x="2" y="7" width="20" height="11" rx="5"/><path d="M7 10v5M4.5 12.5h5"/><circle cx="16" cy="11.5" r="1"/><circle cx="18.5" cy="14" r="1"/>',
+        battery:  '<rect x="2" y="7" width="17" height="10" rx="2"/><path d="M22 11v2"/><path d="M6 10v4M10 10v4"/>',
+        calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+        folder:   '<path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>',
+        tag:      '<path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.2"/>',
+        check:    '<path d="M5 12l5 5L20 7"/>',
+        clock:    '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+        chevron:  '<path d="M6 9l6 6 6-6"/>',
+    };
+    function nbIcon(name, size = 17, color = 'currentColor', sw = 2) {
+        return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; display:inline-block; vertical-align:middle;">${NB_ICON_PATHS[name] || ''}</svg>`;
+    }
 
     // NCC 패널 제목과 동일한 네온 그린(블랙 믹싱) 그라데이션 텍스트 스타일 — 토글/2x2 버튼 라벨,
     // 일일 업무 카드 제목, 파일명 생성기 제목 등 '제목'류 텍스트에 공통으로 재사용
@@ -159,92 +186,109 @@
 
     // 기체 네이밍 매핑 데이터
     const ROBOT_MAP = {
-        "20": { site: "송도 요기요", unit: "#013" }, // 1호기
-        "86": { site: "송도 요기요", unit: "#055" }, // 2호기
-        "80": { site: "송도 요기요", unit: "#091" }, // 3호기
-        "29": { site: "송도 요기요", unit: "#023" }, // 4호기
-        "32": { site: "송도 요기요", unit: "#026" }, // 5호기
-        "87": { site: "송도 요기요", unit: "#056" }, // 6호기
-        "7": { site: "송도 요기요", unit: "#043" }, // 7호기
-        "57": { site: "송도 요기요", unit: "#061" }, // 8호기
+        "20": { site: "송도 요기요", unit: "#013", ho: 1 }, // 1호기
+        "86": { site: "송도 요기요", unit: "#055", ho: 2 }, // 2호기
+        "80": { site: "송도 요기요", unit: "#091", ho: 3 }, // 3호기
+        "29": { site: "송도 요기요", unit: "#023", ho: 4 }, // 4호기
+        "32": { site: "송도 요기요", unit: "#026", ho: 5 }, // 5호기
+        "87": { site: "송도 요기요", unit: "#056", ho: 6 }, // 6호기
+        "7": { site: "송도 요기요", unit: "#043", ho: 7 }, // 7호기
+        "57": { site: "송도 요기요", unit: "#061", ho: 8 }, // 8호기
 
-        "2": { site: "송도 요기요", unit: "#081" }, // 10호기 고장
-        "51": { site: "송도 요기요", unit: "#050" }, // 11호기 고장
-        "71": { site: "송도 요기요", unit: "#075" }, // 15호기 고장
-        "72": { site: "송도 요기요", unit: "#076" }, // 13호기
-        "129": { site: "송도 요기요", unit: "#082" }, // 14호기
+        "2": { site: "송도 요기요", unit: "#081", ho: 10 }, // 10호기 고장
+        "51": { site: "송도 요기요", unit: "#050", ho: 11 }, // 11호기 고장
+        "71": { site: "송도 요기요", unit: "#075", ho: 15 }, // 15호기 고장
+        "72": { site: "송도 요기요", unit: "#076", ho: 13 }, // 13호기
+        "129": { site: "송도 요기요", unit: "#082", ho: 14 }, // 14호기
 
-        "27": { site: "역삼 요기요", unit: "#021" }, // 3호기
-        "152": { site: "역삼 요기요", unit: "#114" }, // 5호기
-        "23": { site: "역삼 요기요", unit: "#017" }, // 11호기
-        "173": { site: "역삼 요기요", unit: "#153" }, // 14호기
-        "78": { site: "역삼 요기요", unit: "#086" }, // 2호기
-        "153": { site: "역삼 요기요", unit: "#118" }, // 6호기
-        "45": { site: "역삼 요기요", unit: "#044" }, // 9호기
-        "174": { site: "역삼 요기요", unit: "#154" }, // 15호기
+        "27": { site: "역삼 요기요", unit: "#021", ho: 3 }, // 3호기
+        "152": { site: "역삼 요기요", unit: "#114", ho: 5 }, // 5호기
+        "23": { site: "역삼 요기요", unit: "#017", ho: 11 }, // 11호기
+        "173": { site: "역삼 요기요", unit: "#153", ho: 14 }, // 14호기
+        "78": { site: "역삼 요기요", unit: "#086", ho: 2 }, // 2호기
+        "153": { site: "역삼 요기요", unit: "#118", ho: 6 }, // 6호기
+        "45": { site: "역삼 요기요", unit: "#044", ho: 9 }, // 9호기
+        "174": { site: "역삼 요기요", unit: "#154", ho: 15 }, // 15호기
 
-        "47": { site: "역삼 요기요", unit: "#046" }, // 1호기 고장
-        "134": { site: "역삼 요기요", unit: "#098" }, // 4호기 고장
-        "1": { site: "역삼 요기요", unit: "#016" }, // 7호기 고장
-        "146": { site: "역삼 요기요", unit: "#084" }, // 12호기 고장
+        "47": { site: "역삼 요기요", unit: "#046", ho: 1 }, // 1호기 고장
+        "134": { site: "역삼 요기요", unit: "#098", ho: 4 }, // 4호기 고장
+        "1": { site: "역삼 요기요", unit: "#016", ho: 7 }, // 7호기 고장
+        "146": { site: "역삼 요기요", unit: "#084", ho: 12 }, // 12호기 고장
 
-        "260": { site: "성수 요기요", unit: "#233" }, // 1호기
-        "174": { site: "성수 요기요", unit: "#154" }, // 2호기
-        "23": { site: "성수 요기요", unit: "#017" }, // 3호기
+        "260": { site: "성수 요기요", unit: "#233", ho: 1 }, // 1호기
+        "174": { site: "성수 요기요", unit: "#154", ho: 2 }, // 2호기
+        "23": { site: "성수 요기요", unit: "#017", ho: 3 }, // 3호기
 
-        "260": { site: "성수 요기요", unit: "#233" }, // 6호기
-        "261": { site: "성수 요기요", unit: "#234" }, // 7호기
-        "262": { site: "성수 요기요", unit: "#235" }, // 8호기
+        "260": { site: "성수 요기요", unit: "#233", ho: 6 }, // 6호기
+        "261": { site: "성수 요기요", unit: "#234", ho: 7 }, // 7호기
+        "262": { site: "성수 요기요", unit: "#235", ho: 8 }, // 8호기
 
-        "46": { site: "성남 삼평동", unit: "#045" },  // 1호기
-        "53": { site: "성남 삼평동", unit: "#052" }, // 2호기
-        "54": { site: "성남 삼평동", unit: "#053" }, // 3호기
-        "55": { site: "성남 삼평동", unit: "#054" }, // 4호기
-        "133": { site: "성남 삼평동", unit: "#087" }, // 5호기
-        "132": { site: "성남 삼평동", unit: "#088" }, // 6호기
-        "135": { site: "성남 삼평동", unit: "#092" }, // 7호기
-        "136": { site: "성남 삼평동", unit: "#093" }, // 8호기
+        "46": { site: "성남 삼평동", unit: "#045", ho: 1 },  // 1호기
+        "53": { site: "성남 삼평동", unit: "#052", ho: 2 }, // 2호기
+        "54": { site: "성남 삼평동", unit: "#053", ho: 3 }, // 3호기
+        "55": { site: "성남 삼평동", unit: "#054", ho: 4 }, // 4호기
+        "133": { site: "성남 삼평동", unit: "#087", ho: 5 }, // 5호기
+        "132": { site: "성남 삼평동", unit: "#088", ho: 6 }, // 6호기
+        "135": { site: "성남 삼평동", unit: "#092", ho: 7 }, // 7호기
+        "136": { site: "성남 삼평동", unit: "#093", ho: 8 }, // 8호기
 
-        "137": { site: "성남 서현동", unit: "#094" }, // 9호기
-        "122": { site: "성남 서현동", unit: "#095" }, // 10호기
+        "137": { site: "성남 서현동", unit: "#094", ho: 9 }, // 9호기
+        "122": { site: "성남 서현동", unit: "#095", ho: 10 }, // 10호기
 
-        "68": { site: "파주 LGD", unit: "#072" }, // 엘리 1호기
-        "106": { site: "파주 LGD", unit: "#078" }, // 엘리 2호기
-        "62": { site: "파주 LGD", unit: "#066" }, // 엘리 3호기
-        "66": { site: "아산 스테이그린", unit: "#070" }, // 그린 1호기
-        "67": { site: "아산 스테이그린", unit: "#071" }, // 그린 2호기
-        "60": { site: "가평 니모 캠핌장", unit: "#064" }, // 가평 1호기
-        "119": { site: "가평 니모 캠핑장", unit: "#085" }, // 가평 2호기
-        "19": { site: "송도 국제캠핑장", unit: "#041" }, // 국캠 1호기
-        "92": { site: "송도 국제캠핑장", unit: "#135" }, // 국캠 2호기
-        "97": { site: "송도 국제캠핑장", unit: "#122" }, // 국캠 3호기
-        "125": { site: "대관령 솔내음 캠핑장", unit: "#110" }, // 대관령 1호기
-        "127": { site: "대관령 솔내음 캠핑장", unit: "#115" }, // 대관령 2호기
+        "68": { site: "파주 LGD", unit: "#072", ho: 1 }, // 엘리 1호기
+        "106": { site: "파주 LGD", unit: "#078", ho: 2 }, // 엘리 2호기
+        "62": { site: "파주 LGD", unit: "#066", ho: 3 }, // 엘리 3호기
+        "66": { site: "아산 스테이그린", unit: "#070", ho: 1 }, // 그린 1호기
+        "67": { site: "아산 스테이그린", unit: "#071", ho: 2 }, // 그린 2호기
+        "60": { site: "가평 니모 캠핑장", unit: "#064", ho: 1 }, // 가평 1호기
+        "119": { site: "가평 니모 캠핑장", unit: "#085", ho: 2 }, // 가평 2호기
+        "19": { site: "송도 국제캠핑장", unit: "#041", ho: 1 }, // 국캠 1호기
+        "92": { site: "송도 국제캠핑장", unit: "#135", ho: 2 }, // 국캠 2호기
+        "97": { site: "송도 국제캠핑장", unit: "#122", ho: 3 }, // 국캠 3호기
+        "125": { site: "대관령 솔내음 캠핑장", unit: "#110", ho: 1 }, // 대관령 1호기
+        "127": { site: "대관령 솔내음 캠핑장", unit: "#115", ho: 2 }, // 대관령 2호기
         "214": { site: "진천 힐사이드 캠핑장", unit: "#194" }, // 진천
         "99": { site: "삼성인력개발원", unit: "#124" }, // 인개원
-		"107": { site: "광주 낭만글램핑", unit: "#080" }, // 낭만글램핑 1호기
-		"121": { site: "광주 낭만글램핑", unit: "#090" }, // 낭만글램핑 2호기
+		"107": { site: "광주 낭만글램핑", unit: "#080", ho: 1 }, // 낭만글램핑 1호기
+		"121": { site: "광주 낭만글램핑", unit: "#090", ho: 2 }, // 낭만글램핑 2호기
 
         "158": { site: "에버랜드 장미축제", unit: "#140" }, // 에버랜드
         "236": { site: "Hitachi Building Systems", unit: "#178" }, // 히타치 배달
         "168": { site: "서산 뜨레 바베큐", unit: "#145" }, // 서산 뜨레 바베큐
 		
-		"303": { site: "충남대학교병원", unit: "#310" }, // 충남대학교병원 두비
-		"304": { site: "충남대학교병원", unit: "#311" }, // 충남대학교병원 달비
+		"303": { site: "충남대학교병원", unit: "#310", nm: "두비" }, // 충남대학교병원 두비
+		"304": { site: "충남대학교병원", unit: "#311", nm: "달비" }, // 충남대학교병원 달비
 
-		"312": { site: "수원 힐스테이트 푸르지오", unit: "#318" }, // 수원 힐스테이트 318호기
-		"313": { site: "수원 힐스테이트 푸르지오", unit: "#319" }, // 수원 힐스테이트 319호기
+		"312": { site: "수원 힐스테이트 푸르지오", unit: "#318", ho: 318 }, // 수원 힐스테이트 318호기
+		"313": { site: "수원 힐스테이트 푸르지오", unit: "#319", ho: 319 }, // 수원 힐스테이트 319호기
 
-        "256": { site: "수원 힐스테이트 바로고", unit: "#229" }, // 수원 힐스테이트 바로고 1호기
-        "257": { site: "수원 힐스테이트 바로고", unit: "#230" }, // 수원 힐스테이트 바로고 2호기
-        "258": { site: "수원 힐스테이트 바로고", unit: "#231" }, // 수원 힐스테이트 바로고 3호기
-        "259": { site: "수원 힐스테이트 바로고", unit: "#232" }, // 수원 힐스테이트 바로고 4호기
+        "256": { site: "수원 힐스테이트 바로고", unit: "#229", ho: 1 }, // 수원 힐스테이트 바로고 1호기
+        "257": { site: "수원 힐스테이트 바로고", unit: "#230", ho: 2 }, // 수원 힐스테이트 바로고 2호기
+        "258": { site: "수원 힐스테이트 바로고", unit: "#231", ho: 3 }, // 수원 힐스테이트 바로고 3호기
+        "259": { site: "수원 힐스테이트 바로고", unit: "#232", ho: 4 }, // 수원 힐스테이트 바로고 4호기
     
-		"315": { site: "반포 래미안 트리니원", unit: "#320" }, // 반포 래미안 트리니원 320호기
-		"316": { site: "반포 래미안 트리니원", unit: "#321" }, // 반포 래미안 트리니원 321호기
-		"317": { site: "반포 래미안 트리니원", unit: "#322" }, // 반포 래미안 트리니원 322호기
-		"318": { site: "반포 래미안 트리니원", unit: "#323" }, // 반포 래미안 트리니원 323호기
-	};
+		"315": { site: "반포 래미안 트리니원", unit: "#320", ho: 320 }, // 반포 래미안 트리니원 320호기
+		"316": { site: "반포 래미안 트리니원", unit: "#321", ho: 321 }, // 반포 래미안 트리니원 321호기
+		"317": { site: "반포 래미안 트리니원", unit: "#322", ho: 322 }, // 반포 래미안 트리니원 322호기
+		"318": { site: "반포 래미안 트리니원", unit: "#323", ho: 323 }, // 반포 래미안 트리니원 323호기
+
+        "295": { site: "제주 월드컵 경기장", unit: "#301", ho: 301 }, // 제주 월드컵 경기장 301호기
+        "294": { site: "제주 월드컵 경기장", unit: "#302", ho: 302 }, // 제주 월드컵 경기장 302호기
+        "296": { site: "제주 월드컵 경기장", unit: "#303", ho: 303 }, // 제주 월드컵 경기장 303호기
+        "297": { site: "제주 월드컵 경기장", unit: "#304", ho: 304 }, // 제주 월드컵 경기장 304호기
+        "298": { site: "제주 월드컵 경기장", unit: "#305", ho: 305 }, // 제주 월드컵 경기장 305호기
+        "299": { site: "제주 월드컵 경기장", unit: "#306", ho: 306 }, // 제주 월드컵 경기장 306호기
+        "300": { site: "제주 월드컵 경기장", unit: "#307", ho: 307 }, // 제주 월드컵 경기장 307호기
+        "301": { site: "제주 월드컵 경기장", unit: "#308", ho: 308 }, // 제주 월드컵 경기장 308호기
+        "302": { site: "제주 월드컵 경기장", unit: "#309", ho: 309 }, // 제주 월드컵 경기장 309호기
+        "305": { site: "제주 월드컵 경기장", unit: "#312", ho: 312 }, // 제주 월드컵 경기장 312호기
+        "306": { site: "제주 월드컵 경기장", unit: "#313", ho: 313 }, // 제주 월드컵 경기장 313호기
+        "307": { site: "제주 월드컵 경기장", unit: "#314", ho: 314 }, // 제주 월드컵 경기장 314호기
+        "308": { site: "제주 월드컵 경기장", unit: "#315", ho: 315 }, // 제주 월드컵 경기장 315호기
+        "309": { site: "제주 월드컵 경기장", unit: "#316", ho: 316 }, // 제주 월드컵 경기장 316호기
+        "310": { site: "제주 월드컵 경기장", unit: "#317", ho: 317 }, // 제주 월드컵 경기장 317호기
+
+    };
 
     // "/monitoring/56"이 "/monitoring/560"에도 부분매칭되는 걸 방지 — 숫자를 정확히 추출해서 완전일치로 비교
     function isTargetMonitoringUrl(url) {
@@ -463,7 +507,7 @@
         return el;
     }
 
-    const dashboard = createContainer('neubie-dashboard', 'min(580px, 94vw)', '50%', '50%');
+    const dashboard = createContainer('neubie-dashboard', 'min(880px, 96vw)', '50%', '50%');
     dashboard.style.padding = '15px'; // 전체 레이아웃이 커 보인다는 피드백 — 외곽 패딩만 살짝 축소
 
     // ── 대시보드 전체 배율(줌) 조정 ──
@@ -519,8 +563,6 @@
         document.head.appendChild(st);
     })();
 	
-    const batteryPopup = createContainer('neubie-battery-popup', '400px', '20px', 'auto', '20px');
-
     function makeDraggable(handleEl, targetEl) {
         let isDragging = false, startX, startY, startLeft, startTop;
 
@@ -570,7 +612,7 @@
 
     const injectUI = () => { 
         if (document.body) {
-            document.body.append(dashboard, batteryPopup);
+            document.body.append(dashboard);
         } 
     };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', injectUI);
@@ -579,94 +621,74 @@
     /* ============================================================
         SECTION 4. 배터리 및 업무 연동 로직
        ============================================================ */
-    let _batteryInitialized = false;
+    // 성남 배터리 현황은 대시보드(Alt+Q) 안의 카드다. 카드를 '만들고 그리는' 것은 캐시된 값만 쓰며
+    // 어떤 조회(iframe)도 시작하지 않는다 — 조회는 오직 카드의 [조회] 버튼을 눌렀을 때만 시작된다.
+    const battRoot = () => document.getElementById('neubie-battery-card');
 
-    function buildBatteryShell() {
-        const T = getNbTheme();
-        batteryPopup.style.backgroundColor = T.bg;
-        batteryPopup.style.backgroundImage = `linear-gradient(${T.bg}, ${T.bg}), linear-gradient(135deg, #10b981, #2dd4bf)`;
-        batteryPopup.style.color = T.text;
+    function buildBatteryCard(T) {
+        const card = document.createElement('div');
+        card.id = 'neubie-battery-card';
+        card.style.cssText = `box-sizing:border-box; min-width:0; min-height:0; padding:12px; display:flex; flex-direction:column; gap:8px; border:2px solid transparent; border-radius:14px; background:${rainbowBg(T.card)}; color:${T.text}; position:relative; overflow:hidden;`;
 
-        batteryPopup.innerHTML = '';
         const header = document.createElement('div');
-        header.style.cssText = `display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid ${T.border}; padding-bottom:10px;`;
-        const titleB = document.createElement('b');
-        titleB.textContent = "🔋 성남 배터리 현황";
-        titleB.style.cssText = `color:${T.text}; font-size:18px;`;
+        header.style.cssText = 'display:flex; align-items:center; justify-content:space-between; gap:8px; height:24px; flex:none;';
+        const titleEl = document.createElement('div');
+        titleEl.style.cssText = `display:flex; align-items:center; gap:7px; font-size:16px; font-weight:800; white-space:nowrap; color:${T.text};`;
+        titleEl.innerHTML = `${nbIcon('battery', 18, '#16a34a')}<span>성남 배터리 현황</span>`;
 
-        const headerRight = document.createElement('div');
-        headerRight.style.cssText = `display:flex; align-items:center; gap:8px;`;
-
-        const copyBtn = document.createElement('button');
-        copyBtn.textContent = '복사';
-        Object.assign(copyBtn.style, {
-            background:'#10b981', color:'white', border:'none',
-            height:'24px', width:'66px', flexShrink:'0', padding:'0',
-            borderRadius:'6px', cursor:'pointer', fontWeight:'bold',
-            fontSize:'13px',
-            display:'flex', alignItems:'center', justifyContent:'center',
-            transition:'0.2s'
-        });
-        copyBtn.onclick = (e) => copyToClipboard(e.target);
-
-        const closeBtn = document.createElement('button');
-        closeBtn.textContent = '✕';
-        closeBtn.style.cssText = `background:#ef4444; color:white; border:none; border-radius:4px; width:22px; height:22px; cursor:pointer; font-weight:bold; display:flex; align-items:center; justify-content:center; font-size:14px;`;
-        closeBtn.onclick = () => toggleBattery();
-
-        headerRight.append(copyBtn, closeBtn);
-        header.append(titleB, headerRight);
-        batteryPopup.appendChild(header);
-        makeDraggable(header, batteryPopup);
-
-        // ── 상태줄(기준 시각/조회 상태) + 재조회 버튼(쿨다운 카운트다운) ──
-        const toolbar = document.createElement('div');
-        toolbar.style.cssText = `display:flex; justify-content:space-between; align-items:center; gap:8px; margin:-5px 0 10px;`;
+        const actions = document.createElement('div');
+        actions.style.cssText = 'display:flex; align-items:center; gap:6px; min-width:0;';
         const metaEl = document.createElement('span');
         metaEl.id = 'neubie-battery-meta';
-        metaEl.style.cssText = `font-size:12px; color:${T.isDark ? '#9ca3af' : '#7a6f57'}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0;`;
+        metaEl.style.cssText = `font-size:12px; color:${T.isDark ? '#b4b8c0' : '#7a6f57'}; white-space:nowrap; flex-shrink:0;`;
         const refreshBtn = document.createElement('button');
         refreshBtn.id = 'neubie-battery-refresh';
-        refreshBtn.style.cssText = `border:none; border-radius:6px; height:24px; min-width:104px; padding:0 10px; font-size:13px; font-weight:bold; flex-shrink:0; transition:0.2s;`;
+        refreshBtn.style.cssText = 'border:none; border-radius:6px; height:24px; min-width:82px; padding:0 10px; font-size:12px; font-weight:800; flex-shrink:0; white-space:nowrap; transition:0.2s;';
         refreshBtn.onclick = () => runBatteryFetch();
-        toolbar.append(metaEl, refreshBtn);
-        batteryPopup.appendChild(toolbar);
+        const copyBtn = document.createElement('button');
+        copyBtn.textContent = '복사';
+        copyBtn.style.cssText = 'background:#10b981; color:#fff; border:none; height:24px; padding:0 12px; flex-shrink:0; border-radius:6px; cursor:pointer; font-weight:800; font-size:12px; transition:0.2s;';
+        copyBtn.onclick = (e) => copyToClipboard(e.currentTarget);
+        actions.append(metaEl, refreshBtn, copyBtn);
+        header.append(titleEl, actions);
+        card.appendChild(header);
 
         const list = document.createElement('div');
         list.id = 'neubie-battery-list';
-        batteryPopup.appendChild(list);
-
+        list.style.cssText = 'flex:1; min-height:0; display:flex; flex-direction:column; gap:5px;';
         config.batteryIds.forEach((c) => {
             const item = document.createElement('div');
             item.dataset.batteryId = c.id;
-            item.style.cssText = `
-                background:${T.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)'};
-                padding:6px 16px;
-                border-radius:10px;
-                margin-bottom:6px;
-                border-left:5px solid #666;
-                font-size: 16px !important;
-            `;
+            item.style.cssText = `flex:1; min-height:0; display:grid; grid-template-columns:78px minmax(0,1fr) 92px; align-items:center; gap:10px; padding:0 10px; border-radius:8px; border-left:5px solid #666; background:${T.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)'}; font-size:13px;`;
             item.innerHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                    <span style="font-weight:500;" class="bat-name">⚪ ${c.name}</span>
-                    <span style="font-weight:bold; font-size: 16px;" class="bat-val">- %</span>
+                <span class="bat-name" style="font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${c.name}</span>
+                <div class="bat-bar-track" style="height:7px; border-radius:4px; overflow:hidden; background:${T.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'};">
+                    <div class="bat-bar-fill" style="height:100%; width:0%; background:#666; border-radius:4px; transition:width 0.3s ease, background 0.3s ease;"></div>
                 </div>
-                <div class="bat-bar-track" style="width:100%; height:6px; background:${T.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'}; border-radius:3px; overflow:hidden;">
-                    <div class="bat-bar-fill" style="height:100%; width:0%; background:#666; border-radius:3px; transition:width 0.3s ease, background 0.3s ease;"></div>
-                </div>
-            `;
+                <span class="bat-val" style="text-align:right; font-weight:800; white-space:nowrap;">조회 전</span>`;
             list.appendChild(item);
         });
-        _batteryInitialized = true;
-        renderBatteryRows();   // 쉘을 다시 만들어도(테마 전환 등) 캐시된 값으로 즉시 복원 — 서버 요청 없음
+        card.appendChild(list);
+        // 쿨다운이 끝난(=2분 넘게 지난/기록 없는) 상태에서는 카드 전체를 흐리게 덮고 가운데 [조회] 버튼만 보여준다
+        const cover = document.createElement('div');
+        cover.id = 'neubie-battery-cover';
+        cover.style.cssText = `position:absolute; inset:0; z-index:3; display:none; align-items:center; justify-content:center; border-radius:12px; background:${T.isDark ? 'rgba(30,30,34,0.55)' : 'rgba(255,255,255,0.5)'}; backdrop-filter:blur(7px); -webkit-backdrop-filter:blur(7px);`;
+        const coverBtn = document.createElement('button');
+        coverBtn.type = 'button';
+        coverBtn.textContent = '성남 배터리 조회';
+        coverBtn.style.cssText = `height:43px; min-width:150px; padding:0 22px; font-size:15px; white-space:nowrap; font-weight:800; cursor:pointer; color:${T.text}; border:2px solid transparent; border-radius:12px; background:${rainbowBg(T.card)}; box-shadow:0 2px 12px rgba(168,85,247,0.35);`;
+        coverBtn.onclick = () => runBatteryFetch();
+        cover.appendChild(coverBtn);
+        card.appendChild(cover);
+        return card;
     }
 
     // ══════════════════════════════════════════════════════════
     //  성남 배터리 현황 — 화면(DOM) 읽기 방식 (코드에서 API를 호출하지 않음)
     //  · 4개 기체 페이지(/ko/monitoring/N)를 같은 origin 숨김 iframe으로 1초 간격 순차 오픈
     //  · 사이드바 텍스트(기체명 / 로봇 전원 / 임무 진행)가 확정되면 그 iframe은 즉시 제거
-    //  · 한 번 조회하면 BATT_COOLDOWN_MS(2분) 동안 재조회 불가. 다음 조회 가능 시각을 localStorage에
+    //  · 조회는 카드의 [조회] 버튼을 눌렀을 때만 시작된다. Alt+Q 를 열거나 새로고침해도 자동 조회는 절대 없다.
+    //  · 한 번 조회하면 BATT_COOLDOWN_MS(2분) 동안 재조회 불가([재조회 ##:##]). 다음 조회 가능 시각을 localStorage에
     //    저장하므로 새로고침·다른 탭에서도 카운트가 이어지고, 그동안은 마지막으로 읽은 값을 그대로 보여준다.
     //  · 실패/타임아웃된 기체는 그 자리에서 재시도하지 않고 '확인 불가'로 두며, 다음 조회 때 다시 시도한다.
     //  · 사이트에 기체 카드 자체가 없는 경우(우측에 '검색 결과가 없어요.')는 타임아웃을 기다리지 않고 짧은 확인 후 바로 '확인 불가'로 판정한다.
@@ -689,15 +711,14 @@
     // 기체 카드가 아예 없는 사이트(사이드바에 '검색 결과가 없어요.' 표시)는 타임아웃(20초)까지 기다리지 않고,
     // 그 상태가 이 시간 동안 끊김 없이 유지되면 '확인 불가'로 바로 확정한다. (로딩 중 깜빡임 오탐 방지용 확인 시간)
     const BATT_NOCARD_CONFIRM_MS = 4000;
-    const BATT_STALE_MS = 10 * 60 * 1000;       // 이보다 오래된 값이면 팝업을 열 때 자동 조회
     const BATT_CACHE_KEY = 'neubie_batt_cache';
     const BATT_NEXT_KEY = 'neubie_batt_next_at';
     const BATT_STATUS_STYLE = {
-        '순찰 중':  { icon: '🔵', border: '#3b82f6' },
-        '충전 중':  { icon: '🟢', border: '#22c55e' },
-        '대기 중':  { icon: '⚪', border: '#9ca3af' },
-        'OFF':      { icon: '⚫', border: '#4b5563' },
-        '확인 불가': { icon: '❔', border: '#666' },
+        '순찰 중':  { border: '#3b82f6' },
+        '충전 중':  { border: '#22c55e' },
+        '대기 중':  { border: '#9ca3af' },
+        'OFF':      { border: '#4b5563' },
+        '확인 불가': { border: '#666' },
     };
     let _battRunning = false;
     let _battDone = 0;
@@ -934,8 +955,9 @@
         });
 
         config.batteryIds.forEach(c => {
-            const item = batteryPopup.querySelector(`[data-battery-id="${c.id}"]`);
-            if (!item) return;
+            const root = battRoot();
+            const item = root && root.querySelector(`[data-battery-id="${c.id}"]`);
+            if (!item) return;   // 대시보드가 닫혀 있으면 그릴 곳이 없음 (복사용 데이터만 갱신됨)
             const nameEl = item.querySelector('.bat-name');
             const valEl = item.querySelector('.bat-val');
             const fillEl = item.querySelector('.bat-bar-fill');
@@ -943,14 +965,14 @@
 
             if (_battLoading.has(c.id)) {
                 item.style.borderLeft = '5px solid #666';
-                nameEl.textContent = `⏳ ${c.name}`;
+                nameEl.textContent = c.name;
                 valEl.textContent = '조회 중…'; valEl.style.color = '#888';
                 if (fillEl) { fillEl.style.width = '0%'; fillEl.style.background = '#666'; }
                 return;
             }
             if (!r) {
                 item.style.borderLeft = '5px solid #666';
-                nameEl.textContent = `❔ ${c.name}`;
+                nameEl.textContent = c.name;
                 valEl.textContent = '조회 전'; valEl.style.color = '#888';
                 if (fillEl) { fillEl.style.width = '0%'; fillEl.style.background = '#666'; }
                 return;
@@ -968,7 +990,7 @@
             const textColor = statusColor;
             const barColor = statusColor;
             item.style.borderLeft = `5px solid ${st.border}`;
-            nameEl.textContent = `${st.icon} ${c.name}`;
+            nameEl.textContent = c.name;
             valEl.textContent = hasBat ? `${r.battery}% · ${r.status}` : r.status;
             valEl.style.color = textColor;
             if (fillEl) { fillEl.style.width = hasBat ? `${r.battery}%` : '0%'; fillEl.style.background = barColor; }
@@ -979,24 +1001,27 @@
 
     // 기준 시각 / 조회 진행 상황 / 재조회 버튼(카운트다운)
     function updateBatteryToolbar(cache, T) {
-        const metaEl = batteryPopup.querySelector('#neubie-battery-meta');
-        const btn = batteryPopup.querySelector('#neubie-battery-refresh');
+        const root = battRoot();
+        const metaEl = root && root.querySelector('#neubie-battery-meta');
+        const btn = root && root.querySelector('#neubie-battery-refresh');
         if (!metaEl || !btn) return;
         cache = cache || loadBatteryCache();
         T = T || getNbTheme();
 
         const latest = latestBatteryReadAt(cache);
         if (_battRunning) metaEl.textContent = `조회 중… (${_battDone}/${config.batteryIds.length})`;
-        else if (latest) metaEl.textContent = `기준 ${new Date(latest).toLocaleTimeString('ko-KR', { hour12: false })}`;
+        else if (latest) { const d = new Date(latest); metaEl.textContent = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')} 기준`; }
         else metaEl.textContent = '조회 기록 없음';
 
         const cd = getBatteryCooldownMs();
         const canRun = !_battRunning && cd === 0;
+        const coverEl = root.querySelector('#neubie-battery-cover');
+        if (coverEl) coverEl.style.display = canRun ? 'flex' : 'none';
         if (_battRunning) btn.textContent = '조회 중…';
         else if (cd > 0) {
             const s = Math.ceil(cd / 1000);
             btn.textContent = `재조회 ${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
-        } else btn.textContent = '재조회';
+        } else btn.textContent = latest ? '재조회' : '조회';   // 조회 기록이 없으면 '조회', 한 번이라도 읽었으면 '재조회'
 
         btn.disabled = !canRun;
         btn.style.background = canRun ? '#10b981' : (T.isDark ? '#3a3a3a' : '#cbbd98');
@@ -1004,11 +1029,11 @@
         btn.style.cursor = canRun ? 'pointer' : 'not-allowed';
     }
 
-    // 팝업이 열려있는 동안만 1초마다 카운트다운 갱신 (닫히면 스스로 멈춤)
+    // 대시보드가 열려있는 동안만 1초마다 카운트다운 갱신 (닫히면 스스로 멈춤). 표시만 갱신할 뿐 조회는 하지 않는다.
     function startBatteryTicker() {
         if (_battTicker) return;
         _battTicker = setInterval(() => {
-            if (batteryPopup.style.display !== 'block') {
+            if (dashboard.style.display !== 'block' || !battRoot()) {
                 clearInterval(_battTicker);
                 _battTicker = null;
                 return;
@@ -1051,27 +1076,10 @@
         }
     }
 
-    // 다른 탭이 조회한 결과/쿨다운도 열려있는 팝업에 반영
+    // 다른 탭이 조회한 결과/쿨다운도 열려있는 대시보드에 반영
     window.addEventListener('storage', (e) => {
-        if ((e.key === BATT_CACHE_KEY || e.key === BATT_NEXT_KEY) && batteryPopup.style.display === 'block') renderBatteryRows();
+        if ((e.key === BATT_CACHE_KEY || e.key === BATT_NEXT_KEY) && dashboard.style.display === 'block') renderBatteryRows();
     });
-
-    // 팝업을 열 때 호출: 마지막으로 읽은 값을 보여주고, 값이 없거나 너무 오래됐고 쿨다운도 끝났을 때만 자동 조회
-    function updateBatteryStatus() {
-        if (batteryPopup.dataset.dragging === 'true') return;
-
-        if (!_batteryInitialized || !batteryPopup.querySelector('#neubie-battery-list')) {
-            buildBatteryShell();
-        } else {
-            renderBatteryRows();
-        }
-
-        const latest = latestBatteryReadAt();
-        if (!_battRunning && getBatteryCooldownMs() === 0 && (!latest || Date.now() - latest > BATT_STALE_MS)) {
-            runBatteryFetch();
-        }
-        startBatteryTicker();
-    }
 
     function copyToClipboard(btn) {
         const now = new Date();
@@ -1194,6 +1202,7 @@
     }
 
     function syncTasksFromServer(force) {
+        if (typeof window.nbDlvRefresh === 'function') window.nbDlvRefresh();   // 이름이 바뀌었을 수 있음 → 내 배달 버튼도 다시 계산 (변화 없으면 아무 일도 안 함)
         const myName = localStorage.getItem('neubie_user_name');
         if (!myName) {
             window.currentMyTasks = [];
@@ -1474,7 +1483,7 @@
         const container = inlineContainer || document.createElement('div'); // fallback
 
         if (validTasks.length === 0) {
-            if (inlineContainer) inlineContainer.innerHTML = `<div style="color:#666; ...">배정된 업무가 없습니다.</div>`;
+            if (inlineContainer) inlineContainer.innerHTML = `<div style="color:#666; font-size:14px; padding:8px 0;">배정된 업무가 없습니다.</div>`;
             return;
         }
 
@@ -1499,13 +1508,14 @@
             item.style.cssText = `
                 background:${status.isExpired ? 'rgba(60, 60, 60, 0.1)' : (isMon ? 'rgba(59, 130, 246, 0.15)' : 'rgba(251, 191, 36, 0.15)')};
                 border-left:4px solid ${status.isExpired ? '#555' : (isMon ? '#3b82f6' : '#fbbf24')};
-                padding:10px; border-radius:8px; margin-bottom:8px; font-size:16px; transition: 0.3s;
+                padding:0 8px; border-radius:8px; margin-bottom:5px; font-size:13px; transition: 0.3s;
                 display: grid;
-                grid-template-columns: auto 1fr auto;
+                grid-template-columns: 92px minmax(0, 1fr) 18px;
                 align-items: center;
                 gap: 6px;
                 overflow: hidden;
-                height: 39px;
+                height: 30px;
+                flex: none;
                 box-sizing: border-box;
             `;
 
@@ -1550,19 +1560,51 @@
                 layoutLen = prefix.length + 25; // 체인 표기가 붙으면 길어진 것으로 간주해 2줄 표시 판단
             }
 
-            const isLong = layoutLen > 40;
-            const contentSpan = isLong
-                ? `<span style="font-size:12px; line-height:1.15; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">${displayContent}</span>`
-                : `<span style="font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${displayContent}</span>`;
+            const contentSpan = `<span class="nb-tk" style="font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block;"><span class="nb-tk-in" style="display:inline-block;">${displayContent}</span></span>`;
 
             item.innerHTML = `
                 <span style="color:${status.isExpired ? '#777' : (T.isDark ? '#fbbf24' : '#1a1a1a')}; white-space:nowrap;">${displayTime || ''}</span>
                 <div style="font-weight:500; min-width:0; overflow:hidden;">
                     ${contentSpan}
                 </div>
-                <div style="font-size:14px; white-space:nowrap;">${status.isExpired ? '✅' : '⏳'}</div>
+                <div style="display:flex; align-items:center; justify-content:flex-end;">${status.isExpired ? nbIcon('check', 16, '#16a34a', 3) : nbIcon('clock', 16, T.isDark ? '#fbbf24' : '#b45309', 2.2)}</div>
             `;
             container.appendChild(item);
+        });
+        nbFitTaskTexts(container);
+    }
+
+    // 일일 업무 글자 맞춤: 한 줄 → 넘치면 두 줄 → 그래도 넘치면 마퀴(좌우로 흐름)
+    function nbFitTaskTexts(root, tries = 0) {
+        if (!document.getElementById('nb-tk-style')) {
+            const st = document.createElement('style'); st.id = 'nb-tk-style';
+            st.textContent = '@keyframes nbTkMq { 0%, 15% { transform:translateX(0); } 85%, 100% { transform:translateX(var(--tk-shift, 0px)); } }';
+            document.head.appendChild(st);
+        }
+        const els = Array.from(root.querySelectorAll('.nb-tk'));
+        if (!els.length) return;
+        if (els[0].clientWidth === 0) {   // 열리는 중이라 아직 안 보임 — 잠깐 뒤 한두 번만 재시도 (닫힌 대시보드에선 타이머를 쌓지 않는다)
+            if (tries < 2 && root.isConnected) {
+                clearTimeout(window._nbTkTimer);
+                window._nbTkTimer = setTimeout(() => nbFitTaskTexts(root, tries + 1), 80);
+            }
+            return;
+        }
+        els.forEach(o => {
+            const inn = o.firstElementChild;
+            o.style.cssText = 'font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block;';
+            inn.style.cssText = 'display:inline-block;'; inn.style.animation = '';
+            if (o.scrollWidth <= o.clientWidth + 1) return;                       // 한 줄로 충분
+            o.style.cssText = 'font-size:11.5px; line-height:1.15; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;';
+            inn.style.cssText = 'display:inline;';
+            if (o.scrollHeight <= o.clientHeight + 1) return;                     // 두 줄로 충분
+            o.style.cssText = 'font-size:12px; white-space:nowrap; overflow:hidden; display:block;';   // 마퀴
+            inn.style.cssText = 'display:inline-block;';
+            const over = inn.scrollWidth - o.clientWidth;
+            if (over > 2) {
+                inn.style.setProperty('--tk-shift', (-Math.ceil(over) - 4) + 'px');
+                inn.style.animation = `nbTkMq ${Math.max(4, over / 30 + 3).toFixed(1)}s ease-in-out infinite alternate`;
+            }
         });
     }
 
@@ -1614,6 +1656,349 @@
     }
 
     /* ============================================================
+        SECTION 6-1. 내 최근 배달 3건 → 파일명 자동 완성 (영상 파일명 생성기 하단 1행)
+       ============================================================ */
+    // 데이터 = 서버(api/delivery-poll)가 슬랙 배차 알림을 파싱해 둔 '오늘 배달 목록' — 배달 로그 보드와 같은 주소·같은 서버 캐시를 쓴다.
+    // 내 배달 = 수행자(이모지로 판정)가 내 이름이거나, 인계 전 수행자에 내 이름이 있는 건. 그중 최근 3건을 '최신 → 오래된' 순서로 왼쪽부터 버튼에 올린다.
+    // 버튼 글자 = '사이트 - 기체명', 누르면 파일명 복사: 날짜_시_사이트_기체명_#주문번호_내이름 (주문번호가 없으면 '#None', 날짜·시는 배정 시각 기준)
+    //
+    // ■ 호출 부담 방어 (한 번에 20명 안팎이 쓰는 도구 — GitHub·Vercel 한도 보호)
+    //   1) 주소는 배달 로그 보드와 똑같이 ?view=day&date=… 만 쓴다. ?t=Date.now() 나 cache:'no-store' 를 붙이지 않는다
+    //      (서버가 60초 엣지 캐시 + 30초 stale-while-revalidate + 함수 메모를 걸어 두어, 몇 명이 부르든 GitHub 읽기는 분당 1~2번 수준)
+    //   2) 패널이 열려 있고 탭이 보일 때만, 08:00~23:00 에만 조회 — 닫혀 있거나 백그라운드 탭이면 네트워크 0
+    //   3) 2분 주기 + 탭마다 다른 0~30초 지터 + 확인 주기(5초)의 시작 위상도 탭마다 무작위 (여러 PC 가 같은 초에 몰리지 않게) + 어떤 경우에도 30초 안에 두 번 부르지 않음
+    //   4) 같은 브라우저의 탭들은 localStorage 의 캐시·잠금을 공유 — 탭이 여러 개여도 2분에 한 번만 조회
+    //   5) 실패하면 지수 백오프(30초→최대 10분)하고, 마지막 성공 데이터로 버튼은 계속 동작 (서버가 GitHub 장애 때 stale 로 주는 응답도 정상 취급)
+    //   6) [동시 접속 분산] 패널을 연 직후·탭이 다시 보일 때의 조회도 0~3초 / 0~2초 무작위로 미룬다 (화면은 예전처럼 바로 그림). 교대 시간에 여러 명이 같은 초에 열어도 서버에 한꺼번에 몰리지 않는다
+    //   7) [상한 안전장치] 이 브라우저에서 최근 1시간 조회 횟수가 45번에 닿으면(정상은 약 26번) 더 부르지 않고 마지막 데이터로 버튼 유지 / 저장하는 배달 건수 상한 600
+    const DLV_API = 'https://multimonitoring.vercel.app/api/delivery-poll';
+    const DLV_POLL_MS = 2 * 60 * 1000;                              // 조회 주기
+    const DLV_JITTER_MS = Math.floor(Math.random() * 30000);        // 이 탭의 고정 지터 (0~30초)
+    const DLV_TICK_MS = 5 * 1000;                                   // '지금 조회할 때인가' 확인 간격 (확인만 — 네트워크는 쓰지 않음). 촘촘할수록 지터가 실제로 퍼진다(15초 단위면 3칸으로 뭉쳤음)
+    const DLV_MIN_GAP_MS = 30 * 1000;                               // 이 탭에서 두 조회 사이 최소 간격
+    const DLV_BACKOFF_MIN_MS = 30 * 1000, DLV_BACKOFF_MAX_MS = 10 * 60 * 1000;
+    const DLV_CACHE_KEY = 'neubie_dlv_cache', DLV_LOCK_KEY = 'neubie_dlv_lock';
+    const DLV_LOG_KEY = 'neubie_dlv_fetchlog', DLV_MAX_PER_HOUR = 45;   // 안전장치: 최근 1시간 조회 횟수 상한 (정상 동작은 시간당 약 26번 — 버그·무한 반복 대비)
+    const DLV_MAX_ITEMS = 600;                                      // 안전장치: 서버가 이상하게 큰 응답을 줘도 저장·계산하는 배달 건수 상한 (하루 정상 분량은 100건 안팎)
+    const DLV_NAME_SEP = '_';                                       // 파일명 칸 구분자 (기존 파일명과 같은 '_')
+    const DLV_TAG = Math.random().toString(36).slice(2);            // 잠금 소유자 표시
+    let _dlvCard = null, _dlvBusy = false, _dlvTickTimer = null, _dlvLastFetchAt = 0, _dlvStatus = 'idle', _dlvBreakerWarnedAt = 0;
+
+    // 근무일 = 07:00 기준 (서버·배달 로그 보드와 같은 날짜 규칙. PC 시간대와 무관하게 KST 로 계산)
+    const dlvOpDate = () => {
+        const d = new Date(Date.now() + (9 - 7) * 3600 * 1000);
+        return d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0') + '-' + String(d.getUTCDate()).padStart(2, '0');
+    };
+    const dlvInWindow = () => { const d = new Date(), m = d.getHours() * 60 + d.getMinutes(); return m >= 8 * 60 && m <= 23 * 60; };   // 서버 크론 08:00~22:58 + 마지막 읽기
+    const dlvMyName = () => String(localStorage.getItem('neubie_user_name') || '').trim();
+    const dlvNorm = s => String(s || '').normalize('NFC').replace(/\s+/g, '');                // 공백·자모 분리 차이 무시
+
+    function dlvReadCache() {
+        try { const c = JSON.parse(localStorage.getItem(DLV_CACHE_KEY) || 'null'); return (c && typeof c === 'object') ? c : null; } catch (e) { return null; }
+    }
+    function dlvWriteCache(c) { try { localStorage.setItem(DLV_CACHE_KEY, JSON.stringify(c)); } catch (e) { /* 저장 공간 문제는 무시 — 이 탭 메모리 동작에는 영향 없음 */ } }
+    function dlvTryLock() {   // 다른 탭이 조회 중이면 false
+        try {
+            const now = Date.now(), cur = JSON.parse(localStorage.getItem(DLV_LOCK_KEY) || 'null');
+            if (cur && cur.until > now && cur.id !== DLV_TAG) return false;
+            localStorage.setItem(DLV_LOCK_KEY, JSON.stringify({ id: DLV_TAG, until: now + 20000 }));
+            const chk = JSON.parse(localStorage.getItem(DLV_LOCK_KEY) || 'null');
+            return !!chk && chk.id === DLV_TAG;
+        } catch (e) { return true; }   // localStorage 가 막혀 있으면 잠금 없이 진행 (위의 간격·백오프 제한은 그대로 적용)
+    }
+    function dlvUnlock() {
+        try { const cur = JSON.parse(localStorage.getItem(DLV_LOCK_KEY) || 'null'); if (cur && cur.id === DLV_TAG) localStorage.removeItem(DLV_LOCK_KEY); } catch (e) {}
+    }
+
+    // 서버 응답에서 필요한 칸만 추려 저장 (완료 건 + '배달 중'(기체 배정됨) 건)
+    function dlvSlim(d) {
+        const pick = (x, run) => ({ t: String(x.threadTs || ''), s: x.site || '', r: x.robot || '', o: x.orderNo || '', i: String(x.robotId || ''), p: x.performer || '', h: Array.isArray(x.handoverFrom) ? x.handoverFrom : [], a: Number(x.assignedTs) || 0, run: run });
+        const out = [];
+        (Array.isArray(d.deliveries) ? d.deliveries : []).forEach(x => { if (x) out.push(pick(x, 0)); });
+        (Array.isArray(d.inProgress) ? d.inProgress : []).forEach(x => { if (x && x.status === 'RUNNING' && x.robot) out.push(pick(x, 1)); });
+        if (out.length > DLV_MAX_ITEMS) out.splice(0, out.length - DLV_MAX_ITEMS);   // 상한을 넘으면 오래된 것부터 버림
+        return out;
+    }
+
+    // ── 안전장치: 최근 1시간 조회 횟수 (탭이 여러 개여도 같은 localStorage 로 합산. 미래 시각(시계 되감김)은 무시) ──
+    function dlvRecentFetches() {
+        try { const now = Date.now(); return (JSON.parse(localStorage.getItem(DLV_LOG_KEY) || '[]') || []).filter(t => typeof t === 'number' && t <= now && now - t < 3600000); } catch (e) { return []; }
+    }
+    function dlvLogFetch() {
+        try { const a = dlvRecentFetches(); a.push(Date.now()); localStorage.setItem(DLV_LOG_KEY, JSON.stringify(a.slice(-(DLV_MAX_PER_HOUR + 5)))); } catch (e) { /* 기록 실패는 무시 */ }
+    }
+    async function dlvFetch() {
+        if (_dlvBusy) return;
+        _dlvBusy = true; _dlvLastFetchAt = Date.now(); dlvLogFetch();
+        const date = dlvOpDate();
+        const ctrl = new AbortController(), to = setTimeout(() => ctrl.abort(), 15000);
+        try {
+            const res = await fetch(DLV_API + '?view=day&date=' + date, { signal: ctrl.signal });
+            if (!res.ok) { const e = new Error('HTTP ' + res.status); e.retryAfter = parseInt(res.headers.get('retry-after') || '0', 10) || 0; throw e; }
+            const d = await res.json();
+            if (!d || d.ok !== true) throw new Error('응답 형식 오류');
+            dlvWriteCache({ date: date, at: Date.now(), nextOk: 0, fails: 0, stale: !!d.stale, items: dlvSlim(d) });
+            _dlvStatus = 'idle';
+        } catch (e) {
+            const c = dlvReadCache() || {};
+            const fails = (c.fails || 0) + 1;
+            const wait = Math.max(Math.min(DLV_BACKOFF_MAX_MS, DLV_BACKOFF_MIN_MS * Math.pow(2, fails - 1)), (e.retryAfter || 0) * 1000);
+            dlvWriteCache(Object.assign({}, c, { date: c.date || date, fails: fails, nextOk: Date.now() + wait + Math.floor(Math.random() * 5000) }));
+            _dlvStatus = 'fail';
+            console.warn('[내 배달] 조회 실패:', e.message, '→', Math.round(wait / 1000) + '초 뒤 다시 시도');
+        } finally {
+            clearTimeout(to); _dlvBusy = false; dlvUnlock(); dlvRender();
+        }
+    }
+
+    const dlvCardLive = () => !!(_dlvCard && _dlvCard.isConnected && _dlvCard.getClientRects().length > 0);   // 패널이 열려 있고 카드가 보일 때만
+    function dlvTick() {
+        if (!dlvCardLive()) return;
+        dlvRender();                                                    // 이름·캐시가 바뀐 경우에만 화면이 실제로 갱신됨
+        if (document.hidden || !dlvMyName() || !dlvInWindow()) return;
+        const now = Date.now(), c = dlvReadCache();
+        // 아래 세 검사는 PC 시계가 되감겨도(시간 동기화 등) 영영 막히지 않게, '미래 시각'으로 찍힌 값은 믿지 않는다
+        const gap = now - _dlvLastFetchAt;
+        if (gap >= 0 && gap < DLV_MIN_GAP_MS) return;
+        if (c && c.nextOk && now < c.nextOk && c.nextOk - now <= DLV_BACKOFF_MAX_MS + 10000) return;       // 백오프 중
+        const age = (c && c.at) ? now - c.at : Infinity;
+        if (c && c.date === dlvOpDate() && age >= 0 && age < (DLV_POLL_MS + DLV_JITTER_MS)) return;         // 아직 신선 (다른 탭이 받은 것 포함)
+        if (dlvRecentFetches().length >= DLV_MAX_PER_HOUR) {            // 안전장치 작동: 평소(시간당 약 26번)보다 훨씬 많이 불렀다면 어딘가 잘못된 것 → 더 부르지 않고 마지막 데이터로 버튼 유지
+            if (now - _dlvBreakerWarnedAt > 600000) { _dlvBreakerWarnedAt = now; console.warn('[내 배달] 최근 1시간 조회 횟수가 상한(' + DLV_MAX_PER_HOUR + '번)에 닿아 조회를 잠시 멈춥니다.'); }
+            return;
+        }
+        if (!dlvTryLock()) return;                                      // 다른 탭이 조회 중
+        dlvFetch();
+    }
+
+    // ── 내 배달 고르기 · 이름 만들기 ──
+    const dlvKeyOf = x => x.a || parseFloat(x.t) || 0;                  // 최근순 기준 = 배정 시각(없으면 스레드 시각)
+    function dlvMine(items, me) {
+        const key = dlvNorm(me);
+        if (!key) return [];
+        return items.filter(x => dlvNorm(x.p) === key || (x.h || []).some(n => dlvNorm(n) === key))
+            .sort((a, b) => dlvKeyOf(b) - dlvKeyOf(a)).slice(0, 3);
+    }
+    function dlvSplit(x) {   // 기체명이 사이트명으로 시작하면('역삼동 (요기요) 9호기') 앞부분을 떼어 사이트가 두 번 나오지 않게
+        const site = String(x.s || '').trim(), robot0 = String(x.r || '').trim();
+        const robot = (site && robot0.startsWith(site)) ? (robot0.slice(site.length).replace(/^[\s\-·_]+/, '') || robot0) : robot0;
+        return { site: site, robot: robot };
+    }
+    // ── 기체번호(#311) 찾기: 슬랙 이름 → ROBOT_MAP ──
+    // 파일명의 '충남대학교병원_#311' 은 ROBOT_MAP(로봇 id → 사이트·기체번호)의 값이다. 슬랙 글에는 '#311' 이 없는 경우가 많아 아래 순서로 연결한다.
+    //  ① slack 별칭   ROBOT_MAP 항목에 slack: '트리니원 3호기' (문자열/배열)를 적어 두면 그 이름이 곧 그 기체 — 자동 연결이 안 되는 '예외'에만 쓴다
+    //  ② 로봇 id      서버가 슬랙의 기체명 링크(/remote/robot/숫자)에서 뽑아 준 id → ROBOT_MAP[id] (이름 속 [229호기] 와 어긋나면 믿지 않음)
+    //  ③ 사이트+번호  슬랙 사이트명을 ROBOT_MAP 사이트명과 맞춘 뒤(띄어쓰기·괄호·'동'·단어 순서 무시):
+    //                 이름 속 기체번호(#229 / [229호기] / 319호기)가 있으면 그 번호로, 없으면 '9호기'(ho)·이름(nm)으로, 사이트에 기체 1대뿐이면 그 기체
+    //                 (ho / nm 은 ROBOT_MAP 줄 끝 주석 '// 9호기' 에서 자동으로 만들어 둔 값. 새 기체를 ROBOT_MAP 에 추가할 때 같이 적어 주세요)
+    //  ④ 번호만       사이트가 안 맞아도 이름 속 기체번호가 ROBOT_MAP 에 딱 하나 있으면 그 기체
+    //  못 찾으면 null → 버튼에 ⚠ 가 붙고 파일명은 슬랙 이름으로 만든다 (틀린 번호가 조용히 들어가는 것보다 낫다). 콘솔에서 nbDlvDiag() 로 못 찾은 목록을 볼 수 있다.
+    const dlvSiteKey = s => String(s || '').normalize('NFC').toLowerCase().replace(/[()\[\]{}_\-·,.]/g, ' ').split(/\s+/).filter(Boolean)
+        .map(t => (t.length > 2 && t.endsWith('동')) ? t.slice(0, -1) : t).sort().join(' ');       // '역삼동 (요기요)' = '역삼 요기요', '수원 힐스테이트_바로고' = '수원 힐스테이트 바로고'
+    function dlvLabelNums(robot) {
+        const r = String(robot || ''), br = /\[\s*(\d{2,4})\s*호기\s*\]/.exec(r);                     // '바로고 1호기 [229호기]' → 229
+        const all = [...r.replace(/\[[^\]]*\]/g, ' ').matchAll(/(\d+)\s*호기/g)].map(m => parseInt(m[1], 10));
+        const idx = all.length ? all[all.length - 1] : null;                                       // '역삼동 (요기요) 9호기' → 9
+        return { unitN: br ? parseInt(br[1], 10) : (idx !== null && idx >= 100 ? idx : null), idx: idx };   // 3자리 이상 호기('319호기')는 기체번호
+    }
+    let _dlvIdx = null;
+    function dlvIndex() {
+        if (_dlvIdx) return _dlvIdx;
+        const all = [], bySite = {};
+        Object.keys(ROBOT_MAP).forEach(id => {
+            const e = ROBOT_MAP[id]; if (!e) return;
+            const ent = { id: id, site: e.site, unit: e.unit, ho: e.ho, nm: e.nm, slack: [].concat(e.slack || []).map(dlvNorm) }, k = dlvSiteKey(e.site);
+            all.push(ent); (bySite[k] = bySite[k] || []).push(ent);
+        });
+        return (_dlvIdx = { all: all, bySite: bySite });
+    }
+    function dlvResolve(x) {
+        const ix = dlvIndex(), robot = String(x.r || ''), n = dlvLabelNums(robot), unitStr = n.unitN ? '#' + String(n.unitN).padStart(3, '0') : null;
+        const out = (e, how) => ({ site: e.site, unit: e.unit, how: how });
+        const key = dlvNorm(robot);
+        if (key) { const hit = ix.all.filter(e => e.slack.includes(key)); if (hit.length === 1) return out(hit[0], 'alias'); }                       // ①
+        const byId = x.i && ROBOT_MAP[x.i];
+        if (byId && !(unitStr && byId.unit !== unitStr)) {                                                                                           // ②
+            // 같은 기체(id)가 사이트를 옮겨 다녀 ROBOT_MAP 에 같은 id 줄이 둘 이상이면(23·174·260) JS 객체에는 마지막 줄만 남는다.
+            // 슬랙의 사이트가 ROBOT_MAP 의 '다른' 사이트로 인식되면, 기체번호는 id 에서 / 사이트 이름은 슬랙 쪽(ROBOT_MAP 표기)에서 가져온다.
+            const cs = ix.bySite[dlvSiteKey(x.s)];
+            if (cs && cs.length && dlvSiteKey(byId.site) !== dlvSiteKey(x.s)) return { site: cs[0].site, unit: byId.unit, how: 'id*' };
+            return out(byId, 'id');
+        }
+        const cands = ix.bySite[dlvSiteKey(x.s)] || [];
+        if (cands.length) {                                                                                                                         // ③
+            let hit = unitStr ? cands.filter(e => e.unit === unitStr) : [];
+            if (hit.length === 1) return out(hit[0], 'unit');
+            if (n.idx !== null) { hit = cands.filter(e => e.ho === n.idx); if (hit.length === 1) return out(hit[0], 'ho'); }
+            hit = cands.filter(e => e.nm && robot.includes(e.nm)); if (hit.length === 1) return out(hit[0], 'name');
+            if (cands.length === 1 && cands[0].ho === undefined && (n.idx === null || n.idx === 1)) return out(cands[0], 'single');
+        }
+        if (unitStr) { const hit = ix.all.filter(e => e.unit === unitStr); if (hit.length === 1) return out(hit[0], 'unit*'); }                       // ④
+        return null;
+    }
+    const DLV_HOW = { alias: 'slack 별칭', id: '링크 id', 'id*': '링크 id + 슬랙 사이트', unit: '기체번호', ho: '호기', name: '이름', single: '단일 기체', 'unit*': '기체번호(사이트명 불일치)' };
+
+    function dlvLabel(x) { const p = dlvSplit(x); return (p.site && p.robot) ? p.site + ' - ' + p.robot : (p.robot || p.site || '(기체 정보 없음)'); }
+    const dlvClean = s => String(s || '').replace(/[\\/:*?"<>|]/g, '-').replace(/\s+/g, ' ').trim();   // 파일명에 못 쓰는 글자 치환
+    function dlvFileName(x, me) {
+        const p = dlvSplit(x), d = new Date((dlvKeyOf(x) || Date.now() / 1000) * 1000), rs = dlvResolve(x);
+        const parts = [getFormattedDate(d), getFormattedHour(d)];
+        if (rs) { parts.push(dlvClean(rs.site)); parts.push(dlvClean(rs.unit)); }      // ROBOT_MAP 기준: '충남대학교병원_#311' (기존 파일명과 같은 모양)
+        else { if (p.site) parts.push(dlvClean(p.site)); if (p.robot) parts.push(dlvClean(p.robot)); }   // 못 찾으면 슬랙 이름으로
+        let name = parts.join(DLV_NAME_SEP);
+        name += DLV_NAME_SEP + '#' + (dlvClean(x.o) || 'None');   // 주문번호가 없으면 '#None' 으로 자리를 남긴다
+        if (me) name += DLV_NAME_SEP + dlvClean(me);
+        return name;
+    }
+
+    // ── 화면 ──
+    // ■ 폭 방어 (중요): 대시보드 목록(#dashboard-list)은 한 칸짜리 grid 라서, 안의 요소가 가진 '최소 폭'(nowrap 글자의 길이)만큼 칸이 넓어지고
+    //   옆 칸(다중 모니터링·띠띠·배터리/스케줄 카드)이 패널 밖으로 잘려 나간다. 그래서 이 행은 폭 계산에 아예 참여하지 않게 한다:
+    //   width:0 + min-width:100% (= 내용 폭은 0 으로 계산하고, 실제 폭은 부모 폭을 그대로 채움) + contain:inline-size.
+    // ■ 모양: 버튼 하나 = 두 줄(사이트 / 기체명) + 초록 외곽선 + 테두리 위에 걸친 작은 '배정 시각'(높이를 늘리지 않음).
+    //   글자가 길면 평소엔 … 으로 줄이고, 커서를 올린 동안만 좌우로 흘려 끝까지 보여준다.
+    function dlvBuildCss(t) {
+        const fillBg = c => `linear-gradient(${c}, ${c}) padding-box, ${RAINBOW} border-box`;
+        return `
+            #nbDlvRow { display:flex; flex-direction:column; gap:8px; min-width:0; min-height:0; height:100%; box-sizing:border-box; padding-top:10px; }
+            .nb-dlv-slot { position:relative; min-width:0; flex:1; min-height:0; }
+            .nb-dlv-btn { display:flex; flex-direction:column; justify-content:center; align-items:stretch; width:100%; height:100%; min-width:0; padding:5px 6px 1px; box-sizing:border-box; overflow:hidden; text-align:center;
+                color:${t.text}; border:2px solid transparent; border-radius:10px; cursor:pointer; transition:background .2s, color .2s, box-shadow .2s;
+                background:${fillBg(t.fill)}; }
+            .nb-dlv-btn:hover:not(:disabled) { background:${fillBg(t.hoverBg)}; color:${t.hoverText}; box-shadow:0 0 10px rgba(168,85,247,.4); }
+            .nb-dlv-btn.copied, .nb-dlv-btn.copied:hover:not(:disabled) { background:${fillBg(t.accent)}; color:#fff; }
+            .nb-dlv-btn.copied.fail, .nb-dlv-btn.copied.fail:hover:not(:disabled) { background:${fillBg('#ef4444')}; }
+            .nb-dlv-btn:disabled { cursor:default; }
+            .nb-dlv-btn.empty .nb-dlv-ln { color:#8d8d95; font-weight:600; font-size:12.5px; }
+            .nb-dlv-btn.empty, .nb-dlv-btn.note { border:1.5px dashed ${t.border}; background:transparent; box-shadow:none; opacity:.55; }
+            .nb-dlv-btn.note { opacity:.85; }
+            .nb-dlv-ln { display:block; min-width:0; max-width:100%; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; line-height:1.15; font-size:11.5px; font-weight:600; }
+            .nb-dlv-ln.l1 { font-size:12.5px; font-weight:800; }
+            .nb-dlv-btn.copied .l2 { display:none; }
+            .nb-dlv-time { position:absolute; top:-9px; left:8px; z-index:2; max-width:calc(100% - 16px); overflow:hidden; text-overflow:ellipsis; padding:0 6px; border-radius:8px; border:1.5px solid transparent; font-size:12px; font-weight:800; line-height:16px; white-space:nowrap; pointer-events:none; background:linear-gradient(${t.card}, ${t.card}) padding-box, ${RAINBOW} border-box; color:${t.timeText}; }; color:${t.timeText}; }
+            .nb-dlv-ln.mq { text-align:left; text-overflow:clip; }
+            .nb-dlv-ln.mq .nb-dlv-txt { display:inline-block; animation:nbDlvMq var(--mq-dur, 6s) ease-in-out infinite alternate; }
+            @keyframes nbDlvMq { 0%, 18% { transform:translateX(0); } 82%, 100% { transform:translateX(var(--mq-shift, 0px)); } }
+            @media (prefers-reduced-motion: reduce) { .nb-dlv-ln.mq .nb-dlv-txt { animation:none; } }
+        `;
+    }
+    // 커서를 올린 동안만: 칸보다 긴 줄을 좌우로 오가며 끝까지 보여준다 (평소엔 … 로 줄임). 커서를 치우면 원위치.
+    function dlvMqStart(btn) {
+        btn.querySelectorAll('.nb-dlv-ln').forEach(ln => {
+            const over = ln.scrollWidth - ln.clientWidth;
+            if (over > 2) {
+                ln.style.setProperty('--mq-shift', (-Math.ceil(over) - 2) + 'px');
+                ln.style.setProperty('--mq-dur', Math.max(3, over / 35 + 2).toFixed(1) + 's');
+                ln.classList.add('mq');
+            }
+        });
+    }
+    function dlvMqStop(btn) { btn.querySelectorAll('.nb-dlv-ln').forEach(ln => { ln.classList.remove('mq'); ln.style.removeProperty('--mq-shift'); ln.style.removeProperty('--mq-dur'); }); }
+    const dlvSetText = (btn, l1, l2) => {
+        const e1 = btn.querySelector('.l1'), e2 = btn.querySelector('.l2');
+        e1.querySelector('.nb-dlv-txt').textContent = l1; e1.style.display = l1 ? '' : 'none';
+        e2.querySelector('.nb-dlv-txt').textContent = l2; e2.style.display = l2 ? '' : 'none';
+    };
+
+    function dlvRender() {
+        const card = _dlvCard;
+        if (!card || !card.isConnected) return;
+        const row = card.querySelector('#nbDlvRow');
+        if (!row) return;
+        const me = dlvMyName(), c = dlvReadCache();
+        const hasData = !!(c && c.date === dlvOpDate() && Array.isArray(c.items));
+        const inWin = dlvInWindow();
+        const sig = [me, c && c.at, c && c.fails, hasData, _dlvStatus, inWin].join('|');
+        if (card._dlvSig === sig) return;                               // 달라진 게 없으면 DOM 을 건드리지 않음
+        card._dlvSig = sig;
+
+        const mine = (me && hasData) ? dlvMine(c.items, me) : [];
+        let note = '';
+        if (!me) note = '성명을 입력하면 내 배달이 표시돼요';
+        else if (!hasData && inWin) note = (_dlvStatus === 'fail' || (c && c.fails)) ? '배달 정보를 불러오지 못했어요' : '불러오는 중…';   // 조회 시간(08~23시) 밖에는 조회 자체를 안 하므로 '불러오는 중…' 대신 빈 칸('배달 건 없음')
+        const ageMin = (c && c.at) ? Math.floor((Date.now() - c.at) / 60000) : 0;
+        const staleWarn = (ageMin >= 6 || (c && c.stale)) ? '\n⚠ ' + (c && c.stale ? '서버가 마지막 정상 데이터를 대신 보내는 중' : '마지막 갱신 ' + ageMin + '분 전') : '';
+
+        row.querySelectorAll('.nb-dlv-slot').forEach((slot, i) => {
+            const btn = slot.querySelector('.nb-dlv-btn'), tm = slot.querySelector('.nb-dlv-time'), x = mine[i];
+            let l1 = '배달 건 없음', l2 = '', time = '', fileName = '', title = '', kind = 'empty';
+            if (note && i === 0) { l1 = note; kind = 'note'; }
+            else if (x) {
+                const p = dlvSplit(x), rs = dlvResolve(x), d = new Date(dlvKeyOf(x) * 1000), hm = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+                l1 = (rs ? '' : '⚠ ') + (p.site || p.robot || '(기체 정보 없음)'); l2 = p.site ? p.robot : '';   // 1줄 = 사이트, 2줄 = 기체명
+                time = hm + ' 배달 건 - ' + me; fileName = dlvFileName(x, me); kind = 'item';
+                title = dlvLabel(x) + '\n' + hm + ' 배정 · ' + (x.o ? '주문번호 ' + x.o : '주문번호 없음') + (x.run ? ' · 진행 중' : '') + '\n'
+                    + (rs ? '기체번호: ' + rs.site + ' ' + rs.unit + ' (' + (DLV_HOW[rs.how] || rs.how) + ')' : '⚠ ROBOT_MAP 에서 기체번호를 못 찾아 슬랙 이름으로 만들었어요') + '\n→ ' + fileName + staleWarn;
+            }
+            btn.dataset.name = fileName; btn.title = title; btn.disabled = kind !== 'item';
+            btn.classList.toggle('empty', kind === 'empty'); btn.classList.toggle('note', kind === 'note');
+            tm.textContent = time; tm.style.display = time ? '' : 'none';
+            if (btn.dataset.copied === '1') { btn.dataset.l1 = l1; btn.dataset.l2 = l2; return; }   // '복사됨' 표시 중이면 끝난 뒤 새 글자로 복원
+            dlvMqStop(btn); dlvSetText(btn, l1, l2);
+            if (btn.matches(':hover') && kind === 'item') dlvMqStart(btn);
+        });
+    }
+
+    function dlvFlash(btn, ok) {
+        if (btn._flashTimer) clearTimeout(btn._flashTimer);
+        const e1 = btn.querySelector('.l1 .nb-dlv-txt'), e2 = btn.querySelector('.l2 .nb-dlv-txt');
+        if (btn.dataset.copied !== '1') { btn.dataset.copied = '1'; btn.dataset.l1 = e1.textContent; btn.dataset.l2 = e2.textContent; }
+        dlvMqStop(btn); btn.classList.add('copied'); btn.classList.toggle('fail', !ok); e1.textContent = ok ? '복사됨' : '복사 실패';
+        btn._flashTimer = setTimeout(() => {
+            btn.classList.remove('copied', 'fail'); btn.dataset.copied = '0'; btn._flashTimer = null;
+            dlvSetText(btn, btn.dataset.l1 || '', btn.dataset.l2 || '');
+            if (btn.matches(':hover') && !btn.disabled) dlvMqStart(btn);
+        }, 1500);
+    }
+    async function dlvCopy(text) {
+        try { await navigator.clipboard.writeText(text); return true; } catch (e) { /* 아래 폴백 */ }
+        try {   // 클립보드 권한이 막힌 환경 폴백
+            const ta = document.createElement('textarea'); ta.value = text; ta.style.cssText = 'position:fixed;opacity:0;left:-9999px;';
+            document.body.appendChild(ta); ta.select(); const ok = document.execCommand('copy'); ta.remove(); return !!ok;
+        } catch (e) { return false; }
+    }
+
+    function dlvMount(card) {
+        _dlvCard = card;
+        const row = card.querySelector('#nbDlvRow');
+        if (!row) return;
+        row.addEventListener('click', async (e) => {
+            const btn = e.target.closest('.nb-dlv-btn');
+            if (!btn || btn.disabled || !btn.dataset.name) return;
+            dlvFlash(btn, await dlvCopy(btn.dataset.name));
+        });
+        row.querySelectorAll('.nb-dlv-btn').forEach(btn => {
+            btn.addEventListener('mouseenter', () => { if (!btn.disabled && btn.dataset.copied !== '1') dlvMqStart(btn); });
+            btn.addEventListener('mouseleave', () => dlvMqStop(btn));
+            btn.addEventListener('focus', () => { if (!btn.disabled && btn.dataset.copied !== '1') dlvMqStart(btn); });
+            btn.addEventListener('blur', () => dlvMqStop(btn));
+        });
+        if (!_dlvTickTimer) {
+            _dlvTickTimer = -1;                                          // (자리 표시: 아래 타이머가 시작되기 전에 또 만들어지지 않게)
+            setTimeout(() => { _dlvTickTimer = setInterval(dlvTick, DLV_TICK_MS); }, Math.floor(Math.random() * DLV_TICK_MS));   // 확인 주기의 시작 위상을 탭마다 무작위로
+            document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(dlvTick, Math.floor(Math.random() * 2000)); });   // 탭이 다시 보일 때도 0~2초 분산
+            window.addEventListener('storage', e => { if (e.key === DLV_CACHE_KEY || e.key === 'neubie_user_name') dlvRender(); });   // 다른 탭이 새로 받았거나 이름이 바뀐 경우
+        }
+        // 패널을 연 직후: 화면은 예전처럼 바로(50ms) 그리고, 서버 조회 확인만 무작위로 살짝 미룬다 — 교대 시간에 여러 명이 같은 초에 열어도 한꺼번에 몰리지 않게.
+        // 받아 둔 데이터가 있으면 0~3초, 없으면(그날 첫 조회라 '불러오는 중…') 0~0.8초만 미룬다. 캐시가 신선하면 어차피 네트워크는 쓰지 않는다.
+        setTimeout(dlvRender, 50);
+        const c0 = dlvReadCache(), hadCache = !!(c0 && c0.date === dlvOpDate() && Array.isArray(c0.items));
+        setTimeout(dlvTick, 50 + Math.floor(Math.random() * (hadCache ? 3000 : 800)));
+    }
+
+    // 콘솔에서 nbDlvDiag() — 받아 둔 오늘 배달 전체(내 것만이 아니라 모두)가 ROBOT_MAP 에 어떻게 연결되는지 표로 보여 준다. '못 찾음'만 ROBOT_MAP 에 보강하면 된다.
+    window.nbDlvDiag = function () {
+        const c = dlvReadCache();
+        if (!c || !Array.isArray(c.items)) { console.log('[내 배달] 받아 둔 데이터가 없습니다. 패널을 연 채로 잠시 기다린 뒤 다시 실행하세요.'); return null; }
+        const rows = c.items.map(x => { const r = dlvResolve(x); return { 슬랙사이트: x.s, 슬랙기체명: x.r, 링크id: x.i || '-', 수행자: x.p || '-', 결과: r ? r.site + ' ' + r.unit : '❌ 못 찾음', 방식: r ? (DLV_HOW[r.how] || r.how) : '-' }; });
+        console.table(rows);
+        const miss = [...new Set(rows.filter(r => r.방식 === '-').map(r => r.슬랙사이트 + '  |  ' + r.슬랙기체명))];
+        console.log('[내 배달] 오늘 ' + rows.length + '건 중 못 찾은 기체 ' + miss.length + '종' + (miss.length ? ' — ROBOT_MAP 해당 줄에 slack: \'슬랙기체명\' 을 추가하세요:\n  ' + miss.join('\n  ') : ' ✔'));
+        return rows;
+    };
+    window.nbDlvRefresh = dlvRender;                                    // 이름 변경 등 외부에서 다시 그리라고 부를 때 (변화 없으면 아무 일도 안 함)
+
+    /* ============================================================
         SECTION 7. 스마트 네이밍 엔진 카드
        ============================================================ */
     function createNamingCard() {
@@ -1637,10 +2022,8 @@
         const card = document.createElement('div');
         card.id = 'namingSection';
         card.style.cssText = `
-            padding:10px 15px 6px; border-radius:15px; margin-top:5px; border:1px solid transparent;
-            background-image: linear-gradient(${T.card}, ${T.card}), linear-gradient(135deg, #10b981, #2dd4bf);
-            background-origin: border-box; background-clip: padding-box, border-box;
-            box-shadow:0 0 5px rgba(150,120,255,0.25);
+            display:flex; flex-direction:column; height:100%; min-width:0; box-sizing:border-box; padding:10px 12px; border-radius:14px;
+            border:2px solid transparent; background:${rainbowBg(T.card)};
         `;
 
         const history = JSON.parse(localStorage.getItem('neubie_robot_history') || '[]');
@@ -1740,30 +2123,32 @@
         };
 
         card.innerHTML = `
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                <span style="font-size:18px;">🏷️ <span style="color:${T.text}; font-weight:bold;">영상 파일명 생성기</span></span>
-                <button id="openDriveTodayBtn" style="background:${neutralBtnBg}; color:${neutralBtnText}; border:1px solid ${neutralBtnBorder}; padding:4px 8px; border-radius:6px; font-size:13px; font-weight:bold; cursor:pointer; white-space:nowrap;">📂 구글 영상 드라이브</button>
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px; flex:none;">
+                <span style="display:flex; align-items:center; gap:7px; font-size:15px; color:${T.text}; font-weight:800; white-space:nowrap;">${nbIcon('tag', 17, '#0e7490')}영상 파일명 생성기</span>
+                <button id="openDriveTodayBtn" style="display:inline-flex; align-items:center; gap:5px; background:${neutralBtnBg}; color:${neutralBtnText}; border:1px solid ${neutralBtnBorder}; padding:3px 8px; border-radius:6px; font-size:12px; font-weight:bold; cursor:pointer; white-space:nowrap;">${nbIcon('folder', 14)}구글 영상 드라이브</button>
             </div>
-            <div style="display: flex; gap: 12px; margin-bottom: 10px;">
-                <div style="flex: 1; display: flex; flex-direction: column; gap: 8px; min-width: 0;">
-                    <div style="position: relative; min-width: 0;">
-                        <select id="robotSelector" style="width: 100%; background: ${fieldBg}; color: ${fieldText}; border: 1px solid ${fieldBorder}; border-radius: 4px; font-size: 15px; font-weight: bold; padding: 0 20px 0 8px; height: 32px; line-height: 32px; box-sizing: border-box; appearance: none; -webkit-appearance: none; -moz-appearance: none;">
+            <div style="display:grid; grid-template-columns:150px minmax(0,1fr); gap:10px; flex:1; min-height:0;">
+                <div id="nbDlvRow">
+                    ${[0, 1, 2].map(i => `<div class="nb-dlv-slot" data-slot="${i}"><button type="button" class="nb-dlv-btn empty" disabled><span class="nb-dlv-ln l1"><span class="nb-dlv-txt"></span></span><span class="nb-dlv-ln l2"><span class="nb-dlv-txt"></span></span></button><span class="nb-dlv-time" style="display:none"></span></div>`).join('')}
+                </div>
+                <div style="display:flex; flex-direction:column; gap:7px; min-width:0; min-height:0;">
+                    <div style="display:flex; gap:0; min-width:0;">
+                        <button id="btnMulti" class="sub-btn" style="flex:4; min-width:0; border-top-right-radius:0; border-bottom-right-radius:0;">다중 모니터링 (${multiHourLabel})</button>
+                        <button id="btnMultiSub" class="sub-btn" style="flex:1; min-width:0; padding:0 2px; font-size:13px; border-top-left-radius:0; border-bottom-left-radius:0; margin-left:-2px;">서브</button>
+                    </div>
+                    <button id="btnCombined" class="sub-btn" ${isTiddiActive ? '' : 'disabled'} style="flex:none; ${tiddiLockStyle}">${tiddiState.text}</button>
+                    <div style="height:1px; background:${T.border}; flex:none; margin:1px 0;"></div>
+                    <div style="font-size:11.5px; font-weight:800; color:${T.isDark ? '#aaa' : '#6b6b6b'}; flex:none;">배달 건 수동 입력 시</div>
+                    <div style="position:relative; min-width:0; flex:none;">
+                        <select id="robotSelector" style="width:100%; background:${fieldBg}; color:${fieldText}; border:1px solid ${fieldBorder}; border-radius:6px; font-size:13.5px; font-weight:bold; padding:0 20px 0 8px; height:30px; box-sizing:border-box; appearance:none; -webkit-appearance:none; -moz-appearance:none;">
                             ${dropdownOptions || '<option>최근 배달 기체 미감지</option>'}
                         </select>
-                        <span style="position: absolute; right: 6px; top: 50%; transform: translateY(-50%); pointer-events: none; color: #aaa; font-size: 11px;">▾</span>
+                        <span style="position:absolute; right:7px; top:50%; transform:translateY(-50%); pointer-events:none; color:#aaa; font-size:11px;">▾</span>
                     </div>
-                    <div style="display: flex; gap: 5px; min-width: 0;">
-                        <input type="text" id="taskInput" placeholder="주문번호를 붙여넣으세요." style="flex: 1; min-width: 0; background: ${fieldBg}; color: ${fieldText}; border: 1px solid ${fieldBorder}; padding: 0 8px; border-radius: 4px; font-size: 15px; font-weight: bold; height: 32px; line-height: 32px; box-sizing: border-box;">
-                        <button id="copyFileName" style="width: 70px; flex-shrink: 0; background: #10b981; color: white; border: none; padding: 0 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 15px; white-space: nowrap; overflow: hidden; height: 32px; line-height: 32px; box-sizing: border-box;">복사</button>
+                    <div style="display:flex; gap:5px; min-width:0; flex:none;">
+                        <input type="text" id="taskInput" placeholder="주문번호 붙여넣기" style="flex:1; min-width:0; background:${fieldBg}; color:${fieldText}; border:1px solid ${fieldBorder}; padding:0 8px; border-radius:6px; font-size:13.5px; font-weight:bold; height:30px; box-sizing:border-box;">
+                        <button id="copyFileName" style="width:62px; flex-shrink:0; background:#10b981; color:white; border:none; padding:0; border-radius:6px; cursor:pointer; font-weight:bold; font-size:14px; white-space:nowrap; height:30px; box-sizing:border-box;">복사</button>
                     </div>
-                </div>
-                <div style="width: 1px; align-self: stretch; background: ${T.border};"></div>
-                <div style="flex: 1; display: flex; flex-direction: column; gap: 8px; min-width: 0;">
-                    <div style="display:flex; gap:1px; min-width:0;">
-                        <button id="btnMulti" class="sub-btn" style="flex:4; min-width:0; border-top-right-radius:0; border-bottom-right-radius:0;">다중 모니터링 (${multiHourLabel})</button>
-                        <button id="btnMultiSub" class="sub-btn" style="flex:1; min-width:0; padding:6px 2px; font-size:13px; border-top-left-radius:0; border-bottom-left-radius:0;">서브</button>
-                    </div>
-                    <button id="btnCombined" class="sub-btn" ${isTiddiActive ? '' : 'disabled'} style="${tiddiLockStyle}">${tiddiState.text}</button>
                 </div>
             </div>
         `;
@@ -1774,7 +2159,14 @@
             btnStyleTag.id = 'naming-btn-style';
             document.head.appendChild(btnStyleTag);
         }
-        btnStyleTag.textContent = `.sub-btn { background: ${neutralBtnBg}; color: ${neutralBtnText}; border: 1px solid ${neutralBtnBorder}; padding: 6px 4px; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; flex: 1; min-width: 0; transition: 0.2s; } .sub-btn:hover { background: ${subBtnHoverBg}; border-color: ${subBtnHoverBorder}; color: ${subBtnHoverText}; }`;
+        btnStyleTag.textContent = `.sub-btn { height:43px; background:${rainbowBg(neutralBtnBg)}; color:${neutralBtnText}; border:2px solid transparent; padding:0 4px; border-radius:10px; font-size:14px; font-weight:bold; cursor:pointer; flex:1; min-width:0; box-sizing:border-box; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; transition:0.2s; } .sub-btn:hover:not(:disabled) { background:${rainbowBg(subBtnHoverBg)}; color:${subBtnHoverText}; }`;
+
+        // ── 내 최근 배달 3버튼 (SECTION 6-1) — 테마 색은 다른 버튼들과 같은 값을 쓴다 ──
+        let dlvStyleTag = document.getElementById('naming-dlv-style');
+        if (!dlvStyleTag) { dlvStyleTag = document.createElement('style'); dlvStyleTag.id = 'naming-dlv-style'; document.head.appendChild(dlvStyleTag); }
+        dlvStyleTag.textContent = dlvBuildCss({ text: neutralBtnText, border: neutralBtnBorder, hoverBg: subBtnHoverBg, hoverText: subBtnHoverText, card: T.card, accent: HOVER_ACCENT,
+            fill: T.isDark ? '#3a4a43' : '#eaf1df', timeText: T.isDark ? '#6ee7b7' : '#047857' });   // 연한 그린 기운이 도는 바탕 + 시각 글자색
+        dlvMount(card);
 
         setTimeout(() => {
 			// 영상 드라이브 열기 → 오늘 날짜 폴더로 이동 (없으면 루트 폴더로 폴백)
@@ -1879,41 +2271,42 @@
         const T = getNbTheme();
         dashboard.style.backgroundColor = T.bg;
         dashboard.style.color = T.text;
-        dashboard.style.backgroundImage = `linear-gradient(${T.bg}, ${T.bg}), linear-gradient(135deg, #10b981, #2dd4bf)`;
+        dashboard.style.backgroundImage = `linear-gradient(${T.bg}, ${T.bg}), ${RAINBOW}`;   // 레인보우→퍼플 외곽선
+        dashboard.style.borderWidth = '3px';
+        dashboard.style.borderRadius = '22px';
         
         // 헤더 컨테이너 (제목 + 성명 입력창 + X 버튼 인라인 배치)
         const headerContainer = document.createElement('div');
-        headerContainer.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; padding-right:5px;";
+        headerContainer.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding-right:5px; min-height:44px;";
 
         const title = document.createElement('h2');
-        title.textContent = "API 호출 전혀 없습니다";
-        title.style.cssText = `${NCC_TITLE_GRADIENT} font-size:21px; margin:0; font-weight:bold; white-space:nowrap; min-width:0; overflow:hidden; text-overflow:ellipsis;`;
+        title.textContent = "관제 도우미(싱글플레이)";
+        title.style.cssText = `${NCC_TITLE_GRADIENT} font-size:24px; flex:0 1 auto; width:fit-content; margin:0; font-weight:800; white-space:nowrap; min-width:0; overflow:hidden; text-overflow:ellipsis;`;
 
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
 		// 문자열을 넣으면 패치노트에 빨간 '`' 뱃지가 점멸하며 뜸.
 		// 빈 문자열('')로 비우면 뱃지가 사라짐.
-		const PATCH_NOTE_NEW_CONTENT = '호출없음';
+		const PATCH_NOTE_NEW_CONTENT = '개편하다 새기들아';
 
         // ── 패치노트 내용 ──────────────────────────────────────
         // 아래 patchItems 배열에 버전별 내용을 추가하세요 (버튼 라벨의 날짜도 이 배열의
         // 맨 위(patchItems[0].date) 값을 그대로 가져다 쓰므로, 여기 날짜만 바꾸면 버튼도 같이 갱신됨)
         const patchItems = [
             {
-                version: 'v1.0',
-                date: '2026-10-02',
+                version: 'v1.1',
+                date: '2026-10-07',
                 items: [
-					'NCC API 호출 기능 전체 제거',
-					'다중 모니터링 자동 시작 보험 적용(최대 6대)',
+                    '본 스크립트는 NCC 서버에 신호를 전혀 보내지 않음',
+                    '성남 배터리 조회 쿨다운 2분(iframe 방식)',
+                    '영상 파일명 생성기: 본인 최근 배달 3건 자동 텍스트 버튼',
+                    '제주 전국체전 대비',
+                    '다중 모니터링 자동 시작은 최대 12대까지',
                     'D-PAD UP 커스텀 핫키(원격페이지: UP 1초 홀드 시 설정창/버튼 입력 시 적용)',
-					'서브모니터링 버튼 추가',
-                    '스케줄표/좌석도 라이트/다크 모드(디폴트 라이트)',
-                    '다중/과학관 업무 전임자/후임자 표기',
-                    '레이아웃 전체에 그린 톤 테마 적용',
-					'다중 관제 기체 삭제 시 선택한 기체명 표기',
-					'다중 관제 시 모니터링 생성 모달을 우측에 고정',
-					'맵 최적화 속도 개선(Dot 제거, 비타겟 site 이동 반영)',
-					'개입카드 진입 시 다음 개입 요청 토글 자동으로 OFF',
-					'다중 모니터링 자동 교대시작은 최대 12대까지 가능',
+                    '서브모니터링 텍스트 버튼',
+                    '다중 및 과학관 업무 전임자/후임자 표기',
+                    '다중 기체 삭제 시 기체명 표기, 모니터링 생성 모달 우측 고정',
+                    '맵 최적화 속도 개선(Dot 제거, 비타겟 site 이동 반영)',
+                    '다음 개입 요청 토글 자동 OFF',
                 ]
             },
         ];
@@ -1925,7 +2318,7 @@
         patchBtn.style.cssText = `
 			position:relative;
             background:transparent; border:1px solid ${T.border}; color:${T.text};
-            border-radius:6px; padding:4px 10px; cursor:pointer;
+            border-radius:6px; padding:0 10px; height:28px; box-sizing:border-box; cursor:pointer;
             font-size:14px; margin-left:6px; vertical-align:middle; white-space:nowrap; flex-shrink:0;
             transition:all 0.2s;
         `;
@@ -1954,33 +2347,25 @@
             }
 
             const patchBox = document.createElement('div');
-            patchBox.style.cssText = `
-                background:${T.card}; color:${T.text}; border-radius:18px; pointer-events:auto;
-                border:1.5px solid ${T.accent}; padding:28px 32px 24px 32px;
-                width:100%; box-sizing:border-box; max-height:70vh; overflow-y:auto;
-                position:relative; box-shadow:0 10px 50px rgba(0,0,0,0.7);
-            `;
-            const patchTitle = document.createElement('div');
-            patchTitle.textContent = '패치노트';
-            patchTitle.style.cssText = `font-size:20px; font-weight:bold; margin-bottom:20px; color:${T.accent};`;
+            patchBox.style.cssText = `background:transparent; color:${T.text}; pointer-events:auto; width:100%; box-sizing:border-box;`;
             const patchClose = document.createElement('button');
             patchClose.textContent = '✕';
             patchClose.style.cssText = `
-                position:absolute; top:16px; right:18px;
+                position:absolute; top:6px; right:8px;
                 background:transparent; border:none; color:#aaa;
                 font-size:20px; cursor:pointer; padding:4px 8px; border-radius:6px;
             `;
-            patchClose.onmouseenter = () => { patchClose.style.color='#fff'; };
+            patchClose.onmouseenter = () => { patchClose.style.color = T.isDark ? '#fff' : '#000'; };
             patchClose.onmouseleave = () => { patchClose.style.color='#aaa'; };
             patchClose.onclick = () => hideSharedPopup();
 
             // patchItems는 위(버튼 라벨 생성 시점)에서 이미 선언됨 — 여기서는 그대로 재사용
 
             const patchContent = document.createElement('div');
-            patchContent.style.cssText = "display:grid; gap:16px;";
+            patchContent.style.cssText = "display:grid; gap:10px;";
             patchItems.forEach(patch => {
                 const section = document.createElement('div');
-                section.style.cssText = `background:${T.card}; border:1px solid ${T.border}; border-radius:12px; padding:14px 16px;`;
+                section.style.cssText = 'padding:2px 4px;';
                 const versionRow = document.createElement('div');
                 versionRow.style.cssText = "display:flex; align-items:center; gap:8px; margin-bottom:10px;";
                 versionRow.innerHTML = `
@@ -2001,7 +2386,6 @@
             });
 
             patchBox.appendChild(patchClose);
-            patchBox.appendChild(patchTitle);
             patchBox.appendChild(patchContent);
             showSharedPopup('patch', patchBox);
         };
@@ -2022,12 +2406,13 @@
 
         // ── 다크/라이트 토글 (패치노트 옆, 누르면 이모지가 바뀜) ──
         const themeBtn = document.createElement('button');
-        themeBtn.textContent = T.isDark ? '🌙' : '☀️';
+        const _seg = (emoji, active) => `<span style="display:inline-flex; align-items:center; justify-content:center; width:24px; height:20px; border-radius:5px; font-size:13px; line-height:1; ${active ? 'background:' + (T.isDark ? 'rgba(255,255,255,0.22)' : 'rgba(0,0,0,0.14)') + ';' : 'opacity:0.4; filter:grayscale(0.6);'}">${emoji}</span>`;
+        themeBtn.innerHTML = _seg('🌙', T.isDark) + _seg('☀️', !T.isDark);   // 두 이모지를 항상 함께 표시, 현재 모드가 강조됨
         themeBtn.title = T.isDark ? '다크 모드 (클릭: 라이트로 전환)' : '라이트 모드 (클릭: 다크로 전환)';
         themeBtn.style.cssText = `
             background:transparent; border:1px solid ${T.border}; color:${T.text};
-            border-radius:6px; padding:3px 7px; cursor:pointer; flex-shrink:0;
-            font-size:14px; line-height:1.3; margin-left:5px; vertical-align:middle;
+            border-radius:6px; padding:0 4px; height:28px; box-sizing:border-box; cursor:pointer; flex-shrink:0; display:inline-flex; gap:2px; align-items:center;
+            font-size:14px; line-height:1; margin-left:6px; vertical-align:middle;
             transition:all 0.2s;
         `;
         themeBtn.onmouseenter = () => { themeBtn.style.borderColor = GREEN_HOVER; };
@@ -2038,7 +2423,6 @@
                 const el = document.getElementById(id);
                 if (el) el.remove();
             });
-            buildBatteryShell();   // 성남 배터리 팝업도 새 테마로 (캐시된 값 그대로 복원, 서버 요청 없음)
             renderDashboard();
         };
 
@@ -2048,7 +2432,7 @@
         titleWrap.appendChild(patchBtn);
         titleWrap.appendChild(themeBtn);
 
-        const gamepadToggleUI = createToggleRow('🎮', '패드 키변경/테스트', !isDpadBindingOff(),
+        const gamepadToggleUI = createToggleRow(nbIcon('gamepad', 19, '#0e7490'), '패드 키변경/테스트', !isDpadBindingOff(),
             (on) => {
                 localStorage.setItem('neubie_dpad_binding', on ? 'on' : 'off');
             },
@@ -2072,7 +2456,7 @@
         headerContainer.appendChild(nameArea);
         dashboard.appendChild(headerContainer);
 
-        makeDraggable(headerContainer, dashboard);
+        makeDraggable(title, dashboard);   // 드래그는 제목 글자를 눌렀을 때만
 
         setTimeout(() => {
             const input = document.getElementById('inline-name-input');
@@ -2120,35 +2504,48 @@
 
         const list = document.createElement('div');
         list.id = 'dashboard-list';
-        list.style.cssText = "display:grid; gap:6px; width:100%; box-sizing:border-box;";
+        list.style.cssText = "display:flex; flex-direction:column; gap:10px; width:100%; box-sizing:border-box;";
 
-        // 1. 업무 알림 설정 (태스크 리스트 인라인 삽입)
+        // 1. 일일 업무 카드 (좌) — 업무가 5개를 넘으면 카드 '안에서' 스크롤되어 아래 영역을 밀거나 넘치지 않는다.
+        //    패치노트 / 설명(Click!) / 패드 팝업도 이 카드 위(#neubie-shared-popup 레이어)에 뜬다.
         const taskCard = document.createElement('div');
+        taskCard.id = 'neubie-task-card';
         taskCard.style.cssText = `
-            padding:15px; border-radius:15px; border:1px solid transparent;
-            background-image: linear-gradient(${T.card}, ${T.card}), linear-gradient(135deg, #10b981, #2dd4bf);
-            background-origin: border-box; background-clip: padding-box, border-box;
-            box-shadow:0 0 5px rgba(150,120,255,0.25);
+            position:relative; box-sizing:border-box; min-width:0; height:100%;
+            padding:12px; border-radius:14px; border:2px solid transparent;
+            background:${rainbowBg(T.card)};
+            display:flex; flex-direction:column; gap:8px; overflow:hidden;
         `;
         const storedName = localStorage.getItem('neubie_user_name') || "사용자";
         const currentInt = localStorage.getItem('neubie_remind_int') || '0';
         taskCard.innerHTML = `
-            <div style="margin-bottom:10px;">
-                <div style="display:flex; align-items:center; gap:6px; margin-bottom:8px; flex-wrap:nowrap;">
-                    <div style="font-weight:bold; font-size:17px; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📋 <span style="color:${T.text};">${storedName}</span><span style="color:${T.text};">의 일일 업무</span></div>
-                    <select id="remind-inline" style="background:${T.isDark ? '#333' : '#f0ede1'}; color:${T.isDark ? '#fff' : T.text}; border:1px solid ${T.isDark ? '#555' : T.border}; font-size:13px; font-weight:bold; border-radius:4px; padding:2px;">
-                        <option value="0" ${currentInt === '0' ? 'selected' : ''}>알림 없음</option>
-                        <option value="3" ${currentInt === '3' ? 'selected' : ''}>3분 전 알림</option>
-                        <option value="5" ${currentInt === '5' ? 'selected' : ''}>5분 전 알림</option>
-                    </select>
-                </div>
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:6px; height:24px; flex:none;">
+                <div style="display:flex; align-items:center; gap:7px; font-weight:800; font-size:16px; flex:1; min-width:0; overflow:hidden; white-space:nowrap; color:${T.text};">${nbIcon('clip', 17, '#7c3aed')}<span style="min-width:0; overflow:hidden; text-overflow:ellipsis;">${storedName}의 일일 업무</span></div>
+                <select id="remind-inline" style="flex:none; background:${T.isDark ? '#333' : '#f0ede1'}; color:${T.isDark ? '#fff' : T.text}; border:1px solid ${T.isDark ? '#555' : T.border}; font-size:12px; font-weight:bold; border-radius:6px; height:22px; padding:0 4px;">
+                    <option value="0" ${currentInt === '0' ? 'selected' : ''}>알림 없음</option>
+                    <option value="3" ${currentInt === '3' ? 'selected' : ''}>3분 전 알림</option>
+                    <option value="5" ${currentInt === '5' ? 'selected' : ''}>5분 전 알림</option>
+                </select>
             </div>
         `;
 
         const taskInline = document.createElement('div');
         taskInline.id = 'inline-task-container';
+        taskInline.style.cssText = 'flex:1; min-height:0; overflow-y:auto; overflow-x:hidden; padding-right:2px; scrollbar-width:thin;';
         taskCard.appendChild(taskInline);
-        list.appendChild(taskCard);
+
+        // 팝업 레이어 — 평소엔 숨김. 열리면 일일 업무 카드 전체를 덮고(스크롤 가능), X를 누르면 닫혀 다시 업무 목록이 보인다.
+        const popupLayer = document.createElement('div');
+        popupLayer.id = 'neubie-shared-popup';
+        popupLayer.style.cssText = `position:absolute; inset:0; z-index:5; display:none; background:${T.card}; border-radius:12px; overflow:hidden;`;
+        taskCard.appendChild(popupLayer);
+
+        // 위 줄: 일일 업무(좌) | 성남 배터리 현황(우) — 높이는 업무 5줄이 스크롤 없이 들어가는 크기
+        const rowTop = document.createElement('div');
+        rowTop.style.cssText = 'display:grid; grid-template-columns:minmax(0, 1.12fr) minmax(0, 1fr); gap:10px; height:236px; flex:none;';
+        const batteryCard = buildBatteryCard(T);
+        rowTop.append(taskCard, batteryCard);
+        list.appendChild(rowTop);
 
         // ON/OFF 상태를 색이 채워진 알약형 배지로 명확하게 표기
         function styleOnOffBadge(el, isOn) {
@@ -2165,15 +2562,10 @@
             const row = document.createElement('div');
             row.style.cssText = `
                 display:flex; align-items:center; justify-content:space-between;
-                border:1px solid ${T.border}; border-radius:10px; padding:8px 14px;
-                background:${T.card}; gap:10px;
+                flex:1; min-height:40px; border-bottom:1px solid ${T.border}; border-radius:8px; padding:0 6px;
+                background:transparent; gap:10px;
             `;
-            const clickHint = onLabelClick
-                ? `<span class="nb-click-hint" style="display:inline-flex; flex-direction:column; align-items:center; justify-content:center; line-height:1.05; margin-left:3px; animation:neubie-blink 2.2s ease-in-out infinite;">
-                        <span style="font-size:8.5px; font-weight:800; color:${T.accent};">설명</span>
-                        <span style="font-size:8px; font-weight:800; color:${T.accent};">Click!</span>
-                   </span>`
-                : '';
+            const clickHint = '';   // '설명 Click!' 안내 표기 제거 — 라벨을 누르면 곧바로 팝업이 열린다
             row.innerHTML = `
                 <span class="nb-toggle-label" style="display:flex; align-items:center; gap:9px; font-size:15px; font-weight:600;">
                     <span style="font-size:18px;">${icon}</span><span style="color:${T.text};">${label}</span>${clickHint}
@@ -2203,18 +2595,12 @@
             });
             if (onLabelClick) {
                 const labelEl = row.querySelector('.nb-toggle-label');
-                labelEl.style.cursor = 'pointer';
-                labelEl.onclick = onLabelClick;
+                // 행 어디를 눌러도 설명이 열린다 — 단, ON/OFF 스위치(<label>)를 누를 때는 제외
+                row.onclick = (e) => { if (e.target.closest('label')) return; onLabelClick(e); };
                 row.style.cursor = 'pointer';
-                row.style.transition = 'border-color 0.15s, background 0.15s';
-                row.onmouseenter = () => {
-                    row.style.borderColor = HOVER_ACCENT;
-                    row.style.background = 'rgba(91,155,247,0.14)';
-                };
-                row.onmouseleave = () => {
-                    row.style.borderColor = T.border;
-                    row.style.background = T.card;
-                };
+                row.style.transition = 'background 0.15s';
+                row.onmouseenter = () => { row.style.background = 'rgba(91,155,247,0.14)'; };
+                row.onmouseleave = () => { row.style.background = 'transparent'; };
             }
             return { row, input, applyVisual };
         }
@@ -2227,77 +2613,46 @@
             el.onmouseleave = () => { el.style.boxShadow = base; };
         }
 
-        // 맵최적화/다중모니터링/레이아웃색상/날씨&기타/패치노트 팝업을 '일일 업무 카드(taskCard) 바닥' 기준으로
-        // 스트림덱 타일(bottomRow) 위쪽 틈에만 앉히기 위한 영역 계산 — 스트림덱 버튼을 절대 가리지 않음
-        // ── 스트림덱 위 팝업들의 '공유 창' 시스템 ──────────────────────────────
-        // 맵최적화/다중모니터링/레이아웃색상/날씨&기타/패치노트 — 이 5개는 모두
-        // 하나의 오버레이(#neubie-shared-popup)를 공유한다. 즉 다른 트리거를 누르면
-        // 새 창이 또 뜨는 게 아니라, 이미 떠있는 창의 '내용물만' 교체된다.
-        // 폭은 메인 대시보드(dashboard) 폭에 맞추고, 높이는 내용에 따라 자동.
-        // 위치는 스트림덱 상단에서 POPUP_GAP만큼 살짝 띄워서 붙인다(버튼과 완전히 안 붙게).
-        const POPUP_GAP = 14;
-
-        function getSharedPopupRect() {
-            const d = dashboard.getBoundingClientRect();
-            const t = bottomRow.getBoundingClientRect();
-            return { left: d.left, width: d.width, bottom: (window.innerHeight - t.top) + POPUP_GAP };
-        }
-
+        // ── 팝업들의 '공유 창' 시스템 ──────────────────────────────
+        // 패치노트 / 맵최적화·다중모니터링 설명(Click!) / 패드 메뉴·가이드·테스터는 모두 일일 업무 카드 위의
+        // 하나의 레이어(#neubie-shared-popup)를 공유한다. 다른 트리거를 누르면 새 창이 뜨는 게 아니라
+        // 떠 있는 레이어의 '내용물만' 교체된다. 내용이 길면 레이어 안에서 스크롤된다.
         function showSharedPopup(key, boxEl) {
-            let overlay = document.getElementById('neubie-shared-popup');
-            if (!overlay) {
-                overlay = document.createElement('div');
-                overlay.id = 'neubie-shared-popup';
-                overlay.style.cssText = `
-                    position:fixed; z-index:2147483646; background:transparent; pointer-events:none;
-                    display:flex; align-items:flex-end; justify-content:center;
-                    font-family:Pretendard, sans-serif;
-                `;
-                document.body.appendChild(overlay);
-            }
-            overlay.dataset.key = key;
-            overlay.innerHTML = '';
-            overlay.appendChild(boxEl);
-
-            if (key === 'patch') {
-                // 패치노트만 예외 — 스트림덱 기준이 아니라 대시보드 전체 위에 겹쳐서(중앙 정렬) 뜸
-                const d = dashboard.getBoundingClientRect();
-                overlay.style.alignItems = 'center';
-                overlay.style.top = d.top + 'px';
-                overlay.style.left = d.left + 'px';
-                overlay.style.width = d.width + 'px';
-                overlay.style.height = d.height + 'px';
-                overlay.style.bottom = 'auto';
-            } else {
-                overlay.style.alignItems = 'flex-end';
-                const r = getSharedPopupRect();
-                overlay.style.top = 'auto';
-                overlay.style.left = r.left + 'px';
-                overlay.style.width = r.width + 'px';
-                overlay.style.bottom = r.bottom + 'px';
-                overlay.style.height = 'auto';
-            }
-            overlay.style.display = 'flex';
+            const layer = document.getElementById('neubie-shared-popup');
+            if (!layer) return;
+            layer.dataset.key = key;
+            layer.innerHTML = '';
+            // 각 팝업 박스는 따로 크기를 갖지 않고 일일 업무 카드 크기에 맞춘다
+            Object.assign(boxEl.style, {
+                position: 'relative', width: '100%', height: '100%', maxHeight: 'none',
+                overflowY: 'auto', overflowX: 'hidden', boxSizing: 'border-box',
+                borderRadius: '0', border: 'none', boxShadow: 'none', padding: '12px 14px',
+            });
+            if (boxEl.dataset.fit === '1') { boxEl.style.overflow = 'hidden'; boxEl.style.display = 'flex'; boxEl.style.flexDirection = 'column'; boxEl.style.padding = '10px 12px'; }
+            layer.appendChild(boxEl);
+            layer.style.display = 'block';
         }
 
         function hideSharedPopup() {
-            const overlay = document.getElementById('neubie-shared-popup');
-            if (overlay) overlay.style.display = 'none';
+            const layer = document.getElementById('neubie-shared-popup');
+            if (!layer) return;
+            layer.style.display = 'none';
+            layer.innerHTML = '';   // 내용 제거 (컨트롤러 테스터 루프도 이때 스스로 종료됨)
+            delete layer.dataset.key;
         }
 
         function isSharedPopupOpen(key) {
-            const overlay = document.getElementById('neubie-shared-popup');
-            return !!(overlay && overlay.style.display === 'flex' && overlay.dataset.key === key);
+            const layer = document.getElementById('neubie-shared-popup');
+            return !!(layer && layer.style.display === 'block' && layer.dataset.key === key);
         }
 
-        // 다른 스코프(레이아웃색상/날씨&기타 오버레이 등)에서도 호출 가능하도록 전역 노출
-        window.getSharedPopupRect = getSharedPopupRect;
+        // 다른 스코프(패드 메뉴/가이드/테스터 등)에서도 호출 가능하도록 전역 노출
         window.showSharedPopup = showSharedPopup;
         window.hideSharedPopup = hideSharedPopup;
         window.isSharedPopupOpen = isSharedPopupOpen;
 
         // 요기요 최적화 — 토글 행 (아이콘 + 라벨 클릭=설명, 스위치 클릭=on/off)
-        const mapToggleUI = createToggleRow('🗺️', 'NCC 맵 최적화', state.isMapOpt,
+        const mapToggleUI = createToggleRow(nbIcon('map', 19, '#0e7490'), 'NCC 맵 최적화', state.isMapOpt,
             (on) => {
                 state.isMapOpt = on;
                 localStorage.setItem('neubie_opt_map', state.isMapOpt);
@@ -2338,16 +2693,16 @@
             `;
             const mapInfoTitle = document.createElement('div');
             mapInfoTitle.textContent = '기능 설명';
-            mapInfoTitle.style.cssText = `font-size:22px; font-weight:bold; margin-bottom:20px; color:${T.accent};`;
+            mapInfoTitle.style.cssText = `font-size:17px; font-weight:800; margin-bottom:10px; color:${T.accent};`;
             const mapInfoClose = document.createElement('button');
             mapInfoClose.textContent = '✕';
             mapInfoClose.style.cssText = `
-                position:absolute; top:16px; right:18px;
+                position:absolute; top:6px; right:8px;
                 background:transparent; border:none; color:#aaa;
                 font-size:20px; cursor:pointer; line-height:1; padding:4px 8px;
                 border-radius:6px; transition:color 0.2s;
             `;
-            mapInfoClose.onmouseenter = () => { mapInfoClose.style.color='#fff'; };
+            mapInfoClose.onmouseenter = () => { mapInfoClose.style.color = T.isDark ? '#fff' : '#000'; };
             mapInfoClose.onmouseleave = () => { mapInfoClose.style.color='#aaa'; };
             mapInfoClose.onclick = () => hideSharedPopup();
             const mapInfoContent = document.createElement('div');
@@ -2368,7 +2723,7 @@
 		// 다중 모니터링 기능 — 토글 행 (관리자 잠금 시 회색으로 비활성화)
         const queueLocked = ADMIN_CONFIG.locked;
         const queueEnabled = !queueLocked && localStorage.getItem('neubie_handover_enabled') === 'true';
-        const queueToggleUI = createToggleRow('🖥️', queueLocked ? '다중 모니터링 도우미 (관리자 잠금)' : '다중 모니터링 도우미', queueEnabled,
+        const queueToggleUI = createToggleRow(nbIcon('monitor', 19, '#0e7490'), queueLocked ? '다중 모니터링 도우미 (관리자 잠금)' : '다중 모니터링 도우미', queueEnabled,
             (on) => {
                 if (queueLocked) return; // input.disabled로 이미 막히지만 방어적으로 한 번 더 체크
                 localStorage.setItem('neubie_handover_enabled', on);
@@ -2429,27 +2784,27 @@
             `;
             const queueInfoTitle = document.createElement('div');
             queueInfoTitle.textContent = '기능 설명';
-            queueInfoTitle.style.cssText = `font-size:22px; font-weight:bold; margin-bottom:20px; color:${T.accent};`;
+            queueInfoTitle.style.cssText = `font-size:17px; font-weight:800; margin-bottom:10px; color:${T.accent};`;
             const queueInfoClose = document.createElement('button');
             queueInfoClose.textContent = '✕';
             queueInfoClose.style.cssText = `
-                position:absolute; top:16px; right:18px;
+                position:absolute; top:6px; right:8px;
                 background:transparent; border:none; color:#aaa;
                 font-size:20px; cursor:pointer; line-height:1; padding:4px 8px;
                 border-radius:6px; transition:color 0.2s;
             `;
-            queueInfoClose.onmouseenter = () => { queueInfoClose.style.color='#fff'; };
+            queueInfoClose.onmouseenter = () => { queueInfoClose.style.color = T.isDark ? '#fff' : '#000'; };
             queueInfoClose.onmouseleave = () => { queueInfoClose.style.color='#aaa'; };
             queueInfoClose.onclick = () => hideSharedPopup();
             const queueInfoContent = document.createElement('div');
             queueInfoContent.id = 'neubie-queue-info-content';
             queueInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:${T.text}; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;`;
             queueInfoContent.innerHTML = `
+                자동 시작 1 / 자동 시작 2(2는 시작하기 수동 클릭)<br>
 				삭제 레이아웃 기체명 표기<br>
 				모니터링 생성 모달 우측 고정<br>
 				기체 카메라 밝기 한 번에 조절<br>
 				카메라 위치 스왑<br>
-				'NCC 패널'만 이용하더라도 교대 기체 받기는 가능<br>
             `;
 
             queueInfoBox.appendChild(queueInfoClose);
@@ -2458,71 +2813,50 @@
             showSharedPopup('queue-info', queueInfoBox);
         };
 
-        // 스트림덱 스타일 4열 타일 그리드 (8개)
-        const bottomRow = document.createElement('div');
-        bottomRow.id = 'neubie-streamdeck-grid';
-        bottomRow.style.cssText = "display:flex; gap:8px;";
+        // 아래 줄 좌측: 토글 카드(맵 최적화 / 다중 도우미 / 패드) + 스케줄표·좌석도 버튼
+        const toggleCard = document.createElement('div');
+        toggleCard.style.cssText = `display:flex; flex-direction:column; flex:1; min-height:0; padding:4px 10px; box-sizing:border-box; border:2px solid transparent; border-radius:14px; background:${rainbowBg(T.card)};`;
+        toggleCard.appendChild(mapToggle);
+        toggleCard.appendChild(queueToggle);
+        toggleCard.appendChild(gamepadBtn);
+        if (gamepadBtn.style) gamepadBtn.style.borderBottom = 'none';
 
-        const scheduleCard = document.createElement('div');
-        scheduleCard.style.cssText = `
-            position:relative; min-height:52px; border-radius:10px; cursor:pointer;
-            background:${T.card}; border:1px solid #15803d;
-            box-shadow:0 0 6px rgba(21,128,61,0.35), inset 0 0 8px rgba(21,128,61,0.1);
-            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
-            padding:7px 4px; box-sizing:border-box; transition:box-shadow 0.15s;
-        `;
-        scheduleCard.innerHTML = `<span style="font-size:16px;">📅</span>
-            <span style="font-size:14px; font-weight:600; line-height:1.2; text-align:center; color:${T.text};">스케줄표/좌석도</span>`;
+        const scheduleCard = document.createElement('button');
+        scheduleCard.type = 'button';
+        scheduleCard.style.cssText = `flex:none; height:43px; display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer; font-size:14.5px; font-weight:700; color:${T.text}; border:2px solid transparent; border-radius:12px; background:${rainbowBg(T.card)}; box-sizing:border-box; transition:box-shadow .15s;`;
+        scheduleCard.innerHTML = `${nbIcon('calendar', 18, '#0e7490')}<span>스케줄표/좌석도</span>`;
         window._neubieScheduleCard = scheduleCard;
-        attachStaticNeonHover(scheduleCard, '21,128,61');
+        scheduleCard.onmouseenter = () => { scheduleCard.style.boxShadow = '0 0 12px rgba(168,85,247,0.45)'; };
+        scheduleCard.onmouseleave = () => { scheduleCard.style.boxShadow = 'none'; };
         scheduleCard.onclick = () => {
             const isActive = scheduleCard.style.outline !== 'none' && scheduleCard.style.outline !== '';
             scheduleCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
             if (!isActive) openScheduleOverlay();
         };
 
-        const isBatteryOpen = batteryPopup.style.display === 'block';
-        const batteryCard = document.createElement('div');
-        batteryCard.style.cssText = `
-            position:relative; min-height:52px; border-radius:10px; cursor:pointer;
-            background:${T.card}; border:1px solid #22c55e;
-            box-shadow:0 0 6px rgba(34,197,94,0.35), inset 0 0 8px rgba(34,197,94,0.1);
-            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
-            padding:7px 4px; box-sizing:border-box; transition:box-shadow 0.15s;
-        `;
-        batteryCard.innerHTML = `<span style="font-size:16px;">🔋</span>
-            <span style="font-size:14px; font-weight:600; line-height:1.2; text-align:center; color:${T.text};">성남 배터리 현황</span>`;
-        window._neubieBatteryCard = batteryCard;
-        attachStaticNeonHover(batteryCard, '34,197,94');
-        batteryCard.onclick = () => {
-            const isActive = batteryCard.style.outline !== 'none' && batteryCard.style.outline !== '';
-            batteryCard.style.outline = isActive ? 'none' : '2px solid #ef4444';
-            toggleBattery();
-            if (window.currentMyTasks && window.currentMyTasks.length > 0) {
-                renderTaskList(window.currentMyTasks);
-            }
+        const leftCol = document.createElement('div');
+        leftCol.style.cssText = 'display:flex; flex-direction:column; gap:8px; min-width:0; min-height:0;';
+        leftCol.append(toggleCard, scheduleCard);
+
+        const rowBottom = document.createElement('div');
+        rowBottom.style.cssText = 'display:grid; grid-template-columns:minmax(0, 1.12fr) minmax(0, 1fr); gap:10px; height:270px; flex:none;';
+        rowBottom.append(leftCol, createNamingCard());
+        list.appendChild(rowBottom);
+
+        // 최하단: 대기 중 행사 배너 (종료일 다음날부터 자동 숨김)
+        const buildEventBanner = () => {
+            const ev = NB_EVENT_BANNER;
+            const now = getKSTDate();
+            const endMs = new Date(ev.end[0], ev.end[1] - 1, ev.end[2] + 1).getTime();
+            if (now.getTime() >= endMs) return null;
+            const pad = n => String(n).padStart(2, '0');
+            const el = document.createElement('div');
+            el.style.cssText = `flex:none; height:44px; display:flex; align-items:center; justify-content:center; gap:10px; border-radius:14px; background:${T.isDark ? '#2c2c30' : '#e4e4e7'}; color:${T.isDark ? '#8a8a92' : '#71717a'}; border:1px dashed ${T.isDark ? '#4a4a52' : '#b4b4bc'}; font-size:15px; font-weight:700; box-sizing:border-box;`;
+            el.innerHTML = `${nbIcon('clock', 17, 'currentColor')}<span>${ev.title}</span><span style="font-weight:600;">${pad(ev.start[1])}/${pad(ev.start[2])} ~ ${pad(ev.end[1])}/${pad(ev.end[2])}</span><span style="font-size:11px; font-weight:700; padding:2px 8px; border-radius:999px; background:rgba(120,120,130,0.25);">대기 중</span>`;
+            return el;
         };
-
-        const toggleCol = document.createElement('div');
-        toggleCol.style.cssText = "flex:1.3; display:flex; flex-direction:column; gap:6px;";
-        toggleCol.appendChild(mapToggle);    // 맵 최적화 기능 (ON/OFF)
-        toggleCol.appendChild(queueToggle);  // 다중 모니터링 기능 (ON/OFF)
-        toggleCol.appendChild(gamepadBtn);   // 패드 기능 & 테스터 (ON/OFF)
-
-        const navGrid = document.createElement('div');
-        navGrid.style.cssText = "flex:1; display:grid; grid-template-columns:repeat(2, 1fr); grid-template-rows:repeat(2, 1fr); gap:6px;";
-        batteryCard.style.gridColumn = 'span 2';    // 카드 2개 구성 — 각각 한 줄 전체 폭
-        navGrid.appendChild(batteryCard);   // 성남 배터리
-        scheduleCard.style.gridColumn = 'span 2';
-        navGrid.appendChild(scheduleCard);  // 스케줄표
-
-        bottomRow.appendChild(toggleCol);
-        bottomRow.appendChild(navGrid);
-
-        list.appendChild(bottomRow);
-
-        // 영상 파일명 도우미
-        list.appendChild(createNamingCard());
+        const banner = buildEventBanner();
+        if (banner) list.appendChild(banner);
 
         dashboard.appendChild(list);
 
@@ -2531,47 +2865,19 @@
         } else {
             taskInline.innerHTML = `<div style="color:#666; font-size:14px; padding:8px 0;">배정된 업무가 없습니다.</div>`;
         }
-    }
-
-    // 팝업 열 때만 생성
-    function toggleBattery() {
-        if (batteryPopup.style.display !== 'block') {
-
-            // Alt+Q 메인 레이아웃이 떠있을 때만 스트림덱 바로 위(bottom 라인)에 맞춤,
-            // 아니면(Alt+B 단독 호출 등) 기존 우상단 고정 위치 그대로
-            if (dashboard.style.display === 'block' && typeof getSharedPopupRect === 'function') {
-                const r = getSharedPopupRect();
-                batteryPopup.style.top = 'auto';
-                batteryPopup.style.left = r.left + 'px';
-                batteryPopup.style.right = 'auto';
-                batteryPopup.style.bottom = r.bottom + 'px';
-            } else {
-                batteryPopup.style.top = '20px';
-                batteryPopup.style.left = 'auto';
-                batteryPopup.style.right = '20px';
-                batteryPopup.style.bottom = 'auto';
-            }
-
-            // 마지막으로 읽은 값을 표시. 값이 없거나 10분 넘게 오래됐고 쿨다운이 끝났을 때만 자동 조회
-            updateBatteryStatus();
-            batteryPopup.style.display = 'block';
-
-        } else {
-            batteryPopup.style.display = 'none';
-            if (window._neubieBatteryCard) window._neubieBatteryCard.style.outline = 'none';
-        }
+        // 배터리: 저장된 값/카운트다운만 복원 — 서버·iframe 조회는 '조회' 버튼을 눌러야만 시작
+        renderBatteryRows();
+        startBatteryTicker();
     }
 
     function closeAllPopups() {
         dashboard.style.display = 'none';
-        batteryPopup.style.display = 'none';
-        if (window._neubieBatteryCard) window._neubieBatteryCard.style.outline = 'none';
 
 		document.getElementById('ho-remote-peek')?.remove();
     	document.getElementById('ho-remote-panel')?.remove();
 		
         const sharedPopup = document.getElementById('neubie-shared-popup');
-        if (sharedPopup) sharedPopup.style.display = 'none';
+        if (sharedPopup) { sharedPopup.style.display = 'none'; sharedPopup.innerHTML = ''; delete sharedPopup.dataset.key; }
         const secretOverlay = document.getElementById('neubie-secret-overlay');
         if (secretOverlay) secretOverlay.style.display='none';
     }
@@ -2626,7 +2932,16 @@
         } catch (e) { console.log('gistFallback error:', e); return null; }
     };
     // handover.json 우선 → 유효 데이터(20분 이내 + 기체 있음)가 없을 때만 gist
-    const githubGet = async () => {
+    // slot: 1 | 2 — 지정하면 새 인계 저장소(api/handover_new, handover_new_{slot}.json)만 읽고 gist 폴백은 쓰지 않는다.
+    const githubGet = async (slot) => {
+        if (slot) {
+            try {
+                const res = await fetchWithTimeout(`https://multimonitoring.vercel.app/api/handover_new?slot=${slot}&t=${Date.now()}`, { cache: 'no-store' }, 6000);
+                if (res.ok) { _lastSrc = 'handover'; return { data: await res.json() }; }
+                console.log('githubGet(slot) 실패:', slot, res.status);
+            } catch (e) { console.log('githubGet(slot) 오류:', slot, e); }
+            return null;
+        }
         let hand = null;
         try {
             const res = await fetchWithTimeout(`https://multimonitoring.vercel.app/api/handover?t=${Date.now()}`, { cache: 'no-store' }, 6000);
@@ -2660,18 +2975,57 @@
     // 표시 문구: 이름 - (##대)
     const loadedMsg = (data) => `${data._src === 'gist' ? '순찰감지' : '로드됨'} (${data.handover_by || '?'} - ${(data.units || []).length}대)`;
 
+    // ── 새 인계 저장소(handover_new_1 / handover_new_2.json) 기준 상태 문구 ──
+    // 한 슬롯의 상태: ok(유효) / old(20분 경과) / empty(기체 없음) / none(데이터 없음) / fail(조회 실패)
+    const slotState = (result) => {
+        if (!result) return { st: 'fail' };
+        const d = result.data || {};
+        if (!d.updatedAt) return { st: 'none' };
+        const units = d.units || [];
+        if (!isDataValid(d.updatedAt)) return { st: 'old', by: d.handover_by, n: units.length };
+        if (!units.length) return { st: 'empty', by: d.handover_by };
+        const left = units.filter(u => !(d.taken || []).includes(u)).length;
+        return { st: 'ok', by: d.handover_by, n: units.length, left };
+    };
+    const slotText = (slot, x) => {
+        const who = x.by ? `${x.by} - ` : '';
+        switch (x.st) {
+            case 'ok': return `${slot}번 로드됨 (${who}${x.n}대${x.left !== x.n ? `, 남은 ${x.left}대` : ''})`;
+            case 'old': return `${slot}번 20분 경과 (${who}${x.n}대)`;
+            case 'empty': return `${slot}번 기체 없음`;
+            case 'none': return `${slot}번 데이터 없음`;
+            default: return `${slot}번 조회 실패`;
+        }
+    };
+    // results: [slot1 결과, slot2 결과] → { msg, color, anyValid, key }
+    const slotSummary = (results) => {
+        const xs = results.map(slotState);
+        const okCount = xs.filter(x => x.st === 'ok').length;
+        const hasOld = xs.some(x => x.st === 'old');
+        const msg = xs.map((x, i) => slotText(i + 1, x)).join(' · ') + (okCount && okCount < 2 && hasOld ? ' — 오래된 쪽은 사용 불가' : '');
+        let color = '#22c55e';                       // 두 슬롯 모두 유효
+        if (okCount === 0) color = hasOld ? '#ef4444' : '#f59e0b';
+        else if (okCount < 2) color = '#f59e0b';     // 한쪽만 유효
+        return { msg, color, anyValid: okCount > 0, key: xs.map(x => x.st).join(',') };
+    };
+    const checkSlots = async () => {
+        const results = await Promise.all([1, 2].map(n => githubGet(n).catch(() => null)));
+        return { results, ...slotSummary(results) };
+    };
+
     // ── 핸드오버 레이아웃 ──────────────────────────────────
 	async function initHandoverLayout() {
 		await adminConfigReady; // maxMonitorSlots 확정 후 진행
 		let panel = document.getElementById('ho-remote-panel');
         if (panel) {
             panel.style.top = '0px';
-            const r = await githubGet();
+            const r = await checkSlots();
             const dpMsgEl = document.getElementById('ho-dp-msg');
             if (dpMsgEl) {
-                if (r && !isDataValid(r.data?.updatedAt)) {
-                    dpMsgEl.textContent = '20분 초과로 로드 실패';
-                    dpMsgEl.style.color = '#ef4444';
+                dpMsgEl.textContent = r.msg;
+                dpMsgEl.style.color = r.color;
+                dpMsgEl.title = r.msg;
+                if (!r.anyValid) {
                     document.querySelectorAll('.ho-remote-cell').forEach(c => {
                         c.textContent = '—';
                         Object.assign(c.style, { background: 'rgba(255,255,255,0.45)', color: '#b0bec5',
@@ -2687,7 +3041,7 @@
 		panel.id = 'ho-remote-panel';
 		Object.assign(panel.style, {
 			position: 'fixed', top: '0px', left: '50%', transform: 'translateX(-50%)',
-			zIndex: '2147483646', width: '616px',
+			zIndex: '2147483646', width: '690px',
 			background: '#1c1c1f',
 			backgroundImage: 'linear-gradient(#1c1c1f, #1c1c1f), linear-gradient(90deg, #0e7490, #22c55e)',
 			backgroundOrigin: 'border-box', backgroundClip: 'padding-box, border-box',
@@ -2706,14 +3060,16 @@
 			fontSize: '12px', color: '#9ca3af',
 			overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
 			flex: '1', minWidth: '0',
-            background: 'rgba(255,255,255,0.06)',
-            borderRadius: '5px',
-            padding: '3px 8px',
+			background: 'rgba(255,255,255,0.06)',
+			borderRadius: '5px',
+			padding: '3px 8px',
 		});
 		dpMsg.textContent = '로딩 중...';
 
+		// 자리가 좁아 말줄임(…)될 수 있으므로 마우스를 올리면 전체 문구가 툴팁으로 보이게 한다.
 		const setDpMsg = (msg, color = '#9ca3af') => {
 			dpMsg.textContent = msg;
+			dpMsg.title = msg;
 			dpMsg.style.color = color;
 		};
 
@@ -2770,10 +3126,13 @@
 		const rightBtns = document.createElement('div');
 		Object.assign(rightBtns.style, { marginLeft: 'auto', display: 'flex', gap: '5px', flexShrink: '0' });
 
-		const autoBtn = mkBtn('자동 시작', 'linear-gradient(135deg, #0f766e, #22c55e)',
+		const autoBtn1 = mkBtn('자동 시작 1️⃣', 'linear-gradient(135deg, #0f766e, #22c55e)',
+			{ color: '#fff', boxShadow: '0 0 10px rgba(34,197,94,0.4)', padding: '4px 8px' });
+		const autoBtn2 = mkBtn('자동 시작 2️⃣', 'linear-gradient(135deg, #0f766e, #22c55e)',
 			{ color: '#fff', boxShadow: '0 0 10px rgba(34,197,94,0.4)', padding: '4px 8px' });
 
-		rightBtns.appendChild(autoBtn);
+		rightBtns.appendChild(autoBtn1);
+		rightBtns.appendChild(autoBtn2);
 		headerRow.appendChild(rightBtns);
 		panel.appendChild(headerRow);
 
@@ -2804,13 +3163,13 @@
 
 		panel.appendChild(grid);
 
-		const patchTaken = async (names) => {
-			if (_lastSrc === 'gist') { gistTakenList(); (names || []).forEach(n => _gistTaken.set.add(n)); return true; } // gist 폴백은 handover.json에 기록하지 않고 이 탭에만 보관
+		const patchTaken = async (names, slot) => {
+			if (!slot && _lastSrc === 'gist') { gistTakenList(); (names || []).forEach(n => _gistTaken.set.add(n)); return true; } // gist 폴백은 handover.json에 기록하지 않고 이 탭에만 보관
 			try {
-				const res = await fetch(`https://multimonitoring.vercel.app/api/handover`, {
+				const res = await fetch(slot ? 'https://multimonitoring.vercel.app/api/handover_new' : 'https://multimonitoring.vercel.app/api/handover', {
 					method: 'PATCH',
 					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ addTaken: names }),
+					body: JSON.stringify(slot ? { slot, addTaken: names } : { addTaken: names }),
 				});
 				if (!res.ok) { console.log('patchTaken 실패:', res.status); return false; }
 				return true;
@@ -2829,16 +3188,8 @@
             fetchBtn.style.opacity = '0.5';
             try {
                 setDpMsg('데이터 확인 중...', '#3b82f6');
-                const result = await githubGet();
-                if (!result) { setDpMsg('Fetch 실패', '#ef4444'); return; }
-                const { data } = result;
-                if (!isDataValid(data.updatedAt)) {
-                    setDpMsg('이전 시간 교대 기체 데이터가 없습니다', '#f59e0b');
-                    return;
-                }
-                const units = data.units || [];
-                if (!units.length) { setDpMsg('기체 데이터 없음', '#94a3b8'); return; }
-                setDpMsg(loadedMsg(data), '#22c55e');
+                const r = await checkSlots();
+                setDpMsg(r.msg, r.color);
             } finally {
                 _fetchBtnRunning = false;
                 fetchBtn.disabled = false;
@@ -2850,8 +3201,9 @@
 		// maxSuccesses: 이번 호출에서 "새로 체크"해도 되는 최대 개수(남은 모니터링 자리 수).
 		// 이미 모달에서 체크돼 있던 기체는 이 예산을 소모하지 않는다. 기본값 Infinity면
 		// 예산 제한 없이 후보 리스트를 끝까지 순서대로 시도한다(기존 자동시작/인계 버튼과 동일 동작).
-		const AUTO_CLICK_DELAY_MS = 400; // 기체 체크박스를 하나씩 누르는 간격 (눈으로 따라갈 수 있는 속도)
-		const runAutoSelect = async (units, maxSuccesses = Infinity) => {
+		const AUTO_CLICK_DELAY_MS = 400; // 기체 체크박스를 하나씩 누르는 간격 (기존 80ms → 눈으로 따라갈 수 있는 속도)
+		// autoConfirm=false면 체크까지만 하고 '시작하기'는 누르지 않는다(사용자가 기체를 더 추가한 뒤 직접 시작).
+		const runAutoSelect = async (units, maxSuccesses = Infinity, autoConfirm = true) => {
 			let modal = document.querySelector('[data-qk="remote-multiple-select-robot-dialog"]');
 			if (!modal) {
 				setDpMsg('모달 대기 중...', '#3b82f6');
@@ -2950,7 +3302,7 @@
 					skippedUnits.push(name); // 체크 불가 — 자리 안 쓰고 다음 후보로
 					skipReason[name] = !foundLabel ? '목록에 없음' : blocked ? 'OFF 등 선택 불가' : '체크 안 됨';
 				}
-				await new Promise(r => setTimeout(r, AUTO_CLICK_DELAY_MS));
+				await new Promise(r => setTimeout(r, AUTO_CLICK_DELAY_MS)); // 눈으로 체크되는 게 보일 정도의 간격
 			}
 
 			if (!checkedUnits.length) {
@@ -2959,6 +3311,10 @@
 			}
 
 			const attempted = checkedUnits.length + skippedUnits.length;
+			if (!autoConfirm) {
+				setDpMsg(`${checkedUnits.length}/${attempted} 선택 완료${skipNote()} — 기체를 더 추가하고 시작하기를 직접 눌러주세요`, skippedUnits.length ? '#f59e0b' : '#22c55e');
+				return { confirmed: false, manual: true, checkedUnits };
+			}
 			setDpMsg(`${checkedUnits.length}/${attempted} 선택 완료${skipNote()}, 시작하기 대기 중...`, skippedUnits.length ? '#f59e0b' : '#22c55e');
 
 			// ✅ 시작하기 버튼이 활성화될 때까지 폴링 (최대 3초)
@@ -3017,11 +3373,13 @@
 		// 찾아서 그 라벨만 확인하는 reactCheck/wasAlreadyChecked)에만 의존한다.
 		const MAX_MONITOR_SLOTS = ADMIN_CONFIG.maxMonitorSlots; // 관리자 설정값 (MAX_UNITS와 동일 값 공유)
 
+		// 자동 시작 1/2 공통 로직 — 읽어오는 json(slot 1/2 → handover_new_N.json)만 다르고, 선택/시작/taken 처리는 동일
 		let _autoRunning = false;
-		autoBtn.addEventListener('click', async () => {
+		const runAutoStart = async (slot) => {
 			if (_autoRunning) return;
 			_autoRunning = true;
-			autoBtn.disabled = true; autoBtn.style.opacity = '0.6';
+			const allBtns = [autoBtn1, autoBtn2];
+			allBtns.forEach(b => { b.disabled = true; b.style.opacity = '0.6'; });
 			try {
 				const modal = document.querySelector('[data-qk="remote-multiple-select-robot-dialog"]');
 				if (!modal) {
@@ -3029,9 +3387,9 @@
 					return;
 				}
 
-				const result = await githubGet();
+				const result = await githubGet(slot);
 				if (!result || !isDataValid(result.data?.updatedAt)) {
-					setDpMsg('교대 기체 데이터가 없습니다. 로드 먼저 해주세요', '#f59e0b');
+					setDpMsg(`자동 시작 ${slot}번: 교대 기체 데이터가 없거나 20분이 지났습니다`, '#f59e0b');
 					return;
 				}
 
@@ -3043,13 +3401,17 @@
 					return;
 				}
 
-				const { confirmed, checkedUnits } = await runAutoSelect(available);
+				// 2번은 '시작하기'를 누르지 않는다 (남는 자리에 직접 기체를 검색·추가한 뒤 수동 시작)
+				const manualStart = slot === 2;
+				const { confirmed, manual, checkedUnits } = await runAutoSelect(available, Infinity, !manualStart);
 
 				if (!checkedUnits.length) return;
 
-				if (confirmed) {
-					let ok = await patchTaken(checkedUnits);
-					if (!ok) ok = await patchTaken(checkedUnits); // 실패 시 1회 재시도
+				if (manual) {
+					return; // 2번: 체크까지만. 시작은 사용자가 직접 하며 taken 반영·확인은 하지 않음
+				} else if (confirmed) {
+					let ok = await patchTaken(checkedUnits, slot);
+					if (!ok) ok = await patchTaken(checkedUnits, slot); // 실패 시 1회 재시도
 					if (ok) {
 						setDpMsg(`${checkedUnits.length}대 시작 및 서버 반영 완료`, '#22c55e');
 					} else {
@@ -3061,10 +3423,12 @@
 			} finally {
 				setTimeout(() => {
 					_autoRunning = false;
-					autoBtn.disabled = false; autoBtn.style.opacity = '1';
+					allBtns.forEach(b => { b.disabled = false; b.style.opacity = '1'; });
 				}, 2000);
 			}
-		});
+		};
+		autoBtn1.addEventListener('click', () => runAutoStart(1));
+		autoBtn2.addEventListener('click', () => runAutoStart(2));
 
 		posBtn.addEventListener('click', () => {
 			const cards = [...document.querySelectorAll(
@@ -3125,31 +3489,23 @@
 			setDpMsg('드래그로 순서를 변경하세요', '#3b82f6');
 		});
 
-		// ── 자동 Fetch (패널 열릴 때 1회) ──
+		// ── 자동 Fetch (패널 열릴 때 1회) — 새 인계 저장소 1번·2번 기준 ──
 		setDpMsg('인계 데이터 확인 중...', '#3b82f6');
-		const result = await githubGet().catch(() => null);
-		if (result && isDataValid(result.data.updatedAt)) {
-            const units = result.data.units || [];
-            if (units.length) {
-                setDpMsg(loadedMsg(result.data), '#22c55e');
-            } else {
-                setDpMsg('교대 기체 데이터가 없습니다', '#f59e0b');
-            }
-        } else if (result && result.data?.updatedAt) {
-            setDpMsg('이미 20분이 지난 데이터입니다', '#ef4444');
-        } else {
-            setDpMsg('교대 기체 데이터가 없습니다', '#f59e0b');
-        }
+		const slotsNow = await checkSlots();
+		setDpMsg(slotsNow.msg, slotsNow.color);
 
-        // ── 20분 만료 감시 (30초마다) ──
+        // ── 20분 만료 감시 (30초마다) — 슬롯별로 유효 여부가 바뀔 때만 문구 갱신 ──
         clearInterval(window.__hoExpiryTimer);   // 패널 재생성 시 이전 타이머 정리 (누적 방지)
+        let lastKey = slotsNow.key;
         const expiryInterval = window.__hoExpiryTimer = setInterval(() => {
             if (!panel.isConnected) { clearInterval(expiryInterval); return; }   // 패널이 제거됐으면 타이머 종료
             if (panel.style.top !== '0px') return;   // 패널 닫혀있으면 스킵
-            if (!isDataValid(result?.data?.updatedAt)) {
-                setDpMsg('20분 초과, 기체 목록 만료됨', '#ef4444');
-                clearInterval(expiryInterval);
+            const sum = slotSummary(slotsNow.results);
+            if (sum.key !== lastKey) {
+                lastKey = sum.key;
+                setDpMsg(sum.msg + ' (만료됨)', sum.color);
             }
+            if (!sum.anyValid) clearInterval(expiryInterval);
         }, 30000);
 
 		// 패널 외부 클릭 시 닫기 (패널이 재생성돼도 리스너는 document에 1번만 등록)
@@ -3395,11 +3751,12 @@
     _origCheckBrightness(); // 최초 1회
 
     window.addEventListener('keydown', (e) => {
-        if (e.altKey && e.code === 'KeyQ') {
+        if (e.altKey && (e.code === 'KeyQ' || e.code === 'KeyB')) {
 			e.preventDefault();
+			const _isAltB = e.code === 'KeyB';   // Alt+B: 배터리가 대시보드 안으로 들어와 Alt+Q와 동일하게 대시보드를 토글
 
 			// remote/multiple 페이지면 핸드오버 레이아웃
-			if (isHandoverPage() && isHandoverFeatureOn()) {
+			if (!_isAltB && isHandoverPage() && isHandoverFeatureOn()) {
 				const existing = document.getElementById('ho-remote-panel');
 				if (existing) {
 					const isOpen = existing.style.top === '0px';
@@ -3954,7 +4311,7 @@
                 box.innerHTML = `
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
                         <span style="font-size:16px;font-weight:700;">🎮 패드 기능 & 테스터</span>
-                        <button id="gpm-close" style="width:28px;height:28px;border:none;border-radius:5px;background:#3b0000;border:1px solid #ef4444;color:#ef4444;font-size:16px;cursor:pointer;">✕</button>
+                        <button id="gpm-close" style="position:absolute; top:6px; right:8px; background:transparent; border:none; color:#aaa; font-size:20px; cursor:pointer; line-height:1; padding:4px 8px; border-radius:6px; transition:color 0.2s;">✕</button>
                     </div>
                     <div style="display:flex; flex-direction:column; gap:8px;">
                         <button id="gpm-guide" style="padding:10px; border-radius:8px; border:1px solid ${T.border}; background:transparent; color:${T.text}; cursor:pointer; text-align:left; font-size:14px;">🕹️ D-PAD 기능 변경점 설명</button>
@@ -3962,6 +4319,7 @@
                     </div>
                 `;
                 box.querySelector('#gpm-close').onclick = () => window.hideSharedPopup();
+                { const _x = box.querySelector('#gpm-close'); const _d = getNbTheme().isDark; _x.onmouseenter = () => { _x.style.color = _d ? '#fff' : '#000'; }; _x.onmouseleave = () => { _x.style.color = '#aaa'; }; }
                 box.querySelector('#gpm-guide').onclick = () => openGamepadGuideOverlay();
                 box.querySelector('#gpm-tester').onclick = () => openGamepadTesterOverlay();
                 window.showSharedPopup('gamepad-menu', box);
@@ -3970,15 +4328,16 @@
             // 실시간 컨트롤러 테스터 — 사용자가 벡터화한 xbox_skeleton.svg 원본(여백 크롭) + 버튼별 투명 오버레이 + 스틱 기울임 시 캡 이동
             window.openGamepadTesterOverlay = function() {
                 const box = document.createElement('div');
-                box.style.cssText = `background:#1e1e2e; color:#e2e8f0; border-radius:16px; padding:12px; width:100%; box-sizing:border-box; max-height:78vh; overflow-y:auto; box-shadow:0 10px 50px rgba(0,0,0,0.7); pointer-events:auto;`;
+                box.dataset.fit = '1';
+                { const TT = getNbTheme(); box.style.cssText = `background:${TT.isDark ? '#1e1e2e' : TT.card}; color:${TT.isDark ? '#e2e8f0' : TT.text}; width:100%; box-sizing:border-box; pointer-events:auto;`; }
                 box.innerHTML = `
-                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; gap:10px;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; gap:10px; flex:none;">
                         <span style="font-size:15px; font-weight:700;">🎮 컨트롤러 기능 작동 테스터</span>
-                        <button id="gpt-close" style="width:26px; height:26px; border:none; border-radius:5px; background:#3b0000; border:1px solid #ef4444; color:#ef4444; font-size:14px; cursor:pointer;">✕</button>
+                        <button id="gpt-close" style="position:absolute; top:6px; right:8px; background:transparent; border:none; color:#aaa; font-size:20px; cursor:pointer; line-height:1; padding:4px 8px; border-radius:6px; transition:color 0.2s;">✕</button>
                     </div>
-                    <div id="gpt-status" style="text-align:center; font-size:11px; color:#94a3b8; margin-bottom:6px;">컨트롤러의 아무 버튼이나 눌러 연결하세요</div>
-                    <div style="background:#f4ede0; border-radius:10px; padding:8px; max-width:400px; margin:0 auto; box-sizing:border-box;">
-                    <svg viewBox="71 229 1251 930" xmlns="http://www.w3.org/2000/svg" style="width:100%; height:auto; display:block;">
+                    <div id="gpt-status" style="text-align:center; font-size:11px; color:${getNbTheme().isDark ? '#94a3b8' : '#5b5340'}; margin-bottom:4px; flex:none;">컨트롤러의 아무 버튼이나 눌러 연결하세요</div>
+                    <div style="background:#f4ede0; border-radius:10px; padding:6px; flex:1; min-height:0; width:100%; box-sizing:border-box; display:flex;">
+                    <svg viewBox="71 229 1251 930" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" style="width:100%; height:100%; display:block; min-height:0;">
 <path d="M0 0 C17.02 14.78 28.91 33.44 34.51 55.31 C34.81 56.29 35.11 57.27 35.41 58.28 C41.36 80.44 38.7 106.8 28.51 127.31 C28.23 127.89 27.95 128.47 27.67 129.06 C14.18 156.81 -7.86 175 -36.3 186.12 C-62.17 194.83 -91.15 193.22 -115.75 181.46 C-146.03 166.39 -164.89 143.27 -175.63 111.42 C-178.14 102.33 -178.8 93.86 -178.74 84.44 C-178.75 83.25 -178.75 82.06 -178.76 80.83 C-178.7 51.36 -166.63 26.24 -146.49 5.31 C-145.63 4.34 -145.63 4.34 -144.75 3.35 C-107.92 -37.09 -39.44 -33.37 0 0 Z " fill="#FDFDFD" transform="translate(1069.48876953125,444.68798828125)"/>
 <path d="M0 0 C0.74 0.59 1.47 1.18 2.23 1.79 C21.3 17.65 33.82 42.58 37 67 C38.5 90.55 36.07 109.77 26 131 C25.52 132.04 25.03 133.08 24.53 134.15 C11.41 160.12 -12.6 176.82 -39.38 186.44 C-67.86 194.91 -98.01 191.08 -123.89 177.18 C-151.24 161.85 -168.06 136.95 -177.1 107.4 C-183.94 79.09 -177.99 49.25 -163.27 24.61 C-160.23 19.7 -156.9 15.26 -153 11 C-152.27 10.2 -152.27 10.2 -151.53 9.38 C-111.59 -33.94 -45.08 -38.44 0 0 Z " fill="#FDFDFD" transform="translate(617,662)"/>
 <path d="M0 0 C2.3 -0 4.61 -0.01 6.91 -0.01 C13.17 -0.02 19.43 -0.01 25.69 0 C31.77 0.01 37.85 0.01 43.93 0.01 C56.35 -0 68.77 0 81.19 0.02 C93.49 0.03 105.78 0.04 118.07 0.04 C118.84 0.04 119.61 0.04 120.4 0.04 C123.51 0.04 126.63 0.04 129.74 0.04 C158.07 0.05 186.4 0.06 214.74 0.09 C241.45 0.11 268.16 0.12 294.88 0.13 C295.7 0.13 296.53 0.13 297.37 0.13 C300.7 0.13 304.02 0.13 307.34 0.13 C308.99 0.13 310.65 0.13 312.3 0.13 C313.95 0.13 315.61 0.13 317.26 0.13 C343.57 0.13 369.89 0.15 396.21 0.16 C403.9 0.16 411.59 0.17 419.29 0.17 C435.45 0.17 451.62 0.18 467.79 0.2 C474.47 0.2 481.16 0.21 487.84 0.21 C493.96 0.21 500.08 0.21 506.21 0.22 C508.42 0.23 510.63 0.23 512.84 0.23 C527.58 0.22 542.14 0.24 556.66 3.18 C557.56 3.36 558.45 3.53 559.38 3.72 C602.17 12.36 641.32 31.41 673.22 61.37 C673.75 61.86 674.28 62.36 674.83 62.87 C687.82 75.13 698.42 88.8 707.22 104.37 C707.61 105.04 708 105.72 708.4 106.41 C718.23 123.58 725.15 141.95 732.22 160.37 C732.67 161.53 732.67 161.53 733.13 162.72 C741.37 184.19 749.39 205.75 757.22 227.37 C757.51 228.16 757.79 228.95 758.09 229.76 C759.99 235.01 761.89 240.25 763.78 245.5 C764.4 247.22 765.02 248.94 765.64 250.66 C768.46 258.46 771.25 266.22 773.54 274.19 C774.25 276.47 775.11 278.63 776.03 280.83 C779.27 288.71 781.69 296.88 784.28 304.99 C785.08 307.48 785.88 309.97 786.68 312.46 C787.17 314 787.66 315.54 788.15 317.08 C789.5 321.28 790.96 325.42 792.53 329.54 C793.45 331.99 794.29 334.46 795.12 336.94 C795.45 337.93 795.78 338.92 796.13 339.94 C796.47 340.97 796.81 342 797.16 343.05 C797.51 344.13 797.87 345.2 798.24 346.31 C801.49 356.14 804.56 366.01 807.38 375.98 C807.63 376.89 807.89 377.8 808.16 378.74 C808.42 379.66 808.67 380.57 808.94 381.51 C810.41 386.66 811.98 391.74 813.72 396.8 C816.76 405.71 819.12 414.8 821.55 423.88 C822.41 427.05 823.31 430.21 824.22 433.37 C826.2 440.23 828.07 447.12 829.94 454.01 C831.09 458.26 832.25 462.5 833.47 466.73 C839.97 489.28 844.78 512.34 849.58 535.31 C850.14 537.99 850.72 540.66 851.31 543.33 C854.85 559.84 857.05 576.63 859.22 593.37 C859.31 594.03 859.41 594.69 859.5 595.37 C860.39 602.27 860.38 609.13 860.39 616.07 C860.39 617.38 860.4 618.7 860.4 620.05 C860.4 622.83 860.41 625.61 860.41 628.38 C860.41 631.18 860.41 633.99 860.43 636.79 C860.5 652.39 860.3 667.83 858.45 683.34 C858.14 686.06 857.94 688.79 857.74 691.52 C857.26 696.78 856.19 701.85 854.97 706.99 C854.75 707.94 854.53 708.89 854.3 709.87 C847.09 740.22 835.34 769.01 807.97 786.55 C785.29 799.93 761.17 803.48 735.28 803.68 C734.02 803.71 732.75 803.74 731.44 803.77 C705.62 803.94 685.54 788.17 667.85 770.99 C659.09 762.31 651.17 753.08 643.69 743.28 C642.11 741.23 640.52 739.19 638.92 737.15 C628.77 724.23 619.01 711.05 609.43 697.7 C601.57 686.76 593.45 676.03 585.22 665.37 C584.69 664.68 584.16 663.99 583.62 663.29 C574.3 651.22 564.49 639.63 554.22 628.37 C553.37 627.41 552.52 626.45 551.64 625.47 C526.34 597.19 493.12 573.83 454.22 571.37 C448.74 571.22 443.27 571.22 437.79 571.23 C436.14 571.22 434.49 571.22 432.83 571.22 C428.32 571.21 423.81 571.21 419.29 571.21 C414.41 571.21 409.53 571.2 404.66 571.19 C394 571.18 383.35 571.17 372.69 571.17 C366.03 571.16 359.37 571.16 352.71 571.16 C334.26 571.14 315.8 571.13 297.35 571.13 C296.17 571.13 294.99 571.13 293.77 571.13 C292 571.13 292 571.13 290.19 571.13 C287.79 571.13 285.39 571.13 283 571.13 C281.81 571.13 280.62 571.13 279.4 571.13 C260.14 571.12 240.89 571.11 221.63 571.08 C201.84 571.06 182.05 571.05 162.25 571.04 C151.15 571.04 140.05 571.04 128.95 571.02 C119.49 571 110.04 571 100.58 571.01 C95.76 571.01 90.94 571.01 86.13 571 C81.7 570.98 77.28 570.98 72.86 571 C71.27 571 69.68 571 68.09 570.99 C54.38 570.92 40.53 572.17 27.6 577.05 C26.9 577.31 26.2 577.57 25.49 577.83 C-4.68 589.35 -31.94 613.51 -51.64 638.66 C-53.66 641.21 -55.76 643.65 -57.9 646.09 C-65.38 654.62 -72.11 663.65 -78.85 672.76 C-81.38 676.18 -83.95 679.58 -86.51 682.98 C-91.83 690.03 -97.07 697.13 -102.22 704.3 C-109.52 714.49 -117.13 724.44 -124.78 734.37 C-125.3 735.05 -125.83 735.73 -126.37 736.43 C-129.46 740.45 -132.59 744.43 -135.78 748.37 C-136.43 749.18 -136.43 749.18 -137.1 750.01 C-155.63 772.77 -179.18 798.87 -209.78 803.37 C-214.65 803.61 -219.53 803.61 -224.4 803.62 C-225.44 803.62 -225.44 803.62 -226.5 803.62 C-238.15 803.6 -249.39 802.88 -260.78 800.37 C-261.55 800.2 -262.31 800.03 -263.1 799.86 C-288.1 794.21 -309.54 780.5 -323.69 758.78 C-338.08 735.8 -343.59 709.82 -346.47 683.21 C-346.67 681.39 -346.88 679.56 -347.1 677.74 C-354.13 618.95 -344.3 560.53 -330.53 503.51 C-329.49 499.14 -328.54 494.76 -327.59 490.37 C-326.25 484.2 -324.63 478.15 -322.84 472.1 C-321.59 467.69 -320.49 463.25 -319.4 458.8 C-317.03 449.17 -314.36 439.65 -311.58 430.13 C-310.76 427.29 -309.94 424.46 -309.12 421.62 C-304.85 406.82 -300.37 392.08 -295.78 377.37 C-295.56 376.68 -295.35 375.99 -295.13 375.28 C-288.14 352.86 -280.95 330.52 -273.43 308.27 C-272.29 304.88 -271.15 301.49 -270.02 298.1 C-207.14 110.32 -207.14 110.32 -172.85 73.59 C-170.98 71.59 -169.22 69.53 -167.47 67.43 C-154.95 53.17 -139.12 41.83 -122.78 32.37 C-122.17 32.01 -121.55 31.64 -120.92 31.27 C-101.71 19.95 -81.33 12.04 -59.78 6.37 C-58.81 6.1 -57.83 5.84 -56.83 5.56 C-38.18 0.83 -19.15 -0.08 0 0 Z M-57.28 14.24 C-58.28 14.5 -59.28 14.76 -60.3 15.03 C-113.11 29.08 -160.32 61.27 -188.2 108.78 C-196.15 122.75 -202.2 137.45 -208.02 152.41 C-208.79 154.4 -209.57 156.38 -210.35 158.37 C-234.21 218.96 -255.7 280.51 -276.03 342.37 C-276.25 343.05 -276.48 343.74 -276.71 344.44 C-281.71 359.66 -286.64 374.89 -291.16 390.26 C-292.12 393.51 -293.1 396.76 -294.09 400 C-301.84 425.65 -308.98 451.45 -315.78 477.37 C-316.07 478.46 -316.36 479.55 -316.65 480.67 C-325.58 514.55 -332.98 548.88 -337.31 583.66 C-337.79 587.43 -338.31 591.2 -338.84 594.96 C-344.58 638.13 -342.8 689.14 -327.78 730.37 C-327.5 731.13 -327.23 731.89 -326.94 732.67 C-323.52 741.89 -319.61 750.39 -313.78 758.37 C-313.12 759.28 -312.47 760.19 -311.8 761.13 C-295.59 782.33 -270.77 790.99 -245.18 794.54 C-229.71 796.38 -212.27 798.01 -197.78 791.37 C-196.8 790.95 -195.82 790.54 -194.8 790.12 C-172.54 779.99 -154.64 759.18 -139.78 740.37 C-139.28 739.73 -138.77 739.09 -138.25 738.44 C-129.17 726.93 -120.43 715.2 -111.78 703.37 C-103.83 692.5 -95.8 681.7 -87.61 671.01 C-84.04 666.34 -80.5 661.65 -77 656.92 C-68.43 645.34 -59.02 634.61 -49.24 624.05 C-47.15 621.77 -45.11 619.46 -43.09 617.12 C-36.32 609.35 -28.86 602.75 -20.78 596.37 C-20.27 595.96 -19.76 595.55 -19.23 595.12 C-0.57 580.2 21.87 566.64 46.1 564.25 C46.93 564.17 47.75 564.08 48.61 564 C57.02 563.21 65.38 563.08 73.82 563.09 C75.5 563.09 77.18 563.08 78.86 563.08 C83.41 563.06 87.97 563.06 92.53 563.06 C97.46 563.06 102.4 563.05 107.34 563.04 C118.11 563.01 128.87 563.01 139.64 563 C146.37 563 153.11 562.99 159.84 562.98 C178.53 562.96 197.21 562.95 215.89 562.94 C217.08 562.94 218.28 562.94 219.5 562.94 C221.92 562.94 224.34 562.94 226.75 562.94 C227.95 562.94 229.15 562.94 230.39 562.94 C231.59 562.94 232.79 562.94 234.03 562.94 C253.49 562.94 272.96 562.91 292.42 562.87 C312.46 562.84 332.49 562.82 352.52 562.82 C363.75 562.82 374.98 562.81 386.21 562.78 C395.76 562.75 405.32 562.75 414.88 562.76 C419.75 562.77 424.61 562.77 429.48 562.74 C477.07 562.53 512.84 575.81 547.22 609.37 C548.24 610.36 548.24 610.36 549.29 611.37 C556.96 618.84 564.51 626.27 571.12 634.7 C573.11 637.22 575.16 639.66 577.24 642.09 C583.16 648.99 588.75 656.11 594.22 663.37 C594.9 664.27 594.9 664.27 595.6 665.19 C605.09 677.76 614.43 690.45 623.73 703.16 C631.7 714.05 639.87 724.77 648.22 735.37 C648.96 736.31 649.7 737.25 650.45 738.22 C652.35 740.63 654.28 743 656.22 745.37 C656.63 745.87 657.05 746.38 657.47 746.89 C673.88 766.77 695.85 792.43 723.22 795.37 C754.44 797.05 789.01 792.75 813.59 771.77 C844.9 743.11 850.53 695.58 852.36 655.31 C852.6 648.02 852.66 640.73 852.66 633.43 C852.66 632.31 852.66 631.19 852.66 630.04 C852.64 608.51 850.75 587.59 847.22 566.37 C846.93 564.6 846.93 564.6 846.64 562.79 C845.38 555.27 843.86 547.82 842.22 540.37 C842.06 539.62 841.89 538.87 841.72 538.1 C838.19 521.95 834.64 505.81 830.58 489.78 C829.48 485.44 828.45 481.08 827.45 476.72 C825.28 467.27 822.72 457.97 819.95 448.68 C817.7 441.09 815.62 433.46 813.6 425.8 C811.47 417.79 809.18 409.93 806.45 402.09 C804.96 397.59 803.68 393.05 802.41 388.49 C799.37 377.68 795.97 367.01 792.5 356.33 C791.49 353.21 790.5 350.09 789.51 346.97 C784.48 331.18 779.29 315.44 773.97 299.74 C773.76 299.12 773.55 298.49 773.33 297.85 C764.1 270.58 754.35 243.5 744.38 216.5 C743.25 213.45 742.13 210.41 741.02 207.37 C732.15 183.2 723.03 159.16 713.22 135.37 C712.82 134.39 712.42 133.41 712 132.41 C705.6 116.95 697.52 102.58 687.22 89.37 C686.61 88.55 685.99 87.73 685.36 86.89 C670.29 67.54 651.46 51.53 630.22 39.37 C629.56 38.98 628.9 38.59 628.22 38.19 C606.51 25.47 584 17.26 559.41 12.05 C558.22 11.8 557.02 11.55 555.8 11.28 C554.05 10.93 554.05 10.93 552.26 10.57 C551.24 10.36 550.22 10.15 549.17 9.94 C535.75 8 522.22 8.22 508.7 8.23 C506.42 8.22 504.14 8.22 501.87 8.22 C495.64 8.21 489.41 8.21 483.18 8.21 C477.14 8.21 471.11 8.2 465.07 8.19 C448.91 8.18 432.75 8.17 416.59 8.17 C408.94 8.16 401.29 8.16 393.64 8.16 C367.41 8.14 341.18 8.13 314.96 8.13 C313.31 8.13 311.67 8.13 310.02 8.13 C308.37 8.13 306.73 8.13 305.08 8.13 C301.77 8.13 298.47 8.13 295.16 8.13 C294.34 8.13 293.52 8.13 292.68 8.13 C266.11 8.12 239.54 8.11 212.98 8.08 C184.85 8.06 156.72 8.05 128.59 8.04 C125.5 8.04 122.41 8.04 119.31 8.04 C118.17 8.04 118.17 8.04 117.01 8.04 C104.8 8.04 92.59 8.03 80.37 8.02 C68.09 8 55.8 8 43.51 8.01 C36.86 8.01 30.21 8.01 23.56 8 C17.46 7.98 11.36 7.98 5.26 8 C3.07 8 0.88 8 -1.32 7.99 C-20.19 7.92 -38.99 9.29 -57.28 14.24 Z " fill="#C7D9EC" transform="translate(440.77955627441406,334.63250732421875)"/>
@@ -4043,6 +4402,7 @@
                     </div>
                 `;
                 box.querySelector('#gpt-close').onclick = () => window.hideSharedPopup();
+                { const _x = box.querySelector('#gpt-close'); const _d = getNbTheme().isDark; _x.onmouseenter = () => { _x.style.color = _d ? '#fff' : '#000'; }; _x.onmouseleave = () => { _x.style.color = '#aaa'; }; }
                 window.showSharedPopup('gamepad-tester', box);
 
                 // 버튼 index → 오버레이 id 매핑 (xbox_skeleton.svg 좌표 분석 기준)
@@ -4105,25 +4465,25 @@
 
             window.openGamepadGuideOverlay = function() {
                 const box = document.createElement('div');
-                box.style.cssText = `background:#1e1e2e; color:#e2e8f0; border-radius:16px; padding:16px; width:100%; box-sizing:border-box; max-height:90vh; overflow-y:auto; box-shadow:0 10px 50px rgba(0,0,0,0.7); pointer-events:auto; display:flex; flex-direction:column;`;
+                box.dataset.fit = '1';
+                { const TT = getNbTheme(); box.style.cssText = `background:${TT.isDark ? '#1e1e2e' : TT.card}; color:${TT.isDark ? '#e2e8f0' : TT.text}; width:100%; box-sizing:border-box; pointer-events:auto;`; }
                 box.innerHTML = `
-                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; gap:10px;">
-                        <span style="font-size:16px; font-weight:700;">🎮 D-PAD 기능 변경점 설명</span>
-                        <button id="gp-close" style="width:28px; height:28px; border:none; border-radius:5px; background:#3b0000; border:1px solid #ef4444; color:#ef4444; font-size:16px; cursor:pointer;">✕</button>
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; gap:10px; flex:none;">
+                        <span style="font-size:15px; font-weight:700;">🎮 D-PAD 기능 변경점 설명</span>
+                        <button id="gp-close" style="position:absolute; top:6px; right:8px; background:transparent; border:none; color:#aaa; font-size:20px; cursor:pointer; line-height:1; padding:4px 8px; border-radius:6px; transition:color 0.2s;">✕</button>
                     </div>
                     <img src="https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/xbox_binding.jpg"
-                         style="border-radius:8px; display:block; width:100%; height:auto;" />
+                         style="border-radius:8px; display:block; width:100%; flex:1; min-height:0; object-fit:contain;" />
                 `;
                 box.querySelector('#gp-close').onclick = () => window.hideSharedPopup();
+                { const _x = box.querySelector('#gp-close'); const _d = getNbTheme().isDark; _x.onmouseenter = () => { _x.style.color = _d ? '#fff' : '#000'; }; _x.onmouseleave = () => { _x.style.color = '#aaa'; }; }
                 window.showSharedPopup('gamepad-guide', box);
             };
 
 			// 그 외 페이지는 기존 대시보드
 			const sharedPopupEl = document.getElementById('neubie-shared-popup');
 			const scheduleOverlayEl = document.getElementById('neubie-schedule-overlay');
-              const isAnyOpen = (dashboard.style.display === 'block' || 
-              batteryPopup.style.display === 'block' ||
-              (sharedPopupEl && sharedPopupEl.style.display === 'flex') ||
+              const isAnyOpen = (dashboard.style.display === 'block' ||
               (scheduleOverlayEl && scheduleOverlayEl.style.display === 'flex'));
 			
 			if (isAnyOpen) {
@@ -4141,29 +4501,6 @@
 				syncTasksFromServer(true);
 			}
 		}
-
-        // Alt + B (배터리) 단축키
-        if (e.altKey && e.code === 'KeyB') { 
-            e.preventDefault(); 
-            toggleBattery();
-            const battBtnEl = document.getElementById('ho-batt-btn');
-            if (battBtnEl) {
-                const isOpen = batteryPopup.style.display === 'block';
-                battBtnEl.textContent = isOpen ? '배터리 닫기' : '성남 배터리';
-                battBtnEl.style.background = isOpen ? '#ef4444' : '#475569';
-            }
-            if (dashboard.style.display === 'block') {
-                renderDashboard();
-                if (window.currentMyTasks && window.currentMyTasks.length > 0) {
-                    renderTaskList(window.currentMyTasks);
-                }
-            }
-            // renderDashboard 이후에 outline 적용
-            if (window._neubieBatteryCard) {
-                const isOpen = batteryPopup.style.display === 'block';
-                window._neubieBatteryCard.style.outline = isOpen ? '2px solid #ef4444' : 'none';
-            }
-        }
     });
 
 	let neubieInterventionEntry = { time: null, scenario: null };
