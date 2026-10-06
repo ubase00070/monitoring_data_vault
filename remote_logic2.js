@@ -691,6 +691,7 @@
     //  · 한 번 조회하면 BATT_COOLDOWN_MS(2분) 동안 재조회 불가([재조회 ##:##]). 다음 조회 가능 시각을 localStorage에
     //    저장하므로 새로고침·다른 탭에서도 카운트가 이어지고, 그동안은 마지막으로 읽은 값을 그대로 보여준다.
     //  · 실패/타임아웃된 기체는 그 자리에서 재시도하지 않고 '확인 불가'로 두며, 다음 조회 때 다시 시도한다.
+    //  · 사이트에 기체 카드 자체가 없는 경우(우측에 '검색 결과가 없어요.')는 타임아웃을 기다리지 않고 짧은 확인 후 바로 '확인 불가'로 판정한다.
     // ══════════════════════════════════════════════════════════
     const BATT_COOLDOWN_MS = 2 * 60 * 1000;     // 재조회 간격
     const BATT_STAGGER_MS = 1000;               // iframe 순차 오픈 간격
@@ -707,6 +708,9 @@
     // 'OFF/대기'처럼 로딩 중 기본값과 구별이 안 되는 값은 같은 값이 일정 시간 유지돼야 확정한다.
     const BATT_OFF_CONFIRM_MS = 3000;
     const BATT_IDLE_CONFIRM_MS = 3000;
+    // 기체 카드가 아예 없는 사이트(사이드바에 '검색 결과가 없어요.' 표시)는 타임아웃(20초)까지 기다리지 않고,
+    // 그 상태가 이 시간 동안 끊김 없이 유지되면 '확인 불가'로 바로 확정한다. (로딩 중 깜빡임 오탐 방지용 확인 시간)
+    const BATT_NOCARD_CONFIRM_MS = 4000;
     const BATT_CACHE_KEY = 'neubie_batt_cache';
     const BATT_NEXT_KEY = 'neubie_batt_next_at';
     const BATT_STATUS_STYLE = {
@@ -720,6 +724,29 @@
     let _battDone = 0;
     let _battTicker = null;
     const _battLoading = new Set();
+
+    // '이 사이트에는 기체 카드가 없다'는 것을 적극적 증거로 판단한다. (카드가 아직 안 보이는 것만으로는 판정하지 않음 — 로딩 중일 수 있으므로)
+    //  모두 만족해야 true:
+    //   ① 기체 카드(li[data-qk="robot-card"])가 없고
+    //   ② '로봇 전원' / '임무 진행' 라벨도 없으며
+    //   ③ 사이드바에 빈 목록 안내 문구('검색 결과가 없어요')가 실제로 표시되어 있다.
+    //  페이지 로드 실패/로그인 화면 등은 ③ 문구가 없으므로 true가 되지 않고, 기존처럼 타임아웃 경로로 간다.
+    function hasNoRobotCard(doc) {
+        try {
+            if (!doc || !doc.body) return false;
+            if (doc.querySelector('[data-qk="robot-card"]')) return false;
+            let emptyMsg = false;
+            const walker = doc.createTreeWalker(doc.body, 4 /* SHOW_TEXT */);
+            let tn;
+            while ((tn = walker.nextNode())) {
+                const t = tn.nodeValue.trim();
+                if (!t) continue;
+                if (t === '로봇 전원' || t === '임무 진행') return false;
+                if (t.replace(/\s+/g, ' ').includes('검색 결과가 없어요')) emptyMsg = true;
+            }
+            return emptyMsg;
+        } catch (e) { return false; }
+    }
 
     // 사이드바 텍스트로 기체 상태를 읽는다. 아직 값이 확정되지 않았으면 null.
     // 반환: { status, battery, definitive } — definitive=true면 즉시 확정, false면 연속 일치 확인 필요
@@ -856,7 +883,7 @@
             f.style.cssText = 'position:fixed; left:0; top:0; width:1440px; height:900px; border:0; opacity:0; pointer-events:none; z-index:-1;';
             f.src = `${location.origin}/ko/monitoring/${c.monitoringId}`;
 
-            let done = false, lastKey = '', stableSince = 0;
+            let done = false, lastKey = '', stableSince = 0, noCardSince = 0;
             let poll = null, killer = null;
             const finish = (r) => {
                 if (done) return;
@@ -872,7 +899,16 @@
                 try { doc = f.contentDocument; } catch (e) { finish({ ok: false }); return; }   // 교차 출처/차단
                 if (!doc || !doc.body) return;
                 const r = parseBatterySidebar(doc, c.keyword);
-                if (!r) { lastKey = ''; stableSince = 0; return; }
+                if (!r) {
+                    lastKey = ''; stableSince = 0;
+                    // 기체 카드가 없는 사이트: 상태가 BATT_NOCARD_CONFIRM_MS 동안 계속 유지되면 즉시 '확인 불가' 확정
+                    if (hasNoRobotCard(doc)) {
+                        if (!noCardSince) noCardSince = Date.now();
+                        else if (Date.now() - noCardSince >= BATT_NOCARD_CONFIRM_MS) finish({ ok: false, noCard: true });
+                    } else noCardSince = 0;
+                    return;
+                }
+                noCardSince = 0;
                 const key = `${r.status}|${r.battery}`;
                 if (key !== lastKey) { lastKey = key; stableSince = Date.now(); }
                 const need = r.status === 'OFF' ? BATT_OFF_CONFIRM_MS : BATT_IDLE_CONFIRM_MS;
