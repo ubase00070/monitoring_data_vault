@@ -1660,7 +1660,7 @@
        ============================================================ */
     // 데이터 = 서버(api/delivery-poll)가 슬랙 배차 알림을 파싱해 둔 '오늘 배달 목록' — 배달 로그 보드와 같은 주소·같은 서버 캐시를 쓴다.
     // 내 배달 = 수행자(이모지로 판정)가 내 이름이거나, 인계 전 수행자에 내 이름이 있는 건. 그중 최근 3건을 '최신 → 오래된' 순서로 왼쪽부터 버튼에 올린다.
-    // 버튼 글자 = '사이트 - 기체명', 누르면 파일명 복사: 날짜_시_사이트_기체명_#주문번호_내이름 (주문번호가 없으면 그 칸은 생략, 날짜·시는 배정 시각 기준)
+    // 버튼 글자 = '사이트 - 기체명', 누르면 파일명 복사: 날짜_시_사이트_기체명_#주문번호_내이름 (주문번호가 없으면 '#None', 날짜·시는 배정 시각 기준)
     //
     // ■ 호출 부담 방어 (한 번에 20명 안팎이 쓰는 도구 — GitHub·Vercel 한도 보호)
     //   1) 주소는 배달 로그 보드와 똑같이 ?view=day&date=… 만 쓴다. ?t=Date.now() 나 cache:'no-store' 를 붙이지 않는다
@@ -1846,7 +1846,7 @@
         if (rs) { parts.push(dlvClean(rs.site)); parts.push(dlvClean(rs.unit)); }      // ROBOT_MAP 기준: '충남대학교병원_#311' (기존 파일명과 같은 모양)
         else { if (p.site) parts.push(dlvClean(p.site)); if (p.robot) parts.push(dlvClean(p.robot)); }   // 못 찾으면 슬랙 이름으로
         let name = parts.join(DLV_NAME_SEP);
-        if (x.o) name += DLV_NAME_SEP + '#' + dlvClean(x.o);
+        name += DLV_NAME_SEP + '#' + (dlvClean(x.o) || 'None');   // 주문번호가 없으면 '#None' 으로 자리를 남긴다
         if (me) name += DLV_NAME_SEP + dlvClean(me);
         return name;
     }
