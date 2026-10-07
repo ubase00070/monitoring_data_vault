@@ -9265,6 +9265,585 @@
       }
     },
     {
+      "name": "신입1",
+      "shiftType": "주중주간",
+      "workTime": "12;30~21:30",
+      "schedule": {
+        "10/1": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/2": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/3": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/4": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/5": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/6": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/7": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/8": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/9": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/10": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/11": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/12": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/13": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/14": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/15": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/16": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/17": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/18": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/19": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/20": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/21": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/22": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/23": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/24": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/25": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/26": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/27": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/28": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/29": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/30": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/31": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        }
+      }
+    },
+    {
+      "name": "신입2",
+      "shiftType": "주중야간",
+      "workTime": "13:00~22:00",
+      "schedule": {
+        "10/1": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/2": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/3": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/4": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/5": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/6": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/7": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/8": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/9": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/10": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/11": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/12": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/13": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/14": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/15": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/16": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/17": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/18": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/19": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/20": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/21": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/22": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/23": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/24": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/25": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/26": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/27": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/28": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/29": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/30": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/31": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        }
+      }
+    },
+    {
+      "name": "신입3",
+      "shiftType": "주말야간",
+      "workTime": "13:00~22:00",
+      "schedule": {
+        "10/1": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/2": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/3": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/4": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/5": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/6": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/7": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/8": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/9": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/10": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/11": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/12": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/13": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/14": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/15": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/16": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/17": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/18": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/19": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/20": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/21": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/22": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/23": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/24": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/25": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/26": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/27": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/28": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/29": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/30": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        },
+        "10/31": {
+          "status": "empty",
+          "working": false,
+          "present": false,
+          "raw": ""
+        }
+      }
+    },
+    {
       "name": "이연지",
       "shiftType": "야간2",
       "workTime": "",
@@ -9685,6 +10264,6 @@
     "10/31"
   ],
   "mainMonth": 10,
-  "updatedAt": "2026-10-06T03:53:07.180Z",
+  "updatedAt": "2026-10-07T03:53:10.292Z",
   "sheetName": "2026년_10월 스케줄"
 }
