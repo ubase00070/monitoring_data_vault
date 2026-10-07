@@ -1755,8 +1755,9 @@
     function dlvTick() {
         if (!dlvCardLive()) return;
         dlvRender();                                                    // 이름·캐시가 바뀐 경우에만 화면이 실제로 갱신됨
-        if (document.hidden || !dlvMyName() || !dlvInWindow()) return;
+        if (document.hidden || !dlvMyName()) return;
         const now = Date.now(), c = dlvReadCache();
+        if (!dlvInWindow() && c && c.date === dlvOpDate() && Array.isArray(c.items)) return;   // 조회 시간(08~23시) 밖에는 갱신 안 함 — 단, 오늘(~다음날 07시) 데이터가 아직 없으면 한 번은 받아온다
         // 아래 세 검사는 PC 시계가 되감겨도(시간 동기화 등) 영영 막히지 않게, '미래 시각'으로 찍힌 값은 믿지 않는다
         const gap = now - _dlvLastFetchAt;
         if (gap >= 0 && gap < DLV_MIN_GAP_MS) return;
@@ -1915,7 +1916,7 @@
         const mine = (me && hasData) ? dlvMine(c.items, me) : [];
         let note = '';
         if (!me) note = '성명을 입력하면 내 배달이 표시돼요';
-        else if (!hasData && inWin) note = (_dlvStatus === 'fail' || (c && c.fails)) ? '배달 정보를 불러오지 못했어요' : '불러오는 중…';   // 조회 시간(08~23시) 밖에는 조회 자체를 안 하므로 '불러오는 중…' 대신 빈 칸('배달 건 없음')
+        else if (!hasData) note = (_dlvStatus === 'fail' || (c && c.fails)) ? '배달 정보를 불러오지 못했어요' : '불러오는 중…';   // 조회 시간 밖이라도 오늘 데이터가 없으면 한 번 받아오므로 '불러오는 중…' 표시
         const ageMin = (c && c.at) ? Math.floor((Date.now() - c.at) / 60000) : 0;
         const staleWarn = (ageMin >= 6 || (c && c.stale)) ? '\n⚠ ' + (c && c.stale ? '서버가 마지막 정상 데이터를 대신 보내는 중' : '마지막 갱신 ' + ageMin + '분 전') : '';
 
