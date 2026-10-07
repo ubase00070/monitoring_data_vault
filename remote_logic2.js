@@ -3306,7 +3306,7 @@
 			}
 
 			if (!checkedUnits.length) {
-				setDpMsg(skippedUnits.length ? `선택된 기체 없음 (전부 체크 불가: ${skippedUnits.map(n => `${n}(${skipReason[n] || '체크 불가'})`).join(', ')})` : '선택된 기체 없음', '#ef4444');
+				setDpMsg(skippedUnits.length ? `새로고침 후 재시도하세요 (${skippedUnits.map(n => `${n}(${skipReason[n] || '체크 불가'})`).join(', ')})` : '선택된 기체 없음', '#ef4444');
 				return { confirmed: false, checkedUnits: [] };
 			}
 
