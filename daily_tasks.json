@@ -11,7 +11,7 @@
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "08:00",
-    "subUser": "호덕진"
+    "subUser": "오정훈"
   },
   {
     "user": "조천호",
@@ -25,147 +25,147 @@
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "10:00",
-    "subUser": "오정훈"
+    "subUser": "백진홍"
   },
   {
     "user": "백진홍",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "11:00",
-    "subUser": "신현철"
+    "subUser": "이현경"
   },
   {
     "user": "신현철",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "12:00",
-    "subUser": "조천호"
+    "subUser": "최윤혁"
   },
   {
     "user": "석승찬",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "13:00",
-    "subUser": "한승완"
+    "subUser": "호덕진"
   },
   {
     "user": "김한석",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "14:00",
-    "subUser": "장재원"
+    "subUser": "김동진"
   },
   {
     "user": "김미소",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "15:00",
-    "subUser": "임미선"
+    "subUser": "신현철"
   },
   {
     "user": "이현경",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "16:00",
-    "subUser": "석승찬"
+    "subUser": "송태영"
   },
   {
     "user": "김동진",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "17:00",
-    "subUser": "백진홍"
+    "subUser": "석승찬"
   },
   {
     "user": "한승완",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "18:00",
-    "subUser": "박효빈"
+    "subUser": "권재윤"
   },
   {
     "user": "장재원",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "19:00",
-    "subUser": "이규순"
+    "subUser": "박효빈"
   },
   {
     "user": "박효빈",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "20:00",
-    "subUser": "박계원"
+    "subUser": "김가은"
   },
   {
     "user": "권재윤",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "21:00",
-    "subUser": "서형민"
+    "subUser": "최정기"
   },
   {
     "user": "김가은",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "22:00",
-    "subUser": "최정기"
+    "subUser": "박계원"
   },
   {
     "user": "서형민",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "23:00",
-    "subUser": "임다연"
+    "subUser": "김소연"
   },
   {
     "user": "이규순",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "00:00",
-    "subUser": "임아연"
+    "subUser": "임다연"
   },
   {
     "user": "김소연",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "01:00",
-    "subUser": "최정기"
+    "subUser": "박계원"
   },
   {
     "user": "박계원",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "02:00",
-    "subUser": "이규순"
+    "subUser": "임아연"
   },
   {
     "user": "최정기",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "03:00",
-    "subUser": "김소연"
+    "subUser": "임다연"
   },
   {
     "user": "임다연",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "04:00",
-    "subUser": "임아연"
+    "subUser": "김소연"
   },
   {
     "user": "임아연",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "05:00",
-    "subUser": "김소연"
+    "subUser": "임다연"
   },
   {
     "user": "김소연",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "06:00",
-    "subUser": "임다연"
+    "subUser": "임아연"
   },
   {
     "user": "호덕진",
@@ -182,13 +182,13 @@
   {
     "user": "오정훈",
     "type": "task",
-    "content": "[08:50] 부산과학관 170호기 임무 HUB B 출근 / 자비에 재부팅 / 임무받기 ON 진행 [수,목,금,토,일,월]",
+    "content": "[08:50] 부산과학관 170호기 임무 HUB B 출근 / 자비에 재부팅 / 임무받기 ON 진행 [화,수,목,금,토,일]",
     "rawTime": "08:50"
   },
   {
     "user": "오정훈",
     "type": "task",
-    "content": "[09:00~10:00] 부산국립과학관 170,171호기  임무  [수,목,금,토,일,월]",
+    "content": "[09:00~10:00] 부산국립과학관 170,171호기  임무 [화,수,목,금,토,일]",
     "rawTime": "09:00"
   },
   {
@@ -212,7 +212,7 @@
   {
     "user": "박효선",
     "type": "task",
-    "content": "[10:00~11:00] 부산국립과학관 170,171호기 임무 [수,목,금,토,일,월]",
+    "content": "[10:00~11:00] 부산국립과학관 170,171호기 임무  [화,수,목,금,토,일]",
     "rawTime": "10:00"
   },
   {
@@ -242,7 +242,7 @@
   {
     "user": "김미소",
     "type": "task",
-    "content": "[11:00~12:00] 부산국립과학관 170,171호기 임무 [수,목,금,토,일,월]",
+    "content": "[11:00~12:00] 부산국립과학관 170,171호기 임무 [화,수,목,금,토,일]",
     "rawTime": "11:00"
   },
   {
@@ -260,13 +260,13 @@
   {
     "user": "장재원",
     "type": "task",
-    "content": "[12:00~13:00] 부산국립과학관 170,171호기 임무 [수,목,금,토,일,월]",
+    "content": "[12:00~13:00] 부산국립과학관 170,171호기 임무 [화,수,목,금,토,일]",
     "rawTime": "12:00"
   },
   {
     "user": "송태영",
     "type": "task",
-    "content": "[13:00~14:00] 부산국립과학관 170,171호기 임무 [수,목,금,토,일,월]",
+    "content": "[13:00~14:00] 부산국립과학관 170,171호기 임무 [화,수,목,금,토,일]",
     "rawTime": "13:00"
   },
   {
@@ -290,13 +290,13 @@
   {
     "user": "김동진",
     "type": "task",
-    "content": "[14:00~15:00] 부산국립과학관 170,171호기 임무 [수,목,금,토,일,월]",
+    "content": "[14:00~15:00] 부산국립과학관 170,171호기 임무  [화,수,목,금,토,일]",
     "rawTime": "14:00"
   },
   {
     "user": "박효빈",
     "type": "task",
-    "content": "[15:00~16:00] 부산국립과학관 170,171호기 임무 [수,목,금,토,일,월]",
+    "content": "[15:00~16:00] 부산국립과학관 170,171호기 임무  [화,수,목,금,토,일]",
     "rawTime": "15:00"
   },
   {
@@ -314,7 +314,7 @@
   {
     "user": "백진홍",
     "type": "task",
-    "content": "[16:00~17:00] 부산국립과학관 170,171호기 임무 후 주차, 임무받기 OFF [수,목,금,토,일,월]",
+    "content": "[16:00~17:00] 부산국립과학관 170,171호기 임무 후 주차, 임무받기 OFF  [화,수,목,금,토,일]",
     "rawTime": "16:00"
   },
   {
@@ -374,7 +374,7 @@
   {
     "user": "김가은",
     "type": "task",
-    "content": "[22:59] 무선충전 기체 주차 상태 (충전중⚡) 확인",
-    "rawTime": "22:59"
+    "content": "[23:00] 무선충전 기체 주차 상태 (충전중⚡) 확인",
+    "rawTime": "23:00"
   }
 ]
