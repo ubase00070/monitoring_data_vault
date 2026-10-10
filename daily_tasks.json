@@ -91,35 +91,35 @@
     "subUser": "김도형"
   },
   {
-    "user": "박효빈",
+    "user": "최성환",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "20:00",
     "subUser": "이규순"
   },
   {
-    "user": "최성환",
+    "user": "박효빈",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "21:00",
     "subUser": "최정기"
   },
   {
-    "user": "최선호",
+    "user": "김도형",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "22:00",
     "subUser": "박효빈"
   },
   {
-    "user": "김도형",
+    "user": "최성환",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "23:00",
     "subUser": "이규순"
   },
   {
-    "user": "최성환",
+    "user": "최선호",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "00:00",
