@@ -56,21 +56,21 @@
     "subUser": "이수성"
   },
   {
-    "user": "김동진",
+    "user": "백진홍",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "15:00",
     "subUser": "최윤혁"
   },
   {
-    "user": "백진홍",
+    "user": "유재헌",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "16:00",
     "subUser": "백진홍"
   },
   {
-    "user": "유재헌",
+    "user": "김동진",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "17:00",
@@ -246,7 +246,7 @@
     "rawTime": "13:00"
   },
   {
-    "user": "송태영",
+    "user": "김동진",
     "type": "task",
     "content": "[13:00] 무선충전 기체 주차 상태 (충전중⚡) 확인 및 무선충전기체 자비에 재시작",
     "rawTime": "13:00"
@@ -300,13 +300,13 @@
     "rawTime": "17:00"
   },
   {
-    "user": "송주현",
+    "user": "백진홍",
     "type": "task",
     "content": "[17:40] 무선충전 기체 주차 상태 (충전중⚡) 확인",
     "rawTime": "17:40"
   },
   {
-    "user": "송주현",
+    "user": "박효빈",
     "type": "task",
     "content": "[18:40] 수원 힐스테이트 푸르지오 (뉴비오더) 임무 OFF [주말]",
     "rawTime": "18:40"
@@ -318,13 +318,13 @@
     "rawTime": "20:30"
   },
   {
-    "user": "최선호",
+    "user": "김도형",
     "type": "task",
     "content": "[20:59] 수원 힐스테이트_바로고 임무 OFF",
     "rawTime": "20:59"
   },
   {
-    "user": "강철환",
+    "user": "김가은",
     "type": "task",
     "content": "[23:00] 무선충전 기체 주차 상태 (충전중⚡) 확인",
     "rawTime": "23:00"
