@@ -49,7 +49,7 @@
     "subUser": "이준"
   },
   {
-    "user": "이수성",
+    "user": "유재헌",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "14:00",
@@ -63,7 +63,7 @@
     "subUser": "최윤혁"
   },
   {
-    "user": "유재헌",
+    "user": "이수성",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "16:00",
@@ -192,7 +192,7 @@
     "rawTime": "09:50"
   },
   {
-    "user": "이수성",
+    "user": "이민수",
     "type": "task",
     "content": "[10:00] 무선충전 기체 주차 상태 (충전중⚡) 확인 및 무선충전기체 자비에 재시작",
     "rawTime": "10:00"
