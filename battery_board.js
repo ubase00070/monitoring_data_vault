@@ -6924,7 +6924,7 @@
         .bb-sp-t .x { color:#b91c1c; font-size:16px; font-weight:900; padding:0 4px; cursor:pointer; }
         .bb-sp-sub { font-size:11.5px; color:var(--mu); }
         .bb-sp-sub.warn { color:#c2410c; font-weight:700; }
-        .bb-sp-th, .bb-sp-row { display:grid; grid-template-columns:28px minmax(0,1fr) 76px 62px 64px; gap:6px; align-items:center; padding:0 16px; }
+        .bb-sp-th, .bb-sp-row { display:grid; grid-template-columns:28px minmax(0,1fr) 72px 64px 64px; gap:6px; align-items:center; padding:0 16px; }
         .bb-sp-th { flex:0 0 auto; font-size:11px; color:var(--mu); padding-top:5px; padding-bottom:5px; border-bottom:1px solid var(--bd); background:var(--sur2); }
         .bb-sp-th span:nth-child(n+3), .bb-sp-row > div:nth-child(n+3) { text-align:right; }
         .bb-sp-body { flex:1 1 auto; min-height:0; overflow-y:auto; }
@@ -6939,6 +6939,9 @@
         .bb-sp-c small { margin-left:2px; font-size:11px; color:var(--mu); font-weight:700; }
         .bb-sp-d, .bb-sp-a { font-size:13.5px; font-variant-numeric:tabular-nums; }
         .bb-sp-a { color:var(--mu); }
+        .bb-sp-th span[data-sort] { cursor:pointer; user-select:none; }
+        .bb-sp-th span[data-sort]:hover { color:var(--tx); }
+        .bb-sp-th span.cur { color:#c2410c; font-weight:800 !important; }
         .bb-sp-msg { padding:34px 16px; text-align:center; color:var(--mu); font-size:13px; }
         .bb-sp-ft { flex:0 0 auto; padding:6px 16px 9px; border-top:1px solid var(--bd); font-size:10.5px; line-height:1.55; color:var(--mu); }
         `;
@@ -6947,6 +6950,7 @@
         const spPop = ivEl('div'); spPop.id = 'bb-iv-sp';
         document.body.appendChild(spPop);
 
+        let _spSort = { k: 'solved', dir: -1 };   // 정렬 기준(누적/일평균/근무일/이름)과 방향(-1 내림차순)
         let _spOpen = false, _spSeq = 0, _spView = { dates: [], days: {}, sched: {}, state: null };
 
         const spShift = (ymd, n) => {
@@ -7038,6 +7042,11 @@
             const { dates, days, sched, state } = _spView;
             const have = dates.filter(d => days[d]);
             const rows = spAgg(have, days, sched);
+            const avgOf = x => x.days > 0 ? x.solved / x.days : -1;
+            const val = { solved: x => x.solved, avg: avgOf, days: x => x.days }[_spSort.k];
+            rows.sort((a, b) => _spSort.k === 'name'
+                ? _spSort.dir * String(a.name).localeCompare(String(b.name), 'ko')
+                : (val(a) - val(b)) * _spSort.dir || b.solved - a.solved || String(a.name).localeCompare(String(b.name), 'ko'));
             const head = ivEl('div', 'bb-sp-h');
             const t = ivEl('div', 'bb-sp-t');
             t.appendChild(ivEl('b', '', '개입 통계 (누적)'));
@@ -7057,21 +7066,25 @@
             head.appendChild(ivEl('div', 'bb-sp-sub' + (warn ? ' warn' : ''), sub || ' '));
 
             const th = ivEl('div', 'bb-sp-th');
-            ['#', '이름', '누적', '근무일', '일평균'].forEach(s => th.appendChild(ivEl('span', '', s)));
+            [['#', ''], ['이름', 'name'], ['누적', 'solved'], ['일평균', 'avg'], ['근무일', 'days']].forEach(([lb, k]) => {
+                const sp = ivEl('span', k && _spSort.k === k ? 'cur' : '', lb + (k && _spSort.k === k ? (_spSort.dir < 0 ? ' ▼' : ' ▲') : ''));
+                if (k) { sp.dataset.sort = k; sp.title = '눌러서 정렬 (다시 누르면 오름/내림차순 전환)'; }
+                th.appendChild(sp);
+            });
             const body = ivEl('div', 'bb-sp-body');
             if (!rows.length) {
                 body.appendChild(ivEl('div', 'bb-sp-msg', state && state.phase === 'loading' ? '불러오는 중…' : state && state.phase === 'fail' ? '다시 열어 주세요.' : '집계할 기록이 없습니다.'));
             } else {
                 const max = Math.max(1, rows[0].solved);
                 rows.forEach((r, i) => {
-                    const row = ivEl('div', 'bb-sp-row' + (i < 3 && r.solved > 0 ? ' top' : ''));
+                    const row = ivEl('div', 'bb-sp-row' + (_spSort.k === 'solved' && _spSort.dir < 0 && i < 3 && r.solved > 0 ? ' top' : ''));
                     row.appendChild(ivEl('div', 'bb-sp-rk', String(i + 1)));
                     const nm = ivEl('div', 'bb-sp-nm'); nm.appendChild(ivEl('div', 'n', r.name));
                     const bar = ivEl('div', 'bb-sp-bar'), fill = ivEl('i'); fill.style.width = Math.round(r.solved / max * 100) + '%'; bar.appendChild(fill); nm.appendChild(bar);
                     row.appendChild(nm);
                     const c = ivEl('div', 'bb-sp-c', String(r.solved)); c.appendChild(ivEl('small', '', '건')); row.appendChild(c);
-                    row.appendChild(ivEl('div', 'bb-sp-d', r.days + '일' + (r.est ? '*' : '')));
                     row.appendChild(ivEl('div', 'bb-sp-a', r.days > 0 ? (r.solved / r.days).toFixed(1) : '-'));
+                    row.appendChild(ivEl('div', 'bb-sp-d', r.days + '일' + (r.est ? '*' : '')));
                     body.appendChild(row);
                 });
             }
@@ -7155,6 +7168,8 @@
         window.__bbIvSpClose = spClose;   // 보드를 닫을 때 같이 닫음 (closeBoard 에서 호출)
         $iv('bb-iv-stats-btn').addEventListener('click', ivSafe(() => spOpen()));
         spPop.addEventListener('click', ivSafe(e => {
+            const so = e.target.closest('[data-sort]');
+            if (so) { const k = so.dataset.sort; _spSort = _spSort.k === k ? { k, dir: -_spSort.dir } : { k, dir: k === 'name' ? 1 : -1 }; spRender(); return; }
             const a = e.target.closest('[data-act]'); if (!a) return;
             if (a.dataset.act === 'close') spClose();
             else if (a.dataset.act === 'refresh') spLoad(true);
@@ -7506,8 +7521,8 @@
         // 알림 칩 영역(.bb-alert-zone)은 카드 폭만큼 오른쪽으로 밀어 겹치지 않게 한다.
         const mwStyle = document.createElement('style');
         mwStyle.textContent = `
-            #bb .bb-alert-zone { left:204px; width:calc(50% - 375px - 190px); }
-            #bb-mw { display:none; position:absolute; left:14px; top:50%; transform:translateY(-50%); z-index:3; width:184px; box-sizing:border-box;
+            #bb .bb-alert-zone { left:226px; width:calc(50% - 375px - 212px); }
+            #bb-mw { display:none; position:absolute; left:14px; top:50%; transform:translateY(-50%); z-index:3; width:206px; box-sizing:border-box;
                 padding:3px 9px; border-radius:12px; background:var(--sur,#f8f3e6); color:var(--tx,#2b2418);
                 border:2.5px solid var(--bd2,#b3a687); box-shadow:0 2px 8px rgba(60,45,20,.18); }
             #bb-mw.mw-ok  { border-color:#3fae6a; }
@@ -7518,8 +7533,8 @@
             }
             #bb-mw .mw-row { display:grid; grid-template-columns:1fr auto; align-items:center; gap:0 6px; padding:3px 0 2px; }
             #bb-mw .mw-row + .mw-row { border-top:1px dashed var(--bd,#cabf9d); }
-            #bb-mw .mw-name { font-size:15px; font-weight:900 !important; }
-            #bb-mw .mw-pill { min-width:52px; text-align:center; padding:0 9px; border-radius:999px; font-size:16px; line-height:22px; font-weight:900 !important;
+            #bb-mw .mw-name { font-size:13px; white-space:nowrap; font-weight:900 !important; }
+            #bb-mw .mw-pill { min-width:44px; text-align:center; padding:0 8px; border-radius:999px; font-size:15px; line-height:22px; font-weight:900 !important;
                 background:var(--sur2,#efe6d2); color:var(--mu,#7a6f5c); }
             #bb-mw .mw-pill.on  { background:#8fe0ab; color:#0f4a26; }
             #bb-mw .mw-pill.off { background:#e0453a; color:#fff; }
@@ -7538,7 +7553,7 @@
 
         const mwRows = MW_TARGETS.map((name) => {
             const row = document.createElement('div'); row.className = 'mw-row';
-            const nm = document.createElement('div'); nm.className = 'mw-name'; nm.textContent = name.replace('스테이 그린 ', '');
+            const nm = document.createElement('div'); nm.className = 'mw-name'; nm.textContent = name;   // '스테이 그린 1호기' 전체 표기
             const pill = document.createElement('div'); pill.className = 'mw-pill'; pill.textContent = '—';
             const sub = document.createElement('div'); sub.className = 'mw-sub';
             const pw = document.createElement('span'); pw.className = 'mw-pw';   // 전원 표시는 sub 줄 안에 이어붙임
@@ -7617,7 +7632,7 @@
                 const s = robots && robots[name];
                 if (!s || typeof s.on !== 'boolean') {
                     pill.textContent = '—'; pill.className = 'mw-pill';
-                    sub.textContent = mwFail && !mwData ? '불러오지 못함' : mw404 ? '업로드된 데이터 없음 · 감시 스크립트 확인' : '불러오는 중…';
+                    sub.textContent = mwFail && !mwData ? '불러오지 못함' : mw404 ? '데이터 없음 (감시 스크립트 확인)' : '불러오는 중…';
                     pw.textContent = ''; pw.className = 'mw-pw';
                     row.classList.add('stale');
                     anyBad = true;
