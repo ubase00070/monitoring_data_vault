@@ -7497,63 +7497,59 @@
     try {
     {
         const MW_TARGETS = ['스테이 그린 1호기', '스테이 그린 2호기'];
-        const MW_NAME = '임무받기 현황';
+        const MW_NAME = '임무받기_현황';
         const MW_POLL_MS = 60 * 1000;
         const MW_MIN_GAP_MS = 50 * 1000;
         const MW_CACHE_KEY = 'bb_mw_cache_v1';
 
+        // 위치: 보드(#bb) 헤더 좌상단 안쪽 (보드 밖으로 나가지 않음). 색은 보드 테마 변수(--sur/--bd/--tx/--mu)를 따라 라이트·다크 모두 맞음.
+        // 알림 칩 영역(.bb-alert-zone)은 카드 폭만큼 오른쪽으로 밀어 겹치지 않게 한다.
         const mwStyle = document.createElement('style');
         mwStyle.textContent = `
-            #bb-mw { display:none; position:fixed; top:12px; left:12px; z-index:10000000; width:244px; box-sizing:border-box;
-                padding:10px 12px 8px; border-radius:14px; background:#10131a; color:#f3f4f6; border:3px solid #4b5563;
-                box-shadow:0 8px 24px rgba(0,0,0,.55); font-family:'Paperlogy','Lato',-apple-system,sans-serif; }
-            #bb-mw.mw-ok  { border-color:#22c55e; }
-            #bb-mw.mw-off { border-color:#ef4444; animation:mwPulse 1.6s ease-in-out infinite; }
+            #bb .bb-alert-zone { left:204px; width:calc(50% - 375px - 190px); }
+            #bb-mw { display:none; position:absolute; left:14px; top:50%; transform:translateY(-50%); z-index:3; width:184px; box-sizing:border-box;
+                padding:3px 9px; border-radius:12px; background:var(--sur,#f8f3e6); color:var(--tx,#2b2418);
+                border:2.5px solid var(--bd2,#b3a687); box-shadow:0 2px 8px rgba(60,45,20,.18); }
+            #bb-mw.mw-ok  { border-color:#3fae6a; }
+            #bb-mw.mw-off { border-color:#e0453a; animation:mwPulse 1.6s ease-in-out infinite; }
             @keyframes mwPulse {
-                0%,100% { box-shadow:0 0 0 0 rgba(239,68,68,.55), 0 8px 24px rgba(0,0,0,.55); }
-                50%     { box-shadow:0 0 0 9px rgba(239,68,68,0), 0 8px 24px rgba(0,0,0,.55); }
+                0%,100% { box-shadow:0 0 0 0 rgba(224,69,58,.45), 0 2px 8px rgba(60,45,20,.18); }
+                50%     { box-shadow:0 0 0 7px rgba(224,69,58,0), 0 2px 8px rgba(60,45,20,.18); }
             }
-            #bb-mw .mw-title { font-size:12px; font-weight:800; color:#9ca3af; margin-bottom:4px; }
-            #bb-mw .mw-row { display:grid; grid-template-columns:1fr auto; align-items:center; gap:1px 8px; padding:6px 0 5px; }
-            #bb-mw .mw-row + .mw-row { border-top:1px solid #2a2e3a; }
-            #bb-mw .mw-name { font-size:18px; font-weight:900; }
-            #bb-mw .mw-pill { min-width:66px; text-align:center; padding:2px 10px; border-radius:999px; font-size:21px; font-weight:900;
-                background:#374151; color:#e5e7eb; }
-            #bb-mw .mw-pill.on  { background:#4ade80; color:#052e16; }
-            #bb-mw .mw-pill.off { background:#dc2626; color:#fff; }
+            #bb-mw .mw-row { display:grid; grid-template-columns:1fr auto; align-items:center; gap:0 6px; padding:3px 0 2px; }
+            #bb-mw .mw-row + .mw-row { border-top:1px dashed var(--bd,#cabf9d); }
+            #bb-mw .mw-name { font-size:15px; font-weight:900 !important; }
+            #bb-mw .mw-pill { min-width:52px; text-align:center; padding:0 9px; border-radius:999px; font-size:16px; line-height:22px; font-weight:900 !important;
+                background:var(--sur2,#efe6d2); color:var(--mu,#7a6f5c); }
+            #bb-mw .mw-pill.on  { background:#8fe0ab; color:#0f4a26; }
+            #bb-mw .mw-pill.off { background:#e0453a; color:#fff; }
             #bb-mw .mw-row.stale .mw-pill, #bb-mw .mw-row.stale .mw-name { opacity:.45; }
-            #bb-mw .mw-sub { grid-column:1 / 3; font-size:13px; font-weight:800; color:#d1d5db; }
-            #bb-mw .mw-pw  { grid-column:1 / 3; font-size:12px; font-weight:800; color:#9ca3af; }
-            #bb-mw .mw-pw.pon  { color:#86efac; }
-            #bb-mw .mw-pw.poff { color:#9ca3af; }
-            #bb-mw .mw-pw.low  { color:#fca5a5; }
-            #bb-mw .mw-row.stale .mw-sub { color:#fbbf24; }
-            #bb-mw .mw-foot { margin-top:2px; padding-top:4px; border-top:1px solid #2a2e3a; font-size:10.5px; color:#6b7280; }
-            #bb-mw .mw-foot.warn { color:#fbbf24; }
+            #bb-mw .mw-sub { grid-column:1 / 3; font-size:11px; font-weight:800 !important; color:var(--tx,#2b2418); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+            #bb-mw .mw-row.stale .mw-sub { color:#c2410c; }
+            #bb-mw .mw-pw { color:var(--mu,#7a6f5c); font-weight:700 !important; }
+            #bb-mw .mw-foot { display:none; }
+            #bb-mw .mw-foot.warn { display:block; margin-top:1px; padding-top:2px; border-top:1px dashed var(--bd,#cabf9d); font-size:10px; color:#c2410c; font-weight:800 !important; }
         `;
         document.head.appendChild(mwStyle);
 
         const mwCard = document.createElement('div');
         mwCard.id = 'bb-mw';
-        const mwTitle = document.createElement('div');
-        mwTitle.className = 'mw-title';
-        mwTitle.textContent = '📡 임무받기 · 스테이 그린';
-        mwCard.appendChild(mwTitle);
+        mwCard.title = '임무받기 · 스테이 그린 (감시 스크립트가 올린 값)';
 
         const mwRows = MW_TARGETS.map((name) => {
             const row = document.createElement('div'); row.className = 'mw-row';
             const nm = document.createElement('div'); nm.className = 'mw-name'; nm.textContent = name.replace('스테이 그린 ', '');
             const pill = document.createElement('div'); pill.className = 'mw-pill'; pill.textContent = '—';
             const sub = document.createElement('div'); sub.className = 'mw-sub';
-            const pw = document.createElement('div'); pw.className = 'mw-pw';
-            row.append(nm, pill, sub, pw);
+            const pw = document.createElement('span'); pw.className = 'mw-pw';   // 전원 표시는 sub 줄 안에 이어붙임
+            row.append(nm, pill, sub);
             mwCard.appendChild(row);
             return { name, row, pill, sub, pw };
         });
         const mwFoot = document.createElement('div');
         mwFoot.className = 'mw-foot';
         mwCard.appendChild(mwFoot);
-        document.body.appendChild(mwCard);
+        (document.querySelector('#bb .bb-hd') || document.getElementById('bb') || document.body).appendChild(mwCard);
 
         const mwP = (n) => String(n).padStart(2, '0');
         const mwHM = (ms) => { const d = new Date(ms); return `${mwP(d.getHours())}:${mwP(d.getMinutes())}`; };
@@ -7595,7 +7591,7 @@
             }
             mwBusy = true;
             try {
-                const res = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent(MW_NAME)}`, { cache: 'no-cache' });   // ③ 조건부 요청
+                const res = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent(MW_NAME)}`, { cache: 'no-cache', priority: 'low' });   // ③ 조건부 요청(서버가 ETag 를 주면 304) · 낮은 우선순위로 다른 요청을 방해하지 않음
                 let rec;
                 if (res.status === 404) rec = { at: Date.now(), missing: true };
                 else if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -7632,25 +7628,20 @@
                 row.classList.toggle('stale', hbStale);
                 if (hbStale) anyBad = true; else if (!s.on) anyOff = true;
 
-                // '언제부터 ON/OFF 인지' = 마지막으로 임무받기가 바뀐 시각
+                // '언제부터 ON/OFF 인지' = 마지막으로 임무받기가 바뀐 시각 (+ 전원 켜짐/꺼짐, 업로드 시점 값)
                 let txt;
                 if (s.since) {
-                    if (s.source === 'initial') txt = '최초 관측 ' + mwMDHM(s.since) + ' (그 이전부터)';
-                    else txt = mwMDHM(s.since) + ((s.source === 'external' || s.source === 'gap') ? ' 경(추정)' : '') + '부터 ' + (s.on ? 'ON' : 'OFF');
+                    if (s.source === 'initial') txt = mwMDHM(s.since) + '~ (최초 관측)';
+                    else txt = mwMDHM(s.since) + ((s.source === 'external' || s.source === 'gap') ? ' 경' : '') + '부터';
                 } else txt = '변경 시각 미상';
-                if (hbStale) txt += ' ⚠ 감시 끊김';
+                if (s.power === true || s.power === false) txt += ' · 전원 ' + (s.power ? '켜짐' : '꺼짐');
+                if (hbStale) txt += ' ⚠';
                 sub.textContent = txt;
-
-                // 전원 켜짐/꺼짐 (업로드 시점 값, 배터리는 표시하지 않음)
-                if (s.power === true || s.power === false) {
-                    pw.textContent = (s.power ? '전원 켜짐' : '전원 꺼짐') + (mwData.updatedAt ? ' · ' + mwHM(mwData.updatedAt) + ' 기준' : '');
-                    pw.className = 'mw-pw ' + (s.power ? 'pon' : 'poff');
-                } else { pw.textContent = ''; pw.className = 'mw-pw'; }
+                sub.title = (s.since ? mwMDHM(s.since) + (s.on ? ' 부터 ON' : ' 부터 OFF') + (s.source === 'external' || s.source === 'gap' ? ' (정확한 시각 아님 · 다른 사용자/감시 공백)' : '') : '') + (mwData.updatedAt ? ' · 업로드 ' + mwMDHM(mwData.updatedAt) : '');
             });
 
-            mwFoot.textContent = mwFail
-                ? '⚠ 조회 실패' + (mwFetchedAt ? ' (마지막 성공 ' + mwHM(mwFetchedAt) + ')' : '')
-                : mwFetchedAt ? '조회 ' + mwHM(mwFetchedAt) : '';
+            mwFoot.textContent = mwFail ? '⚠ 조회 실패' + (mwFetchedAt ? ' (마지막 성공 ' + mwHM(mwFetchedAt) + ')' : '') : '';
+            mwCard.title = '임무받기 · 스테이 그린' + (mwFetchedAt ? ' · 조회 ' + mwHM(mwFetchedAt) : '');
             mwFoot.classList.toggle('warn', mwFail);
 
             // 카드 테두리: 데이터 없음/감시 끊김 = 회색, 임무받기 OFF 가 하나라도 있으면 빨강(깜빡임), 전부 ON 이면 초록
