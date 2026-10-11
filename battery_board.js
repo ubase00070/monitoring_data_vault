@@ -7653,7 +7653,7 @@
                 if (s.power === true || s.power === false) txt += ' · 전원 ' + (s.power ? '켜짐' : '꺼짐');
                 if (hbStale) txt += ' ⚠';
                 sub.textContent = txt;
-                sub.title = (s.since ? mwMDHM(s.since) + (s.on ? ' 부터 ON' : ' 부터 OFF') + (s.source === 'external' || s.source === 'gap' ? ' (정확한 시각 아님 · 다른 사용자/감시 공백)' : '') : '') + (mwData.updatedAt ? ' · 업로드 ' + mwMDHM(mwData.updatedAt) : '');
+                sub.title = (s.since ? mwMDHM(s.since) + (s.on ? ' 부터 ON' : ' 부터 OFF') + (s.source === 'external' || s.source === 'gap' ? ' (정확한 시각 아님 · 다른 사용자/감시 공백)' : '') : '') + (s.powerSince ? ' · 전원 ' + (s.power ? '켜짐' : '꺼짐') + ' ' + mwMDHM(s.powerSince) + '부터' : '') + (mwData.updatedAt ? ' · 업로드 ' + mwMDHM(mwData.updatedAt) : '');
             });
 
             mwFoot.textContent = mwFail ? '⚠ 조회 실패' + (mwFetchedAt ? ' (마지막 성공 ' + mwHM(mwFetchedAt) + ')' : '') : '';
