@@ -6337,6 +6337,7 @@
         .bb-iv-head .bb-att-title { grid-column:2; }
         .bb-iv-head .bb-att-r2 { grid-column:2; }
         #bb-iv-help-btn { grid-column:1; grid-row:1 / 3; align-self:stretch; height:auto; padding:0 8px; }
+        #bb-iv-stats-btn { grid-column:3; grid-row:1 / 3; align-self:stretch; height:auto; padding:0 8px; }   /* '사용 설명'(왼쪽)과 좌우 대칭으로 오른쪽 */
         #bb-iv-help-btn.on { border-color:var(--bl); color:var(--bl); background:var(--bl2, #dbe8fd); }
         .bb-iv-help { display:none; position:absolute; left:8px; right:8px; top:100%; margin-top:4px; max-height:60vh; overflow-y:auto; padding:12px 14px; background:var(--sur); border:1.5px solid var(--bd2); border-radius:10px; box-shadow:0 10px 28px rgba(0,0,0,.35); font-size:13px; line-height:2.1; color:var(--tx); word-break:keep-all; overflow-wrap:anywhere; }
         .bb-iv-help.open { display:block; }
@@ -6468,8 +6469,8 @@
                 '<button class="bb-mm-nav bb-att-mbtn" id="bb-iv-cal-btn">달력</button>' +
                 '<button class="bb-mm-nav" id="bb-iv-all" title="그날 전체 처리 내역">자세히</button>' +
                 '<span class="bb-att-stat" id="bb-iv-stat"></span>' +
-              '<button class="bb-mm-nav" id="bb-iv-stats-btn" title="개인별 누적 개입 건수 (근무일수 포함)">통계</button>' +
               '</div>' +
+              '<button class="bb-mm-nav" id="bb-iv-stats-btn" title="개인별 누적 개입 건수 (근무일수 포함)"><span class="tx"><span class="l1">누적</span><span class="l2">통계</span></span></button>' +
               '<button class="bb-mm-nav bb-att-back" id="bb-iv-back" title="다중 모니터링으로 돌아가기"><span class="tx"><span class="l1">다중</span><span class="l2">미갱신</span></span><span class="ar">»</span></button>' +
               '<div class="bb-att-cal" id="bb-iv-cal"></div>' +
               '<div class="bb-iv-help" id="bb-iv-help"></div>' +
@@ -6920,8 +6921,8 @@
         .bb-sp-h { flex:0 0 auto; padding:12px 16px 8px; display:flex; flex-direction:column; gap:4px; }
         .bb-sp-t { display:flex; align-items:baseline; gap:10px; }
         .bb-sp-t b { font-size:20px; font-weight:900; }
-        .bb-sp-t .rf { margin-left:auto; font-size:11.5px; color:var(--bl); cursor:pointer; text-decoration:underline; }
-        .bb-sp-t .x { color:#b91c1c; font-size:16px; font-weight:900; padding:0 4px; cursor:pointer; }
+        .bb-sp-t .rf { margin-left:2px; font-size:11.5px; color:var(--bl); cursor:pointer; text-decoration:underline; }
+        .bb-sp-t .x { margin-left:auto; color:#b91c1c; font-size:16px; font-weight:900; padding:0 4px; cursor:pointer; }
         .bb-sp-sub { font-size:11.5px; color:var(--mu); }
         .bb-sp-sub.warn { color:#c2410c; font-weight:700; }
         .bb-sp-th, .bb-sp-row { display:grid; grid-template-columns:28px minmax(0,1fr) 72px 64px 64px; gap:6px; align-items:center; padding:0 16px; }
@@ -7052,7 +7053,7 @@
             t.appendChild(ivEl('b', '', '개입 통계 (누적)'));
             const rf = ivEl('span', 'rf', '새로 집계'); rf.dataset.act = 'refresh'; rf.title = '저장해 둔 날짜별 기록을 버리고 전부 다시 받아 집계합니다';
             const x = ivEl('span', 'x', '✕'); x.dataset.act = 'close';
-            t.append(rf, x);
+            t.append(rf, x);   // '새로 집계'는 제목(누적) 바로 오른쪽, ✕ 는 맨 오른쪽
             head.appendChild(t);
             let sub = have.length ? ivMD(have[0]) + ' ~ ' + ivMD(have[have.length - 1]) + ' · ' + have.length + '일치 · 총 ' + rows.reduce((s, r) => s + r.solved, 0) + '건' : '';
             let warn = false;
@@ -7521,8 +7522,8 @@
         // 알림 칩 영역(.bb-alert-zone)은 카드 폭만큼 오른쪽으로 밀어 겹치지 않게 한다.
         const mwStyle = document.createElement('style');
         mwStyle.textContent = `
-            #bb .bb-alert-zone { left:226px; width:calc(50% - 375px - 212px); }
-            #bb-mw { display:none; position:absolute; left:14px; top:50%; transform:translateY(-50%); z-index:3; width:206px; box-sizing:border-box;
+            #bb .bb-alert-zone { left:238px; width:calc(50% - 375px - 224px); }
+            #bb-mw { display:none; position:absolute; left:14px; top:50%; transform:translateY(-50%); z-index:3; width:218px; box-sizing:border-box;
                 padding:3px 9px; border-radius:12px; background:var(--sur,#f8f3e6); color:var(--tx,#2b2418);
                 border:2.5px solid var(--bd2,#b3a687); box-shadow:0 2px 8px rgba(60,45,20,.18); }
             #bb-mw.mw-ok  { border-color:#3fae6a; }
@@ -7533,8 +7534,8 @@
             }
             #bb-mw .mw-row { display:grid; grid-template-columns:1fr auto; align-items:center; gap:0 6px; padding:3px 0 2px; }
             #bb-mw .mw-row + .mw-row { border-top:1px dashed var(--bd,#cabf9d); }
-            #bb-mw .mw-name { font-size:13px; white-space:nowrap; font-weight:900 !important; }
-            #bb-mw .mw-pill { min-width:44px; text-align:center; padding:0 8px; border-radius:999px; font-size:15px; line-height:22px; font-weight:900 !important;
+            #bb-mw .mw-name { font-size:12px; white-space:nowrap; font-weight:900 !important; }
+            #bb-mw .mw-pill { text-align:center; padding:0 7px; border-radius:999px; font-size:12.5px; white-space:nowrap; line-height:22px; font-weight:900 !important;
                 background:var(--sur2,#efe6d2); color:var(--mu,#7a6f5c); }
             #bb-mw .mw-pill.on  { background:#8fe0ab; color:#0f4a26; }
             #bb-mw .mw-pill.off { background:#e0453a; color:#fff; }
@@ -7638,7 +7639,7 @@
                     anyBad = true;
                     return;
                 }
-                pill.textContent = s.on ? 'ON' : 'OFF';
+                pill.textContent = s.on ? '임무받기 ON' : '임무받기 OFF';
                 pill.className = 'mw-pill ' + (s.on ? 'on' : 'off');
                 row.classList.toggle('stale', hbStale);
                 if (hbStale) anyBad = true; else if (!s.on) anyOff = true;
