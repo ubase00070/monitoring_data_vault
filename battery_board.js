@@ -6,6 +6,7 @@
 (function () {
     'use strict';
 
+
     // 수집기가 "일부 사이트만 받은 데이터"(data-bb-partial=1)를 보내도 안전하게 처리할 수 있음을 알린다 (수집기가 이 값을 확인하고 전달)
     window.__bbPartialOk = true;
 
@@ -2304,6 +2305,7 @@
     function openBoard() {
         isOpen = true;
         document.getElementById('bb').classList.add('open');
+        window.__bbMw?.show(true);   // 임무받기 카드 (SECTION 20)
         render();
         renderMonitorGrid(lastRaw);   // 하단 퀵바
         if (_fbReady) refreshFixedTools();
@@ -2315,6 +2317,8 @@
     function closeBoard() {
         isOpen = false;
         document.getElementById('bb').classList.remove('open');
+        window.__bbMw?.show(false);
+        window.__bbIvSpClose?.();   // 개입 통계 팝업 (SECTION 18)
         document.getElementById('bb-alert-panel').classList.remove('open');
         // (기체 정보 창은 보드를 닫아도 유지 — 창의 ✕ 로만 닫음)
         if (rmMode) { rmMode = false; rmSet.clear(); updateRmUI(); }
@@ -6464,6 +6468,7 @@
                 '<button class="bb-mm-nav bb-att-mbtn" id="bb-iv-cal-btn">달력</button>' +
                 '<button class="bb-mm-nav" id="bb-iv-all" title="그날 전체 처리 내역">자세히</button>' +
                 '<span class="bb-att-stat" id="bb-iv-stat"></span>' +
+              '<button class="bb-mm-nav" id="bb-iv-stats-btn" title="개인별 누적 개입 건수 (근무일수 포함)">통계</button>' +
               '</div>' +
               '<button class="bb-mm-nav bb-att-back" id="bb-iv-back" title="다중 모니터링으로 돌아가기"><span class="tx"><span class="l1">다중</span><span class="l2">미갱신</span></span><span class="ar">»</span></button>' +
               '<div class="bb-att-cal" id="bb-iv-cal"></div>' +
@@ -6883,6 +6888,283 @@
         }), true);
         document.addEventListener('keydown', ivSafe(e => { if (e.key === 'Escape') { if (_ivPopKey) ivClosePop(); else if (_ivCalOpen) ivCloseCal(); else ivCloseHelp(); } }));
 
+        /* ───────── 통계: 개인별 누적 개입 건수 (헤더의 '통계' 버튼 → 팝업) ─────────
+           · 건수: 날짜 목록(view=dates) + 날짜별 요약(view=summary&date=…) 을 서버에서 받아 합산. 건수 = 서버가 '이름 확정'으로 센 처리 건수(p.solved)
+           · 근무일: 월별 근무표 JSON(monitoring_data_vault/monthly_schedule/schedule_for_mobile_YYYY-MM.json)에서 개입 기록 기간의 날짜만 대조.
+                    present===true 인 날 = 근무일 (연차 제외, 반차는 1일). 근무표에 없는 날/이름은 기록 기반(처리 건수 또는 근무시간)으로 대체하고 '*' 표시.
+                    근무표에는 없는 날에 처리 건수가 있으면 그 날도 근무일로 본다(근무 교대 등).
+           · 저장(localStorage): 지난 날짜 요약(bbIvStatsV2)과 지난 달 근무표(bbIvSchedV1)는 변하지 않으므로 다시 받지 않는다.
+             최근 3일 요약과 이번 달 근무표(6시간 지나면)만 다시 받는다. '새로 집계' = 저장분 버리고 전부 다시 받기. */
+        const IV_SP_KEY = 'bbIvStatsV2';
+        const IV_SCH_KEY = 'bbIvSchedV1';
+        const IV_SCH_BASE = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/monthly_schedule/schedule_for_mobile_';
+        const IV_SCH_TTL = 6 * 3600 * 1000;   // 이번 달 근무표를 다시 받는 간격
+        const IV_SP_CONC = 3;     // 동시 요청 수
+        const IV_SP_REFETCH_DAYS = 3;   // 오늘 포함 이 일수만큼은 매번 다시 받음
+        const spSt = document.createElement('style');
+        spSt.id = 'bb-sp-style';
+        spSt.textContent = `
+        #bb-iv-stats-btn { background:#d6f5e3; border-color:#8fd3ac; color:#14532d; }
+        #bb-iv-stats-btn.on { background:#9fe3bd; border-color:#4fb57d; }
+        #bb-iv-sp {
+            --bg:#f2e4c4; --sur:#f8f3e6; --sur2:#efe6d2; --bd:#cabf9d; --bd2:#b3a687; --tx:#2b2418; --mu:#7a6f5c; --bl:#3b82f6;
+            display:none; position:fixed; width:440px; max-width:96vw; flex-direction:column; color:var(--tx); font-family:'Paperlogy','Lato',-apple-system,sans-serif;
+            border:3px solid transparent; border-radius:14px;
+            transform:scale(var(--bb-pop-zoom,1)); transform-origin:center center;
+            background-image:linear-gradient(var(--sur),var(--sur)), linear-gradient(135deg, #d9b8ff, #9333ea);
+            background-origin:border-box; background-clip:padding-box,border-box;
+            box-shadow:0 18px 46px rgba(0,0,0,.45); z-index:99999998; box-sizing:border-box; overflow:hidden;
+        }
+        #bb-iv-sp * { box-sizing:border-box; }
+        #bb-iv-sp.open { display:flex; }
+        .bb-sp-h { flex:0 0 auto; padding:12px 16px 8px; display:flex; flex-direction:column; gap:4px; }
+        .bb-sp-t { display:flex; align-items:baseline; gap:10px; }
+        .bb-sp-t b { font-size:20px; font-weight:900; }
+        .bb-sp-t .rf { margin-left:auto; font-size:11.5px; color:var(--bl); cursor:pointer; text-decoration:underline; }
+        .bb-sp-t .x { color:#b91c1c; font-size:16px; font-weight:900; padding:0 4px; cursor:pointer; }
+        .bb-sp-sub { font-size:11.5px; color:var(--mu); }
+        .bb-sp-sub.warn { color:#c2410c; font-weight:700; }
+        .bb-sp-th, .bb-sp-row { display:grid; grid-template-columns:28px minmax(0,1fr) 76px 62px 64px; gap:6px; align-items:center; padding:0 16px; }
+        .bb-sp-th { flex:0 0 auto; font-size:11px; color:var(--mu); padding-top:5px; padding-bottom:5px; border-bottom:1px solid var(--bd); background:var(--sur2); }
+        .bb-sp-th span:nth-child(n+3), .bb-sp-row > div:nth-child(n+3) { text-align:right; }
+        .bb-sp-body { flex:1 1 auto; min-height:0; overflow-y:auto; }
+        .bb-sp-row { padding-top:7px; padding-bottom:7px; border-bottom:1px solid var(--bd); }
+        .bb-sp-rk { font-size:13px; font-weight:900; color:var(--mu); text-align:center; }
+        .bb-sp-row.top .bb-sp-rk { color:#c2410c; }
+        .bb-sp-nm { min-width:0; }
+        .bb-sp-nm .n { font-size:15px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .bb-sp-bar { height:5px; margin-top:4px; border-radius:3px; background:rgba(0,0,0,.07); overflow:hidden; }
+        .bb-sp-bar i { display:block; height:100%; background:#f97316; border-radius:3px; }
+        .bb-sp-c { font-size:17px; font-weight:900; color:#c2410c; font-variant-numeric:tabular-nums; }
+        .bb-sp-c small { margin-left:2px; font-size:11px; color:var(--mu); font-weight:700; }
+        .bb-sp-d, .bb-sp-a { font-size:13.5px; font-variant-numeric:tabular-nums; }
+        .bb-sp-a { color:var(--mu); }
+        .bb-sp-msg { padding:34px 16px; text-align:center; color:var(--mu); font-size:13px; }
+        .bb-sp-ft { flex:0 0 auto; padding:6px 16px 9px; border-top:1px solid var(--bd); font-size:10.5px; line-height:1.55; color:var(--mu); }
+        `;
+        document.head.appendChild(spSt);
+
+        const spPop = ivEl('div'); spPop.id = 'bb-iv-sp';
+        document.body.appendChild(spPop);
+
+        let _spOpen = false, _spSeq = 0, _spView = { dates: [], days: {}, sched: {}, state: null };
+
+        const spShift = (ymd, n) => {
+            const p = ymd.split('-').map(Number), t = new Date(Date.UTC(p[0], p[1] - 1, p[2] + n));
+            return t.getUTCFullYear() + '-' + attPad(t.getUTCMonth() + 1) + '-' + attPad(t.getUTCDate());
+        };
+        // 근무일 판정 (바꾸고 싶으면 여기만): 근무시간(시각 숫자가 든 shift 또는 hours 배열)이 잡혀 있거나, 처리 건수가 있으면 근무한 날
+        const spWorked = p => (Array.isArray(p.hours) && p.hours.length > 0) || (+p.solved || 0) > 0 || /\d/.test(String(p.shift || ''));
+        const spCompact = d => {   // 하루 요약 → { 이름: [처리건수, 기록상 근무(1/0)] }
+            const o = {};
+            (d.people || []).forEach(p => { if (p && p.name) { const sv = +p.solved || 0, w = spWorked(p) ? 1 : 0; o[p.name] = [sv, w]; } });
+            return o;
+        };
+        const spNorm = n => String(n || '').replace(/\s+/g, '');
+        const spLoadSch = () => { try { const s = JSON.parse(localStorage.getItem(IV_SCH_KEY) || 'null'); if (s && s.months && typeof s.months === 'object') return s; } catch (e) { /* 없으면 새로 */ } return { months: {} }; };
+        const spSaveSch = s => { try { localStorage.setItem(IV_SCH_KEY, JSON.stringify(s)); } catch (e) { /* 저장 못 해도 이번 화면에는 지장 없음 */ } };
+        // 근무표 JSON → { 이름: { 'M/D': 1(근무)|0(비근무) } }
+        function spParseSch(j) {
+            const out = {};
+            (j && Array.isArray(j.staff) ? j.staff : []).forEach(st => {
+                if (!st || !st.name || !st.schedule) return;
+                const m = {};
+                Object.keys(st.schedule).forEach(k => { const v = st.schedule[k]; if (v && typeof v === 'object' && v.status !== 'empty') m[k] = v.present === true ? 1 : 0; });
+                out[spNorm(st.name)] = m;
+            });
+            return out;
+        }
+        // 필요한 달의 근무표를 확보 (저장분 우선). 반환: { 'YYYY-MM': {p:{이름:{M/D:0|1}}} | null(받지 못함) }
+        async function spLoadSched(months, force) {
+            const store = force ? { months: {} } : spLoadSch(), cur = ivOpDate().slice(0, 7), res = {};
+            await Promise.all(months.map(async mo => {
+                const c = store.months[mo];
+                if (c && c.p && (mo < cur || Date.now() - c.at < IV_SCH_TTL)) { res[mo] = c; return; }
+                try {
+                    const r = await fetch(IV_SCH_BASE + mo + '.json', { cache: 'no-cache' });
+                    if (r.status === 404) { store.months[mo] = { at: Date.now(), p: {} }; res[mo] = store.months[mo]; return; }   // 그 달 근무표 없음
+                    if (!r.ok) throw new Error('HTTP ' + r.status);
+                    const rec = { at: Date.now(), p: spParseSch(await r.json()) };
+                    store.months[mo] = rec; res[mo] = rec;
+                } catch (e) {
+                    console.warn('[BB] 근무표 불러오기 실패', mo, e && e.message);
+                    res[mo] = c && c.p ? c : null;   // 실패해도 예전에 받은 게 있으면 그걸 사용
+                }
+            }));
+            spSaveSch(store);
+            return res;
+        }
+        // 이름 매칭: 공백 제거 후 같은 이름 → 없으면 한쪽이 다른 쪽을 포함하고 후보가 딱 하나일 때만
+        function spFindSch(p, name) {
+            const k = spNorm(name);
+            if (p[k]) return p[k];
+            if (k.length < 2) return null;
+            const c = Object.keys(p).filter(x => x.includes(k) || k.includes(x));
+            return c.length === 1 ? p[c[0]] : null;
+        }
+
+        const spLoadStore = () => { try { const s = JSON.parse(localStorage.getItem(IV_SP_KEY) || 'null'); if (s && s.days && typeof s.days === 'object') return s; } catch (e) { /* 없으면 새로 */ } return { days: {}, at: 0 }; };
+        const spSaveStore = s => { try { localStorage.setItem(IV_SP_KEY, JSON.stringify(s)); } catch (e) { /* 저장 못 해도 이번 화면에는 지장 없음 */ } };
+
+        function spAgg(dates, days, sched) {
+            const m = {};
+            dates.forEach(d => {
+                const day = days[d]; if (!day) return;
+                const mo = d.slice(0, 7), md = ivMD(d), sc = sched && sched[mo] && sched[mo].p;
+                Object.keys(day).forEach(nm => {
+                    const a = m[nm] || (m[nm] = { name: nm, solved: 0, days: 0, est: 0 });
+                    const [sv, w] = day[nm];
+                    a.solved += sv;
+                    const mine = sc && spFindSch(sc, nm), v = mine ? mine[md] : undefined;
+                    if (v === 1) a.days += 1;                       // 근무표상 근무
+                    else if (v === 0) { if (sv > 0) a.days += 1; }  // 근무표상 비근무(휴무·연차)인데 처리 건수가 있으면 근무로 봄
+                    else if (w) { a.days += 1; a.est += 1; }        // 근무표에 없음 → 기록 기반 (추정)
+                });
+            });
+            // 근무표상 근무일이지만 그 날 요약에 이름이 없는(건수 0·기록 없음) 사람의 근무일도 채움
+            Object.keys(m).forEach(nm => {
+                const a = m[nm];
+                dates.forEach(d => {
+                    const day = days[d]; if (!day || day[nm]) return;
+                    const mo = d.slice(0, 7), sc = sched && sched[mo] && sched[mo].p, mine = sc && spFindSch(sc, nm);
+                    if (mine && mine[ivMD(d)] === 1) a.days += 1;
+                });
+            });
+            return Object.values(m).sort((a, b) => b.solved - a.solved || b.days - a.days || String(a.name).localeCompare(String(b.name), 'ko'));
+        }
+
+        function spRender() {
+            if (!_spOpen) return;
+            const { dates, days, sched, state } = _spView;
+            const have = dates.filter(d => days[d]);
+            const rows = spAgg(have, days, sched);
+            const head = ivEl('div', 'bb-sp-h');
+            const t = ivEl('div', 'bb-sp-t');
+            t.appendChild(ivEl('b', '', '개입 통계 (누적)'));
+            const rf = ivEl('span', 'rf', '새로 집계'); rf.dataset.act = 'refresh'; rf.title = '저장해 둔 날짜별 기록을 버리고 전부 다시 받아 집계합니다';
+            const x = ivEl('span', 'x', '✕'); x.dataset.act = 'close';
+            t.append(rf, x);
+            head.appendChild(t);
+            let sub = have.length ? ivMD(have[0]) + ' ~ ' + ivMD(have[have.length - 1]) + ' · ' + have.length + '일치 · 총 ' + rows.reduce((s, r) => s + r.solved, 0) + '건' : '';
+            let warn = false;
+            if (state && state.phase === 'loading') { sub += (sub ? ' · ' : '') + '집계 중… ' + state.done + '/' + state.total; }
+            else if (state && state.phase === 'fail') { sub = '날짜 목록을 불러오지 못했습니다.'; warn = true; }
+            else if (state && state.failed) { sub += ' · ⚠ ' + state.failed + '일 불러오지 못함 (열 때 다시 시도)'; warn = true; }
+            if (state && state.phase !== 'loading' && state.phase !== 'fail' && sched) {
+                const bad = Object.keys(sched).filter(k => !sched[k] || !Object.keys(sched[k].p || {}).length);
+                if (bad.length) { sub += ' · ⚠ 근무표 ' + bad.join(', ') + ' 없음/실패 → 기록 기반(*)'; warn = true; }
+            }
+            head.appendChild(ivEl('div', 'bb-sp-sub' + (warn ? ' warn' : ''), sub || ' '));
+
+            const th = ivEl('div', 'bb-sp-th');
+            ['#', '이름', '누적', '근무일', '일평균'].forEach(s => th.appendChild(ivEl('span', '', s)));
+            const body = ivEl('div', 'bb-sp-body');
+            if (!rows.length) {
+                body.appendChild(ivEl('div', 'bb-sp-msg', state && state.phase === 'loading' ? '불러오는 중…' : state && state.phase === 'fail' ? '다시 열어 주세요.' : '집계할 기록이 없습니다.'));
+            } else {
+                const max = Math.max(1, rows[0].solved);
+                rows.forEach((r, i) => {
+                    const row = ivEl('div', 'bb-sp-row' + (i < 3 && r.solved > 0 ? ' top' : ''));
+                    row.appendChild(ivEl('div', 'bb-sp-rk', String(i + 1)));
+                    const nm = ivEl('div', 'bb-sp-nm'); nm.appendChild(ivEl('div', 'n', r.name));
+                    const bar = ivEl('div', 'bb-sp-bar'), fill = ivEl('i'); fill.style.width = Math.round(r.solved / max * 100) + '%'; bar.appendChild(fill); nm.appendChild(bar);
+                    row.appendChild(nm);
+                    const c = ivEl('div', 'bb-sp-c', String(r.solved)); c.appendChild(ivEl('small', '', '건')); row.appendChild(c);
+                    row.appendChild(ivEl('div', 'bb-sp-d', r.days + '일' + (r.est ? '*' : '')));
+                    row.appendChild(ivEl('div', 'bb-sp-a', r.days > 0 ? (r.solved / r.days).toFixed(1) : '-'));
+                    body.appendChild(row);
+                });
+            }
+            const ft = ivEl('div', 'bb-sp-ft', '건수 = 이름이 확정된 처리 건만 (추정·이탈·특정 불가 제외, 개입카드 화면과 같은 기준) · 근무일 = 월별 근무표에서 출근으로 표시된 날(연차 제외·반차 1일) · * = 근무표에 없는 날이 있어 처리·근무시간 기록으로 대체 · 일평균 = 누적 ÷ 근무일');
+            const keep = spPop.querySelector('.bb-sp-body'), keepTop = keep ? keep.scrollTop : 0;
+            spPop.replaceChildren(head, th, body, ft);
+            body.scrollTop = keepTop;
+        }
+
+        function spPlace() {
+            const br = page.getBoundingClientRect(), w = spPop.offsetWidth;   // 개입 그리드 자신의 왼쪽 (공간이 없으면 오른쪽)
+            let left = br.left - w - 10;
+            if (left < 8) left = Math.min(br.right + 10, window.innerWidth - w - 8);
+            spPop.style.left = Math.max(8, left) + 'px';
+            spPop.style.top = Math.max(8, br.top) + 'px';
+            spPop.style.height = Math.min(br.height, window.innerHeight - 16) + 'px';
+        }
+        function spClose() {
+            _spOpen = false; _spSeq++;   // 진행 중이던 집계는 결과를 버림
+            spPop.classList.remove('open');
+            const b = $iv('bb-iv-stats-btn'); if (b) b.classList.remove('on');
+        }
+        async function spLoad(force) {
+            const seq = ++_spSeq;
+            const store = force ? { days: {}, at: 0 } : spLoadStore();
+            _spView = { dates: Object.keys(store.days).sort(), days: store.days, sched: spLoadSch().months, state: { phase: 'loading', done: 0, total: 0, failed: 0 } };   // 저장분을 먼저 보여주고 그 위에 갱신
+            spRender();
+            let dates;
+            try {
+                const dd = await attFetchJson(IV_API + '?view=dates');
+                if (!dd || dd.ok !== true || !Array.isArray(dd.dates)) throw new Error('데이터 형식 오류');
+                dates = dd.dates.filter(x => /^\d{4}-\d{2}-\d{2}$/.test(x)).sort();
+            } catch (e) {
+                console.warn('[BB] 개입 통계 날짜 목록 실패:', e && e.message);
+                if (seq === _spSeq) { _spView.state = { phase: 'fail' }; spRender(); }
+                return;
+            }
+            if (seq !== _spSeq) return;
+            Object.keys(store.days).forEach(d => { if (!dates.includes(d)) delete store.days[d]; });   // 서버에서 사라진 날짜는 버림
+            const cut = spShift(ivOpDate(), -(IV_SP_REFETCH_DAYS - 1));
+            const todo = dates.filter(d => !store.days[d] || d >= cut);
+            const st = { phase: 'loading', done: 0, total: todo.length, failed: 0 };
+            _spView = { dates, days: store.days, sched: _spView.sched, state: st };
+            spRender();
+            const months = [...new Set(dates.map(d => d.slice(0, 7)))];
+            const schP = spLoadSched(months, force);   // 근무표는 요약 받기와 동시에
+            let idx = 0;
+            const worker = async () => {
+                while (idx < todo.length) {
+                    if (seq !== _spSeq) return;
+                    const d = todo[idx++];
+                    try {
+                        const j = await attFetchJson(IV_API + '?view=summary&date=' + d);
+                        if (j && j._404) delete store.days[d];
+                        else if (!j || j.ok !== true || !Array.isArray(j.people)) throw new Error('데이터 형식 오류');
+                        else store.days[d] = spCompact(j);
+                    } catch (e) { st.failed++; }
+                    st.done++;
+                    if (seq === _spSeq && (st.done % 3 === 0 || st.done === st.total)) spRender();
+                }
+            };
+            await Promise.all(Array.from({ length: Math.min(IV_SP_CONC, todo.length) }, worker));
+            const sched = await schP;
+            if (seq !== _spSeq) return;
+            _spView.sched = sched;
+            store.at = Date.now();
+            spSaveStore(store);
+            st.phase = 'done';
+            spRender();
+        }
+        function spOpen() {
+            if (_spOpen) { spClose(); return; }
+            ivClosePop(); ivCloseCal(); ivCloseHelp();
+            _spOpen = true;
+            $iv('bb-iv-stats-btn').classList.add('on');
+            spPop.classList.add('open');
+            spPlace();
+            spLoad(false);
+            spPlace();
+        }
+        window.__bbIvSpClose = spClose;   // 보드를 닫을 때 같이 닫음 (closeBoard 에서 호출)
+        $iv('bb-iv-stats-btn').addEventListener('click', ivSafe(() => spOpen()));
+        spPop.addEventListener('click', ivSafe(e => {
+            const a = e.target.closest('[data-act]'); if (!a) return;
+            if (a.dataset.act === 'close') spClose();
+            else if (a.dataset.act === 'refresh') spLoad(true);
+        }));
+        document.addEventListener('click', ivSafe(e => {   // 바깥 클릭 → 닫기
+            if (_spOpen && !e.target.closest('#bb-iv-sp') && !e.target.closest('#bb-iv-stats-btn')) spClose();
+        }), true);
+        document.addEventListener('keydown', ivSafe(e => { if (e.key === 'Escape' && _spOpen) spClose(); }));
+        window.addEventListener('resize', ivSafe(() => { if (_spOpen) spPlace(); }));
+
         const ivVisible = () => isOpen && _ivOpen && !document.hidden;
         setInterval(ivSafe(() => {
             if (!isOpen && (_ivPopKey || _ivCalOpen)) { ivClosePop(); ivCloseCal(); }   // 보드를 닫으면 팝업/달력도 닫음
@@ -7197,6 +7479,210 @@
     }
     } catch (e) { console.warn('[BB] 배달 로그 초기화 실패 — 기존 기능에는 영향 없음:', e && e.message); }
 
+
+    // ============================================================
+    // SECTION 20. 임무받기 현황 카드 (화면 좌상단) — 스테이 그린 1·2호기
+    //   · 데이터: 임무받기 감시 스크립트(Tampermonkey, NCC monitoring/27)가 '임무받기가 바뀔 때만' 올리는 JSON 파일 1개
+    //            (multimonitoring.vercel.app/api/battery?name=임무받기 현황 → GitHub 레포). 보드는 NCC 를 전혀 호출하지 않는다.
+    //   · 카드 내용: 임무받기 ON/OFF(항상) + 전원 켜짐/꺼짐 + (켜져 있으면) 배터리. 전원·배터리는 '마지막 업로드 시점' 값이다
+    //                (임무받기가 바뀔 때만 올라오므로 그 이후의 배터리 변화는 반영되지 않음 → 카드에 'HH:MM 기준'을 함께 표시)
+    //   · 조회: 보드가 열려 있고 탭이 보일 때만 1분에 1번 — 아래 '요청 줄이기'를 거쳐서만 실제 요청이 나간다
+    //   · 요청 줄이기(불필요한 부담 방지):
+    //       ① 캐시(localStorage bb_mw_cache_v1): 50초 안에 받은 값이 있으면 요청하지 않는다. 같은 PC 의 보드 탭이 여러 개여도 한 탭만 받고 나머지는 캐시를 쓴다
+    //       ② 한 번에 하나만 요청(진행 중이면 건너뜀) · 열기/탭 전환 때의 연속 호출도 ①에 걸려 요청되지 않음
+    //       ③ 조건부 요청(cache:'no-cache'): 브라우저가 ETag 검증을 붙여 보낸다 — 서버가 ETag/304 를 지원하면 본문 없이 끝난다 (지원 여부는 서버 쪽)
+    //       ④ 실패하면 1분 → 2분 → 4분 … 최대 10분까지 쉬었다가 재시도
+    //   · 보드를 열고 닫을 때 같이 보이고 숨겨진다 (openBoard / closeBoard 에서 window.__bbMw.show 호출)
+    // ============================================================
+    try {
+    {
+        const MW_TARGETS = ['스테이 그린 1호기', '스테이 그린 2호기'];
+        const MW_NAME = '임무받기 현황';
+        const MW_POLL_MS = 60 * 1000;
+        const MW_MIN_GAP_MS = 50 * 1000;
+        const MW_CACHE_KEY = 'bb_mw_cache_v1';
+
+        const mwStyle = document.createElement('style');
+        mwStyle.textContent = `
+            #bb-mw { display:none; position:fixed; top:12px; left:12px; z-index:10000000; width:244px; box-sizing:border-box;
+                padding:10px 12px 8px; border-radius:14px; background:#10131a; color:#f3f4f6; border:3px solid #4b5563;
+                box-shadow:0 8px 24px rgba(0,0,0,.55); font-family:'Paperlogy','Lato',-apple-system,sans-serif; }
+            #bb-mw.mw-ok  { border-color:#22c55e; }
+            #bb-mw.mw-off { border-color:#ef4444; animation:mwPulse 1.6s ease-in-out infinite; }
+            @keyframes mwPulse {
+                0%,100% { box-shadow:0 0 0 0 rgba(239,68,68,.55), 0 8px 24px rgba(0,0,0,.55); }
+                50%     { box-shadow:0 0 0 9px rgba(239,68,68,0), 0 8px 24px rgba(0,0,0,.55); }
+            }
+            #bb-mw .mw-title { font-size:12px; font-weight:800; color:#9ca3af; margin-bottom:4px; }
+            #bb-mw .mw-row { display:grid; grid-template-columns:1fr auto; align-items:center; gap:1px 8px; padding:6px 0 5px; }
+            #bb-mw .mw-row + .mw-row { border-top:1px solid #2a2e3a; }
+            #bb-mw .mw-name { font-size:18px; font-weight:900; }
+            #bb-mw .mw-pill { min-width:66px; text-align:center; padding:2px 10px; border-radius:999px; font-size:21px; font-weight:900;
+                background:#374151; color:#e5e7eb; }
+            #bb-mw .mw-pill.on  { background:#4ade80; color:#052e16; }
+            #bb-mw .mw-pill.off { background:#dc2626; color:#fff; }
+            #bb-mw .mw-row.stale .mw-pill, #bb-mw .mw-row.stale .mw-name { opacity:.45; }
+            #bb-mw .mw-sub { grid-column:1 / 3; font-size:13px; font-weight:800; color:#d1d5db; }
+            #bb-mw .mw-pw  { grid-column:1 / 3; font-size:12px; font-weight:800; color:#9ca3af; }
+            #bb-mw .mw-pw.pon  { color:#86efac; }
+            #bb-mw .mw-pw.poff { color:#9ca3af; }
+            #bb-mw .mw-pw.low  { color:#fca5a5; }
+            #bb-mw .mw-row.stale .mw-sub { color:#fbbf24; }
+            #bb-mw .mw-foot { margin-top:2px; padding-top:4px; border-top:1px solid #2a2e3a; font-size:10.5px; color:#6b7280; }
+            #bb-mw .mw-foot.warn { color:#fbbf24; }
+        `;
+        document.head.appendChild(mwStyle);
+
+        const mwCard = document.createElement('div');
+        mwCard.id = 'bb-mw';
+        const mwTitle = document.createElement('div');
+        mwTitle.className = 'mw-title';
+        mwTitle.textContent = '📡 임무받기 · 스테이 그린';
+        mwCard.appendChild(mwTitle);
+
+        const mwRows = MW_TARGETS.map((name) => {
+            const row = document.createElement('div'); row.className = 'mw-row';
+            const nm = document.createElement('div'); nm.className = 'mw-name'; nm.textContent = name.replace('스테이 그린 ', '');
+            const pill = document.createElement('div'); pill.className = 'mw-pill'; pill.textContent = '—';
+            const sub = document.createElement('div'); sub.className = 'mw-sub';
+            const pw = document.createElement('div'); pw.className = 'mw-pw';
+            row.append(nm, pill, sub, pw);
+            mwCard.appendChild(row);
+            return { name, row, pill, sub, pw };
+        });
+        const mwFoot = document.createElement('div');
+        mwFoot.className = 'mw-foot';
+        mwCard.appendChild(mwFoot);
+        document.body.appendChild(mwCard);
+
+        const mwP = (n) => String(n).padStart(2, '0');
+        const mwHM = (ms) => { const d = new Date(ms); return `${mwP(d.getHours())}:${mwP(d.getMinutes())}`; };
+        const mwMDHM = (ms) => { const d = new Date(ms); return `${mwP(d.getMonth() + 1)}/${mwP(d.getDate())} ${mwHM(ms)}`; };
+
+        let mwData = null, mwFetchedAt = 0, mwFail = false, mwBusy = false, mw404 = false;
+        let mwFailN = 0, mwNextAt = 0;
+
+        const mwCacheRead = () => {
+            try { const c = JSON.parse(localStorage.getItem(MW_CACHE_KEY) || 'null'); if (c && typeof c.at === 'number') return c; } catch (e) { /* 캐시 없음으로 처리 */ }
+            return null;
+        };
+        const mwCacheWrite = (c) => { try { localStorage.setItem(MW_CACHE_KEY, JSON.stringify(c)); } catch (e) { /* 저장 못 해도 동작에는 지장 없음 */ } };
+
+        // 받은 기록(캐시 형식 {at, body|missing})을 화면에 반영
+        function mwApply(rec) {
+            mwFetchedAt = rec.at;
+            if (rec.missing) { mwData = null; mw404 = true; }
+            else {
+                try {
+                    const j = JSON.parse(rec.body), d = j && j.data;
+                    if (d && d.robots && typeof d.robots === 'object') { mwData = d; mw404 = false; }
+                    else { mwData = null; mw404 = true; }   // 파일이 아직 없음 (감시 스크립트가 한 번도 올리지 않음)
+                } catch (e) { mwData = null; mw404 = true; }
+            }
+            mwDraw();
+        }
+
+        async function mwFetch(force) {
+            if (mwBusy) return;                                              // ② 진행 중이면 건너뜀
+            const now = Date.now();
+            if (!force) {
+                const c = mwCacheRead();
+                if (c && now - c.at < MW_MIN_GAP_MS) {                       // ① 방금(다른 탭 포함) 받은 값이 있음 → 요청하지 않고 캐시 사용
+                    if (c.at !== mwFetchedAt) mwApply(c);
+                    return;
+                }
+                if (now < mwNextAt) return;                                  // ④ 실패 뒤 쉬는 중
+            }
+            mwBusy = true;
+            try {
+                const res = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent(MW_NAME)}`, { cache: 'no-cache' });   // ③ 조건부 요청
+                let rec;
+                if (res.status === 404) rec = { at: Date.now(), missing: true };
+                else if (!res.ok) throw new Error('HTTP ' + res.status);
+                else rec = { at: Date.now(), body: await res.text() };
+                mwFail = false; mwFailN = 0; mwNextAt = 0;
+                mwCacheWrite(rec);
+                mwApply(rec);
+            } catch (e) {
+                mwFail = true; mwFailN++;
+                mwNextAt = Date.now() + Math.min(60000 * Math.pow(2, mwFailN - 1), 10 * 60000);   // 1분, 2분, 4분 … 최대 10분
+                console.warn('[BB] 임무받기 조회 실패:', e && e.message, '— ' + Math.round((mwNextAt - Date.now()) / 60000) + '분 뒤 재시도');
+                mwDraw();
+            } finally { mwBusy = false; }
+        }
+
+        function mwDraw() {
+            const now = Date.now();
+            const robots = mwData && mwData.robots;
+            const hbStale = !!(mwData && mwData.hb > 0 && now - (mwData.updatedAt || 0) > mwData.hb * 2.5 * 60000);
+            let anyOff = false, anyBad = false;
+
+            mwRows.forEach(({ name, row, pill, sub, pw }) => {
+                const s = robots && robots[name];
+                if (!s || typeof s.on !== 'boolean') {
+                    pill.textContent = '—'; pill.className = 'mw-pill';
+                    sub.textContent = mwFail && !mwData ? '불러오지 못함' : mw404 ? '업로드된 데이터 없음 · 감시 스크립트 확인' : '불러오는 중…';
+                    pw.textContent = ''; pw.className = 'mw-pw';
+                    row.classList.add('stale');
+                    anyBad = true;
+                    return;
+                }
+                pill.textContent = s.on ? 'ON' : 'OFF';
+                pill.className = 'mw-pill ' + (s.on ? 'on' : 'off');
+                row.classList.toggle('stale', hbStale);
+                if (hbStale) anyBad = true; else if (!s.on) anyOff = true;
+
+                // '언제부터 ON/OFF 인지' = 마지막으로 임무받기가 바뀐 시각
+                let txt;
+                if (s.since) {
+                    if (s.source === 'initial') txt = '최초 관측 ' + mwMDHM(s.since) + ' (그 이전부터)';
+                    else txt = mwMDHM(s.since) + ((s.source === 'external' || s.source === 'gap') ? ' 경(추정)' : '') + '부터 ' + (s.on ? 'ON' : 'OFF');
+                } else txt = '변경 시각 미상';
+                if (hbStale) txt += ' ⚠ 감시 끊김';
+                sub.textContent = txt;
+
+                // 전원 켜짐/꺼짐 (업로드 시점 값, 배터리는 표시하지 않음)
+                if (s.power === true || s.power === false) {
+                    pw.textContent = (s.power ? '전원 켜짐' : '전원 꺼짐') + (mwData.updatedAt ? ' · ' + mwHM(mwData.updatedAt) + ' 기준' : '');
+                    pw.className = 'mw-pw ' + (s.power ? 'pon' : 'poff');
+                } else { pw.textContent = ''; pw.className = 'mw-pw'; }
+            });
+
+            mwFoot.textContent = mwFail
+                ? '⚠ 조회 실패' + (mwFetchedAt ? ' (마지막 성공 ' + mwHM(mwFetchedAt) + ')' : '')
+                : mwFetchedAt ? '조회 ' + mwHM(mwFetchedAt) : '';
+            mwFoot.classList.toggle('warn', mwFail);
+
+            // 카드 테두리: 데이터 없음/감시 끊김 = 회색, 임무받기 OFF 가 하나라도 있으면 빨강(깜빡임), 전부 ON 이면 초록
+            mwCard.classList.toggle('mw-off', !anyBad && anyOff);
+            mwCard.classList.toggle('mw-ok', !anyBad && !anyOff);
+        }
+
+        // 보드가 열려 있고 탭이 보일 때만 1분마다 (실제 요청 여부는 mwFetch 의 캐시/백오프가 결정)
+        setInterval(() => { if (isOpen && !document.hidden) mwFetch(false); }, MW_POLL_MS);
+        document.addEventListener('visibilitychange', () => { if (!document.hidden && isOpen) mwFetch(false); });
+        window.addEventListener('storage', (e) => {   // 다른 보드 탭이 새로 받은 값을 요청 없이 그대로 반영
+            if (e.key !== MW_CACHE_KEY) return;
+            const c = mwCacheRead();
+            if (c && c.at !== mwFetchedAt) mwApply(c);
+        });
+
+        window.__bbMw = {
+            show(v) {
+                mwCard.style.display = v ? 'block' : 'none';
+                if (v) {
+                    const c = mwCacheRead();
+                    if (c && c.at !== mwFetchedAt) mwApply(c); else mwDraw();   // 캐시가 있으면 즉시 표시
+                    mwFetch(false);
+                }
+            },
+            draw: mwDraw,
+            fetch: mwFetch,   // __bbMw.fetch(true) = 캐시/쉬는 시간 무시하고 지금 받기
+        };
+        window.__bbMw.show(isOpen);
+        console.log('[BB] 임무받기 카드 켜짐 (SECTION 20)');
+    }
+    } catch (e) { console.warn('[BB] 임무받기 카드 초기화 실패 — 기존 기능에는 영향 없음:', e && e.message); }
 
     render();
     if (_trimNotice) {
