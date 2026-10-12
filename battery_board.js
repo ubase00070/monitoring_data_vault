@@ -1,5 +1,5 @@
 /* ============================================================
-   battery_board.js v6.5 [배달 로그 '누적 통계' 추가] v6.4 [UI 전면 개편: 순찰·배달 열 + 다중/개입/이석 3분할 그리드. 로직 변경 없음 — 빠진 요소는 CSS로만 숨김] v6.3 (배경 이미지 · 방전 로그 · 이석/착석 현황 슬라이드 전환 추가 · 배달 기체 로그 · 하루 기준 07:00 · 금일 배달 건수 배지 · 고정 버튼 3종 무지개 파스텔+이모지)
+   battery_board.js v6.7 [개입 누적 통계에 점유율 열] v6.6 [이석 오늘·달력 / 누적 통계 버튼 통일 / 헤더 높이 통일 / 스테이 그린 확인 시각] v6.5 [배달 로그 '누적 통계' 추가] v6.4 [UI 전면 개편: 순찰·배달 열 + 다중/개입/이석 3분할 그리드. 로직 변경 없음 — 빠진 요소는 CSS로만 숨김] v6.3 (배경 이미지 · 방전 로그 · 이석/착석 현황 슬라이드 전환 추가 · 배달 기체 로그 · 하루 기준 07:00 · 금일 배달 건수 배지 · 고정 버튼 3종 무지개 파스텔+이모지)
    NCC 종합 모니터 — 템퍼몽키 inject
    ============================================================ */
 
@@ -810,8 +810,15 @@
             cursor:pointer; white-space:nowrap; display:inline-flex; align-items:center; justify-content:center; flex:none;
         }
         .bb-mm-nav:hover { border-color:var(--mu); }
-        #bb-att-detailbtn, #bb-iv-all { background:#ffd9e4; border-color:#f2a7bf; color:#5c2233; }   /* 이석 현황 / 개입카드 현황의 '자세히': 카드 제거(#bb-rmbtn)와 같은 파스텔 연핑크 */
-        #bb-att-detailbtn:hover, #bb-iv-all:hover { background:#ffc9d9; border-color:#ea86a5; }
+        #bb-iv-all { background:#ffd9e4; border-color:#f2a7bf; color:#5c2233; }   /* 이석 현황 / 개입카드 현황의 '자세히': 카드 제거(#bb-rmbtn)와 같은 파스텔 연핑크 */
+        #bb-iv-all:hover { background:#ffc9d9; border-color:#ea86a5; }
+        #bb-att-detailbtn { background:#d6f5e3; border-color:#8fd3ac; color:#14532d; }   /* 이석 현황 '누적 통계': 개입카드와 같은 녹색 */
+        #bb-att-detailbtn:hover { background:#c3efd5; border-color:#6fc496; }
+        #bb-att-detailbtn.on { background:#9fe3bd; border-color:#4fb57d; }
+        .bb-att-cal-h { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+        .bb-att-cal-h .t { font-size:14px; color:var(--tx); }
+        .bb-att-cal-h button { height:24px; min-width:28px; padding:0 6px; border-radius:6px; border:1.5px solid var(--bd2); background:var(--sur2,var(--sur)); color:var(--tx); cursor:pointer; font-size:14px; line-height:1; }
+        .bb-att-cal-h button[disabled] { opacity:.35; cursor:default; }
         .bb-mm-goatt { position:absolute; right:8px; top:50%; transform:translateY(-50%); height:auto; padding:5px 9px; gap:5px; }
         /* 두 줄 버튼 공통: 화살표(« »)는 글자 옆에 따로 두고, 두 줄 글자는 같은 크기 · 가운데 정렬 */
         .bb-mm-nav .ar { flex:none; font-size:14px; line-height:1; }
@@ -1304,9 +1311,12 @@
             width:auto; min-height:0; max-height:none; flex:1 1 0; overflow:visible; z-index:auto;
             border:2px solid var(--bd2); border-radius:8px; background:color-mix(in srgb, var(--bg) 60%, transparent); box-shadow:none;
         }
-        #bb #bb-dlog-panel .bb-ap-hd { position:static; padding:5px 10px; border-radius:6px 6px 0 0; }
-        #bb #bb-dlog-panel .bb-ap-title { font-size:15px; }
-        #bb #bb-dlog-panel .bb-dlog-head { padding:6px 10px; }
+        #bb #bb-dlog-panel .bb-ap-hd { position:relative; display:grid; grid-template-columns:46px minmax(0,1fr) 46px; column-gap:8px; row-gap:6px; align-items:center; padding:6px 8px; border-bottom:1px solid var(--bd); border-radius:6px 6px 0 0; }
+        #bb #bb-dlog-panel .bb-ap-title { grid-column:2; grid-row:1; text-align:center; font-size:14px; line-height:1.25; }
+        #bb #bb-dlog-panel .bb-dlog-head { grid-column:2; grid-row:2; position:static; padding:0; border-bottom:0; justify-content:center; gap:5px; min-width:0; }
+        #bb #bb-dlog-panel #bb-dlog-date-lbl { display:none; }
+        #bb #bb-dlog-panel .bb-dlog-note { margin-left:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.25; font-size:11.5px; min-width:0; }
+        #bb #bb-dlog-panel #bb-dl-stats-btn { grid-column:3; grid-row:1 / 3; align-self:stretch; height:auto; padding:0 6px; margin-left:0; }
         #bb #bb-dlog-panel .bb-att-cal { z-index:30; }
         #bb #bb-dlog-panel .bb-dlog-kpi { padding:6px 10px 2px; }
         #bb #bb-dlog-panel .bb-dlog-kpi .v { font-size:15px; }
@@ -1328,8 +1338,13 @@
         #bb #bb-iv-page { order:2; }
         #bb #bb-mm-page-att { order:3; }
         #bb .bb-mm-head, #bb .bb-mm-head.bb-iv-hd { padding:5px 8px 4px; }
-        #bb .bb-att-head, #bb .bb-iv-head { column-gap:0; }
-        #bb .bb-att-head .bb-att-title, #bb .bb-att-head .bb-att-r2 { grid-column:1 / -1; }
+        #bb .bb-iv-head { column-gap:0; }
+        #bb .bb-att-head { grid-template-columns:46px minmax(0,1fr) 46px; column-gap:8px; }
+        #bb .bb-att-head .bb-att-title, #bb .bb-att-head .bb-att-r2 { grid-column:2; }
+        #bb #bb-att-detailbtn { grid-column:3; grid-row:1 / 3; align-self:stretch; height:auto; padding:0 6px; }
+        /* 네 그리드(배달 로그·다중·개입·이석) 제목 헤더 높이 통일 */
+        #bb .bb-mm-head, #bb .bb-att-head, #bb .bb-iv-head, #bb #bb-dlog-panel .bb-ap-hd { box-sizing:border-box; height:64px; flex:0 0 auto; }
+        #bb .bb-mm-head { display:flex; flex-direction:column; justify-content:center; }
         #bb .bb-att-body { grid-template-columns:repeat(3,minmax(0,1fr)); }   /* 근무자 카드 한 줄에 3명 */
 
         /* 개입/이석 그리드 헤더: 제목·버튼 중앙정렬 */
@@ -1498,15 +1513,15 @@
                             <div class="bb-scroll bb-sec-deliv" id="bb-col-deliv" data-empty="배달 기체 없음" title="배달 기체 (사이트 기준 자동 분류)"></div>
                     <div id="bb-dlog-panel">
                         <div class="bb-ap-hd">
-                            <div class="bb-ap-title">🚚 배달 로그</div>
+                            <div class="bb-ap-title" id="bb-dlog-title">🚚 배달 로그</div>
                             <div class="bb-ap-close" id="bb-dlog-close">✕</div>
-                        </div>
-                        <div class="bb-dlog-head">
-                            <button class="bb-mm-nav bb-att-mbtn" id="bb-dlog-today">오늘</button>
-                            <button class="bb-mm-nav bb-att-mbtn" id="bb-dlog-cal-btn">달력</button>
-                            <span class="bb-dlog-date-lbl" id="bb-dlog-date-lbl"></span>
-                            <span class="bb-dlog-note" id="bb-dlog-note"></span>
-                            <div class="bb-att-cal" id="bb-dlog-cal"></div>
+                            <div class="bb-dlog-head">
+                                <button class="bb-mm-nav bb-att-mbtn" id="bb-dlog-today">오늘</button>
+                                <button class="bb-mm-nav bb-att-mbtn" id="bb-dlog-cal-btn">달력</button>
+                                <span class="bb-dlog-date-lbl" id="bb-dlog-date-lbl"></span>
+                                <span class="bb-dlog-note" id="bb-dlog-note"></span>
+                                <div class="bb-att-cal" id="bb-dlog-cal"></div>
+                            </div>
                         </div>
                         <div class="bb-dlog-kpi" id="bb-dlog-kpi"></div>
                         <div class="bb-dlog-sub" id="bb-dlog-sub">배달 내역</div>
@@ -1539,12 +1554,11 @@
                                     <button class="bb-mm-nav bb-att-back" id="bb-att-back" title="다중 모니터링으로 돌아가기"><span class="ar">«</span><span class="tx"><span class="l1">다중</span><span class="l2">미갱신</span></span></button>
                                     <div class="bb-att-title" id="bb-att-title">이석 현황</div>
                                     <div class="bb-att-r2">
-                                        <button class="bb-mm-nav bb-att-mbtn" id="bb-att-mprev">--월</button>
-                                        <button class="bb-mm-nav bb-att-mbtn" id="bb-att-mcur">--월</button>
-                                        <button class="bb-mm-nav" id="bb-att-detailbtn" title="월별 근무자 상세 통계">자세히</button>
-                                        <button class="bb-mm-nav" id="bb-att-today" style="display:none" title="실시간 현황으로 돌아가기">오늘로</button>
+                                        <button class="bb-mm-nav bb-att-mbtn" id="bb-att-today" title="실시간 현황으로 돌아가기">오늘</button>
+                                        <button class="bb-mm-nav bb-att-mbtn" id="bb-att-cal-btn" title="이전달/이번달 날짜 선택">달력</button>
                                         <span class="bb-att-stat" id="bb-att-stat"></span>
                                     </div>
+                                    <button class="bb-mm-nav" id="bb-att-detailbtn" title="월별 근무자 누적 통계"><span class="tx"><span class="l1">누적</span><span class="l2">통계</span></span></button>
                                     <div class="bb-att-cal" id="bb-att-cal"></div>
                                 </div>
                                 <div class="bb-att-body" id="bb-att-body"></div>
@@ -5729,14 +5743,8 @@
         }
 
         // 2번째 줄: 이전달/이번달 버튼 (자동 반영), 과거 조회 중이면 '오늘로'
-        const months = attMonths();
-        [['bb-att-mprev', months[0]], ['bb-att-mcur', months[1]]].forEach(([id, ym]) => {
-            const b = $att(id);
-            b.textContent = ym.slice(5) + '월';
-            b.title = ym.slice(0, 4) + '년 ' + Number(ym.slice(5)) + '월 — 날짜 선택';
-            b.classList.toggle('on', ds.slice(0, 7) === ym);
-        });
-        $att('bb-att-today').style.display = live ? 'none' : '';
+        $att('bb-att-today').classList.toggle('on', live);
+        $att('bb-att-cal-btn').classList.toggle('on', !live);
 
         // 상태 문구
         const st = $att('bb-att-stat');
@@ -5884,14 +5892,19 @@
 
     /* ───────── 이전달/이번달 날짜 선택 (미니 달력) ───────── */
     function attCloseCal() { _attCalWhich = null; $att('bb-att-cal').classList.remove('open'); }
-    async function attOpenCal(which) {
-        if (_attCalWhich === which) { attCloseCal(); return; }
+    let _attCalYm = null;
+    async function attOpenCal() {
+        if (_attCalWhich) { attCloseCal(); return; }
         attClosePop();
-        _attCalWhich = which;
-        const ym = attMonths()[which === 'prev' ? 0 : 1];
+        _attCalWhich = 'cal';
+        const months = attMonths(), cur = (_attDate || attLiveDate()).slice(0, 7);
+        await attShowCal(months.includes(cur) ? cur : months[1]);
+    }
+    async function attShowCal(ym) {
+        _attCalYm = ym;
         attRenderCal(ym, null);
         let dates; try { dates = await attGetDates(ym); } catch (e) { dates = 'fail'; }
-        if (_attCalWhich === which) attRenderCal(ym, dates);
+        if (_attCalWhich && _attCalYm === ym) attRenderCal(ym, dates);
     }
     // dates = 기록 있는 날짜 배열 | null(불러오는 중) | 'fail'(목록 조회 실패 → 지난 날짜는 모두 눌러볼 수 있게 함)
     function attRenderCal(ym, dates) {
@@ -5914,7 +5927,14 @@
             }
             grid.appendChild(el);
         }
-        cal.replaceChildren(attEl('div', 'bb-att-cal-title', y + '년 ' + m + '월'), grid);
+        const months = attMonths();
+        const hd = attEl('div', 'bb-att-cal-h');
+        const pv = attEl('button', '', '‹'), nx = attEl('button', '', '›');
+        pv.type = nx.type = 'button';
+        if (ym <= months[0]) pv.disabled = true; else pv.addEventListener('click', () => attShowCal(months[0]));
+        if (ym >= months[1]) nx.disabled = true; else nx.addEventListener('click', () => attShowCal(months[1]));
+        hd.append(pv, attEl('span', 't', y + '년 ' + m + '월'), nx);
+        cal.replaceChildren(hd, grid);
         cal.classList.add('open');
     }
     function attSelectDate(ds) {
@@ -6231,8 +6251,7 @@
     /* ───────── 이벤트 연결 ───────── */
     $att('bb-mm-goatt').addEventListener('click', () => attSetView('att'));
     $att('bb-att-back').addEventListener('click', () => attSetView('multi'));
-    $att('bb-att-mprev').addEventListener('click', () => attOpenCal('prev'));
-    $att('bb-att-mcur').addEventListener('click', () => attOpenCal('cur'));
+    $att('bb-att-cal-btn').addEventListener('click', () => attOpenCal());
     $att('bb-att-detailbtn').addEventListener('click', () => { if ($att('bb-att-detail').classList.contains('open')) attCloseDetail(); else attOpenDetail(); });
     $att('bb-att-today').addEventListener('click', attGoToday);
     $att('bb-att-dclose').addEventListener('click', attCloseDetail);
@@ -6910,7 +6929,7 @@
         #bb-iv-stats-btn.on { background:#9fe3bd; border-color:#4fb57d; }
         #bb-iv-sp {
             --bg:#f2e4c4; --sur:#f8f3e6; --sur2:#efe6d2; --bd:#cabf9d; --bd2:#b3a687; --tx:#2b2418; --mu:#7a6f5c; --bl:#3b82f6;
-            display:none; position:fixed; width:440px; max-width:96vw; flex-direction:column; color:var(--tx); font-family:'Paperlogy','Lato',-apple-system,sans-serif;
+            display:none; position:fixed; width:490px; max-width:96vw; flex-direction:column; color:var(--tx); font-family:'Paperlogy','Lato',-apple-system,sans-serif;
             border:3px solid transparent; border-radius:14px;
             transform:scale(var(--bb-pop-zoom,1)); transform-origin:center center;
             background-image:linear-gradient(var(--sur),var(--sur)), linear-gradient(135deg, #d9b8ff, #9333ea);
@@ -6926,7 +6945,7 @@
         .bb-sp-t .x { margin-left:auto; color:#b91c1c; font-size:16px; font-weight:900; padding:0 4px; cursor:pointer; }
         .bb-sp-sub { font-size:11.5px; color:var(--mu); }
         .bb-sp-sub.warn { color:#c2410c; font-weight:700; }
-        .bb-sp-th, .bb-sp-row { display:grid; grid-template-columns:28px minmax(0,1fr) 72px 64px 64px; gap:6px; align-items:center; padding:0 16px; }
+        .bb-sp-th, .bb-sp-row { display:grid; grid-template-columns:28px minmax(0,1fr) 66px 56px 62px 56px; gap:6px; align-items:center; padding:0 16px; }
         .bb-sp-th { flex:0 0 auto; font-size:11px; color:var(--mu); padding-top:5px; padding-bottom:5px; border-bottom:1px solid var(--bd); background:var(--sur2); }
         .bb-sp-th span:nth-child(n+3), .bb-sp-row > div:nth-child(n+3) { text-align:right; }
         .bb-sp-body { flex:1 1 auto; min-height:0; overflow-y:auto; }
@@ -6971,26 +6990,28 @@
         const spSaveSch = s => { try { localStorage.setItem(IV_SCH_KEY, JSON.stringify(s)); } catch (e) { /* 저장 못 해도 이번 화면에는 지장 없음 */ } };
         // 근무표 JSON → { 이름: { 'M/D': 1(근무)|0(비근무) } }
         function spParseSch(j) {
-            const out = {};
+            const out = {}, win = {};
             (j && Array.isArray(j.staff) ? j.staff : []).forEach(st => {
                 if (!st || !st.name || !st.schedule) return;
                 const m = {};
+                const wm = String(st.workTime || '').match(/(\d{1,2}):(\d{2})\s*~\s*(\d{1,2}):(\d{2})/);   // '15:00~24:00A' 처럼 뒤에 글자가 붙어도 시각만 읽음
+                if (wm) { const a = (+wm[1]) * 60 + (+wm[2]); let b = (+wm[3]) * 60 + (+wm[4]); if (b <= a) b += 1440; if (b - a > 0 && b - a <= 960) win[spNorm(st.name)] = [a, b]; }   // 자정 넘기면 +24h, 16시간 넘는 값은 오타로 보고 무시
                 Object.keys(st.schedule).forEach(k => { const v = st.schedule[k]; if (v && typeof v === 'object' && v.status !== 'empty') m[k] = v.present === true ? 1 : 0; });
                 out[spNorm(st.name)] = m;
             });
-            return out;
+            return { p: out, w: win };
         }
         // 필요한 달의 근무표를 확보 (저장분 우선). 반환: { 'YYYY-MM': {p:{이름:{M/D:0|1}}} | null(받지 못함) }
         async function spLoadSched(months, force) {
             const store = force ? { months: {} } : spLoadSch(), cur = ivOpDate().slice(0, 7), res = {};
             await Promise.all(months.map(async mo => {
                 const c = store.months[mo];
-                if (c && c.p && (mo < cur || Date.now() - c.at < IV_SCH_TTL)) { res[mo] = c; return; }
+                if (c && c.p && c.w && (mo < cur || Date.now() - c.at < (Object.keys(c.p).length ? IV_SCH_TTL : 30 * 60 * 1000))) { res[mo] = c; return; }   // c.w 가 없는 예전 저장분(근무시간 미포함)은 다시 받음 · 파일이 아직 없던 달은 30분마다 재시도
                 try {
                     const r = await fetch(IV_SCH_BASE + mo + '.json', { cache: 'no-cache' });
-                    if (r.status === 404) { store.months[mo] = { at: Date.now(), p: {} }; res[mo] = store.months[mo]; return; }   // 그 달 근무표 없음
+                    if (r.status === 404) { store.months[mo] = { at: Date.now(), p: {}, w: {} }; res[mo] = store.months[mo]; return; }   // 그 달 근무표 없음
                     if (!r.ok) throw new Error('HTTP ' + r.status);
-                    const rec = { at: Date.now(), p: spParseSch(await r.json()) };
+                    const ps = spParseSch(await r.json()), rec = { at: Date.now(), p: ps.p, w: ps.w };
                     store.months[mo] = rec; res[mo] = rec;
                 } catch (e) {
                     console.warn('[BB] 근무표 불러오기 실패', mo, e && e.message);
@@ -7001,12 +7022,41 @@
             return res;
         }
         // 이름 매칭: 공백 제거 후 같은 이름 → 없으면 한쪽이 다른 쪽을 포함하고 후보가 딱 하나일 때만
-        function spFindSch(p, name) {
+        function spFindKey(p, name) {
             const k = spNorm(name);
-            if (p[k]) return p[k];
+            if (p[k]) return k;
             if (k.length < 2) return null;
             const c = Object.keys(p).filter(x => x.includes(k) || k.includes(x));
-            return c.length === 1 ? p[c[0]] : null;
+            return c.length === 1 ? c[0] : null;
+        }
+        function spFindSch(p, name) { const k = spFindKey(p, name); return k == null ? null : p[k]; }
+
+        // 점유율: 그날 '내 근무시간대에 같이 근무한 사람들이 처리한 건' 중 내가 처리한 비율.
+        //  - 하루 요약에는 시간대별 건수가 없으므로, 각자 처리 건수를 본인 근무시간에 고르게 분포한다고 보고 내 근무시간과 겹치는 만큼만 더함
+        //  - 근무시간(workTime)을 모르는 사람은 비교 대상에서 빠짐 · 근무시간을 모르는 본인은 그날 계산 제외
+        function spShareDay(day, sc, w, md) {
+            const pp = [];   // { key, sv, win }
+            const seen = new Set();
+            Object.keys(day).forEach(nm => {
+                const key = spFindKey(sc, nm), sv = day[nm][0] || 0, v = key != null ? sc[key][md] : undefined;
+                if (key != null) seen.add(key);
+                const worked = v === 1 || (v === 0 ? sv > 0 : !!day[nm][1]);
+                if (!worked) return;
+                pp.push({ nm, sv, win: key != null ? w[key] : null });
+            });
+            Object.keys(sc).forEach(key => { if (!seen.has(key) && sc[key][md] === 1) pp.push({ nm: null, key, sv: 0, win: w[key] || null }); });
+            const out = {};
+            pp.forEach(a => {
+                if (!a.nm || !a.win) return;
+                let pool = 0;
+                pp.forEach(b => {
+                    if (!b.win || !b.sv) return;
+                    const ov = Math.min(a.win[1], b.win[1]) - Math.max(a.win[0], b.win[0]);
+                    if (ov > 0) pool += b.sv * ov / (b.win[1] - b.win[0]);
+                });
+                if (pool > 0) out[a.nm] = Math.min(1, a.sv / pool);
+            });
+            return out;
         }
 
         const spLoadStore = () => { try { const s = JSON.parse(localStorage.getItem(IV_SP_KEY) || 'null'); if (s && s.days && typeof s.days === 'object') return s; } catch (e) { /* 없으면 새로 */ } return { days: {}, at: 0 }; };
@@ -7017,10 +7067,12 @@
             dates.forEach(d => {
                 const day = days[d]; if (!day) return;
                 const mo = d.slice(0, 7), md = ivMD(d), sc = sched && sched[mo] && sched[mo].p;
+                let shr = {}; try { shr = sc ? spShareDay(day, sc, (sched[mo].w || {}), md) : {}; } catch (e) { shr = {}; }   // 계산이 실패해도 나머지 통계는 그대로
                 Object.keys(day).forEach(nm => {
-                    const a = m[nm] || (m[nm] = { name: nm, solved: 0, days: 0, est: 0 });
+                    const a = m[nm] || (m[nm] = { name: nm, solved: 0, days: 0, est: 0, sh: 0, shn: 0 });
                     const [sv, w] = day[nm];
                     a.solved += sv;
+                    if (shr[nm] != null) { a.sh += shr[nm]; a.shn++; }
                     const mine = sc && spFindSch(sc, nm), v = mine ? mine[md] : undefined;
                     if (v === 1) a.days += 1;                       // 근무표상 근무
                     else if (v === 0) { if (sv > 0) a.days += 1; }  // 근무표상 비근무(휴무·연차)인데 처리 건수가 있으면 근무로 봄
@@ -7045,7 +7097,8 @@
             const have = dates.filter(d => days[d]);
             const rows = spAgg(have, days, sched);
             const avgOf = x => x.days > 0 ? x.solved / x.days : -1;
-            const val = { solved: x => x.solved, avg: avgOf, days: x => x.days }[_spSort.k];
+            const shOf = x => x.shn > 0 ? x.sh / x.shn : -1;
+            const val = { solved: x => x.solved, avg: avgOf, share: shOf, days: x => x.days }[_spSort.k];
             rows.sort((a, b) => _spSort.k === 'name'
                 ? _spSort.dir * String(a.name).localeCompare(String(b.name), 'ko')
                 : (val(a) - val(b)) * _spSort.dir || b.solved - a.solved || String(a.name).localeCompare(String(b.name), 'ko'));
@@ -7068,7 +7121,7 @@
             head.appendChild(ivEl('div', 'bb-sp-sub' + (warn ? ' warn' : ''), sub || ' '));
 
             const th = ivEl('div', 'bb-sp-th');
-            [['#', ''], ['이름', 'name'], ['누적', 'solved'], ['일평균', 'avg'], ['근무일', 'days']].forEach(([lb, k]) => {
+            [['#', ''], ['이름', 'name'], ['누적', 'solved'], ['일평균', 'avg'], ['점유율', 'share'], ['근무일', 'days']].forEach(([lb, k]) => {
                 const sp = ivEl('span', k && _spSort.k === k ? 'cur' : '', lb + (k && _spSort.k === k ? (_spSort.dir < 0 ? ' ▼' : ' ▲') : ''));
                 if (k) { sp.dataset.sort = k; sp.title = '눌러서 정렬 (다시 누르면 오름/내림차순 전환)'; }
                 th.appendChild(sp);
@@ -7086,11 +7139,14 @@
                     row.appendChild(nm);
                     const c = ivEl('div', 'bb-sp-c', String(r.solved)); c.appendChild(ivEl('small', '', '건')); row.appendChild(c);
                     row.appendChild(ivEl('div', 'bb-sp-a', r.days > 0 ? (r.solved / r.days).toFixed(1) : '-'));
+                    const shc = ivEl('div', 'bb-sp-a', r.shn > 0 ? Math.round(r.sh / r.shn * 100) + '%' : '-');
+                    shc.title = r.shn > 0 ? '근무시간대에 같이 근무한 사람들이 처리한 건 중 본인 비율의 평균 (' + r.shn + '일 기준)' : '근무시간 정보가 없어 계산하지 못함';
+                    row.appendChild(shc);
                     row.appendChild(ivEl('div', 'bb-sp-d', r.days + '일' + (r.est ? '*' : '')));
                     body.appendChild(row);
                 });
             }
-            const ft = ivEl('div', 'bb-sp-ft', '건수 = 이름이 확정된 처리 건만 (추정·이탈·특정 불가 제외, 개입카드 화면과 같은 기준) · 근무일 = 월별 근무표에서 출근으로 표시된 날(연차 제외·반차 1일) · * = 근무표에 없는 날이 있어 처리·근무시간 기록으로 대체 · 일평균 = 누적 ÷ 근무일');
+            const ft = ivEl('div', 'bb-sp-ft', '건수 = 이름이 확정된 처리 건만 (추정·이탈·특정 불가 제외, 개입카드 화면과 같은 기준) · 근무일 = 월별 근무표에서 출근으로 표시된 날(연차 제외·반차 1일) · * = 근무표에 없는 날이 있어 처리·근무시간 기록으로 대체 · 일평균 = 누적 ÷ 근무일 · 점유율 = (내 근무시간과 겹치는 시간 동안 같이 근무한 사람들의 처리 건 중 내가 처리한 비율)의 일별 평균 — 건수는 각자 근무시간에 고르게 분포한다고 보고 추정 · 근무시간 미등록자는 비교에서 제외');
             const keep = spPop.querySelector('.bb-sp-body'), keepTop = keep ? keep.scrollTop : 0;
             spPop.replaceChildren(head, th, body, ft);
             body.scrollTop = keepTop;
@@ -7354,6 +7410,8 @@
             const lbl = $dl('bb-dlog-date-lbl'), kpi = $dl('bb-dlog-kpi'), body = $dl('bb-dlog-body');
             const isToday = !_dlDate;
             lbl.textContent = isToday ? '오늘 (' + dlDateNow() + ')' : dlDateNow();
+            const dlTitle = $dl('bb-dlog-title'), dlDp = dlDateNow().split('-');
+            dlTitle.textContent = '🚚 배달 로그 (' + Number(dlDp[1]) + '/' + Number(dlDp[2]) + ')';
             $dl('bb-dlog-today').classList.toggle('on', isToday);
             $dl('bb-dlog-cal-btn').classList.toggle('on', !isToday);
             if (!_dlData) {
@@ -7374,11 +7432,14 @@
             kpi.replaceChildren(...cells);
             const closedNow = isToday && !dlInSchedule();   // 마감 후(23:00~08:00): 더 이상 조회하지 않고 마지막 값을 그대로 보여줌
             _dlRefMs = (closedNow && _dlData._at) ? _dlData._at : Date.now();   // 마감 후에는 진행 중 카드의 경과/대기 시간이 계속 늘어나지 않도록 마지막 조회 시각에 고정
-            $dl('bb-dlog-note').innerHTML = !isToday
-                ? '* 확정된 기록입니다.'
+            dlTitle.append(' - ' + (isToday ? '오늘 ' : '과거 '));
+            { const c = dlEl('span', '', String(s.completed || 0) + '건'); c.style.color = '#c2410c'; c.style.fontWeight = '700'; dlTitle.appendChild(c); }
+            const dlNoteTxt = !isToday
+                ? '확정된 기록'
                 : closedNow
-                    ? '* 마감 (23:00) · 08:00 재개<br>' + (_dlData._at ? dlHMS(_dlData._at) : '--:--:--') + ' 기준'
-                    : '* 08:00~23:00<br>' + (_dlData._at ? dlHMS(_dlData._at) : '--:--:--') + ' 업데이트';   // 업데이트 시각 = 이 화면이 서버에서 마지막으로 '성공적으로' 받아온 시각 (조회가 실패하면 마지막 성공 시각 그대로 남음)
+                    ? '마감 · 08:00 재개 · ' + (_dlData._at ? dlHMS(_dlData._at) : '--:--:--') + ' 기준'
+                    : '08:00~23:00 · ' + (_dlData._at ? dlHMS(_dlData._at) : '--:--:--') + ' 업데이트';
+            $dl('bb-dlog-note').textContent = dlNoteTxt; $dl('bb-dlog-note').title = dlNoteTxt;   // 업데이트 시각 = 이 화면이 서버에서 마지막으로 '성공적으로' 받아온 시각 (조회가 실패하면 마지막 성공 시각 그대로 남음)
             // 진행 중(아직 완료 신호가 없는 건)은 오늘 화면에서만 맨 위에 카드로: 배달 중(최신 배정 순) → 배정 대기(최신 접수 순)
             const running = (isToday && Array.isArray(_dlData.inProgress)) ? _dlData.inProgress.slice() : [];
             const sinceOf = r => parseFloat(r.assignedTs || r.threadTs) || 0;
@@ -7509,7 +7570,7 @@
         const dsSt = document.createElement('style');
         dsSt.id = 'bb-ds-style';
         dsSt.textContent = `
-        #bb-dl-stats-btn { margin-left:auto; background:#d6f5e3; border-color:#8fd3ac; color:#14532d; }
+        #bb-dl-stats-btn { background:#d6f5e3; border-color:#8fd3ac; color:#14532d; }
         #bb-dl-stats-btn:hover { background:#c3efd5; border-color:#6fc496; }
         #bb-dl-stats-btn.on { background:#9fe3bd; border-color:#4fb57d; }
         #bb-ds {
@@ -7577,10 +7638,11 @@
         document.head.appendChild(dsSt);
 
         // 제목 줄 우측에 버튼 삽입 (닫기 ✕ 는 숨김 상태라 이 버튼이 맨 오른쪽에 놓임)
-        const dsBtn = dlEl('button', 'bb-mm-nav', '누적 통계');
+        const dsBtn = dlEl('button', 'bb-mm-nav');
+        dsBtn.innerHTML = '<span class="tx"><span class="l1">누적</span><span class="l2">통계</span></span>';
         dsBtn.id = 'bb-dl-stats-btn'; dsBtn.type = 'button'; dsBtn.title = '사이트별 배달 건수 · 주중(월~목) vs 주말(금~일) · 시간대별';
         const dsHd = document.querySelector('#bb-dlog-panel .bb-ap-hd');
-        if (dsHd) dsHd.insertBefore(dsBtn, document.getElementById('bb-dlog-close'));
+        if (dsHd) dsHd.appendChild(dsBtn);
 
         const dsPop = dlEl('div'); dsPop.id = 'bb-ds';
         document.body.appendChild(dsPop);
@@ -7892,8 +7954,10 @@
             #bb-mw .mw-pill.on  { background:#bfe8cb; color:#1d5a35; }    /* 파스텔 초록 = ON */
             #bb-mw .mw-pill.off { background:#f4b8b3; color:#8a2a22; }    /* 파스텔 레드 = OFF */
             #bb-mw .mw-row.stale .mw-pill, #bb-mw .mw-row.stale .mw-name { opacity:.45; }
-            #bb-mw .mw-sub { grid-column:1 / 3; font-size:11px; font-weight:600 !important; color:var(--tx,#2b2418); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+            #bb-mw .mw-sub { grid-column:1; grid-row:2; min-width:0; font-size:11px; font-weight:600 !important; color:var(--tx,#2b2418); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
             #bb-mw .mw-row.stale .mw-sub { color:#c2410c; }
+            #bb-mw .mw-chk { grid-column:2; grid-row:2; text-align:right; font-size:11px; font-weight:600 !important; white-space:nowrap; color:var(--tx,#2b2418); }
+            #bb-mw .mw-row.stale .mw-chk { color:#c2410c; }
                         #bb-mw .mw-foot { display:none; }
             #bb-mw .mw-foot.warn { display:block; margin-top:1px; padding-top:2px; border-top:1px dashed var(--bd,#cabf9d); font-size:10px; color:#c2410c; font-weight:600 !important; }
         `;
@@ -7910,9 +7974,10 @@
             const ppill = document.createElement('div'); ppill.className = 'mw-pill'; ppill.textContent = '—';   // 전원
             const pills = document.createElement('div'); pills.className = 'mw-pills'; pills.append(ppill, pill);
             const sub = document.createElement('div'); sub.className = 'mw-sub';
-            row.append(nm, pills, sub);
+            const chk = document.createElement('div'); chk.className = 'mw-chk'; chk.textContent = '확인 —';   // 확인한 시간 (전원·임무 칸 바로 아래)
+            row.append(nm, pills, sub, chk);
             mwCard.appendChild(row);
-            return { name, row, pill, ppill, sub };
+            return { name, row, pill, ppill, sub, chk };
         });
         const mwFoot = document.createElement('div');
         mwFoot.className = 'mw-foot';
@@ -7921,6 +7986,7 @@
 
         const mwP = (n) => String(n).padStart(2, '0');
         const mwHM = (ms) => { const d = new Date(ms); return `${mwP(d.getHours())}:${mwP(d.getMinutes())}`; };
+        const mwHMS = (ms) => { const d = new Date(ms); return `${mwP(d.getHours())}:${mwP(d.getMinutes())}:${mwP(d.getSeconds())}`; };
         const mwMDHM = (ms) => { const d = new Date(ms); return `${mwP(d.getMonth() + 1)}/${mwP(d.getDate())} ${mwHM(ms)}`; };
 
         let mwData = null, mwFetchedAt = 0, mwFail = false, mwBusy = false, mw404 = false;
@@ -7981,12 +8047,13 @@
             const hbStale = !!(mwData && mwData.hb > 0 && now - (mwData.updatedAt || 0) > mwData.hb * 2.5 * 60000);
             let anyOff = false, anyBad = false;
 
-            mwRows.forEach(({ name, row, pill, ppill, sub }) => {
+            mwRows.forEach(({ name, row, pill, ppill, sub, chk }) => {
                 const s = robots && robots[name];
                 if (!s || typeof s.on !== 'boolean') {
                     pill.textContent = '—'; pill.className = 'mw-pill';
                     sub.textContent = mwFail && !mwData ? '불러오지 못함' : mw404 ? '데이터 없음 (감시 스크립트 확인)' : '불러오는 중…';
                     ppill.textContent = '—'; ppill.className = 'mw-pill';
+                    chk.textContent = '확인 —'; chk.title = '';
                     row.classList.add('stale');
                     anyBad = true;
                     return;
@@ -8001,10 +8068,12 @@
                 // '언제부터 ON/OFF 인지' = 마지막으로 임무받기가 바뀐 시각 (+ 전원 켜짐/꺼짐, 업로드 시점 값)
                 let txt;
                 if (s.since) {
-                    if (s.source === 'initial') txt = '임무 ' + mwMDHM(s.since) + '~ (최초 관측)';
-                    else txt = '임무 ' + mwMDHM(s.since) + ((s.source === 'external' || s.source === 'gap') ? ' 경' : '') + '부터';
-                } else txt = '임무 변경 시각 미상';
-                if (hbStale) txt += ' ⚠';
+                    if (s.source === 'initial') txt = mwMDHM(s.since) + '~ 최초';
+                    else txt = mwMDHM(s.since) + ((s.source === 'external' || s.source === 'gap') ? ' 경' : '') + '부터';
+                } else txt = '변경 시각 미상';
+                const chkAt = mwData.updatedAt > 0 ? mwData.updatedAt : mwFetchedAt;   // 감시 스크립트가 마지막으로 확인·업로드한 시각 (없으면 보드가 받아온 시각)
+                chk.textContent = '확인 ' + (chkAt ? mwHMS(chkAt) : '—') + (hbStale ? ' ⚠' : '');
+                chk.title = '감시 스크립트가 마지막으로 확인·업로드한 시각' + (mwFetchedAt ? ' · 보드가 받아온 시각 ' + mwHMS(mwFetchedAt) : '') + (hbStale ? ' · 갱신이 끊긴 것으로 보임' : '');
                 sub.textContent = txt;
                 sub.title = (s.since ? mwMDHM(s.since) + (s.on ? ' 부터 ON' : ' 부터 OFF') + (s.source === 'external' || s.source === 'gap' ? ' (정확한 시각 아님 · 다른 사용자/감시 공백)' : '') : '') + (s.powerSince ? ' · 전원 ' + (s.power ? '켜짐' : '꺼짐') + ' ' + mwMDHM(s.powerSince) + '부터' : '') + (mwData.updatedAt ? ' · 업로드 ' + mwMDHM(mwData.updatedAt) : '');
             });
