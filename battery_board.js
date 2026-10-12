@@ -7941,9 +7941,9 @@
     //            (multimonitoring.vercel.app/api/battery?name=임무받기 현황 → GitHub 레포). 보드는 NCC 를 전혀 호출하지 않는다.
     //   · 카드 내용: 임무받기 ON/OFF(항상) + 전원 켜짐/꺼짐 + (켜져 있으면) 배터리. 전원·배터리는 '마지막 업로드 시점' 값이다
     //                (임무받기가 바뀔 때만 올라오므로 그 이후의 배터리 변화는 반영되지 않음 → 카드에 'HH:MM 기준'을 함께 표시)
-    //   · 조회: 보드가 열려 있고 탭이 보일 때만 1분에 1번 — 아래 '요청 줄이기'를 거쳐서만 실제 요청이 나간다
+    //   · 조회: 보드가 열려 있고 탭이 보일 때만, 실제 요청은 5분에 1번 (1분마다 '요청이 필요한가'만 로컬에서 확인) — 아래 '요청 줄이기'를 거쳐서만 실제 요청이 나간다
     //   · 요청 줄이기(불필요한 부담 방지):
-    //       ① 캐시(localStorage bb_mw_cache_v1): 50초 안에 받은 값이 있으면 요청하지 않는다. 같은 PC 의 보드 탭이 여러 개여도 한 탭만 받고 나머지는 캐시를 쓴다
+    //       ① 캐시(localStorage bb_mw_cache_v1): 4분 30초 안에 받은 값이 있으면 요청하지 않는다. 같은 PC 의 보드 탭이 여러 개여도 한 탭만 받고 나머지는 캐시를 쓴다
     //       ② 한 번에 하나만 요청(진행 중이면 건너뜀) · 열기/탭 전환 때의 연속 호출도 ①에 걸려 요청되지 않음
     //       ③ 조건부 요청(cache:'no-cache'): 브라우저가 ETag 검증을 붙여 보낸다 — 서버가 ETag/304 를 지원하면 본문 없이 끝난다 (지원 여부는 서버 쪽)
     //       ④ 실패하면 1분 → 2분 → 4분 … 최대 10분까지 쉬었다가 재시도
@@ -7953,8 +7953,8 @@
     {
         const MW_TARGETS = ['스테이 그린 1호기', '스테이 그린 2호기'];
         const MW_NAME = '임무받기_현황';
-        const MW_POLL_MS = 60 * 1000;
-        const MW_MIN_GAP_MS = 50 * 1000;
+        const MW_POLL_MS = 60 * 1000;            // 요청이 필요한지 로컬에서 확인하는 주기 (이 자체로는 요청을 보내지 않음)
+        const MW_MIN_GAP_MS = 270 * 1000;        // 실제 요청 최소 간격 ≈ 5분 (이 안에 받은 값이 캐시에 있으면 요청하지 않음)
         const MW_CACHE_KEY = 'bb_mw_cache_v1';
 
         // 위치: 보드(#bb) 헤더 좌상단 안쪽 (보드 밖으로 나가지 않음). 색은 보드 테마 변수(--sur/--bd/--tx/--mu)를 따라 라이트·다크 모두 맞음.
@@ -8102,11 +8102,11 @@
                 sub.title = (s.since ? mwMDHM(s.since) + (s.on ? ' 부터 ON' : ' 부터 OFF') + (s.source === 'external' || s.source === 'gap' ? ' (정확한 시각 아님 · 다른 사용자/감시 공백)' : '') : '') + (s.powerSince ? ' · 전원 ' + (s.power ? '켜짐' : '꺼짐') + ' ' + mwMDHM(s.powerSince) + '부터' : '') + (mwData.updatedAt ? ' · 업로드 ' + mwMDHM(mwData.updatedAt) : '');
             });
 
-            // 맨 아래 줄: 보드가 서버를 마지막으로 점검한 시각 (1분마다 갱신 → '실시간 점검 중' 표시). 임무가 바뀐 시각과는 별개.
+            // 맨 아래 줄: 보드가 서버를 마지막으로 점검한 시각 (5분마다 갱신 → '실시간 점검 중' 표시). 임무가 바뀐 시각과는 별개.
             const mwHMS = (ms) => { const d = new Date(ms); return mwP(d.getHours()) + ':' + mwP(d.getMinutes()) + ':' + mwP(d.getSeconds()); };
             mwFoot.textContent = '';
             if (mwFail) mwFoot.textContent = '⚠ 조회 실패' + (mwFetchedAt ? ' (마지막 성공 ' + mwHMS(mwFetchedAt) + ')' : '');
-            else if (mwFetchedAt) { const dot = document.createElement('span'); dot.className = 'mw-live'; dot.textContent = '●'; mwFoot.append(dot, ' 점검 ' + mwHMS(mwFetchedAt) + ' · 1분마다'); }
+            else if (mwFetchedAt) { const dot = document.createElement('span'); dot.className = 'mw-live'; dot.textContent = '●'; mwFoot.append(dot, ' 점검 ' + mwHMS(mwFetchedAt) + ' · 5분마다'); }
             mwFoot.title = '이 보드가 서버의 임무받기 기록을 마지막으로 확인한 시각 (임무가 바뀐 시각 아님)';
             mwFoot.classList.toggle('warn', mwFail);
 
@@ -8115,7 +8115,7 @@
             mwCard.classList.toggle('mw-ok', !anyBad && !anyOff);
         }
 
-        // 보드가 열려 있고 탭이 보일 때만 1분마다 (실제 요청 여부는 mwFetch 의 캐시/백오프가 결정)
+        // 보드가 열려 있고 탭이 보일 때만 1분마다 확인 (실제 요청은 mwFetch 의 캐시 간격(5분)/백오프가 결정 — 탭이 가려졌다 보이면 1분 안에 따라잡음)
         setInterval(() => { if (isOpen && !document.hidden) mwFetch(false); }, MW_POLL_MS);
         document.addEventListener('visibilitychange', () => { if (!document.hidden && isOpen) mwFetch(false); });
         window.addEventListener('storage', (e) => {   // 다른 보드 탭이 새로 받은 값을 요청 없이 그대로 반영
