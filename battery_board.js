@@ -869,7 +869,7 @@
         }
         .bb-att-card:hover { filter:brightness(1.03); }
         /* 관리자 동그라미 버튼(이석 현황 제목 왼쪽) — 동작은 근무자 카드와 같음: 누르면 이석 로그 창, 이석 중이면 빨간 외곽선, 퇴근/미근무는 회색 */
-        .bb-att-mgs { display:inline-flex; align-items:center; gap:4px; margin-right:8px; vertical-align:middle; }
+        .bb-att-mgs { flex:0 0 auto; display:inline-flex; align-items:center; gap:4px; margin-right:6px; }
         .bb-att-mg { box-sizing:border-box; width:24px; height:24px; padding:0; border-radius:50%; border:2px solid #b79af0; background:#e9defc; color:#4c2f8f; font-family:inherit; font-size:12.5px; font-weight:900; line-height:1; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; }
         .bb-att-mg:hover { filter:brightness(1.05); }
         .bb-att-mg.sel { outline:2px solid var(--tx); outline-offset:1px; }
@@ -954,9 +954,9 @@
         .bb-att-dh .sr:focus { border-color:var(--bl); background:var(--sur); }
         .bb-att-dh .sr::placeholder { color:var(--mu); font-weight:400; }
         .bb-att-dh .mgb { flex:0 0 auto; display:inline-flex; gap:5px; }
-        .bb-att-dh .mgb button { width:34px; height:34px; padding:0; border-radius:50%; border:1.5px solid #b79af0; background:#e9defc; color:#4c2f8f; font-size:14px; font-weight:900; font-family:inherit; cursor:pointer; }
+        .bb-att-dh .mgb button { width:34px; height:34px; padding:0; border-radius:50%; border:1.5px solid #a39b84; background:#cfc8b4; color:#4a4436; font-size:14px; font-weight:900; font-family:inherit; cursor:pointer; }
         .bb-att-dh .mgb button:hover { filter:brightness(1.05); }
-        .bb-att-dh .mgb button.on { background:#b79af0; color:#fff; border-color:#7a55d6; }
+        .bb-att-dh .mgb button.on { background:#6b6558; color:#fff; border-color:#4a4436; }
         .bb-att-dh .x { margin-left:auto; width:34px; height:34px; border-radius:8px; background:rgba(239,68,68,.18); border:1px solid rgba(239,68,68,.5); color:#b91c1c; font-size:18px; font-weight:900; cursor:pointer; display:flex; align-items:center; justify-content:center; }
         .bb-att-dnote { flex:0 0 auto; padding:6px 18px 0; font-size:12px; color:#c2410c; }
         .bb-att-db { flex:1 1 auto; min-height:0; overflow:auto; padding:0 12px 14px; }
@@ -5766,7 +5766,7 @@
             title.append(attEl('span', 'sep', ' - '), attEl('span', 'past', '과거 기록'));
         }
 
-        // 관리자 버튼 (제목 왼쪽): 근무자 카드와 같은 상태 규칙 — 이석 중이면 빨간 외곽선, 퇴근·미근무면 회색
+        // 관리자 버튼 (2번째 줄 왼쪽): 근무자 카드와 같은 상태 규칙 — 이석 중이면 빨간 외곽선, 퇴근·미근무면 회색
         const mgWrap = attEl('span', 'bb-att-mgs');
         ATT_MGRS.forEach(m => {
             const ms = stats && stats.find(x => attMgrOf(x) === m);
@@ -5778,7 +5778,8 @@
             else b.title = m.name + (stats ? ' · 기록 없음' : '');
             mgWrap.appendChild(b);
         });
-        title.prepend(mgWrap);
+        const r2 = $att('bb-att-r2'); r2.querySelectorAll('.bb-att-mgs').forEach(n => n.remove());
+        r2.prepend(mgWrap);   // 제목 줄은 좁아서 줄바꿈이 생기므로 2번째 줄(오늘·달력 버튼 왼쪽)에 둠
 
         // 2번째 줄: 이전달/이번달 버튼 (자동 반영), 과거 조회 중이면 '오늘로'
         $att('bb-att-today').classList.toggle('on', live);
@@ -6169,7 +6170,7 @@
                     const t = rows.length > 1 ? ri / (rows.length - 1) : 0;
                     const td = attEl('td', 'bar'), w = attEl('div', 'bb-att-bw'), bar = attEl('div', 'bb-att-bar', r.totalCount + '회');
                     bar.style.width = (r.totalSec / maxSec * 100).toFixed(1) + '%';
-                    bar.style.background = 'hsl(' + Math.round(24 + 72 * t) + ',85%,' + Math.round(52 + 10 * t) + '%)';
+                    bar.style.background = ATT_MGRS.some(m => r.name.includes(m.name)) ? '#c9c5ba' : 'hsl(' + Math.round(24 + 72 * t) + ',85%,' + Math.round(52 + 10 * t) + '%)';
                     w.append(bar, attEl('span', '', attDurHM(r.totalSec)));
                     td.appendChild(w); tr.appendChild(td);
                 } else if (c.viol) {
@@ -6320,7 +6321,7 @@
     });
     $att('bb-att-dbody').addEventListener('click', e => { const td = e.target.closest('td.nm'); if (td && _attDetailYm) attOpenPlog(td.dataset.name, _attDetailYm); });   // 이름 클릭 (예전엔 더블클릭)
     $att('bb-att-body').addEventListener('click', e => { const c = e.target.closest('.bb-att-card'); if (c) attTogglePop(c.dataset.uid); });
-    $att('bb-att-title').addEventListener('click', e => { const b = e.target.closest('.bb-att-mg'); if (b && b.dataset.uid) attTogglePop(b.dataset.uid); });   // 관리자 동그라미 버튼
+    $att('bb-att-r2').addEventListener('click', e => { const b = e.target.closest('.bb-att-mg'); if (b && b.dataset.uid) attTogglePop(b.dataset.uid); });   // 관리자 동그라미 버튼
     document.addEventListener('click', e => {   // 바깥 클릭 → 이석 로그 / 달력 닫기 (캡처 단계: 재렌더로 대상이 사라지기 전에 판단)
         if (_attPopId && !e.target.closest('#bb-att-pop') && !e.target.closest('.bb-att-card') && !e.target.closest('.bb-att-mg')) attClosePop();
         if (_attCalWhich && !e.target.closest('#bb-att-cal') && !e.target.closest('.bb-att-mbtn')) attCloseCal();
