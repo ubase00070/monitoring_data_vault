@@ -1,5 +1,5 @@
 /* ============================================================
-   battery_board.js v6.4 [UI 전면 개편: 순찰·배달 열 + 다중/개입/이석 3분할 그리드. 로직 변경 없음 — 빠진 요소는 CSS로만 숨김] v6.3 (배경 이미지 · 방전 로그 · 이석/착석 현황 슬라이드 전환 추가 · 배달 기체 로그 · 하루 기준 07:00 · 금일 배달 건수 배지 · 고정 버튼 3종 무지개 파스텔+이모지)
+   battery_board.js v6.5 [배달 로그 '누적 통계' 추가] v6.4 [UI 전면 개편: 순찰·배달 열 + 다중/개입/이석 3분할 그리드. 로직 변경 없음 — 빠진 요소는 CSS로만 숨김] v6.3 (배경 이미지 · 방전 로그 · 이석/착석 현황 슬라이드 전환 추가 · 배달 기체 로그 · 하루 기준 07:00 · 금일 배달 건수 배지 · 고정 버튼 3종 무지개 파스텔+이모지)
    NCC 종합 모니터 — 템퍼몽키 inject
    ============================================================ */
 
@@ -2319,6 +2319,7 @@
         document.getElementById('bb').classList.remove('open');
         window.__bbMw?.show(false);
         window.__bbIvSpClose?.();   // 개입 통계 팝업 (SECTION 18)
+        window.__bbDlSpClose?.();   // 배달 누적 통계 팝업 (SECTION 19)
         document.getElementById('bb-alert-panel').classList.remove('open');
         // (기체 정보 창은 보드를 닫아도 유지 — 창의 ✕ 로만 닫음)
         if (rmMode) { rmMode = false; rmSet.clear(); updateRmUI(); }
@@ -7489,6 +7490,356 @@
             if (!document.hidden && (!_dlData || Date.now() - (_dlData._at || 0) > 30000)) dlPollToday();
         });
         dlRefreshBadge();   // 처음 열었을 때 1회 (패널 자체의 첫 조회는 아래 dlOpenPanel 이 담당)
+
+        /* ───────── 누적 통계: 사이트별 배달 건수 + 주중(월~목) vs 주말(금~일) + 시간대별 ─────────
+           · 건수 = 완료된 배달(deliveries)만. 진행 중/확인 중은 제외. 요일은 근무일(07시 기준 날짜) 기준.
+           · 데이터: 날짜 목록(view=dates) + 날짜별(view=day&date=…) 을 받아 {사이트: [0~23시 건수, 24=시각 미상]} 로 압축해 저장.
+           · 저장(localStorage bbDlStatsV1): 지난 날짜는 변하지 않으므로 다시 받지 않음. 최근 DLS_REFETCH_DAYS 일만 다시 받음.
+             '새로 집계' = 저장분 버리고 전부 다시 받기. 저장값은 읽을 때마다 형식 검증, 이상하면 버림.
+           · 방어: 진행 중 중복 실행 방지(시퀀스 번호) · 동시 요청 3개 제한 · 실패한 날은 저장하지 않고 '불러오지 못함'으로 표시 · 전체 try/catch */
+        try {
+        const DLS_KEY = 'bbDlStatsV1';
+        const DLS_CONC = 3;
+        const DLS_REFETCH_DAYS = 3;
+        const DLS_MAX_DAYS = 400;
+        const DLS_UNK = 24;
+        const DLS_HOURS = [7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,0,1,2,3,4,5,6];   // 근무일 순서 (07시 시작)
+        const dlsSafe = fn => function () { try { return fn.apply(this, arguments); } catch (e) { console.warn('[BB] 배달 누적 통계 오류:', e && e.message); } };
+
+        const dsSt = document.createElement('style');
+        dsSt.id = 'bb-ds-style';
+        dsSt.textContent = `
+        #bb-dl-stats-btn { margin-left:auto; background:#d6f5e3; border-color:#8fd3ac; color:#14532d; }
+        #bb-dl-stats-btn:hover { background:#c3efd5; border-color:#6fc496; }
+        #bb-dl-stats-btn.on { background:#9fe3bd; border-color:#4fb57d; }
+        #bb-ds {
+            --bg:#f2e4c4; --sur:#f8f3e6; --sur2:#efe6d2; --bd:#cabf9d; --bd2:#b3a687; --tx:#2b2418; --mu:#7a6f5c; --bl:#3b82f6;
+            display:none; position:fixed; width:600px; max-width:96vw; flex-direction:column; color:var(--tx); font-family:'Paperlogy','Lato',-apple-system,sans-serif;
+            border:3px solid transparent; border-radius:14px;
+            transform:scale(var(--bb-pop-zoom,1)); transform-origin:center center;
+            background-image:linear-gradient(var(--sur),var(--sur)), linear-gradient(135deg, #d9b8ff, #9333ea);
+            background-origin:border-box; background-clip:padding-box,border-box;
+            box-shadow:0 18px 46px rgba(0,0,0,.45); z-index:99999998; box-sizing:border-box; overflow:hidden;
+        }
+        #bb-ds * { box-sizing:border-box; }
+        #bb-ds.open { display:flex; }
+        .bb-ds-h { flex:0 0 auto; padding:12px 16px 6px; display:flex; flex-direction:column; gap:4px; }
+        .bb-ds-t { display:flex; align-items:baseline; gap:10px; }
+        .bb-ds-t b { font-size:20px; font-weight:900; }
+        .bb-ds-t .rf { font-size:11.5px; color:var(--bl); cursor:pointer; text-decoration:underline; }
+        .bb-ds-t .x { margin-left:auto; color:#b91c1c; font-size:16px; font-weight:900; padding:0 4px; cursor:pointer; }
+        .bb-ds-sub { font-size:11.5px; color:var(--mu); }
+        .bb-ds-sub.warn { color:#c2410c; font-weight:700; }
+        .bb-ds-cards { flex:0 0 auto; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; padding:4px 16px 8px; }
+        .bb-ds-card { padding:6px 9px; border-radius:9px; background:var(--sur2); border:1px solid var(--bd); border-left-width:5px; }
+        .bb-ds-card.wd { border-left-color:#5b8fd1; }
+        .bb-ds-card.we { border-left-color:#f08a4b; }
+        .bb-ds-card .l { font-size:11px; color:var(--mu); }
+        .bb-ds-card .v { font-size:17px; font-weight:900; white-space:nowrap; }
+        .bb-ds-card .v small { margin-left:3px; font-size:11px; color:var(--mu); font-weight:700; }
+        .bb-ds-card .s { font-size:11px; color:var(--mu); margin-top:1px; }
+        .bb-ds-ch { flex:0 0 auto; padding:2px 16px 8px; border-top:1px solid var(--bd); }
+        .bb-ds-chh { display:flex; align-items:center; gap:8px; padding:6px 0 4px; font-size:12.5px; font-weight:800; }
+        .bb-ds-chh .lg { display:inline-flex; align-items:center; gap:4px; font-size:11px; color:var(--mu); font-weight:700; }
+        .bb-ds-chh .lg i { width:10px; height:10px; border-radius:2px; display:inline-block; }
+        .bb-ds-chh .tg { margin-left:auto; display:inline-flex; gap:3px; }
+        .bb-ds-chip { height:22px; padding:0 9px; border-radius:999px; border:1.5px solid var(--bd2); background:transparent; color:var(--tx); font-size:11.5px; cursor:pointer; font-family:inherit; }
+        .bb-ds-chip.on { border-color:var(--tx); background:var(--tx); color:var(--sur); }
+        .bb-ds-bars { display:flex; align-items:flex-end; gap:2px; height:104px; }
+        .bb-ds-hc { flex:1; min-width:0; height:100%; display:flex; align-items:flex-end; justify-content:center; gap:1px; }
+        .bb-ds-hc i { flex:1; min-width:2px; max-width:9px; border-radius:2px 2px 0 0; display:block; }
+        .bb-ds-hc i.wd { background:#5b8fd1; }
+        .bb-ds-hc i.we { background:#f08a4b; }
+        .bb-ds-hl { display:flex; gap:2px; margin-top:2px; }
+        .bb-ds-hl span { flex:1; text-align:center; font-size:9.5px; color:var(--mu); }
+        .bb-ds-th, .bb-ds-row { display:grid; grid-template-columns:28px minmax(0,1fr) 64px 78px 78px; gap:6px; align-items:center; padding:0 16px; }
+        .bb-ds-th { flex:0 0 auto; font-size:11px; color:var(--mu); padding-top:5px; padding-bottom:5px; border-top:1px solid var(--bd); border-bottom:1px solid var(--bd); background:var(--sur2); }
+        .bb-ds-th span:nth-child(n+3), .bb-ds-row > div:nth-child(n+3) { text-align:right; }
+        .bb-ds-th span[data-sort] { cursor:pointer; user-select:none; }
+        .bb-ds-th span[data-sort]:hover { color:var(--tx); }
+        .bb-ds-th span.cur { color:#c2410c; font-weight:800; }
+        .bb-ds-body { flex:1 1 auto; min-height:0; overflow-y:auto; }
+        .bb-ds-row { padding-top:6px; padding-bottom:6px; border-bottom:1px solid var(--bd); cursor:pointer; }
+        .bb-ds-row:hover { background:rgba(0,0,0,.035); }
+        .bb-ds-row.sel { background:#d6f5e3; }
+        .bb-ds-rk { font-size:13px; font-weight:900; color:var(--mu); text-align:center; }
+        .bb-ds-row.top .bb-ds-rk { color:#c2410c; }
+        .bb-ds-nm { min-width:0; }
+        .bb-ds-nm .n { font-size:13.5px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .bb-ds-bar { height:5px; margin-top:4px; border-radius:3px; background:rgba(0,0,0,.07); overflow:hidden; }
+        .bb-ds-bar i { display:block; height:100%; background:#22a05a; border-radius:3px; }
+        .bb-ds-c { font-size:16px; font-weight:900; color:#14532d; font-variant-numeric:tabular-nums; }
+        .bb-ds-c small { margin-left:2px; font-size:11px; color:var(--mu); font-weight:700; }
+        .bb-ds-a { font-size:13px; font-variant-numeric:tabular-nums; }
+        .bb-ds-msg { padding:30px 16px; text-align:center; color:var(--mu); font-size:13px; }
+        .bb-ds-ft { flex:0 0 auto; padding:6px 16px 9px; border-top:1px solid var(--bd); font-size:10.5px; line-height:1.55; color:var(--mu); }
+        `;
+        document.head.appendChild(dsSt);
+
+        // 제목 줄 우측에 버튼 삽입 (닫기 ✕ 는 숨김 상태라 이 버튼이 맨 오른쪽에 놓임)
+        const dsBtn = dlEl('button', 'bb-mm-nav', '누적 통계');
+        dsBtn.id = 'bb-dl-stats-btn'; dsBtn.type = 'button'; dsBtn.title = '사이트별 배달 건수 · 주중(월~목) vs 주말(금~일) · 시간대별';
+        const dsHd = document.querySelector('#bb-dlog-panel .bb-ap-hd');
+        if (dsHd) dsHd.insertBefore(dsBtn, document.getElementById('bb-dlog-close'));
+
+        const dsPop = dlEl('div'); dsPop.id = 'bb-ds';
+        document.body.appendChild(dsPop);
+
+        let _dsOpen = false, _dsSeq = 0, _dsSite = null, _dsMode = 'avg';
+        let _dsSort = { k: 'total', dir: -1 };
+        let _dsView = { dates: [], days: {}, state: null };
+
+        const dsRound = n => (Math.round(n * 10) / 10).toFixed(1);
+        const dsGroup = ymd => { const w = new Date(ymd + 'T12:00:00Z').getUTCDay(); return (w >= 1 && w <= 4) ? 'wd' : 'we'; };   // 월~목 = 주중, 금·토·일 = 주말
+        const dsShift = (ymd, n) => { const p = ymd.split('-').map(Number), t = new Date(Date.UTC(p[0], p[1] - 1, p[2] + n)); return t.getUTCFullYear() + '-' + attPad(t.getUTCMonth() + 1) + '-' + attPad(t.getUTCDate()); };
+        const dsIsYmd = s => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
+
+        function dsSite(r) {
+            const v = String(r.site || '').replace(/\s+/g, ' ').trim() || String(r.robot || '').replace(/\s+/g, ' ').trim() || String(r.store || '').replace(/\s+/g, ' ').trim();
+            return v || '(사이트 미상)';
+        }
+        function dsHour(r) {
+            for (const s of [r.assignedAt, r.receivedAt]) {
+                const m = /(\d{1,2}):(\d{2})/.exec(String(s || ''));
+                if (m && +m[1] < 24) return +m[1];
+            }
+            for (const t of [r.assignedTs, r.threadTs]) {
+                const f = parseFloat(t);
+                if (f > 0) return new Date(f * 1000 + 9 * 3600 * 1000).getUTCHours();
+            }
+            return DLS_UNK;
+        }
+        function dsCompact(d) {   // 하루 응답 → { 사이트: [25칸] }
+            const out = {}, seen = new Set();
+            (Array.isArray(d.deliveries) ? d.deliveries : []).forEach(r => {
+                if (!r || typeof r !== 'object') return;
+                if (r.orderNo) { const k = String(r.orderNo); if (seen.has(k)) return; seen.add(k); }   // 같은 날 같은 주문번호 중복 방지
+                const nm = dsSite(r), a = out[nm] || (out[nm] = new Array(25).fill(0));
+                a[dsHour(r)]++;
+            });
+            return out;
+        }
+        function dsLoadStore() {   // 저장값 검증: 형식이 이상한 날짜는 버림
+            const empty = { v: 1, days: {}, at: 0 };
+            try {
+                const s = JSON.parse(localStorage.getItem(DLS_KEY) || 'null');
+                if (!s || s.v !== 1 || !s.days || typeof s.days !== 'object') return empty;
+                const days = {};
+                Object.keys(s.days).forEach(d => {
+                    const day = s.days[d];
+                    if (!dsIsYmd(d) || !day || typeof day !== 'object') return;
+                    const ok = {};
+                    Object.keys(day).forEach(nm => { const a = day[nm]; if (Array.isArray(a) && a.length === 25 && a.every(x => Number.isFinite(x) && x >= 0)) ok[nm] = a; });
+                    days[d] = ok;
+                });
+                return { v: 1, days, at: +s.at || 0 };
+            } catch (e) { return empty; }
+        }
+        const dsSaveStore = s => { try { localStorage.setItem(DLS_KEY, JSON.stringify(s)); } catch (e) { /* 저장 못 해도 이번 화면에는 지장 없음 */ } };
+
+        function dsAgg(dates, days) {
+            const g = { wd: { days: 0, total: 0 }, we: { days: 0, total: 0 } }, sites = new Map();
+            const all = { wd: new Array(24).fill(0), we: new Array(24).fill(0) };
+            let unk = 0;
+            dates.forEach(d => {
+                const day = days[d]; if (!day) return;
+                const k = dsGroup(d); g[k].days++;
+                Object.keys(day).forEach(nm => {
+                    const a = day[nm];
+                    let s = sites.get(nm);
+                    if (!s) sites.set(nm, s = { name: nm, wd: 0, we: 0, hrs: { wd: new Array(24).fill(0), we: new Array(24).fill(0) } });
+                    for (let h = 0; h < 24; h++) { s[k] += a[h]; s.hrs[k][h] += a[h]; all[k][h] += a[h]; g[k].total += a[h]; }
+                    s[k] += a[DLS_UNK]; g[k].total += a[DLS_UNK]; unk += a[DLS_UNK];
+                });
+            });
+            return { g, sites: [...sites.values()], all, unk };
+        }
+
+        function dsRender() {
+            if (!_dsOpen) return;
+            const { dates, days, state } = _dsView;
+            const have = dates.filter(d => days[d]);
+            const A = dsAgg(have, days), g = A.g;
+            const avg = k => g[k].days ? g[k].total / g[k].days : 0;
+            const grand = g.wd.total + g.we.total;
+
+            const head = dlEl('div', 'bb-ds-h');
+            const t = dlEl('div', 'bb-ds-t');
+            t.appendChild(dlEl('b', '', '배달 통계 (누적)'));
+            const rf = dlEl('span', 'rf', '새로 집계'); rf.dataset.act = 'refresh'; rf.title = '저장해 둔 날짜별 기록을 버리고 전부 다시 받아 집계합니다';
+            const x = dlEl('span', 'x', '✕'); x.dataset.act = 'close';
+            t.append(rf, x);
+            head.appendChild(t);
+            let sub = have.length ? have[0].slice(5).replace('-', '/') + ' ~ ' + have[have.length - 1].slice(5).replace('-', '/') + ' · ' + have.length + '일치 · 총 ' + grand + '건' : '';
+            let warn = false;
+            if (state && state.phase === 'loading') sub += (sub ? ' · ' : '') + '집계 중… ' + state.done + '/' + state.total;
+            else if (state && state.phase === 'fail') { sub = '날짜 목록을 불러오지 못했습니다.'; warn = true; }
+            else if (state && state.failed) { sub += ' · ⚠ ' + state.failed + '일 불러오지 못함 (열 때 다시 시도)'; warn = true; }
+            head.appendChild(dlEl('div', 'bb-ds-sub' + (warn ? ' warn' : ''), sub || ' '));
+
+            const card = (cls, l, v, u, s) => { const e = dlEl('div', 'bb-ds-card ' + cls); e.appendChild(dlEl('div', 'l', l)); const vv = dlEl('div', 'v', v); if (u) vv.appendChild(dlEl('small', '', u)); e.appendChild(vv); e.appendChild(dlEl('div', 's', s)); return e; };
+            const ratio = avg('wd') > 0 ? avg('we') / avg('wd') : null;
+            const cards = dlEl('div', 'bb-ds-cards');
+            cards.append(
+                card('wd', '주중 (월~목)', String(g.wd.total), '건', g.wd.days + '일 · 일평균 ' + dsRound(avg('wd')) + '건'),
+                card('we', '주말 (금~일)', String(g.we.total), '건', g.we.days + '일 · 일평균 ' + dsRound(avg('we')) + '건'),
+                card('', '일평균 비교', ratio == null ? '-' : '×' + ratio.toFixed(2), '', ratio == null ? '비교할 데이터 없음' : ratio >= 1 ? '주말이 주중보다 ' + Math.round((ratio - 1) * 100) + '% 많음' : '주말이 주중보다 ' + Math.round((1 - ratio) * 100) + '% 적음')
+            );
+
+            // 시간대별 (선택한 사이트가 있으면 그 사이트만)
+            const sel = _dsSite ? A.sites.find(s => s.name === _dsSite) : null;
+            if (_dsSite && !sel) _dsSite = null;
+            const hrs = sel ? sel.hrs : A.all;
+            const val = (k, h) => (_dsMode === 'avg' ? (g[k].days ? hrs[k][h] / g[k].days : 0) : hrs[k][h]);
+            let max = 0; DLS_HOURS.forEach(h => { max = Math.max(max, val('wd', h), val('we', h)); });
+            const ch = dlEl('div', 'bb-ds-ch');
+            const chh = dlEl('div', 'bb-ds-chh');
+            chh.appendChild(dlEl('span', '', '시간대별 ' + (_dsMode === 'avg' ? '일평균' : '누적') + ' · ' + (sel ? sel.name : '전체')));
+            const lg1 = dlEl('span', 'lg'), lg2 = dlEl('span', 'lg');
+            const i1 = dlEl('i'); i1.style.background = '#5b8fd1'; const i2 = dlEl('i'); i2.style.background = '#f08a4b';
+            lg1.append(i1, '주중'); lg2.append(i2, '주말');
+            const tg = dlEl('span', 'tg');
+            [['avg', '일평균'], ['sum', '누적']].forEach(([k, l]) => { const c = dlEl('button', 'bb-ds-chip' + (_dsMode === k ? ' on' : ''), l); c.dataset.mode = k; c.type = 'button'; tg.appendChild(c); });
+            chh.append(lg1, lg2, tg);
+            const bars = dlEl('div', 'bb-ds-bars'), hl = dlEl('div', 'bb-ds-hl');
+            DLS_HOURS.forEach(h => {
+                const col = dlEl('div', 'bb-ds-hc');
+                ['wd', 'we'].forEach(k => {
+                    const b = dlEl('i', k), v = val(k, h);
+                    b.style.height = max > 0 ? Math.max(v > 0 ? 2 : 0, Math.round(v / max * 100)) + '%' : '0';
+                    b.title = String(h).padStart(2, '0') + '시 · ' + (k === 'wd' ? '주중 ' : '주말 ') + (_dsMode === 'avg' ? dsRound(v) + '건/일' : v + '건');
+                    col.appendChild(b);
+                });
+                bars.appendChild(col);
+                hl.appendChild(dlEl('span', '', String(h).padStart(2, '0')));
+            });
+            ch.append(chh, bars, hl);
+
+            // 사이트별 표
+            const wdAvg = s => g.wd.days ? s.wd / g.wd.days : 0, weAvg = s => g.we.days ? s.we / g.we.days : 0;
+            const key = { total: s => s.wd + s.we, wd: wdAvg, we: weAvg }[_dsSort.k];
+            const rows = A.sites.slice().sort((a, b) => _dsSort.k === 'name'
+                ? _dsSort.dir * a.name.localeCompare(b.name, 'ko')
+                : (key(a) - key(b)) * _dsSort.dir || (b.wd + b.we) - (a.wd + a.we) || a.name.localeCompare(b.name, 'ko'));
+            const th = dlEl('div', 'bb-ds-th');
+            [['#', ''], ['사이트', 'name'], ['누적', 'total'], ['주중 일평균', 'wd'], ['주말 일평균', 'we']].forEach(([lb, k]) => {
+                const sp = dlEl('span', k && _dsSort.k === k ? 'cur' : '', lb + (k && _dsSort.k === k ? (_dsSort.dir < 0 ? ' ▼' : ' ▲') : ''));
+                if (k) { sp.dataset.sort = k; sp.title = '눌러서 정렬 (다시 누르면 오름/내림차순 전환)'; }
+                th.appendChild(sp);
+            });
+            const body = dlEl('div', 'bb-ds-body');
+            if (!rows.length) {
+                body.appendChild(dlEl('div', 'bb-ds-msg', state && state.phase === 'loading' ? '불러오는 중…' : state && state.phase === 'fail' ? '다시 열어 주세요.' : '집계할 배달 기록이 없습니다.'));
+            } else {
+                const mx = Math.max(1, ...rows.map(s => s.wd + s.we));
+                rows.forEach((s, i) => {
+                    const tot = s.wd + s.we;
+                    const row = dlEl('div', 'bb-ds-row' + (_dsSort.k === 'total' && _dsSort.dir < 0 && i < 3 ? ' top' : '') + (_dsSite === s.name ? ' sel' : ''));
+                    row.dataset.site = s.name;
+                    row.title = s.name + ' — 클릭: 이 사이트만 시간대별 그래프로 보기 (다시 클릭하면 해제)';
+                    row.appendChild(dlEl('div', 'bb-ds-rk', String(i + 1)));
+                    const nm = dlEl('div', 'bb-ds-nm'); nm.appendChild(dlEl('div', 'n', s.name));
+                    const bar = dlEl('div', 'bb-ds-bar'), f = dlEl('i'); f.style.width = Math.round(tot / mx * 100) + '%'; bar.appendChild(f); nm.appendChild(bar);
+                    row.appendChild(nm);
+                    const c = dlEl('div', 'bb-ds-c', String(tot)); c.appendChild(dlEl('small', '', '건')); row.appendChild(c);
+                    row.appendChild(dlEl('div', 'bb-ds-a', g.wd.days ? dsRound(wdAvg(s)) : '-'));
+                    row.appendChild(dlEl('div', 'bb-ds-a', g.we.days ? dsRound(weAvg(s)) : '-'));
+                    body.appendChild(row);
+                });
+            }
+            const ft = dlEl('div', 'bb-ds-ft', '건수 = 완료된 배달만 (진행 중·확인 중 제외) · 요일은 근무일(07시 기준) 기준 · 주중 = 월~목, 주말 = 금~일 · 일평균 = 건수 ÷ 해당 요일군 일수 · 시간대는 기체 배정 시각 기준' + (A.unk ? ' · 시각 미상 ' + A.unk + '건은 그래프에서 제외' : ''));
+            const keepEl = dsPop.querySelector('.bb-ds-body'), keep = keepEl ? keepEl.scrollTop : 0;
+            dsPop.replaceChildren(head, cards, ch, th, body, ft);
+            body.scrollTop = keep;
+        }
+
+        function dsPlace() {
+            const p = document.getElementById('bb-dlog-panel'); if (!p) return;
+            const br = p.getBoundingClientRect(), w = dsPop.offsetWidth;
+            let left = br.left - w - 10;
+            if (left < 8) left = Math.min(br.right + 10, window.innerWidth - w - 8);
+            dsPop.style.left = Math.max(8, left) + 'px';
+            dsPop.style.top = Math.max(8, br.top) + 'px';
+            dsPop.style.height = Math.min(Math.max(br.height, 600), window.innerHeight - 16) + 'px';
+        }
+        function dsClose() {
+            _dsOpen = false; _dsSeq++;   // 진행 중이던 집계는 결과를 버림
+            dsPop.classList.remove('open');
+            dsBtn.classList.remove('on');
+        }
+        async function dsLoad(force) {
+            const seq = ++_dsSeq;
+            const store = force ? { v: 1, days: {}, at: 0 } : dsLoadStore();
+            _dsView = { dates: Object.keys(store.days).sort(), days: store.days, state: { phase: 'loading', done: 0, total: 0, failed: 0 } };   // 저장분 먼저 표시
+            dsRender();
+            let dates;
+            try {
+                const dd = await attFetchJson(DL_API + '?view=dates');
+                if (!dd || dd.ok !== true || !Array.isArray(dd.dates)) throw new Error('데이터 형식 오류');
+                dates = dd.dates.filter(dsIsYmd).sort().slice(-DLS_MAX_DAYS);
+            } catch (e) {
+                console.warn('[BB] 배달 통계 날짜 목록 실패:', e && e.message);
+                if (seq === _dsSeq) { _dsView.state = { phase: seq === _dsSeq ? 'fail' : '' }; dsRender(); }
+                return;
+            }
+            if (seq !== _dsSeq) return;
+            Object.keys(store.days).forEach(d => { if (!dates.includes(d)) delete store.days[d]; });   // 서버에서 사라진 날짜는 버림
+            const cut = dsShift(dlOpDate(), -(DLS_REFETCH_DAYS - 1));
+            const todo = dates.filter(d => !store.days[d] || d >= cut);
+            const st = { phase: 'loading', done: 0, total: todo.length, failed: 0 };
+            _dsView = { dates, days: store.days, state: st };
+            dsRender();
+            let idx = 0;
+            const worker = async () => {
+                while (idx < todo.length) {
+                    if (seq !== _dsSeq) return;
+                    const d = todo[idx++];
+                    try {
+                        const j = await attFetchJson(DL_API + '?view=day&date=' + d);
+                        if (j && j._404) delete store.days[d];
+                        else if (!j || j.ok !== true) throw new Error('데이터 형식 오류');
+                        else store.days[d] = dsCompact(j);
+                    } catch (e) { st.failed++; }   // 실패한 날은 저장하지 않음 (예전 저장분이 있으면 그대로 유지)
+                    st.done++;
+                    if (seq === _dsSeq && (st.done % 3 === 0 || st.done === st.total)) dsRender();
+                }
+            };
+            await Promise.all(Array.from({ length: Math.min(DLS_CONC, todo.length) }, worker));
+            if (seq !== _dsSeq) return;
+            store.at = Date.now();
+            dsSaveStore(store);
+            _dsView.dates = Object.keys(store.days).sort();
+            st.phase = 'done';
+            dsRender();
+        }
+        function dsOpen() {
+            if (_dsOpen) { dsClose(); return; }
+            if (typeof dlCloseCal === 'function') dlCloseCal();
+            _dsOpen = true; _dsSite = null;
+            dsBtn.classList.add('on');
+            dsPop.classList.add('open');
+            dsPlace();
+            dsLoad(false);
+            dsPlace();
+        }
+        window.__bbDlSpClose = dsClose;   // 보드를 닫을 때 같이 닫음 (closeBoard 에서 호출)
+        dsBtn.addEventListener('click', dlsSafe(() => dsOpen()));
+        dsPop.addEventListener('click', dlsSafe(e => {
+            const so = e.target.closest('[data-sort]');
+            if (so) { const k = so.dataset.sort; _dsSort = _dsSort.k === k ? { k, dir: -_dsSort.dir } : { k, dir: k === 'name' ? 1 : -1 }; dsRender(); return; }
+            const md = e.target.closest('[data-mode]');
+            if (md) { _dsMode = md.dataset.mode === 'sum' ? 'sum' : 'avg'; dsRender(); return; }
+            const a = e.target.closest('[data-act]');
+            if (a) { if (a.dataset.act === 'close') dsClose(); else if (a.dataset.act === 'refresh') dsLoad(true); return; }
+            const row = e.target.closest('.bb-ds-row');
+            if (row) { _dsSite = _dsSite === row.dataset.site ? null : row.dataset.site; dsRender(); }
+        }));
+        document.addEventListener('click', dlsSafe(e => {   // 바깥 클릭 → 닫기
+            if (_dsOpen && !e.target.closest('#bb-ds') && !e.target.closest('#bb-dl-stats-btn')) dsClose();
+        }), true);
+        document.addEventListener('keydown', dlsSafe(e => { if (e.key === 'Escape' && _dsOpen) dsClose(); }));
+        window.addEventListener('resize', dlsSafe(() => { if (_dsOpen) dsPlace(); }));
+        } catch (e) { console.warn('[BB] 배달 누적 통계 초기화 실패 — 기존 기능에는 영향 없음:', e && e.message); }
 
         dlOpenPanel();   // [UI 개편] 배달 로그 항상 표시
         console.log('[BB] 배달 로그 켜짐 (SECTION 19)');
