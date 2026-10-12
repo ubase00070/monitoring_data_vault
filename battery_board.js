@@ -980,7 +980,7 @@
         .bb-att-mt tr:hover td { background:rgba(0,0,0,.035); }
         .bb-att-mt td.bar { text-align:left; width:46%; min-width:300px; }   /* 총 이석시간 막대 칸: 막대 안에 총 이석횟수, 막대 끝에 총 이석시간 */
         .bb-att-bw { display:flex; align-items:center; gap:8px; }
-        .bb-att-bar { height:22px; min-width:54px; border-radius:5px; display:flex; align-items:center; padding-left:9px; box-sizing:border-box; font-size:13px; font-weight:900; color:#2b2418; white-space:nowrap; }
+        .bb-att-bar { flex:none; height:22px; min-width:54px; border-radius:5px; display:flex; align-items:center; padding-left:9px; box-sizing:border-box; font-size:13px; font-weight:900; color:#2b2418; white-space:nowrap; }
         .bb-att-vt { display:inline-block; min-width:40px; text-align:center; padding:2px 9px; border-radius:999px; font-size:13px; font-weight:900; }
         .bb-att-vt.g { background:#d9efc9; color:#2d5a1a; } .bb-att-vt.y { background:#fbe3a3; color:#6b4a00; } .bb-att-vt.r { background:#f6b3a8; color:#8a1f12; }
         .bb-att-mt tr:hover td.warn { background:rgba(249,115,22,.16); }
@@ -6169,7 +6169,7 @@
                 if (c.bar) {   // 위쪽 순위일수록 진한 주황 → 아래로 갈수록 연두 (현재 정렬 순서 기준)
                     const t = rows.length > 1 ? ri / (rows.length - 1) : 0;
                     const td = attEl('td', 'bar'), w = attEl('div', 'bb-att-bw'), bar = attEl('div', 'bb-att-bar', r.totalCount + '회');
-                    bar.style.width = (r.totalSec / maxSec * 100).toFixed(1) + '%';
+                    bar.style.width = 'calc((100% - 100px) * ' + (r.totalSec / maxSec).toFixed(4) + ')';   // 오른쪽 시간 글자 자리(100px)를 뺀 폭에서 비율로 — 가장 긴 사람이 꽉 차도 flex 축소로 길이가 틀어지지 않게
                     bar.style.background = ATT_MGRS.some(m => r.name.includes(m.name)) ? '#c9c5ba' : 'hsl(' + Math.round(24 + 72 * t) + ',85%,' + Math.round(52 + 10 * t) + '%)';
                     w.append(bar, attEl('span', '', attDurHM(r.totalSec)));
                     td.appendChild(w); tr.appendChild(td);
