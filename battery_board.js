@@ -7522,8 +7522,8 @@
         // 알림 칩 영역(.bb-alert-zone)은 카드 폭만큼 오른쪽으로 밀어 겹치지 않게 한다.
         const mwStyle = document.createElement('style');
         mwStyle.textContent = `
-            #bb .bb-alert-zone { left:238px; width:calc(50% - 375px - 224px); }
-            #bb-mw { display:none; position:absolute; left:14px; top:50%; transform:translateY(-50%); z-index:3; width:218px; box-sizing:border-box;
+            #bb .bb-alert-zone { left:256px; width:calc(50% - 375px - 242px); }
+            #bb-mw { display:none; position:absolute; left:14px; top:50%; transform:translateY(-50%); z-index:3; width:236px; box-sizing:border-box;
                 padding:3px 9px; border-radius:12px; background:var(--sur,#f8f3e6); color:var(--tx,#2b2418);
                 border:2.5px solid var(--bd2,#b3a687); box-shadow:0 2px 8px rgba(60,45,20,.18); }
             #bb-mw.mw-ok  { border-color:#3fae6a; }
@@ -7533,18 +7533,18 @@
                 50%     { box-shadow:0 0 0 7px rgba(224,69,58,0), 0 2px 8px rgba(60,45,20,.18); }
             }
             #bb-mw .mw-row { display:grid; grid-template-columns:1fr auto; align-items:center; gap:0 6px; padding:3px 0 2px; }
+            #bb-mw .mw-pills { display:flex; gap:3px; }
             #bb-mw .mw-row + .mw-row { border-top:1px dashed var(--bd,#cabf9d); }
-            #bb-mw .mw-name { font-size:12px; white-space:nowrap; font-weight:900 !important; }
-            #bb-mw .mw-pill { text-align:center; padding:0 7px; border-radius:999px; font-size:12.5px; white-space:nowrap; line-height:22px; font-weight:900 !important;
+            #bb-mw .mw-name { font-size:11.5px; white-space:nowrap; font-weight:700 !important; }
+            #bb-mw .mw-pill { text-align:center; padding:0 6px; border-radius:999px; font-size:11px; white-space:nowrap; line-height:20px; font-weight:700 !important;
                 background:var(--sur2,#efe6d2); color:var(--mu,#7a6f5c); }
-            #bb-mw .mw-pill.on  { background:#8fe0ab; color:#0f4a26; }
-            #bb-mw .mw-pill.off { background:#e0453a; color:#fff; }
+            #bb-mw .mw-pill.on  { background:#bfe8cb; color:#1d5a35; }    /* 파스텔 초록 = ON */
+            #bb-mw .mw-pill.off { background:#f4b8b3; color:#8a2a22; }    /* 파스텔 레드 = OFF */
             #bb-mw .mw-row.stale .mw-pill, #bb-mw .mw-row.stale .mw-name { opacity:.45; }
-            #bb-mw .mw-sub { grid-column:1 / 3; font-size:11px; font-weight:800 !important; color:var(--tx,#2b2418); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+            #bb-mw .mw-sub { grid-column:1 / 3; font-size:11px; font-weight:600 !important; color:var(--tx,#2b2418); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
             #bb-mw .mw-row.stale .mw-sub { color:#c2410c; }
-            #bb-mw .mw-pw { color:var(--mu,#7a6f5c); font-weight:700 !important; }
-            #bb-mw .mw-foot { display:none; }
-            #bb-mw .mw-foot.warn { display:block; margin-top:1px; padding-top:2px; border-top:1px dashed var(--bd,#cabf9d); font-size:10px; color:#c2410c; font-weight:800 !important; }
+                        #bb-mw .mw-foot { display:none; }
+            #bb-mw .mw-foot.warn { display:block; margin-top:1px; padding-top:2px; border-top:1px dashed var(--bd,#cabf9d); font-size:10px; color:#c2410c; font-weight:600 !important; }
         `;
         document.head.appendChild(mwStyle);
 
@@ -7555,12 +7555,13 @@
         const mwRows = MW_TARGETS.map((name) => {
             const row = document.createElement('div'); row.className = 'mw-row';
             const nm = document.createElement('div'); nm.className = 'mw-name'; nm.textContent = name;   // '스테이 그린 1호기' 전체 표기
-            const pill = document.createElement('div'); pill.className = 'mw-pill'; pill.textContent = '—';
+            const pill = document.createElement('div'); pill.className = 'mw-pill'; pill.textContent = '—';   // 임무
+            const ppill = document.createElement('div'); ppill.className = 'mw-pill'; ppill.textContent = '—';   // 전원
+            const pills = document.createElement('div'); pills.className = 'mw-pills'; pills.append(ppill, pill);
             const sub = document.createElement('div'); sub.className = 'mw-sub';
-            const pw = document.createElement('span'); pw.className = 'mw-pw';   // 전원 표시는 sub 줄 안에 이어붙임
-            row.append(nm, pill, sub);
+            row.append(nm, pills, sub);
             mwCard.appendChild(row);
-            return { name, row, pill, sub, pw };
+            return { name, row, pill, ppill, sub };
         });
         const mwFoot = document.createElement('div');
         mwFoot.className = 'mw-foot';
@@ -7629,28 +7630,29 @@
             const hbStale = !!(mwData && mwData.hb > 0 && now - (mwData.updatedAt || 0) > mwData.hb * 2.5 * 60000);
             let anyOff = false, anyBad = false;
 
-            mwRows.forEach(({ name, row, pill, sub, pw }) => {
+            mwRows.forEach(({ name, row, pill, ppill, sub }) => {
                 const s = robots && robots[name];
                 if (!s || typeof s.on !== 'boolean') {
                     pill.textContent = '—'; pill.className = 'mw-pill';
                     sub.textContent = mwFail && !mwData ? '불러오지 못함' : mw404 ? '데이터 없음 (감시 스크립트 확인)' : '불러오는 중…';
-                    pw.textContent = ''; pw.className = 'mw-pw';
+                    ppill.textContent = '—'; ppill.className = 'mw-pill';
                     row.classList.add('stale');
                     anyBad = true;
                     return;
                 }
-                pill.textContent = s.on ? '임무받기 ON' : '임무받기 OFF';
+                pill.textContent = s.on ? '임무 ON' : '임무 OFF';
                 pill.className = 'mw-pill ' + (s.on ? 'on' : 'off');
+                if (s.power === true || s.power === false) { ppill.textContent = s.power ? '전원 ON' : '전원 OFF'; ppill.className = 'mw-pill ' + (s.power ? 'on' : 'off'); }
+                else { ppill.textContent = '전원 ?'; ppill.className = 'mw-pill'; }
                 row.classList.toggle('stale', hbStale);
                 if (hbStale) anyBad = true; else if (!s.on) anyOff = true;
 
                 // '언제부터 ON/OFF 인지' = 마지막으로 임무받기가 바뀐 시각 (+ 전원 켜짐/꺼짐, 업로드 시점 값)
                 let txt;
                 if (s.since) {
-                    if (s.source === 'initial') txt = mwMDHM(s.since) + '~ (최초 관측)';
-                    else txt = mwMDHM(s.since) + ((s.source === 'external' || s.source === 'gap') ? ' 경' : '') + '부터';
-                } else txt = '변경 시각 미상';
-                if (s.power === true || s.power === false) txt += ' · 전원 ' + (s.power ? '켜짐' : '꺼짐');
+                    if (s.source === 'initial') txt = '임무 ' + mwMDHM(s.since) + '~ (최초 관측)';
+                    else txt = '임무 ' + mwMDHM(s.since) + ((s.source === 'external' || s.source === 'gap') ? ' 경' : '') + '부터';
+                } else txt = '임무 변경 시각 미상';
                 if (hbStale) txt += ' ⚠';
                 sub.textContent = txt;
                 sub.title = (s.since ? mwMDHM(s.since) + (s.on ? ' 부터 ON' : ' 부터 OFF') + (s.source === 'external' || s.source === 'gap' ? ' (정확한 시각 아님 · 다른 사용자/감시 공백)' : '') : '') + (s.powerSince ? ' · 전원 ' + (s.power ? '켜짐' : '꺼짐') + ' ' + mwMDHM(s.powerSince) + '부터' : '') + (mwData.updatedAt ? ' · 업로드 ' + mwMDHM(mwData.updatedAt) : '');
