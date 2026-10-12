@@ -1,5 +1,5 @@
 /* ============================================================
-   battery_board.js v6.8 [개입 통계: 주간/야간 뱃지 · 동료 대비 열] v6.7 [개입 누적 통계에 점유율 열] v6.6 [이석 오늘·달력 / 누적 통계 버튼 통일 / 헤더 높이 통일 / 스테이 그린 확인 시각] v6.5 [배달 로그 '누적 통계' 추가] v6.4 [UI 전면 개편: 순찰·배달 열 + 다중/개입/이석 3분할 그리드. 로직 변경 없음 — 빠진 요소는 CSS로만 숨김] v6.3 (배경 이미지 · 방전 로그 · 이석/착석 현황 슬라이드 전환 추가 · 배달 기체 로그 · 하루 기준 07:00 · 금일 배달 건수 배지 · 고정 버튼 3종 무지개 파스텔+이모지)
+   battery_board.js v6.9 [배달 통계 평균 소요시간 / 개입 통계 기본정렬·동률 규칙 / 배달 로그 하단 안내] v6.8 [개입 통계: 주간/야간 뱃지 · 동료 대비 열] v6.7 [개입 누적 통계에 점유율 열] v6.6 [이석 오늘·달력 / 누적 통계 버튼 통일 / 헤더 높이 통일 / 스테이 그린 확인 시각] v6.5 [배달 로그 '누적 통계' 추가] v6.4 [UI 전면 개편: 순찰·배달 열 + 다중/개입/이석 3분할 그리드. 로직 변경 없음 — 빠진 요소는 CSS로만 숨김] v6.3 (배경 이미지 · 방전 로그 · 이석/착석 현황 슬라이드 전환 추가 · 배달 기체 로그 · 하루 기준 07:00 · 금일 배달 건수 배지 · 고정 버튼 3종 무지개 파스텔+이모지)
    NCC 종합 모니터 — 템퍼몽키 inject
    ============================================================ */
 
@@ -1322,6 +1322,7 @@
         #bb #bb-dlog-panel .bb-dlog-kpi .v { font-size:15px; }
         #bb #bb-dlog-panel .bb-dlog-sub { padding:6px 10px 2px; }
         #bb #bb-dlog-body { flex:1 1 auto; min-height:0; overflow-y:auto; padding:0 6px 6px; }
+        #bb #bb-dlog-panel .bb-att-legend { overflow:hidden; text-overflow:ellipsis; font-size:11.5px; }
 
         /* 배달 내역: 주문번호는 카드 셋째 줄에 항상 표시 (끝에 복사 이모지 버튼) */
 
@@ -1526,6 +1527,7 @@
                         <div class="bb-dlog-kpi" id="bb-dlog-kpi"></div>
                         <div class="bb-dlog-sub" id="bb-dlog-sub">배달 내역</div>
                         <div id="bb-dlog-body"></div>
+                        <div class="bb-att-legend">진행 중인 배달은 맨 위, 완료 건은 최신순으로 표시됩니다.</div>
                     </div>
                         </div>
                       </div>
@@ -6974,7 +6976,7 @@
         const spPop = ivEl('div'); spPop.id = 'bb-iv-sp';
         document.body.appendChild(spPop);
 
-        let _spSort = { k: 'solved', dir: -1 };   // 정렬 기준(누적/일평균/근무일/이름)과 방향(-1 내림차순)
+        let _spSort = { k: 'avg', dir: -1 };   // 정렬 기준(누적/일평균/근무일/이름)과 방향(-1 내림차순)
         let _spOpen = false, _spSeq = 0, _spView = { dates: [], days: {}, sched: {}, state: null };
 
         const spShift = (ymd, n) => {
@@ -7107,9 +7109,13 @@
             const shOf = x => x.shn > 0 ? x.sh / x.shn : -1;
             const rlOf = x => x.rln > 0 ? x.rl / x.rln : -1;
             const val = { solved: x => x.solved, avg: avgOf, share: shOf, rel: rlOf, days: x => x.days }[_spSort.k];
+            const shPct = x => x.shn > 0 ? Math.round(x.sh / x.shn * 100) : -1;          // 화면에 보이는 값(정수 %) 기준으로 동률 판정
+            const rlTen = x => x.rln > 0 ? Math.round(x.rl / x.rln * 10) : -1;           // 동료 대비도 보이는 값(소수 1자리) 기준
             rows.sort((a, b) => _spSort.k === 'name'
                 ? _spSort.dir * String(a.name).localeCompare(String(b.name), 'ko')
-                : (val(a) - val(b)) * _spSort.dir || b.solved - a.solved || String(a.name).localeCompare(String(b.name), 'ko'));
+                : _spSort.k === 'share'
+                    ? (shPct(a) - shPct(b)) * _spSort.dir || rlTen(b) - rlTen(a) || a.days - b.days || b.solved - a.solved || String(a.name).localeCompare(String(b.name), 'ko')   // 점유율 같으면 동료 대비 높은 쪽, 그것도 같으면 근무일 적은 쪽이 위
+                    : (val(a) - val(b)) * _spSort.dir || b.solved - a.solved || String(a.name).localeCompare(String(b.name), 'ko'));
             const head = ivEl('div', 'bb-sp-h');
             const t = ivEl('div', 'bb-sp-t');
             t.appendChild(ivEl('b', '', '개입 통계 (누적)'));
@@ -7140,7 +7146,7 @@
             } else {
                 const max = Math.max(1, rows[0].solved);
                 rows.forEach((r, i) => {
-                    const row = ivEl('div', 'bb-sp-row' + (_spSort.k === 'solved' && _spSort.dir < 0 && i < 3 && r.solved > 0 ? ' top' : ''));
+                    const row = ivEl('div', 'bb-sp-row' + ((_spSort.k === 'solved' || _spSort.k === 'avg') && _spSort.dir < 0 && i < 3 && r.solved > 0 ? ' top' : ''));
                     row.appendChild(ivEl('div', 'bb-sp-rk', String(i + 1)));
                     const nm = ivEl('div', 'bb-sp-nm'), nmN = ivEl('div', 'n', r.name);
                     if (r.win) { const night = r.win[0] >= 14 * 60; const bd = ivEl('span', 'bb-sp-bdg ' + (night ? 'bd-n' : 'bd-d'), night ? '야간' : '주간'); bd.title = '근무 ' + attPad(Math.floor(r.win[0] / 60)) + ':' + attPad(r.win[0] % 60) + ' 시작 (14:00 이후 시작 = 야간)'; nmN.appendChild(bd); }   // 근무표 시간이 없는 사람은 뱃지 없음
@@ -7588,7 +7594,7 @@
         #bb-dl-stats-btn.on { background:#9fe3bd; border-color:#4fb57d; }
         #bb-ds {
             --bg:#f2e4c4; --sur:#f8f3e6; --sur2:#efe6d2; --bd:#cabf9d; --bd2:#b3a687; --tx:#2b2418; --mu:#7a6f5c; --bl:#3b82f6;
-            display:none; position:fixed; width:600px; max-width:96vw; flex-direction:column; color:var(--tx); font-family:'Paperlogy','Lato',-apple-system,sans-serif;
+            display:none; position:fixed; width:660px; max-width:96vw; flex-direction:column; color:var(--tx); font-family:'Paperlogy','Lato',-apple-system,sans-serif;
             border:3px solid transparent; border-radius:14px;
             transform:scale(var(--bb-pop-zoom,1)); transform-origin:center center;
             background-image:linear-gradient(var(--sur),var(--sur)), linear-gradient(135deg, #d9b8ff, #9333ea);
@@ -7626,7 +7632,7 @@
         .bb-ds-hc i.we { background:#f08a4b; }
         .bb-ds-hl { display:flex; gap:2px; margin-top:2px; }
         .bb-ds-hl span { flex:1; text-align:center; font-size:9.5px; color:var(--mu); }
-        .bb-ds-th, .bb-ds-row { display:grid; grid-template-columns:28px minmax(0,1fr) 64px 78px 78px; gap:6px; align-items:center; padding:0 16px; }
+        .bb-ds-th, .bb-ds-row { display:grid; grid-template-columns:28px minmax(0,1fr) 60px 74px 74px 92px; gap:6px; align-items:center; padding:0 16px; }
         .bb-ds-th { flex:0 0 auto; font-size:11px; color:var(--mu); padding-top:5px; padding-bottom:5px; border-top:1px solid var(--bd); border-bottom:1px solid var(--bd); background:var(--sur2); }
         .bb-ds-th span:nth-child(n+3), .bb-ds-row > div:nth-child(n+3) { text-align:right; }
         .bb-ds-th span[data-sort] { cursor:pointer; user-select:none; }
@@ -7689,25 +7695,27 @@
             (Array.isArray(d.deliveries) ? d.deliveries : []).forEach(r => {
                 if (!r || typeof r !== 'object') return;
                 if (r.orderNo) { const k = String(r.orderNo); if (seen.has(k)) return; seen.add(k); }   // 같은 날 같은 주문번호 중복 방지
-                const nm = dsSite(r), a = out[nm] || (out[nm] = new Array(25).fill(0));
+                const nm = dsSite(r), a = out[nm] || (out[nm] = new Array(27).fill(0));   // [0~23]=시간대별 건수, [24]=시각 미상, [25]=소요시간 합(초), [26]=소요시간이 있는 건수
                 a[dsHour(r)]++;
+                const du = Number(r.durationSec);
+                if (r.durationSec != null && Number.isFinite(du) && du > 0 && du <= 86400) { a[25] += du; a[26]++; }   // 비정상 값(0 이하·하루 초과)은 평균에서 제외
             });
             return out;
         }
         function dsLoadStore() {   // 저장값 검증: 형식이 이상한 날짜는 버림
-            const empty = { v: 1, days: {}, at: 0 };
+            const empty = { v: 2, days: {}, at: 0 };   // v2: 사이트별 배열이 25칸 → 27칸(소요시간 합·건수 추가). v1 저장분은 형식이 달라 버리고 새로 받음
             try {
                 const s = JSON.parse(localStorage.getItem(DLS_KEY) || 'null');
-                if (!s || s.v !== 1 || !s.days || typeof s.days !== 'object') return empty;
+                if (!s || s.v !== 2 || !s.days || typeof s.days !== 'object') return empty;
                 const days = {};
                 Object.keys(s.days).forEach(d => {
                     const day = s.days[d];
                     if (!dsIsYmd(d) || !day || typeof day !== 'object') return;
                     const ok = {};
-                    Object.keys(day).forEach(nm => { const a = day[nm]; if (Array.isArray(a) && a.length === 25 && a.every(x => Number.isFinite(x) && x >= 0)) ok[nm] = a; });
+                    Object.keys(day).forEach(nm => { const a = day[nm]; if (Array.isArray(a) && a.length === 27 && a.every(x => Number.isFinite(x) && x >= 0)) ok[nm] = a; });
                     days[d] = ok;
                 });
-                return { v: 1, days, at: +s.at || 0 };
+                return { v: 2, days, at: +s.at || 0 };
             } catch (e) { return empty; }
         }
         const dsSaveStore = s => { try { localStorage.setItem(DLS_KEY, JSON.stringify(s)); } catch (e) { /* 저장 못 해도 이번 화면에는 지장 없음 */ } };
@@ -7722,9 +7730,10 @@
                 Object.keys(day).forEach(nm => {
                     const a = day[nm];
                     let s = sites.get(nm);
-                    if (!s) sites.set(nm, s = { name: nm, wd: 0, we: 0, hrs: { wd: new Array(24).fill(0), we: new Array(24).fill(0) } });
+                    if (!s) sites.set(nm, s = { name: nm, wd: 0, we: 0, dsum: 0, dcnt: 0, hrs: { wd: new Array(24).fill(0), we: new Array(24).fill(0) } });
                     for (let h = 0; h < 24; h++) { s[k] += a[h]; s.hrs[k][h] += a[h]; all[k][h] += a[h]; g[k].total += a[h]; }
                     s[k] += a[DLS_UNK]; g[k].total += a[DLS_UNK]; unk += a[DLS_UNK];
+                    s.dsum += a[25]; s.dcnt += a[26];
                 });
             });
             return { g, sites: [...sites.values()], all, unk };
@@ -7792,12 +7801,13 @@
 
             // 사이트별 표
             const wdAvg = s => g.wd.days ? s.wd / g.wd.days : 0, weAvg = s => g.we.days ? s.we / g.we.days : 0;
-            const key = { total: s => s.wd + s.we, wd: wdAvg, we: weAvg }[_dsSort.k];
+            const durOf = s => s.dcnt > 0 ? s.dsum / s.dcnt : -1;
+            const key = { total: s => s.wd + s.we, wd: wdAvg, we: weAvg, dur: durOf }[_dsSort.k];
             const rows = A.sites.slice().sort((a, b) => _dsSort.k === 'name'
                 ? _dsSort.dir * a.name.localeCompare(b.name, 'ko')
                 : (key(a) - key(b)) * _dsSort.dir || (b.wd + b.we) - (a.wd + a.we) || a.name.localeCompare(b.name, 'ko'));
             const th = dlEl('div', 'bb-ds-th');
-            [['#', ''], ['사이트', 'name'], ['누적', 'total'], ['주중 일평균', 'wd'], ['주말 일평균', 'we']].forEach(([lb, k]) => {
+            [['#', ''], ['사이트', 'name'], ['누적', 'total'], ['주중 일평균', 'wd'], ['주말 일평균', 'we'], ['평균 소요시간', 'dur']].forEach(([lb, k]) => {
                 const sp = dlEl('span', k && _dsSort.k === k ? 'cur' : '', lb + (k && _dsSort.k === k ? (_dsSort.dir < 0 ? ' ▼' : ' ▲') : ''));
                 if (k) { sp.dataset.sort = k; sp.title = '눌러서 정렬 (다시 누르면 오름/내림차순 전환)'; }
                 th.appendChild(sp);
@@ -7819,10 +7829,13 @@
                     const c = dlEl('div', 'bb-ds-c', String(tot)); c.appendChild(dlEl('small', '', '건')); row.appendChild(c);
                     row.appendChild(dlEl('div', 'bb-ds-a', g.wd.days ? dsRound(wdAvg(s)) : '-'));
                     row.appendChild(dlEl('div', 'bb-ds-a', g.we.days ? dsRound(weAvg(s)) : '-'));
+                    const dur = dlEl('div', 'bb-ds-a', s.dcnt > 0 ? attDurHM(s.dsum / s.dcnt) : '-');
+                    dur.title = s.dcnt > 0 ? '배달 1건당 평균 소요시간 (소요시간이 기록된 ' + s.dcnt + '건 기준)' : '소요시간 기록이 없음';
+                    row.appendChild(dur);
                     body.appendChild(row);
                 });
             }
-            const ft = dlEl('div', 'bb-ds-ft', '건수 = 완료된 배달만 (진행 중·확인 중 제외) · 요일은 근무일(07시 기준) 기준 · 주중 = 월~목, 주말 = 금~일 · 일평균 = 건수 ÷ 해당 요일군 일수 · 시간대는 기체 배정 시각 기준' + (A.unk ? ' · 시각 미상 ' + A.unk + '건은 그래프에서 제외' : ''));
+            const ft = dlEl('div', 'bb-ds-ft', '건수 = 완료된 배달만 (진행 중·확인 중 제외) · 요일은 근무일(07시 기준) 기준 · 주중 = 월~목, 주말 = 금~일 · 일평균 = 건수 ÷ 해당 요일군 일수 · 평균 소요시간 = 배달 1건당 소요시간 평균(기록된 건만) · 시간대는 기체 배정 시각 기준' + (A.unk ? ' · 시각 미상 ' + A.unk + '건은 그래프에서 제외' : ''));
             const keepEl = dsPop.querySelector('.bb-ds-body'), keep = keepEl ? keepEl.scrollTop : 0;
             dsPop.replaceChildren(head, cards, ch, th, body, ft);
             body.scrollTop = keep;
@@ -7844,7 +7857,7 @@
         }
         async function dsLoad(force) {
             const seq = ++_dsSeq;
-            const store = force ? { v: 1, days: {}, at: 0 } : dsLoadStore();
+            const store = force ? { v: 2, days: {}, at: 0 } : dsLoadStore();
             _dsView = { dates: Object.keys(store.days).sort(), days: store.days, state: { phase: 'loading', done: 0, total: 0, failed: 0 } };   // 저장분 먼저 표시
             dsRender();
             let dates;
