@@ -6954,9 +6954,9 @@
         .bb-sp-row.top .bb-sp-rk { color:#c2410c; }
         .bb-sp-nm { min-width:0; }
         .bb-sp-nm .n { font-size:15px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-        .bb-sp-bdg { display:inline-block; margin-left:6px; padding:0 6px; border-radius:999px; font-size:10.5px; font-weight:800; line-height:16px; vertical-align:2px; }
-        .bb-sp-bdg.d { background:#fde047; color:#713f12; }   /* 주간 = 노랑 */
-        .bb-sp-bdg.n { background:#60a5fa; color:#0b2a5b; }   /* 야간 = 파랑 */
+        .bb-sp-nm .bb-sp-bdg { display:inline-block; margin-left:6px; padding:0 6px; border-radius:999px; font-size:10.5px; font-weight:800; line-height:16px; vertical-align:2px; }
+        .bb-sp-bdg.bd-d { background:#fde047; color:#713f12; }   /* 주간 = 노랑 */
+        .bb-sp-bdg.bd-n { background:#60a5fa; color:#0b2a5b; }   /* 야간 = 파랑 */
         .bb-sp-bar { height:5px; margin-top:4px; border-radius:3px; background:rgba(0,0,0,.07); overflow:hidden; }
         .bb-sp-bar i { display:block; height:100%; background:#f97316; border-radius:3px; }
         .bb-sp-c { font-size:17px; font-weight:900; color:#c2410c; font-variant-numeric:tabular-nums; }
@@ -7143,7 +7143,7 @@
                     const row = ivEl('div', 'bb-sp-row' + (_spSort.k === 'solved' && _spSort.dir < 0 && i < 3 && r.solved > 0 ? ' top' : ''));
                     row.appendChild(ivEl('div', 'bb-sp-rk', String(i + 1)));
                     const nm = ivEl('div', 'bb-sp-nm'), nmN = ivEl('div', 'n', r.name);
-                    if (r.win) { const night = r.win[0] >= 14 * 60; const bd = ivEl('span', 'bb-sp-bdg ' + (night ? 'n' : 'd'), night ? '야간' : '주간'); bd.title = '근무 ' + attPad(Math.floor(r.win[0] / 60)) + ':' + attPad(r.win[0] % 60) + ' 시작 (14:00 이후 시작 = 야간)'; nmN.appendChild(bd); }   // 근무표 시간이 없는 사람은 뱃지 없음
+                    if (r.win) { const night = r.win[0] >= 14 * 60; const bd = ivEl('span', 'bb-sp-bdg ' + (night ? 'bd-n' : 'bd-d'), night ? '야간' : '주간'); bd.title = '근무 ' + attPad(Math.floor(r.win[0] / 60)) + ':' + attPad(r.win[0] % 60) + ' 시작 (14:00 이후 시작 = 야간)'; nmN.appendChild(bd); }   // 근무표 시간이 없는 사람은 뱃지 없음
                     nm.appendChild(nmN);
                     const bar = ivEl('div', 'bb-sp-bar'), fill = ivEl('i'); fill.style.width = Math.round(r.solved / max * 100) + '%'; bar.appendChild(fill); nm.appendChild(bar);
                     row.appendChild(nm);
