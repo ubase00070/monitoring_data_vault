@@ -1,5 +1,5 @@
 /* ============================================================
-   battery_board.js v6.7 [개입 누적 통계에 점유율 열] v6.6 [이석 오늘·달력 / 누적 통계 버튼 통일 / 헤더 높이 통일 / 스테이 그린 확인 시각] v6.5 [배달 로그 '누적 통계' 추가] v6.4 [UI 전면 개편: 순찰·배달 열 + 다중/개입/이석 3분할 그리드. 로직 변경 없음 — 빠진 요소는 CSS로만 숨김] v6.3 (배경 이미지 · 방전 로그 · 이석/착석 현황 슬라이드 전환 추가 · 배달 기체 로그 · 하루 기준 07:00 · 금일 배달 건수 배지 · 고정 버튼 3종 무지개 파스텔+이모지)
+   battery_board.js v6.8 [개입 통계: 주간/야간 뱃지 · 동료 대비 열] v6.7 [개입 누적 통계에 점유율 열] v6.6 [이석 오늘·달력 / 누적 통계 버튼 통일 / 헤더 높이 통일 / 스테이 그린 확인 시각] v6.5 [배달 로그 '누적 통계' 추가] v6.4 [UI 전면 개편: 순찰·배달 열 + 다중/개입/이석 3분할 그리드. 로직 변경 없음 — 빠진 요소는 CSS로만 숨김] v6.3 (배경 이미지 · 방전 로그 · 이석/착석 현황 슬라이드 전환 추가 · 배달 기체 로그 · 하루 기준 07:00 · 금일 배달 건수 배지 · 고정 버튼 3종 무지개 파스텔+이모지)
    NCC 종합 모니터 — 템퍼몽키 inject
    ============================================================ */
 
@@ -6929,7 +6929,7 @@
         #bb-iv-stats-btn.on { background:#9fe3bd; border-color:#4fb57d; }
         #bb-iv-sp {
             --bg:#f2e4c4; --sur:#f8f3e6; --sur2:#efe6d2; --bd:#cabf9d; --bd2:#b3a687; --tx:#2b2418; --mu:#7a6f5c; --bl:#3b82f6;
-            display:none; position:fixed; width:490px; max-width:96vw; flex-direction:column; color:var(--tx); font-family:'Paperlogy','Lato',-apple-system,sans-serif;
+            display:none; position:fixed; width:545px; max-width:96vw; flex-direction:column; color:var(--tx); font-family:'Paperlogy','Lato',-apple-system,sans-serif;
             border:3px solid transparent; border-radius:14px;
             transform:scale(var(--bb-pop-zoom,1)); transform-origin:center center;
             background-image:linear-gradient(var(--sur),var(--sur)), linear-gradient(135deg, #d9b8ff, #9333ea);
@@ -6945,7 +6945,7 @@
         .bb-sp-t .x { margin-left:auto; color:#b91c1c; font-size:16px; font-weight:900; padding:0 4px; cursor:pointer; }
         .bb-sp-sub { font-size:11.5px; color:var(--mu); }
         .bb-sp-sub.warn { color:#c2410c; font-weight:700; }
-        .bb-sp-th, .bb-sp-row { display:grid; grid-template-columns:28px minmax(0,1fr) 66px 56px 62px 56px; gap:6px; align-items:center; padding:0 16px; }
+        .bb-sp-th, .bb-sp-row { display:grid; grid-template-columns:28px minmax(0,1fr) 66px 56px 60px 66px 54px; gap:6px; align-items:center; padding:0 16px; }
         .bb-sp-th { flex:0 0 auto; font-size:11px; color:var(--mu); padding-top:5px; padding-bottom:5px; border-bottom:1px solid var(--bd); background:var(--sur2); }
         .bb-sp-th span:nth-child(n+3), .bb-sp-row > div:nth-child(n+3) { text-align:right; }
         .bb-sp-body { flex:1 1 auto; min-height:0; overflow-y:auto; }
@@ -6954,6 +6954,9 @@
         .bb-sp-row.top .bb-sp-rk { color:#c2410c; }
         .bb-sp-nm { min-width:0; }
         .bb-sp-nm .n { font-size:15px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .bb-sp-bdg { display:inline-block; margin-left:6px; padding:0 6px; border-radius:999px; font-size:10.5px; font-weight:800; line-height:16px; vertical-align:2px; }
+        .bb-sp-bdg.d { background:#fde047; color:#713f12; }   /* 주간 = 노랑 */
+        .bb-sp-bdg.n { background:#60a5fa; color:#0b2a5b; }   /* 야간 = 파랑 */
         .bb-sp-bar { height:5px; margin-top:4px; border-radius:3px; background:rgba(0,0,0,.07); overflow:hidden; }
         .bb-sp-bar i { display:block; height:100%; background:#f97316; border-radius:3px; }
         .bb-sp-c { font-size:17px; font-weight:900; color:#c2410c; font-variant-numeric:tabular-nums; }
@@ -7048,13 +7051,16 @@
             const out = {};
             pp.forEach(a => {
                 if (!a.nm || !a.win) return;
-                let pool = 0;
+                let pool = 0, rateSum = 0, ovSum = 0;
                 pp.forEach(b => {
-                    if (!b.win || !b.sv) return;
+                    if (!b.win) return;
                     const ov = Math.min(a.win[1], b.win[1]) - Math.max(a.win[0], b.win[0]);
-                    if (ov > 0) pool += b.sv * ov / (b.win[1] - b.win[0]);
+                    if (ov <= 0) return;
+                    const rb = b.sv / (b.win[1] - b.win[0]);   // 시간당(분당) 처리량
+                    pool += b.sv * ov / (b.win[1] - b.win[0]);
+                    rateSum += rb * ov; ovSum += ov;           // 겹친 시간만큼 가중한 동료 평균 처리량 (본인·건수 0인 동료 포함)
                 });
-                if (pool > 0) out[a.nm] = Math.min(1, a.sv / pool);
+                if (pool > 0) out[a.nm] = [Math.min(1, a.sv / pool), (a.sv / (a.win[1] - a.win[0])) / (rateSum / ovSum)];
             });
             return out;
         }
@@ -7069,10 +7075,11 @@
                 const mo = d.slice(0, 7), md = ivMD(d), sc = sched && sched[mo] && sched[mo].p;
                 let shr = {}; try { shr = sc ? spShareDay(day, sc, (sched[mo].w || {}), md) : {}; } catch (e) { shr = {}; }   // 계산이 실패해도 나머지 통계는 그대로
                 Object.keys(day).forEach(nm => {
-                    const a = m[nm] || (m[nm] = { name: nm, solved: 0, days: 0, est: 0, sh: 0, shn: 0 });
+                    const a = m[nm] || (m[nm] = { name: nm, solved: 0, days: 0, est: 0, sh: 0, shn: 0, rl: 0, win: null });
                     const [sv, w] = day[nm];
                     a.solved += sv;
-                    if (shr[nm] != null) { a.sh += shr[nm]; a.shn++; }
+                    if (shr[nm] != null) { a.sh += shr[nm][0]; a.shn++; if (isFinite(shr[nm][1])) { a.rl += shr[nm][1]; a.rln = (a.rln || 0) + 1; } }
+                    { const wk = sc && sched[mo].w ? spFindKey(sc, nm) : null; if (wk != null && sched[mo].w[wk]) a.win = sched[mo].w[wk]; }   // 가장 최근 날짜의 근무시간 (주간/야간 뱃지용)
                     const mine = sc && spFindSch(sc, nm), v = mine ? mine[md] : undefined;
                     if (v === 1) a.days += 1;                       // 근무표상 근무
                     else if (v === 0) { if (sv > 0) a.days += 1; }  // 근무표상 비근무(휴무·연차)인데 처리 건수가 있으면 근무로 봄
@@ -7098,7 +7105,8 @@
             const rows = spAgg(have, days, sched);
             const avgOf = x => x.days > 0 ? x.solved / x.days : -1;
             const shOf = x => x.shn > 0 ? x.sh / x.shn : -1;
-            const val = { solved: x => x.solved, avg: avgOf, share: shOf, days: x => x.days }[_spSort.k];
+            const rlOf = x => x.rln > 0 ? x.rl / x.rln : -1;
+            const val = { solved: x => x.solved, avg: avgOf, share: shOf, rel: rlOf, days: x => x.days }[_spSort.k];
             rows.sort((a, b) => _spSort.k === 'name'
                 ? _spSort.dir * String(a.name).localeCompare(String(b.name), 'ko')
                 : (val(a) - val(b)) * _spSort.dir || b.solved - a.solved || String(a.name).localeCompare(String(b.name), 'ko'));
@@ -7121,7 +7129,7 @@
             head.appendChild(ivEl('div', 'bb-sp-sub' + (warn ? ' warn' : ''), sub || ' '));
 
             const th = ivEl('div', 'bb-sp-th');
-            [['#', ''], ['이름', 'name'], ['누적', 'solved'], ['일평균', 'avg'], ['점유율', 'share'], ['근무일', 'days']].forEach(([lb, k]) => {
+            [['#', ''], ['이름', 'name'], ['누적', 'solved'], ['일평균', 'avg'], ['점유율', 'share'], ['동료 대비', 'rel'], ['근무일', 'days']].forEach(([lb, k]) => {
                 const sp = ivEl('span', k && _spSort.k === k ? 'cur' : '', lb + (k && _spSort.k === k ? (_spSort.dir < 0 ? ' ▼' : ' ▲') : ''));
                 if (k) { sp.dataset.sort = k; sp.title = '눌러서 정렬 (다시 누르면 오름/내림차순 전환)'; }
                 th.appendChild(sp);
@@ -7134,7 +7142,9 @@
                 rows.forEach((r, i) => {
                     const row = ivEl('div', 'bb-sp-row' + (_spSort.k === 'solved' && _spSort.dir < 0 && i < 3 && r.solved > 0 ? ' top' : ''));
                     row.appendChild(ivEl('div', 'bb-sp-rk', String(i + 1)));
-                    const nm = ivEl('div', 'bb-sp-nm'); nm.appendChild(ivEl('div', 'n', r.name));
+                    const nm = ivEl('div', 'bb-sp-nm'), nmN = ivEl('div', 'n', r.name);
+                    if (r.win) { const night = r.win[0] >= 14 * 60; const bd = ivEl('span', 'bb-sp-bdg ' + (night ? 'n' : 'd'), night ? '야간' : '주간'); bd.title = '근무 ' + attPad(Math.floor(r.win[0] / 60)) + ':' + attPad(r.win[0] % 60) + ' 시작 (14:00 이후 시작 = 야간)'; nmN.appendChild(bd); }   // 근무표 시간이 없는 사람은 뱃지 없음
+                    nm.appendChild(nmN);
                     const bar = ivEl('div', 'bb-sp-bar'), fill = ivEl('i'); fill.style.width = Math.round(r.solved / max * 100) + '%'; bar.appendChild(fill); nm.appendChild(bar);
                     row.appendChild(nm);
                     const c = ivEl('div', 'bb-sp-c', String(r.solved)); c.appendChild(ivEl('small', '', '건')); row.appendChild(c);
@@ -7142,11 +7152,14 @@
                     const shc = ivEl('div', 'bb-sp-a', r.shn > 0 ? Math.round(r.sh / r.shn * 100) + '%' : '-');
                     shc.title = r.shn > 0 ? '근무시간대에 같이 근무한 사람들이 처리한 건 중 본인 비율의 평균 (' + r.shn + '일 기준)' : '근무시간 정보가 없어 계산하지 못함';
                     row.appendChild(shc);
+                    const rlc = ivEl('div', 'bb-sp-a', r.rln > 0 ? (r.rl / r.rln).toFixed(1) + '배' : '-');
+                    rlc.title = r.rln > 0 ? '같은 시간대에 근무한 동료의 평균 시간당 처리량 대비 본인 처리량 (1.0배 = 동료 평균, ' + r.rln + '일 기준)' : '근무시간 정보가 없어 계산하지 못함';
+                    row.appendChild(rlc);
                     row.appendChild(ivEl('div', 'bb-sp-d', r.days + '일' + (r.est ? '*' : '')));
                     body.appendChild(row);
                 });
             }
-            const ft = ivEl('div', 'bb-sp-ft', '건수 = 이름이 확정된 처리 건만 (추정·이탈·특정 불가 제외, 개입카드 화면과 같은 기준) · 근무일 = 월별 근무표에서 출근으로 표시된 날(연차 제외·반차 1일) · * = 근무표에 없는 날이 있어 처리·근무시간 기록으로 대체 · 일평균 = 누적 ÷ 근무일 · 점유율 = (내 근무시간과 겹치는 시간 동안 같이 근무한 사람들의 처리 건 중 내가 처리한 비율)의 일별 평균 — 건수는 각자 근무시간에 고르게 분포한다고 보고 추정 · 근무시간 미등록자는 비교에서 제외');
+            const ft = ivEl('div', 'bb-sp-ft', '건수 = 이름이 확정된 처리 건만 (추정·이탈·특정 불가 제외, 개입카드 화면과 같은 기준) · 근무일 = 월별 근무표에서 출근으로 표시된 날(연차 제외·반차 1일) · * = 근무표에 없는 날이 있어 처리·근무시간 기록으로 대체 · 일평균 = 누적 ÷ 근무일 · 점유율 = (내 근무시간과 겹치는 시간 동안 같이 근무한 사람들의 처리 건 중 내가 처리한 비율)의 일별 평균 — 건수는 각자 근무시간에 고르게 분포한다고 보고 추정 · 동료 대비 = 내 시간당 처리량 ÷ 겹친 시간 동료들의 평균 시간당 처리량(1.0배 = 동료 평균, 인원·발생량 차이 보정) · 뱃지: 근무 시작 14:00 이후 = 야간, 그 전 = 주간 · 근무시간 미등록자는 비교·뱃지에서 제외');
             const keep = spPop.querySelector('.bb-sp-body'), keepTop = keep ? keep.scrollTop : 0;
             spPop.replaceChildren(head, th, body, ft);
             body.scrollTop = keepTop;
