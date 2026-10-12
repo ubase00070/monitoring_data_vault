@@ -868,6 +868,14 @@
             display:flex; flex-direction:column; justify-content:center; gap:2px; cursor:pointer;
         }
         .bb-att-card:hover { filter:brightness(1.03); }
+        /* 관리자 동그라미 버튼(이석 현황 제목 왼쪽) — 동작은 근무자 카드와 같음: 누르면 이석 로그 창, 이석 중이면 빨간 외곽선, 퇴근/미근무는 회색 */
+        .bb-att-mgs { display:inline-flex; align-items:center; gap:4px; margin-right:8px; vertical-align:middle; }
+        .bb-att-mg { box-sizing:border-box; width:24px; height:24px; padding:0; border-radius:50%; border:2px solid #b79af0; background:#e9defc; color:#4c2f8f; font-family:inherit; font-size:12.5px; font-weight:900; line-height:1; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; }
+        .bb-att-mg:hover { filter:brightness(1.05); }
+        .bb-att-mg.sel { outline:2px solid var(--tx); outline-offset:1px; }
+        .bb-att-mg.off { background:#cfc8b4; border-color:#a39b84; color:#4a4436; }
+        .bb-att-mg.none { background:#cfc8b4; border-color:#a39b84; color:#4a4436; cursor:default; opacity:.7; }
+        .bb-att-mg.away { border-color:#ef4444; box-shadow:0 0 8px -2px rgba(239,68,68,.6); animation:bb-att-away-blink 2s ease-in-out infinite; }
         .bb-att-card.sel { outline:2px solid var(--tx); outline-offset:1px; }
         /* 이석 중인 근무자 카드는 빨간 테두리 고정 (퇴근자는 회색, 그 외는 기본 테두리) */
         .bb-att-card.away { border-color:#ef4444; box-shadow:0 0 8px -2px rgba(239,68,68,.6); animation:bb-att-away-blink 2s ease-in-out infinite; }   /* 겹선(0 0 0 1px) 제거로 살짝 얇게 · 2초 주기로 아주 옅게만 점멸 */
@@ -945,6 +953,10 @@
         .bb-att-dh .sr { flex:0 0 auto; width:110px; height:34px; padding:0 10px; border-radius:8px; border:1.5px solid var(--bd2); background:var(--sur2); color:var(--tx); font-size:14px; font-weight:700; font-family:inherit; outline:none; }
         .bb-att-dh .sr:focus { border-color:var(--bl); background:var(--sur); }
         .bb-att-dh .sr::placeholder { color:var(--mu); font-weight:400; }
+        .bb-att-dh .mgb { flex:0 0 auto; display:inline-flex; gap:5px; }
+        .bb-att-dh .mgb button { width:34px; height:34px; padding:0; border-radius:50%; border:1.5px solid #b79af0; background:#e9defc; color:#4c2f8f; font-size:14px; font-weight:900; font-family:inherit; cursor:pointer; }
+        .bb-att-dh .mgb button:hover { filter:brightness(1.05); }
+        .bb-att-dh .mgb button.on { background:#b79af0; color:#fff; border-color:#7a55d6; }
         .bb-att-dh .x { margin-left:auto; width:34px; height:34px; border-radius:8px; background:rgba(239,68,68,.18); border:1px solid rgba(239,68,68,.5); color:#b91c1c; font-size:18px; font-weight:900; cursor:pointer; display:flex; align-items:center; justify-content:center; }
         .bb-att-dnote { flex:0 0 auto; padding:6px 18px 0; font-size:12px; color:#c2410c; }
         .bb-att-db { flex:1 1 auto; min-height:0; overflow:auto; padding:0 12px 14px; }
@@ -1615,6 +1627,7 @@
                 <div class="t" id="bb-att-dtitle">자세히</div>
                 <select id="bb-att-dsel"></select>
                 <input type="search" class="sr" id="bb-att-search" placeholder="이름 검색" autocomplete="off" spellcheck="false" title="이름을 입력하면 그 근무자만 표시 (월을 바꾸거나 창을 닫았다 열어도 유지 · 새로고침하면 초기화)">
+                <div class="mgb" id="bb-att-mgb"><button type="button" data-name="안혜림" title="안혜림 로그만 보기 (다시 누르면 해제)">안</button><button type="button" data-name="박수연" title="박수연 로그만 보기 (다시 누르면 해제)">박</button><button type="button" data-name="신지섭" title="신지섭 로그만 보기 (다시 누르면 해제)">신</button></div>
                 <div class="x" id="bb-att-dclose">✕</div>
             </div>
             <div class="bb-att-dnote" id="bb-att-dnote"></div>
@@ -5580,6 +5593,10 @@
     const ATT_QUIET = [3 * 60, 8 * 60]; // cron-job.org 에서 수집을 멈추는 시간대(KST 03:00~08:00) — 크론 스케줄을 바꾸면 여기도 맞출 것. 이 시간대에는 '수집 지연' 경고를 내지 않음
     const ATT_VIOL_LABELS = ['15분 초과 이석', '착석 미기입', '메시지 편집됨', '출근 60분 이내 이석'];   // '착석 60분 이내 재이석'은 '자세히' 표와 마찬가지로 근무자 카드에서도 집계·표시하지 않음
     const ATT_EXCLUDE = ['차현모', '김용욱', '이연지', '정우솔'];
+    // 관리자: 업무상 자리를 자주 비워 일반 근무자와 같은 기준으로 평가할 수 없음 → 근무자 카드/누적 통계 표에서 숨기고,
+    // 이석 현황 제목 왼쪽의 동그란 버튼(안·박·신) / 누적 통계 검색창 옆 버튼으로만 본다. 순서 = 버튼 순서
+    const ATT_MGRS = [{ ab: '안', name: '안혜림' }, { ab: '박', name: '박수연' }, { ab: '신', name: '신지섭' }];
+    const attMgrOf = s => ATT_MGRS.find(m => (s.name || '').includes(m.name) || (s.dn || '').includes(m.name)) || null;
 
     let _attView = 'multi';   // 'multi' | 'att'
     let _attDate = null;      // null = 실시간, 'YYYY-MM-DD' = 과거 기록
@@ -5743,11 +5760,25 @@
         const title = $att('bb-att-title');
         title.textContent = '이석 현황 (' + dp[1] + '/' + dp[2] + ')';
         if (live && stats) {
-            const awayN = stats.filter(s => s.lastStatus === '이석' && attOnShift(s.shift, nowMin)).length;
+            const awayN = stats.filter(s => !attMgrOf(s) && s.lastStatus === '이석' && attOnShift(s.shift, nowMin)).length;   // 관리자는 현재 이석 인원 수에서 제외
             title.append(attEl('span', 'sep', ' - '), '현재 이석 ', attEl('span', 'n', awayN + '명'));
         } else if (!live) {
             title.append(attEl('span', 'sep', ' - '), attEl('span', 'past', '과거 기록'));
         }
+
+        // 관리자 버튼 (제목 왼쪽): 근무자 카드와 같은 상태 규칙 — 이석 중이면 빨간 외곽선, 퇴근·미근무면 회색
+        const mgWrap = attEl('span', 'bb-att-mgs');
+        ATT_MGRS.forEach(m => {
+            const ms = stats && stats.find(x => attMgrOf(x) === m);
+            const off = !ms || (live && !attOnShift(ms.shift, nowMin));
+            const away = !!ms && live && !off && ms.lastStatus === '이석';
+            const b = attEl('button', 'bb-att-mg' + (!ms ? ' none' : off ? ' off' : '') + (away ? ' away' : '') + (ms && ms.userId === _attPopId ? ' sel' : ''), m.ab);
+            b.type = 'button';
+            if (ms) { b.dataset.uid = ms.userId; b.title = `${m.name} · 이석 ${ms.awayCount}회 · ${attDur(ms.totalAwaySec)}` + (away ? ' · 이석 중' : '') + (off ? ' · 퇴근' : ''); }
+            else b.title = m.name + (stats ? ' · 기록 없음' : '');
+            mgWrap.appendChild(b);
+        });
+        title.prepend(mgWrap);
 
         // 2번째 줄: 이전달/이번달 버튼 (자동 반영), 과거 조회 중이면 '오늘로'
         $att('bb-att-today').classList.toggle('on', live);
@@ -5778,13 +5809,14 @@
             attClosePop();
             return;
         }
-        if (!stats.length) {
+        const regular = stats.filter(s => !attMgrOf(s));   // 관리자는 카드를 만들지 않음 (제목 옆 버튼으로)
+        if (!regular.length) {
             body.replaceChildren(attEl('div', 'bb-att-msg', live ? '아직 이석 기록이 없습니다' : ((_attDay && _attDay.msg) || '기록이 없습니다')));
             attClosePop();
             return;
         }
         const frag = document.createDocumentFragment();
-        stats.forEach(s => {
+        regular.forEach(s => {
             const v = attViol(s), n = v.slice(0, ATT_VIOL_LABELS.length).filter(x => x > 0).length;   // 재이석60분내(v[4])는 더 이상 세지 않음
             const off = live && !attOnShift(s.shift, nowMin);
             const away = live && !off && s.lastStatus === '이석';
@@ -5805,15 +5837,14 @@
     function attClosePop() {
         _attPopId = null;
         $att('bb-att-pop').classList.remove('open');
-        const sel = document.querySelector('.bb-att-card.sel');
-        if (sel) sel.classList.remove('sel');
+        document.querySelectorAll('.bb-att-card.sel, .bb-att-mg.sel').forEach(c => c.classList.remove('sel'));
     }
     function attTogglePop(uid) {
         if (_attPopId === uid) { attClosePop(); return; }
         attCloseCal();
         _attPopId = uid;
-        document.querySelectorAll('.bb-att-card.sel').forEach(c => c.classList.remove('sel'));
-        const card = document.querySelector('.bb-att-card[data-uid="' + uid + '"]');
+        document.querySelectorAll('.bb-att-card.sel, .bb-att-mg.sel').forEach(c => c.classList.remove('sel'));
+        const card = document.querySelector('.bb-att-card[data-uid="' + uid + '"], .bb-att-mg[data-uid="' + uid + '"]');
         if (card) card.classList.add('sel');
         attRenderPop(true);
     }
@@ -5888,7 +5919,7 @@
     }
     // 창은 다중 영역 '왼쪽'에 띄워 카드(오른쪽)를 가리지 않는다. 줌(scale)이 걸려 있어도 화면 좌표로 계산.
     function attPlacePop() {
-        const pop = $att('bb-att-pop'), card = document.querySelector('.bb-att-card.sel'), box = $att('bb-mm-page-att');   // [UI 개편] 이석 그리드 자신의 왼쪽
+        const pop = $att('bb-att-pop'), card = document.querySelector('.bb-att-card.sel, .bb-att-mg.sel'), box = $att('bb-mm-page-att');   // [UI 개편] 이석 그리드 자신의 왼쪽
         if (!card || !box) return;
         const cr = card.getBoundingClientRect(), br = box.getBoundingClientRect(), w = pop.offsetWidth, h = pop.offsetHeight;
         let left = br.left - w - 10;
@@ -6077,7 +6108,7 @@
         ym = ym || (_attDate ? _attDate.slice(0, 7) : months[1]);
         if (!months.includes(ym)) ym = months[1];
         _attDetailYm = ym;
-        $att('bb-att-search').value = _attNameFilter;
+        $att('bb-att-search').value = _attNameFilter; attSyncMgb();
         const sel = $att('bb-att-dsel');
         sel.replaceChildren(...months.map(m => { const o = attEl('option', '', m.slice(0, 4) + '년 ' + Number(m.slice(5)) + '월'); o.value = m; return o; }));
         sel.value = ym;
@@ -6113,7 +6144,8 @@
         }
         const q = _attNameFilter.trim().toLowerCase();   // 이름 검색어 (포함되면 표시, 대소문자 무시)
         if (!ATT_COLS.some(c => c.key === _attSortKey)) _attSortKey = 'totalSec';   // 없어진 열(총 횟수·일평균 횟수)로 정렬돼 있던 경우 기본값으로
-        const rows = built.rows.filter(r => !q || r.name.toLowerCase().includes(q)).sort((a, b) => (b[_attSortKey] - a[_attSortKey]) || (a.order - b.order));
+        // 관리자(안·박·신)는 기본으로 숨김 — 검색어에 이름이 걸리거나 안/박/신 버튼으로 이름을 넣었을 때만 표시
+        const rows = built.rows.filter(r => q ? r.name.toLowerCase().includes(q) : !ATT_MGRS.some(m => r.name.includes(m.name))).sort((a, b) => (b[_attSortKey] - a[_attSortKey]) || (a.order - b.order));
         if (!rows.length) {
             body.replaceChildren(attEl('div', 'bb-att-msg', `"${_attNameFilter.trim()}" 이름의 근무자가 이 달에는 없습니다`));
             return;
@@ -6275,14 +6307,22 @@
     $att('bb-att-today').addEventListener('click', attGoToday);
     $att('bb-att-dclose').addEventListener('click', attCloseDetail);
     $att('bb-att-dsel').addEventListener('change', e => attOpenDetail(e.target.value));
+    function attSyncMgb() { document.querySelectorAll('#bb-att-mgb button').forEach(b => b.classList.toggle('on', _attNameFilter.trim() === b.dataset.name)); }
+    $att('bb-att-mgb').addEventListener('click', e => {   // 안·박·신: 검색창에 그 이름을 넣은 것과 같음 (같은 버튼을 다시 누르면 해제)
+        const b = e.target.closest('button'); if (!b) return;
+        _attNameFilter = _attNameFilter.trim() === b.dataset.name ? '' : b.dataset.name;
+        $att('bb-att-search').value = _attNameFilter; attSyncMgb();
+        if (_attLast && _attLast.ym === _attDetailYm) attRenderDetail(_attLast.ym, _attLast.dig, _attLast.sched, _attLast.doc);
+    });
     $att('bb-att-search').addEventListener('input', e => {   // 입력할 때마다 표만 다시 그림 (서버 요청 없음)
-        _attNameFilter = e.target.value;
+        _attNameFilter = e.target.value; attSyncMgb();
         if (_attLast && _attLast.ym === _attDetailYm) attRenderDetail(_attLast.ym, _attLast.dig, _attLast.sched, _attLast.doc);
     });
     $att('bb-att-dbody').addEventListener('click', e => { const td = e.target.closest('td.nm'); if (td && _attDetailYm) attOpenPlog(td.dataset.name, _attDetailYm); });   // 이름 클릭 (예전엔 더블클릭)
     $att('bb-att-body').addEventListener('click', e => { const c = e.target.closest('.bb-att-card'); if (c) attTogglePop(c.dataset.uid); });
+    $att('bb-att-title').addEventListener('click', e => { const b = e.target.closest('.bb-att-mg'); if (b && b.dataset.uid) attTogglePop(b.dataset.uid); });   // 관리자 동그라미 버튼
     document.addEventListener('click', e => {   // 바깥 클릭 → 이석 로그 / 달력 닫기 (캡처 단계: 재렌더로 대상이 사라지기 전에 판단)
-        if (_attPopId && !e.target.closest('#bb-att-pop') && !e.target.closest('.bb-att-card')) attClosePop();
+        if (_attPopId && !e.target.closest('#bb-att-pop') && !e.target.closest('.bb-att-card') && !e.target.closest('.bb-att-mg')) attClosePop();
         if (_attCalWhich && !e.target.closest('#bb-att-cal') && !e.target.closest('.bb-att-mbtn')) attCloseCal();
         if (_attPlogKey && !e.target.closest('#bb-att-plog')) attClosePlog();   // 이석 로그 창 바깥을 누르면 그 창만 닫힘 (상세 로그 창 안쪽을 눌렀다면 상세 로그는 유지)
         if ($att('bb-att-detail').classList.contains('open') && !e.target.closest('#bb-att-detail') && !e.target.closest('#bb-att-plog') && !e.target.closest('#bb-att-detailbtn')) attCloseDetail();   // 상세 로그 창 바깥을 누르면 닫힘
