@@ -1572,7 +1572,7 @@
                                 <div class="bb-att-head">
                                     <button class="bb-mm-nav bb-att-back" id="bb-att-back" title="다중 모니터링으로 돌아가기"><span class="ar">«</span><span class="tx"><span class="l1">다중</span><span class="l2">미갱신</span></span></button>
                                     <div class="bb-att-title" id="bb-att-title">이석 현황</div>
-                                    <div class="bb-att-r2">
+                                    <div class="bb-att-r2" id="bb-att-r2">
                                         <button class="bb-mm-nav bb-att-mbtn" id="bb-att-today" title="실시간 현황으로 돌아가기">오늘</button>
                                         <button class="bb-mm-nav bb-att-mbtn" id="bb-att-cal-btn" title="이전달/이번달 날짜 선택">달력</button>
                                         <span class="bb-att-stat" id="bb-att-stat"></span>
