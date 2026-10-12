@@ -966,6 +966,11 @@
         .bb-att-mt td.warn { color:#c2410c; }
         .bb-att-mt td.nm { cursor:pointer; user-select:none; }
         .bb-att-mt tr:hover td { background:rgba(0,0,0,.035); }
+        .bb-att-mt td.bar { text-align:left; width:46%; min-width:300px; }   /* 총 이석시간 막대 칸: 막대 안에 총 이석횟수, 막대 끝에 총 이석시간 */
+        .bb-att-bw { display:flex; align-items:center; gap:8px; }
+        .bb-att-bar { height:22px; min-width:54px; border-radius:5px; display:flex; align-items:center; padding-left:9px; box-sizing:border-box; font-size:13px; font-weight:900; color:#2b2418; white-space:nowrap; }
+        .bb-att-vt { display:inline-block; min-width:40px; text-align:center; padding:2px 9px; border-radius:999px; font-size:13px; font-weight:900; }
+        .bb-att-vt.g { background:#d9efc9; color:#2d5a1a; } .bb-att-vt.y { background:#fbe3a3; color:#6b4a00; } .bb-att-vt.r { background:#f6b3a8; color:#8a1f12; }
         .bb-att-mt tr:hover td.warn { background:rgba(249,115,22,.16); }
 
         /* ── 하단 퀵바: 한 줄에 4개 그룹 (제목 | 켜진 기체 동그라미) ── */
@@ -6049,23 +6054,20 @@
             const totalSec = a[1] + (addSec[name] || 0);
             return { name, time: meta[name].time, order: meta[name].order, days: d, totalCount: a[0], totalSec,
                      avgCount: d ? a[0] / d : 0, avgSec: d ? totalSec / d : 0, avgPerEvent: a[0] ? totalSec / a[0] : 0,
-                     over: a[2], unfiled: a[3], edited: a[4], early: a[5] };
+                     over: a[2], unfiled: a[3], edited: a[4], early: a[5], viol: a[2] + a[3] + a[4] + a[5] };
         });
         return { rows, approx, dates };
     }
 
+    // 열 구성: 이름 | 근무일수 | 총 이석시간(막대, 막대 안에 총 이석횟수) | 일평균 이석시간 | 1회당 평균 | 확인사항(합계)
+    // bar:true / viol:true 열은 attRenderDetail 에서 따로 그린다 (f 는 정렬 대신 쓰는 단순 텍스트)
     const ATT_COLS = [
         { label: '이름', key: null },
         { label: '근무일수', key: 'days', f: r => r.days + '일' },
-        { label: '총 이석횟수', key: 'totalCount', f: r => r.totalCount + '회' },
-        { label: '총 이석시간', key: 'totalSec', f: r => attDurHM(r.totalSec) },
-        { label: '일평균 이석횟수', key: 'avgCount', f: r => r.avgCount.toFixed(1) + '회' },
+        { label: '총 이석시간 (막대 안은 총 이석횟수)', key: 'totalSec', bar: true, cls: 'bar' },
         { label: '일평균 이석시간', key: 'avgSec', f: r => attDurHM(r.avgSec) },
         { label: '1회당 평균 이석시간', key: 'avgPerEvent', f: r => attDurHM(r.avgPerEvent) },
-        { label: '15분 초과', key: 'over', f: r => r.over + '회', cls: 'bad' },
-        { label: '미기입', key: 'unfiled', f: r => r.unfiled + '회', cls: 'bad' },
-        { label: '편집됨', key: 'edited', f: r => r.edited + '회', cls: 'bad' },
-        { label: '출근60분내', key: 'early', f: r => r.early + '회', cls: 'bad' }   // 전용 적색 배경 강조는 제거 — 다른 위반 열들과 같은 글자색만
+        { label: '확인사항', key: 'viol', viol: true }   // 15분 초과 + 미기입 + 편집됨 + 출근60분내 합계 (세부는 마우스를 올리면 표시)
     ];
 
 
@@ -6110,6 +6112,7 @@
             return;
         }
         const q = _attNameFilter.trim().toLowerCase();   // 이름 검색어 (포함되면 표시, 대소문자 무시)
+        if (!ATT_COLS.some(c => c.key === _attSortKey)) _attSortKey = 'totalSec';   // 없어진 열(총 횟수·일평균 횟수)로 정렬돼 있던 경우 기본값으로
         const rows = built.rows.filter(r => !q || r.name.toLowerCase().includes(q)).sort((a, b) => (b[_attSortKey] - a[_attSortKey]) || (a.order - b.order));
         if (!rows.length) {
             body.replaceChildren(attEl('div', 'bb-att-msg', `"${_attNameFilter.trim()}" 이름의 근무자가 이 달에는 없습니다`));
@@ -6123,12 +6126,26 @@
             hr.appendChild(th);
         });
         const tb = table.createTBody();
-        rows.forEach(r => {
+        const maxSec = Math.max(1, ...rows.map(r => r.totalSec));   // 막대 길이: 지금 보이는 사람 중 가장 긴 사람을 100% 로
+        rows.forEach((r, ri) => {
             const tr = tb.insertRow(), td0 = attEl('td', 'nm', r.name);
             td0.dataset.name = r.name; td0.title = '클릭: 이 달 이석 로그';
             if (r.time) td0.appendChild(attEl('span', 'tm', '(' + r.time + ')'));
             tr.appendChild(td0);
-            ATT_COLS.slice(1).forEach(c => tr.appendChild(attEl('td', c.cls || '', c.f(r))));
+            ATT_COLS.slice(1).forEach(c => {
+                if (c.bar) {   // 위쪽 순위일수록 진한 주황 → 아래로 갈수록 연두 (현재 정렬 순서 기준)
+                    const t = rows.length > 1 ? ri / (rows.length - 1) : 0;
+                    const td = attEl('td', 'bar'), w = attEl('div', 'bb-att-bw'), bar = attEl('div', 'bb-att-bar', r.totalCount + '회');
+                    bar.style.width = (r.totalSec / maxSec * 100).toFixed(1) + '%';
+                    bar.style.background = 'hsl(' + Math.round(24 + 72 * t) + ',85%,' + Math.round(52 + 10 * t) + '%)';
+                    w.append(bar, attEl('span', '', attDurHM(r.totalSec)));
+                    td.appendChild(w); tr.appendChild(td);
+                } else if (c.viol) {
+                    const td = attEl('td', ''), v = r.viol, pill = attEl('span', 'bb-att-vt ' + (v <= 5 ? 'g' : v <= 14 ? 'y' : 'r'), String(v));
+                    td.title = `15분 초과 ${r.over} · 미기입 ${r.unfiled} · 편집됨 ${r.edited} · 출근60분내 ${r.early}`;
+                    td.appendChild(pill); tr.appendChild(td);
+                } else tr.appendChild(attEl('td', c.cls || '', c.f(r)));
+            });
         });
         body.replaceChildren(table);
     }
