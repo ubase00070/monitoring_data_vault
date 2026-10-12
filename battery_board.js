@@ -1,5 +1,5 @@
 /* ============================================================
-   battery_board.js v6.4 [UI 전면 개편: 순찰·배달 열 + 다중/개입/이석 3분할 그리드. 로직 변경 없음 — 빠진 요소는 CSS로만 숨김] v6.3 (배경 이미지 · 방전 로그 · 이석/착석 현황 슬라이드 전환 추가 · 배달 기체 로그 · 하루 기준 07:00 · 금일 배달 건수 배지 · 고정 버튼 3종 무지개 파스텔+이모지)
+   battery_board.js v6.9 [배달 통계 평균 소요시간 / 개입 통계 기본정렬·동률 규칙 / 배달 로그 하단 안내] v6.8 [개입 통계: 주간/야간 뱃지 · 동료 대비 열] v6.7 [개입 누적 통계에 점유율 열] v6.6 [이석 오늘·달력 / 누적 통계 버튼 통일 / 헤더 높이 통일 / 스테이 그린 확인 시각] v6.5 [배달 로그 '누적 통계' 추가] v6.4 [UI 전면 개편: 순찰·배달 열 + 다중/개입/이석 3분할 그리드. 로직 변경 없음 — 빠진 요소는 CSS로만 숨김] v6.3 (배경 이미지 · 방전 로그 · 이석/착석 현황 슬라이드 전환 추가 · 배달 기체 로그 · 하루 기준 07:00 · 금일 배달 건수 배지 · 고정 버튼 3종 무지개 파스텔+이모지)
    NCC 종합 모니터 — 템퍼몽키 inject
    ============================================================ */
 
@@ -810,8 +810,15 @@
             cursor:pointer; white-space:nowrap; display:inline-flex; align-items:center; justify-content:center; flex:none;
         }
         .bb-mm-nav:hover { border-color:var(--mu); }
-        #bb-att-detailbtn, #bb-iv-all { background:#ffd9e4; border-color:#f2a7bf; color:#5c2233; }   /* 이석 현황 / 개입카드 현황의 '자세히': 카드 제거(#bb-rmbtn)와 같은 파스텔 연핑크 */
-        #bb-att-detailbtn:hover, #bb-iv-all:hover { background:#ffc9d9; border-color:#ea86a5; }
+        #bb-iv-all { background:#ffd9e4; border-color:#f2a7bf; color:#5c2233; }   /* 이석 현황 / 개입카드 현황의 '자세히': 카드 제거(#bb-rmbtn)와 같은 파스텔 연핑크 */
+        #bb-iv-all:hover { background:#ffc9d9; border-color:#ea86a5; }
+        #bb-att-detailbtn { background:#d6f5e3; border-color:#8fd3ac; color:#14532d; }   /* 이석 현황 '누적 통계': 개입카드와 같은 녹색 */
+        #bb-att-detailbtn:hover { background:#c3efd5; border-color:#6fc496; }
+        #bb-att-detailbtn.on { background:#9fe3bd; border-color:#4fb57d; }
+        .bb-att-cal-h { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+        .bb-att-cal-h .t { font-size:14px; color:var(--tx); }
+        .bb-att-cal-h button { height:24px; min-width:28px; padding:0 6px; border-radius:6px; border:1.5px solid var(--bd2); background:var(--sur2,var(--sur)); color:var(--tx); cursor:pointer; font-size:14px; line-height:1; }
+        .bb-att-cal-h button[disabled] { opacity:.35; cursor:default; }
         .bb-mm-goatt { position:absolute; right:8px; top:50%; transform:translateY(-50%); height:auto; padding:5px 9px; gap:5px; }
         /* 두 줄 버튼 공통: 화살표(« »)는 글자 옆에 따로 두고, 두 줄 글자는 같은 크기 · 가운데 정렬 */
         .bb-mm-nav .ar { flex:none; font-size:14px; line-height:1; }
@@ -1304,14 +1311,18 @@
             width:auto; min-height:0; max-height:none; flex:1 1 0; overflow:visible; z-index:auto;
             border:2px solid var(--bd2); border-radius:8px; background:color-mix(in srgb, var(--bg) 60%, transparent); box-shadow:none;
         }
-        #bb #bb-dlog-panel .bb-ap-hd { position:static; padding:5px 10px; border-radius:6px 6px 0 0; }
-        #bb #bb-dlog-panel .bb-ap-title { font-size:15px; }
-        #bb #bb-dlog-panel .bb-dlog-head { padding:6px 10px; }
+        #bb #bb-dlog-panel .bb-ap-hd { position:relative; display:grid; grid-template-columns:46px minmax(0,1fr) 46px; column-gap:8px; row-gap:6px; align-items:center; padding:6px 8px; border-bottom:1px solid var(--bd); border-radius:6px 6px 0 0; }
+        #bb #bb-dlog-panel .bb-ap-title { grid-column:2; grid-row:1; text-align:center; font-size:14px; line-height:1.25; }
+        #bb #bb-dlog-panel .bb-dlog-head { grid-column:2; grid-row:2; position:static; padding:0; border-bottom:0; justify-content:center; gap:5px; min-width:0; }
+        #bb #bb-dlog-panel #bb-dlog-date-lbl { display:none; }
+        #bb #bb-dlog-panel .bb-dlog-note { margin-left:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.25; font-size:11.5px; min-width:0; }
+        #bb #bb-dlog-panel #bb-dl-stats-btn { grid-column:3; grid-row:1 / 3; align-self:stretch; height:auto; padding:0 6px; margin-left:0; }
         #bb #bb-dlog-panel .bb-att-cal { z-index:30; }
         #bb #bb-dlog-panel .bb-dlog-kpi { padding:6px 10px 2px; }
         #bb #bb-dlog-panel .bb-dlog-kpi .v { font-size:15px; }
         #bb #bb-dlog-panel .bb-dlog-sub { padding:6px 10px 2px; }
         #bb #bb-dlog-body { flex:1 1 auto; min-height:0; overflow-y:auto; padding:0 6px 6px; }
+        #bb #bb-dlog-panel .bb-att-legend { overflow:hidden; text-overflow:ellipsis; font-size:11.5px; }
 
         /* 배달 내역: 주문번호는 카드 셋째 줄에 항상 표시 (끝에 복사 이모지 버튼) */
 
@@ -1328,8 +1339,13 @@
         #bb #bb-iv-page { order:2; }
         #bb #bb-mm-page-att { order:3; }
         #bb .bb-mm-head, #bb .bb-mm-head.bb-iv-hd { padding:5px 8px 4px; }
-        #bb .bb-att-head, #bb .bb-iv-head { column-gap:0; }
-        #bb .bb-att-head .bb-att-title, #bb .bb-att-head .bb-att-r2 { grid-column:1 / -1; }
+        #bb .bb-iv-head { column-gap:0; }
+        #bb .bb-att-head { grid-template-columns:46px minmax(0,1fr) 46px; column-gap:8px; }
+        #bb .bb-att-head .bb-att-title, #bb .bb-att-head .bb-att-r2 { grid-column:2; }
+        #bb #bb-att-detailbtn { grid-column:3; grid-row:1 / 3; align-self:stretch; height:auto; padding:0 6px; }
+        /* 네 그리드(배달 로그·다중·개입·이석) 제목 헤더 높이 통일 */
+        #bb .bb-mm-head, #bb .bb-att-head, #bb .bb-iv-head, #bb #bb-dlog-panel .bb-ap-hd { box-sizing:border-box; height:64px; flex:0 0 auto; }
+        #bb .bb-mm-head { display:flex; flex-direction:column; justify-content:center; }
         #bb .bb-att-body { grid-template-columns:repeat(3,minmax(0,1fr)); }   /* 근무자 카드 한 줄에 3명 */
 
         /* 개입/이석 그리드 헤더: 제목·버튼 중앙정렬 */
@@ -1498,19 +1514,20 @@
                             <div class="bb-scroll bb-sec-deliv" id="bb-col-deliv" data-empty="배달 기체 없음" title="배달 기체 (사이트 기준 자동 분류)"></div>
                     <div id="bb-dlog-panel">
                         <div class="bb-ap-hd">
-                            <div class="bb-ap-title">🚚 배달 로그</div>
+                            <div class="bb-ap-title" id="bb-dlog-title">🚚 배달 로그</div>
                             <div class="bb-ap-close" id="bb-dlog-close">✕</div>
-                        </div>
-                        <div class="bb-dlog-head">
-                            <button class="bb-mm-nav bb-att-mbtn" id="bb-dlog-today">오늘</button>
-                            <button class="bb-mm-nav bb-att-mbtn" id="bb-dlog-cal-btn">달력</button>
-                            <span class="bb-dlog-date-lbl" id="bb-dlog-date-lbl"></span>
-                            <span class="bb-dlog-note" id="bb-dlog-note"></span>
-                            <div class="bb-att-cal" id="bb-dlog-cal"></div>
+                            <div class="bb-dlog-head">
+                                <button class="bb-mm-nav bb-att-mbtn" id="bb-dlog-today">오늘</button>
+                                <button class="bb-mm-nav bb-att-mbtn" id="bb-dlog-cal-btn">달력</button>
+                                <span class="bb-dlog-date-lbl" id="bb-dlog-date-lbl"></span>
+                                <span class="bb-dlog-note" id="bb-dlog-note"></span>
+                                <div class="bb-att-cal" id="bb-dlog-cal"></div>
+                            </div>
                         </div>
                         <div class="bb-dlog-kpi" id="bb-dlog-kpi"></div>
                         <div class="bb-dlog-sub" id="bb-dlog-sub">배달 내역</div>
                         <div id="bb-dlog-body"></div>
+                        <div class="bb-att-legend">진행 중인 배달은 맨 위, 완료 건은 최신순으로 표시됩니다.</div>
                     </div>
                         </div>
                       </div>
@@ -1539,12 +1556,11 @@
                                     <button class="bb-mm-nav bb-att-back" id="bb-att-back" title="다중 모니터링으로 돌아가기"><span class="ar">«</span><span class="tx"><span class="l1">다중</span><span class="l2">미갱신</span></span></button>
                                     <div class="bb-att-title" id="bb-att-title">이석 현황</div>
                                     <div class="bb-att-r2">
-                                        <button class="bb-mm-nav bb-att-mbtn" id="bb-att-mprev">--월</button>
-                                        <button class="bb-mm-nav bb-att-mbtn" id="bb-att-mcur">--월</button>
-                                        <button class="bb-mm-nav" id="bb-att-detailbtn" title="월별 근무자 상세 통계">자세히</button>
-                                        <button class="bb-mm-nav" id="bb-att-today" style="display:none" title="실시간 현황으로 돌아가기">오늘로</button>
+                                        <button class="bb-mm-nav bb-att-mbtn" id="bb-att-today" title="실시간 현황으로 돌아가기">오늘</button>
+                                        <button class="bb-mm-nav bb-att-mbtn" id="bb-att-cal-btn" title="이전달/이번달 날짜 선택">달력</button>
                                         <span class="bb-att-stat" id="bb-att-stat"></span>
                                     </div>
+                                    <button class="bb-mm-nav" id="bb-att-detailbtn" title="월별 근무자 누적 통계"><span class="tx"><span class="l1">누적</span><span class="l2">통계</span></span></button>
                                     <div class="bb-att-cal" id="bb-att-cal"></div>
                                 </div>
                                 <div class="bb-att-body" id="bb-att-body"></div>
@@ -2319,6 +2335,7 @@
         document.getElementById('bb').classList.remove('open');
         window.__bbMw?.show(false);
         window.__bbIvSpClose?.();   // 개입 통계 팝업 (SECTION 18)
+        window.__bbDlSpClose?.();   // 배달 누적 통계 팝업 (SECTION 19)
         document.getElementById('bb-alert-panel').classList.remove('open');
         // (기체 정보 창은 보드를 닫아도 유지 — 창의 ✕ 로만 닫음)
         if (rmMode) { rmMode = false; rmSet.clear(); updateRmUI(); }
@@ -5728,14 +5745,8 @@
         }
 
         // 2번째 줄: 이전달/이번달 버튼 (자동 반영), 과거 조회 중이면 '오늘로'
-        const months = attMonths();
-        [['bb-att-mprev', months[0]], ['bb-att-mcur', months[1]]].forEach(([id, ym]) => {
-            const b = $att(id);
-            b.textContent = ym.slice(5) + '월';
-            b.title = ym.slice(0, 4) + '년 ' + Number(ym.slice(5)) + '월 — 날짜 선택';
-            b.classList.toggle('on', ds.slice(0, 7) === ym);
-        });
-        $att('bb-att-today').style.display = live ? 'none' : '';
+        $att('bb-att-today').classList.toggle('on', live);
+        $att('bb-att-cal-btn').classList.toggle('on', !live);
 
         // 상태 문구
         const st = $att('bb-att-stat');
@@ -5883,14 +5894,19 @@
 
     /* ───────── 이전달/이번달 날짜 선택 (미니 달력) ───────── */
     function attCloseCal() { _attCalWhich = null; $att('bb-att-cal').classList.remove('open'); }
-    async function attOpenCal(which) {
-        if (_attCalWhich === which) { attCloseCal(); return; }
+    let _attCalYm = null;
+    async function attOpenCal() {
+        if (_attCalWhich) { attCloseCal(); return; }
         attClosePop();
-        _attCalWhich = which;
-        const ym = attMonths()[which === 'prev' ? 0 : 1];
+        _attCalWhich = 'cal';
+        const months = attMonths(), cur = (_attDate || attLiveDate()).slice(0, 7);
+        await attShowCal(months.includes(cur) ? cur : months[1]);
+    }
+    async function attShowCal(ym) {
+        _attCalYm = ym;
         attRenderCal(ym, null);
         let dates; try { dates = await attGetDates(ym); } catch (e) { dates = 'fail'; }
-        if (_attCalWhich === which) attRenderCal(ym, dates);
+        if (_attCalWhich && _attCalYm === ym) attRenderCal(ym, dates);
     }
     // dates = 기록 있는 날짜 배열 | null(불러오는 중) | 'fail'(목록 조회 실패 → 지난 날짜는 모두 눌러볼 수 있게 함)
     function attRenderCal(ym, dates) {
@@ -5913,7 +5929,14 @@
             }
             grid.appendChild(el);
         }
-        cal.replaceChildren(attEl('div', 'bb-att-cal-title', y + '년 ' + m + '월'), grid);
+        const months = attMonths();
+        const hd = attEl('div', 'bb-att-cal-h');
+        const pv = attEl('button', '', '‹'), nx = attEl('button', '', '›');
+        pv.type = nx.type = 'button';
+        if (ym <= months[0]) pv.disabled = true; else pv.addEventListener('click', () => attShowCal(months[0]));
+        if (ym >= months[1]) nx.disabled = true; else nx.addEventListener('click', () => attShowCal(months[1]));
+        hd.append(pv, attEl('span', 't', y + '년 ' + m + '월'), nx);
+        cal.replaceChildren(hd, grid);
         cal.classList.add('open');
     }
     function attSelectDate(ds) {
@@ -6230,8 +6253,7 @@
     /* ───────── 이벤트 연결 ───────── */
     $att('bb-mm-goatt').addEventListener('click', () => attSetView('att'));
     $att('bb-att-back').addEventListener('click', () => attSetView('multi'));
-    $att('bb-att-mprev').addEventListener('click', () => attOpenCal('prev'));
-    $att('bb-att-mcur').addEventListener('click', () => attOpenCal('cur'));
+    $att('bb-att-cal-btn').addEventListener('click', () => attOpenCal());
     $att('bb-att-detailbtn').addEventListener('click', () => { if ($att('bb-att-detail').classList.contains('open')) attCloseDetail(); else attOpenDetail(); });
     $att('bb-att-today').addEventListener('click', attGoToday);
     $att('bb-att-dclose').addEventListener('click', attCloseDetail);
@@ -6909,7 +6931,7 @@
         #bb-iv-stats-btn.on { background:#9fe3bd; border-color:#4fb57d; }
         #bb-iv-sp {
             --bg:#f2e4c4; --sur:#f8f3e6; --sur2:#efe6d2; --bd:#cabf9d; --bd2:#b3a687; --tx:#2b2418; --mu:#7a6f5c; --bl:#3b82f6;
-            display:none; position:fixed; width:440px; max-width:96vw; flex-direction:column; color:var(--tx); font-family:'Paperlogy','Lato',-apple-system,sans-serif;
+            display:none; position:fixed; width:545px; max-width:96vw; flex-direction:column; color:var(--tx); font-family:'Paperlogy','Lato',-apple-system,sans-serif;
             border:3px solid transparent; border-radius:14px;
             transform:scale(var(--bb-pop-zoom,1)); transform-origin:center center;
             background-image:linear-gradient(var(--sur),var(--sur)), linear-gradient(135deg, #d9b8ff, #9333ea);
@@ -6925,7 +6947,7 @@
         .bb-sp-t .x { margin-left:auto; color:#b91c1c; font-size:16px; font-weight:900; padding:0 4px; cursor:pointer; }
         .bb-sp-sub { font-size:11.5px; color:var(--mu); }
         .bb-sp-sub.warn { color:#c2410c; font-weight:700; }
-        .bb-sp-th, .bb-sp-row { display:grid; grid-template-columns:28px minmax(0,1fr) 72px 64px 64px; gap:6px; align-items:center; padding:0 16px; }
+        .bb-sp-th, .bb-sp-row { display:grid; grid-template-columns:28px minmax(0,1fr) 66px 56px 60px 66px 54px; gap:6px; align-items:center; padding:0 16px; }
         .bb-sp-th { flex:0 0 auto; font-size:11px; color:var(--mu); padding-top:5px; padding-bottom:5px; border-bottom:1px solid var(--bd); background:var(--sur2); }
         .bb-sp-th span:nth-child(n+3), .bb-sp-row > div:nth-child(n+3) { text-align:right; }
         .bb-sp-body { flex:1 1 auto; min-height:0; overflow-y:auto; }
@@ -6934,6 +6956,9 @@
         .bb-sp-row.top .bb-sp-rk { color:#c2410c; }
         .bb-sp-nm { min-width:0; }
         .bb-sp-nm .n { font-size:15px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .bb-sp-nm .bb-sp-bdg { display:inline-block; margin-left:6px; padding:0 6px; border-radius:999px; font-size:10.5px; font-weight:800; line-height:16px; vertical-align:2px; }
+        .bb-sp-bdg.bd-d { background:#fde047; color:#713f12; }   /* 주간 = 노랑 */
+        .bb-sp-bdg.bd-n { background:#60a5fa; color:#0b2a5b; }   /* 야간 = 파랑 */
         .bb-sp-bar { height:5px; margin-top:4px; border-radius:3px; background:rgba(0,0,0,.07); overflow:hidden; }
         .bb-sp-bar i { display:block; height:100%; background:#f97316; border-radius:3px; }
         .bb-sp-c { font-size:17px; font-weight:900; color:#c2410c; font-variant-numeric:tabular-nums; }
@@ -6951,7 +6976,7 @@
         const spPop = ivEl('div'); spPop.id = 'bb-iv-sp';
         document.body.appendChild(spPop);
 
-        let _spSort = { k: 'solved', dir: -1 };   // 정렬 기준(누적/일평균/근무일/이름)과 방향(-1 내림차순)
+        let _spSort = { k: 'avg', dir: -1 };   // 정렬 기준(누적/일평균/근무일/이름)과 방향(-1 내림차순)
         let _spOpen = false, _spSeq = 0, _spView = { dates: [], days: {}, sched: {}, state: null };
 
         const spShift = (ymd, n) => {
@@ -6970,26 +6995,28 @@
         const spSaveSch = s => { try { localStorage.setItem(IV_SCH_KEY, JSON.stringify(s)); } catch (e) { /* 저장 못 해도 이번 화면에는 지장 없음 */ } };
         // 근무표 JSON → { 이름: { 'M/D': 1(근무)|0(비근무) } }
         function spParseSch(j) {
-            const out = {};
+            const out = {}, win = {};
             (j && Array.isArray(j.staff) ? j.staff : []).forEach(st => {
                 if (!st || !st.name || !st.schedule) return;
                 const m = {};
+                const wm = String(st.workTime || '').match(/(\d{1,2}):(\d{2})\s*~\s*(\d{1,2}):(\d{2})/);   // '15:00~24:00A' 처럼 뒤에 글자가 붙어도 시각만 읽음
+                if (wm) { const a = (+wm[1]) * 60 + (+wm[2]); let b = (+wm[3]) * 60 + (+wm[4]); if (b <= a) b += 1440; if (b - a > 0 && b - a <= 960) win[spNorm(st.name)] = [a, b]; }   // 자정 넘기면 +24h, 16시간 넘는 값은 오타로 보고 무시
                 Object.keys(st.schedule).forEach(k => { const v = st.schedule[k]; if (v && typeof v === 'object' && v.status !== 'empty') m[k] = v.present === true ? 1 : 0; });
                 out[spNorm(st.name)] = m;
             });
-            return out;
+            return { p: out, w: win };
         }
         // 필요한 달의 근무표를 확보 (저장분 우선). 반환: { 'YYYY-MM': {p:{이름:{M/D:0|1}}} | null(받지 못함) }
         async function spLoadSched(months, force) {
             const store = force ? { months: {} } : spLoadSch(), cur = ivOpDate().slice(0, 7), res = {};
             await Promise.all(months.map(async mo => {
                 const c = store.months[mo];
-                if (c && c.p && (mo < cur || Date.now() - c.at < IV_SCH_TTL)) { res[mo] = c; return; }
+                if (c && c.p && c.w && (mo < cur || Date.now() - c.at < (Object.keys(c.p).length ? IV_SCH_TTL : 30 * 60 * 1000))) { res[mo] = c; return; }   // c.w 가 없는 예전 저장분(근무시간 미포함)은 다시 받음 · 파일이 아직 없던 달은 30분마다 재시도
                 try {
                     const r = await fetch(IV_SCH_BASE + mo + '.json', { cache: 'no-cache' });
-                    if (r.status === 404) { store.months[mo] = { at: Date.now(), p: {} }; res[mo] = store.months[mo]; return; }   // 그 달 근무표 없음
+                    if (r.status === 404) { store.months[mo] = { at: Date.now(), p: {}, w: {} }; res[mo] = store.months[mo]; return; }   // 그 달 근무표 없음
                     if (!r.ok) throw new Error('HTTP ' + r.status);
-                    const rec = { at: Date.now(), p: spParseSch(await r.json()) };
+                    const ps = spParseSch(await r.json()), rec = { at: Date.now(), p: ps.p, w: ps.w };
                     store.months[mo] = rec; res[mo] = rec;
                 } catch (e) {
                     console.warn('[BB] 근무표 불러오기 실패', mo, e && e.message);
@@ -7000,12 +7027,44 @@
             return res;
         }
         // 이름 매칭: 공백 제거 후 같은 이름 → 없으면 한쪽이 다른 쪽을 포함하고 후보가 딱 하나일 때만
-        function spFindSch(p, name) {
+        function spFindKey(p, name) {
             const k = spNorm(name);
-            if (p[k]) return p[k];
+            if (p[k]) return k;
             if (k.length < 2) return null;
             const c = Object.keys(p).filter(x => x.includes(k) || k.includes(x));
-            return c.length === 1 ? p[c[0]] : null;
+            return c.length === 1 ? c[0] : null;
+        }
+        function spFindSch(p, name) { const k = spFindKey(p, name); return k == null ? null : p[k]; }
+
+        // 점유율: 그날 '내 근무시간대에 같이 근무한 사람들이 처리한 건' 중 내가 처리한 비율.
+        //  - 하루 요약에는 시간대별 건수가 없으므로, 각자 처리 건수를 본인 근무시간에 고르게 분포한다고 보고 내 근무시간과 겹치는 만큼만 더함
+        //  - 근무시간(workTime)을 모르는 사람은 비교 대상에서 빠짐 · 근무시간을 모르는 본인은 그날 계산 제외
+        function spShareDay(day, sc, w, md) {
+            const pp = [];   // { key, sv, win }
+            const seen = new Set();
+            Object.keys(day).forEach(nm => {
+                const key = spFindKey(sc, nm), sv = day[nm][0] || 0, v = key != null ? sc[key][md] : undefined;
+                if (key != null) seen.add(key);
+                const worked = v === 1 || (v === 0 ? sv > 0 : !!day[nm][1]);
+                if (!worked) return;
+                pp.push({ nm, sv, win: key != null ? w[key] : null });
+            });
+            Object.keys(sc).forEach(key => { if (!seen.has(key) && sc[key][md] === 1) pp.push({ nm: null, key, sv: 0, win: w[key] || null }); });
+            const out = {};
+            pp.forEach(a => {
+                if (!a.nm || !a.win) return;
+                let pool = 0, rateSum = 0, ovSum = 0;
+                pp.forEach(b => {
+                    if (!b.win) return;
+                    const ov = Math.min(a.win[1], b.win[1]) - Math.max(a.win[0], b.win[0]);
+                    if (ov <= 0) return;
+                    const rb = b.sv / (b.win[1] - b.win[0]);   // 시간당(분당) 처리량
+                    pool += b.sv * ov / (b.win[1] - b.win[0]);
+                    rateSum += rb * ov; ovSum += ov;           // 겹친 시간만큼 가중한 동료 평균 처리량 (본인·건수 0인 동료 포함)
+                });
+                if (pool > 0) out[a.nm] = [Math.min(1, a.sv / pool), (a.sv / (a.win[1] - a.win[0])) / (rateSum / ovSum)];
+            });
+            return out;
         }
 
         const spLoadStore = () => { try { const s = JSON.parse(localStorage.getItem(IV_SP_KEY) || 'null'); if (s && s.days && typeof s.days === 'object') return s; } catch (e) { /* 없으면 새로 */ } return { days: {}, at: 0 }; };
@@ -7016,10 +7075,13 @@
             dates.forEach(d => {
                 const day = days[d]; if (!day) return;
                 const mo = d.slice(0, 7), md = ivMD(d), sc = sched && sched[mo] && sched[mo].p;
+                let shr = {}; try { shr = sc ? spShareDay(day, sc, (sched[mo].w || {}), md) : {}; } catch (e) { shr = {}; }   // 계산이 실패해도 나머지 통계는 그대로
                 Object.keys(day).forEach(nm => {
-                    const a = m[nm] || (m[nm] = { name: nm, solved: 0, days: 0, est: 0 });
+                    const a = m[nm] || (m[nm] = { name: nm, solved: 0, days: 0, est: 0, sh: 0, shn: 0, rl: 0, win: null });
                     const [sv, w] = day[nm];
                     a.solved += sv;
+                    if (shr[nm] != null) { a.sh += shr[nm][0]; a.shn++; if (isFinite(shr[nm][1])) { a.rl += shr[nm][1]; a.rln = (a.rln || 0) + 1; } }
+                    { const wk = sc && sched[mo].w ? spFindKey(sc, nm) : null; if (wk != null && sched[mo].w[wk]) a.win = sched[mo].w[wk]; }   // 가장 최근 날짜의 근무시간 (주간/야간 뱃지용)
                     const mine = sc && spFindSch(sc, nm), v = mine ? mine[md] : undefined;
                     if (v === 1) a.days += 1;                       // 근무표상 근무
                     else if (v === 0) { if (sv > 0) a.days += 1; }  // 근무표상 비근무(휴무·연차)인데 처리 건수가 있으면 근무로 봄
@@ -7044,10 +7106,16 @@
             const have = dates.filter(d => days[d]);
             const rows = spAgg(have, days, sched);
             const avgOf = x => x.days > 0 ? x.solved / x.days : -1;
-            const val = { solved: x => x.solved, avg: avgOf, days: x => x.days }[_spSort.k];
+            const shOf = x => x.shn > 0 ? x.sh / x.shn : -1;
+            const rlOf = x => x.rln > 0 ? x.rl / x.rln : -1;
+            const val = { solved: x => x.solved, avg: avgOf, share: shOf, rel: rlOf, days: x => x.days }[_spSort.k];
+            const shPct = x => x.shn > 0 ? Math.round(x.sh / x.shn * 100) : -1;          // 화면에 보이는 값(정수 %) 기준으로 동률 판정
+            const rlTen = x => x.rln > 0 ? Math.round(x.rl / x.rln * 10) : -1;           // 동료 대비도 보이는 값(소수 1자리) 기준
             rows.sort((a, b) => _spSort.k === 'name'
                 ? _spSort.dir * String(a.name).localeCompare(String(b.name), 'ko')
-                : (val(a) - val(b)) * _spSort.dir || b.solved - a.solved || String(a.name).localeCompare(String(b.name), 'ko'));
+                : _spSort.k === 'share'
+                    ? (shPct(a) - shPct(b)) * _spSort.dir || rlTen(b) - rlTen(a) || a.days - b.days || b.solved - a.solved || String(a.name).localeCompare(String(b.name), 'ko')   // 점유율 같으면 동료 대비 높은 쪽, 그것도 같으면 근무일 적은 쪽이 위
+                    : (val(a) - val(b)) * _spSort.dir || b.solved - a.solved || String(a.name).localeCompare(String(b.name), 'ko'));
             const head = ivEl('div', 'bb-sp-h');
             const t = ivEl('div', 'bb-sp-t');
             t.appendChild(ivEl('b', '', '개입 통계 (누적)'));
@@ -7067,7 +7135,7 @@
             head.appendChild(ivEl('div', 'bb-sp-sub' + (warn ? ' warn' : ''), sub || ' '));
 
             const th = ivEl('div', 'bb-sp-th');
-            [['#', ''], ['이름', 'name'], ['누적', 'solved'], ['일평균', 'avg'], ['근무일', 'days']].forEach(([lb, k]) => {
+            [['#', ''], ['이름', 'name'], ['누적', 'solved'], ['일평균', 'avg'], ['점유율', 'share'], ['동료 대비', 'rel'], ['근무일', 'days']].forEach(([lb, k]) => {
                 const sp = ivEl('span', k && _spSort.k === k ? 'cur' : '', lb + (k && _spSort.k === k ? (_spSort.dir < 0 ? ' ▼' : ' ▲') : ''));
                 if (k) { sp.dataset.sort = k; sp.title = '눌러서 정렬 (다시 누르면 오름/내림차순 전환)'; }
                 th.appendChild(sp);
@@ -7078,18 +7146,26 @@
             } else {
                 const max = Math.max(1, rows[0].solved);
                 rows.forEach((r, i) => {
-                    const row = ivEl('div', 'bb-sp-row' + (_spSort.k === 'solved' && _spSort.dir < 0 && i < 3 && r.solved > 0 ? ' top' : ''));
+                    const row = ivEl('div', 'bb-sp-row' + ((_spSort.k === 'solved' || _spSort.k === 'avg') && _spSort.dir < 0 && i < 3 && r.solved > 0 ? ' top' : ''));
                     row.appendChild(ivEl('div', 'bb-sp-rk', String(i + 1)));
-                    const nm = ivEl('div', 'bb-sp-nm'); nm.appendChild(ivEl('div', 'n', r.name));
+                    const nm = ivEl('div', 'bb-sp-nm'), nmN = ivEl('div', 'n', r.name);
+                    if (r.win) { const night = r.win[0] >= 14 * 60; const bd = ivEl('span', 'bb-sp-bdg ' + (night ? 'bd-n' : 'bd-d'), night ? '야간' : '주간'); bd.title = '근무 ' + attPad(Math.floor(r.win[0] / 60)) + ':' + attPad(r.win[0] % 60) + ' 시작 (14:00 이후 시작 = 야간)'; nmN.appendChild(bd); }   // 근무표 시간이 없는 사람은 뱃지 없음
+                    nm.appendChild(nmN);
                     const bar = ivEl('div', 'bb-sp-bar'), fill = ivEl('i'); fill.style.width = Math.round(r.solved / max * 100) + '%'; bar.appendChild(fill); nm.appendChild(bar);
                     row.appendChild(nm);
                     const c = ivEl('div', 'bb-sp-c', String(r.solved)); c.appendChild(ivEl('small', '', '건')); row.appendChild(c);
                     row.appendChild(ivEl('div', 'bb-sp-a', r.days > 0 ? (r.solved / r.days).toFixed(1) : '-'));
+                    const shc = ivEl('div', 'bb-sp-a', r.shn > 0 ? Math.round(r.sh / r.shn * 100) + '%' : '-');
+                    shc.title = r.shn > 0 ? '근무시간대에 같이 근무한 사람들이 처리한 건 중 본인 비율의 평균 (' + r.shn + '일 기준)' : '근무시간 정보가 없어 계산하지 못함';
+                    row.appendChild(shc);
+                    const rlc = ivEl('div', 'bb-sp-a', r.rln > 0 ? (r.rl / r.rln).toFixed(1) + '배' : '-');
+                    rlc.title = r.rln > 0 ? '같은 시간대에 근무한 동료의 평균 시간당 처리량 대비 본인 처리량 (1.0배 = 동료 평균, ' + r.rln + '일 기준)' : '근무시간 정보가 없어 계산하지 못함';
+                    row.appendChild(rlc);
                     row.appendChild(ivEl('div', 'bb-sp-d', r.days + '일' + (r.est ? '*' : '')));
                     body.appendChild(row);
                 });
             }
-            const ft = ivEl('div', 'bb-sp-ft', '건수 = 이름이 확정된 처리 건만 (추정·이탈·특정 불가 제외, 개입카드 화면과 같은 기준) · 근무일 = 월별 근무표에서 출근으로 표시된 날(연차 제외·반차 1일) · * = 근무표에 없는 날이 있어 처리·근무시간 기록으로 대체 · 일평균 = 누적 ÷ 근무일');
+            const ft = ivEl('div', 'bb-sp-ft', '건수 = 이름이 확정된 처리 건만 (추정·이탈·특정 불가 제외, 개입카드 화면과 같은 기준) · 근무일 = 월별 근무표에서 출근으로 표시된 날(연차 제외·반차 1일) · * = 근무표에 없는 날이 있어 처리·근무시간 기록으로 대체 · 일평균 = 누적 ÷ 근무일 · 점유율 = (내 근무시간과 겹치는 시간 동안 같이 근무한 사람들의 처리 건 중 내가 처리한 비율)의 일별 평균 — 건수는 각자 근무시간에 고르게 분포한다고 보고 추정 · 동료 대비 = 내 시간당 처리량 ÷ 겹친 시간 동료들의 평균 시간당 처리량(1.0배 = 동료 평균, 인원·발생량 차이 보정) · 뱃지: 근무 시작 14:00 이후 = 야간, 그 전 = 주간 · 근무시간 미등록자는 비교·뱃지에서 제외');
             const keep = spPop.querySelector('.bb-sp-body'), keepTop = keep ? keep.scrollTop : 0;
             spPop.replaceChildren(head, th, body, ft);
             body.scrollTop = keepTop;
@@ -7353,6 +7429,8 @@
             const lbl = $dl('bb-dlog-date-lbl'), kpi = $dl('bb-dlog-kpi'), body = $dl('bb-dlog-body');
             const isToday = !_dlDate;
             lbl.textContent = isToday ? '오늘 (' + dlDateNow() + ')' : dlDateNow();
+            const dlTitle = $dl('bb-dlog-title'), dlDp = dlDateNow().split('-');
+            dlTitle.textContent = '🚚 배달 로그 (' + Number(dlDp[1]) + '/' + Number(dlDp[2]) + ')';
             $dl('bb-dlog-today').classList.toggle('on', isToday);
             $dl('bb-dlog-cal-btn').classList.toggle('on', !isToday);
             if (!_dlData) {
@@ -7373,11 +7451,14 @@
             kpi.replaceChildren(...cells);
             const closedNow = isToday && !dlInSchedule();   // 마감 후(23:00~08:00): 더 이상 조회하지 않고 마지막 값을 그대로 보여줌
             _dlRefMs = (closedNow && _dlData._at) ? _dlData._at : Date.now();   // 마감 후에는 진행 중 카드의 경과/대기 시간이 계속 늘어나지 않도록 마지막 조회 시각에 고정
-            $dl('bb-dlog-note').innerHTML = !isToday
-                ? '* 확정된 기록입니다.'
+            dlTitle.append(' - ' + (isToday ? '오늘 ' : '과거 '));
+            { const c = dlEl('span', '', String(s.completed || 0) + '건'); c.style.color = '#c2410c'; c.style.fontWeight = '700'; dlTitle.appendChild(c); }
+            const dlNoteTxt = !isToday
+                ? '확정된 기록'
                 : closedNow
-                    ? '* 마감 (23:00) · 08:00 재개<br>' + (_dlData._at ? dlHMS(_dlData._at) : '--:--:--') + ' 기준'
-                    : '* 08:00~23:00<br>' + (_dlData._at ? dlHMS(_dlData._at) : '--:--:--') + ' 업데이트';   // 업데이트 시각 = 이 화면이 서버에서 마지막으로 '성공적으로' 받아온 시각 (조회가 실패하면 마지막 성공 시각 그대로 남음)
+                    ? '마감 · 08:00 재개 · ' + (_dlData._at ? dlHMS(_dlData._at) : '--:--:--') + ' 기준'
+                    : '08:00~23:00 · ' + (_dlData._at ? dlHMS(_dlData._at) : '--:--:--') + ' 업데이트';
+            $dl('bb-dlog-note').textContent = dlNoteTxt; $dl('bb-dlog-note').title = dlNoteTxt;   // 업데이트 시각 = 이 화면이 서버에서 마지막으로 '성공적으로' 받아온 시각 (조회가 실패하면 마지막 성공 시각 그대로 남음)
             // 진행 중(아직 완료 신호가 없는 건)은 오늘 화면에서만 맨 위에 카드로: 배달 중(최신 배정 순) → 배정 대기(최신 접수 순)
             const running = (isToday && Array.isArray(_dlData.inProgress)) ? _dlData.inProgress.slice() : [];
             const sinceOf = r => parseFloat(r.assignedTs || r.threadTs) || 0;
@@ -7490,6 +7571,364 @@
         });
         dlRefreshBadge();   // 처음 열었을 때 1회 (패널 자체의 첫 조회는 아래 dlOpenPanel 이 담당)
 
+        /* ───────── 누적 통계: 사이트별 배달 건수 + 주중(월~목) vs 주말(금~일) + 시간대별 ─────────
+           · 건수 = 완료된 배달(deliveries)만. 진행 중/확인 중은 제외. 요일은 근무일(07시 기준 날짜) 기준.
+           · 데이터: 날짜 목록(view=dates) + 날짜별(view=day&date=…) 을 받아 {사이트: [0~23시 건수, 24=시각 미상]} 로 압축해 저장.
+           · 저장(localStorage bbDlStatsV1): 지난 날짜는 변하지 않으므로 다시 받지 않음. 최근 DLS_REFETCH_DAYS 일만 다시 받음.
+             '새로 집계' = 저장분 버리고 전부 다시 받기. 저장값은 읽을 때마다 형식 검증, 이상하면 버림.
+           · 방어: 진행 중 중복 실행 방지(시퀀스 번호) · 동시 요청 3개 제한 · 실패한 날은 저장하지 않고 '불러오지 못함'으로 표시 · 전체 try/catch */
+        try {
+        const DLS_KEY = 'bbDlStatsV1';
+        const DLS_CONC = 3;
+        const DLS_REFETCH_DAYS = 3;
+        const DLS_MAX_DAYS = 400;
+        const DLS_UNK = 24;
+        const DLS_HOURS = [7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,0,1,2,3,4,5,6];   // 근무일 순서 (07시 시작)
+        const dlsSafe = fn => function () { try { return fn.apply(this, arguments); } catch (e) { console.warn('[BB] 배달 누적 통계 오류:', e && e.message); } };
+
+        const dsSt = document.createElement('style');
+        dsSt.id = 'bb-ds-style';
+        dsSt.textContent = `
+        #bb-dl-stats-btn { background:#d6f5e3; border-color:#8fd3ac; color:#14532d; }
+        #bb-dl-stats-btn:hover { background:#c3efd5; border-color:#6fc496; }
+        #bb-dl-stats-btn.on { background:#9fe3bd; border-color:#4fb57d; }
+        #bb-ds {
+            --bg:#f2e4c4; --sur:#f8f3e6; --sur2:#efe6d2; --bd:#cabf9d; --bd2:#b3a687; --tx:#2b2418; --mu:#7a6f5c; --bl:#3b82f6;
+            display:none; position:fixed; width:660px; max-width:96vw; flex-direction:column; color:var(--tx); font-family:'Paperlogy','Lato',-apple-system,sans-serif;
+            border:3px solid transparent; border-radius:14px;
+            transform:scale(var(--bb-pop-zoom,1)); transform-origin:center center;
+            background-image:linear-gradient(var(--sur),var(--sur)), linear-gradient(135deg, #d9b8ff, #9333ea);
+            background-origin:border-box; background-clip:padding-box,border-box;
+            box-shadow:0 18px 46px rgba(0,0,0,.45); z-index:99999998; box-sizing:border-box; overflow:hidden;
+        }
+        #bb-ds * { box-sizing:border-box; }
+        #bb-ds.open { display:flex; }
+        .bb-ds-h { flex:0 0 auto; padding:12px 16px 6px; display:flex; flex-direction:column; gap:4px; }
+        .bb-ds-t { display:flex; align-items:baseline; gap:10px; }
+        .bb-ds-t b { font-size:20px; font-weight:900; }
+        .bb-ds-t .rf { font-size:11.5px; color:var(--bl); cursor:pointer; text-decoration:underline; }
+        .bb-ds-t .x { margin-left:auto; color:#b91c1c; font-size:16px; font-weight:900; padding:0 4px; cursor:pointer; }
+        .bb-ds-sub { font-size:11.5px; color:var(--mu); }
+        .bb-ds-sub.warn { color:#c2410c; font-weight:700; }
+        .bb-ds-cards { flex:0 0 auto; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; padding:4px 16px 8px; }
+        .bb-ds-card { padding:6px 9px; border-radius:9px; background:var(--sur2); border:1px solid var(--bd); border-left-width:5px; }
+        .bb-ds-card.wd { border-left-color:#5b8fd1; }
+        .bb-ds-card.we { border-left-color:#f08a4b; }
+        .bb-ds-card .l { font-size:11px; color:var(--mu); }
+        .bb-ds-card .v { font-size:17px; font-weight:900; white-space:nowrap; }
+        .bb-ds-card .v small { margin-left:3px; font-size:11px; color:var(--mu); font-weight:700; }
+        .bb-ds-card .s { font-size:11px; color:var(--mu); margin-top:1px; }
+        .bb-ds-ch { flex:0 0 auto; padding:2px 16px 8px; border-top:1px solid var(--bd); }
+        .bb-ds-chh { display:flex; align-items:center; gap:8px; padding:6px 0 4px; font-size:12.5px; font-weight:800; }
+        .bb-ds-chh .lg { display:inline-flex; align-items:center; gap:4px; font-size:11px; color:var(--mu); font-weight:700; }
+        .bb-ds-chh .lg i { width:10px; height:10px; border-radius:2px; display:inline-block; }
+        .bb-ds-chh .tg { margin-left:auto; display:inline-flex; gap:3px; }
+        .bb-ds-chip { height:22px; padding:0 9px; border-radius:999px; border:1.5px solid var(--bd2); background:transparent; color:var(--tx); font-size:11.5px; cursor:pointer; font-family:inherit; }
+        .bb-ds-chip.on { border-color:var(--tx); background:var(--tx); color:var(--sur); }
+        .bb-ds-bars { display:flex; align-items:flex-end; gap:2px; height:104px; }
+        .bb-ds-hc { flex:1; min-width:0; height:100%; display:flex; align-items:flex-end; justify-content:center; gap:1px; }
+        .bb-ds-hc i { flex:1; min-width:2px; max-width:9px; border-radius:2px 2px 0 0; display:block; }
+        .bb-ds-hc i.wd { background:#5b8fd1; }
+        .bb-ds-hc i.we { background:#f08a4b; }
+        .bb-ds-hl { display:flex; gap:2px; margin-top:2px; }
+        .bb-ds-hl span { flex:1; text-align:center; font-size:9.5px; color:var(--mu); }
+        .bb-ds-th, .bb-ds-row { display:grid; grid-template-columns:28px minmax(0,1fr) 60px 74px 74px 92px; gap:6px; align-items:center; padding:0 16px; }
+        .bb-ds-th { flex:0 0 auto; font-size:11px; color:var(--mu); padding-top:5px; padding-bottom:5px; border-top:1px solid var(--bd); border-bottom:1px solid var(--bd); background:var(--sur2); }
+        .bb-ds-th span:nth-child(n+3), .bb-ds-row > div:nth-child(n+3) { text-align:right; }
+        .bb-ds-th span[data-sort] { cursor:pointer; user-select:none; }
+        .bb-ds-th span[data-sort]:hover { color:var(--tx); }
+        .bb-ds-th span.cur { color:#c2410c; font-weight:800; }
+        .bb-ds-body { flex:1 1 auto; min-height:0; overflow-y:auto; }
+        .bb-ds-row { padding-top:6px; padding-bottom:6px; border-bottom:1px solid var(--bd); cursor:pointer; }
+        .bb-ds-row:hover { background:rgba(0,0,0,.035); }
+        .bb-ds-row.sel { background:#d6f5e3; }
+        .bb-ds-rk { font-size:13px; font-weight:900; color:var(--mu); text-align:center; }
+        .bb-ds-row.top .bb-ds-rk { color:#c2410c; }
+        .bb-ds-nm { min-width:0; }
+        .bb-ds-nm .n { font-size:13.5px; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .bb-ds-bar { height:5px; margin-top:4px; border-radius:3px; background:rgba(0,0,0,.07); overflow:hidden; }
+        .bb-ds-bar i { display:block; height:100%; background:#22a05a; border-radius:3px; }
+        .bb-ds-c { font-size:16px; font-weight:900; color:#14532d; font-variant-numeric:tabular-nums; }
+        .bb-ds-c small { margin-left:2px; font-size:11px; color:var(--mu); font-weight:700; }
+        .bb-ds-a { font-size:13px; font-variant-numeric:tabular-nums; }
+        .bb-ds-msg { padding:30px 16px; text-align:center; color:var(--mu); font-size:13px; }
+        .bb-ds-ft { flex:0 0 auto; padding:6px 16px 9px; border-top:1px solid var(--bd); font-size:10.5px; line-height:1.55; color:var(--mu); }
+        `;
+        document.head.appendChild(dsSt);
+
+        // 제목 줄 우측에 버튼 삽입 (닫기 ✕ 는 숨김 상태라 이 버튼이 맨 오른쪽에 놓임)
+        const dsBtn = dlEl('button', 'bb-mm-nav');
+        dsBtn.innerHTML = '<span class="tx"><span class="l1">누적</span><span class="l2">통계</span></span>';
+        dsBtn.id = 'bb-dl-stats-btn'; dsBtn.type = 'button'; dsBtn.title = '사이트별 배달 건수 · 주중(월~목) vs 주말(금~일) · 시간대별';
+        const dsHd = document.querySelector('#bb-dlog-panel .bb-ap-hd');
+        if (dsHd) dsHd.appendChild(dsBtn);
+
+        const dsPop = dlEl('div'); dsPop.id = 'bb-ds';
+        document.body.appendChild(dsPop);
+
+        let _dsOpen = false, _dsSeq = 0, _dsSite = null, _dsMode = 'avg';
+        let _dsSort = { k: 'total', dir: -1 };
+        let _dsView = { dates: [], days: {}, state: null };
+
+        const dsRound = n => (Math.round(n * 10) / 10).toFixed(1);
+        const dsGroup = ymd => { const w = new Date(ymd + 'T12:00:00Z').getUTCDay(); return (w >= 1 && w <= 4) ? 'wd' : 'we'; };   // 월~목 = 주중, 금·토·일 = 주말
+        const dsShift = (ymd, n) => { const p = ymd.split('-').map(Number), t = new Date(Date.UTC(p[0], p[1] - 1, p[2] + n)); return t.getUTCFullYear() + '-' + attPad(t.getUTCMonth() + 1) + '-' + attPad(t.getUTCDate()); };
+        const dsIsYmd = s => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
+
+        function dsSite(r) {
+            const v = String(r.site || '').replace(/\s+/g, ' ').trim() || String(r.robot || '').replace(/\s+/g, ' ').trim() || String(r.store || '').replace(/\s+/g, ' ').trim();
+            return v || '(사이트 미상)';
+        }
+        function dsHour(r) {
+            for (const s of [r.assignedAt, r.receivedAt]) {
+                const m = /(\d{1,2}):(\d{2})/.exec(String(s || ''));
+                if (m && +m[1] < 24) return +m[1];
+            }
+            for (const t of [r.assignedTs, r.threadTs]) {
+                const f = parseFloat(t);
+                if (f > 0) return new Date(f * 1000 + 9 * 3600 * 1000).getUTCHours();
+            }
+            return DLS_UNK;
+        }
+        function dsCompact(d) {   // 하루 응답 → { 사이트: [25칸] }
+            const out = {}, seen = new Set();
+            (Array.isArray(d.deliveries) ? d.deliveries : []).forEach(r => {
+                if (!r || typeof r !== 'object') return;
+                if (r.orderNo) { const k = String(r.orderNo); if (seen.has(k)) return; seen.add(k); }   // 같은 날 같은 주문번호 중복 방지
+                const nm = dsSite(r), a = out[nm] || (out[nm] = new Array(27).fill(0));   // [0~23]=시간대별 건수, [24]=시각 미상, [25]=소요시간 합(초), [26]=소요시간이 있는 건수
+                a[dsHour(r)]++;
+                const du = Number(r.durationSec);
+                if (r.durationSec != null && Number.isFinite(du) && du > 0 && du <= 86400) { a[25] += du; a[26]++; }   // 비정상 값(0 이하·하루 초과)은 평균에서 제외
+            });
+            return out;
+        }
+        function dsLoadStore() {   // 저장값 검증: 형식이 이상한 날짜는 버림
+            const empty = { v: 2, days: {}, at: 0 };   // v2: 사이트별 배열이 25칸 → 27칸(소요시간 합·건수 추가). v1 저장분은 형식이 달라 버리고 새로 받음
+            try {
+                const s = JSON.parse(localStorage.getItem(DLS_KEY) || 'null');
+                if (!s || s.v !== 2 || !s.days || typeof s.days !== 'object') return empty;
+                const days = {};
+                Object.keys(s.days).forEach(d => {
+                    const day = s.days[d];
+                    if (!dsIsYmd(d) || !day || typeof day !== 'object') return;
+                    const ok = {};
+                    Object.keys(day).forEach(nm => { const a = day[nm]; if (Array.isArray(a) && a.length === 27 && a.every(x => Number.isFinite(x) && x >= 0)) ok[nm] = a; });
+                    days[d] = ok;
+                });
+                return { v: 2, days, at: +s.at || 0 };
+            } catch (e) { return empty; }
+        }
+        const dsSaveStore = s => { try { localStorage.setItem(DLS_KEY, JSON.stringify(s)); } catch (e) { /* 저장 못 해도 이번 화면에는 지장 없음 */ } };
+
+        function dsAgg(dates, days) {
+            const g = { wd: { days: 0, total: 0 }, we: { days: 0, total: 0 } }, sites = new Map();
+            const all = { wd: new Array(24).fill(0), we: new Array(24).fill(0) };
+            let unk = 0;
+            dates.forEach(d => {
+                const day = days[d]; if (!day) return;
+                const k = dsGroup(d); g[k].days++;
+                Object.keys(day).forEach(nm => {
+                    const a = day[nm];
+                    let s = sites.get(nm);
+                    if (!s) sites.set(nm, s = { name: nm, wd: 0, we: 0, dsum: 0, dcnt: 0, hrs: { wd: new Array(24).fill(0), we: new Array(24).fill(0) } });
+                    for (let h = 0; h < 24; h++) { s[k] += a[h]; s.hrs[k][h] += a[h]; all[k][h] += a[h]; g[k].total += a[h]; }
+                    s[k] += a[DLS_UNK]; g[k].total += a[DLS_UNK]; unk += a[DLS_UNK];
+                    s.dsum += a[25]; s.dcnt += a[26];
+                });
+            });
+            return { g, sites: [...sites.values()], all, unk };
+        }
+
+        function dsRender() {
+            if (!_dsOpen) return;
+            const { dates, days, state } = _dsView;
+            const have = dates.filter(d => days[d]);
+            const A = dsAgg(have, days), g = A.g;
+            const avg = k => g[k].days ? g[k].total / g[k].days : 0;
+            const grand = g.wd.total + g.we.total;
+
+            const head = dlEl('div', 'bb-ds-h');
+            const t = dlEl('div', 'bb-ds-t');
+            t.appendChild(dlEl('b', '', '배달 통계 (누적)'));
+            const rf = dlEl('span', 'rf', '새로 집계'); rf.dataset.act = 'refresh'; rf.title = '저장해 둔 날짜별 기록을 버리고 전부 다시 받아 집계합니다';
+            const x = dlEl('span', 'x', '✕'); x.dataset.act = 'close';
+            t.append(rf, x);
+            head.appendChild(t);
+            let sub = have.length ? have[0].slice(5).replace('-', '/') + ' ~ ' + have[have.length - 1].slice(5).replace('-', '/') + ' · ' + have.length + '일치 · 총 ' + grand + '건' : '';
+            let warn = false;
+            if (state && state.phase === 'loading') sub += (sub ? ' · ' : '') + '집계 중… ' + state.done + '/' + state.total;
+            else if (state && state.phase === 'fail') { sub = '날짜 목록을 불러오지 못했습니다.'; warn = true; }
+            else if (state && state.failed) { sub += ' · ⚠ ' + state.failed + '일 불러오지 못함 (열 때 다시 시도)'; warn = true; }
+            head.appendChild(dlEl('div', 'bb-ds-sub' + (warn ? ' warn' : ''), sub || ' '));
+
+            const card = (cls, l, v, u, s) => { const e = dlEl('div', 'bb-ds-card ' + cls); e.appendChild(dlEl('div', 'l', l)); const vv = dlEl('div', 'v', v); if (u) vv.appendChild(dlEl('small', '', u)); e.appendChild(vv); e.appendChild(dlEl('div', 's', s)); return e; };
+            const ratio = avg('wd') > 0 ? avg('we') / avg('wd') : null;
+            const cards = dlEl('div', 'bb-ds-cards');
+            cards.append(
+                card('wd', '주중 (월~목)', String(g.wd.total), '건', g.wd.days + '일 · 일평균 ' + dsRound(avg('wd')) + '건'),
+                card('we', '주말 (금~일)', String(g.we.total), '건', g.we.days + '일 · 일평균 ' + dsRound(avg('we')) + '건'),
+                card('', '일평균 비교', ratio == null ? '-' : '×' + ratio.toFixed(2), '', ratio == null ? '비교할 데이터 없음' : ratio >= 1 ? '주말이 주중보다 ' + Math.round((ratio - 1) * 100) + '% 많음' : '주말이 주중보다 ' + Math.round((1 - ratio) * 100) + '% 적음')
+            );
+
+            // 시간대별 (선택한 사이트가 있으면 그 사이트만)
+            const sel = _dsSite ? A.sites.find(s => s.name === _dsSite) : null;
+            if (_dsSite && !sel) _dsSite = null;
+            const hrs = sel ? sel.hrs : A.all;
+            const val = (k, h) => (_dsMode === 'avg' ? (g[k].days ? hrs[k][h] / g[k].days : 0) : hrs[k][h]);
+            let max = 0; DLS_HOURS.forEach(h => { max = Math.max(max, val('wd', h), val('we', h)); });
+            const ch = dlEl('div', 'bb-ds-ch');
+            const chh = dlEl('div', 'bb-ds-chh');
+            chh.appendChild(dlEl('span', '', '시간대별 ' + (_dsMode === 'avg' ? '일평균' : '누적') + ' · ' + (sel ? sel.name : '전체')));
+            const lg1 = dlEl('span', 'lg'), lg2 = dlEl('span', 'lg');
+            const i1 = dlEl('i'); i1.style.background = '#5b8fd1'; const i2 = dlEl('i'); i2.style.background = '#f08a4b';
+            lg1.append(i1, '주중'); lg2.append(i2, '주말');
+            const tg = dlEl('span', 'tg');
+            [['avg', '일평균'], ['sum', '누적']].forEach(([k, l]) => { const c = dlEl('button', 'bb-ds-chip' + (_dsMode === k ? ' on' : ''), l); c.dataset.mode = k; c.type = 'button'; tg.appendChild(c); });
+            chh.append(lg1, lg2, tg);
+            const bars = dlEl('div', 'bb-ds-bars'), hl = dlEl('div', 'bb-ds-hl');
+            DLS_HOURS.forEach(h => {
+                const col = dlEl('div', 'bb-ds-hc');
+                ['wd', 'we'].forEach(k => {
+                    const b = dlEl('i', k), v = val(k, h);
+                    b.style.height = max > 0 ? Math.max(v > 0 ? 2 : 0, Math.round(v / max * 100)) + '%' : '0';
+                    b.title = String(h).padStart(2, '0') + '시 · ' + (k === 'wd' ? '주중 ' : '주말 ') + (_dsMode === 'avg' ? dsRound(v) + '건/일' : v + '건');
+                    col.appendChild(b);
+                });
+                bars.appendChild(col);
+                hl.appendChild(dlEl('span', '', String(h).padStart(2, '0')));
+            });
+            ch.append(chh, bars, hl);
+
+            // 사이트별 표
+            const wdAvg = s => g.wd.days ? s.wd / g.wd.days : 0, weAvg = s => g.we.days ? s.we / g.we.days : 0;
+            const durOf = s => s.dcnt > 0 ? s.dsum / s.dcnt : -1;
+            const key = { total: s => s.wd + s.we, wd: wdAvg, we: weAvg, dur: durOf }[_dsSort.k];
+            const rows = A.sites.slice().sort((a, b) => _dsSort.k === 'name'
+                ? _dsSort.dir * a.name.localeCompare(b.name, 'ko')
+                : (key(a) - key(b)) * _dsSort.dir || (b.wd + b.we) - (a.wd + a.we) || a.name.localeCompare(b.name, 'ko'));
+            const th = dlEl('div', 'bb-ds-th');
+            [['#', ''], ['사이트', 'name'], ['누적', 'total'], ['주중 일평균', 'wd'], ['주말 일평균', 'we'], ['평균 소요시간', 'dur']].forEach(([lb, k]) => {
+                const sp = dlEl('span', k && _dsSort.k === k ? 'cur' : '', lb + (k && _dsSort.k === k ? (_dsSort.dir < 0 ? ' ▼' : ' ▲') : ''));
+                if (k) { sp.dataset.sort = k; sp.title = '눌러서 정렬 (다시 누르면 오름/내림차순 전환)'; }
+                th.appendChild(sp);
+            });
+            const body = dlEl('div', 'bb-ds-body');
+            if (!rows.length) {
+                body.appendChild(dlEl('div', 'bb-ds-msg', state && state.phase === 'loading' ? '불러오는 중…' : state && state.phase === 'fail' ? '다시 열어 주세요.' : '집계할 배달 기록이 없습니다.'));
+            } else {
+                const mx = Math.max(1, ...rows.map(s => s.wd + s.we));
+                rows.forEach((s, i) => {
+                    const tot = s.wd + s.we;
+                    const row = dlEl('div', 'bb-ds-row' + (_dsSort.k === 'total' && _dsSort.dir < 0 && i < 3 ? ' top' : '') + (_dsSite === s.name ? ' sel' : ''));
+                    row.dataset.site = s.name;
+                    row.title = s.name + ' — 클릭: 이 사이트만 시간대별 그래프로 보기 (다시 클릭하면 해제)';
+                    row.appendChild(dlEl('div', 'bb-ds-rk', String(i + 1)));
+                    const nm = dlEl('div', 'bb-ds-nm'); nm.appendChild(dlEl('div', 'n', s.name));
+                    const bar = dlEl('div', 'bb-ds-bar'), f = dlEl('i'); f.style.width = Math.round(tot / mx * 100) + '%'; bar.appendChild(f); nm.appendChild(bar);
+                    row.appendChild(nm);
+                    const c = dlEl('div', 'bb-ds-c', String(tot)); c.appendChild(dlEl('small', '', '건')); row.appendChild(c);
+                    row.appendChild(dlEl('div', 'bb-ds-a', g.wd.days ? dsRound(wdAvg(s)) : '-'));
+                    row.appendChild(dlEl('div', 'bb-ds-a', g.we.days ? dsRound(weAvg(s)) : '-'));
+                    const dur = dlEl('div', 'bb-ds-a', s.dcnt > 0 ? attDurHM(s.dsum / s.dcnt) : '-');
+                    dur.title = s.dcnt > 0 ? '배달 1건당 평균 소요시간 (소요시간이 기록된 ' + s.dcnt + '건 기준)' : '소요시간 기록이 없음';
+                    row.appendChild(dur);
+                    body.appendChild(row);
+                });
+            }
+            const ft = dlEl('div', 'bb-ds-ft', '건수 = 완료된 배달만 (진행 중·확인 중 제외) · 요일은 근무일(07시 기준) 기준 · 주중 = 월~목, 주말 = 금~일 · 일평균 = 건수 ÷ 해당 요일군 일수 · 평균 소요시간 = 배달 1건당 소요시간 평균(기록된 건만) · 시간대는 기체 배정 시각 기준' + (A.unk ? ' · 시각 미상 ' + A.unk + '건은 그래프에서 제외' : ''));
+            const keepEl = dsPop.querySelector('.bb-ds-body'), keep = keepEl ? keepEl.scrollTop : 0;
+            dsPop.replaceChildren(head, cards, ch, th, body, ft);
+            body.scrollTop = keep;
+        }
+
+        function dsPlace() {
+            const p = document.getElementById('bb-dlog-panel'); if (!p) return;
+            const br = p.getBoundingClientRect(), w = dsPop.offsetWidth;
+            let left = br.left - w - 10;
+            if (left < 8) left = Math.min(br.right + 10, window.innerWidth - w - 8);
+            dsPop.style.left = Math.max(8, left) + 'px';
+            dsPop.style.top = Math.max(8, br.top) + 'px';
+            dsPop.style.height = Math.min(Math.max(br.height, 600), window.innerHeight - 16) + 'px';
+        }
+        function dsClose() {
+            _dsOpen = false; _dsSeq++;   // 진행 중이던 집계는 결과를 버림
+            dsPop.classList.remove('open');
+            dsBtn.classList.remove('on');
+        }
+        async function dsLoad(force) {
+            const seq = ++_dsSeq;
+            const store = force ? { v: 2, days: {}, at: 0 } : dsLoadStore();
+            _dsView = { dates: Object.keys(store.days).sort(), days: store.days, state: { phase: 'loading', done: 0, total: 0, failed: 0 } };   // 저장분 먼저 표시
+            dsRender();
+            let dates;
+            try {
+                const dd = await attFetchJson(DL_API + '?view=dates');
+                if (!dd || dd.ok !== true || !Array.isArray(dd.dates)) throw new Error('데이터 형식 오류');
+                dates = dd.dates.filter(dsIsYmd).sort().slice(-DLS_MAX_DAYS);
+            } catch (e) {
+                console.warn('[BB] 배달 통계 날짜 목록 실패:', e && e.message);
+                if (seq === _dsSeq) { _dsView.state = { phase: seq === _dsSeq ? 'fail' : '' }; dsRender(); }
+                return;
+            }
+            if (seq !== _dsSeq) return;
+            Object.keys(store.days).forEach(d => { if (!dates.includes(d)) delete store.days[d]; });   // 서버에서 사라진 날짜는 버림
+            const cut = dsShift(dlOpDate(), -(DLS_REFETCH_DAYS - 1));
+            const todo = dates.filter(d => !store.days[d] || d >= cut);
+            const st = { phase: 'loading', done: 0, total: todo.length, failed: 0 };
+            _dsView = { dates, days: store.days, state: st };
+            dsRender();
+            let idx = 0;
+            const worker = async () => {
+                while (idx < todo.length) {
+                    if (seq !== _dsSeq) return;
+                    const d = todo[idx++];
+                    try {
+                        const j = await attFetchJson(DL_API + '?view=day&date=' + d);
+                        if (j && j._404) delete store.days[d];
+                        else if (!j || j.ok !== true) throw new Error('데이터 형식 오류');
+                        else store.days[d] = dsCompact(j);
+                    } catch (e) { st.failed++; }   // 실패한 날은 저장하지 않음 (예전 저장분이 있으면 그대로 유지)
+                    st.done++;
+                    if (seq === _dsSeq && (st.done % 3 === 0 || st.done === st.total)) dsRender();
+                }
+            };
+            await Promise.all(Array.from({ length: Math.min(DLS_CONC, todo.length) }, worker));
+            if (seq !== _dsSeq) return;
+            store.at = Date.now();
+            dsSaveStore(store);
+            _dsView.dates = Object.keys(store.days).sort();
+            st.phase = 'done';
+            dsRender();
+        }
+        function dsOpen() {
+            if (_dsOpen) { dsClose(); return; }
+            if (typeof dlCloseCal === 'function') dlCloseCal();
+            _dsOpen = true; _dsSite = null;
+            dsBtn.classList.add('on');
+            dsPop.classList.add('open');
+            dsPlace();
+            dsLoad(false);
+            dsPlace();
+        }
+        window.__bbDlSpClose = dsClose;   // 보드를 닫을 때 같이 닫음 (closeBoard 에서 호출)
+        dsBtn.addEventListener('click', dlsSafe(() => dsOpen()));
+        dsPop.addEventListener('click', dlsSafe(e => {
+            const so = e.target.closest('[data-sort]');
+            if (so) { const k = so.dataset.sort; _dsSort = _dsSort.k === k ? { k, dir: -_dsSort.dir } : { k, dir: k === 'name' ? 1 : -1 }; dsRender(); return; }
+            const md = e.target.closest('[data-mode]');
+            if (md) { _dsMode = md.dataset.mode === 'sum' ? 'sum' : 'avg'; dsRender(); return; }
+            const a = e.target.closest('[data-act]');
+            if (a) { if (a.dataset.act === 'close') dsClose(); else if (a.dataset.act === 'refresh') dsLoad(true); return; }
+            const row = e.target.closest('.bb-ds-row');
+            if (row) { _dsSite = _dsSite === row.dataset.site ? null : row.dataset.site; dsRender(); }
+        }));
+        document.addEventListener('click', dlsSafe(e => {   // 바깥 클릭 → 닫기
+            if (_dsOpen && !e.target.closest('#bb-ds') && !e.target.closest('#bb-dl-stats-btn')) dsClose();
+        }), true);
+        document.addEventListener('keydown', dlsSafe(e => { if (e.key === 'Escape' && _dsOpen) dsClose(); }));
+        window.addEventListener('resize', dlsSafe(() => { if (_dsOpen) dsPlace(); }));
+        } catch (e) { console.warn('[BB] 배달 누적 통계 초기화 실패 — 기존 기능에는 영향 없음:', e && e.message); }
+
         dlOpenPanel();   // [UI 개편] 배달 로그 항상 표시
         console.log('[BB] 배달 로그 켜짐 (SECTION 19)');
     }
@@ -7523,8 +7962,8 @@
         const mwStyle = document.createElement('style');
         mwStyle.textContent = `
             #bb .bb-alert-zone { left:256px; width:calc(50% - 375px - 242px); }
-            #bb-mw { display:none; position:absolute; left:14px; top:50%; transform:translateY(-50%); z-index:3; width:236px; box-sizing:border-box;
-                padding:2px 9px 1px; border-radius:12px; background:var(--sur,#f8f3e6); color:var(--tx,#2b2418);
+            #bb-mw { display:none; position:absolute; left:14px; top:50%; transform:translateY(-50%); line-height:1.15; z-index:3; width:236px; box-sizing:border-box;
+                padding:4px 9px 3px; border-radius:12px; background:var(--sur,#f8f3e6); color:var(--tx,#2b2418);
                 border:2.5px solid var(--bd2,#b3a687); box-shadow:0 2px 8px rgba(60,45,20,.18); }
             #bb-mw.mw-ok  { border-color:#3fae6a; }
             #bb-mw.mw-off { border-color:#e0453a; animation:mwPulse 1.6s ease-in-out infinite; }
@@ -7532,21 +7971,21 @@
                 0%,100% { box-shadow:0 0 0 0 rgba(224,69,58,.45), 0 2px 8px rgba(60,45,20,.18); }
                 50%     { box-shadow:0 0 0 7px rgba(224,69,58,0), 0 2px 8px rgba(60,45,20,.18); }
             }
-            #bb-mw .mw-row { display:grid; grid-template-columns:1fr auto; align-items:center; gap:0 6px; padding:1px 0 1px; }
+            #bb-mw .mw-row { display:grid; grid-template-columns:1fr auto; align-items:center; gap:0 6px; padding:1px 0; }
             #bb-mw .mw-pills { display:flex; gap:3px; }
             #bb-mw .mw-row + .mw-row { border-top:1px dashed var(--bd,#cabf9d); }
             #bb-mw .mw-name { font-size:11.5px; white-space:nowrap; font-weight:700 !important; }
-            #bb-mw .mw-pill { text-align:center; padding:0 6px; border-radius:999px; font-size:11px; white-space:nowrap; line-height:20px; font-weight:700 !important;
+            #bb-mw .mw-pill { text-align:center; padding:0 6px; border-radius:999px; font-size:11px; white-space:nowrap; line-height:18px; font-weight:700 !important;
                 background:var(--sur2,#efe6d2); color:var(--mu,#7a6f5c); }
             #bb-mw .mw-pill.on  { background:#bfe8cb; color:#1d5a35; }    /* 파스텔 초록 = ON */
             #bb-mw .mw-pill.off { background:#f4b8b3; color:#8a2a22; }    /* 파스텔 레드 = OFF */
-            #bb-mw .mw-pill.pwr { font-size:10px; line-height:18px; padding:0 5px; font-weight:500 !important; }   /* 전원 = 참고용 (작고 연하게) */
+            #bb-mw .mw-pill.pwr { font-size:10px; line-height:16px; padding:0 5px; font-weight:500 !important; }   /* 전원 = 참고용 (작고 연하게) */
             #bb-mw .mw-pill.pwr.on  { background:#e3f0e7; color:#5f8069; }
             #bb-mw .mw-pill.pwr.off { background:#f3dedb; color:#a5645d; }
             #bb-mw .mw-row.stale .mw-pill, #bb-mw .mw-row.stale .mw-name { opacity:.45; }
-            #bb-mw .mw-sub { grid-column:1 / 3; font-size:11px; font-weight:600 !important; color:var(--tx,#2b2418); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+            #bb-mw .mw-sub { grid-column:1 / 3; font-size:11px; line-height:13px; font-weight:600 !important; color:var(--tx,#2b2418); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
             #bb-mw .mw-row.stale .mw-sub { color:#c2410c; }
-                        #bb-mw .mw-foot { margin-top:0; padding:1px 0 0; border-top:1px dashed var(--bd,#cabf9d); font-size:10px; color:var(--mu,#7a6f5c); font-weight:500 !important; white-space:nowrap; }
+                        #bb-mw .mw-foot { margin-top:1px; padding:2px 0 0; line-height:12px; border-top:1px dashed var(--bd,#cabf9d); font-size:10px; color:var(--mu,#7a6f5c); font-weight:500 !important; white-space:nowrap; }
             #bb-mw .mw-foot.warn { color:#c2410c; font-weight:600 !important; }
             #bb-mw .mw-live { display:inline-block; color:#3fae6a; animation:mwFlash 1.4s ease-out 1; }   /* 조회할 때마다 한 번 반짝 */
             @keyframes mwFlash { 0% { opacity:.15; transform:scale(1.6); } 100% { opacity:1; transform:scale(1); } }
