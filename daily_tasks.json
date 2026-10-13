@@ -28,7 +28,7 @@
     "subUser": "이규은"
   },
   {
-    "user": "이지윤",
+    "user": "이수성",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "11:00",
@@ -63,7 +63,7 @@
     "subUser": "임미선"
   },
   {
-    "user": "이수성",
+    "user": "이지윤",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "16:00",
@@ -198,7 +198,7 @@
     "rawTime": "09:30"
   },
   {
-    "user": "이수성",
+    "user": "유재헌",
     "type": "task",
     "content": "[10:00] 성남 [삼평동] 대기장소2 주간기체 출근 임무 [평일]",
     "rawTime": "10:00"
