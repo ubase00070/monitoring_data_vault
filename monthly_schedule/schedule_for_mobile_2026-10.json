@@ -554,10 +554,10 @@
           "raw": "휴무"
         },
         "10/28": {
-          "status": "work",
+          "status": "annual",
           "working": true,
-          "present": true,
-          "raw": "1"
+          "present": false,
+          "raw": "연차"
         },
         "10/29": {
           "status": "work",
@@ -8582,16 +8582,16 @@
           "raw": "1"
         },
         "10/15": {
+          "status": "annual",
+          "working": true,
+          "present": false,
+          "raw": "연차"
+        },
+        "10/16": {
           "status": "work",
           "working": true,
           "present": true,
           "raw": "1"
-        },
-        "10/16": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
         },
         "10/17": {
           "status": "off",
@@ -8600,10 +8600,10 @@
           "raw": "휴무"
         },
         "10/18": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "10/19": {
           "status": "work",
@@ -10264,6 +10264,6 @@
     "10/31"
   ],
   "mainMonth": 10,
-  "updatedAt": "2026-10-14T03:53:13.838Z",
+  "updatedAt": "2026-10-15T03:53:15.552Z",
   "sheetName": "2026년_10월 스케줄"
 }
