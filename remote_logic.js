@@ -290,6 +290,20 @@
 
     };
 
+    // ── 제주 전국체전 기체 (제주 월드컵 경기장) ──
+    // 최근 접속 이력은 일반 배달 기체 이력(neubie_robot_history)과 분리해 따로 저장한다 → 배달 수동입력 드롭다운에는 잡히지 않음.
+    const JEJU_SITE = '제주 월드컵 경기장';
+    const JEJU_HISTORY_KEY = 'neubie_jeju_history';
+    const JEJU_MAX_RECENT = 2;
+    const isJejuRobot = (id) => !!(ROBOT_MAP[id] && ROBOT_MAP[id].site === JEJU_SITE);
+    const _jejuExcluded = new Set();   // 파일명에서 제외(적색)한 기체 — 대시보드를 다시 그려도 유지
+    function jejuRecentUnits() {   // 최근 접속한 제주 기체번호(#302 …) 최대 2대, 번호순
+        let h = [];
+        try { h = JSON.parse(localStorage.getItem(JEJU_HISTORY_KEY) || '[]'); } catch (e) {}
+        return (Array.isArray(h) ? h : []).filter(x => x && isJejuRobot(x.id)).slice(0, JEJU_MAX_RECENT)
+            .map(x => ROBOT_MAP[x.id].unit).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+    }
+
     // "/monitoring/56"이 "/monitoring/560"에도 부분매칭되는 걸 방지 — 숫자를 정확히 추출해서 완전일치로 비교
     function isTargetMonitoringUrl(url) {
         const m = url && url.match(/\/monitoring\/(\d+)/);
@@ -477,10 +491,12 @@
 	        const idMatch = path.match(/\/ko\/remote\/robot\/(\d+)/);
 	        const robotNum = idMatch ? idMatch[1] : null;
 	        if (robotNum && ROBOT_MAP[robotNum]) {
-	            let history = JSON.parse(localStorage.getItem('neubie_robot_history') || '[]');
+	            const jeju = isJejuRobot(robotNum);
+	            const key = jeju ? JEJU_HISTORY_KEY : 'neubie_robot_history';
+	            let history = JSON.parse(localStorage.getItem(key) || '[]');
 	            const newData = { id: robotNum, timestamp: Date.now() };
-	            history = [newData, ...history.filter(h => h.id !== robotNum)].slice(0, 3);
-	            localStorage.setItem('neubie_robot_history', JSON.stringify(history));
+	            history = [newData, ...history.filter(h => h.id !== robotNum)].slice(0, jeju ? JEJU_MAX_RECENT : 3);
+	            localStorage.setItem(key, JSON.stringify(history));
 	        }
 	    }
 	}
@@ -2027,7 +2043,7 @@
             border:2px solid transparent; background:${rainbowBg(T.card)};
         `;
 
-        const history = JSON.parse(localStorage.getItem('neubie_robot_history') || '[]');
+        const history = JSON.parse(localStorage.getItem('neubie_robot_history') || '[]').filter(h => !isJejuRobot(h.id));   // 제주 기체는 제주 전국체전 행에서만 사용
         let dropdownOptions = history.map(h => {
             const info = ROBOT_MAP[h.id] || { site: "미등록", unit: "#" + h.id };
             return `<option value="${h.id}">${info.site} ${info.unit}</option>`;
@@ -2844,12 +2860,77 @@
         rowBottom.append(leftCol, createNamingCard());
         list.appendChild(rowBottom);
 
-        // 최하단: 대기 중 행사 배너 (종료일 다음날부터 자동 숨김)
+        // 행사 기간 중 배너: [제주 전국체전] [#302] [#304] [복사]
+        // 기체 버튼 = 최근 접속한 제주 기체 최대 2대. 누르면 적색(제외) ↔ 원래대로(포함)로 토글되고, 복사 파일명에도 그대로 반영된다.
+        const buildJejuActiveBanner = (ev) => {
+            const units = jejuRecentUnits();
+            const fill = T.isDark ? '#3a3a40' : '#f0ede1';
+            const el = document.createElement('div');
+            el.style.cssText = `flex:none; height:44px; display:flex; align-items:center; justify-content:center; gap:8px; border-radius:14px; border:2px solid transparent; background:${rainbowBg(T.card)}; color:${T.text}; font-size:15px; font-weight:700; box-sizing:border-box; padding:0 10px; min-width:0;`;
+            const label = document.createElement('span');
+            label.style.cssText = 'display:inline-flex; align-items:center; gap:7px; white-space:nowrap;';
+            label.innerHTML = `${nbIcon('tag', 17, '#0e7490')}<span>${ev.title}</span>`;
+            el.appendChild(label);
+
+            const copyBtn = document.createElement('button');
+            copyBtn.type = 'button';
+            copyBtn.textContent = '복사';
+            copyBtn.style.cssText = 'width:62px; height:30px; flex-shrink:0; border:none; border-radius:6px; font-size:14px; font-weight:bold; white-space:nowrap; transition:0.2s;';
+            const selected = () => units.filter(u => !_jejuExcluded.has(u));
+            const paintCopy = () => {
+                const ok = selected().length > 0;
+                copyBtn.disabled = !ok;
+                copyBtn.style.background = ok ? '#10b981' : (T.isDark ? '#3a3a3a' : '#cbbd98');
+                copyBtn.style.color = ok ? '#fff' : (T.isDark ? '#8b8b8b' : '#7a6f57');
+                copyBtn.style.cursor = ok ? 'pointer' : 'not-allowed';
+            };
+
+            if (!units.length) {
+                const none = document.createElement('span');
+                none.textContent = '최근 접속한 제주 기체 없음';
+                none.style.cssText = `font-size:13px; font-weight:600; color:${T.isDark ? '#b4b8c0' : '#7a6f57'}; white-space:nowrap;`;
+                el.appendChild(none);
+            }
+            units.forEach(u => {
+                const chip = document.createElement('button');
+                chip.type = 'button';
+                chip.textContent = u;
+                chip.title = '클릭: 파일명에서 제외(적색) / 다시 클릭: 포함';
+                const paint = () => {
+                    const off = _jejuExcluded.has(u);
+                    chip.style.cssText = `height:30px; min-width:62px; padding:0 12px; flex-shrink:0; border-radius:8px; font-size:14px; font-weight:800; cursor:pointer; white-space:nowrap; transition:0.2s; box-sizing:border-box; ` + (off
+                        ? 'border:2px solid #ef4444; background:#ef4444; color:#fff; text-decoration:line-through;'
+                        : `border:2px solid transparent; background:${rainbowBg(fill)}; color:${T.text};`);
+                };
+                paint();
+                chip.onclick = () => { _jejuExcluded.has(u) ? _jejuExcluded.delete(u) : _jejuExcluded.add(u); paint(); paintCopy(); };
+                el.appendChild(chip);
+            });
+
+            paintCopy();
+            copyBtn.onclick = () => {
+                const sel = selected();
+                if (!sel.length) return;
+                const d = new Date(), me = localStorage.getItem('neubie_user_name') || '';
+                const name = `${getFormattedDate(d)}_${getFormattedHour(d)}_${ev.title}_${sel.join(', ')}${me ? '_' + me : ''}`;
+                const flash = (txt, bg) => {
+                    copyBtn.textContent = txt; copyBtn.style.background = bg;
+                    clearTimeout(copyBtn._t);
+                    copyBtn._t = setTimeout(() => { copyBtn.textContent = '복사'; paintCopy(); }, 1500);
+                };
+                navigator.clipboard.writeText(name).then(() => flash('복사됨', HOVER_ACCENT)).catch(() => flash('실패', '#ef4444'));
+            };
+            el.appendChild(copyBtn);
+            return el;
+        };
+
+        // 최하단: 행사 배너 — 시작 전엔 회색 '대기 중', 기간 중엔 위 복사 행, 종료일 다음날부터 자동 숨김
         const buildEventBanner = () => {
             const ev = NB_EVENT_BANNER;
             const now = getKSTDate();
             const endMs = new Date(ev.end[0], ev.end[1] - 1, ev.end[2] + 1).getTime();
             if (now.getTime() >= endMs) return null;
+            if (now.getTime() >= new Date(ev.start[0], ev.start[1] - 1, ev.start[2]).getTime()) return buildJejuActiveBanner(ev);   // 기간 중: 최근 접속 기체 복사 행
             const pad = n => String(n).padStart(2, '0');
             const el = document.createElement('div');
             el.style.cssText = `flex:none; height:44px; display:flex; align-items:center; justify-content:center; gap:10px; border-radius:14px; background:${T.isDark ? '#2c2c30' : '#e4e4e7'}; color:${T.isDark ? '#8a8a92' : '#71717a'}; border:1px dashed ${T.isDark ? '#4a4a52' : '#b4b4bc'}; font-size:15px; font-weight:700; box-sizing:border-box;`;
