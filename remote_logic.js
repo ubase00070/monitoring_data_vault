@@ -2865,7 +2865,22 @@
         const buildJejuActiveBanner = (ev) => {
             const units = jejuRecentUnits();
             const fill = T.isDark ? '#3a3a40' : '#f0ede1';
+            // 새로 추가된 기능임을 알리는 핑크 점멸 (2.2초 주기의 느린 맥박 — 눈이 아프지 않게)
+            if (!document.getElementById('nb-jeju-pulse-style')) {
+                const st = document.createElement('style');
+                st.id = 'nb-jeju-pulse-style';
+                st.textContent = `
+                    @keyframes nbJejuPulse {
+                        0%, 100% { box-shadow: 0 0 0 0 rgba(255,105,180,0), inset 0 0 0 0 rgba(255,105,180,0); }
+                        50%      { box-shadow: 0 0 16px 3px rgba(255,105,180,0.9), inset 0 0 14px 0 rgba(255,105,180,0.45); }
+                    }
+                    #nb-jeju-banner { animation: nbJejuPulse 2.2s ease-in-out infinite; }
+                    @media (prefers-reduced-motion: reduce) { #nb-jeju-banner { animation: none; box-shadow: 0 0 10px 2px rgba(255,105,180,0.7); } }
+                `;
+                document.head.appendChild(st);
+            }
             const el = document.createElement('div');
+            el.id = 'nb-jeju-banner';
             el.style.cssText = `flex:none; height:44px; display:flex; align-items:center; justify-content:center; gap:8px; border-radius:14px; border:2px solid transparent; background:${rainbowBg(T.card)}; color:${T.text}; font-size:15px; font-weight:700; box-sizing:border-box; padding:0 10px; min-width:0;`;
             const label = document.createElement('span');
             label.style.cssText = 'display:inline-flex; align-items:center; gap:7px; white-space:nowrap;';
