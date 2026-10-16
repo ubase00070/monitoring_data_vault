@@ -102,14 +102,14 @@
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "21:00",
-    "subUser": "박은선"
+    "subUser": "최정기"
   },
   {
     "user": "서형민",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "22:00",
-    "subUser": "최정기"
+    "subUser": "박은선"
   },
   {
     "user": "김도형",
@@ -123,42 +123,42 @@
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "00:00",
-    "subUser": "안대관"
+    "subUser": "김소연"
   },
   {
     "user": "박은선",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "01:00",
-    "subUser": "박계원"
+    "subUser": "임다연"
   },
   {
     "user": "박계원",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "02:00",
-    "subUser": "김소연"
+    "subUser": "안대관"
   },
   {
     "user": "최정기",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "03:00",
-    "subUser": "안대관"
+    "subUser": "박은선"
   },
   {
     "user": "안대관",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "04:00",
-    "subUser": "임다연"
+    "subUser": "최정기"
   },
   {
     "user": "김소연",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "05:00",
-    "subUser": "후보 없음"
+    "subUser": "안대관"
   },
   {
     "user": "임다연",
