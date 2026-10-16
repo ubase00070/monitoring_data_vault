@@ -3763,10 +3763,10 @@
           "raw": "1"
         },
         "10/16": {
-          "status": "work",
+          "status": "half",
           "working": true,
           "present": true,
-          "raw": "1"
+          "raw": "반차"
         },
         "10/17": {
           "status": "off",
@@ -10264,6 +10264,6 @@
     "10/31"
   ],
   "mainMonth": 10,
-  "updatedAt": "2026-10-15T03:53:15.552Z",
+  "updatedAt": "2026-10-16T03:53:11.417Z",
   "sheetName": "2026년_10월 스케줄"
 }
