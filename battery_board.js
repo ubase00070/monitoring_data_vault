@@ -1415,7 +1415,7 @@
                 </div>
                 <div class="bb-hd-titlebox" id="bb-drag-handle">
                     <div class="bb-hd-title">
-                        It's not over
+                        관제 센터
                         <span id="bb-cyh-tag" style="font-size:16px;color:var(--mu);font-weight:400;">by CYH</span>
                     </div>
                     <div class="bb-hd-time">
