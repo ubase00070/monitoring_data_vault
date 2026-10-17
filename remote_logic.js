@@ -2297,13 +2297,13 @@
         headerContainer.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding-right:5px; min-height:44px;";
 
         const title = document.createElement('h2');
-        title.textContent = "관제 도우미(싱글플레이)";
+        title.textContent = "관제 도구";
         title.style.cssText = `${NCC_TITLE_GRADIENT} font-size:24px; flex:0 1 auto; width:fit-content; margin:0; font-weight:800; white-space:nowrap; min-width:0; overflow:hidden; text-overflow:ellipsis;`;
 
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
 		// 문자열을 넣으면 패치노트에 빨간 '`' 뱃지가 점멸하며 뜸.
 		// 빈 문자열('')로 비우면 뱃지가 사라짐.
-		const PATCH_NOTE_NEW_CONTENT = '개편하다 새기들아';
+		const PATCH_NOTE_NEW_CONTENT = '';
 
         // ── 패치노트 내용 ──────────────────────────────────────
         // 아래 patchItems 배열에 버전별 내용을 추가하세요 (버튼 라벨의 날짜도 이 배열의
