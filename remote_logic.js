@@ -2926,7 +2926,10 @@
             copyBtn.onclick = () => {
                 const sel = selected();
                 if (!sel.length) return;
-                const d = new Date(), me = localStorage.getItem('neubie_user_name') || '';
+                // 12:05~13:05 식 근무라 정각 직후(##:00~##:09)에 만들면 '이전 시간'으로 표기 (00시대는 전날 23시로 자동 처리)
+                let d = new Date();
+                if (d.getMinutes() < 10) d = new Date(d.getTime() - 60 * 60 * 1000);
+                const me = localStorage.getItem('neubie_user_name') || '';
                 const name = `${getFormattedDate(d)}_${getFormattedHour(d)}_${ev.title}_${sel.join(', ')}${me ? '_' + me : ''}`;
                 const flash = (txt, bg) => {
                     copyBtn.textContent = txt; copyBtn.style.background = bg;
