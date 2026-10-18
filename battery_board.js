@@ -7247,10 +7247,11 @@
             const store = force ? { days: {}, at: 0 } : spLoadStore();
             _spView = { dates: Object.keys(store.days).sort(), days: store.days, sched: spLoadSch().months, state: { phase: 'loading', done: 0, total: 0, failed: 0 } };   // 저장분을 먼저 보여주고 그 위에 갱신
             spRender();
-            let dates;
+            let dates, srvRevs = null;
             try {
                 const dd = await attFetchJson(IV_API + '?view=dates');
                 if (!dd || dd.ok !== true || !Array.isArray(dd.dates)) throw new Error('데이터 형식 오류');
+                srvRevs = (dd.revs && typeof dd.revs === 'object') ? dd.revs : null;   // 서버가 날짜별 원본 지문(rev)을 주면 바뀐 날만 다시 받음
                 dates = dd.dates.filter(x => /^\d{4}-\d{2}-\d{2}$/.test(x)).sort();
             } catch (e) {
                 console.warn('[BB] 개입 통계 날짜 목록 실패:', e && e.message);
@@ -7259,8 +7260,9 @@
             }
             if (seq !== _spSeq) return;
             Object.keys(store.days).forEach(d => { if (!dates.includes(d)) delete store.days[d]; });   // 서버에서 사라진 날짜는 버림
+            if (store.revs) Object.keys(store.revs).forEach(d => { if (!dates.includes(d)) delete store.revs[d]; });
             const cut = spShift(ivOpDate(), -(IV_SP_REFETCH_DAYS - 1));
-            const todo = dates.filter(d => !store.days[d] || d >= cut);
+            const todo = dates.filter(d => !store.days[d] || d >= cut || (srvRevs && (store.revs || {})[d] !== srvRevs[d]));
             const st = { phase: 'loading', done: 0, total: todo.length, failed: 0 };
             _spView = { dates, days: store.days, sched: _spView.sched, state: st };
             spRender();
@@ -7273,9 +7275,9 @@
                     const d = todo[idx++];
                     try {
                         const j = await attFetchJson(IV_API + '?view=summary&date=' + d);
-                        if (j && j._404) delete store.days[d];
+                        if (j && j._404) { delete store.days[d]; if (store.revs) delete store.revs[d]; }
                         else if (!j || j.ok !== true || !Array.isArray(j.people)) throw new Error('데이터 형식 오류');
-                        else store.days[d] = spCompact(j);
+                        else { store.days[d] = spCompact(j); if (srvRevs && srvRevs[d]) (store.revs || (store.revs = {}))[d] = srvRevs[d]; }
                     } catch (e) { st.failed++; }
                     st.done++;
                     if (seq === _spSeq && (st.done % 3 === 0 || st.done === st.total)) spRender();
