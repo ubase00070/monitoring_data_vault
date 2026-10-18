@@ -130,42 +130,42 @@
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "01:00",
-    "subUser": "임아연"
+    "subUser": "최선호"
   },
   {
     "user": "박은선",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "02:00",
-    "subUser": "최선호"
+    "subUser": "박계원"
   },
   {
     "user": "임아연",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "03:00",
-    "subUser": "박계원"
+    "subUser": "안대관"
   },
   {
     "user": "최선호",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "04:00",
-    "subUser": "안대관"
+    "subUser": "임아연"
   },
   {
     "user": "안대관",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "05:00",
-    "subUser": "임아연"
+    "subUser": "후보 없음"
   },
   {
     "user": "임아연",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "06:00",
-    "subUser": "후보 없음"
+    "subUser": "임아연"
   },
   {
     "user": "이기완",
