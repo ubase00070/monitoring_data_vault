@@ -8319,9 +8319,15 @@
         #bb .bba-memo textarea:focus { outline:2px solid #3b82f6; outline-offset:1px; }
         #bb .bba-memo .sv { font-size:11px; color:var(--mu); min-height:14px; }
         /* 순찰 일정 (다중 모니터링 제목 우측 버튼 + 카드형 일정) */
-        #bb #bb-mm-page-multi .bb-mm-head { padding-right:112px; }
+        #bb #bb-mm-page-multi .bb-mm-head { padding:5px 112px 4px; text-align:center; }
+        #bb #bb-mm-page-multi .bb-mm-title, #bb #bb-mm-page-multi .bb-mm-sub { text-align:center; }
         #bb .bba-sbtn { position:absolute; right:8px; top:50%; transform:translateY(-50%); height:30px; padding:0 12px; border-radius:8px; border:1.5px solid #c98a2b; background:#f1e6ce; color:var(--tx); font-family:inherit; font-size:13px; cursor:pointer; font-weight:700 !important; white-space:nowrap; }
         #bb .bba-sbtn:hover { background:#ebcf96; }
+        #bb .bba-sbtn.left { right:auto; left:8px; border-color:#d16a8a; background:#f6dde3; }
+        #bb .bba-sbtn.left:hover { background:#f2c6d3; }
+        #bb .bba-hr .bd.sp { color:#c2375f; }
+        #bb .bba-hr > .pls { display:flex; flex-wrap:wrap; gap:6px; }
+        #bb .bba-pl.mon { border-color:#22a05a; outline:3px solid #22a05a; outline-offset:0; }
         #bb #bba-right { position:relative; }
         #bb #bba-sch { position:absolute; inset:0; z-index:6; display:none; flex-direction:column; border:2px solid var(--bd2); border-radius:8px; background:var(--bg); overflow:hidden; }
         #bb #bba-sch.open { display:flex; }
@@ -8454,7 +8460,7 @@
         const OUT_TAG = { label: '출차예정', bg: '#FFE68B', color: '#3F2E00' };
         const OUT_PATROL_TAG = { label: '출차 및 순찰', bg: '#FFE68B', color: '#3F2E00' };
         const NIGHT_TAG = { label: '유선기체', bg: '#E3E6EA', color: '#2B3138' };
-        let timeTable = {}, unitNotes = {}, unitHourNotes = {}, schedAt = '';
+        let timeTable = {}, unitNotes = {}, unitHourNotes = {}, schedAt = '', psAt = '', schMode = 'sched';
         function suspReason(name, hh) {
             const clean = String(name || '').replace(/\s+/g, '');
             const gk = Object.keys(unitNotes).find(k => k.replace(/\s+/g, '') === clean);
@@ -8488,8 +8494,18 @@
             if (!ps) { try { ps = JSON.parse(lsGet('bba_ps_cache', 'null')); } catch (e) { ps = null; } }
             if (tt) timeTable = tt;
             applyStatus(ps);
+            psAt = (ps && ps.updatedAt) || '';
             schedAt = pad(new Date().getHours()) + ':' + pad(new Date().getMinutes());
             renderSched();
+        }
+        // 다중 모니터링 그리드(#bb-mm-body)에 떠 있는 기체 이름 — 일정의 이름('엘스')이 '엘스 1/2' 처럼 번호 붙은 기체와도 맞도록 비교
+        function monitoredNames() {
+            return Array.from(document.querySelectorAll('#bb-mm-body .bb-mm-card .bb-mm-name')).map(e => (e.textContent || '').trim()).filter(Boolean);
+        }
+        let _monNames = [];
+        function isMonitored(name) {
+            const c = name.replace(/\s+/g, '');
+            return _monNames.some(n => n === name || n.startsWith(name + ' ') || n.replace(/\s+/g, '') === c);
         }
         function schedGroupHtml(hh, isCur) {
             const data = timeTable[hh] || {};
@@ -8520,37 +8536,74 @@
                     if (rs) { pills += '<div class="bba-pl sus"><span class="nm">' + esc(n) + '</span><span class="rs">' + esc(rs) + '</span></div>'; return; }
                     let tag = k === 'plan' ? tagMap.get(n) : (outPatrol.includes(n) ? OUT_PATROL_TAG : OUT_TAG);
                     if (!tag && k === 'plan' && nightOff.has(n)) tag = NIGHT_TAG;
-                    pills += '<div class="bba-pl"><span class="nm">' + esc(n) + '</span><span class="tg"' + (tag ? ' style="background:' + tag.bg + ';color:' + tag.color + '"' : '') + '>' + esc(tag ? tag.label : '') + '</span></div>';
+                    const monNow = isCur && k === 'plan' && isMonitored(n);   // 지금 다중 모니터링 목록에서 순찰 중인 기체
+                    pills += '<div class="bba-pl' + (monNow ? ' mon' : '') + '"' + (monNow ? ' title="현재 모니터링 중"' : '') + '><span class="nm">' + esc(n) + '</span><span class="tg"' + (tag ? ' style="background:' + tag.bg + ';color:' + tag.color + '"' : '') + '>' + esc(tag ? tag.label : '') + '</span></div>';
                 });
                 if (pills) body += '<div class="bba-sl"><div class="lb">' + esc(s.t) + '</div><div class="pls">' + pills + '</div></div>';
             });
             return '<section class="bba-hr"><div class="hh"><b>' + hh + '시</b><span class="bd' + (isCur ? '' : ' nx') + '">' + (isCur ? '현 시각 일정' : '다음 시간대') + '</span></div>' +
                 (body ? '<div class="sls">' + body + '</div>' : '<div class="bba-empty">일정이 없습니다</div>') + '</section>';
         }
+        function suspPill(n, reason) {
+            return '<div class="bba-pl sus"><span class="nm">' + esc(n) + '</span><span class="rs" title="' + esc(reason) + '">' + esc(reason) + '</span></div>';
+        }
+        function suspHtml() {
+            const glob = Object.keys(unitNotes).sort((a, b) => a.localeCompare(b, 'ko'));
+            const hourly = Object.keys(unitHourNotes).filter(k => !(k in unitNotes)).sort((a, b) => a.localeCompare(b, 'ko'));
+            let h = '<section class="bba-hr"><div class="hh"><b>순찰중단</b><span class="bd sp">' + glob.length + '대</span></div>' +
+                (glob.length ? '<div class="pls">' + glob.map(n => suspPill(n, unitNotes[n])).join('') + '</div>' : '<div class="bba-empty">현재 순찰중단 기체가 없습니다</div>') + '</section>';
+            if (hourly.length) {
+                h += '<section class="bba-hr"><div class="hh"><b>시간대 한정 보류</b><span class="bd nx">' + hourly.length + '대</span></div><div class="pls">' +
+                    hourly.map(n => { const o = unitHourNotes[n]; return suspPill(n, (o.reason || '순찰 보류') + ' (' + (o.hours || []).join('·') + '시)'); }).join('') + '</div></section>';
+            }
+            return h;
+        }
         function renderSched() {
             const box = $('bba-sb'); if (!box) return;
-            const h = new Date().getHours(), cur = pad(h), nxt = pad((h + 1) % 24), keep = box.scrollTop;
-            box.innerHTML = Object.keys(timeTable).some(k => /^\d{2}$/.test(k))
-                ? schedGroupHtml(cur, true) + schedGroupHtml(nxt, false)
-                : '<div class="bba-empty">순찰 일정 데이터를 받지 못했습니다</div>';
+            const keep = box.scrollTop;
+            if (schMode === 'susp') {
+                box.innerHTML = Object.keys(unitNotes).length || Object.keys(unitHourNotes).length || psAt ? suspHtml() : '<div class="bba-empty">순찰중단 데이터를 받지 못했습니다</div>';
+                $('bba-sth').textContent = '⛔ 순찰중단';
+                const u = $('bba-sat'); if (u) u.textContent = psAt ? '시트 갱신 ' + psAt : '';
+            } else {
+                _monNames = monitoredNames();
+                const h = new Date().getHours(), cur = pad(h), nxt = pad((h + 1) % 24);
+                box.innerHTML = Object.keys(timeTable).some(k => /^\d{2}$/.test(k))
+                    ? schedGroupHtml(cur, true) + schedGroupHtml(nxt, false)
+                    : '<div class="bba-empty">순찰 일정 데이터를 받지 못했습니다</div>';
+                $('bba-sth').textContent = '📅 순찰 일정';
+                const u = $('bba-sat'); if (u) u.textContent = schedAt ? schedAt + ' 기준 · 초록 = 모니터링 중' : '';
+            }
             box.scrollTop = keep;
-            const u = $('bba-sat'); if (u) u.textContent = schedAt ? schedAt + ' 기준' : '';
         }
         const schEl = document.createElement('div');
         schEl.id = 'bba-sch';
-        schEl.innerHTML = '<div class="bba-zh"><h2>📅 순찰 일정</h2><span class="bba-cnt" id="bba-sat"></span><button class="bba-btn" id="bba-sre">새로고침</button><button class="bba-btn" id="bba-scl">✕ 닫기</button></div><div class="bba-zb" id="bba-sb"></div>';
+        schEl.innerHTML = '<div class="bba-zh"><h2 id="bba-sth">📅 순찰 일정</h2><span class="bba-cnt" id="bba-sat"></span><button class="bba-btn" id="bba-sre">새로고침</button><button class="bba-btn" id="bba-scl">✕ 닫기</button></div><div class="bba-zb" id="bba-sb"></div>';
         $('bba-right').appendChild(schEl);   // 배달 사이트 점검 / HW / SW 그리드 자리에 겹쳐서 표시
+        function openSch(mode) {
+            const isOpen = schEl.classList.contains('open');
+            if (isOpen && schMode === mode) { schEl.classList.remove('open'); return; }
+            schMode = mode; schEl.classList.add('open'); renderSched(); loadSched();
+        }
         const mmHead = mm && mm.querySelector('.bb-mm-head');
         if (mmHead) {
             const sb = document.createElement('button');
             sb.id = 'bba-sbtn'; sb.className = 'bba-sbtn'; sb.textContent = '📅 순찰 일정'; sb.title = '현 시각 / 다음 시간대 순찰 일정 보기';
             mmHead.appendChild(sb);
-            sb.addEventListener('click', () => { const on = !schEl.classList.contains('open'); schEl.classList.toggle('open', on); if (on) { renderSched(); loadSched(); } });
+            sb.addEventListener('click', () => openSch('sched'));
+            const xb = document.createElement('button');
+            xb.id = 'bba-xbtn'; xb.className = 'bba-sbtn left'; xb.textContent = '⛔ 순찰중단'; xb.title = '현재 순찰중단된 기체와 사유 보기';
+            mmHead.appendChild(xb);
+            xb.addEventListener('click', () => openSch('susp'));
         }
         $('bba-scl').addEventListener('click', () => schEl.classList.remove('open'));
         $('bba-sre').addEventListener('click', () => loadSched());
         loadSched();
-        setInterval(() => { if (schEl.classList.contains('open')) renderSched(); }, 30 * 1000);   // 시간대가 바뀌면 자동 갱신
+        setInterval(() => { if (schEl.classList.contains('open')) renderSched(); }, 10 * 1000);   // 시간대 변경 · 모니터링 기체 변화 반영 (조회 없음, 화면만 다시 그림)
+        try {   // 다중 모니터링 카드가 바뀌면 곧바로 반영
+            const mmBody = $('bb-mm-body'); let mt = null;
+            if (mmBody) new MutationObserver(() => { clearTimeout(mt); mt = setTimeout(() => { if (schEl.classList.contains('open') && schMode === 'sched') renderSched(); }, 300); }).observe(mmBody, { childList: true, subtree: true });
+        } catch (e) { /* 무시 */ }
         setInterval(loadSched, 5 * 60 * 1000);
 
         // ───────── 업무일 / 저장 ─────────
