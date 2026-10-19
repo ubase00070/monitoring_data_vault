@@ -5924,8 +5924,8 @@
         const pop = $att('bb-att-pop'), card = document.querySelector('.bb-att-card.sel, .bb-att-mg.sel'), box = $att('bb-mm-page-att');   // [UI 개편] 이석 그리드 자신의 왼쪽
         if (!card || !box) return;
         const cr = card.getBoundingClientRect(), br = box.getBoundingClientRect(), w = pop.offsetWidth, h = pop.offsetHeight;
-        let left = br.left - w - 10;
-        if (left < 8) left = Math.min(br.right + 10, window.innerWidth - w - 8);
+        let left = br.right + 10;   // [admin] 그리드가 왼쪽 절반에 있으므로 팝업은 오른쪽 우선
+        if (left + w > window.innerWidth - 8) left = br.left - w - 10;
         pop.style.left = Math.max(8, left) + 'px';
         pop.style.top = Math.max(8, Math.min(cr.top, window.innerHeight - h - 8)) + 'px';
     }
@@ -6774,8 +6774,8 @@
         /* ───────── 팝업 ───────── */
         function ivPlacePop() {
             const br = page.getBoundingClientRect(), w = pop.offsetWidth;   // [UI 개편] 개입 그리드 자신의 왼쪽
-            let left = br.left - w - 10;
-            if (left < 8) left = Math.min(br.right + 10, window.innerWidth - w - 8);
+            let left = br.right + 10;   // [admin] 그리드가 왼쪽 절반에 있으므로 팝업은 오른쪽 우선
+            if (left + w > window.innerWidth - 8) left = br.left - w - 10;
             pop.style.left = Math.max(8, left) + 'px';
             pop.style.top = Math.max(8, br.top) + 'px';
             pop.style.height = Math.min(br.height, window.innerHeight - 16) + 'px';
@@ -7232,8 +7232,8 @@
 
         function spPlace() {
             const br = page.getBoundingClientRect(), w = spPop.offsetWidth;   // 개입 그리드 자신의 왼쪽 (공간이 없으면 오른쪽)
-            let left = br.left - w - 10;
-            if (left < 8) left = Math.min(br.right + 10, window.innerWidth - w - 8);
+            let left = br.right + 10;   // [admin] 그리드가 왼쪽 절반에 있으므로 팝업은 오른쪽 우선
+            if (left + w > window.innerWidth - 8) left = br.left - w - 10;
             spPop.style.left = Math.max(8, left) + 'px';
             spPop.style.top = Math.max(8, br.top) + 'px';
             spPop.style.height = Math.min(br.height, window.innerHeight - 16) + 'px';
@@ -7905,8 +7905,8 @@
         function dsPlace() {
             const p = document.getElementById('bb-dlog-panel'); if (!p) return;
             const br = p.getBoundingClientRect(), w = dsPop.offsetWidth;
-            let left = br.left - w - 10;
-            if (left < 8) left = Math.min(br.right + 10, window.innerWidth - w - 8);
+            let left = br.right + 10;   // [admin] 그리드가 왼쪽 절반에 있으므로 팝업은 오른쪽 우선
+            if (left + w > window.innerWidth - 8) left = br.left - w - 10;
             dsPop.style.left = Math.max(8, left) + 'px';
             dsPop.style.top = Math.max(8, br.top) + 'px';
             dsPop.style.height = Math.min(Math.max(br.height, 600), window.innerHeight - 16) + 'px';
@@ -8239,7 +8239,7 @@
         const TASKS_REFRESH_MS = 5 * 60 * 1000;
         const WD0 = 7 * 60;                       // 업무일 시작 07:00
         const LATE_GRACE = 10;                    // 종료 시각 + 10분이 지나도 미확인이면 '지연'
-        const CAMPS = ['아산 스테이그린', '가평 니모', '대관령 솔내음', '파주 LGD', '인력개발원', '충남대 병원'];   // 배달 사이트 점검 목록
+        const CAMPS = ['아산 스테이그린', '가평 니모', '대관령 솔내음', '파주 LGD', '인력개발원', '충남대병원', '진천 힐사이드'];   // 배달 사이트 점검 목록
         const DAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
         // ───────── 스타일 ─────────
@@ -8292,11 +8292,11 @@
         #bb .bba-th, #bb .bba-row { display:grid; grid-template-columns:28px minmax(0,1fr) 120px; gap:8px; align-items:center; padding:0 10px; }
         #bb .bba-th { position:sticky; top:0; z-index:2; background:var(--sur2); border-bottom:1px solid var(--bd); height:26px; font-size:12px; color:var(--mu); }
         #bb .bba-th span:last-child { text-align:center; }
-        #bb .bba-row { min-height:30px; border-bottom:1px solid var(--bd); cursor:pointer; position:relative; }
+        #bb .bba-row { min-height:30px; border-bottom:1px solid var(--bd); position:relative; }
         #bb .bba-row:hover { background:var(--sur2); }
         #bb .bba-row.cur { background:#fff3b5; }
         #bb .bba-row.late::before { content:""; position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--rd); }
-        #bb .bba-chk { width:22px; height:22px; border-radius:6px; border:2px solid var(--bd2); background:var(--sur); display:grid; place-items:center; font-size:14px; line-height:1; color:transparent; }
+        #bb .bba-chk { padding:0; cursor:pointer; font-family:inherit; width:22px; height:22px; border-radius:6px; border:2px solid var(--bd2); background:var(--sur); display:grid; place-items:center; font-size:14px; line-height:1; color:transparent; }
         #bb .bba-row.done .bba-chk { background:#22a05a; border-color:#22a05a; color:#fff; }
         #bb .bba-txt { min-width:0; padding:4px 0; line-height:1.35; font-size:13.5px; color:var(--tx); }
         #bb .bba-txt .tm { color:var(--mu); font-variant-numeric:tabular-nums; }
@@ -8322,7 +8322,7 @@
         #bb #bb-mm-page-multi .bb-mm-head { padding-right:112px; }
         #bb .bba-sbtn { position:absolute; right:8px; top:50%; transform:translateY(-50%); height:30px; padding:0 12px; border-radius:8px; border:1.5px solid #c98a2b; background:#f1e6ce; color:var(--tx); font-family:inherit; font-size:13px; cursor:pointer; font-weight:700 !important; white-space:nowrap; }
         #bb .bba-sbtn:hover { background:#ebcf96; }
-        #bb #bba-mmw { position:relative; }
+        #bb #bba-right { position:relative; }
         #bb #bba-sch { position:absolute; inset:0; z-index:6; display:none; flex-direction:column; border:2px solid var(--bd2); border-radius:8px; background:var(--bg); overflow:hidden; }
         #bb #bba-sch.open { display:flex; }
         #bb #bba-sb { padding:8px 10px; display:flex; flex-direction:column; gap:8px; }
@@ -8375,7 +8375,7 @@
             '</section>' +
             '<div class="bba-bottom">' +
               '<div id="bba-mmw"></div>' +
-              '<div class="bba-right">' +
+              '<div class="bba-right" id="bba-right">' +
                 '<section class="bba-zone"><div class="bba-zh"><h2>배달 사이트 점검</h2><span class="bba-cnt" id="bba-campn"></span></div><div class="bba-camp" id="bba-camp"></div></section>' +
                 '<section class="bba-zone"><div class="bba-zh"><h2>HW 이슈</h2></div><div class="bba-memo"><textarea id="bba-hw" placeholder="HW 이슈를 자유롭게 입력 (예: 엘스 2호기 / 섀시 좌측 온도 센서 이상)" spellcheck="false"></textarea><div class="sv" id="bba-hw-s"></div></div></section>' +
                 '<section class="bba-zone"><div class="bba-zh"><h2>SW 이슈</h2></div><div class="bba-memo"><textarea id="bba-sw" placeholder="SW 이슈를 자유롭게 입력 (예: 판교 / 미니맵 미노출)" spellcheck="false"></textarea><div class="sv" id="bba-sw-s"></div></div></section>' +
@@ -8539,7 +8539,7 @@
         const schEl = document.createElement('div');
         schEl.id = 'bba-sch';
         schEl.innerHTML = '<div class="bba-zh"><h2>📅 순찰 일정</h2><span class="bba-cnt" id="bba-sat"></span><button class="bba-btn" id="bba-sre">새로고침</button><button class="bba-btn" id="bba-scl">✕ 닫기</button></div><div class="bba-zb" id="bba-sb"></div>';
-        $('bba-mmw').appendChild(schEl);
+        $('bba-right').appendChild(schEl);   // 배달 사이트 점검 / HW / SW 그리드 자리에 겹쳐서 표시
         const mmHead = mm && mm.querySelector('.bb-mm-head');
         if (mmHead) {
             const sb = document.createElement('button');
@@ -8642,8 +8642,8 @@
             const box = $('bba-tb'), keep = box ? box.scrollTop : 0;
             $('bba-rows').innerHTML = list.length ? list.map(t => {
                 const isDone = !!chk[t.id], isLate = !isDone && rel(t.e) + LATE_GRACE < nr, isCur = cur && cur.id === t.id;
-                return '<div class="bba-row' + (isDone ? ' done' : '') + (isLate ? ' late' : '') + (isCur ? ' cur' : '') + '" data-id="' + esc(t.id) + '" tabindex="0" role="checkbox" aria-checked="' + isDone + '">' +
-                    '<span class="bba-chk">✓</span>' +
+                return '<div class="bba-row' + (isDone ? ' done' : '') + (isLate ? ' late' : '') + (isCur ? ' cur' : '') + '" data-id="' + esc(t.id) + '">' +
+                    '<button type="button" class="bba-chk" role="checkbox" aria-checked="' + isDone + '" title="' + (isDone ? '완료 취소' : '완료 확인') + '">✓</button>' +
                     '<span class="bba-txt"><span class="tm">' + esc(t.head) + '</span> ' + esc(t.body) + (t.tag ? ' <span class="tag">' + esc(t.tag) + '</span>' : '') +
                     (isDone ? '<span class="meta">✓ ' + esc(chk[t.id]) + ' 확인</span>' : isLate ? '<span class="meta">미확인</span>' : '') + '</span>' +
                     '<span class="bba-who" style="--h:' + hue(t.u) + '">' + esc(t.u) + '</span></div>';
@@ -8656,10 +8656,9 @@
             if (chk[id]) delete chk[id]; else { const d = new Date(); chk[id] = pad(d.getHours()) + ':' + pad(d.getMinutes()); }
             lsSet('bba_chk_' + curKey, JSON.stringify(chk)); renderTasks();
         }
-        $('bba-rows').addEventListener('click', e => { const r = e.target.closest('.bba-row'); if (r) toggleTask(r.dataset.id); });
-        $('bba-rows').addEventListener('keydown', e => {
-            if (e.key !== ' ' && e.key !== 'Enter') return;
-            const r = e.target.closest('.bba-row'); if (r) { e.preventDefault(); toggleTask(r.dataset.id); }
+        $('bba-rows').addEventListener('click', e => {   // 체크박스를 눌러야만 체크/해제 (행의 다른 곳은 무시)
+            if (!e.target.closest('.bba-chk')) return;
+            const r = e.target.closest('.bba-row'); if (r) toggleTask(r.dataset.id);
         });
         $('bba-fday').addEventListener('click', e => { onlyDay = !onlyDay; e.currentTarget.classList.toggle('on', onlyDay); renderTasks(); });
         $('bba-fopen').addEventListener('click', e => { onlyOpen = !onlyOpen; e.currentTarget.classList.toggle('on', onlyOpen); renderTasks(); });
