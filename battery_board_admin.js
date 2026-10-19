@@ -8243,6 +8243,29 @@
         const CAMPS = ['아산 스테이그린', '가평 니모', '대관령 솔내음', '파주 LGD', '인력개발원', '충남대병원', '진천 힐사이드'];   // 배달 사이트 점검 목록
         const DAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
+        // ───────── 임무 ON/OFF 자동 점검 설정 (여기만 고치면 됩니다) ─────────
+        const AUTO_DIM_FROM = 18 * 60;            // 이 시각 이후에 시작하는 업무(18:00~ 및 자정~07:00)는 체크박스 없이 흐리게만 표시 (점검·완료 집계 제외)
+        const AUTO_RANGE_AT = 'end';              // [시작~끝] 업무의 점검 기준: 'end' = 끝 시각 +1분 / 'start' = 시작 시각 +1분 (시각이 하나뿐인 업무는 그 시각 +1분)
+        const AUTO_DELAY_MIN = 1;                 // 기준 시각 + 몇 분에 점검할지
+        const AUTO_RETRY_MS = 60 * 1000;          // 맞지 않으면 이 시간 뒤 다시 점검
+        const AUTO_MAX_TRIES = 2;                 // 최대 점검 횟수 (이 횟수까지 안 맞으면 ✕ 로 표시)
+        const AUTO_SKIP_RE = /요기요|성수\s*(?:동)?\s*1가|송도|삼평동/;   // 이 단어가 들어간 업무는 자동 점검하지 않음 (수동 확인)
+        const PROBE_W = 1440, PROBE_H = 1800;     // 점검용 숨김 iframe 의 가상 화면 크기 (NCC 화면이 이 크기로 그려짐)
+        const PROBE_TIMEOUT_MS = 45 * 1000;       // 사이트 한 곳 점검 제한 시간
+        const PROBE_STABLE_MS = 1800;             // 스위치 값이 이 시간 동안 같아야 '확정' (로딩 중 깜빡임 방지)
+        const normTxt = s => String(s == null ? '' : s).replace(/[\s ]+/g, '');
+        const U = (n, extra) => Object.assign({ n, m: [normTxt(n)] }, extra || {});   // 기체: n=표시 이름, m=카드 글자에서 찾을 이름들(공백 무시), g=주간/야간 묶음
+        // k=사이트 이름 · id=NCC 모니터링 주소 번호(/ko/monitoring/<id>) · kw=업무 문구에서 이 사이트를 알아보는 글자 · units=점검할 기체
+        // powerOnly=전원이 켜진 기체만 ON 확인 · dayUntil=주/야간 구분이 없는 업무를 주간으로 볼 마지막 시각 (그 이후 업무는 야간 기체)
+        const AUTO_SITES = [
+            { k: '파주 LGD', id: 118, kw: /파주\s*LGD/i, units: [U('파주 LGD 1호기'), U('파주 LGD 2호기')] },
+            { k: '수원 푸르지오', id: 265, kw: /푸르지오/, powerOnly: true, units: [U('318호기'), U('319호기')] },
+            { k: '수원 바로고', id: 256, kw: /바로고/, dayUntil: 15 * 60, units: [
+                U('229호기', { m: ['229호기', '바로고1호기'], g: '주간' }), U('230호기', { m: ['230호기', '바로고2호기'], g: '주간' }),
+                U('231호기', { g: '야간' }), U('232호기', { g: '야간' })] },
+            { k: '성남 서현동', id: 86, kw: /서현동/, units: [U('성남형 로봇배달 서현동 1호기', { m: ['성남형로봇배달서현동1호기', '서현동1호기'] })] },
+        ];
+
         // ───────── 스타일 ─────────
         const st = document.createElement('style');
         st.id = 'bba-style';
@@ -8305,6 +8328,51 @@
         #bb .bba-row.done .bba-txt { text-decoration:line-through; text-decoration-thickness:1.5px; color:var(--mu); }
         #bb .bba-txt .meta { font-size:11px; font-weight:700 !important; margin-left:6px; color:var(--rd); }
         #bb .bba-row.done .bba-txt .meta { color:#22a05a; }
+        /* 임무 ON/OFF 자동 점검 표시 */
+        #bb .bba-row.done.byauto .bba-chk { box-shadow:0 0 0 2px #bfe8cf; }
+        #bb .bba-row.bad .bba-chk { background:#d93a35; border-color:#d93a35; color:#fff; font-size:15px; }
+        #bb .bba-row.bad { background:#fdecea; }
+        #bb .bba-row.bad.cur { background:#fff3b5; }
+        #bb .bba-row.bad .bba-txt .meta { color:#d93a35; }
+        #bb .bba-row.retry .bba-chk { border-color:#d98a1c; color:#d98a1c; font-size:15px; }
+        #bb .bba-row.retry .bba-txt .meta { color:#c97a10; }
+        #bb .bba-row.run .bba-chk { border-color:#3b82f6; color:#3b82f6; font-size:15px; animation:bbaPulse 1s ease-in-out infinite; }
+        #bb .bba-row.run .bba-txt .meta { color:#2563eb; }
+        #bb .bba-row.sup .bba-chk { color:var(--mu); font-size:15px; }
+        #bb .bba-row.sup .bba-txt .meta { color:var(--mu); }
+        #bb .bba-row .meta.sch { color:var(--mu); font-weight:450 !important; }
+        @keyframes bbaPulse { 50% { opacity:.35; } }
+        #bb .bba-row.auto { user-select:none; -webkit-user-select:none; }
+        #bb .bba-row .ach { display:inline-block; margin-left:5px; font-size:11px; line-height:1; padding:1px 4px; border-radius:6px; background:#e6efe1; color:#2c6b3f; cursor:help; }
+        #bb .bba-row .ach.cfg { background:#fde9c8; color:#8a5a0a; }
+        #bb .bba-row .ach.off { background:var(--sur2); color:var(--mu); }
+        #bb .bba-row.dim { opacity:.4; }
+        #bb .bba-row.dim:hover { background:transparent; }
+        #bb .bba-row.dim .bba-who { filter:grayscale(.6); }
+        #bb .bba-pill.bad { border-color:#d93a35; color:#d93a35; }
+        #bb .bba-pill.au { cursor:pointer; max-width:230px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        #bb .bba-pill.au.off { color:var(--mu); border-style:dashed; }
+        #bb .bba-pill.au.run { border-color:#3b82f6; color:#2563eb; }
+        #bb #bba-ap { position:absolute; z-index:40; width:372px; box-sizing:border-box; padding:10px 12px 12px; border-radius:12px; border:2px solid var(--bd2); background:var(--sur); box-shadow:0 8px 26px rgba(40,30,10,.32); font-size:13px; color:var(--tx); display:none; }
+        #bb #bba-ap.open { display:block; }
+        #bb #bba-ap .ph { display:flex; align-items:center; gap:8px; margin-bottom:4px; }
+        #bb #bba-ap .ph b { flex:1; font-size:14px; font-weight:700 !important; }
+        #bb #bba-ap .px { width:24px; height:24px; border-radius:6px; border:1.5px solid var(--bd2); background:var(--sur2); color:var(--tx); cursor:pointer; font-family:inherit; line-height:1; }
+        #bb #bba-ap .pt { color:var(--mu); font-size:12px; line-height:1.4; margin-bottom:8px; max-height:34px; overflow:hidden; }
+        #bb #bba-ap .sh { margin:8px 0 3px; font-size:12px; font-weight:700 !important; color:#2c6b3f; }
+        #bb #bba-ap label { display:flex; align-items:center; gap:7px; min-height:28px; cursor:pointer; }
+        #bb #bba-ap .u { padding:0 2px; border-radius:6px; }
+        #bb #bba-ap .u:hover { background:var(--sur2); }
+        #bb #bba-ap .u .nm { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        #bb #bba-ap .seg { display:inline-flex; border:1.5px solid var(--bd2); border-radius:7px; overflow:hidden; }
+        #bb #bba-ap .seg button { border:0; background:var(--sur2); color:var(--mu); font-family:inherit; font-size:12px; font-weight:700 !important; padding:2px 10px; cursor:pointer; }
+        #bb #bba-ap .seg button.on[data-w="on"] { background:#22a05a; color:#fff; }
+        #bb #bba-ap .seg button.on[data-w="off"] { background:#d93a35; color:#fff; }
+        #bb #bba-ap .u.dis .seg { opacity:.45; }
+        #bb #bba-ap .tm { margin-top:8px; color:var(--mu); font-size:12px; line-height:1.45; }
+        #bb #bba-ap .rs { margin-top:6px; padding:6px 8px; border-radius:8px; background:var(--sur2); font-size:12px; line-height:1.5; max-height:150px; overflow:auto; }
+        #bb #bba-ap .rs .g { color:#22a05a; } #bb #bba-ap .rs .r { color:#d93a35; } #bb #bba-ap .rs .m { color:var(--mu); }
+        #bb #bba-ap .pb { display:flex; gap:6px; margin-top:8px; justify-content:flex-end; }
         #bb .bba-who { height:26px; border-radius:6px; display:grid; place-items:center; font-weight:700 !important; font-size:13px; color:#1e1a12; background:hsl(var(--h) 58% 84%); white-space:nowrap; overflow:hidden; }
         #bb .bba-empty { padding:24px 10px; text-align:center; color:var(--mu); }
         /* 우측 구역 */
@@ -8377,6 +8445,8 @@
                 '<span class="bba-cnt" id="bba-wd"></span>' +
                 '<span class="bba-pill" id="bba-prog">완료 0/0</span>' +
                 '<span class="bba-pill late" id="bba-late" style="display:none"></span>' +
+                '<span class="bba-pill bad" id="bba-bad" style="display:none"></span>' +
+                '<span class="bba-pill au" id="bba-auto"></span>' +
                 '<button class="bba-btn on" id="bba-fday" title="켜면 [평일]·[주말]·[화,수…] 처럼 요일이 적힌 업무가 해당 요일에만 보입니다 (끄면 요일과 상관없이 전부 표시)">요일 적용</button>' +
                 '<button class="bba-btn" id="bba-fopen" title="완료한 업무 숨기기">미완료만</button>' +
                 '<button class="bba-btn" id="bba-now">현재 위치로</button>' +
@@ -8640,18 +8710,19 @@
         function workDay() { const d = new Date(); if (nowMin() < WD0) d.setDate(d.getDate() - 1); return d; }
         const wdKey = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
         const rel = m => (m - WD0 + 1440) % 1440;
-        let curKey = '', chk = {}, camp = {};
+        let curKey = '', chk = {}, camp = {}, auto = {};
         function loadDay() {
             const k = wdKey(workDay());
             if (k === curKey) return false;
             curKey = k;
             try { chk = JSON.parse(lsGet('bba_chk_' + k, '{}')) || {}; } catch (e) { chk = {}; }
             try { camp = JSON.parse(lsGet('bba_camp_' + k, '{}')) || {}; } catch (e) { camp = {}; }
+            try { auto = JSON.parse(lsGet('bba_auto_' + k, '{}')) || {}; } catch (e) { auto = {}; }
             try {   // 지난 업무일 기록 정리 (최근 3일만 유지)
                 const keep = new Date(k).getTime();
                 for (let i = localStorage.length - 1; i >= 0; i--) {
                     const key = localStorage.key(i) || '';
-                    const m = /^bba_(?:chk|camp)_(\d{4}-\d{2}-\d{2})$/.exec(key);
+                    const m = /^bba_(?:chk|camp|auto)_(\d{4}-\d{2}-\d{2})$/.exec(key);
                     if (m && keep - new Date(m[1]).getTime() > 3 * 864e5) localStorage.removeItem(key);
                 }
             } catch (e) { /* 무시 */ }
@@ -8683,7 +8754,9 @@
                 let body = r ? c.slice(r[0].length) : c;
                 if (isTag) body = body.replace(/\s*\[[^\]]*\]\s*$/, '');
                 const u0 = String(t.user == null ? '' : t.user).trim();
-                out.push({ id: hash(u0 + '|' + c), u: u0, head: r ? r[0] : '', body: body.trim(), tag: tag ? '[' + tag + ']' : '', s, e, days });
+                const bd = body.trim(), dirs = parseDirs(bd), sites = AUTO_SITES.filter(S => S.kw.test(bd));
+                out.push({ id: hash(u0 + '|' + c), u: u0, head: r ? r[0] : '', body: bd, tag: tag ? '[' + tag + ']' : '', s, e, days, dirs, sites,
+                    auto: dirs.length > 0 && sites.length > 0 && !AUTO_SKIP_RE.test(bd) && rel(s) < rel(AUTO_DIM_FROM) });   // 임무 ON/OFF 가 적힌 업무 중 점검 가능한 사이트(제외 단어 없음, 18시 이전)
             });
             out.sort((a, b) => rel(a.s) - rel(b.s));
             tasks = out;
@@ -8705,47 +8778,452 @@
             }
             const el = $('bba-src'); if (el) el.textContent = srcMsg;
             renderTasks();
+            setTimeout(autoTick, 1500);   // 업무표를 새로 받았으면 점검할 것이 있는지 바로 확인
+        }
+
+        // ───────── 임무 ON/OFF 자동 점검: 업무 문구 분석 · 저장 ─────────
+        const siteByKey = k => AUTO_SITES.find(s => s.k === k) || null;
+        const dimOf = t => rel(t.s) >= rel(AUTO_DIM_FROM);
+        function parseDirs(body) {
+            const re = /(?:(주간|야간)\s*)?임무(?:\s*받기)?\s*(ON|OFF)\b/gi, out = []; let m;
+            while ((m = re.exec(body))) out.push({ g: m[1] || null, w: m[2].toLowerCase() });
+            return out;
+        }
+        const cfgAll = () => { try { return JSON.parse(lsGet('bba_auto_cfg', '{}')) || {}; } catch (e) { return {}; } };   // 업무별 기체 선정 (날짜와 무관하게 유지)
+        function defaultsFor(t) {   // 설정을 저장하기 전의 기본 점검 대상: 사이트 기체 전부 + 문구의 ON/OFF (주/야간 묶음이 있는 사이트는 문구/시각에 맞는 묶음만)
+            const res = [], seen = new Set(), put = (S, u, w) => { const key = S.k + '|' + u.n; if (!seen.has(key)) { seen.add(key); res.push({ k: S.k, n: u.n, w }); } };
+            t.sites.forEach(S => {
+                if (S.units.some(u => u.g)) {
+                    t.dirs.forEach(d => {
+                        const g = d.g || (t.s < (S.dayUntil || 15 * 60) ? '주간' : '야간');
+                        S.units.filter(u => u.g === g).forEach(u => put(S, u, d.w));
+                    });
+                } else {
+                    const ws = [...new Set(t.dirs.map(d => d.w))];
+                    if (ws.length === 1) S.units.forEach(u => put(S, u, ws[0]));
+                }
+            });
+            return res;
+        }
+        function effOf(t) {   // 이 업무에 실제로 적용되는 점검 설정 {on, u:[{k,n,w}], pw}
+            const c = cfgAll()[t.id];
+            let u = c && Array.isArray(c.u) ? c.u : defaultsFor(t);
+            u = u.filter(x => { const S = siteByKey(x.k); return S && S.units.some(y => y.n === x.n) && (x.w === 'on' || x.w === 'off'); });
+            return { on: !(c && c.on === false), u, pw: c && typeof c.pw === 'boolean' ? c.pw : null, custom: !!c };
+        }
+        const pwRule = (e, S) => (e.pw === null ? !!S.powerOnly : e.pw);
+        const dayStartTs = () => { const d = workDay(); return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(); };
+        function dueTs(t) { let m = AUTO_RANGE_AT === 'start' ? t.s : t.e; if (m < t.s) m += 1440; return dayStartTs() + (m + AUTO_DELAY_MIN) * 60000; }
+        const todayOk = t => !t.days || t.days.includes(workDay().getDay());
+        const hmOf = ts => { const d = new Date(ts); return pad(d.getHours()) + ':' + pad(d.getMinutes()); };
+        const autoKey = () => 'bba_auto_' + curKey;
+        function reloadAuto() { try { auto = JSON.parse(lsGet(autoKey(), '{}')) || {}; } catch (e) { auto = {}; } }
+        function reloadChk() { try { chk = JSON.parse(lsGet('bba_chk_' + curKey, '{}')) || {}; } catch (e) { /* 그대로 */ } }
+        function autoPut(id, rec) { reloadAuto(); if (rec === null) delete auto[id]; else auto[id] = rec; lsSet(autoKey(), JSON.stringify(auto)); }
+        const autoEnabled = () => lsGet('bba_auto_on', '1') !== '0' && lsGet('bbaAutoOff', '') !== '1';
+        const sleep = ms => new Promise(r => setTimeout(r, ms));
+        // 여러 보드 탭이 같은 PC 에서 열려 있어도 점검 iframe 은 한 번에 하나만 (잠금은 localStorage, 150초 안 갱신되면 무효)
+        const TABID = Math.random().toString(36).slice(2);
+        const lockGet = () => { try { return JSON.parse(lsGet('bba_auto_lock', 'null')); } catch (e) { return null; } };
+        function lockTake(ids, site) {
+            const l = lockGet(), now = Date.now();
+            if (l && l.tab !== TABID && now - l.t < 150000) return false;
+            lsSet('bba_auto_lock', JSON.stringify({ tab: TABID, t: now, ids, site: site || '' }));
+            const v = lockGet(); return !!(v && v.tab === TABID);
+        }
+        function lockFree() { const l = lockGet(); if (l && l.tab === TABID) { try { localStorage.removeItem('bba_auto_lock'); } catch (e) { /* 무시 */ } } }
+        const runningIds = () => { const l = lockGet(); return l && l.ids && Date.now() - l.t < 150000 ? l.ids : []; };
+
+        // ───────── 점검용 숨김 iframe: 사이트 페이지를 열어 기체 카드의 임무받기 스위치 · 전원을 읽는다 ─────────
+        const NCC_ORIGIN = /(^|\.)neubility\.ai$/.test(location.hostname) ? location.origin : 'https://ncc.neubility.ai';
+        function cardMatches(txt, u) {   // 카드 글자(공백 제거) 안에 기체 이름이 있고, 앞뒤가 숫자가 아닐 것 (1호기 ↔ 11호기 혼동 방지)
+            return u.m.some(tok => {
+                const t = normTxt(tok); if (!t) return false;
+                for (let i = txt.indexOf(t); i >= 0; i = txt.indexOf(t, i + 1)) {
+                    if (!/\d/.test(txt.charAt(i - 1) || ' ') && !/\d/.test(txt.charAt(i + t.length) || ' ')) return true;
+                }
+                return false;
+            });
+        }
+        function readSwitch(sw) {
+            const input = sw.querySelector('input[type="checkbox"]');
+            if (input) return input.checked;
+            const aria = sw.querySelector('[role="switch"],[aria-checked]');
+            if (aria) return aria.getAttribute('aria-checked') === 'true';
+            const ds = sw.querySelector('[data-state]');
+            if (ds) return ds.getAttribute('data-state') === 'checked';
+            return null;
+        }
+        function readPower(card) {   // '로봇 전원' 행: 꺼짐 → false, 켜짐 → true, 못 읽음 → null
+            let best = null, bestLen = Infinity;
+            card.querySelectorAll('div,span,p,li').forEach(el => {
+                const t = el.textContent.replace(/\s+/g, ' ').trim();
+                if (!t.startsWith('로봇 전원') || t.length <= 5) return;
+                if (t.length < bestLen) { best = t; bestLen = t.length; }
+            });
+            if (best === null) return null;
+            const raw = best.replace(/^로봇 전원\s*/, '');
+            return raw.includes('꺼짐') ? false : raw.includes('켜짐') ? true : null;
+        }
+        function scrollers(doc, win, card) {   // 카드 목록이 들어 있는 스크롤 영역(기체 카드 그리드)과 문서 자체
+            const out = [];
+            for (let el = card && card.parentElement; el && el !== doc.documentElement; el = el.parentElement) {
+                let oy = ''; try { oy = win.getComputedStyle(el).overflowY; } catch (e) { /* 무시 */ }
+                if ((oy === 'auto' || oy === 'scroll') && el.scrollHeight > el.clientHeight + 8) out.push(el);
+            }
+            if (doc.scrollingElement && doc.scrollingElement.scrollHeight > doc.scrollingElement.clientHeight + 8) out.push(doc.scrollingElement);
+            return out;
+        }
+        function probeSite(S, units) {   // → Promise<{err?, units:{[n]:{found,on,pw}}, names:[...]}>
+            return new Promise(resolve => {
+                const f = document.createElement('iframe');
+                f.setAttribute('aria-hidden', 'true'); f.tabIndex = -1; f.title = 'bba-probe';
+                // 화면 안쪽(투명·클릭 불가)에 둔다: 화면 밖이면 NCC 화면의 '보일 때만 그리기'가 멈출 수 있어서. 크게 그린 뒤 축소해서 작게 놓는다.
+                f.style.cssText = 'position:fixed;left:0;top:0;width:' + PROBE_W + 'px;height:' + PROBE_H + 'px;border:0;transform:scale(.3);transform-origin:0 0;opacity:0;pointer-events:none;z-index:-1;';
+                const seen = {}, names = new Set(); let done = false, t0 = Date.now(), cardsAt = 0, scrollDone = false, lastScroll = 0, iv = null, mo = null, to = null, lastScan = 0, docRef = null;
+                const fin = err => {
+                    if (done) return; done = true;
+                    clearInterval(iv); clearTimeout(to); try { mo && mo.disconnect(); } catch (e) { /* 무시 */ }
+                    try { f.src = 'about:blank'; } catch (e) { /* 무시 */ }
+                    setTimeout(() => { try { f.remove(); } catch (e) { /* 무시 */ } }, 30);
+                    const res = {}; units.forEach(u => { res[u.n] = seen[u.n] ? { found: true, on: seen[u.n].on, pw: seen[u.n].pw } : { found: false }; });
+                    resolve({ err: err || null, units: res, names: [...names].slice(0, 30), ms: Date.now() - t0 });
+                };
+                const scan = () => {
+                    if (done) return;
+                    lastScan = Date.now();
+                    let doc, win;
+                    try { win = f.contentWindow; doc = f.contentDocument; void (doc && doc.body); } catch (e) { return fin('xorigin'); }
+                    if (!doc || !doc.body || !win) return;
+                    const path = (win.location && win.location.pathname) || '';
+                    if (path === 'blank' || /^about:/.test(win.location && win.location.href || '')) return;
+                    if (/\/(login|signin|sign-in|auth)\b/i.test(path) || doc.querySelector('input[type="password"]')) return fin('login');
+                    const now = Date.now();
+                    const cards = doc.querySelectorAll('[data-qk="robot-card"]');
+                    if (cards.length && !cardsAt) cardsAt = now;
+                    cards.forEach(card => {
+                        const txt = normTxt(card.textContent);
+                        if (names.size < 40) names.add(txt.slice(0, 26));
+                        units.forEach(u => {
+                            if (!cardMatches(txt, u)) return;
+                            const sw = card.querySelector('[data-qk="mission-available-switch"]');
+                            const on = sw ? readSwitch(sw) : null, pw = readPower(card);
+                            const c = seen[u.n];
+                            if (!c) seen[u.n] = { on, pw, since: now, at: now };
+                            else if (c.on !== on || c.pw !== pw) { c.on = on; c.pw = pw; c.since = now; }
+                        });
+                    });
+                    const need = units.filter(u => !(seen[u.n] && seen[u.n].on !== null));
+                    const ready = units.every(u => { const c = seen[u.n]; return c && c.on !== null && now - c.since >= PROBE_STABLE_MS && (c.pw !== null || now - c.at > 4500); });
+                    if (ready) return fin(null);
+                    if (need.length && cards.length && now - cardsAt > 2500 && !scrollDone && now - lastScroll > 600) {   // 못 찾은 기체가 있으면 카드 그리드를 스크롤하며 찾는다 (스크롤이 있거나 화면 밖 카드는 아직 안 그려져 있을 수 있음)
+                        lastScroll = now;
+                        let moved = false;
+                        scrollers(doc, win, cards[0]).forEach(sc => {
+                            if (sc.scrollTop + sc.clientHeight < sc.scrollHeight - 4) { sc.scrollTop = Math.min(sc.scrollHeight, sc.scrollTop + Math.max(120, sc.clientHeight * 0.8)); moved = true; }
+                        });
+                        if (!moved) scrollDone = true;
+                    }
+                    if (need.length && cardsAt && (scrollDone || now - cardsAt > 20000) && now - cardsAt > 9000) return fin(null);   // 끝까지 찾아도 없으면 '못 찾음'
+                };
+                f.addEventListener('load', () => {
+                    if (done) return; scan();
+                    try {
+                        const d = f.contentDocument; if (d && d !== docRef) {
+                            docRef = d; if (mo) mo.disconnect();
+                            mo = new MutationObserver(() => { if (Date.now() - lastScan > 250) scan(); });   // 타이머는 백그라운드 탭에서 느려질 수 있어 DOM 변화로도 확인
+                            mo.observe(d.documentElement, { childList: true, subtree: true, attributes: true });
+                        }
+                    } catch (e) { fin('xorigin'); }
+                });
+                iv = setInterval(scan, 500);
+                to = setTimeout(() => fin(cardsAt ? null : (lastScan && Date.now() - t0 > 3000 ? 'timeout' : 'timeout')), PROBE_TIMEOUT_MS);
+                f.src = NCC_ORIGIN + '/ko/monitoring/' + S.id;
+                document.body.appendChild(f);
+            });
+        }
+
+        // ───────── 점검 실행 ─────────
+        const forced = new Set();
+        let autoBusy = false, curSiteTxt = '';
+        function buildAll() {   // 오늘 점검 대상 업무와 설정
+            return tasks.filter(t => t.auto && todayOk(t)).map(t => ({ t, e: effOf(t), due: dueTs(t) }));
+        }
+        function pickDue(now) {
+            reloadAuto(); reloadChk();
+            const all = buildAll().sort((a, b) => a.due - b.due || a.t.s - b.t.s);
+            const active = all.filter(x => x.e.on && x.e.u.length);
+            const out = [];
+            all.forEach(it => {
+                if (forced.has(it.t.id) && it.e.u.length) { out.push(Object.assign({ force: true }, it)); return; }
+                if (!it.e.on || !it.e.u.length || it.due > now || chk[it.t.id]) return;
+                const a = auto[it.t.id];
+                if (a && (a.st === 'ok' || a.st === 'fail' || a.st === 'sup')) return;
+                if (a && a.st === 'retry' && now < a.next) return;
+                out.push(it);
+            });
+            return { out, active };
+        }
+        function evalUnits(it, ev, readings) {   // → {ok, det:[...], msg}
+            const det = []; let bad = 0, unk = 0;
+            ev.forEach(u => {
+                const S = siteByKey(u.k), R = readings[u.k], x = R && !R.err ? R.units[u.n] : null;
+                const d = { k: u.k, n: u.n, w: u.w, got: null, pw: null, r: '' };
+                if (!R || R.err) { d.r = 'err'; d.e = R ? R.err : 'noread'; unk++; }
+                else if (!x || !x.found) { d.r = 'miss'; unk++; }
+                else if (x.on === null) { d.r = 'unk'; unk++; }
+                else {
+                    d.got = x.on ? 'on' : 'off'; d.pw = x.pw;
+                    if (u.w === 'on' && pwRule(it.e, S) && x.pw === false) d.r = 'exempt';
+                    else if (d.got === u.w) d.r = 'ok';
+                    else { d.r = 'bad'; bad++; }
+                }
+                det.push(d);
+            });
+            return { ok: !bad && !unk, det };
+        }
+        const ERR_TXT = { xorigin: '다른 도메인이라 읽을 수 없음', login: 'NCC 로그인이 필요함', timeout: '페이지 로드 시간 초과', noread: '읽지 못함' };
+        function detMsg(det) {
+            const bad = det.filter(d => d.r === 'bad').map(d => d.n + ' ' + (d.got || '').toUpperCase() + ' (기대 ' + d.w.toUpperCase() + ')');
+            const unk = det.filter(d => d.r === 'err' || d.r === 'miss' || d.r === 'unk').map(d => d.n + (d.r === 'err' ? ' — ' + (ERR_TXT[d.e] || d.e) : d.r === 'miss' ? ' — 기체 카드를 찾지 못함' : ' — 스위치를 읽지 못함'));
+            return bad.concat(unk).join(' / ');
+        }
+        async function runBatch(items, active) {
+            const now = Date.now();
+            const latest = {};   // 기체별로 '지금까지 시각이 된 가장 최근 업무' — 오래된 업무는 이미 이후 업무가 상태를 바꿨을 수 있어 그 기체는 점검하지 않는다
+            active.forEach(x => { if (x.due > now) return; x.e.u.forEach(u => { const key = u.k + '|' + u.n, c = latest[key]; if (!c || x.due > c.due || (x.due === c.due && x.t.s >= c.s)) latest[key] = { due: x.due, id: x.t.id, s: x.t.s, tm: x.t.head }; }); });
+            const run = [];
+            items.forEach(it => {
+                const ev = it.force ? it.e.u.slice() : it.e.u.filter(u => { const c = latest[u.k + '|' + u.n]; return !c || c.id === it.t.id; });
+                if (!ev.length) {
+                    const by = latest[it.e.u[0].k + '|' + it.e.u[0].n];
+                    autoPut(it.t.id, { st: 'sup', at: now, due: it.due, by: by ? by.tm : '' });
+                } else run.push({ it, ev });
+            });
+            renderTasks();
+            if (!run.length) return;
+            const bySite = {};
+            run.forEach(r => r.ev.forEach(u => { (bySite[u.k] = bySite[u.k] || new Set()).add(u.n); }));
+            const readings = {};
+            for (const k of Object.keys(bySite)) {
+                const S = siteByKey(k); curSiteTxt = S.k;
+                lockTake(run.map(r => r.it.t.id), S.k); drawAutoPill(); renderTasks();
+                try { readings[k] = await probeSite(S, [...bySite[k]].map(n => S.units.find(y => y.n === n))); }
+                catch (e) { readings[k] = { err: 'noread', units: {}, names: [] }; console.warn('[BBA] 점검 오류:', e && e.message); }
+                if (readings[k].err || Object.values(readings[k].units).some(x => !x.found)) console.warn('[BBA] 자동 점검 —', S.k, '(' + S.id + ')', readings[k].err || '', '화면 카드:', readings[k].names);
+                await sleep(800);
+            }
+            curSiteTxt = '';
+            const fin = Date.now();
+            run.forEach(({ it, ev }) => {
+                reloadAuto();
+                const prev = auto[it.t.id], n = it.force ? AUTO_MAX_TRIES : ((prev && prev.n) || 0) + 1;
+                const r = evalUnits(it, ev, readings), late = fin - it.due > 3 * 60000;
+                const rec = { st: r.ok ? 'ok' : (n >= AUTO_MAX_TRIES ? 'fail' : 'retry'), n, at: fin, due: it.due, det: r.det, msg: r.ok ? '' : detMsg(r.det), late, forced: !!it.force };
+                if (rec.st === 'retry') rec.next = fin + AUTO_RETRY_MS;
+                autoPut(it.t.id, rec);
+                forced.delete(it.t.id);
+                console.log('[BBA] 자동 점검', it.t.head, rec.st, rec.msg || '');
+            });
+        }
+        async function autoTick() {
+            if (autoBusy || !tasks.length) return;
+            if (!autoEnabled() && !forced.size) { drawAutoPill(); return; }
+            autoBusy = true;
+            try {
+                for (let guard = 0; guard < 8; guard++) {
+                    const { out, active } = pickDue(Date.now());
+                    const list = autoEnabled() ? out : out.filter(x => x.force);
+                    if (!list.length) break;
+                    if (!lockTake(list.map(x => x.t.id), '')) break;
+                    try { await runBatch(list, active); }
+                    catch (e) {
+                        console.warn('[BBA] 자동 점검 실패:', e && e.message);
+                        list.forEach(x => { forced.delete(x.t.id); autoPut(x.t.id, { st: 'fail', n: AUTO_MAX_TRIES, at: Date.now(), due: x.due, det: [], msg: '점검 중 오류: ' + (e && e.message) }); });
+                    }
+                }
+            } finally { autoBusy = false; curSiteTxt = ''; lockFree(); renderTasks(); }
+        }
+        function drawAutoPill() {
+            const el = $('bba-auto'); if (!el) return;
+            let txt, cls = 'bba-pill au', ttl = '임무 ON/OFF 자동 점검 (클릭: 켜기/끄기). 업무 시각 +1분에 숨김 iframe 으로 NCC 사이트를 열어 기체의 임무받기 상태를 확인합니다.';
+            if (!autoEnabled()) { txt = '⏸ 자동점검 꺼짐'; cls += ' off'; }
+            else if (autoBusy || runningIds().length) { txt = '⚡ 점검 중' + (curSiteTxt ? ' · ' + curSiteTxt : ''); cls += ' run'; }
+            else {
+                reloadAuto(); const now = Date.now(); let nx = null, nm = '';
+                buildAll().forEach(x => {
+                    if (!x.e.on || !x.e.u.length || chk[x.t.id]) return;
+                    const a = auto[x.t.id]; if (a && (a.st === 'ok' || a.st === 'fail' || a.st === 'sup')) return;
+                    const at = a && a.st === 'retry' ? a.next : x.due;
+                    if (at > now - 1 && (nx === null || at < nx)) { nx = at; nm = x.t.body.slice(0, 12); }
+                });
+                txt = nx ? '⚡ 다음 점검 ' + hmOf(nx) : '⚡ 자동점검 대기';
+                if (nx) ttl += '\n다음: ' + hmOf(nx) + ' ' + nm;
+            }
+            el.className = cls; el.textContent = txt; el.title = ttl;
         }
 
         // ───────── 업무표 렌더 ─────────
         let onlyDay = true, onlyOpen = false, lastCurId = null;
+        function rowInfo(t, nr, now) {
+            const a = auto[t.id], man = chk[t.id], run = runningIds().includes(t.id);
+            const o = { cls: '', box: '✓', ttl: '완료 확인', meta: '', tip: '', done: false };
+            if (man) { o.cls = 'done'; o.ttl = '완료 취소'; o.meta = '✓ ' + man + ' 확인'; o.done = true; }
+            else if (a && a.st === 'ok' && !a.clr) { o.cls = 'done byauto'; o.ttl = '자동 확인됨 — 누르면 해제'; o.meta = '✓ ' + hmOf(a.at) + ' 자동 확인' + (a.late ? ' (지연 점검)' : ''); o.done = true; }
+            else if (a && a.st === 'fail') { o.cls = 'bad'; o.box = '✕'; o.ttl = '자동 점검에서 확인되지 않음 — 직접 확인한 뒤 누르면 체크됩니다'; o.meta = '✕ ' + hmOf(a.at) + (a.det && a.det.some(d => d.r === 'bad') ? ' 자동 점검 불일치' : ' 자동 점검 실패(확인 못 함)') + ' · 직접 확인'; o.tip = a.msg || ''; }
+            else if (a && a.st === 'retry') { o.cls = 'retry'; o.box = '↻'; o.meta = '↻ ' + hmOf(a.next) + ' 재점검 예정 (' + (a.msg || '불일치') + ')'; o.tip = a.msg || ''; }
+            else if (a && a.st === 'sup') { o.cls = 'sup'; o.box = '–'; o.ttl = '이후 업무가 같은 기체를 바꿔서 지금 상태로는 확인할 수 없음 — 직접 확인 후 체크'; o.meta = '– ' + (a.by || '이후 업무') + ' 업무로 대체되어 점검 생략'; }
+            if (run && !man) { o.cls += ' run'; o.box = '…'; o.meta = '… 점검 중'; }
+            return o;
+        }
         function renderTasks(scrollToCur) {
             const dayChanged = loadDay();
             if (dayChanged) { drawCamp(); scrollToCur = true; }
-            const n = nowMin(), nr = rel(n), wd = workDay(), dow = wd.getDay();
+            reloadChk(); reloadAuto();
+            const nowTs = Date.now(), n = nowMin(), nr = rel(n), wd = workDay(), dow = wd.getDay();
             $('bba-wd').textContent = '업무일 ' + (wd.getMonth() + 1) + '/' + wd.getDate() + '(' + DAYS[dow] + ') · 매일 07:00 초기화';
             let list = tasks.filter(t => !onlyDay || !t.days || t.days.includes(dow));
-            const done = list.filter(t => chk[t.id]).length;
-            const late = list.filter(t => !chk[t.id] && rel(t.e) + LATE_GRACE < nr);
-            $('bba-prog').textContent = '완료 ' + done + '/' + list.length;
+            const live = list.filter(t => !dimOf(t));               // 18:00 이후 업무는 집계·지연 판단에서 제외
+            const infos = {}; live.forEach(t => { infos[t.id] = rowInfo(t, nr, nowTs); });
+            const isDone = t => !!(infos[t.id] && infos[t.id].done);
+            const done = live.filter(isDone).length;
+            const late = live.filter(t => !isDone(t) && rel(t.e) + LATE_GRACE < nr);
+            const badN = live.filter(t => infos[t.id].cls.startsWith('bad')).length;
+            $('bba-prog').textContent = '완료 ' + done + '/' + live.length;
             const L = $('bba-late'); L.style.display = late.length ? '' : 'none'; L.textContent = '⚠ 지연 미확인 ' + late.length;
-            if (onlyOpen) list = list.filter(t => !chk[t.id]);
-            const cur = list.find(t => !chk[t.id] && rel(t.e) + LATE_GRACE >= nr) || null;
+            const B = $('bba-bad'); B.style.display = badN ? '' : 'none'; B.textContent = '✕ 자동점검 불일치 ' + badN;
+            if (onlyOpen) list = list.filter(t => !dimOf(t) && !isDone(t));
+            const cur = list.find(t => !dimOf(t) && !isDone(t) && rel(t.e) + LATE_GRACE >= nr) || null;
             const box = $('bba-tb'), keep = box ? box.scrollTop : 0;
             $('bba-rows').innerHTML = list.length ? list.map(t => {
-                const isDone = !!chk[t.id], isLate = !isDone && rel(t.e) + LATE_GRACE < nr, isCur = cur && cur.id === t.id;
-                return '<div class="bba-row' + (isDone ? ' done' : '') + (isLate ? ' late' : '') + (isCur ? ' cur' : '') + '" data-id="' + esc(t.id) + '">' +
-                    '<button type="button" class="bba-chk" role="checkbox" aria-checked="' + isDone + '" title="' + (isDone ? '완료 취소' : '완료 확인') + '">✓</button>' +
-                    '<span class="bba-txt"><span class="tm">' + esc(t.head) + '</span> ' + esc(t.body) + (t.tag ? ' <span class="tag">' + esc(t.tag) + '</span>' : '') +
-                    (isDone ? '<span class="meta">✓ ' + esc(chk[t.id]) + ' 확인</span>' : isLate ? '<span class="meta">미확인</span>' : '') + '</span>' +
+                if (dimOf(t)) {   // 18:00 이후: 체크박스 없이 흐리게 표시만
+                    return '<div class="bba-row dim" data-id="' + esc(t.id) + '"><span></span>' +
+                        '<span class="bba-txt"><span class="tm">' + esc(t.head) + '</span> ' + esc(t.body) + (t.tag ? ' <span class="tag">' + esc(t.tag) + '</span>' : '') + '</span>' +
+                        '<span class="bba-who" style="--h:' + hue(t.u) + '">' + esc(t.u) + '</span></div>';
+                }
+                const o = infos[t.id], isLate = !o.done && !o.cls.startsWith('bad') && rel(t.e) + LATE_GRACE < nr, isCur = cur && cur.id === t.id;
+                let chip = '', sch = '';
+                if (t.auto && todayOk(t)) {
+                    const e = effOf(t);
+                    if (!e.on) chip = '<span class="ach off" title="이 업무는 자동 점검을 끔 (더블클릭: 설정)">⏸</span>';
+                    else if (!e.u.length) chip = '<span class="ach cfg" title="점검할 기체가 정해지지 않음 — 더블클릭해서 선택">⚙</span>';
+                    else {
+                        chip = '<span class="ach" title="자동 점검 대상 (' + esc(hmOf(dueTs(t))) + ' 점검) · 더블클릭: 기체 선정">⚡</span>';
+                        if (!o.meta && dueTs(t) > nowTs) sch = '<span class="meta sch">' + hmOf(dueTs(t)) + ' 점검 예정</span>';
+                    }
+                }
+                return '<div class="bba-row' + (t.auto && todayOk(t) ? ' auto' : '') + (o.cls ? ' ' + o.cls : '') + (isLate ? ' late' : '') + (isCur ? ' cur' : '') + '" data-id="' + esc(t.id) + '"' + (t.auto && todayOk(t) ? ' title="더블클릭: 임무 ON/OFF 자동 점검 설정"' : '') + '>' +
+                    '<button type="button" class="bba-chk" role="checkbox" aria-checked="' + o.done + '" title="' + esc(o.ttl) + '">' + o.box + '</button>' +
+                    '<span class="bba-txt"' + (o.tip ? ' title="' + esc(o.tip) + '"' : '') + '><span class="tm">' + esc(t.head) + '</span> ' + esc(t.body) + (t.tag ? ' <span class="tag">' + esc(t.tag) + '</span>' : '') + chip +
+                    (o.meta ? '<span class="meta">' + esc(o.meta) + '</span>' : isLate ? '<span class="meta">미확인</span>' : sch) + '</span>' +
                     '<span class="bba-who" style="--h:' + hue(t.u) + '">' + esc(t.u) + '</span></div>';
             }).join('') : '<div class="bba-empty">' + (tasks.length ? '표시할 업무가 없습니다' : '업무표 데이터를 받지 못했습니다') + '</div>';
             if (box) box.scrollTop = keep;
             if (scrollToCur || (cur && lastCurId === null)) { const c = $('bba-rows').querySelector('.bba-row.cur'); if (c && box) box.scrollTop = Math.max(0, c.offsetTop - box.clientHeight / 3); }
             lastCurId = cur ? cur.id : '';
+            drawAutoPill();
+            if (popTask) refreshPop();
         }
         function toggleTask(id) {
+            reloadChk();
             if (chk[id]) delete chk[id]; else { const d = new Date(); chk[id] = pad(d.getHours()) + ':' + pad(d.getMinutes()); }
             lsSet('bba_chk_' + curKey, JSON.stringify(chk)); renderTasks();
         }
+        function onBoxClick(id) {   // 자동으로 확인된 업무를 누르면 해제, ✕ 나 빈 칸을 누르면 직접 확인으로 체크
+            reloadChk(); reloadAuto();
+            const a = auto[id];
+            if (!chk[id] && a && a.st === 'ok' && !a.clr) { a.clr = 1; autoPut(id, a); renderTasks(); return; }
+            toggleTask(id);
+        }
         $('bba-rows').addEventListener('click', e => {   // 체크박스를 눌러야만 체크/해제 (행의 다른 곳은 무시)
             if (!e.target.closest('.bba-chk')) return;
-            const r = e.target.closest('.bba-row'); if (r) toggleTask(r.dataset.id);
+            const r = e.target.closest('.bba-row'); if (r && !r.classList.contains('dim')) onBoxClick(r.dataset.id);
+        });
+        $('bba-rows').addEventListener('dblclick', e => {   // 체크박스 이외를 더블클릭 → 자동 점검 기체 선정 창
+            if (e.target.closest('.bba-chk')) return;
+            const r = e.target.closest('.bba-row'); if (!r || r.classList.contains('dim')) return;
+            const t = tasks.find(x => x.id === r.dataset.id); if (t && t.auto && todayOk(t)) openPop(t, r);
         });
         $('bba-fday').addEventListener('click', e => { onlyDay = !onlyDay; e.currentTarget.classList.toggle('on', onlyDay); renderTasks(); });
         $('bba-fopen').addEventListener('click', e => { onlyOpen = !onlyOpen; e.currentTarget.classList.toggle('on', onlyOpen); renderTasks(); });
         $('bba-now').addEventListener('click', () => renderTasks(true));
         $('bba-reload').addEventListener('click', () => loadTasks());
+        $('bba-auto').addEventListener('click', () => { lsSet('bba_auto_on', autoEnabled() ? '0' : '1'); drawAutoPill(); if (autoEnabled()) autoTick(); });
+        window.addEventListener('storage', e => { if (e.key && /^bba_(chk|auto|auto_lock|auto_cfg|auto_on)/.test(e.key)) { clearTimeout(storT); storT = setTimeout(() => renderTasks(), 200); } });
+        let storT = null;
+
+        // ───────── 기체 선정 창 (업무 행 더블클릭) ─────────
+        const pop = document.createElement('div'); pop.id = 'bba-ap'; root.appendChild(pop);
+        let popTask = null, popWk = null;
+        const closePop = () => { pop.classList.remove('open'); popTask = null; };
+        function popSave() {
+            if (!popTask) return;
+            const c = cfgAll(), u = [];
+            popWk.units.forEach(x => { if (x.on) u.push({ k: x.k, n: x.n, w: x.w }); });
+            c[popTask.id] = { on: popWk.on, u }; if (popWk.pw !== null) c[popTask.id].pw = popWk.pw;
+            lsSet('bba_auto_cfg', JSON.stringify(c));
+        }
+        function resultHtml(a) {
+            if (!a) return '<span class="m">아직 점검 기록 없음</span>';
+            const head = a.st === 'ok' ? '<span class="g">✓ ' + hmOf(a.at) + ' 자동 확인됨</span>' : a.st === 'fail' ? '<span class="r">✕ ' + hmOf(a.at) + ' 불일치 (' + a.n + '회 점검)</span>' : a.st === 'retry' ? '<span class="r">↻ ' + hmOf(a.at) + ' 불일치 — ' + hmOf(a.next) + ' 재점검 예정</span>' : '<span class="m">– 이후 업무로 대체됨(' + esc(a.by || '') + ')</span>';
+            const rows = (a.det || []).map(d => {
+                const lb = { ok: '<span class="g">일치</span>', exempt: '<span class="m">전원 꺼짐 — 제외</span>', bad: '<span class="r">불일치</span>', miss: '<span class="r">카드 없음</span>', unk: '<span class="r">읽지 못함</span>', err: '<span class="r">' + esc(ERR_TXT[d.e] || d.e || '오류') + '</span>' }[d.r] || '';
+                return '<div>' + esc(d.n) + ' · 기대 ' + d.w.toUpperCase() + (d.got ? ' / 실제 ' + d.got.toUpperCase() + (d.pw === false ? ' (전원 꺼짐)' : '') : '') + ' · ' + lb + '</div>';
+            }).join('');
+            return head + rows;
+        }
+        function buildPop() {
+            const t = popTask, wk = popWk;
+            let h = '<div class="ph"><b>⚡ 임무 ON/OFF 자동 점검</b><button class="px" data-a="x" title="닫기">✕</button></div>' +
+                '<div class="pt">' + esc(t.head + ' ' + t.body) + '</div>' +
+                '<label><input type="checkbox" data-a="on"' + (wk.on ? ' checked' : '') + '> 이 업무 자동 점검 사용</label>';
+            t.sites.forEach(S => {
+                h += '<div class="sh">' + esc(S.k) + ' · /monitoring/' + S.id + '</div>';
+                wk.units.filter(x => x.k === S.k).forEach(x => {
+                    h += '<label class="u' + (x.on ? '' : ' dis') + '"><input type="checkbox" data-a="u" data-k="' + esc(x.k) + '" data-n="' + esc(x.n) + '"' + (x.on ? ' checked' : '') + '><span class="nm">' + esc(x.n) + '</span>' +
+                        '<span class="seg"><button type="button" data-a="w" data-w="on" data-k="' + esc(x.k) + '" data-n="' + esc(x.n) + '" class="' + (x.w === 'on' ? 'on' : '') + '">ON</button><button type="button" data-a="w" data-w="off" data-k="' + esc(x.k) + '" data-n="' + esc(x.n) + '" class="' + (x.w === 'off' ? 'on' : '') + '">OFF</button></span></label>';
+                });
+            });
+            const anyPo = t.sites.some(S => S.powerOnly), pwv = wk.pw === null ? anyPo : wk.pw;
+            h += '<label><input type="checkbox" data-a="pw"' + (pwv ? ' checked' : '') + '> ON 확인은 전원이 켜진 기체만</label>' +
+                '<div class="tm">점검 시각 ' + hmOf(dueTs(t)) + ' (' + (AUTO_RANGE_AT === 'end' && t.e !== t.s ? '끝' : '업무') + ' 시각 +' + AUTO_DELAY_MIN + '분) · 안 맞으면 ' + Math.round(AUTO_RETRY_MS / 60000) + '분 뒤 한 번 더 → 그래도 안 맞으면 ✕</div>' +
+                '<div class="rs" id="bba-ap-rs">' + resultHtml(auto[t.id]) + '</div>' +
+                '<div class="pb"><button class="bba-btn" data-a="def" title="기본 설정으로 되돌리기">기본값</button><button class="bba-btn on" data-a="now" title="지금 바로 이 업무를 점검">지금 점검</button></div>';
+            pop.innerHTML = h;
+        }
+        function refreshPop() { const el = $('bba-ap-rs'); if (el && popTask) el.innerHTML = resultHtml(auto[popTask.id]); }
+        function openPop(t, rowEl) {
+            const e = effOf(t), first = (t.dirs[0] && t.dirs[0].w) || 'on';
+            popTask = t;
+            popWk = { on: e.on, pw: e.pw, units: [] };
+            t.sites.forEach(S => S.units.forEach(u => {
+                const f = e.u.find(x => x.k === S.k && x.n === u.n);
+                popWk.units.push({ k: S.k, n: u.n, on: !!f, w: f ? f.w : first });
+            }));
+            buildPop(); pop.classList.add('open');
+            const rr = rowEl.getBoundingClientRect(), br = root.getBoundingClientRect(), sc = br.width / root.offsetWidth || 1;
+            let top = (rr.bottom - br.top) / sc + 4; const h = pop.offsetHeight;
+            if (top + h > root.offsetHeight - 6) top = Math.max(4, (rr.top - br.top) / sc - h - 4);
+            pop.style.top = top + 'px'; pop.style.left = Math.min(Math.max(8, (rr.left - br.left) / sc + 34), Math.max(8, root.offsetWidth - 380)) + 'px';
+        }
+        pop.addEventListener('click', e => {
+            const b = e.target.closest('[data-a]'); if (!b || !popTask) return;
+            const a = b.dataset.a;
+            if (a === 'x') return closePop();
+            if (a === 'w') { const x = popWk.units.find(v => v.k === b.dataset.k && v.n === b.dataset.n); if (x) { x.w = b.dataset.w; popSave(); buildPop(); } return; }
+            if (a === 'def') { const c = cfgAll(); delete c[popTask.id]; lsSet('bba_auto_cfg', JSON.stringify(c)); const t = popTask, r = $('bba-rows').querySelector('.bba-row[data-id="' + t.id + '"]'); closePop(); if (r) openPop(t, r); renderTasks(); return; }
+            if (a === 'now') { const t = popTask; popSave(); forced.add(t.id); $('bba-ap-rs').innerHTML = '<span class="m">점검 요청됨 — 잠시 후 결과가 표시됩니다…</span>'; autoTick(); return; }
+        });
+        pop.addEventListener('change', e => {
+            const b = e.target.closest('[data-a]'); if (!b || !popTask) return;
+            const a = b.dataset.a;
+            if (a === 'on') popWk.on = b.checked;
+            else if (a === 'u') { const x = popWk.units.find(v => v.k === b.dataset.k && v.n === b.dataset.n); if (x) x.on = b.checked; }
+            else if (a === 'pw') popWk.pw = b.checked;
+            popSave(); buildPop(); renderTasks();
+        });
+        document.addEventListener('mousedown', e => { if (popTask && !pop.contains(e.target) && !(e.target.closest && e.target.closest('.bba-row.auto'))) closePop(); }, true);
+        document.addEventListener('keydown', e => { if (e.key === 'Escape' && popTask) closePop(); });
 
         // ───────── 캠핑장 점검 ─────────
         function drawCamp() {
@@ -8777,6 +9255,17 @@
         loadTasks();                  // 최신본을 받아 다시 그림
         setInterval(() => renderTasks(), 30 * 1000);       // 지연/현재 표시 + 07:00 초기화 감지
         setInterval(loadTasks, TASKS_REFRESH_MS);
+        // 자동 점검: 15초마다 '시각이 된 업무가 있는가'만 로컬에서 확인 (평소엔 요청·iframe 없음). 켜자마자 밀린 업무가 있으면 시각 순서대로 한 사이트씩 점검
+        setTimeout(autoTick, 4000);
+        setInterval(autoTick, 15 * 1000);
+        document.addEventListener('visibilitychange', () => { if (!document.hidden) autoTick(); });
+        window.bbaAuto = {   // 콘솔 도구: bbaAuto.state() 점검 기록 · bbaAuto.run(업무 일부 글자) 지금 점검 · bbaAuto.reset() 오늘 점검 기록 지우기
+            state: () => { reloadAuto(); return JSON.parse(JSON.stringify(auto)); },
+            list: () => buildAll().map(x => ({ 시각: x.t.head, 업무: x.t.body, 점검: hmOf(x.due), 기체: x.e.u.map(u => u.n + ' ' + u.w.toUpperCase()).join(', '), 사용: x.e.on })),
+            run: q => { const t = tasks.find(x => x.auto && (x.head + x.body).includes(q)); if (!t) return '일치하는 점검 업무 없음'; forced.add(t.id); autoTick(); return t.head + ' ' + t.body; },
+            reset: () => { try { localStorage.removeItem(autoKey()); } catch (e) { /* 무시 */ } reloadAuto(); renderTasks(); },
+            probe: id => { const S = AUTO_SITES.find(x => x.id === +id); return S ? probeSite(S, S.units) : '등록된 사이트 번호가 아님'; },
+        };
         console.log('[BBA] 관리자 확장 켜짐 (일일 업무표 · 펼침 그리드 · 캠핑장/HW/SW)');
     } catch (e) {
         console.warn('[BBA] 관리자 확장 초기화 실패 — 기존 보드 기능에는 영향 없음:', e && e.message);
