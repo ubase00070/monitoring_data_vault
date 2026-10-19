@@ -8249,7 +8249,7 @@
         const AUTO_DELAY_MIN = 1;                 // 기준 시각 + 몇 분에 점검할지
         const AUTO_RETRY_MS = 60 * 1000;          // 맞지 않으면 이 시간 뒤 다시 점검
         const AUTO_MAX_TRIES = 2;                 // 최대 점검 횟수 (이 횟수까지 안 맞으면 ✕ 로 표시)
-        const AUTO_SKIP_RE = /요기요|성수\s*(?:동)?\s*1가|송도|삼평동/;   // 이 단어가 들어간 업무는 자동 점검하지 않음 (수동 확인)
+        const AUTO_SKIP_RE = /역삼|송도|삼평동/;   // 이 단어가 들어간 임무 ON/OFF 업무는 자동 점검하지 않음 (수동 확인)
         const PROBE_W = 1440, PROBE_H = 1800;     // 점검용 숨김 iframe 의 가상 화면 크기 (NCC 화면이 이 크기로 그려짐)
         const PROBE_TIMEOUT_MS = 45 * 1000;       // 사이트 한 곳 점검 제한 시간
         const PROBE_STABLE_MS = 1800;             // 스위치 값이 이 시간 동안 같아야 '확정' (로딩 중 깜빡임 방지)
@@ -8264,6 +8264,13 @@
                 U('229호기', { g: '주간' }), U('230호기', { g: '주간' }),   // 카드는 '바로고 1호기 [229호기]' 형태 → 대괄호 안 번호로만 찾는다 (번호는 겹치지 않음)
                 U('231호기', { g: '야간' }), U('232호기', { g: '야간' })] },
             { k: '성남 서현동', id: 86, kw: /서현동/, units: [U('성남형 로봇배달 서현동 1호기', { m: ['성남형로봇배달서현동1호기', '서현동1호기'] })] },
+            // 성수동1가 요기요: 오전(10:30)은 1·2호기 ON / 그 이후(15:30~16:00)는 1호기 OFF, 2·3호기 ON / OFF 업무면 전부 OFF  (def: 기본 점검 대상 — 팝업에서 바꿀 수 있음)
+            { k: '성수동1가 요기요', id: 56, kw: /성수\s*(?:동)?\s*1가/,
+              def: t => (t.dirs[0].w === 'off' ? [{ i: 0, w: 'off' }, { i: 1, w: 'off' }, { i: 2, w: 'off' }]
+                  : t.s < 13 * 60 ? [{ i: 0, w: 'on' }, { i: 1, w: 'on' }] : [{ i: 0, w: 'off' }, { i: 1, w: 'on' }, { i: 2, w: 'on' }]),
+              units: [1, 2, 3].map(n => U('성수동 1가 (요기요) ' + n + '호기', { m: ['성수동1가(요기요)' + n + '호기', '성수동1가요기요' + n + '호기'] })) },
+            // 성남 삼평동 '출근 임무' 업무: 7호기의 '임무 진행'이 비어 있지 않으면(무언가 진행 중) 출근 임무를 수행 중으로 보고 확인. ※ id(NCC 주소 번호)를 채워야 동작
+            { k: '성남 삼평동', id: 44, kw: /삼평동/, prog: /출근\s*임무\s*$/, units: [U('성남형 로봇배달 삼평동 7호기', { m: ['성남형로봇배달삼평동7호기', '삼평동7호기'] })] },
         ];
 
         // ───────── 스타일 ─────────
@@ -8369,6 +8376,7 @@
         #bb #bba-ap .seg button.on[data-w="on"] { background:#22a05a; color:#fff; }
         #bb #bba-ap .seg button.on[data-w="off"] { background:#d93a35; color:#fff; }
         #bb #bba-ap .u.dis .seg { opacity:.45; }
+        #bb #bba-ap .seg button.on.run { background:#3b82f6; color:#fff; cursor:default; }
         #bb #bba-ap .tm { margin-top:8px; color:var(--mu); font-size:12px; line-height:1.45; }
         #bb #bba-ap .rs { margin-top:6px; padding:6px 8px; border-radius:8px; background:var(--sur2); font-size:12px; line-height:1.5; max-height:150px; overflow:auto; }
         #bb #bba-ap .rs .g { color:#22a05a; } #bb #bba-ap .rs .r { color:#d93a35; } #bb #bba-ap .rs .m { color:var(--mu); }
@@ -8754,9 +8762,10 @@
                 let body = r ? c.slice(r[0].length) : c;
                 if (isTag) body = body.replace(/\s*\[[^\]]*\]\s*$/, '');
                 const u0 = String(t.user == null ? '' : t.user).trim();
-                const bd = body.trim(), dirs = parseDirs(bd), sites = AUTO_SITES.filter(S => S.kw.test(bd));
+                const bd = body.trim(), prog = AUTO_SITES.filter(S => S.prog && S.kw.test(bd) && S.prog.test(bd));   // '임무 진행 중인지' 확인형 업무
+                const dirs = prog.length ? [{ g: null, w: 'run' }] : parseDirs(bd), sites = prog.length ? prog : AUTO_SITES.filter(S => !S.prog && S.kw.test(bd));
                 out.push({ id: hash(u0 + '|' + c), u: u0, head: r ? r[0] : '', body: bd, tag: tag ? '[' + tag + ']' : '', s, e, days, dirs, sites,
-                    auto: dirs.length > 0 && sites.length > 0 && !AUTO_SKIP_RE.test(bd) && rel(s) < rel(AUTO_DIM_FROM) });   // 임무 ON/OFF 가 적힌 업무 중 점검 가능한 사이트(제외 단어 없음, 18시 이전)
+                    auto: dirs.length > 0 && sites.length > 0 && (prog.length > 0 || !AUTO_SKIP_RE.test(bd)) && rel(s) < rel(AUTO_DIM_FROM) });   // 임무 ON/OFF 가 적힌 업무 중 점검 가능한 사이트(제외 단어 없음, 18시 이전)
             });
             out.sort((a, b) => rel(a.s) - rel(b.s));
             tasks = out;
@@ -8793,7 +8802,8 @@
         function defaultsFor(t) {   // 설정을 저장하기 전의 기본 점검 대상: 사이트 기체 전부 + 문구의 ON/OFF (주/야간 묶음이 있는 사이트는 문구/시각에 맞는 묶음만)
             const res = [], seen = new Set(), put = (S, u, w) => { const key = S.k + '|' + u.n; if (!seen.has(key)) { seen.add(key); res.push({ k: S.k, n: u.n, w }); } };
             t.sites.forEach(S => {
-                if (S.units.some(u => u.g)) {
+                if (S.def) { S.def(t).forEach(x => put(S, S.units[x.i], x.w)); }
+                else if (S.units.some(u => u.g)) {
                     t.dirs.forEach(d => {
                         const g = d.g || (t.s < (S.dayUntil || 15 * 60) ? '주간' : '야간');
                         S.units.filter(u => u.g === g).forEach(u => put(S, u, d.w));
@@ -8808,7 +8818,7 @@
         function effOf(t) {   // 이 업무에 실제로 적용되는 점검 설정 {on, u:[{k,n,w}], pw}
             const c = cfgAll()[t.id];
             let u = c && Array.isArray(c.u) ? c.u : defaultsFor(t);
-            u = u.filter(x => { const S = siteByKey(x.k); return S && S.units.some(y => y.n === x.n) && (x.w === 'on' || x.w === 'off'); });
+            u = u.filter(x => { const S = siteByKey(x.k); return S && S.id && S.units.some(y => y.n === x.n) && (x.w === 'on' || x.w === 'off' || x.w === 'run'); });
             return { on: !(c && c.on === false), u, pw: c && typeof c.pw === 'boolean' ? c.pw : null, custom: !!c };
         }
         const pwRule = (e, S) => (e.pw === null ? !!S.powerOnly : e.pw);
@@ -8865,6 +8875,18 @@
             const raw = best.replace(/^로봇 전원\s*/, '');
             return raw.includes('꺼짐') ? false : raw.includes('켜짐') ? true : null;
         }
+        function readProgress(card) {   // '임무 진행' 행의 값 글자 (비어 있거나 '-'·'없음'이면 '') — 행을 못 찾으면 null
+            const rows = [...card.querySelectorAll('div,span,p,li,dd,dt,label')].filter(el => /^임무\s*진행/.test(el.textContent.replace(/\s+/g, ' ').trim()));
+            if (!rows.length) return null;
+            rows.sort((a, b) => a.textContent.length - b.textContent.length);
+            const L = rows[0], strip = x => x.replace(/\s+/g, ' ').trim().replace(/^임무\s*진행\s*/, '').trim();
+            let v = strip(L.textContent);
+            if (!v) {   // 라벨만 있는 요소 → 값은 다음 형제 칸이나 같은 행(부모)에 있을 수 있음
+                if (L.nextElementSibling) v = strip(L.nextElementSibling.textContent);
+                else if (L.parentElement && L.parentElement.children.length <= 3) v = strip(L.parentElement.textContent);
+            }
+            return /^(?:[-–—~]+|없음|없다|n\/?a|none|null)?$/i.test(v) ? '' : v;
+        }
         function scrollers(doc, win, card) {   // 카드 목록이 들어 있는 스크롤 영역(기체 카드 그리드)과 문서 자체
             const out = [];
             for (let el = card && card.parentElement; el && el !== doc.documentElement; el = el.parentElement) {
@@ -8886,7 +8908,7 @@
                     clearInterval(iv); clearTimeout(to); try { mo && mo.disconnect(); } catch (e) { /* 무시 */ }
                     try { f.src = 'about:blank'; } catch (e) { /* 무시 */ }
                     setTimeout(() => { try { f.remove(); } catch (e) { /* 무시 */ } }, 30);
-                    const res = {}; units.forEach(u => { res[u.n] = seen[u.n] ? { found: true, on: seen[u.n].on, pw: seen[u.n].pw } : { found: false }; });
+                    const res = {}; units.forEach(u => { res[u.n] = seen[u.n] ? { found: true, on: seen[u.n].on, pw: seen[u.n].pw, pg: seen[u.n].pg } : { found: false }; });
                     resolve({ err: err || null, units: res, names: [...names].slice(0, 30), ms: Date.now() - t0 });
                 };
                 const scan = () => {
@@ -8907,14 +8929,20 @@
                         units.forEach(u => {
                             if (!cardMatches(txt, u)) return;
                             const sw = card.querySelector('[data-qk="mission-available-switch"]');
-                            const on = sw ? readSwitch(sw) : null, pw = readPower(card);
+                            const on = sw ? readSwitch(sw) : null, pw = readPower(card), pg = S.prog ? readProgress(card) : undefined;
                             const c = seen[u.n];
-                            if (!c) seen[u.n] = { on, pw, since: now, at: now };
-                            else if (c.on !== on || c.pw !== pw) { c.on = on; c.pw = pw; c.since = now; }
+                            if (!c) seen[u.n] = { on, pw, pg, since: now, at: now };
+                            else if (c.on !== on || c.pw !== pw || c.pg !== pg) { c.on = on; c.pw = pw; c.pg = pg; c.since = now; }
                         });
                     });
-                    const need = units.filter(u => !(seen[u.n] && seen[u.n].on !== null));
-                    const ready = units.every(u => { const c = seen[u.n]; return c && c.on !== null && now - c.since >= PROBE_STABLE_MS && (c.pw !== null || now - c.at > 4500); });
+                    const okVal = c => (S.prog ? true : c.on !== null);   // 임무 진행 확인형 사이트는 스위치 값이 필요 없음
+                    const need = units.filter(u => !(seen[u.n] && okVal(seen[u.n])));
+                    const ready = units.every(u => {
+                        const c = seen[u.n]; if (!c || !okVal(c)) return false;
+                        const stab = S.prog && c.pg === '' ? 4000 : PROBE_STABLE_MS;   // '비어 있음'은 아직 안 채워진 것일 수 있어 더 오래 같은 값이어야 확정
+                        const loaded = S.prog ? c.pg !== null : c.pw !== null;
+                        return now - c.since >= stab && (loaded || now - c.at > 4500);
+                    });
                     if (ready) return fin(null);
                     if (need.length && cards.length && now - cardsAt > 2500 && !scrollDone && now - lastScroll > 600) {   // 못 찾은 기체가 있으면 카드 그리드를 스크롤하며 찾는다 (스크롤이 있거나 화면 밖 카드는 아직 안 그려져 있을 수 있음)
                         lastScroll = now;
@@ -8971,6 +8999,10 @@
                 const d = { k: u.k, n: u.n, w: u.w, got: null, pw: null, r: '' };
                 if (!R || R.err) { d.r = 'err'; d.e = R ? R.err : 'noread'; unk++; }
                 else if (!x || !x.found) { d.r = 'miss'; unk++; }
+                else if (u.w === 'run') {   // '임무 진행'이 비어 있지 않으면(무언가 진행 중) 일치
+                    if (x.pg === null || x.pg === undefined) { d.r = 'unk'; unk++; }
+                    else { d.got = x.pg ? 'run' : 'idle'; d.pgTxt = x.pg; d.pw = x.pw; if (x.pg) d.r = 'ok'; else { d.r = 'bad'; bad++; } }
+                }
                 else if (x.on === null) { d.r = 'unk'; unk++; }
                 else {
                     d.got = x.on ? 'on' : 'off'; d.pw = x.pw;
@@ -8982,9 +9014,11 @@
             });
             return { ok: !bad && !unk, det };
         }
+        const wTxt = w => (w === 'run' ? '진행 중' : String(w).toUpperCase());
+        const gTxt = g => (g === 'idle' ? '비어 있음' : g === 'run' ? '진행 중' : String(g || '').toUpperCase());
         const ERR_TXT = { xorigin: '다른 도메인이라 읽을 수 없음', login: 'NCC 로그인이 필요함', timeout: '페이지 로드 시간 초과', noread: '읽지 못함' };
         function detMsg(det) {
-            const bad = det.filter(d => d.r === 'bad').map(d => d.n + ' ' + (d.got || '').toUpperCase() + ' (기대 ' + d.w.toUpperCase() + ')');
+            const bad = det.filter(d => d.r === 'bad').map(d => d.n + ' ' + gTxt(d.got) + ' (기대 ' + wTxt(d.w) + ')');
             const unk = det.filter(d => d.r === 'err' || d.r === 'miss' || d.r === 'unk').map(d => d.n + (d.r === 'err' ? ' — ' + (ERR_TXT[d.e] || d.e) : d.r === 'miss' ? ' — 기체 카드를 찾지 못함' : ' — 스위치를 읽지 못함'));
             return bad.concat(unk).join(' / ');
         }
@@ -9048,7 +9082,7 @@
             const el = $('bba-auto'); if (!el) return;
             let txt, cls = 'bba-pill au', ttl = '임무 ON/OFF 자동 점검 (클릭: 켜기/끄기). 업무 시각 +1분에 숨김 iframe 으로 NCC 사이트를 열어 기체의 임무받기 상태를 확인합니다.';
             if (!autoEnabled()) { txt = '⏸ 자동점검 꺼짐'; cls += ' off'; }
-            else if (autoBusy || runningIds().length) { txt = '⚡ 점검 중' + (curSiteTxt ? ' · ' + curSiteTxt : ''); cls += ' run'; }
+            else if (autoBusy || runningIds().length) { txt = '🔍 점검 중' + (curSiteTxt ? ' · ' + curSiteTxt : ''); cls += ' run'; }
             else {
                 reloadAuto(); const now = Date.now(); let nx = null, nm = '';
                 buildAll().forEach(x => {
@@ -9057,7 +9091,7 @@
                     const at = a && a.st === 'retry' ? a.next : x.due;
                     if (at > now - 1 && (nx === null || at < nx)) { nx = at; nm = x.t.body.slice(0, 12); }
                 });
-                txt = nx ? '⚡ 다음 점검 ' + hmOf(nx) : '⚡ 자동점검 대기';
+                txt = nx ? '🔍 다음 점검 ' + hmOf(nx) : '🔍 자동점검 대기';
                 if (nx) ttl += '\n다음: ' + hmOf(nx) + ' ' + nm;
             }
             el.className = cls; el.textContent = txt; el.title = ttl;
@@ -9106,9 +9140,9 @@
                 if (t.auto && todayOk(t)) {
                     const e = effOf(t);
                     if (!e.on) chip = '<span class="ach off" title="이 업무는 자동 점검을 끔 (더블클릭: 설정)">⏸</span>';
-                    else if (!e.u.length) chip = '<span class="ach cfg" title="점검할 기체가 정해지지 않음 — 더블클릭해서 선택">⚙</span>';
+                    else if (!e.u.length) chip = '<span class="ach cfg" title="' + (t.sites.some(S => !S.id) ? '사이트 번호(id)가 설정되지 않아 점검할 수 없음 — 파일 상단 AUTO_SITES 의 id 를 채워 주세요' : '점검할 기체가 정해지지 않음 — 더블클릭해서 선택') + '">⚙</span>';
                     else {
-                        chip = '<span class="ach" title="자동 점검 대상 (' + esc(hmOf(dueTs(t))) + ' 점검) · 더블클릭: 기체 선정">⚡</span>';
+                        chip = '<span class="ach" title="자동 점검 대상 (' + esc(hmOf(dueTs(t))) + ' 점검) · 더블클릭: 기체 선정">🔍</span>';
                         if (!o.meta && dueTs(t) > nowTs) sch = '<span class="meta sch">' + hmOf(dueTs(t)) + ' 점검 예정</span>';
                     }
                 }
@@ -9168,24 +9202,24 @@
             const head = a.st === 'ok' ? '<span class="g">✓ ' + hmOf(a.at) + ' 자동 확인됨</span>' : a.st === 'fail' ? '<span class="r">✕ ' + hmOf(a.at) + ' 불일치 (' + a.n + '회 점검)</span>' : a.st === 'retry' ? '<span class="r">↻ ' + hmOf(a.at) + ' 불일치 — ' + hmOf(a.next) + ' 재점검 예정</span>' : '<span class="m">– 이후 업무로 대체됨(' + esc(a.by || '') + ')</span>';
             const rows = (a.det || []).map(d => {
                 const lb = { ok: '<span class="g">일치</span>', exempt: '<span class="m">전원 꺼짐 — 제외</span>', bad: '<span class="r">불일치</span>', miss: '<span class="r">카드 없음</span>', unk: '<span class="r">읽지 못함</span>', err: '<span class="r">' + esc(ERR_TXT[d.e] || d.e || '오류') + '</span>' }[d.r] || '';
-                return '<div>' + esc(d.n) + ' · 기대 ' + d.w.toUpperCase() + (d.got ? ' / 실제 ' + d.got.toUpperCase() + (d.pw === false ? ' (전원 꺼짐)' : '') : '') + ' · ' + lb + '</div>';
+                return '<div>' + esc(d.n) + ' · 기대 ' + wTxt(d.w) + (d.got ? ' / 실제 ' + gTxt(d.got) + (d.pgTxt ? ' (' + esc(d.pgTxt) + ')' : '') + (d.pw === false && d.w !== 'run' ? ' (전원 꺼짐)' : '') : '') + ' · ' + lb + '</div>';
             }).join('');
             return head + rows;
         }
         function buildPop() {
             const t = popTask, wk = popWk;
-            let h = '<div class="ph"><b>⚡ 임무 ON/OFF 자동 점검</b><button class="px" data-a="x" title="닫기">✕</button></div>' +
+            let h = '<div class="ph"><b>🔍 임무 ON/OFF 자동 점검</b><button class="px" data-a="x" title="닫기">✕</button></div>' +
                 '<div class="pt">' + esc(t.head + ' ' + t.body) + '</div>' +
                 '<label><input type="checkbox" data-a="on"' + (wk.on ? ' checked' : '') + '> 이 업무 자동 점검 사용</label>';
             t.sites.forEach(S => {
-                h += '<div class="sh">' + esc(S.k) + ' · /monitoring/' + S.id + '</div>';
+                h += '<div class="sh">' + esc(S.k) + ' · ' + (S.id ? '/monitoring/' + S.id : '사이트 번호 미설정 (AUTO_SITES 의 id)') + '</div>';
                 wk.units.filter(x => x.k === S.k).forEach(x => {
                     h += '<label class="u' + (x.on ? '' : ' dis') + '"><input type="checkbox" data-a="u" data-k="' + esc(x.k) + '" data-n="' + esc(x.n) + '"' + (x.on ? ' checked' : '') + '><span class="nm">' + esc(x.n) + '</span>' +
-                        '<span class="seg"><button type="button" data-a="w" data-w="on" data-k="' + esc(x.k) + '" data-n="' + esc(x.n) + '" class="' + (x.w === 'on' ? 'on' : '') + '">ON</button><button type="button" data-a="w" data-w="off" data-k="' + esc(x.k) + '" data-n="' + esc(x.n) + '" class="' + (x.w === 'off' ? 'on' : '') + '">OFF</button></span></label>';
+                        (S.prog ? '<span class="seg"><button type="button" class="on run" disabled>진행 중</button></span>' : '<span class="seg"><button type="button" data-a="w" data-w="on" data-k="' + esc(x.k) + '" data-n="' + esc(x.n) + '" class="' + (x.w === 'on' ? 'on' : '') + '">ON</button><button type="button" data-a="w" data-w="off" data-k="' + esc(x.k) + '" data-n="' + esc(x.n) + '" class="' + (x.w === 'off' ? 'on' : '') + '">OFF</button></span>') + '</label>';
                 });
             });
             const anyPo = t.sites.some(S => S.powerOnly), pwv = wk.pw === null ? anyPo : wk.pw;
-            h += '<label><input type="checkbox" data-a="pw"' + (pwv ? ' checked' : '') + '> ON 확인은 전원이 켜진 기체만</label>' +
+            h += (t.sites.some(S => !S.prog) ? '<label><input type="checkbox" data-a="pw"' + (pwv ? ' checked' : '') + '> ON 확인은 전원이 켜진 기체만</label>' : '') +
                 '<div class="tm">점검 시각 ' + hmOf(dueTs(t)) + ' (' + (AUTO_RANGE_AT === 'end' && t.e !== t.s ? '끝' : '업무') + ' 시각 +' + AUTO_DELAY_MIN + '분) · 안 맞으면 ' + Math.round(AUTO_RETRY_MS / 60000) + '분 뒤 한 번 더 → 그래도 안 맞으면 ✕</div>' +
                 '<div class="rs" id="bba-ap-rs">' + resultHtml(auto[t.id]) + '</div>' +
                 '<div class="pb"><button class="bba-btn" data-a="def" title="기본 설정으로 되돌리기">기본값</button><button class="bba-btn on" data-a="now" title="지금 바로 이 업무를 점검">지금 점검</button></div>';
@@ -9261,7 +9295,7 @@
         document.addEventListener('visibilitychange', () => { if (!document.hidden) autoTick(); });
         window.bbaAuto = {   // 콘솔 도구: bbaAuto.state() 점검 기록 · bbaAuto.run(업무 일부 글자) 지금 점검 · bbaAuto.reset() 오늘 점검 기록 지우기
             state: () => { reloadAuto(); return JSON.parse(JSON.stringify(auto)); },
-            list: () => buildAll().map(x => ({ 시각: x.t.head, 업무: x.t.body, 점검: hmOf(x.due), 기체: x.e.u.map(u => u.n + ' ' + u.w.toUpperCase()).join(', '), 사용: x.e.on })),
+            list: () => buildAll().map(x => ({ 시각: x.t.head, 업무: x.t.body, 점검: hmOf(x.due), 기체: x.e.u.map(u => u.n + ' ' + wTxt(u.w)).join(', '), 사용: x.e.on })),
             run: q => { const t = tasks.find(x => x.auto && (x.head + x.body).includes(q)); if (!t) return '일치하는 점검 업무 없음'; forced.add(t.id); autoTick(); return t.head + ' ' + t.body; },
             reset: () => { try { localStorage.removeItem(autoKey()); } catch (e) { /* 무시 */ } reloadAuto(); renderTasks(); },
             probe: id => { const S = AUTO_SITES.find(x => x.id === +id); return S ? probeSite(S, S.units) : '등록된 사이트 번호가 아님'; },
