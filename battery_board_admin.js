@@ -8239,7 +8239,7 @@
         const TASKS_REFRESH_MS = 5 * 60 * 1000;
         const WD0 = 7 * 60;                       // 업무일 시작 07:00
         const LATE_GRACE = 10;                    // 종료 시각 + 10분이 지나도 미확인이면 '지연'
-        const CAMPS = ['아산 스테이그린', '가평 니모', '대관령 솔내음', '파주 LGD'];
+        const CAMPS = ['아산 스테이그린', '가평 니모', '대관령 솔내음', '파주 LGD', '인력개발원', '충남대 병원'];   // 배달 사이트 점검 목록
         const DAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
         // ───────── 스타일 ─────────
@@ -8266,7 +8266,7 @@
         #bb .bba-note { margin-left:auto; font-size:12px; color:var(--mu); }
         /* 펼침 영역 */
         /* 펼침 그리드: 버튼 줄 아래 보드 전체(좌우 끝~하단)를 덮는 오버레이 */
-        #bb #bba-dr { position:absolute; left:14px; right:14px; top:40px; bottom:12px; z-index:30; display:flex; gap:10px; min-height:0; padding:8px; background:var(--bg); border:2px solid var(--bd2); border-radius:10px; box-shadow:0 10px 28px rgba(0,0,0,.35); box-sizing:border-box; }
+        #bb #bba-dr { position:absolute; left:14px; width:calc(50% - 18px); top:40px; bottom:12px; z-index:30; display:flex; gap:10px; min-height:0; padding:8px; background:var(--bg); border:2px solid var(--bd2); border-radius:10px; box-shadow:0 10px 28px rgba(0,0,0,.35); box-sizing:border-box; }
         #bb #bba-dr.none { display:none; }
         #bb #bba-dr > .bba-p, #bb #bba-mmw > .bba-p {
             flex:1 1 0; width:auto; min-width:0; height:100%; position:relative; inset:auto; z-index:auto; display:flex !important; flex-direction:column;
@@ -8318,6 +8318,34 @@
         #bb .bba-memo textarea { flex:1; min-height:0; resize:none; border:1.5px solid var(--bd2); border-radius:8px; background:var(--sur2); color:var(--tx); padding:8px 10px; line-height:1.5; font-family:inherit; font-size:13.5px; box-sizing:border-box; }
         #bb .bba-memo textarea:focus { outline:2px solid #3b82f6; outline-offset:1px; }
         #bb .bba-memo .sv { font-size:11px; color:var(--mu); min-height:14px; }
+        /* 순찰 일정 (다중 모니터링 제목 우측 버튼 + 카드형 일정) */
+        #bb #bb-mm-page-multi .bb-mm-head { padding-right:112px; }
+        #bb .bba-sbtn { position:absolute; right:8px; top:50%; transform:translateY(-50%); height:30px; padding:0 12px; border-radius:8px; border:1.5px solid #c98a2b; background:#f1e6ce; color:var(--tx); font-family:inherit; font-size:13px; cursor:pointer; font-weight:700 !important; white-space:nowrap; }
+        #bb .bba-sbtn:hover { background:#ebcf96; }
+        #bb #bba-mmw { position:relative; }
+        #bb #bba-sch { position:absolute; inset:0; z-index:6; display:none; flex-direction:column; border:2px solid var(--bd2); border-radius:8px; background:var(--bg); overflow:hidden; }
+        #bb #bba-sch.open { display:flex; }
+        #bb #bba-sb { padding:8px 10px; display:flex; flex-direction:column; gap:8px; }
+        #bb .bba-hr { border:1.5px solid var(--bd2); border-radius:12px; background:var(--sur); padding:8px 12px 10px; }
+        #bb .bba-hr .hh { display:flex; align-items:baseline; gap:8px; margin-bottom:6px; }
+        #bb .bba-hr .hh b { font-size:24px; font-weight:700 !important; color:var(--tx); }
+        #bb .bba-hr .bd { font-size:12.5px; font-weight:700 !important; color:#2e9a80; }
+        #bb .bba-hr .bd.nx { color:#c98a2b; }
+        #bb .bba-hr .sls { position:relative; display:flex; flex-direction:column; gap:8px; padding-left:20px; }
+        #bb .bba-hr .sls::before { content:""; position:absolute; left:4px; top:8px; bottom:6px; width:2px; background:var(--bd2); }
+        #bb .bba-sl { position:relative; display:flex; flex-direction:column; gap:4px; }
+        #bb .bba-sl::before { content:""; position:absolute; left:-20px; top:4px; width:11px; height:11px; border-radius:50%; background:#c98a2b; border:2px solid var(--sur); box-sizing:border-box; }
+        #bb .bba-sl .lb { font-size:13.5px; font-weight:700 !important; color:#c98a2b; font-variant-numeric:tabular-nums; }
+        #bb .bba-sl .pls { display:flex; flex-wrap:wrap; gap:6px; }
+        #bb .bba-pl { display:flex; flex-direction:column; min-width:80px; overflow:hidden; border:1.5px solid #8f8670; border-radius:8px; background:#e0dacb; text-align:center; position:relative; }
+        #bb .bba-pl .nm { padding:3px 9px 2px; font-size:14px; line-height:1.2; font-weight:700 !important; white-space:nowrap; color:#2b2418; }
+        #bb .bba-pl .tg { padding:1px 8px; font-size:11px; line-height:1.3; font-weight:700 !important; white-space:nowrap; border-top:1.5px solid #8f8670; }
+        #bb .bba-pl.sus { background:#ffc4d4; max-width:150px; }
+        #bb .bba-pl.sus .nm { color:#4a0f2b; overflow:hidden; text-overflow:ellipsis; }
+        #bb .bba-pl.sus .rs { padding:1px 8px; font-size:10.5px; line-height:1.3; font-weight:700 !important; color:#4a0f2b; background:#ff9db7; border-top:1.5px solid #8f8670; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        #bb .bba-pl.sus::before { content:""; position:absolute; inset:0; pointer-events:none; background:
+            linear-gradient(to top right, transparent calc(50% - 1.5px), rgba(30,26,60,.32) calc(50% - 1.5px), rgba(30,26,60,.32) calc(50% + 1.5px), transparent calc(50% + 1.5px)),
+            linear-gradient(to top left, transparent calc(50% - 1.5px), rgba(30,26,60,.32) calc(50% - 1.5px), rgba(30,26,60,.32) calc(50% + 1.5px), transparent calc(50% + 1.5px)); }
         `;
         document.head.appendChild(st);
 
@@ -8338,7 +8366,7 @@
                 '<span class="bba-cnt" id="bba-wd"></span>' +
                 '<span class="bba-pill" id="bba-prog">완료 0/0</span>' +
                 '<span class="bba-pill late" id="bba-late" style="display:none"></span>' +
-                '<button class="bba-btn on" id="bba-fday" title="업무일 요일에 해당하는 업무만 표시">오늘 요일만</button>' +
+                '<button class="bba-btn on" id="bba-fday" title="켜면 [평일]·[주말]·[화,수…] 처럼 요일이 적힌 업무가 해당 요일에만 보입니다 (끄면 요일과 상관없이 전부 표시)">요일 적용</button>' +
                 '<button class="bba-btn" id="bba-fopen" title="완료한 업무 숨기기">미완료만</button>' +
                 '<button class="bba-btn" id="bba-now">현재 위치로</button>' +
                 '<button class="bba-btn" id="bba-reload" title="daily_tasks.json 다시 받기">새로고침</button>' +
@@ -8348,7 +8376,7 @@
             '<div class="bba-bottom">' +
               '<div id="bba-mmw"></div>' +
               '<div class="bba-right">' +
-                '<section class="bba-zone"><div class="bba-zh"><h2>캠핑장 점검</h2><span class="bba-cnt" id="bba-campn"></span></div><div class="bba-camp" id="bba-camp"></div></section>' +
+                '<section class="bba-zone"><div class="bba-zh"><h2>배달 사이트 점검</h2><span class="bba-cnt" id="bba-campn"></span></div><div class="bba-camp" id="bba-camp"></div></section>' +
                 '<section class="bba-zone"><div class="bba-zh"><h2>HW 이슈</h2></div><div class="bba-memo"><textarea id="bba-hw" placeholder="HW 이슈를 자유롭게 입력 (예: 엘스 2호기 / 섀시 좌측 온도 센서 이상)" spellcheck="false"></textarea><div class="sv" id="bba-hw-s"></div></div></section>' +
                 '<section class="bba-zone"><div class="bba-zh"><h2>SW 이슈</h2></div><div class="bba-memo"><textarea id="bba-sw" placeholder="SW 이슈를 자유롭게 입력 (예: 판교 / 미니맵 미노출)" spellcheck="false"></textarea><div class="sv" id="bba-sw-s"></div></div></section>' +
               '</div>' +
@@ -8410,6 +8438,120 @@
             try { const b = document.querySelector('#bb-fb-dlog b'); const n = $('bba-n-dl'); if (b && n) n.textContent = (b.textContent || '').trim() || '-'; } catch (e) { /* 무시 */ }
         }
         syncDlCount(); setInterval(syncDlCount, 3000);
+
+        // ───────── 순찰 일정 (다중 모니터링 제목 우측 버튼 → 카드형 일정 보기) ─────────
+        //   관제 도우미(index.html)의 '현 시각 일정 / 다음 시간대' 카드 모양을 그대로 옮김 (보기 전용)
+        //   데이터: patrol_timetable.json(시간대별 예정/출차예정/배차방식) + patrol_status.json(순찰중단 기체)
+        const TT_URL = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/patrol_timetable.json';
+        const PS_URL = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/patrol_status.json';
+        const DISPATCH_TYPES = [
+            { key: 'auto_dispatch', label: '자동출차', bg: '#B6E2FF', color: '#0E2A44' },
+            { key: 'reserved_dispatch', label: '예약배차', bg: '#DDD0FF', color: '#2A1560' },
+            { key: 'control_dispatch', label: '관제실배차', bg: '#FFD0A0', color: '#4A2600' },
+            { key: 'site_dispatch', label: '사이트배차', bg: '#FFC0DA', color: '#4A0F2B' },
+            { key: 'random_site_dispatch', label: '랜덤사이트배차', bg: '#D0F79B', color: '#1D3A00' },
+        ];
+        const OUT_TAG = { label: '출차예정', bg: '#FFE68B', color: '#3F2E00' };
+        const OUT_PATROL_TAG = { label: '출차 및 순찰', bg: '#FFE68B', color: '#3F2E00' };
+        const NIGHT_TAG = { label: '유선기체', bg: '#E3E6EA', color: '#2B3138' };
+        let timeTable = {}, unitNotes = {}, unitHourNotes = {}, schedAt = '';
+        function suspReason(name, hh) {
+            const clean = String(name || '').replace(/\s+/g, '');
+            const gk = Object.keys(unitNotes).find(k => k.replace(/\s+/g, '') === clean);
+            if (gk) return unitNotes[gk] || '순회 보류';
+            const hk = Object.keys(unitHourNotes).find(k => k.replace(/\s+/g, '') === clean);
+            if (hk && (unitHourNotes[hk].hours || []).includes(hh)) return unitHourNotes[hk].reason || '순찰 보류';
+            return null;
+        }
+        // 요일/시간에 따라 일정에서 빼는 기체 (관제 도우미의 filterHoliday 와 같은 규칙)
+        function holidayOk(name) {
+            const now = new Date(), d = now.getDay(), h = now.getHours(), t = name.replace(/\s+/g, ''), wk = d === 0 || d === 6;
+            if (t.includes('잠실레이크')) { if (d === 1 && h >= 13 && h < 17) return false; if (d === 2 && h < 12) return false; }
+            if (d >= 1 && d <= 5 && t.includes('고양래미안') && (h === 13 || h === 14)) return false;
+            if (wk && (t.includes('인력개발원') || t.includes('구리롯데캐슬') || t.includes('장애인고용공단1') || t.includes('장애인고용공단2') || t.includes('동대문구회기동'))) return false;
+            return true;
+        }
+        function applyStatus(ps) {
+            unitNotes = {}; unitHourNotes = {};
+            const map = (ps && ps.unitStatusMap) || {};
+            Object.keys(map).forEach(k => {
+                const info = map[k]; if (!info) return;
+                if (info.hourly && Array.isArray(info.hourly.hours) && info.hourly.hours.length) unitHourNotes[k] = info.hourly;
+                if (info.status === 'suspended') unitNotes[k] = info.reason || '순회 보류';
+            });
+        }
+        async function loadSched() {
+            let tt = null, ps = null;
+            try { const r = await fetch(TT_URL + '?t=' + Date.now(), { cache: 'no-store' }); if (r.ok) { const tx = await r.text(); tt = JSON.parse(tx); lsSet('bba_tt_cache', tx); } } catch (e) { /* 캐시 사용 */ }
+            if (!tt) { try { tt = JSON.parse(lsGet('bba_tt_cache', 'null')); } catch (e) { tt = null; } }
+            try { const r = await fetch(PS_URL + '?t=' + Date.now(), { cache: 'no-store' }); if (r.ok) { const tx = await r.text(); ps = JSON.parse(tx); lsSet('bba_ps_cache', tx); } } catch (e) { /* 캐시 사용 */ }
+            if (!ps) { try { ps = JSON.parse(lsGet('bba_ps_cache', 'null')); } catch (e) { ps = null; } }
+            if (tt) timeTable = tt;
+            applyStatus(ps);
+            schedAt = pad(new Date().getHours()) + ':' + pad(new Date().getMinutes());
+            renderSched();
+        }
+        function schedGroupHtml(hh, isCur) {
+            const data = timeTable[hh] || {};
+            const tagMap = new Map();
+            [...DISPATCH_TYPES].reverse().forEach(dt => (Array.isArray(data[dt.key]) ? data[dt.key] : []).forEach(n => tagMap.set(n, dt)));
+            const outPatrol = Array.isArray(data.out_patrol) ? data.out_patrol : [];
+            outPatrol.forEach(n => tagMap.set(n, OUT_PATROL_TAG));
+            const planTimes = data.planTimes || {}, outTimes = data.outTimes || {};
+            const tl = (v, fb) => (Array.isArray(v) && v.length ? v : (typeof v === 'string' && v ? [v] : [fb]));
+            const entries = [];
+            (Array.isArray(data.plan) ? data.plan : []).forEach(n => tl(planTimes[n], hh + ':00').forEach(t => entries.push({ n, k: 'plan', t })));
+            (Array.isArray(data.out) ? data.out : []).forEach(n => tl(outTimes[n], hh + ':50').forEach(t => entries.push({ n, k: 'out', t })));
+            const nightOff = new Set();
+            if (isCur) (Array.isArray(data.night_excluded) ? data.night_excluded : []).forEach(m => {
+                const n = String(m).replace(/\s*\(.*$/, '').trim();
+                if (!n || entries.some(e => e.k === 'plan' && e.n === n)) return;
+                nightOff.add(n); tl(planTimes[n], hh + ':00').forEach(t => entries.push({ n, k: 'plan', t }));
+            });
+            entries.sort((a, b) => a.t.localeCompare(b.t));
+            const slots = [];
+            entries.forEach(e => { let s = slots.find(x => x.t === e.t); if (!s) { s = { t: e.t, items: [] }; slots.push(s); } s.items.push(e); });
+            let body = '';
+            slots.forEach(s => {
+                let pills = '';
+                s.items.forEach(({ n, k }) => {
+                    if (!holidayOk(n)) return;
+                    const rs = suspReason(n, hh);
+                    if (rs) { pills += '<div class="bba-pl sus"><span class="nm">' + esc(n) + '</span><span class="rs">' + esc(rs) + '</span></div>'; return; }
+                    let tag = k === 'plan' ? tagMap.get(n) : (outPatrol.includes(n) ? OUT_PATROL_TAG : OUT_TAG);
+                    if (!tag && k === 'plan' && nightOff.has(n)) tag = NIGHT_TAG;
+                    pills += '<div class="bba-pl"><span class="nm">' + esc(n) + '</span><span class="tg"' + (tag ? ' style="background:' + tag.bg + ';color:' + tag.color + '"' : '') + '>' + esc(tag ? tag.label : '') + '</span></div>';
+                });
+                if (pills) body += '<div class="bba-sl"><div class="lb">' + esc(s.t) + '</div><div class="pls">' + pills + '</div></div>';
+            });
+            return '<section class="bba-hr"><div class="hh"><b>' + hh + '시</b><span class="bd' + (isCur ? '' : ' nx') + '">' + (isCur ? '현 시각 일정' : '다음 시간대') + '</span></div>' +
+                (body ? '<div class="sls">' + body + '</div>' : '<div class="bba-empty">일정이 없습니다</div>') + '</section>';
+        }
+        function renderSched() {
+            const box = $('bba-sb'); if (!box) return;
+            const h = new Date().getHours(), cur = pad(h), nxt = pad((h + 1) % 24), keep = box.scrollTop;
+            box.innerHTML = Object.keys(timeTable).some(k => /^\d{2}$/.test(k))
+                ? schedGroupHtml(cur, true) + schedGroupHtml(nxt, false)
+                : '<div class="bba-empty">순찰 일정 데이터를 받지 못했습니다</div>';
+            box.scrollTop = keep;
+            const u = $('bba-sat'); if (u) u.textContent = schedAt ? schedAt + ' 기준' : '';
+        }
+        const schEl = document.createElement('div');
+        schEl.id = 'bba-sch';
+        schEl.innerHTML = '<div class="bba-zh"><h2>📅 순찰 일정</h2><span class="bba-cnt" id="bba-sat"></span><button class="bba-btn" id="bba-sre">새로고침</button><button class="bba-btn" id="bba-scl">✕ 닫기</button></div><div class="bba-zb" id="bba-sb"></div>';
+        $('bba-mmw').appendChild(schEl);
+        const mmHead = mm && mm.querySelector('.bb-mm-head');
+        if (mmHead) {
+            const sb = document.createElement('button');
+            sb.id = 'bba-sbtn'; sb.className = 'bba-sbtn'; sb.textContent = '📅 순찰 일정'; sb.title = '현 시각 / 다음 시간대 순찰 일정 보기';
+            mmHead.appendChild(sb);
+            sb.addEventListener('click', () => { const on = !schEl.classList.contains('open'); schEl.classList.toggle('open', on); if (on) { renderSched(); loadSched(); } });
+        }
+        $('bba-scl').addEventListener('click', () => schEl.classList.remove('open'));
+        $('bba-sre').addEventListener('click', () => loadSched());
+        loadSched();
+        setInterval(() => { if (schEl.classList.contains('open')) renderSched(); }, 30 * 1000);   // 시간대가 바뀌면 자동 갱신
+        setInterval(loadSched, 5 * 60 * 1000);
 
         // ───────── 업무일 / 저장 ─────────
         const nowMin = () => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); };
