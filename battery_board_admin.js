@@ -8250,11 +8250,11 @@
         /* 기존 기체 리스트 본문: 화면 밖에 치워 두되 레이아웃은 유지(로직이 크기를 재는 경우 대비) */
         #bb .bb-body { position:absolute; left:-40000px; top:0; width:1100px; height:760px; visibility:hidden; pointer-events:none; }
         /* 헤더: 동숲/아토/고정 버튼 제외, 알림 칩 · 임무받기 · 제목 · 우측 버튼만 */
-        #bb .bb-hd { min-height:84px; padding:6px 14px; flex:0 0 auto; }
+        #bb .bb-hd { min-height:0; padding:4px 14px 2px; flex:0 0 auto; }
         #bb #bb-walker-wrap-l, #bb #bb-walker-wrap-l2, #bb #bb-walker-wrap, #bb #bb-walker-wrap-r2 { display:none !important; }
-        #bb .bb-hd .bb-alert-zone { left:14px; width:300px; }
+        #bb .bb-hd .bb-alert-zone { left:14px; width:420px; top:4px; transform:none; max-height:62px; overflow-y:auto; }   /* 2줄까지 보이고 그 이상은 스크롤 */
         #bb #bb-mw { display:none !important; }   /* 아산 스테이그린 임무받기 카드는 admin 에서 숨김 */
-        #bb .bba-root { position:relative; flex:1 1 0; min-height:0; display:flex; flex-direction:column; gap:8px; padding:0 14px 12px; }
+        #bb .bba-root { position:relative; flex:1 1 0; min-height:0; display:flex; flex-direction:column; gap:6px; padding:0 14px 12px; }
         #bb .bba-bar { flex:0 0 auto; display:flex; align-items:center; gap:8px; }
         #bb .bba-dbtn { height:32px; padding:0 14px; border-radius:9px; border:2px solid var(--bd2); background:var(--sur2); color:var(--tx); font-family:inherit; font-size:14px; cursor:pointer; display:inline-flex; align-items:center; gap:7px; font-weight:700 !important; }
         #bb .bba-dbtn:hover { border-color:var(--mu); }
@@ -8286,7 +8286,7 @@
         #bb .bba-btn { height:26px; padding:0 10px; border-radius:8px; border:1.5px solid var(--bd2); background:var(--sur2); color:var(--tx); font-family:inherit; font-size:12px; font-weight:700 !important; cursor:pointer; white-space:nowrap; }
         #bb .bba-btn:hover { border-color:var(--mu); }
         #bb .bba-btn.on { background:var(--tx); color:var(--sur); border-color:var(--tx); }
-        #bb .bba-tasks { flex:1.25 1 0; min-height:150px; }
+        #bb .bba-tasks { flex:0 0 372px; }   /* 제목줄 + 헤더 + 10줄 */
         #bb .bba-bottom { flex:1 1 0; min-height:150px; display:grid; grid-template-columns:minmax(0,5fr) minmax(0,6fr); gap:8px; }
         /* 업무표 */
         #bb .bba-th, #bb .bba-row { display:grid; grid-template-columns:28px minmax(0,1fr) 120px; gap:8px; align-items:center; padding:0 10px; }
@@ -8305,7 +8305,6 @@
         #bb .bba-txt .meta { font-size:11px; font-weight:700 !important; margin-left:6px; color:var(--rd); }
         #bb .bba-row.done .bba-txt .meta { color:#22a05a; }
         #bb .bba-who { height:26px; border-radius:6px; display:grid; place-items:center; font-weight:700 !important; font-size:13px; color:#1e1a12; background:hsl(var(--h) 58% 84%); white-space:nowrap; overflow:hidden; }
-        #bb .bba-who.off { background:#111; color:#fff; border:1px solid #444; }
         #bb .bba-empty { padding:24px 10px; text-align:center; color:var(--mu); }
         /* 우측 구역 */
         #bb .bba-right { display:grid; grid-template-rows:auto minmax(0,1fr) minmax(0,1fr); gap:8px; min-height:0; min-width:0; }
@@ -8387,6 +8386,7 @@
         // 펼침 상태 (여러 개를 동시에 열 수 있음 — 나란히 표시)
         let open = [];
         try { open = JSON.parse(lsGet('bba_open', '[]')).filter(k => PANELS.some(p => p[0] === k)); } catch (e) { open = []; }
+        open = open.slice(0, 1);
         function applyOpen() {
             PANELS.forEach(([k, id]) => { const el = $(id); if (el) el.classList.toggle('bba-off', !open.includes(k)); });
             root.querySelectorAll('.bba-dbtn').forEach(b => {
@@ -8400,7 +8400,7 @@
         root.querySelector('.bba-bar').addEventListener('click', e => {
             const b = e.target.closest('.bba-dbtn'); if (!b || b.disabled) return;
             const k = b.dataset.k;
-            open = open.includes(k) ? open.filter(x => x !== k) : PANELS.map(p => p[0]).filter(x => x === k || open.includes(x));
+            open = open.includes(k) ? [] : [k];   // 한 번에 하나만 열림
             applyOpen();
         });
         applyOpen();
@@ -8444,6 +8444,7 @@
             (Array.isArray(arr) ? arr : []).forEach(t => {
                 if (!t || t.type === 'monitoring') return;   // 다중 모니터링 시간대 행은 업무표에서 제외 (task 및 그 밖의 유형은 표시)
                 const c = String(t.content || '');
+                if (/부산\s*(국립\s*)?과학관/.test(c)) return;   // 부산(국립)과학관 업무는 표시하지 않음
                 const r = /^\[(\d{1,2}:\d{2})(?:\s*~\s*(\d{1,2}:\d{2}))?\]/.exec(c);
                 const s = r ? hm(r[1]) : hm(t.rawTime);
                 if (s == null) return;
@@ -8458,8 +8459,7 @@
                 let body = r ? c.slice(r[0].length) : c;
                 if (isTag) body = body.replace(/\s*\[[^\]]*\]\s*$/, '');
                 const u0 = String(t.user == null ? '' : t.user).trim();
-                const isOff = /휴무/.test(u0) || /휴무/.test(String(t.type || ''));   // 시트에서 휴무로 넘어온 행 → 배정자 칸에 '휴무'
-                out.push({ id: hash(u0 + '|' + c), u: isOff ? '휴무' : u0, head: r ? r[0] : '', body: body.trim(), tag: tag ? '[' + tag + ']' : '', s, e, days });
+                out.push({ id: hash(u0 + '|' + c), u: u0, head: r ? r[0] : '', body: body.trim(), tag: tag ? '[' + tag + ']' : '', s, e, days });
             });
             out.sort((a, b) => rel(a.s) - rel(b.s));
             tasks = out;
@@ -8499,12 +8499,12 @@
             const cur = list.find(t => !chk[t.id] && rel(t.e) + LATE_GRACE >= nr) || null;
             const box = $('bba-tb'), keep = box ? box.scrollTop : 0;
             $('bba-rows').innerHTML = list.length ? list.map(t => {
-                const isDone = !!chk[t.id], isLate = !isDone && rel(t.e) + LATE_GRACE < nr, isCur = cur && cur.id === t.id, off = t.u === '휴무';
+                const isDone = !!chk[t.id], isLate = !isDone && rel(t.e) + LATE_GRACE < nr, isCur = cur && cur.id === t.id;
                 return '<div class="bba-row' + (isDone ? ' done' : '') + (isLate ? ' late' : '') + (isCur ? ' cur' : '') + '" data-id="' + esc(t.id) + '" tabindex="0" role="checkbox" aria-checked="' + isDone + '">' +
                     '<span class="bba-chk">✓</span>' +
                     '<span class="bba-txt"><span class="tm">' + esc(t.head) + '</span> ' + esc(t.body) + (t.tag ? ' <span class="tag">' + esc(t.tag) + '</span>' : '') +
                     (isDone ? '<span class="meta">✓ ' + esc(chk[t.id]) + ' 확인</span>' : isLate ? '<span class="meta">미확인</span>' : '') + '</span>' +
-                    '<span class="bba-who' + (off ? ' off' : '') + '" style="--h:' + hue(t.u) + '">' + (off ? '🛌휴무' : esc(t.u)) + '</span></div>';
+                    '<span class="bba-who" style="--h:' + hue(t.u) + '">' + esc(t.u) + '</span></div>';
             }).join('') : '<div class="bba-empty">' + (tasks.length ? '표시할 업무가 없습니다' : '업무표 데이터를 받지 못했습니다') + '</div>';
             if (box) box.scrollTop = keep;
             if (scrollToCur || (cur && lastCurId === null)) { const c = $('bba-rows').querySelector('.bba-row.cur'); if (c && box) box.scrollTop = Math.max(0, c.offsetTop - box.clientHeight / 3); }
