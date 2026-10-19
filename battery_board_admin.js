@@ -5561,6 +5561,7 @@
 
             _patrolLastUpdated = data.updated_at || null;
             _patrolFeed = { records: data.records, updated_at: data.updated_at };
+            window.__bbaPatrolRecords = data.records;   // [admin] 순찰 일정의 '순찰완료' 표기용 (같은 Worker 피드)
             rebuildPatrolView();
             setPatrolStatus(`${_patrolLastUpdated || '-'} 기준(POI 정체 감지)${_patrolSrc === 'Gist(대체)' ? ' · Gist 대체' : ''}`, false);   // 게시 시각 (Gist 로 읽었을 때만 표시)
         } catch (e) {
@@ -8327,6 +8328,10 @@
         #bb .bba-sbtn.left:hover { background:#f2c6d3; }
         #bb .bba-hr .bd.sp { color:#c2375f; }
         #bb .bba-hr > .pls { display:flex; flex-wrap:wrap; gap:6px; }
+        #bb .bba-pl.skip { opacity:.5; border-style:dashed; }
+        #bb .bba-pl.fin { opacity:.82; }
+        #bb .bba-pl.fin .nm { padding-top:13px; }
+        #bb .bba-pl .fb { position:absolute; top:2px; right:3px; padding:1px 6px; border-radius:8px; background:#6b7280; color:#fff; font-size:10px; line-height:1.3; font-weight:700 !important; white-space:nowrap; }
         #bb .bba-pl.mon { border-color:#22a05a; outline:3px solid #22a05a; outline-offset:0; }
         #bb #bba-right { position:relative; }
         #bb #bba-sch { position:absolute; inset:0; z-index:6; display:none; flex-direction:column; border:2px solid var(--bd2); border-radius:8px; background:var(--bg); overflow:hidden; }
@@ -8507,6 +8512,26 @@
             const c = name.replace(/\s+/g, '');
             return _monNames.some(n => n === name || n.startsWith(name + ' ') || n.replace(/\s+/g, '') === c);
         }
+        // Worker 피드(window.__bbaPatrolRecords)에서 기체별 기록을 모아, 이번 시(hour)에 순찰이 끝났는지 판정 (관제 도우미와 같은 규칙)
+        //  · 이름 '엘스' ↔ 기록 '엘스 1/2' 처럼 번호 붙은 기체 포함, 그 기체들의 기록이 모두 finished 이고 하나라도 이번 시 시작 이후 종료
+        let _recIdx = {};
+        function buildRecIdx() {
+            const idx = {}, rank = r => (r.status === 'anomaly' ? 3 : r.status === 'ongoing' ? 2 : 1);
+            (window.__bbaPatrolRecords || []).forEach(r => {
+                const nm = r && String(r.robot || '').trim();
+                if (!nm) return;
+                const cur = idx[nm];
+                if (!cur || rank(r) > rank(cur) || (rank(r) === rank(cur) && (r.end_ts || 0) > (cur.end_ts || 0))) idx[nm] = r;
+            });
+            _recIdx = idx;
+        }
+        function isFinishedThisHour(name) {
+            const recs = Object.keys(_recIdx).filter(k => k === name || k.startsWith(name + ' ') || k.replace(/\s+/g, '') === name.replace(/\s+/g, '')).map(k => _recIdx[k]);
+            if (!recs.length) return false;
+            const d = new Date(); d.setMinutes(0, 0, 0);
+            const hourStart = d.getTime() / 1000;
+            return recs.every(r => r.status === 'finished') && recs.some(r => (r.end_ts || 0) >= hourStart);
+        }
         function schedGroupHtml(hh, isCur) {
             const data = timeTable[hh] || {};
             const tagMap = new Map();
@@ -8519,7 +8544,7 @@
             (Array.isArray(data.plan) ? data.plan : []).forEach(n => tl(planTimes[n], hh + ':00').forEach(t => entries.push({ n, k: 'plan', t })));
             (Array.isArray(data.out) ? data.out : []).forEach(n => tl(outTimes[n], hh + ':50').forEach(t => entries.push({ n, k: 'out', t })));
             const nightOff = new Set();
-            if (isCur) (Array.isArray(data.night_excluded) ? data.night_excluded : []).forEach(m => {
+            (Array.isArray(data.night_excluded) ? data.night_excluded : []).forEach(m => {
                 const n = String(m).replace(/\s*\(.*$/, '').trim();
                 if (!n || entries.some(e => e.k === 'plan' && e.n === n)) return;
                 nightOff.add(n); tl(planTimes[n], hh + ':00').forEach(t => entries.push({ n, k: 'plan', t }));
@@ -8531,13 +8556,16 @@
             slots.forEach(s => {
                 let pills = '';
                 s.items.forEach(({ n, k }) => {
-                    if (!holidayOk(n)) return;
+                    const skipDay = !holidayOk(n);   // 요일/시간 규칙상 오늘은 빠지는 일정도 숨기지 않고 흐리게 표시
                     const rs = suspReason(n, hh);
                     if (rs) { pills += '<div class="bba-pl sus"><span class="nm">' + esc(n) + '</span><span class="rs">' + esc(rs) + '</span></div>'; return; }
                     let tag = k === 'plan' ? tagMap.get(n) : (outPatrol.includes(n) ? OUT_PATROL_TAG : OUT_TAG);
                     if (!tag && k === 'plan' && nightOff.has(n)) tag = NIGHT_TAG;
                     const monNow = isCur && k === 'plan' && isMonitored(n);   // 지금 다중 모니터링 목록에서 순찰 중인 기체
-                    pills += '<div class="bba-pl' + (monNow ? ' mon' : '') + '"' + (monNow ? ' title="현재 모니터링 중"' : '') + '><span class="nm">' + esc(n) + '</span><span class="tg"' + (tag ? ' style="background:' + tag.bg + ';color:' + tag.color + '"' : '') + '>' + esc(tag ? tag.label : '') + '</span></div>';
+                    const finNow = isCur && k === 'plan' && !monNow && isFinishedThisHour(n);   // 이번 시(hour) 안에 순찰이 끝난 기체 (Worker 기록)
+                    pills += '<div class="bba-pl' + (monNow ? ' mon' : '') + (finNow ? ' fin' : '') + (skipDay ? ' skip' : '') + '"' +
+                        (monNow ? ' title="현재 모니터링 중"' : finNow ? ' title="이번 시간대에 순찰이 끝난 기체입니다"' : skipDay ? ' title="요일·시간 규칙상 오늘 이 시각에는 제외되는 일정입니다"' : '') + '>' +
+                        (finNow ? '<span class="fb">순찰완료</span>' : '') + '<span class="nm">' + esc(n) + '</span><span class="tg"' + (tag ? ' style="background:' + tag.bg + ';color:' + tag.color + '"' : '') + '>' + esc(tag ? tag.label : '') + '</span></div>';
                 });
                 if (pills) body += '<div class="bba-sl"><div class="lb">' + esc(s.t) + '</div><div class="pls">' + pills + '</div></div>';
             });
@@ -8567,6 +8595,7 @@
                 const u = $('bba-sat'); if (u) u.textContent = psAt ? '시트 갱신 ' + psAt : '';
             } else {
                 _monNames = monitoredNames();
+                buildRecIdx();
                 const h = new Date().getHours(), cur = pad(h), nxt = pad((h + 1) % 24);
                 box.innerHTML = Object.keys(timeTable).some(k => /^\d{2}$/.test(k))
                     ? schedGroupHtml(cur, true) + schedGroupHtml(nxt, false)
