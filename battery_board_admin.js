@@ -8239,7 +8239,7 @@
         const TASKS_REFRESH_MS = 5 * 60 * 1000;
         const WD0 = 7 * 60;                       // 업무일 시작 07:00
         const LATE_GRACE = 10;                    // 종료 시각 + 10분이 지나도 미확인이면 '지연'
-        const CAMPS = ['아산 스테이그린', '가평 니모 캠핑장', '대관령 솔내음 캠핑장', '파주 LGD'];
+        const CAMPS = ['아산 스테이그린', '가평 니모', '대관령 솔내음', '파주 LGD'];
         const DAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
         // ───────── 스타일 ─────────
@@ -8250,10 +8250,11 @@
         /* 기존 기체 리스트 본문: 화면 밖에 치워 두되 레이아웃은 유지(로직이 크기를 재는 경우 대비) */
         #bb .bb-body { position:absolute; left:-40000px; top:0; width:1100px; height:760px; visibility:hidden; pointer-events:none; }
         /* 헤더: 동숲/아토/고정 버튼 제외, 알림 칩 · 임무받기 · 제목 · 우측 버튼만 */
-        #bb .bb-hd { min-height:92px; padding:6px 14px; flex:0 0 auto; }
+        #bb .bb-hd { min-height:84px; padding:6px 14px; flex:0 0 auto; }
         #bb #bb-walker-wrap-l, #bb #bb-walker-wrap-l2, #bb #bb-walker-wrap, #bb #bb-walker-wrap-r2 { display:none !important; }
-        #bb .bb-hd .bb-alert-zone { left:256px; width:224px; }
-        #bb .bba-root { flex:1 1 0; min-height:0; display:flex; flex-direction:column; gap:8px; padding:0 14px 12px; }
+        #bb .bb-hd .bb-alert-zone { left:14px; width:300px; }
+        #bb #bb-mw { display:none !important; }   /* 아산 스테이그린 임무받기 카드는 admin 에서 숨김 */
+        #bb .bba-root { position:relative; flex:1 1 0; min-height:0; display:flex; flex-direction:column; gap:8px; padding:0 14px 12px; }
         #bb .bba-bar { flex:0 0 auto; display:flex; align-items:center; gap:8px; }
         #bb .bba-dbtn { height:32px; padding:0 14px; border-radius:9px; border:2px solid var(--bd2); background:var(--sur2); color:var(--tx); font-family:inherit; font-size:14px; cursor:pointer; display:inline-flex; align-items:center; gap:7px; font-weight:700 !important; }
         #bb .bba-dbtn:hover { border-color:var(--mu); }
@@ -8264,7 +8265,8 @@
         #bb .bba-dbtn .ar { font-size:10px; }
         #bb .bba-note { margin-left:auto; font-size:12px; color:var(--mu); }
         /* 펼침 영역 */
-        #bb #bba-dr { flex:0 0 340px; display:flex; gap:10px; min-height:0; }
+        /* 펼침 그리드: 버튼 줄 아래 보드 전체(좌우 끝~하단)를 덮는 오버레이 */
+        #bb #bba-dr { position:absolute; left:14px; right:14px; top:40px; bottom:12px; z-index:30; display:flex; gap:10px; min-height:0; padding:8px; background:var(--bg); border:2px solid var(--bd2); border-radius:10px; box-shadow:0 10px 28px rgba(0,0,0,.35); box-sizing:border-box; }
         #bb #bba-dr.none { display:none; }
         #bb #bba-dr > .bba-p, #bb #bba-mmw > .bba-p {
             flex:1 1 0; width:auto; min-width:0; height:100%; position:relative; inset:auto; z-index:auto; display:flex !important; flex-direction:column;
@@ -8290,13 +8292,13 @@
         #bb .bba-th, #bb .bba-row { display:grid; grid-template-columns:28px minmax(0,1fr) 120px; gap:8px; align-items:center; padding:0 10px; }
         #bb .bba-th { position:sticky; top:0; z-index:2; background:var(--sur2); border-bottom:1px solid var(--bd); height:26px; font-size:12px; color:var(--mu); }
         #bb .bba-th span:last-child { text-align:center; }
-        #bb .bba-row { min-height:34px; border-bottom:1px solid var(--bd); cursor:pointer; position:relative; }
+        #bb .bba-row { min-height:30px; border-bottom:1px solid var(--bd); cursor:pointer; position:relative; }
         #bb .bba-row:hover { background:var(--sur2); }
         #bb .bba-row.cur { background:#fff3b5; }
         #bb .bba-row.late::before { content:""; position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--rd); }
         #bb .bba-chk { width:22px; height:22px; border-radius:6px; border:2px solid var(--bd2); background:var(--sur); display:grid; place-items:center; font-size:14px; line-height:1; color:transparent; }
         #bb .bba-row.done .bba-chk { background:#22a05a; border-color:#22a05a; color:#fff; }
-        #bb .bba-txt { min-width:0; padding:6px 0; line-height:1.4; font-size:14px; color:var(--tx); }
+        #bb .bba-txt { min-width:0; padding:4px 0; line-height:1.35; font-size:13.5px; color:var(--tx); }
         #bb .bba-txt .tm { color:var(--mu); font-variant-numeric:tabular-nums; }
         #bb .bba-txt .tag { color:var(--mu); font-size:12px; }
         #bb .bba-row.done .bba-txt { text-decoration:line-through; text-decoration-thickness:1.5px; color:var(--mu); }
@@ -8353,6 +8355,20 @@
               '</div>' +
             '</div>';
         bb.appendChild(root);
+
+        // 아산 스테이그린 임무받기 카드 제거 (admin 전용)
+        try { const mw = $('bb-mw'); if (mw) mw.remove(); } catch (e) { /* 무시 */ }
+
+        // 화면 높이에 맞춰 보드 높이를 줄여 위/아래가 잘리지 않게 함 (최대 1300, 줌 반영)
+        function fitHeight() {
+            try {
+                const z = parseFloat(lsGet('bba_zoom', '0.8')) || 0.8;
+                bb.style.height = Math.max(1000, Math.min(1300, Math.floor((window.innerHeight - 6) / z))) + 'px';
+            } catch (e) { /* 무시 */ }
+        }
+        fitHeight();
+        window.addEventListener('resize', fitHeight);
+        ['bb-zoom-in', 'bb-zoom-out'].forEach(id => { const b = $(id); if (b) b.addEventListener('click', () => setTimeout(fitHeight, 0)); });
 
         // ───────── 기존 그리드 옮겨 붙이기 ─────────
         const dr = $('bba-dr');
@@ -8426,7 +8442,7 @@
         function parseTasks(arr) {
             const out = [];
             (Array.isArray(arr) ? arr : []).forEach(t => {
-                if (!t || t.type !== 'task') return;
+                if (!t || t.type === 'monitoring') return;   // 다중 모니터링 시간대 행은 업무표에서 제외 (task 및 그 밖의 유형은 표시)
                 const c = String(t.content || '');
                 const r = /^\[(\d{1,2}:\d{2})(?:\s*~\s*(\d{1,2}:\d{2}))?\]/.exec(c);
                 const s = r ? hm(r[1]) : hm(t.rawTime);
@@ -8441,7 +8457,9 @@
                 else if (tag && tag !== '매일') days = tag.split(',').map(x => DAYS.indexOf(x.trim())).filter(x => x >= 0);
                 let body = r ? c.slice(r[0].length) : c;
                 if (isTag) body = body.replace(/\s*\[[^\]]*\]\s*$/, '');
-                out.push({ id: hash(String(t.user) + '|' + c), u: String(t.user || ''), head: r ? r[0] : '', body: body.trim(), tag: tag ? '[' + tag + ']' : '', s, e, days });
+                const u0 = String(t.user == null ? '' : t.user).trim();
+                const isOff = /휴무/.test(u0) || /휴무/.test(String(t.type || ''));   // 시트에서 휴무로 넘어온 행 → 배정자 칸에 '휴무'
+                out.push({ id: hash(u0 + '|' + c), u: isOff ? '휴무' : u0, head: r ? r[0] : '', body: body.trim(), tag: tag ? '[' + tag + ']' : '', s, e, days });
             });
             out.sort((a, b) => rel(a.s) - rel(b.s));
             tasks = out;
