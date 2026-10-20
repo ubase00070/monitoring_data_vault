@@ -9695,12 +9695,15 @@
         const orderFor = s => s < 720 ? [0, 1, 2, 3] : s < 1020 ? [1, 0, 2, 3] : [2, 1, 0, 3];
         const DEFAULTS = { gp: 0.1, cw: 0.4, cap: 3, holiday: false, sciPen: 1, grace: 1, tMid: 0.15, tLate: 0.3 };
         const RELAX_TXT = ['', '가중치 2.0 상한을 풀어 배정', '다중 포함 개수 상한까지 풀어 배정', '다중과 연속 금지까지 풀어 배정'];
+        /* [규칙] 07~16시 근무자 중 07·08·09시 다중이 없는 사람은 '부산 08:50 HUB B 출근 + 09~10시 과학관' 을 우선 맡는다 (안 그러면 09~18시 근무자가 받기 쉬움) */
+        const isHubU = u => /HUB B 출근|부산 08:50/.test(u.label || '');
+        const earlyFree = s => !!(s && s.p && s.p.start === 420 && s.p.end === 960 && ![420, 480, 540].some(H => s.mons.includes(H)));
         function assign(variant, d, M, rng, optIn) {
           const opt = Object.assign({}, DEFAULTS, optIn || {});
           const LV = opt.live || null, ex = new Set(LV ? LV.exclude || [] : []);
           const people = LV ? LV.people.filter(p => !ex.has(p.name)) : present(d), mons = LV ? LV.main : (M.main[d] || {}), subs = LV ? LV.sub : (M.sub[d] || {}), S = {};
           people.forEach(p => { const Hs = Object.entries(mons).filter(([h, n]) => n === p.name).map(([h]) => +h); const sb = Object.entries(subs).filter(([h, n]) => n === p.name).map(([h]) => +h); S[p.name] = { p, mons: Hs, subAll: sb, subs: sb.filter(H => H >= SUB_STRICT), W: Hs.length, Ct: 0, tasks: [], sci: false, slots: new Set(), rows: 0 }; });
-          const base = variant === 'base', lite = variant === 'lite', cm = variant === 'cnt', nv = variant === 'new' || variant === 'newF' || variant === 'newL' || variant === 'newH', U0 = buildUnits(d, nv || cm, opt.holiday, LV ? LV.tasks : null).map(u => nv && opt.grace && u.rows.length === 1 && /무선충전/.test(u.label) && /재시작/.test(u.label) && u.s === 600 ? { ...u, e: 630 } : u), U = variant === 'newH' ? [...U0.filter(u => u.sci).map(u => ({ ...u, restrict: true })), ...U0.filter(u => !u.sci)] : variant === 'newF' ? [...U0.filter(u => u.sci), ...U0.filter(u => !u.sci)] : variant === 'newL' ? [...U0.filter(u => !u.sci), ...U0.filter(u => u.sci)] : U0, out = [];
+          const base = variant === 'base', lite = variant === 'lite', cm = variant === 'cnt', nv = variant === 'new' || variant === 'newF' || variant === 'newL' || variant === 'newH', U0 = buildUnits(d, nv || cm, opt.holiday, LV ? LV.tasks : null).map(u => nv && opt.grace && u.rows.length === 1 && /무선충전/.test(u.label) && /재시작/.test(u.label) && u.s === 600 ? { ...u, e: 630 } : u), U = variant === 'newH' ? [...U0.filter(u => u.sci).map(u => ({ ...u, restrict: true })), ...U0.filter(u => !u.sci)] : variant === 'newF' ? [...U0.filter(u => u.sci), ...U0.filter(u => !u.sci)] : variant === 'newL' ? [...U0.filter(u => !u.sci), ...U0.filter(u => u.sci)] : (variant === 'new' ? [...U0.filter(isHubU), ...U0.filter(u => !isHubU(u))] : U0), out = [];
           const UU = opt.names ? (opt.evalOnly ? U : [...U.filter(u => opt.keep.has(u.rows[0])), ...U.filter(u => !opt.keep.has(u.rows[0]))]) : U;
           for (const u of UU) {
             let chosen = null, tierUsed = null;
@@ -9748,7 +9751,7 @@
               }
             } else {
               for (let tier = 0; tier < (u.restrict ? 1 : 4); tier++) {
-                const c = people.filter(p => {
+                let c = people.filter(p => {
                   const s = S[p.name];
                   if (u.restrict && s.mons.length > 0) return false;
                   if (!(p.start <= u.slot && u.slot + 60 <= p.end)) return false;
@@ -9763,6 +9766,7 @@
                   return true;
                 });
                 if (!c.length) continue;
+                if (nv && isHubU(u)) { const pc = c.filter(p => earlyFree(S[p.name])); if (pc.length) c = pc; }   // 07~16시 근무자 중 07·08·09시 다중이 없는 사람 우선
                 const od = orderFor(u.s);
                 const pen = p => {
                   const s = S[p.name]; if (u.sci) return 0;
@@ -9799,6 +9803,7 @@
             if (s.p.brk && ov(u.s, u.e, s.p.brk[0], s.p.brk[1])) { why.push('휴게시간과 겹침'); m.other++; }
             if (r.tasks.some(t => ov(t[0], t[1], u.s, u.e))) { why.push('본인 다른 업무와 겹침'); m.other++; }
             if (u.sci && r.sci) { why.push('부산 하루 2회'); m.other++; }
+            if (isHubU(u) && !earlyFree(s) && Object.values(S).some(x => earlyFree(x) && x.mons.length + Math.max(u.w, 1e-6) <= 2 + 1e-9 && x.mons.length + u.cnt <= 3 && !x.mons.some(H => ov(H - 10, H + 50 + GAP, u.s - GAP, u.e + GAP)))) { why.push('07~16시 근무자 중 07·08·09시 다중이 없는 사람이 있는데 부산 08:50을 다른 사람이 받음'); m.other++; }
             r.W += u.w; r.C += u.cnt; r.tasks.push([u.s, u.e]); r.sci = r.sci || u.sci;
             if (why.length) { flags[i] = why; if (why.some(x => !x.startsWith('가중치'))) core[i] = 1; }
           });
@@ -9949,15 +9954,8 @@
             } catch (e) { simRes = null; simErr = (e && e.message) || String(e); console.warn('[BBA] 일일 업무 배정표 계산 실패:', simErr); }
             finally { simSearching = false; simBusy = false; simProg = ''; simDraw(); }
         }
-        const SIM_AUTO_FROM = WD0 - 5, SIM_AUTO_TO = 8 * 60 + 30;   // 자동 재배정은 시트 업무표가 오늘자로 바뀐 07시 언저리(06:55~08:30)에서 업무일당 1회만
-        function simOnNewJson(txt) {   // daily_tasks.json 을 받을 때마다 호출
-            try {
-                const c = simCfg(), nm = nowMin(), inWin = nm >= SIM_AUTO_FROM && nm < SIM_AUTO_TO;
-                if (!c) simDo(txt);   // (비동기: 5초 동안 최적안을 찾음)   // 이 기능이 처음 들어온 뒤 한 번은 계산 (이후엔 아래 규칙)
-                else if (c.day !== curKey && inWin) simDo(txt);   // 오늘 업무일 첫 JSON(07시 언저리) → 자동 1회
-                else if (!simRes) simRun(c);
-                simDraw();
-            } catch (e) { console.warn('[BBA] 일일 업무 배정표:', e && e.message); }
+        function simOnNewJson(txt) {   // 수동 방식: daily_tasks.json 을 받아도 자동 계산은 하지 않는다 — 저장된 결과를 다시 그리기만 함 (계산은 '재배정하기' 버튼에서만)
+            try { const c = simCfg(); if (!simRes && c && c.day === curKey) simRun(c); simDraw(); } catch (e) { console.warn('[BBA] 일일 업무 배정표:', e && e.message); }
         }
         const simp = document.createElement('div'); simp.id = 'bba-sim'; root.appendChild(simp);
         const simNm = n => n ? '<span class="nm' + (/없음/.test(n) ? ' none' : '') + '" style="--h:' + hue(n) + '">' + esc(n) + '</span>' : '<span class="nm none">후보 없음</span>';
@@ -9970,7 +9968,7 @@
             const head = '<div class="mh"><b title="새 수식으로 계산한 시뮬레이션입니다 — 실제 업무표는 바뀌지 않습니다">📋 일일 업무 배정표</b><span class="sp">' +
                 '<button class="bba-btn cp" data-a="cp" title="아래 \'새 수식 배정자\' 결과를 시트 행 순서 그대로 한 열(줄바꿈으로 구분)로 복사합니다 — 시트의 배정자 칸에 값만 붙여넣기">📋 배정자 1열 복사</button>' +
                 '<button class="bba-btn on" data-a="re" title="지금의 daily_tasks.json 으로 일일 업무 배정을 다시 찾습니다 (다중/서브는 그대로)">' + (simBusy ? (simProg || '받아오는 중…') : '재배정하기') + '</button><button class="bba-btn" data-a="x">✕ 닫기</button></span></div>';
-            if (!R) { simp.innerHTML = head + '<div class="meta">' + (simBusy ? (simProg || '최적안을 찾는 중입니다…') : !txt ? 'daily_tasks.json 을 아직 받지 못했습니다' : cfg && cfg.day !== curKey ? '오늘 업무일의 배정표는 아직 계산되지 않았습니다 (자동 계산은 07시 언저리 1회뿐). <b>재배정하기</b>를 누르면 지금의 daily_tasks.json 으로 계산합니다.' : '계산하지 못했습니다: ' + esc(simErr || '알 수 없는 오류')) + '</div>'; return; }
+            if (!R) { simp.innerHTML = head + '<div class="meta">' + (simBusy ? (simProg || '최적안을 찾는 중입니다…') : (!cfg || cfg.day !== curKey) ? '아직 계산하지 않았습니다. <b>재배정하기</b>를 누르면 최신 daily_tasks.json 을 받아 최적안을 찾습니다.' : '계산하지 못했습니다: ' + esc(simErr || '알 수 없는 오류')) + '</div>'; return; }
             const { P, A, B, mA, mB, ctx, follow, d, wd } = R, at = new Date(cfg.at), dow = '일월화수목금토'[wd.getDay()], stale = hash(cfg.txt) !== hash(txt);
             const chg = P.TL.filter((t, i) => !t.fixed && (B[i] || null) !== (A[i] || null)).length;
             const sB = R.sB, warns = [];
