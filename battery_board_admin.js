@@ -8328,7 +8328,38 @@
         #bb .bba-bar.inhd { position:absolute; left:14px; top:50%; transform:translateY(-50%); z-index:3; gap:6px; }
         #bb .bba-bar.inhd .bba-note { display:none; }   /* '업무표 갱신' 문구는 제목 줄에서 숨김 (업무표 머리글에 이미 표시) */
         #bb .bba-bar.inhd .bba-dbtn { height:30px; padding:0 10px; font-size:13px; }
-        #bb .bba-mmb.inhd { position:absolute; left:calc(50% + 128px); top:50%; transform:translateY(-50%); margin:0; z-index:3; }
+        #bb .bba-hdr2 { position:absolute; left:calc(50% + 128px); top:50%; transform:translateY(-50%); display:flex; gap:6px; z-index:3; }
+        #bb .bba-hdr2 .bba-mmb { margin:0; }
+        #bb .bba-mmb.sim { border-color:#9db4ff; }
+        #bb #bba-sim { position:absolute; left:14px; right:14px; top:6px; bottom:12px; z-index:32; display:none; flex-direction:column; min-height:0; box-sizing:border-box; padding:10px 12px 12px; background:var(--bg); border:2px solid var(--bd2); border-radius:12px; box-shadow:0 10px 28px rgba(0,0,0,.35); }
+        #bb #bba-sim.open { display:flex; }
+        #bb #bba-sim .mh { display:flex; align-items:center; gap:8px; margin-bottom:4px; flex-wrap:wrap; }
+        #bb #bba-sim .mh b { font-size:16px; font-weight:700 !important; }
+        #bb #bba-sim .mh .sp { margin-left:auto; display:flex; gap:6px; align-items:center; }
+        #bb #bba-sim .meta { font-size:12px; color:var(--mu); margin-bottom:6px; line-height:1.45; }
+        #bb #bba-sim .meta b { color:var(--tx); font-weight:700 !important; }
+        #bb #bba-sim .meta .warn { color:var(--rd); font-weight:700 !important; }
+        #bb #bba-sim .sb { flex:1; min-height:0; display:grid; grid-template-columns:minmax(230px,.36fr) minmax(0,1fr); gap:10px; }
+        #bb #bba-sim .col { min-height:0; overflow:auto; border:1.5px solid var(--bd2); border-radius:10px; background:var(--sur); }
+        #bb #bba-sim .gh { position:sticky; top:0; z-index:2; display:grid; gap:8px; padding:5px 8px; background:var(--sur2); border-bottom:2px solid var(--bd2); font-size:12px; font-weight:700 !important; color:var(--mu); }
+        #bb #bba-sim .gr { display:grid; gap:8px; align-items:center; padding:2px 8px; min-height:26px; border-bottom:1px solid var(--bd); }
+        #bb #bba-sim .c1 .gh, #bb #bba-sim .c1 .gr { grid-template-columns:50px minmax(0,1fr) minmax(0,1fr); }
+        #bb #bba-sim .c2 .gh, #bb #bba-sim .c2 .gr { grid-template-columns:86px minmax(0,1fr) minmax(150px,.62fr); }
+        #bb #bba-sim .tm { font-size:12.5px; font-weight:700 !important; color:var(--mu); font-variant-numeric:tabular-nums; }
+        #bb #bba-sim .tk { font-size:12.5px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        #bb #bba-sim .nm { height:22px; border-radius:6px; display:grid; place-items:center; font-weight:600 !important; font-size:12.5px; color:#1e1a12; background:hsl(var(--h) 58% 84%); white-space:nowrap; overflow:hidden; padding:0 6px; }
+        #bb #bba-sim .nm.none { background:var(--sur2); color:var(--mu); border:1px dashed var(--bd2); }
+        #bb #bba-sim .em { color:var(--mu); font-size:12px; text-align:center; }
+        #bb #bba-sim .gr.chg { background:#e3eeff; }
+        #bb #bba-sim .gr.chg .nm { box-shadow:0 0 0 2px #3b82f6; }
+        #bb #bba-sim .asg { display:flex; align-items:center; gap:6px; min-width:0; }
+        #bb #bba-sim .asg .nm { flex:0 0 auto; min-width:60px; }
+        #bb #bba-sim .asg .was { font-size:11px; color:#2a5db0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
+        #bb #bba-sim .gr.fx { opacity:.6; }
+        #bb #bba-sim .foot { margin-top:6px; font-size:11.5px; color:var(--mu); }
+        #bb #bba-sim .seg2 { display:inline-flex; border:1.5px solid var(--bd2); border-radius:8px; overflow:hidden; }
+        #bb #bba-sim .seg2 button { height:26px; padding:0 10px; border:0; background:var(--sur2); color:var(--mu); font-family:inherit; font-size:12px; font-weight:700 !important; cursor:pointer; }
+        #bb #bba-sim .seg2 button.on { background:var(--tx); color:var(--sur); }
         #bb .bba-root.hdbar #bba-dr, #bb .bba-root.hdbar #bba-mmp { top:6px; }
         #bb .bba-dbtn { height:32px; padding:0 14px; border-radius:9px; border:2px solid var(--bd2); background:var(--sur2); color:var(--tx); font-family:inherit; font-size:14px; cursor:pointer; display:inline-flex; align-items:center; gap:7px; font-weight:700 !important; }
         #bb .bba-dbtn:hover { border-color:var(--mu); }
@@ -8349,15 +8380,15 @@
         #bb #bba-mmp .mh .sp { margin-left:auto; font-size:11.5px; color:var(--mu); }
         #bb #bba-mmp .mx { width:26px; height:26px; border-radius:7px; border:1.5px solid var(--bd2); background:var(--sur2); color:var(--tx); cursor:pointer; font-family:inherit; line-height:1; }
         #bb #bba-mmp .mb { position:relative; flex:1; min-height:0; overflow:auto; border:1.5px solid var(--bd2); border-radius:10px; background:var(--sur); }
-        #bb #bba-mmp .mg { display:grid; grid-template-columns:62px minmax(0,1fr) minmax(0,1fr) 12px minmax(0,1.35fr); align-items:stretch; }
-        #bb #bba-mmp .mg > div { padding:5px 7px; border-bottom:1px solid var(--bd); display:flex; flex-direction:column; justify-content:center; gap:3px; min-width:0; }
-        #bb #bba-mmp .mg .hd { position:sticky; top:0; z-index:2; background:var(--sur2); font-size:12px; font-weight:700 !important; color:var(--mu); text-align:center; border-bottom:2px solid var(--bd2); align-items:center; }
+        #bb #bba-mmp .mg { display:grid; grid-template-columns:62px minmax(0,1fr) minmax(0,1fr) 12px minmax(0,1.35fr); grid-template-rows:auto repeat(24, minmax(24px, 1fr)); align-items:stretch; min-height:100%; }   /* 24개 시간대가 패널 높이에 맞춰 나눠 가짐 → 위아래 스크롤 없음 */
+        #bb #bba-mmp .mg > div { padding:2px 7px; border-bottom:1px solid var(--bd); display:flex; flex-direction:column; justify-content:center; gap:2px; min-width:0; }
+        #bb #bba-mmp .mg .hd { padding-top:4px; padding-bottom:4px; position:sticky; top:0; z-index:2; background:var(--sur2); font-size:12px; font-weight:700 !important; color:var(--mu); text-align:center; border-bottom:2px solid var(--bd2); align-items:center; }
         #bb #bba-mmp .mg .hd.mc { background:#dff3ee; color:#1c6a57; } #bb #bba-mmp .mg .hd.sc { background:#e7e9fb; color:#3b3f96; }
         #bb #bba-mmp .mg .tm { font-size:13px; font-weight:700 !important; color:var(--mu); text-align:center; font-variant-numeric:tabular-nums; }
         #bb #bba-mmp .mg .gap { padding:0; border-bottom:none; background:var(--bg); }
         #bb #bba-mmp .mg .cur { background:#fff3c4; } #bb #bba-mmp .mg .cur.tm { color:#8a5a00; }
         #bb #bba-mmp .mg .past { opacity:.55; }
-        #bb #bba-mmp .mg .nm { height:26px; border-radius:6px; display:grid; place-items:center; font-weight:700 !important; font-size:13px; color:#1e1a12; background:hsl(var(--h) 58% 84%); white-space:nowrap; overflow:hidden; }
+        #bb #bba-mmp .mg .nm { height:20px; border-radius:6px; display:grid; place-items:center; font-weight:700 !important; font-size:13px; color:#1e1a12; background:hsl(var(--h) 58% 84%); white-space:nowrap; overflow:hidden; }
         #bb #bba-mmp .mg .nm.none { background:var(--sur2); color:var(--mu); border:1px dashed var(--bd2); }
         #bb #bba-mmp .mg .sci { display:flex; align-items:center; gap:5px; min-width:0; }
         #bb #bba-mmp .mg .sci .nm { flex:1 1 0; min-width:0; padding:0 6px; }   /* 담당자가 여럿이면 한 줄에 나란히 (행 높이 = 다중/서브와 동일) */
@@ -8558,7 +8589,7 @@
         // 버튼 줄을 '관제 센터' 제목 줄로 올림: 배달 로그·개입·이석 = 제목 박스 왼쪽, 다중/과학관 = 오른쪽 → 아래 그리드가 그만큼 길어짐
         try {
             const hd = bb.querySelector('.bb-hd');
-            if (hd) { const bar = root.querySelector('.bba-bar'), mb = $('bba-mmb'); hd.appendChild(bar); hd.appendChild(mb); bar.classList.add('inhd'); mb.classList.add('inhd'); root.classList.add('hdbar'); }
+            if (hd) { const bar = root.querySelector('.bba-bar'), mb = $('bba-mmb'); const hb = document.createElement('div'); hb.className = 'bba-hdr2'; hd.appendChild(bar); hd.appendChild(hb); hb.appendChild(mb); const sb = document.createElement('button'); sb.className = 'bba-mmb sim'; sb.id = 'bba-simb'; sb.title = '새 수식(시뮬레이터)을 적용했을 때의 일일 업무 배정 결과 — 시뮬레이션이며 실제 업무표는 바뀌지 않습니다'; sb.textContent = '📋 일일 업무 배정표'; hb.appendChild(sb); bar.classList.add('inhd'); mb.classList.add('inhd'); root.classList.add('hdbar'); }
         } catch (e) { /* 무시 */ }
 
         // 아산 스테이그린 임무받기 카드 제거 (admin 전용)
@@ -8933,6 +8964,7 @@
                 const json = JSON.parse(txt);
                 lsSet('bba_tasks_cache', txt);
                 parseTasks(json);
+                try { if (typeof simOnNewJson === 'function') simOnNewJson(txt); } catch (e2) { /* 무시 */ }
                 srcMsg = '업무표 ' + pad(new Date().getHours()) + ':' + pad(new Date().getMinutes()) + ' 갱신';
             } catch (e) {
                 try { parseTasks(JSON.parse(lsGet('bba_tasks_cache', '[]'))); } catch (e2) { tasks = []; }
@@ -9584,15 +9616,352 @@
             mmp.querySelector('.mx').addEventListener('click', () => { mmp.classList.remove('open'); $('bba-mmb').classList.remove('on'); });
         }
         function closeMmp() { mmp.classList.remove('open'); $('bba-mmb').classList.remove('on'); }
+        // ───────── 일일 업무 배정표: '새 수식(시뮬레이터)'을 적용했을 때의 배정 결과 (dailytaskssim.html 의 로직 이식) ─────────
+        //  · 입력 = 지금 받아온 daily_tasks.json (다중/서브 · 업무 목록) → 규칙(가중치 2.0 이하, 다중 포함 3개 이하, 부산 하루 1회, 시간·휴게·다중 겹침 금지 등)에 맞게 다시 배정한 결과만 보여준다.
+        //  · 시뮬레이션일 뿐 — 일일 업무표(실제 배정자)는 JSON 이 바뀌기 전까지 절대 바뀌지 않는다.
+        //  · JSON 내용이 바뀐 것을 받는 즉시(07시 갱신 등) 한 번 계산해 결과(시드)를 고정 → 열 때마다 같은 결과. '다시 뽑기'로만 바뀜.
+        const SIM = (function () {
+        const STAFF_DATA=[["김지훈", "07:00~16:00", "WWWOOWWOOAWWWWOOWWWWWOOWWWWWOOO"], ["오정훈", "07:00~16:00", "OWWHOOWWHAAOOWWWWOOWWWWWOOOWWWO"], ["호덕진", "07:00~16:00", "WOOWWOOWWWWWOOWWAOWWWWWOOOOWWWW"], ["이기완", "07:00~16:00", "WOOWWOOOWWWWWOOAWWWWWOOWWWWWOOW"], ["김경환", "08:00~17:00", "OWWOOWWWWWOOWWWWOOWWWWWOOWOOWWW"], ["박효선", "08:00~17:00", "WOOWWWWWOOWWWWOOWWWWWOOOOWWWWWO"], ["최윤혁", "09:00~18:00", "WWOAAOWWWOAAOWWWWWOOOWWWWOOWWOO"], ["신현철", "09:00~18:00", "WOOWWHWWOOWWOOWWWWWOWWOOHWWOOAW"], ["이민수", "09:00~18:00", "WWWOOWWOOWWWWOOWWWOWWWAOOWWWWOO"], ["김한석", "09:00~18:00", "WWOOAWWWWWOOWWWWOOOWWWWWOOWWWOO"], ["이지윤", "09:00~18:00", "OOWhhhhOOOWWWWOOWWWWOOWWWWWOOWW"], ["김미소", "09:00~18:00", "WWOOWWWWWOOWOWWWWWOOOWWWWOOWWWO"], ["이규은", "09:00~18:00", "OOWWWWWOOOWWWWWOOWWWWWOOWWWWWOO"], ["유재헌", "09:00~18:00", "OOWWWWWOOWWOWWOOWWWWWOOWWWWOOWW"], ["조천호", "09:00~18:00", "WWOOWWWWOOOWWWWWOOWWWWOOWWWOOWW"], ["이수성", "09:00~18:00", "OOWWWWOOWWWWWOOWWWWWOWWWOOWWOOW"], ["백진홍", "09:00~18:00", "WWOOOWWWWWOWOWWWWWOOWWWOWOOOWWW"], ["임미선", "09:00~18:00", "OWWOOOOOWWWWWOWWWWWOOWWWOWWWWWO"], ["이현경", "09:00~18:00", "WWOOOWWWWOOWWOOWWWWWOOWWWWWOOWW"], ["석승찬", "10:00~19:00", "WHOWWWOWWOOHWWWWOOOWWWWOOOOWWWW"], ["이준", "10:00~19:00", "WWWWOOWOWWWWOWOOWWOWWOOWWWWWOOW"], ["한승완", "10:00~19:00", "OWWWWOOWWWOWWOWWWWWOOWWWOWWWOOO"], ["김동진", "11:00~20:00", "WWWWOOOWWWOOWWWWOOAAWWWOOOOWWWW"], ["송주현", "11:00~20:00", "WAOOWWOOWWWOOWWWWWOOOWWWWOOWWWW"], ["송태영", "11:00~20:00", "WWWOOWWHWWOOOWWWOOWWOOWWAOWWWWO"], ["신은정", "11:00~20:00", "WOOWWWWOOWWWWWOOWWWOOWWOOWWOWWW"], ["장재원", "11:00~20:00", "OWWWOOWWWOOWWWWWOOWWWOOWWWWWOOW"], ["박효빈", "14:00~23:00", "OOWWWOOWWWOOOWWWWOOWWWWOOWWWWWW"], ["권재윤", "14:00~23:00", "WWOOWWWWOOWWWWOOWWWWOOWWWOOWWWO"], ["김가은", "15:00~24:00", "WWWOOOWWWWOOWWWWOOWWWWOOWWWOOWW"], ["서형민", "15:00~24:00", "WWWWOOWWWOOWWWWWOOWWOOWWWWWOOOW"], ["김도형", "15:00~24:00", "OWWWWWOOWWWWWOOWWWWOOWWOOOWWWWO"], ["최성환", "15:00~24:00", "OOWWOOOOOWWOOOOOWWOOOOOWWOOOOOW"], ["이규순", "18:00~03:00", "WWOOWWWWWOWWOOWWOOOWWWWWOOAWWOA"], ["강철환", "18:00~03:00", "OOWWHWWOOWWWWWOOWWWWWOOOWWWOOWW"], ["박은선", "19:00~04:00", "WWOOWWWOOWWWOOOWWWOOOWWWWOAWWWW"], ["박계원", "19:00~04:00", "OOWWWOAWWWWOAOWWWWOOWWWOOWWWOOW"], ["최정기", "20:00~05:00", "OOWWOWWWWOOOWWWWOOWWWWWOOOWWWWW"], ["최선호", "20:00~05:00", "WWOWWWOOWWWWWWOOWWWWOOOWWWOOWWO"], ["김소연", "22:00~07:00", "WWWOOWWWWWOOOWWOOWWWWOOWWWOOWWW"], ["임다연", "22:00~07:00", "WWWWWOOWWWOOWWWWWOOWWWWWOOWWOOO"], ["임아연", "22:00~07:00", "WWOOOWWWOOWWWWWOOWWWWWOOWWWWWOO"], ["안대관", "23:30~08:30", "OOWWWWWOOWWWWOOWWWWOOOWWWWWOOWW"]];
+        const DOW_KO = ['일', '월', '화', '수', '목', '금', '토'];
+        const dowOf = d => (4 + d - 1) % 7;            // 2026-10-01 = 목
+        const ov = (a, b, c, d) => a < d && c < b;
+        const tmin = s => { const m = String(s).match(/(\d{1,2}):(\d{2})/); return +m[1] * 60 + +m[2]; };
+        const fmt = m => { m = ((m % 1440) + 1440) % 1440; return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
+        const GAP = 15;
+        const BREAK = { 420: [660, 720], 480: [720, 780], 540: [780, 840], 600: [840, 900], 660: [900, 960], 840: [1020, 1080], 900: [1020, 1080], 1080: [1320, 1380], 1140: [1320, 1380], 1200: [1320, 1380], 1320: [1500, 1560], 1410: [1560, 1620] };
+        const STAFF = STAFF_DATA.map(([name, time, sc]) => {
+          const a = tmin(time.split('~')[0]); let b = tmin(time.split('~')[1]); if (b <= a) b += 1440;
+          return { name, time, start: a, end: b, brk: BREAK[a] || null, g: a <= 540 ? 0 : a <= 660 ? 1 : a < 1080 ? 2 : 3, sc };
+        });
+        const BYNAME = Object.fromEntries(STAFF.map(p => [p.name, p]));
+        const GROUPS = ['07·08·09시 출근', '10·11시 출근', '14·15시 출근', '18시 이후 출근'];
+        let MONTH_OK = false;   // 10월(근무표가 있는 달)일 때만 근무표(sc)로 출근자를 추림 — 그 외 달은 JSON 에 나온 이름으로 대체
+        const present = d => MONTH_OK ? STAFF.filter(p => p.sc[d - 1] === 'W') : [];
+        function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+        const SUB_STRICT = 1080;   // 18:00 이후 슬롯의 서브는 일일 업무와 겹치면 안 됨 (그 전은 겹쳐도 무방)
+        const mkTask = (t, bold, fixed, i) => {
+          const m = t.match(/^\[(\d{1,2}:\d{2})(?:~(\d{1,2}:\d{2}))?\]/); const s = tmin(m[1]), e = m[2] ? tmin(m[2]) : s + 10;
+          const z = t.replace(/\s/g, ''); let days = 'all';
+          if (z.includes('[평일]')) days = 'wd'; else if (z.includes('[주말]')) days = 'we'; else if (z.includes('화,수,목,금,토,일')) days = 'nm';
+          const sci = t.includes('부산국립과학관'), nh = t.includes('대기장소2 주간기체 출근');
+          let w = 0;
+          if (sci) w = 1; else if (t.includes('무선충전') && t.includes('재시작') && s === 600) w = 0.5; else if (t.includes('송도요기요')) w = 0.5; else if (nh) w = 0.5;
+          return { i, t, bold: !!bold, fixed: fixed || '', s, e, days, slot: Math.floor(s / 60) * 60, sci, hub: t.includes('HUB B 출근'), nh, nt: /\[삼평동,\s*서현동\]\s*기체 출근 체크/.test(t), w };
+        };
+        const TASKS = [];
+        function rowState(t, d, holiday) {
+          if (t.fixed) return 'fixed';
+          const w = dowOf(d), we = holiday || w === 0 || w === 6;
+          const on = t.days === 'all' || (t.days === 'wd' && !we) || (t.days === 'we' && we) || (t.days === 'nm' && w !== 1);
+          return on ? 'on' : 'off';
+        }
+        function buildUnits(d, bundled, holiday, TL) {
+          TL = TL || TASKS;
+          const st = TL.map(t => TL === TASKS ? rowState(t, d, holiday) : (t.fixed ? 'fixed' : 'on')), U = [], skip = new Set();
+          TL.forEach((t, i) => {
+            if (st[i] !== 'on' || skip.has(i)) return;
+            if (t.hub) {
+              if (!bundled) return;
+              const j = TL.findIndex(x => x.sci && x.s === 540);
+              if (j >= 0 && st[j] === 'on') { skip.add(j); U.push({ rows: [i, j], s: 530, e: 600, slot: 540, w: 1, cnt: 1, sci: true, label: '부산 08:50 + 09:00 묶음' }); return; }
+            }
+            if (bundled && t.nh) {
+              const j = TL.findIndex(x => x.nt);
+              if (j >= 0 && st[j] === 'on') { skip.add(j); U.push({ rows: [i, j], s: 600, e: 660, slot: 600, w: 0.5, cnt: 2, sci: false, label: '성남 삼평동 10:00 + 10:30 묶음' }); return; }
+            }
+            U.push({ rows: [i], s: t.s, e: t.e, slot: t.slot, w: t.w, cnt: 1, sci: t.sci, label: t.t });
+          });
+          return U;
+        }
+        /* 시간대 경향(강제 아님): 값이 클수록 후순위 */
+        function tendency(p, u, mid, late) {
+          const s = u.s, g = p.g;
+          if (s < 660) return 0;
+          if (s < 960) return mid * [1, 0, 0.5, 0.5][g];
+          if (s < 1080) return late * (g === 3 ? 1 : 0);
+          if (s < 1320) return late * [0.3, 0, 0, 1][g];
+          return late * (g === 2 ? 0 : 0.5);
+        }
+        const orderFor = s => s < 720 ? [0, 1, 2, 3] : s < 1020 ? [1, 0, 2, 3] : [2, 1, 0, 3];
+        const DEFAULTS = { gp: 0.1, cw: 0.4, cap: 3, holiday: false, sciPen: 1, grace: 1, tMid: 0.15, tLate: 0.3 };
+        const RELAX_TXT = ['', '가중치 2.0 상한을 풀어 배정', '다중 포함 개수 상한까지 풀어 배정', '다중과 연속 금지까지 풀어 배정'];
+        function assign(variant, d, M, rng, optIn) {
+          const opt = Object.assign({}, DEFAULTS, optIn || {});
+          const LV = opt.live || null, ex = new Set(LV ? LV.exclude || [] : []);
+          const people = LV ? LV.people.filter(p => !ex.has(p.name)) : present(d), mons = LV ? LV.main : (M.main[d] || {}), subs = LV ? LV.sub : (M.sub[d] || {}), S = {};
+          people.forEach(p => { const Hs = Object.entries(mons).filter(([h, n]) => n === p.name).map(([h]) => +h); const sb = Object.entries(subs).filter(([h, n]) => n === p.name).map(([h]) => +h); S[p.name] = { p, mons: Hs, subAll: sb, subs: sb.filter(H => H >= SUB_STRICT), W: Hs.length, Ct: 0, tasks: [], sci: false, slots: new Set(), rows: 0 }; });
+          const base = variant === 'base', lite = variant === 'lite', cm = variant === 'cnt', nv = variant === 'new' || variant === 'newF' || variant === 'newL' || variant === 'newH', U0 = buildUnits(d, nv || cm, opt.holiday, LV ? LV.tasks : null).map(u => nv && opt.grace && u.rows.length === 1 && /무선충전/.test(u.label) && /재시작/.test(u.label) && u.s === 600 ? { ...u, e: 630 } : u), U = variant === 'newH' ? [...U0.filter(u => u.sci).map(u => ({ ...u, restrict: true })), ...U0.filter(u => !u.sci)] : variant === 'newF' ? [...U0.filter(u => u.sci), ...U0.filter(u => !u.sci)] : variant === 'newL' ? [...U0.filter(u => !u.sci), ...U0.filter(u => u.sci)] : U0, out = [];
+          const UU = opt.names ? (opt.evalOnly ? U : [...U.filter(u => opt.keep.has(u.rows[0])), ...U.filter(u => !opt.keep.has(u.rows[0]))]) : U;
+          for (const u of UU) {
+            let chosen = null, tierUsed = null;
+            const pre = opt.names && (opt.evalOnly || opt.keep.has(u.rows[0])) ? (opt.names[u.rows[0]] || null) : undefined;
+            if (pre !== undefined) {
+              if (pre && S[pre]) { chosen = S[pre].p; tierUsed = 0; }
+              else { out.push({ u, name: pre, tier: 0, absent: !!pre }); continue; }
+            } else if (base) {
+              let c = people.filter(p => {
+                const s = S[p.name];
+                if (!(p.start <= u.slot && u.slot + 60 <= p.end)) return false;
+                if (p.brk && ov(u.s, u.e, p.brk[0], p.brk[1])) return false;
+                if (s.slots.has(u.slot)) return false;
+                if (s.mons.some(H => H === u.slot)) return false;
+                if (u.sci && s.mons.some(H => H === u.slot + 60)) return false;
+                if (s.rows >= 3) return false;
+                if (u.sci && s.sci) return false;
+                return true;
+              });
+              if (u.sci) { const c2 = c.filter(p => !S[p.name].mons.some(H => H === u.slot - 60)); if (c2.length) c = c2; }
+              if (c.length) { chosen = c[Math.floor(rng() * c.length)]; tierUsed = 0; }
+            } else if (lite) {
+              const edge = /^\s*\[\d{1,2}:5\d|~\d{1,2}:00\]/.test(u.label);
+              for (let tier = 0; tier < 4; tier++) {
+                let c = people.filter(p => {
+                  const s = S[p.name];
+                  if (!(p.start <= u.slot && u.slot + 60 <= p.end)) return false;
+                  if (p.brk && ov(u.s, u.e, p.brk[0], p.brk[1])) return false;
+                  if (u.sci && s.sci) return false;
+                  if (tier < 3) {
+                    if (s.slots.has(u.slot)) return false;
+                    if (s.mons.some(H => H === u.slot)) return false;
+                    if (u.sci && s.mons.some(H => H === u.slot + 60)) return false;
+                    if (edge && s.mons.some(H => H === u.slot + 60)) return false;
+                  }
+                  if (tier < 1 && s.W + Math.max(u.w, 1e-6) > 2 + 1e-9) return false;
+                  if (tier < 2 && s.mons.length + s.Ct + 1 > opt.cap) return false;
+                  return true;
+                });
+                if (!c.length) continue;
+                if (u.sci) { const c2 = c.filter(p => !S[p.name].mons.some(H => H === u.slot - 60)); if (c2.length) c = c2; }
+                const sc = p => S[p.name].W + 0.4 * S[p.name].Ct;
+                const m = Math.min(...c.map(sc)), pool = c.filter(p => sc(p) < m + 1e-9);
+                chosen = pool[Math.floor(rng() * pool.length)]; tierUsed = Math.min(tier, 3); break;
+              }
+            } else {
+              for (let tier = 0; tier < (u.restrict ? 1 : 4); tier++) {
+                const c = people.filter(p => {
+                  const s = S[p.name];
+                  if (u.restrict && s.mons.length > 0) return false;
+                  if (!(p.start <= u.slot && u.slot + 60 <= p.end)) return false;
+                  if (p.brk && ov(u.s, u.e, p.brk[0], p.brk[1])) return false;
+                  if (s.mons.some(H => ov(H - 10, H + 50, u.s, u.e))) return false;
+                  if (s.subs.some(H => ov(H - 10, H + 50, u.s, u.e))) return false;
+                  if (s.tasks.some(([a, b]) => ov(a, b, u.s, u.e))) return false;
+                  if (u.sci && s.sci) return false;
+                  if (tier < 3 && u.sci && s.mons.some(H => ov(H - 10, H + 50 + GAP, u.s - GAP, u.e + GAP))) return false;
+                  if (tier < 1 && !cm && s.W + Math.max(u.w, 1e-6) > 2 + 1e-9) return false;
+                  if (tier < 2 && s.mons.length + s.Ct + u.cnt > opt.cap) return false;
+                  return true;
+                });
+                if (!c.length) continue;
+                const od = orderFor(u.s);
+                const pen = p => {
+                  const s = S[p.name]; if (u.sci) return 0;
+                  return (s.mons.some(H => ov(H - 10, H + 50, u.s - GAP, u.e + GAP)) || s.tasks.some(([a, b]) => ov(a, b, u.s - GAP, u.e + GAP))) ? 1 : 0;
+                };
+                const sc = p => (cm ? S[p.name].mons.length + 0.5 * S[p.name].Ct : S[p.name].W + opt.cw * S[p.name].Ct) + opt.gp * od.indexOf(p.g) + 0.25 * pen(p) + (!cm && opt.sciPen && u.sci && S[p.name].mons.length > 0 ? opt.sciPen : 0) + (!cm && (opt.tMid || opt.tLate) ? tendency(p, u, opt.tMid || 0, opt.tLate || 0) : 0);
+                const m = Math.min(...c.map(sc)), pool = c.filter(p => sc(p) < m + 1e-9);
+                chosen = pool[Math.floor(rng() * pool.length)]; tierUsed = tier; break;
+              }
+            }
+            if (!chosen && u.restrict) { U.push({ ...u, restrict: false }); continue; }
+            if (!chosen) { out.push({ u, name: null, tier: 9 }); continue; }
+            const s = S[chosen.name];
+            s.W += u.w; s.Ct += u.cnt; s.rows += 1; s.tasks.push([u.s, u.e]); s.slots.add(u.slot); s.sci = s.sci || u.sci;
+            out.push({ u, name: chosen.name, tier: tierUsed });
+          }
+          if (opt.names) out.sort((a, b) => a.u.rows[0] - b.u.rows[0]);
+          return { S, out, U };
+        }
+
+        function evaluate(S, out) {
+          const flags = {}, run = {}, core = {};
+          const m = { flagged: 0, n4: 0, overW: 0, wRule: 0, timeConflict: 0, none: 0, other: 0, zero: 0, std: 0, nUnits: out.length };
+          for (const n in S) run[n] = { W: S[n].mons.length, C: S[n].mons.length, tasks: [], sci: false };
+          out.forEach((o, i) => {
+            if (!o.name) { flags[i] = ['후보 없음 (근무·휴게·다중 시간이 모두 겹침)']; core[i] = 1; m.none++; return; }
+            if (o.absent) { flags[i] = ['오늘 근무표에 없는 사람(또는 제외 지정)']; core[i] = 1; m.other++; return; }
+            const r = run[o.name], s = S[o.name], u = o.u, why = [];
+            if (r.W + Math.max(u.w, 1e-6) > 2 + 1e-9) { why.push('가중치 2.0을 넘겨 배정'); m.wRule++; }
+            if (r.C + u.cnt > 3) why.push('다중 포함 4개째 배정');
+            if (s.mons.some(H => ov(H - 10, H + 50, u.s, u.e))) { why.push('다중 교대 시간과 겹침'); m.timeConflict++; }
+            else if (u.sci && s.mons.some(H => ov(H - 10, H + 50 + GAP, u.s - GAP, u.e + GAP))) { why.push('다중과 연달아 배정 (부산)'); m.timeConflict++; }
+            if (s.subs.some(H => ov(H - 10, H + 50, u.s, u.e))) { why.push('18시 이후 서브 시간과 겹침'); m.timeConflict++; }
+            if (s.p.brk && ov(u.s, u.e, s.p.brk[0], s.p.brk[1])) { why.push('휴게시간과 겹침'); m.other++; }
+            if (r.tasks.some(t => ov(t[0], t[1], u.s, u.e))) { why.push('본인 다른 업무와 겹침'); m.other++; }
+            if (u.sci && r.sci) { why.push('부산 하루 2회'); m.other++; }
+            r.W += u.w; r.C += u.cnt; r.tasks.push([u.s, u.e]); r.sci = r.sci || u.sci;
+            if (why.length) { flags[i] = why; if (why.some(x => !x.startsWith('가중치'))) core[i] = 1; }
+          });
+          m.flagged = Object.keys(flags).length;
+          const loads = [];
+          for (const n in S) {
+            const r = run[n]; if (r.C > 3) m.n4++; if (r.W > 2 + 1e-9) m.overW++; if (r.C === 0) m.zero++;
+            loads.push(r.W + 0.4 * (r.C - S[n].mons.length));
+          }
+          const mean = loads.reduce((a, b) => a + b, 0) / (loads.length || 1);
+          m.std = Math.sqrt(loads.reduce((a, b) => a + (b - mean) ** 2, 0) / (loads.length || 1));
+          m.clean = m.flagged === 0 ? 1 : 0; m.cleanCore = Object.keys(core).length === 0 ? 1 : 0;
+          return { m, flags, run };
+        }
+
+        const hmin = s => { const m = String(s).match(/(\d{1,2}):(\d{2})/); if (!m) return null; let v = +m[1] * 60 + +m[2]; if (v < 420) v += 1440; return v; };
+        const fmtM = m => { m = m % 1440; return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
+        const isFixedName = n => !n || n === '관리자' || n === '-' || /휴무/.test(n);
+        function liveParse(arr) {
+          if (!Array.isArray(arr)) throw new Error('JSON이 목록(배열) 형태가 아닙니다');
+          const warn = [], main = {}, sub = {}, TL = [], rowUser = [];
+          arr.forEach(x => {
+            if (!x || typeof x !== 'object') return;
+            if (x.type === 'monitoring') {
+              const t = hmin(x.rawTime); if (t == null) { warn.push('다중 시각을 읽지 못함: ' + x.rawTime); return; }
+              main[t] = x.user; if (x.subUser && x.subUser !== '후보 없음') sub[t] = x.subUser; else if (x.subUser) warn.push(fmtM(t) + ' 서브: 시트에서 \'후보 없음\' 으로 나옴');
+            } else if (x.type === 'task' && x.content) {
+              const t = String(x.content).replace(/ /g, ' ');
+              if (!/^\s*\[\d{1,2}:\d{2}/.test(t)) { warn.push('시각 없는 업무 제외: ' + t.slice(0, 30)); return; }
+              const i = TL.length; TL.push(mkTask(t, 0, (isFixedName(x.user) && x.user !== '후보 없음') ? '관리자' : '', i)); rowUser.push(x.user === '후보 없음' ? '' : (x.user || ''));
+            }
+          });
+          if (!Object.keys(main).length) warn.push('다중 모니터링 항목이 없음');
+          if (!TL.length) warn.push('업무 항목이 없음');
+          return { main, sub, TL, rowUser, warn };
+        }
+
+        function liveCtx(P, d, excl) {
+          const names = new Set(present(d).map(p => p.name));
+          const all = [...Object.values(P.main), ...Object.values(P.sub), ...P.rowUser].filter(n => !isFixedName(n));
+          all.forEach(n => { if (BYNAME[n]) names.add(n); });
+          const unknown = [...new Set(all.filter(n => !BYNAME[n]))];
+          return { people: STAFF.filter(p => names.has(p.name)), main: P.main, sub: P.sub, tasks: P.TL, exclude: excl || [], unknown };
+        }
+
+        /* 행별 이름(배열) → 평가. 묶음 업무는 첫 줄 담당자 기준으로 채점하고, 둘째 줄이 다르면 '불일치'로 표시 */
+        function liveEval(ctx, d, rowNames) {
+          const U = buildUnits(d, true, false, ctx.tasks);
+          const R = assign('new', d, null, mulberry(1), { live: ctx, names: rowNames, evalOnly: true });
+          const ev = evaluate(R.S, R.out);
+          const bad = new Set(), why = {};
+          R.out.forEach((o, i) => {
+            const f = ev.flags[i]; if (!f) return;
+            if (!(f.every(x => x.startsWith('가중치')) && !(o.u.w > 0))) { bad.add(o.u.rows[0]); why[o.u.rows[0]] = f; }
+          });
+          U.forEach(u => { if (u.rows.length > 1) { const lead = rowNames[u.rows[0]]; u.rows.slice(1).forEach(r => { if (rowNames[r] !== lead) { bad.add(r); why[r] = ['묶음 업무인데 첫 줄(' + (lead || '없음') + ')과 담당자가 다름']; } }); } });
+          return { R, ev, bad, why, U };
+        }
+
+        function liveMetrics(ctx, d, rowNames) {
+          const e = liveEval(ctx, d, rowNames);
+          return { prob: e.bad.size, n4: e.ev.m.n4, overW: e.ev.m.overW, std: e.ev.m.std, bad: e.bad, why: e.why };
+        }
+
+        /* 묶음의 둘째 줄까지 첫 줄 담당자로 맞춘 행별 이름 만들기 */
+        function namesFromOut(ctx, d, out, base) {
+          const names = base.slice();
+          out.forEach(o => { o.u.rows.forEach(r => { names[r] = o.name || null; }); });
+          return names;
+        }
+
+        function liveRepair(ctx, d, A, seed) {
+          const e = liveEval(ctx, d, A);
+          const keep = new Set(e.U.filter(u => !e.bad.has(u.rows[0]) && A[u.rows[0]]).map(u => u.rows[0]));
+          const R = assign('new', d, null, mulberry(seed | 0), { live: ctx, names: A, keep });
+          return namesFromOut(ctx, d, R.out, A);
+        }
+        function liveFull(ctx, d, A, seed) {
+          const R = assign('new', d, null, mulberry(seed | 0), { live: ctx });
+          return namesFromOut(ctx, d, R.out, A);
+        }
+        /* 비교 숫자 */
+            return {
+                liveParse, liveCtx, liveMetrics, liveRepair, liveFull, buildUnits, fmt,
+                setMonth: v => { MONTH_OK = !!v; }
+            };
+        })();
+        // 계산 결과는 '스냅샷'(계산에 쓴 JSON 원문 + 시드 + 방식 + 업무일)으로 저장해 두고 그대로 보여준다 → 이후 JSON 이 바뀌어도 배정표가 저절로 달라지지 않음
+        const SIMCFG_KEY = 'bba_sim_snap';
+        let simRes = null, simErr = '', simBusy = false;
+        const simCfg = () => { try { return JSON.parse(lsGet(SIMCFG_KEY, 'null')) || null; } catch (e) { return null; } };
+        const simSave = c => lsSet(SIMCFG_KEY, JSON.stringify(c));
+        function simCompute(snap) {
+            const arr = JSON.parse(snap.txt), wd = workDay();
+            SIM.setMonth(wd.getFullYear() === 2026 && wd.getMonth() === 9);   // 근무표(STAFF_DATA)는 2026년 10월분 — 그 외 달은 JSON 에 나온 이름을 출근자로 간주
+            const d = wd.getDate(), P = SIM.liveParse(arr), ctx = SIM.liveCtx(P, d, []), A = P.rowUser.map(n => n || null);   // 다중/서브는 07시에 이미 정해진 값 그대로(건드리지 않음), 일일 업무 칸만 다시 배정
+            const B = snap.mode === 'full' ? SIM.liveFull(ctx, d, A, snap.seed) : SIM.liveRepair(ctx, d, A, snap.seed);
+            const follow = new Set(); SIM.buildUnits(d, true, false, ctx.tasks).forEach(u => { if (u.rows.length > 1) follow.add(u.rows[1]); });
+            return { P, d, ctx, A, B, mA: SIM.liveMetrics(ctx, d, A), mB: SIM.liveMetrics(ctx, d, B), follow, cfg: snap, wd };
+        }
+        function simRun(snap) { try { simRes = simCompute(snap); simErr = ''; } catch (e) { simRes = null; simErr = (e && e.message) || String(e); console.warn('[BBA] 일일 업무 배정표 계산 실패:', simErr); } }
+        function simDo(txt, mode) {   // 현재 JSON 으로 새로 재배정 (새 시드)
+            const snap = { txt, seed: 1 + Math.floor(Math.random() * 1e9), mode: mode || 'repair', at: Date.now(), day: curKey };
+            simSave(snap); simRun(snap);
+        }
+        const SIM_AUTO_FROM = WD0 - 5, SIM_AUTO_TO = 8 * 60 + 30;   // 자동 재배정은 시트 업무표가 오늘자로 바뀐 07시 언저리(06:55~08:30)에서 업무일당 1회만
+        function simOnNewJson(txt) {   // daily_tasks.json 을 받을 때마다 호출
+            try {
+                const c = simCfg(), nm = nowMin(), inWin = nm >= SIM_AUTO_FROM && nm < SIM_AUTO_TO;
+                if (!c) simDo(txt, 'repair');   // 이 기능이 처음 들어온 뒤 한 번은 계산 (이후엔 아래 규칙)
+                else if (c.day !== curKey && inWin) simDo(txt, c.mode);   // 오늘 업무일 첫 JSON(07시 언저리) → 자동 1회
+                else if (!simRes) simRun(c);
+                simDraw();
+            } catch (e) { console.warn('[BBA] 일일 업무 배정표:', e && e.message); }
+        }
+        const simp = document.createElement('div'); simp.id = 'bba-sim'; root.appendChild(simp);
+        const simNm = n => n ? '<span class="nm' + (/없음/.test(n) ? ' none' : '') + '" style="--h:' + hue(n) + '">' + esc(n) + '</span>' : '<span class="nm none">후보 없음</span>';
+        const simRange = t => SIM.fmt(t.s) + (t.e - t.s > 10 ? '~' + SIM.fmt(t.e) : '');
+        function simDraw() {
+            if (!simp.classList.contains('open')) return;
+            const txt = lsGet('bba_tasks_cache', ''), cfg = simCfg();
+            if (cfg && !simRes && cfg.day === curKey) simRun(cfg);
+            const R = (cfg && cfg.day === curKey) ? simRes : null, keep = (simp.querySelector('.col.c2') || {}).scrollTop;
+            const head = '<div class="mh"><b>📋 일일 업무 배정표</b><span class="cnt" style="font-size:12px;color:var(--mu)">새 수식 시뮬레이션 · 실제 업무표는 바뀌지 않음</span><span class="sp">' +
+                '<span class="seg2"><button data-a="m" data-m="repair" class="' + (cfg && cfg.mode !== 'full' ? 'on' : '') + '" title="받아온 배정에서 규칙을 어긴 칸만 고쳐 봄">문제 칸만 수정</button><button data-a="m" data-m="full" class="' + (cfg && cfg.mode === 'full' ? 'on' : '') + '" title="모든 칸을 새 수식으로 처음부터 다시 배정">전체 다시 배정</button></span>' +
+                '<button class="bba-btn on" data-a="re" title="지금의 daily_tasks.json 으로 일일 업무 배정을 다시 돌립니다 (다중/서브는 그대로)">' + (simBusy ? '받아오는 중…' : '재배정하기') + '</button><button class="bba-btn" data-a="x">✕ 닫기</button></span></div>';
+            if (!R) { simp.innerHTML = head + '<div class="meta">' + (!txt ? 'daily_tasks.json 을 아직 받지 못했습니다' : cfg && cfg.day !== curKey ? '오늘 업무일의 배정표는 아직 계산되지 않았습니다 (자동 계산은 07시 언저리 1회뿐). <b>재배정하기</b>를 누르면 지금의 daily_tasks.json 으로 계산합니다.' : '계산하지 못했습니다: ' + esc(simErr || '알 수 없는 오류')) + '</div>'; return; }
+            const { P, A, B, mA, mB, ctx, follow, d, wd } = R, at = new Date(cfg.at), dow = '일월화수목금토'[wd.getDay()], stale = hash(cfg.txt) !== hash(txt);
+            const chg = P.TL.filter((t, i) => !t.fixed && (B[i] || null) !== (A[i] || null)).length;
+            const meta = '<div class="meta">기준 <b>daily_tasks.json</b> · 계산 ' + pad(at.getMonth() + 1) + '/' + pad(at.getDate()) + ' ' + pad(at.getHours()) + ':' + pad(at.getMinutes()) + ' · 업무일 ' + d + '일(' + dow + ') · ' +
+                '규칙 문제 칸 현재 <b>' + mA.prob + '</b> → 시뮬레이션 <b>' + mB.prob + '</b> · 가중치 2.0 초과 ' + mA.overW + ' → ' + mB.overW + ' · 다중 포함 4개 이상 ' + mA.n4 + ' → ' + mB.n4 + ' · 바뀐 칸 <b>' + chg + '</b>' +
+                (stale ? '<br><span class="warn">⚠ 지금의 daily_tasks.json 이 이 배정표를 계산할 때와 다릅니다 — 재배정하기를 누르면 지금 JSON 기준으로 다시 계산합니다.</span>' : '') + (P.warn.length ? '<br><span class="warn">' + P.warn.map(esc).join(' · ') + '</span>' : '') + (ctx.unknown.length ? '<br><span class="warn">근무표에 없는 이름: ' + esc(ctx.unknown.join(', ')) + '</span>' : '') + '</div>';
+            const mons = Object.keys(P.main).map(Number).sort((a, b) => a - b);
+            const c1 = '<div class="col c1"><div class="gh"><span>시각</span><span>다중</span><span>서브</span></div>' + mons.map(t => '<div class="gr"><span class="tm">' + SIM.fmt(t) + '</span><span>' + simNm(P.main[t]) + '</span><span>' + (P.sub[t] ? simNm(P.sub[t]) : '<span class="em">–</span>') + '</span></div>').join('') + '</div>';
+            const c2 = '<div class="col c2"><div class="gh"><span>시각</span><span>일일 업무</span><span>새 수식 배정자</span></div>' + P.TL.map((t, i) => {
+                if (t.fixed) return '<div class="gr fx"><span class="tm">' + simRange(t) + '</span><span class="tk" title="' + esc(t.t) + '">' + esc(t.t.replace(/^\s*\[[^\]]*\]\s*/, '')) + '</span><span class="em">고정 (' + esc(A[i] || '관리자') + ')</span></div>';
+                const ch = (B[i] || null) !== (A[i] || null), why = (mA.why[i] || []).join(' · ') || (follow.has(i) ? '첫 줄 담당자 변경에 맞춤' : '다른 칸 수정에 따른 재조정');
+                return '<div class="gr' + (ch ? ' chg' : '') + '"><span class="tm">' + simRange(t) + '</span><span class="tk" title="' + esc(t.t) + '">' + (follow.has(i) ? '🔗 ' : '') + esc(t.t.replace(/^\s*\[[^\]]*\]\s*/, '')) + '</span><span class="asg">' + simNm(B[i]) + (ch ? '<span class="was" title="' + esc(why) + '">← 현재 ' + esc(A[i] || '후보 없음') + ' · ' + esc(why) + '</span>' : '') + '</span></div>';
+            }).join('') + '</div>';
+            simp.innerHTML = head + meta + '<div class="sb">' + c1 + c2 + '</div><div class="foot">파란 칸 = 현재 업무표(받아온 배정)에서 바뀐 칸 · 🔗 = 첫 줄과 같은 사람이 맡는 묶음 업무 · 다중/서브는 받아온 값 그대로 고정</div>';
+            const c2e = simp.querySelector('.col.c2'); if (c2e && keep) c2e.scrollTop = keep;
+        }
+        function simClose() { simp.classList.remove('open'); const b = $('bba-simb'); if (b) b.classList.remove('on'); }
+        simp.addEventListener('click', e => {
+            const b = e.target.closest('[data-a]'); if (!b) return;
+            const a = b.dataset.a;
+            if (a === 'x') return simClose();
+            if (a === 'm') { const c = simCfg(); if (!c || c.day !== curKey) return; c.mode = b.dataset.m; simSave(c); simRun(c); return simDraw(); }   // 방식만 바꿔 보기(같은 JSON·같은 시드)
+            if (a === 're') {   // 재배정하기: 최신 daily_tasks.json 을 받아(실패하면 저장본) 그 값으로 일일 업무 배정을 다시 돌림
+                if (simBusy) return; simBusy = true; simDraw();
+                (async () => {
+                    try { await loadTasks(); } catch (e) { /* 저장본 사용 */ }
+                    try { const txt = lsGet('bba_tasks_cache', ''); if (txt) simDo(txt, (simCfg() || {}).mode); } finally { simBusy = false; simDraw(); }
+                })();
+            }
+        });
+        $('bba-simb').addEventListener('click', () => {
+            const o = !simp.classList.contains('open');
+            if (o) { closeMmp(); open = []; applyOpen(); simp.classList.add('open'); simDraw(); } else simClose();
+            $('bba-simb').classList.toggle('on', o);
+        });
+        setInterval(() => { if (simp.classList.contains('open')) simDraw(); }, 60 * 1000);
+
         // 다른 레이아웃 영역을 누르면 열려 있는 패널(배달 로그 · 개입 현황 · 이석 현황 · 근무자)을 닫는다
         document.getElementById('bb').addEventListener('click', e => {
             const t = e.target; if (!(t instanceof Element)) return;
             if (mmp.classList.contains('open') && !t.closest('#bba-mmp, #bba-mmb')) closeMmp();
+            if (simp.classList.contains('open') && !t.closest('#bba-sim, #bba-simb')) simClose();
             if (!open.length || t.closest('#bba-dr, .bba-bar, #bba-ap, [id*="-pop"], [class*="-pop"], #bb-fbp')) return;
             // 업무표·다중 모니터링·오른쪽 영역은 어디를 눌러도 닫고, 그 밖(관제 센터 머리글 등)은 빈 영역을 눌렀을 때만 닫는다 (버튼·입력칸은 제외)
             if (t.closest('.bba-tasks, #bb-mm-page-multi, #bba-right, #bba-mmp, #bba-mmb') || !t.closest('button, a, input, select, textarea, label')) { open = []; applyOpen(); }
         }, true);
-        $('bba-mmb').addEventListener('click', () => { const o = mmp.classList.toggle('open'); $('bba-mmb').classList.toggle('on', o); if (o) { mmp.innerHTML = ''; drawMmp(); } });
+        $('bba-mmb').addEventListener('click', () => { if (!mmp.classList.contains('open')) simClose(); const o = mmp.classList.toggle('open'); $('bba-mmb').classList.toggle('on', o); if (o) { mmp.innerHTML = ''; drawMmp(); } });
         setInterval(drawMmp, 30 * 1000);
 
         // ───────── 시작 ─────────
