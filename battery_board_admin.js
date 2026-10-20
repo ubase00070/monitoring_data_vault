@@ -9868,7 +9868,7 @@
         }
 
         function liveCtx(P, d, excl) {
-          const names = new Set(present(d).map(p => p.name));
+          const names = new Set();   // 후보 = 07시 JSON(다중·서브·업무 행)에 배정자로 들어 있는 사람 — 07시 배정이 출근자를 제대로 반영한다고 신뢰. 근무표 파일은 근무시간·휴게시간을 알려주는 용도(보험)
           const all = [...Object.values(P.main), ...Object.values(P.sub), ...P.rowUser.filter((n, i) => !P.TL[i].fixed)].filter(n => !isFixedName(n));
           all.forEach(n => { if (BYNAME[n]) names.add(n); });
           const unknown = [...new Set(all.filter(n => !BYNAME[n]))];
@@ -9973,8 +9973,7 @@
         function simRoster(wd) {
           let list = null; try { list = JSON.parse(lsGet(simRKey(wd), 'null')); } catch (e) { list = null; }
           if (Array.isArray(list) && list.length >= 10) SIM.setRoster(list);
-          else if (wd.getFullYear() === 2026 && wd.getMonth() === 9) SIM.useEmbedded();
-          else SIM.setMonth(false);
+          else SIM.useEmbedded();   // 파일을 못 받았으면 내장 표(10월분)의 근무시간으로 — 근무표에 없는 사람은 배정 후보에서 빠지고 그 칸은 그대로 둠
         }
         async function simFetchRoster() {
           const wd = workDay(), y = wd.getFullYear(), m = wd.getMonth() + 1;
@@ -10053,7 +10052,7 @@
             const sB = R.sB, warns = [];
             if (stale) warns.push('⚠ 지금의 daily_tasks.json 이 계산 때와 다릅니다 — 재배정하기를 누르세요');
             P.warn.filter(w => !/서브: 시트에서/.test(w)).forEach(w => warns.push(esc(w)));
-            if (SIM.rosterSrc() !== 'file') warns.push(SIM.rosterSrc() === 'embedded' ? '월별 근무표 파일을 받지 못해 내장 10월 표로 계산' : '이 달 근무표가 없어 JSON 에 나온 이름 기준으로 계산 (근무·휴게시간 검사 없음)'); if (ctx.unknown.length) warns.push('근무표에 없는 이름: ' + esc(ctx.unknown.join(', ')));
+            if (SIM.rosterSrc() !== 'file') warns.push('월별 근무표 파일을 받지 못해 내장 10월 표의 근무시간으로 계산'); if (ctx.unknown.length) warns.push('근무표에 없는 이름: ' + esc(ctx.unknown.join(', ')));
             const meta = '<div class="meta sum">' + (cfg.tries ? '✅ <b>최적안</b> (' + cfg.tries.toLocaleString() + '가지 중)' : '시뮬레이션') + ' · ' + pad(at.getHours()) + ':' + pad(at.getMinutes()) + ' 계산 · 바뀐 칸 <b>' + chg + '</b> · 규칙 문제 칸 ' + mA.prob + ' → <b>' + mB.prob + '</b><br>' +
                 '가중치 2.0 ' + (sB.m.overW === 0 ? '모두 지킴(최대 ' + sB.maxW.toFixed(1) + ')' : '<span class="warn">' + sB.m.overW + '명 초과(최대 ' + sB.maxW.toFixed(1) + ')</span>') + ' · 업무+다중 ' + sB.mn + '~' + sB.mx + '건 (1건 이하 ' + sB.low + '명, 3건 이상 ' + sB.high + '명) · 연속 3건 ' + (sB.chains ? '<span class="warn">' + sB.chains + '명</span>' : '없음') +
                 (warns.length ? '<br><span class="warn">' + warns.join(' · ') + '</span>' : '') + '</div>';
