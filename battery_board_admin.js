@@ -8597,6 +8597,13 @@
         function monitoredNames() {
             return Array.from(document.querySelectorAll('#bb-mm-body .bb-mm-card .bb-mm-name')).map(e => (e.textContent || '').trim()).filter(Boolean);
         }
+        // 다중 모니터링 카드의 이름 + 시작 시각('10:05부터') — 시각이 지난 시간대의 일정 카드를 계속 보여주기 위해 사용
+        function monitoredCards() {
+            return Array.from(document.querySelectorAll('#bb-mm-body .bb-mm-card')).map(c => {
+                const n = ((c.querySelector('.bb-mm-name') || {}).textContent || '').trim(), m = /(\d{1,2}):(\d{2})/.exec((c.querySelector('.bb-mm-since') || {}).textContent || '');
+                return n && m ? { n, h: +m[1], t: pad(+m[1]) + ':' + m[2] } : null;
+            }).filter(Boolean);
+        }
         let _monNames = [];
         function isMonitored(name) {
             const c = name.replace(/\s+/g, '');
@@ -8662,6 +8669,17 @@
             return '<section class="bba-hr"><div class="hh"><b>' + hh + '시</b><span class="bd' + (isCur ? '' : ' nx') + '">' + (isCur ? '현 시각 일정' : '다음 시간대') + '</span></div>' +
                 (body ? '<div class="sls">' + body + '</div>' : '<div class="bba-empty">일정이 없습니다</div>') + '</section>';
         }
+        // 이미 지난 시간대(예: 10시)에 시작했는데 지금도 다중 모니터링에 떠 있는 기체 — 그 시간대의 일정 카드(배차 방식 태그)를 시작 시각별로 모아 보여줌
+        function schedPrevHtml(hh, cards) {
+            const data = timeTable[pad(hh)] || {}, planNames = Array.isArray(data.plan) ? data.plan : [], outPatrol = Array.isArray(data.out_patrol) ? data.out_patrol : [];
+            const tagFor = n => (outPatrol.includes(n) ? OUT_PATROL_TAG : (DISPATCH_TYPES.find(dt => (Array.isArray(data[dt.key]) ? data[dt.key] : []).includes(n)) || null));
+            const same = (p, c) => c === p || c.startsWith(p + ' ') || c.replace(/\s+/g, '') === p.replace(/\s+/g, '');
+            const slots = {};
+            cards.forEach(c => { const p = planNames.find(x => same(x, c.n)); (slots[c.t] = slots[c.t] || []).push({ n: c.n, tag: p ? tagFor(p) : null }); });
+            const body = Object.keys(slots).sort().map(t => '<div class="bba-sl"><div class="lb">' + esc(t) + '</div><div class="pls">' + slots[t].map(x =>
+                '<div class="bba-pl mon" title="현재 모니터링 중 (' + esc(t) + '부터)"><span class="nm">' + esc(x.n) + '</span><span class="tg"' + (x.tag ? ' style="background:' + x.tag.bg + ';color:' + x.tag.color + '"' : '') + '>' + esc(x.tag ? x.tag.label : '') + '</span></div>').join('') + '</div></div>').join('');
+            return '<section class="bba-hr"><div class="hh"><b>' + pad(hh) + '시</b><span class="bd nx">이전 시간대 · 아직 모니터링 중</span></div><div class="sls">' + body + '</div></section>';
+        }
         function suspPill(n, reason) {
             return '<div class="bba-pl sus"><span class="nm">' + esc(n) + '</span><span class="rs" title="' + esc(reason) + '">' + esc(reason) + '</span></div>';
         }
@@ -8688,7 +8706,10 @@
                 buildRecIdx();
                 const h = new Date().getHours(), cur = pad(h), nxt = pad((h + 1) % 24);
                 box.innerHTML = Object.keys(timeTable).some(k => /^\d{2}$/.test(k))
-                    ? schedGroupHtml(cur, true) + schedGroupHtml(nxt, false)
+                    ? schedGroupHtml(cur, true) + schedGroupHtml(nxt, false) + (() => {
+                        const old = monitoredCards().filter(c => c.h !== h), hs = [...new Set(old.map(c => c.h))].sort((a, b) => ((h - a + 24) % 24) - ((h - b + 24) % 24));   // 가까운 시간대부터
+                        return hs.map(x => schedPrevHtml(x, old.filter(c => c.h === x))).join('');
+                    })()
                     : '<div class="bba-empty">순찰 일정 데이터를 받지 못했습니다</div>';
                 $('bba-sth').textContent = '📅 순찰 일정';
                 const u = $('bba-sat'); if (u) u.textContent = schedAt ? schedAt + ' 기준 · 초록 = 모니터링 중' : '';
