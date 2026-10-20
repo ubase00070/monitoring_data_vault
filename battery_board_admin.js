@@ -8249,7 +8249,7 @@
         const AUTO_DELAY_MIN = 1;                 // 기준 시각 + 몇 분에 점검할지
         const AUTO_RETRY_MS = 60 * 1000;          // 맞지 않으면 이 시간 뒤 다시 점검
         const AUTO_MAX_TRIES = 2;                 // 최대 점검 횟수 (이 횟수까지 안 맞으면 ✕ 로 표시)
-        const AUTO_SKIP_RE = /역삼|송도/;   // 이 단어가 들어간 임무 ON/OFF 업무는 자동 점검하지 않음 (수동 확인)
+        const AUTO_SKIP_RE = /(?!)/;   // 이 단어가 들어간 임무 ON/OFF 업무는 자동 점검하지 않음 (수동 확인)
         const PROBE_W = 1440, PROBE_H = 1800;     // 점검용 숨김 iframe 의 가상 화면 크기 (NCC 화면이 이 크기로 그려짐)
         const PROBE_TIMEOUT_MS = 45 * 1000;       // 사이트 한 곳 점검 제한 시간
         const PROBE_STABLE_MS = 1800;             // 스위치 값이 이 시간 동안 같아야 '확정' (로딩 중 깜빡임 방지)
@@ -8271,6 +8271,16 @@
               units: [1, 2, 3].map(n => U('성수동 1가 (요기요) ' + n + '호기', { m: ['성수동1가(요기요)' + n + '호기', '성수동1가요기요' + n + '호기'] })) },
             // 성남 삼평동 '출근 임무' 업무: 7호기의 '임무 진행'이 비어 있지 않으면(무언가 진행 중) 출근 임무를 수행 중으로 보고 확인. ※ id(NCC 주소 번호)를 채워야 동작
             { k: '성남 삼평동', id: 44, kw: /삼평동/, prog: /출근\s*임무\s*$/, units: [U('성남형 로봇배달 삼평동 7호기', { m: ['성남형로봇배달삼평동7호기', '삼평동7호기'] })] },
+            // 송도요기요(65): 오전(10:30~11:00) 1~6호기 ON / 오후(교대) 1~6호기 OFF + 7·10·11·13·14·15호기 ON. 현장 준비 시간이 걸려 점검은 보통보다 5분 늦게(extra)
+            { k: '송도요기요', id: 65, kw: /송도/, extra: 5,
+              def: t => { const am = t.s < 13 * 60, ids = [1, 2, 3, 4, 5, 6, 7, 10, 11, 13, 14, 15], on = am ? [1, 2, 3, 4, 5, 6] : [7, 10, 11, 13, 14, 15];
+                  return ids.map((n, i) => ({ i, w: on.includes(n) ? 'on' : 'off' })).filter(x => !am || on.includes(ids[x.i])); },
+              units: [1, 2, 3, 4, 5, 6, 7, 10, 11, 13, 14, 15].map(n => U('송도 신도시(요기요) ' + n + '호기', { m: ['송도신도시(요기요)' + n + '호기', '송도신도시요기요' + n + '호기'] })) },
+            // 역삼요기요(109): 오전(09:30~10:00) 3·4·12호기 ON / 오후(15:30~16:00) 3·4·12호기 OFF + 6·7·9호기 ON. 기체가 앞쪽 시간에 맞춰 준비되므로 점검은 '시작' 시각 +1분(at:'start')
+            { k: '역삼요기요', id: 109, kw: /역삼/, at: 'start',
+              def: t => { const am = t.s < 13 * 60, ids = [3, 4, 12, 6, 7, 9], on = am ? [3, 4, 12] : [6, 7, 9];
+                  return ids.map((n, i) => ({ i, w: on.includes(n) ? 'on' : 'off' })).filter(x => !am || on.includes(ids[x.i])); },
+              units: [3, 4, 12, 6, 7, 9].map(n => U('역삼동 (요기요) ' + n + '호기', { m: ['역삼동(요기요)' + n + '호기', '역삼동요기요' + n + '호기'] })) },
             // 성남 삼평동 '임무 ON/OFF' 업무(예: [삼평동,서현동] 출근 체크 후 임무 ON): 1·7·8호기가 문구의 ON/OFF 와 같아야 통과 (같은 주소 44)
             { k: '성남 삼평동 임무', id: 44, kw: /삼평동/, units: [1, 7, 8].map(n => U('성남형 로봇배달 삼평동 ' + n + '호기', { m: ['성남형로봇배달삼평동' + n + '호기', '삼평동' + n + '호기'] })) },
         ];
@@ -8825,7 +8835,8 @@
         }
         const pwRule = (e, S) => (e.pw === null ? !!S.powerOnly : e.pw);
         const dayStartTs = () => { const d = workDay(); return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(); };
-        function dueTs(t) { let m = AUTO_RANGE_AT === 'start' ? t.s : t.e; if (m < t.s) m += 1440; return dayStartTs() + (m + AUTO_DELAY_MIN) * 60000; }
+        function timingOf(t) { const S = t.sites.find(x => x.at || x.extra); return { at: (S && S.at) || AUTO_RANGE_AT, delay: AUTO_DELAY_MIN + ((S && S.extra) || 0) }; }   // 사이트별 점검 기준(시작/끝)과 추가 지연
+        function dueTs(t) { const tm = timingOf(t); let m = tm.at === 'start' ? t.s : t.e; if (m < t.s) m += 1440; return dayStartTs() + (m + tm.delay) * 60000; }
         const todayOk = t => !t.days || t.days.includes(workDay().getDay());
         const hmOf = ts => { const d = new Date(ts); return pad(d.getHours()) + ':' + pad(d.getMinutes()); };
         const autoKey = () => 'bba_auto_' + curKey;
@@ -9222,7 +9233,7 @@
             });
             const anyPo = t.sites.some(S => S.powerOnly), pwv = wk.pw === null ? anyPo : wk.pw;
             h += (t.sites.some(S => !S.prog) ? '<label><input type="checkbox" data-a="pw"' + (pwv ? ' checked' : '') + '> ON 확인은 전원이 켜진 기체만</label>' : '') +
-                '<div class="tm">점검 시각 ' + hmOf(dueTs(t)) + ' (' + (AUTO_RANGE_AT === 'end' && t.e !== t.s ? '끝' : '업무') + ' 시각 +' + AUTO_DELAY_MIN + '분) · 안 맞으면 ' + Math.round(AUTO_RETRY_MS / 60000) + '분 뒤 한 번 더 → 그래도 안 맞으면 ✕</div>' +
+                '<div class="tm">점검 시각 ' + hmOf(dueTs(t)) + ' (' + (t.e === t.s ? '업무' : timingOf(t).at === 'start' ? '시작' : '끝') + ' 시각 +' + timingOf(t).delay + '분) · 안 맞으면 ' + Math.round(AUTO_RETRY_MS / 60000) + '분 뒤 한 번 더 → 그래도 안 맞으면 ✕</div>' +
                 '<div class="rs" id="bba-ap-rs">' + resultHtml(auto[t.id]) + '</div>' +
                 '<div class="pb"><button class="bba-btn" data-a="def" title="기본 설정으로 되돌리기">기본값</button><button class="bba-btn on" data-a="now" title="지금 바로 이 업무를 점검">지금 점검</button></div>';
             pop.innerHTML = h;
