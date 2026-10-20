@@ -9915,7 +9915,7 @@
             const arr = JSON.parse(snap.txt), wd = workDay();
             SIM.setMonth(wd.getFullYear() === 2026 && wd.getMonth() === 9);   // 근무표(STAFF_DATA)는 2026년 10월분 — 그 외 달은 JSON 에 나온 이름을 출근자로 간주
             const d = wd.getDate(), P = SIM.liveParse(arr), ctx = SIM.liveCtx(P, d, []), A = P.rowUser.map(n => n || null);   // 다중/서브는 07시에 이미 정해진 값 그대로(건드리지 않음), 일일 업무 칸만 다시 배정
-            const B = snap.mode === 'full' ? SIM.liveFull(ctx, d, A, snap.seed) : SIM.liveRepair(ctx, d, A, snap.seed);
+            const B = SIM.liveFull(ctx, d, A, snap.seed);   // 항상 '전체 다시 배정' 방식
             const follow = new Set(); SIM.buildUnits(d, true, false, ctx.tasks).forEach(u => { if (u.rows.length > 1) follow.add(u.rows[1]); });
             return { P, d, ctx, A, B, mA: SIM.liveMetrics(ctx, d, A), mB: SIM.liveMetrics(ctx, d, B), sB: SIM.liveScore(ctx, d, B, A), follow, cfg: snap, wd };
         }
@@ -9943,8 +9943,8 @@
         async function simDo(txt, mode) {   // 현재 JSON 으로 새로 재배정 (최적안 찾기 후 확정)
             if (simSearching) return; simSearching = true; simBusy = true; simProg = '최적안 찾는 중 1/' + SIM_ROUNDS; simDraw();
             try {
-                const r = await simSearch(txt, mode || 'repair');
-                const snap = { txt, seed: r.seed, mode: mode || 'repair', at: Date.now(), day: curKey, tries: r.tries, score: r.score };
+                const r = await simSearch(txt, 'full');
+                const snap = { txt, seed: r.seed, mode: 'full', at: Date.now(), day: curKey, tries: r.tries, score: r.score };
                 simSave(snap); simRun(snap);
             } catch (e) { simRes = null; simErr = (e && e.message) || String(e); console.warn('[BBA] 일일 업무 배정표 계산 실패:', simErr); }
             finally { simSearching = false; simBusy = false; simProg = ''; simDraw(); }
@@ -9953,8 +9953,8 @@
         function simOnNewJson(txt) {   // daily_tasks.json 을 받을 때마다 호출
             try {
                 const c = simCfg(), nm = nowMin(), inWin = nm >= SIM_AUTO_FROM && nm < SIM_AUTO_TO;
-                if (!c) simDo(txt, 'repair');   // (비동기: 5초 동안 최적안을 찾음)   // 이 기능이 처음 들어온 뒤 한 번은 계산 (이후엔 아래 규칙)
-                else if (c.day !== curKey && inWin) simDo(txt, c.mode);   // 오늘 업무일 첫 JSON(07시 언저리) → 자동 1회
+                if (!c) simDo(txt);   // (비동기: 5초 동안 최적안을 찾음)   // 이 기능이 처음 들어온 뒤 한 번은 계산 (이후엔 아래 규칙)
+                else if (c.day !== curKey && inWin) simDo(txt);   // 오늘 업무일 첫 JSON(07시 언저리) → 자동 1회
                 else if (!simRes) simRun(c);
                 simDraw();
             } catch (e) { console.warn('[BBA] 일일 업무 배정표:', e && e.message); }
@@ -9967,16 +9967,19 @@
             const txt = lsGet('bba_tasks_cache', ''), cfg = simCfg();
             if (cfg && !simRes && cfg.day === curKey) simRun(cfg);
             const R = (cfg && cfg.day === curKey) ? simRes : null, keep = (simp.querySelector('.col.c2') || {}).scrollTop;
-            const head = '<div class="mh"><b>📋 일일 업무 배정표</b><span class="cnt" style="font-size:12px;color:var(--mu)">새 수식 시뮬레이션 · 실제 업무표는 바뀌지 않음</span><span class="sp">' +
-                '<span class="seg2"><button data-a="m" data-m="repair" class="' + (cfg && cfg.mode !== 'full' ? 'on' : '') + '" title="받아온 배정에서 규칙을 어긴 칸만 고쳐 봄">문제 칸만 수정</button><button data-a="m" data-m="full" class="' + (cfg && cfg.mode === 'full' ? 'on' : '') + '" title="모든 칸을 새 수식으로 처음부터 다시 배정">전체 다시 배정</button></span>' +
+            const head = '<div class="mh"><b title="새 수식으로 계산한 시뮬레이션입니다 — 실제 업무표는 바뀌지 않습니다">📋 일일 업무 배정표</b><span class="sp">' +
                 '<button class="bba-btn cp" data-a="cp" title="아래 \'새 수식 배정자\' 결과를 시트 행 순서 그대로 한 열(줄바꿈으로 구분)로 복사합니다 — 시트의 배정자 칸에 값만 붙여넣기">📋 배정자 1열 복사</button>' +
-                '<button class="bba-btn on" data-a="re" title="지금의 daily_tasks.json 으로 일일 업무 배정을 다시 돌립니다 (다중/서브는 그대로)">' + (simBusy ? (simProg || '받아오는 중…') : '재배정하기') + '</button><button class="bba-btn" data-a="x">✕ 닫기</button></span></div>';
+                '<button class="bba-btn on" data-a="re" title="지금의 daily_tasks.json 으로 일일 업무 배정을 다시 찾습니다 (다중/서브는 그대로)">' + (simBusy ? (simProg || '받아오는 중…') : '재배정하기') + '</button><button class="bba-btn" data-a="x">✕ 닫기</button></span></div>';
             if (!R) { simp.innerHTML = head + '<div class="meta">' + (simBusy ? (simProg || '최적안을 찾는 중입니다…') : !txt ? 'daily_tasks.json 을 아직 받지 못했습니다' : cfg && cfg.day !== curKey ? '오늘 업무일의 배정표는 아직 계산되지 않았습니다 (자동 계산은 07시 언저리 1회뿐). <b>재배정하기</b>를 누르면 지금의 daily_tasks.json 으로 계산합니다.' : '계산하지 못했습니다: ' + esc(simErr || '알 수 없는 오류')) + '</div>'; return; }
             const { P, A, B, mA, mB, ctx, follow, d, wd } = R, at = new Date(cfg.at), dow = '일월화수목금토'[wd.getDay()], stale = hash(cfg.txt) !== hash(txt);
             const chg = P.TL.filter((t, i) => !t.fixed && (B[i] || null) !== (A[i] || null)).length;
-            const meta = '<div class="meta">기준 <b>daily_tasks.json</b> · 계산 ' + pad(at.getMonth() + 1) + '/' + pad(at.getDate()) + ' ' + pad(at.getHours()) + ':' + pad(at.getMinutes()) + ' · 업무일 ' + d + '일(' + dow + ') · ' +
-                '규칙 문제 칸 현재 <b>' + mA.prob + '</b> → 시뮬레이션 <b>' + mB.prob + '</b> · 가중치 2.0 초과 ' + mA.overW + ' → ' + mB.overW + ' · 다중 포함 4개 이상 ' + mA.n4 + ' → ' + mB.n4 + ' · 바뀐 칸 <b>' + chg + '</b>' +
-                (stale ? '<br><span class="warn">⚠ 지금의 daily_tasks.json 이 이 배정표를 계산할 때와 다릅니다 — 재배정하기를 누르면 지금 JSON 기준으로 다시 계산합니다.</span>' : '') + (P.warn.length ? '<br><span class="warn">' + P.warn.map(esc).join(' · ') + '</span>' : '') + (ctx.unknown.length ? '<br><span class="warn">근무표에 없는 이름: ' + esc(ctx.unknown.join(', ')) + '</span>' : '') + '</div>';
+            const sB = R.sB, warns = [];
+            if (stale) warns.push('⚠ 지금의 daily_tasks.json 이 계산 때와 다릅니다 — 재배정하기를 누르세요');
+            P.warn.filter(w => !/서브: 시트에서/.test(w)).forEach(w => warns.push(esc(w)));
+            if (ctx.unknown.length) warns.push('근무표에 없는 이름: ' + esc(ctx.unknown.join(', ')));
+            const meta = '<div class="meta sum">' + (cfg.tries ? '✅ <b>최적안</b> (' + cfg.tries.toLocaleString() + '가지 중)' : '시뮬레이션') + ' · ' + pad(at.getHours()) + ':' + pad(at.getMinutes()) + ' 계산 · 바뀐 칸 <b>' + chg + '</b> · 규칙 문제 칸 ' + mA.prob + ' → <b>' + mB.prob + '</b><br>' +
+                '가중치 2.0 ' + (sB.m.overW === 0 ? '모두 지킴(최대 ' + sB.maxW.toFixed(1) + ')' : '<span class="warn">' + sB.m.overW + '명 초과(최대 ' + sB.maxW.toFixed(1) + ')</span>') + ' · 업무+다중 ' + sB.mn + '~' + sB.mx + '건 (1건 이하 ' + sB.low + '명, 3건 이상 ' + sB.high + '명) · 연속 3건 ' + (sB.chains ? '<span class="warn">' + sB.chains + '명</span>' : '없음') +
+                (warns.length ? '<br><span class="warn">' + warns.join(' · ') + '</span>' : '') + '</div>';
             const mons = Object.keys(P.main).map(Number).sort((a, b) => a - b);
             const c1 = '<div class="col c1"><div class="gh"><span>시각</span><span>다중</span><span>서브</span></div>' + mons.map(t => '<div class="gr"><span class="tm">' + SIM.fmt(t) + '</span><span>' + simNm(P.main[t]) + '</span><span>' + (P.sub[t] ? simNm(P.sub[t]) : '<span class="em">–</span>') + '</span></div>').join('') + '</div>';
             const c2 = '<div class="col c2"><div class="gh"><span>시각</span><span>일일 업무</span><span>새 수식 배정자</span></div>' + (() => { const M = simMerge(R); return M && !M.bad ? M.items : P.TL.map((t, i) => ({ i, user: A[i] || '', content: t.t })); })().map(it => {   // 전체 행 파일이 있으면 휴무·관리자 행도 시트 순서 그대로 함께 표시
@@ -9987,10 +9990,7 @@
                 return '<div class="gr' + (ch ? ' chg' : '') + '"><span class="tm">' + simRange(t) + '</span><span class="tk" title="' + esc(t.t) + '">' + (follow.has(i) ? '🔗 ' : '') + esc(t.t.replace(/^\s*\[[^\]]*\]\s*/, '')) + '</span><span class="asg">' + simNm(B[i]) + (ch ? '<span class="was" title="' + esc(why) + '">← 현재 ' + esc(A[i] || '후보 없음') + ' · ' + esc(why) + '</span>' : '') + '</span></div>';
             }).join('') + '</div>';
             const cpm = (simMsg ? '<div class="cpm">' + simMsg + '</div>' : '') + (simBox ? '<div class="cpm">자동 복사가 막혀 있어요. 아래 글자를 직접 복사(Ctrl+A → Ctrl+C)하세요.<textarea readonly rows="4">' + esc(simBox) + '</textarea></div>' : '');
-            const sB = R.sB, sum = cfg.tries ? '<div class="meta sum">✅ <b>최적안 확정</b> · ' + cfg.tries.toLocaleString() + '가지를 확인해 가장 좋은 배정을 골랐어요<br>' +
-                '· <b>가중치 2.0</b>: ' + (sB.m.overW === 0 ? '모두 지킴 — 가장 많이 받은 사람도 ' + sB.maxW.toFixed(1) + ' (다중 포함)' : '<span class="warn">' + sB.m.overW + '명이 2.0 초과 (최고 ' + sB.maxW.toFixed(1) + ')</span>') + ' · 규칙 문제 칸 ' + sB.m.prob + '개<br>' +
-                '· <b>고르게</b>: 낮·저녁 근무 ' + sB.nDay + '명이 업무+다중 합쳐 ' + sB.mn + '~' + sB.mx + '건 (1건 이하 ' + sB.low + '명 · 3건 이상 ' + sB.high + '명) · 한 사람에게 연달아 3건 이상 ' + (sB.chains ? '<span class="warn">' + sB.chains + '명</span>' : '없음') + ' · 야간조 배정 ' + sB.night + '건</div>' : '';
-            simp.innerHTML = head + meta + sum + cpm + '<div class="sb">' + c1 + c2 + '</div><div class="foot">시트에 적용: 배정자 열의 <b>첫 업무 행</b>을 클릭 → <b>값만 붙여넣기(Ctrl+Shift+V)</b> · 파란 칸 = 현재 업무표(받아온 배정)에서 바뀐 칸 · 🔗 = 첫 줄과 같은 사람이 맡는 묶음 업무 · 다중/서브는 받아온 값 그대로 고정</div>';
+            simp.innerHTML = head + meta + cpm + '<div class="sb">' + c1 + c2 + '</div><div class="foot">시트에 붙여넣기: 배정자 열의 첫 업무 행 클릭 → 값만 붙여넣기(Ctrl+Shift+V) · 파란 칸 = 바뀐 칸 · 🔗 = 묶음 업무</div>';
             const c2e = simp.querySelector('.col.c2'); if (c2e && keep) c2e.scrollTop = keep;
         }
         /* 시트에 값만 붙여넣기용 '배정자 1열' — 받아온 daily_tasks.json 의 일일 업무 행 순서 그대로(휴무·관리자 고정 행·시각 없는 행도 원래 값으로 자리 유지) 한 줄에 한 칸 */
@@ -10039,12 +10039,11 @@
                 });
                 return;
             }
-            if (a === 'm') { const c = simCfg(); if (!c || c.day !== curKey || simBusy || c.mode === b.dataset.m) return; simDo(c.txt, b.dataset.m); return; }   // 방식을 바꾸면 그 방식으로 최적안을 다시 찾음(같은 JSON)
             if (a === 're') {   // 재배정하기: 최신 daily_tasks.json 을 받아(실패하면 저장본) 그 값으로 일일 업무 배정을 다시 돌림
                 if (simBusy) return; simBusy = true; simProg = '최신 업무표 받는 중…'; simDraw();
                 (async () => {
                     try { await loadTasks(); } catch (e) { /* 저장본 사용 */ }
-                    try { const txt = lsGet('bba_tasks_cache', ''); if (txt) await simDo(txt, (simCfg() || {}).mode); } finally { simBusy = false; simProg = ''; simDraw(); }
+                    try { const txt = lsGet('bba_tasks_cache', ''); if (txt) await simDo(txt); } finally { simBusy = false; simProg = ''; simDraw(); }
                 })();
             }
         });
