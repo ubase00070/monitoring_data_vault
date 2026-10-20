@@ -8353,7 +8353,7 @@
         #bb #bba-mmp .mg .nm { height:26px; border-radius:6px; display:grid; place-items:center; font-weight:700 !important; font-size:13px; color:#1e1a12; background:hsl(var(--h) 58% 84%); white-space:nowrap; overflow:hidden; }
         #bb #bba-mmp .mg .nm.none { background:var(--sur2); color:var(--mu); border:1px dashed var(--bd2); }
         #bb #bba-mmp .mg .sci { display:flex; align-items:center; gap:5px; min-width:0; }
-        #bb #bba-mmp .mg .sci .nm { flex:0 0 auto; min-width:56px; padding:0 8px; }
+        #bb #bba-mmp .mg .sci .nm { flex:1 1 0; min-width:0; padding:0 6px; }   /* 담당자가 여럿이면 한 줄에 나란히 (행 높이 = 다중/서브와 동일) */
         #bb #bba-mmp .mg .sci .tx { font-size:11.5px; color:var(--mu); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
         #bb #bba-mmp .mg .em { color:var(--mu); text-align:center; font-size:12px; }
         /* 펼침 영역 */
@@ -8531,8 +8531,6 @@
                 '<span class="bba-pill bad" id="bba-bad" style="display:none"></span>' +
                 '<span class="bba-pill au" id="bba-auto"></span>' +
                 '<button class="bba-btn on" id="bba-fday" title="켜면 [평일]·[주말]·[화,수…] 처럼 요일이 적힌 업무가 해당 요일에만 보입니다 (끄면 요일과 상관없이 전부 표시)">요일 적용</button>' +
-                '<button class="bba-btn" id="bba-fopen" title="완료한 업무 숨기기">미완료만</button>' +
-                '<button class="bba-btn" id="bba-now">현재 위치로</button>' +
                 '<button class="bba-btn" id="bba-reload" title="daily_tasks.json 다시 받기">새로고침</button>' +
               '</div>' +
               '<div class="bba-zb" id="bba-tb"><div class="bba-th"><span></span><span>기체 관리 : [HH:MM~HH:MM] 시간 사이트 / N호기 / 내용 / [요일]</span><span>당일배정 현황</span></div><div id="bba-rows"></div></div>' +
@@ -8717,6 +8715,8 @@
             const slots = [];
             entries.forEach(e => { let s = slots.find(x => x.t === e.t); if (!s) { s = { t: e.t, items: [] }; slots.push(s); } s.items.push(e); });
             let body = '';
+            const nowHM = pad(new Date().getHours()) + ':' + pad(new Date().getMinutes()), lastStart = {};   // 같은 기체가 한 시간에 여러 번 나오면, 이미 시작된 일정 중 가장 최근 것만 '진행 중' 표시
+            if (isCur) entries.forEach(e => { if (e.k === 'plan' && e.t <= nowHM && (!lastStart[e.n] || e.t > lastStart[e.n])) lastStart[e.n] = e.t; });
             slots.forEach(s => {
                 let pills = '';
                 s.items.forEach(({ n, k }) => {
@@ -8725,8 +8725,8 @@
                     if (rs) { pills += '<div class="bba-pl sus"><span class="nm">' + esc(n) + '</span><span class="rs">' + esc(rs) + '</span></div>'; return; }
                     let tag = k === 'plan' ? tagMap.get(n) : (outPatrol.includes(n) ? OUT_PATROL_TAG : OUT_TAG);
                     if (!tag && k === 'plan' && nightOff.has(n)) tag = NIGHT_TAG;
-                    const monNow = isCur && k === 'plan' && isMonitored(n);   // 지금 다중 모니터링 목록에서 순찰 중인 기체
-                    const finNow = isCur && k === 'plan' && !monNow && isFinishedThisHour(n);   // 이번 시(hour) 안에 순찰이 끝난 기체 (Worker 기록)
+                    const monNow = isCur && k === 'plan' && lastStart[n] === s.t && isMonitored(n);   // 지금 다중 모니터링 목록에서 순찰 중인 기체
+                    const finNow = isCur && k === 'plan' && !monNow && lastStart[n] === s.t && isFinishedThisHour(n);   // 이번 시(hour) 안에 순찰이 끝난 기체 (Worker 기록)
                     pills += '<div class="bba-pl' + (monNow ? ' mon' : '') + (finNow ? ' fin' : '') + (skipDay ? ' skip' : '') + '"' +
                         (monNow ? ' title="현재 모니터링 중"' : finNow ? ' title="이번 시간대에 순찰이 끝난 기체입니다"' : skipDay ? ' title="요일·시간 규칙상 오늘 이 시각에는 제외되는 일정입니다"' : '') + '>' +
                         (finNow ? '<span class="fb">순찰완료</span>' : '') + '<span class="nm">' + esc(n) + '</span><span class="tg"' + (tag ? ' style="background:' + tag.bg + ';color:' + tag.color + '"' : '') + '>' + esc(tag ? tag.label : '') + '</span></div>';
@@ -9389,8 +9389,6 @@
             const t = tasks.find(x => x.id === r.dataset.id); if (t && t.auto && todayOk(t)) openPop(t, r);
         });
         $('bba-fday').addEventListener('click', e => { onlyDay = !onlyDay; e.currentTarget.classList.toggle('on', onlyDay); renderTasks(); });
-        $('bba-fopen').addEventListener('click', e => { onlyOpen = !onlyOpen; e.currentTarget.classList.toggle('on', onlyOpen); renderTasks(); });
-        $('bba-now').addEventListener('click', () => renderTasks(true));
         $('bba-reload').addEventListener('click', () => loadTasks());
         $('bba-auto').addEventListener('click', () => { lsSet('bba_auto_on', autoEnabled() ? '0' : '1'); drawAutoPill(); if (autoEnabled()) autoTick(); });
         window.addEventListener('storage', e => { if (e.key && /^bba_(chk|auto|auto_lock|auto_cfg|auto_on)/.test(e.key)) { clearTimeout(storT); storT = setTimeout(() => renderTasks(), 200); } });
@@ -9532,7 +9530,7 @@
                 const sc = sciTasks.filter(t => (!t.days || t.days.includes(dow)) && sciCovers(t, relH));
                 g += '<div class="tm' + cls + '"' + (cur ? ' id="bba-mm-cur"' : '') + '>' + pad(hh) + ':00</div>' +
                     '<div class="' + cls.trim() + '">' + nmChip(r && r.u) + '</div><div class="' + cls.trim() + '">' + nmChip(r && r.sub) + '</div><div class="gap"></div>' +
-                    '<div class="' + cls.trim() + '">' + (sc.length ? sc.map(t => '<div class="sci" title="' + esc(pad(Math.floor(t.s / 60)) + ':' + pad(t.s % 60) + (t.e !== t.s ? '~' + pad(Math.floor(t.e / 60)) + ':' + pad(t.e % 60) : '') + ' ' + t.body) + '">' + nmChip(t.u) + '</div>').join('') : '<span class="em">-</span>') + '</div>';
+                    '<div class="' + cls.trim() + '">' + (sc.length ? '<div class="sci" title="' + esc(sc.map(t => pad(Math.floor(t.s / 60)) + ':' + pad(t.s % 60) + (t.e !== t.s ? '~' + pad(Math.floor(t.e / 60)) + ':' + pad(t.e % 60) : '') + ' ' + t.body).join(' / ')) + '">' + [...new Set(sc.map(t => t.u))].map(nmChip).join('') + '</div>' : '<span class="em">-</span>') + '</div>';
             }
             const keep = (mmp.querySelector('.mb') || {}).scrollTop;
             mmp.innerHTML = '<div class="mh"><b>👥 시간대별 근무자</b><span class="sp">' + esc(srcMsg || '') + (monRows.length || sciTasks.length ? '' : ' · 데이터 없음') + '</span><button class="mx" title="닫기">✕</button></div><div class="mb">' + g + '</div></div>';
