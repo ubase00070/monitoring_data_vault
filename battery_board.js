@@ -8364,6 +8364,8 @@
         /* [규칙] 07~16시 근무자 중 07·08·09시 다중이 없는 사람은 '부산 08:50 HUB B 출근 + 09~10시 과학관' 을 우선 맡는다 (안 그러면 09~18시 근무자가 받기 쉬움) */
         const isHubU = u => /HUB B 출근|부산 08:50/.test(u.label || '');
         const earlyFree = s => !!(s && s.p && s.p.start === 420 && s.p.end === 960 && ![420, 480, 540].some(H => s.mons.includes(H)));
+        /* [선호] 07~16시·08~17시 근무자는 퇴근 1시간 전(15~16시 · 16~17시)의 과학관 1시간 업무를 가급적 피함 */
+        const lastHrSci = (p, u) => !!(u.sci && p && (p.start === 420 || p.start === 480) && p.end === u.slot + 60);
         function assign(variant, d, M, rng, optIn) {
           const opt = Object.assign({}, DEFAULTS, optIn || {});
           const LV = opt.live || null, ex = new Set(LV ? LV.exclude || [] : []);
@@ -8439,7 +8441,7 @@
                   const s = S[p.name]; if (u.sci) return 0;
                   return (s.mons.some(H => ov(H - 10, H + 50, u.s - GAP, u.e + GAP)) || s.tasks.some(([a, b]) => ov(a, b, u.s - GAP, u.e + GAP))) ? 1 : 0;
                 };
-                const sc = p => (cm ? S[p.name].mons.length + 0.5 * S[p.name].Ct : S[p.name].W + opt.cw * S[p.name].Ct) + opt.gp * od.indexOf(p.g) + 0.25 * pen(p) + (!cm && opt.sciPen && u.sci && S[p.name].mons.length > 0 ? opt.sciPen : 0) + (!cm && (opt.tMid || opt.tLate) ? tendency(p, u, opt.tMid || 0, opt.tLate || 0) : 0);
+                const sc = p => (cm ? S[p.name].mons.length + 0.5 * S[p.name].Ct : S[p.name].W + opt.cw * S[p.name].Ct) + opt.gp * od.indexOf(p.g) + 0.25 * pen(p) + (lastHrSci(p, u) ? 0.8 : 0) + (!cm && opt.sciPen && u.sci && S[p.name].mons.length > 0 ? opt.sciPen : 0) + (!cm && (opt.tMid || opt.tLate) ? tendency(p, u, opt.tMid || 0, opt.tLate || 0) : 0);
                 const m = Math.min(...c.map(sc)), pool = c.filter(p => sc(p) < m + 1e-9);
                 chosen = pool[Math.floor(rng() * pool.length)]; tierUsed = tier; break;
               }
@@ -8575,8 +8577,9 @@
           const mean = cs.reduce((a, b) => a + b, 0) / (cs.length || 1), sd = Math.sqrt(cs.reduce((a, b) => a + (b - mean) * (b - mean), 0) / (cs.length || 1));
           const low = cs.filter(c => c <= 1).length, high = cs.filter(c => c >= 3).length, chains = per.filter(p => p.chain >= 3).length, night = per.filter(p => p.g === 3).reduce((a, p) => a + p.t, 0);
           const changes = X.filter((n, i) => (n || null) !== (A[i] || null)).length;
-          const score = m.prob * 1000 + m.overW * 100 + m.n4 * 40 + sd * 10 + low * 4 + high * 1.2 + chains * 3 + m.std * 5 + night * 2 + changes * 1;
-          return { score, m, per, sd, mn: cs.length ? Math.min(...cs) : 0, mx: cs.length ? Math.max(...cs) : 0, nDay: cs.length, low, high, chains, night, maxW: Math.max(0, ...per.map(p => p.w)), changes };
+          const lastHr = buildUnits(d, true, false, ctx.tasks).filter(u => u.sci && lastHrSci(BYNAME[X[u.rows[0]]], u)).length;   // 퇴근 1시간 전 과학관(07~16·08~17시 근무자) 건수
+          const score = m.prob * 1000 + m.overW * 100 + m.n4 * 40 + sd * 10 + low * 4 + high * 1.2 + chains * 3 + m.std * 5 + night * 2 + changes * 1 + lastHr * 5;
+          return { score, lastHr, m, per, sd, mn: cs.length ? Math.min(...cs) : 0, mx: cs.length ? Math.max(...cs) : 0, nDay: cs.length, low, high, chains, night, maxW: Math.max(0, ...per.map(p => p.w)), changes };
         }
         /* 한 칸씩 담당자를 바꿔 보며 점수가 좋아지면 채택(언덕 오르기) — 바뀐 칸 수에도 점수를 매기므로 '꼭 필요한 수정'만 남는다 */
         function liveClimber(ctx, d, X0, A) {
