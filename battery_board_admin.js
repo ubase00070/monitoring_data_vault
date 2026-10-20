@@ -8242,7 +8242,7 @@
         const TASKS_REFRESH_MS = 5 * 60 * 1000;
         const WD0 = 7 * 60;                       // 업무일 시작 07:00
         const LATE_GRACE = 10;                    // 종료 시각 + 10분이 지나도 미확인이면 '지연'
-        const CAMPS = ['아산 스테이그린', '가평 니모', '대관령 솔내음', '파주 LGD', '인력개발원', '충남대병원', '진천 힐사이드'];   // 배달 사이트 점검 목록
+        const CAMPS = ['아산', '가평', '대관령', '진천', '파주LGD', '인력개발원', '충남대병원'];   // 배달 사이트 점검 목록
         const DAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
         // ───────── 임무 ON/OFF 자동 점검 설정 (여기만 고치면 됩니다) ─────────
@@ -8268,7 +8268,7 @@
                 U('231호기', { g: '야간' }), U('232호기', { g: '야간' })] },
             { k: '성남 서현동', id: 86, kw: /서현동/, units: [U('성남형 로봇배달 서현동 1호기', { m: ['성남형로봇배달서현동1호기', '서현동1호기'] })] },
             // 성수동1가 요기요: 오전(10:30)은 1·2호기 ON / 그 이후(15:30~16:00)는 1호기 OFF, 2·3호기 ON / OFF 업무면 전부 OFF  (def: 기본 점검 대상 — 팝업에서 바꿀 수 있음)
-            { k: '성수동1가 요기요', id: 56, kw: /성수\s*(?:동)?\s*1가/,
+            { k: '성수동1가 요기요', id: 56, kw: /성수\s*(?:동)?\s*1가/, plan: 'front',
               def: t => (t.dirs[0].w === 'off' ? [{ i: 0, w: 'off' }, { i: 1, w: 'off' }, { i: 2, w: 'off' }]
                   : t.s < 13 * 60 ? [{ i: 0, w: 'on' }, { i: 1, w: 'on' }] : [{ i: 0, w: 'off' }, { i: 1, w: 'on' }, { i: 2, w: 'on' }]),
               units: [1, 2, 3].map(n => U('성수동 1가 (요기요) ' + n + '호기', { m: ['성수동1가(요기요)' + n + '호기', '성수동1가요기요' + n + '호기'] })) },
@@ -8280,7 +8280,7 @@
                   return ids.map((n, i) => ({ i, w: on.includes(n) ? 'on' : 'off' })).filter(x => !am || on.includes(ids[x.i])); },
               units: [1, 2, 3, 4, 5, 6, 7, 10, 11, 13, 14, 15].map(n => U('송도 신도시(요기요) ' + n + '호기', { m: ['송도신도시(요기요)' + n + '호기', '송도신도시요기요' + n + '호기'] })) },
             // 역삼요기요(109): 오전(09:30~10:00) 3·4·12호기 ON / 오후(15:30~16:00) 3·4·12호기 OFF + 6·7·9호기 ON. 기체가 앞쪽 시간에 맞춰 준비되므로 점검은 '시작' 시각 +1분(at:'start')
-            { k: '역삼요기요', id: 109, kw: /역삼/, at: 'start',
+            { k: '역삼요기요', id: 109, kw: /역삼/, plan: 'front',
               def: t => { const am = t.s < 13 * 60, ids = [3, 4, 12, 6, 7, 9], on = am ? [3, 4, 12] : [6, 7, 9];
                   return ids.map((n, i) => ({ i, w: on.includes(n) ? 'on' : 'off' })).filter(x => !am || on.includes(ids[x.i])); },
               units: [3, 4, 12, 6, 7, 9].map(n => U('역삼동 (요기요) ' + n + '호기', { m: ['역삼동(요기요)' + n + '호기', '역삼동요기요' + n + '호기'] })) },
@@ -8841,6 +8841,7 @@
             curKey = k;
             try { chk = JSON.parse(lsGet('bba_chk_' + k, '{}')) || {}; } catch (e) { chk = {}; }
             try { camp = JSON.parse(lsGet('bba_camp_' + k, '{}')) || {}; } catch (e) { camp = {}; }
+            try { const LEG = { '아산 스테이그린': '아산', '가평 니모': '가평', '대관령 솔내음': '대관령', '파주 LGD': '파주LGD', '진천 힐사이드': '진천' }; Object.keys(LEG).forEach(o => { if (camp[o]) { if (!camp[LEG[o]]) camp[LEG[o]] = camp[o]; delete camp[o]; } }); } catch (e) { /* 무시 */ }   // 이름을 줄이기 전에 눌러 둔 오늘 기록 이어받기
             try { auto = JSON.parse(lsGet('bba_auto_' + k, '{}')) || {}; } catch (e) { auto = {}; }
             try {   // 지난 업무일 기록 정리 (최근 3일만 유지)
                 const keep = new Date(k).getTime();
@@ -8945,7 +8946,16 @@
         function timingOf(t) { const S = t.sites.find(x => x.at || x.extra); return { at: (S && S.at) || AUTO_RANGE_AT, delay: AUTO_DELAY_MIN + ((S && S.extra) || 0) }; }   // 사이트별 점검 기준(시작/끝)과 추가 지연
         // 재점검까지의 시간: 충전 점검 5분 / 사이트에 retryMs 가 있으면 그 시간 / 그 밖에는 AUTO_RETRY_MS
         const retryMsOf = t => (t.chg ? CHG_RETRY_MS : ((t.sites.find(x => x.retryMs) || {}).retryMs || AUTO_RETRY_MS));
-        function dueTs(t) { const tm = timingOf(t); let m = tm.at === 'start' ? t.s : t.e; if (m < t.s) m += 1440; return dayStartTs() + (m + tm.delay) * 60000; }
+        // plan:'front' 사이트(역삼·성수 요기요): 앞시각 +1분, 앞시각 +5분, 그래도 안 되면 뒷시각 정각에 마지막 1회 (뒷시각이 없는 단일 시각 업무는 앞의 2회까지)
+        function attemptsOf(t) {
+            if (!t.sites.some(x => x.plan === 'front')) return null;
+            let e = t.e; if (e < t.s) e += 1440;
+            const a = [t.s + 1, t.s + 5]; if (e > t.s + 5) a.push(e);
+            return a.map(m => dayStartTs() + m * 60000);
+        }
+        const maxTriesOf = t => { const a = attemptsOf(t); return a ? a.length : AUTO_MAX_TRIES; };
+        function dueTs(t) {
+            const at = attemptsOf(t); if (at) return at[0]; const tm = timingOf(t); let m = tm.at === 'start' ? t.s : t.e; if (m < t.s) m += 1440; return dayStartTs() + (m + tm.delay) * 60000; }
         const todayOk = t => !t.days || t.days.includes(workDay().getDay());
         const hmOf = ts => { const d = new Date(ts); return pad(d.getHours()) + ':' + pad(d.getMinutes()); };
         const autoKey = () => 'bba_auto_' + curKey;
@@ -9239,10 +9249,11 @@
             const fin = Date.now();
             run.forEach(({ it, ev, keep, pre }) => {
                 reloadAuto();
-                const prev = auto[it.t.id], n = it.force ? AUTO_MAX_TRIES : ((prev && prev.n) || 0) + 1;
+                const prev = auto[it.t.id], n = it.force ? maxTriesOf(it.t) : ((prev && prev.n) || 0) + 1;
                 const r = evalUnits(it, ev, readings, pre, keep), late = now - it.due > 3 * 60000;   // 점검 '시작'이 예정보다 3분 넘게 늦었는가 (충전 점검처럼 오래 걸려도 지연으로 치지 않도록)
-                const rec = { st: r.ok ? 'ok' : (n >= AUTO_MAX_TRIES ? 'fail' : 'retry'), n, at: fin, due: it.due, det: r.det, msg: r.ok ? '' : detMsg(r.det), late, forced: !!it.force };
-                if (rec.st === 'retry') { const rm = retryMsOf(it.t); rec.next = it.t.chg || rm === AUTO_RETRY_MS ? fin + rm : Math.max(it.due + rm, fin + 60000); }   // 사이트별 재점검(송도): 첫 점검 예정 시각 + 5분 (11:01 → 11:06), 이미 늦었으면 1분 뒤
+                const rec = { st: r.ok ? 'ok' : (n >= maxTriesOf(it.t) ? 'fail' : 'retry'), n, at: fin, due: it.due, det: r.det, msg: r.ok ? '' : detMsg(r.det), late, forced: !!it.force };
+                if (rec.st === 'retry' && attemptsOf(it.t)) { const at = attemptsOf(it.t); rec.next = Math.max(at[Math.min(n, at.length - 1)], fin + 60000); }   // 다음 점검 시각(앞시각 +5분 → 뒷시각 정각), 이미 지났으면 1분 뒤
+                else if (rec.st === 'retry') { const rm = retryMsOf(it.t); rec.next = it.t.chg || rm === AUTO_RETRY_MS ? fin + rm : Math.max(it.due + rm, fin + 60000); }   // 사이트별 재점검(송도): 첫 점검 예정 시각 + 5분 (11:01 → 11:06), 이미 늦었으면 1분 뒤
                 autoPut(it.t.id, rec);
                 forced.delete(it.t.id);
                 console.log('[BBA] 자동 점검', it.t.head, rec.st, rec.msg || '');
@@ -9434,7 +9445,7 @@
             });
             const anyPo = t.sites.some(S => S.powerOnly), pwv = wk.pw === null ? anyPo : wk.pw;
             h += (t.sites.some(S => !S.prog) ? '<label><input type="checkbox" data-a="pw"' + (pwv ? ' checked' : '') + '> ON 확인은 전원이 켜진 기체만</label>' : '') +
-                '<div class="tm">점검 시각 ' + hmOf(dueTs(t)) + ' (' + (t.e === t.s ? '업무' : timingOf(t).at === 'start' ? '시작' : '끝') + ' 시각 +' + timingOf(t).delay + '분) · 안 맞으면 ' + Math.round(retryMsOf(t) / 60000) + '분 뒤 한 번 더 → 그래도 안 맞으면 ✕</div>' +
+                '<div class="tm">점검 시각 ' + (attemptsOf(t) ? attemptsOf(t).map(hmOf).join(' → ') + ' (앞시각 +1분 · +5분 · 뒷시각 정각, 안 맞으면 다음 점검) · 모두 안 맞으면 ✕' : hmOf(dueTs(t)) + ' (' + (t.e === t.s ? '업무' : timingOf(t).at === 'start' ? '시작' : '끝') + ' 시각 +' + timingOf(t).delay + '분) · 안 맞으면 ' + Math.round(retryMsOf(t) / 60000) + '분 뒤 한 번 더 → 그래도 안 맞으면 ✕') + '</div>' +
                 '<div class="rs" id="bba-ap-rs">' + resultHtml(auto[t.id]) + '</div>' +
                 '<div class="pb"><button class="bba-btn" data-a="def" title="기본 설정으로 되돌리기">기본값</button><button class="bba-btn on" data-a="now" title="지금 바로 이 업무를 점검">지금 점검</button></div>';
             pop.innerHTML = h;
