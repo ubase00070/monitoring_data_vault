@@ -8457,6 +8457,10 @@
         #bb #bba-ap .seg button.on[data-w="off"] { background:#d93a35; color:#fff; }
         #bb #bba-ap .u.dis .seg { opacity:.45; }
         #bb #bba-ap .seg button.on.run { background:#3b82f6; color:#fff; cursor:default; }
+        #bb #bba-ap .lgt { display:flex; gap:4px; flex-wrap:wrap; margin-bottom:6px; }
+        #bb #bba-ap .lgt button { height:24px; padding:0 8px; border-radius:7px; border:1.5px solid var(--bd2); background:var(--sur); color:var(--mu); font-family:inherit; font-size:11.5px; font-weight:700 !important; cursor:pointer; }
+        #bb #bba-ap .lgt button.on { background:var(--tx); color:var(--sur); border-color:var(--tx); }
+        #bb #bba-ap .pb .cf { font-size:12.5px; font-weight:700 !important; margin-right:auto; align-self:center; }
         #bb #bba-ap .tm { margin-top:8px; color:var(--mu); font-size:12px; line-height:1.45; }
         #bb #bba-ap .rs { margin-top:6px; padding:6px 8px; border-radius:8px; background:var(--sur2); font-size:12px; line-height:1.5; max-height:150px; overflow:auto; }
         #bb #bba-ap .rs .g { color:#22a05a; } #bb #bba-ap .rs .r { color:#d93a35; } #bb #bba-ap .rs .m { color:var(--mu); }
@@ -9286,6 +9290,11 @@
                 const rec = { st: r.ok ? 'ok' : (n >= maxTriesOf(it.t) ? 'fail' : 'retry'), n, at: fin, due: it.due, det: r.det, msg: r.ok ? '' : detMsg(r.det), late, forced: !!it.force };
                 if (rec.st === 'retry' && attemptsOf(it.t)) { const at = attemptsOf(it.t); rec.next = Math.max(at[Math.min(n, at.length - 1)], fin + 60000); }   // 다음 점검 시각(앞시각 +5분 → 뒷시각 정각), 이미 지났으면 1분 뒤
                 else if (rec.st === 'retry') { const rm = retryMsOf(it.t); rec.next = it.t.chg || rm === AUTO_RETRY_MS ? fin + rm : Math.max(it.due + rm, fin + 60000); }   // 사이트별 재점검(송도): 첫 점검 예정 시각 + 5분 (11:01 → 11:06), 이미 늦었으면 1분 뒤
+                if (it.t.chg) {   // 무선충전 점검 기록: +1분 · +5분 · 지금 점검 (지금 점검은 가장 최근 1개만) — 최대 3개
+                    const kind = it.force ? 'now' : (n <= 1 ? 'p1' : 'p2'), lg = ((prev && prev.logs) || []).filter(x => x.k !== kind);
+                    lg.push({ k: kind, at: fin, st: rec.st, n, next: rec.next || 0, det: rec.det, msg: rec.msg });
+                    lg.sort((x, y) => x.at - y.at); rec.logs = lg;
+                }
                 autoPut(it.t.id, rec);
                 forced.delete(it.t.id);
                 console.log('[BBA] 자동 점검', it.t.head, rec.st, rec.msg || '');
@@ -9458,7 +9467,7 @@
                     h += '<label class="u' + (x.on ? '' : ' dis') + '"><input type="checkbox" data-a="u" data-k="' + esc(x.k) + '" data-n="' + esc(x.n) + '"' + (x.on ? ' checked' : '') + '><span class="nm">[' + S.id + '] ' + esc(x.n) + (S.any ? ' (택1)' : '') + (S.batOnly ? ' (배터리만)' : '') + '</span></label>';
                 }));
                 h += '</div><div class="tm">점검 시각 ' + hmOf(dueTs(t)) + ' · 통과: 전원 켜짐 + 배터리 수치 + ⚡ · 제외: 순찰 중 / 전원 꺼짐 / 입고됨(카드 없음) · 못 찾으면 ' + Math.round(CHG_RETRY_MS / 60000) + '분 뒤 그 기체만 한 번 더 → ✕ · 인재개발원은 배터리 수치만 확인</div>' +
-                    '<div class="rs" id="bba-ap-rs">' + resultHtml(auto[t.id]) + '</div>' +
+                    '<div class="rs" id="bba-ap-rs">' + popRs(t) + '</div>' +
                     '<div class="pb"><button class="bba-btn" data-a="def" title="기본 설정으로 되돌리기">기본값</button><button class="bba-btn on" data-a="now" title="지금 바로 이 업무를 점검">지금 점검</button></div>';
                 pop.innerHTML = h; return;
             }
@@ -9479,7 +9488,17 @@
                 '<div class="pb"><button class="bba-btn" data-a="def" title="기본 설정으로 되돌리기">기본값</button><button class="bba-btn on" data-a="now" title="지금 바로 이 업무를 점검">지금 점검</button></div>';
             pop.innerHTML = h;
         }
-        function refreshPop() { const el = $('bba-ap-rs'); if (el && popTask) el.innerHTML = resultHtml(auto[popTask.id]); }
+        let popLogI = null, popLogFor = '';
+        const LG_NAME = { p1: '+1분', p2: '+5분', now: '지금 점검' };
+        function popRs(t) {   // 팝업의 점검 결과 영역: 충전 점검은 점검 때마다 남긴 기록(+1분 / +5분 / 지금 점검)을 탭으로 볼 수 있음
+            const a = auto[t.id];
+            if (!t.chg || !a || !a.logs || !a.logs.length) return resultHtml(a);
+            if (popLogFor !== t.id) { popLogFor = t.id; popLogI = null; }
+            const lg = a.logs, i = popLogI != null && lg[popLogI] ? popLogI : lg.length - 1, e = lg[i];
+            const tabs = '<div class="lgt">' + lg.map((x, j) => '<button type="button" data-a="lg" data-i="' + j + '" class="' + (j === i ? 'on' : '') + '">' + LG_NAME[x.k] + ' ' + hmOf(x.at) + ' ' + (x.st === 'ok' ? '✓' : x.st === 'fail' ? '✕' : '↻') + '</button>').join('') + '</div>';
+            return tabs + resultHtml({ st: e.st, n: e.n, at: e.at, next: e.next, det: e.det, msg: e.msg });
+        }
+        function refreshPop() { const el = $('bba-ap-rs'); if (el && popTask) el.innerHTML = popRs(popTask); }
         function openPop(t, rowEl) {
             const e = effOf(t), first = (t.dirs[0] && t.dirs[0].w) || 'on';
             popTask = t;
@@ -9500,7 +9519,10 @@
             if (a === 'x') return closePop();
             if (a === 'w') { const x = popWk.units.find(v => v.k === b.dataset.k && v.n === b.dataset.n); if (x) { x.w = b.dataset.w; popSave(); buildPop(); } return; }
             if (a === 'def') { const c = cfgAll(); delete c[popTask.id]; lsSet('bba_auto_cfg', JSON.stringify(c)); const t = popTask, r = $('bba-rows').querySelector('.bba-row[data-id="' + t.id + '"]'); closePop(); if (r) openPop(t, r); renderTasks(); return; }
-            if (a === 'now') { const t = popTask; popSave(); forced.add(t.id); $('bba-ap-rs').innerHTML = '<span class="m">점검 요청됨 — 잠시 후 결과가 표시됩니다…</span>'; autoTick(); return; }
+            if (a === 'lg') { popLogI = +b.dataset.i; refreshPop(); return; }
+            if (a === 'now') { const pb = b.closest('.pb'); if (pb) { pb.dataset.h = pb.innerHTML; pb.innerHTML = '<span class="cf">지금 점검을 진행할까요?</span><button class="bba-btn on" data-a="nowy">예</button><button class="bba-btn" data-a="non">아니오</button>'; } return; }
+            if (a === 'non') { const pb = b.closest('.pb'); if (pb && pb.dataset.h) pb.innerHTML = pb.dataset.h; return; }
+            if (a === 'nowy') { const pb = b.closest('.pb'); if (pb && pb.dataset.h) pb.innerHTML = pb.dataset.h; const t = popTask; popSave(); forced.add(t.id); $('bba-ap-rs').innerHTML = '<span class="m">점검 요청됨 — 잠시 후 결과가 표시됩니다…</span>'; autoTick(); return; }
         });
         pop.addEventListener('change', e => {
             const b = e.target.closest('[data-a]'); if (!b || !popTask) return;
