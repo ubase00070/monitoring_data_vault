@@ -8710,6 +8710,7 @@
 
         // ── 안혜림 모드 ──
         const MODE_KEY = 'bb_user_mode', MODE_NAME = '안혜림';
+        const MODE_KEYS = ['안혜림', 'dksgpfla', 'anhyerim', 'anhyelim'];   // 한글 · 한영키를 안 바꾸고 친 영문(안혜림 = dksgPfla, 대소문자 무관) · 로마자
         const isMode = () => lsGet(MODE_KEY, '') === MODE_NAME;
         const tag = $('bb-cyh-tag'), tagOrig = tag ? tag.textContent : 'by CYH', simBtn = $('bbsim-btn');
         function applyMode() {
@@ -8722,7 +8723,7 @@
 
         // 관제 센터 제목 박스를 한 번 클릭하면 보이지 않는 입력칸이 잠깐 열린다 → '안혜림' 입력 + Enter (한 번 더 하면 해제)
         const box = $('bb-drag-handle'); let down = null, keyIn = null, keyT = 0;
-        function closeKey() { clearTimeout(keyT); if (keyIn) { keyIn.remove(); keyIn = null; } }
+        function closeKey() { clearTimeout(keyT); const k = keyIn; keyIn = null; if (k) k.remove(); }
         function openKey() {
             closeKey();
             const r = box.getBoundingClientRect();
@@ -8731,12 +8732,12 @@
             document.body.appendChild(keyIn); keyIn.focus();
             const commit = () => {
                 if (!keyIn) return;
-                if (keyIn.value.trim() !== MODE_NAME) return;   // 아직 입력 중이거나 다른 글자 → 그대로 둠(15초 뒤 자동 닫힘)
+                if (!MODE_KEYS.includes(keyIn.value.replace(/\s+/g, '').toLowerCase())) return;   // 아직 입력 중이거나 다른 글자 → 그대로 둠(15초 뒤 자동 닫힘)
                 lsSet(MODE_KEY, isMode() ? '' : MODE_NAME); closeKey(); applyMode();
             };
             keyIn.addEventListener('keydown', e => { if (e.key === 'Escape') return closeKey(); if (e.key === 'Enter') setTimeout(commit, 60); });
             keyIn.addEventListener('keyup', e => { if (e.key === 'Enter') setTimeout(commit, 0); });
-            keyIn.addEventListener('blur', () => setTimeout(closeKey, 0));
+            const me = keyIn; me.addEventListener('blur', () => setTimeout(() => { if (keyIn === me) closeKey(); }, 0));   // 예전 입력칸의 blur 가 새 입력칸을 닫지 않도록
             keyT = setTimeout(closeKey, 15000);
         }
         if (box) {
