@@ -8341,12 +8341,15 @@
         const orderFor = s => s < 720 ? [0, 1, 2, 3] : s < 1020 ? [1, 0, 2, 3] : [2, 1, 0, 3];
         const DEFAULTS = { gp: 0.1, cw: 0.4, cap: 3, holiday: false, sciPen: 1, grace: 1, tMid: 0.15, tLate: 0.3 };
         const RELAX_TXT = ['', '가중치 2.0 상한을 풀어 배정', '다중 포함 개수 상한까지 풀어 배정', '다중과 연속 금지까지 풀어 배정'];
+        /* [규칙] 07~16시 근무자 중 07·08·09시 다중이 없는 사람은 '부산 08:50 HUB B 출근 + 09~10시 과학관' 을 우선 맡는다 (안 그러면 09~18시 근무자가 받기 쉬움) */
+        const isHubU = u => /HUB B 출근|부산 08:50/.test(u.label || '');
+        const earlyFree = s => !!(s && s.p && s.p.start === 420 && s.p.end === 960 && ![420, 480, 540].some(H => s.mons.includes(H)));
         function assign(variant, d, M, rng, optIn) {
           const opt = Object.assign({}, DEFAULTS, optIn || {});
           const LV = opt.live || null, ex = new Set(LV ? LV.exclude || [] : []);
           const people = LV ? LV.people.filter(p => !ex.has(p.name)) : present(d), mons = LV ? LV.main : (M.main[d] || {}), subs = LV ? LV.sub : (M.sub[d] || {}), S = {};
           people.forEach(p => { const Hs = Object.entries(mons).filter(([h, n]) => n === p.name).map(([h]) => +h); const sb = Object.entries(subs).filter(([h, n]) => n === p.name).map(([h]) => +h); S[p.name] = { p, mons: Hs, subAll: sb, subs: sb.filter(H => H >= SUB_STRICT), W: Hs.length, Ct: 0, tasks: [], sci: false, slots: new Set(), rows: 0 }; });
-          const base = variant === 'base', lite = variant === 'lite', cm = variant === 'cnt', nv = variant === 'new' || variant === 'newF' || variant === 'newL' || variant === 'newH', U0 = buildUnits(d, nv || cm, opt.holiday, LV ? LV.tasks : null).map(u => nv && opt.grace && u.rows.length === 1 && /무선충전/.test(u.label) && /재시작/.test(u.label) && u.s === 600 ? { ...u, e: 630 } : u), U = variant === 'newH' ? [...U0.filter(u => u.sci).map(u => ({ ...u, restrict: true })), ...U0.filter(u => !u.sci)] : variant === 'newF' ? [...U0.filter(u => u.sci), ...U0.filter(u => !u.sci)] : variant === 'newL' ? [...U0.filter(u => !u.sci), ...U0.filter(u => u.sci)] : U0, out = [];
+          const base = variant === 'base', lite = variant === 'lite', cm = variant === 'cnt', nv = variant === 'new' || variant === 'newF' || variant === 'newL' || variant === 'newH', U0 = buildUnits(d, nv || cm, opt.holiday, LV ? LV.tasks : null).map(u => nv && opt.grace && u.rows.length === 1 && /무선충전/.test(u.label) && /재시작/.test(u.label) && u.s === 600 ? { ...u, e: 630 } : u), U = variant === 'newH' ? [...U0.filter(u => u.sci).map(u => ({ ...u, restrict: true })), ...U0.filter(u => !u.sci)] : variant === 'newF' ? [...U0.filter(u => u.sci), ...U0.filter(u => !u.sci)] : variant === 'newL' ? [...U0.filter(u => !u.sci), ...U0.filter(u => u.sci)] : (variant === 'new' ? [...U0.filter(isHubU), ...U0.filter(u => !isHubU(u))] : U0), out = [];
           const UU = opt.names ? (opt.evalOnly ? U : [...U.filter(u => opt.keep.has(u.rows[0])), ...U.filter(u => !opt.keep.has(u.rows[0]))]) : U;
           for (const u of UU) {
             let chosen = null, tierUsed = null;
@@ -8394,7 +8397,7 @@
               }
             } else {
               for (let tier = 0; tier < (u.restrict ? 1 : 4); tier++) {
-                const c = people.filter(p => {
+                let c = people.filter(p => {
                   const s = S[p.name];
                   if (u.restrict && s.mons.length > 0) return false;
                   if (!(p.start <= u.slot && u.slot + 60 <= p.end)) return false;
@@ -8409,6 +8412,7 @@
                   return true;
                 });
                 if (!c.length) continue;
+                if (nv && isHubU(u)) { const pc = c.filter(p => earlyFree(S[p.name])); if (pc.length) c = pc; }   // 07~16시 근무자 중 07·08·09시 다중이 없는 사람 우선
                 const od = orderFor(u.s);
                 const pen = p => {
                   const s = S[p.name]; if (u.sci) return 0;
@@ -8445,6 +8449,7 @@
             if (s.p.brk && ov(u.s, u.e, s.p.brk[0], s.p.brk[1])) { why.push('휴게시간과 겹침'); m.other++; }
             if (r.tasks.some(t => ov(t[0], t[1], u.s, u.e))) { why.push('본인 다른 업무와 겹침'); m.other++; }
             if (u.sci && r.sci) { why.push('부산 하루 2회'); m.other++; }
+            if (isHubU(u) && !earlyFree(s) && Object.values(S).some(x => earlyFree(x) && x.mons.length + Math.max(u.w, 1e-6) <= 2 + 1e-9 && x.mons.length + u.cnt <= 3 && !x.mons.some(H => ov(H - 10, H + 50 + GAP, u.s - GAP, u.e + GAP)))) { why.push('07~16시 근무자 중 07·08·09시 다중이 없는 사람이 있는데 부산 08:50을 다른 사람이 받음'); m.other++; }
             r.W += u.w; r.C += u.cnt; r.tasks.push([u.s, u.e]); r.sci = r.sci || u.sci;
             if (why.length) { flags[i] = why; if (why.some(x => !x.startsWith('가중치'))) core[i] = 1; }
           });
