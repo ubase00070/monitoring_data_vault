@@ -8338,6 +8338,7 @@
         #bb #bba-sim .mh b { font-size:16px; font-weight:700 !important; }
         #bb #bba-sim .mh .sp { margin-left:auto; display:flex; gap:6px; align-items:center; }
         #bb #bba-sim .meta { font-size:12px; color:var(--mu); margin-bottom:6px; line-height:1.45; }
+        #bb #bba-sim .meta.sum { margin-top:-2px; padding:4px 9px; border-radius:8px; background:var(--sur2); border:1.5px solid var(--bd2); color:var(--tx); }
         #bb #bba-sim .meta b { color:var(--tx); font-weight:700 !important; }
         #bb #bba-sim .meta .warn { color:var(--rd); font-weight:700 !important; }
         #bb #bba-sim .sb { flex:1; min-height:0; display:grid; grid-template-columns:minmax(230px,.36fr) minmax(0,1fr); gap:10px; }
@@ -9879,9 +9880,29 @@
           const R = assign('new', d, null, mulberry(seed | 0), { live: ctx });
           return namesFromOut(ctx, d, R.out, A);
         }
-        /* 비교 숫자 */
+        /* 사람별 업무 현황: 업무 건수(t) · 업무 가중치(own) · 다중 횟수(m) · 가중치 합(w, 다중 포함) · 가장 긴 연속(앞 업무 끝~다음 시작 30분 이내) */
+        function liveStats(ctx, d, X) {
+          const U = buildUnits(d, true, false, ctx.tasks), by = {}, mons = {};
+          Object.values(ctx.main).forEach(n => { mons[n] = (mons[n] || 0) + 1; });
+          U.forEach(u => { const n = X[u.rows[0]]; if (!n) return; const l = ctx.tasks[u.rows[u.rows.length - 1]]; (by[n] = by[n] || []).push({ s: ctx.tasks[u.rows[0]].s, e: Math.max(l.e, l.s + 10), w: u.w, c: u.cnt }); });
+          return ctx.people.map(p => {
+            const l = (by[p.name] || []).sort((a, b) => a.s - b.s); let run = l.length ? 1 : 0, best = run;
+            for (let i = 1; i < l.length; i++) { if (l[i].s - l[i - 1].e <= 30) { run++; best = Math.max(best, run); } else run = 1; }
+            const own = l.reduce((a, b) => a + b.w, 0), t = l.reduce((a, b) => a + b.c, 0), m = mons[p.name] || 0;
+            return { n: p.name, g: p.g, m, t, own, w: own + m, chain: best };
+          });
+        }
+        /* 배정안 점수(작을수록 좋음): ① 규칙 위반·2.0 초과·다중 포함 4개 이상(가장 크게) ② 낮·저녁조 건수 편차 · 1건 이하 · 3건 이상 · 3건 연속 · 가중치 편차 · 야간조 업무 ③ 바뀐 칸 수(아주 약하게) */
+        function liveScore(ctx, d, X, A) {
+          const m = liveMetrics(ctx, d, X), per = liveStats(ctx, d, X), day = per.filter(p => p.g <= 2), cs = day.map(p => p.t + p.m);
+          const mean = cs.reduce((a, b) => a + b, 0) / (cs.length || 1), sd = Math.sqrt(cs.reduce((a, b) => a + (b - mean) * (b - mean), 0) / (cs.length || 1));
+          const low = cs.filter(c => c <= 1).length, high = cs.filter(c => c >= 3).length, chains = per.filter(p => p.chain >= 3).length, night = per.filter(p => p.g === 3).reduce((a, p) => a + p.t, 0);
+          const changes = X.filter((n, i) => (n || null) !== (A[i] || null)).length;
+          const score = m.prob * 1000 + m.overW * 100 + m.n4 * 40 + sd * 10 + low * 4 + high * 1.2 + chains * 3 + m.std * 5 + night * 2 + changes * 0.02;
+          return { score, m, per, sd, mn: cs.length ? Math.min(...cs) : 0, mx: cs.length ? Math.max(...cs) : 0, nDay: cs.length, low, high, chains, night, maxW: Math.max(0, ...per.map(p => p.w)), changes };
+        }
             return {
-                liveParse, liveCtx, liveMetrics, liveRepair, liveFull, buildUnits, fmt,
+                liveParse, liveCtx, liveMetrics, liveRepair, liveFull, liveScore, buildUnits, fmt,
                 setMonth: v => { MONTH_OK = !!v; }
             };
         })();
@@ -9896,18 +9917,43 @@
             const d = wd.getDate(), P = SIM.liveParse(arr), ctx = SIM.liveCtx(P, d, []), A = P.rowUser.map(n => n || null);   // 다중/서브는 07시에 이미 정해진 값 그대로(건드리지 않음), 일일 업무 칸만 다시 배정
             const B = snap.mode === 'full' ? SIM.liveFull(ctx, d, A, snap.seed) : SIM.liveRepair(ctx, d, A, snap.seed);
             const follow = new Set(); SIM.buildUnits(d, true, false, ctx.tasks).forEach(u => { if (u.rows.length > 1) follow.add(u.rows[1]); });
-            return { P, d, ctx, A, B, mA: SIM.liveMetrics(ctx, d, A), mB: SIM.liveMetrics(ctx, d, B), follow, cfg: snap, wd };
+            return { P, d, ctx, A, B, mA: SIM.liveMetrics(ctx, d, A), mB: SIM.liveMetrics(ctx, d, B), sB: SIM.liveScore(ctx, d, B, A), follow, cfg: snap, wd };
         }
         function simRun(snap) { try { simRes = simCompute(snap); simErr = ''; } catch (e) { simRes = null; simErr = (e && e.message) || String(e); console.warn('[BBA] 일일 업무 배정표 계산 실패:', simErr); } }
-        function simDo(txt, mode) {   // 현재 JSON 으로 새로 재배정 (새 시드)
-            const snap = { txt, seed: 1 + Math.floor(Math.random() * 1e9), mode: mode || 'repair', at: Date.now(), day: curKey };
-            simSave(snap); simRun(snap);
+        /* 최적안 찾기: 1초씩 5번(총 5초) 동안 시드를 바꿔 가며 수천 가지 배정을 만들어 보고, 점수(규칙 위반 → 2.0 초과 → 고른 정도)가 가장 좋은 안을 확정 */
+        let simSearching = false, simProg = '';
+        const SIM_ROUNDS = 5, SIM_ROUND_MS = 1000;
+        async function simSearch(txt, mode) {
+            const arr = JSON.parse(txt), wd = workDay();
+            SIM.setMonth(wd.getFullYear() === 2026 && wd.getMonth() === 9);
+            const d = wd.getDate(), P = SIM.liveParse(arr), ctx = SIM.liveCtx(P, d, []), A = P.rowUser.map(n => n || null), t0 = performance.now(), total = SIM_ROUNDS * SIM_ROUND_MS;
+            let best = null, tries = 0;
+            for (;;) {
+                const el = performance.now() - t0; if (el >= total && best) break;
+                const sl = performance.now(), slice = document.hidden ? 700 : 40;   // 뒤쪽 탭은 브라우저가 타이머를 늦추므로 한 번에 더 오래 계산
+                do {
+                    const seed = 1 + Math.floor(Math.random() * 1e9), B = mode === 'full' ? SIM.liveFull(ctx, d, A, seed) : SIM.liveRepair(ctx, d, A, seed), sc = SIM.liveScore(ctx, d, B, A);
+                    tries++; if (!best || sc.score < best.score) best = { seed, score: sc.score };
+                } while (performance.now() - sl < slice && performance.now() - t0 < total);
+                simProg = '최적안 찾는 중 ' + Math.min(SIM_ROUNDS, Math.floor((performance.now() - t0) / SIM_ROUND_MS) + 1) + '/' + SIM_ROUNDS + ' · ' + tries + '가지 확인'; simDraw();
+                await new Promise(r => setTimeout(r, 0));
+            }
+            return { seed: best.seed, tries, score: best.score };
+        }
+        async function simDo(txt, mode) {   // 현재 JSON 으로 새로 재배정 (최적안 찾기 후 확정)
+            if (simSearching) return; simSearching = true; simBusy = true; simProg = '최적안 찾는 중 1/' + SIM_ROUNDS; simDraw();
+            try {
+                const r = await simSearch(txt, mode || 'repair');
+                const snap = { txt, seed: r.seed, mode: mode || 'repair', at: Date.now(), day: curKey, tries: r.tries, score: r.score };
+                simSave(snap); simRun(snap);
+            } catch (e) { simRes = null; simErr = (e && e.message) || String(e); console.warn('[BBA] 일일 업무 배정표 계산 실패:', simErr); }
+            finally { simSearching = false; simBusy = false; simProg = ''; simDraw(); }
         }
         const SIM_AUTO_FROM = WD0 - 5, SIM_AUTO_TO = 8 * 60 + 30;   // 자동 재배정은 시트 업무표가 오늘자로 바뀐 07시 언저리(06:55~08:30)에서 업무일당 1회만
         function simOnNewJson(txt) {   // daily_tasks.json 을 받을 때마다 호출
             try {
                 const c = simCfg(), nm = nowMin(), inWin = nm >= SIM_AUTO_FROM && nm < SIM_AUTO_TO;
-                if (!c) simDo(txt, 'repair');   // 이 기능이 처음 들어온 뒤 한 번은 계산 (이후엔 아래 규칙)
+                if (!c) simDo(txt, 'repair');   // (비동기: 5초 동안 최적안을 찾음)   // 이 기능이 처음 들어온 뒤 한 번은 계산 (이후엔 아래 규칙)
                 else if (c.day !== curKey && inWin) simDo(txt, c.mode);   // 오늘 업무일 첫 JSON(07시 언저리) → 자동 1회
                 else if (!simRes) simRun(c);
                 simDraw();
@@ -9924,8 +9970,8 @@
             const head = '<div class="mh"><b>📋 일일 업무 배정표</b><span class="cnt" style="font-size:12px;color:var(--mu)">새 수식 시뮬레이션 · 실제 업무표는 바뀌지 않음</span><span class="sp">' +
                 '<span class="seg2"><button data-a="m" data-m="repair" class="' + (cfg && cfg.mode !== 'full' ? 'on' : '') + '" title="받아온 배정에서 규칙을 어긴 칸만 고쳐 봄">문제 칸만 수정</button><button data-a="m" data-m="full" class="' + (cfg && cfg.mode === 'full' ? 'on' : '') + '" title="모든 칸을 새 수식으로 처음부터 다시 배정">전체 다시 배정</button></span>' +
                 '<button class="bba-btn cp" data-a="cp" title="아래 \'새 수식 배정자\' 결과를 시트 행 순서 그대로 한 열(줄바꿈으로 구분)로 복사합니다 — 시트의 배정자 칸에 값만 붙여넣기">📋 배정자 1열 복사</button>' +
-                '<button class="bba-btn on" data-a="re" title="지금의 daily_tasks.json 으로 일일 업무 배정을 다시 돌립니다 (다중/서브는 그대로)">' + (simBusy ? '받아오는 중…' : '재배정하기') + '</button><button class="bba-btn" data-a="x">✕ 닫기</button></span></div>';
-            if (!R) { simp.innerHTML = head + '<div class="meta">' + (!txt ? 'daily_tasks.json 을 아직 받지 못했습니다' : cfg && cfg.day !== curKey ? '오늘 업무일의 배정표는 아직 계산되지 않았습니다 (자동 계산은 07시 언저리 1회뿐). <b>재배정하기</b>를 누르면 지금의 daily_tasks.json 으로 계산합니다.' : '계산하지 못했습니다: ' + esc(simErr || '알 수 없는 오류')) + '</div>'; return; }
+                '<button class="bba-btn on" data-a="re" title="지금의 daily_tasks.json 으로 일일 업무 배정을 다시 돌립니다 (다중/서브는 그대로)">' + (simBusy ? (simProg || '받아오는 중…') : '재배정하기') + '</button><button class="bba-btn" data-a="x">✕ 닫기</button></span></div>';
+            if (!R) { simp.innerHTML = head + '<div class="meta">' + (simBusy ? (simProg || '최적안을 찾는 중입니다…') : !txt ? 'daily_tasks.json 을 아직 받지 못했습니다' : cfg && cfg.day !== curKey ? '오늘 업무일의 배정표는 아직 계산되지 않았습니다 (자동 계산은 07시 언저리 1회뿐). <b>재배정하기</b>를 누르면 지금의 daily_tasks.json 으로 계산합니다.' : '계산하지 못했습니다: ' + esc(simErr || '알 수 없는 오류')) + '</div>'; return; }
             const { P, A, B, mA, mB, ctx, follow, d, wd } = R, at = new Date(cfg.at), dow = '일월화수목금토'[wd.getDay()], stale = hash(cfg.txt) !== hash(txt);
             const chg = P.TL.filter((t, i) => !t.fixed && (B[i] || null) !== (A[i] || null)).length;
             const meta = '<div class="meta">기준 <b>daily_tasks.json</b> · 계산 ' + pad(at.getMonth() + 1) + '/' + pad(at.getDate()) + ' ' + pad(at.getHours()) + ':' + pad(at.getMinutes()) + ' · 업무일 ' + d + '일(' + dow + ') · ' +
@@ -9941,7 +9987,10 @@
                 return '<div class="gr' + (ch ? ' chg' : '') + '"><span class="tm">' + simRange(t) + '</span><span class="tk" title="' + esc(t.t) + '">' + (follow.has(i) ? '🔗 ' : '') + esc(t.t.replace(/^\s*\[[^\]]*\]\s*/, '')) + '</span><span class="asg">' + simNm(B[i]) + (ch ? '<span class="was" title="' + esc(why) + '">← 현재 ' + esc(A[i] || '후보 없음') + ' · ' + esc(why) + '</span>' : '') + '</span></div>';
             }).join('') + '</div>';
             const cpm = (simMsg ? '<div class="cpm">' + simMsg + '</div>' : '') + (simBox ? '<div class="cpm">자동 복사가 막혀 있어요. 아래 글자를 직접 복사(Ctrl+A → Ctrl+C)하세요.<textarea readonly rows="4">' + esc(simBox) + '</textarea></div>' : '');
-            simp.innerHTML = head + meta + cpm + '<div class="sb">' + c1 + c2 + '</div><div class="foot">시트에 적용: 배정자 열의 <b>첫 업무 행</b>을 클릭 → <b>값만 붙여넣기(Ctrl+Shift+V)</b> · 파란 칸 = 현재 업무표(받아온 배정)에서 바뀐 칸 · 🔗 = 첫 줄과 같은 사람이 맡는 묶음 업무 · 다중/서브는 받아온 값 그대로 고정</div>';
+            const sB = R.sB, sum = cfg.tries ? '<div class="meta sum">✅ <b>최적안 확정</b> · ' + cfg.tries.toLocaleString() + '가지를 확인해 가장 좋은 배정을 골랐어요<br>' +
+                '· <b>가중치 2.0</b>: ' + (sB.m.overW === 0 ? '모두 지킴 — 가장 많이 받은 사람도 ' + sB.maxW.toFixed(1) + ' (다중 포함)' : '<span class="warn">' + sB.m.overW + '명이 2.0 초과 (최고 ' + sB.maxW.toFixed(1) + ')</span>') + ' · 규칙 문제 칸 ' + sB.m.prob + '개<br>' +
+                '· <b>고르게</b>: 낮·저녁 근무 ' + sB.nDay + '명이 업무+다중 합쳐 ' + sB.mn + '~' + sB.mx + '건 (1건 이하 ' + sB.low + '명 · 3건 이상 ' + sB.high + '명) · 한 사람에게 연달아 3건 이상 ' + (sB.chains ? '<span class="warn">' + sB.chains + '명</span>' : '없음') + ' · 야간조 배정 ' + sB.night + '건</div>' : '';
+            simp.innerHTML = head + meta + sum + cpm + '<div class="sb">' + c1 + c2 + '</div><div class="foot">시트에 적용: 배정자 열의 <b>첫 업무 행</b>을 클릭 → <b>값만 붙여넣기(Ctrl+Shift+V)</b> · 파란 칸 = 현재 업무표(받아온 배정)에서 바뀐 칸 · 🔗 = 첫 줄과 같은 사람이 맡는 묶음 업무 · 다중/서브는 받아온 값 그대로 고정</div>';
             const c2e = simp.querySelector('.col.c2'); if (c2e && keep) c2e.scrollTop = keep;
         }
         /* 시트에 값만 붙여넣기용 '배정자 1열' — 받아온 daily_tasks.json 의 일일 업무 행 순서 그대로(휴무·관리자 고정 행·시각 없는 행도 원래 값으로 자리 유지) 한 줄에 한 칸 */
@@ -9978,6 +10027,7 @@
             if (a === 'cp') {   // 배정자 1열 복사
                 const show = m => { simMsg = m; clearTimeout(simMsgT); simMsgT = setTimeout(() => { simMsg = ''; simDraw(); }, 12000); simDraw(); };
                 simBox = '';
+                if (simBusy) return show('<span class="warn">최적안을 찾는 중입니다 — 끝난 뒤 복사하세요.</span>');
                 const cfg = simCfg(), R = (cfg && cfg.day === curKey) ? simRes : null;
                 if (!R) return show('<span class="warn">복사할 배정표가 없습니다 — 재배정하기를 먼저 누르세요.</span>');
                 if (hash(cfg.txt) !== hash(lsGet('bba_tasks_cache', ''))) return show('<span class="warn">⚠ 지금의 daily_tasks.json 이 이 배정표와 달라 줄이 어긋날 수 있습니다. 재배정하기를 누른 뒤 복사하세요.</span>');
@@ -9989,12 +10039,12 @@
                 });
                 return;
             }
-            if (a === 'm') { const c = simCfg(); if (!c || c.day !== curKey) return; c.mode = b.dataset.m; simSave(c); simRun(c); return simDraw(); }   // 방식만 바꿔 보기(같은 JSON·같은 시드)
+            if (a === 'm') { const c = simCfg(); if (!c || c.day !== curKey || simBusy || c.mode === b.dataset.m) return; simDo(c.txt, b.dataset.m); return; }   // 방식을 바꾸면 그 방식으로 최적안을 다시 찾음(같은 JSON)
             if (a === 're') {   // 재배정하기: 최신 daily_tasks.json 을 받아(실패하면 저장본) 그 값으로 일일 업무 배정을 다시 돌림
-                if (simBusy) return; simBusy = true; simDraw();
+                if (simBusy) return; simBusy = true; simProg = '최신 업무표 받는 중…'; simDraw();
                 (async () => {
                     try { await loadTasks(); } catch (e) { /* 저장본 사용 */ }
-                    try { const txt = lsGet('bba_tasks_cache', ''); if (txt) simDo(txt, (simCfg() || {}).mode); } finally { simBusy = false; simDraw(); }
+                    try { const txt = lsGet('bba_tasks_cache', ''); if (txt) await simDo(txt, (simCfg() || {}).mode); } finally { simBusy = false; simProg = ''; simDraw(); }
                 })();
             }
         });
