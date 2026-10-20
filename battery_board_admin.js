@@ -8274,8 +8274,8 @@
               units: [1, 2, 3].map(n => U('성수동 1가 (요기요) ' + n + '호기', { m: ['성수동1가(요기요)' + n + '호기', '성수동1가요기요' + n + '호기'] })) },
             // 성남 삼평동 '출근 임무' 업무: 7호기의 '임무 진행'이 비어 있지 않으면(무언가 진행 중) 출근 임무를 수행 중으로 보고 확인. ※ id(NCC 주소 번호)를 채워야 동작
             { k: '성남 삼평동', id: 44, kw: /삼평동/, prog: /출근\s*임무\s*$/, units: [U('성남형 로봇배달 삼평동 7호기', { m: ['성남형로봇배달삼평동7호기', '삼평동7호기'] })] },
-            // 송도요기요(65): 오전(10:30~11:00) 1~6호기 ON / 오후(교대) 1~6호기 OFF + 7·10·11·13·14·15호기 ON. 현장 준비 시간이 걸려 점검은 보통보다 5분 늦게(extra)
-            { k: '송도요기요', id: 65, kw: /송도/, extra: 5,
+            // 송도요기요(65): 오전(10:30~11:00) 1~6호기 ON / 오후(교대) 1~6호기 OFF + 7·10·11·13·14·15호기 ON. 현장 준비 시간이 걸려 첫 점검은 +1분, 안 맞으면 재점검은 5분 뒤(retryMs)
+            { k: '송도요기요', id: 65, kw: /송도/, retryMs: 5 * 60 * 1000,
               def: t => { const am = t.s < 13 * 60, ids = [1, 2, 3, 4, 5, 6, 7, 10, 11, 13, 14, 15], on = am ? [1, 2, 3, 4, 5, 6] : [7, 10, 11, 13, 14, 15];
                   return ids.map((n, i) => ({ i, w: on.includes(n) ? 'on' : 'off' })).filter(x => !am || on.includes(ids[x.i])); },
               units: [1, 2, 3, 4, 5, 6, 7, 10, 11, 13, 14, 15].map(n => U('송도 신도시(요기요) ' + n + '호기', { m: ['송도신도시(요기요)' + n + '호기', '송도신도시요기요' + n + '호기'] })) },
@@ -8370,6 +8370,10 @@
         #bb .bba-zone { border:2px solid var(--bd2); border-radius:8px; background:var(--sur); display:flex; flex-direction:column; min-height:0; min-width:0; }
         #bb .bba-zh { display:flex; align-items:center; gap:8px; padding:6px 10px; border-bottom:1px solid var(--bd); flex:0 0 auto; flex-wrap:wrap; }
         #bb .bba-zh h2 { margin:0; font-size:15px; margin-right:auto; font-weight:700 !important; color:var(--tx); }
+        #bb .bba-tasks .bba-zh { flex-wrap:nowrap; }   /* 일일 업무표 헤더는 항상 한 줄 — 긴 글자는 … 로 줄인다 */
+        #bb .bba-tasks .bba-zh > * { flex:0 0 auto; }
+        #bb .bba-tasks .bba-zh #bba-wd { flex:0 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        #bb .bba-tasks .bba-zh .bba-pill.au { display:block; flex:0 1 auto; min-width:60px; max-width:210px; line-height:24px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
         #bb .bba-zb { overflow:auto; min-height:0; flex:1; }
         #bb .bba-cnt { font-size:12px; color:var(--mu); font-weight:700 !important; }
         #bb .bba-pill { display:inline-flex; align-items:center; height:26px; padding:0 10px; border-radius:999px; border:1px solid var(--bd2); background:var(--sur2); font-size:12px; font-weight:700 !important; white-space:nowrap; color:var(--tx); }
@@ -8939,6 +8943,8 @@
         const pwRule = (e, S) => (e.pw === null ? !!S.powerOnly : e.pw);
         const dayStartTs = () => { const d = workDay(); return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(); };
         function timingOf(t) { const S = t.sites.find(x => x.at || x.extra); return { at: (S && S.at) || AUTO_RANGE_AT, delay: AUTO_DELAY_MIN + ((S && S.extra) || 0) }; }   // 사이트별 점검 기준(시작/끝)과 추가 지연
+        // 재점검까지의 시간: 충전 점검 5분 / 사이트에 retryMs 가 있으면 그 시간 / 그 밖에는 AUTO_RETRY_MS
+        const retryMsOf = t => (t.chg ? CHG_RETRY_MS : ((t.sites.find(x => x.retryMs) || {}).retryMs || AUTO_RETRY_MS));
         function dueTs(t) { const tm = timingOf(t); let m = tm.at === 'start' ? t.s : t.e; if (m < t.s) m += 1440; return dayStartTs() + (m + tm.delay) * 60000; }
         const todayOk = t => !t.days || t.days.includes(workDay().getDay());
         const hmOf = ts => { const d = new Date(ts); return pad(d.getHours()) + ':' + pad(d.getMinutes()); };
@@ -9236,7 +9242,7 @@
                 const prev = auto[it.t.id], n = it.force ? AUTO_MAX_TRIES : ((prev && prev.n) || 0) + 1;
                 const r = evalUnits(it, ev, readings, pre, keep), late = now - it.due > 3 * 60000;   // 점검 '시작'이 예정보다 3분 넘게 늦었는가 (충전 점검처럼 오래 걸려도 지연으로 치지 않도록)
                 const rec = { st: r.ok ? 'ok' : (n >= AUTO_MAX_TRIES ? 'fail' : 'retry'), n, at: fin, due: it.due, det: r.det, msg: r.ok ? '' : detMsg(r.det), late, forced: !!it.force };
-                if (rec.st === 'retry') rec.next = fin + (it.t.chg ? CHG_RETRY_MS : AUTO_RETRY_MS);
+                if (rec.st === 'retry') { const rm = retryMsOf(it.t); rec.next = it.t.chg || rm === AUTO_RETRY_MS ? fin + rm : Math.max(it.due + rm, fin + 60000); }   // 사이트별 재점검(송도): 첫 점검 예정 시각 + 5분 (11:01 → 11:06), 이미 늦었으면 1분 뒤
                 autoPut(it.t.id, rec);
                 forced.delete(it.t.id);
                 console.log('[BBA] 자동 점검', it.t.head, rec.st, rec.msg || '');
@@ -9428,7 +9434,7 @@
             });
             const anyPo = t.sites.some(S => S.powerOnly), pwv = wk.pw === null ? anyPo : wk.pw;
             h += (t.sites.some(S => !S.prog) ? '<label><input type="checkbox" data-a="pw"' + (pwv ? ' checked' : '') + '> ON 확인은 전원이 켜진 기체만</label>' : '') +
-                '<div class="tm">점검 시각 ' + hmOf(dueTs(t)) + ' (' + (t.e === t.s ? '업무' : timingOf(t).at === 'start' ? '시작' : '끝') + ' 시각 +' + timingOf(t).delay + '분) · 안 맞으면 ' + Math.round(AUTO_RETRY_MS / 60000) + '분 뒤 한 번 더 → 그래도 안 맞으면 ✕</div>' +
+                '<div class="tm">점검 시각 ' + hmOf(dueTs(t)) + ' (' + (t.e === t.s ? '업무' : timingOf(t).at === 'start' ? '시작' : '끝') + ' 시각 +' + timingOf(t).delay + '분) · 안 맞으면 ' + Math.round(retryMsOf(t) / 60000) + '분 뒤 한 번 더 → 그래도 안 맞으면 ✕</div>' +
                 '<div class="rs" id="bba-ap-rs">' + resultHtml(auto[t.id]) + '</div>' +
                 '<div class="pb"><button class="bba-btn" data-a="def" title="기본 설정으로 되돌리기">기본값</button><button class="bba-btn on" data-a="now" title="지금 바로 이 업무를 점검">지금 점검</button></div>';
             pop.innerHTML = h;
@@ -9517,10 +9523,12 @@
         }
         function closeMmp() { mmp.classList.remove('open'); $('bba-mmb').classList.remove('on'); }
         // 다른 레이아웃 영역을 누르면 열려 있는 패널(배달 로그 · 개입 현황 · 이석 현황 · 근무자)을 닫는다
-        root.addEventListener('click', e => {
+        document.getElementById('bb').addEventListener('click', e => {
             const t = e.target; if (!(t instanceof Element)) return;
             if (mmp.classList.contains('open') && !t.closest('#bba-mmp, #bba-mmb')) closeMmp();
-            if (open.length && !t.closest('#bba-dr, .bba-dbtn, #bba-ap, [id*="-pop"], [class*="-pop"], #bb-fbp') && t.closest('.bba-tasks, #bb-mm-page-multi, #bba-right, #bba-mmp, #bba-mmb')) { open = []; applyOpen(); }
+            if (!open.length || t.closest('#bba-dr, .bba-bar, #bba-ap, [id*="-pop"], [class*="-pop"], #bb-fbp')) return;
+            // 업무표·다중 모니터링·오른쪽 영역은 어디를 눌러도 닫고, 그 밖(관제 센터 머리글 등)은 빈 영역을 눌렀을 때만 닫는다 (버튼·입력칸은 제외)
+            if (t.closest('.bba-tasks, #bb-mm-page-multi, #bba-right, #bba-mmp, #bba-mmb') || !t.closest('button, a, input, select, textarea, label')) { open = []; applyOpen(); }
         }, true);
         $('bba-mmb').addEventListener('click', () => { const o = mmp.classList.toggle('open'); $('bba-mmb').classList.toggle('on', o); if (o) { mmp.innerHTML = ''; drawMmp(); } });
         setInterval(drawMmp, 30 * 1000);
