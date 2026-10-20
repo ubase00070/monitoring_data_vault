@@ -9800,6 +9800,7 @@
             if (s.mons.some(H => ov(H - 10, H + 50, u.s, u.e))) { why.push('다중 교대 시간과 겹침'); m.timeConflict++; }
             else if (u.sci && s.mons.some(H => ov(H - 10, H + 50 + GAP, u.s - GAP, u.e + GAP))) { why.push('다중과 연달아 배정 (부산)'); m.timeConflict++; }
             if (s.subs.some(H => ov(H - 10, H + 50, u.s, u.e))) { why.push('18시 이후 서브 시간과 겹침'); m.timeConflict++; }
+            if (!(s.p.start <= u.slot && u.slot + 60 <= s.p.end)) { why.push('근무시간 밖 (' + fmt(s.p.start) + '~' + fmt(s.p.end) + ' 근무)'); m.other++; }
             if (s.p.brk && ov(u.s, u.e, s.p.brk[0], s.p.brk[1])) { why.push('휴게시간과 겹침'); m.other++; }
             if (r.tasks.some(t => ov(t[0], t[1], u.s, u.e))) { why.push('본인 다른 업무와 겹침'); m.other++; }
             if (u.sci && r.sci) { why.push('부산 하루 2회'); m.other++; }
