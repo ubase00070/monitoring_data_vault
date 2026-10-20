@@ -8356,6 +8356,10 @@
         #bb #bba-sim .asg .nm { flex:0 0 auto; min-width:60px; }
         #bb #bba-sim .asg .was { font-size:11px; color:#2a5db0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
         #bb #bba-sim .gr.fx { opacity:.6; }
+        #bb #bba-sim .cpm { margin-bottom:6px; padding:5px 9px; border-radius:8px; background:#e3f6e6; border:1.5px solid #5cb96b; color:#1d4a26; font-size:12px; line-height:1.45; }
+        #bb #bba-sim .cpm b { font-weight:700 !important; }
+        #bb #bba-sim .cpm .warn { color:var(--rd); font-weight:700 !important; }
+        #bb #bba-sim .cpm textarea { display:block; width:100%; box-sizing:border-box; margin-top:4px; font-size:12px; line-height:1.4; font-family:inherit; }
         #bb #bba-sim .foot { margin-top:6px; font-size:11.5px; color:var(--mu); }
         #bb #bba-sim .seg2 { display:inline-flex; border:1.5px solid var(--bd2); border-radius:8px; overflow:hidden; }
         #bb #bba-sim .seg2 button { height:26px; padding:0 10px; border:0; background:var(--sur2); color:var(--mu); font-family:inherit; font-size:12px; font-weight:700 !important; cursor:pointer; }
@@ -9914,6 +9918,7 @@
             const R = (cfg && cfg.day === curKey) ? simRes : null, keep = (simp.querySelector('.col.c2') || {}).scrollTop;
             const head = '<div class="mh"><b>📋 일일 업무 배정표</b><span class="cnt" style="font-size:12px;color:var(--mu)">새 수식 시뮬레이션 · 실제 업무표는 바뀌지 않음</span><span class="sp">' +
                 '<span class="seg2"><button data-a="m" data-m="repair" class="' + (cfg && cfg.mode !== 'full' ? 'on' : '') + '" title="받아온 배정에서 규칙을 어긴 칸만 고쳐 봄">문제 칸만 수정</button><button data-a="m" data-m="full" class="' + (cfg && cfg.mode === 'full' ? 'on' : '') + '" title="모든 칸을 새 수식으로 처음부터 다시 배정">전체 다시 배정</button></span>' +
+                '<button class="bba-btn cp" data-a="cp" title="아래 \'새 수식 배정자\' 결과를 시트 행 순서 그대로 한 열(줄바꿈으로 구분)로 복사합니다 — 시트의 배정자 칸에 값만 붙여넣기">📋 배정자 1열 복사</button>' +
                 '<button class="bba-btn on" data-a="re" title="지금의 daily_tasks.json 으로 일일 업무 배정을 다시 돌립니다 (다중/서브는 그대로)">' + (simBusy ? '받아오는 중…' : '재배정하기') + '</button><button class="bba-btn" data-a="x">✕ 닫기</button></span></div>';
             if (!R) { simp.innerHTML = head + '<div class="meta">' + (!txt ? 'daily_tasks.json 을 아직 받지 못했습니다' : cfg && cfg.day !== curKey ? '오늘 업무일의 배정표는 아직 계산되지 않았습니다 (자동 계산은 07시 언저리 1회뿐). <b>재배정하기</b>를 누르면 지금의 daily_tasks.json 으로 계산합니다.' : '계산하지 못했습니다: ' + esc(simErr || '알 수 없는 오류')) + '</div>'; return; }
             const { P, A, B, mA, mB, ctx, follow, d, wd } = R, at = new Date(cfg.at), dow = '일월화수목금토'[wd.getDay()], stale = hash(cfg.txt) !== hash(txt);
@@ -9928,14 +9933,47 @@
                 const ch = (B[i] || null) !== (A[i] || null), why = (mA.why[i] || []).join(' · ') || (follow.has(i) ? '첫 줄 담당자 변경에 맞춤' : '다른 칸 수정에 따른 재조정');
                 return '<div class="gr' + (ch ? ' chg' : '') + '"><span class="tm">' + simRange(t) + '</span><span class="tk" title="' + esc(t.t) + '">' + (follow.has(i) ? '🔗 ' : '') + esc(t.t.replace(/^\s*\[[^\]]*\]\s*/, '')) + '</span><span class="asg">' + simNm(B[i]) + (ch ? '<span class="was" title="' + esc(why) + '">← 현재 ' + esc(A[i] || '후보 없음') + ' · ' + esc(why) + '</span>' : '') + '</span></div>';
             }).join('') + '</div>';
-            simp.innerHTML = head + meta + '<div class="sb">' + c1 + c2 + '</div><div class="foot">파란 칸 = 현재 업무표(받아온 배정)에서 바뀐 칸 · 🔗 = 첫 줄과 같은 사람이 맡는 묶음 업무 · 다중/서브는 받아온 값 그대로 고정</div>';
+            const cpm = (simMsg ? '<div class="cpm">' + simMsg + '</div>' : '') + (simBox ? '<div class="cpm">자동 복사가 막혀 있어요. 아래 글자를 직접 복사(Ctrl+A → Ctrl+C)하세요.<textarea readonly rows="4">' + esc(simBox) + '</textarea></div>' : '');
+            simp.innerHTML = head + meta + cpm + '<div class="sb">' + c1 + c2 + '</div><div class="foot">시트에 적용: 배정자 열의 <b>첫 업무 행</b>을 클릭 → <b>값만 붙여넣기(Ctrl+Shift+V)</b> · 파란 칸 = 현재 업무표(받아온 배정)에서 바뀐 칸 · 🔗 = 첫 줄과 같은 사람이 맡는 묶음 업무 · 다중/서브는 받아온 값 그대로 고정</div>';
             const c2e = simp.querySelector('.col.c2'); if (c2e && keep) c2e.scrollTop = keep;
         }
+        /* 시트에 값만 붙여넣기용 '배정자 1열' — 받아온 daily_tasks.json 의 일일 업무 행 순서 그대로(휴무·관리자 고정 행·시각 없는 행도 원래 값으로 자리 유지) 한 줄에 한 칸 */
+        function simColumn(R) {
+            const arr = JSON.parse(R.cfg.txt), names = [], heads = []; let ti = 0;
+            arr.forEach(x => {
+                if (!x || typeof x !== 'object' || x.type === 'monitoring') return;
+                let nm = String(x.user == null ? '' : x.user), h = String(x.content || '').replace(/\s+/g, ' ').trim();
+                if (x.type === 'task' && x.content && /^\s*\[\d{1,2}:\d{2}/.test(String(x.content))) {
+                    const i = ti++; if (!R.P.TL[i].fixed) nm = R.B[i] || '후보 없음';
+                }
+                names.push(nm.replace(/[\r\n\t]+/g, ' ').trim()); heads.push(h);
+            });
+            return { names, heads, text: names.join('\n') };   // 끝에 줄바꿈을 붙이지 않음(붙이면 시트에 빈 칸 한 줄이 더 덮어써짐)
+        }
+        async function simCopyText(text) {
+            try { await navigator.clipboard.writeText(text); return true; } catch (e) { /* 아래 대체 방법 */ }
+            try { const ta = document.createElement('textarea'); ta.value = text; ta.style.cssText = 'position:fixed;left:-9999px;top:0'; document.body.appendChild(ta); ta.select(); const ok = document.execCommand('copy'); ta.remove(); return !!ok; } catch (e) { return false; }
+        }
+        let simMsg = '', simMsgT = 0, simBox = '';
         function simClose() { simp.classList.remove('open'); const b = $('bba-simb'); if (b) b.classList.remove('on'); }
         simp.addEventListener('click', e => {
             const b = e.target.closest('[data-a]'); if (!b) return;
             const a = b.dataset.a;
             if (a === 'x') return simClose();
+            if (a === 'cp') {   // 배정자 1열 복사
+                const show = m => { simMsg = m; clearTimeout(simMsgT); simMsgT = setTimeout(() => { simMsg = ''; simDraw(); }, 12000); simDraw(); };
+                simBox = '';
+                const cfg = simCfg(), R = (cfg && cfg.day === curKey) ? simRes : null;
+                if (!R) return show('<span class="warn">복사할 배정표가 없습니다 — 재배정하기를 먼저 누르세요.</span>');
+                if (hash(cfg.txt) !== hash(lsGet('bba_tasks_cache', ''))) return show('<span class="warn">⚠ 지금의 daily_tasks.json 이 이 배정표와 달라 줄이 어긋날 수 있습니다. 재배정하기를 누른 뒤 복사하세요.</span>');
+                let col; try { col = simColumn(R); } catch (e) { return show('<span class="warn">복사 데이터를 만들지 못했습니다: ' + esc(e.message) + '</span>'); }
+                simCopyText(col.text).then(ok => {
+                    if (!ok) simBox = col.text;
+                    const cut = s => esc(s.length > 26 ? s.slice(0, 26) + '…' : s), L = col.names.length;
+                    show((ok ? '✔ <b>' + L + '줄</b> 복사됨' : '복사 실패') + ' · 첫 줄 <b>' + esc(col.names[0] || '') + '</b> (' + cut(col.heads[0] || '') + ') · 끝 줄 <b>' + esc(col.names[L - 1] || '') + '</b> (' + cut(col.heads[L - 1] || '') + ') — 시트 첫 행·끝 행과 맞는지 확인하세요');
+                });
+                return;
+            }
             if (a === 'm') { const c = simCfg(); if (!c || c.day !== curKey) return; c.mode = b.dataset.m; simSave(c); simRun(c); return simDraw(); }   // 방식만 바꿔 보기(같은 JSON·같은 시드)
             if (a === 're') {   // 재배정하기: 최신 daily_tasks.json 을 받아(실패하면 저장본) 그 값으로 일일 업무 배정을 다시 돌림
                 if (simBusy) return; simBusy = true; simDraw();
