@@ -8307,6 +8307,30 @@
         #bb .bba-dbtn.on .n { background:rgba(255,255,255,.25); }
         #bb .bba-dbtn .ar { font-size:10px; }
         #bb .bba-note { margin-left:auto; font-size:12px; color:var(--mu); }
+        #bb .bba-mmb { margin-left:auto; height:28px; padding:0 12px; border-radius:9px; border:2px solid #8fd6c0; background:var(--sur2); color:var(--tx); font-family:inherit; font-size:13px; font-weight:700 !important; cursor:pointer; } #bb .bba-mmb.on { background:var(--tx); color:var(--sur); }
+        #bb .bba-mmb + .bba-note { margin-left:4px; }
+        /* 다중·서브·과학관 근무자 (보드 오른쪽 절반을 덮는 오버레이) */
+        #bb #bba-mmp { position:absolute; right:14px; width:calc(50% - 18px); top:40px; bottom:12px; z-index:31; display:none; flex-direction:column; min-height:0; box-sizing:border-box; padding:10px 12px 12px; background:var(--bg); border:2px solid var(--bd2); border-radius:12px; box-shadow:0 10px 28px rgba(0,0,0,.35); }
+        #bb #bba-mmp.open { display:flex; }
+        #bb #bba-mmp .mh { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+        #bb #bba-mmp .mh b { font-size:16px; font-weight:700 !important; }
+        #bb #bba-mmp .mh .sp { margin-left:auto; font-size:11.5px; color:var(--mu); }
+        #bb #bba-mmp .mx { width:26px; height:26px; border-radius:7px; border:1.5px solid var(--bd2); background:var(--sur2); color:var(--tx); cursor:pointer; font-family:inherit; line-height:1; }
+        #bb #bba-mmp .mb { position:relative; flex:1; min-height:0; overflow:auto; border:1.5px solid var(--bd2); border-radius:10px; background:var(--sur); }
+        #bb #bba-mmp .mg { display:grid; grid-template-columns:62px minmax(0,1fr) minmax(0,1fr) 12px minmax(0,1.35fr); align-items:stretch; }
+        #bb #bba-mmp .mg > div { padding:5px 7px; border-bottom:1px solid var(--bd); display:flex; flex-direction:column; justify-content:center; gap:3px; min-width:0; }
+        #bb #bba-mmp .mg .hd { position:sticky; top:0; z-index:2; background:var(--sur2); font-size:12px; font-weight:700 !important; color:var(--mu); text-align:center; border-bottom:2px solid var(--bd2); align-items:center; }
+        #bb #bba-mmp .mg .hd.mc { background:#dff3ee; color:#1c6a57; } #bb #bba-mmp .mg .hd.sc { background:#e7e9fb; color:#3b3f96; }
+        #bb #bba-mmp .mg .tm { font-size:13px; font-weight:700 !important; color:var(--mu); text-align:center; font-variant-numeric:tabular-nums; }
+        #bb #bba-mmp .mg .gap { padding:0; border-bottom:none; background:var(--bg); }
+        #bb #bba-mmp .mg .cur { background:#fff3c4; } #bb #bba-mmp .mg .cur.tm { color:#8a5a00; }
+        #bb #bba-mmp .mg .past { opacity:.55; }
+        #bb #bba-mmp .mg .nm { height:26px; border-radius:6px; display:grid; place-items:center; font-weight:700 !important; font-size:13px; color:#1e1a12; background:hsl(var(--h) 58% 84%); white-space:nowrap; overflow:hidden; }
+        #bb #bba-mmp .mg .nm.none { background:var(--sur2); color:var(--mu); border:1px dashed var(--bd2); }
+        #bb #bba-mmp .mg .sci { display:flex; align-items:center; gap:5px; min-width:0; }
+        #bb #bba-mmp .mg .sci .nm { flex:0 0 auto; min-width:56px; padding:0 8px; }
+        #bb #bba-mmp .mg .sci .tx { font-size:11.5px; color:var(--mu); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+        #bb #bba-mmp .mg .em { color:var(--mu); text-align:center; font-size:12px; }
         /* 펼침 영역 */
         /* 펼침 그리드: 버튼 줄 아래 보드 전체(좌우 끝~하단)를 덮는 오버레이 */
         #bb #bba-dr { position:absolute; left:14px; width:calc(50% - 18px); top:40px; bottom:12px; z-index:30; display:flex; gap:10px; min-height:0; padding:8px; background:var(--bg); border:2px solid var(--bd2); border-radius:10px; box-shadow:0 10px 28px rgba(0,0,0,.35); box-sizing:border-box; }
@@ -8456,6 +8480,7 @@
               '<button class="bba-dbtn" data-k="dl" aria-expanded="false">🚚 배달 로그 <span class="n" id="bba-n-dl">-</span><span class="ar">▾</span></button>' +
               '<button class="bba-dbtn" data-k="iv" aria-expanded="false">🧑‍💻 개입 현황 <span class="ar">▾</span></button>' +
               '<button class="bba-dbtn" data-k="at" aria-expanded="false">🪑 이석 현황 <span class="ar">▾</span></button>' +
+              '<button class="bba-mmb" id="bba-mmb" title="다중 · 서브 모니터링, 부산 국립과학관 시간대별 담당자">👥 근무자</button>' +
               '<span class="bba-note" id="bba-src"></span>' +
             '</div>' +
             '<div id="bba-dr" class="none"></div>' +
@@ -8669,16 +8694,19 @@
             return '<section class="bba-hr"><div class="hh"><b>' + hh + '시</b><span class="bd' + (isCur ? '' : ' nx') + '">' + (isCur ? '현 시각 일정' : '다음 시간대') + '</span></div>' +
                 (body ? '<div class="sls">' + body + '</div>' : '<div class="bba-empty">일정이 없습니다</div>') + '</section>';
         }
-        // 이미 지난 시간대(예: 10시)에 시작했는데 지금도 다중 모니터링에 떠 있는 기체 — 그 시간대의 일정 카드(배차 방식 태그)를 시작 시각별로 모아 보여줌
-        function schedPrevHtml(hh, cards) {
-            const data = timeTable[pad(hh)] || {}, planNames = Array.isArray(data.plan) ? data.plan : [], outPatrol = Array.isArray(data.out_patrol) ? data.out_patrol : [];
+        // 지금 모니터링 중인데 '현 시각 일정'에 없는 기체 — 이미 지난 시간대 일정(예: A/B 코스를 도는 엘스: 11시에 시작한 B코스는 10시 일정)이거나 일정에 없는 기체.
+        // 기체 이름이 일정(plan)에 들어 있는 가장 가까운 지난 시간대(시작 시각 포함 최대 3시간 전까지)의 카드로 보여주고, 어디에도 없으면 '일정에 없는 기체'로 모은다.
+        const samePlan = (p, c) => c === p || c.startsWith(p + ' ') || c.replace(/\s+/g, '') === p.replace(/\s+/g, '');
+        const planHas = (hh, n) => { const d = timeTable[pad(hh)]; return !!(d && Array.isArray(d.plan) && d.plan.some(x => samePlan(x, n))); };
+        function schedPrevHtml(hh, cards, unplanned) {
+            const data = timeTable[pad(hh)] || {}, planNames = Array.isArray(data.plan) ? data.plan : [], outPatrol = Array.isArray(data.out_patrol) ? data.out_patrol : [], pt = data.planTimes || {};
             const tagFor = n => (outPatrol.includes(n) ? OUT_PATROL_TAG : (DISPATCH_TYPES.find(dt => (Array.isArray(data[dt.key]) ? data[dt.key] : []).includes(n)) || null));
-            const same = (p, c) => c === p || c.startsWith(p + ' ') || c.replace(/\s+/g, '') === p.replace(/\s+/g, '');
+            const slotOf = (p, st) => { const v = pt[p], a = Array.isArray(v) ? v : (typeof v === 'string' && v ? [v] : [pad(hh) + ':00']), ok = a.filter(x => x <= st); return ok.length ? ok[ok.length - 1] : a[0]; };   // 그 기체의 일정 시각 중 시작 시각 이전의 가장 늦은 것
             const slots = {};
-            cards.forEach(c => { const p = planNames.find(x => same(x, c.n)); (slots[c.t] = slots[c.t] || []).push({ n: c.n, tag: p ? tagFor(p) : null }); });
+            cards.forEach(c => { const p = unplanned ? null : planNames.find(x => samePlan(x, c.n)), t = p ? slotOf(p, c.t) : c.t; (slots[t] = slots[t] || []).push({ n: c.n, st: c.t, tag: p ? tagFor(p) : null }); });
             const body = Object.keys(slots).sort().map(t => '<div class="bba-sl"><div class="lb">' + esc(t) + '</div><div class="pls">' + slots[t].map(x =>
-                '<div class="bba-pl mon" title="현재 모니터링 중 (' + esc(t) + '부터)"><span class="nm">' + esc(x.n) + '</span><span class="tg"' + (x.tag ? ' style="background:' + x.tag.bg + ';color:' + x.tag.color + '"' : '') + '>' + esc(x.tag ? x.tag.label : '') + '</span></div>').join('') + '</div></div>').join('');
-            return '<section class="bba-hr"><div class="hh"><b>' + pad(hh) + '시</b><span class="bd nx">이전 시간대 · 아직 모니터링 중</span></div><div class="sls">' + body + '</div></section>';
+                '<div class="bba-pl mon" title="현재 모니터링 중 (' + esc(x.st) + '부터)"><span class="nm">' + esc(x.n) + '</span><span class="tg"' + (x.tag ? ' style="background:' + x.tag.bg + ';color:' + x.tag.color + '"' : '') + '>' + esc(x.tag ? x.tag.label : '') + '</span></div>').join('') + '</div></div>').join('');
+            return '<section class="bba-hr"><div class="hh"><b>' + pad(hh) + '시</b><span class="bd nx">' + (unplanned ? '일정에 없는 기체 · 모니터링 중' : '이전 시간대 일정 · 아직 모니터링 중') + '</span></div><div class="sls">' + body + '</div></section>';
         }
         function suspPill(n, reason) {
             return '<div class="bba-pl sus"><span class="nm">' + esc(n) + '</span><span class="rs" title="' + esc(reason) + '">' + esc(reason) + '</span></div>';
@@ -8707,8 +8735,14 @@
                 const h = new Date().getHours(), cur = pad(h), nxt = pad((h + 1) % 24);
                 box.innerHTML = Object.keys(timeTable).some(k => /^\d{2}$/.test(k))
                     ? schedGroupHtml(cur, true) + schedGroupHtml(nxt, false) + (() => {
-                        const old = monitoredCards().filter(c => c.h !== h), hs = [...new Set(old.map(c => c.h))].sort((a, b) => ((h - a + 24) % 24) - ((h - b + 24) % 24));   // 가까운 시간대부터
-                        return hs.map(x => schedPrevHtml(x, old.filter(c => c.h === x))).join('');
+                        const g = {}, un = [];
+                        monitoredCards().forEach(c => {
+                            if (planHas(h, c.n)) return;   // 현 시각 일정에서 이미 초록으로 표시됨
+                            let a = null;
+                            for (let k = 0; k < 4 && a === null; k++) { const x = (c.h - k + 24) % 24; if (planHas(x, c.n)) a = x; }
+                            if (a === null) un.push(c); else (g[a] = g[a] || []).push(c);
+                        });
+                        return Object.keys(g).map(Number).sort((a, b) => ((h - a + 24) % 24) - ((h - b + 24) % 24)).map(x => schedPrevHtml(x, g[x])).join('') + (un.length ? schedPrevHtml(h, un, true) : '');   // 가까운 시간대부터
                     })()
                     : '<div class="bba-empty">순찰 일정 데이터를 받지 못했습니다</div>';
                 $('bba-sth').textContent = '📅 순찰 일정';
@@ -8775,12 +8809,13 @@
         const hue = n => { let h = 0; for (const ch of String(n)) h = (h * 31 + ch.charCodeAt(0)) % 360; return h; };
         const hash = s => { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
         let tasks = [];
+        let monRows = [], sciTasks = [];   // 다중/서브 모니터링 시간대 행, 부산 국립과학관 업무 (업무표에는 안 나오고 '담당자 보기'에서만 사용)
         function parseTasks(arr) {
-            const out = [];
+            const out = [], monTmp = [], sciTmp = [];
             (Array.isArray(arr) ? arr : []).forEach(t => {
-                if (!t || t.type === 'monitoring') return;   // 다중 모니터링 시간대 행은 업무표에서 제외 (task 및 그 밖의 유형은 표시)
-                const c = String(t.content || '');
-                if (/부산\s*(국립\s*)?과학관/.test(c)) return;   // 부산(국립)과학관 업무는 표시하지 않음
+                if (t && t.type === 'monitoring') { const mn = hm(t.rawTime); if (mn != null) monTmp.push({ s: mn, u: String(t.user == null ? '' : t.user).trim(), sub: String(t.subUser == null ? '' : t.subUser).trim() }); return; }   // 다중(user)·서브(subUser) 시간대 행은 업무표에서 제외
+                if (!t) return;
+                const c = String(t.content || ''), isSci = /부산\s*(국립\s*)?과학관/.test(c);   // 부산(국립)과학관 업무는 업무표에 표시하지 않음
                 const r = /^\[(\d{1,2}:\d{2})(?:\s*~\s*(\d{1,2}:\d{2}))?\]/.exec(c);
                 const s = r ? hm(r[1]) : hm(t.rawTime);
                 if (s == null) return;
@@ -8795,13 +8830,14 @@
                 let body = r ? c.slice(r[0].length) : c;
                 if (isTag) body = body.replace(/\s*\[[^\]]*\]\s*$/, '');
                 const u0 = String(t.user == null ? '' : t.user).trim();
+                if (isSci) { sciTmp.push({ s, e, u: u0, body: body.replace(/부산\s*(국립\s*)?과학관/g, '').replace(/\s+/g, ' ').trim(), days }); return; }
                 const bd = body.trim(), prog = AUTO_SITES.filter(S => S.prog && S.kw.test(bd) && S.prog.test(bd));   // '임무 진행 중인지' 확인형 업무
                 const dirs = prog.length ? [{ g: null, w: 'run' }] : parseDirs(bd), sites = prog.length ? prog : AUTO_SITES.filter(S => !S.prog && S.kw.test(bd));
                 out.push({ id: hash(u0 + '|' + c), u: u0, head: r ? r[0] : '', body: bd, tag: tag ? '[' + tag + ']' : '', s, e, days, dirs, sites,
                     auto: dirs.length > 0 && sites.length > 0 && (prog.length > 0 || !AUTO_SKIP_RE.test(bd)) && rel(s) < rel(AUTO_DIM_FROM) });   // 임무 ON/OFF 가 적힌 업무 중 점검 가능한 사이트(제외 단어 없음, 18시 이전)
             });
             out.sort((a, b) => rel(a.s) - rel(b.s));
-            tasks = out;
+            tasks = out; monRows = monTmp; sciTasks = sciTmp;
         }
         let srcMsg = '';
         async function loadTasks() {
@@ -8819,7 +8855,7 @@
                 console.warn('[BBA] daily_tasks.json 불러오기 실패:', e && e.message);
             }
             const el = $('bba-src'); if (el) el.textContent = srcMsg;
-            renderTasks();
+            renderTasks(); try { drawMmp(); } catch (e) { /* 아직 준비 전 */ }
             setTimeout(autoTick, 1500);   // 업무표를 새로 받았으면 점검할 것이 있는지 바로 확인
         }
 
@@ -9315,6 +9351,34 @@
                 t = setTimeout(() => { lsSet('bba_txt_' + id, ta.value); s.textContent = '저장됨 · 이 브라우저에만 보관'; }, 400);
             });
         });
+
+        // ───────── 다중 · 서브 모니터링 / 부산 국립과학관 시간대별 근무자 ─────────
+        const mmp = document.createElement('div'); mmp.id = 'bba-mmp'; root.appendChild(mmp);
+        function sciCovers(t, relH) {   // 과학관 업무가 이 시(hour, 업무일 기준 분)에 걸치는가
+            const a = rel(t.s), len = t.e > t.s ? t.e - t.s : t.e < t.s ? t.e + 1440 - t.s : 0;
+            return len ? (a < relH + 60 && a + len > relH) : (a >= relH && a < relH + 60);
+        }
+        function drawMmp() {
+            if (!mmp.classList.contains('open')) return;
+            const dow = workDay().getDay(), curH = new Date().getHours(), now = nowMin();
+            const nmChip = n => n ? '<span class="nm' + (/없음/.test(n) ? ' none' : '') + '" style="--h:' + hue(n) + '">' + esc(n) + '</span>' : '<span class="em">-</span>';
+            let g = '<div class="mg"><div class="hd">시간</div><div class="hd mc">다중 모니터링</div><div class="hd sc">서브 모니터링</div><div class="gap hd" style="background:var(--bg);border:none"></div><div class="hd">🏛 부산 국립과학관</div>';
+            for (let i = 0; i < 24; i++) {
+                const hh = (WD0 / 60 + i) % 24, relH = i * 60, cur = hh === curH, cls = (cur ? ' cur' : '') + (i * 60 + 59 < rel(now) ? ' past' : '');
+                const r = monRows.find(x => Math.floor(x.s / 60) === hh);
+                const sc = sciTasks.filter(t => (!t.days || t.days.includes(dow)) && sciCovers(t, relH));
+                g += '<div class="tm' + cls + '"' + (cur ? ' id="bba-mm-cur"' : '') + '>' + pad(hh) + ':00</div>' +
+                    '<div class="' + cls.trim() + '">' + nmChip(r && r.u) + '</div><div class="' + cls.trim() + '">' + nmChip(r && r.sub) + '</div><div class="gap"></div>' +
+                    '<div class="' + cls.trim() + '">' + (sc.length ? sc.map(t => '<div class="sci" title="' + esc(pad(Math.floor(t.s / 60)) + ':' + pad(t.s % 60) + (t.e !== t.s ? '~' + pad(Math.floor(t.e / 60)) + ':' + pad(t.e % 60) : '') + ' ' + t.body) + '">' + nmChip(t.u) + (t.body ? '<span class="tx">' + esc(t.body) + '</span>' : '') + '</div>').join('') : '<span class="em">-</span>') + '</div>';
+            }
+            const keep = (mmp.querySelector('.mb') || {}).scrollTop;
+            mmp.innerHTML = '<div class="mh"><b>👥 시간대별 근무자</b><span class="sp">' + esc(srcMsg || '') + (monRows.length || sciTasks.length ? '' : ' · 데이터 없음') + '</span><button class="mx" title="닫기">✕</button></div><div class="mb">' + g + '</div></div>';
+            const mb = mmp.querySelector('.mb');
+            if (keep == null) { const c = $('bba-mm-cur'); if (c) mb.scrollTop = Math.max(0, c.offsetTop - 70); } else mb.scrollTop = keep;
+            mmp.querySelector('.mx').addEventListener('click', () => { mmp.classList.remove('open'); $('bba-mmb').classList.remove('on'); });
+        }
+        $('bba-mmb').addEventListener('click', () => { const o = mmp.classList.toggle('open'); $('bba-mmb').classList.toggle('on', o); if (o) { mmp.innerHTML = ''; drawMmp(); } });
+        setInterval(drawMmp, 30 * 1000);
 
         // ───────── 시작 ─────────
         loadDay(); drawCamp();
