@@ -8250,6 +8250,7 @@
         const AUTO_RANGE_AT = 'end';              // [시작~끝] 업무의 점검 기준: 'end' = 끝 시각 +1분 / 'start' = 시작 시각 +1분 (시각이 하나뿐인 업무는 그 시각 +1분)
         const AUTO_DELAY_MIN = 1;                 // 기준 시각 + 몇 분에 점검할지
         const AUTO_RETRY_MS = 60 * 1000;          // 맞지 않으면 이 시간 뒤 다시 점검
+        const CHG_RETRY_MS = 5 * 60 * 1000;       // 무선충전 점검에서 통과 못 한 기체를 다시 점검하기까지 (충전 시작 직후일 수 있어 길게)
         const AUTO_MAX_TRIES = 2;                 // 최대 점검 횟수 (이 횟수까지 안 맞으면 ✕ 로 표시)
         const AUTO_SKIP_RE = /(?!)/;   // 이 단어가 들어간 임무 ON/OFF 업무는 자동 점검하지 않음 (수동 확인)
         const PROBE_W = 1440, PROBE_H = 1800;     // 점검용 숨김 iframe 의 가상 화면 크기 (NCC 화면이 이 크기로 그려짐)
@@ -8298,14 +8299,14 @@
             [224, ['동대문구회기동 1호기(쉴드플러스)']], [216, ['동백SK아펠바움 1차1호기']], [235, ['두루아이 5호기']], [230, ['더샵남천프레스티지 1호기']],
             [151, ['부산 EDC 수자인 1호기', '부산 EDC 수자인 2호기']], [150, ['부산 EDC 호반써밋 1호기', '부산 EDC 호반써밋 2호기']], [138, ['서강대학교 1호기']],
             [145, ['성남시 서현역 1호기']], [143, ['성남시 야탑역 1호기']], [144, ['성남시 율동공원 1호기']], [142, ['성남시 판교역 1호기']],
-            [134, ['롯데마트부산CFC(쉴더스) 1호기']], [146, ['신동백 롯데캐슬 에코1단지 1호기']], [111, ['인재개발원 1호기']], [181, ['잠실 레이크팰리스 1호기']],
+            [134, ['롯데마트부산CFC(쉴더스) 1호기']], [146, ['신동백 롯데캐슬 에코1단지 1호기']], [111, ['인재개발원 1호기'], false, true], [181, ['잠실 레이크팰리스 1호기']],
             [187, ['잠실 르엘 1호기']], [182, ['전주시 전주천 1호기']], [240, ['전주천(덕진구) 1호기']], [193, ['창원대학교 1호기', '창원대학교 2호기']],
             [177, ['청담르엘 1호기']], [57, ['파주 디에트르더클래스 1호기']], [137, ['한국장애인고용공단 1호기', '한국장애인고용공단 2호기']], [179, ['한성대학교 1호기']],
             [202, ['두루아이 2호기', '중앙대학교 1호기'], true], [246, ['서울 양원 LH 1단지 1호기']], [244, ['덕수궁 1호기']], [245, ['순천향대학교 1호기']],
             [247, ['수원센트럴 1호기', '수원센트럴 2호기']], [252, ['강동현대홈타운 1호기']], [267, ['두루아이 4호기']],
             [261, ['수원 힐스테이트푸르지오 1호기', '수원 힐스테이트푸르지오 2호기']], [258, ['더샵지제역센트럴파크 1호기', '더샵지제역센트럴파크 2호기']], [250, ['트리니원 1호기', '트리니원 2호기']],
         ];
-        const CHG_SITES = CHG_SRC.map(([id, names, any]) => ({ k: '충전 ' + id, id, chg: true, any: !!any, label: names[0].replace(/\s*\d+호기.*$/, ''), kw: /(?!)/, units: names.map(n => U(n)) }));
+        const CHG_SITES = CHG_SRC.map(([id, names, any, batOnly]) => ({ k: '충전 ' + id, id, chg: true, any: !!any, batOnly: !!batOnly, label: names[0].replace(/\s*\d+호기.*$/, ''), kw: /(?!)/, units: names.map(n => U(n)) }));
         CHG_SITES.forEach(S => AUTO_SITES.push(S));
 
         // ───────── 스타일 ─────────
@@ -8395,6 +8396,8 @@
         #bb .bba-txt .meta { font-size:11px; font-weight:700 !important; margin-left:6px; color:var(--rd); }
         #bb .bba-row.done .bba-txt .meta { color:#22a05a; }
         /* 임무 ON/OFF 자동 점검 표시 */
+        #bb .bba-row.done.manfail .bba-chk { background:#f2b705; border-color:#d49b00; color:#fff; }
+        #bb .bba-row.done.manfail .bba-txt .meta { color:#b07a00; }
         #bb .bba-row.done.byauto .bba-chk { box-shadow:0 0 0 2px #bfe8cf; }
         #bb .bba-row.bad .bba-chk { background:#d93a35; border-color:#d93a35; color:#fff; font-size:15px; }
         #bb .bba-row.bad { background:#fdecea; }
@@ -9070,7 +9073,7 @@
                         units.forEach(u => {
                             if (!cardMatches(txt, u)) return;
                             const sw = card.querySelector('[data-qk="mission-available-switch"]');
-                            const on = sw ? readSwitch(sw) : null, pw = readPower(card), pg = S.prog ? readProgress(card) : undefined, cg = S.chg ? readCharge(card) : null, ch = cg ? cg.ch : undefined, bat = cg ? cg.bat : undefined;
+                            const on = sw ? readSwitch(sw) : null, pw = readPower(card), pg = S.prog || S.chg ? readProgress(card) : undefined, cg = S.chg ? readCharge(card) : null, ch = cg ? cg.ch : undefined, bat = cg ? cg.bat : undefined;
                             const c = seen[u.n];
                             if (!c) seen[u.n] = { on, pw, pg, ch, bat, row: cg ? cg.row : '', since: now, at: now };
                             else if (c.on !== on || c.pw !== pw || c.pg !== pg || c.ch !== ch || c.bat !== bat) { c.on = on; c.pw = pw; c.pg = pg; c.ch = ch; c.bat = bat; c.row = cg ? cg.row : ''; c.since = now; }
@@ -9146,7 +9149,13 @@
                     else if (!x || !x.found) d.r = 'miss';
                     else if (x.pw === null || x.pw === undefined) d.r = 'unk';
                     else if (x.pw === false) { d.r = 'skip'; d.why = 'off'; d.pw = false; }
-                    else { d.pw = true; d.bat = x.bat; d.got = x.ch ? 'chg' : 'nochg'; d.r = x.ch && x.bat !== null && x.bat !== undefined ? 'ok' : 'bad'; }
+                    else if (x.pg && /순찰|순회/.test(x.pg)) { d.r = 'skip'; d.why = 'patrol'; d.pw = true; d.bat = x.bat; }   // NCC 카드의 '임무 진행'이 순찰 중 → 충전소에 없음
+                    else {
+                        const hasBat = x.bat !== null && x.bat !== undefined; d.pw = true; d.bat = x.bat;
+                        if (S.batOnly) { d.got = 'bat'; d.r = hasBat ? 'ok' : 'bad'; }   // 현장에서 나중에 충전하는 곳: 배터리 수치만 확인
+                        else { d.got = x.ch ? 'chg' : 'nochg'; d.r = x.ch && hasBat ? 'ok' : 'bad'; }
+                        if (d.r === 'bad' && x.row) d.row = String(x.row).slice(0, 350);   // 원인 확인용: 그 줄의 HTML (bbaAuto.state() 에서 볼 수 있음)
+                    }
                 }
                 else if (!R || R.err) { d.r = 'err'; d.e = R ? R.err : 'noread'; }
                 else if (!x || !x.found) d.r = 'miss';
@@ -9173,13 +9182,13 @@
         const wTxt = w => (w === 'run' ? '진행 중' : w === 'chg' ? '충전중' : String(w).toUpperCase());
         const gTxt = g => (g === 'idle' ? '비어 있음' : g === 'run' ? '진행 중' : g === 'chg' ? '충전중(⚡)' : g === 'nochg' ? '⚡ 없음' : String(g || '').toUpperCase());
         const ERR_TXT = { xorigin: '다른 도메인이라 읽을 수 없음', login: 'NCC 로그인이 필요함', timeout: '페이지 로드 시간 초과', noread: '읽지 못함' };
-        const SKIP_TXT = { patrol: '순찰 중이라 제외', off: '로봇 전원 꺼짐 — 제외', in: '입고됨(카드 없음) — 제외', any: '같은 주소의 다른 기체가 충전 확인됨' };
+        const SKIP_TXT = { patrol: '순찰 중(다중 모니터링 또는 NCC 임무 진행)이라 제외', off: '로봇 전원 꺼짐 — 제외', in: '입고됨(카드 없음) — 제외', any: '같은 주소의 다른 기체가 충전 확인됨' };
         const dLab = d => { const S = siteByKey(d.k); return (S && S.chg ? '[' + S.id + '] ' : '') + d.n; };
         function failWhy(d) {
             if (d.r === 'err') return ERR_TXT[d.e] || d.e || '오류';
             if (d.r === 'miss') return '기체 카드를 찾지 못함';
             if (d.r === 'unk') return d.w === 'chg' ? '전원 상태를 읽지 못함' : '스위치를 읽지 못함';
-            if (d.w === 'chg') return d.got === 'chg' ? '⚡는 있는데 배터리 수치 없음' : '충전 표시(⚡) 없음 · 켜짐' + (d.bat !== null && d.bat !== undefined ? ' · 배터리 ' + d.bat + '%' : '');
+            if (d.w === 'chg') return d.got === 'bat' ? '배터리 수치를 읽지 못함' : d.got === 'chg' ? '⚡는 있는데 배터리 수치 없음' : '충전 표시(⚡) 없음 · 켜짐' + (d.bat !== null && d.bat !== undefined ? ' · 배터리 ' + d.bat + '%' : '');
             return gTxt(d.got) + ' (기대 ' + wTxt(d.w) + ')';
         }
         function detMsg(det) {
@@ -9227,7 +9236,7 @@
                 const prev = auto[it.t.id], n = it.force ? AUTO_MAX_TRIES : ((prev && prev.n) || 0) + 1;
                 const r = evalUnits(it, ev, readings, pre, keep), late = now - it.due > 3 * 60000;   // 점검 '시작'이 예정보다 3분 넘게 늦었는가 (충전 점검처럼 오래 걸려도 지연으로 치지 않도록)
                 const rec = { st: r.ok ? 'ok' : (n >= AUTO_MAX_TRIES ? 'fail' : 'retry'), n, at: fin, due: it.due, det: r.det, msg: r.ok ? '' : detMsg(r.det), late, forced: !!it.force };
-                if (rec.st === 'retry') rec.next = fin + AUTO_RETRY_MS;
+                if (rec.st === 'retry') rec.next = fin + (it.t.chg ? CHG_RETRY_MS : AUTO_RETRY_MS);
                 autoPut(it.t.id, rec);
                 forced.delete(it.t.id);
                 console.log('[BBA] 자동 점검', it.t.head, rec.st, rec.msg || '');
@@ -9277,7 +9286,8 @@
         function rowInfo(t, nr, now) {
             const a = auto[t.id], man = chk[t.id], run = runningIds().includes(t.id);
             const o = { cls: '', box: '✓', ttl: '완료 확인', meta: '', tip: '', done: false };
-            if (man) { o.cls = 'done'; o.ttl = '완료 취소'; o.meta = '✓ ' + man + ' 확인'; o.done = true; }
+            if (man && a && a.st === 'fail') { o.cls = 'done manfail'; o.ttl = '직접 확인됨(자동 점검은 실패했음) — 누르면 해제'; o.meta = '✓ ' + man + ' 직접 확인 (자동 점검 실패)'; o.done = true; }   // 자동 점검이 실패해서 사람이 직접 확인한 업무는 노란 체크
+            else if (man) { o.cls = 'done'; o.ttl = '완료 취소'; o.meta = '✓ ' + man + ' 확인'; o.done = true; }
             else if (a && a.st === 'ok' && !a.clr) { o.cls = 'done byauto'; o.ttl = '자동 확인됨 — 누르면 해제'; o.meta = '✓ ' + hmOf(a.at) + ' 자동 확인' + (t.chg ? chgCnt(a, true) : '') + (a.late ? ' (지연 점검)' : ''); o.done = true; }
             else if (a && a.st === 'fail') { o.cls = 'bad'; o.box = '✕'; o.ttl = '자동 점검에서 확인되지 않음 — 직접 확인한 뒤 누르면 체크됩니다'; o.meta = '✕ ' + hmOf(a.at) + (t.chg ? ' 충전 미확인 ' + chgFails(a) + '대' : a.det && a.det.some(d => d.r === 'bad') ? ' 자동 점검 불일치' : ' 자동 점검 실패(확인 못 함)') + ' · 직접 확인'; o.tip = a.msg || ''; }
             else if (a && a.st === 'retry') { o.cls = 'retry'; o.box = '↻'; o.meta = '↻ ' + hmOf(a.next) + ' 재점검 예정 (' + (t.chg ? '충전 미확인 ' + chgFails(a) + '대' : (a.msg || '불일치')) + ')'; o.tip = a.msg || ''; }
@@ -9399,9 +9409,9 @@
                 let h = '<div class="ph"><b>🔍 무선충전 자동 점검 (⚡)</b><button class="px" data-a="x" title="닫기">✕</button></div><div class="pt">' + esc(t.head + ' ' + t.body) + '</div>' +
                     '<label><input type="checkbox" data-a="on"' + (wk.on ? ' checked' : '') + '> 이 업무 자동 점검 사용</label><div class="ul">';
                 t.sites.forEach(S => wk.units.filter(x => x.k === S.k).forEach(x => {
-                    h += '<label class="u' + (x.on ? '' : ' dis') + '"><input type="checkbox" data-a="u" data-k="' + esc(x.k) + '" data-n="' + esc(x.n) + '"' + (x.on ? ' checked' : '') + '><span class="nm">[' + S.id + '] ' + esc(x.n) + (S.any ? ' (택1)' : '') + '</span></label>';
+                    h += '<label class="u' + (x.on ? '' : ' dis') + '"><input type="checkbox" data-a="u" data-k="' + esc(x.k) + '" data-n="' + esc(x.n) + '"' + (x.on ? ' checked' : '') + '><span class="nm">[' + S.id + '] ' + esc(x.n) + (S.any ? ' (택1)' : '') + (S.batOnly ? ' (배터리만)' : '') + '</span></label>';
                 }));
-                h += '</div><div class="tm">점검 시각 ' + hmOf(dueTs(t)) + ' · 통과: 전원 켜짐 + 배터리 수치 + ⚡ · 제외: 순찰 중 / 전원 꺼짐 / 입고됨(카드 없음) · 못 찾으면 ' + Math.round(AUTO_RETRY_MS / 60000) + '분 뒤 그 기체만 한 번 더 → ✕</div>' +
+                h += '</div><div class="tm">점검 시각 ' + hmOf(dueTs(t)) + ' · 통과: 전원 켜짐 + 배터리 수치 + ⚡ · 제외: 순찰 중 / 전원 꺼짐 / 입고됨(카드 없음) · 못 찾으면 ' + Math.round(CHG_RETRY_MS / 60000) + '분 뒤 그 기체만 한 번 더 → ✕ · 인재개발원은 배터리 수치만 확인</div>' +
                     '<div class="rs" id="bba-ap-rs">' + resultHtml(auto[t.id]) + '</div>' +
                     '<div class="pb"><button class="bba-btn" data-a="def" title="기본 설정으로 되돌리기">기본값</button><button class="bba-btn on" data-a="now" title="지금 바로 이 업무를 점검">지금 점검</button></div>';
                 pop.innerHTML = h; return;
