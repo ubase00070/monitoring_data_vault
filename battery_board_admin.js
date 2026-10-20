@@ -9202,7 +9202,7 @@
             items.forEach(it => {
                 const prev = auto[it.t.id];
                 let ev = it.force ? it.e.u.slice() : it.e.u.filter(u => { const c = latest[u.k + '|' + u.n]; return !c || c.id === it.t.id; }), keep = [];
-                if (it.t.chg && !it.force && prev && prev.st === 'retry' && Array.isArray(prev.det) && prev.det.length) {   // 재점검: 지난번에 통과 못 한 기체만 다시 확인 (통과·제외한 기체 결과는 그대로 둠)
+                if (it.t.chg && prev && (prev.st === 'retry' || (it.force && prev.st === 'fail')) && Array.isArray(prev.det) && prev.det.length) {   // 재점검 · '지금 점검': 지난번에 통과 못 한 기체만 다시 확인 (통과·제외한 기체 결과는 그대로 둠)
                     const bad = new Set(prev.det.filter(d => d.r === 'bad' || d.r === 'miss' || d.r === 'unk' || d.r === 'err').map(d => d.k + '|' + d.n)), again = ev.filter(u => bad.has(u.k + '|' + u.n));
                     if (again.length) { keep = prev.det.filter(d => !bad.has(d.k + '|' + d.n)); ev = again; }
                 }
