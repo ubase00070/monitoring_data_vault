@@ -8239,6 +8239,7 @@
         const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* 무시 */ } };
 
         const TASKS_URL = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/daily_tasks.json';
+        const TASKS_FULL_URL = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/daily_tasks_full.json';   // admin 전용: 휴무·관리자 행까지 포함한 일일 업무 전체 행 (GAS 가 기록)
         const TASKS_REFRESH_MS = 5 * 60 * 1000;
         const WD0 = 7 * 60;                       // 업무일 시작 07:00
         const LATE_GRACE = 10;                    // 종료 시각 + 10분이 지나도 미확인이면 '지연'
@@ -8967,6 +8968,10 @@
                 const txt = await res.text();
                 const json = JSON.parse(txt);
                 lsSet('bba_tasks_cache', txt);
+                try {   // admin 전용 전체 행 파일 (없거나 실패해도 기존 기능에는 영향 없음)
+                    const rf = await fetch(TASKS_FULL_URL + '?t=' + Date.now(), { cache: 'no-store' });
+                    if (rf.ok) { const ft = await rf.text(); JSON.parse(ft); lsSet('bba_tasks_full', ft); }
+                } catch (ef) { /* 무시 */ }
                 parseTasks(json);
                 try { if (typeof simOnNewJson === 'function') simOnNewJson(txt); } catch (e2) { /* 무시 */ }
                 srcMsg = '업무표 ' + pad(new Date().getHours()) + ':' + pad(new Date().getMinutes()) + ' 갱신';
@@ -9928,7 +9933,9 @@
                 (stale ? '<br><span class="warn">⚠ 지금의 daily_tasks.json 이 이 배정표를 계산할 때와 다릅니다 — 재배정하기를 누르면 지금 JSON 기준으로 다시 계산합니다.</span>' : '') + (P.warn.length ? '<br><span class="warn">' + P.warn.map(esc).join(' · ') + '</span>' : '') + (ctx.unknown.length ? '<br><span class="warn">근무표에 없는 이름: ' + esc(ctx.unknown.join(', ')) + '</span>' : '') + '</div>';
             const mons = Object.keys(P.main).map(Number).sort((a, b) => a - b);
             const c1 = '<div class="col c1"><div class="gh"><span>시각</span><span>다중</span><span>서브</span></div>' + mons.map(t => '<div class="gr"><span class="tm">' + SIM.fmt(t) + '</span><span>' + simNm(P.main[t]) + '</span><span>' + (P.sub[t] ? simNm(P.sub[t]) : '<span class="em">–</span>') + '</span></div>').join('') + '</div>';
-            const c2 = '<div class="col c2"><div class="gh"><span>시각</span><span>일일 업무</span><span>새 수식 배정자</span></div>' + P.TL.map((t, i) => {
+            const c2 = '<div class="col c2"><div class="gh"><span>시각</span><span>일일 업무</span><span>새 수식 배정자</span></div>' + (() => { const M = simMerge(R); return M && !M.bad ? M.items : P.TL.map((t, i) => ({ i, user: A[i] || '', content: t.t })); })().map(it => {   // 전체 행 파일이 있으면 휴무·관리자 행도 시트 순서 그대로 함께 표시
+                const i = it.i, t = P.TL[i];
+                if (i < 0) { const m = simNorm(it.content).match(/^\[([^\]]*)\]\s*(.*)$/); return '<div class="gr fx"><span class="tm">' + esc(m ? m[1] : '') + '</span><span class="tk" title="' + esc(it.content) + '">' + esc(m ? m[2] : it.content) + '</span><span class="em">고정 (' + esc(it.user || '비어 있음') + ')</span></div>'; }
                 if (t.fixed) return '<div class="gr fx"><span class="tm">' + simRange(t) + '</span><span class="tk" title="' + esc(t.t) + '">' + esc(t.t.replace(/^\s*\[[^\]]*\]\s*/, '')) + '</span><span class="em">고정 (' + esc(A[i] || '관리자') + ')</span></div>';
                 const ch = (B[i] || null) !== (A[i] || null), why = (mA.why[i] || []).join(' · ') || (follow.has(i) ? '첫 줄 담당자 변경에 맞춤' : '다른 칸 수정에 따른 재조정');
                 return '<div class="gr' + (ch ? ' chg' : '') + '"><span class="tm">' + simRange(t) + '</span><span class="tk" title="' + esc(t.t) + '">' + (follow.has(i) ? '🔗 ' : '') + esc(t.t.replace(/^\s*\[[^\]]*\]\s*/, '')) + '</span><span class="asg">' + simNm(B[i]) + (ch ? '<span class="was" title="' + esc(why) + '">← 현재 ' + esc(A[i] || '후보 없음') + ' · ' + esc(why) + '</span>' : '') + '</span></div>';
@@ -9938,16 +9945,24 @@
             const c2e = simp.querySelector('.col.c2'); if (c2e && keep) c2e.scrollTop = keep;
         }
         /* 시트에 값만 붙여넣기용 '배정자 1열' — 받아온 daily_tasks.json 의 일일 업무 행 순서 그대로(휴무·관리자 고정 행·시각 없는 행도 원래 값으로 자리 유지) 한 줄에 한 칸 */
-        function simColumn(R) {
-            const arr = JSON.parse(R.cfg.txt), names = [], heads = []; let ti = 0;
-            arr.forEach(x => {
-                if (!x || typeof x !== 'object' || x.type === 'monitoring') return;
-                let nm = String(x.user == null ? '' : x.user), h = String(x.content || '').replace(/\s+/g, ' ').trim();
-                if (x.type === 'task' && x.content && /^\s*\[\d{1,2}:\d{2}/.test(String(x.content))) {
-                    const i = ti++; if (!R.P.TL[i].fixed) nm = R.B[i] || '후보 없음';
-                }
-                names.push(nm.replace(/[\r\n\t]+/g, ' ').trim()); heads.push(h);
+        /* 시트의 일일 업무 행 전체(휴무·관리자·빈 담당자 행 포함, 시트 순서 그대로) — GAS 가 daily_tasks_full.json 에 따로 기록. daily_tasks.json 에는 이런 행이 빠져 있음 */
+        const simNorm = s => String(s || '').replace(/\s+/g, ' ').trim(), SIM_EXCL = /배정\s*현황|휴무|다중관제|관리자|이름|담당자|보류/;
+        function simFullData() { try { const f = JSON.parse(lsGet('bba_tasks_full', 'null')); return f && Array.isArray(f.rows) && f.rows.length && f.workday === curKey ? f : null; } catch (e) { return null; } }
+        function simMerge(R) {   // → null(전체 행 파일 없음) | { items:[{i(JSON 업무 번호, 없으면 -1), user, content}], bad:'' | 불일치 사유 }
+            const f = simFullData(); if (!f) return null;
+            const q = {}; R.P.TL.forEach((t, i) => { (q[simNorm(t.t)] = q[simNorm(t.t)] || []).push(i); });
+            const used = new Set(), items = []; let bad = '';
+            f.rows.forEach(r => {
+                const k = simNorm(r.content), u = String(r.user == null ? '' : r.user).trim(), a = r.fixed === true ? null : q[k], i = a && a.length ? a.shift() : -1;   // fixed=true(휴무·관리자 등)는 JSON 에 없는 행
+                if (i >= 0) used.add(i); else if (r.fixed !== true && !(r.fixed === undefined && (!u || u.length < 2 || SIM_EXCL.test(u))) && !bad) bad = '전체 행 파일에는 담당자가 있는 행인데 daily_tasks.json 에는 없는 업무가 있습니다 (' + k.slice(0, 20) + '…)';
+                items.push({ i, user: u, content: r.content });
             });
+            if (!bad) { const miss = R.P.TL.findIndex((t, i) => !used.has(i)); if (miss >= 0) bad = 'daily_tasks.json 에는 있는데 전체 행 파일에는 없는 업무가 있습니다 (' + simNorm(R.P.TL[miss].t).slice(0, 20) + '…)'; }
+            return { items, bad: bad ? bad + ' — 두 파일이 갱신된 시점이 달라서일 수 있어요. 1~2분 뒤 재배정하기를 다시 누르세요.' : '' };
+        }
+        function simColumn(R) {
+            const M = simMerge(R); if (!M) throw new Error('NOFULL'); if (M.bad) throw new Error(M.bad);
+            const names = M.items.map(it => (it.i >= 0 && !R.P.TL[it.i].fixed ? (R.B[it.i] || '후보 없음') : it.user).replace(/[\r\n\t]+/g, ' ').trim()), heads = M.items.map(it => simNorm(it.content));
             return { names, heads, text: names.join('\n') };   // 끝에 줄바꿈을 붙이지 않음(붙이면 시트에 빈 칸 한 줄이 더 덮어써짐)
         }
         async function simCopyText(text) {
@@ -9966,7 +9981,7 @@
                 const cfg = simCfg(), R = (cfg && cfg.day === curKey) ? simRes : null;
                 if (!R) return show('<span class="warn">복사할 배정표가 없습니다 — 재배정하기를 먼저 누르세요.</span>');
                 if (hash(cfg.txt) !== hash(lsGet('bba_tasks_cache', ''))) return show('<span class="warn">⚠ 지금의 daily_tasks.json 이 이 배정표와 달라 줄이 어긋날 수 있습니다. 재배정하기를 누른 뒤 복사하세요.</span>');
-                let col; try { col = simColumn(R); } catch (e) { return show('<span class="warn">복사 데이터를 만들지 못했습니다: ' + esc(e.message) + '</span>'); }
+                let col; try { col = simColumn(R); } catch (e) { return show('<span class="warn">' + (e.message === 'NOFULL' ? '⚠ 휴무·관리자 행까지 담긴 daily_tasks_full.json 을 받지 못했습니다. daily_tasks.json 에는 그 행들이 빠져 있어서, 이 상태로 복사하면 시트와 줄이 밀립니다. (GAS 수정 후 다음 동기화가 끝나면 사용 가능)' : '복사 데이터를 만들지 못했습니다: ' + esc(e.message)) + '</span>'); }
                 simCopyText(col.text).then(ok => {
                     if (!ok) simBox = col.text;
                     const cut = s => esc(s.length > 26 ? s.slice(0, 26) + '…' : s), L = col.names.length;
