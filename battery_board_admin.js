@@ -8323,6 +8323,12 @@
         #bb #bb-mw { display:none !important; }   /* 아산 스테이그린 임무받기 카드는 admin 에서 숨김 */
         #bb .bba-root { position:relative; flex:1 1 0; min-height:0; display:flex; flex-direction:column; gap:6px; padding:0 14px 12px; }
         #bb .bba-bar { flex:0 0 auto; display:flex; align-items:center; gap:8px; }
+        #bb .bb-hd { position:relative; }
+        #bb .bba-bar.inhd { position:absolute; left:14px; top:50%; transform:translateY(-50%); z-index:3; gap:6px; }
+        #bb .bba-bar.inhd .bba-note { display:none; }   /* '업무표 갱신' 문구는 제목 줄에서 숨김 (업무표 머리글에 이미 표시) */
+        #bb .bba-bar.inhd .bba-dbtn { height:30px; padding:0 10px; font-size:13px; }
+        #bb .bba-mmb.inhd { position:absolute; left:calc(50% + 128px); top:50%; transform:translateY(-50%); margin:0; z-index:3; }
+        #bb .bba-root.hdbar #bba-dr, #bb .bba-root.hdbar #bba-mmp { top:6px; }
         #bb .bba-dbtn { height:32px; padding:0 14px; border-radius:9px; border:2px solid var(--bd2); background:var(--sur2); color:var(--tx); font-family:inherit; font-size:14px; cursor:pointer; display:inline-flex; align-items:center; gap:7px; font-weight:700 !important; }
         #bb .bba-dbtn:hover { border-color:var(--mu); }
         #bb .bba-dbtn[data-k="dl"] { border-color:#ff7ab8; } #bb .bba-dbtn[data-k="iv"] { border-color:#8fb6ff; } #bb .bba-dbtn[data-k="at"] { border-color:#f0c36a; }
@@ -8454,7 +8460,7 @@
         #bb #bba-ap .rs { margin-top:6px; padding:6px 8px; border-radius:8px; background:var(--sur2); font-size:12px; line-height:1.5; max-height:150px; overflow:auto; }
         #bb #bba-ap .rs .g { color:#22a05a; } #bb #bba-ap .rs .r { color:#d93a35; } #bb #bba-ap .rs .m { color:var(--mu); }
         #bb #bba-ap .pb { display:flex; gap:6px; margin-top:8px; justify-content:flex-end; }
-        #bb .bba-who { height:26px; border-radius:6px; display:grid; place-items:center; font-weight:700 !important; font-size:13px; color:#1e1a12; background:hsl(var(--h) 58% 84%); white-space:nowrap; overflow:hidden; }
+        #bb .bba-who { height:26px; border-radius:6px; display:grid; place-items:center; font-weight:600 !important; font-size:13px; color:#1e1a12; background:hsl(var(--h) 58% 84%); white-space:nowrap; overflow:hidden; }
         #bb .bba-empty { padding:24px 10px; text-align:center; color:var(--mu); }
         /* 우측 구역 */
         #bb .bba-right { display:grid; grid-template-rows:minmax(0,1fr) minmax(0,1fr); gap:8px; min-height:0; min-width:0; }
@@ -8517,7 +8523,7 @@
               '<button class="bba-dbtn" data-k="dl" aria-expanded="false">🚚 배달 로그 <span class="n" id="bba-n-dl">-</span><span class="ar">▾</span></button>' +
               '<button class="bba-dbtn" data-k="iv" aria-expanded="false">🧑‍💻 개입 현황 <span class="ar">▾</span></button>' +
               '<button class="bba-dbtn" data-k="at" aria-expanded="false">🪑 이석 현황 <span class="n" id="bba-n-at" title="현재 이석 인원">-</span><span class="ar">▾</span></button>' +
-              '<button class="bba-mmb" id="bba-mmb" title="다중 · 서브 모니터링, 부산 국립과학관 시간대별 담당자">👥 근무자</button>' +
+              '<button class="bba-mmb" id="bba-mmb" title="다중 · 서브 모니터링, 부산 국립과학관 시간대별 담당자">👥 다중/과학관</button>' +
               '<span class="bba-note" id="bba-src"></span>' +
             '</div>' +
             '<div id="bba-dr" class="none"></div>' +
@@ -8530,7 +8536,6 @@
                 '<span class="bba-pill late" id="bba-late" style="display:none"></span>' +
                 '<span class="bba-pill bad" id="bba-bad" style="display:none"></span>' +
                 '<span class="bba-pill au" id="bba-auto"></span>' +
-                '<button class="bba-btn on" id="bba-fday" title="켜면 [평일]·[주말]·[화,수…] 처럼 요일이 적힌 업무가 해당 요일에만 보입니다 (끄면 요일과 상관없이 전부 표시)">요일 적용</button>' +
                 '<button class="bba-btn" id="bba-reload" title="daily_tasks.json 다시 받기">새로고침</button>' +
               '</div>' +
               '<div class="bba-zb" id="bba-tb"><div class="bba-th"><span></span><span>기체 관리 : [HH:MM~HH:MM] 시간 사이트 / N호기 / 내용 / [요일]</span><span>당일배정 현황</span></div><div id="bba-rows"></div></div>' +
@@ -8545,6 +8550,11 @@
               '</div>' +
             '</div>';
         bb.appendChild(root);
+        // 버튼 줄을 '관제 센터' 제목 줄로 올림: 배달 로그·개입·이석 = 제목 박스 왼쪽, 다중/과학관 = 오른쪽 → 아래 그리드가 그만큼 길어짐
+        try {
+            const hd = bb.querySelector('.bb-hd');
+            if (hd) { const bar = root.querySelector('.bba-bar'), mb = $('bba-mmb'); hd.appendChild(bar); hd.appendChild(mb); bar.classList.add('inhd'); mb.classList.add('inhd'); root.classList.add('hdbar'); }
+        } catch (e) { /* 무시 */ }
 
         // 아산 스테이그린 임무받기 카드 제거 (admin 전용)
         try { const mw = $('bb-mw'); if (mw) mw.remove(); } catch (e) { /* 무시 */ }
@@ -8565,7 +8575,7 @@
         const PANELS = [['dl', 'bb-dlog-panel'], ['iv', 'bb-iv-page'], ['at', 'bb-mm-page-att']];
         PANELS.forEach(([k, id]) => {
             const el = $(id);
-            if (!el) { const b = root.querySelector('.bba-dbtn[data-k="' + k + '"]'); if (b) { b.disabled = true; b.title = '이 그리드를 찾지 못했습니다'; } return; }
+            if (!el) { const b = bb.querySelector('.bba-dbtn[data-k="' + k + '"]'); if (b) { b.disabled = true; b.title = '이 그리드를 찾지 못했습니다'; } return; }
             el.classList.add('bba-p', 'bba-off');
             el.dataset.bba = k;
             try { el.inert = false; } catch (e) { /* 무시 */ }
@@ -8580,7 +8590,7 @@
         open = open.slice(0, 1);
         function applyOpen() {
             PANELS.forEach(([k, id]) => { const el = $(id); if (el) el.classList.toggle('bba-off', !open.includes(k)); });
-            root.querySelectorAll('.bba-dbtn').forEach(b => {
+            bb.querySelectorAll('.bba-dbtn').forEach(b => {
                 const on = open.includes(b.dataset.k);
                 b.classList.toggle('on', on); b.setAttribute('aria-expanded', on);
                 b.querySelector('.ar').textContent = on ? '▴' : '▾';
@@ -8588,7 +8598,7 @@
             dr.classList.toggle('none', !open.length);
             lsSet('bba_open', JSON.stringify(open));
         }
-        root.querySelector('.bba-bar').addEventListener('click', e => {
+        bb.querySelector('.bba-bar').addEventListener('click', e => {
             const b = e.target.closest('.bba-dbtn'); if (!b || b.disabled) return;
             const k = b.dataset.k;
             open = open.includes(k) ? [] : [k];   // 한 번에 하나만 열림
@@ -9388,7 +9398,6 @@
             const r = e.target.closest('.bba-row'); if (!r || r.classList.contains('dim')) return;
             const t = tasks.find(x => x.id === r.dataset.id); if (t && t.auto && todayOk(t)) openPop(t, r);
         });
-        $('bba-fday').addEventListener('click', e => { onlyDay = !onlyDay; e.currentTarget.classList.toggle('on', onlyDay); renderTasks(); });
         $('bba-reload').addEventListener('click', () => loadTasks());
         $('bba-auto').addEventListener('click', () => { lsSet('bba_auto_on', autoEnabled() ? '0' : '1'); drawAutoPill(); if (autoEnabled()) autoTick(); });
         window.addEventListener('storage', e => { if (e.key && /^bba_(chk|auto|auto_lock|auto_cfg|auto_on)/.test(e.key)) { clearTimeout(storT); storT = setTimeout(() => renderTasks(), 200); } });
@@ -9533,7 +9542,7 @@
                     '<div class="' + cls.trim() + '">' + (sc.length ? '<div class="sci" title="' + esc(sc.map(t => pad(Math.floor(t.s / 60)) + ':' + pad(t.s % 60) + (t.e !== t.s ? '~' + pad(Math.floor(t.e / 60)) + ':' + pad(t.e % 60) : '') + ' ' + t.body).join(' / ')) + '">' + [...new Set(sc.map(t => t.u))].map(nmChip).join('') + '</div>' : '<span class="em">-</span>') + '</div>';
             }
             const keep = (mmp.querySelector('.mb') || {}).scrollTop;
-            mmp.innerHTML = '<div class="mh"><b>👥 시간대별 근무자</b><span class="sp">' + esc(srcMsg || '') + (monRows.length || sciTasks.length ? '' : ' · 데이터 없음') + '</span><button class="mx" title="닫기">✕</button></div><div class="mb">' + g + '</div></div>';
+            mmp.innerHTML = '<div class="mh"><b>👥 다중/과학관 시간대별 근무자</b><span class="sp">' + esc(srcMsg || '') + (monRows.length || sciTasks.length ? '' : ' · 데이터 없음') + '</span><button class="mx" title="닫기">✕</button></div><div class="mb">' + g + '</div></div>';
             const mb = mmp.querySelector('.mb');
             if (keep == null) { const c = $('bba-mm-cur'); if (c) mb.scrollTop = Math.max(0, c.offsetTop - 70); } else mb.scrollTop = keep;
             mmp.querySelector('.mx').addEventListener('click', () => { mmp.classList.remove('open'); $('bba-mmb').classList.remove('on'); });
