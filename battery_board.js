@@ -8284,7 +8284,7 @@
         const tmin = s => { const m = String(s).match(/(\d{1,2}):(\d{2})/); return +m[1] * 60 + +m[2]; };
         const fmt = m => { m = ((m % 1440) + 1440) % 1440; return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
         const GAP = 15;
-        const BREAK = { 420: [660, 720], 480: [720, 780], 540: [780, 840], 600: [840, 900], 660: [900, 960], 840: [1020, 1080], 900: [1020, 1080], 1080: [1320, 1380], 1140: [1320, 1380], 1200: [1320, 1380], 1320: [1500, 1560], 1410: [1560, 1620] };
+        const BREAK = { 420: [650, 710], 480: [710, 770], 540: [770, 830], 600: [830, 890], 660: [890, 950], 840: [1010, 1070], 900: [1010, 1070], 1080: [1310, 1370], 1140: [1310, 1370], 1200: [1310, 1370], 1320: [1490, 1550], 1410: [1550, 1610] };   // 휴게는 :50 ~ :50 (예: 09~18시 근무 → 12:50~13:50)
         const STAFF = STAFF_DATA.map(([name, time, sc]) => {
           const a = tmin(time.split('~')[0]); let b = tmin(time.split('~')[1]); if (b <= a) b += 1440;
           return { name, time, start: a, end: b, brk: BREAK[a] || null, g: a <= 540 ? 0 : a <= 660 ? 1 : a < 1080 ? 2 : 3, sc };
@@ -8549,11 +8549,25 @@
           const mean = cs.reduce((a, b) => a + b, 0) / (cs.length || 1), sd = Math.sqrt(cs.reduce((a, b) => a + (b - mean) * (b - mean), 0) / (cs.length || 1));
           const low = cs.filter(c => c <= 1).length, high = cs.filter(c => c >= 3).length, chains = per.filter(p => p.chain >= 3).length, night = per.filter(p => p.g === 3).reduce((a, p) => a + p.t, 0);
           const changes = X.filter((n, i) => (n || null) !== (A[i] || null)).length;
-          const score = m.prob * 1000 + m.overW * 100 + m.n4 * 40 + sd * 10 + low * 4 + high * 1.2 + chains * 3 + m.std * 5 + night * 2 + changes * 0.02;
+          const score = m.prob * 1000 + m.overW * 100 + m.n4 * 40 + sd * 10 + low * 4 + high * 1.2 + chains * 3 + m.std * 5 + night * 2 + changes * 1;
           return { score, m, per, sd, mn: cs.length ? Math.min(...cs) : 0, mx: cs.length ? Math.max(...cs) : 0, nDay: cs.length, low, high, chains, night, maxW: Math.max(0, ...per.map(p => p.w)), changes };
         }
+        /* 한 칸씩 담당자를 바꿔 보며 점수가 좋아지면 채택(언덕 오르기) — 바뀐 칸 수에도 점수를 매기므로 '꼭 필요한 수정'만 남는다 */
+        function liveClimber(ctx, d, X0, A) {
+          const U = buildUnits(d, true, false, ctx.tasks).filter(u => !ctx.tasks[u.rows[0]].fixed);
+          let X = X0.slice(), cur = liveScore(ctx, d, X, A).score, ui = 0, idle = 0, evals = 0, done = !U.length;
+          return {
+            get X() { return X; }, get cur() { return cur; }, get done() { return done; }, get evals() { return evals; },
+            step() {
+              if (done) return; const u = U[ui], old = X[u.rows[0]]; let bestY = null, bs = cur - 1e-9;
+              for (const p of ctx.people) { if (p.name === old) continue; const Y = X.slice(); u.rows.forEach(r => { Y[r] = p.name; }); const s = liveScore(ctx, d, Y, A).score; evals++; if (s < bs) { bs = s; bestY = Y; } }
+              if (bestY) { X = bestY; cur = bs; idle = 0; } else idle++;
+              ui = (ui + 1) % U.length; if (idle >= U.length) done = true;
+            }
+          };
+        }
             return {
-                liveParse, liveCtx, liveMetrics, liveRepair, liveFull, liveScore, buildUnits, fmt,
+                liveParse, liveCtx, liveMetrics, liveRepair, liveFull, liveScore, liveClimber, buildUnits, fmt,
                 setMonth: v => { MONTH_OK = !!v; }
             };
         })();
@@ -8567,7 +8581,7 @@
             const arr = JSON.parse(snap.txt), wd = workDay();
             SIM.setMonth(wd.getFullYear() === 2026 && wd.getMonth() === 9);   // 근무표(STAFF_DATA)는 2026년 10월분 — 그 외 달은 JSON 에 나온 이름을 출근자로 간주
             const d = wd.getDate(), P = SIM.liveParse(arr), ctx = SIM.liveCtx(P, d, []), A = P.rowUser.map(n => n || null);   // 다중/서브는 07시에 이미 정해진 값 그대로(건드리지 않음), 일일 업무 칸만 다시 배정
-            const B = SIM.liveFull(ctx, d, A, snap.seed);   // 항상 '전체 다시 배정' 방식
+            const B = Array.isArray(snap.X) && snap.X.length === A.length ? snap.X.slice() : SIM.liveFull(ctx, d, A, snap.seed);   // 저장된 최적안(담당자 목록) 그대로 — 옛 저장본은 시드로 다시 만든다
             const follow = new Set(); SIM.buildUnits(d, true, false, ctx.tasks).forEach(u => { if (u.rows.length > 1) follow.add(u.rows[1]); });
             return { P, d, ctx, A, B, mA: SIM.liveMetrics(ctx, d, A), mB: SIM.liveMetrics(ctx, d, B), sB: SIM.liveScore(ctx, d, B, A), follow, cfg: snap, wd };
         }
@@ -8579,24 +8593,33 @@
             const arr = JSON.parse(txt), wd = workDay();
             SIM.setMonth(wd.getFullYear() === 2026 && wd.getMonth() === 9);
             const d = wd.getDate(), P = SIM.liveParse(arr), ctx = SIM.liveCtx(P, d, []), A = P.rowUser.map(n => n || null), t0 = performance.now(), total = SIM_ROUNDS * SIM_ROUND_MS;
-            let best = null, tries = 0;
-            for (;;) {
-                const el = performance.now() - t0; if (el >= total && best) break;
-                const sl = performance.now(), slice = document.hidden ? 700 : 40;   // 뒤쪽 탭은 브라우저가 타이머를 늦추므로 한 번에 더 오래 계산
+            const pool = []; let tries = 0;
+            const prog = () => { simProg = '최적안 찾는 중 ' + Math.min(SIM_ROUNDS, Math.floor((performance.now() - t0) / SIM_ROUND_MS) + 1) + '/' + SIM_ROUNDS + ' · ' + tries + '가지 확인'; simDraw(); };
+            // 1단계(앞 40%): 규칙에 맞는 안을 무작위로 많이 만들어 점수 좋은 후보 몇 개를 추림 — 현재 배정을 최대한 살리는 '부분 수정' 안과 '전체 다시 배정' 안을 섞어서
+            while (performance.now() - t0 < total * 0.4 || !pool.length) {
+                const sl = performance.now(), slice = document.hidden ? 700 : 40;
                 do {
-                    const seed = 1 + Math.floor(Math.random() * 1e9), B = mode === 'full' ? SIM.liveFull(ctx, d, A, seed) : SIM.liveRepair(ctx, d, A, seed), sc = SIM.liveScore(ctx, d, B, A);
-                    tries++; if (!best || sc.score < best.score) best = { seed, score: sc.score };
-                } while (performance.now() - sl < slice && performance.now() - t0 < total);
-                simProg = '최적안 찾는 중 ' + Math.min(SIM_ROUNDS, Math.floor((performance.now() - t0) / SIM_ROUND_MS) + 1) + '/' + SIM_ROUNDS + ' · ' + tries + '가지 확인'; simDraw();
-                await new Promise(r => setTimeout(r, 0));
+                    const seed = 1 + Math.floor(Math.random() * 1e9), B = tries % 2 ? SIM.liveFull(ctx, d, A, seed) : SIM.liveRepair(ctx, d, A, seed), sc = SIM.liveScore(ctx, d, B, A).score, key = B.join('|');
+                    tries++; if (!pool.some(x => x.key === key)) { pool.push({ B, key, score: sc }); pool.sort((a, b) => a.score - b.score); if (pool.length > 3) pool.length = 3; }
+                } while (performance.now() - sl < slice && performance.now() - t0 < total * 0.4);
+                prog(); await new Promise(r => setTimeout(r, 0));
             }
-            return { seed: best.seed, tries, score: best.score };
+            // 2단계: 후보마다 한 칸씩 바꿔 보며 더 좋아지면 채택 (남은 시간 동안)
+            const cl = pool.map(x => SIM.liveClimber(ctx, d, x.B, A));
+            while (performance.now() - t0 < total && cl.some(c => !c.done)) {
+                const sl = performance.now(), slice = document.hidden ? 700 : 40;
+                do { cl.forEach(c => { if (!c.done) { const e0 = c.evals; c.step(); tries += c.evals - e0; } }); } while (performance.now() - sl < slice && performance.now() - t0 < total && cl.some(c => !c.done));
+                prog(); await new Promise(r => setTimeout(r, 0));
+            }
+            let best = { X: pool[0].B, score: pool[0].score };
+            cl.forEach(c => { if (c.cur < best.score) best = { X: c.X, score: c.cur }; });
+            return { X: best.X, seed: 0, tries, score: best.score };
         }
         async function simDo(txt, mode) {   // 현재 JSON 으로 새로 재배정 (최적안 찾기 후 확정)
             if (simSearching) return; simSearching = true; simBusy = true; simProg = '최적안 찾는 중 1/' + SIM_ROUNDS; simDraw();
             try {
                 const r = await simSearch(txt, 'full');
-                const snap = { txt, seed: r.seed, mode: 'full', at: Date.now(), day: ckey(), tries: r.tries, score: r.score };
+                const snap = { txt, X: r.X, seed: r.seed, mode: 'best', at: Date.now(), day: ckey(), tries: r.tries, score: r.score };
                 simSave(snap); simRun(snap);
             } catch (e) { simRes = null; simErr = (e && e.message) || String(e); console.warn('[BBA] 일일 업무 배정표 계산 실패:', simErr); }
             finally { simSearching = false; simBusy = false; simProg = ''; simDraw(); }
