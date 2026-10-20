@@ -8,7 +8,7 @@
     'use strict';
 
 
-    // 수집기가 "일부 사이트만 받은 데이터"(data-bb-partial=1)를 보내도 안전하게 처리할 수 있음을 알림 (수집기가 이 값을 확인하고 전달)
+    // 수집기가 "일부 사이트만 받은 데이터"(data-bb-partial=1)를 보내도 안전하게 처리할 수 있음을 알린다 (수집기가 이 값을 확인하고 전달)
     window.__bbPartialOk = true;
 
     // ══ 오프라인 모드 (NCC 통신 중단) ══════════════════════════════════════
@@ -9702,7 +9702,7 @@
           const opt = Object.assign({}, DEFAULTS, optIn || {});
           const LV = opt.live || null, ex = new Set(LV ? LV.exclude || [] : []);
           const people = LV ? LV.people.filter(p => !ex.has(p.name)) : present(d), mons = LV ? LV.main : (M.main[d] || {}), subs = LV ? LV.sub : (M.sub[d] || {}), S = {};
-          people.forEach(p => { const Hs = Object.entries(mons).filter(([h, n]) => n === p.name).map(([h]) => +h); const sb = Object.entries(subs).filter(([h, n]) => n === p.name).map(([h]) => +h); S[p.name] = { p, mons: Hs, subAll: sb, subs: sb.filter(H => H >= SUB_STRICT), W: Hs.length, Ct: 0, tasks: [], sci: false, slots: new Set(), rows: 0 }; });
+          people.forEach(p => { const Hs = Object.entries(mons).filter(([h, n]) => n === p.name).map(([h]) => +h); const sb = Object.entries(subs).filter(([h, n]) => n === p.name).map(([h]) => +h); S[p.name] = { p, mons: Hs, subAll: sb, subs: sb.filter(H => H >= SUB_STRICT), W: Hs.length, Ct: 0, tasks: [], sciT: [], sci: false, slots: new Set(), rows: 0 }; });
           const base = variant === 'base', lite = variant === 'lite', cm = variant === 'cnt', nv = variant === 'new' || variant === 'newF' || variant === 'newL' || variant === 'newH', U0 = buildUnits(d, nv || cm, opt.holiday, LV ? LV.tasks : null).map(u => nv && opt.grace && u.rows.length === 1 && /무선충전/.test(u.label) && /재시작/.test(u.label) && u.s === 600 ? { ...u, e: 630 } : u), U = variant === 'newH' ? [...U0.filter(u => u.sci).map(u => ({ ...u, restrict: true })), ...U0.filter(u => !u.sci)] : variant === 'newF' ? [...U0.filter(u => u.sci), ...U0.filter(u => !u.sci)] : variant === 'newL' ? [...U0.filter(u => !u.sci), ...U0.filter(u => u.sci)] : (variant === 'new' ? [...U0.filter(isHubU), ...U0.filter(u => !isHubU(u))] : U0), out = [];
           const UU = opt.names ? (opt.evalOnly ? U : [...U.filter(u => opt.keep.has(u.rows[0])), ...U.filter(u => !opt.keep.has(u.rows[0]))]) : U;
           for (const u of UU) {
@@ -9759,6 +9759,7 @@
                   if (s.mons.some(H => ov(H - 10, H + 50, u.s, u.e))) return false;
                   if (s.subs.some(H => ov(H - 10, H + 50, u.s, u.e))) return false;
                   if (s.tasks.some(([a, b]) => ov(a, b, u.s, u.e))) return false;
+                  if (tier < 3 && (u.sci ? s.tasks : s.sciT).some(([a, b]) => ov(a, b, u.s - 10, u.e + 10))) return false;   // 과학관은 정각 교대 — 앞뒤로 다른 업무가 바로 붙으면 안 됨
                   if (u.sci && s.sci) return false;
                   if (tier < 3 && u.sci && s.mons.some(H => ov(H - 10, H + 50 + GAP, u.s - GAP, u.e + GAP))) return false;
                   if (tier < 1 && !cm && s.W + Math.max(u.w, 1e-6) > 2 + 1e-9) return false;
@@ -9780,7 +9781,7 @@
             if (!chosen && u.restrict) { U.push({ ...u, restrict: false }); continue; }
             if (!chosen) { out.push({ u, name: null, tier: 9 }); continue; }
             const s = S[chosen.name];
-            s.W += u.w; s.Ct += u.cnt; s.rows += 1; s.tasks.push([u.s, u.e]); s.slots.add(u.slot); s.sci = s.sci || u.sci;
+            s.W += u.w; s.Ct += u.cnt; s.rows += 1; s.tasks.push([u.s, u.e]); if (u.sci) s.sciT.push([u.s, u.e]); s.slots.add(u.slot); s.sci = s.sci || u.sci;
             out.push({ u, name: chosen.name, tier: tierUsed });
           }
           if (opt.names) out.sort((a, b) => a.u.rows[0] - b.u.rows[0]);
@@ -9790,7 +9791,7 @@
         function evaluate(S, out) {
           const flags = {}, run = {}, core = {};
           const m = { flagged: 0, n4: 0, overW: 0, wRule: 0, timeConflict: 0, none: 0, other: 0, zero: 0, std: 0, nUnits: out.length };
-          for (const n in S) run[n] = { W: S[n].mons.length, C: S[n].mons.length, tasks: [], sci: false };
+          for (const n in S) run[n] = { W: S[n].mons.length, C: S[n].mons.length, tasks: [], sciT: [], sci: false };
           out.forEach((o, i) => {
             if (!o.name) { flags[i] = ['후보 없음 (근무·휴게·다중 시간이 모두 겹침)']; core[i] = 1; m.none++; return; }
             if (o.absent) { flags[i] = ['오늘 근무표에 없는 사람(또는 제외 지정)']; core[i] = 1; m.other++; return; }
@@ -9804,8 +9805,9 @@
             if (s.p.brk && ov(u.s, u.e, s.p.brk[0], s.p.brk[1])) { why.push('휴게시간과 겹침'); m.other++; }
             if (r.tasks.some(t => ov(t[0], t[1], u.s, u.e))) { why.push('본인 다른 업무와 겹침'); m.other++; }
             if (u.sci && r.sci) { why.push('부산 하루 2회'); m.other++; }
+            if ((u.sci ? r.tasks : r.sciT).some(t => ov(t[0], t[1], u.s - 10, u.e + 10))) { why.push('과학관(정각 교대)과 다른 업무가 바로 붙음'); m.timeConflict++; }
             if (isHubU(u) && !earlyFree(s) && Object.values(S).some(x => earlyFree(x) && x.mons.length + Math.max(u.w, 1e-6) <= 2 + 1e-9 && x.mons.length + u.cnt <= 3 && !x.mons.some(H => ov(H - 10, H + 50 + GAP, u.s - GAP, u.e + GAP)))) { why.push('07~16시 근무자 중 07·08·09시 다중이 없는 사람이 있는데 부산 08:50을 다른 사람이 받음'); m.other++; }
-            r.W += u.w; r.C += u.cnt; r.tasks.push([u.s, u.e]); r.sci = r.sci || u.sci;
+            r.W += u.w; r.C += u.cnt; r.tasks.push([u.s, u.e]); if (u.sci) r.sciT.push([u.s, u.e]); r.sci = r.sci || u.sci;
             if (why.length) { flags[i] = why; if (why.some(x => !x.startsWith('가중치'))) core[i] = 1; }
           });
           m.flagged = Object.keys(flags).length;
@@ -9834,7 +9836,7 @@
             } else if (x.type === 'task' && x.content) {
               const t = String(x.content).replace(/ /g, ' ');
               if (!/^\s*\[\d{1,2}:\d{2}/.test(t)) { warn.push('시각 없는 업무 제외: ' + t.slice(0, 30)); return; }
-              const i = TL.length; TL.push(mkTask(t, 0, (isFixedName(x.user) && x.user !== '후보 없음') ? '관리자' : '', i)); rowUser.push(x.user === '후보 없음' ? '' : (x.user || ''));
+              const i = TL.length; TL.push(mkTask(t, 0, ((isFixedName(x.user) && x.user !== '후보 없음') || (x.user && x.user !== '후보 없음' && !BYNAME[x.user])) ? '관리자' : '', i)); rowUser.push(x.user === '후보 없음' ? '' : (x.user || ''));
             }
           });
           if (!Object.keys(main).length) warn.push('다중 모니터링 항목이 없음');
@@ -9844,7 +9846,7 @@
 
         function liveCtx(P, d, excl) {
           const names = new Set(present(d).map(p => p.name));
-          const all = [...Object.values(P.main), ...Object.values(P.sub), ...P.rowUser].filter(n => !isFixedName(n));
+          const all = [...Object.values(P.main), ...Object.values(P.sub), ...P.rowUser.filter((n, i) => !P.TL[i].fixed)].filter(n => !isFixedName(n));
           all.forEach(n => { if (BYNAME[n]) names.add(n); });
           const unknown = [...new Set(all.filter(n => !BYNAME[n]))];
           return { people: STAFF.filter(p => names.has(p.name)), main: P.main, sub: P.sub, tasks: P.TL, exclude: excl || [], unknown };
