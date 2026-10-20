@@ -1451,6 +1451,7 @@
                     <div class="bb-hd-right" id="bb-hd-right">
                         <div class="bb-hd-right-row spread">
                             <div class="bb-hd-grp">
+                                <button id="bbsim-btn" class="bb-btn" style="display:none;" title="일일 업무 배정표 (시뮬레이션 — 실제 업무표는 바뀌지 않음)">📋 일일 업무 배정표</button>
                                 <button id="bb-theme-btn" class="bb-btn">-</button>
                                 <button id="bb-lighttheme-btn" class="bb-btn" title="배경 테마 전환">☁️</button>
                                 <button id="bb-zoom-out" class="zoom-btn">－</button>
@@ -8207,5 +8208,552 @@
         _trimNotice = 0;
     }
     // [주석처리: 동숲] applyCampingBackground();
+
+
+    // ════════════════════════════════════════════════════════════════════
+    // 📋 일일 업무 배정표 (안혜림 모드 전용)
+    //   · 관제 센터 제목 박스를 한 번 클릭 → '안혜림' 입력 후 Enter → 'by CYH' 가 'for 안혜림' 으로 바뀌고 이 PC(브라우저)에 저장됨 (다시 하면 해제)
+    //   · 안혜림 모드에서만 테마 버튼 왼쪽에 '일일 업무 배정표' 버튼이 보임. 시뮬레이션일 뿐 실제 업무표(시트)는 바뀌지 않음
+    //   · 다른 기능과 분리된 모듈 — 어떤 오류가 나도 이 안에서만 처리하고 기존 기능에는 영향 없음
+    // ════════════════════════════════════════════════════════════════════
+    (function bbSimModule() {
+        try {
+        const bbEl = document.getElementById('bb'); if (!bbEl) return;
+        const $ = id => document.getElementById(id);
+        const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const pad = n => String(n).padStart(2, '0');
+        const lsGet = (k, f) => { try { const v = localStorage.getItem(k); return v === null ? f : v; } catch (e) { return f; } };
+        const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* 무시 */ } };
+        const hash = s => { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
+        const hue = n => { let h = 0; for (const ch of String(n)) h = (h * 31 + ch.charCodeAt(0)) % 360; return h; };
+        const WD0 = 7 * 60;                       // 업무일 시작 07:00
+        const nowMin = () => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); };
+        function workDay() { const d = new Date(); if (nowMin() < WD0) d.setDate(d.getDate() - 1); return d; }
+        const wdKey = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+        const ckey = () => wdKey(workDay());
+        const TASKS_URL = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/daily_tasks.json';
+        const TASKS_FULL_URL = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/daily_tasks_full.json';   // 휴무·관리자 행까지 포함한 일일 업무 전체 행
+        const TASKS_REFRESH_MS = 5 * 60 * 1000;
+
+        const st = document.createElement('style'); st.textContent = `
+        #bb #bbsim { position:absolute; left:14px; right:14px; top:112px; bottom:12px; z-index:32; display:none; flex-direction:column; min-height:0; box-sizing:border-box; padding:10px 12px 12px; background:var(--bg); border:2px solid var(--bd2); border-radius:12px; box-shadow:0 10px 28px rgba(0,0,0,.35); }
+        #bb #bbsim.open { display:flex; }
+        #bb #bbsim .mh { display:flex; align-items:center; gap:8px; margin-bottom:4px; flex-wrap:wrap; }
+        #bb #bbsim .mh b { font-size:16px; font-weight:700 !important; }
+        #bb #bbsim .mh .sp { margin-left:auto; display:flex; gap:6px; align-items:center; }
+        #bb #bbsim .meta { font-size:12px; color:var(--mu); margin-bottom:6px; line-height:1.45; }
+        #bb #bbsim .meta.sum { margin-top:-2px; padding:4px 9px; border-radius:8px; background:var(--sur2); border:1.5px solid var(--bd2); color:var(--tx); }
+        #bb #bbsim .meta b { color:var(--tx); font-weight:700 !important; }
+        #bb #bbsim .meta .warn { color:var(--rd); font-weight:700 !important; }
+        #bb #bbsim .sb { flex:1; min-height:0; display:grid; grid-template-columns:minmax(230px,.36fr) minmax(0,1fr); gap:10px; }
+        #bb #bbsim .col { min-height:0; overflow:auto; border:1.5px solid var(--bd2); border-radius:10px; background:var(--sur); }
+        #bb #bbsim .gh { position:sticky; top:0; z-index:2; display:grid; gap:8px; padding:5px 8px; background:var(--sur2); border-bottom:2px solid var(--bd2); font-size:12px; font-weight:700 !important; color:var(--mu); }
+        #bb #bbsim .gr { display:grid; gap:8px; align-items:center; padding:2px 8px; min-height:26px; border-bottom:1px solid var(--bd); }
+        #bb #bbsim .c1 .gh, #bb #bbsim .c1 .gr { grid-template-columns:50px minmax(0,1fr) minmax(0,1fr); }
+        #bb #bbsim .c2 .gh, #bb #bbsim .c2 .gr { grid-template-columns:86px minmax(0,1fr) minmax(150px,.62fr); }
+        #bb #bbsim .tm { font-size:12.5px; font-weight:700 !important; color:var(--mu); font-variant-numeric:tabular-nums; }
+        #bb #bbsim .tk { font-size:12.5px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        #bb #bbsim .nm { height:22px; border-radius:6px; display:grid; place-items:center; font-weight:600 !important; font-size:12.5px; color:#1e1a12; background:hsl(var(--h) 58% 84%); white-space:nowrap; overflow:hidden; padding:0 6px; }
+        #bb #bbsim .nm.none { background:var(--sur2); color:var(--mu); border:1px dashed var(--bd2); }
+        #bb #bbsim .em { color:var(--mu); font-size:12px; text-align:center; }
+        #bb #bbsim .gr.chg { background:#e3eeff; }
+        #bb #bbsim .gr.chg .nm { box-shadow:0 0 0 2px #3b82f6; }
+        #bb #bbsim .asg { display:flex; align-items:center; gap:6px; min-width:0; }
+        #bb #bbsim .asg .nm { flex:0 0 auto; min-width:60px; }
+        #bb #bbsim .asg .was { font-size:11px; color:#2a5db0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
+        #bb #bbsim .gr.fx { opacity:.6; }
+        #bb #bbsim .cpm { margin-bottom:6px; padding:5px 9px; border-radius:8px; background:#e3f6e6; border:1.5px solid #5cb96b; color:#1d4a26; font-size:12px; line-height:1.45; }
+        #bb #bbsim .cpm b { font-weight:700 !important; }
+        #bb #bbsim .cpm .warn { color:var(--rd); font-weight:700 !important; }
+        #bb #bbsim .cpm textarea { display:block; width:100%; box-sizing:border-box; margin-top:4px; font-size:12px; line-height:1.4; font-family:inherit; }
+        #bb #bbsim .foot { margin-top:6px; font-size:11.5px; color:var(--mu); }
+        #bb #bbsim .seg2 { display:inline-flex; border:1.5px solid var(--bd2); border-radius:8px; overflow:hidden; }
+        #bb #bbsim .seg2 button { height:26px; padding:0 10px; border:0; background:var(--sur2); color:var(--mu); font-family:inherit; font-size:12px; font-weight:700 !important; cursor:pointer; }
+        #bb #bbsim .seg2 button.on { background:var(--tx); color:var(--sur); }
+        #bb #bbsim .bba-btn { height:26px; padding:0 10px; border-radius:8px; border:1.5px solid var(--bd2); background:var(--sur2); color:var(--tx); font-family:inherit; font-size:12px; font-weight:700 !important; cursor:pointer; white-space:nowrap; }
+        #bb #bbsim .bba-btn:hover { border-color:var(--mu); }
+        #bb #bbsim .bba-btn.on { background:var(--tx); color:var(--sur); border-color:var(--tx); }
+#bb #bbsim-btn.on { background:var(--tx); color:var(--sur); }
+        `; document.head.appendChild(st);
+
+        const SIM = (function () {
+        const STAFF_DATA=[["김지훈", "07:00~16:00", "WWWOOWWOOAWWWWOOWWWWWOOWWWWWOOO"], ["오정훈", "07:00~16:00", "OWWHOOWWHAAOOWWWWOOWWWWWOOOWWWO"], ["호덕진", "07:00~16:00", "WOOWWOOWWWWWOOWWAOWWWWWOOOOWWWW"], ["이기완", "07:00~16:00", "WOOWWOOOWWWWWOOAWWWWWOOWWWWWOOW"], ["김경환", "08:00~17:00", "OWWOOWWWWWOOWWWWOOWWWWWOOWOOWWW"], ["박효선", "08:00~17:00", "WOOWWWWWOOWWWWOOWWWWWOOOOWWWWWO"], ["최윤혁", "09:00~18:00", "WWOAAOWWWOAAOWWWWWOOOWWWWOOWWOO"], ["신현철", "09:00~18:00", "WOOWWHWWOOWWOOWWWWWOWWOOHWWOOAW"], ["이민수", "09:00~18:00", "WWWOOWWOOWWWWOOWWWOWWWAOOWWWWOO"], ["김한석", "09:00~18:00", "WWOOAWWWWWOOWWWWOOOWWWWWOOWWWOO"], ["이지윤", "09:00~18:00", "OOWhhhhOOOWWWWOOWWWWOOWWWWWOOWW"], ["김미소", "09:00~18:00", "WWOOWWWWWOOWOWWWWWOOOWWWWOOWWWO"], ["이규은", "09:00~18:00", "OOWWWWWOOOWWWWWOOWWWWWOOWWWWWOO"], ["유재헌", "09:00~18:00", "OOWWWWWOOWWOWWOOWWWWWOOWWWWOOWW"], ["조천호", "09:00~18:00", "WWOOWWWWOOOWWWWWOOWWWWOOWWWOOWW"], ["이수성", "09:00~18:00", "OOWWWWOOWWWWWOOWWWWWOWWWOOWWOOW"], ["백진홍", "09:00~18:00", "WWOOOWWWWWOWOWWWWWOOWWWOWOOOWWW"], ["임미선", "09:00~18:00", "OWWOOOOOWWWWWOWWWWWOOWWWOWWWWWO"], ["이현경", "09:00~18:00", "WWOOOWWWWOOWWOOWWWWWOOWWWWWOOWW"], ["석승찬", "10:00~19:00", "WHOWWWOWWOOHWWWWOOOWWWWOOOOWWWW"], ["이준", "10:00~19:00", "WWWWOOWOWWWWOWOOWWOWWOOWWWWWOOW"], ["한승완", "10:00~19:00", "OWWWWOOWWWOWWOWWWWWOOWWWOWWWOOO"], ["김동진", "11:00~20:00", "WWWWOOOWWWOOWWWWOOAAWWWOOOOWWWW"], ["송주현", "11:00~20:00", "WAOOWWOOWWWOOWWWWWOOOWWWWOOWWWW"], ["송태영", "11:00~20:00", "WWWOOWWHWWOOOWWWOOWWOOWWAOWWWWO"], ["신은정", "11:00~20:00", "WOOWWWWOOWWWWWOOWWWOOWWOOWWOWWW"], ["장재원", "11:00~20:00", "OWWWOOWWWOOWWWWWOOWWWOOWWWWWOOW"], ["박효빈", "14:00~23:00", "OOWWWOOWWWOOOWWWWOOWWWWOOWWWWWW"], ["권재윤", "14:00~23:00", "WWOOWWWWOOWWWWOOWWWWOOWWWOOWWWO"], ["김가은", "15:00~24:00", "WWWOOOWWWWOOWWWWOOWWWWOOWWWOOWW"], ["서형민", "15:00~24:00", "WWWWOOWWWOOWWWWWOOWWOOWWWWWOOOW"], ["김도형", "15:00~24:00", "OWWWWWOOWWWWWOOWWWWOOWWOOOWWWWO"], ["최성환", "15:00~24:00", "OOWWOOOOOWWOOOOOWWOOOOOWWOOOOOW"], ["이규순", "18:00~03:00", "WWOOWWWWWOWWOOWWOOOWWWWWOOAWWOA"], ["강철환", "18:00~03:00", "OOWWHWWOOWWWWWOOWWWWWOOOWWWOOWW"], ["박은선", "19:00~04:00", "WWOOWWWOOWWWOOOWWWOOOWWWWOAWWWW"], ["박계원", "19:00~04:00", "OOWWWOAWWWWOAOWWWWOOWWWOOWWWOOW"], ["최정기", "20:00~05:00", "OOWWOWWWWOOOWWWWOOWWWWWOOOWWWWW"], ["최선호", "20:00~05:00", "WWOWWWOOWWWWWWOOWWWWOOOWWWOOWWO"], ["김소연", "22:00~07:00", "WWWOOWWWWWOOOWWOOWWWWOOWWWOOWWW"], ["임다연", "22:00~07:00", "WWWWWOOWWWOOWWWWWOOWWWWWOOWWOOO"], ["임아연", "22:00~07:00", "WWOOOWWWOOWWWWWOOWWWWWOOWWWWWOO"], ["안대관", "23:30~08:30", "OOWWWWWOOWWWWOOWWWWOOOWWWWWOOWW"]];
+        const DOW_KO = ['일', '월', '화', '수', '목', '금', '토'];
+        const dowOf = d => (4 + d - 1) % 7;            // 2026-10-01 = 목
+        const ov = (a, b, c, d) => a < d && c < b;
+        const tmin = s => { const m = String(s).match(/(\d{1,2}):(\d{2})/); return +m[1] * 60 + +m[2]; };
+        const fmt = m => { m = ((m % 1440) + 1440) % 1440; return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
+        const GAP = 15;
+        const BREAK = { 420: [660, 720], 480: [720, 780], 540: [780, 840], 600: [840, 900], 660: [900, 960], 840: [1020, 1080], 900: [1020, 1080], 1080: [1320, 1380], 1140: [1320, 1380], 1200: [1320, 1380], 1320: [1500, 1560], 1410: [1560, 1620] };
+        const STAFF = STAFF_DATA.map(([name, time, sc]) => {
+          const a = tmin(time.split('~')[0]); let b = tmin(time.split('~')[1]); if (b <= a) b += 1440;
+          return { name, time, start: a, end: b, brk: BREAK[a] || null, g: a <= 540 ? 0 : a <= 660 ? 1 : a < 1080 ? 2 : 3, sc };
+        });
+        const BYNAME = Object.fromEntries(STAFF.map(p => [p.name, p]));
+        const GROUPS = ['07·08·09시 출근', '10·11시 출근', '14·15시 출근', '18시 이후 출근'];
+        let MONTH_OK = false;   // 10월(근무표가 있는 달)일 때만 근무표(sc)로 출근자를 추림 — 그 외 달은 JSON 에 나온 이름으로 대체
+        const present = d => MONTH_OK ? STAFF.filter(p => p.sc[d - 1] === 'W') : [];
+        function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+        const SUB_STRICT = 1080;   // 18:00 이후 슬롯의 서브는 일일 업무와 겹치면 안 됨 (그 전은 겹쳐도 무방)
+        const mkTask = (t, bold, fixed, i) => {
+          const m = t.match(/^\[(\d{1,2}:\d{2})(?:~(\d{1,2}:\d{2}))?\]/); const s = tmin(m[1]), e = m[2] ? tmin(m[2]) : s + 10;
+          const z = t.replace(/\s/g, ''); let days = 'all';
+          if (z.includes('[평일]')) days = 'wd'; else if (z.includes('[주말]')) days = 'we'; else if (z.includes('화,수,목,금,토,일')) days = 'nm';
+          const sci = t.includes('부산국립과학관'), nh = t.includes('대기장소2 주간기체 출근');
+          let w = 0;
+          if (sci) w = 1; else if (t.includes('무선충전') && t.includes('재시작') && s === 600) w = 0.5; else if (t.includes('송도요기요')) w = 0.5; else if (nh) w = 0.5;
+          return { i, t, bold: !!bold, fixed: fixed || '', s, e, days, slot: Math.floor(s / 60) * 60, sci, hub: t.includes('HUB B 출근'), nh, nt: /\[삼평동,\s*서현동\]\s*기체 출근 체크/.test(t), w };
+        };
+        const TASKS = [];
+        function rowState(t, d, holiday) {
+          if (t.fixed) return 'fixed';
+          const w = dowOf(d), we = holiday || w === 0 || w === 6;
+          const on = t.days === 'all' || (t.days === 'wd' && !we) || (t.days === 'we' && we) || (t.days === 'nm' && w !== 1);
+          return on ? 'on' : 'off';
+        }
+        function buildUnits(d, bundled, holiday, TL) {
+          TL = TL || TASKS;
+          const st = TL.map(t => TL === TASKS ? rowState(t, d, holiday) : (t.fixed ? 'fixed' : 'on')), U = [], skip = new Set();
+          TL.forEach((t, i) => {
+            if (st[i] !== 'on' || skip.has(i)) return;
+            if (t.hub) {
+              if (!bundled) return;
+              const j = TL.findIndex(x => x.sci && x.s === 540);
+              if (j >= 0 && st[j] === 'on') { skip.add(j); U.push({ rows: [i, j], s: 530, e: 600, slot: 540, w: 1, cnt: 1, sci: true, label: '부산 08:50 + 09:00 묶음' }); return; }
+            }
+            if (bundled && t.nh) {
+              const j = TL.findIndex(x => x.nt);
+              if (j >= 0 && st[j] === 'on') { skip.add(j); U.push({ rows: [i, j], s: 600, e: 660, slot: 600, w: 0.5, cnt: 2, sci: false, label: '성남 삼평동 10:00 + 10:30 묶음' }); return; }
+            }
+            U.push({ rows: [i], s: t.s, e: t.e, slot: t.slot, w: t.w, cnt: 1, sci: t.sci, label: t.t });
+          });
+          return U;
+        }
+        /* 시간대 경향(강제 아님): 값이 클수록 후순위 */
+        function tendency(p, u, mid, late) {
+          const s = u.s, g = p.g;
+          if (s < 660) return 0;
+          if (s < 960) return mid * [1, 0, 0.5, 0.5][g];
+          if (s < 1080) return late * (g === 3 ? 1 : 0);
+          if (s < 1320) return late * [0.3, 0, 0, 1][g];
+          return late * (g === 2 ? 0 : 0.5);
+        }
+        const orderFor = s => s < 720 ? [0, 1, 2, 3] : s < 1020 ? [1, 0, 2, 3] : [2, 1, 0, 3];
+        const DEFAULTS = { gp: 0.1, cw: 0.4, cap: 3, holiday: false, sciPen: 1, grace: 1, tMid: 0.15, tLate: 0.3 };
+        const RELAX_TXT = ['', '가중치 2.0 상한을 풀어 배정', '다중 포함 개수 상한까지 풀어 배정', '다중과 연속 금지까지 풀어 배정'];
+        function assign(variant, d, M, rng, optIn) {
+          const opt = Object.assign({}, DEFAULTS, optIn || {});
+          const LV = opt.live || null, ex = new Set(LV ? LV.exclude || [] : []);
+          const people = LV ? LV.people.filter(p => !ex.has(p.name)) : present(d), mons = LV ? LV.main : (M.main[d] || {}), subs = LV ? LV.sub : (M.sub[d] || {}), S = {};
+          people.forEach(p => { const Hs = Object.entries(mons).filter(([h, n]) => n === p.name).map(([h]) => +h); const sb = Object.entries(subs).filter(([h, n]) => n === p.name).map(([h]) => +h); S[p.name] = { p, mons: Hs, subAll: sb, subs: sb.filter(H => H >= SUB_STRICT), W: Hs.length, Ct: 0, tasks: [], sci: false, slots: new Set(), rows: 0 }; });
+          const base = variant === 'base', lite = variant === 'lite', cm = variant === 'cnt', nv = variant === 'new' || variant === 'newF' || variant === 'newL' || variant === 'newH', U0 = buildUnits(d, nv || cm, opt.holiday, LV ? LV.tasks : null).map(u => nv && opt.grace && u.rows.length === 1 && /무선충전/.test(u.label) && /재시작/.test(u.label) && u.s === 600 ? { ...u, e: 630 } : u), U = variant === 'newH' ? [...U0.filter(u => u.sci).map(u => ({ ...u, restrict: true })), ...U0.filter(u => !u.sci)] : variant === 'newF' ? [...U0.filter(u => u.sci), ...U0.filter(u => !u.sci)] : variant === 'newL' ? [...U0.filter(u => !u.sci), ...U0.filter(u => u.sci)] : U0, out = [];
+          const UU = opt.names ? (opt.evalOnly ? U : [...U.filter(u => opt.keep.has(u.rows[0])), ...U.filter(u => !opt.keep.has(u.rows[0]))]) : U;
+          for (const u of UU) {
+            let chosen = null, tierUsed = null;
+            const pre = opt.names && (opt.evalOnly || opt.keep.has(u.rows[0])) ? (opt.names[u.rows[0]] || null) : undefined;
+            if (pre !== undefined) {
+              if (pre && S[pre]) { chosen = S[pre].p; tierUsed = 0; }
+              else { out.push({ u, name: pre, tier: 0, absent: !!pre }); continue; }
+            } else if (base) {
+              let c = people.filter(p => {
+                const s = S[p.name];
+                if (!(p.start <= u.slot && u.slot + 60 <= p.end)) return false;
+                if (p.brk && ov(u.s, u.e, p.brk[0], p.brk[1])) return false;
+                if (s.slots.has(u.slot)) return false;
+                if (s.mons.some(H => H === u.slot)) return false;
+                if (u.sci && s.mons.some(H => H === u.slot + 60)) return false;
+                if (s.rows >= 3) return false;
+                if (u.sci && s.sci) return false;
+                return true;
+              });
+              if (u.sci) { const c2 = c.filter(p => !S[p.name].mons.some(H => H === u.slot - 60)); if (c2.length) c = c2; }
+              if (c.length) { chosen = c[Math.floor(rng() * c.length)]; tierUsed = 0; }
+            } else if (lite) {
+              const edge = /^\s*\[\d{1,2}:5\d|~\d{1,2}:00\]/.test(u.label);
+              for (let tier = 0; tier < 4; tier++) {
+                let c = people.filter(p => {
+                  const s = S[p.name];
+                  if (!(p.start <= u.slot && u.slot + 60 <= p.end)) return false;
+                  if (p.brk && ov(u.s, u.e, p.brk[0], p.brk[1])) return false;
+                  if (u.sci && s.sci) return false;
+                  if (tier < 3) {
+                    if (s.slots.has(u.slot)) return false;
+                    if (s.mons.some(H => H === u.slot)) return false;
+                    if (u.sci && s.mons.some(H => H === u.slot + 60)) return false;
+                    if (edge && s.mons.some(H => H === u.slot + 60)) return false;
+                  }
+                  if (tier < 1 && s.W + Math.max(u.w, 1e-6) > 2 + 1e-9) return false;
+                  if (tier < 2 && s.mons.length + s.Ct + 1 > opt.cap) return false;
+                  return true;
+                });
+                if (!c.length) continue;
+                if (u.sci) { const c2 = c.filter(p => !S[p.name].mons.some(H => H === u.slot - 60)); if (c2.length) c = c2; }
+                const sc = p => S[p.name].W + 0.4 * S[p.name].Ct;
+                const m = Math.min(...c.map(sc)), pool = c.filter(p => sc(p) < m + 1e-9);
+                chosen = pool[Math.floor(rng() * pool.length)]; tierUsed = Math.min(tier, 3); break;
+              }
+            } else {
+              for (let tier = 0; tier < (u.restrict ? 1 : 4); tier++) {
+                const c = people.filter(p => {
+                  const s = S[p.name];
+                  if (u.restrict && s.mons.length > 0) return false;
+                  if (!(p.start <= u.slot && u.slot + 60 <= p.end)) return false;
+                  if (p.brk && ov(u.s, u.e, p.brk[0], p.brk[1])) return false;
+                  if (s.mons.some(H => ov(H - 10, H + 50, u.s, u.e))) return false;
+                  if (s.subs.some(H => ov(H - 10, H + 50, u.s, u.e))) return false;
+                  if (s.tasks.some(([a, b]) => ov(a, b, u.s, u.e))) return false;
+                  if (u.sci && s.sci) return false;
+                  if (tier < 3 && u.sci && s.mons.some(H => ov(H - 10, H + 50 + GAP, u.s - GAP, u.e + GAP))) return false;
+                  if (tier < 1 && !cm && s.W + Math.max(u.w, 1e-6) > 2 + 1e-9) return false;
+                  if (tier < 2 && s.mons.length + s.Ct + u.cnt > opt.cap) return false;
+                  return true;
+                });
+                if (!c.length) continue;
+                const od = orderFor(u.s);
+                const pen = p => {
+                  const s = S[p.name]; if (u.sci) return 0;
+                  return (s.mons.some(H => ov(H - 10, H + 50, u.s - GAP, u.e + GAP)) || s.tasks.some(([a, b]) => ov(a, b, u.s - GAP, u.e + GAP))) ? 1 : 0;
+                };
+                const sc = p => (cm ? S[p.name].mons.length + 0.5 * S[p.name].Ct : S[p.name].W + opt.cw * S[p.name].Ct) + opt.gp * od.indexOf(p.g) + 0.25 * pen(p) + (!cm && opt.sciPen && u.sci && S[p.name].mons.length > 0 ? opt.sciPen : 0) + (!cm && (opt.tMid || opt.tLate) ? tendency(p, u, opt.tMid || 0, opt.tLate || 0) : 0);
+                const m = Math.min(...c.map(sc)), pool = c.filter(p => sc(p) < m + 1e-9);
+                chosen = pool[Math.floor(rng() * pool.length)]; tierUsed = tier; break;
+              }
+            }
+            if (!chosen && u.restrict) { U.push({ ...u, restrict: false }); continue; }
+            if (!chosen) { out.push({ u, name: null, tier: 9 }); continue; }
+            const s = S[chosen.name];
+            s.W += u.w; s.Ct += u.cnt; s.rows += 1; s.tasks.push([u.s, u.e]); s.slots.add(u.slot); s.sci = s.sci || u.sci;
+            out.push({ u, name: chosen.name, tier: tierUsed });
+          }
+          if (opt.names) out.sort((a, b) => a.u.rows[0] - b.u.rows[0]);
+          return { S, out, U };
+        }
+
+        function evaluate(S, out) {
+          const flags = {}, run = {}, core = {};
+          const m = { flagged: 0, n4: 0, overW: 0, wRule: 0, timeConflict: 0, none: 0, other: 0, zero: 0, std: 0, nUnits: out.length };
+          for (const n in S) run[n] = { W: S[n].mons.length, C: S[n].mons.length, tasks: [], sci: false };
+          out.forEach((o, i) => {
+            if (!o.name) { flags[i] = ['후보 없음 (근무·휴게·다중 시간이 모두 겹침)']; core[i] = 1; m.none++; return; }
+            if (o.absent) { flags[i] = ['오늘 근무표에 없는 사람(또는 제외 지정)']; core[i] = 1; m.other++; return; }
+            const r = run[o.name], s = S[o.name], u = o.u, why = [];
+            if (r.W + Math.max(u.w, 1e-6) > 2 + 1e-9) { why.push('가중치 2.0을 넘겨 배정'); m.wRule++; }
+            if (r.C + u.cnt > 3) why.push('다중 포함 4개째 배정');
+            if (s.mons.some(H => ov(H - 10, H + 50, u.s, u.e))) { why.push('다중 교대 시간과 겹침'); m.timeConflict++; }
+            else if (u.sci && s.mons.some(H => ov(H - 10, H + 50 + GAP, u.s - GAP, u.e + GAP))) { why.push('다중과 연달아 배정 (부산)'); m.timeConflict++; }
+            if (s.subs.some(H => ov(H - 10, H + 50, u.s, u.e))) { why.push('18시 이후 서브 시간과 겹침'); m.timeConflict++; }
+            if (s.p.brk && ov(u.s, u.e, s.p.brk[0], s.p.brk[1])) { why.push('휴게시간과 겹침'); m.other++; }
+            if (r.tasks.some(t => ov(t[0], t[1], u.s, u.e))) { why.push('본인 다른 업무와 겹침'); m.other++; }
+            if (u.sci && r.sci) { why.push('부산 하루 2회'); m.other++; }
+            r.W += u.w; r.C += u.cnt; r.tasks.push([u.s, u.e]); r.sci = r.sci || u.sci;
+            if (why.length) { flags[i] = why; if (why.some(x => !x.startsWith('가중치'))) core[i] = 1; }
+          });
+          m.flagged = Object.keys(flags).length;
+          const loads = [];
+          for (const n in S) {
+            const r = run[n]; if (r.C > 3) m.n4++; if (r.W > 2 + 1e-9) m.overW++; if (r.C === 0) m.zero++;
+            loads.push(r.W + 0.4 * (r.C - S[n].mons.length));
+          }
+          const mean = loads.reduce((a, b) => a + b, 0) / (loads.length || 1);
+          m.std = Math.sqrt(loads.reduce((a, b) => a + (b - mean) ** 2, 0) / (loads.length || 1));
+          m.clean = m.flagged === 0 ? 1 : 0; m.cleanCore = Object.keys(core).length === 0 ? 1 : 0;
+          return { m, flags, run };
+        }
+
+        const hmin = s => { const m = String(s).match(/(\d{1,2}):(\d{2})/); if (!m) return null; let v = +m[1] * 60 + +m[2]; if (v < 420) v += 1440; return v; };
+        const fmtM = m => { m = m % 1440; return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
+        const isFixedName = n => !n || n === '관리자' || n === '-' || /휴무/.test(n);
+        function liveParse(arr) {
+          if (!Array.isArray(arr)) throw new Error('JSON이 목록(배열) 형태가 아닙니다');
+          const warn = [], main = {}, sub = {}, TL = [], rowUser = [];
+          arr.forEach(x => {
+            if (!x || typeof x !== 'object') return;
+            if (x.type === 'monitoring') {
+              const t = hmin(x.rawTime); if (t == null) { warn.push('다중 시각을 읽지 못함: ' + x.rawTime); return; }
+              main[t] = x.user; if (x.subUser && x.subUser !== '후보 없음') sub[t] = x.subUser; else if (x.subUser) warn.push(fmtM(t) + ' 서브: 시트에서 \'후보 없음\' 으로 나옴');
+            } else if (x.type === 'task' && x.content) {
+              const t = String(x.content).replace(/ /g, ' ');
+              if (!/^\s*\[\d{1,2}:\d{2}/.test(t)) { warn.push('시각 없는 업무 제외: ' + t.slice(0, 30)); return; }
+              const i = TL.length; TL.push(mkTask(t, 0, (isFixedName(x.user) && x.user !== '후보 없음') ? '관리자' : '', i)); rowUser.push(x.user === '후보 없음' ? '' : (x.user || ''));
+            }
+          });
+          if (!Object.keys(main).length) warn.push('다중 모니터링 항목이 없음');
+          if (!TL.length) warn.push('업무 항목이 없음');
+          return { main, sub, TL, rowUser, warn };
+        }
+
+        function liveCtx(P, d, excl) {
+          const names = new Set(present(d).map(p => p.name));
+          const all = [...Object.values(P.main), ...Object.values(P.sub), ...P.rowUser].filter(n => !isFixedName(n));
+          all.forEach(n => { if (BYNAME[n]) names.add(n); });
+          const unknown = [...new Set(all.filter(n => !BYNAME[n]))];
+          return { people: STAFF.filter(p => names.has(p.name)), main: P.main, sub: P.sub, tasks: P.TL, exclude: excl || [], unknown };
+        }
+
+        /* 행별 이름(배열) → 평가. 묶음 업무는 첫 줄 담당자 기준으로 채점하고, 둘째 줄이 다르면 '불일치'로 표시 */
+        function liveEval(ctx, d, rowNames) {
+          const U = buildUnits(d, true, false, ctx.tasks);
+          const R = assign('new', d, null, mulberry(1), { live: ctx, names: rowNames, evalOnly: true });
+          const ev = evaluate(R.S, R.out);
+          const bad = new Set(), why = {};
+          R.out.forEach((o, i) => {
+            const f = ev.flags[i]; if (!f) return;
+            if (!(f.every(x => x.startsWith('가중치')) && !(o.u.w > 0))) { bad.add(o.u.rows[0]); why[o.u.rows[0]] = f; }
+          });
+          U.forEach(u => { if (u.rows.length > 1) { const lead = rowNames[u.rows[0]]; u.rows.slice(1).forEach(r => { if (rowNames[r] !== lead) { bad.add(r); why[r] = ['묶음 업무인데 첫 줄(' + (lead || '없음') + ')과 담당자가 다름']; } }); } });
+          return { R, ev, bad, why, U };
+        }
+
+        function liveMetrics(ctx, d, rowNames) {
+          const e = liveEval(ctx, d, rowNames);
+          return { prob: e.bad.size, n4: e.ev.m.n4, overW: e.ev.m.overW, std: e.ev.m.std, bad: e.bad, why: e.why };
+        }
+
+        /* 묶음의 둘째 줄까지 첫 줄 담당자로 맞춘 행별 이름 만들기 */
+        function namesFromOut(ctx, d, out, base) {
+          const names = base.slice();
+          out.forEach(o => { o.u.rows.forEach(r => { names[r] = o.name || null; }); });
+          return names;
+        }
+
+        function liveRepair(ctx, d, A, seed) {
+          const e = liveEval(ctx, d, A);
+          const keep = new Set(e.U.filter(u => !e.bad.has(u.rows[0]) && A[u.rows[0]]).map(u => u.rows[0]));
+          const R = assign('new', d, null, mulberry(seed | 0), { live: ctx, names: A, keep });
+          return namesFromOut(ctx, d, R.out, A);
+        }
+        function liveFull(ctx, d, A, seed) {
+          const R = assign('new', d, null, mulberry(seed | 0), { live: ctx });
+          return namesFromOut(ctx, d, R.out, A);
+        }
+        /* 사람별 업무 현황: 업무 건수(t) · 업무 가중치(own) · 다중 횟수(m) · 가중치 합(w, 다중 포함) · 가장 긴 연속(앞 업무 끝~다음 시작 30분 이내) */
+        function liveStats(ctx, d, X) {
+          const U = buildUnits(d, true, false, ctx.tasks), by = {}, mons = {};
+          Object.values(ctx.main).forEach(n => { mons[n] = (mons[n] || 0) + 1; });
+          U.forEach(u => { const n = X[u.rows[0]]; if (!n) return; const l = ctx.tasks[u.rows[u.rows.length - 1]]; (by[n] = by[n] || []).push({ s: ctx.tasks[u.rows[0]].s, e: Math.max(l.e, l.s + 10), w: u.w, c: u.cnt }); });
+          return ctx.people.map(p => {
+            const l = (by[p.name] || []).sort((a, b) => a.s - b.s); let run = l.length ? 1 : 0, best = run;
+            for (let i = 1; i < l.length; i++) { if (l[i].s - l[i - 1].e <= 30) { run++; best = Math.max(best, run); } else run = 1; }
+            const own = l.reduce((a, b) => a + b.w, 0), t = l.reduce((a, b) => a + b.c, 0), m = mons[p.name] || 0;
+            return { n: p.name, g: p.g, m, t, own, w: own + m, chain: best };
+          });
+        }
+        /* 배정안 점수(작을수록 좋음): ① 규칙 위반·2.0 초과·다중 포함 4개 이상(가장 크게) ② 낮·저녁조 건수 편차 · 1건 이하 · 3건 이상 · 3건 연속 · 가중치 편차 · 야간조 업무 ③ 바뀐 칸 수(아주 약하게) */
+        function liveScore(ctx, d, X, A) {
+          const m = liveMetrics(ctx, d, X), per = liveStats(ctx, d, X), day = per.filter(p => p.g <= 2), cs = day.map(p => p.t + p.m);
+          const mean = cs.reduce((a, b) => a + b, 0) / (cs.length || 1), sd = Math.sqrt(cs.reduce((a, b) => a + (b - mean) * (b - mean), 0) / (cs.length || 1));
+          const low = cs.filter(c => c <= 1).length, high = cs.filter(c => c >= 3).length, chains = per.filter(p => p.chain >= 3).length, night = per.filter(p => p.g === 3).reduce((a, p) => a + p.t, 0);
+          const changes = X.filter((n, i) => (n || null) !== (A[i] || null)).length;
+          const score = m.prob * 1000 + m.overW * 100 + m.n4 * 40 + sd * 10 + low * 4 + high * 1.2 + chains * 3 + m.std * 5 + night * 2 + changes * 0.02;
+          return { score, m, per, sd, mn: cs.length ? Math.min(...cs) : 0, mx: cs.length ? Math.max(...cs) : 0, nDay: cs.length, low, high, chains, night, maxW: Math.max(0, ...per.map(p => p.w)), changes };
+        }
+            return {
+                liveParse, liveCtx, liveMetrics, liveRepair, liveFull, liveScore, buildUnits, fmt,
+                setMonth: v => { MONTH_OK = !!v; }
+            };
+        })();
+
+        // 계산 결과는 '스냅샷'(계산에 쓴 JSON 원문 + 시드 + 방식 + 업무일)으로 저장해 두고 그대로 보여준다 → 이후 JSON 이 바뀌어도 배정표가 저절로 달라지지 않음
+        const SIMCFG_KEY = 'bbs_sim_snap';
+        let simRes = null, simErr = '', simBusy = false;
+        const simCfg = () => { try { return JSON.parse(lsGet(SIMCFG_KEY, 'null')) || null; } catch (e) { return null; } };
+        const simSave = c => lsSet(SIMCFG_KEY, JSON.stringify(c));
+        function simCompute(snap) {
+            const arr = JSON.parse(snap.txt), wd = workDay();
+            SIM.setMonth(wd.getFullYear() === 2026 && wd.getMonth() === 9);   // 근무표(STAFF_DATA)는 2026년 10월분 — 그 외 달은 JSON 에 나온 이름을 출근자로 간주
+            const d = wd.getDate(), P = SIM.liveParse(arr), ctx = SIM.liveCtx(P, d, []), A = P.rowUser.map(n => n || null);   // 다중/서브는 07시에 이미 정해진 값 그대로(건드리지 않음), 일일 업무 칸만 다시 배정
+            const B = SIM.liveFull(ctx, d, A, snap.seed);   // 항상 '전체 다시 배정' 방식
+            const follow = new Set(); SIM.buildUnits(d, true, false, ctx.tasks).forEach(u => { if (u.rows.length > 1) follow.add(u.rows[1]); });
+            return { P, d, ctx, A, B, mA: SIM.liveMetrics(ctx, d, A), mB: SIM.liveMetrics(ctx, d, B), sB: SIM.liveScore(ctx, d, B, A), follow, cfg: snap, wd };
+        }
+        function simRun(snap) { try { simRes = simCompute(snap); simErr = ''; } catch (e) { simRes = null; simErr = (e && e.message) || String(e); console.warn('[BBA] 일일 업무 배정표 계산 실패:', simErr); } }
+        /* 최적안 찾기: 1초씩 5번(총 5초) 동안 시드를 바꿔 가며 수천 가지 배정을 만들어 보고, 점수(규칙 위반 → 2.0 초과 → 고른 정도)가 가장 좋은 안을 확정 */
+        let simSearching = false, simProg = '';
+        const SIM_ROUNDS = 5, SIM_ROUND_MS = 1000;
+        async function simSearch(txt, mode) {
+            const arr = JSON.parse(txt), wd = workDay();
+            SIM.setMonth(wd.getFullYear() === 2026 && wd.getMonth() === 9);
+            const d = wd.getDate(), P = SIM.liveParse(arr), ctx = SIM.liveCtx(P, d, []), A = P.rowUser.map(n => n || null), t0 = performance.now(), total = SIM_ROUNDS * SIM_ROUND_MS;
+            let best = null, tries = 0;
+            for (;;) {
+                const el = performance.now() - t0; if (el >= total && best) break;
+                const sl = performance.now(), slice = document.hidden ? 700 : 40;   // 뒤쪽 탭은 브라우저가 타이머를 늦추므로 한 번에 더 오래 계산
+                do {
+                    const seed = 1 + Math.floor(Math.random() * 1e9), B = mode === 'full' ? SIM.liveFull(ctx, d, A, seed) : SIM.liveRepair(ctx, d, A, seed), sc = SIM.liveScore(ctx, d, B, A);
+                    tries++; if (!best || sc.score < best.score) best = { seed, score: sc.score };
+                } while (performance.now() - sl < slice && performance.now() - t0 < total);
+                simProg = '최적안 찾는 중 ' + Math.min(SIM_ROUNDS, Math.floor((performance.now() - t0) / SIM_ROUND_MS) + 1) + '/' + SIM_ROUNDS + ' · ' + tries + '가지 확인'; simDraw();
+                await new Promise(r => setTimeout(r, 0));
+            }
+            return { seed: best.seed, tries, score: best.score };
+        }
+        async function simDo(txt, mode) {   // 현재 JSON 으로 새로 재배정 (최적안 찾기 후 확정)
+            if (simSearching) return; simSearching = true; simBusy = true; simProg = '최적안 찾는 중 1/' + SIM_ROUNDS; simDraw();
+            try {
+                const r = await simSearch(txt, 'full');
+                const snap = { txt, seed: r.seed, mode: 'full', at: Date.now(), day: ckey(), tries: r.tries, score: r.score };
+                simSave(snap); simRun(snap);
+            } catch (e) { simRes = null; simErr = (e && e.message) || String(e); console.warn('[BBA] 일일 업무 배정표 계산 실패:', simErr); }
+            finally { simSearching = false; simBusy = false; simProg = ''; simDraw(); }
+        }
+        const SIM_AUTO_FROM = WD0 - 5, SIM_AUTO_TO = 8 * 60 + 30;   // 자동 재배정은 시트 업무표가 오늘자로 바뀐 07시 언저리(06:55~08:30)에서 업무일당 1회만
+        function simOnNewJson(txt) {   // daily_tasks.json 을 받을 때마다 호출
+            try {
+                const c = simCfg(), nm = nowMin(), inWin = nm >= SIM_AUTO_FROM && nm < SIM_AUTO_TO;
+                if (!c) simDo(txt);   // (비동기: 5초 동안 최적안을 찾음)   // 이 기능이 처음 들어온 뒤 한 번은 계산 (이후엔 아래 규칙)
+                else if (c.day !== ckey() && inWin) simDo(txt);   // 오늘 업무일 첫 JSON(07시 언저리) → 자동 1회
+                else if (!simRes) simRun(c);
+                simDraw();
+            } catch (e) { console.warn('[BBA] 일일 업무 배정표:', e && e.message); }
+        }
+        const simp = document.createElement('div'); simp.id = 'bbsim'; bbEl.appendChild(simp);
+        const simNm = n => n ? '<span class="nm' + (/없음/.test(n) ? ' none' : '') + '" style="--h:' + hue(n) + '">' + esc(n) + '</span>' : '<span class="nm none">후보 없음</span>';
+        const simRange = t => SIM.fmt(t.s) + (t.e - t.s > 10 ? '~' + SIM.fmt(t.e) : '');
+        function simDraw() {
+            if (!simp.classList.contains('open')) return;
+            const txt = lsGet('bbs_tasks_cache', ''), cfg = simCfg();
+            if (cfg && !simRes && cfg.day === ckey()) simRun(cfg);
+            const R = (cfg && cfg.day === ckey()) ? simRes : null, keep = (simp.querySelector('.col.c2') || {}).scrollTop;
+            const head = '<div class="mh"><b title="새 수식으로 계산한 시뮬레이션입니다 — 실제 업무표는 바뀌지 않습니다">📋 일일 업무 배정표</b><span class="sp">' +
+                '<button class="bba-btn cp" data-a="cp" title="아래 \'새 수식 배정자\' 결과를 시트 행 순서 그대로 한 열(줄바꿈으로 구분)로 복사합니다 — 시트의 배정자 칸에 값만 붙여넣기">📋 배정자 1열 복사</button>' +
+                '<button class="bba-btn on" data-a="re" title="지금의 daily_tasks.json 으로 일일 업무 배정을 다시 찾습니다 (다중/서브는 그대로)">' + (simBusy ? (simProg || '받아오는 중…') : '재배정하기') + '</button><button class="bba-btn" data-a="x">✕ 닫기</button></span></div>';
+            if (!R) { simp.innerHTML = head + '<div class="meta">' + (simBusy ? (simProg || '최적안을 찾는 중입니다…') : !txt ? 'daily_tasks.json 을 아직 받지 못했습니다' : cfg && cfg.day !== ckey() ? '오늘 업무일의 배정표는 아직 계산되지 않았습니다 (자동 계산은 07시 언저리 1회뿐). <b>재배정하기</b>를 누르면 지금의 daily_tasks.json 으로 계산합니다.' : '계산하지 못했습니다: ' + esc(simErr || '알 수 없는 오류')) + '</div>'; return; }
+            const { P, A, B, mA, mB, ctx, follow, d, wd } = R, at = new Date(cfg.at), dow = '일월화수목금토'[wd.getDay()], stale = hash(cfg.txt) !== hash(txt);
+            const chg = P.TL.filter((t, i) => !t.fixed && (B[i] || null) !== (A[i] || null)).length;
+            const sB = R.sB, warns = [];
+            if (stale) warns.push('⚠ 지금의 daily_tasks.json 이 계산 때와 다릅니다 — 재배정하기를 누르세요');
+            P.warn.filter(w => !/서브: 시트에서/.test(w)).forEach(w => warns.push(esc(w)));
+            if (ctx.unknown.length) warns.push('근무표에 없는 이름: ' + esc(ctx.unknown.join(', ')));
+            const meta = '<div class="meta sum">' + (cfg.tries ? '✅ <b>최적안</b> (' + cfg.tries.toLocaleString() + '가지 중)' : '시뮬레이션') + ' · ' + pad(at.getHours()) + ':' + pad(at.getMinutes()) + ' 계산 · 바뀐 칸 <b>' + chg + '</b> · 규칙 문제 칸 ' + mA.prob + ' → <b>' + mB.prob + '</b><br>' +
+                '가중치 2.0 ' + (sB.m.overW === 0 ? '모두 지킴(최대 ' + sB.maxW.toFixed(1) + ')' : '<span class="warn">' + sB.m.overW + '명 초과(최대 ' + sB.maxW.toFixed(1) + ')</span>') + ' · 업무+다중 ' + sB.mn + '~' + sB.mx + '건 (1건 이하 ' + sB.low + '명, 3건 이상 ' + sB.high + '명) · 연속 3건 ' + (sB.chains ? '<span class="warn">' + sB.chains + '명</span>' : '없음') +
+                (warns.length ? '<br><span class="warn">' + warns.join(' · ') + '</span>' : '') + '</div>';
+            const mons = Object.keys(P.main).map(Number).sort((a, b) => a - b);
+            const c1 = '<div class="col c1"><div class="gh"><span>시각</span><span>다중</span><span>서브</span></div>' + mons.map(t => '<div class="gr"><span class="tm">' + SIM.fmt(t) + '</span><span>' + simNm(P.main[t]) + '</span><span>' + (P.sub[t] ? simNm(P.sub[t]) : '<span class="em">–</span>') + '</span></div>').join('') + '</div>';
+            const c2 = '<div class="col c2"><div class="gh"><span>시각</span><span>일일 업무</span><span>새 수식 배정자</span></div>' + (() => { const M = simMerge(R); return M && !M.bad ? M.items : P.TL.map((t, i) => ({ i, user: A[i] || '', content: t.t })); })().map(it => {   // 전체 행 파일이 있으면 휴무·관리자 행도 시트 순서 그대로 함께 표시
+                const i = it.i, t = P.TL[i];
+                if (i < 0) { const m = simNorm(it.content).match(/^\[([^\]]*)\]\s*(.*)$/); return '<div class="gr fx"><span class="tm">' + esc(m ? m[1] : '') + '</span><span class="tk" title="' + esc(it.content) + '">' + esc(m ? m[2] : it.content) + '</span><span class="em">고정 (' + esc(it.user || '비어 있음') + ')</span></div>'; }
+                if (t.fixed) return '<div class="gr fx"><span class="tm">' + simRange(t) + '</span><span class="tk" title="' + esc(t.t) + '">' + esc(t.t.replace(/^\s*\[[^\]]*\]\s*/, '')) + '</span><span class="em">고정 (' + esc(A[i] || '관리자') + ')</span></div>';
+                const ch = (B[i] || null) !== (A[i] || null), why = (mA.why[i] || []).join(' · ') || (follow.has(i) ? '첫 줄 담당자 변경에 맞춤' : '다른 칸 수정에 따른 재조정');
+                return '<div class="gr' + (ch ? ' chg' : '') + '"><span class="tm">' + simRange(t) + '</span><span class="tk" title="' + esc(t.t) + '">' + (follow.has(i) ? '🔗 ' : '') + esc(t.t.replace(/^\s*\[[^\]]*\]\s*/, '')) + '</span><span class="asg">' + simNm(B[i]) + (ch ? '<span class="was" title="' + esc(why) + '">← 현재 ' + esc(A[i] || '후보 없음') + ' · ' + esc(why) + '</span>' : '') + '</span></div>';
+            }).join('') + '</div>';
+            const cpm = (simMsg ? '<div class="cpm">' + simMsg + '</div>' : '') + (simBox ? '<div class="cpm">자동 복사가 막혀 있어요. 아래 글자를 직접 복사(Ctrl+A → Ctrl+C)하세요.<textarea readonly rows="4">' + esc(simBox) + '</textarea></div>' : '');
+            simp.innerHTML = head + meta + cpm + '<div class="sb">' + c1 + c2 + '</div><div class="foot">시트에 붙여넣기: 배정자 열의 첫 업무 행 클릭 → 값만 붙여넣기(Ctrl+Shift+V) · 파란 칸 = 바뀐 칸 · 🔗 = 묶음 업무</div>';
+            const c2e = simp.querySelector('.col.c2'); if (c2e && keep) c2e.scrollTop = keep;
+        }
+        /* 시트에 값만 붙여넣기용 '배정자 1열' — 받아온 daily_tasks.json 의 일일 업무 행 순서 그대로(휴무·관리자 고정 행·시각 없는 행도 원래 값으로 자리 유지) 한 줄에 한 칸 */
+        /* 시트의 일일 업무 행 전체(휴무·관리자·빈 담당자 행 포함, 시트 순서 그대로) — GAS 가 daily_tasks_full.json 에 따로 기록. daily_tasks.json 에는 이런 행이 빠져 있음 */
+        const simNorm = s => String(s || '').replace(/\s+/g, ' ').trim(), SIM_EXCL = /배정\s*현황|휴무|다중관제|관리자|이름|담당자|보류/;
+        function simFullData() { try { const f = JSON.parse(lsGet('bbs_tasks_full', 'null')); return f && Array.isArray(f.rows) && f.rows.length && f.workday === ckey() ? f : null; } catch (e) { return null; } }
+        function simMerge(R) {   // → null(전체 행 파일 없음) | { items:[{i(JSON 업무 번호, 없으면 -1), user, content}], bad:'' | 불일치 사유 }
+            const f = simFullData(); if (!f) return null;
+            const q = {}; R.P.TL.forEach((t, i) => { (q[simNorm(t.t)] = q[simNorm(t.t)] || []).push(i); });
+            const used = new Set(), items = []; let bad = '';
+            f.rows.forEach(r => {
+                const k = simNorm(r.content), u = String(r.user == null ? '' : r.user).trim(), a = r.fixed === true ? null : q[k], i = a && a.length ? a.shift() : -1;   // fixed=true(휴무·관리자 등)는 JSON 에 없는 행
+                if (i >= 0) used.add(i); else if (r.fixed !== true && !(r.fixed === undefined && (!u || u.length < 2 || SIM_EXCL.test(u))) && !bad) bad = '전체 행 파일에는 담당자가 있는 행인데 daily_tasks.json 에는 없는 업무가 있습니다 (' + k.slice(0, 20) + '…)';
+                items.push({ i, user: u, content: r.content });
+            });
+            if (!bad) { const miss = R.P.TL.findIndex((t, i) => !used.has(i)); if (miss >= 0) bad = 'daily_tasks.json 에는 있는데 전체 행 파일에는 없는 업무가 있습니다 (' + simNorm(R.P.TL[miss].t).slice(0, 20) + '…)'; }
+            return { items, bad: bad ? bad + ' — 두 파일이 갱신된 시점이 달라서일 수 있어요. 1~2분 뒤 재배정하기를 다시 누르세요.' : '' };
+        }
+        function simColumn(R) {
+            const M = simMerge(R); if (!M) throw new Error('NOFULL'); if (M.bad) throw new Error(M.bad);
+            const names = M.items.map(it => (it.i >= 0 && !R.P.TL[it.i].fixed ? (R.B[it.i] || '후보 없음') : it.user).replace(/[\r\n\t]+/g, ' ').trim()), heads = M.items.map(it => simNorm(it.content));
+            return { names, heads, text: names.join('\n') };   // 끝에 줄바꿈을 붙이지 않음(붙이면 시트에 빈 칸 한 줄이 더 덮어써짐)
+        }
+        async function simCopyText(text) {
+            try { await navigator.clipboard.writeText(text); return true; } catch (e) { /* 아래 대체 방법 */ }
+            try { const ta = document.createElement('textarea'); ta.value = text; ta.style.cssText = 'position:fixed;left:-9999px;top:0'; document.body.appendChild(ta); ta.select(); const ok = document.execCommand('copy'); ta.remove(); return !!ok; } catch (e) { return false; }
+        }
+        let simMsg = '', simMsgT = 0, simBox = '';
+        function simClose() { simp.classList.remove('open'); const b = $('bbsim-btn'); if (b) b.classList.remove('on'); }
+        simp.addEventListener('click', e => {
+            const b = e.target.closest('[data-a]'); if (!b) return;
+            const a = b.dataset.a;
+            if (a === 'x') return simClose();
+            if (a === 'cp') {   // 배정자 1열 복사
+                const show = m => { simMsg = m; clearTimeout(simMsgT); simMsgT = setTimeout(() => { simMsg = ''; simDraw(); }, 12000); simDraw(); };
+                simBox = '';
+                if (simBusy) return show('<span class="warn">최적안을 찾는 중입니다 — 끝난 뒤 복사하세요.</span>');
+                const cfg = simCfg(), R = (cfg && cfg.day === ckey()) ? simRes : null;
+                if (!R) return show('<span class="warn">복사할 배정표가 없습니다 — 재배정하기를 먼저 누르세요.</span>');
+                if (hash(cfg.txt) !== hash(lsGet('bbs_tasks_cache', ''))) return show('<span class="warn">⚠ 지금의 daily_tasks.json 이 이 배정표와 달라 줄이 어긋날 수 있습니다. 재배정하기를 누른 뒤 복사하세요.</span>');
+                let col; try { col = simColumn(R); } catch (e) { return show('<span class="warn">' + (e.message === 'NOFULL' ? '⚠ 휴무·관리자 행까지 담긴 daily_tasks_full.json 을 받지 못했습니다. daily_tasks.json 에는 그 행들이 빠져 있어서, 이 상태로 복사하면 시트와 줄이 밀립니다. (GAS 수정 후 다음 동기화가 끝나면 사용 가능)' : '복사 데이터를 만들지 못했습니다: ' + esc(e.message)) + '</span>'); }
+                simCopyText(col.text).then(ok => {
+                    if (!ok) simBox = col.text;
+                    const cut = s => esc(s.length > 26 ? s.slice(0, 26) + '…' : s), L = col.names.length;
+                    show((ok ? '✔ <b>' + L + '줄</b> 복사됨' : '복사 실패') + ' · 첫 줄 <b>' + esc(col.names[0] || '') + '</b> (' + cut(col.heads[0] || '') + ') · 끝 줄 <b>' + esc(col.names[L - 1] || '') + '</b> (' + cut(col.heads[L - 1] || '') + ') — 시트 첫 행·끝 행과 맞는지 확인하세요');
+                });
+                return;
+            }
+            if (a === 're') {   // 재배정하기: 최신 daily_tasks.json 을 받아(실패하면 저장본) 그 값으로 일일 업무 배정을 다시 돌림
+                if (simBusy) return; simBusy = true; simProg = '최신 업무표 받는 중…'; simDraw();
+                (async () => {
+                    try { await simLoad(); } catch (e) { /* 저장본 사용 */ }
+                    try { const txt = lsGet('bbs_tasks_cache', ''); if (txt) await simDo(txt); } finally { simBusy = false; simProg = ''; simDraw(); }
+                })();
+            }
+        });
+        $('bbsim-btn').addEventListener('click', () => {
+            const o = !simp.classList.contains('open');
+            if (o) { simp.classList.add('open'); simDraw(); } else simClose();
+            $('bbsim-btn').classList.toggle('on', o);
+        });
+        bbEl.addEventListener('click', e => { const t = e.target; if (t instanceof Element && simp.classList.contains('open') && !t.closest('#bbsim, #bbsim-btn')) simClose(); }, true);   // 다른 곳을 누르면 닫기
+        setInterval(() => { if (simp.classList.contains('open')) simDraw(); }, 60 * 1000);
+
+        // ── 데이터 받기 (안혜림 모드일 때만 동작) ──
+        async function simLoad() {
+            const res = await fetch(TASKS_URL + '?t=' + Date.now(), { cache: 'no-store' });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const txt = await res.text(); JSON.parse(txt);
+            lsSet('bbs_tasks_cache', txt);
+            try {   // 휴무·관리자 행 파일 (없거나 실패해도 무시)
+                const rf = await fetch(TASKS_FULL_URL + '?t=' + Date.now(), { cache: 'no-store' });
+                if (rf.ok) { const ft = await rf.text(); JSON.parse(ft); lsSet('bbs_tasks_full', ft); }
+            } catch (ef) { /* 무시 */ }
+            simOnNewJson(txt);
+        }
+
+        // ── 안혜림 모드 ──
+        const MODE_KEY = 'bb_user_mode', MODE_NAME = '안혜림';
+        const isMode = () => lsGet(MODE_KEY, '') === MODE_NAME;
+        const tag = $('bb-cyh-tag'), tagOrig = tag ? tag.textContent : 'by CYH', simBtn = $('bbsim-btn');
+        let loadTimer = 0;
+        function applyMode() {
+            const on = isMode();
+            if (tag) tag.textContent = on ? 'for ' + MODE_NAME : tagOrig;
+            if (simBtn) simBtn.style.display = on ? '' : 'none';
+            if (!on) simClose();
+            clearInterval(loadTimer); loadTimer = 0;
+            if (on) { simLoad().catch(e => console.warn('[BB] 일일 업무 배정표 데이터 받기 실패:', e && e.message)); loadTimer = setInterval(() => { simLoad().catch(() => { /* 다음 주기에 다시 */ }); }, TASKS_REFRESH_MS); }
+        }
+        applyMode();
+
+        // 관제 센터 제목 박스를 한 번 클릭하면 보이지 않는 입력칸이 잠깐 열린다 → '안혜림' 입력 + Enter (한 번 더 하면 해제)
+        const box = $('bb-drag-handle'); let down = null, keyIn = null, keyT = 0;
+        function closeKey() { clearTimeout(keyT); if (keyIn) { keyIn.remove(); keyIn = null; } }
+        function openKey() {
+            closeKey();
+            const r = box.getBoundingClientRect();
+            keyIn = document.createElement('input'); keyIn.type = 'text'; keyIn.autocomplete = 'off'; keyIn.setAttribute('aria-hidden', 'true'); keyIn.tabIndex = -1;
+            keyIn.style.cssText = 'position:fixed;z-index:2147483647;left:' + Math.round(r.left) + 'px;top:' + Math.round(r.top) + 'px;width:' + Math.round(r.width) + 'px;height:' + Math.round(r.height) + 'px;opacity:0;border:0;padding:0;margin:0;background:transparent;color:transparent;caret-color:transparent;pointer-events:none;';
+            document.body.appendChild(keyIn); keyIn.focus();
+            const commit = () => {
+                if (!keyIn) return;
+                if (keyIn.value.trim() !== MODE_NAME) return;   // 아직 입력 중이거나 다른 글자 → 그대로 둠(15초 뒤 자동 닫힘)
+                lsSet(MODE_KEY, isMode() ? '' : MODE_NAME); closeKey(); applyMode();
+            };
+            keyIn.addEventListener('keydown', e => { if (e.key === 'Escape') return closeKey(); if (e.key === 'Enter') setTimeout(commit, 60); });
+            keyIn.addEventListener('keyup', e => { if (e.key === 'Enter') setTimeout(commit, 0); });
+            keyIn.addEventListener('blur', () => setTimeout(closeKey, 0));
+            keyT = setTimeout(closeKey, 15000);
+        }
+        if (box) {
+            box.addEventListener('mousedown', e => { down = { x: e.clientX, y: e.clientY }; });
+            box.addEventListener('click', e => { const m = down && (Math.abs(e.clientX - down.x) > 4 || Math.abs(e.clientY - down.y) > 4); down = null; if (!m) openKey(); });   // 끌어서 옮긴 경우는 제외
+        }
+        } catch (e) { console.warn('[BB] 일일 업무 배정표 모듈 초기화 실패 — 기존 기능에는 영향 없음:', e && e.message); }
+    })();
 
 })();
