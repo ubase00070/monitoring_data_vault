@@ -8251,6 +8251,7 @@
         const AUTO_DELAY_MIN = 1;                 // 기준 시각 + 몇 분에 점검할지
         const AUTO_RETRY_MS = 60 * 1000;          // 맞지 않으면 이 시간 뒤 다시 점검
         const CHG_RETRY_MS = 5 * 60 * 1000;       // 무선충전 점검에서 통과 못 한 기체를 다시 점검하기까지 (충전 시작 직후일 수 있어 길게)
+        const CHG_STALE_MS = 20 * 60 * 1000;      // 충전 점검은 예정 시각에서 20분 넘게 지나 처음 시작하게 되면 생략(직접 확인)
         const AUTO_MAX_TRIES = 2;                 // 최대 점검 횟수 (이 횟수까지 안 맞으면 ✕ 로 표시)
         const AUTO_SKIP_RE = /(?!)/;   // 이 단어가 들어간 임무 ON/OFF 업무는 자동 점검하지 않음 (수동 확인)
         const PROBE_W = 1440, PROBE_H = 1800;     // 점검용 숨김 iframe 의 가상 화면 크기 (NCC 화면이 이 크기로 그려짐)
@@ -8861,6 +8862,7 @@
             try { camp = JSON.parse(lsGet('bba_camp_' + k, '{}')) || {}; } catch (e) { camp = {}; }
             try { const LEG = { '아산 스테이그린': '아산', '가평 니모': '가평', '대관령 솔내음': '대관령', '파주 LGD': '파주LGD', '진천 힐사이드': '진천' }; Object.keys(LEG).forEach(o => { if (camp[o]) { if (!camp[LEG[o]]) camp[LEG[o]] = camp[o]; delete camp[o]; } }); } catch (e) { /* 무시 */ }   // 이름을 줄이기 전에 눌러 둔 오늘 기록 이어받기
             try { auto = JSON.parse(lsGet('bba_auto_' + k, '{}')) || {}; } catch (e) { auto = {}; }
+            try { migrateIds(); } catch (e) { /* 무시 */ }
             try {   // 지난 업무일 기록 정리 (최근 3일만 유지)
                 const keep = new Date(k).getTime();
                 for (let i = localStorage.length - 1; i >= 0; i--) {
@@ -8879,7 +8881,7 @@
         let tasks = [];
         let monRows = [], sciTasks = [];   // 다중/서브 모니터링 시간대 행, 부산 국립과학관 업무 (업무표에는 안 나오고 '담당자 보기'에서만 사용)
         function parseTasks(arr) {
-            const out = [], monTmp = [], sciTmp = [];
+            const out = [], monTmp = [], sciTmp = [], occ = {};
             (Array.isArray(arr) ? arr : []).forEach(t => {
                 if (t && t.type === 'monitoring') { const mn = hm(t.rawTime); if (mn != null) monTmp.push({ s: mn, u: String(t.user == null ? '' : t.user).trim(), sub: String(t.subUser == null ? '' : t.subUser).trim() }); return; }   // 다중(user)·서브(subUser) 시간대 행은 업무표에서 제외
                 if (!t) return;
@@ -8902,11 +8904,21 @@
                 const bd = body.trim(), prog = AUTO_SITES.filter(S => S.prog && S.kw.test(bd) && S.prog.test(bd));   // '임무 진행 중인지' 확인형 업무
                 const chg = CHG_RE.test(bd);   // 무선충전 기체 주차 상태(충전중) 확인 업무
                 const dirs = chg ? [{ g: null, w: 'chg' }] : prog.length ? [{ g: null, w: 'run' }] : parseDirs(bd), sites = chg ? CHG_SITES : prog.length ? prog : AUTO_SITES.filter(S => !S.prog && S.kw.test(bd));
-                out.push({ id: hash(u0 + '|' + c), u: u0, head: r ? r[0] : '', body: bd, tag: tag ? '[' + tag + ']' : '', s, e, days, dirs, sites, chg,
+                const oc = occ[c] = (occ[c] || 0) + 1;   // id 는 담당자와 무관하게 '업무 문구(+같은 문구 순번)' 로만 만든다 — 당일 배정자가 바뀌어도 체크/점검 기록이 사라지지 않도록
+                out.push({ id: hash('c|' + c + '|' + oc), lid: hash(u0 + '|' + c), u: u0, head: r ? r[0] : '', body: bd, tag: tag ? '[' + tag + ']' : '', s, e, days, dirs, sites, chg,
                     auto: dirs.length > 0 && sites.length > 0 && (chg || prog.length > 0 || !AUTO_SKIP_RE.test(bd)) && rel(s) < rel(AUTO_DIM_FROM) });   // 임무 ON/OFF 가 적힌 업무 중 점검 가능한 사이트(제외 단어 없음, 18시 이전)
             });
             out.sort((a, b) => rel(a.s) - rel(b.s));
             tasks = out; monRows = monTmp; sciTasks = sciTmp;
+            try { migrateIds(); } catch (e) { /* 무시 */ }
+        }
+        function migrateIds() {   // 예전 id(담당자 포함)로 저장된 오늘의 체크·점검 기록을 새 id 로 이어받기
+            if (!curKey) return;
+            let c1 = false, a1 = false, cs = {}, as = {};
+            try { cs = JSON.parse(lsGet('bba_chk_' + curKey, '{}')) || {}; as = JSON.parse(lsGet('bba_auto_' + curKey, '{}')) || {}; } catch (e) { return; }
+            tasks.forEach(t => { if (t.lid && t.lid !== t.id) { if (cs[t.lid] && !cs[t.id]) { cs[t.id] = cs[t.lid]; c1 = true; } if (as[t.lid] && !as[t.id]) { as[t.id] = as[t.lid]; a1 = true; } } });
+            if (c1) lsSet('bba_chk_' + curKey, JSON.stringify(cs)); if (a1) lsSet('bba_auto_' + curKey, JSON.stringify(as));
+            if (c1 || a1) { try { reloadChk(); reloadAuto(); } catch (e) { /* 무시 */ } }
         }
         let srcMsg = '';
         async function loadTasks() {
@@ -8966,6 +8978,7 @@
         const retryMsOf = t => (t.chg ? CHG_RETRY_MS : ((t.sites.find(x => x.retryMs) || {}).retryMs || AUTO_RETRY_MS));
         // plan:'front' 사이트(역삼·성수 요기요): 앞시각 +1분, 앞시각 +5분, 그래도 안 되면 뒷시각 정각에 마지막 1회 (뒷시각이 없는 단일 시각 업무는 앞의 2회까지)
         function attemptsOf(t) {
+            if (t.chg) return [t.s + 1, t.s + 5].map(m => dayStartTs() + m * 60000);   // 무선충전(⚡) 점검: +1분, +5분 딱 두 번 (+5분은 +1분에 통과 못 한 기체만)
             if (!t.sites.some(x => x.plan === 'front')) return null;
             let e = t.e; if (e < t.s) e += 1440;
             const a = [t.s + 1, t.s + 5]; if (e > t.s + 5) a.push(e);
@@ -9164,6 +9177,7 @@
                 if (forced.has(it.t.id) && it.e.u.length) { out.push(Object.assign({ force: true }, it)); return; }
                 if (!it.e.on || !it.e.u.length || it.due > now || chk[it.t.id]) return;
                 const a = auto[it.t.id];
+                if (it.t.chg && !a && now - it.due > CHG_STALE_MS) { autoPut(it.t.id, { st: 'sup', stale: 1, at: now, due: it.due, by: '' }); return; }   // 점검 시각이 한참 지난 충전 점검은 지금 보면 의미가 없으니 하지 않음
                 if (a && (a.st === 'ok' || a.st === 'fail' || a.st === 'sup')) return;
                 if (a && a.st === 'retry' && now < a.next) return;
                 out.push(it);
@@ -9326,7 +9340,7 @@
             else if (a && a.st === 'ok' && !a.clr) { o.cls = 'done byauto'; o.ttl = '자동 확인됨 — 누르면 해제 (다시 누르면 자동 확인 시각으로 복원)'; o.meta = '✓ ' + hmOf(a.at) + ' 자동 확인' + (t.chg ? chgCnt(a, true) : '') + (a.late ? ' (지연 점검)' : ''); o.done = true; }
             else if (a && a.st === 'fail') { o.cls = 'bad'; o.box = '✕'; o.ttl = '자동 점검에서 확인되지 않음 — 직접 확인한 뒤 누르면 체크됩니다'; o.meta = '✕ ' + hmOf(a.at) + (t.chg ? ' 충전 미확인 ' + chgFails(a) + '대' : a.det && a.det.some(d => d.r === 'bad') ? ' 자동 점검 불일치' : ' 자동 점검 실패(확인 못 함)') + ' · 직접 확인'; o.tip = a.msg || ''; }
             else if (a && a.st === 'retry') { o.cls = 'retry'; o.box = '↻'; o.meta = '↻ ' + hmOf(a.next) + ' 재점검 예정 (' + (t.chg ? '충전 미확인 ' + chgFails(a) + '대' : (a.msg || '불일치')) + ')'; o.tip = a.msg || ''; }
-            else if (a && a.st === 'sup') { o.cls = 'sup'; o.box = '–'; o.ttl = '이후 업무가 같은 기체를 바꿔서 지금 상태로는 확인할 수 없음 — 직접 확인 후 체크'; o.meta = '– ' + (a.by || '이후 업무') + ' 업무로 대체되어 점검 생략'; }
+            else if (a && a.st === 'sup') { o.cls = 'sup'; o.box = '–'; o.ttl = '이후 업무가 같은 기체를 바꿔서 지금 상태로는 확인할 수 없음 — 직접 확인 후 체크'; o.meta = a.stale ? '– 점검 시각이 지나 자동 점검 생략 — 직접 확인' : '– ' + (a.by || '이후 업무') + ' 업무로 대체되어 점검 생략'; }
             if (run && !man) { o.cls += ' run'; o.box = '…'; o.meta = '… 점검 중'; }
             return o;
         }
@@ -9460,7 +9474,7 @@
             });
             const anyPo = t.sites.some(S => S.powerOnly), pwv = wk.pw === null ? anyPo : wk.pw;
             h += (t.sites.some(S => !S.prog) ? '<label><input type="checkbox" data-a="pw"' + (pwv ? ' checked' : '') + '> ON 확인은 전원이 켜진 기체만</label>' : '') +
-                '<div class="tm">점검 시각 ' + (attemptsOf(t) ? attemptsOf(t).map(hmOf).join(' → ') + ' (앞시각 +1분 · +5분 · 뒷시각 정각, 안 맞으면 다음 점검) · 모두 안 맞으면 ✕' : hmOf(dueTs(t)) + ' (' + (t.e === t.s ? '업무' : timingOf(t).at === 'start' ? '시작' : '끝') + ' 시각 +' + timingOf(t).delay + '분) · 안 맞으면 ' + Math.round(retryMsOf(t) / 60000) + '분 뒤 한 번 더 → 그래도 안 맞으면 ✕') + '</div>' +
+                '<div class="tm">점검 시각 ' + (attemptsOf(t) ? attemptsOf(t).map(hmOf).join(' → ') + (t.chg ? ' (+1분 · +5분, +5분에는 통과 못 한 기체만) · 그래도 안 맞으면 ✕' : ' (앞시각 +1분 · +5분 · 뒷시각 정각, 안 맞으면 다음 점검) · 모두 안 맞으면 ✕') : hmOf(dueTs(t)) + ' (' + (t.e === t.s ? '업무' : timingOf(t).at === 'start' ? '시작' : '끝') + ' 시각 +' + timingOf(t).delay + '분) · 안 맞으면 ' + Math.round(retryMsOf(t) / 60000) + '분 뒤 한 번 더 → 그래도 안 맞으면 ✕') + '</div>' +
                 '<div class="rs" id="bba-ap-rs">' + resultHtml(auto[t.id]) + '</div>' +
                 '<div class="pb"><button class="bba-btn" data-a="def" title="기본 설정으로 되돌리기">기본값</button><button class="bba-btn on" data-a="now" title="지금 바로 이 업무를 점검">지금 점검</button></div>';
             pop.innerHTML = h;
