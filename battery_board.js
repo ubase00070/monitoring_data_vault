@@ -8214,6 +8214,7 @@
     // 📋 일일 업무 배정표 (안혜림 모드 전용)
     //   · 관제 센터 제목 박스를 한 번 클릭 → '안혜림' 입력 후 Enter → 'by CYH' 가 'for 안혜림' 으로 바뀌고 이 PC(브라우저)에 저장됨 (다시 하면 해제)
     //   · 안혜림 모드에서만 테마 버튼 왼쪽에 '일일 업무 배정표' 버튼이 보임. 시뮬레이션일 뿐 실제 업무표(시트)는 바뀌지 않음
+    //   · 수동 방식: 배정표를 열어도 아무것도 계산하지 않고, '재배정하기' 를 눌렀을 때만 최신 JSON 을 받아 계산
     //   · 다른 기능과 분리된 모듈 — 어떤 오류가 나도 이 안에서만 처리하고 기존 기능에는 영향 없음
     // ════════════════════════════════════════════════════════════════════
     (function bbSimModule() {
@@ -8233,7 +8234,6 @@
         const ckey = () => wdKey(workDay());
         const TASKS_URL = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/daily_tasks.json';
         const TASKS_FULL_URL = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/daily_tasks_full.json';   // 휴무·관리자 행까지 포함한 일일 업무 전체 행
-        const TASKS_REFRESH_MS = 5 * 60 * 1000;
 
         const st = document.createElement('style'); st.textContent = `
         #bb #bbsim { position:absolute; left:14px; right:14px; top:112px; bottom:12px; z-index:32; display:none; flex-direction:column; min-height:0; box-sizing:border-box; padding:10px 12px 12px; background:var(--bg); border:2px solid var(--bd2); border-radius:12px; box-shadow:0 10px 28px rgba(0,0,0,.35); }
@@ -8596,15 +8596,8 @@
             } catch (e) { simRes = null; simErr = (e && e.message) || String(e); console.warn('[BBA] 일일 업무 배정표 계산 실패:', simErr); }
             finally { simSearching = false; simBusy = false; simProg = ''; simDraw(); }
         }
-        const SIM_AUTO_FROM = WD0 - 5, SIM_AUTO_TO = 8 * 60 + 30;   // 자동 재배정은 시트 업무표가 오늘자로 바뀐 07시 언저리(06:55~08:30)에서 업무일당 1회만
-        function simOnNewJson(txt) {   // daily_tasks.json 을 받을 때마다 호출
-            try {
-                const c = simCfg(), nm = nowMin(), inWin = nm >= SIM_AUTO_FROM && nm < SIM_AUTO_TO;
-                if (!c) simDo(txt);   // (비동기: 5초 동안 최적안을 찾음)   // 이 기능이 처음 들어온 뒤 한 번은 계산 (이후엔 아래 규칙)
-                else if (c.day !== ckey() && inWin) simDo(txt);   // 오늘 업무일 첫 JSON(07시 언저리) → 자동 1회
-                else if (!simRes) simRun(c);
-                simDraw();
-            } catch (e) { console.warn('[BBA] 일일 업무 배정표:', e && e.message); }
+        function simOnNewJson(txt) {   // 수동 방식: 자동 계산은 하지 않는다 — 저장된 결과를 다시 그리기만 함 (계산은 '재배정하기' 버튼에서만)
+            try { const c = simCfg(); if (!simRes && c && c.day === ckey()) simRun(c); simDraw(); } catch (e) { console.warn('[BB] 일일 업무 배정표:', e && e.message); }
         }
         const simp = document.createElement('div'); simp.id = 'bbsim'; bbEl.appendChild(simp);
         const simNm = n => n ? '<span class="nm' + (/없음/.test(n) ? ' none' : '') + '" style="--h:' + hue(n) + '">' + esc(n) + '</span>' : '<span class="nm none">후보 없음</span>';
@@ -8617,7 +8610,7 @@
             const head = '<div class="mh"><b title="새 수식으로 계산한 시뮬레이션입니다 — 실제 업무표는 바뀌지 않습니다">📋 일일 업무 배정표</b><span class="sp">' +
                 '<button class="bba-btn cp" data-a="cp" title="아래 \'새 수식 배정자\' 결과를 시트 행 순서 그대로 한 열(줄바꿈으로 구분)로 복사합니다 — 시트의 배정자 칸에 값만 붙여넣기">📋 배정자 1열 복사</button>' +
                 '<button class="bba-btn on" data-a="re" title="지금의 daily_tasks.json 으로 일일 업무 배정을 다시 찾습니다 (다중/서브는 그대로)">' + (simBusy ? (simProg || '받아오는 중…') : '재배정하기') + '</button><button class="bba-btn" data-a="x">✕ 닫기</button></span></div>';
-            if (!R) { simp.innerHTML = head + '<div class="meta">' + (simBusy ? (simProg || '최적안을 찾는 중입니다…') : !txt ? 'daily_tasks.json 을 아직 받지 못했습니다' : cfg && cfg.day !== ckey() ? '오늘 업무일의 배정표는 아직 계산되지 않았습니다 (자동 계산은 07시 언저리 1회뿐). <b>재배정하기</b>를 누르면 지금의 daily_tasks.json 으로 계산합니다.' : '계산하지 못했습니다: ' + esc(simErr || '알 수 없는 오류')) + '</div>'; return; }
+            if (!R) { simp.innerHTML = head + '<div class="meta">' + (simBusy ? (simProg || '최적안을 찾는 중입니다…') : (!cfg || cfg.day !== ckey()) ? '아직 계산하지 않았습니다. <b>재배정하기</b>를 누르면 최신 daily_tasks.json 을 받아 최적안을 찾습니다.' : '계산하지 못했습니다: ' + esc(simErr || '알 수 없는 오류')) + '</div>'; return; }
             const { P, A, B, mA, mB, ctx, follow, d, wd } = R, at = new Date(cfg.at), dow = '일월화수목금토'[wd.getDay()], stale = hash(cfg.txt) !== hash(txt);
             const chg = P.TL.filter((t, i) => !t.fixed && (B[i] || null) !== (A[i] || null)).length;
             const sB = R.sB, warns = [];
@@ -8702,7 +8695,7 @@
         bbEl.addEventListener('click', e => { const t = e.target; if (t instanceof Element && simp.classList.contains('open') && !t.closest('#bbsim, #bbsim-btn')) simClose(); }, true);   // 다른 곳을 누르면 닫기
         setInterval(() => { if (simp.classList.contains('open')) simDraw(); }, 60 * 1000);
 
-        // ── 데이터 받기 (안혜림 모드일 때만 동작) ──
+        // ── 데이터 받기 ('재배정하기' 버튼을 눌렀을 때만 호출됨 — 자동으로 받거나 계산하지 않음) ──
         async function simLoad() {
             const res = await fetch(TASKS_URL + '?t=' + Date.now(), { cache: 'no-store' });
             if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -8719,14 +8712,11 @@
         const MODE_KEY = 'bb_user_mode', MODE_NAME = '안혜림';
         const isMode = () => lsGet(MODE_KEY, '') === MODE_NAME;
         const tag = $('bb-cyh-tag'), tagOrig = tag ? tag.textContent : 'by CYH', simBtn = $('bbsim-btn');
-        let loadTimer = 0;
         function applyMode() {
             const on = isMode();
             if (tag) tag.textContent = on ? 'for ' + MODE_NAME : tagOrig;
             if (simBtn) simBtn.style.display = on ? '' : 'none';
             if (!on) simClose();
-            clearInterval(loadTimer); loadTimer = 0;
-            if (on) { simLoad().catch(e => console.warn('[BB] 일일 업무 배정표 데이터 받기 실패:', e && e.message)); loadTimer = setInterval(() => { simLoad().catch(() => { /* 다음 주기에 다시 */ }); }, TASKS_REFRESH_MS); }
         }
         applyMode();
 
