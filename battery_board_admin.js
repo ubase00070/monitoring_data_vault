@@ -9810,6 +9810,9 @@
             r.W += u.w; r.C += u.cnt; r.tasks.push([u.s, u.e]); if (u.sci) r.sciT.push([u.s, u.e]); r.sci = r.sci || u.sci;
             if (why.length) { flags[i] = why; if (why.some(x => !x.startsWith('가중치'))) core[i] = 1; }
           });
+          // 이미 가중치 2.0(다중+과학관 등)인 사람이 가중치 0짜리 일반 업무까지 받으면 위반 — 순서와 상관없이 최종 합계로 판단
+          const zr = {}; out.forEach((o, i) => { if (o.name && !o.absent && !(o.u.w > 0)) (zr[o.name] = zr[o.name] || []).push(i); });
+          for (const n in zr) { const r = run[n]; if (r && r.W >= 2 - 1e-9 && r.W <= 2 + 1e-9) zr[n].forEach(i => { (flags[i] = flags[i] || []).push('가중치 2.0(다중+과학관 등)인 사람에게 일반 업무까지 배정'); m.wRule++; }); }
           m.flagged = Object.keys(flags).length;
           const loads = [];
           for (const n in S) {
@@ -9860,7 +9863,7 @@
           const bad = new Set(), why = {};
           R.out.forEach((o, i) => {
             const f = ev.flags[i]; if (!f) return;
-            if (!(f.every(x => x.startsWith('가중치')) && !(o.u.w > 0))) { bad.add(o.u.rows[0]); why[o.u.rows[0]] = f; }
+            bad.add(o.u.rows[0]); why[o.u.rows[0]] = f;   // 가중치가 0인 업무라도, 이미 2.0(다중+과학관 등)인 사람에게 더 얹으면 위반
           });
           U.forEach(u => { if (u.rows.length > 1) { const lead = rowNames[u.rows[0]]; u.rows.slice(1).forEach(r => { if (rowNames[r] !== lead) { bad.add(r); why[r] = ['묶음 업무인데 첫 줄(' + (lead || '없음') + ')과 담당자가 다름']; } }); } });
           return { R, ev, bad, why, U };
@@ -9912,14 +9915,22 @@
         /* 한 칸씩 담당자를 바꿔 보며 점수가 좋아지면 채택(언덕 오르기) — 바뀐 칸 수에도 점수를 매기므로 '꼭 필요한 수정'만 남는다 */
         function liveClimber(ctx, d, X0, A) {
           const U = buildUnits(d, true, false, ctx.tasks).filter(u => !ctx.tasks[u.rows[0]].fixed);
-          let X = X0.slice(), cur = liveScore(ctx, d, X, A).score, ui = 0, idle = 0, evals = 0, done = !U.length;
+          let X = X0.slice(), cur = liveScore(ctx, d, X, A).score, ui = 0, idle = 0, evals = 0, done = !U.length, swap = false, si = 0, sj = 1;
           return {
             get X() { return X; }, get cur() { return cur; }, get done() { return done; }, get evals() { return evals; },
             step() {
-              if (done) return; const u = U[ui], old = X[u.rows[0]]; let bestY = null, bs = cur - 1e-9;
-              for (const p of ctx.people) { if (p.name === old) continue; const Y = X.slice(); u.rows.forEach(r => { Y[r] = p.name; }); const s = liveScore(ctx, d, Y, A).score; evals++; if (s < bs) { bs = s; bestY = Y; } }
-              if (bestY) { X = bestY; cur = bs; idle = 0; } else idle++;
-              ui = (ui + 1) % U.length; if (idle >= U.length) done = true;
+              if (done) return;
+              if (!swap) {   // 1) 한 칸의 담당자를 다른 사람으로
+                const u = U[ui], old = X[u.rows[0]]; let bestY = null, bs = cur - 1e-9;
+                for (const p of ctx.people) { if (p.name === old) continue; const Y = X.slice(); u.rows.forEach(r => { Y[r] = p.name; }); const s = liveScore(ctx, d, Y, A).score; evals++; if (s < bs) { bs = s; bestY = Y; } }
+                if (bestY) { X = bestY; cur = bs; idle = 0; } else idle++;
+                ui = (ui + 1) % U.length; if (idle >= U.length) { swap = true; si = 0; sj = 1; }
+              } else {       // 2) 더 안 풀리면 두 칸의 담당자를 서로 맞바꿈 — 개선되면 다시 1)로
+                if (sj >= U.length) { si++; sj = si + 1; } if (si >= U.length - 1) { done = true; return; }
+                const a = U[si], b = U[sj++], na = X[a.rows[0]], nb = X[b.rows[0]]; if (na === nb) return;
+                const Y = X.slice(); a.rows.forEach(r => { Y[r] = nb; }); b.rows.forEach(r => { Y[r] = na; }); const s = liveScore(ctx, d, Y, A).score; evals++;
+                if (s < cur - 1e-9) { X = Y; cur = s; swap = false; idle = 0; ui = 0; }
+              }
             }
           };
         }
@@ -9955,8 +9966,8 @@
             while (performance.now() - t0 < total * 0.4 || !pool.length) {
                 const sl = performance.now(), slice = document.hidden ? 700 : 40;
                 do {
-                    const seed = 1 + Math.floor(Math.random() * 1e9), B = tries % 2 ? SIM.liveFull(ctx, d, A, seed) : SIM.liveRepair(ctx, d, A, seed), sc = SIM.liveScore(ctx, d, B, A).score, key = B.join('|');
-                    tries++; if (!pool.some(x => x.key === key)) { pool.push({ B, key, score: sc }); pool.sort((a, b) => a.score - b.score); if (pool.length > 3) pool.length = 3; }
+                    const seed = 1 + Math.floor(Math.random() * 1e9), kind = tries % 2, B = kind ? SIM.liveFull(ctx, d, A, seed) : SIM.liveRepair(ctx, d, A, seed), sc = SIM.liveScore(ctx, d, B, A).score, key = B.join('|');
+                    tries++; if (!pool.some(x => x.key === key)) { pool.push({ B, key, kind, score: sc }); pool.sort((a, b) => a.score - b.score); [0, 1].forEach(k => { let n = 0; for (let i = 0; i < pool.length; i++) if (pool[i].kind === k && ++n > (k ? 1 : 2)) pool.splice(i--, 1); }); }   // 부분 수정 안 2개 + 전체 재배정 안 1개를 따로 보관 (점수만 보면 전체 재배정 안이 먼저 차지함)
                 } while (performance.now() - sl < slice && performance.now() - t0 < total * 0.4);
                 prog(); await new Promise(r => setTimeout(r, 0));
             }
