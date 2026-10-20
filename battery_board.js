@@ -8285,11 +8285,31 @@
         const fmt = m => { m = ((m % 1440) + 1440) % 1440; return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
         const GAP = 15;
         const BREAK = { 420: [650, 710], 480: [710, 770], 540: [770, 830], 600: [830, 890], 660: [890, 950], 840: [1010, 1070], 900: [1010, 1070], 1080: [1310, 1370], 1140: [1310, 1370], 1200: [1310, 1370], 1320: [1490, 1550], 1410: [1550, 1610] };   // 휴게는 :50 ~ :50 (예: 09~18시 근무 → 12:50~13:50)
-        const STAFF = STAFF_DATA.map(([name, time, sc]) => {
-          const a = tmin(time.split('~')[0]); let b = tmin(time.split('~')[1]); if (b <= a) b += 1440;
-          return { name, time, start: a, end: b, brk: BREAK[a] || null, g: a <= 540 ? 0 : a <= 660 ? 1 : a < 1080 ? 2 : 3, sc };
-        });
-        const BYNAME = Object.fromEntries(STAFF.map(p => [p.name, p]));
+        let STAFF = [], BYNAME = {}, RSRC = 'none';   // 근무자 목록 — 월별 근무표 파일(schedule_for_mobile_YYYY-MM.json)에서 받아 채움. 못 받으면 아래 내장 10월 표로 대체
+        function mkStaff(list) {
+          STAFF = list.map(([name, time, sc]) => {
+            const a = tmin(time.split('~')[0]); let b = tmin(time.split('~')[1]); if (b <= a) b += 1440;
+            return { name, time, start: a, end: b, brk: BREAK[a] || null, g: a <= 540 ? 0 : a <= 660 ? 1 : a < 1080 ? 2 : 3, sc };
+          });
+          BYNAME = Object.fromEntries(STAFF.map(p => [p.name, p]));
+        }
+        /* 월별 근무표 JSON → [이름, 'HH:MM~HH:MM', 날짜별 문자열(W 출근 · H 반차 · A 연차 · O 휴무/빈칸)]. 근무시간이 비었거나 읽을 수 없으면 내장 표의 시간으로 보충, 그것도 없으면(관리자·신입 등) 제외 */
+        const ADMINS = ['김용욱', '차현모', '안혜림', '박수연', '신지섭'];   // 관리자 — 근무표 파일에는 있지만 일일 업무 배정에서는 제외 (관리자가 바뀌면 여기만 고치면 됨)
+        function parseSchedule(js, y, m) {
+          if (!js || !Array.isArray(js.staff)) throw new Error('근무표 형식이 아님');
+          const emb = Object.fromEntries(STAFF_DATA.map(r => [r[0], r[1]])), nd = new Date(y, m, 0).getDate(), out = [];
+          js.staff.forEach(x => {
+            if (!x || !x.name || /^신입/.test(x.name) || ADMINS.includes(x.name)) return;   // 관리자·신입은 업무 배정 대상이 아님
+            const mm = String(x.workTime || '').replace(/;/g, ':').match(/(\d{1,2}):(\d{2})\s*~\s*(\d{1,2}):(\d{2})/);
+            const time = mm ? mm[1].padStart(2, '0') + ':' + mm[2] + '~' + mm[3].padStart(2, '0') + ':' + mm[4] : (emb[x.name] || '');
+            if (!time) return;
+            let sc = ''; for (let d = 1; d <= nd; d++) { const st = x.schedule && x.schedule[m + '/' + d] ? x.schedule[m + '/' + d].status : ''; sc += st === 'work' ? 'W' : (st === 'half' || st === 'half-half') ? 'H' : st === 'annual' ? 'A' : 'O'; }
+            out.push([x.name, time, sc]);
+          });
+          if (out.length < 10) throw new Error('근무표에서 읽은 사람이 너무 적음');
+          return out;
+        }
+        mkStaff(STAFF_DATA); RSRC = 'embedded';
         const GROUPS = ['07·08·09시 출근', '10·11시 출근', '14·15시 출근', '18시 이후 출근'];
         let MONTH_OK = false;   // 10월(근무표가 있는 달)일 때만 근무표(sc)로 출근자를 추림 — 그 외 달은 JSON 에 나온 이름으로 대체
         const present = d => MONTH_OK ? STAFF.filter(p => p.sc[d - 1] === 'W') : [];
@@ -8494,7 +8514,7 @@
         }
 
         function liveCtx(P, d, excl) {
-          const names = new Set(present(d).map(p => p.name));
+          const names = new Set();   // 후보 = 07시 JSON(다중·서브·업무 행)에 배정자로 들어 있는 사람 — 07시 배정이 출근자를 제대로 반영한다고 신뢰. 근무표 파일은 근무시간·휴게시간을 알려주는 용도(보험)
           const all = [...Object.values(P.main), ...Object.values(P.sub), ...P.rowUser.filter((n, i) => !P.TL[i].fixed)].filter(n => !isFixedName(n));
           all.forEach(n => { if (BYNAME[n]) names.add(n); });
           const unknown = [...new Set(all.filter(n => !BYNAME[n]))];
@@ -8582,7 +8602,10 @@
         }
             return {
                 liveParse, liveCtx, liveMetrics, liveRepair, liveFull, liveScore, liveClimber, buildUnits, fmt,
-                setMonth: v => { MONTH_OK = !!v; }
+                setMonth: v => { MONTH_OK = !!v; if (!v) { RSRC = 'none'; } },
+                setRoster: list => { mkStaff(list); MONTH_OK = true; RSRC = 'file'; },
+                useEmbedded: () => { mkStaff(STAFF_DATA); MONTH_OK = true; RSRC = 'embedded'; },
+                parseSchedule, rosterSrc: () => RSRC,
             };
         })();
 
@@ -8591,9 +8614,26 @@
         let simRes = null, simErr = '', simBusy = false;
         const simCfg = () => { try { return JSON.parse(lsGet(SIMCFG_KEY, 'null')) || null; } catch (e) { return null; } };
         const simSave = c => lsSet(SIMCFG_KEY, JSON.stringify(c));
+        // ── 근무표(월별 JSON) ── 재배정하기를 누를 때 해당 월 파일을 받아 저장해 두고, 이후 계산은 저장본을 씀. 11월부터는 같은 위치에 schedule_for_mobile_2026-11.json 만 올리면 됨
+        const SIM_SCH_BASE = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/monthly_schedule/schedule_for_mobile_', SIM_RK = 'bbs_sim_roster_';
+        const simRKey = wd => SIM_RK + wd.getFullYear() + '-' + String(wd.getMonth() + 1).padStart(2, '0');
+        function simRoster(wd) {
+          let list = null; try { list = JSON.parse(lsGet(simRKey(wd), 'null')); } catch (e) { list = null; }
+          if (Array.isArray(list) && list.length >= 10) SIM.setRoster(list);
+          else SIM.useEmbedded();   // 파일을 못 받았으면 내장 표(10월분)의 근무시간으로 — 근무표에 없는 사람은 배정 후보에서 빠지고 그 칸은 그대로 둠
+        }
+        async function simFetchRoster() {
+          const wd = workDay(), y = wd.getFullYear(), m = wd.getMonth() + 1;
+          try {
+            const ac = new AbortController(), tm = setTimeout(() => ac.abort(), 8000);
+            const res = await fetch(SIM_SCH_BASE + y + '-' + String(m).padStart(2, '0') + '.json?t=' + Date.now(), { cache: 'no-store', signal: ac.signal }); clearTimeout(tm);
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            lsSet(simRKey(wd), JSON.stringify(SIM.parseSchedule(JSON.parse(await res.text()), y, m)));
+          } catch (e) { console.warn('[BBS] 근무표 받기 실패 — 저장본/내장 표로 계산:', e && e.message); }
+        }
         function simCompute(snap) {
             const arr = JSON.parse(snap.txt), wd = workDay();
-            SIM.setMonth(wd.getFullYear() === 2026 && wd.getMonth() === 9);   // 근무표(STAFF_DATA)는 2026년 10월분 — 그 외 달은 JSON 에 나온 이름을 출근자로 간주
+            simRoster(wd);   // 근무표: 받아 둔 월별 파일 → 없으면 내장 10월 표 → 그것도 없으면 JSON 에 나온 이름으로 대체
             const d = wd.getDate(), P = SIM.liveParse(arr), ctx = SIM.liveCtx(P, d, []), A = P.rowUser.map(n => n || null);   // 다중/서브는 07시에 이미 정해진 값 그대로(건드리지 않음), 일일 업무 칸만 다시 배정
             const B = Array.isArray(snap.X) && snap.X.length === A.length ? snap.X.slice() : SIM.liveFull(ctx, d, A, snap.seed);   // 저장된 최적안(담당자 목록) 그대로 — 옛 저장본은 시드로 다시 만든다
             const follow = new Set(); SIM.buildUnits(d, true, false, ctx.tasks).forEach(u => { if (u.rows.length > 1) follow.add(u.rows[1]); });
@@ -8605,7 +8645,7 @@
         const SIM_ROUNDS = 5, SIM_ROUND_MS = 1000;
         async function simSearch(txt, mode) {
             const arr = JSON.parse(txt), wd = workDay();
-            SIM.setMonth(wd.getFullYear() === 2026 && wd.getMonth() === 9);
+            simRoster(wd);   // 근무표: 받아 둔 월별 파일 → 없으면 내장 10월 표 → 그것도 없으면 JSON 에 나온 이름으로 대체
             const d = wd.getDate(), P = SIM.liveParse(arr), ctx = SIM.liveCtx(P, d, []), A = P.rowUser.map(n => n || null), t0 = performance.now(), total = SIM_ROUNDS * SIM_ROUND_MS;
             const pool = []; let tries = 0;
             const prog = () => { simProg = '최적안 찾는 중 ' + Math.min(SIM_ROUNDS, Math.floor((performance.now() - t0) / SIM_ROUND_MS) + 1) + '/' + SIM_ROUNDS + ' · ' + tries + '가지 확인'; simDraw(); };
@@ -8632,6 +8672,7 @@
         async function simDo(txt, mode) {   // 현재 JSON 으로 새로 재배정 (최적안 찾기 후 확정)
             if (simSearching) return; simSearching = true; simBusy = true; simProg = '최적안 찾는 중 1/' + SIM_ROUNDS; simDraw();
             try {
+                await simFetchRoster();
                 const r = await simSearch(txt, 'full');
                 const snap = { txt, X: r.X, seed: r.seed, mode: 'best', at: Date.now(), day: ckey(), tries: r.tries, score: r.score };
                 simSave(snap); simRun(snap);
@@ -8658,7 +8699,7 @@
             const sB = R.sB, warns = [];
             if (stale) warns.push('⚠ 지금의 daily_tasks.json 이 계산 때와 다릅니다 — 재배정하기를 누르세요');
             P.warn.filter(w => !/서브: 시트에서/.test(w)).forEach(w => warns.push(esc(w)));
-            if (ctx.unknown.length) warns.push('근무표에 없는 이름: ' + esc(ctx.unknown.join(', ')));
+            if (SIM.rosterSrc() !== 'file') warns.push('월별 근무표 파일을 받지 못해 내장 10월 표의 근무시간으로 계산'); if (ctx.unknown.length) warns.push('근무표에 없는 이름: ' + esc(ctx.unknown.join(', ')));
             const meta = '<div class="meta sum">' + (cfg.tries ? '✅ <b>최적안</b> (' + cfg.tries.toLocaleString() + '가지 중)' : '시뮬레이션') + ' · ' + pad(at.getHours()) + ':' + pad(at.getMinutes()) + ' 계산 · 바뀐 칸 <b>' + chg + '</b> · 규칙 문제 칸 ' + mA.prob + ' → <b>' + mB.prob + '</b><br>' +
                 '가중치 2.0 ' + (sB.m.overW === 0 ? '모두 지킴(최대 ' + sB.maxW.toFixed(1) + ')' : '<span class="warn">' + sB.m.overW + '명 초과(최대 ' + sB.maxW.toFixed(1) + ')</span>') + ' · 업무+다중 ' + sB.mn + '~' + sB.mx + '건 (1건 이하 ' + sB.low + '명, 3건 이상 ' + sB.high + '명) · 연속 3건 ' + (sB.chains ? '<span class="warn">' + sB.chains + '명</span>' : '없음') +
                 (warns.length ? '<br><span class="warn">' + warns.join(' · ') + '</span>' : '') + '</div>';
