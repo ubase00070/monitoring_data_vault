@@ -8329,6 +8329,7 @@
         #bb .bba-dbtn.on { background:var(--tx); color:var(--sur); }
         #bb .bba-dbtn .n { min-width:22px; height:18px; padding:0 6px; border-radius:9px; background:rgba(0,0,0,.12); font-size:11.5px; line-height:18px; text-align:center; }
         #bb .bba-dbtn.on .n { background:rgba(255,255,255,.25); }
+        #bb .bba-dbtn .n.hot { background:#d93a35; color:#fff; }
         #bb .bba-dbtn .ar { font-size:10px; }
         #bb .bba-note { margin-left:auto; font-size:12px; color:var(--mu); }
         #bb .bba-mmb { margin-left:auto; height:28px; padding:0 12px; border-radius:9px; border:2px solid #8fd6c0; background:var(--sur2); color:var(--tx); font-family:inherit; font-size:13px; font-weight:700 !important; cursor:pointer; } #bb .bba-mmb.on { background:var(--tx); color:var(--sur); }
@@ -8381,7 +8382,9 @@
         #bb .bba-btn { height:26px; padding:0 10px; border-radius:8px; border:1.5px solid var(--bd2); background:var(--sur2); color:var(--tx); font-family:inherit; font-size:12px; font-weight:700 !important; cursor:pointer; white-space:nowrap; }
         #bb .bba-btn:hover { border-color:var(--mu); }
         #bb .bba-btn.on { background:var(--tx); color:var(--sur); border-color:var(--tx); }
-        #bb .bba-tasks { flex:0 0 372px; }   /* 제목줄 + 헤더 + 10줄 */
+        #bb .bba-top { flex:0 0 372px; display:flex; gap:8px; min-height:0; }   /* 제목줄 + 헤더 + 10줄 */
+        #bb .bba-top > .bba-tasks { flex:0 0 64%; min-width:0; }   /* 업무표를 좁혀서 '당일배정 현황' 열을 좌측으로 당김 */
+        #bb .bba-top > .bba-campz { flex:1 1 0; min-width:0; }   /* 남은 우측 빈 공간 = 배달 사이트 점검 */
         #bb .bba-bottom { flex:1 1 0; min-height:150px; display:grid; grid-template-columns:minmax(0,5fr) minmax(0,6fr); gap:8px; }
         /* 업무표 */
         #bb .bba-th, #bb .bba-row { display:grid; grid-template-columns:28px minmax(0,1fr) 120px; gap:8px; align-items:center; padding:0 10px; }
@@ -8454,7 +8457,7 @@
         #bb .bba-who { height:26px; border-radius:6px; display:grid; place-items:center; font-weight:700 !important; font-size:13px; color:#1e1a12; background:hsl(var(--h) 58% 84%); white-space:nowrap; overflow:hidden; }
         #bb .bba-empty { padding:24px 10px; text-align:center; color:var(--mu); }
         /* 우측 구역 */
-        #bb .bba-right { display:grid; grid-template-rows:auto minmax(0,1fr) minmax(0,1fr); gap:8px; min-height:0; min-width:0; }
+        #bb .bba-right { display:grid; grid-template-rows:minmax(0,1fr) minmax(0,1fr); gap:8px; min-height:0; min-width:0; }
         #bb .bba-camp { display:flex; flex-wrap:wrap; gap:6px; padding:8px 10px; }
         #bb .bba-cb { display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 11px 0 8px; border-radius:999px; border:1.5px solid var(--bd2); background:var(--sur2); color:var(--tx); font-family:inherit; font-size:12.5px; font-weight:700 !important; cursor:pointer; }
         #bb .bba-cb i { width:16px; height:16px; border-radius:5px; border:2px solid var(--bd2); background:var(--sur); display:grid; place-items:center; font-style:normal; font-size:11px; line-height:1; color:transparent; }
@@ -8513,11 +8516,12 @@
             '<div class="bba-bar">' +
               '<button class="bba-dbtn" data-k="dl" aria-expanded="false">🚚 배달 로그 <span class="n" id="bba-n-dl">-</span><span class="ar">▾</span></button>' +
               '<button class="bba-dbtn" data-k="iv" aria-expanded="false">🧑‍💻 개입 현황 <span class="ar">▾</span></button>' +
-              '<button class="bba-dbtn" data-k="at" aria-expanded="false">🪑 이석 현황 <span class="ar">▾</span></button>' +
+              '<button class="bba-dbtn" data-k="at" aria-expanded="false">🪑 이석 현황 <span class="n" id="bba-n-at" title="현재 이석 인원">-</span><span class="ar">▾</span></button>' +
               '<button class="bba-mmb" id="bba-mmb" title="다중 · 서브 모니터링, 부산 국립과학관 시간대별 담당자">👥 근무자</button>' +
               '<span class="bba-note" id="bba-src"></span>' +
             '</div>' +
             '<div id="bba-dr" class="none"></div>' +
+            '<div class="bba-top">' +
             '<section class="bba-zone bba-tasks">' +
               '<div class="bba-zh">' +
                 '<h2>일일 업무표</h2>' +
@@ -8533,10 +8537,11 @@
               '</div>' +
               '<div class="bba-zb" id="bba-tb"><div class="bba-th"><span></span><span>기체 관리 : [HH:MM~HH:MM] 시간 사이트 / N호기 / 내용 / [요일]</span><span>당일배정 현황</span></div><div id="bba-rows"></div></div>' +
             '</section>' +
+            '<section class="bba-zone bba-campz"><div class="bba-zh"><h2>배달 사이트 점검</h2><span class="bba-cnt" id="bba-campn"></span></div><div class="bba-camp" id="bba-camp"></div></section>' +
+            '</div>' +
             '<div class="bba-bottom">' +
               '<div id="bba-mmw"></div>' +
               '<div class="bba-right" id="bba-right">' +
-                '<section class="bba-zone"><div class="bba-zh"><h2>배달 사이트 점검</h2><span class="bba-cnt" id="bba-campn"></span></div><div class="bba-camp" id="bba-camp"></div></section>' +
                 '<section class="bba-zone"><div class="bba-zh"><h2>HW 이슈</h2></div><div class="bba-memo"><textarea id="bba-hw" placeholder="HW 이슈를 자유롭게 입력 (예: 엘스 2호기 / 섀시 좌측 온도 센서 이상)" spellcheck="false"></textarea><div class="sv" id="bba-hw-s"></div></div></section>' +
                 '<section class="bba-zone"><div class="bba-zh"><h2>SW 이슈</h2></div><div class="bba-memo"><textarea id="bba-sw" placeholder="SW 이슈를 자유롭게 입력 (예: 판교 / 미니맵 미노출)" spellcheck="false"></textarea><div class="sv" id="bba-sw-s"></div></div></section>' +
               '</div>' +
@@ -8597,7 +8602,10 @@
         function syncDlCount() {
             try { const b = document.querySelector('#bb-fb-dlog b'); const n = $('bba-n-dl'); if (b && n) n.textContent = (b.textContent || '').trim() || '-'; } catch (e) { /* 무시 */ }
         }
-        syncDlCount(); setInterval(syncDlCount, 3000);
+        function syncAtCount() {   // 이석 현황 버튼의 '현재 이석 N명' = 이석 현황 제목에 이미 계산돼 있는 값
+            try { const t = document.querySelector('#bb-att-title .n'); const n = $('bba-n-at'); if (n) { n.textContent = t ? (t.textContent || '').trim() : '-'; n.classList.toggle('hot', !!t && parseInt(t.textContent, 10) > 0); } } catch (e) { /* 무시 */ }
+        }
+        syncDlCount(); syncAtCount(); setInterval(() => { syncDlCount(); syncAtCount(); }, 3000);
 
         // ───────── 순찰 일정 (다중 모니터링 제목 우측 버튼 → 카드형 일정 보기) ─────────
         //   관제 도우미(index.html)의 '현 시각 일정 / 다음 시간대' 카드 모양을 그대로 옮김 (보기 전용)
@@ -9305,7 +9313,7 @@
             const o = { cls: '', box: '✓', ttl: '완료 확인', meta: '', tip: '', done: false };
             if (man && a && a.st === 'fail') { o.cls = 'done manfail'; o.ttl = '직접 확인됨(자동 점검은 실패했음) — 누르면 해제'; o.meta = '✓ ' + man + ' 직접 확인 (자동 점검 실패)'; o.done = true; }   // 자동 점검이 실패해서 사람이 직접 확인한 업무는 노란 체크
             else if (man) { o.cls = 'done'; o.ttl = '완료 취소'; o.meta = '✓ ' + man + ' 확인'; o.done = true; }
-            else if (a && a.st === 'ok' && !a.clr) { o.cls = 'done byauto'; o.ttl = '자동 확인됨 — 누르면 해제'; o.meta = '✓ ' + hmOf(a.at) + ' 자동 확인' + (t.chg ? chgCnt(a, true) : '') + (a.late ? ' (지연 점검)' : ''); o.done = true; }
+            else if (a && a.st === 'ok' && !a.clr) { o.cls = 'done byauto'; o.ttl = '자동 확인됨 — 누르면 해제 (다시 누르면 자동 확인 시각으로 복원)'; o.meta = '✓ ' + hmOf(a.at) + ' 자동 확인' + (t.chg ? chgCnt(a, true) : '') + (a.late ? ' (지연 점검)' : ''); o.done = true; }
             else if (a && a.st === 'fail') { o.cls = 'bad'; o.box = '✕'; o.ttl = '자동 점검에서 확인되지 않음 — 직접 확인한 뒤 누르면 체크됩니다'; o.meta = '✕ ' + hmOf(a.at) + (t.chg ? ' 충전 미확인 ' + chgFails(a) + '대' : a.det && a.det.some(d => d.r === 'bad') ? ' 자동 점검 불일치' : ' 자동 점검 실패(확인 못 함)') + ' · 직접 확인'; o.tip = a.msg || ''; }
             else if (a && a.st === 'retry') { o.cls = 'retry'; o.box = '↻'; o.meta = '↻ ' + hmOf(a.next) + ' 재점검 예정 (' + (t.chg ? '충전 미확인 ' + chgFails(a) + '대' : (a.msg || '불일치')) + ')'; o.tip = a.msg || ''; }
             else if (a && a.st === 'sup') { o.cls = 'sup'; o.box = '–'; o.ttl = '이후 업무가 같은 기체를 바꿔서 지금 상태로는 확인할 수 없음 — 직접 확인 후 체크'; o.meta = '– ' + (a.by || '이후 업무') + ' 업무로 대체되어 점검 생략'; }
@@ -9368,7 +9376,7 @@
         function onBoxClick(id) {   // 자동으로 확인된 업무를 누르면 해제, ✕ 나 빈 칸을 누르면 직접 확인으로 체크
             reloadChk(); reloadAuto();
             const a = auto[id];
-            if (!chk[id] && a && a.st === 'ok' && !a.clr) { a.clr = 1; autoPut(id, a); renderTasks(); return; }
+            if (!chk[id] && a && a.st === 'ok') { if (a.clr) delete a.clr; else a.clr = 1; autoPut(id, a); renderTasks(); return; }   // 자동 확인된 업무: 해제 ↔ 다시 누르면 원래 자동 확인 시각으로 복원 (직접 확인 업무는 그대로 현재 시각 기록)
             toggleTask(id);
         }
         $('bba-rows').addEventListener('click', e => {   // 체크박스를 눌러야만 체크/해제 (행의 다른 곳은 무시)
@@ -9524,7 +9532,7 @@
                 const sc = sciTasks.filter(t => (!t.days || t.days.includes(dow)) && sciCovers(t, relH));
                 g += '<div class="tm' + cls + '"' + (cur ? ' id="bba-mm-cur"' : '') + '>' + pad(hh) + ':00</div>' +
                     '<div class="' + cls.trim() + '">' + nmChip(r && r.u) + '</div><div class="' + cls.trim() + '">' + nmChip(r && r.sub) + '</div><div class="gap"></div>' +
-                    '<div class="' + cls.trim() + '">' + (sc.length ? sc.map(t => '<div class="sci" title="' + esc(pad(Math.floor(t.s / 60)) + ':' + pad(t.s % 60) + (t.e !== t.s ? '~' + pad(Math.floor(t.e / 60)) + ':' + pad(t.e % 60) : '') + ' ' + t.body) + '">' + nmChip(t.u) + (t.body ? '<span class="tx">' + esc(t.body) + '</span>' : '') + '</div>').join('') : '<span class="em">-</span>') + '</div>';
+                    '<div class="' + cls.trim() + '">' + (sc.length ? sc.map(t => '<div class="sci" title="' + esc(pad(Math.floor(t.s / 60)) + ':' + pad(t.s % 60) + (t.e !== t.s ? '~' + pad(Math.floor(t.e / 60)) + ':' + pad(t.e % 60) : '') + ' ' + t.body) + '">' + nmChip(t.u) + '</div>').join('') : '<span class="em">-</span>') + '</div>';
             }
             const keep = (mmp.querySelector('.mb') || {}).scrollTop;
             mmp.innerHTML = '<div class="mh"><b>👥 시간대별 근무자</b><span class="sp">' + esc(srcMsg || '') + (monRows.length || sciTasks.length ? '' : ' · 데이터 없음') + '</span><button class="mx" title="닫기">✕</button></div><div class="mb">' + g + '</div></div>';
