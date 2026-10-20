@@ -8694,19 +8694,34 @@
             return '<section class="bba-hr"><div class="hh"><b>' + hh + '시</b><span class="bd' + (isCur ? '' : ' nx') + '">' + (isCur ? '현 시각 일정' : '다음 시간대') + '</span></div>' +
                 (body ? '<div class="sls">' + body + '</div>' : '<div class="bba-empty">일정이 없습니다</div>') + '</section>';
         }
-        // 지금 모니터링 중인데 '현 시각 일정'에 없는 기체 — 이미 지난 시간대 일정(예: A/B 코스를 도는 엘스: 11시에 시작한 B코스는 10시 일정)이거나 일정에 없는 기체.
-        // 기체 이름이 일정(plan)에 들어 있는 가장 가까운 지난 시간대(시작 시각 포함 최대 3시간 전까지)의 카드로 보여주고, 어디에도 없으면 '일정에 없는 기체'로 모은다.
+        // 지금 모니터링 중인데 '현 시각 일정'에 없는 기체:
+        //  · 이전 시간대 일정의 연장 — A/B 코스를 도는 기체(예: 엘스는 10:30 일정인데 11:00에 B코스 시작)는 그 일정 시각으로부터 PREV_MAX_MIN 분 안에 시작했을 때만 그 시간대 카드로 보여준다.
+        //  · 그 밖의 기체(예: 07시 일정이 끝난 뒤 10:58에 불시에 다시 시작한 경희대)는 일정과 무관하게 나타난 '예외 기체'로 맨 아래에 따로 모은다.
+        const PREV_MAX_MIN = 90;
         const samePlan = (p, c) => c === p || c.startsWith(p + ' ') || c.replace(/\s+/g, '') === p.replace(/\s+/g, '');
         const planHas = (hh, n) => { const d = timeTable[pad(hh)]; return !!(d && Array.isArray(d.plan) && d.plan.some(x => samePlan(x, n))); };
-        function schedPrevHtml(hh, cards, unplanned) {
-            const data = timeTable[pad(hh)] || {}, planNames = Array.isArray(data.plan) ? data.plan : [], outPatrol = Array.isArray(data.out_patrol) ? data.out_patrol : [], pt = data.planTimes || {};
+        function prevSlot(hh, c) {   // 시간대 hh 의 일정에 이 기체가 있고, 그 일정 시각 직후(PREV_MAX_MIN 분 이내)에 시작했다면 {p, slot}
+            const d = timeTable[pad(hh)], p = d && Array.isArray(d.plan) ? d.plan.find(x => samePlan(x, c.n)) : null; if (!p) return null;
+            const v = (d.planTimes || {})[p], arr = Array.isArray(v) ? v : (typeof v === 'string' && v ? [v] : [pad(hh) + ':00']), st = c.h * 60 + (+c.t.slice(3));
+            let best = null;
+            arr.forEach(t => { const m = /(\d{1,2}):(\d{2})/.exec(t); if (!m) return; const diff = ((st - (+m[1] * 60 + +m[2]) + 1440 + 15) % 1440) - 15;   // 시작 − 일정 시각 (−15 ~ 1424분)
+                if (diff <= PREV_MAX_MIN && (best === null || Math.abs(diff) < Math.abs(best.diff))) best = { p, diff, slot: pad(+m[1]) + ':' + m[2] }; });
+            return best;
+        }
+        function schedPrevHtml(hh, items) {
+            const data = timeTable[pad(hh)] || {}, outPatrol = Array.isArray(data.out_patrol) ? data.out_patrol : [];
             const tagFor = n => (outPatrol.includes(n) ? OUT_PATROL_TAG : (DISPATCH_TYPES.find(dt => (Array.isArray(data[dt.key]) ? data[dt.key] : []).includes(n)) || null));
-            const slotOf = (p, st) => { const v = pt[p], a = Array.isArray(v) ? v : (typeof v === 'string' && v ? [v] : [pad(hh) + ':00']), ok = a.filter(x => x <= st); return ok.length ? ok[ok.length - 1] : a[0]; };   // 그 기체의 일정 시각 중 시작 시각 이전의 가장 늦은 것
             const slots = {};
-            cards.forEach(c => { const p = unplanned ? null : planNames.find(x => samePlan(x, c.n)), t = p ? slotOf(p, c.t) : c.t; (slots[t] = slots[t] || []).push({ n: c.n, st: c.t, tag: p ? tagFor(p) : null }); });
-            const body = Object.keys(slots).sort().map(t => '<div class="bba-sl"><div class="lb">' + esc(t) + '</div><div class="pls">' + slots[t].map(x =>
+            items.forEach(x => { (slots[x.slot] = slots[x.slot] || []).push({ n: x.c.n, st: x.c.t, tag: tagFor(x.p) }); });
+            return '<section class="bba-hr"><div class="hh"><b>' + pad(hh) + '시</b><span class="bd nx">이전 시간대 일정 · 아직 모니터링 중</span></div><div class="sls">' + slotsHtml(slots) + '</div></section>';
+        }
+        function slotsHtml(slots) {
+            return Object.keys(slots).sort().map(t => '<div class="bba-sl"><div class="lb">' + esc(t) + '</div><div class="pls">' + slots[t].map(x =>
                 '<div class="bba-pl mon" title="현재 모니터링 중 (' + esc(x.st) + '부터)"><span class="nm">' + esc(x.n) + '</span><span class="tg"' + (x.tag ? ' style="background:' + x.tag.bg + ';color:' + x.tag.color + '"' : '') + '>' + esc(x.tag ? x.tag.label : '') + '</span></div>').join('') + '</div></div>').join('');
-            return '<section class="bba-hr"><div class="hh"><b>' + pad(hh) + '시</b><span class="bd nx">' + (unplanned ? '일정에 없는 기체 · 모니터링 중' : '이전 시간대 일정 · 아직 모니터링 중') + '</span></div><div class="sls">' + body + '</div></section>';
+        }
+        function schedExceptHtml(cards) {   // 일정 없이 나타난 예외 기체 — 시작 시각별
+            const slots = {}; cards.forEach(c => { (slots[c.t] = slots[c.t] || []).push({ n: c.n, st: c.t, tag: null }); });
+            return '<section class="bba-hr exc"><div class="hh"><b>예외 기체</b><span class="bd sp">일정과 무관하게 시작 · 모니터링 중</span></div><div class="sls">' + slotsHtml(slots) + '</div></section>';
         }
         function suspPill(n, reason) {
             return '<div class="bba-pl sus"><span class="nm">' + esc(n) + '</span><span class="rs" title="' + esc(reason) + '">' + esc(reason) + '</span></div>';
@@ -8738,11 +8753,11 @@
                         const g = {}, un = [];
                         monitoredCards().forEach(c => {
                             if (planHas(h, c.n)) return;   // 현 시각 일정에서 이미 초록으로 표시됨
-                            let a = null;
-                            for (let k = 0; k < 4 && a === null; k++) { const x = (c.h - k + 24) % 24; if (planHas(x, c.n)) a = x; }
-                            if (a === null) un.push(c); else (g[a] = g[a] || []).push(c);
+                            let hit = null;
+                            for (let k = 0; k < 3 && !hit; k++) { const x = (c.h - k + 24) % 24, r = prevSlot(x, c); if (r) hit = { x, c, p: r.p, slot: r.slot }; }
+                            if (hit) (g[hit.x] = g[hit.x] || []).push(hit); else un.push(c);
                         });
-                        return Object.keys(g).map(Number).sort((a, b) => ((h - a + 24) % 24) - ((h - b + 24) % 24)).map(x => schedPrevHtml(x, g[x])).join('') + (un.length ? schedPrevHtml(h, un, true) : '');   // 가까운 시간대부터
+                        return Object.keys(g).map(Number).sort((a, b) => ((h - a + 24) % 24) - ((h - b + 24) % 24)).map(x => schedPrevHtml(x, g[x])).join('') + (un.length ? schedExceptHtml(un) : '');   // 가까운 시간대부터, 예외 기체는 맨 아래
                     })()
                     : '<div class="bba-empty">순찰 일정 데이터를 받지 못했습니다</div>';
                 $('bba-sth').textContent = '📅 순찰 일정';
@@ -9377,6 +9392,13 @@
             if (keep == null) { const c = $('bba-mm-cur'); if (c) mb.scrollTop = Math.max(0, c.offsetTop - 70); } else mb.scrollTop = keep;
             mmp.querySelector('.mx').addEventListener('click', () => { mmp.classList.remove('open'); $('bba-mmb').classList.remove('on'); });
         }
+        function closeMmp() { mmp.classList.remove('open'); $('bba-mmb').classList.remove('on'); }
+        // 다른 레이아웃 영역을 누르면 열려 있는 패널(배달 로그 · 개입 현황 · 이석 현황 · 근무자)을 닫는다
+        root.addEventListener('click', e => {
+            const t = e.target; if (!(t instanceof Element)) return;
+            if (mmp.classList.contains('open') && !t.closest('#bba-mmp, #bba-mmb')) closeMmp();
+            if (open.length && !t.closest('#bba-dr, .bba-dbtn, #bba-ap, [id*="-pop"], [class*="-pop"], #bb-fbp') && t.closest('.bba-tasks, #bb-mm-page-multi, #bba-right, #bba-mmp, #bba-mmb')) { open = []; applyOpen(); }
+        }, true);
         $('bba-mmb').addEventListener('click', () => { const o = mmp.classList.toggle('open'); $('bba-mmb').classList.toggle('on', o); if (o) { mmp.innerHTML = ''; drawMmp(); } });
         setInterval(drawMmp, 30 * 1000);
 
