@@ -8383,8 +8383,8 @@
         #bb .bba-btn:hover { border-color:var(--mu); }
         #bb .bba-btn.on { background:var(--tx); color:var(--sur); border-color:var(--tx); }
         #bb .bba-top { flex:0 0 372px; display:flex; gap:8px; min-height:0; }   /* 제목줄 + 헤더 + 10줄 */
-        #bb .bba-top > .bba-tasks { flex:0 0 64%; min-width:0; }   /* 업무표를 좁혀서 '당일배정 현황' 열을 좌측으로 당김 */
-        #bb .bba-top > .bba-campz { flex:1 1 0; min-width:0; }   /* 남은 우측 빈 공간 = 배달 사이트 점검 */
+        #bb .bba-top > .bba-tasks { flex:1 1 0; min-width:0; }   /* 업무표를 좁혀서 '당일배정 현황' 열을 좌측으로 당김 */
+        #bb .bba-top > .bba-campz { flex:0 0 18%; min-width:0; }   /* 남은 우측 빈 공간 = 배달 사이트 점검 */
         #bb .bba-bottom { flex:1 1 0; min-height:150px; display:grid; grid-template-columns:minmax(0,5fr) minmax(0,6fr); gap:8px; }
         /* 업무표 */
         #bb .bba-th, #bb .bba-row { display:grid; grid-template-columns:28px minmax(0,1fr) 120px; gap:8px; align-items:center; padding:0 10px; }
