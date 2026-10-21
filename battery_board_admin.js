@@ -8243,7 +8243,7 @@
         const TASKS_REFRESH_MS = 5 * 60 * 1000;
         const WD0 = 7 * 60;                       // 업무일 시작 07:00
         const LATE_GRACE = 10;                    // 종료 시각 + 10분이 지나도 미확인이면 '지연'
-        const CAMPS = ['아산', '가평', '대관령', '진천', '파주LGD', '인력개발원', '충남대병원'];   // 배달 사이트 점검 목록
+        const CAMPS = ['아산', '가평', '대관령', '진천', '파주LGD', '인력개발원', '충남대병원', 'LIT청주'];   // 사이트 점검 목록
         const DAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
         // ───────── 임무 ON/OFF 자동 점검 설정 (여기만 고치면 됩니다) ─────────
@@ -8428,7 +8428,7 @@
         #bb .bba-btn.on { background:var(--tx); color:var(--sur); border-color:var(--tx); }
         #bb .bba-top { flex:0 0 372px; display:flex; gap:8px; min-height:0; }   /* 제목줄 + 헤더 + 10줄 */
         #bb .bba-top > .bba-tasks { flex:1 1 0; min-width:0; }   /* 업무표를 좁혀서 '당일배정 현황' 열을 좌측으로 당김 */
-        #bb .bba-top > .bba-campz { flex:0 0 18%; min-width:0; }   /* 남은 우측 빈 공간 = 배달 사이트 점검 */
+        #bb .bba-top > .bba-campz { flex:0 0 18%; min-width:0; }   /* 남은 우측 빈 공간 = 사이트 점검 */
         #bb .bba-bottom { flex:1 1 0; min-height:150px; display:grid; grid-template-columns:minmax(0,5fr) minmax(0,6fr); gap:8px; }
         /* 업무표 */
         #bb .bba-th, #bb .bba-row { display:grid; grid-template-columns:28px minmax(0,1fr) 120px; gap:8px; align-items:center; padding:0 10px; }
@@ -8582,7 +8582,7 @@
               '</div>' +
               '<div class="bba-zb" id="bba-tb"><div class="bba-th"><span></span><span>기체 관리 : [HH:MM~HH:MM] 시간 사이트 / N호기 / 내용 / [요일]</span><span>당일배정 현황</span></div><div id="bba-rows"></div></div>' +
             '</section>' +
-            '<section class="bba-zone bba-campz"><div class="bba-zh"><h2>배달 사이트 점검</h2><span class="bba-cnt" id="bba-campn"></span></div><div class="bba-camp" id="bba-camp"></div></section>' +
+            '<section class="bba-zone bba-campz"><div class="bba-zh"><h2>사이트 점검</h2><span class="bba-cnt" id="bba-campn"></span></div><div class="bba-camp" id="bba-camp"></div></section>' +
             '</div>' +
             '<div class="bba-bottom">' +
               '<div id="bba-mmw"></div>' +
@@ -8862,7 +8862,7 @@
         const schEl = document.createElement('div');
         schEl.id = 'bba-sch';
         schEl.innerHTML = '<div class="bba-zh"><h2 id="bba-sth">📅 순찰 일정</h2><span class="bba-cnt" id="bba-sat"></span><button class="bba-btn" id="bba-sre">새로고침</button><button class="bba-btn" id="bba-scl">✕ 닫기</button></div><div class="bba-zb" id="bba-sb"></div>';
-        $('bba-right').appendChild(schEl);   // 배달 사이트 점검 / HW / SW 그리드 자리에 겹쳐서 표시
+        $('bba-right').appendChild(schEl);   // 사이트 점검 / HW / SW 그리드 자리에 겹쳐서 표시
         function openSch(mode) {
             const isOpen = schEl.classList.contains('open');
             if (isOpen && schMode === mode) { schEl.classList.remove('open'); return; }
