@@ -9314,9 +9314,38 @@
             const bySite = {};
             run.forEach(r => r.ev.forEach(u => { if (r.pre[u.k + '|' + u.n]) return; (bySite[u.k] = bySite[u.k] || new Set()).add(u.n); }));
             const readings = {}, keys = Object.keys(bySite).sort((a, b) => (siteByKey(a).chg ? 1 : 0) - (siteByKey(b).chg ? 1 : 0));   // 일반 임무 점검을 먼저, 오래 걸리는 충전 점검은 뒤에
+            const finish = list => {   // 점검한 업무의 결과를 확정·기록
+                const fin = Date.now();
+                list.forEach(({ it, ev, keep, pre }) => {
+                    reloadAuto();
+                    const prev = auto[it.t.id], n = it.force ? maxTriesOf(it.t) : ((prev && prev.n) || 0) + 1;
+                    const r = evalUnits(it, ev, readings, pre, keep), late = now - it.due > 3 * 60000;   // 점검 '시작'이 예정보다 3분 넘게 늦었는가 (충전 점검처럼 오래 걸려도 지연으로 치지 않도록)
+                    const rec = { st: r.ok ? 'ok' : (n >= maxTriesOf(it.t) ? 'fail' : 'retry'), n, at: fin, due: it.due, det: r.det, msg: r.ok ? '' : detMsg(r.det), late, forced: !!it.force };
+                    if (rec.st === 'retry' && attemptsOf(it.t)) { const at = attemptsOf(it.t); rec.next = Math.max(at[Math.min(n, at.length - 1)], fin + 60000); }   // 다음 점검 시각(앞시각 +5분 → 뒷시각 정각), 이미 지났으면 1분 뒤
+                    else if (rec.st === 'retry') { const rm = retryMsOf(it.t); rec.next = it.t.chg || rm === AUTO_RETRY_MS ? fin + rm : Math.max(it.due + rm, fin + 60000); }   // 사이트별 재점검(송도): 첫 점검 예정 시각 + 5분 (11:01 → 11:06), 이미 늦었으면 1분 뒤
+                    if (it.t.chg) {   // 무선충전 점검 기록: +1분 · +5분 · 지금 점검 (지금 점검은 가장 최근 1개만) — 최대 3개
+                        const kind = it.force ? 'now' : (n <= 1 ? 'p1' : 'p2'), lg = ((prev && prev.logs) || []).filter(x => x.k !== kind);
+                        lg.push({ k: kind, at: fin, st: rec.st, n, next: rec.next || 0, det: rec.det, msg: rec.msg });
+                        lg.sort((x, y) => x.at - y.at); rec.logs = lg;
+                    }
+                    autoPut(it.t.id, rec);
+                    forced.delete(it.t.id);
+                    console.log('[BBA] 자동 점검', it.t.head, rec.st, rec.msg || '');
+                });
+            };
+            const batchIds = new Set(run.map(r => r.it.t.id));
+            let regDone = false;
             let ci = 0; const cn = keys.filter(k => siteByKey(k).chg).length;
             for (const k of keys) {
-                const S = siteByKey(k); curSiteTxt = S.chg ? '충전 ' + (++ci) + '/' + cn + ' · ' + S.label : S.k;
+                const S = siteByKey(k);
+                if (S.chg && !regDone) {   // 일반 임무 점검 결과는 오래 걸리는 충전 점검을 기다리지 않고 먼저 확정
+                    regDone = true; const reg = run.filter(r => !r.it.t.chg); if (reg.length) { finish(reg); renderTasks(); }
+                }
+                if (S.chg && ci >= 1) {   // 충전 점검 사이사이: 그동안 시각이 된 일반 업무가 있으면 그것부터 먼저 점검
+                    try { const pk = pickDue(Date.now()), ex = pk.out.filter(x => !x.t.chg && !batchIds.has(x.t.id)); if (ex.length) { ex.forEach(x => batchIds.add(x.t.id)); await runBatch(ex, pk.active); } }
+                    catch (e) { console.warn('[BBA] 충전 점검 중 일반 점검 실패:', e && e.message); }
+                }
+                curSiteTxt = S.chg ? '충전 ' + (++ci) + '/' + cn + ' · ' + S.label : S.k;
                 lockTake(run.map(r => r.it.t.id), S.k); drawAutoPill(); if (!S.chg || ci === 1) renderTasks();
                 try { readings[k] = await probeSite(S, [...bySite[k]].map(n => S.units.find(y => y.n === n))); }
                 catch (e) { readings[k] = { err: 'noread', units: {}, names: [] }; console.warn('[BBA] 점검 오류:', e && e.message); }
@@ -9324,23 +9353,7 @@
                 await sleep(800);
             }
             curSiteTxt = '';
-            const fin = Date.now();
-            run.forEach(({ it, ev, keep, pre }) => {
-                reloadAuto();
-                const prev = auto[it.t.id], n = it.force ? maxTriesOf(it.t) : ((prev && prev.n) || 0) + 1;
-                const r = evalUnits(it, ev, readings, pre, keep), late = now - it.due > 3 * 60000;   // 점검 '시작'이 예정보다 3분 넘게 늦었는가 (충전 점검처럼 오래 걸려도 지연으로 치지 않도록)
-                const rec = { st: r.ok ? 'ok' : (n >= maxTriesOf(it.t) ? 'fail' : 'retry'), n, at: fin, due: it.due, det: r.det, msg: r.ok ? '' : detMsg(r.det), late, forced: !!it.force };
-                if (rec.st === 'retry' && attemptsOf(it.t)) { const at = attemptsOf(it.t); rec.next = Math.max(at[Math.min(n, at.length - 1)], fin + 60000); }   // 다음 점검 시각(앞시각 +5분 → 뒷시각 정각), 이미 지났으면 1분 뒤
-                else if (rec.st === 'retry') { const rm = retryMsOf(it.t); rec.next = it.t.chg || rm === AUTO_RETRY_MS ? fin + rm : Math.max(it.due + rm, fin + 60000); }   // 사이트별 재점검(송도): 첫 점검 예정 시각 + 5분 (11:01 → 11:06), 이미 늦었으면 1분 뒤
-                if (it.t.chg) {   // 무선충전 점검 기록: +1분 · +5분 · 지금 점검 (지금 점검은 가장 최근 1개만) — 최대 3개
-                    const kind = it.force ? 'now' : (n <= 1 ? 'p1' : 'p2'), lg = ((prev && prev.logs) || []).filter(x => x.k !== kind);
-                    lg.push({ k: kind, at: fin, st: rec.st, n, next: rec.next || 0, det: rec.det, msg: rec.msg });
-                    lg.sort((x, y) => x.at - y.at); rec.logs = lg;
-                }
-                autoPut(it.t.id, rec);
-                forced.delete(it.t.id);
-                console.log('[BBA] 자동 점검', it.t.head, rec.st, rec.msg || '');
-            });
+            finish(regDone ? run.filter(r => r.it.t.chg) : run);
         }
         async function autoTick() {
             if (autoBusy || !tasks.length) return;
