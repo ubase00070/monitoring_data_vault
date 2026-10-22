@@ -9276,7 +9276,7 @@
                     if (why) { d.r = 'skip'; d.why = why; }
                     else if (!R || R.err) { d.r = 'err'; d.e = R ? R.err : 'noread'; }
                     else if (R.cards === 0) { d.r = 'skip'; d.why = 'in'; }
-                    else if (!x || !x.found) d.r = 'miss';
+                    else if (!x || !x.found) { d.r = 'skip'; d.why = 'in'; }   // 같은 주소의 다른 기체 카드는 보이는데 이 기체 카드만 없음 = 입고됨 (전원 꺼짐이 아니라 카드 자체가 없음) → 제외, 재점검 대상 아님
                     else if (x.pw === null || x.pw === undefined) d.r = 'unk';
                     else if (x.pw === false) { d.r = 'skip'; d.why = 'off'; d.pw = false; }
                     else if (x.pg && /순찰|순회/.test(x.pg)) { d.r = 'skip'; d.why = 'patrol'; d.pw = true; d.bat = x.bat; }   // NCC 카드의 '임무 진행'이 순찰 중 → 충전소에 없음
@@ -9372,7 +9372,9 @@
             const batchIds = new Set(run.map(r => r.it.t.id));
             let regDone = false;
             let ci = 0; const cn = keys.filter(k => siteByKey(k).chg).length;
+            let homeAbort = false;
             for (const k of keys) {
+                if (homeHalt() && !run.some(r => r.it.force)) { homeAbort = true; break; }   // HOME 모드로 중단됨 — 남은 사이트는 보지 않음
                 const S = siteByKey(k);
                 if (S.chg && !regDone) {   // 일반 임무 점검 결과는 오래 걸리는 충전 점검을 기다리지 않고 먼저 확정
                     regDone = true; const reg = run.filter(r => !r.it.t.chg); if (reg.length) { finish(reg); renderTasks(); }
@@ -9390,6 +9392,7 @@
                 await sleep(800);
             }
             curSiteTxt = '';
+            if (homeAbort) { renderTasks(); return; }   // 끝까지 보지 못한 업무는 결과를 기록하지 않음
             finish(regDone ? run.filter(r => r.it.t.chg) : run);
         }
         async function autoTick() {
@@ -10328,7 +10331,7 @@
                     e.preventDefault(); e.stopPropagation();
                     if (buf === 'home') {
                         lsSet('bba_home', homeOn() ? '' : '1');
-                        if (homeOn()) { try { homeDecide(); } catch (e2) { /* 무시 */ } }
+                        if (homeOn()) { loadDay(); lsSet(homeKey(), '1'); }   // 직접 켠 경우: 이미 시작된 점검이 '쌓인 업무'를 줄여 놓았을 수 있으니 개수와 상관없이 오늘은 바로 중단 (알약을 누르면 재개)
                         drawAutoPill(); renderTasks(); if (autoEnabled()) autoTick();
                     }
                     return disarm();
