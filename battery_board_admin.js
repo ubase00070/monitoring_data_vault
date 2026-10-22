@@ -8244,6 +8244,17 @@
         const WD0 = 7 * 60;                       // 업무일 시작 07:00
         const LATE_GRACE = 10;                    // 종료 시각 + 10분이 지나도 미확인이면 '지연'
         const CAMPS = ['아산', '가평', '대관령', '진천', '파주LGD', '인력개발원', '충남대병원', 'LIT청주'];   // 사이트 점검 목록
+        // ── 사이트 점검 자동 확인 (정각에 숨김 iframe 으로 NCC 를 열어 확인) ──
+        //  id = NCC 주소 번호 · mode 'any' = 기체 중 하나라도 '전원 켜짐 + 임무관리 ON' 이면 OK / mode 'chg' = 전원 ON + 충전중(⚡) + 배터리 수치가 보이면 OK
+        //  stopOnOk = 한 번이라도 OK 면 그날은 더 점검하지 않음 · slots = 점검 시각(정각) — 시각이 지났는데 안 했으면 CAMP_MAX_LATE 안에서만 따라잡음
+        const CAMP_SLOTS_AG = ['10:00', '12:00', '14:00', '16:00', '17:30'];
+        const CAMP_AUTO = {
+            '아산': { id: 27, mode: 'any', stopOnOk: true, slots: CAMP_SLOTS_AG, units: ['스테이 그린 1호기', '스테이 그린 2호기'] },
+            '가평': { id: 47, mode: 'any', stopOnOk: true, slots: CAMP_SLOTS_AG, units: ['가평 니모 캠핑장 1호기', '가평 니모 캠핑장 2호기'] },
+            'LIT청주': { id: 267, mode: 'chg', stopOnOk: false, slots: ['10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '17:30'], units: ['두루아이 4호기'] },
+        };
+        const CAMP_MAX_LATE = 30 * 60 * 1000;     // 점검 시각에서 이만큼 지나 처음 보게 되면 그 회차는 건너뜀 (아산·가평은 오늘 한 번도 못 했으면 90분까지 따라잡음)
+        const CAMP_RETRY_MS = 3 * 60 * 1000;      // 페이지를 못 읽은 경우(로딩 실패 등)만 한 번 더 확인하기까지
         const DAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
         // ───────── 임무 ON/OFF 자동 점검 설정 (여기만 고치면 됩니다) ─────────
@@ -8512,6 +8523,12 @@
         #bb .bba-cb.on { background:#d6f5e3; border-color:#8fd3ac; color:#14532d; }
         #bb .bba-cb.on i { background:#22a05a; border-color:#22a05a; color:#fff; }
         #bb .bba-cb .t { font-weight:400 !important; }
+        #bb .bba-cb.bad { background:#fdecea; border-color:#e8a29f; color:#9b1c18; }
+        #bb .bba-cb.bad i { background:#d93a35; border-color:#d93a35; color:#fff; font-size:12px; }
+        #bb .bba-cb.manfail { background:#fff4c2; border-color:#e6c04a; color:#6b4f00; }
+        #bb .bba-cb.manfail i { background:#f2b705; border-color:#d49b00; color:#fff; }
+        #bb .bba-cb.run { border-style:dashed; color:var(--mu); }
+        #bb .bba-cb.run i { color:var(--mu); }
         #bb .bba-memo { display:flex; flex-direction:column; flex:1; min-height:0; padding:8px 10px; gap:4px; }
         #bb .bba-memo textarea { flex:1; min-height:0; resize:none; border:1.5px solid var(--bd2); border-radius:8px; background:var(--sur2); color:var(--tx); padding:8px 10px; line-height:1.5; font-family:inherit; font-size:15.5px; box-sizing:border-box; }
         #bb .bba-memo textarea:focus { outline:2px solid #3b82f6; outline-offset:1px; }
@@ -8894,7 +8911,7 @@
         function workDay() { const d = new Date(); if (nowMin() < WD0) d.setDate(d.getDate() - 1); return d; }
         const wdKey = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
         const rel = m => (m - WD0 + 1440) % 1440;
-        let curKey = '', chk = {}, camp = {}, auto = {};
+        let curKey = '', chk = {}, camp = {}, auto = {}, campAuto = {};
         function loadDay() {
             const k = wdKey(workDay());
             if (k === curKey) return false;
@@ -8903,12 +8920,13 @@
             try { camp = JSON.parse(lsGet('bba_camp_' + k, '{}')) || {}; } catch (e) { camp = {}; }
             try { const LEG = { '아산 스테이그린': '아산', '가평 니모': '가평', '대관령 솔내음': '대관령', '파주 LGD': '파주LGD', '진천 힐사이드': '진천' }; Object.keys(LEG).forEach(o => { if (camp[o]) { if (!camp[LEG[o]]) camp[LEG[o]] = camp[o]; delete camp[o]; } }); } catch (e) { /* 무시 */ }   // 이름을 줄이기 전에 눌러 둔 오늘 기록 이어받기
             try { auto = JSON.parse(lsGet('bba_auto_' + k, '{}')) || {}; } catch (e) { auto = {}; }
+            try { campAuto = JSON.parse(lsGet('bba_campauto_' + k, '{}')) || {}; } catch (e) { campAuto = {}; }
             try { migrateIds(); } catch (e) { /* 무시 */ }
             try {   // 지난 업무일 기록 정리 (최근 3일만 유지)
                 const keep = new Date(k).getTime();
                 for (let i = localStorage.length - 1; i >= 0; i--) {
                     const key = localStorage.key(i) || '';
-                    const m = /^bba_(?:chk|camp|auto)_(\d{4}-\d{2}-\d{2})$/.exec(key);
+                    const m = /^bba_(?:chk|camp|auto|campauto)_(\d{4}-\d{2}-\d{2})$/.exec(key);
                     if (m && keep - new Date(m[1]).getTime() > 3 * 864e5) localStorage.removeItem(key);
                 }
             } catch (e) { /* 무시 */ }
@@ -9166,17 +9184,17 @@
                         units.forEach(u => {
                             if (!cardMatches(txt, u)) return;
                             const sw = card.querySelector('[data-qk="mission-available-switch"]');
-                            const on = sw ? readSwitch(sw) : null, pw = readPower(card), pg = S.prog || S.chg ? readProgress(card) : undefined, cg = S.chg ? readCharge(card) : null, ch = cg ? cg.ch : undefined, bat = cg ? cg.bat : undefined;
+                            const on = sw ? readSwitch(sw) : null, pw = readPower(card), pg = S.prog || S.chg ? readProgress(card) : undefined, cg = S.chg || S.rch ? readCharge(card) : null, ch = cg ? cg.ch : undefined, bat = cg ? cg.bat : undefined;
                             const c = seen[u.n];
                             if (!c) seen[u.n] = { on, pw, pg, ch, bat, row: cg ? cg.row : '', since: now, at: now };
                             else if (c.on !== on || c.pw !== pw || c.pg !== pg || c.ch !== ch || c.bat !== bat) { c.on = on; c.pw = pw; c.pg = pg; c.ch = ch; c.bat = bat; c.row = cg ? cg.row : ''; c.since = now; }
                         });
                     });
-                    const okVal = c => (S.prog || S.chg ? true : c.on !== null);   // 임무 진행 확인형 사이트는 스위치 값이 필요 없음
+                    const okVal = c => (S.prog || S.chg || S.rch ? true : c.on !== null);   // 임무 진행 확인형 사이트는 스위치 값이 필요 없음
                     const need = units.filter(u => !(seen[u.n] && okVal(seen[u.n])));
                     const ready = units.every(u => {
                         const c = seen[u.n]; if (!c || !okVal(c)) return false;
-                        const stab = S.prog && c.pg === '' ? 4000 : S.chg && c.pw === true && !c.ch ? 3500 : PROBE_STABLE_MS;   // 아직 값이 안 채워졌을 수 있는 경우(진행 비어 있음 / 켜짐인데 ⚡ 없음)는 더 오래 같아야 확정   // '비어 있음'은 아직 안 채워진 것일 수 있어 더 오래 같은 값이어야 확정
+                        const stab = S.prog && c.pg === '' ? 4000 : (S.chg || S.rch) && c.pw === true && !c.ch ? 3500 : PROBE_STABLE_MS;   // 아직 값이 안 채워졌을 수 있는 경우(진행 비어 있음 / 켜짐인데 ⚡ 없음)는 더 오래 같아야 확정   // '비어 있음'은 아직 안 채워진 것일 수 있어 더 오래 같은 값이어야 확정
                         const loaded = S.prog ? c.pg !== null : c.pw !== null;
                         return now - c.since >= stab && (loaded || now - c.at > 4500);
                     });
@@ -9344,6 +9362,7 @@
                 if (S.chg && ci >= 1) {   // 충전 점검 사이사이: 그동안 시각이 된 일반 업무가 있으면 그것부터 먼저 점검
                     try { const pk = pickDue(Date.now()), ex = pk.out.filter(x => !x.t.chg && !batchIds.has(x.t.id)); if (ex.length) { ex.forEach(x => batchIds.add(x.t.id)); await runBatch(ex, pk.active); } }
                     catch (e) { console.warn('[BBA] 충전 점검 중 일반 점검 실패:', e && e.message); }
+                    try { await campCheck(); } catch (e) { console.warn('[BBA] 충전 점검 중 사이트 점검 실패:', e && e.message); }
                 }
                 curSiteTxt = S.chg ? '충전 ' + (++ci) + '/' + cn + ' · ' + S.label : S.k;
                 lockTake(run.map(r => r.it.t.id), S.k); drawAutoPill(); if (!S.chg || ci === 1) renderTasks();
@@ -9356,11 +9375,11 @@
             finish(regDone ? run.filter(r => r.it.t.chg) : run);
         }
         async function autoTick() {
-            if (autoBusy || !tasks.length) return;
-            if (!autoEnabled() && !forced.size) { drawAutoPill(); return; }
+            if (autoBusy) return;
+            if (!autoEnabled() && !forced.size && !campForce.size) { drawAutoPill(); return; }
             autoBusy = true;
             try {
-                for (let guard = 0; guard < 8; guard++) {
+                for (let guard = 0; guard < 8 && tasks.length; guard++) {
                     const { out, active } = pickDue(Date.now());
                     const list = autoEnabled() ? out : out.filter(x => x.force);
                     if (!list.length) break;
@@ -9371,6 +9390,7 @@
                         list.forEach(x => { forced.delete(x.t.id); autoPut(x.t.id, { st: 'fail', n: AUTO_MAX_TRIES, at: Date.now(), due: x.due, det: [], msg: '점검 중 오류: ' + (e && e.message) }); });
                     }
                 }
+                try { await campCheck(); } catch (e) { console.warn('[BBA] 사이트 점검 실패:', e && e.message); }
             } finally { autoBusy = false; curSiteTxt = ''; lockFree(); renderTasks(); }
         }
         function drawAutoPill() {
@@ -9386,6 +9406,10 @@
                     const at = a && a.st === 'retry' ? a.next : x.due;
                     if (at > now - 1 && (nx === null || at < nx)) { nx = at; nm = x.t.body.slice(0, 12); }
                 });
+                try {   // 사이트 점검(캠핑장)의 다음 정각 시각도 후보에 넣음
+                    reloadCampAuto(); const wd = workDay();
+                    Object.keys(CAMP_AUTO).forEach(c => { const cf = CAMP_AUTO[c], r = campAuto[c] || {}; if (cf.stopOnOk && r.done) return; cf.slots.forEach(sl => { const p = sl.split(':'), t = new Date(wd.getFullYear(), wd.getMonth(), wd.getDate(), +p[0], +p[1]).getTime(); if (t > now - 1 && (nx === null || t < nx)) { nx = t; nm = '사이트 ' + c; } }); });
+                } catch (e) { /* 무시 */ }
                 txt = nx ? '🔍 다음 점검 ' + hmOf(nx) : '🔍 자동점검 대기';
                 if (nx) ttl += '\n다음: ' + hmOf(nx) + ' ' + nm;
             }
@@ -9590,18 +9614,116 @@
         document.addEventListener('mousedown', e => { if (popTask && !pop.contains(e.target) && !(e.target.closest && e.target.closest('.bba-row.auto'))) closePop(); }, true);
         document.addEventListener('keydown', e => { if (e.key === 'Escape' && popTask) closePop(); });
 
-        // ───────── 캠핑장 점검 ─────────
+        // ───────── 사이트 점검 (캠핑장) — 직접 체크 + 정각 자동 확인 ─────────
+        //  표시: 자동 확인 성공 = 초록 ✓ · 자동 확인 실패 = 빨강 ✕ · 실패한 것을 직접 확인해 누르면 노란 ✓ (다음 점검 시각에 자동 확인이 다시 덮어씀)
+        const campForce = new Set(); let campBusy = false;
+        function reloadCampAuto() { try { campAuto = JSON.parse(lsGet('bba_campauto_' + curKey, '{}')) || {}; } catch (e) { /* 그대로 */ } }
+        function campPut(c, rec) { reloadCampAuto(); campAuto[c] = rec; lsSet('bba_campauto_' + curKey, JSON.stringify(campAuto)); }
+        const campSites = {};
+        function campSite(c) {
+            const cf = CAMP_AUTO[c];
+            return campSites[c] || (campSites[c] = { k: '사이트 ' + c, id: cf.id, rch: cf.mode === 'chg', units: cf.units.map(n => U(n)) });
+        }
+        function campView(c) {   // → { cls, box, t, ttl, done }
+            const r = campAuto[c] || null, cur = r && r.cur, o = { cls: '', box: '✓', t: '', ttl: '', done: false };
+            const hist = r && r.slots ? Object.keys(r.slots).sort().map(sl => { const x = r.slots[sl]; return sl + ' ' + (x.st === 'ok' ? '✓ 정상' + (x.bat != null ? ' · 배터리 ' + x.bat + '%' : '') : x.st === 'retry' ? '↻ 읽지 못해 ' + hmOf(x.next) + ' 재확인' : '✕ ' + (x.msg || '확인 실패')); }).join('\n') : '';
+            if (cur && cur.st === 'fail') {
+                if (r.man) { o.cls = ' on manfail'; o.t = r.man; o.done = true; o.ttl = '직접 확인함 (자동 확인은 ' + hmOf(cur.at) + ' 실패: ' + (cur.msg || '') + ') — 누르면 해제'; }
+                else { o.cls = ' bad'; o.box = '✕'; o.t = hmOf(cur.at); o.ttl = '자동 확인 실패 (' + hmOf(cur.at) + '): ' + (cur.msg || '') + ' — 직접 확인한 뒤 누르면 노란 체크'; }
+            } else if (cur && cur.st === 'ok' && !r.clr && !camp[c]) {
+                o.cls = ' on byauto'; o.t = hmOf(cur.at) + (cur.bat != null ? ' · ' + cur.bat + '%' : ''); o.done = true; o.ttl = '자동 확인 정상 (' + hmOf(cur.at) + ') — 누르면 해제';
+            } else if (camp[c]) { o.cls = ' on'; o.t = camp[c]; o.done = true; o.ttl = '직접 확인함 — 누르면 해제'; }
+            else if (cur && cur.st === 'ok') o.ttl = '자동 확인 정상이었지만 해제됨 — 누르면 복원';
+            if (CAMP_AUTO[c]) o.ttl = (o.ttl ? o.ttl + '\n' : '') + (CAMP_AUTO[c].stopOnOk ? '자동 확인: ' : '자동 확인(매 회차): ') + CAMP_AUTO[c].slots.join(' · ') + (hist ? '\n' + hist : '');
+            return o;
+        }
         function drawCamp() {
-            $('bba-camp').innerHTML = CAMPS.map((c, i) =>
-                '<button class="bba-cb' + (camp[c] ? ' on' : '') + '" data-c="' + i + '" aria-pressed="' + !!camp[c] + '"><i>✓</i>' + esc(c) + (camp[c] ? ' <span class="t">' + esc(camp[c]) + '</span>' : '') + '</button>').join('');
-            $('bba-campn').textContent = '점검 ' + CAMPS.filter(c => camp[c]).length + '/' + CAMPS.length + ' · 매일 07:00 초기화';
+            reloadCampAuto();
+            const runIds = runningIds(); let nDone = 0;
+            $('bba-camp').innerHTML = CAMPS.map((c, i) => {
+                const o = campView(c), run = runIds.includes('camp:' + c) && !o.done;
+                if (o.done) nDone++;
+                return '<button class="bba-cb' + o.cls + (run ? ' run' : '') + '" data-c="' + i + '" aria-pressed="' + o.done + '" title="' + esc(run ? '자동 확인 중…' : o.ttl) + '"><i>' + (run ? '…' : o.box) + '</i>' + esc(c) + (o.t && !run ? ' <span class="t">' + esc(o.t) + '</span>' : '') + '</button>';
+            }).join('');
+            $('bba-campn').textContent = '점검 ' + nDone + '/' + CAMPS.length + ' · 매일 07:00 초기화';
         }
         $('bba-camp').addEventListener('click', e => {
             const b = e.target.closest('.bba-cb'); if (!b) return;
-            const c = CAMPS[+b.dataset.c];
-            if (camp[c]) delete camp[c]; else { const d = new Date(); camp[c] = pad(d.getHours()) + ':' + pad(d.getMinutes()); }
-            lsSet('bba_camp_' + curKey, JSON.stringify(camp)); drawCamp();
+            const c = CAMPS[+b.dataset.c], d = new Date(), now = pad(d.getHours()) + ':' + pad(d.getMinutes());
+            reloadCampAuto(); const r = campAuto[c], cur = r && r.cur;
+            if (cur && cur.st === 'fail') { if (r.man) delete r.man; else r.man = now; campPut(c, r); }   // 자동 확인이 실패한 곳을 직접 확인 → 노란 체크
+            else if (cur && cur.st === 'ok' && !camp[c]) { if (r.clr) delete r.clr; else r.clr = 1; campPut(c, r); }   // 자동 확인된 것: 해제 ↔ 복원
+            else { if (camp[c]) delete camp[c]; else camp[c] = now; lsSet('bba_camp_' + curKey, JSON.stringify(camp)); }
+            drawCamp();
         });
+        function campDue(now) {   // 지금 점검해야 할 사이트 (정각 회차)
+            reloadCampAuto();
+            const wd = workDay(), y = wd.getFullYear(), mo = wd.getMonth(), dd = wd.getDate(), out = [], on = autoEnabled();
+            Object.keys(CAMP_AUTO).forEach(c => {
+                const cf = CAMP_AUTO[c], r = campAuto[c] || {};
+                if (campForce.has(c)) { out.push({ c, slot: hmOf(now), forced: true }); return; }
+                if (!on || (cf.stopOnOk && r.done)) return;
+                const past = cf.slots.map(sl => { const p = sl.split(':'); return { sl, t: new Date(y, mo, dd, +p[0], +p[1]).getTime() }; }).filter(x => x.t <= now);
+                if (!past.length) return;
+                const L = past[past.length - 1], rs = r.slots && r.slots[L.sl];
+                if (rs) { if (rs.st === 'retry' && now >= rs.next) out.push({ c, slot: L.sl, retry: true }); return; }
+                const noTry = !r.slots || !Object.keys(r.slots).length;
+                if (now - L.t <= CAMP_MAX_LATE || (cf.stopOnOk && noTry && now - L.t <= 90 * 60 * 1000)) out.push({ c, slot: L.sl });
+            });
+            return out;
+        }
+        const shortU = n => n.replace(/^.*?(\d+호기)$/, '$1');
+        function campEval(c, R) {   // → { st:'ok'|'fail'|'err', msg, bat }
+            const cf = CAMP_AUTO[c];
+            if (!R || R.err) return { st: 'err', msg: ERR_TXT[R && R.err] || (R && R.err) || ERR_TXT.noread };
+            const U0 = campSite(c).units, rd = U0.map(u => ({ n: u.n, x: R.units[u.n] }));
+            if (cf.mode === 'chg') {
+                const x = rd[0] && rd[0].x;
+                if (!x || !x.found) return { st: 'err', msg: '기체 카드를 찾지 못함' };
+                if (x.pw === null || x.pw === undefined) return { st: 'err', msg: '전원 상태를 읽지 못함' };
+                const bat = x.bat !== null && x.bat !== undefined ? x.bat : null;
+                if (x.pw === false) return { st: 'fail', msg: '전원 꺼짐' + (bat !== null ? ' · 배터리 ' + bat + '%' : ''), bat };
+                if (bat === null) return { st: 'fail', msg: '켜짐 · 배터리 수치를 읽지 못함' + (x.ch ? ' (⚡ 있음)' : ''), bat };
+                if (!x.ch) return { st: 'fail', msg: '켜짐 · 충전 표시(⚡) 없음 · 배터리 ' + bat + '%', bat };
+                return { st: 'ok', msg: '', bat };
+            }
+            const found = rd.filter(d => d.x && d.x.found);
+            if (!found.length) return { st: 'err', msg: '기체 카드를 찾지 못함' };
+            const good = found.find(d => d.x.pw === true && d.x.on === true);
+            if (good) return { st: 'ok', msg: '', unit: good.n };
+            if (found.some(d => d.x.pw === null || d.x.pw === undefined || d.x.on === null || d.x.on === undefined)) return { st: 'err', msg: '전원/임무관리 상태를 읽지 못함' };
+            return { st: 'fail', msg: rd.map(d => shortU(d.n) + ' ' + (!d.x || !d.x.found ? '카드 없음' : d.x.pw === false ? '전원 꺼짐' : '전원 켜짐 · 임무관리 OFF')).join(' / ') };
+        }
+        async function campRun(list) {
+            const ids = list.map(x => 'camp:' + x.c);
+            for (const it of list) {
+                const cf = CAMP_AUTO[it.c], S = campSite(it.c);
+                lockTake(ids, S.k); curSiteTxt = S.k; drawAutoPill(); drawCamp();
+                let R; try { R = await probeSite(S, S.units); } catch (e) { R = { err: 'noread', units: {}, cards: 0 }; console.warn('[BBA] 사이트 점검 오류:', e && e.message); }
+                const res = campEval(it.c, R);
+                reloadCampAuto();
+                const r = campAuto[it.c] || {}; r.slots = r.slots || {};
+                const prev = r.slots[it.slot] || { tries: 0 }, fin = Date.now();
+                const s = { tries: (prev.tries || 0) + 1, at: fin, st: '', msg: res.msg || '', bat: res.bat !== undefined ? res.bat : null };
+                if (res.st === 'err' && s.tries < 2 && !it.forced) { s.st = 'retry'; s.next = fin + CAMP_RETRY_MS; }   // 읽지 못한 경우만 한 번 더
+                else {
+                    s.st = res.st === 'ok' ? 'ok' : 'fail';
+                    r.cur = { slot: it.slot, st: s.st, at: fin, msg: s.msg, bat: s.bat };
+                    delete r.man; delete r.clr;   // 새 점검 결과가 나오면 지난 직접 체크 표시는 지우고 자동 결과로 덮어씀
+                    if (camp[it.c]) { delete camp[it.c]; lsSet('bba_camp_' + curKey, JSON.stringify(camp)); }
+                    if (s.st === 'ok' && cf.stopOnOk) r.done = true;
+                }
+                r.slots[it.slot] = s; campPut(it.c, r); campForce.delete(it.c);
+                console.log('[BBA] 사이트 점검', it.c, it.slot, s.st, s.msg || '');
+                drawCamp(); await sleep(800);
+            }
+            curSiteTxt = '';
+        }
+        async function campCheck() {
+            if (campBusy) return; const list = campDue(Date.now()); if (!list.length) return;
+            campBusy = true;
+            try { if (!lockTake(list.map(x => 'camp:' + x.c), '')) return; await campRun(list); } finally { campBusy = false; lockFree(); drawAutoPill(); drawCamp(); }
+        }
 
         // ───────── HW / SW 이슈 (자유 텍스트, 자동 저장) ─────────
         ['hw', 'sw'].forEach(id => {
@@ -10174,6 +10296,8 @@
             state: () => { reloadAuto(); return JSON.parse(JSON.stringify(auto)); },
             list: () => buildAll().map(x => ({ 시각: x.t.head, 업무: x.t.body, 점검: hmOf(x.due), 기체: x.e.u.map(u => u.n + ' ' + wTxt(u.w)).join(', '), 사용: x.e.on })),
             run: q => { const t = tasks.find(x => x.auto && (x.head + x.body).includes(q)); if (!t) return '일치하는 점검 업무 없음'; forced.add(t.id); autoTick(); return t.head + ' ' + t.body; },
+            camp: c => { if (!CAMP_AUTO[c]) return '등록된 사이트 점검이 아님: ' + Object.keys(CAMP_AUTO).join(', '); campForce.add(c); autoTick(); return c + ' 지금 점검'; },
+            campState: () => JSON.parse(JSON.stringify(campAuto)),
             reset: () => { try { localStorage.removeItem(autoKey()); } catch (e) { /* 무시 */ } reloadAuto(); renderTasks(); },
             probe: id => { const S = AUTO_SITES.find(x => x.id === +id); return S ? probeSite(S, S.units) : '등록된 사이트 번호가 아님'; },
         };
