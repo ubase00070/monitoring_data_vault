@@ -1,6 +1,149 @@
 {
-  "updatedAt": "2026-10-22 15:54:46",
+  "updatedAt": "2026-10-22 16:09:45",
   "recentHistory": [
+    {
+      "at": "2026-10-22 16:09:45",
+      "changes": [
+        {
+          "type": "변경",
+          "site": "수원센트럴 2",
+          "status": "uncertain",
+          "reason": "변경"
+        },
+        {
+          "type": "변경",
+          "site": "수원센트럴 2",
+          "status": "uncertain",
+          "reason": "변경"
+        },
+        {
+          "type": "추가",
+          "site": "[자동출차] 더샵지제역센트럴파크 1호기",
+          "status": "uncertain",
+          "reason": "[추가] 12:00 - [12:00] [자동출차] 더샵지제역센트럴파크 1호기 - 순찰"
+        },
+        {
+          "type": "추가",
+          "site": "[자동출차] 더샵지제역센트럴파크 2호기",
+          "status": "uncertain",
+          "reason": "[추가] 12:00 - [12:00] [자동출차] 더샵지제역센트럴파크 2호기 - 순찰"
+        },
+        {
+          "type": "변경",
+          "site": "수원센트럴 2",
+          "status": "uncertain",
+          "reason": "변경"
+        },
+        {
+          "type": "추가",
+          "site": "[자동출차] 더샵지제역센트럴파크 1호기",
+          "status": "uncertain",
+          "reason": "[추가] 15:00 - [15:00] [자동출차] 더샵지제역센트럴파크 1호기 - 순찰"
+        },
+        {
+          "type": "추가",
+          "site": "[자동출차] 더샵지제역센트럴파크 2호기",
+          "status": "uncertain",
+          "reason": "[추가] 15:00 - [15:00] [자동출차] 더샵지제역센트럴파크 2호기 - 순찰"
+        },
+        {
+          "type": "변경",
+          "site": "수원센트럴 2",
+          "status": "uncertain",
+          "reason": "변경"
+        },
+        {
+          "type": "변경",
+          "site": "수원센트럴 2",
+          "status": "uncertain",
+          "reason": "변경"
+        },
+        {
+          "type": "변경",
+          "site": "수원센트럴 2",
+          "status": "uncertain",
+          "reason": "변경"
+        },
+        {
+          "type": "변경",
+          "site": "수원센트럴 2",
+          "status": "uncertain",
+          "reason": "변경"
+        },
+        {
+          "type": "추가",
+          "site": "[자동출차] 더샵지제역센트럴파크 1호기",
+          "status": "uncertain",
+          "reason": "[추가] 22:00 - [22:00] [자동출차] 더샵지제역센트럴파크 1호기 - 순찰"
+        },
+        {
+          "type": "추가",
+          "site": "[자동출차] 더샵지제역센트럴파크 2호기",
+          "status": "uncertain",
+          "reason": "[추가] 22:00 - [22:00] [자동출차] 더샵지제역센트럴파크 2호기 - 순찰"
+        },
+        {
+          "type": "변경",
+          "site": "수원센트럴 2",
+          "status": "uncertain",
+          "reason": "변경"
+        },
+        {
+          "type": "변경",
+          "site": "수원센트럴 2",
+          "status": "uncertain",
+          "reason": "변경"
+        },
+        {
+          "type": "추가",
+          "site": "[자동출차] 더샵지제역센트럴파크 1호기",
+          "status": "uncertain",
+          "reason": "[추가] 01:00 - [01:00] [자동출차] 더샵지제역센트럴파크 1호기 - 순찰"
+        },
+        {
+          "type": "추가",
+          "site": "[자동출차] 더샵지제역센트럴파크 2호기",
+          "status": "uncertain",
+          "reason": "[추가] 01:00 - [01:00] [자동출차] 더샵지제역센트럴파크 2호기 - 순찰"
+        },
+        {
+          "type": "변경",
+          "site": "수원센트럴 2",
+          "status": "uncertain",
+          "reason": "변경"
+        },
+        {
+          "type": "변경",
+          "site": "수원센트럴 2",
+          "status": "uncertain",
+          "reason": "변경"
+        },
+        {
+          "type": "변경",
+          "site": "수원센트럴 2",
+          "status": "uncertain",
+          "reason": "변경"
+        },
+        {
+          "type": "추가",
+          "site": "[자동출차] 더샵지제역센트럴파크 1호기",
+          "status": "uncertain",
+          "reason": "[추가] 04:00 - [04:00] [자동출차] 더샵지제역센트럴파크 1호기 - 순찰"
+        },
+        {
+          "type": "추가",
+          "site": "[자동출차] 더샵지제역센트럴파크 2호기",
+          "status": "uncertain",
+          "reason": "[추가] 04:00 - [04:00] [자동출차] 더샵지제역센트럴파크 2호기 - 순찰"
+        },
+        {
+          "type": "변경",
+          "site": "[상태변경] 수원센트럴 2: suspended → active",
+          "status": "uncertain",
+          "reason": "[상태변경] 수원센트럴 2: suspended → active"
+        }
+      ]
+    },
     {
       "at": "2026-10-22 15:54:46",
       "changes": [
@@ -393,53 +536,6 @@
           "reason": "변경"
         }
       ]
-    },
-    {
-      "at": "2026-10-21 16:39:45",
-      "changes": [
-        {
-          "type": "변경",
-          "site": "덕수궁",
-          "status": "suspended",
-          "reason": "변경"
-        },
-        {
-          "type": "변경",
-          "site": "덕수궁",
-          "status": "suspended",
-          "reason": "변경"
-        },
-        {
-          "type": "변경",
-          "site": "덕수궁",
-          "status": "suspended",
-          "reason": "변경"
-        },
-        {
-          "type": "변경",
-          "site": "덕수궁",
-          "status": "suspended",
-          "reason": "변경"
-        },
-        {
-          "type": "변경",
-          "site": "덕수궁",
-          "status": "suspended",
-          "reason": "변경"
-        },
-        {
-          "type": "변경",
-          "site": "덕수궁",
-          "status": "suspended",
-          "reason": "변경"
-        },
-        {
-          "type": "변경",
-          "site": "덕수궁",
-          "status": "uncertain",
-          "reason": "[상태변경] 덕수궁: active → suspended"
-        }
-      ]
     }
   ],
   "patrol_schedule": {
@@ -476,7 +572,7 @@
       },
       {
         "task": "[07:00] 수원 센트럴아이파크자이 2호기 - 순찰 B코스",
-        "note": "순찰중단(캘리)",
+        "note": "",
         "dispatchTag": "예약 배차"
       },
       {
@@ -697,7 +793,7 @@
       },
       {
         "task": "[10:00] 수원 센트럴아이파크자이 2호기 - 10분 전 출차 및 순찰 B코스",
-        "note": "순찰중단(캘리)",
+        "note": "",
         "dispatchTag": "예약 배차"
       },
       {
@@ -805,6 +901,16 @@
         "dispatchTag": ""
       },
       {
+        "task": "[12:00] [자동출차] 더샵지제역센트럴파크 1호기 - 순찰",
+        "note": "",
+        "dispatchTag": ""
+      },
+      {
+        "task": "[12:00] [자동출차] 더샵지제역센트럴파크 2호기 - 순찰",
+        "note": "",
+        "dispatchTag": ""
+      },
+      {
         "task": "[12:15] [자동출차] 한국장애인고용공단 자체순찰02 (빅웨이브) - 순찰 [평일]",
         "note": "",
         "dispatchTag": ""
@@ -873,7 +979,7 @@
       },
       {
         "task": "[13:00] 수원 센트럴아이파크자이 2호기 - 10분 전 출차 및 순찰 B코스",
-        "note": "순찰중단(캘리)",
+        "note": "",
         "dispatchTag": "예약 배차"
       },
       {
@@ -1021,6 +1127,16 @@
         "dispatchTag": ""
       },
       {
+        "task": "[15:00] [자동출차] 더샵지제역센트럴파크 1호기 - 순찰",
+        "note": "",
+        "dispatchTag": ""
+      },
+      {
+        "task": "[15:00] [자동출차] 더샵지제역센트럴파크 2호기 - 순찰",
+        "note": "",
+        "dispatchTag": ""
+      },
+      {
         "task": "[15:30] [자동출차] 한국장애인고용공단 자체순찰01 (빅웨이브) - 순찰 [평일]",
         "note": "",
         "dispatchTag": ""
@@ -1139,7 +1255,7 @@
       },
       {
         "task": "[16:00] 수원 센트럴아이파크자이 2호기 - 10분 전 출차 및 순찰 B코스",
-        "note": "순찰중단(캘리)",
+        "note": "",
         "dispatchTag": "예약 배차"
       }
     ],
@@ -1228,7 +1344,7 @@
       },
       {
         "task": "[18:50] 수원 센트럴아이파크자이 2호기 - 출차",
-        "note": "순찰중단(캘리)",
+        "note": "",
         "dispatchTag": ""
       },
       {
@@ -1295,7 +1411,7 @@
       },
       {
         "task": "[19:00] 수원 센트럴아이파크자이 2호기 - 10분 전 출차 및 순찰 B코스",
-        "note": "순찰중단(캘리)",
+        "note": "",
         "dispatchTag": "예약 배차"
       },
       {
@@ -1464,7 +1580,7 @@
       },
       {
         "task": "[21:50] 수원 센트럴아이파크자이 2호기 - 출차",
-        "note": "순찰중단(캘리)",
+        "note": "",
         "dispatchTag": ""
       }
     ],
@@ -1491,6 +1607,16 @@
       },
       {
         "task": "[22:00] [자동출차] 고양시 래미안 휴레스트 1호기 - 순찰",
+        "note": "",
+        "dispatchTag": ""
+      },
+      {
+        "task": "[22:00] [자동출차] 더샵지제역센트럴파크 1호기 - 순찰",
+        "note": "",
+        "dispatchTag": ""
+      },
+      {
+        "task": "[22:00] [자동출차] 더샵지제역센트럴파크 2호기 - 순찰",
         "note": "",
         "dispatchTag": ""
       },
@@ -1566,7 +1692,7 @@
       },
       {
         "task": "[22:00] 수원 센트럴아이파크자이 2호기 - 순찰 B코스",
-        "note": "순찰중단(캘리)",
+        "note": "",
         "dispatchTag": "예약 배차"
       }
     ],
@@ -1705,7 +1831,7 @@
       },
       {
         "task": "[00:50] 수원 센트럴아이파크자이 2호기 - 출차",
-        "note": "순찰중단(캘리)",
+        "note": "",
         "dispatchTag": ""
       },
       {
@@ -1756,6 +1882,16 @@
         "dispatchTag": ""
       },
       {
+        "task": "[01:00] [자동출차] 더샵지제역센트럴파크 1호기 - 순찰",
+        "note": "",
+        "dispatchTag": ""
+      },
+      {
+        "task": "[01:00] [자동출차] 더샵지제역센트럴파크 2호기 - 순찰",
+        "note": "",
+        "dispatchTag": ""
+      },
+      {
         "task": "[01:00] 쉴더스_롯데마트부산CFC - 순찰",
         "note": "",
         "dispatchTag": "예약 배차"
@@ -1782,7 +1918,7 @@
       },
       {
         "task": "[01:00] 수원 센트럴아이파크자이 2호기 - 순찰 B코스",
-        "note": "순찰중단(캘리)",
+        "note": "",
         "dispatchTag": "예약 배차"
       },
       {
@@ -1894,7 +2030,7 @@
       },
       {
         "task": "[02:50] 수원 센트럴아이파크자이 2호기 - 출차",
-        "note": "순찰중단(캘리)",
+        "note": "",
         "dispatchTag": ""
       },
       {
@@ -1991,7 +2127,7 @@
       },
       {
         "task": "[03:00] 수원 센트럴아이파크자이 2호기 - 순찰 B코스",
-        "note": "순찰중단(캘리)",
+        "note": "",
         "dispatchTag": "예약 배차"
       },
       {
@@ -2023,6 +2159,16 @@
       },
       {
         "task": "[04:00] [자동출차] 고양시 래미안 휴레스트 1호기 - 순찰",
+        "note": "",
+        "dispatchTag": ""
+      },
+      {
+        "task": "[04:00] [자동출차] 더샵지제역센트럴파크 1호기 - 순찰",
+        "note": "",
+        "dispatchTag": ""
+      },
+      {
+        "task": "[04:00] [자동출차] 더샵지제역센트럴파크 2호기 - 순찰",
         "note": "",
         "dispatchTag": ""
       },
@@ -2126,343 +2272,343 @@
     "서강대": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "성남 율동": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "성남 야탑": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "용인 고진": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "경희대 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "수원센트럴 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "수원센트럴 2": {
-      "status": "suspended",
-      "reason": "캘리",
-      "updatedAt": "2026-10-22 15:54:46",
+      "status": "active",
+      "reason": "",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "수원 힐스 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "수원 힐스 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "부산 호반 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "부산 수자인 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "구리 롯데캐슬": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "양원LH": {
       "status": "suspended",
       "reason": "전면부파손",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "장애인고용공단 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "장애인고용공단 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "파주": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "리센츠 1": {
       "status": "suspended",
       "reason": "타이어 마모",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "리센츠 2": {
       "status": "suspended",
       "reason": "타이어 마모",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "평택 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "평택 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "DMZ": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "부산 서면": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "부천 위브": {
       "status": "suspended",
       "reason": "타이어 및 구동부이슈",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "성남 판교": {
       "status": "suspended",
       "reason": "타이어마모",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "부산 호반 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "부산 수자인 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "고양 래미안": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "성남 서현": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "잠실 레이크": {
       "status": "suspended",
       "reason": "타이어 마모",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "덕수궁": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "동대문구 회기동": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "순천향": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "강동현대홈타운": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "인력개발원": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "엘스": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "한성대": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "창원대 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "창원대 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "김포 풍무": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "부경대": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "김포 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "김포 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "더샵남천": {
       "status": "suspended",
       "reason": "27일까지 아파트 공사",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "지제": {
       "status": "suspended",
       "reason": "목업파손",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "두루아이 5": {
       "status": "suspended",
       "reason": "타이어 마모",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "두루아이 4": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "중앙대": {
       "status": "active",
       "reason": "두루아이2호기 대체순찰",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "잠실 르엘": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "동백SK": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "청담 르엘": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "전주천": {
       "status": "suspended",
       "reason": "기체이동",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "신동백": {
       "status": "uncertain",
       "reason": "임시코스",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "아주대 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "아주대 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "인재개발원": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "전주천(덕진구)": {
       "status": "suspended",
       "reason": "타이어교체",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     },
     "쉴더스": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-10-22 15:54:46",
+      "updatedAt": "2026-10-22 16:09:45",
       "syncIssue": false
     }
   }
