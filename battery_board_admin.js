@@ -8979,15 +8979,6 @@
             if (c1) lsSet('bba_chk_' + curKey, JSON.stringify(cs)); if (a1) lsSet('bba_auto_' + curKey, JSON.stringify(as));
             if (c1 || a1) { try { reloadChk(); reloadAuto(); } catch (e) { /* 무시 */ } }
         }
-        function homeDecide() {   // HOME 모드 + 그날 처음 불러왔을 때: 지금 자동 점검해야 하는 업무가 몰려 있으면(10개 이상) 오늘 자동 점검을 중단 (한 번 정하면 그날은 유지)
-            if (!homeOn()) return;
-            loadDay(); if (lsGet(homeKey(), '') !== '') return;
-            reloadChk(); reloadAuto();
-            const now = Date.now();
-            const n = buildAll().filter(x => x.e.on && x.e.u.length && x.due <= now && !chk[x.t.id] && !(auto[x.t.id] && ['ok', 'fail', 'sup'].includes(auto[x.t.id].st))).length;
-            lsSet(homeKey(), n >= HOME_MAX_PENDING ? '1' : '0');
-            console.log('[BBA] HOME 모드 — 지금 점검해야 할 업무 ' + n + '개 → 오늘 자동 점검 ' + (n >= HOME_MAX_PENDING ? '중단' : '계속'));
-        }
         let srcMsg = '';
         async function loadTasks() {
             try {
@@ -9008,7 +8999,6 @@
                 srcMsg = '업무표 불러오기 실패 — ' + (tasks.length ? '저장본 표시' : '데이터 없음');
                 console.warn('[BBA] daily_tasks.json 불러오기 실패:', e && e.message);
             }
-            try { homeDecide(); } catch (e) { console.warn('[BBA] HOME 모드 판단 실패:', e && e.message); }
             const el = $('bba-src'); if (el) el.textContent = srcMsg;
             renderTasks(); try { drawMmp(); } catch (e) { /* 아직 준비 전 */ }
             setTimeout(autoTick, 1500);   // 업무표를 새로 받았으면 점검할 것이 있는지 바로 확인
@@ -9067,15 +9057,7 @@
         function reloadAuto() { try { auto = JSON.parse(lsGet(autoKey(), '{}')) || {}; } catch (e) { auto = {}; } }
         function reloadChk() { try { chk = JSON.parse(lsGet('bba_chk_' + curKey, '{}')) || {}; } catch (e) { /* 그대로 */ } }
         function autoPut(id, rec) { reloadAuto(); if (rec === null) delete auto[id]; else auto[id] = rec; lsSet(autoKey(), JSON.stringify(auto)); }
-        // ───────── HOME 모드 (집 PC): 회사에서 이미 확인한 업무를 퇴근 후 집에서 다시 자동 점검하지 않도록 ─────────
-        //  제목 '관제 센터' 를 클릭 → 'home' 입력 → Enter 로 켜고 끔 (제목이 '관제 센터 Home' 으로 바뀜).
-        //  켜져 있으면: 그날 처음 업무표를 불러왔을 때 '지금 자동 점검해야 하는 업무'(시각이 지났는데 아직 확인 안 된 점검 업무)가 HOME_MAX_PENDING 개 이상 쌓여 있으면
-        //  (= 회사에서 이미 본 것을 퇴근 후 집에서 켜서 한꺼번에 다시 점검하려는 상황) 그날은 자동 점검을 중단. 오전부터 켜 둔 PC 는 쌓인 게 거의 없어서 그대로 점검함. 자동점검 알약을 누르면 다시 시작
-        const HOME_MAX_PENDING = 10;
-        const homeOn = () => lsGet('bba_home', '') === '1';
-        const homeKey = () => 'bba_homehalt_' + curKey;
-        const homeHalt = () => homeOn() && lsGet(homeKey(), '') !== '0';   // 아직 결정 전(''), 중단('1') 이면 점검 안 함 — '0' 이어야만 계속 점검
-        const autoEnabled = () => lsGet('bba_auto_on', '1') !== '0' && lsGet('bbaAutoOff', '') !== '1' && !homeHalt();
+        const autoEnabled = () => lsGet('bba_auto_on', '1') !== '0' && lsGet('bbaAutoOff', '') !== '1';
         const sleep = ms => new Promise(r => setTimeout(r, ms));
         // 여러 보드 탭이 같은 PC 에서 열려 있어도 점검 iframe 은 한 번에 하나만 (잠금은 localStorage, 150초 안 갱신되면 무효)
         const TABID = Math.random().toString(36).slice(2);
@@ -9164,7 +9146,22 @@
             if (doc.scrollingElement && doc.scrollingElement.scrollHeight > doc.scrollingElement.clientHeight + 8) out.push(doc.scrollingElement);
             return out;
         }
-        function probeSite(S, units) {   // → Promise<{err?, units:{[n]:{found,on,pw}}, names:[...]}>
+        // 점검 1건은 무슨 일이 있어도 PROBE_TIMEOUT_MS+15초 안에 끝낸다 (타이머 지연·iframe 멈춤 대비) + 진행 상황 표시용 기록
+        let probeInfo = null, lastBeat = Date.now();
+        function probeSite(S, units) {
+            const info = probeInfo = { k: S.k || S.label || String(S.id), t0: Date.now() }; lastBeat = info.t0;
+            return new Promise(resolve => {
+                let end = false;
+                const out = r => { if (end) return; end = true; clearTimeout(hard); lastBeat = Date.now(); if (probeInfo === info) probeInfo = null; resolve(r); };
+                const hard = setTimeout(() => {
+                    console.warn('[BBA] 점검 강제 종료(응답 없음):', info.k);
+                    try { document.querySelectorAll('iframe[title="bba-probe"]').forEach(x => x.remove()); } catch (e) { /* 무시 */ }
+                    out({ err: 'timeout', units: {}, names: [], cards: 0 });
+                }, PROBE_TIMEOUT_MS + 15000);
+                probeSite0(S, units).then(out, () => out({ err: 'noread', units: {}, names: [], cards: 0 }));
+            });
+        }
+        function probeSite0(S, units) {   // → Promise<{err?, units:{[n]:{found,on,pw}}, names:[...]}>
             return new Promise(resolve => {
                 const f = document.createElement('iframe');
                 f.setAttribute('aria-hidden', 'true'); f.tabIndex = -1; f.title = 'bba-probe';
@@ -9372,9 +9369,7 @@
             const batchIds = new Set(run.map(r => r.it.t.id));
             let regDone = false;
             let ci = 0; const cn = keys.filter(k => siteByKey(k).chg).length;
-            let homeAbort = false;
             for (const k of keys) {
-                if (homeHalt() && !run.some(r => r.it.force)) { homeAbort = true; break; }   // HOME 모드로 중단됨 — 남은 사이트는 보지 않음
                 const S = siteByKey(k);
                 if (S.chg && !regDone) {   // 일반 임무 점검 결과는 오래 걸리는 충전 점검을 기다리지 않고 먼저 확정
                     regDone = true; const reg = run.filter(r => !r.it.t.chg); if (reg.length) { finish(reg); renderTasks(); }
@@ -9392,13 +9387,19 @@
                 await sleep(800);
             }
             curSiteTxt = '';
-            if (homeAbort) { renderTasks(); return; }   // 끝까지 보지 못한 업무는 결과를 기록하지 않음
             finish(regDone ? run.filter(r => r.it.t.chg) : run);
         }
+        let busySince = 0;
         async function autoTick() {
-            if (autoBusy) return;
+            if (autoBusy && Date.now() - lastBeat > 150000) {   // 2분 반 동안 아무 진전이 없으면 멈춘 것으로 보고 풀어준다
+                console.warn('[BBA] 자동 점검이 멈춘 것으로 보여 초기화합니다');
+                try { document.querySelectorAll('iframe[title="bba-probe"]').forEach(x => x.remove()); } catch (e) { /* 무시 */ }
+                autoBusy = false; campBusy = false; probeInfo = null; curSiteTxt = ''; lockFree(); lsSet('bba_auto_lock', 'null'); forced.clear();
+                drawAutoPill(); renderTasks();
+            }
+            if (autoBusy) { drawAutoPill(); try { const l = lockGet(); if (l && l.tab === TABID) lsSet('bba_auto_lock', JSON.stringify(Object.assign(l, { t: Date.now() }))); } catch (e) { /* 무시 */ } return; }
             if (!autoEnabled() && !forced.size && !campForce.size) { drawAutoPill(); return; }
-            autoBusy = true;
+            autoBusy = true; lastBeat = Date.now();
             try {
                 for (let guard = 0; guard < 8 && tasks.length; guard++) {
                     const { out, active } = pickDue(Date.now());
@@ -9417,9 +9418,8 @@
         function drawAutoPill() {
             const el = $('bba-auto'); if (!el) return;
             let txt, cls = 'bba-pill au', ttl = '임무 ON/OFF 자동 점검 (클릭: 켜기/끄기). 업무 시각 +1분에 숨김 iframe 으로 NCC 사이트를 열어 기체의 임무받기 상태를 확인합니다.';
-            if (homeHalt()) { txt = '🏠 오늘 자동점검 중단'; cls += ' off'; ttl = 'HOME 모드: 불러왔을 때 점검해야 할 지난 업무가 ' + HOME_MAX_PENDING + '개 이상 쌓여 있어(회사에서 이미 확인한 것으로 봄) 오늘은 자동 점검을 하지 않습니다. 클릭하면 오늘 자동 점검을 다시 시작합니다.'; }
-            else if (!autoEnabled()) { txt = '⏸ 자동점검 꺼짐'; cls += ' off'; }
-            else if (autoBusy || runningIds().length) { txt = '🔍 점검 중' + (curSiteTxt ? ' · ' + curSiteTxt : ''); cls += ' run'; }
+            if (!autoEnabled()) { txt = '⏸ 자동점검 꺼짐'; cls += ' off'; }
+            else if (autoBusy || runningIds().length) { txt = '🔍 점검 중' + (curSiteTxt || probeInfo ? ' · ' + (probeInfo ? probeInfo.k + ' ' + Math.round((Date.now() - probeInfo.t0) / 1000) + '초' : curSiteTxt) : ''); cls += ' run'; }
             else {
                 reloadAuto(); const now = Date.now(); let nx = null, nm = '';
                 buildAll().forEach(x => {
@@ -9524,7 +9524,6 @@
         });
         $('bba-reload').addEventListener('click', () => loadTasks());
         $('bba-auto').addEventListener('click', () => {
-            if (homeHalt()) { lsSet(homeKey(), '0'); lsSet('bba_auto_on', '1'); drawAutoPill(); autoTick(); return; }   // HOME 모드에서 중단된 상태 → 오늘 다시 시작
             lsSet('bba_auto_on', autoEnabled() ? '0' : '1'); drawAutoPill(); if (autoEnabled()) autoTick();
         });
         window.addEventListener('storage', e => { if (e.key && /^bba_(chk|auto|auto_lock|auto_cfg|auto_on)/.test(e.key)) { clearTimeout(storT); storT = setTimeout(() => renderTasks(), 200); } });
@@ -10314,43 +10313,6 @@
         setInterval(() => renderTasks(), 30 * 1000);       // 지연/현재 표시 + 07:00 초기화 감지
         setInterval(loadTasks, TASKS_REFRESH_MS);
         // 자동 점검: 15초마다 '시각이 된 업무가 있는가'만 로컬에서 확인 (평소엔 요청·iframe 없음). 켜자마자 밀린 업무가 있으면 시각 순서대로 한 사이트씩 점검
-        // ───────── HOME 모드 켜기/끄기: '관제 센터' 제목 클릭 → home 입력 → Enter ─────────
-        (function () {
-            const box = document.getElementById('bb-drag-handle'), tag = document.getElementById('bb-cyh-tag'); if (!box || !tag) return;
-            const KEYS = { KeyH: 'h', KeyO: 'o', KeyM: 'm', KeyE: 'e' };   // 한글 입력 상태여도 자판 위치(code)로 읽음
-            let armed = false, buf = '', tmr = 0, dx = 0, dy = 0;
-            const base = () => (homeOn() ? 'Home' : 'by CYH');
-            const show = () => { tag.textContent = armed ? (buf || '') + '▌' : base(); };
-            const disarm = () => { armed = false; buf = ''; clearTimeout(tmr); document.removeEventListener('keydown', onKey, true); show(); };
-            const rearm = () => { clearTimeout(tmr); tmr = setTimeout(disarm, 8000); };
-            function onKey(e) {
-                if (!armed) return;
-                const t = e.target; if (t && /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName || '')) return;
-                if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); return disarm(); }
-                if (e.key === 'Enter') {
-                    e.preventDefault(); e.stopPropagation();
-                    if (buf === 'home') {
-                        lsSet('bba_home', homeOn() ? '' : '1');
-                        if (homeOn()) { loadDay(); lsSet(homeKey(), '1'); }   // 직접 켠 경우: 이미 시작된 점검이 '쌓인 업무'를 줄여 놓았을 수 있으니 개수와 상관없이 오늘은 바로 중단 (알약을 누르면 재개)
-                        drawAutoPill(); renderTasks(); if (autoEnabled()) autoTick();
-                    }
-                    return disarm();
-                }
-                const ch = KEYS[e.code] || (e.key && e.key.length === 1 && /[a-z]/i.test(e.key) ? e.key.toLowerCase() : '');
-                if (ch && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); e.stopPropagation(); if (buf.length < 8) buf += ch; show(); rearm(); }
-                else if (e.key === 'Backspace') { e.preventDefault(); e.stopPropagation(); buf = buf.slice(0, -1); show(); rearm(); }
-            }
-            box.addEventListener('mousedown', e => { dx = e.clientX; dy = e.clientY; });
-            box.addEventListener('click', e => {
-                if (Math.abs(e.clientX - dx) > 5 || Math.abs(e.clientY - dy) > 5) return;   // 끌어서 옮긴 것은 제외
-                if (e.target.closest && e.target.closest('#bb-wbl-upload-btn')) return;
-                if (e.target === tag) return;   // 'by CYH' 5번 클릭(제작자 PC 표시)과 겹치지 않게
-                if (armed) return disarm();
-                armed = true; buf = ''; show(); rearm(); document.addEventListener('keydown', onKey, true);
-            });
-            window.bbaHomeTitle = show;
-            show();
-        })();
         setTimeout(autoTick, 4000);
         setInterval(autoTick, 15 * 1000);
         document.addEventListener('visibilitychange', () => { if (!document.hidden) autoTick(); });
