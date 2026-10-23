@@ -1,17 +1,17 @@
 {
-  "workday": "2026-10-23",
+  "workday": "2026-10-24",
   "rows": [
     {
       "row": 81,
       "content": "[08:30] 파주LGD(현대밴디스) 기체 출근 처리 후 임무 ON [평일]",
-      "fixed": false,
-      "user": ""
+      "fixed": true,
+      "user": "🛌휴무"
     },
     {
       "row": 82,
       "content": "[08:50~09:00] 수원 힐스테이트 푸르지오 (뉴비오더) 임무 ON [평일]",
-      "fixed": false,
-      "user": ""
+      "fixed": true,
+      "user": "🛌휴무"
     },
     {
       "row": 83,
@@ -34,14 +34,14 @@
     {
       "row": 86,
       "content": "[09:50~10:00] 수원 힐스테이트 푸르지오 (뉴비오더) 임무 ON [주말]",
-      "fixed": true,
-      "user": "🛌휴무"
+      "fixed": false,
+      "user": ""
     },
     {
       "row": 87,
       "content": "[10:00] 성남 [삼평동] 대기장소2 주간기체 출근 임무 [평일]",
-      "fixed": false,
-      "user": ""
+      "fixed": true,
+      "user": "🛌휴무"
     },
     {
       "row": 88,
@@ -70,8 +70,8 @@
     {
       "row": 92,
       "content": "[10:30~11:00] 성남 [삼평동,서현동] 기체 출근 체크 후 임무 ON  [평일]",
-      "fixed": false,
-      "user": ""
+      "fixed": true,
+      "user": "🛌휴무"
     },
     {
       "row": 93,
@@ -88,8 +88,8 @@
     {
       "row": 95,
       "content": "[11:55] 파주LGD(현대밴디스) 임무받기 OFF [평일]",
-      "fixed": false,
-      "user": ""
+      "fixed": true,
+      "user": "🛌휴무"
     },
     {
       "row": 96,
@@ -130,8 +130,8 @@
     {
       "row": 102,
       "content": "[13:05] 파주LGD(현대밴디스) 임무받기 ON [평일]",
-      "fixed": false,
-      "user": ""
+      "fixed": true,
+      "user": "🛌휴무"
     },
     {
       "row": 103,
@@ -172,8 +172,8 @@
     {
       "row": 109,
       "content": "[16:30] 파주LGD(현대밴디스) 기체 퇴근 처리 후 임무 OFF [평일]",
-      "fixed": false,
-      "user": ""
+      "fixed": true,
+      "user": "🛌휴무"
     },
     {
       "row": 110,
@@ -184,14 +184,14 @@
     {
       "row": 111,
       "content": "[17:30] 성남 [서현동]  임무받기 OFF [평일]",
-      "fixed": false,
-      "user": ""
+      "fixed": true,
+      "user": "🛌휴무"
     },
     {
       "row": 112,
       "content": "[17:40] 수원 힐스테이트 푸르지오 (뉴비오더) 임무 OFF [평일]",
-      "fixed": false,
-      "user": ""
+      "fixed": true,
+      "user": "🛌휴무"
     },
     {
       "row": 113,
@@ -202,8 +202,8 @@
     {
       "row": 114,
       "content": "[18:40] 수원 힐스테이트 푸르지오 (뉴비오더) 임무 OFF [주말]",
-      "fixed": true,
-      "user": "🛌휴무"
+      "fixed": false,
+      "user": ""
     },
     {
       "row": 115,
@@ -220,8 +220,8 @@
     {
       "row": 117,
       "content": "[21:59] 성남 삼평동 임무받기 OFF[평일]",
-      "fixed": false,
-      "user": ""
+      "fixed": true,
+      "user": "🛌휴무"
     },
     {
       "row": 118,
