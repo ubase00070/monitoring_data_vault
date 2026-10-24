@@ -220,8 +220,8 @@
     {
       "row": 117,
       "content": "[21:59] 성남 삼평동 임무받기 OFF [평일]",
-      "fixed": false,
-      "user": ""
+      "fixed": true,
+      "user": "🛌휴무"
     },
     {
       "row": 118,
