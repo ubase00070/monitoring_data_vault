@@ -21,7 +21,7 @@
     "subUser": "이기완"
   },
   {
-    "user": "최윤혁",
+    "user": "김미소",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "10:00",
@@ -56,28 +56,28 @@
     "subUser": "유재헌"
   },
   {
-    "user": "임미선",
+    "user": "이현경",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "15:00",
     "subUser": "김지훈"
   },
   {
-    "user": "김미소",
+    "user": "최윤혁",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "16:00",
     "subUser": "최윤혁"
   },
   {
-    "user": "이현경",
+    "user": "이준",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "17:00",
     "subUser": "한승완"
   },
   {
-    "user": "이준",
+    "user": "임미선",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "18:00",
@@ -192,7 +192,7 @@
     "rawTime": "10:00"
   },
   {
-    "user": "임미선",
+    "user": "최윤혁",
     "type": "task",
     "content": "[10:00~11:00] 부산국립과학관 170,171호기 임무  [화,수,목,금,토,일]",
     "rawTime": "10:00"
@@ -276,7 +276,7 @@
     "rawTime": "15:30"
   },
   {
-    "user": "최윤혁",
+    "user": "임미선",
     "type": "task",
     "content": "[16:00~17:00] 부산국립과학관 170,171호기 임무 후 주차, 임무받기 OFF  [화,수,목,금,토,일]",
     "rawTime": "16:00"
