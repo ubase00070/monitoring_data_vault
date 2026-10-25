@@ -25,14 +25,14 @@
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "10:00",
-    "subUser": "김미소"
+    "subUser": "조천호"
   },
   {
     "user": "김미소",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "11:00",
-    "subUser": "유재헌"
+    "subUser": "백진홍"
   },
   {
     "user": "유재헌",
@@ -53,14 +53,14 @@
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "14:00",
-    "subUser": "이규은"
+    "subUser": "유재헌"
   },
   {
     "user": "신현철",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "15:00",
-    "subUser": "이준"
+    "subUser": "이지윤"
   },
   {
     "user": "이현경",
@@ -74,7 +74,7 @@
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "17:00",
-    "subUser": "조천호"
+    "subUser": "송주현"
   },
   {
     "user": "송주현",
@@ -95,7 +95,7 @@
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "20:00",
-    "subUser": "서형민"
+    "subUser": "박은선"
   },
   {
     "user": "김가은",
@@ -116,7 +116,7 @@
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "23:00",
-    "subUser": "박은선"
+    "subUser": "김소연"
   },
   {
     "user": "강철환",
@@ -130,7 +130,7 @@
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "01:00",
-    "subUser": "박은선"
+    "subUser": "최선호"
   },
   {
     "user": "박은선",
@@ -144,28 +144,28 @@
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "03:00",
-    "subUser": "김소연"
+    "subUser": "안대관"
   },
   {
     "user": "임아연",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "04:00",
-    "subUser": "안대관"
+    "subUser": "김소연"
   },
   {
     "user": "안대관",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "05:00",
-    "subUser": "김소연"
+    "subUser": "임아연"
   },
   {
     "user": "김소연",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "06:00",
-    "subUser": "임아연"
+    "subUser": "후보 없음"
   },
   {
     "user": "유재헌",
