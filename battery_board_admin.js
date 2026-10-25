@@ -9238,7 +9238,7 @@
                         units.forEach(u => {
                             if (!cardMatches(txt, u)) return;
                             const sw = card.querySelector('[data-qk="mission-available-switch"]');
-                            const on = sw ? readSwitch(sw) : null, pw = readPower(card), pg = S.prog || S.chg ? readProgress(card) : undefined, cg = S.chg || S.rch || S.bt ? readCharge(card) : null, ch = cg ? cg.ch : undefined, bat = cg ? cg.bat : undefined, gp = S.bt ? readGps(card) : undefined;
+                            const on = sw ? readSwitch(sw) : null, pw = readPower(card), pg = S.prog || S.chg ? readProgress(card) : undefined, cg = S.chg || S.rch || S.bt ? readCharge(card) : null, ch = cg ? cg.ch : undefined, bat = cg ? cg.bat : undefined, gp = S.bt ? ((g0) => g0 === null || g0 === '' ? g0 : 'y')(readGps(card)) : undefined;   // GPS 값은 실시간으로 계속 바뀌므로 '있음(y)/없음('')'만 비교 — 숫자를 그대로 비교하면 값이 안정되지 않아 매번 시간 초과까지 기다리게 됨
                             const c = seen[u.n];
                             if (!c) seen[u.n] = { on, pw, pg, ch, bat, gp, row: cg ? cg.row : '', since: now, at: now };
                             else if (c.on !== on || c.pw !== pw || c.pg !== pg || c.ch !== ch || c.bat !== bat || c.gp !== gp) { c.on = on; c.pw = pw; c.pg = pg; c.ch = ch; c.bat = bat; c.gp = gp; c.row = cg ? cg.row : ''; c.since = now; }
