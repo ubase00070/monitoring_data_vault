@@ -95,7 +95,7 @@
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "20:00",
-    "subUser": "이규순"
+    "subUser": "박은선"
   },
   {
     "user": "김가은",
@@ -116,7 +116,7 @@
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "23:00",
-    "subUser": "임다연"
+    "subUser": "강철환"
   },
   {
     "user": "강철환",
@@ -126,25 +126,25 @@
     "subUser": "안대관"
   },
   {
-    "user": "박은선",
+    "user": "김소연",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "01:00",
     "subUser": "최선호"
   },
   {
-    "user": "최선호",
+    "user": "박은선",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "02:00",
-    "subUser": "박은선"
+    "subUser": "강철환"
   },
   {
-    "user": "김소연",
+    "user": "최선호",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "03:00",
-    "subUser": "임다연"
+    "subUser": "임아연"
   },
   {
     "user": "임아연",
@@ -158,14 +158,14 @@
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "05:00",
-    "subUser": "안대관"
+    "subUser": "임아연"
   },
   {
     "user": "김소연",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "06:00",
-    "subUser": "김소연"
+    "subUser": "안대관"
   },
   {
     "user": "유재헌",
