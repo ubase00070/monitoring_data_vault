@@ -2777,6 +2777,7 @@
     }
 
     function wblGetSourceData(source) {
+        if (source && typeof source === 'object') return source;   // 기체 배터리 점검(30분 간격)이 자기 데이터를 넘겨 같은 그래프를 재사용
         if (source === 'yesterday') {
             return wblLoadYesterdaySnapshot();
         }
@@ -2847,7 +2848,8 @@
 
         const PX_PER_MIN = 2.9, H = 252, PADX = 19, PADT = 17, PADB = 31;
         const dayStartMin = WBL_DAY_START_H * 60;
-        const spanMin = source === 'yesterday'
+        const own = !!(source && typeof source === 'object');
+        const spanMin = (source === 'yesterday' || (own && source.full))
             ? 24 * 60   // 어제는 이미 끝난 하루(07:00~익일07:00, 24시간)이니 항상 전체 구간
             : Math.max(60, (() => { const n=new Date(); let m=n.getHours()*60+n.getMinutes(); if (n.getHours()<WBL_DAY_START_H) m += 1440; return m; })() - dayStartMin);
         const W = Math.round(spanMin * PX_PER_MIN + PADX * 2);
@@ -2885,7 +2887,8 @@
             colorSegs.push({ status: cur[0].status, points: cur });
         });
 
-        const colorOf = (status) => STATUS_AC[status] || '#3b82f6';
+        const BTC = { bt: 'var(--gn)', btl: 'var(--rd)', btz: 'var(--or)' };
+        const colorOf = (status) => (own && BTC[status]) || STATUS_AC[status] || '#3b82f6';
 
         const polylines = colorSegs.map(seg => {
             const pts = seg.points.map(pt => `${xOf(pt.t).toFixed(1)},${yOf(pt.battery).toFixed(1)}`).join(' ');
@@ -2931,7 +2934,7 @@
 
         // x축: 정시 사이 10분 단위 보조 눈금(10/20/30/40/50) — 시간대를 더 세밀하게 가늠할 수 있도록
         const xMinorTicks = [];
-        for (let m = dayStartMin; m <= dayStartMin + spanMin; m += 10) {
+        for (let m = dayStartMin; m <= dayStartMin + spanMin; m += own ? 30 : 10) {
             if (m % 60 === 0) continue;   // 정시는 xTicks에서 이미 표기
             xMinorTicks.push({ x: PADX + (m - dayStartMin) * PX_PER_MIN, label: String(m % 60) });
         }
@@ -2960,9 +2963,9 @@
                 ↔️ 그래프를 좌우로 드래그하면 시간대를 이동할 수 있어요
             </div>
             <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:6px; padding:0 4px 0 30px;">
-                ${Object.keys(WBL_STL).map(st => `
+                ${(own ? ['bt', 'btl'] : Object.keys(WBL_STL)).map(st => `
                     <span style="display:flex; align-items:center; gap:4px; font-size:13px; color:var(--mu);">
-                        <span style="width:10px; height:10px; border-radius:50%; background:${colorOf(st)};"></span>${WBL_STL[st]}
+                        <span style="width:10px; height:10px; border-radius:50%; background:${colorOf(st)};"></span>${own ? (st === 'bt' ? '정상' : '배터리 부족(21% 이하)') : WBL_STL[st]}
                     </span>`).join('')}
             </div>
         `;
@@ -3463,6 +3466,7 @@
         `).join('');
     }
 
+    try { window.__bbaWbl = { chart: wblRenderChartSVG, md: wblFormatMonthDay, dayStart: WBL_DAY_START_H, z: () => ++topmostZ }; } catch (e) { /* 무시 */ }   // [admin] 기체 배터리 점검 패널이 같은 그래프를 재사용
     function openInfoCardPanel(r) {
         const raw = r.raw;
         if (!raw) return;
@@ -8516,7 +8520,7 @@
         #bb .bba-who { height:26px; border-radius:6px; display:grid; place-items:center; font-weight:600 !important; font-size:15px; color:#1e1a12; background:hsl(var(--h) 58% 84%); white-space:nowrap; overflow:hidden; }
         #bb .bba-empty { padding:24px 10px; text-align:center; color:var(--mu); }
         /* 우측 구역 */
-        #bb .bba-right { display:grid; grid-template-rows:minmax(0,1fr) minmax(0,1fr); gap:8px; min-height:0; min-width:0; }
+        #bb .bba-right { display:grid; grid-template-rows:minmax(0,1fr); gap:8px; min-height:0; min-width:0; }
         #bb .bba-camp { display:flex; flex-wrap:wrap; gap:6px; padding:8px 10px; }
         #bb .bba-cb { display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 11px 0 8px; border-radius:999px; border:1.5px solid var(--bd2); background:var(--sur2); color:var(--tx); font-family:inherit; font-size:14.5px; font-weight:700 !important; cursor:pointer; }
         #bb .bba-cb i { width:16px; height:16px; border-radius:5px; border:2px solid var(--bd2); background:var(--sur); display:grid; place-items:center; font-style:normal; font-size:13px; line-height:1; color:transparent; }
@@ -8529,6 +8533,28 @@
         #bb .bba-cb.manfail i { background:#f2b705; border-color:#d49b00; color:#fff; }
         #bb .bba-cb.run { border-style:dashed; color:var(--mu); }
         #bb .bba-cb.run i { color:var(--mu); }
+        #bb .bba-btz { min-height:0; }
+        #bb .bba-btz .bba-zh { flex-wrap:nowrap; }
+        #bb .bba-btz .bba-zh > * { flex:0 0 auto; }
+        #bb .bba-btz .bba-cnt { flex:0 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        #bb .bba-btz .bba-pill { display:block; max-width:190px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; line-height:24px; }
+        #bb #bba-bt-gh.bad, #bb #bba-bt-on.bad { color:var(--rd); border-color:var(--rd); }
+        #bb .bba-btg { flex:1; min-height:0; overflow-y:auto; display:grid; grid-template-columns:1fr 1fr; grid-auto-rows:32px; gap:5px 6px; padding:8px 10px; align-content:start; }
+        #bb .bba-btg .bt { position:relative; display:flex; align-items:center; gap:0; height:32px; padding:0 9px; border-radius:8px; border:1.5px solid var(--row-bd, var(--bd)); background:var(--sur); overflow:hidden; min-width:0; box-sizing:border-box; font-size:15px; font-weight:700; color:var(--tx); }
+        #bb .bba-btg .bt i { position:absolute; left:0; top:0; bottom:0; opacity:.35; background:var(--gn); box-shadow:inset -2px 0 0 var(--gn); }
+        #bb .bba-btg .bt .nm { position:relative; flex:0 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        #bb .bba-btg .bt .sp { position:relative; flex:0 0 auto; white-space:pre; color:var(--mu); font-weight:500; }
+        #bb .bba-btg .bt .v { position:relative; flex:0 0 auto; white-space:nowrap; font-weight:900; font-family:'Paperlogy','Lato',sans-serif; }
+        #bb .bba-btg .bt.low { border-color:var(--rd); animation:bb-warnBlink .8s infinite; }
+        #bb .bba-btg .bt.low i { background:var(--rd); box-shadow:inset -2px 0 0 var(--rd); }
+        #bb .bba-btg .bt.low .v { color:#dc2626; }
+        #bb .bba-btg .bt.zb { background:rgba(249,115,22,.12); border:2px solid rgba(249,115,22,.55); color:var(--or); animation:chipPulse .7s infinite, chipBorder .7s infinite; }
+        #bb .bba-btg .bt.off, #bb .bba-btg .bt.in, #bb .bba-btg .bt.wait { color:var(--mu); }
+        #bb .bba-btg .bt.off .v { color:var(--off-main); }
+        #bb .bba-btg .bt.unk { border-style:dashed; color:var(--mu); }
+        #bb .bba-btg .bt { cursor:pointer; }
+        #bb .bba-btg .bt.over { border-color:var(--bl); box-shadow:0 0 0 2px var(--bl); }
+        #bb .bba-btg .bt.now { box-shadow:0 0 0 2px var(--bl); }
         #bb .bba-memo { display:flex; flex-direction:column; flex:1; min-height:0; padding:8px 10px; gap:4px; }
         #bb .bba-memo textarea { flex:1; min-height:0; resize:none; border:1.5px solid var(--bd2); border-radius:8px; background:var(--sur2); color:var(--tx); padding:8px 10px; line-height:1.5; font-family:inherit; font-size:15.5px; box-sizing:border-box; }
         #bb .bba-memo textarea:focus { outline:2px solid #3b82f6; outline-offset:1px; }
@@ -8604,8 +8630,7 @@
             '<div class="bba-bottom">' +
               '<div id="bba-mmw"></div>' +
               '<div class="bba-right" id="bba-right">' +
-                '<section class="bba-zone"><div class="bba-zh"><h2>HW 이슈</h2></div><div class="bba-memo"><textarea id="bba-hw" placeholder="HW 이슈를 자유롭게 입력 (예: 엘스 2호기 / 섀시 좌측 온도 센서 이상)" spellcheck="false"></textarea><div class="sv" id="bba-hw-s"></div></div></section>' +
-                '<section class="bba-zone"><div class="bba-zh"><h2>SW 이슈</h2></div><div class="bba-memo"><textarea id="bba-sw" placeholder="SW 이슈를 자유롭게 입력 (예: 판교 / 미니맵 미노출)" spellcheck="false"></textarea><div class="sv" id="bba-sw-s"></div></div></section>' +
+                '<section class="bba-zone bba-btz"><div class="bba-zh"><h2>🔋 기체 배터리</h2><span class="bba-cnt" id="bba-bt-cnt"></span><span class="bba-pill" id="bba-bt-st"></span><button class="bba-btn" id="bba-bt-now" title="지금 한 바퀴 점검">지금 점검</button><button class="bba-btn" id="bba-bt-sort" title="정렬 바꾸기: 상태순 → 이름순 → 내 배치">정렬</button><button class="bba-btn" id="bba-bt-on" title="배터리 점검 일시중지 / 재개">⏸</button><button class="bba-btn" id="bba-bt-gh" title="GitHub 저장">☁</button></div><div class="bba-btg" id="bba-btg"></div></section>' +
               '</div>' +
             '</div>';
         bb.appendChild(root);
@@ -9069,7 +9094,11 @@
             const v = lockGet(); return !!(v && v.tab === TABID);
         }
         function lockFree() { const l = lockGet(); if (l && l.tab === TABID) { try { localStorage.removeItem('bba_auto_lock'); } catch (e) { /* 무시 */ } } }
-        const runningIds = () => { const l = lockGet(); return l && l.ids && Date.now() - l.t < 150000 ? l.ids : []; };
+        const runningIds = () => {   // 점검 중인 업무 — 잠금이 최근(90초) 것이고, 이 탭의 잠금이면 실제로 이 탭이 점검 중일 때만
+            const l = lockGet(); if (!l || !l.ids || Date.now() - l.t >= 90000) return [];
+            if (l.tab === TABID && !autoBusy && !campBusy) { lockFree(); return []; }
+            return l.ids;
+        };
 
         // ───────── 점검용 숨김 iframe: 사이트 페이지를 열어 기체 카드의 임무받기 스위치 · 전원을 읽는다 ─────────
         const NCC_ORIGIN = /(^|\.)neubility\.ai$/.test(location.hostname) ? location.origin : 'https://ncc.neubility.ai';
@@ -9114,6 +9143,15 @@
             const ch = /⚡|충전/.test(txt) || /icon-bolt|bolt-wireless/i.test(best.innerHTML);   // NCC 의 무선충전 아이콘: <svg> 안의 clip-path id 'icon-bolt-wireless_svg__a' (다른 종류의 svg 는 충전 표시로 보지 않음)
             return { ch, bat: m ? +m[1] : null, row: best.outerHTML.slice(0, 600) };
         }
+        function readGps(card) {   // 'GPS 수신' 행의 값 ('-'·빈 값이면 '') — 행을 못 찾으면 null
+            const rows = [...card.querySelectorAll('div,span,p,li,dd,dt')].filter(el => /^GPS\s*수신/.test(el.textContent.replace(/\s+/g, ' ').trim()));
+            if (!rows.length) return null;
+            rows.sort((a, b) => a.textContent.length - b.textContent.length);
+            const L = rows[0], strip = x => x.replace(/\s+/g, ' ').trim().replace(/^GPS\s*수신\s*/, '').trim();
+            let v = strip(L.textContent);
+            if (!v) { if (L.nextElementSibling) v = strip(L.nextElementSibling.textContent); else if (L.parentElement && L.parentElement.children.length <= 3) v = strip(L.parentElement.textContent); }
+            return /^[-–—~]*$/.test(v) ? '' : v;
+        }
         function patrolFulls() {   // 지금 다중 모니터링 그리드에서 순찰 중인 기체의 NCC 기체명(정규화) 집합
             const set = new Set(), M = window.__bbaPatrolNames || {};
             document.querySelectorAll('#bb-mm-body .bb-mm-card').forEach(c => {
@@ -9147,12 +9185,13 @@
             return out;
         }
         // 점검 1건은 무슨 일이 있어도 PROBE_TIMEOUT_MS+15초 안에 끝낸다 (타이머 지연·iframe 멈춤 대비) + 진행 상황 표시용 기록
-        let probeInfo = null, lastBeat = Date.now();
+        let probeInfo = null, lastBeat = Date.now(), btInfo = null, btBeat = Date.now();
         function probeSite(S, units) {
-            const info = probeInfo = { k: S.k || S.label || String(S.id), t0: Date.now() }; lastBeat = info.t0;
+            const info = { k: S.k || S.label || String(S.id), t0: Date.now() };
+            if (S.bt) btInfo = info; else { probeInfo = info; lastBeat = info.t0; }
             return new Promise(resolve => {
                 let end = false;
-                const out = r => { if (end) return; end = true; clearTimeout(hard); lastBeat = Date.now(); if (probeInfo === info) probeInfo = null; resolve(r); };
+                const out = r => { if (end) return; end = true; clearTimeout(hard); if (S.bt) { btBeat = Date.now(); if (btInfo === info) btInfo = null; } else { lastBeat = Date.now(); if (probeInfo === info) probeInfo = null; } resolve(r); };
                 const hard = setTimeout(() => {
                     console.warn('[BBA] 점검 강제 종료(응답 없음):', info.k);
                     try { document.querySelectorAll('iframe[title="bba-probe"]').forEach(x => x.remove()); } catch (e) { /* 무시 */ }
@@ -9173,7 +9212,7 @@
                     clearInterval(iv); clearTimeout(to); try { mo && mo.disconnect(); } catch (e) { /* 무시 */ }
                     try { f.src = 'about:blank'; } catch (e) { /* 무시 */ }
                     setTimeout(() => { try { f.remove(); } catch (e) { /* 무시 */ } }, 30);
-                    const res = {}; units.forEach(u => { res[u.n] = seen[u.n] ? { found: true, on: seen[u.n].on, pw: seen[u.n].pw, pg: seen[u.n].pg, ch: seen[u.n].ch, bat: seen[u.n].bat, row: seen[u.n].row } : { found: false }; });
+                    const res = {}; units.forEach(u => { res[u.n] = seen[u.n] ? { found: true, on: seen[u.n].on, pw: seen[u.n].pw, pg: seen[u.n].pg, ch: seen[u.n].ch, bat: seen[u.n].bat, gp: seen[u.n].gp, row: seen[u.n].row } : { found: false }; });
                     resolve({ err: err || null, units: res, cards: cardN, names: [...names].slice(0, 30), ms: Date.now() - t0 });
                 };
                 const scan = () => {
@@ -9189,7 +9228,7 @@
                     const cards = doc.querySelectorAll('[data-qk="robot-card"]');
                     if (cards.length && !cardsAt) cardsAt = now;
                     if (cards.length) cardN = cards.length;
-                    if (S.chg && !cards.length) {   // 기체 목록 틀(검색창)은 그려졌는데 카드가 하나도 없는 채로 일정 시간 → 입고됨
+                    if ((S.chg || S.bt) && !cards.length) {   // 기체 목록 틀(검색창)은 그려졌는데 카드가 하나도 없는 채로 일정 시간 → 입고됨
                         if (doc.querySelector('[data-qk="search-robot-card-list-wrapper"]') && !listAt) listAt = now;
                         if (listAt && now - listAt > CHG_EMPTY_MS) return fin(null);
                     }
@@ -9199,20 +9238,21 @@
                         units.forEach(u => {
                             if (!cardMatches(txt, u)) return;
                             const sw = card.querySelector('[data-qk="mission-available-switch"]');
-                            const on = sw ? readSwitch(sw) : null, pw = readPower(card), pg = S.prog || S.chg ? readProgress(card) : undefined, cg = S.chg || S.rch ? readCharge(card) : null, ch = cg ? cg.ch : undefined, bat = cg ? cg.bat : undefined;
+                            const on = sw ? readSwitch(sw) : null, pw = readPower(card), pg = S.prog || S.chg ? readProgress(card) : undefined, cg = S.chg || S.rch || S.bt ? readCharge(card) : null, ch = cg ? cg.ch : undefined, bat = cg ? cg.bat : undefined, gp = S.bt ? readGps(card) : undefined;
                             const c = seen[u.n];
-                            if (!c) seen[u.n] = { on, pw, pg, ch, bat, row: cg ? cg.row : '', since: now, at: now };
-                            else if (c.on !== on || c.pw !== pw || c.pg !== pg || c.ch !== ch || c.bat !== bat) { c.on = on; c.pw = pw; c.pg = pg; c.ch = ch; c.bat = bat; c.row = cg ? cg.row : ''; c.since = now; }
+                            if (!c) seen[u.n] = { on, pw, pg, ch, bat, gp, row: cg ? cg.row : '', since: now, at: now };
+                            else if (c.on !== on || c.pw !== pw || c.pg !== pg || c.ch !== ch || c.bat !== bat || c.gp !== gp) { c.on = on; c.pw = pw; c.pg = pg; c.ch = ch; c.bat = bat; c.gp = gp; c.row = cg ? cg.row : ''; c.since = now; }
                         });
                     });
-                    const okVal = c => (S.prog || S.chg || S.rch ? true : c.on !== null);   // 임무 진행 확인형 사이트는 스위치 값이 필요 없음
+                    const okVal = c => (S.prog || S.chg || S.rch || S.bt ? true : c.on !== null);   // 임무 진행 확인형 사이트는 스위치 값이 필요 없음
                     const need = units.filter(u => !(seen[u.n] && okVal(seen[u.n])));
-                    const ready = units.every(u => {
+                    const rdyF = u => {
                         const c = seen[u.n]; if (!c || !okVal(c)) return false;
-                        const stab = S.prog && c.pg === '' ? 4000 : (S.chg || S.rch) && c.pw === true && !c.ch ? 3500 : PROBE_STABLE_MS;   // 아직 값이 안 채워졌을 수 있는 경우(진행 비어 있음 / 켜짐인데 ⚡ 없음)는 더 오래 같아야 확정   // '비어 있음'은 아직 안 채워진 것일 수 있어 더 오래 같은 값이어야 확정
+                        const stab = S.bt ? (c.pw === true && (c.bat === null || c.bat === undefined) ? 4500 : 1500) : S.prog && c.pg === '' ? 4000 : (S.chg || S.rch) && c.pw === true && !c.ch ? 3500 : PROBE_STABLE_MS;   // 아직 값이 안 채워졌을 수 있는 경우(진행 비어 있음 / 켜짐인데 ⚡ 없음)는 더 오래 같아야 확정   // '비어 있음'은 아직 안 채워진 것일 수 있어 더 오래 같은 값이어야 확정
                         const loaded = S.prog ? c.pg !== null : c.pw !== null;
                         return now - c.since >= stab && (loaded || now - c.at > 4500);
-                    });
+                    };
+                    const ready = S.pick1 ? units.some(rdyF) : units.every(rdyF);
                     if (ready) return fin(null);
                     if (need.length && cards.length && now - cardsAt > 2500 && !scrollDone && now - lastScroll > 600) {   // 못 찾은 기체가 있으면 카드 그리드를 스크롤하며 찾는다 (스크롤이 있거나 화면 밖 카드는 아직 안 그려져 있을 수 있음)
                         lastScroll = now;
@@ -9222,7 +9262,7 @@
                         });
                         if (!moved) scrollDone = true;
                     }
-                    if (need.length && cardsAt && (scrollDone || now - cardsAt > 20000) && now - cardsAt > 9000) return fin(null);   // 끝까지 찾아도 없으면 '못 찾음'
+                    if (need.length && cardsAt && (scrollDone || now - cardsAt > 20000) && now - cardsAt > (S.bt ? 5000 : 9000)) return fin(null);   // 끝까지 찾아도 없으면 '못 찾음'
                 };
                 f.addEventListener('load', () => {
                     if (done) return; scan();
@@ -9254,6 +9294,7 @@
             const out = [];
             all.forEach(it => {
                 if (forced.has(it.t.id) && it.e.u.length) { out.push(Object.assign({ force: true }, it)); return; }
+                if (it.t.chg) return;   // 무선충전 점검은 수동 — '지금 점검' 버튼으로만
                 if (!it.e.on || !it.e.u.length || it.due > now || chk[it.t.id]) return;
                 const a = auto[it.t.id];
                 if (it.t.chg && !a && now - it.due > CHG_STALE_MS) { autoPut(it.t.id, { st: 'sup', stale: 1, at: now, due: it.due, by: '' }); return; }   // 점검 시각이 한참 지난 충전 점검은 지금 보면 의미가 없으니 하지 않음
@@ -9423,7 +9464,7 @@
             else {
                 reloadAuto(); const now = Date.now(); let nx = null, nm = '';
                 buildAll().forEach(x => {
-                    if (!x.e.on || !x.e.u.length || chk[x.t.id]) return;
+                    if (x.t.chg || !x.e.on || !x.e.u.length || chk[x.t.id]) return;
                     const a = auto[x.t.id]; if (a && (a.st === 'ok' || a.st === 'fail' || a.st === 'sup')) return;
                     const at = a && a.st === 'retry' ? a.next : x.due;
                     if (at > now - 1 && (nx === null || at < nx)) { nx = at; nm = x.t.body.slice(0, 12); }
@@ -9487,7 +9528,8 @@
                     else if (!e.u.length) chip = '<span class="ach cfg" title="' + (t.sites.some(S => !S.id) ? '사이트 번호(id)가 설정되지 않아 점검할 수 없음 — 파일 상단 AUTO_SITES 의 id 를 채워 주세요' : '점검할 기체가 정해지지 않음 — 더블클릭해서 선택') + '">⚙</span>';
                     else {
                         chip = '<span class="ach" title="자동 점검 대상 (' + esc(hmOf(dueTs(t))) + ' 점검) · 더블클릭: 기체 선정">🔍</span>';
-                        if (!o.meta && dueTs(t) > nowTs) sch = '<span class="meta sch">' + hmOf(dueTs(t)) + ' 점검 예정</span>';
+                        if (!o.meta && t.chg) sch = '<span class="meta sch">✋ 수동 점검 (지금 점검 버튼)</span>';
+                        else if (!o.meta && dueTs(t) > nowTs) sch = '<span class="meta sch">' + hmOf(dueTs(t)) + ' 점검 예정</span>';
                     }
                 }
                 return '<div class="bba-row' + (t.auto && todayOk(t) ? ' auto' : '') + (o.cls ? ' ' + o.cls : '') + (isLate ? ' late' : '') + (isCur ? ' cur' : '') + '" data-id="' + esc(t.id) + '"' + (t.auto && todayOk(t) ? ' title="더블클릭: 임무 ON/OFF 자동 점검 설정"' : '') + '>' +
@@ -9749,15 +9791,250 @@
             try { if (!lockTake(list.map(x => 'camp:' + x.c), '')) return; await campRun(list); } finally { campBusy = false; lockFree(); drawAutoPill(); drawCamp(); }
         }
 
-        // ───────── HW / SW 이슈 (자유 텍스트, 자동 저장) ─────────
-        ['hw', 'sw'].forEach(id => {
-            const ta = $('bba-' + id), s = $('bba-' + id + '-s'); let t;
-            ta.value = lsGet('bba_txt_' + id, '');
-            ta.addEventListener('input', () => {
-                s.textContent = '입력 중…'; clearTimeout(t);
-                t = setTimeout(() => { lsSet('bba_txt_' + id, ta.value); s.textContent = '저장됨 · 이 브라우저에만 보관'; }, 400);
-            });
+        // ───────── 기체 배터리 점검 (2번째 트랙) ─────────
+        //  무선충전 점검 사이트(CHG_SRC) 전체의 기체를 30분마다(±2분 지터) 한 곳씩 열어 [배터리 · 전원 · GPS 수신]만 읽고 바로 닫는다.
+        //  일일 업무 점검(자동점검)과는 잠금이 따로라 iframe 이 동시에 2개까지 돌 수 있다(일일 업무 1 + 배터리 1).
+        //  결과: 이 브라우저(bba_bt_data)에 72시간 보관 + vercel 함수(api/battery) 경유로 GitHub(monitoring_no_limit/bb_backup_battery_status.json) 한 파일에 저장.
+        //  상태: o 정상(배터리 수치) · z 좀비 의심(전원 켜짐 + 배터리 '-' + GPS '-') · f 전원 꺼짐 · i 입고(카드 없음) · u 읽지 못함
+        const BT_INT_MS = 30 * 60 * 1000, BT_JIT_MS = 2 * 60 * 1000, BT_KEEP_MS = 72 * 3600 * 1000;
+        const BT_API = 'https://multimonitoring.vercel.app/api/battery', BT_NAME = 'battery_status';   // 내 vercel 함수(api/battery)가 monitoring_no_limit 저장소의 bb_backup_battery_status.json 으로 저장
+        const BT_SITES = CHG_SRC.map(([id, names]) => {
+            const nm = id === 235 ? ['두루아이 5호기', '두루아이 3호기'] : names;   // 235: 5호기가 없으면 3호기 (둘 중 하나만)
+            return { k: '배터리 ' + id, id, bt: true, pick1: id === 235, label: names[0].replace(/\s*\d+호기.*$/, ''), kw: /(?!)/, units: nm.map(n => U(n)) };
         });
+        const BT_UNITS = BT_SITES.reduce((a, S) => a.concat(S.pick1 ? [S.units[0]] : S.units), []).length;   // 표시 기체 수
+        let btData = {}, btBusy = false, btCur = null, btDone = 0, btUp = { st: '', t: 0, msg: '' };
+        try { btData = JSON.parse(lsGet('bba_bt_data', '{}')) || {}; } catch (e) { btData = {}; }
+        if (!btData.robots) btData = { robots: {} };
+        const BTL = { gp: 'bba_bt_lock' };
+        const btLockGet = () => { try { return JSON.parse(lsGet(BTL.gp, 'null')); } catch (e) { return null; } };
+        const btLockTake = () => { const l = btLockGet(), now = Date.now(); if (l && l.tab !== TABID && now - l.t < 150000) return false; lsSet(BTL.gp, JSON.stringify({ tab: TABID, t: now })); const v = btLockGet(); return !!(v && v.tab === TABID); };
+        const btLockFree = () => { const l = btLockGet(); if (l && l.tab === TABID) { try { localStorage.removeItem(BTL.gp); } catch (e) { /* 무시 */ } } };
+        function btClassify(R, u) {   // → {s, b?}
+            if (!R || R.err) return { s: 'u' };
+            const x = R.units[u.n];
+            if (R.cards === 0 || !x || !x.found) return { s: 'i' };
+            if (x.pw === false) return { s: 'f' };
+            if (x.pw === null || x.pw === undefined) return { s: 'u' };
+            if (x.bat !== null && x.bat !== undefined) return { s: 'o', b: x.bat };
+            if (x.gp === '') return { s: 'z' };
+            return { s: 'u' };
+        }
+        function btPut(name, id, rec) {   // rec = [t(초), 배터리|null, 상태]
+            const r = btData.robots[name] || (btData.robots[name] = { id, h: [] });
+            r.id = id; r.h.push(rec);
+        }
+        function btPrune() {
+            const lim = Math.floor((Date.now() - BT_KEEP_MS) / 1000);
+            Object.keys(btData.robots).forEach(n => { const r = btData.robots[n]; r.h = (r.h || []).filter(x => x[0] >= lim); if (!r.h.length) delete btData.robots[n]; });
+        }
+        const btSave = () => { btPrune(); lsSet('bba_bt_data', JSON.stringify(btData)); };
+        function btLatest() {   // 표시용: 기체별 가장 최근 기록 (235 는 5호기/3호기 중 최근 것 하나)
+            const out = [];
+            BT_SITES.forEach(S => {
+                const us = S.pick1 ? [S.units.slice().map(u => ({ u, h: (btData.robots[u.n] || {}).h || [] })).sort((a, b) => ((b.h[b.h.length - 1] || [0])[0]) - ((a.h[a.h.length - 1] || [0])[0]))[0].u] : S.units;
+                us.forEach(u => { const h = (btData.robots[u.n] || {}).h || [], l = h[h.length - 1]; out.push({ n: u.n, id: S.id, rec: l || null }); });
+            });
+            return out;
+        }
+        async function btRound(manual) {
+            if (btBusy) return;
+            if (!btLockTake()) return;
+            btBusy = true; btBeat = Date.now(); btDone = 0; lsSet('bba_bt_last', String(Date.now()));
+            lsSet('bba_bt_next', String(Date.now() + BT_INT_MS + Math.round((Math.random() * 2 - 1) * BT_JIT_MS)));
+            const t0 = Date.now(); let nOk = 0;
+            try {
+                for (const S of BT_SITES) {
+                    if (lsGet('bba_bt_on', '1') === '0') break;   // 일시중지: 지금 보던 사이트까지만 기록하고 멈춤
+                    btCur = S; drawBt(); btLockTake(); btBeat = Date.now();
+                    let R; try { R = await probeSite(S, S.units); } catch (e) { R = { err: 'noread', units: {}, cards: 0 }; }
+                    const t = Math.floor(Date.now() / 1000);
+                    if (S.pick1) {   // 5호기가 보이면 5호기, 아니면 3호기
+                        const c = S.units.map(u => ({ u, c: btClassify(R, u) }));
+                        const pick = c.find(x => x.c.s !== 'i' && x.c.s !== 'u') || c.find(x => x.c.s === 'u') || c[0];
+                        btPut(pick.u.n, S.id, [t, pick.c.b === undefined ? null : pick.c.b, pick.c.s]);
+                    } else S.units.forEach(u => { const c = btClassify(R, u); btPut(u.n, S.id, [t, c.b === undefined ? null : c.b, c.s]); });
+                    btDone++; btSave(); drawBt(); await sleep(250);
+                }
+                nOk = 1;
+            } catch (e) { console.warn('[BBA] 배터리 점검 오류:', e && e.message); }
+            finally { btBusy = false; btCur = null; btInfo = null; btLockFree(); btSave(); drawBt(); }
+            console.log('[BBA] 배터리 점검 완료', Math.round((Date.now() - t0) / 1000) + '초');
+            if (nOk) btSync();
+        }
+        function btTick() {
+            const now = Date.now();
+            if (btBusy && now - btBeat > 150000) {   // 멈춤 방지: 2분 반 진전이 없으면 풀어줌
+                console.warn('[BBA] 배터리 점검이 멈춘 것으로 보여 초기화합니다');
+                try { document.querySelectorAll('iframe[title="bba-probe"]').forEach(x => x.remove()); } catch (e) { /* 무시 */ }
+                btBusy = false; btCur = null; btInfo = null; btLockFree(); drawBt();
+            }
+            if (btBusy) { btLockTake(); drawBt(); return; }
+            drawBt();
+            if (lsGet('bba_bt_on', '1') === '0') return;
+            const next = +lsGet('bba_bt_next', '0') || 0;
+            if (now >= next) btRound(false);
+        }
+        // ── 저장: 내 vercel 함수(BACKUP_BASE)가 GitHub 토큰을 가지고 있어 이 파일에는 토큰이 없다 ──
+        function btMerge(a, b) {   // 두 robots 묶음을 시각(초) 기준으로 합침
+            const out = {};
+            [a, b].forEach(src => Object.keys(src || {}).forEach(n => {
+                const r = src[n], o = out[n] || (out[n] = { id: r.id, h: [] }), seen = new Set(o.h.map(x => x[0]));
+                (r.h || []).forEach(x => { if (!seen.has(x[0])) { o.h.push(x); seen.add(x[0]); } });
+            }));
+            Object.keys(out).forEach(n => out[n].h.sort((x, y) => x[0] - y[0]));
+            return out;
+        }
+        let btSyncing = false;
+        async function btSync() {
+            if (btSyncing) return; btSyncing = true;
+            try {
+                let remote = {};
+                try {
+                    const g = await fetch(BT_API + '?name=' + encodeURIComponent(BT_NAME), { cache: 'no-store' });
+                    if (g.ok) { const j = await g.json(); remote = (j && j.data && j.data.robots) || {}; }
+                } catch (e) { /* 처음이거나 읽기 실패 — 이 PC 기록만으로 저장 */ }
+                btData.robots = btMerge(remote, btData.robots); btPrune(); lsSet('bba_bt_data', JSON.stringify(btData));
+                const latest = {}; Object.keys(btData.robots).forEach(n => { const h = btData.robots[n].h; latest[n] = h[h.length - 1]; });
+                const data = { v: 1, fmt: '[unix초, 배터리%|null, 상태(o정상 z좀비의심 f꺼짐 i입고 u읽기실패)]', updated: new Date().toISOString(), keepHours: 72, intervalMin: 30, latest, robots: btData.robots };
+                const p = await fetch(BT_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: BT_NAME, data }) });
+                let j = {}; try { j = await p.json(); } catch (e) { /* 무시 */ }
+                if (p.ok && j.ok !== false) btUp = { st: 'ok', t: Date.now(), msg: '' };
+                else throw new Error('저장 ' + p.status);
+            } catch (e) { btUp = { st: 'err', t: Date.now(), msg: (e && e.message) || '네트워크 오류' }; console.warn('[BBA] 배터리 저장 실패:', e && e.message); }
+            finally { btSyncing = false; drawBt(); }
+        }
+        // ── 기체 카드 클릭 → 기체 정보 창의 '배터리 증감 추이' 그래프 재사용 (점은 점검한 실제 시각, 보조 눈금은 30분) ──
+        function btOpenPanel(name) {
+            const panel = document.getElementById('bb-info-card-panel'), titleEl = document.getElementById('bb-icp-title'), badgeEl = document.getElementById('bb-icp-badge'), bodyEl = document.getElementById('bb-icp-body');
+            const W = window.__bbaWbl; if (!panel || !bodyEl || !W) return;
+            const rec = btData.robots[name], h = rec ? rec.h : [], last = h[h.length - 1], p2 = x => String(x).padStart(2, '0');
+            const hmS = t => { const d = new Date(t * 1000); return p2(d.getHours()) + ':' + p2(d.getMinutes()); };
+            const stTxt = { o: '정상', z: '좀비 의심 👻', f: '전원 꺼짐', i: '입고 (카드 없음)', u: '확인 불가' };
+            titleEl.textContent = name;
+            const asof = document.createElement('span'); asof.className = 'bb-icp-asof'; asof.textContent = last ? ' ' + hmS(last[0]) + ' 점검' : ' 기록 없음'; titleEl.appendChild(asof);
+            const bd = !last ? { l: '기록 없음', c: 'standby' } : last[2] === 'o' ? { l: '🟢 ' + last[1] + '%', c: last[1] <= BT_LOW ? 'warn' : 'ok' } : last[2] === 'z' ? { l: '👻 좀비 의심', c: 'warn' } : last[2] === 'f' ? { l: '⚫ 전원 꺼짐', c: 'off' } : last[2] === 'i' ? { l: '입고', c: 'standby' } : { l: '확인 불가', c: 'warn' };
+            badgeEl.className = 'bb-icp-badge ' + bd.c; badgeEl.textContent = bd.l;
+            const bats = h.filter(x => x[2] === 'o').map(x => x[1]), cntS = k => h.filter(x => x[2] === k).length;
+            const row = (a, b) => '<div class="bb-icp-row"><span class="bb-icp-label">' + a + '</span><span class="bb-icp-value">' + b + '</span></div>';
+            const dayBase = off => { const n = new Date(), d = new Date(n); if (n.getHours() < W.dayStart) d.setDate(d.getDate() - 1); d.setHours(W.dayStart, 0, 0, 0); d.setDate(d.getDate() - off); return d; };
+            const dayData = off => {
+                const d0 = dayBase(off), s0 = d0.getTime(), e0 = s0 + 86400000;
+                const log = h.filter(x => x[0] * 1000 >= s0 && x[0] * 1000 < e0).map(x => ({ t: hmS(x[0]), battery: x[2] === 'o' ? x[1] : null, status: x[2] === 'o' ? (x[1] <= BT_LOW ? 'btl' : 'bt') : x[2] === 'z' ? 'btz' : x[2] === 'f' ? 'off' : 'btu', k: x[2], ts: x[0] }));
+                for (let i = log.length - 1; i > 0; i--) if (log[i].ts - log[i - 1].ts > 75 * 60) log.splice(i, 0, { t: hmS(log[i - 1].ts + 1), battery: null, status: 'btu', k: 'gap', ts: log[i - 1].ts + 1 });   // 일시중지 등으로 75분 넘게 비면 선을 끊음
+                return { entries: { [name]: { log } }, full: off > 0, day: d0.getFullYear() + '-' + p2(d0.getMonth() + 1) + '-' + p2(d0.getDate()), log };
+            };
+            function lines(log) {
+                if (!log.filter(pt => pt.k !== 'gap').length) return '<div class="bb-icp-wbl-line" style="color:var(--mu);">이 날 점검 기록 없음</div>';
+                const out = []; let cur = null;
+                log.filter(pt => pt.k !== 'gap').sort((a, b) => a.ts - b.ts).forEach(pt => { const k = pt.k === 'o' ? (pt.battery <= BT_LOW ? 'low' : 'ok') : pt.k; if (!cur || cur.k !== k) { cur = { k, a: pt, b: pt }; out.push(cur); } else cur.b = pt; });
+                const col = { ok: 'var(--gn)', low: 'var(--rd)', z: 'var(--or)', f: 'var(--offdot)', i: 'var(--mu)', u: 'var(--mu)' }, lab = { ok: '정상', low: '배터리 부족', z: '좀비 의심 👻', f: '전원 꺼짐', i: '입고', u: '확인 불가' };
+                return out.map(g => {
+                    const dot = '<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:' + col[g.k] + ';margin-right:5px;"></span>';
+                    let t = dot + lab[g.k] + ' ' + g.a.t + (g.b.t !== g.a.t ? '~' + g.b.t : '');
+                    if ((g.k === 'ok' || g.k === 'low') && g.a.battery != null) {
+                        const d = g.b.battery - g.a.battery, hrs = (g.b.ts - g.a.ts) / 3600;
+                        t += d === 0 || hrs <= 0 ? ' · ' + g.a.battery + '% 유지' : ' · ' + g.a.battery + '%→' + g.b.battery + '% (시간당 ' + (d / hrs > 0 ? '+' : '') + (d / hrs).toFixed(1) + '%)';
+                    }
+                    return '<div class="bb-icp-wbl-line">' + t + '</div>';
+                }).join('');
+            }
+            let off = 0;
+            bodyEl.innerHTML = '<div class="bb-icp-flex"><div class="bb-icp-left">' +
+                '<div class="bb-icp-section"><div class="bb-icp-section-title">현재 상태</div>' + row('상태', last ? stTxt[last[2]] + (last[2] === 'o' ? ' · ' + last[1] + '%' : '') : '기록 없음') + row('마지막 점검', last ? hmS(last[0]) : '-') + row('사이트 번호', rec ? rec.id : '-') + '</div>' +
+                '<div class="bb-icp-section"><div class="bb-icp-section-title">최근 72시간</div>' + row('점검 횟수', h.length + '회 (약 30분 간격)') + row('배터리 범위', bats.length ? Math.min.apply(null, bats) + '% ~ ' + Math.max.apply(null, bats) + '%' : '-') + row('좀비 의심', cntS('z') + '회') + row('전원 꺼짐', cntS('f') + '회') + row('확인 불가', cntS('u') + '회') + '</div></div>' +
+                '<div class="bb-icp-right"><div class="bb-icp-section-title" style="display:flex;align-items:center;justify-content:space-between;gap:6px;"><span id="bt-p-title"></span><span style="display:flex;gap:6px;flex-shrink:0;"><button class="bb-btn" id="bt-p-prev" style="font-size:15px;font-weight:900;padding:3px 8px;">◀ 이전 날</button><button class="bb-btn" id="bt-p-next" style="font-size:15px;font-weight:900;padding:3px 8px;">다음 날 ▶</button></span></div>' +
+                '<div id="bt-p-chart"></div><div class="bb-icp-wbl-log" id="bt-p-log"></div></div></div>';
+            function show() {
+                const d = dayData(off);
+                document.getElementById('bt-p-title').textContent = (off === 0 ? '오늘' : off === 1 ? '어제' : off + '일 전') + ' 배터리 증감 추이 [' + W.md(d.day) + ']';
+                document.getElementById('bt-p-chart').innerHTML = W.chart(name, d);
+                document.getElementById('bt-p-log').innerHTML = lines(d.log);
+                document.getElementById('bt-p-prev').disabled = off >= 3; document.getElementById('bt-p-next').disabled = off <= 0;
+                requestAnimationFrame(() => {
+                    const sc = document.getElementById('bb-wbl-scroll'); if (!sc) return; sc.scrollLeft = off === 0 ? sc.scrollWidth : 0;
+                    sc.addEventListener('wheel', e => { if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return; e.preventDefault(); sc.scrollLeft += e.deltaY; }, { passive: false });
+                });
+            }
+            document.getElementById('bt-p-prev').addEventListener('click', () => { if (off < 3) { off++; show(); } });
+            document.getElementById('bt-p-next').addEventListener('click', () => { if (off > 0) { off--; show(); } });
+            panel.classList.add('open'); panel.style.zIndex = W.z();
+            show();
+        }
+        // ── 화면: 기체별 한 줄 카드 2열 ──
+        const BT_LOW = 21;
+        let btSortMode = lsGet('bba_bt_sort', 'sev'), btShown = [], btDrag = null;
+        const btOrder = () => { try { const a = JSON.parse(lsGet('bba_bt_order', '[]')); return Array.isArray(a) ? a : []; } catch (e) { return []; } };
+        const btSev = (r) => { if (!r) return 6; const s = r[2]; return s === 'z' ? 0 : s === 'o' && r[1] <= BT_LOW ? 1 : s === 'u' ? 2 : s === 'f' ? 3 : s === 'o' ? 4 : 5; };
+        function drawBt() {
+            const g = $('bba-btg'); if (!g) return;
+            const byName = (a, b) => a.n.localeCompare(b.n, 'ko', { numeric: true });
+            const list = btLatest();
+            if (btSortMode === 'name') list.sort(byName);
+            else if (btSortMode === 'mine') { const od = btOrder(), ix = n => { const i = od.indexOf(n); return i < 0 ? 1e6 : i; }; list.sort((a, b) => ix(a.n) - ix(b.n) || byName(a, b)); }
+            else list.sort((a, b) => btSev(a.rec) - btSev(b.rec) || ((a.rec && a.rec[1] != null ? a.rec[1] : 999) - (b.rec && b.rec[1] != null ? b.rec[1] : 999)) || byName(a, b));
+            btShown = list.map(x => x.n);
+            const sb = $('bba-bt-sort'); if (sb) sb.textContent = btSortMode === 'name' ? '이름순' : btSortMode === 'mine' ? '내 배치' : '상태순';
+            let nz = 0, nl = 0, nf = 0;
+            const html = list.map(x => {
+                const r = x.rec, s = r ? r[2] : '', b = r ? r[1] : null; let cls = 'bt', v = '대기', fill = 0, ttl = x.n;
+                if (s === 'o') { v = b + '%'; fill = Math.max(0, Math.min(100, b)); if (b <= BT_LOW) { cls += ' low'; nl++; } else cls += ' ok'; }
+                else if (s === 'z') { v = '좀비 의심 👻'; cls += ' zb'; nz++; }
+                else if (s === 'f') { v = '전원 꺼짐'; cls += ' off'; nf++; }
+                else if (s === 'i') { v = '입고'; cls += ' in'; }
+                else if (s === 'u') { v = '확인 불가'; cls += ' unk'; }
+                else cls += ' wait';
+                if (r) { const d = new Date(r[0] * 1000); ttl += ' · ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') + ' 확인'; }
+                if (btCur && btCur.id === x.id && btBusy) cls += ' now';
+                return '<div class="' + cls + '" draggable="true" data-n="' + esc(x.n) + '" title="' + esc(ttl) + '">' + (fill ? '<i style="width:' + fill + '%"></i>' : '') + '<span class="nm">' + esc(x.n) + '</span><span class="sp"> - </span><span class="v">' + esc(v) + '</span></div>';
+            }).join('');
+            if (!btDrag) g.innerHTML = html;
+            const cnt = $('bba-bt-cnt'); if (cnt) cnt.textContent = (nz ? '👻' + nz + ' · ' : '') + (nl ? '부족 ' + nl + ' · ' : '') + (nf ? '꺼짐 ' + nf + ' · ' : '') + list.length + '대';
+            const st = $('bba-bt-st');
+            if (st) {
+                let txt; const hm = t => { const d = new Date(t); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
+                if (btBusy) txt = '🔋 점검 중 ' + btDone + '/' + BT_SITES.length + (btCur ? ' · ' + btCur.label : '');
+                else if (lsGet('bba_bt_on', '1') === '0') txt = '⏸ 일시중지됨';
+                else { const nx = +lsGet('bba_bt_next', '0') || 0, ls = +lsGet('bba_bt_last', '0') || 0; txt = (ls ? '마지막 ' + hm(ls) + ' · ' : '') + (nx ? '다음 ' + hm(Math.max(nx, Date.now())) : '대기'); }
+                const ob = $('bba-bt-on'); if (ob) { const paused = lsGet('bba_bt_on', '1') === '0'; ob.textContent = paused ? '▶' : '⏸'; ob.title = paused ? '배터리 점검 재개 (바로 한 바퀴 점검)' : '배터리 점검 일시중지'; ob.classList.toggle('bad', paused); }
+                st.textContent = txt; st.className = 'bba-pill' + (btBusy ? ' au run' : '');
+            }
+            const up = $('bba-bt-gh');
+            if (up) { up.textContent = btUp.st === 'ok' ? '☁✓' : btUp.st === 'err' ? '☁✕' : '☁'; up.title = btUp.st === 'ok' ? 'GitHub 저장됨 ' + new Date(btUp.t).toLocaleTimeString('ko-KR', { hour12: false }) + ' (클릭: 지금 저장)' : btUp.st === 'err' ? 'GitHub 저장 실패: ' + btUp.msg + ' (클릭: 다시 저장)' : (btUp.msg || 'GitHub 저장 (한 바퀴가 끝날 때마다 자동 · 클릭: 지금 저장)'); up.classList.toggle('bad', btUp.st === 'err'); }
+        }
+        const btSortEl = $('bba-bt-sort');
+        if (btSortEl) btSortEl.addEventListener('click', () => {
+            const seq = btOrder().length ? ['sev', 'name', 'mine'] : ['sev', 'name'];
+            btSortMode = seq[(seq.indexOf(btSortMode) + 1) % seq.length]; lsSet('bba_bt_sort', btSortMode); drawBt();
+        });
+        (function () {   // 한 줄 카드 끌어서 놓기 = 두 카드 위치 맞바꾸기 → '내 배치'로 저장
+            const g = $('bba-btg'); if (!g) return;
+            g.addEventListener('dragstart', e => { const c = e.target.closest && e.target.closest('.bt'); if (!c) return; btDrag = c.dataset.n; try { e.dataTransfer.setData('text/plain', btDrag); e.dataTransfer.effectAllowed = 'move'; } catch (er) { /* 무시 */ } c.style.opacity = '.35'; });
+            g.addEventListener('dragover', e => { if (!btDrag) return; const c = e.target.closest && e.target.closest('.bt'); if (c) { e.preventDefault(); g.querySelectorAll('.bt.over').forEach(x => x.classList.remove('over')); c.classList.add('over'); } });
+            g.addEventListener('dragleave', e => { const c = e.target.closest && e.target.closest('.bt'); if (c) c.classList.remove('over'); });
+            g.addEventListener('drop', e => {
+                const c = e.target.closest && e.target.closest('.bt'); if (!c || !btDrag) return; e.preventDefault();
+                const a = btShown.indexOf(btDrag), b = btShown.indexOf(c.dataset.n);
+                if (a >= 0 && b >= 0 && a !== b) { const arr = btShown.slice(); const t = arr[a]; arr[a] = arr[b]; arr[b] = t; lsSet('bba_bt_order', JSON.stringify(arr)); btSortMode = 'mine'; lsSet('bba_bt_sort', 'mine'); }
+                btDrag = null; drawBt();
+            });
+            g.addEventListener('dragend', () => { btDrag = null; drawBt(); });
+            g.addEventListener('click', e => { const c = e.target.closest && e.target.closest('.bt'); if (c) btOpenPanel(c.dataset.n); });
+        })();
+        const btNowEl = $('bba-bt-now');
+        if (btNowEl) btNowEl.addEventListener('click', () => { lsSet('bba_bt_on', '1'); btRound(true); });
+        const btOnEl = $('bba-bt-on');
+        if (btOnEl) btOnEl.addEventListener('click', () => {
+            const wasPaused = lsGet('bba_bt_on', '1') === '0';
+            lsSet('bba_bt_on', wasPaused ? '1' : '0');
+            if (wasPaused) lsSet('bba_bt_next', '0');   // 재개하면 바로 한 바퀴
+            drawBt(); btTick();
+        });
+        const btGhEl = $('bba-bt-gh');
+        if (btGhEl) btGhEl.addEventListener('click', () => btSync());
+        drawBt();
+        setTimeout(btTick, 6000);
+        setInterval(btTick, 20 * 1000);
 
         // ───────── 다중 · 서브 모니터링 / 부산 국립과학관 시간대별 근무자 ─────────
         const mmp = document.createElement('div'); mmp.id = 'bba-mmp'; root.appendChild(mmp);
