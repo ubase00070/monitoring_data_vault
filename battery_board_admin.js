@@ -202,7 +202,7 @@
             display:flex; align-items:center; gap:7px;
         }
         .bb-hd-time { display:flex; align-items:baseline; gap:8px; }
-        .bb-clock { font-family:'Lato',monospace; font-size:15px; font-weight:900; color:var(--mu); letter-spacing:.8px; }
+        .bb-clock { font-family:'Paperlogy','Lato',monospace; font-size:15px; font-weight:900; color:var(--mu); letter-spacing:.8px; }
         .bb-ref   { font-size:14px; color:var(--mu); font-weight:700; }
         /* 헤더 우측 = [버튼 2줄: 테마·줌·백업·검색] (동숲 주민과 배달/방전/이상 알림 3종은 제목 박스 좌우에 따로 배치) */
         .bb-hd-rightwrap {
@@ -1178,7 +1178,7 @@
         .bb-ap-info { display:flex; flex-direction:column; gap:4px; flex:1; }
         .bb-ap-name { font-size:19px; font-weight:900; color:#f4f4ff; }
         .bb-ap-desc { font-size:16.5px; font-weight:700; color:#c4c8e8; line-height:1.55; }
-        .bb-ap-time { font-size:13px; color:#8890b8; font-family:'Lato',monospace; }
+        .bb-ap-time { font-size:13px; color:#8890b8; font-family:'Paperlogy','Lato',monospace; }
         .bb-ap-dismiss {
             display:flex; flex-shrink:0; align-self:center;
             padding:4px 11px; border-radius:6px;
@@ -1214,7 +1214,7 @@
             background-origin: border-box;
             background-clip: padding-box, border-box;
             box-shadow:0 16px 48px rgba(0,0,0,.9);
-            z-index:999999999; font-family:'Lato',sans-serif;
+            z-index:999999999; font-family:'Paperlogy','Lato',sans-serif;
             color:var(--tx); overflow:hidden;
                     }
         .bb-icp-flex { display:flex; align-items:stretch; }
@@ -8585,7 +8585,13 @@
         #bb .bba-pl.fin { opacity:.82; }
         #bb .bba-pl.fin .nm { padding-top:13px; }
         #bb .bba-pl .fb { position:absolute; top:2px; right:3px; padding:1px 6px; border-radius:8px; background:#6b7280; color:#fff; font-size:12px; line-height:1.3; font-weight:700 !important; white-space:nowrap; }
-        #bb .bba-pl.mon { border-color:#22a05a; outline:3px solid #22a05a; outline-offset:0; }
+        #bb .bba-pl.mon { border-color:#22a05a; outline:2px solid #22a05a; outline-offset:0; }
+        #bb #bba-btask { position:absolute; inset:0; z-index:99999; background:rgba(0,0,0,.45); display:flex; align-items:center; justify-content:center; }
+        #bb #bba-btask .bx { background:var(--sur); color:var(--tx); border:2px solid var(--bd2); border-radius:12px; padding:18px 22px; min-width:300px; text-align:center; box-shadow:0 12px 36px rgba(0,0,0,.5); }
+        #bb #bba-btask .m { font-size:16px; font-weight:800; line-height:1.5; margin-bottom:14px; }
+        #bb #bba-btask .b { display:flex; gap:10px; justify-content:center; }
+        #bb #bba-btask .b .bba-btn { height:32px; padding:0 22px; font-size:15px; }
+        #bb, #bb * , #bb button, #bb input, #bb textarea, #bb select { font-family:'Paperlogy','Lato',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; }
         #bb #bba-right { position:relative; }
         #bb #bba-sch { position:absolute; inset:0; z-index:6; display:none; flex-direction:column; border:2px solid var(--bd2); border-radius:8px; background:var(--bg); overflow:hidden; }
         #bb #bba-sch.open { display:flex; }
@@ -8643,7 +8649,7 @@
             '<div class="bba-bottom">' +
               '<div id="bba-mmw"></div>' +
               '<div class="bba-right" id="bba-right">' +
-                '<section class="bba-zone bba-btz"><div class="bba-zh"><h2>🔋 무선 기체</h2><button class="bba-btn" id="bba-bt-cfg" title="점검할 기체 선택">🔍</button><span class="bba-cnt" id="bba-bt-cnt"></span><span class="bba-pill" id="bba-bt-st"></span><button class="bba-btn" id="bba-bt-now" title="지금 한 바퀴 점검">지금 점검</button><button class="bba-btn" id="bba-bt-sort" title="정렬 바꾸기: 상태순 → 이름순 → 내 배치">정렬</button><button class="bba-btn" id="bba-bt-on" title="배터리 점검 일시중지 / 재개">⏸</button><button class="bba-btn" id="bba-bt-gh" title="GitHub 저장">☁</button></div><div class="bba-btg" id="bba-btg"></div></section>' +
+                '<section class="bba-zone bba-btz"><div class="bba-zh"><h2>🔋 무선 기체</h2><button class="bba-btn" id="bba-bt-cfg" title="점검할 기체 선택">🔍</button><span class="bba-cnt" id="bba-bt-cnt"></span><span class="bba-pill" id="bba-bt-st"></span><button class="bba-btn" id="bba-bt-sort" title="정렬 바꾸기: 상태순 → 이름순 → 내 배치">정렬</button><button class="bba-btn" id="bba-bt-on" title="배터리 점검 일시중지 / 재개">⏸</button><button class="bba-btn" id="bba-bt-gh" title="GitHub 저장">☁</button></div><div class="bba-btg" id="bba-btg"></div></section>' +
               '</div>' +
             '</div>';
         bb.appendChild(root);
@@ -9003,7 +9009,7 @@
                 const dirs = chg ? [{ g: null, w: 'chg' }] : prog.length ? [{ g: null, w: 'run' }] : parseDirs(bd), sites = chg ? CHG_SITES : prog.length ? prog : AUTO_SITES.filter(S => !S.prog && S.kw.test(bd));
                 const oc = occ[c] = (occ[c] || 0) + 1;   // id 는 담당자와 무관하게 '업무 문구(+같은 문구 순번)' 로만 만든다 — 당일 배정자가 바뀌어도 체크/점검 기록이 사라지지 않도록
                 out.push({ id: hash('c|' + c + '|' + oc), lid: hash(u0 + '|' + c), u: u0, head: r ? r[0] : '', body: bd, tag: tag ? '[' + tag + ']' : '', s, e, days, dirs, sites, chg,
-                    auto: dirs.length > 0 && sites.length > 0 && (chg || prog.length > 0 || !AUTO_SKIP_RE.test(bd)) && rel(s) < rel(AUTO_DIM_FROM) });   // 임무 ON/OFF 가 적힌 업무 중 점검 가능한 사이트(제외 단어 없음, 18시 이전)
+                    auto: dirs.length > 0 && sites.length > 0 && (chg || prog.length > 0 || !AUTO_SKIP_RE.test(bd)) });   // 임무 ON/OFF 가 적힌 업무 중 점검 가능한 사이트(제외 단어 없음, 18시 이전)
             });
             out.sort((a, b) => rel(a.s) - rel(b.s));
             tasks = out; monRows = monTmp; sciTasks = sciTmp;
@@ -9044,7 +9050,7 @@
 
         // ───────── 임무 ON/OFF 자동 점검: 업무 문구 분석 · 저장 ─────────
         const siteByKey = k => AUTO_SITES.find(s => s.k === k) || null;
-        const dimOf = t => rel(t.s) >= rel(AUTO_DIM_FROM);
+        const dimOf = t => false;   // 18시 이후 업무도 다른 업무처럼 체크·집계
         function parseDirs(body) {
             const re = /(?:(주간|야간)\s*)?임무(?:\s*받기)?\s*(ON|OFF)\b/gi, out = []; let m;
             while ((m = re.exec(body))) out.push({ g: m[1] || null, w: m[2].toLowerCase() });
@@ -10014,7 +10020,7 @@
             if (st) {
                 let txt; const hm = t => { const d = new Date(t); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
                 if (btBusy) txt = '🔋 점검 중 ' + btDone + '/' + (btTotal || btActiveSites().length) + (btCur ? ' · ' + btCur.label : '');
-                else if (lsGet('bba_bt_on', '1') === '0') txt = '⏸ 일시중지됨';
+                else if (lsGet('bba_bt_on', '1') === '0') txt = '';
                 else { const nx = +lsGet('bba_bt_next', '0') || 0, ls = +lsGet('bba_bt_last', '0') || 0; txt = (ls ? '마지막 ' + hm(ls) + ' · ' : '') + (nx ? '다음 ' + hm(Math.max(nx, Date.now())) : '대기'); }
                 const ob = $('bba-bt-on'); if (ob) { const paused = lsGet('bba_bt_on', '1') === '0'; ob.textContent = paused ? '▶' : '⏸'; ob.title = paused ? '배터리 점검 재개 (바로 한 바퀴 점검)' : '배터리 점검 일시중지'; ob.classList.toggle('bad', paused); }
                 st.textContent = txt; st.className = 'bba-pill' + (btBusy ? ' au run' : '');
@@ -10078,14 +10084,22 @@
         });
         document.addEventListener('mousedown', e => { if (btCfg.classList.contains('open') && !btCfg.contains(e.target) && !(e.target.closest && e.target.closest('#bba-bt-cfg'))) btCfgClose(); }, true);
         document.addEventListener('keydown', e => { if (e.key === 'Escape' && btCfg.classList.contains('open')) btCfgClose(); });
-        const btNowEl = $('bba-bt-now');
-        if (btNowEl) btNowEl.addEventListener('click', () => { lsSet('bba_bt_on', '1'); btRound(true); });
+        function btAsk(msg, cb) {
+            const old = $('bba-btask'); if (old) old.remove();
+            const w = document.createElement('div'); w.id = 'bba-btask';
+            w.innerHTML = '<div class="bx"><div class="m">' + msg + '</div><div class="b"><button type="button" class="bba-btn" data-v="0">아니오</button><button type="button" class="bba-btn" data-v="1" style="border-color:#22a05a">예</button></div></div>';
+            const done = v => { w.remove(); cb(v); };
+            w.addEventListener('click', e => { const b = e.target.closest && e.target.closest('button[data-v]'); if (b) done(b.dataset.v === '1'); else if (e.target === w) done(false); });
+            ($('bb') || document.body).appendChild(w);
+        }
         const btOnEl = $('bba-bt-on');
         if (btOnEl) btOnEl.addEventListener('click', () => {
             const wasPaused = lsGet('bba_bt_on', '1') === '0';
-            lsSet('bba_bt_on', wasPaused ? '1' : '0');
-            if (wasPaused) lsSet('bba_bt_next', '0');   // 재개하면 바로 한 바퀴
-            drawBt(); btTick();
+            if (!wasPaused) { lsSet('bba_bt_on', '0'); drawBt(); return; }
+            const nx = +lsGet('bba_bt_next', '0') || 0;
+            const resume = go => { lsSet('bba_bt_on', '1'); if (go) lsSet('bba_bt_next', '0'); drawBt(); btTick(); };
+            if (Date.now() >= nx) btAsk('1시간 점검 주기가 되었습니다.<br>지금 점검을 진행할까요?', ok => { if (ok) resume(true); });   // 아니오 → 일시중지 유지
+            else resume(false);                          // 아직 때가 아니면 묻지 않고 재개
         });
         const btGhEl = $('bba-bt-gh');
         if (btGhEl) btGhEl.addEventListener('click', () => btSync());
