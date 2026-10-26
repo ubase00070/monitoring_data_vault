@@ -8247,15 +8247,17 @@
         const TASKS_REFRESH_MS = 5 * 60 * 1000;
         const WD0 = 7 * 60;                       // 업무일 시작 07:00
         const LATE_GRACE = 10;                    // 종료 시각 + 10분이 지나도 미확인이면 '지연'
-        const CAMPS = ['아산', '가평', '대관령', '진천', '파주LGD', '인력개발원', '충남대병원', 'LIT청주'];   // 사이트 점검 목록
+        const CAMPS = ['아산', '가평', 'LIT청주', '인력개발원', '대관령', '진천', '파주LGD', '충남대병원'];   // 사이트 점검 목록
         // ── 사이트 점검 자동 확인 (정각에 숨김 iframe 으로 NCC 를 열어 확인) ──
         //  id = NCC 주소 번호 · mode 'any' = 기체 중 하나라도 '전원 켜짐 + 임무관리 ON' 이면 OK / mode 'chg' = 전원 ON + 충전중(⚡) + 배터리 수치가 보이면 OK
         //  stopOnOk = 한 번이라도 OK 면 그날은 더 점검하지 않음 · slots = 점검 시각(정각) — 시각이 지났는데 안 했으면 CAMP_MAX_LATE 안에서만 따라잡음
-        const CAMP_SLOTS_AG = ['10:00', '12:00', '14:00', '16:00', '17:30'];
+        const CAMP_SLOTS_AG = ['08:30', '10:00', '12:00', '14:00', '16:00', '17:30'];   // 아산·가평·LIT청주 자동 점검 시각 (아산·가평은 조건이 맞으면 그날 종료)
+        const CAMP_NOTE = { '대관령': '직접 확인 — 기체 화면에 접속해서 확인', '진천': '직접 확인 — 기체 화면에 접속해서 확인', '파주LGD': '직접 확인 — 기체 화면에 접속해서 확인', '충남대병원': '직접 확인 — 기체 화면에 접속해서 확인' };
         const CAMP_AUTO = {
-            '아산': { id: 27, mode: 'any', stopOnOk: true, slots: CAMP_SLOTS_AG, units: ['스테이 그린 1호기', '스테이 그린 2호기'] },
-            '가평': { id: 47, mode: 'any', stopOnOk: true, slots: CAMP_SLOTS_AG, units: ['가평 니모 캠핑장 1호기', '가평 니모 캠핑장 2호기'] },
-            'LIT청주': { id: 267, mode: 'chg', stopOnOk: false, slots: ['10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '17:30'], units: ['두루아이 4호기'] },
+            '아산': { id: 27, mode: 'duty', stopOnOk: true, slots: CAMP_SLOTS_AG, units: ['스테이 그린 1호기', '스테이 그린 2호기'] },
+            '가평': { id: 47, mode: 'duty', stopOnOk: true, slots: CAMP_SLOTS_AG, units: ['가평 니모 캠핑장 1호기', '가평 니모 캠핑장 2호기'] },
+            '인력개발원': { id: 24, mode: 'power', stopOnOk: false, weekdayOnly: true, slots: ['09:50', '12:50', '14:50'], units: ['삼성인력개발원 1호기'] },   // 평일만 · 전원 ON/OFF 여부만 확인 (주소 24)
+            'LIT청주': { id: 267, mode: 'info', stopOnOk: false, slots: CAMP_SLOTS_AG, units: ['두루아이 4호기'] },
         };
         const CAMP_MAX_LATE = 30 * 60 * 1000;     // 점검 시각에서 이만큼 지나 처음 보게 되면 그 회차는 건너뜀 (아산·가평은 오늘 한 번도 못 했으면 90분까지 따라잡음)
         const CAMP_RETRY_MS = 3 * 60 * 1000;      // 페이지를 못 읽은 경우(로딩 실패 등)만 한 번 더 확인하기까지
@@ -8349,8 +8351,8 @@
         #bb .bba-dbtn .l2 { font-size:11.5px; font-weight:600; opacity:.7; letter-spacing:.2px; }
         #bb .bba-dbtn .l2.warn { color:#d93a35; opacity:1; }
         #bb .bba-dbtn.on .l2.warn { color:#ffb4b0; }
-        #bb .bba-hdr2 { position:absolute; left:calc(50% + 112px); top:50%; transform:translateY(-50%); display:flex; gap:4px; z-index:3; }
-        #bb .bba-hdr2 .bba-mmb { margin:0; padding:0 7px; font-size:14px; }   /* 글자를 키워도 오른쪽 줌 버튼과 겹치지 않게 */
+        #bb .bba-hdr2 { position:absolute; left:calc(50% + 118px); top:50%; transform:translateY(-50%); display:flex; gap:3px; z-index:3; }
+        #bb .bba-hdr2 .bba-mmb { margin:0; padding:0 6px; font-size:14px; }   /* 글자를 키워도 오른쪽 줌 버튼과 겹치지 않게 */
         #bb .bba-mmb.sim { border-color:#9db4ff; }
         #bb #bba-sim { position:absolute; left:14px; right:14px; top:6px; bottom:12px; z-index:32; display:none; flex-direction:column; min-height:0; box-sizing:border-box; padding:10px 12px 12px; background:var(--bg); border:2px solid var(--bd2); border-radius:12px; box-shadow:0 10px 28px rgba(0,0,0,.35); }
         #bb #bba-sim.open { display:flex; }
@@ -8369,7 +8371,7 @@
         #bb #bba-sim .c2 .gh, #bb #bba-sim .c2 .gr { grid-template-columns:86px minmax(0,1fr) minmax(150px,.62fr); }
         #bb #bba-sim .tm { font-size:14.5px; font-weight:700 !important; color:var(--mu); font-variant-numeric:tabular-nums; }
         #bb #bba-sim .tk { font-size:14.5px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-        #bb #bba-sim .nm { height:22px; border-radius:6px; display:grid; place-items:center; font-weight:600 !important; font-size:14.5px; color:#1e1a12; background:hsl(var(--h) 58% 84%); white-space:nowrap; overflow:hidden; padding:0 6px; }
+        #bb #bba-sim .nm { height:22px; border-radius:6px; display:grid; place-items:center; font-weight:600 !important; font-size:14.5px; color:#1e1a12; background:hsl(var(--h) 58% var(--l,84%)); white-space:nowrap; overflow:hidden; padding:0 6px; }
         #bb #bba-sim .nm.none { background:var(--sur2); color:var(--mu); border:1px dashed var(--bd2); }
         #bb #bba-sim .em { color:var(--mu); font-size:14px; text-align:center; }
         #bb #bba-sim .gr.chg { background:#e3eeff; }
@@ -8414,7 +8416,7 @@
         #bb #bba-mmp .mg .gap { padding:0; border-bottom:none; background:var(--bg); }
         #bb #bba-mmp .mg .cur { background:#fff3c4; } #bb #bba-mmp .mg .cur.tm { color:#8a5a00; }
         #bb #bba-mmp .mg .past { opacity:.55; }
-        #bb #bba-mmp .mg .nm { height:20px; border-radius:6px; display:grid; place-items:center; font-weight:700 !important; font-size:15px; color:#1e1a12; background:hsl(var(--h) 58% 84%); white-space:nowrap; overflow:hidden; }
+        #bb #bba-mmp .mg .nm { height:20px; border-radius:6px; display:grid; place-items:center; font-weight:700 !important; font-size:15px; color:#1e1a12; background:hsl(var(--h) 58% var(--l,84%)); white-space:nowrap; overflow:hidden; }
         #bb #bba-mmp .mg .nm.none { background:var(--sur2); color:var(--mu); border:1px dashed var(--bd2); }
         #bb #bba-mmp .mg .sci { display:flex; align-items:center; gap:5px; min-width:0; }
         #bb #bba-mmp .mg .sci .nm { flex:1 1 0; min-width:0; padding:0 6px; }   /* 담당자가 여럿이면 한 줄에 나란히 (행 높이 = 다중/서브와 동일) */
@@ -8448,7 +8450,7 @@
         #bb .bba-btn.on { background:var(--tx); color:var(--sur); border-color:var(--tx); }
         #bb .bba-top { flex:0 0 372px; display:flex; gap:8px; min-height:0; }   /* 제목줄 + 헤더 + 10줄 */
         #bb .bba-top > .bba-tasks { flex:1 1 0; min-width:0; }   /* 업무표를 좁혀서 '당일배정 현황' 열을 좌측으로 당김 */
-        #bb .bba-top > .bba-campz { flex:0 0 18%; min-width:0; }   /* 남은 우측 빈 공간 = 사이트 점검 */
+        #bb .bba-top > .bba-campz { flex:0 0 20.7%; min-width:0; }   /* 남은 우측 빈 공간 = 사이트 점검 */
         #bb .bba-bottom { flex:1 1 0; min-height:150px; display:grid; grid-template-columns:minmax(0,5fr) minmax(0,6fr); gap:8px; }
         /* 업무표 */
         #bb .bba-th, #bb .bba-row { display:grid; grid-template-columns:28px minmax(0,1fr) 120px; gap:8px; align-items:center; padding:0 10px; }
@@ -8535,7 +8537,7 @@
         #bb #bba-ap .rs { margin-top:6px; padding:6px 8px; border-radius:8px; background:var(--sur2); font-size:14px; line-height:1.5; max-height:150px; overflow:auto; }
         #bb #bba-ap .rs .g { color:#22a05a; } #bb #bba-ap .rs .r { color:#d93a35; } #bb #bba-ap .rs .m { color:var(--mu); }
         #bb #bba-ap .pb { display:flex; gap:6px; margin-top:8px; justify-content:flex-end; }
-        #bb .bba-who { height:26px; border-radius:6px; display:grid; place-items:center; font-weight:600 !important; font-size:15px; color:#1e1a12; background:hsl(var(--h) 58% 84%); white-space:nowrap; overflow:hidden; }
+        #bb .bba-who { height:26px; border-radius:6px; display:grid; place-items:center; font-weight:600 !important; font-size:15px; color:#1e1a12; background:hsl(var(--h) 58% var(--l,84%)); white-space:nowrap; overflow:hidden; }
         #bb .bba-empty { padding:24px 10px; text-align:center; color:var(--mu); }
         /* 우측 구역 */
         #bb .bba-right { display:grid; grid-template-rows:minmax(0,1fr); gap:8px; min-height:0; min-width:0; }
@@ -8998,7 +9000,15 @@
 
         // ───────── daily_tasks.json ─────────
         const hm = s => { const m = /(\d{1,2}):(\d{2})/.exec(s || ''); return m ? (+m[1]) * 60 + (+m[2]) : null; };
-        const hue = n => { let h = 0; for (const ch of String(n)) h = (h * 31 + ch.charCodeAt(0)) % 360; return h; };
+        const HUEMAP = {};   // 근무자 이름 → '색상;--l:밝기%' (오늘 업무표에 나오는 이름끼리는 서로 다른 파스텔이 되도록 배정)
+        const hue = n => { n = String(n); if (HUEMAP[n]) return HUEMAP[n]; let h = 0; for (const ch of n) h = (h * 31 + ch.charCodeAt(0)) % 360; return h + ';--l:84%'; };
+        function buildHues(names) {   // 색상환을 N등분하고, 이름순으로 이웃한 사람끼리는 색이 멀어지도록 건너뛰며 배정 + 3단계 밝기로 한 번 더 구분
+            Object.keys(HUEMAP).forEach(k => delete HUEMAP[k]);
+            const ns = [...new Set(names.filter(x => x && !/없음/.test(x)))].sort((a, b) => a.localeCompare(b, 'ko')), N = ns.length; if (!N) return;
+            const gcd = (a, b) => b ? gcd(b, a % b) : a; let step = Math.max(1, Math.round(N * 0.382)); while (gcd(step, N) !== 1) step++;
+            const LV = [86, 78, 92];
+            ns.forEach((n, i) => { const slot = (i * step) % N; HUEMAP[n] = (Math.round(slot * 360 / N + 8) % 360) + ';--l:' + LV[i % 3] + '%'; });
+        }
         const hash = s => { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
         let tasks = [];
         let monRows = [], sciTasks = [];   // 다중/서브 모니터링 시간대 행, 부산 국립과학관 업무 (업무표에는 안 나오고 '담당자 보기'에서만 사용)
@@ -9032,6 +9042,7 @@
             });
             out.sort((a, b) => rel(a.s) - rel(b.s));
             tasks = out; monRows = monTmp; sciTasks = sciTmp;
+            try { buildHues(out.map(t => t.u)); } catch (e) { /* 색 배정 실패 시 기본 해시 색 */ }
             try { migrateIds(); } catch (e) { /* 무시 */ }
         }
         function migrateIds() {   // 예전 id(담당자 포함)로 저장된 오늘의 체크·점검 기록을 새 id 로 이어받기
@@ -9321,7 +9332,7 @@
 
         // ───────── 점검 실행 ─────────
         const forced = new Set();
-        let autoBusy = false, curSiteTxt = '';
+        let autoBusy = false, curSiteTxt = '', curProg = '';   // curProg = '현재/전체' 번째 사이트
         function buildAll() {   // 오늘 점검 대상 업무와 설정
             return tasks.filter(t => t.auto && todayOk(t)).map(t => ({ t, e: effOf(t), due: dueTs(t) }));
         }
@@ -9458,14 +9469,15 @@
                     catch (e) { console.warn('[BBA] 충전 점검 중 일반 점검 실패:', e && e.message); }
                     try { await campCheck(); } catch (e) { console.warn('[BBA] 충전 점검 중 사이트 점검 실패:', e && e.message); }
                 }
-                curSiteTxt = S.chg ? '충전 ' + (++ci) + '/' + cn + ' · ' + S.label : S.k;
+                if (S.chg) ++ci; curProg = (keys.indexOf(k) + 1) + '/' + keys.length;
+                curSiteTxt = S.chg ? '충전 ' + ci + '/' + cn + ' · ' + S.label : S.k;
                 lockTake(run.map(r => r.it.t.id), S.k); drawAutoPill(); if (!S.chg || ci === 1) renderTasks();
                 try { readings[k] = await probeSite(S, [...bySite[k]].map(n => S.units.find(y => y.n === n))); }
                 catch (e) { readings[k] = { err: 'noread', units: {}, names: [] }; console.warn('[BBA] 점검 오류:', e && e.message); }
                 if (readings[k].err || Object.values(readings[k].units).some(x => !x.found)) console.warn('[BBA] 자동 점검 —', S.k, '(' + S.id + ')', readings[k].err || '', '화면 카드:', readings[k].names);
                 await sleep(800);
             }
-            curSiteTxt = '';
+            curSiteTxt = ''; curProg = '';
             finish(regDone ? run.filter(r => r.it.t.chg) : run);
         }
         let busySince = 0;
@@ -9473,7 +9485,7 @@
             if (autoBusy && Date.now() - lastBeat > 150000) {   // 2분 반 동안 아무 진전이 없으면 멈춘 것으로 보고 풀어준다
                 console.warn('[BBA] 자동 점검이 멈춘 것으로 보여 초기화합니다');
                 try { document.querySelectorAll('iframe[title="bba-probe"]').forEach(x => x.remove()); } catch (e) { /* 무시 */ }
-                autoBusy = false; campBusy = false; probeInfo = null; curSiteTxt = ''; lockFree(); lsSet('bba_auto_lock', 'null'); forced.clear();
+                autoBusy = false; campBusy = false; probeInfo = null; curSiteTxt = ''; curProg = ''; lockFree(); lsSet('bba_auto_lock', 'null'); forced.clear();
                 drawAutoPill(); renderTasks();
             }
             if (autoBusy) { drawAutoPill(); try { const l = lockGet(); if (l && l.tab === TABID) lsSet('bba_auto_lock', JSON.stringify(Object.assign(l, { t: Date.now() }))); } catch (e) { /* 무시 */ } return; }
@@ -9492,13 +9504,16 @@
                     }
                 }
                 try { await campCheck(); } catch (e) { console.warn('[BBA] 사이트 점검 실패:', e && e.message); }
-            } finally { autoBusy = false; curSiteTxt = ''; lockFree(); renderTasks(); }
+            } finally { autoBusy = false; curSiteTxt = ''; curProg = ''; lockFree(); renderTasks(); }
         }
         function drawAutoPill() {
             const el = $('bba-auto'); if (!el) return;
             let txt, cls = 'bba-pill au', ttl = '임무 ON/OFF 자동 점검 (클릭: 켜기/끄기). 업무 시각 +1분에 숨김 iframe 으로 NCC 사이트를 열어 기체의 임무받기 상태를 확인합니다.';
             if (!autoEnabled()) { txt = '⏸ 자동점검 꺼짐'; cls += ' off'; }
-            else if (autoBusy || runningIds().length) { txt = '🔍 점검 중' + (curSiteTxt || probeInfo ? ' · ' + (probeInfo ? probeInfo.k + ' ' + Math.round((Date.now() - probeInfo.t0) / 1000) + '초' : curSiteTxt) : ''); cls += ' run'; }
+            else if (autoBusy || runningIds().length) {
+                txt = '🔍 점검 중' + (curProg ? ' ' + curProg : '') + (curSiteTxt || probeInfo ? ' · ' + (probeInfo ? probeInfo.k + ' ' + Math.round((Date.now() - probeInfo.t0) / 1000) + '초' : curSiteTxt) : ''); cls += ' run';
+                ttl = (curProg ? '현재 ' + curProg.replace('/', ' / ') + '번째 사이트 점검 중\n' : '') + (probeInfo ? probeInfo.k + ' · ' + Math.round((Date.now() - probeInfo.t0) / 1000) + '초째' : curSiteTxt) + '\n\n' + ttl;
+            }
             else {
                 reloadAuto(); const now = Date.now(); let nx = null, nm = '';
                 buildAll().forEach(x => {
@@ -9509,7 +9524,7 @@
                 });
                 try {   // 사이트 점검(캠핑장)의 다음 정각 시각도 후보에 넣음
                     reloadCampAuto(); const wd = workDay();
-                    Object.keys(CAMP_AUTO).forEach(c => { const cf = CAMP_AUTO[c], r = campAuto[c] || {}; if (cf.stopOnOk && r.done) return; cf.slots.forEach(sl => { const p = sl.split(':'), t = new Date(wd.getFullYear(), wd.getMonth(), wd.getDate(), +p[0], +p[1]).getTime(); if (t > now - 1 && (nx === null || t < nx)) { nx = t; nm = '사이트 ' + c; } }); });
+                    Object.keys(CAMP_AUTO).forEach(c => { const cf = CAMP_AUTO[c], r = campAuto[c] || {}; if (cf.stopOnOk && r.done) return; if (cf.weekdayOnly && (wd.getDay() === 0 || wd.getDay() === 6)) return; cf.slots.forEach(sl => { const p = sl.split(':'), t = new Date(wd.getFullYear(), wd.getMonth(), wd.getDate(), +p[0], +p[1]).getTime(); if (t > now - 1 && (nx === null || t < nx)) { nx = t; nm = '사이트 ' + c; } }); });
                 } catch (e) { /* 무시 */ }
                 txt = nx ? '🔍 다음 점검 ' + hmOf(nx) : '🔍 자동점검 대기';
                 if (nx) ttl += '\n다음: ' + hmOf(nx) + ' ' + nm;
@@ -9726,18 +9741,19 @@
         const campSites = {};
         function campSite(c) {
             const cf = CAMP_AUTO[c];
-            return campSites[c] || (campSites[c] = { k: '사이트 ' + c, id: cf.id, rch: cf.mode === 'chg', units: cf.units.map(n => U(n)) });
+            return campSites[c] || (campSites[c] = { k: '사이트 ' + c, id: cf.id, rch: cf.mode === 'chg' || cf.mode === 'info', units: cf.units.map(n => U(n)) });
         }
         function campView(c) {   // → { cls, box, t, ttl, done }
             const r = campAuto[c] || null, cur = r && r.cur, o = { cls: '', box: '✓', t: '', ttl: '', done: false };
-            const hist = r && r.slots ? Object.keys(r.slots).sort().map(sl => { const x = r.slots[sl]; return sl + ' ' + (x.st === 'ok' ? '✓ 정상' + (x.bat != null ? ' · 배터리 ' + x.bat + '%' : '') : x.st === 'retry' ? '↻ 읽지 못해 ' + hmOf(x.next) + ' 재확인' : '✕ ' + (x.msg || '확인 실패')); }).join('\n') : '';
+            const hist = r && r.slots ? Object.keys(r.slots).sort().map(sl => { const x = r.slots[sl]; return sl + ' ' + (x.st === 'ok' ? '✓ 정상' + (x.mis ? ' · 임무ON' : '') + (x.pwr ? ' · 전원ON' : '') + (x.bat != null ? ' · ' + (x.ch ? '충전중 ' : '') + '배터리 ' + x.bat + '%' : '') : x.st === 'skip' ? '− ' + (x.msg || '판단 보류') : x.st === 'retry' ? '↻ 읽지 못해 ' + hmOf(x.next) + ' 재확인' : '✕ ' + (x.msg || '확인 실패')); }).join('\n') : '';
             if (cur && cur.st === 'fail') {
                 if (r.man) { o.cls = ' on manfail'; o.t = r.man; o.done = true; o.ttl = '직접 확인함 (자동 확인은 ' + hmOf(cur.at) + ' 실패: ' + (cur.msg || '') + ') — 누르면 해제'; }
                 else { o.cls = ' bad'; o.box = '✕'; o.t = hmOf(cur.at); o.ttl = '자동 확인 실패 (' + hmOf(cur.at) + '): ' + (cur.msg || '') + ' — 직접 확인한 뒤 누르면 노란 체크'; }
             } else if (cur && cur.st === 'ok' && !r.clr && !camp[c]) {
-                o.cls = ' on byauto'; o.t = hmOf(cur.at) + (cur.bat != null ? ' · ' + cur.bat + '%' : ''); o.done = true; o.ttl = '자동 확인 정상 (' + hmOf(cur.at) + ') — 누르면 해제';
+                o.cls = ' on byauto'; o.t = hmOf(cur.at) + (cur.mis ? ' · 임무ON' : '') + (cur.pwr ? ' · 전원ON' : '') + (cur.bat != null ? ' · ' + (cur.ch ? '⚡' : '🔋') + cur.bat + '%' : ''); o.done = true; o.ttl = '자동 확인 정상 (' + hmOf(cur.at) + ') — 누르면 해제';
             } else if (camp[c]) { o.cls = ' on'; o.t = camp[c]; o.done = true; o.ttl = '직접 확인함 — 누르면 해제'; }
             else if (cur && cur.st === 'ok') o.ttl = '자동 확인 정상이었지만 해제됨 — 누르면 복원';
+            if (!CAMP_AUTO[c] && CAMP_NOTE[c]) o.ttl = (o.ttl ? o.ttl + '\n' : '') + CAMP_NOTE[c];
             if (CAMP_AUTO[c]) o.ttl = (o.ttl ? o.ttl + '\n' : '') + (CAMP_AUTO[c].stopOnOk ? '자동 확인: ' : '자동 확인(매 회차): ') + CAMP_AUTO[c].slots.join(' · ') + (hist ? '\n' + hist : '');
             return o;
         }
@@ -9767,12 +9783,14 @@
                 const cf = CAMP_AUTO[c], r = campAuto[c] || {};
                 if (campForce.has(c)) { out.push({ c, slot: hmOf(now), forced: true }); return; }
                 if (!on || (cf.stopOnOk && r.done)) return;
+                if (cf.weekdayOnly && (wd.getDay() === 0 || wd.getDay() === 6)) return;   // 평일만
                 const past = cf.slots.map(sl => { const p = sl.split(':'); return { sl, t: new Date(y, mo, dd, +p[0], +p[1]).getTime() }; }).filter(x => x.t <= now);
                 if (!past.length) return;
                 const L = past[past.length - 1], rs = r.slots && r.slots[L.sl];
                 if (rs) { if (rs.st === 'retry' && now >= rs.next) out.push({ c, slot: L.sl, retry: true }); return; }
                 const noTry = !r.slots || !Object.keys(r.slots).length;
-                if (now - L.t <= CAMP_MAX_LATE || (cf.stopOnOk && noTry && now - L.t <= 90 * 60 * 1000)) out.push({ c, slot: L.sl });
+                const endT = new Date(y, mo, dd, ...cf.slots[cf.slots.length - 1].split(':').map(Number)).getTime();
+                if (now - L.t <= CAMP_MAX_LATE || (noTry && now <= endT + CAMP_MAX_LATE)) out.push({ c, slot: L.sl });   // 오늘 한 번도 못 했으면(스크립트를 늦게 켠 경우) 마지막 점검 시각 +30분까지는 켜자마자 바로 점검
             });
             return out;
         }
@@ -9791,8 +9809,32 @@
                 if (!x.ch) return { st: 'fail', msg: '켜짐 · 충전 표시(⚡) 없음 · 배터리 ' + bat + '%', bat };
                 return { st: 'ok', msg: '', bat };
             }
+            if (cf.mode === 'power') {   // 전원 ON/OFF 여부만 확인
+                const x = rd[0] && rd[0].x;
+                if (!x || !x.found) return { st: 'err', msg: '기체 카드를 찾지 못함' };
+                if (x.pw === null || x.pw === undefined) return { st: 'err', msg: '전원 상태를 읽지 못함' };
+                return x.pw ? { st: 'ok', msg: '', pwr: true } : { st: 'fail', msg: '전원 꺼짐' };
+            }
+            if (cf.mode === 'info') {   // LIT청주: 합격/불합격 없이 충전 여부와 배터리 %만 기록
+                const x = rd[0] && rd[0].x;
+                if (!x || !x.found) return { st: 'err', msg: '기체 카드를 찾지 못함' };
+                if (x.pw === null || x.pw === undefined) return { st: 'err', msg: '전원 상태를 읽지 못함' };
+                const bat = x.bat !== null && x.bat !== undefined ? x.bat : null;
+                if (x.pw === false) return { st: 'fail', msg: '전원 꺼짐' + (bat !== null ? ' · 배터리 ' + bat + '%' : ''), bat };
+                if (bat === null) return { st: 'fail', msg: '켜짐 · 배터리 수치를 읽지 못함', bat };
+                return { st: 'ok', msg: '', bat, ch: !!x.ch };
+            }
             const found = rd.filter(d => d.x && d.x.found);
             if (!found.length) return { st: 'err', msg: '기체 카드를 찾지 못함' };
+            if (cf.mode === 'duty') {   // 아산·가평: 전원 ON 인 기체만 임무 확인 (전원 OFF 는 제외 → 다음 점검으로 넘김)
+                if (found.some(d => d.x.pw === null || d.x.pw === undefined)) return { st: 'err', msg: '전원 상태를 읽지 못함' };
+                const pwr = found.filter(d => d.x.pw === true);
+                if (!pwr.length) return { st: 'skip', msg: '전원 꺼짐 — 다음 점검으로 넘김' };
+                if (pwr.some(d => d.x.on === null || d.x.on === undefined)) return { st: 'err', msg: '임무 상태를 읽지 못함' };
+                const bad = pwr.filter(d => d.x.on === false);
+                if (bad.length) return { st: 'fail', msg: bad.map(d => shortU(d.n) + ' 임무 OFF').join(' / ') + (found.length > pwr.length ? ' · 전원 꺼진 기체 제외' : '') };
+                return { st: 'ok', msg: '', mis: true };
+            }
             const good = found.find(d => d.x.pw === true && d.x.on === true);
             if (good) return { st: 'ok', msg: '', unit: good.n };
             if (found.some(d => d.x.pw === null || d.x.pw === undefined || d.x.on === null || d.x.on === undefined)) return { st: 'err', msg: '전원/임무관리 상태를 읽지 못함' };
@@ -9802,17 +9844,18 @@
             const ids = list.map(x => 'camp:' + x.c);
             for (const it of list) {
                 const cf = CAMP_AUTO[it.c], S = campSite(it.c);
-                lockTake(ids, S.k); curSiteTxt = S.k; drawAutoPill(); drawCamp();
+                curProg = (list.indexOf(it) + 1) + '/' + list.length; lockTake(ids, S.k); curSiteTxt = S.k; drawAutoPill(); drawCamp();
                 let R; try { R = await probeSite(S, S.units); } catch (e) { R = { err: 'noread', units: {}, cards: 0 }; console.warn('[BBA] 사이트 점검 오류:', e && e.message); }
                 const res = campEval(it.c, R);
                 reloadCampAuto();
                 const r = campAuto[it.c] || {}; r.slots = r.slots || {};
                 const prev = r.slots[it.slot] || { tries: 0 }, fin = Date.now();
-                const s = { tries: (prev.tries || 0) + 1, at: fin, st: '', msg: res.msg || '', bat: res.bat !== undefined ? res.bat : null };
+                const s = { tries: (prev.tries || 0) + 1, at: fin, st: '', msg: res.msg || '', bat: res.bat !== undefined ? res.bat : null, ch: !!res.ch, mis: !!res.mis, pwr: !!res.pwr };
                 if (res.st === 'err' && s.tries < 2 && !it.forced) { s.st = 'retry'; s.next = fin + CAMP_RETRY_MS; }   // 읽지 못한 경우만 한 번 더
+                else if (res.st === 'skip') { s.st = 'skip'; }   // 전원이 꺼져 있어 판단 보류 → 표식 없이 다음 점검 시각으로
                 else {
                     s.st = res.st === 'ok' ? 'ok' : 'fail';
-                    r.cur = { slot: it.slot, st: s.st, at: fin, msg: s.msg, bat: s.bat };
+                    r.cur = { slot: it.slot, st: s.st, at: fin, msg: s.msg, bat: s.bat, ch: s.ch, mis: s.mis, pwr: s.pwr };
                     delete r.man; delete r.clr;   // 새 점검 결과가 나오면 지난 직접 체크 표시는 지우고 자동 결과로 덮어씀
                     if (camp[it.c]) { delete camp[it.c]; lsSet('bba_camp_' + curKey, JSON.stringify(camp)); }
                     if (s.st === 'ok' && cf.stopOnOk) r.done = true;
@@ -9821,7 +9864,7 @@
                 console.log('[BBA] 사이트 점검', it.c, it.slot, s.st, s.msg || '');
                 drawCamp(); await sleep(800);
             }
-            curSiteTxt = '';
+            curSiteTxt = ''; curProg = '';
         }
         async function campCheck() {
             if (campBusy) return; const list = campDue(Date.now()); if (!list.length) return;
