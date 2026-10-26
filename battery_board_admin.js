@@ -8490,6 +8490,19 @@
         #bb .bba-pill.au.run { border-color:#3b82f6; color:#2563eb; }
         #bb #bba-ap { position:absolute; z-index:40; width:372px; box-sizing:border-box; padding:10px 12px 12px; border-radius:12px; border:2px solid var(--bd2); background:var(--sur); box-shadow:0 8px 26px rgba(40,30,10,.32); font-size:15px; color:var(--tx); display:none; }
         #bb #bba-ap.open { display:block; }
+        #bb #bba-btcfg { position:absolute; z-index:41; width:372px; box-sizing:border-box; padding:10px 12px 12px; border-radius:12px; border:2px solid var(--bd2); background:var(--sur); box-shadow:0 8px 26px rgba(40,30,10,.32); font-size:15px; color:var(--tx); display:none; }
+        #bb #bba-btcfg.open { display:block; }
+        #bb #bba-btcfg .ph { display:flex; align-items:center; gap:8px; margin-bottom:4px; }
+        #bb #bba-btcfg .ph b { flex:1; font-size:16px; font-weight:700 !important; }
+        #bb #bba-btcfg .px { width:24px; height:24px; border-radius:6px; border:1.5px solid var(--bd2); background:var(--sur2); color:var(--tx); cursor:pointer; font-family:inherit; line-height:1; }
+        #bb #bba-btcfg .ul { max-height:300px; overflow:auto; margin-top:4px; padding:2px 4px; border:1px solid var(--bd); border-radius:8px; }
+        #bb #bba-btcfg label { display:flex; align-items:center; gap:7px; min-height:28px; cursor:pointer; }
+        #bb #bba-btcfg .u { padding:0 2px; border-radius:6px; }
+        #bb #bba-btcfg .u:hover { background:var(--sur2); }
+        #bb #bba-btcfg .u.dis { color:var(--mu); }
+        #bb #bba-btcfg .u .nm { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        #bb #bba-btcfg .tm { margin-top:8px; color:var(--mu); font-size:14px; line-height:1.45; }
+        #bb #bba-btcfg .pb { display:flex; gap:6px; margin-top:8px; justify-content:flex-end; }
         #bb #bba-ap.wide { width:560px; }
         #bb #bba-ap .ul { max-height:210px; overflow:auto; margin-top:4px; padding:2px 4px; border:1px solid var(--bd); border-radius:8px; }
         #bb #bba-ap.wide .rs { max-height:260px; }
@@ -8630,7 +8643,7 @@
             '<div class="bba-bottom">' +
               '<div id="bba-mmw"></div>' +
               '<div class="bba-right" id="bba-right">' +
-                '<section class="bba-zone bba-btz"><div class="bba-zh"><h2>🔋 기체 배터리</h2><span class="bba-cnt" id="bba-bt-cnt"></span><span class="bba-pill" id="bba-bt-st"></span><button class="bba-btn" id="bba-bt-now" title="지금 한 바퀴 점검">지금 점검</button><button class="bba-btn" id="bba-bt-sort" title="정렬 바꾸기: 상태순 → 이름순 → 내 배치">정렬</button><button class="bba-btn" id="bba-bt-on" title="배터리 점검 일시중지 / 재개">⏸</button><button class="bba-btn" id="bba-bt-gh" title="GitHub 저장">☁</button></div><div class="bba-btg" id="bba-btg"></div></section>' +
+                '<section class="bba-zone bba-btz"><div class="bba-zh"><h2>🔋 무선 기체</h2><button class="bba-btn" id="bba-bt-cfg" title="점검할 기체 선택">🔍</button><span class="bba-cnt" id="bba-bt-cnt"></span><span class="bba-pill" id="bba-bt-st"></span><button class="bba-btn" id="bba-bt-now" title="지금 한 바퀴 점검">지금 점검</button><button class="bba-btn" id="bba-bt-sort" title="정렬 바꾸기: 상태순 → 이름순 → 내 배치">정렬</button><button class="bba-btn" id="bba-bt-on" title="배터리 점검 일시중지 / 재개">⏸</button><button class="bba-btn" id="bba-bt-gh" title="GitHub 저장">☁</button></div><div class="bba-btg" id="bba-btg"></div></section>' +
               '</div>' +
             '</div>';
         bb.appendChild(root);
@@ -9791,19 +9804,23 @@
             try { if (!lockTake(list.map(x => 'camp:' + x.c), '')) return; await campRun(list); } finally { campBusy = false; lockFree(); drawAutoPill(); drawCamp(); }
         }
 
-        // ───────── 기체 배터리 점검 (2번째 트랙) ─────────
-        //  무선충전 점검 사이트(CHG_SRC) 전체의 기체를 30분마다(±2분 지터) 한 곳씩 열어 [배터리 · 전원 · GPS 수신]만 읽고 바로 닫는다.
+        // ───────── 무선 기체 점검 (2번째 트랙) ─────────
+        //  무선충전 점검 사이트(CHG_SRC)에서 🔍로 고른 기체만 1시간마다(±2분 지터) 한 곳씩 열어 [배터리 · 전원 · GPS 수신]만 읽고 바로 닫는다.
         //  일일 업무 점검(자동점검)과는 잠금이 따로라 iframe 이 동시에 2개까지 돌 수 있다(일일 업무 1 + 배터리 1).
         //  결과: 이 브라우저(bba_bt_data)에 72시간 보관 + vercel 함수(api/battery) 경유로 GitHub(monitoring_no_limit/bb_backup_battery_status.json) 한 파일에 저장.
         //  상태: o 정상(배터리 수치) · z 좀비 의심(전원 켜짐 + 배터리 '-' + GPS '-') · f 전원 꺼짐 · i 입고(카드 없음) · u 읽지 못함
-        const BT_INT_MS = 30 * 60 * 1000, BT_JIT_MS = 2 * 60 * 1000, BT_KEEP_MS = 72 * 3600 * 1000;
+        const BT_INT_MS = 60 * 60 * 1000, BT_JIT_MS = 2 * 60 * 1000, BT_KEEP_MS = 72 * 3600 * 1000;
         const BT_API = 'https://multimonitoring.vercel.app/api/battery', BT_NAME = 'battery_status';   // 내 vercel 함수(api/battery)가 monitoring_no_limit 저장소의 bb_backup_battery_status.json 으로 저장
         const BT_SITES = CHG_SRC.map(([id, names]) => {
             const nm = id === 235 ? ['두루아이 5호기', '두루아이 3호기'] : names;   // 235: 5호기가 없으면 3호기 (둘 중 하나만)
             return { k: '배터리 ' + id, id, bt: true, pick1: id === 235, label: names[0].replace(/\s*\d+호기.*$/, ''), kw: /(?!)/, units: nm.map(n => U(n)) };
         });
         const BT_UNITS = BT_SITES.reduce((a, S) => a.concat(S.pick1 ? [S.units[0]] : S.units), []).length;   // 표시 기체 수
-        let btData = {}, btBusy = false, btCur = null, btDone = 0, btUp = { st: '', t: 0, msg: '' };
+        // ── 🔍 점검할 기체 선택: 체크 해제한 기체 이름만 저장(bba_bt_off) → 새로 생긴 기체는 기본으로 점검 대상. 235(5호기/3호기 택1)는 5호기 이름 하나로 사이트 전체를 켜고 끈다 ──
+        const btOffSet = () => { try { const a = JSON.parse(lsGet('bba_bt_off', '[]')); return new Set(Array.isArray(a) ? a : []); } catch (e) { return new Set(); } };
+        const btActiveUnits = (S, off) => { off = off || btOffSet(); return S.pick1 ? (off.has(S.units[0].n) ? [] : S.units) : S.units.filter(u => !off.has(u.n)); };
+        const btActiveSites = () => { const off = btOffSet(); return BT_SITES.filter(S => btActiveUnits(S, off).length); };
+        let btData = {}, btBusy = false, btCur = null, btDone = 0, btTotal = 0, btUp = { st: '', t: 0, msg: '' };
         try { btData = JSON.parse(lsGet('bba_bt_data', '{}')) || {}; } catch (e) { btData = {}; }
         if (!btData.robots) btData = { robots: {} };
         const BTL = { gp: 'bba_bt_lock' };
@@ -9830,9 +9847,10 @@
         }
         const btSave = () => { btPrune(); lsSet('bba_bt_data', JSON.stringify(btData)); };
         function btLatest() {   // 표시용: 기체별 가장 최근 기록 (235 는 5호기/3호기 중 최근 것 하나)
-            const out = [];
+            const out = [], off = btOffSet();
             BT_SITES.forEach(S => {
-                const us = S.pick1 ? [S.units.slice().map(u => ({ u, h: (btData.robots[u.n] || {}).h || [] })).sort((a, b) => ((b.h[b.h.length - 1] || [0])[0]) - ((a.h[a.h.length - 1] || [0])[0]))[0].u] : S.units;
+                if (!btActiveUnits(S, off).length) return;
+                const us = S.pick1 ? [S.units.slice().map(u => ({ u, h: (btData.robots[u.n] || {}).h || [] })).sort((a, b) => ((b.h[b.h.length - 1] || [0])[0]) - ((a.h[a.h.length - 1] || [0])[0]))[0].u] : btActiveUnits(S, off);
                 us.forEach(u => { const h = (btData.robots[u.n] || {}).h || [], l = h[h.length - 1]; out.push({ n: u.n, id: S.id, rec: l || null }); });
             });
             return out;
@@ -9843,17 +9861,19 @@
             btBusy = true; btBeat = Date.now(); btDone = 0; lsSet('bba_bt_last', String(Date.now()));
             lsSet('bba_bt_next', String(Date.now() + BT_INT_MS + Math.round((Math.random() * 2 - 1) * BT_JIT_MS)));
             const t0 = Date.now(); let nOk = 0;
+            const offNow = btOffSet(), plan = BT_SITES.map(S => ({ S, us: btActiveUnits(S, offNow) })).filter(x => x.us.length);
+            btTotal = plan.length;
             try {
-                for (const S of BT_SITES) {
+                for (const { S, us } of plan) {
                     if (lsGet('bba_bt_on', '1') === '0') break;   // 일시중지: 지금 보던 사이트까지만 기록하고 멈춤
                     btCur = S; drawBt(); btLockTake(); btBeat = Date.now();
-                    let R; try { R = await probeSite(S, S.units); } catch (e) { R = { err: 'noread', units: {}, cards: 0 }; }
+                    let R; try { R = await probeSite(S, us); } catch (e) { R = { err: 'noread', units: {}, cards: 0 }; }
                     const t = Math.floor(Date.now() / 1000);
                     if (S.pick1) {   // 5호기가 보이면 5호기, 아니면 3호기
                         const c = S.units.map(u => ({ u, c: btClassify(R, u) }));
                         const pick = c.find(x => x.c.s !== 'i' && x.c.s !== 'u') || c.find(x => x.c.s === 'u') || c[0];
                         btPut(pick.u.n, S.id, [t, pick.c.b === undefined ? null : pick.c.b, pick.c.s]);
-                    } else S.units.forEach(u => { const c = btClassify(R, u); btPut(u.n, S.id, [t, c.b === undefined ? null : c.b, c.s]); });
+                    } else us.forEach(u => { const c = btClassify(R, u); btPut(u.n, S.id, [t, c.b === undefined ? null : c.b, c.s]); });
                     btDone++; btSave(); drawBt(); await sleep(250);
                 }
                 nOk = 1;
@@ -9904,7 +9924,7 @@
             } catch (e) { btUp = { st: 'err', t: Date.now(), msg: (e && e.message) || '네트워크 오류' }; console.warn('[BBA] 배터리 저장 실패:', e && e.message); }
             finally { btSyncing = false; drawBt(); }
         }
-        // ── 기체 카드 클릭 → 기체 정보 창의 '배터리 증감 추이' 그래프 재사용 (점은 점검한 실제 시각, 보조 눈금은 30분) ──
+        // ── 기체 카드 클릭 → 기체 정보 창의 '배터리 증감 추이' 그래프 재사용 (점은 점검한 실제 시각, 보조 눈금은 30분 — 점검 주기는 1시간) ──
         function btOpenPanel(name) {
             const panel = document.getElementById('bb-info-card-panel'), titleEl = document.getElementById('bb-icp-title'), badgeEl = document.getElementById('bb-icp-badge'), bodyEl = document.getElementById('bb-icp-body');
             const W = window.__bbaWbl; if (!panel || !bodyEl || !W) return;
@@ -9921,7 +9941,7 @@
             const dayData = off => {
                 const d0 = dayBase(off), s0 = d0.getTime(), e0 = s0 + 86400000;
                 const log = h.filter(x => x[0] * 1000 >= s0 && x[0] * 1000 < e0).map(x => ({ t: hmS(x[0]), battery: x[2] === 'o' ? x[1] : null, status: x[2] === 'o' ? (x[1] <= BT_LOW ? 'btl' : 'bt') : x[2] === 'z' ? 'btz' : x[2] === 'f' ? 'off' : 'btu', k: x[2], ts: x[0] }));
-                for (let i = log.length - 1; i > 0; i--) if (log[i].ts - log[i - 1].ts > 75 * 60) log.splice(i, 0, { t: hmS(log[i - 1].ts + 1), battery: null, status: 'btu', k: 'gap', ts: log[i - 1].ts + 1 });   // 일시중지 등으로 75분 넘게 비면 선을 끊음
+                for (let i = log.length - 1; i > 0; i--) if (log[i].ts - log[i - 1].ts > 150 * 60) log.splice(i, 0, { t: hmS(log[i - 1].ts + 1), battery: null, status: 'btu', k: 'gap', ts: log[i - 1].ts + 1 });   // 일시중지 등으로 150분(2.5회분) 넘게 비면 선을 끊음
                 return { entries: { [name]: { log } }, full: off > 0, day: d0.getFullYear() + '-' + p2(d0.getMonth() + 1) + '-' + p2(d0.getDate()), log };
             };
             function lines(log) {
@@ -9942,7 +9962,7 @@
             let off = 0;
             bodyEl.innerHTML = '<div class="bb-icp-flex"><div class="bb-icp-left">' +
                 '<div class="bb-icp-section"><div class="bb-icp-section-title">현재 상태</div>' + row('상태', last ? stTxt[last[2]] + (last[2] === 'o' ? ' · ' + last[1] + '%' : '') : '기록 없음') + row('마지막 점검', last ? hmS(last[0]) : '-') + row('사이트 번호', rec ? rec.id : '-') + '</div>' +
-                '<div class="bb-icp-section"><div class="bb-icp-section-title">최근 72시간</div>' + row('점검 횟수', h.length + '회 (약 30분 간격)') + row('배터리 범위', bats.length ? Math.min.apply(null, bats) + '% ~ ' + Math.max.apply(null, bats) + '%' : '-') + row('좀비 의심', cntS('z') + '회') + row('전원 꺼짐', cntS('f') + '회') + row('확인 불가', cntS('u') + '회') + '</div></div>' +
+                '<div class="bb-icp-section"><div class="bb-icp-section-title">최근 72시간</div>' + row('점검 횟수', h.length + '회 (약 1시간 간격)') + row('배터리 범위', bats.length ? Math.min.apply(null, bats) + '% ~ ' + Math.max.apply(null, bats) + '%' : '-') + row('좀비 의심', cntS('z') + '회') + row('전원 꺼짐', cntS('f') + '회') + row('확인 불가', cntS('u') + '회') + '</div></div>' +
                 '<div class="bb-icp-right"><div class="bb-icp-section-title" style="display:flex;align-items:center;justify-content:space-between;gap:6px;"><span id="bt-p-title"></span><span style="display:flex;gap:6px;flex-shrink:0;"><button class="bb-btn" id="bt-p-prev" style="font-size:15px;font-weight:900;padding:3px 8px;">◀ 이전 날</button><button class="bb-btn" id="bt-p-next" style="font-size:15px;font-weight:900;padding:3px 8px;">다음 날 ▶</button></span></div>' +
                 '<div id="bt-p-chart"></div><div class="bb-icp-wbl-log" id="bt-p-log"></div></div></div>';
             function show() {
@@ -9989,11 +10009,11 @@
                 return '<div class="' + cls + '" draggable="true" data-n="' + esc(x.n) + '" title="' + esc(ttl) + '">' + (fill ? '<i style="width:' + fill + '%"></i>' : '') + '<span class="nm">' + esc(x.n) + '</span><span class="sp"> - </span><span class="v">' + esc(v) + '</span></div>';
             }).join('');
             if (!btDrag) g.innerHTML = html;
-            const cnt = $('bba-bt-cnt'); if (cnt) cnt.textContent = (nz ? '👻' + nz + ' · ' : '') + (nl ? '부족 ' + nl + ' · ' : '') + (nf ? '꺼짐 ' + nf + ' · ' : '') + list.length + '대';
+            const cnt = $('bba-bt-cnt'); if (cnt) cnt.textContent = list.length + '대';
             const st = $('bba-bt-st');
             if (st) {
                 let txt; const hm = t => { const d = new Date(t); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
-                if (btBusy) txt = '🔋 점검 중 ' + btDone + '/' + BT_SITES.length + (btCur ? ' · ' + btCur.label : '');
+                if (btBusy) txt = '🔋 점검 중 ' + btDone + '/' + (btTotal || btActiveSites().length) + (btCur ? ' · ' + btCur.label : '');
                 else if (lsGet('bba_bt_on', '1') === '0') txt = '⏸ 일시중지됨';
                 else { const nx = +lsGet('bba_bt_next', '0') || 0, ls = +lsGet('bba_bt_last', '0') || 0; txt = (ls ? '마지막 ' + hm(ls) + ' · ' : '') + (nx ? '다음 ' + hm(Math.max(nx, Date.now())) : '대기'); }
                 const ob = $('bba-bt-on'); if (ob) { const paused = lsGet('bba_bt_on', '1') === '0'; ob.textContent = paused ? '▶' : '⏸'; ob.title = paused ? '배터리 점검 재개 (바로 한 바퀴 점검)' : '배터리 점검 일시중지'; ob.classList.toggle('bad', paused); }
@@ -10021,6 +10041,43 @@
             g.addEventListener('dragend', () => { btDrag = null; drawBt(); });
             g.addEventListener('click', e => { const c = e.target.closest && e.target.closest('.bt'); if (c) btOpenPanel(c.dataset.n); });
         })();
+        // ── 🔍 점검할 기체 선택 창 (무선충전 상세 설정과 같은 모양: 체크한 기체만 점검·표시) ──
+        const btCfg = document.createElement('div'); btCfg.id = 'bba-btcfg'; root.appendChild(btCfg);
+        function btCfgBuild() {
+            const off = btOffSet(); let tot = 0, on = 0;
+            const rows = BT_SITES.map(S => {
+                const us = S.pick1 ? [S.units[0]] : S.units;
+                return us.map(u => { tot++; const ck = !off.has(u.n); if (ck) on++; return '<label class="u' + (ck ? '' : ' dis') + '"><input type="checkbox" data-n="' + esc(u.n) + '"' + (ck ? ' checked' : '') + '><span class="nm">[' + S.id + '] ' + esc(u.n) + (S.pick1 ? ' (없으면 3호기)' : '') + '</span></label>'; }).join('');
+            }).join('');
+            btCfg.innerHTML = '<div class="ph"><b>🔍 무선 기체 점검 대상</b><button class="px" data-a="x" title="닫기">✕</button></div>' +
+                '<div class="ul">' + rows + '</div>' +
+                '<div class="tm">' + on + ' / ' + tot + '대 선택 · 체크한 기체만 1시간마다 점검하고 목록에 표시합니다 (체크를 풀어도 기록은 보관됨) · 바뀐 선택은 다음 점검부터 적용 — 바로 보려면 [지금 점검]</div>' +
+                '<div class="pb"><button class="bba-btn" data-a="all">전체 선택</button><button class="bba-btn" data-a="none">전체 해제</button><button class="bba-btn on" data-a="now">지금 점검</button></div>';
+        }
+        function btCfgOpen(btn) {
+            btCfgBuild(); btCfg.classList.add('open');
+            const rr = btn.getBoundingClientRect(), br = root.getBoundingClientRect(), sc = br.width / root.offsetWidth || 1;
+            let top = (rr.bottom - br.top) / sc + 4; const h = btCfg.offsetHeight;
+            if (top + h > root.offsetHeight - 6) top = Math.max(4, root.offsetHeight - h - 6);
+            btCfg.style.top = top + 'px'; btCfg.style.left = Math.min(Math.max(8, (rr.left - br.left) / sc - 4), Math.max(8, root.offsetWidth - 380)) + 'px';
+        }
+        const btCfgClose = () => btCfg.classList.remove('open');
+        const btCfgEl = $('bba-bt-cfg');
+        if (btCfgEl) btCfgEl.addEventListener('click', () => { if (btCfg.classList.contains('open')) btCfgClose(); else btCfgOpen(btCfgEl); });
+        btCfg.addEventListener('change', e => {
+            const c = e.target.closest('input[type="checkbox"][data-n]'); if (!c) return;
+            const off = btOffSet(); if (c.checked) off.delete(c.dataset.n); else off.add(c.dataset.n);
+            lsSet('bba_bt_off', JSON.stringify([...off])); const keep = (btCfg.querySelector('.ul') || {}).scrollTop || 0; btCfgBuild(); btCfg.querySelector('.ul').scrollTop = keep; drawBt();
+        });
+        btCfg.addEventListener('click', e => {
+            const b = e.target.closest('button[data-a]'); if (!b) return; const a = b.dataset.a;
+            if (a === 'x') return btCfgClose();
+            if (a === 'all') { lsSet('bba_bt_off', '[]'); btCfgBuild(); drawBt(); return; }
+            if (a === 'none') { lsSet('bba_bt_off', JSON.stringify(BT_SITES.map(S => S.units[0].n).concat(BT_SITES.filter(S => !S.pick1).reduce((r, S) => r.concat(S.units.slice(1).map(u => u.n)), [])))); btCfgBuild(); drawBt(); return; }
+            if (a === 'now') { btCfgClose(); lsSet('bba_bt_on', '1'); btRound(true); }
+        });
+        document.addEventListener('mousedown', e => { if (btCfg.classList.contains('open') && !btCfg.contains(e.target) && !(e.target.closest && e.target.closest('#bba-bt-cfg'))) btCfgClose(); }, true);
+        document.addEventListener('keydown', e => { if (e.key === 'Escape' && btCfg.classList.contains('open')) btCfgClose(); });
         const btNowEl = $('bba-bt-now');
         if (btNowEl) btNowEl.addEventListener('click', () => { lsSet('bba_bt_on', '1'); btRound(true); });
         const btOnEl = $('bba-bt-on');
