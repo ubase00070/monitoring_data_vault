@@ -9831,7 +9831,7 @@
             if (cf.mode === 'duty') {   // 아산·가평: 전원 ON 인 기체만 임무 확인 (전원 OFF 는 제외 → 다음 점검으로 넘김)
                 if (found.some(d => d.x.pw === null || d.x.pw === undefined)) return { st: 'err', msg: '전원 상태를 읽지 못함' };
                 const pwr = found.filter(d => d.x.pw === true);
-                if (!pwr.length) return { st: 'skip', msg: '전원 꺼짐 — 다음 점검으로 넘김' };
+                if (!pwr.length) return { st: 'skip', msg: '전원 꺼짐 — 다음 점검으로 넘김', lbl: '전원OFF' };
                 if (pwr.some(d => d.x.on === null || d.x.on === undefined)) return { st: 'err', msg: '임무 상태를 읽지 못함' };
                 const bad = pwr.filter(d => d.x.on === false);
                 if (bad.length) return { st: 'fail', msg: bad.map(d => shortU(d.n) + ' 임무 OFF').join(' / ') + (found.length > pwr.length ? ' · 전원 꺼진 기체 제외' : '') };
@@ -9854,10 +9854,9 @@
                 const prev = r.slots[it.slot] || { tries: 0 }, fin = Date.now();
                 const s = { tries: (prev.tries || 0) + 1, at: fin, st: '', msg: res.msg || '', bat: res.bat !== undefined ? res.bat : null, ch: !!res.ch, mis: !!res.mis, pwr: !!res.pwr, lbl: res.lbl || '' };
                 if (res.st === 'err' && s.tries < 2 && !it.forced) { s.st = 'retry'; s.next = fin + CAMP_RETRY_MS; }   // 읽지 못한 경우만 한 번 더
-                else if (res.st === 'skip') { s.st = 'skip'; }   // 전원이 꺼져 있어 판단 보류 → 표식 없이 다음 점검 시각으로
                 else {
-                    s.st = res.st === 'ok' ? 'ok' : 'fail';
-                    r.cur = { slot: it.slot, st: s.st, at: fin, msg: s.msg, bat: s.bat, ch: s.ch, mis: s.mis, pwr: s.pwr, lbl: s.lbl };
+                    s.st = res.st === 'ok' ? 'ok' : res.st === 'skip' ? 'skip' : 'fail';   // skip = 전원이 꺼져 판단 보류(다음 점검 시각으로 넘김) — 점검은 수행했으므로 화면에는 ✕ 로 표시
+                    r.cur = { slot: it.slot, st: s.st === 'ok' ? 'ok' : 'fail', at: fin, msg: s.msg, bat: s.bat, ch: s.ch, mis: s.mis, pwr: s.pwr, lbl: s.lbl };
                     delete r.man; delete r.clr;   // 새 점검 결과가 나오면 지난 직접 체크 표시는 지우고 자동 결과로 덮어씀
                     if (camp[it.c]) { delete camp[it.c]; lsSet('bba_camp_' + curKey, JSON.stringify(camp)); }
                     if (s.st === 'ok' && cf.stopOnOk) r.done = true;
