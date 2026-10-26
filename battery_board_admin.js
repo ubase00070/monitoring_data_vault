@@ -8273,7 +8273,7 @@
         const AUTO_MAX_TRIES = 2;                 // 최대 점검 횟수 (이 횟수까지 안 맞으면 ✕ 로 표시)
         const AUTO_SKIP_RE = /(?!)/;   // 이 단어가 들어간 임무 ON/OFF 업무는 자동 점검하지 않음 (수동 확인)
         const PROBE_W = 1440, PROBE_H = 1800;     // 점검용 숨김 iframe 의 가상 화면 크기 (NCC 화면이 이 크기로 그려짐)
-        const PROBE_TIMEOUT_MS = 45 * 1000;       // 사이트 한 곳 점검 제한 시간
+        const PROBE_TIMEOUT_MS = 30 * 1000;       // 사이트 한 곳 점검 제한 시간
         const PROBE_STABLE_MS = 1800;             // 스위치 값이 이 시간 동안 같아야 '확정' (로딩 중 깜빡임 방지)
         const normTxt = s => String(s == null ? '' : s).normalize('NFKC').replace(/[\s ]+/g, '');
         const U = (n, extra) => Object.assign({ n, m: [normTxt(n)] }, extra || {});   // 기체: n=표시 이름, m=카드 글자에서 찾을 이름들(공백 무시), g=주간/야간 묶음
@@ -9745,12 +9745,12 @@
         }
         function campView(c) {   // → { cls, box, t, ttl, done }
             const r = campAuto[c] || null, cur = r && r.cur, o = { cls: '', box: '✓', t: '', ttl: '', done: false };
-            const hist = r && r.slots ? Object.keys(r.slots).sort().map(sl => { const x = r.slots[sl]; return sl + ' ' + (x.st === 'ok' ? '✓ 정상' + (x.mis ? ' · 임무ON' : '') + (x.pwr ? ' · 전원ON' : '') + (x.bat != null ? ' · ' + (x.ch ? '충전중 ' : '') + '배터리 ' + x.bat + '%' : '') : x.st === 'skip' ? '− ' + (x.msg || '판단 보류') : x.st === 'retry' ? '↻ 읽지 못해 ' + hmOf(x.next) + ' 재확인' : '✕ ' + (x.msg || '확인 실패')); }).join('\n') : '';
+            const hist = r && r.slots ? Object.keys(r.slots).sort().map(sl => { const x = r.slots[sl]; return sl + ' ' + (x.st === 'ok' ? '✓ 정상' + (x.pwr ? ' · 전원ON' : '') + (x.mis ? ' · 임무ON' : '') + (x.bat != null ? ' · ' + (x.ch ? '충전중 ' : '') + '배터리 ' + x.bat + '%' : '') : x.st === 'skip' ? '− ' + (x.msg || '판단 보류') : x.st === 'retry' ? '↻ 읽지 못해 ' + hmOf(x.next) + ' 재확인' : '✕ ' + (x.msg || '확인 실패')); }).join('\n') : '';
             if (cur && cur.st === 'fail') {
                 if (r.man) { o.cls = ' on manfail'; o.t = r.man; o.done = true; o.ttl = '직접 확인함 (자동 확인은 ' + hmOf(cur.at) + ' 실패: ' + (cur.msg || '') + ') — 누르면 해제'; }
-                else { o.cls = ' bad'; o.box = '✕'; o.t = hmOf(cur.at); o.ttl = '자동 확인 실패 (' + hmOf(cur.at) + '): ' + (cur.msg || '') + ' — 직접 확인한 뒤 누르면 노란 체크'; }
+                else { o.cls = ' bad'; o.box = '✕'; o.t = hmOf(cur.at) + (cur.lbl ? ' · ' + cur.lbl : ''); o.ttl = '자동 확인 실패 (' + hmOf(cur.at) + '): ' + (cur.msg || '') + ' — 직접 확인한 뒤 누르면 노란 체크'; }
             } else if (cur && cur.st === 'ok' && !r.clr && !camp[c]) {
-                o.cls = ' on byauto'; o.t = hmOf(cur.at) + (cur.mis ? ' · 임무ON' : '') + (cur.pwr ? ' · 전원ON' : '') + (cur.bat != null ? ' · ' + (cur.ch ? '⚡' : '🔋') + cur.bat + '%' : ''); o.done = true; o.ttl = '자동 확인 정상 (' + hmOf(cur.at) + ') — 누르면 해제';
+                o.cls = ' on byauto'; o.t = hmOf(cur.at) + (cur.pwr ? ' · 전원ON' : '') + (cur.mis ? ' · 임무ON' : '') + (cur.bat != null ? ' · ' + (cur.ch ? '⚡' : '🔋') + cur.bat + '%' : ''); o.done = true; o.ttl = '자동 확인 정상 (' + hmOf(cur.at) + ') — 누르면 해제';
             } else if (camp[c]) { o.cls = ' on'; o.t = camp[c]; o.done = true; o.ttl = '직접 확인함 — 누르면 해제'; }
             else if (cur && cur.st === 'ok') o.ttl = '자동 확인 정상이었지만 해제됨 — 누르면 복원';
             if (!CAMP_AUTO[c] && CAMP_NOTE[c]) o.ttl = (o.ttl ? o.ttl + '\n' : '') + CAMP_NOTE[c];
@@ -9813,7 +9813,9 @@
                 const x = rd[0] && rd[0].x;
                 if (!x || !x.found) return { st: 'err', msg: '기체 카드를 찾지 못함' };
                 if (x.pw === null || x.pw === undefined) return { st: 'err', msg: '전원 상태를 읽지 못함' };
-                return x.pw ? { st: 'ok', msg: '', pwr: true } : { st: 'fail', msg: '전원 꺼짐' };
+                if (!x.pw) return { st: 'fail', msg: '전원 꺼짐', lbl: '전원OFF' };
+                if (x.on === null || x.on === undefined) return { st: 'err', msg: '임무 상태를 읽지 못함' };
+                return x.on ? { st: 'ok', msg: '', pwr: true, mis: true } : { st: 'fail', msg: '전원 켜짐 · 임무 OFF (알림만 — 재점검 없음)', lbl: '임무OFF', pwr: true };   // 결과만 알려줌
             }
             if (cf.mode === 'info') {   // LIT청주: 합격/불합격 없이 충전 여부와 배터리 %만 기록
                 const x = rd[0] && rd[0].x;
@@ -9850,12 +9852,12 @@
                 reloadCampAuto();
                 const r = campAuto[it.c] || {}; r.slots = r.slots || {};
                 const prev = r.slots[it.slot] || { tries: 0 }, fin = Date.now();
-                const s = { tries: (prev.tries || 0) + 1, at: fin, st: '', msg: res.msg || '', bat: res.bat !== undefined ? res.bat : null, ch: !!res.ch, mis: !!res.mis, pwr: !!res.pwr };
+                const s = { tries: (prev.tries || 0) + 1, at: fin, st: '', msg: res.msg || '', bat: res.bat !== undefined ? res.bat : null, ch: !!res.ch, mis: !!res.mis, pwr: !!res.pwr, lbl: res.lbl || '' };
                 if (res.st === 'err' && s.tries < 2 && !it.forced) { s.st = 'retry'; s.next = fin + CAMP_RETRY_MS; }   // 읽지 못한 경우만 한 번 더
                 else if (res.st === 'skip') { s.st = 'skip'; }   // 전원이 꺼져 있어 판단 보류 → 표식 없이 다음 점검 시각으로
                 else {
                     s.st = res.st === 'ok' ? 'ok' : 'fail';
-                    r.cur = { slot: it.slot, st: s.st, at: fin, msg: s.msg, bat: s.bat, ch: s.ch, mis: s.mis, pwr: s.pwr };
+                    r.cur = { slot: it.slot, st: s.st, at: fin, msg: s.msg, bat: s.bat, ch: s.ch, mis: s.mis, pwr: s.pwr, lbl: s.lbl };
                     delete r.man; delete r.clr;   // 새 점검 결과가 나오면 지난 직접 체크 표시는 지우고 자동 결과로 덮어씀
                     if (camp[it.c]) { delete camp[it.c]; lsSet('bba_camp_' + curKey, JSON.stringify(camp)); }
                     if (s.st === 'ok' && cf.stopOnOk) r.done = true;
