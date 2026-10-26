@@ -10383,7 +10383,7 @@
           return { S, out, U };
         }
 
-        function evaluate(S, out) {
+        function evaluate(S, out, rowNames) {
           const flags = {}, run = {}, core = {};
           const m = { flagged: 0, n4: 0, overW: 0, wRule: 0, timeConflict: 0, none: 0, other: 0, zero: 0, std: 0, nUnits: out.length };
           for (const n in S) run[n] = { W: S[n].mons.length, C: S[n].mons.length, tasks: [], sciT: [], sci: false };
@@ -10391,8 +10391,9 @@
             if (!o.name) { flags[i] = ['후보 없음 (근무·휴게·다중 시간이 모두 겹침)']; core[i] = 1; m.none++; return; }
             if (o.absent) { flags[i] = ['오늘 근무표에 없는 사람(또는 제외 지정)']; core[i] = 1; m.other++; return; }
             const r = run[o.name], s = S[o.name], u = o.u, why = [];
+            const ucnt = rowNames && u.rows.length > 1 ? Math.min(u.cnt, u.rows.filter(rr => rowNames[rr] === rowNames[u.rows[0]]).length) : u.cnt;   // 묶음의 둘째 줄을 다른 사람이 맡고 있으면 그 줄은 첫 줄 담당자의 건수에 넣지 않음 (둘째 줄 불일치는 따로 표시)
             if (r.W + Math.max(u.w, 1e-6) > 2 + 1e-9) { why.push('가중치 2.0을 넘겨 배정'); m.wRule++; }
-            if (r.C + u.cnt > 3) why.push('다중 포함 4개째 배정');
+            if (r.C + ucnt > 3) why.push('다중 포함 ' + (r.C + ucnt) + '건째 배정 (다중 ' + s.mons.length + ' + 앞선 업무 ' + (r.C - s.mons.length) + ' + 이번 ' + (ucnt > 1 ? ucnt + '줄 묶음' : '1건') + ' · 서브는 제외)');
             if (s.mons.some(H => ov(H - 10, H + 50, u.s, u.e))) { why.push('다중 교대 시간과 겹침'); m.timeConflict++; }
             else if (u.sci && s.mons.some(H => ov(H - 10, H + 50 + GAP, u.s - GAP, u.e + GAP))) { why.push('다중과 연달아 배정 (부산)'); m.timeConflict++; }
             if (s.subs.some(H => ov(H - 10, H + 50, u.s, u.e))) { why.push('18시 이후 서브 시간과 겹침'); m.timeConflict++; }
@@ -10402,7 +10403,7 @@
             if (u.sci && r.sci) { why.push('부산 하루 2회'); m.other++; }
             if ((u.sci ? r.tasks : r.sciT).some(t => ov(t[0], t[1], u.s - 10, u.e + 10))) { why.push('과학관(정각 교대)과 다른 업무가 바로 붙음'); m.timeConflict++; }
             if (isHubU(u) && !earlyFree(s) && Object.values(S).some(x => earlyFree(x) && x.mons.length + Math.max(u.w, 1e-6) <= 2 + 1e-9 && x.mons.length + u.cnt <= 3 && !x.mons.some(H => ov(H - 10, H + 50 + GAP, u.s - GAP, u.e + GAP)))) { why.push('07~16시 근무자 중 07·08·09시 다중이 없는 사람이 있는데 부산 08:50을 다른 사람이 받음'); m.other++; }
-            r.W += u.w; r.C += u.cnt; r.tasks.push([u.s, u.e]); if (u.sci) r.sciT.push([u.s, u.e]); r.sci = r.sci || u.sci;
+            r.W += u.w; r.C += ucnt; r.tasks.push([u.s, u.e]); if (u.sci) r.sciT.push([u.s, u.e]); r.sci = r.sci || u.sci;
             if (why.length) { flags[i] = why; if (why.some(x => !x.startsWith('가중치'))) core[i] = 1; }
           });
           // 이미 가중치 2.0(다중+과학관 등)인 사람이 가중치 0짜리 일반 업무까지 받으면 위반 — 순서와 상관없이 최종 합계로 판단
@@ -10454,7 +10455,7 @@
         function liveEval(ctx, d, rowNames) {
           const U = buildUnits(d, true, false, ctx.tasks);
           const R = assign('new', d, null, mulberry(1), { live: ctx, names: rowNames, evalOnly: true });
-          const ev = evaluate(R.S, R.out);
+          const ev = evaluate(R.S, R.out, rowNames);
           const bad = new Set(), why = {};
           R.out.forEach((o, i) => {
             const f = ev.flags[i]; if (!f) return;
@@ -10490,7 +10491,8 @@
         function liveStats(ctx, d, X) {
           const U = buildUnits(d, true, false, ctx.tasks), by = {}, mons = {};
           Object.values(ctx.main).forEach(n => { mons[n] = (mons[n] || 0) + 1; });
-          U.forEach(u => { const n = X[u.rows[0]]; if (!n) return; const l = ctx.tasks[u.rows[u.rows.length - 1]]; (by[n] = by[n] || []).push({ s: ctx.tasks[u.rows[0]].s, e: Math.max(l.e, l.s + 10), w: u.w, c: u.cnt }); });
+          U.forEach(u => { const n = X[u.rows[0]]; if (!n) return; const l = ctx.tasks[u.rows[u.rows.length - 1]]; const ec = u.rows.length > 1 ? Math.min(u.cnt, u.rows.filter(rr => X[rr] === n).length) : u.cnt; (by[n] = by[n] || []).push({ s: ctx.tasks[u.rows[0]].s, e: Math.max(l.e, l.s + 10), w: u.w, c: ec });
+            u.rows.slice(1).forEach(rr => { const n2 = X[rr]; if (n2 && n2 !== n) { const t2 = ctx.tasks[rr]; (by[n2] = by[n2] || []).push({ s: t2.s, e: Math.max(t2.e, t2.s + 10), w: 0, c: 1 }); } }); });
           return ctx.people.map(p => {
             const l = (by[p.name] || []).sort((a, b) => a.s - b.s); let run = l.length ? 1 : 0, best = run;
             for (let i = 1; i < l.length; i++) { if (l[i].s - l[i - 1].e <= 30) { run++; best = Math.max(best, run); } else run = 1; }
