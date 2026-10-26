@@ -154,18 +154,18 @@
     "subUser": "안대관"
   },
   {
-    "user": "임아연",
-    "type": "monitoring",
-    "content": "다중 모니터링",
-    "rawTime": "05:00",
-    "subUser": "김소연"
-  },
-  {
     "user": "안대관",
     "type": "monitoring",
     "content": "다중 모니터링",
-    "rawTime": "06:00",
+    "rawTime": "05:00",
     "subUser": "임아연"
+  },
+  {
+    "user": "임아연",
+    "type": "monitoring",
+    "content": "다중 모니터링",
+    "rawTime": "06:00",
+    "subUser": "안대관"
   },
   {
     "user": "이기완",
