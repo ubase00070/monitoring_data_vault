@@ -130,8 +130,8 @@
     {
       "row": 102,
       "content": "[13:05] 파주LGD(현대밴디스) 임무받기 ON [평일]",
-      "fixed": true,
-      "user": "🛌휴무"
+      "fixed": false,
+      "user": ""
     },
     {
       "row": 103,
@@ -172,8 +172,8 @@
     {
       "row": 109,
       "content": "[16:30] 파주LGD(현대밴디스) 기체 퇴근 처리 후 임무 OFF [평일]",
-      "fixed": true,
-      "user": "🛌휴무"
+      "fixed": false,
+      "user": ""
     },
     {
       "row": 110,
@@ -184,14 +184,14 @@
     {
       "row": 111,
       "content": "[17:30] 성남 [서현동]  임무받기 OFF [평일]",
-      "fixed": true,
-      "user": "🛌휴무"
+      "fixed": false,
+      "user": ""
     },
     {
       "row": 112,
       "content": "[17:40] 수원 힐스테이트 푸르지오 (뉴비오더) 임무 OFF [평일]",
-      "fixed": true,
-      "user": "🛌휴무"
+      "fixed": false,
+      "user": ""
     },
     {
       "row": 113,
