@@ -7,7 +7,7 @@
     "subUser": "안대관"
   },
   {
-    "user": "이기완",
+    "user": "박효선",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "08:00",
@@ -28,14 +28,14 @@
     "subUser": "이현경"
   },
   {
-    "user": "이민수",
+    "user": "이지윤",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "11:00",
     "subUser": "김미소"
   },
   {
-    "user": "이지윤",
+    "user": "이기완",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "12:00",
@@ -70,7 +70,7 @@
     "subUser": "최윤혁"
   },
   {
-    "user": "이준",
+    "user": "이민수",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "17:00",
