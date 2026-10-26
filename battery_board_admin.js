@@ -8343,7 +8343,12 @@
         #bb .bb-hd { position:relative; }
         #bb .bba-bar.inhd { position:absolute; left:14px; top:50%; transform:translateY(-50%); z-index:3; gap:6px; }
         #bb .bba-bar.inhd .bba-note { display:none; }   /* '업무표 갱신' 문구는 제목 줄에서 숨김 (업무표 머리글에 이미 표시) */
-        #bb .bba-bar.inhd .bba-dbtn { height:30px; padding:0 8px; font-size:15px; }
+        #bb .bba-bar.inhd .bba-dbtn { height:auto; min-height:30px; padding:2px 8px; font-size:15px; }
+        #bb .bba-dbtn { flex-direction:column; justify-content:center; gap:0 !important; line-height:1.25; }
+        #bb .bba-dbtn .l1 { display:inline-flex; align-items:center; gap:7px; }
+        #bb .bba-dbtn .l2 { font-size:11.5px; font-weight:600; opacity:.7; letter-spacing:.2px; }
+        #bb .bba-dbtn .l2.warn { color:#d93a35; opacity:1; }
+        #bb .bba-dbtn.on .l2.warn { color:#ffb4b0; }
         #bb .bba-hdr2 { position:absolute; left:calc(50% + 112px); top:50%; transform:translateY(-50%); display:flex; gap:4px; z-index:3; }
         #bb .bba-hdr2 .bba-mmb { margin:0; padding:0 7px; font-size:14px; }   /* 글자를 키워도 오른쪽 줌 버튼과 겹치지 않게 */
         #bb .bba-mmb.sim { border-color:#9db4ff; }
@@ -8546,7 +8551,8 @@
         #bb .bba-cb.manfail i { background:#f2b705; border-color:#d49b00; color:#fff; }
         #bb .bba-cb.run { border-style:dashed; color:var(--mu); }
         #bb .bba-cb.run i { color:var(--mu); }
-        #bb .bba-btz { min-height:0; }
+        #bb .bba-btz { min-height:0; position:relative; }
+        #bb .bba-pill:empty { display:none !important; }
         #bb .bba-btz .bba-zh { flex-wrap:nowrap; }
         #bb .bba-btz .bba-zh > * { flex:0 0 auto; }
         #bb .bba-btz .bba-cnt { flex:0 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
@@ -8586,8 +8592,8 @@
         #bb .bba-pl.fin .nm { padding-top:13px; }
         #bb .bba-pl .fb { position:absolute; top:2px; right:3px; padding:1px 6px; border-radius:8px; background:#6b7280; color:#fff; font-size:12px; line-height:1.3; font-weight:700 !important; white-space:nowrap; }
         #bb .bba-pl.mon { border-color:#22a05a; outline:2px solid #22a05a; outline-offset:0; }
-        #bb #bba-btask { position:absolute; inset:0; z-index:99999; background:rgba(0,0,0,.45); display:flex; align-items:center; justify-content:center; }
-        #bb #bba-btask .bx { background:var(--sur); color:var(--tx); border:2px solid var(--bd2); border-radius:12px; padding:18px 22px; min-width:300px; text-align:center; box-shadow:0 12px 36px rgba(0,0,0,.5); }
+        #bb #bba-btask { position:absolute; inset:0; z-index:50; display:flex; align-items:center; justify-content:center; pointer-events:none; }
+        #bb #bba-btask .bx { pointer-events:auto; background:var(--sur); color:var(--tx); border:2px solid var(--bd2); border-radius:12px; padding:18px 22px; min-width:300px; text-align:center; box-shadow:0 12px 36px rgba(0,0,0,.5); }
         #bb #bba-btask .m { font-size:16px; font-weight:800; line-height:1.5; margin-bottom:14px; }
         #bb #bba-btask .b { display:flex; gap:10px; justify-content:center; }
         #bb #bba-btask .b .bba-btn { height:32px; padding:0 22px; font-size:15px; }
@@ -8624,9 +8630,9 @@
         root.className = 'bba-root';
         root.innerHTML =
             '<div class="bba-bar">' +
-              '<button class="bba-dbtn" data-k="dl" aria-expanded="false">🚚 배달 로그 <span class="n" id="bba-n-dl">-</span><span class="ar">▾</span></button>' +
-              '<button class="bba-dbtn" data-k="iv" aria-expanded="false">🧑‍💻 개입 현황 <span class="ar">▾</span></button>' +
-              '<button class="bba-dbtn" data-k="at" aria-expanded="false">🪑 이석 현황 <span class="n" id="bba-n-at" title="현재 이석 인원">-</span><span class="ar">▾</span></button>' +
+              '<button class="bba-dbtn" data-k="dl" aria-expanded="false"><span class="l1">🚚 배달 로그 <span class="n" id="bba-n-dl">-</span><span class="ar">▾</span></span><span class="l2" id="bba-t-dl">--:-- 기준</span></button>' +
+              '<button class="bba-dbtn" data-k="iv" aria-expanded="false"><span class="l1">🧑‍💻 개입 현황 <span class="ar">▾</span></span><span class="l2" id="bba-t-iv">--:-- 기준</span></button>' +
+              '<button class="bba-dbtn" data-k="at" aria-expanded="false"><span class="l1">🪑 이석 현황 <span class="n" id="bba-n-at" title="현재 이석 인원">-</span><span class="ar">▾</span></span><span class="l2" id="bba-t-at">--:-- 기준</span></button>' +
               '<button class="bba-mmb" id="bba-mmb" title="다중 · 서브 모니터링, 부산 국립과학관 시간대별 담당자">👥 다중/과학관</button>' +
               '<span class="bba-note" id="bba-src"></span>' +
             '</div>' +
@@ -8716,7 +8722,20 @@
         function syncAtCount() {   // 이석 현황 버튼의 '현재 이석 N명' = 이석 현황 제목에 이미 계산돼 있는 값
             try { const t = document.querySelector('#bb-att-title .n'); const n = $('bba-n-at'); if (n) { n.textContent = t ? (t.textContent || '').trim() : '-'; n.classList.toggle('hot', !!t && parseInt(t.textContent, 10) > 0); } } catch (e) { /* 무시 */ }
         }
-        syncDlCount(); syncAtCount(); setInterval(() => { syncDlCount(); syncAtCount(); }, 3000);
+        // 버튼 아래 줄: '##:## 기준' = 각 현황 화면이 이미 표시 중인 마지막 갱신 시각을 그대로 읽어 옴 (눌러 보지 않아도 실시간 갱신 여부 확인)
+        function syncAsof() {
+            [['dl', 'bb-dlog-note'], ['iv', 'bb-iv-stat'], ['at', 'bb-att-stat']].forEach(([k, id]) => {
+                try {
+                    const t = $('bba-t-' + k), src = document.getElementById(id); if (!t) return;
+                    const tx = src ? (src.textContent || '').trim() : '', m = [...tx.matchAll(/(\d{1,2}):(\d{2})/g)].pop();   // 문구 앞쪽의 '08:00~23:00' 같은 운영시간이 아니라 마지막 시각을 사용
+                    const warn = /⚠/.test(tx) || (src && src.classList.contains('warn'));
+                    t.textContent = (warn ? '⚠ ' : '') + (m ? m[1].padStart(2, '0') + ':' + m[2] + ' 기준' : /야간|마감/.test(tx) ? tx.slice(0, 8) : '--:-- 기준');
+                    t.classList.toggle('warn', !!warn);
+                    t.title = tx || '아직 받은 데이터가 없습니다';
+                } catch (e) { /* 무시 */ }
+            });
+        }
+        syncDlCount(); syncAtCount(); syncAsof(); setInterval(() => { syncDlCount(); syncAtCount(); syncAsof(); }, 3000);
 
         // ───────── 순찰 일정 (다중 모니터링 제목 우측 버튼 → 카드형 일정 보기) ─────────
         //   관제 도우미(index.html)의 '현 시각 일정 / 다음 시간대' 카드 모양을 그대로 옮김 (보기 전용)
@@ -9820,7 +9839,7 @@
         const BT_SITES = CHG_SRC.map(([id, names]) => {
             const nm = id === 235 ? ['두루아이 5호기', '두루아이 3호기'] : names;   // 235: 5호기가 없으면 3호기 (둘 중 하나만)
             return { k: '배터리 ' + id, id, bt: true, pick1: id === 235, label: names[0].replace(/\s*\d+호기.*$/, ''), kw: /(?!)/, units: nm.map(n => U(n)) };
-        });
+        }).concat([[268, '가평자이 1호기'], [229, '신대양제지반월2공장 1호기']].map(([id, n]) => ({ k: '배터리 ' + id, id, bt: true, pick1: false, label: n.replace(/\s*\d+호기.*$/, ''), kw: /(?!)/, units: [U(n)] })));   // 무선 기체 전용 추가 (무선충전 목록에는 없음)
         const BT_UNITS = BT_SITES.reduce((a, S) => a.concat(S.pick1 ? [S.units[0]] : S.units), []).length;   // 표시 기체 수
         // ── 🔍 점검할 기체 선택: 체크 해제한 기체 이름만 저장(bba_bt_off) → 새로 생긴 기체는 기본으로 점검 대상. 235(5호기/3호기 택1)는 5호기 이름 하나로 사이트 전체를 켜고 끈다 ──
         const btOffSet = () => { try { const a = JSON.parse(lsGet('bba_bt_off', '[]')); return new Set(Array.isArray(a) ? a : []); } catch (e) { return new Set(); } };
@@ -10023,7 +10042,7 @@
                 else if (lsGet('bba_bt_on', '1') === '0') txt = '';
                 else { const nx = +lsGet('bba_bt_next', '0') || 0, ls = +lsGet('bba_bt_last', '0') || 0; txt = (ls ? '마지막 ' + hm(ls) + ' · ' : '') + (nx ? '다음 ' + hm(Math.max(nx, Date.now())) : '대기'); }
                 const ob = $('bba-bt-on'); if (ob) { const paused = lsGet('bba_bt_on', '1') === '0'; ob.textContent = paused ? '▶' : '⏸'; ob.title = paused ? '배터리 점검 재개 (바로 한 바퀴 점검)' : '배터리 점검 일시중지'; ob.classList.toggle('bad', paused); }
-                st.textContent = txt; st.className = 'bba-pill' + (btBusy ? ' au run' : '');
+                st.textContent = txt; st.style.display = txt ? '' : 'none'; st.className = 'bba-pill' + (btBusy ? ' au run' : '');
             }
             const up = $('bba-bt-gh');
             if (up) { up.textContent = btUp.st === 'ok' ? '☁✓' : btUp.st === 'err' ? '☁✕' : '☁'; up.title = btUp.st === 'ok' ? 'GitHub 저장됨 ' + new Date(btUp.t).toLocaleTimeString('ko-KR', { hour12: false }) + ' (클릭: 지금 저장)' : btUp.st === 'err' ? 'GitHub 저장 실패: ' + btUp.msg + ' (클릭: 다시 저장)' : (btUp.msg || 'GitHub 저장 (한 바퀴가 끝날 때마다 자동 · 클릭: 지금 저장)'); up.classList.toggle('bad', btUp.st === 'err'); }
@@ -10089,8 +10108,9 @@
             const w = document.createElement('div'); w.id = 'bba-btask';
             w.innerHTML = '<div class="bx"><div class="m">' + msg + '</div><div class="b"><button type="button" class="bba-btn" data-v="0">아니오</button><button type="button" class="bba-btn" data-v="1" style="border-color:#22a05a">예</button></div></div>';
             const done = v => { w.remove(); cb(v); };
-            w.addEventListener('click', e => { const b = e.target.closest && e.target.closest('button[data-v]'); if (b) done(b.dataset.v === '1'); else if (e.target === w) done(false); });
-            ($('bb') || document.body).appendChild(w);
+            w.addEventListener('mousedown', e => e.preventDefault());   // 다른 창/입력의 포커스를 가져가지 않음
+            w.addEventListener('click', e => { const b = e.target.closest && e.target.closest('button[data-v]'); if (b) done(b.dataset.v === '1'); });
+            ($('bba-btg') && $('bba-btg').closest('.bba-btz') || $('bb') || document.body).appendChild(w);
         }
         const btOnEl = $('bba-bt-on');
         if (btOnEl) btOnEl.addEventListener('click', () => {
