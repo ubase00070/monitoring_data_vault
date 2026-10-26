@@ -10,8 +10,8 @@
     {
       "row": 82,
       "content": "[08:50~09:00] 수원 힐스테이트 푸르지오 (뉴비오더) 임무 ON [평일]",
-      "fixed": true,
-      "user": "🛌휴무"
+      "fixed": false,
+      "user": ""
     },
     {
       "row": 83,
@@ -220,8 +220,8 @@
     {
       "row": 117,
       "content": "[21:59] 성남 삼평동 임무받기 OFF [평일]",
-      "fixed": true,
-      "user": "🛌휴무"
+      "fixed": false,
+      "user": ""
     },
     {
       "row": 118,
