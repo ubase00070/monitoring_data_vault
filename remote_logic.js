@@ -115,7 +115,10 @@
     // (T.accent를 쓰면 라이트모드에서 짙은 네이비가 나와 너무 진해 보이는 문제가 있었음)
     const HOVER_ACCENT = '#5b9bf7';
     // 온오프 토글의 ON 상태와 동일한 그린 — 다중모니터링/배송순찰띠띠 호버 전용
-    const GREEN_HOVER = '#22c55e';
+    const GREEN_HOVER = '#3cc79a';
+    // 버튼/토글/호버 공통 에메랄드 톤 (파스텔 에메랄드 — '원격 조종' 버튼 계열)
+    const EMERALD = '#2fbf8d';
+    const EMERALD_RGB = '47,191,141';
 
     function getNbTheme() {
         return NB_THEMES[localStorage.getItem('neubie_theme') || 'dark'];
@@ -487,7 +490,7 @@
             borderRadius: '24px', padding: '20px', zIndex: '1000000',
             fontFamily: 'Pretendard, sans-serif', boxShadow: '0 20px 50px rgba(0,0,0,0.8)',
             border: '4px solid transparent', display: 'none', transform: left === '50%' ? 'translate(-50%, -50%)' : 'none',
-            backgroundImage: 'linear-gradient(#111111, #111111), linear-gradient(135deg, #10b981, #2dd4bf)',
+            backgroundImage: 'linear-gradient(#111111, #111111), linear-gradient(135deg, #2fbf8d, #6fdcb8)',
             backgroundOrigin: 'border-box',
             backgroundClip: 'padding-box, border-box',
             maxHeight: '90vh', overflowY: 'auto', overflowX: 'hidden',
@@ -636,7 +639,7 @@
         refreshBtn.onclick = () => runBatteryFetch();
         const copyBtn = document.createElement('button');
         copyBtn.textContent = '복사';
-        copyBtn.style.cssText = 'background:#10b981; color:#fff; border:none; height:24px; padding:0 12px; flex-shrink:0; border-radius:6px; cursor:pointer; font-weight:800; font-size:12px; transition:0.2s;';
+        copyBtn.style.cssText = `background:${EMERALD}; color:#fff; border:none; height:24px; padding:0 12px; flex-shrink:0; border-radius:6px; cursor:pointer; font-weight:800; font-size:12px; transition:0.2s;`;
         copyBtn.onclick = (e) => copyToClipboard(e.currentTarget);
         actions.append(metaEl, refreshBtn, copyBtn);
         header.append(titleEl, actions);
@@ -1013,7 +1016,7 @@
         } else btn.textContent = latest ? '재조회' : '조회';   // 조회 기록이 없으면 '조회', 한 번이라도 읽었으면 '재조회'
 
         btn.disabled = !canRun;
-        btn.style.background = canRun ? '#10b981' : (T.isDark ? '#3a3a3a' : '#cbbd98');
+        btn.style.background = canRun ? EMERALD : (T.isDark ? '#3a3a3a' : '#cbbd98');
         btn.style.color = canRun ? '#fff' : (T.isDark ? '#8b8b8b' : '#7a6f57');
         btn.style.cursor = canRun ? 'pointer' : 'not-allowed';
     }
@@ -2008,7 +2011,7 @@
         // 다중 모니터링 / 배송·순찰 띠띠 전용 호버 — 온오프 토글과 동일한 그린, 다크/라이트 공통
         const subBtnHoverBg = GREEN_HOVER;
         const subBtnHoverBorder = GREEN_HOVER;
-        const subBtnHoverText = '#062e13';
+        const subBtnHoverText = '#06382a';
         const card = document.createElement('div');
         card.id = 'namingSection';
         card.style.cssText = `
@@ -2123,8 +2126,8 @@
                 </div>
                 <div style="display:flex; flex-direction:column; gap:7px; min-width:0; min-height:0;">
                     <div style="display:flex; gap:0; min-width:0;">
-                        <button id="btnMulti" class="sub-btn" style="flex:4; min-width:0; border-top-right-radius:0; border-bottom-right-radius:0;">다중 모니터링 (${multiHourLabel})</button>
-                        <button id="btnMultiSub" class="sub-btn" style="flex:1; min-width:0; padding:0 2px; font-size:13px; border-top-left-radius:0; border-bottom-left-radius:0; margin-left:-2px;">서브</button>
+                        <button id="btnMulti" class="sub-btn" style="flex:77; min-width:0; border-top-right-radius:0; border-bottom-right-radius:0;">다중 모니터링 (${multiHourLabel})</button>
+                        <button id="btnMultiSub" class="sub-btn" style="flex:23; min-width:0; padding:0 2px; font-size:13px; border-top-left-radius:0; border-bottom-left-radius:0; margin-left:-2px;">서브</button>
                     </div>
                     <button id="btnCombined" class="sub-btn" ${isTiddiActive ? '' : 'disabled'} style="flex:none; ${tiddiLockStyle}">${tiddiState.text}</button>
                     <div style="height:1px; background:${T.border}; flex:none; margin:1px 0;"></div>
@@ -2137,7 +2140,7 @@
                     </div>
                     <div style="display:flex; gap:5px; min-width:0; flex:none;">
                         <input type="text" id="taskInput" placeholder="주문번호 붙여넣기" style="flex:1; min-width:0; background:${fieldBg}; color:${fieldText}; border:1px solid ${fieldBorder}; padding:0 8px; border-radius:6px; font-size:13.5px; font-weight:bold; height:30px; box-sizing:border-box;">
-                        <button id="copyFileName" style="width:62px; flex-shrink:0; background:#10b981; color:white; border:none; padding:0; border-radius:6px; cursor:pointer; font-weight:bold; font-size:14px; white-space:nowrap; height:30px; box-sizing:border-box;">복사</button>
+                        <button id="copyFileName" style="width:62px; flex-shrink:0; background:${EMERALD}; color:white; border:none; padding:0; border-radius:6px; cursor:pointer; font-weight:bold; font-size:14px; white-space:nowrap; height:30px; box-sizing:border-box;">복사</button>
                     </div>
                 </div>
             </div>
@@ -2206,7 +2209,7 @@
                     const myName = localStorage.getItem('neubie_user_name') || '';
 					const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_${info.site}_${info.unit}${taskNo}${myName ? '_' + myName : ''}`;
                     navigator.clipboard.writeText(finalName);
-                    applyCopyEffect(e.target, '#10b981', 'white');
+                    applyCopyEffect(e.target, EMERALD, 'white');
                 };
             }
 
@@ -2270,7 +2273,7 @@
         headerContainer.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding-right:5px; min-height:44px;";
 
         const title = document.createElement('h2');
-        title.textContent = "관제 도구";
+        title.textContent = "관제 컨트롤";
         title.style.cssText = `${NCC_TITLE_GRADIENT} font-size:24px; flex:0 1 auto; width:fit-content; margin:0; font-weight:800; white-space:nowrap; min-width:0; overflow:hidden; text-overflow:ellipsis;`;
 
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
@@ -2541,8 +2544,8 @@
             el.style.cssText = `
                 font-size:11px; font-weight:800; letter-spacing:0.4px;
                 padding:2px 8px; border-radius:999px; line-height:1.4;
-                background:${isOn ? '#22c55e' : 'rgba(148,148,148,0.55)'};
-                color:${isOn ? '#062e13' : '#fff'};
+                background:${isOn ? EMERALD : 'rgba(148,148,148,0.55)'};
+                color:${isOn ? '#fff' : '#fff'};
             `;
         }
 
@@ -2556,12 +2559,12 @@
             `;
             const clickHint = '';   // '설명 Click!' 안내 표기 제거 — 라벨을 누르면 곧바로 팝업이 열린다
             row.innerHTML = `
-                <span class="nb-toggle-label" style="display:flex; align-items:center; gap:9px; font-size:15px; font-weight:600;">
+                <span class="nb-toggle-label" style="display:flex; align-items:center; gap:9px; font-size:16px; font-weight:800;">
                     <span style="font-size:18px;">${icon}</span><span style="color:${T.text};">${label}</span>${clickHint}
                 </span>
                 <label style="position:relative; display:inline-block; width:54px; height:24px; flex-shrink:0; cursor:pointer;">
                     <input type="checkbox" ${isOn ? 'checked' : ''} class="nb-toggle-input" style="opacity:0; width:0; height:0;">
-                    <span class="nb-toggle-track" style="position:absolute; inset:0; background:${isOn ? '#22c55e' : (T.isDark ? '#55545c' : '#c9be9c')}; border-radius:999px; transition:background .15s;">
+                    <span class="nb-toggle-track" style="position:absolute; inset:0; background:${isOn ? EMERALD : (T.isDark ? '#55545c' : '#c9be9c')}; border-radius:999px; transition:background .15s;">
                         <span class="nb-toggle-text" style="position:absolute; top:50%; transform:translateY(-50%); ${isOn ? 'left:7px;' : 'right:6px;'} font-size:9px; font-weight:800; letter-spacing:0.3px; color:#fff;">${isOn ? 'ON' : 'OFF'}</span>
                     </span>
                     <span class="nb-toggle-knob" style="position:absolute; top:3px; left:${isOn ? '33px' : '3px'}; width:18px; height:18px; background:#fff; border-radius:50%; transition:left .15s; box-shadow:0 1px 3px rgba(0,0,0,0.3);"></span>
@@ -2572,7 +2575,7 @@
             const knob = row.querySelector('.nb-toggle-knob');
             const text = row.querySelector('.nb-toggle-text');
             const applyVisual = (on) => {
-                track.style.background = on ? '#22c55e' : (T.isDark ? '#55545c' : '#c9be9c');
+                track.style.background = on ? EMERALD : (T.isDark ? '#55545c' : '#c9be9c');
                 knob.style.left = on ? '33px' : '3px';
                 text.textContent = on ? 'ON' : 'OFF';
                 text.style.left = on ? '7px' : 'auto';
@@ -3017,11 +3020,11 @@
 			position: 'fixed', top: '0px', left: '50%', transform: 'translateX(-50%)',
 			zIndex: '2147483646', width: '690px',
 			background: '#1c1c1f',
-			backgroundImage: 'linear-gradient(#1c1c1f, #1c1c1f), linear-gradient(90deg, #0e7490, #22c55e)',
+			backgroundImage: 'linear-gradient(#1c1c1f, #1c1c1f), linear-gradient(90deg, #0e7490, #2fbf8d)',
 			backgroundOrigin: 'border-box', backgroundClip: 'padding-box, border-box',
 			borderRadius: '0 0 14px 14px', padding: '7px 8px 9px',
 			fontFamily: 'Pretendard,sans-serif',
-			boxShadow: '0 8px 32px rgba(0,0,0,0.5), 0 0 16px rgba(34,197,94,0.12)',
+			boxShadow: '0 8px 32px rgba(0,0,0,0.5), 0 0 16px rgba(47,191,141,0.14)',
 			border: '1px solid transparent', borderTop: 'none',
 			transition: 'top 0.28s cubic-bezier(0.4,0,0.2,1)',
 		});
@@ -3051,14 +3054,14 @@
 		const MAX_UNITS = ADMIN_CONFIG.maxMonitorSlots; // 관리자 설정값 (기본 6, 확장 시 9)
 
 		const cellIdle = c => {
-			Object.assign(c.style, { background: 'rgba(34,197,94,0.12)', color: '#e5f9ee',
-				border: '1.5px solid #4ade80', cursor: 'pointer', fontWeight: '600' });
+			Object.assign(c.style, { background: 'rgba(47,191,141,0.14)', color: '#e5f9ee',
+				border: '1.5px solid #5ed3ae', cursor: 'pointer', fontWeight: '600' });
 			c.dataset.selected = 'false';
 		};
 		const cellEmpty = c => {
 			c.textContent = '—';
 			Object.assign(c.style, { background: 'rgba(255,255,255,0.03)', color: '#6b7280',
-				border: '1.5px dashed rgba(34,197,94,0.35)', cursor: 'default', fontWeight: '400' });
+				border: '1.5px dashed rgba(47,191,141,0.4)', cursor: 'default', fontWeight: '400' });
 			c.dataset.unit = ''; c.dataset.selected = 'false'; c.dataset.done = 'false';
 		};
 
@@ -3086,11 +3089,11 @@
 		});
 
 		// 카메라 배치 새로고침 버튼 (기존 '다중 파일명'/'성남 배터리' 자리로 이동)
-		const posBtn = mkBtn('카메라 배치 새로고침', '#26292f', { border: '1px solid #22c55e', color: '#4ade80' });
+		const posBtn = mkBtn('카메라 배치 새로고침', '#26292f', { border: '1px solid #3cc79a', color: '#5ed3ae' });
 
 		// 교대 받기 버튼
-		const fetchBtn = mkBtn('교대 기체 로드', 'linear-gradient(135deg, #16a34a, #4ade80)',
-			{ color: '#062e13', boxShadow: '0 0 10px rgba(74,222,128,0.55)' });
+		const fetchBtn = mkBtn('교대 기체 로드', 'linear-gradient(135deg, #2fbf8d, #6fdcb8)',
+			{ color: '#06382a', boxShadow: '0 0 10px rgba(47,191,141,0.45)' });
 
 		headerRow.appendChild(posBtn);
 		headerRow.appendChild(fetchBtn);
@@ -3100,10 +3103,10 @@
 		const rightBtns = document.createElement('div');
 		Object.assign(rightBtns.style, { marginLeft: 'auto', display: 'flex', gap: '5px', flexShrink: '0' });
 
-		const autoBtn1 = mkBtn('자동 시작 1️⃣', 'linear-gradient(135deg, #0f766e, #22c55e)',
-			{ color: '#fff', boxShadow: '0 0 10px rgba(34,197,94,0.4)', padding: '4px 8px' });
-		const autoBtn2 = mkBtn('자동 시작 2️⃣', 'linear-gradient(135deg, #0f766e, #22c55e)',
-			{ color: '#fff', boxShadow: '0 0 10px rgba(34,197,94,0.4)', padding: '4px 8px' });
+		const autoBtn1 = mkBtn('자동 시작 1️⃣', 'linear-gradient(135deg, #1fa98a, #3cc79a)',
+			{ color: '#fff', boxShadow: '0 0 10px rgba(47,191,141,0.4)', padding: '4px 8px' });
+		const autoBtn2 = mkBtn('자동 시작 2️⃣', 'linear-gradient(135deg, #1fa98a, #3cc79a)',
+			{ color: '#fff', boxShadow: '0 0 10px rgba(47,191,141,0.4)', padding: '4px 8px' });
 
 		rightBtns.appendChild(autoBtn1);
 		rightBtns.appendChild(autoBtn2);
@@ -3125,7 +3128,7 @@
 			cell.dataset.done = 'false';
 			cell.textContent = '—';
 			Object.assign(cell.style, {
-				height: '31px', borderRadius: '7px', border: '1.5px dashed rgba(34,197,94,0.35)',
+				height: '31px', borderRadius: '7px', border: '1.5px dashed rgba(47,191,141,0.4)',
 				background: 'rgba(255,255,255,0.03)', color: '#6b7280', fontSize: '10px',
 				fontFamily: 'Pretendard,sans-serif', cursor: 'default',
 				display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -3552,17 +3555,17 @@
                 #neubie-master-brightness::-webkit-slider-thumb {
                     -webkit-appearance: none;
                     width: 12px; height: 12px; border-radius: 50%;
-                    background: linear-gradient(135deg, #d1fae5, #22c55e);
+                    background: linear-gradient(135deg, #d9f7ec, #2fbf8d);
                     border: 1.5px solid #052e1c;
-                    box-shadow: 0 0 6px rgba(34,197,94,0.9), 0 1px 2px rgba(0,0,0,0.4);
+                    box-shadow: 0 0 6px rgba(47,191,141,0.85), 0 1px 2px rgba(0,0,0,0.4);
                     cursor: pointer;
                     margin-top: 1.5px;
                 }
                 #neubie-master-brightness::-moz-range-thumb {
                     width: 12px; height: 12px; border-radius: 50%;
-                    background: linear-gradient(135deg, #d1fae5, #22c55e);
+                    background: linear-gradient(135deg, #d9f7ec, #2fbf8d);
                     border: 1.5px solid #052e1c;
-                    box-shadow: 0 0 6px rgba(34,197,94,0.9);
+                    box-shadow: 0 0 6px rgba(47,191,141,0.85);
                     cursor: pointer;
                 }
                 #neubie-master-brightness::-moz-range-track {
@@ -3582,7 +3585,7 @@
             left: '60px',
             zIndex: '2147483640',
             background: '#14161a',
-            backgroundImage: 'linear-gradient(#14161a, #14161a), linear-gradient(90deg, #0e7490, #22c55e)',
+            backgroundImage: 'linear-gradient(#14161a, #14161a), linear-gradient(90deg, #0e7490, #2fbf8d)',
             backgroundOrigin: 'border-box',
             backgroundClip: 'padding-box, border-box',
             border: '1px solid transparent',
@@ -3593,7 +3596,7 @@
             gap: '6px',
             width: '150px',
             boxSizing: 'border-box',
-            boxShadow: '0 2px 14px rgba(0,0,0,0.5), 0 0 10px rgba(34,197,94,0.12)',
+            boxShadow: '0 2px 14px rgba(0,0,0,0.5), 0 0 10px rgba(47,191,141,0.14)',
             fontFamily: 'Pretendard, sans-serif',
             userSelect: 'none',
         });
@@ -3636,14 +3639,14 @@
         });
 
         const valueLabel = document.createElement('span');
-        valueLabel.style.cssText = 'color:#4ade80; font-size:12px; font-weight:700; min-width:20px; text-align:right; flex-shrink:0;';
+        valueLabel.style.cssText = 'color:#5ed3ae; font-size:12px; font-weight:700; min-width:20px; text-align:right; flex-shrink:0;';
         valueLabel.textContent = savedVal;
 
         // 슬라이더 값에 맞춰 채워진(초록) 구간과 안 채워진(어두운) 구간의 경계를 실시간 계산
         const updateSliderFill = (v) => {
             const pct = ((v - BRIGHTNESS.MIN) / (BRIGHTNESS.MAX - BRIGHTNESS.MIN)) * 100;
             slider.style.background =
-                `linear-gradient(90deg, #10b981 0%, #6ee7b7 ${pct}%, rgba(255,255,255,0.08) ${pct}%, rgba(255,255,255,0.08) 100%)`;
+                `linear-gradient(90deg, #2fbf8d 0%, #8fe3c8 ${pct}%, rgba(255,255,255,0.08) ${pct}%, rgba(255,255,255,0.08) 100%)`;
         };
         updateSliderFill(savedVal);
 
