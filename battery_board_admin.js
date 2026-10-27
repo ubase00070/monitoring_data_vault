@@ -10423,6 +10423,7 @@
         const hmin = s => { const m = String(s).match(/(\d{1,2}):(\d{2})/); if (!m) return null; let v = +m[1] * 60 + +m[2]; if (v < 420) v += 1440; return v; };
         const fmtM = m => { m = m % 1440; return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
         const isFixedName = n => !n || n === '관리자' || n === '-' || /휴무/.test(n);
+        const ADMIN_ONLY_RE = /\[송도\]\s*뉴비\s*대기장소\s*설정/;   // 관리자 전용 업무 — 시트가 07시에 일반 직원 이름을 넣어 두어도 배정 대상에서 빼고 '고정 (관리자)'로 둔다
         function liveParse(arr) {
           if (!Array.isArray(arr)) throw new Error('JSON이 목록(배열) 형태가 아닙니다');
           const warn = [], main = {}, sub = {}, TL = [], rowUser = [];
@@ -10434,7 +10435,7 @@
             } else if (x.type === 'task' && x.content) {
               const t = String(x.content).replace(/ /g, ' ');
               if (!/^\s*\[\d{1,2}:\d{2}/.test(t)) { warn.push('시각 없는 업무 제외: ' + t.slice(0, 30)); return; }
-              const i = TL.length; TL.push(mkTask(t, 0, ((isFixedName(x.user) && x.user !== '후보 없음') || (x.user && x.user !== '후보 없음' && !BYNAME[x.user])) ? '관리자' : '', i)); rowUser.push(x.user === '후보 없음' ? '' : (x.user || ''));
+              const i = TL.length; const adm = ADMIN_ONLY_RE.test(t); TL.push(mkTask(t, 0, (adm || (isFixedName(x.user) && x.user !== '후보 없음') || (x.user && x.user !== '후보 없음' && !BYNAME[x.user])) ? '관리자' : '', i)); rowUser.push(adm ? '관리자' : x.user === '후보 없음' ? '' : (x.user || ''));
             }
           });
           if (!Object.keys(main).length) warn.push('다중 모니터링 항목이 없음');
