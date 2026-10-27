@@ -8546,7 +8546,10 @@
         #bb .bba-cb i { width:16px; height:16px; border-radius:5px; border:2px solid var(--bd2); background:var(--sur); display:grid; place-items:center; font-style:normal; font-size:13px; line-height:1; color:transparent; }
         #bb .bba-cb.on { background:#d6f5e3; border-color:#8fd3ac; color:#14532d; }
         #bb .bba-cb.on i { background:#22a05a; border-color:#22a05a; color:#fff; }
-        #bb .bba-cb .t { font-weight:400 !important; }
+        #bb .bba-cb .cn { display:flex; flex-direction:column; align-items:flex-start; line-height:1.15; min-width:0; }
+        #bb .bba-cb .n1 { white-space:nowrap; }
+        #bb .bba-cb .t { font-size:11.5px; font-weight:400 !important; white-space:nowrap; opacity:.85; }
+        #bb .bba-cb.two { height:auto; min-height:28px; padding:3px 12px 3px 8px; border-radius:15px; }
         #bb .bba-cb.bad { background:#fdecea; border-color:#e8a29f; color:#9b1c18; }
         #bb .bba-cb.bad i { background:#d93a35; border-color:#d93a35; color:#fff; font-size:12px; }
         #bb .bba-cb.manfail { background:#fff4c2; border-color:#e6c04a; color:#6b4f00; }
@@ -9763,7 +9766,8 @@
             $('bba-camp').innerHTML = CAMPS.map((c, i) => {
                 const o = campView(c), run = runIds.includes('camp:' + c) && !o.done;
                 if (o.done) nDone++;
-                return '<button class="bba-cb' + o.cls + (run ? ' run' : '') + '" data-c="' + i + '" aria-pressed="' + o.done + '" title="' + esc(run ? '자동 확인 중…' : o.ttl) + '"><i>' + (run ? '…' : o.box) + '</i>' + esc(c) + (o.t && !run ? ' <span class="t">' + esc(o.t) + '</span>' : '') + '</button>';
+                const two = !!(o.t && !run);   // 시각·전원·임무 같은 결과 글자가 있으면 이름 아래 둘째 줄에 작게
+                return '<button class="bba-cb' + o.cls + (run ? ' run' : '') + (two ? ' two' : '') + '" data-c="' + i + '" aria-pressed="' + o.done + '" title="' + esc(run ? '자동 확인 중…' : o.ttl) + '"><i>' + (run ? '…' : o.box) + '</i><span class="cn"><span class="n1">' + esc(c) + '</span>' + (two ? '<span class="t">' + esc(o.t) + '</span>' : '') + '</span></button>';
             }).join('');
             $('bba-campn').textContent = '점검 ' + nDone + '/' + CAMPS.length + ' · 매일 07:00 초기화';
         }
