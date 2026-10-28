@@ -1,6 +1,6 @@
 /* battery_board_admin.js — battery_board.js v6.9 기반 관리자판 (별도 파일). 기존 기능 유지 + 960×1040 레이아웃 / 일일 업무표 / 펼침 그리드 / 캠핑장·HW·SW. 맨 아래 'ADMIN 확장' 참고 */
 /* ============================================================
-   battery_board.js v6.9 [배달 통계 평균 소요시간 / 개입 통계 기본정렬·동률 / 배달 로그 하단 안내] v6.8 [개입 통계: 주간/야간 뱃지 · 동료 대비 열] v6.7 [개입 누적 통계에 점유율 열] v6.6 [이석 오늘·달력 / 누적 통계 버튼 통일 / 헤더 높이 통일 / 스테이 그린 확인 시각] v6.5 [배달 로그 '누적 통계' 추가] v6.4 [UI 전면 개편: 순찰·배달 열 + 다중/개입/이석 3분할 그리드. 로직 변경 없음 — 빠진 요소는 CSS로만 숨김] v6.3 (배경 이미지 · 방전 로그 · 이석/착석 현황 슬라이드 전환 추가 · 배달 기체 로그 · 하루 기준 07:00 · 금일 배달 건수 배지 · 고정 버튼 3종 무지개 파스텔+이모지)
+   battery_board.js v6.9 [배달 통계 평균 소요시간 / 개입 통계 기본정렬·동률 규칙 / 배달 로그 하단 안내] v6.8 [개입 통계: 주간/야간 뱃지 · 동료 대비 열] v6.7 [개입 누적 통계에 점유율 열] v6.6 [이석 오늘·달력 / 누적 통계 버튼 통일 / 헤더 높이 통일 / 스테이 그린 확인 시각] v6.5 [배달 로그 '누적 통계' 추가] v6.4 [UI 전면 개편: 순찰·배달 열 + 다중/개입/이석 3분할 그리드. 로직 변경 없음 — 빠진 요소는 CSS로만 숨김] v6.3 (배경 이미지 · 방전 로그 · 이석/착석 현황 슬라이드 전환 추가 · 배달 기체 로그 · 하루 기준 07:00 · 금일 배달 건수 배지 · 고정 버튼 3종 무지개 파스텔+이모지)
    NCC 종합 모니터 — 템퍼몽키 inject
    ============================================================ */
 
@@ -8640,6 +8640,15 @@
         #bb .bba-pl { display:flex; flex-direction:column; min-width:80px; overflow:hidden; border:1.5px solid #8f8670; border-radius:8px; background:#e0dacb; text-align:center; position:relative; }
         #bb .bba-pl .nm { padding:3px 9px 2px; font-size:16px; line-height:1.2; font-weight:700 !important; white-space:nowrap; color:#2b2418; }
         #bb .bba-pl .tg { padding:1px 8px; font-size:13px; line-height:1.3; font-weight:700 !important; white-space:nowrap; border-top:1.5px solid #8f8670; }
+        #bb #bba-memo { position:absolute; right:0; bottom:0; width:50%; z-index:8; display:none; flex-direction:column; border:2px solid var(--bd2); border-radius:8px; background:var(--bg); overflow:hidden; box-shadow:-6px 0 18px rgba(0,0,0,.18); }
+        #bb #bba-memo.open { display:flex; }
+        #bb #bba-memo .bba-zh .bba-cnt { white-space:normal; line-height:1.3; text-align:right; flex:1 1 140px; }
+        #bb #bba-memo-cf { padding:8px 10px; border-bottom:1px solid var(--bd); background:#ffe2b8; color:#4a2a00; font-size:14px; display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+        #bb #bba-memo-ta { flex:1 1 auto; width:100%; box-sizing:border-box; border:0; outline:0; resize:none; padding:12px 14px; font-family:inherit; font-size:15px; line-height:1.55; background:var(--sur); color:var(--tx); }
+        #bb .bb-hd-rightwrap { overflow:visible; }
+        #bb #bba-memob { position:absolute; top:calc(100% + 5px); left:44px; height:24px; padding:0 10px; border-radius:8px; border:1.5px solid var(--bd2); background:var(--sur2); color:var(--tx); font-family:inherit; font-size:14px; font-weight:700 !important; cursor:pointer; white-space:nowrap; z-index:4; }
+        #bb #bba-memob.on { background:#c9f0d6; color:#14532d; border-color:#7fcf9a; }
+        #bb #bba-memob.warn { border-color:#e11d48; color:#b4123c; animation:bbaPatBtn 2.4s ease-in-out infinite; }
         #bb .bba-pr { display:flex; align-items:center; flex-wrap:wrap; gap:4px 6px; padding:5px 4px; border-top:1px solid var(--bd); }
         #bb .bba-pr:first-of-type { border-top:0; }
         #bb .bba-pr .n { min-width:104px; font-size:15px; font-weight:700 !important; color:var(--tx); }
@@ -9121,6 +9130,107 @@
             if (mmBody) new MutationObserver(() => { clearTimeout(mt); mt = setTimeout(() => { if (schEl.classList.contains('open') && schMode === 'sched') renderSched(); }, 300); }).observe(mmBody, { childList: true, subtree: true });
         } catch (e) { /* 무시 */ }
         setInterval(loadSched, 5 * 60 * 1000);
+
+
+        // ───────── 메모 (집 ↔ 회사 PC 넘겨받기) ─────────
+        //   · 쓰는 동안은 이 PC 의 localStorage 에만 저장 (키 bba_memo).
+        //   · 레포(monitoring_no_limit/bb_backup_memo.json — vercel api/battery 경유)에는 매일 07:30 · 17:30 에만 올린다 (그 사이 이 PC 에서 바꾼 내용이 있을 때만).
+        //   · 메모 버튼을 열면 레포 파일을 읽어, 다른 PC 가 올린 더 새로운 메모가 있으면 가져온다. 양쪽이 모두 바뀌었으면 덮어쓰지 않고 어느 쪽을 쓸지 묻는다.
+        //   · 시각이 지난 뒤에 보드를 켜도 바로 따라잡는다 (가장 최근 07:30/17:30 회차를 아직 못 했으면 실행).
+        const MEMO_API = 'https://multimonitoring.vercel.app/api/battery', MEMO_NAME = 'memo', MEMO_KEY = 'bba_memo', MEMO_SLOTS = [[7, 30], [17, 30]], MEMO_MAX = 200000, MEMO_RETRY_MS = 5 * 60 * 1000;
+        let memo = (() => { try { const o = JSON.parse(lsGet(MEMO_KEY, 'null')); if (o && typeof o.text === 'string') return { text: o.text, edited: +o.edited || 0, base: +o.base || 0, slot: +o.slot || 0 }; } catch (e) { /* 무시 */ } return { text: '', edited: 0, base: 0, slot: 0 }; })();
+        let memoConf = null, memoBusy = false, memoMsg = '', memoTryAt = 0, memoIsOpen = false, memoTimer = null;   // memoConf = 충돌 시 레포의 메모 {text, at}
+        const memoSave = () => { lsSet(MEMO_KEY, JSON.stringify(memo)); };
+        const memoDirty = () => memo.edited > memo.base;
+        const memoFmt = t => { if (!t) return '—'; const d = new Date(t); return (d.toDateString() === new Date().toDateString() ? '' : (d.getMonth() + 1) + '/' + d.getDate() + ' ') + pad(d.getHours()) + ':' + pad(d.getMinutes()); };
+        function memoSlotTs(now, dir) {   // dir -1: 가장 최근에 지난 회차 · +1: 다음 회차
+            const d = new Date(now); let best = dir < 0 ? 0 : Infinity;
+            for (let k = -1; k <= 1; k++) MEMO_SLOTS.forEach(([h, m]) => {
+                const t = new Date(d.getFullYear(), d.getMonth(), d.getDate() + k, h, m, 0, 0).getTime();
+                if (dir < 0 ? (t <= now && t > best) : (t > now && t < best)) best = t;
+            });
+            return best;
+        }
+        async function memoRemote() {   // 레포의 메모 → { text, at(수정 시각) } | null(파일 없음)
+            const r = await fetch(MEMO_API + '?name=' + MEMO_NAME, { cache: 'no-store' });
+            if (!r.ok) throw new Error('읽기 ' + r.status);
+            const j = await r.json(), d = j && j.data;
+            return d && typeof d.text === 'string' ? { text: d.text, at: +d.updatedAt || 0 } : null;
+        }
+        async function memoPush() {
+            const sent = { text: memo.text, at: memo.edited };
+            const r = await fetch(MEMO_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: MEMO_NAME, data: { v: 1, text: sent.text, updatedAt: sent.at } }) });
+            let j = {}; try { j = await r.json(); } catch (e) { /* 무시 */ }
+            if (!r.ok || j.ok === false) throw new Error('저장 ' + r.status);
+            memo.base = Math.max(memo.base, sent.at); memoSave();   // 보내는 동안 더 쓴 내용은 아직 '변경 있음'으로 남는다
+        }
+        // push=true 면 이 PC 에서 바꾼 내용이 있을 때 레포에 올림. 항상 먼저 레포를 읽어 더 새로운 메모를 놓치지 않는다.
+        async function memoSync(push) {
+            if (memoBusy) return false; memoBusy = true; memoMsg = ''; memoDraw();
+            let ok = false;
+            try {
+                const rem = await memoRemote();
+                if (rem && rem.at > memo.base) {   // 이 PC 가 아직 못 본 더 새로운 메모가 레포에 있음
+                    if (rem.text === memo.text) { memo.base = rem.at; memo.edited = Math.min(memo.edited, rem.at) || rem.at; memoSave(); memoConf = null; }
+                    else if (!memoDirty()) { memo.text = rem.text; memo.base = memo.edited = rem.at; memoSave(); memoConf = null; memoFill(); }
+                    else { memoConf = rem; throw new Error('충돌'); }
+                }
+                if (push && memoDirty()) await memoPush();
+                memoConf = null; ok = true;
+            } catch (e) { if (!memoConf) memoMsg = '네트워크 오류 (' + ((e && e.message) || '') + ')'; }
+            finally { memoBusy = false; memoDraw(); }
+            return ok;
+        }
+        function memoTick() {   // 30초마다: 가장 최근 07:30/17:30 회차를 아직 못 했으면 실행
+            try { const o = JSON.parse(lsGet(MEMO_KEY, 'null')); if (o && +o.slot > memo.slot) memo.slot = +o.slot; } catch (e) { /* 무시 */ }
+            const now = Date.now(), T = memoSlotTs(now, -1);
+            if (memo.slot >= T || memoBusy || memoConf || now < memoTryAt) return;
+            memoTryAt = now + MEMO_RETRY_MS;   // 실패하면 5분 뒤 다시
+            memoSync(true).then(ok => { if (ok) { memo.slot = T; memoSave(); memoDraw(); } });
+        }
+        const memoEl = document.createElement('div');
+        memoEl.id = 'bba-memo';
+        memoEl.innerHTML = '<div class="bba-zh"><h2>📝 메모</h2><span class="bba-cnt" id="bba-memo-st"></span><button class="bba-btn" id="bba-memo-save" title="07:30 · 17:30 을 기다리지 않고 지금 레포에 올립니다">지금 저장</button><button class="bba-btn" id="bba-memo-cl">✕ 닫기</button></div>' +
+            '<div id="bba-memo-cf" style="display:none"></div><textarea id="bba-memo-ta" spellcheck="false" maxlength="' + MEMO_MAX + '" placeholder="여기에 메모를 적으세요. 이 PC 에 바로 저장되고, 매일 07:30 · 17:30 에 레포로 올라가 다른 PC 에서 이어서 볼 수 있습니다."></textarea>';
+        $('bb').appendChild(memoEl);
+        function memoFill() { const ta = $('bba-memo-ta'); if (ta && document.activeElement !== ta && ta.value !== memo.text) ta.value = memo.text; }
+        function memoDraw() {
+            const st = $('bba-memo-st'), cf = $('bba-memo-cf'), btn = $('bba-memob'), sv = $('bba-memo-save');
+            if (btn) { btn.classList.toggle('warn', !!memoConf); btn.classList.toggle('on', memoIsOpen); btn.textContent = memoConf ? '📝 메모 ⚠' : '📝 메모'; }
+            if (!st) return;
+            const nx = memoSlotTs(Date.now(), 1);
+            st.textContent = (memoBusy ? '레포 확인 중… · ' : '') + '레포 저장본 ' + memoFmt(memo.base) + (memoDirty() ? ' · ● 변경 있음 (다음 자동 저장 ' + memoFmt(nx) + ')' : ' · 저장본과 같음') + (memoMsg ? ' · ' + memoMsg : '');
+            if (sv) sv.disabled = memoBusy;
+            if (memoConf) {
+                cf.style.display = '';
+                cf.innerHTML = '<b>다른 PC 에서 저장한 메모(' + memoFmt(memoConf.at) + ')와 이 PC 의 메모가 모두 바뀌었습니다.</b> 어느 쪽을 쓸까요?' +
+                    '<button class="bba-btn" id="bba-memo-mine">이 PC 것으로 덮어쓰기</button><button class="bba-btn" id="bba-memo-theirs">레포 것 가져오기 (이 PC 것은 따로 보관)</button>';
+                $('bba-memo-mine').onclick = async () => { memo.edited = Math.max(Date.now(), memoConf.at + 1); memo.base = memoConf.at; memoSave(); memoConf = null; await memoSync(true); };
+                $('bba-memo-theirs').onclick = () => { try { lsSet('bba_memo_backup', JSON.stringify({ text: memo.text, at: Date.now() })); } catch (e) { /* 무시 */ } memo.text = memoConf.text; memo.base = memo.edited = memoConf.at; memoSave(); memoConf = null; memoFill(); memoDraw(); };
+            } else { cf.style.display = 'none'; cf.innerHTML = ''; }
+        }
+        function openMemo() {
+            memoIsOpen = !memoIsOpen;
+            memoEl.classList.toggle('open', memoIsOpen);
+            if (memoIsOpen) {
+                const hd = document.querySelector('#bb .bb-hd'); memoEl.style.top = (hd ? hd.offsetTop + hd.offsetHeight : 64) + 'px';   // 헤더(줌·닫기 버튼)는 가리지 않고 그 아래 오른쪽 절반
+                memoFill(); const ta = $('bba-memo-ta'); if (ta) ta.value = memo.text;
+                memoSync(false).then(() => { memoFill(); try { $('bba-memo-ta').focus(); } catch (e) { /* 무시 */ } });   // 열 때 레포 파일을 읽어 더 새로운 메모가 있으면 가져옴
+            }
+            memoDraw();
+        }
+        (() => {
+            const ta = $('bba-memo-ta'); let t = null;
+            ['keydown', 'keyup', 'keypress'].forEach(ev => ta.addEventListener(ev, e => e.stopPropagation()));   // 보드/NCC 의 단축키와 겹치지 않게
+            ta.addEventListener('input', () => { clearTimeout(t); t = setTimeout(() => { memo.text = ta.value; memo.edited = Math.max(Date.now(), memo.base + 1); memoSave(); memoDraw(); }, 250); });
+            $('bba-memo-cl').addEventListener('click', () => { if (memoIsOpen) openMemo(); });
+            $('bba-memo-save').addEventListener('click', () => { memoMsg = ''; memoSync(true).then(ok => { if (ok) { memoMsg = '저장됨 ' + memoFmt(Date.now()); memoDraw(); } }); });
+            const wrap = document.querySelector('#bb .bb-hd-rightwrap');
+            if (wrap) { const b = document.createElement('button'); b.id = 'bba-memob'; b.textContent = '📝 메모'; b.title = '메모 — 집/회사 PC 에서 이어 쓰기 (이 PC 에 바로 저장 · 매일 07:30 / 17:30 에 레포로 올림)'; wrap.appendChild(b); b.addEventListener('click', openMemo); }
+            window.addEventListener('storage', e => { if (e.key !== MEMO_KEY) return; try { const o = JSON.parse(e.newValue || 'null'); if (o && typeof o.text === 'string') { memo = { text: o.text, edited: +o.edited || 0, base: +o.base || 0, slot: +o.slot || 0 }; memoFill(); memoDraw(); } } catch (x) { /* 무시 */ } });   // 같은 PC 의 다른 보드 탭에서 쓴 내용 반영
+            memoDraw();
+            memoTimer = setInterval(memoTick, 30 * 1000); setTimeout(memoTick, 6000);   // 켜자마자 지난 회차를 못 했으면 따라잡기
+        })();
 
         // ───────── 업무일 / 저장 ─────────
         const nowMin = () => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); };
