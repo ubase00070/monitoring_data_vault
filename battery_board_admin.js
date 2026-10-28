@@ -5280,7 +5280,7 @@
         '두루아이 3': '두루아이 3호기',
         '두루아이 4': '두루아이 4호기',
         '두루아이 5': '두루아이 5호기',
-        '중앙대': ['중앙대학교 1호기', '두루아이 2호기'],
+        '중앙대': ['중앙대학교 1호기'],
         '잠실 르엘': '잠실 르엘 1호기',
         '신동백': '신동백 롯데캐슬 에코1단지 1호기',
         '청담 르엘': '청담르엘 1호기',
@@ -8334,13 +8334,13 @@
         const CHG_EMPTY_MS = 12 * 1000;   // 기체 목록 틀은 보이는데 카드가 하나도 없는 채로 이 시간이 지나면 '입고됨'
         const CHG_SRC = [
             [178, ['강남 래미안블레스티지 1호기']], [132, ['경희대학교 국제캠퍼스 1호기', '경희대학교 국제캠퍼스 2호기']], [117, ['고양 래미안 휴레스트 1호기']],
-            [224, ['동대문구회기동 1호기(쉴드플러스)']], [216, ['동백SK아펠바움 1차1호기']], [235, ['두루아이 5호기']], [230, ['더샵남천프레스티지 1호기']],
+            [224, ['동대문구회기동 1호기(쉴드플러스)']], [216, ['동백SK아펠바움 1차1호기']], [235, ['두루아이 3호기']], [230, ['더샵남천프레스티지 1호기']],
             [151, ['부산 EDC 수자인 1호기', '부산 EDC 수자인 2호기']], [150, ['부산 EDC 호반써밋 1호기', '부산 EDC 호반써밋 2호기']], [138, ['서강대학교 1호기']],
             [145, ['성남시 서현역 1호기']], [143, ['성남시 야탑역 1호기']], [144, ['성남시 율동공원 1호기']], [142, ['성남시 판교역 1호기']],
             [134, ['롯데마트부산CFC(쉴더스) 1호기']], [146, ['신동백 롯데캐슬 에코1단지 1호기']], [111, ['인재개발원 1호기'], false, true], [181, ['잠실 레이크팰리스 1호기']],
             [187, ['잠실 르엘 1호기']], [182, ['전주시 전주천 1호기']], [240, ['전주천(덕진구) 1호기']], [193, ['창원대학교 1호기', '창원대학교 2호기']],
             [177, ['청담르엘 1호기']], [57, ['파주 디에트르더클래스 1호기']], [137, ['한국장애인고용공단 1호기', '한국장애인고용공단 2호기']], [179, ['한성대학교 1호기']],
-            [202, ['두루아이 2호기', '중앙대학교 1호기'], true], [246, ['서울 양원 LH 1단지 1호기']], [244, ['덕수궁 1호기']], [245, ['순천향대학교 1호기']],
+            [202, ['중앙대학교 1호기', '두루아이 5호기']], [246, ['서울 양원 LH 1단지 1호기']], [244, ['덕수궁 1호기']], [245, ['순천향대학교 1호기']],
             [247, ['수원센트럴 1호기', '수원센트럴 2호기']], [252, ['강동현대홈타운 1호기']], [267, ['두루아이 4호기']],
             [261, ['수원 힐스테이트푸르지오 1호기', '수원 힐스테이트푸르지오 2호기']], [258, ['더샵지제역센트럴파크 1호기', '더샵지제역센트럴파크 2호기']], [250, ['트리니원 1호기', '트리니원 2호기']],
         ];
@@ -8640,6 +8640,22 @@
         #bb .bba-pl { display:flex; flex-direction:column; min-width:80px; overflow:hidden; border:1.5px solid #8f8670; border-radius:8px; background:#e0dacb; text-align:center; position:relative; }
         #bb .bba-pl .nm { padding:3px 9px 2px; font-size:16px; line-height:1.2; font-weight:700 !important; white-space:nowrap; color:#2b2418; }
         #bb .bba-pl .tg { padding:1px 8px; font-size:13px; line-height:1.3; font-weight:700 !important; white-space:nowrap; border-top:1.5px solid #8f8670; }
+        #bb .bba-pr { display:flex; align-items:center; flex-wrap:wrap; gap:4px 6px; padding:5px 4px; border-top:1px solid var(--bd); }
+        #bb .bba-pr:first-of-type { border-top:0; }
+        #bb .bba-pr .n { min-width:104px; font-size:15px; font-weight:700 !important; color:var(--tx); }
+        #bb .bba-pr .sub { font-size:12.5px; color:var(--mu); }
+        #bb .bba-pr .c { padding:1px 8px; border-radius:8px; font-size:13px; line-height:1.4; font-weight:700 !important; white-space:nowrap; border:1.5px solid transparent; }
+        #bb .bba-pr .c.ok { background:#c9f0d6; color:#14532d; border-color:#7fcf9a; }
+        #bb .bba-pr .c.warn { background:#ffe2b8; color:#6b3a00; border-color:#e0a24d; }
+        #bb .bba-pr .c.off { background:#e5e7eb; color:#374151; border-color:#aab0ba; }
+        #bb .bba-pr .c.err { background:#ffd0d6; color:#7a1226; border-color:#e08a98; }
+        #bb .bba-pr .c.mu { color:var(--mu); }
+        #bb .bba-pr .rsn { margin-left:auto; font-size:12.5px; color:var(--mu); max-width:40%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        #bb .bba-pl.sus.new { outline:3px solid #e11d48; outline-offset:-1px; animation:bbaPatBlink 2.4s ease-in-out infinite; }
+        @keyframes bbaPatBlink { 0%,100% { outline-color:rgba(225,29,72,0); } 50% { outline-color:#e11d48; } }
+        #bb .bba-pr.new { background:rgba(225,29,72,.07); border-radius:6px; }
+        #bb .bba-btn.alert { border-color:#e11d48; color:#b4123c; animation:bbaPatBtn 2.4s ease-in-out infinite; }
+        @keyframes bbaPatBtn { 0%,100% { box-shadow:0 0 0 0 rgba(225,29,72,0); } 50% { box-shadow:0 0 0 3px rgba(225,29,72,.45); } }
         #bb .bba-pl.sus { background:#ffc4d4; max-width:150px; }
         #bb .bba-pl.sus .nm { color:#4a0f2b; overflow:hidden; text-overflow:ellipsis; }
         #bb .bba-pl.sus .rs { padding:1px 8px; font-size:12.5px; line-height:1.3; font-weight:700 !important; color:#4a0f2b; background:#ff9db7; border-top:1.5px solid #8f8670; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -8776,6 +8792,117 @@
         const OUT_TAG = { label: '출차예정', bg: '#FFE68B', color: '#3F2E00' };
         const OUT_PATROL_TAG = { label: '출차 및 순찰', bg: '#FFE68B', color: '#3F2E00' };
         const NIGHT_TAG = { label: '유선기체', bg: '#E3E6EA', color: '#2B3138' };
+
+        // ───────── 순찰중단 '지금 점검' ─────────
+        //   순찰중단 목록의 기체마다 NCC 사이트 주소(/ko/monitoring/<번호>)를 숨김 iframe 으로 열어 '기체 카드가 있는지 · 전원 · 임무받기 ON/OFF' 를 읽는다.
+        //   버튼을 눌렀을 때만 동작 · 사이트 단위로 한 곳씩(같은 주소의 기체는 한 번에) · 자동 점검과는 동시에 돌지 않음
+        //   ※ 새 사이트/기체를 추가하려면: PAT_NAME_MAP 에 '기체 풀네임': '순찰 목록 이름' 을 넣고, 주소 번호는 CHG_SRC(무선충전 목록)나 PAT_EXTRA_ID 에 넣는다
+        const PAT_NAME_MAP = {
+            '용인 고진역 힐스테이트 1호기': '용인 고진', '경희대학교 국제캠퍼스 1호기': '경희대 1', '경희대학교 국제캠퍼스 2호기': '경희대 2',
+            '성남시 판교역 1호기': '성남 판교', '성남시 서현역 1호기': '성남 서현', '성남시 율동공원 1호기': '성남 율동', '성남시 야탑역 1호기': '성남 야탑',
+            '부산 EDC 호반써밋 1호기': '부산 호반 1', '부산 EDC 호반써밋 2호기': '부산 호반 2', '부산 EDC 수자인 1호기': '부산 수자인 1', '부산 EDC 수자인 2호기': '부산 수자인 2',
+            '파주 디에트르더클래스 1호기': '파주', '잠실 리센츠 아파트 1호기': '리센츠 1', '잠실 리센츠 아파트 2호기': '리센츠 2',
+            '평택고덕 디에트르 1호기': '평택 1', '평택고덕 디에트르 2호기': '평택 2', '부산 서면비스타동원 1호기': '부산 서면', '부천 위브 1호기': '부천 위브',
+            '잠실 레이크팰리스 1호기': '잠실 레이크', '잠실 엘스 아파트 1호기': '엘스 1', '잠실 엘스 아파트 2호기': '엘스 2', '삼성인력개발원 1호기': '인력개발원',
+            '고양 래미안 휴레스트 1호기': '고양 래미안', '강동현대홈타운 1호기': '강동현대홈타운', '창원대학교 1호기': '창원대 1', '창원대학교 2호기': '창원대 2',
+            '한성대학교 1호기': '한성대', '김포풍무센트럴푸르지오 1호기': '김포 풍무', '강남 래미안블레스티지 1호기': '강남 래미안',
+            '김포 캐슬앤파밀리에 1호기': '김포 1', '김포 캐슬앤파밀리에 2호기': '김포 2', '지제역 푸르지오엘리아츠 1호기': '지제',
+            '부경대 1호기': '부경대', '부경대 2호기': '부경대', '롯데마트부산CFC(쉴더스) 1호기': '쉴더스',
+            '두루아이 3호기': '두루아이 3', '두루아이 4호기': '두루아이 4', '두루아이 5호기': '두루아이 5', '중앙대학교 1호기': '중앙대',
+            '잠실 르엘 1호기': '잠실 르엘', '신동백 롯데캐슬 에코1단지 1호기': '신동백', '청담르엘 1호기': '청담 르엘', '전주시 전주천 1호기': '전주천',
+            '인재개발원 1호기': '인재개발원', '아주대학교 1호기': '아주대 1', '아주대학교 2호기': '아주대 2', '서강대학교 1호기': '서강대',
+            '동백SK아펠바움 1차 1호기': '동백SK', '동대문구회기동 1호기(쉴드플러스)': '동대문구 회기동', '더샵남천프레스티지 1호기': '더샵남천',
+            '한국장애인고용공단 1호기': '장애인고용공단 1', '한국장애인고용공단 2호기': '장애인고용공단 2', '서울 양원 LH 1단지 1호기': '양원LH',
+            '덕수궁 1호기': '덕수궁', '순천향대학교 1호기': '순천향', '전주천(덕진구) 1호기': '전주천(덕진구)',
+            '수원센트럴 1호기': '수원센트럴 1', '수원센트럴 2호기': '수원센트럴 2', '수원 힐스테이트푸르지오 1호기': '수원 힐스 1', '수원 힐스테이트푸르지오 2호기': '수원 힐스 2',
+            '더샵지제역센트럴파크 1호기': '더샵지제 1', '더샵지제역센트럴파크 2호기': '더샵지제 2', '신대양제지반월2공장 1호기': '신대양',
+            'DMZ 캠프 그리브스 1호기': 'DMZ', '광교 풍경채 1호기': '광교 풍경채', '광교풍경채(대체 기체) 1호기': '광교 풍경채'
+        };
+        const PAT_ALIAS = { '엘스': ['엘스 1', '엘스 2'] };   // 순찰 목록의 이름이 위 표와 번호 표기만 다른 것
+        const PAT_SKIP = ['구리 롯데캐슬', '광교 풍경채'];      // 철수한 사이트 — 점검하지 않음
+        const PAT_EXTRA_ID = {   // 무선충전 목록(CHG_SRC)에 없는 사이트의 NCC 주소 번호
+            '용인 고진역 힐스테이트 1호기': 131, '잠실 리센츠 아파트 1호기': 46, '잠실 리센츠 아파트 2호기': 46, '평택고덕 디에트르 1호기': 105, '평택고덕 디에트르 2호기': 105,
+            '부산 서면비스타동원 1호기': 66, '부천 위브 1호기': 72, '잠실 엘스 아파트 1호기': 75, '잠실 엘스 아파트 2호기': 75, '김포풍무센트럴푸르지오 1호기': 196,
+            '김포 캐슬앤파밀리에 1호기': 108, '김포 캐슬앤파밀리에 2호기': 108, '부경대 1호기': 37, '부경대 2호기': 37, '지제역 푸르지오엘리아츠 1호기': 126,
+            '아주대학교 1호기': 36, '아주대학교 2호기': 36, 'DMZ 캠프 그리브스 1호기': 82, '삼성인력개발원 1호기': 24, '신대양제지반월2공장 1호기': 229
+        };
+        const PAT_ID = {}, PAT_FULLS = {};   // PAT_ID[정규화한 풀네임] = 주소 번호 · PAT_FULLS[정규화한 짧은 이름] = [풀네임...]
+        CHG_SRC.forEach(([id, names]) => names.forEach(n => { PAT_ID[normTxt(n)] = id; }));
+        Object.keys(PAT_EXTRA_ID).forEach(n => { PAT_ID[normTxt(n)] = PAT_EXTRA_ID[n]; });
+        Object.keys(PAT_NAME_MAP).forEach(f => { const k = normTxt(PAT_NAME_MAP[f]); (PAT_FULLS[k] = PAT_FULLS[k] || []).push(f); });
+        const PAT_KEY = 'bba_pat_res';   // 마지막 점검 결과 (새로고침해도 유지)
+        let patBusy = false, patMsg = '', patRes = (() => { try { const o = JSON.parse(lsGet(PAT_KEY, 'null')); if (o && o.at && Array.isArray(o.rows)) return { at: o.at, i: 0, n: 0, rows: o.rows, names: o.names || o.rows.map(r => r.short) }; } catch (e) { /* 무시 */ } return { at: 0, i: 0, n: 0, rows: [], names: [] }; })();
+        function patNew() {   // 마지막 점검 이후 새로 순찰중단에 오른 기체 (점검 기록이 아직 없으면 비교할 기준이 없으니 비움)
+            if (!patRes.at) return new Set();
+            const done = new Set(patRes.names || []);
+            return new Set(Object.keys(unitNotes).filter(n => !done.has(n)));
+        }
+        function patTargets(shorts) {   // 순찰중단 이름들 → { sites: [{id, units:[{short, full}]}], rows: [점검 결과 행] }
+            const sites = {}, rows = [];
+            shorts.forEach(short => {
+                const row = { short, items: [], note: '' }; rows.push(row);
+                if (PAT_SKIP.includes(short)) { row.note = '철수 — 점검 제외'; return; }
+                const k = normTxt(short), fulls = [].concat(PAT_FULLS[k] || [], (PAT_ALIAS[short] || []).reduce((a, x) => a.concat(PAT_FULLS[normTxt(x)] || []), []));
+                if (!fulls.length) { row.note = '이름 연결 없음'; return; }
+                fulls.forEach(full => {
+                    const id = PAT_ID[normTxt(full)];
+                    if (!id) { row.note = '주소 미등록'; return; }
+                    (sites[id] = sites[id] || { id, units: [] }).units.push({ short, full, row });
+                });
+            });
+            return { sites: Object.keys(sites).map(id => sites[id]), rows };
+        }
+        async function patRun() {
+            if (patBusy) return;
+            const l = lockGet();
+            if (autoBusy || campBusy || (l && l.tab !== TABID && Date.now() - l.t < 150000)) { patMsg = '다른 점검이 진행 중입니다. 끝난 뒤 다시 눌러 주세요'; renderSched(); return; }
+            const shorts = Object.keys(unitNotes).sort((a, b) => a.localeCompare(b, 'ko'));
+            if (!shorts.length) { patMsg = '점검할 순찰중단 기체가 없습니다'; renderSched(); return; }
+            patMsg = ''; patBusy = true;
+            const plan = patTargets(shorts);
+            patRes = { at: 0, i: 0, n: plan.sites.length, rows: plan.rows, names: shorts };
+            renderSched();
+            try {
+                for (const site of plan.sites) {
+                    const S = { k: '순찰 ' + site.id, id: site.id, pat: true, kw: /(?!)/, units: [] };
+                    const units = site.units.map(x => U(x.full));
+                    let R; try { R = await probeSite(S, units); } catch (e) { R = { err: 'noread', units: {}, cards: 0 }; }
+                    site.units.forEach(x => { x.row.items.push({ full: x.full, id: site.id, err: R.err || null, cards: R.cards || 0, r: (R.units && R.units[x.full]) || { found: false } }); });
+                    patRes.i++; renderSched(); await sleep(400);
+                }
+            } finally {
+                patBusy = false; patRes.at = Date.now();
+                try { lsSet(PAT_KEY, JSON.stringify({ at: patRes.at, names: patRes.names, rows: patRes.rows.map(r => ({ short: r.short, note: r.note, items: r.items.map(x => ({ full: x.full, id: x.id, err: x.err, cards: x.cards, r: { found: !!(x.r && x.r.found), on: x.r ? x.r.on : null, pw: x.r ? x.r.pw : null } })) })) })); } catch (e) { /* 무시 */ }
+                renderSched();
+            }
+        }
+        function patHtml() {
+            if (!patBusy && !patRes.at && !patMsg) return '<section class="bba-hr"><div class="hh"><b>점검 결과</b><span class="bd nx">아직 점검 기록이 없습니다 · 위의 \'지금 점검\'을 눌러 주세요</span></div></section>';
+            const ERR = { timeout: '시간 초과', login: '로그인 필요', xorigin: '접근 불가', noread: '읽지 못함' };
+            const chip = (c, t) => '<span class="c ' + c + '">' + esc(t) + '</span>';
+            const sw = (v, lb) => v === true ? chip('ok', lb + ' ON') : v === false ? chip('warn', lb + ' OFF') : chip('mu', lb + ' ?');
+            let h = '<section class="bba-hr"><div class="hh"><b>점검 결과</b><span class="bd nx">' +
+                (patBusy ? '점검 중 ' + patRes.i + '/' + patRes.n + ' 사이트' : patRes.at ? '마지막 점검 ' + (new Date(patRes.at).toDateString() === new Date().toDateString() ? '' : (new Date(patRes.at).getMonth() + 1) + '/' + new Date(patRes.at).getDate() + ' ') + pad(new Date(patRes.at).getHours()) + ':' + pad(new Date(patRes.at).getMinutes()) : '') + '</span></div>';
+            if (patMsg) h += '<div class="bba-empty" style="padding:8px">' + esc(patMsg) + '</div>';
+            const isNew = patNew(), byName = {}; patRes.rows.forEach(r => { byName[r.short] = r; });
+            const names = patBusy ? patRes.rows.map(r => r.short) : Object.keys(unitNotes).sort((a, b) => a.localeCompare(b, 'ko'));   // 지금 순찰중단인 기체만 (풀린 기체의 지난 결과는 숨김)
+            h += names.map(nm => byName[nm] || { short: nm, items: [], note: '', fresh: true }).map(row => {
+                let c = '';
+                if (row.fresh) c = chip('err', '미점검 · 새로 추가됨');
+                else if (row.note && !row.items.length) c = chip('mu', row.note);
+                else if (!row.items.length) c = chip('mu', patBusy ? '대기 중…' : '—');
+                else {
+                    const found = row.items.filter(x => x.r && x.r.found), multi = row.items.length > 1;
+                    if (found.length) c = found.map(x => (multi ? '<span class="sub">' + esc(x.full) + '</span>' : '') +
+                        (x.r.pw === true ? chip('ok', '전원 ON') : x.r.pw === false ? chip('off', '전원 OFF') : chip('mu', '전원 ?')) + sw(x.r.on, '임무받기')).join('');
+                    else if (row.items.some(x => x.err)) c = chip('err', '읽지 못함 · ' + (ERR[row.items.find(x => x.err).err] || row.items.find(x => x.err).err));
+                    else c = chip('err', row.items.every(x => !x.cards) ? '카드 없음 (입고)' : '카드 없음');
+                    if (row.note) c += chip('mu', row.note);
+                }
+                return '<div class="bba-pr' + (isNew.has(row.short) ? ' new' : '') + '"><span class="n">' + esc(row.short) + '</span>' + c + '<span class="rsn" title="' + esc(unitNotes[row.short] || '') + '">' + esc(unitNotes[row.short] || '') + '</span></div>';
+            }).join('');
+            return h + '</section>';
+        }
         let timeTable = {}, unitNotes = {}, unitHourNotes = {}, schedAt = '', psAt = '', schMode = 'sched';
         function suspReason(name, hh) {
             const clean = String(name || '').replace(/\s+/g, '');
@@ -8921,14 +9048,14 @@
             const slots = {}; cards.forEach(c => { (slots[c.t] = slots[c.t] || []).push({ n: c.n, st: c.t, tag: null }); });
             return '<section class="bba-hr exc"><div class="hh"><b>예외 기체</b><span class="bd sp">일정과 무관하게 시작 · 모니터링 중</span></div><div class="sls">' + slotsHtml(slots) + '</div></section>';
         }
-        function suspPill(n, reason) {
-            return '<div class="bba-pl sus"><span class="nm">' + esc(n) + '</span><span class="rs" title="' + esc(reason) + '">' + esc(reason) + '</span></div>';
+        function suspPill(n, reason, isNew) {
+            return '<div class="bba-pl sus' + (isNew ? ' new' : '') + '"' + (isNew ? ' title="마지막 점검 이후 새로 순찰중단된 기체 — 지금 점검으로 다시 확인하세요"' : '') + '><span class="nm">' + esc(n) + '</span><span class="rs" title="' + esc(reason) + '">' + esc(reason) + '</span></div>';
         }
         function suspHtml() {
-            const glob = Object.keys(unitNotes).sort((a, b) => a.localeCompare(b, 'ko'));
+            const glob = Object.keys(unitNotes).sort((a, b) => a.localeCompare(b, 'ko')), patNewSet = patNew();
             const hourly = Object.keys(unitHourNotes).filter(k => !(k in unitNotes)).sort((a, b) => a.localeCompare(b, 'ko'));
             let h = '<section class="bba-hr"><div class="hh"><b>순찰중단</b><span class="bd sp">' + glob.length + '대</span></div>' +
-                (glob.length ? '<div class="pls">' + glob.map(n => suspPill(n, unitNotes[n])).join('') + '</div>' : '<div class="bba-empty">현재 순찰중단 기체가 없습니다</div>') + '</section>';
+                (glob.length ? '<div class="pls">' + glob.map(n => suspPill(n, unitNotes[n], patNewSet.has(n))).join('') + '</div>' : '<div class="bba-empty">현재 순찰중단 기체가 없습니다</div>') + '</section>' + patHtml();
             if (hourly.length) {
                 h += '<section class="bba-hr"><div class="hh"><b>시간대 한정 보류</b><span class="bd nx">' + hourly.length + '대</span></div><div class="pls">' +
                     hourly.map(n => { const o = unitHourNotes[n]; return suspPill(n, (o.reason || '순찰 보류') + ' (' + (o.hours || []).join('·') + '시)'); }).join('') + '</div></section>';
@@ -8938,6 +9065,7 @@
         function renderSched() {
             const box = $('bba-sb'); if (!box) return;
             const keep = box.scrollTop;
+            const pb = $('bba-spc'); if (pb) { pb.style.display = schMode === 'susp' ? '' : 'none'; pb.disabled = patBusy; pb.textContent = patBusy ? '점검 중…' : '지금 점검'; pb.classList.toggle('alert', !patBusy && patNew().size > 0); }
             if (schMode === 'susp') {
                 box.innerHTML = Object.keys(unitNotes).length || Object.keys(unitHourNotes).length || psAt ? suspHtml() : '<div class="bba-empty">순찰중단 데이터를 받지 못했습니다</div>';
                 $('bba-sth').textContent = '⛔ 순찰중단';
@@ -8965,7 +9093,7 @@
         }
         const schEl = document.createElement('div');
         schEl.id = 'bba-sch';
-        schEl.innerHTML = '<div class="bba-zh"><h2 id="bba-sth">📅 순찰 일정</h2><span class="bba-cnt" id="bba-sat"></span><button class="bba-btn" id="bba-sre">새로고침</button><button class="bba-btn" id="bba-scl">✕ 닫기</button></div><div class="bba-zb" id="bba-sb"></div>';
+        schEl.innerHTML = '<div class="bba-zh"><h2 id="bba-sth">📅 순찰 일정</h2><span class="bba-cnt" id="bba-sat"></span><button class="bba-btn" id="bba-spc" style="display:none" title="순찰중단 기체의 사이트를 열어 기체 카드 유무 · 전원 · 임무받기 ON/OFF 를 확인합니다">지금 점검</button><button class="bba-btn" id="bba-sre">새로고침</button><button class="bba-btn" id="bba-scl">✕ 닫기</button></div><div class="bba-zb" id="bba-sb"></div>';
         $('bba-right').appendChild(schEl);   // 사이트 점검 / HW / SW 그리드 자리에 겹쳐서 표시
         function openSch(mode) {
             const isOpen = schEl.classList.contains('open');
@@ -8985,6 +9113,7 @@
         }
         $('bba-scl').addEventListener('click', () => schEl.classList.remove('open'));
         $('bba-sre').addEventListener('click', () => loadSched());
+        $('bba-spc').addEventListener('click', () => patRun());
         loadSched();
         setInterval(() => { if (schEl.classList.contains('open')) renderSched(); }, 10 * 1000);   // 시간대 변경 · 모니터링 기체 변화 반영 (조회 없음, 화면만 다시 그림)
         try {   // 다중 모니터링 카드가 바뀌면 곧바로 반영
@@ -9259,10 +9388,10 @@
         let probeInfo = null, lastBeat = Date.now(), btInfo = null, btBeat = Date.now();
         function probeSite(S, units) {
             const info = { k: S.k || S.label || String(S.id), t0: Date.now() };
-            if (S.bt) btInfo = info; else { probeInfo = info; lastBeat = info.t0; }
+            if (S.pat) { /* 순찰중단 수동 점검 — 자동 점검 표시/감시와 분리 */ } else if (S.bt) btInfo = info; else { probeInfo = info; lastBeat = info.t0; }
             return new Promise(resolve => {
                 let end = false;
-                const out = r => { if (end) return; end = true; clearTimeout(hard); if (S.bt) { btBeat = Date.now(); if (btInfo === info) btInfo = null; } else { lastBeat = Date.now(); if (probeInfo === info) probeInfo = null; } resolve(r); };
+                const out = r => { if (end) return; end = true; clearTimeout(hard); if (S.pat) { /* 없음 */ } else if (S.bt) { btBeat = Date.now(); if (btInfo === info) btInfo = null; } else { lastBeat = Date.now(); if (probeInfo === info) probeInfo = null; } resolve(r); };
                 const hard = setTimeout(() => {
                     console.warn('[BBA] 점검 강제 종료(응답 없음):', info.k);
                     try { document.querySelectorAll('iframe[title="bba-probe"]').forEach(x => x.remove()); } catch (e) { /* 무시 */ }
@@ -9299,7 +9428,7 @@
                     const cards = doc.querySelectorAll('[data-qk="robot-card"]');
                     if (cards.length && !cardsAt) cardsAt = now;
                     if (cards.length) cardN = cards.length;
-                    if ((S.chg || S.bt) && !cards.length) {   // 기체 목록 틀(검색창)은 그려졌는데 카드가 하나도 없는 채로 일정 시간 → 입고됨
+                    if ((S.chg || S.bt || S.pat) && !cards.length) {   // 기체 목록 틀(검색창)은 그려졌는데 카드가 하나도 없는 채로 일정 시간 → 입고됨
                         if (doc.querySelector('[data-qk="search-robot-card-list-wrapper"]') && !listAt) listAt = now;
                         if (listAt && now - listAt > CHG_EMPTY_MS) return fin(null);
                     }
@@ -9315,7 +9444,7 @@
                             else if (c.on !== on || c.pw !== pw || c.pg !== pg || c.ch !== ch || c.bat !== bat || c.gp !== gp) { c.on = on; c.pw = pw; c.pg = pg; c.ch = ch; c.bat = bat; c.gp = gp; c.row = cg ? cg.row : ''; c.since = now; }
                         });
                     });
-                    const okVal = c => (S.prog || S.chg || S.rch || S.bt ? true : c.on !== null);   // 임무 진행 확인형 사이트는 스위치 값이 필요 없음
+                    const okVal = c => (S.prog || S.chg || S.rch || S.bt ? true : (c.on !== null || (S.pat && c.pw === false)));   // 임무 진행 확인형 사이트는 스위치 값이 필요 없음
                     const need = units.filter(u => !(seen[u.n] && okVal(seen[u.n])));
                     const rdyF = u => {
                         const c = seen[u.n]; if (!c || !okVal(c)) return false;
@@ -9504,6 +9633,7 @@
         }
         let busySince = 0;
         async function autoTick() {
+            if (patBusy) return;   // 순찰중단 수동 점검 중에는 자동 점검을 쉰다 (끝나면 다음 틱에서 이어서)
             if (autoBusy && Date.now() - lastBeat > 150000) {   // 2분 반 동안 아무 진전이 없으면 멈춘 것으로 보고 풀어준다
                 console.warn('[BBA] 자동 점검이 멈춘 것으로 보여 초기화합니다');
                 try { document.querySelectorAll('iframe[title="bba-probe"]').forEach(x => x.remove()); } catch (e) { /* 무시 */ }
@@ -9904,11 +10034,11 @@
         const BT_INT_MS = 60 * 60 * 1000, BT_JIT_MS = 2 * 60 * 1000, BT_KEEP_MS = 72 * 3600 * 1000;
         const BT_API = 'https://multimonitoring.vercel.app/api/battery', BT_NAME = 'battery_status';   // 내 vercel 함수(api/battery)가 monitoring_no_limit 저장소의 bb_backup_battery_status.json 으로 저장
         const BT_SITES = CHG_SRC.map(([id, names]) => {
-            const nm = id === 235 ? ['두루아이 5호기', '두루아이 3호기'] : names;   // 235: 5호기가 없으면 3호기 (둘 중 하나만)
-            return { k: '배터리 ' + id, id, bt: true, pick1: id === 235, label: names[0].replace(/\s*\d+호기.*$/, ''), kw: /(?!)/, units: nm.map(n => U(n)) };
+            const nm = names;   // (두루아이 5호기는 202 로 옮겨 감 — 235 는 3호기만)
+            return { k: '배터리 ' + id, id, bt: true, pick1: false, label: names[0].replace(/\s*\d+호기.*$/, ''), kw: /(?!)/, units: nm.map(n => U(n)) };
         }).concat([[268, '가평자이 1호기'], [229, '신대양제지반월2공장 1호기']].map(([id, n]) => ({ k: '배터리 ' + id, id, bt: true, pick1: false, label: n.replace(/\s*\d+호기.*$/, ''), kw: /(?!)/, units: [U(n)] })));   // 무선 기체 전용 추가 (무선충전 목록에는 없음)
         const BT_UNITS = BT_SITES.reduce((a, S) => a.concat(S.pick1 ? [S.units[0]] : S.units), []).length;   // 표시 기체 수
-        // ── 🔍 점검할 기체 선택: 체크 해제한 기체 이름만 저장(bba_bt_off) → 새로 생긴 기체는 기본으로 점검 대상. 235(5호기/3호기 택1)는 5호기 이름 하나로 사이트 전체를 켜고 끈다 ──
+        // ── 🔍 점검할 기체 선택: 체크 해제한 기체 이름만 저장(bba_bt_off) → 새로 생긴 기체는 기본으로 점검 대상. (pick1 사이트가 있으면 첫 기체 이름 하나로 사이트 전체를 켜고 끈다 — 현재 해당 없음) ──
         const btOffSet = () => { try { const a = JSON.parse(lsGet('bba_bt_off', '[]')); return new Set(Array.isArray(a) ? a : []); } catch (e) { return new Set(); } };
         const btActiveUnits = (S, off) => { off = off || btOffSet(); return S.pick1 ? (off.has(S.units[0].n) ? [] : S.units) : S.units.filter(u => !off.has(u.n)); };
         const btActiveSites = () => { const off = btOffSet(); return BT_SITES.filter(S => btActiveUnits(S, off).length); };
@@ -9938,7 +10068,7 @@
             Object.keys(btData.robots).forEach(n => { const r = btData.robots[n]; r.h = (r.h || []).filter(x => x[0] >= lim); if (!r.h.length) delete btData.robots[n]; });
         }
         const btSave = () => { btPrune(); lsSet('bba_bt_data', JSON.stringify(btData)); };
-        function btLatest() {   // 표시용: 기체별 가장 최근 기록 (235 는 5호기/3호기 중 최근 것 하나)
+        function btLatest() {   // 표시용: 기체별 가장 최근 기록 (pick1 사이트는 후보 중 최근 기록 하나)
             const out = [], off = btOffSet();
             BT_SITES.forEach(S => {
                 if (!btActiveUnits(S, off).length) return;
