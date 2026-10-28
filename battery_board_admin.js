@@ -7250,11 +7250,17 @@
             spPop.classList.remove('open');
             const b = $iv('bb-iv-stats-btn'); if (b) b.classList.remove('on');
         }
+        const IV_SP_FRESH_MS = 5 * 60 * 1000;   // 마지막 전체 집계가 이 시간 이내면 네트워크 생략
         async function spLoad(force) {
             const seq = ++_spSeq;
             const store = force ? { days: {}, at: 0 } : spLoadStore();
             _spView = { dates: Object.keys(store.days).sort(), days: store.days, sched: spLoadSch().months, state: { phase: 'loading', done: 0, total: 0, failed: 0 } };   // 저장분을 먼저 보여주고 그 위에 갱신
             spRender();
+            if (!force && store.at && Date.now() - store.at < IV_SP_FRESH_MS) {   // 방금 집계한 저장분 → 바로 완료 표시
+                _spView.state = { phase: 'done', done: 0, total: 0, failed: 0 };
+                spRender();
+                return;
+            }
             let dates, srvRevs = null;
             try {
                 const dd = await attFetchJson(IV_API + '?view=dates');
@@ -7269,14 +7275,17 @@
             if (seq !== _spSeq) return;
             Object.keys(store.days).forEach(d => { if (!dates.includes(d)) delete store.days[d]; });   // 서버에서 사라진 날짜는 버림
             if (store.revs) Object.keys(store.revs).forEach(d => { if (!dates.includes(d)) delete store.revs[d]; });
-            const cut = spShift(ivOpDate(), -(IV_SP_REFETCH_DAYS - 1));
-            const todo = dates.filter(d => !store.days[d] || d >= cut || (srvRevs && (store.revs || {})[d] !== srvRevs[d]));
+            const today = ivOpDate();
+            const cut = spShift(today, -(IV_SP_REFETCH_DAYS - 1));
+            // rev 가 있으면: 없는 날 + 오늘 + rev 달라진 날만. rev 가 없으면(폴백): 최근 N일 재수신
+            const todo = dates.filter(d => !store.days[d] || d === today || (srvRevs ? (store.revs || {})[d] !== srvRevs[d] : d >= cut));
+            console.log('[BB] 개입 통계: 받을 날짜', todo.length, '/', dates.length, '· revs', srvRevs ? '있음' : '없음(폴백)', todo.slice(0, 5));
             const st = { phase: 'loading', done: 0, total: todo.length, failed: 0 };
             _spView = { dates, days: store.days, sched: _spView.sched, state: st };
             spRender();
             const months = [...new Set(dates.map(d => d.slice(0, 7)))];
             const schP = spLoadSched(months, force);   // 근무표는 요약 받기와 동시에
-            let idx = 0;
+            let idx = 0, sinceSave = 0;
             const worker = async () => {
                 while (idx < todo.length) {
                     if (seq !== _spSeq) return;
@@ -7288,12 +7297,14 @@
                         else { store.days[d] = spCompact(j); if (srvRevs && srvRevs[d]) (store.revs || (store.revs = {}))[d] = srvRevs[d]; }
                     } catch (e) { st.failed++; }
                     st.done++;
+                    if (++sinceSave >= 10) { sinceSave = 0; spSaveStore(store); }   // 중간 저장 — 닫아도 받은 만큼은 남음
                     if (seq === _spSeq && (st.done % 3 === 0 || st.done === st.total)) spRender();
                 }
             };
             await Promise.all(Array.from({ length: Math.min(IV_SP_CONC, todo.length) }, worker));
+            if (seq !== _spSeq) { spSaveStore(store); return; }   // 중단돼도 받은 분 저장 (at 은 갱신하지 않음)
             const sched = await schP;
-            if (seq !== _spSeq) return;
+            if (seq !== _spSeq) { spSaveStore(store); return; }
             _spView.sched = sched;
             store.at = Date.now();
             spSaveStore(store);
@@ -7648,7 +7659,7 @@
         try {
         const DLS_KEY = 'bbDlStatsV1';
         const DLS_CONC = 3;
-        const DLS_REFETCH_DAYS = 3;
+        const DLS_REFETCH_DAYS = 2;
         const DLS_MAX_DAYS = 400;
         const DLS_UNK = 24;
         const DLS_HOURS = [7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,0,1,2,3,4,5,6];   // 근무일 순서 (07시 시작)
@@ -7923,11 +7934,17 @@
             dsPop.classList.remove('open');
             dsBtn.classList.remove('on');
         }
+        const DLS_FRESH_MS = 5 * 60 * 1000;   // 마지막 전체 집계가 이 시간 이내면 네트워크 생략
         async function dsLoad(force) {
             const seq = ++_dsSeq;
             const store = force ? { v: 2, days: {}, at: 0 } : dsLoadStore();
             _dsView = { dates: Object.keys(store.days).sort(), days: store.days, state: { phase: 'loading', done: 0, total: 0, failed: 0 } };   // 저장분 먼저 표시
             dsRender();
+            if (!force && store.at && Date.now() - store.at < DLS_FRESH_MS) {   // 방금 집계한 저장분 → 바로 완료 표시
+                _dsView.state = { phase: 'done', done: 0, total: 0, failed: 0 };
+                dsRender();
+                return;
+            }
             let dates;
             try {
                 const dd = await attFetchJson(DL_API + '?view=dates');
@@ -7940,12 +7957,13 @@
             }
             if (seq !== _dsSeq) return;
             Object.keys(store.days).forEach(d => { if (!dates.includes(d)) delete store.days[d]; });   // 서버에서 사라진 날짜는 버림
-            const cut = dsShift(dlOpDate(), -(DLS_REFETCH_DAYS - 1));
+            const cut = dsShift(dlOpDate(), -(DLS_REFETCH_DAYS - 1));   // 오늘(+어제 여유)만 다시 받음
             const todo = dates.filter(d => !store.days[d] || d >= cut);
+            console.log('[BB] 배달 통계: 받을 날짜', todo.length, '/', dates.length, todo.slice(0, 5));
             const st = { phase: 'loading', done: 0, total: todo.length, failed: 0 };
             _dsView = { dates, days: store.days, state: st };
             dsRender();
-            let idx = 0;
+            let idx = 0, sinceSave = 0;
             const worker = async () => {
                 while (idx < todo.length) {
                     if (seq !== _dsSeq) return;
@@ -7957,11 +7975,12 @@
                         else store.days[d] = dsCompact(j);
                     } catch (e) { st.failed++; }   // 실패한 날은 저장하지 않음 (예전 저장분이 있으면 그대로 유지)
                     st.done++;
+                    if (++sinceSave >= 10) { sinceSave = 0; dsSaveStore(store); }   // 중간 저장
                     if (seq === _dsSeq && (st.done % 3 === 0 || st.done === st.total)) dsRender();
                 }
             };
             await Promise.all(Array.from({ length: Math.min(DLS_CONC, todo.length) }, worker));
-            if (seq !== _dsSeq) return;
+            if (seq !== _dsSeq) { dsSaveStore(store); return; }   // 중단돼도 받은 분 저장 (at 은 갱신하지 않음)
             store.at = Date.now();
             dsSaveStore(store);
             _dsView.dates = Object.keys(store.days).sort();
