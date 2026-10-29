@@ -8329,12 +8329,15 @@
           return { main, sub, TL, rowUser, warn };
         }
 
+        const LIVE_LOCK_BEFORE = 9 * 60;   // 이 시각(분) 전에 시작하는 업무는 live 재배정에서 고정
         function liveCtx(P, d, excl) {
           const names = new Set();   // 후보 = 07시 JSON(다중·서브·업무 행)에 배정자로 들어 있는 사람 — 07시 배정이 출근자를 제대로 반영한다고 신뢰. 근무표 파일은 근무시간·휴게시간을 알려주는 용도(보험)
           const all = [...Object.values(P.main), ...Object.values(P.sub), ...P.rowUser.filter((n, i) => !P.TL[i].fixed)].filter(n => !isFixedName(n));
           all.forEach(n => { if (BYNAME[n]) names.add(n); });
           const unknown = [...new Set(all.filter(n => !BYNAME[n]))];
-          return { people: STAFF.filter(p => names.has(p.name)), main: P.main, sub: P.sub, tasks: P.TL, exclude: excl || [], unknown };
+          const lock = new Set();   // 09시 이전에 시작하는 업무(출근 처리 등)는 관리자가 09시 전에 미리 준비해야 하므로 07시 배정 그대로 고정 — 09:00 정각 이후 업무만 수식으로 다시 배분
+          P.TL.forEach((t, i) => { if (!t.fixed && t.s < LIVE_LOCK_BEFORE && P.rowUser[i]) lock.add(i); });
+          return { people: STAFF.filter(p => names.has(p.name)), main: P.main, sub: P.sub, tasks: P.TL, exclude: excl || [], unknown, lock };
         }
 
         /* 행별 이름(배열) → 평가. 묶음 업무는 첫 줄 담당자 기준으로 채점하고, 둘째 줄이 다르면 '불일치'로 표시 */
@@ -8365,12 +8368,13 @@
 
         function liveRepair(ctx, d, A, seed) {
           const e = liveEval(ctx, d, A);
-          const keep = new Set(e.U.filter(u => !e.bad.has(u.rows[0]) && A[u.rows[0]]).map(u => u.rows[0]));
+          const keep = new Set(e.U.filter(u => (!e.bad.has(u.rows[0]) || (ctx.lock && ctx.lock.has(u.rows[0]))) && A[u.rows[0]]).map(u => u.rows[0]));
           const R = assign('new', d, null, mulberry(seed | 0), { live: ctx, names: A, keep });
           return namesFromOut(ctx, d, R.out, A);
         }
         function liveFull(ctx, d, A, seed) {
-          const R = assign('new', d, null, mulberry(seed | 0), { live: ctx });
+          const lk = ctx.lock && ctx.lock.size ? ctx.lock : null;
+          const R = lk ? assign('new', d, null, mulberry(seed | 0), { live: ctx, names: A, keep: lk }) : assign('new', d, null, mulberry(seed | 0), { live: ctx });
           return namesFromOut(ctx, d, R.out, A);
         }
         /* 사람별 업무 현황: 업무 건수(t) · 업무 가중치(own) · 다중 횟수(m) · 가중치 합(w, 다중 포함) · 가장 긴 연속(앞 업무 끝~다음 시작 30분 이내) */
@@ -8398,7 +8402,7 @@
         }
         /* 한 칸씩 담당자를 바꿔 보며 점수가 좋아지면 채택(언덕 오르기) — 바뀐 칸 수에도 점수를 매기므로 '꼭 필요한 수정'만 남는다 */
         function liveClimber(ctx, d, X0, A) {
-          const U = buildUnits(d, true, false, ctx.tasks).filter(u => !ctx.tasks[u.rows[0]].fixed);
+          const U = buildUnits(d, true, false, ctx.tasks).filter(u => !ctx.tasks[u.rows[0]].fixed && !(ctx.lock && ctx.lock.has(u.rows[0])));
           let X = X0.slice(), cur = liveScore(ctx, d, X, A).score, ui = 0, idle = 0, evals = 0, done = !U.length, swap = false, si = 0, sj = 1;
           return {
             get X() { return X; }, get cur() { return cur; }, get done() { return done; }, get evals() { return evals; },
@@ -8520,7 +8524,7 @@
             if (SIM.rosterSrc() !== 'file') warns.push('월별 근무표 파일을 받지 못해 내장 10월 표의 근무시간으로 계산'); if (ctx.unknown.length) warns.push('근무표에 없는 이름: ' + esc(ctx.unknown.join(', ')));
             const meta = '<div class="meta sum">' + (cfg.tries ? '✅ <b>최적안</b> (' + cfg.tries.toLocaleString() + '가지 중)' : '시뮬레이션') + ' · ' + pad(at.getHours()) + ':' + pad(at.getMinutes()) + ' 계산 · 바뀐 칸 <b>' + chg + '</b> · 규칙 문제 칸 ' + mA.prob + ' → <b>' + mB.prob + '</b><br>' +
                 '가중치 2.0 ' + (sB.m.overW === 0 ? '모두 지킴(최대 ' + sB.maxW.toFixed(1) + ')' : '<span class="warn">' + sB.m.overW + '명 초과(최대 ' + sB.maxW.toFixed(1) + ')</span>') + ' · 업무+다중 ' + sB.mn + '~' + sB.mx + '건 (1건 이하 ' + sB.low + '명, 3건 이상 ' + sB.high + '명) · 연속 3건 ' + (sB.chains ? '<span class="warn">' + sB.chains + '명</span>' : '없음') +
-                (warns.length ? '<br><span class="warn">' + warns.join(' · ') + '</span>' : '') + '</div>';
+                (ctx.lock && ctx.lock.size ? '<br>🔒 09시 이전 업무 ' + ctx.lock.size + '건은 07시 배정 그대로 고정' : '') + (warns.length ? '<br><span class="warn">' + warns.join(' · ') + '</span>' : '') + '</div>';
             const mons = Object.keys(P.main).map(Number).sort((a, b) => a - b);
             const c1 = '<div class="col c1"><div class="gh"><span>시각</span><span>다중</span><span>서브</span></div>' + mons.map(t => '<div class="gr"><span class="tm">' + SIM.fmt(t) + '</span><span>' + simNm(P.main[t]) + '</span><span>' + (P.sub[t] ? simNm(P.sub[t]) : '<span class="em">–</span>') + '</span></div>').join('') + '</div>';
             const c2 = '<div class="col c2"><div class="gh"><span>시각</span><span>일일 업무</span><span>새 수식 배정자</span></div>' + (() => { const M = simMerge(R); return M && !M.bad ? M.items : P.TL.map((t, i) => ({ i, user: A[i] || '', content: t.t })); })().map(it => {   // 전체 행 파일이 있으면 휴무·관리자 행도 시트 순서 그대로 함께 표시
