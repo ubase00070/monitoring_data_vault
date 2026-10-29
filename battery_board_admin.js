@@ -10713,6 +10713,7 @@
           return { main, sub, TL, rowUser, warn };
         }
 
+        const EARLY_SCI09_BONUS = 3;   // 09:00 과학관을 07·08시 출근자가 맡으면 점수에서 이만큼 뺌(작은 선호) — 위반(1000)·균형(수~수십)보다 훨씬 작아 강제력은 없음
         const LIVE_LOCK_BEFORE = 9 * 60;   // 이 시각(분) 전에 시작하는 업무는 live 재배정에서 고정
         function liveCtx(P, d, excl) {
           const names = new Set();   // 후보 = 07시 JSON(다중·서브·업무 행)에 배정자로 들어 있는 사람 — 07시 배정이 출근자를 제대로 반영한다고 신뢰. 근무표 파일은 근무시간·휴게시간을 알려주는 용도(보험)
@@ -10781,8 +10782,9 @@
           const low = cs.filter(c => c <= 1).length, high = cs.filter(c => c >= 3).length, chains = per.filter(p => p.chain >= 3).length, night = per.filter(p => p.g === 3).reduce((a, p) => a + p.t, 0);
           const changes = X.filter((n, i) => (n || null) !== (A[i] || null)).length;
           const UU = buildUnits(d, true, false, ctx.tasks), monSet = new Set(Object.values(ctx.main)), lastHr = UU.filter(u => u.sci && lastHrSci(BYNAME[X[u.rows[0]]], u)).length, sciMon = UU.filter(u => u.sci && X[u.rows[0]] && monSet.has(X[u.rows[0]])).length;   // sciMon: 다중이 있는 사람이 받은 과학관 칸 수   // 퇴근 1시간 전 과학관(07~16·08~17시 근무자) 건수
-          const score = m.prob * 1000 + m.overW * 100 + m.n4 * 40 + sd * 10 + low * 4 + high * 1.2 + chains * 3 + m.std * 5 + night * 2 + changes * 1 + lastHr * 5 + sciMon * 5;
-          return { score, lastHr, sciMon, m, per, sd, mn: cs.length ? Math.min(...cs) : 0, mx: cs.length ? Math.max(...cs) : 0, nDay: cs.length, low, high, chains, night, maxW: Math.max(0, ...per.map(p => p.w)), changes };
+          const early09 = UU.filter(u => u.sci && u.slot === 540 && X[u.rows[0]] && ((q) => !!q && (q.start === 420 || q.start === 480))(BYNAME[X[u.rows[0]]])).length;   // 09:00 과학관을 07·08시 출근자가 받은 칸 수 — 09시 출근자가 오기 전에 이미 준비되는 업무라 '가능하면' 먼저 출근한 사람이 맡도록 (강제 아님, 보너스 EARLY_SCI09_BONUS 점)
+          const score = m.prob * 1000 + m.overW * 100 + m.n4 * 40 + sd * 10 + low * 4 + high * 1.2 + chains * 3 + m.std * 5 + night * 2 + changes * 1 + lastHr * 5 + sciMon * 5 - early09 * EARLY_SCI09_BONUS;
+          return { score, lastHr, sciMon, early09, m, per, sd, mn: cs.length ? Math.min(...cs) : 0, mx: cs.length ? Math.max(...cs) : 0, nDay: cs.length, low, high, chains, night, maxW: Math.max(0, ...per.map(p => p.w)), changes };
         }
         /* 한 칸씩 담당자를 바꿔 보며 점수가 좋아지면 채택(언덕 오르기) — 바뀐 칸 수에도 점수를 매기므로 '꼭 필요한 수정'만 남는다 */
         function liveClimber(ctx, d, X0, A) {
