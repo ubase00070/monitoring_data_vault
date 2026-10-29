@@ -4992,7 +4992,7 @@
         const ZOOM_KEY = 'bba_zoom', ZOOM_MIN = 0.8, ZOOM_MAX = 1.3, ZOOM_STEP = 0.1;
         let zoom = parseFloat(localStorage.getItem(ZOOM_KEY)) || 0.8;   // [admin] 기본 80%
         // 글자 키우기 배율 — 보드/버튼 크기(레이아웃)는 그대로 두고 글자(font-size)만 이 배율로 커짐. 모든 font-size 가 calc(Npx * var(--bb-ts)) 로 되어 있음. 1.0 = 예전 크기
-        const TS_KEY = 'bba_ts', TS_DEFAULT = 1.12;
+        const TS_KEY = 'bba_ts', TS_DEFAULT = 1.2;
         let ts = parseFloat(localStorage.getItem(TS_KEY)); if (!(ts >= 0.8 && ts <= 1.6)) ts = TS_DEFAULT;
         document.documentElement.style.setProperty('--bb-tg', ts); document.documentElement.style.setProperty('--bb-ts', ts);
 
@@ -8371,10 +8371,10 @@
         #bb .bb-hd { position:relative; }
         #bb .bba-bar.inhd { position:absolute; left:14px; top:50%; transform:translateY(-50%); z-index:3; gap:6px; }
         #bb .bba-bar.inhd .bba-note { display:none; }   /* '업무표 갱신' 문구는 제목 줄에서 숨김 (업무표 머리글에 이미 표시) */
-        #bb .bba-bar.inhd .bba-dbtn { height:auto; min-height:30px; padding:2px 8px; font-size:calc(15px * var(--bb-ts, 1)); }
+        #bb .bba-bar.inhd .bba-dbtn { height:auto; min-height:40px; padding:3px 8px; font-size:calc(15px * var(--bb-ts, 1)); }
         #bb .bba-dbtn { flex-direction:column; justify-content:center; gap:0 !important; line-height:1.25; }
         #bb .bba-dbtn .l1 { display:inline-flex; align-items:center; gap:7px; }
-        #bb .bba-dbtn .l2 { font-size:calc(11.5px * var(--bb-ts, 1)); font-weight:600; opacity:.7; letter-spacing:.2px; }
+        #bb .bba-dbtn .l2 { font-size:calc(13.5px * var(--bb-ts, 1)); font-weight:600; opacity:.7; letter-spacing:.2px; }
         #bb .bba-dbtn .l2.warn { color:#d93a35; opacity:1; }
         #bb .bba-dbtn.on .l2.warn { color:#ffb4b0; }
         #bb .bba-hdr2 { position:absolute; left:calc(50% + 118px); top:50%; transform:translateY(-50%); display:flex; gap:3px; z-index:3; }
@@ -8650,8 +8650,8 @@
         #bb #bba-memo { position:absolute; right:0; bottom:0; width:50%; z-index:8; display:none; flex-direction:column; border:2px solid var(--bd2); border-radius:8px; background:var(--bg); overflow:hidden; box-shadow:-6px 0 18px rgba(0,0,0,.18); }
         #bb #bba-memo.open { display:flex; }
         #bb #bba-memo .bba-zh .bba-cnt { white-space:normal; line-height:1.3; text-align:right; flex:1 1 140px; }
-        #bb #bba-memo-cf { padding:8px 10px; border-bottom:1px solid var(--bd); background:#ffe2b8; color:#4a2a00; font-size:calc(14px * var(--bb-ts, 1)); display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
-        #bb #bba-memo-ta { flex:1 1 auto; width:100%; box-sizing:border-box; border:0; outline:0; resize:none; padding:12px 14px; font-family:inherit; font-size:calc(15px * var(--bb-ts, 1)); line-height:1.55; background:var(--sur); color:var(--tx); }
+        #bb #bba-memo-cf { padding:8px 10px; border-bottom:1px solid var(--bd); background:#ffe2b8; color:#4a2a00; font-size:calc(16px * var(--bb-ts, 1)); display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+        #bb #bba-memo-ta { flex:1 1 auto; width:100%; box-sizing:border-box; border:0; outline:0; resize:none; padding:12px 14px; font-family:inherit; font-size:calc(18px * var(--bb-ts, 1)); line-height:1.55; background:var(--sur); color:var(--tx); }
         #bb .bb-hd-rightwrap { overflow:visible; }
         #bb #bba-memob { position:absolute; top:calc(100% + 5px); left:44px; height:24px; padding:0 10px; border-radius:8px; border:1.5px solid var(--bd2); background:var(--sur2); color:var(--tx); font-family:inherit; font-size:calc(14px * var(--bb-ts, 1)); font-weight:700 !important; cursor:pointer; white-space:nowrap; z-index:4; }
         #bb #bba-memob.on { background:#c9f0d6; color:#14532d; border-color:#7fcf9a; }
