@@ -10713,7 +10713,17 @@
           return { main, sub, TL, rowUser, warn };
         }
 
-        const EARLY_SCI09_BONUS = 3;   // 09:00 과학관을 07·08시 출근자가 맡으면 점수에서 이만큼 뺌(작은 선호) — 위반(1000)·균형(수~수십)보다 훨씬 작아 강제력은 없음
+        const SCI_PRIO_W = 30;   // 다중 없는 사람에게 과학관 우선배정 — 어기면 칸당 30점: 균형 항목(수~수십)보다 크고, 가중치 2.0 초과(100)·다중 포함 4건 이상(40)·규칙 위반(1000)보다는 작음 = 상한을 지키는 범위 안에서 최대한 우선
+        /* 다중 없는 사람이 맡을 수 있는 과학관 칸의 최대 개수(근무시간·휴게시간 안, 한 사람 하루 1칸) = 이분 매칭 → 나머지 칸은 다중 보유자가 받을 수밖에 없는 하한 */
+        function sciFloor(ctx, d) {
+          if (ctx._sciFloor !== undefined) return ctx._sciFloor;
+          const monSet = new Set(Object.values(ctx.main)), U = buildUnits(d, true, false, ctx.tasks).filter(u => u.sci && !ctx.tasks[u.rows[0]].fixed), P = ctx.people.filter(p => !monSet.has(p.name));
+          const can = (p, u) => p.start <= u.s && p.end >= u.e && !(p.brk && ov(u.s, u.e, p.brk[0], p.brk[1])), owner = {};
+          const aug = (ui, seen) => { for (let pi = 0; pi < P.length; pi++) { if (seen[pi] || !can(P[pi], U[ui])) continue; seen[pi] = true; if (owner[pi] === undefined || aug(owner[pi], seen)) { owner[pi] = ui; return true; } } return false; };
+          let match = 0; for (let ui = 0; ui < U.length; ui++) if (aug(ui, {})) match++;
+          return (ctx._sciFloor = U.length - match);
+        }
+        const EARLY_SCI09_BONUS = 6;   // 09:00 과학관을 07·08시 출근자가 맡으면 점수에서 이만큼 뺌(작은 선호) — 위반(1000)·균형(수~수십)보다 훨씬 작아 강제력은 없음
         const LIVE_LOCK_BEFORE = 9 * 60;   // 이 시각(분) 전에 시작하는 업무는 live 재배정에서 고정
         function liveCtx(P, d, excl) {
           const names = new Set();   // 후보 = 07시 JSON(다중·서브·업무 행)에 배정자로 들어 있는 사람 — 07시 배정이 출근자를 제대로 반영한다고 신뢰. 근무표 파일은 근무시간·휴게시간을 알려주는 용도(보험)
@@ -10782,9 +10792,10 @@
           const low = cs.filter(c => c <= 1).length, high = cs.filter(c => c >= 3).length, chains = per.filter(p => p.chain >= 3).length, night = per.filter(p => p.g === 3).reduce((a, p) => a + p.t, 0);
           const changes = X.filter((n, i) => (n || null) !== (A[i] || null)).length;
           const UU = buildUnits(d, true, false, ctx.tasks), monSet = new Set(Object.values(ctx.main)), lastHr = UU.filter(u => u.sci && lastHrSci(BYNAME[X[u.rows[0]]], u)).length, sciMon = UU.filter(u => u.sci && X[u.rows[0]] && monSet.has(X[u.rows[0]])).length;   // sciMon: 다중이 있는 사람이 받은 과학관 칸 수   // 퇴근 1시간 전 과학관(07~16·08~17시 근무자) 건수
+          const sciMin = sciFloor(ctx, d), sciEx = Math.max(0, sciMon - sciMin);   // sciMin: 다중 없는 사람이 맡을 수 있는 만큼 다 맡았을 때 다중 보유자가 어쩔 수 없이 받아야 하는 과학관 칸 수 / sciEx: 그보다 더 받은 칸(= 우선배정을 어긴 칸)
           const early09 = UU.filter(u => u.sci && u.slot === 540 && X[u.rows[0]] && ((q) => !!q && (q.start === 420 || q.start === 480))(BYNAME[X[u.rows[0]]])).length;   // 09:00 과학관을 07·08시 출근자가 받은 칸 수 — 09시 출근자가 오기 전에 이미 준비되는 업무라 '가능하면' 먼저 출근한 사람이 맡도록 (강제 아님, 보너스 EARLY_SCI09_BONUS 점)
-          const score = m.prob * 1000 + m.overW * 100 + m.n4 * 40 + sd * 10 + low * 4 + high * 1.2 + chains * 3 + m.std * 5 + night * 2 + changes * 1 + lastHr * 5 + sciMon * 5 - early09 * EARLY_SCI09_BONUS;
-          return { score, lastHr, sciMon, early09, m, per, sd, mn: cs.length ? Math.min(...cs) : 0, mx: cs.length ? Math.max(...cs) : 0, nDay: cs.length, low, high, chains, night, maxW: Math.max(0, ...per.map(p => p.w)), changes };
+          const score = m.prob * 1000 + m.overW * 100 + m.n4 * 40 + sd * 10 + low * 4 + high * 1.2 + chains * 3 + m.std * 5 + night * 2 + changes * 1 + lastHr * 5 + sciMon * 5 + sciEx * SCI_PRIO_W - early09 * EARLY_SCI09_BONUS;
+          return { score, lastHr, sciMon, sciMin, sciEx, early09, m, per, sd, mn: cs.length ? Math.min(...cs) : 0, mx: cs.length ? Math.max(...cs) : 0, nDay: cs.length, low, high, chains, night, maxW: Math.max(0, ...per.map(p => p.w)), changes };
         }
         /* 한 칸씩 담당자를 바꿔 보며 점수가 좋아지면 채택(언덕 오르기) — 바뀐 칸 수에도 점수를 매기므로 '꼭 필요한 수정'만 남는다 */
         function liveClimber(ctx, d, X0, A) {
@@ -10844,7 +10855,7 @@
             const d = wd.getDate(), P = SIM.liveParse(arr), ctx = SIM.liveCtx(P, d, []), A = P.rowUser.map(n => n || null);   // 다중/서브는 07시에 이미 정해진 값 그대로(건드리지 않음), 일일 업무 칸만 다시 배정
             const B = Array.isArray(snap.X) && snap.X.length === A.length ? snap.X.slice() : SIM.liveFull(ctx, d, A, snap.seed);   // 저장된 최적안(담당자 목록) 그대로 — 옛 저장본은 시드로 다시 만든다
             const follow = new Set(); SIM.buildUnits(d, true, false, ctx.tasks).forEach(u => { if (u.rows.length > 1) follow.add(u.rows[1]); });
-            return { P, d, ctx, A, B, mA: SIM.liveMetrics(ctx, d, A), mB: SIM.liveMetrics(ctx, d, B), sB: SIM.liveScore(ctx, d, B, A), follow, cfg: snap, wd };
+            return { P, d, ctx, A, B, mA: SIM.liveMetrics(ctx, d, A), mB: SIM.liveMetrics(ctx, d, B), sA: SIM.liveScore(ctx, d, A, A), sB: SIM.liveScore(ctx, d, B, A), follow, cfg: snap, wd };
         }
         function simRun(snap) { try { simRes = simCompute(snap); simErr = ''; } catch (e) { simRes = null; simErr = (e && e.message) || String(e); console.warn('[BBA] 일일 업무 배정표 계산 실패:', simErr); } }
         /* 최적안 찾기: 1초씩 5번(총 5초) 동안 시드를 바꿔 가며 수천 가지 배정을 만들어 보고, 점수(규칙 위반 → 2.0 초과 → 고른 정도)가 가장 좋은 안을 확정 */
@@ -10909,7 +10920,7 @@
             if (SIM.rosterSrc() !== 'file') warns.push('월별 근무표 파일을 받지 못해 내장 10월 표의 근무시간으로 계산'); if (ctx.unknown.length) warns.push('근무표에 없는 이름: ' + esc(ctx.unknown.join(', ')));
             const meta = '<div class="meta sum">' + (cfg.tries ? '✅ <b>최적안</b> (' + cfg.tries.toLocaleString() + '가지 중)' : '시뮬레이션') + ' · ' + pad(at.getHours()) + ':' + pad(at.getMinutes()) + ' 계산 · 바뀐 칸 <b>' + chg + '</b> · 규칙 문제 칸 ' + mA.prob + ' → <b>' + mB.prob + '</b><br>' +
                 '가중치 2.0 ' + (sB.m.overW === 0 ? '모두 지킴(최대 ' + sB.maxW.toFixed(1) + ')' : '<span class="warn">' + sB.m.overW + '명 초과(최대 ' + sB.maxW.toFixed(1) + ')</span>') + ' · 업무+다중 ' + sB.mn + '~' + sB.mx + '건 (1건 이하 ' + sB.low + '명, 3건 이상 ' + sB.high + '명) · 연속 3건 ' + (sB.chains ? '<span class="warn">' + sB.chains + '명</span>' : '없음') +
-                (ctx.lock && ctx.lock.size ? '<br>🔒 09시 이전 업무 ' + ctx.lock.size + '건은 07시 배정 그대로 고정' : '') + (warns.length ? '<br><span class="warn">' + warns.join(' · ') + '</span>' : '') + '</div>';
+                '<br>🔬 과학관 다중 無 우선: 다중 보유자 ' + R.sA.sciMon + ' → <b>' + sB.sciMon + '</b>칸 (최소 ' + sB.sciMin + '칸)' + (sB.sciEx ? ' <span class="warn">⚠ ' + sB.sciEx + '칸 더 줄일 수 있음</span>' : ' ✔') + (ctx.lock && ctx.lock.size ? '<br>🔒 09시 이전 업무 ' + ctx.lock.size + '건은 07시 배정 그대로 고정' : '') + (warns.length ? '<br><span class="warn">' + warns.join(' · ') + '</span>' : '') + '</div>';
             const mons = Object.keys(P.main).map(Number).sort((a, b) => a - b);
             const c1 = '<div class="col c1"><div class="gh"><span>시각</span><span>다중</span><span>서브</span></div>' + mons.map(t => '<div class="gr"><span class="tm">' + SIM.fmt(t) + '</span><span>' + simNm(P.main[t]) + '</span><span>' + (P.sub[t] ? simNm(P.sub[t]) : '<span class="em">–</span>') + '</span></div>').join('') + '</div>';
             const c2 = '<div class="col c2"><div class="gh"><span>시각</span><span>일일 업무</span><span>새 수식 배정자</span></div>' + (() => { const M = simMerge(R); return M && !M.bad ? M.items : P.TL.map((t, i) => ({ i, user: A[i] || '', content: t.t })); })().map(it => {   // 전체 행 파일이 있으면 휴무·관리자 행도 시트 순서 그대로 함께 표시
