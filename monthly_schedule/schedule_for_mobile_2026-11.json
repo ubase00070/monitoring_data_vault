@@ -1936,10 +1936,10 @@
           "raw": "1"
         },
         "11/11": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "11/12": {
           "status": "off",
@@ -1948,10 +1948,10 @@
           "raw": "휴무"
         },
         "11/13": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "11/14": {
           "status": "work",
@@ -3571,10 +3571,10 @@
           "raw": "1"
         },
         "11/3": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "11/4": {
           "status": "off",
@@ -3583,10 +3583,10 @@
           "raw": "휴무"
         },
         "11/5": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "11/6": {
           "status": "work",
@@ -3945,10 +3945,10 @@
           "raw": "1"
         },
         "11/3": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "11/4": {
           "status": "off",
@@ -3957,10 +3957,10 @@
           "raw": "휴무"
         },
         "11/5": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "11/6": {
           "status": "work",
@@ -9384,6 +9384,6 @@
     "11/30"
   ],
   "mainMonth": 11,
-  "updatedAt": "2026-10-29T03:53:51.803Z",
+  "updatedAt": "2026-10-30T03:53:15.632Z",
   "sheetName": "2026년_11월 스케줄 "
 }
