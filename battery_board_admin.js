@@ -8043,7 +8043,7 @@
         #bb .bba-bar.inhd .bba-dbtn { height:auto; min-height:40px; padding:3px 8px; font-size:calc(17px * var(--bb-ts, 1)); }
         #bb .bba-dbtn { flex-direction:column; justify-content:center; gap:0 !important; line-height:1.25; }
         #bb .bba-dbtn .l1 { display:inline-flex; align-items:center; gap:7px; }
-        #bb .bba-dbtn .l2 { font-size:calc(15.5px * var(--bb-ts, 1)); font-weight:600; opacity:.7; letter-spacing:.2px; }
+        #bb .bba-dbtn .l2 { font-size:calc(15.5px * var(--bb-ts, 1)); font-weight:800 !important; opacity:.85; letter-spacing:.2px; }
         #bb .bba-dbtn .l2.warn { color:#d93a35; opacity:1; }
         #bb .bba-dbtn.on .l2.warn { color:#ffb4b0; }
         #bb .bba-hdr2 { position:absolute; left:calc(50% + 118px); top:50%; transform:translateY(-50%); display:flex; flex-direction:column; align-items:stretch; gap:3px; z-index:3; }   /* 글자가 커져도 오른쪽 줌 버튼과 겹치지 않게 세로로 쌓음 */
@@ -8058,13 +8058,13 @@
         #bb #bba-sim .meta.sum { margin-top:-2px; padding:4px 9px; border-radius:8px; background:var(--sur2); border:1.5px solid var(--bd2); color:var(--tx); }
         #bb #bba-sim .meta b { color:var(--tx); font-weight:700 !important; }
         #bb #bba-sim .meta .warn { color:var(--rd); font-weight:700 !important; }
-        #bb #bba-sim .sb { flex:1; min-height:0; display:grid; grid-template-columns:minmax(230px,.36fr) minmax(0,1fr); gap:10px; }
+        #bb #bba-sim .sb { flex:1; min-height:0; display:grid; grid-template-columns:minmax(200px,.28fr) minmax(0,1fr); gap:10px; }
         #bb #bba-sim .col { min-height:0; overflow:auto; border:1.5px solid var(--bd2); border-radius:10px; background:var(--sur); }
         #bb #bba-sim .gh { position:sticky; top:0; z-index:2; display:grid; gap:8px; padding:5px 8px; background:var(--sur2); border-bottom:2px solid var(--bd2); font-size:calc(14px * var(--bb-ts, 1)); font-weight:700 !important; color:var(--mu); }
         #bb #bba-sim .gr { display:grid; gap:8px; align-items:center; padding:2px 8px; min-height:26px; border-bottom:1px solid var(--bd); }
         #bb #bba-sim .c1 .gh, #bb #bba-sim .c1 .gr { grid-template-columns:50px minmax(0,1fr) minmax(0,1fr); }
-        #bb #bba-sim .c2 .gh, #bb #bba-sim .c2 .gr { grid-template-columns:86px minmax(0,1fr) minmax(150px,.62fr); }
-        #bb #bba-sim .tm { font-size:calc(14.5px * var(--bb-ts, 1)); font-weight:700 !important; color:var(--mu); font-variant-numeric:tabular-nums; }
+        #bb #bba-sim .c2 .gh, #bb #bba-sim .c2 .gr { grid-template-columns:112px minmax(0,1fr) minmax(150px,.62fr); }
+        #bb #bba-sim .tm { font-size:calc(14.5px * var(--bb-ts, 1)); font-weight:700 !important; color:var(--mu); font-variant-numeric:tabular-nums; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         #bb #bba-sim .tk { font-size:calc(14.5px * var(--bb-ts, 1)); min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
         #bb #bba-sim .nm { height:22px; border-radius:6px; display:grid; place-items:center; font-weight:600 !important; font-size:calc(14.5px * var(--bb-ts, 1)); color:#1e1a12; background:hsl(var(--h) 58% var(--l,84%)); white-space:nowrap; overflow:hidden; padding:0 6px; }
         #bb #bba-sim .nm.none { background:var(--sur2); color:var(--mu); border:1px dashed var(--bd2); }
@@ -8322,6 +8322,89 @@
         #bb #bba-memo-cf { padding:8px 10px; border-bottom:1px solid var(--bd); background:#ffe2b8; color:#4a2a00; font-size:calc(16px * var(--bb-ts, 1)); display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
         #bb #bba-memo-ta { flex:1 1 auto; width:100%; box-sizing:border-box; border:0; outline:0; resize:none; padding:12px 14px; font-family:inherit; font-size:calc(18px * var(--bb-ts, 1)); line-height:1.55; background:var(--sur); color:var(--tx); }
         #bb .bb-hd-rightwrap { overflow:visible; }
+        #bb #bba-killask { display:none; position:absolute; top:calc(100% + 6px); right:0; z-index:8; padding:10px 12px; border:2px solid #e11d48; border-radius:10px; background:var(--sur); box-shadow:0 8px 22px rgba(40,30,10,.35); white-space:nowrap; }
+        #bb #bba-killask.open { display:block; }
+        #bb #bba-killask .m { font-size:calc(15px * var(--bb-ts, 1)); font-weight:700 !important; margin-bottom:8px; }
+        #bb #bba-killask .b { display:flex; gap:8px; justify-content:flex-end; }
+        #bb #bba-killask .b .bba-btn { height:28px; padding:0 16px; }
+        #bb #bba-killask .b .bba-btn[data-v="1"] { border-color:#e11d48; color:#b4123c; }
+        #bb #bba-killb:disabled { opacity:1; background:#e11d48; color:#fff; cursor:default; }
+        /* 커스텀 점검 */
+        #bb .bba-campft { flex:0 0 auto; margin-top:auto; padding:8px 10px; border-top:1px solid var(--bd); }
+        #bb #bba-cu-open { width:100%; height:32px; border-radius:9px; border:1.5px dashed var(--bd2); background:var(--sur2); color:var(--tx); font-family:inherit; font-size:calc(15px * var(--bb-ts, 1)); font-weight:700 !important; cursor:pointer; }
+        #bb #bba-cu-open:hover { border-style:solid; background:#fff7dd; }
+        #bb #bba-cu-open.run { border:1.5px solid #3b82f6; color:#2563eb; animation:bbaPulse 1.4s ease-in-out infinite; }
+        #bb #bba-cu-bg { display:none; position:absolute; inset:0; z-index:58; background:rgba(30,24,12,.40); border-radius:inherit; }
+        #bb #bba-cu { display:none; position:absolute; z-index:59; left:50%; top:50%; transform:translate(-50%,-50%); width:min(1040px, 95%); height:min(800px, 92%); box-sizing:border-box; flex-direction:column; border:2px solid var(--bd2); border-radius:16px; background:var(--bg, var(--sur)); box-shadow:0 20px 56px rgba(0,0,0,.5); overflow:hidden; }
+        #bb #bba-cu.open, #bb #bba-cu-bg.open { display:flex; }
+        #bb #bba-cu * { box-sizing:border-box; }
+        #bb #bba-cu .hd { flex:0 0 auto; display:flex; align-items:center; gap:12px; padding:12px 16px; border-bottom:2px solid var(--bd2); background:var(--sur2); }
+        #bb #bba-cu .hd b { font-size:calc(20px * var(--bb-ts, 1)); font-weight:900 !important; }
+        #bb #bba-cu .hd .sub { font-size:calc(14px * var(--bb-ts, 1)); color:var(--mu); }
+        #bb #bba-cu .hd .st { margin-left:auto; font-size:calc(14px * var(--bb-ts, 1)); font-weight:700 !important; color:var(--mu); }
+        #bb #bba-cu .hd .st.run { color:#2563eb; }
+        #bb #bba-cu .bd { flex:1 1 0; min-height:0; display:grid; grid-template-columns:392px minmax(0,1fr); }
+        #bb #bba-cu .lf { min-height:0; overflow:auto; padding:14px; border-right:1.5px solid var(--bd2); display:flex; flex-direction:column; gap:16px; }
+        #bb #bba-cu .rt { min-height:0; overflow:auto; padding:14px 16px; }
+        #bb #bba-cu .sec .t { display:flex; align-items:center; gap:8px; margin-bottom:8px; font-size:calc(15px * var(--bb-ts, 1)); font-weight:800 !important; }
+        #bb #bba-cu .sec .t i { display:inline-grid; place-items:center; width:22px; height:22px; border-radius:50%; background:var(--tx); color:var(--sur); font-style:normal; font-size:calc(13px * var(--bb-ts, 1)); }
+        #bb #bba-cu .sec .t small { margin-left:auto; color:var(--mu); font-weight:600 !important; font-size:calc(13px * var(--bb-ts, 1)); }
+        #bb #bba-cu .ad { display:flex; gap:6px; }
+        #bb #bba-cu .ad input { flex:1; min-width:0; height:34px; padding:0 12px; border-radius:9px; border:1.5px solid var(--bd2); background:var(--sur); color:var(--tx); font-family:inherit; font-size:calc(15px * var(--bb-ts, 1)); font-weight:600 !important; outline:none; }
+        #bb #bba-cu .ad input:focus { border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,.18); }
+        #bb #bba-cu .ad .bba-btn { height:34px; padding:0 14px; }
+        #bb #bba-cu .sug { display:flex; flex-direction:column; gap:3px; margin-top:6px; }
+        #bb #bba-cu .sug button { display:flex; align-items:center; gap:8px; padding:5px 10px; border-radius:8px; border:1px solid var(--bd); background:var(--sur); color:var(--tx); font-family:inherit; font-size:calc(14px * var(--bb-ts, 1)); text-align:left; cursor:pointer; }
+        #bb #bba-cu .sug button:hover { background:#fff7dd; border-color:var(--bd2); }
+        #bb #bba-cu .sug b { color:var(--mu); font-variant-numeric:tabular-nums; }
+        #bb #bba-cu .sug span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        #bb #bba-cu .hint { margin-top:6px; font-size:calc(13px * var(--bb-ts, 1)); color:var(--mu); line-height:1.4; }
+        #bb #bba-cu .cs { margin-top:8px; border:1.5px solid var(--bd2); border-radius:11px; background:var(--sur); overflow:hidden; }
+        #bb #bba-cu .cs .ch { display:flex; align-items:center; gap:8px; padding:6px 10px; background:var(--sur2); }
+        #bb #bba-cu .cs .ch .id { font-variant-numeric:tabular-nums; color:var(--mu); font-size:calc(14px * var(--bb-ts, 1)); }
+        #bb #bba-cu .cs .ch .nm { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:calc(15px * var(--bb-ts, 1)); font-weight:800 !important; }
+        #bb #bba-cu .tg { padding:0 8px; border-radius:999px; font-size:calc(12px * var(--bb-ts, 1)); font-weight:800 !important; line-height:18px; }
+        #bb #bba-cu .tg.k { background:#d9f2e3; color:#14532d; }
+        #bb #bba-cu .tg.n { background:#e0e7ff; color:#312e81; }
+        #bb #bba-cu .cs .x { width:24px; height:24px; padding:0; border-radius:6px; border:0; background:transparent; color:var(--mu); font-family:inherit; cursor:pointer; }
+        #bb #bba-cu .cs .x:hover { background:#fdecea; color:#b4123c; }
+        #bb #bba-cu .cs .cu { display:grid; grid-template-columns:1fr 1fr; gap:2px 8px; padding:7px 10px 8px; }
+        #bb #bba-cu .cs .cu label { display:flex; align-items:center; gap:6px; min-width:0; font-size:calc(14px * var(--bb-ts, 1)); cursor:pointer; }
+        #bb #bba-cu .cs .cu label span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        #bb #bba-cu .cs .cn { padding:7px 10px 9px; font-size:calc(13.5px * var(--bb-ts, 1)); color:var(--mu); }
+        #bb #bba-cu .ck { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+        #bb #bba-cu .ck label { display:flex; align-items:flex-start; gap:7px; padding:7px 9px; border-radius:10px; border:1.5px solid var(--bd); background:var(--sur); cursor:pointer; user-select:none; }
+        #bb #bba-cu .ck label.on { border-color:#22a05a; background:#e8f7ee; }
+        #bb #bba-cu .ck label input { margin-top:3px; }
+        #bb #bba-cu .ck label b { display:block; font-size:calc(14.5px * var(--bb-ts, 1)); font-weight:800 !important; }
+        #bb #bba-cu .ck label small { display:block; margin-top:1px; font-size:calc(12px * var(--bb-ts, 1)); color:var(--mu); line-height:1.3; font-weight:500 !important; }
+        #bb #bba-cu .empty { padding:46px 10px; text-align:center; color:var(--mu); font-size:calc(15px * var(--bb-ts, 1)); line-height:1.7; }
+        #bb #bba-cu .sm { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:12px; }
+        #bb #bba-cu .sm .k { display:flex; flex-direction:column; align-items:center; min-width:76px; padding:6px 12px; border-radius:11px; border:1.5px solid var(--bd2); background:var(--sur); }
+        #bb #bba-cu .sm .k b { font-size:calc(22px * var(--bb-ts, 1)); font-weight:900 !important; line-height:1.1; }
+        #bb #bba-cu .sm .k span { font-size:calc(12.5px * var(--bb-ts, 1)); color:var(--mu); }
+        #bb #bba-cu .sm .k.bad { border-color:#e11d48; } #bb #bba-cu .sm .k.bad b { color:#b4123c; }
+        #bb #bba-cu .sm .k.ins { border-color:#d98a1c; } #bb #bba-cu .sm .k.ins b { color:#8a5a0a; }
+        #bb #bba-cu .sm label { margin-left:auto; display:flex; align-items:center; gap:6px; font-size:calc(14px * var(--bb-ts, 1)); cursor:pointer; }
+        #bb #bba-cu .rs { margin-bottom:12px; border:1.5px solid var(--bd2); border-radius:12px; overflow:hidden; background:var(--sur); }
+        #bb #bba-cu .rs .sh { display:flex; align-items:center; gap:8px; padding:7px 12px; background:var(--sur2); font-size:calc(15px * var(--bb-ts, 1)); font-weight:800 !important; }
+        #bb #bba-cu .rs .sh .id { color:var(--mu); font-size:calc(13.5px * var(--bb-ts, 1)); font-variant-numeric:tabular-nums; }
+        #bb #bba-cu .rs .sh .ct { margin-left:auto; font-size:calc(13.5px * var(--bb-ts, 1)); color:var(--mu); font-weight:700 !important; }
+        #bb #bba-cu .rs .er { padding:9px 12px; color:#b4123c; font-size:calc(14.5px * var(--bb-ts, 1)); font-weight:700 !important; }
+        #bb #bba-cu .rr { display:grid; grid-template-columns:minmax(130px,.9fr) minmax(0,2fr); gap:10px; align-items:center; padding:6px 12px; border-top:1px solid var(--bd); }
+        #bb #bba-cu .rr.bad { background:#fdecea; }
+        #bb #bba-cu .rr.ins { background:#fff4dc; }
+        #bb #bba-cu .rr .n { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:calc(14.5px * var(--bb-ts, 1)); font-weight:700 !important; }
+        #bb #bba-cu .c { display:inline-block; margin:2px 5px 2px 0; padding:1px 9px; border-radius:999px; font-size:calc(13px * var(--bb-ts, 1)); font-weight:700 !important; line-height:20px; white-space:nowrap; }
+        #bb #bba-cu .c.ok { background:#d9f2e3; color:#14532d; }
+        #bb #bba-cu .c.warn { background:#fbd5d0; color:#9f1239; }
+        #bb #bba-cu .c.mid { background:#fdebc8; color:#8a5a0a; }
+        #bb #bba-cu .c.mu { background:var(--sur2); color:var(--mu); }
+        #bb #bba-cu .ft { flex:0 0 auto; display:flex; align-items:center; gap:8px; padding:10px 16px; border-top:2px solid var(--bd2); background:var(--sur2); }
+        #bb #bba-cu .ft .msg { flex:1; min-width:0; font-size:calc(14px * var(--bb-ts, 1)); color:#b4123c; font-weight:700 !important; }
+        #bb #bba-cu .ft .bba-btn { height:34px; padding:0 14px; }
+        #bb #bba-cu .ft .bba-btn.go { padding:0 24px; border-color:#1b8a4c; background:#22a05a; color:#fff; }
+        #bb #bba-cu .ft .bba-btn.go.stop { border-color:#b4123c; background:#e11d48; }
         #bb #bba-memorow { position:absolute; top:calc(100% + 5px); right:0; display:flex; gap:6px; z-index:4; }
         #bb #bba-memob, #bb #bba-killb { height:26px; padding:0 10px; border-radius:8px; border:1.5px solid var(--bd2); background:var(--sur2); color:var(--tx); font-family:inherit; font-size:calc(16px * var(--bb-ts, 1)); font-weight:700 !important; cursor:pointer; white-space:nowrap; }
         #bb #bba-killb { border-color:#e11d48; color:#b4123c; }
@@ -8378,7 +8461,7 @@
               '</div>' +
               '<div class="bba-zb" id="bba-tb"><div class="bba-th"><span></span><span>기체 관리 : [HH:MM~HH:MM] 시간 사이트 / N호기 / 내용 / [요일]</span><span>당일배정 현황</span></div><div id="bba-rows"></div></div>' +
             '</section>' +
-            '<section class="bba-zone bba-campz"><div class="bba-zh"><h2>사이트 점검</h2><span class="bba-cnt" id="bba-campn"></span></div><div class="bba-camp" id="bba-camp"></div></section>' +
+            '<section class="bba-zone bba-campz"><div class="bba-zh"><h2>사이트 점검</h2><span class="bba-cnt" id="bba-campn"></span></div><div class="bba-camp" id="bba-camp"></div><div class="bba-campft"><button type="button" id="bba-cu-open" title="주소를 직접 정해 기체 카드를 읽고, 고른 항목만 점검합니다">🧪 커스텀 점검</button></div></section>' +
             '</div>' +
             '<div class="bba-bottom">' +
               '<div id="bba-mmw"></div>' +
@@ -8400,6 +8483,7 @@
             try {
                 const z = parseFloat(lsGet('bba_zoom', '0.8')) || 0.8;
                 bb.style.height = Math.max(1000, Math.min(1300, Math.floor((window.innerHeight - 6) / z))) + 'px';
+                bb.style.width = Math.max(1100, Math.min(2400, Math.floor(((document.documentElement.clientWidth || window.innerWidth) - 6) / z))) + 'px';   // 가로도 창 폭에 딱 맞춤 (반창 스냅 등)
             } catch (e) { /* 무시 */ }
         }
         fitHeight();
@@ -8908,7 +8992,18 @@
             $('bba-memo-cl').addEventListener('click', () => { if (memoIsOpen) openMemo(); });
             $('bba-memo-save').addEventListener('click', () => { memoMsg = ''; memoSync(true).then(ok => { if (ok) { memoMsg = '저장됨 ' + memoFmt(Date.now()); memoDraw(); } }); });
             const wrap = document.querySelector('#bb .bb-hd-rightwrap');
-            if (wrap) { const row = document.createElement('div'); row.id = 'bba-memorow'; wrap.appendChild(row); const kb = document.createElement('button'); kb.id = 'bba-killb'; kb.textContent = '⛔ Kill All'; kb.title = '진행 중인 모든 점검(iframe)을 즉시 중지'; kb.addEventListener('click', () => killAll()); const b = document.createElement('button'); b.id = 'bba-memob'; b.textContent = '📝 메모'; b.title = '메모 — 집/회사 PC 에서 이어 쓰기 (이 PC 에 바로 저장 · 매일 07:30 / 17:30 에 레포로 올림)'; row.appendChild(b); row.appendChild(kb); b.addEventListener('click', openMemo); }
+            if (wrap) { const row = document.createElement('div'); row.id = 'bba-memorow'; wrap.appendChild(row); const kb = document.createElement('button'); kb.id = 'bba-killb'; kb.textContent = '⛔ Kill All'; kb.title = '진행 중인 모든 점검(iframe)을 즉시 중지'; const b = document.createElement('button'); b.id = 'bba-memob'; b.textContent = '📝 메모'; b.title = '메모 — 집/회사 PC 에서 이어 쓰기 (이 PC 에 바로 저장 · 매일 07:30 / 17:30 에 레포로 올림)'; row.appendChild(b); row.appendChild(kb); b.addEventListener('click', openMemo);
+                const ka = document.createElement('div'); ka.id = 'bba-killask'; ka.innerHTML = '<div class="m">진행 중인 모든 점검을 중지할까요?</div><div class="b"><button type="button" class="bba-btn" data-v="0">아니오</button><button type="button" class="bba-btn" data-v="1">예</button></div>'; row.appendChild(ka);
+                kb.addEventListener('click', e => { e.stopPropagation(); ka.classList.toggle('open'); });
+                ka.addEventListener('click', e => {
+                    const bt = e.target.closest && e.target.closest('button[data-v]'); if (!bt) return;
+                    ka.classList.remove('open');
+                    if (bt.dataset.v !== '1') return;
+                    killAll(); kb.textContent = 'Killed'; kb.disabled = true;
+                    setTimeout(() => { kb.textContent = '⛔ Kill All'; kb.disabled = false; }, 2000);
+                });
+                document.addEventListener('mousedown', e => { if (ka.classList.contains('open') && !ka.contains(e.target) && e.target !== kb) ka.classList.remove('open'); }, true);
+            }
             window.addEventListener('storage', e => { if (e.key !== MEMO_KEY) return; try { const o = JSON.parse(e.newValue || 'null'); if (o && typeof o.text === 'string') { memo = { text: o.text, edited: +o.edited || 0, base: +o.base || 0, slot: +o.slot || 0 }; memoFill(); memoDraw(); } } catch (x) { /* 무시 */ } });   // 같은 PC 의 다른 보드 탭에서 쓴 내용 반영
             memoDraw();
             memoTimer = setInterval(memoTick, 30 * 1000); setTimeout(memoTick, 6000);   // 켜자마자 지난 회차를 못 했으면 따라잡기
@@ -9181,7 +9276,7 @@
         // ── Kill All: 진행 중인 모든 점검(iframe)을 즉시 멈춘다. killGen 이 바뀌면 각 점검 루프는 결과를 기록하지 않고 빠져나온다.
         let killGen = 0, killUntil = 0; const probeFins = new Set(); const KILL_COOL_MS = 2 * 60 * 1000;   // 멈춘 직후 2분 동안은 예약된 자동 점검이 바로 되살아나지 않게 쉼
         function killAll() {
-            const wasPat = patBusy; killGen++; killUntil = Date.now() + KILL_COOL_MS;
+            const wasPat = patBusy, wasCu = cuBusy; killGen++; killUntil = Date.now() + KILL_COOL_MS;
             [...probeFins].forEach(f => { try { f('killed'); } catch (e) { /* 무시 */ } });   // 열려 있는 점검 iframe 을 모두 닫고 점검 약속을 '중단'으로 끝냄
             try { document.querySelectorAll('iframe[title="bba-probe"]').forEach(x => x.remove()); } catch (e) { /* 무시 */ }
             // 화면에는 즉시 반영 (각 루프는 다음 순간 스스로 빠져나옴)
@@ -9192,15 +9287,16 @@
             try { renderTasks(); } catch (e) { /* 무시 */ }
             try { drawCamp(); } catch (e) { /* 무시 */ }
             try { drawBt(); } catch (e) { /* 무시 */ }
+            try { if (wasCu) { cuBusy = false; cuCur = null; cuMsg = '점검을 중단했습니다'; if (cuRes) { cuRes.busy = false; cuRes.stopped = true; cuRes.at = cuRes.at || Date.now(); cuSaveRes(); } } cuDraw(); cuDrawBtn(); } catch (e) { /* 무시 */ }
             try { if (wasPat) patMsg = '점검을 중단했습니다'; renderSched(); } catch (e) { /* 무시 */ }
             console.warn('[BBA] Kill All — 모든 점검을 중단했습니다');
         }
         function probeSite(S, units) {
             const info = { k: S.k || S.label || String(S.id), t0: Date.now() };
-            if (S.pat) { /* 순찰중단 수동 점검 — 자동 점검 표시/감시와 분리 */ } else if (S.bt) btInfo = info; else { probeInfo = info; lastBeat = info.t0; }
+            if (S.pat || S.cu) { /* 순찰중단·커스텀 수동 점검 — 자동 점검 표시/감시와 분리 */ } else if (S.bt) btInfo = info; else { probeInfo = info; lastBeat = info.t0; }
             return new Promise(resolve => {
                 let end = false;
-                const out = r => { if (end) return; end = true; clearTimeout(hard); if (S.pat) { /* 없음 */ } else if (S.bt) { btBeat = Date.now(); if (btInfo === info) btInfo = null; } else { lastBeat = Date.now(); if (probeInfo === info) probeInfo = null; } resolve(r); };
+                const out = r => { if (end) return; end = true; clearTimeout(hard); if (S.pat || S.cu) { /* 없음 */ } else if (S.bt) { btBeat = Date.now(); if (btInfo === info) btInfo = null; } else { lastBeat = Date.now(); if (probeInfo === info) probeInfo = null; } resolve(r); };
                 const hard = setTimeout(() => {
                     console.warn('[BBA] 점검 강제 종료(응답 없음):', info.k);
                     try { document.querySelectorAll('iframe[title="bba-probe"]').forEach(x => x.remove()); } catch (e) { /* 무시 */ }
@@ -9209,22 +9305,31 @@
                 probeSite0(S, units).then(out, () => out({ err: 'noread', units: {}, names: [], cards: 0 }));
             });
         }
+        function cardName(card) {   // 기체 카드의 이름 글자: 카드 안 첫 번째 '이름처럼 보이는' 글자
+            const lab = /^(로봇\s*전원|임무|GPS|배터리|현재|위치|상태|순찰|충전)/;
+            for (const e of card.querySelectorAll('*')) {
+                if (e.children.length) continue;
+                const t = (e.textContent || '').replace(/\s+/g, ' ').trim();
+                if (t.length >= 2 && !lab.test(t) && !/^[-–—\d%.:\s]+$/.test(t)) return t.slice(0, 40);
+            }
+            return (card.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 24);
+        }
         function probeSite0(S, units) {   // → Promise<{err?, units:{[n]:{found,on,pw}}, names:[...]}>
             return new Promise(resolve => {
                 const f = document.createElement('iframe');
                 f.setAttribute('aria-hidden', 'true'); f.tabIndex = -1; f.title = 'bba-probe';
                 // 화면 안쪽(투명·클릭 불가)에 둔다: 화면 밖이면 NCC 화면의 '보일 때만 그리기'가 멈출 수 있어서. 크게 그린 뒤 축소해서 작게 놓는다.
                 f.style.cssText = 'position:fixed;left:0;top:0;width:' + PROBE_W + 'px;height:' + PROBE_H + 'px;border:0;transform:scale(.3);transform-origin:0 0;opacity:0;pointer-events:none;z-index:-1;';
-                const seen = {}, names = new Set(); let done = false, t0 = Date.now(), cardsAt = 0, listAt = 0, cardN = 0, scrollDone = false, lastScroll = 0, iv = null, mo = null, to = null, lastScan = 0, docRef = null;
+                const seen = {}, names = new Set(), allSeen = {}; let lastCnt = 0, cntAt = 0, done = false, t0 = Date.now(), cardsAt = 0, listAt = 0, cardN = 0, scrollDone = false, lastScroll = 0, iv = null, mo = null, to = null, lastScan = 0, docRef = null;
                 const fin = err => {
                     if (done) return; done = true; probeFins.delete(fin);
                     clearInterval(iv); clearTimeout(to); try { mo && mo.disconnect(); } catch (e) { /* 무시 */ }
                     try { f.src = 'about:blank'; } catch (e) { /* 무시 */ }
                     setTimeout(() => { try { f.remove(); } catch (e) { /* 무시 */ } }, 30);
                     const res = {}; units.forEach(u => { res[u.n] = seen[u.n] ? { found: true, on: seen[u.n].on, pw: seen[u.n].pw, pg: seen[u.n].pg, ch: seen[u.n].ch, bat: seen[u.n].bat, gp: seen[u.n].gp, row: seen[u.n].row } : { found: false }; });
-                    resolve({ err: err || null, units: res, cards: cardN, names: [...names].slice(0, 30), ms: Date.now() - t0 });
+                    resolve({ err: err || null, units: res, cards: cardN, names: [...names].slice(0, 30), ms: Date.now() - t0, all: S.cu ? Object.keys(allSeen).map(k => allSeen[k]) : undefined });
                 };
-                probeFins.add(fin);
+                probeFins.add(fin); if (S.cu) S.kill = fin;
                 const scan = () => {
                     if (done) return;
                     lastScan = Date.now();
@@ -9238,13 +9343,19 @@
                     const cards = doc.querySelectorAll('[data-qk="robot-card"]');
                     if (cards.length && !cardsAt) cardsAt = now;
                     if (cards.length) cardN = cards.length;
-                    if ((S.chg || S.bt || S.pat) && !cards.length) {   // 기체 목록 틀(검색창)은 그려졌는데 카드가 하나도 없는 채로 일정 시간 → 입고됨
+                    if ((S.chg || S.bt || S.pat || S.cu) && !cards.length) {   // 기체 목록 틀(검색창)은 그려졌는데 카드가 하나도 없는 채로 일정 시간 → 입고됨
                         if (doc.querySelector('[data-qk="search-robot-card-list-wrapper"]') && !listAt) listAt = now;
                         if (listAt && now - listAt > CHG_EMPTY_MS) return fin(null);
                     }
                     cards.forEach(card => {
                         const txt = normTxt(card.textContent);
                         if (names.size < 40) names.add(txt.slice(0, 26));
+                        if (S.cu) {   // 커스텀 점검: 화면의 카드를 전부 읽어 둔다 (스크롤로 사라진 카드도 남도록 누적)
+                            const nm = cardName(card), key = normTxt(nm) || txt.slice(0, 24), sw0 = card.querySelector('[data-qk="mission-available-switch"]'), cg0 = readCharge(card);
+                            const v = { name: nm, txt: txt.slice(0, 200), on: sw0 ? readSwitch(sw0) : null, pw: readPower(card), bat: cg0 ? cg0.bat : null, ch: !!(cg0 && cg0.ch), gp: readGps(card), pg: readProgress(card) }, c0 = allSeen[key];
+                            if (!c0) allSeen[key] = Object.assign(v, { since: now, at: now });
+                            else if (['on', 'pw', 'bat', 'ch', 'gp', 'pg'].some(f => c0[f] !== v[f])) Object.assign(c0, v, { since: now });
+                        }
                         units.forEach(u => {
                             if (!cardMatches(txt, u)) return;
                             const sw = card.querySelector('[data-qk="mission-available-switch"]');
@@ -9254,7 +9365,7 @@
                             else if (c.on !== on || c.pw !== pw || c.pg !== pg || c.ch !== ch || c.bat !== bat || c.gp !== gp) { c.on = on; c.pw = pw; c.pg = pg; c.ch = ch; c.bat = bat; c.gp = gp; c.row = cg ? cg.row : ''; c.since = now; }
                         });
                     });
-                    const okVal = c => (S.prog || S.chg || S.rch || S.bt ? true : (c.on !== null || (S.pat && c.pw === false)));   // 임무 진행 확인형 사이트는 스위치 값이 필요 없음
+                    const okVal = c => (S.prog || S.chg || S.rch || S.bt || S.cu ? true : (c.on !== null || (S.pat && c.pw === false)));   // 임무 진행 확인형 사이트는 스위치 값이 필요 없음
                     const need = units.filter(u => !(seen[u.n] && okVal(seen[u.n])));
                     const rdyF = u => {
                         const c = seen[u.n]; if (!c || !okVal(c)) return false;
@@ -9262,9 +9373,11 @@
                         const loaded = S.prog ? c.pg !== null : c.pw !== null;
                         return now - c.since >= stab && (loaded || now - c.at > 4500);
                     };
-                    const ready = S.pick1 ? units.some(rdyF) : units.every(rdyF);
+                    const ks = S.cu ? Object.keys(allSeen) : [];
+                    if (S.cu && ks.length !== lastCnt) { lastCnt = ks.length; cntAt = now; }
+                    const ready = S.cu ? (ks.length > 0 && scrollDone && now - cntAt > 3000 && ks.every(k => now - allSeen[k].since >= (allSeen[k].pw === true && allSeen[k].bat == null ? 4500 : 1500))) : (S.pick1 ? units.some(rdyF) : units.every(rdyF));   // 커스텀: 카드가 더 늘지 않고 값이 안정되면 끝
                     if (ready) return fin(null);
-                    if (need.length && cards.length && now - cardsAt > 2500 && !scrollDone && now - lastScroll > 600) {   // 못 찾은 기체가 있으면 카드 그리드를 스크롤하며 찾는다 (스크롤이 있거나 화면 밖 카드는 아직 안 그려져 있을 수 있음)
+                    if ((need.length || S.cu) && cards.length && now - cardsAt > 2500 && !scrollDone && now - lastScroll > 600) {   // 못 찾은 기체가 있으면 카드 그리드를 스크롤하며 찾는다 (스크롤이 있거나 화면 밖 카드는 아직 안 그려져 있을 수 있음)
                         lastScroll = now;
                         let moved = false;
                         scrollers(doc, win, cards[0]).forEach(sc => {
@@ -10132,6 +10245,199 @@
         if (btGhEl) btGhEl.addEventListener('click', () => btSync());
         drawBt();
         setInterval(btTick, 20 * 1000);   // 멈춤 감시·화면 갱신만 (점검 자체는 자동으로 시작하지 않음)
+
+        // ───────── 커스텀 점검: 주소(사이트 번호)를 직접 정해 그 안의 기체 카드를 읽고, 미리 고른 항목만 검사 ─────────
+        //  · 주소: 사이트 번호(예: 178)·NCC 주소(…/monitoring/178)·이름 검색. 코드에 들어 있는 주소면 기체 카드가 나오고 체크로 고를 수 있음. 없는 주소면 열어서 카드를 전부 읽음.
+        //  · 항목: 전원 · 배터리 · 충전 · 임무관리 · 좀비 의심 · 입고 추정 · GPS · 임무 진행 — 체크한 것만 결과에 표시/판정
+        //  · 설정(주소·체크)과 마지막 결과는 localStorage 에 저장. 창을 닫아도 점검은 계속되고, 다시 열면 진행/결과가 보임.
+        const CU_CFG = 'bba_cu_cfg', CU_RES = 'bba_cu_res';
+        const CU_CHECKS = [
+            ['pw', '🔌', '전원 켜짐/꺼짐', '로봇 전원이 켜져 있는지'],
+            ['bat', '🔋', '배터리', '수치 표시 · 20% 이하는 경고'],
+            ['chg', '⚡', '충전 중', '무선충전 중인지'],
+            ['mis', '🎯', '임무관리', '임무받기 스위치 ON/OFF'],
+            ['zom', '🧟', '좀비 의심', '전원 켜짐 + 배터리·GPS 없음'],
+            ['ins', '📦', '입고 추정', '카드가 사라짐 (등록된 기체만)'],
+            ['gps', '📡', 'GPS 수신', 'GPS 수신 값'],
+            ['prg', '🚦', '임무 진행', '임무 진행 칸의 값'],
+        ];
+        const CU_DEF = { pw: 1, bat: 1, mis: 1, zom: 1, ins: 1, chg: 0, gps: 0, prg: 0 };
+        let cuCfg = (() => {
+            try { const o = JSON.parse(lsGet(CU_CFG, 'null')); if (o && Array.isArray(o.sites)) return { sites: o.sites.filter(x => x && +x.id > 0).map(x => ({ id: +x.id, off: Array.isArray(x.off) ? x.off : [] })), chk: Object.assign({}, CU_DEF, o.chk || {}) }; } catch (e) { /* 무시 */ }
+            return { sites: [], chk: Object.assign({}, CU_DEF) };
+        })();
+        let cuRes = (() => { try { const o = JSON.parse(lsGet(CU_RES, 'null')); if (o && Array.isArray(o.sites)) { o.busy = false; return o; } } catch (e) { /* 무시 */ } return null; })();
+        let cuBusy = false, cuProg = { i: 0, n: 0, cur: '' }, cuMsg = '', cuOnlyBad = false, cuCur = null, cuStopReq = false, _cuReg = null, cuIsOpen = false;
+        const cuSaveCfg = () => lsSet(CU_CFG, JSON.stringify(cuCfg));
+        const cuSaveRes = () => { try { lsSet(CU_RES, JSON.stringify(cuRes)); } catch (e) { /* 무시 */ } };
+        function cuReg() {   // 코드에 들어 있는 주소 → { id, label, names[] }
+            if (_cuReg) return _cuReg;
+            const m = {}, lab = n => String(n).replace(/\s*\d+호기.*$/, '').trim();
+            const add = (id, names, label) => { id = +id; if (!id) return; const e = m[id] || (m[id] = { id, label: '', names: [] }); if (label && !e.label) e.label = label; names.forEach(n => { if (n && !e.names.includes(n)) e.names.push(n); }); };
+            try { CHG_SRC.forEach(r => add(r[0], r[1], lab(r[1][0]))); } catch (e) { /* 무시 */ }
+            try { BT_SITES.forEach(S => add(S.id, S.units.map(u => u.n), S.label)); } catch (e) { /* 무시 */ }
+            try { Object.keys(PAT_EXTRA_ID).forEach(n => add(PAT_EXTRA_ID[n], [n], lab(n))); } catch (e) { /* 무시 */ }
+            try { AUTO_SITES.forEach(S => add(S.id, S.units.map(u => u.n), S.k)); } catch (e) { /* 무시 */ }
+            return (_cuReg = m);
+        }
+        function cuParse(txt) { const t = String(txt || '').trim(), m = t.match(/monitoring\/(\d{1,6})/) || t.match(/^#?(\d{1,6})$/); return m ? +m[1] : 0; }
+        function cuSearch(q) {
+            const k = normTxt(q); if (!k) return [];
+            return Object.values(cuReg()).filter(e => String(e.id) === String(q).trim() || normTxt(e.label).includes(k) || e.names.some(n => normTxt(n).includes(k))).slice(0, 6);
+        }
+        function cuAddSite(id) {
+            if (!id) return false;
+            if (!cuCfg.sites.some(x => x.id === id)) { cuCfg.sites.push({ id, off: [] }); cuSaveCfg(); }
+            return true;
+        }
+        const cuZombie = c => c.pw === true && c.bat == null && c.gp === '';
+        const cuBad = (c, k) => !!((k.pw && c.pw === false) || (k.mis && c.on === false) || (k.bat && c.bat != null && c.bat <= 20) || (k.zom && cuZombie(c)));
+        function cuChips(c, k) {
+            const ch = (cls, t) => '<span class="c ' + cls + '">' + esc(t) + '</span>';
+            let h = '';
+            if (k.pw) h += c.pw === true ? ch('ok', '전원 ON') : c.pw === false ? ch('warn', '전원 OFF') : ch('mu', '전원 ?');
+            if (k.bat) h += c.bat == null ? ch('mu', '🔋 -') : ch(c.bat <= 20 ? 'warn' : c.bat <= 50 ? 'mid' : 'ok', '🔋 ' + c.bat + '%');
+            if (k.chg) h += c.ch ? ch('ok', '⚡ 충전 중') : ch('mu', '⚡ -');
+            if (k.mis) h += c.on === true ? ch('ok', '임무 ON') : c.on === false ? ch('warn', '임무 OFF') : ch('mu', '임무 ?');
+            if (k.zom && cuZombie(c)) h += ch('warn', '🧟 좀비 의심');
+            if (k.gps) h += ch('mu', '📡 ' + (c.gp ? c.gp : '-'));
+            if (k.prg) h += ch('mu', '🚦 ' + (c.pg ? c.pg : '-'));
+            return h;
+        }
+        const cuFmt = t => { const d = new Date(t), p = n => String(n).padStart(2, '0'); return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()); };
+        // 한 사이트의 점검 결과 → 저장용 (등록된 주소면 체크한 기체만 · 새 주소면 읽은 카드 전부)
+        function cuMake(s, e, names, S, R) {
+            const all = (R.all || []).map(c => ({ n: c.name, txt: c.txt, pw: c.pw, bat: c.bat, ch: c.ch ? 1 : 0, on: c.on, gp: c.gp, pg: c.pg }));
+            let cards = [], miss = [];
+            if (e) { S.units.forEach(u => { const c = all.find(x => cardMatches(x.txt, u)); if (c) cards.push(Object.assign({}, c, { n: u.n })); else miss.push(u.n); }); }
+            else cards = all;
+            cards.forEach(c => { delete c.txt; });
+            return { id: s.id, label: e ? e.label : '', known: !!e, err: R.err || null, cards, miss: R.err ? [] : miss };
+        }
+        async function cuRun() {
+            if (cuBusy) return;
+            if (!cuCfg.sites.length) { cuMsg = '점검할 주소를 먼저 추가해 주세요'; cuDraw(); return; }
+            if (!Object.values(cuCfg.chk).some(Boolean)) { cuMsg = '점검 항목을 하나 이상 골라 주세요'; cuDraw(); return; }
+            const sites = cuCfg.sites.map(x => ({ id: x.id, off: x.off.slice() })), g = killGen, res = { at: 0, busy: true, chk: Object.assign({}, cuCfg.chk), sites: [] };
+            cuBusy = true; cuStopReq = false; cuMsg = ''; cuRes = res; cuProg = { i: 0, n: sites.length, cur: '' }; cuSaveRes(); cuDraw(); cuDrawBtn();
+            try {
+                for (const s of sites) {
+                    if (g !== killGen || cuStopReq) break;
+                    const e = cuReg()[s.id], names = e ? e.names.filter(n => !s.off.includes(n)) : [];
+                    cuProg.cur = (e && e.label) || ('#' + s.id); cuProg.i++; cuDraw(); cuDrawBtn();
+                    const S = { k: '커스텀 ' + s.id, id: s.id, cu: true, kw: /(?!)/, units: names.map(n => U(n)) };
+                    cuCur = S;
+                    let R; try { R = await probeSite(S, S.units); } catch (er) { R = { err: 'noread', units: {}, cards: 0, all: [] }; }
+                    cuCur = null;
+                    if (R.err === 'killed' || g !== killGen || cuStopReq) break;
+                    res.sites.push(cuMake(s, e, names, S, R));
+                    if (cuRes === res) { cuSaveRes(); cuDraw(); cuDrawBtn(); }
+                    await sleep(300);
+                }
+            } finally {
+                res.busy = false;
+                if (g === killGen && !cuStopReq) res.at = Date.now(); else { res.stopped = true; res.at = res.at || Date.now(); }
+                if (cuRes === res) { cuBusy = false; cuCur = null; cuSaveRes(); cuDraw(); cuDrawBtn(); }
+            }
+        }
+        function cuStop() { cuStopReq = true; try { if (cuCur && cuCur.kill) cuCur.kill('killed'); } catch (e) { /* 무시 */ } }
+        // ── 화면 ──
+        const cuBg = document.createElement('div'); cuBg.id = 'bba-cu-bg';
+        const cuEl = document.createElement('div'); cuEl.id = 'bba-cu';
+        cuEl.innerHTML =
+            '<div class="hd"><b>🧪 커스텀 점검</b><span class="sub">주소 고르기 → 항목 정하기 → 한 번에 점검</span><span class="st" id="bba-cu-st"></span><button type="button" class="bba-btn" data-a="close" title="닫기 (점검 중이면 계속 진행됩니다)">✕</button></div>' +
+            '<div class="bd"><div class="lf">' +
+              '<div class="sec"><div class="t"><i>1</i>점검할 주소<small id="bba-cu-sn"></small></div>' +
+                '<div class="ad"><input id="bba-cu-in" type="text" placeholder="번호 · 주소 · 이름" autocomplete="off" spellcheck="false"><button type="button" class="bba-btn" data-a="add">추가</button></div>' +
+                '<div class="sug" id="bba-cu-sug"></div><div class="hint">번호(예: 178)나 NCC 주소를 넣으면 등록된 주소는 기체 목록이 나오고, 처음 보는 주소는 점검할 때 카드를 전부 읽습니다.</div><div id="bba-cu-sites"></div></div>' +
+              '<div class="sec"><div class="t"><i>2</i>무엇을 점검할까요<small>카드 유무는 기본</small></div><div class="ck" id="bba-cu-ck"></div></div>' +
+            '</div><div class="rt" id="bba-cu-res"></div></div>' +
+            '<div class="ft"><span class="msg" id="bba-cu-msg"></span><button type="button" class="bba-btn" data-a="clear">주소 비우기</button><button type="button" class="bba-btn" data-a="defaults">항목 기본값</button><button type="button" class="bba-btn go" id="bba-cu-go" data-a="go">▶ 점검 시작</button></div>';
+        bb.appendChild(cuBg); bb.appendChild(cuEl);
+        function cuDrawSites() {
+            const w = $('bba-cu-sites'); if (!w) return;
+            w.innerHTML = cuCfg.sites.map(s => {
+                const e = cuReg()[s.id];
+                return '<div class="cs" data-id="' + s.id + '"><div class="ch"><span class="id">#' + s.id + '</span><span class="nm">' + esc(e ? (e.label || '등록된 주소') : '새 주소') + '</span><span class="tg ' + (e ? 'k' : 'n') + '">' + (e ? '등록됨' : '새 주소') + '</span><button type="button" class="x" data-a="rm" title="빼기">✕</button></div>' +
+                    (e ? '<div class="cu">' + e.names.map(n => '<label title="' + esc(n) + '"><input type="checkbox" data-a="un" data-n="' + esc(n) + '"' + (s.off.includes(n) ? '' : ' checked') + '><span>' + esc(n) + '</span></label>').join('') + '</div>' : '<div class="cn">점검할 때 이 주소의 기체 카드를 모두 읽습니다</div>') + '</div>';
+            }).join('');
+            const sn = $('bba-cu-sn'); if (sn) sn.textContent = cuCfg.sites.length ? cuCfg.sites.length + '곳' : '';
+        }
+        function cuDrawChecks() {
+            const w = $('bba-cu-ck'); if (!w) return;
+            w.innerHTML = CU_CHECKS.map(c => '<label class="' + (cuCfg.chk[c[0]] ? 'on' : '') + '"><input type="checkbox" data-k="' + c[0] + '"' + (cuCfg.chk[c[0]] ? ' checked' : '') + '><span><b>' + c[1] + ' ' + c[2] + '</b><small>' + c[3] + '</small></span></label>').join('');
+        }
+        function cuDrawSug() {
+            const w = $('bba-cu-sug'), inp = $('bba-cu-in'); if (!w || !inp) return;
+            const q = inp.value.trim(), id = cuParse(q), list = q && !id ? cuSearch(q) : (id && cuReg()[id] ? [cuReg()[id]] : []);
+            w.innerHTML = list.map(e => '<button type="button" data-a="sug" data-id="' + e.id + '"><b>#' + e.id + '</b><span>' + esc(e.label || e.names[0]) + ' · ' + e.names.length + '대</span></button>').join('') +
+                (q && !list.length && !id ? '<div class="hint">등록된 이름이 아니에요 — 번호나 NCC 주소로 넣어 주세요</div>' : '');
+        }
+        function cuDrawRes() {
+            const w = $('bba-cu-res'); if (!w) return;
+            const r = cuRes;
+            if (!r || (!r.sites.length && !r.busy)) { w.innerHTML = '<div class="empty">아직 점검 결과가 없습니다<br>왼쪽에서 주소와 항목을 고르고 <b>점검 시작</b>을 눌러 주세요</div>'; return; }
+            const k = r.chk || cuCfg.chk;
+            let total = 0, bad = 0, ins = 0;
+            r.sites.forEach(s => { total += s.cards.length; s.cards.forEach(c => { if (cuBad(c, k)) bad++; }); if (k.ins) ins += s.miss.length; });
+            let h = '<div class="sm"><div class="k"><b>' + total + '</b><span>읽은 기체</span></div><div class="k' + (bad ? ' bad' : '') + '"><b>' + bad + '</b><span>이상</span></div>' + (k.ins ? '<div class="k' + (ins ? ' ins' : '') + '"><b>' + ins + '</b><span>입고 추정</span></div>' : '') +
+                '<label><input type="checkbox" data-a="onlybad"' + (cuOnlyBad ? ' checked' : '') + '>이상만 보기</label></div>';
+            r.sites.forEach(s => {
+                const rows = s.cards.filter(c => !cuOnlyBad || cuBad(c, k)), nb = s.cards.filter(c => cuBad(c, k)).length;
+                h += '<div class="rs"><div class="sh"><span class="id">#' + s.id + '</span><span>' + esc(s.label || (s.known ? '' : '새 주소')) + '</span><span class="ct">' + s.cards.length + '대' + (nb ? ' · 이상 ' + nb : '') + (k.ins && s.miss.length ? ' · 입고 ' + s.miss.length : '') + '</span></div>';
+                if (s.err) h += '<div class="er">' + esc({ timeout: '시간 초과 — 카드를 읽지 못했습니다', login: '로그인이 필요합니다', xorigin: '접근할 수 없는 화면입니다', noread: '화면을 읽지 못했습니다' }[s.err] || s.err) + '</div>';
+                else if (!s.cards.length && !(k.ins && s.miss.length)) h += '<div class="er" style="color:var(--mu)">기체 카드가 없습니다</div>';
+                rows.forEach(c => { h += '<div class="rr' + (cuBad(c, k) ? ' bad' : '') + '"><span class="n" title="' + esc(c.n) + '">' + esc(c.n) + '</span><span class="cp">' + cuChips(c, k) + '</span></div>'; });
+                if (k.ins) s.miss.forEach(n => { h += '<div class="rr ins"><span class="n" title="' + esc(n) + '">' + esc(n) + '</span><span class="cp"><span class="c mid">📦 입고 추정 · 카드 없음</span></span></div>'; });
+                h += '</div>';
+            });
+            if (r.busy) h += '<div class="empty" style="padding:14px">점검 중… ' + cuProg.i + '/' + cuProg.n + ' · ' + esc(cuProg.cur) + '</div>';
+            w.innerHTML = h;
+        }
+        function cuDrawStatus() {
+            const st = $('bba-cu-st'), go = $('bba-cu-go'), msg = $('bba-cu-msg');
+            if (st) { st.className = 'st' + (cuBusy ? ' run' : ''); st.textContent = cuBusy ? '🔍 점검 중 ' + cuProg.i + '/' + cuProg.n + ' · ' + cuProg.cur : cuRes && cuRes.at ? (cuRes.stopped ? '중단됨 ' : '마지막 점검 ') + cuFmt(cuRes.at) : ''; }
+            if (go) { go.textContent = cuBusy ? '■ 중단' : '▶ 점검 시작'; go.classList.toggle('stop', cuBusy); }
+            if (msg) msg.textContent = cuMsg;
+        }
+        function cuDraw() { if (!cuIsOpen) return; cuDrawRes(); cuDrawStatus(); }
+        function cuDrawAll() { cuDrawSites(); cuDrawChecks(); cuDrawSug(); cuDraw(); }
+        function cuDrawBtn() {
+            const b = $('bba-cu-open'); if (!b) return;
+            b.textContent = cuBusy ? '🧪 커스텀 점검 · ' + cuProg.i + '/' + cuProg.n : '🧪 커스텀 점검'; b.classList.toggle('run', cuBusy);
+        }
+        function cuOpen(on) {
+            cuIsOpen = on; cuEl.classList.toggle('open', on); cuBg.classList.toggle('open', on);
+            if (on) { cuMsg = ''; cuDrawAll(); setTimeout(() => { const i = $('bba-cu-in'); if (i) i.focus(); }, 30); }
+        }
+        const cuOpenBtn = $('bba-cu-open'); if (cuOpenBtn) cuOpenBtn.addEventListener('click', () => cuOpen(!cuIsOpen));
+        cuBg.addEventListener('mousedown', () => cuOpen(false));
+        document.addEventListener('keydown', e => { if (e.key === 'Escape' && cuIsOpen && !(e.target && e.target.id === 'bba-cu-in' && e.target.value)) cuOpen(false); });
+        cuEl.addEventListener('click', e => {
+            const b = e.target.closest && e.target.closest('[data-a]'); if (!b || b.tagName === 'INPUT') return;
+            const a = b.dataset.a;
+            if (a === 'close') return cuOpen(false);
+            if (a === 'add') {
+                const inp = $('bba-cu-in'), q = inp.value.trim(), id = cuParse(q) || ((cuSearch(q)[0] || {}).id || 0);
+                if (!q) { cuMsg = ''; return cuDraw(); }
+                if (!id) { cuMsg = '번호나 NCC 주소로 넣어 주세요 (이름은 등록된 기체만 찾을 수 있어요)'; return cuDraw(); }
+                cuAddSite(id); inp.value = ''; cuMsg = ''; return cuDrawAll();
+            }
+            if (a === 'sug') { cuAddSite(+b.dataset.id); const inp = $('bba-cu-in'); inp.value = ''; cuMsg = ''; return cuDrawAll(); }
+            if (a === 'rm') { const id = +b.closest('.cs').dataset.id; cuCfg.sites = cuCfg.sites.filter(x => x.id !== id); cuSaveCfg(); return cuDrawSites(); }
+            if (a === 'clear') { cuCfg.sites = []; cuSaveCfg(); cuMsg = ''; return cuDrawAll(); }
+            if (a === 'defaults') { cuCfg.chk = Object.assign({}, CU_DEF); cuSaveCfg(); return cuDrawChecks(); }
+            if (a === 'go') { if (cuBusy) cuStop(); else { cuMsg = ''; cuRun(); } }
+        });
+        cuEl.addEventListener('change', e => {
+            const t = e.target;
+            if (t.dataset.k) { cuCfg.chk[t.dataset.k] = t.checked ? 1 : 0; cuSaveCfg(); const l = t.closest('label'); if (l) l.classList.toggle('on', t.checked); return; }
+            if (t.dataset.a === 'un') { const id = +t.closest('.cs').dataset.id, s = cuCfg.sites.find(x => x.id === id), n = t.dataset.n; if (!s) return; s.off = s.off.filter(x => x !== n); if (!t.checked) s.off.push(n); cuSaveCfg(); return; }
+            if (t.dataset.a === 'onlybad') { cuOnlyBad = t.checked; cuDrawRes(); }
+        });
+        cuEl.addEventListener('input', e => { if (e.target.id === 'bba-cu-in') cuDrawSug(); });
+        cuEl.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'bba-cu-in') { e.preventDefault(); const b = cuEl.querySelector('[data-a="add"]'); if (b) b.click(); } });
+        cuDrawBtn();
 
         // ───────── 다중 · 서브 모니터링 / 부산 국립과학관 시간대별 근무자 ─────────
         const mmp = document.createElement('div'); mmp.id = 'bba-mmp'; root.appendChild(mmp);
