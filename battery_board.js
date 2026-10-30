@@ -2299,11 +2299,9 @@
             try { sampleChargeBuffer(DB); } catch (err) { console.error('[BB] 충전 관측 오류:', err); }   // 저속충전 계산용 (2분마다 1회 기록)
             wblCyhAutoUploadTick();
             wblOthersAutoDownloadTick();
-            wblNightUploadTick();
             alertLogCyhTick();
             alertLogNonCyhTick();
             alertLogDownloadTick();
-            dcDownloadTick();   // 방전 기록: 페이지를 연 직후 1회 + 6시간마다 (30분마다 받지 않음)
 
             const alerts = detectAlerts(allRaw);
             renderAlertChips(alerts);
@@ -3087,8 +3085,6 @@
 		Object.keys(localStorage).forEach(k => { if (k.startsWith('bb_wbl_up_') && !k.startsWith(`bb_wbl_up_${today}_`)) localStorage.removeItem(k); });   // 지난 날짜 기록 정리
 		localStorage.setItem(doneKey, '1');   // 시도하기 전에 기록 → 성공/실패와 무관하게 이 시각엔 1회만
 		await wblDoUpload();
-		await new Promise(r => setTimeout(r, 1500));   // 같은 저장소에 커밋이 동시에 몰리지 않도록 순서대로
-		try { await dcUpload(); } catch (e) { console.log('[BB] 방전 로그 업로드 오류:', e.message); }   // 방전 기록 (있을 때만 실제 요청)
 	}
 	// 정각(그 분 안)을 놓치지 않도록 20초마다 확인 — 데이터 갱신(2분 주기)과 무관하게 동작. 이미 한 시각은 위의 기록으로 건너뜀
 	setInterval(wblCyhAutoUploadTick, 20 * 1000);
@@ -3110,44 +3106,6 @@
 		_wblDlRetryTimer = setTimeout(async () => {
 			await wblDoDownload();
 		}, 60 * 1000);
-	}
-
-	// 야간 업로드(02:50) — CYH가 자리를 비웠을 때를 대비해, 그 시간에 접속해있는 아무나(비-CYH)가 대신 최종본을 올려줌.
-	// 별도 역할 설정 없음: 그냥 02:50에 켜져있는 PC가 시도. 두 명이 동시에 켜져있어도 서버 "락" 파일로 한쪽만 실제 업로드.
-	// (하루 시작 기준(WBL_DAY_START_H)과는 별개로 02:50 고정)
-	// (완전한 원자적 락은 아니지만, 랜덤 지연 + 2명뿐인 상황이라 실질적으로 충분 — 설령 겹쳐도 데이터가 깨지는 구조는 아님)
-	const WBL_NIGHT_LOCK_NAME = '배터리_야간업로드_락';
-	async function wblNightUploadTick() {
-		if (localStorage.getItem('bb_is_cyh') === '1') return;   // CYH는 본인 낮 로직으로 이미 커버
-		const now = new Date();
-		if (now.getHours() !== 2 || now.getMinutes() < 50) return;   // 02:50 이후에만
-
-		const dayKey = wblGetDayKey();
-		if (!dayKey) return;
-
-		const doneKey = `bb_wbl_night_up_${dayKey}`;
-		if (localStorage.getItem(doneKey) === '1') return;   // 이 PC는 오늘치 이미 시도함(성공/스킵 무관, 1회만)
-		localStorage.setItem(doneKey, '1');
-
-		// 여러 PC가 동시에 02:50을 맞이해도 정확히 같은 순간에 몰리지 않도록 짧게 랜덤 대기
-		await new Promise(r => setTimeout(r, Math.random() * 5000));
-
-		try {
-			const lockRes = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent(WBL_NIGHT_LOCK_NAME)}`);
-			if (lockRes.ok) {
-				const lockData = await lockRes.json();
-				if (lockData?.data?.day === dayKey) {
-					console.log('[BB] 야간 업로드: 이미 다른 PC가 처리함, 스킵');
-					return;
-				}
-			}
-		} catch (e) { /* 락 확인 실패 시엔 없는 셈 치고 계속 진행 */ }
-
-		await wblUploadNamed(WBL_NIGHT_LOCK_NAME, { day: dayKey, claimedAt: Date.now() });   // 락 선점
-
-		await wblDoDownload();   // 혹시 그 사이 CYH가 막판에 올린 게 있으면 먼저 반영
-		const ok = await wblDoUpload();
-		console.log('[BB] 야간 업로드(02:50)', ok ? '완료' : '실패');
 	}
 
 	// 새로고침(스크립트 재실행) 시점에 한 번 즉시 로드 — 그 시점부터 30분 카운트가 자연스럽게 시작됨
@@ -3353,8 +3311,6 @@
 		if (localStorage.getItem(hourKey) === '1') return;
 		localStorage.setItem(hourKey, '1');
 		await alertLogUpload();
-		await new Promise(r => setTimeout(r, Math.random() * 15000));   // 여러 PC 가 같은 :50 에 몰려도 조금씩 어긋나게 (랜덤 0~15초)
-		try { await dcUpload(); } catch (e) { console.log('[BB] 방전 로그 업로드 오류:', e.message); }   // 방전 기록 (있을 때만 실제 요청)
 	}
 
 	// 30분마다 단일 파일을 통째로 받아와서 로컬 캐시 — CYH/비CYH 둘 다(당일 실시간 조회용)
@@ -3906,7 +3862,6 @@
         const orig = btn.textContent;
         btn.textContent = '⏳'; btn.disabled = true;
         let ok = await wblDoUpload();
-        try { ok = (await dcUpload()) && ok; } catch { ok = false; }   // 방전 기록도 함께
         btn.textContent = ok ? '✅' : '❌';
         setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 1500);
     });
@@ -4465,28 +4420,17 @@
     /* DISCHARGE-LOG-START */
     // ── 방전 로그(최근 30일) ──
     // 원본: 배터리 로그(어제+오늘, 10분 단위)에서 'FB_DISCHARGE_PCT% 이하 → OFF' 로 이어진 지점(방전) 또는 그렇게 지나친 것으로 보이는 지점(방전 추정)
-    // 저장: ① 이 PC(bb_discharge_local) — 배터리 로그는 하루가 지나면 초기화되지만 방전 기록은 30일 동안 남음
-    //       ② 서버 단일 파일(배터리_방전로그) — 방전이 '기록될 때만' 올림. 방전이 없으면 파일도, 업로드 요청도 없음
+    // 저장: 이 PC(bb_discharge_local)에만 — 배터리 로그는 하루가 지나면 초기화되지만 방전 기록은 30일 동안 남음 (서버 파일 업로드/다운로드는 없음)
     // 병합: 같은 기체의 90분 이내 기록은 같은 방전으로 보고 더 확실한 쪽(확정 > 추정, 정확한 시각 > 10분 슬롯 시각)을 채택
-    //       → 여러 PC 가 각자 감지해서 올려도 결과가 같고, 서버에 이미 있는 내용이면 업로드 자체를 건너뜀 (커밋이 몰리지 않음)
-    // 업로드 시점: 배터리 로그와 같은 슬롯(CYH = 정각 업로드 직후 / 그 외 = 매시 50분)에 얹음. 강제 업로드 버튼에도 포함
-    // 다운로드: 방전은 드물어서 30분마다 받지 않음 — 페이지를 연 직후 1회 + 6시간마다 + 목록 창을 열 때(캐시가 30분 넘었으면)
     // 공용 헬퍼 (원래 배달 로그 섹션에 있었지만 방전 로그 쪽도 그대로 가져다 씀 — 배달 로그를 지우면서 이 두 개만 여기로 옮김)
     function dvDayIdx(day) { return Math.floor(new Date(day + 'T00:00:00Z').getTime() / 86400000); }   // 'YYYY-MM-DD' → 1970-01-01 이후 며칠째 (날짜 비교·정리용)
     function dvSig(o) { const s = JSON.stringify(o); let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return s.length + ':' + h; }   // 객체 내용이 바뀌었는지만 보는 간단한 서명(체크섬)
 
-    const DC_LOG_NAME = '배터리_방전로그';
     const DC_RETENTION_DAYS = 30;
     const DC_LOCAL_KEY = 'bb_discharge_local';           // { days:{일자:{기체id:{name,ev:[{ts,bat,kind,exact}]}}}, up:{일자:마지막 업로드 서명} }
-    const DC_CACHE_KEY = 'bb_dischargelog_file_cache';   // { days:{...}, at:받아온 시각(ms) }
-    const DC_SEEN_KEY = 'bb_dc_file_seen';               // 서버 파일을 한 번이라도 확인/생성했는지 (처음 1회 예외 처리용)
-    const DC_POST_TRIES = 2;
     const DC_SAME_MS = 90 * 60000;                       // 같은 기체의 이 시간(분) 이내 기록은 같은 방전
     const DC_JUST_OFF_WINDOW_MS = 24 * 3600000;          // '방금 꺼져서 로그에 OFF 칸이 아직 없는' 경우는 마지막 기록이 이 시간 안일 때만 인정
-    const DC_BG_REFRESH_MS = 6 * 3600000;
-    const DC_OPEN_REFRESH_MS = 30 * 60000;
     const DC_RANK = { sure: 2, est: 1 };
-    let _dcUploading = false;
 
     function dcDayKey(ts) { return wblLocalDateStr(new Date(ts - WBL_DAY_START_H * 3600000)); }   // 배터리 로그의 하루(07:00~익일 07:00) 기준 날짜
     function dcCutoffIdx() { return dvDayIdx(wblGetDayKey() || wblTodayStr()) - (DC_RETENTION_DAYS - 1); }
@@ -4611,83 +4555,10 @@
         return changed;
     }
 
-    // 서버 파일 읽기. 실패하면 null — (빈 파일로 착각해서 서버 데이터를 덮어쓰는 사고 방지)
-    // 단, 서버에 파일이 아직 없는 '맨 처음'(방전이 한 번도 기록된 적 없음)에는 빈 파일로 취급 (404 이거나, 한 번도 확인한 적이 없을 때)
-    async function dcFetchFile() {
-        try {
-            const res = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent(DC_LOG_NAME)}`);
-            if (res.ok) {
-                const j = await res.json();
-                const f = (j && j.data && typeof j.data === 'object' && j.data.days) ? j.data : { days: {} };
-                if (j && j.data) { try { localStorage.setItem(DC_SEEN_KEY, '1'); } catch {} }
-                return f;
-            }
-            if (res.status === 404 || localStorage.getItem(DC_SEEN_KEY) !== '1') return { days: {} };
-            console.log('[BB] 방전 로그: 서버 조회 실패 (HTTP ' + res.status + ')');
-            return null;
-        } catch (e) { console.log('[BB] 방전 로그: 서버 조회 실패:', e.message); return null; }
-    }
-    function dcCachedFile() {
-        try { const c = JSON.parse(localStorage.getItem(DC_CACHE_KEY) || 'null'); if (c && c.days) return c; } catch {}
-        return { days: {}, at: 0 };
-    }
-    async function dcRefreshCache(minAgeMs) {   // 캐시가 minAgeMs 보다 오래됐을 때만 서버에서 다시 받음. 갱신했으면 true
-        if (Date.now() - dcCachedFile().at < minAgeMs) return false;
-        const f = await dcFetchFile();
-        if (!f) return false;
-        try { localStorage.setItem(DC_CACHE_KEY, JSON.stringify({ days: dcPrune(f.days || {}), at: Date.now() })); } catch {}
-        return true;
-    }
-    let _dcDlLast = 0;
-    async function dcDownloadTick() {   // 2분 갱신마다 불리지만 실제 요청은 페이지를 연 직후 1회 + 6시간마다
-        if (Date.now() - _dcDlLast < DC_BG_REFRESH_MS) return;
-        _dcDlLast = Date.now();
-        await dcRefreshCache(0);
-    }
-
-    // 업로드: 이 PC 에 '아직 안 올린' 방전이 있을 때만 → 서버 최신 파일을 읽어 병합 → 서버에 없는 내용이 있을 때만 올림. 실패하면 다시 읽어 병합해 1회 재시도.
-    async function dcUpload() {
-        if (_dcUploading) return true;
-        const loc = dcLoadLocal();
-        const dirty = Object.keys(loc.days).filter(d => Object.keys(loc.days[d]).length && loc.up[d] !== dvSig(loc.days[d]));
-        if (!dirty.length) return true;   // 방전 기록이 없거나 이미 올렸음 → 요청 자체를 안 보냄
-        const sent = {}; dirty.forEach(d => { sent[d] = dvSig(loc.days[d]); });   // 보낸 시점의 서명 (업로드 도중 값이 바뀌어도 다음에 다시 올라가도록)
-        _dcUploading = true;
-        const markSynced = file => {
-            const cur = dcLoadLocal(); dirty.forEach(d => { cur.up[d] = sent[d]; }); dcSaveLocal(cur);
-            try { localStorage.setItem(DC_SEEN_KEY, '1'); localStorage.setItem(DC_CACHE_KEY, JSON.stringify({ days: file.days, at: Date.now() })); } catch {}
-        };
-        try {
-            for (let attempt = 1; attempt <= DC_POST_TRIES; attempt++) {
-                const file = await dcFetchFile();
-                if (!file) return false;   // 서버 파일을 못 읽었으면 보류 (다음 슬롯에 다시)
-                if (!file.days) file.days = {};
-                const before = dvSig(dcPrune(file.days));
-                dirty.forEach(d => { file.days[d] = dcMergeDay(file.days[d] || {}, loc.days[d]); });
-                dcPrune(file.days);
-                if (dvSig(file.days) === before) { markSynced(file); return true; }   // 서버에 이미 같은 내용이 있음 (다른 PC 가 먼저 올림) → 올리지 않음
-                try {
-                    const res = await fetch(BACKUP_BASE, {
-                        method: 'POST', headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ name: DC_LOG_NAME, data: file }),
-                    });
-                    if (res.ok) {
-                        markSynced(file);
-                        console.log('[BB] 방전 로그 업로드 완료 (' + new Date().toTimeString().slice(0, 5) + ', ' + dirty.length + '일치)');
-                        return true;
-                    }
-                    console.log('[BB] 방전 로그 업로드 거절됨 (HTTP ' + res.status + ')' + (attempt < DC_POST_TRIES ? ' — 잠시 뒤 재시도' : ''));
-                } catch (e) { console.log('[BB] 방전 로그 업로드 실패:', e.message); }
-                if (attempt < DC_POST_TRIES) await new Promise(r => setTimeout(r, 2000 + Math.random() * 4000));
-            }
-            return false;
-        } finally { _dcUploading = false; }
-    }
-
-    // 화면용: 서버 캐시 + 이 PC 기록을 합쳐서(기체별로 90분 이내는 같은 방전) 최근 순으로
+    // 화면용: 이 PC 기록(최근 30일)을 기체별로 합쳐서(90분 이내는 같은 방전) 최근 순으로
     function dcBuildView() {
         const byRobot = new Map(), cutoff = dcCutoffIdx();
-        [dcCachedFile().days, dcLoadLocal().days].forEach(src => {
+        [dcLoadLocal().days].forEach(src => {
             Object.keys(src || {}).forEach(day => {
                 if (dvDayIdx(day) < cutoff) return;
                 Object.keys(src[day] || {}).forEach(id => {
@@ -4959,7 +4830,6 @@
     document.querySelectorAll('.bb-fb[data-mode]').forEach(btn => btn.addEventListener('click', () => {
         _fbMode = _fbMode === btn.dataset.mode ? null : btn.dataset.mode;   // 같은 버튼을 다시 누르면 닫힘
         refreshFixedTools();
-        if (_fbMode === 'dis') dcRefreshCache(DC_OPEN_REFRESH_MS).then(ok => { if (ok && _fbMode === 'dis') refreshFixedTools(); }).catch(() => {});   // 다른 PC 가 올린 방전 기록 반영 (30분 이내에 받았으면 요청 없음)
     }));
     document.getElementById('bb-fbp-x').addEventListener('click', () => { _fbMode = null; fbRender(); });
     document.getElementById('bb-fbp-body').addEventListener('click', e => {
