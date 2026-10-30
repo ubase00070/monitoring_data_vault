@@ -2302,11 +2302,9 @@
             try { sampleChargeBuffer(DB); } catch (err) { console.error('[BB] 충전 관측 오류:', err); }   // 저속충전 계산용 (2분마다 1회 기록)
             wblCyhAutoUploadTick();
             wblOthersAutoDownloadTick();
-            wblNightUploadTick();
             alertLogCyhTick();
             alertLogNonCyhTick();
             alertLogDownloadTick();
-            dcDownloadTick();   // 방전 기록: 페이지를 연 직후 1회 + 6시간마다 (30분마다 받지 않음)
 
             const alerts = detectAlerts(allRaw);
             renderAlertChips(alerts);
@@ -2343,7 +2341,6 @@
     function openBoard() {
         isOpen = true;
         document.getElementById('bb').classList.add('open');
-        window.__bbMw?.show(true);   // 임무받기 카드 (SECTION 20)
         render();
         renderMonitorGrid(lastRaw);   // 하단 퀵바
         if (_fbReady) refreshFixedTools();
@@ -2355,7 +2352,6 @@
     function closeBoard() {
         isOpen = false;
         document.getElementById('bb').classList.remove('open');
-        window.__bbMw?.show(false);
         window.__bbIvSpClose?.();   // 개입 통계 팝업 (SECTION 18)
         window.__bbDlSpClose?.();   // 배달 누적 통계 팝업 (SECTION 19)
         document.getElementById('bb-alert-panel').classList.remove('open');
@@ -3095,8 +3091,6 @@
 		Object.keys(localStorage).forEach(k => { if (k.startsWith('bb_wbl_up_') && !k.startsWith(`bb_wbl_up_${today}_`)) localStorage.removeItem(k); });   // 지난 날짜 기록 정리
 		localStorage.setItem(doneKey, '1');   // 시도하기 전에 기록 → 성공/실패와 무관하게 이 시각엔 1회만
 		await wblDoUpload();
-		await new Promise(r => setTimeout(r, 1500));   // 같은 저장소에 커밋이 동시에 몰리지 않도록 순서대로
-		try { await dcUpload(); } catch (e) { console.log('[BB] 방전 로그 업로드 오류:', e.message); }   // 방전 기록 (있을 때만 실제 요청)
 	}
 	// 정각(그 분 안)을 놓치지 않도록 20초마다 확인 — 데이터 갱신(2분 주기)과 무관하게 동작. 이미 한 시각은 위의 기록으로 건너뜀
 	setInterval(wblCyhAutoUploadTick, 20 * 1000);
@@ -3118,44 +3112,6 @@
 		_wblDlRetryTimer = setTimeout(async () => {
 			await wblDoDownload();
 		}, 60 * 1000);
-	}
-
-	// 야간 업로드(02:50) — CYH가 자리를 비웠을 때를 대비해, 그 시간에 접속해있는 아무나(비-CYH)가 대신 최종본을 올려줌.
-	// 별도 역할 설정 없음: 그냥 02:50에 켜져있는 PC가 시도. 두 명이 동시에 켜져있어도 서버 "락" 파일로 한쪽만 실제 업로드.
-	// (하루 시작 기준(WBL_DAY_START_H)과는 별개로 02:50 고정)
-	// (완전한 원자적 락은 아니지만, 랜덤 지연 + 2명뿐인 상황이라 실질적으로 충분 — 설령 겹쳐도 데이터가 깨지는 구조는 아님)
-	const WBL_NIGHT_LOCK_NAME = '배터리_야간업로드_락';
-	async function wblNightUploadTick() {
-		if (localStorage.getItem('bb_is_cyh') === '1') return;   // CYH는 본인 낮 로직으로 이미 커버
-		const now = new Date();
-		if (now.getHours() !== 2 || now.getMinutes() < 50) return;   // 02:50 이후에만
-
-		const dayKey = wblGetDayKey();
-		if (!dayKey) return;
-
-		const doneKey = `bb_wbl_night_up_${dayKey}`;
-		if (localStorage.getItem(doneKey) === '1') return;   // 이 PC는 오늘치 이미 시도함(성공/스킵 무관, 1회만)
-		localStorage.setItem(doneKey, '1');
-
-		// 여러 PC가 동시에 02:50을 맞이해도 정확히 같은 순간에 몰리지 않도록 짧게 랜덤 대기
-		await new Promise(r => setTimeout(r, Math.random() * 5000));
-
-		try {
-			const lockRes = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent(WBL_NIGHT_LOCK_NAME)}`);
-			if (lockRes.ok) {
-				const lockData = await lockRes.json();
-				if (lockData?.data?.day === dayKey) {
-					console.log('[BB] 야간 업로드: 이미 다른 PC가 처리함, 스킵');
-					return;
-				}
-			}
-		} catch (e) { /* 락 확인 실패 시엔 없는 셈 치고 계속 진행 */ }
-
-		await wblUploadNamed(WBL_NIGHT_LOCK_NAME, { day: dayKey, claimedAt: Date.now() });   // 락 선점
-
-		await wblDoDownload();   // 혹시 그 사이 CYH가 막판에 올린 게 있으면 먼저 반영
-		const ok = await wblDoUpload();
-		console.log('[BB] 야간 업로드(02:50)', ok ? '완료' : '실패');
 	}
 
 	// 새로고침(스크립트 재실행) 시점에 한 번 즉시 로드 — 그 시점부터 30분 카운트가 자연스럽게 시작됨
@@ -3361,8 +3317,6 @@
 		if (localStorage.getItem(hourKey) === '1') return;
 		localStorage.setItem(hourKey, '1');
 		await alertLogUpload();
-		await new Promise(r => setTimeout(r, Math.random() * 15000));   // 여러 PC 가 같은 :50 에 몰려도 조금씩 어긋나게 (랜덤 0~15초)
-		try { await dcUpload(); } catch (e) { console.log('[BB] 방전 로그 업로드 오류:', e.message); }   // 방전 기록 (있을 때만 실제 요청)
 	}
 
 	// 30분마다 단일 파일을 통째로 받아와서 로컬 캐시 — CYH/비CYH 둘 다(당일 실시간 조회용)
@@ -3915,7 +3869,6 @@
         const orig = btn.textContent;
         btn.textContent = '⏳'; btn.disabled = true;
         let ok = await wblDoUpload();
-        try { ok = (await dcUpload()) && ok; } catch { ok = false; }   // 방전 기록도 함께
         btn.textContent = ok ? '✅' : '❌';
         setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 1500);
     });
@@ -4474,28 +4427,17 @@
     /* DISCHARGE-LOG-START */
     // ── 방전 로그(최근 30일) ──
     // 원본: 배터리 로그(어제+오늘, 10분 단위)에서 'FB_DISCHARGE_PCT% 이하 → OFF' 로 이어진 지점(방전) 또는 그렇게 지나친 것으로 보이는 지점(방전 추정)
-    // 저장: ① 이 PC(bb_discharge_local) — 배터리 로그는 하루가 지나면 초기화되지만 방전 기록은 30일 동안 남음
-    //       ② 서버 단일 파일(배터리_방전로그) — 방전이 '기록될 때만' 올림. 방전이 없으면 파일도, 업로드 요청도 없음
+    // 저장: 이 PC(bb_discharge_local)에만 — 배터리 로그는 하루가 지나면 초기화되지만 방전 기록은 30일 동안 남음 (서버 파일 업로드/다운로드는 없음)
     // 병합: 같은 기체의 90분 이내 기록은 같은 방전으로 보고 더 확실한 쪽(확정 > 추정, 정확한 시각 > 10분 슬롯 시각)을 채택
-    //       → 여러 PC 가 각자 감지해서 올려도 결과가 같고, 서버에 이미 있는 내용이면 업로드 자체를 건너뜀 (커밋이 몰리지 않음)
-    // 업로드 시점: 배터리 로그와 같은 슬롯(CYH = 정각 업로드 직후 / 그 외 = 매시 50분)에 얹음. 강제 업로드 버튼에도 포함
-    // 다운로드: 방전은 드물어서 30분마다 받지 않음 — 페이지를 연 직후 1회 + 6시간마다 + 목록 창을 열 때(캐시가 30분 넘었으면)
     // 공용 헬퍼 (원래 배달 로그 섹션에 있었지만 방전 로그 쪽도 그대로 가져다 씀 — 배달 로그를 지우면서 이 두 개만 여기로 옮김)
     function dvDayIdx(day) { return Math.floor(new Date(day + 'T00:00:00Z').getTime() / 86400000); }   // 'YYYY-MM-DD' → 1970-01-01 이후 며칠째 (날짜 비교·정리용)
     function dvSig(o) { const s = JSON.stringify(o); let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return s.length + ':' + h; }   // 객체 내용이 바뀌었는지만 보는 간단한 서명(체크섬)
 
-    const DC_LOG_NAME = '배터리_방전로그';
     const DC_RETENTION_DAYS = 30;
     const DC_LOCAL_KEY = 'bb_discharge_local';           // { days:{일자:{기체id:{name,ev:[{ts,bat,kind,exact}]}}}, up:{일자:마지막 업로드 서명} }
-    const DC_CACHE_KEY = 'bb_dischargelog_file_cache';   // { days:{...}, at:받아온 시각(ms) }
-    const DC_SEEN_KEY = 'bb_dc_file_seen';               // 서버 파일을 한 번이라도 확인/생성했는지 (처음 1회 예외 처리용)
-    const DC_POST_TRIES = 2;
     const DC_SAME_MS = 90 * 60000;                       // 같은 기체의 이 시간(분) 이내 기록은 같은 방전
     const DC_JUST_OFF_WINDOW_MS = 24 * 3600000;          // '방금 꺼져서 로그에 OFF 칸이 아직 없는' 경우는 마지막 기록이 이 시간 안일 때만 인정
-    const DC_BG_REFRESH_MS = 6 * 3600000;
-    const DC_OPEN_REFRESH_MS = 30 * 60000;
     const DC_RANK = { sure: 2, est: 1 };
-    let _dcUploading = false;
 
     function dcDayKey(ts) { return wblLocalDateStr(new Date(ts - WBL_DAY_START_H * 3600000)); }   // 배터리 로그의 하루(07:00~익일 07:00) 기준 날짜
     function dcCutoffIdx() { return dvDayIdx(wblGetDayKey() || wblTodayStr()) - (DC_RETENTION_DAYS - 1); }
@@ -4620,83 +4562,10 @@
         return changed;
     }
 
-    // 서버 파일 읽기. 실패하면 null — (빈 파일로 착각해서 서버 데이터를 덮어쓰는 사고 방지)
-    // 단, 서버에 파일이 아직 없는 '맨 처음'(방전이 한 번도 기록된 적 없음)에는 빈 파일로 취급 (404 이거나, 한 번도 확인한 적이 없을 때)
-    async function dcFetchFile() {
-        try {
-            const res = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent(DC_LOG_NAME)}`);
-            if (res.ok) {
-                const j = await res.json();
-                const f = (j && j.data && typeof j.data === 'object' && j.data.days) ? j.data : { days: {} };
-                if (j && j.data) { try { localStorage.setItem(DC_SEEN_KEY, '1'); } catch {} }
-                return f;
-            }
-            if (res.status === 404 || localStorage.getItem(DC_SEEN_KEY) !== '1') return { days: {} };
-            console.log('[BB] 방전 로그: 서버 조회 실패 (HTTP ' + res.status + ')');
-            return null;
-        } catch (e) { console.log('[BB] 방전 로그: 서버 조회 실패:', e.message); return null; }
-    }
-    function dcCachedFile() {
-        try { const c = JSON.parse(localStorage.getItem(DC_CACHE_KEY) || 'null'); if (c && c.days) return c; } catch {}
-        return { days: {}, at: 0 };
-    }
-    async function dcRefreshCache(minAgeMs) {   // 캐시가 minAgeMs 보다 오래됐을 때만 서버에서 다시 받음. 갱신했으면 true
-        if (Date.now() - dcCachedFile().at < minAgeMs) return false;
-        const f = await dcFetchFile();
-        if (!f) return false;
-        try { localStorage.setItem(DC_CACHE_KEY, JSON.stringify({ days: dcPrune(f.days || {}), at: Date.now() })); } catch {}
-        return true;
-    }
-    let _dcDlLast = 0;
-    async function dcDownloadTick() {   // 2분 갱신마다 불리지만 실제 요청은 페이지를 연 직후 1회 + 6시간마다
-        if (Date.now() - _dcDlLast < DC_BG_REFRESH_MS) return;
-        _dcDlLast = Date.now();
-        await dcRefreshCache(0);
-    }
-
-    // 업로드: 이 PC 에 '아직 안 올린' 방전이 있을 때만 → 서버 최신 파일을 읽어 병합 → 서버에 없는 내용이 있을 때만 올림. 실패하면 다시 읽어 병합해 1회 재시도.
-    async function dcUpload() {
-        if (_dcUploading) return true;
-        const loc = dcLoadLocal();
-        const dirty = Object.keys(loc.days).filter(d => Object.keys(loc.days[d]).length && loc.up[d] !== dvSig(loc.days[d]));
-        if (!dirty.length) return true;   // 방전 기록이 없거나 이미 올렸음 → 요청 자체를 안 보냄
-        const sent = {}; dirty.forEach(d => { sent[d] = dvSig(loc.days[d]); });   // 보낸 시점의 서명 (업로드 도중 값이 바뀌어도 다음에 다시 올라가도록)
-        _dcUploading = true;
-        const markSynced = file => {
-            const cur = dcLoadLocal(); dirty.forEach(d => { cur.up[d] = sent[d]; }); dcSaveLocal(cur);
-            try { localStorage.setItem(DC_SEEN_KEY, '1'); localStorage.setItem(DC_CACHE_KEY, JSON.stringify({ days: file.days, at: Date.now() })); } catch {}
-        };
-        try {
-            for (let attempt = 1; attempt <= DC_POST_TRIES; attempt++) {
-                const file = await dcFetchFile();
-                if (!file) return false;   // 서버 파일을 못 읽었으면 보류 (다음 슬롯에 다시)
-                if (!file.days) file.days = {};
-                const before = dvSig(dcPrune(file.days));
-                dirty.forEach(d => { file.days[d] = dcMergeDay(file.days[d] || {}, loc.days[d]); });
-                dcPrune(file.days);
-                if (dvSig(file.days) === before) { markSynced(file); return true; }   // 서버에 이미 같은 내용이 있음 (다른 PC 가 먼저 올림) → 올리지 않음
-                try {
-                    const res = await fetch(BACKUP_BASE, {
-                        method: 'POST', headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ name: DC_LOG_NAME, data: file }),
-                    });
-                    if (res.ok) {
-                        markSynced(file);
-                        console.log('[BB] 방전 로그 업로드 완료 (' + new Date().toTimeString().slice(0, 5) + ', ' + dirty.length + '일치)');
-                        return true;
-                    }
-                    console.log('[BB] 방전 로그 업로드 거절됨 (HTTP ' + res.status + ')' + (attempt < DC_POST_TRIES ? ' — 잠시 뒤 재시도' : ''));
-                } catch (e) { console.log('[BB] 방전 로그 업로드 실패:', e.message); }
-                if (attempt < DC_POST_TRIES) await new Promise(r => setTimeout(r, 2000 + Math.random() * 4000));
-            }
-            return false;
-        } finally { _dcUploading = false; }
-    }
-
-    // 화면용: 서버 캐시 + 이 PC 기록을 합쳐서(기체별로 90분 이내는 같은 방전) 최근 순으로
+    // 화면용: 이 PC 기록(최근 30일)을 기체별로 합쳐서(90분 이내는 같은 방전) 최근 순으로
     function dcBuildView() {
         const byRobot = new Map(), cutoff = dcCutoffIdx();
-        [dcCachedFile().days, dcLoadLocal().days].forEach(src => {
+        [dcLoadLocal().days].forEach(src => {
             Object.keys(src || {}).forEach(day => {
                 if (dvDayIdx(day) < cutoff) return;
                 Object.keys(src[day] || {}).forEach(id => {
@@ -4968,7 +4837,6 @@
     document.querySelectorAll('.bb-fb[data-mode]').forEach(btn => btn.addEventListener('click', () => {
         _fbMode = _fbMode === btn.dataset.mode ? null : btn.dataset.mode;   // 같은 버튼을 다시 누르면 닫힘
         refreshFixedTools();
-        if (_fbMode === 'dis') dcRefreshCache(DC_OPEN_REFRESH_MS).then(ok => { if (ok && _fbMode === 'dis') refreshFixedTools(); }).catch(() => {});   // 다른 PC 가 올린 방전 기록 반영 (30분 이내에 받았으면 요청 없음)
     }));
     document.getElementById('bb-fbp-x').addEventListener('click', () => { _fbMode = null; fbRender(); });
     document.getElementById('bb-fbp-body').addEventListener('click', e => {
@@ -8030,210 +7898,14 @@
 
 
     // ============================================================
-    // SECTION 20. 임무받기 현황 카드 (화면 좌상단) — 스테이 그린 1·2호기
-    //   · 데이터: 임무받기 감시 스크립트(Tampermonkey, NCC monitoring/27)가 '임무받기가 바뀔 때만' 올리는 JSON 파일 1개
-    //            (multimonitoring.vercel.app/api/battery?name=임무받기 현황 → GitHub 레포). 보드는 NCC 를 전혀 호출하지 않는다.
-    //   · 카드 내용: 임무받기 ON/OFF(항상) + 전원 켜짐/꺼짐 + (켜져 있으면) 배터리. 전원·배터리는 '마지막 업로드 시점' 값이다
-    //                (임무받기가 바뀔 때만 올라오므로 그 이후의 배터리 변화는 반영되지 않음 → 카드에 'HH:MM 기준'을 함께 표시)
-    //   · 조회: 보드가 열려 있고 탭이 보일 때만, 실제 요청은 5분에 1번 (1분마다 '요청이 필요한가'만 로컬에서 확인) — 아래 '요청 줄이기'를 거쳐서만 실제 요청이 나간다
-    //   · 요청 줄이기(불필요한 부담 방지):
-    //       ① 캐시(localStorage bb_mw_cache_v1): 4분 30초 안에 받은 값이 있으면 요청하지 않는다. 같은 PC 의 보드 탭이 여러 개여도 한 탭만 받고 나머지는 캐시를 쓴다
-    //       ② 한 번에 하나만 요청(진행 중이면 건너뜀) · 열기/탭 전환 때의 연속 호출도 ①에 걸려 요청되지 않음
-    //       ③ 조건부 요청(cache:'no-cache'): 브라우저가 ETag 검증을 붙여 보낸다 — 서버가 ETag/304 를 지원하면 본문 없이 끝난다 (지원 여부는 서버 쪽)
-    //       ④ 실패하면 1분 → 2분 → 4분 … 최대 10분까지 쉬었다가 재시도
-    //   · 보드를 열고 닫을 때 같이 보이고 숨겨진다 (openBoard / closeBoard 에서 window.__bbMw.show 호출)
+    // (SECTION 20 '임무받기 현황 카드' 삭제 — 서버 파일 '임무받기_현황' 조회·캐시·폴링 로직 전부 제거. 헤더의 알림 칩 영역 위치만 기존 그대로 유지)
     // ============================================================
     try {
-    {
-        const MW_TARGETS = ['스테이 그린 1호기', '스테이 그린 2호기'];
-        const MW_NAME = '임무받기_현황';
-        const MW_POLL_MS = 60 * 1000;            // 요청이 필요한지 로컬에서 확인하는 주기 (이 자체로는 요청을 보내지 않음)
-        const MW_MIN_GAP_MS = 270 * 1000;        // 실제 요청 최소 간격 ≈ 5분 (이 안에 받은 값이 캐시에 있으면 요청하지 않음)
-        const MW_CACHE_KEY = 'bb_mw_cache_v1';
-
-        // 위치: 보드(#bb) 헤더 좌상단 안쪽 (보드 밖으로 나가지 않음). 색은 보드 테마 변수(--sur/--bd/--tx/--mu)를 따라 라이트·다크 모두 맞음.
-        // 알림 칩 영역(.bb-alert-zone)은 카드 폭만큼 오른쪽으로 밀어 겹치지 않게 한다.
-        const mwStyle = document.createElement('style');
-        mwStyle.textContent = `
-            #bb .bb-alert-zone { left:256px; width:calc(50% - 375px - 242px); }
-            #bb-mw { display:none; position:absolute; left:14px; top:50%; transform:translateY(-50%); line-height:1.15; z-index:3; width:236px; box-sizing:border-box;
-                padding:4px 9px 3px; border-radius:12px; background:var(--sur,#f8f3e6); color:var(--tx,#2b2418);
-                border:2.5px solid var(--bd2,#b3a687); box-shadow:0 2px 8px rgba(60,45,20,.18); }
-            #bb-mw.mw-ok  { border-color:#3fae6a; }
-            #bb-mw.mw-off { border-color:#e0453a; animation:mwPulse 1.6s ease-in-out infinite; }
-            @keyframes mwPulse {
-                0%,100% { box-shadow:0 0 0 0 rgba(224,69,58,.45), 0 2px 8px rgba(60,45,20,.18); }
-                50%     { box-shadow:0 0 0 7px rgba(224,69,58,0), 0 2px 8px rgba(60,45,20,.18); }
-            }
-            #bb-mw .mw-row { display:grid; grid-template-columns:1fr auto; align-items:center; gap:0 6px; padding:1px 0; }
-            #bb-mw .mw-pills { display:flex; gap:3px; }
-            #bb-mw .mw-row + .mw-row { border-top:1px dashed var(--bd,#cabf9d); }
-            #bb-mw .mw-name { font-size:calc(13.5px * var(--bb-ts, 1)); white-space:nowrap; font-weight:700 !important; }
-            #bb-mw .mw-pill { text-align:center; padding:0 6px; border-radius:999px; font-size:calc(13px * var(--bb-ts, 1)); white-space:nowrap; line-height:18px; font-weight:700 !important;
-                background:var(--sur2,#efe6d2); color:var(--mu,#7a6f5c); }
-            #bb-mw .mw-pill.on  { background:#bfe8cb; color:#1d5a35; }    /* 파스텔 초록 = ON */
-            #bb-mw .mw-pill.off { background:#f4b8b3; color:#8a2a22; }    /* 파스텔 레드 = OFF */
-            #bb-mw .mw-pill.pwr { font-size:calc(12px * var(--bb-ts, 1)); line-height:16px; padding:0 5px; font-weight:500 !important; }   /* 전원 = 참고용 (작고 연하게) */
-            #bb-mw .mw-pill.pwr.on  { background:#e3f0e7; color:#5f8069; }
-            #bb-mw .mw-pill.pwr.off { background:#f3dedb; color:#a5645d; }
-            #bb-mw .mw-row.stale .mw-pill, #bb-mw .mw-row.stale .mw-name { opacity:.45; }
-            #bb-mw .mw-sub { grid-column:1 / 3; font-size:calc(13px * var(--bb-ts, 1)); line-height:13px; font-weight:600 !important; color:var(--tx,#2b2418); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-            #bb-mw .mw-row.stale .mw-sub { color:#c2410c; }
-                        #bb-mw .mw-foot { margin-top:1px; padding:2px 0 0; line-height:12px; border-top:1px dashed var(--bd,#cabf9d); font-size:calc(12px * var(--bb-ts, 1)); color:var(--mu,#7a6f5c); font-weight:500 !important; white-space:nowrap; }
-            #bb-mw .mw-foot.warn { color:#c2410c; font-weight:600 !important; }
-            #bb-mw .mw-live { display:inline-block; color:#3fae6a; animation:mwFlash 1.4s ease-out 1; }   /* 조회할 때마다 한 번 반짝 */
-            @keyframes mwFlash { 0% { opacity:.15; transform:scale(1.6); } 100% { opacity:1; transform:scale(1); } }
-        `;
-        document.head.appendChild(mwStyle);
-
-        const mwCard = document.createElement('div');
-        mwCard.id = 'bb-mw';
-        mwCard.title = '임무받기 · 스테이 그린 (감시 스크립트가 올린 값)';
-
-        const mwRows = MW_TARGETS.map((name) => {
-            const row = document.createElement('div'); row.className = 'mw-row';
-            const nm = document.createElement('div'); nm.className = 'mw-name'; nm.textContent = name;   // '스테이 그린 1호기' 전체 표기
-            const pill = document.createElement('div'); pill.className = 'mw-pill'; pill.textContent = '—';   // 임무
-            const ppill = document.createElement('div'); ppill.className = 'mw-pill pwr'; ppill.textContent = '—';   // 전원
-            const pills = document.createElement('div'); pills.className = 'mw-pills'; pills.append(pill, ppill);   // 임무가 핵심(앞·진하게), 전원은 참고용(뒤·연하게)
-            const sub = document.createElement('div'); sub.className = 'mw-sub';
-            row.append(nm, pills, sub);
-            mwCard.appendChild(row);
-            return { name, row, pill, ppill, sub };
-        });
-        const mwFoot = document.createElement('div');
-        mwFoot.className = 'mw-foot';
-        mwCard.appendChild(mwFoot);
-        (document.querySelector('#bb .bb-hd') || document.getElementById('bb') || document.body).appendChild(mwCard);
-
-        const mwP = (n) => String(n).padStart(2, '0');
-        const mwHM = (ms) => { const d = new Date(ms); return `${mwP(d.getHours())}:${mwP(d.getMinutes())}`; };
-        const mwMDHM = (ms) => { const d = new Date(ms); return `${mwP(d.getMonth() + 1)}/${mwP(d.getDate())} ${mwHM(ms)}`; };
-
-        let mwData = null, mwFetchedAt = 0, mwFail = false, mwBusy = false, mw404 = false;
-        let mwFailN = 0, mwNextAt = 0;
-
-        const mwCacheRead = () => {
-            try { const c = JSON.parse(localStorage.getItem(MW_CACHE_KEY) || 'null'); if (c && typeof c.at === 'number') return c; } catch (e) { /* 캐시 없음으로 처리 */ }
-            return null;
-        };
-        const mwCacheWrite = (c) => { try { localStorage.setItem(MW_CACHE_KEY, JSON.stringify(c)); } catch (e) { /* 저장 못 해도 동작에는 지장 없음 */ } };
-
-        // 받은 기록(캐시 형식 {at, body|missing})을 화면에 반영
-        function mwApply(rec) {
-            mwFetchedAt = rec.at;
-            if (rec.missing) { mwData = null; mw404 = true; }
-            else {
-                try {
-                    const j = JSON.parse(rec.body), d = j && j.data;
-                    if (d && d.robots && typeof d.robots === 'object') { mwData = d; mw404 = false; }
-                    else { mwData = null; mw404 = true; }   // 파일이 아직 없음 (감시 스크립트가 한 번도 올리지 않음)
-                } catch (e) { mwData = null; mw404 = true; }
-            }
-            mwDraw();
-        }
-
-        async function mwFetch(force) {
-            if (mwBusy) return;                                              // ② 진행 중이면 건너뜀
-            const now = Date.now();
-            if (!force) {
-                const c = mwCacheRead();
-                if (c && now - c.at < MW_MIN_GAP_MS) {                       // ① 방금(다른 탭 포함) 받은 값이 있음 → 요청하지 않고 캐시 사용
-                    if (c.at !== mwFetchedAt) mwApply(c);
-                    return;
-                }
-                if (now < mwNextAt) return;                                  // ④ 실패 뒤 쉬는 중
-            }
-            mwBusy = true;
-            try {
-                const res = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent(MW_NAME)}`, { cache: 'no-cache', priority: 'low' });   // ③ 조건부 요청(서버가 ETag 를 주면 304) · 낮은 우선순위로 다른 요청을 방해하지 않음
-                let rec;
-                if (res.status === 404) rec = { at: Date.now(), missing: true };
-                else if (!res.ok) throw new Error('HTTP ' + res.status);
-                else rec = { at: Date.now(), body: await res.text() };
-                mwFail = false; mwFailN = 0; mwNextAt = 0;
-                mwCacheWrite(rec);
-                mwApply(rec);
-            } catch (e) {
-                mwFail = true; mwFailN++;
-                mwNextAt = Date.now() + Math.min(60000 * Math.pow(2, mwFailN - 1), 10 * 60000);   // 1분, 2분, 4분 … 최대 10분
-                console.warn('[BB] 임무받기 조회 실패:', e && e.message, '— ' + Math.round((mwNextAt - Date.now()) / 60000) + '분 뒤 재시도');
-                mwDraw();
-            } finally { mwBusy = false; }
-        }
-
-        function mwDraw() {
-            const now = Date.now();
-            const robots = mwData && mwData.robots;
-            const hbStale = !!(mwData && mwData.hb > 0 && now - (mwData.updatedAt || 0) > mwData.hb * 2.5 * 60000);
-            let anyOff = false, anyBad = false;
-
-            mwRows.forEach(({ name, row, pill, ppill, sub }) => {
-                const s = robots && robots[name];
-                if (!s || typeof s.on !== 'boolean') {
-                    pill.textContent = '—'; pill.className = 'mw-pill';
-                    sub.textContent = mwFail && !mwData ? '불러오지 못함' : mw404 ? '데이터 없음 (감시 스크립트 확인)' : '불러오는 중…';
-                    ppill.textContent = '—'; ppill.className = 'mw-pill pwr';
-                    row.classList.add('stale');
-                    anyBad = true;
-                    return;
-                }
-                pill.textContent = s.on ? '임무 ON' : '임무 OFF';
-                pill.className = 'mw-pill ' + (s.on ? 'on' : 'off');
-                if (s.power === true || s.power === false) { ppill.textContent = s.power ? '전원 ON' : '전원 OFF'; ppill.className = 'mw-pill pwr ' + (s.power ? 'on' : 'off'); }
-                else { ppill.textContent = '전원 ?'; ppill.className = 'mw-pill pwr'; }
-                row.classList.toggle('stale', hbStale);
-                if (hbStale) anyBad = true; else if (!s.on) anyOff = true;
-
-                // '언제부터 ON/OFF 인지' = 마지막으로 임무받기가 바뀐 시각 (+ 전원 켜짐/꺼짐, 업로드 시점 값)
-                let txt;
-                if (s.since) {
-                    if (s.source === 'initial') txt = '임무 ' + mwMDHM(s.since) + '~ (최초 관측)';
-                    else txt = '임무 ' + mwMDHM(s.since) + ((s.source === 'external' || s.source === 'gap') ? ' 경' : '') + '부터';
-                } else txt = '임무 변경 시각 미상';
-                if (hbStale) txt += ' ⚠';
-                sub.textContent = txt;
-                sub.title = (s.since ? mwMDHM(s.since) + (s.on ? ' 부터 ON' : ' 부터 OFF') + (s.source === 'external' || s.source === 'gap' ? ' (정확한 시각 아님 · 다른 사용자/감시 공백)' : '') : '') + (s.powerSince ? ' · 전원 ' + (s.power ? '켜짐' : '꺼짐') + ' ' + mwMDHM(s.powerSince) + '부터' : '') + (mwData.updatedAt ? ' · 업로드 ' + mwMDHM(mwData.updatedAt) : '');
-            });
-
-            // 맨 아래 줄: 보드가 서버를 마지막으로 점검한 시각 (5분마다 갱신 → '실시간 점검 중' 표시). 임무가 바뀐 시각과는 별개.
-            const mwHMS = (ms) => { const d = new Date(ms); return mwP(d.getHours()) + ':' + mwP(d.getMinutes()) + ':' + mwP(d.getSeconds()); };
-            mwFoot.textContent = '';
-            if (mwFail) mwFoot.textContent = '⚠ 조회 실패' + (mwFetchedAt ? ' (마지막 성공 ' + mwHMS(mwFetchedAt) + ')' : '');
-            else if (mwFetchedAt) { const dot = document.createElement('span'); dot.className = 'mw-live'; dot.textContent = '●'; mwFoot.append(dot, ' 점검 ' + mwHMS(mwFetchedAt) + ' · 5분마다'); }
-            mwFoot.title = '이 보드가 서버의 임무받기 기록을 마지막으로 확인한 시각 (임무가 바뀐 시각 아님)';
-            mwFoot.classList.toggle('warn', mwFail);
-
-            // 카드 테두리: 데이터 없음/감시 끊김 = 회색, 임무받기 OFF 가 하나라도 있으면 빨강(깜빡임), 전부 ON 이면 초록
-            mwCard.classList.toggle('mw-off', !anyBad && anyOff);
-            mwCard.classList.toggle('mw-ok', !anyBad && !anyOff);
-        }
-
-        // 보드가 열려 있고 탭이 보일 때만 1분마다 확인 (실제 요청은 mwFetch 의 캐시 간격(5분)/백오프가 결정 — 탭이 가려졌다 보이면 1분 안에 따라잡음)
-        setInterval(() => { if (isOpen && !document.hidden) mwFetch(false); }, MW_POLL_MS);
-        document.addEventListener('visibilitychange', () => { if (!document.hidden && isOpen) mwFetch(false); });
-        window.addEventListener('storage', (e) => {   // 다른 보드 탭이 새로 받은 값을 요청 없이 그대로 반영
-            if (e.key !== MW_CACHE_KEY) return;
-            const c = mwCacheRead();
-            if (c && c.at !== mwFetchedAt) mwApply(c);
-        });
-
-        window.__bbMw = {
-            show(v) {
-                mwCard.style.display = v ? 'block' : 'none';
-                if (v) {
-                    const c = mwCacheRead();
-                    if (c && c.at !== mwFetchedAt) mwApply(c); else mwDraw();   // 캐시가 있으면 즉시 표시
-                    mwFetch(false);
-                }
-            },
-            draw: mwDraw,
-            fetch: mwFetch,   // __bbMw.fetch(true) = 캐시/쉬는 시간 무시하고 지금 받기
-        };
-        window.__bbMw.show(isOpen);
-        console.log('[BB] 임무받기 카드 켜짐 (SECTION 20)');
-    }
-    } catch (e) { console.warn('[BB] 임무받기 카드 초기화 실패 — 기존 기능에는 영향 없음:', e && e.message); }
+        const st = document.createElement('style');
+        st.textContent = '#bb .bb-alert-zone { left:256px; width:calc(50% - 375px - 242px); }';
+        document.head.appendChild(st);
+        try { localStorage.removeItem('bb_mw_cache_v1'); } catch (e) { /* 무시 */ }
+    } catch (e) { /* 무시 */ }
 
     render();
     if (_trimNotice) {
@@ -8722,7 +8394,6 @@
         } catch (e) { /* 무시 */ }
 
         // 아산 스테이그린 임무받기 카드 제거 (admin 전용)
-        try { const mw = $('bb-mw'); if (mw) mw.remove(); } catch (e) { /* 무시 */ }
 
         // 화면 높이에 맞춰 보드 높이를 줄여 위/아래가 잘리지 않게 함 (최대 1300, 줌 반영)
         function fitHeight() {
