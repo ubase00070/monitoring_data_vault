@@ -8047,6 +8047,12 @@
         const earlyFree = s => !!(s && s.p && s.p.start === 420 && s.p.end === 960 && ![420, 480, 540].some(H => s.mons.includes(H)));
         /* [선호] 07~16시·08~17시 근무자는 퇴근 1시간 전(15~16시 · 16~17시)의 과학관 1시간 업무를 가급적 피함 */
         const lastHrSci = (p, u) => !!(u.sci && p && (p.start === 420 || p.start === 480) && p.end === u.slot + 60);
+        /* [선호] 14-23·15-24 근무자('오후조'): 오후→야간으로 갈수록 업무를 더 맡고, 20:30 이후 업무는 가능하면 먼저 맡는다 (18시 이후 출근하는 야간조는 다중 월간 개수가 많아 일일 업무라도 덜 배정). 강제는 아님 */
+        const isPm = p => !!p && (p.start === 840 || p.start === 900);
+        const EVE_FROM = 20 * 60 + 30;   // 20:30 요기요 영업종료부터 = 오후조 우선 구간
+        const pmRamp = s => s <= 900 ? 0 : Math.min(1, (s - 900) / (EVE_FROM - 900));   // 15:00 = 0 → 20:30 = 1 (직선으로 상승)
+        const firstHrSci = (p, u) => !!(u.sci && isPm(p) && p.start === u.slot);   // 출근하자마자(14시·15시) 맡는 과학관 — 가급적 자제
+        const canPm = (p, u) => isPm(p) && p.start <= u.s && p.end >= u.e && !(p.brk && ov(u.s, u.e, p.brk[0], p.brk[1]));
         function assign(variant, d, M, rng, optIn) {
           const opt = Object.assign({}, DEFAULTS, optIn || {});
           const LV = opt.live || null, ex = new Set(LV ? LV.exclude || [] : []);
@@ -8116,6 +8122,7 @@
                   return true;
                 });
                 if (!c.length) continue;
+                if (nv && u.s >= EVE_FROM) { const pc = c.filter(isPm); if (pc.length) c = pc; }   // 20:30 이후 업무는 배정 가능하면 14-23·15-24 근무자가 먼저 — 못 맡는 업무만 기존 방식
                 if (nv && isHubU(u)) { const pc = c.filter(p => earlyFree(S[p.name])); if (pc.length) c = pc; }   // 07~16시 근무자 중 07·08·09시 다중이 없는 사람 우선
                 if (nv && u.sci) { const pc = c.filter(p => !S[p.name].mons.length); if (pc.length) c = pc; }   // 과학관은 다중이 없는 사람에게 먼저 — 그 사람들로 안 되는 시간대(휴게·근무시간·1일 1회)만 다중 있는 사람에게
                 const od = orderFor(u.s);
@@ -8123,7 +8130,7 @@
                   const s = S[p.name]; if (u.sci) return 0;
                   return (s.mons.some(H => ov(H - 10, H + 50, u.s - GAP, u.e + GAP)) || s.tasks.some(([a, b]) => ov(a, b, u.s - GAP, u.e + GAP))) ? 1 : 0;
                 };
-                const sc = p => (cm ? S[p.name].mons.length + 0.5 * S[p.name].Ct : S[p.name].W + opt.cw * S[p.name].Ct) + opt.gp * od.indexOf(p.g) + 0.25 * pen(p) + (lastHrSci(p, u) ? 0.8 : 0) + (!cm && opt.sciPen && u.sci && S[p.name].mons.length > 0 ? opt.sciPen : 0) + (!cm && (opt.tMid || opt.tLate) ? tendency(p, u, opt.tMid || 0, opt.tLate || 0) : 0);
+                const sc = p => (cm ? S[p.name].mons.length + 0.5 * S[p.name].Ct : S[p.name].W + opt.cw * S[p.name].Ct) + opt.gp * od.indexOf(p.g) + 0.25 * pen(p) + (lastHrSci(p, u) ? 0.8 : 0) + (firstHrSci(p, u) ? 0.8 : 0) - (nv && !cm && isPm(p) ? PM_RAMP_A * pmRamp(u.s) : 0) + (!cm && opt.sciPen && u.sci && S[p.name].mons.length > 0 ? opt.sciPen : 0) + (!cm && (opt.tMid || opt.tLate) ? tendency(p, u, opt.tMid || 0, opt.tLate || 0) : 0);
                 const m = Math.min(...c.map(sc)), pool = c.filter(p => sc(p) < m + 1e-9);
                 chosen = pool[Math.floor(rng() * pool.length)]; tierUsed = tier; break;
               }
@@ -8209,6 +8216,7 @@
           let match = 0; for (let ui = 0; ui < U.length; ui++) if (aug(ui, {})) match++;
           return (ctx._sciFloor = U.length - match);
         }
+        const PM_RAMP_A = 0.5, PM_RAMP_W = 2, EVE_PM_W = 20;   // 오후조 시간 경사(배정 시 W 단위 0.5 · 점수 2점) / 20:30 이후 업무를 야간조가 맡으면 건당 20점 (균형 항목보다 크고 상한 위반 40·100·1000 보다는 작음)
         const EARLY_SCI09_BONUS = 6;   // 09:00 과학관을 07·08시 출근자가 맡으면 점수에서 이만큼 뺌(작은 선호) — 위반(1000)·균형(수~수십)보다 훨씬 작아 강제력은 없음
         const LIVE_LOCK_BEFORE = 9 * 60;   // 이 시각(분) 전에 시작하는 업무는 live 재배정에서 고정
         function liveCtx(P, d, excl) {
@@ -8280,8 +8288,11 @@
           const UU = buildUnits(d, true, false, ctx.tasks), monSet = new Set(Object.values(ctx.main)), lastHr = UU.filter(u => u.sci && lastHrSci(BYNAME[X[u.rows[0]]], u)).length, sciMon = UU.filter(u => u.sci && X[u.rows[0]] && monSet.has(X[u.rows[0]])).length;   // sciMon: 다중이 있는 사람이 받은 과학관 칸 수   // 퇴근 1시간 전 과학관(07~16·08~17시 근무자) 건수
           const sciMin = sciFloor(ctx, d), sciEx = Math.max(0, sciMon - sciMin);   // sciMin: 다중 없는 사람이 맡을 수 있는 만큼 다 맡았을 때 다중 보유자가 어쩔 수 없이 받아야 하는 과학관 칸 수 / sciEx: 그보다 더 받은 칸(= 우선배정을 어긴 칸)
           const early09 = UU.filter(u => u.sci && u.slot === 540 && X[u.rows[0]] && ((q) => !!q && (q.start === 420 || q.start === 480))(BYNAME[X[u.rows[0]]])).length;   // 09:00 과학관을 07·08시 출근자가 받은 칸 수 — 09시 출근자가 오기 전에 이미 준비되는 업무라 '가능하면' 먼저 출근한 사람이 맡도록 (강제 아님, 보너스 EARLY_SCI09_BONUS 점)
-          const score = m.prob * 1000 + m.overW * 100 + m.n4 * 40 + sd * 10 + low * 4 + high * 1.2 + chains * 3 + m.std * 5 + night * 2 + changes * 1 + lastHr * 5 + sciMon * 5 + sciEx * SCI_PRIO_W - early09 * EARLY_SCI09_BONUS;
-          return { score, lastHr, sciMon, sciMin, sciEx, early09, m, per, sd, mn: cs.length ? Math.min(...cs) : 0, mx: cs.length ? Math.max(...cs) : 0, nDay: cs.length, low, high, chains, night, maxW: Math.max(0, ...per.map(p => p.w)), changes };
+          const eveU = UU.filter(u => u.s >= EVE_FROM && !ctx.tasks[u.rows[0]].fixed), asg = u => BYNAME[X[u.rows[0]]];
+          const eveFeas = eveU.filter(u => ctx.people.some(q => canPm(q, u))), eveNon = eveFeas.filter(u => asg(u) && !isPm(asg(u))).length, pmN = eveU.filter(u => isPm(asg(u))).length;   // 오후조가 맡을 수 있는데 야간조가 맡은 20:30 이후 업무 수
+          const pmRampSum = UU.filter(u => u.s > 900 && u.s < EVE_FROM && !ctx.tasks[u.rows[0]].fixed && isPm(asg(u))).reduce((a, u) => a + pmRamp(u.s), 0), firstHr = UU.filter(u => firstHrSci(asg(u), u)).length;
+          const score = m.prob * 1000 + m.overW * 100 + m.n4 * 40 + sd * 10 + low * 4 + high * 1.2 + chains * 3 + m.std * 5 + night * 2 + changes * 1 + lastHr * 5 + sciMon * 5 + sciEx * SCI_PRIO_W - early09 * EARLY_SCI09_BONUS + firstHr * 5 + eveNon * EVE_PM_W - pmRampSum * PM_RAMP_W;
+          return { score, lastHr, firstHr, eveNon, eveN: eveU.length, pmN, pmRampSum, sciMon, sciMin, sciEx, early09, m, per, sd, mn: cs.length ? Math.min(...cs) : 0, mx: cs.length ? Math.max(...cs) : 0, nDay: cs.length, low, high, chains, night, maxW: Math.max(0, ...per.map(p => p.w)), changes };
         }
         /* 한 칸씩 담당자를 바꿔 보며 점수가 좋아지면 채택(언덕 오르기) — 바뀐 칸 수에도 점수를 매기므로 '꼭 필요한 수정'만 남는다 */
         function liveClimber(ctx, d, X0, A) {
