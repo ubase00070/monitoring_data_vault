@@ -10565,6 +10565,7 @@
         const eveFromOf = (UU, fixedOf) => { const L = UU.filter(u => u.s >= 1080 && !fixedOf(u)).map(u => u.s).sort((a, b) => a - b); return L.length ? L[Math.max(0, L.length - 4)] : EVE_FROM0; };   // 하루의 마지막 4건 업무가 시작되는 시각 (평일 20:30 · 주말 18:40 수원 힐스테이트 푸르지오 OFF)
         const pmRamp = (s, ef) => s <= 900 ? 0 : Math.min(1, (s - 900) / Math.max(60, ef - 900));   // 15:00 = 0 → 마지막 4건 시작 시각 = 1 (직선으로 상승)
         const firstHrSci = (p, u) => !!(u.sci && isPm(p) && p.start === u.slot);   // 출근하자마자(14시·15시) 맡는 과학관 — 가급적 자제
+        const firstTask10 = (p, u) => !!p && p.start === 600 && u.s === p.start;   // [선호] 10시 출근자(10-19)가 출근 시각 정각에 시작하는 업무를 맡는 것 — 가급적 피함 (예: 10:00 무선충전 확인)
         const canPm = (p, u) => isPm(p) && p.start <= u.s && p.end >= u.e && !(p.brk && ov(u.s, u.e, p.brk[0], p.brk[1]));
         function assign(variant, d, M, rng, optIn) {
           const opt = Object.assign({}, DEFAULTS, optIn || {});
@@ -10644,7 +10645,7 @@
                   const s = S[p.name]; if (u.sci) return 0;
                   return (s.mons.some(H => ov(H - 10, H + 50, u.s - GAP, u.e + GAP)) || s.tasks.some(([a, b]) => ov(a, b, u.s - GAP, u.e + GAP))) ? 1 : 0;
                 };
-                const sc = p => (cm ? S[p.name].mons.length + 0.5 * S[p.name].Ct : S[p.name].W + opt.cw * S[p.name].Ct) + opt.gp * od.indexOf(p.g) + 0.25 * pen(p) + (lastHrSci(p, u) ? 0.8 : 0) + (firstHrSci(p, u) ? 0.8 : 0) - (nv && !cm && isPm(p) ? PM_RAMP_A * pmRamp(u.s, eveF) : 0) + (!cm && opt.sciPen && u.sci && S[p.name].mons.length > 0 ? opt.sciPen : 0) + (!cm && (opt.tMid || opt.tLate) ? tendency(p, u, opt.tMid || 0, opt.tLate || 0) : 0);
+                const sc = p => (cm ? S[p.name].mons.length + 0.5 * S[p.name].Ct : S[p.name].W + opt.cw * S[p.name].Ct) + opt.gp * od.indexOf(p.g) + 0.25 * pen(p) + (lastHrSci(p, u) ? 0.8 : 0) + (firstHrSci(p, u) ? 0.8 : 0) + (firstTask10(p, u) ? 0.8 : 0) - (nv && !cm && isPm(p) ? PM_RAMP_A * pmRamp(u.s, eveF) : 0) + (!cm && opt.sciPen && u.sci && S[p.name].mons.length > 0 ? opt.sciPen : 0) + (!cm && (opt.tMid || opt.tLate) ? tendency(p, u, opt.tMid || 0, opt.tLate || 0) : 0);
                 const m = Math.min(...c.map(sc)), pool = c.filter(p => sc(p) < m + 1e-9);
                 chosen = pool[Math.floor(rng() * pool.length)]; tierUsed = tier; break;
               }
@@ -10730,6 +10731,7 @@
           let match = 0; for (let ui = 0; ui < U.length; ui++) if (aug(ui, {})) match++;
           return (ctx._sciFloor = U.length - match);
         }
+        const ADJ_W = 8;   // 한 사람의 업무 두 개가 10분 안에 붙어 있으면 쌍당 8점 (가벼운 선호 — 균형 항목과 비슷한 크기, 규칙 위반·상한(40·100·1000)보다는 훨씬 작음)
         const PM_RAMP_A = 0.5, PM_RAMP_W = 2, EVE_PM_W = 20;   // 오후조 시간 경사(배정 시 W 단위 0.5 · 점수 2점) / 20:30 이후 업무를 야간조가 맡으면 건당 20점 (균형 항목보다 크고 상한 위반 40·100·1000 보다는 작음)
         const EARLY_SCI09_BONUS = 6;   // 09:00 과학관을 07·08시 출근자가 맡으면 점수에서 이만큼 뺌(작은 선호) — 위반(1000)·균형(수~수십)보다 훨씬 작아 강제력은 없음
         const LIVE_LOCK_BEFORE = 9 * 60;   // 이 시각(분) 전에 시작하는 업무는 live 재배정에서 고정
@@ -10787,26 +10789,26 @@
           U.forEach(u => { const n = X[u.rows[0]]; if (!n) return; const l = ctx.tasks[u.rows[u.rows.length - 1]]; const ec = u.rows.length > 1 ? Math.min(u.cnt, u.rows.filter(rr => X[rr] === n).length) : u.cnt; (by[n] = by[n] || []).push({ s: ctx.tasks[u.rows[0]].s, e: Math.max(l.e, l.s + 10), w: u.w, c: ec });
             u.rows.slice(1).forEach(rr => { const n2 = X[rr]; if (n2 && n2 !== n) { const t2 = ctx.tasks[rr]; (by[n2] = by[n2] || []).push({ s: t2.s, e: Math.max(t2.e, t2.s + 10), w: 0, c: 1 }); } }); });
           return ctx.people.map(p => {
-            const l = (by[p.name] || []).sort((a, b) => a.s - b.s); let run = l.length ? 1 : 0, best = run;
-            for (let i = 1; i < l.length; i++) { if (l[i].s - l[i - 1].e <= 30) { run++; best = Math.max(best, run); } else run = 1; }
+            const l = (by[p.name] || []).sort((a, b) => a.s - b.s); let run = l.length ? 1 : 0, best = run, adj = 0;
+            for (let i = 1; i < l.length; i++) { if (l[i].s - l[i - 1].e <= 30) { run++; best = Math.max(best, run); } else run = 1; if (l[i].s - l[i - 1].e <= 10) adj++; }   // adj: 앞 업무가 끝난 지 10분도 안 돼 바로 이어지는 업무 쌍 (붙어 있는 업무)
             const own = l.reduce((a, b) => a + b.w, 0), t = l.reduce((a, b) => a + b.c, 0), m = mons[p.name] || 0;
-            return { n: p.name, g: p.g, m, t, own, w: own + m, chain: best };
+            return { n: p.name, g: p.g, m, t, own, w: own + m, chain: best, adj };
           });
         }
         /* 배정안 점수(작을수록 좋음): ① 규칙 위반·2.0 초과·다중 포함 4개 이상(가장 크게) ② 낮·저녁조 건수 편차 · 1건 이하 · 3건 이상 · 3건 연속 · 가중치 편차 · 야간조 업무 ③ 바뀐 칸 수(아주 약하게) */
         function liveScore(ctx, d, X, A) {
           const m = liveMetrics(ctx, d, X), per = liveStats(ctx, d, X), day = per.filter(p => p.g <= 2), cs = day.map(p => p.t + p.m);
           const mean = cs.reduce((a, b) => a + b, 0) / (cs.length || 1), sd = Math.sqrt(cs.reduce((a, b) => a + (b - mean) * (b - mean), 0) / (cs.length || 1));
-          const low = cs.filter(c => c <= 1).length, high = cs.filter(c => c >= 3).length, chains = per.filter(p => p.chain >= 3).length, night = per.filter(p => p.g === 3).reduce((a, p) => a + p.t, 0);
+          const low = cs.filter(c => c <= 1).length, high = cs.filter(c => c >= 3).length, chains = per.filter(p => p.chain >= 3).length, night = per.filter(p => p.g === 3).reduce((a, p) => a + p.t, 0), adjN = per.reduce((a, p) => a + (p.adj || 0), 0);
           const changes = X.filter((n, i) => (n || null) !== (A[i] || null)).length;
           const UU = buildUnits(d, true, false, ctx.tasks), monSet = new Set(Object.values(ctx.main)), lastHr = UU.filter(u => u.sci && lastHrSci(BYNAME[X[u.rows[0]]], u)).length, sciMon = UU.filter(u => u.sci && X[u.rows[0]] && monSet.has(X[u.rows[0]])).length;   // sciMon: 다중이 있는 사람이 받은 과학관 칸 수   // 퇴근 1시간 전 과학관(07~16·08~17시 근무자) 건수
           const sciMin = sciFloor(ctx, d), sciEx = Math.max(0, sciMon - sciMin);   // sciMin: 다중 없는 사람이 맡을 수 있는 만큼 다 맡았을 때 다중 보유자가 어쩔 수 없이 받아야 하는 과학관 칸 수 / sciEx: 그보다 더 받은 칸(= 우선배정을 어긴 칸)
           const early09 = UU.filter(u => u.sci && u.slot === 540 && X[u.rows[0]] && ((q) => !!q && (q.start === 420 || q.start === 480))(BYNAME[X[u.rows[0]]])).length;   // 09:00 과학관을 07·08시 출근자가 받은 칸 수 — 09시 출근자가 오기 전에 이미 준비되는 업무라 '가능하면' 먼저 출근한 사람이 맡도록 (강제 아님, 보너스 EARLY_SCI09_BONUS 점)
           const ef = eveFromOf(UU, u => !!ctx.tasks[u.rows[0]].fixed), eveU = UU.filter(u => u.s >= ef && !ctx.tasks[u.rows[0]].fixed), asg = u => BYNAME[X[u.rows[0]]];
           const eveFeas = eveU.filter(u => ctx.people.some(q => canPm(q, u))), eveNon = eveFeas.filter(u => asg(u) && !isPm(asg(u))).length, pmN = eveU.filter(u => isPm(asg(u))).length;   // 오후조가 맡을 수 있는데 야간조가 맡은 20:30 이후 업무 수
-          const pmRampSum = UU.filter(u => u.s > 900 && u.s < ef && !ctx.tasks[u.rows[0]].fixed && isPm(asg(u))).reduce((a, u) => a + pmRamp(u.s, ef), 0), firstHr = UU.filter(u => firstHrSci(asg(u), u)).length;
-          const score = m.prob * 1000 + m.overW * 100 + m.n4 * 40 + sd * 10 + low * 4 + high * 1.2 + chains * 3 + m.std * 5 + night * 2 + changes * 1 + lastHr * 5 + sciMon * 5 + sciEx * SCI_PRIO_W - early09 * EARLY_SCI09_BONUS + firstHr * 5 + eveNon * EVE_PM_W - pmRampSum * PM_RAMP_W;
-          return { score, lastHr, firstHr, eveNon, eveN: eveU.length, pmN, pmRampSum, sciMon, sciMin, sciEx, early09, m, per, sd, mn: cs.length ? Math.min(...cs) : 0, mx: cs.length ? Math.max(...cs) : 0, nDay: cs.length, low, high, chains, night, maxW: Math.max(0, ...per.map(p => p.w)), changes };
+          const pmRampSum = UU.filter(u => u.s > 900 && u.s < ef && !ctx.tasks[u.rows[0]].fixed && isPm(asg(u))).reduce((a, u) => a + pmRamp(u.s, ef), 0), firstHr = UU.filter(u => firstHrSci(asg(u), u)).length, first10 = UU.filter(u => firstTask10(asg(u), u)).length;
+          const score = m.prob * 1000 + m.overW * 100 + m.n4 * 40 + sd * 10 + low * 4 + high * 1.2 + chains * 3 + m.std * 5 + night * 2 + changes * 1 + lastHr * 5 + sciMon * 5 + sciEx * SCI_PRIO_W - early09 * EARLY_SCI09_BONUS + firstHr * 5 + first10 * 5 + adjN * ADJ_W + eveNon * EVE_PM_W - pmRampSum * PM_RAMP_W;
+          return { score, adjN, lastHr, firstHr, first10, eveNon, eveN: eveU.length, pmN, pmRampSum, sciMon, sciMin, sciEx, early09, m, per, sd, mn: cs.length ? Math.min(...cs) : 0, mx: cs.length ? Math.max(...cs) : 0, nDay: cs.length, low, high, chains, night, maxW: Math.max(0, ...per.map(p => p.w)), changes };
         }
         /* 한 칸씩 담당자를 바꿔 보며 점수가 좋아지면 채택(언덕 오르기) — 바뀐 칸 수에도 점수를 매기므로 '꼭 필요한 수정'만 남는다 */
         function liveClimber(ctx, d, X0, A) {
@@ -10958,7 +10960,7 @@
             if (SIM.rosterSrc() !== 'file') warns.push('월별 근무표 파일을 받지 못해 내장 10월 표의 근무시간으로 계산'); if (ctx.unknown.length) warns.push('근무표에 없는 이름: ' + esc(ctx.unknown.join(', ')));
             const meta = '<div class="meta sum">' + (cfg.tries ? '✅ <b>최적안</b> (' + cfg.tries.toLocaleString() + '가지 중)' : '시뮬레이션') + ' · ' + pad(at.getHours()) + ':' + pad(at.getMinutes()) + ' 계산 · 바뀐 칸 <b>' + chg + '</b> · 규칙 문제 칸 ' + mA.prob + ' → <b>' + mB.prob + '</b><br>' +
                 '가중치 2.0 ' + (sB.m.overW === 0 ? '모두 지킴(최대 ' + sB.maxW.toFixed(1) + ')' : '<span class="warn">' + sB.m.overW + '명 초과(최대 ' + sB.maxW.toFixed(1) + ')</span>') + ' · 업무+다중 ' + sB.mn + '~' + sB.mx + '건 (1건 이하 ' + sB.low + '명, 3건 이상 ' + sB.high + '명) · 연속 3건 ' + (sB.chains ? '<span class="warn">' + sB.chains + '명</span>' : '없음') +
-                (sB.eveN ? '<br>🌆 20:30 이후 ' + sB.eveN + '건: 오후조(14-23·15-24) <b>' + sB.pmN + '</b>건' + (sB.eveNon ? ' <span class="warn">⚠ 오후조가 맡을 수 있는 ' + sB.eveNon + '건을 야간조가 맡음</span>' : ' ✔') : '') + (sB.firstHr ? '<br>⚠ 출근 직후 과학관 ' + sB.firstHr + '건 (오후조)' : '') +
+                (sB.eveN ? '<br>🌆 20:30 이후 ' + sB.eveN + '건: 오후조(14-23·15-24) <b>' + sB.pmN + '</b>건' + (sB.eveNon ? ' <span class="warn">⚠ 오후조가 맡을 수 있는 ' + sB.eveNon + '건을 야간조가 맡음</span>' : ' ✔') : '') + (sB.firstHr ? '<br>⚠ 출근 직후 과학관 ' + sB.firstHr + '건 (오후조)' : '') + (sB.first10 ? '<br>⚠ 10시 출근자가 10:00 업무를 맡음 ' + sB.first10 + '건' : '') + (sB.adjN ? '<br>⚠ 한 사람에게 10분 안에 붙은 업무 ' + sB.adjN + '쌍' : '') +
                 '<br>🔬 과학관 다중 無 우선: 다중 보유자 ' + R.sA.sciMon + ' → <b>' + sB.sciMon + '</b>칸 (최소 ' + sB.sciMin + '칸)' + (sB.sciEx ? ' <span class="warn">⚠ ' + sB.sciEx + '칸 더 줄일 수 있음</span>' : ' ✔') + (ctx.lock && ctx.lock.size ? '<br>🔒 09시 이전 업무 ' + ctx.lock.size + '건은 07시 배정 그대로 고정' : '') + (warns.length ? '<br><span class="warn">' + warns.join(' · ') + '</span>' : '') + '</div>';
             const mons = Object.keys(P.main).map(Number).sort((a, b) => a - b);
             const c1 = '<div class="col c1"><div class="gh"><span>시각</span><span>다중</span><span>서브</span></div>' + mons.map(t => '<div class="gr"><span class="tm">' + SIM.fmt(t) + '</span><span>' + simNm(P.main[t]) + '</span><span>' + (P.sub[t] ? simNm(P.sub[t]) : '<span class="em">–</span>') + '</span></div>').join('') + '</div>';
