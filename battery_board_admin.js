@@ -10812,6 +10812,25 @@
         function liveClimber(ctx, d, X0, A) {
           const U = buildUnits(d, true, false, ctx.tasks).filter(u => !ctx.tasks[u.rows[0]].fixed && !(ctx.lock && ctx.lock.has(u.rows[0])));
           let X = X0.slice(), cur = liveScore(ctx, d, X, A).score, ui = 0, idle = 0, evals = 0, done = !U.length, swap = false, si = 0, sj = 1;
+          const ef = eveFromOf(buildUnits(d, true, false, ctx.tasks), u => !!ctx.tasks[u.rows[0]].fixed), EV = U.filter(u => u.s >= ef);
+          /* 3) 연쇄 이동: 마지막 4건 중 야간조가 맡은 업무를 오후조에게 주고, 그 오후조가 이미 맡은 다른 업무 하나를 제3자에게 넘김
+                (오후조는 이미 3건이라 한 칸만 바꾸면 '다중 포함 4건' 에 걸려서 한 칸씩 바꾸는 탐색으로는 못 찾음) */
+          const chain = () => {
+            let bestZ = null, bs = cur - 1e-9;
+            for (const u of EV) {
+              if (isPm(BYNAME[X[u.rows[0]]])) continue;
+              for (const p of ctx.people) {
+                if (!isPm(p)) continue;
+                const Y = X.slice(); u.rows.forEach(r => { Y[r] = p.name; });
+                for (const v of U) {
+                  if (v === u || X[v.rows[0]] !== p.name) continue;
+                  for (const q of ctx.people) { if (q.name === p.name) continue; const Z = Y.slice(); v.rows.forEach(r => { Z[r] = q.name; }); const sc = liveScore(ctx, d, Z, A).score; evals++; if (sc < bs) { bs = sc; bestZ = Z; } }
+                }
+              }
+            }
+            if (bestZ) { X = bestZ; cur = bs; return true; }
+            return false;
+          };
           return {
             get X() { return X; }, get cur() { return cur; }, get done() { return done; }, get evals() { return evals; },
             step() {
@@ -10820,9 +10839,9 @@
                 const u = U[ui], old = X[u.rows[0]]; let bestY = null, bs = cur - 1e-9;
                 for (const p of ctx.people) { if (p.name === old) continue; const Y = X.slice(); u.rows.forEach(r => { Y[r] = p.name; }); const s = liveScore(ctx, d, Y, A).score; evals++; if (s < bs) { bs = s; bestY = Y; } }
                 if (bestY) { X = bestY; cur = bs; idle = 0; } else idle++;
-                ui = (ui + 1) % U.length; if (idle >= U.length) { swap = true; si = 0; sj = 1; }
+                ui = (ui + 1) % U.length; if (idle >= U.length) { if (chain()) { idle = 0; ui = 0; } else { swap = true; si = 0; sj = 1; } }
               } else {       // 2) 더 안 풀리면 두 칸의 담당자를 서로 맞바꿈 — 개선되면 다시 1)로
-                if (sj >= U.length) { si++; sj = si + 1; } if (si >= U.length - 1) { done = true; return; }
+                if (sj >= U.length) { si++; sj = si + 1; } if (si >= U.length - 1) { if (chain()) { swap = false; idle = 0; ui = 0; } else done = true; return; }
                 const a = U[si], b = U[sj++], na = X[a.rows[0]], nb = X[b.rows[0]]; if (na === nb) return;
                 const Y = X.slice(); a.rows.forEach(r => { Y[r] = nb; }); b.rows.forEach(r => { Y[r] = na; }); const s = liveScore(ctx, d, Y, A).score; evals++;
                 if (s < cur - 1e-9) { X = Y; cur = s; swap = false; idle = 0; ui = 0; }
@@ -10896,6 +10915,14 @@
             }
             let best = { X: pool[0].B, score: pool[0].score };
             cl.forEach(c => { if (c.cur < best.score) best = { X: c.X, score: c.cur }; });
+            {   // 마무리: 가장 좋은 안에서 끝까지 다듬기 — 시간이 모자라 끝내지 못한 연쇄 이동(마지막 4건을 오후조에게)까지 마저 시도 (최대 4초)
+                const fin = SIM.liveClimber(ctx, d, best.X, A), tf = performance.now();
+                while (!fin.done && performance.now() - tf < 4000) {
+                    const sl = performance.now(); do { fin.step(); } while (!fin.done && performance.now() - sl < 40 && performance.now() - tf < 4000);
+                    await new Promise(r => setTimeout(r, 0));
+                }
+                if (fin.cur < best.score) best = { X: fin.X, score: fin.cur };
+            }
             return { X: best.X, seed: 0, tries, score: best.score };
         }
         async function simDo(txt, mode) {   // 현재 JSON 으로 새로 재배정 (최적안 찾기 후 확정)
