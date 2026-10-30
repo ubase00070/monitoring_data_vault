@@ -8053,6 +8053,7 @@
         const eveFromOf = (UU, fixedOf) => { const L = UU.filter(u => u.s >= 1080 && !fixedOf(u)).map(u => u.s).sort((a, b) => a - b); return L.length ? L[Math.max(0, L.length - 4)] : EVE_FROM0; };   // 하루의 마지막 4건 업무가 시작되는 시각 (평일 20:30 · 주말 18:40 수원 힐스테이트 푸르지오 OFF)
         const pmRamp = (s, ef) => s <= 900 ? 0 : Math.min(1, (s - 900) / Math.max(60, ef - 900));   // 15:00 = 0 → 마지막 4건 시작 시각 = 1 (직선으로 상승)
         const firstHrSci = (p, u) => !!(u.sci && isPm(p) && p.start === u.slot);   // 출근하자마자(14시·15시) 맡는 과학관 — 가급적 자제
+        const firstTask10 = (p, u) => !!p && p.start === 600 && u.s === p.start;   // [선호] 10시 출근자(10-19)가 출근 시각 정각에 시작하는 업무를 맡는 것 — 가급적 피함 (예: 10:00 무선충전 확인)
         const canPm = (p, u) => isPm(p) && p.start <= u.s && p.end >= u.e && !(p.brk && ov(u.s, u.e, p.brk[0], p.brk[1]));
         function assign(variant, d, M, rng, optIn) {
           const opt = Object.assign({}, DEFAULTS, optIn || {});
@@ -8132,7 +8133,7 @@
                   const s = S[p.name]; if (u.sci) return 0;
                   return (s.mons.some(H => ov(H - 10, H + 50, u.s - GAP, u.e + GAP)) || s.tasks.some(([a, b]) => ov(a, b, u.s - GAP, u.e + GAP))) ? 1 : 0;
                 };
-                const sc = p => (cm ? S[p.name].mons.length + 0.5 * S[p.name].Ct : S[p.name].W + opt.cw * S[p.name].Ct) + opt.gp * od.indexOf(p.g) + 0.25 * pen(p) + (lastHrSci(p, u) ? 0.8 : 0) + (firstHrSci(p, u) ? 0.8 : 0) - (nv && !cm && isPm(p) ? PM_RAMP_A * pmRamp(u.s, eveF) : 0) + (!cm && opt.sciPen && u.sci && S[p.name].mons.length > 0 ? opt.sciPen : 0) + (!cm && (opt.tMid || opt.tLate) ? tendency(p, u, opt.tMid || 0, opt.tLate || 0) : 0);
+                const sc = p => (cm ? S[p.name].mons.length + 0.5 * S[p.name].Ct : S[p.name].W + opt.cw * S[p.name].Ct) + opt.gp * od.indexOf(p.g) + 0.25 * pen(p) + (lastHrSci(p, u) ? 0.8 : 0) + (firstHrSci(p, u) ? 0.8 : 0) + (firstTask10(p, u) ? 0.8 : 0) - (nv && !cm && isPm(p) ? PM_RAMP_A * pmRamp(u.s, eveF) : 0) + (!cm && opt.sciPen && u.sci && S[p.name].mons.length > 0 ? opt.sciPen : 0) + (!cm && (opt.tMid || opt.tLate) ? tendency(p, u, opt.tMid || 0, opt.tLate || 0) : 0);
                 const m = Math.min(...c.map(sc)), pool = c.filter(p => sc(p) < m + 1e-9);
                 chosen = pool[Math.floor(rng() * pool.length)]; tierUsed = tier; break;
               }
@@ -8292,9 +8293,9 @@
           const early09 = UU.filter(u => u.sci && u.slot === 540 && X[u.rows[0]] && ((q) => !!q && (q.start === 420 || q.start === 480))(BYNAME[X[u.rows[0]]])).length;   // 09:00 과학관을 07·08시 출근자가 받은 칸 수 — 09시 출근자가 오기 전에 이미 준비되는 업무라 '가능하면' 먼저 출근한 사람이 맡도록 (강제 아님, 보너스 EARLY_SCI09_BONUS 점)
           const ef = eveFromOf(UU, u => !!ctx.tasks[u.rows[0]].fixed), eveU = UU.filter(u => u.s >= ef && !ctx.tasks[u.rows[0]].fixed), asg = u => BYNAME[X[u.rows[0]]];
           const eveFeas = eveU.filter(u => ctx.people.some(q => canPm(q, u))), eveNon = eveFeas.filter(u => asg(u) && !isPm(asg(u))).length, pmN = eveU.filter(u => isPm(asg(u))).length;   // 오후조가 맡을 수 있는데 야간조가 맡은 20:30 이후 업무 수
-          const pmRampSum = UU.filter(u => u.s > 900 && u.s < ef && !ctx.tasks[u.rows[0]].fixed && isPm(asg(u))).reduce((a, u) => a + pmRamp(u.s, ef), 0), firstHr = UU.filter(u => firstHrSci(asg(u), u)).length;
-          const score = m.prob * 1000 + m.overW * 100 + m.n4 * 40 + sd * 10 + low * 4 + high * 1.2 + chains * 3 + m.std * 5 + night * 2 + changes * 1 + lastHr * 5 + sciMon * 5 + sciEx * SCI_PRIO_W - early09 * EARLY_SCI09_BONUS + firstHr * 5 + eveNon * EVE_PM_W - pmRampSum * PM_RAMP_W;
-          return { score, lastHr, firstHr, eveNon, eveN: eveU.length, pmN, pmRampSum, sciMon, sciMin, sciEx, early09, m, per, sd, mn: cs.length ? Math.min(...cs) : 0, mx: cs.length ? Math.max(...cs) : 0, nDay: cs.length, low, high, chains, night, maxW: Math.max(0, ...per.map(p => p.w)), changes };
+          const pmRampSum = UU.filter(u => u.s > 900 && u.s < ef && !ctx.tasks[u.rows[0]].fixed && isPm(asg(u))).reduce((a, u) => a + pmRamp(u.s, ef), 0), firstHr = UU.filter(u => firstHrSci(asg(u), u)).length, first10 = UU.filter(u => firstTask10(asg(u), u)).length;
+          const score = m.prob * 1000 + m.overW * 100 + m.n4 * 40 + sd * 10 + low * 4 + high * 1.2 + chains * 3 + m.std * 5 + night * 2 + changes * 1 + lastHr * 5 + sciMon * 5 + sciEx * SCI_PRIO_W - early09 * EARLY_SCI09_BONUS + firstHr * 5 + first10 * 5 + eveNon * EVE_PM_W - pmRampSum * PM_RAMP_W;
+          return { score, lastHr, firstHr, first10, eveNon, eveN: eveU.length, pmN, pmRampSum, sciMon, sciMin, sciEx, early09, m, per, sd, mn: cs.length ? Math.min(...cs) : 0, mx: cs.length ? Math.max(...cs) : 0, nDay: cs.length, low, high, chains, night, maxW: Math.max(0, ...per.map(p => p.w)), changes };
         }
         /* 한 칸씩 담당자를 바꿔 보며 점수가 좋아지면 채택(언덕 오르기) — 바뀐 칸 수에도 점수를 매기므로 '꼭 필요한 수정'만 남는다 */
         function liveClimber(ctx, d, X0, A) {
