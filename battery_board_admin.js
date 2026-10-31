@@ -7257,7 +7257,7 @@
         .bb-tr-body { flex:1 1 auto; min-height:0; overflow-y:auto; }
         .bb-tr-wrap { position:relative; overflow-x:auto; padding:8px 8px 0; }
         .bb-tr-wrap svg { display:block; overflow:visible; }
-        .bb-tr-tip { position:absolute; pointer-events:none; z-index:5; min-width:170px; padding:8px 11px; background:var(--sur); border:1.5px solid var(--bd2); border-radius:9px; box-shadow:0 8px 22px rgba(0,0,0,.28); font-size:calc(13.5px * var(--bb-ts, 1)); }
+        .bb-tr-tip { position:absolute; pointer-events:none; z-index:9; min-width:170px; padding:8px 11px; background:var(--sur); border:1.5px solid var(--bd2); border-radius:9px; box-shadow:0 8px 22px rgba(0,0,0,.28); font-size:calc(13.5px * var(--bb-ts, 1)); }
         .bb-tr-tip[hidden] { display:none; }
         .bb-tr-tip .h { font-weight:900; margin-bottom:5px; font-variant-numeric:tabular-nums; }
         .bb-tr-tip .r { display:flex; align-items:center; gap:7px; padding:1.5px 0; color:var(--mu); }
@@ -7266,6 +7266,28 @@
         .bb-tr-tip .r b { color:var(--tx); font-variant-numeric:tabular-nums; }
         .bb-tr-tip .r small { color:var(--mu); font-size:calc(11.5px * var(--bb-ts, 1)); }
         .bb-tr-tip .r.me, .bb-tr-tip .r.me b { color:#c2410c; font-weight:900; }
+        .bb-tr-box { position:relative; }
+        .bb-tr-hm { overflow:auto; margin:8px 8px 0; border:1px solid var(--bd); border-radius:10px; background:var(--sur); }
+        .bb-tr-g { position:relative; display:grid; grid-template-columns:176px repeat(24, minmax(46px, 1fr)); min-width:1290px; }
+        .bb-tr-g > div { height:31px; display:flex; align-items:center; justify-content:center; font-size:calc(14px * var(--bb-ts, 1)); font-variant-numeric:tabular-nums; border-right:1px solid rgba(120,100,60,.14); border-bottom:1px solid rgba(120,100,60,.14); white-space:nowrap; }
+        .bb-tr-g .hd, .bb-tr-g .hd2, .bb-tr-g .cn { position:sticky; z-index:3; background:var(--sur2); font-weight:800; color:var(--mu); }
+        .bb-tr-g .hd { top:0; }
+        .bb-tr-g .hd2 { top:31px; color:var(--tx); border-bottom:2px solid var(--bd2); font-size:calc(13px * var(--bb-ts, 1)); }
+        .bb-tr-g .hd2.pk { color:#c2410c; font-weight:900; }
+        .bb-tr-g .cn { left:0; z-index:4; justify-content:flex-start; padding:0 10px; }
+        .bb-tr-g .cn.hd2 { top:31px; }
+        .bb-tr-g .nm { position:sticky; left:0; z-index:2; justify-content:flex-start; gap:6px; padding:0 10px; background:var(--sur); cursor:pointer; font-weight:800; overflow:hidden; }
+        .bb-tr-g .nm small { margin-left:auto; color:var(--mu); font-size:calc(12px * var(--bb-ts, 1)); font-weight:700; }
+        .bb-tr-g .nm:hover { color:var(--bl); }
+        .bb-tr-g .nm.sel { background:#ffe8d6; color:#c2410c; }
+        .bb-tr-g .v { font-weight:700; }
+        .bb-tr-g .v.off { background:repeating-linear-gradient(135deg, transparent 0 5px, rgba(120,100,60,.07) 5px 6px); }
+        .bb-tr-g .v.dim { opacity:.3; }
+        .bb-tr-g .v.rowsel { box-shadow:inset 0 1px 0 #c2410c, inset 0 -1px 0 #c2410c; }
+        .bb-tr-g .hl { position:absolute; top:0; bottom:0; z-index:1; background:rgba(60,40,0,.07); pointer-events:none; display:none; border:0; height:auto; }
+        .bb-tr-srt { display:inline-flex; border:1.5px solid var(--bd2); border-radius:8px; overflow:hidden; }
+        .bb-tr-srt button { height:27px; padding:0 11px; border:0; background:var(--sur2); color:var(--mu); font-family:inherit; font-size:calc(14px * var(--bb-ts, 1)); font-weight:700; cursor:pointer; }
+        .bb-tr-srt button.on { background:#b3cdf8; color:#1e3a8a; font-weight:900; }
         .bb-tr-leg { display:flex; flex-wrap:wrap; gap:6px; padding:10px 16px 8px; }
         .bb-tr-chip { display:inline-flex; align-items:center; gap:6px; padding:3px 10px; border-radius:999px; border:1.5px solid var(--bd2); background:var(--sur2); color:var(--tx); font-size:calc(14px * var(--bb-ts, 1)); font-weight:700; cursor:pointer; user-select:none; }
         .bb-tr-chip:hover { border-color:var(--mu); }
@@ -7280,7 +7302,7 @@
         const trPop = ivEl('div'); trPop.id = 'bb-iv-tr';
         document.body.appendChild(trPop);
         let _trOpen = false, _trSeq = 0, _trDate = '', _trFocus = '', _trDates = null, _trRevs = null, _trDatesAt = 0, _trState = 'loading', _trData = null;
-        let _trMode = 'day', _trAll = null;   // _trAll = { store, state:{ phase, done, total, failed } }
+        let _trMode = 'day', _trAll = null, _trSort = 'start';   // _trAll = { store, state:{ phase, done, total, failed } }
         const _trCache = new Map();   // 날짜 → { at, d }
         const trEsc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
         const TR_AXIS = Array.from({ length: 24 }, (_, i) => (i + 7) % 24);
@@ -7408,20 +7430,23 @@
 
         /* ── 그리기 ── */
         function trAvail() { return Math.max(500, trPop.clientWidth - 28); }
-        function trTip(wrap, svgW, M, band, cur, hitSel, fill) {
-            const tip = ivEl('div', 'bb-tr-tip'); tip.hidden = true; wrap.appendChild(tip);
+        // 툴팁: 마우스 옆이 아니라 '그 시간대 칸의 위쪽'에 고정 (스크롤이 있어도 항상 같은 자리). 반환값 = 그래프를 감싼 상자(box)
+        function trTip(wrap, M, band, cur, hitSel, fill, topPx) {
+            const box = ivEl('div', 'bb-tr-box'), tip = ivEl('div', 'bb-tr-tip'); tip.hidden = true;
+            box.append(wrap, tip);
             wrap.querySelectorAll(hitSel).forEach(r => {
-                r.addEventListener('mousemove', ivSafe(e => {
+                r.addEventListener('mouseenter', ivSafe(() => {
                     const i = +r.dataset.i;
                     tip.innerHTML = fill(i); tip.hidden = false;
-                    const wr = wrap.getBoundingClientRect(), z = wr.width / (wrap.offsetWidth || 1) || 1;
-                    let left = (e.clientX - wr.left) / z + wrap.scrollLeft + 14, top = (e.clientY - wr.top) / z + 10;
-                    if (left + tip.offsetWidth > wrap.scrollLeft + wrap.clientWidth - 4) left = (e.clientX - wr.left) / z + wrap.scrollLeft - tip.offsetWidth - 14;
-                    tip.style.left = Math.max(0, left) + 'px'; tip.style.top = Math.max(0, top) + 'px';
-                    cur.setAttribute('x', M.l + band * i); cur.setAttribute('opacity', '1');
+                    const br = box.getBoundingClientRect(), rr = r.getBoundingClientRect(), z = br.width / (box.offsetWidth || 1) || 1;
+                    let left = (rr.left + rr.width / 2 - br.left) / z - tip.offsetWidth / 2;
+                    left = Math.max(4, Math.min(left, box.clientWidth - tip.offsetWidth - 4));
+                    tip.style.left = left + 'px'; tip.style.top = (topPx || 4) + 'px';
+                    if (cur) { cur.setAttribute('x', M.l + band * i); cur.setAttribute('opacity', '1'); }
                 }));
-                r.addEventListener('mouseleave', ivSafe(() => { tip.hidden = true; cur.setAttribute('opacity', '0'); }));
+                r.addEventListener('mouseleave', ivSafe(() => { tip.hidden = true; if (cur) cur.setAttribute('opacity', '0'); }));
             });
+            return box;
         }
         function trAxisSvg(W, H, M, band, yMax, stp, fmt) {
             const ih = H - M.t - M.b, y = v => M.t + ih - (v / yMax) * ih, base = M.t + ih;
@@ -7479,51 +7504,67 @@
             let hit = ''; TR_AXIS.forEach((h, i) => { hit += '<rect class="bb-tr-hit" data-i="' + i + '" x="' + (M.l + band * i) + '" y="' + (M.t - 20) + '" width="' + band + '" height="' + (ax.ih + 20) + '" fill="transparent"/>'; });
             wrap.innerHTML = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" font-family="Paperlogy,Lato,sans-serif">' + ax.g +
                 '<rect id="bb-tr-cur" x="0" y="' + (M.t - 20) + '" width="' + band + '" height="' + (ax.ih + 20) + '" rx="6" fill="rgba(60,40,0,.07)" opacity="0"/>' + bars + labs + hit + '</svg>';
-            trTip(wrap, W, M, band, wrap.querySelector('#bb-tr-cur'), '.bb-tr-hit', i => {
+            body.appendChild(trTip(wrap, M, band, wrap.querySelector('#bb-tr-cur'), '.bb-tr-hit', i => {
                 const list = items[i].slice().sort((a, b) => b.v - a.v);
                 return '<div class="h">' + TR_AXIS[i] + ':00 ~ ' + TR_AXIS[i] + ':59 · ' + totals[i] + '건</div>' +
                     (list.length ? list.map(({ p, v }) => '<div class="r' + (p.name === _trFocus ? ' me' : '') + '"><i style="background:' + p.color + '"></i><span>' + trEsc(p.name) + '</span><b>' + v + '건</b></div>').join('') : '<div class="r"><span>처리 기록 없음</span></div>');
-            });
-            body.appendChild(wrap);
+            }, 6));
             body.appendChild(trLegend(people, p => p.total + '건'));
         }
+        // 전체 추이: 사람(행) × 시간대(열) 평균 처리 건수 표 (색이 진할수록 많음). 선그래프는 46명이 겹쳐 구분이 안 돼 이 방식으로 바꿈.
         function trAllChart(body, sum, ag) {
-            const people = ag.people, st = _trAll.state;
-            const colTot = TR_AXIS.map(h => people.reduce((a, p) => a + (p.avg[h] || 0), 0)), pk = colTot.indexOf(Math.max.apply(null, colTot));
+            const people = ag.people.slice(), st = _trAll.state;
+            const colTot = TR_AXIS.map(h => people.reduce((a, p) => a + (p.avg[h] || 0), 0)), colMax = Math.max.apply(null, colTot), pk = colTot.indexOf(colMax);
             const fp = _trFocus ? people.find(p => p.name === _trFocus) : null;
             let fh = -1, fv = 0; if (fp) TR_AXIS.forEach(h => { if ((fp.avg[h] || 0) > fv) { fv = fp.avg[h]; fh = h; } });
             sum.innerHTML = '<span>기록<b class="hl">' + ag.nd + '일</b></span><span>기간<b>' + (ag.first ? ivMD(ag.first) + ' ~ ' + ivMD(ag.last) : '-') + '</b></span><span>인원<b>' + people.length + '명</b></span>' +
                 '<span>평균이 가장 몰리는 시간대<b>' + TR_AXIS[pk] + '시 · ' + trNum(colTot[pk]) + '건</b></span>' +
                 (fp ? '<span>' + trEsc(fp.name) + ' 피크<b class="hl">' + (fh >= 0 ? fh + '시 · 평균 ' + trNum(fv) + '건' : '-') + '</b></span><span>' + trEsc(fp.name) + ' 근무<b>' + fp.days + '일</b></span>' : '') +
                 (st.phase === 'loading' ? '<span class="pg">새 날짜 받는 중 ' + st.done + '/' + st.total + '</span>' : st.phase === 'fail' ? '<span class="pg">날짜 목록을 받지 못해 저장분만 표시</span>' : st.failed ? '<span class="pg">' + st.failed + '일 받기 실패</span>' : '');
-            const wrap = ivEl('div', 'bb-tr-wrap');
-            const M = { l: 44, r: 16, t: 22, b: 30 }, avail = trAvail(), W = avail, band = (W - M.l - M.r) / 24;
-            const H = Math.max(360, Math.min(640, Math.round(trPop.clientHeight * 0.58)));
-            const rawMax = Math.max(0.5, ...people.flatMap(p => p.avg.map(v => v || 0)));
-            const stp = rawMax <= 2 ? 0.5 : rawMax <= 5 ? 1 : Math.ceil(rawMax / 5), yMax = Math.ceil(rawMax / stp - 1e-9) * stp;
-            const ax = trAxisSvg(W, H, M, band, yMax, stp, v => trNum(v)), y = ax.y, cx0 = i => M.l + band * (i + 0.5);
-            const order = people.filter(p => p.name !== _trFocus).concat(fp ? [fp] : []);   // 강조 대상은 맨 위에 그림
-            let lines = '';
-            order.forEach(p => {
-                const isF = _trFocus && p.name === _trFocus, dim = _trFocus && !isF;
-                const op = isF ? 1 : dim ? 0.16 : 0.85, sw = isF ? 4.5 : 2.6;
-                let d = '', pen = false;
-                TR_AXIS.forEach((h, i) => { const v = p.avg[h]; if (v == null) { pen = false; return; } d += (pen ? 'L' : 'M') + cx0(i).toFixed(1) + ' ' + y(v).toFixed(1); pen = true; });
-                lines += '<path d="' + d + '" fill="none" stroke="' + p.lcolor + '" stroke-width="' + sw + '" stroke-linejoin="round" stroke-linecap="round" opacity="' + op + '"/>';
-                TR_AXIS.forEach((h, i) => { const v = p.avg[h]; if (v != null) lines += '<circle cx="' + cx0(i).toFixed(1) + '" cy="' + y(v).toFixed(1) + '" r="' + (isF ? 4.5 : 3) + '" fill="' + p.lcolor + '" opacity="' + op + '"/>'; });
+            // 정렬: 출근시간순(그 사람이 주로 일하는 첫 시간대 → 처리량) / 처리량순
+            const startIdx = p => { const mx = Math.max.apply(null, p.n); const i = TR_AXIS.findIndex(h => p.n[h] >= Math.max(1, mx * 0.3)); return i < 0 ? 99 : i; };
+            if (_trSort === 'start') people.sort((a, b) => startIdx(a) - startIdx(b) || b.total - a.total || a.name.localeCompare(b.name, 'ko'));
+            let gmax = 0; people.forEach(p => p.avg.forEach(v => { if (v > gmax) gmax = v; }));
+            gmax = Math.max(gmax, 0.5);
+            const fmt1 = v => String(Math.round(v * 10) / 10);
+            let h = '<div class="cn hd">이름 · 일 평균 합계</div>';
+            TR_AXIS.forEach((hr, i) => { h += '<div class="hd" data-i="' + i + '">' + hr + '시</div>'; });
+            h += '<div class="cn hd2">전체 평균 합계</div>';
+            TR_AXIS.forEach((hr, i) => { h += '<div class="hd2' + (i === pk ? ' pk' : '') + '" data-i="' + i + '">' + (colTot[i] > 0 ? fmt1(colTot[i]) : '-') + '</div>'; });
+            people.forEach(p => {
+                const isF = p.name === _trFocus, dim = _trFocus && !isF;
+                h += '<div class="nm' + (isF ? ' sel' : '') + '" data-focus="' + trEsc(p.name) + '" title="' + p.days + '일 근무 · 누르면 이 사람 줄만 강조">' + trEsc(p.name) + '<small>' + fmt1(p.total) + '</small></div>';
+                TR_AXIS.forEach((hr, i) => {
+                    const v = p.avg[hr];
+                    if (v == null) { h += '<div class="v off' + (dim ? ' dim' : '') + '" data-i="' + i + '"></div>'; return; }
+                    const t = Math.pow(v / gmax, 0.75), a = v > 0 ? 0.1 + 0.9 * t : 0;
+                    h += '<div class="v' + (dim ? ' dim' : '') + (isF ? ' rowsel' : '') + '" data-i="' + i + '" style="background:rgba(234,88,12,' + a.toFixed(3) + ');color:' + (a > 0.55 ? '#fff' : v > 0 ? '#2b2418' : '#b3a687') + '">' + (v > 0 ? fmt1(v) : '·') + '</div>';
+                });
             });
-            let flab = '';
-            if (fp) TR_AXIS.forEach((h, i) => { const v = fp.avg[h]; if (v != null) flab += '<text x="' + cx0(i).toFixed(1) + '" y="' + (y(v) - 9).toFixed(1) + '" text-anchor="middle" font-size="12" font-weight="800" fill="#c2410c">' + trNum(v) + '</text>'; });
-            let hit = ''; TR_AXIS.forEach((h, i) => { hit += '<rect class="bb-tr-hit" data-i="' + i + '" x="' + (M.l + band * i) + '" y="' + (M.t - 14) + '" width="' + band + '" height="' + (ax.ih + 14) + '" fill="transparent"/>'; });
-            wrap.innerHTML = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" font-family="Paperlogy,Lato,sans-serif">' + ax.g +
-                '<rect id="bb-tr-cur" x="0" y="' + (M.t - 14) + '" width="' + band + '" height="' + (ax.ih + 14) + '" rx="6" fill="rgba(60,40,0,.07)" opacity="0"/>' + lines + flab + hit + '</svg>';
-            trTip(wrap, W, M, band, wrap.querySelector('#bb-tr-cur'), '.bb-tr-hit', i => {
-                const h = TR_AXIS[i], list = people.filter(p => p.avg[h] != null && p.avg[h] > 0).sort((a, b) => b.avg[h] - a.avg[h]);
-                return '<div class="h">' + h + ':00 ~ ' + h + ':59 · 평균 합계 ' + trNum(colTot[i]) + '건</div>' +
-                    (list.length ? list.map(p => '<div class="r' + (p.name === _trFocus ? ' me' : '') + '"><i style="background:' + p.lcolor + '"></i><span>' + trEsc(p.name) + ' <small>' + p.n[h] + '일</small></span><b>' + trNum(p.avg[h]) + '건</b></div>').join('') : '<div class="r"><span>처리 기록 없음</span></div>');
-            });
-            body.appendChild(wrap);
-            body.appendChild(trLegend(people, p => '일 ' + trNum(p.total) + '건'));
+            const hm = ivEl('div', 'bb-tr-hm');
+            hm.style.maxHeight = Math.max(260, trPop.clientHeight - 215) + 'px';
+            hm.innerHTML = '<div class="bb-tr-g" id="bb-tr-g">' + h + '<div class="hl" id="bb-tr-hl"></div></div>';
+            const grid = hm.firstChild, hl = hm.querySelector('#bb-tr-hl');
+            const box = ivEl('div', 'bb-tr-box'), tip = ivEl('div', 'bb-tr-tip'); tip.hidden = true;
+            box.append(hm, tip);
+            let curI = -1;
+            const show = i => {
+                const hr = TR_AXIS[i], list = people.filter(p => p.avg[hr] != null && p.avg[hr] > 0).sort((a, b) => b.avg[hr] - a.avg[hr]);
+                const rows = list.slice(0, 12).map(p => '<div class="r' + (p.name === _trFocus ? ' me' : '') + '"><span>' + trEsc(p.name) + ' <small>' + p.n[hr] + '일</small></span><b>' + trNum(p.avg[hr]) + '건</b></div>').join('');
+                tip.innerHTML = '<div class="h">' + hr + ':00 ~ ' + hr + ':59 · 평균 합계 ' + trNum(colTot[i]) + '건 · ' + list.length + '명</div>' + (rows || '<div class="r"><span>처리 기록 없음</span></div>') + (list.length > 12 ? '<div class="r"><span>외 ' + (list.length - 12) + '명</span></div>' : '');
+                tip.hidden = false;
+                const hd = grid.querySelector('.hd[data-i="' + i + '"]'), br = box.getBoundingClientRect(), rr = hd.getBoundingClientRect(), z = br.width / (box.offsetWidth || 1) || 1;
+                let left = (rr.left + rr.width / 2 - br.left) / z - tip.offsetWidth / 2;
+                left = Math.max(4, Math.min(left, box.clientWidth - tip.offsetWidth - 4));
+                tip.style.left = left + 'px'; tip.style.top = '70px';   // 두 줄짜리 머리글 바로 아래(스크롤해도 같은 자리)
+                hl.style.left = hd.offsetLeft + 'px'; hl.style.width = hd.offsetWidth + 'px'; hl.style.display = 'block';
+            };
+            grid.addEventListener('mouseover', ivSafe(e => {
+                const c = e.target.closest('[data-i]'); if (!c) return;
+                const i = +c.dataset.i; if (i === curI && !tip.hidden) return; curI = i; show(i);
+            }));
+            hm.addEventListener('mouseleave', ivSafe(() => { curI = -1; tip.hidden = true; hl.style.display = 'none'; }));
+            body.appendChild(box);
         }
 
         function trRender() {
@@ -7540,6 +7581,11 @@
             dates.forEach(d => { const o = ivEl('option', '', d + (d === ivOpDate() ? ' (오늘)' : '')); o.value = d; if (d === _trDate) o.selected = true; sel.appendChild(o); });
             nav.append(pv, sel, nx); head.appendChild(nav);
             const ab = ivEl('button', 'bb-tr-allb' + (all ? ' on' : ''), '전체 추이'); ab.dataset.act = 'all'; ab.title = '기록 전체에서 사람별·시간대별 평균 처리 건수'; head.appendChild(ab);
+            if (all) {
+                const sg = ivEl('div', 'bb-tr-srt');
+                [['start', '출근시간순'], ['total', '처리량순']].forEach(([k, t]) => { const b = ivEl('button', _trSort === k ? 'on' : '', t); b.dataset.act = 'sort'; b.dataset.k = k; sg.appendChild(b); });
+                head.appendChild(sg);
+            }
             const rf = ivEl('span', 'rf', all ? '새로 집계' : '새로고침'); rf.dataset.act = 'refresh'; rf.title = all ? '저장분을 버리고 모든 날짜를 다시 받음' : ''; head.appendChild(rf);
             const x = ivEl('span', 'x', '✕'); x.dataset.act = 'close'; head.appendChild(x);
 
@@ -7549,7 +7595,7 @@
                 const ag = _trAll ? trAggregate(_trAll.store) : { people: [], nd: 0 };
                 if (!ag.people.length) body.appendChild(ivEl('div', 'bb-tr-msg', _trAll && _trAll.state.phase === 'loading' ? '기록을 불러오는 중… ' + _trAll.state.done + '/' + _trAll.state.total : '집계할 기록이 아직 없습니다.'));
                 else { if (_trFocus && !ag.people.some(p => p.name === _trFocus)) _trFocus = ''; trAllChart(body, sum, ag); }
-                ft = '각 선 = 한 사람의 시간대별 평균 처리 건수 (그 시간대에 근무한 날만 평균 · 휴게·근무 밖 시간은 제외) · 오늘은 끝나지 않아 제외 · 저장된 기록(이 브라우저)에 새 날짜가 생길 때만 추가로 받아 계산 · 아래 이름을 누르면 그 사람 선만 강조';
+                ft = '칸 = 그 사람이 그 시간대에 일한 날만 평균낸 처리 건수 (진할수록 많음 · 빗금 = 근무 밖/휴게, 평균 제외) · 오늘은 끝나지 않아 제외 · 새 날짜가 생길 때만 추가로 받아 계산(이 브라우저에 저장) · 이름을 누르면 그 사람 줄만 강조';
             } else {
                 const people = _trData ? trPeople(_trData) : [];
                 if (_trFocus && !people.some(p => p.name === _trFocus)) _trFocus = '';
@@ -7611,6 +7657,7 @@
             const dates = trDateList(), di = dates.indexOf(_trDate), act = a.dataset.act;
             if (act === 'close') trClose();
             else if (act === 'refresh') trLoad(true);
+            else if (act === 'sort') { _trSort = a.dataset.k; trRender(); }
             else if (act === 'all') { _trMode = _trMode === 'all' ? 'day' : 'all'; trLoad(false); }
             else if (act === 'prev' && di < dates.length - 1) { _trMode = 'day'; _trDate = dates[di + 1]; trLoad(false); }
             else if (act === 'next' && di > 0) { _trMode = 'day'; _trDate = dates[di - 1]; trLoad(false); }
