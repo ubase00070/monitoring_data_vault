@@ -1198,7 +1198,14 @@
         const myTasks = data.map(t => {
             // 메인2로 배정된 사람에게도 같은 업무가 보이도록, 이 경우엔 담당자를 나로 바꾼 사본을 사용
             const viaMain2 = !String(t.user || '').split('/').map(n => n.trim()).includes(myName) && (t.main2 || []).includes(myName);
-            return viaMain2 ? Object.assign({}, t, { user: myName }) : t;
+            if (!viaMain2) return t;
+            const copy = Object.assign({}, t, { user: myName });
+            // 내가 메인이 아니라 '메인2'로 배정된 다중 모니터링이면 목록에 '다중 모니터링(메인2)'로 표기
+            if (String(t.content || '').includes('다중 모니터링') && !String(t.content).includes('(메인2)')) {
+                copy.isMain2 = true;
+                copy.content = String(t.content).replace('다중 모니터링', '다중 모니터링(메인2)');
+            }
+            return copy;
         }).filter(t => {
             // 담당자란에 '홍길동/임꺽정'처럼 여러 명이 슬래시로 같이 적힌 경우, 그중 한 명이라도
             // 나와 일치하면 그 업무는 나한테도 표시되어야 함 (seat_map.json 파싱 때와 동일한 관례)
@@ -1575,7 +1582,8 @@
                 chainParts.push(nameChip(t.user, true));
                 if (neighbors.next) chainParts.push(nameChip(neighbors.next, false));
                 const chainHtml = chainParts.join(' <span style="font-size:10px; opacity:0.55;">→</span> ');
-                const prefix = HANDOVER_DISPLAY_LABEL[handoverKey] || bodyText;
+                let prefix = HANDOVER_DISPLAY_LABEL[handoverKey] || bodyText;
+                if (t.isMain2 && !prefix.includes('(메인2)')) prefix += '(메인2)';
                 displayContent = `<span style="${prefixStyle}">${prefix}</span><span style="margin-left:10px; ${chainDimStyle}">${chainHtml}</span>`;
                 layoutLen = prefix.length + 25; // 체인 표기가 붙으면 길어진 것으로 간주해 2줄 표시 판단
             }
