@@ -7,7 +7,7 @@
     'use strict';
 
 
-    // 수집기가 "일부 사이트만 받은 데이터"(data-bb-partial=1)를 보내도 안전하게 처리할 수 있음을 알린다 (수집기가 이 값을 확인하고 전달함)
+    // 수집기가 "일부 사이트만 받은 데이터"(data-bb-partial=1)를 보내도 안전하게 처리할 수 있음을 알린다 (수집기가 이 값을 확인하고 전달)
     window.__bbPartialOk = true;
 
     // ══ 오프라인 모드 (NCC 통신 중단) ══════════════════════════════════════
@@ -7202,11 +7202,12 @@
         /* ───────── 시간추이: 시간대별 · 사람별 처리 건수 (헤더의 '시간추이' 버튼 → 큰 팝업) ─────────
            · [날짜별] 근무일 하나를 골라 07시 ~ 다음날 06시 시간대별 사람별 막대그래프.
            · [전체 추이] 지금까지 기록 전체에서 '사람마다, 그 시간대에 일한 날 기준 평균 처리 건수' 를 사람별 선그래프로.
-             (휴게 칸과 근무시간 밖은 평균에서 제외 · 오늘은 아직 끝나지 않았으므로 제외)
+             (근무시간 밖은 평균에서 제외 · 휴게 칸은 처리 건이 있는 날만 포함 · 오늘은 아직 끝나지 않았으므로 제외)
            · 데이터: 날짜 목록(view=dates) + 그날 요약(view=summary&date=…) 의 p.hours (근무 시작 시각부터 1칸=1시간, 서버가 '이름 확정'으로 센 건수).
-           · 저장(localStorage bbIvTrV1): 지난 날짜마다 { 이름: [0~23시 건수, 근무 밖=-1] } 를 한 번만 받아 보관. 새 날짜가 생겼을 때(또는 서버 rev 가 바뀐 날)만 추가로 받고,
+           · 저장(localStorage bbIvTrV2): 지난 날짜마다 { 이름: [0~23시 건수, 근무 밖=-1] } 를 한 번만 받아 보관. 새 날짜가 생겼을 때(또는 서버 rev 가 바뀐 날)만 추가로 받고,
              평균은 저장분으로 즉시 계산하므로 창을 다시 열거나 새로고침해도 전부 다시 받지 않는다. */
-        const IV_TR_KEY = 'bbIvTrV1';
+        const IV_TR_KEY = 'bbIvTrV2';   // V2: 휴게 칸 처리 건 포함 (V1 저장분은 휴게 칸이 빠져 있어 버리고 새로 받음)
+        try { localStorage.removeItem('bbIvTrV1'); } catch (e) { /* 무시 */ }
         const trSt = document.createElement('style');
         trSt.id = 'bb-tr-style';
         trSt.textContent = `
@@ -7347,7 +7348,7 @@
                 if (!p || !p.name || !Array.isArray(p.hours)) return;
                 const m = /^(\d{2})/.exec(p.shift || ''); if (!m) return;
                 const arr = new Array(24).fill(-1);
-                p.hours.forEach((c, i) => { if (ivOv(p, i) === 'b') return; const h = (+m[1] + i) % 24; if (arr[h] < 0) arr[h] = 0; arr[h] += (+c || 0); });
+                p.hours.forEach((c, i) => { if (ivOv(p, i) === 'b' && !(+c > 0)) return; const h = (+m[1] + i) % 24; if (arr[h] < 0) arr[h] = 0; arr[h] += (+c || 0); });
                 if (arr.some(v => v >= 0)) o[p.name] = arr;
             });
             return o;
@@ -7548,7 +7549,7 @@
                 const ag = _trAll ? trAggregate(_trAll.store) : { people: [], nd: 0 };
                 if (!ag.people.length) body.appendChild(ivEl('div', 'bb-tr-msg', _trAll && _trAll.state.phase === 'loading' ? '기록을 불러오는 중… ' + _trAll.state.done + '/' + _trAll.state.total : '집계할 기록이 아직 없습니다.'));
                 else { trPruneSel(ag.people); trAllChart(body, sum, ag); }
-                ft = '칸 = 그 사람이 그 시간대에 일한 날만 평균낸 처리 건수 (진할수록 많음 · 빗금 = 근무 밖/휴게, 평균 제외) · 오늘은 끝나지 않아 제외 · 새 날짜가 생길 때만 추가로 받아 계산(이 브라우저에 저장) · 이름을 여러 명 눌러 그 줄만 강조 (다시 누르면 해제 · Shift+클릭 = 구간 선택) · 연한 보라 테두리 = 그 시간대 최다 처리자';
+                ft = '칸 = 그 사람이 그 시간대에 일한 날만 평균낸 처리 건수 (진할수록 많음 · 빗금 = 근무 밖/휴게, 평균 제외 · 휴게 중 처리한 날은 그 건수만 반영) · 오늘은 끝나지 않아 제외 · 새 날짜가 생길 때만 추가로 받아 계산(이 브라우저에 저장) · 이름을 여러 명 눌러 그 줄만 강조 (다시 누르면 해제 · Shift+클릭 = 구간 선택) · 연한 보라 테두리 = 그 시간대 최다 처리자';
             } else {
                 const people = _trData ? trPeople(_trData) : [];
                 trPruneSel(people);
