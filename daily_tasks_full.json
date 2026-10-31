@@ -34,8 +34,8 @@
     {
       "row": 86,
       "content": "[09:50~10:00] 수원 힐스테이트 푸르지오 (뉴비오더) 임무 ON [주말]",
-      "fixed": false,
-      "user": ""
+      "fixed": true,
+      "user": "🛌휴무"
     },
     {
       "row": 87,
@@ -94,8 +94,8 @@
     {
       "row": 96,
       "content": "[12:00] 수원 힐스테이트 푸르지오 (뉴비오더) 임무 OFF",
-      "fixed": false,
-      "user": ""
+      "fixed": true,
+      "user": "🛌휴무"
     },
     {
       "row": 97,
@@ -124,8 +124,8 @@
     {
       "row": 101,
       "content": "[13:00] 수원 힐스테이트 푸르지오 (뉴비오더) 임무 ON",
-      "fixed": false,
-      "user": ""
+      "fixed": true,
+      "user": "🛌휴무"
     },
     {
       "row": 102,
@@ -202,8 +202,8 @@
     {
       "row": 114,
       "content": "[18:40] 수원 힐스테이트 푸르지오 (뉴비오더) 임무 OFF [주말]",
-      "fixed": false,
-      "user": ""
+      "fixed": true,
+      "user": "🛌휴무"
     },
     {
       "row": 115,
