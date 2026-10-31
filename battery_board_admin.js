@@ -5946,7 +5946,7 @@
        데이터: 하루치 archive(action=archive) 를 그 달 날짜 수만큼 한꺼번에 받고 + 스케줄(/schedule?ym=). 한 번 받은 달은 이 화면을 닫았다 열어도 다시 받지 않음('새로고침' 으로만 다시). */
     const RS_DAY_START = 7 * 60;      // 근무일은 07:00 에 시작 (07:00 이전 시각은 다음날 새벽으로 본다)
     const RS_MIN_WORK_SLOT = 20;      // 한 시간대에서 근무한 분이 이보다 적으면 그 시간대는 계산하지 않음
-    const RS_BAR_COLS = 4;            // 가로 막대 보기: 한 줄에 시간대 패널 4개
+    const RS_BAR_COLS = 3;            // 가로 막대 보기: 한 줄에 시간대 패널 3개
     const rsHh = h => attPad(h % 24);
     const rsToAbs = m => (m < RS_DAY_START ? m + 1440 : m);   // 하루 안의 분 → 근무일 기준 분(07:00 ~ 다음날 06:59 = 420 ~ 1859)
     const rsParseTod = s => { const m = /(\d{1,2}):(\d{2})(?::(\d{2}))?/.exec(s || ''); return m ? (+m[1]) * 60 + (+m[2]) + (+(m[3] || 0)) / 60 : null; };
