@@ -1152,6 +1152,28 @@
         return 20 * 60 * 1000;                                             // 11:00~18:00
     }
 
+    // ── 시트 구조 변경 대응: 담당자 칸에 '서형민\n메인2: 미배정'처럼 부가 줄이 붙어 오는 경우 정리 ──
+    // 첫 줄 = 메인 담당자(슬래시로 여러 명 가능), '메인2: 이름' 줄 = 보조 메인. '미배정/없음/-'은 비어 있는 것으로 본다.
+    // 정리 결과: t.user = 메인 이름만 / t.main2 = 실제 배정된 메인2 이름 배열(없으면 빈 배열)
+    // 이렇게 한 곳에서 정리해 두면 일치 비교, 로테이션 시간표, 전임자/후임자 표기가 모두 깨끗한 이름을 쓴다.
+    const NB_UNASSIGNED_RE = /^(미배정|미정|없음|후보\s*없음|-|–|—)?$/;
+    function nbCleanName(v) {
+        return String(v == null ? '' : v).split(/\r?\n/)[0].trim();
+    }
+    function normalizeTaskRow(t) {
+        if (!t || typeof t !== 'object') return t;
+        const lines = String(t.user == null ? '' : t.user).split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+        const main2 = [];
+        lines.slice(1).forEach(l => {
+            const m = /^메인\s*\d*\s*[:：]\s*(.*)$/.exec(l);
+            if (!m) return;
+            m[1].split('/').map(n => n.trim()).forEach(n => { if (!NB_UNASSIGNED_RE.test(n)) main2.push(n); });
+        });
+        const out = Object.assign({}, t, { user: lines[0] || '', main2 });
+        ['subUser', 'selfUser', 'prevUser', 'nextUser'].forEach(k => { if (k in out) out[k] = nbCleanName(out[k]); });
+        return out;
+    }
+
     // daily_tasks 의 monitoring 항목으로 24시간 로테이션 시간표(메인/서브)를 만든다.
     // (전임자/후임자 표기와 순찰 감지 폴백이 이 시간표를 쓴다)
     function buildMonitorSchedule(data) {
@@ -1169,10 +1191,15 @@
     function applyTaskData(data) {
         if (!Array.isArray(data)) throw new Error('tasks 응답 형식 오류');   // 서버 오류 응답이 정상 데이터를 덮어쓰지 않게 함
         const myName = localStorage.getItem('neubie_user_name');
+        data = data.map(normalizeTaskRow);   // 담당자 칸의 '\n메인2: …' 같은 부가 줄 제거 (원본 구조 변경 대응)
         state.monitorSchedule = buildMonitorSchedule(data);
         window.currentAllTasks = data; // 인계 체인(전임자/후임자) 조회용 — 필터링 전 전체 목록
 
-        const myTasks = data.filter(t => {
+        const myTasks = data.map(t => {
+            // 메인2로 배정된 사람에게도 같은 업무가 보이도록, 이 경우엔 담당자를 나로 바꾼 사본을 사용
+            const viaMain2 = !String(t.user || '').split('/').map(n => n.trim()).includes(myName) && (t.main2 || []).includes(myName);
+            return viaMain2 ? Object.assign({}, t, { user: myName }) : t;
+        }).filter(t => {
             // 담당자란에 '홍길동/임꺽정'처럼 여러 명이 슬래시로 같이 적힌 경우, 그중 한 명이라도
             // 나와 일치하면 그 업무는 나한테도 표시되어야 함 (seat_map.json 파싱 때와 동일한 관례)
             const assignees = String(t.user || '').split('/').map(n => n.trim());
