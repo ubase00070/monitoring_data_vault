@@ -5888,7 +5888,7 @@
         [1140, 240, 1380, 1440],  // 1900-0400 → 23:00-00:00
         [1200, 300, 1380, 1440],  // 2000-0500 → 23:00-00:00 (최정기 예외: 아래에서 22:00-23:00 로 대체)
         [1320, 420, 60, 120],     // 2200-0700 → 01:00-02:00
-        [1410, 510, 60, 120],     // 2330-0830 → 01:00-02:00
+        [1410, 510, 120, 180],    // 2330-0830 → 02:00-03:00 (안대관 이석 로그상 02시대 이석 없음 → 01:00-02:00 에서 정정)
     ];
     function attBreakWindow(shiftMin, name) {
         if (!shiftMin) return null;
@@ -5930,7 +5930,7 @@
        값 = 그 시간대(예: 09:00~10:00)에 이석해 있던 시간의 하루 평균(분) = 그 시간대 이석 분 합계 ÷ 그 시간대에 근무한 날 수.
        - 시간대에 걸친 이석은 시간대별로 나눠 담는다 (09:50~10:10 → 09시 10분 + 10시 10분).
        - 근무한 날 = 그날 기록이 있고(스케줄상 출근 또는 이석 기록 있음) 그 시간대 근무가 20분 이상인 날.
-       - 휴게시간은 근무·이석 양쪽에서 제외, 근무시간 밖은 잘라냄.
+       - 휴게시간은 제외하지 않음(기록된 이석 그대로), 근무시간 밖은 잘라냄.
        - 착석 미기입(back 없음)은 옵션으로 그 사람의 평균 소요시간(정상 기록 10건 초과일 때만)으로 보정.
        데이터: 하루치 archive(action=archive) 를 그 달 날짜 수만큼 한꺼번에 받고 + 스케줄(/schedule?ym=). 한 번 받은 달은 이 화면을 닫았다 열어도 다시 받지 않음('새로고침' 으로만 다시). */
     const RS_DAY_START = 7 * 60;      // 근무일은 07:00 에 시작 (07:00 이전 시각은 다음날 새벽으로 본다)
@@ -5997,8 +5997,7 @@
                 if (!p.shift && shift) p.shift = shift;
                 if (!shift) { p.noShift++; return; }
                 let S = rsToAbs(shift[0]), E = rsToAbs(shift[1]); if (E <= S) E += 1440;
-                const bw = attBreakWindow(shift, name); let B0 = null, B1 = null;
-                if (bw) { B0 = rsToAbs(bw[0]); B1 = rsToAbs(bw[1]); if (B1 <= B0) B1 += 1440; }
+                const B0 = null, B1 = null;   // 이석 시간대 통계는 휴게시간을 제외하지 않음 (기록된 이석을 그대로 반영)
                 p.days++;
                 // 근무일은 07:00~다음날 06:59 (abs 420~1859). 근무가 다음날 07시를 넘기면(예: 23:30~08:30) 넘긴 부분은 07시 칸으로 이어 붙인다
                 // → 축이 31시·32시로 늘어나 07·08시가 한 번 더 나오는 일이 없음 (그 시각의 기록은 같은 시계 시각인 07·08시 칸에 합쳐짐)
@@ -6116,7 +6115,7 @@
                     const y = Y(o.v), hgt = Math.max(1, Y(0) - y);
                     svg += '<rect x="' + (X(i) + 1) + '" y="' + y + '" width="' + (bw - 2) + '" height="' + hgt + '" rx="1.5" fill="' + colors[p.name] + '" stroke="rgba(60,45,20,.28)" stroke-width=".6" ' + (o.n < 3 ? 'opacity=".55"' : '') + '><title>' + esc(p.name) + ' · ' + rsHh(h) + '시\n하루 평균 ' + o.v.toFixed(1) + '분 (전체 근무자 평균 ' + mean[h].toFixed(1) + '분)\n합계 ' + o.min.toFixed(1) + '분 / 근무 ' + o.n + '일 · 이 시간대에 시작한 이석 ' + o.cnt + '회</title></rect>';
                     if (h === pkh && pk > 0) svg += '<text x="' + (X(i) + bw / 2) + '" y="' + (y - 3) + '" text-anchor="middle" class="bb-rs-fp">' + o.v.toFixed(1) + '</text>';
-                } else if (inSpan(p, h)) svg += '<rect x="' + (X(i) + 1) + '" y="' + (Y(0) - 3) + '" width="' + (bw - 2) + '" height="3" rx="1" fill="#8f73d4" opacity=".55"><title>' + rsHh(h) + '시 휴게</title></rect>';
+                }
             });
             let d = '', pen = false;   // 같은 시간대 전체 근무자 평균 (점선)
             hrs.forEach(({ h }, i) => { if (mean[h] == null) { pen = false; return; } d += (pen ? 'L' : 'M') + (X(i) + bw / 2).toFixed(1) + ' ' + Y(mean[h]).toFixed(1) + ' '; pen = true; });
@@ -6144,7 +6143,7 @@
         const cap = Math.max(10, Math.ceil(maxV * 1.15 / 5) * 5);   // 막대 위 숫자가 들어갈 여유를 둠
         if (_rsHl && !list.some(p => p.name === _rsHl)) _rsHl = null;
         $att('bb-rs-legend').replaceChildren(attEl('span', '', (_rsView === 'flow'
-            ? '막대 = 시간대별 하루 평균 이석(분), 같은 눈금(최대 ' + cap + '분) · 점선 = 전체 평균 · 보라 = 휴게 · 카드 클릭 = 일자별 기록'
+            ? '막대 = 시간대별 하루 평균 이석(분), 같은 눈금(최대 ' + cap + '분) · 점선 = 전체 평균 · 카드 클릭 = 일자별 기록'
             : '막대 = 시간대별 하루 평균 이석(분), 같은 눈금(최대 ' + cap + '분) · 흐리게 = 근무 3일 미만 · 줄 클릭 = 강조')));
         const st = sc.scrollTop, sl = sc.scrollLeft;   // 눌러서 다시 그려도 보던 위치 유지
         sc.replaceChildren(_rsView === 'flow' ? rsBuildFlow(list, hmin, hmax, cap) : rsBuildHBars(list, hmin, hmax, cap)); rsFitBars(); sc.scrollTop = st; sc.scrollLeft = sl;
