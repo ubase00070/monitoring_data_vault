@@ -2350,6 +2350,7 @@
         isOpen = false;
         document.getElementById('bb').classList.remove('open');
         window.__bbIvSpClose?.();   // 개입 통계 팝업 (SECTION 18)
+        window.__bbIvTrClose?.();   // 개입 시간추이 팝업 (SECTION 18)
         window.__bbDlSpClose?.();   // 배달 누적 통계 팝업 (SECTION 19)
         document.getElementById('bb-alert-panel').classList.remove('open');
         // (기체 정보 창은 보드를 닫아도 유지 — 창의 ✕ 로만 닫음)
@@ -6419,6 +6420,7 @@
                 '<button class="bb-mm-nav" id="bb-iv-all" title="그날 전체 처리 내역">자세히</button>' +
                 '<span class="bb-att-stat" id="bb-iv-stat"></span>' +
               '</div>' +
+              '<button class="bb-mm-nav" id="bb-iv-tr-btn" title="시간대별 처리 추이 (근무일 선택, 사람별 막대)"><span class="tx"><span class="l1">시간</span><span class="l2">추이</span></span></button>' +
               '<button class="bb-mm-nav" id="bb-iv-stats-btn" title="개인별 누적 개입 건수 (근무일수 포함)"><span class="tx"><span class="l1">누적</span><span class="l2">통계</span></span></button>' +
               '<button class="bb-mm-nav bb-att-back" id="bb-iv-back" title="다중 모니터링으로 돌아가기"><span class="tx"><span class="l1">다중</span><span class="l2">미갱신</span></span><span class="ar">»</span></button>' +
               '<div class="bb-att-cal" id="bb-iv-cal"></div>' +
@@ -7174,7 +7176,7 @@
         }
         function spOpen() {
             if (_spOpen) { spClose(); return; }
-            ivClosePop(); ivCloseCal(); ivCloseHelp();
+            ivClosePop(); ivCloseCal(); ivCloseHelp(); window.__bbIvTrClose?.();
             _spOpen = true;
             $iv('bb-iv-stats-btn').classList.add('on');
             spPop.classList.add('open');
@@ -7196,6 +7198,442 @@
         }), true);
         document.addEventListener('keydown', ivSafe(e => { if (e.key === 'Escape' && _spOpen) spClose(); }));
         window.addEventListener('resize', ivSafe(() => { if (_spOpen) spPlace(); }));
+
+        /* ───────── 시간추이: 시간대별 · 사람별 처리 건수 (헤더의 '시간추이' 버튼 → 큰 팝업) ─────────
+           · [날짜별] 근무일 하나를 골라 07시 ~ 다음날 06시 시간대별 사람별 막대그래프.
+           · [전체 추이] 지금까지 기록 전체에서 '사람마다, 그 시간대에 일한 날 기준 평균 처리 건수' 를 사람별 선그래프로.
+             (휴게 칸과 근무시간 밖은 평균에서 제외 · 오늘은 아직 끝나지 않았으므로 제외)
+           · 데이터: 날짜 목록(view=dates) + 그날 요약(view=summary&date=…) 의 p.hours (근무 시작 시각부터 1칸=1시간, 서버가 '이름 확정'으로 센 건수).
+           · 저장(localStorage bbIvTrV1): 지난 날짜마다 { 이름: [0~23시 건수, 근무 밖=-1] } 를 한 번만 받아 보관. 새 날짜가 생겼을 때(또는 서버 rev 가 바뀐 날)만 추가로 받고,
+             평균은 저장분으로 즉시 계산하므로 창을 다시 열거나 새로고침해도 전부 다시 받지 않는다. */
+        const IV_TR_KEY = 'bbIvTrV1';
+        const trSt = document.createElement('style');
+        trSt.id = 'bb-tr-style';
+        trSt.textContent = `
+        #bb .bb-iv-head { grid-template-columns:auto minmax(0,1fr) auto auto; }
+        #bb-iv-tr-btn { grid-column:3; grid-row:1 / 3; align-self:stretch; height:auto; padding:0 8px; margin-right:6px; background:#dbe8fd; border-color:#93b5ee; color:#1e3a8a; }
+        #bb-iv-tr-btn.on { background:#b3cdf8; border-color:#5b8fe0; }
+        #bb-iv-stats-btn { grid-column:4; }
+        #bb-iv-back { grid-column:4; }
+        #bb-iv-tr {
+            --bg:#f2e4c4; --sur:#f8f3e6; --sur2:#efe6d2; --bd:#cabf9d; --bd2:#b3a687; --tx:#2b2418; --mu:#7a6f5c; --bl:#3b82f6;
+            display:none; position:fixed; width:min(1400px, 94vw); flex-direction:column; color:var(--tx); font-family:'Paperlogy','Lato',-apple-system,sans-serif;
+            border:3px solid transparent; border-radius:14px;
+            transform:scale(var(--bb-pop-zoom,1)); transform-origin:center center;
+            background-image:linear-gradient(var(--sur),var(--sur)), linear-gradient(135deg, #a5c8ff, #2563eb);
+            background-origin:border-box; background-clip:padding-box,border-box;
+            box-shadow:0 18px 46px rgba(0,0,0,.45); z-index:99999998; box-sizing:border-box; overflow:hidden;
+        }
+        #bb-iv-tr * { box-sizing:border-box; }
+        #bb-iv-tr.open { display:flex; }
+        .bb-tr-h { flex:0 0 auto; padding:12px 16px 6px; display:flex; flex-wrap:wrap; align-items:center; gap:6px 12px; }
+        .bb-tr-h b { font-size:calc(22px * var(--bb-ts, 1)); font-weight:900; }
+        .bb-tr-nav { display:inline-flex; align-items:center; gap:6px; }
+        .bb-tr-nav button, .bb-tr-allb { width:30px; height:30px; border-radius:8px; border:1.5px solid var(--bd2); background:var(--sur2); color:var(--tx); font-size:calc(17px * var(--bb-ts, 1)); font-weight:900; line-height:1; cursor:pointer; }
+        .bb-tr-nav button:hover:not(:disabled) { border-color:var(--bl); color:var(--bl); }
+        .bb-tr-nav button:disabled { opacity:.35; cursor:not-allowed; }
+        .bb-tr-nav select { height:30px; padding:0 8px; border-radius:8px; border:1.5px solid var(--bd2); background:var(--sur2); color:var(--tx); font-family:inherit; font-size:calc(15px * var(--bb-ts, 1)); font-weight:700; cursor:pointer; }
+        .bb-tr-nav.dim { opacity:.55; }
+        .bb-tr-allb { width:auto; padding:0 14px; font-size:calc(15px * var(--bb-ts, 1)); font-weight:800; font-family:inherit; }
+        .bb-tr-allb:hover { border-color:var(--bl); color:var(--bl); }
+        .bb-tr-allb.on { background:#b3cdf8; border-color:#5b8fe0; color:#1e3a8a; }
+        .bb-tr-h .rf { font-size:calc(13.5px * var(--bb-ts, 1)); color:var(--bl); cursor:pointer; text-decoration:underline; }
+        .bb-tr-h .x { margin-left:auto; color:#b91c1c; font-size:calc(18px * var(--bb-ts, 1)); font-weight:900; padding:0 4px; cursor:pointer; }
+        .bb-tr-sum { flex:0 0 auto; display:flex; flex-wrap:wrap; gap:2px 20px; padding:2px 16px 8px; font-size:calc(14px * var(--bb-ts, 1)); color:var(--mu); border-bottom:1px solid var(--bd); }
+        .bb-tr-sum b { margin-left:5px; font-size:calc(17px * var(--bb-ts, 1)); font-weight:900; color:var(--tx); font-variant-numeric:tabular-nums; }
+        .bb-tr-sum b.hl { color:#c2410c; }
+        .bb-tr-sum .pg { color:#c2410c; font-weight:800; }
+        .bb-tr-body { flex:1 1 auto; min-height:0; overflow-y:auto; }
+        .bb-tr-wrap { position:relative; overflow-x:auto; padding:8px 8px 0; }
+        .bb-tr-wrap svg { display:block; overflow:visible; }
+        .bb-tr-hm { overflow:auto; margin:8px 8px 0; border:1px solid var(--bd); border-radius:10px; background:var(--sur); }
+        .bb-tr-g { position:relative; display:grid; grid-template-columns:176px repeat(24, minmax(46px, 1fr)); min-width:1290px; }
+        .bb-tr-g > div { height:31px; display:flex; align-items:center; justify-content:center; font-size:calc(14px * var(--bb-ts, 1)); font-variant-numeric:tabular-nums; border-right:1px solid rgba(120,100,60,.14); border-bottom:1px solid rgba(120,100,60,.14); white-space:nowrap; }
+        .bb-tr-g .hd, .bb-tr-g .hd2, .bb-tr-g .cn { position:sticky; z-index:3; background:var(--sur2); font-weight:800; color:var(--mu); }
+        .bb-tr-g .hd { top:0; }
+        .bb-tr-g .hd2 { top:31px; color:var(--tx); border-bottom:2px solid var(--bd2); font-size:calc(13px * var(--bb-ts, 1)); }
+        .bb-tr-g .cn { left:0; z-index:4; justify-content:flex-start; padding:0 10px; }
+        .bb-tr-g .cn.hd2 { top:31px; }
+        .bb-tr-g .nm { position:sticky; left:0; z-index:2; justify-content:flex-start; gap:6px; padding:0 10px; background:var(--sur); cursor:pointer; font-weight:800; overflow:hidden; }
+        .bb-tr-g .nm small { margin-left:auto; color:var(--mu); font-size:calc(12px * var(--bb-ts, 1)); font-weight:700; }
+        .bb-tr-g .nm:hover { color:#166534; }
+        .bb-tr-g .nm.sel { background:#d8f3dc; color:#166534; }
+        .bb-tr-g .v { font-weight:700; }
+        .bb-tr-g .v.off { background:repeating-linear-gradient(135deg, transparent 0 5px, rgba(120,100,60,.07) 5px 6px); }
+        .bb-tr-g .clr { position:sticky; left:0; bottom:0; z-index:4; justify-content:center; background:var(--sur2); color:#166534; font-weight:800; cursor:pointer; border-top:2px solid var(--bd2); user-select:none; }
+        .bb-tr-g .clr:hover { background:#d8f3dc; }
+        .bb-tr-g .clr.off { opacity:.45; cursor:default; }
+        .bb-tr-g .ft { position:sticky; bottom:0; z-index:3; background:var(--sur2); border-top:2px solid var(--bd2); }
+        .bb-tr-g .nm, .bb-tr-chip { user-select:none; }
+        .bb-tr-g .v.dim { opacity:.3; }
+        .bb-tr-g .v.top { box-shadow:inset 0 0 0 2.5px #8f73d4; font-weight:800; }   /* 그 시간대 최다 처리자: 연한 보라 테두리 — 녹색 칸과 보색 계열이라 또렷하고 붉은 계열처럼 눈이 아프지 않음 */
+        .bb-tr-g .v.top.dim { opacity:.6; }
+        .bb-tr-g .v.top.rowsel { box-shadow:inset 0 0 0 2.5px #8f73d4, inset 0 4px 0 #15803d, inset 0 -4px 0 #15803d; }
+        .bb-tr-g .v.rowsel { box-shadow:inset 0 1px 0 #15803d, inset 0 -1px 0 #15803d; }
+        .bb-tr-srt { display:inline-flex; border:1.5px solid var(--bd2); border-radius:8px; overflow:hidden; }
+        .bb-tr-srt button { height:27px; padding:0 11px; border:0; background:var(--sur2); color:var(--mu); font-family:inherit; font-size:calc(14px * var(--bb-ts, 1)); font-weight:700; cursor:pointer; }
+        .bb-tr-srt button.on { background:#b3cdf8; color:#1e3a8a; font-weight:900; }
+        .bb-tr-leg { display:flex; flex-wrap:wrap; gap:6px; padding:10px 16px 8px; }
+        .bb-tr-chip { display:inline-flex; align-items:center; gap:6px; padding:3px 10px; border-radius:999px; border:1.5px solid var(--bd2); background:var(--sur2); color:var(--tx); font-size:calc(14px * var(--bb-ts, 1)); font-weight:700; cursor:pointer; user-select:none; }
+        .bb-tr-chip:hover { border-color:var(--mu); }
+        .bb-tr-chip i { width:10px; height:10px; border-radius:3px; }
+        .bb-tr-chip small { color:var(--mu); font-size:calc(12.5px * var(--bb-ts, 1)); font-weight:700; }
+        .bb-tr-chip.sel { border-color:#c2410c; background:#ffe8d6; }
+        .bb-tr-msg { padding:44px 16px; text-align:center; color:var(--mu); font-size:calc(15px * var(--bb-ts, 1)); }
+        .bb-tr-ft { flex:0 0 auto; padding:6px 16px 9px; border-top:1px solid var(--bd); font-size:calc(12.5px * var(--bb-ts, 1)); line-height:1.55; color:var(--mu); }
+        `;
+        document.head.appendChild(trSt);
+
+        const trPop = ivEl('div'); trPop.id = 'bb-iv-tr';
+        document.body.appendChild(trPop);
+        let _trOpen = false, _trSeq = 0, _trDate = '', _trSel = new Set(), _trDates = null, _trRevs = null, _trDatesAt = 0, _trState = 'loading', _trData = null;
+        let _trAnchor = '', _trMode = 'day', _trAll = null, _trSort = 'start';   // _trAll = { store, state:{ phase, done, total, failed } }
+        const _trCache = new Map();   // 날짜 → { at, d }
+        const trEsc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+        const TR_AXIS = Array.from({ length: 24 }, (_, i) => (i + 7) % 24);
+        const trPruneSel = list => { const ok = new Set(list.map(p => p.name)); [..._trSel].forEach(n => { if (!ok.has(n)) _trSel.delete(n); }); };
+        const trNum = v => String(Math.round(v * 100) / 100);
+
+        async function trFetchDay(d, force) {
+            const c = _trCache.get(d);
+            if (c && !force && (d !== ivOpDate() || Date.now() - c.at < 60000)) return c.d;
+            const j = await attFetchJson(IV_API + '?view=summary&date=' + d);
+            if (!j || j.ok !== true || !Array.isArray(j.people)) throw new Error('데이터 형식 오류');
+            _trCache.set(d, { at: Date.now(), d: j });
+            return j;
+        }
+        async function trFetchDates(force) {
+            if (_trDates && !force && Date.now() - _trDatesAt < 10 * 60000) return _trDates;
+            const dd = await attFetchJson(IV_API + '?view=dates');
+            if (!dd || dd.ok !== true || !Array.isArray(dd.dates)) throw new Error('데이터 형식 오류');
+            _trDates = dd.dates.filter(x => /^\d{4}-\d{2}-\d{2}$/.test(x)); _trDatesAt = Date.now();
+            _trRevs = (dd.revs && typeof dd.revs === 'object') ? dd.revs : null;
+            return _trDates;
+        }
+        const trDateList = () => { const s = new Set(_trDates || []); s.add(ivOpDate()); return [...s].sort().reverse(); };   // 최신순
+
+        // 색: 막대용(밝게) / 선용(진하게). 인원마다 색상환을 균등 분할 (순위가 가까운 사람끼리 서로 먼 색이 되도록 건너뛰며 배정)
+        function trColors(list) {
+            const n = list.length, gcd = (a, b) => (b ? gcd(b, a % b) : a);
+            let step = Math.max(1, Math.round(n * 0.382)); while (n > 1 && gcd(step, n) !== 1) step++;
+            list.forEach((p, k) => {
+                const hue = Math.round((((k * step) % n) * 360) / n + 210) % 360;
+                p.color = 'hsl(' + hue + ',62%,' + (k % 2 ? 66 : 56) + '%)';
+                p.lcolor = 'hsl(' + hue + ',68%,' + (k % 2 ? 52 : 42) + '%)';
+            });
+        }
+        // 그날 요약 → [{ name, arr[24 = 시각별 건수], total, shift }] (건수 많은 순)
+        function trPeople(j) {
+            const out = [];
+            (j.people || []).forEach(p => {
+                if (!p || !p.name || !Array.isArray(p.hours)) return;
+                const m = /^(\d{2})/.exec(p.shift || ''); if (!m) return;
+                const arr = new Array(24).fill(0); let tot = 0;
+                p.hours.forEach((c, i) => { c = +c || 0; if (c > 0) { arr[(+m[1] + i) % 24] += c; tot += c; } });
+                if (tot > 0) out.push({ name: p.name, arr, total: tot, shift: p.shift });
+            });
+            out.sort((a, b) => b.total - a.total || a.name.localeCompare(b.name, 'ko'));
+            trColors(out);
+            return out;
+        }
+
+        /* ── 전체 추이: 저장소 + 집계 ── */
+        const trStoreLoad = () => { try { const s = JSON.parse(localStorage.getItem(IV_TR_KEY) || 'null'); if (s && s.days && typeof s.days === 'object') { s.got = s.got || {}; s.revs = s.revs || {}; return s; } } catch (e) { /* 없으면 새로 */ } return { days: {}, got: {}, revs: {} }; };
+        const trStoreSave = s => { try { localStorage.setItem(IV_TR_KEY, JSON.stringify(s)); } catch (e) { /* 저장 못 해도 이번 화면에는 지장 없음 */ } };
+        // 하루 요약 → { 이름: [0~23시 건수 (근무 밖·휴게 칸 = -1)] }
+        function trCompact(j) {
+            const o = {};
+            (j.people || []).forEach(p => {
+                if (!p || !p.name || !Array.isArray(p.hours)) return;
+                const m = /^(\d{2})/.exec(p.shift || ''); if (!m) return;
+                const arr = new Array(24).fill(-1);
+                p.hours.forEach((c, i) => { if (ivOv(p, i) === 'b') return; const h = (+m[1] + i) % 24; if (arr[h] < 0) arr[h] = 0; arr[h] += (+c || 0); });
+                if (arr.some(v => v >= 0)) o[p.name] = arr;
+            });
+            return o;
+        }
+        // 저장분 전체 → [{ name, avg[24 | null], n[24], total(시간대 평균의 합), days }] (합 큰 순)
+        function trAggregate(store) {
+            const acc = new Map(); let nd = 0, first = '', last = '';
+            Object.keys(store.days).sort().forEach(d => {
+                nd++; if (!first) first = d; last = d;
+                const day = store.days[d];
+                Object.keys(day).forEach(nm => {
+                    let a = acc.get(nm); if (!a) acc.set(nm, a = { name: nm, sum: new Array(24).fill(0), n: new Array(24).fill(0), days: 0 });
+                    a.days++;
+                    day[nm].forEach((v, h) => { if (v >= 0) { a.sum[h] += v; a.n[h]++; } });
+                });
+            });
+            const people = [...acc.values()].map(a => {
+                const avg = a.sum.map((s, h) => (a.n[h] ? s / a.n[h] : null));
+                return { name: a.name, avg, n: a.n, days: a.days, total: avg.reduce((x, v) => x + (v || 0), 0), shift: '' };
+            }).filter(p => p.total > 0).sort((a, b) => b.total - a.total || a.name.localeCompare(b.name, 'ko'));
+            trColors(people);
+            return { people, nd, first, last };
+        }
+        async function trLoadAll(force) {
+            const seq = ++_trSeq;
+            const store = force ? { days: {}, got: {}, revs: {} } : trStoreLoad();
+            const st = { phase: 'loading', done: 0, total: 0, failed: 0 };
+            _trAll = { store, state: st };
+            trRender();   // 저장분을 먼저 보여주고 그 위에 갱신
+            let dates;
+            try { dates = (await trFetchDates(force)).slice().sort(); }
+            catch (e) {
+                console.warn('[BB] 시간추이 날짜 목록 실패:', e && e.message);
+                if (seq === _trSeq) { st.phase = 'fail'; trRender(); }
+                return;
+            }
+            if (seq !== _trSeq) return;
+            Object.keys(store.days).forEach(d => { if (!dates.includes(d)) { delete store.days[d]; delete store.got[d]; delete store.revs[d]; } });   // 서버에서 사라진 날짜는 버림
+            const today = ivOpDate(), revs = _trRevs;
+            // 지난 날짜만 (오늘은 아직 진행 중). 없는 날 + (rev 가 있으면 rev 달라진 날 / 없으면 끝난 지 이틀이 안 된 날) 만 받는다
+            const todo = dates.filter(d => d < today && (!store.days[d] || (revs ? (revs[d] && store.revs[d] !== revs[d]) : (store.got[d] || '') < spShift(d, 2))));
+            st.total = todo.length;
+            trRender();
+            let idx = 0, since = 0;
+            const worker = async () => {
+                while (idx < todo.length) {
+                    if (seq !== _trSeq) return;
+                    const d = todo[idx++];
+                    try {
+                        const j = await attFetchJson(IV_API + '?view=summary&date=' + d);
+                        if (j && j._404) { delete store.days[d]; delete store.got[d]; delete store.revs[d]; }
+                        else if (!j || j.ok !== true || !Array.isArray(j.people)) throw new Error('데이터 형식 오류');
+                        else { store.days[d] = trCompact(j); store.got[d] = today; if (revs && revs[d]) store.revs[d] = revs[d]; }
+                    } catch (e) { st.failed++; }
+                    st.done++;
+                    if (++since >= 10) { since = 0; trStoreSave(store); }   // 중간 저장 — 닫아도 받은 만큼은 남음
+                    if (seq === _trSeq && (st.done % 3 === 0 || st.done === st.total)) trRender();
+                }
+            };
+            await Promise.all(Array.from({ length: Math.min(IV_SP_CONC, todo.length) }, worker));
+            trStoreSave(store);
+            if (seq !== _trSeq) return;
+            st.phase = 'done';
+            trRender();
+        }
+
+        /* ── 그리기 ── */
+        function trAvail() { return Math.max(500, trPop.clientWidth - 28); }
+        function trAxisSvg(W, H, M, band, yMax, stp, fmt) {
+            const ih = H - M.t - M.b, y = v => M.t + ih - (v / yMax) * ih, base = M.t + ih;
+            let g = '';
+            for (let v = 0; v <= yMax + 1e-9; v += stp) g += '<line x1="' + M.l + '" x2="' + (W - M.r) + '" y1="' + y(v) + '" y2="' + y(v) + '" stroke="' + (v === 0 ? '#b3a687' : '#d9cfb3') + '" stroke-dasharray="' + (v === 0 ? '' : '3 4') + '"/><text x="' + (M.l - 7) + '" y="' + (y(v) + 4) + '" text-anchor="end" font-size="12" fill="#7a6f5c">' + fmt(v) + '</text>';
+            TR_AXIS.forEach((h, i) => {
+                g += '<text x="' + (M.l + band * (i + 0.5)) + '" y="' + (H - M.b + 19) + '" text-anchor="middle" font-size="12" fill="#7a6f5c">' + h + '시</text>';
+                if (h === 0) g += '<line x1="' + (M.l + band * i) + '" x2="' + (M.l + band * i) + '" y1="' + M.t + '" y2="' + base + '" stroke="#b3a687" stroke-dasharray="2 4"/>';
+            });
+            return { g, y, base, ih };
+        }
+        function trLegend(people, sub) {
+            const leg = ivEl('div', 'bb-tr-leg');
+            people.forEach(p => {
+                const c = ivEl('span', 'bb-tr-chip' + (_trSel.has(p.name) ? ' sel' : ''));
+                c.dataset.focus = p.name; c.title = p.shift || '';
+                c.innerHTML = '<i style="background:' + p.color + '"></i>' + trEsc(p.name) + ' <small>' + sub(p) + '</small>';
+                leg.appendChild(c);
+            });
+            const cl = ivEl('span', 'bb-tr-chip', '전체 해제'); cl.dataset.act = 'clear'; cl.style.opacity = _trSel.size ? '1' : '.45'; leg.appendChild(cl);
+            return leg;
+        }
+        function trDayChart(body, sum, people) {
+            const items = TR_AXIS.map(h => people.filter(p => p.arr[h] > 0).map(p => ({ p, v: p.arr[h] })));
+            const totals = items.map(l => l.reduce((a, b) => a + b.v, 0));
+            const total = totals.reduce((a, b) => a + b, 0);
+            const pk = totals.indexOf(Math.max.apply(null, totals));
+            const sel = people.filter(p => _trSel.has(p.name)), fp = sel.length === 1 ? sel[0] : null;
+            let fh = -1, fv = 0; if (fp) TR_AXIS.forEach(h => { if (fp.arr[h] > fv) { fv = fp.arr[h]; fh = h; } });
+            sum.innerHTML = '<span>총 처리<b class="hl">' + total + '건</b></span><span>처리 인원<b>' + people.length + '명</b></span><span>가장 바쁜 시간대<b>' + TR_AXIS[pk] + '시 · ' + totals[pk] + '건</b></span>' +
+                (fp ? '<span>' + trEsc(fp.name) + '<b class="hl">' + fp.total + '건</b></span><span>피크<b>' + (fh >= 0 ? fh + '시 · ' + fv + '건' : '-') + '</b></span>' : sel.length > 1 ? '<span>선택 ' + sel.length + '명 합계<b class="hl">' + sel.reduce((a, p) => a + p.total, 0) + '건</b></span>' : '');
+            const wrap = ivEl('div', 'bb-tr-wrap');
+            const maxK = Math.max(1, ...items.map(l => l.length)), M = { l: 36, r: 12, t: 30, b: 30 };
+            const avail = trAvail(), band0 = (avail - M.l - M.r) / 24;
+            const BAR = 24, GAP = 2, FS = 15, LH = 17;   // 막대 폭·이름 글자는 고정으로 크게 (대신 그래프가 가로로 길어져 스크롤)
+            const H = Math.max(330, Math.min(620, Math.round(trPop.clientHeight * 0.55)));
+            const W = Math.max(avail, M.l + M.r + 24 * (maxK * (BAR + GAP) + 12)), band = (W - M.l - M.r) / 24;
+            const rawMax = Math.max(1, ...people.flatMap(p => p.arr)), stp = rawMax <= 5 ? 1 : Math.ceil(rawMax / 5), yMax = Math.ceil(rawMax / stp) * stp;
+            const ax = trAxisSvg(W, H, M, band, yMax, stp, v => v), y = ax.y, base = ax.base, cx0 = i => M.l + band * (i + 0.5);
+            let bars = '', labs = '';
+            items.forEach((list, i) => {
+                const k = list.length, gw = k * BAR + (k - 1) * GAP;
+                list.forEach(({ p, v }, j) => {
+                    const bx = cx0(i) - gw / 2 + j * (BAR + GAP), top = y(v), bh = base - top, cx = bx + BAR / 2;
+                    const isF = _trSel.has(p.name), dim = _trSel.size > 0 && !isF, chars = Array.from(p.name), nh = chars.length * LH;
+                    if (isF) bars += '<rect x="' + (bx - 2.5) + '" y="' + (top - 2.5) + '" width="' + (BAR + 5) + '" height="' + (bh + 2.5) + '" rx="5" fill="none" stroke="#c2410c" stroke-width="1.8"/>';
+                    bars += '<rect x="' + bx + '" y="' + top + '" width="' + BAR + '" height="' + bh + '" rx="3" fill="' + p.color + '" opacity="' + (isF ? 1 : dim ? 0.28 : 0.92) + '"/>';
+                    labs += '<text x="' + cx + '" y="' + (top - 5) + '" text-anchor="middle" font-size="' + (isF ? FS + 1.5 : FS - 1) + '" font-weight="800" fill="' + (isF ? '#c2410c' : '#2b2418') + '" opacity="' + (dim ? 0.4 : 1) + '">' + v + '</text>';
+                    const inside = bh >= nh + 12;
+                    chars.forEach((ch, c) => {
+                        const ty = inside ? top + 8 + FS + c * LH : top - 21 - (chars.length - 1 - c) * LH;
+                        labs += '<text x="' + cx + '" y="' + ty + '" text-anchor="middle" font-size="' + FS + '" font-weight="800" fill="' + (inside ? '#1f1a10' : '#2b2418') + '" opacity="' + (dim ? 0.4 : 1) + '">' + trEsc(ch) + '</text>';
+                    });
+                });
+            });
+            wrap.innerHTML = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" font-family="Paperlogy,Lato,sans-serif">' + ax.g +
+                bars + labs + '</svg>';
+            body.appendChild(wrap);
+            body.appendChild(trLegend(people, p => p.total + '건'));
+        }
+        // 전체 추이: 사람(행) × 시간대(열) 평균 처리 건수 표 (색이 진할수록 많음). 선그래프는 46명이 겹쳐 구분이 안 돼 이 방식으로 바꿈.
+        function trAllChart(body, sum, ag) {
+            const people = ag.people.slice(), st = _trAll.state;
+            const colTot = TR_AXIS.map(h => people.reduce((a, p) => a + (p.avg[h] || 0), 0));
+            const sel = people.filter(p => _trSel.has(p.name)), fp = sel.length === 1 ? sel[0] : null;
+            let fh = -1, fv = 0; if (fp) TR_AXIS.forEach(h => { if ((fp.avg[h] || 0) > fv) { fv = fp.avg[h]; fh = h; } });
+            sum.innerHTML = '<span>기록<b class="hl">' + ag.nd + '일치</b></span><span>기간<b>' + (ag.first ? ivMD(ag.first) + ' ~ ' + ivMD(ag.last) : '-') + '</b></span><span>인원<b>' + people.length + '명</b></span>' +
+                (fp ? '<span>' + trEsc(fp.name) + ' 피크<b class="hl">' + (fh >= 0 ? fh + '시 · 평균 ' + trNum(fv) + '건' : '-') + '</b></span><span>' + trEsc(fp.name) + ' 근무<b>' + fp.days + '일</b></span>' : sel.length > 1 ? '<span>선택<b class="hl">' + sel.length + '명</b></span>' : '') +
+                (st.phase === 'loading' ? '<span class="pg">새 날짜 받는 중 ' + st.done + '/' + st.total + '</span>' : st.phase === 'fail' ? '<span class="pg">날짜 목록을 받지 못해 저장분만 표시</span>' : st.failed ? '<span class="pg">' + st.failed + '일 받기 실패</span>' : '');
+            // 정렬: 출근시간순(그 사람이 주로 일하는 첫 시간대 → 처리량) / 처리량순
+            const startIdx = p => {   // 실제 출근 시각(연속 근무 구간의 시작)을 07시 기준 순서로. 예) 00-09 근무자는 07·08시를 지나지만 출근은 00시 → 아래쪽
+                const mx = Math.max.apply(null, p.n), w = p.n.map(n => n >= Math.max(1, mx * 0.3));
+                for (let h = 0; h < 24; h++) if (!w[h] && w[(h + 23) % 24] && w[(h + 1) % 24]) w[h] = true;   // 휴게 1칸은 근무로 이어 봄
+                if (w.every(Boolean)) return 0;
+                let best = -1, bestLen = 0;
+                for (let h = 0; h < 24; h++) if (w[h] && !w[(h + 23) % 24]) { let l = 0; while (w[(h + l) % 24] && l < 24) l++; if (l > bestLen) { bestLen = l; best = h; } }
+                return best < 0 ? 99 : (best - 7 + 24) % 24;
+            };
+            if (_trSort === 'start') people.sort((a, b) => startIdx(a) - startIdx(b) || b.total - a.total || a.name.localeCompare(b.name, 'ko'));
+            let gmax = 0; people.forEach(p => p.avg.forEach(v => { if (v > gmax) gmax = v; }));
+            gmax = Math.max(gmax, 0.5);
+            const colBest = TR_AXIS.map(hr => { let m = 0; people.forEach(p => { if ((p.avg[hr] || 0) > m) m = p.avg[hr]; }); return m; });   // 시간대(열)별 최고 평균 — 그 칸(동률이면 모두)을 진한 테두리로
+            const fmt1 = v => String(Math.round(v * 10) / 10);
+            let h = '<div class="cn hd">이름 · 일 평균 합계</div>';
+            TR_AXIS.forEach((hr, i) => { h += '<div class="hd">' + hr + '시</div>'; });
+            h += '<div class="cn hd2">전체 평균 합계</div>';
+            TR_AXIS.forEach((hr, i) => { h += '<div class="hd2">' + (colTot[i] > 0 ? fmt1(colTot[i]) : '-') + '</div>'; });
+            people.forEach(p => {
+                const isF = _trSel.has(p.name), dim = _trSel.size > 0 && !isF;
+                h += '<div class="nm' + (isF ? ' sel' : '') + '" data-focus="' + trEsc(p.name) + '">' + trEsc(p.name) + '<small>' + fmt1(p.total) + '</small></div>';
+                TR_AXIS.forEach((hr, i) => {
+                    const v = p.avg[hr];
+                    if (v == null) { h += '<div class="v off' + (dim ? ' dim' : '') + '"></div>'; return; }
+                    const t = Math.pow(Math.min(1, v / gmax), 0.75);   // 파스텔 녹색 그라데이션: 연한 연두(적음) → 진한 민트그린(많음). 글씨는 항상 짙은 색
+                    const bg = v > 0 ? 'hsl(' + Math.round(110 + 25 * t) + ',' + Math.round(38 + 22 * t) + '%,' + Math.round(95 - 38 * t) + '%)' : 'transparent';
+                    h += '<div class="v' + (dim ? ' dim' : '') + (isF ? ' rowsel' : '') + (v > 0 && v >= colBest[i] - 1e-9 ? ' top' : '') + '" style="background:' + bg + ';color:' + (v > 0 ? '#16301f' : '#b3a687') + '">' + (v > 0 ? fmt1(v) : '·') + '</div>';
+                });
+            });
+            h += '<div class="clr' + (_trSel.size ? '' : ' off') + '" data-act="clear">전체 해제</div>' + '<div class="ft"></div>'.repeat(24);   // 맨 아래(항상 보이게 고정): 선택 전체 해제
+            const hm = ivEl('div', 'bb-tr-hm');
+            hm.style.maxHeight = Math.max(260, trPop.clientHeight - 215) + 'px';
+            hm.innerHTML = '<div class="bb-tr-g">' + h + '</div>';
+            body.appendChild(hm);
+        }
+
+        function trRender() {
+            if (!_trOpen) return;
+            const dates = trDateList();
+            if (!dates.includes(_trDate)) _trDate = dates[0];
+            const di = dates.indexOf(_trDate), all = _trMode === 'all';
+            const head = ivEl('div', 'bb-tr-h');
+            head.appendChild(ivEl('b', '', all ? '시간대별 추이 · 전체 평균' : '시간대별 추이'));
+            const nav = ivEl('div', 'bb-tr-nav' + (all ? ' dim' : ''));
+            const pv = ivEl('button', '', '‹'); pv.dataset.act = 'prev'; pv.title = '이전 근무일'; pv.disabled = di >= dates.length - 1;
+            const nx = ivEl('button', '', '›'); nx.dataset.act = 'next'; nx.title = '다음 근무일'; nx.disabled = di <= 0;
+            const sel = ivEl('select'); sel.id = 'bb-tr-date';
+            dates.forEach(d => { const o = ivEl('option', '', d + (d === ivOpDate() ? ' (오늘)' : '')); o.value = d; if (d === _trDate) o.selected = true; sel.appendChild(o); });
+            nav.append(pv, sel, nx); head.appendChild(nav);
+            const ab = ivEl('button', 'bb-tr-allb' + (all ? ' on' : ''), '전체 추이'); ab.dataset.act = 'all'; ab.title = '기록 전체에서 사람별·시간대별 평균 처리 건수'; head.appendChild(ab);
+            if (all) {
+                const sg = ivEl('div', 'bb-tr-srt');
+                [['start', '출근시간순'], ['total', '처리량순']].forEach(([k, t]) => { const b = ivEl('button', _trSort === k ? 'on' : '', t); b.dataset.act = 'sort'; b.dataset.k = k; sg.appendChild(b); });
+                head.appendChild(sg);
+            }
+            const rf = ivEl('span', 'rf', all ? '새로 집계' : '새로고침'); rf.dataset.act = 'refresh'; rf.title = all ? '저장분을 버리고 모든 날짜를 다시 받음' : ''; head.appendChild(rf);
+            const x = ivEl('span', 'x', '✕'); x.dataset.act = 'close'; head.appendChild(x);
+
+            const body = ivEl('div', 'bb-tr-body'), sum = ivEl('div', 'bb-tr-sum');
+            let ft = '';
+            if (all) {
+                const ag = _trAll ? trAggregate(_trAll.store) : { people: [], nd: 0 };
+                if (!ag.people.length) body.appendChild(ivEl('div', 'bb-tr-msg', _trAll && _trAll.state.phase === 'loading' ? '기록을 불러오는 중… ' + _trAll.state.done + '/' + _trAll.state.total : '집계할 기록이 아직 없습니다.'));
+                else { trPruneSel(ag.people); trAllChart(body, sum, ag); }
+                ft = '칸 = 그 사람이 그 시간대에 일한 날만 평균낸 처리 건수 (진할수록 많음 · 빗금 = 근무 밖/휴게, 평균 제외) · 오늘은 끝나지 않아 제외 · 새 날짜가 생길 때만 추가로 받아 계산(이 브라우저에 저장) · 이름을 여러 명 눌러 그 줄만 강조 (다시 누르면 해제 · Shift+클릭 = 구간 선택) · 연한 보라 테두리 = 그 시간대 최다 처리자';
+            } else {
+                const people = _trData ? trPeople(_trData) : [];
+                trPruneSel(people);
+                if (_trState === 'loading' && !_trData) body.appendChild(ivEl('div', 'bb-tr-msg', '불러오는 중…'));
+                else if (_trState === 'fail' && !_trData) body.appendChild(ivEl('div', 'bb-tr-msg', '데이터를 받지 못했습니다. 잠시 뒤 새로고침을 눌러 주세요.'));
+                else if (!people.length) body.appendChild(ivEl('div', 'bb-tr-msg', '이 근무일에는 확정된 처리 기록이 아직 없습니다.'));
+                else trDayChart(body, sum, people);
+                ft = '근무일 07시 ~ 다음날 06시 · 건수 = 이름이 확정된 처리 건만 (개입카드 화면과 같은 기준) · 아래 이름을 여러 명 눌러 그 막대만 강조 (다시 누르면 해제) · 인원이 많으면 좌우로 스크롤';
+            }
+            const keep = trPop.querySelector('.bb-tr-body'), kt = keep ? keep.scrollTop : 0, kl = (trPop.querySelector('.bb-tr-wrap') || {}).scrollLeft || 0;
+            const oh = trPop.querySelector('.bb-tr-hm'), hmT = oh ? oh.scrollTop : 0, hmL = oh ? oh.scrollLeft : 0, sameMode = trPop.dataset.mode === _trMode;   // 표 자체의 스크롤 위치도 유지 (이름을 눌러도 제자리)
+            trPop.replaceChildren(head, sum, body, ivEl('div', 'bb-tr-ft', ft));
+            body.scrollTop = kt; const w2 = trPop.querySelector('.bb-tr-wrap'); if (w2) w2.scrollLeft = kl;
+            const nh = trPop.querySelector('.bb-tr-hm'); if (nh && sameMode) { nh.scrollTop = hmT; nh.scrollLeft = hmL; }
+            trPop.dataset.mode = _trMode;
+        }
+        async function trLoad(force) {
+            if (_trMode === 'all') return trLoadAll(force);
+            const seq = ++_trSeq, d = _trDate;
+            const c = _trCache.get(d);
+            _trData = c ? c.d : null; _trState = 'loading';
+            trRender();
+            try {
+                await trFetchDates(force).catch(e => { console.warn('[BB] 시간추이 날짜 목록 실패:', e && e.message); });
+                if (seq !== _trSeq) return;
+                _trData = await trFetchDay(d, force);
+                _trState = 'ok';
+            } catch (e) {
+                if (seq !== _trSeq) return;
+                console.warn('[BB] 시간추이 실패:', e && e.message);
+                _trState = 'fail';
+            }
+            trRender();
+        }
+        function trPlace() {   // 화면 가운데에 큰 창으로 (개입 그리드에 붙이지 않음)
+            const h = Math.round(window.innerHeight * 0.92);
+            trPop.style.height = h + 'px';
+            trPop.style.left = Math.max(0, Math.round((window.innerWidth - trPop.offsetWidth) / 2)) + 'px';
+            trPop.style.top = Math.max(0, Math.round((window.innerHeight - h) / 2)) + 'px';
+        }
+        function trClose() {
+            _trOpen = false; _trSeq++;
+            trPop.classList.remove('open');
+            const b = $iv('bb-iv-tr-btn'); if (b) b.classList.remove('on');
+        }
+        function trOpen() {
+            if (_trOpen) { trClose(); return; }
+            ivClosePop(); ivCloseCal(); ivCloseHelp(); spClose();
+            _trOpen = true;
+            $iv('bb-iv-tr-btn').classList.add('on');
+            _trDate = _trDate || ivDateNow();
+            trPop.classList.add('open');
+            trPlace();
+            trLoad(false);
+        }
+        window.__bbIvTrClose = trClose;   // 보드를 닫을 때 같이 닫음 (closeBoard 에서 호출)
+        $iv('bb-iv-tr-btn').addEventListener('click', ivSafe(() => trOpen()));
+        trPop.addEventListener('click', ivSafe(e => {
+            const ch = e.target.closest('[data-focus]');
+            if (ch) {   // 여러 명 토글 · Shift+클릭 = 마지막으로 누른 이름부터 여기까지 (화면에 보이는 순서대로) 한꺼번에 선택
+                const nm = ch.dataset.focus;
+                if (e.shiftKey && _trAnchor && _trAnchor !== nm) {
+                    const names = [...ch.closest('.bb-tr-g, .bb-tr-leg').querySelectorAll('[data-focus]')].map(el => el.dataset.focus);
+                    const i1 = names.indexOf(_trAnchor), i2 = names.indexOf(nm);
+                    if (i1 >= 0 && i2 >= 0) names.slice(Math.min(i1, i2), Math.max(i1, i2) + 1).forEach(n => _trSel.add(n));
+                    else _trSel.add(nm);
+                } else if (_trSel.has(nm)) _trSel.delete(nm); else _trSel.add(nm);
+                _trAnchor = nm; trRender(); return;
+            }
+            const a = e.target.closest('[data-act]'); if (!a || a.disabled) return;
+            const dates = trDateList(), di = dates.indexOf(_trDate), act = a.dataset.act;
+            if (act === 'clear') { _trSel.clear(); _trAnchor = ''; trRender(); }
+            else if (act === 'close') trClose();
+            else if (act === 'refresh') trLoad(true);
+            else if (act === 'sort') { _trSort = a.dataset.k; trRender(); }
+            else if (act === 'all') { _trMode = _trMode === 'all' ? 'day' : 'all'; trLoad(false); }
+            else if (act === 'prev' && di < dates.length - 1) { _trMode = 'day'; _trDate = dates[di + 1]; trLoad(false); }
+            else if (act === 'next' && di > 0) { _trMode = 'day'; _trDate = dates[di - 1]; trLoad(false); }
+        }));
+        trPop.addEventListener('change', ivSafe(e => { if (e.target.id === 'bb-tr-date') { _trMode = 'day'; _trDate = e.target.value; trLoad(false); } }));
+        document.addEventListener('click', ivSafe(e => {   // 바깥 클릭 → 닫기
+            if (_trOpen && !e.target.closest('#bb-iv-tr') && !e.target.closest('#bb-iv-tr-btn')) trClose();
+        }), true);
+        document.addEventListener('keydown', ivSafe(e => { if (e.key === 'Escape' && _trOpen) trClose(); }));
+        window.addEventListener('resize', ivSafe(() => { if (_trOpen) { trPlace(); trRender(); } }));
 
         const ivVisible = () => isOpen && _ivOpen && !document.hidden;
         setInterval(ivSafe(() => {
