@@ -2351,6 +2351,7 @@
         isOpen = false;
         document.getElementById('bb').classList.remove('open');
         window.__bbIvSpClose?.();   // 개입 통계 팝업 (SECTION 18)
+        window.__bbIvTrClose?.();   // 개입 시간추이 팝업 (SECTION 18)
         window.__bbDlSpClose?.();   // 배달 누적 통계 팝업 (SECTION 19)
         document.getElementById('bb-alert-panel').classList.remove('open');
         // (기체 정보 창은 보드를 닫아도 유지 — 창의 ✕ 로만 닫음)
@@ -6430,6 +6431,7 @@
                 '<button class="bb-mm-nav" id="bb-iv-all" title="그날 전체 처리 내역">자세히</button>' +
                 '<span class="bb-att-stat" id="bb-iv-stat"></span>' +
               '</div>' +
+              '<button class="bb-mm-nav" id="bb-iv-tr-btn" title="시간대별 처리 추이 (근무일 선택, 사람별 막대)"><span class="tx"><span class="l1">시간</span><span class="l2">추이</span></span></button>' +
               '<button class="bb-mm-nav" id="bb-iv-stats-btn" title="개인별 누적 개입 건수 (근무일수 포함)"><span class="tx"><span class="l1">누적</span><span class="l2">통계</span></span></button>' +
               '<button class="bb-mm-nav bb-att-back" id="bb-iv-back" title="다중 모니터링으로 돌아가기"><span class="tx"><span class="l1">다중</span><span class="l2">미갱신</span></span><span class="ar">»</span></button>' +
               '<div class="bb-att-cal" id="bb-iv-cal"></div>' +
@@ -7185,7 +7187,7 @@
         }
         function spOpen() {
             if (_spOpen) { spClose(); return; }
-            ivClosePop(); ivCloseCal(); ivCloseHelp();
+            ivClosePop(); ivCloseCal(); ivCloseHelp(); window.__bbIvTrClose?.();
             _spOpen = true;
             $iv('bb-iv-stats-btn').classList.add('on');
             spPop.classList.add('open');
@@ -7207,6 +7209,267 @@
         }), true);
         document.addEventListener('keydown', ivSafe(e => { if (e.key === 'Escape' && _spOpen) spClose(); }));
         window.addEventListener('resize', ivSafe(() => { if (_spOpen) spPlace(); }));
+
+        /* ───────── 시간추이: 근무일별 · 시간대별 · 사람별 처리 건수 막대그래프 (헤더의 '시간추이' 버튼 → 팝업) ─────────
+           · 데이터: 날짜 목록(view=dates) + 그날 요약(view=summary&date=…) 의 p.hours (근무 시작 시각부터 1칸=1시간, 서버가 '이름 확정'으로 센 건수).
+           · 축: 07시 ~ 다음날 06시 (근무일 기준). 지난 날짜 요약은 이 세션 동안 메모리에 보관, 오늘만 1분 지나면 다시 받음.
+           · 사람 이름을 누르면 그 사람 막대만 강조. 시간대 위에 마우스를 올리면 그 시간 전체 내역. */
+        const trSt = document.createElement('style');
+        trSt.id = 'bb-tr-style';
+        trSt.textContent = `
+        #bb .bb-iv-head { grid-template-columns:auto minmax(0,1fr) auto auto; }
+        #bb-iv-tr-btn { grid-column:3; grid-row:1 / 3; align-self:stretch; height:auto; padding:0 8px; margin-right:6px; background:#dbe8fd; border-color:#93b5ee; color:#1e3a8a; }
+        #bb-iv-tr-btn.on { background:#b3cdf8; border-color:#5b8fe0; }
+        #bb-iv-stats-btn { grid-column:4; }
+        #bb-iv-back { grid-column:4; }
+        #bb-iv-tr {
+            --bg:#f2e4c4; --sur:#f8f3e6; --sur2:#efe6d2; --bd:#cabf9d; --bd2:#b3a687; --tx:#2b2418; --mu:#7a6f5c; --bl:#3b82f6;
+            display:none; position:fixed; width:740px; max-width:96vw; flex-direction:column; color:var(--tx); font-family:'Paperlogy','Lato',-apple-system,sans-serif;
+            border:3px solid transparent; border-radius:14px;
+            transform:scale(var(--bb-pop-zoom,1)); transform-origin:center center;
+            background-image:linear-gradient(var(--sur),var(--sur)), linear-gradient(135deg, #a5c8ff, #2563eb);
+            background-origin:border-box; background-clip:padding-box,border-box;
+            box-shadow:0 18px 46px rgba(0,0,0,.45); z-index:99999998; box-sizing:border-box; overflow:hidden;
+        }
+        #bb-iv-tr * { box-sizing:border-box; }
+        #bb-iv-tr.open { display:flex; }
+        .bb-tr-h { flex:0 0 auto; padding:12px 16px 6px; display:flex; flex-wrap:wrap; align-items:center; gap:6px 12px; }
+        .bb-tr-h b { font-size:calc(22px * var(--bb-ts, 1)); font-weight:900; }
+        .bb-tr-nav { display:inline-flex; align-items:center; gap:6px; }
+        .bb-tr-nav button { width:30px; height:30px; border-radius:8px; border:1.5px solid var(--bd2); background:var(--sur2); color:var(--tx); font-size:calc(17px * var(--bb-ts, 1)); font-weight:900; line-height:1; cursor:pointer; }
+        .bb-tr-nav button:hover:not(:disabled) { border-color:var(--bl); color:var(--bl); }
+        .bb-tr-nav button:disabled { opacity:.35; cursor:not-allowed; }
+        .bb-tr-nav select { height:30px; padding:0 8px; border-radius:8px; border:1.5px solid var(--bd2); background:var(--sur2); color:var(--tx); font-family:inherit; font-size:calc(15px * var(--bb-ts, 1)); font-weight:700; cursor:pointer; }
+        .bb-tr-h .rf { font-size:calc(13.5px * var(--bb-ts, 1)); color:var(--bl); cursor:pointer; text-decoration:underline; }
+        .bb-tr-h .x { margin-left:auto; color:#b91c1c; font-size:calc(18px * var(--bb-ts, 1)); font-weight:900; padding:0 4px; cursor:pointer; }
+        .bb-tr-sum { flex:0 0 auto; display:flex; flex-wrap:wrap; gap:2px 20px; padding:2px 16px 8px; font-size:calc(14px * var(--bb-ts, 1)); color:var(--mu); border-bottom:1px solid var(--bd); }
+        .bb-tr-sum b { margin-left:5px; font-size:calc(17px * var(--bb-ts, 1)); font-weight:900; color:var(--tx); font-variant-numeric:tabular-nums; }
+        .bb-tr-sum b.hl { color:#c2410c; }
+        .bb-tr-body { flex:1 1 auto; min-height:0; overflow-y:auto; }
+        .bb-tr-wrap { position:relative; overflow-x:auto; padding:8px 8px 0; }
+        .bb-tr-wrap svg { display:block; overflow:visible; }
+        .bb-tr-tip { position:absolute; pointer-events:none; z-index:5; min-width:150px; padding:8px 11px; background:var(--sur); border:1.5px solid var(--bd2); border-radius:9px; box-shadow:0 8px 22px rgba(0,0,0,.28); font-size:calc(13.5px * var(--bb-ts, 1)); }
+        .bb-tr-tip[hidden] { display:none; }
+        .bb-tr-tip .h { font-weight:900; margin-bottom:5px; font-variant-numeric:tabular-nums; }
+        .bb-tr-tip .r { display:flex; align-items:center; gap:7px; padding:1.5px 0; color:var(--mu); }
+        .bb-tr-tip .r i { width:9px; height:9px; border-radius:3px; flex-shrink:0; }
+        .bb-tr-tip .r span { flex:1; }
+        .bb-tr-tip .r b { color:var(--tx); font-variant-numeric:tabular-nums; }
+        .bb-tr-tip .r.me, .bb-tr-tip .r.me b { color:#c2410c; font-weight:900; }
+        .bb-tr-leg { display:flex; flex-wrap:wrap; gap:6px; padding:10px 16px 8px; }
+        .bb-tr-chip { display:inline-flex; align-items:center; gap:6px; padding:3px 10px; border-radius:999px; border:1.5px solid var(--bd2); background:var(--sur2); color:var(--tx); font-size:calc(14px * var(--bb-ts, 1)); font-weight:700; cursor:pointer; user-select:none; }
+        .bb-tr-chip:hover { border-color:var(--mu); }
+        .bb-tr-chip i { width:10px; height:10px; border-radius:3px; }
+        .bb-tr-chip small { color:var(--mu); font-size:calc(12.5px * var(--bb-ts, 1)); font-weight:700; }
+        .bb-tr-chip.sel { border-color:#c2410c; background:#ffe8d6; }
+        .bb-tr-msg { padding:44px 16px; text-align:center; color:var(--mu); font-size:calc(15px * var(--bb-ts, 1)); }
+        .bb-tr-ft { flex:0 0 auto; padding:6px 16px 9px; border-top:1px solid var(--bd); font-size:calc(12.5px * var(--bb-ts, 1)); line-height:1.55; color:var(--mu); }
+        `;
+        document.head.appendChild(trSt);
+
+        const trPop = ivEl('div'); trPop.id = 'bb-iv-tr';
+        document.body.appendChild(trPop);
+        let _trOpen = false, _trSeq = 0, _trDate = '', _trFocus = '', _trDates = null, _trDatesAt = 0, _trState = 'loading', _trData = null;
+        const _trCache = new Map();   // 날짜 → { at, d }
+        const trEsc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+        const TR_AXIS = Array.from({ length: 24 }, (_, i) => (i + 7) % 24);
+
+        async function trFetchDay(d, force) {
+            const c = _trCache.get(d);
+            if (c && !force && (d !== ivOpDate() || Date.now() - c.at < 60000)) return c.d;
+            const j = await attFetchJson(IV_API + '?view=summary&date=' + d);
+            if (!j || j.ok !== true || !Array.isArray(j.people)) throw new Error('데이터 형식 오류');
+            _trCache.set(d, { at: Date.now(), d: j });
+            return j;
+        }
+        async function trFetchDates(force) {
+            if (_trDates && !force && Date.now() - _trDatesAt < 10 * 60000) return _trDates;
+            const dd = await attFetchJson(IV_API + '?view=dates');
+            if (!dd || dd.ok !== true || !Array.isArray(dd.dates)) throw new Error('데이터 형식 오류');
+            _trDates = dd.dates.filter(x => /^\d{4}-\d{2}-\d{2}$/.test(x)); _trDatesAt = Date.now();
+            return _trDates;
+        }
+        const trDateList = () => { const s = new Set(_trDates || []); s.add(ivOpDate()); return [...s].sort().reverse(); };   // 최신순
+
+        // 그날 요약 → [{ name, arr[24 = 시각별 건수], total, shift }] (건수 많은 순)
+        function trPeople(j) {
+            const out = [];
+            (j.people || []).forEach(p => {
+                if (!p || !p.name || !Array.isArray(p.hours)) return;
+                const m = /^(\d{2})/.exec(p.shift || ''); if (!m) return;
+                const arr = new Array(24).fill(0); let tot = 0;
+                p.hours.forEach((c, i) => { c = +c || 0; if (c > 0) { arr[(+m[1] + i) % 24] += c; tot += c; } });
+                if (tot > 0) out.push({ name: p.name, arr, total: tot, shift: p.shift });
+            });
+            out.sort((a, b) => b.total - a.total || a.name.localeCompare(b.name, 'ko'));
+            // 인원마다 색상환을 균등 분할 (순위가 가까운 사람끼리 서로 먼 색이 되도록 건너뛰며 배정)
+            const n = out.length, gcd = (a, b) => (b ? gcd(b, a % b) : a);
+            let step = Math.max(1, Math.round(n * 0.382)); while (n > 1 && gcd(step, n) !== 1) step++;
+            out.forEach((p, k) => { p.color = 'hsl(' + (Math.round((((k * step) % n) * 360) / n + 210) % 360) + ',62%,' + (k % 2 ? 66 : 56) + '%)'; });
+            return out;
+        }
+
+        function trRender() {
+            if (!_trOpen) return;
+            const dates = trDateList();
+            if (!dates.includes(_trDate)) _trDate = dates[0];
+            const di = dates.indexOf(_trDate);
+            const head = ivEl('div', 'bb-tr-h');
+            head.appendChild(ivEl('b', '', '시간대별 추이'));
+            const nav = ivEl('div', 'bb-tr-nav');
+            const pv = ivEl('button', '', '‹'); pv.dataset.act = 'prev'; pv.title = '이전 근무일'; pv.disabled = di >= dates.length - 1;
+            const nx = ivEl('button', '', '›'); nx.dataset.act = 'next'; nx.title = '다음 근무일'; nx.disabled = di <= 0;
+            const sel = ivEl('select'); sel.id = 'bb-tr-date';
+            dates.forEach(d => { const o = ivEl('option', '', d + (d === ivOpDate() ? ' (오늘)' : '')); o.value = d; if (d === _trDate) o.selected = true; sel.appendChild(o); });
+            nav.append(pv, sel, nx); head.appendChild(nav);
+            const rf = ivEl('span', 'rf', '새로고침'); rf.dataset.act = 'refresh'; head.appendChild(rf);
+            const x = ivEl('span', 'x', '✕'); x.dataset.act = 'close'; head.appendChild(x);
+
+            const body = ivEl('div', 'bb-tr-body');
+            const sum = ivEl('div', 'bb-tr-sum');
+            const people = _trData ? trPeople(_trData) : [];
+            if (_trFocus && !people.some(p => p.name === _trFocus)) _trFocus = '';
+            if (_trState === 'loading' && !_trData) body.appendChild(ivEl('div', 'bb-tr-msg', '불러오는 중…'));
+            else if (_trState === 'fail' && !_trData) body.appendChild(ivEl('div', 'bb-tr-msg', '데이터를 받지 못했습니다. 잠시 뒤 새로고침을 눌러 주세요.'));
+            else if (!people.length) body.appendChild(ivEl('div', 'bb-tr-msg', '이 근무일에는 확정된 처리 기록이 아직 없습니다.'));
+            else {
+                const items = TR_AXIS.map(h => people.filter(p => p.arr[h] > 0).map(p => ({ p, v: p.arr[h] })));
+                const totals = items.map(l => l.reduce((a, b) => a + b.v, 0));
+                const total = totals.reduce((a, b) => a + b, 0);
+                const pk = totals.indexOf(Math.max.apply(null, totals));
+                const fp = _trFocus ? people.find(p => p.name === _trFocus) : null;
+                let fh = -1, fv = 0; if (fp) TR_AXIS.forEach(h => { if (fp.arr[h] > fv) { fv = fp.arr[h]; fh = h; } });
+                sum.innerHTML = '<span>총 처리<b class="hl">' + total + '건</b></span><span>처리 인원<b>' + people.length + '명</b></span><span>가장 바쁜 시간대<b>' + TR_AXIS[pk] + '시 · ' + totals[pk] + '건</b></span>' +
+                    (fp ? '<span>' + trEsc(fp.name) + '<b class="hl">' + fp.total + '건</b></span><span>피크<b>' + (fh >= 0 ? fh + '시 · ' + fv + '건' : '-') + '</b></span>' : '');
+
+                const wrap = ivEl('div', 'bb-tr-wrap'); wrap.id = 'bb-tr-wrap';
+                const tip = ivEl('div', 'bb-tr-tip'); tip.hidden = true;
+                const BAR = 13, GAP = 1, FS = 11, LH = 12.5, M = { l: 34, r: 10, t: 26, b: 30 }, H = 330;
+                const maxK = Math.max(1, ...items.map(l => l.length));
+                const bandMin = maxK * (BAR + GAP) + 8;
+                const W = Math.max(wrap.clientWidth || 0, 780, M.l + M.r + 24 * bandMin);
+                const iw = W - M.l - M.r, ih = H - M.t - M.b, band = iw / 24;
+                const rawMax = Math.max(1, ...people.flatMap(p => p.arr));
+                const stp = rawMax <= 5 ? 1 : Math.ceil(rawMax / 5), yMax = Math.ceil(rawMax / stp) * stp;
+                const y = v => M.t + ih - (v / yMax) * ih, base = M.t + ih, cx0 = i => M.l + band * (i + 0.5);
+                let g = '';
+                for (let v = 0; v <= yMax; v += stp) g += '<line x1="' + M.l + '" x2="' + (W - M.r) + '" y1="' + y(v) + '" y2="' + y(v) + '" stroke="' + (v === 0 ? '#b3a687' : '#d9cfb3') + '" stroke-dasharray="' + (v === 0 ? '' : '3 4') + '"/><text x="' + (M.l - 7) + '" y="' + (y(v) + 4) + '" text-anchor="end" font-size="12" fill="#7a6f5c">' + v + '</text>';
+                TR_AXIS.forEach((h, i) => {
+                    g += '<text x="' + cx0(i) + '" y="' + (H - M.b + 19) + '" text-anchor="middle" font-size="12" fill="#7a6f5c">' + h + '시</text>';
+                    if (h === 0) g += '<line x1="' + (M.l + band * i) + '" x2="' + (M.l + band * i) + '" y1="' + M.t + '" y2="' + base + '" stroke="#b3a687" stroke-dasharray="2 4"/>';
+                });
+                let bars = '', labs = '';
+                items.forEach((list, i) => {
+                    const k = list.length, gw = k * BAR + (k - 1) * GAP;
+                    list.forEach(({ p, v }, j) => {
+                        const bx = cx0(i) - gw / 2 + j * (BAR + GAP), top = y(v), bh = base - top, cx = bx + BAR / 2;
+                        const isF = _trFocus && p.name === _trFocus, dim = _trFocus && !isF, chars = Array.from(p.name), nh = chars.length * LH;
+                        if (isF) bars += '<rect x="' + (bx - 2.5) + '" y="' + (top - 2.5) + '" width="' + (BAR + 5) + '" height="' + (bh + 2.5) + '" rx="5" fill="none" stroke="#c2410c" stroke-width="1.8"/>';
+                        bars += '<rect x="' + bx + '" y="' + top + '" width="' + BAR + '" height="' + bh + '" rx="3" fill="' + p.color + '" opacity="' + (isF ? 1 : dim ? 0.28 : 0.92) + '"/>';
+                        labs += '<text x="' + cx + '" y="' + (top - 4) + '" text-anchor="middle" font-size="' + (isF ? 12.5 : 11) + '" font-weight="800" fill="' + (isF ? '#c2410c' : '#2b2418') + '" opacity="' + (dim ? 0.4 : 1) + '">' + v + '</text>';
+                        const inside = bh >= nh + 12;
+                        chars.forEach((ch, c) => {
+                            const ty = inside ? top + 8 + FS + c * LH : top - 19 - (chars.length - 1 - c) * LH;
+                            labs += '<text x="' + cx + '" y="' + ty + '" text-anchor="middle" font-size="' + FS + '" font-weight="800" fill="' + (inside ? '#1f1a10' : '#2b2418') + '" opacity="' + (dim ? 0.4 : 1) + '">' + trEsc(ch) + '</text>';
+                        });
+                    });
+                });
+                let hit = '';
+                TR_AXIS.forEach((h, i) => { hit += '<rect class="bb-tr-hit" data-i="' + i + '" x="' + (M.l + band * i) + '" y="' + (M.t - 20) + '" width="' + band + '" height="' + (ih + 20) + '" fill="transparent"/>'; });
+                wrap.innerHTML = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" font-family="Paperlogy,Lato,sans-serif">' + g +
+                    '<rect id="bb-tr-cur" x="0" y="' + (M.t - 20) + '" width="' + band + '" height="' + (ih + 20) + '" rx="6" fill="rgba(60,40,0,.07)" opacity="0"/>' + bars + labs + hit + '</svg>';
+                wrap.appendChild(tip);
+                const cur = wrap.querySelector('#bb-tr-cur');
+                wrap.querySelectorAll('.bb-tr-hit').forEach(r => {
+                    r.addEventListener('mousemove', ivSafe(e => {
+                        const i = +r.dataset.i, list = items[i].slice().sort((a, b) => b.v - a.v);
+                        tip.innerHTML = '<div class="h">' + TR_AXIS[i] + ':00 ~ ' + TR_AXIS[i] + ':59 · ' + totals[i] + '건</div>' +
+                            (list.length ? list.map(({ p, v }) => '<div class="r' + (p.name === _trFocus ? ' me' : '') + '"><i style="background:' + p.color + '"></i><span>' + trEsc(p.name) + '</span><b>' + v + '건</b></div>').join('') : '<div class="r"><span>처리 기록 없음</span></div>');
+                        tip.hidden = false;
+                        const wr = wrap.getBoundingClientRect(), z = wr.width / (wrap.offsetWidth || 1) || 1;
+                        let left = (e.clientX - wr.left) / z + wrap.scrollLeft + 14, top = (e.clientY - wr.top) / z + 10;
+                        if (left + tip.offsetWidth > wrap.scrollLeft + wrap.clientWidth - 4) left = (e.clientX - wr.left) / z + wrap.scrollLeft - tip.offsetWidth - 14;
+                        tip.style.left = Math.max(0, left) + 'px'; tip.style.top = Math.max(0, top) + 'px';
+                        cur.setAttribute('x', M.l + band * i); cur.setAttribute('opacity', '1');
+                    }));
+                    r.addEventListener('mouseleave', ivSafe(() => { tip.hidden = true; cur.setAttribute('opacity', '0'); }));
+                });
+                body.appendChild(wrap);
+                const leg = ivEl('div', 'bb-tr-leg');
+                people.forEach(p => {
+                    const c = ivEl('span', 'bb-tr-chip' + (p.name === _trFocus ? ' sel' : ''));
+                    c.dataset.focus = p.name; c.title = p.shift;
+                    c.innerHTML = '<i style="background:' + p.color + '"></i>' + trEsc(p.name) + ' <small>' + p.total + '건</small>';
+                    leg.appendChild(c);
+                });
+                body.appendChild(leg);
+            }
+            const ft = ivEl('div', 'bb-tr-ft', '근무일 07시 ~ 다음날 06시 · 건수 = 이름이 확정된 처리 건만 (개입카드 화면과 같은 기준) · 아래 이름을 누르면 그 사람 막대만 강조 (다시 누르면 해제) · 인원이 많으면 좌우로 스크롤');
+            const keep = trPop.querySelector('.bb-tr-body'), kt = keep ? keep.scrollTop : 0, kl = (trPop.querySelector('.bb-tr-wrap') || {}).scrollLeft || 0;
+            trPop.replaceChildren(head, sum, body, ft);
+            body.scrollTop = kt; const w2 = trPop.querySelector('.bb-tr-wrap'); if (w2) w2.scrollLeft = kl;
+        }
+        async function trLoad(force) {
+            const seq = ++_trSeq, d = _trDate;
+            const c = _trCache.get(d);
+            _trData = c ? c.d : null; _trState = 'loading';
+            trRender();
+            try {
+                await trFetchDates(force).catch(e => { console.warn('[BB] 시간추이 날짜 목록 실패:', e && e.message); });
+                if (seq !== _trSeq) return;
+                _trData = await trFetchDay(d, force);
+                _trState = 'ok';
+            } catch (e) {
+                if (seq !== _trSeq) return;
+                console.warn('[BB] 시간추이 실패:', e && e.message);
+                _trState = 'fail';
+            }
+            trRender();
+        }
+        function trPlace() {
+            const br = page.getBoundingClientRect(), w = trPop.offsetWidth;
+            let left = br.right + 10, top = br.top;   // [admin] 개입 그리드 오른쪽 우선
+            if (left + w > window.innerWidth - 8) {   // 공간이 없으면 그리드 위에 겹치되, 헤더(시간추이·누적통계 버튼)는 가리지 않게 그 아래로
+                left = Math.max(8, Math.min(br.left, window.innerWidth - w - 8)); top = br.top + 72;
+            }
+            trPop.style.left = Math.max(8, left) + 'px';
+            trPop.style.top = Math.max(8, top) + 'px';
+            trPop.style.height = Math.max(200, Math.min(br.height - (top - br.top), window.innerHeight - 16 - Math.max(0, top - 8))) + 'px';
+        }
+        function trClose() {
+            _trOpen = false; _trSeq++;
+            trPop.classList.remove('open');
+            const b = $iv('bb-iv-tr-btn'); if (b) b.classList.remove('on');
+        }
+        function trOpen() {
+            if (_trOpen) { trClose(); return; }
+            ivClosePop(); ivCloseCal(); ivCloseHelp(); spClose();
+            _trOpen = true;
+            $iv('bb-iv-tr-btn').classList.add('on');
+            _trDate = _trDate || ivDateNow();
+            trPop.classList.add('open');
+            trPlace();
+            trLoad(false);
+            trPlace();
+        }
+        window.__bbIvTrClose = trClose;   // 보드를 닫을 때 같이 닫음 (closeBoard 에서 호출)
+        $iv('bb-iv-tr-btn').addEventListener('click', ivSafe(() => trOpen()));
+        trPop.addEventListener('click', ivSafe(e => {
+            const ch = e.target.closest('[data-focus]');
+            if (ch) { _trFocus = _trFocus === ch.dataset.focus ? '' : ch.dataset.focus; trRender(); return; }
+            const a = e.target.closest('[data-act]'); if (!a || a.disabled) return;
+            const dates = trDateList(), di = dates.indexOf(_trDate);
+            if (a.dataset.act === 'close') trClose();
+            else if (a.dataset.act === 'refresh') trLoad(true);
+            else if (a.dataset.act === 'prev' && di < dates.length - 1) { _trDate = dates[di + 1]; trLoad(false); }
+            else if (a.dataset.act === 'next' && di > 0) { _trDate = dates[di - 1]; trLoad(false); }
+        }));
+        trPop.addEventListener('change', ivSafe(e => { if (e.target.id === 'bb-tr-date') { _trDate = e.target.value; trLoad(false); } }));
+        document.addEventListener('click', ivSafe(e => {   // 바깥 클릭 → 닫기
+            if (_trOpen && !e.target.closest('#bb-iv-tr') && !e.target.closest('#bb-iv-tr-btn')) trClose();
+        }), true);
+        document.addEventListener('keydown', ivSafe(e => { if (e.key === 'Escape' && _trOpen) trClose(); }));
+        window.addEventListener('resize', ivSafe(() => { if (_trOpen) trPlace(); }));
 
         const ivVisible = () => isOpen && _ivOpen && !document.hidden;
         setInterval(ivSafe(() => {
