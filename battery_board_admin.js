@@ -952,40 +952,55 @@
         .bb-att-dh { flex:0 0 auto; display:flex; align-items:center; gap:14px; padding:14px 18px; border-bottom:1px solid var(--bd); }
         .bb-att-dh .t { font-size:calc(22px * var(--bb-ts, 1)); font-weight:900; white-space:nowrap; flex:0 0 auto; }   /* 제목은 줄바꿈 없이, 남는 자리에서 포디움 카드가 줄바꿈 */
         .bb-att-dh select { height:34px; padding:0 10px; border-radius:8px; border:1.5px solid var(--bd2); background:var(--sur2); color:var(--tx); font-size:calc(16px * var(--bb-ts, 1)); font-family:inherit; }
-        .bb-att-dh .sr { flex:0 0 auto; width:110px; height:34px; padding:0 10px; border-radius:8px; border:1.5px solid var(--bd2); background:var(--sur2); color:var(--tx); font-size:calc(16px * var(--bb-ts, 1)); font-weight:700; font-family:inherit; outline:none; }
-        .bb-att-dh .sr:focus { border-color:var(--bl); background:var(--sur); }
-        .bb-att-dh .sr::placeholder { color:var(--mu); font-weight:400; }
-        .bb-att-dh .mgb { flex:0 0 auto; display:inline-flex; gap:5px; }
-        .bb-att-dh .mgb button { width:34px; height:34px; padding:0; border-radius:50%; border:1.5px solid #a39b84; background:#cfc8b4; color:#4a4436; font-size:calc(16px * var(--bb-ts, 1)); font-weight:900; font-family:inherit; cursor:pointer; }
-        .bb-att-dh .mgb button:hover { filter:brightness(1.05); }
-        .bb-att-dh .mgb button.on { background:#6b6558; color:#fff; border-color:#4a4436; }
         .bb-att-dh .x { margin-left:auto; width:34px; height:34px; border-radius:8px; background:rgba(239,68,68,.18); border:1px solid rgba(239,68,68,.5); color:#b91c1c; font-size:calc(20px * var(--bb-ts, 1)); font-weight:900; cursor:pointer; display:flex; align-items:center; justify-content:center; }
-        .bb-att-dnote { flex:0 0 auto; padding:6px 18px 0; font-size:calc(14px * var(--bb-ts, 1)); color:#c2410c; }
-        .bb-att-db { flex:1 1 auto; min-height:0; overflow:auto; padding:0 12px 14px; }
-        .bb-att-mt { width:100%; border-collapse:collapse; font-size:calc(17px * var(--bb-ts, 1)); font-variant-numeric:tabular-nums; }
-        .bb-att-mt th { font-weight:900; position:sticky; top:0; z-index:1; background:var(--sur); padding:14px 12px; font-size:calc(16px * var(--bb-ts, 1)); color:var(--tx); text-align:right; white-space:nowrap; border-bottom:2px solid var(--bd); cursor:pointer; user-select:none; }
-        .bb-att-mt th:first-child { text-align:left; cursor:default; }
-        /* 이름 열 전체(헤더 ~ 마지막 근무자)를 검정 틀로 감쌈 — '이름을 클릭하면 로그가 열림'을 알려주기 위함. 표 테두리(collapse)와 상관없이 스크롤 헤더에서도 유지되도록 inset 그림자로 그림 */
-        .bb-att-mt th:first-child { box-shadow:inset 2px 0 0 #111, inset -2px 0 0 #111, inset 0 2px 0 #111; }
-        .bb-att-mt td:first-child { box-shadow:inset 2px 0 0 #111, inset -2px 0 0 #111; }
-        .bb-att-mt tbody tr:last-child td:first-child { box-shadow:inset 2px 0 0 #111, inset -2px 0 0 #111, inset 0 -2px 0 #111; }
-        .bb-att-mt th .hint { margin-left:5px; font-size:calc(13px * var(--bb-ts, 1)); font-weight:700; color:var(--mu); }
-        .bb-att-mt th.sorted { background:#ffe0d6; }
-        .bb-att-mt th.sorted::after { content:' ▾'; font-size:calc(13px * var(--bb-ts, 1)); }
-        .bb-att-mt td { padding:11px 12px; text-align:right; white-space:nowrap; border-bottom:1px solid var(--bd); }
-        .bb-att-mt td:first-child { text-align:left; }
-        .bb-att-mt td .tm { margin-left:5px; font-size:calc(14px * var(--bb-ts, 1)); color:var(--mu); }
-        .bb-att-mt td.bad { color:#e11d74; }
-        .bb-att-mt td.warn, .bb-att-mt th.warn { background:rgba(249,115,22,.10); }
-        .bb-att-mt td.warn { color:#c2410c; }
-        .bb-att-mt td.nm { cursor:pointer; user-select:none; }
-        .bb-att-mt tr:hover td { background:rgba(0,0,0,.035); }
-        .bb-att-mt td.bar { text-align:left; width:46%; min-width:300px; }   /* 총 이석시간 막대 칸: 막대 안에 총 이석횟수, 막대 끝에 총 이석시간 */
-        .bb-att-bw { display:flex; align-items:center; gap:8px; }
-        .bb-att-bar { flex:none; height:22px; min-width:54px; border-radius:5px; display:flex; align-items:center; padding-left:9px; box-sizing:border-box; font-size:calc(15px * var(--bb-ts, 1)); font-weight:900; color:#2b2418; white-space:nowrap; }
-        .bb-att-vt { display:inline-block; min-width:40px; text-align:center; padding:2px 9px; border-radius:999px; font-size:calc(15px * var(--bb-ts, 1)); font-weight:900; }
-        .bb-att-vt.g { background:#d9efc9; color:#2d5a1a; } .bb-att-vt.y { background:#fbe3a3; color:#6b4a00; } .bb-att-vt.r { background:#f6b3a8; color:#8a1f12; }
-        .bb-att-mt tr:hover td.warn { background:rgba(249,115,22,.16); }
+        /* 누적 통계 = 이석 시간대별 명단 (SECTION 17) */
+        .bb-att-dh { flex-wrap:wrap; gap:8px 12px; }
+        .bb-rs-seg { display:inline-flex; flex:0 0 auto; border:1.5px solid var(--bd2); border-radius:8px; overflow:hidden; }
+        .bb-rs-seg button { height:34px; padding:0 14px; border:0; background:var(--sur2); color:var(--mu); font-family:inherit; font-size:calc(15px * var(--bb-ts, 1)); font-weight:700; cursor:pointer; }
+        .bb-rs-seg button.on { background:#b3cdf8; color:#1e3a8a; font-weight:900; }
+        .bb-rs-chk { display:inline-flex; align-items:center; gap:6px; flex:0 0 auto; font-size:calc(15px * var(--bb-ts, 1)); font-weight:700; white-space:nowrap; cursor:pointer; user-select:none; }
+        .bb-rs-chk input { width:16px; height:16px; margin:0; accent-color:#2563eb; cursor:pointer; }
+        .bb-rs-btn { height:34px; padding:0 14px; border-radius:8px; border:1.5px solid var(--bd2); background:var(--sur2); color:var(--tx); font-family:inherit; font-size:calc(15px * var(--bb-ts, 1)); font-weight:700; cursor:pointer; }
+        .bb-rs-btn:hover { border-color:var(--bl); color:var(--bl); }
+        .bb-rs-st { font-size:calc(14px * var(--bb-ts, 1)); color:var(--mu); }
+        .bb-rs-st.warn { color:#c2410c; font-weight:700; }
+        .bb-rs-lg { flex:0 0 auto; display:flex; flex-wrap:wrap; gap:2px 12px; padding:8px 18px 0; font-size:calc(13.5px * var(--bb-ts, 1)); line-height:1.45; color:var(--mu); }
+        .bb-rs-note { flex:0 0 auto; padding:6px 18px 10px; font-size:calc(13px * var(--bb-ts, 1)); line-height:1.45; color:var(--mu); }
+        .bb-rs-sc { flex:1 1 auto; min-height:0; overflow-x:auto; overflow-y:scroll; margin:8px 12px 0; border:1px solid var(--bd); border-radius:10px; background:var(--sur2); }
+        .bb-rs-msg { padding:40px 20px; text-align:center; font-size:calc(16px * var(--bb-ts, 1)); color:var(--mu); }
+        .bb-rs-msg.warn { color:#c2410c; font-weight:700; }
+        .bb-rs-bw { display:grid; gap:10px; padding:10px; justify-content:center; align-content:start; min-width:0; }
+        .bb-rs-bp { display:flex; flex-direction:column; border:1px solid var(--bd); border-radius:10px; background:var(--sur); overflow:hidden; min-width:0; min-height:0; }
+        .bb-rs-bp .hd { flex:0 0 auto; height:46px; background:var(--sur2); padding:2px 6px; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; border-bottom:1px solid var(--bd); font-size:calc(17px * var(--bb-ts, 1)); line-height:1.25; }
+        .bb-rs-bp .hd span { color:var(--mu); font-size:calc(12.5px * var(--bb-ts, 1)); white-space:nowrap; }
+        .bb-rs-bp .hb { flex:1; min-height:0; display:flex; gap:10px; padding:6px 8px; }
+        .bb-rs-hcol { flex:1 1 0; min-width:0; display:flex; flex-direction:column; justify-content:flex-start; }
+        .bb-rs-hr { flex:1 1 0; max-height:30px; min-height:0; display:flex; align-items:center; gap:5px; cursor:pointer; font-size:calc(14px * var(--bb-ts, 1)); }
+        .bb-rs-hr .hn { flex:0 0 3.4em; text-align:right; font-weight:700; white-space:nowrap; overflow:hidden; letter-spacing:-.02em; }
+        .bb-rs-hr .ht { flex:1; min-width:0; height:72%; max-height:18px; display:flex; align-items:center; gap:4px; }
+        .bb-rs-hr .ht i { display:block; height:100%; border-radius:2px; box-shadow:inset 0 0 0 1px rgba(60,45,20,.18); flex:0 0 auto; max-width:calc(100% - 34px); }
+        .bb-rs-hr .ht b { font-size:calc(12.5px * var(--bb-ts, 1)); font-weight:700; white-space:nowrap; font-variant-numeric:tabular-nums; }
+        .bb-rs-bp .hb[data-d="m"] .bb-rs-hr { font-size:calc(13px * var(--bb-ts, 1)); }
+        .bb-rs-bp .hb[data-d="m"] .bb-rs-hr .ht b { font-size:calc(11.5px * var(--bb-ts, 1)); }
+        .bb-rs-bp .hb[data-d="x"] .bb-rs-hr { font-size:calc(12px * var(--bb-ts, 1)); }
+        .bb-rs-bp .hb[data-d="x"] .bb-rs-hr .ht b { font-size:calc(11px * var(--bb-ts, 1)); }
+        .bb-rs-hr.few { opacity:.6; }
+        .bb-rs-hr.hl { background:color-mix(in srgb, #8f73d4 28%, transparent); box-shadow:inset 0 0 0 1.5px #8f73d4; border-radius:4px; opacity:1; }
+        .bb-rs-bw.dim .bb-rs-hr:not(.hl) { opacity:.3; }
+        .bb-rs-fl { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:10px; padding:10px; }
+        .bb-rs-fc { border:1px solid var(--bd); border-radius:10px; background:var(--sur); padding:6px 8px 2px; min-width:0; }
+        .bb-rs-fc .fh { display:flex; flex-wrap:wrap; align-items:center; gap:0 6px; min-width:0; font-size:calc(14px * var(--bb-ts, 1)); }
+        .bb-rs-fc .fh b { font-size:calc(16px * var(--bb-ts, 1)); }
+        .bb-rs-fc .fh small { color:var(--mu); font-size:calc(11.5px * var(--bb-ts, 1)); }
+        .bb-rs-fc .fh span { color:var(--mu); font-size:calc(12.5px * var(--bb-ts, 1)); margin-left:auto; }
+        .bb-rs-fc .fh i { width:10px; height:10px; border-radius:3px; box-shadow:inset 0 0 0 1px rgba(60,45,20,.28); }
+        .bb-rs-fc .fh em { font-style:normal; font-size:calc(12px * var(--bb-ts, 1)); }
+        .bb-rs-fc svg { display:block; width:100%; height:auto; }
+        .bb-rs-fc.hl { box-shadow:0 0 0 2px #8f73d4; background:color-mix(in srgb, #8f73d4 10%, var(--sur)); }
+        .bb-rs-fl.dim .bb-rs-fc:not(.hl) { opacity:.35; }
+        .bb-rs-fx { font-size:9.5px; fill:#7a6f5c; }
+        .bb-rs-fy { font-size:9px; fill:#7a6f5c; }
+        .bb-rs-fp { font-size:10.5px; font-weight:700; fill:#2b2418; }
 
         /* ── 하단 퀵바: 한 줄에 4개 그룹 (제목 | 켜진 기체 동그라미) ── */
         .bb-quick {
@@ -1579,7 +1594,7 @@
                                         <button class="bb-mm-nav bb-att-mbtn" id="bb-att-cal-btn" title="이전달/이번달 날짜 선택">달력</button>
                                         <span class="bb-att-stat" id="bb-att-stat"></span>
                                     </div>
-                                    <button class="bb-mm-nav" id="bb-att-detailbtn" title="월별 근무자 누적 통계"><span class="tx"><span class="l1">누적</span><span class="l2">통계</span></span></button>
+                                    <button class="bb-mm-nav" id="bb-att-detailbtn" title="이석 시간대별 명단"><span class="tx"><span class="l1">누적</span><span class="l2">통계</span></span></button>
                                     <div class="bb-att-cal" id="bb-att-cal"></div>
                                 </div>
                                 <div class="bb-att-body" id="bb-att-body"></div>
@@ -1626,14 +1641,18 @@
         <div id="bb-att-pop"></div>
         <div id="bb-att-detail">
             <div class="bb-att-dh">
-                <div class="t" id="bb-att-dtitle">자세히</div>
-                <select id="bb-att-dsel"></select>
-                <input type="search" class="sr" id="bb-att-search" placeholder="이름 검색" autocomplete="off" spellcheck="false" title="이름을 입력하면 그 근무자만 표시 (월을 바꾸거나 창을 닫았다 열어도 유지 · 새로고침하면 초기화)">
-                <div class="mgb" id="bb-att-mgb"><button type="button" data-name="안혜림" title="안혜림 로그만 보기 (다시 누르면 해제)">안</button><button type="button" data-name="박수연" title="박수연 로그만 보기 (다시 누르면 해제)">박</button><button type="button" data-name="신지섭" title="신지섭 로그만 보기 (다시 누르면 해제)">신</button></div>
+                <div class="t" id="bb-att-dtitle">이석 시간대별 명단</div>
+                <select id="bb-att-dsel" title="월 선택"></select>
+                <div class="bb-rs-seg" id="bb-rs-view"></div>
+                <label class="bb-rs-chk" title="안혜림·박수연·신지섭을 명단에 포함"><input type="checkbox" id="bb-rs-mgr"> 관리자(안·박·신) 포함</label>
+                <label class="bb-rs-chk" title="착석 미기입 이석을 그 사람의 평균 소요시간으로 채워 계산"><input type="checkbox" id="bb-rs-est" checked> 미기입 평균 보정</label>
+                <button type="button" class="bb-rs-btn" id="bb-rs-reload">새로고침</button>
+                <span class="bb-rs-st" id="bb-rs-status"></span>
                 <div class="x" id="bb-att-dclose">✕</div>
             </div>
-            <div class="bb-att-dnote" id="bb-att-dnote"></div>
-            <div class="bb-att-db" id="bb-att-dbody"></div>
+            <div class="bb-rs-lg" id="bb-rs-legend"></div>
+            <div class="bb-rs-sc" id="bb-rs-scroll"></div>
+            <div class="bb-rs-note" id="bb-rs-note"></div>
         </div>
         <div id="bb-att-plog"></div>
     `;
@@ -5484,9 +5503,8 @@
     let _attLive = null;      // 마지막으로 받은 실시간 데이터
     let _attDay = null;       // { date, stats, msg } 과거 기록
     let _attFail = false, _attBusy = false, _attSig = null;
-    let _attPopId = null, _attCalWhich = null, _attDetailYm = null, _attSortKey = 'totalSec', _attPlogKey = '';
+    let _attPopId = null, _attCalWhich = null, _attPlogKey = '';
     let _attPopAvgYm = null, _attPopAvgMap = null;   // 카드 팝업(실시간 이석 로그)의 미기입 보정용 — 이번 달 사람별 평균 캐시
-    let _attNameFilter = '', _attLast = null;   // 상세 로그 이름 검색어 (창을 닫았다 열어도/월을 바꿔도 유지, 새로고침하면 초기화 — 저장하지 않음) / 마지막으로 그린 월 데이터
     const _attMonthCache = {}, _attSchedCache = {}, _attDayCache = {}, _attSchedErr = {};
 
     const $att = id => document.getElementById(id);
@@ -5602,14 +5620,6 @@
         const d = await attFetchJson(ATT_API + '/attendance-data?action=dates&ym=' + ym);
         const v = (d && Array.isArray(d.dates)) ? d.dates : [];
         _attMonthCache['d' + ym] = { at: Date.now(), v };
-        return v;
-    }
-    async function attGetMonth(ym) {   // 월별 요약 (5분 캐시). 요약이 없으면 { days:{}, missing:true }
-        const c = _attMonthCache[ym];
-        if (c && Date.now() - c.at < 5 * 60000) return c.v;
-        const d = await attFetchJson(ATT_API + '/attendance-data?action=monthly&ym=' + ym);
-        const v = d._404 ? { ym, days: {}, missing: true } : d;
-        _attMonthCache[ym] = { at: Date.now(), v };
         return v;
     }
     async function attGetSchedule(ym) {   // 스케줄(근무일수 계산용, 1시간 캐시). 실패하면 null → 근무일수는 '기록이 있는 날'로 대체
@@ -5870,9 +5880,8 @@
         attRefreshLive();
     }
 
-    /* ───────── 상세 로그 (월별 근무자 통계) ───────── */
+    /* ───────── 근무 판정·휴게시간 공용 ───────── */
     const attIsPresent = d => !!d && (d.present || (d.raw || '').toUpperCase().includes('OT'));   // OT 는 실제 출근으로 간주
-    const attTimeLabel = wt => { const m = (wt || '').match(/(\d{2}):(\d{2})~(\d{2}):(\d{2})/); return m ? `${m[1]}${m[2]}-${m[3]}${m[4]}` : ''; };
     function attWorkShiftMin(entry) {   // 스케줄의 workTime('09:00~18:00')을 [시작분,종료분]으로
         const m = entry && (entry.workTime || '').match(/(\d{2}):(\d{2})~(\d{2}):(\d{2})/);
         return m ? [(+m[1]) * 60 + (+m[2]), (+m[3]) * 60 + (+m[4])] : null;
@@ -5928,144 +5937,275 @@
         return false;   // 아직 미확정 — 보류
     }
 
-    // 일별 요약 [횟수, 총이석초, 15분초과, 미기입, 편집됨, 출근60분내, 재이석60분내] + 스케줄(근무일수) → 사람별 행
-    // doc(일자별 상세 로그)을 주면, 미기입 건에 사람별 평균 소요시간을 보정치로 더해 총/평균 이석시간에 반영한다 (오늘자 집계중인 건은 제외)
-    function attBuildRows(dig, sched, doc) {
-        const days = (dig && dig.days) || {}, dates = Object.keys(days).sort(), agg = {};
-        dates.forEach(dt => Object.keys(days[dt]).forEach(name => {
-            if (ATT_EXCLUDE.includes(name)) return;
-            const r = days[dt][name], a = agg[name] || (agg[name] = { v: [0, 0, 0, 0, 0, 0, 0], seen: 0 });
-            for (let i = 0; i < 7; i++) a.v[i] += r[i];
-            a.seen++;
+    /* ───────── 누적 통계: 이석 시간대별 명단 (헤더의 '누적 통계' 버튼 → 큰 창) ─────────
+       값 = 그 시간대(예: 09:00~10:00)에 이석해 있던 시간의 하루 평균(분) = 그 시간대 이석 분 합계 ÷ 그 시간대에 근무한 날 수.
+       - 시간대에 걸친 이석은 시간대별로 나눠 담는다 (09:50~10:10 → 09시 10분 + 10시 10분).
+       - 근무한 날 = 그날 기록이 있고(스케줄상 출근 또는 이석 기록 있음) 그 시간대 근무가 20분 이상인 날.
+       - 휴게시간은 근무·이석 양쪽에서 제외, 근무시간 밖은 잘라냄.
+       - 착석 미기입(back 없음)은 옵션으로 그 사람의 평균 소요시간(정상 기록 10건 초과일 때만)으로 보정.
+       데이터: 하루치 archive(action=archive) 를 그 달 날짜 수만큼 한꺼번에 받고 + 스케줄(/schedule?ym=). 한 번 받은 달은 이 화면을 닫았다 열어도 다시 받지 않음('새로고침' 으로만 다시). */
+    const RS_DAY_START = 7 * 60;      // 근무일은 07:00 에 시작 (07:00 이전 시각은 다음날 새벽으로 본다)
+    const RS_MIN_WORK_SLOT = 20;      // 한 시간대에서 근무한 분이 이보다 적으면 그 시간대는 계산하지 않음
+    const RS_BAR_COLS = 4;            // 가로 막대 보기: 한 줄에 시간대 패널 4개
+    const rsHh = h => attPad(h % 24);
+    const rsToAbs = m => (m < RS_DAY_START ? m + 1440 : m);   // 하루 안의 분 → 근무일 기준 분(07:00 ~ 다음날 06:59 = 420 ~ 1859)
+    const rsParseTod = s => { const m = /(\d{1,2}):(\d{2})(?::(\d{2}))?/.exec(s || ''); return m ? (+m[1]) * 60 + (+m[2]) + (+(m[3] || 0)) / 60 : null; };
+    const rsOverlap = (a0, a1, b0, b1) => Math.max(0, Math.min(a1, b1) - Math.max(a0, b0));
+    const rsIsMgr = n => ATT_MGRS.some(m => (n || '').includes(m.name));
+    const rsIsExcl = n => ATT_EXCLUDE.some(m => (n || '').includes(m));
+    const rsShiftOf = wt => { const m = /(\d{2}):(\d{2})~(\d{2}):(\d{2})/.exec(wt || ''); return m ? [(+m[1]) * 60 + +m[2], (+m[3]) * 60 + +m[4]] : null; };
+    const rsDatesOf = ym => { const [y, m] = ym.split('-').map(Number), last = new Date(Date.UTC(y, m, 0)).getUTCDate(); return Array.from({ length: last }, (_, i) => ym + '-' + attPad(i + 1)); };
+    let _rsRaw = null, _rsHl = null, _rsView = 'hbar', _rsYm = null, _rsSeq = 0;
+    const _rsCache = {};
+
+    /* 카드 팝업(attEntryConfirmed)과 같은 규칙: 지난 날짜는 항상 확정. 오늘(실시간 날짜)은 ① 뒤에 다른 기록이 있거나 ② 퇴근했거나 ③ 이석 이후 휴게시간이 시작됐을 때만 확정 */
+    function rsEntryConfirmed(dt, idx, log, name, shift) {
+        if (dt !== attLiveDate()) return true;
+        if (idx < log.length - 1) return true;
+        const now = attKstMin(Date.now());
+        if (!attOnShift(shift, now)) return true;
+        const bw = attBreakWindow(shift, name);
+        if (bw) {
+            const am = rsParseTod(log[idx].away), base = shift[0];
+            if (am != null && attElapsedSince(am, base) < attElapsedSince(bw[0], base) && attElapsedSince(now, base) >= attElapsedSince(bw[0], base)) return true;
+        }
+        return false;
+    }
+    /* raw = { ym, schedule: {staff:[...]}|null, archives: { 'YYYY-MM-DD': { stats:[...] } }, failed } */
+    async function rsLoadMonth(ym, onProg) {
+        const dates = rsDatesOf(ym).filter(d => d <= attLiveDate()), archives = {};
+        let done = 0, fail = 0;
+        const sched = attFetchJson(ATT_API + '/schedule?ym=' + ym, 20000).then(d => (d && Array.isArray(d.staff)) ? d : null).catch(() => null);
+        await Promise.all(dates.map(async d => {
+            try {
+                const r = await attFetchJson(ATT_API + '/attendance-data?action=archive&date=' + d, 20000);
+                if (r && !r._404 && Array.isArray(r.stats)) archives[d] = { stats: r.stats };
+            } catch (e) { fail++; }
+            onProg(++done, dates.length);
         }));
-        const approx = !(sched && sched.staff), meta = {};
-        if (!approx) {
-            const keys = dates.map(d => (+d.slice(5, 7)) + '/' + (+d.slice(8, 10)));
-            sched.staff.forEach((p, idx) => {
-                if (ATT_EXCLUDE.includes(p.name)) return;
-                let cnt = 0; keys.forEach(k => { if (attIsPresent(p.schedule && p.schedule[k])) cnt++; });
-                if (cnt > 0) meta[p.name] = { days: cnt, time: attTimeLabel(p.workTime), order: idx };
-            });
-        } else Object.keys(agg).forEach(n => { meta[n] = { days: agg[n].seen, time: '', order: 9999 }; });
-        // 미기입 보정: 사람별로 더할 초를 미리 구해둠 (doc 이 없으면 빈 채로 — 보정 없이 기존 digest 값 그대로)
-        const addSec = {};
-        if (doc) {
-            const avgMap = attAvgByName(doc), today = attLiveDate(), nowMin = attKstMin(Date.now());
-            const ddays = doc.days || {};
-            Object.keys(ddays).forEach(dt => Object.keys(ddays[dt]).forEach(name => {
-                if (ATT_EXCLUDE.includes(name)) return;
-                const avg = avgMap[name]; if (avg == null) return;
-                const shiftMin = attWorkShiftMin(sched && sched.staff ? sched.staff.find(p => p.name === name) : null);
-                const entries = ddays[dt][name][2];
-                entries.forEach((e, idx) => {
-                    if (e[0] && !e[1] && attEntryConfirmed(dt, idx, entries, name, shiftMin, today, nowMin)) addSec[name] = (addSec[name] || 0) + avg;
+        if (dates.length && fail === dates.length) throw new Error('모든 요청 실패 (CORS 차단 또는 네트워크 오류)');
+        return { ym, schedule: await sched, archives, failed: fail };
+    }
+    function rsCompute(raw, opt) {
+        const sched = raw.schedule, staff = (sched && sched.staff) || [];
+        const staffBy = {}; staff.forEach(p => { staffBy[p.name] = p; });
+        const agg = {};
+        Object.values(raw.archives).forEach(a => a.stats.forEach(s => (s.log || []).forEach(l => {
+            if (l.away && l.back && typeof l.durationSec === 'number') { const k = s.dn || s.name, g = agg[k] || (agg[k] = { sum: 0, n: 0 }); g.sum += l.durationSec; g.n++; }
+        })));
+        const avgSec = {}; Object.keys(agg).forEach(k => { avgSec[k] = agg[k].n > 10 ? agg[k].sum / agg[k].n : null; });
+        const people = {}, ds = Object.keys(raw.archives).sort();
+        let usedEst = 0, pending = 0;
+        ds.forEach(dt => {
+            const key = (+dt.slice(5, 7)) + '/' + (+dt.slice(8, 10));
+            raw.archives[dt].stats.forEach(s => {
+                const name = s.dn || s.name;
+                if (!name || rsIsExcl(name) || rsIsExcl(s.name)) return;
+                const ent = staffBy[name] || staffBy[s.name], log = s.log || [];
+                if (ent && ent.schedule && ent.schedule[key] && !attIsPresent(ent.schedule[key]) && !log.length && !(s.awayCount > 0)) return;
+                const shift = rsShiftOf(ent && ent.workTime) || (Array.isArray(s.shift) && s.shift.length === 2 ? s.shift : null);
+                const p = people[name] || (people[name] = { name, mgr: rsIsMgr(name), shift, days: 0, dayN: {}, away: {}, ev: {}, noShift: 0 });
+                if (!p.shift && shift) p.shift = shift;
+                if (!shift) { p.noShift++; return; }
+                let S = rsToAbs(shift[0]), E = rsToAbs(shift[1]); if (E <= S) E += 1440;
+                const bw = attBreakWindow(shift, name); let B0 = null, B1 = null;
+                if (bw) { B0 = rsToAbs(bw[0]); B1 = rsToAbs(bw[1]); if (B1 <= B0) B1 += 1440; }
+                p.days++;
+                // 근무일은 07:00~다음날 06:59 (abs 420~1859). 근무가 다음날 07시를 넘기면(예: 23:30~08:30) 넘긴 부분은 07시 칸으로 이어 붙인다
+                // → 축이 31시·32시로 늘어나 07·08시가 한 번 더 나오는 일이 없음 (그 시각의 기록은 같은 시계 시각인 07·08시 칸에 합쳐짐)
+                const segs = [[S, Math.min(E, RS_DAY_START + 1440)]];
+                if (E > RS_DAY_START + 1440) segs.push([RS_DAY_START, E - 1440]);
+                if (!p.segs) p.segs = segs;
+                const ok = {};
+                segs.forEach(([s0, s1]) => {
+                    for (let h = Math.floor(s0 / 60); h <= Math.floor((s1 - 1e-9) / 60); h++) {
+                        let w = rsOverlap(s0, s1, h * 60, h * 60 + 60);
+                        if (B0 != null) w -= rsOverlap(Math.max(s0, B0), Math.min(s1, B1), h * 60, h * 60 + 60);
+                        if (w >= RS_MIN_WORK_SLOT) { ok[h] = 1; p.dayN[h] = (p.dayN[h] || 0) + 1; }
+                    }
                 });
-            }));
-        }
-        const rows = Object.keys(meta).map(name => {
-            const a = agg[name] ? agg[name].v : [0, 0, 0, 0, 0, 0, 0], d = meta[name].days;
-            const totalSec = a[1] + (addSec[name] || 0);
-            return { name, time: meta[name].time, order: meta[name].order, days: d, totalCount: a[0], totalSec,
-                     avgCount: d ? a[0] / d : 0, avgSec: d ? totalSec / d : 0, avgPerEvent: a[0] ? totalSec / a[0] : 0,
-                     over: a[2], unfiled: a[3], edited: a[4], early: a[5], viol: a[2] + a[3] + a[4] + a[5] };
-        });
-        return { rows, approx, dates };
-    }
-
-    // 열 구성: 이름 | 근무일수 | 총 이석시간(막대, 막대 안에 총 이석횟수) | 일평균 이석시간 | 1회당 평균 | 확인사항(합계)
-    // bar:true / viol:true 열은 attRenderDetail 에서 따로 그린다 (f 는 정렬 대신 쓰는 단순 텍스트)
-    const ATT_COLS = [
-        { label: '이름', key: null },
-        { label: '근무일수', key: 'days', f: r => r.days + '일' },
-        { label: '총 이석시간 (막대 안은 총 이석횟수)', key: 'totalSec', bar: true, cls: 'bar' },
-        { label: '일평균 이석시간', key: 'avgSec', f: r => attDurHM(r.avgSec) },
-        { label: '1회당 평균 이석시간', key: 'avgPerEvent', f: r => attDurHM(r.avgPerEvent) },
-        { label: '확인사항', key: 'viol', viol: true }   // 15분 초과 + 미기입 + 편집됨 + 출근60분내 합계 (세부는 마우스를 올리면 표시)
-    ];
-
-
-    async function attOpenDetail(ym) {
-        attClosePop(); attCloseCal(); attClosePlog();
-        const months = attMonths();
-        ym = ym || (_attDate ? _attDate.slice(0, 7) : months[1]);
-        if (!months.includes(ym)) ym = months[1];
-        _attDetailYm = ym;
-        $att('bb-att-search').value = _attNameFilter; attSyncMgb();
-        const sel = $att('bb-att-dsel');
-        sel.replaceChildren(...months.map(m => { const o = attEl('option', '', m.slice(0, 4) + '년 ' + Number(m.slice(5)) + '월'); o.value = m; return o; }));
-        sel.value = ym;
-        $att('bb-att-detail').classList.add('open');
-        $att('bb-att-dtitle').textContent = '불러오는 중…';
-        $att('bb-att-dbody').replaceChildren();
-        $att('bb-att-dnote').textContent = '';
-        let dig, sched;
-        try { [dig, sched] = await Promise.all([attGetMonth(ym), attGetSchedule(ym)]); }
-        catch (e) {
-            if (_attDetailYm !== ym) return;
-            $att('bb-att-dtitle').textContent = ym.slice(0, 4) + '년 ' + Number(ym.slice(5)) + '월';
-            $att('bb-att-dbody').replaceChildren(attEl('div', 'bb-att-msg warn', '⚠ 불러오기 실패 — 잠시 후 다시 열어 주세요'));
-            return;
-        }
-        if (_attDetailYm !== ym) return;   // 그 사이 다른 달로 바꿈/닫음
-        attRenderDetail(ym, dig, sched, null);   // 우선 빠른 데이터로 표를 바로 연다 (미기입 보정 없이)
-        attGetDayLogs(ym).then(doc => {   // daylogs 는 그 달 첫 조회면 서버가 새로 만들어야 해서 최대 30초까지 걸릴 수 있어 표 열기와 분리 — 도착하면 보정치를 반영해 조용히 다시 그림
-            if (_attDetailYm === ym) attRenderDetail(ym, dig, sched, doc);
-        }).catch(e => console.warn('[BB] 일자별 로그(미기입 보정용) 조회 실패:', e.message));   // 실패해도 표는 이미 열려 있으니 그냥 보정 없이 둠
-    }
-    function attRenderDetail(ym, dig, sched, doc) {
-        _attLast = { ym, dig, sched, doc };
-        const built = attBuildRows(dig, sched, doc), dates = built.dates;
-        const label = ym.slice(0, 4) + '년 ' + Number(ym.slice(5)) + '월';
-        $att('bb-att-dtitle').textContent = dates.length
-            ? `${label} (${+dates[0].slice(8)}일 ~ ${+dates[dates.length - 1].slice(8)}일, 총 ${dates.length}일간)` : label + ' (확정된 데이터 없음)';
-        $att('bb-att-dnote').textContent = (dates.length && built.approx) ? '⚠ 스케줄을 불러오지 못해 근무일수를 "기록이 있는 날"로 계산했습니다 (기록이 없던 근무일은 빠짐)' + (_attSchedErr[ym] ? ' [원인: ' + _attSchedErr[ym] + ']' : '') : '';
-        const body = $att('bb-att-dbody');
-        if (!built.rows.length) {
-            body.replaceChildren(attEl('div', 'bb-att-msg', dig && dig.missing ? '이 달의 요약 데이터가 아직 없습니다' : '확정된 기록이 없습니다'));
-            return;
-        }
-        const q = _attNameFilter.trim().toLowerCase();   // 이름 검색어 (포함되면 표시, 대소문자 무시)
-        if (!ATT_COLS.some(c => c.key === _attSortKey)) _attSortKey = 'totalSec';   // 없어진 열(총 횟수·일평균 횟수)로 정렬돼 있던 경우 기본값으로
-        // 관리자(안·박·신)는 기본으로 숨김 — 검색어에 이름이 걸리거나 안/박/신 버튼으로 이름을 넣었을 때만 표시
-        const rows = built.rows.filter(r => q ? r.name.toLowerCase().includes(q) : !ATT_MGRS.some(m => r.name.includes(m.name))).sort((a, b) => (b[_attSortKey] - a[_attSortKey]) || (a.order - b.order));
-        if (!rows.length) {
-            body.replaceChildren(attEl('div', 'bb-att-msg', `"${_attNameFilter.trim()}" 이름의 근무자가 이 달에는 없습니다`));
-            return;
-        }
-        const table = attEl('table', 'bb-att-mt'), hr = table.createTHead().insertRow();
-        ATT_COLS.forEach(c => {
-            const th = attEl('th', (c.key === _attSortKey ? 'sorted ' : '') + (c.cls === 'warn' ? 'warn' : ''), c.label);
-            if (c.label === '이름') th.appendChild(attEl('span', 'hint', '(클릭하여 열람)'));   // 이름 칸을 클릭하면 그 달 이석 로그가 열린다는 안내
-            if (c.key) th.addEventListener('click', () => { _attSortKey = c.key; attRenderDetail(ym, dig, sched, doc); });
-            hr.appendChild(th);
-        });
-        const tb = table.createTBody();
-        const maxSec = Math.max(1, ...rows.map(r => r.totalSec));   // 막대 길이: 지금 보이는 사람 중 가장 긴 사람을 100% 로
-        rows.forEach((r, ri) => {
-            const tr = tb.insertRow(), td0 = attEl('td', 'nm', r.name);
-            td0.dataset.name = r.name; td0.title = '클릭: 이 달 이석 로그';
-            if (r.time) td0.appendChild(attEl('span', 'tm', '(' + r.time + ')'));
-            tr.appendChild(td0);
-            ATT_COLS.slice(1).forEach(c => {
-                if (c.bar) {   // 위쪽 순위일수록 진한 주황 → 아래로 갈수록 연두 (현재 정렬 순서 기준)
-                    const t = rows.length > 1 ? ri / (rows.length - 1) : 0;
-                    const td = attEl('td', 'bar'), w = attEl('div', 'bb-att-bw'), bar = attEl('div', 'bb-att-bar', r.totalCount + '회');
-                    bar.style.width = 'calc((100% - 100px) * ' + (r.totalSec / maxSec).toFixed(4) + ')';   // 오른쪽 시간 글자 자리(100px)를 뺀 폭에서 비율로 — 가장 긴 사람이 꽉 차도 flex 축소로 길이가 틀어지지 않게
-                    bar.style.background = ATT_MGRS.some(m => r.name.includes(m.name)) ? '#c9c5ba' : 'hsl(' + Math.round(24 + 72 * t) + ',85%,' + Math.round(52 + 10 * t) + '%)';
-                    w.append(bar, attEl('span', '', attDurHM(r.totalSec)));
-                    td.appendChild(w); tr.appendChild(td);
-                } else if (c.viol) {
-                    const td = attEl('td', ''), v = r.viol, pill = attEl('span', 'bb-att-vt ' + (v <= 5 ? 'g' : v <= 14 ? 'y' : 'r'), String(v));
-                    td.title = `15분 초과 ${r.over} · 미기입 ${r.unfiled} · 편집됨 ${r.edited} · 출근60분내 ${r.early}`;
-                    td.appendChild(pill); tr.appendChild(td);
-                } else tr.appendChild(attEl('td', c.cls || '', c.f(r)));
+                log.forEach((l, li) => {
+                    const am = rsParseTod(l.away); if (am == null) return;
+                    let a = rsToAbs(am), b;
+                    if (l.back) { b = rsToAbs(rsParseTod(l.back)); if (b < a) b += 1440; }
+                    else if (opt.est && avgSec[name] != null) {
+                        if (!rsEntryConfirmed(dt, li, log, name, shift)) { pending++; return; }   // 오늘 아직 진행 중일 수 있는 이석은 보정하지 않음
+                        b = a + avgSec[name] / 60; usedEst++;
+                    }
+                    else return;
+                    const a0 = a;
+                    segs.forEach(([s0, s1]) => {                       // 근무 구간 안쪽만 (구간 밖은 잘라냄)
+                        const x = Math.max(a, s0), y = Math.min(b, s1); if (y <= x) return;
+                        for (let h = Math.floor(x / 60); h <= Math.floor((y - 1e-9) / 60); h++) {
+                            if (!ok[h]) continue;
+                            let m = rsOverlap(x, y, h * 60, h * 60 + 60);
+                            if (B0 != null) m -= rsOverlap(Math.max(x, B0), Math.min(y, B1), h * 60, h * 60 + 60);
+                            if (m > 0) p.away[h] = (p.away[h] || 0) + m;
+                        }
+                    });
+                    const h0 = Math.floor(a0 / 60); if (ok[h0] && !(B0 != null && a0 >= B0 && a0 < B1)) p.ev[h0] = (p.ev[h0] || 0) + 1;   // 이석 시작 횟수(툴팁용)
+                });
             });
         });
-        body.replaceChildren(table);
+        const list = Object.values(people).filter(p => p.days > 0 && (opt.mgr || !p.mgr));
+        let hmin = 99, hmax = 0;
+        list.forEach(p => Object.keys(p.dayN).forEach(h => { h = +h; hmin = Math.min(hmin, h); hmax = Math.max(hmax, h); }));
+        if (hmin > hmax) { hmin = 7; hmax = 30; }
+        list.forEach(p => {
+            p.val = {};
+            Object.keys(p.dayN).forEach(h => { p.val[h] = { v: (p.away[h] || 0) / p.dayN[h], min: p.away[h] || 0, cnt: p.ev[h] || 0, n: p.dayN[h] }; });
+        });
+        return { list, hmin, hmax, dates: ds, usedEst, pending, hasSched: !!sched, noShift: list.filter(p => !p.shift).map(p => p.name) };
     }
-    function attCloseDetail() { _attDetailYm = null; $att('bb-att-detail').classList.remove('open'); attClosePlog(); }
 
-    /* ───────── 이름 클릭 → 그 달 일자별 이석 로그 ─────────
+    /* 막대 색은 사람마다 고유한 파스텔 색(모든 패널에서 같은 사람 = 같은 색) */
+    function rsColors(list) {
+        const order = list.slice().sort((a, b) => ((a.shift && rsToAbs(a.shift[0])) || 9999) - ((b.shift && rsToAbs(b.shift[0])) || 9999) || a.name.localeCompare(b.name, 'ko')), m = {};
+        order.forEach((p, i) => { m[p.name] = 'hsl(' + Math.round((i * 137.508) % 360) + ' 62% 80%)'; });   // 황금각으로 색상을 흩어 이웃한 사람끼리 색이 겹치지 않게
+        return m;
+    }
+    /* ---------- 가로 막대 보기: 시간대마다 하나의 패널(07시부터 왼쪽→오른쪽), 패널 안에 근무자마다 한 줄(이름 | 막대 | 숫자), 값 큰 순.
+       인원이 많으면 패널 안을 2단으로 나눈다. 막대 길이 눈금은 모든 패널 공통 ---------- */
+    function rsBuildHBars(list, hmin, hmax, cap) {
+        const colors = rsColors(list), wrap = attEl('div', 'bb-rs-bw' + (_rsHl ? ' dim' : ''));
+        for (let h = hmin; h <= hmax; h++) {
+            const ppl = list.filter(p => p.val[h]).sort((a, b) => b.val[h].v - a.val[h].v || a.name.localeCompare(b.name, 'ko'));
+            const mean = ppl.length ? ppl.reduce((a, p) => a + p.val[h].v, 0) / ppl.length : 0;
+            const pn = attEl('div', 'bb-rs-bp');
+            const hd = attEl('div', 'hd'); hd.append(attEl('b', '', rsHh(h) + '시'), attEl('span', '', ppl.length ? ppl.length + '명 · 평균 ' + mean.toFixed(1) + '분' : '근무자 없음'));
+            pn.appendChild(hd);
+            const body = attEl('div', 'hb'), ncol = ppl.length > 10 ? 2 : 1, per = Math.max(1, Math.ceil(ppl.length / ncol));
+            body.dataset.d = ppl.length > 36 ? 'x' : ppl.length > 24 ? 'm' : 's';
+            for (let c = 0; c < ncol; c++) {
+                const col = attEl('div', 'bb-rs-hcol');
+                ppl.slice(c * per, (c + 1) * per).forEach(p => {
+                    const o = p.val[h], pct = Math.min(100, o.v / cap * 100);
+                    const row = attEl('div', 'bb-rs-hr' + (o.n < 3 ? ' few' : '') + (_rsHl === p.name ? ' hl' : '')); row.dataset.hn = p.name;
+                    row.title = rsHh(h) + '시 · ' + p.name + '\n하루 평균 ' + o.v.toFixed(1) + '분  (합계 ' + o.min.toFixed(1) + '분 / 근무 ' + o.n + '일)\n이 시간대에 시작한 이석 ' + o.cnt + '회';
+                    const hn = attEl('span', 'hn', p.name), ht = attEl('span', 'ht'), bar = attEl('i');
+                    bar.style.width = Math.max(0.6, pct) + '%'; bar.style.background = colors[p.name];
+                    ht.append(bar, attEl('b', '', o.v.toFixed(1)));
+                    row.append(hn, ht);
+                    col.appendChild(row);
+                });
+                body.appendChild(col);
+            }
+            pn.appendChild(body); wrap.appendChild(pn);
+        }
+        return wrap;
+    }
+    /* ---------- 인원별 흐름 보기: 사람마다 카드 하나, 가로축 = 본인 근무 시간대(07시→06시), 세로 = 그 시간대 평균 이석 시간(분). 눈금은 모든 카드 공통.
+       점선 = 같은 시간대 전체 근무자 평균 → 그 사람이 평균보다 많이/적게 비우는 시간대가 바로 보인다. 근무 시간 밖은 비워 두고, 휴게는 보라색 짧은 막대 ---------- */
+    function rsBuildFlow(list, hmin, hmax, cap) {
+        const colors = rsColors(list), W = 300, H = 128, L = 22, R = 6, T = 22, B = 18;
+        const Y = v => T + (H - T - B) * (1 - v / cap), step = cap > 30 ? 10 : 5;
+        const start = p => (p.shift ? rsToAbs(p.shift[0]) : 9999), esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+        const inSpan = (p, h) => (p.segs || []).some(([s0, s1]) => h >= Math.floor(s0 / 60) && h <= Math.floor((s1 - 1e-9) / 60));
+        const mean = {}; for (let h = hmin; h <= hmax; h++) { const a = list.filter(p => p.val[h]); mean[h] = a.length ? a.reduce((x, p) => x + p.val[h].v, 0) / a.length : null; }
+        const wrap = attEl('div', 'bb-rs-fl' + (_rsHl ? ' dim' : ''));
+        // 본인 근무 시간대만: 근무 구간(휴게 포함) 또는 기록이 있는 시간. 익일 07시 이후로 이어지는 구간은 맨 뒤에 붙임
+        const myHours = p => {
+            const sg = (p.segs || []).slice().sort((a, b) => a[0] - b[0]), set = new Map();
+            const hasMain = sg.some(g => g[1] >= 1860 - 1e-9);
+            sg.forEach(([s0, s1]) => { const tail = hasMain && s0 <= 420 + 1e-9 && s1 < 1860 - 1e-9 && sg.length > 1; for (let h = Math.floor(s0 / 60); h <= Math.floor((s1 - 1e-9) / 60); h++) set.set(h + (tail ? 24 : 0), h); });
+            Object.keys(p.val).forEach(k => { k = +k; if (![...set.values()].includes(k)) set.set(k, k); });
+            return [...set.entries()].sort((a, b) => a[0] - b[0]).map(([d, h]) => ({ d, h }));
+        };
+        list.slice().sort((a, b) => start(a) - start(b) || a.name.localeCompare(b.name, 'ko')).forEach(p => {
+            let svg = '', pk = -1, pkh = null, tot = 0;
+            const hrs = myHours(p), n = Math.max(1, hrs.length), bw = (W - L - R) / n, X = i => L + i * bw, lab = n <= 12 ? 1 : 2;
+            for (let v = step; v <= cap; v += step) svg += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(v) + '" y2="' + Y(v) + '" stroke="#d9cba6" stroke-width=".6"/><text x="' + (L - 3) + '" y="' + (Y(v) + 3) + '" text-anchor="end" class="bb-rs-fy">' + v + '</text>';
+            svg += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(0) + '" y2="' + Y(0) + '" stroke="#a89b78" stroke-width=".8"/>';
+            hrs.forEach(({ h }, i) => {
+                const o = p.val[h];
+                if (o) { tot += o.v; if (o.v > pk) { pk = o.v; pkh = h; } }
+                if (i % lab === 0) svg += '<text x="' + (X(i) + bw / 2) + '" y="' + (H - 5) + '" text-anchor="middle" class="bb-rs-fx">' + rsHh(h) + '</text>';
+            });
+            hrs.forEach(({ h }, i) => {
+                const o = p.val[h];
+                if (o) {
+                    const y = Y(o.v), hgt = Math.max(1, Y(0) - y);
+                    svg += '<rect x="' + (X(i) + 1) + '" y="' + y + '" width="' + (bw - 2) + '" height="' + hgt + '" rx="1.5" fill="' + colors[p.name] + '" stroke="rgba(60,45,20,.28)" stroke-width=".6" ' + (o.n < 3 ? 'opacity=".55"' : '') + '><title>' + esc(p.name) + ' · ' + rsHh(h) + '시\n하루 평균 ' + o.v.toFixed(1) + '분 (전체 근무자 평균 ' + mean[h].toFixed(1) + '분)\n합계 ' + o.min.toFixed(1) + '분 / 근무 ' + o.n + '일 · 이 시간대에 시작한 이석 ' + o.cnt + '회</title></rect>';
+                    if (h === pkh && pk > 0) svg += '<text x="' + (X(i) + bw / 2) + '" y="' + (y - 3) + '" text-anchor="middle" class="bb-rs-fp">' + o.v.toFixed(1) + '</text>';
+                } else if (inSpan(p, h)) svg += '<rect x="' + (X(i) + 1) + '" y="' + (Y(0) - 3) + '" width="' + (bw - 2) + '" height="3" rx="1" fill="#8f73d4" opacity=".55"><title>' + rsHh(h) + '시 휴게</title></rect>';
+            });
+            let d = '', pen = false;   // 같은 시간대 전체 근무자 평균 (점선)
+            hrs.forEach(({ h }, i) => { if (mean[h] == null) { pen = false; return; } d += (pen ? 'L' : 'M') + (X(i) + bw / 2).toFixed(1) + ' ' + Y(mean[h]).toFixed(1) + ' '; pen = true; });
+            svg += '<path d="' + d + '" fill="none" stroke="#6b5f4a" stroke-width="1.1" stroke-dasharray="3 2.5" opacity=".85"/>';
+            const card = attEl('div', 'bb-rs-fc' + (_rsHl === p.name ? ' hl' : '')); card.dataset.hn = p.name;
+            card.innerHTML = '<div class="fh"><b>' + esc(p.name) + '</b><small>' + (p.shift ? attPad(Math.floor(p.shift[0] / 60)) + attPad(p.shift[0] % 60) + '-' + attPad(Math.floor(p.shift[1] / 60) % 24) + attPad(p.shift[1] % 60) : '') + '</small><span>' + (pkh != null ? '피크 ' + rsHh(pkh) + '시' : '') + '</span><i style="background:' + colors[p.name] + '"></i><em>합계 ' + tot.toFixed(1) + '분</em></div><svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(p.name) + ' 시간대별 이석">' + svg + '</svg>';
+            wrap.appendChild(card);
+        });
+        return wrap;
+    }
+    /* 시간대 패널: 4열 고정, 폭에 맞춘 정사각형 (6줄 → 세로로 스크롤). 07시부터 왼쪽→오른쪽, 한 줄이 차면 다음 줄 */
+    function rsFitBars() {
+        const w = document.querySelector('#bb-rs-scroll .bb-rs-bw'); if (!w) return;   // 가로 막대 보기만 정사각형 4열
+        const G = 10, W = $att('bb-rs-scroll').clientWidth - 2 * G - 2;
+        const size = Math.max(150, Math.floor((W - (RS_BAR_COLS - 1) * G) / RS_BAR_COLS));
+        w.style.gridTemplateColumns = 'repeat(' + RS_BAR_COLS + ',' + size + 'px)'; w.style.gridAutoRows = size + 'px';
+    }
+    function rsSetStatus(t, warn) { const s = $att('bb-rs-status'); s.textContent = t; s.classList.toggle('warn', !!warn); }
+    function rsRender() {
+        if (!_rsRaw) return;
+        const sc = $att('bb-rs-scroll'), res = rsCompute(_rsRaw, { mgr: $att('bb-rs-mgr').checked, est: $att('bb-rs-est').checked });
+        const { list, hmin, hmax } = res;
+        if (!list.length) { sc.replaceChildren(attEl('div', 'bb-rs-msg', '표시할 근무자가 없습니다 (기록이 없거나 스케줄 정보를 알 수 없음)')); $att('bb-rs-legend').replaceChildren(); $att('bb-rs-note').textContent = ''; return; }
+        const maxV = Math.max(1, ...list.flatMap(p => Object.values(p.val).map(v => v.v)));
+        const cap = Math.max(10, Math.ceil(maxV * 1.15 / 5) * 5);   // 막대 위 숫자가 들어갈 여유를 둠
+        if (_rsHl && !list.some(p => p.name === _rsHl)) _rsHl = null;
+        $att('bb-rs-legend').replaceChildren(..._rsView === 'flow'
+            ? ['카드 하나 = 근무자 한 명 · 가로 = 본인 근무 시간대만 · 막대 높이 = 그 시간대 평균 이석 시간(분/근무일), 모든 카드 같은 눈금 (최대 ' + cap + '분)', '점선 = 같은 시간대 전체 근무자 평균 · 막대 위 숫자 = 그 사람의 피크 · 보라 = 휴게 · 흐리게 = 근무 3일 미만 · 카드를 누르면 그 사람의 일자별 이석 기록'].map(t => attEl('span', '', t))
+            : ['한 줄 = 근무자 한 명 (사람마다 고유한 색) · 막대 길이 = 그 시간대 평균 이석 시간(분/근무일), 모든 시간대 같은 눈금 (최대 ' + cap + '분) · 숫자 = 분 · 인원이 많으면 2단 · 흐리게 = 근무 3일 미만 · 줄을 누르면 그 사람 강조'].map(t => attEl('span', '', t)));
+        const st = sc.scrollTop, sl = sc.scrollLeft;   // 눌러서 다시 그려도 보던 위치 유지
+        sc.replaceChildren(_rsView === 'flow' ? rsBuildFlow(list, hmin, hmax, cap) : rsBuildHBars(list, hmin, hmax, cap)); rsFitBars(); sc.scrollTop = st; sc.scrollLeft = sl;
+        const notes = ['기간 ' + _rsRaw.ym + ' · 기록 있는 날 ' + res.dates.length + '일 · 근무자 ' + list.length + '명'];
+        if (!res.hasSched) notes.push('⚠ 스케줄을 불러오지 못해 근무시간을 기록에서 추정합니다 (근무시간을 알 수 없는 사람은 제외)');
+        if (res.noShift.length) notes.push('⚠ 근무시간을 알 수 없어 제외: ' + res.noShift.join(', '));
+        if (_rsRaw.failed) notes.push('⚠ 일부 날짜 ' + _rsRaw.failed + '일 조회 실패');
+        if ($att('bb-rs-est').checked) notes.push('착석 미기입 ' + res.usedEst + '건을 그 사람의 평균 소요시간으로 보정 (그 달 정상 기록 10건 초과인 사람만' + (res.pending ? ', 오늘 진행 중 ' + res.pending + '건은 보류' : '') + ')');
+        notes.push('시간대에 걸친 이석은 시간대별로 나눠 계산 · 휴게시간은 근무·이석에서 제외');
+        $att('bb-rs-note').textContent = notes.join(' · ');
+    }
+    async function rsLoad(force) {
+        const ym = _rsYm, seq = ++_rsSeq;
+        $att('bb-att-dtitle').textContent = '이석 시간대별 명단';
+        if (!force && _rsCache[ym]) { _rsRaw = _rsCache[ym]; rsSetStatus(ym + ' 불러옴 (저장분)'); rsRender(); return; }
+        _rsRaw = null;
+        $att('bb-rs-scroll').replaceChildren(attEl('div', 'bb-rs-msg', '불러오는 중…'));
+        rsSetStatus('불러오는 중…');
+        try {
+            const raw = await rsLoadMonth(ym, (d, n) => { if (seq === _rsSeq) rsSetStatus('불러오는 중… ' + d + '/' + n + '일'); });
+            if (seq !== _rsSeq) return;   // 그 사이 다른 달로 바꿈/닫음
+            _rsCache[ym] = _rsRaw = raw; rsSetStatus(ym + ' 불러옴 · ' + Object.keys(raw.archives).length + '일 기록'); rsRender();
+        } catch (e) {
+            if (seq !== _rsSeq) return;
+            console.warn('[BB] 이석 시간대별 명단 조회 실패:', e.message);
+            $att('bb-rs-scroll').replaceChildren(attEl('div', 'bb-rs-msg warn', '⚠ 서버에서 불러오지 못했습니다 — ' + e.message + ' (잠시 뒤 새로고침을 눌러 주세요)'));
+            rsSetStatus('불러오기 실패', true);
+        }
+    }
+    // 조회 가능한 달: 이번 달 + 전달 (이번 달 10일 데이터가 쌓이기 전(1~10일)에는 전전달도 표시) — 기본 = 이번 달
+    function rsMonths() {
+        const t = attLiveDate().split('-').map(Number);
+        return (t[2] <= 10 ? [2, 1, 0] : [1, 0]).map(i => { const d = new Date(Date.UTC(t[0], t[1] - 1 - i, 1)); return { v: d.getUTCFullYear() + '-' + attPad(d.getUTCMonth() + 1), label: d.getUTCFullYear() + '년 ' + (d.getUTCMonth() + 1) + '월' }; });
+    }
+    function attOpenDetail() {
+        attClosePop(); attCloseCal(); attClosePlog();
+        const ms = rsMonths(), sel = $att('bb-att-dsel');
+        sel.replaceChildren(...ms.map(m => { const o = attEl('option', '', m.label); o.value = m.v; return o; }));
+        if (!_rsYm || !ms.some(m => m.v === _rsYm)) _rsYm = ms[ms.length - 1].v;
+        sel.value = _rsYm;
+        const vw = $att('bb-rs-view');
+        if (!vw.children.length) [['hbar', '가로 막대'], ['flow', '인원별 흐름']].forEach(([k, l]) => {
+            const b = attEl('button', k === _rsView ? 'on' : '', l); b.type = 'button'; b.dataset.k = k; vw.appendChild(b);
+        });
+        $att('bb-att-detail').classList.add('open');
+        rsLoad(false);
+    }
+    function attCloseDetail() { _rsSeq++; $att('bb-att-detail').classList.remove('open'); attClosePlog(); }
+
+    /* ───────── 그 달 일자별 로그 조립 (이석 카드 팝업의 미기입 보정이 사용) ─────────
        서버의 월별 집계 파일(_logs/YYYY-MM.json)이 아직 없거나 오래됐으면 매번 그 달 전체를 새로 만들어야 해서
        느려질 수 있어(최대 30초) — 대신 이미 빠르고 잘 캐시되는 하루치 archive(action=archive, 과거 날짜는 24시간 캐시)를
        그 달 날짜 수만큼 병렬로 모아 클라이언트에서 같은 형태로 조립한다. 서버의 월별 사전 집계에 기대지 않아 더 안정적으로 빠르고,
@@ -6107,6 +6247,7 @@
         _attDayLogsPending[ym] = p;
         try { return await p; } finally { delete _attDayLogsPending[ym]; }
     }
+
     function attClosePlog() { _attPlogKey = ''; $att('bb-att-plog').classList.remove('open'); }
     // 서버 로그 형식: days[날짜][이름] = [횟수, 총초, [[이석, 착석, 소요초, 편집플래그(1=이석 메시지, 2=착석 메시지)], ...]]
     function attPlogBody(name, doc, sched) {
@@ -6188,25 +6329,28 @@
     $att('bb-att-detailbtn').addEventListener('click', () => { if ($att('bb-att-detail').classList.contains('open')) attCloseDetail(); else attOpenDetail(); });
     $att('bb-att-today').addEventListener('click', attGoToday);
     $att('bb-att-dclose').addEventListener('click', attCloseDetail);
-    $att('bb-att-dsel').addEventListener('change', e => attOpenDetail(e.target.value));
-    function attSyncMgb() { document.querySelectorAll('#bb-att-mgb button').forEach(b => b.classList.toggle('on', _attNameFilter.trim() === b.dataset.name)); }
-    $att('bb-att-mgb').addEventListener('click', e => {   // 안·박·신: 검색창에 그 이름을 넣은 것과 같음 (같은 버튼을 다시 누르면 해제)
-        const b = e.target.closest('button'); if (!b) return;
-        _attNameFilter = _attNameFilter.trim() === b.dataset.name ? '' : b.dataset.name;
-        $att('bb-att-search').value = _attNameFilter; attSyncMgb();
-        if (_attLast && _attLast.ym === _attDetailYm) attRenderDetail(_attLast.ym, _attLast.dig, _attLast.sched, _attLast.doc);
+    $att('bb-att-dsel').addEventListener('change', e => { _rsYm = e.target.value; _rsHl = null; rsLoad(false); });
+    $att('bb-rs-view').addEventListener('click', e => {
+        const b = e.target.closest('button'); if (!b || b.dataset.k === _rsView) return;
+        _rsView = b.dataset.k; document.querySelectorAll('#bb-rs-view button').forEach(x => x.classList.toggle('on', x === b)); rsRender();
     });
-    $att('bb-att-search').addEventListener('input', e => {   // 입력할 때마다 표만 다시 그림 (서버 요청 없음)
-        _attNameFilter = e.target.value; attSyncMgb();
-        if (_attLast && _attLast.ym === _attDetailYm) attRenderDetail(_attLast.ym, _attLast.dig, _attLast.sched, _attLast.doc);
+    $att('bb-rs-mgr').addEventListener('change', rsRender);
+    $att('bb-rs-est').addEventListener('change', rsRender);
+    $att('bb-rs-reload').addEventListener('click', () => rsLoad(true));
+    $att('bb-rs-scroll').addEventListener('click', e => {   // 줄/카드를 누르면 그 사람 강조 (다시 누르거나 빈 곳을 누르면 해제)
+        const fc = e.target.closest('.bb-rs-fc');
+        if (fc) { attOpenPlog(fc.dataset.hn, _rsYm); return; }   // 인원별 흐름: 카드 → 그 사람의 일자별 이석 기록
+        const t = e.target.closest('[data-hn]');
+        if (!t && !_rsHl) return;
+        _rsHl = (t && t.dataset.hn !== _rsHl) ? t.dataset.hn : null; rsRender();
     });
-    $att('bb-att-dbody').addEventListener('click', e => { const td = e.target.closest('td.nm'); if (td && _attDetailYm) attOpenPlog(td.dataset.name, _attDetailYm); });   // 이름 클릭 (예전엔 더블클릭)
+    window.addEventListener('resize', () => { if ($att('bb-att-detail').classList.contains('open')) rsFitBars(); });
     $att('bb-att-body').addEventListener('click', e => { const c = e.target.closest('.bb-att-card'); if (c) attTogglePop(c.dataset.uid); });
     $att('bb-att-r2').addEventListener('click', e => { const b = e.target.closest('.bb-att-mg'); if (b && b.dataset.uid) attTogglePop(b.dataset.uid); });   // 관리자 동그라미 버튼
     document.addEventListener('click', e => {   // 바깥 클릭 → 이석 로그 / 달력 닫기 (캡처 단계: 재렌더로 대상이 사라지기 전에 판단)
         if (_attPopId && !e.target.closest('#bb-att-pop') && !e.target.closest('.bb-att-card') && !e.target.closest('.bb-att-mg')) attClosePop();
         if (_attCalWhich && !e.target.closest('#bb-att-cal') && !e.target.closest('.bb-att-mbtn')) attCloseCal();
-        if (_attPlogKey && !e.target.closest('#bb-att-plog')) attClosePlog();   // 이석 로그 창 바깥을 누르면 그 창만 닫힘 (상세 로그 창 안쪽을 눌렀다면 상세 로그는 유지)
+        if (_attPlogKey && !e.target.closest('#bb-att-plog')) attClosePlog();   // 이석 로그 창 바깥을 누르면 그 창만 닫힘
         if ($att('bb-att-detail').classList.contains('open') && !e.target.closest('#bb-att-detail') && !e.target.closest('#bb-att-plog') && !e.target.closest('#bb-att-detailbtn')) attCloseDetail();   // 상세 로그 창 바깥을 누르면 닫힘
     }, true);
     document.addEventListener('keydown', e => {
