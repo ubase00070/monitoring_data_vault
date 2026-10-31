@@ -7271,10 +7271,15 @@
         .bb-tr-g .nm.sel { background:#d8f3dc; color:#166534; }
         .bb-tr-g .v { font-weight:700; }
         .bb-tr-g .v.off { background:repeating-linear-gradient(135deg, transparent 0 5px, rgba(120,100,60,.07) 5px 6px); }
+        .bb-tr-g .clr { position:sticky; left:0; bottom:0; z-index:4; justify-content:center; background:var(--sur2); color:#166534; font-weight:800; cursor:pointer; border-top:2px solid var(--bd2); user-select:none; }
+        .bb-tr-g .clr:hover { background:#d8f3dc; }
+        .bb-tr-g .clr.off { opacity:.45; cursor:default; }
+        .bb-tr-g .ft { position:sticky; bottom:0; z-index:3; background:var(--sur2); border-top:2px solid var(--bd2); }
+        .bb-tr-g .nm, .bb-tr-chip { user-select:none; }
         .bb-tr-g .v.dim { opacity:.3; }
-        .bb-tr-g .v.top { box-shadow:inset 0 0 0 3px #5b21b6; font-weight:900; }   /* 그 시간대 최다 처리자: 진한 보라(인디고) 테두리 — 녹색 칸과 보색 계열이라 또렷하고 붉은 계열처럼 눈이 아프지 않음 */
+        .bb-tr-g .v.top { box-shadow:inset 0 0 0 2.5px #8f73d4; font-weight:800; }   /* 그 시간대 최다 처리자: 연한 보라 테두리 — 녹색 칸과 보색 계열이라 또렷하고 붉은 계열처럼 눈이 아프지 않음 */
         .bb-tr-g .v.top.dim { opacity:.6; }
-        .bb-tr-g .v.top.rowsel { box-shadow:inset 0 0 0 3px #5b21b6, inset 0 4px 0 #15803d, inset 0 -4px 0 #15803d; }
+        .bb-tr-g .v.top.rowsel { box-shadow:inset 0 0 0 2.5px #8f73d4, inset 0 4px 0 #15803d, inset 0 -4px 0 #15803d; }
         .bb-tr-g .v.rowsel { box-shadow:inset 0 1px 0 #15803d, inset 0 -1px 0 #15803d; }
         .bb-tr-srt { display:inline-flex; border:1.5px solid var(--bd2); border-radius:8px; overflow:hidden; }
         .bb-tr-srt button { height:27px; padding:0 11px; border:0; background:var(--sur2); color:var(--mu); font-family:inherit; font-size:calc(14px * var(--bb-ts, 1)); font-weight:700; cursor:pointer; }
@@ -7293,7 +7298,7 @@
         const trPop = ivEl('div'); trPop.id = 'bb-iv-tr';
         document.body.appendChild(trPop);
         let _trOpen = false, _trSeq = 0, _trDate = '', _trSel = new Set(), _trDates = null, _trRevs = null, _trDatesAt = 0, _trState = 'loading', _trData = null;
-        let _trMode = 'day', _trAll = null, _trSort = 'start';   // _trAll = { store, state:{ phase, done, total, failed } }
+        let _trAnchor = '', _trMode = 'day', _trAll = null, _trSort = 'start';   // _trAll = { store, state:{ phase, done, total, failed } }
         const _trCache = new Map();   // 날짜 → { at, d }
         const trEsc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
         const TR_AXIS = Array.from({ length: 24 }, (_, i) => (i + 7) % 24);
@@ -7440,6 +7445,7 @@
                 c.innerHTML = '<i style="background:' + p.color + '"></i>' + trEsc(p.name) + ' <small>' + sub(p) + '</small>';
                 leg.appendChild(c);
             });
+            const cl = ivEl('span', 'bb-tr-chip', '전체 해제'); cl.dataset.act = 'clear'; cl.style.opacity = _trSel.size ? '1' : '.45'; leg.appendChild(cl);
             return leg;
         }
         function trDayChart(body, sum, people) {
@@ -7518,6 +7524,7 @@
                     h += '<div class="v' + (dim ? ' dim' : '') + (isF ? ' rowsel' : '') + (v > 0 && v >= colBest[i] - 1e-9 ? ' top' : '') + '" style="background:' + bg + ';color:' + (v > 0 ? '#16301f' : '#b3a687') + '">' + (v > 0 ? fmt1(v) : '·') + '</div>';
                 });
             });
+            h += '<div class="clr' + (_trSel.size ? '' : ' off') + '" data-act="clear">전체 해제</div>' + '<div class="ft"></div>'.repeat(24);   // 맨 아래(항상 보이게 고정): 선택 전체 해제
             const hm = ivEl('div', 'bb-tr-hm');
             hm.style.maxHeight = Math.max(260, trPop.clientHeight - 215) + 'px';
             hm.innerHTML = '<div class="bb-tr-g">' + h + '</div>';
@@ -7552,7 +7559,7 @@
                 const ag = _trAll ? trAggregate(_trAll.store) : { people: [], nd: 0 };
                 if (!ag.people.length) body.appendChild(ivEl('div', 'bb-tr-msg', _trAll && _trAll.state.phase === 'loading' ? '기록을 불러오는 중… ' + _trAll.state.done + '/' + _trAll.state.total : '집계할 기록이 아직 없습니다.'));
                 else { trPruneSel(ag.people); trAllChart(body, sum, ag); }
-                ft = '칸 = 그 사람이 그 시간대에 일한 날만 평균낸 처리 건수 (진할수록 많음 · 빗금 = 근무 밖/휴게, 평균 제외) · 오늘은 끝나지 않아 제외 · 새 날짜가 생길 때만 추가로 받아 계산(이 브라우저에 저장) · 이름을 여러 명 눌러 그 줄만 강조 (다시 누르면 해제) · 진한 보라 테두리 = 그 시간대 최다 처리자';
+                ft = '칸 = 그 사람이 그 시간대에 일한 날만 평균낸 처리 건수 (진할수록 많음 · 빗금 = 근무 밖/휴게, 평균 제외) · 오늘은 끝나지 않아 제외 · 새 날짜가 생길 때만 추가로 받아 계산(이 브라우저에 저장) · 이름을 여러 명 눌러 그 줄만 강조 (다시 누르면 해제 · Shift+클릭 = 구간 선택) · 연한 보라 테두리 = 그 시간대 최다 처리자';
             } else {
                 const people = _trData ? trPeople(_trData) : [];
                 trPruneSel(people);
@@ -7612,10 +7619,20 @@
         $iv('bb-iv-tr-btn').addEventListener('click', ivSafe(() => trOpen()));
         trPop.addEventListener('click', ivSafe(e => {
             const ch = e.target.closest('[data-focus]');
-            if (ch) { const nm = ch.dataset.focus; if (_trSel.has(nm)) _trSel.delete(nm); else _trSel.add(nm); trRender(); return; }   // 여러 명 토글
+            if (ch) {   // 여러 명 토글 · Shift+클릭 = 마지막으로 누른 이름부터 여기까지 (화면에 보이는 순서대로) 한꺼번에 선택
+                const nm = ch.dataset.focus;
+                if (e.shiftKey && _trAnchor && _trAnchor !== nm) {
+                    const names = [...ch.closest('.bb-tr-g, .bb-tr-leg').querySelectorAll('[data-focus]')].map(el => el.dataset.focus);
+                    const i1 = names.indexOf(_trAnchor), i2 = names.indexOf(nm);
+                    if (i1 >= 0 && i2 >= 0) names.slice(Math.min(i1, i2), Math.max(i1, i2) + 1).forEach(n => _trSel.add(n));
+                    else _trSel.add(nm);
+                } else if (_trSel.has(nm)) _trSel.delete(nm); else _trSel.add(nm);
+                _trAnchor = nm; trRender(); return;
+            }
             const a = e.target.closest('[data-act]'); if (!a || a.disabled) return;
             const dates = trDateList(), di = dates.indexOf(_trDate), act = a.dataset.act;
-            if (act === 'close') trClose();
+            if (act === 'clear') { _trSel.clear(); _trAnchor = ''; trRender(); }
+            else if (act === 'close') trClose();
             else if (act === 'refresh') trLoad(true);
             else if (act === 'sort') { _trSort = a.dataset.k; trRender(); }
             else if (act === 'all') { _trMode = _trMode === 'all' ? 'day' : 'all'; trLoad(false); }
