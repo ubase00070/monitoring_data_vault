@@ -296,7 +296,8 @@
       "장애인고용공단 1"
     ],
     "reserved_dispatch": [
-      "장애인고용공단 2",
+      "강동현대홈타운",
+      "수원센트럴 1",
       "수원센트럴 2",
       "인력개발원"
     ],
@@ -431,11 +432,13 @@
       "장애인고용공단 1"
     ],
     "reserved_dispatch": [
-      "부경대"
+      "김포 풍무"
     ],
     "control_dispatch": [],
     "site_dispatch": [],
-    "random_site_dispatch": [],
+    "random_site_dispatch": [
+      "부경대"
+    ],
     "planTimes": {
       "한성대": [
         "11:00"
@@ -586,6 +589,7 @@
       "성남 야탑"
     ],
     "reserved_dispatch": [
+      "인력개발원",
       "수원센트럴 1",
       "수원센트럴 2",
       "수원 힐스 1"
@@ -686,15 +690,16 @@
       "장애인고용공단 2"
     ],
     "reserved_dispatch": [
-      "장애인고용공단 2",
-      "부천 위브"
+      "강동현대홈타운",
+      "수원 힐스 2"
     ],
     "control_dispatch": [
-      "리센츠 2",
-      "평택 1"
+      "리센츠 1",
+      "리센츠 2"
     ],
     "site_dispatch": [
-      "리센츠 1",
+      "부천 위브",
+      "평택 1",
       "평택 2",
       "김포 1",
       "김포 2"
@@ -821,13 +826,14 @@
       "더샵지제 2"
     ],
     "reserved_dispatch": [
+      "파주",
       "인력개발원"
     ],
     "control_dispatch": [
-      "부산 서면"
+      "성남 판교"
     ],
     "site_dispatch": [
-      "성남 판교"
+      "부산 서면"
     ],
     "random_site_dispatch": [],
     "planTimes": {
@@ -941,15 +947,16 @@
       "장애인고용공단 2"
     ],
     "reserved_dispatch": [
-      "엘스",
+      "용인 고진",
+      "수원센트럴 1",
       "수원센트럴 2"
     ],
     "control_dispatch": [
-      "평택 1"
+      "엘스"
     ],
     "site_dispatch": [
-      "평택 2",
-      "수원센트럴 1"
+      "평택 1",
+      "평택 2"
     ],
     "random_site_dispatch": [],
     "planTimes": {
@@ -1078,7 +1085,8 @@
       "장애인고용공단 2"
     ],
     "reserved_dispatch": [
-      "장애인고용공단 2",
+      "강동현대홈타운",
+      "김포 풍무",
       "지제"
     ],
     "control_dispatch": [],
@@ -1143,7 +1151,9 @@
       "부산 호반 2",
       "부산 수자인 2"
     ],
-    "reserved_dispatch": [],
+    "reserved_dispatch": [
+      "파주"
+    ],
     "control_dispatch": [],
     "site_dispatch": [],
     "random_site_dispatch": [],
@@ -1211,15 +1221,17 @@
       "두루아이 3"
     ],
     "reserved_dispatch": [
-      "엘스",
+      "용인 고진",
+      "수원센트럴 1",
       "수원센트럴 2",
-      "수원 힐스 1"
+      "수원 힐스 1",
+      "두루아이 4"
     ],
     "control_dispatch": [
-      "용인 고진",
+      "구리 롯데캐슬",
+      "엘스",
       "리센츠 1",
-      "리센츠 2",
-      "수원센트럴 1"
+      "리센츠 2"
     ],
     "site_dispatch": [],
     "random_site_dispatch": [],
@@ -1344,13 +1356,13 @@
       "신대양"
     ],
     "reserved_dispatch": [
-      "중앙대"
-    ],
-    "control_dispatch": [
-      "부천 위브"
-    ],
-    "site_dispatch": [
+      "수원 힐스 2",
+      "중앙대",
       "지제"
+    ],
+    "control_dispatch": [],
+    "site_dispatch": [
+      "부천 위브"
     ],
     "random_site_dispatch": [],
     "planTimes": {
@@ -1460,12 +1472,15 @@
       "신대양"
     ],
     "reserved_dispatch": [
+      "두루아이 4",
       "파주",
-      "부산 서면"
+      "중앙대"
     ],
-    "control_dispatch": [],
-    "site_dispatch": [
+    "control_dispatch": [
       "성남 판교"
+    ],
+    "site_dispatch": [
+      "부산 서면"
     ],
     "random_site_dispatch": [],
     "planTimes": {
@@ -1595,15 +1610,18 @@
       "두루아이 3"
     ],
     "reserved_dispatch": [
-      "평택 1",
+      "동백SK",
+      "두루아이 4",
+      "중앙대",
+      "수원센트럴 1",
       "수원센트럴 2"
     ],
     "control_dispatch": [],
     "site_dispatch": [
+      "평택 1",
       "평택 2",
       "아주대 1",
-      "아주대 2",
-      "수원센트럴 1"
+      "아주대 2"
     ],
     "random_site_dispatch": [],
     "planTimes": {
@@ -1770,8 +1788,10 @@
       "신대양"
     ],
     "reserved_dispatch": [
-      "신대양",
-      "지제"
+      "강동현대홈타운",
+      "용인 고진",
+      "지제",
+      "인재개발원"
     ],
     "control_dispatch": [],
     "site_dispatch": [],
@@ -1865,12 +1885,14 @@
       "신대양"
     ],
     "reserved_dispatch": [
-      "신대양",
+      "전주천(덕진구)",
+      "두루아이 4",
       "파주",
-      "중앙대",
+      "중앙대"
+    ],
+    "control_dispatch": [
       "엘스"
     ],
-    "control_dispatch": [],
     "site_dispatch": [],
     "random_site_dispatch": [],
     "planTimes": {
@@ -2004,15 +2026,18 @@
       "신대양"
     ],
     "reserved_dispatch": [
-      "김포 1",
+      "쉴더스",
+      "용인 고진",
       "수원센트럴 1",
       "수원센트럴 2",
-      "수원 힐스 1"
+      "수원 힐스 1",
+      "중앙대",
+      "두루아이 4"
     ],
     "control_dispatch": [],
     "site_dispatch": [
-      "김포 2",
-      "용인 고진"
+      "김포 1",
+      "김포 2"
     ],
     "random_site_dispatch": [],
     "planTimes": {
@@ -2180,8 +2205,11 @@
       "신대양"
     ],
     "reserved_dispatch": [
-      "신대양",
-      "지제"
+      "수원 힐스 2",
+      "동백SK",
+      "지제",
+      "인재개발원",
+      "중앙대"
     ],
     "control_dispatch": [],
     "site_dispatch": [],
@@ -2304,14 +2332,16 @@
       "신대양"
     ],
     "reserved_dispatch": [
+      "두루아이 4",
       "쉴더스",
       "파주",
       "용인 고진",
       "수원센트럴 1",
-      "수원센트럴 2",
+      "수원센트럴 2"
+    ],
+    "control_dispatch": [
       "성남 판교"
     ],
-    "control_dispatch": [],
     "site_dispatch": [],
     "random_site_dispatch": [],
     "planTimes": {
@@ -2454,7 +2484,10 @@
       "더샵지제 2",
       "두루아이 3"
     ],
-    "reserved_dispatch": [],
+    "reserved_dispatch": [
+      "중앙대",
+      "두루아이 4"
+    ],
     "control_dispatch": [],
     "site_dispatch": [],
     "random_site_dispatch": [],
@@ -2541,6 +2574,7 @@
       "더샵남천"
     ],
     "reserved_dispatch": [
+      "중앙대",
       "용인 고진",
       "지제"
     ],
@@ -2603,7 +2637,9 @@
     "auto_dispatch": [
       "양원LH"
     ],
-    "reserved_dispatch": [],
+    "reserved_dispatch": [
+      "파주"
+    ],
     "control_dispatch": [],
     "site_dispatch": [],
     "random_site_dispatch": [],
@@ -2695,5 +2731,5 @@
     {"btn":"서강대","ncc":["서강대학교 1호기"]},
     {"btn":"강남 래미안","ncc":["강남 래미안블레스티지 1호기"],"shift":false}
   ],
-  "_unmapped": ["[09:00] DMZ - 순찰"]
+  "_unmapped": ["[09:00] DMZ - 순찰","[10:00] 가평 자이 1호기 - 순찰 (3바퀴)","[15:00] 가평 자이 1호기 - 순찰 (3바퀴)"]
 }
