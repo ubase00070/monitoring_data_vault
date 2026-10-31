@@ -7272,6 +7272,9 @@
         .bb-tr-g .v { font-weight:700; }
         .bb-tr-g .v.off { background:repeating-linear-gradient(135deg, transparent 0 5px, rgba(120,100,60,.07) 5px 6px); }
         .bb-tr-g .v.dim { opacity:.3; }
+        .bb-tr-g .v.top { box-shadow:inset 0 0 0 3px #5b21b6; font-weight:900; }   /* 그 시간대 최다 처리자: 진한 보라(인디고) 테두리 — 녹색 칸과 보색 계열이라 또렷하고 붉은 계열처럼 눈이 아프지 않음 */
+        .bb-tr-g .v.top.dim { opacity:.6; }
+        .bb-tr-g .v.top.rowsel { box-shadow:inset 0 0 0 3px #5b21b6, inset 0 4px 0 #15803d, inset 0 -4px 0 #15803d; }
         .bb-tr-g .v.rowsel { box-shadow:inset 0 1px 0 #15803d, inset 0 -1px 0 #15803d; }
         .bb-tr-srt { display:inline-flex; border:1.5px solid var(--bd2); border-radius:8px; overflow:hidden; }
         .bb-tr-srt button { height:27px; padding:0 11px; border:0; background:var(--sur2); color:var(--mu); font-family:inherit; font-size:calc(14px * var(--bb-ts, 1)); font-weight:700; cursor:pointer; }
@@ -7289,11 +7292,12 @@
 
         const trPop = ivEl('div'); trPop.id = 'bb-iv-tr';
         document.body.appendChild(trPop);
-        let _trOpen = false, _trSeq = 0, _trDate = '', _trFocus = '', _trDates = null, _trRevs = null, _trDatesAt = 0, _trState = 'loading', _trData = null;
+        let _trOpen = false, _trSeq = 0, _trDate = '', _trSel = new Set(), _trDates = null, _trRevs = null, _trDatesAt = 0, _trState = 'loading', _trData = null;
         let _trMode = 'day', _trAll = null, _trSort = 'start';   // _trAll = { store, state:{ phase, done, total, failed } }
         const _trCache = new Map();   // 날짜 → { at, d }
         const trEsc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
         const TR_AXIS = Array.from({ length: 24 }, (_, i) => (i + 7) % 24);
+        const trPruneSel = list => { const ok = new Set(list.map(p => p.name)); [..._trSel].forEach(n => { if (!ok.has(n)) _trSel.delete(n); }); };
         const trNum = v => String(Math.round(v * 100) / 100);
 
         async function trFetchDay(d, force) {
@@ -7431,7 +7435,7 @@
         function trLegend(people, sub) {
             const leg = ivEl('div', 'bb-tr-leg');
             people.forEach(p => {
-                const c = ivEl('span', 'bb-tr-chip' + (p.name === _trFocus ? ' sel' : ''));
+                const c = ivEl('span', 'bb-tr-chip' + (_trSel.has(p.name) ? ' sel' : ''));
                 c.dataset.focus = p.name; c.title = p.shift || '';
                 c.innerHTML = '<i style="background:' + p.color + '"></i>' + trEsc(p.name) + ' <small>' + sub(p) + '</small>';
                 leg.appendChild(c);
@@ -7443,10 +7447,10 @@
             const totals = items.map(l => l.reduce((a, b) => a + b.v, 0));
             const total = totals.reduce((a, b) => a + b, 0);
             const pk = totals.indexOf(Math.max.apply(null, totals));
-            const fp = _trFocus ? people.find(p => p.name === _trFocus) : null;
+            const sel = people.filter(p => _trSel.has(p.name)), fp = sel.length === 1 ? sel[0] : null;
             let fh = -1, fv = 0; if (fp) TR_AXIS.forEach(h => { if (fp.arr[h] > fv) { fv = fp.arr[h]; fh = h; } });
             sum.innerHTML = '<span>총 처리<b class="hl">' + total + '건</b></span><span>처리 인원<b>' + people.length + '명</b></span><span>가장 바쁜 시간대<b>' + TR_AXIS[pk] + '시 · ' + totals[pk] + '건</b></span>' +
-                (fp ? '<span>' + trEsc(fp.name) + '<b class="hl">' + fp.total + '건</b></span><span>피크<b>' + (fh >= 0 ? fh + '시 · ' + fv + '건' : '-') + '</b></span>' : '');
+                (fp ? '<span>' + trEsc(fp.name) + '<b class="hl">' + fp.total + '건</b></span><span>피크<b>' + (fh >= 0 ? fh + '시 · ' + fv + '건' : '-') + '</b></span>' : sel.length > 1 ? '<span>선택 ' + sel.length + '명 합계<b class="hl">' + sel.reduce((a, p) => a + p.total, 0) + '건</b></span>' : '');
             const wrap = ivEl('div', 'bb-tr-wrap');
             const maxK = Math.max(1, ...items.map(l => l.length)), M = { l: 36, r: 12, t: 30, b: 30 };
             const avail = trAvail(), band0 = (avail - M.l - M.r) / 24;
@@ -7460,7 +7464,7 @@
                 const k = list.length, gw = k * BAR + (k - 1) * GAP;
                 list.forEach(({ p, v }, j) => {
                     const bx = cx0(i) - gw / 2 + j * (BAR + GAP), top = y(v), bh = base - top, cx = bx + BAR / 2;
-                    const isF = _trFocus && p.name === _trFocus, dim = _trFocus && !isF, chars = Array.from(p.name), nh = chars.length * LH;
+                    const isF = _trSel.has(p.name), dim = _trSel.size > 0 && !isF, chars = Array.from(p.name), nh = chars.length * LH;
                     if (isF) bars += '<rect x="' + (bx - 2.5) + '" y="' + (top - 2.5) + '" width="' + (BAR + 5) + '" height="' + (bh + 2.5) + '" rx="5" fill="none" stroke="#c2410c" stroke-width="1.8"/>';
                     bars += '<rect x="' + bx + '" y="' + top + '" width="' + BAR + '" height="' + bh + '" rx="3" fill="' + p.color + '" opacity="' + (isF ? 1 : dim ? 0.28 : 0.92) + '"/>';
                     labs += '<text x="' + cx + '" y="' + (top - 5) + '" text-anchor="middle" font-size="' + (isF ? FS + 1.5 : FS - 1) + '" font-weight="800" fill="' + (isF ? '#c2410c' : '#2b2418') + '" opacity="' + (dim ? 0.4 : 1) + '">' + v + '</text>';
@@ -7480,10 +7484,10 @@
         function trAllChart(body, sum, ag) {
             const people = ag.people.slice(), st = _trAll.state;
             const colTot = TR_AXIS.map(h => people.reduce((a, p) => a + (p.avg[h] || 0), 0));
-            const fp = _trFocus ? people.find(p => p.name === _trFocus) : null;
+            const sel = people.filter(p => _trSel.has(p.name)), fp = sel.length === 1 ? sel[0] : null;
             let fh = -1, fv = 0; if (fp) TR_AXIS.forEach(h => { if ((fp.avg[h] || 0) > fv) { fv = fp.avg[h]; fh = h; } });
             sum.innerHTML = '<span>기록<b class="hl">' + ag.nd + '일치</b></span><span>기간<b>' + (ag.first ? ivMD(ag.first) + ' ~ ' + ivMD(ag.last) : '-') + '</b></span><span>인원<b>' + people.length + '명</b></span>' +
-                (fp ? '<span>' + trEsc(fp.name) + ' 피크<b class="hl">' + (fh >= 0 ? fh + '시 · 평균 ' + trNum(fv) + '건' : '-') + '</b></span><span>' + trEsc(fp.name) + ' 근무<b>' + fp.days + '일</b></span>' : '') +
+                (fp ? '<span>' + trEsc(fp.name) + ' 피크<b class="hl">' + (fh >= 0 ? fh + '시 · 평균 ' + trNum(fv) + '건' : '-') + '</b></span><span>' + trEsc(fp.name) + ' 근무<b>' + fp.days + '일</b></span>' : sel.length > 1 ? '<span>선택<b class="hl">' + sel.length + '명</b></span>' : '') +
                 (st.phase === 'loading' ? '<span class="pg">새 날짜 받는 중 ' + st.done + '/' + st.total + '</span>' : st.phase === 'fail' ? '<span class="pg">날짜 목록을 받지 못해 저장분만 표시</span>' : st.failed ? '<span class="pg">' + st.failed + '일 받기 실패</span>' : '');
             // 정렬: 출근시간순(그 사람이 주로 일하는 첫 시간대 → 처리량) / 처리량순
             const startIdx = p => {   // 실제 출근 시각(연속 근무 구간의 시작)을 07시 기준 순서로. 예) 00-09 근무자는 07·08시를 지나지만 출근은 00시 → 아래쪽
@@ -7497,20 +7501,21 @@
             if (_trSort === 'start') people.sort((a, b) => startIdx(a) - startIdx(b) || b.total - a.total || a.name.localeCompare(b.name, 'ko'));
             let gmax = 0; people.forEach(p => p.avg.forEach(v => { if (v > gmax) gmax = v; }));
             gmax = Math.max(gmax, 0.5);
+            const colBest = TR_AXIS.map(hr => { let m = 0; people.forEach(p => { if ((p.avg[hr] || 0) > m) m = p.avg[hr]; }); return m; });   // 시간대(열)별 최고 평균 — 그 칸(동률이면 모두)을 진한 테두리로
             const fmt1 = v => String(Math.round(v * 10) / 10);
             let h = '<div class="cn hd">이름 · 일 평균 합계</div>';
             TR_AXIS.forEach((hr, i) => { h += '<div class="hd">' + hr + '시</div>'; });
             h += '<div class="cn hd2">전체 평균 합계</div>';
             TR_AXIS.forEach((hr, i) => { h += '<div class="hd2">' + (colTot[i] > 0 ? fmt1(colTot[i]) : '-') + '</div>'; });
             people.forEach(p => {
-                const isF = p.name === _trFocus, dim = _trFocus && !isF;
+                const isF = _trSel.has(p.name), dim = _trSel.size > 0 && !isF;
                 h += '<div class="nm' + (isF ? ' sel' : '') + '" data-focus="' + trEsc(p.name) + '">' + trEsc(p.name) + '<small>' + fmt1(p.total) + '</small></div>';
                 TR_AXIS.forEach((hr, i) => {
                     const v = p.avg[hr];
                     if (v == null) { h += '<div class="v off' + (dim ? ' dim' : '') + '"></div>'; return; }
                     const t = Math.pow(Math.min(1, v / gmax), 0.75);   // 파스텔 녹색 그라데이션: 연한 연두(적음) → 진한 민트그린(많음). 글씨는 항상 짙은 색
                     const bg = v > 0 ? 'hsl(' + Math.round(110 + 25 * t) + ',' + Math.round(38 + 22 * t) + '%,' + Math.round(95 - 38 * t) + '%)' : 'transparent';
-                    h += '<div class="v' + (dim ? ' dim' : '') + (isF ? ' rowsel' : '') + '" style="background:' + bg + ';color:' + (v > 0 ? '#16301f' : '#b3a687') + '">' + (v > 0 ? fmt1(v) : '·') + '</div>';
+                    h += '<div class="v' + (dim ? ' dim' : '') + (isF ? ' rowsel' : '') + (v > 0 && v >= colBest[i] - 1e-9 ? ' top' : '') + '" style="background:' + bg + ';color:' + (v > 0 ? '#16301f' : '#b3a687') + '">' + (v > 0 ? fmt1(v) : '·') + '</div>';
                 });
             });
             const hm = ivEl('div', 'bb-tr-hm');
@@ -7546,20 +7551,23 @@
             if (all) {
                 const ag = _trAll ? trAggregate(_trAll.store) : { people: [], nd: 0 };
                 if (!ag.people.length) body.appendChild(ivEl('div', 'bb-tr-msg', _trAll && _trAll.state.phase === 'loading' ? '기록을 불러오는 중… ' + _trAll.state.done + '/' + _trAll.state.total : '집계할 기록이 아직 없습니다.'));
-                else { if (_trFocus && !ag.people.some(p => p.name === _trFocus)) _trFocus = ''; trAllChart(body, sum, ag); }
-                ft = '칸 = 그 사람이 그 시간대에 일한 날만 평균낸 처리 건수 (진할수록 많음 · 빗금 = 근무 밖/휴게, 평균 제외) · 오늘은 끝나지 않아 제외 · 새 날짜가 생길 때만 추가로 받아 계산(이 브라우저에 저장) · 이름을 누르면 그 사람 줄만 강조';
+                else { trPruneSel(ag.people); trAllChart(body, sum, ag); }
+                ft = '칸 = 그 사람이 그 시간대에 일한 날만 평균낸 처리 건수 (진할수록 많음 · 빗금 = 근무 밖/휴게, 평균 제외) · 오늘은 끝나지 않아 제외 · 새 날짜가 생길 때만 추가로 받아 계산(이 브라우저에 저장) · 이름을 여러 명 눌러 그 줄만 강조 (다시 누르면 해제) · 진한 보라 테두리 = 그 시간대 최다 처리자';
             } else {
                 const people = _trData ? trPeople(_trData) : [];
-                if (_trFocus && !people.some(p => p.name === _trFocus)) _trFocus = '';
+                trPruneSel(people);
                 if (_trState === 'loading' && !_trData) body.appendChild(ivEl('div', 'bb-tr-msg', '불러오는 중…'));
                 else if (_trState === 'fail' && !_trData) body.appendChild(ivEl('div', 'bb-tr-msg', '데이터를 받지 못했습니다. 잠시 뒤 새로고침을 눌러 주세요.'));
                 else if (!people.length) body.appendChild(ivEl('div', 'bb-tr-msg', '이 근무일에는 확정된 처리 기록이 아직 없습니다.'));
                 else trDayChart(body, sum, people);
-                ft = '근무일 07시 ~ 다음날 06시 · 건수 = 이름이 확정된 처리 건만 (개입카드 화면과 같은 기준) · 아래 이름을 누르면 그 사람 막대만 강조 (다시 누르면 해제) · 인원이 많으면 좌우로 스크롤';
+                ft = '근무일 07시 ~ 다음날 06시 · 건수 = 이름이 확정된 처리 건만 (개입카드 화면과 같은 기준) · 아래 이름을 여러 명 눌러 그 막대만 강조 (다시 누르면 해제) · 인원이 많으면 좌우로 스크롤';
             }
             const keep = trPop.querySelector('.bb-tr-body'), kt = keep ? keep.scrollTop : 0, kl = (trPop.querySelector('.bb-tr-wrap') || {}).scrollLeft || 0;
+            const oh = trPop.querySelector('.bb-tr-hm'), hmT = oh ? oh.scrollTop : 0, hmL = oh ? oh.scrollLeft : 0, sameMode = trPop.dataset.mode === _trMode;   // 표 자체의 스크롤 위치도 유지 (이름을 눌러도 제자리)
             trPop.replaceChildren(head, sum, body, ivEl('div', 'bb-tr-ft', ft));
             body.scrollTop = kt; const w2 = trPop.querySelector('.bb-tr-wrap'); if (w2) w2.scrollLeft = kl;
+            const nh = trPop.querySelector('.bb-tr-hm'); if (nh && sameMode) { nh.scrollTop = hmT; nh.scrollLeft = hmL; }
+            trPop.dataset.mode = _trMode;
         }
         async function trLoad(force) {
             if (_trMode === 'all') return trLoadAll(force);
@@ -7604,7 +7612,7 @@
         $iv('bb-iv-tr-btn').addEventListener('click', ivSafe(() => trOpen()));
         trPop.addEventListener('click', ivSafe(e => {
             const ch = e.target.closest('[data-focus]');
-            if (ch) { _trFocus = _trFocus === ch.dataset.focus ? '' : ch.dataset.focus; trRender(); return; }
+            if (ch) { const nm = ch.dataset.focus; if (_trSel.has(nm)) _trSel.delete(nm); else _trSel.add(nm); trRender(); return; }   // 여러 명 토글
             const a = e.target.closest('[data-act]'); if (!a || a.disabled) return;
             const dates = trDateList(), di = dates.indexOf(_trDate), act = a.dataset.act;
             if (act === 'close') trClose();
