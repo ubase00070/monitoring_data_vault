@@ -1650,8 +1650,8 @@
                 <span class="bb-rs-st" id="bb-rs-status"></span>
                 <div class="x" id="bb-att-dclose">✕</div>
             </div>
-            <div class="bb-rs-lg" id="bb-rs-legend"></div>
             <div class="bb-rs-sc" id="bb-rs-scroll"></div>
+            <div class="bb-rs-lg" id="bb-rs-legend"></div>
             <div class="bb-rs-note" id="bb-rs-note"></div>
         </div>
         <div id="bb-att-plog"></div>
@@ -6154,17 +6154,16 @@
         const maxV = Math.max(1, ...list.flatMap(p => Object.values(p.val).map(v => v.v)));
         const cap = Math.max(10, Math.ceil(maxV * 1.15 / 5) * 5);   // 막대 위 숫자가 들어갈 여유를 둠
         if (_rsHl && !list.some(p => p.name === _rsHl)) _rsHl = null;
-        $att('bb-rs-legend').replaceChildren(..._rsView === 'flow'
-            ? ['카드 하나 = 근무자 한 명 · 가로 = 본인 근무 시간대만 · 막대 높이 = 그 시간대 평균 이석 시간(분/근무일), 모든 카드 같은 눈금 (최대 ' + cap + '분)', '점선 = 같은 시간대 전체 근무자 평균 · 막대 위 숫자 = 그 사람의 피크 · 보라 = 휴게 · 흐리게 = 근무 3일 미만 · 카드를 누르면 그 사람의 일자별 이석 기록'].map(t => attEl('span', '', t))
-            : ['한 줄 = 근무자 한 명 (사람마다 고유한 색) · 막대 길이 = 그 시간대 평균 이석 시간(분/근무일), 모든 시간대 같은 눈금 (최대 ' + cap + '분) · 숫자 = 분 · 인원이 많으면 2단 · 흐리게 = 근무 3일 미만 · 줄을 누르면 그 사람 강조'].map(t => attEl('span', '', t)));
+        $att('bb-rs-legend').replaceChildren(attEl('span', '', (_rsView === 'flow'
+            ? '막대 = 시간대별 하루 평균 이석(분), 같은 눈금(최대 ' + cap + '분) · 점선 = 전체 평균 · 보라 = 휴게 · 카드 클릭 = 일자별 기록'
+            : '막대 = 시간대별 하루 평균 이석(분), 같은 눈금(최대 ' + cap + '분) · 흐리게 = 근무 3일 미만 · 줄 클릭 = 강조')));
         const st = sc.scrollTop, sl = sc.scrollLeft;   // 눌러서 다시 그려도 보던 위치 유지
         sc.replaceChildren(_rsView === 'flow' ? rsBuildFlow(list, hmin, hmax, cap) : rsBuildHBars(list, hmin, hmax, cap)); rsFitBars(); sc.scrollTop = st; sc.scrollLeft = sl;
-        const notes = ['기간 ' + _rsRaw.ym + ' · 기록 있는 날 ' + res.dates.length + '일 · 근무자 ' + list.length + '명'];
-        if (!res.hasSched) notes.push('⚠ 스케줄을 불러오지 못해 근무시간을 기록에서 추정합니다 (근무시간을 알 수 없는 사람은 제외)');
-        if (res.noShift.length) notes.push('⚠ 근무시간을 알 수 없어 제외: ' + res.noShift.join(', '));
-        if (_rsRaw.failed) notes.push('⚠ 일부 날짜 ' + _rsRaw.failed + '일 조회 실패');
-        if ($att('bb-rs-est').checked) notes.push('착석 미기입 ' + res.usedEst + '건을 그 사람의 평균 소요시간으로 보정 (그 달 정상 기록 10건 초과인 사람만' + (res.pending ? ', 오늘 진행 중 ' + res.pending + '건은 보류' : '') + ')');
-        notes.push('시간대에 걸친 이석은 시간대별로 나눠 계산 · 휴게시간은 근무·이석에서 제외');
+        const notes = [_rsRaw.ym + ' · 기록 ' + res.dates.length + '일 · 근무자 ' + list.length + '명'];
+        if (!res.hasSched) notes.push('⚠ 스케줄 없음 — 근무시간을 기록에서 추정');
+        if (res.noShift.length) notes.push('⚠ 근무시간 불명 제외: ' + res.noShift.join(', '));
+        if (_rsRaw.failed) notes.push('⚠ ' + _rsRaw.failed + '일 조회 실패');
+        if ($att('bb-rs-est').checked && res.usedEst) notes.push('미기입 ' + res.usedEst + '건 평균 보정' + (res.pending ? ' (진행 중 ' + res.pending + '건 보류)' : ''));
         $att('bb-rs-note').textContent = notes.join(' · ');
     }
     async function rsLoad(force) {
