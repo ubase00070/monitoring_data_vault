@@ -4168,10 +4168,10 @@
           "raw": "휴무"
         },
         "11/9": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "11/10": {
           "status": "work",
@@ -4186,10 +4186,10 @@
           "raw": "1"
         },
         "11/12": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "11/13": {
           "status": "work",
@@ -4198,10 +4198,10 @@
           "raw": "1"
         },
         "11/14": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "11/15": {
           "status": "work",
@@ -4222,10 +4222,10 @@
           "raw": "1"
         },
         "11/18": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "11/19": {
           "status": "work",
@@ -4355,10 +4355,10 @@
           "raw": "1"
         },
         "11/9": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "11/10": {
           "status": "work",
@@ -4373,10 +4373,10 @@
           "raw": "휴무"
         },
         "11/12": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "11/13": {
           "status": "work",
@@ -4385,10 +4385,10 @@
           "raw": "1"
         },
         "11/14": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "11/15": {
           "status": "work",
@@ -4409,10 +4409,10 @@
           "raw": "1"
         },
         "11/18": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "11/19": {
           "status": "off",
@@ -5435,10 +5435,10 @@
           "raw": "휴무"
         },
         "11/2": {
-          "status": "work",
+          "status": "annual",
           "working": true,
-          "present": true,
-          "raw": "1"
+          "present": false,
+          "raw": "연차"
         },
         "11/3": {
           "status": "work",
@@ -6056,10 +6056,10 @@
           "raw": "1"
         },
         "11/12": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "11/13": {
           "status": "work",
@@ -6080,10 +6080,10 @@
           "raw": "휴무"
         },
         "11/16": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "11/17": {
           "status": "work",
@@ -8985,181 +8985,181 @@
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "산전후휴가"
+          "raw": "산전후휴가(무급)"
         },
         "11/2": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "산전후휴가"
+          "raw": "산전후휴가(무급)"
         },
         "11/3": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "산전후휴가"
+          "raw": "산전후휴가(무급)"
         },
         "11/4": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "산전후휴가"
+          "raw": "산전후휴가(무급)"
         },
         "11/5": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "산전후휴가"
+          "raw": "산전후휴가(무급)"
         },
         "11/6": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "산전후휴가"
+          "raw": "산전후휴가(무급)"
         },
         "11/7": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "산전후휴가"
+          "raw": "산전후휴가(무급)"
         },
         "11/8": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "산전후휴가"
+          "raw": "산전후휴가(무급)"
         },
         "11/9": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "산전후휴가"
+          "raw": "산전후휴가(무급)"
         },
         "11/10": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "산전후휴가"
+          "raw": "산전후휴가(무급)"
         },
         "11/11": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "산전후휴가"
+          "raw": "산전후휴가(무급)"
         },
         "11/12": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "산전후휴가"
+          "raw": "산전후휴가(무급)"
         },
         "11/13": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "산전후휴가"
+          "raw": "산전후휴가(무급)"
         },
         "11/14": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "산전후휴가"
+          "raw": "산전후휴가(무급)"
         },
         "11/15": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "산전후휴가"
+          "raw": "산전후휴가(무급)"
         },
         "11/16": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "산전후휴가"
+          "raw": "산전후휴가(무급)"
         },
         "11/17": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "산전후휴가"
+          "raw": "산전후휴가(무급)"
         },
         "11/18": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "산전후휴가"
+          "raw": "산전후휴가(무급)"
         },
         "11/19": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "산전후휴가"
+          "raw": "산전후휴가(무급)"
         },
         "11/20": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "산전후휴가"
+          "raw": "산전후휴가(무급)"
         },
         "11/21": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "산전후휴가"
+          "raw": "산전후휴가(무급)"
         },
         "11/22": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "산전후휴가"
+          "raw": "산전후휴가(무급)"
         },
         "11/23": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "산전후휴가"
+          "raw": "산전후휴가(무급)"
         },
         "11/24": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "산전후휴가"
+          "raw": "산전후휴가(무급)"
         },
         "11/25": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "산전후휴가"
+          "raw": "산전후휴가(무급)"
         },
         "11/26": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "산전후휴가"
+          "raw": "산전후휴가(무급)"
         },
         "11/27": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "산전후휴가"
+          "raw": "산전후휴가(무급)"
         },
         "11/28": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "산전후휴가"
+          "raw": "산전후휴가(무급)"
         },
         "11/29": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "산전후휴가"
+          "raw": "산전후휴가(무급)"
         },
         "11/30": {
           "status": "empty",
           "working": false,
           "present": false,
-          "raw": "산전후휴가"
+          "raw": "산전후휴가(무급)"
         }
       }
     },
@@ -9384,6 +9384,6 @@
     "11/30"
   ],
   "mainMonth": 11,
-  "updatedAt": "2026-10-30T03:53:15.632Z",
+  "updatedAt": "2026-10-31T03:53:17.324Z",
   "sheetName": "2026년_11월 스케줄 "
 }
