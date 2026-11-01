@@ -7628,7 +7628,20 @@
                 (fp ? '<span>' + trEsc(fp.name) + ' 피크<b class="hl">' + (fh >= 0 ? fh + '시 · 평균 ' + trNum(fv) + '건' : '-') + '</b></span><span>' + trEsc(fp.name) + ' 근무<b>' + fp.days + '일</b></span>' : sel.length > 1 ? '<span>선택<b class="hl">' + sel.length + '명</b></span>' : '') +
                 (st.phase === 'loading' ? '<span class="pg">새 날짜 받는 중 ' + st.done + '/' + st.total + '</span>' : st.phase === 'fail' ? '<span class="pg">날짜 목록을 받지 못해 저장분만 표시</span>' : st.failed ? '<span class="pg">' + st.failed + '일 받기 실패</span>' : '');
             // 정렬: 출근시간순(그 사람이 주로 일하는 첫 시간대 → 처리량) / 처리량순
+            // 최신 요약(날짜가 가장 늦은 것)의 현재 근무시간 → 출근 시각. 근무시간이 바뀐 사람(예: 오전 → 22-07)도 지난 기록의 시간대와 상관없이 지금 근무조 쪽에 묶인다. 없으면 아래 기록 기반 추정으로
+            const curStart = new Map();
+            {
+                const srcs = [];
+                if (typeof _ivData !== 'undefined' && _ivData && _ivData.date && Array.isArray(_ivData.people)) srcs.push({ date: _ivData.date, people: _ivData.people });
+                _trCache.forEach((v, d) => { if (v && v.d && Array.isArray(v.d.people)) srcs.push({ date: d, people: v.d.people }); });
+                srcs.sort((x, y) => (x.date < y.date ? 1 : x.date > y.date ? -1 : 0));
+                if (srcs.length) srcs[0].people.forEach(q => {
+                    const m = q && q.name && /^(\d{2})(?::(\d{2}))?/.exec(q.shift || '');
+                    if (m) curStart.set(q.name, ((+m[1] - 7 + 24) % 24) + (+(m[2] || 0)) / 60);
+                });
+            }
             const startIdx = p => {   // 실제 출근 시각(연속 근무 구간의 시작)을 07시 기준 순서로. 예) 00-09 근무자는 07·08시를 지나지만 출근은 00시 → 아래쪽
+                if (curStart.has(p.name)) return curStart.get(p.name);
                 const mx = Math.max.apply(null, p.n), w = p.n.map(n => n >= Math.max(1, mx * 0.3));
                 for (let h = 0; h < 24; h++) if (!w[h] && w[(h + 23) % 24] && w[(h + 1) % 24]) w[h] = true;   // 휴게 1칸은 근무로 이어 봄
                 if (w.every(Boolean)) return 0;
