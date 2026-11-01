@@ -4661,14 +4661,9 @@
 		const resolveBtn = Array.from(document.querySelectorAll('button'))
 			.find(el => el.textContent.trim() === '해결 완료' || el.textContent.trim() === '해결완료');
 
-		// 예외 사용자('최정기')는 상태바 재배치(위로 올리기)만 건너뜀 — 다음 개입 요청 자동 OFF / 지도(레이아웃) 정렬은 그대로 수행
-		const isStatusBarExceptionUser = (localStorage.getItem('neubie_user_name') || '') === '최정기';
-
 		if (statusBar && redBadge) {
-			if (!isStatusBarExceptionUser) {
-				redBadge.parentElement.insertBefore(statusBar, redBadge.nextSibling);
-				statusBar.style.marginLeft = '';
-			}
+			redBadge.parentElement.insertBefore(statusBar, redBadge.nextSibling);
+			statusBar.style.marginLeft = '';
 
 			// 신규 추가 — 상태바가 확실히 상단으로 이동(=개입 해결 확인)되면 "다음 개입 요청"을 자동 OFF
 			try {
@@ -4683,10 +4678,8 @@
 			} catch (e) { /* 상태 판별 실패 시 아무 것도 안 하고 조용히 넘어감 (안전) */ }
 			
 		} else if (statusBar && resolveBtn) {
-			if (!isStatusBarExceptionUser) {
-				resolveBtn.parentElement.insertBefore(statusBar, resolveBtn);
-				statusBar.style.marginLeft = '-240px';
-			}
+			resolveBtn.parentElement.insertBefore(statusBar, resolveBtn);
+			statusBar.style.marginLeft = '-240px';
 		}
 
         // 임무 바 높이 조정
