@@ -7029,7 +7029,7 @@
         .bb-sp-t .x { margin-left:auto; color:#b91c1c; font-size:16px; font-weight:900; padding:0 4px; cursor:pointer; }
         .bb-sp-sub { font-size:11.5px; color:var(--mu); }
         .bb-sp-sub.warn { color:#c2410c; font-weight:700; }
-        .bb-sp-th, .bb-sp-row { display:grid; grid-template-columns:28px minmax(0,1fr) 78px 64px 92px; gap:6px; align-items:center; padding:0 16px; }
+        .bb-sp-th, .bb-sp-row { display:grid; grid-template-columns:28px minmax(0,1fr) 80px 84px 146px; gap:6px; align-items:center; padding:0 16px; }
         .bb-sp-th { flex:0 0 auto; font-size:11px; color:var(--mu); padding-top:5px; padding-bottom:5px; border-bottom:1px solid var(--bd); background:var(--sur2); }
         .bb-sp-th span:nth-child(n+3), .bb-sp-row > div:nth-child(n+3) { text-align:right; }
         .bb-sp-body { flex:1 1 auto; min-height:0; overflow-y:auto; }
@@ -7051,7 +7051,9 @@
         .bb-sp-th span { white-space:nowrap; }
         .bb-sp-th span[data-sort] { cursor:pointer; user-select:none; }
         .bb-sp-th span[data-sort]:hover { color:var(--tx); }
-        .bb-sp-th span.cur { color:#c2410c; font-weight:800 !important; }
+        .bb-sp-th span.cur { color:#c2410c; font-weight:800 !important; border:1.5px solid #c2410c; border-radius:6px; padding:0 6px; }   /* 지금 정렬 기준인 열: 빨간 글씨 + 네모 테두리 */
+        .bb-sp-th span:nth-child(n+3) { justify-self:end; }
+        .bb-sp-th span:nth-child(2) { justify-self:start; }
         .bb-sp-msg { padding:34px 16px; text-align:center; color:var(--mu); font-size:13px; }
         .bb-sp-ft { flex:0 0 auto; padding:6px 16px 9px; border-top:1px solid var(--bd); font-size:10.5px; line-height:1.55; color:var(--mu); }
         `;
@@ -7220,7 +7222,7 @@
             head.appendChild(ivEl('div', 'bb-sp-sub' + (warn ? ' warn' : ''), sub || ' '));
 
             const th = ivEl('div', 'bb-sp-th');
-            [['#', ''], ['이름', 'name'], ['누적', 'solved'], ['일평균', 'avg'], ['20초 이내', 'fast']].forEach(([lb, k]) => {
+            [['#', ''], ['이름', 'name'], ['누적', 'solved'], ['일평균', 'avg'], ['20초 이내 해결', 'fast']].forEach(([lb, k]) => {
                 const sp = ivEl('span', k && _spSort.k === k ? 'cur' : '', lb + (k && _spSort.k === k ? (_spSort.dir < 0 ? ' ▼' : ' ▲') : ''));
                 if (k) { sp.dataset.sort = k; sp.title = '눌러서 정렬 (다시 누르면 오름/내림차순 전환)'; }
                 th.appendChild(sp);
@@ -7246,7 +7248,7 @@
                     body.appendChild(row);
                 });
             }
-            const ft = ivEl('div', 'bb-sp-ft', '건수 = 이름이 확정된 처리 건만 (추정·이탈·특정 불가 제외, 개입카드 화면과 같은 기준) · (N일) = 근무일: 월별 근무표에서 출근으로 표시된 날(연차 제외·반차 1일) · * = 근무표에 없는 날이 있어 처리·근무시간 기록으로 대체 · 일평균 = 누적 ÷ 근무일 · 20초 이내 = 해결 건 중 시작~종료가 20초 이하인 건의 비율(시작·종료가 추정인 건 제외, 괄호는 그 건수) · 이 열은 비율 높은 순으로 정렬 · 뱃지: 근무 시작 14:00 이후 = 야간, 그 전 = 주간');
+            const ft = ivEl('div', 'bb-sp-ft', '건수 = 이름이 확정된 처리 건만 (추정·이탈·특정 불가 제외, 개입카드 화면과 같은 기준) · (N일) = 근무일: 월별 근무표에서 출근으로 표시된 날(연차 제외·반차 1일) · * = 근무표에 없는 날이 있어 처리·근무시간 기록으로 대체 · 일평균 = 누적 ÷ 근무일 · 20초 이내 해결 = 해결 건 중 시작~종료가 20초 이하인 건의 비율(시작·종료가 추정인 건 제외, 괄호는 그 건수) · 이 열은 비율 높은 순으로 정렬 · 뱃지: 근무 시작 14:00 이후 = 야간, 그 전 = 주간');
             const keep = spPop.querySelector('.bb-sp-body'), keepTop = keep ? keep.scrollTop : 0;
             spPop.replaceChildren(head, th, body, ft);
             body.scrollTop = keepTop;
