@@ -77,15 +77,30 @@
     const isHandoverFeatureOn = () =>
         !ADMIN_CONFIG.locked && localStorage.getItem('neubie_handover_enabled') !== 'false';
 
+    // ── Vice City 팜 스트립 테마 (석양 하늘 헤더 + 야자수 / 본문은 평평한 면) ──
     const NB_THEMES = {
-        light: { bg: '#f3ecdb', card: '#e2d7bd', border: '#cbbd98', text: '#2b2418', accent: '#1e3a5f', purple: '#7c3aed', isDark: false },
-        dark:  { bg: '#2b2b30', card: '#4a4953', border: '#62616b', text: '#dedfe3', accent: '#5b9bf7', purple: '#c9b8fb', isDark: true }
+        light: { bg: '#f6eefa', card: '#fcf3e3', border: '#dcc9ec', text: '#2a1d3f', accent: '#6d3fc7', purple: '#7048e8', isDark: false,
+                 muted: '#6f5e86', hdrText: '#2b1650', hair: '#e1d1ef', line: '#c9a6e0', row: '#f5ead6', field: '#fff8ea', ctl: 'rgba(255,255,255,.65)',
+                 nameBg: 'rgba(255,255,255,.85)', nameText: '#2b1650', neutralBg: '#f4e8d2',
+                 band: 'linear-gradient(180deg,#8497ea 0%,#c79cea 45%,#ff9fb9 78%,#ffc79a 100%)', palm: '#7a3f86',
+                 sun: 'linear-gradient(180deg,#fff0c4,#ffb08a 55%,#f26aa3)',
+                 titleCss: 'background:linear-gradient(90deg,#2b1a7a 0%,#a81f78 55%,#c2410c 100%);',
+                 shadow: '0 20px 50px rgba(90,40,120,0.35)' },
+        dark:  { bg: '#17102b', card: '#231843', border: '#3a2a63', text: '#f6ecff', accent: '#b9a6ff', purple: '#c9b8fb', isDark: true,
+                 muted: '#b3a4cf', hdrText: '#ffffff', hair: '#3d2d68', line: '#6a4aa3', row: 'rgba(255,255,255,.06)', field: '#17102b', ctl: 'rgba(0,0,0,.28)',
+                 nameBg: 'rgba(0,0,0,.3)', nameText: '#ffffff', neutralBg: '#2e2252',
+                 band: 'linear-gradient(180deg,#2b2a8a 0%,#7b3a98 50%,#d9527f 82%,#ff9a6a 100%)', palm: '#1a0f3a',
+                 sun: 'linear-gradient(180deg,#ffe2a8,#ff8f7a 55%,#e8559a)',
+                 titleCss: 'background:linear-gradient(90deg,#ffe29a 0%,#ff9a6a 38%,#ff5fa8 72%,#c4a6ff 100%);',
+                 shadow: '0 20px 50px rgba(0,0,0,0.8)' }
     };
 
     // ── UI 개편: 레인보우 → 퍼플 그라데이션 외곽선 (패널·카드·버튼 공통) ──
     // 사용법: `border:2px solid transparent; background: linear-gradient(면색,면색) padding-box, ${RAINBOW} border-box;`
-    const RAINBOW = 'linear-gradient(115deg,#ff6b81 0%,#ffa94d 26%,#7ee0a4 52%,#52b6f6 76%,#a855f7 100%)';   // 색 수를 줄여 넓고 느슨하게
-    const rainbowBg = (fill) => `linear-gradient(${fill}, ${fill}) padding-box, ${RAINBOW} border-box`;
+    const RAINBOW = 'linear-gradient(115deg,#6d6fd6,#c25bb5 34%,#ff7f78 68%,#ffc18a)';   // Vice City 석양 그라데이션 (강조용)
+    // 팜 스트립: 패널·카드·버튼 외곽선은 모두 Vice City 석양 그라데이션 (기존 호출부 호환을 위해 이름 유지)
+    const CARD_LINE = () => RAINBOW;
+    const rainbowBg = (fill) => `linear-gradient(${fill}, ${fill}) padding-box, ${CARD_LINE()} border-box`;
 
     // 선형 아이콘(이모지 대체) — nbIcon('map', 18, '#0e7490')
     const NB_ICON_PATHS = {
@@ -113,12 +128,12 @@
 
     // 호버 효과 공통 파란색 — 라이트/다크 상관없이 항상 이 톤 하나로 통일
     // (T.accent를 쓰면 라이트모드에서 짙은 네이비가 나와 너무 진해 보이는 문제가 있었음)
-    const HOVER_ACCENT = '#5b9bf7';
+    const HOVER_ACCENT = '#8b6cf0';
     // 온오프 토글의 ON 상태와 동일한 그린 — 다중모니터링/배송순찰띠띠 호버 전용
-    const GREEN_HOVER = '#3cc79a';
+    const GREEN_HOVER = '#34cfc4';
     // 버튼/토글/호버 공통 에메랄드 톤 (파스텔 에메랄드 — '원격 조종' 버튼 계열)
-    const EMERALD = '#2fbf8d';
-    const EMERALD_RGB = '47,191,141';
+    const EMERALD = '#14a89b';
+    const EMERALD_RGB = '20,168,155';
 
     function getNbTheme() {
         return NB_THEMES[localStorage.getItem('neubie_theme') || 'dark'];
@@ -669,7 +684,7 @@
         const coverBtn = document.createElement('button');
         coverBtn.type = 'button';
         coverBtn.textContent = '성남 배터리 조회';
-        coverBtn.style.cssText = `height:43px; min-width:150px; padding:0 22px; font-size:15px; white-space:nowrap; font-weight:800; cursor:pointer; color:${T.text}; border:2px solid transparent; border-radius:12px; background:${rainbowBg(T.card)}; box-shadow:0 2px 12px rgba(168,85,247,0.35);`;
+        coverBtn.style.cssText = `height:43px; min-width:150px; padding:0 22px; font-size:15px; white-space:nowrap; font-weight:800; cursor:pointer; color:${T.text}; border:2px solid transparent; border-radius:12px; background:${rainbowBg(T.card)}; box-shadow:0 2px 12px rgba(194,91,181,0.35);`;
         coverBtn.onclick = () => runBatteryFetch();
         cover.appendChild(coverBtn);
         card.appendChild(cover);
@@ -1887,7 +1902,7 @@
     // ■ 모양: 버튼 하나 = 두 줄(사이트 / 기체명) + 초록 외곽선 + 테두리 위에 걸친 작은 '배정 시각'(높이를 늘리지 않음).
     //   글자가 길면 평소엔 … 으로 줄이고, 커서를 올린 동안만 좌우로 흘려 끝까지 보여준다.
     function dlvBuildCss(t) {
-        const fillBg = c => `linear-gradient(${c}, ${c}) padding-box, ${RAINBOW} border-box`;
+        const fillBg = c => `linear-gradient(${c}, ${c}) padding-box, ${CARD_LINE()} border-box`;
         return `
             #nbDlvRow { display:flex; flex-direction:column; gap:8px; min-width:0; min-height:0; height:100%; box-sizing:border-box; padding-top:10px; }
             .nb-dlv-slot { position:relative; min-width:0; flex:1; min-height:0; }
@@ -1904,7 +1919,7 @@
             .nb-dlv-ln { display:block; min-width:0; max-width:100%; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; line-height:1.15; font-size:11.5px; font-weight:600; }
             .nb-dlv-ln.l1 { font-size:12.5px; font-weight:800; }
             .nb-dlv-btn.copied .l2 { display:none; }
-            .nb-dlv-time { position:absolute; top:-9px; left:8px; z-index:2; max-width:calc(100% - 16px); overflow:hidden; text-overflow:ellipsis; padding:0 6px; border-radius:8px; border:1.5px solid transparent; font-size:12px; font-weight:800; line-height:16px; white-space:nowrap; pointer-events:none; background:linear-gradient(${t.card}, ${t.card}) padding-box, ${RAINBOW} border-box; color:${t.timeText}; }; color:${t.timeText}; }
+            .nb-dlv-time { position:absolute; top:-9px; left:8px; z-index:2; max-width:calc(100% - 16px); overflow:hidden; text-overflow:ellipsis; padding:0 6px; border-radius:8px; border:1.5px solid transparent; font-size:12px; font-weight:800; line-height:16px; white-space:nowrap; pointer-events:none; background:linear-gradient(${t.card}, ${t.card}) padding-box, ${CARD_LINE()} border-box; color:${t.timeText}; }; color:${t.timeText}; }
             .nb-dlv-ln.mq { text-align:left; text-overflow:clip; }
             .nb-dlv-ln.mq .nb-dlv-txt { display:inline-block; animation:nbDlvMq var(--mq-dur, 6s) ease-in-out infinite alternate; }
             @keyframes nbDlvMq { 0%, 18% { transform:translateX(0); } 82%, 100% { transform:translateX(var(--mq-shift, 0px)); } }
@@ -2035,19 +2050,19 @@
         const T = getNbTheme();
         // 라이트모드에서도 다크 전용 색이 그대로 남아있던 문제 — 입력칸/버튼을 테마에 맞게 분기
         // (순백색은 너무 튀어서, 크림톤과는 구분되는 차분한 아이보리 톤을 사용)
-        const fieldBg = T.isDark ? '#333' : '#f0ede1';
-        const fieldBorder = T.isDark ? '#555' : T.border;
+        const fieldBg = T.field;
+        const fieldBorder = T.isDark ? '#4a3a7a' : T.line;
         const fieldText = T.isDark ? '#fff' : T.text;
-        const neutralBtnBg = T.isDark ? '#444' : '#f0ede1';
-        const neutralBtnBorder = T.isDark ? '#666' : T.border;
-        const neutralBtnText = T.isDark ? '#ddd' : T.text;
-        const neutralBtnHoverBg = T.isDark ? '#555' : HOVER_ACCENT;
-        const neutralBtnHoverBorder = T.isDark ? '#888' : HOVER_ACCENT;
+        const neutralBtnBg = T.neutralBg;
+        const neutralBtnBorder = T.isDark ? '#4a3a7a' : T.line;
+        const neutralBtnText = T.isDark ? '#e8dcfa' : T.text;
+        const neutralBtnHoverBg = T.isDark ? '#3d2d68' : HOVER_ACCENT;
+        const neutralBtnHoverBorder = T.isDark ? '#6a4aa3' : HOVER_ACCENT;
         const neutralBtnHoverText = T.isDark ? neutralBtnText : '#fff';
         // 다중 모니터링 / 배송·순찰 띠띠 전용 호버 — 온오프 토글과 동일한 그린, 다크/라이트 공통
         const subBtnHoverBg = GREEN_HOVER;
         const subBtnHoverBorder = GREEN_HOVER;
-        const subBtnHoverText = '#06382a';
+        const subBtnHoverText = '#04332f';
         const card = document.createElement('div');
         card.id = 'namingSection';
         card.style.cssText = `
@@ -2294,23 +2309,56 @@
     /* ============================================================
         SECTION 8. 대시보드 및 초기화
        ============================================================ */
+    // ── Vice City 헤더 장식: 석양(해) + 야자수 (해 안으로 들어가는 야자수는 두지 않음) ──
+    const VICE_PALM_PATHS = '<path d="M62 200 C64 150 60 110 64 72 L68 72 C66 112 70 152 70 200Z"/><path d="M66 70 Q36 48 4 78 Q36 60 66 70Z"/><path d="M66 70 Q40 28 14 38 Q40 40 66 70Z"/><path d="M66 70 Q50 20 38 6 Q64 30 66 70Z"/><path d="M66 70 Q84 20 102 8 Q76 34 66 70Z"/><path d="M66 70 Q92 30 120 40 Q92 44 66 70Z"/><path d="M66 70 Q98 50 128 82 Q96 62 66 70Z"/><path d="M66 70 Q44 70 30 100 Q50 80 66 70Z"/><path d="M66 70 Q88 72 102 102 Q82 82 66 70Z"/>';
+    const VICE_SUN_RIGHT = 170, VICE_SUN_SIZE = 130;   // 해: 헤더 오른쪽 기준 170~300px 구간
+    const VICE_PALMS = [   // l/r: 가장자리 기준 위치(px), b: 바닥 오프셋, h: 높이, o: 투명도, f: 좌우반전, rot: 기울기(deg)
+        { r: 60,  b: -80, h: 165, o: .6,  rot: -4 },
+        { l: 450, b: -60, h: 130, o: .46, rot: 3 },
+        { l: 506, b: -44, h: 86,  o: .3,  f: true, rot: -5 }
+    ];
+    function buildViceDecor(T) {
+        const wrap = document.createElement('div');
+        wrap.setAttribute('aria-hidden', 'true');
+        wrap.style.cssText = 'position:absolute; inset:0; pointer-events:none;';
+        const sun = document.createElement('div');
+        sun.style.cssText = `position:absolute; right:${VICE_SUN_RIGHT}px; bottom:-64px; width:${VICE_SUN_SIZE}px; height:${VICE_SUN_SIZE}px; border-radius:50%; opacity:.92; background:${T.sun};`;
+        wrap.appendChild(sun);
+        VICE_PALMS.forEach(o => {
+            const w = Math.round(o.h * 132 / 200);
+            const pos = (o.l != null ? `left:${o.l}px;` : `right:${o.r}px;`);
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('viewBox', '0 0 132 200');
+            svg.style.cssText = `position:absolute; ${pos} bottom:${o.b}px; height:${o.h}px; width:${w}px; opacity:${o.o}; transform-origin:50% 100%; transform:${o.f ? 'scaleX(-1) ' : ''}rotate(${o.rot || 0}deg);`;
+            svg.innerHTML = `<g fill="${T.palm}">${VICE_PALM_PATHS}</g>`;
+            wrap.appendChild(svg);
+        });
+        return wrap;
+    }
+
     async function renderDashboard() {
         await adminConfigReady; // 관리자 잠금(locked) 여부를 토글 그리기 전에 확정
         dashboard.innerHTML = '';
         const T = getNbTheme();
         dashboard.style.backgroundColor = T.bg;
         dashboard.style.color = T.text;
-        dashboard.style.backgroundImage = `linear-gradient(${T.bg}, ${T.bg}), ${RAINBOW}`;   // 레인보우→퍼플 외곽선
-        dashboard.style.borderWidth = '3px';
+        dashboard.style.backgroundImage = `linear-gradient(${T.bg}, ${T.bg}), ${RAINBOW}`;   // 팜 스트립: 두꺼운 Vice City 그라데이션 외곽선
+        dashboard.style.borderWidth = '4px';
+        dashboard.style.boxShadow = T.shadow;
         dashboard.style.borderRadius = '22px';
         
         // 헤더 컨테이너 (제목 + 성명 입력창 + X 버튼 인라인 배치)
         const headerContainer = document.createElement('div');
-        headerContainer.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding-right:5px; min-height:44px;";
+        // 헤더 띠: 대시보드 패딩(15px)을 상쇄해 가장자리까지 붙인 석양 하늘 + 해 + 야자수
+        headerContainer.style.cssText = `position:relative; overflow:hidden; display:flex; justify-content:space-between; align-items:center; margin:-15px -15px 10px; padding:20px 22px 18px; min-height:44px; background:${T.band};`;
+        // 전역 CSS(#neubie-dashboard * { max-width:100% !important })가 음수 마진으로 넓힌 헤더 띠를 잘라내므로, 이 요소만 !important 로 예외 처리
+        headerContainer.style.setProperty('max-width', 'calc(100% + 30px)', 'important');
+        headerContainer.appendChild(buildViceDecor(T));
 
         const title = document.createElement('h2');
-        title.textContent = "관제 컨트롤";
-        title.style.cssText = `${NCC_TITLE_GRADIENT} font-size:24px; flex:0 1 auto; width:fit-content; margin:0; font-weight:800; white-space:nowrap; min-width:0; overflow:hidden; text-overflow:ellipsis;`;
+        title.innerHTML = '<span style="font-size:1.2em;">G</span>rand <span style="font-size:1.2em;">T</span>ower <span style="font-size:1.2em;">A</span>ssistant';
+        title.title = "Grand Tower Assistant";
+        title.style.cssText = `${T.titleCss} -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent; font-size:21px; letter-spacing:0; flex:0 1 auto; width:fit-content; margin:0; font-weight:900; white-space:nowrap; min-width:0; overflow:hidden; text-overflow:ellipsis;`;
 
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
 		// 문자열을 넣으면 패치노트에 빨간 '`' 뱃지가 점멸하며 뜸.
@@ -2323,8 +2371,9 @@
         const patchItems = [
             {
                 version: 'v1.1',
-                date: '2026-10-26',
+                date: '2026-11-02',
                 items: [
+                    'Rockstar ☆',
                     '본 스크립트는 NCC 서버에 직접 신호를 보내지 않음',
                     '성남 배터리 조회 쿨다운 2분',
                     '영상 파일명 생성기: 본인 최근 배달 3건 자동 텍스트 버튼',
@@ -2345,8 +2394,8 @@
         patchBtn.title = '패치노트';
         patchBtn.style.cssText = `
 			position:relative;
-            background:transparent; border:1px solid ${T.border}; color:${T.text};
-            border-radius:6px; padding:0 10px; height:28px; box-sizing:border-box; cursor:pointer;
+            background:${T.ctl}; border:1px solid ${T.hair}; color:${T.text};
+            border-radius:7px; padding:0 10px; height:28px; box-sizing:border-box; cursor:pointer;
             font-size:14px; margin-left:6px; vertical-align:middle; white-space:nowrap; flex-shrink:0;
             transition:all 0.2s;
         `;
@@ -2366,7 +2415,7 @@
 		}
 		
         patchBtn.onmouseenter = () => { patchBtn.style.borderColor=GREEN_HOVER; patchBtn.style.color=GREEN_HOVER; };
-        patchBtn.onmouseleave = () => { patchBtn.style.borderColor=T.border; patchBtn.style.color=T.text; };
+        patchBtn.onmouseleave = () => { patchBtn.style.borderColor=T.hair; patchBtn.style.color=T.text; };
         patchBtn.onclick = () => {
             // 이미 열려있으면(패치노트 버튼 재클릭) 닫기만 하고 종료 — X버튼 없이도 닫는 방법
             if (isSharedPopupOpen('patch')) {
@@ -2420,16 +2469,16 @@
 
         // 이름 입력 및 닫기 버튼 영역
         const nameArea = document.createElement('div');
-        nameArea.style.cssText = "display:flex; align-items:center; gap:8px; font-size:15px; color:#64748b;";
+        nameArea.style.cssText = `position:relative; z-index:1; display:flex; align-items:center; gap:8px; font-size:15px; color:${T.hdrText};`;
         const currentName = localStorage.getItem('neubie_user_name') || "";
         
         nameArea.innerHTML = `
             <span>성명:</span>
             <input type="text" id="inline-name-input" value="${currentName}" placeholder="이름"
-                style="width:60px; border:1px solid #a7d8b8; outline:none; padding:5px 6px; 
-                    font-size:15px; font-weight:bold; color:#1f3d2a; background:#dff3e6; 
+                style="width:60px; border:1px solid ${T.line}; outline:none; padding:5px 6px; 
+                    font-size:15px; font-weight:bold; color:${T.nameText}; background:${T.nameBg}; 
                     border-radius:10px; text-align:center; box-sizing:border-box;">
-            <button id="all-close-btn" style="background:#ef4444; color:white; border:none; border-radius:4px; width:26px; height:26px; cursor:pointer; font-weight:bold; display:flex; align-items:center; justify-content:center; font-size:14px; box-sizing:border-box;">✕</button>
+            <button id="all-close-btn" style="background:linear-gradient(135deg,#ff6b6b,#d6336c); color:white; border:none; border-radius:4px; width:26px; height:26px; cursor:pointer; font-weight:bold; display:flex; align-items:center; justify-content:center; font-size:14px; box-sizing:border-box;">✕</button>
         `;
 
         // ── 다크/라이트 토글 (패치노트 옆, 누르면 이모지가 바뀜) ──
@@ -2438,13 +2487,13 @@
         themeBtn.innerHTML = _seg('🌙', T.isDark) + _seg('☀️', !T.isDark);   // 두 이모지를 항상 함께 표시, 현재 모드가 강조됨
         themeBtn.title = T.isDark ? '다크 모드 (클릭: 라이트로 전환)' : '라이트 모드 (클릭: 다크로 전환)';
         themeBtn.style.cssText = `
-            background:transparent; border:1px solid ${T.border}; color:${T.text};
+            background:${T.ctl}; border:1px solid ${T.hair}; color:${T.text};
             border-radius:6px; padding:0 4px; height:28px; box-sizing:border-box; cursor:pointer; flex-shrink:0; display:inline-flex; gap:2px; align-items:center;
             font-size:14px; line-height:1; margin-left:6px; vertical-align:middle;
             transition:all 0.2s;
         `;
         themeBtn.onmouseenter = () => { themeBtn.style.borderColor = GREEN_HOVER; };
-        themeBtn.onmouseleave = () => { themeBtn.style.borderColor = T.border; };
+        themeBtn.onmouseleave = () => { themeBtn.style.borderColor = T.hair; };
         themeBtn.onclick = () => {
             localStorage.setItem('neubie_theme', T.isDark ? 'light' : 'dark');
             ['neubie-shared-popup', 'neubie-secret-overlay'].forEach(id => {
@@ -2455,7 +2504,7 @@
         };
 
         const titleWrap = document.createElement('div');
-        titleWrap.style.cssText = "display:flex; align-items:center; gap:0; min-width:0;";
+        titleWrap.style.cssText = "position:relative; z-index:1; display:flex; align-items:center; gap:0; min-width:0;";
         titleWrap.appendChild(title);
         titleWrap.appendChild(patchBtn);
         titleWrap.appendChild(themeBtn);
@@ -2549,7 +2598,7 @@
         taskCard.innerHTML = `
             <div style="display:flex; align-items:center; justify-content:space-between; gap:6px; height:24px; flex:none;">
                 <div style="display:flex; align-items:center; gap:7px; font-weight:800; font-size:16px; flex:1; min-width:0; overflow:hidden; white-space:nowrap; color:${T.text};">${nbIcon('clip', 17, '#7c3aed')}<span style="min-width:0; overflow:hidden; text-overflow:ellipsis;">${storedName}의 일일 업무</span></div>
-                <select id="remind-inline" style="flex:none; background:${T.isDark ? '#333' : '#f0ede1'}; color:${T.isDark ? '#fff' : T.text}; border:1px solid ${T.isDark ? '#555' : T.border}; font-size:12px; font-weight:bold; border-radius:6px; height:22px; padding:0 4px;">
+                <select id="remind-inline" style="flex:none; background:${T.field}; color:${T.isDark ? '#fff' : T.text}; border:1px solid ${T.isDark ? '#4a3a7a' : T.line}; font-size:12px; font-weight:bold; border-radius:6px; height:22px; padding:0 4px;">
                     <option value="0" ${currentInt === '0' ? 'selected' : ''}>알림 없음</option>
                     <option value="3" ${currentInt === '3' ? 'selected' : ''}>3분 전 알림</option>
                     <option value="5" ${currentInt === '5' ? 'selected' : ''}>5분 전 알림</option>
