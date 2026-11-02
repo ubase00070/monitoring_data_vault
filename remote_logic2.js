@@ -79,9 +79,9 @@
 
     // ── Vice City 팜 스트립 테마 (석양 하늘 헤더 + 야자수 / 본문은 평평한 면) ──
     const NB_THEMES = {
-        light: { bg: '#f6eefa', card: '#ffffff', border: '#dcc9ec', text: '#2a1d3f', accent: '#6d3fc7', purple: '#7048e8', isDark: false,
-                 muted: '#6f5e86', hdrText: '#2b1650', hair: '#e1d1ef', line: '#c9a6e0', row: '#f4ebfa', field: '#faf5fd', ctl: 'rgba(255,255,255,.65)',
-                 nameBg: 'rgba(255,255,255,.85)', nameText: '#2b1650', neutralBg: '#f4ebfa',
+        light: { bg: '#f6eefa', card: '#fcf3e3', border: '#dcc9ec', text: '#2a1d3f', accent: '#6d3fc7', purple: '#7048e8', isDark: false,
+                 muted: '#6f5e86', hdrText: '#2b1650', hair: '#e1d1ef', line: '#c9a6e0', row: '#f5ead6', field: '#fff8ea', ctl: 'rgba(255,255,255,.65)',
+                 nameBg: 'rgba(255,255,255,.85)', nameText: '#2b1650', neutralBg: '#f4e8d2',
                  band: 'linear-gradient(180deg,#8497ea 0%,#c79cea 45%,#ff9fb9 78%,#ffc79a 100%)', palm: '#7a3f86',
                  sun: 'linear-gradient(180deg,#fff0c4,#ffb08a 55%,#f26aa3)',
                  titleCss: 'background:linear-gradient(90deg,#2b1a7a 0%,#a81f78 55%,#c2410c 100%);',
@@ -98,8 +98,8 @@
     // ── UI 개편: 레인보우 → 퍼플 그라데이션 외곽선 (패널·카드·버튼 공통) ──
     // 사용법: `border:2px solid transparent; background: linear-gradient(면색,면색) padding-box, ${RAINBOW} border-box;`
     const RAINBOW = 'linear-gradient(115deg,#6d6fd6,#c25bb5 34%,#ff7f78 68%,#ffc18a)';   // Vice City 석양 그라데이션 (강조용)
-    // 팜 스트립: 카드·버튼 외곽선은 그라데이션 대신 테마의 단색 라인 (기존 호출부 호환을 위해 이름 유지)
-    const CARD_LINE = () => { const c = getNbTheme().border; return `linear-gradient(${c}, ${c})`; };
+    // 팜 스트립: 패널·카드·버튼 외곽선은 모두 Vice City 석양 그라데이션 (기존 호출부 호환을 위해 이름 유지)
+    const CARD_LINE = () => RAINBOW;
     const rainbowBg = (fill) => `linear-gradient(${fill}, ${fill}) padding-box, ${CARD_LINE()} border-box`;
 
     // 선형 아이콘(이모지 대체) — nbIcon('map', 18, '#0e7490')
@@ -2342,8 +2342,8 @@
         const T = getNbTheme();
         dashboard.style.backgroundColor = T.bg;
         dashboard.style.color = T.text;
-        dashboard.style.backgroundImage = `linear-gradient(${T.bg}, ${T.bg}), linear-gradient(${T.border}, ${T.border})`;   // 팜 스트립: 얇은 단색 외곽선
-        dashboard.style.borderWidth = '1px';
+        dashboard.style.backgroundImage = `linear-gradient(${T.bg}, ${T.bg}), ${RAINBOW}`;   // 팜 스트립: 두꺼운 Vice City 그라데이션 외곽선
+        dashboard.style.borderWidth = '4px';
         dashboard.style.boxShadow = T.shadow;
         dashboard.style.borderRadius = '22px';
         
@@ -2351,6 +2351,8 @@
         const headerContainer = document.createElement('div');
         // 헤더 띠: 대시보드 패딩(15px)을 상쇄해 가장자리까지 붙인 석양 하늘 + 해 + 야자수
         headerContainer.style.cssText = `position:relative; overflow:hidden; display:flex; justify-content:space-between; align-items:center; margin:-15px -15px 10px; padding:20px 22px 18px; min-height:44px; background:${T.band};`;
+        // 전역 CSS(#neubie-dashboard * { max-width:100% !important })가 음수 마진으로 넓힌 헤더 띠를 잘라내므로, 이 요소만 !important 로 예외 처리
+        headerContainer.style.setProperty('max-width', 'calc(100% + 30px)', 'important');
         headerContainer.appendChild(buildViceDecor(T));
 
         const title = document.createElement('h2');
@@ -2371,7 +2373,7 @@
                 version: 'v1.1',
                 date: '2026-11-02',
                 items: [
-                    'Rockstar',
+                    'Rockstar ☆',
                     '본 스크립트는 NCC 서버에 직접 신호를 보내지 않음',
                     '성남 배터리 조회 쿨다운 2분',
                     '영상 파일명 생성기: 본인 최근 배달 3건 자동 텍스트 버튼',
@@ -2596,7 +2598,7 @@
         taskCard.innerHTML = `
             <div style="display:flex; align-items:center; justify-content:space-between; gap:6px; height:24px; flex:none;">
                 <div style="display:flex; align-items:center; gap:7px; font-weight:800; font-size:16px; flex:1; min-width:0; overflow:hidden; white-space:nowrap; color:${T.text};">${nbIcon('clip', 17, '#7c3aed')}<span style="min-width:0; overflow:hidden; text-overflow:ellipsis;">${storedName}의 일일 업무</span></div>
-                <select id="remind-inline" style="flex:none; background:${T.isDark ? '#333' : '#f0ede1'}; color:${T.isDark ? '#fff' : T.text}; border:1px solid ${T.isDark ? '#555' : T.border}; font-size:12px; font-weight:bold; border-radius:6px; height:22px; padding:0 4px;">
+                <select id="remind-inline" style="flex:none; background:${T.field}; color:${T.isDark ? '#fff' : T.text}; border:1px solid ${T.isDark ? '#4a3a7a' : T.line}; font-size:12px; font-weight:bold; border-radius:6px; height:22px; padding:0 4px;">
                     <option value="0" ${currentInt === '0' ? 'selected' : ''}>알림 없음</option>
                     <option value="3" ${currentInt === '3' ? 'selected' : ''}>3분 전 알림</option>
                     <option value="5" ${currentInt === '5' ? 'selected' : ''}>5분 전 알림</option>
