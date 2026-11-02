@@ -16,7 +16,7 @@
     {
       "row": 83,
       "content": "[08:50] 부산과학관 170호기 임무 HUB B 출근 / 자비에 재부팅 / 임무받기 ON 진행 [화,수,목,금,토,일]",
-      "fixed": false,
+      "fixed": true,
       "user": ""
     },
     {
@@ -58,7 +58,7 @@
     {
       "row": 90,
       "content": "[10:30] 요기요 [송도] 뉴비 대기장소 설정 체크",
-      "fixed": false,
+      "fixed": true,
       "user": ""
     },
     {
