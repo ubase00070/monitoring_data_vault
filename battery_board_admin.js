@@ -7203,13 +7203,14 @@
             const have = dates.filter(d => days[d]);
             const rows = spAgg(have, days, sched);
             const avgOf = x => x.days > 0 ? x.solved / x.days : -1;
+            const FAST_TAIL = ['김용욱', '차현모', '안혜림', '박수연', '신지섭'];   // 관리자 — 20초 이내 정렬에서는 항상 맨 아래 (오름·내림 무관)
             const fastOf = x => x.fastMiss > 0 ? -1 : x.fast;
             const fastPct = x => x.fastMiss > 0 ? -1 : (x.solved > 0 ? x.fast / x.solved : 0);   // 20초 이내 비중 = 20초 이내 건수 ÷ 해결 건수 (건수는 사람마다 달라서 비중으로 비교)
             const val = { solved: x => x.solved, avg: avgOf, fast: fastPct }[_spSort.k];
             rows.sort((a, b) => _spSort.k === 'name'
                 ? _spSort.dir * String(a.name).localeCompare(String(b.name), 'ko')
                 : _spSort.k === 'fast'
-                    ? (fastPct(a) - fastPct(b)) * _spSort.dir || fastOf(b) - fastOf(a) || b.solved - a.solved || String(a.name).localeCompare(String(b.name), 'ko')   // 비중(%) 순 · 같으면 20초 이내 건수 많은 쪽 · 그래도 같으면 해결 건수 많은 쪽
+                    ? (FAST_TAIL.includes(a.name) - FAST_TAIL.includes(b.name)) || (fastPct(a) - fastPct(b)) * _spSort.dir || fastOf(b) - fastOf(a) || b.solved - a.solved || String(a.name).localeCompare(String(b.name), 'ko')   // 비중(%) 순 · 같으면 20초 이내 건수 많은 쪽 · 그래도 같으면 해결 건수 많은 쪽
                 : (val(a) - val(b)) * _spSort.dir || b.solved - a.solved || String(a.name).localeCompare(String(b.name), 'ko'));
             const head = ivEl('div', 'bb-sp-h');
             const t = ivEl('div', 'bb-sp-t');
