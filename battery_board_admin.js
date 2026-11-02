@@ -1648,6 +1648,7 @@
                 <label class="bb-rs-chk" title="착석 미기입 이석을 그 사람의 평균 소요시간으로 채워 계산"><input type="checkbox" id="bb-rs-est" checked> 미기입 평균 보정</label>
                 <button type="button" class="bb-rs-btn" id="bb-rs-reload">새로고침</button>
                 <span class="bb-rs-st" id="bb-rs-status"></span>
+                <div class="bb-rs-seg" id="bb-rs-sort" title="인원별 흐름 카드 정렬 (이석 시간 순 = 하루 평균 이석이 긴 사람부터)"></div>
                 <div class="x" id="bb-att-dclose">✕</div>
             </div>
             <div class="bb-rs-sc" id="bb-rs-scroll"></div>
@@ -5955,7 +5956,7 @@
     const rsIsExcl = n => ATT_EXCLUDE.some(m => (n || '').includes(m));
     const rsShiftOf = wt => { const m = /(\d{2}):(\d{2})~(\d{2}):(\d{2})/.exec(wt || ''); return m ? [(+m[1]) * 60 + +m[2], (+m[3]) * 60 + +m[4]] : null; };
     const rsDatesOf = ym => { const [y, m] = ym.split('-').map(Number), last = new Date(Date.UTC(y, m, 0)).getUTCDate(); return Array.from({ length: last }, (_, i) => ym + '-' + attPad(i + 1)); };
-    let _rsRaw = null, _rsHl = null, _rsView = 'hbar', _rsYm = null, _rsSeq = 0;
+    let _rsRaw = null, _rsHl = null, _rsView = 'hbar', _rsSort = 'shift', _rsYm = null, _rsSeq = 0;
     const _rsCache = {};
 
     /* 카드 팝업(attEntryConfirmed)과 같은 규칙: 지난 날짜는 항상 확정. 오늘(실시간 날짜)은 ① 뒤에 다른 기록이 있거나 ② 퇴근했거나 ③ 이석 이후 휴게시간이 시작됐을 때만 확정 */
@@ -6110,7 +6111,8 @@
             Object.keys(p.val).forEach(k => { k = +k; if (![...set.values()].includes(k)) set.set(k, k); });
             return [...set.entries()].sort((a, b) => a[0] - b[0]).map(([d, h]) => ({ d, h }));
         };
-        list.slice().sort((a, b) => start(a) - start(b) || a.name.localeCompare(b.name, 'ko')).forEach(p => {
+        const sumOf = p => Object.values(p.val).reduce((x, o) => x + o.v, 0);   // 하루 평균 이석 총량(시간대별 평균의 합)
+        list.slice().sort((a, b) => (_rsSort === 'away' ? sumOf(b) - sumOf(a) : 0) || start(a) - start(b) || a.name.localeCompare(b.name, 'ko')).forEach(p => {
             let svg = '', pk = -1, pkh = null, tot = 0;
             const hrs = myHours(p), n = Math.max(1, hrs.length), bw = (W - L - R) / n, X = i => L + i * bw, lab = n <= 12 ? 1 : 2;
             for (let v = step; v <= cap; v += step) svg += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(v) + '" y2="' + Y(v) + '" stroke="#d9cba6" stroke-width=".6"/><text x="' + (L - 3) + '" y="' + (Y(v) + 3) + '" text-anchor="end" class="bb-rs-fy">' + v + '</text>';
@@ -6132,7 +6134,7 @@
             hrs.forEach(({ h }, i) => { if (mean[h] == null) { pen = false; return; } d += (pen ? 'L' : 'M') + (X(i) + bw / 2).toFixed(1) + ' ' + Y(mean[h]).toFixed(1) + ' '; pen = true; });
             svg += '<path d="' + d + '" fill="none" stroke="#6b5f4a" stroke-width="1.1" stroke-dasharray="3 2.5" opacity=".85"/>';
             const card = attEl('div', 'bb-rs-fc' + (_rsHl === p.name ? ' hl' : '')); card.dataset.hn = p.name;
-            card.innerHTML = '<div class="fh"><b>' + esc(p.name) + '</b><small>' + (p.shift ? attPad(Math.floor(p.shift[0] / 60)) + attPad(p.shift[0] % 60) + '-' + attPad(Math.floor(p.shift[1] / 60) % 24) + attPad(p.shift[1] % 60) : '') + '</small><span>' + (pkh != null ? '피크 ' + rsHh(pkh) + '시' : '') + '</span><i style="background:' + colors[p.name] + '"></i><em>합계 ' + tot.toFixed(1) + '분</em></div><svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(p.name) + ' 시간대별 이석">' + svg + '</svg>';
+            card.innerHTML = '<div class="fh"><b>' + esc(p.name) + '</b><small>' + (p.shift ? attPad(Math.floor(p.shift[0] / 60)) + attPad(p.shift[0] % 60) + '-' + attPad(Math.floor(p.shift[1] / 60) % 24) + attPad(p.shift[1] % 60) : '') + '</small><span>' + (pkh != null ? '피크 ' + rsHh(pkh) + '시' : '') + '</span><i style="background:' + colors[p.name] + '"></i><em title="시간대별 하루 평균 이석을 모두 더한 값 = 근무일 하루당 평균 이석 시간">일평균 ' + tot.toFixed(1) + '분</em></div><svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(p.name) + ' 시간대별 이석">' + svg + '</svg>';
             wrap.appendChild(card);
         });
         return wrap;
@@ -6156,6 +6158,7 @@
         $att('bb-rs-legend').replaceChildren(attEl('span', '', (_rsView === 'flow'
             ? '막대 = 시간대별 하루 평균 이석(분), 같은 눈금(최대 ' + cap + '분) · 점선 = 전체 평균 · 카드 클릭 = 일자별 기록'
             : '막대 = 시간대별 하루 평균 이석(분), 같은 눈금(최대 ' + cap + '분) · 흐리게 = 근무 3일 미만 · 줄 클릭 = 강조')));
+        $att('bb-rs-sort').style.display = _rsView === 'flow' ? '' : 'none';   // 정렬 토글은 인원별 흐름에서만
         const st = sc.scrollTop, sl = sc.scrollLeft;   // 눌러서 다시 그려도 보던 위치 유지
         sc.replaceChildren(_rsView === 'flow' ? rsBuildFlow(list, hmin, hmax, cap) : rsBuildHBars(list, hmin, hmax, cap)); rsFitBars(); sc.scrollTop = st; sc.scrollLeft = sl;
         const notes = [_rsRaw.ym + ' · 기록 ' + res.dates.length + '일 · 근무자 ' + list.length + '명'];
@@ -6197,6 +6200,10 @@
         const vw = $att('bb-rs-view');
         if (!vw.children.length) [['hbar', '가로 막대'], ['flow', '인원별 흐름']].forEach(([k, l]) => {
             const b = attEl('button', k === _rsView ? 'on' : '', l); b.type = 'button'; b.dataset.k = k; vw.appendChild(b);
+        });
+        const so = $att('bb-rs-sort');
+        if (!so.children.length) [['shift', '근무 시간 순'], ['away', '이석 시간 순']].forEach(([k, l]) => {
+            const b = attEl('button', k === _rsSort ? 'on' : '', l); b.type = 'button'; b.dataset.k = k; so.appendChild(b);
         });
         $att('bb-att-detail').classList.add('open');
         rsLoad(false);
@@ -6331,6 +6338,10 @@
     $att('bb-rs-view').addEventListener('click', e => {
         const b = e.target.closest('button'); if (!b || b.dataset.k === _rsView) return;
         _rsView = b.dataset.k; document.querySelectorAll('#bb-rs-view button').forEach(x => x.classList.toggle('on', x === b)); rsRender();
+    });
+    $att('bb-rs-sort').addEventListener('click', e => {
+        const b = e.target.closest('button'); if (!b || b.dataset.k === _rsSort) return;
+        _rsSort = b.dataset.k; document.querySelectorAll('#bb-rs-sort button').forEach(x => x.classList.toggle('on', x === b)); rsRender();
     });
     $att('bb-rs-mgr').addEventListener('change', rsRender);
     $att('bb-rs-est').addEventListener('change', rsRender);
