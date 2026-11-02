@@ -7029,7 +7029,7 @@
         .bb-sp-t .x { margin-left:auto; color:#b91c1c; font-size:calc(18px * var(--bb-ts, 1)); font-weight:900; padding:0 4px; cursor:pointer; }
         .bb-sp-sub { font-size:calc(13.5px * var(--bb-ts, 1)); color:var(--mu); }
         .bb-sp-sub.warn { color:#c2410c; font-weight:700; }
-        .bb-sp-th, .bb-sp-row { display:grid; grid-template-columns:28px minmax(0,1fr) 66px 56px 60px 66px 54px; gap:6px; align-items:center; padding:0 16px; }
+        .bb-sp-th, .bb-sp-row { display:grid; grid-template-columns:28px minmax(0,1fr) 78px 64px; gap:6px; align-items:center; padding:0 16px; }
         .bb-sp-th { flex:0 0 auto; font-size:calc(13px * var(--bb-ts, 1)); color:var(--mu); padding-top:5px; padding-bottom:5px; border-bottom:1px solid var(--bd); background:var(--sur2); }
         .bb-sp-th span:nth-child(n+3), .bb-sp-row > div:nth-child(n+3) { text-align:right; }
         .bb-sp-body { flex:1 1 auto; min-height:0; overflow-y:auto; }
@@ -7045,6 +7045,7 @@
         .bb-sp-bar i { display:block; height:100%; background:#f97316; border-radius:3px; }
         .bb-sp-c { font-size:calc(19px * var(--bb-ts, 1)); font-weight:900; color:#c2410c; font-variant-numeric:tabular-nums; }
         .bb-sp-c small { margin-left:2px; font-size:calc(13px * var(--bb-ts, 1)); color:var(--mu); font-weight:700; }
+        .bb-sp-c .dd { margin-top:1px; font-size:calc(12px * var(--bb-ts, 1)); font-weight:700; color:var(--mu); line-height:1.2; }
         .bb-sp-d, .bb-sp-a { font-size:calc(15.5px * var(--bb-ts, 1)); font-variant-numeric:tabular-nums; }
         .bb-sp-a { color:var(--mu); }
         .bb-sp-th span[data-sort] { cursor:pointer; user-select:none; }
@@ -7058,7 +7059,7 @@
         const spPop = ivEl('div'); spPop.id = 'bb-iv-sp';
         document.body.appendChild(spPop);
 
-        let _spSort = { k: 'avg', dir: -1 };   // 정렬 기준(누적/일평균/근무일/이름)과 방향(-1 내림차순)
+        let _spSort = { k: 'avg', dir: -1 };   // 정렬 기준(누적/일평균/이름)과 방향(-1 내림차순)
         let _spOpen = false, _spSeq = 0, _spView = { dates: [], days: {}, sched: {}, state: null };
 
         const spShift = (ymd, n) => {
@@ -7188,16 +7189,10 @@
             const have = dates.filter(d => days[d]);
             const rows = spAgg(have, days, sched);
             const avgOf = x => x.days > 0 ? x.solved / x.days : -1;
-            const shOf = x => x.shn > 0 ? x.sh / x.shn : -1;
-            const rlOf = x => x.rln > 0 ? x.rl / x.rln : -1;
-            const val = { solved: x => x.solved, avg: avgOf, share: shOf, rel: rlOf, days: x => x.days }[_spSort.k];
-            const shPct = x => x.shn > 0 ? Math.round(x.sh / x.shn * 100) : -1;          // 화면에 보이는 값(정수 %) 기준으로 동률 판정
-            const rlTen = x => x.rln > 0 ? Math.round(x.rl / x.rln * 10) : -1;           // 동료 대비도 보이는 값(소수 1자리) 기준
+            const val = { solved: x => x.solved, avg: avgOf }[_spSort.k];
             rows.sort((a, b) => _spSort.k === 'name'
                 ? _spSort.dir * String(a.name).localeCompare(String(b.name), 'ko')
-                : _spSort.k === 'share'
-                    ? (shPct(a) - shPct(b)) * _spSort.dir || rlTen(b) - rlTen(a) || a.days - b.days || b.solved - a.solved || String(a.name).localeCompare(String(b.name), 'ko')   // 점유율 같으면 동료 대비 높은 쪽, 그것도 같으면 근무일 적은 쪽이 위
-                    : (val(a) - val(b)) * _spSort.dir || b.solved - a.solved || String(a.name).localeCompare(String(b.name), 'ko'));
+                : (val(a) - val(b)) * _spSort.dir || b.solved - a.solved || String(a.name).localeCompare(String(b.name), 'ko'));
             const head = ivEl('div', 'bb-sp-h');
             const t = ivEl('div', 'bb-sp-t');
             t.appendChild(ivEl('b', '', '개입 통계 (누적)'));
@@ -7217,7 +7212,7 @@
             head.appendChild(ivEl('div', 'bb-sp-sub' + (warn ? ' warn' : ''), sub || ' '));
 
             const th = ivEl('div', 'bb-sp-th');
-            [['#', ''], ['이름', 'name'], ['누적', 'solved'], ['일평균', 'avg'], ['점유율', 'share'], ['동료 대비', 'rel'], ['근무일', 'days']].forEach(([lb, k]) => {
+            [['#', ''], ['이름', 'name'], ['누적', 'solved'], ['일평균', 'avg']].forEach(([lb, k]) => {
                 const sp = ivEl('span', k && _spSort.k === k ? 'cur' : '', lb + (k && _spSort.k === k ? (_spSort.dir < 0 ? ' ▼' : ' ▲') : ''));
                 if (k) { sp.dataset.sort = k; sp.title = '눌러서 정렬 (다시 누르면 오름/내림차순 전환)'; }
                 th.appendChild(sp);
@@ -7235,19 +7230,14 @@
                     nm.appendChild(nmN);
                     const bar = ivEl('div', 'bb-sp-bar'), fill = ivEl('i'); fill.style.width = Math.round(r.solved / max * 100) + '%'; bar.appendChild(fill); nm.appendChild(bar);
                     row.appendChild(nm);
-                    const c = ivEl('div', 'bb-sp-c', String(r.solved)); c.appendChild(ivEl('small', '', '건')); row.appendChild(c);
+                    const c = ivEl('div', 'bb-sp-c', String(r.solved)); c.appendChild(ivEl('small', '', '건'));
+                    const dd = ivEl('div', 'dd', '(' + r.days + '일' + (r.est ? '*' : '') + ')'); dd.title = '근무일 = 월별 근무표에서 출근으로 표시된 날' + (r.est ? ' (* = 근무표에 없는 날은 처리·근무시간 기록으로 대체)' : ''); c.appendChild(dd);   // 누적 건수 아래에 근무일 수를 작게
+                    row.appendChild(c);
                     row.appendChild(ivEl('div', 'bb-sp-a', r.days > 0 ? (r.solved / r.days).toFixed(1) : '-'));
-                    const shc = ivEl('div', 'bb-sp-a', r.shn > 0 ? Math.round(r.sh / r.shn * 100) + '%' : '-');
-                    shc.title = r.shn > 0 ? '근무시간대에 같이 근무한 사람들이 처리한 건 중 본인 비율의 평균 (' + r.shn + '일 기준)' : '근무시간 정보가 없어 계산하지 못함';
-                    row.appendChild(shc);
-                    const rlc = ivEl('div', 'bb-sp-a', r.rln > 0 ? (r.rl / r.rln).toFixed(1) + '배' : '-');
-                    rlc.title = r.rln > 0 ? '같은 시간대에 근무한 동료의 평균 시간당 처리량 대비 본인 처리량 (1.0배 = 동료 평균, ' + r.rln + '일 기준)' : '근무시간 정보가 없어 계산하지 못함';
-                    row.appendChild(rlc);
-                    row.appendChild(ivEl('div', 'bb-sp-d', r.days + '일' + (r.est ? '*' : '')));
                     body.appendChild(row);
                 });
             }
-            const ft = ivEl('div', 'bb-sp-ft', '건수 = 이름이 확정된 처리 건만 (추정·이탈·특정 불가 제외, 개입카드 화면과 같은 기준) · 근무일 = 월별 근무표에서 출근으로 표시된 날(연차 제외·반차 1일) · * = 근무표에 없는 날이 있어 처리·근무시간 기록으로 대체 · 일평균 = 누적 ÷ 근무일 · 점유율 = (내 근무시간과 겹치는 시간 동안 같이 근무한 사람들의 처리 건 중 내가 처리한 비율)의 일별 평균 — 건수는 각자 근무시간에 고르게 분포한다고 보고 추정 · 동료 대비 = 내 시간당 처리량 ÷ 겹친 시간 동료들의 평균 시간당 처리량(1.0배 = 동료 평균, 인원·발생량 차이 보정) · 뱃지: 근무 시작 14:00 이후 = 야간, 그 전 = 주간 · 근무시간 미등록자는 비교·뱃지에서 제외');
+            const ft = ivEl('div', 'bb-sp-ft', '건수 = 이름이 확정된 처리 건만 (추정·이탈·특정 불가 제외, 개입카드 화면과 같은 기준) · (N일) = 근무일: 월별 근무표에서 출근으로 표시된 날(연차 제외·반차 1일) · * = 근무표에 없는 날이 있어 처리·근무시간 기록으로 대체 · 일평균 = 누적 ÷ 근무일 · 뱃지: 근무 시작 14:00 이후 = 야간, 그 전 = 주간');
             const keep = spPop.querySelector('.bb-sp-body'), keepTop = keep ? keep.scrollTop : 0;
             spPop.replaceChildren(head, th, body, ft);
             body.scrollTop = keepTop;
