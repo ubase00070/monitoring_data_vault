@@ -7011,7 +7011,7 @@
                     근무표에는 없는 날에 처리 건수가 있으면 그 날도 근무일로 본다(근무 교대 등).
            · 저장(localStorage): 지난 날짜 요약(bbIvStatsV2)과 지난 달 근무표(bbIvSchedV1)는 변하지 않으므로 다시 받지 않는다.
              최근 3일 요약과 이번 달 근무표(6시간 지나면)만 다시 받는다. '새로 집계' = 저장분 버리고 전부 다시 받기. */
-        const IV_SP_KEY = 'bbIvStatsV2';
+        const IV_SP_KEY = 'bbIvStatsV3';   // V3: 하루 요약에 '20초 이내 해결 건수'(fast) 추가 — 예전 저장분(V2)은 형식이 달라 버리고 새로 받음
         const IV_SCH_KEY = 'bbIvSchedV1';
         const IV_SCH_BASE = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/monthly_schedule/schedule_for_mobile_';
         const IV_SCH_TTL = 6 * 3600 * 1000;   // 이번 달 근무표를 다시 받는 간격
@@ -7040,7 +7040,7 @@
         .bb-sp-t .x { margin-left:auto; color:#b91c1c; font-size:calc(18px * var(--bb-ts, 1)); font-weight:900; padding:0 4px; cursor:pointer; }
         .bb-sp-sub { font-size:calc(13.5px * var(--bb-ts, 1)); color:var(--mu); }
         .bb-sp-sub.warn { color:#c2410c; font-weight:700; }
-        .bb-sp-th, .bb-sp-row { display:grid; grid-template-columns:28px minmax(0,1fr) 78px 64px; gap:6px; align-items:center; padding:0 16px; }
+        .bb-sp-th, .bb-sp-row { display:grid; grid-template-columns:28px minmax(0,1fr) 78px 64px 92px; gap:6px; align-items:center; padding:0 16px; }
         .bb-sp-th { flex:0 0 auto; font-size:calc(13px * var(--bb-ts, 1)); color:var(--mu); padding-top:5px; padding-bottom:5px; border-bottom:1px solid var(--bd); background:var(--sur2); }
         .bb-sp-th span:nth-child(n+3), .bb-sp-row > div:nth-child(n+3) { text-align:right; }
         .bb-sp-body { flex:1 1 auto; min-height:0; overflow-y:auto; }
@@ -7059,6 +7059,7 @@
         .bb-sp-c .dd { margin-top:1px; font-size:calc(12px * var(--bb-ts, 1)); font-weight:700; color:var(--mu); line-height:1.2; }
         .bb-sp-d, .bb-sp-a { font-size:calc(15.5px * var(--bb-ts, 1)); font-variant-numeric:tabular-nums; }
         .bb-sp-a { color:var(--mu); }
+        .bb-sp-th span { white-space:nowrap; }
         .bb-sp-th span[data-sort] { cursor:pointer; user-select:none; }
         .bb-sp-th span[data-sort]:hover { color:var(--tx); }
         .bb-sp-th span.cur { color:#c2410c; font-weight:800 !important; }
@@ -7070,7 +7071,7 @@
         const spPop = ivEl('div'); spPop.id = 'bb-iv-sp';
         document.body.appendChild(spPop);
 
-        let _spSort = { k: 'avg', dir: -1 };   // 정렬 기준(누적/일평균/이름)과 방향(-1 내림차순)
+        let _spSort = { k: 'avg', dir: -1 };   // 정렬 기준(누적/일평균/20초 이내/이름)과 방향(-1 내림차순)
         let _spOpen = false, _spSeq = 0, _spView = { dates: [], days: {}, sched: {}, state: null };
 
         const spShift = (ymd, n) => {
@@ -7079,11 +7080,12 @@
         };
         // 근무일 판정 (바꾸고 싶으면 여기만): 근무시간(시각 숫자가 든 shift 또는 hours 배열)이 잡혀 있거나, 처리 건수가 있으면 근무한 날
         const spWorked = p => (Array.isArray(p.hours) && p.hours.length > 0) || (+p.solved || 0) > 0 || /\d/.test(String(p.shift || ''));
-        const spCompact = d => {   // 하루 요약 → { 이름: [처리건수, 기록상 근무(1/0)] }
+        const spCompact = d => {   // 하루 요약 → { 이름: [처리건수, 기록상 근무(1/0), 20초 이내 해결 건수(-1 = 서버가 아직 주지 않음)] }
             const o = {};
-            (d.people || []).forEach(p => { if (p && p.name) { const sv = +p.solved || 0, w = spWorked(p) ? 1 : 0; o[p.name] = [sv, w]; } });
+            (d.people || []).forEach(p => { if (p && p.name) { const sv = +p.solved || 0, w = spWorked(p) ? 1 : 0, fs = (typeof p.fast === 'number' && p.fast >= 0) ? p.fast : -1; o[p.name] = [sv, w, fs]; } });
             return o;
         };
+        const spNeedFast = day => !!day && Object.keys(day).some(n => day[n][0] > 0 && day[n][2] == null || day[n][0] > 0 && day[n][2] < 0);   // 처리 건수는 있는데 20초 건수를 못 받아 둔 날 → 서버가 갱신된 뒤 다시 받음
         const spNorm = n => String(n || '').replace(/\s+/g, '');
         const spLoadSch = () => { try { const s = JSON.parse(localStorage.getItem(IV_SCH_KEY) || 'null'); if (s && s.months && typeof s.months === 'object') return s; } catch (e) { /* 없으면 새로 */ } return { months: {} }; };
         const spSaveSch = s => { try { localStorage.setItem(IV_SCH_KEY, JSON.stringify(s)); } catch (e) { /* 저장 못 해도 이번 화면에는 지장 없음 */ } };
@@ -7171,9 +7173,10 @@
                 const mo = d.slice(0, 7), md = ivMD(d), sc = sched && sched[mo] && sched[mo].p;
                 let shr = {}; try { shr = sc ? spShareDay(day, sc, (sched[mo].w || {}), md) : {}; } catch (e) { shr = {}; }   // 계산이 실패해도 나머지 통계는 그대로
                 Object.keys(day).forEach(nm => {
-                    const a = m[nm] || (m[nm] = { name: nm, solved: 0, days: 0, est: 0, sh: 0, shn: 0, rl: 0, win: null });
-                    const [sv, w] = day[nm];
+                    const a = m[nm] || (m[nm] = { name: nm, solved: 0, fast: 0, fastMiss: 0, days: 0, est: 0, sh: 0, shn: 0, rl: 0, win: null });
+                    const [sv, w, fs] = day[nm];
                     a.solved += sv;
+                    if (fs >= 0) a.fast += fs; else if (sv > 0) a.fastMiss++;   // 건수가 있는데 20초 건수를 모르는 날이 있으면 그 사람은 '-' 로 표시
                     if (shr[nm] != null) { a.sh += shr[nm][0]; a.shn++; if (isFinite(shr[nm][1])) { a.rl += shr[nm][1]; a.rln = (a.rln || 0) + 1; } }
                     { const wk = sc && sched[mo].w ? spFindKey(sc, nm) : null; if (wk != null && sched[mo].w[wk]) a.win = sched[mo].w[wk]; }   // 가장 최근 날짜의 근무시간 (주간/야간 뱃지용)
                     const mine = sc && spFindSch(sc, nm), v = mine ? mine[md] : undefined;
@@ -7200,9 +7203,12 @@
             const have = dates.filter(d => days[d]);
             const rows = spAgg(have, days, sched);
             const avgOf = x => x.days > 0 ? x.solved / x.days : -1;
-            const val = { solved: x => x.solved, avg: avgOf }[_spSort.k];
+            const fastOf = x => x.fastMiss > 0 ? -1 : x.fast;
+            const val = { solved: x => x.solved, avg: avgOf, fast: fastOf }[_spSort.k];
             rows.sort((a, b) => _spSort.k === 'name'
                 ? _spSort.dir * String(a.name).localeCompare(String(b.name), 'ko')
+                : _spSort.k === 'fast'
+                    ? (fastOf(a) - fastOf(b)) * _spSort.dir || (b.solved ? b.fast / b.solved : 0) - (a.solved ? a.fast / a.solved : 0) || b.solved - a.solved || String(a.name).localeCompare(String(b.name), 'ko')   // 20초 이내 건수 같으면 비중(%) 높은 쪽
                 : (val(a) - val(b)) * _spSort.dir || b.solved - a.solved || String(a.name).localeCompare(String(b.name), 'ko'));
             const head = ivEl('div', 'bb-sp-h');
             const t = ivEl('div', 'bb-sp-t');
@@ -7223,7 +7229,7 @@
             head.appendChild(ivEl('div', 'bb-sp-sub' + (warn ? ' warn' : ''), sub || ' '));
 
             const th = ivEl('div', 'bb-sp-th');
-            [['#', ''], ['이름', 'name'], ['누적', 'solved'], ['일평균', 'avg']].forEach(([lb, k]) => {
+            [['#', ''], ['이름', 'name'], ['누적', 'solved'], ['일평균', 'avg'], ['20초 이내', 'fast']].forEach(([lb, k]) => {
                 const sp = ivEl('span', k && _spSort.k === k ? 'cur' : '', lb + (k && _spSort.k === k ? (_spSort.dir < 0 ? ' ▼' : ' ▲') : ''));
                 if (k) { sp.dataset.sort = k; sp.title = '눌러서 정렬 (다시 누르면 오름/내림차순 전환)'; }
                 th.appendChild(sp);
@@ -7234,7 +7240,7 @@
             } else {
                 const max = Math.max(1, rows[0].solved);
                 rows.forEach((r, i) => {
-                    const row = ivEl('div', 'bb-sp-row' + ((_spSort.k === 'solved' || _spSort.k === 'avg') && _spSort.dir < 0 && i < 3 && r.solved > 0 ? ' top' : ''));
+                    const row = ivEl('div', 'bb-sp-row' + ((_spSort.k === 'solved' || _spSort.k === 'avg' || _spSort.k === 'fast') && _spSort.dir < 0 && i < 3 && r.solved > 0 ? ' top' : ''));
                     row.appendChild(ivEl('div', 'bb-sp-rk', String(i + 1)));
                     const nm = ivEl('div', 'bb-sp-nm'), nmN = ivEl('div', 'n', r.name);
                     if (r.win) { const night = r.win[0] >= 14 * 60; const bd = ivEl('span', 'bb-sp-bdg ' + (night ? 'bd-n' : 'bd-d'), night ? '야간' : '주간'); bd.title = '근무 ' + attPad(Math.floor(r.win[0] / 60)) + ':' + attPad(r.win[0] % 60) + ' 시작 (14:00 이후 시작 = 야간)'; nmN.appendChild(bd); }   // 근무표 시간이 없는 사람은 뱃지 없음
@@ -7245,10 +7251,11 @@
                     const dd = ivEl('div', 'dd', '(' + r.days + '일' + (r.est ? '*' : '') + ')'); dd.title = '근무일 = 월별 근무표에서 출근으로 표시된 날' + (r.est ? ' (* = 근무표에 없는 날은 처리·근무시간 기록으로 대체)' : ''); c.appendChild(dd);   // 누적 건수 아래에 근무일 수를 작게
                     row.appendChild(c);
                     row.appendChild(ivEl('div', 'bb-sp-a', r.days > 0 ? (r.solved / r.days).toFixed(1) : '-'));
+                    { const fc = ivEl('div', 'bb-sp-c'); if (r.fastMiss > 0) { fc.textContent = '-'; fc.title = '서버가 20초 이내 건수를 아직 주지 않은 날이 있어 계산하지 못함'; } else { fc.textContent = String(r.fast); fc.appendChild(ivEl('small', '', '건')); fc.appendChild(ivEl('div', 'dd', '(' + (r.solved > 0 ? Math.round(r.fast / r.solved * 100) : 0) + '%)')); fc.title = '시작~종료가 20초 이하인 해결 건 (시작/종료가 추정인 건 제외) · 괄호 = 전체 해결 건 중 비율'; } row.appendChild(fc); }
                     body.appendChild(row);
                 });
             }
-            const ft = ivEl('div', 'bb-sp-ft', '건수 = 이름이 확정된 처리 건만 (추정·이탈·특정 불가 제외, 개입카드 화면과 같은 기준) · (N일) = 근무일: 월별 근무표에서 출근으로 표시된 날(연차 제외·반차 1일) · * = 근무표에 없는 날이 있어 처리·근무시간 기록으로 대체 · 일평균 = 누적 ÷ 근무일 · 뱃지: 근무 시작 14:00 이후 = 야간, 그 전 = 주간');
+            const ft = ivEl('div', 'bb-sp-ft', '건수 = 이름이 확정된 처리 건만 (추정·이탈·특정 불가 제외, 개입카드 화면과 같은 기준) · (N일) = 근무일: 월별 근무표에서 출근으로 표시된 날(연차 제외·반차 1일) · * = 근무표에 없는 날이 있어 처리·근무시간 기록으로 대체 · 일평균 = 누적 ÷ 근무일 · 20초 이내 = 시작~종료가 20초 이하인 해결 건(시작·종료가 추정인 건 제외, 괄호는 해결 건 중 비율) · 뱃지: 근무 시작 14:00 이후 = 야간, 그 전 = 주간');
             const keep = spPop.querySelector('.bb-sp-body'), keepTop = keep ? keep.scrollTop : 0;
             spPop.replaceChildren(head, th, body, ft);
             body.scrollTop = keepTop;
@@ -7295,7 +7302,7 @@
             const today = ivOpDate();
             const cut = spShift(today, -(IV_SP_REFETCH_DAYS - 1));
             // rev 가 있으면: 없는 날 + 오늘 + rev 달라진 날만. rev 가 없으면(폴백): 최근 N일 재수신
-            const todo = dates.filter(d => !store.days[d] || d === today || (srvRevs ? (store.revs || {})[d] !== srvRevs[d] : d >= cut));
+            const todo = dates.filter(d => !store.days[d] || d === today || spNeedFast(store.days[d]) || (srvRevs ? (store.revs || {})[d] !== srvRevs[d] : d >= cut));
             console.log('[BB] 개입 통계: 받을 날짜', todo.length, '/', dates.length, '· revs', srvRevs ? '있음' : '없음(폴백)', todo.slice(0, 5));
             const st = { phase: 'loading', done: 0, total: todo.length, failed: 0 };
             _spView = { dates, days: store.days, sched: _spView.sched, state: st };
