@@ -7204,11 +7204,12 @@
             const rows = spAgg(have, days, sched);
             const avgOf = x => x.days > 0 ? x.solved / x.days : -1;
             const fastOf = x => x.fastMiss > 0 ? -1 : x.fast;
-            const val = { solved: x => x.solved, avg: avgOf, fast: fastOf }[_spSort.k];
+            const fastPct = x => x.fastMiss > 0 ? -1 : (x.solved > 0 ? x.fast / x.solved : 0);   // 20초 이내 비중 = 20초 이내 건수 ÷ 해결 건수 (건수는 사람마다 달라서 비중으로 비교)
+            const val = { solved: x => x.solved, avg: avgOf, fast: fastPct }[_spSort.k];
             rows.sort((a, b) => _spSort.k === 'name'
                 ? _spSort.dir * String(a.name).localeCompare(String(b.name), 'ko')
                 : _spSort.k === 'fast'
-                    ? (fastOf(a) - fastOf(b)) * _spSort.dir || (b.solved ? b.fast / b.solved : 0) - (a.solved ? a.fast / a.solved : 0) || b.solved - a.solved || String(a.name).localeCompare(String(b.name), 'ko')   // 20초 이내 건수 같으면 비중(%) 높은 쪽
+                    ? (fastPct(a) - fastPct(b)) * _spSort.dir || fastOf(b) - fastOf(a) || b.solved - a.solved || String(a.name).localeCompare(String(b.name), 'ko')   // 비중(%) 순 · 같으면 20초 이내 건수 많은 쪽 · 그래도 같으면 해결 건수 많은 쪽
                 : (val(a) - val(b)) * _spSort.dir || b.solved - a.solved || String(a.name).localeCompare(String(b.name), 'ko'));
             const head = ivEl('div', 'bb-sp-h');
             const t = ivEl('div', 'bb-sp-t');
@@ -7251,11 +7252,11 @@
                     const dd = ivEl('div', 'dd', '(' + r.days + '일' + (r.est ? '*' : '') + ')'); dd.title = '근무일 = 월별 근무표에서 출근으로 표시된 날' + (r.est ? ' (* = 근무표에 없는 날은 처리·근무시간 기록으로 대체)' : ''); c.appendChild(dd);   // 누적 건수 아래에 근무일 수를 작게
                     row.appendChild(c);
                     row.appendChild(ivEl('div', 'bb-sp-a', r.days > 0 ? (r.solved / r.days).toFixed(1) : '-'));
-                    { const fc = ivEl('div', 'bb-sp-c'); if (r.fastMiss > 0) { fc.textContent = '-'; fc.title = '서버가 20초 이내 건수를 아직 주지 않은 날이 있어 계산하지 못함'; } else { fc.textContent = String(r.fast); fc.appendChild(ivEl('small', '', '건')); fc.appendChild(ivEl('div', 'dd', '(' + (r.solved > 0 ? Math.round(r.fast / r.solved * 100) : 0) + '%)')); fc.title = '시작~종료가 20초 이하인 해결 건 (시작/종료가 추정인 건 제외) · 괄호 = 전체 해결 건 중 비율'; } row.appendChild(fc); }
+                    { const fc = ivEl('div', 'bb-sp-c'); if (r.fastMiss > 0) { fc.textContent = '-'; fc.title = '서버가 20초 이내 건수를 아직 주지 않은 날이 있어 계산하지 못함'; } else { fc.textContent = (r.solved > 0 ? Math.round(r.fast / r.solved * 100) : 0) + '%'; fc.appendChild(ivEl('div', 'dd', '(' + r.fast + '건)')); fc.title = '전체 해결 건 중 시작~종료가 20초 이하인 건의 비율 (시작/종료가 추정인 건은 제외) · 괄호 = 20초 이내 건수 · 이 열은 비율 순으로 정렬'; } row.appendChild(fc); }
                     body.appendChild(row);
                 });
             }
-            const ft = ivEl('div', 'bb-sp-ft', '건수 = 이름이 확정된 처리 건만 (추정·이탈·특정 불가 제외, 개입카드 화면과 같은 기준) · (N일) = 근무일: 월별 근무표에서 출근으로 표시된 날(연차 제외·반차 1일) · * = 근무표에 없는 날이 있어 처리·근무시간 기록으로 대체 · 일평균 = 누적 ÷ 근무일 · 20초 이내 = 시작~종료가 20초 이하인 해결 건(시작·종료가 추정인 건 제외, 괄호는 해결 건 중 비율) · 뱃지: 근무 시작 14:00 이후 = 야간, 그 전 = 주간');
+            const ft = ivEl('div', 'bb-sp-ft', '건수 = 이름이 확정된 처리 건만 (추정·이탈·특정 불가 제외, 개입카드 화면과 같은 기준) · (N일) = 근무일: 월별 근무표에서 출근으로 표시된 날(연차 제외·반차 1일) · * = 근무표에 없는 날이 있어 처리·근무시간 기록으로 대체 · 일평균 = 누적 ÷ 근무일 · 20초 이내 = 해결 건 중 시작~종료가 20초 이하인 건의 비율(시작·종료가 추정인 건 제외, 괄호는 그 건수) · 이 열은 비율 높은 순으로 정렬 · 뱃지: 근무 시작 14:00 이후 = 야간, 그 전 = 주간');
             const keep = spPop.querySelector('.bb-sp-body'), keepTop = keep ? keep.scrollTop : 0;
             spPop.replaceChildren(head, th, body, ft);
             body.scrollTop = keepTop;
