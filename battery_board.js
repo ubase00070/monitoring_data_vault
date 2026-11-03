@@ -8620,7 +8620,7 @@
         const YW_RE = /양원\s*LH.*관제\s*주행/;   // [양원LH 관제 주행] 시트 관리자가 수식으로 넣는 임무 — 일반 업무처럼 배정하되 한 사람이 하루 1회만 (자정 이후 00·03·06시 임무는 수식 범위 밖이라 시트 값 그대로 둠)
         const SUB_STRICT = 1080;   // 18:00 이후 슬롯의 서브는 일일 업무와 겹치면 안 됨 (그 전은 겹쳐도 무방)
         const mkTask = (t, bold, fixed, i) => {
-          const m = t.match(/^\[(\d{1,2}:\d{2})(?:~(\d{1,2}:\d{2}))?\]/); const yw = YW_RE.test(t), s = tmin(m[1]), e = m[2] ? tmin(m[2]) : s + (yw ? 30 : 10);   // 양원LH 관제 주행은 한 번에 약 30분
+          const m = t.match(/^\[(\d{1,2}:\d{2})(?:~(\d{1,2}:\d{2}))?\]/); const yw = YW_RE.test(t), s = tmin(m[1]), e = m[2] ? tmin(m[2]) : s + (yw ? 60 : 10);   // 양원LH 관제 주행은 30~45분 걸려서 1시간 업무로 취급 (화면 표기는 시트 원본 시각 그대로 — de)
           const z = t.replace(/\s/g, ''); let days = 'all';
           if (z.includes('[평일]')) days = 'wd'; else if (z.includes('[주말]')) days = 'we'; else if (z.includes('화,수,목,금,토,일')) days = 'nm';
           const sci = t.includes('부산국립과학관'), nh = t.includes('대기장소2 주간기체 출근');
