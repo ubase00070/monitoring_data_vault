@@ -5461,8 +5461,8 @@
        ============================================================ */
     (function patrolRemind() {
         const API = 'https://multimonitoring.vercel.app/api/battery?name=patrol_remind';
-        const SLOTS = ['46|09:02', '46|14:02', '75|10:32', '75|16:02', '268|10:02', '268|15:02'];
-        const FROM_S = 75, TO_S = 330, GAP_MS = 30000, SHOW_MS = 15000;   // 점검 시각 +75초 ~ +330초 사이에만 읽음
+        const SLOTS = ['46|09:00', '46|14:00', '75|10:30', '75|16:00', '268|10:00', '268|15:00'];   // admin 의 PR_SLOTS 와 같아야 함 (주소|점검 시각)
+        const FROM_S = 75, TO_S = 540, GAP_MS = 30000, SHOW_MS = 15000;   // 점검 시각 +75초 ~ +9분 사이에만 읽음 (admin 이 늦게 기록해도 놓치지 않도록 admin 의 8분 유예보다 길게)
         const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
         const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* 무시 */ } };
         const pad = n => String(n).padStart(2, '0');
