@@ -8626,7 +8626,7 @@
           const sci = t.includes('부산국립과학관'), nh = t.includes('대기장소2 주간기체 출근');
           let w = 0;
           if (sci) w = 1; else if (t.includes('무선충전') && t.includes('재시작') && s === 600) w = 0.5; else if (t.includes('송도요기요')) w = 0.5; else if (nh) w = 0.5; else if (yw) w = 0.5;   // 양원LH 관제 주행: 가중치 0.5 (일반 업무와 같은 규칙 — 2.0 이하 · 다중 포함 3건 이하 · 15분 간격)
-          return { i, t, bold: !!bold, fixed: fixed || '', s, e, days, slot: Math.floor(s / 60) * 60, sci, hub: t.includes('HUB B 출근'), yw, nh, nt: /\[삼평동,\s*서현동\]\s*기체 출근 체크/.test(t), w };
+          return { i, t, bold: !!bold, fixed: fixed || '', s, e, days, slot: Math.floor(s / 60) * 60, sci, hub: t.includes('HUB B 출근'), yw, de: m[2] ? tmin(m[2]) : s + 10, nh, nt: /\[삼평동,\s*서현동\]\s*기체 출근 체크/.test(t), w };
         };
         const TASKS = [];
         function rowState(t, d, holiday) {
@@ -9060,7 +9060,7 @@
         }
         const simp = document.createElement('div'); simp.id = 'bbsim'; bbEl.appendChild(simp);
         const simNm = n => n ? '<span class="nm' + (/없음/.test(n) ? ' none' : '') + '" style="--h:' + hue(n) + '">' + esc(n) + '</span>' : '<span class="nm none">후보 없음</span>';
-        const simRange = t => SIM.fmt(t.s) + (t.e - t.s > 10 ? '~' + SIM.fmt(t.e) : '');
+        const simRange = t => { const de = t.de != null ? t.de : t.e; return SIM.fmt(t.s) + (de - t.s > 10 ? '~' + SIM.fmt(de) : ''); };   // 화면 표기는 시트에 적힌 원래 시각 그대로 (양원LH 30분은 계산용 가정)
         function simDraw() {
             if (!simp.classList.contains('open')) return;
             const txt = lsGet('bbs_tasks_cache', ''), cfg = simCfg();
@@ -9155,7 +9155,7 @@
             const ok = m.prob === 0 && S.m.overW === 0 && S.m.n4 === 0;
             const verdict = '<div class="vd' + (ok ? '' : ' bad') + '">' + (ok ? '✅ <b>규칙 위반 0칸</b> — 가중치 2.0 · 다중 포함 3건 · 시간 겹침 모두 지킴.' : '⚠ <b>규칙 문제 ' + m.prob + '칸</b>' + (S.m.overW ? ' · 2.0 초과 ' + S.m.overW + '명' : '') + (S.m.n4 ? ' · 4건 이상 ' + S.m.n4 + '명' : '') + ' — 아래 위반 목록을 확인하세요.') +
                 (S.sciEx > 0 ? ' 과학관 다중 無 우선은 ' + S.sciEx + '칸 아쉬움.' : '') + '</div>';
-            const rng = t => SIM.fmt(t.s) + (t.e - t.s > 10 ? '~' + SIM.fmt(t.e) : ''), short = t => esc(String(t.t || '').replace(/^\s*\[[^\]]*\]\s*/, '').slice(0, 30));
+            const rng = t => { const de = t.de != null ? t.de : t.e; return SIM.fmt(t.s) + (de - t.s > 10 ? '~' + SIM.fmt(de) : ''); }, short = t => esc(String(t.t || '').replace(/^\s*\[[^\]]*\]\s*/, '').slice(0, 30));
             const badTbl = bad.length ? '<table><tr><th>시각</th><th>업무</th><th>배정자</th><th>위반 내용</th></tr>' + bad.slice(0, 20).map(i => '<tr><td class="n">' + rng(T[i]) + '</td><td>' + short(T[i]) + '</td><td class="n">' + esc(X[i] || '후보 없음') + '</td><td class="ng">' + esc((m.why[i] || []).join(' · ')) + '</td></tr>').join('') + '</table>' + (bad.length > 20 ? '<div class="sm">… 외 ' + (bad.length - 20) + '칸</div>' : '') : '<div class="sm">위반 칸 없음.</div>';
             const tab = (v, label) => '<button data-a="brt" data-v="' + v + '" class="' + (simBriefTab === v ? 'on' : '') + '">' + label + '</button>';
             const note = isA
