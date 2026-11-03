@@ -8617,15 +8617,16 @@
         let MONTH_OK = false;   // 10월(근무표가 있는 달)일 때만 근무표(sc)로 출근자를 추림 — 그 외 달은 JSON 에 나온 이름으로 대체
         const present = d => MONTH_OK ? STAFF.filter(p => p.sc[d - 1] === 'W') : [];
         function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+        const YW_RE = /양원\s*LH.*관제\s*주행/;   // [양원LH 관제 주행] 시트 관리자가 수식으로 넣는 임무 — 일반 업무처럼 배정하되 한 사람이 하루 1회만 (자정 이후 00·03·06시 임무는 수식 범위 밖이라 시트 값 그대로 둠)
         const SUB_STRICT = 1080;   // 18:00 이후 슬롯의 서브는 일일 업무와 겹치면 안 됨 (그 전은 겹쳐도 무방)
         const mkTask = (t, bold, fixed, i) => {
-          const m = t.match(/^\[(\d{1,2}:\d{2})(?:~(\d{1,2}:\d{2}))?\]/); const s = tmin(m[1]), e = m[2] ? tmin(m[2]) : s + 10;
+          const m = t.match(/^\[(\d{1,2}:\d{2})(?:~(\d{1,2}:\d{2}))?\]/); const yw = YW_RE.test(t), s = tmin(m[1]), e = m[2] ? tmin(m[2]) : s + (yw ? 30 : 10);   // 양원LH 관제 주행은 한 번에 약 30분
           const z = t.replace(/\s/g, ''); let days = 'all';
           if (z.includes('[평일]')) days = 'wd'; else if (z.includes('[주말]')) days = 'we'; else if (z.includes('화,수,목,금,토,일')) days = 'nm';
           const sci = t.includes('부산국립과학관'), nh = t.includes('대기장소2 주간기체 출근');
           let w = 0;
-          if (sci) w = 1; else if (t.includes('무선충전') && t.includes('재시작') && s === 600) w = 0.5; else if (t.includes('송도요기요')) w = 0.5; else if (nh) w = 0.5;
-          return { i, t, bold: !!bold, fixed: fixed || '', s, e, days, slot: Math.floor(s / 60) * 60, sci, hub: t.includes('HUB B 출근'), nh, nt: /\[삼평동,\s*서현동\]\s*기체 출근 체크/.test(t), w };
+          if (sci) w = 1; else if (t.includes('무선충전') && t.includes('재시작') && s === 600) w = 0.5; else if (t.includes('송도요기요')) w = 0.5; else if (nh) w = 0.5; else if (yw) w = 0.5;   // 양원LH 관제 주행: 가중치 0.5 (일반 업무와 같은 규칙 — 2.0 이하 · 다중 포함 3건 이하 · 15분 간격)
+          return { i, t, bold: !!bold, fixed: fixed || '', s, e, days, slot: Math.floor(s / 60) * 60, sci, hub: t.includes('HUB B 출근'), yw, nh, nt: /\[삼평동,\s*서현동\]\s*기체 출근 체크/.test(t), w };
         };
         const TASKS = [];
         function rowState(t, d, holiday) {
@@ -8648,7 +8649,7 @@
               const j = TL.findIndex(x => x.nt);
               if (j >= 0 && st[j] === 'on') { skip.add(j); U.push({ rows: [i, j], s: 600, e: 660, slot: 600, w: 0.5, cnt: 2, sci: false, label: '성남 삼평동 10:00 + 10:30 묶음' }); return; }
             }
-            U.push({ rows: [i], s: t.s, e: t.e, slot: t.slot, w: t.w, cnt: 1, sci: t.sci, label: t.t });
+            U.push({ rows: [i], s: t.s, e: t.e, slot: t.slot, w: t.w, cnt: 1, sci: t.sci, yw: !!t.yw, label: t.t });
           });
           return U;
         }
@@ -8681,9 +8682,9 @@
           const opt = Object.assign({}, DEFAULTS, optIn || {});
           const LV = opt.live || null, ex = new Set(LV ? LV.exclude || [] : []);
           const people = LV ? LV.people.filter(p => !ex.has(p.name)) : present(d), mons = LV ? LV.main : (M.main[d] || {}), subs = LV ? LV.sub : (M.sub[d] || {}), S = {};
-          people.forEach(p => { const Hs = Object.entries(mons).filter(([h, n]) => n === p.name).map(([h]) => +h); const sb = Object.entries(subs).filter(([h, n]) => n === p.name).map(([h]) => +h); S[p.name] = { p, mons: Hs, subAll: sb, subs: sb.filter(H => H >= SUB_STRICT), W: Hs.length, Ct: 0, tasks: [], sciT: [], sci: false, slots: new Set(), rows: 0 }; });
+          people.forEach(p => { const Hs = Object.entries(mons).filter(([h, n]) => n === p.name).map(([h]) => +h); const sb = Object.entries(subs).filter(([h, n]) => n === p.name).map(([h]) => +h); S[p.name] = { p, mons: Hs, subAll: sb, subs: sb.filter(H => H >= SUB_STRICT), W: Hs.length, Ct: 0, tasks: [], sciT: [], sci: false, slots: new Set(), rows: 0, yw: !!(LV && LV.ywHeld && LV.ywHeld[p.name]), ywi: !!(LV && LV.ywHeld && LV.ywHeld[p.name]) }; });
           const base = variant === 'base', lite = variant === 'lite', cm = variant === 'cnt', nv = variant === 'new' || variant === 'newF' || variant === 'newL' || variant === 'newH', U0 = buildUnits(d, nv || cm, opt.holiday, LV ? LV.tasks : null).map(u => nv && opt.grace && u.rows.length === 1 && /무선충전/.test(u.label) && /재시작/.test(u.label) && u.s === 600 ? { ...u, e: 630 } : u), U = variant === 'newH' ? [...U0.filter(u => u.sci).map(u => ({ ...u, restrict: true })), ...U0.filter(u => !u.sci)] : variant === 'newF' ? [...U0.filter(u => u.sci), ...U0.filter(u => !u.sci)] : variant === 'newL' ? [...U0.filter(u => !u.sci), ...U0.filter(u => u.sci)] : (variant === 'new' ? [...U0.filter(isHubU), ...U0.filter(u => u.sci && !isHubU(u)), ...U0.filter(u => !u.sci && !isHubU(u))] : U0), out = [];
-          const eveF = eveFromOf(U, u => !!(LV && LV.tasks && LV.tasks[u.rows[0]] && LV.tasks[u.rows[0]].fixed));
+          const eveF = eveFromOf(U, u => !!(LV && LV.tasks && LV.tasks[u.rows[0]] && LV.tasks[u.rows[0]].fixed) || !!u.yw);   // 양원LH 는 '마지막 4건' 계산에서 제외 — 기존 20:30 기준이 안 바뀌게
           const UU = opt.names ? (opt.evalOnly ? U : [...U.filter(u => opt.keep.has(u.rows[0])), ...U.filter(u => !opt.keep.has(u.rows[0]))]) : U;
           for (const u of UU) {
             let chosen = null, tierUsed = null;
@@ -8701,6 +8702,7 @@
                 if (u.sci && s.mons.some(H => H === u.slot + 60)) return false;
                 if (s.rows >= 3) return false;
                 if (u.sci && s.sci) return false;
+                if (u.yw && s.yw) return false;
                 return true;
               });
               if (u.sci) { const c2 = c.filter(p => !S[p.name].mons.some(H => H === u.slot - 60)); if (c2.length) c = c2; }
@@ -8713,6 +8715,7 @@
                   if (!(p.start <= u.slot && u.slot + 60 <= p.end)) return false;
                   if (p.brk && ov(u.s, u.e, p.brk[0], p.brk[1])) return false;
                   if (u.sci && s.sci) return false;
+                  if (u.yw && s.yw) return false;
                   if (tier < 3) {
                     if (s.slots.has(u.slot)) return false;
                     if (s.mons.some(H => H === u.slot)) return false;
@@ -8741,21 +8744,22 @@
                   if (s.tasks.some(([a, b]) => ov(a, b, u.s, u.e))) return false;
                   if (tier < 3 && (u.sci ? s.tasks : s.sciT).some(([a, b]) => ov(a, b, u.s - 10, u.e + 10))) return false;   // 과학관은 정각 교대 — 앞뒤로 다른 업무가 바로 붙으면 안 됨
                   if (u.sci && s.sci) return false;
+                  if (u.yw && s.yw) return false;   // 양원LH 는 한 사람이 하루 1회만
                   if (tier < 3 && u.sci && s.mons.some(H => ov(H - 10, H + 50 + GAP, u.s - GAP, u.e + GAP))) return false;
                   if (tier < 1 && !cm && s.W + Math.max(u.w, 1e-6) > 2 + 1e-9) return false;
                   if (tier < 2 && s.mons.length + s.Ct + u.cnt > opt.cap) return false;
                   return true;
                 });
                 if (!c.length) continue;
-                if (nv && u.s >= eveF) { const pc = c.filter(isPm); if (pc.length) c = pc; }   // 20:30 이후 업무는 배정 가능하면 14-23·15-24 근무자가 먼저 — 못 맡는 업무만 기존 방식
+                if (nv && u.s >= eveF && !u.yw) { const pc = c.filter(isPm); if (pc.length) c = pc; }   // 20:30 이후 업무는 배정 가능하면 14-23·15-24 근무자가 먼저 — 못 맡는 업무만 기존 방식
                 if (nv && isHubU(u)) { const pc = c.filter(p => earlyFree(S[p.name])); if (pc.length) c = pc; }   // 07~16시 근무자 중 07·08·09시 다중이 없는 사람 우선
                 if (nv && u.sci) { const pc = c.filter(p => !S[p.name].mons.length); if (pc.length) c = pc; }   // 과학관은 다중이 없는 사람에게 먼저 — 그 사람들로 안 되는 시간대(휴게·근무시간·1일 1회)만 다중 있는 사람에게
-                const od = orderFor(u.s);
+                const od = u.yw && u.s >= 1080 ? [3, 2, 1, 0] : orderFor(u.s);   // 양원LH 저녁 임무는 시트 관리자가 주로 18시 이후 출근자에게 주던 경향을 따름(아주 약한 선호)
                 const pen = p => {
                   const s = S[p.name]; if (u.sci) return 0;
                   return (s.mons.some(H => ov(H - 10, H + 50, u.s - GAP, u.e + GAP)) || s.tasks.some(([a, b]) => ov(a, b, u.s - GAP, u.e + GAP))) ? 1 : 0;
                 };
-                const sc = p => (cm ? S[p.name].mons.length + 0.5 * S[p.name].Ct : S[p.name].W + opt.cw * S[p.name].Ct) + opt.gp * od.indexOf(p.g) + 0.25 * pen(p) + (lastHrSci(p, u) ? 0.8 : 0) + (firstHrSci(p, u) ? 0.8 : 0) + (firstTask10(p, u) ? 0.8 : 0) - (nv && !cm && isPm(p) ? PM_RAMP_A * pmRamp(u.s, eveF) : 0) + (!cm && opt.sciPen && u.sci && S[p.name].mons.length > 0 ? opt.sciPen : 0) + (!cm && (opt.tMid || opt.tLate) ? tendency(p, u, opt.tMid || 0, opt.tLate || 0) : 0);
+                const sc = p => (cm ? S[p.name].mons.length + 0.5 * S[p.name].Ct : S[p.name].W + opt.cw * S[p.name].Ct) + opt.gp * od.indexOf(p.g) + 0.25 * pen(p) + (lastHrSci(p, u) ? 0.8 : 0) + (firstHrSci(p, u) ? 0.8 : 0) + (firstTask10(p, u) ? 0.8 : 0) - (nv && !cm && !u.yw && isPm(p) ? PM_RAMP_A * pmRamp(u.s, eveF) : 0) + (!cm && opt.sciPen && u.sci && S[p.name].mons.length > 0 ? opt.sciPen : 0) + (!cm && !u.yw && (opt.tMid || opt.tLate) ? tendency(p, u, opt.tMid || 0, opt.tLate || 0) : 0);
                 const m = Math.min(...c.map(sc)), pool = c.filter(p => sc(p) < m + 1e-9);
                 chosen = pool[Math.floor(rng() * pool.length)]; tierUsed = tier; break;
               }
@@ -8763,7 +8767,7 @@
             if (!chosen && u.restrict) { U.push({ ...u, restrict: false }); continue; }
             if (!chosen) { out.push({ u, name: null, tier: 9 }); continue; }
             const s = S[chosen.name];
-            s.W += u.w; s.Ct += u.cnt; s.rows += 1; s.tasks.push([u.s, u.e]); if (u.sci) s.sciT.push([u.s, u.e]); s.slots.add(u.slot); s.sci = s.sci || u.sci;
+            s.W += u.w; s.Ct += u.cnt; s.rows += 1; s.tasks.push([u.s, u.e]); if (u.sci) s.sciT.push([u.s, u.e]); s.slots.add(u.slot); s.sci = s.sci || u.sci; s.yw = s.yw || !!u.yw;
             out.push({ u, name: chosen.name, tier: tierUsed });
           }
           if (opt.names) out.sort((a, b) => a.u.rows[0] - b.u.rows[0]);
@@ -8773,7 +8777,7 @@
         function evaluate(S, out, rowNames) {
           const flags = {}, run = {}, core = {};
           const m = { flagged: 0, n4: 0, overW: 0, wRule: 0, timeConflict: 0, none: 0, other: 0, zero: 0, std: 0, nUnits: out.length };
-          for (const n in S) run[n] = { W: S[n].mons.length, C: S[n].mons.length, tasks: [], sciT: [], sci: false };
+          for (const n in S) run[n] = { W: S[n].mons.length, C: S[n].mons.length, tasks: [], sciT: [], sci: false, yw: !!S[n].ywi };
           out.forEach((o, i) => {
             if (!o.name) { flags[i] = ['후보 없음 (근무·휴게·다중 시간이 모두 겹침)']; core[i] = 1; m.none++; return; }
             if (o.absent) { flags[i] = ['오늘 근무표에 없는 사람(또는 제외 지정)']; core[i] = 1; m.other++; return; }
@@ -8788,9 +8792,10 @@
             if (s.p.brk && ov(u.s, u.e, s.p.brk[0], s.p.brk[1])) { why.push('휴게시간과 겹침'); m.other++; }
             if (r.tasks.some(t => ov(t[0], t[1], u.s, u.e))) { why.push('본인 다른 업무와 겹침'); m.other++; }
             if (u.sci && r.sci) { why.push('부산 하루 2회'); m.other++; }
+            if (u.yw && r.yw) { why.push('양원LH 하루 2회'); m.other++; }
             if ((u.sci ? r.tasks : r.sciT).some(t => ov(t[0], t[1], u.s - 10, u.e + 10))) { why.push('과학관(정각 교대)과 다른 업무가 바로 붙음'); m.timeConflict++; }
             if (isHubU(u) && !earlyFree(s) && Object.values(S).some(x => earlyFree(x) && x.mons.length + Math.max(u.w, 1e-6) <= 2 + 1e-9 && x.mons.length + u.cnt <= 3 && !x.mons.some(H => ov(H - 10, H + 50 + GAP, u.s - GAP, u.e + GAP)))) { why.push('07~16시 근무자 중 07·08·09시 다중이 없는 사람이 있는데 부산 08:50을 다른 사람이 받음'); m.other++; }
-            r.W += u.w; r.C += ucnt; r.tasks.push([u.s, u.e]); if (u.sci) r.sciT.push([u.s, u.e]); r.sci = r.sci || u.sci;
+            r.W += u.w; r.C += ucnt; r.tasks.push([u.s, u.e]); if (u.sci) r.sciT.push([u.s, u.e]); r.sci = r.sci || u.sci; r.yw = r.yw || !!u.yw;
             if (why.length) { flags[i] = why; if (why.some(x => !x.startsWith('가중치'))) core[i] = 1; }
           });
           // 이미 가중치 2.0(다중+과학관 등)인 사람이 가중치 0짜리 일반 업무까지 받으면 위반 — 순서와 상관없이 최종 합계로 판단
@@ -8811,7 +8816,6 @@
         const hmin = s => { const m = String(s).match(/(\d{1,2}):(\d{2})/); if (!m) return null; let v = +m[1] * 60 + +m[2]; if (v < 420) v += 1440; return v; };
         const fmtM = m => { m = m % 1440; return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
         const isFixedName = n => !n || n === '관리자' || n === '-' || /휴무/.test(n);
-        const YW_RE = /양원\s*LH.*관제\s*주행/, YW_LEN = 60, YW_W = 30;   // 양원LH 관제 주행 = 시트 관리자가 수식으로 넣는 임무 — 배정 대상이 아니라 07시 값 그대로 고정. 한 번에 약 60분 걸린다고 보고, 그 시간대와 겹치는 20:30 이후 업무는 그 사람에게 가급적 안 주도록 건당 30점 감점(강제 아님)
         const ADMIN_ONLY_RE = /\[송도\]\s*뉴비\s*대기장소\s*설정/;   // 관리자 전용 업무 — 시트가 07시에 일반 직원 이름을 넣어 두어도 배정 대상에서 빼고 '고정 (관리자)'로 둔다
         function liveParse(arr) {
           if (!Array.isArray(arr)) throw new Error('JSON이 목록(배열) 형태가 아닙니다');
@@ -8824,7 +8828,7 @@
             } else if (x.type === 'task' && x.content) {
               const t = String(x.content).replace(/ /g, ' ');
               if (!/^\s*\[\d{1,2}:\d{2}/.test(t)) { warn.push('시각 없는 업무 제외: ' + t.slice(0, 30)); return; }
-              const i = TL.length; const adm = ADMIN_ONLY_RE.test(t), yw = YW_RE.test(t); TL.push(mkTask(t, 0, yw ? '양원LH' : (adm || (isFixedName(x.user) && x.user !== '후보 없음') || (x.user && x.user !== '후보 없음' && !BYNAME[x.user])) ? '관리자' : '', i)); if (yw) TL[i].yw = true; rowUser.push(yw ? (x.user === '후보 없음' ? '' : (x.user || '')) : adm ? '관리자' : x.user === '후보 없음' ? '' : (x.user || ''));   // 양원LH 관제 주행: 고정(배정 대상 아님) + 담당자는 시트 값 그대로
+              const i = TL.length; const adm = ADMIN_ONLY_RE.test(t), ywN = YW_RE.test(t) && (() => { const q = t.match(/^\s*\[(\d{1,2}):(\d{2})/); return !!q && +q[1] * 60 + +q[2] < 420; })(); TL.push(mkTask(t, 0, ywN ? '양원LH' : (adm || (isFixedName(x.user) && x.user !== '후보 없음') || (x.user && x.user !== '후보 없음' && !BYNAME[x.user])) ? '관리자' : '', i)); rowUser.push(ywN ? (x.user === '후보 없음' ? '' : (x.user || '')) : adm ? '관리자' : x.user === '후보 없음' ? '' : (x.user || ''));   // 00·03·06시 양원LH = 고정(시트 담당자 그대로)
             }
           });
           if (!Object.keys(main).length) warn.push('다중 모니터링 항목이 없음');
@@ -8848,14 +8852,14 @@
         const LIVE_LOCK_BEFORE = 9 * 60;   // 이 시각(분) 전에 시작하는 업무는 live 재배정에서 고정
         function liveCtx(P, d, excl) {
           const names = new Set();   // 후보 = 07시 JSON(다중·서브·업무 행)에 배정자로 들어 있는 사람 — 07시 배정이 출근자를 제대로 반영한다고 신뢰. 근무표 파일은 근무시간·휴게시간을 알려주는 용도(보험)
-          const all = [...Object.values(P.main), ...Object.values(P.sub), ...P.rowUser.filter((n, i) => !P.TL[i].fixed || P.TL[i].yw)].filter(n => !isFixedName(n));   // 양원LH 담당자도 근무자
+          const all = [...Object.values(P.main), ...Object.values(P.sub), ...P.rowUser.filter((n, i) => !P.TL[i].fixed || P.TL[i].yw)].filter(n => !isFixedName(n));
           all.forEach(n => { if (BYNAME[n]) names.add(n); });
           const unknown = [...new Set(all.filter(n => !BYNAME[n]))];
           const lock = new Set();   // 09시 이전에 시작하는 업무(출근 처리 등)는 관리자가 09시 전에 미리 준비해야 하므로 07시 배정 그대로 고정 — 09:00 정각 이후 업무만 수식으로 다시 배분
           P.TL.forEach((t, i) => { if (!t.fixed && t.s < LIVE_LOCK_BEFORE && P.rowUser[i]) lock.add(i); });
-          const yw = {};   // 이름 → 양원LH 관제 주행 시간대 [[시작, 끝], …] (07시 이후~자정 전만 — 00·03·06시 임무는 일일 업무와 겹칠 일이 없음)
-          P.TL.forEach((t, i) => { const n = P.rowUser[i]; if (t.yw && t.s >= 420 && n && !isFixedName(n)) (yw[n] = yw[n] || []).push([t.s, t.s + YW_LEN]); });
-          return { people: STAFF.filter(p => names.has(p.name)), main: P.main, sub: P.sub, tasks: P.TL, exclude: excl || [], unknown, lock, yw };
+          const ywHeld = {};   // 자정 이후(고정) 양원LH 를 이미 맡은 사람 — 하루 1회 규칙에 포함
+          P.TL.forEach((t, i) => { if (t.yw && t.fixed && P.rowUser[i] && !isFixedName(P.rowUser[i])) ywHeld[P.rowUser[i]] = 1; });
+          return { people: STAFF.filter(p => names.has(p.name)), main: P.main, sub: P.sub, tasks: P.TL, exclude: excl || [], unknown, lock, ywHeld };
         }
 
         /* 행별 이름(배열) → 평가. 묶음 업무는 첫 줄 담당자 기준으로 채점하고, 둘째 줄이 다르면 '불일치'로 표시 */
@@ -8899,36 +8903,35 @@
         function liveStats(ctx, d, X) {
           const U = buildUnits(d, true, false, ctx.tasks), by = {}, mons = {};
           Object.values(ctx.main).forEach(n => { mons[n] = (mons[n] || 0) + 1; });
-          U.forEach(u => { const n = X[u.rows[0]]; if (!n) return; const l = ctx.tasks[u.rows[u.rows.length - 1]]; const ec = u.rows.length > 1 ? Math.min(u.cnt, u.rows.filter(rr => X[rr] === n).length) : u.cnt; (by[n] = by[n] || []).push({ s: ctx.tasks[u.rows[0]].s, e: Math.max(l.e, l.s + 10), w: u.w, c: ec });
+          U.forEach(u => { const n = X[u.rows[0]]; if (!n) return; const l = ctx.tasks[u.rows[u.rows.length - 1]]; const ec = u.rows.length > 1 ? Math.min(u.cnt, u.rows.filter(rr => X[rr] === n).length) : u.cnt; (by[n] = by[n] || []).push({ s: ctx.tasks[u.rows[0]].s, e: Math.max(l.e, l.s + 10), w: u.w, c: ec, y: u.yw ? ec : 0 });
             u.rows.slice(1).forEach(rr => { const n2 = X[rr]; if (n2 && n2 !== n) { const t2 = ctx.tasks[rr]; (by[n2] = by[n2] || []).push({ s: t2.s, e: Math.max(t2.e, t2.s + 10), w: 0, c: 1 }); } }); });
           return ctx.people.map(p => {
             const l = (by[p.name] || []).sort((a, b) => a.s - b.s); let run = l.length ? 1 : 0, best = run, adj = 0;
             for (let i = 1; i < l.length; i++) { if (l[i].s - l[i - 1].e <= 30) { run++; best = Math.max(best, run); } else run = 1; if (l[i].s - l[i - 1].e <= 10) adj++; }   // adj: 앞 업무가 끝난 지 10분도 안 돼 바로 이어지는 업무 쌍 (붙어 있는 업무)
             const own = l.reduce((a, b) => a + b.w, 0), t = l.reduce((a, b) => a + b.c, 0), m = mons[p.name] || 0;
-            return { n: p.name, g: p.g, m, t, own, w: own + m, chain: best, adj };
+            return { n: p.name, g: p.g, m, t, y: l.reduce((a, b) => a + (b.y || 0), 0), own, w: own + m, chain: best, adj };
           });
         }
         /* 배정안 점수(작을수록 좋음): ① 규칙 위반·2.0 초과·다중 포함 4개 이상(가장 크게) ② 낮·저녁조 건수 편차 · 1건 이하 · 3건 이상 · 3건 연속 · 가중치 편차 · 야간조 업무 ③ 바뀐 칸 수(아주 약하게) */
         function liveScore(ctx, d, X, A) {
           const m = liveMetrics(ctx, d, X), per = liveStats(ctx, d, X), day = per.filter(p => p.g <= 2), cs = day.map(p => p.t + p.m);
           const mean = cs.reduce((a, b) => a + b, 0) / (cs.length || 1), sd = Math.sqrt(cs.reduce((a, b) => a + (b - mean) * (b - mean), 0) / (cs.length || 1));
-          const low = cs.filter(c => c <= 1).length, high = cs.filter(c => c >= 3).length, chains = per.filter(p => p.chain >= 3).length, night = per.filter(p => p.g === 3).reduce((a, p) => a + p.t, 0), adjN = per.reduce((a, p) => a + (p.adj || 0), 0);
+          const low = cs.filter(c => c <= 1).length, high = cs.filter(c => c >= 3).length, chains = per.filter(p => p.chain >= 3).length, night = per.filter(p => p.g === 3).reduce((a, p) => a + p.t - (p.y || 0), 0), adjN = per.reduce((a, p) => a + (p.adj || 0), 0);
           const changes = X.filter((n, i) => (n || null) !== (A[i] || null)).length;
           const UU = buildUnits(d, true, false, ctx.tasks), monSet = new Set(Object.values(ctx.main)), lastHr = UU.filter(u => u.sci && lastHrSci(BYNAME[X[u.rows[0]]], u)).length, sciMon = UU.filter(u => u.sci && X[u.rows[0]] && monSet.has(X[u.rows[0]])).length;   // sciMon: 다중이 있는 사람이 받은 과학관 칸 수   // 퇴근 1시간 전 과학관(07~16·08~17시 근무자) 건수
           const sciMin = sciFloor(ctx, d), sciEx = Math.max(0, sciMon - sciMin);   // sciMin: 다중 없는 사람이 맡을 수 있는 만큼 다 맡았을 때 다중 보유자가 어쩔 수 없이 받아야 하는 과학관 칸 수 / sciEx: 그보다 더 받은 칸(= 우선배정을 어긴 칸)
           const early09 = UU.filter(u => u.sci && u.slot === 540 && X[u.rows[0]] && ((q) => !!q && (q.start === 420 || q.start === 480))(BYNAME[X[u.rows[0]]])).length;   // 09:00 과학관을 07·08시 출근자가 받은 칸 수 — 09시 출근자가 오기 전에 이미 준비되는 업무라 '가능하면' 먼저 출근한 사람이 맡도록 (강제 아님, 보너스 EARLY_SCI09_BONUS 점)
-          const ef = eveFromOf(UU, u => !!ctx.tasks[u.rows[0]].fixed), eveU = UU.filter(u => u.s >= ef && !ctx.tasks[u.rows[0]].fixed), asg = u => BYNAME[X[u.rows[0]]];
+          const ef = eveFromOf(UU, u => !!ctx.tasks[u.rows[0]].fixed || !!u.yw), eveU = UU.filter(u => u.s >= ef && !ctx.tasks[u.rows[0]].fixed && !u.yw), asg = u => BYNAME[X[u.rows[0]]];
           const eveFeas = eveU.filter(u => ctx.people.some(q => canPm(q, u))), eveNon = eveFeas.filter(u => asg(u) && !isPm(asg(u))).length, pmN = eveU.filter(u => isPm(asg(u))).length;   // 오후조가 맡을 수 있는데 야간조가 맡은 20:30 이후 업무 수
-          const pmRampSum = UU.filter(u => u.s > 900 && u.s < ef && !ctx.tasks[u.rows[0]].fixed && isPm(asg(u))).reduce((a, u) => a + pmRamp(u.s, ef), 0), firstHr = UU.filter(u => firstHrSci(asg(u), u)).length, first10 = UU.filter(u => firstTask10(asg(u), u)).length;
-          const ywN = UU.filter(u => { const n = X[u.rows[0]], w = n && ctx.yw && ctx.yw[n]; return !!w && w.some(q => ov(q[0], q[1], u.s, u.e)); }).length;   // 양원LH 관제 주행 시간과 겹친 일일 업무 수
-          const score = m.prob * 1000 + ywN * YW_W + m.overW * 100 + m.n4 * 40 + sd * 10 + low * 4 + high * 1.2 + chains * 3 + m.std * 5 + night * 2 + changes * 1 + lastHr * 5 + sciMon * 5 + sciEx * SCI_PRIO_W - early09 * EARLY_SCI09_BONUS + firstHr * 5 + first10 * 5 + adjN * ADJ_W + eveNon * EVE_PM_W - pmRampSum * PM_RAMP_W;
-          return { score, ywN, adjN, lastHr, firstHr, first10, eveNon, eveN: eveU.length, pmN, pmRampSum, sciMon, sciMin, sciEx, early09, m, per, sd, mn: cs.length ? Math.min(...cs) : 0, mx: cs.length ? Math.max(...cs) : 0, nDay: cs.length, low, high, chains, night, maxW: Math.max(0, ...per.map(p => p.w)), changes };
+          const pmRampSum = UU.filter(u => u.s > 900 && u.s < ef && !ctx.tasks[u.rows[0]].fixed && !u.yw && isPm(asg(u))).reduce((a, u) => a + pmRamp(u.s, ef), 0), firstHr = UU.filter(u => firstHrSci(asg(u), u)).length, first10 = UU.filter(u => firstTask10(asg(u), u)).length;
+          const score = m.prob * 1000 + m.overW * 100 + m.n4 * 40 + sd * 10 + low * 4 + high * 1.2 + chains * 3 + m.std * 5 + night * 2 + changes * 1 + lastHr * 5 + sciMon * 5 + sciEx * SCI_PRIO_W - early09 * EARLY_SCI09_BONUS + firstHr * 5 + first10 * 5 + adjN * ADJ_W + eveNon * EVE_PM_W - pmRampSum * PM_RAMP_W;
+          return { score, adjN, lastHr, firstHr, first10, eveNon, eveN: eveU.length, pmN, pmRampSum, sciMon, sciMin, sciEx, early09, m, per, sd, mn: cs.length ? Math.min(...cs) : 0, mx: cs.length ? Math.max(...cs) : 0, nDay: cs.length, low, high, chains, night, maxW: Math.max(0, ...per.map(p => p.w)), changes };
         }
         /* 한 칸씩 담당자를 바꿔 보며 점수가 좋아지면 채택(언덕 오르기) — 바뀐 칸 수에도 점수를 매기므로 '꼭 필요한 수정'만 남는다 */
         function liveClimber(ctx, d, X0, A) {
           const U = buildUnits(d, true, false, ctx.tasks).filter(u => !ctx.tasks[u.rows[0]].fixed && !(ctx.lock && ctx.lock.has(u.rows[0])));
           let X = X0.slice(), cur = liveScore(ctx, d, X, A).score, ui = 0, idle = 0, evals = 0, done = !U.length, swap = false, si = 0, sj = 1;
-          const ef = eveFromOf(buildUnits(d, true, false, ctx.tasks), u => !!ctx.tasks[u.rows[0]].fixed), EV = U.filter(u => u.s >= ef);
+          const ef = eveFromOf(buildUnits(d, true, false, ctx.tasks), u => !!ctx.tasks[u.rows[0]].fixed || !!u.yw), EV = U.filter(u => u.s >= ef && !u.yw);
           /* 3) 연쇄 이동: 마지막 4건 중 야간조가 맡은 업무를 오후조에게 주고, 그 오후조가 이미 맡은 다른 업무 하나를 제3자에게 넘김
                 (오후조는 이미 3건이라 한 칸만 바꾸면 '다중 포함 4건' 에 걸려서 한 칸씩 바꾸는 탐색으로는 못 찾음) */
           const chain = () => {
@@ -8999,7 +9002,7 @@
         function simCompute(snap) {
             const arr = JSON.parse(snap.txt), wd = workDay();
             simRoster(wd);   // 근무표: 받아 둔 월별 파일 → 없으면 내장 10월 표 → 그것도 없으면 JSON 에 나온 이름으로 대체
-            const d = wd.getDate(), P = SIM.liveParse(arr), ctx = simYwAdd(SIM.liveCtx(P, d, [])), A = P.rowUser.map(n => n || null);   // 다중/서브는 07시에 이미 정해진 값 그대로(건드리지 않음), 일일 업무 칸만 다시 배정
+            const d = wd.getDate(), P = SIM.liveParse(arr), ctx = SIM.liveCtx(P, d, []), A = P.rowUser.map(n => n || null);   // 다중/서브는 07시에 이미 정해진 값 그대로(건드리지 않음), 일일 업무 칸만 다시 배정
             const B = Array.isArray(snap.X) && snap.X.length === A.length ? snap.X.slice() : SIM.liveFull(ctx, d, A, snap.seed);   // 저장된 최적안(담당자 목록) 그대로 — 옛 저장본은 시드로 다시 만든다
             const follow = new Set(); SIM.buildUnits(d, true, false, ctx.tasks).forEach(u => { if (u.rows.length > 1) follow.add(u.rows[1]); });
             return { P, d, ctx, A, B, mA: SIM.liveMetrics(ctx, d, A), mB: SIM.liveMetrics(ctx, d, B), sA: SIM.liveScore(ctx, d, A, A), sB: SIM.liveScore(ctx, d, B, A), follow, cfg: snap, wd };
@@ -9011,7 +9014,7 @@
         async function simSearch(txt, mode) {
             const arr = JSON.parse(txt), wd = workDay();
             simRoster(wd);   // 근무표: 받아 둔 월별 파일 → 없으면 내장 10월 표 → 그것도 없으면 JSON 에 나온 이름으로 대체
-            const d = wd.getDate(), P = SIM.liveParse(arr), ctx = simYwAdd(SIM.liveCtx(P, d, [])), A = P.rowUser.map(n => n || null), t0 = performance.now(), total = SIM_ROUNDS * SIM_ROUND_MS;
+            const d = wd.getDate(), P = SIM.liveParse(arr), ctx = SIM.liveCtx(P, d, []), A = P.rowUser.map(n => n || null), t0 = performance.now(), total = SIM_ROUNDS * SIM_ROUND_MS;
             const pool = []; let tries = 0;
             const prog = () => { simProg = '최적안 찾는 중 ' + Math.min(SIM_ROUNDS, Math.floor((performance.now() - t0) / SIM_ROUND_MS) + 1) + '/' + SIM_ROUNDS + ' · ' + tries + '가지 확인'; simDraw(); };
             // 1단계(앞 40%): 규칙에 맞는 안을 무작위로 많이 만들어 점수 좋은 후보 몇 개를 추림 — 현재 배정을 최대한 살리는 '부분 수정' 안과 '전체 다시 배정' 안을 섞어서
@@ -9075,7 +9078,7 @@
             if (SIM.rosterSrc() !== 'file') warns.push('월별 근무표 파일을 받지 못해 내장 10월 표의 근무시간으로 계산'); if (ctx.unknown.length) warns.push('근무표에 없는 이름: ' + esc(ctx.unknown.join(', ')));
             const meta = '<div class="meta sum">' + (cfg.tries ? '✅ <b>최적안</b> (' + cfg.tries.toLocaleString() + '가지 중)' : '시뮬레이션') + ' · ' + pad(at.getHours()) + ':' + pad(at.getMinutes()) + ' 계산 · 바뀐 칸 <b>' + chg + '</b> · 규칙 문제 칸 ' + mA.prob + ' → <b>' + mB.prob + '</b><br>' +
                 '가중치 2.0 ' + (sB.m.overW === 0 ? '모두 지킴(최대 ' + sB.maxW.toFixed(1) + ')' : '<span class="warn">' + sB.m.overW + '명 초과(최대 ' + sB.maxW.toFixed(1) + ')</span>') + ' · 업무+다중 ' + sB.mn + '~' + sB.mx + '건 (1건 이하 ' + sB.low + '명, 3건 이상 ' + sB.high + '명) · 연속 3건 ' + (sB.chains ? '<span class="warn">' + sB.chains + '명</span>' : '없음') +
-                (Object.keys(ctx.yw || {}).length ? '<br>🚗 양원LH 관제 주행 ' + Object.values(ctx.yw).reduce((a, l) => a + l.length, 0) + '건(' + Object.keys(ctx.yw).map(esc).join('·') + ')은 07시 배정 그대로 고정 · 그 시간대와 겹친 일일 업무 ' + (sB.ywN ? '<span class="warn">' + sB.ywN + '건</span>' : '<b>0</b>건 ✔') : '') + '<br>🔬 과학관 다중 無 우선: 다중 보유자 ' + R.sA.sciMon + ' → <b>' + sB.sciMon + '</b>칸 (최소 ' + sB.sciMin + '칸)' + (sB.sciEx ? ' <span class="warn">⚠ ' + sB.sciEx + '칸 더 줄일 수 있음</span>' : ' ✔') + (ctx.lock && ctx.lock.size ? '<br>🔒 09시 이전 업무 ' + ctx.lock.size + '건은 07시 배정 그대로 고정' : '') + (warns.length ? '<br><span class="warn">' + warns.join(' · ') + '</span>' : '') + '</div>';
+                '<br>🔬 과학관 다중 無 우선: 다중 보유자 ' + R.sA.sciMon + ' → <b>' + sB.sciMon + '</b>칸 (최소 ' + sB.sciMin + '칸)' + (sB.sciEx ? ' <span class="warn">⚠ ' + sB.sciEx + '칸 더 줄일 수 있음</span>' : ' ✔') + (ctx.lock && ctx.lock.size ? '<br>🔒 09시 이전 업무 ' + ctx.lock.size + '건은 07시 배정 그대로 고정' : '') + (warns.length ? '<br><span class="warn">' + warns.join(' · ') + '</span>' : '') + '</div>';
             const mons = Object.keys(P.main).map(Number).sort((a, b) => a - b);
             const c1 = '<div class="col c1"><div class="gh"><span>시각</span><span>다중</span><span>서브</span></div>' + mons.map(t => '<div class="gr"><span class="tm">' + SIM.fmt(t) + '</span><span>' + simNm(P.main[t]) + '</span><span>' + (P.sub[t] ? simNm(P.sub[t]) : '<span class="em">–</span>') + '</span></div>').join('') + '</div>';
             const c2 = '<div class="col c2"><div class="gh"><span>시각</span><span>일일 업무</span><span>새 수식 배정자</span></div>' + (() => { const M = simMerge(R); return M && !M.bad ? M.items : P.TL.map((t, i) => ({ i, user: A[i] || '', content: t.t })); })().map(it => {   // 전체 행 파일이 있으면 휴무·관리자 행도 시트 순서 그대로 함께 표시
@@ -9093,19 +9096,6 @@
         /* 시트의 일일 업무 행 전체(휴무·관리자·빈 담당자 행 포함, 시트 순서 그대로) — GAS 가 daily_tasks_full.json 에 따로 기록. daily_tasks.json 에는 이런 행이 빠져 있음 */
         const simNorm = s => String(s || '').replace(/\s+/g, ' ').trim(), SIM_EXCL = /배정\s*현황|휴무|다중관제|관리자|이름|담당자|보류/;
         function simFullData() { try { const f = JSON.parse(lsGet('bbs_tasks_full', 'null')); return f && Array.isArray(f.rows) && f.rows.length && f.workday === ckey() ? f : null; } catch (e) { return null; } }
-        /* 양원LH 관제 주행이 daily_tasks.json 에는 없고 전체 행 파일(휴무·관리자 행 포함)에만 있어도 그 시간대를 반영 — 이미 JSON 에서 읽은 것과 같은 시각·담당자는 중복으로 넣지 않음 */
-        function simYwAdd(ctx) {
-            try {
-                const f = simFullData(); if (!f) return ctx;
-                f.rows.forEach(r => {
-                    const c = String(r.content || ''), u = String(r.user == null ? '' : r.user).trim(), mm = c.match(/^\s*\[(\d{1,2}):(\d{2})/);
-                    if (!mm || !/양원\s*LH.*관제\s*주행/.test(c) || !u || u.length < 2 || /후보|휴무|관리자/.test(u)) return;
-                    const t = +mm[1] * 60 + +mm[2]; if (t < 420) return;
-                    const w = (ctx.yw[u] = ctx.yw[u] || []); if (!w.some(q => q[0] === t)) w.push([t, t + 60]);
-                });
-            } catch (e) { /* 전체 행 파일이 없거나 형식이 달라도 계산은 그대로 */ }
-            return ctx;
-        }
         function simMerge(R) {   // → null(전체 행 파일 없음) | { items:[{i(JSON 업무 번호, 없으면 -1), user, content}], bad:'' | 불일치 사유 }
             const f = simFullData(); if (!f) return null;
             const q = {}; R.P.TL.forEach((t, i) => { (q[simNorm(t.t)] = q[simNorm(t.t)] || []).push(i); });
@@ -9145,6 +9135,7 @@
                 rv('다중 포함 3건 이하', pc(p => p.t + p.m <= 3) + '/' + N + '명', S.m.n4 > 0, S.m.n4 ? '4건 이상 ' + S.m.n4 + '명 (서브 제외)' : '서브 제외'),
                 rv('과학관: 다중 無 우선', sciU ? (sciU - S.sciMon) + '/' + sciU + '칸' : '–', S.sciEx > 0, sciU ? '다중 無 인원이 맡을 수 있는 최대 ' + (sciU - S.sciMin) + '칸 · 다중 보유자가 받은 칸 ' + S.sciMon + (S.sciEx ? ' (' + S.sciEx + '칸 더 줄일 수 있음)' : '') : '오늘 과학관 업무 없음'),
                 viol('부산 하루 1회', /부산 하루 2회/),
+                viol('양원LH 하루 1회', /양원LH 하루 2회/),
                 viol('다중·서브 시간 겹침 / 과학관 정각 교대', /다중 교대|다중과 연달아|서브 시간|정각 교대/),
                 viol('근무·휴게시간 / 본인 업무 겹침', /근무시간 밖|휴게시간|본인 다른 업무/),
                 viol('부산 08:50 우선 (07~16시 · 다중 無)', /07·08·09시 다중이 없는/),
@@ -9158,7 +9149,6 @@
                 pf('퇴근 1시간 전 과학관 (07~16 · 08~17시)', S.lastHr + '칸', '가급적 피함'),
                 pf('출근 직후 과학관 (오후조)', S.firstHr + '칸', '가급적 피함'),
                 pf('10시 출근자의 10:00 업무', S.first10 + '칸', '가급적 피함'),
-                pf('양원LH 관제 주행 시간과 겹친 업무', (ctx.yw && Object.keys(ctx.yw).length) ? S.ywN + '건' : '–', (ctx.yw && Object.keys(ctx.yw).length) ? '주행 담당자: ' + Object.keys(ctx.yw).map(esc).join('·') + ' (가급적 피함)' : '오늘 양원LH 관제 주행 없음'),
                 pf('20:30 이후 업무를 오후조가 맡음', S.eveN ? S.pmN + '/' + S.eveN + '건' : '–', S.eveNon ? '오후조가 맡을 수 있는 ' + S.eveNon + '건을 야간조가 맡음' : ''),
             ].join('');
             const bad = Object.keys(m.why).map(Number).sort((a, b) => a - b);
