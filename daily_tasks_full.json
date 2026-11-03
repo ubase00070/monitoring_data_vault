@@ -1,5 +1,5 @@
 {
-  "workday": "2026-11-03",
+  "workday": "2026-11-04",
   "rows": [
     {
       "row": 81,
@@ -58,7 +58,7 @@
     {
       "row": 90,
       "content": "[10:30] 요기요 [송도] 뉴비 대기장소 설정 체크",
-      "fixed": true,
+      "fixed": false,
       "user": ""
     },
     {
@@ -202,8 +202,8 @@
     {
       "row": 114,
       "content": "[17:40] 수원 힐스테이트 푸르지오 (뉴비오더) 임무 OFF [평일]",
-      "fixed": true,
-      "user": "🛌휴무"
+      "fixed": false,
+      "user": ""
     },
     {
       "row": 115,
@@ -214,8 +214,8 @@
     {
       "row": 116,
       "content": "[18:40] 수원 힐스테이트 푸르지오 (뉴비오더) 임무 OFF [주말]",
-      "fixed": false,
-      "user": ""
+      "fixed": true,
+      "user": "🛌휴무"
     },
     {
       "row": 117,
