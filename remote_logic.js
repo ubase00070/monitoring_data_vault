@@ -2364,7 +2364,7 @@
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
 		// 문자열을 넣으면 패치노트에 빨간 '`' 뱃지가 점멸하며 뜸.
 		// 빈 문자열('')로 비우면 뱃지가 사라짐.
-		const PATCH_NOTE_NEW_CONTENT = '';
+		const PATCH_NOTE_NEW_CONTENT = '관제실 배차 리마인더';
 
         // ── 패치노트 내용 ──────────────────────────────────────
         // 아래 patchItems 배열에 버전별 내용을 추가하세요 (버튼 라벨의 날짜도 이 배열의
@@ -2375,6 +2375,7 @@
                 date: '2026-11-02',
                 items: [
                     'Rockstar ☆ Vice City, Baby!',
+					'리센츠/엘스/가평자이 미순찰 리마인더',
                     '본 스크립트는 NCC 서버에 직접 신호를 보내지 않음',
                     '성남 배터리 조회 쿨다운 2분',
                     '영상 파일명 생성기: 본인 최근 배달 3건 자동 텍스트 버튼',
@@ -2878,6 +2879,7 @@
             queueInfoContent.id = 'neubie-queue-info-content';
             queueInfoContent.style.cssText = `font-size:13px; line-height:1.8; color:${T.text}; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;`;
             queueInfoContent.innerHTML = `
+				리센츠/엘스/가평자이 미순찰 리마인더<br>
                 자동 시작 1 / 자동 시작 2(2는 시작하기 수동 클릭)<br>
 				삭제 레이아웃 기체명 표기<br>
 				모니터링 생성 모달 우측 고정<br>
