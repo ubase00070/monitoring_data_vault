@@ -11585,7 +11585,7 @@
                 return '<div class="gr' + (ch ? ' chg' : '') + '"><span class="tm">' + simRange(t) + '</span><span class="tk" title="' + esc(t.t) + '">' + (follow.has(i) ? '🔗 ' : '') + esc(t.t.replace(/^\s*\[[^\]]*\]\s*/, '')) + '</span><span class="asg">' + simNm(B[i]) + (ch ? '<span class="was" title="' + esc(why) + '">← 현재 ' + esc(A[i] || '후보 없음') + ' · ' + esc(why) + '</span>' : '') + '</span></div>';
             }).join('') + '</div>';
             const cpm = (simMsg ? '<div class="cpm">' + simMsg + '</div>' : '') + (simBox ? '<div class="cpm">자동 복사가 막혀 있어요. 아래 글자를 직접 복사(Ctrl+A → Ctrl+C)하세요.<textarea readonly rows="4">' + esc(simBox) + '</textarea></div>' : '');
-            simp.innerHTML = head + (simBrief ? '' : meta) + cpm + (simBrief ? '<div class="brf">' + simBriefHtml(R) + '</div><div class="foot">📊 브리핑은 계산에 쓴 daily_tasks.json 과 근무표 기준입니다 · 다시 누르면 배정표로 돌아갑니다</div>' : '<div class="sb">' + c1 + c2 + '</div><div class="foot">시트에 붙여넣기: 배정자 열의 첫 업무 행 클릭 → 값만 붙여넣기(Ctrl+Shift+V) · 파란 칸 = 바뀐 칸 · 🔗 = 묶음 업무</div>');
+            simp.innerHTML = head + (simBrief ? '' : meta) + cpm + (simBrief ? '<div class="brf">' + simBriefHtml(R) + '</div><div class="foot">📊 두 배정은 서로 달라도 둘 다 합리적일 수 있어요 — 각각 규칙 위반만 확인하세요 · 브리핑을 다시 누르면 배정표로 돌아갑니다</div>' : '<div class="sb">' + c1 + c2 + '</div><div class="foot">시트에 붙여넣기: 배정자 열의 첫 업무 행 클릭 → 값만 붙여넣기(Ctrl+Shift+V) · 파란 칸 = 바뀐 칸 · 🔗 = 묶음 업무</div>');
             const c2e = simp.querySelector('.col.c2'); if (c2e && keep) c2e.scrollTop = keep;
         }
         /* 시트에 값만 붙여넣기용 '배정자 1열' — 받아온 daily_tasks.json 의 일일 업무 행 순서 그대로(휴무·관리자 고정 행·시각 없는 행도 원래 값으로 자리 유지) 한 줄에 한 칸 */
@@ -11613,48 +11613,55 @@
             try { await navigator.clipboard.writeText(text); return true; } catch (e) { /* 아래 대체 방법 */ }
             try { const ta = document.createElement('textarea'); ta.value = text; ta.style.cssText = 'position:fixed;left:-9999px;top:0'; document.body.appendChild(ta); ta.select(); const ok = document.execCommand('copy'); ta.remove(); return !!ok; } catch (e) { return false; }
         }
-        let simBrief = false;
-        /* 📊 브리핑 — 현재(시트) 배정과 새 수식 배정을 같은 기준으로 채점해 표로 보여준다 (질문 없이 바로 확인용) */
+        let simBrief = false, simBriefTab = 'B';
+        /* 📊 브리핑 — 한 배정안을 규칙 기준으로 채점해 보여준다. 탭 2개: 'B' = 이 PC 에서 돌린 새 수식 배정 / 'A' = 지금 daily_tasks.json 에 실제 반영된 값(관리자가 시트에서 정한 값).
+           두 안은 달라도 둘 다 합리적일 수 있으므로 서로 비교해 틀렸다고 하지 않고, 각각 규칙을 얼마나 지켰는지만 본다. */
         function simBriefHtml(R) {
-            const { P, A, B, mA, mB, sA, sB, ctx, d } = R, T = P.TL;
+            const { P, A, B, mA, mB, sA, sB, ctx, d } = R, T = P.TL, isA = simBriefTab === 'A';
+            const X = isA ? A : B, m = isA ? mA : mB, S = isA ? sA : sB;
             const U = SIM.buildUnits(d, true, false, ctx.tasks).filter(u => !ctx.tasks[u.rows[0]].fixed), sciU = U.filter(u => u.sci).length;
-            const cnt = (m, re) => Object.keys(m.why).filter(i => (m.why[i] || []).some(w => re.test(w))).length;
-            const N = sB.per.length, pc = (S, f) => S.per.filter(f).length;
-            const chg = T.filter((t, i) => !t.fixed && (B[i] || null) !== (A[i] || null));
-            const cell = (v, bad) => '<td class="n ' + (bad ? 'ng' : 'ok') + '">' + v + '</td>';
-            const row = (name, va, vb, badA, badB, note) => '<tr><td>' + name + '</td>' + cell(va, badA) + cell(vb, badB) + '<td class="nt">' + (note || '') + '</td></tr>';
+            const cnt = re => Object.keys(m.why).filter(i => (m.why[i] || []).some(w => re.test(w))).length;
+            const N = S.per.length, pc = f => S.per.filter(f).length;
+            const diff = T.filter((t, i) => !t.fixed && (B[i] || null) !== (A[i] || null)).length;
+            const rv = (name, v, bad, note) => '<tr><td>' + name + '</td><td class="n ' + (bad ? 'ng' : 'ok') + '">' + v + '</td><td class="nt">' + (note || '') + '</td></tr>';
+            const viol = (name, re, note) => { const c = cnt(re); return rv(name, c ? c + '칸 위반' : '지킴', c > 0, note || ''); };
+            const zw = cnt(/가중치 2\.0\(다중/);
             const rules = [
-                ['가중치 2.0 이하', pc(sA, p => p.w <= 2 + 1e-9) + '/' + N + '명', pc(sB, p => p.w <= 2 + 1e-9) + '/' + N + '명', sA.m.overW > 0, sB.m.overW > 0, '최대 ' + sA.maxW.toFixed(1) + ' → ' + sB.maxW.toFixed(1) + (cnt(mB, /가중치 2\.0\(다중/) ? ' · 2.0인 사람에게 일반 업무 ' + cnt(mB, /가중치 2\.0\(다중/) + '칸' : '')],
-                ['다중 포함 3건 이하', pc(sA, p => p.t + p.m <= 3) + '/' + N + '명', pc(sB, p => p.t + p.m <= 3) + '/' + N + '명', sA.m.n4 > 0, sB.m.n4 > 0, '4건 이상 ' + sA.m.n4 + ' → ' + sB.m.n4 + '명 (서브 제외)'],
-                ['과학관: 다중 無 우선', sciU ? (sciU - sA.sciMon) + '/' + sciU + '칸' : '–', sciU ? (sciU - sB.sciMon) + '/' + sciU + '칸' : '–', sA.sciEx > 0, sB.sciEx > 0, (sciU ? '다중 無 인원이 맡을 수 있는 최대 ' + (sciU - sB.sciMin) + '칸 · 다중 보유자가 받은 칸 ' : '오늘 과학관 업무 없음 · ') + sA.sciMon + ' → ' + sB.sciMon + (sB.sciEx ? ' (줄일 수 있는 ' + sB.sciEx + '칸)' : '')],
-                ['부산 하루 1회', (cnt(mA, /부산 하루 2회/) ? cnt(mA, /부산 하루 2회/) + '칸 위반' : '지킴'), (cnt(mB, /부산 하루 2회/) ? cnt(mB, /부산 하루 2회/) + '칸 위반' : '지킴'), cnt(mA, /부산 하루 2회/) > 0, cnt(mB, /부산 하루 2회/) > 0, ''],
-                ['다중·서브 시간 겹침 / 과학관 정각 교대', cnt(mA, /다중 교대|다중과 연달아|서브 시간|정각 교대/) + '칸', cnt(mB, /다중 교대|다중과 연달아|서브 시간|정각 교대/) + '칸', cnt(mA, /다중 교대|다중과 연달아|서브 시간|정각 교대/) > 0, cnt(mB, /다중 교대|다중과 연달아|서브 시간|정각 교대/) > 0, '위반 칸 수 (0이 정상)'],
-                ['근무·휴게시간 / 본인 업무 겹침', cnt(mA, /근무시간 밖|휴게시간|본인 다른 업무/) + '칸', cnt(mB, /근무시간 밖|휴게시간|본인 다른 업무/) + '칸', cnt(mA, /근무시간 밖|휴게시간|본인 다른 업무/) > 0, cnt(mB, /근무시간 밖|휴게시간|본인 다른 업무/) > 0, '위반 칸 수 (0이 정상)'],
-                ['부산 08:50 우선(07~16시 · 다중 無)', cnt(mA, /07·08·09시 다중이 없는/) + '칸', cnt(mB, /07·08·09시 다중이 없는/) + '칸', cnt(mA, /07·08·09시 다중이 없는/) > 0, cnt(mB, /07·08·09시 다중이 없는/) > 0, '위반 칸 수 (0이 정상)'],
-                ['후보 없음 · 묶음 불일치', (cnt(mA, /후보 없음|근무표에 없는|묶음 업무인데/)) + '칸', (cnt(mB, /후보 없음|근무표에 없는|묶음 업무인데/)) + '칸', cnt(mA, /후보 없음|근무표에 없는|묶음 업무인데/) > 0, cnt(mB, /후보 없음|근무표에 없는|묶음 업무인데/) > 0, '위반 칸 수 (0이 정상)'],
-            ];
+                rv('가중치 2.0 이하', pc(p => p.w <= 2 + 1e-9) + '/' + N + '명', S.m.overW > 0, '최대 ' + S.maxW.toFixed(1) + (zw ? ' · 2.0인 사람에게 일반 업무 ' + zw + '칸' : '')),
+                rv('다중 포함 3건 이하', pc(p => p.t + p.m <= 3) + '/' + N + '명', S.m.n4 > 0, S.m.n4 ? '4건 이상 ' + S.m.n4 + '명 (서브 제외)' : '서브 제외'),
+                rv('과학관: 다중 無 우선', sciU ? (sciU - S.sciMon) + '/' + sciU + '칸' : '–', S.sciEx > 0, sciU ? '다중 無 인원이 맡을 수 있는 최대 ' + (sciU - S.sciMin) + '칸 · 다중 보유자가 받은 칸 ' + S.sciMon + (S.sciEx ? ' (' + S.sciEx + '칸 더 줄일 수 있음)' : '') : '오늘 과학관 업무 없음'),
+                viol('부산 하루 1회', /부산 하루 2회/),
+                viol('다중·서브 시간 겹침 / 과학관 정각 교대', /다중 교대|다중과 연달아|서브 시간|정각 교대/),
+                viol('근무·휴게시간 / 본인 업무 겹침', /근무시간 밖|휴게시간|본인 다른 업무/),
+                viol('부산 08:50 우선 (07~16시 · 다중 無)', /07·08·09시 다중이 없는/),
+                viol('후보 없음 · 묶음 담당자 불일치', /후보 없음|근무표에 없는|묶음 업무인데/),
+            ].join('');
+            const pf = (name, v, note) => '<tr><td>' + name + '</td><td class="n">' + v + '</td><td class="nt">' + (note || '') + '</td></tr>';
             const pref = [
-                ['업무+다중 건수 편차', sA.mn + '~' + sA.mx + '건', sB.mn + '~' + sB.mx + '건', '1건 이하 ' + sA.low + ' → ' + sB.low + '명 · 3건 이상 ' + sA.high + ' → ' + sB.high + '명'],
-                ['연속 3건 이상', sA.chains + '명', sB.chains + '명', ''],
-                ['10분 안에 붙은 업무', sA.adjN + '쌍', sB.adjN + '쌍', ''],
-                ['퇴근 1시간 전 과학관(07~16 · 08~17시)', sA.lastHr + '칸', sB.lastHr + '칸', '가급적 피함'],
-                ['출근 직후 과학관(오후조)', sA.firstHr + '칸', sB.firstHr + '칸', '가급적 피함'],
-                ['10시 출근자의 10:00 업무', sA.first10 + '칸', sB.first10 + '칸', '가급적 피함'],
-                ['20:30 이후 업무를 오후조가 맡음', sA.eveN ? (sA.pmN + '/' + sA.eveN + '건') : '–', sB.eveN ? (sB.pmN + '/' + sB.eveN + '건') : '–', sB.eveNon ? '오후조가 맡을 수 있는 ' + sB.eveNon + '건을 야간조가 맡음' : '야간조는 안 맡아도 되는 만큼만'],
-            ];
-            const bad = Object.keys(mB.why).map(Number).sort((a, b) => a - b);
-            const ok = mB.prob === 0 && sB.m.overW === 0 && sB.m.n4 === 0, soft = sB.sciEx > 0 || sB.eveNon > 0;
-            const verdict = '<div class="vd' + (ok ? '' : ' bad') + '">' + (ok ? '✅ <b>규칙 위반 0칸</b> — 가중치 2.0 · 다중 포함 3건 · 시간 겹침 모두 지킴.' : '⚠ <b>규칙 문제 ' + mB.prob + '칸</b>' + (sB.m.overW ? ' · 2.0 초과 ' + sB.m.overW + '명' : '') + (sB.m.n4 ? ' · 4건 이상 ' + sB.m.n4 + '명' : '') + ' — 아래 위반 목록을 확인하세요.') +
-                ' 시트 현재 상태는 문제 칸 <b>' + mA.prob + '</b>개 → 새 수식 <b>' + mB.prob + '</b>개, 바뀐 칸 <b>' + chg.length + '</b>/' + U.length + '개.' + (soft ? ' (선호 항목에서 아쉬운 점이 조금 남아 있음)' : '') + '</div>';
+                pf('업무+다중 건수 편차', S.mn + '~' + S.mx + '건', '1건 이하 ' + S.low + '명 · 3건 이상 ' + S.high + '명'),
+                pf('연속 3건 이상', S.chains + '명'),
+                pf('10분 안에 붙은 업무', S.adjN + '쌍'),
+                pf('퇴근 1시간 전 과학관 (07~16 · 08~17시)', S.lastHr + '칸', '가급적 피함'),
+                pf('출근 직후 과학관 (오후조)', S.firstHr + '칸', '가급적 피함'),
+                pf('10시 출근자의 10:00 업무', S.first10 + '칸', '가급적 피함'),
+                pf('20:30 이후 업무를 오후조가 맡음', S.eveN ? S.pmN + '/' + S.eveN + '건' : '–', S.eveNon ? '오후조가 맡을 수 있는 ' + S.eveNon + '건을 야간조가 맡음' : ''),
+            ].join('');
+            const bad = Object.keys(m.why).map(Number).sort((a, b) => a - b);
+            const ok = m.prob === 0 && S.m.overW === 0 && S.m.n4 === 0;
+            const verdict = '<div class="vd' + (ok ? '' : ' bad') + '">' + (ok ? '✅ <b>규칙 위반 0칸</b> — 가중치 2.0 · 다중 포함 3건 · 시간 겹침 모두 지킴.' : '⚠ <b>규칙 문제 ' + m.prob + '칸</b>' + (S.m.overW ? ' · 2.0 초과 ' + S.m.overW + '명' : '') + (S.m.n4 ? ' · 4건 이상 ' + S.m.n4 + '명' : '') + ' — 아래 위반 목록을 확인하세요.') +
+                (S.sciEx > 0 ? ' 과학관 다중 無 우선은 ' + S.sciEx + '칸 아쉬움.' : '') + '</div>';
             const rng = t => SIM.fmt(t.s) + (t.e - t.s > 10 ? '~' + SIM.fmt(t.e) : ''), short = t => esc(String(t.t || '').replace(/^\s*\[[^\]]*\]\s*/, '').slice(0, 30));
-            const badTbl = bad.length ? '<table><tr><th>시각</th><th>업무</th><th>배정자</th><th>위반 내용</th></tr>' + bad.slice(0, 15).map(i => '<tr><td class="n">' + rng(T[i]) + '</td><td>' + short(T[i]) + '</td><td class="n">' + esc(B[i] || '후보 없음') + '</td><td class="ng">' + esc((mB.why[i] || []).join(' · ')) + '</td></tr>').join('') + '</table>' + (bad.length > 15 ? '<div class="sm">… 외 ' + (bad.length - 15) + '칸</div>' : '') : '<div class="sm">위반 칸 없음.</div>';
-            const chgTbl = chg.length ? '<table><tr><th>시각</th><th>업무</th><th>현재</th><th>→ 새 수식</th><th>이유</th></tr>' + chg.slice(0, 15).map(t => { const i = T.indexOf(t); return '<tr><td class="n">' + rng(t) + '</td><td>' + short(t) + '</td><td class="n">' + esc(A[i] || '–') + '</td><td class="n"><b>' + esc(B[i] || '후보 없음') + '</b></td><td class="nt">' + esc((mA.why[i] || []).join(' · ') || '다른 칸 수정에 따른 재조정') + '</td></tr>'; }).join('') + '</table>' + (chg.length > 15 ? '<div class="sm">… 외 ' + (chg.length - 15) + '칸 (배정표에서 파란 칸으로 확인)</div>' : '') : '<div class="sm">바뀐 칸 없음 — 현재 시트 배정이 이미 최선입니다.</div>';
-            return verdict +
-                '<h4>① 필수 규칙 (위반 0이어야 정상)</h4><table><tr><th>규칙</th><th>현재 시트</th><th>새 수식</th><th>비고</th></tr>' + rules.map(r => row(r[0], r[1], r[2], r[3], r[4], r[5])).join('') + '</table>' +
-                '<h4>② 선호 항목 (강제 아님 · 점수로 최대한 반영)</h4><table><tr><th>항목</th><th>현재 시트</th><th>새 수식</th><th>비고</th></tr>' + pref.map(r => '<tr><td>' + r[0] + '</td><td class="n">' + r[1] + '</td><td class="n">' + r[2] + '</td><td class="nt">' + r[3] + '</td></tr>').join('') + '</table>' +
-                '<h4>③ 새 수식의 위반 칸 (' + bad.length + ')</h4>' + badTbl +
-                '<h4>④ 바뀐 칸 (' + chg.length + ')</h4>' + chgTbl +
-                (ctx.lock && ctx.lock.size ? '<div class="sm">🔒 09시 이전 업무 ' + ctx.lock.size + '건은 07시 배정 그대로 고정이라 위 표에서 제외됩니다.</div>' : '');
+            const badTbl = bad.length ? '<table><tr><th>시각</th><th>업무</th><th>배정자</th><th>위반 내용</th></tr>' + bad.slice(0, 20).map(i => '<tr><td class="n">' + rng(T[i]) + '</td><td>' + short(T[i]) + '</td><td class="n">' + esc(X[i] || '후보 없음') + '</td><td class="ng">' + esc((m.why[i] || []).join(' · ')) + '</td></tr>').join('') + '</table>' + (bad.length > 20 ? '<div class="sm">… 외 ' + (bad.length - 20) + '칸</div>' : '') : '<div class="sm">위반 칸 없음.</div>';
+            const tab = (v, label) => '<button data-a="brt" data-v="' + v + '" class="' + (simBriefTab === v ? 'on' : '') + '">' + label + '</button>';
+            const note = isA
+                ? '지금 daily_tasks.json 에 반영된 값(관리자가 시트에서 정한 배정)을 규칙 기준으로 채점한 결과입니다. 이 PC 시뮬 배정과 <b>' + diff + '</b>칸 다르지만, 다르다고 틀린 것은 아니고 아래 위반만 확인하면 됩니다.'
+                : '이 PC 에서 재배정하기로 찾은 새 수식 배정을 채점한 결과입니다. 현재 JSON 과는 <b>' + diff + '</b>칸 다릅니다(배정표 화면의 파란 칸).';
+            return '<div class="seg2" style="margin-bottom:8px">' + tab('B', '🖥 이 PC 시뮬 배정') + tab('A', '📄 현재 JSON 반영값') + '</div>' + verdict +
+                '<div class="sm" style="margin:4px 0 0">' + note + '</div>' +
+                '<h4>① 필수 규칙 (위반 0이어야 정상)</h4><table><tr><th>규칙</th><th>결과</th><th>비고</th></tr>' + rules + '</table>' +
+                '<h4>② 선호 항목 (강제 아님)</h4><table><tr><th>항목</th><th>결과</th><th>비고</th></tr>' + pref + '</table>' +
+                '<h4>③ 위반 칸 (' + bad.length + ')</h4>' + badTbl +
+                (ctx.lock && ctx.lock.size ? '<div class="sm">🔒 09시 이전 업무 ' + ctx.lock.size + '건은 07시 배정 그대로 고정입니다.</div>' : '');
         }
         let simMsg = '', simMsgT = 0, simBox = '';
         function simClose() { simp.classList.remove('open'); const b = $('bba-simb'); if (b) b.classList.remove('on'); }
@@ -11663,6 +11670,7 @@
             const a = b.dataset.a;
             if (a === 'x') return simClose();
             if (a === 'br') { simBrief = !simBrief; return simDraw(); }
+            if (a === 'brt') { simBriefTab = b.dataset.v === 'A' ? 'A' : 'B'; return simDraw(); }
             if (a === 'cp') {   // 배정자 1열 복사
                 const show = m => { simMsg = m; clearTimeout(simMsgT); simMsgT = setTimeout(() => { simMsg = ''; simDraw(); }, 12000); simDraw(); };
                 simBox = '';
