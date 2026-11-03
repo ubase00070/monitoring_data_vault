@@ -5523,10 +5523,10 @@
                     if (!rec) return;   // 아직 admin 이 기록 전 → 창 안에서 다시 읽음
                     if (!s.n) {   // 1차
                         if (rec.r < 1) return;
-                        if (rec.units && rec.units.length) { rec.units.forEach(u => toast(u, rec.time)); s.n = 1; s.next = rec.next || 0; if (!s.next) s.done = 1; } else s.done = 1;
+                        if (rec.units && rec.units.length) { s.n = 1; s.next = rec.next || 0; if (!s.next) s.done = 1; saveSt(); rec.units.forEach(u => toast(u, rec.time)); } else s.done = 1;   // 상태를 먼저 저장해 두어, 화면 표시 중 오류가 나도 같은 토스트가 반복되지 않게 함
                     } else if (rec.r === 2) {   // 2차 (admin 재점검 결과)
+                        s.n = 2; s.done = 1; saveSt();
                         if (rec.units && rec.units.length) rec.units.forEach(u => toast(u, rec.time));
-                        s.n = 2; s.done = 1;
                     }
                 });
                 saveSt();
