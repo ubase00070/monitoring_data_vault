@@ -51,7 +51,7 @@
     // 아래 값을 그대로 반영받는다(재배포 불필요).
     //   { "maxMonitorSlots": 6, "locked": false }
     // fetch 실패 시엔 안전 기본값(6대 / 잠금 해제)으로 지금까지와 동일하게 동작한다.
-    let ADMIN_CONFIG = { maxMonitorSlots: 6, locked: false };
+    let ADMIN_CONFIG = { maxMonitorSlots: 6, locked: false, patrolRemind: true };
     const adminConfigReady = (async () => {
         try {
             const res = await fetch(
@@ -63,6 +63,7 @@
             if (typeof cfg.maxMonitorSlots === 'number' && cfg.maxMonitorSlots > 0) {
                 ADMIN_CONFIG.maxMonitorSlots = cfg.maxMonitorSlots;
             }
+            if (cfg.patrolRemind === false) ADMIN_CONFIG.patrolRemind = false;   // 순찰 리마인더 원격 끄기
             if (typeof cfg.locked === 'boolean') {
                 ADMIN_CONFIG.locked = cfg.locked;
             }
@@ -5451,6 +5452,81 @@
     if (localStorage.getItem('neubie_user_name')) {
         syncTasksFromServer();
     }
+
+    /* ============================================================
+        순찰 진행 리마인더 토스트
+        - admin 이 (API 없이) 점검해 둔 '이상 신호' JSON 을 읽어, 다중 모니터링 화면에 접속해 있는 사용자에게만 안내한다.
+        - 평소엔 10초마다 시각만 로컬에서 비교(요청 없음). 점검 시각 직후 약 4분 창 안에서만 30초 간격으로 읽고, 화면이 숨겨진 탭은 건너뛴다.
+        - 같은 점검 시각에 최대 2회(1차 · admin 2분 재점검 후 2차)만 띄운다. 끄기: remote_admin_config.json 의 "patrolRemind": false
+       ============================================================ */
+    (function patrolRemind() {
+        const API = 'https://multimonitoring.vercel.app/api/battery?name=patrol_remind';
+        const SLOTS = ['46|09:02', '46|14:02', '75|10:32', '75|16:02', '268|10:02', '268|15:02'];
+        const FROM_S = 75, TO_S = 330, GAP_MS = 30000, SHOW_MS = 15000;   // 점검 시각 +75초 ~ +330초 사이에만 읽음
+        const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+        const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* 무시 */ } };
+        const pad = n => String(n).padStart(2, '0');
+        let st = {}, stDay = '', lastFetch = 0, busy = false;
+
+        function dayKey() { const k = getKSTDate(); return k.getFullYear() + '-' + pad(k.getMonth() + 1) + '-' + pad(k.getDate()); }
+        function loadSt() {
+            const d = dayKey(); if (d === stDay) return;
+            stDay = d; try { st = JSON.parse(lsGet('neubie_pr_' + d) || '{}') || {}; } catch (e) { st = {}; }
+            try { for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i); if (k && /^neubie_pr_\d{4}-/.test(k) && k !== 'neubie_pr_' + d) localStorage.removeItem(k); } } catch (e) { /* 무시 */ }
+        }
+        const saveSt = () => lsSet('neubie_pr_' + stDay, JSON.stringify(st));
+
+        function stack() {
+            let box = document.getElementById('neubie-pr-stack');
+            if (!box) {
+                box = document.createElement('div'); box.id = 'neubie-pr-stack';
+                box.style.cssText = 'position:fixed;left:50%;bottom:28px;transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;align-items:center;z-index:99999999;pointer-events:none;';
+                document.body.appendChild(box);
+            }
+            return box;
+        }
+        function toast(unit, time) {
+            const el = document.createElement('div');
+            el.textContent = `${unit} - ${time} 순찰 진행 여부 확인바랍니다`;
+            el.style.cssText = 'background:#1e293b;color:#fff;border-left:5px solid #f59e0b;padding:12px 22px;border-radius:12px;font-size:15px;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,.45);opacity:0;transform:translateY(8px);transition:opacity .3s ease,transform .3s ease;max-width:90vw;text-align:center;';
+            stack().appendChild(el);
+            requestAnimationFrame(() => { el.style.opacity = '1'; el.style.transform = 'none'; });
+            setTimeout(() => { el.style.opacity = '0'; setTimeout(() => { el.remove(); const b = document.getElementById('neubie-pr-stack'); if (b && !b.children.length) b.remove(); }, 350); }, SHOW_MS);
+        }
+
+        async function tick() {
+            try {
+                if (busy || document.hidden || ADMIN_CONFIG.patrolRemind === false || !isHandoverPage()) return;
+                loadSt();
+                const k = getKSTDate(), nowS = k.getHours() * 3600 + k.getMinutes() * 60 + k.getSeconds(), now = Date.now();
+                const due = [];   // 지금 읽어야 하는 점검 시각들
+                SLOTS.forEach(key => {
+                    const [hh, mm] = key.split('|')[1].split(':').map(Number), s = st[key] || {};
+                    if (s.done) return;
+                    if (!s.n) { const e = nowS - (hh * 3600 + mm * 60); if (e >= FROM_S && e <= TO_S) due.push(key); }
+                    else if (s.n === 1 && s.next && now >= s.next + FROM_S * 1000) { if (now <= s.next + TO_S * 1000) due.push(key); else { s.done = 1; saveSt(); } }
+                });
+                if (!due.length || now - lastFetch < GAP_MS) return;
+                busy = true; lastFetch = now;
+                let data = null;
+                try { const r = await fetchWithTimeout(API + '&t=' + now, { cache: 'no-store' }, 8000); if (r.ok) { const j = await r.json(); data = j && j.data; } } catch (e) { /* 다음 틱에 다시 */ }
+                if (!data || data.day !== stDay || !data.items) return;
+                due.forEach(key => {
+                    const rec = data.items[key], s = st[key] || (st[key] = {});
+                    if (!rec) return;   // 아직 admin 이 기록 전 → 창 안에서 다시 읽음
+                    if (!s.n) {   // 1차
+                        if (rec.r < 1) return;
+                        if (rec.units && rec.units.length) { rec.units.forEach(u => toast(u, rec.time)); s.n = 1; s.next = rec.next || 0; if (!s.next) s.done = 1; } else s.done = 1;
+                    } else if (rec.r === 2) {   // 2차 (admin 재점검 결과)
+                        if (rec.units && rec.units.length) rec.units.forEach(u => toast(u, rec.time));
+                        s.n = 2; s.done = 1;
+                    }
+                });
+                saveSt();
+            } catch (e) { /* 알림 실패는 조용히 무시 */ } finally { busy = false; }
+        }
+        setInterval(tick, 10000);
+    })();
 
     let lastNotifiedMin = -1; 
 
