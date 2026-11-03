@@ -10182,6 +10182,7 @@
         }
         let busySince = 0;
         async function autoTick() {
+            if (prPending()) return;   // 순찰 리마인더 점검이 우선 (시각이 되었거나 진행 중이면 새 점검을 시작하지 않음)
             if (patBusy) return;   // 순찰중단 수동 점검 중에는 자동 점검을 쉰다 (끝나면 다음 틱에서 이어서)
             if (autoBusy && Date.now() - lastBeat > 150000) {   // 2분 반 동안 아무 진전이 없으면 멈춘 것으로 보고 풀어준다
                 console.warn('[BBA] 자동 점검이 멈춘 것으로 보여 초기화합니다');
@@ -10460,6 +10461,31 @@
             if (CAMP_AUTO[c]) o.ttl = (o.ttl ? o.ttl + '\n' : '') + (CAMP_AUTO[c].stopOnOk ? '자동 확인: ' : '자동 확인(매 회차): ') + CAMP_AUTO[c].slots.join(' · ') + (hist ? '\n' + hist : '');
             return o;
         }
+        // '사이트 점검' 그리드의 리센츠 · 엘스 · 가평자이 버튼: 오늘 점검 시각별 결과 (글자 · 색은 기존 사이트 점검 버튼과 같은 형식)
+        function prView(S) {   // → { cls, box, t, ttl }
+            prLoad();
+            const sh = n => PAT_NAME_MAP[n] || n, o = { cls: '', box: '✓', t: '', ttl: '' }, lines = []; let last = null;
+            const part = r => r.bad.length ? '✕ ' + r.on.length + '대 ON · 임무 미진행 ' + r.bad.length + '대 (' + r.bad.map(sh).join(', ') + ')' + (r.susp.length ? ' · 순찰중단 제외 ' + r.susp.map(sh).join(', ') : '')
+                : r.on.length ? '✓ ' + r.on.length + '대 ON · 임무 진행 정상' + (r.susp.length ? ' · 순찰중단 제외 ' + r.susp.map(sh).join(', ') : '') : '− 전원 OFF (해당 없음)';
+            S.times.forEach(t => {
+                const st = prSt[prKey(S.id, t)];
+                if (!st) { lines.push(t + ' · 점검 전'); return; }
+                let ln = t + ' ';
+                if (st.r1) ln += '1차 ' + part(st.r1); else if (st.e1) ln += '1차 ↻ 읽지 못함 (' + st.e1.err + ')'; else ln += st.w === 'run1' ? '1차 점검 중…' : '대기';
+                if (st.r2) ln += ' → 2차 ' + (st.r2.bad.length ? part(st.r2) : '✓ 해소됨'); else if (st.e2) ln += ' → 2차 ↻ 읽지 못함'; else if (st.w === 'wait2' || st.w === 'run2') ln += ' → 2차 ' + (st.w === 'run2' ? '점검 중…' : hmOf(st.t1 + PR_RECHECK_MS) + ' 예정');
+                lines.push(ln);
+                const fin = st.r2 || st.r1; if (fin) last = { t, fin, two: !!st.r2 };
+            });
+            if (last) {
+                const f = last.fin;
+                if (f.bad.length) { o.cls = ' bad'; o.box = '✕'; o.t = last.t + ' · 미진행 ' + f.bad.length + '대'; }
+                else if (f.on.length) { o.cls = ' on byauto'; o.t = last.t + ' · ' + f.on.length + '대 ON 정상'; }
+                else if (f.susp.length) { o.cls = ' on byauto'; o.t = last.t + ' · 순찰중단'; }
+                else { o.cls = ' on byauto'; o.t = last.t + ' · 전원 OFF'; }
+            }
+            o.ttl = '순찰 진행 확인 (' + S.label + ') — 전원 ON 인데 임무가 진행 중이 아니면 이상 (이상이면 2분 뒤 재점검)\n' + lines.join('\n');
+            return o;
+        }
         function drawCamp() {
             reloadCampAuto();
             const runIds = runningIds(); let nDone = 0;
@@ -10469,10 +10495,13 @@
                 const two = !!(o.t && !run);   // 시각·전원·임무 같은 결과 글자가 있으면 이름 아래 둘째 줄에 작게
                 return '<button class="bba-cb' + o.cls + (run ? ' run' : '') + (two ? ' two' : '') + '" data-c="' + i + '" aria-pressed="' + o.done + '" title="' + esc(run ? '자동 확인 중…' : o.ttl) + '"><i>' + (run ? '…' : o.box) + '</i><span class="cn"><span class="n1">' + esc(c) + '</span>' + (two ? '<span class="t">' + esc(o.t) + '</span>' : '') + '</span></button>';
             }).join('');
+            try {   // 순찰 리마인더 결과 버튼 (리센츠 · 엘스 · 가평자이) — 점검 n/N 집계에는 넣지 않음
+                $('bba-camp').insertAdjacentHTML('beforeend', PR_SLOTS.map((S, i) => { const o = prView(S), run = prBusy && prCur === S.id, two = !!(o.t && !run); return '<button class="bba-cb' + o.cls + (run ? ' run' : '') + (two ? ' two' : '') + '" data-pr="' + i + '" title="' + esc(run ? '점검 중…' : o.ttl) + '"><i>' + (run ? '…' : o.box) + '</i><span class="cn"><span class="n1">' + esc(S.label) + '</span>' + (two ? '<span class="t">' + esc(o.t) + '</span>' : '') + '</span></button>'; }).join(''));
+            } catch (e) { /* 무시 */ }
             $('bba-campn').textContent = '점검 ' + nDone + '/' + CAMPS.length + ' · 매일 07:00 초기화';
         }
         $('bba-camp').addEventListener('click', e => {
-            const b = e.target.closest('.bba-cb'); if (!b) return;
+            const b = e.target.closest('.bba-cb'); if (!b || b.dataset.pr !== undefined) return;   // 순찰 결과 버튼은 보기 전용
             const c = CAMPS[+b.dataset.c], d = new Date(), now = pad(d.getHours()) + ':' + pad(d.getMinutes());
             reloadCampAuto(); const r = campAuto[c], cur = r && r.cur;
             if (cur && cur.st === 'fail') { if (r.man) delete r.man; else r.man = now; campPut(c, r); }   // 자동 확인이 실패한 곳을 직접 확인 → 노란 체크
@@ -11722,6 +11751,118 @@
         $('bba-mmb').addEventListener('click', () => { if (!mmp.classList.contains('open')) simClose(); const o = mmp.classList.toggle('open'); $('bba-mmb').classList.toggle('on', o); if (o) { mmp.innerHTML = ''; drawMmp(); } });
         setInterval(drawMmp, 30 * 1000);
 
+        // ───────── 순찰 진행 리마인더 (API 없이): 정해진 시각에 숨김 iframe 으로 NCC 를 열어 '전원 ON 인데 임무 진행 아님' 인 기체를 찾고,
+        //   결과(이상 신호)를 vercel api/battery → monitoring_no_limit 저장소(bb_backup_patrol_remind.json)에 적어 둔다. 사용자 화면의 토스트는 remote_logic.js 가 이 파일을 읽어 띄운다.
+        //   · 이상이면 2분 뒤 한 번 더 점검해 다시 기록 (최대 2회) · 순찰중단 목록에 있는 기체는 제외 · 점검 중 다른 자동 점검과 겹치지 않음 · 켜고 끄기: localStorage bba_pr_on = '0' 이면 끔
+        const PR_API = 'https://multimonitoring.vercel.app/api/battery', PR_NAME = 'patrol_remind';
+        const PR_RECHECK_MS = 2 * 60 * 1000, PR_GRACE_MS = 8 * 60 * 1000;   // 재점검 간격 · 시각이 지나도 이 시간 안이면 늦게라도 점검
+        const PR_SLOTS = [
+            { id: 46, label: '리센츠', times: ['09:02', '14:02'], units: ['잠실 리센츠 아파트 1호기', '잠실 리센츠 아파트 2호기'] },
+            { id: 75, label: '엘스', times: ['10:32', '16:02'], units: ['잠실 엘스 아파트 1호기', '잠실 엘스 아파트 2호기'] },
+            { id: 268, label: '가평자이', times: ['10:02', '15:02'], units: ['가평자이 1호기'] },
+        ];
+        const prOn = () => lsGet('bba_pr_on', '1') !== '0';
+        const prDay = () => new Date().getFullYear() + '-' + pad(new Date().getMonth() + 1) + '-' + pad(new Date().getDate());
+        const prKey = (id, t) => id + '|' + t;
+        let prBusy = false, prSt = {}, prStDay = '';
+        function prLoad() {   // 오늘 점검 기록 (새로고침해도 같은 시각을 다시 점검하지 않음)
+            const d = prDay(); if (prStDay === d) return;
+            prStDay = d; try { prSt = JSON.parse(lsGet('bba_pr_' + d, '{}')) || {}; } catch (e) { prSt = {}; }
+            try { for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i); if (k && /^bba_pr_\d{4}-/.test(k) && k !== 'bba_pr_' + d) localStorage.removeItem(k); } } catch (e) { /* 무시 */ }
+        }
+        const prSave = () => lsSet('bba_pr_' + prStDay, JSON.stringify(prSt));
+        function prSusp(n, h) {   // 순찰중단 목록에 있는 기체인지 (전체 이름 · 짧은 이름('엘스 1') · 묶음 이름('엘스') 모두 확인)
+            const short = PAT_NAME_MAP[n] || '', c = [n, short, n.replace(/\s*\d+호기.*$/, '')];
+            if (short && /\s\d+$/.test(short)) c.push(short.replace(/\s*\d+$/, ''));
+            for (const x of c) { if (!x) continue; for (const hh of [pad(h), String(h), h]) { const r = suspReason(x, hh); if (r) return r; } }
+            return null;
+        }
+        async function prProbe(S, tag) {   // → { bad:[기체 이름], on:[전원 켜진 기체], susp:[순찰중단이라 제외한 기체], err }  (이상 = 전원 켜짐 ∧ 임무 진행 값이 빈 기체)
+            const units = S.units.map(n => U(n));
+            const r = await probeSite({ k: '순찰알림 ' + S.id, id: S.id, prog: true, pat: true, label: '순찰알림' }, units);   // pat: 다른 자동 점검의 진행 표시·감시와 분리 (동시에 돌아도 서로 영향 없음)
+            if (!r || r.err) return { err: (r && r.err) || 'noread', bad: [], on: [], susp: [] };
+            const h = new Date().getHours(), bad = [], on = [], susp = [];
+            S.units.forEach(n => {
+                const u = r.units[n];
+                if (!u || !u.found || u.pw !== true) return;
+                on.push(n);
+                if (u.pg !== '') return;   // 임무 진행 값이 있으면 정상, 못 읽은 값(null)은 이상으로 보지 않음
+                if (prSusp(n, h)) susp.push(n); else bad.push(n);
+            });
+            console.log('[BBA] 순찰알림 점검', S.id, tag, bad.length ? '이상: ' + bad.join(', ') : '이상 없음', r.units);
+            return { err: null, bad, on, susp };
+        }
+        async function prWrite(key, rec) {   // 저장소의 파일을 읽어 오늘 항목만 갱신해 다시 쓴다 (한 번 실패하면 한 번 더)
+            for (let i = 0; i < 2; i++) {
+                try {
+                    let cur = null; try { const g = await fetch(PR_API + '?name=' + PR_NAME + '&t=' + Date.now(), { cache: 'no-store' }); if (g.ok) cur = await g.json(); } catch (e) { /* 새로 씀 */ }
+                    let data = cur && cur.data && typeof cur.data === 'object' ? cur.data : {};
+                    if (data.day !== prDay() || !data.items) data = { day: prDay(), items: {} };
+                    data.items[key] = rec;
+                    const p = await fetch(PR_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: PR_NAME, data }) });
+                    const j = await p.json().catch(() => ({})); if (j && j.ok) return true;
+                } catch (e) { /* 재시도 */ }
+                await sleep(3000);
+            }
+            console.warn('[BBA] 순찰알림 기록 실패', key); return false;
+        }
+        let prCur = null;
+        async function prRun(S, t, round) {
+            const key = prKey(S.id, t), st = prSt[key] || (prSt[key] = { tries: 0 }), g1 = killGen;
+            prBusy = true; prCur = S.id; try { drawCamp(); } catch (e) { /* 무시 */ }
+            try {
+                const t0 = Date.now();
+                if (round === 1) { st.t1 = t0; st.tries++; st.w = 'run1'; } else { st.w = 'run2'; }
+                prSave();
+                const res = await prProbe(S, round === 1 ? '1차' : '2차');
+                if (g1 !== killGen) { if (round === 1) { st.w = ''; st.nextTry = Date.now() + KILL_COOL_MS; } else st.w = 'done'; prSave(); return; }   // Kill All: 기록하지 않고 빠져나옴
+                if (res.err) {   // 못 읽음: 1차는 최대 2번까지 1분 뒤 다시 시도, 2차는 포기
+                    st['e' + round] = { at: Date.now(), err: res.err };
+                    if (round === 1 && st.tries < 2) { st.w = ''; st.nextTry = Date.now() + 60000; } else st.w = 'done';
+                    prSave(); return;
+                }
+                if (round === 1) {
+                    const bad = res.bad; st.bad = bad; st.r1 = { at: Date.now(), on: res.on, bad, susp: res.susp }; delete st.e1;
+                    prSave();
+                    await prWrite(key, { r: 1, at: Date.now(), time: t, units: bad, next: bad.length ? st.t1 + PR_RECHECK_MS : 0 });
+                    st.w = bad.length ? 'wait2' : 'done';
+                } else {
+                    const bad = res.bad.filter(n => (st.bad || []).includes(n));   // 1차에서도 이상이었던 기체 중 여전히 이상인 것만
+                    st.r2 = { at: Date.now(), on: res.on, bad, susp: res.susp }; delete st.e2;
+                    prSave();
+                    await prWrite(key, { r: 2, at: Date.now(), time: t, units: bad, next: 0 });
+                    st.w = 'done';
+                }
+                prSave();
+            } catch (e) { console.warn('[BBA] 순찰알림 점검 오류:', e && e.message); st.w = round === 1 && st.tries < 2 ? '' : 'done'; st.nextTry = Date.now() + 60000; prSave(); }
+            finally { prBusy = false; prCur = null; try { drawCamp(); } catch (e) { /* 무시 */ } }
+        }
+        function prNext() {   // 지금 시작해야 하는 순찰알림 점검 { S, t, round } (없으면 null)
+            if (!prOn() || Date.now() < killUntil) return null;
+            prLoad(); const now = Date.now(), d = new Date();
+            for (const S of PR_SLOTS) for (const t of S.times) {
+                const [hh, mm] = t.split(':').map(Number), due = new Date(d.getFullYear(), d.getMonth(), d.getDate(), hh, mm, 0).getTime();
+                const st = prSt[prKey(S.id, t)];
+                if (!st || st.w === '') {   // 1차
+                    if (now >= due && now < due + PR_GRACE_MS && (!st || (st.tries < 2 && now >= (st.nextTry || 0)))) return { S, t, round: 1 };
+                } else if (st.w === 'wait2' && now >= st.t1 + PR_RECHECK_MS) {   // 2차 (이상이었던 경우만)
+                    if (now < st.t1 + PR_RECHECK_MS + PR_GRACE_MS) return { S, t, round: 2 };
+                    st.w = 'done'; prSave();
+                }
+            }
+            return null;
+        }
+        // 다른 점검과 시간이 겹치면 이 점검이 우선: 진행 중인 점검은 그대로 끝나게 두고(동시에 iframe 하나 더), 새 점검은 이 점검이 끝날 때까지 시작하지 않는다 (autoTick 이 prPending 을 확인)
+        const prPending = () => { try { return prBusy || !!prNext(); } catch (e) { return false; } };
+        function prTick() {
+            try {
+                if (prBusy) return;
+                const nx = prNext(); if (nx) prRun(nx.S, nx.t, nx.round);
+            } catch (e) { console.warn('[BBA] 순찰알림 확인 오류:', e && e.message); }
+        }
+        setTimeout(prTick, 8000);
+        setInterval(prTick, 15 * 1000);   // 평소엔 시각만 로컬에서 비교 (요청·iframe 없음)
+
         // ───────── 시작 ─────────
         loadDay(); drawCamp();
         try { parseTasks(JSON.parse(lsGet('bba_tasks_cache', '[]'))); } catch (e) { tasks = []; }
@@ -11740,6 +11881,7 @@
             camp: c => { if (!CAMP_AUTO[c]) return '등록된 사이트 점검이 아님: ' + Object.keys(CAMP_AUTO).join(', '); campForce.add(c); autoTick(); return c + ' 지금 점검'; },
             campState: () => JSON.parse(JSON.stringify(campAuto)),
             reset: () => { try { localStorage.removeItem(autoKey()); } catch (e) { /* 무시 */ } reloadAuto(); renderTasks(); },
+            pr: () => JSON.parse(JSON.stringify(prSt)),   // 순찰알림 오늘 점검 기록
             probe: id => { const S = AUTO_SITES.find(x => x.id === +id); return S ? probeSite(S, S.units) : '등록된 사이트 번호가 아님'; },
         };
         console.log('[BBA] 관리자 확장 켜짐 (일일 업무표 · 펼침 그리드 · 캠핑장/HW/SW)');
