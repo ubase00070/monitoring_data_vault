@@ -7157,6 +7157,15 @@
         const spLoadStore = () => { try { const s = JSON.parse(localStorage.getItem(IV_SP_KEY) || 'null'); if (s && s.days && typeof s.days === 'object') return s; } catch (e) { /* 없으면 새로 */ } return { days: {}, at: 0 }; };
         const spSaveStore = s => { try { localStorage.setItem(IV_SP_KEY, JSON.stringify(s)); } catch (e) { /* 저장 못 해도 이번 화면에는 지장 없음 */ } };
 
+        // 23:30~08:30 처럼 업무일 경계(07시)를 넘겨 근무하는 사람: 07시 이후 ~ 퇴근 전에 한 개입은 '전날 근무'의 일부 → 근무표상 비근무인 날에 건수가 있어도 근무일로 세지 않음
+        //  (건수는 그대로 더하고 근무일만 안 늘리므로 = 전날 근무일에 한 개입으로 합산됨. 전날도 근무표상 비근무면 일반 규칙대로 근무로 봄)
+        const SP_OVERNIGHT = ['안대관'];
+        const spPrevDay = d => { const t = new Date(d + 'T00:00:00Z'); t.setUTCDate(t.getUTCDate() - 1); return t.toISOString().slice(0, 10); };
+        function spCarry(nm, d, sched) {
+            if (!SP_OVERNIGHT.includes(nm)) return false;
+            const pd = spPrevDay(d), mo = pd.slice(0, 7), sc = sched && sched[mo] && sched[mo].p, mine = sc && spFindSch(sc, nm);
+            return !!mine && mine[ivMD(pd)] === 1;   // 전날이 근무일이면 오늘 07시 이후 건수는 전날 근무의 연장
+        }
         function spAgg(dates, days, sched) {
             const m = {};
             dates.forEach(d => {
@@ -7172,7 +7181,7 @@
                     { const wk = sc && sched[mo].w ? spFindKey(sc, nm) : null; if (wk != null && sched[mo].w[wk]) a.win = sched[mo].w[wk]; }   // 가장 최근 날짜의 근무시간 (주간/야간 뱃지용)
                     const mine = sc && spFindSch(sc, nm), v = mine ? mine[md] : undefined;
                     if (v === 1) a.days += 1;                       // 근무표상 근무
-                    else if (v === 0) { if (sv > 0) a.days += 1; }  // 근무표상 비근무(휴무·연차)인데 처리 건수가 있으면 근무로 봄
+                    else if (v === 0) { if (sv > 0 && !spCarry(nm, d, sched)) a.days += 1; }  // 근무표상 비근무(휴무·연차)인데 처리 건수가 있으면 근무로 봄 (단 야간 경계 근무자의 전날 연장분은 제외)
                     else if (w) { a.days += 1; a.est += 1; }        // 근무표에 없음 → 기록 기반 (추정)
                 });
             });
