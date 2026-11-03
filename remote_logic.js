@@ -5488,8 +5488,15 @@
         function toast(unit, time) {
             const el = document.createElement('div');
             el.textContent = `${unit} - ${time} 순찰 진행 여부 확인바랍니다`;
-            el.style.cssText = 'background:#1e293b;color:#fff;border-left:5px solid #f59e0b;padding:12px 22px;border-radius:12px;font-size:15px;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,.45);opacity:0;transform:translateY(8px);transition:opacity .3s ease,transform .3s ease;max-width:90vw;text-align:center;';
+            el.style.cssText = 'background:#1e293b;color:#fff;border:2px solid #ef4444;padding:12px 22px;border-radius:12px;font-size:15px;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,.45);opacity:0;transform:translateY(8px);transition:opacity .3s ease,transform .3s ease;max-width:90vw;text-align:center;';
             stack().appendChild(el);
+            try {   // 빨간 테두리가 1.5초 주기로 부드럽게 점멸 (눈에 띌 정도만)
+                el.animate([
+                    { borderColor: '#ef4444', boxShadow: '0 6px 20px rgba(0,0,0,.45), 0 0 10px 2px rgba(239,68,68,.65)' },
+                    { borderColor: 'rgba(239,68,68,.15)', boxShadow: '0 6px 20px rgba(0,0,0,.45), 0 0 0 0 rgba(239,68,68,0)' },
+                    { borderColor: '#ef4444', boxShadow: '0 6px 20px rgba(0,0,0,.45), 0 0 10px 2px rgba(239,68,68,.65)' }
+                ], { duration: 1500, iterations: Infinity, easing: 'ease-in-out' });
+            } catch (e) { /* 애니메이션 미지원이면 고정 빨간 테두리 */ }
             requestAnimationFrame(() => { el.style.opacity = '1'; el.style.transform = 'none'; });
             setTimeout(() => { el.style.opacity = '0'; setTimeout(() => { el.remove(); const b = document.getElementById('neubie-pr-stack'); if (b && !b.children.length) b.remove(); }, 350); }, SHOW_MS);
         }
