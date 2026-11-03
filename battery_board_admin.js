@@ -11757,9 +11757,9 @@
         const PR_API = 'https://multimonitoring.vercel.app/api/battery', PR_NAME = 'patrol_remind';
         const PR_RECHECK_MS = 2 * 60 * 1000, PR_GRACE_MS = 8 * 60 * 1000;   // 재점검 간격 · 시각이 지나도 이 시간 안이면 늦게라도 점검
         const PR_SLOTS = [
-            { id: 46, label: '리센츠', times: ['09:02', '14:02'], units: ['잠실 리센츠 아파트 1호기', '잠실 리센츠 아파트 2호기'] },
-            { id: 75, label: '엘스', times: ['10:32', '16:02'], units: ['잠실 엘스 아파트 1호기', '잠실 엘스 아파트 2호기'] },
-            { id: 268, label: '가평자이', times: ['10:02', '15:02'], units: ['가평자이 1호기'] },
+            { id: 46, label: '리센츠', times: ['09:00', '14:00'], units: ['잠실 리센츠 아파트 1호기', '잠실 리센츠 아파트 2호기'] },
+            { id: 75, label: '엘스', times: ['10:30', '16:00'], units: ['잠실 엘스 아파트 1호기', '잠실 엘스 아파트 2호기'] },
+            { id: 268, label: '가평자이', times: ['10:00', '15:00'], units: ['가평자이 1호기'] },
         ];
         const prOn = () => lsGet('bba_pr_on', '1') !== '0';
         const prDay = () => new Date().getFullYear() + '-' + pad(new Date().getMonth() + 1) + '-' + pad(new Date().getDate());
