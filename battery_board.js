@@ -8828,7 +8828,7 @@
             } else if (x.type === 'task' && x.content) {
               const t = String(x.content).replace(/ /g, ' ');
               if (!/^\s*\[\d{1,2}:\d{2}/.test(t)) { warn.push('시각 없는 업무 제외: ' + t.slice(0, 30)); return; }
-              const i = TL.length; const adm = ADMIN_ONLY_RE.test(t), ywN = YW_RE.test(t) && (() => { const q = t.match(/^\s*\[(\d{1,2}):(\d{2})/); return !!q && +q[1] * 60 + +q[2] < 420; })(); TL.push(mkTask(t, 0, ywN ? '양원LH' : (adm || (isFixedName(x.user) && x.user !== '후보 없음') || (x.user && x.user !== '후보 없음' && !BYNAME[x.user])) ? '관리자' : '', i)); rowUser.push(ywN ? (x.user === '후보 없음' ? '' : (x.user || '')) : adm ? '관리자' : x.user === '후보 없음' ? '' : (x.user || ''));   // 00·03·06시 양원LH = 고정(시트 담당자 그대로)
+              const i = TL.length; const adm = ADMIN_ONLY_RE.test(t), ywN = YW_RE.test(t) && (() => { const q = t.match(/^\s*\[(\d{1,2}):(\d{2})/); return !!q && +q[1] * 60 + +q[2] < 420; })(); TL.push(mkTask(t, 0, ywN ? '양원LH' : (adm || (isFixedName(x.user) && x.user !== '후보 없음') || (x.user && x.user !== '후보 없음' && !BYNAME[x.user])) ? '관리자' : '', i)); if (adm) TL[i].adm = true; rowUser.push(ywN ? (x.user === '후보 없음' ? '' : (x.user || '')) : adm ? '관리자' : x.user === '후보 없음' ? '' : (x.user || ''));   // 00·03·06시 양원LH = 고정(시트 담당자 그대로)
             }
           });
           if (!Object.keys(main).length) warn.push('다중 모니터링 항목이 없음');
@@ -9110,7 +9110,7 @@
         }
         function simColumn(R) {
             const M = simMerge(R); if (!M) throw new Error('NOFULL'); if (M.bad) throw new Error(M.bad);
-            const names = M.items.map(it => (it.i >= 0 && !R.P.TL[it.i].fixed ? (R.B[it.i] || '후보 없음') : it.user).replace(/[\r\n\t]+/g, ' ').trim()), heads = M.items.map(it => simNorm(it.content));
+            const names = M.items.map(it => (it.i >= 0 && R.P.TL[it.i].adm ? '' : it.i >= 0 && !R.P.TL[it.i].fixed ? (R.B[it.i] || '후보 없음') : it.user).replace(/[\r\n\t]+/g, ' ').trim()), heads = M.items.map(it => simNorm(it.content));
             return { names, heads, text: names.join('\n') };   // 끝에 줄바꿈을 붙이지 않음(붙이면 시트에 빈 칸 한 줄이 더 덮어써짐)
         }
         async function simCopyText(text) {
