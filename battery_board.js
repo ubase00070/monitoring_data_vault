@@ -8556,6 +8556,20 @@
         #bb #bbsim .cpm .warn { color:var(--rd); font-weight:700 !important; }
         #bb #bbsim .cpm textarea { display:block; width:100%; box-sizing:border-box; margin-top:4px; font-size:12px; line-height:1.4; font-family:inherit; }
         #bb #bbsim .foot { margin-top:6px; font-size:11.5px; color:var(--mu); }
+        #bb #bbsim .brf { flex:1; min-height:0; overflow:auto; border:1.5px solid var(--bd2); border-radius:10px; background:var(--sur); padding:10px 14px 14px; }
+        #bb #bbsim .brf h4 { margin:12px 0 5px; font-size:13.5px; font-weight:800 !important; }
+        #bb #bbsim .brf h4:first-child { margin-top:0; }
+        #bb #bbsim .brf .vd { padding:6px 10px; border-radius:8px; font-size:12.5px; line-height:1.5; background:#e3f6e6; border:1.5px solid #5cb96b; color:#1d4a26; }
+        #bb #bbsim .brf .vd.bad { background:#fdeaea; border-color:#e07a7a; color:#7a1d1d; }
+        #bb #bbsim .brf .vd b { font-weight:800 !important; }
+        #bb #bbsim .brf table { width:100%; border-collapse:collapse; font-size:12px; }
+        #bb #bbsim .brf th { text-align:left; padding:4px 8px; background:var(--sur2); border-bottom:2px solid var(--bd2); color:var(--mu); font-weight:700 !important; white-space:nowrap; }
+        #bb #bbsim .brf td { padding:4px 8px; border-bottom:1px solid var(--bd); vertical-align:top; }
+        #bb #bbsim .brf td.n { font-variant-numeric:tabular-nums; white-space:nowrap; }
+        #bb #bbsim .brf td.nt { color:var(--mu); font-size:11.5px; }
+        #bb #bbsim .brf .ok { color:#1d7a35; font-weight:800 !important; }
+        #bb #bbsim .brf .ng { color:var(--rd); font-weight:800 !important; }
+        #bb #bbsim .brf .sm { margin-top:4px; font-size:11.5px; color:var(--mu); line-height:1.45; }
         #bb #bbsim .seg2 { display:inline-flex; border:1.5px solid var(--bd2); border-radius:8px; overflow:hidden; }
         #bb #bbsim .seg2 button { height:26px; padding:0 10px; border:0; background:var(--sur2); color:var(--mu); font-family:inherit; font-size:12px; font-weight:700 !important; cursor:pointer; }
         #bb #bbsim .seg2 button.on { background:var(--tx); color:var(--sur); }
@@ -9046,7 +9060,7 @@
             if (cfg && !simRes && cfg.day === ckey()) simRun(cfg);
             const R = (cfg && cfg.day === ckey()) ? simRes : null, keep = (simp.querySelector('.col.c2') || {}).scrollTop;
             const head = '<div class="mh"><b title="새 수식으로 계산한 시뮬레이션입니다 — 실제 업무표는 바뀌지 않습니다">📋 일일 업무 배정표</b><span class="sp">' +
-                '<button class="bba-btn cp" data-a="cp" title="아래 \'새 수식 배정자\' 결과를 시트 행 순서 그대로 한 열(줄바꿈으로 구분)로 복사합니다 — 시트의 배정자 칸에 값만 붙여넣기">📋 배정자 1열 복사</button>' +
+                '<button class="bba-btn' + (simBrief ? ' on' : '') + '" data-a="br" title="이 배정표가 규칙(가중치 2.0 · 다중 포함 3건 · 과학관 다중 無 우선 등)을 얼마나 지켰는지 요약해서 보여줍니다">📊 브리핑</button><button class="bba-btn cp" data-a="cp" title="아래 \'새 수식 배정자\' 결과를 시트 행 순서 그대로 한 열(줄바꿈으로 구분)로 복사합니다 — 시트의 배정자 칸에 값만 붙여넣기">📋 배정자 1열 복사</button>' +
                 '<button class="bba-btn on" data-a="re" title="지금의 daily_tasks.json 으로 일일 업무 배정을 다시 찾습니다 (다중/서브는 그대로)">' + (simBusy ? (simProg || '받아오는 중…') : '재배정하기') + '</button><button class="bba-btn" data-a="x">✕ 닫기</button></span></div>';
             if (!R) { simp.innerHTML = head + '<div class="meta">' + (simBusy ? (simProg || '최적안을 찾는 중입니다…') : (!cfg || cfg.day !== ckey()) ? '아직 계산하지 않았습니다. <b>재배정하기</b>를 누르면 최신 daily_tasks.json 을 받아 최적안을 찾습니다.' : '계산하지 못했습니다: ' + esc(simErr || '알 수 없는 오류')) + '</div>'; return; }
             const { P, A, B, mA, mB, ctx, follow, d, wd } = R, at = new Date(cfg.at), dow = '일월화수목금토'[wd.getDay()], stale = hash(cfg.txt) !== hash(txt);
@@ -9068,7 +9082,7 @@
                 return '<div class="gr' + (ch ? ' chg' : '') + '"><span class="tm">' + simRange(t) + '</span><span class="tk" title="' + esc(t.t) + '">' + (follow.has(i) ? '🔗 ' : '') + esc(t.t.replace(/^\s*\[[^\]]*\]\s*/, '')) + '</span><span class="asg">' + simNm(B[i]) + (ch ? '<span class="was" title="' + esc(why) + '">← 현재 ' + esc(A[i] || '후보 없음') + ' · ' + esc(why) + '</span>' : '') + '</span></div>';
             }).join('') + '</div>';
             const cpm = (simMsg ? '<div class="cpm">' + simMsg + '</div>' : '') + (simBox ? '<div class="cpm">자동 복사가 막혀 있어요. 아래 글자를 직접 복사(Ctrl+A → Ctrl+C)하세요.<textarea readonly rows="4">' + esc(simBox) + '</textarea></div>' : '');
-            simp.innerHTML = head + meta + cpm + '<div class="sb">' + c1 + c2 + '</div><div class="foot">시트에 붙여넣기: 배정자 열의 첫 업무 행 클릭 → 값만 붙여넣기(Ctrl+Shift+V) · 파란 칸 = 바뀐 칸 · 🔗 = 묶음 업무</div>';
+            simp.innerHTML = head + (simBrief ? '' : meta) + cpm + (simBrief ? '<div class="brf">' + simBriefHtml(R) + '</div><div class="foot">📊 두 배정은 서로 달라도 둘 다 합리적일 수 있어요 — 각각 규칙 위반만 확인하세요 · 브리핑을 다시 누르면 배정표로 돌아갑니다</div>' : '<div class="sb">' + c1 + c2 + '</div><div class="foot">시트에 붙여넣기: 배정자 열의 첫 업무 행 클릭 → 값만 붙여넣기(Ctrl+Shift+V) · 파란 칸 = 바뀐 칸 · 🔗 = 묶음 업무</div>');
             const c2e = simp.querySelector('.col.c2'); if (c2e && keep) c2e.scrollTop = keep;
         }
         /* 시트에 값만 붙여넣기용 '배정자 1열' — 받아온 daily_tasks.json 의 일일 업무 행 순서 그대로(휴무·관리자 고정 행·시각 없는 행도 원래 값으로 자리 유지) 한 줄에 한 칸 */
@@ -9096,12 +9110,64 @@
             try { await navigator.clipboard.writeText(text); return true; } catch (e) { /* 아래 대체 방법 */ }
             try { const ta = document.createElement('textarea'); ta.value = text; ta.style.cssText = 'position:fixed;left:-9999px;top:0'; document.body.appendChild(ta); ta.select(); const ok = document.execCommand('copy'); ta.remove(); return !!ok; } catch (e) { return false; }
         }
+        let simBrief = false, simBriefTab = 'B';
+        /* 📊 브리핑 — 한 배정안을 규칙 기준으로 채점해 보여준다. 탭 2개: 'B' = 이 PC 에서 돌린 새 수식 배정 / 'A' = 지금 daily_tasks.json 에 실제 반영된 값(관리자가 시트에서 정한 값).
+           두 안은 달라도 둘 다 합리적일 수 있으므로 서로 비교해 틀렸다고 하지 않고, 각각 규칙을 얼마나 지켰는지만 본다. */
+        function simBriefHtml(R) {
+            const { P, A, B, mA, mB, sA, sB, ctx, d } = R, T = P.TL, isA = simBriefTab === 'A';
+            const X = isA ? A : B, m = isA ? mA : mB, S = isA ? sA : sB;
+            const U = SIM.buildUnits(d, true, false, ctx.tasks).filter(u => !ctx.tasks[u.rows[0]].fixed), sciU = U.filter(u => u.sci).length;
+            const cnt = re => Object.keys(m.why).filter(i => (m.why[i] || []).some(w => re.test(w))).length;
+            const N = S.per.length, pc = f => S.per.filter(f).length;
+            const diff = T.filter((t, i) => !t.fixed && (B[i] || null) !== (A[i] || null)).length;
+            const rv = (name, v, bad, note) => '<tr><td>' + name + '</td><td class="n ' + (bad ? 'ng' : 'ok') + '">' + v + '</td><td class="nt">' + (note || '') + '</td></tr>';
+            const viol = (name, re, note) => { const c = cnt(re); return rv(name, c ? c + '칸 위반' : '지킴', c > 0, note || ''); };
+            const zw = cnt(/가중치 2\.0\(다중/);
+            const rules = [
+                rv('가중치 2.0 이하', pc(p => p.w <= 2 + 1e-9) + '/' + N + '명', S.m.overW > 0, '최대 ' + S.maxW.toFixed(1) + (zw ? ' · 2.0인 사람에게 일반 업무 ' + zw + '칸' : '')),
+                rv('다중 포함 3건 이하', pc(p => p.t + p.m <= 3) + '/' + N + '명', S.m.n4 > 0, S.m.n4 ? '4건 이상 ' + S.m.n4 + '명 (서브 제외)' : '서브 제외'),
+                rv('과학관: 다중 無 우선', sciU ? (sciU - S.sciMon) + '/' + sciU + '칸' : '–', S.sciEx > 0, sciU ? '다중 無 인원이 맡을 수 있는 최대 ' + (sciU - S.sciMin) + '칸 · 다중 보유자가 받은 칸 ' + S.sciMon + (S.sciEx ? ' (' + S.sciEx + '칸 더 줄일 수 있음)' : '') : '오늘 과학관 업무 없음'),
+                viol('부산 하루 1회', /부산 하루 2회/),
+                viol('다중·서브 시간 겹침 / 과학관 정각 교대', /다중 교대|다중과 연달아|서브 시간|정각 교대/),
+                viol('근무·휴게시간 / 본인 업무 겹침', /근무시간 밖|휴게시간|본인 다른 업무/),
+                viol('부산 08:50 우선 (07~16시 · 다중 無)', /07·08·09시 다중이 없는/),
+                viol('후보 없음 · 묶음 담당자 불일치', /후보 없음|근무표에 없는|묶음 업무인데/),
+            ].join('');
+            const pf = (name, v, note) => '<tr><td>' + name + '</td><td class="n">' + v + '</td><td class="nt">' + (note || '') + '</td></tr>';
+            const pref = [
+                pf('업무+다중 건수 편차', S.mn + '~' + S.mx + '건', '1건 이하 ' + S.low + '명 · 3건 이상 ' + S.high + '명'),
+                pf('연속 3건 이상', S.chains + '명'),
+                pf('10분 안에 붙은 업무', S.adjN + '쌍'),
+                pf('퇴근 1시간 전 과학관 (07~16 · 08~17시)', S.lastHr + '칸', '가급적 피함'),
+                pf('출근 직후 과학관 (오후조)', S.firstHr + '칸', '가급적 피함'),
+                pf('10시 출근자의 10:00 업무', S.first10 + '칸', '가급적 피함'),
+                pf('20:30 이후 업무를 오후조가 맡음', S.eveN ? S.pmN + '/' + S.eveN + '건' : '–', S.eveNon ? '오후조가 맡을 수 있는 ' + S.eveNon + '건을 야간조가 맡음' : ''),
+            ].join('');
+            const bad = Object.keys(m.why).map(Number).sort((a, b) => a - b);
+            const ok = m.prob === 0 && S.m.overW === 0 && S.m.n4 === 0;
+            const verdict = '<div class="vd' + (ok ? '' : ' bad') + '">' + (ok ? '✅ <b>규칙 위반 0칸</b> — 가중치 2.0 · 다중 포함 3건 · 시간 겹침 모두 지킴.' : '⚠ <b>규칙 문제 ' + m.prob + '칸</b>' + (S.m.overW ? ' · 2.0 초과 ' + S.m.overW + '명' : '') + (S.m.n4 ? ' · 4건 이상 ' + S.m.n4 + '명' : '') + ' — 아래 위반 목록을 확인하세요.') +
+                (S.sciEx > 0 ? ' 과학관 다중 無 우선은 ' + S.sciEx + '칸 아쉬움.' : '') + '</div>';
+            const rng = t => SIM.fmt(t.s) + (t.e - t.s > 10 ? '~' + SIM.fmt(t.e) : ''), short = t => esc(String(t.t || '').replace(/^\s*\[[^\]]*\]\s*/, '').slice(0, 30));
+            const badTbl = bad.length ? '<table><tr><th>시각</th><th>업무</th><th>배정자</th><th>위반 내용</th></tr>' + bad.slice(0, 20).map(i => '<tr><td class="n">' + rng(T[i]) + '</td><td>' + short(T[i]) + '</td><td class="n">' + esc(X[i] || '후보 없음') + '</td><td class="ng">' + esc((m.why[i] || []).join(' · ')) + '</td></tr>').join('') + '</table>' + (bad.length > 20 ? '<div class="sm">… 외 ' + (bad.length - 20) + '칸</div>' : '') : '<div class="sm">위반 칸 없음.</div>';
+            const tab = (v, label) => '<button data-a="brt" data-v="' + v + '" class="' + (simBriefTab === v ? 'on' : '') + '">' + label + '</button>';
+            const note = isA
+                ? '지금 daily_tasks.json 에 반영된 값(관리자가 시트에서 정한 배정)을 규칙 기준으로 채점한 결과입니다. 이 PC 시뮬 배정과 <b>' + diff + '</b>칸 다르지만, 다르다고 틀린 것은 아니고 아래 위반만 확인하면 됩니다.'
+                : '이 PC 에서 재배정하기로 찾은 새 수식 배정을 채점한 결과입니다. 현재 JSON 과는 <b>' + diff + '</b>칸 다릅니다(배정표 화면의 파란 칸).';
+            return '<div class="seg2" style="margin-bottom:8px">' + tab('B', '🖥 이 PC 시뮬 배정') + tab('A', '📄 현재 JSON 반영값') + '</div>' + verdict +
+                '<div class="sm" style="margin:4px 0 0">' + note + '</div>' +
+                '<h4>① 필수 규칙 (위반 0이어야 정상)</h4><table><tr><th>규칙</th><th>결과</th><th>비고</th></tr>' + rules + '</table>' +
+                '<h4>② 선호 항목 (강제 아님)</h4><table><tr><th>항목</th><th>결과</th><th>비고</th></tr>' + pref + '</table>' +
+                '<h4>③ 위반 칸 (' + bad.length + ')</h4>' + badTbl +
+                (ctx.lock && ctx.lock.size ? '<div class="sm">🔒 09시 이전 업무 ' + ctx.lock.size + '건은 07시 배정 그대로 고정입니다.</div>' : '');
+        }
         let simMsg = '', simMsgT = 0, simBox = '';
         function simClose() { simp.classList.remove('open'); const b = $('bbsim-btn'); if (b) b.classList.remove('on'); }
         simp.addEventListener('click', e => {
             const b = e.target.closest('[data-a]'); if (!b) return;
             const a = b.dataset.a;
             if (a === 'x') return simClose();
+            if (a === 'br') { simBrief = !simBrief; return simDraw(); }
+            if (a === 'brt') { simBriefTab = b.dataset.v === 'A' ? 'A' : 'B'; return simDraw(); }
             if (a === 'cp') {   // 배정자 1열 복사
                 const show = m => { simMsg = m; clearTimeout(simMsgT); simMsgT = setTimeout(() => { simMsg = ''; simDraw(); }, 12000); simDraw(); };
                 simBox = '';
