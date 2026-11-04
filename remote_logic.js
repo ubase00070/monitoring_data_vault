@@ -1203,6 +1203,21 @@
         return { schedule, subSchedule };
     }
 
+    // ── 서브 모니터링 표시 규칙 ──
+    // 서브 모니터링 임무는 기본적으로 일일 업무 목록에서 숨기되, 비중이 늘어난 시간대(10시·15시·16시)에 배정된 건만 표시한다.
+    // 시작 시각은 rawTime(예: '10:00')을 우선 보고, 없으면 업무 텍스트의 첫 'HH:MM' 또는 'N시'에서 읽는다.
+    const SUB_MON_SHOW_HOURS = [10, 15, 16];
+    function isHiddenSubMonitoring(t) {
+        const content = String((t && t.content) || '');
+        if (!/서브\s*모니터링/.test(content)) return false;   // 서브 모니터링이 아니면 숨길 대상 아님
+        const src = String((t && t.rawTime) || '');
+        let h = null;
+        const m1 = /(\d{1,2}):\d{2}/.exec(src) || /(\d{1,2}):\d{2}/.exec(content);
+        if (m1) h = parseInt(m1[1], 10);
+        else { const m2 = /(\d{1,2})\s*시/.exec(content); if (m2) h = parseInt(m2[1], 10); }
+        return !SUB_MON_SHOW_HOURS.includes(h);
+    }
+
     // 받아 둔 데이터로 화면·알림을 처리한다 (네트워크 없음) — 서버에서 새로 받았을 때와, 받아 둔 데이터를 매분 다시 계산할 때 공용
     function applyTaskData(data) {
         if (!Array.isArray(data)) throw new Error('tasks 응답 형식 오류');   // 서버 오류 응답이 정상 데이터를 덮어쓰지 않게 함
@@ -1227,8 +1242,8 @@
             // 나와 일치하면 그 업무는 나한테도 표시되어야 함 (seat_map.json 파싱 때와 동일한 관례)
             const assignees = String(t.user || '').split('/').map(n => n.trim());
             if (!assignees.includes(myName)) return false;
-            // '서브 모니터링 임무'는 일일 업무 목록에 표시하지 않는다 (띄어쓰기 유무 모두 대응)
-            if (/서브\s*모니터링/.test(String(t.content || ''))) return false;
+            // '서브 모니터링 임무'는 10·15·16시 배정분만 표시하고 나머지는 숨긴다 (띄어쓰기 유무 모두 대응)
+            if (isHiddenSubMonitoring(t)) return false;
             // next_0700_handover(내일 07시 다중모니터링 통합 인계 스냅샷)는
             // 00:00~07:10 사이에만 미리보기로 표시. 그 이후엔 같은 07:00 업무가
             // 정규 monitoring 항목으로 자연스럽게 이어지므로 중복 표시를 막는다.
@@ -1511,7 +1526,7 @@
                 const content = t.content || "";
                 const rawTime = t.rawTime || "";
                 return content.trim() !== "" && !String(rawTime).includes("1899")
-                    && !/서브\s*모니터링/.test(content);   // 서브 모니터링 임무는 표시 제외
+                    && !isHiddenSubMonitoring(t);   // 서브 모니터링은 10·15·16시 배정분만 표시
             })
             .sort((a, b) => {
                 // '내일 07시' 미리보기(next_0700_handover)는 rawTime이 '07:00'이라
