@@ -9150,7 +9150,7 @@
             function rngB(t) { return SIM.fmt(t.s) + (de(t) - t.s > 10 ? '~' + SIM.fmt(de(t)) : ''); }
             const subBad = cnt(/^서브 시간\(|서브와 연달아/);
             const subRv = rv('서브 10·15·16시 간격 (서브 시작 10분 전 ~ 종료 10분 전 비움)', !SR.gap ? '꺼짐' : (subBad ? subBad + '칸 위반' : '지킴'), SR.gap && subBad > 0,
-                !SR.gap ? '간격 규칙이 꺼져 있습니다' : (subInfo.length ? subInfo.map(o => SIM.fmt(o.H) + ' ' + esc(o.nm)).join(' · ') + ' 의 업무를 서브 시간과 겹치지 않게 배정' : '오늘 해당 시간대 서브 없음'));
+                !SR.gap ? '간격 규칙이 꺼져 있습니다' : (subInfo.length ? subInfo.map(o => SIM.fmt(o.H) + ' ' + esc(o.nm)).join(' · ') + ' 의 업무를 서브 시간과 겹치지 않게 배정 (서브는 10분 전부터 대기하므로 09·14·15시 과학관도 피함)' : '오늘 해당 시간대 서브 없음'));
             const subLines = !subInfo.length ? '' : '<h4>서브 10·15·16시 반영 내역</h4><table><tr><th>서브</th><th>담당자</th><th>이 배정안의 업무</th><th>서브와 가장 가까운 업무</th></tr>' + subInfo.map(o => '<tr><td class="n">' + SIM.fmt(o.H) + '</td><td class="n">' + esc(o.nm) + '</td><td>' + (o.ts.join(', ') || '업무 없음') + '</td><td class="nt">' + (o.gap === null ? '–' : (o.gap < 0 ? '<span class="ng">겹침</span>' : o.gap + '분 떨어짐')) + '</td></tr>').join('') + '</table><div class="sm">간격: ' + (SR.gap ? '켜짐 (과학관은 서브와 연달아도 피함)' : '꺼짐') + ' · 가중치: 서브 1건당 +' + SR.w + ' 로 계산(2.0 상한·균형 점수에 반영)' + (SR.cnt ? ' · 건수: 서브 1건당 1건으로 침(다중 포함 3건 한도에 포함)' : '') + '</div>';
             const rules = [
                 rv('가중치 2.0 이하', pc(p => p.w <= 2 + 1e-9) + '/' + N + '명', S.m.overW > 0, '최대 ' + S.maxW.toFixed(1) + (zw ? ' · 2.0인 사람에게 일반 업무 ' + zw + '칸' : '')),
