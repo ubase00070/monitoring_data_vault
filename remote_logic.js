@@ -1242,6 +1242,7 @@
 
         renderTaskList(myTasks);
         if (typeof window.syncTiddiButtonState === 'function') window.syncTiddiButtonState();
+        if (typeof window.syncYangwonButtonState === 'function') window.syncYangwonButtonState();
     }
 
     function syncTasksFromServer(force) {
@@ -2116,6 +2117,53 @@
         // 버튼에 표기할 '유효 시간대' — 실제 복사 시 쓰이는 getCalculatedTime()과 동일한 보정 로직
         const multiHourLabel = getFormattedHour(getCalculatedTime(10)) + '시';
 
+        // 잠금(비활성) 버튼 공통 스타일 — 과학관 / 양원LH 버튼 공용
+        const NB_LOCK_CSS = T.isDark
+            ? 'background:#3a3a3a; color:#777; cursor:not-allowed; opacity:0.7;'
+            : 'background:#4d6b57; color:#d7e8dc; cursor:not-allowed; opacity:0.9;';
+
+        // ── 서울 양원LH 임무 버튼 ──
+        // 담당 임무는 각자의 일일 업무(window.currentMyTasks)에 '[09:00~10:00] 양원LH 1호기 - 관제 주행' 식으로 들어온다.
+        //  · 내 업무에 양원LH가 있고 '현재 그 시간대'일 때만 버튼 테두리가 1.5초 주기로 점멸
+        //  · 임무 시간이 지나면 점멸만 멈추고, 복사는 그 업무가 목록에서 사라질 때까지(=다음 업무일 갱신 시) 계속 가능
+        //  · 아직 시작 전이거나 내 양원LH 업무가 없으면 잠금
+        const YANGWON_CONFIG = { site: '서울 양원LH', unit: '#333' };
+        function computeYangwonState() {
+            const mine = (window.currentMyTasks || []).filter(t => t && /양원\s*LH/i.test(String(t.content || '')));
+            if (!mine.length) return { canCopy: false, blink: false, text: '양원LH' };
+
+            const now = new Date();
+            const nowMin = now.getHours() * 60 + now.getMinutes();
+            const rel = m => (((m - 420) % 1440) + 1440) % 1440;   // 07시 기준 상대 분 (자정 전후 역전 방지)
+            const nowRel = rel(nowMin);
+            const items = [];
+            mine.forEach(t => {
+                const c = String(t.content || ''), r = String(t.rawTime || t.time || '');
+                let times = c.match(/\d{2}:\d{2}/g) || r.match(/\d{2}:\d{2}/g);
+                if (!times) { const h = /(\d{1,2})\s*시/.exec(c); if (h) times = [String(h[1]).padStart(2, '0') + ':00']; }
+                if (!times) return;
+                const [sh, sm] = times[0].split(':').map(Number);
+                const sMin = sh * 60 + sm;
+                let dur = 60;   // 종료 시각이 안 적혀 있으면 1시간
+                if (times.length > 1) { const [eh, em] = times[times.length - 1].split(':').map(Number); dur = ((eh * 60 + em - sMin + 1440) % 1440) || 60; }
+                const s = rel(sMin);
+                items.push({ sMin, hh: String(sh).padStart(2, '0'), s, e: s + dur });
+            });
+            if (!items.length) return { canCopy: false, blink: false, text: '양원LH' };
+
+            const active = items.find(i => nowRel >= i.s && nowRel < i.e);
+            const started = items.filter(i => i.s <= nowRel).sort((a, b) => b.s - a.s)[0];
+            const pick = active || started;
+            if (!pick) {   // 오늘 임무가 아직 하나도 시작 전
+                const next = items.slice().sort((a, b) => a.s - b.s)[0];
+                return { canCopy: false, blink: false, text: `양원LH (${next.hh}시)` };
+            }
+            const date = new Date();
+            if (pick.sMin > nowMin) date.setDate(date.getDate() - 1);   // 어제 밤 임무를 자정 넘어 보는 경우
+            return { canCopy: true, blink: !!active, text: `양원LH (${pick.hh}시)`, hh: pick.hh, date };
+        }
+        const ywState = computeYangwonState();
+
         // ── 배송/순찰 띠띠 버튼 상태 계산 (휴관 여부 + 09~18시 시간대 잠금) ──
         // 카드 최초 렌더링과, syncTasksFromServer가 도는 매분 주기적 동기화 양쪽에서 재사용.
         // 휴관일이면 시간 표기 없이 항상 '(휴관)'만 붙고, 시간대와 무관하게 항상 잠긴다.
@@ -2131,11 +2179,8 @@
             const isActive = !isClosed && hourNow >= 9 && hourNow < 18;
             const hourLabel = getFormattedHour(getCalculatedTime(10)) + '시';
             const suffix = isClosed ? ' (휴관)' : (isActive ? ` (${hourLabel})` : '');
-            const lockStyle = isActive ? '' : (T.isDark
-                ? 'background:#3a3a3a; color:#777; cursor:not-allowed; opacity:0.7;'
-                : 'background:#4d6b57; color:#d7e8dc; cursor:not-allowed; opacity:0.9;');
-            const baseLabel = TTIDDI_CONFIG.deliveryActive ? '배송/순찰 띠띠' : '순찰 띠띠 (배송 띠띠 입고)';
-            return { isClosed, isActive, lockStyle, text: baseLabel + suffix };
+            const lockStyle = isActive ? '' : NB_LOCK_CSS;
+            return { isClosed, isActive, lockStyle, text: '과학관' + suffix };
         }
 
         const tiddiState = computeTiddiButtonState();
@@ -2167,6 +2212,29 @@
             btn.textContent = s.text;
         };
 
+        // 매분 업무 동기화 때 같이 호출 — 임무 시작/종료 경계에서 점멸/잠금/라벨을 갱신 (변화 없으면 DOM 안 건드림)
+        window.syncYangwonButtonState = function() {
+            const btn = document.getElementById('btnYangwon');
+            if (!btn) return;
+            if (btn.dataset.copyEffectActive === 'true') return;   // '복사됨' 표시 중엔 다음 틱에
+            const s = computeYangwonState();
+            const key = [s.canCopy, s.blink, s.text].join('|');
+            if (btn.dataset.ywKey === key) return;
+            btn.dataset.ywKey = key;
+
+            btn.disabled = !s.canCopy;
+            btn.classList.toggle('nb-yw-blink', s.blink);
+            if (s.canCopy) {
+                btn.style.background = '';
+                btn.style.color = '';
+                btn.style.cursor = '';
+                btn.style.opacity = '';
+            } else {
+                btn.style.cssText += NB_LOCK_CSS;
+            }
+            btn.textContent = s.text;
+        };
+
         card.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px; flex:none;">
                 <span style="display:flex; align-items:center; gap:7px; font-size:15px; color:${T.text}; font-weight:800; white-space:nowrap;">${nbIcon('tag', 17, '#0e7490')}영상 파일명 생성기</span>
@@ -2181,7 +2249,10 @@
                         <button id="btnMulti" class="sub-btn" style="flex:77; min-width:0; border-top-right-radius:0; border-bottom-right-radius:0;">다중 모니터링 (${multiHourLabel})</button>
                         <button id="btnMultiSub" class="sub-btn" style="flex:23; min-width:0; padding:0 2px; font-size:13px; border-top-left-radius:0; border-bottom-left-radius:0; margin-left:-2px;">서브</button>
                     </div>
-                    <button id="btnCombined" class="sub-btn" ${isTiddiActive ? '' : 'disabled'} style="flex:none; ${tiddiLockStyle}">${tiddiState.text}</button>
+                    <div style="display:flex; gap:0; min-width:0;">
+                        <button id="btnCombined" class="sub-btn" ${isTiddiActive ? '' : 'disabled'} style="flex:1; min-width:0; padding:0 2px; font-size:13px; border-top-right-radius:0; border-bottom-right-radius:0; ${tiddiLockStyle}">${tiddiState.text}</button>
+                        <button id="btnYangwon" class="sub-btn${ywState.blink ? ' nb-yw-blink' : ''}" ${ywState.canCopy ? '' : 'disabled'} data-yw-key="${[ywState.canCopy, ywState.blink, ywState.text].join('|')}" style="flex:1; min-width:0; padding:0 2px; font-size:13px; border-top-left-radius:0; border-bottom-left-radius:0; margin-left:-2px; ${ywState.canCopy ? '' : NB_LOCK_CSS}">${ywState.text}</button>
+                    </div>
                     <div style="height:1px; background:${T.border}; flex:none; margin:1px 0;"></div>
                     <div style="font-size:11.5px; font-weight:800; color:${T.isDark ? '#aaa' : '#6b6b6b'}; flex:none;">배달 건 수동 입력 시</div>
                     <div style="position:relative; min-width:0; flex:none;">
@@ -2204,7 +2275,7 @@
             btnStyleTag.id = 'naming-btn-style';
             document.head.appendChild(btnStyleTag);
         }
-        btnStyleTag.textContent = `.sub-btn { height:43px; background:${rainbowBg(neutralBtnBg)}; color:${neutralBtnText}; border:2px solid transparent; padding:0 4px; border-radius:10px; font-size:14px; font-weight:bold; cursor:pointer; flex:1; min-width:0; box-sizing:border-box; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; transition:0.2s; } .sub-btn:hover:not(:disabled) { background:${rainbowBg(subBtnHoverBg)}; color:${subBtnHoverText}; }`;
+        btnStyleTag.textContent = `.sub-btn { height:43px; background:${rainbowBg(neutralBtnBg)}; color:${neutralBtnText}; border:2px solid transparent; padding:0 4px; border-radius:10px; font-size:14px; font-weight:bold; cursor:pointer; flex:1; min-width:0; box-sizing:border-box; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; transition:0.2s; } .sub-btn:hover:not(:disabled) { background:${rainbowBg(subBtnHoverBg)}; color:${subBtnHoverText}; } @keyframes nbYwBlink { 0%, 100% { box-shadow:0 0 0 2px rgba(239,68,68,.95), 0 0 9px 1px rgba(239,68,68,.5); } 50% { box-shadow:0 0 0 2px rgba(239,68,68,.12), 0 0 0 0 rgba(239,68,68,0); } } .sub-btn.nb-yw-blink { position:relative; z-index:1; animation:nbYwBlink 1.5s ease-in-out infinite; }`;
 
         // ── 내 최근 배달 3버튼 (SECTION 6-1) — 테마 색은 다른 버튼들과 같은 값을 쓴다 ──
         let dlvStyleTag = document.getElementById('naming-dlv-style');
@@ -2299,8 +2370,19 @@
 					: TTIDDI_CONFIG.units.patrol;
 				const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_${TTIDDI_CONFIG.site}_${unitsText}${myName ? '_' + myName : ''}`;
 				navigator.clipboard.writeText(finalName);
-				applyCopyEffect(e.target, neutralBtnBg, neutralBtnText);
+				applyCopyEffect(e.target, '', '');
 			};
+
+            // 양원LH 버튼 — 내 양원LH 임무 시각 기준: 20261104_09_서울 양원LH_#333_홍길동
+            const ywBtn = card.querySelector('#btnYangwon');
+            if (ywBtn) ywBtn.onclick = (e) => {
+                const s = computeYangwonState();   // 클릭 시점 기준으로 다시 계산
+                if (!s.canCopy) return;
+                const myName = localStorage.getItem('neubie_user_name') || '';
+                const finalName = `${getFormattedDate(s.date)}_${s.hh}_${YANGWON_CONFIG.site}_${YANGWON_CONFIG.unit}${myName ? '_' + myName : ''}`;
+                navigator.clipboard.writeText(finalName);
+                applyCopyEffect(e.target, '', '');
+            };
 
         }, 10);
 
