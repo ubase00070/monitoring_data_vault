@@ -8538,7 +8538,7 @@
         #bb #bbsim .col { min-height:0; overflow:auto; border:1.5px solid var(--bd2); border-radius:10px; background:var(--sur); }
         #bb #bbsim .gh { position:sticky; top:0; z-index:2; display:grid; gap:8px; padding:5px 8px; background:var(--sur2); border-bottom:2px solid var(--bd2); font-size:12px; font-weight:700 !important; color:var(--mu); }
         #bb #bbsim .gr { display:grid; gap:8px; align-items:center; padding:2px 8px; min-height:26px; border-bottom:1px solid var(--bd); }
-        #bb #bbsim .c1 .gh, #bb #bbsim .c1 .gr { grid-template-columns:50px minmax(0,1fr) minmax(0,1fr); }
+        #bb #bbsim .c1 .gh, #bb #bbsim .c1 .gr { grid-template-columns:calc(54px * var(--bb-ts, 1)) minmax(0,1fr) minmax(0,1fr); gap:5px; padding-left:6px; padding-right:6px; }
         #bb #bbsim .c2 .gh, #bb #bbsim .c2 .gr { grid-template-columns:86px minmax(0,1fr) minmax(150px,.62fr); }
         #bb #bbsim .tm { font-size:12.5px; font-weight:700 !important; color:var(--mu); font-variant-numeric:tabular-nums; }
         #bb #bbsim .tk { font-size:12.5px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
@@ -8790,14 +8790,14 @@
             if (r.W + Math.max(u.w, 1e-6) > 2 + 1e-9) { why.push('가중치 2.0을 넘겨 배정'); m.wRule++; }
             if (r.C + ucnt > 3) why.push('다중 포함 ' + (r.C + ucnt) + '건째 배정 (다중 ' + s.mons.length + ' + 앞선 업무 ' + (r.C - s.mons.length) + ' + 이번 ' + (ucnt > 1 ? ucnt + '줄 묶음' : '1건') + ' · 서브는 제외)');
             if (s.mons.some(H => ov(H - 10, H + 50, u.s, u.e))) { why.push('다중 교대 시간과 겹침'); m.timeConflict++; }
-            else if (u.sci && s.mons.some(H => ov(H - 10, H + 50 + GAP, u.s - GAP, u.e + GAP))) { why.push('다중과 연달아 배정 (부산)'); m.timeConflict++; }
+            else if (u.sci && s.mons.some(H => ov(H - 10, H + 50 + GAP, u.s - GAP, u.e + GAP))) { why.push('다중과 연달아 배정 (과학관)'); m.timeConflict++; }
             if (s.subG.some(H => ov(H - 10, H + 50, u.s, u.e))) { why.push('서브 시간(' + s.subG.filter(H => ov(H - 10, H + 50, u.s, u.e)).map(fmt).join('·') + ')과 겹침'); m.timeConflict++; }
-            else if (u.sci && s.subG.some(H => ov(H - 10, H + 50 + GAP, u.s - GAP, u.e + GAP))) { why.push('서브와 연달아 배정 (부산)'); m.timeConflict++; }
+            else if (u.sci && s.subG.some(H => ov(H - 10, H + 50 + GAP, u.s - GAP, u.e + GAP))) { why.push('서브와 연달아 배정 (과학관)'); m.timeConflict++; }
             if (s.subs.some(H => ov(H - 10, H + 50, u.s, u.e))) { why.push('18시 이후 서브 시간과 겹침'); m.timeConflict++; }
             if (!(s.p.start <= u.slot && u.slot + 60 <= s.p.end)) { why.push('근무시간 밖 (' + fmt(s.p.start) + '~' + fmt(s.p.end) + ' 근무)'); m.other++; }
             if (s.p.brk && ov(u.s, u.e, s.p.brk[0], s.p.brk[1])) { why.push('휴게시간과 겹침'); m.other++; }
             if (r.tasks.some(t => ov(t[0], t[1], u.s, u.e))) { why.push('본인 다른 업무와 겹침'); m.other++; }
-            if (u.sci && r.sci) { why.push('부산 하루 2회'); m.other++; }
+            if (u.sci && r.sci) { why.push('과학관 하루 2회'); m.other++; }
             if (u.yw && r.yw) { why.push('양원LH 하루 2회'); m.other++; }
             if ((u.sci ? r.tasks : r.sciT).some(t => ov(t[0], t[1], u.s - 10, u.e + 10))) { why.push('과학관(정각 교대)과 다른 업무가 바로 붙음'); m.timeConflict++; }
             if (isHubU(u) && !earlyFree(s) && Object.values(S).some(x => earlyFree(x) && x.mons.length + Math.max(u.w, 1e-6) <= 2 + 1e-9 && x.mons.length + u.cnt <= 3 && !x.mons.some(H => ov(H - 10, H + 50 + GAP, u.s - GAP, u.e + GAP)))) { why.push('07~16시 근무자 중 07·08·09시 다중이 없는 사람이 있는데 부산 08:50을 다른 사람이 받음'); m.other++; }
@@ -9149,19 +9149,19 @@
             }).filter(Boolean);
             function rngB(t) { return SIM.fmt(t.s) + (de(t) - t.s > 10 ? '~' + SIM.fmt(de(t)) : ''); }
             const subBad = cnt(/^서브 시간\(|서브와 연달아/);
-            const subRv = rv('서브 10·15·16시 간격 (앞 10분~뒤 50분 비움)', !SR.gap ? '꺼짐' : (subBad ? subBad + '칸 위반' : '지킴'), SR.gap && subBad > 0,
+            const subRv = rv('서브 10·15·16시 간격 (서브 시작 10분 전 ~ 종료 10분 전 비움)', !SR.gap ? '꺼짐' : (subBad ? subBad + '칸 위반' : '지킴'), SR.gap && subBad > 0,
                 !SR.gap ? '간격 규칙이 꺼져 있습니다' : (subInfo.length ? subInfo.map(o => SIM.fmt(o.H) + ' ' + esc(o.nm)).join(' · ') + ' 의 업무를 서브 시간과 겹치지 않게 배정' : '오늘 해당 시간대 서브 없음'));
             const subLines = !subInfo.length ? '' : '<h4>서브 10·15·16시 반영 내역</h4><table><tr><th>서브</th><th>담당자</th><th>이 배정안의 업무</th><th>서브와 가장 가까운 업무</th></tr>' + subInfo.map(o => '<tr><td class="n">' + SIM.fmt(o.H) + '</td><td class="n">' + esc(o.nm) + '</td><td>' + (o.ts.join(', ') || '업무 없음') + '</td><td class="nt">' + (o.gap === null ? '–' : (o.gap < 0 ? '<span class="ng">겹침</span>' : o.gap + '분 떨어짐')) + '</td></tr>').join('') + '</table><div class="sm">간격: ' + (SR.gap ? '켜짐 (과학관은 서브와 연달아도 피함)' : '꺼짐') + ' · 가중치: 서브 1건당 +' + SR.w + ' 로 계산(2.0 상한·균형 점수에 반영)</div>';
             const rules = [
                 rv('가중치 2.0 이하', pc(p => p.w <= 2 + 1e-9) + '/' + N + '명', S.m.overW > 0, '최대 ' + S.maxW.toFixed(1) + (zw ? ' · 2.0인 사람에게 일반 업무 ' + zw + '칸' : '')),
                 rv('다중 포함 3건 이하', pc(p => p.t + p.m <= 3) + '/' + N + '명', S.m.n4 > 0, S.m.n4 ? '4건 이상 ' + S.m.n4 + '명 (서브 제외)' : '서브 제외'),
-                rv('과학관: 다중 無 우선', sciU ? (sciU - S.sciMon) + '/' + sciU + '칸' : '–', S.sciEx > 0, sciU ? '다중 無 인원이 맡을 수 있는 최대 ' + (sciU - S.sciMin) + '칸 · 다중 보유자가 받은 칸 ' + S.sciMon + (S.sciEx ? ' (' + S.sciEx + '칸 더 줄일 수 있음)' : '') : '오늘 과학관 업무 없음'),
+                rv('과학관: 다중 없는 인원 우선 배정', sciU ? (sciU - S.sciMon) + '/' + sciU + '칸' : '–', S.sciEx > 0, sciU ? '다중 無 인원이 맡을 수 있는 최대 ' + (sciU - S.sciMin) + '칸 · 다중 보유자가 받은 칸 ' + S.sciMon + (S.sciEx ? ' (' + S.sciEx + '칸 더 줄일 수 있음)' : '') : '오늘 과학관 업무 없음'),
                 subRv,
-                viol('부산 하루 1회', /부산 하루 2회/),
+                viol('과학관 하루 1회', /과학관 하루 2회/),
                 viol('양원LH 하루 1회', /양원LH 하루 2회/),
                 viol('다중·서브 시간 겹침 / 과학관 정각 교대', /다중 교대|다중과 연달아|서브 시간|서브와 연달아|정각 교대/),
                 viol('근무·휴게시간 / 본인 업무 겹침', /근무시간 밖|휴게시간|본인 다른 업무/),
-                viol('부산 08:50 우선 (07~16시 · 다중 無)', /07·08·09시 다중이 없는/),
+                viol('08:50 출근 + 09시 과학관 우선 (다중 없는 07~16시 인원 우선)', /07·08·09시 다중이 없는/),
                 viol('후보 없음 · 묶음 담당자 불일치', /후보 없음|근무표에 없는|묶음 업무인데/),
             ].join('');
             const pf = (name, v, note) => '<tr><td>' + name + '</td><td class="n">' + v + '</td><td class="nt">' + (note || '') + '</td></tr>';
