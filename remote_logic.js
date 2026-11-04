@@ -1252,6 +1252,17 @@
             }
             return true;
         });
+        // 서브 모니터링은 별도 업무 행이 아니라 monitoring 행의 subUser 칸에 들어 있다.
+        // 내가 서브로 배정된 시각이 10·15·16시(SUB_MON_SHOW_HOURS)이면 '서브 모니터링' 업무를 만들어 목록에 넣는다.
+        // (앞뒤 담당자 표기 없이 '시각 + 서브 모니터링'만 표시)
+        data.forEach(t => {
+            if (!t || t.type !== 'monitoring' || !/^\d{2}:\d{2}$/.test(t.rawTime || '')) return;
+            const hour = parseInt(t.rawTime.slice(0, 2), 10);
+            if (!SUB_MON_SHOW_HOURS.includes(hour)) return;
+            const subs = String(t.subUser || '').split('/').map(n => n.trim());
+            if (!myName || !subs.includes(myName)) return;
+            myTasks.push({ user: myName, type: 'sub_monitoring', content: '서브 모니터링', rawTime: t.rawTime, main2: [] });
+        });
         window.currentMyTasks = myTasks;
         checkAndTriggerNotifications(myTasks);
 
