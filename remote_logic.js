@@ -2128,6 +2128,40 @@
         //  · 임무 시간이 지나면 점멸만 멈추고, 복사는 그 업무가 목록에서 사라질 때까지(=다음 업무일 갱신 시) 계속 가능
         //  · 아직 시작 전이거나 내 양원LH 업무가 없으면 잠금
         const YANGWON_CONFIG = { site: '서울 양원LH', unit: '#333' };
+        // [양원LH 태스크 번호] Worker 가 슬랙 배정 메시지에서 뽑아 레포(yangwon_task.json)에 올려 둔 번호를 읽어 복사 텍스트에 끼워 넣는다.
+        //  · 키: 날짜_시(예: 20261104_12). 레포에서 못 찾으면 Worker 주소(/yangwon)로 한 번 더 찾고, 그래도 없으면 예전처럼 번호 없이 복사한다.
+        //  · 복사 순간에 기다리지 않도록 카드가 그려질 때·버튼에 마우스를 올릴 때 미리 받아 두고, 못 받은 채 눌렀을 때만 최대 2.5초 기다린다.
+        const YW_TASK_URLS = [
+            'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/yangwon_task.json',
+            'https://patrol-watch-worker.ubase00070.workers.dev/yangwon'
+        ];
+        window.__ywNo = window.__ywNo || {};   // { 키: { no, at } }
+        function ywCachedNo(key) {
+            const c = window.__ywNo[key];
+            return (c && c.no && Date.now() - c.at < 30 * 60 * 1000) ? c.no : '';
+        }
+        async function ywFetchNo(key) {
+            for (const url of YW_TASK_URLS) {
+                const ctrl = new AbortController(), to = setTimeout(() => ctrl.abort(), 2000);
+                try {
+                    const r = await fetch(url + '?t=' + Date.now(), { cache: 'no-store', signal: ctrl.signal });
+                    if (!r.ok) continue;
+                    const j = await r.json();
+                    const no = j && j.tasks && j.tasks[key] && j.tasks[key].task_no;
+                    if (no) { window.__ywNo[key] = { no: String(no), at: Date.now() }; return String(no); }
+                } catch (e) { /* 다음 주소로 */ }
+                finally { clearTimeout(to); }
+            }
+            return '';
+        }
+        function ywPrefetch() {
+            try {
+                const s = computeYangwonState();
+                if (!s.canCopy) return;
+                const key = `${getFormattedDate(s.date)}_${s.hh}`;
+                if (!ywCachedNo(key)) ywFetchNo(key);
+            } catch (e) { /* 미리 받기 실패는 무시 */ }
+        }
         function computeYangwonState() {
             const mine = (window.currentMyTasks || []).filter(t => t && /양원\s*LH/i.test(String(t.content || '')));
             if (!mine.length) return { canCopy: false, blink: false, text: '양원LH' };
@@ -2375,14 +2409,23 @@
 
             // 양원LH 버튼 — 내 양원LH 임무 시각 기준: 20261104_09_서울 양원LH_#333_홍길동
             const ywBtn = card.querySelector('#btnYangwon');
-            if (ywBtn) ywBtn.onclick = (e) => {
-                const s = computeYangwonState();   // 클릭 시점 기준으로 다시 계산
-                if (!s.canCopy) return;
-                const myName = localStorage.getItem('neubie_user_name') || '';
-                const finalName = `${getFormattedDate(s.date)}_${s.hh}_${YANGWON_CONFIG.site}_${YANGWON_CONFIG.unit}${myName ? '_' + myName : ''}`;
-                navigator.clipboard.writeText(finalName);
-                applyCopyEffect(e.target, '', '');
-            };
+            if (ywBtn) {
+                ywBtn.onmouseenter = ywPrefetch;
+                ywPrefetch();   // 카드가 그려질 때 미리 받아 둠 (복사 순간엔 보통 이미 있음)
+                ywBtn.onclick = async (e) => {
+                    const s = computeYangwonState();   // 클릭 시점 기준으로 다시 계산
+                    if (!s.canCopy) return;
+                    const myName = localStorage.getItem('neubie_user_name') || '';
+                    const key = `${getFormattedDate(s.date)}_${s.hh}`;
+                    let no = ywCachedNo(key);
+                    if (!no) {   // 아직 못 받았으면 최대 2.5초만 기다림(복사 권한이 유지되는 시간 안) — 못 찾으면 번호 없이 복사
+                        try { no = await Promise.race([ywFetchNo(key), new Promise(r => setTimeout(() => r(''), 2500))]); } catch (err) { no = ''; }
+                    }
+                    const finalName = `${key}_${YANGWON_CONFIG.site}_${YANGWON_CONFIG.unit}${no ? '_#' + no : ''}${myName ? '_' + myName : ''}`;
+                    navigator.clipboard.writeText(finalName);
+                    applyCopyEffect(e.target, '', '');
+                };
+            }
 
         }, 10);
 
@@ -2446,7 +2489,7 @@
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
 		// 문자열을 넣으면 패치노트에 빨간 '`' 뱃지가 점멸하며 뜸.
 		// 빈 문자열('')로 비우면 뱃지가 사라짐.
-		const PATCH_NOTE_NEW_CONTENT = '관제실 배차 리마인더';
+		const PATCH_NOTE_NEW_CONTENT = '양원';
 
         // ── 패치노트 내용 ──────────────────────────────────────
         // 아래 patchItems 배열에 버전별 내용을 추가하세요 (버튼 라벨의 날짜도 이 배열의
@@ -2454,9 +2497,10 @@
         const patchItems = [
             {
                 version: 'v1.1',
-                date: '2026-11-02',
+                date: '2026-11-04',
                 items: [
                     'Rockstar ☆ Vice City, Baby!',
+					'양원LH 1:1관제 주행 대응',
 					'리센츠/엘스/가평자이 미순찰 리마인더',
                     '본 스크립트는 NCC 서버에 직접 신호를 보내지 않음',
                     '성남 배터리 조회 쿨다운 2분',
