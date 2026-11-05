@@ -9354,6 +9354,7 @@
         const SUB_STRICT = 1080;   // 18:00 이후 슬롯의 서브는 일일 업무와 겹치면 안 됨 (그 전은 겹쳐도 무방)
         /* [서브 규칙] 10시·15시·16시 '서브 모니터링' 담당자: ① 다중과 똑같이 그 시간(H-10 ~ H+50) 앞뒤로 일일 업무가 겹치거나 붙지 않게(15분 룰·과학관 정각 교대 포함) ② 가중치 SUBRULE.w(0.5) 를 가진 것으로 취급 (다중 포함 3건 한도에는 안 셈) */
         const SUB_H = [600, 900, 960];
+        const YW_EXCLUDE = ['김한석', '김미소', '이규은', '유재헌', '조천호', '이수성', '임미선', '이현경'];   // 양원LH 관제 주행(09·12·15·20·22시)은 이 인원에게 배정하지 않음 (심야 00·03·06시 고정 칸은 수식 범위 밖이라 무관)
         const SUBRULE = { gap: true, w: 0.5, cnt: true };   // cnt: 10·15·16시 서브 1건을 '다중 포함 3건' 건수에도 1건으로 센다
         const mkTask = (t, bold, fixed, i) => {
           const m = t.match(/^\[(\d{1,2}:\d{2})(?:~(\d{1,2}:\d{2}))?\]/); const yw = YW_RE.test(t), s = tmin(m[1]), e = m[2] ? tmin(m[2]) : s + (yw ? 60 : 10);   // 양원LH 관제 주행은 30~45분 걸려서 1시간 업무로 취급 (화면 표기는 시트 원본 시각 그대로 — de)
@@ -9438,7 +9439,7 @@
                 if (u.sci && s.mons.some(H => H === u.slot + 60)) return false;
                 if (s.rows >= 3) return false;
                 if (u.sci && s.sci) return false;
-                if (u.yw && s.yw) return false;
+                if (u.yw && (s.yw || YW_EXCLUDE.includes(p.name))) return false;
                 return true;
               });
               if (u.sci) { const c2 = c.filter(p => !S[p.name].mons.some(H => H === u.slot - 60)); if (c2.length) c = c2; }
@@ -9451,7 +9452,7 @@
                   if (!(p.start <= u.slot && u.slot + 60 <= p.end)) return false;
                   if (p.brk && ov(u.s, u.e, p.brk[0], p.brk[1])) return false;
                   if (u.sci && s.sci) return false;
-                  if (u.yw && s.yw) return false;
+                  if (u.yw && (s.yw || YW_EXCLUDE.includes(p.name))) return false;
                   if (tier < 3) {
                     if (s.slots.has(u.slot)) return false;
                     if (s.mons.some(H => H === u.slot)) return false;
@@ -9481,7 +9482,7 @@
                   if (s.tasks.some(([a, b]) => ov(a, b, u.s, u.e))) return false;
                   if (tier < 3 && (u.sci ? s.tasks : s.sciT).some(([a, b]) => ov(a, b, u.s - 10, u.e + 10))) return false;   // 과학관은 정각 교대 — 앞뒤로 다른 업무가 바로 붙으면 안 됨
                   if (u.sci && s.sci) return false;
-                  if (u.yw && s.yw) return false;   // 양원LH 는 한 사람이 하루 1회만
+                  if (u.yw && (s.yw || YW_EXCLUDE.includes(p.name))) return false;   // 양원LH 는 한 사람이 하루 1회만
                   if (tier < 3 && u.sci && (s.mons.some(H => ov(H - 10, H + 50 + GAP, u.s - GAP, u.e + GAP)) || s.subG.some(H => ov(H - 10, H + 50 + GAP, u.s - GAP, u.e + GAP)))) return false;
                   if (tier < 1 && !cm && s.W + Math.max(u.w, 1e-6) > 2 + 1e-9) return false;
                   if (tier < 2 && s.mons.length + s.sn + s.Ct + u.cnt > opt.cap) return false;
@@ -9532,6 +9533,7 @@
             if (r.tasks.some(t => ov(t[0], t[1], u.s, u.e))) { why.push('본인 다른 업무와 겹침'); m.other++; }
             if (u.sci && r.sci) { why.push('과학관 하루 2회'); m.other++; }
             if (u.yw && r.yw) { why.push('양원LH 하루 2회'); m.other++; }
+            if (u.yw && YW_EXCLUDE.includes(o.name)) { why.push('양원LH 배정 제외 인원'); m.other++; }
             if ((u.sci ? r.tasks : r.sciT).some(t => ov(t[0], t[1], u.s - 10, u.e + 10))) { why.push('과학관(정각 교대)과 다른 업무가 바로 붙음'); m.timeConflict++; }
             if (isHubU(u) && !earlyFree(s) && Object.values(S).some(x => earlyFree(x) && x.mons.length + Math.max(u.w, 1e-6) <= 2 + 1e-9 && x.mons.length + x.sn + u.cnt <= 3 && !x.mons.some(H => ov(H - 10, H + 50 + GAP, u.s - GAP, u.e + GAP)))) { why.push('07~16시 근무자 중 07·08·09시 다중이 없는 사람이 있는데 부산 08:50을 다른 사람이 받음'); m.other++; }
             r.W += u.w; r.C += ucnt; r.tasks.push([u.s, u.e]); if (u.sci) r.sciT.push([u.s, u.e]); r.sci = r.sci || u.sci; r.yw = r.yw || !!u.yw;
@@ -9711,7 +9713,7 @@
             return {
                 liveParse, liveCtx, liveMetrics, liveRepair, liveFull, liveScore, liveClimber, buildUnits, fmt,
                 setSubRule: o => { Object.assign(SUBRULE, o || {}); },
-                subRule: () => ({ H: SUB_H.slice(), gap: SUBRULE.gap, w: SUBRULE.w, cnt: SUBRULE.cnt }),
+                ywExclude: () => YW_EXCLUDE.slice(), subRule: () => ({ H: SUB_H.slice(), gap: SUBRULE.gap, w: SUBRULE.w, cnt: SUBRULE.cnt }),
                 setMonth: v => { MONTH_OK = !!v; if (!v) { RSRC = 'none'; } },
                 setRoster: list => { mkStaff(list); MONTH_OK = true; RSRC = 'file'; },
                 useEmbedded: () => { mkStaff(STAFF_DATA); MONTH_OK = true; RSRC = 'embedded'; },
@@ -9892,6 +9894,7 @@
                 subRv,
                 viol('과학관 하루 1회', /과학관 하루 2회/),
                 viol('양원LH 하루 1회', /양원LH 하루 2회/),
+                viol('양원LH 배정 제외 인원 (' + SIM.ywExclude().join('·') + ')', /양원LH 배정 제외/),
                 viol('다중·서브 시간 겹침 / 과학관 정각 교대', /다중 교대|다중과 연달아|서브 시간|서브와 연달아|정각 교대/),
                 viol('근무·휴게시간 / 본인 업무 겹침', /근무시간 밖|휴게시간|본인 다른 업무/),
                 viol('08:50 출근 + 09시 과학관 우선 (다중 없는 07~16시 인원 우선)', /07·08·09시 다중이 없는/),
