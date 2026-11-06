@@ -119,7 +119,7 @@
     "subUser": "이규순"
   },
   {
-    "user": "백진홍",
+    "user": "안대관",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "00:00",
@@ -154,7 +154,7 @@
     "subUser": "이준"
   },
   {
-    "user": "안대관",
+    "user": "백진홍",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "05:00",
@@ -366,7 +366,7 @@
     "rawTime": "03:00"
   },
   {
-    "user": "백진홍",
+    "user": "안대관",
     "type": "task",
     "content": "[06:00] 양원LH 1호기 - 관제 주행",
     "rawTime": "06:00"
