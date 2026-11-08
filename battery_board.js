@@ -5073,13 +5073,15 @@
     //    여기서는 status('anomaly') 와 limit_min 을 그대로 표시만 한다. 판정 기준을 이 파일에 또 두면 두 파일이 어긋난다.
     // ============================================================
     //  읽는 순서: ① Cloudflare Worker /live (Durable Object — 원본, 30초 갱신) → ② 실패하면 Gist raw (미러·백업)
-    //  Worker 가 실패하면 60초 동안은 Worker 를 건너뛰고 Gist 만 읽는다 (장애 중 매번 15초씩 기다리지 않도록).
+    //  Worker 는 최대 3번 시도하고, 3번 다 실패하면 10초만 건너뛰고 Gist 를 읽는다 (Gist 가 1분 넘게 낡았으면 쓰지 않음).
     const PATROL_WORKER_URL = 'https://patrol-watch-worker.ubase00070.workers.dev/live';
     const PATROL_LIVE_URL = 'https://gist.githubusercontent.com/ubase00070/bd7773a059217fb81b0be90c961fcc22/raw/patrol_watch_live.json';   // 백업(Gist 미러)
     const PATROL_REFRESH_MS = 30 * 1000;   // 30초마다 조회 (NCC API 와 무관 — Worker/Gist 파일만 읽음)
-    const PATROL_WORKER_TIMEOUT_MS = 8000;
+    const PATROL_WORKER_TIMEOUT_MS = 7000;
     let _patrolWorkerFailUntil = 0;
     let _patrolSrc = '';                   // 마지막으로 읽은 곳: 'Worker' | 'Gist(대체)'
+    const PATROL_GIST_MAX_AGE_SEC = 60;    // 예비(Gist)가 이보다 오래된 데이터면 쓰지 않음 (Gist 는 한도 소진 등으로 멈춰 있을 수 있음 — 낡은 정보를 새것처럼 보여주지 않음)
+    const _patrolSleep = (ms) => new Promise(r => setTimeout(r, ms));
 
     async function fetchPatrolOne(url, ms) {
         const ctrl = new AbortController();
@@ -5095,18 +5097,37 @@
         }
     }
 
+    // updated_at(HH:MM:SS, KST) 기준 데이터 나이(초). 알 수 없으면 null
+    function patrolAgeSec(d) {
+        const ua = d && d.updated_at;
+        if (typeof ua !== 'string' || !/^\d{1,2}:\d{2}(:\d{2})?$/.test(ua)) return null;
+        const [h, m, sc] = ua.split(':').map(Number);
+        const k = new Date(Date.now() + 9 * 3600 * 1000);
+        let diff = (k.getUTCHours() * 3600 + k.getUTCMinutes() * 60 + k.getUTCSeconds()) - (h * 3600 + m * 60 + (sc || 0));
+        if (diff < -3600) diff += 86400;   // 자정 경계
+        return diff;
+    }
+
+    // Worker 가 최우선. 잠깐 막혀도(예: 저장소 지연 → 503) 바로 Gist 로 갈아타지 않고 최대 3번 시도한다 (7초 → 0.8초 쉬고 → 7초 → 2초 쉬고 → 7초).
+    // 3번 다 실패하면 10초만 Worker 를 건너뛰고 Gist 를 읽되, Gist 데이터가 1분 넘게 낡았으면 쓰지 않고 실패로 처리한다
+    // (화면에는 마지막으로 받은 정상 데이터와 '불러오기 실패' 표시가 유지됨). — 메인 화면(index.html)의 읽기 방식과 동일
     async function fetchPatrolData() {
         if (Date.now() >= _patrolWorkerFailUntil) {
-            try {
-                const data = await fetchPatrolOne(`${PATROL_WORKER_URL}?t=${Date.now()}`, PATROL_WORKER_TIMEOUT_MS);
-                _patrolSrc = 'Worker';
-                return data;
-            } catch (e) {
-                _patrolWorkerFailUntil = Date.now() + 60 * 1000;
-                console.warn('[BB] Worker 읽기 실패 → Gist 로 대체:', e.message);
+            for (let i = 0; i < 3; i++) {
+                try {
+                    const data = await fetchPatrolOne(`${PATROL_WORKER_URL}?t=${Date.now()}`, PATROL_WORKER_TIMEOUT_MS);
+                    _patrolSrc = 'Worker';
+                    return data;
+                } catch (e) {
+                    if (i < 2) await _patrolSleep(i === 0 ? 800 : 2000);
+                    else console.warn('[BB] Worker 읽기 3회 실패 → Gist 로 대체:', e.message);
+                }
             }
+            _patrolWorkerFailUntil = Date.now() + 10 * 1000;
         }
-        const data = await fetchPatrolOne(`${PATROL_LIVE_URL}?t=${Date.now()}`, 15000);
+        const data = await fetchPatrolOne(`${PATROL_LIVE_URL}?t=${Date.now()}`, 8000);
+        const age = patrolAgeSec(data);
+        if (age !== null && age > PATROL_GIST_MAX_AGE_SEC) throw new Error('Worker 응답 지연 · 예비(Gist) 데이터도 ' + Math.max(1, Math.round(age / 60)) + '분 전 것이라 사용하지 않음');
         _patrolSrc = 'Gist(대체)';
         return data;
     }
