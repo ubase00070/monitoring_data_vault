@@ -58,8 +58,8 @@
     {
       "row": 90,
       "content": "[10:30] 요기요 [송도] 뉴비 대기장소 설정 체크",
-      "fixed": false,
-      "user": ""
+      "fixed": true,
+      "user": "관리자"
     },
     {
       "row": 91,
