@@ -2508,8 +2508,7 @@
         headerContainer.appendChild(buildViceDecor(T));
 
         const title = document.createElement('h2');
-        title.innerHTML = '<span style="font-size:1.2em;">G</span>rand <span style="font-size:1.2em;">T</span>ower <span style="font-size:1.2em;">A</span>ssistant';
-        title.title = "기능개선 피드백 환영입니다";
+        title.textContent = '기능개선 피드백 환영입니다';
         title.style.cssText = `${T.titleCss} -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent; font-size:21px; letter-spacing:0; flex:0 1 auto; width:fit-content; margin:0; font-weight:900; white-space:nowrap; min-width:0; overflow:hidden; text-overflow:ellipsis;`;
 
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
