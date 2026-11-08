@@ -2509,7 +2509,7 @@
 
         const title = document.createElement('h2');
         title.innerHTML = '<span style="font-size:1.2em;">G</span>rand <span style="font-size:1.2em;">T</span>ower <span style="font-size:1.2em;">A</span>ssistant';
-        title.title = "Grand Tower Assistant";
+        title.title = "기능개선 피드백 환영입니다";
         title.style.cssText = `${T.titleCss} -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent; font-size:21px; letter-spacing:0; flex:0 1 auto; width:fit-content; margin:0; font-weight:900; white-space:nowrap; min-width:0; overflow:hidden; text-overflow:ellipsis;`;
 
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
@@ -2525,7 +2525,7 @@
                 version: 'v1.1',
                 date: '2026-11-04',
                 items: [
-                    'Rockstar ☆ Vice City, Baby!',
+                    '기능 개선 및 추가 피드백 바랍니다. 코드는 멈춰있으면 죽습니다.',
 					'양원LH 1:1관제 파일명 자동 생성',
 					'리센츠/엘스/가평자이 미순찰 리마인더',
                     '본 스크립트는 NCC 서버에 직접 신호를 보내지 않음',
