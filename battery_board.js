@@ -9356,6 +9356,11 @@
         const SUB_H = [600, 900, 960];
         const YW_EXCLUDE = ['김한석', '김미소', '이규은', '유재헌', '조천호', '이수성', '임미선', '이현경'];   // 양원LH 관제 주행(09·12·15·20·22시)은 이 인원에게 배정하지 않음 (심야 00·03·06시 고정 칸은 수식 범위 밖이라 무관)
         const SUBRULE = { gap: true, w: 0.5, cnt: true };   // cnt: 10·15·16시 서브 1건을 '다중 포함 3건' 건수에도 1건으로 센다
+        const YW_MGRS = ['안혜림', '박수연', '신지섭'];   // 관리자: 양원LH 를 맡아도 감점·횟수 집계에서 제외 (기록용)
+        const YW_REAL_MIN = 30;   // 양원LH 실제 소요 약 30분 — 휴게시간 겹침 판단에만 30분을 적용 (12시 임무는 09-18 근무자도 식사 전에 끝낼 수 있음)
+        const YWP_W = 6, YWP_SC = 25, YWP_MAX = 3;   // 연속 배정 감점: 배정할 때 단계당 +6(균형 점수 단위) · 배정안 점수 단계당 +25 · 단계 상한 3 (후보가 없으면 어쩔 수 없이 배정 — 강제 규칙 아님)
+        const YW_SEED = { '2026-11-04': ['신현철', '오정훈', '호덕진', '이규순', '김소연', '박계원', '백진홍', '이지윤'], '2026-11-05': ['최윤혁', '이기완', '권재윤', '서형민', '김소연', '임다연', '이준'], '2026-11-06': ['호덕진', '오정훈', '최윤혁', '이규순', '백진홍', '안대관', '이준', '김소연'], '2026-11-07': ['이민수', '오정훈', '호덕진', '강철환', '박계원', '최선호', '임아연', '안대관'], '2026-11-08': ['이기완', '김지훈', '김도형', '박계원', '이지윤', '임아연', '임다연', '안대관'] };   // 기록 파일이 없을 때의 시작값 (수기 입력분 · 22시 이후 출근자는 계산 때 걸러짐)
+        let RMON = '', YWPEN = {}, YWINFO = { T: '', last: '', n: 0, src: '' };
         const mkTask = (t, bold, fixed, i) => {
           const m = t.match(/^\[(\d{1,2}:\d{2})(?:~(\d{1,2}:\d{2}))?\]/); const yw = YW_RE.test(t), s = tmin(m[1]), e = m[2] ? tmin(m[2]) : s + (yw ? 60 : 10);   // 양원LH 관제 주행은 30~45분 걸려서 1시간 업무로 취급 (화면 표기는 시트 원본 시각 그대로 — de)
           const z = t.replace(/\s/g, ''); let days = 'all';
@@ -9414,6 +9419,7 @@
         const pmRamp = (s, ef) => s <= 900 ? 0 : Math.min(1, (s - 900) / Math.max(60, ef - 900));   // 15:00 = 0 → 마지막 4건 시작 시각 = 1 (직선으로 상승)
         const firstHrSci = (p, u) => !!(u.sci && isPm(p) && p.start === u.slot);   // 출근하자마자(14시·15시) 맡는 과학관 — 가급적 자제
         const firstTask10 = (p, u) => !!p && p.start === 600 && u.s === p.start;   // [선호] 10시 출근자(10-19)가 출근 시각 정각에 시작하는 업무를 맡는 것 — 가급적 피함 (예: 10:00 무선충전 확인)
+        const brkOv = (p, u) => !!(p.brk && ov(u.s, u.yw ? Math.min(u.e, u.s + YW_REAL_MIN) : u.e, p.brk[0], p.brk[1]));   // 휴게시간 겹침 (양원LH 는 30분으로 계산)
         const canPm = (p, u) => isPm(p) && p.start <= u.s && p.end >= u.e && !(p.brk && ov(u.s, u.e, p.brk[0], p.brk[1]));
         function assign(variant, d, M, rng, optIn) {
           const opt = Object.assign({}, DEFAULTS, optIn || {});
@@ -9433,7 +9439,7 @@
               let c = people.filter(p => {
                 const s = S[p.name];
                 if (!(p.start <= u.slot && u.slot + 60 <= p.end)) return false;
-                if (p.brk && ov(u.s, u.e, p.brk[0], p.brk[1])) return false;
+                if (brkOv(p, u)) return false;
                 if (s.slots.has(u.slot)) return false;
                 if (s.mons.some(H => H === u.slot)) return false;
                 if (u.sci && s.mons.some(H => H === u.slot + 60)) return false;
@@ -9450,7 +9456,7 @@
                 let c = people.filter(p => {
                   const s = S[p.name];
                   if (!(p.start <= u.slot && u.slot + 60 <= p.end)) return false;
-                  if (p.brk && ov(u.s, u.e, p.brk[0], p.brk[1])) return false;
+                  if (brkOv(p, u)) return false;
                   if (u.sci && s.sci) return false;
                   if (u.yw && (s.yw || YW_EXCLUDE.includes(p.name))) return false;
                   if (tier < 3) {
@@ -9475,7 +9481,7 @@
                   const s = S[p.name];
                   if (u.restrict && s.mons.length > 0) return false;
                   if (!(p.start <= u.slot && u.slot + 60 <= p.end)) return false;
-                  if (p.brk && ov(u.s, u.e, p.brk[0], p.brk[1])) return false;
+                  if (brkOv(p, u)) return false;
                   if (s.mons.some(H => ov(H - 10, H + 50, u.s, u.e))) return false;
                   if (s.subs.some(H => ov(H - 10, H + 50, u.s, u.e))) return false;
                   if (s.subG.some(H => ov(H - 10, H + 50, u.s, u.e))) return false;   // 10·15·16시 서브 시간과 겹침
@@ -9497,7 +9503,7 @@
                   const s = S[p.name]; if (u.sci) return 0;
                   return (s.mons.some(H => ov(H - 10, H + 50, u.s - GAP, u.e + GAP)) || s.subG.some(H => ov(H - 10, H + 50, u.s - GAP, u.e + GAP)) || s.tasks.some(([a, b]) => ov(a, b, u.s - GAP, u.e + GAP))) ? 1 : 0;
                 };
-                const sc = p => (cm ? S[p.name].mons.length + 0.5 * S[p.name].Ct : S[p.name].W + opt.cw * S[p.name].Ct) + opt.gp * od.indexOf(p.g) + 0.25 * pen(p) + (lastHrSci(p, u) ? 0.8 : 0) + (firstHrSci(p, u) ? 0.8 : 0) + (firstTask10(p, u) ? 0.8 : 0) - (nv && !cm && !u.yw && isPm(p) ? PM_RAMP_A * pmRamp(u.s, eveF) : 0) + (!cm && opt.sciPen && u.sci && S[p.name].mons.length > 0 ? opt.sciPen : 0) + (!cm && !u.yw && (opt.tMid || opt.tLate) ? tendency(p, u, opt.tMid || 0, opt.tLate || 0) : 0);
+                const sc = p => (cm ? S[p.name].mons.length + 0.5 * S[p.name].Ct : S[p.name].W + opt.cw * S[p.name].Ct) + opt.gp * od.indexOf(p.g) + (u.yw ? YWP_W * (YWPEN[p.name] || 0) : 0) + 0.25 * pen(p) + (lastHrSci(p, u) ? 0.8 : 0) + (firstHrSci(p, u) ? 0.8 : 0) + (firstTask10(p, u) ? 0.8 : 0) - (nv && !cm && !u.yw && isPm(p) ? PM_RAMP_A * pmRamp(u.s, eveF) : 0) + (!cm && opt.sciPen && u.sci && S[p.name].mons.length > 0 ? opt.sciPen : 0) + (!cm && !u.yw && (opt.tMid || opt.tLate) ? tendency(p, u, opt.tMid || 0, opt.tLate || 0) : 0);
                 const m = Math.min(...c.map(sc)), pool = c.filter(p => sc(p) < m + 1e-9);
                 chosen = pool[Math.floor(rng() * pool.length)]; tierUsed = tier; break;
               }
@@ -9529,7 +9535,7 @@
             else if (u.sci && s.subG.some(H => ov(H - 10, H + 50 + GAP, u.s - GAP, u.e + GAP))) { why.push('서브와 연달아 배정 (과학관)'); m.timeConflict++; }
             if (s.subs.some(H => ov(H - 10, H + 50, u.s, u.e))) { why.push('18시 이후 서브 시간과 겹침'); m.timeConflict++; }
             if (!(s.p.start <= u.slot && u.slot + 60 <= s.p.end)) { why.push('근무시간 밖 (' + fmt(s.p.start) + '~' + fmt(s.p.end) + ' 근무)'); m.other++; }
-            if (s.p.brk && ov(u.s, u.e, s.p.brk[0], s.p.brk[1])) { why.push('휴게시간과 겹침'); m.other++; }
+            if (brkOv(s.p, u)) { why.push('휴게시간과 겹침'); m.other++; }
             if (r.tasks.some(t => ov(t[0], t[1], u.s, u.e))) { why.push('본인 다른 업무와 겹침'); m.other++; }
             if (u.sci && r.sci) { why.push('과학관 하루 2회'); m.other++; }
             if (u.yw && r.yw) { why.push('양원LH 하루 2회'); m.other++; }
@@ -9666,8 +9672,9 @@
           const ef = eveFromOf(UU, u => !!ctx.tasks[u.rows[0]].fixed || !!u.yw), eveU = UU.filter(u => u.s >= ef && !ctx.tasks[u.rows[0]].fixed && !u.yw), asg = u => BYNAME[X[u.rows[0]]];
           const eveFeas = eveU.filter(u => ctx.people.some(q => canPm(q, u))), eveNon = eveFeas.filter(u => asg(u) && !isPm(asg(u))).length, pmN = eveU.filter(u => isPm(asg(u))).length;   // 오후조가 맡을 수 있는데 야간조가 맡은 20:30 이후 업무 수
           const pmRampSum = UU.filter(u => u.s > 900 && u.s < ef && !ctx.tasks[u.rows[0]].fixed && !u.yw && isPm(asg(u))).reduce((a, u) => a + pmRamp(u.s, ef), 0), firstHr = UU.filter(u => firstHrSci(asg(u), u)).length, first10 = UU.filter(u => firstTask10(asg(u), u)).length;
-          const score = m.prob * 1000 + m.overW * 100 + m.n4 * 40 + sd * 10 + low * 4 + high * 1.2 + chains * 3 + m.std * 5 + night * 2 + changes * 1 + lastHr * 5 + sciMon * 5 + sciEx * SCI_PRIO_W - early09 * EARLY_SCI09_BONUS + firstHr * 5 + first10 * 5 + adjN * ADJ_W + eveNon * EVE_PM_W - pmRampSum * PM_RAMP_W;
-          return { score, adjN, lastHr, firstHr, first10, eveNon, eveN: eveU.length, pmN, pmRampSum, sciMon, sciMin, sciEx, early09, m, per, sd, mn: cs.length ? Math.min(...cs) : 0, mx: cs.length ? Math.max(...cs) : 0, nDay: cs.length, low, high, chains, night, maxW: Math.max(0, ...per.map(p => p.w)), changes };
+          const ywPL = UU.filter(u => u.yw && !ctx.tasks[u.rows[0]].fixed && X[u.rows[0]] && YWPEN[X[u.rows[0]]]).map(u => ({ n: X[u.rows[0]], pen: YWPEN[X[u.rows[0]]], s: u.s })), ywPenN = ywPL.reduce((a, o) => a + o.pen, 0);   // 어제도 양원LH 를 맡은 사람이 또 받은 칸 (감점 대상)
+          const score = m.prob * 1000 + m.overW * 100 + m.n4 * 40 + sd * 10 + low * 4 + high * 1.2 + chains * 3 + m.std * 5 + night * 2 + changes * 1 + lastHr * 5 + sciMon * 5 + sciEx * SCI_PRIO_W - early09 * EARLY_SCI09_BONUS + firstHr * 5 + first10 * 5 + adjN * ADJ_W + eveNon * EVE_PM_W - pmRampSum * PM_RAMP_W + ywPenN * YWP_SC;
+          return { score, ywPenN, ywPL, adjN, lastHr, firstHr, first10, eveNon, eveN: eveU.length, pmN, pmRampSum, sciMon, sciMin, sciEx, early09, m, per, sd, mn: cs.length ? Math.min(...cs) : 0, mx: cs.length ? Math.max(...cs) : 0, nDay: cs.length, low, high, chains, night, maxW: Math.max(0, ...per.map(p => p.w)), changes };
         }
         /* 한 칸씩 담당자를 바꿔 보며 점수가 좋아지면 채택(언덕 오르기) — 바뀐 칸 수에도 점수를 매기므로 '꼭 필요한 수정'만 남는다 */
         function liveClimber(ctx, d, X0, A) {
@@ -9710,10 +9717,53 @@
             }
           };
         }
+            /* ───────── 양원LH 연속 배정 감점 ─────────
+               기록 파일(yangwon_distribution.json)의 days = { 'YYYY-MM-DD'(근무일 07시~다음날 07시): [그날 양원LH 를 맡은 사람(시각 무관 · 00·03·06시 고정 칸 포함)] }.
+               감점 단계 = 배정하는 날 바로 전날부터 거꾸로 '연속으로 맡은 날 수'(최대 3). 근무였는데 안 맡은 날이 있으면 연속이 끊겨 사라지고(근무가 아니라 못 맡은 날은 건너뛰어 감점 유지),
+               후보가 없어 또 맡게 되면 연속 일수가 늘어 감점이 유지(단계 상승)된다. 관리자·신입 제외 인원은 집계하지 않는다. */
+            const ywAddDays = (k, n) => { const q = String(k).split('-').map(Number), t = new Date(q[0], q[1] - 1, q[2] + n); return t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0') + '-' + String(t.getDate()).padStart(2, '0'); };
+            const ywOk = n => !!n && !isFixedName(n) && !YW_EXCLUDE.includes(n) && !YW_MGRS.includes(n) && !ywNight(n);
+            function ywNames(rows) {   // daily_tasks.json 행 → 그날 양원LH 담당자 이름(중복 제거 · 집계 대상만)
+                const s = new Set(); (Array.isArray(rows) ? rows : []).forEach(r => { if (r && r.type === 'task' && YW_RE.test(String(r.content || ''))) { const n = String(r.user == null ? '' : r.user).trim(); if (ywOk(n)) s.add(n); } });
+                return [...s];
+            }
+            const ywNight = n => { const p = BYNAME[n]; return !!p && p.start >= 1320; };   // 22시 이후 출근(22-07 · 23:30-08:30) — 심야 칸만 맡는 근무자라 수식 범위 밖: 감점·기록에서 제외
+            function ywWork(n, k) {   // 그날(근무일 k) 그 사람이 근무였는지: true 근무/반차 · false 휴무/연차 · null 알 수 없음(근무표에 없거나 다른 달)
+                const p = BYNAME[n]; if (!p || !p.sc || String(k).slice(0, 7) !== RMON) return null;
+                const c = p.sc[+String(k).slice(8, 10) - 1]; return c ? (c === 'W' || c === 'H') : null;
+            }
+            function ywLevel(days, n, T) {   // 근무일 T 의 감점 단계: 전날부터 거꾸로 '연속으로 맡은 날 수'. 근무였는데 안 맡은 날을 만나면 끊김 · 근무가 아니라 못 맡은 날(휴무·연차)은 건너뛰어 감점 유지 · 기록 없는 날도 건너뜀
+                let c = 0, k = ywAddDays(T, -1);
+                for (let i = 0; i < 40; i++, k = ywAddDays(k, -1)) {
+                    const rec = days[k]; if (!rec) continue;
+                    if (rec.includes(n)) { c++; continue; }
+                    if (ywWork(n, k) === false) continue;
+                    break;
+                }
+                return Math.min(YWP_MAX, c);
+            }
+            function ywClean(days) { const o = {}; Object.keys(days).sort().forEach(k => { o[k] = [...new Set((days[k] || []).filter(ywOk))].sort((a, b) => a.localeCompare(b, 'ko')); }); return o; }
+            function ywBuild(dist, T, slot, stamp) {   // 기록(days) → 저장용 객체: 인원별 누적 횟수 · 감점 단계 재계산 (시작값 YW_SEED 가 밑에 깔림)
+                const sorted = ywClean(Object.assign({}, YW_SEED, dist && dist.days || {})), keys = Object.keys(sorted);
+                const last = keys[keys.length - 1] || '', next = last ? ywAddDays(last, 1) : '', people = {};
+                RMON = (T || next).slice(0, 7);
+                keys.forEach(k => sorted[k].forEach(n => { const p = people[n] || (people[n] = { count: 0, pen: 0, last: '' }); p.count++; p.last = k; }));
+                Object.keys(people).forEach(n => { people[n].pen = next ? ywLevel(sorted, n, next) : 0; });
+                const saved = Object.assign({}, dist && dist.saved || {}); if (T && slot) { saved[T] = [...new Set([...(saved[T] || []), slot])]; }
+                return { version: 2, note: '양원LH 관제 주행 배정 기록 — days: 근무일(07시~다음날 07시)별 담당자(22시 이후 출근자 제외) / people.count: 누적 배정 횟수 · pen: 다음 배정일에 적용되는 감점 단계(연속 배정 일수, 최대 ' + YWP_MAX + ' · 근무가 아니라 못 맡은 날은 끊지 않음) / saved: 저장 시각(09:30 · 22:00)', updated: stamp || (dist && dist.updated) || '', last, days: sorted, people, saved };
+            }
+            function ywPenFrom(dist, T) {   // 근무일 T 에 배정할 때 적용할 감점 { 이름: 단계 } — T 이전 기록만 쓴다 (오늘 기록은 무시) · 전날 기록이 없으면 감점 없음
+                RMON = String(T).slice(0, 7);
+                const days = ywClean(Object.assign({}, YW_SEED, dist && dist.days || {})), prev = ywAddDays(T, -1), map = {}; let n = 0;
+                const last = Object.keys(days).filter(k => k < T).sort().pop() || '';
+                if (days[prev]) { const lo = ywAddDays(T, -14), names = new Set(); Object.keys(days).forEach(k => { if (k >= lo && k < T) days[k].forEach(x => names.add(x)); }); names.forEach(nm => { const l = ywLevel(days, nm, T); if (l > 0) { map[nm] = l; n++; } }); }
+                return { map, n, last, prevOk: !!days[prev] };
+            }
+            function setYwDist(dist, T, src) { RMON = String(T).slice(0, 7); const r = ywPenFrom(dist, T); YWPEN = r.map; YWINFO = { T, last: r.last, n: r.n, src: src || '', prevOk: r.prevOk }; }
             return {
                 liveParse, liveCtx, liveMetrics, liveRepair, liveFull, liveScore, liveClimber, buildUnits, fmt,
                 setSubRule: o => { Object.assign(SUBRULE, o || {}); },
-                ywExclude: () => YW_EXCLUDE.slice(), subRule: () => ({ H: SUB_H.slice(), gap: SUBRULE.gap, w: SUBRULE.w, cnt: SUBRULE.cnt }),
+                ywExclude: () => YW_EXCLUDE.slice(), ywNames, ywBuild, ywPenFrom, setYwDist, ywInfo: () => Object.assign({}, YWINFO), ywPen: () => Object.assign({}, YWPEN), subRule: () => ({ H: SUB_H.slice(), gap: SUBRULE.gap, w: SUBRULE.w, cnt: SUBRULE.cnt }),
                 setMonth: v => { MONTH_OK = !!v; if (!v) { RSRC = 'none'; } },
                 setRoster: list => { mkStaff(list); MONTH_OK = true; RSRC = 'file'; },
                 useEmbedded: () => { mkStaff(STAFF_DATA); MONTH_OK = true; RSRC = 'embedded'; },
@@ -9734,6 +9784,21 @@
           if (Array.isArray(list) && list.length >= 10) SIM.setRoster(list);
           else SIM.useEmbedded();   // 파일을 못 받았으면 내장 표(10월분)의 근무시간으로 — 근무표에 없는 사람은 배정 후보에서 빠지고 그 칸은 그대로 둠
         }
+        const SIM_YW_NAME = 'yangwon_distribution', SIM_YW_API = 'https://multimonitoring.vercel.app/api/battery', SIM_YW_RAW = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/yangwon_distribution.json', SIM_YW_LS = 'bba_yw_dist';
+        function simYw(wd) {   // 저장해 둔 양원LH 배정 기록 → 엔진의 연속 배정 감점 (없으면 수기 시작값만)
+          let dist = null; try { dist = JSON.parse(lsGet(SIM_YW_LS, 'null')); } catch (e) { dist = null; }
+          SIM.setYwDist(dist && dist.days ? dist : null, wdKey(wd), dist && dist.days ? 'saved' : 'seed');
+        }
+        async function simFetchYw() {   // 재배정하기 때 최신 기록을 받아 둔다: 서버(api/battery) → 퍼블릭 레포 파일 → 이 PC 저장본 중 가장 최근 날짜까지 있는 것
+          const cand = [], get = async (u, pick) => { try { const ac = new AbortController(), tm = setTimeout(() => ac.abort(), 8000); const r = await fetch(u, { cache: 'no-store', signal: ac.signal }); clearTimeout(tm); if (r.ok) { const o = pick(await r.json()); if (o && o.days && typeof o.days === 'object') cand.push(o); } } catch (e) { /* 다음 출처 */ } };
+          await get(SIM_YW_API + '?name=' + SIM_YW_NAME + '&t=' + Date.now(), j => j && j.data);
+          await get(SIM_YW_RAW + '?t=' + Date.now(), j => j);
+          try { const l = JSON.parse(lsGet(SIM_YW_LS, 'null')); if (l && l.days) cand.push(l); } catch (e) { /* 무시 */ }
+          if (!cand.length) { console.warn('[BBA] 양원LH 배정 기록을 못 받음 — 수기 시작값으로 계산'); return; }
+          const last = o => Object.keys(o.days).sort().pop() || '';
+          cand.sort((a, b) => last(b).localeCompare(last(a)));   // 같은 날짜면 앞선 출처(서버)가 우선
+          lsSet(SIM_YW_LS, JSON.stringify(cand[0]));
+        }
         async function simFetchRoster() {
           const wd = workDay(), y = wd.getFullYear(), m = wd.getMonth() + 1;
           try {
@@ -9745,7 +9810,7 @@
         }
         function simCompute(snap) {
             const arr = JSON.parse(snap.txt), wd = workDay();
-            simRoster(wd);   // 근무표: 받아 둔 월별 파일 → 없으면 내장 10월 표 → 그것도 없으면 JSON 에 나온 이름으로 대체
+            simYw(wd); simRoster(wd);   // 근무표: 받아 둔 월별 파일 → 없으면 내장 10월 표 → 그것도 없으면 JSON 에 나온 이름으로 대체
             const d = wd.getDate(), P = SIM.liveParse(arr), ctx = SIM.liveCtx(P, d, []), A = P.rowUser.map(n => n || null);   // 다중/서브는 07시에 이미 정해진 값 그대로(건드리지 않음), 일일 업무 칸만 다시 배정
             const B = Array.isArray(snap.X) && snap.X.length === A.length ? snap.X.slice() : SIM.liveFull(ctx, d, A, snap.seed);   // 저장된 최적안(담당자 목록) 그대로 — 옛 저장본은 시드로 다시 만든다
             const follow = new Set(); SIM.buildUnits(d, true, false, ctx.tasks).forEach(u => { if (u.rows.length > 1) follow.add(u.rows[1]); });
@@ -9757,7 +9822,7 @@
         const SIM_ROUNDS = 5, SIM_ROUND_MS = 1000;
         async function simSearch(txt, mode) {
             const arr = JSON.parse(txt), wd = workDay();
-            simRoster(wd);   // 근무표: 받아 둔 월별 파일 → 없으면 내장 10월 표 → 그것도 없으면 JSON 에 나온 이름으로 대체
+            simYw(wd); simRoster(wd);   // 근무표: 받아 둔 월별 파일 → 없으면 내장 10월 표 → 그것도 없으면 JSON 에 나온 이름으로 대체
             const d = wd.getDate(), P = SIM.liveParse(arr), ctx = SIM.liveCtx(P, d, []), A = P.rowUser.map(n => n || null), t0 = performance.now(), total = SIM_ROUNDS * SIM_ROUND_MS;
             const pool = []; let tries = 0;
             const prog = () => { simProg = '최적안 찾는 중 ' + Math.min(SIM_ROUNDS, Math.floor((performance.now() - t0) / SIM_ROUND_MS) + 1) + '/' + SIM_ROUNDS + ' · ' + tries + '가지 확인'; simDraw(); };
@@ -9792,7 +9857,7 @@
         async function simDo(txt, mode) {   // 현재 JSON 으로 새로 재배정 (최적안 찾기 후 확정)
             if (simSearching) return; simSearching = true; simBusy = true; simProg = '최적안 찾는 중 1/' + SIM_ROUNDS; simDraw();
             try {
-                await simFetchRoster();
+                await simFetchRoster(); await simFetchYw();
                 const r = await simSearch(txt, 'full');
                 const snap = { txt, X: r.X, seed: r.seed, mode: 'best', at: Date.now(), day: ckey(), tries: r.tries, score: r.score };
                 simSave(snap); simRun(snap);
@@ -9896,11 +9961,12 @@
                 viol('양원LH 하루 1회', /양원LH 하루 2회/),
                 viol('양원LH 배정 제외 인원 (' + SIM.ywExclude().join('·') + ')', /양원LH 배정 제외/),
                 viol('다중·서브 시간 겹침 / 과학관 정각 교대', /다중 교대|다중과 연달아|서브 시간|서브와 연달아|정각 교대/),
-                viol('근무·휴게시간 / 본인 업무 겹침', /근무시간 밖|휴게시간|본인 다른 업무/),
+                viol('근무·휴게시간 / 본인 업무 겹침', /근무시간 밖|휴게시간|본인 다른 업무/, '양원LH 는 실제 30분 소요로 보고 휴게시간을 판단 (12시 임무는 09-18 근무자도 가능)'),
                 viol('08:50 출근 + 09시 과학관 우선 (다중 없는 07~16시 인원 우선)', /07·08·09시 다중이 없는/),
                 viol('후보 없음 · 묶음 담당자 불일치', /후보 없음|근무표에 없는|묶음 업무인데/),
             ].join('');
             const pf = (name, v, note) => '<tr><td>' + name + '</td><td class="n">' + v + '</td><td class="nt">' + (note || '') + '</td></tr>';
+            const YI = SIM.ywInfo(), ywNote = (YI.prevOk ? '기록 ' + YI.last + ' 기준 · 감점 대상 ' + YI.n + '명' : '전날 기록이 없어 감점 없음') + ((S.ywPL || []).length ? ' · 연속 배정: ' + S.ywPL.map(o => esc(o.n) + '(' + o.pen + '단계)').join(' · ') + ' — 후보가 없어 어쩔 수 없이 배정(감점 유지)' : ' · 연속 배정 대상은 피함');
             const pref = [
                 pf('업무+다중 건수 편차', S.mn + '~' + S.mx + '건', '1건 이하 ' + S.low + '명 · 3건 이상 ' + S.high + '명'),
                 pf('연속 3건 이상', S.chains + '명'),
@@ -9908,6 +9974,7 @@
                 pf('퇴근 1시간 전 과학관 (07~16 · 08~17시)', S.lastHr + '칸', '가급적 피함'),
                 pf('출근 직후 과학관 (오후조)', S.firstHr + '칸', '가급적 피함'),
                 pf('10시 출근자의 10:00 업무', S.first10 + '칸', '가급적 피함'),
+                pf('양원LH 연속 배정 (직전 근무일에도 맡은 사람)', (S.ywPL || []).length + '칸', ywNote),
                 pf('20:30 이후 업무를 오후조가 맡음', S.eveN ? S.pmN + '/' + S.eveN + '건' : '–', S.eveNon ? '오후조가 맡을 수 있는 ' + S.eveNon + '건을 야간조가 맡음' : ''),
             ].join('');
             const bad = Object.keys(m.why).map(Number).sort((a, b) => a - b);
