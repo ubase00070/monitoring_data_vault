@@ -9358,9 +9358,10 @@
         const SUBRULE = { gap: true, w: 0.5, cnt: true };   // cnt: 10·15·16시 서브 1건을 '다중 포함 3건' 건수에도 1건으로 센다
         const YW_MGRS = ['안혜림', '박수연', '신지섭'];   // 관리자: 양원LH 를 맡아도 감점·횟수 집계에서 제외 (기록용)
         const YW_REAL_MIN = 30;   // 양원LH 실제 소요 약 30분 — 휴게시간 겹침 판단에만 30분을 적용 (12시 임무는 09-18 근무자도 식사 전에 끝낼 수 있음)
+        const YWC_W = 0.4, YWC_DAYS = 30;   // 최근 30일 양원LH 배정 횟수 1회당 +0.4 (균형 점수 단위) — 많이 맡은 사람을 후순위로 (후보가 여럿일 때만 작용 · 강제 규칙 아님)
         const YWP_W = 6, YWP_SC = 25, YWP_MAX = 3;   // 연속 배정 감점: 배정할 때 단계당 +6(균형 점수 단위) · 배정안 점수 단계당 +25 · 단계 상한 3 (후보가 없으면 어쩔 수 없이 배정 — 강제 규칙 아님)
         const YW_SEED = { '2026-11-04': ['신현철', '오정훈', '호덕진', '이규순', '김소연', '박계원', '백진홍', '이지윤'], '2026-11-05': ['최윤혁', '이기완', '권재윤', '서형민', '김소연', '임다연', '이준'], '2026-11-06': ['호덕진', '오정훈', '최윤혁', '이규순', '백진홍', '안대관', '이준', '김소연'], '2026-11-07': ['이민수', '오정훈', '호덕진', '강철환', '박계원', '최선호', '임아연', '안대관'], '2026-11-08': ['이기완', '김지훈', '김도형', '박계원', '이지윤', '임아연', '임다연', '안대관'] };   // 기록 파일이 없을 때의 시작값 (수기 입력분 · 22시 이후 출근자는 계산 때 걸러짐)
-        let RMON = '', YWPEN = {}, YWINFO = { T: '', last: '', n: 0, src: '' };
+        let RMON = '', YWCNT = {}, YWPEN = {}, YWINFO = { T: '', last: '', n: 0, src: '' };
         const mkTask = (t, bold, fixed, i) => {
           const m = t.match(/^\[(\d{1,2}:\d{2})(?:~(\d{1,2}:\d{2}))?\]/); const yw = YW_RE.test(t), s = tmin(m[1]), e = m[2] ? tmin(m[2]) : s + (yw ? 60 : 10);   // 양원LH 관제 주행은 30~45분 걸려서 1시간 업무로 취급 (화면 표기는 시트 원본 시각 그대로 — de)
           const z = t.replace(/\s/g, ''); let days = 'all';
@@ -9426,10 +9427,11 @@
           const LV = opt.live || null, ex = new Set(LV ? LV.exclude || [] : []);
           const people = LV ? LV.people.filter(p => !ex.has(p.name)) : present(d), mons = LV ? LV.main : (M.main[d] || {}), subs = LV ? LV.sub : (M.sub[d] || {}), S = {};
           people.forEach(p => { const Hs = Object.entries(mons).filter(([h, n]) => n === p.name).map(([h]) => +h); const sb = Object.entries(subs).filter(([h, n]) => n === p.name).map(([h]) => +h); S[p.name] = { p, mons: Hs, subAll: sb, subs: sb.filter(H => H >= SUB_STRICT), subG: SUBRULE.gap ? sb.filter(H => SUB_H.includes(H)) : [], sw: SUBRULE.w * sb.filter(H => SUB_H.includes(H)).length, sn: SUBRULE.cnt ? sb.filter(H => SUB_H.includes(H)).length : 0, W: Hs.length + SUBRULE.w * sb.filter(H => SUB_H.includes(H)).length, Ct: 0, tasks: [], sciT: [], sci: false, slots: new Set(), rows: 0, yw: !!(LV && LV.ywHeld && LV.ywHeld[p.name]), ywi: !!(LV && LV.ywHeld && LV.ywHeld[p.name]) }; });
-          const base = variant === 'base', lite = variant === 'lite', cm = variant === 'cnt', nv = variant === 'new' || variant === 'newF' || variant === 'newL' || variant === 'newH', U0 = buildUnits(d, nv || cm, opt.holiday, LV ? LV.tasks : null).map(u => nv && opt.grace && u.rows.length === 1 && /무선충전/.test(u.label) && /재시작/.test(u.label) && u.s === 600 ? { ...u, e: 630 } : u), U = variant === 'newH' ? [...U0.filter(u => u.sci).map(u => ({ ...u, restrict: true })), ...U0.filter(u => !u.sci)] : variant === 'newF' ? [...U0.filter(u => u.sci), ...U0.filter(u => !u.sci)] : variant === 'newL' ? [...U0.filter(u => !u.sci), ...U0.filter(u => u.sci)] : (variant === 'new' ? [...U0.filter(isHubU), ...U0.filter(u => u.sci && !isHubU(u)), ...U0.filter(u => !u.sci && !isHubU(u))] : U0), out = [];
+          const base = variant === 'base', lite = variant === 'lite', cm = variant === 'cnt', nv = variant === 'new' || variant === 'newF' || variant === 'newL' || variant === 'newH', U0 = buildUnits(d, nv || cm, opt.holiday, LV ? LV.tasks : null).map(u => nv && opt.grace && u.rows.length === 1 && /무선충전/.test(u.label) && /재시작/.test(u.label) && u.s === 600 ? { ...u, e: 630 } : u), U = variant === 'newH' ? [...U0.filter(u => u.sci).map(u => ({ ...u, restrict: true })), ...U0.filter(u => !u.sci)] : variant === 'newF' ? [...U0.filter(u => u.sci), ...U0.filter(u => !u.sci)] : variant === 'newL' ? [...U0.filter(u => !u.sci), ...U0.filter(u => u.sci)] : (variant === 'new' ? (opt.evalOnly ? [...U0.filter(isHubU), ...U0.filter(u => u.sci && !isHubU(u)), ...U0.filter(u => !u.sci && !isHubU(u))] : [...U0.filter(isHubU), ...U0.filter(u => u.sci && !isHubU(u)).map(u => ({ ...u, restrict: true, rq: true })), ...U0.filter(u => !u.sci && !isHubU(u) && u.yw), ...U0.filter(u => u.sci && !isHubU(u)).map(u => ({ ...u, retry: true })), ...U0.filter(u => !u.sci && !isHubU(u) && !u.yw)]) : U0), out = [];
           const eveF = eveFromOf(U, u => !!(LV && LV.tasks && LV.tasks[u.rows[0]] && LV.tasks[u.rows[0]].fixed) || !!u.yw);   // 양원LH 는 '마지막 4건' 계산에서 제외 — 기존 20:30 기준이 안 바뀌게
           const UU = opt.names ? (opt.evalOnly ? U : [...U.filter(u => opt.keep.has(u.rows[0])), ...U.filter(u => !opt.keep.has(u.rows[0]))]) : U;
           for (const u of UU) {
+            if (u.retry && out.some(o => o.u.rows[0] === u.rows[0])) continue;   // 배정 순서: 과학관(다중 없는 사람) → 양원LH → 남은 과학관(다중 있는 사람) → 나머지. 남은 과학관은 앞에서 못 정한 칸만
             let chosen = null, tierUsed = null;
             const pre = opt.names && (opt.evalOnly || opt.keep.has(u.rows[0])) ? (opt.names[u.rows[0]] || null) : undefined;
             if (pre !== undefined) {
@@ -9503,12 +9505,12 @@
                   const s = S[p.name]; if (u.sci) return 0;
                   return (s.mons.some(H => ov(H - 10, H + 50, u.s - GAP, u.e + GAP)) || s.subG.some(H => ov(H - 10, H + 50, u.s - GAP, u.e + GAP)) || s.tasks.some(([a, b]) => ov(a, b, u.s - GAP, u.e + GAP))) ? 1 : 0;
                 };
-                const sc = p => (cm ? S[p.name].mons.length + 0.5 * S[p.name].Ct : S[p.name].W + opt.cw * S[p.name].Ct) + opt.gp * od.indexOf(p.g) + (u.yw ? YWP_W * (YWPEN[p.name] || 0) : 0) + 0.25 * pen(p) + (lastHrSci(p, u) ? 0.8 : 0) + (firstHrSci(p, u) ? 0.8 : 0) + (firstTask10(p, u) ? 0.8 : 0) - (nv && !cm && !u.yw && isPm(p) ? PM_RAMP_A * pmRamp(u.s, eveF) : 0) + (!cm && opt.sciPen && u.sci && S[p.name].mons.length > 0 ? opt.sciPen : 0) + (!cm && !u.yw && (opt.tMid || opt.tLate) ? tendency(p, u, opt.tMid || 0, opt.tLate || 0) : 0);
+                const sc = p => (cm ? S[p.name].mons.length + 0.5 * S[p.name].Ct : S[p.name].W + opt.cw * S[p.name].Ct) + opt.gp * od.indexOf(p.g) + (u.yw ? YWP_W * (YWPEN[p.name] || 0) + YWC_W * (YWCNT[p.name] || 0) : 0) + 0.25 * pen(p) + (lastHrSci(p, u) ? 0.8 : 0) + (firstHrSci(p, u) ? 0.8 : 0) + (firstTask10(p, u) ? 0.8 : 0) - (nv && !cm && !u.yw && isPm(p) ? PM_RAMP_A * pmRamp(u.s, eveF) : 0) + (!cm && opt.sciPen && u.sci && S[p.name].mons.length > 0 ? opt.sciPen : 0) + (!cm && !u.yw && (opt.tMid || opt.tLate) ? tendency(p, u, opt.tMid || 0, opt.tLate || 0) : 0);
                 const m = Math.min(...c.map(sc)), pool = c.filter(p => sc(p) < m + 1e-9);
                 chosen = pool[Math.floor(rng() * pool.length)]; tierUsed = tier; break;
               }
             }
-            if (!chosen && u.restrict) { U.push({ ...u, restrict: false }); continue; }
+            if (!chosen && u.restrict) { if (!u.rq) U.push({ ...u, restrict: false }); continue; }
             if (!chosen) { out.push({ u, name: null, tier: 9 }); continue; }
             const s = S[chosen.name];
             s.W += u.w; s.Ct += u.cnt; s.rows += 1; s.tasks.push([u.s, u.e]); if (u.sci) s.sciT.push([u.s, u.e]); s.slots.add(u.slot); s.sci = s.sci || u.sci; s.yw = s.yw || !!u.yw;
@@ -9748,9 +9750,9 @@
                 const last = keys[keys.length - 1] || '', next = last ? ywAddDays(last, 1) : '', people = {};
                 RMON = (T || next).slice(0, 7);
                 keys.forEach(k => sorted[k].forEach(n => { const p = people[n] || (people[n] = { count: 0, pen: 0, last: '' }); p.count++; p.last = k; }));
-                Object.keys(people).forEach(n => { people[n].pen = next ? ywLevel(sorted, n, next) : 0; });
+                Object.keys(people).forEach(n => { people[n].pen = next ? ywLevel(sorted, n, next) : 0; people[n].count30 = next ? keys.filter(k => k >= ywAddDays(next, -YWC_DAYS) && k < next && sorted[k].includes(n)).length : 0; });
                 const saved = Object.assign({}, dist && dist.saved || {}); if (T && slot) { saved[T] = [...new Set([...(saved[T] || []), slot])]; }
-                return { version: 2, note: '양원LH 관제 주행 배정 기록 — days: 근무일(07시~다음날 07시)별 담당자(22시 이후 출근자 제외) / people.count: 누적 배정 횟수 · pen: 다음 배정일에 적용되는 감점 단계(연속 배정 일수, 최대 ' + YWP_MAX + ' · 근무가 아니라 못 맡은 날은 끊지 않음) / saved: 저장 시각(09:30 · 22:00)', updated: stamp || (dist && dist.updated) || '', last, days: sorted, people, saved };
+                return { version: 2, note: '양원LH 관제 주행 배정 기록 — days: 근무일(07시~다음날 07시)별 담당자(22시 이후 출근자 제외) / people.count: 누적 배정 횟수 · pen: 다음 배정일에 적용되는 감점 단계(연속 배정 일수, 최대 ' + YWP_MAX + ' · 근무가 아니라 못 맡은 날은 끊지 않음) · count30: 최근 30일 배정 횟수(많을수록 양원 후순위) / saved: 저장 시각(09:30 · 22:00)', updated: stamp || (dist && dist.updated) || '', last, days: sorted, people, saved };
             }
             function ywPenFrom(dist, T) {   // 근무일 T 에 배정할 때 적용할 감점 { 이름: 단계 } — T 이전 기록만 쓴다 (오늘 기록은 무시) · 전날 기록이 없으면 감점 없음
                 RMON = String(T).slice(0, 7);
@@ -9759,7 +9761,7 @@
                 if (days[prev]) { const lo = ywAddDays(T, -14), names = new Set(); Object.keys(days).forEach(k => { if (k >= lo && k < T) days[k].forEach(x => names.add(x)); }); names.forEach(nm => { const l = ywLevel(days, nm, T); if (l > 0) { map[nm] = l; n++; } }); }
                 return { map, n, last, prevOk: !!days[prev] };
             }
-            function setYwDist(dist, T, src) { RMON = String(T).slice(0, 7); const r = ywPenFrom(dist, T); YWPEN = r.map; YWINFO = { T, last: r.last, n: r.n, src: src || '', prevOk: r.prevOk }; }
+            function setYwDist(dist, T, src) { RMON = String(T).slice(0, 7); { const dd = ywClean(Object.assign({}, YW_SEED, dist && dist.days || {})), lo = ywAddDays(T, -YWC_DAYS); YWCNT = {}; Object.keys(dd).forEach(k => { if (k >= lo && k < T) dd[k].forEach(n => { YWCNT[n] = (YWCNT[n] || 0) + 1; }); }); } const r = ywPenFrom(dist, T); YWPEN = r.map; YWINFO = { T, last: r.last, n: r.n, src: src || '', prevOk: r.prevOk }; }
             return {
                 liveParse, liveCtx, liveMetrics, liveRepair, liveFull, liveScore, liveClimber, buildUnits, fmt,
                 setSubRule: o => { Object.assign(SUBRULE, o || {}); },
@@ -9966,7 +9968,7 @@
                 viol('후보 없음 · 묶음 담당자 불일치', /후보 없음|근무표에 없는|묶음 업무인데/),
             ].join('');
             const pf = (name, v, note) => '<tr><td>' + name + '</td><td class="n">' + v + '</td><td class="nt">' + (note || '') + '</td></tr>';
-            const YI = SIM.ywInfo(), ywNote = (YI.prevOk ? '기록 ' + YI.last + ' 기준 · 감점 대상 ' + YI.n + '명' : '전날 기록이 없어 감점 없음') + ((S.ywPL || []).length ? ' · 연속 배정: ' + S.ywPL.map(o => esc(o.n) + '(' + o.pen + '단계)').join(' · ') + ' — 후보가 없어 어쩔 수 없이 배정(감점 유지)' : ' · 연속 배정 대상은 피함');
+            const YI = SIM.ywInfo(), ywNote = (YI.prevOk ? '기록 ' + YI.last + ' 기준 · 감점 대상 ' + YI.n + '명' : '전날 기록이 없어 감점 없음') + ((S.ywPL || []).length ? ' · 연속 배정: ' + S.ywPL.map(o => esc(o.n) + '(' + o.pen + '단계)').join(' · ') + ' — 후보가 없어 어쩔 수 없이 배정(감점 유지)' : ' · 연속 배정 대상은 피함 · 최근 30일 많이 맡은 사람은 후순위');
             const pref = [
                 pf('업무+다중 건수 편차', S.mn + '~' + S.mx + '건', '1건 이하 ' + S.low + '명 · 3건 이상 ' + S.high + '명'),
                 pf('연속 3건 이상', S.chains + '명'),
