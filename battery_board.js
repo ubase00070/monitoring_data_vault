@@ -5073,15 +5073,13 @@
     //    여기서는 status('anomaly') 와 limit_min 을 그대로 표시만 한다. 판정 기준을 이 파일에 또 두면 두 파일이 어긋난다.
     // ============================================================
     //  읽는 순서: ① Cloudflare Worker /live (Durable Object — 원본, 30초 갱신) → ② 실패하면 Gist raw (미러·백업)
-    //  Worker 는 최대 3번 시도하고, 3번 다 실패하면 10초만 건너뛰고 Gist 를 읽는다 (Gist 가 1분 넘게 낡았으면 쓰지 않음).
+    //  Worker 가 실패하면 60초 동안은 Worker 를 건너뛰고 Gist 만 읽는다 (장애 중 매번 15초씩 기다리지 않도록).
     const PATROL_WORKER_URL = 'https://patrol-watch-worker.ubase00070.workers.dev/live';
     const PATROL_LIVE_URL = 'https://gist.githubusercontent.com/ubase00070/bd7773a059217fb81b0be90c961fcc22/raw/patrol_watch_live.json';   // 백업(Gist 미러)
     const PATROL_REFRESH_MS = 30 * 1000;   // 30초마다 조회 (NCC API 와 무관 — Worker/Gist 파일만 읽음)
-    const PATROL_WORKER_TIMEOUT_MS = 7000;
+    const PATROL_WORKER_TIMEOUT_MS = 8000;
     let _patrolWorkerFailUntil = 0;
     let _patrolSrc = '';                   // 마지막으로 읽은 곳: 'Worker' | 'Gist(대체)'
-    const PATROL_GIST_MAX_AGE_SEC = 60;    // 예비(Gist)가 이보다 오래된 데이터면 쓰지 않음 (Gist 는 한도 소진 등으로 멈춰 있을 수 있음 — 낡은 정보를 새것처럼 보여주지 않음)
-    const _patrolSleep = (ms) => new Promise(r => setTimeout(r, ms));
 
     async function fetchPatrolOne(url, ms) {
         const ctrl = new AbortController();
@@ -5097,37 +5095,18 @@
         }
     }
 
-    // updated_at(HH:MM:SS, KST) 기준 데이터 나이(초). 알 수 없으면 null
-    function patrolAgeSec(d) {
-        const ua = d && d.updated_at;
-        if (typeof ua !== 'string' || !/^\d{1,2}:\d{2}(:\d{2})?$/.test(ua)) return null;
-        const [h, m, sc] = ua.split(':').map(Number);
-        const k = new Date(Date.now() + 9 * 3600 * 1000);
-        let diff = (k.getUTCHours() * 3600 + k.getUTCMinutes() * 60 + k.getUTCSeconds()) - (h * 3600 + m * 60 + (sc || 0));
-        if (diff < -3600) diff += 86400;   // 자정 경계
-        return diff;
-    }
-
-    // Worker 가 최우선. 잠깐 막혀도(예: 저장소 지연 → 503) 바로 Gist 로 갈아타지 않고 최대 3번 시도한다 (7초 → 0.8초 쉬고 → 7초 → 2초 쉬고 → 7초).
-    // 3번 다 실패하면 10초만 Worker 를 건너뛰고 Gist 를 읽되, Gist 데이터가 1분 넘게 낡았으면 쓰지 않고 실패로 처리한다
-    // (화면에는 마지막으로 받은 정상 데이터와 '불러오기 실패' 표시가 유지됨). — 메인 화면(index.html)의 읽기 방식과 동일
     async function fetchPatrolData() {
         if (Date.now() >= _patrolWorkerFailUntil) {
-            for (let i = 0; i < 3; i++) {
-                try {
-                    const data = await fetchPatrolOne(`${PATROL_WORKER_URL}?t=${Date.now()}`, PATROL_WORKER_TIMEOUT_MS);
-                    _patrolSrc = 'Worker';
-                    return data;
-                } catch (e) {
-                    if (i < 2) await _patrolSleep(i === 0 ? 800 : 2000);
-                    else console.warn('[BB] Worker 읽기 3회 실패 → Gist 로 대체:', e.message);
-                }
+            try {
+                const data = await fetchPatrolOne(`${PATROL_WORKER_URL}?t=${Date.now()}`, PATROL_WORKER_TIMEOUT_MS);
+                _patrolSrc = 'Worker';
+                return data;
+            } catch (e) {
+                _patrolWorkerFailUntil = Date.now() + 60 * 1000;
+                console.warn('[BB] Worker 읽기 실패 → Gist 로 대체:', e.message);
             }
-            _patrolWorkerFailUntil = Date.now() + 10 * 1000;
         }
-        const data = await fetchPatrolOne(`${PATROL_LIVE_URL}?t=${Date.now()}`, 8000);
-        const age = patrolAgeSec(data);
-        if (age !== null && age > PATROL_GIST_MAX_AGE_SEC) throw new Error('Worker 응답 지연 · 예비(Gist) 데이터도 ' + Math.max(1, Math.round(age / 60)) + '분 전 것이라 사용하지 않음');
+        const data = await fetchPatrolOne(`${PATROL_LIVE_URL}?t=${Date.now()}`, 15000);
         _patrolSrc = 'Gist(대체)';
         return data;
     }
@@ -9807,15 +9786,14 @@
           if (Array.isArray(list) && list.length >= 10) SIM.setRoster(list);
           else SIM.useEmbedded();   // 파일을 못 받았으면 내장 표(10월분)의 근무시간으로 — 근무표에 없는 사람은 배정 후보에서 빠지고 그 칸은 그대로 둠
         }
-        const SIM_YW_NAME = 'yangwon_distribution', SIM_YW_API = 'https://multimonitoring.vercel.app/api/battery', SIM_YW_RAW = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/yangwon_distribution.json', SIM_YW_LS = 'bba_yw_dist';
+        const SIM_YW_NAME = 'yangwon_distribution', SIM_YW_API = 'https://multimonitoring.vercel.app/api/battery', SIM_YW_LS = 'bba_yw_dist';
         function simYw(wd) {   // 저장해 둔 양원LH 배정 기록 → 엔진의 연속 배정 감점 (없으면 수기 시작값만)
           let dist = null; try { dist = JSON.parse(lsGet(SIM_YW_LS, 'null')); } catch (e) { dist = null; }
           SIM.setYwDist(dist && dist.days ? dist : null, wdKey(wd), dist && dist.days ? 'saved' : 'seed');
         }
-        async function simFetchYw() {   // 재배정하기 때 최신 기록을 받아 둔다: 서버(api/battery) → 퍼블릭 레포 파일 → 이 PC 저장본 중 가장 최근 날짜까지 있는 것
+        async function simFetchYw() {   // 재배정하기 때 최신 기록을 받아 둔다: 서버(api/battery · monitoring_no_limit 의 bb_backup_yangwon_distribution.json) → 이 PC 저장본 중 가장 최근 날짜까지 있는 것
           const cand = [], get = async (u, pick) => { try { const ac = new AbortController(), tm = setTimeout(() => ac.abort(), 8000); const r = await fetch(u, { cache: 'no-store', signal: ac.signal }); clearTimeout(tm); if (r.ok) { const o = pick(await r.json()); if (o && o.days && typeof o.days === 'object') cand.push(o); } } catch (e) { /* 다음 출처 */ } };
           await get(SIM_YW_API + '?name=' + SIM_YW_NAME + '&t=' + Date.now(), j => j && j.data);
-          await get(SIM_YW_RAW + '?t=' + Date.now(), j => j);
           try { const l = JSON.parse(lsGet(SIM_YW_LS, 'null')); if (l && l.days) cand.push(l); } catch (e) { /* 무시 */ }
           if (!cand.length) { console.warn('[BBA] 양원LH 배정 기록을 못 받음 — 수기 시작값으로 계산'); return; }
           const last = o => Object.keys(o.days).sort().pop() || '';
