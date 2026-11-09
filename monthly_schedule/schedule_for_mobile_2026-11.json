@@ -4198,10 +4198,10 @@
           "raw": "1"
         },
         "11/14": {
-          "status": "work",
+          "status": "half",
           "working": true,
           "present": true,
-          "raw": "1"
+          "raw": "반차"
         },
         "11/15": {
           "status": "work",
@@ -4210,10 +4210,10 @@
           "raw": "1"
         },
         "11/16": {
-          "status": "half",
+          "status": "work",
           "working": true,
           "present": true,
-          "raw": "반차"
+          "raw": "1"
         },
         "11/17": {
           "status": "work",
@@ -6593,10 +6593,10 @@
           "raw": "1"
         },
         "11/8": {
-          "status": "work",
+          "status": "annual",
           "working": true,
-          "present": true,
-          "raw": "1"
+          "present": false,
+          "raw": "연차"
         },
         "11/9": {
           "status": "off",
@@ -6623,10 +6623,10 @@
           "raw": "1"
         },
         "11/13": {
-          "status": "annual",
+          "status": "work",
           "working": true,
-          "present": false,
-          "raw": "연차"
+          "present": true,
+          "raw": "1"
         },
         "11/14": {
           "status": "off",
@@ -9384,6 +9384,6 @@
     "11/30"
   ],
   "mainMonth": 11,
-  "updatedAt": "2026-11-08T03:53:04.831Z",
+  "updatedAt": "2026-11-09T03:53:03.742Z",
   "sheetName": "2026년_11월 스케줄 "
 }
