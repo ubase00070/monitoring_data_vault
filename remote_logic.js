@@ -51,7 +51,7 @@
     // 아래 값을 그대로 반영받는다(재배포 불필요).
     //   { "maxMonitorSlots": 6, "locked": false }
     // fetch 실패 시엔 안전 기본값(6대 / 잠금 해제)으로 지금까지와 동일하게 동작한다.
-    let ADMIN_CONFIG = { maxMonitorSlots: 6, locked: false, patrolRemind: true };
+    let ADMIN_CONFIG = { maxMonitorSlots: 6, locked: false, patrolRemind: true, parkingToast: true };
     const adminConfigReady = (async () => {
         try {
             const res = await fetch(
@@ -64,6 +64,7 @@
                 ADMIN_CONFIG.maxMonitorSlots = cfg.maxMonitorSlots;
             }
             if (cfg.patrolRemind === false) ADMIN_CONFIG.patrolRemind = false;   // 순찰 리마인더 원격 끄기
+            if (cfg.parkingToast === false) ADMIN_CONFIG.parkingToast = false;   // 주차 확인 토스트 원격 끄기
             if (typeof cfg.locked === 'boolean') {
                 ADMIN_CONFIG.locked = cfg.locked;
             }
@@ -2514,7 +2515,7 @@
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
 		// 문자열을 넣으면 패치노트에 빨간 '`' 뱃지가 점멸하며 뜸.
 		// 빈 문자열('')로 비우면 뱃지가 사라짐.
-		const PATCH_NOTE_NEW_CONTENT = '양원';
+		const PATCH_NOTE_NEW_CONTENT = '주차 누락 토스트';
 
         // ── 패치노트 내용 ──────────────────────────────────────
         // 아래 patchItems 배열에 버전별 내용을 추가하세요 (버튼 라벨의 날짜도 이 배열의
@@ -2522,10 +2523,11 @@
         const patchItems = [
             {
                 version: 'v1.1',
-                date: '2026-11-04',
+                date: '2026-11-09',
                 items: [
                     '기능 개선 및 추가 피드백 바랍니다. 코드는 멈춰있으면 죽습니다.',
-					'양원LH 1:1관제 파일명 자동 생성',
+					'주차 누락 기체 토스트 알림 04/06/08시',
+                    '양원LH 1:1관제 파일명 자동 생성',
 					'리센츠/엘스/가평자이 미순찰 리마인더',
                     '본 스크립트는 NCC 서버에 직접 신호를 보내지 않음',
                     '성남 배터리 조회 쿨다운 2분',
@@ -5683,6 +5685,128 @@
                     }
                 });
                 saveSt();
+            } catch (e) { /* 알림 실패는 조용히 무시 */ } finally { busy = false; }
+        }
+        setInterval(tick, 10000);
+    })();
+
+    /* ============================================================
+        주차 확인 토스트 (admin '무선 기체 주차' 점검의 '확인 요망' 기체 안내)
+        - 04:05 / 06:05 / 08:05 에 슬롯마다 딱 1명에게만 띄운다. 순위대로 훑어, 그 시각 다중(메인) · 서브로 배정된 사람은 건너뛰고 첫 번째 사람이 받는다.
+          (08시는 서브 모니터링이어도 받는다 · 메인2 는 건너뛰지 않는다)
+        - 누가 받을지는 daily_tasks 만으로 각 PC 가 똑같이 계산한다 → PC 끼리 통신 불필요, 주차 json 을 읽는 건 받을 사람 PC 한 대뿐.
+        - 출근 여부는 구분하지 않는다. 받을 사람이 미출근이면 그 슬롯은 안내가 없고, 그대로 미주차면 다음 점검에서 다시 안내된다.
+        - 순위 3명이 전부 다중/서브면 → ##:50 에 1순위 사람이 (조건 없이) 받는다.
+        - 끄기: remote_admin_config.json 의 "parkingToast": false
+       ============================================================ */
+    (function parkingToast() {
+        const API = 'https://multimonitoring.vercel.app/api/battery?name=parking_check';
+        const TASKS_API = 'https://multimonitoring.vercel.app/api/tasks';   // ※ 쿼리/no-store 를 붙이지 않는다 (서버 CDN 캐시 유지)
+        const SLOTS = [   // 월초 근무표가 바뀌면 여기 이름만 고치면 된다
+            { id: '04', hh: 4, ranks: ['최정기', '백진홍', '이지윤'], subBlocks: true },
+            { id: '06', hh: 6, ranks: ['백진홍', '김소연', '이준'], subBlocks: true },
+            { id: '08', hh: 8, ranks: ['오정훈', '박효선', '호덕진'], subBlocks: false }
+        ];
+        const DECIDE_S = 270, A_FROM = 300, A_TO = 1200, B_FROM = 3000, B_TO = 3480;   // 정시 이후 초: 04:30 결정 · 05~20분 읽기 · 50~58분 재안내
+        const GAP_MS = 30000, SHOW_MS = 10000, PER_BATCH = 2;
+        const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+        const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* 무시 */ } };
+        const pad = n => String(n).padStart(2, '0');
+        let busy = false;
+
+        const dayKey = k => k.getFullYear() + '-' + pad(k.getMonth() + 1) + '-' + pad(k.getDate());
+        function load(day, id) {
+            let st = {}; try { st = JSON.parse(lsGet('neubie_pk_' + day + '_' + id) || '{}') || {}; } catch (e) { st = {}; }
+            try { for (let i = localStorage.length - 1; i >= 0; i--) { const kk = localStorage.key(i); if (kk && /^neubie_pk_\d{4}-/.test(kk) && kk.indexOf('neubie_pk_' + day) !== 0) localStorage.removeItem(kk); } } catch (e) { /* 무시 */ }
+            return st;
+        }
+        const save = (day, id, st) => lsSet('neubie_pk_' + day + '_' + id, JSON.stringify(st));
+
+        async function freshTasks() {   // 밤에는 daily_tasks 동기화가 60분 간격이라, 결정 직전에 한 번 새로 받는다 (후보 3명 PC 만)
+            try {
+                const r = await fetchWithTimeout(TASKS_API, {}, 8000);
+                const d = r.ok ? await r.json() : null;
+                if (Array.isArray(d)) return d.map(normalizeTaskRow);
+            } catch (e) { /* 받아 둔 것 사용 */ }
+            return Array.isArray(window.currentAllTasks) ? window.currentAllTasks : [];
+        }
+        function blockedSet(tasks, sl) {   // 그 시각 다중(메인) · 서브 담당자
+            const out = new Set(), key = pad(sl.hh) + ':00';
+            tasks.forEach(t => {
+                if (!t || t.type !== 'monitoring' || t.rawTime !== key) return;
+                String(t.user || '').split('/').forEach(n => { n = n.trim(); if (n) out.add(n); });
+                if (sl.subBlocks) String(t.subUser || '').split('/').forEach(n => { n = n.trim(); if (n) out.add(n); });
+            });
+            return out;
+        }
+
+        function stack() {
+            let box = document.getElementById('neubie-pr-stack');
+            if (!box) {
+                box = document.createElement('div'); box.id = 'neubie-pr-stack';
+                box.style.cssText = 'position:fixed;left:50%;bottom:28px;transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;align-items:center;z-index:99999999;pointer-events:none;';
+                document.body.appendChild(box);
+            }
+            return box;
+        }
+        function toast(unit) {
+            const PEACH = '#ffb38a', RGB = '255,179,138';
+            const el = document.createElement('div');
+            el.textContent = `${unit} 기체 주차 확인 바랍니다.`;
+            el.style.cssText = `background:#1e293b;color:#fff;border:2px solid ${PEACH};padding:12px 22px;border-radius:12px;font-size:15px;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,.45);opacity:0;transform:translateY(8px);transition:opacity .3s ease,transform .3s ease;max-width:90vw;text-align:center;`;
+            stack().appendChild(el);
+            try {
+                el.animate([
+                    { borderColor: PEACH, boxShadow: `0 6px 20px rgba(0,0,0,.45), 0 0 10px 2px rgba(${RGB},.7)` },
+                    { borderColor: `rgba(${RGB},.15)`, boxShadow: `0 6px 20px rgba(0,0,0,.45), 0 0 0 0 rgba(${RGB},0)` },
+                    { borderColor: PEACH, boxShadow: `0 6px 20px rgba(0,0,0,.45), 0 0 10px 2px rgba(${RGB},.7)` }
+                ], { duration: 1500, iterations: Infinity, easing: 'ease-in-out' });
+            } catch (e) { /* 미지원이면 고정 테두리 */ }
+            requestAnimationFrame(() => { el.style.opacity = '1'; el.style.transform = 'none'; });
+            setTimeout(() => { el.style.opacity = '0'; setTimeout(() => { el.remove(); const b = document.getElementById('neubie-pr-stack'); if (b && !b.children.length) b.remove(); }, 350); }, SHOW_MS - 350);
+        }
+        function showAll(units) {   // 2대씩 묶어 10초 간격
+            for (let i = 0; i < units.length; i += PER_BATCH) {
+                const batch = units.slice(i, i + PER_BATCH);
+                setTimeout(() => batch.forEach(toast), (i / PER_BATCH) * SHOW_MS);
+            }
+        }
+
+        async function tick() {
+            if (busy || document.hidden || ADMIN_CONFIG.parkingToast === false) return;
+            busy = true;
+            try {
+                const me = String(lsGet('neubie_user_name') || '').trim();
+                if (!me) return;
+                const k = getKSTDate(), sec = k.getHours() * 3600 + k.getMinutes() * 60 + k.getSeconds(), day = dayKey(k);
+                for (const sl of SLOTS) {
+                    if (!sl.ranks.includes(me)) continue;   // 후보 3명이 아니면 아무것도 안 함 (요청도 없음)
+                    const e = sec - sl.hh * 3600;
+                    if (e < DECIDE_S || e > B_TO) continue;
+                    const st = load(day, sl.id);
+                    if (st.done) continue;
+                    if (!st.role) {   // 누가 받을지 결정 (모든 후보 PC 가 같은 데이터로 같은 결과를 냄)
+                        const blocked = blockedSet(await freshTasks(), sl);
+                        const cur = load(day, sl.id); if (cur.role || cur.done) continue;   // 다른 탭이 먼저 결정했으면 그쪽 결과 사용
+                        const first = sl.ranks.find(n => !blocked.has(n));
+                        st.role = first ? (first === me ? 'main' : 'none') : (sl.ranks[0] === me ? 'fallback' : 'none');
+                        if (st.role === 'none') st.done = 1;
+                        save(day, sl.id, st);
+                        if (st.done) continue;
+                    }
+                    const inA = e >= A_FROM && e <= A_TO, inB = e >= B_FROM && e <= B_TO;
+                    if (!((st.role === 'main' && inA) || inB)) continue;
+                    const now = Date.now();
+                    if (now - (parseInt(lsGet('neubie_pk_gap'), 10) || 0) < GAP_MS) continue;   // 같은 PC 의 다른 탭이 방금 읽었으면 건너뜀 (탭끼리 localStorage 공유)
+                    lsSet('neubie_pk_gap', String(now));
+                    let pk = null;
+                    try { const r = await fetchWithTimeout(API + '&t=' + now, { cache: 'no-store' }, 8000); if (r.ok) { const j = await r.json(); pk = j && j.data; } } catch (er) { /* 다음 틱에 다시 */ }
+                    if (!pk || pk.date !== day || !pk.slots || !pk.slots[sl.id] || !pk.res || !pk.res[sl.id]) continue;   // 아직 admin 점검 전/중
+                    if (load(day, sl.id).done) continue;   // 읽는 사이 다른 탭이 이미 띄웠으면 중단
+                    const units = Object.keys(pk.res[sl.id]).filter(u => pk.res[sl.id][u] && pk.res[sl.id][u].s === 'miss');
+                    st.done = 1; save(day, sl.id, st);   // 먼저 저장 → 화면 오류가 나도 반복되지 않음
+                    if (units.length) showAll(units);
+                }
             } catch (e) { /* 알림 실패는 조용히 무시 */ } finally { busy = false; }
         }
         setInterval(tick, 10000);
