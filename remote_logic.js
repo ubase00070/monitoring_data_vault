@@ -5826,6 +5826,7 @@
         const SCH = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/monthly_schedule/schedule_for_mobile_';
         const TARGET = '안혜림', PAIR = ['최윤혁', '안혜림'];
         const WIN = [[540, 780], [840, 1080]];                 // 09:00~13:00, 14:00~18:00
+        const TEST_ALL = true;   // ★ 테스트용: true 면 시간대·근무표 조건 없이 항상 10초 간격 조회. 테스트가 끝나면 false 로 바꿀 것
         const POLL_MS = 10000, GAP_MS = 8000, HB_MS = 60000, TTL_MS = 60 * 60 * 1000, SHOW_MS = 10000;
         const SCH_FRESH_MS = 6 * 3600 * 1000, SCH_RETRY_MS = 10 * 60 * 1000;
         const BACKOFF = [30000, 60000, 120000, 300000];
@@ -5877,7 +5878,7 @@
             document.getElementById('neubie-dm-toast')?.remove();
             const el = document.createElement('div');
             el.id = 'neubie-dm-toast';
-            el.style.cssText = 'position:fixed;top:14vh;left:50%;transform:translate(-50%,-34px);opacity:0;max-width:min(560px,90vw);min-width:260px;box-sizing:border-box;padding:14px 20px;border-radius:14px;background:#1e293b;color:#fff;border:2px solid #14a89b;box-shadow:0 10px 32px rgba(0,0,0,.5);z-index:2147483647;cursor:pointer;font-family:Paperlogy,Pretendard,sans-serif;transition:transform .5s cubic-bezier(.2,.9,.3,1),opacity .35s ease;';
+            el.style.cssText = 'position:fixed;top:22px;left:50%;transform:translate(-50%,-34px);opacity:0;max-width:min(560px,90vw);min-width:260px;box-sizing:border-box;padding:14px 20px;border-radius:14px;background:#1e293b;color:#fff;border:2px solid #14a89b;box-shadow:0 10px 32px rgba(0,0,0,.5);z-index:2147483647;cursor:pointer;font-family:Paperlogy,Pretendard,sans-serif;transition:transform .5s cubic-bezier(.2,.9,.3,1),opacity .35s ease;';
             const h = document.createElement('div'); h.style.cssText = 'font-size:12.5px;font-weight:800;color:#5ed3ae;margin-bottom:6px;'; h.textContent = '✉ 메시지 · ' + from;
             const b = document.createElement('div'); b.style.cssText = 'font-size:16px;font-weight:700;line-height:1.5;white-space:pre-wrap;word-break:break-word;'; b.textContent = text;
             const f = document.createElement('div'); f.style.cssText = 'font-size:11px;color:#94a3b8;margin-top:8px;text-align:right;'; f.textContent = '클릭하면 닫힙니다';
@@ -5899,7 +5900,7 @@
                 if (Date.now() < (+lsGet('neubie_dm_next') || 0)) return;           // 백오프 중
                 const last = () => +lsGet('neubie_dm_last') || 0;
                 // 룰 판정: 테스트 강제 / 시간대 안 + (둘 다 출근 또는 근무표를 모름)
-                let inRules = lsGet('neubie_dm_force') === '1';
+                let inRules = TEST_ALL || lsGet('neubie_dm_force') === '1';
                 if (!inRules && inWindow()) inRules = (await overlapToday()) !== false;
                 const gap = inRules ? GAP_MS : HB_MS - 2000;                         // 룰 밖이면 60초 간격 하트비트
                 if (Date.now() - last() < gap) return;                               // 다른 탭이 방금 조회함 / 아직 때가 아님
