@@ -5826,7 +5826,7 @@
         const SCH = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/monthly_schedule/schedule_for_mobile_';
         const TARGET = '안혜림', PAIR = ['최윤혁', '안혜림'];
         const WIN = [[540, 780], [840, 1080]];                 // 09:00~13:00, 14:00~18:00
-        const TEST_ALL = true;   // ★ 테스트용: true 면 시간대·근무표 조건 없이 항상 10초 간격 조회. 테스트가 끝나면 false 로 바꿀 것
+        const TEST_ALL = false;   // 테스트용: true 면 시간대·근무표 조건 없이 항상 10초 간격 조회 (평소엔 false)
         const POLL_MS = 10000, GAP_MS = 8000, HB_MS = 60000, TTL_MS = 60 * 60 * 1000, SHOW_MS = 10000;
         const SCH_FRESH_MS = 6 * 3600 * 1000, SCH_RETRY_MS = 10 * 60 * 1000;
         const BACKOFF = [30000, 60000, 120000, 300000];
