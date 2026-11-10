@@ -51,7 +51,7 @@
     // 아래 값을 그대로 반영받는다(재배포 불필요).
     //   { "maxMonitorSlots": 6, "locked": false }
     // fetch 실패 시엔 안전 기본값(6대 / 잠금 해제)으로 지금까지와 동일하게 동작한다.
-    let ADMIN_CONFIG = { maxMonitorSlots: 6, locked: false, patrolRemind: true, parkingToast: true };
+    let ADMIN_CONFIG = { maxMonitorSlots: 6, locked: false, patrolRemind: true, parkingToast: true, directMsg: true };
     const adminConfigReady = (async () => {
         try {
             const res = await fetch(
@@ -65,6 +65,7 @@
             }
             if (cfg.patrolRemind === false) ADMIN_CONFIG.patrolRemind = false;   // 순찰 리마인더 원격 끄기
             if (cfg.parkingToast === false) ADMIN_CONFIG.parkingToast = false;   // 주차 확인 토스트 원격 끄기
+            if (cfg.directMsg === false) ADMIN_CONFIG.directMsg = false;   // DM 수신 원격 끄기
             if (typeof cfg.locked === 'boolean') {
                 ADMIN_CONFIG.locked = cfg.locked;
             }
@@ -5809,6 +5810,117 @@
             } catch (e) { /* 알림 실패는 조용히 무시 */ } finally { busy = false; }
         }
         setInterval(tick, 10000);
+    })();
+
+    /* ============================================================
+        DM 수신 (admin → 안혜림 한 명에게만)
+        - 안혜림 PC 에서만, 탭이 보일 때만 조회한다.
+        - 평소(룰 안): 09~13 / 14~18시 + 최윤혁·안혜림 둘 다 출근한 날 → 10초 간격
+        - 룰 밖(점심·퇴근 후·단독 근무일 등): 60초 간격 '하트비트'로만 조회 → admin 이 '강제 전송'으로 보낸 메시지(force)만 표시
+          (일반 메시지는 룰 밖에서 표시하지 않고, 룰 안에 들어오면 유효시간(TTL) 이내일 때 표시)
+        - 끄기: remote_admin_config.json 의 "directMsg": false
+        - 테스트: localStorage.neubie_dm_force='1' 이면 이 PC 는 룰을 무시하고 항상 10초 간격으로 조회
+       ============================================================ */
+    (function directMsg() {
+        const API = 'https://multimonitoring.vercel.app/api/battery?name=direct_msg';
+        const SCH = 'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/monthly_schedule/schedule_for_mobile_';
+        const TARGET = '안혜림', PAIR = ['최윤혁', '안혜림'];
+        const WIN = [[540, 780], [840, 1080]];                 // 09:00~13:00, 14:00~18:00
+        const POLL_MS = 10000, GAP_MS = 8000, HB_MS = 60000, TTL_MS = 60 * 60 * 1000, SHOW_MS = 10000;
+        const SCH_FRESH_MS = 6 * 3600 * 1000, SCH_RETRY_MS = 10 * 60 * 1000;
+        const BACKOFF = [30000, 60000, 120000, 300000];
+        const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+        const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* 무시 */ } };
+        const norm = s => String(s == null ? '' : s).normalize('NFC').trim();
+        const pad = n => String(n).padStart(2, '0');
+        let busy = false, fails = 0;
+
+        const inWindow = () => { const k = getKSTDate(), m = k.getHours() * 60 + k.getMinutes(); return WIN.some(([a, b]) => m >= a && m < b); };
+
+        // 근무표 → { 이름: { 'M/D': 1 } } (두 사람만 압축 저장)
+        async function loadSchedule(ym) {
+            const key = 'neubie_dm_sch_' + ym;
+            let c = null; try { c = JSON.parse(lsGet(key) || 'null'); } catch (e) { /* 무시 */ }
+            const now = Date.now();
+            if (c && c.p && now - c.at < SCH_FRESH_MS) return c;
+            if (now - (+lsGet(key + '_try') || 0) < SCH_RETRY_MS) return c && c.p ? c : null;   // 최근에 실패했으면 잠시 쉼
+            lsSet(key + '_try', String(now));
+            try {
+                const r = await fetchWithTimeout(SCH + ym + '.json?t=' + now, { cache: 'no-store' }, 8000);
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                const js = await r.json();
+                if (!js || !Array.isArray(js.staff)) throw new Error('형식 오류');
+                const p = {};
+                PAIR.forEach(n => {
+                    const s = js.staff.find(x => norm(x && x.name).includes(n));
+                    if (!s || !s.schedule) return;
+                    p[n] = {};
+                    Object.keys(s.schedule).forEach(d => {
+                        const v = s.schedule[d];
+                        if (v && (v.present === true || String(v.raw || '').toUpperCase().includes('OT'))) p[n][d] = 1;
+                    });
+                });
+                c = { at: now, p }; lsSet(key, JSON.stringify(c));
+                return c;
+            } catch (e) { console.warn('[DM] 근무표 로드 실패:', e.message); return c && c.p ? c : null; }
+        }
+        // true = 둘 다 출근 / false = 아님 / null = 근무표를 알 수 없음(이 경우 조회는 계속)
+        async function overlapToday() {
+            const k = getKSTDate(), ym = k.getFullYear() + '-' + pad(k.getMonth() + 1), day = (k.getMonth() + 1) + '/' + k.getDate();
+            const c = await loadSchedule(ym); if (!c) return null;
+            const a = c.p[PAIR[0]], b = c.p[PAIR[1]];
+            if (!a || !b) { console.warn('[DM] 근무표에서 이름을 찾지 못함'); return false; }
+            return !!(a[day] && b[day]);
+        }
+
+        function showDmToast(from, text) {
+            document.getElementById('neubie-dm-toast')?.remove();
+            const el = document.createElement('div');
+            el.id = 'neubie-dm-toast';
+            el.style.cssText = 'position:fixed;top:14vh;left:50%;transform:translate(-50%,-34px);opacity:0;max-width:min(560px,90vw);min-width:260px;box-sizing:border-box;padding:14px 20px;border-radius:14px;background:#1e293b;color:#fff;border:2px solid #14a89b;box-shadow:0 10px 32px rgba(0,0,0,.5);z-index:2147483647;cursor:pointer;font-family:Paperlogy,Pretendard,sans-serif;transition:transform .5s cubic-bezier(.2,.9,.3,1),opacity .35s ease;';
+            const h = document.createElement('div'); h.style.cssText = 'font-size:12.5px;font-weight:800;color:#5ed3ae;margin-bottom:6px;'; h.textContent = '✉ 메시지 · ' + from;
+            const b = document.createElement('div'); b.style.cssText = 'font-size:16px;font-weight:700;line-height:1.5;white-space:pre-wrap;word-break:break-word;'; b.textContent = text;
+            const f = document.createElement('div'); f.style.cssText = 'font-size:11px;color:#94a3b8;margin-top:8px;text-align:right;'; f.textContent = '클릭하면 닫힙니다';
+            el.append(h, b, f); document.body.appendChild(el);
+            let t = null;
+            const close = () => { clearTimeout(t); el.style.opacity = '0'; el.style.transform = 'translate(-50%,-24px)'; setTimeout(() => el.remove(), 450); };
+            el.addEventListener('click', close);
+            requestAnimationFrame(() => requestAnimationFrame(() => { el.style.opacity = '1'; el.style.transform = 'translate(-50%,0)'; }));
+            t = setTimeout(close, SHOW_MS);
+        }
+
+        async function tick() {
+            if (busy || document.hidden) return;
+            if (norm(lsGet('neubie_user_name')) !== TARGET) return;                  // 안혜림 PC 만
+            busy = true;
+            try {
+                await adminConfigReady;
+                if (ADMIN_CONFIG.directMsg === false) return;
+                if (Date.now() < (+lsGet('neubie_dm_next') || 0)) return;           // 백오프 중
+                const last = () => +lsGet('neubie_dm_last') || 0;
+                // 룰 판정: 테스트 강제 / 시간대 안 + (둘 다 출근 또는 근무표를 모름)
+                let inRules = lsGet('neubie_dm_force') === '1';
+                if (!inRules && inWindow()) inRules = (await overlapToday()) !== false;
+                const gap = inRules ? GAP_MS : HB_MS - 2000;                         // 룰 밖이면 60초 간격 하트비트
+                if (Date.now() - last() < gap) return;                               // 다른 탭이 방금 조회함 / 아직 때가 아님
+                lsSet('neubie_dm_last', String(Date.now()));
+                const r = await fetchWithTimeout(API + '&t=' + Date.now(), { cache: 'no-store' }, 8000);
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                const d = (await r.json()).data;
+                fails = 0; lsSet('neubie_dm_next', '0');
+                if (!d || norm(d.to) !== TARGET || !d.id || !d.msg) return;
+                if (d.id <= (+lsGet('neubie_dm_seen') || 0)) return;                 // 이미 표시함
+                if (Date.now() - (+d.at || 0) > TTL_MS) return;                      // 너무 오래된 메시지
+                if (!inRules && d.force !== true) return;                            // 룰 밖에서는 강제 전송만 표시 (일반 메시지는 seen 처리 안 함 → 룰 안에서 표시)
+                lsSet('neubie_dm_seen', String(d.id));                                // 표시 전에 먼저 기록
+                showDmToast(norm(d.from) || '관리자', String(d.msg).slice(0, 500));
+            } catch (e) {
+                fails++; lsSet('neubie_dm_next', String(Date.now() + BACKOFF[Math.min(fails - 1, BACKOFF.length - 1)]));
+                console.warn('[DM] 조회 실패:', e.message);
+            } finally { busy = false; }
+        }
+        setInterval(tick, POLL_MS + Math.floor(Math.random() * 1500));   // 탭마다 조금씩 어긋나게
+        document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(tick, 500); });   // 탭으로 돌아오면 바로 확인
     })();
 
     let lastNotifiedMin = -1; 
