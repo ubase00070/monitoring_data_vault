@@ -390,7 +390,7 @@
     "rawTime": "21:59"
   },
   {
-    "user": "김소연",
+    "user": "임다연",
     "type": "task",
     "content": "[22:00] 양원LH 1호기 - 관제 주행",
     "rawTime": "22:00"
@@ -400,6 +400,18 @@
     "type": "task",
     "content": "[23:00] 무선충전 기체 주차 상태 (충전중⚡) 확인",
     "rawTime": "23:00"
+  },
+  {
+    "user": "최선호",
+    "type": "task",
+    "content": "[00:00] 양원LH 1호기 - 관제 주행",
+    "rawTime": "00:00"
+  },
+  {
+    "user": "김소연",
+    "type": "task",
+    "content": "[03:00] 양원LH 1호기 - 관제 주행",
+    "rawTime": "03:00"
   },
   {
     "user": "이지윤",
