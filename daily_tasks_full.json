@@ -58,7 +58,7 @@
     {
       "row": 90,
       "content": "[10:30] 요기요 [송도] 뉴비 대기장소 설정 체크",
-      "fixed": false,
+      "fixed": true,
       "user": ""
     },
     {
@@ -256,13 +256,13 @@
     {
       "row": 123,
       "content": "[00:00] 양원LH 1호기 - 관제 주행",
-      "fixed": false,
+      "fixed": true,
       "user": ""
     },
     {
       "row": 124,
       "content": "[03:00] 양원LH 1호기 - 관제 주행",
-      "fixed": false,
+      "fixed": true,
       "user": ""
     },
     {
