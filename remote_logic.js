@@ -5693,21 +5693,20 @@
 
     /* ============================================================
         주차 확인 토스트 (admin '무선 기체 주차' 점검의 '확인 요망' 기체 안내)
-        - 04:05 / 06:05 에 슬롯마다 딱 1명에게만 띄운다. 순위대로 훑어, 그 시각 다중(메인) · 서브로 배정된 사람은 건너뛰고 첫 번째 사람이 받는다. (메인2 는 건너뛰지 않는다)
+        - 06:05 에 딱 1명에게만 띄운다. (04:05 안내는 삭제됨) 순위대로 훑어, 그 시각 다중(메인) · 서브로 배정된 사람은 건너뛰고 첫 번째 사람이 받는다. (메인2 는 건너뛰지 않는다)
           08시 점검 결과는 admin 이 json 에만 저장하고 토스트는 없다 (출근한 admin 사용자가 직접 확인).
         - 누가 받을지는 daily_tasks 만으로 각 PC 가 똑같이 계산한다 → PC 끼리 통신 불필요, 주차 json 을 읽는 건 받을 사람 PC 한 대뿐.
         - 출근 여부는 구분하지 않는다. 받을 사람이 미출근이면 그 슬롯은 안내가 없고, 그대로 미주차면 다음 점검에서 다시 안내된다.
-        - 순위 3명이 전부 다중/서브면 → ##:50 에 1순위 사람이 (조건 없이) 받는다.
+        - 순위 4명이 전부 다중/서브면 → ##:50 에 1순위 사람이 (조건 없이) 받는다.
         - 끄기: remote_admin_config.json 의 "parkingToast": false
        ============================================================ */
     (function parkingToast() {
         const API = 'https://multimonitoring.vercel.app/api/battery?name=parking_check';
         const TASKS_API = 'https://multimonitoring.vercel.app/api/tasks';   // ※ 쿼리/no-store 를 붙이지 않는다 (서버 CDN 캐시 유지)
         const SLOTS = [   // 월초 근무표가 바뀌면 여기 이름만 고치면 된다
-            { id: '04', hh: 4, ranks: ['최정기', '백진홍', '이지윤'], subBlocks: true },
-            { id: '06', hh: 6, ranks: ['백진홍', '김소연', '이준'], subBlocks: true }
+            { id: '06', hh: 6, ranks: ['백진홍', '이지윤', '이준', '김소연'], subBlocks: true }
         ];
-        const DECIDE_S = 270, A_FROM = 300, A_TO = 1200, B_FROM = 3000, B_TO = 3480;   // 정시 이후 초: 04:30 결정 · 05~20분 읽기 · 50~58분 재안내
+        const DECIDE_S = 270, A_FROM = 300, A_TO = 1200, B_FROM = 3000, B_TO = 3480;   // 정시 이후 초: 4분 30초 결정 · 05~20분 읽기 · 50~58분 재안내
         const GAP_MS = 30000, SHOW_MS = 10000, PER_BATCH = 2;
         const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
         const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* 무시 */ } };
@@ -5722,7 +5721,7 @@
         }
         const save = (day, id, st) => lsSet('neubie_pk_' + day + '_' + id, JSON.stringify(st));
 
-        async function freshTasks() {   // 밤에는 daily_tasks 동기화가 60분 간격이라, 결정 직전에 한 번 새로 받는다 (후보 3명 PC 만)
+        async function freshTasks() {   // 밤에는 daily_tasks 동기화가 60분 간격이라, 결정 직전에 한 번 새로 받는다 (후보 PC 만)
             try {
                 const r = await fetchWithTimeout(TASKS_API, {}, 8000);
                 const d = r.ok ? await r.json() : null;
@@ -5780,7 +5779,7 @@
                 if (!me) return;
                 const k = getKSTDate(), sec = k.getHours() * 3600 + k.getMinutes() * 60 + k.getSeconds(), day = dayKey(k);
                 for (const sl of SLOTS) {
-                    if (!sl.ranks.includes(me)) continue;   // 후보 3명이 아니면 아무것도 안 함 (요청도 없음)
+                    if (!sl.ranks.includes(me)) continue;   // 후보가 아니면 아무것도 안 함 (요청도 없음)
                     const e = sec - sl.hh * 3600;
                     if (e < DECIDE_S || e > B_TO) continue;
                     const st = load(day, sl.id);
