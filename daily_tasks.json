@@ -402,10 +402,16 @@
     "rawTime": "23:00"
   },
   {
-    "user": "임다연",
+    "user": "박계원",
     "type": "task",
     "content": "[00:00] 양원LH 1호기 - 관제 주행",
     "rawTime": "00:00"
+  },
+  {
+    "user": "임다연",
+    "type": "task",
+    "content": "[03:00] 양원LH 1호기 - 관제 주행",
+    "rawTime": "03:00"
   },
   {
     "user": "이준",
