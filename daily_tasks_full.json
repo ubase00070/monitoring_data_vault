@@ -256,7 +256,7 @@
     {
       "row": 123,
       "content": "[00:00] 양원LH 1호기 - 관제 주행",
-      "fixed": true,
+      "fixed": false,
       "user": ""
     },
     {
