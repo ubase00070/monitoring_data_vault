@@ -8045,7 +8045,7 @@
             });
             db.dirty = {};
         }
-        function tPurge() { _totDB = { S: {}, A: {}, R: {}, dirty: {} }; [TOT_KS, TOT_KA, TOT_KR].forEach(k => { try { localStorage.removeItem(k); } catch (e) { /* 무시 */ } }); }
+        function tPurge() { _totDB = { S: {}, A: {}, R: {}, dirty: {} }; try { _sumDone = {}; } catch (e) { /* 아직 초기화 전 */ } [TOT_KS, TOT_KA, TOT_KR].forEach(k => { try { localStorage.removeItem(k); } catch (e) { /* 무시 */ } }); }
 
         /* ── 요약(summary) 파일: 지난 날짜의 개입 요약(S)·10분 구간(R)·이석(A)을 월별 파일로 한 번에 받아 저장본을 채운다 ──
               개입: intervenes/logs/_summary/YYYY-MM.json (api/intervene?view=summary_file) · 이석: no_limit/attendance/_summary/YYYY-MM.json (api/attendance-data?action=summary)
@@ -8110,10 +8110,10 @@
         }
         async function tSumEnsure(force) {   // 요약 파일을 (이 화면을 여는 동안) 달마다 한 번만 받음
             if (_sumSkip) return 0;
+            while (_sumPend) { try { await _sumPend; } catch (e) { /* 무시 */ } }   // 이미 받는 중이면 끝난 뒤 다시 계산 (그 사이 저장본을 비웠다면 처음부터 다시 채움)
             if (force) _sumDone = {};
             const months = [...new Set((TD.dates || []).filter(d => tAge(d) >= 2).map(d => d.slice(0, 7)))].filter(ym => !_sumDone[ym]);
             if (!months.length) return 0;
-            if (_sumPend) return _sumPend;
             return _sumPend = (async () => {
                 let n = 0;
                 try { await tPool(months, 3, async ym => { n += await tSumFetchMonth(ym); _sumDone[ym] = true; }); }
@@ -8168,7 +8168,7 @@
                     if (!live) { db.S[d] = { got: today, rv: tRev(d), p: tPack(keep) }; tDirty('S'); }
                     return TD.sum[d];
                 } catch (e) { TD.err = e && e.message; if (TD.sum[d] === undefined) TD.sum[d] = null; return TD.sum[d]; }
-                finally { delete TD.pend['s' + d]; }
+                finally { Promise.resolve().then(() => { delete TD.pend['s' + d]; }); }   /* 바로 끝나는 경우(저장본 사용)에도 아래 대입이 끝난 뒤 지워서 '진행 중' 표시가 남지 않게 */
             })();
         }
         window.__bbTotFeed = (d, j) => {   // 시간추이·누적통계가 지난 날짜 요약을 받았을 때 같이 보관 (같은 응답을 두 번 받지 않도록)
@@ -8236,7 +8236,7 @@
                     if (ok) return set(null, age >= 2);
                     TD.arc[d] = null; TD.arcAt[d] = Date.now(); return null;   // 네트워크 실패: 저장하지 않고 이번 화면에서만 비움
                 } catch (e) { TD.err = e && e.message; return TD.arc[d] || null; }
-                finally { delete TD.pend['a' + d]; }
+                finally { Promise.resolve().then(() => { delete TD.pend['a' + d]; }); }   /* 바로 끝나는 경우(저장본 사용)에도 아래 대입이 끝난 뒤 지워서 '진행 중' 표시가 남지 않게 */
             })();
         }
         const tArcOf = (d, name) => { const a = TD.arc[d]; return a && a[name] ? a[name] : null; };
@@ -8282,7 +8282,7 @@
                     }
                     return null;
                 } catch (e) { TD.err = e && e.message; return null; }   // 실패는 저장하지 않음 (다시 열면 재시도)
-                finally { delete TD.pend['r' + k]; }
+                finally { Promise.resolve().then(() => { delete TD.pend['r' + k]; }); }   /* 바로 끝나는 경우(저장본 사용)에도 아래 대입이 끝난 뒤 지워서 '진행 중' 표시가 남지 않게 */
             })();
         }
 
@@ -8566,7 +8566,7 @@
         /* ── 불러오기 순서: 날짜 목록 → 가장 최근 근무일 요약 → (먼저 화면) → 나머지 요약·이석을 뒤에서 조금씩 ── */
         async function totInit(force, noSum) {
             const seq = ++_totInit; _sumSkip = !!noSum;
-            if (force) { tPurge(); TD.sum = {}; TD.sumAt = {}; TD.arc = {}; TD.arcAt = {}; TD.bins = {}; TD.binAt = {}; _totAvgc = null; trFetchDates(true).catch(() => { /* 무시 */ }); }
+            if (force) { tPurge(); TD.pend = {}; TD.sum = {}; TD.sumAt = {}; TD.arc = {}; TD.arcAt = {}; TD.bins = {}; TD.binAt = {}; _totAvgc = null; trFetchDates(true).catch(() => { /* 무시 */ }); }
             TD.err = null; TD.hit = 0; TD.net = 0; TD.sm = 0; TD.bg = '';
             tSetStatus('날짜 목록 불러오는 중…', false, true);
             try { await trFetchDates(!!force); } catch (e) { TD.err = e && e.message; }
