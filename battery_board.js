@@ -5575,6 +5575,23 @@
         } finally { clearTimeout(timer); }
     }
 
+    /* ── 요약(summary) 파일 — 이석: no_limit/attendance/_summary/YYYY-MM.json (api/attendance-data?action=summary) ──
+          지난(확정된) 날짜의 이석 기록을 월 파일 하나로 받는다. 날짜별 항목: { none:1 } | { s:(합산 통계용 이석 요약), st:(그날 stats 중 이석 화면이 쓰는 필드만) }
+          파일이 없거나 형식이 다르면 null → 각 화면이 예전처럼 날짜별 archive 로 받는다 */
+    let _attSumC = {};
+    function attSumDoc(ym, fresh) {
+        const c = _attSumC[ym]; if (c && !fresh && Date.now() - c.at < 10 * 60000) return c.p;
+        const p = attFetchJson(ATT_API + '/attendance-data?action=summary&ym=' + ym).then(x => (x && !x._404 && x.v === 1 && x.days && typeof x.days === 'object') ? x : null).catch(() => null);
+        _attSumC[ym] = { at: Date.now(), p }; return p;
+    }
+    const attSumReset = () => { _attSumC = {}; };
+    // 하루 stats → 요약용 배열 [[이름, 표시이름, 근무[시작,끝], 이석횟수, 총이석초, [[이석, 착석, 소요초, 편집플래그(1=이석,2=착석)], …]], …]
+    const attStToSum = stats => (stats || []).map(s => [s.name || '', s.dn || null, (Array.isArray(s.shift) && s.shift.length === 2) ? s.shift : null, s.awayCount || 0, Math.round(s.totalAwaySec || 0),
+        (s.log || []).map(l => [l.away || null, l.back || null, typeof l.durationSec === 'number' ? l.durationSec : null, (l.awayEdited ? 1 : 0) | (l.backEdited ? 2 : 0)])]);
+    // 요약용 배열 → archive 의 stats 와 같은 모양 (이석 누적통계·일자별 로그가 읽는 필드만)
+    const attStFromSum = st => (st || []).map(a => ({ name: a[0], dn: a[1] || undefined, shift: a[2] || undefined, awayCount: a[3], totalAwaySec: a[4],
+        log: (a[5] || []).map(l => ({ away: l[0], back: l[1], durationSec: l[2], awayEdited: !!(l[3] & 1), backEdited: !!(l[3] & 2) })) }));
+
     async function attRefreshLive() {
         if (_attBusy) return;
         _attBusy = true;
@@ -5970,7 +5987,10 @@
         const dates = rsDatesOf(ym).filter(d => d <= attLiveDate()), archives = {};
         let done = 0, fail = 0;
         const sched = attFetchJson(ATT_API + '/schedule?ym=' + ym, 20000).then(d => (d && Array.isArray(d.staff)) ? d : null).catch(() => null);
+        const sum = await attSumDoc(ym);   // 지난 날짜는 월 요약 한 번으로 (요약에 없는 날짜·오늘은 아래에서 날짜별로)
         await Promise.all(dates.map(async d => {
+            const se = sum && sum.days[d];
+            if (se && (se.none || Array.isArray(se.st))) { if (!se.none) archives[d] = { stats: attStFromSum(se.st) }; onProg(++done, dates.length); return; }
             try {
                 const r = await attFetchJson(ATT_API + '/attendance-data?action=archive&date=' + d, 20000);
                 if (r && !r._404 && Array.isArray(r.stats)) archives[d] = { stats: r.stats };
@@ -6226,9 +6246,12 @@
         if (_attDayLogsPending[ym]) return _attDayLogsPending[ym];
         const p = (async () => {
             const dates = attDatesGuess(ym), days = {};
+            const sum = await attSumDoc(ym);   // 지난 날짜는 월 요약에서, 없는 날짜·오늘은 아래에서 날짜별로
             await Promise.all(dates.map(async d => {
                 let r;
-                try { r = await attFetchJson(ATT_API + '/attendance-data?action=archive&date=' + d); }
+                const se = sum && sum.days[d];
+                if (se && (se.none || Array.isArray(se.st))) { if (!se.none) r = { stats: attStFromSum(se.st) }; else return; }
+                else try { r = await attFetchJson(ATT_API + '/attendance-data?action=archive&date=' + d); }
                 catch (e) { console.warn('[BB] 일자별 로그: ' + d + ' 조회 실패:', e.message); return; }   // 하루치 실패는 그 날만 비우고 나머지는 계속
                 if (!r || r._404 || !Array.isArray(r.stats)) return;   // 기록 없는 날(404)은 조용히 건너뜀
                 const dayObj = {};
@@ -7307,6 +7330,8 @@
             if (store.revs) Object.keys(store.revs).forEach(d => { if (!dates.includes(d)) delete store.revs[d]; });
             const today = ivOpDate();
             const cut = spShift(today, -(IV_SP_REFETCH_DAYS - 1));
+            try { await ivPrefillStore(store, dates, srvRevs, 'sp', false); } catch (e) { /* 요약 실패는 무시 — 아래에서 날짜별로 받음 */ }
+            if (seq !== _spSeq) return;
             // rev 가 있으면: 없는 날 + 오늘 + rev 달라진 날만. rev 가 없으면(폴백): 최근 N일 재수신
             const todo = dates.filter(d => !store.days[d] || d === today || spNeedFast(store.days[d]) || (srvRevs ? (store.revs || {})[d] !== srvRevs[d] : d >= cut));
             console.log('[BB] 개입 통계: 받을 날짜', todo.length, '/', dates.length, '· revs', srvRevs ? '있음' : '없음(폴백)', todo.slice(0, 5));
@@ -7555,6 +7580,8 @@
             if (seq !== _trSeq) return;
             Object.keys(store.days).forEach(d => { if (!dates.includes(d)) { delete store.days[d]; delete store.got[d]; delete store.revs[d]; } });   // 서버에서 사라진 날짜는 버림
             const today = ivOpDate(), revs = _trRevs;
+            try { await ivPrefillStore(store, dates, revs, 'tr', true); } catch (e) { /* 요약 실패는 무시 — 아래에서 날짜별로 받음 */ }
+            if (seq !== _trSeq) return;
             // 지난 날짜만 (오늘은 아직 진행 중). 없는 날 + (rev 가 있으면 rev 달라진 날 / 없으면 끝난 지 이틀이 안 된 날) 만 받는다
             const todo = dates.filter(d => d < today && (!store.days[d] || (revs ? (revs[d] && store.revs[d] !== revs[d]) : (store.got[d] || '') < spShift(d, 2))));
             st.total = todo.length;
@@ -7950,7 +7977,7 @@
         const totPop = ivEl('div'); totPop.id = 'bb-iv-tot';
         totPop.innerHTML =
             '<div class="bb-tot-h"><b>📈 합산 통계</b><span class="sub">개입 건수 · 이석을 10분 단위로 (이름이 확인된 해결 건만 셉니다)</span>' +
-            '<span class="st busy" id="bb-tot-st">준비 중…</span><span class="rf" data-act="reload" title="저장해 둔 합산 통계 데이터를 비우고 서버에서 다시 받습니다">↻ 새로 받기</span><span class="x" data-act="close" title="닫기">✕</span></div>' +
+            '<span class="st busy" id="bb-tot-st">준비 중…</span><span class="rf" data-act="reload" title="저장해 둔 합산 통계 데이터를 비우고 다시 받습니다 (요약 파일 + 부족한 날짜). Shift+클릭: 요약 파일 없이 날짜별로 전부 서버에서">↻ 새로 받기</span><span class="x" data-act="close" title="닫기">✕</span></div>' +
             '<div class="bb-tot-ctl">' +
               '<div class="bb-tot-seg" id="bb-tot-seg"><button data-act="mode" data-v="day">날짜별</button><button data-act="mode" data-v="all">전체 통계</button></div>' +
               '<label class="bb-tot-chk"><input type="checkbox" data-opt="away" checked>이석 표시</label>' +
@@ -8019,6 +8046,82 @@
             db.dirty = {};
         }
         function tPurge() { _totDB = { S: {}, A: {}, R: {}, dirty: {} }; [TOT_KS, TOT_KA, TOT_KR].forEach(k => { try { localStorage.removeItem(k); } catch (e) { /* 무시 */ } }); }
+
+        /* ── 요약(summary) 파일: 지난 날짜의 개입 요약(S)·10분 구간(R)·이석(A)을 월별 파일로 한 번에 받아 저장본을 채운다 ──
+              개입: intervenes/logs/_summary/YYYY-MM.json (api/intervene?view=summary_file) · 이석: no_limit/attendance/_summary/YYYY-MM.json (api/attendance-data?action=summary)
+              · 어제·오늘은 담지 않고 늘 새로 받음 · 개입은 날짜별 지문(rv)이 지금 서버와 같을 때만 사용(명단·근무표가 바뀌면 그 날짜는 새로 받음)
+              · 집계 제외 명단·구간 크기(cfg)가 다르면 그 파일은 통째로 무시 · 파일이 없거나 형식이 다르면 지금까지처럼 날짜별로 받음 */
+        const SUM_V = 1, SUM_CFG = JSON.stringify([ATT_EXCLUDE, TOT_MGRS, TOT_BIN]), ATT_SUM = ATT_API + '/attendance-data';
+        let _sumDone = {}, _sumPend = null, _sumSkip = false;
+        const _ivSumC = {};
+        function ivSumDoc(ym, fresh) {   // 개입 월 요약 (이 화면을 여는 동안 10분 재사용)
+            const c = _ivSumC[ym]; if (c && !fresh && Date.now() - c.at < 10 * 60000) return c.p;
+            const p = attFetchJson(IV_API + '?view=summary_file&ym=' + ym).then(x => (x && !x._404 && x.v === SUM_V && x.days && typeof x.days === 'object') ? x : null).catch(() => null);
+            _ivSumC[ym] = { at: Date.now(), p }; return p;
+        }
+        // 개입 누적통계·시간추이의 저장분(store)에 없는 지난 날짜를 요약에서 채운다 (서버의 날짜별 지문 revs 가 요약과 같은 날짜만 — 다르면 서버에서 새로 받음)
+        async function ivPrefillStore(store, dates, revs, field, withGot) {
+            if (!revs || _sumSkip) return 0;
+            const today = ivOpDate(), miss = dates.filter(d => d < today && !store.days[d] && revs[d]);
+            if (!miss.length) return 0;
+            const months = [...new Set(miss.map(d => d.slice(0, 7)))], docs = {};
+            await tPool(months, 3, async ym => { docs[ym] = await ivSumDoc(ym); });
+            let n = 0;
+            miss.forEach(d => {
+                const doc = docs[d.slice(0, 7)], e = doc && doc.days[d];
+                if (!e || e.rv !== revs[d] || !e[field] || typeof e[field] !== 'object') return;
+                store.days[d] = e[field]; (store.revs || (store.revs = {}))[d] = e.rv; if (withGot) (store.got || (store.got = {}))[d] = today; n++;
+            });
+            return n;
+        }
+        const tArcOk = a => !!a && (a.sm || Date.now() - a.at < 30 * 86400e3);
+        function tSumNeeded() {   // 저장본에 없거나 낡은 지난 날짜가 있을 때만 요약 파일을 받는다 (다 있으면 요청 0)
+            const db = tDB();
+            return (TD.dates || []).some(d => tAge(d) >= 2 && (!(db.S[d] && tSumFresh(d)) || !tArcOk(db.A[d])));
+        }
+        async function tSumFetchMonth(ym) {   // 이 달 요약 두 개를 받아 저장본에 채움 → 채운 날짜 수
+            const [a, b] = await Promise.all([ivSumDoc(ym), attSumDoc(ym)]);
+            const ok = x => !!x && x.cfg === SUM_CFG;
+            const db = tDB(), days = new Set();
+            if (ok(a)) {
+                const got = String(a.built || '').slice(0, 10) || ivOpDate();
+                Object.keys(a.days).forEach(d => {
+                    const e = a.days[d];
+                    if (!e || !/^\d{4}-\d{2}-\d{2}$/.test(d) || d.slice(0, 7) !== ym || tAge(d) < 2) return;
+                    const rv = tRev(d);
+                    if (rv && e.rv !== rv) return;   // 명단·근무표·로그가 바뀐 날짜 → 서버에서 새로 받음
+                    if (!e.none && !Array.isArray(e.p)) return;
+                    if (!(db.S[d] && tSumFresh(d))) { db.S[d] = e.none ? { none: 1, got, rv: e.rv || '' } : { got, rv: e.rv || '', p: e.p }; days.add(d); }
+                    if (e.R) Object.keys(e.R).forEach(nm => { const k = d + '|' + nm, x = e.R[nm]; if (!db.R[k] && Array.isArray(x) && Array.isArray(x[2])) { db.R[k] = { a: x[0], b: x[1], at: Date.now(), rv: e.rv || '', c: x[2] }; days.add(d); } });
+                });
+                tDirty('S'); tDirty('R');
+            }
+            if (ok(b)) {
+                Object.keys(b.days).forEach(d => {
+                    const e = b.days[d];
+                    if (!e || !/^\d{4}-\d{2}-\d{2}$/.test(d) || d.slice(0, 7) !== ym || tAge(d) < 2) return;
+                    if (tArcOk(db.A[d])) return;
+                    db.A[d] = (e.none || (!e.s && Array.isArray(e.st))) ? { at: Date.now(), sm: 1, none: 1 } : (e.s && typeof e.s === 'object' ? { at: Date.now(), sm: 1, s: e.s } : null);
+                    if (db.A[d]) days.add(d); else delete db.A[d];
+                });
+                tDirty('A');
+            }
+            return days.size;
+        }
+        async function tSumEnsure(force) {   // 요약 파일을 (이 화면을 여는 동안) 달마다 한 번만 받음
+            if (_sumSkip) return 0;
+            if (force) _sumDone = {};
+            const months = [...new Set((TD.dates || []).filter(d => tAge(d) >= 2).map(d => d.slice(0, 7)))].filter(ym => !_sumDone[ym]);
+            if (!months.length) return 0;
+            if (_sumPend) return _sumPend;
+            return _sumPend = (async () => {
+                let n = 0;
+                try { await tPool(months, 3, async ym => { n += await tSumFetchMonth(ym); _sumDone[ym] = true; }); }
+                finally { _sumPend = null; }
+                TD.sm = (TD.sm || 0) + n; _totAvgc = null;
+                return n;
+            })();
+        }
 
         /* ── 개입 요약 (날짜별) ── */
         const tKeep = list => (list || []).filter(p => p && p.name && !tExcl(p.name) && !tMgr(p.name)).map(p => ({
@@ -8117,7 +8220,7 @@
                     if (live && _attLive && _attLive.date === d && Array.isArray(_attLive.stats) && Date.now() - (_attLive._at || 0) < 60000) return set(tArcFromStats(_attLive.stats), false);   // 이석 현황이 받아 둔 실시간 값
                     if (!live && !force) {
                         const r = db.A[d];
-                        if (r && (age >= 2 ? Date.now() - r.at < 30 * 86400e3 : Date.now() - r.at < 3600e3)) { TD.hit++; return set(r.none ? null : r.s, false); }
+                        if (r && (age >= 2 ? tArcOk(r) : Date.now() - r.at < 3600e3)) { TD.hit++; return set(r.none ? null : r.s, false); }
                         const mem = _attDayCache[d];   // 이석 화면에서 이미 본 날
                         if (mem && mem.v && Array.isArray(mem.v.stats) && mem.v.stats.length && Date.now() - mem.at < 3600e3) return set(tArcFromStats(mem.v.stats), true);
                         const mo = _attMonthCache['l' + d.slice(0, 7)];   // 이석 로그(월) 에서 이미 받은 날
@@ -8163,6 +8266,7 @@
             if (TD.pend['r' + k]) return TD.pend['r' + k];
             return TD.pend['r' + k] = (async () => {
                 try {
+                    if (!live && age >= 2 && !db.R[k]) { try { await tSumEnsure(false); } catch (e) { /* 요약 실패는 무시 — 아래에서 날짜별로 받음 */ } }
                     const r = db.R[k];
                     if (!live && r && r.a === sh[0] && r.b === sh[1]) {
                         const rv = tRev(d), ok = age >= 2 ? !(rv && r.rv && r.rv !== rv) : (Date.now() - r.at < 3600e3);
@@ -8397,7 +8501,7 @@
             if (!TS.name) { body.innerHTML = '<div class="bb-tot-msg">' + (TD.bg ? '' : '아래에서 인원을 고르세요.') + '</div>'; return; }
             const pre = body.querySelector('.bb-tot-dates'), keepD = pre ? pre.scrollLeft : 0, keepC = (body.querySelector('.bb-tot-cs') || {}).scrollLeft || 0, keepT = body.scrollTop;
             const person = await totEnsure(); if (seq !== _totSeq) return;
-            tSetStatus(TD.err ? '일부 요청 실패: ' + TD.err : (TD.bg || '준비 완료 · ' + TD.dates.length + '일치 · 서버 요청 ' + TD.net + '회 / 저장본 ' + TD.hit + '건'), !!TD.err, !!TD.bg);
+            tSetStatus(TD.err ? '일부 요청 실패: ' + TD.err : (TD.bg || '준비 완료 · ' + TD.dates.length + '일치 · ' + (TD.sm ? '요약 파일 ' + TD.sm + '일 · ' : '') + '서버 요청 ' + TD.net + '회 / 저장본 ' + TD.hit + '건'), !!TD.err, !!TD.bg);
             const all = TS.mode === 'all';
             if (!person) {
                 if (all) { body.innerHTML = '<div class="bb-tot-msg">' + (TD.bg ? trEsc(TS.name) + ' 님의 기록을 불러오는 중이에요 ☕' : trEsc(TS.name) + ' 님의 근무 정보를 찾지 못했어요 🔍') + '</div>'; return; }
@@ -8460,10 +8564,10 @@
         }
 
         /* ── 불러오기 순서: 날짜 목록 → 가장 최근 근무일 요약 → (먼저 화면) → 나머지 요약·이석을 뒤에서 조금씩 ── */
-        async function totInit(force) {
-            const seq = ++_totInit;
+        async function totInit(force, noSum) {
+            const seq = ++_totInit; _sumSkip = !!noSum;
             if (force) { tPurge(); TD.sum = {}; TD.sumAt = {}; TD.arc = {}; TD.arcAt = {}; TD.bins = {}; TD.binAt = {}; _totAvgc = null; trFetchDates(true).catch(() => { /* 무시 */ }); }
-            TD.err = null; TD.hit = 0; TD.net = 0; TD.bg = '';
+            TD.err = null; TD.hit = 0; TD.net = 0; TD.sm = 0; TD.bg = '';
             tSetStatus('날짜 목록 불러오는 중…', false, true);
             try { await trFetchDates(!!force); } catch (e) { TD.err = e && e.message; }
             if (seq !== _totInit) return;
@@ -8471,6 +8575,11 @@
             Object.keys(db.S).forEach(d => { if (_trDates && !_trDates.includes(d)) delete db.S[d]; });   // 서버에서 사라진 날짜는 버림
             Object.keys(db.A).forEach(d => { if (_trDates && !_trDates.includes(d)) delete db.A[d]; });
             Object.keys(db.R).forEach(k => { if (_trDates && !_trDates.includes(k.slice(0, 10))) delete db.R[k]; });
+            if (!_sumSkip && (force || tSumNeeded())) {   // 지난 날짜는 요약 파일로 한꺼번에 채우고, 부족한 날짜만 아래에서 예전처럼 받는다
+                tSetStatus('요약 파일 불러오는 중…', false, true);
+                try { await tSumEnsure(!!force); } catch (e) { TD.err = null; }
+                if (seq !== _totInit) return;
+            }
             let found = null;
             for (const d of TD.dates.slice(0, 10)) { const s = await tGetSum(d); if (seq !== _totInit) return; if (s && s.people.length) { found = d; break; } }
             if (!found) { tSetStatus('데이터를 불러오지 못했습니다' + (TD.err ? ' — ' + TD.err : ''), true); $iv('bb-tot-body').innerHTML = '<div class="bb-tot-msg">서버 응답을 받지 못했습니다.<br>' + trEsc(TD.err || '') + '</div>'; return; }
@@ -8484,7 +8593,7 @@
             const total = restS.length + restA.length;
             if (!total) { totDone(); return; }
             let done = 0, since = 0;
-            const tick = () => { done++; TD.bg = '집계 중… ' + done + '/' + total + ' · 서버 요청 ' + TD.net + '회 / 저장본 ' + TD.hit + '건'; if (++since >= 4 || done === total) { since = 0; if (TS.open && seq === _totInit) { tSetStatus(TD.bg, !!TD.err, true); totRenderPeople(); } } };
+            const tick = () => { done++; TD.bg = '집계 중… ' + done + '/' + total + ' · 요약 파일 ' + (TD.sm || 0) + '일 · 서버 요청 ' + TD.net + '회 / 저장본 ' + TD.hit + '건'; if (++since >= 4 || done === total) { since = 0; if (TS.open && seq === _totInit) { tSetStatus(TD.bg, !!TD.err, true); totRenderPeople(); } } };
             await tPool(restS, 3, async d => { if (seq !== _totInit) return; await tGetSum(d); tick(); });
             if (seq !== _totInit) return;
             if (TS.open) totRender();   // 요약이 다 모이면 한 번 다시 그림 (전체 통계·날짜 칩)
@@ -8522,7 +8631,7 @@
             const b = e.target.closest('[data-act]'); if (!b) return;
             const act = b.dataset.act;
             if (act === 'close') { totClose(); return; }
-            if (act === 'reload') { totInit(true); return; }
+            if (act === 'reload') { totInit(true, e.shiftKey); return; }
             if (act === 'mode') { TS.mode = b.dataset.v; totRender(); return; }
             if (act === 'pid') TS.name = b.dataset.v;
             else if (act === 'lastwork') { const d = TD.dates.find(x => tPersonOn(x, TS.name)); if (d) TS.date = d; }
