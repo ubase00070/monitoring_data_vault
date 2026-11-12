@@ -1,6 +1,587 @@
 {
-  "updatedAt": "2026-11-12 18:39:46",
+  "updatedAt": "2026-11-12 18:54:45",
   "recentHistory": [
+    {
+      "at": "2026-11-12 18:54:45",
+      "changes": [
+        {
+          "type": "추가",
+          "site": "성남 율동",
+          "status": "uncertain",
+          "reason": "07:00 ~ 10:00"
+        },
+        {
+          "type": "추가",
+          "site": "성남 야탑",
+          "status": "uncertain",
+          "reason": "07:00 ~ 10:00"
+        },
+        {
+          "type": "삭제",
+          "site": "성남 율동",
+          "status": "active",
+          "reason": " 07:00 ~ 10:00 "
+        },
+        {
+          "type": "삭제",
+          "site": "성남 야탑",
+          "status": "active",
+          "reason": " 07:00 ~ 10:00 "
+        },
+        {
+          "type": "추가",
+          "site": "성남 율동",
+          "status": "uncertain",
+          "reason": "07:00 ~ 10:00"
+        },
+        {
+          "type": "삭제",
+          "site": "성남 율동",
+          "status": "active",
+          "reason": " 07:00 ~ 10:00 "
+        },
+        {
+          "type": "추가",
+          "site": "성남 율동",
+          "status": "uncertain",
+          "reason": "07:00 ~ 10:00"
+        },
+        {
+          "type": "추가",
+          "site": "성남 야탑",
+          "status": "uncertain",
+          "reason": "07:00 ~ 10:00"
+        },
+        {
+          "type": "삭제",
+          "site": "성남 율동",
+          "status": "active",
+          "reason": " 07:00 ~ 10:00 "
+        },
+        {
+          "type": "삭제",
+          "site": "성남 야탑",
+          "status": "active",
+          "reason": " 07:00 ~ 10:00 "
+        },
+        {
+          "type": "추가",
+          "site": "성남 판교",
+          "status": "uncertain",
+          "reason": "10:00 ~ 13:00"
+        },
+        {
+          "type": "추가",
+          "site": "성남 서현",
+          "status": "uncertain",
+          "reason": "10:00 ~ 13:00"
+        },
+        {
+          "type": "삭제",
+          "site": "성남 판교",
+          "status": "active",
+          "reason": " 10:00 ~ 13:00 "
+        },
+        {
+          "type": "삭제",
+          "site": "성남 서현",
+          "status": "active",
+          "reason": " 10:00 ~ 13:00 "
+        },
+        {
+          "type": "추가",
+          "site": "성남 판교",
+          "status": "uncertain",
+          "reason": "10:00 ~ 13:00"
+        },
+        {
+          "type": "추가",
+          "site": "성남 서현",
+          "status": "uncertain",
+          "reason": "10:00 ~ 13:00"
+        },
+        {
+          "type": "삭제",
+          "site": "성남 판교",
+          "status": "active",
+          "reason": " 10:00 ~ 13:00 "
+        },
+        {
+          "type": "삭제",
+          "site": "성남 서현",
+          "status": "active",
+          "reason": " 10:00 ~ 13:00 "
+        },
+        {
+          "type": "추가",
+          "site": "성남 판교",
+          "status": "uncertain",
+          "reason": "10:00 ~ 13:00"
+        },
+        {
+          "type": "추가",
+          "site": "성남 서현",
+          "status": "uncertain",
+          "reason": "10:00 ~ 13:00"
+        },
+        {
+          "type": "삭제",
+          "site": "성남 판교",
+          "status": "active",
+          "reason": " 10:00 ~ 13:00 "
+        },
+        {
+          "type": "삭제",
+          "site": "성남 서현",
+          "status": "active",
+          "reason": " 10:00 ~ 13:00 "
+        },
+        {
+          "type": "추가",
+          "site": "성남 율동",
+          "status": "uncertain",
+          "reason": "13:00 ~ 16:00"
+        },
+        {
+          "type": "추가",
+          "site": "성남 야탑",
+          "status": "uncertain",
+          "reason": "13:00 ~ 16:00"
+        },
+        {
+          "type": "삭제",
+          "site": "성남 율동",
+          "status": "active",
+          "reason": " 13:00 ~ 16:00 "
+        },
+        {
+          "type": "삭제",
+          "site": "성남 야탑",
+          "status": "active",
+          "reason": " 13:00 ~ 16:00 "
+        },
+        {
+          "type": "추가",
+          "site": "성남 율동",
+          "status": "uncertain",
+          "reason": "13:00 ~ 16:00"
+        },
+        {
+          "type": "추가",
+          "site": "성남 야탑",
+          "status": "uncertain",
+          "reason": "13:00 ~ 16:00"
+        },
+        {
+          "type": "삭제",
+          "site": "성남 율동",
+          "status": "active",
+          "reason": " 13:00 ~ 16:00 "
+        },
+        {
+          "type": "삭제",
+          "site": "성남 야탑",
+          "status": "active",
+          "reason": " 13:00 ~ 16:00 "
+        },
+        {
+          "type": "추가",
+          "site": "성남 율동",
+          "status": "uncertain",
+          "reason": "13:00 ~ 16:00"
+        },
+        {
+          "type": "추가",
+          "site": "성남 야탑",
+          "status": "uncertain",
+          "reason": "13:00 ~ 16:00"
+        },
+        {
+          "type": "삭제",
+          "site": "성남 율동",
+          "status": "active",
+          "reason": " 13:00 ~ 16:00 "
+        },
+        {
+          "type": "삭제",
+          "site": "성남 야탑",
+          "status": "active",
+          "reason": " 13:00 ~ 16:00 "
+        },
+        {
+          "type": "추가",
+          "site": "성남 판교",
+          "status": "uncertain",
+          "reason": "16:00 ~ 19:00"
+        },
+        {
+          "type": "추가",
+          "site": "성남 서현",
+          "status": "uncertain",
+          "reason": "16:00 ~ 19:00"
+        },
+        {
+          "type": "삭제",
+          "site": "성남 판교",
+          "status": "active",
+          "reason": " 16:00 ~ 19:00 "
+        },
+        {
+          "type": "삭제",
+          "site": "성남 서현",
+          "status": "active",
+          "reason": " 16:00 ~ 19:00 "
+        },
+        {
+          "type": "추가",
+          "site": "성남 판교",
+          "status": "uncertain",
+          "reason": "16:00 ~ 19:00"
+        },
+        {
+          "type": "추가",
+          "site": "성남 서현",
+          "status": "uncertain",
+          "reason": "16:00 ~ 19:00"
+        },
+        {
+          "type": "삭제",
+          "site": "성남 판교",
+          "status": "active",
+          "reason": " 16:00 ~ 19:00 "
+        },
+        {
+          "type": "삭제",
+          "site": "성남 서현",
+          "status": "active",
+          "reason": " 16:00 ~ 19:00 "
+        },
+        {
+          "type": "추가",
+          "site": "성남 판교",
+          "status": "uncertain",
+          "reason": "16:00 ~ 19:00"
+        },
+        {
+          "type": "추가",
+          "site": "성남 서현",
+          "status": "uncertain",
+          "reason": "16:00 ~ 19:00"
+        },
+        {
+          "type": "삭제",
+          "site": "성남 판교",
+          "status": "active",
+          "reason": " 16:00 ~ 19:00 "
+        },
+        {
+          "type": "삭제",
+          "site": "성남 서현",
+          "status": "active",
+          "reason": " 16:00 ~ 19:00 "
+        },
+        {
+          "type": "추가",
+          "site": "성남 율동",
+          "status": "uncertain",
+          "reason": "19:00 ~ 22:00"
+        },
+        {
+          "type": "추가",
+          "site": "성남 야탑",
+          "status": "uncertain",
+          "reason": "19:00 ~ 22:00"
+        },
+        {
+          "type": "삭제",
+          "site": "성남 율동",
+          "status": "active",
+          "reason": " 19:00 ~ 22:00 "
+        },
+        {
+          "type": "삭제",
+          "site": "성남 야탑",
+          "status": "active",
+          "reason": " 19:00 ~ 22:00 "
+        },
+        {
+          "type": "추가",
+          "site": "성남 율동",
+          "status": "uncertain",
+          "reason": "19:00 ~ 22:00"
+        },
+        {
+          "type": "추가",
+          "site": "성남 야탑",
+          "status": "uncertain",
+          "reason": "19:00 ~ 22:00"
+        },
+        {
+          "type": "삭제",
+          "site": "성남 율동",
+          "status": "active",
+          "reason": " 19:00 ~ 22:00 "
+        },
+        {
+          "type": "삭제",
+          "site": "성남 야탑",
+          "status": "active",
+          "reason": " 19:00 ~ 22:00 "
+        },
+        {
+          "type": "추가",
+          "site": "성남 율동",
+          "status": "uncertain",
+          "reason": "19:00 ~ 22:00"
+        },
+        {
+          "type": "추가",
+          "site": "성남 야탑",
+          "status": "uncertain",
+          "reason": "19:00 ~ 22:00"
+        },
+        {
+          "type": "삭제",
+          "site": "성남 율동",
+          "status": "active",
+          "reason": " 19:00 ~ 22:00 "
+        },
+        {
+          "type": "삭제",
+          "site": "성남 야탑",
+          "status": "active",
+          "reason": " 19:00 ~ 22:00 "
+        },
+        {
+          "type": "추가",
+          "site": "성남 판교",
+          "status": "uncertain",
+          "reason": "22:00 ~ 01:00"
+        },
+        {
+          "type": "추가",
+          "site": "성남 서현",
+          "status": "uncertain",
+          "reason": "22:00 ~ 01:00"
+        },
+        {
+          "type": "추가",
+          "site": "전주천",
+          "status": "uncertain",
+          "reason": "22:00 ~ 01:00"
+        },
+        {
+          "type": "추가",
+          "site": "전주천(덕진구)",
+          "status": "uncertain",
+          "reason": "덕진구"
+        },
+        {
+          "type": "추가",
+          "site": "전주천(완산구)",
+          "status": "uncertain",
+          "reason": "완산구"
+        },
+        {
+          "type": "추가",
+          "site": "신동백",
+          "status": "uncertain",
+          "reason": "[추가] 22:00 - [22:00] [자동출차] 신동백 롯데캐슬 에코1단지 아파트 - 순찰"
+        },
+        {
+          "type": "삭제",
+          "site": "성남 판교",
+          "status": "active",
+          "reason": " 22:00 ~ 01:00 "
+        },
+        {
+          "type": "삭제",
+          "site": "성남 서현",
+          "status": "active",
+          "reason": " 22:00 ~ 01:00 "
+        },
+        {
+          "type": "삭제",
+          "site": "전주천",
+          "status": "active",
+          "reason": " 22:00 ~ 01:00 "
+        },
+        {
+          "type": "삭제",
+          "site": "전주천(덕진구)",
+          "status": "active",
+          "reason": "덕진구"
+        },
+        {
+          "type": "삭제",
+          "site": "전주천(완산구)",
+          "status": "active",
+          "reason": "완산구"
+        },
+        {
+          "type": "삭제",
+          "site": "신동백",
+          "status": "active",
+          "reason": " 22:00 ~ 01:00 "
+        },
+        {
+          "type": "추가",
+          "site": "성남 판교",
+          "status": "uncertain",
+          "reason": "22:00 ~ 01:00"
+        },
+        {
+          "type": "추가",
+          "site": "성남 서현",
+          "status": "uncertain",
+          "reason": "22:00 ~ 01:00"
+        },
+        {
+          "type": "삭제",
+          "site": "성남 판교",
+          "status": "active",
+          "reason": " 22:00 ~ 01:00 "
+        },
+        {
+          "type": "삭제",
+          "site": "성남 서현",
+          "status": "active",
+          "reason": " 22:00 ~ 01:00 "
+        },
+        {
+          "type": "추가",
+          "site": "청담 르엘",
+          "status": "uncertain",
+          "reason": "[추가] 02:00 - [02:00] [자동출차] 청담 르엘 - 순찰"
+        },
+        {
+          "type": "추가",
+          "site": "신동백",
+          "status": "uncertain",
+          "reason": "[추가] 02:00 - [02:00] [자동출차] 신동백 롯데캐슬 에코1단지 아파트 - 순찰"
+        },
+        {
+          "type": "삭제",
+          "site": "청담 르엘",
+          "status": "active",
+          "reason": "02:00 ~ 05:00"
+        },
+        {
+          "type": "삭제",
+          "site": "신동백",
+          "status": "active",
+          "reason": " 02:00 ~ 05:00 "
+        },
+        {
+          "type": "추가",
+          "site": "성남 율동",
+          "status": "uncertain",
+          "reason": "01:00 ~ 04:00"
+        },
+        {
+          "type": "추가",
+          "site": "성남 야탑",
+          "status": "uncertain",
+          "reason": "01:00 ~ 04:00"
+        },
+        {
+          "type": "추가",
+          "site": "청담 르엘",
+          "status": "uncertain",
+          "reason": "02:00 ~ 05:00"
+        },
+        {
+          "type": "삭제",
+          "site": "성남 율동",
+          "status": "active",
+          "reason": " 01:00 ~ 04:00 "
+        },
+        {
+          "type": "삭제",
+          "site": "성남 야탑",
+          "status": "active",
+          "reason": " 01:00 ~ 04:00 "
+        },
+        {
+          "type": "삭제",
+          "site": "청담 르엘",
+          "status": "active",
+          "reason": " 02:00 ~ 05:00 "
+        },
+        {
+          "type": "추가",
+          "site": "성남 판교",
+          "status": "uncertain",
+          "reason": "04:00 ~ 07:00"
+        },
+        {
+          "type": "추가",
+          "site": "성남 서현",
+          "status": "uncertain",
+          "reason": "04:00 ~ 07:00"
+        },
+        {
+          "type": "삭제",
+          "site": "성남 판교",
+          "status": "active",
+          "reason": " 04:00 ~ 07:00 "
+        },
+        {
+          "type": "삭제",
+          "site": "성남 서현",
+          "status": "active",
+          "reason": " 04:00 ~ 07:00 "
+        },
+        {
+          "type": "추가",
+          "site": "성남 판교",
+          "status": "uncertain",
+          "reason": "04:00 ~ 07:00"
+        },
+        {
+          "type": "추가",
+          "site": "성남 서현",
+          "status": "uncertain",
+          "reason": "04:00 ~ 07:00"
+        },
+        {
+          "type": "삭제",
+          "site": "성남 판교",
+          "status": "active",
+          "reason": " 04:00 ~ 07:00 "
+        },
+        {
+          "type": "삭제",
+          "site": "성남 서현",
+          "status": "active",
+          "reason": " 04:00 ~ 07:00 "
+        },
+        {
+          "type": "추가",
+          "site": "성남 판교",
+          "status": "uncertain",
+          "reason": "04:00 ~ 07:00"
+        },
+        {
+          "type": "추가",
+          "site": "성남 서현",
+          "status": "uncertain",
+          "reason": "04:00 ~ 07:00"
+        },
+        {
+          "type": "삭제",
+          "site": "성남 판교",
+          "status": "active",
+          "reason": " 04:00 ~ 07:00 "
+        },
+        {
+          "type": "삭제",
+          "site": "성남 서현",
+          "status": "active",
+          "reason": " 04:00 ~ 07:00 "
+        }
+      ]
+    },
     {
       "at": "2026-11-12 18:39:46",
       "changes": [
@@ -405,35 +986,6 @@
           "reason": "[상태변경] 지제: suspended → active"
         }
       ]
-    },
-    {
-      "at": "2026-11-11 00:39:45",
-      "changes": [
-        {
-          "type": "변경",
-          "site": "더샵남천",
-          "status": "uncertain",
-          "reason": "변경"
-        },
-        {
-          "type": "변경",
-          "site": "더샵남천",
-          "status": "uncertain",
-          "reason": "변경"
-        },
-        {
-          "type": "변경",
-          "site": "더샵남천",
-          "status": "uncertain",
-          "reason": "변경"
-        },
-        {
-          "type": "변경",
-          "site": "[상태변경] 더샵남천: uncertain → active",
-          "status": "uncertain",
-          "reason": "[상태변경] 더샵남천: uncertain → active"
-        }
-      ]
     }
   ],
   "patrol_schedule": {
@@ -444,12 +996,12 @@
         "dispatchTag": ""
       },
       {
-        "task": "[07:00] [자동출차] 성남시 율동공원 1호기 - 순찰 ( 07:00 ~ 10:00 )",
+        "task": "[07:00] [자동출차] 성남시 율동공원 1호기 - 순찰 (07:00 ~ 10:00)",
         "note": "",
         "dispatchTag": ""
       },
       {
-        "task": "[07:00] [자동출차] 성남시 야탑역 1호기 - 순찰 ( 07:00 ~ 10:00 )",
+        "task": "[07:00] [자동출차] 성남시 야탑역 1호기 - 순찰 (07:00 ~ 10:00)",
         "note": "",
         "dispatchTag": ""
       },
@@ -496,7 +1048,7 @@
         "dispatchTag": ""
       },
       {
-        "task": "[08:00] [자동출차] 성남시 율동공원 1호기 - 순찰 ( 07:00 ~ 10:00 )",
+        "task": "[08:00] [자동출차] 성남시 율동공원 1호기 - 순찰 (07:00 ~ 10:00)",
         "note": "",
         "dispatchTag": ""
       },
@@ -528,12 +1080,12 @@
         "dispatchTag": ""
       },
       {
-        "task": "[09:00] [자동출차] 성남시 율동공원 1호기 - 순찰 ( 07:00 ~ 10:00 )",
+        "task": "[09:00] [자동출차] 성남시 율동공원 1호기 - 순찰 (07:00 ~ 10:00)",
         "note": "",
         "dispatchTag": ""
       },
       {
-        "task": "[09:00] [자동출차] 성남시 야탑역 1호기 - 순찰 ( 07:00 ~ 10:00 )",
+        "task": "[09:00] [자동출차] 성남시 야탑역 1호기 - 순찰 (07:00 ~ 10:00)",
         "note": "",
         "dispatchTag": ""
       },
@@ -625,12 +1177,12 @@
         "dispatchTag": ""
       },
       {
-        "task": "[10:00] [자동출차] 성남시 판교역 1호기 - 순찰 ( 10:00 ~ 13:00 )",
+        "task": "[10:00] [자동출차] 성남시 판교역 1호기 - 순찰 (10:00 ~ 13:00)",
         "note": "순찰중단(타이어마모)",
         "dispatchTag": ""
       },
       {
-        "task": "[10:00] [자동출차] 성남시 서현역 1호기 - 순찰 ( 10:00 ~ 13:00 )",
+        "task": "[10:00] [자동출차] 성남시 서현역 1호기 - 순찰 (10:00 ~ 13:00)",
         "note": "",
         "dispatchTag": ""
       },
@@ -727,12 +1279,12 @@
         "dispatchTag": ""
       },
       {
-        "task": "[11:00] [자동출차] 성남시 판교역 1호기 - 순찰 ( 10:00 ~ 13:00 )",
+        "task": "[11:00] [자동출차] 성남시 판교역 1호기 - 순찰 (10:00 ~ 13:00)",
         "note": "순찰중단(타이어마모)",
         "dispatchTag": ""
       },
       {
-        "task": "[11:00] [자동출차] 성남시 서현역 1호기 - 순찰 ( 10:00 ~ 13:00 )",
+        "task": "[11:00] [자동출차] 성남시 서현역 1호기 - 순찰 (10:00 ~ 13:00)",
         "note": "",
         "dispatchTag": ""
       },
@@ -774,12 +1326,12 @@
         "dispatchTag": ""
       },
       {
-        "task": "[12:00] [자동출차] 성남시 판교역 1호기 - 순찰 ( 10:00 ~ 13:00 )",
+        "task": "[12:00] [자동출차] 성남시 판교역 1호기 - 순찰 (10:00 ~ 13:00)",
         "note": "순찰중단(타이어 마모)",
         "dispatchTag": ""
       },
       {
-        "task": "[12:00] [자동출차] 성남시 서현역 1호기 - 순찰 ( 10:00 ~ 13:00 )",
+        "task": "[12:00] [자동출차] 성남시 서현역 1호기 - 순찰 (10:00 ~ 13:00)",
         "note": "",
         "dispatchTag": ""
       },
@@ -836,12 +1388,12 @@
         "dispatchTag": ""
       },
       {
-        "task": "[13:00] [자동출차] 성남시 율동공원 1호기 - 순찰 ( 13:00 ~ 16:00 ) - 호수 코스",
+        "task": "[13:00] [자동출차] 성남시 율동공원 1호기 - 순찰 (13:00 ~ 16:00) - 호수 코스",
         "note": "",
         "dispatchTag": ""
       },
       {
-        "task": "[13:00] [자동출차] 성남시 야탑역 1호기 - 순찰 ( 13:00 ~ 16:00 )",
+        "task": "[13:00] [자동출차] 성남시 야탑역 1호기 - 순찰 (13:00 ~ 16:00)",
         "note": "",
         "dispatchTag": ""
       },
@@ -888,12 +1440,12 @@
         "dispatchTag": ""
       },
       {
-        "task": "[14:00] [자동출차] 성남시 율동공원 1호기 - 순찰 ( 13:00 ~ 16:00 ) - 호수 코스",
+        "task": "[14:00] [자동출차] 성남시 율동공원 1호기 - 순찰 (13:00 ~ 16:00) - 호수 코스",
         "note": "",
         "dispatchTag": ""
       },
       {
-        "task": "[14:00] [자동출차] 성남시 야탑역 1호기 - 순찰 ( 13:00 ~ 16:00 )",
+        "task": "[14:00] [자동출차] 성남시 야탑역 1호기 - 순찰 (13:00 ~ 16:00)",
         "note": "",
         "dispatchTag": ""
       },
@@ -980,12 +1532,12 @@
         "dispatchTag": ""
       },
       {
-        "task": "[15:00] [자동출차] 성남시 율동공원 1호기 - 순찰 ( 13:00 ~ 16:00 ) - 호수 코스",
+        "task": "[15:00] [자동출차] 성남시 율동공원 1호기 - 순찰 (13:00 ~ 16:00) - 호수 코스",
         "note": "",
         "dispatchTag": ""
       },
       {
-        "task": "[15:00] [자동출차] 성남시 야탑역 1호기 - 순찰 ( 13:00 ~ 16:00 )",
+        "task": "[15:00] [자동출차] 성남시 야탑역 1호기 - 순찰 (13:00 ~ 16:00)",
         "note": "",
         "dispatchTag": ""
       },
@@ -1062,12 +1614,12 @@
         "dispatchTag": ""
       },
       {
-        "task": "[16:00] [자동출차] 성남시 판교역 1호기 - 순찰  ( 16:00 ~ 19:00 )",
+        "task": "[16:00] [자동출차] 성남시 판교역 1호기 - 순찰  (16:00 ~ 19:00)",
         "note": "순찰중단(타이어 마모)",
         "dispatchTag": ""
       },
       {
-        "task": "[16:00] [자동출차] 성남시 서현역 1호기 - 순찰  ( 16:00 ~ 19:00 )",
+        "task": "[16:00] [자동출차] 성남시 서현역 1호기 - 순찰  (16:00 ~ 19:00)",
         "note": "",
         "dispatchTag": ""
       },
@@ -1149,12 +1701,12 @@
         "dispatchTag": ""
       },
       {
-        "task": "[17:00] [자동출차] 성남시 판교역 1호기 - 순찰  ( 16:00 ~ 19:00 )",
+        "task": "[17:00] [자동출차] 성남시 판교역 1호기 - 순찰  (16:00 ~ 19:00)",
         "note": "순찰중단(타이어 마모)",
         "dispatchTag": ""
       },
       {
-        "task": "[17:00] [자동출차] 성남시 서현역 1호기 - 순찰  ( 16:00 ~ 19:00 )",
+        "task": "[17:00] [자동출차] 성남시 서현역 1호기 - 순찰  (16:00 ~ 19:00)",
         "note": "",
         "dispatchTag": ""
       },
@@ -1196,12 +1748,12 @@
         "dispatchTag": ""
       },
       {
-        "task": "[18:00] [자동출차] 성남시 판교역 1호기 - 순찰  ( 16:00 ~ 19:00 )",
+        "task": "[18:00] [자동출차] 성남시 판교역 1호기 - 순찰  (16:00 ~ 19:00)",
         "note": "순찰중단(타이어 마모)",
         "dispatchTag": ""
       },
       {
-        "task": "[18:00] [자동출차] 성남시 서현역 1호기 - 순찰  ( 16:00 ~ 19:00 )",
+        "task": "[18:00] [자동출차] 성남시 서현역 1호기 - 순찰  (16:00 ~ 19:00)",
         "note": "",
         "dispatchTag": ""
       },
@@ -1243,12 +1795,12 @@
         "dispatchTag": ""
       },
       {
-        "task": "[19:00] [자동출차] 성남시 율동공원 1호기 - 순찰 ( 19:00 ~ 22:00 )",
+        "task": "[19:00] [자동출차] 성남시 율동공원 1호기 - 순찰 (19:00 ~ 22:00)",
         "note": "",
         "dispatchTag": ""
       },
       {
-        "task": "[19:00] [자동출차] 성남시 야탑역 1호기 - 순찰 ( 19:00 ~ 22:00 )",
+        "task": "[19:00] [자동출차] 성남시 야탑역 1호기 - 순찰 (19:00 ~ 22:00)",
         "note": "",
         "dispatchTag": ""
       },
@@ -1330,12 +1882,12 @@
         "dispatchTag": ""
       },
       {
-        "task": "[20:00] [자동출차] 성남시 율동공원 1호기 - 순찰 ( 19:00 ~ 22:00 )",
+        "task": "[20:00] [자동출차] 성남시 율동공원 1호기 - 순찰 (19:00 ~ 22:00)",
         "note": "",
         "dispatchTag": ""
       },
       {
-        "task": "[20:00] [자동출차] 성남시 야탑역 1호기 - 순찰 ( 19:00 ~ 22:00 )",
+        "task": "[20:00] [자동출차] 성남시 야탑역 1호기 - 순찰 (19:00 ~ 22:00)",
         "note": "",
         "dispatchTag": ""
       },
@@ -1402,12 +1954,12 @@
         "dispatchTag": ""
       },
       {
-        "task": "[21:00] [자동출차] 성남시 율동공원 1호기 - 순찰 ( 19:00 ~ 22:00 )",
+        "task": "[21:00] [자동출차] 성남시 율동공원 1호기 - 순찰 (19:00 ~ 22:00)",
         "note": "",
         "dispatchTag": ""
       },
       {
-        "task": "[21:00] [자동출차] 성남시 야탑역 1호기 - 순찰 ( 19:00 ~ 22:00 )",
+        "task": "[21:00] [자동출차] 성남시 야탑역 1호기 - 순찰 (19:00 ~ 22:00)",
         "note": "",
         "dispatchTag": ""
       },
@@ -1489,12 +2041,12 @@
     ],
     "22:00": [
       {
-        "task": "[22:00] [자동출차] 성남시 판교역 1호기 - 순찰  ( 22:00 ~ 01:00 )",
+        "task": "[22:00] [자동출차] 성남시 판교역 1호기 - 순찰  (22:00 ~ 01:00)",
         "note": "순찰중단(타이어 마모)",
         "dispatchTag": ""
       },
       {
-        "task": "[22:00] [자동출차] 성남시 서현역 1호기- 순찰  ( 22:00 ~ 01:00 )",
+        "task": "[22:00] [자동출차] 성남시 서현역 1호기- 순찰  (22:00 ~ 01:00)",
         "note": "",
         "dispatchTag": ""
       },
@@ -1519,22 +2071,22 @@
         "dispatchTag": ""
       },
       {
-        "task": "[22:00] [자동출차]전주시 전주천 - 순찰 ( 22:00 ~ 01:00 )",
+        "task": "[22:00] [자동출차]전주시 전주천 - 순찰 (22:00 ~ 01:00)",
         "note": "",
         "dispatchTag": ""
       },
       {
-        "task": "[22:00] [자동출차]전주시 전주천(덕진구) - 순찰 ( 22:00 ~ 01:00 )",
+        "task": "[22:00] [자동출차]전주시 전주천(덕진구) - 순찰 (22:00 ~ 01:00)",
         "note": "",
         "dispatchTag": ""
       },
       {
-        "task": "[22:00] [자동출차]전주시 전주천(완산구) - 순찰 ( 22:00 ~ 01:00 )",
+        "task": "[22:00] [자동출차]전주시 전주천(완산구) - 순찰 (22:00 ~ 01:00)",
         "note": "",
         "dispatchTag": ""
       },
       {
-        "task": "[22:00] [자동출차] 신동백 롯데캐슬 에코1단지 아파트 - 순찰 ( 22:00 ~ 01:00 )",
+        "task": "[22:00] [자동출차] 신동백 롯데캐슬 에코1단지 아파트 - 순찰",
         "note": "임시코스",
         "dispatchTag": ""
       },
@@ -1621,12 +2173,12 @@
     ],
     "23:00": [
       {
-        "task": "[23:00] [자동출차] 성남시 판교역 1호기 - 순찰  ( 22:00 ~ 01:00 )",
+        "task": "[23:00] [자동출차] 성남시 판교역 1호기 - 순찰  (22:00 ~ 01:00)",
         "note": "순찰중단(타이어 마모)",
         "dispatchTag": ""
       },
       {
-        "task": "[23:00] [자동출차] 성남시 서현역 1호기 - 순찰  ( 22:00 ~ 01:00 )",
+        "task": "[23:00] [자동출차] 성남시 서현역 1호기 - 순찰  (22:00 ~ 01:00)",
         "note": "",
         "dispatchTag": ""
       },
@@ -1932,12 +2484,12 @@
         "dispatchTag": ""
       },
       {
-        "task": "[02:00] [자동출차] 청담 르엘 - 순찰 (02:00 ~ 05:00)",
+        "task": "[02:00] [자동출차] 청담 르엘 - 순찰",
         "note": "",
         "dispatchTag": ""
       },
       {
-        "task": "[02:00] [자동출차] 신동백 롯데캐슬 에코1단지 아파트 - 순찰 ( 02:00 ~ 05:00 )",
+        "task": "[02:00] [자동출차] 신동백 롯데캐슬 에코1단지 아파트 - 순찰",
         "note": "임시코스",
         "dispatchTag": ""
       },
@@ -2019,17 +2571,17 @@
         "dispatchTag": ""
       },
       {
-        "task": "[03:00] [자동출차] 성남시 율동공원 1호기 - 순찰 ( 01:00 ~ 04:00 )",
+        "task": "[03:00] [자동출차] 성남시 율동공원 1호기 - 순찰 (01:00 ~ 04:00)",
         "note": "",
         "dispatchTag": ""
       },
       {
-        "task": "[03:00] [자동출차] 성남시 야탑역 1호기 - 순찰 ( 01:00 ~ 04:00 )",
+        "task": "[03:00] [자동출차] 성남시 야탑역 1호기 - 순찰 (01:00 ~ 04:00)",
         "note": "",
         "dispatchTag": ""
       },
       {
-        "task": "[03:00] [자동출차] 청담 르엘 - 순찰 ( 02:00 ~ 05:00 )",
+        "task": "[03:00] [자동출차] 청담 르엘 - 순찰 (02:00 ~ 05:00)",
         "note": "",
         "dispatchTag": ""
       },
@@ -2131,12 +2683,12 @@
         "dispatchTag": ""
       },
       {
-        "task": "[04:00] [자동출차] 성남시 판교역 1호기 - 순찰  ( 04:00 ~ 07:00 )",
+        "task": "[04:00] [자동출차] 성남시 판교역 1호기 - 순찰  (04:00 ~ 07:00)",
         "note": "순찰중단(타이어 마모)",
         "dispatchTag": ""
       },
       {
-        "task": "[04:00] [자동출차] 성남시 서현역 1호기 - 순찰  ( 04:00 ~ 07:00 )",
+        "task": "[04:00] [자동출차] 성남시 서현역 1호기 - 순찰  (04:00 ~ 07:00)",
         "note": "",
         "dispatchTag": ""
       },
@@ -2178,12 +2730,12 @@
     ],
     "05:00": [
       {
-        "task": "[05:00] [자동출차] 성남시 판교역 1호기 - 순찰  ( 04:00 ~ 07:00 )",
+        "task": "[05:00] [자동출차] 성남시 판교역 1호기 - 순찰  (04:00 ~ 07:00)",
         "note": "순찰중단(타이어 마모)",
         "dispatchTag": ""
       },
       {
-        "task": "[05:00] [자동출차] 성남시 서현역 1호기 - 순찰  ( 04:00 ~ 07:00 )",
+        "task": "[05:00] [자동출차] 성남시 서현역 1호기 - 순찰  (04:00 ~ 07:00)",
         "note": "",
         "dispatchTag": ""
       },
@@ -2225,12 +2777,12 @@
     ],
     "06:00": [
       {
-        "task": "[06:00] [자동출차] 성남시 판교역 1호기 - 순찰  ( 04:00 ~ 07:00 )",
+        "task": "[06:00] [자동출차] 성남시 판교역 1호기 - 순찰  (04:00 ~ 07:00)",
         "note": "순찰중단(타이어 마모)",
         "dispatchTag": ""
       },
       {
-        "task": "[06:00] [자동출차] 성남시 서현역 1호기 - 순찰  ( 04:00 ~ 07:00 )",
+        "task": "[06:00] [자동출차] 성남시 서현역 1호기 - 순찰  (04:00 ~ 07:00)",
         "note": "",
         "dispatchTag": ""
       },
@@ -2250,361 +2802,361 @@
     "서강대": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "성남 율동": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "성남 야탑": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "용인 고진": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "경희대 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "수원센트럴 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "수원센트럴 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "수원 힐스 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "수원 힐스 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "부산 호반 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "부산 수자인 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "구리 롯데캐슬": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "장애인고용공단 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "장애인고용공단 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "파주": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "리센츠 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "리센츠 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "평택 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "평택 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "부천 위브": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "성남 판교": {
       "status": "suspended",
       "reason": "타이어마모",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "부산 호반 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "부산 수자인 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "고양 래미안": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "성남 서현": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "잠실 레이크": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "덕수궁": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "동대문구 회기동": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "순천향": {
       "status": "suspended",
       "reason": "적재함파손",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "강동현대홈타운": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "인력개발원": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "엘스": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "한성대": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "창원대 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "창원대 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "김포 풍무": {
       "status": "suspended",
       "reason": "전원off",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "부경대": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "더샵지제 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "더샵지제 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "김포 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "김포 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "더샵남천": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "지제": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "가평 자이": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "두루아이 3": {
       "status": "uncertain",
       "reason": "두루아이 3호기",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "두루아이 4": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "중앙대": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "잠실 르엘": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "신대양": {
       "status": "suspended",
       "reason": "깃대파손",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "부산 서면": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "동백SK": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "청담 르엘": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "전주천": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "전주천(덕진구)": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "전주천(완산구)": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "신동백": {
       "status": "uncertain",
       "reason": "임시코스",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "아주대 1": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "아주대 2": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "인재개발원": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     },
     "쉴더스": {
       "status": "active",
       "reason": "",
-      "updatedAt": "2026-11-12 18:39:46",
+      "updatedAt": "2026-11-12 18:54:45",
       "syncIssue": false
     }
   }
