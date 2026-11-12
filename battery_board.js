@@ -9588,12 +9588,12 @@
                 chosen = pool[Math.floor(rng() * pool.length)]; tierUsed = Math.min(tier, 3); break;
               }
             } else {
-              for (let tier = 0; tier < (u.restrict ? 1 : 4); tier++) {
+              for (let tier = 0; tier < (u.restrict ? 1 : (u.sci && u.slot === 720 ? 5 : 4)); tier++) {   // tier 4 = 12시 과학관 마지막 수단: 09-18 근무자의 휴게(12:50~) 10분 겹침 허용 — 앞 단계(07·11시 출근자 등)에서 맡을 사람이 아무도 없을 때만
                 let c = people.filter(p => {
                   const s = S[p.name];
                   if (u.restrict && s.mons.length > 0) return false;
                   if (!(p.start <= u.slot && u.slot + 60 <= p.end)) return false;
-                  if (brkOv(p, u)) return false;
+                  if (tier >= 4 ? (p.start === 540 ? false : brkOv(p, u)) : brkOv(p, u)) return false;
                   if (s.mons.some(H => ov(H - 10, H + 50, u.s, u.e))) return false;
                   if (s.subs.some(H => ov(H - 10, H + 50, u.s, u.e))) return false;
                   if (s.subG.some(H => ov(H - 10, H + 50, u.s, u.e))) return false;   // 10·15·16시 서브 시간과 겹침
