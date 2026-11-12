@@ -10031,8 +10031,10 @@
             const q = {}; R.P.TL.forEach((t, i) => { (q[simNorm(t.t)] = q[simNorm(t.t)] || []).push(i); });
             const used = new Set(), items = []; let bad = '';
             f.rows.forEach(r => {
-                const k = simNorm(r.content), u = String(r.user == null ? '' : r.user).trim(), a = r.fixed === true ? null : q[k], i = a && a.length ? a.shift() : -1;   // fixed=true(휴무·관리자 등)는 JSON 에 없는 행
-                if (i >= 0) used.add(i); else if (r.fixed !== true && !(r.fixed === undefined && (!u || u.length < 2 || SIM_EXCL.test(u))) && !bad) bad = '전체 행 파일에는 담당자가 있는 행인데 daily_tasks.json 에는 없는 업무가 있습니다 (' + k.slice(0, 20) + '…)';
+                const k = simNorm(r.content), u0 = String(r.user == null ? '' : r.user).trim(), a = r.fixed === true ? null : q[k], i = a && a.length ? a.shift() : -1;   // fixed=true(휴무·관리자 등)는 JSON 에 없는 행
+                // 00·03·06시 양원LH 는 시트 담당자가 고정이라 배정 대상이 아니지만, 복사 열에서 이름이 비면 '후보 없음'처럼 보이므로 daily_tasks.json 의 고정 담당자 이름을 그대로 채운다
+                const ywFix = (() => { const z = q[k]; return z && z.length ? z.filter(j => R.P.TL[j].fixed === '양원LH')[0] : undefined; })(), u = u0 || (ywFix !== undefined && R.P.rowUser[ywFix] ? String(R.P.rowUser[ywFix]).trim() : (i >= 0 && R.P.TL[i].fixed === '양원LH' ? String(R.P.rowUser[i] || '').trim() : ''));
+                if (i >= 0) used.add(i); else if (r.fixed === true && ywFix !== undefined) used.add(ywFix); else if (r.fixed !== true && !(r.fixed === undefined && (!u || u.length < 2 || SIM_EXCL.test(u))) && !bad) bad = '전체 행 파일에는 담당자가 있는 행인데 daily_tasks.json 에는 없는 업무가 있습니다 (' + k.slice(0, 20) + '…)';
                 items.push({ i, user: u, content: r.content });
             });
             if (!bad) { const miss = R.P.TL.findIndex((t, i) => !used.has(i)); if (miss >= 0) bad = 'daily_tasks.json 에는 있는데 전체 행 파일에는 없는 업무가 있습니다 (' + simNorm(R.P.TL[miss].t).slice(0, 20) + '…)'; }
