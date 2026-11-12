@@ -8062,7 +8062,7 @@
         // 개입 누적통계·시간추이의 저장분(store)에 없는 지난 날짜를 요약에서 채운다 (서버의 날짜별 지문 revs 가 요약과 같은 날짜만 — 다르면 서버에서 새로 받음)
         async function ivPrefillStore(store, dates, revs, field, withGot) {
             if (!revs || _sumSkip) return 0;
-            const today = ivOpDate(), miss = dates.filter(d => d < today && !store.days[d] && revs[d]);
+            const today = ivOpDate(), miss = dates.filter(d => d < today && revs[d] && (!store.days[d] || (store.revs || {})[d] !== revs[d]));   // 저장분에 없거나 지문이 낡은 날짜 — 요약에 지금 지문과 같은 항목이 있으면 그걸로 채움(교체)
             if (!miss.length) return 0;
             const months = [...new Set(miss.map(d => d.slice(0, 7)))], docs = {};
             await tPool(months, 3, async ym => { docs[ym] = await ivSumDoc(ym); });
