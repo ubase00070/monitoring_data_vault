@@ -9635,7 +9635,7 @@
 
         function evaluate(S, out, rowNames) {
           const flags = {}, run = {}, core = {};
-          const m = { flagged: 0, n4: 0, overW: 0, wRule: 0, timeConflict: 0, none: 0, other: 0, zero: 0, std: 0, nUnits: out.length };
+          const m = { flagged: 0, n4: 0, overW: 0, wRule: 0, timeConflict: 0, none: 0, other: 0, zero: 0, std: 0, nUnits: out.length, rule: 0, ovl: 0 };
           for (const n in S) run[n] = { W: S[n].mons.length + S[n].sw, C: S[n].mons.length + S[n].sn, tasks: [], sciT: [], sci: false, yw: !!S[n].ywi };
           out.forEach((o, i) => {
             if (!o.name) { flags[i] = ['후보 없음 (근무·휴게·다중 시간이 모두 겹침)']; core[i] = 1; m.none++; return; }
@@ -9644,17 +9644,17 @@
             const ucnt = rowNames && u.rows.length > 1 ? Math.min(u.cnt, u.rows.filter(rr => rowNames[rr] === rowNames[u.rows[0]]).length) : u.cnt;   // 묶음의 둘째 줄을 다른 사람이 맡고 있으면 그 줄은 첫 줄 담당자의 건수에 넣지 않음 (둘째 줄 불일치는 따로 표시)
             if (r.W + Math.max(u.w, 1e-6) > 2 + 1e-9) { why.push('가중치 2.0을 넘겨 배정'); m.wRule++; }
             if (r.C + ucnt > 3) why.push('다중 포함 ' + (r.C + ucnt) + '건째 배정 (다중 ' + s.mons.length + ' + ' + (s.sn ? '서브 ' + s.sn + ' + ' : '') + '앞선 업무 ' + (r.C - s.mons.length - s.sn) + ' + 이번 ' + (ucnt > 1 ? ucnt + '줄 묶음' : '1건') + ' · 10·15·16시 서브는 1건으로 침)');
-            if (s.mons.some(H => ov(H - 10, H + 50, u.s, u.e))) { why.push('다중 교대 시간과 겹침'); m.timeConflict++; }
+            if (s.mons.some(H => ov(H - 10, H + 50, u.s, u.e))) { why.push('다중 교대 시간과 겹침'); m.timeConflict++; m.ovl++; }
             else if (u.sci && s.mons.some(H => ov(H - 10, H + 50 + GAP, u.s - GAP, u.e + GAP))) { why.push('다중과 연달아 배정 (과학관)'); m.timeConflict++; }
-            if (s.subG.some(H => ov(H - 10, H + 50, u.s, u.e))) { why.push('서브 시간(' + s.subG.filter(H => ov(H - 10, H + 50, u.s, u.e)).map(fmt).join('·') + ')과 겹침'); m.timeConflict++; }
+            if (s.subG.some(H => ov(H - 10, H + 50, u.s, u.e))) { why.push('서브 시간(' + s.subG.filter(H => ov(H - 10, H + 50, u.s, u.e)).map(fmt).join('·') + ')과 겹침'); m.timeConflict++; m.ovl++; }
             else if (u.sci && s.subG.some(H => ov(H - 10, H + 50 + GAP, u.s - GAP, u.e + GAP))) { why.push('서브와 연달아 배정 (과학관)'); m.timeConflict++; }
-            if (s.subs.some(H => ov(H - 10, H + 50, u.s, u.e))) { why.push('18시 이후 서브 시간과 겹침'); m.timeConflict++; }
+            if (s.subs.some(H => ov(H - 10, H + 50, u.s, u.e))) { why.push('18시 이후 서브 시간과 겹침'); m.timeConflict++; m.ovl++; }
             if (!(s.p.start <= u.slot && u.slot + 60 <= s.p.end)) { why.push('근무시간 밖 (' + fmt(s.p.start) + '~' + fmt(s.p.end) + ' 근무)'); m.other++; }
             if (brkOv(s.p, u)) { why.push('휴게시간과 겹침'); m.other++; }
-            if (r.tasks.some(t => ov(t[0], t[1], u.s, u.e))) { why.push('본인 다른 업무와 겹침'); m.other++; }
-            if (u.sci && r.sci) { why.push('과학관 하루 2회'); m.other++; }
-            if (u.yw && r.yw) { why.push('양원LH 하루 2회'); m.other++; }
-            if (u.yw && YW_EXCLUDE.includes(o.name)) { why.push('양원LH 배정 제외 인원'); m.other++; }
+            if (r.tasks.some(t => ov(t[0], t[1], u.s, u.e))) { why.push('본인 다른 업무와 겹침'); m.other++; m.ovl++; }
+            if (u.sci && r.sci) { why.push('과학관 하루 2회'); m.other++; m.rule++; }
+            if (u.yw && r.yw) { why.push('양원LH 하루 2회'); m.other++; m.rule++; }
+            if (u.yw && YW_EXCLUDE.includes(o.name)) { why.push('양원LH 배정 제외 인원'); m.other++; m.rule++; }
             if ((u.sci ? r.tasks : r.sciT).some(t => ov(t[0], t[1], u.s - 10, u.e + 10))) { why.push('과학관(정각 교대)과 다른 업무가 바로 붙음'); m.timeConflict++; }
             if (isHubU(u) && !earlyFree(s) && Object.values(S).some(x => earlyFree(x) && x.mons.length + Math.max(u.w, 1e-6) <= 2 + 1e-9 && x.mons.length + x.sn + u.cnt <= 3 && !x.mons.some(H => ov(H - 10, H + 50 + GAP, u.s - GAP, u.e + GAP)))) { why.push('07~16시 근무자 중 07·08·09시 다중이 없는 사람이 있는데 부산 08:50을 다른 사람이 받음'); m.other++; }
             r.W += u.w; r.C += ucnt; r.tasks.push([u.s, u.e]); if (u.sci) r.sciT.push([u.s, u.e]); r.sci = r.sci || u.sci; r.yw = r.yw || !!u.yw;
@@ -9751,7 +9751,7 @@
 
         function liveMetrics(ctx, d, rowNames) {
           const e = liveEval(ctx, d, rowNames);
-          return { prob: e.bad.size, none: e.ev.m.none || 0, work: [...e.bad].filter(i => (e.why[i] || []).some(w => /^근무시간 밖|근무표에 없는/.test(w))).length, n4: e.ev.m.n4, overW: e.ev.m.overW, std: e.ev.m.std, bad: e.bad, why: e.why };
+          return { prob: e.bad.size, rule: e.ev.m.rule || 0, ovl: e.ev.m.ovl || 0, none: e.ev.m.none || 0, work: [...e.bad].filter(i => (e.why[i] || []).some(w => /^근무시간 밖|근무표에 없는/.test(w))).length, n4: e.ev.m.n4, overW: e.ev.m.overW, std: e.ev.m.std, bad: e.bad, why: e.why };
         }
 
         /* 묶음의 둘째 줄까지 첫 줄 담당자로 맞춘 행별 이름 만들기 */
@@ -9790,6 +9790,10 @@
         /* '후보 없음'(칸이 빈 채로 남음)은 규칙 위반 1건과 같은 1000점이라, 모든 후보가 다른 칸에 위반을 만들 때(= 어느 쪽이든 위반 1건) 빈 칸이 그대로 선택되곤 했다.
            빈 칸에 추가 감점(NONE_W)을 줘서, 어쩔 수 없을 땐 위반이 가장 적은 사람을 넣고 사유(가중치 2.0 초과 등)를 표시하도록 한다 — 칸을 비워 두는 건 정말 아무도 못 맡을 때만 */
         const NONE_W = 800;
+        /* 위반에도 급이 있다: 과학관·양원 '하루 1회'/제외 규칙을 깨거나 다중·서브·본인 업무와 시간이 겹치는 배정은, 가중치 2.0·다중 포함 3건 초과를 풀어 주는 것보다 훨씬 나쁘다.
+           예전에는 위반 칸 1개 = 1000점으로 같아서, 한 칸씩 바꿔 보는 단계가 '가중치 초과 2칸'을 없애려고 '과학관 2회 1칸'을 만들곤 했다 (같은 사람이 12시·14시 과학관, 다중과 동시에 과학관 등).
+           RULE_W/OVL_W 를 가중치·건수 초과(100·40 + 칸당 1000)와 '후보 없음'(1000+NONE_W)보다 크게 둬서, 어쩔 수 없으면 차라리 후보 없음으로 남긴다 (실제로는 앞 단계에서 위반 없이 채울 수 있어 거의 안 쓰임) */
+        const RULE_W = 4000, OVL_W = 4000;
         function liveScore(ctx, d, X, A) {
           const m = liveMetrics(ctx, d, X), per = liveStats(ctx, d, X), day = per.filter(p => p.g <= 2), cs = day.map(p => p.t + p.m + (p.sn || 0));
           const mean = cs.reduce((a, b) => a + b, 0) / (cs.length || 1), sd = Math.sqrt(cs.reduce((a, b) => a + (b - mean) * (b - mean), 0) / (cs.length || 1));
@@ -9803,7 +9807,7 @@
           const pmRampSum = UU.filter(u => u.s > 900 && u.s < ef && !ctx.tasks[u.rows[0]].fixed && !u.yw && isPm(asg(u))).reduce((a, u) => a + pmRamp(u.s, ef), 0), firstHr = UU.filter(u => firstHrSci(asg(u), u)).length, first10 = UU.filter(u => firstTask10(asg(u), u)).length;
           const ywPL = UU.filter(u => u.yw && !ctx.tasks[u.rows[0]].fixed && X[u.rows[0]] && YWPEN[X[u.rows[0]]]).map(u => ({ n: X[u.rows[0]], pen: YWPEN[X[u.rows[0]]], s: u.s })), ywPenN = ywPL.reduce((a, o) => a + o.pen, 0);   // 어제도 양원LH 를 맡은 사람이 또 받은 칸 (감점 대상)
           const dawn20 = UU.filter(u => u.s >= 1440 && !u.yw && !ctx.tasks[u.rows[0]].fixed && is2005(asg(u))).length;   // 새벽 업무를 20-05 근무자가 맡은 칸 수
-          const score = m.prob * 1000 + m.none * NONE_W + m.work * 5000 + dawn20 * DAWN_W + m.overW * 100 + m.n4 * 40 + sd * 10 + low * 4 + high * 1.2 + chains * 3 + m.std * 5 + night * 2 + changes * 1 + lastHr * 5 + sciMon * 5 + sciEx * SCI_PRIO_W - early09 * EARLY_SCI09_BONUS + firstHr * 5 + first10 * 5 + adjN * ADJ_W + eveNon * EVE_PM_W - pmRampSum * PM_RAMP_W + ywPenN * YWP_SC;
+          const score = m.prob * 1000 + m.none * NONE_W + m.rule * RULE_W + m.ovl * OVL_W + m.work * 5000 + dawn20 * DAWN_W + m.overW * 100 + m.n4 * 40 + sd * 10 + low * 4 + high * 1.2 + chains * 3 + m.std * 5 + night * 2 + changes * 1 + lastHr * 5 + sciMon * 5 + sciEx * SCI_PRIO_W - early09 * EARLY_SCI09_BONUS + firstHr * 5 + first10 * 5 + adjN * ADJ_W + eveNon * EVE_PM_W - pmRampSum * PM_RAMP_W + ywPenN * YWP_SC;
           return { score, ywPenN, ywPL, adjN, lastHr, firstHr, first10, eveNon, eveN: eveU.length, pmN, pmRampSum, sciMon, sciMin, sciEx, early09, m, per, sd, mn: cs.length ? Math.min(...cs) : 0, mx: cs.length ? Math.max(...cs) : 0, nDay: cs.length, low, high, chains, night, maxW: Math.max(0, ...per.map(p => p.w)), changes };
         }
         /* 한 칸씩 담당자를 바꿔 보며 점수가 좋아지면 채택(언덕 오르기) — 바뀐 칸 수에도 점수를 매기므로 '꼭 필요한 수정'만 남는다 */
