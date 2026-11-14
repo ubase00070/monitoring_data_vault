@@ -9635,7 +9635,7 @@
 
         function evaluate(S, out, rowNames) {
           const flags = {}, run = {}, core = {};
-          const m = { flagged: 0, n4: 0, overW: 0, wRule: 0, timeConflict: 0, none: 0, other: 0, zero: 0, std: 0, nUnits: out.length, rule: 0, ovl: 0 };
+          const m = { flagged: 0, n4: 0, overW: 0, wRule: 0, timeConflict: 0, none: 0, other: 0, zero: 0, std: 0, nUnits: out.length, rule: 0, ovl: 0, brk: 0 };
           for (const n in S) run[n] = { W: S[n].mons.length + S[n].sw, C: S[n].mons.length + S[n].sn, tasks: [], sciT: [], sci: false, yw: !!S[n].ywi };
           out.forEach((o, i) => {
             if (!o.name) { flags[i] = ['후보 없음 (근무·휴게·다중 시간이 모두 겹침)']; core[i] = 1; m.none++; return; }
@@ -9650,7 +9650,7 @@
             else if (u.sci && s.subG.some(H => ov(H - 10, H + 50 + GAP, u.s - GAP, u.e + GAP))) { why.push('서브와 연달아 배정 (과학관)'); m.timeConflict++; }
             if (s.subs.some(H => ov(H - 10, H + 50, u.s, u.e))) { why.push('18시 이후 서브 시간과 겹침'); m.timeConflict++; m.ovl++; }
             if (!(s.p.start <= u.slot && u.slot + 60 <= s.p.end)) { why.push('근무시간 밖 (' + fmt(s.p.start) + '~' + fmt(s.p.end) + ' 근무)'); m.other++; }
-            if (brkOv(s.p, u)) { why.push('휴게시간과 겹침'); m.other++; }
+            if (brkOv(s.p, u)) { why.push('휴게시간과 겹침'); m.other++; if (!(u.sci && u.slot === 720 && s.p.start === 540)) m.brk++; }   // 12시 과학관을 09-18 근무자가 맡는 10분 겹침(마지막 수단)만 예외 — 그 밖의 휴게 겹침은 규칙 위반급 감점
             if (r.tasks.some(t => ov(t[0], t[1], u.s, u.e))) { why.push('본인 다른 업무와 겹침'); m.other++; m.ovl++; }
             if (u.sci && r.sci) { why.push('과학관 하루 2회'); m.other++; m.rule++; }
             if (u.yw && r.yw) { why.push('양원LH 하루 2회'); m.other++; m.rule++; }
@@ -9751,7 +9751,7 @@
 
         function liveMetrics(ctx, d, rowNames) {
           const e = liveEval(ctx, d, rowNames);
-          return { prob: e.bad.size, rule: e.ev.m.rule || 0, ovl: e.ev.m.ovl || 0, none: e.ev.m.none || 0, work: [...e.bad].filter(i => (e.why[i] || []).some(w => /^근무시간 밖|근무표에 없는/.test(w))).length, n4: e.ev.m.n4, overW: e.ev.m.overW, std: e.ev.m.std, bad: e.bad, why: e.why };
+          return { prob: e.bad.size, rule: e.ev.m.rule || 0, ovl: e.ev.m.ovl || 0, none: e.ev.m.none || 0, brk: e.ev.m.brk || 0, work: [...e.bad].filter(i => (e.why[i] || []).some(w => /^근무시간 밖|근무표에 없는/.test(w))).length, n4: e.ev.m.n4, overW: e.ev.m.overW, std: e.ev.m.std, bad: e.bad, why: e.why };
         }
 
         /* 묶음의 둘째 줄까지 첫 줄 담당자로 맞춘 행별 이름 만들기 */
@@ -9807,7 +9807,7 @@
           const pmRampSum = UU.filter(u => u.s > 900 && u.s < ef && !ctx.tasks[u.rows[0]].fixed && !u.yw && isPm(asg(u))).reduce((a, u) => a + pmRamp(u.s, ef), 0), firstHr = UU.filter(u => firstHrSci(asg(u), u)).length, first10 = UU.filter(u => firstTask10(asg(u), u)).length;
           const ywPL = UU.filter(u => u.yw && !ctx.tasks[u.rows[0]].fixed && X[u.rows[0]] && YWPEN[X[u.rows[0]]]).map(u => ({ n: X[u.rows[0]], pen: YWPEN[X[u.rows[0]]], s: u.s })), ywPenN = ywPL.reduce((a, o) => a + o.pen, 0);   // 어제도 양원LH 를 맡은 사람이 또 받은 칸 (감점 대상)
           const dawn20 = UU.filter(u => u.s >= 1440 && !u.yw && !ctx.tasks[u.rows[0]].fixed && is2005(asg(u))).length;   // 새벽 업무를 20-05 근무자가 맡은 칸 수
-          const score = m.prob * 1000 + m.none * NONE_W + m.rule * RULE_W + m.ovl * OVL_W + m.work * 5000 + dawn20 * DAWN_W + m.overW * 100 + m.n4 * 40 + sd * 10 + low * 4 + high * 1.2 + chains * 3 + m.std * 5 + night * 2 + changes * 1 + lastHr * 5 + sciMon * 5 + sciEx * SCI_PRIO_W - early09 * EARLY_SCI09_BONUS + firstHr * 5 + first10 * 5 + adjN * ADJ_W + eveNon * EVE_PM_W - pmRampSum * PM_RAMP_W + ywPenN * YWP_SC;
+          const score = m.prob * 1000 + m.none * NONE_W + m.rule * RULE_W + m.ovl * OVL_W + m.brk * RULE_W + m.work * 5000 + dawn20 * DAWN_W + m.overW * 100 + m.n4 * 40 + sd * 10 + low * 4 + high * 1.2 + chains * 3 + m.std * 5 + night * 2 + changes * 1 + lastHr * 5 + sciMon * 5 + sciEx * SCI_PRIO_W - early09 * EARLY_SCI09_BONUS + firstHr * 5 + first10 * 5 + adjN * ADJ_W + eveNon * EVE_PM_W - pmRampSum * PM_RAMP_W + ywPenN * YWP_SC;
           return { score, ywPenN, ywPL, adjN, lastHr, firstHr, first10, eveNon, eveN: eveU.length, pmN, pmRampSum, sciMon, sciMin, sciEx, early09, m, per, sd, mn: cs.length ? Math.min(...cs) : 0, mx: cs.length ? Math.max(...cs) : 0, nDay: cs.length, low, high, chains, night, maxW: Math.max(0, ...per.map(p => p.w)), changes };
         }
         /* 한 칸씩 담당자를 바꿔 보며 점수가 좋아지면 채택(언덕 오르기) — 바뀐 칸 수에도 점수를 매기므로 '꼭 필요한 수정'만 남는다 */
