@@ -10,6 +10,45 @@
     // 수집기가 "일부 사이트만 받은 데이터"(data-bb-partial=1)를 보내도 안전하게 처리할 수 있음을 알린다 (수집기가 이 값을 확인하고 전달)
     window.__bbPartialOk = true;
 
+    // ══ 퇴사자 처리 ═══════════════════════════════════════════════════════════════════
+    // 퇴사자가 나오면 아래 목록에 '이름: 퇴사일(YYYY-MM-DD)' 한 줄만 추가하면 된다. (기록·건수·평균 같은 통계 값은 절대 지우지 않고 화면 표시만 바꿈)
+    //   · 퇴사일 '다음 날'부터: 합산 통계 · 개입 현황(누적/시간추이 포함) · 이석 현황(시간대별 명단 포함)의 이름에 취소선 + '퇴사' 뱃지
+    //   · 퇴사일이 속한 달의 '다음달 1일'부터: 위 화면들에서 그 사람의 줄·카드·칩을 아예 가림 (합계·평균 등 숫자는 그대로 유지)
+    //   · 판단 기준 날짜 = 지금(한국 시간) 날짜. 예) 유재헌 11/11 퇴사 → 지금은 뱃지, 12/1 부터 가림 / 이기완 11/30 퇴사 → 12/1 에 바로 가림(뱃지 없이)
+    //   ※ 일일 업무 배정표(admin 의 재배정·양원LH·배정 통계)는 이 목록을 보지 않음 — 그쪽은 기존 로직 그대로
+    const BB_RESIGNED = {
+        '유재헌': '2026-11-11',
+        '이기완': '2026-11-30'
+    };
+    const BBRESIGN = (function () {
+        const todayKst = () => { try { return new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' }); } catch (e) { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); } };
+        const nextMonth1 = ymd => { const p = String(ymd).split('-').map(Number); if (!p[0] || !p[1]) return '9999-12-31'; const y = p[1] === 12 ? p[0] + 1 : p[0], m = p[1] === 12 ? 1 : p[1] + 1; return y + '-' + String(m).padStart(2, '0') + '-01'; };
+        const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+        // 0 = 해당 없음 · 1 = 퇴사 뱃지 · 2 = 화면에서 가림
+        function state(name) {
+            if (!name) return 0;
+            const k = String(name).trim(), day = BB_RESIGNED[k]; if (!day) return 0;
+            const t = todayKst();
+            if (t >= nextMonth1(day)) return 2;
+            return t > day ? 1 : 0;
+        }
+        const hidden = name => state(name) === 2;
+        const badge = () => '<span class="bb-rsg-b">퇴사</span>';
+        const html = name => state(name) === 1 ? '<span class="bb-rsg-n">' + esc(name) + '</span>' + badge() : esc(name == null ? '' : name);
+        const fill = (el, name) => {
+            if (state(name) !== 1) { el.textContent = name == null ? '' : name; return el; }
+            const n = document.createElement('span'); n.className = 'bb-rsg-n'; n.textContent = name;
+            const b = document.createElement('span'); b.className = 'bb-rsg-b'; b.textContent = '퇴사';
+            el.textContent = ''; el.append(n, b); return el;
+        };
+        try {
+            const st = document.createElement('style'); st.id = 'bb-rsg-style';
+            st.textContent = '.bb-rsg-n { text-decoration:line-through; text-decoration-thickness:2px; opacity:.55; } .bb-rsg-b { display:inline-block; margin-left:4px; padding:0 6px; border-radius:9px; background:#7b7f8a; color:#fff; font-size:.72em; font-weight:800; line-height:1.55; vertical-align:middle; text-decoration:none !important; white-space:nowrap; }';
+            (document.head || document.documentElement).appendChild(st);
+        } catch (e) { /* 스타일을 못 붙여도 동작은 유지 */ }
+        return { state, hidden, html, fill };
+    })();
+
     // ══ 오프라인 모드 (NCC 통신 중단) ══════════════════════════════════════
     // 이 파일은 NCC 로 직접 요청하지 않는다. NCC 조회는 로더(뉴비고 도우미)가 하고, 이 파일은
     //   ① 토큰을 넘기고(bb_token)  ② 로더가 2분마다 쏘는 결과(bb_robots_data)를 받아 그리기만 한다.
@@ -5712,7 +5751,7 @@
             attClosePop();
             return;
         }
-        const regular = stats.filter(s => !attMgrOf(s));   // 관리자는 카드를 만들지 않음 (제목 옆 버튼으로)
+        const regular = stats.filter(s => !attMgrOf(s) && !BBRESIGN.hidden(s.dn || s.name) && !BBRESIGN.hidden(s.name));   // 관리자는 카드를 만들지 않음 (제목 옆 버튼으로)
         if (!regular.length) {
             body.replaceChildren(attEl('div', 'bb-att-msg', live ? '아직 이석 기록이 없습니다' : ((_attDay && _attDay.msg) || '기록이 없습니다')));
             attClosePop();
@@ -5727,7 +5766,7 @@
             el.dataset.uid = s.userId;
             el.title = `${s.dn || s.name}${s.label ? ' (' + s.label + ')' : ''} · 이석 ${s.awayCount}회 · ${attDur(s.totalAwaySec)} · 확인사항 ${n}개` + (away ? ' · 이석 중' : '') + (off ? ' · 퇴근' : '');
             const l1 = attEl('div', 'bb-att-l1');
-            l1.append(attEl('span', 'bb-att-name', s.dn || s.name), attEl('span', 'bb-att-cnt', s.awayCount + '회'));
+            l1.append(BBRESIGN.fill(attEl('span', 'bb-att-name'), s.dn || s.name), attEl('span', 'bb-att-cnt', s.awayCount + '회'));
             const vLv = n === 0 ? 'v0' : n <= 2 ? 'v1' : n === 3 ? 'v2' : 'v3';   // 0개=연두 · 1~2개=연노랑 · 3개=연주황 · 4~5개=연빨강
             el.append(l1, attEl('div', 'bb-att-tot', attDur(s.totalAwaySec)), attEl('div', 'bb-att-vbar ' + vLv));
             frag.appendChild(el);
@@ -5765,7 +5804,7 @@
 
         const hd = attEl('div', 'bb-att-ph');
         const x = attEl('div', 'x', '✕'); x.addEventListener('click', attClosePop);
-        hd.append(attEl('b', '', s.dn || s.name), attEl('span', '', s.label || ''), x);
+        hd.append(BBRESIGN.fill(attEl('b', ''), s.dn || s.name), attEl('span', '', s.label || ''), x);
 
         const vs = attEl('div', 'bb-att-vs');
         ATT_VIOL_LABELS.forEach((label, i) => {
@@ -6082,8 +6121,9 @@
     function rsBuildHBars(list, hmin, hmax, cap) {
         const colors = rsColors(list), wrap = attEl('div', 'bb-rs-bw' + (_rsHl ? ' dim' : ''));
         for (let h = hmin; h <= hmax; h++) {
-            const ppl = list.filter(p => p.val[h]).sort((a, b) => b.val[h].v - a.val[h].v || a.name.localeCompare(b.name, 'ko'));
-            const mean = ppl.length ? ppl.reduce((a, p) => a + p.val[h].v, 0) / ppl.length : 0;
+            const pplAll = list.filter(p => p.val[h]).sort((a, b) => b.val[h].v - a.val[h].v || a.name.localeCompare(b.name, 'ko'));
+            const ppl = pplAll.filter(p => !BBRESIGN.hidden(p.name));   // 퇴사자는 줄만 가림 — 시간대 평균은 전체 기록 기준 그대로
+            const mean = pplAll.length ? pplAll.reduce((a, p) => a + p.val[h].v, 0) / pplAll.length : 0;
             const pn = attEl('div', 'bb-rs-bp');
             const hd = attEl('div', 'hd'); hd.append(attEl('b', '', rsHh(h) + '시'), attEl('span', '', ppl.length ? ppl.length + '명 · 평균 ' + mean.toFixed(1) + '분' : '근무자 없음'));
             pn.appendChild(hd);
@@ -6095,7 +6135,7 @@
                     const o = p.val[h], pct = Math.min(100, o.v / cap * 100);
                     const row = attEl('div', 'bb-rs-hr' + (o.n < 3 ? ' few' : '') + (_rsHl === p.name ? ' hl' : '')); row.dataset.hn = p.name;
                     row.title = rsHh(h) + '시 · ' + p.name + '\n하루 평균 ' + o.v.toFixed(1) + '분  (합계 ' + o.min.toFixed(1) + '분 / 근무 ' + o.n + '일)\n이 시간대에 시작한 이석 ' + o.cnt + '회';
-                    const hn = attEl('span', 'hn', p.name), ht = attEl('span', 'ht'), bar = attEl('i');
+                    const hn = BBRESIGN.fill(attEl('span', 'hn'), p.name), ht = attEl('span', 'ht'), bar = attEl('i');
                     bar.style.width = Math.max(0.6, pct) + '%'; bar.style.background = colors[p.name];
                     ht.append(bar, attEl('b', '', o.v.toFixed(1)));
                     row.append(hn, ht);
@@ -6126,6 +6166,7 @@
         };
         const sumOf = p => Object.values(p.val).reduce((x, o) => x + o.v, 0);   // 하루 평균 이석 총량(시간대별 평균의 합)
         list.slice().sort((a, b) => (_rsSort === 'away' ? sumOf(b) - sumOf(a) : 0) || start(a) - start(b) || a.name.localeCompare(b.name, 'ko')).forEach(p => {
+            if (BBRESIGN.hidden(p.name)) return;   // 퇴사자 카드만 가림 (점선 평균은 전체 기록 기준 그대로)
             let svg = '', pk = -1, pkh = null, tot = 0;
             const hrs = myHours(p), n = Math.max(1, hrs.length), bw = (W - L - R) / n, X = i => L + i * bw, lab = n <= 12 ? 1 : 2;
             for (let v = step; v <= cap; v += step) svg += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(v) + '" y2="' + Y(v) + '" stroke="#d9cba6" stroke-width=".6"/><text x="' + (L - 3) + '" y="' + (Y(v) + 3) + '" text-anchor="end" class="bb-rs-fy">' + v + '</text>';
@@ -6147,7 +6188,7 @@
             hrs.forEach(({ h }, i) => { if (mean[h] == null) { pen = false; return; } d += (pen ? 'L' : 'M') + (X(i) + bw / 2).toFixed(1) + ' ' + Y(mean[h]).toFixed(1) + ' '; pen = true; });
             svg += '<path d="' + d + '" fill="none" stroke="#6b5f4a" stroke-width="1.1" stroke-dasharray="3 2.5" opacity=".85"/>';
             const card = attEl('div', 'bb-rs-fc' + (_rsHl === p.name ? ' hl' : '')); card.dataset.hn = p.name;
-            card.innerHTML = '<div class="fh"><b>' + esc(p.name) + '</b><small>' + (p.shift ? attPad(Math.floor(p.shift[0] / 60)) + attPad(p.shift[0] % 60) + '-' + attPad(Math.floor(p.shift[1] / 60) % 24) + attPad(p.shift[1] % 60) : '') + '</small><span>' + (pkh != null ? '피크 ' + rsHh(pkh) + '시' : '') + '</span><i style="background:' + colors[p.name] + '"></i><em title="시간대별 하루 평균 이석을 모두 더한 값 = 근무일 하루당 평균 이석 시간">일평균 ' + tot.toFixed(1) + '분</em></div><svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(p.name) + ' 시간대별 이석">' + svg + '</svg>';
+            card.innerHTML = '<div class="fh"><b>' + BBRESIGN.html(p.name) + '</b><small>' + (p.shift ? attPad(Math.floor(p.shift[0] / 60)) + attPad(p.shift[0] % 60) + '-' + attPad(Math.floor(p.shift[1] / 60) % 24) + attPad(p.shift[1] % 60) : '') + '</small><span>' + (pkh != null ? '피크 ' + rsHh(pkh) + '시' : '') + '</span><i style="background:' + colors[p.name] + '"></i><em title="시간대별 하루 평균 이석을 모두 더한 값 = 근무일 하루당 평균 이석 시간">일평균 ' + tot.toFixed(1) + '분</em></div><svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(p.name) + ' 시간대별 이석">' + svg + '</svg>';
             wrap.appendChild(card);
         });
         return wrap;
@@ -6740,6 +6781,7 @@
             const rows = [];
             ivSortPeople(d.people).forEach((p) => {
                 if (!p.solved && !p.hours && !p.inferred && !p.abandoned) return;
+                if (BBRESIGN.hidden(p.name)) return;   // 퇴사 다음달 1일부터 가림 (집계 숫자는 그대로)
                 const r = ivEl('div', 'bb-iv-row');
                 r.dataset.name = p.name;
                 if (p.onBreak) r.classList.add('brk');
@@ -6747,7 +6789,7 @@
                 if (_ivPopName === p.name) r.classList.add('sel');
                 const mid = ivEl('div', 'bb-iv-mid');
                 const l1 = ivEl('div', 'bb-iv-l1');
-                l1.appendChild(ivEl('span', 'bb-iv-nm', p.name));
+                l1.appendChild(BBRESIGN.fill(ivEl('span', 'bb-iv-nm'), p.name));
                 l1.appendChild(ivEl('span', 'bb-iv-meta', p.shift || ''));
                 if (p.onBreak) l1.appendChild(ivEl('span', 'bb-iv-badge', '휴게중'));
                 else if (p.off) l1.appendChild(ivEl('span', 'bb-iv-badge off', p.offKind === 'before' ? '출근 전' : '퇴근'));
@@ -7228,7 +7270,7 @@
             if (!_spOpen) return;
             const { dates, days, sched, state } = _spView;
             const have = dates.filter(d => days[d]);
-            const rows = spAgg(have, days, sched);
+            const rowsAll = spAgg(have, days, sched), rows = rowsAll.filter(r => !BBRESIGN.hidden(r.name));   // 퇴사자는 가리되 총 건수에는 그대로 포함
             const avgOf = x => x.days > 0 ? x.solved / x.days : -1;
             const FAST_TAIL = ['김용욱', '차현모', '안혜림', '박수연', '신지섭'];   // 관리자 — 20초 이내 정렬에서는 항상 맨 아래 (오름·내림 무관)
             const fastOf = x => x.fastMiss > 0 ? -1 : x.fast;
@@ -7246,7 +7288,7 @@
             const x = ivEl('span', 'x', '✕'); x.dataset.act = 'close';
             t.append(rf, x);   // '새로 집계'는 제목(누적) 바로 오른쪽, ✕ 는 맨 오른쪽
             head.appendChild(t);
-            let sub = have.length ? ivMD(have[0]) + ' ~ ' + ivMD(have[have.length - 1]) + ' · ' + have.length + '일치 · 총 ' + rows.reduce((s, r) => s + r.solved, 0) + '건' : '';
+            let sub = have.length ? ivMD(have[0]) + ' ~ ' + ivMD(have[have.length - 1]) + ' · ' + have.length + '일치 · 총 ' + rowsAll.reduce((s, r) => s + r.solved, 0) + '건' : '';
             let warn = false;
             if (state && state.phase === 'loading') { sub += (sub ? ' · ' : '') + '집계 중… ' + state.done + '/' + state.total; }
             else if (state && state.phase === 'fail') { sub = '날짜 목록을 불러오지 못했습니다.'; warn = true; }
@@ -7271,7 +7313,7 @@
                 rows.forEach((r, i) => {
                     const row = ivEl('div', 'bb-sp-row' + ((_spSort.k === 'solved' || _spSort.k === 'avg' || _spSort.k === 'fast') && _spSort.dir < 0 && i < 3 && r.solved > 0 ? ' top' : ''));
                     row.appendChild(ivEl('div', 'bb-sp-rk', String(i + 1)));
-                    const nm = ivEl('div', 'bb-sp-nm'), nmN = ivEl('div', 'n', r.name);
+                    const nm = ivEl('div', 'bb-sp-nm'), nmN = BBRESIGN.fill(ivEl('div', 'n'), r.name);
                     if (r.win) { const night = r.win[0] >= 14 * 60; const bd = ivEl('span', 'bb-sp-bdg ' + (night ? 'bd-n' : 'bd-d'), night ? '야간' : '주간'); bd.title = '근무 ' + attPad(Math.floor(r.win[0] / 60)) + ':' + attPad(r.win[0] % 60) + ' 시작 (14:00 이후 시작 = 야간)'; nmN.appendChild(bd); }   // 근무표 시간이 없는 사람은 뱃지 없음
                     nm.appendChild(nmN);
                     const bar = ivEl('div', 'bb-sp-bar'), fill = ivEl('i'); fill.style.width = Math.round(r.solved / max * 100) + '%'; bar.appendChild(fill); nm.appendChild(bar);
@@ -7626,20 +7668,21 @@
             people.forEach(p => {
                 const c = ivEl('span', 'bb-tr-chip' + (_trSel.has(p.name) ? ' sel' : ''));
                 c.dataset.focus = p.name; c.title = p.shift || '';
-                c.innerHTML = '<i style="background:' + p.color + '"></i>' + trEsc(p.name) + ' <small>' + sub(p) + '</small>';
+                c.innerHTML = '<i style="background:' + p.color + '"></i>' + BBRESIGN.html(p.name) + ' <small>' + sub(p) + '</small>';
                 leg.appendChild(c);
             });
             const cl = ivEl('span', 'bb-tr-chip', '전체 해제'); cl.dataset.act = 'clear'; cl.style.opacity = _trSel.size ? '1' : '.45'; leg.appendChild(cl);
             return leg;
         }
         function trDayChart(body, sum, people) {
+            const peopleAll = people; people = people.filter(p => !BBRESIGN.hidden(p.name));   // 퇴사자는 막대·범례에서만 가림 (총 처리/인원 숫자는 그대로)
             const items = TR_AXIS.map(h => people.filter(p => p.arr[h] > 0).map(p => ({ p, v: p.arr[h] })));
-            const totals = items.map(l => l.reduce((a, b) => a + b.v, 0));
+            const totals = TR_AXIS.map(h => peopleAll.reduce((a, p) => a + (p.arr[h] > 0 ? p.arr[h] : 0), 0));
             const total = totals.reduce((a, b) => a + b, 0);
             const pk = totals.indexOf(Math.max.apply(null, totals));
             const sel = people.filter(p => _trSel.has(p.name)), fp = sel.length === 1 ? sel[0] : null;
             let fh = -1, fv = 0; if (fp) TR_AXIS.forEach(h => { if (fp.arr[h] > fv) { fv = fp.arr[h]; fh = h; } });
-            sum.innerHTML = '<span>총 처리<b class="hl">' + total + '건</b></span><span>처리 인원<b>' + people.length + '명</b></span><span>가장 바쁜 시간대<b>' + TR_AXIS[pk] + '시 · ' + totals[pk] + '건</b></span>' +
+            sum.innerHTML = '<span>총 처리<b class="hl">' + total + '건</b></span><span>처리 인원<b>' + peopleAll.length + '명</b></span><span>가장 바쁜 시간대<b>' + TR_AXIS[pk] + '시 · ' + totals[pk] + '건</b></span>' +
                 (fp ? '<span>' + trEsc(fp.name) + '<b class="hl">' + fp.total + '건</b></span><span>피크<b>' + (fh >= 0 ? fh + '시 · ' + fv + '건' : '-') + '</b></span>' : sel.length > 1 ? '<span>선택 ' + sel.length + '명 합계<b class="hl">' + sel.reduce((a, p) => a + p.total, 0) + '건</b></span>' : '');
             const wrap = ivEl('div', 'bb-tr-wrap');
             const maxK = Math.max(1, ...items.map(l => l.length)), M = { l: 36, r: 12, t: 30, b: 30 };
@@ -7661,7 +7704,7 @@
                     const inside = bh >= nh + 12;
                     chars.forEach((ch, c) => {
                         const ty = inside ? top + 8 + FS + c * LH : top - 21 - (chars.length - 1 - c) * LH;
-                        labs += '<text x="' + cx + '" y="' + ty + '" text-anchor="middle" font-size="' + FS + '" font-weight="800" fill="' + (inside ? '#1f1a10' : '#2b2418') + '" opacity="' + (dim ? 0.4 : 1) + '">' + trEsc(ch) + '</text>';
+                        labs += '<text x="' + cx + '" y="' + ty + '" text-anchor="middle" font-size="' + FS + '" font-weight="800" fill="' + (inside ? '#1f1a10' : '#2b2418') + '" opacity="' + (dim ? 0.4 : 1) + '"' + (BBRESIGN.state(p.name) === 1 ? ' text-decoration="line-through"' : '') + '>' + trEsc(ch) + '</text>';
                     });
                 });
             });
@@ -7704,8 +7747,9 @@
             h += '<div class="cn hd2">전체 평균 합계</div>';
             TR_AXIS.forEach((hr, i) => { h += '<div class="hd2">' + (colTot[i] > 0 ? fmt1(colTot[i]) : '-') + '</div>'; });
             people.forEach(p => {
+                if (BBRESIGN.hidden(p.name)) return;   // 퇴사자 줄만 가림 (위의 시간대별 합계는 그대로)
                 const isF = _trSel.has(p.name), dim = _trSel.size > 0 && !isF;
-                h += '<div class="nm' + (isF ? ' sel' : '') + '" data-focus="' + trEsc(p.name) + '">' + trEsc(p.name) + '<small>' + fmt1(p.total) + '</small></div>';
+                h += '<div class="nm' + (isF ? ' sel' : '') + '" data-focus="' + trEsc(p.name) + '">' + BBRESIGN.html(p.name) + '<small>' + fmt1(p.total) + '</small></div>';
                 TR_AXIS.forEach((hr, i) => {
                     const v = p.avg[hr];
                     if (v == null) { h += '<div class="v off' + (dim ? ' dim' : '') + '"></div>'; return; }
@@ -8469,13 +8513,13 @@
             const val = p => { if (all) return p.days ? p.solved / p.days : 0; const q = tPersonOn(TS.date, p.name); return q ? q.solved : null; };
             let h = '';
             ['d', 'n', 'x'].forEach(g => {
-                const list = ppl.filter(p => tGroupOf(p.sh) === g).sort((a, b) => tSk(a.sh[0]) - tSk(b.sh[0]) || a.sh[1] - b.sh[1] || a.name.localeCompare(b.name, 'ko'));
+                const list = ppl.filter(p => tGroupOf(p.sh) === g && !BBRESIGN.hidden(p.name)).sort((a, b) => tSk(a.sh[0]) - tSk(b.sh[0]) || a.sh[1] - b.sh[1] || a.name.localeCompare(b.name, 'ko'));
                 if (!list.length) return;
                 h += '<div class="bb-tot-gh g-' + g + '">' + T_GICON[g] + ' ' + T_GNAME[g] + ' · ' + T_GDESC[g] + ' <b>' + list.length + '명</b></div>';
                 const mx = Math.max(1, ...list.map(p => val(p) || 0));
                 list.forEach(p => {
                     const v = val(p), off = v == null;
-                    h += '<button class="bb-tot-pi g-' + g + (p.name === TS.name ? ' on' : '') + (off ? ' off' : '') + '" data-act="pid" data-v="' + trEsc(p.name) + '"><span class="pt"><span class="pn">' + trEsc(p.name) + '</span><span class="ps">' + tHhmm(p.sh[0]) + '–' + tHhmm(p.sh[1]) + '</span></span><span class="pv">' + (off ? '–' : tFmt(v) + '<small>' + (all ? '/일' : '건') + '</small>') + '</span>' + (off ? '' : '<i style="width:' + Math.round(v / mx * 100) + '%"></i>') + '</button>';
+                    h += '<button class="bb-tot-pi g-' + g + (p.name === TS.name ? ' on' : '') + (off ? ' off' : '') + '" data-act="pid" data-v="' + trEsc(p.name) + '"><span class="pt"><span class="pn">' + BBRESIGN.html(p.name) + '</span><span class="ps">' + tHhmm(p.sh[0]) + '–' + tHhmm(p.sh[1]) + '</span></span><span class="pv">' + (off ? '–' : tFmt(v) + '<small>' + (all ? '/일' : '건') + '</small>') + '</span>' + (off ? '' : '<i style="width:' + Math.round(v / mx * 100) + '%"></i>') + '</button>';
                 });
             });
             box.innerHTML = h || '<div class="bb-tot-msg" style="grid-column:1/-1;padding:14px">근무자 정보를 불러오는 중…</div>'; box.scrollTop = keep;
@@ -8506,13 +8550,13 @@
             if (!person) {
                 if (all) { body.innerHTML = '<div class="bb-tot-msg">' + (TD.bg ? trEsc(TS.name) + ' 님의 기록을 불러오는 중이에요 ☕' : trEsc(TS.name) + ' 님의 근무 정보를 찾지 못했어요 🔍') + '</div>'; return; }
                 const ap = tAllPeople().find(p => p.name === TS.name), last = TD.dates.find(x => tPersonOn(x, TS.name)), ag = ap ? tGroupOf(ap.sh) : 'x';
-                body.innerHTML = '<div class="bb-tot-ph g-' + ag + '"><span class="bb-tot-av lg">' + trEsc(TS.name.charAt(0)) + '</span><h2>' + trEsc(TS.name) + '</h2>' + (ap ? '<span class="bb-tot-gchip">' + T_GICON[ag] + ' ' + T_GNAME[ag] + '</span><span class="meta">' + tHhmm(ap.sh[0]) + '–' + tHhmm(ap.sh[1]) + ' 근무</span>' : '') + '</div>' + tDatesChips() +
+                body.innerHTML = '<div class="bb-tot-ph g-' + ag + '"><span class="bb-tot-av lg">' + trEsc(TS.name.charAt(0)) + '</span><h2>' + BBRESIGN.html(TS.name) + '</h2>' + (ap ? '<span class="bb-tot-gchip">' + T_GICON[ag] + ' ' + T_GNAME[ag] + '</span><span class="meta">' + tHhmm(ap.sh[0]) + '–' + tHhmm(ap.sh[1]) + ' 근무</span>' : '') + '</div>' + tDatesChips() +
                     '<div class="bb-tot-msg">' + tMd(TS.date) + '(' + tDow(TS.date) + ')은 ' + trEsc(TS.name) + ' 님이 쉬어 가신 날이에요 ☕<br>위에서 다른 날짜를 고르거나 아래 버튼으로 돌아가세요.' + (last ? '<br><button data-act="lastwork">가장 최근 근무일(' + tMd(last) + ')로 돌아가기</button>' : '') + '</div>';
                 const dsc = body.querySelector('.bb-tot-dates'); if (dsc) dsc.scrollLeft = keepD;
                 return;
             }
             const A = tBuildCtx(person), g = tGroupOf(person.sh), gl = T_GNAME[g];
-            let h = '<div class="bb-tot-ph g-' + g + '"><span class="bb-tot-av lg">' + trEsc(person.name.charAt(0)) + '</span><h2>' + trEsc(person.name) + '</h2><span class="bb-tot-gchip">' + T_GICON[g] + ' ' + gl + '</span><span class="meta">' + tHhmm(person.sh[0]) + '–' + tHhmm(person.sh[1]) + ' 근무' + (A && A.spans.length > 1 ? ' · 근무시간 변경 이력 있음' : '') + '</span></div>';
+            let h = '<div class="bb-tot-ph g-' + g + '"><span class="bb-tot-av lg">' + trEsc(person.name.charAt(0)) + '</span><h2>' + BBRESIGN.html(person.name) + '</h2><span class="bb-tot-gchip">' + T_GICON[g] + ' ' + gl + '</span><span class="meta">' + tHhmm(person.sh[0]) + '–' + tHhmm(person.sh[1]) + ' 근무' + (A && A.spans.length > 1 ? ' · 근무시간 변경 이력 있음' : '') + '</span></div>';
             if (!all) h += tDatesChips();
             else if (A) h = h.replace('</div>', '<span class="meta">📅 기록 ' + TD.dates.length + '일(' + tMd(TD.dates[TD.dates.length - 1]) + '~' + tMd(TD.dates[0]) + ') 중 ' + A.days.length + '일 근무</span></div>');
             if (!A) { body.innerHTML = h + '<div class="bb-tot-msg">' + (all ? '이 기간에 불러올 수 있는 개입 내역이 없어요 🔍' : '개입 내역을 불러오지 못했어요 😵<br>위의 "새로 받기"를 눌러 보세요.') + '</div>'; return; }
