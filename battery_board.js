@@ -12,7 +12,7 @@
 
     // ══ 퇴사자 처리 ═══════════════════════════════════════════════════════════════════
     // 퇴사자가 나오면 아래 목록에 '이름: 퇴사일(YYYY-MM-DD)' 한 줄만 추가하면 된다. (기록·건수·평균 같은 통계 값은 절대 지우지 않고 화면 표시만 바꿈)
-    //   · 퇴사일 '다음 날'부터: 합산 통계 · 개입 현황(누적/시간추이 포함) · 이석 현황(시간대별 명단 포함)의 이름에 취소선 + '퇴사' 뱃지
+    //   · 퇴사일 '다음 날'부터: 합산 통계 · 개입 현황(누적/시간추이 포함) · 이석 현황(시간대별 명단 포함)의 이름에 취소선 + 흐리게(뱃지 없음)
     //   · 퇴사일이 속한 달의 '다음달 1일'부터: 위 화면들에서 그 사람의 줄·카드·칩을 아예 가림 (합계·평균 등 숫자는 그대로 유지)
     //   · 판단 기준 날짜 = 지금(한국 시간) 날짜. 예) 유재헌 11/11 퇴사 → 지금은 뱃지, 12/1 부터 가림 / 이기완 11/30 퇴사 → 12/1 에 바로 가림(뱃지 없이)
     //   ※ 일일 업무 배정표(admin 의 재배정·양원LH·배정 통계)는 이 목록을 보지 않음 — 그쪽은 기존 로직 그대로
@@ -33,17 +33,15 @@
             return t > day ? 1 : 0;
         }
         const hidden = name => state(name) === 2;
-        const badge = () => '<span class="bb-rsg-b">퇴사</span>';
-        const html = name => state(name) === 1 ? '<span class="bb-rsg-n">' + esc(name) + '</span>' + badge() : esc(name == null ? '' : name);
+        const html = name => state(name) === 1 ? '<span class="bb-rsg-n">' + esc(name) + '</span>' : esc(name == null ? '' : name);
         const fill = (el, name) => {
             if (state(name) !== 1) { el.textContent = name == null ? '' : name; return el; }
             const n = document.createElement('span'); n.className = 'bb-rsg-n'; n.textContent = name;
-            const b = document.createElement('span'); b.className = 'bb-rsg-b'; b.textContent = '퇴사';
-            el.textContent = ''; el.append(n, b); return el;
+            el.textContent = ''; el.append(n); return el;
         };
         try {
             const st = document.createElement('style'); st.id = 'bb-rsg-style';
-            st.textContent = '.bb-rsg-n { text-decoration:line-through; text-decoration-thickness:2px; opacity:.55; } .bb-rsg-b { display:inline-block; margin-left:4px; padding:0 6px; border-radius:9px; background:#7b7f8a; color:#fff; font-size:.72em; font-weight:800; line-height:1.55; vertical-align:middle; text-decoration:none !important; white-space:nowrap; }';
+            st.textContent = '.bb-rsg-n { text-decoration:line-through; text-decoration-thickness:2px; opacity:.55; }';
             (document.head || document.documentElement).appendChild(st);
         } catch (e) { /* 스타일을 못 붙여도 동작은 유지 */ }
         return { state, hidden, html, fill };
@@ -6967,7 +6965,10 @@
             }
 
             const th = ivEl('div', 'bb-iv-th');
-            th.append(ivEl('span', '', '시작'), ivEl('span', '', special ? '이름 · 카드 · 사유' : '카드 · 사유'), ivEl('span', '', '소요시간'));
+            const fastN = d && !special ? d.rows.filter(r => ivMatch(r, 'ok') && r.e && Math.round((r.e - r.t) / 1000) < 20).length : null;   // 20초 미만으로 해결한 건수 (해결 건만 · 추정/이탈 제외)
+            const dh = ivEl('span', '', fastN == null ? '소요시간' : '소요시간(' + fastN + ')');
+            if (fastN != null) { dh.title = '괄호 안 숫자 = 20초 미만에 해결한 건수 (해결 건만 · 추정/이탈 제외)'; dh.style.cursor = 'help'; }
+            th.append(ivEl('span', '', '시작'), ivEl('span', '', special ? '이름 · 카드 · 사유' : '카드 · 사유'), dh);
             const tb = ivEl('div', 'bb-iv-tb');
             const foot = ivEl('div', 'bb-iv-pf');
             if (!_ivDetail) tb.appendChild(ivEl('div', 'bb-iv-msg', '불러오는 중…'));
