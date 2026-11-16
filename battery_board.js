@@ -7588,6 +7588,33 @@
         #bb #bbsim .brf .ok { color:#1d7a35; font-weight:800 !important; }
         #bb #bbsim .brf .ng { color:var(--rd); font-weight:800 !important; }
         #bb #bbsim .brf .sm { margin-top:4px; font-size:11.5px; color:var(--mu); line-height:1.45; }
+        #bb #bbsim .ywh { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:6px; }
+        #bb #bbsim .ywh b { font-size:calc(16px * var(--bb-ts, 1)); font-weight:800 !important; }
+        #bb #bbsim .ywh .sp { margin-left:auto; display:flex; gap:6px; }
+        #bb #bbsim .ywm { font-size:calc(14px * var(--bb-ts, 1)); color:var(--mu); line-height:1.5; margin-bottom:8px; }
+        #bb #bbsim .ywm b { color:var(--tx); font-weight:700 !important; }
+        #bb #bbsim .ywt { width:100%; border-collapse:collapse; font-size:calc(14.5px * var(--bb-ts, 1)); }
+        #bb #bbsim .ywt th { position:sticky; top:-10px; background:var(--sur2); border-bottom:2px solid var(--bd2); padding:5px 8px; text-align:left; font-weight:800 !important; white-space:nowrap; }
+        #bb #bbsim .ywt td { padding:4px 8px; border-bottom:1px solid var(--bd); white-space:nowrap; }
+        #bb #bbsim .ywt tr.pn td { background:#fff4dc; }
+        #bb #bbsim .ywt td.num { text-align:right; font-variant-numeric:tabular-nums; }
+        #bb #bbsim .ywt td.bar { position:relative; min-width:120px; }
+        #bb #bbsim .ywt td.bar i { position:absolute; left:8px; top:5px; bottom:5px; background:#b3cdf8; border-radius:4px; max-width:calc(100% - 16px); }
+        #bb #bbsim .ywt td.bar span { position:relative; font-weight:700 !important; font-variant-numeric:tabular-nums; }
+        #bb #bbsim .ywt .pb { display:inline-block; padding:0 8px; border-radius:999px; background:#fbd5d0; color:#9f1239; font-weight:800 !important; }
+        #bb #bbsim .ywt .em { color:var(--mu); }
+        #bb #bbsim .ywn { margin-top:10px; font-size:calc(13px * var(--bb-ts, 1)); color:var(--mu); line-height:1.5; }
+        #bb #bbsim .asw { display:flex; gap:12px; align-items:flex-start; }
+        #bb #bbsim .asl { flex:0 0 330px; max-height:calc(100vh - 250px); overflow:auto; border:1.5px solid var(--bd2); border-radius:8px; background:var(--sur); }
+        #bb #bbsim .asl button { display:flex; align-items:center; gap:8px; width:100%; text-align:left; padding:5px 10px; border:0; border-bottom:1px solid var(--bd); background:transparent; color:var(--tx); font:inherit; font-size:calc(14px * var(--bb-ts, 1)); cursor:pointer; }
+        #bb #bbsim .asl button:hover { background:var(--sur2); }
+        #bb #bbsim .asl button.on { background:#d6e6ff; font-weight:800 !important; }
+        #bb #bbsim .asl button.z { color:var(--mu); opacity:.6; }
+        #bb #bbsim .asl button span { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        #bb #bbsim .asl button i { font-style:normal; font-variant-numeric:tabular-nums; font-weight:800 !important; color:var(--mu); }
+        #bb #bbsim .asl .gh { padding:4px 10px; background:var(--sur2); color:var(--mu); font-size:calc(12.5px * var(--bb-ts, 1)); font-weight:800 !important; border-bottom:1px solid var(--bd2); position:sticky; top:0; z-index:1; }
+        #bb #bbsim .asr { flex:1; min-width:0; }
+        #bb #bbsim .asr h5 { margin:0 0 4px; font-size:calc(16px * var(--bb-ts, 1)); font-weight:800 !important; }
         #bb #bbsim .seg2 { display:inline-flex; border:1.5px solid var(--bd2); border-radius:8px; overflow:hidden; }
         #bb #bbsim .seg2 button { height:26px; padding:0 10px; border:0; background:var(--sur2); color:var(--mu); font-family:inherit; font-size:12px; font-weight:700 !important; cursor:pointer; }
         #bb #bbsim .seg2 button.on { background:var(--tx); color:var(--sur); }
@@ -8070,7 +8097,7 @@
             return {
                 liveParse, liveCtx, liveCtxErr, liveMetrics, liveRepair, liveFull, liveScore, liveClimber, buildUnits, fmt,
                 setSubRule: o => { Object.assign(SUBRULE, o || {}); },
-                ywExclude: () => YW_EXCLUDE.slice(), ywNames, ywBuild, ywPenFrom, setYwDist, ywInfo: () => Object.assign({}, YWINFO), ywPen: () => Object.assign({}, YWPEN), subRule: () => ({ H: SUB_H.slice(), gap: SUBRULE.gap, w: SUBRULE.w, cnt: SUBRULE.cnt }),
+                ywExclude: () => YW_EXCLUDE.slice(), ywPeople: () => STAFF.filter(p => ywOk(p.name)).map(p => ({ n: p.name, time: p.time, g: p.g })), ywNames, ywBuild, ywPenFrom, setYwDist, ywInfo: () => Object.assign({}, YWINFO), ywPen: () => Object.assign({}, YWPEN), subRule: () => ({ H: SUB_H.slice(), gap: SUBRULE.gap, w: SUBRULE.w, cnt: SUBRULE.cnt }),
                 setMonth: v => { MONTH_OK = !!v; if (!v) { RSRC = 'none'; } },
                 setRoster: list => { mkStaff(list); MONTH_OK = true; RSRC = 'file'; },
                 useEmbedded: () => { mkStaff(STAFF_DATA); MONTH_OK = true; RSRC = 'embedded'; },
@@ -8096,14 +8123,15 @@
           let dist = null; try { dist = JSON.parse(lsGet(SIM_YW_LS, 'null')); } catch (e) { dist = null; }
           SIM.setYwDist(dist && dist.days ? dist : null, wdKey(wd), dist && dist.days ? 'saved' : 'seed');
         }
+        let simYwSrc = '';   // 마지막으로 읽은 기록의 출처 표시용
         async function simFetchYw() {   // 재배정하기 때 최신 기록을 받아 둔다: 서버(api/battery · monitoring_no_limit 의 bb_backup_yangwon_distribution.json) → 이 PC 저장본 중 가장 최근 날짜까지 있는 것
-          const cand = [], get = async (u, pick) => { try { const ac = new AbortController(), tm = setTimeout(() => ac.abort(), 8000); const r = await fetch(u, { cache: 'no-store', signal: ac.signal }); clearTimeout(tm); if (r.ok) { const o = pick(await r.json()); if (o && o.days && typeof o.days === 'object') cand.push(o); } } catch (e) { /* 다음 출처 */ } };
-          await get(SIM_YW_API + '?name=' + SIM_YW_NAME + '&t=' + Date.now(), j => j && j.data);
-          try { const l = JSON.parse(lsGet(SIM_YW_LS, 'null')); if (l && l.days) cand.push(l); } catch (e) { /* 무시 */ }
-          if (!cand.length) { console.warn('[BBA] 양원LH 배정 기록을 못 받음 — 수기 시작값으로 계산'); return; }
+          const cand = [], srcOf = new Map(), get = async (u, pick, lab) => { try { const ac = new AbortController(), tm = setTimeout(() => ac.abort(), 8000); const r = await fetch(u, { cache: 'no-store', signal: ac.signal }); clearTimeout(tm); if (r.ok) { const o = pick(await r.json()); if (o && o.days && typeof o.days === 'object') { cand.push(o); srcOf.set(o, lab); } } } catch (e) { /* 다음 출처 */ } };
+          await get(SIM_YW_API + '?name=' + SIM_YW_NAME + '&t=' + Date.now(), j => j && j.data, '서버');
+          try { const l = JSON.parse(lsGet(SIM_YW_LS, 'null')); if (l && l.days) { cand.push(l); srcOf.set(l, '이 PC 저장본'); } } catch (e) { /* 무시 */ }
+          if (!cand.length) { simYwSrc = '내장 시작값'; console.warn('[BBA] 양원LH 배정 기록을 못 받음 — 수기 시작값으로 계산'); return; }
           const last = o => Object.keys(o.days).sort().pop() || '';
           cand.sort((a, b) => last(b).localeCompare(last(a)));   // 같은 날짜면 앞선 출처(서버)가 우선
-          lsSet(SIM_YW_LS, JSON.stringify(cand[0]));
+          simYwSrc = srcOf.get(cand[0]) || ''; lsSet(SIM_YW_LS, JSON.stringify(cand[0]));
         }
         async function simFetchRoster() {
           const wd = workDay(), y = wd.getFullYear(), m = wd.getMonth() + 1;
@@ -8280,8 +8308,14 @@
             const txt = lsGet('bbs_tasks_cache', ''), cfg = simCfg();
             const pk = simPick(), errView = pk.err, R = pk.R, keep = (simp.querySelector('.col.c2') || {}).scrollTop;
             const head = '<div class="mh"><b title="새 수식으로 계산한 시뮬레이션입니다 — 실제 업무표는 바뀌지 않습니다">📋 일일 업무 배정표</b>' + '<button class="bba-btn se' + (errView ? ' on' : '') + '" data-a="se" title="시트가 07시에 갱신되지 않아 어제 정보가 남아 있을 때 — JSON 끝의 명일 다중표(= 오늘 다중)와 근무표의 출근자를 기준으로 일일 업무를 다시 배정합니다 (서브는 무시 · 규칙은 재배정하기와 동일)">🆘 시트 에러용</button>' + '<span class="sp">' +
-                '<button class="bba-btn' + (simBrief ? ' on' : '') + '" data-a="br" title="이 배정표가 규칙(가중치 2.0 · 다중 포함 3건 · 과학관 다중 無 우선 등)을 얼마나 지켰는지 요약해서 보여줍니다">📊 브리핑</button><button class="bba-btn cp" data-a="cp" title="아래 \'새 수식 배정자\' 결과를 시트 행 순서 그대로 한 열(줄바꿈으로 구분)로 복사합니다 — 시트의 배정자 칸에 값만 붙여넣기">📋 배정자 1열 복사</button>' +
+                '<button class="bba-btn' + (asV ? ' on' : '') + '" data-a="as" title="업무별로 직원들에게 몇 번씩 배정됐는지 매일 06:30 에 쌓은 기록을 막대그래프로 보여줍니다">📋 배정 기록</button>' + '<button class="bba-btn' + (simYwV ? ' on' : '') + '" data-a="yw" title="양원LH 분배 기록을 읽어 인원별 배정 횟수와 연속 배정 감점 현황을 표로 보여줍니다">🎯 양원LH</button>' + '<button class="bba-btn' + (simBrief ? ' on' : '') + '" data-a="br" title="이 배정표가 규칙(가중치 2.0 · 다중 포함 3건 · 과학관 다중 無 우선 등)을 얼마나 지켰는지 요약해서 보여줍니다">📊 브리핑</button><button class="bba-btn cp" data-a="cp" title="아래 \'새 수식 배정자\' 결과를 시트 행 순서 그대로 한 열(줄바꿈으로 구분)로 복사합니다 — 시트의 배정자 칸에 값만 붙여넣기">📋 배정자 1열 복사</button>' +
                 '<button class="bba-btn on" data-a="re" title="지금의 daily_tasks.json 으로 일일 업무 배정을 다시 찾습니다 (다중/서브는 그대로)">' + (simBusy ? (simProg || '받아오는 중…') : '재배정하기') + '</button><button class="bba-btn" data-a="x">✕ 닫기</button></span></div>';
+            if (asV) {   // 다시 그려도 스크롤 위치(바깥 · 업무 목록)는 그대로 둔다
+                const l0 = simp.querySelector('.asl'), b0 = simp.querySelector('.brf'), ls = l0 ? l0.scrollTop : 0, bs = b0 ? b0.scrollTop : 0;
+                simp.innerHTML = head + '<div class="brf">' + asHtml() + '</div><div class="foot">📋 배정 기록 — 다시 누르면 배정표로 돌아갑니다</div>';
+                const l1 = simp.querySelector('.asl'), b1 = simp.querySelector('.brf'); if (l1) l1.scrollTop = ls; if (b1) b1.scrollTop = bs; return;
+            }
+            if (simYwV) { simp.innerHTML = head + '<div class="brf">' + simYwHtml() + '</div><div class="foot">🎯 양원LH 분배 기록 — 다시 누르면 배정표로 돌아갑니다</div>'; return; }
             if (!R) { simp.innerHTML = head + (simMsg ? '<div class="cpm">' + simMsg + '</div>' : '') + '<div class="meta">' + (simBusy ? (simProg || '최적안을 찾는 중입니다…') : (!cfg || cfg.day !== ckey()) ? '아직 계산하지 않았습니다. <b>재배정하기</b>를 누르면 최신 daily_tasks.json 을 받아 최적안을 찾습니다.' : '계산하지 못했습니다: ' + esc(simErr || '알 수 없는 오류')) + '</div>'; return; }
             const { P, A, B, mA, mB, ctx, follow, d, wd } = R, at = new Date(pk.cfg.at), dow = '일월화수목금토'[wd.getDay()], stale = hash(pk.cfg.txt) !== hash(txt);
             const chg = P.TL.filter((t, i) => !t.fixed && (B[i] || null) !== (A[i] || null)).length;
@@ -8353,7 +8387,74 @@
             try { await navigator.clipboard.writeText(text); return true; } catch (e) { /* 아래 대체 방법 */ }
             try { const ta = document.createElement('textarea'); ta.value = text; ta.style.cssText = 'position:fixed;left:-9999px;top:0'; document.body.appendChild(ta); ta.select(); const ok = document.execCommand('copy'); ta.remove(); return !!ok; } catch (e) { return false; }
         }
-        let simBrief = false, simBriefTab = 'B';
+        let simBrief = false, simBriefTab = 'B', simYwV = false, simYwSort = 'pen', simYwLoading = false;
+        const AS_API = SIM_YW_API, AS_NAME = 'assignment_stats', AS_LS = 'bba_as_stats';
+        let asV = false, asTab = 'all', asSel = '', asLoading = false, asSrc = '', asMsg = '';
+        function asRead() { try { const o = JSON.parse(lsGet(AS_LS, 'null')); return o && o.days && typeof o.days === 'object' ? o : null; } catch (e) { return null; } }
+        async function asLoad() {
+            asLoading = true; asMsg = ''; simDraw();
+            try {
+                const cand = [], l = asRead(); if (l) cand.push([l, '이 PC 저장본']);
+                try { const ac = new AbortController(), tm = setTimeout(() => ac.abort(), 8000); const r = await fetch(AS_API + '?name=' + AS_NAME + '&t=' + Date.now(), { cache: 'no-store', signal: ac.signal }); clearTimeout(tm); if (r.ok) { const j = await r.json(); if (j && j.data && j.data.days) cand.unshift([j.data, '서버']); } } catch (e) { /* 저장본 사용 */ }
+                const last = o => Object.keys(o.days).sort().pop() || '';
+                cand.sort((a, b) => last(b[0]).localeCompare(last(a[0])));
+                if (cand.length) { asSrc = cand[0][1]; lsSet(AS_LS, JSON.stringify(cand[0][0])); } else asSrc = '';
+            } finally { asLoading = false; simDraw(); }
+        }
+        /* 업무별 가중치 — 일일 업무 배정 엔진(mkTask · buildUnits)과 같은 값: 부산 과학관 1 · 다중 메인 1 · 서브(01·02·03·10·15·16시) 0.5 (배정 엔진은 10·15·16시만 — 이 통계에서만 새벽 1~3시 추가) · 양원LH 0.5(00·03·06시 고정 칸은 0)
+           · 송도요기요 0.5 · 10:00 무선충전 재시작 0.5 · 성남 삼평동 대기장소2 주간기체 출근 0.5 (같은 날 '삼평동,서현동 기체 출근 체크'는 묶음이라 0 — 따로 나뉜 날도 대기장소2 담당자에게만 0.5) · 나머지 0 */
+        const asW = t => /^부산국립과학관/.test(t) ? 1 : /^양원LH/.test(t) ? (/ (00|03|06)시$/.test(t) ? 0 : 0.5) : t === '다중 모니터링' ? 1 : t === '서브 모니터링 (01·02·03·10·15·16시)' ? 0.5 : /송도요기요/.test(t) ? 0.5 : /재시작 \(10:00\)$/.test(t) ? 0.5 : /^성남 삼평동 대기장소2 주간기체 출근/.test(t) ? 0.5 : 0;
+        const asHide = t => /HUB\s*B\s*출근/.test(t);   // 삭제된 업무
+        let asWWin = 'all';
+        function asHtml() {
+            const o = asRead(), days = o ? Object.keys(o.days).sort() : [], md = k => k ? Number(k.slice(5, 7)) + '/' + Number(k.slice(8, 10)) : '–';
+            const tab = (v, lab) => '<button class="bba-btn' + (asTab === v ? ' on' : '') + '" data-a="astab" data-v="' + v + '">' + lab + '</button>';
+            let h = '<div class="ywh"><b>📋 배정 기록</b><span class="sp">' + tab('all', '전체 기간') + tab('15', '최근 15일') + tab('wt', '가중치별') + '<button class="bba-btn" data-a="asre" title="서버의 요약 파일을 다시 읽어옵니다">↻ 새로 읽기</button></span></div>';
+            if (asMsg) h += '<div class="ywm"><b>' + esc(asMsg) + '</b></div>';
+            if (!days.length) return h + '<div class="ywm">' + (asLoading ? '요약 파일을 읽는 중…' : '아직 기록이 없습니다. 매일 06:30 에 admin 이 쌓은 기록을 읽어 옵니다.') + '</div>';
+            const lastK = days[days.length - 1], span = asTab === 'wt' ? asWWin : asTab, cutD = new Date(lastK + 'T00:00:00'); if (span !== 'all') cutD.setDate(cutD.getDate() - (Number(span) - 1));
+            const win = span === 'all' ? days : days.filter(k => k >= wdKey(cutD)), all = {}, agg = {}, ppl = {}, dn = t => /^서브 모니터링/.test(t) ? '서브 모니터링' : t;   // 화면 목록에서는 서브 두 항목을 합쳐 '서브 모니터링' 하나로 (가중치별 통계는 원래 항목으로 계산)
+            days.forEach(k => Object.keys(o.days[k] || {}).forEach(t => { if (!asHide(t)) all[dn(t)] = 1; }));
+            win.forEach(k => { const d = o.days[k] || {}; Object.keys(d).forEach(t => { if (asHide(t)) return; const a = agg[dn(t)] = agg[dn(t)] || { tot: 0, p: {} }, w = asW(t); (d[t] || []).forEach(nm => { a.tot++; const q = a.p[nm] = a.p[nm] || { c: 0, last: '' }; q.c++; if (k > q.last) q.last = k; const z = ppl[nm] = ppl[nm] || { w: 0, mn: 0, sb: 0, sc: 0, yw: 0, ot: 0 }; z.w += w; if (w) { if (t === '다중 모니터링') z.mn += w; else if (/^서브 모니터링/.test(t)) z.sb += w; else if (/^부산/.test(t)) z.sc += w; else if (/^양원LH/.test(t)) z.yw += w; else z.ot += w; } }); }); });
+            if (asTab === 'wt') {
+                const wb = (v, lab) => '<button class="bba-btn' + (asWWin === v ? ' on' : '') + '" data-a="aswin" data-v="' + v + '">' + lab + '</button>';
+                const rows = Object.keys(ppl).map(n => Object.assign({ n }, ppl[n])).sort((x, y) => y.w - x.w || x.n.localeCompare(y.n, 'ko')), N = rows.length, ws = rows.map(r => r.w), sum = ws.reduce((a, b) => a + b, 0), avg = N ? sum / N : 0, sd = N ? Math.sqrt(ws.reduce((a, b) => a + (b - avg) * (b - avg), 0) / N) : 0, mx = Math.max(1, ...ws), f = v => (Math.round(v * 10) / 10).toString();
+                h += '<div class="ywh" style="margin-top:2px"><span class="ywm" style="margin:0">기간</span>' + wb('all', '전체') + wb('15', '최근 15일') + '</div>';
+                h += '<div class="ywm">' + (asLoading ? '읽는 중… ' : '') + '기간 <b>' + md(win[0]) + ' ~ ' + md(lastK) + '</b> (' + win.length + '일) · 인원 <b>' + N + '명</b> · 평균 <b>' + avg.toFixed(1) + '</b> · 최고 <b>' + f(Math.max(0, ...ws)) + '</b> · 최저 <b>' + f(N ? Math.min(...ws) : 0) + '</b> · 표준편차 <b>' + sd.toFixed(1) + '</b> (작을수록 고르게 분포) · 쏠림 <b>' + f(Math.max(0, ...ws) - (N ? Math.min(...ws) : 0)) + '</b></div>';
+                h += '<table class="ywt"><thead><tr><th>순위</th><th>이름</th><th>가중치 합</th><th>일평균</th><th>다중 메인</th><th>다중 서브</th><th>부산 과학관</th><th>양원LH</th><th>그 밖</th></tr></thead><tbody>' + rows.map((q, i) => '<tr><td class="num">' + (i + 1) + '</td><td>' + simNm(q.n) + '</td><td class="bar"><i style="width:' + Math.round(q.w / mx * 100) + '%"></i><span>' + f(q.w) + '</span></td><td class="num">' + (win.length ? (q.w / win.length).toFixed(2) : '–') + '</td><td class="num">' + f(q.mn) + '</td><td class="num">' + f(q.sb) + '</td><td class="num">' + f(q.sc) + '</td><td class="num">' + f(q.yw) + '</td><td class="num">' + f(q.ot) + '</td></tr>').join('') + '</tbody></table>';
+                h += '<div class="ywn">가중치 = 일일 업무 배정 규칙과 같은 값: 부산 과학관 1 · 다중 메인 1 · 서브(01·02·03·10·15·16시) 0.5 (배정 엔진은 10·15·16시만 — 이 통계에서만 새벽 1~3시 추가) · 양원LH 0.5(00·03·06시 고정 칸 제외) · 송도요기요 0.5 · 10:00 무선충전 재시작 0.5 · 성남 삼평동 대기장소2 출근 0.5 (같은 날 \'삼평동,서현동 기체 출근 체크\'와는 묶음 — 따로 나뉜 날도 대기장소2 담당자에게만 0.5). 그 밖의 업무는 0. 기록은 매일 06:30 에 admin 이 저장합니다.</div>';
+                return h;
+            }
+            const tmv = o.tm || {}, grp = t => t === '다중 모니터링' || t === '서브 모니터링' ? 0 : 1, GN = ['다중 모니터링', '일일 업무 (07시부터 · 업무표 순서)'], tk = t => t in tmv ? tmv[t] : 1e9;   // 업무표(JSON) 순서: 다중·서브 다음에 07시부터 시작 시각 순
+            const tasks = Object.keys(all).sort((a, b) => grp(a) - grp(b) || (grp(a) === 0 ? (a === '다중 모니터링' ? -1 : 1) : tk(a) - tk(b) || a.localeCompare(b, 'ko', { numeric: true })));
+            if (!asSel || !all[asSel]) asSel = tasks[0] || '';
+            let list = '', pg = -1; tasks.forEach(t => { const g = grp(t); if (g !== pg) { list += '<div class="gh">' + GN[g] + '</div>'; pg = g; } const c = agg[t] ? agg[t].tot : 0; list += '<button class="' + (t === asSel ? 'on' : '') + (c ? '' : ' z') + '" data-a="astask" data-v="' + esc(t) + '"><span title="' + esc(t) + '">' + esc(t) + '</span><i>' + c + '</i></button>'; });
+            const a = agg[asSel] || { tot: 0, p: {} }, rows = Object.keys(a.p).map(n => ({ n, c: a.p[n].c, last: a.p[n].last })).sort((x, y) => y.c - x.c || x.n.localeCompare(y.n, 'ko')), mx = Math.max(1, ...rows.map(r => r.c));
+            let r = '<h5>' + esc(asSel) + ' <span style="font-weight:400;color:var(--mu)">· 가중치 ' + asW(asSel) + '</span></h5><div class="ywm">' + (asLoading ? '읽는 중… ' : '') + '기간 <b>' + md(win[0]) + ' ~ ' + md(lastK) + '</b> (' + win.length + '일) · 총 <b>' + a.tot + '건</b> · 배정된 인원 <b>' + rows.length + '명</b>' + (rows.length ? ' · 평균 <b>' + (a.tot / rows.length).toFixed(1) + '회</b>' : '') + '</div>';
+            r += rows.length ? '<table class="ywt"><thead><tr><th>순위</th><th>이름</th><th>배정 횟수</th><th>비율</th><th>마지막 배정</th></tr></thead><tbody>' + rows.map((q, i) => '<tr><td class="num">' + (i + 1) + '</td><td>' + simNm(q.n) + '</td><td class="bar"><i style="width:' + Math.round(q.c / mx * 100) + '%"></i><span>' + q.c + '</span></td><td class="num">' + Math.round(q.c / a.tot * 100) + '%</td><td>' + md(q.last) + '</td></tr>').join('') + '</tbody></table>' : '<div class="ywm">이 기간에는 배정 기록이 없습니다.</div>';
+            h += '<div class="ywm">출처 <b>' + esc(asSrc || '이 PC 저장본') + '</b> · 기록 <b>' + days.length + '일</b> (' + md(days[0]) + ' ~ ' + md(lastK) + ') · 업무 <b>' + tasks.length + '개</b></div>';
+            h += '<div class="asw"><div class="asl">' + list + '</div><div class="asr">' + r + '</div></div>';
+            h += '<div class="ywn">같은 업무는 시간이 달라져도 하나로 셉니다. 부산 과학관 · 양원LH · 성남 임무받기 OFF · 무선충전 재시작은 시간대마다 따로 셉니다. 없음 · 후보 없음 · 관리자는 제외. 기록은 매일 06:30 에 admin 이 전날 업무일 표를 읽어 저장합니다 (06:30~06:59 사이 admin 이 켜져 있어야 합니다).</div>';
+            return h;
+        }
+        async function simYwLoad() { simYwLoading = true; simDraw(); try { await simFetchYw(); } catch (e) { /* 저장본 사용 */ } simYwLoading = false; simDraw(); }
+        function simYwHtml() {   // 양원LH 분배 기록 표: 인원별 누적 · 최근 30일 · 마지막 배정 · 연속 배정 감점
+            let dist = null; try { dist = JSON.parse(lsGet(SIM_YW_LS, 'null')); } catch (e) { dist = null; }
+            const has = !!(dist && dist.days), wd = workDay(), T = wdKey(wd);
+            simRoster(wd);   // 이번 달 근무표 기준으로 대상 인원(신입·관리자·22시 이후 출근자 제외)을 정함
+            const B = SIM.ywBuild(has ? dist : null, null, null, ''), pt = SIM.ywPenFrom(has ? dist : null, T).map, nx = B.last >= T;
+            const md = k => k ? Number(k.slice(5, 7)) + '/' + Number(k.slice(8, 10)) : '–', days = Object.keys(B.days);
+            const rows = SIM.ywPeople().map(q => { const r = B.people[q.n] || { count: 0, count30: 0, pen: 0, last: '' }; return { n: q.n, g: q.time.slice(0, 2) + '-' + q.time.slice(6, 8), t: q.time, c: r.count, c30: r.count30 || 0, last: r.last, pen: pt[q.n] || 0, nx: r.pen || 0 }; });
+            const cmp = { pen: (a, b) => b.pen - a.pen || b.c30 - a.c30 || b.c - a.c || a.n.localeCompare(b.n, 'ko'), cnt: (a, b) => b.c30 - a.c30 || b.c - a.c || a.n.localeCompare(b.n, 'ko'), grp: (a, b) => a.t.localeCompare(b.t) || b.c30 - a.c30 || a.n.localeCompare(b.n, 'ko') }[simYwSort] || null;
+            rows.sort(cmp);
+            const mx = Math.max(1, ...rows.map(r => r.c30)), pn = rows.filter(r => r.pen > 0).length, zero = rows.filter(r => !r.c30).length, avg = rows.length ? rows.reduce((a, r) => a + r.c30, 0) / rows.length : 0;
+            const tab = (v, lab) => '<button class="bba-btn' + (simYwSort === v ? ' on' : '') + '" data-a="ywsort" data-v="' + v + '">' + lab + '</button>';
+            let h = '<div class="ywh"><b>🎯 양원LH 분배 현황</b><span class="sp">' + tab('pen', '감점순') + tab('cnt', '횟수순') + tab('grp', '근무조순') + '<button class="bba-btn" data-a="ywre" title="분배 파일을 다시 읽어옵니다">↻ 새로 읽기</button></span></div>';
+            h += '<div class="ywm">' + (simYwLoading ? '분배 파일을 읽는 중… ' : '') + '출처 <b>' + esc(simYwSrc || (has ? '이 PC 저장본' : '내장 시작값')) + '</b> · 기록 <b>' + days.length + '일</b> (' + md(days[0]) + ' ~ ' + md(B.last) + ') · 대상 <b>' + rows.length + '명</b> (신입·관리자·22시 이후 출근자 제외) · 오늘(' + md(T) + ') 감점 중 <b>' + pn + '명</b> · 최근 30일 0회 <b>' + zero + '명</b> · 평균 <b>' + avg.toFixed(1) + '회</b></div>';
+            h += '<table class="ywt"><thead><tr><th>근무조</th><th>이름</th><th>누적</th><th>최근 30일</th><th>마지막 배정</th><th>오늘 감점</th>' + (nx ? '<th>다음 근무일</th>' : '') + '</tr></thead><tbody>' + rows.map(r => '<tr' + (r.pen ? ' class="pn"' : '') + '><td>' + esc(r.g) + '</td><td>' + simNm(r.n) + '</td><td class="num">' + r.c + '</td><td class="bar"><i style="width:' + Math.round(r.c30 / mx * 100) + '%"></i><span>' + r.c30 + '</span></td><td>' + md(r.last) + '</td><td>' + (r.pen ? '<span class="pb">' + r.pen + '단계</span>' : '<span class="em">–</span>') + '</td>' + (nx ? '<td>' + (r.nx ? '<span class="pb">' + r.nx + '단계</span>' : '<span class="em">–</span>') + '</td>' : '') + '</tr>').join('') + '</tbody></table>';
+            h += '<div class="ywn">감점 단계 = 직전 근무일부터 연속으로 맡은 횟수(최대 3, 근무가 아니라 못 맡은 날은 끊지 않음) · 후보가 있으면 감점이 큰 사람을 피해 배정하고, 최근 30일 횟수가 많을수록 후순위입니다. 기록은 매일 09:30 · 22:00 에 admin 이 저장합니다.</div>';
+            return h;
+        }
         /* 📊 브리핑 — 한 배정안을 규칙 기준으로 채점해 보여준다. 탭 2개: 'B' = 이 PC 에서 돌린 새 수식 배정 / 'A' = 지금 daily_tasks.json 에 실제 반영된 값(관리자가 시트에서 정한 값).
            두 안은 달라도 둘 다 합리적일 수 있으므로 서로 비교해 틀렸다고 하지 않고, 각각 규칙을 얼마나 지켰는지만 본다. */
         function simBriefBody(R, tabKey) {
@@ -8428,7 +8529,15 @@
             const b = e.target.closest('[data-a]'); if (!b) return;
             const a = b.dataset.a;
             if (a === 'x') return simClose();
-            if (a === 'br') { simBrief = !simBrief; return simDraw(); }
+            if (a === 'as') { asV = !asV; if (asV) { simYwV = false; simBrief = false; asLoad(); return; } return simDraw(); }
+            if (a === 'astab') { asTab = b.dataset.v || 'all'; return simDraw(); }
+            if (a === 'aswin') { asWWin = b.dataset.v || 'all'; return simDraw(); }
+            if (a === 'astask') { asSel = b.dataset.v || ''; return simDraw(); }
+            if (a === 'asre') { asLoad(); return; }
+            if (a === 'yw') { asV = false; simYwV = !simYwV; if (simYwV) { simBrief = false; simYwLoad(); return; } return simDraw(); }
+            if (a === 'ywsort') { simYwSort = b.dataset.v || 'pen'; return simDraw(); }
+            if (a === 'ywre') { simYwLoad(); return; }
+            if (a === 'br') { asV = false; simYwV = false; simBrief = !simBrief; return simDraw(); }
             if (a === 'brt') { simBriefTab = b.dataset.v === 'A' ? 'A' : b.dataset.v === 'E' ? 'E' : 'B'; if (simBriefTab === 'E') simView = 'err'; else if (simRes) simView = 'normal'; return simDraw(); }
             if (a === 'cp') {   // 배정자 1열 복사
                 const show = m => { simMsg = m; clearTimeout(simMsgT); simMsgT = setTimeout(() => { simMsg = ''; simDraw(); }, 12000); simDraw(); };
@@ -8446,6 +8555,7 @@
                 return;
             }
             if (a === 'se') {   // 🆘 시트 에러용: 최신 JSON 을 받아(실패하면 저장본) 명일 다중표 + 근무표 기준으로 일일 업무를 다시 배정
+                asV = false; simYwV = false;
                 if (simBusy) return; simBusy = true; simProg = '최신 업무표 받는 중…'; simDraw();
                 (async () => {
                     try { await simLoad(); } catch (e) { /* 저장본 사용 */ }
@@ -8454,6 +8564,7 @@
                 return;
             }
             if (a === 're') {   // 재배정하기: 최신 daily_tasks.json 을 받아(실패하면 저장본) 그 값으로 일일 업무 배정을 다시 돌림
+                asV = false; simYwV = false;
                 if (simBusy) return; simBusy = true; simProg = '최신 업무표 받는 중…'; simDraw();
                 (async () => {
                     try { await simLoad(); } catch (e) { /* 저장본 사용 */ }
