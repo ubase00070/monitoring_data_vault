@@ -12,7 +12,7 @@
 
     // ══ 퇴사자 처리 ═══════════════════════════════════════════════════════════════════
     // 퇴사자가 나오면 아래 목록에 '이름: 퇴사일(YYYY-MM-DD)' 한 줄만 추가하면 된다. (기록·건수·평균 같은 통계 값은 절대 지우지 않고 화면 표시만 바꿈)
-    //   · 퇴사일 '다음 날'부터: 합산 통계 · 개입 현황(누적/시간추이 포함) · 이석 현황(시간대별 명단 포함)의 이름에 취소선 + 흐리게(뱃지 없음)
+    //   · 퇴사일 '다음 날'부터: 개입 현황(누적/시간추이 포함) · 이석 현황(시간대별 명단 포함)의 이름에 취소선 + 흐리게(뱃지 없음)
     //   · 퇴사일이 속한 달의 '다음달 1일'부터: 위 화면들에서 그 사람의 줄·카드·칩을 아예 가림 (합계·평균 등 숫자는 그대로 유지)
     //   · 판단 기준 날짜 = 지금(한국 시간) 날짜. 예) 유재헌 11/11 퇴사 → 지금은 뱃지, 12/1 부터 가림 / 이기완 11/30 퇴사 → 12/1 에 바로 가림(뱃지 없이)
     //   ※ 일일 업무 배정표(admin 의 재배정·양원LH·배정 통계)는 이 목록을 보지 않음 — 그쪽은 기존 로직 그대로
@@ -46,69 +46,6 @@
         } catch (e) { /* 스타일을 못 붙여도 동작은 유지 */ }
         return { state, hidden, html, fill };
     })();
-
-    // ══ 오프라인 모드 (NCC 통신 중단) ══════════════════════════════════════
-    // 이 파일은 NCC 로 직접 요청하지 않는다. NCC 조회는 로더(뉴비고 도우미)가 하고, 이 파일은
-    //   ① 토큰을 넘기고(bb_token)  ② 로더가 2분마다 쏘는 결과(bb_robots_data)를 받아 그리기만 한다.
-    // 켜지면:
-    //   · bb_token 을 보내지 않는다 (로더가 NCC 를 조회할 열쇠를 주지 않음)
-    //   · bb_robots_data 를 무시한다 (마지막 값 그대로 두고, 로그 기록·저장 같은 파생 처리도 하지 않음)
-    //   · 로더가 따를 수 있게 신호를 남긴다:  <html data-bb-offline="1">  +  document 'bb_offline' 이벤트 {offline:true|false}
-    //   ※ 로더가 이 신호를 확인하도록 고쳐져 있지 않으면, 이미 토큰을 받은 로더의 조회까지는 이 파일이 막을 수 없다.
-    // 켜지는 조건 (하나라도 true 면 켜짐 — 끄는 것은 모두 꺼야 함):
-    //   (1) 아래 상수 BB_OFFLINE_MODE = true
-    //   (2) remote_admin_config.json 의 "offline": true  — remote_logic.js 와 같은 키(한 번에 둘 다 적용), 새로고침 시 반영
-    //   (3) localStorage 'neubie_offline_mode' = 'true'  — 콘솔 localStorage.setItem('neubie_offline_mode','true') 또는 bbSetOffline(true). 1초 안에 반영
-    // 원복: 상수 false + 원격 키 false/삭제 + localStorage 값 'false'(또는 삭제). 토큰은 페이지당 1회만 보내므로 로더가 중복 조회 루프를 만들지 않는다.
-    const BB_OFFLINE_MODE = true;
-    const BB_OFFLINE_LS_KEY = 'neubie_offline_mode';
-    let _bbRemoteOffline = false;
-    const _bbCfgReady = (async () => {
-        try {
-            const res = await fetch(`https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/remote_admin_config.json?t=${Date.now()}`, { cache: 'no-store' });
-            if (!res.ok) return;
-            const cfg = await res.json();
-            if (typeof cfg.offline === 'boolean') _bbRemoteOffline = cfg.offline;
-        } catch { /* 실패 시 원격 스위치는 꺼짐으로 간주 — 지금까지와 동일하게 동작 */ }
-    })();
-    function bbIsOffline() {
-        if (BB_OFFLINE_MODE || _bbRemoteOffline) return true;
-        try { return localStorage.getItem(BB_OFFLINE_LS_KEY) === 'true'; } catch { return false; }
-    }
-    let _bbOfflineShown = false;     // 로더에 마지막으로 알린 상태 (시작은 '온라인' → 평소엔 이벤트가 하나도 나가지 않음)
-    let _bbTokenSent = false;
-    let _bbTokenPhaseDone = false;   // 최초 토큰 발송 판단이 끝났는지
-    function bbSendToken() {
-        console.log('[BB] 토큰은 보내지 않습니다 (수집기 방식 — 로더가 NCC 를 조회하지 않음)');
-        return;
-        const _token = localStorage.getItem('AccessToken');
-        if (_token) {
-            document.dispatchEvent(new CustomEvent('bb_token', {
-                detail: JSON.stringify({ token: _token, siteIds: SITE_IDS })
-            }));
-            _bbTokenSent = true;
-            console.log('[BB] bb_token 발송 완료');
-        } else {
-            console.log('[BB] AccessToken 없음');
-        }
-    }
-    function bbSyncOffline() {
-        const off = bbIsOffline();
-        if (off === _bbOfflineShown) return off;
-        _bbOfflineShown = off;
-        const root = document.documentElement;
-        if (off) root.setAttribute('data-bb-offline', '1'); else root.removeAttribute('data-bb-offline');
-        try { document.dispatchEvent(new CustomEvent('bb_offline', { detail: JSON.stringify({ offline: off }) })); } catch {}
-        console.log(off ? '[BB] 오프라인 모드 ON — NCC 갱신 중단' : '[BB] 오프라인 모드 OFF — NCC 갱신 재개');
-        // 오프라인으로 시작했다가 풀린 경우에만 토큰을 처음 보낸다. 이미 보낸 적이 있으면 재발송하지 않는다(로더 중복 루프 방지).
-        if (!off && _bbTokenPhaseDone && !_bbTokenSent) bbSendToken();
-        return off;
-    }
-    window.bbSetOffline = (on) => {
-        try { localStorage.setItem(BB_OFFLINE_LS_KEY, on ? 'true' : 'false'); } catch {}
-        return bbSyncOffline();   // 반환값 = 실제 오프라인 여부 (상수/원격 스위치가 켜져 있으면 끄려 해도 true)
-    };
-    bbSyncOffline();   // 상수·로컬 스위치는 즉시 신호 (원격 스위치는 설정 도착 후 아래 토큰 단계에서)
 
     // ============================================================
     // 배경 이미지 — 기체 카드 영역부터 하단까지만 (헤더의 3가지 테마 색은 그대로 보임)
@@ -180,15 +117,7 @@
         }
         #bb.bb-light.theme-sunset  { --bg-fill:linear-gradient(180deg, #f7d4c4 0%, #f0dfc9 45%, #f2e4c4 85%); }
         #bb.bb-light.theme-blossom { --bg-fill:linear-gradient(180deg, #f6dde3 0%, #f2e2d2 45%, #f2e4c4 85%); }
-        /* [주석처리: 기타 배달] #bb.bb-light .bb-delivery-title { color:#2b2418; } */
-        /* [주석처리: 기타 배달] #bb.bb-light .bb-delivery-empty { color:#2b2418; } */
         #bb.bb-light .bb-mi.standby { --ac:#8a7f68; }
-        #bb.bb-light .bb-chip.bat    { background:var(--sur); color:#b91c1c; }
-		#bb.bb-light .bb-chip.dock   { background:var(--sur); color:#a16207; }
-		#bb.bb-light .bb-chip.zombie { background:var(--sur); color:#c2410c; }
-		#bb.bb-light .bb-chip.cam    { background:var(--sur); color:#c2410c; }
-		#bb.bb-light .bb-chip.nomap  { background:var(--sur); color:#c2410c; }
-		#bb.bb-light .bb-chip.idle   { background:var(--sur); color:#1d4ed8; }
 
         #bb-wrap * { box-sizing:border-box; }
 
@@ -252,17 +181,6 @@
         .bb-hd-grp { display:flex; align-items:center; gap:6px; }
 
         .bb-hd-ico { font-size:12px; line-height:1; }
-        #bb-alertlog-all-btn { background:#d6e9ff; border-color:#a5c8ef; color:#1e3a5f; }          /* 이상 알림: 파스텔 연파랑 */
-        #bb-alertlog-all-btn:hover { background:#c4ddfb; border-color:#84b2e6; }
-
-        /* 제목 박스 바로 아래 작은 범례 (기체 카드 점 / 하단 동그라미 색 = 현재 상태) */
-        .bb-legend {
-            position:absolute; left:50%; bottom:-2px; transform:translateX(-50%);   /* 제목 박스 테두리와 겹치지 않게 살짝 아래 (헤더 아래 여백으로 2px 걸침) */
-            display:flex; align-items:center; gap:9px; white-space:nowrap;
-            font-size:10.5px; line-height:14px; color:var(--mu);
-        }
-        .bb-legend-item { display:inline-flex; align-items:center; gap:4px; }
-        .bb-legend-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
 
         /* UP: CYH 전용 — 제목 박스 안, "NCC" 글자 바로 밑(시계 왼쪽 빈 자리)에 아주 작게 (CYH 모드일 때만 보임) */
         .bb-up-mini {
@@ -472,43 +390,6 @@
             font-weight:900; cursor:pointer; line-height:1.5; font-family:inherit;
         }
         .zoom-label { font-size:14px; color:var(--tx); font-weight:700; min-width:34px; text-align:center; }
-
-        /* ── 알림 영역 (헤더 좌측) + 검색 ── */
-        .bb-alert-zone {   /* 이 영역 안에서만 버튼이 뜸 — overflow:hidden 으로 밖으로 삐져나오지 않음 */
-            position:absolute; left:14px; top:50%; transform:translateY(-50%);   /* 헤더 세로 중앙. 6칸(3줄) = 3×26 + 2×4 + 패딩 6 = 92px (오른쪽 고정 버튼 3행 86px 과 같은 줄 높이) */
-            width:429px; box-sizing:border-box; padding:3px; overflow:hidden;   /* 429 = 왼쪽 동숲 주민(100px) + 고정 버튼 3행(140px) 자리를 남긴 폭 */
-        }
-        .bb-alert-chips { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:4px 6px; }
-        .bb-chip {   /* 가로로 긴 한 줄 버튼: [아이콘 종류 N건  ··· 기체명] */
-            display:flex; align-items:center; gap:6px; min-width:0;
-            height:26px; padding:0 9px; box-sizing:border-box; border-radius:8px;   /* 고정 버튼(.bb-fb)과 같은 높이·글자 크기 → 3행이 오른쪽 버튼 3행과 나란히 */
-            font-size:12px; font-weight:800; cursor:pointer; font-family:inherit;
-            transition:filter .15s, box-shadow .15s;
-        }
-        .bb-chip-l1 { flex-shrink:0; white-space:nowrap; }
-        .bb-chip-l2 {
-            flex:1; min-width:0; font-size:12px; font-weight:500; opacity:.8;
-            white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-        }
-        .bb-chip:hover { filter:brightness(1.15); }
-        .bb-chip.bat    { background:var(--rd2); color:var(--rd); border:2px solid rgba(239,68,68,.55); animation:chipPulse 1s infinite, chipBorder 1s infinite; }
-        .bb-chip.dock   { background:rgba(251,191,36,.12); color:var(--ye); border:2px solid rgba(251,191,36,.5); animation:chipPulse 1s infinite, chipBorder 1s infinite; }
-        .bb-chip.zombie { background:rgba(249,115,22,.12); color:var(--or); border:2px solid rgba(249,115,22,.5); animation:chipPulse .7s infinite, chipBorder .7s infinite; }
-        .bb-chip.cam    { background:rgba(249,115,22,.12); color:var(--or); border:2px solid rgba(249,115,22,.45); animation:chipPulse 1s infinite, chipBorder 1s infinite; }
-        .bb-chip.nomap  { background:rgba(249,115,22,.12); color:var(--or); border:2px solid rgba(249,115,22,.45); animation:chipPulse 1s infinite, chipBorder 1s infinite; }
-        .bb-chip.idle   { background:rgba(59,130,246,.10); color:var(--bl); border:2px solid rgba(59,130,246,.45); animation:chipPulse 1.2s infinite, chipBorder 1.2s infinite; }
-        #bb.bb-light .bb-chip.bat    { box-shadow:0 0 8px rgba(239,68,68,.25); }
-        #bb.bb-light .bb-chip.dock   { box-shadow:0 0 6px rgba(251,191,36,.2); }
-        #bb.bb-light .bb-chip.zombie { box-shadow:0 0 8px rgba(249,115,22,.2); }
-        #bb.bb-light .bb-chip.cam    { box-shadow:0 0 6px rgba(249,115,22,.15); }
-        #bb.bb-light .bb-chip.nomap  { box-shadow:0 0 6px rgba(249,115,22,.15); }
-        #bb.bb-light .bb-chip.idle   { box-shadow:0 0 6px rgba(59,130,246,.15); }
-        .bb-chip-none   { grid-column:1 / -1; font-size:13px; color:var(--mu); font-weight:700; padding:6px 4px; }
-        @keyframes chipPulse { 0%,100%{opacity:1} 50%{opacity:.85} }
-        @keyframes chipBorder {
-            0%,100% { box-shadow:0 0 0 2px currentColor; }
-            50%     { box-shadow:0 0 0 1px currentColor; }
-        }
 
         /* 검색 */
         .bb-si-wrap { position:relative; flex:0 0 230px; min-width:230px; }   /* 폭 고정 230px (안내 문구가 잘리지 않는 폭) — 남는 자리는 채우지 않고 비워 둠 */
@@ -1071,67 +952,6 @@
         .bb-mi.standby    { --ac:#c8ccd4; }
         .bb-mi.docking    { --ac:var(--ye); }
 
-        /* [주석처리: 기타 배달] — 필요 시 이 주석만 풀면 복구
-        [ 기타 배달 ]
-        .bb-delivery-area {
-			flex:1; display:flex; flex-direction:column; min-height:0;
-			position:relative; border-radius:8px; overflow:hidden;
-			background-size:cover; background-position:center;
-		}
-        .bb-delivery-title {
-            font-size:16.5px; font-weight:900; color:var(--tx); letter-spacing:.3px;
-            padding:5px 6px; border:1px solid var(--bd); background:var(--sur);
-            text-align:center; border-radius:8px; flex-shrink:0;
-            width:30%; box-sizing:border-box; margin:10px 0 0 8px;
-        }
-        .bb-delivery-chips {
-            display:flex; flex-wrap:wrap; gap:4px;
-            overflow-y:auto; max-height:100px; padding:7px 10px 7px 10px;
-            margin-top:16px; max-width:calc(100% - 155px);
-            box-sizing:border-box;
-        }
-        .bb-delivery-chips::-webkit-scrollbar { width:4px; }
-        .bb-delivery-chips::-webkit-scrollbar-thumb { background:var(--bd2); border-radius:2px; }
-        .bb-delivery-chip {
-			display:flex; align-items:center; gap:4px;
-			padding:3px 9px; border-radius:6px;
-			background:var(--sur); border:1px solid rgba(236,72,153,.3);
-			color:var(--pk); font-size:14px; font-weight:700; white-space:nowrap;
-			box-shadow:0 1px 4px rgba(0,0,0,.35);
-		}
-        .bb-delivery-empty {
-            display:inline-block;
-            font-size:12px; color:var(--mu); font-weight:700;
-            padding:2px 7px; border:1px solid var(--bd); background:var(--sur);
-            border-radius:5px;
-        }
-        */
-
-        /* ── 알림 상세 패널 ── */
-        #bb-alert-panel {
-            display:none; position:fixed;
-            top:50%; left:50%; transform:translate(-50%,-50%);
-            width:552px; max-height:86vh; overflow-y:auto;
-            border:3px solid transparent; border-radius:14px;
-            background-image: linear-gradient(var(--sur), var(--sur)), linear-gradient(135deg, #d9b8ff, #9333ea);
-            background-origin: border-box;
-            background-clip: padding-box, border-box;
-            box-shadow:0 24px 64px rgba(0,0,0,.9);
-            z-index:99999999;
-                    }
-
-        #bb-alertlog-all-panel {
-            display:none; position:fixed;
-            top:50%; left:50%; transform:translate(-50%,-50%);
-            width:860px; max-height:82vh; overflow-y:auto;
-            border:3px solid transparent; border-radius:14px;
-            background-image: linear-gradient(var(--sur), var(--sur)), linear-gradient(135deg, #d9b8ff, #9333ea);
-            background-origin: border-box;
-            background-clip: padding-box, border-box;
-            box-shadow:0 24px 64px rgba(0,0,0,.9);
-            z-index:99999999;
-                    }
-        #bb-alertlog-all-panel.open { display:block; }
         #bb-dlog-panel {
             display:none; position:fixed;
             top:50%; left:50%; transform:translate(-50%,-50%);
@@ -1185,22 +1005,6 @@
         .bb-dlog-tag { flex-shrink:0; font-size:10px; font-weight:800; padding:1px 7px; border-radius:8px; background:var(--pk2); color:var(--pk); }
         #bb-dlog-panel .bb-dlog-run.wait .bb-dlog-tag { background:var(--sur2); color:var(--mu); }
         @keyframes bbDlogPulse { 0%,100% { opacity:1; } 50% { opacity:.3; } }
-        .bb-alertlog-day { margin-bottom:14px; }
-        .bb-alertlog-day-title {
-            display:flex; align-items:center; gap:10px;
-            font-size:17px; font-weight:900; color:var(--tx);
-            margin:14px 14px 8px;
-        }
-        .bb-alertlog-day-title::after { content:''; flex:1; height:1px; background:var(--bd2); }
-        .bb-alertlog-day:first-child .bb-alertlog-day-title { margin-top:2px; }
-        .bb-alertlog-row { display:flex; align-items:baseline; gap:8px; font-size:15px; padding:6px 14px; }
-        .bb-alertlog-row:nth-child(even) { background:var(--bg); }
-        .bb-alertlog-time { color:var(--mu); min-width:150px; flex-shrink:0; }
-        .bb-alertlog-name { color:var(--tx); flex-shrink:0; }
-        .bb-alertlog-icon { font-size:20px; line-height:1; }
-        .bb-alertlog-type { font-weight:900; }
-
-        #bb-alert-panel.open { display:block; }
         .bb-ap-hd {
             padding:14px 16px; border-bottom:1px solid #4a5070;
             background:var(--sur);
@@ -1215,45 +1019,7 @@
             color:#fca5a5; font-size:18px; cursor:pointer;
             display:flex; align-items:center; justify-content:center; font-weight:900;
         }
-        .bb-ap-item {
-            padding:13px 16px; border-bottom:1px solid #3a3f62;
-            display:flex; align-items:flex-start; gap:12px; background:var(--sur);
-        }
-        .bb-ap-item:last-child { border-bottom:none; }
-        .bb-ap-item:hover { background:#323558; }
-        .bb-ap-dot { width:14px; height:14px; border-radius:50%; flex-shrink:0; margin-top:3px; }
-        .bb-ap-dot.rd { background:#f87171; }
-        .bb-ap-dot.ye { background:#fcd34d; }
-        .bb-ap-dot.or { background:#fb923c; }
-        .bb-ap-dot.bl { background:#60a5fa; }
-        .bb-ap-info { display:flex; flex-direction:column; gap:4px; flex:1; }
-        .bb-ap-name { font-size:17px; font-weight:900; color:#f4f4ff; }
-        .bb-ap-desc { font-size:14.5px; font-weight:700; color:#c4c8e8; line-height:1.55; }
-        .bb-ap-time { font-size:11px; color:#8890b8; font-family:'Lato',monospace; }
-        .bb-ap-dismiss {
-            display:flex; flex-shrink:0; align-self:center;
-            padding:4px 11px; border-radius:6px;
-            border:1px solid #4a5070; background:#3a3f62;
-            color:#a0a8cc; font-size:11px; font-weight:700; cursor:pointer; font-family:inherit;
-        }
-        .bb-ap-empty { padding:28px 16px; text-align:center; font-size:14px; color:#8890b8; font-weight:700; background:var(--sur); border-radius:0 0 12px 12px; }
 
-        #bb-alert-panel.bb-light {
-			--bg:#f2e4c4; --sur:#f8f3e6; --sur2:#efe6d2;
-			--bd:#cabf9d; --bd2:#b3a687; --tx:#2b2418; --mu:#7a6f5c;
-			--wh:rgba(0,0,0,.05);
-		}
-		#bb-alert-panel.bb-light .bb-ap-hd { background:var(--sur); border-bottom-color:var(--bd); }
-		#bb-alert-panel.bb-light .bb-ap-title { color:var(--tx); }
-		#bb-alertlog-all-panel.bb-light .bb-ap-title { color:var(--tx); }
-		#bb-alert-panel.bb-light .bb-ap-close { color:#b91c1c; }
-		#bb-alert-panel.bb-light .bb-ap-item { background:var(--sur); border-bottom-color:var(--bd); }
-		#bb-alert-panel.bb-light .bb-ap-item:hover { background:var(--sur2); }
-		#bb-alert-panel.bb-light .bb-ap-name { color:var(--tx); }
-		#bb-alert-panel.bb-light .bb-ap-desc { color:var(--tx); }
-		#bb-alert-panel.bb-light .bb-ap-time { color:var(--mu); }
-		#bb-alert-panel.bb-light .bb-ap-dismiss { background:var(--sur2); border-color:var(--bd2); color:var(--tx); }
-		#bb-alert-panel.bb-light .bb-ap-empty { background:var(--sur); color:var(--mu); }
 
         /* ── 기체 Info 패널 ── */
         #bb-info-card-panel {
@@ -1347,8 +1113,6 @@
         #bb .bb-mm-goatt, #bb #bb-att-back, #bb #bb-iv-go, #bb #bb-iv-back, #bb #bb-dlog-close { display:none !important; }
 
         /* 헤더: 알림 칩은 왼쪽 빈 자리까지 넓히고, 남은 버튼(테마·줌·닫기)은 제목 영역 오른쪽에 붙임 */
-        #bb .bb-alert-zone { left:80px; width:calc(50% - 375px - 66px); }   /* 왼쪽 14px 자리는 '합산 통계' 버튼 */
-        #bb .bb-hd > .bba-totb { position:absolute; left:14px; top:50%; transform:translateY(-50%); z-index:60; height:auto; min-height:40px; padding:3px 6px; }
         /* 아토 2호 / 동숲 주민 2: 기존 캐릭터(제목 박스에서 151~251px)에서 8px 띄워 바깥쪽에 배치 */
         #bb #bb-walker-wrap-l2 { position:absolute; right:calc(50% + 259px); top:50%; transform:translateY(-50%); width:100px; height:100px; z-index:1; }
         #bb #bb-walker-l2 { width:100%; height:100%; object-fit:cover; display:block; border:0; }
@@ -1429,7 +1193,6 @@
     // SECTION 0b. HTML
     // ============================================================
     // 카드 영역 마지막 칸 버튼용 아이콘 (SVG — 글자색을 그대로 따라감)
-    const ICON_SORT  = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3.5h9M2 8h6.5M2 12.5h4"/><path d="M12.5 3v9.5M10.2 10.3l2.3 2.5 2.3-2.5"/></svg>';
     const ICON_TRASH = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 4.2h11"/><path d="M6.2 4.2V2.6h3.6v1.6"/><path d="M4.1 4.2l.7 9h6.4l.7-9"/><path d="M6.9 6.8v4.4M9.1 6.8v4.4"/></svg>';
     const ICON_CHECK = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.2 3.2L13 4.8"/></svg>';
 
@@ -1439,12 +1202,6 @@
         <div id="bb">
             <!-- 헤더 -->
             <div class="bb-hd">
-                <!-- 좌: 합산 통계 버튼 — 알림 버튼 영역 왼쪽 (개입 건수 · 이석 10분 단위 합산 팝업, SECTION 18) -->
-                <button class="bba-totb" id="bba-totb" title="합산 통계 — 개입 건수와 이석을 10분 단위 선그래프로 (근무자별 · 날짜별 / 전체)"><span class="l1">합산</span><span class="l2">통계</span></button>
-                <!-- 좌: 알림 버튼 영역 (배터리 / 도킹 / 좀비 / 방치 / 캠 미송출 / GPS 수신 — 2열 × 3줄) -->
-                <div class="bb-alert-zone" id="bb-alert-bar">
-                    <div class="bb-alert-chips" id="bb-alert-chips"></div>
-                </div>
                 <!-- 좌: 고정 버튼 3종 (왼쪽 동숲 주민의 왼쪽) -->
                 <div class="bb-fixbtns" id="bb-fixbtns">
                     <button id="bb-fb-drain" class="bb-fb" data-mode="drain" title="충전 중이 아닌 기체를 최근 6시간 안의 하락 기록으로 배터리가 빨리 닳는 순으로 (상위 5대) · 오른쪽 위 숫자 = 지금 소모 속도를 측정 중인 기체 수">🔥 배터리 소모 TOP5<b class="bb-fb-n"></b></button>
@@ -1479,8 +1236,6 @@
                     </div>
                     <button id="bb-wbl-upload-btn" class="bb-up-mini" style="display:none;" title="배터리 데이터 업로드 (CYH 전용)">UP</button>
                 </div>
-                <!-- 제목 아래: 상태 색 범례 -->
-                <!-- [UI 개편: 상태 표기 범례 주석처리] <div class="bb-legend" id="bb-legend" title="기체 카드의 점 · 하단 동그라미 색 = 기체의 현재 상태"></div> -->
                 <!-- 우: 동숲 주민 1 (제목 박스 오른쪽, 말풍선 있음) -->
                 <div id="bb-walker-wrap">
                     <div id="bb-walker" title="클릭: 말풍선 켜기/끄기"></div>
@@ -1499,7 +1254,6 @@
                 <div class="bb-rbtns" id="bb-fixbtns-r">
                     <button id="bb-fb-dlog" class="bb-fb" title="배달 로그 · 오늘(근무일) 요약이 기본, 달력 버튼으로 다른 날짜 조회 · 오른쪽 위 숫자 = 오늘 완료 건수">🚚 배달 로그<b class="bb-fb-n"></b></button>
                     <button id="bb-fb-dis" class="bb-fb" data-mode="dis" title="최근 30일 방전 기록 · 오른쪽 위 숫자 = 방전 건수(같은 기체라도 건별로 셈)">🪫 방전 로그(최근 30일)<b class="bb-fb-n"></b></button>
-                    <button class="bb-btn" id="bb-alertlog-all-btn" title="최근 30일 동안의 좀비 / 캠 미노출 / 미니맵 미노출 기록"><span class="bb-hd-ico">📋</span>이상 로그(최근 30일)</button>
                 </div>
                 <!-- 우: 버튼 2줄 (테마/줌/백업/검색) -->
                 <div class="bb-hd-rightwrap">
@@ -1542,14 +1296,6 @@
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <div id="bb-alertlog-all-panel">
-                <div class="bb-ap-hd">
-                    <div class="bb-ap-title">📋 이상 로그(최근 30일)</div>
-                    <div class="bb-ap-close" id="bb-alertlog-all-close">✕</div>
-                </div>
-                <div id="bb-alertlog-all-body"></div>
             </div>
 
             <!-- 본문: 좌(기체 리스트 + 하단 퀵바) | 우(다중 모니터링 중 기체) -->
@@ -1644,26 +1390,6 @@
                 </div>
             </div>
 
-            <!-- [주석처리: 기타 배달 기체] — 필요 시 이 주석만 풀면 복구 (.bb-quick 아래에 배치)
-            <div class="bb-bottom">
-                <div class="bb-delivery-area">
-                    <div class="bb-delivery-title">기타 배달 기체</div>
-                    <div class="bb-delivery-chips" id="bb-delivery-chips"></div>
-                </div>
-            </div>
-            -->
-
-        </div>
-
-        <!-- 알림 상세 패널 -->
-        <div id="bb-alert-panel">
-            <div class="bb-ap-hd">
-                <div class="bb-ap-title" id="bb-ap-title">🚨 상태 이상 알림</div>
-                <div class="bb-ap-close" id="bb-ap-close">✕</div>
-            </div>
-            <div id="bb-ap-body">
-                <div class="bb-ap-empty">이상 없음 ✓</div>
-            </div>
         </div>
 
         <!-- 기체 Info 패널 -->
@@ -1702,9 +1428,7 @@
     // 다크모드는 삭제됨 → 항상 라이트. (#bb-theme-btn 은 아래 '카드 배터리바 표기 방식' 버튼으로 재활용)
     const applyBbTheme = () => {
 		bbEl.classList.add('bb-light');
-		document.getElementById('bb-alert-panel').classList.add('bb-light');
 		document.getElementById('bb-info-card-panel').classList.add('bb-light');
-		document.getElementById('bb-alertlog-all-panel').classList.add('bb-light');
 	};
     applyBbTheme();
 
@@ -1751,11 +1475,9 @@
     const MAX = 80;   // 기체 카드(즐겨찾기 + 일반) 최대 80대
     const LS = 'bb_ids';
     const LS_FAV = 'bb_fav_ids';   // 즐겨찾기(1열) 기체 — ids 와 겹치지 않음
-    const LS_ZOMBIE = 'bb_zombie';
 
     const STL = { charging:'충전 중', patrolling:'순찰 중', delivering:'배달 중', standby:'대기 중', docking:'도킹 중', off:'OFF' };
     const STI = { charging:'🟢', patrolling:'🔵', delivering:'🩷', standby:'⚪', docking:'🟡', off:'⚫' };
-    const BADGE_ICON = { charging:'⚡', patrolling:'🚶', delivering:'📦', standby:'💤', docking:'🅿️', off:'⏻' };
 
     const DELIVERY_TYPES = ['ALL', 'OPENAPI_DELIVERY', 'NB_ORDER_DELIVERY', 'DELIVERY'];
     const FORCE_PATROL_SITE_IDS = [24];   // 삼성인력개발원
@@ -1779,16 +1501,6 @@
         return (k === 'delivery' || k === 'patrol') ? k : null;
     }
 
-    // [주석처리: 퀵바/기타 배달] const QUICK_SITE_IDS = [109, 65, 56, 44, 86];
-    // [주석처리: 퀵바/기타 배달] const OTHER_DELIVERY_SITE_IDS = DELIVERY_SITE_IDS.filter(id => !QUICK_SITE_IDS.includes(id));
-
-    const SITE_IDS = [
-        24,27,36,37,44,46,47,48,51,53,56,57,
-        65,66,72,75,82,86,105,108,109,111,117,118,126,131,
-        132,134,137,138,140,141,142,143,144,145,146,150,151,171,
-        177,178,179,180,181,182,187,193,196,202,203,207,214,216,224,230,235,240,241,244,245,246,247,250,256,257,265
-    ];
-
     // ============================================================
     // 통합 리스트 이전용 상수
     //  - 예전 "고정 그리드(무선 기체 사이트)"는 사이트별로 자동 표시되던 영역이었음.
@@ -1804,18 +1516,6 @@
         off:'var(--offdot)', delivering:'var(--pk)', docking:'var(--ye)',
     };
 
-    // 제목 아래 범례 — STL(이름) / STATUS_AC(색)과 같은 값을 써서 실제 화면 색과 항상 일치
-    (function renderLegend() {
-        const el = document.getElementById('bb-legend');
-        if (!el) return;
-        ['charging', 'patrolling', 'delivering', 'standby', 'docking', 'off'].forEach(k => {
-            const item = document.createElement('span'); item.className = 'bb-legend-item';
-            const dot = document.createElement('i');   dot.className = 'bb-legend-dot'; dot.style.background = STATUS_AC[k];
-            item.append(dot, document.createTextNode(STL[k]));
-            el.appendChild(item);
-        });
-    })();
-
     // 하단 퀵바 그룹 — keywords가 기체명에 포함되면 해당 그룹. 켜진 기체만 표시.
     const MONITOR_GROUPS = [
         { id:'yeoksam',  label:'역삼',     full:'역삼 요기요',    keywords:['역삼동'] },
@@ -1823,15 +1523,6 @@
         { id:'seongsu',  label:'성수',     full:'성수 요기요',    keywords:['성수동'] },
         { id:'seongnam', label:'삼평/서현', full:'성남 삼평/서현', keywords:['성남형'] },
     ];
-
-    const CAM_LABELS = {
-        isOnCamF:  'F(전면)',
-        isOnCamFd: 'Fd(하단)',
-        isOnCamFl: 'Fl(전면 좌측)',
-        isOnCamFr: 'Fr(전면 우측)',
-        isOnCamBl: 'Bl(후면 좌측)',
-        isOnCamBr: 'Br(후면 우측)',
-    };
 
     let DB = [];
     let ids = load();
@@ -1857,16 +1548,12 @@
         _trimNotice = clampTotal();
         if (movedFav || _trimNotice) save();
     }
-        const LIST_COLS = 3;   // CSS(.bb-list)의 열 수와 맞출 것 (4열 중 1열은 즐겨찾기)
     const ROW_H = 33;      // 카드 한 줄 높이(px) — CSS .bb-row 와 같게
-    const MAIN_ROWS = 20;  // (현재 미사용 — 더 이상 최소 행수를 강제하지 않음. 예전엔 즐겨찾기 열과 높이를 맞추는 데 썼음)
     let rmMode = false, rmSet = new Set(), isOpen = false;
     let fetchLock = false;
     let lastRaw = [];
     let topmostZ = 100000000;
-    let currentAlertType = null;
     let _patrolReady = false;   // SECTION 16(다중 모니터링) 초기화 끝난 뒤 true
-    let currentAlerts = [];
     // 정렬 / 열 분류 설정 (render() 가 열 때 바로 쓰므로 여기서 먼저 선언)
     const SORT_MODE_KEY = 'bb_sort_mode';
     let _sortMode = 'name';   // 'name' = 이름 순 / 'status' = 상태별
@@ -1899,17 +1586,6 @@
     function statusCmp(a, b) { return ((sortStatusRank[a.status] ?? 4) - (sortStatusRank[b.status] ?? 4)) || nameCmp(a, b); }
     // 열 분류 예외: 이 기체는 순찰 중/배달 중이어도 해당 열에 넣지 않음 ('그 외' 또는 즐겨찾기 열에 표시)
 
-    function loadDismissed() {
-        try {
-            const saved = JSON.parse(localStorage.getItem('bb_dismissed') || '[]');
-            const cutoff = Date.now() - 6 * 60 * 60 * 1000;
-            const valid = saved.filter(item => item.time > cutoff);
-            localStorage.setItem('bb_dismissed', JSON.stringify(valid));
-            return new Set(valid.map(item => item.key));
-        } catch { return new Set(); }
-    }
-    const dismissedAlerts = loadDismissed();
-
     // ============================================================
     // SECTION 2. localStorage 헬퍼
     // ============================================================
@@ -1931,8 +1607,6 @@
         localStorage.setItem(LS, JSON.stringify(ids));
         localStorage.setItem(LS_FAV, JSON.stringify(favIds));
     }
-    function loadZombie()  { try { return JSON.parse(localStorage.getItem(LS_ZOMBIE) || '{}'); } catch { return {}; } }
-    function saveZombie(d) { localStorage.setItem(LS_ZOMBIE, JSON.stringify(d)); }
 
     // ============================================================
     // SECTION 3. 파싱
@@ -1960,351 +1634,6 @@
         }
         return { battery: Math.round(battery), status };
     }
-
-    // ============================================================
-    // SECTION 4. 알림 감지
-    // ============================================================
-    function fmt(isoStr) {
-        if (!isoStr) return '-';
-        const d = new Date(isoStr);
-        const p = x => String(x).padStart(2,'0');
-        return `${p(d.getMonth()+1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
-    }
-    function minAgo(isoStr) {
-        if (!isoStr) return 9999;
-        return Math.floor((Date.now() - new Date(isoStr).getTime()) / 60000);
-    }
-    function alertKey(type, id) { return `${type}::${id}`; }
-
-    function detectAlerts(rawList) {
-        const alerts = [];
-        const rawAlertSignals = [];   // 알림 로그용 — dismiss 여부와 무관한 실제 발생 여부
-        const now = Date.now();
-        const zombie = loadZombie();
-
-        function clearDismiss(key) {
-            if (!dismissedAlerts.has(key)) return;
-            dismissedAlerts.delete(key);
-            try {
-                const saved = JSON.parse(localStorage.getItem('bb_dismissed') || '[]');
-                localStorage.setItem('bb_dismissed', JSON.stringify(saved.filter(i => i.key !== key)));
-            } catch {}
-        }
-
-        rawList.forEach(raw => {
-            const id   = String(raw.id);
-            const name = raw.nickname || raw.name || id;
-            const rs   = raw.robotStatus ?? {};
-            const { status, battery } = parseRobotStatus(raw);
-            const _ko = kindOverride(raw);   // 기체별 지정이 있으면 사이트 기본 분류보다 우선
-            const isDelivery = _ko ? _ko === 'delivery' :
-				(!FORCE_PATROL_SITE_IDS.includes(raw.site?.id) &&
-				(DELIVERY_TYPES.includes(raw.service?.serviceType) ||
-				 DELIVERY_SITE_IDS.includes(raw.site?.id)));
-
-            // ── 기능1: 대기중 방치 (배터리 50% 미만인 경우에만)
-            if (!isDelivery && status === 'standby') {
-                const mins = minAgo(rs.lastOperatedAt);
-                if (battery < 50) {
-                    const key = alertKey('standby', id);
-                    if (!dismissedAlerts.has(key)) alerts.push({
-                        key, type:'idle', dot:'bl', name,
-                        desc:`대기중 ${mins}분 | 배터리 ${battery}% | 마지막 조작: ${rs.lastOperatedUserName || '없음'} ${fmt(rs.lastOperatedAt)}`,
-                        time: fmt(new Date().toISOString())
-                    });
-                } else {
-                    clearDismiss(alertKey('standby', id));
-                }
-            } else {
-                clearDismiss(alertKey('standby', id));
-            }
-
-            // ── 기능2: 도킹 이상
-            if (status === 'docking') {
-                const key = alertKey('docking', id);
-                if (!dismissedAlerts.has(key)) alerts.push({
-                    key, type:'dock', dot:'ye', name,
-                    desc:`무선 도크 위에 있으나 충전 안 됨 | 확인 필요`,
-                    time: fmt(new Date().toISOString())
-                });
-            } else {
-                clearDismiss(alertKey('docking', id));
-            }
-
-            // ── 기능3: 배터리 21% 이하
-            if (rs.isConnecting && battery > 0 && battery <= 21) {
-                const key = alertKey('battery', id);
-                if (!dismissedAlerts.has(key)) alerts.push({
-                    key, type:'bat', dot:'ye', name,
-                    desc:`배터리 ${battery}% | ${STL[status]}`,
-                    time: fmt(new Date().toISOString())
-                });
-            } else {
-                clearDismiss(alertKey('battery', id));
-            }
-
-            // ── 기능4: 좀비 상태
-            {
-                const isZombie =
-                    rs.isConnecting === true &&
-                    !raw.battery &&
-                    (rs.navpvtHorzAccuracy == null || rs.navpvtHorzAccuracy === 0) &&
-                    !rs.velocity;
-                if (isZombie) {
-                    if (!zombie[id]) zombie[id] = { count: 1, firstSeen: now };
-                    else zombie[id].count++;
-                } else {
-                    delete zombie[id];
-                    clearDismiss(alertKey('zombie', id));
-                }
-                if (zombie[id] && zombie[id].count >= 4) {
-                    const key = alertKey('zombie', id);
-                    rawAlertSignals.push({ id, name, type: 'zombie' });
-                    if (!dismissedAlerts.has(key)) {
-                        const mins = Math.floor((now - zombie[id].firstSeen) / 60000);
-                        alerts.push({
-                            key, type:'zombie', dot:'rd', name,
-                            desc:`⚠️ 좀비 추정 ${mins}분째 | 현장 재부팅 필요`,
-                            time: fmt(new Date().toISOString())
-                        });
-                    }
-                }
-            }
-
-            // ── 기능5: 카메라 미노출 감지
-            if (rs.isConnecting) {
-                const anyCamOn = Object.keys(CAM_LABELS).some(k => rs[k] === true);
-                if (anyCamOn) {
-                    const offCams = Object.entries(CAM_LABELS)
-                        .filter(([k]) => rs[k] === false)
-                        .map(([, label]) => label);
-                    if (offCams.length > 0) {
-                        const key = alertKey('cam', id);
-                        rawAlertSignals.push({ id, name, type: 'cam' });
-                        if (!dismissedAlerts.has(key)) alerts.push({
-                            key, type:'cam', dot:'or', name,
-                            desc:`캠 미노출: ${offCams.join(', ')}`,
-                            time: fmt(new Date().toISOString())
-                        });
-                    } else {
-                        clearDismiss(alertKey('cam', id));
-                    }
-                }
-            } else {
-                clearDismiss(alertKey('cam', id));
-            }
-
-            // ── 기능6: 미니맵 위치 미노출 감지
-            {
-                const gpsZero =
-                    rs.isConnecting === true &&
-                    raw.battery > 0 &&
-                    (rs.navpvtHorzAccuracy === 0 || rs.navpvtHorzAccuracy == null);
-
-                if (gpsZero) {
-                    if (!zombie[id + '_gps']) zombie[id + '_gps'] = { count: 1, firstSeen: now };
-                    else zombie[id + '_gps'].count++;
-                } else {
-                    delete zombie[id + '_gps'];
-                    clearDismiss(alertKey('nomap', id));
-                }
-                if (zombie[id + '_gps'] && zombie[id + '_gps'].count >= 4) {
-                    const key = alertKey('nomap', id);
-                    rawAlertSignals.push({ id, name, type: 'nomap' });
-                    if (!dismissedAlerts.has(key)) alerts.push({
-                        key, type:'nomap', dot:'or', name,
-                        desc:`GPS 수신값 0 — 재부팅 조치 필요`,
-                        time: fmt(new Date().toISOString())
-                    });
-                }
-            }
-
-        });
-
-        saveZombie(zombie);
-        window._bbAlerts = alerts;
-        window._bbAlertLogRaw = rawAlertSignals;
-        alertLogRecord(rawAlertSignals);
-        return alerts;
-    }
-
-    // ============================================================
-    // SECTION 5. 알림 칩 + 패널 렌더
-    // ============================================================
-    const ALERT_META = {
-        bat:    { label:'🔋 배터리',      order:0 },
-        dock:   { label:'🟡 도킹',        order:1 },
-        zombie: { label:'👻 좀비',        order:2 },
-        idle:   { label:'⏳ 방치',        order:3 },
-        cam:    { label:'🎥 캠 미송출',   order:4 },
-        nomap:  { label:'🗺️ GPS 수신', order:5 },
-    };
-
-    // 화면에 버튼으로 띄우는 알림 6종: 배터리 / 도킹 / 좀비 / 방치 / 캠 미송출 / GPS 수신 (비상정지 알림은 삭제됨)
-    // 알림 영역은 2열 × 3줄 = 최대 6칸 — 6종이 모두 떠도 잘리지 않고 정확히 들어간다
-    const ALERT_CHIP_TYPES = ['bat', 'dock', 'zombie', 'idle', 'cam', 'nomap'];
-
-    function renderAlertChips(alerts) {
-        currentAlerts = alerts;
-        const el = document.getElementById('bb-alert-chips');
-        if (!el) return;
-
-        const groups = {};
-        alerts.filter(a => ALERT_CHIP_TYPES.includes(a.type)).forEach(a => {
-            if (!groups[a.type]) groups[a.type] = [];
-            groups[a.type].push(a);
-        });
-
-        const types = Object.keys(groups).sort((a,b) =>
-            (ALERT_META[a]?.order ?? 9) - (ALERT_META[b]?.order ?? 9)
-        );
-
-        if (!types.length) {
-            el.innerHTML = '<span class="bb-chip-none">기체 이상 알림 없음 ✓</span>';
-        } else {
-            el.innerHTML = types.map(type => {
-                const meta    = ALERT_META[type] || { label: type };
-                const items   = groups[type];
-                const count   = items.length;
-                const preview = count === 1 ? items[0].name : `${items[0].name} 외 ${count - 1}건`;
-                return `<div class="bb-chip ${type}" data-type="${type}" title="${items.map(a => a.name).join(', ')}">
-                    <span class="bb-chip-l1">${meta.label} <strong>${count}건</strong></span>
-                    <span class="bb-chip-l2">${preview}</span>
-                </div>`;
-            }).join('');
-
-            el.querySelectorAll('.bb-chip[data-type]').forEach(chip => {
-                chip.addEventListener('click', () => {
-                    const panel = document.getElementById('bb-alert-panel');
-                    if (panel.classList.contains('open') && currentAlertType === chip.dataset.type) {
-                        panel.classList.remove('open');
-                    } else {
-                        openAlertPanel(chip.dataset.type, groups);
-                    }
-                });
-            });
-        }
-    }
-
-    function openAlertPanel(type, groups) {
-        const panel = document.getElementById('bb-alert-panel');
-        const titleEl = document.getElementById('bb-ap-title');
-        const bodyEl  = document.getElementById('bb-ap-body');
-        const meta    = ALERT_META[type] || { label: type };
-        const items   = groups[type] || [];
-
-        titleEl.textContent = `${meta.label} (${items.length}건)`;
-        currentAlertType = type;
-
-        bodyEl.innerHTML = items.length
-            ? items.map(a => `
-                <div class="bb-ap-item" data-key="${a.key}">
-                    <div class="bb-ap-dot ${a.dot}"></div>
-                    <div class="bb-ap-info">
-                        <div class="bb-ap-name">${a.name}</div>
-                        <div class="bb-ap-desc">${a.desc}</div>
-                        <div class="bb-ap-time">${a.time ?? ''}</div>
-                    </div>
-                    <button class="bb-ap-dismiss" data-key="${a.key}">해제</button>
-                </div>`).join('')
-            : '<div class="bb-ap-empty">이상 없음 ✓</div>';
-
-        bodyEl.querySelectorAll('.bb-ap-dismiss').forEach(btn => {
-            btn.addEventListener('click', e => { e.stopPropagation(); dismiss(btn.dataset.key); });
-        });
-        bodyEl.querySelectorAll('.bb-ap-item').forEach(item => {
-            item.addEventListener('contextmenu', e => { e.preventDefault(); dismiss(item.dataset.key); });
-        });
-
-        panel.classList.add('open');
-        panel.style.zIndex = ++topmostZ;
-
-        const barEl = document.getElementById('bb-alert-bar');
-        if (barEl) {
-            const r = barEl.getBoundingClientRect();
-            const b = bbEl.getBoundingClientRect();   // 전체 보드 영역 (줌 배율 반영)
-            const pw = panel.offsetWidth || 552;
-            const top = r.bottom + 8;
-            // 알림 영역 폭의 중앙에 맞추되, 보드의 왼쪽·오른쪽 끝을 넘지 않도록 (알림 영역이 좁아져 창이 보드 밖으로 나가던 문제)
-            const left = Math.max(b.left + 8, Math.min(r.left + r.width / 2 - pw / 2, b.right - pw - 8));
-            panel.style.position = 'fixed';
-            panel.style.left = left + 'px';
-            panel.style.top = top + 'px';
-            panel.style.transform = 'none';
-            if (b.bottom > top) panel.style.maxHeight = Math.max(200, b.bottom - top - 8) + 'px';   // 아래쪽도 보드 안에서 끝나게
-        }
-        registerAlertPanelClose();
-    }
-
-    let _alertPanelCloseHandler = null, _alertCloseTimer = null;
-    function registerAlertPanelClose() {
-        const panel = document.getElementById('bb-alert-panel');
-        if (_alertPanelCloseHandler) {
-            document.removeEventListener('mousedown', _alertPanelCloseHandler);
-            _alertPanelCloseHandler = null;
-        }
-        clearTimeout(_alertCloseTimer);   // 100ms 안에 여러 번 눌러도 리스너가 하나만 등록되게
-        _alertCloseTimer = setTimeout(() => {
-            _alertPanelCloseHandler = function closeAlert(e) {
-                if (!panel.contains(e.target) && !e.target.closest('.bb-chip[data-type]')) {
-                    panel.classList.remove('open');
-                    document.removeEventListener('mousedown', _alertPanelCloseHandler);
-                    _alertPanelCloseHandler = null;
-                }
-            };
-            document.addEventListener('mousedown', _alertPanelCloseHandler);
-        }, 100);
-    }
-
-    function dismiss(key) {
-        dismissedAlerts.add(key);
-        try {
-            const saved = JSON.parse(localStorage.getItem('bb_dismissed') || '[]');
-            saved.push({ key, time: Date.now() });
-            localStorage.setItem('bb_dismissed', JSON.stringify(saved));
-        } catch {}
-        currentAlerts = currentAlerts.filter(a => a.key !== key);
-
-        const itemEl = document.querySelector(`.bb-ap-item[data-key="${key}"]`);
-        if (itemEl) itemEl.remove();
-
-        const titleEl = document.getElementById('bb-ap-title');
-        if (titleEl && currentAlertType) {
-            const meta = ALERT_META[currentAlertType] || { label: currentAlertType };
-            const remaining = currentAlerts.filter(a => a.type === currentAlertType).length;
-            titleEl.textContent = `${meta.label} (${remaining}건)`;
-        }
-
-        renderAlertChips(currentAlerts);
-
-        const remainingInType = currentAlerts.filter(a => a.type === currentAlertType).length;
-        if (currentAlerts.length === 0 || remainingInType === 0) {
-            document.getElementById('bb-alert-panel').classList.remove('open');
-        }
-    }
-
-/* [주석처리: 동숲 배경] — 필요 시 이 주석만 풀면 복구
-    // ============================================================
-    // SECTION 5.5 동숲 배경 - 시간대별 전환 (한국시간 기준)
-    // ============================================================
-    // 08~10:1  10~12:2  12~14:3  14~16:4  16~18:5
-    // 18~20:5  20~22:4  22~24:3  00~02:2  02~08:1
-    const CAMPING_HOUR_MAP = [2,2,1,1,1,1,1,1,1,1,2,2,3,3,4,4,5,5,5,5,4,4,3,3];
-    let _lastCampingIdx = null;
-    function applyCampingBackground() {
-        const hour = parseInt(
-            new Date().toLocaleString('en-US', { timeZone: 'Asia/Seoul', hour: '2-digit', hour12: false }),
-            10
-        );
-        const idx = CAMPING_HOUR_MAP[hour % 24];
-        if (idx === _lastCampingIdx) return;
-        _lastCampingIdx = idx;
-        const area = document.querySelector('.bb-delivery-area');
-        if (area) {
-            area.style.backgroundImage = `url('https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/ego_trippin/ac_camping${idx}.webp')`;
-        }
-    }
-*/
 
     // ============================================================
     // SECTION 6. bb_robots_data 리스너
@@ -2359,27 +1688,9 @@
             try { sampleChargeBuffer(DB); } catch (err) { console.error('[BB] 충전 관측 오류:', err); }   // 저속충전 계산용 (2분마다 1회 기록)
             wblCyhAutoUploadTick();
             wblOthersAutoDownloadTick();
-            alertLogCyhTick();
-            alertLogNonCyhTick();
-            alertLogDownloadTick();
-
-            const alerts = detectAlerts(allRaw);
-            renderAlertChips(alerts);
-
-            if (document.getElementById('bb-alert-panel').classList.contains('open') && currentAlertType) {
-                const groups = {};
-                alerts.forEach(a => {
-                    if (!groups[a.type]) groups[a.type] = [];
-                    groups[a.type].push(a);
-                });
-                openAlertPanel(currentAlertType, groups);
-            }
 
             renderMonitorGrid(allRaw);   // 하단 퀵바
             if (_fbReady && isOpen) refreshFixedTools();   // 고정 버튼 3종: 배지 + 열려 있는 목록 창 (2분마다, 보드가 열려 있을 때만 — 닫혀 있으면 열 때 계산)
-            // [주석처리: 기타 배달/동숲]
-            // renderDeliveryChips(allRaw);
-            // applyCampingBackground();
 
             if (isOpen) {
                 render();
@@ -2401,8 +1712,6 @@
         render();
         renderMonitorGrid(lastRaw);   // 하단 퀵바
         if (_fbReady) refreshFixedTools();
-        // [주석처리: 기타 배달]
-        // renderDeliveryChips(lastRaw);
         if (_patrolReady) refreshPatrolLive();   // 다시 열면 즉시 최신 정보로
         if (_attReady) attOnOpen();   // 이석 화면을 보고 있었다면 즉시 최신 정보로 (SECTION 17)
     }
@@ -2411,9 +1720,7 @@
         document.getElementById('bb').classList.remove('open');
         window.__bbIvSpClose?.();   // 개입 통계 팝업 (SECTION 18)
         window.__bbIvTrClose?.();   // 개입 시간추이 팝업 (SECTION 18)
-        window.__bbTotClose?.();    // 합산 통계 팝업 (SECTION 18)
         window.__bbDlSpClose?.();   // 배달 누적 통계 팝업 (SECTION 19)
-        document.getElementById('bb-alert-panel').classList.remove('open');
         // (기체 정보 창은 보드를 닫아도 유지 — 창의 ✕ 로만 닫음)
         if (rmMode) { rmMode = false; rmSet.clear(); updateRmUI(); }
         hideDd();
@@ -2450,11 +1757,8 @@
     setInterval(() => {
         ns--;
         if (ns <= 0) ns = RS;
-        bbSyncOffline();
-        const _off = false;   // [수집기 방식] 오프라인 모드여도 갱신은 계속되므로 '갱신 중단' 문구를 띄우지 않는다
         const m = Math.floor(ns / 60), s = ns % 60;
         const el = document.getElementById('bb-ref');
-        if (_off) { if (el) el.textContent = '🔌 오프라인 · NCC 갱신 중단'; return; }
         if (el) el.textContent = m > 0 ? `${m}분 ${String(s).padStart(2,'0')}초 후 갱신` : `${s}초 후 갱신`;
     }, 1000);
 
@@ -2502,26 +1806,6 @@
             el.appendChild(line);
         });
     }
-
-/* [주석처리: 기타 배달 칩 렌더(동숲 영역)] — 필요 시 이 주석만 풀면 복구
-    // SECTION 8c. 기타 배달 칩 렌더
-    function renderDeliveryChips(rawList) {
-        const el = document.getElementById('bb-delivery-chips');
-        if (!el) return;
-        const others = rawList.filter(r => {
-            const siteId = r.site?.id;
-            const parsed = parseRobotStatus(r);
-            return OTHER_DELIVERY_SITE_IDS.includes(siteId) && parsed.status === 'delivering';
-        });
-        if (!others.length) {
-            el.innerHTML = '<span class="bb-delivery-empty">기타 배달 없음</span>';
-            return;
-        }
-        el.innerHTML = others.map(r =>
-            `<div class="bb-delivery-chip">🩷 ${r.nickname || r.name}</div>`
-        ).join('');
-    }
-*/
 
     // ============================================================
     // SECTION 9. 기체 리스트 렌더 (통합 그리드: 한 줄 = 기체 1대)
@@ -3065,11 +2349,6 @@
 		return wblLocalDateStr(new Date());
 	}
 
-	function wblSlotLabel30(now) {
-		const slotMin = Math.floor(now.getMinutes() / 30) * 30;
-		return `${wblTodayStr()}_${String(now.getHours()).padStart(2,'0')}:${String(slotMin).padStart(2,'0')}`;
-	}
-
 	// 트래킹 데이 기준 "어제" 날짜 계산 (07:00~익일07:00 하루 주기를 그대로 하루 앞으로 민 것)
 	function wblYesterdayDayKey() {
 		const todayTrackingKey = wblGetDayKey() || wblLocalDateStr(new Date());
@@ -3213,271 +2492,6 @@
 			console.log('[BB] 어제자 배터리 로그 이관+로드 완료 (' + targetKey + ')');
 		} catch (e) { console.log('[BB] 어제자 배터리 로그 로드 실패:', e.message); }
 	}
-
-	// ============================================================
-	// SECTION 알림 로그 — 좀비/캠 미노출/미니맵 미노출 3종
-	// 목적: "이거 언제부터 이랬지?"를 나중에 확인하기 위한 기록.
-	// 배터리 로그와 달리 CYH 우선순위가 필요 없음 — "언제 목격했나"는 순수 사실이라
-	// 여러 사람의 기록을 그냥 합치면 됨(합집합). 그래서 락도 필요 없음.
-	//
-	// 저장 방식: alarm/ 폴더의 단일 파일 하나(배터리_알림로그)에 최근 30일치를 다 담음.
-	// 원본 시각(예: 190개 타임스탬프)을 그대로 저장하지 않고, 업로드 시점에 바로
-	// "구간(시작~끝)"으로 압축해서 저장 — 장시간 상습 알림 기체가 있어도 용량이 안 불어남.
-	// 매 업로드마다 30일 넘은 날짜는 자동으로 잘라내서, 파일 크기가 무한정 커지지 않음.
-	// ============================================================
-	const ALERT_LOG_TYPES = ['zombie', 'cam', 'nomap'];
-	const ALERT_LOG_META = {
-		zombie: { icon: '👻', text: '좀비',        color: 'var(--or)' },
-		cam:    { icon: '🎥', text: '캠 미노출',    color: 'var(--bl)' },
-		nomap:  { icon: '🗺️', text: '미니맵 미노출', color: 'var(--ye)' },
-	};
-	const ALERT_LOG_RETENTION_DAYS = 30;
-	const ALERT_LOG_NAME = '배터리_알림로그';
-	const ALERT_LOG_GAP_MIN = 10;   // 이 시간 이상 안 보이면 "끊긴 것"으로 판단(재발생 구분 기준)
-
-	function alertLogBufKey() { return 'bb_alertlog_buffer'; }
-
-	// 매 렌더 사이클마다 호출 — 로컬에 "이 시각에 봤다"는 원본 점만 쌓음(업로드 시점에 구간으로 압축됨)
-	// 배터리 로그(wblGetDayKey)와 달리 업무일 롤백을 안 함 — 자정 넘은 알림은 실제 달력 날짜 그대로 기록
-	function alertLogRecord(rawSignals) {
-		if (!rawSignals || !rawSignals.length) return;
-		const dayKey = wblLocalDateStr(new Date());
-
-		let buf;
-		try { buf = JSON.parse(localStorage.getItem(alertLogBufKey()) || 'null'); } catch { buf = null; }
-		if (!buf || buf.day !== dayKey) buf = { day: dayKey, entries: {} };
-
-		const now = new Date();
-		const hm = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-
-		rawSignals.forEach(({ id, name, type }) => {
-			if (!buf.entries[id]) buf.entries[id] = { name, points: {} };
-			buf.entries[id].name = name;
-			if (!buf.entries[id].points[type]) buf.entries[id].points[type] = [];
-			const arr = buf.entries[id].points[type];
-			if (arr[arr.length - 1] !== hm) arr.push(hm);
-		});
-
-		try { localStorage.setItem(alertLogBufKey(), JSON.stringify(buf)); } catch {}
-	}
-
-	// 원시 점(point) 배열 -> 연속 구간(interval)으로 변환. 10분 이상 벌어지면 재발생으로 구분.
-	function alertLogPointsToIntervals(points) {
-		if (!points || !points.length) return [];
-		const sorted = [...points].sort();
-		const toMin = hm => { const [h, m] = hm.split(':').map(Number); return h * 60 + m; };
-		const intervals = [];
-		let curStart = sorted[0], curEnd = sorted[0];
-		for (let i = 1; i < sorted.length; i++) {
-			const gap = toMin(sorted[i]) - toMin(curEnd);
-			if (gap > ALERT_LOG_GAP_MIN) {
-				intervals.push({ start: curStart, end: curEnd });
-				curStart = sorted[i];
-			}
-			curEnd = sorted[i];
-		}
-		intervals.push({ start: curStart, end: curEnd });
-		return intervals;
-	}
-
-	// 이미 구간(interval) 형태인 두 목록을 병합 — 서로 다른 사람이 관측한 부분 구간들이
-	// 이어붙으면 하나로 합쳐지도록, 다시 갭 기준으로 재정렬-재병합함.
-	function alertLogMergeIntervals(existing, fresh) {
-		const toMin = hm => { const [h, m] = hm.split(':').map(Number); return h * 60 + m; };
-		const all = [...(existing || []), ...(fresh || [])].sort((a, b) => a.start.localeCompare(b.start));
-		if (!all.length) return [];
-		const merged = [all[0]];
-		for (let i = 1; i < all.length; i++) {
-			const last = merged[merged.length - 1];
-			const gap = toMin(all[i].start) - toMin(last.end);
-			if (gap <= ALERT_LOG_GAP_MIN) {
-				if (all[i].end > last.end) last.end = all[i].end;
-			} else {
-				merged.push({ ...all[i] });
-			}
-		}
-		return merged;
-	}
-
-	// 단일 파일 로드
-	async function alertLogFetchFile() {
-		try {
-			const res = await fetch(`${BACKUP_BASE}?name=${encodeURIComponent(ALERT_LOG_NAME)}`);
-			if (!res.ok) return { days: {} };
-			const data = await res.json();
-			return (data?.data && typeof data.data === 'object') ? data.data : { days: {} };
-		} catch (e) { return { days: {} }; }
-	}
-
-	// 30일 넘은 날짜는 잘라냄
-	function alertLogPrune(fileObj) {
-		const cutoff = Math.floor(Date.now() / 86400000) - (ALERT_LOG_RETENTION_DAYS - 1);
-		const days = fileObj.days || {};
-		Object.keys(days).forEach(dayStr => {
-			const idx = Math.floor(new Date(dayStr + 'T00:00:00Z').getTime() / 86400000);
-			if (idx < cutoff) delete days[dayStr];
-		});
-		fileObj.days = days;
-		return fileObj;
-	}
-
-	// 로컬 버퍼(오늘 원시 점)를 구간으로 압축해서 단일 파일에 병합 업로드. 버퍼 비어있으면 요청 자체를 안 보냄.
-	async function alertLogUpload() {
-		let buf;
-		try { buf = JSON.parse(localStorage.getItem(alertLogBufKey()) || 'null'); } catch { buf = null; }
-		if (!buf || !buf.day || Object.keys(buf.entries).length === 0) return true;   // 올릴 게 없음
-
-		try {
-			const fileObj = await alertLogFetchFile();
-			if (!fileObj.days[buf.day]) fileObj.days[buf.day] = {};
-			const todayEntries = fileObj.days[buf.day];
-
-			Object.keys(buf.entries).forEach(id => {
-				const local = buf.entries[id];
-				if (!todayEntries[id]) todayEntries[id] = { name: local.name, intervals: {} };
-				todayEntries[id].name = local.name;
-				ALERT_LOG_TYPES.forEach(type => {
-					const pts = local.points[type];
-					if (!pts || !pts.length) return;
-					const freshIv = alertLogPointsToIntervals(pts);
-					todayEntries[id].intervals[type] = alertLogMergeIntervals(todayEntries[id].intervals[type], freshIv);
-				});
-			});
-
-			alertLogPrune(fileObj);
-
-			const ok = await wblUploadNamed(ALERT_LOG_NAME, fileObj);
-			if (ok) {
-				localStorage.setItem(alertLogBufKey(), JSON.stringify({ day: buf.day, entries: {} }));   // 업로드 성공한 것만 비움
-				console.log('[BB] 알림 로그 업로드 완료 (' + new Date().toTimeString().slice(0,5) + ')');
-			}
-			return ok;
-		} catch (e) { console.log('[BB] 알림 로그 업로드 실패:', e.message); return false; }
-	}
-
-	// CYH — 기존 배터리 업로드와 같은 30분 슬롯에 얹어서 시도
-	async function alertLogCyhTick() {
-		if (localStorage.getItem('bb_is_cyh') !== '1') return;
-		const slot = wblSlotLabel30(new Date());
-		if (localStorage.getItem('bb_alertlog_up_slot') === slot) return;
-		localStorage.setItem('bb_alertlog_up_slot', slot);
-		await alertLogUpload();
-	}
-
-	// 비CYH — 매시 50분에 한 번만 시도(그마저도 쌓인 게 있을 때만 실제 요청이 나감)
-	async function alertLogNonCyhTick() {
-		if (localStorage.getItem('bb_is_cyh') === '1') return;
-		const now = new Date();
-		if (now.getMinutes() < 50) return;
-		const hourKey = `bb_alertlog_up_hr_${wblLocalDateStr(now)}_${now.getHours()}`;
-		if (localStorage.getItem(hourKey) === '1') return;
-		localStorage.setItem(hourKey, '1');
-		await alertLogUpload();
-	}
-
-	// 30분마다 단일 파일을 통째로 받아와서 로컬 캐시 — CYH/비CYH 둘 다(당일 실시간 조회용)
-	let _alertLogDlLast = 0;
-	async function alertLogDownloadTick() {
-		if (Date.now() - _alertLogDlLast < 30 * 60 * 1000) return;
-		_alertLogDlLast = Date.now();
-		const fileObj = await alertLogFetchFile();
-		try { localStorage.setItem('bb_alertlog_file_cache', JSON.stringify(fileObj)); } catch {}
-	}
-
-	function alertLogCachedFile() {
-		try {
-			const cached = JSON.parse(localStorage.getItem('bb_alertlog_file_cache') || 'null');
-			if (cached && cached.days) return cached;
-		} catch {}
-		return { days: {} };
-	}
-
-	// 특정 기체의 알림 로그 조회 (최신순) — 캐시된 30일치 파일에서 바로 필터링, 별도 요청 없음
-	async function alertLogFetchForRobot(robotId) {
-		const fileObj = alertLogCachedFile();
-		const rows = [];
-		Object.keys(fileObj.days || {}).forEach(day => {
-			const entry = fileObj.days[day][robotId];
-			if (!entry) return;
-			ALERT_LOG_TYPES.forEach(type => {
-				(entry.intervals?.[type] || []).forEach(iv => {
-					rows.push({ day, type, start: iv.start, end: iv.end });
-				});
-			});
-		});
-		rows.sort((a, b) => (a.day + a.start).localeCompare(b.day + b.start));
-		return rows.reverse();
-	}
-
-	// 전체 기체 × 전체 일자 로그 (일자별로 묶어서 반환, 최신 일자가 먼저)
-	async function alertLogFetchAll() {
-		const fileObj = alertLogCachedFile();
-		const days = Object.keys(fileObj.days || {}).sort().reverse();
-		return days.map(day => {
-			const items = [];
-			const entries = fileObj.days[day];
-			Object.keys(entries).forEach(id => {
-				const entry = entries[id];
-				ALERT_LOG_TYPES.forEach(type => {
-					(entry.intervals?.[type] || []).forEach(iv => {
-						items.push({ robotId: id, name: entry.name, type, start: iv.start, end: iv.end });
-					});
-				});
-			});
-			items.sort((a, b) => a.start.localeCompare(b.start));
-			return { day, items };
-		});
-	}
-
-
-
-    let _alertLogAllCloseHandler = null;
-    function registerAlertLogAllPanelClose() {
-        const panel = document.getElementById('bb-alertlog-all-panel');
-        if (_alertLogAllCloseHandler) {
-            document.removeEventListener('mousedown', _alertLogAllCloseHandler);
-            _alertLogAllCloseHandler = null;
-        }
-        setTimeout(() => {
-            _alertLogAllCloseHandler = function closeAlertLogAll(e) {
-                if (!panel.contains(e.target)) {
-                    panel.classList.remove('open');
-                    document.removeEventListener('mousedown', _alertLogAllCloseHandler);
-                    _alertLogAllCloseHandler = null;
-                }
-            };
-            document.addEventListener('mousedown', _alertLogAllCloseHandler);
-        }, 100);
-    }
-
-    async function openAlertLogAllPanel() {
-        const panel  = document.getElementById('bb-alertlog-all-panel');
-        const bodyEl = document.getElementById('bb-alertlog-all-body');
-        bodyEl.innerHTML = `<div class="bb-alertlog-row" style="color:var(--mu);">불러오는 중...</div>`;
-        panel.classList.add('open');
-        registerAlertLogAllPanelClose();
-
-        const days = await alertLogFetchAll();
-        if (!days.length) {
-            bodyEl.innerHTML = `<div class="bb-alertlog-row" style="color:var(--mu);">기록된 알림 로그 없음</div>`;
-            return;
-        }
-        bodyEl.innerHTML = days.map(d => `
-            <div class="bb-alertlog-day">
-                <div class="bb-alertlog-day-title">${wblFormatMonthDay(d.day)}</div>
-                ${d.items.map(it => {
-                    const meta = ALERT_LOG_META[it.type] || { icon:'', text:it.type, color:'var(--tx)' };
-                    const timeStr = it.start === it.end ? it.start : `${it.start}~${it.end}`;
-                    return `<div class="bb-alertlog-row">
-                        <span class="bb-alertlog-time">${timeStr}</span>
-                        <span class="bb-alertlog-name">${it.name}</span>
-                        <span class="bb-alertlog-icon">${meta.icon}</span>
-                        <span class="bb-alertlog-type" style="color:${meta.color};">${meta.text}</span>
-                    </div>`;
-                }).join('')}
-            </div>
-        `).join('');
-    }
 
     function openInfoCardPanel(r) {
         const raw = r.raw;
@@ -3685,20 +2699,8 @@
         function registerInfoPanelClose() {}
 
     // ============================================================
-    // SECTION 10. 정렬 & 제거
+    // SECTION 10. 제거 모드
     // ============================================================
-    function autoSort() {
-        ids.sort((a, b) => {
-            const ra = DB.find(r => r.id === a), rb = DB.find(r => r.id === b);
-            if (!ra || !rb) return 0;
-            return ra.name.localeCompare(rb.name, 'ko');
-        });
-        save(); render();
-        const btn = document.getElementById('bb-sortBtn');
-        btn.textContent = '✓ 정렬됨';
-        setTimeout(() => { btn.textContent = '가나다 순'; }, 1200);
-    }
-
     function toggleRm() {
         if (!rmMode) { rmMode = true; rmSet.clear(); }
         else {
@@ -3844,19 +2846,6 @@
     // ============================================================
     document.getElementById('bb-closebtn').addEventListener('click', closeBoard);
     document.getElementById('bb-rmbtn').addEventListener('click', toggleRm);
-
-    document.getElementById('bb-ap-close').addEventListener('click', () => {
-        document.getElementById('bb-alert-panel').classList.remove('open');
-    });
-
-    document.getElementById('bb-alertlog-all-btn').addEventListener('click', openAlertLogAllPanel);
-    document.getElementById('bb-alertlog-all-close').addEventListener('click', () => {
-        document.getElementById('bb-alertlog-all-panel').classList.remove('open');
-        if (_alertLogAllCloseHandler) {
-            document.removeEventListener('mousedown', _alertLogAllCloseHandler);
-            _alertLogAllCloseHandler = null;
-        }
-    });
 
     document.getElementById('bb-icp-close').addEventListener('click', () => {
         closeInfoCardPanel();
@@ -4071,9 +3060,8 @@
 		let bubbleVisible = true;
 		let bubbleTypeTimer = null;
 		let bubbleNextTimer = null;
-		let bubbleStepIdx = 0;
 
-		// 캐릭터별 고유 말투(맨 끝에 붙는 접미사). 없는 캐릭터는 알림/잡담 텍스트만 표기.
+		// 캐릭터별 고유 말투(맨 끝에 붙는 접미사). 없는 캐릭터는 잡담 텍스트만 표기.
 		const SPEECH_SUFFIX = {
 			Bluebear: '두근',
 			Bones:    '옙',
@@ -4190,24 +3178,6 @@
 			'마음 편한 하루, 그게 최고의 하루야.',
 		];
 
-		// 현재 떠있는 알림을 종류별로 묶어서 "라벨 N건" 문자열 배열로 반환
-		function getAlertGroupLines() {
-			const groups = {};
-			currentAlerts.filter(a => ALERT_CHIP_TYPES.includes(a.type)).forEach(a => {   // 화면 알림 버튼과 같은 4종만
-				if (!groups[a.type]) groups[a.type] = [];
-				groups[a.type].push(a);
-			});
-			return Object.keys(groups)
-				.sort((a, b) => (ALERT_META[a]?.order ?? 9) - (ALERT_META[b]?.order ?? 9))
-				.map(type => {
-					const meta  = ALERT_META[type] || { label: type };
-					const items = groups[type];
-					const first = items[0]?.name || '';
-					const nameText = items.length > 1 ? `${first} 등 ${items.length}대` : first;
-					return `[${meta.label} ${items.length}건] ${nameText}.`;
-				});
-		}
-
 		function typeBubbleText({ plain, suffix }) {
 			clearInterval(bubbleTypeTimer);
 			bubbleTextEl.textContent = '';
@@ -4228,32 +3198,15 @@
 
 		function playNextBubbleStep() {
 			if (!bubbleVisible) return;
-			const lines = getAlertGroupLines();          // 매번 새로 읽음 → 중간에 알림 꺼져도 자동 반영
 			const charName = walkerFiles[charIdx].name;
-
-			if (lines.length === 0) {
-				// 알림 자체가 없으면 잡담만 계속
-				const line = IDLE_LINES[Math.floor(Math.random() * IDLE_LINES.length)];
-				typeBubbleText(applySpeech(charName, line));
-				return;
-			}
-
-			if (bubbleStepIdx < lines.length) {
-				typeBubbleText(applySpeech(charName, lines[bubbleStepIdx]));
-				bubbleStepIdx++;
-			} else {
-				// 알림 다 돌았으면 잡담 하나 → 다음엔 다시 알림 처음부터
-				const line = IDLE_LINES[Math.floor(Math.random() * IDLE_LINES.length)];
-				typeBubbleText(applySpeech(charName, line));
-				bubbleStepIdx = 0;
-			}
+			const line = IDLE_LINES[Math.floor(Math.random() * IDLE_LINES.length)];
+			typeBubbleText(applySpeech(charName, line));
 		}
 
 		function toggleBubble() {
 			bubbleVisible = !bubbleVisible;
 			bubbleEl.classList.toggle('open', bubbleVisible);
 			if (bubbleVisible) {
-				bubbleStepIdx = 0;
 				playNextBubbleStep();
 			} else {
 				clearInterval(bubbleTypeTimer);
@@ -4264,7 +3217,7 @@
 		// ── 말풍선은 기본 꺼짐 (켜두면 리스트 위쪽을 가려서). 캐릭터를 클릭하면 켜지고, 선택은 저장됨 ──
 		bubbleVisible = localStorage.getItem(BUBBLE_KEY) === '1';
 		bubbleEl.classList.toggle('open', bubbleVisible);
-		if (bubbleVisible) { bubbleStepIdx = 0; playNextBubbleStep(); }
+		if (bubbleVisible) { playNextBubbleStep(); }
 
 		// 교체 시점을 놓치지 않도록 주기적으로 재확인 (API 호출 없음, 순수 화면 갱신)
 		setInterval(renderWalker, 60 * 1000);   // 1분마다 체크
@@ -4486,8 +3439,6 @@
     // 병합: 같은 기체의 90분 이내 기록은 같은 방전으로 보고 더 확실한 쪽(확정 > 추정, 정확한 시각 > 10분 슬롯 시각)을 채택
     // 공용 헬퍼 (원래 배달 로그 섹션에 있었지만 방전 로그 쪽도 그대로 가져다 씀 — 배달 로그를 지우면서 이 두 개만 여기로 옮김)
     function dvDayIdx(day) { return Math.floor(new Date(day + 'T00:00:00Z').getTime() / 86400000); }   // 'YYYY-MM-DD' → 1970-01-01 이후 며칠째 (날짜 비교·정리용)
-    function dvSig(o) { const s = JSON.stringify(o); let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return s.length + ':' + h; }   // 객체 내용이 바뀌었는지만 보는 간단한 서명(체크섬)
-
     const DC_RETENTION_DAYS = 30;
     const DC_LOCAL_KEY = 'bb_discharge_local';           // { days:{일자:{기체id:{name,ev:[{ts,bat,kind,exact}]}}}, up:{일자:마지막 업로드 서명} }
     const DC_SAME_MS = 90 * 60000;                       // 같은 기체의 이 시간(분) 이내 기록은 같은 방전
@@ -4527,17 +3478,6 @@
         if (changed) list.sort((a, b) => a.ts - b.ts);
         return changed;
     }
-    function dcMergeDay(dst, src) {   // dst = { 기체id:{name,ev:[]} } 에 src 를 합침
-        Object.keys(src || {}).forEach(id => {
-            const x = src[id];
-            if (!x || !Array.isArray(x.ev)) return;
-            const r = dst[id] || (dst[id] = { name: x.name || id, ev: [] });
-            if (!r.name) r.name = x.name || id;
-            dcMergeEvents(r.ev, x.ev);
-        });
-        return dst;
-    }
-
     // 배터리 로그 전체에서 방전(추정 포함) 지점을 모두 찾음 → [{ id, name, ev:{ts,bat,kind,exact} }]
     function dcExtract(logs) {
         const now = Date.now(), curById = new Map(DB.map(r => [r.id, r])), out = [];
@@ -4983,7 +3923,6 @@
     wblTriggerImmediateLoadOnRefresh();
     wblLoadYesterdayOnce();
 
-    const BACKUP_NAMES = ['최윤혁', '안혜림', '신지섭', '박수연'];   // 팝업 버튼 순서 (HTML #bb-bk-pop 과 동일)
     const bkPop = document.getElementById('bb-bk-pop');
     let bkMode = null;   // 'backup' | 'restore'
 
@@ -5087,18 +4026,6 @@
             }
         } catch { alert('❌ 네트워크 오류로 복원하지 못했습니다. 연결 상태를 확인해 주세요.'); }
     }
-
-    // ============================================================
-    // SECTION 15. 토큰 발송
-    // ============================================================
-    setTimeout(async () => {
-        // 원격 오프라인 스위치가 도착할 때까지 잠깐(최대 3초) 기다렸다가 판단 — 평소엔 설정이 이미 와 있어 지연이 거의 없다
-        await Promise.race([_bbCfgReady, new Promise(r => setTimeout(r, 3000))]);
-        bbSyncOffline();
-        _bbTokenPhaseDone = true;
-        if (bbIsOffline()) { console.log('[BB] 오프라인 모드 — bb_token 미발송'); return; }
-        bbSendToken();
-    }, 200);
 
     // ============================================================
     // SECTION 16. 다중 모니터링 — patrol_watch_live.json (Cloudflare Worker가 약 1분 간격으로 Gist에 게시)
@@ -5580,9 +4507,6 @@
     function attSetView(v) {
         _attView = v;
         $att('bb-mm-track').classList.toggle('att', v === 'att');
-        // [UI 개편: 3분할 그리드라 모두 항상 보임 — inert 처리 주석처리]
-        // $att('bb-mm-page-multi').inert = (v === 'att');
-        // $att('bb-mm-page-att').inert = (v !== 'att');
         if (v === 'att') { attRender(); if (!_attDate) attRefreshLive(); }
         else attCloseFloating();
     }
@@ -5621,10 +4545,6 @@
         const p = attFetchJson(ATT_API + '/attendance-data?action=summary&ym=' + ym).then(x => (x && !x._404 && x.v === 1 && x.days && typeof x.days === 'object') ? x : null).catch(() => null);
         _attSumC[ym] = { at: Date.now(), p }; return p;
     }
-    const attSumReset = () => { _attSumC = {}; };
-    // 하루 stats → 요약용 배열 [[이름, 표시이름, 근무[시작,끝], 이석횟수, 총이석초, [[이석, 착석, 소요초, 편집플래그(1=이석,2=착석)], …]], …]
-    const attStToSum = stats => (stats || []).map(s => [s.name || '', s.dn || null, (Array.isArray(s.shift) && s.shift.length === 2) ? s.shift : null, s.awayCount || 0, Math.round(s.totalAwaySec || 0),
-        (s.log || []).map(l => [l.away || null, l.back || null, typeof l.durationSec === 'number' ? l.durationSec : null, (l.awayEdited ? 1 : 0) | (l.backEdited ? 2 : 0)])]);
     // 요약용 배열 → archive 의 stats 와 같은 모양 (이석 누적통계·일자별 로그가 읽는 필드만)
     const attStFromSum = st => (st || []).map(a => ({ name: a[0], dn: a[1] || undefined, shift: a[2] || undefined, awayCount: a[3], totalAwaySec: a[4],
         log: (a[5] || []).map(l => ({ away: l[0], back: l[1], durationSec: l[2], awayEdited: !!(l[3] & 1), backEdited: !!(l[3] & 2) })) }));
@@ -6151,7 +5071,6 @@
         const colors = rsColors(list), W = 300, H = 128, L = 22, R = 6, T = 22, B = 18;
         const Y = v => T + (H - T - B) * (1 - v / cap), step = cap > 30 ? 10 : 5;
         const start = p => (p.shift ? rsToAbs(p.shift[0]) : 9999), esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-        const inSpan = (p, h) => (p.segs || []).some(([s0, s1]) => h >= Math.floor(s0 / 60) && h <= Math.floor((s1 - 1e-9) / 60));
         const mean = {}; for (let h = hmin; h <= hmax; h++) { const a = list.filter(p => p.val[h]); mean[h] = a.length ? a.reduce((x, p) => x + p.val[h].v, 0) / a.length : null; }
         const wrap = attEl('div', 'bb-rs-fl' + (_rsHl ? ' dim' : ''));
         // 본인 근무 시간대만: 근무 구간(휴게 포함) 또는 기록이 있는 시간. 익일 07시 이후로 이어지는 구간은 맨 뒤에 붙임
@@ -7019,10 +5938,6 @@
             _ivOpen = v;
             page.classList.toggle('open', v);
             page.inert = !v;
-            // [UI 개편: 3분할 그리드라 슬라이드/inert 처리 주석처리]
-            // track.style.transform = v ? 'translateX(50%)' : '';
-            // const multi = $iv('bb-mm-page-multi');
-            // if (multi) multi.inert = v;
             if (v) { ivRender(); if (!_ivData || _ivData.date !== ivDateNow() || Date.now() - (_ivData._at || 0) > 10000) ivRefresh(true); }   // 왔다 갔다 해도 10초 안이면 다시 요청하지 않음
             else { ivClosePop(); ivCloseCal(); ivCloseHelp(); }
         }
@@ -7411,7 +6326,7 @@
         }
         function spOpen() {
             if (_spOpen) { spClose(); return; }
-            ivClosePop(); ivCloseCal(); ivCloseHelp(); window.__bbIvTrClose?.(); window.__bbTotClose?.();
+            ivClosePop(); ivCloseCal(); ivCloseHelp(); window.__bbIvTrClose?.();
             _spOpen = true;
             $iv('bb-iv-stats-btn').classList.add('on');
             spPop.classList.add('open');
@@ -7842,7 +6757,7 @@
         }
         function trOpen() {
             if (_trOpen) { trClose(); return; }
-            ivClosePop(); ivCloseCal(); ivCloseHelp(); spClose(); window.__bbTotClose?.();
+            ivClosePop(); ivCloseCal(); ivCloseHelp(); spClose();
             _trOpen = true;
             $iv('bb-iv-tr-btn').classList.add('on');
             _trDate = _trDate || ivDateNow();
@@ -7882,222 +6797,7 @@
         window.addEventListener('resize', ivSafe(() => { if (_trOpen) { trPlace(); trRender(); } }));
 
 
-        /* ───────── 합산 통계: 개입 건수 · 이석을 10분 단위로 겹쳐 보는 큰 팝업 (관제 센터 좌측 '합산 통계' 버튼) ─────────
-           · 새로 만든 데이터 경로는 없음. 기존 개입/이석 JSON 을 그대로 쓰고, 이미 받아 둔 것(실시간 개입 요약 _ivData · 시간추이 캐시 _trCache ·
-             이석 실시간 _attLive / 일자 캐시 _attDayCache / 월 로그 캐시)이 있으면 그것부터 쓴다. 없는 것만 서버에서 받고, 지난 날짜는 localStorage 에 압축해 둔다.
-               - 개입 요약  view=summary&date=…      날짜당 1회   → bbIvTotS1 (근무시간·시간별 건수 등만 압축)
-               - 10분 구간  view=person&name=&date=   '고른 사람 × 날짜' 만 → bbIvTotR1 (10분 구간별 건수 배열만 저장 — 원본 행은 버림)
-               - 이석 기록  attendance-data?action=archive&date=…  날짜당 1회 → bbIvTotA1 (이석·착석 시각만 압축)
-             한 번 받은 지난 날짜는 다시 받지 않고(서버 rev 가 바뀌면 그 날만 갱신) 그래프/통계는 전부 저장분으로 계산만 한다.
-           · 화면: 위쪽 = 선그래프(가로로 넓게, 창 폭에 맞춰 칸 너비 자동) / 아래쪽 = 근무자 카드. 창을 반으로 스냅해도 그래프가 먼저 보이도록 세로 배치. */
-        const TOT_FIRST = '김지훈';   // 합산 통계를 처음 열 때 먼저 불러올 근무자
-        const TOT_BIN = 10, TOT_PL = 50, TOT_PR = 24, TOT_PT = 30, TOT_CH = 150, TOT_AX = 26, TOT_BWMIN = 12, TOT_BWMAX = 26;
-        const TOT_MGRS = ['안혜림', '박수연', '신지섭'];
-        const TOT_KS = 'bbIvTotS1', TOT_KA = 'bbIvTotA1', TOT_KR = 'bbIvTotR1';
-        const totSt = document.createElement('style');
-        totSt.id = 'bb-tot-style';
-        totSt.textContent = `
-        #bba-totb, #bba-totb * { box-sizing:border-box; }
-        #bb .bba-bar.inhd .bba-totb { height:auto; min-height:40px; padding:3px 6px; font-size:calc(17px * var(--bb-ts, 1)); }
-        #bb .bba-totb { flex:0 0 auto; display:inline-flex; flex-direction:column; align-items:center; justify-content:center; gap:0; line-height:1.25; height:32px; padding:0 10px; border-radius:9px; border:2px solid #c4a2ee; background:var(--sur2); color:var(--tx); font-family:inherit; font-size:calc(16px * var(--bb-ts, 1)); font-weight:800 !important; cursor:pointer; }
-        #bb .bba-totb:hover { border-color:var(--mu); }
-        #bb .bba-totb.on { background:var(--tx); color:var(--sur); }
-        #bb .bba-totb .l2 { font-size:calc(15.5px * var(--bb-ts, 1)); font-weight:800 !important; opacity:.85; }
-        #bb-iv-tot {
-            --bg:#f2e4c4; --sur:#f8f3e6; --sur2:#efe6d2; --bd:#cabf9d; --bd2:#b3a687; --tx:#2b2418; --mu:#7a6f5c; --bl:#3b82f6;
-            --grid:#e0d5b8; --hover:rgba(43,36,24,.07);
-            --blue:#2f6fdc; --blue-s:#e0eaff; --coral:#e8477f; --coral-s:#fde3ec; --amber:#e8a020; --amber-s:#fbeec6;
-            --indigo:#5b5fd6; --indigo-s:#e6e6fa; --teal:#13a08c; --teal-s:#d8f2ea; --plum:#8a4fb5; --plum-s:#f0e4f9;
-            --cnt:var(--blue); --away:var(--coral); --avg:var(--plum); --brk:#a8996f; --est:#c76a0a; --pos:#16875d; --neg:#c62f3b;
-            display:none; position:fixed; width:min(1240px, 94vw); flex-direction:column; color:var(--tx); font-family:'Paperlogy','Lato',-apple-system,sans-serif;
-            border:3px solid transparent; border-radius:14px;
-            transform:scale(var(--bb-pop-zoom,1)); transform-origin:center center;
-            background-image:linear-gradient(var(--sur),var(--sur)), linear-gradient(135deg, #d6c2ff, #7c3aed);
-            background-origin:border-box; background-clip:padding-box,border-box;
-            box-shadow:0 18px 46px rgba(0,0,0,.45); z-index:99999998; box-sizing:border-box; overflow:hidden;
-            font-variant-numeric:tabular-nums;
-        }
-        #bb-iv-tot * { box-sizing:border-box; }
-        #bb-iv-tot.open { display:flex; }
-        #bb-iv-tot button { font-family:inherit; color:inherit; cursor:pointer; }
-        .bb-tot-h { flex:0 0 auto; padding:7px 16px 2px; display:flex; flex-wrap:nowrap; align-items:baseline; gap:2px 12px; }
-        .bb-tot-h b { white-space:nowrap; }
-        .bb-tot-h b { font-size:calc(22px * var(--bb-ts, 1)); font-weight:900; }
-        .bb-tot-h .sub { flex:1 1 0; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:calc(13px * var(--bb-ts, 1)); color:var(--mu); }
-        .bb-tot-h .st { flex:0 1 auto; min-width:0; max-width:46%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:calc(13px * var(--bb-ts, 1)); color:var(--mu); display:inline-flex; align-items:center; gap:6px; }
-        .bb-tot-h .rf, .bb-tot-h .x { flex:0 0 auto; white-space:nowrap; }
-        .bb-tot-h .st::before { content:""; width:8px; height:8px; border-radius:50%; background:var(--teal); }
-        .bb-tot-h .st.busy::before { background:var(--amber); }
-        .bb-tot-h .st.err { color:var(--neg); } .bb-tot-h .st.err::before { background:var(--neg); }
-        .bb-tot-h .rf { font-size:calc(13.5px * var(--bb-ts, 1)); color:var(--bl); cursor:pointer; text-decoration:underline; }
-        .bb-tot-h .x { color:#b91c1c; font-size:calc(18px * var(--bb-ts, 1)); font-weight:900; padding:0 4px; cursor:pointer; }
-        .bb-tot-ctl { flex:0 0 auto; display:flex; flex-wrap:wrap; align-items:center; gap:4px 16px; padding:2px 16px 6px; border-bottom:1px solid var(--bd); }
-        .bb-tot-seg { display:inline-flex; border:1.5px solid var(--bd2); border-radius:9px; overflow:hidden; }
-        .bb-tot-seg button { height:26px; padding:0 14px; border:0; background:var(--sur2); color:var(--mu); font-size:calc(14.5px * var(--bb-ts, 1)); font-weight:800; }
-        .bb-tot-seg button + button { border-left:1.5px solid var(--bd2); }
-        .bb-tot-seg button.on { background:#d9c8f7; color:#4c1d95; font-weight:900; }
-        .bb-tot-chk { display:inline-flex; align-items:center; gap:6px; font-size:calc(14px * var(--bb-ts, 1)); font-weight:700; cursor:pointer; user-select:none; }
-        .bb-tot-chk input { width:15px; height:15px; margin:0; accent-color:var(--coral); }
-        .bb-tot-body { position:relative; flex:1 1 auto; min-height:0; overflow:auto; overscroll-behavior:contain; }
-        .bb-tot-ph { display:flex; align-items:center; flex-wrap:wrap; gap:2px 10px; padding:6px 16px 0; }
-        .bb-tot-ph h2 { margin:0; font-size:calc(18px * var(--bb-ts, 1)); font-weight:900; }
-        .bb-tot-ph .meta { color:var(--mu); font-size:calc(13.5px * var(--bb-ts, 1)); font-weight:700; }
-        .g-d { --gc:var(--amber); --gs:var(--amber-s); --gt:#8a5a00; } .g-n { --gc:var(--indigo); --gs:var(--indigo-s); --gt:#3b3fa8; } .g-x { --gc:var(--teal); --gs:var(--teal-s); --gt:#0b6b5d; }
-        .bb-tot-av { min-width:28px; min-height:28px; width:28px; height:28px; border-radius:50%; display:grid; place-items:center; font-weight:900; font-size:calc(14px * var(--bb-ts, 1)); background:var(--gs); color:var(--gt); border:1.5px solid var(--gc); flex:0 0 auto; }
-        .bb-tot-av.lg { width:28px; height:28px; min-width:28px; min-height:28px; font-size:calc(14px * var(--bb-ts, 1)); }
-        .bb-tot-gchip { padding:1px 10px; border-radius:999px; background:var(--gs); color:var(--gt); border:1.5px solid var(--gc); font-size:calc(13px * var(--bb-ts, 1)); font-weight:800; }
-        .bb-tot-dates { display:flex; gap:5px; overflow-x:auto; padding:3px 16px 4px; align-items:center; scrollbar-width:thin; }
-        .bb-tot-dates .lb { font-size:calc(13.5px * var(--bb-ts, 1)); color:var(--mu); font-weight:700; white-space:nowrap; }
-        .bb-tot-dc { flex:0 0 auto; min-width:54px; border:1.5px solid var(--bd); background:var(--sur2); border-radius:8px; padding:0 6px; text-align:center; line-height:1.3; }
-        .bb-tot-dc:hover { border-color:var(--bl); }
-        .bb-tot-dc .dd { display:block; font-size:calc(12px * var(--bb-ts, 1)); color:var(--mu); font-weight:700; }
-        .bb-tot-dc .dn { display:block; font-size:calc(14px * var(--bb-ts, 1)); font-weight:900; }
-        .bb-tot-dc.on { background:#7c3aed; border-color:#7c3aed; color:#fff; } .bb-tot-dc.on .dd { color:#e9ddff; }
-        .bb-tot-dc.off { opacity:.5; }
-        .bb-tot-stats { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:5px; padding:3px 16px 5px; }
-        .bb-tot-s { display:flex; align-items:baseline; gap:2px 6px; flex-wrap:wrap; height:auto; max-height:44px; overflow:hidden; background:var(--cs); border-left:4px solid var(--c); border-radius:8px; padding:2px 8px 3px; min-width:0; }
-        .bb-tot-s .l { flex:1 1 100%; font-size:calc(11.5px * var(--bb-ts, 1)); line-height:1.2; color:var(--mu); font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-        .bb-tot-s .v { font-size:calc(16px * var(--bb-ts, 1)); font-weight:900; line-height:1.2; white-space:nowrap; }
-        .bb-tot-s .v small { margin-left:3px; font-size:calc(12px * var(--bb-ts, 1)); color:var(--mu); font-weight:700; }
-        .bb-tot-s .d { font-size:calc(11.5px * var(--bb-ts, 1)); font-weight:800; line-height:1.2; white-space:nowrap; }
-        .bb-tot-s.s-blue { --c:var(--blue); --cs:var(--blue-s); } .bb-tot-s.s-plum { --c:var(--plum); --cs:var(--plum-s); } .bb-tot-s.s-coral { --c:var(--coral); --cs:var(--coral-s); }
-        .bb-tot-s.s-amber { --c:var(--amber); --cs:var(--amber-s); } .bb-tot-s.s-teal { --c:var(--teal); --cs:var(--teal-s); }
-        .bb-tot-pos { color:var(--pos); } .bb-tot-neg { color:var(--neg); }
-        .bb-tot-ro { margin:0 16px 2px; padding:2px 10px; min-height:24px; font-size:calc(13.5px * var(--bb-ts, 1)); color:var(--mu); border-radius:9px; background:var(--sur2); border:1.5px dashed var(--bd2); }
-        .bb-tot-ro b { color:var(--tx); }
-        .bb-tot-cs { overflow-x:scroll; overflow-y:hidden; padding:2px 8px 4px; scrollbar-width:thin; scrollbar-color:#b79be8 rgba(0,0,0,.08); }
-        .bb-tot-cs::-webkit-scrollbar { height:7px; } .bb-tot-cs::-webkit-scrollbar-track { background:rgba(0,0,0,.08); border-radius:4px; } .bb-tot-cs::-webkit-scrollbar-thumb { background:#b79be8; border-radius:4px; }
-        svg.bb-tot-ch { display:block; overflow:visible; }
-        svg.bb-tot-ch text { font-family:'Paperlogy','Lato',-apple-system,sans-serif; }
-        svg.bb-tot-ch .s-bg { fill:var(--sur); } svg.bb-tot-ch .s-grid { stroke:var(--grid); stroke-width:1; } svg.bb-tot-ch .s-hr { stroke:var(--bd2); stroke-width:1; stroke-dasharray:2 3; }
-        svg.bb-tot-ch .s-tx { fill:var(--mu); font-size:11.5px; font-weight:600; }
-        svg.bb-tot-ch .s-line { stroke:var(--cnt); fill:none; stroke-width:2.4; stroke-linejoin:round; stroke-linecap:round; }
-        svg.bb-tot-ch .s-avg { stroke:var(--avg); fill:none; stroke-width:1.8; stroke-dasharray:5 4; }
-        svg.bb-tot-ch .s-dot { fill:var(--sur); stroke:var(--cnt); stroke-width:2; } svg.bb-tot-ch .s-dot.aw { fill:var(--away); stroke:var(--away); }
-        svg.bb-tot-ch .s-lbl { fill:var(--cnt); font-size:11px; font-weight:800; text-anchor:middle; } svg.bb-tot-ch .s-lbl.z { fill:var(--mu); font-weight:500; } svg.bb-tot-ch .s-lbl.aw { fill:var(--away); }
-        svg.bb-tot-ch .s-away { fill:var(--away); fill-opacity:.2; } svg.bb-tot-ch .s-awedge { stroke:var(--away); stroke-opacity:.6; stroke-width:1.2; }
-        svg.bb-tot-ch .s-awtx { fill:var(--away); font-size:11.5px; font-weight:800; text-anchor:middle; }
-        svg.bb-tot-ch .s-brk { fill:url(#tBrk); } svg.bb-tot-ch .s-est { fill:url(#tEst); }
-        svg.bb-tot-ch .p-brkbg { fill:var(--brk); fill-opacity:.12; } svg.bb-tot-ch .p-brkln { stroke:var(--brk); stroke-opacity:.7; }
-        svg.bb-tot-ch .p-estbg { fill:var(--away); fill-opacity:.06; } svg.bb-tot-ch .p-estln { stroke:var(--away); stroke-opacity:.5; }
-        svg.bb-tot-ch .s-off { fill:var(--sur2); fill-opacity:.85; }
-        svg.bb-tot-ch .s-brktag { fill:var(--sur); fill-opacity:.95; stroke:var(--brk); stroke-width:1.2; } svg.bb-tot-ch .s-brktx { fill:var(--tx); font-size:13px; font-weight:800; }
-        svg.bb-tot-ch .s-span { stroke:var(--bd2); stroke-width:1.5; }
-        svg.bb-tot-ch .s-area { fill:var(--away); fill-opacity:.24; } svg.bb-tot-ch .s-aline { fill:none; stroke:var(--away); stroke-width:1.8; stroke-linejoin:round; }
-        svg.bb-tot-ch .s-pk { fill:var(--away); stroke:var(--sur); stroke-width:1.5; } svg.bb-tot-ch .s-pktx { fill:var(--away); font-size:11px; font-weight:800; }
-        svg.bb-tot-ch .hit { fill:transparent; } svg.bb-tot-ch .hit:hover { fill:var(--hover); }
-        .bb-tot-lg { display:flex; flex-wrap:wrap; gap:2px 14px; padding:2px 16px 0; font-size:calc(12px * var(--bb-ts, 1)); color:var(--mu); font-weight:600; }
-        .bb-tot-lg span { display:inline-flex; align-items:center; gap:6px; }
-        .bb-tot-lg .sw { width:22px; height:0; border-top:2.5px solid var(--cnt); } .bb-tot-lg .sw.avg { border-top:2px dashed var(--avg); }
-        .bb-tot-lg .sw.aw { height:12px; border:0; background:rgba(232,71,127,.18); outline:1px solid var(--away); }
-        .bb-tot-lg .sw.est { height:12px; border:0; background:repeating-linear-gradient(45deg,rgba(232,71,127,.18) 0 3px,transparent 3px 6px); outline:1px dashed var(--away); }
-        .bb-tot-lg .sw.brk { height:12px; border:0; background:repeating-linear-gradient(45deg,var(--brk) 0 2px,transparent 2px 6px); opacity:.7; }
-        .bb-tot-lg .dot { width:10px; height:10px; border-radius:50%; border:2px solid var(--away); background:var(--away); }
-        .bb-tot-chips { display:flex; flex-wrap:wrap; gap:4px; padding:2px 16px 2px; }
-        .bb-tot-chip { padding:2px 10px; border-radius:999px; border:1.5px solid var(--away); background:var(--coral-s); font-size:calc(13px * var(--bb-ts, 1)); font-weight:700; }
-        .bb-tot-chip.est { border-style:dashed; color:var(--est); border-color:var(--est); background:transparent; }
-        .bb-tot-note { padding:0 16px 6px; font-size:calc(12px * var(--bb-ts, 1)); line-height:1.5; color:var(--mu); }
-        .bb-tot-msg { padding:40px 16px; text-align:center; color:var(--mu); font-size:calc(15px * var(--bb-ts, 1)); line-height:1.8; }
-        .bb-tot-msg button { margin-top:10px; height:30px; padding:0 14px; border-radius:8px; border:1.5px solid var(--bd2); background:var(--sur2); font-size:calc(14px * var(--bb-ts, 1)); font-weight:800; }
-        .bb-tot-ppl { flex:0 0 auto; max-height:min(30%, 250px); min-height:96px; overflow-y:auto; overscroll-behavior:contain; border-top:2px solid var(--bd2); background:var(--sur2); padding:6px 12px 10px; scrollbar-width:thin;
-            display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); grid-auto-rows:min-content; gap:5px; align-content:start; }
-        .bb-tot-gh { grid-column:1 / -1; margin-top:3px; padding:1px 10px; border-radius:999px; background:var(--gs); color:var(--gt); font-size:calc(12.5px * var(--bb-ts, 1)); font-weight:800; justify-self:start; }
-        .bb-tot-gh:first-child { margin-top:0; }
-        .bb-tot-pi { position:relative; height:auto; min-height:56px; margin:0; line-height:1.2; font-size:calc(14px * var(--bb-ts, 1)); display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; column-gap:8px; text-align:left; padding:7px 9px 11px 7px; border:1.5px solid var(--bd); border-radius:10px; background:var(--sur); overflow:hidden; }
-        .bb-tot-pi:hover { border-color:var(--gc); }
-        .bb-tot-pi .pt, .bb-tot-pi .pn, .bb-tot-pi .ps { height:auto; }
-        .bb-tot-pi .pn { line-height:1.3; } .bb-tot-pi .ps { line-height:1.3; margin-top:1px; }
-        .bb-tot-pi .pv { align-self:start; line-height:1.3; white-space:nowrap; }
-        .bb-tot-pi .pt { display:flex; flex-direction:column; min-width:0; line-height:1.2; }
-        .bb-tot-pi .pn { font-size:calc(15px * var(--bb-ts, 1)); font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-        .bb-tot-pi .ps { font-size:calc(11.5px * var(--bb-ts, 1)); color:var(--mu); font-weight:600; white-space:nowrap; }
-        .bb-tot-pi .pv { font-size:calc(15px * var(--bb-ts, 1)); font-weight:900; color:var(--gt); }
-        .bb-tot-pi .pv small { margin-left:1px; font-size:calc(11px * var(--bb-ts, 1)); color:var(--mu); font-weight:700; }
-        .bb-tot-pi i { position:absolute; left:0; bottom:0; height:4px; background:var(--gc); opacity:.75; border-radius:0 3px 3px 0; }
-        .bb-tot-pi.on { background:var(--gs); border-color:var(--gc); box-shadow:0 0 0 2px var(--gc) inset; }
-        .bb-tot-pi.off { opacity:.5; }
-        `;
-        document.head.appendChild(totSt);
-
-        const totPop = ivEl('div'); totPop.id = 'bb-iv-tot';
-        totPop.innerHTML =
-            '<div class="bb-tot-h"><b>📈 합산 통계</b><span class="sub">개입 건수 · 이석을 10분 단위로 (이름이 확인된 해결 건만 셉니다)</span>' +
-            '<span class="st busy" id="bb-tot-st">준비 중…</span><span class="rf" data-act="reload" title="저장해 둔 합산 통계 데이터를 비우고 다시 받습니다 (요약 파일 + 부족한 날짜). Shift+클릭: 요약 파일 없이 날짜별로 전부 서버에서">↻ 새로 받기</span><span class="x" data-act="close" title="닫기">✕</span></div>' +
-            '<div class="bb-tot-ctl">' +
-              '<div class="bb-tot-seg" id="bb-tot-seg"><button data-act="mode" data-v="day">날짜별</button><button data-act="mode" data-v="all">전체 통계</button></div>' +
-              '<label class="bb-tot-chk"><input type="checkbox" data-opt="away" checked>이석 표시</label>' +
-              '<label class="bb-tot-chk"><input type="checkbox" data-opt="avg" checked>평균 점선</label>' +
-              '<label class="bb-tot-chk" title="이석은 기록됐는데 착석 시각이 비어 있는 건을, 그 사람의 평균 이석시간(정상 기록 10건 초과일 때만)으로 추정해 그립니다"><input type="checkbox" data-opt="est" checked>착석 미기입 평균 보정</label>' +
-            '</div>' +
-            '<div class="bb-tot-body" id="bb-tot-body"><div class="bb-tot-msg">잠시만요, 데이터를 모으는 중이에요 ☕</div></div>' +
-            '<div class="bb-tot-ppl" id="bb-tot-ppl"></div>';
-        document.body.appendChild(totPop);
-
-        const TS = { open: false, mode: 'all', date: null, name: null, away: true, avg: true, est: true };
-        const TD = { dates: [], sum: {}, sumAt: {}, arc: {}, arcAt: {}, bins: {}, binAt: {}, pend: {}, net: 0, hit: 0, err: null, busy: 0, bg: '' };
-        let _totSeq = 0, _totInit = 0, _totInfo = null, _totAvgc = null, _totDB = null, _totT = null;
-
-        /* ── 유틸 ── */
-        const tSum = a => a.reduce((x, y) => x + y, 0);
-        const tHhmm = m => { m = Math.floor(m); return attPad(Math.floor(m / 60) % 24) + ':' + attPad(m % 60); };
-        const tKstMin = ms => { const d = new Date(ms + 9 * 3600e3); return d.getUTCHours() * 60 + d.getUTCMinutes() + d.getUTCSeconds() / 60 + d.getUTCMilliseconds() / 60000; };
-        const tDow = ymd => '일월화수목금토'[new Date(ymd + 'T12:00:00Z').getUTCDay()];
-        const tMd = ymd => (+ymd.slice(5, 7)) + '/' + (+ymd.slice(8, 10));
-        const tFmt = v => { const r = Math.round(v * 10) / 10; return Number.isInteger(r) ? String(r) : r.toFixed(1); };
-        const tFmtN = v => v == null ? '–' : tFmt(v);
-        const tParseTod = s => { const m = /(\d{1,2}):(\d{2})(?::(\d{2}))?/.exec(s || ''); return m ? (+m[1]) * 60 + (+m[2]) + (+(m[3] || 0)) / 60 : null; };
-        const tExcl = n => ATT_EXCLUDE.some(x => (n || '').includes(x));
-        const tMgr = n => TOT_MGRS.some(x => (n || '').includes(x));
-        const tAge = d => Math.round((Date.parse(ivOpDate() + 'T12:00:00Z') - Date.parse(d + 'T12:00:00Z')) / 86400e3);   // 0 = 오늘 근무일
-        const tRev = d => (_trRevs && _trRevs[d]) || '';
-        const tPct = v => Math.round(v * 100);
-        const tMedian = a => { const s = a.slice().sort((x, y) => x - y), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
-        function tSetStatus(t, err, busy) { const s = $iv('bb-tot-st'); if (!s) return; s.textContent = t; s.classList.toggle('err', !!err); s.classList.toggle('busy', !!busy); }
-        async function tPool(items, n, fn) {
-            let i = 0;
-            await Promise.all(Array.from({ length: Math.min(n, items.length) }, async () => { while (i < items.length) { const it = items[i++]; try { await fn(it); } catch (e) { TD.err = e && e.message; } } }));
-        }
-        /* 근무시간 문자열 → [시작분, 종료분(시작보다 크게)] */
-        function tParseShift(str) {
-            const m = /(\d{1,2})(?::(\d{2}))?\s*[~–-]\s*(\d{1,2})(?::(\d{2}))?/.exec(str || '');
-            if (!m) return null;
-            const s = (+m[1]) * 60 + (+(m[2] || 0)); let e = (+m[3]) * 60 + (+(m[4] || 0));
-            if (e <= s) e += 1440;
-            return [s, e];
-        }
-        const tToAbs = (m, s) => s + ((((m - s) % 1440) + 1440) % 1440);   // 시계 분 → 근무 시작 기준 연속 분
-        const tGroupOf = sh => { const s = sh[0] % 1440; return (s >= 420 && s <= 900) ? 'd' : (s >= 1080 && s <= 1410) ? 'n' : 'x'; };   // 주간 07~15시 출근 / 야간 18~23:30 출근 / 그 외
-        const T_GNAME = { d: '주간', n: '야간', x: '기타' }, T_GDESC = { d: '07~15시 출근', n: '18~23:30 출근', x: '그 외 출근 시각' }, T_GICON = { d: '☀️', n: '🌙', x: '🕐' };
-        const T_BREAKS = [[420, 960, 660, 720], [480, 1020, 720, 780], [540, 1080, 780, 840], [600, 1140, 840, 900], [660, 1200, 900, 960], [840, 1380, 1020, 1080], [900, 1440, 1080, 1140], [1080, 1620, 1320, 1380], [1140, 1680, 1380, 1440], [1200, 1740, 1380, 1440], [1320, 1860, 1500, 1560], [1410, 1950, 1560, 1620]];
-        function tBreakWin(sh, name) {
-            if (!sh) return null;
-            if (name === '최정기' && sh[0] === 1200 && sh[1] === 1740) return [1320, 1380];
-            const r = T_BREAKS.find(x => x[0] === sh[0] && x[1] === sh[1]);
-            return r ? [r[2], r[3]] : null;
-        }
-        const tSk = m => m < 420 ? m + 1440 : m;   // 07:00 시작 근무일 기준 연속 분
-
-        /* ── 저장소 (지난 날짜는 한 번만 받아 압축 보관) ── */
-        const tLoadKey = k => { try { const o = JSON.parse(localStorage.getItem(k) || 'null'); return (o && typeof o === 'object' && !Array.isArray(o)) ? o : {}; } catch (e) { return {}; } };
-        function tDB() { return _totDB || (_totDB = { S: tLoadKey(TOT_KS), A: tLoadKey(TOT_KA), R: tLoadKey(TOT_KR), dirty: {} }); }
-        function tDirty(k) { tDB().dirty[k] = 1; if (!_totT) _totT = setTimeout(tFlush, 1500); }
-        function tFlush() {
-            _totT = null; const db = _totDB; if (!db) return;
-            const keys = { S: TOT_KS, A: TOT_KA, R: TOT_KR };
-            Object.keys(db.dirty).forEach(k => {
-                try { localStorage.setItem(keys[k], JSON.stringify(db[k])); }
-                catch (e) { if (k !== 'S') { db[k] = {}; try { localStorage.removeItem(keys[k]); } catch (e2) { /* 무시 */ } } }   // 용량 부족: 큰 보조 저장분부터 비움 (다음에 다시 받음)
-            });
-            db.dirty = {};
-        }
-        function tPurge() { _totDB = { S: {}, A: {}, R: {}, dirty: {} }; try { _sumDone = {}; } catch (e) { /* 아직 초기화 전 */ } [TOT_KS, TOT_KA, TOT_KR].forEach(k => { try { localStorage.removeItem(k); } catch (e) { /* 무시 */ } }); }
-
-        /* ── 요약(summary) 파일: 지난 날짜의 개입 요약(S)·10분 구간(R)·이석(A)을 월별 파일로 한 번에 받아 저장본을 채운다 ──
-              개입: intervenes/logs/_summary/YYYY-MM.json (api/intervene?view=summary_file) · 이석: no_limit/attendance/_summary/YYYY-MM.json (api/attendance-data?action=summary)
-              · 어제·오늘은 담지 않고 늘 새로 받음 · 개입은 날짜별 지문(rv)이 지금 서버와 같을 때만 사용(명단·근무표가 바뀌면 그 날짜는 새로 받음)
-              · 집계 제외 명단·구간 크기(cfg)가 다르면 그 파일은 통째로 무시 · 파일이 없거나 형식이 다르면 지금까지처럼 날짜별로 받음 */
-        const SUM_V = 1, SUM_CFG = JSON.stringify([ATT_EXCLUDE, TOT_MGRS, TOT_BIN]), ATT_SUM = ATT_API + '/attendance-data';
-        let _sumDone = {}, _sumPend = null, _sumSkip = false;
+        const SUM_V = 1;   // 개입 월 요약 파일 형식 버전
         const _ivSumC = {};
         function ivSumDoc(ym, fresh) {   // 개입 월 요약 (이 화면을 여는 동안 10분 재사용)
             const c = _ivSumC[ym]; if (c && !fresh && Date.now() - c.at < 10 * 60000) return c.p;
@@ -8106,7 +6806,7 @@
         }
         // 개입 누적통계·시간추이의 저장분(store)에 없는 지난 날짜를 요약에서 채운다 (서버의 날짜별 지문 revs 가 요약과 같은 날짜만 — 다르면 서버에서 새로 받음)
         async function ivPrefillStore(store, dates, revs, field, withGot) {
-            if (!revs || _sumSkip) return 0;
+            if (!revs) return 0;
             const today = ivOpDate(), miss = dates.filter(d => d < today && revs[d] && (!store.days[d] || (store.revs || {})[d] !== revs[d]));   // 저장분에 없거나 지문이 낡은 날짜 — 요약에 지금 지문과 같은 항목이 있으면 그걸로 채움(교체)
             if (!miss.length) return 0;
             const months = [...new Set(miss.map(d => d.slice(0, 7)))], docs = {};
@@ -8119,578 +6819,10 @@
             });
             return n;
         }
-        const tArcOk = a => !!a && (a.sm || Date.now() - a.at < 30 * 86400e3);
-        function tSumNeeded() {   // 저장본에 없거나 낡은 지난 날짜가 있을 때만 요약 파일을 받는다 (다 있으면 요청 0)
-            const db = tDB();
-            return (TD.dates || []).some(d => tAge(d) >= 2 && (!(db.S[d] && tSumFresh(d)) || !tArcOk(db.A[d])));
+        async function tPool(items, n, fn) {   // 동시 n개씩 처리 (개별 실패는 무시)
+            let i = 0;
+            await Promise.all(Array.from({ length: Math.min(n, items.length) }, async () => { while (i < items.length) { const it = items[i++]; try { await fn(it); } catch (e) { /* 무시 */ } } }));
         }
-        async function tSumFetchMonth(ym) {   // 이 달 요약 두 개를 받아 저장본에 채움 → 채운 날짜 수
-            const [a, b] = await Promise.all([ivSumDoc(ym), attSumDoc(ym)]);
-            const ok = x => !!x && x.cfg === SUM_CFG;
-            const db = tDB(), days = new Set();
-            if (ok(a)) {
-                const got = String(a.built || '').slice(0, 10) || ivOpDate();
-                Object.keys(a.days).forEach(d => {
-                    const e = a.days[d];
-                    if (!e || !/^\d{4}-\d{2}-\d{2}$/.test(d) || d.slice(0, 7) !== ym || tAge(d) < 2) return;
-                    const rv = tRev(d);
-                    if (rv && e.rv !== rv) return;   // 명단·근무표·로그가 바뀐 날짜 → 서버에서 새로 받음
-                    if (!e.none && !Array.isArray(e.p)) return;
-                    if (!(db.S[d] && tSumFresh(d))) { db.S[d] = e.none ? { none: 1, got, rv: e.rv || '' } : { got, rv: e.rv || '', p: e.p }; days.add(d); }
-                    if (e.R) Object.keys(e.R).forEach(nm => { const k = d + '|' + nm, x = e.R[nm]; if (!db.R[k] && Array.isArray(x) && Array.isArray(x[2])) { db.R[k] = { a: x[0], b: x[1], at: Date.now(), rv: e.rv || '', c: x[2] }; days.add(d); } });
-                });
-                tDirty('S'); tDirty('R');
-            }
-            if (ok(b)) {
-                Object.keys(b.days).forEach(d => {
-                    const e = b.days[d];
-                    if (!e || !/^\d{4}-\d{2}-\d{2}$/.test(d) || d.slice(0, 7) !== ym || tAge(d) < 2) return;
-                    if (tArcOk(db.A[d])) return;
-                    db.A[d] = (e.none || (!e.s && Array.isArray(e.st))) ? { at: Date.now(), sm: 1, none: 1 } : (e.s && typeof e.s === 'object' ? { at: Date.now(), sm: 1, s: e.s } : null);
-                    if (db.A[d]) days.add(d); else delete db.A[d];
-                });
-                tDirty('A');
-            }
-            return days.size;
-        }
-        async function tSumEnsure(force) {   // 요약 파일을 (이 화면을 여는 동안) 달마다 한 번만 받음
-            if (_sumSkip) return 0;
-            while (_sumPend) { try { await _sumPend; } catch (e) { /* 무시 */ } }   // 이미 받는 중이면 끝난 뒤 다시 계산 (그 사이 저장본을 비웠다면 처음부터 다시 채움)
-            if (force) _sumDone = {};
-            const months = [...new Set((TD.dates || []).filter(d => tAge(d) >= 2).map(d => d.slice(0, 7)))].filter(ym => !_sumDone[ym]);
-            if (!months.length) return 0;
-            return _sumPend = (async () => {
-                let n = 0;
-                try { await tPool(months, 3, async ym => { n += await tSumFetchMonth(ym); _sumDone[ym] = true; }); }
-                finally { _sumPend = null; }
-                TD.sm = (TD.sm || 0) + n; _totAvgc = null;
-                return n;
-            })();
-        }
-
-        /* ── 개입 요약 (날짜별) ── */
-        const tKeep = list => (list || []).filter(p => p && p.name && !tExcl(p.name) && !tMgr(p.name)).map(p => ({
-            name: p.name, shift: p.shift || '', solved: +p.solved || 0, hours: Array.isArray(p.hours) ? p.hours.map(v => +v || 0) : null,
-            ov: Array.isArray(p.ov) ? p.ov : null, curIdx: typeof p.curIdx === 'number' ? p.curIdx : -1, futFrom: typeof p.futFrom === 'number' ? p.futFrom : -1
-        }));
-        const tToSum = list => ({ people: list.map(p => Object.assign({ sh: tParseShift(p.shift) }, p)).filter(p => p.sh) });
-        const tPack = list => list.map(p => [p.name, p.shift, p.solved, p.hours, p.ov ? p.ov.map(x => x ? String(x)[0] : '.').join('') : '', p.curIdx, p.futFrom]);
-        const tUnpack = arr => arr.map(a => ({ name: a[0], shift: a[1], solved: a[2], hours: a[3], ov: a[4] ? [...a[4]].map(c => c === '.' ? '' : c) : null, curIdx: a[5], futFrom: a[6] }));
-        function tSumFresh(d) {
-            const r = tDB().S[d]; if (!r) return false;
-            if (r.none) return tAge(d) >= 2;
-            const rv = tRev(d);
-            if (rv) return r.rv === rv;
-            return (r.got || '') >= spShift(d, 2);
-        }
-        async function tGetSum(d, force) {
-            const today = ivOpDate(), live = d === today, db = tDB();
-            const m = TD.sum[d];
-            if (!force && m !== undefined && (!live || Date.now() - (TD.sumAt[d] || 0) < 60000)) return m;
-            if (TD.pend['s' + d]) return TD.pend['s' + d];
-            return TD.pend['s' + d] = (async () => {
-                try {
-                    let list = null;
-                    if (live && !_ivDate && _ivData && _ivData.ok === true && Array.isArray(_ivData.people) && Date.now() - (_ivData._at || 0) < 60000) list = _ivData.people;   // 개입 현황이 30초마다 받아 둔 실시간 요약
-                    else if (!live && !force) {
-                        const r = db.S[d];
-                        if (r && tSumFresh(d)) { TD.hit++; TD.sum[d] = r.none ? null : tToSum(tUnpack(r.p)); TD.sumAt[d] = Date.now(); return TD.sum[d]; }
-                        const c = _trCache.get(d);   // 시간추이에서 이미 받은 그날 요약
-                        if (c && c.d && Array.isArray(c.d.people)) list = c.d.people;
-                    }
-                    if (!list) {
-                        TD.net++;
-                        const j = await attFetchJson(IV_API + '?view=summary&date=' + d);
-                        if (!j || j._404 || j.ok !== true || !Array.isArray(j.people)) {
-                            TD.sum[d] = null; TD.sumAt[d] = Date.now();
-                            if (j && j._404 && !live && tAge(d) >= 2) { db.S[d] = { none: 1, got: today, rv: tRev(d) }; tDirty('S'); }
-                            return null;
-                        }
-                        list = j.people;
-                    }
-                    const keep = tKeep(list);
-                    TD.sum[d] = tToSum(keep); TD.sumAt[d] = Date.now();
-                    if (!live) { db.S[d] = { got: today, rv: tRev(d), p: tPack(keep) }; tDirty('S'); }
-                    return TD.sum[d];
-                } catch (e) { TD.err = e && e.message; if (TD.sum[d] === undefined) TD.sum[d] = null; return TD.sum[d]; }
-                finally { Promise.resolve().then(() => { delete TD.pend['s' + d]; }); }   /* 바로 끝나는 경우(저장본 사용)에도 아래 대입이 끝난 뒤 지워서 '진행 중' 표시가 남지 않게 */
-            })();
-        }
-        window.__bbTotFeed = (d, j) => {   // 시간추이·누적통계가 지난 날짜 요약을 받았을 때 같이 보관 (같은 응답을 두 번 받지 않도록)
-            try {
-                if (!d || !j || j.ok !== true || !Array.isArray(j.people) || d >= ivOpDate()) return;
-                const db = tDB(), keep = tKeep(j.people);
-                db.S[d] = { got: ivOpDate(), rv: tRev(d), p: tPack(keep) }; tDirty('S');
-            } catch (e) { /* 무시 */ }
-        };
-
-        /* ── 이석 기록 (날짜별) ── */
-        // 저장 형식: { 키(이름): [ [이석 분, 착석 분|null, 소요초|null], … ] }
-        function tArcFromStats(stats) {
-            const o = {};
-            (stats || []).forEach(s => {
-                const logs = [];
-                (s.log || []).forEach(l => {
-                    if (!l || !l.away) return;
-                    const a = tParseTod(l.away); if (a == null) return;
-                    const b = l.back ? tParseTod(l.back) : null;
-                    logs.push([Math.round(a * 100) / 100, b == null ? null : Math.round(b * 100) / 100, typeof l.durationSec === 'number' ? l.durationSec : null]);
-                });
-                const k = s.dn || s.name; if (!k) return;
-                o[k] = logs; if (s.name && s.name !== k && !o[s.name]) o[s.name] = logs;
-            });
-            return o;
-        }
-        function tArcFromMonthDoc(day) {   // attGetDayLogs 의 days[날짜] = { 이름: [횟수, 총초, [[이석, 착석, 소요초, 플래그], …]] }
-            const o = {};
-            Object.keys(day).forEach(n => {
-                const logs = [];
-                ((day[n] && day[n][2]) || []).forEach(l => {
-                    if (!l || !l[0]) return;
-                    const a = tParseTod(l[0]); if (a == null) return;
-                    const b = l[1] ? tParseTod(l[1]) : null;
-                    logs.push([Math.round(a * 100) / 100, b == null ? null : Math.round(b * 100) / 100, typeof l[2] === 'number' ? l[2] : null]);
-                });
-                o[n] = logs;
-            });
-            return o;
-        }
-        async function tGetArc(d, force) {
-            const today = ivOpDate(), live = d === today, db = tDB(), age = tAge(d);
-            if (!force && TD.arc[d] !== undefined && (!live || Date.now() - (TD.arcAt[d] || 0) < 60000)) return TD.arc[d];
-            if (TD.pend['a' + d]) return TD.pend['a' + d];
-            return TD.pend['a' + d] = (async () => {
-                try {
-                    const set = (v, persist) => { TD.arc[d] = v; TD.arcAt[d] = Date.now(); _totAvgc = null; if (persist && !live) { db.A[d] = v ? { at: Date.now(), s: v } : { at: Date.now(), none: 1 }; tDirty('A'); } return v; };
-                    if (live && _attLive && _attLive.date === d && Array.isArray(_attLive.stats) && Date.now() - (_attLive._at || 0) < 60000) return set(tArcFromStats(_attLive.stats), false);   // 이석 현황이 받아 둔 실시간 값
-                    if (!live && !force) {
-                        const r = db.A[d];
-                        if (r && (age >= 2 ? tArcOk(r) : Date.now() - r.at < 3600e3)) { TD.hit++; return set(r.none ? null : r.s, false); }
-                        const mem = _attDayCache[d];   // 이석 화면에서 이미 본 날
-                        if (mem && mem.v && Array.isArray(mem.v.stats) && mem.v.stats.length && Date.now() - mem.at < 3600e3) return set(tArcFromStats(mem.v.stats), true);
-                        const mo = _attMonthCache['l' + d.slice(0, 7)];   // 이석 로그(월) 에서 이미 받은 날
-                        if (mo && mo.v && mo.v.days && mo.v.days[d] && Date.now() - mo.at < 3600e3) return set(tArcFromMonthDoc(mo.v.days[d]), true);
-                    }
-                    let st = null, ok = true, isLive = false;
-                    try { TD.net++; const j = await attFetchJson(ATT_API + '/attendance-data?action=archive&date=' + d); if (j && !j._404 && Array.isArray(j.stats) && j.stats.length) st = j.stats; }
-                    catch (e) { ok = false; }
-                    if (!st && live) {   // 오늘 근무일은 보관본이 아직 없을 수 있어 실시간 값을 씀
-                        try { TD.net++; const j = await attFetchJson(ATT_API + '/attendance'); if (j && Array.isArray(j.stats)) { st = j.stats; isLive = true; } } catch (e) { ok = false; }
-                    }
-                    if (st) return set(tArcFromStats(st), !isLive);
-                    if (ok) return set(null, age >= 2);
-                    TD.arc[d] = null; TD.arcAt[d] = Date.now(); return null;   // 네트워크 실패: 저장하지 않고 이번 화면에서만 비움
-                } catch (e) { TD.err = e && e.message; return TD.arc[d] || null; }
-                finally { Promise.resolve().then(() => { delete TD.pend['a' + d]; }); }   /* 바로 끝나는 경우(저장본 사용)에도 아래 대입이 끝난 뒤 지워서 '진행 중' 표시가 남지 않게 */
-            })();
-        }
-        const tArcOf = (d, name) => { const a = TD.arc[d]; return a && a[name] ? a[name] : null; };
-        function tAvgDur(name) {   // 사람별 평균 이석시간(분) — 정상 기록(이석+착석+소요초) 10건을 넘을 때만. 받아 둔 기록 전체 기준
-            if (!_totAvgc) {
-                _totAvgc = {};
-                Object.keys(TD.arc).forEach(dt => { const a = TD.arc[dt]; if (!a) return; Object.keys(a).forEach(k => { a[k].forEach(l => { if (l[1] != null && typeof l[2] === 'number') { const x = _totAvgc[k] || (_totAvgc[k] = { s: 0, n: 0 }); x.s += l[2]; x.n++; } }); }); });
-            }
-            const a = _totAvgc[name]; return (a && a.n > 10) ? a.s / a.n / 60 : null;
-        }
-
-        /* ── 10분 구간 건수 (고른 사람 × 날짜) ── */
-        const tPersonOn = (d, name) => { const s = TD.sum[d]; return s ? s.people.find(p => p.name === name) : null; };
-        function tBinRows(rows, sh) {   // 이름이 확인된 해결 건만, 10분 경계에 걸친 건은 시작 시각 구간에 1건
-            const nb = Math.ceil((sh[1] - sh[0]) / TOT_BIN), c = new Array(nb).fill(0);
-            (rows || []).forEach(r => {
-                if (!r || r.st !== 'resolved' || r.inf || !r.t) return;
-                const t = tToAbs(tKstMin(r.t), sh[0]);
-                c[Math.max(0, Math.min(nb - 1, Math.floor((t - sh[0]) / TOT_BIN)))]++;
-            });
-            return c;
-        }
-        async function tGetBins(d, name) {
-            const p = tPersonOn(d, name); if (!p) return null;
-            const k = d + '|' + name, sh = p.sh, age = tAge(d), live = age <= 0, db = tDB();
-            if (TD.bins[k] !== undefined && (!live || Date.now() - (TD.binAt[k] || 0) < 120000)) return TD.bins[k];
-            if (TD.pend['r' + k]) return TD.pend['r' + k];
-            return TD.pend['r' + k] = (async () => {
-                try {
-                    if (!live && age >= 2 && !db.R[k]) { try { await tSumEnsure(false); } catch (e) { /* 요약 실패는 무시 — 아래에서 날짜별로 받음 */ } }
-                    const r = db.R[k];
-                    if (!live && r && r.a === sh[0] && r.b === sh[1]) {
-                        const rv = tRev(d), ok = age >= 2 ? !(rv && r.rv && r.rv !== rv) : (Date.now() - r.at < 3600e3);
-                        if (ok) { TD.hit++; TD.bins[k] = r.c; TD.binAt[k] = Date.now(); return r.c; }
-                    }
-                    TD.net++;
-                    const j = await attFetchJson(IV_API + '?view=person&name=' + encodeURIComponent(name) + '&date=' + d);
-                    if (j && j.ok === true && Array.isArray(j.rows)) {
-                        const c = tBinRows(j.rows, sh);
-                        TD.bins[k] = c; TD.binAt[k] = Date.now();
-                        if (!live) { db.R[k] = { a: sh[0], b: sh[1], at: Date.now(), rv: tRev(d), c }; tDirty('R'); }
-                        return c;
-                    }
-                    return null;
-                } catch (e) { TD.err = e && e.message; return null; }   // 실패는 저장하지 않음 (다시 열면 재시도)
-                finally { Promise.resolve().then(() => { delete TD.pend['r' + k]; }); }   /* 바로 끝나는 경우(저장본 사용)에도 아래 대입이 끝난 뒤 지워서 '진행 중' 표시가 남지 않게 */
-            })();
-        }
-
-        /* ── 계산 ── */
-        function tAwayView(name, date, sh) {
-            const log = tArcOf(date, name); if (!log) return null;
-            const avg = tAvgDur(name), now = Date.now(), today = ivOpDate(), out = [];
-            log.forEach((l, idx) => {
-                const a = tToAbs(l[0], sh[0]);
-                if (l[1] != null) { let b = tToAbs(l[1], sh[0]); if (b < a) b += 1440; out.push({ a, b, miss: false, est: false }); return; }
-                let conf = date !== today || idx < log.length - 1;   // 미기입은 확정(지난 날 / 뒤에 기록 / 퇴근)일 때만 평균 보정
-                if (!conf) conf = tToAbs(tKstMin(now), sh[0]) >= sh[1];
-                if (TS.est && avg != null && conf) out.push({ a, b: Math.min(sh[1], a + avg), miss: true, est: true });
-                else out.push({ a, b: null, miss: true, est: false });
-            });
-            return out;
-        }
-        const tOccBin = (v, m) => tSum(v.map(x => x.b == null ? 0 : Math.max(0, Math.min(x.b, m + TOT_BIN) - Math.max(x.a, m))));
-        function tGroupAvgSolved(date, g) {
-            const s = TD.sum[date]; if (!s) return null;
-            const v = s.people.filter(p => tGroupOf(p.sh) === g && p.solved > 0).map(p => p.solved);
-            return v.length ? tSum(v) / v.length : null;
-        }
-        function tLocalBrk(sh, name, delta) {   // 휴게시간 [시작,끝] — 근무 시작 기준 연속 분 + delta
-            const bw = tBreakWin(sh, name); if (!bw) return null;
-            const a = tToAbs(bw[0], sh[0]), len = ((bw[1] - bw[0]) + 1440) % 1440 || 60;
-            const b0 = Math.max(sh[0], a), b1 = Math.min(sh[1], a + len);
-            return b1 > b0 ? [b0 + delta, b1 + delta] : null;
-        }
-        /* 같은 구분 인원의 '그 시간대' 개입 건수 중앙값 → 10분당 건수 (본인 제외, 휴게·다중·과학관 시간과 아직 오지 않은 시간 제외, 표본 3명 미만이면 비움) */
-        function tBaseBins(name, date, sh) {
-            const s = TD.sum[date], nb = Math.ceil((sh[1] - sh[0]) / TOT_BIN), g = tGroupOf(sh), today = date === ivOpDate();
-            if (!s) return new Array(nb).fill(null);
-            const peers = s.people.filter(p => p.name !== name && tGroupOf(p.sh) === g && Array.isArray(p.hours)), byHour = {};
-            for (let hr = Math.floor(sh[0] / 60); hr <= Math.floor((sh[1] - 1) / 60); hr++) {
-                const key = hr % 24, vals = [];
-                peers.forEach(p => {
-                    const i = (key - (Math.floor(p.sh[0] / 60) % 24) + 24) % 24;
-                    if (i >= p.hours.length) return;
-                    if (p.ov && p.ov[i]) return;
-                    if (p.futFrom >= 0 && i >= p.futFrom) return;
-                    if (today && p.curIdx >= 0 && i >= p.curIdx) return;
-                    vals.push(+p.hours[i] || 0);
-                });
-                byHour[hr] = vals.length >= 3 ? tMedian(vals) / 6 : null;
-            }
-            return Array.from({ length: nb }, (_, i) => byHour[Math.floor((sh[0] + i * TOT_BIN) / 60)]);
-        }
-        function tDayStruct(name, date, sh, off) {   // 하루치: 10분 구간별 건수 · 이석 분 · 이석 목록
-            const c = TD.bins[date + '|' + name]; if (!c) return null;
-            const v = tAwayView(name, date, sh) || [], delta = tSk(sh[0]) - sh[0];
-            const occ = c.map((_, i) => tOccBin(v, sh[0] + i * TOT_BIN));
-            return { date, sh, off, c, v, occ, base: tBaseBins(name, date, sh), tot: tSum(c), awayMin: tSum(v.map(x => x.b == null ? 0 : x.b - x.a)), brkL: tLocalBrk(sh, name, 0), brkG: tLocalBrk(sh, name, delta), hasArc: !!TD.arc[date] };
-        }
-        function tBuildCtx(person) {
-            const name = person.name;
-            if (TS.mode === 'day') {
-                const sh = person.sh, ds = tDayStruct(name, TS.date, sh, 0); if (!ds) return null;
-                const g = tGroupOf(sh), nb = ds.c.length, gd = tGroupAvgSolved(TS.date, g), brk = new Array(nb).fill(false);
-                if (ds.brkL) for (let i = 0; i < nb; i++) { const m = sh[0] + i * TOT_BIN; if (m < ds.brkL[1] && m + TOT_BIN > ds.brkL[0]) brk[i] = true; }
-                return { mode: 'day', name, G0: sh[0], nb, cnt: ds.c.slice(), occ: ds.occ.slice(), dr: null, cover: new Array(nb).fill(1), spans: [{ g0: sh[0], g1: sh[1], days: 1, brk: ds.brkL, sh }], days: [ds], views: ds.v, brk, group: g, groupLabel: T_GNAME[g], gday: gd, flat: gd == null ? null : gd / nb, base: ds.base.slice(), sh };
-            }
-            const used = [];
-            TD.dates.forEach(d => { const p = tPersonOn(d, name); if (p && TD.bins[d + '|' + name]) used.push({ date: d, sh: p.sh }); });
-            if (!used.length) return null;
-            const G0 = Math.min(...used.map(u => tSk(u.sh[0]))), G1 = Math.max(...used.map(u => tSk(u.sh[0]) + (u.sh[1] - u.sh[0])));
-            const nb = Math.ceil((G1 - G0) / TOT_BIN), cs = new Array(nb).fill(0), os = new Array(nb).fill(0), dc = new Array(nb).fill(0), cov = new Array(nb).fill(0), bsum = new Array(nb).fill(0), bcnt = new Array(nb).fill(0);
-            const days = [], spanMap = {};
-            used.forEach(u => {
-                const ds = tDayStruct(name, u.date, u.sh, Math.round((tSk(u.sh[0]) - G0) / TOT_BIN)); if (!ds) return;
-                days.push(ds);
-                const key = u.sh.join(), sp = spanMap[key] || (spanMap[key] = { g0: tSk(u.sh[0]), g1: tSk(u.sh[0]) + (u.sh[1] - u.sh[0]), days: 0, brk: ds.brkG, sh: u.sh });
-                sp.days++;
-                ds.c.forEach((v, i) => { const gi = ds.off + i; if (gi < 0 || gi >= nb) return; cs[gi] += v; os[gi] += ds.occ[i]; if (ds.occ[i] > 0.01) dc[gi]++; cov[gi]++; if (ds.base[i] != null) { bsum[gi] += ds.base[i]; bcnt[gi]++; } });
-            });
-            const spans = Object.values(spanMap).sort((a, b) => a.g0 - b.g0), brk = new Array(nb).fill(false);
-            spans.forEach(sp => { if (sp.brk) for (let i = 0; i < nb; i++) { const m = G0 + i * TOT_BIN; if (m < sp.brk[1] && m + TOT_BIN > sp.brk[0]) brk[i] = true; } });
-            const gset = new Set(days.map(d => tGroupOf(d.sh))), gAvgs = [], gFlat = [];
-            days.forEach(d => { const a = tGroupAvgSolved(d.date, tGroupOf(d.sh)); if (a != null) { gAvgs.push(a); gFlat.push(a / d.c.length); } });
-            const g = tGroupOf(person.sh);
-            return { mode: 'all', name, G0, nb, cnt: cs.map((v, i) => cov[i] ? v / cov[i] : null), occ: os.map((v, i) => cov[i] ? v / cov[i] : null), dr: dc.map((v, i) => cov[i] ? v / cov[i] : null), cover: cov, spans, days, brk, group: g, groupLabel: gset.size === 1 ? T_GNAME[g] : '같은 구분',
-                gday: gAvgs.length ? tSum(gAvgs) / gAvgs.length : null, flat: gFlat.length ? tSum(gFlat) / gFlat.length : null, base: bsum.map((v, i) => bcnt[i] ? v / bcnt[i] : null), sh: person.sh };
-        }
-
-        /* ── 그래프 (칸 너비 BW 는 창 폭에 맞춰 자동) ── */
-        function tPath(arr, xf, yf) { let d = '', pen = false; arr.forEach((v, i) => { if (v == null) { pen = false; return; } d += (pen ? 'L' : 'M') + xf(i).toFixed(1) + ' ' + yf(v).toFixed(1); pen = true; }); return d; }
-        function tChartSvg(o, BW, CHv) {
-            const all = o.mode === 'all', G0 = o.G0, nb = o.nb, lane = all && TS.away, PL = TOT_PL, PT = TOT_PT, CH = CHv || TOT_CH, AX = TOT_AX;
-            const LH = 56, LG = 36, laneY = PT + CH + (lane ? LG : 0), bottom = lane ? laneY + LH : PT + CH;
-            const W = PL + TOT_PR + nb * BW, H = bottom + AX, x = i => PL + BW * (i + .5), xm = m => PL + (m - G0) / TOT_BIN * BW;
-            const hasBase = o.base && o.base.some(v => v != null);
-            const cv = o.cnt.filter(v => v != null).concat(TS.avg ? (hasBase ? o.base.filter(v => v != null) : (o.flat != null ? [o.flat] : [])) : []);
-            const ymax = Math.max(3, Math.ceil(Math.max.apply(null, cv) + 0.6)), stp = ymax > 8 ? 2 : 1, y = v => PT + CH - (v / ymax) * CH;
-            let s = '<svg class="bb-tot-ch" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + trEsc(o.name) + ' 10분 단위 개입 건수와 이석">';
-            s += '<defs><pattern id="tBrk" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" class="p-brkbg"/><line x1="0" y1="0" x2="0" y2="7" class="p-brkln" stroke-width="2"/></pattern>' +
-                '<pattern id="tEst" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" class="p-estbg"/><line x1="0" y1="0" x2="0" y2="7" class="p-estln" stroke-width="3"/></pattern></defs>';
-            s += '<rect class="s-bg" x="' + PL + '" y="' + PT + '" width="' + nb * BW + '" height="' + CH + '"/>';
-            if (lane) s += '<rect class="s-bg" x="' + PL + '" y="' + laneY + '" width="' + nb * BW + '" height="' + LH + '"/>';
-            for (let i = 0; i < nb;) {   // 근무 외 구간(근무시간이 바뀐 사람)
-                if (o.cnt[i] != null) { i++; continue; }
-                let j = i; while (j < nb && o.cnt[j] == null) j++;
-                const xa = PL + i * BW, w = (j - i) * BW;
-                s += '<rect class="s-off" x="' + xa + '" y="' + PT + '" width="' + w + '" height="' + CH + '"/>';
-                if (lane) s += '<rect class="s-off" x="' + xa + '" y="' + laneY + '" width="' + w + '" height="' + LH + '"/>';
-                if (w >= 70) s += '<text class="s-tx" x="' + (xa + w / 2) + '" y="' + (PT + CH / 2) + '" text-anchor="middle">근무시간 외</text>';
-                i = j;
-            }
-            let brkLbl = '';
-            o.spans.forEach(sp => {   // 휴게 빗금 (라벨은 선 위에 그리려고 뒤에서 따로)
-                if (!sp.brk) return;
-                const xa = xm(sp.brk[0]), w = xm(sp.brk[1]) - xa;
-                s += '<rect class="s-brk" x="' + xa + '" y="' + PT + '" width="' + w + '" height="' + CH + '"/>';
-                if (lane) s += '<rect class="s-brk" x="' + xa + '" y="' + laneY + '" width="' + w + '" height="' + LH + '"/>';
-                const cx = xa + w / 2, cy = PT + CH / 2;
-                brkLbl += '<rect x="' + (cx - 24) + '" y="' + (cy - 12) + '" width="48" height="24" rx="7" class="s-brktag"/><text class="s-brktx" x="' + cx + '" y="' + (cy + 5) + '" text-anchor="middle">휴게</text>';
-            });
-            if (TS.away && !all) o.views.forEach(v => {   // 날짜별: 이석 구간 띠
-                if (v.b == null) { s += '<line class="s-awedge" stroke-dasharray="3 3" x1="' + xm(v.a) + '" x2="' + xm(v.a) + '" y1="' + PT + '" y2="' + (PT + CH) + '"/><text class="s-awtx" style="text-anchor:start" x="' + xm(v.a) + '" dx="4" y="' + (PT + 12) + '">미기입</text>'; return; }
-                const xa = xm(v.a), xb = xm(v.b), w = xb - xa, mins = Math.round(v.b - v.a);
-                s += '<rect class="' + (v.est ? 's-est' : 's-away') + '" x="' + xa + '" y="' + PT + '" width="' + w + '" height="' + CH + '"/><line class="s-awedge" x1="' + xa + '" x2="' + xa + '" y1="' + PT + '" y2="' + (PT + CH) + '"/>';
-                if (!v.est) s += '<line class="s-awedge" x1="' + xb + '" x2="' + xb + '" y1="' + PT + '" y2="' + (PT + CH) + '"/>';
-                const t = v.est ? (w >= 70 ? '추정 ' + mins + '분' : w >= 34 ? '추정' : '') : (w >= 44 ? '이석 ' + mins + '분' : w >= 26 ? mins + '분' : '');
-                if (t) s += '<text class="s-awtx" x="' + (xa + w / 2) + '" y="' + (PT + 13) + '">' + t + '</text>';
-            });
-            for (let v = 0; v <= ymax; v += stp) s += '<line class="s-grid" x1="' + PL + '" x2="' + (PL + nb * BW) + '" y1="' + y(v) + '" y2="' + y(v) + '"/><text class="s-tx" x="' + (PL - 8) + '" y="' + (y(v) + 4) + '" text-anchor="end">' + v + '</text>';
-            s += '<text class="s-tx" x="4" y="' + (PT - 14) + '">' + (all ? '건/10분 (평균)' : '건/10분') + '</text>';
-            for (let i = 0; i <= nb; i++) {
-                const m = G0 + i * TOT_BIN; if (m % 60 !== 0) continue;
-                s += '<line class="s-hr" x1="' + (PL + i * BW) + '" x2="' + (PL + i * BW) + '" y1="' + PT + '" y2="' + bottom + '"/><text class="s-tx" x="' + (PL + i * BW) + '" y="' + (bottom + 18) + '" text-anchor="middle">' + attPad(Math.floor(m / 60) % 24) + ':00</text>';
-            }
-            if (all && o.spans.length > 1) o.spans.forEach(sp => {   // 근무시간이 바뀐 경우: 구간 머리글
-                const xa = xm(sp.g0), xb = xm(sp.g1);
-                s += '<line class="s-span" x1="' + xa + '" x2="' + xb + '" y1="' + (PT - 4) + '" y2="' + (PT - 4) + '"/><text class="s-tx" x="' + ((xa + xb) / 2) + '" y="' + (PT - 9) + '" text-anchor="middle" style="font-weight:800;fill:var(--tx)">' + tHhmm(sp.g0) + '–' + tHhmm(sp.g1) + ' 근무 · ' + sp.days + '일</text>';
-            });
-            if (TS.avg) {
-                if (hasBase) s += '<path class="s-avg" d="' + tPath(o.base, x, y) + '"/>';
-                else if (o.flat != null) s += '<line class="s-avg" x1="' + PL + '" x2="' + (PL + nb * BW) + '" y1="' + y(o.flat) + '" y2="' + y(o.flat) + '"/>';
-            }
-            s += '<path class="s-line" d="' + tPath(o.cnt, x, y) + '"/>';
-            const awayAt = i => TS.away && o.occ[i] != null && o.occ[i] >= (all ? 3 : 5), roomy = BW >= 20;
-            let lastLbl = -9;
-            o.cnt.forEach((v, i) => {
-                if (v == null) return;
-                const aw = awayAt(i);
-                s += '<circle class="s-dot' + (aw ? ' aw' : '') + '" cx="' + x(i) + '" cy="' + y(v) + '" r="' + (roomy ? 4.5 : 3.6) + '"/>';
-                const peak = v > 0 && (o.cnt[i - 1] == null || v >= o.cnt[i - 1]) && (o.cnt[i + 1] == null || v >= o.cnt[i + 1]) && i - lastLbl >= 2;   // 칸이 좁으면 점 위 숫자는 봉우리에만
-                if (roomy || peak) { lastLbl = i; s += '<text class="s-lbl' + (v === 0 ? ' z' : '') + (aw && v > 0 ? ' aw' : '') + '" x="' + x(i) + '" y="' + (y(v) - 9) + '">' + tFmt(v) + '</text>'; }
-            });
-            s += brkLbl;
-            if (lane) {   // 전체 통계: 이석 흐름 면적 (개입 그래프 바로 아래, 같은 시간축)
-                const ov = o.occ.filter(v => v != null), lmax = Math.max(2, Math.ceil(Math.max.apply(null, ov))), ly = v => laneY + LH - (v / lmax) * LH;
-                s += '<text class="s-tx" x="' + PL + '" y="' + (laneY - 12) + '" style="fill:var(--away);font-weight:800">이석 흐름 — 10분 중 평균 이석한 시간(분)</text>';
-                (lmax >= 4 && lmax % 2 === 0 ? [0, lmax / 2, lmax] : [0, lmax]).forEach(v => { s += '<line class="s-grid" x1="' + PL + '" x2="' + (PL + nb * BW) + '" y1="' + ly(v) + '" y2="' + ly(v) + '"/><text class="s-tx" x="' + (PL - 8) + '" y="' + (ly(v) + 4) + '" text-anchor="end" style="fill:var(--away)">' + v + '분</text>'; });
-                for (let i = 0; i < nb;) {
-                    if (o.occ[i] == null) { i++; continue; }
-                    let j = i; while (j < nb && o.occ[j] != null) j++;
-                    const pts = []; for (let k = i; k < j; k++) pts.push(x(k).toFixed(1) + ' ' + ly(o.occ[k]).toFixed(1));
-                    s += '<path class="s-area" d="M' + x(i).toFixed(1) + ' ' + ly(0) + ' L' + pts.join(' L') + ' L' + x(j - 1).toFixed(1) + ' ' + ly(0) + ' Z"/><path class="s-aline" d="M' + pts.join(' L') + '"/>';
-                    i = j;
-                }
-                const pick = []; // 이석이 가장 많은 구간 표시(최대 3곳, 서로 5칸 이상 떨어지게)
-                o.occ.map((v, i) => [v, i]).filter(a => a[0] != null && a[0] >= 0.8).sort((a, b) => b[0] - a[0]).forEach(a => { if (pick.length < 3 && pick.every(p => Math.abs(p[1] - a[1]) >= 5)) pick.push(a); });
-                pick.forEach(([v, i]) => { const yy = Math.max(laneY + 11, ly(v) - 8); s += '<circle cx="' + x(i) + '" cy="' + ly(v) + '" r="4" class="s-pk"/><text class="s-pktx" x="' + x(i) + '" y="' + yy + '" text-anchor="middle">' + tHhmm(G0 + i * TOT_BIN) + ' · ' + v.toFixed(1) + '분</text>'; });
-            }
-            for (let i = 0; i < nb; i++) s += '<rect class="hit" data-i="' + i + '" x="' + (PL + i * BW) + '" y="' + PT + '" width="' + BW + '" height="' + (bottom - PT + AX) + '"/>';
-            return s + '</svg>';
-        }
-
-        /* ── 화면 ── */
-        function tAllPeople() {   // 모든 날짜의 요약에 나온 전체 근무자 — 근무시간은 가장 최근 값 기준
-            const map = {};
-            TD.dates.forEach(d => { const s = TD.sum[d]; if (!s) return; s.people.forEach(p => { const m = map[p.name] || (map[p.name] = { name: p.name, sh: p.sh, days: 0, solved: 0 }); m.days++; m.solved += p.solved; }); });
-            return Object.values(map);
-        }
-        function tDatesChips() {
-            return '<div class="bb-tot-dates">' + TD.dates.map(d => {
-                const p = tPersonOn(d, TS.name), sm = TD.sum[d];
-                return '<button class="bb-tot-dc' + (d === TS.date ? ' on' : '') + (p ? '' : ' off') + '" data-act="day" data-v="' + d + '"><span class="dd">' + tMd(d) + '(' + tDow(d) + ')</span><span class="dn">' + (p ? p.solved : (sm === undefined ? '·' : '–')) + '</span></button>';
-            }).join('') + '</div>';
-        }
-        function totRenderPeople() {
-            const box = $iv('bb-tot-ppl'); if (!box) return;
-            const keep = box.scrollTop, ppl = tAllPeople(), all = TS.mode === 'all';
-            const val = p => { if (all) return p.days ? p.solved / p.days : 0; const q = tPersonOn(TS.date, p.name); return q ? q.solved : null; };
-            let h = '';
-            ['d', 'n', 'x'].forEach(g => {
-                const list = ppl.filter(p => tGroupOf(p.sh) === g && !BBRESIGN.hidden(p.name)).sort((a, b) => tSk(a.sh[0]) - tSk(b.sh[0]) || a.sh[1] - b.sh[1] || a.name.localeCompare(b.name, 'ko'));
-                if (!list.length) return;
-                h += '<div class="bb-tot-gh g-' + g + '">' + T_GICON[g] + ' ' + T_GNAME[g] + ' · ' + T_GDESC[g] + ' <b>' + list.length + '명</b></div>';
-                const mx = Math.max(1, ...list.map(p => val(p) || 0));
-                list.forEach(p => {
-                    const v = val(p), off = v == null;
-                    h += '<button class="bb-tot-pi g-' + g + (p.name === TS.name ? ' on' : '') + (off ? ' off' : '') + '" data-act="pid" data-v="' + trEsc(p.name) + '"><span class="pt"><span class="pn">' + BBRESIGN.html(p.name) + '</span><span class="ps">' + tHhmm(p.sh[0]) + '–' + tHhmm(p.sh[1]) + '</span></span><span class="pv">' + (off ? '–' : tFmt(v) + '<small>' + (all ? '/일' : '건') + '</small>') + '</span>' + (off ? '' : '<i style="width:' + Math.round(v / mx * 100) + '%"></i>') + '</button>';
-                });
-            });
-            box.innerHTML = h || '<div class="bb-tot-msg" style="grid-column:1/-1;padding:14px">근무자 정보를 불러오는 중…</div>'; box.scrollTop = keep;
-        }
-        function totSyncCtl() {
-            totPop.querySelectorAll('#bb-tot-seg button').forEach(b => b.classList.toggle('on', TS.mode === b.dataset.v));
-            totPop.querySelectorAll('input[data-opt]').forEach(i => { i.checked = !!TS[i.dataset.opt]; });
-        }
-        async function totEnsure() {
-            const ap = tAllPeople().find(p => p.name === TS.name);
-            const person = TS.mode === 'all' ? (ap ? { name: TS.name, sh: ap.sh } : null) : tPersonOn(TS.date, TS.name);
-            if (!person) return null;
-            const jobs = [];
-            if (TS.mode === 'day') jobs.push(tGetBins(TS.date, TS.name), tGetArc(TS.date));
-            else TD.dates.forEach(d => { if (tPersonOn(d, TS.name)) jobs.push(tGetBins(d, TS.name)); jobs.push(tGetArc(d)); });
-            tSetStatus('불러오는 중… ☕', false, true);
-            TD.busy++; try { await tPool(jobs, 4, p => p); } finally { TD.busy--; }
-            return person;
-        }
-        async function totRender() {
-            totSyncCtl(); totRenderPeople();
-            const seq = ++_totSeq, body = $iv('bb-tot-body'); if (!body) return;
-            if (!TS.name) { body.innerHTML = '<div class="bb-tot-msg">' + (TD.bg ? '' : '아래에서 인원을 고르세요.') + '</div>'; return; }
-            const pre = body.querySelector('.bb-tot-dates'), keepD = pre ? pre.scrollLeft : 0, keepC = (body.querySelector('.bb-tot-cs') || {}).scrollLeft || 0, keepT = body.scrollTop;
-            const person = await totEnsure(); if (seq !== _totSeq) return;
-            tSetStatus(TD.err ? '일부 요청 실패: ' + TD.err : (TD.bg || '준비 완료 · ' + TD.dates.length + '일치 · ' + (TD.sm ? '요약 파일 ' + TD.sm + '일 · ' : '') + '서버 요청 ' + TD.net + '회 / 저장본 ' + TD.hit + '건'), !!TD.err, !!TD.bg);
-            const all = TS.mode === 'all';
-            if (!person) {
-                if (all) { body.innerHTML = '<div class="bb-tot-msg">' + (TD.bg ? trEsc(TS.name) + ' 님의 기록을 불러오는 중이에요 ☕' : trEsc(TS.name) + ' 님의 근무 정보를 찾지 못했어요 🔍') + '</div>'; return; }
-                const ap = tAllPeople().find(p => p.name === TS.name), last = TD.dates.find(x => tPersonOn(x, TS.name)), ag = ap ? tGroupOf(ap.sh) : 'x';
-                body.innerHTML = '<div class="bb-tot-ph g-' + ag + '"><span class="bb-tot-av lg">' + trEsc(TS.name.charAt(0)) + '</span><h2>' + BBRESIGN.html(TS.name) + '</h2>' + (ap ? '<span class="bb-tot-gchip">' + T_GICON[ag] + ' ' + T_GNAME[ag] + '</span><span class="meta">' + tHhmm(ap.sh[0]) + '–' + tHhmm(ap.sh[1]) + ' 근무</span>' : '') + '</div>' + tDatesChips() +
-                    '<div class="bb-tot-msg">' + tMd(TS.date) + '(' + tDow(TS.date) + ')은 ' + trEsc(TS.name) + ' 님이 쉬어 가신 날이에요 ☕<br>위에서 다른 날짜를 고르거나 아래 버튼으로 돌아가세요.' + (last ? '<br><button data-act="lastwork">가장 최근 근무일(' + tMd(last) + ')로 돌아가기</button>' : '') + '</div>';
-                const dsc = body.querySelector('.bb-tot-dates'); if (dsc) dsc.scrollLeft = keepD;
-                return;
-            }
-            const A = tBuildCtx(person), g = tGroupOf(person.sh), gl = T_GNAME[g];
-            let h = '<div class="bb-tot-ph g-' + g + '"><span class="bb-tot-av lg">' + trEsc(person.name.charAt(0)) + '</span><h2>' + BBRESIGN.html(person.name) + '</h2><span class="bb-tot-gchip">' + T_GICON[g] + ' ' + gl + '</span><span class="meta">' + tHhmm(person.sh[0]) + '–' + tHhmm(person.sh[1]) + ' 근무' + (A && A.spans.length > 1 ? ' · 근무시간 변경 이력 있음' : '') + '</span></div>';
-            if (!all) h += tDatesChips();
-            else if (A) h = h.replace('</div>', '<span class="meta">📅 기록 ' + TD.dates.length + '일(' + tMd(TD.dates[TD.dates.length - 1]) + '~' + tMd(TD.dates[0]) + ') 중 ' + A.days.length + '일 근무</span></div>');
-            if (!A) { body.innerHTML = h + '<div class="bb-tot-msg">' + (all ? '이 기간에 불러올 수 있는 개입 내역이 없어요 🔍' : '개입 내역을 불러오지 못했어요 😵<br>위의 "새로 받기"를 눌러 보세요.') + '</div>'; return; }
-            const n = A.days.length, nb = A.nb, tot = tSum(A.days.map(d => d.tot)), am = tSum(A.days.map(d => d.awayMin));
-            let pk = -1, pv = -1; A.cnt.forEach((v, i) => { if (v != null && v > pv) { pv = v; pk = i; } });
-            const mTot = tot / n, diff = A.gday == null ? null : mTot - A.gday;
-            const T = (tone, icon, label, val, unit, extra) => '<div class="bb-tot-s s-' + tone + '"><div class="l">' + icon + ' ' + label + '</div><div class="v">' + val + (unit ? '<small>' + unit + '</small>' : '') + '</div>' + (extra || '') + '</div>';
-            const dtxt = diff == null ? '' : '<div class="d ' + (diff >= 0 ? 'bb-tot-pos' : 'bb-tot-neg') + '">' + (diff >= 0 ? '▲ +' : '▼ ') + tFmt(diff) + ' vs 평균</div>';
-            let stats;
-            if (!all) {
-                const ds = A.days[0], nEst = ds.v.filter(v => v.est).length;
-                stats = T('blue', '🎯', '해결 건수', tFmt(tot), '건') + T('plum', '⚖️', A.groupLabel + ' 평균 (' + tMd(TS.date) + ')', tFmtN(A.gday), '건', dtxt) +
-                    T('coral', '☕', '이석', ds.v.length, '회 · ' + Math.round(am) + '분' + (nEst ? ' (추정 포함)' : '')) + T('amber', '⚡', '가장 많이 처리한 10분', tHhmm(A.G0 + pk * TOT_BIN), tFmt(pv) + '건');
-            } else {
-                stats = T('teal', '📅', '집계한 날', n, '일') + T('blue', '🎯', '하루 평균 해결', tFmt(mTot), '건') + T('plum', '⚖️', A.groupLabel + ' 하루 평균', tFmtN(A.gday), '건', dtxt) +
-                    T('coral', '☕', '하루 평균 이석', Math.round(am / n), '분') + T('amber', '⚡', '평균 피크 구간', tHhmm(A.G0 + pk * TOT_BIN), tFmt(pv) + '건');
-            }
-            const avail = Math.max(360, body.clientWidth - 16 - TOT_PL - TOT_PR), BW = Math.max(TOT_BWMIN, Math.min(TOT_BWMAX, Math.floor(avail / nb)));
-            h += '<div class="bb-tot-stats">' + stats + '</div><div class="bb-tot-ro" id="bb-tot-ro" title="' + (all ? '각 칸 = 해당 10분의 날짜 평균(그 시간에 근무한 날만), 보라 점선 = 같은 구분 인원의 시간대별 중앙값. 분홍 면적 = 평균 이석 시간(분), 상위 3곳은 시각과 분 표기.' : '보라 점선: 같은 ' + A.groupLabel + ' 인원이 그 시간대에 처리한 건수의 중앙값(1인당, 1시간 단위 집계를 10분으로 환산, 휴게·다중·과학관 시간 제외). 개입 건수 = 이름이 확인된 해결 건, 10분 경계에 걸친 건은 시작 시각 구간에 계산.') + '">마우스를 그래프 위에 올려 보세요 — 10분 단위로 무슨 일이 있었는지 알려 드려요 👀</div>';
-            h += '<div class="bb-tot-cs">' + tChartSvg(A, BW) + '</div>';
-            h += '<div class="bb-tot-lg"><span><i class="sw"></i>해결 건수 (점 위 숫자)</span>' + (TS.avg ? (A.base && A.base.some(v => v != null) ? '<span><i class="sw avg"></i>같은 ' + A.groupLabel + ' 인원의 시간대별 중앙값 (1인당, 10분 환산)</span>' : (A.flat != null ? '<span><i class="sw avg"></i>' + A.groupLabel + ' 하루 평균을 10분으로 환산 (시간대별 자료 없음)</span>' : '')) : '') +
-                (TS.away ? (all ? '<span><i class="sw aw"></i>아래 분홍 면적 = 10분 중 평균 이석 시간</span>' : '<span><i class="sw aw"></i>이석 구간</span><span><i class="sw est"></i>착석 미기입 평균 보정</span>') + '<span><i class="dot"></i>이석이 잦은 구간의 점</span>' : '') + '<span><i class="sw brk"></i>휴게시간</span></div>';
-            if (!all) {
-                const ds = A.days[0];
-                h += '<div class="bb-tot-chips">' + (!ds.hasArc ? '<span class="lb" style="color:var(--mu);font-size:13px">이 날 이석 기록을 불러오지 못했거나 없습니다</span>' : ds.v.length ? ds.v.map(v => {
-                    if (v.b == null) return '<span class="bb-tot-chip est">' + tHhmm(v.a) + ' · 착석 미기입 <b>(보정 안 함)</b></span>';
-                    if (v.est) return '<span class="bb-tot-chip est">' + tHhmm(v.a) + ' · 착석 미기입 → 평균 <b>' + Math.round(v.b - v.a) + '분</b>으로 추정</span>';
-                    return '<span class="bb-tot-chip">' + tHhmm(v.a) + '–' + tHhmm(v.b) + ' · <b>' + Math.round(v.b - v.a) + '분</b></span>';
-                }).join('') : '<span style="color:var(--mu);font-size:13px">이 날은 자리를 꼿꼿이 지키셨네요 💺</span>') + '</div>';
-            } else {
-            }
-            body.innerHTML = h;
-            // 남는(또는 모자란) 세로 공간만큼 선그래프 높이를 늘리거나 줄여 빈칸 없이 채움
-            { const cs = body.querySelector('.bb-tot-cs'), last = body.lastElementChild;
-              if (cs && last) {
-                  const free = body.clientHeight - (last.offsetTop + last.offsetHeight);
-                  if (Math.abs(free) > 4) { const nh = Math.max(110, Math.min(520, TOT_CH + free - 2)); if (nh !== TOT_CH) cs.innerHTML = tChartSvg(A, BW, nh); }
-              } }
-            const dsc = body.querySelector('.bb-tot-dates'); if (dsc) dsc.scrollLeft = keepD;
-            const csc = body.querySelector('.bb-tot-cs'); if (csc) csc.scrollLeft = keepC;
-            body.scrollTop = keepT;
-            _totInfo = i => {
-                const m = A.G0 + i * TOT_BIN, head = tHhmm(m) + '–' + tHhmm(m + TOT_BIN) + ' · ';
-                if (A.cnt[i] == null) return head + '이 시간대는 근무 기록이 없습니다.';
-                const mid = tFmtN(A.base && A.base[i] != null ? A.base[i] : A.flat);
-                if (!all) return head + '해결 <b>' + tFmt(A.cnt[i]) + '</b>건 · ' + A.groupLabel + ' 중앙값 <b>' + mid + '</b>건 · 이석 <b>' + (A.occ[i] >= 0.5 ? Math.round(A.occ[i]) + '분' : '없음') + '</b>' + (A.brk[i] ? ' · 휴게' : '');
-                return head + '평균 해결 <b>' + tFmt(A.cnt[i]) + '</b>건 · ' + A.groupLabel + ' 중앙값 <b>' + mid + '</b>건 · 평균 이석 <b>' + tFmt(A.occ[i]) + '분</b> · 이석한 날 <b>' + tPct(A.dr[i]) + '%</b> · <b>' + A.cover[i] + '일</b> 기준' + (A.brk[i] ? ' · 휴게' : '');
-            };
-        }
-
-        /* ── 불러오기 순서: 날짜 목록 → 가장 최근 근무일 요약 → (먼저 화면) → 나머지 요약·이석을 뒤에서 조금씩 ── */
-        async function totInit(force, noSum) {
-            const seq = ++_totInit; _sumSkip = !!noSum;
-            if (force) { tPurge(); TD.pend = {}; TD.sum = {}; TD.sumAt = {}; TD.arc = {}; TD.arcAt = {}; TD.bins = {}; TD.binAt = {}; _totAvgc = null; trFetchDates(true).catch(() => { /* 무시 */ }); }
-            TD.err = null; TD.hit = 0; TD.net = 0; TD.sm = 0; TD.bg = '';
-            tSetStatus('날짜 목록 불러오는 중…', false, true);
-            try { await trFetchDates(!!force); } catch (e) { TD.err = e && e.message; }
-            if (seq !== _totInit) return;
-            const db = tDB(); TD.dates = trDateList();
-            Object.keys(db.S).forEach(d => { if (_trDates && !_trDates.includes(d)) delete db.S[d]; });   // 서버에서 사라진 날짜는 버림
-            Object.keys(db.A).forEach(d => { if (_trDates && !_trDates.includes(d)) delete db.A[d]; });
-            Object.keys(db.R).forEach(k => { if (_trDates && !_trDates.includes(k.slice(0, 10))) delete db.R[k]; });
-            if (!_sumSkip && (force || tSumNeeded())) {   // 지난 날짜는 요약 파일로 한꺼번에 채우고, 부족한 날짜만 아래에서 예전처럼 받는다
-                tSetStatus('요약 파일 불러오는 중…', false, true);
-                try { await tSumEnsure(!!force); } catch (e) { TD.err = null; }
-                if (seq !== _totInit) return;
-            }
-            let found = null;
-            for (const d of TD.dates.slice(0, 10)) { const s = await tGetSum(d); if (seq !== _totInit) return; if (s && s.people.length) { found = d; break; } }
-            if (!found) { tSetStatus('데이터를 불러오지 못했습니다' + (TD.err ? ' — ' + TD.err : ''), true); $iv('bb-tot-body').innerHTML = '<div class="bb-tot-msg">서버 응답을 받지 못했습니다.<br>' + trEsc(TD.err || '') + '</div>'; return; }
-            if (!TS.date || !TD.dates.includes(TS.date) || force) TS.date = found;
-            const ppl = (TD.sum[TS.date] || { people: [] }).people;
-            if (!TS.name) TS.name = TOT_FIRST;   // 열 때마다 totOpen 이 김지훈으로 맞춰 둠 — 오늘 근무 여부는 보지 않음(전체 통계 기준)
-            TD.bg = TD.bg || '집계 중…';
-            totRender();
-            // 나머지 날짜 요약(전체 통계 · 날짜 칩 · 카드 숫자용) → 이석 기록(평균 이석시간 · 날짜별 이석용) 을 3개씩 뒤에서 받는다
-            const restS = TD.dates.filter(d => TD.sum[d] === undefined), restA = TD.dates.filter(d => TD.arc[d] === undefined);
-            const total = restS.length + restA.length;
-            if (!total) { totDone(); return; }
-            let done = 0, since = 0;
-            const tick = () => { done++; TD.bg = '집계 중… ' + done + '/' + total + ' · 요약 파일 ' + (TD.sm || 0) + '일 · 서버 요청 ' + TD.net + '회 / 저장본 ' + TD.hit + '건'; if (++since >= 4 || done === total) { since = 0; if (TS.open && seq === _totInit) { tSetStatus(TD.bg, !!TD.err, true); totRenderPeople(); } } };
-            await tPool(restS, 3, async d => { if (seq !== _totInit) return; await tGetSum(d); tick(); });
-            if (seq !== _totInit) return;
-            if (TS.open) totRender();   // 요약이 다 모이면 한 번 다시 그림 (전체 통계·날짜 칩)
-            await tPool(restA, 3, async d => { if (seq !== _totInit) return; await tGetArc(d); tick(); });
-            if (seq !== _totInit) return;
-            totDone();
-        }
-        function totDone() { TD.bg = ''; tFlush(); if (TS.open) totRender(); }
-
-        /* ── 열기 · 닫기 · 이벤트 ── */
-        function totPlace() {   // 화면 가운데에 큰 창으로
-            const h = Math.round(window.innerHeight * 0.95);
-            totPop.style.height = h + 'px';
-            totPop.style.left = Math.max(0, Math.round((window.innerWidth - totPop.offsetWidth) / 2)) + 'px';
-            totPop.style.top = Math.max(0, Math.round((window.innerHeight - h) / 2)) + 'px';
-        }
-        function totClose() {
-            if (!TS.open) return;
-            TS.open = false; _totSeq++; _totInit++;   // 진행 중이던 백그라운드 받기는 멈춤 (받아 둔 건 이미 저장됨)
-            totPop.classList.remove('open'); tFlush();
-            const b = document.getElementById('bba-totb'); if (b) b.classList.remove('on');
-        }
-        function totOpen() {
-            if (TS.open) { totClose(); return; }
-            ivClosePop(); ivCloseCal(); ivCloseHelp(); spClose(); trClose();
-            const mm = document.getElementById('bba-mmp'); if (mm && mm.classList.contains('open')) { mm.classList.remove('open'); const mb = document.getElementById('bba-mmb'); if (mb) mb.classList.remove('on'); }
-            TS.open = true; TS.name = TOT_FIRST; TS.mode = 'all';   // 열면 항상 김지훈의 전체 통계부터
-            const b = document.getElementById('bba-totb'); if (b) b.classList.add('on');
-            totPop.classList.add('open'); totPlace(); totSyncCtl();
-            totInit(false);
-        }
-        window.__bbTotClose = totClose;    // 보드를 닫을 때 / 다른 팝업을 열 때 같이 닫음
-        window.__bbTotToggle = ivSafe(totOpen);
-        totPop.addEventListener('click', ivSafe(async e => {
-            const b = e.target.closest('[data-act]'); if (!b) return;
-            const act = b.dataset.act;
-            if (act === 'close') { totClose(); return; }
-            if (act === 'reload') { totInit(true, e.shiftKey); return; }
-            if (act === 'mode') { TS.mode = b.dataset.v; totRender(); return; }
-            if (act === 'pid') TS.name = b.dataset.v;
-            else if (act === 'lastwork') { const d = TD.dates.find(x => tPersonOn(x, TS.name)); if (d) TS.date = d; }
-            else if (act === 'day') { TS.date = b.dataset.v; await tGetSum(TS.date); }
-            totRender();
-        }));
-        totPop.addEventListener('change', ivSafe(e => { const o = e.target.dataset && e.target.dataset.opt; if (o) { TS[o] = e.target.checked; totRender(); } }));
-        totPop.addEventListener('mouseover', ivSafe(e => { const t = e.target.closest('.hit'); if (!t || !_totInfo) return; const r = $iv('bb-tot-ro'); if (r) r.innerHTML = _totInfo(+t.dataset.i); }));
-        document.addEventListener('click', ivSafe(e => {   // 바깥 클릭 → 닫기
-            if (TS.open && !e.target.closest('#bb-iv-tot') && !e.target.closest('#bba-totb')) totClose();
-        }), true);
-        document.addEventListener('keydown', ivSafe(e => { if (e.key === 'Escape' && TS.open) totClose(); }));
-        window.addEventListener('resize', ivSafe(() => { if (TS.open) { totPlace(); totRender(); } }));
-        { const tb = document.getElementById('bba-totb'); if (tb) tb.addEventListener('click', ivSafe(() => { try { window.__bbTotToggle?.(); } catch (e) { console.warn('[BB] 합산 통계 오류:', e && e.message); } })); }   // 헤더 왼쪽 '합산 통계' 버튼
 
         const ivVisible = () => isOpen && _ivOpen && !document.hidden;
         setInterval(ivSafe(() => {
@@ -9383,7 +7515,6 @@
         alert(`기체 카드는 최대 ${MAX}대까지라서, 저장돼 있던 목록에서 뒤쪽 ${_trimNotice}대를 뺐습니다.\n필요한 기체는 오른쪽 위 검색창에서 다시 추가해 주세요.`);
         _trimNotice = 0;
     }
-    // [주석처리: 동숲] applyCampingBackground();
 
 
     // ════════════════════════════════════════════════════════════════════
@@ -9471,7 +7602,6 @@
 
         const SIM = (function () {
         const STAFF_DATA=[["김지훈", "07:00~16:00", "WWWOOWWOOAWWWWOOWWWWWOOWWWWWOOO"], ["오정훈", "07:00~16:00", "OWWHOOWWHAAOOWWWWOOWWWWWOOOWWWO"], ["호덕진", "07:00~16:00", "WOOWWOOWWWWWOOWWAOWWWWWOOOOWWWW"], ["이기완", "07:00~16:00", "WOOWWOOOWWWWWOOAWWWWWOOWWWWWOOW"], ["김경환", "08:00~17:00", "OWWOOWWWWWOOWWWWOOWWWWWOOWOOWWW"], ["박효선", "08:00~17:00", "WOOWWWWWOOWWWWOOWWWWWOOOOWWWWWO"], ["최윤혁", "09:00~18:00", "WWOAAOWWWOAAOWWWWWOOOWWWWOOWWOO"], ["신현철", "09:00~18:00", "WOOWWHWWOOWWOOWWWWWOWWOOHWWOOAW"], ["이민수", "09:00~18:00", "WWWOOWWOOWWWWOOWWWOWWWAOOWWWWOO"], ["김한석", "09:00~18:00", "WWOOAWWWWWOOWWWWOOOWWWWWOOWWWOO"], ["이지윤", "22:00~07:00", "OOWhhhhOOOWWWWOOWWWWOOWWWWWOOWW"], ["김미소", "09:00~18:00", "WWOOWWWWWOOWOWWWWWOOOWWWWOOWWWO"], ["이규은", "09:00~18:00", "OOWWWWWOOOWWWWWOOWWWWWOOWWWWWOO"], ["조천호", "09:00~18:00", "WWOOWWWWOOOWWWWWOOWWWWOOWWWOOWW"], ["이수성", "09:00~18:00", "OOWWWWOOWWWWWOOWWWWWOWWWOOWWOOW"], ["백진홍", "22:00~07:00", "WWOOOWWWWWOWOWWWWWOOWWWOWOOOWWW"], ["임미선", "09:00~18:00", "OWWOOOOOWWWWWOWWWWWOOWWWOWWWWWO"], ["이현경", "09:00~18:00", "WWOOOWWWWOOWWOOWWWWWOOWWWWWOOWW"], ["석승찬", "10:00~19:00", "WHOWWWOWWOOHWWWWOOOWWWWOOOOWWWW"], ["이준", "22:00~07:00", "WWWWOOWOWWWWOWOOWWOWWOOWWWWWOOW"], ["한승완", "10:00~19:00", "OWWWWOOWWWOWWOWWWWWOOWWWOWWWOOO"], ["김동진", "11:00~20:00", "WWWWOOOWWWOOWWWWOOAAWWWOOOOWWWW"], ["송주현", "11:00~20:00", "WAOOWWOOWWWOOWWWWWOOOWWWWOOWWWW"], ["송태영", "11:00~20:00", "WWWOOWWHWWOOOWWWOOWWOOWWAOWWWWO"], ["신은정", "11:00~20:00", "WOOWWWWOOWWWWWOOWWWOOWWOOWWOWWW"], ["장재원", "11:00~20:00", "OWWWOOWWWOOWWWWWOOWWWOOWWWWWOOW"], ["박효빈", "14:00~23:00", "OOWWWOOWWWOOOWWWWOOWWWWOOWWWWWW"], ["권재윤", "14:00~23:00", "WWOOWWWWOOWWWWOOWWWWOOWWWOOWWWO"], ["김가은", "15:00~24:00", "WWWOOOWWWWOOWWWWOOWWWWOOWWWOOWW"], ["서형민", "15:00~24:00", "WWWWOOWWWOOWWWWWOOWWOOWWWWWOOOW"], ["김도형", "15:00~24:00", "OWWWWWOOWWWWWOOWWWWOOWWOOOWWWWO"], ["최성환", "15:00~24:00", "OOWWOOOOOWWOOOOOWWOOOOOWWOOOOOW"], ["이규순", "18:00~03:00", "WWOOWWWWWOWWOOWWOOOWWWWWOOAWWOA"], ["강철환", "18:00~03:00", "OOWWHWWOOWWWWWOOWWWWWOOOWWWOOWW"], ["박은선", "19:00~04:00", "WWOOWWWOOWWWOOOWWWOOOWWWWOAWWWW"], ["박계원", "19:00~04:00", "OOWWWOAWWWWOAOWWWWOOWWWOOWWWOOW"], ["최정기", "20:00~05:00", "OOWWOWWWWOOOWWWWOOWWWWWOOOWWWWW"], ["최선호", "20:00~05:00", "WWOWWWOOWWWWWWOOWWWWOOOWWWOOWWO"], ["김소연", "22:00~07:00", "WWWOOWWWWWOOOWWOOWWWWOOWWWOOWWW"], ["임다연", "22:00~07:00", "WWWWWOOWWWOOWWWWWOOWWWWWOOWWOOO"], ["임아연", "22:00~07:00", "WWOOOWWWOOWWWWWOOWWWWWOOWWWWWOO"], ["안대관", "23:30~08:30", "OOWWWWWOOWWWWOOWWWWOOOWWWWWOOWW"]];
-        const DOW_KO = ['일', '월', '화', '수', '목', '금', '토'];
         const dowOf = d => (4 + d - 1) % 7;            // 2026-10-01 = 목
         const ov = (a, b, c, d) => a < d && c < b;
         const tmin = s => { const m = String(s).match(/(\d{1,2}):(\d{2})/); return +m[1] * 60 + +m[2]; };
@@ -9503,7 +7633,6 @@
           return out;
         }
         mkStaff(STAFF_DATA); RSRC = 'embedded';
-        const GROUPS = ['07·08·09시 출근', '10·11시 출근', '14·15시 출근', '18시 이후 출근'];
         let MONTH_OK = false;   // 10월(근무표가 있는 달)일 때만 근무표(sc)로 출근자를 추림 — 그 외 달은 JSON 에 나온 이름으로 대체
         const present = d => MONTH_OK ? STAFF.filter(p => p.sc[d - 1] === 'W') : [];
         function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
@@ -9564,7 +7693,6 @@
         }
         const orderFor = s => s < 720 ? [0, 1, 2, 3] : s < 1020 ? [1, 0, 2, 3] : [2, 1, 0, 3];
         const DEFAULTS = { gp: 0.1, cw: 0.4, cap: 3, holiday: false, sciPen: 1, grace: 1, tMid: 0.15, tLate: 0.3 };
-        const RELAX_TXT = ['', '가중치 2.0 상한을 풀어 배정', '다중 포함 개수 상한까지 풀어 배정', '다중과 연속 금지까지 풀어 배정'];
         /* [규칙] 07~16시 근무자 중 07·08·09시 다중이 없는 사람은 '부산 08:50 HUB B 출근 + 09~10시 과학관' 을 우선 맡는다 (안 그러면 09~18시 근무자가 받기 쉬움) */
         const isHubU = u => /HUB B 출근|부산 08:50/.test(u.label || '');
         const earlyFree = s => !!(s && s.p && s.p.start === 420 && s.p.end === 960 && ![420, 480, 540].some(H => s.mons.includes(H)));
