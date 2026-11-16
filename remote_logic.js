@@ -45,38 +45,12 @@
         sheetId: "1tLo6Xeq6KJx6zW-fcw8H38jdjxyS2yre5oWY7cxky70"
     };
 
-    // ── [관리자 원격 설정] ────────────────────────────────────────────
-    // monitoring_data_vault 레포의 remote_admin_config.json 값을 읽어온다.
-    // admin이 이 JSON 파일 하나만 GitHub에서 직접 고치면, 모든 사용자는 새로고침 시
-    // 아래 값을 그대로 반영받는다(재배포 불필요).
-    //   { "maxMonitorSlots": 6, "locked": false }
-    // fetch 실패 시엔 안전 기본값(6대 / 잠금 해제)으로 지금까지와 동일하게 동작한다.
-    let ADMIN_CONFIG = { maxMonitorSlots: 6, locked: false, patrolRemind: true, parkingToast: true, directMsg: true };
-    const adminConfigReady = (async () => {
-        try {
-            const res = await fetch(
-                `https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/remote_admin_config.json?t=${Date.now()}`,
-                { cache: 'no-store' }
-            );
-            if (!res.ok) return;
-            const cfg = await res.json();
-            if (typeof cfg.maxMonitorSlots === 'number' && cfg.maxMonitorSlots > 0) {
-                ADMIN_CONFIG.maxMonitorSlots = cfg.maxMonitorSlots;
-            }
-            if (cfg.patrolRemind === false) ADMIN_CONFIG.patrolRemind = false;   // 순찰 리마인더 원격 끄기
-            if (cfg.parkingToast === false) ADMIN_CONFIG.parkingToast = false;   // 주차 확인 토스트 원격 끄기
-            if (cfg.directMsg === false) ADMIN_CONFIG.directMsg = false;   // DM 수신 원격 끄기
-            if (typeof cfg.locked === 'boolean') {
-                ADMIN_CONFIG.locked = cfg.locked;
-            }
-        } catch (e) {
-            console.log('remote_admin_config 로드 실패, 기본값(6대 / 잠금 해제) 유지:', e);
-        }
-    })();
+    // ── [관리자 설정 기본값] ──────────────────────────────────────────
+    // 원격 설정(remote_admin_config.json) 로드는 제거됨. 항상 아래 고정값으로 동작한다.
+    const ADMIN_CONFIG = { maxMonitorSlots: 6, locked: false, patrolRemind: true, parkingToast: true, directMsg: true };
 
     // 다중 모니터링 도우미 기능이 (사용자 토글 ON) && (관리자 잠금 아님) 상태인지 —
     // 기존에 여러 곳에서 반복되던 localStorage 직접 조회를 이 함수 하나로 통일한다.
-    // 반드시 adminConfigReady가 끝난 뒤에 호출해야 ADMIN_CONFIG.locked가 최신값이다.
     const isHandoverFeatureOn = () =>
         !ADMIN_CONFIG.locked && localStorage.getItem('neubie_handover_enabled') !== 'false';
 
@@ -2491,7 +2465,6 @@
     }
 
     async function renderDashboard() {
-        await adminConfigReady; // 관리자 잠금(locked) 여부를 토글 그리기 전에 확정
         dashboard.innerHTML = '';
         const T = getNbTheme();
         dashboard.style.backgroundColor = T.bg;
@@ -3234,7 +3207,6 @@
 
     // ── 핸드오버 레이아웃 ──────────────────────────────────
 	async function initHandoverLayout() {
-		await adminConfigReady; // maxMonitorSlots 확정 후 진행
 		let panel = document.getElementById('ho-remote-panel');
         if (panel) {
             panel.style.top = '0px';
@@ -5613,7 +5585,7 @@
         순찰 진행 리마인더 토스트
         - admin 이 (API 없이) 점검해 둔 '이상 신호' JSON 을 읽어, 다중 모니터링 화면에 접속해 있는 사용자에게만 안내한다.
         - 평소엔 10초마다 시각만 로컬에서 비교(요청 없음). 점검 시각 직후 약 4분 창 안에서만 30초 간격으로 읽고, 화면이 숨겨진 탭은 건너뛴다.
-        - 같은 점검 시각에 최대 2회(1차 · admin 2분 재점검 후 2차)만 띄운다. 끄기: remote_admin_config.json 의 "patrolRemind": false
+        - 같은 점검 시각에 최대 2회(1차 · admin 2분 재점검 후 2차)만 띄운다.
        ============================================================ */
     (function patrolRemind() {
         const API = 'https://multimonitoring.vercel.app/api/battery?name=patrol_remind';
@@ -5698,7 +5670,6 @@
         - 누가 받을지는 daily_tasks 만으로 각 PC 가 똑같이 계산한다 → PC 끼리 통신 불필요, 주차 json 을 읽는 건 받을 사람 PC 한 대뿐.
         - 출근 여부는 구분하지 않는다. 받을 사람이 미출근이면 그 슬롯은 안내가 없고, 그대로 미주차면 다음 점검에서 다시 안내된다.
         - 순위 4명이 전부 다중/서브면 → ##:50 에 1순위 사람이 (조건 없이) 받는다.
-        - 끄기: remote_admin_config.json 의 "parkingToast": false
        ============================================================ */
     (function parkingToast() {
         const API = 'https://multimonitoring.vercel.app/api/battery?name=parking_check';
@@ -5817,7 +5788,6 @@
         - 평소(룰 안): 09~13 / 14~18시 + 최윤혁·안혜림 둘 다 출근한 날 → 10초 간격
         - 룰 밖(점심·퇴근 후·단독 근무일 등): 60초 간격 '하트비트'로만 조회 → admin 이 '강제 전송'으로 보낸 메시지(force)만 표시
           (일반 메시지는 룰 밖에서 표시하지 않고, 룰 안에 들어오면 유효시간(TTL) 이내일 때 표시)
-        - 끄기: remote_admin_config.json 의 "directMsg": false
         - 테스트: localStorage.neubie_dm_force='1' 이면 이 PC 는 룰을 무시하고 항상 10초 간격으로 조회
        ============================================================ */
     (function directMsg() {
@@ -5894,7 +5864,6 @@
             if (norm(lsGet('neubie_user_name')) !== TARGET) return;                  // 안혜림 PC 만
             busy = true;
             try {
-                await adminConfigReady;
                 if (ADMIN_CONFIG.directMsg === false) return;
                 if (Date.now() < (+lsGet('neubie_dm_next') || 0)) return;           // 백오프 중
                 const last = () => +lsGet('neubie_dm_last') || 0;
