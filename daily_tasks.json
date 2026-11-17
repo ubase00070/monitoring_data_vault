@@ -21,14 +21,14 @@
     "subUser": "후보 없음"
   },
   {
-    "user": "최윤혁",
+    "user": "신현철",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "10:00",
     "subUser": "김지훈"
   },
   {
-    "user": "신현철",
+    "user": "최윤혁",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "11:00",
@@ -174,13 +174,13 @@
     "rawTime": "08:30"
   },
   {
-    "user": "김지훈",
+    "user": "임미선",
     "type": "task",
     "content": "[08:50~09:00] 수원 힐스테이트 푸르지오 (뉴비오더) 임무 ON [평일]",
     "rawTime": "08:50"
   },
   {
-    "user": "임미선",
+    "user": "김지훈",
     "type": "task",
     "content": "[09:00~10:00] 부산국립과학관 170,171호기  임무 [화,수,목,금,토,일]",
     "rawTime": "09:00"
