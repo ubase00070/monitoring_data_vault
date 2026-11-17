@@ -8308,7 +8308,7 @@
             const txt = lsGet('bbs_tasks_cache', ''), cfg = simCfg();
             const pk = simPick(), errView = pk.err, R = pk.R, keep = (simp.querySelector('.col.c2') || {}).scrollTop;
             const head = '<div class="mh"><b title="새 수식으로 계산한 시뮬레이션입니다 — 실제 업무표는 바뀌지 않습니다">📋 일일 업무 배정표</b>' + '<button class="bba-btn se' + (errView ? ' on' : '') + '" data-a="se" title="시트가 07시에 갱신되지 않아 어제 정보가 남아 있을 때 — JSON 끝의 명일 다중표(= 오늘 다중)와 근무표의 출근자를 기준으로 일일 업무를 다시 배정합니다 (서브는 무시 · 규칙은 재배정하기와 동일)">🆘 시트 에러용</button>' + '<span class="sp">' +
-                '<button class="bba-btn' + (asV ? ' on' : '') + '" data-a="as" title="업무별로 직원들에게 몇 번씩 배정됐는지 매일 06:30 에 쌓은 기록을 막대그래프로 보여줍니다">📋 배정 기록</button>' + '<button class="bba-btn' + (simYwV ? ' on' : '') + '" data-a="yw" title="양원LH 분배 기록을 읽어 인원별 배정 횟수와 연속 배정 감점 현황을 표로 보여줍니다">🎯 양원LH</button>' + '<button class="bba-btn' + (simBrief ? ' on' : '') + '" data-a="br" title="이 배정표가 규칙(가중치 2.0 · 다중 포함 3건 · 과학관 다중 無 우선 등)을 얼마나 지켰는지 요약해서 보여줍니다">📊 브리핑</button><button class="bba-btn cp" data-a="cp" title="아래 \'새 수식 배정자\' 결과를 시트 행 순서 그대로 한 열(줄바꿈으로 구분)로 복사합니다 — 시트의 배정자 칸에 값만 붙여넣기">📋 배정자 1열 복사</button>' +
+                '<button class="bba-btn' + (asV ? ' on' : '') + '" data-a="as" title="업무별로 직원들에게 몇 번씩 배정됐는지 매일 06:30 에 쌓은 기록을 막대그래프로 보여줍니다">📋 배정 기록</button>' + '<button class="bba-btn' + (simYwV ? ' on' : '') + '" data-a="yw" title="양원LH 분배 기록을 읽어 인원별 배정 횟수와 연속 배정 감점 현황을 표로 보여줍니다">🎯 양원LH</button>' + '<button class="bba-btn' + (simBrief ? ' on' : '') + '" data-a="br" title="이 배정표가 규칙(가중치 2.0 · 다중 포함 3건 · 과학관 다중 無 우선 등)을 얼마나 지켰는지 요약해서 보여줍니다">📊 브리핑</button><button class="bba-btn cp" data-a="cp" title="아래 \'새 수식 배정자\' 결과를 시트 행 순서 그대로 한 열(줄바꿈으로 구분)로 복사합니다 — 시트의 배정자 칸에 값만 붙여넣기">📋 배정자 1열 복사</button><button class="bba-btn cp" data-a="cps" title="배정자 1열 뒤에 서브 모니터링 담당자(07시~06시, 시각 순서)를 이어 붙여 한 번에 복사합니다 — 시트에 1열만 붙여넣었을 때 바로 아래 서브 칸이 비는 경우를 대비한 버튼">📋 배정자+서브 복사</button>' +
                 '<button class="bba-btn on" data-a="re" title="지금의 daily_tasks.json 으로 일일 업무 배정을 다시 찾습니다 (다중/서브는 그대로)">' + (simBusy ? (simProg || '받아오는 중…') : '재배정하기') + '</button><button class="bba-btn" data-a="x">✕ 닫기</button></span></div>';
             if (asV) {   // 다시 그려도 스크롤 위치(바깥 · 업무 목록)는 그대로 둔다
                 const l0 = simp.querySelector('.asl'), b0 = simp.querySelector('.brf'), ls = l0 ? l0.scrollTop : 0, bs = b0 ? b0.scrollTop : 0;
@@ -8539,7 +8539,8 @@
             if (a === 'ywre') { simYwLoad(); return; }
             if (a === 'br') { asV = false; simYwV = false; simBrief = !simBrief; return simDraw(); }
             if (a === 'brt') { simBriefTab = b.dataset.v === 'A' ? 'A' : b.dataset.v === 'E' ? 'E' : 'B'; if (simBriefTab === 'E') simView = 'err'; else if (simRes) simView = 'normal'; return simDraw(); }
-            if (a === 'cp') {   // 배정자 1열 복사
+            if (a === 'cp' || a === 'cps') {   // 배정자 1열 복사 (cps = 뒤에 서브 담당자 07시~06시를 이어 붙임)
+                const withSub = a === 'cps';
                 const show = m => { simMsg = m; clearTimeout(simMsgT); simMsgT = setTimeout(() => { simMsg = ''; simDraw(); }, 12000); simDraw(); };
                 simBox = '';
                 if (simBusy) return show('<span class="warn">최적안을 찾는 중입니다 — 끝난 뒤 복사하세요.</span>');
@@ -8547,10 +8548,18 @@
                 if (!R) return show('<span class="warn">복사할 배정표가 없습니다 — 재배정하기를 먼저 누르세요.</span>');
                 if (hash(cfg.txt) !== hash(lsGet('bbs_tasks_cache', ''))) return show('<span class="warn">⚠ 지금의 daily_tasks.json 이 이 배정표와 달라 줄이 어긋날 수 있습니다. 재배정하기를 누른 뒤 복사하세요.</span>');
                 let col; try { col = pk.err ? simColumnErr(R) : simColumn(R); } catch (e) { return show('<span class="warn">' + (e.message === 'NOFULL' ? '⚠ 휴무·관리자 행까지 담긴 daily_tasks_full.json 을 받지 못했습니다. daily_tasks.json 에는 그 행들이 빠져 있어서, 이 상태로 복사하면 시트와 줄이 밀립니다. (GAS 수정 후 다음 동기화가 끝나면 사용 가능)' : '복사 데이터를 만들지 못했습니다: ' + esc(e.message)) + '</span>'); }
-                simCopyText(col.text).then(ok => {
-                    if (!ok) simBox = col.text;
+                let text = col.text, nSub = 0;
+                if (withSub) {   // 서브 모니터링 담당자: 다중 표와 같은 시각 순서(07시 → 다음날 06시) · 서브가 없는 시각은 빈 줄로 둬서 행 위치를 맞춤
+                    if (pk.err) return show('<span class="warn">🆘 시트 에러용에서는 서브를 무시하므로(시트에 남은 어제 값) 서브를 함께 복사하지 않습니다. 배정자 1열 복사를 쓰세요.</span>');
+                    const mt = Object.keys(R.P.main).map(Number).sort((x, y) => x - y), raw = {};
+                    try { JSON.parse(cfg.txt).forEach(x => { const m = x && x.type === 'monitoring' && String(x.rawTime).match(/(\d{1,2}):(\d{2})/); if (m) { let v = +m[1] * 60 + +m[2]; if (v < 420) v += 1440; raw[v] = String(x.subUser == null ? '' : x.subUser); } }); } catch (e) { /* 아래에서 P.sub 사용 */ }
+                    const subs = mt.map(t => String((R.P.sub && R.P.sub[t]) || raw[t] || '').replace(/[\r\n\t]+/g, ' ').trim());   // 시트 값 그대로(서브가 '후보 없음' 이면 그 글자도 그대로)
+                    nSub = subs.length; text = col.text + '\n' + subs.join('\n');
+                }
+                simCopyText(text).then(ok => {
+                    if (!ok) simBox = text;
                     const cut = s => esc(s.length > 26 ? s.slice(0, 26) + '…' : s), L = col.names.length;
-                    show((ok ? '✔ <b>' + L + '줄</b> 복사됨' : '복사 실패') + ' · 첫 줄 <b>' + esc(col.names[0] || '') + '</b> (' + cut(col.heads[0] || '') + ') · 끝 줄 <b>' + esc(col.names[L - 1] || '') + '</b> (' + cut(col.heads[L - 1] || '') + ') — 시트 첫 행·끝 행과 맞는지 확인하세요');
+                    show((ok ? '✔ <b>' + L + '줄</b>' + (withSub ? ' + 서브 <b>' + nSub + '줄</b>' : '') + ' 복사됨' : '복사 실패') + ' · 첫 줄 <b>' + esc(col.names[0] || '') + '</b> (' + cut(col.heads[0] || '') + ') · 끝 줄 <b>' + esc(col.names[L - 1] || '') + '</b> (' + cut(col.heads[L - 1] || '') + ') — 시트 첫 행·끝 행과 맞는지 확인하세요');
                 });
                 return;
             }
