@@ -133,7 +133,7 @@
     "subUser": "이준"
   },
   {
-    "user": "이지윤",
+    "user": "최선호",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "02:00",
@@ -144,7 +144,7 @@
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "03:00",
-    "subUser": "이지윤"
+    "subUser": "박계원"
   },
   {
     "user": "임다연",
@@ -165,7 +165,7 @@
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "06:00",
-    "subUser": "재배정 필요: 미배정"
+    "subUser": "임아연"
   },
   {
     "user": "호덕진",
@@ -378,7 +378,7 @@
     "rawTime": "21:59"
   },
   {
-    "user": "이지윤",
+    "user": "최선호",
     "type": "task",
     "content": "[22:00] 양원LH 1호기 - 관제 주행",
     "rawTime": "22:00"
