@@ -4887,7 +4887,31 @@
 	    let dpadWasPressed = { up: false, right: false, down: false, left: false };
 		let dpadUpHoldStart = null;
 	    let dpadUpTriggered = false;
-	
+
+        // ── 히든 기능: 우측 스틱 클릭(R3) 길게 → 사이드바 '횡단하기' 버튼 클릭 ──
+        //  · 스크립트 로드 시점에 이름이 '최윤혁'이어야 활성 (이름 변경 후 새로고침 필요)
+        //  · 활성 이후에도 매 틱 현재 이름을 재확인 → 이름이 바뀌면 즉시 비활성
+        const HIDDEN_CROSS_USER = '최윤혁';
+        const HIDDEN_CROSS_ARMED = (localStorage.getItem('neubie_user_name') || '') === HIDDEN_CROSS_USER;
+        const HIDDEN_CROSS_HOLD_MS = 500;   // 주행 중 오조작 방지용 길게 누르기
+        let r3HoldStart = null, r3Fired = false;
+        const resetR3 = () => { r3HoldStart = null; r3Fired = false; };
+        const clickCrossButton = () => {
+            const norm = s => (s || '').replace(/\s+/g, '');
+            const hits = [...(document.querySelector('aside') || document).querySelectorAll('div,button,span')]
+                .filter(el => { const t = norm(el.textContent); return t.startsWith('횡단하기') && t.length <= 8; });
+            const el = hits[hits.length - 1];   // 문서 순서상 마지막 = 가장 안쪽 (클릭은 상위로 버블링)
+            if (el && !el.closest('[disabled],[aria-disabled="true"]')) el.click();
+        };
+        const handleR3Tick = (pressed) => {
+            if (!pressed) { resetR3(); return; }
+            if (r3HoldStart === null) r3HoldStart = performance.now();
+            else if (!r3Fired && performance.now() - r3HoldStart >= HIDDEN_CROSS_HOLD_MS) {
+                r3Fired = true;   // 떼기 전까지 1회만
+                clickCrossButton();
+            }
+        };
+
         // ── 신버전 대응: data-qk 없는 라벨 버튼 하이브리드 파인더 ──
         function findLabelButton(label) {
             const aside = document.querySelector('aside');
@@ -5362,10 +5386,10 @@
 	    setInterval(() => {
 			if(isDpadBindingOff()) return;
 	        const gp = navigator.getGamepads()[0];
-	        if (!gp) { resetDpadUp(); return; }
+	        if (!gp) { resetDpadUp(); resetR3(); return; }
 	        const isDrivingPage = location.href.includes('/remote/multiple/driving/')
 	                           || location.href.includes('/remote/robot/');
-	        if (!isDrivingPage) { closePresetPanel(); resetDpadUp(); return; }
+	        if (!isDrivingPage) { closePresetPanel(); resetDpadUp(); resetR3(); return; }
 	        const padOnBtn = document.querySelector('[data-qk="remote-robot-controller-game-pad-segmented-control-ON"]')
                             || document.querySelector('[data-qk="remote-robot-game-pad-segmented-control-ON"]');
             const isGamepadOn = padOnBtn
@@ -5373,7 +5397,8 @@
                 : getLabelButtonState('게임패드') === 'ON';
 	        if (!isGamepadOn) {
 	            dpadWasPressed = { up: false, right: false, down: false, left: false };
-	            dpadUpHoldStart = null; 
+	            resetR3();
+	            dpadUpHoldStart = null;
 				dpadUpTriggered = false;
 				return;
 	        }
@@ -5414,7 +5439,14 @@
 	        } else if (!leftBtn?.pressed) {
 	            dpadWasPressed.left = false;
 	        }
-	
+
+	        // R3 (11) — 히든: 길게 누르면 '횡단하기' (이름 조건은 위 HIDDEN_CROSS_* 참고)
+	        if (HIDDEN_CROSS_ARMED && localStorage.getItem('neubie_user_name') === HIDDEN_CROSS_USER) {
+	            handleR3Tick(!!gp.buttons[11]?.pressed);
+	        } else {
+	            resetR3();
+	        }
+
 	    }, 100);
 	}
 
