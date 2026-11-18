@@ -4893,7 +4893,7 @@
         //  · 활성 이후에도 매 틱 현재 이름을 재확인 → 이름이 바뀌면 즉시 비활성
         const HIDDEN_CROSS_USER = '최윤혁';
         const HIDDEN_CROSS_ARMED = (localStorage.getItem('neubie_user_name') || '') === HIDDEN_CROSS_USER;
-        const HIDDEN_CROSS_HOLD_MS = 500;   // 주행 중 오조작 방지용 길게 누르기
+        const HIDDEN_CROSS_HOLD_MS = 200;   // 주행 중 오조작 방지용 길게 누르기
         let r3HoldStart = null, r3Fired = false;
         const resetR3 = () => { r3HoldStart = null; r3Fired = false; };
         const clickCrossButton = () => {
