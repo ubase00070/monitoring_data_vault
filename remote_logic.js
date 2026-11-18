@@ -4889,10 +4889,11 @@
 	    let dpadUpTriggered = false;
 
         // ── 히든 기능: 우측 스틱 클릭(R3) 길게 → 사이드바 '횡단하기' 버튼 클릭 ──
-        //  · 스크립트 로드 시점에 이름이 '최윤혁'이어야 활성 (이름 변경 후 새로고침 필요)
+        //  · 스크립트 로드 시점에 이름이 HIDDEN_CROSS_USERS 에 있어야 활성 (이름 변경 후 새로고침 필요)
         //  · 활성 이후에도 매 틱 현재 이름을 재확인 → 이름이 바뀌면 즉시 비활성
-        const HIDDEN_CROSS_USER = '최윤혁';
-        const HIDDEN_CROSS_ARMED = (localStorage.getItem('neubie_user_name') || '') === HIDDEN_CROSS_USER;
+        const HIDDEN_CROSS_USERS = ['최윤혁', '이민수'];   // ← 이름 추가는 여기: ['최윤혁', '홍길동']
+        const isHiddenCrossUser = () => HIDDEN_CROSS_USERS.includes(localStorage.getItem('neubie_user_name') || '');
+        const HIDDEN_CROSS_ARMED = isHiddenCrossUser();
         const HIDDEN_CROSS_HOLD_MS = 200;   // 주행 중 오조작 방지용 길게 누르기
         let r3HoldStart = null, r3Fired = false;
         const resetR3 = () => { r3HoldStart = null; r3Fired = false; };
@@ -5441,7 +5442,7 @@
 	        }
 
 	        // R3 (11) — 히든: 길게 누르면 '횡단하기' (이름 조건은 위 HIDDEN_CROSS_* 참고)
-	        if (HIDDEN_CROSS_ARMED && localStorage.getItem('neubie_user_name') === HIDDEN_CROSS_USER) {
+	        if (HIDDEN_CROSS_ARMED && isHiddenCrossUser()) {
 	            handleR3Tick(!!gp.buttons[11]?.pressed);
 	        } else {
 	            resetR3();
