@@ -202,14 +202,14 @@
     {
       "row": 114,
       "content": "[17:55] 무선충전 기체 주차 상태 (충전중⚡) 확인",
-      "fixed": true,
-      "user": "🛌휴무"
+      "fixed": false,
+      "user": ""
     },
     {
       "row": 115,
       "content": "[18:40] 수원 힐스테이트 푸르지오 (뉴비오더) 임무 OFF [주말]",
-      "fixed": false,
-      "user": ""
+      "fixed": true,
+      "user": "🛌휴무"
     },
     {
       "row": 116,
