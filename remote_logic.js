@@ -1180,9 +1180,8 @@
     }
 
     // ── 서브 모니터링 표시 규칙 ──
-    // 서브 모니터링 임무는 기본적으로 일일 업무 목록에서 숨기되, 비중이 늘어난 시간대(10시·15시·16시)에 배정된 건만 표시한다.
     // 시작 시각은 rawTime(예: '10:00')을 우선 보고, 없으면 업무 텍스트의 첫 'HH:MM' 또는 'N시'에서 읽는다.
-    const SUB_MON_SHOW_HOURS = [10, 15, 16];
+    const SUB_MON_SHOW_HOURS = [10, 15, 16, 22, 23, 00, 01, 02, 03, 04];
     function isHiddenSubMonitoring(t) {
         const content = String((t && t.content) || '');
         if (!/서브\s*모니터링/.test(content)) return false;   // 서브 모니터링이 아니면 숨길 대상 아님
