@@ -1245,6 +1245,7 @@
         renderTaskList(myTasks);
         if (typeof window.syncTiddiButtonState === 'function') window.syncTiddiButtonState();
         if (typeof window.syncYangwonButtonState === 'function') window.syncYangwonButtonState();
+        if (typeof window.syncGangnamButtonState === 'function') window.syncGangnamButtonState();
     }
 
     function syncTasksFromServer(force) {
@@ -2164,9 +2165,10 @@
                 if (!ywCachedNo(key)) ywFetchNo(key);
             } catch (e) { /* 미리 받기 실패는 무시 */ }
         }
-        function computeYangwonState() {
-            const mine = (window.currentMyTasks || []).filter(t => t && /양원\s*LH/i.test(String(t.content || '')));
-            if (!mine.length) return { canCopy: false, blink: false, text: '양원LH' };
+        // 내 일일 업무에서 content 가 re 에 맞는 임무를 찾아 버튼 상태(복사 가능/점멸/라벨)를 계산한다 — 양원LH · 강남구청 공용.
+        function computeMissionState(re, label) {
+            const mine = (window.currentMyTasks || []).filter(t => t && re.test(String(t.content || '')));
+            if (!mine.length) return { canCopy: false, blink: false, text: label };
 
             const now = new Date();
             const nowMin = now.getHours() * 60 + now.getMinutes();
@@ -2185,20 +2187,68 @@
                 const s = rel(sMin);
                 items.push({ sMin, hh: String(sh).padStart(2, '0'), s, e: s + dur });
             });
-            if (!items.length) return { canCopy: false, blink: false, text: '양원LH' };
+            if (!items.length) return { canCopy: false, blink: false, text: label };
 
             const active = items.find(i => nowRel >= i.s && nowRel < i.e);
             const started = items.filter(i => i.s <= nowRel).sort((a, b) => b.s - a.s)[0];
             const pick = active || started;
             if (!pick) {   // 오늘 임무가 아직 하나도 시작 전
                 const next = items.slice().sort((a, b) => a.s - b.s)[0];
-                return { canCopy: false, blink: false, text: `양원LH (${next.hh}시)` };
+                return { canCopy: false, blink: false, text: `${label} (${next.hh}시)` };
             }
             const date = new Date();
             if (pick.sMin > nowMin) date.setDate(date.getDate() - 1);   // 어제 밤 임무를 자정 넘어 보는 경우
-            return { canCopy: true, blink: !!active, text: `양원LH (${pick.hh}시)`, hh: pick.hh, date };
+            return { canCopy: true, blink: !!active, text: `${label} (${pick.hh}시)`, hh: pick.hh, date };
         }
+        function computeYangwonState() { return computeMissionState(/양원\s*LH/i, '양원LH'); }
         const ywState = computeYangwonState();
+
+        // ── 강남구청 1호기 임무 버튼 ──
+        // 양원LH 와 같은 방식: 내 일일 업무에 '14:00~15:00 강남구 영동대로 (강남구청 1호기) - 1:1 관제 주행' 이 있을 때만 활성, 현재 시간대면 점멸.
+        //  · 다른 점: 임무가 '1+1=2시간' 단위로 배정돼 번호가 2시간 이어진다. Worker 는 시작 시각(08·13·17시) 키 하나에만 번호를 올리므로
+        //    내 시각이 둘째 시간(09·14·18시)이면 한 시간 앞 키를 찾아 같은 번호를 쓴다. (파일명의 시각은 내 업무 시각 그대로)
+        //  · 번호를 못 찾으면 양원LH 처럼 번호 없이 복사한다.
+        const GANGNAM_CONFIG = { site: '강남구 영동대로', unit: '#324' };
+        const GN_TASK_RE = /강남구청|강남구\s*영동대로/;
+        const GN_TASK_URLS = [
+            'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/gangnam_task.json',
+            'https://patrol-watch-worker.ubase00070.workers.dev/gangnam'
+        ];
+        window.__gnNo = window.__gnNo || {};   // { 내 시각 키: { no, at } }
+        function gnKeys(date, hh) {   // [내 시각 키, 한 시간 앞 키] 예: 20261120_14 → ['20261120_14', '20261120_13']
+            const d = new Date(date.getFullYear(), date.getMonth(), date.getDate(), parseInt(hh, 10));
+            const p = new Date(d.getTime() - 3600 * 1000);
+            const k = x => `${getFormattedDate(x)}_${getFormattedHour(x)}`;
+            return [k(d), k(p)];
+        }
+        function gnCachedNo(keys) {
+            const c = window.__gnNo[keys[0]];
+            return (c && c.no && Date.now() - c.at < 30 * 60 * 1000) ? c.no : '';
+        }
+        async function gnFetchNo(keys) {
+            for (const url of GN_TASK_URLS) {
+                const ctrl = new AbortController(), to = setTimeout(() => ctrl.abort(), 2000);
+                try {
+                    const r = await fetch(url + '?t=' + Date.now(), { cache: 'no-store', signal: ctrl.signal });
+                    if (!r.ok) continue;
+                    const j = await r.json();
+                    const no = keys.map(k => j && j.tasks && j.tasks[k] && j.tasks[k].task_no).find(Boolean);
+                    if (no) { window.__gnNo[keys[0]] = { no: String(no), at: Date.now() }; return String(no); }
+                } catch (e) { /* 다음 주소로 */ }
+                finally { clearTimeout(to); }
+            }
+            return '';
+        }
+        function gnPrefetch() {
+            try {
+                const s = computeGangnamState();
+                if (!s.canCopy) return;
+                const keys = gnKeys(s.date, s.hh);
+                if (!gnCachedNo(keys)) gnFetchNo(keys);
+            } catch (e) { /* 미리 받기 실패는 무시 */ }
+        }
+        function computeGangnamState() { return computeMissionState(GN_TASK_RE, '강남구청'); }
+        const gnState = computeGangnamState();
 
         // ── 배송/순찰 띠띠 버튼 상태 계산 (휴관 여부 + 09~18시 시간대 잠금) ──
         // 카드 최초 렌더링과, syncTasksFromServer가 도는 매분 주기적 동기화 양쪽에서 재사용.
@@ -2214,7 +2264,7 @@
             const hourNow = new Date().getHours();
             const isActive = !isClosed && hourNow >= 9 && hourNow < 18;
             const hourLabel = getFormattedHour(getCalculatedTime(10)) + '시';
-            const suffix = isClosed ? ' (휴관)' : (isActive ? ` (${hourLabel})` : '');
+            const suffix = isClosed ? '\n(휴관)' : (isActive ? `\n(${hourLabel})` : '');   // 두 줄 표기: '과학관' / '(14시)' — 버튼에 white-space:pre-line 이 걸려 있어 줄바꿈이 그대로 보인다
             const lockStyle = isActive ? '' : NB_LOCK_CSS;
             return { isClosed, isActive, lockStyle, text: '과학관' + suffix };
         }
@@ -2249,11 +2299,11 @@
         };
 
         // 매분 업무 동기화 때 같이 호출 — 임무 시작/종료 경계에서 점멸/잠금/라벨을 갱신 (변화 없으면 DOM 안 건드림)
-        window.syncYangwonButtonState = function() {
-            const btn = document.getElementById('btnYangwon');
+        function syncMissionButton(id, compute) {   // 양원LH · 강남구청 공용
+            const btn = document.getElementById(id);
             if (!btn) return;
             if (btn.dataset.copyEffectActive === 'true') return;   // '복사됨' 표시 중엔 다음 틱에
-            const s = computeYangwonState();
+            const s = compute();
             const key = [s.canCopy, s.blink, s.text].join('|');
             if (btn.dataset.ywKey === key) return;
             btn.dataset.ywKey = key;
@@ -2269,7 +2319,9 @@
                 btn.style.cssText += NB_LOCK_CSS;
             }
             btn.textContent = s.text;
-        };
+        }
+        window.syncYangwonButtonState = function() { syncMissionButton('btnYangwon', computeYangwonState); };
+        window.syncGangnamButtonState = function() { syncMissionButton('btnGangnam', computeGangnamState); };
 
         card.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px; flex:none;">
@@ -2286,8 +2338,11 @@
                         <button id="btnMultiSub" class="sub-btn" style="flex:23; min-width:0; padding:0 2px; font-size:13px; border-top-left-radius:0; border-bottom-left-radius:0; margin-left:-2px;">서브</button>
                     </div>
                     <div style="display:flex; gap:0; min-width:0;">
-                        <button id="btnCombined" class="sub-btn" ${isTiddiActive ? '' : 'disabled'} style="flex:1; min-width:0; padding:0 2px; font-size:13px; border-top-right-radius:0; border-bottom-right-radius:0; ${tiddiLockStyle}">${tiddiState.text}</button>
-                        <button id="btnYangwon" class="sub-btn${ywState.blink ? ' nb-yw-blink' : ''}" ${ywState.canCopy ? '' : 'disabled'} data-yw-key="${[ywState.canCopy, ywState.blink, ywState.text].join('|')}" style="flex:1; min-width:0; padding:0 2px; font-size:13px; border-top-left-radius:0; border-bottom-left-radius:0; margin-left:-2px; ${ywState.canCopy ? '' : NB_LOCK_CSS}">${ywState.text}</button>
+                        <button id="btnCombined" class="sub-btn" ${isTiddiActive ? '' : 'disabled'} style="flex:1; min-width:0; padding:0 2px; font-size:13px; line-height:1.2; white-space:pre-line; border-top-right-radius:0; border-bottom-right-radius:0; ${tiddiLockStyle}">${tiddiState.text}</button>
+                        <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:3px; margin-left:-2px;">
+                            <button id="btnYangwon" class="sub-btn nb-half${ywState.blink ? ' nb-yw-blink' : ''}" ${ywState.canCopy ? '' : 'disabled'} data-yw-key="${[ywState.canCopy, ywState.blink, ywState.text].join('|')}" style="${ywState.canCopy ? '' : NB_LOCK_CSS}">${ywState.text}</button>
+                            <button id="btnGangnam" class="sub-btn nb-half${gnState.blink ? ' nb-yw-blink' : ''}" ${gnState.canCopy ? '' : 'disabled'} data-yw-key="${[gnState.canCopy, gnState.blink, gnState.text].join('|')}" style="${gnState.canCopy ? '' : NB_LOCK_CSS}">${gnState.text}</button>
+                        </div>
                     </div>
                     <div style="height:1px; background:${T.border}; flex:none; margin:1px 0;"></div>
                     <div style="font-size:11.5px; font-weight:800; color:${T.isDark ? '#aaa' : '#6b6b6b'}; flex:none;">배달 건 수동 입력 시</div>
@@ -2311,7 +2366,7 @@
             btnStyleTag.id = 'naming-btn-style';
             document.head.appendChild(btnStyleTag);
         }
-        btnStyleTag.textContent = `.sub-btn { height:43px; background:${rainbowBg(neutralBtnBg)}; color:${neutralBtnText}; border:2px solid transparent; padding:0 4px; border-radius:10px; font-size:14px; font-weight:bold; cursor:pointer; flex:1; min-width:0; box-sizing:border-box; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; transition:0.2s; } .sub-btn:hover:not(:disabled) { background:${rainbowBg(subBtnHoverBg)}; color:${subBtnHoverText}; } @keyframes nbYwBlink { 0%, 100% { box-shadow:0 0 0 2px rgba(239,68,68,.95), 0 0 9px 1px rgba(239,68,68,.5); } 50% { box-shadow:0 0 0 2px rgba(239,68,68,.12), 0 0 0 0 rgba(239,68,68,0); } } .sub-btn.nb-yw-blink { position:relative; z-index:1; animation:nbYwBlink 1.5s ease-in-out infinite; }`;
+        btnStyleTag.textContent = `.sub-btn { height:43px; background:${rainbowBg(neutralBtnBg)}; color:${neutralBtnText}; border:2px solid transparent; padding:0 4px; border-radius:10px; font-size:14px; font-weight:bold; cursor:pointer; flex:1; min-width:0; box-sizing:border-box; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; transition:0.2s; } .sub-btn:hover:not(:disabled) { background:${rainbowBg(subBtnHoverBg)}; color:${subBtnHoverText}; } @keyframes nbYwBlink { 0%, 100% { box-shadow:0 0 0 2px rgba(239,68,68,.95), 0 0 9px 1px rgba(239,68,68,.5); } 50% { box-shadow:0 0 0 2px rgba(239,68,68,.12), 0 0 0 0 rgba(239,68,68,0); } } .sub-btn.nb-yw-blink { position:relative; z-index:1; animation:nbYwBlink 1.5s ease-in-out infinite; } .sub-btn.nb-half { height:20px; flex:none; padding:0 1px; font-size:11px; line-height:1; letter-spacing:-0.2px; border-radius:0 7px 7px 0; }`;
 
         // ── 내 최근 배달 3버튼 (SECTION 6-1) — 테마 색은 다른 버튼들과 같은 값을 쓴다 ──
         let dlvStyleTag = document.getElementById('naming-dlv-style');
@@ -2429,6 +2484,27 @@
                 };
             }
 
+            // 강남구청 버튼 — 내 강남구청 임무 시각 기준: 20261120_08_강남구 영동대로_#324_#123456_홍길동
+            //  (번호는 2시간 임무의 시작 시각 키에서 가져온다 — gnKeys 참고)
+            const gnBtn = card.querySelector('#btnGangnam');
+            if (gnBtn) {
+                gnBtn.onmouseenter = gnPrefetch;
+                gnPrefetch();   // 카드가 그려질 때 미리 받아 둠
+                gnBtn.onclick = async (e) => {
+                    const s = computeGangnamState();   // 클릭 시점 기준으로 다시 계산
+                    if (!s.canCopy) return;
+                    const myName = localStorage.getItem('neubie_user_name') || '';
+                    const keys = gnKeys(s.date, s.hh);
+                    let no = gnCachedNo(keys);
+                    if (!no) {   // 아직 못 받았으면 최대 2.5초만 기다림 — 못 찾으면 번호 없이 복사
+                        try { no = await Promise.race([gnFetchNo(keys), new Promise(r => setTimeout(() => r(''), 2500))]); } catch (err) { no = ''; }
+                    }
+                    const finalName = `${keys[0]}_${GANGNAM_CONFIG.site}_${GANGNAM_CONFIG.unit}${no ? '_#' + no : ''}${myName ? '_' + myName : ''}`;
+                    navigator.clipboard.writeText(finalName);
+                    applyCopyEffect(e.target, '', '');
+                };
+            }
+
         }, 10);
 
         return card;
@@ -2489,7 +2565,7 @@
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
 		// 문자열을 넣으면 패치노트에 빨간 '`' 뱃지가 점멸하며 뜸.
 		// 빈 문자열('')로 비우면 뱃지가 사라짐.
-		const PATCH_NOTE_NEW_CONTENT = '주차 누락 리마인더';
+		const PATCH_NOTE_NEW_CONTENT = '강남구청 1:1';
 
         // ── 패치노트 내용 ──────────────────────────────────────
         // 아래 patchItems 배열에 버전별 내용을 추가하세요 (버튼 라벨의 날짜도 이 배열의
@@ -2497,11 +2573,11 @@
         const patchItems = [
             {
                 version: 'v1.1',
-                date: '2026-11-09',
+                date: '2026-11-20',
                 items: [
                     '기능 개선 및 추가 피드백 바랍니다. 코드는 멈춰있으면 죽습니다.',
 					'주차 감지 리마인더 06:05',
-					'양원LH 1:1관제 파일명 자동 생성',
+					'양원LH / 강남구청 1:1관제 파일명 자동 생성',
 					'리센츠/엘스/가평자이 미순찰 리마인더',
                     '본 스크립트는 NCC 서버에 직접 신호를 보내지 않음',
                     '성남 배터리 조회 쿨다운 2분',
@@ -4771,7 +4847,7 @@
 	// ── 개입 카드 진입 정보 캡처 + 표시 ──
     function captureInterventionEntry() {
         if (!/\/driving\/\d+/.test(location.pathname)) return;
-        const scenarioEl = document.querySelector('.max-w-190.font-size-14.truncate.font-medium.text-mono-800');
+        const senarioEl = document.querySelector('.max-w-190.font-size-14.truncate.font-medium.text-mono-800');
         neubieInterventionEntry = {
             time: Date.now(),
             scenario: scenarioEl ? scenarioEl.textContent.trim() : null
