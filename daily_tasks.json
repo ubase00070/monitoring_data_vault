@@ -28,14 +28,14 @@
     "subUser": "오정훈"
   },
   {
-    "user": "신현철",
+    "user": "최윤혁",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "11:00",
     "subUser": "김미소"
   },
   {
-    "user": "최윤혁",
+    "user": "김한석",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "12:00",
@@ -63,7 +63,7 @@
     "subUser": "한승완"
   },
   {
-    "user": "김한석",
+    "user": "신현철",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "16:00",
@@ -318,13 +318,13 @@
     "rawTime": "16:00"
   },
   {
-    "user": "최성환",
+    "user": "최윤혁",
     "type": "task",
     "content": "[16:00~17:00] 송도요기요 주/야 영업 기체 교대 체크 후 임무 ON",
     "rawTime": "16:00"
   },
   {
-    "user": "한승완",
+    "user": "최성환",
     "type": "task",
     "content": "[17:00~18:00] 강남구 영동대로 ( 강남구청 1호기 ) - 1:1 관제 주행",
     "rawTime": "17:00"
