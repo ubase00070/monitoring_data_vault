@@ -130,7 +130,7 @@
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "01:00",
-    "subUser": "이준"
+    "subUser": "박은선"
   },
   {
     "user": "최선호",
@@ -174,7 +174,7 @@
     "rawTime": "08:00"
   },
   {
-    "user": "김지훈",
+    "user": "호덕진",
     "type": "task",
     "content": "[08:30] 파주LGD(현대밴디스) 기체 출근 처리 후 임무 ON [평일]",
     "rawTime": "08:30"
@@ -432,13 +432,13 @@
     "rawTime": "00:00"
   },
   {
-    "user": "이준",
+    "user": "박은선",
     "type": "task",
     "content": "[03:00] 양원LH 1호기 - 관제 주행",
     "rawTime": "03:00"
   },
   {
-    "user": "이준",
+    "user": "이지윤",
     "type": "task",
     "content": "[04:30] 무선충전 기체 주차 상태 (충전중⚡) 확인",
     "rawTime": "04:30"
