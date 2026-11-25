@@ -7998,10 +7998,10 @@
           "raw": "1"
         },
         "11/24": {
-          "status": "work",
+          "status": "annual",
           "working": true,
-          "present": true,
-          "raw": "1"
+          "present": false,
+          "raw": "연차"
         },
         "11/25": {
           "status": "work",
@@ -9384,6 +9384,6 @@
     "11/30"
   ],
   "mainMonth": 11,
-  "updatedAt": "2026-11-24T03:53:05.836Z",
+  "updatedAt": "2026-11-25T03:53:05.324Z",
   "sheetName": "2026년_11월 스케줄 "
 }
