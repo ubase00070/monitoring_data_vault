@@ -4975,9 +4975,12 @@
         const resetR3 = () => { r3HoldStart = null; r3Fired = false; };
         const clickCrossButton = () => {
             const norm = s => (s || '').replace(/\s+/g, '');
-            const hits = [...(document.querySelector('aside') || document).querySelectorAll('div,button,span')]
+            const find = scope => [...scope.querySelectorAll('div,button,span')]
                 .filter(el => { const t = norm(el.textContent); return t.startsWith('횡단하기') && t.length <= 8; });
-            const el = hits[hits.length - 1];   // 문서 순서상 마지막 = 가장 안쪽 (클릭은 상위로 버블링)
+            // 사이드바(aside)에서 먼저 찾고, 없으면(신버전 /new 등 레이아웃이 다른 경우) 문서 전체에서 찾는다
+            const hits = find(document.querySelector('aside') || document);
+            const all = hits.length ? hits : find(document);
+            const el = all[all.length - 1];   // 문서 순서상 마지막 = 가장 안쪽 (클릭은 상위로 버블링)
             if (el && !el.closest('[disabled],[aria-disabled="true"]')) el.click();
         };
         const handleR3Tick = (pressed) => {
