@@ -3808,23 +3808,26 @@
 		const judgeCardLayout = () => {
 			const cards = [...document.querySelectorAll(CARD_SEL)];
 			if (!cards.length) return { v: 'unknown' };   // 기체가 아직 없음 → 판정 보류(기존 안내 문구 유지)
-			const noName = cards.filter(c => !(c.querySelector('.bg-prmary-50')?.textContent || '').trim()).length;
-			if (noName) return { v: 'native', why: `카드 ${noName}/${cards.length}개에서 기체명 요소(.bg-prmary-50)를 못 찾음` };
-			const badParent = cards.find(c => !c.parentElement || !/flex|grid/.test(getComputedStyle(c.parentElement).display));
-			if (badParent) return { v: 'native', why: `카드 부모가 flex/grid가 아님(order 정렬 불가, display=${badParent.parentElement ? getComputedStyle(badParent.parentElement).display : '-'})` };
+			// 원본 코드는 '기체명 없는 카드'가 섞여 있어도 동작했다(이름 자리에 '—' 표시). 같은 UX를 지키려고 '전부 없을 때'만 구조 변경으로 본다.
+			const named = cards.filter(c => (c.querySelector('.bg-prmary-50')?.textContent || '').trim()).length;
+			if (!named) return { v: 'native', why: `카드 ${cards.length}개 모두에서 기체명 요소(.bg-prmary-50)를 못 찾음` };
+			const orderable = cards.filter(c => c.parentElement && /flex|grid/.test(getComputedStyle(c.parentElement).display)).length;
+			if (!orderable) return { v: 'native', why: `카드 부모가 모두 flex/grid가 아님(order 정렬 불가, display=${cards[0].parentElement ? getComputedStyle(cards[0].parentElement).display : '-'})` };
 			const dnd = document.querySelector('[data-qk*="drag" i],[data-qk*="reorder" i],[data-qk*="sortable" i]')
 				|| cards.find(c => c.draggable || c.closest('[draggable="true"]'));
 			if (dnd) return { v: 'native', why: '원본이 자체 드래그/정렬 기능을 제공하는 것으로 보임' };
-			return { v: 'legacy', why: `카드 ${cards.length}개 · 기체명 있음 · 부모 flex/grid` };
+			return { v: 'legacy', why: `카드 ${cards.length}개(기체명 ${named}) · 정렬 가능 ${orderable}` };
 		};
 		// true = 기존 구조(우리 기능 사용), false = 정식 패치(카드를 건드리지 않음)
+		let _posDimmed = false;
 		const cardLayoutUsable = () => {
 			const r = judgeCardLayout();
 			if (r.v !== 'unknown') NB_COMPAT.set('cardLayout', r.v, r.why);
 			const usable = NB_COMPAT.is('cardLayout') !== 'native';
-			posBtn.style.opacity = usable ? '1' : '0.45';
-			posBtn.title = usable ? '' : '원본 카드 배치가 변경되어 이 기능은 쓰지 않습니다';
-			if (!usable) setDpMsg('원본 카드 배치가 변경되어 배치 기능은 끕니다 (원본 그대로 유지)', '#94a3b8');
+			if (!usable) {   // 양보할 때만 버튼/안내를 건드린다(기존 모습일 때는 DOM이 원본 스크립트와 완전히 동일)
+				posBtn.style.opacity = '0.45'; posBtn.title = '원본 카드 배치가 변경되어 이 기능은 쓰지 않습니다'; _posDimmed = true;
+				setDpMsg('원본 카드 배치가 변경되어 배치 기능은 끕니다 (원본 그대로 유지)', '#94a3b8');
+			} else if (_posDimmed) { posBtn.style.opacity = ''; posBtn.title = ''; _posDimmed = false; }
 			return usable;
 		};
 
@@ -3962,7 +3965,7 @@
 			const mark = vs[i].getAttribute('data-nb-bright');
 			if (mark === null) continue;
 			const f = vs[i].style.filter;
-			if (f && f !== mark) { _brightForeign = `원본이 video filter를 직접 변경(${f})`; return true; }
+			if (f && f !== mark && /brightness\(/i.test(f)) { _brightForeign = `원본이 video filter를 직접 변경(${f})`; return true; }
 		}
 		return false;
 	}
@@ -5818,9 +5821,10 @@
             if (!rect || rect.width < 50 || rect.height < 50) return;   // 아직 그려지는 중 → 다음 틱에 다시 판정
             judged.set(dlg, NB_COMPAT.epoch);
             const vw = root.clientWidth, cx = rect.left + rect.width / 2;
-            const centered = Math.abs(cx - vw / 2) <= Math.max(48, vw * 0.04);   // 가로 중앙 허용 오차(진입 애니메이션 중 오차 흡수)
-            const positioned = wrapPos === 'fixed' || wrapPos === 'absolute';    // 우리 CSS(left/top/transform)가 먹는 구조인지
-            NB_COMPAT.set('modalDock', (centered && positioned) ? 'legacy' : 'native',
+            // 가로 중앙 허용 오차 12%(1920px 기준 약 230px): 진입 애니메이션 오차와, 사이드바/우측 패널을 뺀 영역의 중앙에 뜨는 경우까지 '기존 모습'으로 본다.
+            // (정식 패치로 우측/좌측에 붙으면 중앙에서 700px 넘게 벗어나므로 확실히 구분된다. 래퍼 position은 진단 표기용으로만 남긴다)
+            const centered = Math.abs(cx - vw / 2) <= Math.max(48, vw * 0.12);
+            NB_COMPAT.set('modalDock', centered ? 'legacy' : 'native',
                 `모달 중앙 오차 ${Math.round(cx - vw / 2)}px, 래퍼 position=${wrapPos || '-'}`, { persist: true });
         }
 
