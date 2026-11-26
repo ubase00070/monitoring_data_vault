@@ -116,7 +116,7 @@
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "23:00",
-    "subUser": "김소연"
+    "subUser": "이지윤"
   },
   {
     "user": "박은선",
@@ -137,7 +137,7 @@
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "02:00",
-    "subUser": "이지윤"
+    "subUser": "김소연"
   },
   {
     "user": "임아연",
@@ -438,7 +438,7 @@
     "rawTime": "03:00"
   },
   {
-    "user": "이지윤",
+    "user": "이준",
     "type": "task",
     "content": "[04:30] 무선충전 기체 주차 상태 (충전중⚡) 확인",
     "rawTime": "04:30"
