@@ -753,10 +753,10 @@
           "raw": "1"
         },
         "12/29": {
-          "status": "empty",
+          "status": "off",
           "working": false,
           "present": false,
-          "raw": ""
+          "raw": "휴무"
         },
         "12/30": {
           "status": "work",
@@ -2098,10 +2098,10 @@
           "raw": "1"
         },
         "12/28": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "12/29": {
           "status": "work",
@@ -2110,10 +2110,10 @@
           "raw": "1"
         },
         "12/30": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "12/31": {
           "status": "work",
@@ -3449,10 +3449,10 @@
           "raw": "1"
         },
         "12/28": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "12/29": {
           "status": "off",
@@ -3461,10 +3461,10 @@
           "raw": "휴무"
         },
         "12/30": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "12/31": {
           "status": "work",
@@ -5283,10 +5283,10 @@
           "raw": "휴무"
         },
         "12/12": {
-          "status": "work",
+          "status": "annual",
           "working": true,
-          "present": true,
-          "raw": "1"
+          "present": false,
+          "raw": "연차"
         },
         "12/13": {
           "status": "work",
@@ -6821,10 +6821,10 @@
           "raw": "1"
         },
         "12/11": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "12/12": {
           "status": "work",
@@ -6887,10 +6887,10 @@
           "raw": "1"
         },
         "12/22": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "12/23": {
           "status": "off",
@@ -8178,10 +8178,10 @@
           "raw": "휴무"
         },
         "12/12": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "12/13": {
           "status": "work",
@@ -8286,10 +8286,10 @@
           "raw": "1"
         },
         "12/30": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "12/31": {
           "status": "off",
@@ -9299,6 +9299,6 @@
     "12/31"
   ],
   "mainMonth": 12,
-  "updatedAt": "2026-11-25T10:06:05.371Z",
+  "updatedAt": "2026-11-26T03:53:21.704Z",
   "sheetName": "2026년_12월 스케줄"
 }
