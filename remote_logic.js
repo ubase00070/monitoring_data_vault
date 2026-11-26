@@ -1,6 +1,26 @@
 (function() {
     'use strict';
 
+    // ══════════════════════════════════════════════════════════════════════════
+    //  비상 스위치 (EMERGENCY SWITCH)
+    //  · 배포할 때 false 로 바꾸면 해당 영역 '전체'가 꺼진다 (설치 자체를 하지 않음 → 비용 0).
+    //  · 사용자 개인 토글 · 자동 호환성 판정(nbCompat)보다 항상 우선한다.
+    //  · true(기본)일 때는 아무 것도 달라지지 않는다. 반영은 페이지 새로고침 후.
+    //  · 대시보드의 해당 토글은 회색 '(관리자 잠금)'으로 표시된다.
+    //
+    //  multiHelper      다중 모니터링 도우미 전체 — 전체 밝기 바, Alt+Q 교대 패널/자동 시작,
+    //                   기체 선택 모달 우측 고정, 삭제 확인창 기체명 표기, 순찰 진행 리마인더 토스트
+    //  drivingStatusBar 개입카드(/remote/multiple/driving) 페이지 레이아웃 재정렬 전체 —
+    //                   상태바 상단 이동, 헤더/임무바/여백 압축, '다음 개입 요청' 자동 OFF
+    //  hotkeys          게임패드 커스텀 핫키 전체 — D-PAD 밝기·화질·자동정지·지도·프리셋, R3 횡단하기
+    // ══════════════════════════════════════════════════════════════════════════
+    const FEATURE_SWITCH = Object.freeze({
+        multiHelper: true,
+        drivingStatusBar: true,
+        hotkeys: true,
+    });
+    window.nbSwitch = FEATURE_SWITCH;   // 콘솔 확인용(읽기 전용): nbSwitch
+
     // 성남 배터리 조회용 숨김 iframe(data-nb-batt-probe) 안에서는 이 스크립트를 돌리지 않는다.
     // (부모 페이지가 같은 origin의 iframe DOM을 직접 읽으므로 iframe 쪽 주입은 불필요,
     //  Alt+Q 핸들러·fetch 가로채기 등이 중복 설치되는 것을 막는다. 다른 용도의 iframe에는 영향 없음)
@@ -52,7 +72,7 @@
     // 다중 모니터링 도우미 기능이 (사용자 토글 ON) && (관리자 잠금 아님) 상태인지 —
     // 기존에 여러 곳에서 반복되던 localStorage 직접 조회를 이 함수 하나로 통일한다.
     const isHandoverFeatureOn = () =>
-        !ADMIN_CONFIG.locked && localStorage.getItem('neubie_handover_enabled') !== 'false';
+        FEATURE_SWITCH.multiHelper && !ADMIN_CONFIG.locked && localStorage.getItem('neubie_handover_enabled') !== 'false';
 
     // ── Vice City 팜 스트립 테마 (석양 하늘 헤더 + 야자수 / 본문은 평평한 면) ──
     const NB_THEMES = {
@@ -347,6 +367,87 @@
     }
 
     const taskChannel = new BroadcastChannel('neubie_task_sync');
+
+    /* ============================================================
+        SECTION 1-1. 정식 패치 감지(compat) — "원본이 바뀌었으면 원본 그대로"
+        - 아래 3개 기능은 '지금 NCC의 모습'을 기대하고 그 위에 덧씌운다.
+            modalDock  : 기체 선택 모달이 화면 중앙에 뜬다 → 우측 패널 옆으로 보냄
+            brightness : NCC에 다중 전체 밝기가 없다 → 우리 슬라이더로 video filter 적용
+            cardLayout : 카드가 flex/grid order로 정렬되고 기체명(.bg-prmary-50)이 있다 → 순서 변경
+        - 기대한 모습과 다르면 '공식 패치가 이뤄졌다'고 보고 그 기능을 끄고 원본을 건드리지 않는다.
+        - 판정이 틀렸을 때를 위한 안전장치(콘솔에서):
+            nbCompat.report()               현재 판정과 근거 표 출력
+            nbCompat.force('modalDock','legacy')   강제로 '기존 모습' 취급(우리 기능 사용)
+            nbCompat.force('modalDock','native')   강제로 '정식 패치' 취급(우리 기능 끔)
+            nbCompat.force('modalDock', null)      강제 해제(자동 판정으로 복귀)
+            nbCompat.recheck()              다음 틱에 모두 다시 판정
+       ============================================================ */
+    const NB_COMPAT = (() => {
+        const LABEL = { modalDock: '기체 모달 위치 고정', brightness: '전체 밝기 조절', cardLayout: '카메라 카드 배치' };
+        const LS_FORCE = 'neubie_compat_force_', LS_LAST = 'neubie_compat_last_';
+        const state = {};              // key -> { verdict, why, at }
+        const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+        const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* 무시 */ } };
+        const forced = k => { const v = lsGet(LS_FORCE + k); return (v === 'legacy' || v === 'native') ? v : null; };
+
+        // 판정 결과: 강제값 > 이번 세션 판정 > (persist 기능만) 지난번 판정 > 'legacy'(=현재 동작 그대로)
+        function is(key) {
+            return forced(key) || (state[key] && state[key].verdict) || lsGet(LS_LAST + key) || 'legacy';
+        }
+        // 알림(토스트): 다른 토스트와 겹치거나 지워버리지 않도록 전용 요소를 화면 좌하단에 따로 둔다
+        function notify(text) {
+            try {
+                document.getElementById('nb-compat-toast')?.remove();
+                const el = document.createElement('div');
+                el.id = 'nb-compat-toast';
+                el.textContent = text;
+                el.style.cssText = 'position:fixed;left:16px;bottom:16px;max-width:420px;background:#1e293b;color:#e2e8f0;border:1px solid #475569;padding:8px 14px;border-radius:10px;font-size:12px;font-weight:700;z-index:99999999;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,.4);';
+                document.body.appendChild(el);
+                setTimeout(() => { if (el.isConnected) el.remove(); }, 6000);   // 내 요소만 지운다
+            } catch (e) { /* 무시 */ }
+        }
+        function set(key, verdict, why, opt) {
+            const cur = state[key];
+            if (cur && cur.verdict === verdict && cur.why === why) return;   // 변화 없으면 아무 것도 안 함(매 틱 호출돼도 비용 거의 0)
+            const prev = cur && cur.verdict;
+            state[key] = { verdict, why, at: new Date().toLocaleTimeString('ko-KR', { hour12: false }) };
+            if (opt && opt.persist) lsSet(LS_LAST + key, verdict);   // 다음 접속 때 깜빡임 없이 바로 같은 판정으로 시작
+            if (prev !== verdict) {
+                console.info(`[neubie-compat] ${LABEL[key] || key}: ${prev || '-'} → ${verdict} (${why})`);
+                // 사용자에게는 '정식 패치'로 판정됐을 때 기능별로 하루 한 번만 알려준다(새로고침마다 뜨지 않게).
+                if (verdict === 'native' && !forced(key)) {
+                    const day = new Date().toDateString();
+                    if (lsGet('neubie_compat_toast_' + key) !== day) {
+                        lsSet('neubie_compat_toast_' + key, day);
+                        notify(`원본이 업데이트되어 '${LABEL[key] || key}' 도우미를 끄고 원본 화면을 그대로 둡니다`);
+                    }
+                }
+            }
+        }
+        // 이 스크립트가 만든 요소인지(원본 요소 탐지에서 제외하기 위함)
+        const isOwn = el => !!(el && el.closest && el.closest('[id^="neubie-"],[id^="ho-"],[id^="nb-"],[class^="nb-"],[class*=" nb-"],[class*="ho-remote"]'));
+
+        const api = {
+            epoch: 0, is, set, isOwn,
+            report() {
+                const rows = Object.keys(LABEL).map(k => ({
+                    기능: LABEL[k], 키: k, 적용판정: is(k), 강제: forced(k) || '-',
+                    자동판정: (state[k] && state[k].verdict) || '(아직 판정 전)', 근거: (state[k] && state[k].why) || '-', 시각: (state[k] && state[k].at) || '-'
+                }));
+                console.table(rows); return rows;
+            },
+            force(key, v) {
+                if (!LABEL[key]) { console.warn('[neubie-compat] 키: ' + Object.keys(LABEL).join(', ')); return; }
+                if (v === 'legacy' || v === 'native') lsSet(LS_FORCE + key, v);
+                else { try { localStorage.removeItem(LS_FORCE + key); } catch (e) { /* 무시 */ } }
+                api.epoch++;
+                console.info(`[neubie-compat] ${LABEL[key]} 강제값: ${v || '해제'}`);
+            },
+            recheck() { api.epoch++; Object.keys(state).forEach(k => delete state[k]); console.info('[neubie-compat] 다시 판정합니다'); },
+        };
+        window.nbCompat = api;
+        return api;
+    })();
 
     /* ============================================================
         SECTION 2. 맵 최적화 코어 & 네이밍 유틸리티
@@ -2714,7 +2815,7 @@
         titleWrap.appendChild(patchBtn);
         titleWrap.appendChild(themeBtn);
 
-        const gamepadToggleUI = createToggleRow(nbIcon('gamepad', 19, '#0e7490'), '패드 키변경/테스트', !isDpadBindingOff(),
+        const gamepadToggleUI = createToggleRow(nbIcon('gamepad', 19, '#0e7490'), FEATURE_SWITCH.hotkeys ? '패드 키변경/테스트' : '패드 키변경/테스트 (관리자 잠금)', !isDpadBindingOff(),
             (on) => {
                 localStorage.setItem('neubie_dpad_binding', on ? 'on' : 'off');
             },
@@ -2727,6 +2828,10 @@
             }
         );
         const gamepadBtn = gamepadToggleUI.row;
+        if (!FEATURE_SWITCH.hotkeys) {   // 비상 스위치 OFF → 다중 도우미 토글과 같은 회색 잠금 표시
+            gamepadToggleUI.input.disabled = true;
+            gamepadBtn.style.opacity = '0.45'; gamepadBtn.style.filter = 'grayscale(1)'; gamepadBtn.style.cursor = 'not-allowed';
+        }
         // 게임패드 가이드 오버레이(#gp-toggle)에서 토글해도 이 행이 즉시 반영되도록 전역 sync 함수 노출
         window.syncGamepadTile = () => {
             const on = !isDpadBindingOff();
@@ -3003,7 +3108,7 @@
         };
 
 		// 다중 모니터링 기능 — 토글 행 (관리자 잠금 시 회색으로 비활성화)
-        const queueLocked = ADMIN_CONFIG.locked;
+        const queueLocked = ADMIN_CONFIG.locked || !FEATURE_SWITCH.multiHelper;   // 비상 스위치 OFF도 '잠금'으로 표시
         const queueEnabled = !queueLocked && localStorage.getItem('neubie_handover_enabled') === 'true';
         const queueToggleUI = createToggleRow(nbIcon('monitor', 19, '#0e7490'), queueLocked ? '다중 모니터링 도우미 (관리자 잠금)' : '다중 모니터링 도우미', queueEnabled,
             (on) => {
@@ -3697,10 +3802,35 @@
 		autoBtn1.addEventListener('click', () => runAutoStart(1));
 		autoBtn2.addEventListener('click', () => runAutoStart(2));
 
+		// ── [호환성] 카메라 카드 배치: 카드가 flex/grid order로 정렬되고 기체명 요소가 있는 '지금 구조'일 때만 동작 ──
+		//    구조가 다르거나 원본이 자체 드래그 정렬을 넣었으면 '정식 패치'로 보고 카드를 전혀 건드리지 않는다.
+		const CARD_SEL = '.flex.h-full.w-full.items-center.justify-center.overflow-hidden .p-3';
+		const judgeCardLayout = () => {
+			const cards = [...document.querySelectorAll(CARD_SEL)];
+			if (!cards.length) return { v: 'unknown' };   // 기체가 아직 없음 → 판정 보류(기존 안내 문구 유지)
+			const noName = cards.filter(c => !(c.querySelector('.bg-prmary-50')?.textContent || '').trim()).length;
+			if (noName) return { v: 'native', why: `카드 ${noName}/${cards.length}개에서 기체명 요소(.bg-prmary-50)를 못 찾음` };
+			const badParent = cards.find(c => !c.parentElement || !/flex|grid/.test(getComputedStyle(c.parentElement).display));
+			if (badParent) return { v: 'native', why: `카드 부모가 flex/grid가 아님(order 정렬 불가, display=${badParent.parentElement ? getComputedStyle(badParent.parentElement).display : '-'})` };
+			const dnd = document.querySelector('[data-qk*="drag" i],[data-qk*="reorder" i],[data-qk*="sortable" i]')
+				|| cards.find(c => c.draggable || c.closest('[draggable="true"]'));
+			if (dnd) return { v: 'native', why: '원본이 자체 드래그/정렬 기능을 제공하는 것으로 보임' };
+			return { v: 'legacy', why: `카드 ${cards.length}개 · 기체명 있음 · 부모 flex/grid` };
+		};
+		// true = 기존 구조(우리 기능 사용), false = 정식 패치(카드를 건드리지 않음)
+		const cardLayoutUsable = () => {
+			const r = judgeCardLayout();
+			if (r.v !== 'unknown') NB_COMPAT.set('cardLayout', r.v, r.why);
+			const usable = NB_COMPAT.is('cardLayout') !== 'native';
+			posBtn.style.opacity = usable ? '1' : '0.45';
+			posBtn.title = usable ? '' : '원본 카드 배치가 변경되어 이 기능은 쓰지 않습니다';
+			if (!usable) setDpMsg('원본 카드 배치가 변경되어 배치 기능은 끕니다 (원본 그대로 유지)', '#94a3b8');
+			return usable;
+		};
+
 		posBtn.addEventListener('click', () => {
-			const cards = [...document.querySelectorAll(
-				'.flex.h-full.w-full.items-center.justify-center.overflow-hidden .p-3'
-			)];
+			if (!cardLayoutUsable()) return;
+			const cards = [...document.querySelectorAll(CARD_SEL)];
 			if (!cards.length) {
 				setDpMsg('현재 추가된 기체가 없습니다', '#f59e0b');
 				return;
@@ -3735,6 +3865,7 @@
 					cell.addEventListener('dragover', e => e.preventDefault());
 					cell.addEventListener('drop', () => {
 						if (!dragSrc || dragSrc === cell) return;
+						if (!cardLayoutUsable()) return;   // 그 사이 원본 구조가 바뀌었다면 카드(order)를 건드리지 않음
 						[dragSrc.textContent, cell.textContent] = [cell.textContent, dragSrc.textContent];
 						[dragSrc.dataset.unit, cell.dataset.unit] = [cell.dataset.unit, dragSrc.dataset.unit];
 						const allCards = [...document.querySelectorAll(
@@ -3795,6 +3926,7 @@
 
     // 게임패드 커스텀 바인딩 — 명시적으로 켜거나 끈 적이 없으면 이름으로 기본값 결정 ('오정훈'만 기본 OFF)
 	function isDpadBindingOff() {
+		if (!FEATURE_SWITCH.hotkeys) return true;   // 비상 스위치 OFF: 개인 설정과 무관하게 항상 OFF
 		const stored = localStorage.getItem('neubie_dpad_binding');
 		if (stored === 'off') return true;
 		if (stored === 'on') return false;
@@ -3811,10 +3943,88 @@
         STORAGE_KEY: 'neubie_brightness',
     };
 
+	// ── [호환성] 전체 밝기: NCC에 '다중 전체 밝기'가 없고 video filter를 원본이 안 쓰는 동안만 동작 ──
+	//    원본에 같은 컨트롤이 생기거나, 우리가 쓴 filter를 원본이 직접 바꾸기 시작하면 '정식 패치'로 보고
+	//    슬라이더를 걷어내고 우리가 바꿔둔 filter를 원래대로 돌려놓는다(원본이 쓴 값은 건드리지 않음).
+	const BRIGHT_VIDEO_SEL = 'video[data-qk="remote-multiple-front-cam"]';
+	let _brightForeign = '';         // 원본이 filter를 직접 건드린 근거(한 번 감지되면 새로고침/강제 해제 전까지 유지 — 깜빡임 방지)
+	let _brightCtrlQk = '', _brightCtrlText = '', _brightTextScanAt = 0;
+
+	let _brightEpoch = 0, _brightScanAt = 0, _brightScanBusy = false, _brightMarked = false;   // _brightMarked: 우리가 filter를 쓴 적이 있을 때만 원본 변경 검사/복원을 한다(평소 비용 0)
+	const _idle = window.requestIdleCallback ? (f => window.requestIdleCallback(f, { timeout: 3000 })) : (f => setTimeout(f, 200));
+
+	// (b) 우리가 쓴 filter를 원본이 (비어 있지 않은 다른 값으로) 바꿨는가 — video 12개 안팎의 문자열 비교뿐이라 매우 가볍다
+	function brightnessForeignCheck() {
+		if (_brightForeign) return true;
+		if (!_brightMarked) return false;
+		const vs = document.getElementsByTagName('video');   // 태그 인덱스 조회 — 선택자 매칭/배열 생성 없이 12개 안팎만 훑는다
+		for (let i = 0; i < vs.length; i++) {
+			const mark = vs[i].getAttribute('data-nb-bright');
+			if (mark === null) continue;
+			const f = vs[i].style.filter;
+			if (f && f !== mark) { _brightForeign = `원본이 video filter를 직접 변경(${f})`; return true; }
+		}
+		return false;
+	}
+
+	// (a) 원본에 '다중 전체 밝기' 컨트롤이 생겼는가 — DOM을 훑는 일이라 15초에 한 번, 브라우저가 한가할 때만 돈다
+	function scanNativeBrightnessControl() {
+		let qk = '';
+		const cands = document.querySelectorAll('[data-qk*="brightness" i]');
+		for (let i = 0; i < cands.length; i++) {
+			const q = cands[i].getAttribute('data-qk') || '';
+			if (/multiple/i.test(q)) { qk = q; break; }   // 다중 페이지 전용 접두사(remote-multiple-*) + brightness
+		}
+		_brightCtrlQk = qk ? `원본 컨트롤 발견 data-qk=${qk}` : '';
+		let hit = '';
+		const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);   // 요소 배열을 만들지 않고 텍스트 노드만 순회
+		for (let n = w.nextNode(); n; n = w.nextNode()) {
+			const v = n.nodeValue;
+			if (v.length > 30) continue;
+			const t = v.trim();
+			if (t.length <= 14 && /^전체\s*(기체\s*)?(화면\s*)?밝기/.test(t) && !NB_COMPAT.isOwn(n.parentElement)) { hit = t; break; }
+		}
+		_brightCtrlText = hit ? `원본에 '${hit}' 문구 발견` : '';
+	}
+
+	function brightnessCompatTick() {
+		if (document.hidden) return;   // 숨겨진 탭에서는 아무 일도 하지 않음
+		if (_brightEpoch !== NB_COMPAT.epoch) { _brightEpoch = NB_COMPAT.epoch; _brightForeign = ''; _brightCtrlQk = ''; _brightCtrlText = ''; _brightScanAt = 0; }   // force/recheck 시 초기화
+		const now = Date.now();
+		if (_brightScanAt === 0) { _brightScanAt = now; scanNativeBrightnessControl(); }   // 첫 판정은 바를 만들기 전에 동기로(만들었다 지우는 깜빡임 방지)
+		else if (now - _brightScanAt >= 15000 && !_brightScanBusy) {
+			_brightScanAt = now; _brightScanBusy = true;
+			_idle(() => { try { scanNativeBrightnessControl(); } finally { _brightScanBusy = false; } });
+		}
+		brightnessForeignCheck();
+		const why = _brightCtrlQk || _brightCtrlText || _brightForeign;
+		if (why) NB_COMPAT.set('brightness', 'native', why);
+		else NB_COMPAT.set('brightness', 'legacy', '원본에 전체 밝기 컨트롤/filter 사용 없음');
+		if (NB_COMPAT.is('brightness') === 'native') releaseBrightness();
+	}
+
+	// 우리가 건 filter 정리 — 아직 우리 값이면 원래 값으로 복원, 원본이 바꾼 값이면 그대로 두고 표식만 제거
+	function releaseBrightness() {
+		if (!_brightMarked) return;
+		_brightMarked = false;
+		const vs = document.getElementsByTagName('video');
+		for (let i = 0; i < vs.length; i++) {
+			const v = vs[i], mark = v.getAttribute('data-nb-bright');
+			if (mark === null) continue;
+			if (v.style.filter === mark) v.style.filter = v.getAttribute('data-nb-orig-filter') || '';
+			v.removeAttribute('data-nb-bright'); v.removeAttribute('data-nb-orig-filter');
+		}
+	}
+
 	function applyBrightnessToAll(value) {
+		if (brightnessForeignCheck()) NB_COMPAT.set('brightness', 'native', _brightForeign);   // 슬라이더 조작 직전에도 원본이 건드렸는지 가볍게 확인
+		if (NB_COMPAT.is('brightness') === 'native') return;   // 정식 패치: 원본 밝기 그대로
 		const brightnessVal = value / 50; // 20~100 → 0.0~2.0 (50이 기준 1.0)
-		document.querySelectorAll('video[data-qk="remote-multiple-front-cam"]').forEach(v => {
+		document.querySelectorAll(BRIGHT_VIDEO_SEL).forEach(v => {
+			if (v.dataset.nbBright === undefined) v.dataset.nbOrigFilter = v.style.filter || '';   // 원본 값 보관(양보할 때 복원)
 			v.style.filter = `brightness(${brightnessVal})`;
+			v.dataset.nbBright = v.style.filter;   // 브라우저가 정규화한 값으로 기록 → 나중에 비교
+			_brightMarked = true;
 		});
 		localStorage.setItem(BRIGHTNESS.STORAGE_KEY, value);
 	}
@@ -3822,6 +4032,8 @@
     // ── UI 생성 ───────────────────────────────────────────
     function injectMasterBrightness() {
         if (document.getElementById('neubie-brightness-bar')) return;
+        brightnessCompatTick();
+        if (NB_COMPAT.is('brightness') === 'native') return;   // 정식 패치: 슬라이더를 만들지 않음
 
         const savedVal = parseInt(localStorage.getItem(BRIGHTNESS.STORAGE_KEY) ?? BRIGHTNESS.DEFAULT);
 
@@ -4003,13 +4215,14 @@
 
     // ── multiple/driving 페이지 진입 시 자동 주입 / 이탈 시 제거 ──
     function checkBrightnessBar() {
-		const enabled = isHandoverFeatureOn();
 		const bar = document.getElementById('neubie-brightness-bar');
-		if (isBrightnessPage() && !bar && enabled) {
-			injectMasterBrightness();
-		} else if ((!isBrightnessPage() || !enabled) && bar) {
-			bar.remove();
+		if (!(isHandoverFeatureOn() && isBrightnessPage())) { if (bar) bar.remove(); return; }   // 기능 OFF/다른 페이지 → 원본 감지도 하지 않음(비용 0)
+		brightnessCompatTick();                                      // 원본 변화 감지(양보/복귀)
+		if (NB_COMPAT.is('brightness') === 'native') {               // 정식 패치 → 우리 슬라이더는 두지 않는다
+			if (bar) { bar.remove(); document.getElementById('neubie-brightness-info')?.remove(); }
+			return;
 		}
+		if (!bar) injectMasterBrightness();
 	}
 
     // URL 변경 감지 (기존 setInterval과 연동)
@@ -4887,6 +5100,7 @@
 	
 	// ── 개입 페이지 레이아웃 ──
     function patchDrivingPageLayout() {
+        if (!FEATURE_SWITCH.drivingStatusBar) return;   // 비상 스위치: OFF면 개입 페이지 레이아웃/상태바/자동 OFF 전부 건드리지 않음
         if (!location.href.includes('/remote/multiple/driving/')) return;
 
         // 구버전 전용 마커 확인 — 신버전(리뉴얼)이면 이 패치 전체를 건너뜀
@@ -4958,7 +5172,7 @@
     setTimeout(() => patchDrivingPageLayout(), 6000);
 
 	// ── 게임패드 바인딩 ──
-	if (!window.neubieGamepadBound) {
+	if (FEATURE_SWITCH.hotkeys && !window.neubieGamepadBound) {   // 비상 스위치 OFF면 100ms 폴링 타이머 자체를 만들지 않음
 	    window.neubieGamepadBound = true;
 	    let dpadWasPressed = { up: false, right: false, down: false, left: false };
 		let dpadUpHoldStart = null;
@@ -5567,11 +5781,57 @@
             return panel;
         }
 
+        // ── [호환성] 원본 모달이 '화면 가운데에 뜨는 모습'일 때만 우측 도킹을 건다 ──
+        //    가운데가 아니면(=원본이 이미 위치를 바꿈/정식 패치) 우리 CSS를 걷어내고 원본 그대로 둔다.
+        //    판정은 모달이 새로 뜰 때 한 번만: 우리 CSS를 같은 프레임 안에서 잠깐 끄고 '원본이 원래 그리는 위치'를 잰다.
+        const DLG_SEL = '[data-qk="remote-multiple-select-robot-dialog"]';
+        const judged = new WeakMap();   // 모달 요소 → 판정 당시 epoch
+
+        function ensureProbeStyle() {   // 측정하는 동안만 트랜지션을 꺼서 '이전 위치'가 재어지지 않게 함
+            if (document.getElementById('nb-modal-probe-style')) return;
+            const s = document.createElement('style');
+            s.id = 'nb-modal-probe-style';
+            s.textContent = `html.nb-modal-probing div:has(> ${DLG_SEL}), html.nb-modal-probing ${DLG_SEL} { transition: none !important; }`;
+            document.head.appendChild(s);
+        }
+
+        const tries = new WeakMap();    // 모달 요소 → { n: 측정 시도 횟수, at: 마지막 시도 시각 }
+        function judgeDialogPosition(style) {
+            const dlg = document.querySelector(DLG_SEL);
+            if (!dlg || judged.get(dlg) === NB_COMPAT.epoch) return;
+            // 크기 0(숨겨진 채 남아 있는 모달 등)이라 판정을 못 하는 경우를 대비한 상한 — 0.5초 간격, 최대 5회만 시도하고 포기
+            const tr = tries.get(dlg) || { n: 0, at: 0 }, nowT = Date.now();
+            if (tr.n >= 5 || nowT - tr.at < 500) return;
+            tr.n++; tr.at = nowT; tries.set(dlg, tr);
+            ensureProbeStyle();
+            const root = document.documentElement;
+            let rect = null, wrapPos = '';
+            root.classList.add('nb-modal-probing');
+            if (style) style.disabled = true;                  // 우리 CSS 잠깐 OFF
+            try {
+                rect = dlg.getBoundingClientRect();
+                wrapPos = dlg.parentElement ? getComputedStyle(dlg.parentElement).position : '';
+            } finally {
+                if (style) { style.disabled = false; void dlg.getBoundingClientRect(); }   // 즉시 복원(그려지기 전이라 깜빡임 없음)
+                root.classList.remove('nb-modal-probing');
+            }
+            if (!rect || rect.width < 50 || rect.height < 50) return;   // 아직 그려지는 중 → 다음 틱에 다시 판정
+            judged.set(dlg, NB_COMPAT.epoch);
+            const vw = root.clientWidth, cx = rect.left + rect.width / 2;
+            const centered = Math.abs(cx - vw / 2) <= Math.max(48, vw * 0.04);   // 가로 중앙 허용 오차(진입 애니메이션 중 오차 흡수)
+            const positioned = wrapPos === 'fixed' || wrapPos === 'absolute';    // 우리 CSS(left/top/transform)가 먹는 구조인지
+            NB_COMPAT.set('modalDock', (centered && positioned) ? 'legacy' : 'native',
+                `모달 중앙 오차 ${Math.round(cx - vw / 2)}px, 래퍼 position=${wrapPos || '-'}`, { persist: true });
+        }
+
         function applyModalPosition() {
             const panel = findRobotPanel();
             let style = document.getElementById(STYLE_ID);
 
             if (!panel) { if (style) style.remove(); return; }  // 기체 0대 → NCC 기본(중앙) 유지
+
+            judgeDialogPosition(style);
+            if (NB_COMPAT.is('modalDock') === 'native') { if (style) style.remove(); return; }   // 정식 패치: 원본 위치 그대로
 
             const rect = panel.getBoundingClientRect();
             if (!style) {
@@ -5579,7 +5839,7 @@
                 style.id = STYLE_ID;
                 document.head.appendChild(style);
             }
-            style.textContent = `
+            const css = `
                 div:has(> [data-qk="remote-multiple-select-robot-dialog"]) {
                     left: auto !important;
                     right: ${window.innerWidth - rect.right}px !important;
@@ -5599,6 +5859,8 @@
                     overflow-y: auto !important;
                 }
             `;
+            // 같은 내용이면 다시 쓰지 않는다 — DOM이 바뀔 때마다 문서 전체 스타일 재계산이 일어나던 것을 막는다
+            if (style.dataset.nbCss !== css) { style.textContent = css; style.dataset.nbCss = css; }
         }
 
         let debounceTimer = null;
@@ -5624,7 +5886,7 @@
         // 규칙을 최신 상태로 유지해야 다음에 모달이 열릴 때도 깜빡임이 없다
         window.addEventListener('resize', scheduleApply);
     }
-    setupMonitoringDialogReposition();
+    if (FEATURE_SWITCH.multiHelper) setupMonitoringDialogReposition();   // 비상 스위치 OFF면 옵저버 설치 자체를 안 함
 
     // ══════════════════════════════════════════════════════════
     //  로봇 삭제 확인 팝업에 대상 기체명 표기
@@ -5677,7 +5939,7 @@
             }, 100);
         }, true);
     }
-    setupDeleteConfirmRobotName();
+    if (FEATURE_SWITCH.multiHelper) setupDeleteConfirmRobotName();   // 비상 스위치 OFF면 클릭 리스너도 안 만듦
 
     injectConfigUI();
     // 맵 최적화 초기 적용 (기존엔 SPA 라우트 전환 시에만 호출되어, 새로고침/최초 진입 시
@@ -5743,7 +6005,7 @@
 
         async function tick() {
             try {
-                if (busy || document.hidden || ADMIN_CONFIG.patrolRemind === false || !isHandoverPage()) return;
+                if (busy || document.hidden || !FEATURE_SWITCH.multiHelper || ADMIN_CONFIG.patrolRemind === false || !isHandoverPage()) return;
                 loadSt();
                 const k = getKSTDate(), nowS = k.getHours() * 3600 + k.getMinutes() * 60 + k.getSeconds(), now = Date.now();
                 const due = [];   // 지금 읽어야 하는 점검 시각들
