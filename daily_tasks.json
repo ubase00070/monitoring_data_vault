@@ -88,28 +88,28 @@
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "19:00",
+    "subUser": "박효빈"
+  },
+  {
+    "user": "김도형",
+    "type": "monitoring",
+    "content": "다중 모니터링",
+    "rawTime": "20:00",
     "subUser": "이규순"
   },
   {
     "user": "박효빈",
     "type": "monitoring",
     "content": "다중 모니터링",
-    "rawTime": "20:00",
-    "subUser": "김도형"
+    "rawTime": "21:00",
+    "subUser": "박계원"
   },
   {
     "user": "권재윤",
     "type": "monitoring",
     "content": "다중 모니터링",
-    "rawTime": "21:00",
-    "subUser": "박은선"
-  },
-  {
-    "user": "김도형",
-    "type": "monitoring",
-    "content": "다중 모니터링",
     "rawTime": "22:00",
-    "subUser": "박효빈"
+    "subUser": "박은선"
   },
   {
     "user": "이준",
