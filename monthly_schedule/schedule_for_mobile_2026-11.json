@@ -1857,10 +1857,10 @@
           "raw": "휴무"
         },
         "11/29": {
-          "status": "work",
+          "status": "half",
           "working": true,
           "present": true,
-          "raw": "1"
+          "raw": "반차"
         },
         "11/30": {
           "status": "work",
@@ -9384,6 +9384,6 @@
     "11/30"
   ],
   "mainMonth": 11,
-  "updatedAt": "2026-11-26T03:53:08.665Z",
+  "updatedAt": "2026-11-27T03:53:04.567Z",
   "sheetName": "2026년_11월 스케줄 "
 }
