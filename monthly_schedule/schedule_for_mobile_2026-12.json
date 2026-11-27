@@ -1278,10 +1278,10 @@
           "raw": "1"
         },
         "12/20": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "12/21": {
           "status": "off",
@@ -1290,10 +1290,10 @@
           "raw": "휴무"
         },
         "12/22": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "12/23": {
           "status": "work",
@@ -1664,10 +1664,10 @@
           "raw": "휴무"
         },
         "12/20": {
-          "status": "off",
-          "working": false,
-          "present": false,
-          "raw": "휴무"
+          "status": "work",
+          "working": true,
+          "present": true,
+          "raw": "1"
         },
         "12/21": {
           "status": "work",
@@ -1676,10 +1676,10 @@
           "raw": "1"
         },
         "12/22": {
-          "status": "work",
-          "working": true,
-          "present": true,
-          "raw": "1"
+          "status": "off",
+          "working": false,
+          "present": false,
+          "raw": "휴무"
         },
         "12/23": {
           "status": "work",
@@ -9299,6 +9299,6 @@
     "12/31"
   ],
   "mainMonth": 12,
-  "updatedAt": "2026-11-26T03:53:21.704Z",
+  "updatedAt": "2026-11-27T03:53:14.861Z",
   "sheetName": "2026년_12월 스케줄"
 }
