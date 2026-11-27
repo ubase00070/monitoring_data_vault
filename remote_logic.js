@@ -3953,20 +3953,29 @@
 	let _brightForeign = '';         // 원본이 filter를 직접 건드린 근거(한 번 감지되면 새로고침/강제 해제 전까지 유지 — 깜빡임 방지)
 	let _brightCtrlQk = '', _brightCtrlText = '', _brightTextScanAt = 0;
 
+	// 느슨한 판정(오판 방지): 원본 변경 증거는 '연속으로 확인될 때만' 인정한다 — 한 번 스친 값/요소로는 양보하지 않는다
+	//  · 컨트롤·문구: 스캔이 2회 연속 같은 증거를 찾아야 함(첫 발견 3초 뒤 재확인 스캔이 자동으로 한 번 더 돈다)
+	//  · filter: 우리 값과 다른 brightness() 값이 3틱(약 4.5초) 연속 유지돼야 함. 우리가 슬라이더로 덮어쓰면 카운트는 0으로 돌아간다
+	const BRIGHT_SCAN_CONFIRM = 2, BRIGHT_FOREIGN_CONFIRM = 3;
+	let _brightScanHits = 0, _brightForeignHits = 0, _brightConfirmTimer = null;
 	let _brightEpoch = 0, _brightScanAt = 0, _brightScanBusy = false, _brightMarked = false;   // _brightMarked: 우리가 filter를 쓴 적이 있을 때만 원본 변경 검사/복원을 한다(평소 비용 0)
 	const _idle = window.requestIdleCallback ? (f => window.requestIdleCallback(f, { timeout: 3000 })) : (f => setTimeout(f, 200));
 
 	// (b) 우리가 쓴 filter를 원본이 (비어 있지 않은 다른 값으로) 바꿨는가 — video 12개 안팎의 문자열 비교뿐이라 매우 가볍다
-	function brightnessForeignCheck() {
+	function brightnessForeignCheck(peek) {   // peek=true: 이미 확정된 결과만 본다(카운트 안 함 — 슬라이더 조작 직전 호출용)
 		if (_brightForeign) return true;
-		if (!_brightMarked) return false;
+		if (!_brightMarked) { _brightForeignHits = 0; return false; }
+		let seen = '';
 		const vs = document.getElementsByTagName('video');   // 태그 인덱스 조회 — 선택자 매칭/배열 생성 없이 12개 안팎만 훑는다
 		for (let i = 0; i < vs.length; i++) {
 			const mark = vs[i].getAttribute('data-nb-bright');
 			if (mark === null) continue;
 			const f = vs[i].style.filter;
-			if (f && f !== mark && /brightness\(/i.test(f)) { _brightForeign = `원본이 video filter를 직접 변경(${f})`; return true; }
+			if (f && f !== mark && /brightness\(/i.test(f)) { seen = `원본이 video filter를 직접 변경(${f})`; break; }
 		}
+		if (peek) return false;
+		if (!seen) { _brightForeignHits = 0; return false; }
+		if (++_brightForeignHits >= BRIGHT_FOREIGN_CONFIRM) { _brightForeign = seen; return true; }   // 연속 유지될 때만 확정
 		return false;
 	}
 
@@ -3976,23 +3985,31 @@
 		const cands = document.querySelectorAll('[data-qk*="brightness" i]');
 		for (let i = 0; i < cands.length; i++) {
 			const q = cands[i].getAttribute('data-qk') || '';
-			if (/multiple/i.test(q)) { qk = q; break; }   // 다중 페이지 전용 접두사(remote-multiple-*) + brightness
+			if (/multiple/i.test(q) && !NB_COMPAT.isOwn(cands[i])) { qk = q; break; }   // 다중 페이지 전용 접두사(remote-multiple-*) + brightness
 		}
-		_brightCtrlQk = qk ? `원본 컨트롤 발견 data-qk=${qk}` : '';
 		let hit = '';
 		const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);   // 요소 배열을 만들지 않고 텍스트 노드만 순회
 		for (let n = w.nextNode(); n; n = w.nextNode()) {
 			const v = n.nodeValue;
 			if (v.length > 30) continue;
 			const t = v.trim();
-			if (t.length <= 14 && /^전체\s*(기체\s*)?(화면\s*)?밝기/.test(t) && !NB_COMPAT.isOwn(n.parentElement)) { hit = t; break; }
+			if (t.length <= 14 && /^전체\s*(기체\s*)?(화면\s*)?밝기(\s*조절)?$/.test(t) && !NB_COMPAT.isOwn(n.parentElement)) { hit = t; break; }   // 글자 전체가 '전체 밝기' 류일 때만
 		}
+		if (!qk && !hit) { _brightScanHits = 0; _brightCtrlQk = ''; _brightCtrlText = ''; return; }
+		_brightScanHits++;
+		if (_brightScanHits < BRIGHT_SCAN_CONFIRM) {   // 첫 발견: 아직 인정하지 않고 3초 뒤 한 번 더 확인한다
+			_brightCtrlQk = ''; _brightCtrlText = '';
+			clearTimeout(_brightConfirmTimer);
+			_brightConfirmTimer = setTimeout(() => { if (!document.hidden) _idle(scanNativeBrightnessControl); }, 3000);
+			return;
+		}
+		_brightCtrlQk = qk ? `원본 컨트롤 발견 data-qk=${qk}` : '';
 		_brightCtrlText = hit ? `원본에 '${hit}' 문구 발견` : '';
 	}
 
 	function brightnessCompatTick() {
 		if (document.hidden) return;   // 숨겨진 탭에서는 아무 일도 하지 않음
-		if (_brightEpoch !== NB_COMPAT.epoch) { _brightEpoch = NB_COMPAT.epoch; _brightForeign = ''; _brightCtrlQk = ''; _brightCtrlText = ''; _brightScanAt = 0; }   // force/recheck 시 초기화
+		if (_brightEpoch !== NB_COMPAT.epoch) { _brightEpoch = NB_COMPAT.epoch; _brightForeign = ''; _brightCtrlQk = ''; _brightCtrlText = ''; _brightScanAt = 0; _brightScanHits = 0; _brightForeignHits = 0; clearTimeout(_brightConfirmTimer); }   // force/recheck 시 초기화
 		const now = Date.now();
 		if (_brightScanAt === 0) { _brightScanAt = now; scanNativeBrightnessControl(); }   // 첫 판정은 바를 만들기 전에 동기로(만들었다 지우는 깜빡임 방지)
 		else if (now - _brightScanAt >= 15000 && !_brightScanBusy) {
@@ -4020,7 +4037,7 @@
 	}
 
 	function applyBrightnessToAll(value) {
-		if (brightnessForeignCheck()) NB_COMPAT.set('brightness', 'native', _brightForeign);   // 슬라이더 조작 직전에도 원본이 건드렸는지 가볍게 확인
+		if (brightnessForeignCheck(true)) NB_COMPAT.set('brightness', 'native', _brightForeign);   // 슬라이더 조작 직전에도 원본이 건드렸는지 가볍게 확인
 		if (NB_COMPAT.is('brightness') === 'native') return;   // 정식 패치: 원본 밝기 그대로
 		const brightnessVal = value / 50; // 20~100 → 0.0~2.0 (50이 기준 1.0)
 		document.querySelectorAll(BRIGHT_VIDEO_SEL).forEach(v => {
