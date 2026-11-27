@@ -14,7 +14,7 @@
     "subUser": "이기완"
   },
   {
-    "user": "김한석",
+    "user": "이수성",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "09:00",
@@ -63,7 +63,7 @@
     "subUser": "최윤혁"
   },
   {
-    "user": "이수성",
+    "user": "김한석",
     "type": "monitoring",
     "content": "다중 모니터링",
     "rawTime": "16:00",
@@ -204,7 +204,7 @@
     "rawTime": "09:00"
   },
   {
-    "user": "임미선",
+    "user": "김미소",
     "type": "task",
     "content": "[09:30~10:00] 역삼요기요 대기장소 기체 출근 체크 후 임무 ON",
     "rawTime": "09:30"
