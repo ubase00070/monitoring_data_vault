@@ -2309,7 +2309,7 @@
         //  파일명: 20261128_12_세종 스마트시티 2호기_#343_홍길동
         const SEJONG_CONFIG = {
             site: '세종 스마트시티',
-            units: [ { name: '2호기', no: '#343' }, { name: '3호기', no: '#344' } ]
+            units: [ { name: '2호기', label: '세종 2호기', no: '#343' }, { name: '3호기', label: '세종 3호기', no: '#344' } ]
         };
         const GN_TASK_RE = /강남구청|강남구\s*영동대로/;
         const GN_TASK_URLS = [
@@ -2434,21 +2434,21 @@
                 <div id="nbDlvRow">
                     ${[0, 1, 2].map(i => `<div class="nb-dlv-slot" data-slot="${i}"><button type="button" class="nb-dlv-btn empty" disabled><span class="nb-dlv-ln l1"><span class="nb-dlv-txt"></span></span><span class="nb-dlv-ln l2"><span class="nb-dlv-txt"></span></span></button><span class="nb-dlv-time" style="display:none"></span></div>`).join('')}
                 </div>
-                <div style="display:flex; flex-direction:column; gap:7px; min-width:0; min-height:0;">
-                    <div style="display:flex; gap:0; min-width:0;">
-                        <button id="btnMulti" class="sub-btn" style="flex:77; min-width:0; border-top-right-radius:0; border-bottom-right-radius:0;">다중 모니터링 (${multiHourLabel})</button>
+                <div style="display:flex; flex-direction:column; gap:8px; min-width:0; min-height:0; padding-top:10px; box-sizing:border-box;">
+                    <div class="nb-row" style="display:flex; gap:0; min-width:0;">
+                        <button id="btnMulti"class="sub-btn" style="flex:77; min-width:0; border-top-right-radius:0; border-bottom-right-radius:0;">다중 모니터링 (${multiHourLabel})</button>
                         <button id="btnMultiSub" class="sub-btn" style="flex:23; min-width:0; padding:0 2px; font-size:13px; border-top-left-radius:0; border-bottom-left-radius:0; margin-left:-2px;">서브</button>
                     </div>
-                    <div style="display:flex; gap:0; min-width:0;">
-                        <button id="btnCombined" class="sub-btn" ${isTiddiActive ? '' : 'disabled'} style="flex:1; min-width:0; padding:0 2px; font-size:13px; line-height:1.2; white-space:pre-line; border-top-right-radius:0; border-bottom-right-radius:0; ${tiddiLockStyle}">${tiddiState.text}</button>
+                    <div class="nb-row" style="display:flex; gap:0; min-width:0;">
+                        <button id="btnCombined"class="sub-btn" ${isTiddiActive ? '' : 'disabled'} style="flex:1; min-width:0; padding:0 2px; font-size:13px; line-height:1.2; white-space:pre-line; border-top-right-radius:0; border-bottom-right-radius:0; ${tiddiLockStyle}">${tiddiState.text}</button>
                         <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:3px; margin-left:-2px;">
                             <button id="btnYangwon" class="sub-btn nb-half${ywState.blink ? ' nb-yw-blink' : ''}" ${ywState.canCopy ? '' : 'disabled'} data-yw-key="${[ywState.canCopy, ywState.blink, ywState.text].join('|')}" style="${ywState.canCopy ? '' : NB_LOCK_CSS}">${ywState.text}</button>
                             <button id="btnGangnam" class="sub-btn nb-half${gnState.blink ? ' nb-yw-blink' : ''}" ${gnState.canCopy ? '' : 'disabled'} data-yw-key="${[gnState.canCopy, gnState.blink, gnState.text].join('|')}" style="${gnState.canCopy ? '' : NB_LOCK_CSS}">${gnState.text}</button>
                         </div>
                     </div>
-                    <div style="display:flex; gap:0; min-width:0;">
-                        <button id="btnSejong2" class="sub-btn" style="flex:1; min-width:0; padding:0 2px; font-size:13px; border-top-right-radius:0; border-bottom-right-radius:0;">${SEJONG_CONFIG.units[0].name}</button>
-                        <button id="btnSejong3" class="sub-btn" style="flex:1; min-width:0; padding:0 2px; font-size:13px; border-top-left-radius:0; border-bottom-left-radius:0; margin-left:-2px;">${SEJONG_CONFIG.units[1].name}</button>
+                    <div class="nb-row" style="display:flex; gap:0; min-width:0;">
+                        <button id="btnSejong2" class="sub-btn" style="flex:1; min-width:0; padding:0 2px; font-size:13px; border-top-right-radius:0; border-bottom-right-radius:0;">${SEJONG_CONFIG.units[0].label}</button>
+                        <button id="btnSejong3" class="sub-btn" style="flex:1; min-width:0; padding:0 2px; font-size:13px; border-top-left-radius:0; border-bottom-left-radius:0; margin-left:-2px;">${SEJONG_CONFIG.units[1].label}</button>
                     </div>
                 </div>
             </div>
@@ -2460,7 +2460,7 @@
             btnStyleTag.id = 'naming-btn-style';
             document.head.appendChild(btnStyleTag);
         }
-        btnStyleTag.textContent = `.sub-btn { height:43px; background:${rainbowBg(neutralBtnBg)}; color:${neutralBtnText}; border:2px solid transparent; padding:0 4px; border-radius:10px; font-size:14px; font-weight:bold; cursor:pointer; flex:1; min-width:0; box-sizing:border-box; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; transition:0.2s; } .sub-btn:hover:not(:disabled) { background:${rainbowBg(subBtnHoverBg)}; color:${subBtnHoverText}; } @keyframes nbYwBlink { 0%, 100% { box-shadow:0 0 0 2px rgba(239,68,68,.95), 0 0 9px 1px rgba(239,68,68,.5); } 50% { box-shadow:0 0 0 2px rgba(239,68,68,.12), 0 0 0 0 rgba(239,68,68,0); } } .sub-btn.nb-yw-blink { position:relative; z-index:1; animation:nbYwBlink 1.5s ease-in-out infinite; } .sub-btn.nb-half { height:20px; flex:none; padding:0 1px; font-size:11px; line-height:1; letter-spacing:-0.2px; border-radius:0 7px 7px 0; }`;
+        btnStyleTag.textContent = `.sub-btn { height:43px; background:${rainbowBg(neutralBtnBg)}; color:${neutralBtnText}; border:2px solid transparent; padding:0 4px; border-radius:10px; font-size:14px; font-weight:bold; cursor:pointer; flex:1; min-width:0; box-sizing:border-box; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; transition:0.2s; } .sub-btn:hover:not(:disabled) { background:${rainbowBg(subBtnHoverBg)}; color:${subBtnHoverText}; } @keyframes nbYwBlink { 0%, 100% { box-shadow:0 0 0 2px rgba(239,68,68,.95), 0 0 9px 1px rgba(239,68,68,.5); } 50% { box-shadow:0 0 0 2px rgba(239,68,68,.12), 0 0 0 0 rgba(239,68,68,0); } } .sub-btn.nb-yw-blink { position:relative; z-index:1; animation:nbYwBlink 1.5s ease-in-out infinite; } .nb-row { flex:1 1 0; min-height:43px; } .nb-row > .sub-btn { height:auto; } .sub-btn.nb-half { height:auto; flex:1 1 0; min-height:0; padding:0 1px; font-size:11px; line-height:1; letter-spacing:-0.2px; border-radius:0 7px 7px 0; }`;
 
         // ── 내 최근 배달 3버튼 (SECTION 6-1) — 테마 색은 다른 버튼들과 같은 값을 쓴다 ──
         let dlvStyleTag = document.getElementById('naming-dlv-style');
