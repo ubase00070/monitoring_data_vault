@@ -2176,12 +2176,6 @@
             border:2px solid transparent; background:${rainbowBg(T.card)};
         `;
 
-        const history = JSON.parse(localStorage.getItem('neubie_robot_history') || '[]');
-        let dropdownOptions = history.map(h => {
-            const info = ROBOT_MAP[h.id] || { site: "미등록", unit: "#" + h.id };
-            return `<option value="${h.id}">${info.site} ${info.unit}</option>`;
-        }).join('');
-
         // 복사 효과 공통 함수
         // resetBg/resetColor를 명시적으로 받는 이유: getComputedStyle로 "클릭 시점"의 색을
         // 읽으면, 클릭이라는 행위 자체가 마우스가 버튼 위에 있어야만 가능하므로 항상
@@ -2310,6 +2304,13 @@
         //    내 시각이 둘째 시간(09·14·18시)이면 한 시간 앞 키를 찾아 같은 번호를 쓴다. (파일명의 시각은 내 업무 시각 그대로)
         //  · 번호를 못 찾으면 양원LH 처럼 번호 없이 복사한다.
         const GANGNAM_CONFIG = { site: '강남구 영동대로', unit: '#324' };
+
+        // ── 세종 스마트시티 2호기 / 3호기 버튼 (임무 연동 없이 항상 복사 가능) ──
+        //  파일명: 20261128_12_세종 스마트시티 2호기_#343_홍길동
+        const SEJONG_CONFIG = {
+            site: '세종 스마트시티',
+            units: [ { name: '2호기', no: '#343' }, { name: '3호기', no: '#344' } ]
+        };
         const GN_TASK_RE = /강남구청|강남구\s*영동대로/;
         const GN_TASK_URLS = [
             'https://raw.githubusercontent.com/ubase00070/monitoring_data_vault/main/gangnam_task.json',
@@ -2445,17 +2446,9 @@
                             <button id="btnGangnam" class="sub-btn nb-half${gnState.blink ? ' nb-yw-blink' : ''}" ${gnState.canCopy ? '' : 'disabled'} data-yw-key="${[gnState.canCopy, gnState.blink, gnState.text].join('|')}" style="${gnState.canCopy ? '' : NB_LOCK_CSS}">${gnState.text}</button>
                         </div>
                     </div>
-                    <div style="height:1px; background:${T.border}; flex:none; margin:1px 0;"></div>
-                    <div style="font-size:11.5px; font-weight:800; color:${T.isDark ? '#aaa' : '#6b6b6b'}; flex:none;">배달 건 수동 입력 시</div>
-                    <div style="position:relative; min-width:0; flex:none;">
-                        <select id="robotSelector" style="width:100%; background:${fieldBg}; color:${fieldText}; border:1px solid ${fieldBorder}; border-radius:6px; font-size:13.5px; font-weight:bold; padding:0 20px 0 8px; height:30px; box-sizing:border-box; appearance:none; -webkit-appearance:none; -moz-appearance:none;">
-                            ${dropdownOptions || '<option>최근 배달 기체 미감지</option>'}
-                        </select>
-                        <span style="position:absolute; right:7px; top:50%; transform:translateY(-50%); pointer-events:none; color:#aaa; font-size:11px;">▾</span>
-                    </div>
-                    <div style="display:flex; gap:5px; min-width:0; flex:none;">
-                        <input type="text" id="taskInput" placeholder="주문번호 붙여넣기" style="flex:1; min-width:0; background:${fieldBg}; color:${fieldText}; border:1px solid ${fieldBorder}; padding:0 8px; border-radius:6px; font-size:13.5px; font-weight:bold; height:30px; box-sizing:border-box;">
-                        <button id="copyFileName" style="width:62px; flex-shrink:0; background:${EMERALD}; color:white; border:none; padding:0; border-radius:6px; cursor:pointer; font-weight:bold; font-size:14px; white-space:nowrap; height:30px; box-sizing:border-box;">복사</button>
+                    <div style="display:flex; gap:0; min-width:0;">
+                        <button id="btnSejong2" class="sub-btn" style="flex:1; min-width:0; padding:0 2px; font-size:13px; border-top-right-radius:0; border-bottom-right-radius:0;">${SEJONG_CONFIG.units[0].name}</button>
+                        <button id="btnSejong3" class="sub-btn" style="flex:1; min-width:0; padding:0 2px; font-size:13px; border-top-left-radius:0; border-bottom-left-radius:0; margin-left:-2px;">${SEJONG_CONFIG.units[1].name}</button>
                     </div>
                 </div>
             </div>
@@ -2512,22 +2505,6 @@
                 };
             }
 			
-            // 개별 기체 파일명 복사
-            const copyBtn = card.querySelector('#copyFileName');
-            if (copyBtn) {
-                copyBtn.onclick = (e) => {
-                    const robotId = card.querySelector('#robotSelector').value;
-                    const taskRaw = card.querySelector('#taskInput').value.trim();
-                    const taskNo = taskRaw ? "_#" + taskRaw : "";
-                    const info = ROBOT_MAP[robotId] || { site: "알수없음", unit: "#000" };
-                    const time = new Date();
-                    const myName = localStorage.getItem('neubie_user_name') || '';
-					const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_${info.site}_${info.unit}${taskNo}${myName ? '_' + myName : ''}`;
-                    navigator.clipboard.writeText(finalName);
-                    applyCopyEffect(e.target, EMERALD, 'white');
-                };
-            }
-
             // 다중 모니터링 버튼
             const multiBtn = card.querySelector('#btnMulti');
             if (multiBtn) {
@@ -2606,6 +2583,20 @@
                 };
             }
 
+            // 세종 스마트시티 2호기 / 3호기 버튼 — 20261128_12_세종 스마트시티 2호기_#343_홍길동
+            //  (시각은 과학관·다중 모니터링과 같은 getCalculatedTime(10) 보정)
+            [['btnSejong2', SEJONG_CONFIG.units[0]], ['btnSejong3', SEJONG_CONFIG.units[1]]].forEach(([id, u]) => {
+                const sjBtn = card.querySelector('#' + id);
+                if (!sjBtn) return;
+                sjBtn.onclick = (e) => {
+                    const time = getCalculatedTime(10);
+                    const myName = localStorage.getItem('neubie_user_name') || '';
+                    const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_${SEJONG_CONFIG.site} ${u.name}_${u.no}${myName ? '_' + myName : ''}`;
+                    navigator.clipboard.writeText(finalName);
+                    applyCopyEffect(e.target, '', '');
+                };
+            });
+
         }, 10);
 
         return card;
@@ -2660,7 +2651,7 @@
         headerContainer.appendChild(buildViceDecor(T));
 
         const title = document.createElement('h2');
-        title.textContent = '기능개선 피드백 환영입니다';
+        title.textContent = '관제 도우미';
         title.style.cssText = `${T.titleCss} -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent; font-size:21px; letter-spacing:0; flex:0 1 auto; width:fit-content; margin:0; font-weight:900; white-space:nowrap; min-width:0; overflow:hidden; text-overflow:ellipsis;`;
 
         // ── 패치노트 NEW 뱃지 제어 ──────────────────────────────────
