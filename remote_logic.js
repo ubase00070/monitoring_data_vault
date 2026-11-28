@@ -2176,6 +2176,12 @@
             border:2px solid transparent; background:${rainbowBg(T.card)};
         `;
 
+        const history = JSON.parse(localStorage.getItem('neubie_robot_history') || '[]');
+        let dropdownOptions = history.map(h => {
+            const info = ROBOT_MAP[h.id] || { site: "미등록", unit: "#" + h.id };
+            return `<option value="${h.id}">${info.site} ${info.unit}</option>`;
+        }).join('');
+
         // 복사 효과 공통 함수
         // resetBg/resetColor를 명시적으로 받는 이유: getComputedStyle로 "클릭 시점"의 색을
         // 읽으면, 클릭이라는 행위 자체가 마우스가 버튼 위에 있어야만 가능하므로 항상
@@ -2434,7 +2440,7 @@
                 <div id="nbDlvRow">
                     ${[0, 1, 2].map(i => `<div class="nb-dlv-slot" data-slot="${i}"><button type="button" class="nb-dlv-btn empty" disabled><span class="nb-dlv-ln l1"><span class="nb-dlv-txt"></span></span><span class="nb-dlv-ln l2"><span class="nb-dlv-txt"></span></span></button><span class="nb-dlv-time" style="display:none"></span></div>`).join('')}
                 </div>
-                <div style="display:flex; flex-direction:column; gap:8px; min-width:0; min-height:0; padding-top:10px; box-sizing:border-box;">
+                <div style="display:flex; flex-direction:column; gap:6px; min-width:0; min-height:0;">
                     <div class="nb-row" style="display:flex; gap:0; min-width:0;">
                         <button id="btnMulti"class="sub-btn" style="flex:77; min-width:0; border-top-right-radius:0; border-bottom-right-radius:0;">다중 모니터링 (${multiHourLabel})</button>
                         <button id="btnMultiSub" class="sub-btn" style="flex:23; min-width:0; padding:0 2px; font-size:13px; border-top-left-radius:0; border-bottom-left-radius:0; margin-left:-2px;">서브</button>
@@ -2450,6 +2456,17 @@
                         <button id="btnSejong2" class="sub-btn" style="flex:1; min-width:0; padding:0 2px; font-size:13px; border-top-right-radius:0; border-bottom-right-radius:0;">${SEJONG_CONFIG.units[0].label}</button>
                         <button id="btnSejong3" class="sub-btn" style="flex:1; min-width:0; padding:0 2px; font-size:13px; border-top-left-radius:0; border-bottom-left-radius:0; margin-left:-2px;">${SEJONG_CONFIG.units[1].label}</button>
                     </div>
+                    <div style="height:1px; background:${T.border}; flex:none; margin:1px 0;"></div>
+                    <div style="position:relative; min-width:0; flex:none;">
+                        <select id="robotSelector" style="width:100%; background:${fieldBg}; color:${fieldText}; border:1px solid ${fieldBorder}; border-radius:6px; font-size:13.5px; font-weight:bold; padding:0 20px 0 8px; height:30px; box-sizing:border-box; appearance:none; -webkit-appearance:none; -moz-appearance:none;">
+                            ${dropdownOptions || '<option>최근 배달 기체 미감지</option>'}
+                        </select>
+                        <span style="position:absolute; right:7px; top:50%; transform:translateY(-50%); pointer-events:none; color:#aaa; font-size:11px;">▾</span>
+                    </div>
+                    <div style="display:flex; gap:5px; min-width:0; flex:none;">
+                        <input type="text" id="taskInput" placeholder="주문번호 붙여넣기" style="flex:1; min-width:0; background:${fieldBg}; color:${fieldText}; border:1px solid ${fieldBorder}; padding:0 8px; border-radius:6px; font-size:13.5px; font-weight:bold; height:30px; box-sizing:border-box;">
+                        <button id="copyFileName" style="width:62px; flex-shrink:0; background:${EMERALD}; color:white; border:none; padding:0; border-radius:6px; cursor:pointer; font-weight:bold; font-size:14px; white-space:nowrap; height:30px; box-sizing:border-box;">복사</button>
+                    </div>
                 </div>
             </div>
         `;
@@ -2460,7 +2477,7 @@
             btnStyleTag.id = 'naming-btn-style';
             document.head.appendChild(btnStyleTag);
         }
-        btnStyleTag.textContent = `.sub-btn { height:43px; background:${rainbowBg(neutralBtnBg)}; color:${neutralBtnText}; border:2px solid transparent; padding:0 4px; border-radius:10px; font-size:14px; font-weight:bold; cursor:pointer; flex:1; min-width:0; box-sizing:border-box; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; transition:0.2s; } .sub-btn:hover:not(:disabled) { background:${rainbowBg(subBtnHoverBg)}; color:${subBtnHoverText}; } @keyframes nbYwBlink { 0%, 100% { box-shadow:0 0 0 2px rgba(239,68,68,.95), 0 0 9px 1px rgba(239,68,68,.5); } 50% { box-shadow:0 0 0 2px rgba(239,68,68,.12), 0 0 0 0 rgba(239,68,68,0); } } .sub-btn.nb-yw-blink { position:relative; z-index:1; animation:nbYwBlink 1.5s ease-in-out infinite; } .nb-row { flex:1 1 0; min-height:43px; } .nb-row > .sub-btn { height:auto; } .sub-btn.nb-half { height:auto; flex:1 1 0; min-height:0; padding:0 1px; font-size:11px; line-height:1; letter-spacing:-0.2px; border-radius:0 7px 7px 0; }`;
+        btnStyleTag.textContent = `.sub-btn { height:43px; background:${rainbowBg(neutralBtnBg)}; color:${neutralBtnText}; border:2px solid transparent; padding:0 4px; border-radius:10px; font-size:14px; font-weight:bold; cursor:pointer; flex:1; min-width:0; box-sizing:border-box; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; transition:0.2s; } .sub-btn:hover:not(:disabled) { background:${rainbowBg(subBtnHoverBg)}; color:${subBtnHoverText}; } @keyframes nbYwBlink { 0%, 100% { box-shadow:0 0 0 2px rgba(239,68,68,.95), 0 0 9px 1px rgba(239,68,68,.5); } 50% { box-shadow:0 0 0 2px rgba(239,68,68,.12), 0 0 0 0 rgba(239,68,68,0); } } .sub-btn.nb-yw-blink { position:relative; z-index:1; animation:nbYwBlink 1.5s ease-in-out infinite; } .nb-row { flex:1 1 0; min-height:36px; } .nb-row > .sub-btn { height:auto; } .sub-btn.nb-half { height:auto; flex:1 1 0; min-height:0; padding:0 1px; font-size:11px; line-height:1; letter-spacing:-0.2px; border-radius:0 7px 7px 0; }`;
 
         // ── 내 최근 배달 3버튼 (SECTION 6-1) — 테마 색은 다른 버튼들과 같은 값을 쓴다 ──
         let dlvStyleTag = document.getElementById('naming-dlv-style');
@@ -2505,6 +2522,22 @@
                 };
             }
 			
+            // 개별 기체 파일명 복사
+            const copyBtn = card.querySelector('#copyFileName');
+            if (copyBtn) {
+                copyBtn.onclick = (e) => {
+                    const robotId = card.querySelector('#robotSelector').value;
+                    const taskRaw = card.querySelector('#taskInput').value.trim();
+                    const taskNo = taskRaw ? "_#" + taskRaw : "";
+                    const info = ROBOT_MAP[robotId] || { site: "알수없음", unit: "#000" };
+                    const time = new Date();
+                    const myName = localStorage.getItem('neubie_user_name') || '';
+					const finalName = `${getFormattedDate(time)}_${getFormattedHour(time)}_${info.site}_${info.unit}${taskNo}${myName ? '_' + myName : ''}`;
+                    navigator.clipboard.writeText(finalName);
+                    applyCopyEffect(e.target, EMERALD, 'white');
+                };
+            }
+
             // 다중 모니터링 버튼
             const multiBtn = card.querySelector('#btnMulti');
             if (multiBtn) {
