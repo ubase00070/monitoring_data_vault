@@ -106,7 +106,7 @@
     {
       "row": 98,
       "content": "[11:00~12:00]세종 스마트시티 1:1 관제",
-      "fixed": false,
+      "fixed": true,
       "user": ""
     },
     {
@@ -130,7 +130,7 @@
     {
       "row": 102,
       "content": "[12:00~13:00]세종 스마트시티 1:1 관제",
-      "fixed": true,
+      "fixed": false,
       "user": ""
     },
     {
@@ -184,7 +184,7 @@
     {
       "row": 111,
       "content": "[14:00~15:00]세종 스마트시티 1:1 관제",
-      "fixed": true,
+      "fixed": false,
       "user": ""
     },
     {
